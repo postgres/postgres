@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-05-20 02:16+0000\n"
-"PO-Revision-Date: 2013-05-20 20:02+0400\n"
+"POT-Creation-Date: 2014-04-02 01:47+0000\n"
+"PO-Revision-Date: 2014-04-02 10:46+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -39,7 +39,7 @@ msgstr ""
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83 command.c:1130 input.c:204 mainloop.c:72
-#: mainloop.c:234 tab-complete.c:3821
+#: mainloop.c:234 tab-complete.c:3827
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -144,7 +144,7 @@ msgstr "не удалось получить путь к домашнему ка
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: не удалось перейти в каталог \"%s\": %s\n"
 
-#: command.c:307 common.c:446 common.c:851
+#: command.c:307 common.c:446 common.c:866
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "В данный момент вы не подключены к базе данных.\n"
@@ -262,8 +262,8 @@ msgstr "Секундомер выключен."
 
 #: command.c:1410 command.c:1430 command.c:2027 command.c:2034 command.c:2043
 #: command.c:2053 command.c:2062 command.c:2076 command.c:2093 command.c:2152
-#: common.c:74 copy.c:342 copy.c:393 copy.c:408 psqlscan.l:1674
-#: psqlscan.l:1685 psqlscan.l:1695
+#: common.c:74 copy.c:335 copy.c:389 copy.c:404 psqlscan.l:1677
+#: psqlscan.l:1688 psqlscan.l:1698
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -273,11 +273,11 @@ msgstr "%s: %s\n"
 msgid "+ opt(%d) = |%s|\n"
 msgstr "+ opt(%d) = |%s|\n"
 
-#: command.c:1535 startup.c:188
+#: command.c:1535 startup.c:186
 msgid "Password: "
 msgstr "Пароль: "
 
-#: command.c:1542 startup.c:191 startup.c:193
+#: command.c:1542 startup.c:189 startup.c:191
 #, c-format
 msgid "Password for user %s: "
 msgstr "Пароль пользователя %s: "
@@ -292,8 +292,8 @@ msgstr ""
 "подключения\n"
 
 #: command.c:1673 command.c:2860 common.c:120 common.c:413 common.c:478
-#: common.c:894 common.c:919 common.c:1016 copy.c:502 copy.c:689
-#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1946
+#: common.c:909 common.c:934 common.c:1031 copy.c:487 copy.c:684
+#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -582,12 +582,12 @@ msgstr "неудачна.\n"
 msgid "Succeeded.\n"
 msgstr "удачна.\n"
 
-#: common.c:403 common.c:683 common.c:816
+#: common.c:403 common.c:683 common.c:831
 #, c-format
 msgid "unexpected PQresultStatus: %d\n"
 msgstr "неожиданное значение PQresultStatus: %d\n"
 
-#: common.c:452 common.c:459 common.c:877
+#: common.c:452 common.c:459 common.c:892
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -631,7 +631,7 @@ msgstr "сервер возвратил больше одной строки д�
 msgid "could not set variable \"%s\"\n"
 msgstr "не удалось установить переменную \"%s\"\n"
 
-#: common.c:859
+#: common.c:874
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -645,7 +645,7 @@ msgstr ""
 "%s\n"
 "***(Enter - выполнение; x и Enter - отмена)**************\n"
 
-#: common.c:910
+#: common.c:925
 #, c-format
 msgid ""
 "The server (version %d.%d) does not support savepoints for "
@@ -654,12 +654,12 @@ msgstr ""
 "Сервер (версия %d.%d) не поддерживает точки сохранения для "
 "ON_ERROR_ROLLBACK.\n"
 
-#: common.c:1004
+#: common.c:1019
 #, c-format
 msgid "unexpected transaction status (%d)\n"
 msgstr "неожиданное состояние транзакции (%d)\n"
 
-#: common.c:1032
+#: common.c:1047
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Время: %.3f мс\n"
@@ -679,36 +679,36 @@ msgstr "\\copy: ошибка разбора аргумента \"%s\"\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: ошибка разбора в конце строки\n"
 
-#: copy.c:339
+#: copy.c:332
 #, c-format
 msgid "could not execute command \"%s\": %s\n"
 msgstr "не удалось выполнить команду \"%s\": %s\n"
 
-#: copy.c:355
+#: copy.c:350
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "COPY FROM/TO не может работать с каталогом (%s)\n"
 
-#: copy.c:388
+#: copy.c:383
 #, c-format
 msgid "could not close pipe to external command: %s\n"
 msgstr "не удалось закрыть канал сообщений с внешней командой: %s\n"
 
-#: copy.c:455 copy.c:465
+#: copy.c:450 copy.c:461
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "не удалось записать данные COPY: %s\n"
 
-#: copy.c:472
+#: copy.c:468
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "ошибка передачи данных COPY: %s"
 
-#: copy.c:542
+#: copy.c:529
 msgid "canceled by user"
 msgstr "отменено пользователем"
 
-#: copy.c:552
+#: copy.c:539
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -716,28 +716,28 @@ msgstr ""
 "Вводите данные для копирования, разделяя строки переводом строки.\n"
 "Закончите ввод строкой '\\.'."
 
-#: copy.c:665
+#: copy.c:656
 msgid "aborted because of read failure"
 msgstr "прерывание из-за ошибки чтения"
 
-#: copy.c:685
+#: copy.c:680
 msgid "trying to exit copy mode"
 msgstr "попытка выйти из режима копирования"
 
 #: describe.c:71 describe.c:247 describe.c:478 describe.c:605 describe.c:737
 #: describe.c:822 describe.c:891 describe.c:2666 describe.c:2870
-#: describe.c:2959 describe.c:3197 describe.c:3333 describe.c:3560
-#: describe.c:3632 describe.c:3643 describe.c:3702 describe.c:4110
-#: describe.c:4189
+#: describe.c:2960 describe.c:3202 describe.c:3338 describe.c:3565
+#: describe.c:3637 describe.c:3648 describe.c:3707 describe.c:4115
+#: describe.c:4194
 msgid "Schema"
 msgstr "Схема"
 
 #: describe.c:72 describe.c:149 describe.c:157 describe.c:248 describe.c:479
 #: describe.c:606 describe.c:656 describe.c:738 describe.c:892 describe.c:2667
-#: describe.c:2792 describe.c:2871 describe.c:2960 describe.c:3038
-#: describe.c:3198 describe.c:3261 describe.c:3334 describe.c:3561
-#: describe.c:3633 describe.c:3644 describe.c:3703 describe.c:3892
-#: describe.c:3973 describe.c:4187
+#: describe.c:2792 describe.c:2871 describe.c:2961 describe.c:3039
+#: describe.c:3203 describe.c:3266 describe.c:3339 describe.c:3566
+#: describe.c:3638 describe.c:3649 describe.c:3708 describe.c:3897
+#: describe.c:3978 describe.c:4192
 msgid "Name"
 msgstr "Имя"
 
@@ -751,11 +751,11 @@ msgstr "Типы данных аргументов"
 
 #: describe.c:98 describe.c:170 describe.c:353 describe.c:521 describe.c:610
 #: describe.c:681 describe.c:894 describe.c:1442 describe.c:2471
-#: describe.c:2700 describe.c:2823 describe.c:2897 describe.c:2969
-#: describe.c:3047 describe.c:3114 describe.c:3205 describe.c:3270
-#: describe.c:3335 describe.c:3471 describe.c:3510 describe.c:3577
-#: describe.c:3636 describe.c:3645 describe.c:3704 describe.c:3918
-#: describe.c:3995 describe.c:4124 describe.c:4190 large_obj.c:291
+#: describe.c:2700 describe.c:2823 describe.c:2897 describe.c:2970
+#: describe.c:3052 describe.c:3119 describe.c:3210 describe.c:3275
+#: describe.c:3340 describe.c:3476 describe.c:3515 describe.c:3582
+#: describe.c:3641 describe.c:3650 describe.c:3709 describe.c:3923
+#: describe.c:4000 describe.c:4129 describe.c:4195 large_obj.c:291
 #: large_obj.c:301
 msgid "Description"
 msgstr "Описание"
@@ -770,8 +770,8 @@ msgid "The server (version %d.%d) does not support tablespaces.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает табличные пространства.\n"
 
 #: describe.c:150 describe.c:158 describe.c:350 describe.c:657 describe.c:821
-#: describe.c:2676 describe.c:2796 describe.c:3040 describe.c:3262
-#: describe.c:3893 describe.c:3974 large_obj.c:290
+#: describe.c:2676 describe.c:2796 describe.c:3041 describe.c:3267
+#: describe.c:3898 describe.c:3979 large_obj.c:290
 msgid "Owner"
 msgstr "Владелец"
 
@@ -811,7 +811,7 @@ msgid "normal"
 msgstr "обычная"
 
 #: describe.c:267 describe.c:312 describe.c:329 describe.c:744 describe.c:831
-#: describe.c:1411 describe.c:2675 describe.c:2872 describe.c:3992
+#: describe.c:1411 describe.c:2675 describe.c:2872 describe.c:3997
 msgid "Type"
 msgstr "Тип"
 
@@ -891,11 +891,11 @@ msgstr "Список операторов"
 msgid "Encoding"
 msgstr "Кодировка"
 
-#: describe.c:663 describe.c:3199
+#: describe.c:663 describe.c:3204
 msgid "Collate"
 msgstr "LC_COLLATE"
 
-#: describe.c:664 describe.c:3200
+#: describe.c:664 describe.c:3205
 msgid "Ctype"
 msgstr "LC_CTYPE"
 
@@ -931,7 +931,7 @@ msgstr "сторонняя таблица"
 msgid "Column access privileges"
 msgstr "Права доступа к колонкам"
 
-#: describe.c:781 describe.c:4334 describe.c:4338
+#: describe.c:781 describe.c:4339 describe.c:4343
 msgid "Access privileges"
 msgstr "Права доступа"
 
@@ -1063,8 +1063,8 @@ msgstr "Значение"
 msgid "Definition"
 msgstr "Определение"
 
-#: describe.c:1430 describe.c:3913 describe.c:3994 describe.c:4062
-#: describe.c:4123
+#: describe.c:1430 describe.c:3918 describe.c:3999 describe.c:4067
+#: describe.c:4128
 msgid "FDW Options"
 msgstr "Параметры ОСД"
 
@@ -1205,11 +1205,11 @@ msgstr "Типизированная таблица типа: %s"
 msgid "Has OIDs"
 msgstr "Содержит OID"
 
-#: describe.c:2275 describe.c:2963 describe.c:3106
+#: describe.c:2275 describe.c:2964 describe.c:3111
 msgid "no"
 msgstr "нет"
 
-#: describe.c:2275 describe.c:2963 describe.c:3108
+#: describe.c:2275 describe.c:2964 describe.c:3113
 msgid "yes"
 msgstr "да"
 
@@ -1323,7 +1323,7 @@ msgstr "индекс"
 msgid "special"
 msgstr "спец. отношение"
 
-#: describe.c:2681 describe.c:4111
+#: describe.c:2681 describe.c:4116
 msgid "Table"
 msgstr "Таблица"
 
@@ -1353,7 +1353,7 @@ msgstr "Внутренний язык"
 msgid "Call Handler"
 msgstr "Обработчик вызова"
 
-#: describe.c:2810 describe.c:3900
+#: describe.c:2810 describe.c:3905
 msgid "Validator"
 msgstr "Функция проверки"
 
@@ -1377,193 +1377,209 @@ msgstr "Проверка"
 msgid "List of domains"
 msgstr "Список доменов"
 
-#: describe.c:2961
+#: describe.c:2962
 msgid "Source"
 msgstr "Источник"
 
-#: describe.c:2962
+#: describe.c:2963
 msgid "Destination"
 msgstr "Назначение"
 
-#: describe.c:2964
+#: describe.c:2965
 msgid "Default?"
 msgstr "По умолчанию?"
 
-#: describe.c:3001
+#: describe.c:3002
 msgid "List of conversions"
 msgstr "Список преобразований"
 
-#: describe.c:3039
+#: describe.c:3040
 msgid "Event"
 msgstr "Событие"
 
-#: describe.c:3041
+#: describe.c:3042
+msgid "enabled"
+msgstr "включён"
+
+#: describe.c:3043
+msgid "replica"
+msgstr "реплика"
+
+#: describe.c:3044
+msgid "always"
+msgstr "всегда"
+
+#: describe.c:3045
+msgid "disabled"
+msgstr "отключён"
+
+#: describe.c:3046
 msgid "Enabled"
 msgstr "Включен"
 
-#: describe.c:3042
+#: describe.c:3047
 msgid "Procedure"
 msgstr "Процедура"
 
-#: describe.c:3043
+#: describe.c:3048
 msgid "Tags"
 msgstr "Тэги"
 
-#: describe.c:3062
+#: describe.c:3067
 msgid "List of event triggers"
 msgstr "Список событийных триггеров"
 
-#: describe.c:3103
+#: describe.c:3108
 msgid "Source type"
 msgstr "Исходный тип"
 
-#: describe.c:3104
+#: describe.c:3109
 msgid "Target type"
 msgstr "Целевой тип"
 
-#: describe.c:3105 describe.c:3470
+#: describe.c:3110 describe.c:3475
 msgid "Function"
 msgstr "Функция"
 
-#: describe.c:3107
+#: describe.c:3112
 msgid "in assignment"
 msgstr "в присваивании"
 
-#: describe.c:3109
+#: describe.c:3114
 msgid "Implicit?"
 msgstr "Неявное?"
 
-#: describe.c:3160
+#: describe.c:3165
 msgid "List of casts"
 msgstr "Список преобразований типов"
 
-#: describe.c:3185
+#: describe.c:3190
 #, c-format
 msgid "The server (version %d.%d) does not support collations.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает правила сравнения.\n"
 
-#: describe.c:3235
+#: describe.c:3240
 msgid "List of collations"
 msgstr "Список правил сортировки"
 
-#: describe.c:3293
+#: describe.c:3298
 msgid "List of schemas"
 msgstr "Список схем"
 
-#: describe.c:3316 describe.c:3549 describe.c:3617 describe.c:3685
+#: describe.c:3321 describe.c:3554 describe.c:3622 describe.c:3690
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает полнотекстовый поиск.\n"
 
-#: describe.c:3350
+#: describe.c:3355
 msgid "List of text search parsers"
 msgstr "Список анализаторов текстового поиска"
 
-#: describe.c:3393
+#: describe.c:3398
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "Анализатор текстового поиска \"%s\" не найден.\n"
 
-#: describe.c:3468
+#: describe.c:3473
 msgid "Start parse"
 msgstr "Начало разбора"
 
-#: describe.c:3469
+#: describe.c:3474
 msgid "Method"
 msgstr "Метод"
 
-#: describe.c:3473
+#: describe.c:3478
 msgid "Get next token"
 msgstr "Получение следующего фрагмента"
 
-#: describe.c:3475
+#: describe.c:3480
 msgid "End parse"
 msgstr "Окончание разбора"
 
-#: describe.c:3477
+#: describe.c:3482
 msgid "Get headline"
 msgstr "Получение выдержки"
 
-#: describe.c:3479
+#: describe.c:3484
 msgid "Get token types"
 msgstr "Получение типов фрагментов"
 
-#: describe.c:3489
+#: describe.c:3494
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Анализатор текстового поиска \"%s.%s\""
 
-#: describe.c:3491
+#: describe.c:3496
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "Анализатор текстового поиска \"%s\""
 
-#: describe.c:3509
+#: describe.c:3514
 msgid "Token name"
 msgstr "Имя фрагмента"
 
-#: describe.c:3520
+#: describe.c:3525
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "Типы фрагментов для анализатора \"%s.%s\""
 
-#: describe.c:3522
+#: describe.c:3527
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "Типы фрагментов для анализатора \"%s\""
 
-#: describe.c:3571
+#: describe.c:3576
 msgid "Template"
 msgstr "Шаблон"
 
-#: describe.c:3572
+#: describe.c:3577
 msgid "Init options"
 msgstr "Параметры инициализации"
 
-#: describe.c:3594
+#: describe.c:3599
 msgid "List of text search dictionaries"
 msgstr "Список словарей текстового поиска"
 
-#: describe.c:3634
+#: describe.c:3639
 msgid "Init"
 msgstr "Инициализация"
 
-#: describe.c:3635
+#: describe.c:3640
 msgid "Lexize"
 msgstr "Выделение лексем"
 
-#: describe.c:3662
+#: describe.c:3667
 msgid "List of text search templates"
 msgstr "Список шаблонов текстового поиска"
 
-#: describe.c:3719
+#: describe.c:3724
 msgid "List of text search configurations"
 msgstr "Список конфигураций текстового поиска"
 
-#: describe.c:3763
+#: describe.c:3768
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "Конфигурация текстового поиска \"%s\" не найдена.\n"
 
-#: describe.c:3829
+#: describe.c:3834
 msgid "Token"
 msgstr "Фрагмент"
 
-#: describe.c:3830
+#: describe.c:3835
 msgid "Dictionaries"
 msgstr "Словари"
 
-#: describe.c:3841
+#: describe.c:3846
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Конфигурация текстового поиска \"%s.%s\""
 
-#: describe.c:3844
+#: describe.c:3849
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Конфигурация текстового поиска \"%s\""
 
-#: describe.c:3848
+#: describe.c:3853
 #, c-format
 msgid ""
 "\n"
@@ -1572,7 +1588,7 @@ msgstr ""
 "\n"
 "Анализатор: \"%s.%s\""
 
-#: describe.c:3851
+#: describe.c:3856
 #, c-format
 msgid ""
 "\n"
@@ -1581,86 +1597,86 @@ msgstr ""
 "\n"
 "Анализатор: \"%s\""
 
-#: describe.c:3883
+#: describe.c:3888
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает обёртки сторонних данных.\n"
 
-#: describe.c:3897
+#: describe.c:3902
 msgid "Handler"
 msgstr "Обработчик"
 
-#: describe.c:3940
+#: describe.c:3945
 msgid "List of foreign-data wrappers"
 msgstr "Список обёрток сторонних данных"
 
-#: describe.c:3963
+#: describe.c:3968
 #, c-format
 msgid "The server (version %d.%d) does not support foreign servers.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает сторонние серверы.\n"
 
-#: describe.c:3975
+#: describe.c:3980
 msgid "Foreign-data wrapper"
 msgstr "Обёртка сторонних данных"
 
-#: describe.c:3993 describe.c:4188
+#: describe.c:3998 describe.c:4193
 msgid "Version"
 msgstr "Версия"
 
-#: describe.c:4019
+#: describe.c:4024
 msgid "List of foreign servers"
 msgstr "Список сторонних серверов"
 
-#: describe.c:4042
+#: describe.c:4047
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает сопоставления пользователей.\n"
 
-#: describe.c:4051 describe.c:4112
+#: describe.c:4056 describe.c:4117
 msgid "Server"
 msgstr "Сервер"
 
-#: describe.c:4052
+#: describe.c:4057
 msgid "User name"
 msgstr "Имя пользователя"
 
-#: describe.c:4077
+#: describe.c:4082
 msgid "List of user mappings"
 msgstr "Список сопоставлений пользователей"
 
-#: describe.c:4100
+#: describe.c:4105
 #, c-format
 msgid "The server (version %d.%d) does not support foreign tables.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает сторонние таблицы.\n"
 
-#: describe.c:4151
+#: describe.c:4156
 msgid "List of foreign tables"
 msgstr "Список сторонних таблиц"
 
-#: describe.c:4174 describe.c:4228
+#: describe.c:4179 describe.c:4233
 #, c-format
 msgid "The server (version %d.%d) does not support extensions.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает расширения.\n"
 
-#: describe.c:4205
+#: describe.c:4210
 msgid "List of installed extensions"
 msgstr "Список установленных расширений"
 
-#: describe.c:4255
+#: describe.c:4260
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
 msgstr "Расширение \"%s\" не найдено.\n"
 
-#: describe.c:4258
+#: describe.c:4263
 #, c-format
 msgid "Did not find any extensions.\n"
 msgstr "Расширения не найдены.\n"
 
-#: describe.c:4302
+#: describe.c:4307
 msgid "Object Description"
 msgstr "Описание объекта"
 
-#: describe.c:4311
+#: describe.c:4316
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "Объекты в расширении \"%s\""
@@ -2659,22 +2675,22 @@ msgstr ""
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
 
-#: psqlscan.l:726
+#: psqlscan.l:727
 #, c-format
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "рекурсивное расширение переменной \"%s\" пропускается\n"
 
-#: psqlscan.l:1601
+#: psqlscan.l:1604
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "незавершённая строка в кавычках\n"
 
-#: psqlscan.l:1701
+#: psqlscan.l:1704
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"
 
-#: psqlscan.l:1930
+#: psqlscan.l:1933
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "экранирование строк не работает без подключения к БД\n"
@@ -4469,17 +4485,12 @@ msgstr "получить набор строк"
 msgid "%s: -1 can only be used in non-interactive mode\n"
 msgstr "%s: -1 можно использовать только в неинтерактивном режиме\n"
 
-#: startup.c:170
-#, c-format
-msgid "%s: -1 is incompatible with -c and -l\n"
-msgstr "%s: -1 несовместимо с -c и -l\n"
-
-#: startup.c:272
+#: startup.c:270
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл протокола \"%s\": %s\n"
 
-#: startup.c:334
+#: startup.c:332
 #, c-format
 msgid ""
 "Type \"help\" for help.\n"
@@ -4488,32 +4499,32 @@ msgstr ""
 "Введите \"help\", чтобы получить справку.\n"
 "\n"
 
-#: startup.c:479
+#: startup.c:477
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: не удалось установить параметр печати \"%s\"\n"
 
-#: startup.c:519
+#: startup.c:517
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: удалить переменную \"%s\" нельзя\n"
 
-#: startup.c:529
+#: startup.c:527
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: не удалось установить переменную \"%s\"\n"
 
-#: startup.c:572 startup.c:578
+#: startup.c:570 startup.c:576
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: startup.c:595
+#: startup.c:593
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: предупреждение: лишний аргумент \"%s\" проигнорирован\n"
 
-#: tab-complete.c:3956
+#: tab-complete.c:3962
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -4528,6 +4539,9 @@ msgstr ""
 #, c-format
 msgid "unrecognized Boolean value; assuming \"on\"\n"
 msgstr "нераспознанное логическое значение, подразумевается \"on\"\n"
+
+#~ msgid "%s: -1 is incompatible with -c and -l\n"
+#~ msgstr "%s: -1 несовместимо с -c и -l\n"
 
 #~ msgid "  \\l[+]                  list all databases\n"
 #~ msgstr "  \\l[+]                  список всех баз данных\n"
