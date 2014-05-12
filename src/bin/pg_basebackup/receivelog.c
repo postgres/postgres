@@ -858,6 +858,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				if (!close_walfile(basedir, partial_suffix, blockpos))
 				{
 					/* Error message written in close_walfile() */
+					PQclear(res);
 					goto error;
 				}
 				if (PQresultStatus(res) == PGRES_COPY_IN)
@@ -867,6 +868,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 						fprintf(stderr,
 								_("%s: could not send copy-end packet: %s"),
 								progname, PQerrorMessage(conn));
+						PQclear(res);
 						goto error;
 					}
 					res = PQgetResult(conn);
