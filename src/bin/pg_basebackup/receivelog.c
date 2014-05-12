@@ -612,6 +612,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		fprintf(stderr,
 				_("%s: unexpected termination of replication stream: %s"),
 				progname, PQresultErrorMessage(res));
+		PQclear(res);
 		goto error;
 	}
 	PQclear(res);
