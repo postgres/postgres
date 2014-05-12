@@ -40,7 +40,7 @@ test_shm_mq(queue_size int8, message text,
    is greater than one, and so forth.  Eventually, the last background
    worker sends the message back to the user backend.  If the repeat count
    is greater than one, the user backend then sends the message back to
-   the first worker.  Once the message has been send and received by all
+   the first worker.  Once the message has been sent and received by all
    the coordinating processes a number of times equal to the repeat count,
    the user backend verifies that the message finally received matches the
    one originally sent and throws an error if not.
