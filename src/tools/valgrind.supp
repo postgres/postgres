@@ -5,6 +5,9 @@
 # The libc symbol that implements a particular standard interface is
 # implementation-dependent.  For example, strncpy() shows up as "__GI_strncpy"
 # on some platforms.  Use wildcards to avoid mentioning such specific names.
+# Avoid mentioning functions that are good candidates for inlining,
+# particularly single-caller static functions.  Suppressions mentioning them
+# would be ineffective at higher optimization levels.
 
 
 # We have occasion to write raw binary structures to disk or to the network.
@@ -61,6 +64,15 @@
 
 	...
 	fun:write_relcache_init_file
+}
+
+{
+	padding_reorderbuffer_serialize
+	Memcheck:Param
+	write(buf)
+
+	...
+	fun:ReorderBufferSerializeTXN
 }
 
 
