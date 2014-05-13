@@ -185,7 +185,7 @@
       Prevent <link
       linkend="ddl-constraints-check-constraints"><literal>CHECK</></link>
       constraints from referencing system columns, except
-      <structname>tableoid</> (Amit Kapila)
+      <structfield>tableoid</> (Amit Kapila)
      </para>
 
      <para>
@@ -204,7 +204,7 @@
     <listitem>
      <para>
       Remove system column <link
-      linkend="catalog-pg-class"><structname>pg_class.reltoastidxid</></link>
+      linkend="catalog-pg-class"><structfield>pg_class.reltoastidxid</></link>
       (Michael Paquier)
      </para>
     </listitem>
@@ -240,7 +240,7 @@
     <listitem>
      <para>
       Remove system column <link
-      linkend="catalog-pg-rewrite"><structname>pg_rewrite.ev_attr</></link>
+      linkend="catalog-pg-rewrite"><structfield>pg_rewrite.ev_attr</></link>
       (Kevin Grittner)
      </para>
 
@@ -530,7 +530,7 @@
 
        <para>
         This appears in <link
-        linkend="pg-stat-all-tables-view"><structname>pg_stat_all_tables.n_mod_since_analyze</></link>.
+        linkend="pg-stat-all-tables-view"><structfield>pg_stat_all_tables.n_mod_since_analyze</></link>.
        </para>
       </listitem>
 
@@ -545,8 +545,8 @@
 
       <listitem>
        <para>
-        Add <structname>xid</> and <link
-        linkend="ddl-system-columns"><structname>xmin</></link>
+        Add <structfield>xid</> and <link
+        linkend="ddl-system-columns"><structfield>xmin</></link>
         to system views <link
         linkend="pg-stat-activity-view"><structname>pg_stat_activity</></link>
         and <link
@@ -1448,7 +1448,7 @@
         Add <link
         linkend="information-schema"><structname>information_schema</></link>
         column <link
-        linkend="infoschema-parameters"><structname>parameters.parameter_default</></link>
+        linkend="infoschema-parameters"><structfield>parameters.parameter_default</></link>
         (Peter Eisentraut)
        </para>
       </listitem>
@@ -1456,7 +1456,7 @@
       <listitem>
        <para>
         Have <link
-        linkend="infoschema-schemata"><structname>information_schema.schemata</></link>
+        linkend="infoschema-schemata"><structfield>information_schema.schemata</></link>
         show all accessible schema (Peter Eisentraut)
        </para>
 
@@ -2369,7 +2369,7 @@
 
        <para>
         This allows monitoring tools to only fetch query text for newly
-        created entries, as reported in <structname>queryid</>.
+        created entries, as reported in <structfield>queryid</>.
        </para>
       </listitem>
 
