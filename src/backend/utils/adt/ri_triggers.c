@@ -2934,7 +2934,8 @@ InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 	hash_seq_init(&status, ri_constraint_cache);
 	while ((hentry = (RI_ConstraintInfo *) hash_seq_search(&status)) != NULL)
 	{
-		if (hashvalue == 0 || hentry->oidHashValue == hashvalue)
+		if (hentry->valid &&
+			(hashvalue == 0 || hentry->oidHashValue == hashvalue))
 			hentry->valid = false;
 	}
 }
