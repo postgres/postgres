@@ -1758,7 +1758,7 @@ SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33, '+2') = '1973-07-15 08:15:5
  t
 (1 row)
 
--- full timezone name
+-- full timezone names
 SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Europe/Prague') = timestamptz '2014-12-10 00:00:00 Europe/Prague';
  ?column? 
 ----------
@@ -1777,20 +1777,14 @@ SELECT make_timestamptz(1846, 12, 10, 0, 0, 0, 'Asia/Manila') AT TIME ZONE 'UTC'
  Wed Dec 09 15:56:00 1846
 (1 row)
 
-SELECT make_timestamptz(1866, 12, 10, 0, 0, 0, 'America/Metlakatla') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(1881, 12, 10, 0, 0, 0, 'Europe/Paris') AT TIME ZONE 'UTC';
          timezone         
 --------------------------
- Sun Dec 09 08:46:18 1866
+ Fri Dec 09 23:50:39 1881
 (1 row)
 
-SELECT make_timestamptz(1901, 12, 10, 0, 0, 0, 'America/Metlakatla') AT TIME ZONE 'UTC';
-         timezone         
---------------------------
- Tue Dec 10 08:00:00 1901
-(1 row)
-
-SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Mars/Mons_Olympus');
-ERROR:  time zone "Mars/Mons_Olympus" not recognized
+SELECT make_timestamptz(1910, 12, 24, 0, 0, 0, 'Nehwon/Lankhmar');
+ERROR:  time zone "Nehwon/Lankhmar" not recognized
 -- abbreviations
 SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'CLST');
        make_timestamptz        

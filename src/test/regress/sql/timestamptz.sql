@@ -277,13 +277,12 @@ SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, '-16');
 -- should be true
 SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33, '+2') = '1973-07-15 08:15:55.33+02'::timestamptz;
 
--- full timezone name
+-- full timezone names
 SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Europe/Prague') = timestamptz '2014-12-10 00:00:00 Europe/Prague';
 SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Europe/Prague') AT TIME ZONE 'UTC';
 SELECT make_timestamptz(1846, 12, 10, 0, 0, 0, 'Asia/Manila') AT TIME ZONE 'UTC';
-SELECT make_timestamptz(1866, 12, 10, 0, 0, 0, 'America/Metlakatla') AT TIME ZONE 'UTC';
-SELECT make_timestamptz(1901, 12, 10, 0, 0, 0, 'America/Metlakatla') AT TIME ZONE 'UTC';
-SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Mars/Mons_Olympus');
+SELECT make_timestamptz(1881, 12, 10, 0, 0, 0, 'Europe/Paris') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(1910, 12, 24, 0, 0, 0, 'Nehwon/Lankhmar');
 
 -- abbreviations
 SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'CLST');
