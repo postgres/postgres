@@ -52,7 +52,7 @@
      <listitem>
       <para>
        Add <acronym>SQL</>-level command <link
-       linkend="SQL-ALTERSYSTEM"><command>ALTER SYSTEM</></link> command
+       linkend="SQL-ALTERSYSTEM"><command>ALTER SYSTEM</></link>
        to edit the <filename>postgresql.conf</> configuration file
       </para>
      </listitem>
@@ -1419,9 +1419,10 @@
 
       <listitem>
        <para>
-        Add functions for error-free <structname>pg_class</>,
+        Add functions for <structname>pg_class</>,
         <structname>pg_proc</>, <structname>pg_type</>, and
-        <structname>pg_operator</> lookups (Yugo Nagata, Nozomi Anzai,
+        <structname>pg_operator</> lookups that do not generate errors for
+        non-existent objects (Yugo Nagata, Nozomi Anzai,
         Robert Haas)
        </para>
 
@@ -2105,7 +2106,7 @@
       <listitem>
        <para>
         Improve support for <envar>VPATH</> builds of <acronym>PGXS</>
-        modules  (Cédric Villemain, Andrew Dunstan)
+        modules  (C&eacute;dric Villemain, Andrew Dunstan)
        </para>
       </listitem>
 
@@ -2172,6 +2173,12 @@
        <para>
         Avoid most uses of dlltool in <productname>Cygwin</> and
         <productname>Mingw</> builds (Marco Atzeri, Hiroshi Inoue)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow client-only installs for <acronym>MSVC</> (Windows) builds (MauMau)
        </para>
       </listitem>
 
