@@ -81,10 +81,14 @@ static bytea *
 gbt_bit_xfrm(bytea *leaf)
 {
 	bytea	   *out = leaf;
-	int			s = INTALIGN(VARBITBYTES(leaf) + VARHDRSZ);
+	int			sz = VARBITBYTES(leaf) + VARHDRSZ;
+	int			padded_sz = INTALIGN(sz);
 
-	out = palloc(s);
-	SET_VARSIZE(out, s);
+	out = (bytea *) palloc(padded_sz);
+	/* initialize the padding bytes to zero */
+	while (sz < padded_sz)
+		((char *) out)[sz++] = 0;
+	SET_VARSIZE(out, padded_sz);
 	memcpy((void *) VARDATA(out), (void *) VARBITS(leaf), VARBITBYTES(leaf));
 	return out;
 }
