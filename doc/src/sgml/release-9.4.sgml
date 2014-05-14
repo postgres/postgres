@@ -203,6 +203,21 @@
 
     <listitem>
      <para>
+      On Windows, automatically preserve quotes in command strings supplied
+      by the user (Heikki Linnakangas)
+     </para>
+
+     <para>
+      User commands that did their own quote preservation might need
+      adjustment, e.g.  <link
+      linkend="guc-archive-command">archive_command</link>, <link
+      linkend="restore-command">restore_command</link>, <command>COPY TO/FROM
+      PROGRAM</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Remove system column <link
       linkend="catalog-pg-class"><structfield>pg_class.reltoastidxid</></link>
       (Michael Paquier)
