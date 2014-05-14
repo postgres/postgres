@@ -1829,6 +1829,7 @@ RelationDestroyRelation(Relation relation)
 		FreeTupleDesc(relation->rd_att);
 	list_free(relation->rd_indexlist);
 	bms_free(relation->rd_indexattr);
+	bms_free(relation->rd_keyattr);
 	FreeTriggerDesc(relation->trigdesc);
 	if (relation->rd_options)
 		pfree(relation->rd_options);
@@ -3594,7 +3595,8 @@ insert_ordered_oid(List *list, Oid datum)
  * correctly with respect to the full index set.  It is up to the caller
  * to ensure that a correct rd_indexattr set has been cached before first
  * calling RelationSetIndexList; else a subsequent inquiry might cause a
- * wrong rd_indexattr set to get computed and cached.
+ * wrong rd_indexattr set to get computed and cached.  Likewise, we do not
+ * touch rd_keyattr.
  */
 void
 RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
@@ -3875,10 +3877,16 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 
 	list_free(indexoidlist);
 
-	/* Now save a copy of the bitmap in the relcache entry. */
+	/*
+	 * Now save copies of the bitmaps in the relcache entry.  We intentionally
+	 * set rd_indexattr last, because that's the one that signals validity of
+	 * the values; if we run out of memory before making that copy, we won't
+	 * leave the relcache entry looking like the other ones are valid but
+	 * empty.
+	 */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	relation->rd_indexattr = bms_copy(indexattrs);
 	relation->rd_keyattr = bms_copy(uindexattrs);
+	relation->rd_indexattr = bms_copy(indexattrs);
 	MemoryContextSwitchTo(oldcxt);
 
 	/* We return our original working copy for caller to play with */
@@ -4423,6 +4431,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_indexvalid = 0;
 		rel->rd_indexlist = NIL;
 		rel->rd_indexattr = NULL;
+		rel->rd_keyattr = NULL;
 		rel->rd_oidindex = InvalidOid;
 		rel->rd_createSubid = InvalidSubTransactionId;
 		rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
