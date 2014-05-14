@@ -7113,6 +7113,7 @@ static HeapTuple
 ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *copy)
 {
 	TupleDesc	desc = RelationGetDescr(relation);
+	Oid			replidindex;
 	Relation	idx_rel;
 	TupleDesc	idx_desc;
 	char		replident = relation->rd_rel->relreplident;
@@ -7147,18 +7148,16 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	if (!key_changed)
 		return NULL;
 
-	/* needs to already have been fetched? */
-	if (relation->rd_indexvalid == 0)
-		RelationGetIndexList(relation);
-
-	if (!OidIsValid(relation->rd_replidindex))
+	/* find the replica identity index */
+	replidindex = RelationGetReplicaIndex(relation);
+	if (!OidIsValid(replidindex))
 	{
-		elog(DEBUG4, "Could not find configured replica identity for table \"%s\"",
+		elog(DEBUG4, "could not find configured replica identity for table \"%s\"",
 			 RelationGetRelationName(relation));
 		return NULL;
 	}
 
-	idx_rel = RelationIdGetRelation(relation->rd_replidindex);
+	idx_rel = RelationIdGetRelation(replidindex);
 	idx_desc = RelationGetDescr(idx_rel);
 
 	/* deform tuple, so we have fast access to columns */
