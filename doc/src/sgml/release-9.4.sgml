@@ -1262,7 +1262,8 @@
        <para>
         The line <emphasis>segment</> data type (<link
         linkend="datatype-lseg"><type>LSEG</></link>) has always been
-        fully supported.
+        fully supported.  The previous <type>line</> data type (enabled
+        only via a compile-time option) is not binary or dump-compatible.
        </para>
       </listitem>
 

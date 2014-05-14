@@ -470,6 +470,7 @@ void		pg_putenv(const char *var, const char *val);
 
 void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 										 bool check_mode);
+void old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 
 /* version_old_8_3.c */
 

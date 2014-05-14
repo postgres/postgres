@@ -122,6 +122,10 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 				old_8_3_create_sequence_script(&old_cluster);
 	}
 
+	/* Pre-PG 9.4 had a different 'line' data type internal format */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 904)
+		old_9_3_check_for_line_data_type_usage(&old_cluster);
+
 	/* Pre-PG 9.0 had no large object permissions */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
@@ -914,8 +918,7 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		"			'pg_catalog.regconfig'::pg_catalog.regtype, "
 								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
 								"		c.relnamespace = n.oid AND "
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'");
+							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");

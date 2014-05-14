@@ -87,3 +87,92 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 	else
 		check_ok();
 }
+
+
+/*
+ * old_9_3_check_for_line_data_type_usage()
+ *	9.3 -> 9.4
+ *	Fully implement the 'line' data type in 9.4, which previously returned
+ *	"not enabled" by default and was only functionally enabled with a 
+ *	compile-time switch;  9.4 "line" has different binary and text
+ *	representation formats;  checks tables and indexes.
+ */
+void
+old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for invalid \"line\" user columns");
+
+	snprintf(output_path, sizeof(output_path), "tables_using_line.txt");
+
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_nspname,
+					i_relname,
+					i_attname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		res = executeQueryOrDie(conn,
+								"SELECT n.nspname, c.relname, a.attname "
+								"FROM	pg_catalog.pg_class c, "
+								"		pg_catalog.pg_namespace n, "
+								"		pg_catalog.pg_attribute a "
+								"WHERE	c.oid = a.attrelid AND "
+								"		NOT a.attisdropped AND "
+								"		a.atttypid = 'pg_catalog.line'::pg_catalog.regtype AND "
+								"		c.relnamespace = n.oid AND "
+		/* exclude possible orphaned temp tables */
+								"		n.nspname !~ '^pg_temp_' AND "
+						 "		n.nspname !~ '^pg_toast_temp_' AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+
+		ntups = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_relname = PQfnumber(res, "relname");
+		i_attname = PQfnumber(res, "attname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+			if (!db_used)
+			{
+				fprintf(script, "Database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  %s.%s.%s\n",
+					PQgetvalue(res, rowno, i_nspname),
+					PQgetvalue(res, rowno, i_relname),
+					PQgetvalue(res, rowno, i_attname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("Your installation contains the \"line\" data type in user tables.  This\n"
+		"data type changed its internal and input/output format between your old\n"
+				 "and new clusters so this cluster cannot currently be upgraded.  You can\n"
+		"remove the problem tables and restart the upgrade.  A list of the problem\n"
+				 "columns is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
+}
