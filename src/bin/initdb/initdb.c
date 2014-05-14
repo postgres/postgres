@@ -252,7 +252,7 @@ static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
 static int	locale_date_order(const char *locale);
-static bool check_locale_name(int category, const char *locale,
+static void check_locale_name(int category, const char *locale,
 				  char **canonname);
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
@@ -2529,7 +2529,7 @@ locale_date_order(const char *locale)
 }
 
 /*
- * Is the locale name valid for the locale category?
+ * Verify that locale name is valid for the locale category.
  *
  * If successful, and canonname isn't NULL, a malloc'd copy of the locale's
  * canonical name is stored there.  This is especially useful for figuring out
@@ -2540,7 +2540,7 @@ locale_date_order(const char *locale)
  *
  * this should match the backend's check_locale() function
  */
-static bool
+static void
 check_locale_name(int category, const char *locale, char **canonname)
 {
 	char	   *save;
@@ -2551,7 +2551,11 @@ check_locale_name(int category, const char *locale, char **canonname)
 
 	save = setlocale(category, NULL);
 	if (!save)
-		return false;			/* won't happen, we hope */
+	{
+		fprintf(stderr, _("%s: setlocale failed\n"),
+				progname);
+		exit(1);
+	}
 
 	/* save may be pointing at a modifiable scratch variable, so copy it. */
 	save = pg_strdup(save);
@@ -2565,16 +2569,34 @@ check_locale_name(int category, const char *locale, char **canonname)
 
 	/* restore old value. */
 	if (!setlocale(category, save))
+	{
 		fprintf(stderr, _("%s: failed to restore old locale \"%s\"\n"),
 				progname, save);
+		exit(1);
+	}
 	free(save);
 
-	/* should we exit here? */
+	/* complain if locale wasn't valid */
 	if (res == NULL)
-		fprintf(stderr, _("%s: invalid locale name \"%s\"\n"),
-				progname, locale);
-
-	return (res != NULL);
+	{
+		if (*locale)
+			fprintf(stderr, _("%s: invalid locale name \"%s\"\n"),
+					progname, locale);
+		else
+		{
+			/*
+			 * If no relevant switch was given on command line, locale is an
+			 * empty string, which is not too helpful to report.  Presumably
+			 * setlocale() found something it did not like in the environment.
+			 * Ideally we'd report the bad environment variable, but since
+			 * setlocale's behavior is implementation-specific, it's hard to
+			 * be sure what it didn't like.  Print a safe generic message.
+			 */
+			fprintf(stderr, _("%s: invalid locale settings; check LANG and LC_* environment variables\n"),
+					progname);
+		}
+		exit(1);
+	}
 }
 
 /*
@@ -2642,41 +2664,27 @@ setlocales(void)
 	}
 
 	/*
-	 * canonicalize locale names, and override any missing/invalid values from
-	 * our current environment
+	 * canonicalize locale names, and obtain any missing values from our
+	 * current environment
 	 */
 
-	if (check_locale_name(LC_CTYPE, lc_ctype, &canonname))
-		lc_ctype = canonname;
-	else
-		lc_ctype = pg_strdup(setlocale(LC_CTYPE, NULL));
-	if (check_locale_name(LC_COLLATE, lc_collate, &canonname))
-		lc_collate = canonname;
-	else
-		lc_collate = pg_strdup(setlocale(LC_COLLATE, NULL));
-	if (check_locale_name(LC_NUMERIC, lc_numeric, &canonname))
-		lc_numeric = canonname;
-	else
-		lc_numeric = pg_strdup(setlocale(LC_NUMERIC, NULL));
-	if (check_locale_name(LC_TIME, lc_time, &canonname))
-		lc_time = canonname;
-	else
-		lc_time = pg_strdup(setlocale(LC_TIME, NULL));
-	if (check_locale_name(LC_MONETARY, lc_monetary, &canonname))
-		lc_monetary = canonname;
-	else
-		lc_monetary = pg_strdup(setlocale(LC_MONETARY, NULL));
+	check_locale_name(LC_CTYPE, lc_ctype, &canonname);
+	lc_ctype = canonname;
+	check_locale_name(LC_COLLATE, lc_collate, &canonname);
+	lc_collate = canonname;
+	check_locale_name(LC_NUMERIC, lc_numeric, &canonname);
+	lc_numeric = canonname;
+	check_locale_name(LC_TIME, lc_time, &canonname);
+	lc_time = canonname;
+	check_locale_name(LC_MONETARY, lc_monetary, &canonname);
+	lc_monetary = canonname;
 #if defined(LC_MESSAGES) && !defined(WIN32)
-	if (check_locale_name(LC_MESSAGES, lc_messages, &canonname))
-		lc_messages = canonname;
-	else
-		lc_messages = pg_strdup(setlocale(LC_MESSAGES, NULL));
+	check_locale_name(LC_MESSAGES, lc_messages, &canonname);
+	lc_messages = canonname;
 #else
 	/* when LC_MESSAGES is not available, use the LC_CTYPE setting */
-	if (check_locale_name(LC_CTYPE, lc_messages, &canonname))
-		lc_messages = canonname;
-	else
-		lc_messages = pg_strdup(setlocale(LC_CTYPE, NULL));
+	check_locale_name(LC_CTYPE, lc_messages, &canonname);
+	lc_messages = canonname;
 #endif
 }
 
