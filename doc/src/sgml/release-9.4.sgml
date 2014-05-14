@@ -1120,7 +1120,7 @@
 
        <para>
         Previously the presence of non-updatable columns such as
-        expressions, literals, and function cals prevented automatic
+        expressions, literals, and function calls prevented automatic
         updates.  Now <command>INSERT</>s, <command>UPDATE</>s and
         <command>DELETE</>s are supported, provided that they do not
         attempt to assign new values to any of the non-updatable columns.
