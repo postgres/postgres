@@ -1605,7 +1605,7 @@
        <para>
         Add variables <link
         linkend="plpgsql-extra-checks"><varname>plpgsql.extra_warnings</></link>
-        and <varname>plpgsql.extra_errors</>to enable additional PL/pgSQL
+        and <varname>plpgsql.extra_errors</> to enable additional PL/pgSQL
         warnings and errors (Marko Tiikkaja, Petr Jelinek)
        </para>
 
