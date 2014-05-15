@@ -3523,6 +3523,15 @@ main(int argc, char *argv[])
 	char	   *effective_user;
 	char		bin_dir[MAXPGPATH];
 
+	/*
+	 * Ensure that buffering behavior of stdout and stderr matches what it is
+	 * in interactive usage (at least on most platforms).  This prevents
+	 * unexpected output ordering when, eg, output is redirected to a file.
+	 * POSIX says we must do this before any other usage of these files.
+	 */
+	setvbuf(stdout, NULL, _IOLBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
 
