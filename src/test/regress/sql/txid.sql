@@ -3,13 +3,13 @@
 -- i/o
 select '12:13:'::txid_snapshot;
 select '12:18:14,16'::txid_snapshot;
+select '12:16:14,14'::txid_snapshot;
 
 -- errors
 select '31:12:'::txid_snapshot;
 select '0:1:'::txid_snapshot;
 select '12:13:0'::txid_snapshot;
 select '12:16:14,13'::txid_snapshot;
-select '12:16:14,14'::txid_snapshot;
 
 create temp table snapshot_test (
 	nr	integer,
