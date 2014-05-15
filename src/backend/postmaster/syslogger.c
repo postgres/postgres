@@ -48,17 +48,6 @@
 #include "utils/timestamp.h"
 
 /*
- * We really want line-buffered mode for logfile output, but Windows does
- * not have it, and interprets _IOLBF as _IOFBF (bozos).  So use _IONBF
- * instead on Windows.
- */
-#ifdef WIN32
-#define LBF_MODE	_IONBF
-#else
-#define LBF_MODE	_IOLBF
-#endif
-
-/*
  * We read() into a temp buffer twice as big as a chunk, so that any fragment
  * left after processing can be moved down to the front and we'll still have
  * room to read a full chunk.
@@ -765,7 +754,7 @@ syslogger_parseArgs(int argc, char *argv[])
 	if (fd != -1)
 	{
 		syslogFile = fdopen(fd, "a");
-		setvbuf(syslogFile, NULL, LBF_MODE, 0);
+		setvbuf(syslogFile, NULL, PG_IOLBF, 0);
 	}
 #else							/* WIN32 */
 	fd = atoi(*argv++);
@@ -775,7 +764,7 @@ syslogger_parseArgs(int argc, char *argv[])
 		if (fd > 0)
 		{
 			syslogFile = fdopen(fd, "a");
-			setvbuf(syslogFile, NULL, LBF_MODE, 0);
+			setvbuf(syslogFile, NULL, PG_IOLBF, 0);
 		}
 	}
 #endif   /* WIN32 */
@@ -1154,7 +1143,7 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 
 	if (fh)
 	{
-		setvbuf(fh, NULL, LBF_MODE, 0);
+		setvbuf(fh, NULL, PG_IOLBF, 0);
 
 #ifdef WIN32
 		/* use CRLF line endings on Windows */
