@@ -93,7 +93,7 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
  * old_9_3_check_for_line_data_type_usage()
  *	9.3 -> 9.4
  *	Fully implement the 'line' data type in 9.4, which previously returned
- *	"not enabled" by default and was only functionally enabled with a 
+ *	"not enabled" by default and was only functionally enabled with a
  *	compile-time switch;  9.4 "line" has different binary and text
  *	representation formats;  checks tables and indexes.
  */
