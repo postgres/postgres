@@ -130,7 +130,8 @@ cmp_txid(const void *aa, const void *bb)
 }
 
 /*
- * sort a snapshot's txids, so we can use bsearch() later.
+ * Sort a snapshot's txids, so we can use bsearch() later.  Also remove
+ * any duplicates.
  *
  * For consistency of on-disk representation, we always sort even if bsearch
  * will not be used.
@@ -138,8 +139,25 @@ cmp_txid(const void *aa, const void *bb)
 static void
 sort_snapshot(TxidSnapshot *snap)
 {
+	txid	last = 0;
+	int		nxip, idx1, idx2;
+
 	if (snap->nxip > 1)
+	{
 		qsort(snap->xip, snap->nxip, sizeof(txid), cmp_txid);
+
+		/* remove duplicates */
+		nxip = snap->nxip;
+		idx1 = idx2 = 0;
+		while (idx1 < nxip)
+		{
+			if (snap->xip[idx1] != last)
+				last = snap->xip[idx2++] = snap->xip[idx1];
+			else
+				snap->nxip--;
+			idx1++;
+		}
+	}
 }
 
 /*
@@ -294,10 +312,12 @@ parse_snapshot(const char *str)
 		str = endp;
 
 		/* require the input to be in order */
-		if (val < xmin || val >= xmax || val <= last_val)
+		if (val < xmin || val >= xmax || val < last_val)
 			goto bad_format;
 
-		buf_add_txid(buf, val);
+		/* skip duplicates */
+		if (val != last_val)
+			buf_add_txid(buf, val);
 		last_val = val;
 
 		if (*str == ',')
@@ -360,8 +380,7 @@ txid_current_snapshot(PG_FUNCTION_ARGS)
 {
 	TxidSnapshot *snap;
 	uint32		nxip,
-				i,
-				size;
+				i;
 	TxidEpoch	state;
 	Snapshot	cur;
 
@@ -373,9 +392,7 @@ txid_current_snapshot(PG_FUNCTION_ARGS)
 
 	/* allocate */
 	nxip = cur->xcnt;
-	size = TXID_SNAPSHOT_SIZE(nxip);
-	snap = palloc(size);
-	SET_VARSIZE(snap, size);
+	snap = palloc(TXID_SNAPSHOT_SIZE(nxip));
 
 	/* fill */
 	snap->xmin = convert_xid(cur->xmin, &state);
@@ -384,8 +401,17 @@ txid_current_snapshot(PG_FUNCTION_ARGS)
 	for (i = 0; i < nxip; i++)
 		snap->xip[i] = convert_xid(cur->xip[i], &state);
 
-	/* we want them guaranteed to be in ascending order */
+	/*
+	 * We want them guaranteed to be in ascending order.  This also removes
+	 * any duplicate xids.  Normally, an XID can only be assigned to one
+	 * backend, but when preparing a transaction for two-phase commit, there
+	 * is a transient state when both the original backend and the dummy
+	 * PGPROC entry reserved for the prepared transaction hold the same XID.
+	 */
 	sort_snapshot(snap);
+
+	/* set size after sorting, because it may have removed duplicate xips */
+	SET_VARSIZE(snap, TXID_SNAPSHOT_SIZE(snap->nxip));
 
 	PG_RETURN_POINTER(snap);
 }
@@ -464,18 +490,27 @@ txid_snapshot_recv(PG_FUNCTION_ARGS)
 	snap = palloc(TXID_SNAPSHOT_SIZE(nxip));
 	snap->xmin = xmin;
 	snap->xmax = xmax;
-	snap->nxip = nxip;
-	SET_VARSIZE(snap, TXID_SNAPSHOT_SIZE(nxip));
 
 	for (i = 0; i < nxip; i++)
 	{
 		txid		cur = pq_getmsgint64(buf);
 
-		if (cur <= last || cur < xmin || cur >= xmax)
+		if (cur < last || cur < xmin || cur >= xmax)
 			goto bad_format;
+
+		/* skip duplicate xips */
+		if (cur == last)
+		{
+			i--;
+			nxip--;
+			continue;
+		}
+
 		snap->xip[i] = cur;
 		last = cur;
 	}
+	snap->nxip = nxip;
+	SET_VARSIZE(snap, TXID_SNAPSHOT_SIZE(nxip));
 	PG_RETURN_POINTER(snap);
 
 bad_format:
