@@ -2062,9 +2062,13 @@ PrepareTransaction(void)
 	ProcArrayClearTransaction(MyProc);
 
 	/*
-	 * This is all post-transaction cleanup.  Note that if an error is raised
-	 * here, it's too late to abort the transaction.  This should be just
-	 * noncritical resource releasing.  See notes in CommitTransaction.
+	 * In normal commit-processing, this is all non-critical post-transaction
+	 * cleanup.  When the transaction is prepared, however, it's important that
+	 * the locks and other per-backend resources are transfered to the
+	 * prepared transaction's PGPROC entry.  Note that if an error is raised
+	 * here, it's too late to abort the transaction. XXX: This probably should
+	 * be in a critical section, to force a PANIC if any of this fails, but
+	 * that cure could be worse than the disease.
 	 */
 
 	CallXactCallbacks(XACT_EVENT_PREPARE);
@@ -2100,6 +2104,14 @@ PrepareTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
+
+	/*
+	 * Allow another backend to finish the transaction.  After
+	 * PostPrepare_Twophase(), the transaction is completely detached from
+	 * our backend.  The rest is just non-critical cleanup of backend-local
+	 * state.
+	 */
+	PostPrepare_Twophase();
 
 	/* Check we've released all catcache entries */
 	AtEOXact_CatCache(true);
@@ -2211,6 +2223,7 @@ AbortTransaction(void)
 	AtEOXact_LargeObject(false);
 	AtAbort_Notify();
 	AtEOXact_RelationMap(false);
+	AtAbort_Twophase();
 
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
