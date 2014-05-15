@@ -12,6 +12,12 @@ select '12:18:14,16'::txid_snapshot;
  12:18:14,16
 (1 row)
 
+select '12:16:14,14'::txid_snapshot;
+ txid_snapshot 
+---------------
+ 12:16:14
+(1 row)
+
 -- errors
 select '31:12:'::txid_snapshot;
 ERROR:  invalid input for txid_snapshot: "31:12:"
@@ -28,10 +34,6 @@ LINE 1: select '12:13:0'::txid_snapshot;
 select '12:16:14,13'::txid_snapshot;
 ERROR:  invalid input for txid_snapshot: "12:16:14,13"
 LINE 1: select '12:16:14,13'::txid_snapshot;
-               ^
-select '12:16:14,14'::txid_snapshot;
-ERROR:  invalid input for txid_snapshot: "12:16:14,14"
-LINE 1: select '12:16:14,14'::txid_snapshot;
                ^
 create temp table snapshot_test (
 	nr	integer,
