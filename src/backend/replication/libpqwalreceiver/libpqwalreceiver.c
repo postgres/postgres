@@ -139,7 +139,7 @@ libpqrcv_identify_system(TimeLineID *primary_tli)
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("invalid response from primary server"),
-				 errdetail("Could not identify system: Got %d rows and %d fields, expected %d rows and %d or more fields.",
+				 errdetail("Could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields.",
 						   ntuples, nfields, 3, 1)));
 	}
 	primary_sysid = PQgetvalue(res, 0, 0);

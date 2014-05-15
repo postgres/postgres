@@ -80,14 +80,14 @@ usage(void)
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
 	printf(_("\nReplication options:\n"));
-	printf(_("  -F  --fsync-interval=INTERVAL\n"
-			 "                         frequency of syncs to the output file (in seconds, defaults to 10)\n"));
+	printf(_("  -F  --fsync-interval=SECS\n"
+			 "                         frequency of syncs to the output file (default: %d)\n"), (fsync_interval / 1000));
 	printf(_("  -o, --option=NAME[=VALUE]\n"
 			 "                         Specify option NAME with optional value VALUE, to be passed\n"
 			 "                         to the output plugin\n"));
-	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (defaults to test_decoding)\n"));
-	printf(_("  -s, --status-interval=INTERVAL\n"
-			 "                         time between status packets sent to server (in seconds, defaults to 10)\n"));
+	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"), plugin);
+	printf(_("  -s, --status-interval=SECS\n"
+			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOT        use existing replication slot SLOT instead of starting a new one\n"));
 	printf(_("  -I, --startpos=PTR     Where in an existing slot should the streaming start\n"));
 	printf(_("\nAction to be performed:\n"));
@@ -253,7 +253,7 @@ StreamLog(void)
 	res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_COPY_BOTH)
 	{
-		fprintf(stderr, _("%s: could not send replication command \"%s\": %s\n"),
+		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, query->data, PQresultErrorMessage(res));
 		PQclear(res);
 		goto error;
@@ -263,7 +263,7 @@ StreamLog(void)
 
 	if (verbose)
 		fprintf(stderr,
-				_("%s: initiated streaming\n"),
+				_("%s: streaming initiated\n"),
 				progname);
 
 	while (!time_to_abort)
@@ -817,7 +817,7 @@ main(int argc, char **argv)
 
 	if (do_drop_slot && (do_create_slot || do_start_slot))
 	{
-		fprintf(stderr, _("%s: --stop cannot be combined with --init or --start\n"), progname);
+		fprintf(stderr, _("%s: cannot use --init or --start together with --stop\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -825,7 +825,7 @@ main(int argc, char **argv)
 
 	if (startpos && (do_create_slot || do_drop_slot))
 	{
-		fprintf(stderr, _("%s: --startpos cannot be combined with --init or --stop\n"), progname);
+		fprintf(stderr, _("%s: cannot use --init or --stop together with --startpos\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -895,7 +895,7 @@ main(int argc, char **argv)
 		if (PQntuples(res) != 0 || PQnfields(res) != 0)
 		{
 			fprintf(stderr,
-					_("%s: could not stop logical rep: got %d rows and %d fields, expected %d rows and %d fields\n"),
+					_("%s: could not stop logical replication: got %d rows and %d fields, expected %d rows and %d fields\n"),
 					progname, PQntuples(res), PQnfields(res), 0, 0);
 			disconnect_and_exit(1);
 		}
@@ -930,7 +930,7 @@ main(int argc, char **argv)
 		if (PQntuples(res) != 1 || PQnfields(res) != 4)
 		{
 			fprintf(stderr,
-					_("%s: could not init logical rep: got %d rows and %d fields, expected %d rows and %d fields\n"),
+					_("%s: could not init logical replication: got %d rows and %d fields, expected %d rows and %d fields\n"),
 					progname, PQntuples(res), PQnfields(res), 1, 4);
 			disconnect_and_exit(1);
 		}
@@ -965,14 +965,14 @@ main(int argc, char **argv)
 		}
 		else if (noloop)
 		{
-			fprintf(stderr, _("%s: disconnected.\n"), progname);
+			fprintf(stderr, _("%s: disconnected\n"), progname);
 			exit(1);
 		}
 		else
 		{
 			fprintf(stderr,
 			/* translator: check source for value for %d */
-					_("%s: disconnected. Waiting %d seconds to try again.\n"),
+					_("%s: disconnected; waiting %d seconds to try again\n"),
 					progname, RECONNECT_SLEEP_TIME);
 			pg_usleep(RECONNECT_SLEEP_TIME * 1000000);
 		}

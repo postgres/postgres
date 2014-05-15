@@ -2552,7 +2552,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 		else if (popt->topt.pager == 2)
 			printf(_("Pager (%s) is always used.\n"), param);
 		else
-			printf(_("Pager (%s) usage is off.\n"), param);
+			printf(_("Pager usage (%s) is off.\n"), param);
 	}
 
 	/* show record separator for unaligned text */
@@ -2576,7 +2576,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	else if (strcmp(param, "T") == 0 || strcmp(param, "tableattr") == 0)
 	{
 		if (popt->topt.tableAttr)
-			printf(_("Table attribute (%s) is \"%s\".\n"), param,
+			printf(_("Table attributes (%s) are \"%s\".\n"), param,
 				   popt->topt.tableAttr);
 		else
 			printf(_("Table attributes (%s) unset.\n"), param);

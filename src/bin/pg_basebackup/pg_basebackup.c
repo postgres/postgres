@@ -187,14 +187,14 @@ tablespace_list_append(const char *arg)
 	 */
 	if (!is_absolute_path(cell->old_dir))
 	{
-		fprintf(stderr, _("%s: old directory not absolute in tablespace mapping: %s\n"),
+		fprintf(stderr, _("%s: old directory is not an absolute path in tablespace mapping: %s\n"),
 				progname, cell->old_dir);
 		exit(1);
 	}
 
 	if (!is_absolute_path(cell->new_dir))
 	{
-		fprintf(stderr, _("%s: new directory not absolute in tablespace mapping: %s\n"),
+		fprintf(stderr, _("%s: new directory is not an absolute path in tablespace mapping: %s\n"),
 				progname, cell->new_dir);
 		exit(1);
 	}
@@ -676,7 +676,7 @@ parse_max_rate(char *src)
 	if (*after_num != '\0')
 	{
 		fprintf(stderr,
-				_("%s: invalid --max-rate units: \"%s\"\n"),
+				_("%s: invalid --max-rate unit: \"%s\"\n"),
 				progname, suffix);
 		exit(1);
 	}
