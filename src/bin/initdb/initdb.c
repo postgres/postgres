@@ -2557,7 +2557,7 @@ main(int argc, char *argv[])
 	 * unexpected output ordering when, eg, output is redirected to a file.
 	 * POSIX says we must do this before any other usage of these files.
 	 */
-	setvbuf(stdout, NULL, _IOLBF, 0);
+	setvbuf(stdout, NULL, PG_IOLBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
 
 	progname = get_progname(argv[0]);
