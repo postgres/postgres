@@ -30,6 +30,9 @@ extern int	max_prepared_xacts;
 extern Size TwoPhaseShmemSize(void);
 extern void TwoPhaseShmemInit(void);
 
+extern void AtAbort_Twophase(void);
+extern void PostPrepare_Twophase(void);
+
 extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
 extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
 
