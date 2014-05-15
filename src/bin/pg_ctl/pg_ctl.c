@@ -256,25 +256,24 @@ get_pgpid(bool is_status_request)
 	if (stat(pg_data, &statbuf) != 0)
 	{
 		if (errno == ENOENT)
-			printf(_("%s: directory \"%s\" does not exist\n"), progname,
-				   pg_data);
+			write_stderr(_("%s: directory \"%s\" does not exist\n"), progname,
+						 pg_data);
 		else
-			printf(_("%s: cannot access directory \"%s\"\n"), progname,
-				   pg_data);
+			write_stderr(_("%s: could not access directory \"%s\": %s\n"), progname,
+						 pg_data, strerror(errno));
 
 		/*
 		 * The Linux Standard Base Core Specification 3.1 says this should
 		 * return '4, program or service status is unknown'
-		 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-g
-		 * eneric/iniscrptact.html
+		 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
 		 */
 		exit(is_status_request ? 4 : 1);
 	}
 
 	if (stat(version_file, &statbuf) != 0 && errno == ENOENT)
 	{
-		printf(_("%s: directory \"%s\" is not a database cluster directory\n"),
-			   progname, pg_data);
+		write_stderr(_("%s: directory \"%s\" is not a database cluster directory\n"),
+					 progname, pg_data);
 		exit(is_status_request ? 4 : 1);
 	}
 
