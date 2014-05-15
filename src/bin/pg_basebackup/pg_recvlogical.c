@@ -51,7 +51,7 @@ static int	outfd = -1;
 static volatile sig_atomic_t time_to_abort = false;
 static volatile sig_atomic_t output_reopen = false;
 static int64 output_last_fsync = -1;
-static bool output_unsynced = false;
+static bool output_needs_fsync = false;
 static XLogRecPtr output_written_lsn = InvalidXLogRecPtr;
 static XLogRecPtr output_fsync_lsn = InvalidXLogRecPtr;
 
@@ -173,10 +173,10 @@ OutputFsync(int64 now)
 	if (fsync_interval <= 0)
 		return true;
 
-	if (!output_unsynced)
+	if (!output_needs_fsync)
 		return true;
 
-	output_unsynced = false;
+	output_needs_fsync = false;
 
 	/* Accept EINVAL, in case output is writing to a pipe or similar. */
 	if (fsync(outfd) != 0 && errno != EINVAL)
@@ -304,6 +304,17 @@ StreamLog(void)
 			last_status = now;
 		}
 
+		/* got SIGHUP, close output file */
+		if (outfd != -1 && output_reopen && strcmp(outfile, "-") != 0)
+		{
+			now = feGetCurrentTimestamp();
+			if (!OutputFsync(now))
+				goto error;
+			close(outfd);
+			outfd = -1;
+		}
+		output_reopen = false;
+
 		r = PQgetCopyData(conn, &copybuf, 1);
 		if (r == 0)
 		{
@@ -327,7 +338,7 @@ StreamLog(void)
 					((int64) 1000);
 
 			/* Compute when we need to wakeup to fsync the output file. */
-			if (fsync_interval > 0 && output_unsynced)
+			if (fsync_interval > 0 && output_needs_fsync)
 				fsync_target = output_last_fsync + (fsync_interval - 1) *
 					((int64) 1000);
 
@@ -468,28 +479,14 @@ StreamLog(void)
 			output_written_lsn = Max(temp, output_written_lsn);
 		}
 
-		/* redirect output to stdout */
-		if (outfd == -1 && strcmp(outfile, "-") == 0)
-		{
-			outfd = fileno(stdout);
-		}
-
-		/* got SIGHUP, close output file */
-		if (outfd != -1 && output_reopen)
-		{
-			now = feGetCurrentTimestamp();
-			if (!OutputFsync(now))
-				goto error;
-			close(outfd);
-			outfd = -1;
-			output_reopen = false;
-		}
-
+		/* open the output file, if not open yet */
 		if (outfd == -1)
 		{
-
-			outfd = open(outfile, O_CREAT | O_APPEND | O_WRONLY | PG_BINARY,
-						 S_IRUSR | S_IWUSR);
+			if (strcmp(outfile, "-") == 0)
+				outfd = fileno(stdout);
+			else
+				outfd = open(outfile, O_CREAT | O_APPEND | O_WRONLY | PG_BINARY,
+							 S_IRUSR | S_IWUSR);
 			if (outfd == -1)
 			{
 				fprintf(stderr,
@@ -503,7 +500,7 @@ StreamLog(void)
 		bytes_written = 0;
 
 		/* signal that a fsync is needed */
-		output_unsynced = true;
+		output_needs_fsync = true;
 
 		while (bytes_left)
 		{
