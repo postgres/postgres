@@ -571,8 +571,10 @@ PostgreSQL documentation
   <para>
    The backup will include all files in the data directory and tablespaces,
    including the configuration files and any additional files placed in the
-   directory by third parties. Only regular files and directories are allowed
-   in the data directory, no symbolic links or special device files.
+   directory by third parties. But only regular files and directories are
+   copied.  Symbolic links (other than those used for tablespaces) and special
+   device files are skipped.  (See <xref linkend="protocol-replication"> for
+   the precise details.)
   </para>
 
   <para>
