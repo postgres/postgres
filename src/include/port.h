@@ -302,6 +302,18 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #endif
 
 /*
+ * Mingw-w64 headers #define popen and pclose to _popen and _pclose.  We want
+ * to use our popen wrapper, rather than plain _popen, so override that.  For
+ * consistency, use our version of pclose, too.
+ */
+#ifdef popen
+#undef popen
+#endif
+#ifdef pclose
+#undef pclose
+#endif
+
+/*
  * system() and popen() replacements to enclose the command in an extra
  * pair of quotes.
  */
