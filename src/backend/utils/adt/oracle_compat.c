@@ -932,10 +932,14 @@ chr			(PG_FUNCTION_ARGS)
 	{
 		/* for Unicode we treat the argument as a code point */
 		int			bytes;
-		char	   *wch;
+		unsigned char *wch;
 
-		/* We only allow valid Unicode code points */
-		if (cvalue > 0x001fffff)
+		/*
+		 * We only allow valid Unicode code points; per RFC3629 that stops at
+		 * U+10FFFF, even though 4-byte UTF8 sequences can hold values up to
+		 * U+1FFFFF.
+		 */
+		if (cvalue > 0x0010ffff)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("requested character too large for encoding: %d",
@@ -950,7 +954,7 @@ chr			(PG_FUNCTION_ARGS)
 
 		result = (text *) palloc(VARHDRSZ + bytes);
 		SET_VARSIZE(result, VARHDRSZ + bytes);
-		wch = VARDATA(result);
+		wch = (unsigned char *) VARDATA(result);
 
 		if (bytes == 2)
 		{
@@ -971,8 +975,17 @@ chr			(PG_FUNCTION_ARGS)
 			wch[3] = 0x80 | (cvalue & 0x3F);
 		}
 
+		/*
+		 * The preceding range check isn't sufficient, because UTF8 excludes
+		 * Unicode "surrogate pair" codes.  Make sure what we created is valid
+		 * UTF8.
+		 */
+		if (!pg_utf8_islegal(wch, bytes))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("requested character not valid for encoding: %d",
+							cvalue)));
 	}
-
 	else
 	{
 		bool		is_mb;
@@ -981,7 +994,6 @@ chr			(PG_FUNCTION_ARGS)
 		 * Error out on arguments that make no sense or that we can't validly
 		 * represent in the encoding.
 		 */
-
 		if (cvalue == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -994,7 +1006,6 @@ chr			(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("requested character too large for encoding: %d",
 							cvalue)));
-
 
 		result = (text *) palloc(VARHDRSZ + 1);
 		SET_VARSIZE(result, VARHDRSZ + 1);
