@@ -315,6 +315,23 @@ StreamLog(void)
 		}
 		output_reopen = false;
 
+		/* open the output file, if not open yet */
+		if (outfd == -1)
+		{
+			if (strcmp(outfile, "-") == 0)
+				outfd = fileno(stdout);
+			else
+				outfd = open(outfile, O_CREAT | O_APPEND | O_WRONLY | PG_BINARY,
+							 S_IRUSR | S_IWUSR);
+			if (outfd == -1)
+			{
+				fprintf(stderr,
+						_("%s: could not open log file \"%s\": %s\n"),
+						progname, outfile, strerror(errno));
+				goto error;
+			}
+		}
+
 		r = PQgetCopyData(conn, &copybuf, 1);
 		if (r == 0)
 		{
@@ -477,23 +494,6 @@ StreamLog(void)
 			XLogRecPtr	temp = fe_recvint64(&copybuf[1]);
 
 			output_written_lsn = Max(temp, output_written_lsn);
-		}
-
-		/* open the output file, if not open yet */
-		if (outfd == -1)
-		{
-			if (strcmp(outfile, "-") == 0)
-				outfd = fileno(stdout);
-			else
-				outfd = open(outfile, O_CREAT | O_APPEND | O_WRONLY | PG_BINARY,
-							 S_IRUSR | S_IWUSR);
-			if (outfd == -1)
-			{
-				fprintf(stderr,
-						_("%s: could not open log file \"%s\": %s\n"),
-						progname, outfile, strerror(errno));
-				goto error;
-			}
 		}
 
 		bytes_left = r - hdr_len;
