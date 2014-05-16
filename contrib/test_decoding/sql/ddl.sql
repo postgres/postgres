@@ -331,7 +331,8 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
 
 -- done, free logical replication slot
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+
 SELECT pg_drop_replication_slot('regression_slot');
 
-/* check that we aren't visible anymore now */
-SELECT * FROM pg_stat_replication;
+/* check that the slot is gone */
+SELECT * FROM pg_replication_slots;

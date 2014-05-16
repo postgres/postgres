@@ -639,9 +639,9 @@ SELECT pg_drop_replication_slot('regression_slot');
  
 (1 row)
 
-/* check that we aren't visible anymore now */
-SELECT * FROM pg_stat_replication;
- pid | usesysid | usename | application_name | client_addr | client_hostname | client_port | backend_start | backend_xmin | state | sent_location | write_location | flush_location | replay_location | sync_priority | sync_state 
------+----------+---------+------------------+-------------+-----------------+-------------+---------------+--------------+-------+---------------+----------------+----------------+-----------------+---------------+------------
+/* check that the slot is gone */
+SELECT * FROM pg_replication_slots;
+ slot_name | plugin | slot_type | datoid | database | active | xmin | catalog_xmin | restart_lsn 
+-----------+--------+-----------+--------+----------+--------+------+--------------+-------------
 (0 rows)
 
