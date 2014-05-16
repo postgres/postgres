@@ -127,6 +127,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_ts,
 	sizeof(Timestamp),
+	16,							/* sizeof(gbtreekey16) */
 	gbt_tsgt,
 	gbt_tsge,
 	gbt_tseq,

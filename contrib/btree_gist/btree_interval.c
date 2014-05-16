@@ -87,7 +87,9 @@ gbt_intv_dist(const void *a, const void *b)
 /*
  * INTERVALSIZE should be the actual size-on-disk of an Interval, as shown
  * in pg_type.  This might be less than sizeof(Interval) if the compiler
- * insists on adding alignment padding at the end of the struct.
+ * insists on adding alignment padding at the end of the struct.  (Note:
+ * this concern is obsolete with the current definition of Interval, but
+ * was real before a separate "day" field was added to it.)
  */
 #define INTERVALSIZE 16
 
@@ -95,6 +97,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_intv,
 	sizeof(Interval),
+	32,							/* sizeof(gbtreekey32) */
 	gbt_intvgt,
 	gbt_intvge,
 	gbt_intveq,

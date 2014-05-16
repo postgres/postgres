@@ -28,7 +28,7 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo *tinfo)
 			Cash		ch;
 		}			v;
 
-		GBT_NUMKEY *r = (GBT_NUMKEY *) palloc0(2 * tinfo->size);
+		GBT_NUMKEY *r = (GBT_NUMKEY *) palloc0(tinfo->indexsize);
 		void	   *leaf = NULL;
 
 		switch (tinfo->t)
@@ -76,6 +76,8 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo *tinfo)
 			default:
 				leaf = DatumGetPointer(entry->key);
 		}
+
+		Assert(tinfo->indexsize >= 2 * tinfo->size);
 
 		memcpy((void *) &r[0], leaf, tinfo->size);
 		memcpy((void *) &r[tinfo->size], leaf, tinfo->size);
@@ -165,7 +167,7 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
 
 	if (!DatumGetPointer(*u))
 	{
-		*u = PointerGetDatum(palloc(2 * tinfo->size));
+		*u = PointerGetDatum(palloc0(tinfo->indexsize));
 		memcpy((void *) &(((GBT_NUMKEY *) DatumGetPointer(*u))[0]), (void *) rd.lower, tinfo->size);
 		memcpy((void *) &(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]), (void *) rd.upper, tinfo->size);
 	}

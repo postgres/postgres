@@ -78,6 +78,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_cash,
 	sizeof(Cash),
+	16,							/* sizeof(gbtreekey16) */
 	gbt_cashgt,
 	gbt_cashge,
 	gbt_casheq,

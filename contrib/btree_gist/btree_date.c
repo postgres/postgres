@@ -96,6 +96,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_date,
 	sizeof(DateADT),
+	8,							/* sizeof(gbtreekey8) */
 	gbt_dategt,
 	gbt_datege,
 	gbt_dateeq,

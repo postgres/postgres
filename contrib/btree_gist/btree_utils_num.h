@@ -37,7 +37,8 @@ typedef struct
 	/* Attribs */
 
 	enum gbtree_type t;			/* data type */
-	int32		size;			/* size of type , 0 means variable */
+	int32		size;			/* size of type, 0 means variable */
+	int32		indexsize;		/* size of datums stored in index */
 
 	/* Methods */
 

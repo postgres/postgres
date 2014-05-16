@@ -84,6 +84,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_oid,
 	sizeof(Oid),
+	8,							/* sizeof(gbtreekey8) */
 	gbt_oidgt,
 	gbt_oidge,
 	gbt_oideq,

@@ -74,6 +74,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_macad,
 	sizeof(macaddr),
+	16,							/* sizeof(gbtreekey16) */
 	gbt_macadgt,
 	gbt_macadge,
 	gbt_macadeq,

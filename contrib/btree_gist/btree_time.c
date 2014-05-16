@@ -124,6 +124,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_time,
 	sizeof(TimeADT),
+	16,							/* sizeof(gbtreekey16) */
 	gbt_timegt,
 	gbt_timege,
 	gbt_timeeq,
