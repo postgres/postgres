@@ -2035,9 +2035,13 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	/* Emit the XLOG commit record */
 	xlrec.xid = xid;
-	xlrec.crec.xact_time = GetCurrentTimestamp();
+
 	xlrec.crec.xinfo = initfileinval ? XACT_COMPLETION_UPDATE_RELCACHE_FILE : 0;
-	xlrec.crec.nmsgs = 0;
+
+	xlrec.crec.dbId = MyDatabaseId;
+	xlrec.crec.tsId = MyDatabaseTableSpace;
+
+	xlrec.crec.xact_time = GetCurrentTimestamp();
 	xlrec.crec.nrels = nrels;
 	xlrec.crec.nsubxacts = nchildren;
 	xlrec.crec.nmsgs = ninvalmsgs;
