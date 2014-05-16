@@ -12,6 +12,7 @@ typedef struct
 {
 	macaddr		lower;
 	macaddr		upper;
+	char		pad[4];			/* make struct size = sizeof(gbtreekey16) */
 } macKEY;
 
 /*
@@ -143,7 +144,7 @@ Datum
 gbt_macad_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	void	   *out = palloc(sizeof(macKEY));
+	void	   *out = palloc0(sizeof(macKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(macKEY);
 	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo));
