@@ -225,7 +225,7 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				subxacts = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
 				invals = (SharedInvalidationMessage *) &(subxacts[xlrec->nsubxacts]);
 
-				DecodeCommit(ctx, buf, r->xl_xid, xlrec->dbId,
+				DecodeCommit(ctx, buf, prec->xid, xlrec->dbId,
 							 xlrec->xact_time,
 							 xlrec->nsubxacts, subxacts,
 							 xlrec->nmsgs, invals);
