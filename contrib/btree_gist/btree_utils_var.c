@@ -70,19 +70,21 @@ GBT_VARKEY *
 gbt_var_key_copy(const GBT_VARKEY_R *u, bool force_node)
 {
 	GBT_VARKEY *r = NULL;
+	int32		lowersize = VARSIZE(u->lower);
+	int32		uppersize = VARSIZE(u->upper);
 
 	if (u->lower == u->upper && !force_node)
 	{							/* leaf key mode */
-		r = (GBT_VARKEY *) palloc(VARSIZE(u->lower) + VARHDRSZ);
-		memcpy(VARDATA(r), u->lower, VARSIZE(u->lower));
-		SET_VARSIZE(r, VARSIZE(u->lower) + VARHDRSZ);
+		r = (GBT_VARKEY *) palloc(lowersize + VARHDRSZ);
+		memcpy(VARDATA(r), u->lower, lowersize);
+		SET_VARSIZE(r, lowersize + VARHDRSZ);
 	}
 	else
 	{							/* node key mode  */
-		r = (GBT_VARKEY *) palloc(INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ);
-		memcpy(VARDATA(r), u->lower, VARSIZE(u->lower));
-		memcpy(VARDATA(r) + INTALIGN(VARSIZE(u->lower)), u->upper, VARSIZE(u->upper));
-		SET_VARSIZE(r, INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ);
+		r = (GBT_VARKEY *) palloc0(INTALIGN(lowersize) + uppersize + VARHDRSZ);
+		memcpy(VARDATA(r), u->lower, lowersize);
+		memcpy(VARDATA(r) + INTALIGN(lowersize), u->upper, uppersize);
+		SET_VARSIZE(r, INTALIGN(lowersize) + uppersize + VARHDRSZ);
 	}
 	return r;
 }
@@ -201,7 +203,7 @@ gbt_var_node_truncate(const GBT_VARKEY *node, int32 cpf_length, const gbtree_vin
 	len2 = Min(len2, (cpf_length + 1));
 
 	si = 2 * VARHDRSZ + INTALIGN(len1 + VARHDRSZ) + len2;
-	out = (GBT_VARKEY *) palloc(si);
+	out = (GBT_VARKEY *) palloc0(si);
 	SET_VARSIZE(out, si);
 
 	memcpy(VARDATA(out), r.lower, len1 + VARHDRSZ);
