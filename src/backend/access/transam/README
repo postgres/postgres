@@ -575,16 +575,21 @@ while holding AccessExclusiveLock on the relation.
 
 Due to all these constraints, complex changes (such as a multilevel index
 insertion) normally need to be described by a series of atomic-action WAL
-records.  What do you do if the intermediate states are not self-consistent?
-The answer is that the WAL replay logic has to be able to fix things up.
-In btree indexes, for example, a page split requires insertion of a new key in
-the parent btree level, but for locking reasons this has to be reflected by
-two separate WAL records.  The replay code has to remember "unfinished" split
-operations, and match them up to subsequent insertions in the parent level.
-If no matching insert has been found by the time the WAL replay ends, the
-replay code has to do the insertion on its own to restore the index to
-consistency.  Such insertions occur after WAL is operational, so they can
-and should write WAL records for the additional generated actions.
+records. The intermediate states must be self-consistent, so that if the
+replay is interrupted between any two actions, the system is fully
+functional. In btree indexes, for example, a page split requires a new page
+to be allocated, and an insertion of a new key in the parent btree level,
+but for locking reasons this has to be reflected by two separate WAL
+records. Replaying the first record, to allocate the new page and move
+tuples to it, sets a flag on the page to indicate that the key has not been
+inserted to the parent yet. Replaying the second record clears the flag.
+This intermediate state is never seen by other backends during normal
+operation, because the lock on the child page is held across the two
+actions, but will be seen if the operation is interrupted before writing
+the second WAL record. The search algorithm works with the intermediate
+state as normal, but if an insertion encounters a page with the
+incomplete-split flag set, it will finish the interrupted split by
+inserting the key to the parent, before proceeding.
 
 Writing Hints
 -------------
