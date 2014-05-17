@@ -622,12 +622,11 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
 	XLogRecord *r = &buf->record;
 	xl_heap_update *xlrec;
-	xl_heap_header_len *xlhdr;
+	xl_heap_header_len xlhdr;
 	ReorderBufferChange *change;
 	char	   *data;
 
 	xlrec = (xl_heap_update *) buf->record_data;
-	xlhdr = (xl_heap_header_len *) (buf->record_data + SizeOfHeapUpdate);
 
 	/* only interested in our database */
 	if (xlrec->target.node.dbNode != ctx->slot->data.database)
@@ -637,33 +636,41 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	change->action = REORDER_BUFFER_CHANGE_UPDATE;
 	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
 
-	data = (char *) &xlhdr->header;
+	/* caution, remaining data in record is not aligned */
+	data = buf->record_data + SizeOfHeapUpdate;
 
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
 	{
 		Assert(r->xl_len > (SizeOfHeapUpdate + SizeOfHeapHeaderLen));
 
+		memcpy(&xlhdr, data, sizeof(xlhdr));
+		data += offsetof(xl_heap_header_len, header);
+
 		change->data.tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
 
 		DecodeXLogTuple(data,
-						xlhdr->t_len + SizeOfHeapHeader,
+						xlhdr.t_len + SizeOfHeapHeader,
 						change->data.tp.newtuple);
 		/* skip over the rest of the tuple header */
 		data += SizeOfHeapHeader;
 		/* skip over the tuple data */
-		data += xlhdr->t_len;
+		data += xlhdr.t_len;
 	}
 
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
 	{
-		xlhdr = (xl_heap_header_len *) data;
+		memcpy(&xlhdr, data, sizeof(xlhdr));
+		data += offsetof(xl_heap_header_len, header);
+
 		change->data.tp.oldtuple = ReorderBufferGetTupleBuf(ctx->reorder);
-		DecodeXLogTuple((char *) &xlhdr->header,
-						xlhdr->t_len + SizeOfHeapHeader,
+
+		DecodeXLogTuple(data,
+						xlhdr.t_len + SizeOfHeapHeader,
 						change->data.tp.oldtuple);
-		data = (char *) &xlhdr->header;
+#ifdef NOT_USED
 		data += SizeOfHeapHeader;
-		data += xlhdr->t_len;
+		data += xlhdr.t_len;
+#endif
 	}
 
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
