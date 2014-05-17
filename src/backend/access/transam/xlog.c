@@ -8318,7 +8318,7 @@ CreateCheckPoint(int flags)
  * CreateRestartPoint() allows for the case where recovery may end before
  * the restartpoint completes so there is no concern of concurrent behaviour.
  */
-void
+static void
 CreateEndOfRecoveryRecord(void)
 {
 	xl_end_of_recovery xlrec;

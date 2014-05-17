@@ -5340,7 +5340,7 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
  *	1: the value is valid
  *	0: the name or value is invalid
  */
-bool
+static bool
 validate_conf_option(struct config_generic * record, const char *name,
 					 const char *value, GucSource source, int elevel,
 					 bool freemem, void *newval, void **newextra)

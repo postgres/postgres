@@ -322,7 +322,7 @@ ReorderBufferGetTXN(ReorderBuffer *rb)
  * Deallocation might be delayed for efficiency purposes, for details check
  * the comments above max_cached_changes's definition.
  */
-void
+static void
 ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 {
 	/* clean the lookup cache if we were cached (quite likely) */

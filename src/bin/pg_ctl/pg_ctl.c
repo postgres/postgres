@@ -399,7 +399,7 @@ readfile(const char *path)
 /*
  * Free memory allocated for optlines through readfile()
  */
-void
+static void
 free_readfile(char **optlines)
 {
 	char	   *curr_line = NULL;

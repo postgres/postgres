@@ -2381,7 +2381,7 @@ RelationCloseSmgrByOid(Oid relationId)
 	RelationCloseSmgr(relation);
 }
 
-void
+static void
 RememberToFreeTupleDescAtEOX(TupleDesc td)
 {
 	if (EOXactTupleDescArray == NULL)
