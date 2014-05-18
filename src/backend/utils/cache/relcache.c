@@ -181,13 +181,13 @@ do { \
 										   HASH_ENTER, &found); \
 	if (found) \
 	{ \
-		/* this can happen, see comments in RelationBuildDesc */ \
+		/* see comments in RelationBuildDesc and RelationBuildLocalRelation */ \
 		Relation _old_rel = hentry->reldesc; \
 		Assert(replace_allowed); \
 		hentry->reldesc = (RELATION); \
 		if (RelationHasReferenceCountZero(_old_rel)) \
 			RelationDestroyRelation(_old_rel, false); \
-		else \
+		else if (!IsBootstrapProcessingMode()) \
 			elog(WARNING, "leaking still-referenced relcache entry for \"%s\"", \
 				 RelationGetRelationName(_old_rel)); \
 	} \
@@ -2861,9 +2861,15 @@ RelationBuildLocalRelation(const char *relname,
 	RelationInitPhysicalAddr(rel);
 
 	/*
-	 * Okay to insert into the relcache hash tables.
+	 * Okay to insert into the relcache hash table.
+	 *
+	 * Ordinarily, there should certainly not be an existing hash entry for
+	 * the same OID; but during bootstrap, when we create a "real" relcache
+	 * entry for one of the bootstrap relations, we'll be overwriting the
+	 * phony one created with formrdesc.  So allow that to happen for nailed
+	 * rels.
 	 */
-	RelationCacheInsert(rel, false);
+	RelationCacheInsert(rel, nailit);
 
 	/*
 	 * Flag relation as needing eoxact cleanup (to clear rd_createSubid). We
