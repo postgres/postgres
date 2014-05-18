@@ -171,24 +171,36 @@ static int	NextEOXactTupleDescNum = 0;
 static int	EOXactTupleDescArrayLen = 0;
 
 /*
- *		macros to manipulate the lookup hashtables
+ *		macros to manipulate the lookup hashtable
  */
-#define RelationCacheInsert(RELATION)	\
+#define RelationCacheInsert(RELATION, replace_allowed)	\
 do { \
-	RelIdCacheEnt *idhentry; bool found; \
-	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (void *) &(RELATION->rd_id), \
+	RelIdCacheEnt *hentry; bool found; \
+	hentry = (RelIdCacheEnt *) hash_search(RelationIdCache, \
+										   (void *) &((RELATION)->rd_id), \
 										   HASH_ENTER, &found); \
-	/* used to give notice if found -- now just keep quiet */ \
-	idhentry->reldesc = RELATION; \
+	if (found) \
+	{ \
+		/* this can happen, see comments in RelationBuildDesc */ \
+		Relation _old_rel = hentry->reldesc; \
+		Assert(replace_allowed); \
+		hentry->reldesc = (RELATION); \
+		if (RelationHasReferenceCountZero(_old_rel)) \
+			RelationDestroyRelation(_old_rel, false); \
+		else \
+			elog(WARNING, "leaking still-referenced relcache entry for \"%s\"", \
+				 RelationGetRelationName(_old_rel)); \
+	} \
+	else \
+		hentry->reldesc = (RELATION); \
 } while(0)
 
 #define RelationIdCacheLookup(ID, RELATION) \
 do { \
 	RelIdCacheEnt *hentry; \
-	hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										 (void *) &(ID), \
-										 HASH_FIND, NULL); \
+	hentry = (RelIdCacheEnt *) hash_search(RelationIdCache, \
+										   (void *) &(ID), \
+										   HASH_FIND, NULL); \
 	if (hentry) \
 		RELATION = hentry->reldesc; \
 	else \
@@ -197,12 +209,13 @@ do { \
 
 #define RelationCacheDelete(RELATION) \
 do { \
-	RelIdCacheEnt *idhentry; \
-	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (void *) &(RELATION->rd_id), \
+	RelIdCacheEnt *hentry; \
+	hentry = (RelIdCacheEnt *) hash_search(RelationIdCache, \
+										   (void *) &((RELATION)->rd_id), \
 										   HASH_REMOVE, NULL); \
-	if (idhentry == NULL) \
-		elog(WARNING, "trying to delete a rd_id reldesc that does not exist"); \
+	if (hentry == NULL) \
+		elog(WARNING, "failed to delete relcache entry for OID %u", \
+			 (RELATION)->rd_id); \
 } while(0)
 
 
@@ -982,9 +995,18 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 
 	/*
 	 * Insert newly created relation into relcache hash table, if requested.
+	 *
+	 * There is one scenario in which we might find a hashtable entry already
+	 * present, even though our caller failed to find it: if the relation is a
+	 * system catalog or index that's used during relcache load, we might have
+	 * recursively created the same relcache entry during the preceding steps.
+	 * So allow RelationCacheInsert to delete any already-present relcache
+	 * entry for the same OID.  The already-present entry should have refcount
+	 * zero (else somebody forgot to close it); in the event that it doesn't,
+	 * we'll elog a WARNING and leak the already-present entry.
 	 */
 	if (insertIt)
-		RelationCacheInsert(relation);
+		RelationCacheInsert(relation, true);
 
 	/* It's fully valid */
 	relation->rd_isvalid = true;
@@ -1599,7 +1621,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * add new reldesc to relcache
 	 */
-	RelationCacheInsert(relation);
+	RelationCacheInsert(relation, false);
 
 	/* It's fully valid */
 	relation->rd_isvalid = true;
@@ -2841,7 +2863,7 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * Okay to insert into the relcache hash tables.
 	 */
-	RelationCacheInsert(rel);
+	RelationCacheInsert(rel, false);
 
 	/*
 	 * Flag relation as needing eoxact cleanup (to clear rd_createSubid). We
@@ -3489,8 +3511,13 @@ AttrDefaultFetch(Relation relation)
 				NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 			else
-				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
-												   TextDatumGetCString(val));
+			{
+				/* detoast and convert to cstring in caller's context */
+				char	   *s = TextDatumGetCString(val);
+
+				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext, s);
+				pfree(s);
+			}
 			break;
 		}
 
@@ -4717,7 +4744,7 @@ load_relcache_init_file(bool shared)
 	 */
 	for (relno = 0; relno < num_rels; relno++)
 	{
-		RelationCacheInsert(rels[relno]);
+		RelationCacheInsert(rels[relno], false);
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
 		if (!shared)
 			initFileRelationIds = lcons_oid(RelationGetRelid(rels[relno]),
