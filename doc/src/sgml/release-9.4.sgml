@@ -1327,8 +1327,8 @@
         <para>
          This allows for faster access to values in the <type>JSON</>
          document and faster and more useful indexing of <type>JSON</>.
-         <type>JSONB</> values are also typed as appropriate scalar
-         SQL types.
+         Scalar values in <type>JSONB</> documents are typed as appropriate
+         scalar SQL types.
         </para>
        </listitem>
 
