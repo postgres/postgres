@@ -83,13 +83,13 @@ usage(void)
 	printf(_("  -F  --fsync-interval=SECS\n"
 			 "                         frequency of syncs to the output file (default: %d)\n"), (fsync_interval / 1000));
 	printf(_("  -o, --option=NAME[=VALUE]\n"
-			 "                         Specify option NAME with optional value VALUE, to be passed\n"
+			 "                         specify option NAME with optional value VALUE, to be passed\n"
 			 "                         to the output plugin\n"));
 	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"), plugin);
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOT        use existing replication slot SLOT instead of starting a new one\n"));
-	printf(_("  -I, --startpos=PTR     Where in an existing slot should the streaming start\n"));
+	printf(_("  -I, --startpos=PTR     where in an existing slot should the streaming start\n"));
 	printf(_("\nAction to be performed:\n"));
 	printf(_("      --create           create a new replication slot (for the slotname see --slot)\n"));
 	printf(_("      --start            start streaming in a replication slot (for the slotname see --slot)\n"));
@@ -935,7 +935,7 @@ main(int argc, char **argv)
 		if (sscanf(PQgetvalue(res, 0, 1), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-					_("%s: could not parse log location \"%s\"\n"),
+					_("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 1));
 			disconnect_and_exit(1);
 		}
