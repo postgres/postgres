@@ -89,7 +89,7 @@
       linkend="functions-formatting-table"><function>to_timestamp()</></link>
       and <function>to_date()</> format strings to consume a corresponding
       number of characters in the input string (whitespace or not), then
-      conditionally additional adjacent whitespace if not in <literal>FX</>
+      conditionally consume adjacent whitespace if not in <literal>FX</>
       mode (Jeevan Chalke)
      </para>
 
@@ -98,7 +98,7 @@
       format string behaved like a single whitespace character and consumed
       all adjacent whitespace in the input string.  For example, previously
       format string space-space-space would consume only the first space in
-      ' 12', while it will not consume all three characters.
+      ' 12', while it will now consume all three characters.
      </para>
     </listitem>
 
@@ -122,7 +122,7 @@
      </para>
 
      <para>
-      Previously empty arrays were returned as one-dimensional empty arrays
+      Previously, empty arrays were returned as one-dimensional empty arrays
       whose text representation looked the same as zero-dimensional arrays
       (<literal>{}</>).  <application>intarray</>'s behavior in this area
       now matches the built-in array operators.
@@ -131,9 +131,9 @@
 
     <listitem>
      <para>
-      NULL <link
+      Disallow NULL <link
       linkend="xfunc-sql-variadic-functions"><literal>VARIADIC</></link>
-      function arguments are now disallowed (Pavel Stehule)
+      function arguments (Pavel Stehule)
      </para>
 
      <para>
@@ -300,7 +300,7 @@
 
     <listitem>
      <para>
-      <command>DISCARD ALL</> now also discards the state of sequences.
+      <command>DISCARD ALL</> now also discards sequence state.
      </para>
     </listitem>
 
@@ -366,7 +366,7 @@
 
       <listitem>
        <para>
-        During immediate shutdown, send uncatchable termination signals
+        During immediate shutdown send uncatchable termination signals
         to child processes that have not already shutdown (MauMau,
         &Aacute;lvaro Herrera)
        </para>
@@ -740,7 +740,7 @@
 
        <para>
         In contrast
-        to <link linkend="guc-local-preload-libraries"><varname>local_preload_libraries</></link>,
+        to <link linkend="guc-local-preload-libraries"><varname>local_preload_libraries</></link>
         this parameter can load any shared library, not just those in
         the <filename>$libdir/plugins</> directory.
        </para>
@@ -789,8 +789,8 @@
       <listitem>
        <para>
         Have Windows <acronym>ASCII</>-encoded databases and server process
-        (e.g.  <link linkend="app-postmaster">postmaster) emit messages
-        in the <envar>LC_CTYPE</></link>-defined language (Alexander Law,
+        (e.g.  <link linkend="app-postmaster">postmaster</>) emit messages
+        in the <envar>LC_CTYPE</>-defined language (Alexander Law,
         Noah Misch)
        </para>
 
@@ -994,7 +994,7 @@
       <listitem>
        <para>
         Add <link linkend="queries-tablefunctions"><literal>WITH
-        ORDINALITY</></link> syntax which numbers rows returned from
+        ORDINALITY</></link> syntax to number rows returned from
         <literal>FROM</>-clause functions (Andrew Gierth, David Fetter)
        </para>
 
@@ -1042,7 +1042,7 @@
          Add <command>FORCE NULL</> option
          to <link linkend="SQL-COPY"><command>COPY FROM</></link> which causes
          quoted strings matching the null string to be converted to NULL in
-         in <literal>CSV</> mode (Ian Barwick, Michael Paquier)
+         <literal>CSV</> mode (Ian Barwick, Michael Paquier)
         </para>
 
         <para>
@@ -1178,7 +1178,7 @@
 
       <listitem>
        <para>
-        Improve the internal definition of system relations (Andres Freund,
+        Improve how system-level relations are designated (Andres Freund,
         Robert Haas)
        </para>
 
