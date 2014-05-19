@@ -10531,7 +10531,7 @@ table2-mapping
       </row>
       <row>
        <entry><para><literal>json_extract_path_text(from_json json, VARIADIC path_elems text[])</literal>
-         </para><para><literal>json_extract_path_text(from_json jsonb, VARIADIC path_elems text[])</literal>
+         </para><para><literal>jsonb_extract_path_text(from_json jsonb, VARIADIC path_elems text[])</literal>
        </para></entry>
        <entry><type>text</type></entry>
        <entry>
