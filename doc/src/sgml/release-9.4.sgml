@@ -30,7 +30,7 @@
      <listitem>
       <para>
        <link linkend="logicaldecoding">Logical decoding</link> allows database
-       changes to be streamed out in customizable format
+       changes to be streamed out in a customizable format
       </para>
      </listitem>
 
@@ -295,6 +295,12 @@
       that can be registered
       by <function>RegisterBackgroundWorker()</function> is now limited to
       <link linkend="guc-max-worker-processes"><varname>max_worker_processes</></link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>DISCARD ALL</> now also discards the state of sequences.
      </para>
     </listitem>
 
@@ -1005,7 +1011,6 @@
        </para>
 
        <para>
-        <!-- FIXME: drop? -->
         This was added so views that select from a table with zero columns
         can be dumped correctly.
        </para>
@@ -1028,7 +1033,6 @@
        </para>
 
        <para>
-        <!-- FIXME: compatibility break entry? -->
         <command>DISCARD ALL</> will now also discard such information.
        </para>
       </listitem>
@@ -1199,6 +1203,11 @@
         AGGREGATE</></link> to supply the size of the aggregate's
         transition state data (Hadi Moshayedi)
        </para>
+
+       <para>
+        This allows the optimizer to better estimate how much memory will be
+        used by aggregates.
+       </para>
       </listitem>
 
      </itemizedlist>
@@ -1218,7 +1227,7 @@
 
       <listitem>
        <para>
-        Allow the changing of foreign key constraint  via <link
+        Allow changing foreign key constraint deferrability via <link
         linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></link>
         ... <literal>ALTER CONSTRAINT</> (Simon Riggs)
        </para>
@@ -1254,7 +1263,7 @@
 
       <listitem>
        <para>
-        Fully-implement the <link
+        Fully implement the <link
         linkend="datatype-line"><type>line</></link> data type (Peter
         Eisentraut)
        </para>
@@ -1472,7 +1481,7 @@
        <para>
         Add function <link
         linkend="functions-admin-dblocation"><function>pg_filenode_relation()</></link>
-        to allow for more efficient filenode to relation lookups (Andres
+        to allow for more efficient lookup of relation names from filenodes (Andres
         Freund)
        </para>
       </listitem>
@@ -1543,10 +1552,13 @@
       </listitem>
 
       <listitem>
-       <!-- FIXME -->
        <para>
         Allow polymorphic aggregates to have non-polymorphic state data
-        types ? (Tom Lane)
+        types (Tom Lane)
+       </para>
+       <para>
+        This allows the declaration of aggregates like the built-in
+        aggregate <function>array_agg()</> in SQL.
        </para>
       </listitem>
 
@@ -1772,7 +1784,8 @@
 
       <listitem>
        <para>
-        Allow field wrapping to <application>psql</>'s "extended" mode
+        Add ability to wrap long lines in <application>psql</>'s
+        <literal>expanded</> mode by using <command>\pset format wrapped</>
         (Sergey Muraviov)
        </para>
       </listitem>
@@ -2218,7 +2231,8 @@
       <listitem>
        <para>
         Add <link linkend="pgprewarm"><application>pg_prewarm</></link>
-        to preload relation data into the shared buffer cache (Robert Haas)
+        extension to preload relation data into the shared buffer cache
+        (Robert Haas)
        </para>
 
        <para>
@@ -2243,7 +2257,7 @@
 
       <listitem>
        <para>
-        Add logging of trigger execution to <link
+        Add option to include trigger execution time to <link
         linkend="auto-explain"><application>auto_explain</></link>
         (Horiguchi Kyotaro)
        </para>
@@ -2279,9 +2293,10 @@
 
       <listitem>
        <para>
-        Improve indexing of <link
-        linkend="pgtrgm"><application>pg_trgm</></link> values to
-        discourage indexing whitespace (Alexander Korotkov)
+        Improve <link linkend="pgtrgm"><application>pg_trgm</>'s</link>
+        generation of trigrams for indexed regular expression searches by
+        discouraging the indexing of trigrams containing whitespace (Alexander
+        Korotkov)
        </para>
       </listitem>
 
@@ -2328,7 +2343,7 @@
 
       <listitem>
        <para>
-        Allow pgbench to process script files of any line length (Sawada
+        Allow <application>pgbench</> to process script files of any line length (Sawada
         Masahiko)
        </para>
 
@@ -2339,20 +2354,20 @@
 
       <listitem>
        <para>
-        Add <application>pg_bench</> option (<option>--rate</>) to control
+        Add <application>pgbench</> option (<option>--rate</>) to control
         the transaction rate (Fabien Coelho)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <option>--progress</> output option to pgbench (Fabien Coelho)
+        Add <option>--progress</> output option to <application>pgbench</> (Fabien Coelho)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add long options to pgbench (Fabien Coelho)
+        Add long options to <application>pgbench</> (Fabien Coelho)
        </para>
       </listitem>
 
