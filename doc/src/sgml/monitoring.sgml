@@ -1494,7 +1494,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </entry>
     </row>
     <row>
-     <entry><structfield>backend_xid</structfield></entry>
+     <entry><structfield>backend_xmin</structfield></entry>
      <entry><type>xid</type></entry>
      <entry>This standby's <literal>xmin</> horizon reported
      by <xref linkend="guc-hot-standby-feedback">.</entry>
