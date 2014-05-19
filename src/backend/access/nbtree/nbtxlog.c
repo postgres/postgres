@@ -300,8 +300,8 @@ btree_xlog_split(bool onleft, bool isroot,
 	 */
 	if (!isleaf)
 	{
-		if (record->xl_info & XLR_BKP_BLOCK(2))
-			(void) RestoreBackupBlock(lsn, record, 2, false, false);
+		if (record->xl_info & XLR_BKP_BLOCK(1))
+			(void) RestoreBackupBlock(lsn, record, 1, false, false);
 		else
 			_bt_clear_incomplete_split(lsn, record, xlrec->node, cblkno);
 	}
@@ -439,10 +439,10 @@ btree_xlog_split(bool onleft, bool isroot,
 	if (xlrec->rnext != P_NONE)
 	{
 		/*
-		 * the backup block containing right sibling is 2 or 3, depending
+		 * the backup block containing right sibling is 1 or 2, depending
 		 * whether this was a leaf or internal page.
 		 */
-		int			rnext_index = isleaf ? 2 : 3;
+		int			rnext_index = isleaf ? 1 : 2;
 
 		if (record->xl_info & XLR_BKP_BLOCK(rnext_index))
 			(void) RestoreBackupBlock(lsn, record, rnext_index, false, false);

@@ -1299,7 +1299,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 
 			lastrdata->data = (char *) newitem;
 			lastrdata->len = MAXALIGN(newitemsz);
-			lastrdata->buffer = buf;	/* backup block 1 */
+			lastrdata->buffer = buf;	/* backup block 0 */
 			lastrdata->buffer_std = true;
 		}
 
@@ -1320,7 +1320,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 			item = (IndexTuple) PageGetItem(origpage, itemid);
 			lastrdata->data = (char *) item;
 			lastrdata->len = MAXALIGN(IndexTupleSize(item));
-			lastrdata->buffer = buf;	/* backup block 1 */
+			lastrdata->buffer = buf;	/* backup block 0 */
 			lastrdata->buffer_std = true;
 		}
 
@@ -1333,11 +1333,11 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 			 * Although we don't need to WAL-log anything on the left page, we
 			 * still need XLogInsert to consider storing a full-page image of
 			 * the left page, so make an empty entry referencing that buffer.
-			 * This also ensures that the left page is always backup block 1.
+			 * This also ensures that the left page is always backup block 0.
 			 */
 			lastrdata->data = NULL;
 			lastrdata->len = 0;
-			lastrdata->buffer = buf;	/* backup block 1 */
+			lastrdata->buffer = buf;	/* backup block 0 */
 			lastrdata->buffer_std = true;
 		}
 
@@ -1353,7 +1353,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 			cblkno = BufferGetBlockNumber(cbuf);
 			lastrdata->data = (char *) &cblkno;
 			lastrdata->len = sizeof(BlockNumber);
-			lastrdata->buffer = cbuf;	/* backup block 2 */
+			lastrdata->buffer = cbuf;	/* backup block 1 */
 			lastrdata->buffer_std = true;
 		}
 
@@ -1386,7 +1386,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 
 			lastrdata->data = NULL;
 			lastrdata->len = 0;
-			lastrdata->buffer = sbuf;	/* bkp block 2 (leaf) or 3 (non-leaf) */
+			lastrdata->buffer = sbuf;	/* bkp block 1 (leaf) or 2 (non-leaf) */
 			lastrdata->buffer_std = true;
 		}
 
