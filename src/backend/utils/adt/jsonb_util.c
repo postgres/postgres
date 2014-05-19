@@ -1462,7 +1462,7 @@ convertJsonbScalar(StringInfo buffer, JEntry *jentry, JsonbValue *scalarVal)
 /*
  * Compare two jbvString JsonbValue values, a and b.
  *
- * This is a special qsort_arg() comparator used to sort strings in certain
+ * This is a special qsort() comparator used to sort strings in certain
  * internal contexts where it is sufficient to have a well-defined sort order.
  * In particular, object pair keys are sorted according to this criteria to
  * facilitate cheap binary searches where we don't care about lexical sort
