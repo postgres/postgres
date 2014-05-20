@@ -2343,7 +2343,7 @@
 
       <listitem>
        <para>
-        Allow <application>pgbench</> to process script files of any line length (Sawada
+        Remove line length limit for <application>pgbench</> scripts (Sawada
         Masahiko)
        </para>
 
