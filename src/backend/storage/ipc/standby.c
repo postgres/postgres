@@ -893,10 +893,10 @@ LogStandbySnapshot(void)
 	 * For Hot Standby this can be done before inserting the WAL record
 	 * because ProcArrayApplyRecoveryInfo() rechecks the commit status using
 	 * the clog. For logical decoding, though, the lock can't be released
-	 * early becuase the clog might be "in the future" from the POV of the
+	 * early because the clog might be "in the future" from the POV of the
 	 * historic snapshot. This would allow for situations where we're waiting
 	 * for the end of a transaction listed in the xl_running_xacts record
-	 * which, according to the WAL, have commit before the xl_running_xacts
+	 * which, according to the WAL, has committed before the xl_running_xacts
 	 * record. Fortunately this routine isn't executed frequently, and it's
 	 * only a shared lock.
 	 */
