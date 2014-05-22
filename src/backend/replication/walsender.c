@@ -26,7 +26,7 @@
  *
  * If the server is shut down, postmaster sends us SIGUSR2 after all
  * regular backends have exited and the shutdown checkpoint has been written.
- * This instruct walsender to send any outstanding WAL, including the
+ * This instructs walsender to send any outstanding WAL, including the
  * shutdown checkpoint record, wait for it to be replicated to the standby,
  * and then exit.
  *
@@ -115,7 +115,7 @@ int			wal_sender_timeout = 60 * 1000;		/* maximum time to send one
 bool		wake_wal_senders = false;
 
 /*
- * These variables are used similarly to openLogFile/Id/Seg/Off,
+ * These variables are used similarly to openLogFile/SegNo/Off,
  * but for walsender to read the XLOG.
  */
 static int	sendFile = -1;
