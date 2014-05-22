@@ -554,14 +554,6 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 
 		if (shmctl(ident, IPC_STAT, &shm) != 0)
 		{
-			int			save_errno;
-
-			/* Back out what's already been done. */
-			save_errno = errno;
-			if (op == DSM_OP_CREATE)
-				shmctl(ident, IPC_RMID, NULL);
-			errno = save_errno;
-
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
 					 errmsg("could not stat shared memory segment \"%s\": %m",
