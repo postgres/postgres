@@ -93,7 +93,7 @@ typedef struct JsonbValue JsonbValue;
  *
  * The root node is an exception; it has no parent array or object that could
  * hold its JEntry. Hence, no JEntry header is stored for the root node.  It
- * is implicitly known that the the root node must be an array or an object,
+ * is implicitly known that the root node must be an array or an object,
  * so we can get away without the type indicator as long as we can distinguish
  * the two.  For that purpose, both an array and an object begins with a uint32
  * header field, which contains an JB_FOBJECT or JB_FARRAY flag.  When a naked
