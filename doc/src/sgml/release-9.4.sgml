@@ -285,7 +285,7 @@
 
     <listitem>
      <para>
-      <link linkend="pgupgrade"><application>Pg_upgrade</></link> now
+      <link linkend="pgupgrade"><application>pg_upgrade</></link> now
       uses <option>-U</> to specify the user name (Bruce Momjian)
      </para>
 
@@ -941,7 +941,7 @@
        <listitem>
         <para>
          Allow <link
-         linkend="app-pgreceivexlog"><application>pg_recvlogical</></link>
+         linkend="app-pgrecvlogical"><application>pg_recvlogical</></link>
          to receive data logical decoding data (Andres Freund)
         </para>
        </listitem>
