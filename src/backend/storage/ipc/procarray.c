@@ -1928,7 +1928,7 @@ GetOldestActiveTransactionId(void)
  * much more conservative than what really has been affected by vacuum, but we
  * currently don't have better data available.
  *
- * This is useful to initalize the cutoff xid after which a new changeset
+ * This is useful to initialize the cutoff xid after which a new changeset
  * extraction replication slot can start decoding changes.
  *
  * Must be called with ProcArrayLock held either shared or exclusively,
