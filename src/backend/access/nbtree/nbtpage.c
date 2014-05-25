@@ -955,17 +955,37 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 }
 
 /*
+ * Returns true, if the given block has the half-dead flag set.
+ */
+static bool
+_bt_is_page_halfdead(Relation rel, BlockNumber blk)
+{
+	Buffer		buf;
+	Page		page;
+	BTPageOpaque opaque;
+	bool		result;
+
+	buf = _bt_getbuf(rel, blk, BT_READ);
+	page = BufferGetPage(buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	result = P_ISHALFDEAD(opaque);
+	_bt_relbuf(rel, buf);
+
+	return result;
+}
+
+/*
  * Subroutine to find the parent of the branch we're deleting.  This climbs
  * up the tree until it finds a page with more than one child, i.e. a page
  * that will not be totally emptied by the deletion.  The chain of pages below
- * it, with one downlink each, will be part of the branch that we need to
- * delete.
+ * it, with one downlink each, will form the branch that we need to delete.
  *
  * If we cannot remove the downlink from the parent, because it's the
  * rightmost entry, returns false.  On success, *topparent and *topoff are set
  * to the buffer holding the parent, and the offset of the downlink in it.
  * *topparent is write-locked, the caller is responsible for releasing it when
- * done.  *target is set to the topmost page in the branch to-be-deleted, ie.
+ * done.  *target is set to the topmost page in the branch to-be-deleted, i.e.
  * the page whose downlink *topparent / *topoff point to, and *rightsib to its
  * right sibling.
  *
@@ -994,7 +1014,10 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	BTPageOpaque opaque;
 	BlockNumber leftsib;
 
-	/* Locate the parent's downlink (updating the stack entry if needed) */
+	/*
+	 * Locate the downlink of "child" in the parent (updating the stack entry
+	 * if needed)
+	 */
 	ItemPointerSet(&(stack->bts_btentry.t_tid), child, P_HIKEY);
 	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
@@ -1064,6 +1087,17 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 					return false;
 				}
 				_bt_relbuf(rel, lbuf);
+			}
+
+			/*
+			 * Perform the same check on this internal level that
+			 * _bt_mark_page_halfdead performed on the leaf level.
+			 */
+			if (_bt_is_page_halfdead(rel, *rightsib))
+			{
+				elog(DEBUG1, "could not delete page %u because its right sibling %u is half-dead",
+					 parent, *rightsib);
+				return false;
 			}
 
 			return _bt_lock_branch_parent(rel, parent, stack->bts_parent,
@@ -1234,6 +1268,13 @@ _bt_pagedel(Relation rel, Buffer buf)
 					lbuf = _bt_getbuf(rel, leftsib, BT_READ);
 					lpage = BufferGetPage(lbuf);
 					lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
+					/*
+					 * If the left sibling is split again by another backend,
+					 * after we released the lock, we know that the first
+					 * split must have finished, because we don't allow an
+					 * incompletely-split page to be split again.  So we don't
+					 * need to walk right here.
+					 */
 					if (lopaque->btpo_next == BufferGetBlockNumber(buf) &&
 						P_INCOMPLETE_SPLIT(lopaque))
 					{
@@ -1337,6 +1378,22 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 */
 	leafblkno = BufferGetBlockNumber(leafbuf);
 	leafrightsib = opaque->btpo_next;
+
+	/*
+	 * Before attempting to lock the parent page, check that the right
+	 * sibling is not in half-dead state.  A half-dead right sibling would
+	 * have no downlink in the parent, which would be highly confusing later
+	 * when we delete the downlink that follows the current page's downlink.
+	 * (I believe the deletion would work correctly, but it would fail the
+	 * cross-check we make that the following downlink points to the right
+	 * sibling of the delete page.)
+	 */
+	if (_bt_is_page_halfdead(rel, leafrightsib))
+	{
+		elog(DEBUG1, "could not delete page %u because its right sibling %u is half-dead",
+			 leafblkno, leafrightsib);
+		return false;
+	}
 
 	/*
 	 * We cannot delete a page that is the rightmost child of its immediate
