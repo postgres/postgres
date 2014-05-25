@@ -239,7 +239,7 @@ typedef struct
 typedef struct
 {
 	instr_time	conn_time;
-	int			xacts;
+	int64		xacts;
 	int64		latencies;
 	int64		sqlats;
 	int64		throttle_lag;
@@ -2180,7 +2180,7 @@ process_builtin(char *tb)
 
 /* print out results */
 static void
-printResults(int ttype, int normal_xacts, int nclients,
+printResults(int ttype, int64 normal_xacts, int nclients,
 			 TState *threads, int nthreads,
 			 instr_time total_time, instr_time conn_total_time,
 			 int64 total_latencies, int64 total_sqlats,
@@ -2213,13 +2213,13 @@ printResults(int ttype, int normal_xacts, int nclients,
 	if (duration <= 0)
 	{
 		printf("number of transactions per client: %d\n", nxacts);
-		printf("number of transactions actually processed: %d/%d\n",
-			   normal_xacts, nxacts * nclients);
+		printf("number of transactions actually processed: " INT64_FORMAT "/" INT64_FORMAT "\n",
+			   normal_xacts, (int64) nxacts * nclients);
 	}
 	else
 	{
 		printf("duration: %d s\n", duration);
-		printf("number of transactions actually processed: %d\n",
+		printf("number of transactions actually processed: " INT64_FORMAT "\n",
 			   normal_xacts);
 	}
 
@@ -2359,7 +2359,7 @@ main(int argc, char **argv)
 	instr_time	start_time;		/* start up time */
 	instr_time	total_time;
 	instr_time	conn_total_time;
-	int			total_xacts = 0;
+	int64		total_xacts = 0;
 	int64		total_latencies = 0;
 	int64		total_sqlats = 0;
 	int64		throttle_lag = 0;
