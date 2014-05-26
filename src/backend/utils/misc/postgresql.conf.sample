@@ -127,7 +127,7 @@
 #maintenance_work_mem = 64MB		# min 1MB
 #autovacuum_work_mem = -1		# min 1MB, or -1 to use maintenance_work_mem
 #max_stack_depth = 2MB			# min 100kB
-#dynamic_shared_memory_type = posix # the default is the first option
+#dynamic_shared_memory_type = posix	# the default is the first option
 					# supported by the operating system:
 					#   posix
 					#   sysv
@@ -172,7 +172,7 @@
 
 # - Settings -
 
-#wal_level = minimal			# minimal, archive, hot_standby or logical
+#wal_level = minimal			# minimal, archive, hot_standby, or logical
 					# (change requires restart)
 #fsync = on				# turns forced synchronization on or off
 #synchronous_commit = on		# synchronization level;
@@ -185,7 +185,7 @@
 					#   fsync_writethrough
 					#   open_sync
 #full_page_writes = on			# recover from partial page writes
-#wal_log_hints = off			# also do full pages writes of non-critical updates
+#wal_log_hints = off			# also do full page writes of non-critical updates
 #wal_buffers = -1			# min 32kB, -1 sets based on shared_buffers
 					# (change requires restart)
 #wal_writer_delay = 200ms		# 1-10000 milliseconds
@@ -225,7 +225,7 @@
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
 
-#max_replication_slots = 0	# max number of replication slots.
+#max_replication_slots = 0	# max number of replication slots
 				# (change requires restart)
 
 # - Master Server -
@@ -481,7 +481,7 @@
 #autovacuum_analyze_scale_factor = 0.1	# fraction of table size before analyze
 #autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
 					# (change requires restart)
-#autovacuum_multixact_freeze_max_age = 400000000	# maximum Multixact age
+#autovacuum_multixact_freeze_max_age = 400000000	# maximum multixact age
 					# before forced vacuum
 					# (change requires restart)
 #autovacuum_vacuum_cost_delay = 20ms	# default vacuum cost delay for
