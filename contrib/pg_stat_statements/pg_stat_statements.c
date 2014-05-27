@@ -603,7 +603,7 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 	{
 		instr_time	start;
 		instr_time	duration;
-		uint64		rows = 0;
+		uint64		rows;
 		BufferUsage bufusage;
 
 		bufusage = pgBufferUsage;
@@ -632,7 +632,15 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 
 		/* parse command tag to retrieve the number of affected rows. */
 		if (completionTag &&
-			sscanf(completionTag, "COPY " UINT64_FORMAT, &rows) != 1)
+			strncmp(completionTag, "COPY ", 5) == 0)
+		{
+#ifdef HAVE_STRTOULL
+			rows = strtoull(completionTag + 5, NULL, 10);
+#else
+			rows = strtoul(completionTag + 5, NULL, 10);
+#endif
+		}
+		else
 			rows = 0;
 
 		/* calc differences of buffer counters. */
