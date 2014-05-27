@@ -694,10 +694,38 @@ PGAC_ARG_BOOL(with, libedit-preferred, no,
 
 
 #
-# OSSP UUID library
+# UUID library
 #
-PGAC_ARG_BOOL(with, ossp-uuid, no, [build contrib/uuid-ossp, requires OSSP UUID library])
-AC_SUBST(with_ossp_uuid)
+# There are at least three UUID libraries in common use: the FreeBSD/NetBSD
+# library, the e2fsprogs libuuid (now part of util-linux-ng), and the OSSP
+# UUID library.  More than one of these might be present on a given platform,
+# so we make the user say which one she wants.
+#
+PGAC_ARG_REQ(with, uuid, [LIB], [build contrib/uuid-ossp using LIB (bsd,e2fs,ossp)])
+if test x"$with_uuid" = x"" ; then
+  with_uuid=no
+fi
+PGAC_ARG_BOOL(with, ossp-uuid, no, [obsolete spelling of --with-uuid=ossp])
+if test "$with_ossp_uuid" = yes ; then
+  with_uuid=ossp
+fi
+
+if test "$with_uuid" = bsd ; then
+  AC_DEFINE([HAVE_UUID_BSD], 1, [Define to 1 if you have BSD UUID support.])
+  UUID_EXTRA_OBJS="md5.o sha1.o"
+elif test "$with_uuid" = e2fs ; then
+  AC_DEFINE([HAVE_UUID_E2FS], 1, [Define to 1 if you have E2FS UUID support.])
+  UUID_EXTRA_OBJS="md5.o sha1.o"
+elif test "$with_uuid" = ossp ; then
+  AC_DEFINE([HAVE_UUID_OSSP], 1, [Define to 1 if you have OSSP UUID support.])
+  UUID_EXTRA_OBJS=""
+elif test "$with_uuid" = no ; then
+  UUID_EXTRA_OBJS=""
+else
+  AC_MSG_ERROR([--with-uuid must specify one of bsd, e2fs, or ossp])
+fi
+AC_SUBST(with_uuid)
+AC_SUBST(UUID_EXTRA_OBJS)
 
 
 #
@@ -948,14 +976,26 @@ if test "$with_selinux" = yes; then
 fi
 
 # for contrib/uuid-ossp
-if test "$with_ossp_uuid" = yes ; then
+if test "$with_uuid" = bsd ; then
+  # On BSD, the UUID functions are in libc
+  AC_CHECK_FUNC(uuid_to_string,
+    [UUID_LIBS=""],
+    [AC_MSG_ERROR([BSD UUID functions are not present])])
+elif test "$with_uuid" = e2fs ; then
+  # On OS X, the UUID functions are in libc
+  AC_CHECK_FUNC(uuid_generate,
+    [UUID_LIBS=""],
+    [AC_CHECK_LIB(uuid, uuid_generate,
+      [UUID_LIBS="-luuid"],
+      [AC_MSG_ERROR([library 'uuid' is required for E2FS UUID])])])
+elif test "$with_uuid" = ossp ; then
   AC_CHECK_LIB(ossp-uuid, uuid_export,
-    [OSSP_UUID_LIBS="-lossp-uuid"],
+    [UUID_LIBS="-lossp-uuid"],
     [AC_CHECK_LIB(uuid, uuid_export,
-      [OSSP_UUID_LIBS="-luuid"],
-      [AC_MSG_ERROR([library 'ossp-uuid' or 'uuid' is required for OSSP-UUID])])])
+      [UUID_LIBS="-luuid"],
+      [AC_MSG_ERROR([library 'ossp-uuid' or 'uuid' is required for OSSP UUID])])])
 fi
-AC_SUBST(OSSP_UUID_LIBS)
+AC_SUBST(UUID_LIBS)
 
 
 ##
@@ -1075,10 +1115,27 @@ if test "$with_bonjour" = yes ; then
 fi
 
 # for contrib/uuid-ossp
-if test "$with_ossp_uuid" = yes ; then
-  AC_CHECK_HEADERS(ossp/uuid.h, [], [
-    AC_CHECK_HEADERS(uuid.h, [],
-      [AC_MSG_ERROR([header file <ossp/uuid.h> or <uuid.h> is required for OSSP-UUID])])])
+if test "$with_uuid" = bsd ; then
+  AC_CHECK_HEADERS(uuid.h,
+    [AC_EGREP_HEADER([uuid_to_string], uuid.h, [],
+      [AC_MSG_ERROR([header file <uuid.h> does not match BSD UUID library])])],
+    [AC_MSG_ERROR([header file <uuid.h> is required for BSD UUID])])
+elif test "$with_uuid" = e2fs ; then
+  AC_CHECK_HEADERS(uuid/uuid.h,
+    [AC_EGREP_HEADER([uuid_generate], uuid/uuid.h, [],
+      [AC_MSG_ERROR([header file <uuid/uuid.h> does not match E2FS UUID library])])],
+    [AC_CHECK_HEADERS(uuid.h,
+      [AC_EGREP_HEADER([uuid_generate], uuid.h, [],
+        [AC_MSG_ERROR([header file <uuid.h> does not match E2FS UUID library])])],
+      [AC_MSG_ERROR([header file <uuid/uuid.h> or <uuid.h> is required for E2FS UUID])])])
+elif test "$with_uuid" = ossp ; then
+  AC_CHECK_HEADERS(ossp/uuid.h,
+    [AC_EGREP_HEADER([uuid_export], ossp/uuid.h, [],
+      [AC_MSG_ERROR([header file <ossp/uuid.h> does not match OSSP UUID library])])],
+    [AC_CHECK_HEADERS(uuid.h,
+      [AC_EGREP_HEADER([uuid_export], uuid.h, [],
+        [AC_MSG_ERROR([header file <uuid.h> does not match OSSP UUID library])])],
+      [AC_MSG_ERROR([header file <ossp/uuid.h> or <uuid.h> is required for OSSP UUID])])])
 fi
 
 if test "$PORTNAME" = "win32" ; then

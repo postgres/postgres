@@ -870,16 +870,45 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-uuid=<replaceable>LIBRARY</replaceable></option></term>
+       <listitem>
+        <para>
+         Build the <![%standalone-include[uuid-ossp]]>
+         <![%standalone-ignore[<xref linkend="uuid-ossp">]]> module
+         (which provides functions to generate UUIDs), using the specified
+         UUID library.<indexterm><primary>UUID</primary></indexterm>
+         <replaceable>LIBRARY</replaceable> must be one of:
+        </para>
+        <itemizedlist>
+         <listitem>
+          <para>
+           <option>bsd</> to use the UUID functions found in FreeBSD, NetBSD,
+           and some other BSD-derived systems
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <option>e2fs</> to use the UUID library created by
+           the <literal>e2fsprogs</> project; this library is present in most
+           Linux systems and in Mac OS X, and can be obtained for other
+           platforms as well
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <option>ossp</> to use the <ulink
+           url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID library</ulink>
+          </para>
+         </listitem>
+        </itemizedlist>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-ossp-uuid</option></term>
        <listitem>
         <para>
-         Build components using the <ulink
-         url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
-         library</ulink>.  Specifically, build the
-         <![%standalone-include[uuid-ossp]]>
-         <![%standalone-ignore[<xref linkend="uuid-ossp">]]> module,
-         which provides functions to generate
-         UUIDs.<indexterm><primary>UUID</primary></indexterm>
+         Obsolete equivalent of <literal>--with-uuid=ossp</literal>.
         </para>
        </listitem>
       </varlistentry>

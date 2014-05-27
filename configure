@@ -657,7 +657,7 @@ acx_pthread_config
 have_win32_dbghelp
 HAVE_IPV6
 LIBOBJS
-OSSP_UUID_LIBS
+UUID_LIBS
 ZIC
 python_enable_shared
 python_additional_libs
@@ -705,7 +705,8 @@ with_system_tzdata
 with_libxslt
 with_libxml
 XML2_CONFIG
-with_ossp_uuid
+UUID_EXTRA_OBJS
+with_uuid
 with_selinux
 with_openssl
 krb_srvtab
@@ -826,6 +827,7 @@ with_openssl
 with_selinux
 with_readline
 with_libedit_preferred
+with_uuid
 with_ossp_uuid
 with_libxml
 with_libxslt
@@ -1512,7 +1514,8 @@ Optional Packages:
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
   --with-libedit-preferred
                           prefer BSD Libedit over GNU Readline
-  --with-ossp-uuid        build contrib/uuid-ossp, requires OSSP UUID library
+  --with-uuid=LIB         build contrib/uuid-ossp using LIB (bsd,e2fs,ossp)
+  --with-ossp-uuid        obsolete spelling of --with-uuid=ossp
   --with-libxml           build with XML support
   --with-libxslt          use XSLT support when building contrib/xml2
   --with-system-tzdata=DIR
@@ -1736,6 +1739,73 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_try_cpp
+
+# ac_fn_c_check_func LINENO FUNC VAR
+# ----------------------------------
+# Tests whether FUNC exists, setting the cache variable VAR accordingly
+ac_fn_c_check_func ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+/* Define $2 to an innocuous variant, in case <limits.h> declares $2.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $2 innocuous_$2
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $2 (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $2
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $2 ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$2 || defined __stub___$2
+choke me
+#endif
+
+int
+main ()
+{
+return $2 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_func
 
 # ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
 # -------------------------------------------------------
@@ -2194,73 +2264,6 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
-
-# ac_fn_c_check_func LINENO FUNC VAR
-# ----------------------------------
-# Tests whether FUNC exists, setting the cache variable VAR accordingly
-ac_fn_c_check_func ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-/* Define $2 to an innocuous variant, in case <limits.h> declares $2.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $2 innocuous_$2
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $2 (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $2
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char $2 ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined __stub_$2 || defined __stub___$2
-choke me
-#endif
-
-int
-main ()
-{
-return $2 ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_func
 
 # ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
 # ---------------------------------------------
@@ -5614,8 +5617,37 @@ fi
 
 
 #
-# OSSP UUID library
+# UUID library
 #
+# There are at least three UUID libraries in common use: the FreeBSD/NetBSD
+# library, the e2fsprogs libuuid (now part of util-linux-ng), and the OSSP
+# UUID library.  More than one of these might be present on a given platform,
+# so we make the user say which one she wants.
+#
+
+
+
+# Check whether --with-uuid was given.
+if test "${with_uuid+set}" = set; then :
+  withval=$with_uuid;
+  case $withval in
+    yes)
+      as_fn_error $? "argument required for --with-uuid option" "$LINENO" 5
+      ;;
+    no)
+      as_fn_error $? "argument required for --with-uuid option" "$LINENO" 5
+      ;;
+    *)
+
+      ;;
+  esac
+
+fi
+
+
+if test x"$with_uuid" = x"" ; then
+  with_uuid=no
+fi
 
 
 
@@ -5639,6 +5671,31 @@ else
 
 fi
 
+
+if test "$with_ossp_uuid" = yes ; then
+  with_uuid=ossp
+fi
+
+if test "$with_uuid" = bsd ; then
+
+$as_echo "#define HAVE_UUID_BSD 1" >>confdefs.h
+
+  UUID_EXTRA_OBJS="md5.o sha1.o"
+elif test "$with_uuid" = e2fs ; then
+
+$as_echo "#define HAVE_UUID_E2FS 1" >>confdefs.h
+
+  UUID_EXTRA_OBJS="md5.o sha1.o"
+elif test "$with_uuid" = ossp ; then
+
+$as_echo "#define HAVE_UUID_OSSP 1" >>confdefs.h
+
+  UUID_EXTRA_OBJS=""
+elif test "$with_uuid" = no ; then
+  UUID_EXTRA_OBJS=""
+else
+  as_fn_error $? "--with-uuid must specify one of bsd, e2fs, or ossp" "$LINENO" 5
+fi
 
 
 
@@ -8775,7 +8832,66 @@ fi
 fi
 
 # for contrib/uuid-ossp
-if test "$with_ossp_uuid" = yes ; then
+if test "$with_uuid" = bsd ; then
+  # On BSD, the UUID functions are in libc
+  ac_fn_c_check_func "$LINENO" "uuid_to_string" "ac_cv_func_uuid_to_string"
+if test "x$ac_cv_func_uuid_to_string" = xyes; then :
+  UUID_LIBS=""
+else
+  as_fn_error $? "BSD UUID functions are not present" "$LINENO" 5
+fi
+
+elif test "$with_uuid" = e2fs ; then
+  # On OS X, the UUID functions are in libc
+  ac_fn_c_check_func "$LINENO" "uuid_generate" "ac_cv_func_uuid_generate"
+if test "x$ac_cv_func_uuid_generate" = xyes; then :
+  UUID_LIBS=""
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uuid_generate in -luuid" >&5
+$as_echo_n "checking for uuid_generate in -luuid... " >&6; }
+if ${ac_cv_lib_uuid_uuid_generate+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-luuid  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char uuid_generate ();
+int
+main ()
+{
+return uuid_generate ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_uuid_uuid_generate=yes
+else
+  ac_cv_lib_uuid_uuid_generate=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_uuid_uuid_generate" >&5
+$as_echo "$ac_cv_lib_uuid_uuid_generate" >&6; }
+if test "x$ac_cv_lib_uuid_uuid_generate" = xyes; then :
+  UUID_LIBS="-luuid"
+else
+  as_fn_error $? "library 'uuid' is required for E2FS UUID" "$LINENO" 5
+fi
+
+fi
+
+elif test "$with_uuid" = ossp ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uuid_export in -lossp-uuid" >&5
 $as_echo_n "checking for uuid_export in -lossp-uuid... " >&6; }
 if ${ac_cv_lib_ossp_uuid_uuid_export+:} false; then :
@@ -8813,7 +8929,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ossp_uuid_uuid_export" >&5
 $as_echo "$ac_cv_lib_ossp_uuid_uuid_export" >&6; }
 if test "x$ac_cv_lib_ossp_uuid_uuid_export" = xyes; then :
-  OSSP_UUID_LIBS="-lossp-uuid"
+  UUID_LIBS="-lossp-uuid"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uuid_export in -luuid" >&5
 $as_echo_n "checking for uuid_export in -luuid... " >&6; }
@@ -8852,9 +8968,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_uuid_uuid_export" >&5
 $as_echo "$ac_cv_lib_uuid_uuid_export" >&6; }
 if test "x$ac_cv_lib_uuid_uuid_export" = xyes; then :
-  OSSP_UUID_LIBS="-luuid"
+  UUID_LIBS="-luuid"
 else
-  as_fn_error $? "library 'ossp-uuid' or 'uuid' is required for OSSP-UUID" "$LINENO" 5
+  as_fn_error $? "library 'ossp-uuid' or 'uuid' is required for OSSP UUID" "$LINENO" 5
 fi
 
 fi
@@ -9398,7 +9514,86 @@ fi
 fi
 
 # for contrib/uuid-ossp
-if test "$with_ossp_uuid" = yes ; then
+if test "$with_uuid" = bsd ; then
+  for ac_header in uuid.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "uuid.h" "ac_cv_header_uuid_h" "$ac_includes_default"
+if test "x$ac_cv_header_uuid_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_UUID_H 1
+_ACEOF
+ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <uuid.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "uuid_to_string" >/dev/null 2>&1; then :
+
+else
+  as_fn_error $? "header file <uuid.h> does not match BSD UUID library" "$LINENO" 5
+fi
+rm -f conftest*
+
+else
+  as_fn_error $? "header file <uuid.h> is required for BSD UUID" "$LINENO" 5
+fi
+
+done
+
+elif test "$with_uuid" = e2fs ; then
+  for ac_header in uuid/uuid.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "uuid/uuid.h" "ac_cv_header_uuid_uuid_h" "$ac_includes_default"
+if test "x$ac_cv_header_uuid_uuid_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_UUID_UUID_H 1
+_ACEOF
+ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <uuid/uuid.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "uuid_generate" >/dev/null 2>&1; then :
+
+else
+  as_fn_error $? "header file <uuid/uuid.h> does not match E2FS UUID library" "$LINENO" 5
+fi
+rm -f conftest*
+
+else
+  for ac_header in uuid.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "uuid.h" "ac_cv_header_uuid_h" "$ac_includes_default"
+if test "x$ac_cv_header_uuid_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_UUID_H 1
+_ACEOF
+ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <uuid.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "uuid_generate" >/dev/null 2>&1; then :
+
+else
+  as_fn_error $? "header file <uuid.h> does not match E2FS UUID library" "$LINENO" 5
+fi
+rm -f conftest*
+
+else
+  as_fn_error $? "header file <uuid/uuid.h> or <uuid.h> is required for E2FS UUID" "$LINENO" 5
+fi
+
+done
+
+fi
+
+done
+
+elif test "$with_uuid" = ossp ; then
   for ac_header in ossp/uuid.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "ossp/uuid.h" "ac_cv_header_ossp_uuid_h" "$ac_includes_default"
@@ -9406,19 +9601,42 @@ if test "x$ac_cv_header_ossp_uuid_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_OSSP_UUID_H 1
 _ACEOF
+ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ossp/uuid.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "uuid_export" >/dev/null 2>&1; then :
 
 else
+  as_fn_error $? "header file <ossp/uuid.h> does not match OSSP UUID library" "$LINENO" 5
+fi
+rm -f conftest*
 
-    for ac_header in uuid.h
+else
+  for ac_header in uuid.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "uuid.h" "ac_cv_header_uuid_h" "$ac_includes_default"
 if test "x$ac_cv_header_uuid_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_UUID_H 1
 _ACEOF
+ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <uuid.h>
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "uuid_export" >/dev/null 2>&1; then :
 
 else
-  as_fn_error $? "header file <ossp/uuid.h> or <uuid.h> is required for OSSP-UUID" "$LINENO" 5
+  as_fn_error $? "header file <uuid.h> does not match OSSP UUID library" "$LINENO" 5
+fi
+rm -f conftest*
+
+else
+  as_fn_error $? "header file <ossp/uuid.h> or <uuid.h> is required for OSSP UUID" "$LINENO" 5
 fi
 
 done

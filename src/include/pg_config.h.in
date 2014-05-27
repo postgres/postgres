@@ -602,8 +602,20 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
+/* Define to 1 if you have BSD UUID support. */
+#undef HAVE_UUID_BSD
+
+/* Define to 1 if you have E2FS UUID support. */
+#undef HAVE_UUID_E2FS
+
 /* Define to 1 if you have the <uuid.h> header file. */
 #undef HAVE_UUID_H
+
+/* Define to 1 if you have OSSP UUID support. */
+#undef HAVE_UUID_OSSP
+
+/* Define to 1 if you have the <uuid/uuid.h> header file. */
+#undef HAVE_UUID_UUID_H
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF

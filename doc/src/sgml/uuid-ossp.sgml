@@ -13,20 +13,6 @@
   are also functions to produce certain special UUID constants.
  </para>
 
- <para>
-  This module depends on the OSSP UUID library, which can be found at
-  <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>.
- </para>
-
- <note>
-  <para>
-   The OSSP UUID library is not well maintained, and is becoming increasingly
-   difficult to port to newer platforms.  If you only need randomly-generated
-   (version 4) UUIDs, consider using the <function>gen_random_uuid()</>
-   function from the <xref linkend="pgcrypto"> module instead.
-  </para>
- </note>
-
  <sect2>
   <title><literal>uuid-ossp</literal> Functions</title>
 
@@ -170,6 +156,39 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
     </tbody>
    </tgroup>
   </table>
+ </sect2>
+
+ <sect2>
+  <title>Building <filename>uuid-ossp</></title>
+
+  <para>
+   Historically this module depended on the OSSP UUID library, which accounts
+   for the module's name.  While the OSSP UUID library can still be found
+   at <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>, it is not well
+   maintained, and is becoming increasingly difficult to port to newer
+   platforms.  <filename>uuid-ossp</> can now be built without the OSSP
+   library on some platforms.  On FreeBSD, NetBSD, and some other BSD-derived
+   platforms, suitable UUID creation functions are included in the
+   core <filename>libc</> library.  On Linux, Mac OS X, and some other
+   platforms, suitable functions are provided in the <filename>libuuid</>
+   library, which originally came from the <literal>e2fsprogs</> project
+   (though on modern Linux it is considered part
+   of <literal>util-linux-ng</>).  When invoking <filename>configure</>,
+   specify <option>--with-uuid=bsd</option> to use the BSD functions,
+   or <option>--with-uuid=e2fs</option> to
+   use <literal>e2fsprogs</>' <filename>libuuid</>, or
+   <option>--with-uuid=ossp</option> to use the OSSP UUID library.
+   More than one of these libraries might be available on a particular
+   machine, so <filename>configure</> does not automatically choose one.
+  </para>
+
+  <note>
+   <para>
+    If you only need randomly-generated (version 4) UUIDs,
+    consider using the <function>gen_random_uuid()</> function
+    from the <xref linkend="pgcrypto"> module instead.
+   </para>
+  </note>
  </sect2>
 
  <sect2>
