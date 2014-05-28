@@ -42,7 +42,7 @@ static char strbuf[25] = {
 /* BISON Declarations */
 %parse-param {SEG *result}
 %expect 0
-%name-prefix "seg_yy"
+%name-prefix="seg_yy"
 
 %union {
 	struct BND {
