@@ -148,9 +148,10 @@ static StringInfoData reply_message;
 static StringInfoData tmpbuf;
 
 /*
- * Timestamp of the last receipt of the reply from the standby.
+ * Timestamp of the last receipt of the reply from the standby. Set to 0 if
+ * wal_sender_timeout doesn't need to be active.
  */
-static TimestampTz last_reply_timestamp;
+static TimestampTz last_reply_timestamp = 0;
 
 /* Have we sent a heartbeat message asking for reply, since last reply? */
 static bool waiting_for_ping_response = false;
@@ -795,6 +796,15 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 										cmd->plugin, NIL,
 										logical_read_xlog_page,
 										WalSndPrepareWrite, WalSndWriteData);
+
+		/*
+		 * Signal that we don't need the timeout mechanism. We're just
+		 * creating the replication slot and don't yet accept feedback
+		 * messages or send keepalives. As we possibly need to wait for
+		 * further WAL the walsender would otherwise possibly be killed too
+		 * soon.
+		 */
+		last_reply_timestamp = 0;
 
 		/* build initial snapshot, might take a while */
 		DecodingContextFindStartpoint(ctx);
@@ -1693,7 +1703,7 @@ WalSndComputeSleeptime(TimestampTz now)
 {
 	long		sleeptime = 10000;		/* 10 s */
 
-	if (wal_sender_timeout > 0)
+	if (wal_sender_timeout > 0 && last_reply_timestamp > 0)
 	{
 		TimestampTz wakeup_time;
 		long		sec_to_timeout;
@@ -1735,6 +1745,10 @@ WalSndCheckTimeOut(TimestampTz now)
 {
 	TimestampTz timeout;
 
+	/* don't bail out if we're doing something that doesn't require timeouts */
+	if (last_reply_timestamp <= 0)
+		return;
+
 	timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
 										  wal_sender_timeout);
 
@@ -1764,7 +1778,10 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	initStringInfo(&reply_message);
 	initStringInfo(&tmpbuf);
 
-	/* Initialize the last reply timestamp */
+	/*
+	 * Initialize the last reply timestamp. That enables timeout processing
+	 * from hereon.
+	 */
 	last_reply_timestamp = GetCurrentTimestamp();
 	waiting_for_ping_response = false;
 
@@ -2879,7 +2896,11 @@ WalSndKeepaliveIfNecessary(TimestampTz now)
 {
 	TimestampTz ping_time;
 
-	if (wal_sender_timeout <= 0)
+	/*
+	 * Don't send keepalive messages if timeouts are globally disabled or
+	 * we're doing something not partaking in timeouts.
+	 */
+	if (wal_sender_timeout <= 0 || last_reply_timestamp <= 0)
 		return;
 
 	if (waiting_for_ping_response)
