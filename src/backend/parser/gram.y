@@ -166,7 +166,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %pure-parser
 %expect 0
-%name-prefix "base_yy"
+%name-prefix="base_yy"
 %locations
 
 %parse-param {core_yyscan_t yyscanner}
