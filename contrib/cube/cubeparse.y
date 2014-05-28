@@ -39,7 +39,7 @@ static NDBOX * write_point_as_box(char *s, int dim);
 /* BISON Declarations */
 %parse-param {NDBOX **result}
 %expect 0
-%name-prefix="cube_yy"
+%name-prefix "cube_yy"
 
 %token CUBEFLOAT O_PAREN C_PAREN O_BRACKET C_BRACKET COMMA
 %start box
