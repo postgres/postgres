@@ -219,8 +219,12 @@ sub contribcheck
 	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
-		next if ($module eq 'sepgsql');
-		next if ($module eq 'xml2' && !$config->{xml});
+		# these configuration-based exclusions must match Install.pm
+		next if ($module eq "uuid-ossp" && !defined($config->{uuid}));
+		next if ($module eq "sslinfo"   && !defined($config->{openssl}));
+		next if ($module eq "xml2"      && !defined($config->{xml}));
+		next if ($module eq "sepgsql");
+
 		next
 		  unless -d "$module/sql"
 			  && -d "$module/expected"

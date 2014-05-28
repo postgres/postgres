@@ -408,6 +408,7 @@ sub CopyContribFiles
 		next
 		  if ($insttype eq "client" && !grep { $_ eq $d } @client_contribs);
 
+		# these configuration-based exclusions must match vcregress.pl
 		next if ($d eq "uuid-ossp" && !defined($config->{uuid}));
 		next if ($d eq "sslinfo"   && !defined($config->{openssl}));
 		next if ($d eq "xml2"      && !defined($config->{xml}));
