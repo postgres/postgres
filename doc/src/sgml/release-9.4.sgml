@@ -616,17 +616,18 @@
        </para>
 
        <para>
-        Such keys are faster and have improved security over previous
-        options. The new configuration
-        parameter <link linkend="guc-ssl-ecdh-curve"><varname>ssl_ecdh_curve</></link>
-        controls which curve is used.
+        This allows use of Elliptic Curve keys for server authentication.
+        Such keys are faster and have improved security over <acronym>RSA</> keys.
+        The new configuration parameter
+        <link linkend="guc-ssl-ecdh-curve"><varname>ssl_ecdh_curve</></link>
+        controls which curve is used for <acronym>ECDH</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Improve the default <link
-        linkend="guc-ssl-ciphers"><varname>ssl_ciphers</></link> ciphers
+        linkend="guc-ssl-ciphers"><varname>ssl_ciphers</></link> value
         (Marko Kreen)
        </para>
       </listitem>
