@@ -34,8 +34,8 @@
 
 static void fillJsonbValue(JEntry *array, int index, char *base_addr,
 			   JsonbValue *result);
+static bool	equalsJsonbScalarValue(JsonbValue *a, JsonbValue *b);
 static int	compareJsonbScalarValue(JsonbValue *a, JsonbValue *b);
-static int	lexicalCompareJsonbStringValue(const void *a, const void *b);
 static Jsonb *convertToJsonb(JsonbValue *val);
 static void convertJsonbValue(StringInfo buffer, JEntry *header, JsonbValue *val, int level);
 static void convertJsonbArray(StringInfo buffer, JEntry *header, JsonbValue *val, int level);
@@ -161,8 +161,6 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 				switch (va.type)
 				{
 					case jbvString:
-						res = lexicalCompareJsonbStringValue(&va, &vb);
-						break;
 					case jbvNull:
 					case jbvNumeric:
 					case jbvBool:
@@ -289,7 +287,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 
 			if (key->type == result->type)
 			{
-				if (compareJsonbScalarValue(key, result) == 0)
+				if (equalsJsonbScalarValue(key, result))
 					return result;
 			}
 		}
@@ -917,7 +915,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 			}
 			else if (IsAJsonbScalar(lhsVal))
 			{
-				if (compareJsonbScalarValue(lhsVal, &vcontained) != 0)
+				if (!equalsJsonbScalarValue(lhsVal, &vcontained))
 					return false;
 			}
 			else
@@ -1118,10 +1116,38 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 
 /*
  * Are two scalar JsonbValues of the same type a and b equal?
+ */
+static bool
+equalsJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
+{
+	if (aScalar->type == bScalar->type)
+	{
+		switch (aScalar->type)
+		{
+			case jbvNull:
+				return true;
+			case jbvString:
+				return lengthCompareJsonbStringValue(aScalar, bScalar) == 0;
+			case jbvNumeric:
+				return DatumGetBool(DirectFunctionCall2(numeric_eq,
+									   PointerGetDatum(aScalar->val.numeric),
+									 PointerGetDatum(bScalar->val.numeric)));
+			case jbvBool:
+				return aScalar->val.boolean == bScalar->val.boolean;
+
+			default:
+				elog(ERROR, "invalid jsonb scalar type");
+		}
+	}
+	elog(ERROR, "jsonb scalar type mismatch");
+	return -1;
+}
+
+/*
+ * Compare two scalar JsonbValues, returning -1, 0, or 1.
  *
- * Does not use lexical comparisons.  Therefore, it is essentially that this
- * never be used against Strings for anything other than searching for values
- * within a single jsonb.
+ * Strings are compared using the default collation.  Used by B-tree
+ * operators, where a lexical sort order is generally expected.
  */
 static int
 compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
@@ -1133,41 +1159,28 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 			case jbvNull:
 				return 0;
 			case jbvString:
-				return lengthCompareJsonbStringValue(aScalar, bScalar);
+				return varstr_cmp(aScalar->val.string.val,
+								  aScalar->val.string.len,
+								  bScalar->val.string.val,
+								  bScalar->val.string.len,
+								  DEFAULT_COLLATION_OID);
 			case jbvNumeric:
 				return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
 									   PointerGetDatum(aScalar->val.numeric),
 									 PointerGetDatum(bScalar->val.numeric)));
 			case jbvBool:
-				if (aScalar->val.boolean != bScalar->val.boolean)
-					return (aScalar->val.boolean > bScalar->val.boolean) ? 1 : -1;
-				else
+				if (aScalar->val.boolean == bScalar->val.boolean)
 					return 0;
+				else if (aScalar->val.boolean > bScalar->val.boolean)
+					return 1;
+				else
+					return -1;
 			default:
 				elog(ERROR, "invalid jsonb scalar type");
 		}
 	}
 	elog(ERROR, "jsonb scalar type mismatch");
 	return -1;
-}
-
-/*
- * Standard lexical qsort() comparator of jsonb strings.
- *
- * Sorts strings lexically, using the default database collation.  Used by
- * B-Tree operators, where a lexical sort order is generally expected.
- */
-static int
-lexicalCompareJsonbStringValue(const void *a, const void *b)
-{
-	const JsonbValue *va = (const JsonbValue *) a;
-	const JsonbValue *vb = (const JsonbValue *) b;
-
-	Assert(va->type == jbvString);
-	Assert(vb->type == jbvString);
-
-	return varstr_cmp(va->val.string.val, va->val.string.len, vb->val.string.val,
-					  vb->val.string.len, DEFAULT_COLLATION_OID);
 }
 
 
