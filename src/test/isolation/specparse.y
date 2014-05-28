@@ -20,7 +20,7 @@ TestSpec		parseresult;			/* result of parsing is left here */
 %}
 
 %expect 0
-%name-prefix="spec_yy"
+%name-prefix "spec_yy"
 
 %union
 {
