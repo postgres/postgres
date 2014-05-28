@@ -134,19 +134,12 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
 								  &labelfile);
-	SendXlogRecPtrResult(startptr, starttli);
-
 	/*
-	 * Calculate the relative path of temporary statistics directory in order
-	 * to skip the files which are located in that directory later.
+	 * Once do_pg_start_backup has been called, ensure that any failure causes
+	 * us to abort the backup so we don't "leak" a backup counter. For this reason,
+	 * *all* functionality between do_pg_start_backup() and do_pg_stop_backup()
+	 * should be inside the error cleanup block!
 	 */
-	if (is_absolute_path(pgstat_stat_directory) &&
-		strncmp(pgstat_stat_directory, DataDir, datadirpathlen) == 0)
-		statrelpath = psprintf("./%s", pgstat_stat_directory + datadirpathlen + 1);
-	else if (strncmp(pgstat_stat_directory, "./", 2) != 0)
-		statrelpath = psprintf("./%s", pgstat_stat_directory);
-	else
-		statrelpath = pgstat_stat_directory;
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -154,6 +147,20 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		ListCell   *lc;
 		struct dirent *de;
 		tablespaceinfo *ti;
+
+		SendXlogRecPtrResult(startptr, starttli);
+
+		/*
+		 * Calculate the relative path of temporary statistics directory in order
+		 * to skip the files which are located in that directory later.
+		 */
+		if (is_absolute_path(pgstat_stat_directory) &&
+			strncmp(pgstat_stat_directory, DataDir, datadirpathlen) == 0)
+			statrelpath = psprintf("./%s", pgstat_stat_directory + datadirpathlen + 1);
+		else if (strncmp(pgstat_stat_directory, "./", 2) != 0)
+			statrelpath = psprintf("./%s", pgstat_stat_directory);
+		else
+			statrelpath = pgstat_stat_directory;
 
 		/* Collect information about all tablespaces */
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
