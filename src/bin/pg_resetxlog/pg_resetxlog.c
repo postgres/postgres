@@ -492,7 +492,8 @@ GuessControlValues(void)
 	 */
 	gettimeofday(&tv, NULL);
 	sysidentifier = ((uint64) tv.tv_sec) << 32;
-	sysidentifier |= (uint32) (tv.tv_sec | tv.tv_usec);
+	sysidentifier |= ((uint64) tv.tv_usec) << 12;
+	sysidentifier |= getpid() & 0xFFF;
 
 	ControlFile.system_identifier = sysidentifier;
 
