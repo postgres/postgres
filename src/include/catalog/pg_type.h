@@ -578,7 +578,7 @@ DESCR("UUID datatype");
 DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b A f t \054 0 2950 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* pg_lsn */
-DATA(insert OID = 3220 ( pg_lsn			PGNSP PGUID 8 FLOAT8PASSBYVAL b U t t \054 0 0 3221 pg_lsn_in pg_lsn_out pg_lsn_recv pg_lsn_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3220 ( pg_lsn			PGNSP PGUID 8 FLOAT8PASSBYVAL b U f t \054 0 0 3221 pg_lsn_in pg_lsn_out pg_lsn_recv pg_lsn_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("PostgreSQL LSN datatype");
 #define LSNOID			3220
 DATA(insert OID = 3221 ( _pg_lsn			PGNSP PGUID -1 f b A f t \054 0 3220 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
