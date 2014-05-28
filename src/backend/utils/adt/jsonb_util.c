@@ -62,13 +62,13 @@ static void uniqueifyJsonbObject(JsonbValue *object);
  *
  * There isn't a JsonbToJsonbValue(), because generally we find it more
  * convenient to directly iterate through the Jsonb representation and only
- * really convert nested scalar values.  formIterIsContainer() does this, so
- * that clients of the iteration code don't have to directly deal with the
- * binary representation (JsonbDeepContains() is a notable exception, although
- * all exceptions are internal to this module).  In general, functions that
- * accept a JsonbValue argument are concerned with the manipulation of scalar
- * values, or simple containers of scalar values, where it would be
- * inconvenient to deal with a great amount of other state.
+ * really convert nested scalar values.  JsonbIteratorNext() does this, so that
+ * clients of the iteration code don't have to directly deal with the binary
+ * representation (JsonbDeepContains() is a notable exception, although all
+ * exceptions are internal to this module).  In general, functions that accept
+ * a JsonbValue argument are concerned with the manipulation of scalar values,
+ * or simple containers of scalar values, where it would be inconvenient to
+ * deal with a great amount of other state.
  */
 Jsonb *
 JsonbValueToJsonb(JsonbValue *val)
@@ -137,19 +137,23 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 		ra = JsonbIteratorNext(&ita, &va, false);
 		rb = JsonbIteratorNext(&itb, &vb, false);
 
-		/*
-		 * To a limited extent we'll redundantly iterate over an array/object
-		 * while re-performing the same test without any reasonable
-		 * expectation of the same container types having differing lengths
-		 * (as when we process a WJB_BEGIN_OBJECT, and later the corresponding
-		 * WJB_END_OBJECT), but no matter.
-		 */
 		if (ra == rb)
 		{
 			if (ra == WJB_DONE)
 			{
 				/* Decisively equal */
 				break;
+			}
+
+			if (ra == WJB_END_ARRAY || ra == WJB_END_OBJECT)
+			{
+				/*
+				 * There is no array or object to compare at this stage of
+				 * processing.  jbvArray/jbvObject values are compared
+				 * initially, at the WJB_BEGIN_ARRAY and WJB_BEGIN_OBJECT
+				 * tokens.
+				 */
+				continue;
 			}
 
 			if (va.type == vb.type)
@@ -194,19 +198,26 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 		else
 		{
 			/*
-			 * It's safe to assume that the types differed.
+			 * It's safe to assume that the types differed, and that the va
+			 * and vb values passed were set.
 			 *
-			 * If the two values were the same container type, then there'd
+			 * If the two values were of the same container type, then there'd
 			 * have been a chance to observe the variation in the number of
-			 * elements/pairs (when processing WJB_BEGIN_OBJECT, say).  They
-			 * can't be scalar types either, because then they'd have to be
-			 * contained in containers already ruled unequal due to differing
-			 * numbers of pairs/elements, or already directly ruled unequal
-			 * with a call to the underlying type's comparator.
+			 * elements/pairs (when processing WJB_BEGIN_OBJECT, say).  They're
+			 * either two heterogeneously-typed containers, or a container and
+			 * some scalar type.
+			 *
+			 * We don't have to consider the WJB_END_ARRAY and WJB_END_OBJECT
+			 * cases here, because we would have seen the corresponding
+			 * WJB_BEGIN_ARRAY and WJB_BEGIN_OBJECT tokens first, and
+			 * concluded that they don't match.
 			 */
+			Assert(ra != WJB_END_ARRAY && ra != WJB_END_OBJECT);
+			Assert(rb != WJB_END_ARRAY && rb != WJB_END_OBJECT);
+
 			Assert(va.type != vb.type);
-			Assert(va.type == jbvArray || va.type == jbvObject);
-			Assert(vb.type == jbvArray || vb.type == jbvObject);
+			Assert(va.type != jbvBinary);
+			Assert(vb.type != jbvBinary);
 			/* Type-defined order */
 			res = (va.type > vb.type) ? 1 : -1;
 		}
@@ -630,7 +641,9 @@ JsonbIteratorInit(JsonbContainer *container)
  * It is our job to expand the jbvBinary representation without bothering them
  * with it.  However, clients should not take it upon themselves to touch array
  * or Object element/pair buffers, since their element/pair pointers are
- * garbage.
+ * garbage.  Also, *val will not be set when returning WJB_END_ARRAY or
+ * WJB_END_OBJECT, on the assumption that it's only useful to access values
+ * when recursing in.
  */
 JsonbIteratorToken
 JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
@@ -686,7 +699,7 @@ recurse:
 			else
 			{
 				/*
-				 * Scalar item in array (or a container and caller didn't
+				 * Scalar item in array, or a container and caller didn't
 				 * want us to recurse into it.
 				 */
 				return WJB_ELEM;
