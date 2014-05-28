@@ -140,7 +140,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %}
 
 %expect 0
-%name-prefix="base_yy"
+%name-prefix "base_yy"
 %locations
 
 %union
