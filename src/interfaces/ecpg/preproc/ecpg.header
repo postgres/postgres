@@ -572,7 +572,7 @@ add_typedef(char *name, char *dimension, char *length, enum ECPGttype type_enum,
 %}
 
 %expect 0
-%name-prefix "base_yy"
+%name-prefix="base_yy"
 %locations
 
 %union {

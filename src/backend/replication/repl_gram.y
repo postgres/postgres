@@ -40,7 +40,7 @@ Node *replication_parse_result;
 %}
 
 %expect 0
-%name-prefix "replication_yy"
+%name-prefix="replication_yy"
 
 %union {
 		char					*str;

@@ -110,7 +110,7 @@ static	List			*read_raise_options(void);
 %}
 
 %expect 0
-%name-prefix "plpgsql_yy"
+%name-prefix="plpgsql_yy"
 %locations
 
 %union {
