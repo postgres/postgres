@@ -109,7 +109,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
 								  &labelfile);
-	SendXlogRecPtrResult(startptr, starttli);
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -117,6 +116,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		ListCell   *lc;
 		struct dirent *de;
 		tablespaceinfo *ti;
+
+		SendXlogRecPtrResult(startptr, starttli);
 
 		/* Collect information about all tablespaces */
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
