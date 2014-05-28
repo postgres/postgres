@@ -1020,10 +1020,10 @@ include 'filename'
       </term>
       <listitem>
        <para>
-        Specifies the name of the curve to use in ECDH key exchange.
-        It needs to be supported by all clients that connect.
-        It does not need to be same curve as used by server's
-        Elliptic Curve key.  The default is <literal>prime256v1</>.  
+        Specifies the name of the curve to use in <acronym>ECDH</> key
+        exchange.  It needs to be supported by all clients that connect.
+        It does not need to be same curve as used by server's Elliptic
+        Curve key.  The default is <literal>prime256v1</>.
        </para>
 
        <para>
@@ -1035,8 +1035,8 @@ include 'filename'
 
        <para>
         The full list of available curves can be shown with the command
-        <literal>openssl ecparam -list_curves</literal>.  Not all of them
-        are usable in TLS though.
+        <command>openssl ecparam -list_curves</command>.  Not all of them
+        are usable in <acronym>TLS</> though.
        </para>
       </listitem>
      </varlistentry>
