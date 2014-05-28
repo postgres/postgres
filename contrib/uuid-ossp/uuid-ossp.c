@@ -316,16 +316,19 @@ uuid_generate_internal(int v, unsigned char *ns, char *ptr, int len)
 					MD5Init(&ctx);
 					MD5Update(&ctx, ns, sizeof(uu));
 					MD5Update(&ctx, (unsigned char *) ptr, len);
+					/* we assume sizeof MD5 result is 16, same as UUID size */
 					MD5Final((unsigned char *) &uu, &ctx);
 				}
 				else
 				{
 					SHA1_CTX	ctx;
+					unsigned char sha1result[SHA1_RESULTLEN];
 
 					SHA1Init(&ctx);
 					SHA1Update(&ctx, ns, sizeof(uu));
 					SHA1Update(&ctx, (unsigned char *) ptr, len);
-					SHA1Final((unsigned char *) &uu, &ctx);
+					SHA1Final(sha1result, &ctx);
+					memcpy(&uu, sha1result, sizeof(uu));
 				}
 
 				/* the calculated hash is using local order */
