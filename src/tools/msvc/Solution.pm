@@ -747,13 +747,13 @@ sub new
 	my $self      = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{solutionFileVersion}          = '12.00';
-	$self->{vcver}                        = '12.00';
-	$self->{visualStudioName}             = 'Visual Studio 2013';
-	$self->{VisualStudioVersion}          = '12.0.21005.1',
-	  $self->{MinimumVisualStudioVersion} = '10.0.40219.1',
+	$self->{solutionFileVersion}        = '12.00';
+	$self->{vcver}                      = '12.00';
+	$self->{visualStudioName}           = 'Visual Studio 2013';
+	$self->{VisualStudioVersion}        = '12.0.21005.1';
+	$self->{MinimumVisualStudioVersion} = '10.0.40219.1';
 
-	  return $self;
+	return $self;
 }
 
 sub GetAdditionalHeaders
