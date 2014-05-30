@@ -21,11 +21,9 @@ python_includespec := $(subst \,/,$(python_includespec))
 override python_libspec =
 endif
 
-# Darwin (OS X) has its own ideas about how to do this.
+# Darwin (OS X) does supply a .dylib, but the above test doesn't match that.
 ifeq ($(PORTNAME), darwin)
 shared_libpython = yes
-override python_libspec = -framework Python
-override python_additional_libs =
 endif
 
 # If we don't have a shared library and the platform doesn't allow it
