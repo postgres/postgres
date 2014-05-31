@@ -1428,10 +1428,10 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slotname</> <literal>PHYSICAL</literal><indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm></term>
+    <term>CREATE_REPLICATION_SLOT <replaceable class="parameter">slotname</> { <literal>PHYSICAL</> | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> } <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm></term>
     <listitem>
      <para>
-      Create a physical replication
+      Create a physical or logical replication
       slot. See <xref linkend="streaming-replication-slots"> for more about
       replication slots.
      </para>
@@ -1445,12 +1445,22 @@ The commands accepted in walsender mode are:
          </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term><replaceable class="parameter">output_plugin</></term>
+       <listitem>
+         <para>
+          The name of the output plugin used for logical decoding
+          (see <xref linkend="logicaldecoding-output-plugin">).
+         </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
     </listitem>
   </varlistentry>
 
   <varlistentry>
-    <term><literal>START_REPLICATION</literal> [<literal>SLOT</literal> <replaceable class="parameter">slotname</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]</term>
+    <term>START_REPLICATION [<literal>SLOT</literal> <replaceable class="parameter">slotname</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
@@ -1778,7 +1788,7 @@ The commands accepted in walsender mode are:
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slotname</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</></term>
+    <term>START_REPLICATION <literal>SLOT</literal> <replaceable class="parameter">slotname</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</> [ ( <replaceable>option_name</replaceable> [<replaceable>option_value</replaceable>] [, ... ] ) ]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL for logical replication, starting
@@ -1787,10 +1797,17 @@ The commands accepted in walsender mode are:
       been recycled. On success, server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
+
+     <para>
+      The messages inside the CopyBothResponse messages are of the same format
+      documented for <literal>START_REPLICATION ... PHYSICAL</literal>.
+     </para>
+
      <para>
       The output plugin associated with the selected slot is used
       to process the output for streaming.
      </para>
+
      <variablelist>
       <varlistentry>
        <term><literal>SLOT</literal> <replaceable class="parameter">slotname</></term>
@@ -1811,12 +1828,29 @@ The commands accepted in walsender mode are:
         </para>
        </listitem>
       </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">option_name</></term>
+       <listitem>
+        <para>
+         The name of an option passed to the slot's logical decoding plugin.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">option_value</></term>
+       <listitem>
+        <para>
+         Optional value, in the form of a string constant, associated with the
+         specified option.
+        </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
     </listitem>
   </varlistentry>
 
   <varlistentry>
-    <term><literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slotname</></term>
+    <term>DROP_REPLICATION_SLOT <replaceable class="parameter">slotname</></term>
     <listitem>
      <para>
       Drops a replication slot, freeing any reserved server-side resources. If
