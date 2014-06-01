@@ -466,12 +466,8 @@ Datum
 jsonb_object_field(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
-	char	   *key = text_to_cstring(PG_GETARG_TEXT_P(1));
-	int			klen = strlen(key);
-	JsonbIterator *it;
-	JsonbValue	v;
-	int			r;
-	bool		skipNested = false;
+	text	   *key = PG_GETARG_TEXT_PP(1);
+	JsonbValue *v;
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
@@ -484,25 +480,11 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 
 	Assert(JB_ROOT_IS_OBJECT(jb));
 
-	it = JsonbIteratorInit(&jb->root);
+	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
+									   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
-	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != WJB_DONE)
-	{
-		skipNested = true;
-
-		if (r == WJB_KEY)
-		{
-			if (klen == v.val.string.len && strncmp(key, v.val.string.val, klen) == 0)
-			{
-				/*
-				 * The next thing the iterator fetches should be the value, no
-				 * matter what shape it is.
-				 */
-				(void) JsonbIteratorNext(&it, &v, skipNested);
-				PG_RETURN_JSONB(JsonbValueToJsonb(&v));
-			}
-		}
-	}
+	if (v != NULL)
+		PG_RETURN_JSONB(JsonbValueToJsonb(v));
 
 	PG_RETURN_NULL();
 }
@@ -527,12 +509,8 @@ Datum
 jsonb_object_field_text(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
-	char	   *key = text_to_cstring(PG_GETARG_TEXT_P(1));
-	int			klen = strlen(key);
-	JsonbIterator *it;
-	JsonbValue	v;
-	int			r;
-	bool		skipNested = false;
+	text	   *key = PG_GETARG_TEXT_PP(1);
+	JsonbValue *v;
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
@@ -545,47 +523,41 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 
 	Assert(JB_ROOT_IS_OBJECT(jb));
 
-	it = JsonbIteratorInit(&jb->root);
+	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
+									   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
-	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != WJB_DONE)
+	if (v != NULL)
 	{
-		skipNested = true;
+		text	   *result = NULL;
 
-		if (r == WJB_KEY)
+		switch(v->type)
 		{
-			if (klen == v.val.string.len && strncmp(key, v.val.string.val, klen) == 0)
-			{
-				text	   *result;
-
-				/*
-				 * The next thing the iterator fetches should be the value, no
-				 * matter what shape it is.
-				 */
-				r = JsonbIteratorNext(&it, &v, skipNested);
-
-				/*
-				 * if it's a scalar string it needs to be de-escaped,
-				 * otherwise just return the text
-				 */
-				if (v.type == jbvString)
+			case jbvNull:
+				break;
+			case jbvBool:
+				result = cstring_to_text(v->val.boolean ? "true" : "false");
+				break;
+			case jbvString:
+				result = cstring_to_text_with_len(v->val.string.val, v->val.string.len);
+				break;
+			case jbvNumeric:
+				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
+																			 PointerGetDatum(v->val.numeric))));
+				break;
+			case jbvBinary:
 				{
-					result = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
-				}
-				else if (v.type == jbvNull)
-				{
-					PG_RETURN_NULL();
-				}
-				else
-				{
-					StringInfo	jtext = makeStringInfo();
-					Jsonb	   *tjb = JsonbValueToJsonb(&v);
+					StringInfo  jtext = makeStringInfo();
 
-					(void) JsonbToCString(jtext, &tjb->root , -1);
+					(void) JsonbToCString(jtext, v->val.binary.data, -1);
 					result = cstring_to_text_with_len(jtext->data, jtext->len);
 				}
-				PG_RETURN_TEXT_P(result);
-			}
+				break;
+			default:
+				elog(ERROR, "Wrong jsonb type: %d", v->type);
 		}
+
+		if (result)
+			PG_RETURN_TEXT_P(result);
 	}
 
 	PG_RETURN_NULL();
@@ -611,11 +583,7 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	int			element = PG_GETARG_INT32(1);
-	JsonbIterator *it;
-	JsonbValue	v;
-	int			r;
-	bool		skipNested = false;
-	int			element_number = 0;
+	JsonbValue *v;
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
@@ -628,18 +596,9 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 
 	Assert(JB_ROOT_IS_ARRAY(jb));
 
-	it = JsonbIteratorInit(&jb->root);
-
-	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != WJB_DONE)
-	{
-		skipNested = true;
-
-		if (r == WJB_ELEM)
-		{
-			if (element_number++ == element)
-				PG_RETURN_JSONB(JsonbValueToJsonb(&v));
-		}
-	}
+	v = getIthJsonbValueFromContainer(&jb->root, element);
+	if (v != NULL)
+		PG_RETURN_JSONB(JsonbValueToJsonb(v));
 
 	PG_RETURN_NULL();
 }
@@ -664,12 +623,7 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	int			element = PG_GETARG_INT32(1);
-	JsonbIterator *it;
-	JsonbValue	v;
-	int			r;
-	bool		skipNested = false;
-	int			element_number = 0;
-
+	JsonbValue *v;
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
@@ -682,41 +636,39 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 
 	Assert(JB_ROOT_IS_ARRAY(jb));
 
-	it = JsonbIteratorInit(&jb->root);
-
-	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != WJB_DONE)
+	v = getIthJsonbValueFromContainer(&jb->root, element);
+	if (v != NULL)
 	{
-		skipNested = true;
+		text	   *result = NULL;
 
-		if (r == WJB_ELEM)
+		switch(v->type)
 		{
-			if (element_number++ == element)
-			{
-				/*
-				 * if it's a scalar string it needs to be de-escaped,
-				 * otherwise just return the text
-				 */
-				text	   *result;
+			case jbvNull:
+				break;
+			case jbvBool:
+				result = cstring_to_text(v->val.boolean ? "true" : "false");
+				break;
+			case jbvString:
+				result = cstring_to_text_with_len(v->val.string.val, v->val.string.len);
+				break;
+			case jbvNumeric:
+				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
+											PointerGetDatum(v->val.numeric))));
+				break;
+			case jbvBinary:
+				{
+					StringInfo  jtext = makeStringInfo();
 
-				if (v.type == jbvString)
-				{
-					result = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
-				}
-				else if (v.type == jbvNull)
-				{
-					PG_RETURN_NULL();
-				}
-				else
-				{
-					StringInfo	jtext = makeStringInfo();
-					Jsonb	   *tjb = JsonbValueToJsonb(&v);
-
-					(void) JsonbToCString(jtext, &tjb->root, -1);
+					(void) JsonbToCString(jtext, v->val.binary.data, -1);
 					result = cstring_to_text_with_len(jtext->data, jtext->len);
 				}
-				PG_RETURN_TEXT_P(result);
-			}
+				break;
+			default:
+				elog(ERROR, "Wrong jsonb type: %d", v->type);
 		}
+
+		if (result)
+			PG_RETURN_TEXT_P(result);
 	}
 
 	PG_RETURN_NULL();
