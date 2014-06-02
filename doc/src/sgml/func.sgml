@@ -10519,7 +10519,7 @@ table2-mapping
       </row>
       <row>
        <entry><para><literal>json_extract_path(from_json json, VARIADIC path_elems text[])</literal>
-        </para><para><literal>jsonb_extract_path(from_jsonb jsonb, VARIADIC path_elems text[])</literal>
+        </para><para><literal>jsonb_extract_path(from_json jsonb, VARIADIC path_elems text[])</literal>
        </para></entry>
        <entry><para><type>json</type></para><para><type>jsonb</type>
        </para></entry>
