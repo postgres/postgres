@@ -100,6 +100,17 @@ FROM rows q;
 
 SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
 
+-- to_json, timestamps
+
+select to_json(timestamp '2014-05-28 12:22:35.614298');
+
+BEGIN;
+SET LOCAL TIME ZONE 10.5;
+select to_json(timestamptz '2014-05-28 12:22:35.614298-04');
+SET LOCAL TIME ZONE -8;
+select to_json(timestamptz '2014-05-28 12:22:35.614298-04');
+COMMIT;
+
 --json_agg
 
 SELECT json_agg(q)

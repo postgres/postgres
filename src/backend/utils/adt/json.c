@@ -24,6 +24,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/json.h"
 #include "utils/jsonapi.h"
@@ -53,12 +54,21 @@ typedef enum					/* type categories for datum_to_json */
 	JSONTYPE_NULL,				/* null, so we didn't bother to identify */
 	JSONTYPE_BOOL,				/* boolean (built-in types only) */
 	JSONTYPE_NUMERIC,			/* numeric (ditto) */
+	JSONTYPE_TIMESTAMP,         /* we use special formatting for timestamp */
+	JSONTYPE_TIMESTAMPTZ,       /* ... and timestamptz */
 	JSONTYPE_JSON,				/* JSON itself (and JSONB) */
 	JSONTYPE_ARRAY,				/* array */
 	JSONTYPE_COMPOSITE,			/* composite */
 	JSONTYPE_CAST,				/* something with an explicit cast to JSON */
 	JSONTYPE_OTHER				/* all else */
 } JsonTypeCategory;
+
+/*
+ * to_char formats to turn timestamps and timpstamptzs into json strings
+ * that are ISO 8601 compliant
+ */
+#define TS_ISO8601_FMT "\\\"YYYY-MM-DD\"T\"HH24:MI:SS.US\\\""
+#define TSTZ_ISO8601_FMT "\\\"YYYY-MM-DD\"T\"HH24:MI:SS.USOF\\\""
 
 static inline void json_lex(JsonLexContext *lex);
 static inline void json_lex_string(JsonLexContext *lex);
@@ -1262,6 +1272,14 @@ json_categorize_type(Oid typoid,
 			*tcategory = JSONTYPE_NUMERIC;
 			break;
 
+		case TIMESTAMPOID:
+			*tcategory = JSONTYPE_TIMESTAMP;
+			break;
+
+		case TIMESTAMPTZOID:
+			*tcategory = JSONTYPE_TIMESTAMPTZ;
+			break;
+
 		case JSONOID:
 		case JSONBOID:
 			*tcategory = JSONTYPE_JSON;
@@ -1374,6 +1392,29 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 					escape_json(result, outputstr);
 			}
 			pfree(outputstr);
+			break;
+		case JSONTYPE_TIMESTAMP:
+			/*
+			 * The timestamp format used here provides for quoting the string,
+			 * so no escaping is required.
+			 */
+			jsontext = DatumGetTextP(
+				DirectFunctionCall2(timestamp_to_char, val,
+									CStringGetTextDatum(TS_ISO8601_FMT)));
+			outputstr = text_to_cstring(jsontext);
+			appendStringInfoString(result, outputstr);
+			pfree(outputstr);
+			pfree(jsontext);
+			break;
+		case JSONTYPE_TIMESTAMPTZ:
+			/* same comment as for timestamp above */
+			jsontext = DatumGetTextP(
+				DirectFunctionCall2(timestamptz_to_char, val,
+									CStringGetTextDatum(TSTZ_ISO8601_FMT)));
+			outputstr = text_to_cstring(jsontext);
+			appendStringInfoString(result, outputstr);
+			pfree(outputstr);
+			pfree(jsontext);
 			break;
 		case JSONTYPE_JSON:
 			/* JSON and JSONB output will already be escaped */

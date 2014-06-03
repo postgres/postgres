@@ -164,6 +164,24 @@
 
     <listitem>
      <para>
+      Values of type
+      <link linkend="datatype-datetime"><type>timestamp</></link>  and
+      <link linkend="datatype-datetime"><type>timestamptz</></link> are now
+      rendered in a string format compliant with ISO 8601 rather than the
+      default output format when converting to or used in
+      <link linkend="datatype-json"><type>JSON</type></link>.
+      (Andrew Dunstan)
+     </para>
+
+     <para>
+      Previously these were rendered in the default text output format
+      for the type, but many JSON processors require timestamps in ISO 8601
+      format.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Rename <link linkend="SQL-EXPLAIN"><command>EXPLAIN
       ANALYZE</></link>'s "total runtime" output to "execution time"
       (Tom Lane)
