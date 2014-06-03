@@ -2806,6 +2806,16 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 		}
 	}
 
+	/*
+	 * Set the process latch. This function essentially emulates signal
+	 * handlers like die() and StatementCancelHandler() and it seems prudent
+	 * to behave similarly as they do. Alternatively all plain backend code
+	 * waiting on that latch, expecting to get interrupted by query cancels et
+	 * al., would also need to set set_latch_on_sigusr1.
+	 */
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
 	errno = save_errno;
 }
 
