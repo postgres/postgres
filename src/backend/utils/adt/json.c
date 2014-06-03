@@ -21,10 +21,11 @@
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/formatting.h"
+#include "utils/datetime.h"
 #include "utils/lsyscache.h"
 #include "utils/json.h"
 #include "utils/jsonapi.h"
@@ -62,13 +63,6 @@ typedef enum					/* type categories for datum_to_json */
 	JSONTYPE_CAST,				/* something with an explicit cast to JSON */
 	JSONTYPE_OTHER				/* all else */
 } JsonTypeCategory;
-
-/*
- * to_char formats to turn timestamps and timpstamptzs into json strings
- * that are ISO 8601 compliant
- */
-#define TS_ISO8601_FMT "\\\"YYYY-MM-DD\"T\"HH24:MI:SS.US\\\""
-#define TSTZ_ISO8601_FMT "\\\"YYYY-MM-DD\"T\"HH24:MI:SS.USOF\\\""
 
 static inline void json_lex(JsonLexContext *lex);
 static inline void json_lex_string(JsonLexContext *lex);
@@ -1394,27 +1388,56 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			pfree(outputstr);
 			break;
 		case JSONTYPE_TIMESTAMP:
-			/*
-			 * The timestamp format used here provides for quoting the string,
-			 * so no escaping is required.
-			 */
-			jsontext = DatumGetTextP(
-				DirectFunctionCall2(timestamp_to_char, val,
-									CStringGetTextDatum(TS_ISO8601_FMT)));
-			outputstr = text_to_cstring(jsontext);
-			appendStringInfoString(result, outputstr);
-			pfree(outputstr);
-			pfree(jsontext);
+			{
+				Timestamp	timestamp;
+				struct pg_tm tm;
+				fsec_t		fsec;
+				char		buf[MAXDATELEN + 1];
+
+				timestamp = DatumGetTimestamp(val);
+
+				/* XSD doesn't support infinite values */
+				if (TIMESTAMP_NOT_FINITE(timestamp))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range"),
+							 errdetail("JSON does not support infinite timestamp values.")));
+				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
+					EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+
+				appendStringInfo(result,"\"%s\"",buf);
+			}
 			break;
 		case JSONTYPE_TIMESTAMPTZ:
-			/* same comment as for timestamp above */
-			jsontext = DatumGetTextP(
-				DirectFunctionCall2(timestamptz_to_char, val,
-									CStringGetTextDatum(TSTZ_ISO8601_FMT)));
-			outputstr = text_to_cstring(jsontext);
-			appendStringInfoString(result, outputstr);
-			pfree(outputstr);
-			pfree(jsontext);
+			{
+				TimestampTz timestamp;
+				struct pg_tm tm;
+				int			tz;
+				fsec_t		fsec;
+				const char *tzn = NULL;
+				char		buf[MAXDATELEN + 1];
+
+				timestamp = DatumGetTimestamp(val);
+
+				/* XSD doesn't support infinite values */
+				if (TIMESTAMP_NOT_FINITE(timestamp))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range"),
+							 errdetail("JSON does not support infinite timestamp values.")));
+				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
+					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+
+				appendStringInfo(result,"\"%s\"",buf);
+			}
 			break;
 		case JSONTYPE_JSON:
 			/* JSON and JSONB output will already be escaped */
