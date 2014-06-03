@@ -111,6 +111,14 @@ SET LOCAL TIME ZONE -8;
 select to_json(timestamptz '2014-05-28 12:22:35.614298-04');
 COMMIT;
 
+-- unicode escape - backslash is not escaped
+
+select to_json(text '\uabcd');
+
+-- any other backslash is escaped
+
+select to_json(text '\abcd');
+
 --json_agg
 
 SELECT json_agg(q)

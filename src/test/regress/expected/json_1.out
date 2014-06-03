@@ -426,6 +426,20 @@ select to_json(timestamptz '2014-05-28 12:22:35.614298-04');
 (1 row)
 
 COMMIT;
+-- unicode escape - backslash is not escaped
+select to_json(text '\uabcd');
+ to_json  
+----------
+ "\uabcd"
+(1 row)
+
+-- any other backslash is escaped
+select to_json(text '\abcd');
+ to_json  
+----------
+ "\\abcd"
+(1 row)
+
 --json_agg
 SELECT json_agg(q)
   FROM ( SELECT $$a$$ || x AS b, y AS c,

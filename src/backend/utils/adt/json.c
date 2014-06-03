@@ -2315,7 +2315,26 @@ escape_json(StringInfo buf, const char *str)
 				appendStringInfoString(buf, "\\\"");
 				break;
 			case '\\':
-				appendStringInfoString(buf, "\\\\");
+				/*
+				 * Unicode escapes are passed through as is. There is no
+				 * requirement that they denote a valid character in the
+				 * server encoding - indeed that is a big part of their
+				 * usefulness.
+				 *
+				 * All we require is that they consist of \uXXXX where
+				 * the Xs are hexadecimal digits. It is the responsibility
+				 * of the caller of, say, to_json() to make sure that the
+				 * unicode escape is valid.
+				 *
+				 * In the case of a jsonb string value being escaped, the
+				 * only unicode escape that should be present is \u0000,
+				 * all the other unicode escapes will have been resolved.
+				 */
+				if (p[1] == 'u' && isxdigit(p[2]) && isxdigit(p[3])
+					&& isxdigit(p[4]) && isxdigit(p[5]))
+					appendStringInfoCharMacro(buf, *p);
+				else
+					appendStringInfoString(buf, "\\\\");
 				break;
 			default:
 				if ((unsigned char) *p < ' ')

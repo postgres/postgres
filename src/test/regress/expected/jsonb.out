@@ -61,9 +61,9 @@ LINE 1: SELECT '"\u000g"'::jsonb;
 DETAIL:  "\u" must be followed by four hexadecimal digits.
 CONTEXT:  JSON data, line 1: "\u000g...
 SELECT '"\u0000"'::jsonb;		-- OK, legal escape
-   jsonb   
------------
- "\\u0000"
+  jsonb   
+----------
+ "\u0000"
 (1 row)
 
 -- use octet_length here so we don't get an odd unicode char in the

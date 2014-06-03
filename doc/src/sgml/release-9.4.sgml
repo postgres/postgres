@@ -182,6 +182,21 @@
 
     <listitem>
      <para>
+      Unicode escapes in <link linkend="datatype-json"><type>JSON</type></link>
+      text values are no longer rendered with the backslash escaped.
+      (Andrew Dunstan)
+     </para>
+
+     <para>
+      Previously all backslashes in text values being formed into JSON were
+      escaped. Now a backslash followed by "u" and four hexadecimal digits is
+      not escaped, as this is a legal sequence in a JSON string value, and
+      escaping the backslash led to some perverse results.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Rename <link linkend="SQL-EXPLAIN"><command>EXPLAIN
       ANALYZE</></link>'s "total runtime" output to "execution time"
       (Tom Lane)
