@@ -7075,6 +7075,14 @@ $as_echo "$as_me: WARNING:
 *** Bison version 1.875 or later is required, but this is $pgac_bison_version." >&2;}
     BISON=""
   fi
+  # Bison >=3.0 issues warnings about %name-prefix="base_yy", instead
+  # of the now preferred %name-prefix "base_yy", but the latter
+  # doesn't work with Bison 2.3 or less.  So for now we silence the
+  # deprecation warnings.
+  if echo "$pgac_bison_version" | $AWK '{ if ($4 >= 3) exit 0; else exit 1;}'
+  then
+    BISONFLAGS="$BISONFLAGS -Wno-deprecated"
+  fi
 fi
 
 if test -z "$BISON"; then
