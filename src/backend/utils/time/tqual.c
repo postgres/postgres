@@ -1116,14 +1116,29 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 				return HEAPTUPLE_DEAD;
 			}
 		}
-		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
 			if (tuple->t_infomask & HEAP_IS_LOCKED)
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
 			/* inserted and then deleted by same xact */
-			return HEAPTUPLE_DELETE_IN_PROGRESS;
+			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)))
+				return HEAPTUPLE_DELETE_IN_PROGRESS;
+			/* deleting subtransaction must have aborted */
+			return HEAPTUPLE_INSERT_IN_PROGRESS;
+		}
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		{
+			/*
+			 * It'd be possible to discern between INSERT/DELETE in progress
+			 * here by looking at xmax - but that doesn't seem beneficial for
+			 * the majority of callers and even detrimental for some. We'd
+			 * rather have callers look at/wait for xmin than xmax. It's
+			 * always correct to return INSERT_IN_PROGRESS because that's
+			 * what's happening from the view of other backends.
+			 */
+			return HEAPTUPLE_INSERT_IN_PROGRESS;
 		}
 		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
 			SetHintBits(tuple, buffer, HEAP_XMIN_COMMITTED,
