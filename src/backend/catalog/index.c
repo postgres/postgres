@@ -2334,6 +2334,7 @@ IndexBuildHeapScan(Relation heapRelation,
 							 */
 							LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 							XactLockTableWait(xwait);
+							CHECK_FOR_INTERRUPTS();
 							goto recheck;
 						}
 					}
@@ -2380,6 +2381,7 @@ IndexBuildHeapScan(Relation heapRelation,
 							 */
 							LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 							XactLockTableWait(xwait);
+							CHECK_FOR_INTERRUPTS();
 							goto recheck;
 						}
 
