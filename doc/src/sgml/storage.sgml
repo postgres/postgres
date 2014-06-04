@@ -104,6 +104,12 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_stat</></entry>
+ <entry>Subdirectory containing permanent files for the statistics
+  subsystem</entry>
+</row>
+
+<row>
  <entry><filename>pg_stat_tmp</></entry>
  <entry>Subdirectory containing temporary files for the statistics
   subsystem</entry>
