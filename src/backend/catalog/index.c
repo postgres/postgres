@@ -2298,6 +2298,7 @@ IndexBuildHeapScan(Relation heapRelation,
 							XactLockTableWait(xwait, heapRelation,
 											  &heapTuple->t_data->t_ctid,
 											  XLTW_InsertIndexUnique);
+							CHECK_FOR_INTERRUPTS();
 							goto recheck;
 						}
 					}
@@ -2346,6 +2347,7 @@ IndexBuildHeapScan(Relation heapRelation,
 							XactLockTableWait(xwait, heapRelation,
 											  &heapTuple->t_data->t_ctid,
 											  XLTW_InsertIndexUnique);
+							CHECK_FOR_INTERRUPTS();
 							goto recheck;
 						}
 
