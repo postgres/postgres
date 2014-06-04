@@ -80,7 +80,7 @@
 PG_MODULE_MAGIC;
 
 /* Location of permanent stats file (valid when database is shut down) */
-#define PGSS_DUMP_FILE	"global/pg_stat_statements.stat"
+#define PGSS_DUMP_FILE	PGSTAT_STAT_PERMANENT_DIRECTORY "/pg_stat_statements.stat"
 
 /*
  * Location of external query text file.  We don't keep it in the core

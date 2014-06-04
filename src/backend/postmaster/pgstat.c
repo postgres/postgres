@@ -68,14 +68,6 @@
 
 
 /* ----------
- * Paths for the statistics files (relative to installation's $PGDATA).
- * ----------
- */
-#define PGSTAT_STAT_PERMANENT_DIRECTORY		"pg_stat"
-#define PGSTAT_STAT_PERMANENT_FILENAME		"pg_stat/global.stat"
-#define PGSTAT_STAT_PERMANENT_TMPFILE		"pg_stat/global.tmp"
-
-/* ----------
  * Timer definitions.
  * ----------
  */

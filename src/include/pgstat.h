@@ -20,6 +20,14 @@
 #include "utils/relcache.h"
 
 
+/* ----------
+ * Paths for the statistics files (relative to installation's $PGDATA).
+ * ----------
+ */
+#define PGSTAT_STAT_PERMANENT_DIRECTORY		"pg_stat"
+#define PGSTAT_STAT_PERMANENT_FILENAME		"pg_stat/global.stat"
+#define PGSTAT_STAT_PERMANENT_TMPFILE		"pg_stat/global.tmp"
+
 /* Default directory to store temporary statistics data in */
 #define PG_STAT_TMP_DIR		"pg_stat_tmp"
 
