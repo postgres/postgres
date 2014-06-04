@@ -186,7 +186,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    For better performance, <varname>stats_temp_directory</> can be
    pointed at a RAM-based file system, decreasing physical I/O requirements.
    When the server shuts down, a permanent copy of the statistics
-   data is stored in the <filename>global</filename> subdirectory, so that
+   data is stored in the <filename>pg_stat</filename> subdirectory, so that
    statistics can be retained across server restarts.
   </para>
 
