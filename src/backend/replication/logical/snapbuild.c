@@ -153,11 +153,11 @@ struct SnapBuild
 	TransactionId xmax;
 
 	/*
-	 * Don't replay commits from an LSN <= this LSN. This can be set
+	 * Don't replay commits from an LSN < this LSN. This can be set
 	 * externally but it will also be advanced (never retreat) from within
 	 * snapbuild.c.
 	 */
-	XLogRecPtr	transactions_after;
+	XLogRecPtr	start_decoding_at;
 
 	/*
 	 * Don't start decoding WAL until the "xl_running_xacts" information
@@ -309,7 +309,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	builder->committed.includes_all_transactions = true;
 
 	builder->initial_xmin_horizon = xmin_horizon;
-	builder->transactions_after = start_lsn;
+	builder->start_decoding_at = start_lsn;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -375,7 +375,7 @@ SnapBuildCurrentState(SnapBuild *builder)
 bool
 SnapBuildXactNeedsSkip(SnapBuild *builder, XLogRecPtr ptr)
 {
-	return ptr <= builder->transactions_after;
+	return ptr < builder->start_decoding_at;
 }
 
 /*
@@ -955,8 +955,8 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 	if (builder->state < SNAPBUILD_CONSISTENT)
 	{
 		/* ensure that only commits after this are getting replayed */
-		if (builder->transactions_after < lsn)
-			builder->transactions_after = lsn;
+		if (builder->start_decoding_at <= lsn)
+			builder->start_decoding_at = lsn + 1;
 
 		/*
 		 * We could avoid treating !SnapBuildTxnIsRunning transactions as
@@ -1243,9 +1243,10 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 */
 	if (running->xcnt == 0)
 	{
-		if (builder->transactions_after == InvalidXLogRecPtr ||
-			builder->transactions_after < lsn)
-			builder->transactions_after = lsn;
+		if (builder->start_decoding_at == InvalidXLogRecPtr ||
+			builder->start_decoding_at <= lsn)
+			/* can decode everything after this */
+			builder->start_decoding_at = lsn + 1;
 
 		builder->xmin = running->oldestRunningXid;
 		builder->xmax = running->latestCompletedXid;
