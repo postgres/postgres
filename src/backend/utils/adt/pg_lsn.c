@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------------
  *
  * pg_lsn.c
- *	  Internal PostgreSQL LSN operations
+ *	  Operations for the pg_lsn datatype.
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/hash.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
@@ -151,6 +152,29 @@ pg_lsn_ge(PG_FUNCTION_ARGS)
 	XLogRecPtr	lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 >= lsn2);
+}
+
+/* btree index opclass support */
+Datum
+pg_lsn_cmp(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	a = PG_GETARG_LSN(0);
+	XLogRecPtr	b = PG_GETARG_LSN(1);
+
+	if (a > b)
+		PG_RETURN_INT32(1);
+	else if (a == b)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
+}
+
+/* hash index opclass support */
+Datum
+pg_lsn_hash(PG_FUNCTION_ARGS)
+{
+	/* We can use hashint8 directly */
+	return hashint8(fcinfo);
 }
 
 

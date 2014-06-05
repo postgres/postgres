@@ -1595,7 +1595,7 @@ DATA(insert OID = 2977 (  ">="	   PGNSP PGUID b f f 2950 2950 16 2976 2974 uuid_
 DESCR("greater than or equal");
 
 /* pg_lsn operators */
-DATA(insert OID = 3222 (  "="	   PGNSP PGUID b f f 3220 3220 16 3222 3223 pg_lsn_eq eqsel eqjoinsel ));
+DATA(insert OID = 3222 (  "="	   PGNSP PGUID b t t 3220 3220 16 3222 3223 pg_lsn_eq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 3223 (  "<>"	   PGNSP PGUID b f f 3220 3220 16 3223 3222 pg_lsn_ne neqsel neqjoinsel ));
 DESCR("not equal");

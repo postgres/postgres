@@ -4293,6 +4293,10 @@ DATA(insert OID = 3238 (  pg_lsn_recv	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 3
 DESCR("I/O");
 DATA(insert OID = 3239 (  pg_lsn_send	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 17 "3220" _null_ _null_ _null_ _null_ pg_lsn_send _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3251 (  pg_lsn_cmp	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_cmp _null_ _null_ _null_ ));
+DESCR("less-equal-greater");
+DATA(insert OID = 3252 (  pg_lsn_hash	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 23 "3220" _null_ _null_ _null_ _null_ pg_lsn_hash _null_ _null_ _null_ ));
+DESCR("hash");
 
 /* enum related procs */
 DATA(insert OID = 3504 (  anyenum_in	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 3500 "2275" _null_ _null_ _null_ _null_ anyenum_in _null_ _null_ _null_ ));

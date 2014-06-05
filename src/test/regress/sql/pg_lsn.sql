@@ -23,3 +23,17 @@ SELECT '0/16AE7F7' < '0/16AE7F8'::pg_lsn;
 SELECT '0/16AE7F8' > pg_lsn '0/16AE7F7';
 SELECT '0/16AE7F7'::pg_lsn - '0/16AE7F8'::pg_lsn;
 SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn;
+
+-- Check btree and hash opclasses
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT (i || '/' || j)::pg_lsn f
+  FROM generate_series(1, 10) i,
+       generate_series(1, 10) j,
+       generate_series(1, 5) k
+  ORDER BY f;
+
+SELECT DISTINCT (i || '/' || j)::pg_lsn f
+  FROM generate_series(1, 10) i,
+       generate_series(1, 10) j,
+       generate_series(1, 5) k
+  ORDER BY f;

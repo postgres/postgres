@@ -29,6 +29,8 @@ extern Datum pg_lsn_lt(PG_FUNCTION_ARGS);
 extern Datum pg_lsn_gt(PG_FUNCTION_ARGS);
 extern Datum pg_lsn_le(PG_FUNCTION_ARGS);
 extern Datum pg_lsn_ge(PG_FUNCTION_ARGS);
+extern Datum pg_lsn_cmp(PG_FUNCTION_ARGS);
+extern Datum pg_lsn_hash(PG_FUNCTION_ARGS);
 
 extern Datum pg_lsn_mi(PG_FUNCTION_ARGS);
 

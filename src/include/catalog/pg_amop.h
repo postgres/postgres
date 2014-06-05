@@ -513,6 +513,16 @@ DATA(insert (	2968  2950 2950 4 s 2977	403 0 ));
 DATA(insert (	2968  2950 2950 5 s 2975	403 0 ));
 
 /*
+ * btree pg_lsn_ops
+ */
+
+DATA(insert (	3253  3220 3220 1 s 3224	403 0 ));
+DATA(insert (	3253  3220 3220 2 s 3226	403 0 ));
+DATA(insert (	3253  3220 3220 3 s 3222	403 0 ));
+DATA(insert (	3253  3220 3220 4 s 3227	403 0 ));
+DATA(insert (	3253  3220 3220 5 s 3225	403 0 ));
+
+/*
  *	hash index _ops
  */
 
@@ -581,6 +591,8 @@ DATA(insert (	2231   1042 1042 1 s 1054 405 0 ));
 DATA(insert (	2235   1033 1033 1 s  974 405 0 ));
 /* uuid_ops */
 DATA(insert (	2969   2950 2950 1 s 2972 405 0 ));
+/* pg_lsn_ops */
+DATA(insert (	3254   3220 3220 1 s 3222 405 0 ));
 /* numeric_ops */
 DATA(insert (	1998   1700 1700 1 s 1752 405 0 ));
 /* array_ops */
