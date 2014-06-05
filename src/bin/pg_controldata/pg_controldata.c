@@ -287,6 +287,8 @@ main(int argc, char *argv[])
 		   ControlFile.indexMaxKeys);
 	printf(_("Maximum size of a TOAST chunk:        %u\n"),
 		   ControlFile.toast_max_chunk_size);
+	printf(_("Size of a large-object chunk:         %u\n"),
+		   ControlFile.loblksize);
 	printf(_("Date/time type storage:               %s\n"),
 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
 	printf(_("Float4 argument passing:              %s\n"),

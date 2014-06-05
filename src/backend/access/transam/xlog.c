@@ -49,6 +49,7 @@
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/large_object.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/predicate.h"
@@ -4352,6 +4353,7 @@ WriteControlFile(void)
 	ControlFile->indexMaxKeys = INDEX_MAX_KEYS;
 
 	ControlFile->toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
+	ControlFile->loblksize = LOBLKSIZE;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	ControlFile->enableIntTimes = true;
@@ -4544,6 +4546,13 @@ ReadControlFile(void)
 				 errdetail("The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d,"
 				" but the server was compiled with TOAST_MAX_CHUNK_SIZE %d.",
 			  ControlFile->toast_max_chunk_size, (int) TOAST_MAX_CHUNK_SIZE),
+				 errhint("It looks like you need to recompile or initdb.")));
+	if (ControlFile->loblksize != LOBLKSIZE)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+		  errdetail("The database cluster was initialized with LOBLKSIZE %d,"
+					" but the server was compiled with LOBLKSIZE %d.",
+					ControlFile->loblksize, (int) LOBLKSIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 
 #ifdef HAVE_INT64_TIMESTAMP

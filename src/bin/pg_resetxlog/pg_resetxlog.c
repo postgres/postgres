@@ -52,6 +52,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "common/fe_memutils.h"
+#include "storage/large_object.h"
 #include "pg_getopt.h"
 
 
@@ -536,6 +537,7 @@ GuessControlValues(void)
 	ControlFile.nameDataLen = NAMEDATALEN;
 	ControlFile.indexMaxKeys = INDEX_MAX_KEYS;
 	ControlFile.toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
+	ControlFile.loblksize = LOBLKSIZE;
 #ifdef HAVE_INT64_TIMESTAMP
 	ControlFile.enableIntTimes = true;
 #else
@@ -620,6 +622,8 @@ PrintControlValues(bool guessed)
 		   ControlFile.indexMaxKeys);
 	printf(_("Maximum size of a TOAST chunk:        %u\n"),
 		   ControlFile.toast_max_chunk_size);
+	printf(_("Size of a large-object chunk:         %u\n"),
+		   ControlFile.loblksize);
 	printf(_("Date/time type storage:               %s\n"),
 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
 	printf(_("Float4 argument passing:              %s\n"),

@@ -66,6 +66,8 @@ typedef struct LargeObjectDesc
  * Also, it seems to be a smart move to make the page size be a power of 2,
  * since clients will often be written to send data in power-of-2 blocks.
  * This avoids unnecessary tuple updates caused by partial-page writes.
+ *
+ * NB: Changing LOBLKSIZE requires an initdb.
  */
 #define LOBLKSIZE		(BLCKSZ / 4)
 

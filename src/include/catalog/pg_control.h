@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	941
+#define PG_CONTROL_VERSION	942
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -207,6 +207,7 @@ typedef struct ControlFileData
 	uint32		indexMaxKeys;	/* max number of columns in an index */
 
 	uint32		toast_max_chunk_size;	/* chunk size in TOAST tables */
+	uint32		loblksize;		/* chunk size in pg_largeobject */
 
 	/* flag indicating internal format of timestamp, interval, time */
 	bool		enableIntTimes; /* int64 storage enabled? */
