@@ -70,6 +70,7 @@ SELECT DISTINCT (i || '/' || j)::pg_lsn f
   FROM generate_series(1, 10) i,
        generate_series(1, 10) j,
        generate_series(1, 5) k
+  WHERE i <= 10 AND j > 0 AND j <= 10
   ORDER BY f;
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -81,14 +82,17 @@ SELECT DISTINCT (i || '/' || j)::pg_lsn f
                ->  Function Scan on generate_series k
                ->  Materialize
                      ->  Nested Loop
-                           ->  Function Scan on generate_series i
                            ->  Function Scan on generate_series j
-(10 rows)
+                                 Filter: ((j > 0) AND (j <= 10))
+                           ->  Function Scan on generate_series i
+                                 Filter: (i <= 10)
+(12 rows)
 
 SELECT DISTINCT (i || '/' || j)::pg_lsn f
   FROM generate_series(1, 10) i,
        generate_series(1, 10) j,
        generate_series(1, 5) k
+  WHERE i <= 10 AND j > 0 AND j <= 10
   ORDER BY f;
    f   
 -------
