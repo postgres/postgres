@@ -171,13 +171,38 @@ myLargeObjectExists(Oid loid, Snapshot snapshot)
 }
 
 
-static int32
-getbytealen(bytea *data)
+/*
+ * Extract data field from a pg_largeobject tuple, detoasting if needed
+ * and verifying that the length is sane.  Returns data pointer (a bytea *),
+ * data length, and an indication of whether to pfree the data pointer.
+ */
+static void
+getdatafield(Form_pg_largeobject tuple,
+			 bytea **pdatafield,
+			 int *plen,
+			 bool *pfreeit)
 {
-	Assert(!VARATT_IS_EXTENDED(data));
-	if (VARSIZE(data) < VARHDRSZ)
-		elog(ERROR, "invalid VARSIZE(data)");
-	return (VARSIZE(data) - VARHDRSZ);
+	bytea	   *datafield;
+	int			len;
+	bool		freeit;
+
+	datafield = &(tuple->data); /* see note at top of file */
+	freeit = false;
+	if (VARATT_IS_EXTENDED(datafield))
+	{
+		datafield = (bytea *)
+			heap_tuple_untoast_attr((struct varlena *) datafield);
+		freeit = true;
+	}
+	len = VARSIZE(datafield) - VARHDRSZ;
+	if (len < 0 || len > LOBLKSIZE)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("pg_largeobject entry for OID %u, page %d has invalid data field size %d",
+						tuple->loid, tuple->pageno, len)));
+	*pdatafield = datafield;
+	*plen = len;
+	*pfreeit = freeit;
 }
 
 
@@ -363,20 +388,14 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	{
 		Form_pg_largeobject data;
 		bytea	   *datafield;
+		int			len;
 		bool		pfreeit;
 
 		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		data = (Form_pg_largeobject) GETSTRUCT(tuple);
-		datafield = &(data->data);		/* see note at top of file */
-		pfreeit = false;
-		if (VARATT_IS_EXTENDED(datafield))
-		{
-			datafield = (bytea *)
-				heap_tuple_untoast_attr((struct varlena *) datafield);
-			pfreeit = true;
-		}
-		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
+		getdatafield(data, &datafield, &len, &pfreeit);
+		lastbyte = data->pageno * LOBLKSIZE + len;
 		if (pfreeit)
 			pfree(datafield);
 	}
@@ -491,15 +510,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			off = (int) (obj_desc->offset - pageoff);
 			Assert(off >= 0 && off < LOBLKSIZE);
 
-			datafield = &(data->data);	/* see note at top of file */
-			pfreeit = false;
-			if (VARATT_IS_EXTENDED(datafield))
-			{
-				datafield = (bytea *)
-					heap_tuple_untoast_attr((struct varlena *) datafield);
-				pfreeit = true;
-			}
-			len = getbytealen(datafield);
+			getdatafield(data, &datafield, &len, &pfreeit);
 			if (len > off)
 			{
 				n = len - off;
@@ -618,16 +629,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			 *
 			 * First, load old data into workbuf
 			 */
-			datafield = &(olddata->data);		/* see note at top of file */
-			pfreeit = false;
-			if (VARATT_IS_EXTENDED(datafield))
-			{
-				datafield = (bytea *)
-					heap_tuple_untoast_attr((struct varlena *) datafield);
-				pfreeit = true;
-			}
-			len = getbytealen(datafield);
-			Assert(len <= LOBLKSIZE);
+			getdatafield(olddata, &datafield, &len, &pfreeit);
 			memcpy(workb, VARDATA(datafield), len);
 			if (pfreeit)
 				pfree(datafield);
@@ -803,19 +805,11 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	if (olddata != NULL && olddata->pageno == pageno)
 	{
 		/* First, load old data into workbuf */
-		bytea	   *datafield = &(olddata->data);		/* see note at top of
-														 * file */
-		bool		pfreeit = false;
+		bytea	   *datafield;
 		int			pagelen;
+		bool		pfreeit;
 
-		if (VARATT_IS_EXTENDED(datafield))
-		{
-			datafield = (bytea *)
-				heap_tuple_untoast_attr((struct varlena *) datafield);
-			pfreeit = true;
-		}
-		pagelen = getbytealen(datafield);
-		Assert(pagelen <= LOBLKSIZE);
+		getdatafield(olddata, &datafield, &pagelen, &pfreeit);
 		memcpy(workb, VARDATA(datafield), pagelen);
 		if (pfreeit)
 			pfree(datafield);
