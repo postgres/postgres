@@ -422,10 +422,7 @@ typedef struct spgxlogAddLeaf
 	OffsetNumber offnumParent;
 	uint16		nodeI;
 
-	/*
-	 * new leaf tuple follows, on an intalign boundary (replay only needs to
-	 * fetch its size field, so that should be enough alignment)
-	 */
+	/* new leaf tuple follows (unaligned!) */
 } spgxlogAddLeaf;
 
 typedef struct spgxlogMoveLeafs
@@ -449,9 +446,7 @@ typedef struct spgxlogMoveLeafs
 	 * data follows:
 	 *		array of deleted tuple numbers, length nMoves
 	 *		array of inserted tuple numbers, length nMoves + 1 or 1
-	 *		list of leaf tuples, length nMoves + 1 or 1 (must be maxaligned)
-	 * the tuple number arrays are padded to maxalign boundaries so that the
-	 * leaf tuples will be suitably aligned
+	 *		list of leaf tuples, length nMoves + 1 or 1 (unaligned!)
 	 *
 	 * Note: if replaceDead is true then there is only one inserted tuple
 	 * number and only one leaf tuple in the data, because we are not copying
@@ -463,7 +458,10 @@ typedef struct spgxlogMoveLeafs
 	 *		Parent page
 	 *----------
 	 */
+	OffsetNumber offsets[1];
 } spgxlogMoveLeafs;
+
+#define SizeOfSpgxlogMoveLeafs	offsetof(spgxlogMoveLeafs, offsets)
 
 typedef struct spgxlogAddNode
 {
@@ -483,8 +481,7 @@ typedef struct spgxlogAddNode
 	spgxlogState stateSrc;
 
 	/*
-	 * updated inner tuple follows, on an intalign boundary (replay only needs
-	 * to fetch its size field, so that should be enough alignment)
+	 * updated inner tuple follows (unaligned!)
 	 */
 } spgxlogAddNode;
 
@@ -500,9 +497,8 @@ typedef struct spgxlogSplitTuple
 	bool		newPage;		/* need to init that page? */
 
 	/*
-	 * new prefix inner tuple follows, then new postfix inner tuple, on
-	 * intalign boundaries (replay only needs to fetch size fields, so that
-	 * should be enough alignment)
+	 * new prefix inner tuple follows, then new postfix inner tuple
+	 * (both are unaligned!)
 	 */
 } spgxlogSplitTuple;
 
@@ -531,13 +527,11 @@ typedef struct spgxlogPickSplit
 
 	/*----------
 	 * data follows:
-	 *		new inner tuple (assumed to have a maxaligned length)
 	 *		array of deleted tuple numbers, length nDelete
 	 *		array of inserted tuple numbers, length nInsert
 	 *		array of page selector bytes for inserted tuples, length nInsert
-	 *		list of leaf tuples, length nInsert (must be maxaligned)
-	 * the tuple number and page selector arrays are padded to maxalign
-	 * boundaries so that the leaf tuples will be suitably aligned
+	 *		new inner tuple (unaligned!)
+	 *		list of leaf tuples, length nInsert (unaligned!)
 	 *
 	 * Buffer references in the rdata array are:
 	 *		Src page (only if not root and not being init'd)
@@ -546,7 +540,10 @@ typedef struct spgxlogPickSplit
 	 *		Parent page (if any; could be same as Inner)
 	 *----------
 	 */
+	OffsetNumber	offsets[1];
 } spgxlogPickSplit;
+
+#define SizeOfSpgxlogPickSplit offsetof(spgxlogPickSplit, offsets)
 
 typedef struct spgxlogVacuumLeaf
 {
@@ -570,7 +567,10 @@ typedef struct spgxlogVacuumLeaf
 	 *		tuple numbers to insert in nextOffset links
 	 *----------
 	 */
+	OffsetNumber offsets[1];
 } spgxlogVacuumLeaf;
+
+#define SizeOfSpgxlogVacuumLeaf offsetof(spgxlogVacuumLeaf, offsets)
 
 typedef struct spgxlogVacuumRoot
 {
@@ -583,7 +583,10 @@ typedef struct spgxlogVacuumRoot
 	spgxlogState stateSrc;
 
 	/* offsets of tuples to delete follow */
+	OffsetNumber offsets[1];
 } spgxlogVacuumRoot;
+
+#define SizeOfSpgxlogVacuumRoot offsetof(spgxlogVacuumRoot, offsets)
 
 typedef struct spgxlogVacuumRedirect
 {
@@ -595,7 +598,10 @@ typedef struct spgxlogVacuumRedirect
 	TransactionId newestRedirectXid;	/* newest XID of removed redirects */
 
 	/* offsets of redirect tuples to make placeholders follow */
+	OffsetNumber offsets[1];
 } spgxlogVacuumRedirect;
+
+#define SizeOfSpgxlogVacuumRedirect offsetof(spgxlogVacuumRedirect, offsets)
 
 /*
  * The "flags" argument for SpGistGetBuffer should be either GBUF_LEAF to

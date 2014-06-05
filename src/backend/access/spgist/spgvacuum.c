@@ -327,8 +327,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 	xlrec.blkno = BufferGetBlockNumber(buffer);
 	STORE_STATE(&bds->spgstate, xlrec.stateSrc);
 
-	ACCEPT_RDATA_DATA(&xlrec, sizeof(xlrec), 0);
-	/* sizeof(xlrec) should be a multiple of sizeof(OffsetNumber) */
+	ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogVacuumLeaf, 0);
 	ACCEPT_RDATA_DATA(toDead, sizeof(OffsetNumber) * xlrec.nDead, 1);
 	ACCEPT_RDATA_DATA(toPlaceholder, sizeof(OffsetNumber) * xlrec.nPlaceholder, 2);
 	ACCEPT_RDATA_DATA(moveSrc, sizeof(OffsetNumber) * xlrec.nMove, 3);

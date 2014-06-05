@@ -109,13 +109,15 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 {
 	char	   *ptr = XLogRecGetData(record);
 	spgxlogAddLeaf *xldata = (spgxlogAddLeaf *) ptr;
-	SpGistLeafTuple leafTuple;
+	char	   *leafTuple;
+	SpGistLeafTupleData leafTupleHdr;
 	Buffer		buffer;
 	Page		page;
 
-	/* we assume this is adequately aligned */
 	ptr += sizeof(spgxlogAddLeaf);
-	leafTuple = (SpGistLeafTuple) ptr;
+	leafTuple = ptr;
+	/* the leaf tuple is unaligned, so make a copy to access its header */
+	memcpy(&leafTupleHdr, leafTuple, sizeof(SpGistLeafTupleData));
 
 	/*
 	 * In normal operation we would have both current and parent pages locked
@@ -142,7 +144,7 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 				if (xldata->offnumLeaf != xldata->offnumHeadLeaf)
 				{
 					/* normal cases, tuple was added by SpGistPageAddNewItem */
-					addOrReplaceTuple(page, (Item) leafTuple, leafTuple->size,
+					addOrReplaceTuple(page, (Item) leafTuple, leafTupleHdr.size,
 									  xldata->offnumLeaf);
 
 					/* update head tuple's chain link if needed */
@@ -152,7 +154,7 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 
 						head = (SpGistLeafTuple) PageGetItem(page,
 								PageGetItemId(page, xldata->offnumHeadLeaf));
-						Assert(head->nextOffset == leafTuple->nextOffset);
+						Assert(head->nextOffset == leafTupleHdr.nextOffset);
 						head->nextOffset = xldata->offnumLeaf;
 					}
 				}
@@ -161,10 +163,10 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 					/* replacing a DEAD tuple */
 					PageIndexTupleDelete(page, xldata->offnumLeaf);
 					if (PageAddItem(page,
-									(Item) leafTuple, leafTuple->size,
+									(Item) leafTuple, leafTupleHdr.size,
 					 xldata->offnumLeaf, false, false) != xldata->offnumLeaf)
 						elog(ERROR, "failed to add item of size %u to SPGiST index page",
-							 leafTuple->size);
+							 leafTupleHdr.size);
 				}
 
 				PageSetLSN(page, lsn);
@@ -217,11 +219,11 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 
 	nInsert = xldata->replaceDead ? 1 : xldata->nMoves + 1;
 
-	ptr += MAXALIGN(sizeof(spgxlogMoveLeafs));
+	ptr += SizeOfSpgxlogMoveLeafs;
 	toDelete = (OffsetNumber *) ptr;
-	ptr += MAXALIGN(sizeof(OffsetNumber) * xldata->nMoves);
+	ptr += sizeof(OffsetNumber) * xldata->nMoves;
 	toInsert = (OffsetNumber *) ptr;
-	ptr += MAXALIGN(sizeof(OffsetNumber) * nInsert);
+	ptr += sizeof(OffsetNumber) * nInsert;
 
 	/* now ptr points to the list of leaf tuples */
 
@@ -252,10 +254,20 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 
 				for (i = 0; i < nInsert; i++)
 				{
-					SpGistLeafTuple lt = (SpGistLeafTuple) ptr;
+					char	   *leafTuple;
+					SpGistLeafTupleData leafTupleHdr;
 
-					addOrReplaceTuple(page, (Item) lt, lt->size, toInsert[i]);
-					ptr += lt->size;
+					/*
+					 * the tuples are not aligned, so must copy to access
+					 * the size field.
+					 */
+					leafTuple = ptr;
+					memcpy(&leafTupleHdr, leafTuple,
+						   sizeof(SpGistLeafTupleData));
+
+					addOrReplaceTuple(page, (Item) leafTuple,
+									  leafTupleHdr.size, toInsert[i]);
+					ptr += leafTupleHdr.size;
 				}
 
 				PageSetLSN(page, lsn);
@@ -321,15 +333,17 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 {
 	char	   *ptr = XLogRecGetData(record);
 	spgxlogAddNode *xldata = (spgxlogAddNode *) ptr;
-	SpGistInnerTuple innerTuple;
+	char	   *innerTuple;
+	SpGistInnerTupleData innerTupleHdr;
 	SpGistState state;
 	Buffer		buffer;
 	Page		page;
 	int			bbi;
 
-	/* we assume this is adequately aligned */
 	ptr += sizeof(spgxlogAddNode);
-	innerTuple = (SpGistInnerTuple) ptr;
+	innerTuple = ptr;
+	/* the tuple is unaligned, so make a copy to access its header */
+	memcpy(&innerTupleHdr, innerTuple, sizeof(SpGistInnerTupleData));
 
 	fillFakeState(&state, xldata->stateSrc);
 
@@ -348,11 +362,11 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 				if (lsn > PageGetLSN(page))
 				{
 					PageIndexTupleDelete(page, xldata->offnum);
-					if (PageAddItem(page, (Item) innerTuple, innerTuple->size,
+					if (PageAddItem(page, (Item) innerTuple, innerTupleHdr.size,
 									xldata->offnum,
 									false, false) != xldata->offnum)
 						elog(ERROR, "failed to add item of size %u to SPGiST index page",
-							 innerTuple->size);
+							 innerTupleHdr.size);
 
 					PageSetLSN(page, lsn);
 					MarkBufferDirty(buffer);
@@ -393,7 +407,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 				if (lsn > PageGetLSN(page))
 				{
 					addOrReplaceTuple(page, (Item) innerTuple,
-									  innerTuple->size, xldata->offnumNew);
+									  innerTupleHdr.size, xldata->offnumNew);
 
 					/*
 					 * If parent is in this same page, don't advance LSN;
@@ -508,16 +522,21 @@ spgRedoSplitTuple(XLogRecPtr lsn, XLogRecord *record)
 {
 	char	   *ptr = XLogRecGetData(record);
 	spgxlogSplitTuple *xldata = (spgxlogSplitTuple *) ptr;
-	SpGistInnerTuple prefixTuple;
-	SpGistInnerTuple postfixTuple;
+	char	   *prefixTuple;
+	SpGistInnerTupleData prefixTupleHdr;
+	char	   *postfixTuple;
+	SpGistInnerTupleData postfixTupleHdr;
 	Buffer		buffer;
 	Page		page;
 
-	/* we assume this is adequately aligned */
 	ptr += sizeof(spgxlogSplitTuple);
-	prefixTuple = (SpGistInnerTuple) ptr;
-	ptr += prefixTuple->size;
-	postfixTuple = (SpGistInnerTuple) ptr;
+	prefixTuple = ptr;
+	/* the prefix tuple is unaligned, so make a copy to access its header */
+	memcpy(&prefixTupleHdr, prefixTuple, sizeof(SpGistInnerTupleData));
+	ptr += prefixTupleHdr.size;
+	postfixTuple = ptr;
+	/* postfix tuple is also unaligned */
+	memcpy(&postfixTupleHdr, postfixTuple, sizeof(SpGistInnerTupleData));
 
 	/*
 	 * In normal operation we would have both pages locked simultaneously; but
@@ -543,7 +562,7 @@ spgRedoSplitTuple(XLogRecPtr lsn, XLogRecord *record)
 			if (lsn > PageGetLSN(page))
 			{
 				addOrReplaceTuple(page, (Item) postfixTuple,
-								  postfixTuple->size, xldata->offnumPostfix);
+								  postfixTupleHdr.size, xldata->offnumPostfix);
 
 				PageSetLSN(page, lsn);
 				MarkBufferDirty(buffer);
@@ -564,14 +583,14 @@ spgRedoSplitTuple(XLogRecPtr lsn, XLogRecord *record)
 			if (lsn > PageGetLSN(page))
 			{
 				PageIndexTupleDelete(page, xldata->offnumPrefix);
-				if (PageAddItem(page, (Item) prefixTuple, prefixTuple->size,
+				if (PageAddItem(page, (Item) prefixTuple, prefixTupleHdr.size,
 				 xldata->offnumPrefix, false, false) != xldata->offnumPrefix)
 					elog(ERROR, "failed to add item of size %u to SPGiST index page",
-						 prefixTuple->size);
+						 prefixTupleHdr.size);
 
 				if (xldata->blknoPostfix == xldata->blknoPrefix)
 					addOrReplaceTuple(page, (Item) postfixTuple,
-									  postfixTuple->size,
+									  postfixTupleHdr.size,
 									  xldata->offnumPostfix);
 
 				PageSetLSN(page, lsn);
@@ -587,7 +606,8 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 {
 	char	   *ptr = XLogRecGetData(record);
 	spgxlogPickSplit *xldata = (spgxlogPickSplit *) ptr;
-	SpGistInnerTuple innerTuple;
+	char	   *innerTuple;
+	SpGistInnerTupleData innerTupleHdr;
 	SpGistState state;
 	OffsetNumber *toDelete;
 	OffsetNumber *toInsert;
@@ -602,15 +622,18 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 
 	fillFakeState(&state, xldata->stateSrc);
 
-	ptr += MAXALIGN(sizeof(spgxlogPickSplit));
-	innerTuple = (SpGistInnerTuple) ptr;
-	ptr += innerTuple->size;
+	ptr += SizeOfSpgxlogPickSplit;
 	toDelete = (OffsetNumber *) ptr;
-	ptr += MAXALIGN(sizeof(OffsetNumber) * xldata->nDelete);
+	ptr += sizeof(OffsetNumber) * xldata->nDelete;
 	toInsert = (OffsetNumber *) ptr;
-	ptr += MAXALIGN(sizeof(OffsetNumber) * xldata->nInsert);
+	ptr += sizeof(OffsetNumber) * xldata->nInsert;
 	leafPageSelect = (uint8 *) ptr;
-	ptr += MAXALIGN(sizeof(uint8) * xldata->nInsert);
+	ptr += sizeof(uint8) * xldata->nInsert;
+
+	innerTuple = ptr;
+	/* the inner tuple is unaligned, so make a copy to access its header */
+	memcpy(&innerTupleHdr, innerTuple, sizeof(SpGistInnerTupleData));
+	ptr += innerTupleHdr.size;
 
 	/* now ptr points to the list of leaf tuples */
 
@@ -735,15 +758,20 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 	/* restore leaf tuples to src and/or dest page */
 	for (i = 0; i < xldata->nInsert; i++)
 	{
-		SpGistLeafTuple lt = (SpGistLeafTuple) ptr;
+		char	   *leafTuple;
+		SpGistLeafTupleData leafTupleHdr;
 
-		ptr += lt->size;
+		/* the tuples are not aligned, so must copy to access the size field. */
+		leafTuple = ptr;
+		memcpy(&leafTupleHdr, leafTuple, sizeof(SpGistLeafTupleData));
+		ptr += leafTupleHdr.size;
 
 		page = leafPageSelect[i] ? destPage : srcPage;
 		if (page == NULL)
 			continue;			/* no need to touch this page */
 
-		addOrReplaceTuple(page, (Item) lt, lt->size, toInsert[i]);
+		addOrReplaceTuple(page, (Item) leafTuple, leafTupleHdr.size,
+						  toInsert[i]);
 	}
 
 	/* Now update src and dest page LSNs if needed */
@@ -776,7 +804,7 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 
 			if (lsn > PageGetLSN(page))
 			{
-				addOrReplaceTuple(page, (Item) innerTuple, innerTuple->size,
+				addOrReplaceTuple(page, (Item) innerTuple, innerTupleHdr.size,
 								  xldata->offnumInner);
 
 				/* if inner is also parent, update link while we're here */
@@ -861,7 +889,7 @@ spgRedoVacuumLeaf(XLogRecPtr lsn, XLogRecord *record)
 
 	fillFakeState(&state, xldata->stateSrc);
 
-	ptr += sizeof(spgxlogVacuumLeaf);
+	ptr += SizeOfSpgxlogVacuumLeaf;
 	toDead = (OffsetNumber *) ptr;
 	ptr += sizeof(OffsetNumber) * xldata->nDead;
 	toPlaceholder = (OffsetNumber *) ptr;
@@ -941,8 +969,7 @@ spgRedoVacuumRoot(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
-	ptr += sizeof(spgxlogVacuumRoot);
-	toDelete = (OffsetNumber *) ptr;
+	toDelete = xldata->offsets;
 
 	if (record->xl_info & XLR_BKP_BLOCK(0))
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
@@ -974,8 +1001,7 @@ spgRedoVacuumRedirect(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
-	ptr += sizeof(spgxlogVacuumRedirect);
-	itemToPlaceholder = (OffsetNumber *) ptr;
+	itemToPlaceholder = xldata->offsets;
 
 	/*
 	 * If any redirection tuples are being removed, make sure there are no

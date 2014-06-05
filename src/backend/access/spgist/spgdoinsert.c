@@ -217,7 +217,6 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 	xlrec.nodeI = 0;
 
 	ACCEPT_RDATA_DATA(&xlrec, sizeof(xlrec), 0);
-	/* we assume sizeof(xlrec) is at least int-aligned */
 	ACCEPT_RDATA_DATA(leafTuple, leafTuple->size, 1);
 	ACCEPT_RDATA_BUFFER(current->buffer, 2);
 
@@ -533,9 +532,9 @@ moveLeafs(Relation index, SpGistState *state,
 	{
 		XLogRecPtr	recptr;
 
-		ACCEPT_RDATA_DATA(&xlrec, MAXALIGN(sizeof(xlrec)), 0);
-		ACCEPT_RDATA_DATA(toDelete, MAXALIGN(sizeof(OffsetNumber) * nDelete), 1);
-		ACCEPT_RDATA_DATA(toInsert, MAXALIGN(sizeof(OffsetNumber) * nInsert), 2);
+		ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogMoveLeafs, 0);
+		ACCEPT_RDATA_DATA(toDelete, sizeof(OffsetNumber) * nDelete, 1);
+		ACCEPT_RDATA_DATA(toInsert, sizeof(OffsetNumber) * nInsert, 2);
 		ACCEPT_RDATA_DATA(leafdata, leafptr - leafdata, 3);
 		ACCEPT_RDATA_BUFFER(current->buffer, 4);
 		ACCEPT_RDATA_BUFFER(nbuf, 5);
@@ -1116,9 +1115,8 @@ doPickSplit(Relation index, SpGistState *state,
 
 	leafdata = leafptr = (char *) palloc(totalLeafSizes);
 
-	ACCEPT_RDATA_DATA(&xlrec, MAXALIGN(sizeof(xlrec)), 0);
-	ACCEPT_RDATA_DATA(innerTuple, innerTuple->size, 1);
-	nRdata = 2;
+	ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogPickSplit, 0);
+	nRdata = 1;
 
 	/* Here we begin making the changes to the target pages */
 	START_CRIT_SECTION();
@@ -1152,7 +1150,7 @@ doPickSplit(Relation index, SpGistState *state,
 		{
 			xlrec.nDelete = nToDelete;
 			ACCEPT_RDATA_DATA(toDelete,
-							  MAXALIGN(sizeof(OffsetNumber) * nToDelete),
+							  sizeof(OffsetNumber) * nToDelete,
 							  nRdata);
 			nRdata++;
 			ACCEPT_RDATA_BUFFER(current->buffer, nRdata);
@@ -1251,13 +1249,11 @@ doPickSplit(Relation index, SpGistState *state,
 	}
 
 	xlrec.nInsert = nToInsert;
-	ACCEPT_RDATA_DATA(toInsert,
-					  MAXALIGN(sizeof(OffsetNumber) * nToInsert),
-					  nRdata);
+	ACCEPT_RDATA_DATA(toInsert, sizeof(OffsetNumber) * nToInsert, nRdata);
 	nRdata++;
-	ACCEPT_RDATA_DATA(leafPageSelect,
-					  MAXALIGN(sizeof(uint8) * nToInsert),
-					  nRdata);
+	ACCEPT_RDATA_DATA(leafPageSelect, sizeof(uint8) * nToInsert, nRdata);
+	nRdata++;
+	ACCEPT_RDATA_DATA(innerTuple, innerTuple->size, nRdata);
 	nRdata++;
 	ACCEPT_RDATA_DATA(leafdata, leafptr - leafdata, nRdata);
 	nRdata++;
@@ -1518,7 +1514,6 @@ spgAddNodeAction(Relation index, SpGistState *state,
 	xlrec.newPage = false;
 
 	ACCEPT_RDATA_DATA(&xlrec, sizeof(xlrec), 0);
-	/* we assume sizeof(xlrec) is at least int-aligned */
 	ACCEPT_RDATA_DATA(newInnerTuple, newInnerTuple->size, 1);
 	ACCEPT_RDATA_BUFFER(current->buffer, 2);
 
@@ -1733,7 +1728,6 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	xlrec.newPage = false;
 
 	ACCEPT_RDATA_DATA(&xlrec, sizeof(xlrec), 0);
-	/* we assume sizeof(xlrec) is at least int-aligned */
 	ACCEPT_RDATA_DATA(prefixTuple, prefixTuple->size, 1);
 	ACCEPT_RDATA_DATA(postfixTuple, postfixTuple->size, 2);
 	ACCEPT_RDATA_BUFFER(current->buffer, 3);
