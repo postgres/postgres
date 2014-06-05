@@ -1428,7 +1428,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>CREATE_REPLICATION_SLOT <replaceable class="parameter">slotname</> { <literal>PHYSICAL</> | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> } <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm></term>
+    <term>CREATE_REPLICATION_SLOT <replaceable class="parameter">slot_name</> { <literal>PHYSICAL</> | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> } <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm></term>
     <listitem>
      <para>
       Create a physical or logical replication
@@ -1437,7 +1437,7 @@ The commands accepted in walsender mode are:
      </para>
      <variablelist>
       <varlistentry>
-       <term><replaceable class="parameter">slotname</></term>
+       <term><replaceable class="parameter">slot_name</></term>
        <listitem>
          <para>
           The name of the slot to create. Must be a valid replication slot
@@ -1460,7 +1460,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>START_REPLICATION [<literal>SLOT</literal> <replaceable class="parameter">slotname</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]</term>
+    <term>START_REPLICATION [<literal>SLOT</literal> <replaceable class="parameter">slot_name</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
@@ -1506,7 +1506,7 @@ The commands accepted in walsender mode are:
 
      <para>
       If a slot's name is provided
-      via <replaceable class="parameter">slotname</>, it will be updated
+      via <replaceable class="parameter">slot_name</>, it will be updated
       as replication progresses so that the server knows which WAL segments -
       and if <varname>hot_standby_feedback</> is on which transactions -
       are still needed by the standby.
@@ -1788,7 +1788,7 @@ The commands accepted in walsender mode are:
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term>START_REPLICATION <literal>SLOT</literal> <replaceable class="parameter">slotname</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</> [ ( <replaceable>option_name</replaceable> [<replaceable>option_value</replaceable>] [, ... ] ) ]</term>
+    <term>START_REPLICATION <literal>SLOT</literal> <replaceable class="parameter">slot_name</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</> [ ( <replaceable>option_name</replaceable> [<replaceable>option_value</replaceable>] [, ... ] ) ]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL for logical replication, starting
@@ -1810,7 +1810,7 @@ The commands accepted in walsender mode are:
 
      <variablelist>
       <varlistentry>
-       <term><literal>SLOT</literal> <replaceable class="parameter">slotname</></term>
+       <term><literal>SLOT</literal> <replaceable class="parameter">slot_name</></term>
        <listitem>
          <para>
           The name of the slot to stream changes from. This parameter is required,
@@ -1850,7 +1850,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>DROP_REPLICATION_SLOT <replaceable class="parameter">slotname</></term>
+    <term>DROP_REPLICATION_SLOT <replaceable class="parameter">slot_name</></term>
     <listitem>
      <para>
       Drops a replication slot, freeing any reserved server-side resources. If
@@ -1858,7 +1858,7 @@ The commands accepted in walsender mode are:
      </para>
      <variablelist>
       <varlistentry>
-       <term><replaceable class="parameter">slotname</></term>
+       <term><replaceable class="parameter">slot_name</></term>
        <listitem>
          <para>
           The name of the slot to drop.

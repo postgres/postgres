@@ -16609,14 +16609,14 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_physical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_physical_replication_slot(<parameter>slotname</parameter> <type>name</type>)</function></literal>
+        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slotname</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new physical replication slot named
-        <parameter>slotname</parameter>. Streaming changes from a physical slot
+        <parameter>slot_name</parameter>. Streaming changes from a physical slot
         is only possible with the walsender protocol - see <xref
         linkend="protocol-replication">. Corresponds to the walsender protocol
         command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>.
@@ -16627,14 +16627,14 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_drop_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_drop_replication_slot(<parameter>slotname</parameter> <type>name</type>)</function></literal>
+        <literal><function>pg_drop_replication_slot(<parameter>slot_name</parameter> <type>name</type>)</function></literal>
        </entry>
        <entry>
         <type>void</type>
        </entry>
        <entry>
         Drops the physical or logical replication slot
-        named <parameter>slotname</parameter>. Same as walsender protocol
+        named <parameter>slot_name</parameter>. Same as walsender protocol
         command <literal>DROP_REPLICATION_SLOT</>.
        </entry>
       </row>
@@ -16644,14 +16644,14 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_logical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_logical_replication_slot(<parameter>slotname</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type>)</function></literal>
+        <literal><function>pg_create_logical_replication_slot(<parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slotname</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new logical (decoding) replication slot named
-        <parameter>slotname</parameter> using the output plugin
+        <parameter>slot_name</parameter> using the output plugin
         <parameter>plugin</parameter>.  A call to this function has the same
         effect as the replication protocol command
         <literal>CREATE REPLICATION SLOT ... LOGICAL</literal>.
@@ -16663,16 +16663,16 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_logical_slot_get_changes</primary>
         </indexterm>
-        <literal><function>pg_logical_slot_get_changes(<parameter>slotname</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
+        <literal><function>pg_logical_slot_get_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
         (<parameter>location</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>text</type>)
        </entry>
        <entry>
-        Returns changes in the slot <parameter>slotname</parameter>, starting
+        Returns changes in the slot <parameter>slot_name</parameter>, starting
         from the point at which since changes have been consumed last.  If
         <parameter>upto_lsn</> and <parameter>upto_nchanges</> are NULL,
-        logical decoding will continue until end of WAL.  If 
+        logical decoding will continue until end of WAL.  If
         <parameter>upto_lsn</> is non-NULL, decoding will include only
         those transactions which commit prior to the specified LSN.  If
         <parameter>upto_nchanges</parameter> is non-NULL, decoding will
@@ -16688,7 +16688,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_logical_slot_peek_changes</primary>
         </indexterm>
-        <literal><function>pg_logical_slot_peek_changes(<parameter>slotname</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
+        <literal><function>pg_logical_slot_peek_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
         (<parameter>location</parameter> <type>text</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>text</type>)
@@ -16706,7 +16706,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_logical_slot_get_binary_changes</primary>
         </indexterm>
-        <literal><function>pg_logical_slot_get_binary_changes(<parameter>slotname</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
+        <literal><function>pg_logical_slot_get_binary_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
         (<parameter>location</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>bytea</type>)
@@ -16723,7 +16723,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_logical_slot_peek_binary_changes</primary>
         </indexterm>
-        <literal><function>pg_logical_slot_peek_binary_changes(<parameter>slotname</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
+        <literal><function>pg_logical_slot_peek_binary_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
        </entry>
        <entry>
         (<parameter>location</parameter> <type>pg_lsn</type>, <parameter>xid</parameter> <type>xid</type>, <parameter>data</parameter> <type>bytea</type>)

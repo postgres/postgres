@@ -929,7 +929,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      You can create a replication slot like this:
 <programlisting>
 postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
-  slotname   | xlog_position
+  slot_name  | xlog_position
 -------------+---------------
  node_a_slot |
 
@@ -939,13 +939,13 @@ postgres=# SELECT * FROM pg_replication_slots;
  node_a_slot | physical  |        |          | f      |      |
 (1 row)
 </programlisting>
-     To configure the standby to use this slot, <varname>primary_slotname</>
+     To configure the standby to use this slot, <varname>primary_slot_name</>
      should be configured in the standby's <filename>recovery.conf</>.
      Here is a simple example:
 <programlisting>
 standby_mode = 'on'
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
-primary_slotname = 'node_a_slot'
+primary_slot_name = 'node_a_slot'
 </programlisting>
     </para>
    </sect3>

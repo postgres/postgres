@@ -5221,12 +5221,12 @@ readRecoveryCommandFile(void)
 					(errmsg_internal("primary_conninfo = '%s'",
 									 PrimaryConnInfo)));
 		}
-		else if (strcmp(item->name, "primary_slotname") == 0)
+		else if (strcmp(item->name, "primary_slot_name") == 0)
 		{
 			ReplicationSlotValidateName(item->value, ERROR);
 			PrimarySlotName = pstrdup(item->value);
 			ereport(DEBUG2,
-					(errmsg_internal("primary_slotname = '%s'",
+					(errmsg_internal("primary_slot_name = '%s'",
 									 PrimarySlotName)));
 		}
 		else if (strcmp(item->name, "trigger_file") == 0)

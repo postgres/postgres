@@ -125,7 +125,7 @@
 # removal on the upstream node. This setting has no effect if primary_conninfo
 # is not set.
 #
-#primary_slotname = ''
+#primary_slot_name = ''
 #
 # By default, a standby server keeps restoring XLOG records from the
 # primary indefinitely. If you want to stop the standby mode, finish recovery

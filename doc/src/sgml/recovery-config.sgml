@@ -370,10 +370,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          </para>
         </listitem>
        </varlistentry>
-       <varlistentry id="primary-slotname" xreflabel="primary_slotname">
-        <term><varname>primary_slotname</varname> (<type>string</type>)
+       <varlistentry id="primary-slot-name" xreflabel="primary_slot_name">
+        <term><varname>primary_slot_name</varname> (<type>string</type>)
         <indexterm>
-          <primary><varname>primary_slotname</> recovery parameter</primary>
+          <primary><varname>primary_slot_name</> recovery parameter</primary>
         </indexterm>
         </term>
         <listitem>

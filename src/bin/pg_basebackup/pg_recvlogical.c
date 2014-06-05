@@ -89,11 +89,11 @@ usage(void)
 	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"), plugin);
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
-	printf(_("  -S, --slot=SLOT        use existing replication slot SLOT instead of starting a new one\n"));
+	printf(_("  -S, --slot=SLOT        name of the logical replication slot\n"));
 	printf(_("\nAction to be performed:\n"));
-	printf(_("      --create           create a new replication slot (for the slotname see --slot)\n"));
-	printf(_("      --start            start streaming in a replication slot (for the slotname see --slot)\n"));
-	printf(_("      --drop             drop the replication slot (for the slotname see --slot)\n"));
+	printf(_("      --create           create a new replication slot (for the slot's name see --slot)\n"));
+	printf(_("      --start            start streaming in a replication slot (for the slot's name see --slot)\n"));
+	printf(_("      --drop             drop the replication slot (for the slot's name see --slot)\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 

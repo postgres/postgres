@@ -54,7 +54,7 @@
    <programlisting>
 postgres=# -- Create a slot named 'regression_slot' using the output plugin 'test_decoding'
 postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
-    slotname     | xlog_position
+    slot_name    | xlog_position
 -----------------+---------------
  regression_slot | 0/16B1970
 (1 row)
@@ -256,9 +256,9 @@ CTRL-C
   <sect1 id="logicaldecoding-walsender">
    <title>Streaming Replication Protocol Interface</title>
    <para>
-    The <literal>CREATE_REPLICATION_SLOT slotname LOGICAL
-    options</literal>, <literal>DROP_REPLICATION_SLOT slotname</literal>
-    and <literal>START_REPLICATION SLOT slotname LOGICAL options</literal>
+    The <literal>CREATE_REPLICATION_SLOT slot_name LOGICAL
+    options</literal>, <literal>DROP_REPLICATION_SLOT slot_name</literal>
+    and <literal>START_REPLICATION SLOT slot_name LOGICAL options</literal>
     commands can be used to create, drop and stream changes from a replication
     slot respectively. These commands are only available over a replication
     connection; they cannot be used via SQL.
