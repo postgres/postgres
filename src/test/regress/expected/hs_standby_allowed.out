@@ -49,7 +49,7 @@ select count(*)  as should_be_1 from hs1;
 (1 row)
 
 end;
-begin transaction isolation level serializable;
+begin transaction isolation level repeatable read;
 select count(*) as should_be_1 from hs1;
  should_be_1 
 -------------
