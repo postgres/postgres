@@ -124,7 +124,7 @@ unlisten *;
 ERROR:  cannot execute UNLISTEN during recovery
 -- disallowed commands
 ANALYZE hs1;
-ERROR:  cannot execute VACUUM during recovery
+ERROR:  cannot execute ANALYZE during recovery
 VACUUM hs2;
 ERROR:  cannot execute VACUUM during recovery
 CLUSTER hs2 using hs1_pkey;

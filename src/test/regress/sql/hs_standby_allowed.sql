@@ -28,7 +28,7 @@ begin transaction read only;
 select count(*)  as should_be_1 from hs1;
 end;
 
-begin transaction isolation level serializable;
+begin transaction isolation level repeatable read;
 select count(*) as should_be_1 from hs1;
 select count(*) as should_be_1 from hs1;
 select count(*) as should_be_1 from hs1;
