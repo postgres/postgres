@@ -1,7 +1,32 @@
 /*-------------------------------------------------------------------------
  *
  * spgtextproc.c
- *	  implementation of compressed-suffix tree over text
+ *	  implementation of radix tree (compressed trie) over text
+ *
+ * In a text_ops SPGiST index, inner tuples can have a prefix which is the
+ * common prefix of all strings indexed under that tuple.  The node labels
+ * represent the next byte of the string(s) after the prefix.  Assuming we
+ * always use the longest possible prefix, we will get more than one node
+ * label unless the prefix length is restricted by SPGIST_MAX_PREFIX_LENGTH.
+ *
+ * To reconstruct the indexed string for any index entry, concatenate the
+ * inner-tuple prefixes and node labels starting at the root and working
+ * down to the leaf entry, then append the datum in the leaf entry.
+ * (While descending the tree, "level" is the number of bytes reconstructed
+ * so far.)
+ *
+ * However, there are two special cases for node labels: -1 indicates that
+ * there are no more bytes after the prefix-so-far, and -2 indicates that we
+ * had to split an existing allTheSame tuple (in such a case we have to create
+ * a node label that doesn't correspond to any string byte).  In either case,
+ * the node label does not contribute anything to the reconstructed string.
+ *
+ * Previously, we used a node label of zero for both special cases, but
+ * this was problematic because one can't tell whether a string ending at
+ * the current level can be pushed down into such a child node.  For
+ * backwards compatibility, we still support such node labels for reading;
+ * but no new entries will ever be pushed down into a zero-labeled child.
+ * No new entries ever get pushed into a -2-labeled child, either.
  *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
@@ -23,29 +48,30 @@
 
 
 /*
- * In the worst case, a inner tuple in a text suffix tree could have as many
- * as 256 nodes (one for each possible byte value).  Each node can take 16
- * bytes on MAXALIGN=8 machines.  The inner tuple must fit on an index page
- * of size BLCKSZ.  Rather than assuming we know the exact amount of overhead
- * imposed by page headers, tuple headers, etc, we leave 100 bytes for that
- * (the actual overhead should be no more than 56 bytes at this writing, so
- * there is slop in this number).  So we can safely create prefixes up to
- * BLCKSZ - 256 * 16 - 100 bytes long.  Unfortunately, because 256 * 16 is
- * already 4K, there is no safe prefix length when BLCKSZ is less than 8K;
- * it is always possible to get "SPGiST inner tuple size exceeds maximum"
- * if there are too many distinct next-byte values at a given place in the
- * tree.  Since use of nonstandard block sizes appears to be negligible in
- * the field, we just live with that fact for now, choosing a max prefix
- * size of 32 bytes when BLCKSZ is configured smaller than default.
+ * In the worst case, an inner tuple in a text radix tree could have as many
+ * as 258 nodes (one for each possible byte value, plus the two special
+ * cases).  Each node can take 16 bytes on MAXALIGN=8 machines.  The inner
+ * tuple must fit on an index page of size BLCKSZ.  Rather than assuming we
+ * know the exact amount of overhead imposed by page headers, tuple headers,
+ * etc, we leave 100 bytes for that (the actual overhead should be no more
+ * than 56 bytes at this writing, so there is slop in this number).
+ * So we can safely create prefixes up to BLCKSZ - 258 * 16 - 100 bytes long.
+ * Unfortunately, because 258 * 16 is over 4K, there is no safe prefix length
+ * when BLCKSZ is less than 8K; it is always possible to get "SPGiST inner
+ * tuple size exceeds maximum" if there are too many distinct next-byte values
+ * at a given place in the tree.  Since use of nonstandard block sizes appears
+ * to be negligible in the field, we just live with that fact for now,
+ * choosing a max prefix size of 32 bytes when BLCKSZ is configured smaller
+ * than default.
  */
-#define SPGIST_MAX_PREFIX_LENGTH	Max((int) (BLCKSZ - 256 * 16 - 100), 32)
+#define SPGIST_MAX_PREFIX_LENGTH	Max((int) (BLCKSZ - 258 * 16 - 100), 32)
 
 /* Struct for sorting values in picksplit */
 typedef struct spgNodePtr
 {
 	Datum		d;
 	int			i;
-	uint8		c;
+	int16		c;
 } spgNodePtr;
 
 
@@ -56,7 +82,7 @@ spg_text_config(PG_FUNCTION_ARGS)
 	spgConfigOut *cfg = (spgConfigOut *) PG_GETARG_POINTER(1);
 
 	cfg->prefixType = TEXTOID;
-	cfg->labelType = CHAROID;
+	cfg->labelType = INT2OID;
 	cfg->canReturnData = true;
 	cfg->longValuesOK = true;	/* suffixing will shorten long values */
 	PG_RETURN_VOID();
@@ -107,12 +133,12 @@ commonPrefix(const char *a, const char *b, int lena, int lenb)
 }
 
 /*
- * Binary search an array of uint8 datums for a match to c
+ * Binary search an array of int16 datums for a match to c
  *
  * On success, *i gets the match location; on failure, it gets where to insert
  */
 static bool
-searchChar(Datum *nodeLabels, int nNodes, uint8 c, int *i)
+searchChar(Datum *nodeLabels, int nNodes, int16 c, int *i)
 {
 	int			StopLow = 0,
 				StopHigh = nNodes;
@@ -120,7 +146,7 @@ searchChar(Datum *nodeLabels, int nNodes, uint8 c, int *i)
 	while (StopLow < StopHigh)
 	{
 		int			StopMiddle = (StopLow + StopHigh) >> 1;
-		uint8		middle = DatumGetUInt8(nodeLabels[StopMiddle]);
+		int16		middle = DatumGetInt16(nodeLabels[StopMiddle]);
 
 		if (c < middle)
 			StopHigh = StopMiddle;
@@ -145,16 +171,19 @@ spg_text_choose(PG_FUNCTION_ARGS)
 	text	   *inText = DatumGetTextPP(in->datum);
 	char	   *inStr = VARDATA_ANY(inText);
 	int			inSize = VARSIZE_ANY_EXHDR(inText);
-	uint8		nodeChar = '\0';
-	int			i = 0;
+	char	   *prefixStr = NULL;
+	int			prefixSize = 0;
 	int			commonLen = 0;
+	int16		nodeChar = 0;
+	int			i = 0;
 
 	/* Check for prefix match, set nodeChar to first byte after prefix */
 	if (in->hasPrefix)
 	{
 		text	   *prefixText = DatumGetTextPP(in->prefixDatum);
-		char	   *prefixStr = VARDATA_ANY(prefixText);
-		int			prefixSize = VARSIZE_ANY_EXHDR(prefixText);
+
+		prefixStr = VARDATA_ANY(prefixText);
+		prefixSize = VARSIZE_ANY_EXHDR(prefixText);
 
 		commonLen = commonPrefix(inStr + in->level,
 								 prefixStr,
@@ -164,9 +193,9 @@ spg_text_choose(PG_FUNCTION_ARGS)
 		if (commonLen == prefixSize)
 		{
 			if (inSize - in->level > commonLen)
-				nodeChar = *(uint8 *) (inStr + in->level + commonLen);
+				nodeChar = *(unsigned char *) (inStr + in->level + commonLen);
 			else
-				nodeChar = '\0';
+				nodeChar = -1;
 		}
 		else
 		{
@@ -184,7 +213,7 @@ spg_text_choose(PG_FUNCTION_ARGS)
 					formTextDatum(prefixStr, commonLen);
 			}
 			out->result.splitTuple.nodeLabel =
-				UInt8GetDatum(*(prefixStr + commonLen));
+				Int16GetDatum(*(unsigned char *) (prefixStr + commonLen));
 
 			if (prefixSize - commonLen == 1)
 			{
@@ -203,11 +232,11 @@ spg_text_choose(PG_FUNCTION_ARGS)
 	}
 	else if (inSize > in->level)
 	{
-		nodeChar = *(uint8 *) (inStr + in->level);
+		nodeChar = *(unsigned char *) (inStr + in->level);
 	}
 	else
 	{
-		nodeChar = '\0';
+		nodeChar = -1;
 	}
 
 	/* Look up nodeChar in the node label array */
@@ -219,13 +248,18 @@ spg_text_choose(PG_FUNCTION_ARGS)
 		 * to provide the correct levelAdd and restDatum values, and those are
 		 * the same regardless of which node gets chosen by core.)
 		 */
+		int			levelAdd;
+
 		out->resultType = spgMatchNode;
 		out->result.matchNode.nodeN = i;
-		out->result.matchNode.levelAdd = commonLen + 1;
-		if (inSize - in->level - commonLen - 1 > 0)
+		levelAdd = commonLen;
+		if (nodeChar >= 0)
+			levelAdd++;
+		out->result.matchNode.levelAdd = levelAdd;
+		if (inSize - in->level - levelAdd > 0)
 			out->result.matchNode.restDatum =
-				formTextDatum(inStr + in->level + commonLen + 1,
-							  inSize - in->level - commonLen - 1);
+				formTextDatum(inStr + in->level + levelAdd,
+							  inSize - in->level - levelAdd);
 		else
 			out->result.matchNode.restDatum =
 				formTextDatum(NULL, 0);
@@ -234,21 +268,26 @@ spg_text_choose(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Can't use AddNode action, so split the tuple.  The upper tuple has
-		 * the same prefix as before and uses an empty node label for the
+		 * the same prefix as before and uses a dummy node label -2 for the
 		 * lower tuple.  The lower tuple has no prefix and the same node
 		 * labels as the original tuple.
+		 *
+		 * Note: it might seem tempting to shorten the upper tuple's prefix,
+		 * if it has one, then use its last byte as label for the lower tuple.
+		 * But that doesn't win since we know the incoming value matches the
+		 * whole prefix: we'd just end up splitting the lower tuple again.
 		 */
 		out->resultType = spgSplitTuple;
 		out->result.splitTuple.prefixHasPrefix = in->hasPrefix;
 		out->result.splitTuple.prefixPrefixDatum = in->prefixDatum;
-		out->result.splitTuple.nodeLabel = UInt8GetDatum('\0');
+		out->result.splitTuple.nodeLabel = Int16GetDatum(-2);
 		out->result.splitTuple.postfixHasPrefix = false;
 	}
 	else
 	{
 		/* Add a node for the not-previously-seen nodeChar value */
 		out->resultType = spgAddNode;
-		out->result.addNode.nodeLabel = UInt8GetDatum(nodeChar);
+		out->result.addNode.nodeLabel = Int16GetDatum(nodeChar);
 		out->result.addNode.nodeN = i;
 	}
 
@@ -262,12 +301,7 @@ cmpNodePtr(const void *a, const void *b)
 	const spgNodePtr *aa = (const spgNodePtr *) a;
 	const spgNodePtr *bb = (const spgNodePtr *) b;
 
-	if (aa->c == bb->c)
-		return 0;
-	else if (aa->c > bb->c)
-		return 1;
-	else
-		return -1;
+	return aa->c - bb->c;
 }
 
 Datum
@@ -319,15 +353,15 @@ spg_text_picksplit(PG_FUNCTION_ARGS)
 		text	   *texti = DatumGetTextPP(in->datums[i]);
 
 		if (commonLen < VARSIZE_ANY_EXHDR(texti))
-			nodes[i].c = *(uint8 *) (VARDATA_ANY(texti) + commonLen);
+			nodes[i].c = *(unsigned char *) (VARDATA_ANY(texti) + commonLen);
 		else
-			nodes[i].c = '\0';	/* use \0 if string is all common */
+			nodes[i].c = -1;	/* use -1 if string is all common */
 		nodes[i].i = i;
 		nodes[i].d = in->datums[i];
 	}
 
 	/*
-	 * Sort by label bytes so that we can group the values into nodes.  This
+	 * Sort by label values so that we can group the values into nodes.  This
 	 * also ensures that the nodes are ordered by label value, allowing the
 	 * use of binary search in searchChar.
 	 */
@@ -346,7 +380,7 @@ spg_text_picksplit(PG_FUNCTION_ARGS)
 
 		if (i == 0 || nodes[i].c != nodes[i - 1].c)
 		{
-			out->nodeLabels[out->nNodes] = UInt8GetDatum(nodes[i].c);
+			out->nodeLabels[out->nNodes] = Int16GetDatum(nodes[i].c);
 			out->nNodes++;
 		}
 
@@ -377,9 +411,9 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * Reconstruct values represented at this tuple, including parent data,
-	 * prefix of this tuple if any, and the node label if any.  in->level
-	 * should be the length of the previously reconstructed value, and the
-	 * number of bytes added here is prefixSize or prefixSize + 1.
+	 * prefix of this tuple if any, and the node label if it's non-dummy.
+	 * in->level should be the length of the previously reconstructed value,
+	 * and the number of bytes added here is prefixSize or prefixSize + 1.
 	 *
 	 * Note: we assume that in->reconstructedValue isn't toasted and doesn't
 	 * have a short varlena header.  This is okay because it must have been
@@ -422,17 +456,17 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < in->nNodes; i++)
 	{
-		uint8		nodeChar = DatumGetUInt8(in->nodeLabels[i]);
+		int16		nodeChar = DatumGetInt16(in->nodeLabels[i]);
 		int			thisLen;
 		bool		res = true;
 		int			j;
 
-		/* If nodeChar is zero, don't include it in data */
-		if (nodeChar == '\0')
+		/* If nodeChar is a dummy value, don't include it in data */
+		if (nodeChar <= 0)
 			thisLen = maxReconstrLen - 1;
 		else
 		{
-			((char *) VARDATA(reconstrText))[maxReconstrLen - 1] = nodeChar;
+			((unsigned char *) VARDATA(reconstrText))[maxReconstrLen - 1] = nodeChar;
 			thisLen = maxReconstrLen;
 		}
 
@@ -447,7 +481,9 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 			 * If it's a collation-aware operator, but the collation is C, we
 			 * can treat it as non-collation-aware.  With non-C collation we
 			 * need to traverse whole tree :-( so there's no point in making
-			 * any check here.
+			 * any check here.  (Note also that our reconstructed value may
+			 * well end with a partial multibyte character, so that applying
+			 * any encoding-sensitive test to it would be risky anyhow.)
 			 */
 			if (strategy > 10)
 			{
