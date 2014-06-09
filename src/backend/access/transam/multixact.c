@@ -133,6 +133,19 @@
 #define MULTIXACT_MEMBERS_PER_PAGE	\
 	(MULTIXACT_MEMBERGROUPS_PER_PAGE * MULTIXACT_MEMBERS_PER_MEMBERGROUP)
 
+/*
+ * Because the number of items per page is not a divisor of the last item
+ * number (member 0xFFFFFFFF), the last segment does not use the maximum number
+ * of pages, and moreover the last used page therein does not use the same
+ * number of items as previous pages.  (Another way to say it is that the
+ * 0xFFFFFFFF member is somewhere in the middle of the last page, so the page
+ * has some empty space after that item.)
+ *
+ * This constant is the number of members in the last page of the last segment.
+ */
+#define MAX_MEMBERS_IN_LAST_MEMBERS_PAGE \
+		((uint32) ((0xFFFFFFFF % MULTIXACT_MEMBERS_PER_PAGE) + 1))
+
 /* page in which a member is to be found */
 #define MXOffsetToMemberPage(xid) ((xid) / (TransactionId) MULTIXACT_MEMBERS_PER_PAGE)
 
@@ -2278,6 +2291,7 @@ ExtendMultiXactMember(MultiXactOffset offset, int nmembers)
 	{
 		int			flagsoff;
 		int			flagsbit;
+		uint32		difference;
 
 		/*
 		 * Only zero when at first entry of a page.
@@ -2299,24 +2313,29 @@ ExtendMultiXactMember(MultiXactOffset offset, int nmembers)
 		}
 
 		/*
+		 * Compute the number of items till end of current page.  Careful: if
+		 * addition of unsigned ints wraps around, we're at the last page of
+		 * the last segment; since that page holds a different number of items
+		 * than other pages, we need to do it differently.
+		 */
+		if (offset + MAX_MEMBERS_IN_LAST_MEMBERS_PAGE < offset)
+		{
+			/*
+			 * This is the last page of the last segment; we can compute the
+			 * number of items left to allocate in it without modulo
+			 * arithmetic.
+			 */
+			difference = MaxMultiXactOffset - offset + 1;
+		}
+		else
+			difference = MULTIXACT_MEMBERS_PER_PAGE - offset % MULTIXACT_MEMBERS_PER_PAGE;
+
+		/*
 		 * Advance to next page, taking care to properly handle the wraparound
 		 * case.  OK if nmembers goes negative.
 		 */
-		if ((unsigned int) (offset + nmembers) < offset)
-		{
-			uint32		difference = offset + MULTIXACT_MEMBERS_PER_PAGE;
-
-			nmembers -= (unsigned int) (MULTIXACT_MEMBERS_PER_PAGE - difference);
-			offset = 0;
-		}
-		else
-		{
-			int			difference;
-
-			difference = MULTIXACT_MEMBERS_PER_PAGE - offset % MULTIXACT_MEMBERS_PER_PAGE;
-			nmembers -= difference;
-			offset += difference;
-		}
+		nmembers -= difference;
+		offset += difference;
 	}
 }
 

@@ -25,6 +25,8 @@
 
 #define MultiXactIdIsValid(multi) ((multi) != InvalidMultiXactId)
 
+#define MaxMultiXactOffset	((MultiXactOffset) 0xFFFFFFFF)
+
 /* Number of SLRU buffers to use for multixact */
 #define NUM_MXACTOFFSET_BUFFERS		8
 #define NUM_MXACTMEMBER_BUFFERS		16
