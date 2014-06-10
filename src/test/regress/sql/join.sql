@@ -661,6 +661,64 @@ SELECT qq, unique1
   INNER JOIN tenk1 c ON qq = unique2;
 
 --
+-- nested nestloops can require nested PlaceHolderVars
+--
+
+create temp table nt1 (
+  id int primary key,
+  a1 boolean,
+  a2 boolean
+);
+create temp table nt2 (
+  id int primary key,
+  nt1_id int,
+  b1 boolean,
+  b2 boolean,
+  foreign key (nt1_id) references nt1(id)
+);
+create temp table nt3 (
+  id int primary key,
+  nt2_id int,
+  c1 boolean,
+  foreign key (nt2_id) references nt2(id)
+);
+
+insert into nt1 values (1,true,true);
+insert into nt1 values (2,true,false);
+insert into nt1 values (3,false,false);
+insert into nt2 values (1,1,true,true);
+insert into nt2 values (2,2,true,false);
+insert into nt2 values (3,3,false,false);
+insert into nt3 values (1,1,true);
+insert into nt3 values (2,2,false);
+insert into nt3 values (3,3,true);
+
+explain (costs off)
+select nt3.id
+from nt3 as nt3
+  left join
+    (select nt2.*, (nt2.b1 and ss1.a3) AS b3
+     from nt2 as nt2
+       left join
+         (select nt1.*, (nt1.id is not null) as a3 from nt1) as ss1
+         on ss1.id = nt2.nt1_id
+    ) as ss2
+    on ss2.id = nt3.nt2_id
+where nt3.id = 1 and ss2.b3;
+
+select nt3.id
+from nt3 as nt3
+  left join
+    (select nt2.*, (nt2.b1 and ss1.a3) AS b3
+     from nt2 as nt2
+       left join
+         (select nt1.*, (nt1.id is not null) as a3 from nt1) as ss1
+         on ss1.id = nt2.nt1_id
+    ) as ss2
+    on ss2.id = nt3.nt2_id
+where nt3.id = 1 and ss2.b3;
+
+--
 -- test case where a PlaceHolderVar is propagated into a subquery
 --
 
