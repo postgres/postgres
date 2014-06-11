@@ -28,6 +28,10 @@ ifneq (,$(findstring src/common,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
 endif
 
+ifneq (,$(findstring src/port,$(subdir)))
+override CPPFLAGS+= -DBUILDING_DLL
+endif
+
 ifneq (,$(findstring timezone,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
 endif
