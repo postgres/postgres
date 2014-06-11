@@ -6,4 +6,4 @@ SRCH_LIB="/usr/local/lib"
 # pg_toupper() etc. in both libpq and pgport
 # we'd prefer to use --disable-auto-import to match MSVC linking behavior,
 # but support for it in Cygwin is too haphazard
-LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-auto-import"
+LDFLAGS="$LDFLAGS -Wl,--allow-multiple-definition -Wl,--enable-auto-import"
