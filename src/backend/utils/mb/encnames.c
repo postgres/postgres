@@ -1,6 +1,6 @@
 /*
  * Encoding names and routines for work with it. All
- * in this file is shared bedween FE and BE.
+ * in this file is shared between FE and BE.
  *
  * src/backend/utils/mb/encnames.c
  */

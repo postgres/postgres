@@ -11332,7 +11332,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, collinfo->dobj.namespace->dobj.name);
 
-	/* Get conversion-specific details */
+	/* Get collation-specific details */
 	appendPQExpBuffer(query, "SELECT "
 					  "collcollate, "
 					  "collctype "

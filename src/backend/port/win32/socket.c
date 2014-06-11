@@ -177,7 +177,7 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	 * Just a workaround of unknown locking problem with writing in UDP socket
 	 * under high load: Client's pgsql backend sleeps infinitely in
 	 * WaitForMultipleObjectsEx, pgstat process sleeps in pgwin32_select().
-	 * So, we will wait with small timeout(0.1 sec) and if sockect is still
+	 * So, we will wait with small timeout(0.1 sec) and if socket is still
 	 * blocked, try WSASend (see comments in pgwin32_select) and wait again.
 	 */
 	if ((what & FD_WRITE) && isUDP)

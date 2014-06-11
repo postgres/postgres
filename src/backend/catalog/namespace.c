@@ -260,7 +260,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 	 * with the answer changing under them, or that they already hold some
 	 * appropriate lock, and therefore return the first answer we get without
 	 * checking for invalidation messages.  Also, if the requested lock is
-	 * already held, no LockRelationOid will not AcceptInvalidationMessages,
+	 * already held, LockRelationOid will not AcceptInvalidationMessages,
 	 * so we may fail to notice a change.  We could protect against that case
 	 * by calling AcceptInvalidationMessages() before beginning this loop, but
 	 * that would add a significant amount overhead, so for now we don't.
@@ -502,7 +502,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
  * the same name which already exists in that namespace, or to InvalidOid if
  * no such relation exists.
  *
- * If lockmode != NoLock, the specified lock mode is acquire on the existing
+ * If lockmode != NoLock, the specified lock mode is acquired on the existing
  * relation, if any, provided that the current user owns the target relation.
  * However, if lockmode != NoLock and the user does not own the target
  * relation, we throw an ERROR, as we must not try to lock relations the
