@@ -23,7 +23,7 @@
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
 $major1 = 9;
-$major2 = 4;
+$major2 = 5;
 
 # Validate argument and compute derived variables
 $minor = shift;
