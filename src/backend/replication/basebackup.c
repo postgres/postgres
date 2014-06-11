@@ -752,7 +752,7 @@ SendBackupHeader(List *tablespaces)
 
 /*
  * Send a single resultset containing just a single
- * XlogRecPtr record (in text format)
+ * XLogRecPtr record (in text format)
  */
 static void
 SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
