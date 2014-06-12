@@ -547,16 +547,16 @@ int lo_unlink(PGconn *conn, Oid lobjId);
      <row>
       <entry>
        <indexterm>
-        <primary>lo_create</primary>
+        <primary>lo_from_bytea</primary>
        </indexterm>
-       <literal><function>lo_create(<parameter>loid</parameter> <type>oid</type>, <parameter>string</parameter> <type>bytea</type>)</function></literal>
+       <literal><function>lo_from_bytea(<parameter>loid</parameter> <type>oid</type>, <parameter>string</parameter> <type>bytea</type>)</function></literal>
       </entry>
       <entry><type>oid</type></entry>
       <entry>
        Create a large object and store data there, returning its OID.
        Pass <literal>0</> to have the system choose an OID.
       </entry>
-      <entry><literal>lo_create(0, E'\\xffffff00')</literal></entry>
+      <entry><literal>lo_from_bytea(0, E'\\xffffff00')</literal></entry>
       <entry><literal>24528</literal></entry>
      </row>
 
