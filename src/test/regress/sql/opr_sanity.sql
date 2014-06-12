@@ -317,6 +317,30 @@ ORDER BY 1;
 -- restore normal output mode
 \a\t
 
+-- List of functions used by libpq's fe-lobj.c
+--
+-- If the output of this query changes, you probably broke libpq.
+-- lo_initialize() assumes that there will be at most one match for
+-- each listed name.
+select proname, oid from pg_catalog.pg_proc
+where proname in (
+  'lo_open',
+  'lo_close',
+  'lo_creat',
+  'lo_create',
+  'lo_unlink',
+  'lo_lseek',
+  'lo_lseek64',
+  'lo_tell',
+  'lo_tell64',
+  'lo_truncate',
+  'lo_truncate64',
+  'loread',
+  'lowrite')
+and pronamespace = (select oid from pg_catalog.pg_namespace
+                    where nspname = 'pg_catalog')
+order by 1;
+
 
 -- **************** pg_cast ****************
 

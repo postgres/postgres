@@ -638,6 +638,46 @@ uuid_gt(uuid,uuid)
 uuid_ne(uuid,uuid)
 -- restore normal output mode
 \a\t
+-- List of functions used by libpq's fe-lobj.c
+--
+-- If the output of this query changes, you probably broke libpq.
+-- lo_initialize() assumes that there will be at most one match for
+-- each listed name.
+select proname, oid from pg_catalog.pg_proc
+where proname in (
+  'lo_open',
+  'lo_close',
+  'lo_creat',
+  'lo_create',
+  'lo_unlink',
+  'lo_lseek',
+  'lo_lseek64',
+  'lo_tell',
+  'lo_tell64',
+  'lo_truncate',
+  'lo_truncate64',
+  'loread',
+  'lowrite')
+and pronamespace = (select oid from pg_catalog.pg_namespace
+                    where nspname = 'pg_catalog')
+order by 1;
+    proname    | oid  
+---------------+------
+ lo_close      |  953
+ lo_creat      |  957
+ lo_create     |  715
+ lo_lseek      |  956
+ lo_lseek64    | 3170
+ lo_open       |  952
+ lo_tell       |  958
+ lo_tell64     | 3171
+ lo_truncate   | 1004
+ lo_truncate64 | 3172
+ lo_unlink     |  964
+ loread        |  954
+ lowrite       |  955
+(13 rows)
+
 -- **************** pg_cast ****************
 -- Catch bogus values in pg_cast columns (other than cases detected by
 -- oidjoins test).
