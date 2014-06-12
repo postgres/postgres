@@ -85,6 +85,15 @@ SELECT lo_close(fd) FROM lotest_stash_values;
 (1 row)
 
 END;
+-- Copy to another large object.
+-- Note: we intentionally don't remove the object created here;
+-- it's left behind to help test pg_dump.
+SELECT lo_from_bytea(0, lo_get(loid)) AS newloid FROM lotest_stash_values
+\gset
+-- Ideally we'd put a comment on this object for pg_dump testing purposes.
+-- But since pg_upgrade fails to preserve large object comments, doing so
+-- would break pg_upgrade's regression test.
+-- COMMENT ON LARGE OBJECT :newloid IS 'I Wandered Lonely as a Cloud';
 -- Read out a portion
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
@@ -398,6 +407,7 @@ SELECT lo_unlink(loid) FROM lotest_stash_values;
          1
 (1 row)
 
+TRUNCATE lotest_stash_values;
 \lo_unlink :newloid
 \lo_import 'results/lotest.txt'
 \set newloid_1 :LASTOID
@@ -449,5 +459,15 @@ SELECT lo_get(:newloid_1, 4294967294, 100);
 
 \lo_unlink :newloid_1
 \lo_unlink :newloid_2
-TRUNCATE lotest_stash_values;
+-- This object is left in the database for pg_dump test purposes
+SELECT lo_from_bytea(0, E'\\xdeadbeef') AS newloid
+\gset
+SET bytea_output TO hex;
+SELECT lo_get(:newloid);
+   lo_get   
+------------
+ \xdeadbeef
+(1 row)
+
+DROP TABLE lotest_stash_values;
 DROP ROLE regresslo;
