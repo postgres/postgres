@@ -829,7 +829,7 @@ CheckPointReplicationSlots(void)
  * needs to be run before we start crash recovery.
  */
 void
-StartupReplicationSlots(XLogRecPtr checkPointRedo)
+StartupReplicationSlots(void)
 {
 	DIR		   *replication_dir;
 	struct dirent *replication_de;

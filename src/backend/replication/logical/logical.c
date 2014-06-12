@@ -125,7 +125,7 @@ StartupDecodingContext(List *output_plugin_options,
 	slot = MyReplicationSlot;
 
 	context = AllocSetContextCreate(CurrentMemoryContext,
-									"Changeset Extraction Context",
+									"Logical Decoding Context",
 									ALLOCSET_DEFAULT_MINSIZE,
 									ALLOCSET_DEFAULT_INITSIZE,
 									ALLOCSET_DEFAULT_MAXSIZE);

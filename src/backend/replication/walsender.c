@@ -781,6 +781,11 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	else
 	{
 		CheckLogicalDecodingRequirements();
+		/*
+		 * Initially create the slot as ephemeral - that allows us to nicely
+		 * handle errors during initialization because it'll get dropped if
+		 * this transaction fails. We'll make it persistent at the end.
+		 */
 		ReplicationSlotCreate(cmd->slotname, true, RS_EPHEMERAL);
 	}
 
@@ -1682,8 +1687,8 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * If we're using a replication slot we reserve the xmin via that,
 	 * otherwise via the walsender's PGXACT entry.
 	 *
-	 * XXX: It might make sense to introduce ephemeral slots and always use
-	 * the slot mechanism.
+	 * XXX: It might make sense to generalize the ephemeral slot concept and
+	 * always use the slot mechanism to handle the feedback xmin.
 	 */
 	if (MyReplicationSlot != NULL)		/* XXX: persistency configurable? */
 		PhysicalReplicationSlotNewXmin(feedbackXmin);

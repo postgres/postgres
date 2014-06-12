@@ -6270,7 +6270,7 @@ StartupXLOG(void)
 	 * Initialize replication slots, before there's a chance to remove
 	 * required resources.
 	 */
-	StartupReplicationSlots(checkPoint.redo);
+	StartupReplicationSlots();
 
 	/*
 	 * Startup logical state, needs to be setup now so we have proper data
