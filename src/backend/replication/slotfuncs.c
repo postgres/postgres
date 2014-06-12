@@ -46,12 +46,14 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Datum		result;
 
-	check_permissions();
-
-	CheckSlotRequirements();
+	Assert(!MyReplicationSlot);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
+
+	check_permissions();
+
+	CheckSlotRequirements();
 
 	/* acquire replication slot, this will check for conflicting names */
 	ReplicationSlotCreate(NameStr(*name), false, RS_PERSISTENT);
@@ -87,6 +89,8 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	Datum		values[2];
 	bool		nulls[2];
 
+	Assert(!MyReplicationSlot);
+
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
@@ -94,10 +98,11 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 
 	CheckLogicalDecodingRequirements();
 
-	Assert(!MyReplicationSlot);
-
 	/*
-	 * Acquire a logical decoding slot, this will check for conflicting names.
+	 * Acquire a logical decoding slot, this will check for conflicting
+	 * names. Initially create it as ephemeral - that allows us to nicely
+	 * handle errors during initialization because it'll get dropped if this
+	 * transaction fails. We'll make it persistent at the end.
 	 */
 	ReplicationSlotCreate(NameStr(*name), true, RS_EPHEMERAL);
 
