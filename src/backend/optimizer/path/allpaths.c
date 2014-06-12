@@ -17,9 +17,12 @@
 
 #include <math.h>
 
+#include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_type.h"
 #include "foreign/fdwapi.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
@@ -98,6 +101,7 @@ static void subquery_push_qual(Query *subquery,
 				   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
+static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
 
 
 /*
@@ -1124,7 +1128,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * Must copy the Query so that planning doesn't mess up the RTE contents
 	 * (really really need to fix the planner to not scribble on its input,
-	 * someday).
+	 * someday ... but see remove_unused_subquery_outputs to start with).
 	 */
 	subquery = copyObject(subquery);
 
@@ -1197,6 +1201,12 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	pfree(unsafeColumns);
+
+	/*
+	 * The upper query might not use all the subquery's output columns; if
+	 * not, we can simplify.
+	 */
+	remove_unused_subquery_outputs(subquery, rel);
 
 	/*
 	 * We can safely pass the outer tuple_fraction down to the subquery if the
@@ -2029,6 +2039,129 @@ recurse_push_qual(Node *setOp, Query *topquery,
 	{
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
+	}
+}
+
+/*****************************************************************************
+ *			SIMPLIFYING SUBQUERY TARGETLISTS
+ *****************************************************************************/
+
+/*
+ * remove_unused_subquery_outputs
+ *		Remove subquery targetlist items we don't need
+ *
+ * It's possible, even likely, that the upper query does not read all the
+ * output columns of the subquery.  We can remove any such outputs that are
+ * not needed by the subquery itself (e.g., as sort/group columns) and do not
+ * affect semantics otherwise (e.g., volatile functions can't be removed).
+ * This is useful not only because we might be able to remove expensive-to-
+ * compute expressions, but because deletion of output columns might allow
+ * optimizations such as join removal to occur within the subquery.
+ *
+ * To avoid affecting column numbering in the targetlist, we don't physically
+ * remove unused tlist entries, but rather replace their expressions with NULL
+ * constants.  This is implemented by modifying subquery->targetList.
+ */
+static void
+remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
+{
+	Bitmapset  *attrs_used = NULL;
+	ListCell   *lc;
+
+	/*
+	 * Do nothing if subquery has UNION/INTERSECT/EXCEPT: in principle we
+	 * could update all the child SELECTs' tlists, but it seems not worth the
+	 * trouble presently.
+	 */
+	if (subquery->setOperations)
+		return;
+
+	/*
+	 * If subquery has regular DISTINCT (not DISTINCT ON), we're wasting our
+	 * time: all its output columns must be used in the distinctClause.
+	 */
+	if (subquery->distinctClause && !subquery->hasDistinctOn)
+		return;
+
+	/*
+	 * Collect a bitmap of all the output column numbers used by the upper
+	 * query.
+	 *
+	 * Add all the attributes needed for joins or final output.  Note: we must
+	 * look at reltargetlist, not the attr_needed data, because attr_needed
+	 * isn't computed for inheritance child rels, cf set_append_rel_size().
+	 * (XXX might be worth changing that sometime.)
+	 */
+	pull_varattnos((Node *) rel->reltargetlist, rel->relid, &attrs_used);
+
+	/* Add all the attributes used by un-pushed-down restriction clauses. */
+	foreach(lc, rel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		pull_varattnos((Node *) rinfo->clause, rel->relid, &attrs_used);
+	}
+
+	/*
+	 * If there's a whole-row reference to the subquery, we can't remove
+	 * anything.
+	 */
+	if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber, attrs_used))
+		return;
+
+	/*
+	 * Run through the tlist and zap entries we don't need.  It's okay to
+	 * modify the tlist items in-place because set_subquery_pathlist made a
+	 * copy of the subquery.
+	 */
+	foreach(lc, subquery->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		/*
+		 * If it has a sortgroupref number, it's used in some sort/group
+		 * clause so we'd better not remove it.  Also, don't remove any
+		 * resjunk columns, since their reason for being has nothing to do
+		 * with anybody reading the subquery's output.  (It's likely that
+		 * resjunk columns in a sub-SELECT would always have ressortgroupref
+		 * set, but even if they don't, it seems imprudent to remove them.)
+		 */
+		if (tle->ressortgroupref || tle->resjunk)
+			continue;
+
+		/*
+		 * If it's used by the upper query, we can't remove it.
+		 */
+		if (bms_is_member(tle->resno - FirstLowInvalidHeapAttributeNumber,
+						  attrs_used))
+			continue;
+
+		/*
+		 * If it contains a set-returning function, we can't remove it since
+		 * that could change the number of rows returned by the subquery.
+		 */
+		if (expression_returns_set((Node *) tle->expr))
+			continue;
+
+		/*
+		 * If it contains volatile functions, we daren't remove it for fear
+		 * that the user is expecting their side-effects to happen.
+		 */
+		if (contain_volatile_functions((Node *) tle->expr))
+			continue;
+
+		/*
+		 * OK, we don't need it.  Replace the expression with a NULL constant.
+		 * We can just make the constant be of INT4 type, since nothing's
+		 * going to look at it anyway.
+		 */
+		tle->expr = (Expr *) makeConst(INT4OID,
+									   -1,
+									   InvalidOid,
+									   sizeof(int32),
+									   (Datum) 0,
+									   true,	/* isnull */
+									   true /* byval */ );
 	}
 }
 
