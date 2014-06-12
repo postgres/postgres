@@ -1061,8 +1061,8 @@ DESCR("truncate large object");
 DATA(insert OID = 3172 (  lo_truncate64    PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23 "23 20" _null_ _null_ _null_ _null_ lo_truncate64 _null_ _null_ _null_ ));
 DESCR("truncate large object (64 bit)");
 
-DATA(insert OID = 3457 (  lo_create		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 26 "26 17" _null_ _null_ _null_ _null_ lo_create_bytea _null_ _null_ _null_ ));
-DESCR("create new large object with content");
+DATA(insert OID = 3457 (  lo_from_bytea	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 26 "26 17" _null_ _null_ _null_ _null_ lo_from_bytea _null_ _null_ _null_ ));
+DESCR("create new large object with given content");
 DATA(insert OID = 3458 (  lo_get		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 17 "26" _null_ _null_ _null_ _null_ lo_get _null_ _null_ _null_ ));
 DESCR("read entire large object");
 DATA(insert OID = 3459 (  lo_get		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 17 "26 20 23" _null_ _null_ _null_ _null_ lo_get_fragment _null_ _null_ _null_ ));

@@ -25,7 +25,7 @@ extern Datum lo_export(PG_FUNCTION_ARGS);
 
 extern Datum lo_creat(PG_FUNCTION_ARGS);
 extern Datum lo_create(PG_FUNCTION_ARGS);
-extern Datum lo_create_bytea(PG_FUNCTION_ARGS);
+extern Datum lo_from_bytea(PG_FUNCTION_ARGS);
 
 extern Datum lo_open(PG_FUNCTION_ARGS);
 extern Datum lo_close(PG_FUNCTION_ARGS);

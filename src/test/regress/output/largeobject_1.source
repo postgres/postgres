@@ -393,7 +393,7 @@ SELECT lo_unlink(loid) FROM lotest_stash_values;
 \lo_unlink :newloid
 \lo_import 'results/lotest.txt'
 \set newloid_1 :LASTOID
-SELECT lo_create(0, lo_get(:newloid_1)) AS newloid_2
+SELECT lo_from_bytea(0, lo_get(:newloid_1)) AS newloid_2
 \gset
 SELECT md5(lo_get(:newloid_1)) = md5(lo_get(:newloid_2));
  ?column? 
