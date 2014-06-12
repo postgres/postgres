@@ -20,7 +20,6 @@
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_type.h"
 #include "foreign/fdwapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -2117,6 +2116,7 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 	foreach(lc, subquery->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		Node	   *texpr = (Node *) tle->expr;
 
 		/*
 		 * If it has a sortgroupref number, it's used in some sort/group
@@ -2140,28 +2140,24 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 		 * If it contains a set-returning function, we can't remove it since
 		 * that could change the number of rows returned by the subquery.
 		 */
-		if (expression_returns_set((Node *) tle->expr))
+		if (expression_returns_set(texpr))
 			continue;
 
 		/*
 		 * If it contains volatile functions, we daren't remove it for fear
 		 * that the user is expecting their side-effects to happen.
 		 */
-		if (contain_volatile_functions((Node *) tle->expr))
+		if (contain_volatile_functions(texpr))
 			continue;
 
 		/*
 		 * OK, we don't need it.  Replace the expression with a NULL constant.
-		 * We can just make the constant be of INT4 type, since nothing's
-		 * going to look at it anyway.
+		 * Preserve the exposed type of the expression, in case something
+		 * looks at the rowtype of the subquery's result.
 		 */
-		tle->expr = (Expr *) makeConst(INT4OID,
-									   -1,
-									   InvalidOid,
-									   sizeof(int32),
-									   (Datum) 0,
-									   true,	/* isnull */
-									   true /* byval */ );
+		tle->expr = (Expr *) makeNullConst(exprType(texpr),
+										   exprTypmod(texpr),
+										   exprCollation(texpr));
 	}
 }
 
