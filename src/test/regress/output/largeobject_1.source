@@ -20,31 +20,39 @@ UPDATE lotest_stash_values SET fd = lo_open(loid, CAST(x'20000' | x'40000' AS in
 -- lowrite(fd integer, data bytea) returns integer
 -- the integer is the number of bytes written
 SELECT lowrite(fd, '
-Whose woods these are I think I know,
-His house is in the village though.
-He will not see me stopping here,
-To watch his woods fill up with snow.
+I wandered lonely as a cloud
+That floats on high o''er vales and hills,
+When all at once I saw a crowd,
+A host, of golden daffodils;
+Beside the lake, beneath the trees,
+Fluttering and dancing in the breeze.
 
-My little horse must think it queer,
-To stop without a farmhouse near,
-Between the woods and frozen lake,
-The darkest evening of the year.
+Continuous as the stars that shine
+And twinkle on the milky way,
+They stretched in never-ending line
+Along the margin of a bay:
+Ten thousand saw I at a glance,
+Tossing their heads in sprightly dance.
 
-He gives his harness bells a shake,
-To ask if there is some mistake.
-The only other sound''s the sweep,
-Of easy wind and downy flake.
+The waves beside them danced; but they
+Out-did the sparkling waves in glee:
+A poet could not but be gay,
+In such a jocund company:
+I gazed--and gazed--but little thought
+What wealth the show to me had brought:
 
-The woods are lovely, dark and deep,
-But I have promises to keep,
-And miles to go before I sleep,
-And miles to go before I sleep.
+For oft, when on my couch I lie
+In vacant or in pensive mood,
+They flash upon that inward eye
+Which is the bliss of solitude;
+And then my heart with pleasure fills,
+And dances with the daffodils.
 
-         -- Robert Frost
+         -- William Wordsworth
 ') FROM lotest_stash_values;
  lowrite 
 ---------
-     578
+     848
 (1 row)
 
 -- lo_close(fd integer) returns integer
@@ -65,24 +73,24 @@ UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS inte
 --  SEEK_CUR (= 1) meaning relative to current position
 --  SEEK_END (= 2) meaning relative to end (offset better be negative)
 -- returns current position in file
-SELECT lo_lseek(fd, 422, 0) FROM lotest_stash_values;
+SELECT lo_lseek(fd, 104, 0) FROM lotest_stash_values;
  lo_lseek 
 ----------
-      422
+      104
 (1 row)
 
 -- loread/lowrite names are wonky, different from other functions which are lo_*
 -- loread(fd integer, len integer) returns bytea
-SELECT loread(fd, 35) FROM lotest_stash_values;
-               loread                
--------------------------------------
- The woods are lovely, dark and deep
+SELECT loread(fd, 28) FROM lotest_stash_values;
+            loread            
+------------------------------
+ A host, of golden daffodils;
 (1 row)
 
 SELECT lo_lseek(fd, -19, 1) FROM lotest_stash_values;
  lo_lseek 
 ----------
-      438
+      113
 (1 row)
 
 SELECT lowrite(fd, 'n') FROM lotest_stash_values;
@@ -94,19 +102,19 @@ SELECT lowrite(fd, 'n') FROM lotest_stash_values;
 SELECT lo_tell(fd) FROM lotest_stash_values;
  lo_tell 
 ---------
-     439
+     114
 (1 row)
 
-SELECT lo_lseek(fd, -156, 2) FROM lotest_stash_values;
+SELECT lo_lseek(fd, -744, 2) FROM lotest_stash_values;
  lo_lseek 
 ----------
-      422
+      104
 (1 row)
 
-SELECT loread(fd, 35) FROM lotest_stash_values;
-               loread                
--------------------------------------
- The woods are lonely, dark and deep
+SELECT loread(fd, 28) FROM lotest_stash_values;
+            loread            
+------------------------------
+ A host, on golden daffodils;
 (1 row)
 
 SELECT lo_close(fd) FROM lotest_stash_values;
@@ -128,16 +136,16 @@ ABORT;
 -- Test truncation.
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
-SELECT lo_truncate(fd, 10) FROM lotest_stash_values;
+SELECT lo_truncate(fd, 11) FROM lotest_stash_values;
  lo_truncate 
 -------------
            0
 (1 row)
 
 SELECT loread(fd, 15) FROM lotest_stash_values;
-    loread     
----------------
- \012Whose woo
+     loread     
+----------------
+ \012I wandered
 (1 row)
 
 SELECT lo_truncate(fd, 10000) FROM lotest_stash_values;
