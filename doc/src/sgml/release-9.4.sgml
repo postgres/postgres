@@ -573,8 +573,9 @@
 
       <listitem>
        <para>
-        Allow sorting and B-tree <link linkend="SQL-CREATEINDEX">index
-        builds</link> to use over four gigabytes of memory (Noah Misch)
+        Raise hard limit on the number of tuples held in memory during sorting
+        and B-tree <link linkend="SQL-CREATEINDEX">index builds</link> (Noah
+        Misch)
        </para>
       </listitem>
 
@@ -615,7 +616,7 @@
       <listitem>
        <para>
         Expose the estimation of number of changed tuples since last <link
-        linkend="vacuum-for-statistics">analyze</link> (Mark Kirkwood)
+        linkend="vacuum-for-statistics">ANALYZE</link> (Mark Kirkwood)
        </para>
 
        <para>
@@ -838,14 +839,14 @@
 
       <listitem>
        <para>
-        Have Windows <acronym>ASCII</>-encoded databases and server process
-        (e.g.  <link linkend="app-postmaster">postmaster</>) emit messages
-        in the <envar>LC_CTYPE</>-defined language (Alexander Law,
-        Noah Misch)
+        Have Windows <literal>SQL_ASCII</>-encoded databases and server
+        process (e.g.  <link linkend="app-postmaster">postmaster</>) emit
+        messages in the character encoding of the server's Windows user locale
+        (Alexander Law, Noah Misch)
        </para>
 
        <para>
-        Previously these messages were output using the Windows
+        Previously these messages were output in the Windows
         <acronym>ANSI</> code page.
        </para>
       </listitem>
@@ -985,7 +986,7 @@
         <para>
          Allow <link
          linkend="app-pgrecvlogical"><application>pg_recvlogical</></link>
-         to receive data logical decoding data (Andres Freund)
+         to receive logical decoding data (Andres Freund)
         </para>
        </listitem>
 
@@ -1445,9 +1446,8 @@
 
       <listitem>
        <para>
-        Add <acronym>SQL</> functions to allow <link
-        linkend="lo-interfaces">large object reads/writes</link> at
-        arbitrary offsets (Pavel Stehule)
+        Add <acronym>SQL</> functions to allow <link linkend="lo-funcs">large
+        object reads/writes</link> at arbitrary offsets (Pavel Stehule)
        </para>
       </listitem>
 
@@ -2078,7 +2078,7 @@
 
       <listitem>
        <para>
-        Remove <function>SnapshotNow()</> and
+        Remove <varname>SnapshotNow</> and
         <function>HeapTupleSatisfiesNow()</> (Robert Haas)
        </para>
 
@@ -2090,8 +2090,8 @@
 
       <listitem>
        <para>
-        Add <acronym>API</> for memory allocations over four gigabytes
-        (Noah Misch)
+        Add <acronym>API</> for memory allocations over one gigabyte (Noah
+        Misch)
        </para>
       </listitem>
 
@@ -2229,7 +2229,7 @@
 
       <listitem>
        <para>
-        Improve <application>valgrind</> error reporting (Noah Misch)
+        Improve <application>Valgrind</> error reporting (Noah Misch)
        </para>
       </listitem>
 
