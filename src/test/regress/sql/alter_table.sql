@@ -1582,14 +1582,20 @@ ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
 DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
 
--- Check that we map relation oids to filenodes and back correctly.
--- Only display bad mappings so the test output doesn't change all the
--- time.
+-- Check that we map relation oids to filenodes and back correctly.  Only
+-- display bad mappings so the test output doesn't change all the time.  A
+-- filenode function call can return NULL for a relation dropped concurrently
+-- with the call's surrounding query, so ignore a NULL mapped_oid for
+-- relations that no longer exist after all calls finish.
+CREATE TEMP TABLE filenode_mapping AS
 SELECT
     oid, mapped_oid, reltablespace, relfilenode, relname
 FROM pg_class,
     pg_filenode_relation(reltablespace, pg_relation_filenode(oid)) AS mapped_oid
 WHERE relkind IN ('r', 'i', 'S', 't', 'm') AND mapped_oid IS DISTINCT FROM oid;
+
+SELECT m.* FROM filenode_mapping m LEFT JOIN pg_class c ON c.oid = m.oid
+WHERE c.oid IS NOT NULL OR m.mapped_oid IS NOT NULL;
 
 -- Checks on creating and manipulation of user defined relations in
 -- pg_catalog.
