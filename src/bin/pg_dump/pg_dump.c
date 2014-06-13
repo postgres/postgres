@@ -1539,7 +1539,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
  *
  * Caution: when we restore from an archive file direct to database, the
  * INSERT commands emitted by this function have to be parsed by
- * pg_backup_db.c's ExecuteInsertCommands(), which will not handle comments,
+ * pg_backup_db.c's ExecuteSimpleCommands(), which will not handle comments,
  * E'' strings, or dollar-quoted strings.  So don't emit anything like that.
  */
 static int
