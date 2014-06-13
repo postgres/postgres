@@ -383,9 +383,14 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
  * identifiers, so that we can recognize statement-terminating semicolons.
  * We assume that INSERT data will not contain SQL comments, E'' literals,
  * or dollar-quoted strings, so this is much simpler than a full SQL lexer.
+ *
+ * Note: when restoring from a pre-9.0 dump file, this code is also used to
+ * process BLOB COMMENTS data, which has the same problem of containing
+ * multiple SQL commands that might be split across bufferloads.  Fortunately,
+ * that data won't contain anything complicated to lex either.
  */
 static void
-ExecuteInsertCommands(ArchiveHandle *AH, const char *buf, size_t bufLen)
+ExecuteSimpleCommands(ArchiveHandle *AH, const char *buf, size_t bufLen)
 {
 	const char *qry = buf;
 	const char *eos = buf + bufLen;
@@ -469,9 +474,10 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLen)
 	else if (AH->outputKind == OUTPUT_OTHERDATA)
 	{
 		/*
-		 * Table data expressed as INSERT commands.
+		 * Table data expressed as INSERT commands; or, in old dump files,
+		 * BLOB COMMENTS data (which is expressed as COMMENT ON commands).
 		 */
-		ExecuteInsertCommands(AH, buf, bufLen);
+		ExecuteSimpleCommands(AH, buf, bufLen);
 	}
 	else
 	{
