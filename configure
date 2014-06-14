@@ -11650,6 +11650,19 @@ esac
 
 fi
 
+ac_fn_c_check_func "$LINENO" "mkdtemp" "ac_cv_func_mkdtemp"
+if test "x$ac_cv_func_mkdtemp" = xyes; then :
+  $as_echo "#define HAVE_MKDTEMP 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" mkdtemp.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS mkdtemp.$ac_objext"
+ ;;
+esac
+
+fi
+
 ac_fn_c_check_func "$LINENO" "random" "ac_cv_func_random"
 if test "x$ac_cv_func_random" = xyes; then :
   $as_echo "#define HAVE_RANDOM 1" >>confdefs.h
