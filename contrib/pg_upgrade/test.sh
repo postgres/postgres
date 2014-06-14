@@ -17,15 +17,43 @@ set -e
 unset MAKEFLAGS
 unset MAKELEVEL
 
-# Set listen_addresses desirably
+# Establish how the server will listen for connections
 testhost=`uname -s`
 
 case $testhost in
-	MINGW*)	LISTEN_ADDRESSES="localhost" ;;
-	*)		LISTEN_ADDRESSES="" ;;
+	MINGW*)
+		LISTEN_ADDRESSES="localhost"
+		PGHOST=""; unset PGHOST
+		;;
+	*)
+		LISTEN_ADDRESSES=""
+		# Select a socket directory.  The algorithm is from the "configure"
+		# script; the outcome mimics pg_regress.c:make_temp_sockdir().
+		PGHOST=$PG_REGRESS_SOCK_DIR
+		if [ "x$PGHOST" = x ]; then
+			{
+				dir=`(umask 077 &&
+					  mktemp -d /tmp/pg_upgrade_check-XXXXXX) 2>/dev/null` &&
+				[ -d "$dir" ]
+			} ||
+			{
+				dir=/tmp/pg_upgrade_check-$$-$RANDOM
+				(umask 077 && mkdir "$dir")
+			} ||
+			{
+				echo "could not create socket temporary directory in \"/tmp\""
+				exit 1
+			}
+
+			PGHOST=$dir
+			trap 'rm -rf "$PGHOST"' 0
+			trap 'exit 3' 1 2 13 15
+		fi
+		export PGHOST
+		;;
 esac
 
-POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES"
+POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES -k \"$PGHOST\""
 
 temp_root=$PWD/tmp_check
 
@@ -86,7 +114,6 @@ PGSERVICE="";         unset PGSERVICE
 PGSSLMODE="";         unset PGSSLMODE
 PGREQUIRESSL="";      unset PGREQUIRESSL
 PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
-PGHOST="";            unset PGHOST
 PGHOSTADDR="";        unset PGHOSTADDR
 
 # Select a non-conflicting port number, similarly to pg_regress.c
