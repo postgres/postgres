@@ -60,21 +60,14 @@ gmake check
 
   <warning>
    <para>
-    This test method starts a temporary server, which is configured to accept
-    any connection originating on the local machine.  Any local user can gain
-    database superuser privileges when connecting to this server, and could
-    in principle exploit all privileges of the operating-system user running
-    the tests.  Therefore, it is not recommended that you use <literal>gmake
-    check</> on machines shared with untrusted users.  Instead, run the tests
-    after completing the installation, as described in the next section.
-   </para>
-
-   <para>
-    On Unix-like machines, this danger can be avoided if the temporary
-    server's socket file is made inaccessible to other users, for example
-    by running the tests in a protected chroot.  On Windows, the temporary
-    server opens a locally-accessible TCP socket, so filesystem protections
-    cannot help.
+    On systems lacking Unix-domain sockets, notably Windows, this test method
+    starts a temporary server configured to accept any connection originating
+    on the local machine.  Any local user can gain database superuser
+    privileges when connecting to this server, and could in principle exploit
+    all privileges of the operating-system user running the tests.  Therefore,
+    it is not recommended that you use <literal>gmake check</> on an affected
+    system shared with untrusted users.  Instead, run the tests after
+    completing the installation, as described in the next section.
    </para>
   </warning>
 
