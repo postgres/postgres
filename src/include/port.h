@@ -497,4 +497,7 @@ extern int	pg_check_dir(const char *dir);
 /* port/pgmkdirp.c */
 extern int	pg_mkdir_p(char *path, int omode);
 
+/* port/mkdtemp.c */
+extern char *mkdtemp(char *path);
+
 #endif   /* PG_PORT_H */

@@ -1325,7 +1325,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-AC_REPLACE_FUNCS([crypt erand48 getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
+AC_REPLACE_FUNCS([crypt erand48 getopt getrusage inet_aton mkdtemp random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
