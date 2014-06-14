@@ -47,10 +47,10 @@ clean distclean maintainer-clean:
 
 all: pg_regress$(X)
 
-pg_regress$(X): pg_regress_ecpg.o $(top_builddir)/src/test/regress/pg_regress.o
+pg_regress$(X): pg_regress_ecpg.o $(top_builddir)/src/test/regress/pg_regress.o $(top_builddir)/src/test/regress/pqsignal.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $^ $(LIBS) -o $@
 
-$(top_builddir)/src/test/regress/pg_regress.o:
+$(top_builddir)/src/test/regress/pg_regress.o $(top_builddir)/src/test/regress/pqsignal.o:
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
 # dependencies ensure that path changes propagate
