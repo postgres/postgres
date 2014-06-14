@@ -20,13 +20,15 @@ OBJS =  specparse.o isolationtester.o
 
 all: isolationtester$(X) pg_isolation_regress$(X)
 
-submake-regress:
+pg_regress.o:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
-
-pg_regress.o: | submake-regress
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pg_regress.o .
 
-pg_isolation_regress$(X): isolation_main.o pg_regress.o
+pqsignal.o:
+	$(MAKE) -C $(top_builddir)/src/test/regress pqsignal.o
+	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pqsignal.o .
+
+pg_isolation_regress$(X): isolation_main.o pg_regress.o pqsignal.o
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
@@ -64,7 +66,7 @@ endif
 # so do not clean them here
 clean distclean:
 	rm -f isolationtester$(X) pg_isolation_regress$(X) $(OBJS) isolation_main.o
-	rm -f pg_regress.o
+	rm -f pg_regress.o pqsignal.o
 	rm -rf $(pg_regress_clean_files)
 
 maintainer-clean: distclean
