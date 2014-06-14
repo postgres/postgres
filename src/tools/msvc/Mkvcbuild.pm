@@ -61,7 +61,7 @@ sub mkvcbuild
 	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c
 	  pgcheckdir.c pg_crc.c pgmkdirp.c pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c
 	  sprompt.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
-	  win32error.c win32setlocale.c);
+	  win32error.c win32setlocale.c mkdtemp.c);
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');
