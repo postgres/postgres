@@ -446,4 +446,7 @@ extern void qsort_arg(void *base, size_t nel, size_t elsize,
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype);
 
+/* port/mkdtemp.c */
+extern char *mkdtemp(char *path);
+
 #endif   /* PG_PORT_H */
