@@ -43,12 +43,17 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 
 all: pg_regress$(X)
 
-pg_regress$(X): pg_regress.o pg_regress_main.o | submake-libpgport
+pg_regress$(X): pg_regress.o pg_regress_main.o pqsignal.o | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
 pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h
 pg_regress.o: override CPPFLAGS += -I$(top_builddir)/src/port $(EXTRADEFS)
+
+# Pull in pqsignal like initdb does.
+pqsignal.c: % : $(top_srcdir)/src/interfaces/libpq/%
+	rm -f $@ && $(LN_S) $< .
+pqsignal.o: override CPPFLAGS += -I$(libpq_srcdir)
 
 $(top_builddir)/src/port/pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
@@ -166,7 +171,7 @@ bigcheck: all tablespace-setup
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
-	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
+	rm -f pqsignal.c pg_regress_main.o pg_regress.o pqsignal.o pg_regress$(X)
 # things created by various check targets
 	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
