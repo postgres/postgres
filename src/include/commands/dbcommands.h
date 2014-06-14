@@ -63,7 +63,7 @@ extern Oid	get_database_oid(const char *dbname, bool missingok);
 extern char *get_database_name(Oid dbid);
 
 extern void dbase_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void dbase_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void dbase_desc(StringInfo buf, XLogRecord *rptr);
 
 extern void check_encoding_locale_matches(int encoding, const char *collate, const char *ctype);
 

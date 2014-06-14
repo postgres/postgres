@@ -256,6 +256,6 @@ extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern void xact_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void xact_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void xact_desc(StringInfo buf, XLogRecord *record);
 
 #endif   /* XACT_H */

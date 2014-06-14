@@ -77,9 +77,10 @@ desc_recompress_leaf(StringInfo buf, ginxlogRecompressDataLeaf *insertData)
 }
 
 void
-gin_desc(StringInfo buf, uint8 xl_info, char *rec)
+gin_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	char	   *rec = XLogRecGetData(record);
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	switch (info)
 	{
@@ -121,7 +122,7 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 					ginxlogRecompressDataLeaf *insertData =
 					(ginxlogRecompressDataLeaf *) payload;
 
-					if (xl_info & XLR_BKP_BLOCK(0))
+					if (record->xl_info & XLR_BKP_BLOCK(0))
 						appendStringInfo(buf, " (full page image)");
 					else
 						desc_recompress_leaf(buf, insertData);
@@ -159,7 +160,7 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 				appendStringInfoString(buf, "Vacuum data leaf page, ");
 				desc_node(buf, xlrec->node, xlrec->blkno);
-				if (xl_info & XLR_BKP_BLOCK(0))
+				if (record->xl_info & XLR_BKP_BLOCK(0))
 					appendStringInfo(buf, " (full page image)");
 				else
 					desc_recompress_leaf(buf, &xlrec->data);

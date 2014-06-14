@@ -77,6 +77,6 @@ extern void ResetSequence(Oid seq_relid);
 extern void ResetSequenceCaches(void);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void seq_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void seq_desc(StringInfo buf, XLogRecord *rptr);
 
 #endif   /* SEQUENCE_H */

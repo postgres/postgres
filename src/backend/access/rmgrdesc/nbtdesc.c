@@ -26,9 +26,10 @@ out_target(StringInfo buf, xl_btreetid *target)
 }
 
 void
-btree_desc(StringInfo buf, uint8 xl_info, char *rec)
+btree_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	char	   *rec = XLogRecGetData(record);
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	switch (info)
 	{

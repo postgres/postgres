@@ -47,9 +47,10 @@ out_member(StringInfo buf, MultiXactMember *member)
 }
 
 void
-multixact_desc(StringInfo buf, uint8 xl_info, char *rec)
+multixact_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	char	   *rec = XLogRecGetData(record);
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_MULTIXACT_ZERO_OFF_PAGE)
 	{

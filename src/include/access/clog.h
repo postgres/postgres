@@ -48,6 +48,6 @@ extern void TruncateCLOG(TransactionId oldestXact);
 #define CLOG_TRUNCATE		0x10
 
 extern void clog_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void clog_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void clog_desc(StringInfo buf, XLogRecord *record);
 
 #endif   /* CLOG_H */

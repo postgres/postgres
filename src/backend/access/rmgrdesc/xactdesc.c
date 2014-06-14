@@ -137,9 +137,10 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 }
 
 void
-xact_desc(StringInfo buf, uint8 xl_info, char *rec)
+xact_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	char	   *rec = XLogRecGetData(record);
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_XACT_COMMIT_COMPACT)
 	{

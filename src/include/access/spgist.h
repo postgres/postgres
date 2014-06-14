@@ -197,7 +197,7 @@ extern Datum spgvacuumcleanup(PG_FUNCTION_ARGS);
 
 /* spgxlog.c */
 extern void spg_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void spg_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void spg_desc(StringInfo buf, XLogRecord *record);
 extern void spg_xlog_startup(void);
 extern void spg_xlog_cleanup(void);
 

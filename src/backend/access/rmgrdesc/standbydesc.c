@@ -37,9 +37,10 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 }
 
 void
-standby_desc(StringInfo buf, uint8 xl_info, char *rec)
+standby_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	char	   *rec = XLogRecGetData(record);
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_STANDBY_LOCK)
 	{

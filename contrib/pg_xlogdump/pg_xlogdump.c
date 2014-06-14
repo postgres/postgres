@@ -351,7 +351,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord 
 		   !!(XLR_BKP_BLOCK(3) & record->xl_info));
 
 	/* the desc routine will printf the description directly to stdout */
-	desc->rm_desc(NULL, record->xl_info, XLogRecGetData(record));
+	desc->rm_desc(NULL, record);
 
 	putchar('\n');
 

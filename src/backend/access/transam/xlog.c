@@ -1276,11 +1276,12 @@ begin:;
 			rdt_lastnormal->next = NULL;
 
 			initStringInfo(&recordbuf);
+			appendBinaryStringInfo(&recordbuf, (char *) &rechdr, sizeof(XLogRecord));
 			for (; rdata != NULL; rdata = rdata->next)
 				appendBinaryStringInfo(&recordbuf, rdata->data, rdata->len);
 
 			appendStringInfoString(&buf, " - ");
-			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, rechdr->xl_info, recordbuf.data);
+			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, (XLogRecord *) recordbuf.data);
 			pfree(recordbuf.data);
 		}
 		elog(LOG, "%s", buf.data);
@@ -6627,9 +6628,7 @@ StartupXLOG(void)
 							 (uint32) (EndRecPtr >> 32), (uint32) EndRecPtr);
 					xlog_outrec(&buf, record);
 					appendStringInfoString(&buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(&buf,
-													   record->xl_info,
-													 XLogRecGetData(record));
+					RmgrTable[record->xl_rmid].rm_desc(&buf, record);
 					elog(LOG, "%s", buf.data);
 					pfree(buf.data);
 				}
@@ -10453,9 +10452,7 @@ rm_redo_error_callback(void *arg)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-	RmgrTable[record->xl_rmid].rm_desc(&buf,
-									   record->xl_info,
-									   XLogRecGetData(record));
+	RmgrTable[record->xl_rmid].rm_desc(&buf, record);
 
 	/* don't bother emitting empty description */
 	if (buf.len > 0)
