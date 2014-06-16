@@ -4,13 +4,12 @@
  *	  Routines for preprocessing qualification expressions
  *
  *
- * The parser regards AND and OR as purely binary operators, so a qual like
- *		(A = 1) OR (A = 2) OR (A = 3) ...
- * will produce a nested parsetree
- *		(OR (A = 1) (OR (A = 2) (OR (A = 3) ...)))
- * In reality, the optimizer and executor regard AND and OR as N-argument
- * operators, so this tree can be flattened to
- *		(OR (A = 1) (A = 2) (A = 3) ...)
+ * While the parser will produce flattened (N-argument) AND/OR trees from
+ * simple sequences of AND'ed or OR'ed clauses, there might be an AND clause
+ * directly underneath another AND, or OR underneath OR, if the input was
+ * oddly parenthesized.  Also, rule expansion and subquery flattening could
+ * produce such parsetrees.  The planner wants to flatten all such cases
+ * to ensure consistent optimization behavior.
  *
  * Formerly, this module was responsible for doing the initial flattening,
  * but now we leave it to eval_const_expressions to do that since it has to

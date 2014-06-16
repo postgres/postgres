@@ -41,15 +41,13 @@ bool		Transform_null_equals = false;
 static Node *transformExprRecurse(ParseState *pstate, Node *expr);
 static Node *transformParamRef(ParseState *pstate, ParamRef *pref);
 static Node *transformAExprOp(ParseState *pstate, A_Expr *a);
-static Node *transformAExprAnd(ParseState *pstate, A_Expr *a);
-static Node *transformAExprOr(ParseState *pstate, A_Expr *a);
-static Node *transformAExprNot(ParseState *pstate, A_Expr *a);
 static Node *transformAExprOpAny(ParseState *pstate, A_Expr *a);
 static Node *transformAExprOpAll(ParseState *pstate, A_Expr *a);
 static Node *transformAExprDistinct(ParseState *pstate, A_Expr *a);
 static Node *transformAExprNullIf(ParseState *pstate, A_Expr *a);
 static Node *transformAExprOf(ParseState *pstate, A_Expr *a);
 static Node *transformAExprIn(ParseState *pstate, A_Expr *a);
+static Node *transformBoolExpr(ParseState *pstate, BoolExpr *a);
 static Node *transformFuncCall(ParseState *pstate, FuncCall *fn);
 static Node *transformCaseExpr(ParseState *pstate, CaseExpr *c);
 static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
@@ -223,15 +221,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 					case AEXPR_OP:
 						result = transformAExprOp(pstate, a);
 						break;
-					case AEXPR_AND:
-						result = transformAExprAnd(pstate, a);
-						break;
-					case AEXPR_OR:
-						result = transformAExprOr(pstate, a);
-						break;
-					case AEXPR_NOT:
-						result = transformAExprNot(pstate, a);
-						break;
 					case AEXPR_OP_ANY:
 						result = transformAExprOpAny(pstate, a);
 						break;
@@ -257,6 +246,10 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 				}
 				break;
 			}
+
+		case T_BoolExpr:
+			result = transformBoolExpr(pstate, (BoolExpr *) expr);
+			break;
 
 		case T_FuncCall:
 			result = transformFuncCall(pstate, (FuncCall *) expr);
@@ -337,7 +330,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		case T_DistinctExpr:
 		case T_NullIfExpr:
 		case T_ScalarArrayOpExpr:
-		case T_BoolExpr:
 		case T_FieldSelect:
 		case T_FieldStore:
 		case T_RelabelType:
@@ -919,46 +911,6 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 }
 
 static Node *
-transformAExprAnd(ParseState *pstate, A_Expr *a)
-{
-	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
-	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
-
-	lexpr = coerce_to_boolean(pstate, lexpr, "AND");
-	rexpr = coerce_to_boolean(pstate, rexpr, "AND");
-
-	return (Node *) makeBoolExpr(AND_EXPR,
-								 list_make2(lexpr, rexpr),
-								 a->location);
-}
-
-static Node *
-transformAExprOr(ParseState *pstate, A_Expr *a)
-{
-	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
-	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
-
-	lexpr = coerce_to_boolean(pstate, lexpr, "OR");
-	rexpr = coerce_to_boolean(pstate, rexpr, "OR");
-
-	return (Node *) makeBoolExpr(OR_EXPR,
-								 list_make2(lexpr, rexpr),
-								 a->location);
-}
-
-static Node *
-transformAExprNot(ParseState *pstate, A_Expr *a)
-{
-	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
-
-	rexpr = coerce_to_boolean(pstate, rexpr, "NOT");
-
-	return (Node *) makeBoolExpr(NOT_EXPR,
-								 list_make1(rexpr),
-								 a->location);
-}
-
-static Node *
 transformAExprOpAny(ParseState *pstate, A_Expr *a)
 {
 	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
@@ -1235,6 +1187,42 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	}
 
 	return result;
+}
+
+static Node *
+transformBoolExpr(ParseState *pstate, BoolExpr *a)
+{
+	List	   *args = NIL;
+	const char *opname;
+	ListCell   *lc;
+
+	switch (a->boolop)
+	{
+		case AND_EXPR:
+			opname = "AND";
+			break;
+		case OR_EXPR:
+			opname = "OR";
+			break;
+		case NOT_EXPR:
+			opname = "NOT";
+			break;
+		default:
+			elog(ERROR, "unrecognized boolop: %d", (int) a->boolop);
+			opname = NULL;		/* keep compiler quiet */
+			break;
+	}
+
+	foreach(lc, a->args)
+	{
+		Node	   *arg = (Node *) lfirst(lc);
+
+		arg = transformExprRecurse(pstate, arg);
+		arg = coerce_to_boolean(pstate, arg, opname);
+		args = lappend(args, arg);
+	}
+
+	return (Node *) makeBoolExpr(a->boolop, args, a->location);
 }
 
 static Node *
@@ -2428,10 +2416,6 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	/*
 	 * For = and <> cases, we just combine the pairwise operators with AND or
 	 * OR respectively.
-	 *
-	 * Note: this is presently the only place where the parser generates
-	 * BoolExpr with more than two arguments.  Should be OK since the rest of
-	 * the system thinks BoolExpr is N-argument anyway.
 	 */
 	if (rctype == ROWCOMPARE_EQ)
 		return (Node *) makeBoolExpr(AND_EXPR, opexprs, location);

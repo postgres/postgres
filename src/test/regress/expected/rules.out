@@ -2117,7 +2117,7 @@ shoe_ready| SELECT rsh.shoename,
     int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail
    FROM shoe rsh,
     shoelace rsl
-  WHERE (((rsl.sl_color = rsh.slcolor) AND (rsl.sl_len_cm >= rsh.slminlen_cm)) AND (rsl.sl_len_cm <= rsh.slmaxlen_cm));
+  WHERE ((rsl.sl_color = rsh.slcolor) AND (rsl.sl_len_cm >= rsh.slminlen_cm) AND (rsl.sl_len_cm <= rsh.slmaxlen_cm));
 shoelace| SELECT s.sl_name,
     s.sl_avail,
     s.sl_color,

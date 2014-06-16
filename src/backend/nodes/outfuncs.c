@@ -2437,15 +2437,6 @@ _outAExpr(StringInfo str, const A_Expr *node)
 			appendStringInfoChar(str, ' ');
 			WRITE_NODE_FIELD(name);
 			break;
-		case AEXPR_AND:
-			appendStringInfoString(str, " AND");
-			break;
-		case AEXPR_OR:
-			appendStringInfoString(str, " OR");
-			break;
-		case AEXPR_NOT:
-			appendStringInfoString(str, " NOT");
-			break;
 		case AEXPR_OP_ANY:
 			appendStringInfoChar(str, ' ');
 			WRITE_NODE_FIELD(name);

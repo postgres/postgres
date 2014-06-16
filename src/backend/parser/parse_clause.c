@@ -332,7 +332,8 @@ transformJoinUsingClause(ParseState *pstate,
 						 RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
 						 List *leftVars, List *rightVars)
 {
-	Node	   *result = NULL;
+	Node	   *result;
+	List	   *andargs = NIL;
 	ListCell   *lvars,
 			   *rvars;
 
@@ -358,17 +359,15 @@ transformJoinUsingClause(ParseState *pstate,
 							 copyObject(lvar), copyObject(rvar),
 							 -1);
 
-		/* And combine into an AND clause, if multiple join columns */
-		if (result == NULL)
-			result = (Node *) e;
-		else
-		{
-			A_Expr	   *a;
-
-			a = makeA_Expr(AEXPR_AND, NIL, result, (Node *) e, -1);
-			result = (Node *) a;
-		}
+		/* Prepare to combine into an AND clause, if multiple join columns */
+		andargs = lappend(andargs, e);
 	}
+
+	/* Only need an AND if there's more than one join column */
+	if (list_length(andargs) == 1)
+		result = (Node *) linitial(andargs);
+	else
+		result = (Node *) makeBoolExpr(AND_EXPR, andargs, -1);
 
 	/*
 	 * Since the references are already Vars, and are certainly from the input

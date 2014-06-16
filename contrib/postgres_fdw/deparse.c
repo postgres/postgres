@@ -1716,9 +1716,6 @@ deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 
 /*
  * Deparse a BoolExpr node.
- *
- * Note: by the time we get here, AND and OR expressions have been flattened
- * into N-argument form, so we'd better be prepared to deal with that.
  */
 static void
 deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context)

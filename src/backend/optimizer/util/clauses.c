@@ -3447,12 +3447,15 @@ simplify_or_arguments(List *args,
 	List	   *unprocessed_args;
 
 	/*
-	 * Since the parser considers OR to be a binary operator, long OR lists
-	 * become deeply nested expressions.  We must flatten these into long
-	 * argument lists of a single OR operator.  To avoid blowing out the stack
-	 * with recursion of eval_const_expressions, we resort to some tenseness
-	 * here: we keep a list of not-yet-processed inputs, and handle flattening
-	 * of nested ORs by prepending to the to-do list instead of recursing.
+	 * We want to ensure that any OR immediately beneath another OR gets
+	 * flattened into a single OR-list, so as to simplify later reasoning.
+	 *
+	 * To avoid stack overflow from recursion of eval_const_expressions, we
+	 * resort to some tenseness here: we keep a list of not-yet-processed
+	 * inputs, and handle flattening of nested ORs by prepending to the to-do
+	 * list instead of recursing.  Now that the parser generates N-argument
+	 * ORs from simple lists, this complexity is probably less necessary than
+	 * it once was, but we might as well keep the logic.
 	 */
 	unprocessed_args = list_copy(args);
 	while (unprocessed_args)
