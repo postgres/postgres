@@ -1320,18 +1320,23 @@ readMessageFromPipe(int fd)
 /*
  * This is a replacement version of pipe for Win32 which allows returned
  * handles to be used in select(). Note that read/write calls must be replaced
- * with recv/send.
+ * with recv/send.  "handles" have to be integers so we check for errors then
+ * cast to integers.
  */
 static int
 pgpipe(int handles[2])
 {
-	SOCKET		s;
+	pgsocket		s, tmp_sock;
 	struct sockaddr_in serv_addr;
 	int			len = sizeof(serv_addr);
 
-	handles[0] = handles[1] = INVALID_SOCKET;
+	/* We have to use the Unix socket invalid file descriptor value here. */
+	handles[0] = handles[1] = -1;
 
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	/*
+	 * setup listen socket
+	 */
+	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 	{
 		write_msg(modulename, "pgpipe: could not create socket: error code %d\n",
 				  WSAGetLastError());
@@ -1363,13 +1368,18 @@ pgpipe(int handles[2])
 		closesocket(s);
 		return -1;
 	}
-	if ((handles[1] = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+
+	/*
+	 * setup pipe handles
+	 */
+	if ((tmp_sock = socket(AF_INET, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 	{
 		write_msg(modulename, "pgpipe: could not create second socket: error code %d\n",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
+	handles[1] = (int) tmp_sock;
 
 	if (connect(handles[1], (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
@@ -1378,15 +1388,17 @@ pgpipe(int handles[2])
 		closesocket(s);
 		return -1;
 	}
-	if ((handles[0] = accept(s, (SOCKADDR *) &serv_addr, &len)) == INVALID_SOCKET)
+	if ((tmp_sock = accept(s, (SOCKADDR *) &serv_addr, &len)) == PGINVALID_SOCKET)
 	{
 		write_msg(modulename, "pgpipe: could not accept connection: error code %d\n",
 				  WSAGetLastError());
 		closesocket(handles[1]);
-		handles[1] = INVALID_SOCKET;
+		handles[1] = -1;
 		closesocket(s);
 		return -1;
 	}
+	handles[0] = (int) tmp_sock;
+
 	closesocket(s);
 	return 0;
 }
