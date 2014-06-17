@@ -2229,7 +2229,8 @@
 
       <listitem>
        <para>
-        Improve <application>Valgrind</> error reporting (Noah Misch)
+        Improve <application>Valgrind</> detection of invalid memory usage
+        (Noah Misch)
        </para>
       </listitem>
 
