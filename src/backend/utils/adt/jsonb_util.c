@@ -1314,7 +1314,14 @@ convertJsonbValue(StringInfo buffer, JEntry *header, JsonbValue *val, int level)
 	if (!val)
 		return;
 
-	if (IsAJsonbScalar(val) || val->type == jbvBinary)
+	/*
+	 * A JsonbValue passed as val should never have a type of jbvBinary,
+	 * and neither should any of its sub-components. Those values will be
+	 * produced by convertJsonbArray and convertJsonbObject, the results of
+	 * which will not be passed back to this function as an argument.
+	 */
+
+	if (IsAJsonbScalar(val))
 		convertJsonbScalar(buffer, header, val);
 	else if (val->type == jbvArray)
 		convertJsonbArray(buffer, header, val, level);
