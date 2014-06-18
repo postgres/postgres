@@ -188,6 +188,27 @@ get_tlist_exprs(List *tlist, bool includeJunk)
 
 
 /*
+ * count_nonjunk_tlist_entries
+ *		What it says ...
+ */
+int
+count_nonjunk_tlist_entries(List *tlist)
+{
+	int			len = 0;
+	ListCell   *l;
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (!tle->resjunk)
+			len++;
+	}
+	return len;
+}
+
+
+/*
  * tlist_same_exprs
  *		Check whether two target lists contain the same expressions
  *

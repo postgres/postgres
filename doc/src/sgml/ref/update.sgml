@@ -24,7 +24,9 @@ PostgreSQL documentation
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
-          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
+          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
+          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( <replaceable class="PARAMETER">sub-SELECT</replaceable> )
+        } [, ...]
     [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
@@ -142,6 +144,21 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
      <para>
       Set the column to its default value (which will be NULL if no
       specific default expression has been assigned to it).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">sub-SELECT</replaceable></term>
+    <listitem>
+     <para>
+      A <literal>SELECT</> sub-query that produces as many output columns
+      as are listed in the parenthesized column list preceding it.  The
+      sub-query must yield no more than one row when executed.  If it
+      yields one row, its column values are assigned to the target columns;
+      if it yields no rows, NULL values are assigned to the target columns.
+      The sub-query can refer to old values of the current row of the table
+      being updated.
      </para>
     </listitem>
    </varlistentry>
@@ -325,6 +342,38 @@ UPDATE employees SET sales_count = sales_count + 1 WHERE id =
   </para>
 
   <para>
+   Update contact names in an accounts table to match the currently assigned
+   salesmen:
+<programlisting>
+UPDATE accounts SET (contact_first_name, contact_last_name) =
+    (SELECT first_name, last_name FROM salesmen
+     WHERE salesmen.id = accounts.sales_id);
+</programlisting>
+   A similar result could be accomplished with a join:
+<programlisting>
+UPDATE accounts SET contact_first_name = first_name,
+                    contact_last_name = last_name
+  FROM salesmen WHERE salesmen.id = accounts.sales_id;
+</programlisting>
+   However, the second query may give unexpected results
+   if <structname>salesmen</>.<structfield>id</> is not a unique key, whereas
+   the first query is guaranteed to raise an error if there are multiple
+   <structfield>id</> matches.  Also, if there is no match for a particular
+   <structname>accounts</>.<structfield>sales_id</> entry, the first query
+   will set the corresponding name fields to NULL, whereas the second query
+   will not update that row at all.
+  </para>
+
+  <para>
+   Update statistics in a summary table to match the current data:
+<programlisting>
+UPDATE summary s SET (sum_x, sum_y, avg_x, avg_y) =
+    (SELECT sum(x), sum(y), avg(x), avg(y) FROM data d
+     WHERE d.group_id = s.group_id);
+</programlisting>
+  </para>
+
+  <para>
    Attempt to insert a new stock item along with the quantity of stock. If
    the item already exists, instead update the stock count of the existing
    item. To do this without failing the entire transaction, use savepoints:
@@ -362,24 +411,21 @@ UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
   </para>
 
   <para>
-   According to the standard, the column-list syntax should allow a list
-   of columns to be assigned from a single row-valued expression, such
-   as a sub-select:
-<programlisting>
-UPDATE accounts SET (contact_last_name, contact_first_name) =
-    (SELECT last_name, first_name FROM salesmen
-     WHERE salesmen.id = accounts.sales_id);
-</programlisting>
-   This is not currently implemented &mdash; the source must be a list
-   of independent expressions.
-  </para>
-
-  <para>
    Some other database systems offer a <literal>FROM</> option in which
    the target table is supposed to be listed again within <literal>FROM</>.
    That is not how <productname>PostgreSQL</productname> interprets
    <literal>FROM</>.  Be careful when porting applications that use this
    extension.
+  </para>
+
+  <para>
+   According to the standard, the source value for a parenthesized sub-list of
+   column names can be any row-valued expression yielding the correct number
+   of columns.  <productname>PostgreSQL</productname> only allows the source
+   value to be a parenthesized list of expressions (a row constructor) or a
+   sub-<literal>SELECT</>.  An individual column's updated value can be
+   specified as <literal>DEFAULT</> in the row-constructor case, but not
+   inside a sub-<literal>SELECT</>.
   </para>
  </refsect1>
 </refentry>

@@ -385,6 +385,23 @@ typedef struct ResTarget
 } ResTarget;
 
 /*
+ * MultiAssignRef - element of a row source expression for UPDATE
+ *
+ * In an UPDATE target list, when we have SET (a,b,c) = row-valued-expression,
+ * we generate separate ResTarget items for each of a,b,c.  Their "val" trees
+ * are MultiAssignRef nodes numbered 1..n, linking to a common copy of the
+ * row-valued-expression (which parse analysis will process only once, when
+ * handling the MultiAssignRef with colno=1).
+ */
+typedef struct MultiAssignRef
+{
+	NodeTag		type;
+	Node	   *source;			/* the row-valued expression */
+	int			colno;			/* column number for this target (1..n) */
+	int			ncolumns;		/* number of targets in the construct */
+} MultiAssignRef;
+
+/*
  * SortBy - for ORDER BY clause
  */
 typedef struct SortBy

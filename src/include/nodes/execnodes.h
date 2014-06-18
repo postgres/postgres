@@ -728,6 +728,7 @@ typedef struct SubPlanState
 {
 	ExprState	xprstate;
 	struct PlanState *planstate;	/* subselect plan's state tree */
+	struct PlanState *parent;	/* parent plan node's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
 	List	   *args;			/* states of argument expression(s) */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */

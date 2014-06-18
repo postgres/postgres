@@ -379,6 +379,7 @@ typedef enum NodeTag
 	T_A_Indirection,
 	T_A_ArrayExpr,
 	T_ResTarget,
+	T_MultiAssignRef,
 	T_TypeCast,
 	T_CollateClause,
 	T_SortBy,

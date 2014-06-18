@@ -1115,6 +1115,7 @@ _outSubLink(StringInfo str, const SubLink *node)
 	WRITE_NODE_TYPE("SUBLINK");
 
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
+	WRITE_INT_FIELD(subLinkId);
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(operName);
 	WRITE_NODE_FIELD(subselect);
@@ -1701,6 +1702,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_INT_FIELD(join_cur_level);
 	WRITE_NODE_FIELD(init_plans);
 	WRITE_NODE_FIELD(cte_plan_ids);
+	WRITE_NODE_FIELD(multiexpr_params);
 	WRITE_NODE_FIELD(eq_classes);
 	WRITE_NODE_FIELD(canon_pathkeys);
 	WRITE_NODE_FIELD(left_join_clauses);
@@ -2581,6 +2583,16 @@ _outResTarget(StringInfo str, const ResTarget *node)
 }
 
 static void
+_outMultiAssignRef(StringInfo str, const MultiAssignRef *node)
+{
+	WRITE_NODE_TYPE("MULTIASSIGNREF");
+
+	WRITE_NODE_FIELD(source);
+	WRITE_INT_FIELD(colno);
+	WRITE_INT_FIELD(ncolumns);
+}
+
+static void
 _outSortBy(StringInfo str, const SortBy *node)
 {
 	WRITE_NODE_TYPE("SORTBY");
@@ -3190,6 +3202,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_ResTarget:
 				_outResTarget(str, obj);
+				break;
+			case T_MultiAssignRef:
+				_outMultiAssignRef(str, obj);
 				break;
 			case T_SortBy:
 				_outSortBy(str, obj);

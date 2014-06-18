@@ -1164,6 +1164,27 @@ SELECT word FROM words ORDER BY word <-> 'caterpiler' LIMIT 10;
     original one.
 </para>
 
+<caution>
+ <para>
+  In many cases, tasks that could be performed by rules
+  on <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> are better done
+  with triggers.  Triggers are notationally a bit more complicated, but their
+  semantics are much simpler to understand.  Rules tend to have surprising
+  results when the original query contains volatile functions: volatile
+  functions may get executed more times than expected in the process of
+  carrying out the rules.
+ </para>
+
+ <para>
+  Also, there are some cases that are not supported by these types of rules at
+  all, notably including <literal>WITH</> clauses in the original query and
+  multiple-assignment sub-<literal>SELECT</>s in the <literal>SET</> list
+  of <command>UPDATE</> queries.  This is because copying these constructs
+  into a rule query would result in multiple evaluations of the sub-query,
+  contrary to the express intent of the query's author.
+ </para>
+</caution>
+
 <sect2>
 <title>How Update Rules Work</title>
 

@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
@@ -49,6 +50,7 @@ static Node *transformAExprOf(ParseState *pstate, A_Expr *a);
 static Node *transformAExprIn(ParseState *pstate, A_Expr *a);
 static Node *transformBoolExpr(ParseState *pstate, BoolExpr *a);
 static Node *transformFuncCall(ParseState *pstate, FuncCall *fn);
+static Node *transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref);
 static Node *transformCaseExpr(ParseState *pstate, CaseExpr *c);
 static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
 static Node *transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
@@ -253,6 +255,10 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 
 		case T_FuncCall:
 			result = transformFuncCall(pstate, (FuncCall *) expr);
+			break;
+
+		case T_MultiAssignRef:
+			result = transformMultiAssignRef(pstate, (MultiAssignRef *) expr);
 			break;
 
 		case T_NamedArgExpr:
@@ -1268,6 +1274,80 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 }
 
 static Node *
+transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
+{
+	SubLink    *sublink;
+	Query	   *qtree;
+	TargetEntry *tle;
+	Param	   *param;
+
+	/* We should only see this in first-stage processing of UPDATE tlists */
+	Assert(pstate->p_expr_kind == EXPR_KIND_UPDATE_SOURCE);
+
+	/* We only need to transform the source if this is the first column */
+	if (maref->colno == 1)
+	{
+		sublink = (SubLink *) transformExprRecurse(pstate, maref->source);
+		/* Currently, the grammar only allows a SubLink as source */
+		Assert(IsA(sublink, SubLink));
+		Assert(sublink->subLinkType == MULTIEXPR_SUBLINK);
+		qtree = (Query *) sublink->subselect;
+		Assert(IsA(qtree, Query));
+
+		/* Check subquery returns required number of columns */
+		if (count_nonjunk_tlist_entries(qtree->targetList) != maref->ncolumns)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("number of columns does not match number of values"),
+					 parser_errposition(pstate, sublink->location)));
+
+		/*
+		 * Build a resjunk tlist item containing the MULTIEXPR SubLink, and
+		 * add it to pstate->p_multiassign_exprs, whence it will later get
+		 * appended to the completed targetlist.  We needn't worry about
+		 * selecting a resno for it; transformUpdateStmt will do that.
+		 */
+		tle = makeTargetEntry((Expr *) sublink, 0, NULL, true);
+		pstate->p_multiassign_exprs = lappend(pstate->p_multiassign_exprs, tle);
+
+		/*
+		 * Assign a unique-within-this-targetlist ID to the MULTIEXPR SubLink.
+		 * We can just use its position in the p_multiassign_exprs list.
+		 */
+		sublink->subLinkId = list_length(pstate->p_multiassign_exprs);
+	}
+	else
+	{
+		/*
+		 * Second or later column in a multiassignment.  Re-fetch the
+		 * transformed query, which we assume is still the last entry in
+		 * p_multiassign_exprs.
+		 */
+		Assert(pstate->p_multiassign_exprs != NIL);
+		tle = (TargetEntry *) llast(pstate->p_multiassign_exprs);
+		sublink = (SubLink *) tle->expr;
+		Assert(IsA(sublink, SubLink));
+		Assert(sublink->subLinkType == MULTIEXPR_SUBLINK);
+		qtree = (Query *) sublink->subselect;
+		Assert(IsA(qtree, Query));
+	}
+
+	/* Build a Param representing the appropriate subquery output column */
+	tle = (TargetEntry *) list_nth(qtree->targetList, maref->colno - 1);
+	Assert(!tle->resjunk);
+
+	param = makeNode(Param);
+	param->paramkind = PARAM_MULTIEXPR;
+	param->paramid = (sublink->subLinkId << 16) | maref->colno;
+	param->paramtype = exprType((Node *) tle->expr);
+	param->paramtypmod = exprTypmod((Node *) tle->expr);
+	param->paramcollid = exprCollation((Node *) tle->expr);
+	param->location = exprLocation((Node *) tle->expr);
+
+	return (Node *) param;
+}
+
+static Node *
 transformCaseExpr(ParseState *pstate, CaseExpr *c)
 {
 	CaseExpr   *newc;
@@ -1520,31 +1600,26 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	else if (sublink->subLinkType == EXPR_SUBLINK ||
 			 sublink->subLinkType == ARRAY_SUBLINK)
 	{
-		ListCell   *tlist_item = list_head(qtree->targetList);
-
 		/*
 		 * Make sure the subselect delivers a single column (ignoring resjunk
 		 * targets).
 		 */
-		if (tlist_item == NULL ||
-			((TargetEntry *) lfirst(tlist_item))->resjunk)
+		if (count_nonjunk_tlist_entries(qtree->targetList) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery must return a column"),
+					 errmsg("subquery must return only one column"),
 					 parser_errposition(pstate, sublink->location)));
-		while ((tlist_item = lnext(tlist_item)) != NULL)
-		{
-			if (!((TargetEntry *) lfirst(tlist_item))->resjunk)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("subquery must return only one column"),
-						 parser_errposition(pstate, sublink->location)));
-		}
 
 		/*
 		 * EXPR and ARRAY need no test expression or combining operator. These
 		 * fields should be null already, but make sure.
 		 */
+		sublink->testexpr = NULL;
+		sublink->operName = NIL;
+	}
+	else if (sublink->subLinkType == MULTIEXPR_SUBLINK)
+	{
+		/* Same as EXPR case, except no restriction on number of columns */
 		sublink->testexpr = NULL;
 		sublink->operName = NIL;
 	}

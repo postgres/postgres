@@ -144,6 +144,7 @@ struct ParseState
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
 	int			p_next_resno;	/* next targetlist resno to assign */
+	List	   *p_multiassign_exprs;	/* junk tlist entries for multiassign */
 	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
 	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
 	bool		p_hasAggs;

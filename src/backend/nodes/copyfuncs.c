@@ -1327,6 +1327,7 @@ _copySubLink(const SubLink *from)
 	SubLink    *newnode = makeNode(SubLink);
 
 	COPY_SCALAR_FIELD(subLinkType);
+	COPY_SCALAR_FIELD(subLinkId);
 	COPY_NODE_FIELD(testexpr);
 	COPY_NODE_FIELD(operName);
 	COPY_NODE_FIELD(subselect);
@@ -2243,6 +2244,18 @@ _copyResTarget(const ResTarget *from)
 	COPY_NODE_FIELD(indirection);
 	COPY_NODE_FIELD(val);
 	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static MultiAssignRef *
+_copyMultiAssignRef(const MultiAssignRef *from)
+{
+	MultiAssignRef *newnode = makeNode(MultiAssignRef);
+
+	COPY_NODE_FIELD(source);
+	COPY_SCALAR_FIELD(colno);
+	COPY_SCALAR_FIELD(ncolumns);
 
 	return newnode;
 }
@@ -4560,6 +4573,9 @@ copyObject(const void *from)
 			break;
 		case T_ResTarget:
 			retval = _copyResTarget(from);
+			break;
+		case T_MultiAssignRef:
+			retval = _copyMultiAssignRef(from);
 			break;
 		case T_TypeCast:
 			retval = _copyTypeCast(from);

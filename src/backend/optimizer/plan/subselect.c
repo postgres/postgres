@@ -55,8 +55,9 @@ typedef struct finalize_primnode_context
 
 static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  List *plan_params,
-			  SubLinkType subLinkType, Node *testexpr,
-			  bool adjust_testexpr, bool unknownEqFalse);
+			  SubLinkType subLinkType, int subLinkId,
+			  Node *testexpr, bool adjust_testexpr,
+			  bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
 						 List **paramIds);
 static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
@@ -407,7 +408,7 @@ get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod,
 /*
  * Convert a SubLink (as created by the parser) into a SubPlan.
  *
- * We are given the SubLink's contained query, type, and testexpr.  We are
+ * We are given the SubLink's contained query, type, ID, and testexpr.  We are
  * also told if this expression appears at top level of a WHERE/HAVING qual.
  *
  * Note: we assume that the testexpr has been AND/OR flattened (actually,
@@ -415,14 +416,20 @@ get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod,
  * implicit-AND form; and any SubLinks in it should already have been
  * converted to SubPlans.  The subquery is as yet untouched, however.
  *
- * The result is whatever we need to substitute in place of the SubLink
- * node in the executable expression.  This will be either the SubPlan
- * node (if we have to do the subplan as a subplan), or a Param node
- * representing the result of an InitPlan, or a row comparison expression
- * tree containing InitPlan Param nodes.
+ * The result is whatever we need to substitute in place of the SubLink node
+ * in the executable expression.  If we're going to do the subplan as a
+ * regular subplan, this will be the constructed SubPlan node.  If we're going
+ * to do the subplan as an InitPlan, the SubPlan node instead goes into
+ * root->init_plans, and what we return here is an expression tree
+ * representing the InitPlan's result: usually just a Param node representing
+ * a single scalar result, but possibly a row comparison tree containing
+ * multiple Param nodes, or for a MULTIEXPR subquery a simple NULL constant
+ * (since the real output Params are elsewhere in the tree, and the MULTIEXPR
+ * subquery itself is in a resjunk tlist entry whose value is uninteresting).
  */
 static Node *
-make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
+make_subplan(PlannerInfo *root, Query *orig_subquery,
+			 SubLinkType subLinkType, int subLinkId,
 			 Node *testexpr, bool isTopQual)
 {
 	Query	   *subquery;
@@ -452,8 +459,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	 * first tuple will be retrieved.  For ALL and ANY subplans, we will be
 	 * able to stop evaluating if the test condition fails or matches, so very
 	 * often not all the tuples will be retrieved; for lack of a better idea,
-	 * specify 50% retrieval.  For EXPR and ROWCOMPARE subplans, use default
-	 * behavior (we're only expecting one row out, anyway).
+	 * specify 50% retrieval.  For EXPR, MULTIEXPR, and ROWCOMPARE subplans,
+	 * use default behavior (we're only expecting one row out, anyway).
 	 *
 	 * NOTE: if you change these numbers, also change cost_subplan() in
 	 * path/costsize.c.
@@ -491,7 +498,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 
 	/* And convert to SubPlan or InitPlan format. */
 	result = build_subplan(root, plan, subroot, plan_params,
-						   subLinkType, testexpr, true, isTopQual);
+						   subLinkType, subLinkId,
+						   testexpr, true, isTopQual);
 
 	/*
 	 * If it's a correlated EXISTS with an unimportant targetlist, we might be
@@ -536,7 +544,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 				/* OK, convert to SubPlan format. */
 				hashplan = (SubPlan *) build_subplan(root, plan, subroot,
 													 plan_params,
-													 ANY_SUBLINK, newtestexpr,
+													 ANY_SUBLINK, 0,
+													 newtestexpr,
 													 false, true);
 				/* Check we got what we expected */
 				Assert(IsA(hashplan, SubPlan));
@@ -559,14 +568,15 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 /*
  * Build a SubPlan node given the raw inputs --- subroutine for make_subplan
  *
- * Returns either the SubPlan, or an expression using initplan output Params,
- * as explained in the comments for make_subplan.
+ * Returns either the SubPlan, or a replacement expression if we decide to
+ * make it an InitPlan, as explained in the comments for make_subplan.
  */
 static Node *
 build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  List *plan_params,
-			  SubLinkType subLinkType, Node *testexpr,
-			  bool adjust_testexpr, bool unknownEqFalse)
+			  SubLinkType subLinkType, int subLinkId,
+			  Node *testexpr, bool adjust_testexpr,
+			  bool unknownEqFalse)
 {
 	Node	   *result;
 	SubPlan    *splan;
@@ -615,12 +625,15 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	}
 
 	/*
-	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, ARRAY, or
-	 * ROWCOMPARE types can be used as initPlans.  For EXISTS, EXPR, or ARRAY,
-	 * we just produce a Param referring to the result of evaluating the
-	 * initPlan.  For ROWCOMPARE, we must modify the testexpr tree to contain
-	 * PARAM_EXEC Params instead of the PARAM_SUBLINK Params emitted by the
-	 * parser.
+	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, ARRAY,
+	 * ROWCOMPARE, or MULTIEXPR types can be used as initPlans.  For EXISTS,
+	 * EXPR, or ARRAY, we return a Param referring to the result of evaluating
+	 * the initPlan.  For ROWCOMPARE, we must modify the testexpr tree to
+	 * contain PARAM_EXEC Params instead of the PARAM_SUBLINK Params emitted
+	 * by the parser, and then return that tree.  For MULTIEXPR, we return a
+	 * null constant: the resjunk targetlist item containing the SubLink does
+	 * not need to return anything useful, since the referencing Params are
+	 * elsewhere.
 	 */
 	if (splan->parParam == NIL && subLinkType == EXISTS_SUBLINK)
 	{
@@ -686,6 +699,42 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		 * The executable expression is returned to become part of the outer
 		 * plan's expression tree; it is not kept in the initplan node.
 		 */
+	}
+	else if (subLinkType == MULTIEXPR_SUBLINK)
+	{
+		/*
+		 * Whether it's an initplan or not, it needs to set a PARAM_EXEC Param
+		 * for each output column.
+		 */
+		List	   *params;
+
+		Assert(testexpr == NULL);
+		params = generate_subquery_params(root,
+										  plan->targetlist,
+										  &splan->setParam);
+
+		/*
+		 * Save the list of replacement Params in the n'th cell of
+		 * root->multiexpr_params; setrefs.c will use it to replace
+		 * PARAM_MULTIEXPR Params.
+		 */
+		while (list_length(root->multiexpr_params) < subLinkId)
+			root->multiexpr_params = lappend(root->multiexpr_params, NIL);
+		lc = list_nth_cell(root->multiexpr_params, subLinkId - 1);
+		Assert(lfirst(lc) == NIL);
+		lfirst(lc) = params;
+
+		/* It can be an initplan if there are no parParams. */
+		if (splan->parParam == NIL)
+		{
+			isInitPlan = true;
+			result = (Node *) makeNullConst(RECORDOID, -1, InvalidOid);
+		}
+		else
+		{
+			isInitPlan = false;
+			result = (Node *) splan;
+		}
 	}
 	else
 	{
@@ -760,25 +809,22 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 												   splan->plan_id);
 
 	/* Label the subplan for EXPLAIN purposes */
-	if (isInitPlan)
+	splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
+	sprintf(splan->plan_name, "%s %d",
+			isInitPlan ? "InitPlan" : "SubPlan",
+			splan->plan_id);
+	if (splan->setParam)
 	{
-		ListCell   *lc;
-		int			offset;
+		char	   *ptr = splan->plan_name + strlen(splan->plan_name);
 
-		splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
-		sprintf(splan->plan_name, "InitPlan %d (returns ", splan->plan_id);
-		offset = strlen(splan->plan_name);
+		ptr += sprintf(ptr, " (returns ");
 		foreach(lc, splan->setParam)
 		{
-			sprintf(splan->plan_name + offset, "$%d%s",
-					lfirst_int(lc),
-					lnext(lc) ? "," : "");
-			offset += strlen(splan->plan_name + offset);
+			ptr += sprintf(ptr, "$%d%s",
+						   lfirst_int(lc),
+						   lnext(lc) ? "," : ")");
 		}
-		sprintf(splan->plan_name + offset, ")");
 	}
-	else
-		splan->plan_name = psprintf("SubPlan %d", splan->plan_id);
 
 	/* Lastly, fill in the cost estimates for use later */
 	cost_subplan(root, splan, plan);
@@ -1816,6 +1862,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		return make_subplan(context->root,
 							(Query *) sublink->subselect,
 							sublink->subLinkType,
+							sublink->subLinkId,
 							testexpr,
 							context->isTopQual);
 	}

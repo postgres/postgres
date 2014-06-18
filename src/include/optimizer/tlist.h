@@ -27,6 +27,8 @@ extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
 extern List *get_tlist_exprs(List *tlist, bool includeJunk);
 
+extern int	count_nonjunk_tlist_entries(List *tlist);
+
 extern bool tlist_same_exprs(List *tlist1, List *tlist2);
 
 extern bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);

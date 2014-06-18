@@ -5228,8 +5228,12 @@ static void
 get_update_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *sep;
 	RangeTblEntry *rte;
+	List	   *ma_sublinks;
+	ListCell   *next_ma_cell;
+	SubLink    *cur_ma_sublink;
+	int			remaining_ma_columns;
+	const char *sep;
 	ListCell   *l;
 
 	/* Insert the WITH clause if given */
@@ -5253,6 +5257,34 @@ get_update_query_def(Query *query, deparse_context *context)
 						 quote_identifier(rte->alias->aliasname));
 	appendStringInfoString(buf, " SET ");
 
+	/*
+	 * Prepare to deal with MULTIEXPR assignments: collect the source SubLinks
+	 * into a list.  We expect them to appear, in ID order, in resjunk tlist
+	 * entries.
+	 */
+	ma_sublinks = NIL;
+	if (query->hasSubLinks)		/* else there can't be any */
+	{
+		foreach(l, query->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+			if (tle->resjunk && IsA(tle->expr, SubLink))
+			{
+				SubLink    *sl = (SubLink *) tle->expr;
+
+				if (sl->subLinkType == MULTIEXPR_SUBLINK)
+				{
+					ma_sublinks = lappend(ma_sublinks, sl);
+					Assert(sl->subLinkId == list_length(ma_sublinks));
+				}
+			}
+		}
+	}
+	next_ma_cell = list_head(ma_sublinks);
+	cur_ma_sublink = NULL;
+	remaining_ma_columns = 0;
+
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
 	foreach(l, query->targetList)
@@ -5263,8 +5295,56 @@ get_update_query_def(Query *query, deparse_context *context)
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
+		/* Emit separator (OK whether we're in multiassignment or not) */
 		appendStringInfoString(buf, sep);
 		sep = ", ";
+
+		/*
+		 * Check to see if we're starting a multiassignment group: if so,
+		 * output a left paren.
+		 */
+		if (next_ma_cell != NULL && cur_ma_sublink == NULL)
+		{
+			/*
+			 * We must dig down into the expr to see if it's a PARAM_MULTIEXPR
+			 * Param.  That could be buried under FieldStores and ArrayRefs
+			 * (cf processIndirection()), and underneath those there could be
+			 * an implicit type coercion.
+			 */
+			expr = (Node *) tle->expr;
+			while (expr)
+			{
+				if (IsA(expr, FieldStore))
+				{
+					FieldStore *fstore = (FieldStore *) expr;
+
+					expr = (Node *) linitial(fstore->newvals);
+				}
+				else if (IsA(expr, ArrayRef))
+				{
+					ArrayRef   *aref = (ArrayRef *) expr;
+
+					if (aref->refassgnexpr == NULL)
+						break;
+					expr = (Node *) aref->refassgnexpr;
+				}
+				else
+					break;
+			}
+			expr = strip_implicit_coercions(expr);
+
+			if (expr && IsA(expr, Param) &&
+				((Param *) expr)->paramkind == PARAM_MULTIEXPR)
+			{
+				cur_ma_sublink = (SubLink *) lfirst(next_ma_cell);
+				next_ma_cell = lnext(next_ma_cell);
+				remaining_ma_columns = count_nonjunk_tlist_entries(
+						  ((Query *) cur_ma_sublink->subselect)->targetList);
+				Assert(((Param *) expr)->paramid ==
+					   ((cur_ma_sublink->subLinkId << 16) | 1));
+				appendStringInfoChar(buf, '(');
+			}
+		}
 
 		/*
 		 * Put out name of target column; look in the catalogs, not at
@@ -5279,6 +5359,20 @@ get_update_query_def(Query *query, deparse_context *context)
 		 * off the top-level nodes representing the indirection assignments.
 		 */
 		expr = processIndirection((Node *) tle->expr, context, true);
+
+		/*
+		 * If we're in a multiassignment, skip printing anything more, unless
+		 * this is the last column; in which case, what we print should be the
+		 * sublink, not the Param.
+		 */
+		if (cur_ma_sublink != NULL)
+		{
+			if (--remaining_ma_columns > 0)
+				continue;		/* not the last column of multiassignment */
+			appendStringInfoChar(buf, ')');
+			expr = (Node *) cur_ma_sublink;
+			cur_ma_sublink = NULL;
+		}
 
 		appendStringInfoString(buf, " = ");
 
@@ -8123,6 +8217,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case EXPR_SUBLINK:
+		case MULTIEXPR_SUBLINK:
 		case ARRAY_SUBLINK:
 			need_paren = false;
 			break;

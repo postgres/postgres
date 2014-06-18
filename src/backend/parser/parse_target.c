@@ -113,9 +113,9 @@ transformTargetEntry(ParseState *pstate,
  * transformTargetList()
  * Turns a list of ResTarget's into a list of TargetEntry's.
  *
- * At this point, we don't care whether we are doing SELECT, UPDATE,
- * or RETURNING; we just transform the given expressions (the "val" fields).
- * However, our subroutines care, so we need the exprKind parameter.
+ * This code acts mostly the same for SELECT, UPDATE, or RETURNING lists;
+ * the main thing is to transform the given expressions (the "val" fields).
+ * The exprKind parameter distinguishes these cases when necesssary.
  */
 List *
 transformTargetList(ParseState *pstate, List *targetlist,
@@ -123,6 +123,9 @@ transformTargetList(ParseState *pstate, List *targetlist,
 {
 	List	   *p_target = NIL;
 	ListCell   *o_target;
+
+	/* Shouldn't have any leftover multiassign items at start */
+	Assert(pstate->p_multiassign_exprs == NIL);
 
 	foreach(o_target, targetlist)
 	{
@@ -170,6 +173,19 @@ transformTargetList(ParseState *pstate, List *targetlist,
 												exprKind,
 												res->name,
 												false));
+	}
+
+	/*
+	 * If any multiassign resjunk items were created, attach them to the end
+	 * of the targetlist.  This should only happen in an UPDATE tlist.  We
+	 * don't need to worry about numbering of these items; transformUpdateStmt
+	 * will set their resnos.
+	 */
+	if (pstate->p_multiassign_exprs)
+	{
+		Assert(exprKind == EXPR_KIND_UPDATE_SOURCE);
+		p_target = list_concat(p_target, pstate->p_multiassign_exprs);
+		pstate->p_multiassign_exprs = NIL;
 	}
 
 	return p_target;
@@ -233,6 +249,9 @@ transformExpressionList(ParseState *pstate, List *exprlist,
 		result = lappend(result,
 						 transformExpr(pstate, e, exprKind));
 	}
+
+	/* Shouldn't have any multiassign items here */
+	Assert(pstate->p_multiassign_exprs == NIL);
 
 	return result;
 }
@@ -1691,6 +1710,7 @@ FigureColnameInternal(Node *node, char **name)
 					}
 					break;
 					/* As with other operator-like nodes, these have no names */
+				case MULTIEXPR_SUBLINK:
 				case ALL_SUBLINK:
 				case ANY_SUBLINK:
 				case ROWCOMPARE_SUBLINK:

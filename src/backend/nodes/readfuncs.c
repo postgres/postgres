@@ -744,6 +744,7 @@ _readSubLink(void)
 	READ_LOCALS(SubLink);
 
 	READ_ENUM_FIELD(subLinkType, SubLinkType);
+	READ_INT_FIELD(subLinkId);
 	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(operName);
 	READ_NODE_FIELD(subselect);

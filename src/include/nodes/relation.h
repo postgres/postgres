@@ -190,6 +190,9 @@ typedef struct PlannerInfo
 
 	List	   *cte_plan_ids;	/* per-CTE-item list of subplan IDs */
 
+	List	   *multiexpr_params;		/* List of Lists of Params for
+										 * MULTIEXPR subquery outputs */
+
 	List	   *eq_classes;		/* list of active EquivalenceClasses */
 
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */

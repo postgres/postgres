@@ -281,6 +281,26 @@ checkExprHasSubLink_walker(Node *node, void *context)
 	return expression_tree_walker(node, checkExprHasSubLink_walker, context);
 }
 
+/*
+ * Check for MULTIEXPR Param within expression tree
+ *
+ * We intentionally don't descend into SubLinks: only Params at the current
+ * query level are of interest.
+ */
+static bool
+contains_multiexpr_param(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
+	{
+		if (((Param *) node)->paramkind == PARAM_MULTIEXPR)
+			return true;		/* abort the tree traversal and return true */
+		return false;
+	}
+	return expression_tree_walker(node, contains_multiexpr_param, context);
+}
+
 
 /*
  * OffsetVarNodes - adjust Vars when appending one query's RT to another
@@ -1369,6 +1389,21 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)
 			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+
+		/*
+		 * Check to see if the tlist item contains a PARAM_MULTIEXPR Param,
+		 * and throw error if so.  This case could only happen when expanding
+		 * an ON UPDATE rule's NEW variable and the referenced tlist item in
+		 * the original UPDATE command is part of a multiple assignment. There
+		 * seems no practical way to handle such cases without multiple
+		 * evaluation of the multiple assignment's sub-select, which would
+		 * create semantic oddities that users of rules would probably prefer
+		 * not to cope with.  So treat it as an unimplemented feature.
+		 */
+		if (contains_multiexpr_param(newnode, NULL))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("NEW variables in ON UPDATE rules cannot reference columns that are part of a multiple assignment in the subject UPDATE command")));
 
 		return newnode;
 	}

@@ -116,6 +116,11 @@ exprType(const Node *expr)
 							format_type_be(exprType((Node *) tent->expr)))));
 					}
 				}
+				else if (sublink->subLinkType == MULTIEXPR_SUBLINK)
+				{
+					/* MULTIEXPR is always considered to return RECORD */
+					type = RECORDOID;
+				}
 				else
 				{
 					/* for all other sublink types, result is boolean */
@@ -141,6 +146,11 @@ exprType(const Node *expr)
 									 errmsg("could not find array type for data type %s",
 									format_type_be(subplan->firstColType))));
 					}
+				}
+				else if (subplan->subLinkType == MULTIEXPR_SUBLINK)
+				{
+					/* MULTIEXPR is always considered to return RECORD */
+					type = RECORDOID;
 				}
 				else
 				{
@@ -299,6 +309,7 @@ exprTypmod(const Node *expr)
 					return exprTypmod((Node *) tent->expr);
 					/* note we don't need to care if it's an array */
 				}
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
 			}
 			break;
 		case T_SubPlan:
@@ -312,11 +323,7 @@ exprTypmod(const Node *expr)
 					/* note we don't need to care if it's an array */
 					return subplan->firstColTypmod;
 				}
-				else
-				{
-					/* for all other subplan types, result is boolean */
-					return -1;
-				}
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
 			}
 			break;
 		case T_AlternativeSubPlan:
@@ -784,7 +791,7 @@ exprCollation(const Node *expr)
 				}
 				else
 				{
-					/* for all other sublink types, result is boolean */
+					/* otherwise, result is RECORD or BOOLEAN */
 					coll = InvalidOid;
 				}
 			}
@@ -802,7 +809,7 @@ exprCollation(const Node *expr)
 				}
 				else
 				{
-					/* for all other subplan types, result is boolean */
+					/* otherwise, result is RECORD or BOOLEAN */
 					coll = InvalidOid;
 				}
 			}
@@ -1017,7 +1024,7 @@ exprSetCollation(Node *expr, Oid collation)
 				}
 				else
 				{
-					/* for all other sublink types, result is boolean */
+					/* otherwise, result is RECORD or BOOLEAN */
 					Assert(!OidIsValid(collation));
 				}
 			}
@@ -1419,6 +1426,9 @@ exprLocation(const Node *expr)
 		case T_ResTarget:
 			/* we need not examine the contained expression (if any) */
 			loc = ((const ResTarget *) expr)->location;
+			break;
+		case T_MultiAssignRef:
+			loc = exprLocation(((const MultiAssignRef *) expr)->source);
 			break;
 		case T_TypeCast:
 			{
@@ -3107,6 +3117,8 @@ raw_expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_MultiAssignRef:
+			return walker(((MultiAssignRef *) node)->source, context);
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) node;

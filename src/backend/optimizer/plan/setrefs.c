@@ -157,10 +157,13 @@ static bool extract_query_dependencies_walker(Node *node,
  * 3. We adjust Vars in upper plan nodes to refer to the outputs of their
  * subplans.
  *
- * 4. We compute regproc OIDs for operators (ie, we look up the function
+ * 4. PARAM_MULTIEXPR Params are replaced by regular PARAM_EXEC Params,
+ * now that we have finished planning all MULTIEXPR subplans.
+ *
+ * 5. We compute regproc OIDs for operators (ie, we look up the function
  * that implements each op).
  *
- * 5. We create lists of specific objects that the plan depends on.
+ * 6. We create lists of specific objects that the plan depends on.
  * This will be used by plancache.c to drive invalidation of cached plans.
  * Relation dependencies are represented by OIDs, and everything else by
  * PlanInvalItems (this distinction is motivated by the shared-inval APIs).
@@ -1119,10 +1122,39 @@ fix_expr_common(PlannerInfo *root, Node *node)
 }
 
 /*
+ * fix_param_node
+ *		Do set_plan_references processing on a Param
+ *
+ * If it's a PARAM_MULTIEXPR, replace it with the appropriate Param from
+ * root->multiexpr_params; otherwise no change is needed.
+ * Just for paranoia's sake, we make a copy of the node in either case.
+ */
+static Node *
+fix_param_node(PlannerInfo *root, Param *p)
+{
+	if (p->paramkind == PARAM_MULTIEXPR)
+	{
+		int			subqueryid = p->paramid >> 16;
+		int			colno = p->paramid & 0xFFFF;
+		List	   *params;
+
+		if (subqueryid <= 0 ||
+			subqueryid > list_length(root->multiexpr_params))
+			elog(ERROR, "unexpected PARAM_MULTIEXPR ID: %d", p->paramid);
+		params = (List *) list_nth(root->multiexpr_params, subqueryid - 1);
+		if (colno <= 0 || colno > list_length(params))
+			elog(ERROR, "unexpected PARAM_MULTIEXPR ID: %d", p->paramid);
+		return copyObject(list_nth(params, colno - 1));
+	}
+	return copyObject(p);
+}
+
+/*
  * fix_scan_expr
  *		Do set_plan_references processing on a scan-level expression
  *
  * This consists of incrementing all Vars' varnos by rtoffset,
+ * replacing PARAM_MULTIEXPR Params, expanding PlaceHolderVars,
  * looking up operator opcode info for OpExpr and related nodes,
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
  */
@@ -1134,7 +1166,9 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	context.root = root;
 	context.rtoffset = rtoffset;
 
-	if (rtoffset != 0 || root->glob->lastPHId != 0)
+	if (rtoffset != 0 ||
+		root->multiexpr_params != NIL ||
+		root->glob->lastPHId != 0)
 	{
 		return fix_scan_expr_mutator(node, &context);
 	}
@@ -1142,11 +1176,12 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	{
 		/*
 		 * If rtoffset == 0, we don't need to change any Vars, and if there
-		 * are no placeholders anywhere we won't need to remove them.  Then
-		 * it's OK to just scribble on the input node tree instead of copying
-		 * (since the only change, filling in any unset opfuncid fields, is
-		 * harmless).  This saves just enough cycles to be noticeable on
-		 * trivial queries.
+		 * are no MULTIEXPR subqueries then we don't need to replace
+		 * PARAM_MULTIEXPR Params, and if there are no placeholders anywhere
+		 * we won't need to remove them.  Then it's OK to just scribble on the
+		 * input node tree instead of copying (since the only change, filling
+		 * in any unset opfuncid fields, is harmless).  This saves just enough
+		 * cycles to be noticeable on trivial queries.
 		 */
 		(void) fix_scan_expr_walker(node, &context);
 		return node;
@@ -1176,6 +1211,8 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 			var->varnoold += context->rtoffset;
 		return (Node *) var;
 	}
+	if (IsA(node, Param))
+		return fix_param_node(context->root, (Param *) node);
 	if (IsA(node, CurrentOfExpr))
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
@@ -1745,6 +1782,8 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		/* If not supplied by input plans, evaluate the contained expr */
 		return fix_join_expr_mutator((Node *) phv->phexpr, context);
 	}
+	if (IsA(node, Param))
+		return fix_param_node(context->root, (Param *) node);
 	/* Try matching more complex expressions too, if tlists have any */
 	if (context->outer_itlist->has_non_vars)
 	{
@@ -1847,6 +1886,8 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 		/* If not supplied by input plan, evaluate the contained expr */
 		return fix_upper_expr_mutator((Node *) phv->phexpr, context);
 	}
+	if (IsA(node, Param))
+		return fix_param_node(context->root, (Param *) node);
 	/* Try matching more complex expressions too, if tlist has any */
 	if (context->subplan_itlist->has_non_vars)
 	{

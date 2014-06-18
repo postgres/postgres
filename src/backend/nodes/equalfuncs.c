@@ -382,6 +382,7 @@ static bool
 _equalSubLink(const SubLink *a, const SubLink *b)
 {
 	COMPARE_SCALAR_FIELD(subLinkType);
+	COMPARE_SCALAR_FIELD(subLinkId);
 	COMPARE_NODE_FIELD(testexpr);
 	COMPARE_NODE_FIELD(operName);
 	COMPARE_NODE_FIELD(subselect);
@@ -2095,6 +2096,16 @@ _equalResTarget(const ResTarget *a, const ResTarget *b)
 }
 
 static bool
+_equalMultiAssignRef(const MultiAssignRef *a, const MultiAssignRef *b)
+{
+	COMPARE_NODE_FIELD(source);
+	COMPARE_SCALAR_FIELD(colno);
+	COMPARE_SCALAR_FIELD(ncolumns);
+
+	return true;
+}
+
+static bool
 _equalTypeName(const TypeName *a, const TypeName *b)
 {
 	COMPARE_NODE_FIELD(names);
@@ -3028,6 +3039,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_ResTarget:
 			retval = _equalResTarget(a, b);
+			break;
+		case T_MultiAssignRef:
+			retval = _equalMultiAssignRef(a, b);
 			break;
 		case T_TypeCast:
 			retval = _equalTypeCast(a, b);

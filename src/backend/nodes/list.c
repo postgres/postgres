@@ -385,7 +385,7 @@ list_truncate(List *list, int new_size)
  * Locate the n'th cell (counting from 0) of the list.  It is an assertion
  * failure if there is no such cell.
  */
-static ListCell *
+ListCell *
 list_nth_cell(const List *list, int n)
 {
 	ListCell   *match;
