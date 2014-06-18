@@ -214,6 +214,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 
 		if ($self->{options}->{uuid})
 		{
+			print O "#define HAVE_UUID_OSSP\n";
 			print O "#define HAVE_UUID_H\n";
 		}
 		if ($self->{options}->{xml})
