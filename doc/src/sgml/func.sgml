@@ -10159,8 +10159,14 @@ table2-mapping
    </para>
   </note>
   <para>
-   In addition to those operators common to both types, some additional
-   operators exist only for <type>jsonb</type>, as shown
+   The standard comparison operators shown in  <xref
+   linkend="functions-comparison-table"> are available for 
+   <type>jsonb</type>, but not for <type>json</type>. They follow the 
+   ordering rules for btree operations outlined at <xref
+   linkend="json-indexing">.
+  </para>
+  <para>
+   Some further operators also exist only for <type>jsonb</type>, as shown
    in <xref linkend="functions-jsonb-op-table">.
    Many of these operators can be indexed by
    <type>jsonb</> operator classes.  For a full description of
@@ -10181,12 +10187,6 @@ table2-mapping
        </row>
       </thead>
       <tbody>
-       <row>
-        <entry><literal>=</literal></entry>
-        <entry><type>jsonb</type></entry>
-        <entry>Are the two JSON values equal?</entry>
-        <entry><literal>'[1,2,3]'::jsonb = '[1,2,3]'::jsonb</literal></entry>
-       </row>
        <row>
         <entry><literal>@&gt;</literal></entry>
         <entry><type>jsonb</type></entry>
