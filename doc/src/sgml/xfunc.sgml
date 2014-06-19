@@ -143,6 +143,21 @@ SELECT clean_emp();
 </screen>
     </para>
 
+    <note>
+     <para>
+      The entire body of a SQL function is parsed before any of it is
+      executed.  While a SQL function can contain commands that alter
+      the system catalogs (e.g., <command>CREATE TABLE</>), the effects
+      of such commands will not be visible during parse analysis of
+      later commands in the function.  Thus, for example,
+      <literal>CREATE TABLE foo (...); INSERT INTO foo VALUES(...);</literal>
+      will not work as desired if packaged up into a single SQL function,
+      since <structname>foo</> won't exist yet when the <command>INSERT</>
+      command is parsed.  It's recommended to use <application>PL/PgSQL</>
+      instead of a SQL function in this type of situation.
+     </para>
+   </note>
+
    <para>
     The syntax of the <command>CREATE FUNCTION</command> command requires
     the function body to be written as a string constant.  It is usually
