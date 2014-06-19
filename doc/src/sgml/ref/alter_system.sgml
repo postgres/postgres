@@ -77,6 +77,16 @@ ALTER SYSTEM SET <replaceable class="PARAMETER">configuration_parameter</replace
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+  <para>
+    This command can't be used to set <xref linkend="guc-data-directory">
+    and any parameters (e.g., <link linkend="runtime-config-preset">preset options</>)
+    that are not allowed in <filename>postgresql.conf</>.
+  </para>
+ </refsect1>
+  
+ <refsect1>
   <title>Examples</title>
 
   <para>

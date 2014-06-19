@@ -3095,10 +3095,14 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		/*
+		 * Can't be set by ALTER SYSTEM as it can lead to recursive definition
+		 * of data_directory.
+		 */
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Sets the server's data directory."),
 			NULL,
-			GUC_SUPERUSER_ONLY
+			GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE
 		},
 		&data_directory,
 		NULL,
@@ -6735,12 +6739,17 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			   errmsg("unrecognized configuration parameter \"%s\"", name)));
 
+	/*
+	 * Don't allow the parameters which can't be set in configuration
+	 * files to be set in PG_AUTOCONF_FILENAME file.
+	 */
 	if ((record->context == PGC_INTERNAL) ||
-		(record->flags & GUC_DISALLOW_IN_FILE))
-		ereport(ERROR,
-				(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-				 errmsg("parameter \"%s\" cannot be changed",
-						name)));
+		(record->flags & GUC_DISALLOW_IN_FILE) ||
+		(record->flags & GUC_DISALLOW_IN_AUTO_FILE))
+		 ereport(ERROR,
+				 (errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+				  errmsg("parameter \"%s\" cannot be changed",
+						 name)));
 
 	if (!validate_conf_option(record, name, value, PGC_S_FILE,
 							  ERROR, true, NULL,
