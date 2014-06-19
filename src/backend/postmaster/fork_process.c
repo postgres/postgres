@@ -31,6 +31,7 @@ pid_t
 fork_process(void)
 {
 	pid_t		result;
+	const char *oomfilename;
 
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
@@ -71,62 +72,40 @@ fork_process(void)
 		 * process sizes *including shared memory*.  (This is unbelievably
 		 * stupid, but the kernel hackers seem uninterested in improving it.)
 		 * Therefore it's often a good idea to protect the postmaster by
-		 * setting its oom_score_adj value negative (which has to be done in a
-		 * root-owned startup script). If you just do that much, all child
-		 * processes will also be protected against OOM kill, which might not
-		 * be desirable.  You can then choose to build with
-		 * LINUX_OOM_SCORE_ADJ #defined to 0, or to some other value that you
-		 * want child processes to adopt here.
+		 * setting its OOM score adjustment negative (which has to be done in
+		 * a root-owned startup script).  Since the adjustment is inherited by
+		 * child processes, this would ordinarily mean that all the
+		 * postmaster's children are equally protected against OOM kill, which
+		 * is not such a good idea.  So we provide this code to allow the
+		 * children to change their OOM score adjustments again.  Both the
+		 * file name to write to and the value to write are controlled by
+		 * environment variables, which can be set by the same startup script
+		 * that did the original adjustment.
 		 */
-#ifdef LINUX_OOM_SCORE_ADJ
+		oomfilename = getenv("PG_OOM_ADJUST_FILE");
+
+		if (oomfilename != NULL)
 		{
 			/*
 			 * Use open() not stdio, to ensure we control the open flags. Some
 			 * Linux security environments reject anything but O_WRONLY.
 			 */
-			int			fd = open("/proc/self/oom_score_adj", O_WRONLY, 0);
+			int			fd = open(oomfilename, O_WRONLY, 0);
 
 			/* We ignore all errors */
 			if (fd >= 0)
 			{
-				char		buf[16];
+				const char *oomvalue = getenv("PG_OOM_ADJUST_VALUE");
 				int			rc;
 
-				snprintf(buf, sizeof(buf), "%d\n", LINUX_OOM_SCORE_ADJ);
-				rc = write(fd, buf, strlen(buf));
+				if (oomvalue == NULL)	/* supply a useful default */
+					oomvalue = "0";
+
+				rc = write(fd, oomvalue, strlen(oomvalue));
 				(void) rc;
 				close(fd);
 			}
 		}
-#endif   /* LINUX_OOM_SCORE_ADJ */
-
-		/*
-		 * Older Linux kernels have oom_adj not oom_score_adj.  This works
-		 * similarly except with a different scale of adjustment values. If
-		 * it's necessary to build Postgres to work with either API, you can
-		 * define both LINUX_OOM_SCORE_ADJ and LINUX_OOM_ADJ.
-		 */
-#ifdef LINUX_OOM_ADJ
-		{
-			/*
-			 * Use open() not stdio, to ensure we control the open flags. Some
-			 * Linux security environments reject anything but O_WRONLY.
-			 */
-			int			fd = open("/proc/self/oom_adj", O_WRONLY, 0);
-
-			/* We ignore all errors */
-			if (fd >= 0)
-			{
-				char		buf[16];
-				int			rc;
-
-				snprintf(buf, sizeof(buf), "%d\n", LINUX_OOM_ADJ);
-				rc = write(fd, buf, strlen(buf));
-				(void) rc;
-				close(fd);
-			}
-		}
-#endif   /* LINUX_OOM_ADJ */
 
 		/*
 		 * Make sure processes do not share OpenSSL randomness state.

@@ -1275,7 +1275,7 @@ sysctl -w vm.overcommit_memory=2
    <para>
     Another approach, which can be used with or without altering
     <varname>vm.overcommit_memory</>, is to set the process-specific
-    <varname>oom_score_adj</> value for the postmaster process to
+    <firstterm>OOM score adjustment</> value for the postmaster process to
     <literal>-1000</>, thereby guaranteeing it will not be targeted by the OOM
     killer.  The simplest way to do this is to execute
 <programlisting>
@@ -1284,20 +1284,28 @@ echo -1000 > /proc/self/oom_score_adj
     in the postmaster's startup script just before invoking the postmaster.
     Note that this action must be done as root, or it will have no effect;
     so a root-owned startup script is the easiest place to do it.  If you
-    do this, you may also wish to build <productname>PostgreSQL</>
-    with <literal>-DLINUX_OOM_SCORE_ADJ=0</> added to <varname>CPPFLAGS</>.
-    That will cause postmaster child processes to run with the normal
-    <varname>oom_score_adj</> value of zero, so that the OOM killer can still
-    target them at need.
+    do this, you should also set these environment variables in the startup
+    script before invoking the postmaster:
+<programlisting>
+export PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+export PG_OOM_ADJUST_VALUE=0
+</programlisting>
+    These settings will cause postmaster child processes to run with the
+    normal OOM score adjustment of zero, so that the OOM killer can still
+    target them at need.  You could use some other value for
+    <envar>PG_OOM_ADJUST_VALUE</> if you want the child processes to run
+    with some other OOM score adjustment.  (<envar>PG_OOM_ADJUST_VALUE</>
+    can also be omitted, in which case it defaults to zero.)  If you do not
+    set <envar>PG_OOM_ADJUST_FILE</>, the child processes will run with the
+    same OOM score adjustment as the postmaster, which is unwise since the
+    whole point is to ensure that the postmaster has a preferential setting.
    </para>
 
    <para>
     Older Linux kernels do not offer <filename>/proc/self/oom_score_adj</>,
     but may have a previous version of the same functionality called
     <filename>/proc/self/oom_adj</>.  This works the same except the disable
-    value is <literal>-17</> not <literal>-1000</>.  The corresponding
-    build flag for <productname>PostgreSQL</> is
-    <literal>-DLINUX_OOM_ADJ=0</>.
+    value is <literal>-17</> not <literal>-1000</>.
    </para>
 
    <note>
