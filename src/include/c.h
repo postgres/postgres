@@ -597,7 +597,7 @@ typedef NameData *Name;
  */
 #define Trap(condition, errorType) \
 	do { \
-		if ((assert_enabled) && (condition)) \
+		if (condition) \
 			ExceptionalCondition(CppAsString(condition), (errorType), \
 								 __FILE__, __LINE__); \
 	} while (0)
@@ -610,7 +610,7 @@ typedef NameData *Name;
  *	Isn't CPP fun?
  */
 #define TrapMacro(condition, errorType) \
-	((bool) ((! assert_enabled) || ! (condition) || \
+	((bool) (! (condition) || \
 			 (ExceptionalCondition(CppAsString(condition), (errorType), \
 								   __FILE__, __LINE__), 0)))
 

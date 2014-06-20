@@ -174,7 +174,6 @@ static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_phony_autocommit(bool *newval, void **extra, GucSource source);
-static bool check_debug_assertions(bool *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
 static bool check_stage_log_stats(bool *newval, void **extra, GucSource source);
@@ -413,11 +412,6 @@ extern const struct config_enum_entry dynamic_shared_memory_options[];
 /*
  * GUC option variables that are exported from this module
  */
-#ifdef USE_ASSERT_CHECKING
-bool		assert_enabled = true;
-#else
-bool		assert_enabled = false;
-#endif
 bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
@@ -500,6 +494,7 @@ static bool data_checksums;
 static int	wal_segment_size;
 static bool integer_datetimes;
 static int	effective_io_concurrency;
+static bool	assert_enabled;
 
 /* should be static, but commands/variable.c needs to get at this */
 char	   *role_string;
@@ -931,10 +926,10 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"debug_assertions", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Turns on various assertion checks."),
-			gettext_noop("This is a debugging aid."),
-			GUC_NOT_IN_SAMPLE
+		{"debug_assertions", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows whether the running server has assertion checks enabled."),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&assert_enabled,
 #ifdef USE_ASSERT_CHECKING
@@ -942,7 +937,7 @@ static struct config_bool ConfigureNamesBool[] =
 #else
 		false,
 #endif
-		check_debug_assertions, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -9114,19 +9109,6 @@ check_phony_autocommit(bool *newval, void **extra, GucSource source)
 		GUC_check_errmsg("SET AUTOCOMMIT TO OFF is no longer supported");
 		return false;
 	}
-	return true;
-}
-
-static bool
-check_debug_assertions(bool *newval, void **extra, GucSource source)
-{
-#ifndef USE_ASSERT_CHECKING
-	if (*newval)
-	{
-		GUC_check_errmsg("assertion checking is not supported by this build");
-		return false;
-	}
-#endif
 	return true;
 }
 

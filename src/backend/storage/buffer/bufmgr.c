@@ -109,6 +109,7 @@ static volatile BufferDesc *BufferAlloc(SMgrRelation smgr,
 			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
+static void CheckForBufferLeaks(void);
 static int	rnode_comparator(const void *p1, const void *p2);
 
 
@@ -1699,34 +1700,13 @@ SyncOneBuffer(int buf_id, bool skip_recently_used)
 	return result | BUF_WRITTEN;
 }
 
-
 /*
  *		AtEOXact_Buffers - clean up at end of transaction.
- *
- *		As of PostgreSQL 8.0, buffer pins should get released by the
- *		ResourceOwner mechanism.  This routine is just a debugging
- *		cross-check that no pins remain.
  */
 void
 AtEOXact_Buffers(bool isCommit)
 {
-#ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
-	{
-		int			RefCountErrors = 0;
-		Buffer		b;
-
-		for (b = 1; b <= NBuffers; b++)
-		{
-			if (PrivateRefCount[b - 1] != 0)
-			{
-				PrintBufferLeakWarning(b);
-				RefCountErrors++;
-			}
-		}
-		Assert(RefCountErrors == 0);
-	}
-#endif
+	CheckForBufferLeaks();
 
 	AtEOXact_LocalBuffers(isCommit);
 }
@@ -1756,26 +1736,36 @@ AtProcExit_Buffers(int code, Datum arg)
 	AbortBufferIO();
 	UnlockBuffers();
 
-#ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
-	{
-		int			RefCountErrors = 0;
-		Buffer		b;
-
-		for (b = 1; b <= NBuffers; b++)
-		{
-			if (PrivateRefCount[b - 1] != 0)
-			{
-				PrintBufferLeakWarning(b);
-				RefCountErrors++;
-			}
-		}
-		Assert(RefCountErrors == 0);
-	}
-#endif
+	CheckForBufferLeaks();
 
 	/* localbuf.c needs a chance too */
 	AtProcExit_LocalBuffers();
+}
+
+/*
+ *		CheckForBufferLeaks - ensure this backend holds no buffer pins
+ *
+ *		As of PostgreSQL 8.0, buffer pins should get released by the
+ *		ResourceOwner mechanism.  This routine is just a debugging
+ *		cross-check that no pins remain.
+ */
+static void
+CheckForBufferLeaks(void)
+{
+#ifdef USE_ASSERT_CHECKING
+	int			RefCountErrors = 0;
+	Buffer		b;
+
+	for (b = 1; b <= NBuffers; b++)
+	{
+		if (PrivateRefCount[b - 1] != 0)
+		{
+			PrintBufferLeakWarning(b);
+			RefCountErrors++;
+		}
+	}
+	Assert(RefCountErrors == 0);
+#endif
 }
 
 /*

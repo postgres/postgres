@@ -635,7 +635,6 @@ EventTriggerCommonSetup(Node *parsetree,
 	 * relevant command tag.
 	 */
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
 	{
 		const char *dbgtag;
 

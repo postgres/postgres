@@ -553,41 +553,38 @@ void
 AtEOXact_CatCache(bool isCommit)
 {
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
+	slist_iter	cache_iter;
+
+	slist_foreach(cache_iter, &CacheHdr->ch_caches)
 	{
-		slist_iter	cache_iter;
+		CatCache   *ccp = slist_container(CatCache, cc_next, cache_iter.cur);
+		dlist_iter	iter;
+		int			i;
 
-		slist_foreach(cache_iter, &CacheHdr->ch_caches)
+		/* Check CatCLists */
+		dlist_foreach(iter, &ccp->cc_lists)
 		{
-			CatCache   *ccp = slist_container(CatCache, cc_next, cache_iter.cur);
-			dlist_iter	iter;
-			int			i;
+			CatCList   *cl;
 
-			/* Check CatCLists */
-			dlist_foreach(iter, &ccp->cc_lists)
+			cl = dlist_container(CatCList, cache_elem, iter.cur);
+			Assert(cl->cl_magic == CL_MAGIC);
+			Assert(cl->refcount == 0);
+			Assert(!cl->dead);
+		}
+
+		/* Check individual tuples */
+		for (i = 0; i < ccp->cc_nbuckets; i++)
+		{
+			dlist_head *bucket = &ccp->cc_bucket[i];
+
+			dlist_foreach(iter, bucket)
 			{
-				CatCList   *cl;
+				CatCTup    *ct;
 
-				cl = dlist_container(CatCList, cache_elem, iter.cur);
-				Assert(cl->cl_magic == CL_MAGIC);
-				Assert(cl->refcount == 0);
-				Assert(!cl->dead);
-			}
-
-			/* Check individual tuples */
-			for (i = 0; i < ccp->cc_nbuckets; i++)
-			{
-				dlist_head *bucket = &ccp->cc_bucket[i];
-
-				dlist_foreach(iter, bucket)
-				{
-					CatCTup    *ct;
-
-					ct = dlist_container(CatCTup, cache_elem, iter.cur);
-					Assert(ct->ct_magic == CT_MAGIC);
-					Assert(ct->refcount == 0);
-					Assert(!ct->dead);
-				}
+				ct = dlist_container(CatCTup, cache_elem, iter.cur);
+				Assert(ct->ct_magic == CT_MAGIC);
+				Assert(ct->refcount == 0);
+				Assert(!ct->dead);
 			}
 		}
 	}

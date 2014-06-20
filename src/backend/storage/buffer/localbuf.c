@@ -491,15 +491,15 @@ GetLocalBufferStorage(void)
 }
 
 /*
- * AtEOXact_LocalBuffers - clean up at end of transaction.
+ * CheckForLocalBufferLeaks - ensure this backend holds no local buffer pins
  *
- * This is just like AtEOXact_Buffers, but for local buffers.
+ * This is just like CheckBufferLeaks(), but for local buffers.
  */
-void
-AtEOXact_LocalBuffers(bool isCommit)
+static void
+CheckForLocalBufferLeaks(void)
 {
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled && LocalRefCount)
+	if (LocalRefCount)
 	{
 		int			RefCountErrors = 0;
 		int			i;
@@ -520,33 +520,28 @@ AtEOXact_LocalBuffers(bool isCommit)
 }
 
 /*
+ * AtEOXact_LocalBuffers - clean up at end of transaction.
+ *
+ * This is just like AtEOXact_Buffers, but for local buffers.
+ */
+void
+AtEOXact_LocalBuffers(bool isCommit)
+{
+	CheckForLocalBufferLeaks();
+}
+
+/*
  * AtProcExit_LocalBuffers - ensure we have dropped pins during backend exit.
  *
- * This is just like AtProcExit_Buffers, but for local buffers.  We shouldn't
- * be holding any remaining pins; if we are, and assertions aren't enabled,
- * we'll fail later in DropRelFileNodeBuffers while trying to drop the temp
- * rels.
+ * This is just like AtProcExit_Buffers, but for local buffers.
  */
 void
 AtProcExit_LocalBuffers(void)
 {
-#ifdef USE_ASSERT_CHECKING
-	if (assert_enabled && LocalRefCount)
-	{
-		int			RefCountErrors = 0;
-		int			i;
-
-		for (i = 0; i < NLocBuffer; i++)
-		{
-			if (LocalRefCount[i] != 0)
-			{
-				Buffer		b = -i - 1;
-
-				PrintBufferLeakWarning(b);
-				RefCountErrors++;
-			}
-		}
-		Assert(RefCountErrors == 0);
-	}
-#endif
+	/*
+	 * We shouldn't be holding any remaining pins; if we are, and assertions
+	 * aren't enabled, we'll fail later in DropRelFileNodeBuffers while trying
+	 * to drop the temp rels.
+	 */
+	CheckForLocalBufferLeaks();
 }

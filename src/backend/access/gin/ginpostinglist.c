@@ -250,7 +250,6 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 	 * Check that the encoded segment decodes back to the original items.
 	 */
 #if defined (CHECK_ENCODING_ROUNDTRIP)
-	if (assert_enabled)
 	{
 		int			ndecoded;
 		ItemPointer tmp = ginPostingListDecode(result, &ndecoded);

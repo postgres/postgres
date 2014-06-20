@@ -376,7 +376,6 @@ InitProcess(void)
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
 	{
 		int			i;
 
@@ -539,7 +538,6 @@ InitAuxiliaryProcess(void)
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
 	{
 		int			i;
 
@@ -782,7 +780,6 @@ ProcKill(int code, Datum arg)
 	SyncRepCleanupAtProcExit();
 
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
 	{
 		int			i;
 

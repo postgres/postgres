@@ -6722,6 +6722,26 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-debug-assertions" xreflabel="debug_assertions">
+      <term><varname>debug_assertions</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_assertions</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports whether <productname>PostgreSQL</productname> has been built
+        with assertions enabled. That is the case if the
+        macro <symbol>USE_ASSERT_CHECKING</symbol> is defined
+        when <productname>PostgreSQL</productname> is built (accomplished
+        e.g. by the <command>configure</command> option
+        <option>--enable-cassert</option>). By
+        default <productname>PostgreSQL</productname> is built without
+        assertions.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-integer-datetimes" xreflabel="integer_datetimes">
       <term><varname>integer_datetimes</varname> (<type>boolean</type>)
       <indexterm>
@@ -6969,28 +6989,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Allows modification of the structure of system tables.
         This is used by <command>initdb</command>.
         This parameter can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-debug-assertions" xreflabel="debug_assertions">
-      <term><varname>debug_assertions</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>debug_assertions</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Turns on various assertion checks. This is a debugging aid. If
-        you are experiencing strange problems or crashes you might want
-        to turn this on, as it might expose programming mistakes. To use
-        this parameter, the macro <symbol>USE_ASSERT_CHECKING</symbol>
-        must be defined when <productname>PostgreSQL</productname> is
-        built (accomplished by the <command>configure</command> option
-        <option>--enable-cassert</option>). Note that
-        <varname>debug_assertions</varname> defaults to <literal>on</>
-        if <productname>PostgreSQL</productname> has been built with
-        assertions enabled.
        </para>
       </listitem>
      </varlistentry>
@@ -7354,10 +7352,6 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </thead>
 
       <tbody>
-       <row>
-        <entry><option>-A <replaceable>x</replaceable></option></entry>
-        <entry><literal>debug_assertions = <replaceable>x</replaceable></></entry>
-       </row>
        <row>
         <entry><option>-B <replaceable>x</replaceable></option></entry>
         <entry><literal>shared_buffers = <replaceable>x</replaceable></></entry>

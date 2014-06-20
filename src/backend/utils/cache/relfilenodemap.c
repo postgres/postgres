@@ -220,7 +220,6 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 			found = true;
 
 #ifdef USE_ASSERT_CHECKING
-			if (assert_enabled)
 			{
 				bool		isnull;
 				Oid			check;

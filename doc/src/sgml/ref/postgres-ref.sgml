@@ -102,18 +102,6 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-A 0|1</option></term>
-      <listitem>
-       <para>
-        Enables run-time assertion checks, which is a debugging aid to
-        detect programming mistakes.  This option is only available if
-        assertions were enabled when <productname>PostgreSQL</> was
-        compiled. If so, the default is on.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-B <replaceable class="parameter">nbuffers</replaceable></option></term>
       <listitem>
        <para>
