@@ -207,6 +207,7 @@ extern Datum GetAttributeByName(HeapTupleHeader tuple, const char *attname,
 				   bool *isNull);
 extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
+							MemoryContext argContext,
 							TupleDesc expectedDesc,
 							bool randomAccess);
 extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
