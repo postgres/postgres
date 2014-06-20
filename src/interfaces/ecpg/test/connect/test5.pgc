@@ -21,7 +21,9 @@ exec sql end declare section;
 	ECPGdebug(1, stderr);
 
 	exec sql connect to connectdb as main;
+	exec sql alter user connectdb ENCRYPTED PASSWORD 'insecure';
 	exec sql alter user connectuser ENCRYPTED PASSWORD 'connectpw';
+	exec sql commit;
 	exec sql disconnect;  /* <-- "main" not specified */
 
 	strcpy(db, "connectdb");
@@ -38,28 +40,28 @@ exec sql end declare section;
 	exec sql connect to 'connectdb' as main;
 	exec sql disconnect main;
 
-	exec sql connect to as main user connectdb;
+	exec sql connect to as main user connectdb/insecure;
 	exec sql disconnect main;
 
-	exec sql connect to connectdb as main user connectuser/connectdb;
+	exec sql connect to connectdb as main user connectuser/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/connectdb as main user connectuser;
+	exec sql connect to unix:postgresql://localhost/connectdb as main user connectuser/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to "unix:postgresql://localhost/connectdb" as main user connectuser;
+	exec sql connect to "unix:postgresql://localhost/connectdb" as main user connectuser/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to 'unix:postgresql://localhost/connectdb' as main user :user;
+	exec sql connect to 'unix:postgresql://localhost/connectdb' as main user :user USING "connectpw";
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/connectdb?connect_timeout=14&client_encoding=latin1 as main user connectuser;
+	exec sql connect to unix:postgresql://localhost/connectdb?connect_timeout=14&client_encoding=latin1 as main user connectuser/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to "unix:postgresql://200.46.204.71/connectdb" as main user connectuser;
+	exec sql connect to "unix:postgresql://200.46.204.71/connectdb" as main user connectuser/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/ as main user connectdb;
+	exec sql connect to unix:postgresql://localhost/ as main user connectdb IDENTIFIED BY insecure;
 	exec sql disconnect main;
 
 	/* connect twice */

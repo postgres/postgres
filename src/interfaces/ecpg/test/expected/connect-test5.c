@@ -43,113 +43,119 @@ main(void)
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 23 "test5.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter user connectuser encrypted password 'connectpw'", ECPGt_EOIT, ECPGt_EORT);}
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter user connectdb encrypted password 'insecure'", ECPGt_EOIT, ECPGt_EORT);}
 #line 24 "test5.pgc"
 
-	{ ECPGdisconnect(__LINE__, "CURRENT");}
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter user connectuser encrypted password 'connectpw'", ECPGt_EOIT, ECPGt_EORT);}
 #line 25 "test5.pgc"
+
+	{ ECPGtrans(__LINE__, NULL, "commit");}
+#line 26 "test5.pgc"
+
+	{ ECPGdisconnect(__LINE__, "CURRENT");}
+#line 27 "test5.pgc"
   /* <-- "main" not specified */
 
 	strcpy(db, "connectdb");
 	strcpy(id, "main");
 	{ ECPGconnect(__LINE__, 0, db , NULL, NULL , id, 0); }
-#line 29 "test5.pgc"
+#line 31 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, id);}
-#line 30 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 32 "test5.pgc"
 
-	{ ECPGdisconnect(__LINE__, "main");}
-#line 33 "test5.pgc"
-
 
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
+#line 34 "test5.pgc"
+
+	{ ECPGdisconnect(__LINE__, "main");}
 #line 35 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
+#line 37 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 36 "test5.pgc"
+#line 38 "test5.pgc"
 
 
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
-#line 38 "test5.pgc"
+#line 40 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 39 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "" , "connectdb" , NULL , "main", 0); }
 #line 41 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "" , "connectdb" , "insecure" , "main", 0); }
+#line 43 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 42 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "connectdb" , "connectuser" , "connectdb" , "main", 0); }
 #line 44 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "connectdb" , "connectuser" , "connectpw" , "main", 0); }
+#line 46 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 45 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , "connectuser" , NULL , "main", 0); }
 #line 47 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , "connectuser" , "connectpw" , "main", 0); }
+#line 49 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 48 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , "connectuser" , NULL , "main", 0); }
 #line 50 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , "connectuser" , "connectpw" , "main", 0); }
+#line 52 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 51 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , user , NULL , "main", 0); }
 #line 53 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , user , "connectpw" , "main", 0); }
+#line 55 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 54 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb?connect_timeout=14 & client_encoding=latin1" , "connectuser" , NULL , "main", 0); }
 #line 56 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb?connect_timeout=14 & client_encoding=latin1" , "connectuser" , "connectpw" , "main", 0); }
+#line 58 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 57 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://200.46.204.71/connectdb" , "connectuser" , NULL , "main", 0); }
 #line 59 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://200.46.204.71/connectdb" , "connectuser" , "connectpw" , "main", 0); }
+#line 61 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 60 "test5.pgc"
-
-
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/" , "connectdb" , NULL , "main", 0); }
 #line 62 "test5.pgc"
 
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/" , "connectdb" , "insecure" , "main", 0); }
+#line 64 "test5.pgc"
+
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 63 "test5.pgc"
+#line 65 "test5.pgc"
 
 
 	/* connect twice */
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
-#line 66 "test5.pgc"
+#line 68 "test5.pgc"
 
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
-#line 67 "test5.pgc"
+#line 69 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 68 "test5.pgc"
+#line 70 "test5.pgc"
 
 
 	/* not connected */
 	{ ECPGdisconnect(__LINE__, "nonexistant");}
-#line 71 "test5.pgc"
+#line 73 "test5.pgc"
 
 
 	return (0);
