@@ -1207,13 +1207,6 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	PageRepairFragmentation(page);
 
 	/*
-	 * Now that we have removed the dead tuples from the page, once again
-	 * check if the page has become all-visible.
-	 */
-	if (heap_page_is_all_visible(buffer, &visibility_cutoff_xid))
-		PageSetAllVisible(page);
-
-	/*
 	 * Mark buffer dirty before we write WAL.
 	 */
 	MarkBufferDirty(buffer);
@@ -1231,6 +1224,23 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	}
 
 	/*
+	 * End critical section, so we safely can do visibility tests (which
+	 * possibly need to perform IO and allocate memory!). If we crash now the
+	 * page (including the corresponding vm bit) might not be marked all
+	 * visible, but that's fine. A later vacuum will fix that.
+	 */
+	END_CRIT_SECTION();
+
+	/*
+	 * Now that we have removed the dead tuples from the page, once again
+	 * check if the page has become all-visible.  The page is already marked
+	 * dirty, exclusively locked, and, if needed, a full page image has been
+	 * emitted in the log_heap_clean() above.
+	 */
+	if (heap_page_is_all_visible(buffer, &visibility_cutoff_xid))
+		PageSetAllVisible(page);
+
+	/*
 	 * All the changes to the heap page have been done. If the all-visible
 	 * flag is now set, also set the VM bit.
 	 */
@@ -1241,8 +1251,6 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 		visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr, *vmbuffer,
 						  visibility_cutoff_xid);
 	}
-
-	END_CRIT_SECTION();
 
 	return tupindex;
 }
