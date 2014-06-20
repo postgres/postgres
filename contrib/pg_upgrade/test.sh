@@ -80,7 +80,7 @@ if [ "$1" = '--install' ]; then
 	# use psql from the proper installation directory, which might
 	# be outdated or missing. But don't override anything else that's
 	# already in EXTRA_REGRESS_OPTS.
-	EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --psqldir=$bindir"
+	EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --psqldir='$bindir'"
 	export EXTRA_REGRESS_OPTS
 fi
 
@@ -117,7 +117,7 @@ PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
 PGHOSTADDR="";        unset PGHOSTADDR
 
 # Select a non-conflicting port number, similarly to pg_regress.c
-PG_VERSION_NUM=`grep '#define PG_VERSION_NUM' $newsrc/src/include/pg_config.h | awk '{print $3}'`
+PG_VERSION_NUM=`grep '#define PG_VERSION_NUM' "$newsrc"/src/include/pg_config.h | awk '{print $3}'`
 PGPORT=`expr $PG_VERSION_NUM % 16384 + 49152`
 export PGPORT
 
@@ -141,8 +141,8 @@ export EXTRA_REGRESS_OPTS
 # enable echo so the user can see what is being executed
 set -x
 
-$oldbindir/initdb -N
-$oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
+"$oldbindir"/initdb -N
+"$oldbindir"/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 	if [ "$newsrc" != "$oldsrc" ]; then
@@ -167,7 +167,7 @@ if "$MAKE" -C "$oldsrc" installcheck; then
 else
 	make_installcheck_status=$?
 fi
-$oldbindir/pg_ctl -m fast stop
+"$oldbindir"/pg_ctl -m fast stop
 if [ -n "$make_installcheck_status" ]; then
 	exit 1
 fi
