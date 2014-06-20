@@ -931,7 +931,13 @@ CatalogCacheInitializeCache(CatCache *cache)
 		CatalogCacheInitializeCache_DEBUG2;
 
 		if (cache->cc_key[i] > 0)
-			keytype = tupdesc->attrs[cache->cc_key[i] - 1]->atttypid;
+		{
+			Form_pg_attribute attr = tupdesc->attrs[cache->cc_key[i] - 1];
+
+			keytype = attr->atttypid;
+			/* cache key columns should always be NOT NULL */
+			Assert(attr->attnotnull);
+		}
 		else
 		{
 			if (cache->cc_key[i] != ObjectIdAttributeNumber)
@@ -1003,6 +1009,16 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
 		 */
 		LockRelationOid(cache->cc_reloid, AccessShareLock);
 		idesc = index_open(cache->cc_indexoid, AccessShareLock);
+
+		/*
+		 * While we've got the index open, let's check that it's unique (and
+		 * not just deferrable-unique, thank you very much).  This is just to
+		 * catch thinkos in definitions of new catcaches, so we don't worry
+		 * about the pg_am indexes not getting tested.
+		 */
+		Assert(idesc->rd_index->indisunique &&
+			   idesc->rd_index->indimmediate);
+
 		index_close(idesc, AccessShareLock);
 		UnlockRelationOid(cache->cc_reloid, AccessShareLock);
 	}
