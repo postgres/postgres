@@ -2002,6 +2002,7 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 Tuplestorestate *
 ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
+							MemoryContext argContext,
 							TupleDesc expectedDesc,
 							bool randomAccess)
 {
@@ -2083,12 +2084,18 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		/*
 		 * Evaluate the function's argument list.
 		 *
-		 * Note: ideally, we'd do this in the per-tuple context, but then the
-		 * argument values would disappear when we reset the context in the
-		 * inner loop.  So do it in caller context.  Perhaps we should make a
-		 * separate context just to hold the evaluated arguments?
+		 * We can't do this in the per-tuple context: the argument values
+		 * would disappear when we reset that context in the inner loop.  And
+		 * the caller's CurrentMemoryContext is typically a query-lifespan
+		 * context, so we don't want to leak memory there.  We require the
+		 * caller to pass a separate memory context that can be used for this,
+		 * and can be reset each time through to avoid bloat.
 		 */
+		MemoryContextReset(argContext);
+		oldcontext = MemoryContextSwitchTo(argContext);
 		argDone = ExecEvalFuncArgs(&fcinfo, fcache->args, econtext);
+		MemoryContextSwitchTo(oldcontext);
+
 		/* We don't allow sets in the arguments of the table function */
 		if (argDone != ExprSingleResult)
 			ereport(ERROR,
