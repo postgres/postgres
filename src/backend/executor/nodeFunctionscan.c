@@ -28,6 +28,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 
 
 /*
@@ -94,6 +95,7 @@ FunctionNext(FunctionScanState *node)
 			node->funcstates[0].tstore = tstore =
 				ExecMakeTableFunctionResult(node->funcstates[0].funcexpr,
 											node->ss.ps.ps_ExprContext,
+											node->argcontext,
 											node->funcstates[0].tupdesc,
 										  node->eflags & EXEC_FLAG_BACKWARD);
 
@@ -152,6 +154,7 @@ FunctionNext(FunctionScanState *node)
 			fs->tstore =
 				ExecMakeTableFunctionResult(fs->funcexpr,
 											node->ss.ps.ps_ExprContext,
+											node->argcontext,
 											fs->tupdesc,
 										  node->eflags & EXEC_FLAG_BACKWARD);
 
@@ -514,6 +517,19 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
+
+	/*
+	 * Create a memory context that ExecMakeTableFunctionResult can use to
+	 * evaluate function arguments in.  We can't use the per-tuple context for
+	 * this because it gets reset too often; but we don't want to leak
+	 * evaluation results into the query-lifespan context either.  We just
+	 * need one context, because we evaluate each function separately.
+	 */
+	scanstate->argcontext = AllocSetContextCreate(CurrentMemoryContext,
+												  "Table function arguments",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
 
 	return scanstate;
 }
