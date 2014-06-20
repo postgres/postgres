@@ -1391,6 +1391,7 @@ typedef struct SubqueryScanState
  *		tupdesc				expected return tuple description
  *		tuplestorestate		private state of tuplestore.c
  *		funcexpr			state for function expression being evaluated
+ *		argcontext			memory context to evaluate function arguments in
  * ----------------
  */
 typedef struct FunctionScanState
@@ -1400,6 +1401,7 @@ typedef struct FunctionScanState
 	TupleDesc	tupdesc;
 	Tuplestorestate *tuplestorestate;
 	ExprState  *funcexpr;
+	MemoryContext argcontext;
 } FunctionScanState;
 
 /* ----------------

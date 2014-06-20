@@ -25,6 +25,7 @@
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
+#include "utils/memutils.h"
 
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
@@ -64,6 +65,7 @@ FunctionNext(FunctionScanState *node)
 		node->tuplestorestate = tuplestorestate =
 			ExecMakeTableFunctionResult(node->funcexpr,
 										node->ss.ps.ps_ExprContext,
+										node->argcontext,
 										node->tupdesc,
 										node->eflags & EXEC_FLAG_BACKWARD);
 	}
@@ -226,6 +228,19 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
+
+	/*
+	 * Create a memory context that ExecMakeTableFunctionResult can use to
+	 * evaluate function arguments in.  We can't use the per-tuple context for
+	 * this because it gets reset too often; but we don't want to leak
+	 * evaluation results into the query-lifespan context either.  We just
+	 * need one context, because we evaluate each function separately.
+	 */
+	scanstate->argcontext = AllocSetContextCreate(CurrentMemoryContext,
+												  "Table function arguments",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
 
 	return scanstate;
 }
