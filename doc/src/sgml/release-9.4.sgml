@@ -96,7 +96,7 @@
       linkend="functions-formatting-table"><function>to_timestamp()</></link>
       and <function>to_date()</> format strings to consume a corresponding
       number of characters in the input string (whitespace or not), then
-      conditionally consume adjacent whitespace if not in <literal>FX</>
+      conditionally consume adjacent whitespace, if not in <literal>FX</>
       mode (Jeevan Chalke)
      </para>
 
@@ -1638,6 +1638,18 @@
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Convert <link linkend="datatype-numeric"><type>NUMERIC</></link>s to
+       <type>decimal</> values in <link linkend="plpython">PL/Python</link>
+       (Szymon Guz, Ronan Dunklau)
+      </para>
+
+      <para>
+       Previously these were converted to <type>float</>s.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
     <sect4>
@@ -1678,26 +1690,6 @@
       </listitem>
 
     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title><link linkend="plpython">PL/Python</link> Server-Side Language</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Convert <link linkend="datatype-numeric"><type>NUMERIC</></link>s
-        to <type>decimal</> values in PL/Python (Szymon Guz, Ronan Dunklau)
-       </para>
-
-       <para>
-        Previously these were converted to <type>float</>s.
-       </para>
-      </listitem>
-
-     </itemizedlist>
 
     </sect4>
 
@@ -1891,7 +1883,7 @@
 
        <listitem>
         <para>
-         Have <command>\d</> display disabled system triggers (Bruce
+         Have <command>\d</> show disabled system triggers (Bruce
          Momjian)
         </para>
 
@@ -2013,7 +2005,7 @@
       <listitem>
        <para>
         Add <application>pg_basebackup</> option <option>--xlogdir</>
-        to specify the <filename>pg_xlog</> direction location (Haribabu
+        to specify the <filename>pg_xlog</> directory location (Haribabu
         Kommi)
        </para>
       </listitem>
