@@ -460,11 +460,16 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
     and a <literal>jsonb_path_ops</literal> GIN index is that the former
     creates independent index items for each key and value in the data,
     while the latter creates index items only for each value in the
-    data.<footnote><para>For this purpose, the term <quote>value</>
-    includes array elements, though JSON terminology sometimes considers
-    array elements distinct from values within objects.</para></footnote>
-    But in <literal>jsonb_path_ops</literal>, each index item is a hash
-    of both the value and the key(s) leading to it; for example to index
+    data.  
+    <footnote>
+     <para>
+      For this purpose, the term <quote>value</> includes array elements,
+      though JSON terminology sometimes considers array elements distinct
+      from values within objects.
+     </para>
+    </footnote>
+    Basically, each <literal>jsonb_path_ops</literal> index item is
+    a hash of the value and the key(s) leading to it; for example to index
     <literal>{"foo": {"bar": "baz"}}</literal>, a single index item would
     be created incorporating all three of <literal>foo</>, <literal>bar</>,
     and <literal>baz</> into the hash value.  Thus a containment query
