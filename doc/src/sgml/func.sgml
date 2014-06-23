@@ -16654,7 +16654,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <parameter>slot_name</parameter> using the output plugin
         <parameter>plugin</parameter>.  A call to this function has the same
         effect as the replication protocol command
-        <literal>CREATE REPLICATION SLOT ... LOGICAL</literal>.
+        <literal>CREATE_REPLICATION_SLOT ... LOGICAL</literal>.
        </entry>
       </row>
 
