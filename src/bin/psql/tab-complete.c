@@ -626,6 +626,14 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "         WHERE pg_catalog.quote_ident(conname)='%s')"
 
 /* the silly-looking length condition is just to eat up the current word */
+#define Query_for_rule_of_table \
+"SELECT pg_catalog.quote_ident(rulename) "\
+"  FROM pg_catalog.pg_class c1, pg_catalog.pg_rewrite "\
+" WHERE c1.oid=ev_class and (%d = pg_catalog.length('%s'))"\
+"       and pg_catalog.quote_ident(c1.relname)='%s'"\
+"       and pg_catalog.pg_table_is_visible(c1.oid)"
+
+/* the silly-looking length condition is just to eat up the current word */
 #define Query_for_list_of_tables_for_rule \
 "SELECT pg_catalog.quote_ident(relname) "\
 "  FROM pg_catalog.pg_class"\
@@ -633,6 +641,15 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "   AND oid IN "\
 "       (SELECT ev_class FROM pg_catalog.pg_rewrite "\
 "         WHERE pg_catalog.quote_ident(rulename)='%s')"
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_trigger_of_table \
+"SELECT pg_catalog.quote_ident(tgname) "\
+"  FROM pg_catalog.pg_class c1, pg_catalog.pg_trigger "\
+" WHERE c1.oid=tgrelid and (%d = pg_catalog.length('%s'))"\
+"       and pg_catalog.quote_ident(c1.relname)='%s'"\
+"       and pg_catalog.pg_table_is_visible(c1.oid)"\
+"       and not tgisinternal"
 
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_list_of_tables_for_trigger \
@@ -774,7 +791,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"TEMP", NULL, NULL, THING_NO_DROP},		/* for CREATE TEMP TABLE ... */
 	{"TEMPLATE", Query_for_list_of_ts_templates, NULL, THING_NO_SHOW},
 	{"TEXT SEARCH", NULL, NULL},
-	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s'"},
+	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s' AND NOT tgisinternal"},
 	{"TYPE", NULL, &Query_for_list_of_datatypes},
 	{"UNIQUE", NULL, NULL, THING_NO_DROP},		/* for CREATE UNIQUE INDEX ... */
 	{"UNLOGGED", NULL, NULL, THING_NO_DROP},	/* for CREATE UNLOGGED TABLE
@@ -1409,6 +1426,38 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERENABLE2);
 	}
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ENABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "RULE") == 0)
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_rule_of_table);
+	}
+	else if (pg_strcasecmp(prev6_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "ENABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "RULE") == 0)
+	{
+		completion_info_charp = prev4_wd;
+		COMPLETE_WITH_QUERY(Query_for_rule_of_table);
+	}
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ENABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "TRIGGER") == 0)
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_trigger_of_table);
+	}
+	else if (pg_strcasecmp(prev6_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "ENABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "TRIGGER") == 0)
+	{
+		completion_info_charp = prev4_wd;
+		COMPLETE_WITH_QUERY(Query_for_trigger_of_table);
+	}
 	/* ALTER TABLE xxx INHERIT */
 	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
@@ -1424,6 +1473,7 @@ psql_completion(const char *text, int start, int end)
 	{
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
 	}
+	/* ALTER TABLE xxx DISABLE */
 	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev_wd, "DISABLE") == 0)
@@ -1432,6 +1482,22 @@ psql_completion(const char *text, int start, int end)
 		{"RULE", "TRIGGER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERDISABLE);
+	}
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "DISABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "RULE") == 0)
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_rule_of_table);
+	}
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "DISABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "TRIGGER") == 0)
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_trigger_of_table);
 	}
 
 	/* ALTER TABLE xxx ALTER */
@@ -2587,6 +2653,29 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH);
 	}
 
+	/* DROP TRIGGER */
+	else if (pg_strcasecmp(prev3_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev2_wd, "TRIGGER") == 0)
+	{
+		COMPLETE_WITH_CONST("ON");
+	}
+	else if (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TRIGGER") == 0 &&
+			 pg_strcasecmp(prev_wd, "ON") == 0)
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_trigger);
+	}
+	else if (pg_strcasecmp(prev5_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TRIGGER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ON") == 0)
+	{
+		static const char *const list_DROPCR[] =
+		{"CASCADE", "RESTRICT", NULL};
+
+		COMPLETE_WITH_LIST(list_DROPCR);
+	}
+
 	/* DROP EVENT TRIGGER */
 	else if (pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "EVENT") == 0)
@@ -2598,6 +2687,29 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "TRIGGER") == 0)
 	{
 		COMPLETE_WITH_QUERY(Query_for_list_of_event_triggers);
+	}
+
+	/* DROP RULE */
+	else if (pg_strcasecmp(prev3_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev2_wd, "RULE") == 0)
+	{
+		COMPLETE_WITH_CONST("ON");
+	}
+	else if (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev3_wd, "RULE") == 0 &&
+			 pg_strcasecmp(prev_wd, "ON") == 0)
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_rule);
+	}
+	else if (pg_strcasecmp(prev5_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev4_wd, "RULE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ON") == 0)
+	{
+		static const char *const list_DROPCR[] =
+		{"CASCADE", "RESTRICT", NULL};
+
+		COMPLETE_WITH_LIST(list_DROPCR);
 	}
 
 /* EXECUTE, but not EXECUTE embedded in other commands */
