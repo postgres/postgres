@@ -2489,7 +2489,7 @@ include 'filename'
        <listitem>
         <para>
          Specifies the maximum number of replication slots
-         (see <xref linkend="streaming-replication-slots"> that the server
+         (see <xref linkend="streaming-replication-slots">) that the server
          can support. The default is zero.  This parameter can only be set at
          server start.
          <varname>wal_level</varname> must be set
