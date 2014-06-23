@@ -1276,7 +1276,7 @@ begin:;
 			rdt_lastnormal->next = NULL;
 
 			initStringInfo(&recordbuf);
-			appendBinaryStringInfo(&recordbuf, (char *) &rechdr, sizeof(XLogRecord));
+			appendBinaryStringInfo(&recordbuf, (char *) rechdr, sizeof(XLogRecord));
 			for (; rdata != NULL; rdata = rdata->next)
 				appendBinaryStringInfo(&recordbuf, rdata->data, rdata->len);
 
