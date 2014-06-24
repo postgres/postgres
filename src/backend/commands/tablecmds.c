@@ -517,7 +517,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 */
 	descriptor = BuildDescForRelation(schema);
 
-	localHasOids = interpretOidsOption(stmt->options);
+	if (relkind == RELKIND_FOREIGN_TABLE)
+		localHasOids = false;
+	else
+		localHasOids = interpretOidsOption(stmt->options);
 	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
 
 	/*
