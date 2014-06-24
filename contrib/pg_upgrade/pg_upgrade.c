@@ -364,8 +364,24 @@ create_new_objects(void)
 }
 
 /*
- * Delete the given subdirectory contents from the new cluster, and copy the
- * files from the old cluster into it.
+ * Delete the given subdirectory contents from the new cluster
+ */
+static void
+remove_new_subdir(char *subdir, bool rmtopdir)
+{
+	char		new_path[MAXPGPATH];
+
+	prep_status("Deleting files from new %s", subdir);
+
+	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
+	if (!rmtree(new_path, rmtopdir))
+		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
+
+	check_ok();
+}
+
+/*
+ * Copy the files from the old cluster into it
  */
 static void
 copy_subdir_files(char *subdir)
@@ -373,13 +389,10 @@ copy_subdir_files(char *subdir)
 	char		old_path[MAXPGPATH];
 	char		new_path[MAXPGPATH];
 
-	prep_status("Deleting files from new %s", subdir);
+	remove_new_subdir(subdir, true);
 
 	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
 	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
-	if (!rmtree(new_path, true))
-		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
-	check_ok();
 
 	prep_status("Copying old %s to new server", subdir);
 
@@ -420,6 +433,7 @@ copy_clog_xlog_xid(void)
 	{
 		copy_subdir_files("pg_multixact/offsets");
 		copy_subdir_files("pg_multixact/members");
+
 		prep_status("Setting next multixact ID and offset for new cluster");
 
 		/*
@@ -437,6 +451,13 @@ copy_clog_xlog_xid(void)
 	}
 	else if (new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
 	{
+		/*
+		 * Remove files created by initdb that no longer match the
+		 * new multi-xid value.
+		 */
+		remove_new_subdir("pg_multixact/offsets", false);
+		remove_new_subdir("pg_multixact/members", false);
+
 		prep_status("Setting oldest multixact ID on new cluster");
 
 		/*
