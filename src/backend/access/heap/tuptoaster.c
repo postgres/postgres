@@ -35,6 +35,7 @@
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/pg_lzcompress.h"
 #include "utils/rel.h"
@@ -1494,6 +1495,8 @@ toast_save_datum(Relation rel, Datum value,
 	while (data_todo > 0)
 	{
 		int			i;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Calculate the size of this chunk

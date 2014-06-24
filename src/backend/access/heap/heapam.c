@@ -2355,6 +2355,8 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 		bool		all_visible_cleared = false;
 		int			nthispage;
 
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * Find buffer where at least the next tuple will fit.  If the page is
 		 * all-visible, this will also pin the requisite visibility map page.
