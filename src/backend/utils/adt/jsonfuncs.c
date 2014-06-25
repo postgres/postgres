@@ -48,11 +48,13 @@ static void get_array_element_end(void *state, bool isnull);
 static void get_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* common worker function for json getter functions */
-static Datum get_path_all(FunctionCallInfo fcinfo, bool as_text);
+static Datum get_path_all(FunctionCallInfo fcinfo, const char *funcname,
+			 bool as_text);
 static text *get_worker(text *json, char *field, int elem_index,
 		   char **tpath, int *ipath, int npath,
 		   bool normalize_results);
-static Datum get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text);
+static Datum get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname,
+				   bool as_text);
 
 /* semantic action functions for json_array_length */
 static void alen_object_start(void *state);
@@ -61,7 +63,8 @@ static void alen_array_element_start(void *state, bool isnull);
 
 /* common workers for json{b}_each* functions */
 static Datum each_worker(FunctionCallInfo fcinfo, bool as_text);
-static Datum each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text);
+static Datum each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
+				  bool as_text);
 
 /* semantic action functions for json_each */
 static void each_object_field_start(void *state, char *fname, bool isnull);
@@ -70,8 +73,10 @@ static void each_array_start(void *state);
 static void each_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* common workers for json{b}_array_elements_* functions */
-static Datum elements_worker(FunctionCallInfo fcinfo, bool as_text);
-static Datum elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text);
+static Datum elements_worker(FunctionCallInfo fcinfo, const char *funcname,
+				bool as_text);
+static Datum elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
+					  bool as_text);
 
 /* semantic action functions for json_array_elements */
 static void elements_object_start(void *state);
@@ -80,10 +85,11 @@ static void elements_array_element_end(void *state, bool isnull);
 static void elements_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* turn a json object into a hash table */
-static HTAB *get_json_object_as_hash(text *json, char *funcname, bool use_json_as_text);
+static HTAB *get_json_object_as_hash(text *json, const char *funcname,
+						bool use_json_as_text);
 
 /* common worker for populate_record and to_record */
-static Datum populate_record_worker(FunctionCallInfo fcinfo,
+static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 					   bool have_record_arg);
 
 /* semantic action functions for get_json_object_as_hash */
@@ -102,7 +108,7 @@ static void populate_recordset_array_start(void *state);
 static void populate_recordset_array_element_start(void *state, bool isnull);
 
 /* worker function for populate_recordset and to_recordset */
-static Datum populate_recordset_worker(FunctionCallInfo fcinfo,
+static Datum populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 						  bool have_record_arg);
 
 /* Worker that takes care of common setup for us */
@@ -174,6 +180,7 @@ typedef struct EachState
 typedef struct ElementsState
 {
 	JsonLexContext *lex;
+	const char *function_name;
 	Tuplestorestate *tuple_store;
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
@@ -187,11 +194,11 @@ typedef struct ElementsState
 typedef struct JhashState
 {
 	JsonLexContext *lex;
+	const char *function_name;
 	HTAB	   *hash;
 	char	   *saved_scalar;
 	char	   *save_json_start;
 	bool		use_json_as_text;
-	char	   *function_name;
 } JHashState;
 
 /* hashtable element */
@@ -224,6 +231,7 @@ typedef struct RecordIOData
 typedef struct PopulateRecordsetState
 {
 	JsonLexContext *lex;
+	const char *function_name;
 	HTAB	   *json_hash;
 	char	   *saved_scalar;
 	char	   *save_json_start;
@@ -270,11 +278,13 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 		if (JB_ROOT_IS_SCALAR(jb))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call jsonb_object_keys on a scalar")));
+					 errmsg("cannot call %s on a scalar",
+							"jsonb_object_keys")));
 		else if (JB_ROOT_IS_ARRAY(jb))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call jsonb_object_keys on an array")));
+					 errmsg("cannot call %s on an array",
+							"jsonb_object_keys")));
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -420,7 +430,8 @@ okeys_array_start(void *state)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call json_object_keys on an array")));
+				 errmsg("cannot call %s on an array",
+						"json_object_keys")));
 }
 
 static void
@@ -432,7 +443,8 @@ okeys_scalar(void *state, char *token, JsonTokenType tokentype)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call json_object_keys on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						"json_object_keys")));
 }
 
 /*
@@ -468,11 +480,13 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_object_field (jsonb -> text operator) on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						"jsonb_object_field (jsonb -> text)")));
 	else if (JB_ROOT_IS_ARRAY(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_object_field (jsonb -> text operator) on an array")));
+				 errmsg("cannot call %s on an array",
+						"jsonb_object_field (jsonb -> text)")));
 
 	Assert(JB_ROOT_IS_OBJECT(jb));
 
@@ -511,11 +525,13 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_object_field_text (jsonb ->> text operator) on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						"jsonb_object_field_text (jsonb ->> text)")));
 	else if (JB_ROOT_IS_ARRAY(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_object_field_text (jsonb ->> text operator) on an array")));
+				 errmsg("cannot call %s on an array",
+						"jsonb_object_field_text (jsonb ->> text)")));
 
 	Assert(JB_ROOT_IS_OBJECT(jb));
 
@@ -549,7 +565,7 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 				}
 				break;
 			default:
-				elog(ERROR, "Wrong jsonb type: %d", v->type);
+				elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
 		}
 
 		if (result)
@@ -584,11 +600,13 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_array_element (jsonb -> int operator) on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						"jsonb_array_element (jsonb -> int)")));
 	else if (JB_ROOT_IS_OBJECT(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_array_element (jsonb -> int operator) on an object")));
+				 errmsg("cannot call %s on an object",
+						"jsonb_array_element (jsonb -> int)")));
 
 	Assert(JB_ROOT_IS_ARRAY(jb));
 
@@ -624,11 +642,13 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_array_element_text on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						"jsonb_array_element_text")));
 	else if (JB_ROOT_IS_OBJECT(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("cannot call jsonb_array_element_text on an object")));
+				 errmsg("cannot call %s on an object",
+						"jsonb_array_element_text")));
 
 	Assert(JB_ROOT_IS_ARRAY(jb));
 
@@ -660,7 +680,7 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 				}
 				break;
 			default:
-				elog(ERROR, "Wrong jsonb type: %d", v->type);
+				elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
 		}
 
 		if (result)
@@ -673,20 +693,20 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 Datum
 json_extract_path(PG_FUNCTION_ARGS)
 {
-	return get_path_all(fcinfo, false);
+	return get_path_all(fcinfo, "json_extract_path", false);
 }
 
 Datum
 json_extract_path_text(PG_FUNCTION_ARGS)
 {
-	return get_path_all(fcinfo, true);
+	return get_path_all(fcinfo, "json_extract_path_text", true);
 }
 
 /*
  * common routine for extract_path functions
  */
 static Datum
-get_path_all(FunctionCallInfo fcinfo, bool as_text)
+get_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
@@ -703,7 +723,8 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 	if (array_contains_nulls(path))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call function with null path elements")));
+				 errmsg("cannot call %s with null path elements",
+						funcname)));
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
@@ -715,10 +736,10 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 	{
 		tpath[i] = TextDatumGetCString(pathtext[i]);
 		if (*tpath[i] == '\0')
-			ereport(
-					ERROR,
+			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				   errmsg("cannot call function with empty path elements")));
+					 errmsg("cannot call %s with empty path elements",
+							funcname)));
 
 		/*
 		 * we have no idea at this stage what structure the document is so
@@ -798,8 +819,8 @@ get_worker(text *json,
 	sem->semstate = (void *) state;
 
 	/*
-	 * Not all	variants need all the semantic routines. only set the ones
-	 * that are actually needed for maximum efficiency.
+	 * Not all variants need all the semantic routines. Only set the ones that
+	 * are actually needed for maximum efficiency.
 	 */
 	sem->object_start = get_object_start;
 	sem->array_start = get_array_start;
@@ -1068,17 +1089,17 @@ get_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 jsonb_extract_path(PG_FUNCTION_ARGS)
 {
-	return get_jsonb_path_all(fcinfo, false);
+	return get_jsonb_path_all(fcinfo, "jsonb_extract_path", false);
 }
 
 Datum
 jsonb_extract_path_text(PG_FUNCTION_ARGS)
 {
-	return get_jsonb_path_all(fcinfo, true);
+	return get_jsonb_path_all(fcinfo, "jsonb_extract_path_text", true);
 }
 
 static Datum
-get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
+get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
@@ -1096,7 +1117,8 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	if (array_contains_nulls(path))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call function with null path elements")));
+				 errmsg("cannot call %s with null path elements",
+						funcname)));
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
@@ -1135,7 +1157,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 			if (i == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("cannot call extract path from a scalar")));
+						 errmsg("cannot extract path from a scalar")));
 			PG_RETURN_NULL();
 		}
 
@@ -1290,7 +1312,7 @@ json_each(PG_FUNCTION_ARGS)
 Datum
 jsonb_each(PG_FUNCTION_ARGS)
 {
-	return each_worker_jsonb(fcinfo, false);
+	return each_worker_jsonb(fcinfo, "jsonb_each", false);
 }
 
 Datum
@@ -1302,11 +1324,11 @@ json_each_text(PG_FUNCTION_ARGS)
 Datum
 jsonb_each_text(PG_FUNCTION_ARGS)
 {
-	return each_worker_jsonb(fcinfo, true);
+	return each_worker_jsonb(fcinfo, "jsonb_each_text", true);
 }
 
 static Datum
-each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
+each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	ReturnSetInfo *rsi;
@@ -1323,8 +1345,8 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 	if (!JB_ROOT_IS_OBJECT(jb))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call jsonb_each%s on a non-object",
-						as_text ? "_text" : "")));
+				 errmsg("cannot call %s on a non-object",
+						funcname)));
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -1614,17 +1636,18 @@ each_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 jsonb_array_elements(PG_FUNCTION_ARGS)
 {
-	return elements_worker_jsonb(fcinfo, false);
+	return elements_worker_jsonb(fcinfo, "jsonb_array_elements", false);
 }
 
 Datum
 jsonb_array_elements_text(PG_FUNCTION_ARGS)
 {
-	return elements_worker_jsonb(fcinfo, true);
+	return elements_worker_jsonb(fcinfo, "jsonb_array_elements_text", true);
 }
 
 static Datum
-elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
+elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
+					  bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	ReturnSetInfo *rsi;
@@ -1751,17 +1774,17 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 Datum
 json_array_elements(PG_FUNCTION_ARGS)
 {
-	return elements_worker(fcinfo, false);
+	return elements_worker(fcinfo, "json_array_elements", false);
 }
 
 Datum
 json_array_elements_text(PG_FUNCTION_ARGS)
 {
-	return elements_worker(fcinfo, true);
+	return elements_worker(fcinfo, "json_array_elements_text", true);
 }
 
 static Datum
-elements_worker(FunctionCallInfo fcinfo, bool as_text)
+elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
 
@@ -1808,6 +1831,7 @@ elements_worker(FunctionCallInfo fcinfo, bool as_text)
 	sem->array_element_start = elements_array_element_start;
 	sem->array_element_end = elements_array_element_end;
 
+	state->function_name = funcname;
 	state->normalize_results = as_text;
 	state->next_scalar = false;
 	state->lex = lex;
@@ -1900,7 +1924,8 @@ elements_object_start(void *state)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call json_array_elements on a non-array")));
+				 errmsg("cannot call %s on a non-array",
+						_state->function_name)));
 }
 
 static void
@@ -1912,7 +1937,8 @@ elements_scalar(void *state, char *token, JsonTokenType tokentype)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call json_array_elements on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						_state->function_name)));
 
 	/* supply de-escaped value if required */
 	if (_state->next_scalar)
@@ -1934,29 +1960,30 @@ elements_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 jsonb_populate_record(PG_FUNCTION_ARGS)
 {
-	return populate_record_worker(fcinfo, true);
+	return populate_record_worker(fcinfo, "jsonb_populate_record", true);
 }
 
 Datum
 jsonb_to_record(PG_FUNCTION_ARGS)
 {
-	return populate_record_worker(fcinfo, false);
+	return populate_record_worker(fcinfo, "jsonb_to_record", false);
 }
 
 Datum
 json_populate_record(PG_FUNCTION_ARGS)
 {
-	return populate_record_worker(fcinfo, true);
+	return populate_record_worker(fcinfo, "json_populate_record", true);
 }
 
 Datum
 json_to_record(PG_FUNCTION_ARGS)
 {
-	return populate_record_worker(fcinfo, false);
+	return populate_record_worker(fcinfo, "json_to_record", false);
 }
 
 static Datum
-populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
+populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
+					   bool have_record_arg)
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
 	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
@@ -1988,7 +2015,8 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		if (!type_is_rowtype(argtype))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("first argument of json%s_populate_record must be a row type", jtype == JSONBOID ? "b" : "")));
+					 errmsg("first argument of %s must be a row type",
+							funcname)));
 
 		if (PG_ARGISNULL(0))
 		{
@@ -2037,7 +2065,7 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		/* just get the text */
 		json = PG_GETARG_TEXT_P(json_arg_num);
 
-		json_hash = get_json_object_as_hash(json, "json_populate_record", use_json_as_text);
+		json_hash = get_json_object_as_hash(json, funcname, use_json_as_text);
 
 		/*
 		 * if the input json is empty, we can only skip the rest if we were
@@ -2206,7 +2234,7 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 				else if (v->type == jbvBinary)
 					s = JsonbToCString(NULL, (JsonbContainer *) v->val.binary.data, v->val.binary.len);
 				else
-					elog(ERROR, "invalid jsonb type");
+					elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
 			}
 
 			values[i] = InputFunctionCall(&column_info->proc, s,
@@ -2238,7 +2266,7 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
  * error messages.
  */
 static HTAB *
-get_json_object_as_hash(text *json, char *funcname, bool use_json_as_text)
+get_json_object_as_hash(text *json, const char *funcname, bool use_json_as_text)
 {
 	HASHCTL		ctl;
 	HTAB	   *tab;
@@ -2385,25 +2413,25 @@ hash_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 jsonb_populate_recordset(PG_FUNCTION_ARGS)
 {
-	return populate_recordset_worker(fcinfo, true);
+	return populate_recordset_worker(fcinfo, "jsonb_populate_recordset", true);
 }
 
 Datum
 jsonb_to_recordset(PG_FUNCTION_ARGS)
 {
-	return populate_recordset_worker(fcinfo, false);
+	return populate_recordset_worker(fcinfo, "jsonb_to_recordset", false);
 }
 
 Datum
 json_populate_recordset(PG_FUNCTION_ARGS)
 {
-	return populate_recordset_worker(fcinfo, true);
+	return populate_recordset_worker(fcinfo, "json_populate_recordset", true);
 }
 
 Datum
 json_to_recordset(PG_FUNCTION_ARGS)
 {
-	return populate_recordset_worker(fcinfo, false);
+	return populate_recordset_worker(fcinfo, "json_to_recordset", false);
 }
 
 static void
@@ -2514,7 +2542,7 @@ make_row_from_rec_and_jsonb(Jsonb *element, PopulateRecordsetState *state)
 			else if (v->type == jbvBinary)
 				s = JsonbToCString(NULL, (JsonbContainer *) v->val.binary.data, v->val.binary.len);
 			else
-				elog(ERROR, "invalid jsonb type");
+				elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
 
 			values[i] = InputFunctionCall(&column_info->proc, s,
 										  column_info->typioparam,
@@ -2532,7 +2560,8 @@ make_row_from_rec_and_jsonb(Jsonb *element, PopulateRecordsetState *state)
  * common worker for json_populate_recordset() and json_to_recordset()
  */
 static Datum
-populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
+populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
+						  bool have_record_arg)
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
 	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
@@ -2556,7 +2585,8 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		if (!type_is_rowtype(argtype))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("first argument must be a row type")));
+					 errmsg("first argument of %s must be a row type",
+							funcname)));
 	}
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -2634,6 +2664,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 											   false, work_mem);
 	MemoryContextSwitchTo(old_cxt);
 
+	state->function_name = funcname;
 	state->my_extra = my_extra;
 	state->rec = rec;
 	state->use_json_as_text = use_json_as_text;
@@ -2675,7 +2706,8 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		if (JB_ROOT_IS_SCALAR(jb) || !JB_ROOT_IS_ARRAY(jb))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("cannot call jsonb_populate_recordset on non-array")));
+					 errmsg("cannot call %s on a non-array",
+							funcname)));
 
 		it = JsonbIteratorInit(&jb->root);
 
@@ -2690,7 +2722,8 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 				if (!JB_ROOT_IS_OBJECT(element))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("jsonb_populate_recordset argument must be an array of objects")));
+						 errmsg("argument of %s must be an array of objects",
+								funcname)));
 				make_row_from_rec_and_jsonb(element, state);
 			}
 		}
@@ -2713,7 +2746,8 @@ populate_recordset_object_start(void *state)
 	if (lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call json_populate_recordset on an object")));
+				 errmsg("cannot call %s on an object",
+						_state->function_name)));
 
 	/* Nested objects, if allowed, require no special processing */
 	if (lex_level > 1)
@@ -2721,7 +2755,8 @@ populate_recordset_object_start(void *state)
 		if (!_state->use_json_as_text)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call json_populate_recordset with nested objects")));
+					 errmsg("cannot call %s with nested objects",
+							_state->function_name)));
 		return;
 	}
 
@@ -2861,7 +2896,8 @@ populate_recordset_array_element_start(void *state, bool isnull)
 		_state->lex->token_type != JSON_TOKEN_OBJECT_START)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		errmsg("must call json_populate_recordset on an array of objects")));
+				 errmsg("argument of %s must be an array of objects",
+						_state->function_name)));
 }
 
 static void
@@ -2872,7 +2908,8 @@ populate_recordset_array_start(void *state)
 	if (_state->lex->lex_level != 0 && !_state->use_json_as_text)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		  errmsg("cannot call json_populate_recordset with nested arrays")));
+				 errmsg("cannot call %s with nested arrays",
+						_state->function_name)));
 }
 
 static void
@@ -2883,7 +2920,8 @@ populate_recordset_scalar(void *state, char *token, JsonTokenType tokentype)
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call json_populate_recordset on a scalar")));
+				 errmsg("cannot call %s on a scalar",
+						_state->function_name)));
 
 	if (_state->lex->lex_level == 2)
 		_state->saved_scalar = token;
@@ -2903,7 +2941,8 @@ populate_recordset_object_field_start(void *state, char *fname, bool isnull)
 		if (!_state->use_json_as_text)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call json_populate_recordset on a nested object")));
+					 errmsg("cannot call %s on a nested object",
+							_state->function_name)));
 		_state->save_json_start = _state->lex->token_start;
 	}
 	else

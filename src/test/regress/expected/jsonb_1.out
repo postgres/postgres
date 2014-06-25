@@ -311,9 +311,9 @@ INSERT INTO test_jsonb VALUES
 ('array','["zero", "one","two",null,"four","five", [1,2,3],{"f1":9}]'),
 ('object','{"field1":"val1","field2":"val2","field3":null, "field4": 4, "field5": [1,2,3], "field6": {"f1":9}}');
 SELECT test_json -> 'x' FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_object_field (jsonb -> text operator) on a scalar
+ERROR:  cannot call jsonb_object_field (jsonb -> text) on a scalar
 SELECT test_json -> 'x' FROM test_jsonb WHERE json_type = 'array';
-ERROR:  cannot call jsonb_object_field (jsonb -> text operator) on an array
+ERROR:  cannot call jsonb_object_field (jsonb -> text) on an array
 SELECT test_json -> 'x' FROM test_jsonb WHERE json_type = 'object';
  ?column? 
 ----------
@@ -327,9 +327,9 @@ SELECT test_json -> 'field2' FROM test_jsonb WHERE json_type = 'object';
 (1 row)
 
 SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_object_field_text (jsonb ->> text operator) on a scalar
+ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on a scalar
 SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'array';
-ERROR:  cannot call jsonb_object_field_text (jsonb ->> text operator) on an array
+ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on an array
 SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'object';
  ?column? 
 ----------
@@ -337,7 +337,7 @@ SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'object';
 (1 row)
 
 SELECT test_json -> 2 FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_array_element (jsonb -> int operator) on a scalar
+ERROR:  cannot call jsonb_array_element (jsonb -> int) on a scalar
 SELECT test_json -> 2 FROM test_jsonb WHERE json_type = 'array';
  ?column? 
 ----------
@@ -351,7 +351,7 @@ SELECT test_json -> 9 FROM test_jsonb WHERE json_type = 'array';
 (1 row)
 
 SELECT test_json -> 2 FROM test_jsonb WHERE json_type = 'object';
-ERROR:  cannot call jsonb_array_element (jsonb -> int operator) on an object
+ERROR:  cannot call jsonb_array_element (jsonb -> int) on an object
 SELECT test_json ->> 6 FROM test_jsonb WHERE json_type = 'array';
  ?column?  
 -----------
@@ -1229,13 +1229,13 @@ SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>'{f2,1}';
 
 -- same on jsonb scalars (expecting errors)
 SELECT '42'::jsonb#>array['f2'];
-ERROR:  cannot call extract path from a scalar
+ERROR:  cannot extract path from a scalar
 SELECT '42'::jsonb#>array['0'];
-ERROR:  cannot call extract path from a scalar
+ERROR:  cannot extract path from a scalar
 SELECT '42'::jsonb#>>array['f2'];
-ERROR:  cannot call extract path from a scalar
+ERROR:  cannot extract path from a scalar
 SELECT '42'::jsonb#>>array['0'];
-ERROR:  cannot call extract path from a scalar
+ERROR:  cannot extract path from a scalar
 -- array_elements
 SELECT jsonb_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]');
     jsonb_array_elements    
@@ -1923,7 +1923,7 @@ SELECT '{"n":null,"a":1,"b":[1,2],"c":{"1":2},"d":{"1":[2,3]}}'::jsonb -> 'e';
 (1 row)
 
 SELECT '{"n":null,"a":1,"b":[1,2],"c":{"1":2},"d":{"1":[2,3]}}'::jsonb -> 0; --expecting error
-ERROR:  cannot call jsonb_array_element (jsonb -> int operator) on an object
+ERROR:  cannot call jsonb_array_element (jsonb -> int) on an object
 SELECT '["a","b","c",[1,2],null]'::jsonb -> 0;
  ?column? 
 ----------
