@@ -16,19 +16,19 @@
 
 #include <limits.h>
 
-#include "fmgr.h"
-#include "funcapi.h"
-#include "miscadmin.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "fmgr.h"
+#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/json.h"
-#include "utils/jsonb.h"
 #include "utils/jsonapi.h"
+#include "utils/jsonb.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
@@ -48,11 +48,11 @@ static void get_array_element_end(void *state, bool isnull);
 static void get_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* common worker function for json getter functions */
-static inline Datum get_path_all(FunctionCallInfo fcinfo, bool as_text);
-static inline text *get_worker(text *json, char *field, int elem_index,
+static Datum get_path_all(FunctionCallInfo fcinfo, bool as_text);
+static text *get_worker(text *json, char *field, int elem_index,
 		   char **tpath, int *ipath, int npath,
 		   bool normalize_results);
-static inline Datum get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text);
+static Datum get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text);
 
 /* semantic action functions for json_array_length */
 static void alen_object_start(void *state);
@@ -60,8 +60,8 @@ static void alen_scalar(void *state, char *token, JsonTokenType tokentype);
 static void alen_array_element_start(void *state, bool isnull);
 
 /* common workers for json{b}_each* functions */
-static inline Datum each_worker(FunctionCallInfo fcinfo, bool as_text);
-static inline Datum each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text);
+static Datum each_worker(FunctionCallInfo fcinfo, bool as_text);
+static Datum each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text);
 
 /* semantic action functions for json_each */
 static void each_object_field_start(void *state, char *fname, bool isnull);
@@ -70,8 +70,8 @@ static void each_array_start(void *state);
 static void each_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* common workers for json{b}_array_elements_* functions */
-static inline Datum elements_worker(FunctionCallInfo fcinfo, bool as_text);
-static inline Datum elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text);
+static Datum elements_worker(FunctionCallInfo fcinfo, bool as_text);
+static Datum elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text);
 
 /* semantic action functions for json_array_elements */
 static void elements_object_start(void *state);
@@ -83,7 +83,7 @@ static void elements_scalar(void *state, char *token, JsonTokenType tokentype);
 static HTAB *get_json_object_as_hash(text *json, char *funcname, bool use_json_as_text);
 
 /* common worker for populate_record and to_record */
-static inline Datum populate_record_worker(FunctionCallInfo fcinfo,
+static Datum populate_record_worker(FunctionCallInfo fcinfo,
 					   bool have_record_arg);
 
 /* semantic action functions for get_json_object_as_hash */
@@ -102,14 +102,14 @@ static void populate_recordset_array_start(void *state);
 static void populate_recordset_array_element_start(void *state, bool isnull);
 
 /* worker function for populate_recordset and to_recordset */
-static inline Datum populate_recordset_worker(FunctionCallInfo fcinfo,
+static Datum populate_recordset_worker(FunctionCallInfo fcinfo,
 						  bool have_record_arg);
 
 /* Worker that takes care of common setup for us */
 static JsonbValue *findJsonbValueFromContainerLen(JsonbContainer *container,
-								 uint32 flags,
-								 char *key,
-								 uint32 keylen);
+							   uint32 flags,
+							   char *key,
+							   uint32 keylen);
 
 /* search type classification for json_get* functions */
 typedef enum
@@ -194,10 +194,10 @@ typedef struct JhashState
 	char	   *function_name;
 } JHashState;
 
-/* used to build the hashtable */
+/* hashtable element */
 typedef struct JsonHashEntry
 {
-	char		fname[NAMEDATALEN];
+	char		fname[NAMEDATALEN];		/* hash key (MUST BE FIRST) */
 	char	   *val;
 	char	   *json;
 	bool		isnull;
@@ -303,10 +303,8 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 			}
 		}
 
-
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = (void *) state;
-
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -341,7 +339,6 @@ json_object_keys(PG_FUNCTION_ARGS)
 		text	   *json = PG_GETARG_TEXT_P(0);
 		JsonLexContext *lex = makeJsonLexContext(json, true);
 		JsonSemAction *sem;
-
 		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -372,7 +369,6 @@ json_object_keys(PG_FUNCTION_ARGS)
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = (void *) state;
-
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -407,7 +403,7 @@ okeys_object_field_start(void *state, char *fname, bool isnull)
 	if (_state->result_count >= _state->result_size)
 	{
 		_state->result_size *= 2;
-		_state->result =
+		_state->result = (char **)
 			repalloc(_state->result, sizeof(char *) * _state->result_size);
 	}
 
@@ -450,9 +446,9 @@ Datum
 json_object_field(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
+	text	   *result;
 
 	result = get_worker(json, fnamestr, -1, NULL, NULL, -1, false);
 
@@ -481,7 +477,7 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 	Assert(JB_ROOT_IS_OBJECT(jb));
 
 	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
-									   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+								   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 	if (v != NULL)
 		PG_RETURN_JSONB(JsonbValueToJsonb(v));
@@ -493,9 +489,9 @@ Datum
 json_object_field_text(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
+	text	   *result;
 
 	result = get_worker(json, fnamestr, -1, NULL, NULL, -1, true);
 
@@ -524,13 +520,13 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 	Assert(JB_ROOT_IS_OBJECT(jb));
 
 	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
-									   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+								   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 	if (v != NULL)
 	{
 		text	   *result = NULL;
 
-		switch(v->type)
+		switch (v->type)
 		{
 			case jbvNull:
 				break;
@@ -542,11 +538,11 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 				break;
 			case jbvNumeric:
 				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
-																			 PointerGetDatum(v->val.numeric))));
+										  PointerGetDatum(v->val.numeric))));
 				break;
 			case jbvBinary:
 				{
-					StringInfo  jtext = makeStringInfo();
+					StringInfo	jtext = makeStringInfo();
 
 					(void) JsonbToCString(jtext, v->val.binary.data, -1);
 					result = cstring_to_text_with_len(jtext->data, jtext->len);
@@ -567,8 +563,8 @@ Datum
 json_array_element(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	int			element = PG_GETARG_INT32(1);
+	text	   *result;
 
 	result = get_worker(json, NULL, element, NULL, NULL, -1, false);
 
@@ -607,8 +603,8 @@ Datum
 json_array_element_text(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	int			element = PG_GETARG_INT32(1);
+	text	   *result;
 
 	result = get_worker(json, NULL, element, NULL, NULL, -1, true);
 
@@ -641,7 +637,7 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 	{
 		text	   *result = NULL;
 
-		switch(v->type)
+		switch (v->type)
 		{
 			case jbvNull:
 				break;
@@ -653,11 +649,11 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 				break;
 			case jbvNumeric:
 				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
-											PointerGetDatum(v->val.numeric))));
+										  PointerGetDatum(v->val.numeric))));
 				break;
 			case jbvBinary:
 				{
-					StringInfo  jtext = makeStringInfo();
+					StringInfo	jtext = makeStringInfo();
 
 					(void) JsonbToCString(jtext, v->val.binary.data, -1);
 					result = cstring_to_text_with_len(jtext->data, jtext->len);
@@ -689,10 +685,10 @@ json_extract_path_text(PG_FUNCTION_ARGS)
 /*
  * common routine for extract_path functions
  */
-static inline Datum
+static Datum
 get_path_all(FunctionCallInfo fcinfo, bool as_text)
 {
-	text	   *json;
+	text	   *json = PG_GETARG_TEXT_P(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
 	text	   *result;
 	Datum	   *pathtext;
@@ -704,20 +700,16 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 	long		ind;
 	char	   *endptr;
 
-	json = PG_GETARG_TEXT_P(0);
-
 	if (array_contains_nulls(path))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot call function with null path elements")));
-
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
 
 	tpath = palloc(npath * sizeof(char *));
 	ipath = palloc(npath * sizeof(int));
-
 
 	for (i = 0; i < npath; i++)
 	{
@@ -740,7 +732,6 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 			ipath[i] = -1;
 	}
 
-
 	result = get_worker(json, NULL, -1, tpath, ipath, npath, as_text);
 
 	if (result != NULL)
@@ -755,7 +746,7 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
  *
  * common worker for all the json getter functions
  */
-static inline text *
+static text *
 get_worker(text *json,
 		   char *field,
 		   int elem_index,
@@ -795,7 +786,6 @@ get_worker(text *json,
 		state->pathok[0] = true;
 		state->array_level_index = palloc(sizeof(int) * npath);
 		state->path_level_index = ipath;
-
 	}
 	else
 	{
@@ -852,7 +842,6 @@ get_object_field_start(void *state, char *fname, bool isnull)
 	if (lex_level == 1 && _state->search_type == JSON_SEARCH_OBJECT &&
 		strcmp(fname, _state->search_term) == 0)
 	{
-
 		_state->tresult = NULL;
 		_state->result_start = NULL;
 		get_next = true;
@@ -865,7 +854,6 @@ get_object_field_start(void *state, char *fname, bool isnull)
 		/* path search, path so far is ok,	and we have a match */
 
 		/* this object overrides any previous matching object */
-
 		_state->tresult = NULL;
 		_state->result_start = NULL;
 
@@ -900,7 +888,6 @@ get_object_field_end(void *state, char *fname, bool isnull)
 	GetState   *_state = (GetState *) state;
 	bool		get_last = false;
 	int			lex_level = _state->lex->lex_level;
-
 
 	/* same tests as in get_object_field_start, mutatis mutandis */
 	if (lex_level == 1 && _state->search_type == JSON_SEARCH_OBJECT &&
@@ -957,7 +944,7 @@ get_array_start(void *state)
 				 errmsg("cannot extract field from a non-object")));
 
 	/*
-	 * initialize array count for this nesting level Note: the lex_level seen
+	 * initialize array count for this nesting level. Note: the lex_level seen
 	 * by array_start is one less than that seen by the elements of the array.
 	 */
 	if (_state->search_type == JSON_SEARCH_PATH &&
@@ -991,7 +978,6 @@ get_array_element_start(void *state, bool isnull)
 		 *
 		 * then check if we have a match.
 		 */
-
 		if (++_state->array_level_index[lex_level - 1] ==
 			_state->path_level_index[lex_level - 1])
 		{
@@ -1006,7 +992,6 @@ get_array_element_start(void *state, bool isnull)
 				_state->pathok[lex_level] = true;
 			}
 		}
-
 	}
 
 	/* same logic as for objects */
@@ -1078,7 +1063,6 @@ get_scalar(void *state, char *token, JsonTokenType tokentype)
 		/* make sure the next call to get_scalar doesn't overwrite it */
 		_state->next_scalar = false;
 	}
-
 }
 
 Datum
@@ -1093,7 +1077,7 @@ jsonb_extract_path_text(PG_FUNCTION_ARGS)
 	return get_jsonb_path_all(fcinfo, true);
 }
 
-static inline Datum
+static Datum
 get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
@@ -1206,13 +1190,11 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 Datum
 json_array_length(PG_FUNCTION_ARGS)
 {
-	text	   *json;
-
+	text	   *json = PG_GETARG_TEXT_P(0);
 	AlenState  *state;
 	JsonLexContext *lex;
 	JsonSemAction *sem;
 
-	json = PG_GETARG_TEXT_P(0);
 	lex = makeJsonLexContext(json, false);
 	state = palloc0(sizeof(AlenState));
 	sem = palloc0(sizeof(JsonSemAction));
@@ -1251,7 +1233,7 @@ jsonb_array_length(PG_FUNCTION_ARGS)
 }
 
 /*
- * These next two check ensure that the json is an array (since it can't be
+ * These next two checks ensure that the json is an array (since it can't be
  * a scalar or an object).
  */
 
@@ -1323,7 +1305,7 @@ jsonb_each_text(PG_FUNCTION_ARGS)
 	return each_worker_jsonb(fcinfo, true);
 }
 
-static inline Datum
+static Datum
 each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
@@ -1354,7 +1336,6 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
 
-
 	rsi->returnMode = SFRM_Materialize;
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -1378,7 +1359,6 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 									ALLOCSET_DEFAULT_MINSIZE,
 									ALLOCSET_DEFAULT_INITSIZE,
 									ALLOCSET_DEFAULT_MAXSIZE);
-
 
 	it = JsonbIteratorInit(&jb->root);
 
@@ -1463,18 +1443,16 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 }
 
 
-static inline Datum
+static Datum
 each_worker(FunctionCallInfo fcinfo, bool as_text)
 {
-	text	   *json;
+	text	   *json = PG_GETARG_TEXT_P(0);
 	JsonLexContext *lex;
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	TupleDesc	tupdesc;
 	EachState  *state;
-
-	json = PG_GETARG_TEXT_P(0);
 
 	lex = makeJsonLexContext(json, true);
 	state = palloc0(sizeof(EachState));
@@ -1489,7 +1467,6 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
-
 
 	rsi->returnMode = SFRM_Materialize;
 
@@ -1514,7 +1491,6 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	state->normalize_results = as_text;
 	state->next_scalar = false;
-
 	state->lex = lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										   "json_each temporary cxt",
@@ -1576,7 +1552,7 @@ each_object_field_end(void *state, char *fname, bool isnull)
 	if (isnull && _state->normalize_results)
 	{
 		nulls[1] = true;
-		values[1] = (Datum) NULL;
+		values[1] = (Datum) 0;
 	}
 	else if (_state->next_scalar)
 	{
@@ -1589,7 +1565,6 @@ each_object_field_end(void *state, char *fname, bool isnull)
 		val = cstring_to_text_with_len(_state->result_start, len);
 		values[1] = PointerGetDatum(val);
 	}
-
 
 	tuple = heap_form_tuple(_state->ret_tdesc, values, nulls);
 
@@ -1648,7 +1623,7 @@ jsonb_array_elements_text(PG_FUNCTION_ARGS)
 	return elements_worker_jsonb(fcinfo, true);
 }
 
-static inline Datum
+static Datum
 elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
@@ -1682,7 +1657,6 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
 
-
 	rsi->returnMode = SFRM_Materialize;
 
 	/* it's a simple type, so don't use get_call_result_type() */
@@ -1699,11 +1673,10 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 	MemoryContextSwitchTo(old_cxt);
 
 	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
-									"jsonb_each temporary cxt",
+									"jsonb_array_elements temporary cxt",
 									ALLOCSET_DEFAULT_MINSIZE,
 									ALLOCSET_DEFAULT_INITSIZE,
 									ALLOCSET_DEFAULT_MAXSIZE);
-
 
 	it = JsonbIteratorInit(&jb->root);
 
@@ -1787,7 +1760,7 @@ json_array_elements_text(PG_FUNCTION_ARGS)
 	return elements_worker(fcinfo, true);
 }
 
-static inline Datum
+static Datum
 elements_worker(FunctionCallInfo fcinfo, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
@@ -1813,7 +1786,6 @@ elements_worker(FunctionCallInfo fcinfo, bool as_text)
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
 
-
 	rsi->returnMode = SFRM_Materialize;
 
 	/* it's a simple type, so don't use get_call_result_type() */
@@ -1838,7 +1810,6 @@ elements_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	state->normalize_results = as_text;
 	state->next_scalar = false;
-
 	state->lex = lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										 "json_array_elements temporary cxt",
@@ -1910,7 +1881,6 @@ elements_array_element_end(void *state, bool isnull)
 		val = cstring_to_text_with_len(_state->result_start, len);
 		values[0] = PointerGetDatum(val);
 	}
-
 
 	tuple = heap_form_tuple(_state->ret_tdesc, values, nulls);
 
@@ -1985,7 +1955,7 @@ json_to_record(PG_FUNCTION_ARGS)
 	return populate_record_worker(fcinfo, false);
 }
 
-static inline Datum
+static Datum
 populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
@@ -2048,8 +2018,8 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	}
 	else
-	{							/* json{b}_to_record case */
-
+	{
+		/* json{b}_to_record case */
 		if (PG_ARGISNULL(0))
 			PG_RETURN_NULL();
 
@@ -2152,7 +2122,6 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = tupdesc->attrs[i]->atttypid;
 		JsonbValue *v = NULL;
-		char		fname[NAMEDATALEN];
 		JsonHashEntry *hashentry = NULL;
 
 		/* Ignore dropped columns in datatype */
@@ -2164,10 +2133,9 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 
 		if (jtype == JSONOID)
 		{
-
-			memset(fname, 0, NAMEDATALEN);
-			strncpy(fname, NameStr(tupdesc->attrs[i]->attname), NAMEDATALEN);
-			hashentry = hash_search(json_hash, fname, HASH_FIND, NULL);
+			hashentry = hash_search(json_hash,
+									NameStr(tupdesc->attrs[i]->attname),
+									HASH_FIND, NULL);
 		}
 		else
 		{
@@ -2337,19 +2305,24 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 	JHashState *_state = (JHashState *) state;
 	JsonHashEntry *hashentry;
 	bool		found;
-	char		name[NAMEDATALEN];
 
 	/*
-	 * ignore field names >= NAMEDATALEN - they can't match a record field
-	 * ignore nested fields.
+	 * Ignore nested fields.
 	 */
-	if (_state->lex->lex_level > 2 || strlen(fname) >= NAMEDATALEN)
+	if (_state->lex->lex_level > 2)
 		return;
 
-	memset(name, 0, NAMEDATALEN);
-	strncpy(name, fname, NAMEDATALEN);
+	/*
+	 * Ignore field names >= NAMEDATALEN - they can't match a record field.
+	 * (Note: without this test, the hash code would truncate the string at
+	 * NAMEDATALEN-1, and could then match against a similarly-truncated
+	 * record field name.  That would be a reasonable behavior, but this code
+	 * has previously insisted on exact equality, so we keep this behavior.)
+	 */
+	if (strlen(fname) >= NAMEDATALEN)
+		return;
 
-	hashentry = hash_search(_state->hash, name, HASH_ENTER, &found);
+	hashentry = hash_search(_state->hash, fname, HASH_ENTER, &found);
 
 	/*
 	 * found being true indicates a duplicate. We don't do anything about
@@ -2558,7 +2531,7 @@ make_row_from_rec_and_jsonb(Jsonb *element, PopulateRecordsetState *state)
 /*
  * common worker for json_populate_recordset() and json_to_recordset()
  */
-static inline Datum
+static Datum
 populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
@@ -2595,7 +2568,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
-
 
 	rsi->returnMode = SFRM_Materialize;
 
@@ -2669,7 +2641,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 
 	if (jtype == JSONOID)
 	{
-		text	   *json = PG_GETARG_TEXT_P(have_record_arg ? 1 : 0);
+		text	   *json = PG_GETARG_TEXT_P(json_arg_num);
 		JsonLexContext *lex;
 		JsonSemAction *sem;
 
@@ -2689,18 +2661,16 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		state->lex = lex;
 
 		pg_parse_json(lex, sem);
-
 	}
 	else
 	{
-		Jsonb	   *jb;
+		Jsonb	   *jb = PG_GETARG_JSONB(json_arg_num);
 		JsonbIterator *it;
 		JsonbValue	v;
 		bool		skipNested = false;
 		int			r;
 
 		Assert(jtype == JSONBOID);
-		jb = PG_GETARG_JSONB(have_record_arg ? 1 : 0);
 
 		if (JB_ROOT_IS_SCALAR(jb) || !JB_ROOT_IS_ARRAY(jb))
 			ereport(ERROR,
@@ -2730,7 +2700,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	rsi->setDesc = state->ret_tdesc;
 
 	PG_RETURN_NULL();
-
 }
 
 static void
@@ -2774,7 +2743,6 @@ populate_recordset_object_end(void *state)
 	HTAB	   *json_hash = _state->json_hash;
 	Datum	   *values;
 	bool	   *nulls;
-	char		fname[NAMEDATALEN];
 	int			i;
 	RecordIOData *my_extra = _state->my_extra;
 	int			ncolumns = my_extra->ncolumns;
@@ -2826,9 +2794,9 @@ populate_recordset_object_end(void *state)
 			continue;
 		}
 
-		memset(fname, 0, NAMEDATALEN);
-		strncpy(fname, NameStr(tupdesc->attrs[i]->attname), NAMEDATALEN);
-		hashentry = hash_search(json_hash, fname, HASH_FIND, NULL);
+		hashentry = hash_search(json_hash,
+								NameStr(tupdesc->attrs[i]->attname),
+								HASH_FIND, NULL);
 
 		/*
 		 * we can't just skip here if the key wasn't found since we might have
@@ -2950,19 +2918,24 @@ populate_recordset_object_field_end(void *state, char *fname, bool isnull)
 	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 	JsonHashEntry *hashentry;
 	bool		found;
-	char		name[NAMEDATALEN];
 
 	/*
-	 * ignore field names >= NAMEDATALEN - they can't match a record field
-	 * ignore nested fields.
+	 * Ignore nested fields.
 	 */
-	if (_state->lex->lex_level > 2 || strlen(fname) >= NAMEDATALEN)
+	if (_state->lex->lex_level > 2)
 		return;
 
-	memset(name, 0, NAMEDATALEN);
-	strncpy(name, fname, NAMEDATALEN);
+	/*
+	 * Ignore field names >= NAMEDATALEN - they can't match a record field.
+	 * (Note: without this test, the hash code would truncate the string at
+	 * NAMEDATALEN-1, and could then match against a similarly-truncated
+	 * record field name.  That would be a reasonable behavior, but this code
+	 * has previously insisted on exact equality, so we keep this behavior.)
+	 */
+	if (strlen(fname) >= NAMEDATALEN)
+		return;
 
-	hashentry = hash_search(_state->json_hash, name, HASH_ENTER, &found);
+	hashentry = hash_search(_state->json_hash, fname, HASH_ENTER, &found);
 
 	/*
 	 * found being true indicates a duplicate. We don't do anything about
