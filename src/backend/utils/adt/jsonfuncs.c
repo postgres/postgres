@@ -1282,8 +1282,10 @@ json_populate_record(PG_FUNCTION_ARGS)
 	 * nulls.
 	 */
 	if (hash_get_num_entries(json_hash) == 0 && rec)
+	{
+		hash_destroy(json_hash);
 		PG_RETURN_POINTER(rec);
-
+	}
 
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
@@ -1407,6 +1409,8 @@ json_populate_record(PG_FUNCTION_ARGS)
 	rettuple = heap_form_tuple(tupdesc, values, nulls);
 
 	ReleaseTupleDesc(tupdesc);
+
+	hash_destroy(json_hash);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(rettuple));
 }
@@ -1698,16 +1702,23 @@ populate_recordset_object_start(void *state)
 	int			lex_level = _state->lex->lex_level;
 	HASHCTL		ctl;
 
+	/* Reject object at top level: we must have an array at level 0 */
 	if (lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot call json_populate_recordset on an object")));
-	else if (lex_level > 1 && !_state->use_json_as_text)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		 errmsg("cannot call json_populate_recordset with nested objects")));
 
-	/* set up a new hash for this entry */
+	/* Nested objects, if allowed, require no special processing */
+	if (lex_level > 1)
+	{
+		if (!_state->use_json_as_text)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot call json_populate_recordset with nested objects")));
+		return;
+	}
+
+	/* Object at level 1: set up a new hash table for this object */
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = NAMEDATALEN;
 	ctl.entrysize = sizeof(JsonHashEntry);
@@ -1734,9 +1745,11 @@ populate_recordset_object_end(void *state)
 	HeapTupleHeader rec = _state->rec;
 	HeapTuple	rettuple;
 
+	/* Nested objects require no special processing */
 	if (_state->lex->lex_level > 1)
 		return;
 
+	/* Otherwise, construct and return a tuple based on this level-1 object */
 	values = (Datum *) palloc(ncolumns * sizeof(Datum));
 	nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
@@ -1828,7 +1841,9 @@ populate_recordset_object_end(void *state)
 
 	tuplestore_puttuple(_state->tuple_store, rettuple);
 
+	/* Done with hash for this object */
 	hash_destroy(json_hash);
+	_state->json_hash = NULL;
 }
 
 static void
