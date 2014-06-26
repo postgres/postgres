@@ -1045,14 +1045,18 @@ SELECT p_oid, proname, prodesc FROM funcdescs
   WHERE prodesc IS DISTINCT FROM expecteddesc
     AND oprdesc NOT LIKE 'deprecated%'
 ORDER BY 1;
- p_oid |    proname    |               prodesc               
--------+---------------+-------------------------------------
-   378 | array_append  | append element onto end of array
-   379 | array_prepend | prepend element onto front of array
-  1035 | aclinsert     | add/update ACL item
-  1036 | aclremove     | remove ACL item
-  1037 | aclcontains   | contains
-(5 rows)
+ p_oid |         proname         |                     prodesc                     
+-------+-------------------------+-------------------------------------------------
+   378 | array_append            | append element onto end of array
+   379 | array_prepend           | prepend element onto front of array
+  1035 | aclinsert               | add/update ACL item
+  1036 | aclremove               | remove ACL item
+  1037 | aclcontains             | contains
+  3217 | jsonb_extract_path      | get value from jsonb with path elements
+  3940 | jsonb_extract_path_text | get value from jsonb as text with path elements
+  3951 | json_extract_path       | get value from json with path elements
+  3953 | json_extract_path_text  | get value from json as text with path elements
+(9 rows)
 
 -- **************** pg_aggregate ****************
 -- Look for illegal values in pg_aggregate fields.
