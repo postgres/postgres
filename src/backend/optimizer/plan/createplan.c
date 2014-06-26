@@ -700,7 +700,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 
 	/* Compute sort column info, and adjust MergeAppend's tlist as needed */
 	(void) prepare_sort_from_pathkeys(root, plan, pathkeys,
-									  NULL,
+									  best_path->path.parent->relids,
 									  NULL,
 									  true,
 									  &node->numCols,

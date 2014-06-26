@@ -1850,16 +1850,20 @@ add_child_rel_equivalences(PlannerInfo *root,
 		if (cur_ec->ec_has_volatile)
 			continue;
 
-		/* No point in searching if parent rel not mentioned in eclass */
-		if (!bms_is_subset(parent_rel->relids, cur_ec->ec_relids))
+		/*
+		 * No point in searching if parent rel not mentioned in eclass; but
+		 * we can't tell that for sure if parent rel is itself a child.
+		 */
+		if (parent_rel->reloptkind == RELOPT_BASEREL &&
+			!bms_is_subset(parent_rel->relids, cur_ec->ec_relids))
 			continue;
 
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			if (cur_em->em_is_child)
-				continue;		/* ignore children here */
+			if (cur_em->em_is_const)
+				continue;		/* ignore consts here */
 
 			/* Does it reference (only) parent_rel? */
 			if (bms_equal(cur_em->em_relids, parent_rel->relids))

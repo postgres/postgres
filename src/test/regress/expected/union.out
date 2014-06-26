@@ -500,9 +500,37 @@ explain (costs off)
                Index Cond: (ab = 'ab'::text)
 (6 rows)
 
+--
+-- Test that ORDER BY for UNION ALL can be pushed down to inheritance
+-- children.
+--
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+create table events (event_id int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "events_pkey" for table "events"
+create table other_events (event_id int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "other_events_pkey" for table "other_events"
+create table events_child () inherits (events);
+explain (costs off)
+select event_id
+ from (select event_id from events
+       union all
+       select event_id from other_events) ss
+ order by event_id;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Result
+   ->  Merge Append
+         Sort Key: public.events.event_id
+         ->  Index Scan using events_pkey on events
+         ->  Sort
+               Sort Key: public.events.event_id
+               ->  Seq Scan on events_child events
+         ->  Index Scan using other_events_pkey on other_events
+(8 rows)
+
+drop table events_child, events, other_events;
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
  SELECT * FROM
