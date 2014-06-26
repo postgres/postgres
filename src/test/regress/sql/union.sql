@@ -229,6 +229,22 @@ explain (costs off)
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+
+-- This simpler variant of the above test has been observed to fail differently
+
+create table events (event_id int primary key);
+create table other_events (event_id int primary key);
+create table events_child () inherits (events);
+
+explain (costs off)
+select event_id
+ from (select event_id from events
+       union all
+       select event_id from other_events) ss
+ order by event_id;
+
+drop table events_child, events, other_events;
+
 reset enable_indexonlyscan;
 
 -- Test constraint exclusion of UNION ALL subqueries
