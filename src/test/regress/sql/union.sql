@@ -196,9 +196,30 @@ explain (costs off)
   SELECT * FROM t2) t
  WHERE ab = 'ab';
 
+--
+-- Test that ORDER BY for UNION ALL can be pushed down to inheritance
+-- children.
+--
+
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+set enable_indexonlyscan = off;
+
+create table events (event_id int primary key);
+create table other_events (event_id int primary key);
+create table events_child () inherits (events);
+
+explain (costs off)
+select event_id
+ from (select event_id from events
+       union all
+       select event_id from other_events) ss
+ order by event_id;
+
+drop table events_child, events, other_events;
+
+reset enable_indexonlyscan;
 
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
