@@ -1031,10 +1031,15 @@ get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
  * accumulate_append_subpath
  *		Add a subpath to the list being built for an Append or MergeAppend
  *
- * It's possible that the child is itself an Append path, in which case
- * we can "cut out the middleman" and just add its child paths to our
- * own list.  (We don't try to do this earlier because we need to
- * apply both levels of transformation to the quals.)
+ * It's possible that the child is itself an Append or MergeAppend path, in
+ * which case we can "cut out the middleman" and just add its child paths to
+ * our own list.  (We don't try to do this earlier because we need to apply
+ * both levels of transformation to the quals.)
+ *
+ * Note that if we omit a child MergeAppend in this way, we are effectively
+ * omitting a sort step, which seems fine: if the parent is to be an Append,
+ * its result would be unsorted anyway, while if the parent is to be a
+ * MergeAppend, there's no point in a separate sort on a child.
  */
 static List *
 accumulate_append_subpath(List *subpaths, Path *path)
@@ -1045,6 +1050,13 @@ accumulate_append_subpath(List *subpaths, Path *path)
 
 		/* list_copy is important here to avoid sharing list substructure */
 		return list_concat(subpaths, list_copy(apath->subpaths));
+	}
+	else if (IsA(path, MergeAppendPath))
+	{
+		MergeAppendPath *mpath = (MergeAppendPath *) path;
+
+		/* list_copy is important here to avoid sharing list substructure */
+		return list_concat(subpaths, list_copy(mpath->subpaths));
 	}
 	else
 		return lappend(subpaths, path);
