@@ -10524,7 +10524,8 @@ table2-mapping
        <entry><para><type>json</type></para><para><type>jsonb</type>
        </para></entry>
        <entry>
-         Returns JSON value pointed to by <replaceable>path_elems</replaceable>.
+         Returns JSON value pointed to by <replaceable>path_elems</replaceable>
+         (equivalent to <literal>#&gt;</literal> operator).
        </entry>
        <entry><literal>json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4')</literal></entry>
        <entry><literal>{"f5":99,"f6":"foo"}</literal></entry>
@@ -10536,7 +10537,8 @@ table2-mapping
        <entry><type>text</type></entry>
        <entry>
          Returns JSON value pointed to by <replaceable>path_elems</replaceable>
-         as <type>text</>.
+         as <type>text</>
+         (equivalent to <literal>#&gt;&gt;</literal> operator).
        </entry>
        <entry><literal>json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4', 'f6')</literal></entry>
        <entry><literal>foo</literal></entry>
