@@ -861,6 +861,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
 		FreezeXid = OldHeap->rd_rel->relfrozenxid;
 
+	/*
+	 * MultiXactCutoff, similarly, shouldn't go backwards either.
+	 */
+	if (MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
+		MultiXactCutoff = OldHeap->rd_rel->relminmxid;
+
 	/* return selected values to caller */
 	*pFreezeXid = FreezeXid;
 	*pCutoffMulti = MultiXactCutoff;
