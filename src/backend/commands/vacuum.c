@@ -969,9 +969,11 @@ vac_truncate_clog(TransactionId frozenXID, MultiXactId minMulti)
 		return;
 	}
 
-	/* Truncate CLOG and Multi to the oldest computed value */
+	/*
+	 * Truncate CLOG to the oldest computed value.  Note we don't truncate
+	 * multixacts; that will be done by the next checkpoint.
+	 */
 	TruncateCLOG(frozenXID);
-	TruncateMultiXact(minMulti);
 
 	/*
 	 * Update the wrap limit for GetNewTransactionId and creation of new
@@ -980,7 +982,7 @@ vac_truncate_clog(TransactionId frozenXID, MultiXactId minMulti)
 	 * signalling twice?
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
-	MultiXactAdvanceOldest(minMulti, minmulti_datoid);
+	SetMultiXactIdLimit(minMulti, minmulti_datoid);
 }
 
 
