@@ -42,6 +42,14 @@
 #include "utils/lsyscache.h"
 
 
+/* results of subquery_is_pushdown_safe */
+typedef struct pushdown_safety_info
+{
+	bool	   *unsafeColumns;	/* which output columns are unsafe to use */
+	bool		unsafeVolatile; /* don't push down volatile quals */
+	bool		unsafeLeaky;	/* don't push down leaky quals */
+} pushdown_safety_info;
+
 /* These parameters are set by GUC */
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
@@ -88,14 +96,15 @@ static void set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
-						  bool *unsafeColumns);
+						  pushdown_safety_info *safetyInfo);
 static bool recurse_pushdown_safe(Node *setOp, Query *topquery,
-					  bool *unsafeColumns);
-static void check_output_expressions(Query *subquery, bool *unsafeColumns);
+					  pushdown_safety_info *safetyInfo);
+static void check_output_expressions(Query *subquery,
+						 pushdown_safety_info *safetyInfo);
 static void compare_tlist_datatypes(List *tlist, List *colTypes,
-						bool *unsafeColumns);
+						pushdown_safety_info *safetyInfo);
 static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
-					  bool *unsafeColumns);
+					  pushdown_safety_info *safetyInfo);
 static void subquery_push_qual(Query *subquery,
 				   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
@@ -1119,7 +1128,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	Query	   *parse = root->parse;
 	Query	   *subquery = rte->subquery;
 	Relids		required_outer;
-	bool	   *unsafeColumns;
+	pushdown_safety_info safetyInfo;
 	double		tuple_fraction;
 	PlannerInfo *subroot;
 	List	   *pathkeys;
@@ -1139,12 +1148,24 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	required_outer = rel->lateral_relids;
 
 	/*
-	 * We need a workspace for keeping track of unsafe-to-reference columns.
-	 * unsafeColumns[i] is set TRUE if we've found that output column i of the
-	 * subquery is unsafe to use in a pushed-down qual.
+	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
+	 * flags as needed while recursing.  In particular, we need a workspace
+	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
+	 * will be set TRUE if we find that output column i of the subquery is
+	 * unsafe to use in a pushed-down qual.
 	 */
-	unsafeColumns = (bool *)
+	memset(&safetyInfo, 0, sizeof(safetyInfo));
+	safetyInfo.unsafeColumns = (bool *)
 		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
+
+	/*
+	 * If the subquery has the "security_barrier" flag, it means the subquery
+	 * originated from a view that must enforce row-level security.  Then we
+	 * must not push down quals that contain leaky functions.  (Ideally this
+	 * would be checked inside subquery_is_pushdown_safe, but since we don't
+	 * currently pass the RTE to that function, we must do it here.)
+	 */
+	safetyInfo.unsafeLeaky = rte->security_barrier;
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
@@ -1160,10 +1181,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * pseudoconstant clauses; better to have the gating node above the
 	 * subquery.
 	 *
-	 * Also, if the sub-query has the "security_barrier" flag, it means the
-	 * sub-query originated from a view that must enforce row-level security.
-	 * Then we must not push down quals that contain leaky functions.
-	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
 	 *
@@ -1171,7 +1188,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * push down a pushable qual, because it'd result in a worse plan?
 	 */
 	if (rel->baserestrictinfo != NIL &&
-		subquery_is_pushdown_safe(subquery, subquery, unsafeColumns))
+		subquery_is_pushdown_safe(subquery, subquery, &safetyInfo))
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;
@@ -1183,9 +1200,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			Node	   *clause = (Node *) rinfo->clause;
 
 			if (!rinfo->pseudoconstant &&
-				(!rte->security_barrier ||
-				 !contain_leaky_functions(clause)) &&
-				qual_is_pushdown_safe(subquery, rti, clause, unsafeColumns))
+				qual_is_pushdown_safe(subquery, rti, clause, &safetyInfo))
 			{
 				/* Push it down */
 				subquery_push_qual(subquery, rte, rti, clause);
@@ -1199,7 +1214,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		rel->baserestrictinfo = upperrestrictlist;
 	}
 
-	pfree(unsafeColumns);
+	pfree(safetyInfo.unsafeColumns);
 
 	/*
 	 * The upper query might not use all the subquery's output columns; if
@@ -1679,19 +1694,39 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * 3. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
  * quals into it, because that could change the results.
  *
- * In addition, we make several checks on the subquery's output columns
- * to see if it is safe to reference them in pushed-down quals.  If output
- * column k is found to be unsafe to reference, we set unsafeColumns[k] to
- * TRUE, but we don't reject the subquery overall since column k might
- * not be referenced by some/all quals.  The unsafeColumns[] array will be
- * consulted later by qual_is_pushdown_safe().  It's better to do it this
- * way than to make the checks directly in qual_is_pushdown_safe(), because
- * when the subquery involves set operations we have to check the output
+ * 4. If the subquery uses DISTINCT, we cannot push volatile quals into it.
+ * This is because upper-level quals should semantically be evaluated only
+ * once per distinct row, not once per original row, and if the qual is
+ * volatile then extra evaluations could change the results.  (This issue
+ * does not apply to other forms of aggregation such as GROUP BY, because
+ * when those are present we push into HAVING not WHERE, so that the quals
+ * are still applied after aggregation.)
+ *
+ * In addition, we make several checks on the subquery's output columns to see
+ * if it is safe to reference them in pushed-down quals.  If output column k
+ * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
+ * to TRUE, but we don't reject the subquery overall since column k might not
+ * be referenced by some/all quals.  The unsafeColumns[] array will be
+ * consulted later by qual_is_pushdown_safe().  It's better to do it this way
+ * than to make the checks directly in qual_is_pushdown_safe(), because when
+ * the subquery involves set operations we have to check the output
  * expressions in each arm of the set op.
+ *
+ * Note: pushing quals into a DISTINCT subquery is theoretically dubious:
+ * we're effectively assuming that the quals cannot distinguish values that
+ * the DISTINCT's equality operator sees as equal, yet there are many
+ * counterexamples to that assumption.  However use of such a qual with a
+ * DISTINCT subquery would be unsafe anyway, since there's no guarantee which
+ * "equal" value will be chosen as the output value by the DISTINCT operation.
+ * So we don't worry too much about that.  Another objection is that if the
+ * qual is expensive to evaluate, running it for each original row might cost
+ * more than we save by eliminating rows before the DISTINCT step.  But it
+ * would be very hard to estimate that at this stage, and in practice pushdown
+ * seldom seems to make things worse, so we ignore that problem too.
  */
 static bool
 subquery_is_pushdown_safe(Query *subquery, Query *topquery,
-						  bool *unsafeColumns)
+						  pushdown_safety_info *safetyInfo)
 {
 	SetOperationStmt *topop;
 
@@ -1703,6 +1738,10 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 	if (subquery->hasWindowFuncs)
 		return false;
 
+	/* Check point 4 */
+	if (subquery->distinctClause)
+		safetyInfo->unsafeVolatile = true;
+
 	/*
 	 * If we're at a leaf query, check for unsafe expressions in its target
 	 * list, and mark any unsafe ones in unsafeColumns[].  (Non-leaf nodes in
@@ -1710,7 +1749,7 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 	 * them.)
 	 */
 	if (subquery->setOperations == NULL)
-		check_output_expressions(subquery, unsafeColumns);
+		check_output_expressions(subquery, safetyInfo);
 
 	/* Are we at top level, or looking at a setop component? */
 	if (subquery == topquery)
@@ -1718,7 +1757,7 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 		/* Top level, so check any component queries */
 		if (subquery->setOperations != NULL)
 			if (!recurse_pushdown_safe(subquery->setOperations, topquery,
-									   unsafeColumns))
+									   safetyInfo))
 				return false;
 	}
 	else
@@ -1731,7 +1770,7 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 		Assert(topop && IsA(topop, SetOperationStmt));
 		compare_tlist_datatypes(subquery->targetList,
 								topop->colTypes,
-								unsafeColumns);
+								safetyInfo);
 	}
 	return true;
 }
@@ -1741,7 +1780,7 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
  */
 static bool
 recurse_pushdown_safe(Node *setOp, Query *topquery,
-					  bool *unsafeColumns)
+					  pushdown_safety_info *safetyInfo)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -1750,7 +1789,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
 		Query	   *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
-		return subquery_is_pushdown_safe(subquery, topquery, unsafeColumns);
+		return subquery_is_pushdown_safe(subquery, topquery, safetyInfo);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
@@ -1760,9 +1799,9 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
 		if (op->op == SETOP_EXCEPT)
 			return false;
 		/* Else recurse */
-		if (!recurse_pushdown_safe(op->larg, topquery, unsafeColumns))
+		if (!recurse_pushdown_safe(op->larg, topquery, safetyInfo))
 			return false;
-		if (!recurse_pushdown_safe(op->rarg, topquery, unsafeColumns))
+		if (!recurse_pushdown_safe(op->rarg, topquery, safetyInfo))
 			return false;
 	}
 	else
@@ -1793,14 +1832,12 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  * 3. If the subquery uses DISTINCT ON, we must not push down any quals that
  * refer to non-DISTINCT output columns, because that could change the set
  * of rows returned.  (This condition is vacuous for DISTINCT, because then
- * there are no non-DISTINCT output columns, so we needn't check.  But note
- * we are assuming that the qual can't distinguish values that the DISTINCT
- * operator sees as equal.  This is a bit shaky but we have no way to test
- * for the case, and it's unlikely enough that we shouldn't refuse the
- * optimization just because it could theoretically happen.)
+ * there are no non-DISTINCT output columns, so we needn't check.  Note that
+ * subquery_is_pushdown_safe already reported that we can't use volatile
+ * quals if there's DISTINCT or DISTINCT ON.)
  */
 static void
-check_output_expressions(Query *subquery, bool *unsafeColumns)
+check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 {
 	ListCell   *lc;
 
@@ -1812,20 +1849,20 @@ check_output_expressions(Query *subquery, bool *unsafeColumns)
 			continue;			/* ignore resjunk columns */
 
 		/* We need not check further if output col is already known unsafe */
-		if (unsafeColumns[tle->resno])
+		if (safetyInfo->unsafeColumns[tle->resno])
 			continue;
 
 		/* Functions returning sets are unsafe (point 1) */
 		if (expression_returns_set((Node *) tle->expr))
 		{
-			unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeColumns[tle->resno] = true;
 			continue;
 		}
 
 		/* Volatile functions are unsafe (point 2) */
 		if (contain_volatile_functions((Node *) tle->expr))
 		{
-			unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeColumns[tle->resno] = true;
 			continue;
 		}
 
@@ -1834,7 +1871,7 @@ check_output_expressions(Query *subquery, bool *unsafeColumns)
 			!targetIsInSortList(tle, InvalidOid, subquery->distinctClause))
 		{
 			/* non-DISTINCT column, so mark it unsafe */
-			unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeColumns[tle->resno] = true;
 			continue;
 		}
 	}
@@ -1855,11 +1892,11 @@ check_output_expressions(Query *subquery, bool *unsafeColumns)
  *
  * tlist is a subquery tlist.
  * colTypes is an OID list of the top-level setop's output column types.
- * unsafeColumns[] is the result array.
+ * safetyInfo->unsafeColumns[] is the result array.
  */
 static void
 compare_tlist_datatypes(List *tlist, List *colTypes,
-						bool *unsafeColumns)
+						pushdown_safety_info *safetyInfo)
 {
 	ListCell   *l;
 	ListCell   *colType = list_head(colTypes);
@@ -1873,7 +1910,7 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
 		if (colType == NULL)
 			elog(ERROR, "wrong number of tlist entries");
 		if (exprType((Node *) tle->expr) != lfirst_oid(colType))
-			unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeColumns[tle->resno] = true;
 		colType = lnext(colType);
 	}
 	if (colType != NULL)
@@ -1892,15 +1929,20 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
  * it will work correctly: sublinks will already have been transformed into
  * subplans in the qual, but not in the subquery).
  *
- * 2. The qual must not refer to the whole-row output of the subquery
+ * 2. If unsafeVolatile is set, the qual must not contain any volatile
+ * functions.
+ *
+ * 3. If unsafeLeaky is set, the qual must not contain any leaky functions.
+ *
+ * 4. The qual must not refer to the whole-row output of the subquery
  * (since there is no easy way to name that within the subquery itself).
  *
- * 3. The qual must not refer to any subquery output columns that were
+ * 5. The qual must not refer to any subquery output columns that were
  * found to be unsafe to reference by subquery_is_pushdown_safe().
  */
 static bool
 qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
-					  bool *unsafeColumns)
+					  pushdown_safety_info *safetyInfo)
 {
 	bool		safe = true;
 	List	   *vars;
@@ -1908,6 +1950,16 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 	/* Refuse subselects (point 1) */
 	if (contain_subplans(qual))
+		return false;
+
+	/* Refuse volatile quals if we found they'd be unsafe (point 2) */
+	if (safetyInfo->unsafeVolatile &&
+		contain_volatile_functions(qual))
+		return false;
+
+	/* Refuse leaky quals if told to (point 3) */
+	if (safetyInfo->unsafeLeaky &&
+		contain_leaky_functions(qual))
 		return false;
 
 	/*
@@ -1944,15 +1996,15 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		Assert(var->varno == rti);
 		Assert(var->varattno >= 0);
 
-		/* Check point 2 */
+		/* Check point 4 */
 		if (var->varattno == 0)
 		{
 			safe = false;
 			break;
 		}
 
-		/* Check point 3 */
-		if (unsafeColumns[var->varattno])
+		/* Check point 5 */
+		if (safetyInfo->unsafeColumns[var->varattno])
 		{
 			safe = false;
 			break;
