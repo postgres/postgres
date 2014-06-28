@@ -1034,6 +1034,47 @@ FROM empsalary GROUP BY depname;
  25100 |          1 |        22600 | develop
 (3 rows)
 
+-- Test pushdown of quals into a subquery containing window functions
+-- pushdown is safe because all PARTITION BY clauses include depname:
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT depname,
+          sum(salary) OVER (PARTITION BY depname) depsalary,
+          min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
+   FROM empsalary) emp
+WHERE depname = 'sales';
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Subquery Scan on emp
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: (((empsalary.depname)::text || 'A'::text))
+               ->  WindowAgg
+                     ->  Seq Scan on empsalary
+                           Filter: ((depname)::text = 'sales'::text)
+(7 rows)
+
+-- pushdown is unsafe because there's a PARTITION BY clause without depname:
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT depname,
+          sum(salary) OVER (PARTITION BY enroll_date) enroll_salary,
+          min(salary) OVER (PARTITION BY depname) depminsalary
+   FROM empsalary) emp
+WHERE depname = 'sales';
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Subquery Scan on emp
+   Filter: ((emp.depname)::text = 'sales'::text)
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: empsalary.depname
+               ->  WindowAgg
+                     ->  Sort
+                           Sort Key: empsalary.enroll_date
+                           ->  Seq Scan on empsalary
+(9 rows)
+
 -- cleanup
 DROP TABLE empsalary;
 -- test user-defined window function with named args and default args
