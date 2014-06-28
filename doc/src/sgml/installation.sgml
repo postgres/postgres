@@ -1669,8 +1669,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
     <systemitem class="osname">HP-UX</>,
     <systemitem class="osname">Linux</>,
     <systemitem class="osname">NetBSD</>, <systemitem
-    class="osname">OpenBSD</>, <systemitem class="osname">Tru64
-    UNIX</> (formerly <systemitem class="osname">Digital UNIX</>), and
+    class="osname">OpenBSD</>, and
     <systemitem class="osname">Solaris</>.
    </para>
 
@@ -1981,7 +1980,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    In general, <productname>PostgreSQL</> can be expected to work on
    these CPU architectures: x86, x86_64, IA64, PowerPC,
-   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, Alpha, ARM, MIPS, MIPSEL, M68K,
+   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL, M68K,
    and PA-RISC.  Code support exists for M32R and VAX, but these
    architectures are not known to have been tested recently.  It is often
    possible to build on an unsupported CPU type by configuring with
@@ -1991,7 +1990,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    <productname>PostgreSQL</> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
-   FreeBSD, OpenBSD, NetBSD, Mac OS X, AIX, HP/UX, Solaris, Tru64 Unix,
+   FreeBSD, OpenBSD, NetBSD, Mac OS X, AIX, HP/UX, Solaris,
    and UnixWare.  Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in

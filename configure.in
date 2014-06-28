@@ -69,7 +69,6 @@ dragonfly*) template=netbsd ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
  openbsd*) template=openbsd ;;
-     osf*) template=osf ;;
      sco*) template=sco ;;
  solaris*) template=solaris ;;
    sysv5*) template=unixware ;;

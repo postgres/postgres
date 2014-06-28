@@ -548,51 +548,6 @@ tas(volatile slock_t *lock)
 
 #endif	 /* __vax__ */
 
-#if defined(__alpha) || defined(__alpha__)	/* Alpha */
-/*
- * Correct multi-processor locking methods are explained in section 5.5.3
- * of the Alpha AXP Architecture Handbook, which at this writing can be
- * found at ftp://ftp.netbsd.org/pub/NetBSD/misc/dec-docs/index.html.
- * For gcc we implement the handbook's code directly with inline assembler.
- */
-#define HAS_TEST_AND_SET
-
-typedef unsigned long slock_t;
-
-#define TAS(lock)  tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register slock_t _res;
-
-	__asm__	__volatile__(
-		"	ldq		$0, %1	\n"
-		"	bne		$0, 2f	\n"
-		"	ldq_l	%0, %1	\n"
-		"	bne		%0, 2f	\n"
-		"	mov		1,  $0	\n"
-		"	stq_c	$0, %1	\n"
-		"	beq		$0, 2f	\n"
-		"	mb				\n"
-		"	br		3f		\n"
-		"2:	mov		1, %0	\n"
-		"3:					\n"
-:		"=&r"(_res), "+m"(*lock)
-:
-:		"memory", "0");
-	return (int) _res;
-}
-
-#define S_UNLOCK(lock)	\
-do \
-{\
-	__asm__ __volatile__ ("	mb \n"); \
-	*((volatile slock_t *) (lock)) = 0; \
-} while (0)
-
-#endif /* __alpha || __alpha__ */
-
 
 #if defined(__mips__) && !defined(__sgi)	/* non-SGI MIPS */
 /* Note: on SGI we use the OS' mutex ABI, see below */
@@ -731,27 +686,6 @@ tas(volatile slock_t *s_lock)
 }
 
 #endif	 /* defined(USE_UNIVEL_CC) */
-
-
-#if defined(__alpha) || defined(__alpha__)	/* Tru64 Unix Alpha compiler */
-/*
- * The Tru64 compiler doesn't support gcc-style inline asm, but it does
- * have some builtin functions that accomplish much the same results.
- * For simplicity, slock_t is defined as long (ie, quadword) on Alpha
- * regardless of the compiler in use.  LOCK_LONG and UNLOCK_LONG only
- * operate on an int (ie, longword), but that's OK as long as we define
- * S_INIT_LOCK to zero out the whole quadword.
- */
-#define HAS_TEST_AND_SET
-
-typedef unsigned long slock_t;
-
-#include <alpha/builtins.h>
-#define S_INIT_LOCK(lock)  (*(lock) = 0)
-#define TAS(lock)		   (__LOCK_LONG_RETRY((lock), 1) == 0)
-#define S_UNLOCK(lock)	   __UNLOCK_LONG(lock)
-
-#endif	 /* __alpha || __alpha__ */
 
 
 #if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */

@@ -207,27 +207,6 @@ gcc -G -o foo.so foo.o
 
    <varlistentry>
     <term>
-     <systemitem class="osname">Tru64 UNIX</>
-     <indexterm><primary>Tru64 UNIX</><secondary>shared library</></>
-     <indexterm><primary>Digital UNIX</><see>Tru64 UNIX</></>
-    </term>
-    <listitem>
-     <para>
-      <acronym>PIC</acronym> is the default, so the compilation command
-      is the usual one.  <command>ld</command> with special options is
-      used to do the linking.
-<programlisting>
-cc -c foo.c
-ld -shared -expect_unresolved '*' -o foo.so foo.o
-</programlisting>
-      The same procedure is used with GCC instead of the system
-      compiler; no special options are required.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
      <systemitem class="osname">UnixWare</>
      <indexterm><primary>UnixWare</><secondary>shared library</></>
     </term>

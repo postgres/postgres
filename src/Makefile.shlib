@@ -236,10 +236,6 @@ ifeq ($(PORTNAME), solaris)
   endif
 endif
 
-ifeq ($(PORTNAME), osf)
-  LINK.shared		= $(LD) -shared -expect_unresolved '*'
-endif
-
 ifeq ($(PORTNAME), sco)
   ifeq ($(GCC), yes)
     LINK.shared		= $(CC) -shared

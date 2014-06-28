@@ -22,14 +22,6 @@
 
 #include <unistd.h>
 
-#if defined(__alpha) && defined(__osf__)		/* no __alpha__ ? */
-#include <sys/sysinfo.h>
-#include "machine/hal_sysinfo.h"
-#define ASSEMBLER
-#include <sys/proc.h>
-#undef ASSEMBLER
-#endif
-
 #if defined(__NetBSD__)
 #include <sys/param.h>
 #endif
@@ -244,27 +236,6 @@ main(int argc, char *argv[])
 static void
 startup_hacks(const char *progname)
 {
-	/*
-	 * On some platforms, unaligned memory accesses result in a kernel trap;
-	 * the default kernel behavior is to emulate the memory access, but this
-	 * results in a significant performance penalty.  We want PG never to make
-	 * such unaligned memory accesses, so this code disables the kernel
-	 * emulation: unaligned accesses will result in SIGBUS instead.
-	 */
-#ifdef NOFIXADE
-
-#if defined(__alpha)			/* no __alpha__ ? */
-	{
-		int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
-
-		if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
-					   (unsigned long) NULL) < 0)
-			write_stderr("%s: setsysinfo failed: %s\n",
-						 progname, strerror(errno));
-	}
-#endif   /* __alpha */
-#endif   /* NOFIXADE */
-
 	/*
 	 * Windows-specific execution environment hacking.
 	 */

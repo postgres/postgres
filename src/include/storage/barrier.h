@@ -109,16 +109,7 @@ extern slock_t dummy_spinlock;
 #define pg_memory_barrier()		__asm__ __volatile__ ("sync" : : : "memory")
 #define pg_read_barrier()		__asm__ __volatile__ ("lwsync" : : : "memory")
 #define pg_write_barrier()		__asm__ __volatile__ ("lwsync" : : : "memory")
-#elif defined(__alpha) || defined(__alpha__)	/* Alpha */
 
-/*
- * Unlike all other known architectures, Alpha allows dependent reads to be
- * reordered, but we don't currently find it necessary to provide a conditional
- * read barrier to cover that case.  We might need to add that later.
- */
-#define pg_memory_barrier()		__asm__ __volatile__ ("mb" : : : "memory")
-#define pg_read_barrier()		__asm__ __volatile__ ("rmb" : : : "memory")
-#define pg_write_barrier()		__asm__ __volatile__ ("wmb" : : : "memory")
 #elif defined(__hppa) || defined(__hppa__)		/* HP PA-RISC */
 
 /* HPPA doesn't do either read or write reordering */
