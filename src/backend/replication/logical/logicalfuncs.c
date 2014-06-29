@@ -438,6 +438,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			if (upto_nchanges != 0 &&
 				upto_nchanges <= p->returned_rows)
 				break;
+			CHECK_FOR_INTERRUPTS();
 		}
 	}
 	PG_CATCH();

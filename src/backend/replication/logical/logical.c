@@ -451,11 +451,6 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		XLogRecord *record;
 		char	   *err = NULL;
 
-		/*
-		 * If the caller requires that interrupts be checked, the read_page
-		 * callback should do so, as those will often wait.
-		 */
-
 		/* the read_page callback waits for new WAL */
 		record = XLogReadRecord(ctx->reader, startptr, &err);
 		if (err)
@@ -470,6 +465,8 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		/* only continue till we found a consistent spot */
 		if (DecodingContextReady(ctx))
 			break;
+
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	ctx->slot->data.confirmed_flush = ctx->reader->EndRecPtr;
