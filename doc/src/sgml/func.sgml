@@ -10562,8 +10562,8 @@ table2-mapping
        </entry>
       </row>
       <row>
-       <entry><para><literal>json_populate_record(base anyelement, from_json json, [, use_json_as_text bool=false])</literal>
-         </para><para><literal>jsonb_populate_record(base anyelement, from_json jsonb, [, use_json_as_text bool=false])</literal>
+       <entry><para><literal>json_populate_record(base anyelement, from_json json)</literal>
+         </para><para><literal>jsonb_populate_record(base anyelement, from_json jsonb)</literal>
        </para></entry>
        <entry><type>anyelement</type></entry>
        <entry>
@@ -10581,8 +10581,8 @@ table2-mapping
        </entry>
       </row>
       <row>
-       <entry><para><literal>json_populate_recordset(base anyelement, from_json json, [, use_json_as_text bool=false])</literal>
-         </para><para><literal>jsonb_populate_recordset(base anyelement, from_json jsonb, [, use_json_as_text bool=false])</literal>
+       <entry><para><literal>json_populate_recordset(base anyelement, from_json json)</literal>
+         </para><para><literal>jsonb_populate_recordset(base anyelement, from_json jsonb)</literal>
        </para></entry>
        <entry><type>setof anyelement</type></entry>
        <entry>
@@ -10655,18 +10655,17 @@ table2-mapping
        <entry><literal>number</literal></entry>
       </row>
       <row>
-       <entry><para><literal>json_to_record(json [, nested_as_text bool=false])</literal>
-          </para><para><literal>jsonb_to_record(jsonb [, nested_as_text bool=false])</literal>
+       <entry><para><literal>json_to_record(json)</literal>
+          </para><para><literal>jsonb_to_record(jsonb)</literal>
        </para></entry>
        <entry><type>record</type></entry>
        <entry>
          Builds an arbitrary record from a JSON object (see note below).  As
          with all functions returning <type>record</>, the caller must
          explicitly define the structure of the record with an <literal>AS</>
-         clause.  If <replaceable>nested_as_text</> is true, the function
-         coerces nested complex elements to text.
+         clause.
        </entry>
-       <entry><literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":"bar"}',true) as x(a int, b text, d text) </literal></entry>
+       <entry><literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":"bar"}') as x(a int, b text, d text) </literal></entry>
        <entry>
 <programlisting>
  a |    b    | d 
@@ -10676,18 +10675,17 @@ table2-mapping
        </entry>
       </row>
       <row>
-       <entry><para><literal>json_to_recordset(json [, nested_as_text bool=false])</literal>
-         </para><para><literal>jsonb_to_recordset(jsonb [, nested_as_text bool=false])</literal>
+       <entry><para><literal>json_to_recordset(json)</literal>
+         </para><para><literal>jsonb_to_recordset(jsonb)</literal>
        </para></entry>
        <entry><type>setof record</type></entry>
        <entry>
          Builds an arbitrary set of records from a JSON array of objects (see
          note below).  As with all functions returning <type>record</>, the
          caller must explicitly define the structure of the record with
-         an <literal>AS</> clause.  <replaceable>nested_as_text</> works as
-         with <function>json_to_record</>.
+         an <literal>AS</> clause.
        </entry>
-       <entry><literal>select * from json_to_recordset('[{"a":1,"b":"foo"},{"a":"2","c":"bar"}]',true) as x(a int, b text);</literal></entry>
+       <entry><literal>select * from json_to_recordset('[{"a":1,"b":"foo"},{"a":"2","c":"bar"}]') as x(a int, b text);</literal></entry>
        <entry>
 <programlisting>
  a |  b

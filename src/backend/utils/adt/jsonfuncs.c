@@ -85,8 +85,7 @@ static void elements_array_element_end(void *state, bool isnull);
 static void elements_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* turn a json object into a hash table */
-static HTAB *get_json_object_as_hash(text *json, const char *funcname,
-						bool use_json_as_text);
+static HTAB *get_json_object_as_hash(text *json, const char *funcname);
 
 /* common worker for populate_record and to_record */
 static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
@@ -198,7 +197,6 @@ typedef struct JhashState
 	HTAB	   *hash;
 	char	   *saved_scalar;
 	char	   *save_json_start;
-	bool		use_json_as_text;
 } JHashState;
 
 /* hashtable element */
@@ -235,7 +233,6 @@ typedef struct PopulateRecordsetState
 	HTAB	   *json_hash;
 	char	   *saved_scalar;
 	char	   *save_json_start;
-	bool		use_json_as_text;
 	Tuplestorestate *tuple_store;
 	TupleDesc	ret_tdesc;
 	HeapTupleHeader rec;
@@ -1989,7 +1986,6 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
 	text	   *json;
 	Jsonb	   *jb = NULL;
-	bool		use_json_as_text;
 	HTAB	   *json_hash = NULL;
 	HeapTupleHeader rec = NULL;
 	Oid			tupType = InvalidOid;
@@ -2004,9 +2000,6 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	bool	   *nulls;
 
 	Assert(jtype == JSONOID || jtype == JSONBOID);
-
-	use_json_as_text = PG_ARGISNULL(json_arg_num + 1) ? false :
-		PG_GETARG_BOOL(json_arg_num + 1);
 
 	if (have_record_arg)
 	{
@@ -2065,7 +2058,7 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 		/* just get the text */
 		json = PG_GETARG_TEXT_P(json_arg_num);
 
-		json_hash = get_json_object_as_hash(json, funcname, use_json_as_text);
+		json_hash = get_json_object_as_hash(json, funcname);
 
 		/*
 		 * if the input json is empty, we can only skip the rest if we were
@@ -2227,10 +2220,6 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 				else if (v->type == jbvNumeric)
 					s = DatumGetCString(DirectFunctionCall1(numeric_out,
 										   PointerGetDatum(v->val.numeric)));
-				else if (!use_json_as_text)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("cannot populate with a nested object unless use_json_as_text is true")));
 				else if (v->type == jbvBinary)
 					s = JsonbToCString(NULL, (JsonbContainer *) v->val.binary.data, v->val.binary.len);
 				else
@@ -2258,15 +2247,9 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
  * get_json_object_as_hash
  *
  * decompose a json object into a hash table.
- *
- * Currently doesn't allow anything but a flat object. Should this
- * change?
- *
- * funcname argument allows caller to pass in its name for use in
- * error messages.
  */
 static HTAB *
-get_json_object_as_hash(text *json, const char *funcname, bool use_json_as_text)
+get_json_object_as_hash(text *json, const char *funcname)
 {
 	HASHCTL		ctl;
 	HTAB	   *tab;
@@ -2289,7 +2272,6 @@ get_json_object_as_hash(text *json, const char *funcname, bool use_json_as_text)
 	state->function_name = funcname;
 	state->hash = tab;
 	state->lex = lex;
-	state->use_json_as_text = use_json_as_text;
 
 	sem->semstate = (void *) state;
 	sem->array_start = hash_array_start;
@@ -2313,11 +2295,7 @@ hash_object_field_start(void *state, char *fname, bool isnull)
 	if (_state->lex->token_type == JSON_TOKEN_ARRAY_START ||
 		_state->lex->token_type == JSON_TOKEN_OBJECT_START)
 	{
-		if (!_state->use_json_as_text)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call %s on a nested object",
-							_state->function_name)));
+		/* remember start position of the whole text of the subobject */
 		_state->save_json_start = _state->lex->token_start;
 	}
 	else
@@ -2535,10 +2513,6 @@ make_row_from_rec_and_jsonb(Jsonb *element, PopulateRecordsetState *state)
 			else if (v->type == jbvNumeric)
 				s = DatumGetCString(DirectFunctionCall1(numeric_out,
 										   PointerGetDatum(v->val.numeric)));
-			else if (!state->use_json_as_text)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("cannot populate with a nested object unless use_json_as_text is true")));
 			else if (v->type == jbvBinary)
 				s = JsonbToCString(NULL, (JsonbContainer *) v->val.binary.data, v->val.binary.len);
 			else
@@ -2565,7 +2539,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
 	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
-	bool		use_json_as_text;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	Oid			tupType;
@@ -2575,8 +2548,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	RecordIOData *my_extra;
 	int			ncolumns;
 	PopulateRecordsetState *state;
-
-	use_json_as_text = PG_ARGISNULL(json_arg_num + 1) ? false : PG_GETARG_BOOL(json_arg_num + 1);
 
 	if (have_record_arg)
 	{
@@ -2667,7 +2638,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	state->function_name = funcname;
 	state->my_extra = my_extra;
 	state->rec = rec;
-	state->use_json_as_text = use_json_as_text;
 	state->fn_mcxt = fcinfo->flinfo->fn_mcxt;
 
 	if (jtype == JSONOID)
@@ -2749,16 +2719,9 @@ populate_recordset_object_start(void *state)
 				 errmsg("cannot call %s on an object",
 						_state->function_name)));
 
-	/* Nested objects, if allowed, require no special processing */
+	/* Nested objects require no special processing */
 	if (lex_level > 1)
-	{
-		if (!_state->use_json_as_text)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call %s with nested objects",
-							_state->function_name)));
 		return;
-	}
 
 	/* Object at level 1: set up a new hash table for this object */
 	memset(&ctl, 0, sizeof(ctl));
@@ -2903,13 +2866,7 @@ populate_recordset_array_element_start(void *state, bool isnull)
 static void
 populate_recordset_array_start(void *state)
 {
-	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
-
-	if (_state->lex->lex_level != 0 && !_state->use_json_as_text)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s with nested arrays",
-						_state->function_name)));
+	/* nothing to do */
 }
 
 static void
@@ -2938,11 +2895,6 @@ populate_recordset_object_field_start(void *state, char *fname, bool isnull)
 	if (_state->lex->token_type == JSON_TOKEN_ARRAY_START ||
 		_state->lex->token_type == JSON_TOKEN_OBJECT_START)
 	{
-		if (!_state->use_json_as_text)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call %s on a nested object",
-							_state->function_name)));
 		_state->save_json_start = _state->lex->token_start;
 	}
 	else
