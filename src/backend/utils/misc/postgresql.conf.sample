@@ -435,7 +435,8 @@
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
 #log_timezone = 'GMT'
-
+#cluster_name = ''			# added to process titles if nonempty
+					# (change requires restart)
 
 #------------------------------------------------------------------------------
 # RUNTIME STATISTICS

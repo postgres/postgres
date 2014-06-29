@@ -92,6 +92,22 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
+   If <xref linkend="guc-cluster-name"> has been configured the
+   cluster name will also be show in <command>ps</> output:
+<screen>
+$ psql -c 'SHOW cluster_name'
+ cluster_name
+--------------
+ server1
+(1 row)
+
+$ ps aux|grep server1
+postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: server1: writer process
+...
+</screen>
+  </para>
+
+  <para>
    If you have turned off <xref linkend="guc-update-process-title"> then the
    activity indicator is not updated; the process title is set only once
    when a new process is launched.  On some platforms this saves a measurable
