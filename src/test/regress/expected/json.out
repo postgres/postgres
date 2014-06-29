@@ -943,78 +943,47 @@ select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":
  blurfl | 3 | Mon Dec 31 15:30:56 2012
 (1 row)
 
-select * from json_populate_record(null::jpop,'{"a":"blurfl","x":43.2}', true) q;
+select * from json_populate_record(null::jpop,'{"a":"blurfl","x":43.2}') q;
    a    | b | c 
 --------+---+---
  blurfl |   | 
 (1 row)
 
-select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":"blurfl","x":43.2}', true) q;
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":"blurfl","x":43.2}') q;
    a    | b |            c             
 --------+---+--------------------------
  blurfl | 3 | Mon Dec 31 15:30:56 2012
 (1 row)
 
-select * from json_populate_record(null::jpop,'{"a":[100,200,false],"x":43.2}', true) q;
+select * from json_populate_record(null::jpop,'{"a":[100,200,false],"x":43.2}') q;
         a        | b | c 
 -----------------+---+---
  [100,200,false] |   | 
 (1 row)
 
-select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":[100,200,false],"x":43.2}', true) q;
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":[100,200,false],"x":43.2}') q;
         a        | b |            c             
 -----------------+---+--------------------------
  [100,200,false] | 3 | Mon Dec 31 15:30:56 2012
 (1 row)
 
-select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"c":[100,200,false],"x":43.2}', true) q;
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"c":[100,200,false],"x":43.2}') q;
 ERROR:  invalid input syntax for type timestamp: "[100,200,false]"
 -- populate_recordset
-select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',false) q;
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
    a    | b |            c             
 --------+---+--------------------------
  blurfl |   | 
         | 3 | Fri Jan 20 10:42:53 2012
 (2 rows)
 
-select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',false) q;
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
    a    | b  |            c             
 --------+----+--------------------------
  blurfl | 99 | 
  def    |  3 | Fri Jan 20 10:42:53 2012
 (2 rows)
 
-select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
-   a    | b |            c             
---------+---+--------------------------
- blurfl |   | 
-        | 3 | Fri Jan 20 10:42:53 2012
-(2 rows)
-
-select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
-   a    | b  |            c             
---------+----+--------------------------
- blurfl | 99 | 
- def    |  3 | Fri Jan 20 10:42:53 2012
-(2 rows)
-
-select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
-       a       | b  |            c             
----------------+----+--------------------------
- [100,200,300] | 99 | 
- {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
-(2 rows)
-
-select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
-ERROR:  invalid input syntax for type timestamp: "[100,200,300]"
-create type jpop2 as (a int, b json, c int, d int);
-select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d":6}]',true) q;
- a |    b    | c | d 
----+---------+---+---
- 2 | {"z":4} | 3 | 6
-(1 row)
-
--- using the default use_json_as_text argument
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
    a    | b |            c             
 --------+---+--------------------------
@@ -1030,9 +999,42 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","
 (2 rows)
 
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
-ERROR:  cannot call json_populate_recordset on a nested object
+       a       | b  |            c             
+---------------+----+--------------------------
+ [100,200,300] | 99 | 
+ {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
-ERROR:  cannot call json_populate_recordset on a nested object
+ERROR:  invalid input syntax for type timestamp: "[100,200,300]"
+create type jpop2 as (a int, b json, c int, d int);
+select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d":6}]') q;
+ a |    b    | c | d 
+---+---------+---+---
+ 2 | {"z":4} | 3 | 6
+(1 row)
+
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl |   | 
+        | 3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+   a    | b  |            c             
+--------+----+--------------------------
+ blurfl | 99 | 
+ def    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+       a       | b  |            c             
+---------------+----+--------------------------
+ [100,200,300] | 99 | 
+ {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
 -- handling of unicode surrogate pairs
 select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
       correct_in_utf8       
@@ -1215,14 +1217,14 @@ ERROR:  null value not allowed for object key
 select json_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
 ERROR:  empty value not allowed for object key
 -- json_to_record and json_to_recordset
-select * from json_to_record('{"a":1,"b":"foo","c":"bar"}',true)
+select * from json_to_record('{"a":1,"b":"foo","c":"bar"}')
     as x(a int, b text, d text);
  a |  b  | d 
 ---+-----+---
  1 | foo | 
 (1 row)
 
-select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]',false)
+select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]')
     as x(a int, b text, c boolean);
  a |  b  | c 
 ---+-----+---
@@ -1230,7 +1232,7 @@ select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","
  2 | bar | t
 (2 rows)
 
-select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":false,"b":{"d":"bar"}}]', true)
+select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":false,"b":{"d":"bar"}}]')
     as x(a int, b json, c boolean);
  a |      b      | c 
 ---+-------------+---
