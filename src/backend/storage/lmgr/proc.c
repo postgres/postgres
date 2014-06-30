@@ -411,8 +411,9 @@ InitProcess(void)
 
 	/*
 	 * Now that we have a PGPROC, we could try to acquire locks, so initialize
-	 * the deadlock checker.
+	 * local state needed for LWLocks, and the deadlock checker.
 	 */
+	InitLWLockAccess();
 	InitDeadLockChecking();
 }
 

@@ -60,6 +60,9 @@ typedef struct MemoryContextData
 	MemoryContext nextchild;	/* next child of same parent */
 	char	   *name;			/* context name (just for debugging) */
 	bool		isReset;		/* T = no space alloced since last reset */
+#ifdef USE_ASSERT_CHECKING
+	bool		allowInCritSection;	/* allow palloc in critical section */
+#endif
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */

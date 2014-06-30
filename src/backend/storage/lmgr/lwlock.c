@@ -104,8 +104,8 @@ typedef struct lwlock_stats
 	int			spin_delay_count;
 }	lwlock_stats;
 
-static int	counts_for_pid = 0;
 static HTAB *lwlock_stats_htab;
+static lwlock_stats lwlock_stats_dummy;
 #endif
 
 #ifdef LOCK_DEBUG
@@ -142,21 +142,39 @@ static void
 init_lwlock_stats(void)
 {
 	HASHCTL		ctl;
+	static MemoryContext lwlock_stats_cxt = NULL;
+	static bool exit_registered = false;
 
-	if (lwlock_stats_htab != NULL)
-	{
-		hash_destroy(lwlock_stats_htab);
-		lwlock_stats_htab = NULL;
-	}
+	if (lwlock_stats_cxt != NULL)
+		MemoryContextDelete(lwlock_stats_cxt);
+
+	/*
+	 * The LWLock stats will be updated within a critical section, which
+	 * requires allocating new hash entries. Allocations within a critical
+	 * section are normally not allowed because running out of memory would
+	 * lead to a PANIC, but LWLOCK_STATS is debugging code that's not normally
+	 * turned on in production, so that's an acceptable risk. The hash entries
+	 * are small, so the risk of running out of memory is minimal in practice.
+	 */
+	lwlock_stats_cxt = AllocSetContextCreate(TopMemoryContext,
+											 "LWLock stats",
+											 ALLOCSET_DEFAULT_MINSIZE,
+											 ALLOCSET_DEFAULT_INITSIZE,
+											 ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextAllowInCriticalSection(lwlock_stats_cxt, true);
 
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(lwlock_stats_key);
 	ctl.entrysize = sizeof(lwlock_stats);
 	ctl.hash = tag_hash;
+	ctl.hcxt = lwlock_stats_cxt;
 	lwlock_stats_htab = hash_create("lwlock stats", 16384, &ctl,
-									HASH_ELEM | HASH_FUNCTION);
-	counts_for_pid = MyProcPid;
-	on_shmem_exit(print_lwlock_stats, 0);
+									HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+	if (!exit_registered)
+	{
+		on_shmem_exit(print_lwlock_stats, 0);
+		exit_registered = true;
+	}
 }
 
 static void
@@ -190,9 +208,13 @@ get_lwlock_stats_entry(LWLock *lock)
 	lwlock_stats *lwstats;
 	bool		found;
 
-	/* Set up local count state first time through in a given process */
-	if (counts_for_pid != MyProcPid)
-		init_lwlock_stats();
+	/*
+	 * During shared memory initialization, the hash table doesn't exist yet.
+	 * Stats of that phase aren't very interesting, so just collect operations
+	 * on all locks in a single dummy entry.
+	 */
+	if (lwlock_stats_htab == NULL)
+		return &lwlock_stats_dummy;
 
 	/* Fetch or create the entry. */
 	key.tranche = lock->tranche;
@@ -361,6 +383,16 @@ CreateLWLocks(void)
 	LWLockRegisterTranche(0, &MainLWLockTranche);
 }
 
+/*
+ * InitLWLockAccess - initialize backend-local state needed to hold LWLocks
+ */
+void
+InitLWLockAccess(void)
+{
+#ifdef LWLOCK_STATS
+	init_lwlock_stats();
+#endif
+}
 
 /*
  * LWLockAssign - assign a dynamically-allocated LWLock number

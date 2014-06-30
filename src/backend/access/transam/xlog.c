@@ -60,6 +60,7 @@
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
@@ -736,6 +737,10 @@ static bool bgwriterLaunched = false;
 static int	MyLockNo = 0;
 static bool holdingAllLocks = false;
 
+#ifdef WAL_DEBUG
+static MemoryContext walDebugCxt = NULL;
+#endif
+
 static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo);
 static bool recoveryStopsBefore(XLogRecord *record);
@@ -1258,6 +1263,7 @@ begin:;
 	if (XLOG_DEBUG)
 	{
 		StringInfoData buf;
+		MemoryContext oldCxt = MemoryContextSwitchTo(walDebugCxt);
 
 		initStringInfo(&buf);
 		appendStringInfo(&buf, "INSERT @ %X/%X: ",
@@ -1282,10 +1288,11 @@ begin:;
 
 			appendStringInfoString(&buf, " - ");
 			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, (XLogRecord *) recordbuf.data);
-			pfree(recordbuf.data);
 		}
 		elog(LOG, "%s", buf.data);
-		pfree(buf.data);
+
+		MemoryContextSwitchTo(oldCxt);
+		MemoryContextReset(walDebugCxt);
 	}
 #endif
 
@@ -4806,6 +4813,24 @@ XLOGShmemInit(void)
 				foundXLog;
 	char	   *allocptr;
 	int			i;
+
+#ifdef WAL_DEBUG
+	/*
+	 * Create a memory context for WAL debugging that's exempt from the
+	 * normal "no pallocs in critical section" rule. Yes, that can lead to a
+	 * PANIC if an allocation fails, but wal_debug is not for production use
+	 * anyway.
+	 */
+	if (walDebugCxt == NULL)
+	{
+		walDebugCxt = AllocSetContextCreate(TopMemoryContext,
+											"WAL Debug",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+		MemoryContextAllowInCriticalSection(walDebugCxt, true);
+	}
+#endif
 
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);

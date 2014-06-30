@@ -60,15 +60,9 @@ static void MemoryContextStatsInternal(MemoryContext context, int level);
  * You should not do memory allocations within a critical section, because
  * an out-of-memory error will be escalated to a PANIC. To enforce that
  * rule, the allocation functions Assert that.
- *
- * There are a two exceptions: 1) error recovery uses ErrorContext, which
- * has some memory set aside so that you don't run out. And 2) checkpointer
- * currently just hopes for the best, which is wrong and ought to be fixed,
- * but it's a known issue so let's not complain about in the meanwhile.
  */
 #define AssertNotInCriticalSection(context) \
-	Assert(CritSectionCount == 0 || (context) == ErrorContext || \
-		   AmCheckpointerProcess())
+	Assert(CritSectionCount == 0 || (context)->allowInCritSection)
 
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
@@ -120,7 +114,10 @@ MemoryContextInit(void)
 	 * require it to contain at least 8K at all times. This is the only case
 	 * where retained memory in a context is *essential* --- we want to be
 	 * sure ErrorContext still has some memory even if we've run out
-	 * elsewhere!
+	 * elsewhere! Also, allow allocations in ErrorContext within a critical
+	 * section. Otherwise a PANIC will cause an assertion failure in the
+	 * error reporting code, before printing out the real cause of the
+	 * failure.
 	 *
 	 * This should be the last step in this function, as elog.c assumes memory
 	 * management works once ErrorContext is non-null.
@@ -130,6 +127,7 @@ MemoryContextInit(void)
 										 8 * 1024,
 										 8 * 1024,
 										 8 * 1024);
+	MemoryContextAllowInCriticalSection(ErrorContext, true);
 }
 
 /*
@@ -303,6 +301,26 @@ MemoryContextSetParent(MemoryContext context, MemoryContext new_parent)
 		context->parent = NULL;
 		context->nextchild = NULL;
 	}
+}
+
+/*
+ * MemoryContextAllowInCriticalSection
+ *		Allow/disallow allocations in this memory context within a critical
+ *		section.
+ *
+ * Normally, memory allocations are not allowed within a critical section,
+ * because a failure would lead to PANIC.  There are a few exceptions to
+ * that, like allocations related to debugging code that is not supposed to
+ * be enabled in production.  This function can be used to exempt specific
+ * memory contexts from the assertion in palloc().
+ */
+void
+MemoryContextAllowInCriticalSection(MemoryContext context, bool allow)
+{
+	AssertArg(MemoryContextIsValid(context));
+#ifdef USE_ASSERT_CHECKING
+	context->allowInCritSection = allow;
+#endif
 }
 
 /*
@@ -533,6 +551,7 @@ MemoryContextCreate(NodeTag tag, Size size,
 	MemoryContext node;
 	Size		needed = size + strlen(name) + 1;
 
+	/* creating new memory contexts is not allowed in a critical section */
 	Assert(CritSectionCount == 0);
 
 	/* Get space for node and name */
@@ -570,6 +589,11 @@ MemoryContextCreate(NodeTag tag, Size size,
 		node->parent = parent;
 		node->nextchild = parent->firstchild;
 		parent->firstchild = node;
+
+#ifdef USE_ASSERT_CHECKING
+		/* inherit allowInCritSection flag from parent */
+		node->allowInCritSection = parent->allowInCritSection;
+#endif
 	}
 
 	VALGRIND_CREATE_MEMPOOL(node, 0, false);

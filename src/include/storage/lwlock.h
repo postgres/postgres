@@ -182,6 +182,7 @@ extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 value);
 
 extern Size LWLockShmemSize(void);
 extern void CreateLWLocks(void);
+extern void InitLWLockAccess(void);
 
 /*
  * The traditional method for obtaining an lwlock for use by an extension is

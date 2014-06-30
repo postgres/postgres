@@ -1305,19 +1305,6 @@ AbsorbFsyncRequests(void)
 	if (!AmCheckpointerProcess())
 		return;
 
-	/*
-	 * We have to PANIC if we fail to absorb all the pending requests (eg,
-	 * because our hashtable runs out of memory).  This is because the system
-	 * cannot run safely if we are unable to fsync what we have been told to
-	 * fsync.  Fortunately, the hashtable is so small that the problem is
-	 * quite unlikely to arise in practice.
-	 */
-	START_CRIT_SECTION();
-
-	/*
-	 * We try to avoid holding the lock for a long time by copying the request
-	 * array.
-	 */
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Transfer stats counts into pending pgstats message */
@@ -1327,12 +1314,25 @@ AbsorbFsyncRequests(void)
 	CheckpointerShmem->num_backend_writes = 0;
 	CheckpointerShmem->num_backend_fsync = 0;
 
+	/*
+	 * We try to avoid holding the lock for a long time by copying the request
+	 * array, and processing the requests after releasing the lock.
+	 *
+	 * Once we have cleared the requests from shared memory, we have to PANIC
+	 * if we then fail to absorb them (eg, because our hashtable runs out of
+	 * memory).  This is because the system cannot run safely if we are unable
+	 * to fsync what we have been told to fsync.  Fortunately, the hashtable
+	 * is so small that the problem is quite unlikely to arise in practice.
+	 */
 	n = CheckpointerShmem->num_requests;
 	if (n > 0)
 	{
 		requests = (CheckpointerRequest *) palloc(n * sizeof(CheckpointerRequest));
 		memcpy(requests, CheckpointerShmem->requests, n * sizeof(CheckpointerRequest));
 	}
+
+	START_CRIT_SECTION();
+
 	CheckpointerShmem->num_requests = 0;
 
 	LWLockRelease(CheckpointerCommLock);
@@ -1340,10 +1340,10 @@ AbsorbFsyncRequests(void)
 	for (request = requests; n > 0; request++, n--)
 		RememberFsyncRequest(request->rnode, request->forknum, request->segno);
 
+	END_CRIT_SECTION();
+
 	if (requests)
 		pfree(requests);
-
-	END_CRIT_SECTION();
 }
 
 /*

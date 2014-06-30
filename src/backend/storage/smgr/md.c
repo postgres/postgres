@@ -115,7 +115,7 @@ typedef struct _MdfdVec
 	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 } MdfdVec;
 
-static MemoryContext MdCxt;		/* context for all md.c allocations */
+static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /*
@@ -157,6 +157,7 @@ typedef struct
 
 static HTAB *pendingOpsTable = NULL;
 static List *pendingUnlinks = NIL;
+static MemoryContext pendingOpsCxt;		/* context for the above  */
 
 static CycleCtr mdsync_cycle_ctr = 0;
 static CycleCtr mdckpt_cycle_ctr = 0;
@@ -209,11 +210,27 @@ mdinit(void)
 	{
 		HASHCTL		hash_ctl;
 
+		/*
+		 * XXX: The checkpointer needs to add entries to the pending ops table
+		 * when absorbing fsync requests.  That is done within a critical
+		 * section, which isn't usually allowed, but we make an exception.
+		 * It means that there's a theoretical possibility that you run out of
+		 * memory while absorbing fsync requests, which leads to a PANIC.
+		 * Fortunately the hash table is small so that's unlikely to happen in
+		 * practice.
+		 */
+		pendingOpsCxt = AllocSetContextCreate(MdCxt,
+											  "Pending Ops Context",
+											  ALLOCSET_DEFAULT_MINSIZE,
+											  ALLOCSET_DEFAULT_INITSIZE,
+											  ALLOCSET_DEFAULT_MAXSIZE);
+		MemoryContextAllowInCriticalSection(pendingOpsCxt, true);
+
 		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(RelFileNode);
 		hash_ctl.entrysize = sizeof(PendingOperationEntry);
 		hash_ctl.hash = tag_hash;
-		hash_ctl.hcxt = MdCxt;
+		hash_ctl.hcxt = pendingOpsCxt;
 		pendingOpsTable = hash_create("Pending Ops Table",
 									  100L,
 									  &hash_ctl,
@@ -1516,7 +1533,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 	else if (segno == UNLINK_RELATION_REQUEST)
 	{
 		/* Unlink request: put it in the linked list */
-		MemoryContext oldcxt = MemoryContextSwitchTo(MdCxt);
+		MemoryContext oldcxt = MemoryContextSwitchTo(pendingOpsCxt);
 		PendingUnlinkEntry *entry;
 
 		/* PendingUnlinkEntry doesn't store forknum, since it's always MAIN */
@@ -1533,7 +1550,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 	else
 	{
 		/* Normal case: enter a request to fsync this segment */
-		MemoryContext oldcxt = MemoryContextSwitchTo(MdCxt);
+		MemoryContext oldcxt = MemoryContextSwitchTo(pendingOpsCxt);
 		PendingOperationEntry *entry;
 		bool		found;
 
