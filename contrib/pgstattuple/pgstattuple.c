@@ -277,16 +277,11 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	BlockNumber tupblock;
 	Buffer		buffer;
 	pgstattuple_type stat = {0};
-	BufferAccessStrategy bstrategy;
 
 	/* Disable syncscan because we assume we scan from block zero upwards */
 	scan = heap_beginscan_strat(rel, SnapshotAny, 0, NULL, true, false);
 
 	nblocks = scan->rs_nblocks; /* # blocks to be scanned */
-
-	/* prepare access strategy for this table */
-	bstrategy = GetAccessStrategy(BAS_BULKREAD);
-	scan->rs_strategy = bstrategy;
 
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -321,26 +316,28 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		{
 			CHECK_FOR_INTERRUPTS();
 
-			buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block, RBM_NORMAL, bstrategy);
+			buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
+										RBM_NORMAL, scan->rs_strategy);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 			stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
 			UnlockReleaseBuffer(buffer);
 			block++;
 		}
 	}
-	heap_endscan(scan);
 
 	while (block < nblocks)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block, RBM_NORMAL, bstrategy);
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
+									RBM_NORMAL, scan->rs_strategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
 		UnlockReleaseBuffer(buffer);
 		block++;
 	}
 
+	heap_endscan(scan);
 	relation_close(rel, AccessShareLock);
 
 	stat.table_len = (uint64) nblocks *BLCKSZ;
