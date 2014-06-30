@@ -491,7 +491,7 @@ copy_clog_xlog_xid(void)
  *
  *	We have frozen all xids, so set relfrozenxid and datfrozenxid
  *	to be the old cluster's xid counter, which we just set in the new
- *	cluster.  User-table frozenxid values will be set by pg_dumpall
+ *	cluster.  User-table frozenxid values will be set by pg_dump
  *	--binary-upgrade, but objects not set by the pg_dump must have
  *	proper frozen counters.
  */
