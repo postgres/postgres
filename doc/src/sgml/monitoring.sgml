@@ -93,7 +93,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    If <xref linkend="guc-cluster-name"> has been configured the
-   cluster name will also be show in <command>ps</> output:
+   cluster name will also be shown in <command>ps</> output:
 <screen>
 $ psql -c 'SHOW cluster_name'
  cluster_name

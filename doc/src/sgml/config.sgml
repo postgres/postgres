@@ -4142,7 +4142,7 @@ local0.*    /var/log/postgresql
         processes in this cluster. The name can be any string of less than
         <symbol>NAMEDATALEN</> characters (64 characters in a standard
         build). Only printable ASCII characters may be used in the
-        <varname>application_name</varname> value. Other characters will be
+        <varname>cluster_name</varname> value. Other characters will be
         replaced with question marks (<literal>?</literal>).  No name is shown
         if this parameter is set to the empty string <literal>''</> (which is
         the default). This parameter can only be set at server start.
