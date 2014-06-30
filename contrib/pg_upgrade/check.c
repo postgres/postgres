@@ -285,9 +285,9 @@ check_cluster_versions(void)
 				 PG_MAJORVERSION);
 
 	/*
-	 * We can't allow downgrading because we use the target pg_dumpall, and
-	 * pg_dumpall cannot operate on new database versions, only older
-	 * versions.
+	 * We can't allow downgrading because we use the target pg_dump, and
+	 * pg_dump cannot operate on newer database versions, only current and
+	 * older versions.
 	 */
 	if (old_cluster.major_version > new_cluster.major_version)
 		pg_fatal("This utility cannot be used to downgrade to older major PostgreSQL versions.\n");

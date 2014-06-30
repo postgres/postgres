@@ -161,7 +161,7 @@ get_loadable_libraries(void)
 		/*
 		 * Systems that install plpython before 8.1 have
 		 * plpython_call_handler() defined in the "public" schema, causing
-		 * pg_dumpall to dump it.  However that function still references
+		 * pg_dump to dump it.  However that function still references
 		 * "plpython" (no "2"), so it throws an error on restore.  This code
 		 * checks for the problem function, reports affected databases to the
 		 * user and explains how to remove them. 8.1 git commit:
