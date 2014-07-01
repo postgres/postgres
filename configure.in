@@ -1502,15 +1502,6 @@ ACX_PTHREAD	# set thread flags
 # enables 5-arg getpwuid_r, among other things.
 PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
 
-
-# At this point, we don't want to muck with the compiler name for threading.
-# Let's see who fails, perhaps AIX.  2004-04-23
-if test "$PTHREAD_CC" != "$CC"; then
-AC_MSG_ERROR([
-PostgreSQL does not support platforms that require a special compiler
-for thread safety;  use --disable-thread-safety to disable thread safety.])
-fi
-
 # Check for *_r functions
 _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"

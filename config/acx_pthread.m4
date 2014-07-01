@@ -1,8 +1,7 @@
-dnl PGSGL:  When updating, comment out port-specific part below;
-dnl see the comment below with the word "PostgreSQL".
-dnl
-dnl Available from the GNU Autoconf Macro Archive at:
+dnl This is based on an old macro from the GNU Autoconf Macro Archive at:
 dnl http://www.gnu.org/software/ac-archive/htmldoc/acx_pthread.html
+dnl but it's been rather heavily hacked --- beware of blindly dropping in
+dnl upstream changes!
 dnl
 AC_DEFUN([ACX_PTHREAD], [
 AC_REQUIRE([AC_CANONICAL_HOST])
@@ -144,8 +143,9 @@ _ACEOF
             rm -f conftest.$ac_objext conftest$ac_exeext
             # Check both linking and compiling, because they might tolerate different options.
             if test "`(eval $ac_link 2>&1 1>&5)`" = "" && test "`(eval $ac_compile 2>&1 1>&5)`" = ""; then
-                # we continue with more flags because Linux needs -lpthread
-                # for libpq builds on PostgreSQL.  The test above only
+                # The original macro breaks out of the loop at this point,
+                # but we continue trying flags because Linux needs -lpthread
+                # too to build libpq successfully.  The test above only
                 # tests for building binaries, not shared libraries.
                 PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
                 PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
@@ -160,69 +160,12 @@ _ACEOF
 done
 fi
 
-# Various other checks:
-if test "x$acx_pthread_ok" = xyes; then
-        save_LIBS="$LIBS"
-        LIBS="$PTHREAD_LIBS $LIBS"
-        save_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-
-        # Detect AIX lossage: threads are created detached by default
-        # and the JOINABLE attribute has a nonstandard name (UNDETACHED).
-        AC_MSG_CHECKING([for joinable pthread attribute])
-        AC_TRY_LINK([#include <pthread.h>],
-                    [int attr=PTHREAD_CREATE_JOINABLE;],
-                    ok=PTHREAD_CREATE_JOINABLE, ok=unknown)
-        if test x"$ok" = xunknown; then
-                AC_TRY_LINK([#include <pthread.h>],
-                            [int attr=PTHREAD_CREATE_UNDETACHED;],
-                            ok=PTHREAD_CREATE_UNDETACHED, ok=unknown)
-        fi
-        if test x"$ok" != xPTHREAD_CREATE_JOINABLE; then
-                AC_DEFINE(PTHREAD_CREATE_JOINABLE, $ok,
-                          [Define to the necessary symbol if this constant
-                           uses a non-standard name on your system.])
-        fi
-        AC_MSG_RESULT(${ok})
-        if test x"$ok" = xunknown; then
-                AC_MSG_WARN([we do not know how to create joinable pthreads])
-        fi
-
-        AC_MSG_CHECKING([if more special flags are required for pthreads])
-        flag=no
-# We always add these in PostgreSQL
-#       case "${host_cpu}-${host_os}" in
-#               *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
-#               *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
-#       esac
-        AC_MSG_RESULT(${flag})
-        if test "x$flag" != xno; then
-                PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
-        fi
-
-        LIBS="$save_LIBS"
-        CFLAGS="$save_CFLAGS"
-
-# Supporting cc_r would require a special CC in all places that
-# use libpq, and that is ugly, so we don't do it.  Users can still
-# define their compiler as cc_r to do thread builds of everything.
-        # More AIX lossage: must compile with cc_r
-        AC_CHECK_PROG(PTHREAD_CC, cc_r, cc_r, ${CC})
-else
-        PTHREAD_CC="$CC"
-fi
+# The original macro has a bunch of other tests here, which we have removed
+# because (a) Postgres doesn't need them, and (b) $acx_pthread_ok is not
+# meaningful at this point.
 
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_CC)
 
-# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test x"$acx_pthread_ok" = xyes; then
-        ifelse([$1],,AC_DEFINE(HAVE_PTHREAD,1,[Define if you have POSIX threads libraries and header files.]),[$1])
-        :
-else
-        acx_pthread_ok=no
-        $2
-fi
 AC_LANG_RESTORE
 ])dnl ACX_PTHREAD
