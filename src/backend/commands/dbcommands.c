@@ -39,6 +39,7 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/defrem.h"
 #include "commands/seclabel.h"
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
@@ -188,7 +189,7 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dctype = defel;
 		}
-		else if (strcmp(defel->defname, "connectionlimit") == 0)
+		else if (strcmp(defel->defname, "connection_limit") == 0)
 		{
 			if (dconnlimit)
 				ereport(ERROR,
@@ -204,21 +205,22 @@ createdb(const CreatedbStmt *stmt)
 					 errhint("Consider using tablespaces instead.")));
 		}
 		else
-			elog(ERROR, "option \"%s\" not recognized",
-				 defel->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("option \"%s\" not recognized", defel->defname)));
 	}
 
 	if (downer && downer->arg)
-		dbowner = strVal(downer->arg);
+		dbowner = defGetString(downer);
 	if (dtemplate && dtemplate->arg)
-		dbtemplate = strVal(dtemplate->arg);
+		dbtemplate = defGetString(dtemplate);
 	if (dencoding && dencoding->arg)
 	{
 		const char *encoding_name;
 
 		if (IsA(dencoding->arg, Integer))
 		{
-			encoding = intVal(dencoding->arg);
+			encoding = defGetInt32(dencoding);
 			encoding_name = pg_encoding_to_char(encoding);
 			if (strcmp(encoding_name, "") == 0 ||
 				pg_valid_server_encoding(encoding_name) < 0)
@@ -227,9 +229,9 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("%d is not a valid encoding code",
 								encoding)));
 		}
-		else if (IsA(dencoding->arg, String))
+		else
 		{
-			encoding_name = strVal(dencoding->arg);
+			encoding_name = defGetString(dencoding);
 			encoding = pg_valid_server_encoding(encoding_name);
 			if (encoding < 0)
 				ereport(ERROR,
@@ -237,18 +239,15 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("%s is not a valid encoding name",
 								encoding_name)));
 		}
-		else
-			elog(ERROR, "unrecognized node type: %d",
-				 nodeTag(dencoding->arg));
 	}
 	if (dcollate && dcollate->arg)
-		dbcollate = strVal(dcollate->arg);
+		dbcollate = defGetString(dcollate);
 	if (dctype && dctype->arg)
-		dbctype = strVal(dctype->arg);
+		dbctype = defGetString(dctype);
 
 	if (dconnlimit && dconnlimit->arg)
 	{
-		dbconnlimit = intVal(dconnlimit->arg);
+		dbconnlimit = defGetInt32(dconnlimit);
 		if (dbconnlimit < -1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -379,7 +378,7 @@ createdb(const CreatedbStmt *stmt)
 		char	   *tablespacename;
 		AclResult	aclresult;
 
-		tablespacename = strVal(dtablespacename->arg);
+		tablespacename = defGetString(dtablespacename);
 		dst_deftablespace = get_tablespace_oid(tablespacename, false);
 		/* check permissions */
 		aclresult = pg_tablespace_aclcheck(dst_deftablespace, GetUserId(),
@@ -1341,7 +1340,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "connectionlimit") == 0)
+		if (strcmp(defel->defname, "connection_limit") == 0)
 		{
 			if (dconnlimit)
 				ereport(ERROR,
@@ -1358,23 +1357,32 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 			dtablespace = defel;
 		}
 		else
-			elog(ERROR, "option \"%s\" not recognized",
-				 defel->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("option \"%s\" not recognized", defel->defname)));
 	}
 
 	if (dtablespace)
 	{
-		/* currently, can't be specified along with any other options */
-		Assert(!dconnlimit);
+		/*
+		 * While the SET TABLESPACE syntax doesn't allow any other options,
+		 * somebody could write "WITH TABLESPACE ...".  Forbid any other
+		 * options from being specified in that case.
+		 */
+		if (list_length(stmt->options) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("option \"%s\" cannot be specified with other options",
+					  dtablespace->defname)));
 		/* this case isn't allowed within a transaction block */
 		PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
-		movedb(stmt->dbname, strVal(dtablespace->arg));
+		movedb(stmt->dbname, defGetString(dtablespace));
 		return InvalidOid;
 	}
 
-	if (dconnlimit)
+	if (dconnlimit && dconnlimit->arg)
 	{
-		connlimit = intVal(dconnlimit->arg);
+		connlimit = defGetInt32(dconnlimit);
 		if (connlimit < -1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
