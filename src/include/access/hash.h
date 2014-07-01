@@ -336,7 +336,8 @@ typedef struct HSpool HSpool;	/* opaque struct in hashsort.c */
 
 extern HSpool *_h_spoolinit(Relation heap, Relation index, uint32 num_buckets);
 extern void _h_spooldestroy(HSpool *hspool);
-extern void _h_spool(IndexTuple itup, HSpool *hspool);
+extern void _h_spool(HSpool *hspool, ItemPointer self,
+                Datum *values, bool *isnull);
 extern void _h_indexbuild(HSpool *hspool);
 
 /* hashutil.c */

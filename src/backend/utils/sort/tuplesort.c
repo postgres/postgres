@@ -1134,22 +1134,25 @@ tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
 }
 
 /*
- * Accept one index tuple while collecting input data for sort.
- *
- * Note that the input tuple is always copied; the caller need not save it.
+ * Collect one index tuple while collecting input data for sort, building
+ * it from caller-supplied values.
  */
 void
-tuplesort_putindextuple(Tuplesortstate *state, IndexTuple tuple)
+tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
+							  ItemPointer self, Datum *values,
+                              bool *isnull)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
 
-	/*
-	 * Copy the given tuple into memory we control, and decrease availMem.
-	 * Then call the common code.
-	 */
-	COPYTUP(state, &stup, (void *) tuple);
-
+	stup.tuple = index_form_tuple(RelationGetDescr(rel), values, isnull);
+	((IndexTuple) stup.tuple)->t_tid = *self;
+	USEMEM(state, GetMemoryChunkSpace(stup.tuple));
+	/* set up first-column key value */
+	stup.datum1 = index_getattr((IndexTuple) stup.tuple,
+								1,
+								RelationGetDescr(state->indexRel),
+								&stup.isnull1);
 	puttuple_common(state, &stup);
 
 	MemoryContextSwitchTo(oldcontext);

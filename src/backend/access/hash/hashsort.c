@@ -90,9 +90,10 @@ _h_spooldestroy(HSpool *hspool)
  * spool an index entry into the sort file.
  */
 void
-_h_spool(IndexTuple itup, HSpool *hspool)
+_h_spool(HSpool *hspool, ItemPointer self, Datum *values, bool *isnull)
 {
-	tuplesort_putindextuple(hspool->sortstate, itup);
+	tuplesort_putindextuplevalues(hspool->sortstate, hspool->index,
+								  self, values, isnull);
 }
 
 /*

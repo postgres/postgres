@@ -84,7 +84,9 @@ extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
 extern void tuplesort_puttupleslot(Tuplesortstate *state,
 					   TupleTableSlot *slot);
 extern void tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup);
-extern void tuplesort_putindextuple(Tuplesortstate *state, IndexTuple tuple);
+extern void tuplesort_putindextuplevalues(Tuplesortstate *state,
+							  Relation rel, ItemPointer self,
+							  Datum *values, bool *isnull);
 extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
 				   bool isNull);
 

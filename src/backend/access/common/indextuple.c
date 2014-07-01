@@ -28,6 +28,9 @@
 
 /* ----------------
  *		index_form_tuple
+ *
+ *		This shouldn't leak any memory; otherwise, callers such as
+ *		tuplesort_putindextuplevalues() will be very unhappy.
  * ----------------
  */
 IndexTuple

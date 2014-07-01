@@ -171,28 +171,21 @@ btbuildCallback(Relation index,
 				void *state)
 {
 	BTBuildState *buildstate = (BTBuildState *) state;
-	IndexTuple	itup;
-
-	/* form an index tuple and point it at the heap tuple */
-	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
-	itup->t_tid = htup->t_self;
 
 	/*
 	 * insert the index tuple into the appropriate spool file for subsequent
 	 * processing
 	 */
 	if (tupleIsAlive || buildstate->spool2 == NULL)
-		_bt_spool(itup, buildstate->spool);
+		_bt_spool(buildstate->spool, &htup->t_self, values, isnull);
 	else
 	{
 		/* dead tuples are put into spool2 */
 		buildstate->haveDead = true;
-		_bt_spool(itup, buildstate->spool2);
+		_bt_spool(buildstate->spool2, &htup->t_self, values, isnull);
 	}
 
 	buildstate->indtuples += 1;
-
-	pfree(itup);
 }
 
 /*
