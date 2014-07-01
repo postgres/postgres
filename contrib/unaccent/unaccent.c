@@ -63,7 +63,9 @@ placeChar(TrieChar *node, const unsigned char *str, int lenstr,
 	if (lenstr <= 1)
 	{
 		if (curnode->replaceTo)
-			elog(WARNING, "duplicate source strings, first one will be used");
+			ereport(WARNING,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				errmsg("duplicate source strings, first one will be used")));
 		else
 		{
 			curnode->replacelen = replacelen;
@@ -128,7 +130,7 @@ initTrie(char *filename)
 				 *	2	in whitespace after src
 				 *	3	in trg
 				 *	4	in whitespace after trg
-				 *	-1	syntax error detected (line will be ignored)
+				 *	-1	syntax error detected
 				 *----------
 				 */
 				int			state;
@@ -192,6 +194,10 @@ initTrie(char *filename)
 					rootTrie = placeChar(rootTrie,
 										 (unsigned char *) src, srclen,
 										 trg, trglen);
+				else if (state < 0)
+					ereport(WARNING,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid syntax: more than two strings in unaccent rule")));
 
 				pfree(line);
 			}
