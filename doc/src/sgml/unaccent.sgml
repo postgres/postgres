@@ -72,6 +72,14 @@
 
    <listitem>
     <para>
+     Actually, each <quote>character</> can be any string not containing
+     whitespace, so <filename>unaccent</> dictionaries could be used for
+     other sorts of substring substitutions besides diacritic removal.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      As with other <productname>PostgreSQL</> text search configuration files,
      the rules file must be stored in UTF-8 encoding.  The data is
      automatically translated into the current database's encoding when

@@ -23,9 +23,16 @@
 PG_MODULE_MAGIC;
 
 /*
- * Unaccent dictionary uses a trie to find a character to replace. Each node of
- * the trie is an array of 256 TrieChar structs (n-th element of array
- * corresponds to byte)
+ * An unaccent dictionary uses a trie to find a string to replace.  Each node
+ * of the trie is an array of 256 TrieChar structs; the N-th element of the
+ * array corresponds to next byte value N.  That element can contain both a
+ * replacement string (to be used if the source string ends with this byte)
+ * and a link to another trie node (to be followed if there are more bytes).
+ *
+ * Note that the trie search logic pays no attention to multibyte character
+ * boundaries.  This is OK as long as both the data entered into the trie and
+ * the data we're trying to look up are validly encoded; no partial-character
+ * matches will occur.
  */
 typedef struct TrieChar
 {
@@ -36,34 +43,38 @@ typedef struct TrieChar
 
 /*
  * placeChar - put str into trie's structure, byte by byte.
+ *
+ * If node is NULL, we need to make a new node, which will be returned;
+ * otherwise the return value is the same as node.
  */
 static TrieChar *
-placeChar(TrieChar *node, unsigned char *str, int lenstr, char *replaceTo, int replacelen)
+placeChar(TrieChar *node, const unsigned char *str, int lenstr,
+		  const char *replaceTo, int replacelen)
 {
 	TrieChar   *curnode;
 
 	if (!node)
-	{
-		node = palloc(sizeof(TrieChar) * 256);
-		memset(node, 0, sizeof(TrieChar) * 256);
-	}
+		node = (TrieChar *) palloc0(sizeof(TrieChar) * 256);
+
+	Assert(lenstr > 0);			/* else str[0] doesn't exist */
 
 	curnode = node + *str;
 
-	if (lenstr == 1)
+	if (lenstr <= 1)
 	{
 		if (curnode->replaceTo)
-			elog(WARNING, "duplicate TO argument, use first one");
+			elog(WARNING, "duplicate source strings, first one will be used");
 		else
 		{
 			curnode->replacelen = replacelen;
-			curnode->replaceTo = palloc(replacelen);
+			curnode->replaceTo = (char *) palloc(replacelen);
 			memcpy(curnode->replaceTo, replaceTo, replacelen);
 		}
 	}
 	else
 	{
-		curnode->nextChar = placeChar(curnode->nextChar, str + 1, lenstr - 1, replaceTo, replacelen);
+		curnode->nextChar = placeChar(curnode->nextChar, str + 1, lenstr - 1,
+									  replaceTo, replacelen);
 	}
 
 	return node;
@@ -213,23 +224,35 @@ initTrie(char *filename)
 }
 
 /*
- * findReplaceTo - find multibyte character in trie
+ * findReplaceTo - find longest possible match in trie
+ *
+ * On success, returns pointer to ending subnode, plus length of matched
+ * source string in *p_matchlen.  On failure, returns NULL.
  */
 static TrieChar *
-findReplaceTo(TrieChar *node, unsigned char *src, int srclen)
+findReplaceTo(TrieChar *node, const unsigned char *src, int srclen,
+			  int *p_matchlen)
 {
-	while (node)
-	{
-		node = node + *src;
-		if (srclen == 1)
-			return node;
+	TrieChar   *result = NULL;
+	int			matchlen = 0;
 
-		src++;
-		srclen--;
+	*p_matchlen = 0;			/* prevent uninitialized-variable warnings */
+
+	while (node && matchlen < srclen)
+	{
+		node = node + src[matchlen];
+		matchlen++;
+
+		if (node->replaceTo)
+		{
+			result = node;
+			*p_matchlen = matchlen;
+		}
+
 		node = node->nextChar;
 	}
 
-	return NULL;
+	return result;
 }
 
 PG_FUNCTION_INFO_V1(unaccent_init);
@@ -280,18 +303,17 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 	TrieChar   *rootTrie = (TrieChar *) PG_GETARG_POINTER(0);
 	char	   *srcchar = (char *) PG_GETARG_POINTER(1);
 	int32		len = PG_GETARG_INT32(2);
-	char	   *srcstart,
+	char	   *srcstart = srcchar,
 			   *trgchar = NULL;
-	int			charlen;
 	TSLexeme   *res = NULL;
-	TrieChar   *node;
 
-	srcstart = srcchar;
-	while (srcchar - srcstart < len)
+	while (len > 0)
 	{
-		charlen = pg_mblen(srcchar);
+		TrieChar   *node;
+		int			matchlen;
 
-		node = findReplaceTo(rootTrie, (unsigned char *) srcchar, charlen);
+		node = findReplaceTo(rootTrie, (unsigned char *) srcchar, len,
+							 &matchlen);
 		if (node && node->replaceTo)
 		{
 			if (!res)
@@ -309,13 +331,18 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 			memcpy(trgchar, node->replaceTo, node->replacelen);
 			trgchar += node->replacelen;
 		}
-		else if (res)
+		else
 		{
-			memcpy(trgchar, srcchar, charlen);
-			trgchar += charlen;
+			matchlen = pg_mblen(srcchar);
+			if (res)
+			{
+				memcpy(trgchar, srcchar, matchlen);
+				trgchar += matchlen;
+			}
 		}
 
-		srcchar += charlen;
+		srcchar += matchlen;
+		len -= matchlen;
 	}
 
 	if (res)
