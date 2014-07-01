@@ -104,11 +104,21 @@ initTrie(char *filename)
 
 			while ((line = tsearch_readline(&trst)) != NULL)
 			{
-				/*
-				 * The format of each line must be "src trg" where src and trg
-				 * are sequences of one or more non-whitespace characters,
-				 * separated by whitespace.  Whitespace at start or end of
-				 * line is ignored.
+				/*----------
+				 * The format of each line must be "src" or "src trg", where
+				 * src and trg are sequences of one or more non-whitespace
+				 * characters, separated by whitespace.  Whitespace at start
+				 * or end of line is ignored.  If trg is omitted, an empty
+				 * string is used as the replacement.
+				 *
+				 * We use a simple state machine, with states
+				 *	0	initial (before src)
+				 *	1	in src
+				 *	2	in whitespace after src
+				 *	3	in trg
+				 *	4	in whitespace after trg
+				 *	-1	syntax error detected (line will be ignored)
+				 *----------
 				 */
 				int			state;
 				char	   *ptr;
@@ -160,7 +170,14 @@ initTrie(char *filename)
 					}
 				}
 
-				if (state >= 3)
+				if (state == 1 || state == 2)
+				{
+					/* trg was omitted, so use "" */
+					trg = "";
+					trglen = 0;
+				}
+
+				if (state > 0)
 					rootTrie = placeChar(rootTrie,
 										 (unsigned char *) src, srclen,
 										 trg, trglen);

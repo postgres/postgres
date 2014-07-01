@@ -45,9 +45,9 @@
   <itemizedlist>
    <listitem>
     <para>
-     Each line represents a pair, consisting of a character with accent
-     followed by a character without accent.  The first is translated into
-     the second.  For example,
+     Each line represents one translation rule, consisting of a character with
+     accent followed by a character without accent.  The first is translated
+     into the second.  For example,
 <programlisting>
 &Agrave;        A
 &Aacute;        A
@@ -57,6 +57,27 @@
 &Aring;        A
 &AElig;        A
 </programlisting>
+     The two characters must be separated by whitespace, and any leading or
+     trailing whitespace on a line is ignored.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Alternatively, if only one character is given on a line, instances of
+     that character are deleted; this is useful in languages where accents
+     are represented by separate characters.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     As with other <productname>PostgreSQL</> text search configuration files,
+     the rules file must be stored in UTF-8 encoding.  The data is
+     automatically translated into the current database's encoding when
+     loaded.  Any lines containing untranslatable characters are silently
+     ignored, so that rules files can contain rules that are not applicable in
+     the current encoding.
     </para>
    </listitem>
   </itemizedlist>
@@ -132,8 +153,8 @@ mydb=# select ts_headline('fr','H&ocirc;tel de la Mer',to_tsquery('fr','Hotels')
 
  <para>
   The <function>unaccent()</> function removes accents (diacritic signs) from
-  a given string.  Basically, it's a wrapper around the
-  <filename>unaccent</> dictionary, but it can be used outside normal
+  a given string.  Basically, it's a wrapper around
+  <filename>unaccent</>-type dictionaries, but it can be used outside normal
   text search contexts.
  </para>
 
@@ -144,6 +165,11 @@ mydb=# select ts_headline('fr','H&ocirc;tel de la Mer',to_tsquery('fr','Hotels')
 <synopsis>
 unaccent(<optional><replaceable class="PARAMETER">dictionary</replaceable>, </optional> <replaceable class="PARAMETER">string</replaceable>) returns <type>text</type>
 </synopsis>
+
+ <para>
+  If the <replaceable class="PARAMETER">dictionary</replaceable> argument is
+  omitted, <literal>unaccent</> is assumed.
+ </para>
 
  <para>
   For example:
