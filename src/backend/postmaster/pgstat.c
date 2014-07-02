@@ -753,7 +753,8 @@ pgstat_report_stat(bool force)
 
 	/* Don't expend a clock check if nothing to do */
 	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
-		!have_function_stats && !force)
+		pgStatXactCommit == 0 && pgStatXactRollback == 0 &&
+		!have_function_stats)
 		return;
 
 	/*
@@ -817,11 +818,11 @@ pgstat_report_stat(bool force)
 	}
 
 	/*
-	 * Send partial messages.  If force is true, make sure that any pending
-	 * xact commit/abort gets counted, even if no table stats to send.
+	 * Send partial messages.  Make sure that any pending xact commit/abort
+	 * gets counted, even if there are no table stats to send.
 	 */
 	if (regular_msg.m_nentries > 0 ||
-		(force && (pgStatXactCommit > 0 || pgStatXactRollback > 0)))
+		pgStatXactCommit > 0 || pgStatXactRollback > 0)
 		pgstat_send_tabstat(&regular_msg);
 	if (shared_msg.m_nentries > 0)
 		pgstat_send_tabstat(&shared_msg);
