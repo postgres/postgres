@@ -540,9 +540,8 @@ set_frozenxids(void)
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
-									  "UPDATE pg_catalog.pg_database "
-									  "SET	datallowconn = true "
-									  "WHERE datname = '%s'", datname));
+								"ALTER DATABASE %s ALLOW_CONNECTIONS = true",
+									  quote_identifier(datname)));
 
 		conn = connectToServer(&new_cluster, datname);
 
@@ -558,9 +557,8 @@ set_frozenxids(void)
 		/* Reset datallowconn flag */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
-									  "UPDATE pg_catalog.pg_database "
-									  "SET	datallowconn = false "
-									  "WHERE datname = '%s'", datname));
+							   "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
+									  quote_identifier(datname)));
 	}
 
 	PQclear(dbres);

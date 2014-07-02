@@ -2288,11 +2288,7 @@ make_template0(void)
 	PG_CMD_DECL;
 	const char **line;
 	static const char *template0_setup[] = {
-		"CREATE DATABASE template0;\n",
-		"UPDATE pg_database SET "
-		"	datistemplate = 't', "
-		"	datallowconn = 'f' "
-		"    WHERE datname = 'template0';\n",
+		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false;\n",
 
 		/*
 		 * We use the OID of template0 to determine lastsysoid

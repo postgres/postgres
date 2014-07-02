@@ -123,6 +123,8 @@ createdb(const CreatedbStmt *stmt)
 	DefElem    *dencoding = NULL;
 	DefElem    *dcollate = NULL;
 	DefElem    *dctype = NULL;
+	DefElem    *distemplate = NULL;
+	DefElem    *dallowconnections = NULL;
 	DefElem    *dconnlimit = NULL;
 	char	   *dbname = stmt->dbname;
 	char	   *dbowner = NULL;
@@ -131,6 +133,8 @@ createdb(const CreatedbStmt *stmt)
 	char	   *dbctype = NULL;
 	char	   *canonname;
 	int			encoding = -1;
+	bool		dbistemplate = false;
+	bool		dballowconnections = true;
 	int			dbconnlimit = -1;
 	int			notherbackends;
 	int			npreparedxacts;
@@ -189,6 +193,22 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dctype = defel;
 		}
+		else if (strcmp(defel->defname, "is_template") == 0)
+		{
+			if (distemplate)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			distemplate = defel;
+		}
+		else if (strcmp(defel->defname, "allow_connections") == 0)
+		{
+			if (dallowconnections)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dallowconnections = defel;
+		}
 		else if (strcmp(defel->defname, "connection_limit") == 0)
 		{
 			if (dconnlimit)
@@ -244,7 +264,10 @@ createdb(const CreatedbStmt *stmt)
 		dbcollate = defGetString(dcollate);
 	if (dctype && dctype->arg)
 		dbctype = defGetString(dctype);
-
+	if (distemplate && distemplate->arg)
+		dbistemplate = defGetBoolean(distemplate);
+	if (dallowconnections && dallowconnections->arg)
+		dballowconnections = defGetBoolean(dallowconnections);
 	if (dconnlimit && dconnlimit->arg)
 	{
 		dbconnlimit = defGetInt32(dconnlimit);
@@ -487,8 +510,8 @@ createdb(const CreatedbStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(dbcollate));
 	new_record[Anum_pg_database_datctype - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(dbctype));
-	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
-	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
+	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(dbistemplate);
+	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(dballowconnections);
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
@@ -1328,7 +1351,11 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	ScanKeyData scankey;
 	SysScanDesc scan;
 	ListCell   *option;
-	int			connlimit = -1;
+	bool		dbistemplate = false;
+	bool		dballowconnections = true;
+	int			dbconnlimit = -1;
+	DefElem    *distemplate = NULL;
+	DefElem    *dallowconnections = NULL;
 	DefElem    *dconnlimit = NULL;
 	DefElem    *dtablespace = NULL;
 	Datum		new_record[Natts_pg_database];
@@ -1340,7 +1367,23 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "connection_limit") == 0)
+		if (strcmp(defel->defname, "is_template") == 0)
+		{
+			if (distemplate)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			distemplate = defel;
+		}
+		else if (strcmp(defel->defname, "allow_connections") == 0)
+		{
+			if (dallowconnections)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dallowconnections = defel;
+		}
+		else if (strcmp(defel->defname, "connection_limit") == 0)
 		{
 			if (dconnlimit)
 				ereport(ERROR,
@@ -1380,13 +1423,17 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 		return InvalidOid;
 	}
 
+	if (distemplate && distemplate->arg)
+		dbistemplate = defGetBoolean(distemplate);
+	if (dallowconnections && dallowconnections->arg)
+		dballowconnections = defGetBoolean(dallowconnections);
 	if (dconnlimit && dconnlimit->arg)
 	{
-		connlimit = defGetInt32(dconnlimit);
-		if (connlimit < -1)
+		dbconnlimit = defGetInt32(dconnlimit);
+		if (dbconnlimit < -1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid connection limit: %d", connlimit)));
+					 errmsg("invalid connection limit: %d", dbconnlimit)));
 	}
 
 	/*
@@ -1414,15 +1461,36 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 					   stmt->dbname);
 
 	/*
+	 * In order to avoid getting locked out and having to go through
+	 * standalone mode, we refuse to disallow connections to the database
+	 * we're currently connected to.  Lockout can still happen with concurrent
+	 * sessions but the likeliness of that is not high enough to worry about.
+	 */
+	if (!dballowconnections && dboid == MyDatabaseId)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot disallow connections for current database")));
+
+	/*
 	 * Build an updated tuple, perusing the information just obtained
 	 */
 	MemSet(new_record, 0, sizeof(new_record));
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
+	if (distemplate)
+	{
+		new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(dbistemplate);
+		new_record_repl[Anum_pg_database_datistemplate - 1] = true;
+	}
+	if (dallowconnections)
+	{
+		new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(dballowconnections);
+		new_record_repl[Anum_pg_database_datallowconn - 1] = true;
+	}
 	if (dconnlimit)
 	{
-		new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(connlimit);
+		new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 		new_record_repl[Anum_pg_database_datconnlimit - 1] = true;
 	}
 

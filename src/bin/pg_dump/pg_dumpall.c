@@ -1374,18 +1374,14 @@ dumpCreateDB(PGconn *conn)
 				appendPQExpBuffer(buf, " TABLESPACE = %s",
 								  fmtId(dbtablespace));
 
+			if (strcmp(dbistemplate, "t") == 0)
+				appendPQExpBuffer(buf, " IS_TEMPLATE = true");
+
 			if (strcmp(dbconnlimit, "-1") != 0)
 				appendPQExpBuffer(buf, " CONNECTION LIMIT = %s",
 								  dbconnlimit);
 
 			appendPQExpBufferStr(buf, ";\n");
-
-			if (strcmp(dbistemplate, "t") == 0)
-			{
-				appendPQExpBufferStr(buf, "UPDATE pg_catalog.pg_database SET datistemplate = 't' WHERE datname = ");
-				appendStringLiteralConn(buf, dbname, conn);
-				appendPQExpBufferStr(buf, ";\n");
-			}
 
 			if (binary_upgrade)
 			{

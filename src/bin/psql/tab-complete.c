@@ -1021,7 +1021,8 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DATABASE") == 0)
 	{
 		static const char *const list_ALTERDATABASE[] =
-		{"RESET", "SET", "OWNER TO", "RENAME TO", "CONNECTION LIMIT", NULL};
+		{"RESET", "SET", "OWNER TO", "RENAME TO", "IS_TEMPLATE",
+		"ALLOW_CONNECTIONS", "CONNECTION LIMIT", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERDATABASE);
 	}
@@ -2111,8 +2112,8 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DATABASE") == 0)
 	{
 		static const char *const list_DATABASE[] =
-		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE", "CONNECTION LIMIT",
-		NULL};
+		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE", "IS_TEMPLATE",
+		"ALLOW_CONNECTIONS", "CONNECTION LIMIT", NULL};
 
 		COMPLETE_WITH_LIST(list_DATABASE);
 	}
