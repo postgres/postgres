@@ -1524,6 +1524,23 @@ command_no_begin(const char *query)
 		return false;
 	}
 
+	if (wordlen == 5 && pg_strncasecmp(query, "alter", 5) == 0)
+	{
+		query += wordlen;
+
+		query = skip_white_space(query);
+
+		wordlen = 0;
+		while (isalpha((unsigned char) query[wordlen]))
+			wordlen += PQmblen(&query[wordlen], pset.encoding);
+
+		/* ALTER SYSTEM isn't allowed in xacts */
+		if (wordlen == 6 && pg_strncasecmp(query, "system", 6) == 0)
+			return true;
+
+		return false;
+	}
+
 	/*
 	 * Note: these tests will match DROP SYSTEM and REINDEX TABLESPACE, which
 	 * aren't really valid commands so we don't care much. The other four
