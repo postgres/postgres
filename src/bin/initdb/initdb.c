@@ -199,9 +199,9 @@ static const char *subdirs[] = {
 	"pg_tblspc",
 	"pg_stat",
 	"pg_stat_tmp",
-	"pg_llog",
-	"pg_llog/snapshots",
-	"pg_llog/mappings"
+	"pg_logical",
+	"pg_logical/snapshots",
+	"pg_logical/mappings"
 };
 
 
