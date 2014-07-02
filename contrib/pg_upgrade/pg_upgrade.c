@@ -46,7 +46,7 @@ static void prepare_new_cluster(void);
 static void prepare_new_databases(void);
 static void create_new_objects(void);
 static void copy_clog_xlog_xid(void);
-static void set_frozenxids(void);
+static void set_frozenxids(bool minmxid_only);
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 
@@ -250,8 +250,8 @@ prepare_new_cluster(void)
 	/*
 	 * We do freeze after analyze so pg_statistic is also frozen. template0 is
 	 * not frozen here, but data rows were frozen by initdb, and we set its
-	 * datfrozenxid and relfrozenxids later to match the new xid counter
-	 * later.
+	 * datfrozenxid, relfrozenxids, and relminmxid later to match the new xid
+	 * counter later.
 	 */
 	prep_status("Freezing all rows on the new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
@@ -273,7 +273,7 @@ prepare_new_databases(void)
 	 * set.
 	 */
 
-	set_frozenxids();
+	set_frozenxids(false);
 
 	prep_status("Restoring global objects in the new cluster");
 
@@ -355,6 +355,13 @@ create_new_objects(void)
 
 	end_progress_output();
 	check_ok();
+
+	/*
+	 * We don't have minmxids for databases or relations in pre-9.3
+	 * clusters, so set those after we have restores the schemas.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
+		set_frozenxids(true);
 
 	/* regenerate now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
@@ -489,15 +496,15 @@ copy_clog_xlog_xid(void)
 /*
  *	set_frozenxids()
  *
- *	We have frozen all xids, so set relfrozenxid and datfrozenxid
- *	to be the old cluster's xid counter, which we just set in the new
- *	cluster.  User-table frozenxid values will be set by pg_dump
- *	--binary-upgrade, but objects not set by the pg_dump must have
- *	proper frozen counters.
+ *	We have frozen all xids, so set datfrozenxid, relfrozenxid, and
+ *	relminmxid to be the old cluster's xid counter, which we just set
+ *	in the new cluster.  User-table frozenxid and minmxid values will
+ *	be set by pg_dump --binary-upgrade, but objects not set by the pg_dump
+ *	must have proper frozen counters.
  */
 static
 void
-set_frozenxids(void)
+set_frozenxids(bool minmxid_only)
 {
 	int			dbnum;
 	PGconn	   *conn,
@@ -507,15 +514,25 @@ set_frozenxids(void)
 	int			i_datname;
 	int			i_datallowconn;
 
-	prep_status("Setting frozenxid counters in new cluster");
+	if (!minmxid_only)
+		prep_status("Setting frozenxid and minmxid counters in new cluster");
+	else
+		prep_status("Setting minmxid counter in new cluster");
 
 	conn_template1 = connectToServer(&new_cluster, "template1");
 
-	/* set pg_database.datfrozenxid */
+	if (!minmxid_only)
+		/* set pg_database.datfrozenxid */
+		PQclear(executeQueryOrDie(conn_template1,
+								  "UPDATE pg_catalog.pg_database "
+								  "SET	datfrozenxid = '%u'",
+								  old_cluster.controldata.chkpnt_nxtxid));
+
+	/* set pg_database.datminmxid */
 	PQclear(executeQueryOrDie(conn_template1,
 							  "UPDATE pg_catalog.pg_database "
-							  "SET	datfrozenxid = '%u'",
-							  old_cluster.controldata.chkpnt_nxtxid));
+							  "SET	datminmxid = '%u'",
+							  old_cluster.controldata.chkpnt_nxtmulti));
 
 	/* get database names */
 	dbres = executeQueryOrDie(conn_template1,
@@ -533,10 +550,10 @@ set_frozenxids(void)
 
 		/*
 		 * We must update databases where datallowconn = false, e.g.
-		 * template0, because autovacuum increments their datfrozenxids and
-		 * relfrozenxids even if autovacuum is turned off, and even though all
-		 * the data rows are already frozen  To enable this, we temporarily
-		 * change datallowconn.
+		 * template0, because autovacuum increments their datfrozenxids,
+		 * relfrozenxids, and relminmxid  even if autovacuum is turned off,
+		 * and even though all the data rows are already frozen  To enable
+		 * this, we temporarily change datallowconn.
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
@@ -546,13 +563,22 @@ set_frozenxids(void)
 
 		conn = connectToServer(&new_cluster, datname);
 
-		/* set pg_class.relfrozenxid */
+		if (!minmxid_only)
+			/* set pg_class.relfrozenxid */
+			PQclear(executeQueryOrDie(conn,
+									  "UPDATE	pg_catalog.pg_class "
+									  "SET	relfrozenxid = '%u' "
+			/* only heap, materialized view, and TOAST are vacuumed */
+									  "WHERE	relkind IN ('r', 'm', 't')",
+									  old_cluster.controldata.chkpnt_nxtxid));
+
+		/* set pg_class.relminmxid */
 		PQclear(executeQueryOrDie(conn,
 								  "UPDATE	pg_catalog.pg_class "
-								  "SET	relfrozenxid = '%u' "
+								  "SET	relminmxid = '%u' "
 		/* only heap, materialized view, and TOAST are vacuumed */
 								  "WHERE	relkind IN ('r', 'm', 't')",
-								  old_cluster.controldata.chkpnt_nxtxid));
+								  old_cluster.controldata.chkpnt_nxtmulti));
 		PQfinish(conn);
 
 		/* Reset datallowconn flag */
