@@ -524,6 +524,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 	foreach(tllist, targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tllist);
+		Oid			tletypid;
 		int32		tletypmod;
 		Form_pg_attribute attr;
 		char	   *attname;
@@ -555,19 +556,32 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot convert relation containing dropped columns to view")));
 
+		/* Check name match if required; no need for two error texts here */
 		if (isSelect && strcmp(tle->resname, attname) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("SELECT rule's target entry %d has different column name from \"%s\"", i, attname)));
+					 errmsg("SELECT rule's target entry %d has different column name from \"%s\"",
+							i, attname),
+					 errdetail("SELECT target entry is named \"%s\".",
+							   tle->resname)));
 
-		if (attr->atttypid != exprType((Node *) tle->expr))
+		/* Check type match. */
+		tletypid = exprType((Node *) tle->expr);
+		if (attr->atttypid != tletypid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 isSelect ?
 					 errmsg("SELECT rule's target entry %d has different type from column \"%s\"",
 							i, attname) :
 					 errmsg("RETURNING list's entry %d has different type from column \"%s\"",
-							i, attname)));
+							i, attname),
+					 isSelect ?
+					 errdetail("SELECT target entry has type %s, but column has type %s.",
+							   format_type_be(tletypid),
+							   format_type_be(attr->atttypid)) :
+					 errdetail("RETURNING list entry has type %s, but column has type %s.",
+							   format_type_be(tletypid),
+							   format_type_be(attr->atttypid))));
 
 		/*
 		 * Allow typmods to be different only if one of them is -1, ie,
@@ -584,7 +598,16 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 					 errmsg("SELECT rule's target entry %d has different size from column \"%s\"",
 							i, attname) :
 					 errmsg("RETURNING list's entry %d has different size from column \"%s\"",
-							i, attname)));
+							i, attname),
+					 isSelect ?
+					 errdetail("SELECT target entry has type %s, but column has type %s.",
+							   format_type_with_typemod(tletypid, tletypmod),
+							   format_type_with_typemod(attr->atttypid,
+														attr->atttypmod)) :
+					 errdetail("RETURNING list entry has type %s, but column has type %s.",
+							   format_type_with_typemod(tletypid, tletypmod),
+							   format_type_with_typemod(attr->atttypid,
+														attr->atttypmod))));
 	}
 
 	if (i != resultDesc->natts)
