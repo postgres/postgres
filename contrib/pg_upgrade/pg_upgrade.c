@@ -451,11 +451,11 @@ copy_clog_xlog_xid(void)
 	else if (new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
 	{
 		/*
-		 * Remove files created by initdb that no longer match the
-		 * new multi-xid value.
+		 * Remove offsets/0000 file created by initdb that no longer matches
+		 * the new multi-xid value.  "members" starts at zero so no need to
+		 * remove it.
 		 */
 		remove_new_subdir("pg_multixact/offsets", false);
-		remove_new_subdir("pg_multixact/members", false);
 
 		prep_status("Setting oldest multixact ID on new cluster");
 
