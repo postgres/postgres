@@ -1452,7 +1452,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	 * unless the user used pg_resetxlog or similar. If a user did so, there's
 	 * no hope continuing to decode anyway.
 	 */
-	sprintf(path, "pg_llog/snapshots/%X-%X.snap",
+	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
 			(uint32) (lsn >> 32), (uint32) lsn);
 
 	/*
@@ -1478,7 +1478,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 		 * be safely on disk.
 		 */
 		fsync_fname(path, false);
-		fsync_fname("pg_llog/snapshots", true);
+		fsync_fname("pg_logical/snapshots", true);
 
 		builder->last_serialized_snapshot = lsn;
 		goto out;
@@ -1494,7 +1494,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	elog(DEBUG1, "serializing snapshot to %s", path);
 
 	/* to make sure only we will write to this tempfile, include pid */
-	sprintf(tmppath, "pg_llog/snapshots/%X-%X.snap.%u.tmp",
+	sprintf(tmppath, "pg_logical/snapshots/%X-%X.snap.%u.tmp",
 			(uint32) (lsn >> 32), (uint32) lsn, MyProcPid);
 
 	/*
@@ -1580,7 +1580,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	}
 	CloseTransientFile(fd);
 
-	fsync_fname("pg_llog/snapshots", true);
+	fsync_fname("pg_logical/snapshots", true);
 
 	/*
 	 * We may overwrite the work from some other backend, but that's ok, our
@@ -1596,7 +1596,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* make sure we persist */
 	fsync_fname(path, false);
-	fsync_fname("pg_llog/snapshots", true);
+	fsync_fname("pg_logical/snapshots", true);
 
 	/*
 	 * Now there's no way we can loose the dumped state anymore, remember this
@@ -1627,7 +1627,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	if (builder->state == SNAPBUILD_CONSISTENT)
 		return false;
 
-	sprintf(path, "pg_llog/snapshots/%X-%X.snap",
+	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
 			(uint32) (lsn >> 32), (uint32) lsn);
 
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
@@ -1648,7 +1648,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	 * ----
 	 */
 	fsync_fname(path, false);
-	fsync_fname("pg_llog/snapshots", true);
+	fsync_fname("pg_logical/snapshots", true);
 
 
 	/* read statically sized portion of snapshot */
@@ -1825,8 +1825,8 @@ CheckPointSnapBuild(void)
 	if (redo < cutoff)
 		cutoff = redo;
 
-	snap_dir = AllocateDir("pg_llog/snapshots");
-	while ((snap_de = ReadDir(snap_dir, "pg_llog/snapshots")) != NULL)
+	snap_dir = AllocateDir("pg_logical/snapshots");
+	while ((snap_de = ReadDir(snap_dir, "pg_logical/snapshots")) != NULL)
 	{
 		uint32		hi;
 		uint32		lo;
@@ -1837,7 +1837,7 @@ CheckPointSnapBuild(void)
 			strcmp(snap_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(path, MAXPGPATH, "pg_llog/snapshots/%s", snap_de->d_name);
+		snprintf(path, MAXPGPATH, "pg_logical/snapshots/%s", snap_de->d_name);
 
 		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
 		{

@@ -78,6 +78,11 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_logical</></entry>
+ <entry>Subdirectory containing status data for logical decoding</entry>
+</row>
+
+<row>
  <entry><filename>pg_multixact</></entry>
  <entry>Subdirectory containing multitransaction status data
   (used for shared row locks)</entry>
