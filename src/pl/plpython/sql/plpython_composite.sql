@@ -125,7 +125,7 @@ SELECT * FROM changing_test();
 ALTER TABLE changing ADD COLUMN j integer;
 SELECT * FROM changing_test();
 
--- tables of composite types (not yet implemented)
+-- tables of composite types
 
 CREATE FUNCTION composite_types_table(OUT tab table_record[], OUT typ type_record[] ) RETURNS SETOF record AS $$
 yield {'tab': [['first', 1], ['second', 2]],

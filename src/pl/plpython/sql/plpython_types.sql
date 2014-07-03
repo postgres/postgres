@@ -269,7 +269,7 @@ SELECT * FROM test_type_conversion_array_mixed2();
 
 
 CREATE FUNCTION test_type_conversion_array_record() RETURNS type_record[] AS $$
-return [None]
+return [{'first': 'one', 'second': 42}, {'first': 'two', 'second': 11}]
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_record();

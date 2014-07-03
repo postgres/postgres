@@ -630,15 +630,14 @@ ERROR:  invalid input syntax for integer: "abc"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_array_mixed2"
 CREATE FUNCTION test_type_conversion_array_record() RETURNS type_record[] AS $$
-return [None]
+return [{'first': 'one', 'second': 42}, {'first': 'two', 'second': 11}]
 $$ LANGUAGE plpythonu;
-ERROR:  PL/Python functions cannot return type type_record[]
-DETAIL:  PL/Python does not support conversion to arrays of row types.
 SELECT * FROM test_type_conversion_array_record();
-ERROR:  function test_type_conversion_array_record() does not exist
-LINE 1: SELECT * FROM test_type_conversion_array_record();
-                      ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+ test_type_conversion_array_record 
+-----------------------------------
+ {"(one,42)","(two,11)"}
+(1 row)
+
 CREATE FUNCTION test_type_conversion_array_string() RETURNS text[] AS $$
 return 'abc'
 $$ LANGUAGE plpythonu;

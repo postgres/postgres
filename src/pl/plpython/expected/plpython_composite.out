@@ -257,7 +257,7 @@ SELECT * FROM changing_test();
  1 | (3,4)
 (2 rows)
 
--- tables of composite types (not yet implemented)
+-- tables of composite types
 CREATE FUNCTION composite_types_table(OUT tab table_record[], OUT typ type_record[] ) RETURNS SETOF record AS $$
 yield {'tab': [['first', 1], ['second', 2]],
       'typ': [{'first': 'third', 'second': 3},
@@ -270,9 +270,13 @@ yield {'tab': [['first', 1], ['second', 2]],
               {'first': 'fourth', 'second': 4}]}
 $$ LANGUAGE plpythonu;
 SELECT * FROM composite_types_table();
-ERROR:  PL/Python functions cannot return type table_record[]
-DETAIL:  PL/Python does not support conversion to arrays of row types.
-CONTEXT:  PL/Python function "composite_types_table"
+            tab             |            typ             
+----------------------------+----------------------------
+ {"(first,1)","(second,2)"} | {"(third,3)","(fourth,4)"}
+ {"(first,1)","(second,2)"} | {"(third,3)","(fourth,4)"}
+ {"(first,1)","(second,2)"} | {"(third,3)","(fourth,4)"}
+(3 rows)
+
 -- check what happens if the output record descriptor changes
 CREATE FUNCTION return_record(t text) RETURNS record AS $$
 return {'t': t, 'val': 10}

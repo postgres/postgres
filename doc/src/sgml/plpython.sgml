@@ -1026,13 +1026,6 @@ rv = plpy.execute(plan, ["name"], 5)
      <para>
       Query parameters and result row fields are converted between PostgreSQL
       and Python data types as described in <xref linkend="plpython-data">.
-      The exception is that composite types are currently not supported: They
-      will be rejected as query parameters and are converted to strings when
-      appearing in a query result.  As a workaround for the latter problem, the
-      query can sometimes be rewritten so that the composite type result
-      appears as a result row rather than as a field of the result row.
-      Alternatively, the resulting string could be parsed apart by hand, but
-      this approach is not recommended because it is not future-proof.
      </para>
 
      <para>
