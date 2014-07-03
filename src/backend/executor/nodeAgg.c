@@ -2199,44 +2199,56 @@ AggGetAggref(FunctionCallInfo fcinfo)
 }
 
 /*
- * AggGetPerTupleEContext - fetch per-input-tuple ExprContext
+ * AggGetTempMemoryContext - fetch short-term memory context for aggregates
  *
- * This is useful in agg final functions; the econtext returned is the
- * same per-tuple context that the transfn was called in (which can
- * safely get reset during the final function).
+ * This is useful in agg final functions; the context returned is one that
+ * the final function can safely reset as desired.  This isn't useful for
+ * transition functions, since the context returned MAY (we don't promise)
+ * be the same as the context those are called in.
  *
  * As above, this is currently not useful for aggs called as window functions.
  */
-ExprContext *
-AggGetPerTupleEContext(FunctionCallInfo fcinfo)
+MemoryContext
+AggGetTempMemoryContext(FunctionCallInfo fcinfo)
 {
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
 		AggState   *aggstate = (AggState *) fcinfo->context;
 
-		return aggstate->tmpcontext;
+		return aggstate->tmpcontext->ecxt_per_tuple_memory;
 	}
 	return NULL;
 }
 
 /*
- * AggGetPerAggEContext - fetch per-output-tuple ExprContext
+ * AggRegisterCallback - register a cleanup callback for an aggregate
  *
  * This is useful for aggs to register shutdown callbacks, which will ensure
- * that non-memory resources are freed.
+ * that non-memory resources are freed.  The callback will occur just before
+ * the associated aggcontext (as returned by AggCheckCallContext) is reset,
+ * either between groups or as a result of rescanning the query.  The callback
+ * will NOT be called on error paths.  The typical use-case is for freeing of
+ * tuplestores or tuplesorts maintained in aggcontext, or pins held by slots
+ * created by the agg functions.  (The callback will not be called until after
+ * the result of the finalfn is no longer needed, so it's safe for the finalfn
+ * to return data that will be freed by the callback.)
  *
  * As above, this is currently not useful for aggs called as window functions.
  */
-ExprContext *
-AggGetPerAggEContext(FunctionCallInfo fcinfo)
+void
+AggRegisterCallback(FunctionCallInfo fcinfo,
+					ExprContextCallbackFunction func,
+					Datum arg)
 {
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
 		AggState   *aggstate = (AggState *) fcinfo->context;
 
-		return aggstate->ss.ps.ps_ExprContext;
+		RegisterExprContextCallback(aggstate->ss.ps.ps_ExprContext, func, arg);
+
+		return;
 	}
-	return NULL;
+	elog(ERROR, "aggregate function cannot register a callback in this context");
 }
 
 
