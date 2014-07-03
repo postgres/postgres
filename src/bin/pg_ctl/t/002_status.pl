@@ -4,11 +4,12 @@ use TestLib;
 use Test::More tests => 2;
 
 my $tempdir = TestLib::tempdir;
+my $tempdir_short = TestLib::tempdir_short;
 
 system_or_bail "initdb -D $tempdir/data -A trust >/dev/null";
 open CONF, ">>$tempdir/data/postgresql.conf";
 print CONF "listen_addresses = ''\n";
-print CONF "unix_socket_directories = '$tempdir'\n";
+print CONF "unix_socket_directories = '$tempdir_short'\n";
 close CONF;
 
 command_exit_is([ 'pg_ctl', 'status', '-D', "$tempdir/data" ],
