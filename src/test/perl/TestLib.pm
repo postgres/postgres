@@ -62,7 +62,7 @@ $ENV{PGPORT} = int($ENV{PGPORT}) % 65536;
 
 sub tempdir
 {
-	return File::Temp::tempdir('testXXXX', DIR => cwd(), CLEANUP => 1);
+	return File::Temp::tempdir('tmp_testXXXX', DIR => $ENV{TESTDIR} || cwd(), CLEANUP => 1);
 }
 
 my ($test_server_datadir, $test_server_logfile);
