@@ -301,13 +301,13 @@ PG_PROVE_FLAGS = --ext='.pl' -I $(top_srcdir)/src/test/perl/
 PROVE_FLAGS = --verbose
 
 define prove_installcheck
-PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS)
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS)
 endef
 
 define prove_check
 $(MKDIR_P) tmp_check/log
 $(MAKE) -C $(top_builddir) DESTDIR=$(CURDIR)/tmp_check/install install >$(CURDIR)/tmp_check/log/install.log 2>&1
-PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS)
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS)
 endef
 
 # Installation.
