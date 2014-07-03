@@ -49,8 +49,6 @@ typedef struct OSAPerQueryState
 	MemoryContext qcontext;
 	/* Memory context containing per-group data: */
 	MemoryContext gcontext;
-	/* Agg plan node's output econtext: */
-	ExprContext *peraggecontext;
 
 	/* These fields are used only when accumulating tuples: */
 
@@ -117,7 +115,6 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		Aggref	   *aggref;
 		MemoryContext qcontext;
 		MemoryContext gcontext;
-		ExprContext *peraggecontext;
 		List	   *sortlist;
 		int			numSortCols;
 
@@ -133,10 +130,6 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
 		if (!AGGKIND_IS_ORDERED_SET(aggref->aggkind))
 			elog(ERROR, "ordered-set aggregate support function called for non-ordered-set aggregate");
-		/* Also get output exprcontext so we can register shutdown callback */
-		peraggecontext = AggGetPerAggEContext(fcinfo);
-		if (!peraggecontext)
-			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
 
 		/*
 		 * Prepare per-query structures in the fn_mcxt, which we assume is the
@@ -150,7 +143,6 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		qstate->aggref = aggref;
 		qstate->qcontext = qcontext;
 		qstate->gcontext = gcontext;
-		qstate->peraggecontext = peraggecontext;
 
 		/* Extract the sort information */
 		sortlist = aggref->aggorder;
@@ -291,9 +283,9 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 	osastate->number_of_rows = 0;
 
 	/* Now register a shutdown callback to clean things up */
-	RegisterExprContextCallback(qstate->peraggecontext,
-								ordered_set_shutdown,
-								PointerGetDatum(osastate));
+	AggRegisterCallback(fcinfo,
+						ordered_set_shutdown,
+						PointerGetDatum(osastate));
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -1310,7 +1302,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	sortColIdx = osastate->qstate->sortColIdx;
 
 	/* Get short-term context we can use for execTuplesMatch */
-	tmpcontext = AggGetPerTupleEContext(fcinfo)->ecxt_per_tuple_memory;
+	tmpcontext = AggGetTempMemoryContext(fcinfo);
 
 	/* insert the hypothetical row into the sort */
 	slot = osastate->qstate->tupslot;

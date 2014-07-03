@@ -23,7 +23,7 @@ typedef struct Node *fmNodePtr;
 typedef struct Aggref *fmAggrefPtr;
 
 /* Likewise, avoid including execnodes.h here */
-typedef struct ExprContext *fmExprContextPtr;
+typedef void (*fmExprContextCallbackFunction) (Datum arg);
 
 /* Likewise, avoid including stringinfo.h here */
 typedef struct StringInfoData *fmStringInfo;
@@ -656,8 +656,10 @@ extern void **find_rendezvous_variable(const char *varName);
 extern int AggCheckCallContext(FunctionCallInfo fcinfo,
 					MemoryContext *aggcontext);
 extern fmAggrefPtr AggGetAggref(FunctionCallInfo fcinfo);
-extern fmExprContextPtr AggGetPerTupleEContext(FunctionCallInfo fcinfo);
-extern fmExprContextPtr AggGetPerAggEContext(FunctionCallInfo fcinfo);
+extern MemoryContext AggGetTempMemoryContext(FunctionCallInfo fcinfo);
+extern void AggRegisterCallback(FunctionCallInfo fcinfo,
+					fmExprContextCallbackFunction func,
+					Datum arg);
 
 /*
  * We allow plugin modules to hook function entry/exit.  This is intended
