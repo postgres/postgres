@@ -1139,7 +1139,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      UPDATE</command> modifies selected rows to mark them locked, and so
      will result in disk writes.
     </para>
+   </sect2>
 
+   <sect2 id="locking-pages">
+    <title>Page-level Locks</title>
+  
     <para>
      In addition to table and row locks, page-level share/exclusive locks are
      used to control read/write access to table pages in the shared buffer
