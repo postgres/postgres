@@ -1079,12 +1079,11 @@ CopyStreamPoll(PGconn *conn, long timeout_ms)
 static int
 CopyStreamReceive(PGconn *conn, long timeout, char **buffer)
 {
-	static char	   *copybuf = NULL;
+	char	   *copybuf = NULL;
 	int			rawlen;
 
-	if (copybuf != NULL)
-		PQfreemem(copybuf);
-	copybuf = NULL;
+	if (*buffer != NULL)
+		PQfreemem(*buffer);
 	*buffer = NULL;
 
 	/* Try to receive a CopyData message */
