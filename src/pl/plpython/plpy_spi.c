@@ -93,7 +93,6 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			HeapTuple	typeTup;
 			Oid			typeId;
 			int32		typmod;
-			Form_pg_type typeStruct;
 
 			optr = PySequence_GetItem(list, i);
 			if (PyString_Check(optr))
@@ -129,7 +128,6 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			optr = NULL;
 
 			plan->types[i] = typeId;
-			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 			PLy_output_datum_func(&plan->args[i], typeTup);
 			ReleaseSysCache(typeTup);
 		}
