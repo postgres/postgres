@@ -1383,7 +1383,14 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						{
 							ReorderBufferToastReplace(rb, txn, relation, change);
 							rb->apply_change(rb, txn, relation, change);
-							ReorderBufferToastReset(rb, txn);
+
+							/*
+							 * Only clear reassembled toast chunks if we're
+							 * sure they're not required anymore. The creator
+							 * of the tuple tells us.
+							 */
+							if (change->data.tp.clear_toast_afterwards)
+								ReorderBufferToastReset(rb, txn);
 						}
 						/* we're not interested in toast deletions */
 						else if (change->action == REORDER_BUFFER_CHANGE_INSERT)
