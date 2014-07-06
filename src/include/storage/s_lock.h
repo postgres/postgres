@@ -300,55 +300,13 @@ tas(volatile slock_t *lock)
 #endif /* __INTEL_COMPILER */
 #endif	 /* __ia64__ || __ia64 */
 
-
 /*
- * On ARM, we use __sync_lock_test_and_set(int *, int) if available, and if
- * not fall back on the SWPB instruction.  SWPB does not work on ARMv6 or
- * later, so the compiler builtin is preferred if available.  Note also that
- * the int-width variant of the builtin works on more chips than other widths.
+ * On ARM and ARM64, we use __sync_lock_test_and_set(int *, int) if available.
+ *
+ * We use the int-width variant of the builtin because it works on more chips
+ * than other widths.
  */
-#if defined(__arm__) || defined(__arm)
-#define HAS_TEST_AND_SET
-
-#define TAS(lock) tas(lock)
-
-#ifdef HAVE_GCC_INT_ATOMICS
-
-typedef int slock_t;
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	return __sync_lock_test_and_set(lock, 1);
-}
-
-#define S_UNLOCK(lock) __sync_lock_release(lock)
-
-#else /* !HAVE_GCC_INT_ATOMICS */
-
-typedef unsigned char slock_t;
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register slock_t _res = 1;
-
-	__asm__ __volatile__(
-		"	swpb 	%0, %0, [%2]	\n"
-:		"+r"(_res), "+m"(*lock)
-:		"r"(lock)
-:		"memory");
-	return (int) _res;
-}
-
-#endif	 /* HAVE_GCC_INT_ATOMICS */
-#endif	 /* __arm__ */
-
-
-/*
- * On ARM64, we use __sync_lock_test_and_set(int *, int) if available.
- */
-#if defined(__aarch64__) || defined(__aarch64)
+#if defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(__aarch64)
 #ifdef HAVE_GCC_INT_ATOMICS
 #define HAS_TEST_AND_SET
 
@@ -365,7 +323,7 @@ tas(volatile slock_t *lock)
 #define S_UNLOCK(lock) __sync_lock_release(lock)
 
 #endif	 /* HAVE_GCC_INT_ATOMICS */
-#endif	 /* __aarch64__ */
+#endif	 /* __arm__ || __arm || __aarch64__ || __aarch64 */
 
 
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
