@@ -608,6 +608,8 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 						change->data.tp.newtuple);
 	}
 
+	change->data.tp.clear_toast_afterwards = true;
+
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
 }
 
@@ -673,6 +675,8 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 #endif
 	}
 
+	change->data.tp.clear_toast_afterwards = true;
+
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
 }
 
@@ -710,6 +714,9 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 						r->xl_len - SizeOfHeapDelete,
 						change->data.tp.oldtuple);
 	}
+
+	change->data.tp.clear_toast_afterwards = true;
+
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
 }
 
@@ -794,6 +801,9 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			tuple->header.t_infomask2 = xlhdr->t_infomask2;
 			tuple->header.t_hoff = xlhdr->t_hoff;
 		}
+
+		/* reset toast reassembly only after the last chunk */
+		change->data.tp.clear_toast_afterwards = (i + 1) == xlrec->ntuples;
 
 		ReorderBufferQueueChange(ctx->reorder, r->xl_xid,
 								 buf->origptr, change);

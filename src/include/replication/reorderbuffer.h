@@ -75,6 +75,10 @@ typedef struct ReorderBufferChange
 		{
 			/* relation that has been changed */
 			RelFileNode relnode;
+
+			/* no previously reassembled toast chunks are necessary anymore */
+			bool clear_toast_afterwards;
+
 			/* valid for DELETE || UPDATE */
 			ReorderBufferTupleBuf *oldtuple;
 			/* valid for INSERT || UPDATE */
