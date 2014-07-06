@@ -2353,8 +2353,11 @@ escape_json(StringInfo buf, const char *str)
 				 * only unicode escape that should be present is \u0000,
 				 * all the other unicode escapes will have been resolved.
 				 */
-				if (p[1] == 'u' && isxdigit(p[2]) && isxdigit(p[3])
-					&& isxdigit(p[4]) && isxdigit(p[5]))
+				if (p[1] == 'u' &&
+					isxdigit((unsigned char) p[2]) &&
+					isxdigit((unsigned char) p[3]) &&
+					isxdigit((unsigned char) p[4]) &&
+					isxdigit((unsigned char) p[5]))
 					appendStringInfoCharMacro(buf, *p);
 				else
 					appendStringInfoString(buf, "\\\\");
