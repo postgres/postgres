@@ -38,21 +38,61 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 				 int *nmaps, const char *old_pgdata, const char *new_pgdata)
 {
 	FileNameMap *maps;
-	int			relnum;
+	int			old_relnum, new_relnum;
 	int			num_maps = 0;
 
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
 
-	for (relnum = 0; relnum < Min(old_db->rel_arr.nrels, new_db->rel_arr.nrels);
-		 relnum++)
+	/*
+	 * The old database shouldn't have more relations than the new one.
+	 * We force the new cluster to have a TOAST table if the old table
+	 * had one.
+	 */
+	if (old_db->rel_arr.nrels > new_db->rel_arr.nrels)
+		pg_fatal("old and new databases \"%s\" have a mismatched number of relations\n",
+				 old_db->db_name);
+
+	/* Drive the loop using new_relnum, which might be higher. */
+	for (old_relnum = new_relnum = 0; new_relnum < new_db->rel_arr.nrels;
+		 new_relnum++)
 	{
-		RelInfo    *old_rel = &old_db->rel_arr.rels[relnum];
-		RelInfo    *new_rel = &new_db->rel_arr.rels[relnum];
+		RelInfo    *old_rel;
+		RelInfo    *new_rel = &new_db->rel_arr.rels[new_relnum];
+
+		/*
+		 * It is possible that the new cluster has a TOAST table for a table
+		 * that didn't need one in the old cluster, e.g. 9.0 to 9.1 changed the
+		 * NUMERIC length computation.  Therefore, if we have a TOAST table
+		 * in the new cluster that doesn't match, skip over it and continue
+		 * processing.  It is possible this TOAST table used an OID that was
+		 * reserved in the old cluster, but we have no way of testing that,
+		 * and we would have already gotten an error at the new cluster schema
+		 * creation stage.  Fortunately, since we only restore the OID counter
+		 * after schema restore, and restore in OID order via pg_dump, a
+		 * conflict would only happen if the new TOAST table had a very low
+		 * OID.  However, TOAST tables created long after initial table
+		 * creation can have any OID, particularly after OID wraparound.
+		 */
+		if (old_relnum == old_db->rel_arr.nrels)
+		{
+			if (strcmp(new_rel->nspname, "pg_toast") == 0)
+				continue;
+			else
+				pg_fatal("Extra non-TOAST relation found in database \"%s\": new OID %d\n",
+						 old_db->db_name, new_rel->reloid);
+		}
+
+		old_rel = &old_db->rel_arr.rels[old_relnum];
 
 		if (old_rel->reloid != new_rel->reloid)
-			pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
-					 old_db->db_name, old_rel->reloid, new_rel->reloid);
+		{
+			if (strcmp(new_rel->nspname, "pg_toast") == 0)
+				continue;
+			else
+				pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
+						 old_db->db_name, old_rel->reloid, new_rel->reloid);
+		}
 
 		/*
 		 * TOAST table names initially match the heap pg_class oid. In
@@ -76,14 +116,12 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 								old_rel, new_rel, maps + num_maps);
 		num_maps++;
+		old_relnum++;
 	}
 
-	/*
-	 * Do this check after the loop so hopefully we will produce a clearer
-	 * error above
-	 */
-	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
-		pg_fatal("old and new databases \"%s\" have a different number of relations\n",
+	/* Did we fail to exhaust the old array? */
+	if (old_relnum != old_db->rel_arr.nrels)
+		pg_fatal("old and new databases \"%s\" have a mismatched number of relations\n",
 				 old_db->db_name);
 
 	*nmaps = num_maps;
