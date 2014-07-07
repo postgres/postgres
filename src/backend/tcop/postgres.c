@@ -1999,7 +1999,7 @@ exec_execute_message(const char *portal_name, long max_rows)
  * check_log_statement
  *		Determine whether command should be logged because of log_statement
  *
- * parsetree_list can be either raw grammar output or a list of planned
+ * stmt_list can be either raw grammar output or a list of planned
  * statements
  */
 static bool

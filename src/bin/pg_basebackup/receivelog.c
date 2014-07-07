@@ -410,7 +410,7 @@ CheckServerVersionForStreaming(PGconn *conn)
  * indefinitely.
  *
  * standby_message_timeout controls how often we send a message
- * back to the master letting it know our progress, in seconds.
+ * back to the master letting it know our progress, in miliseconds.
  * This message will only contain the write location, and never
  * flush or replay.
  *

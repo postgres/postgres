@@ -680,7 +680,7 @@ extern Datum Float8GetDatum(float8 X);
  */
 
 /*
- * Backend only infrastructure for the the assertion-related macros in c.h.
+ * Backend only infrastructure for the assertion-related macros in c.h.
  *
  * ExceptionalCondition must be present even when assertions are not enabled.
  */
