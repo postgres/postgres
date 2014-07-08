@@ -422,3 +422,12 @@ select * from int4_tbl where
 select * from int4_tbl where
   (case when f1 in (select unique1 from tenk1 a) then f1 else null end) in
   (select ten from tenk1 b);
+
+--
+-- Check for incorrect optimization when IN subquery contains a SRF
+--
+explain (verbose, costs off)
+select * from int4_tbl o where (f1, f1) in
+  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
+select * from int4_tbl o where (f1, f1) in
+  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
