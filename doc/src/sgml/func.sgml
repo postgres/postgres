@@ -16577,9 +16577,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <title>Replication Functions</title>
 
    <para>
-    PostgreSQL exposes a number of functions for controlling and interacting
-    with replication features. See <xref linkend="streaming-replication">
-    and <xref linkend="streaming-replication-slots">.
+    The functions shown in <xref linkend="functions-replication-table"> are
+    for controlling and interacting with replication features.
+    See <xref linkend="streaming-replication">
+    and <xref linkend="streaming-replication-slots"> for information about the
+    underlying features.
    </para>
 
    <para>
@@ -16588,8 +16590,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    The sections <xref linkend="functions-snapshot-synchronization">, <xref
-    linkend="functions-recovery-control"> and <xref
+    The functions described in <xref linkend="functions-snapshot-synchronization">, <xref
+    linkend="functions-recovery-control">, and <xref
     linkend="functions-admin-backup"> are also relevant for replication.
    </para>
 
