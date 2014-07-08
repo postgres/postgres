@@ -3165,7 +3165,7 @@
    </row>
    <row>
     <entry><token>ORDINALITY</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -5047,6 +5047,13 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>VIEWS</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>VOLATILE</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -5104,7 +5111,7 @@
    </row>
    <row>
     <entry><token>WITHIN</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
