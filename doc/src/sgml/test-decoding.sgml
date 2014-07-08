@@ -23,7 +23,7 @@
   Typical output from this plugin, used over the SQL logical decoding
   interface, might be:
 
-  <programlisting>
+<programlisting>
 postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'include-xids', '0');
  location  | xid |                       data
 -----------+-----+--------------------------------------------------
@@ -36,7 +36,7 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'i
  0/16D3398 | 692 | table public.data: DELETE: id[int4]:3
  0/16D3398 | 692 | COMMIT
 (8 rows)
-  </programlisting>
+</programlisting>
  </para>
 
 </sect1>

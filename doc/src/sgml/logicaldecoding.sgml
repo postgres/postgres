@@ -51,7 +51,7 @@
     Then, you should connect to the target database (in the example
     below, <literal>postgres</literal>) as a superuser.
    </para>
-   <programlisting>
+<programlisting>
 postgres=# -- Create a slot named 'regression_slot' using the output plugin 'test_decoding'
 postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
     slot_name    | xlog_position
@@ -139,7 +139,7 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
 -----------------------
 
 (1 row)
-    </programlisting>
+</programlisting>
    <para>
     The following example shows usage of the walsender interface using
     the <link linkend="app-pgrecvlogical"><command>pg_recvlogical</command></link>
@@ -148,7 +148,7 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
     and <varname>max_wal_senders</varname> to be set sufficiently high for
     another connection.
    </para>
-   <programlisting>
+<programlisting>
 # pg_recvlogical -d postgres --slot test --create
 # pg_recvlogical -d postgres --slot test --start -f -
 CTRL-Z
@@ -159,7 +159,7 @@ table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
 CTRL-C
 # pg_recvlogical -d postgres --slot test --drop
-   </programlisting>
+</programlisting>
   </sect1>
   <sect1 id="logicaldecoding-explanation">
    <title>Logical Decoding Concepts</title>
@@ -317,7 +317,7 @@ CTRL-C
      <function>_PG_output_plugin_init</function>. This function is passed a
      struct that needs to be filled with the callback function pointers for
      individual actions.
-     <programlisting>
+<programlisting>
 typedef struct OutputPluginCallbacks
 {
     LogicalDecodeStartupCB startup_cb;
@@ -326,8 +326,9 @@ typedef struct OutputPluginCallbacks
     LogicalDecodeCommitCB commit_cb;
     LogicalDecodeShutdownCB shutdown_cb;
 } OutputPluginCallbacks;
+
 typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
-     </programlisting>
+</programlisting>
      The <function>begin_cb</function>, <function>change_cb</function>
      and <function>commit_cb</function> callbacks are required,
      while <function>startup_cb</function>
@@ -344,10 +345,10 @@ typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
      accessed that either have been created by <command>initdb</command> in
      the <literal>pg_catalog</literal> schema, or have been marked as user
      provided catalog tables using
-     <programlisting>
+<programlisting>
 ALTER TABLE user_catalog_table SET (user_catalog_table = true);
 CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
-     </programlisting>
+</programlisting>
      Any actions leading to xid assignment are prohibited. That, among others,
      includes writing to tables, performing DDL changes and
      calling <literal>txid_current()</literal>.
@@ -385,23 +386,23 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
       The optional <function>startup_cb</function> callback is called whenever
       a replication slot is created or asked to stream changes, independent
       of the number of changes that are ready to be put out.
-      <programlisting>
+<programlisting>
 typedef void (*LogicalDecodeStartupCB) (
     struct LogicalDecodingContext *ctx,
     OutputPluginOptions *options,
     bool is_init
 );
-      </programlisting>
+</programlisting>
       The <literal>is_init</literal> parameter will be true when the
       replication slot is being created and false
       otherwise. <parameter>options</parameter> points to a struct of options
       that output plugins can set:
-      <programlisting>
+<programlisting>
 typedef struct OutputPluginOptions
 {
     OutputPluginOutputType output_type;
 } OutputPluginOptions;
-      </programlisting>
+</programlisting>
       <literal>output_type</literal> has to either be set to
       <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</literal>
       or <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</literal>.
@@ -420,11 +421,11 @@ typedef struct OutputPluginOptions
       whenever a formerly active replication slot is not used anymore and can
       be used to deallocate resources private to the output plugin. The slot
       isn't necessarily being dropped, streaming is just being stopped.
-      <programlisting>
+<programlisting>
 typedef void (*LogicalDecodeShutdownCB) (
     struct LogicalDecodingContext *ctx
 );
-      </programlisting>
+</programlisting>
      </para>
    </sect3>
     <sect3 id="logicaldecoding-output-plugin-begin">
@@ -433,12 +434,12 @@ typedef void (*LogicalDecodeShutdownCB) (
       The required <function>begin_cb</function> callback is called whenever a
       start of a commited transaction has been decoded. Aborted transactions
       and their contents never get decoded.
-      <programlisting>
+<programlisting>
 typedef void (*LogicalDecodeBeginCB) (
     struct LogicalDecodingContext *,
     ReorderBufferTXN *txn
 );
-      </programlisting>
+</programlisting>
       The <parameter>txn</parameter> parameter contains meta information about
       the transaction, like the timestamp at which it has been committed and
       its XID.
@@ -452,12 +453,12 @@ typedef void (*LogicalDecodeBeginCB) (
       decoded. The <function>change_cb</function> callbacks for all modified
       rows will have been called before this, if there have been any modified
       rows.
-      <programlisting>
+<programlisting>
 typedef void (*LogicalDecodeCommitCB) (
     struct LogicalDecodingContext *,
     ReorderBufferTXN *txn
 );
-      </programlisting>
+</programlisting>
      </para>
     </sect3>
     <sect3 id="logicaldecoding-output-plugin-change">
@@ -470,14 +471,14 @@ typedef void (*LogicalDecodeCommitCB) (
       or <command>DELETE</command>. Even if the original command modified
       several rows at once the callback will be called indvidually for each
       row.
-      <programlisting>
+<programlisting>
 typedef void (*LogicalDecodeChangeCB) (
     struct LogicalDecodingContext *ctx,
     ReorderBufferTXN *txn,
     Relation relation,
     ReorderBufferChange *change
 );
-      </programlisting>
+</programlisting>
       The <parameter>ctx</parameter> and <parameter>txn</parameter> parameters
       have the same contents as for the <function>begin_cb</function>
       and <function>commit_cb</function> callbacks, but additionally the
@@ -513,11 +514,11 @@ typedef void (*LogicalDecodeChangeCB) (
     <para>
      The following example shows how to output data to the consumer of an
      output plugin:
-     <programlisting>
+<programlisting>
 OutputPluginPrepareWrite(ctx, true);
 appendStringInfo(ctx->out, "BEGIN %u", txn->xid);
 OutputPluginWrite(ctx, true);
-     </programlisting>
+</programlisting>
     </para>
    </sect2>
   </sect1>
