@@ -19,6 +19,7 @@
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -1092,6 +1093,17 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	Oid			opid;
 
 	Assert(list_length(colnos) == list_length(opids));
+
+	/*
+	 * A set-returning function in the query's targetlist can result in
+	 * returning duplicate rows, if the SRF is evaluated after the
+	 * de-duplication step; so we play it safe and say "no" if there are any
+	 * SRFs.  (We could be certain that it's okay if SRFs appear only in the
+	 * specified columns, since those must be evaluated before de-duplication;
+	 * but it doesn't presently seem worth the complication to check that.)
+	 */
+	if (expression_returns_set((Node *) query->targetList))
+		return false;
 
 	/*
 	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
