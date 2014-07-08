@@ -238,9 +238,9 @@ include 'filename'
         The <filename>postgresql.conf</> file can also contain
         <literal>include_dir</literal> directives, which specify an entire directory
         of configuration files to include.  It is used similarly:
- <programlisting>
- include_dir 'directory'
- </programlisting>
+<programlisting>
+include_dir 'directory'
+</programlisting>
         Non-absolute directory names follow the same rules as single file include
         directives:  they are relative to the directory containing the referencing
         configuration file.  Within that directory, only non-directory files whose
@@ -263,11 +263,11 @@ include 'filename'
        situation is to break the custom configuration changes for your site into
        three files.  You could add this to the end of your
        <filename>postgresql.conf</> file to include them:
- <programlisting>
- include 'shared.conf'
- include 'memory.conf'
- include 'server.conf'
- </programlisting>
+<programlisting>
+include 'shared.conf'
+include 'memory.conf'
+include 'server.conf'
+</programlisting>
        All systems would have the same <filename>shared.conf</>.  Each server
        with a particular amount of memory could share the same
        <filename>memory.conf</>; you might have one for all servers with 8GB of RAM,
@@ -279,15 +279,15 @@ include 'filename'
        Another possibility is to create a configuration file directory and
        put this information into files there. For example, a <filename>conf.d</>
        directory could be referenced at the end of<filename>postgresql.conf</>:
- <screen>
- include_dir 'conf.d'
- </screen>
+<programlisting>
+include_dir 'conf.d'
+</programlisting>
        Then you could name the files in the <filename>conf.d</> directory like this:
- <screen>
- 00shared.conf
- 01memory.conf
- 02server.conf
- </screen>
+<programlisting>
+00shared.conf
+01memory.conf
+02server.conf
+</programlisting>
        This shows a clear order in which these files will be loaded.  This is
        important because only the last setting encountered when the server is
        reading its configuration will be used.  Something set in
@@ -298,11 +298,11 @@ include 'filename'
      <para>
        You might instead use this configuration directory approach while naming
        these files more descriptively:
- <screen>
- 00shared.conf
- 01memory-8GB.conf
- 02server-foo.conf
- </screen>
+<programlisting>
+00shared.conf
+01memory-8GB.conf
+02server-foo.conf
+</programlisting>
        This sort of arrangement gives a unique name for each configuration file
        variation.  This can help eliminate ambiguity when several servers have
        their configurations all stored in one place, such as in a version

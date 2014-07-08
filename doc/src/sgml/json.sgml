@@ -163,7 +163,7 @@
   </para>
   <para>
    The following are all valid <type>json</> (or <type>jsonb</>) expressions:
-  <programlisting>
+<programlisting>
 -- Simple scalar/primitive value
 -- Primitive values can be numbers, quoted strings, true, false, or null
 SELECT '5'::json;
@@ -177,7 +177,7 @@ SELECT '{"bar": "baz", "balance": 7.77, "active": false}'::json;
 
 -- Arrays and objects can be nested arbitrarily
 SELECT '{"foo": [true, "bar"], "tags": {"a": 1, "b": null}}'::json;
-  </programlisting>
+</programlisting>
   </para>
 
   <para>
@@ -262,7 +262,7 @@ SELECT '{"reading": 1.230e-5}'::json, '{"reading": 1.230e-5}'::jsonb;
     one <type>jsonb</> document has contained within it another one.
     These examples return true except as noted:
   </para>
-  <programlisting>
+<programlisting>
 -- Simple scalar/primitive values contain only the identical value:
 SELECT '"foo"'::jsonb @> '"foo"'::jsonb;
 
@@ -282,7 +282,7 @@ SELECT '[1, 2, [1, 3]]'::jsonb @> '[[1, 3]]'::jsonb;
 
 -- Similarly, containment is not reported here:
 SELECT '{"foo": {"bar": "baz"}}'::jsonb @> '{"bar": "baz"}'::jsonb;  -- yields false
-  </programlisting>
+</programlisting>
 
   <para>
    The general principle is that the contained object must match the
@@ -296,13 +296,13 @@ SELECT '{"foo": {"bar": "baz"}}'::jsonb @> '{"bar": "baz"}'::jsonb;  -- yields f
    As a special exception to the general principle that the structures
    must match, an array may contain a primitive value:
   </para>
-  <programlisting>
+<programlisting>
 -- This array contains the primitive string value:
 SELECT '["foo", "bar"]'::jsonb @> '"bar"'::jsonb;
 
 -- This exception is not reciprocal -- non-containment is reported here:
 SELECT '"bar"'::jsonb @> '["bar"]'::jsonb;  -- yields false
-  </programlisting>
+</programlisting>
 
   <para>
     <type>jsonb</> also has an <firstterm>existence</> operator, which is
@@ -363,22 +363,22 @@ SELECT '"foo"'::jsonb ? 'foo';
     (For details of the semantics that these operators
     implement, see <xref linkend="functions-jsonb-op-table">.)
     An example of creating an index with this operator class is:
-  <programlisting>
+<programlisting>
 CREATE INDEX idxgin ON api USING gin (jdoc);
-  </programlisting>
+</programlisting>
     The non-default GIN operator class <literal>jsonb_path_ops</>
     supports indexing the <literal>@&gt;</> operator only.
     An example of creating an index with this operator class is:
-  <programlisting>
+<programlisting>
 CREATE INDEX idxginp ON api USING gin (jdoc jsonb_path_ops);
-  </programlisting>
+</programlisting>
   </para>
 
   <para>
     Consider the example of a table that stores JSON documents
     retrieved from a third-party web service, with a documented schema
     definition.  A typical document is:
-    <programlisting>
+<programlisting>
 {
     "guid": "9c36adc1-7fb5-4d5b-83b4-90356a46061a",
     "name": "Angela Barton",
@@ -394,32 +394,32 @@ CREATE INDEX idxginp ON api USING gin (jdoc jsonb_path_ops);
         "qui"
     ]
 }
-    </programlisting>
+</programlisting>
     We store these documents in a table named <structname>api</>,
     in a <type>jsonb</> column named <structfield>jdoc</>.
     If a GIN index is created on this column,
     queries like the following can make use of the index:
-    <programlisting>
+<programlisting>
 -- Find documents in which the key "company" has value "Magnafone"
 SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"company": "Magnafone"}';
-    </programlisting>
+</programlisting>
     However, the index could not be used for queries like the
     following, because though the operator <literal>?</> is indexable,
     it is not applied directly to the indexed column <structfield>jdoc</>:
-    <programlisting>
+<programlisting>
 -- Find documents in which the key "tags" contains key or array element "qui"
 SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc -&gt; 'tags' ? 'qui';
-    </programlisting>
+</programlisting>
     Still, with appropriate use of expression indexes, the above
     query can use an index.  If querying for particular items within
     the <literal>"tags"</> key is common, defining an index like this
     may be worthwhile:
-  <programlisting>
+<programlisting>
 -- Note that the "jsonb -&gt; text" operator can only be called on a JSON
 -- object, so as a consequence of creating this index the root of each
 -- "jdoc" value must be an object.  This is enforced during insertion.
 CREATE INDEX idxgintags ON api USING gin ((jdoc -&gt; 'tags'));
-  </programlisting>
+</programlisting>
     Now, the <literal>WHERE</> clause <literal>jdoc -&gt; 'tags' ? 'qui'</>
     will be recognized as an application of the indexable
     operator <literal>?</> to the indexed
@@ -429,10 +429,10 @@ CREATE INDEX idxgintags ON api USING gin ((jdoc -&gt; 'tags'));
   </para>
   <para>
     Another approach to querying is to exploit containment, for example:
-  <programlisting>
+<programlisting>
 -- Find documents in which the key "tags" contains array element "qui"
 SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qui"]}';
-  </programlisting>
+</programlisting>
     A simple GIN index on the <structfield>jdoc</> column can support this
     query.  But note that such an index will store copies of every key and
     value in the <structfield>jdoc</> column, whereas the expression index
@@ -460,7 +460,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
     and a <literal>jsonb_path_ops</literal> GIN index is that the former
     creates independent index items for each key and value in the data,
     while the latter creates index items only for each value in the
-    data.  
+    data.
     <footnote>
      <para>
       For this purpose, the term <quote>value</> includes array elements,
@@ -501,17 +501,17 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
     equality of complete JSON documents.
     The <literal>btree</> ordering for <type>jsonb</> datums is seldom
     of great interest, but for completeness it is:
-    <synopsis>
-      <replaceable>Object</replaceable> > <replaceable>Array</replaceable> > <replaceable>Boolean</replaceable> > <replaceable>Number</replaceable> > <replaceable>String</replaceable> > <replaceable>Null</replaceable>
+<synopsis>
+<replaceable>Object</replaceable> > <replaceable>Array</replaceable> > <replaceable>Boolean</replaceable> > <replaceable>Number</replaceable> > <replaceable>String</replaceable> > <replaceable>Null</replaceable>
 
-      <replaceable>Object with n pairs</replaceable> > <replaceable>object with n - 1 pairs</replaceable>
+<replaceable>Object with n pairs</replaceable> > <replaceable>object with n - 1 pairs</replaceable>
 
-      <replaceable>Array with n elements</replaceable> > <replaceable>array with n - 1 elements</replaceable>
-    </synopsis>
+<replaceable>Array with n elements</replaceable> > <replaceable>array with n - 1 elements</replaceable>
+</synopsis>
       Objects with equal numbers of pairs are compared in the order:
-    <synopsis>
-      <replaceable>key-1</replaceable>, <replaceable>value-1</replaceable>, <replaceable>key-2</replaceable> ...
-    </synopsis>
+<synopsis>
+<replaceable>key-1</replaceable>, <replaceable>value-1</replaceable>, <replaceable>key-2</replaceable> ...
+</synopsis>
       Note that object keys are compared in their storage order;
       in particular, since shorter keys are stored before longer keys, this
       can lead to results that might be unintuitive, such as:
@@ -520,9 +520,9 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
 </programlisting>
       Similarly, arrays with equal numbers of elements are compared in the
       order:
-    <synopsis>
-      <replaceable>element-1</replaceable>, <replaceable>element-2</replaceable> ...
-    </synopsis>
+<synopsis>
+<replaceable>element-1</replaceable>, <replaceable>element-2</replaceable> ...
+</synopsis>
       Primitive JSON values are compared using the same
       comparison rules as for the underlying
       <productname>PostgreSQL</productname> data type.  Strings are

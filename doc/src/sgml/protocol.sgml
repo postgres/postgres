@@ -1315,9 +1315,9 @@ the connection to be used for logical replication from that database.
  connection via <application>psql</application> or any other <literal>libpq</literal>-using
  tool with a connection string including the <literal>replication</literal> option,
  e.g.:
- <programlisting>
-  psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
- </programlisting>
+<programlisting>
+psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
+</programlisting>
  However it is often more useful to use
  <application>pg_receivexlog</application> (for physical replication) or
  <application>pg_recvlogical</application> (for logical replication).

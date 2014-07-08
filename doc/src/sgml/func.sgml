@@ -10495,7 +10495,7 @@ table2-mapping
 -----+-------
  a   | "foo"
  b   | "bar"
- </programlisting>
+</programlisting>
        </entry>
       </row>
       <row>
@@ -10514,7 +10514,7 @@ table2-mapping
 -----+-------
  a   | foo
  b   | bar
- </programlisting>
+</programlisting>
        </entry>
       </row>
       <row>
@@ -10598,7 +10598,7 @@ table2-mapping
 ---+---
  1 | 2
  3 | 4
- </programlisting>
+</programlisting>
        </entry>
       </row>
       <row>
@@ -10671,7 +10671,7 @@ table2-mapping
  a |    b    | d 
 ---+---------+---
  1 | [1,2,3] | 
- </programlisting>
+</programlisting>
        </entry>
       </row>
       <row>
@@ -10692,7 +10692,7 @@ table2-mapping
 ---+-----
  1 | foo
  2 |
- </programlisting>
+</programlisting>
        </entry>
       </row>
      </tbody>
