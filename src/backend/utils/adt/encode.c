@@ -325,7 +325,7 @@ b64_decode(const char *src, unsigned len, char *dst)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid base64 end sequence"),
-				 errhint("input data is missing padding, truncated, or otherwise corrupted")));
+				 errhint("Input data is missing padding, truncated, or otherwise corrupted.")));
 
 	return p - dst;
 }
