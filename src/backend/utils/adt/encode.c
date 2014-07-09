@@ -292,7 +292,7 @@ b64_decode(const char *src, unsigned len, char *dst)
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unexpected \"=\"")));
+							 errmsg("unexpected \"=\" while decoding base64 sequence")));
 			}
 			b = 0;
 		}
@@ -304,7 +304,7 @@ b64_decode(const char *src, unsigned len, char *dst)
 			if (b < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid symbol")));
+						 errmsg("invalid symbol '%c' while decoding base64 sequence", (int) c)));
 		}
 		/* add it to buffer */
 		buf = (buf << 6) + b;
@@ -324,7 +324,8 @@ b64_decode(const char *src, unsigned len, char *dst)
 	if (pos != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid end sequence")));
+				 errmsg("invalid base64 end sequence"),
+				 errhint("input data is missing padding, truncated, or otherwise corrupted")));
 
 	return p - dst;
 }
