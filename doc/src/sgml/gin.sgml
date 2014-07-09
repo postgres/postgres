@@ -559,7 +559,7 @@
   triConsistent alone is sufficient. However, if the boolean variant is
   significantly cheaper to calculate, it can be advantageous to provide both.
   If only the boolean variant is provided, some optimizations that depend on
-  refuting index items before fetching all the keys are disabled. 
+  refuting index items before fetching all the keys are disabled.
 
   <variablelist>
     <varlistentry>
@@ -628,7 +628,7 @@
        When <literal>GIN_MAYBE</> values are present, the function should only
        return GIN_TRUE if the item matches whether or not the index item
        contains the corresponding query keys. Likewise, the function must
-       return GIN_FALSE only if the item does not match, whether or not it 
+       return GIN_FALSE only if the item does not match, whether or not it
        contains the GIN_MAYBE keys. If the result depends on the GIN_MAYBE
        entries, i.e. the match cannot be confirmed or refuted based on the
        known query keys, the function must return GIN_MAYBE.

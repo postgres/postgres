@@ -25,7 +25,7 @@ pg_prewarm(regclass, mode text default 'buffer', fork text default 'main',
   <para>
    The first argument is the relation to be prewarmed.  The second argument
    is the prewarming method to be used, as further discussed below; the third
-   is the relation fork to be prewarmed, usually <literal>main</literal>.  
+   is the relation fork to be prewarmed, usually <literal>main</literal>.
    The fourth argument is the first block number to prewarm
    (<literal>NULL</literal> is accepted as a synonym for zero).  The fifth
    argument is the last block number to prewarm (<literal>NULL</literal>

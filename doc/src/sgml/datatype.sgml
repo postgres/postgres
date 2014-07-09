@@ -4496,7 +4496,7 @@ SELECT * FROM pg_attribute
     the write-ahead log stream.  It is printed as two hexadecimal numbers of
     up to 8 digits each, separated by a slash; for example,
     <literal>16/B374D848</>.  The <type>pg_lsn</type> type supports the
-    standard comparison operators, like <literal>=</literal> and 
+    standard comparison operators, like <literal>=</literal> and
     <literal>&gt;</literal>.  Two LSNs can be subtracted using the
     <literal>-</literal> operator; the result is the number of bytes separating
     those write-ahead log positions.

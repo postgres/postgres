@@ -329,7 +329,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
      <para>
       Default expressions for the copied column definitions will only be
-      copied if <literal>INCLUDING DEFAULTS</literal> is specified. 
+      copied if <literal>INCLUDING DEFAULTS</literal> is specified.
       Defaults that call database-modification functions, like
       <function>nextval</>, create a linkage between the original and
       new tables.  The

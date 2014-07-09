@@ -33,16 +33,16 @@ ALTER SYSTEM SET <replaceable class="PARAMETER">configuration_parameter</replace
    values to the <filename>postgresql.auto.conf</filename> file. With
    <literal>DEFAULT</literal>, it removes a configuration entry from
    <filename>postgresql.auto.conf</filename> file. The values will be
-   effective after reload of server configuration (SIGHUP) or in next 
+   effective after reload of server configuration (SIGHUP) or in next
    server start based on the type of configuration parameter modified.
   </para>
 
   <para>
    This command is not allowed inside transaction block or function.
   </para>
-  
+
   <para>
-   See <xref linkend="config-setting"> for other ways to set the parameters and 
+   See <xref linkend="config-setting"> for other ways to set the parameters and
    how they become effective.
   </para>
  </refsect1>

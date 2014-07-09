@@ -157,7 +157,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       following parameters can be used to specify an earlier stopping point.
       At most one of <varname>recovery_target</>,
       <varname>recovery_target_name</>, <varname>recovery_target_time</>, or
-      <varname>recovery_target_xid</> can be specified. 
+      <varname>recovery_target_xid</> can be specified.
      </para>
      <variablelist>
 

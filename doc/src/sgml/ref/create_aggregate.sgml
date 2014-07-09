@@ -447,7 +447,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The approximate average size (in bytes) of the aggregate's state
-      value, when using moving-aggregate mode.  This works the same as 
+      value, when using moving-aggregate mode.  This works the same as
       <replaceable>state_data_size</>.
      </para>
     </listitem>

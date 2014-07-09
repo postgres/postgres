@@ -10160,8 +10160,8 @@ table2-mapping
   </note>
   <para>
    The standard comparison operators shown in  <xref
-   linkend="functions-comparison-table"> are available for 
-   <type>jsonb</type>, but not for <type>json</type>. They follow the 
+   linkend="functions-comparison-table"> are available for
+   <type>jsonb</type>, but not for <type>json</type>. They follow the
    ordering rules for btree operations outlined at <xref
    linkend="json-indexing">.
   </para>
@@ -10668,9 +10668,9 @@ table2-mapping
        <entry><literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":"bar"}') as x(a int, b text, d text) </literal></entry>
        <entry>
 <programlisting>
- a |    b    | d 
+ a |    b    | d
 ---+---------+---
- 1 | [1,2,3] | 
+ 1 | [1,2,3] |
 </programlisting>
        </entry>
       </row>
@@ -14006,7 +14006,7 @@ AND
    <literal>*&gt;=</>.
    These operators compare the internal binary representation of the two
    rows.  Two rows might have a different binary representation even
-   though comparisons of the two rows with the equality operator is true. 
+   though comparisons of the two rows with the equality operator is true.
    The ordering of rows under these comparision operators is deterministic
    but not otherwise meaningful.  These operators are used internally for
    materialized views and might be useful for other specialized purposes

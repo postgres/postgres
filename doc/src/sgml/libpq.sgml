@@ -7200,7 +7200,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <para>
-   Note that the client's <filename>~/.postgresql/root.crt</> lists the top-level CAs 
+   Note that the client's <filename>~/.postgresql/root.crt</> lists the top-level CAs
    that are considered trusted for signing server certificates.  In principle it need
    not list the CA that signed the client's certificate, though in most cases
    that CA would also be trusted for server certificates.
