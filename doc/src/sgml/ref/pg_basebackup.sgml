@@ -254,7 +254,7 @@ PostgreSQL documentation
       <term><option>--xlogdir=<replaceable class="parameter">xlogdir</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the location for the transaction log directory. 
+        Specifies the location for the transaction log directory.
         <replaceable>xlogdir</replaceable> must be an absolute path.
         The transaction log directory can only be specified when
         the backup is in plain mode.

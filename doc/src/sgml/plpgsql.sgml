@@ -4726,7 +4726,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
 
  <para>
   These additional checks are enabled through the configuration variables
-  <varname>plpgsql.extra_warnings</> for warnings and 
+  <varname>plpgsql.extra_warnings</> for warnings and
   <varname>plpgsql.extra_errors</> for errors. Both can be set either to
   a comma-separated list of checks, <literal>"none"</> or <literal>"all"</>.
   The default is <literal>"none"</>. Currently the list of available checks
@@ -4736,7 +4736,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
     <term><varname>shadowed_variables</varname></term>
     <listitem>
      <para>
-      Checks if a declaration shadows a previously defined variable. 
+      Checks if a declaration shadows a previously defined variable.
      </para>
     </listitem>
    </varlistentry>

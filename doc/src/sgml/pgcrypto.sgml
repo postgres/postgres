@@ -95,7 +95,7 @@ hmac(data bytea, key text, type text) returns bytea
   </para>
 
   <para>
-   The algorithms in <function>crypt()</> differ from the usual 
+   The algorithms in <function>crypt()</> differ from the usual
    MD5 or SHA1 hashing algorithms in the following respects:
   </para>
 
