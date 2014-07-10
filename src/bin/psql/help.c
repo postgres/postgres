@@ -87,6 +87,7 @@ usage(void)
 
 	printf(_("\nInput and output options:\n"));
 	printf(_("  -a, --echo-all           echo all input from script\n"));
+	printf(_("  -b, --echo-errors        echo failed commands\n"));
 	printf(_("  -e, --echo-queries       echo commands sent to server\n"));
 	printf(_("  -E, --echo-hidden        display queries that internal commands generate\n"));
 	printf(_("  -L, --log-file=FILENAME  send session log to file\n"));

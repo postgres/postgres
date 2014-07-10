@@ -354,6 +354,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"command", required_argument, NULL, 'c'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"echo-queries", no_argument, NULL, 'e'},
+		{"echo-errors", no_argument, NULL, 'b'},
 		{"echo-hidden", no_argument, NULL, 'E'},
 		{"file", required_argument, NULL, 'f'},
 		{"field-separator", required_argument, NULL, 'F'},
@@ -391,7 +392,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 	memset(options, 0, sizeof *options);
 
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:U:v:VwWxXz?01",
+	while ((c = getopt_long(argc, argv, "aAbc:d:eEf:F:h:HlL:no:p:P:qR:sStT:U:v:VwWxXz?01",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -401,6 +402,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'A':
 				pset.popt.topt.format = PRINT_UNALIGNED;
+				break;
+			case 'b':
+				SetVariable(pset.vars, "ECHO", "errors");
 				break;
 			case 'c':
 				options->action_string = pg_strdup(optarg);
@@ -720,6 +724,8 @@ echo_hook(const char *newval)
 		pset.echo = PSQL_ECHO_NONE;
 	else if (strcmp(newval, "queries") == 0)
 		pset.echo = PSQL_ECHO_QUERIES;
+	else if (strcmp(newval, "errors") == 0)
+		pset.echo = PSQL_ECHO_ERRORS;
 	else if (strcmp(newval, "all") == 0)
 		pset.echo = PSQL_ECHO_ALL;
 	else

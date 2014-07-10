@@ -995,6 +995,9 @@ SendQuery(const char *query)
 		results = NULL;			/* PQclear(NULL) does nothing */
 	}
 
+	if (!OK && pset.echo == PSQL_ECHO_ERRORS)
+		psql_error("STATEMENT:  %s\n", query);
+
 	/* If we made a temporary savepoint, possibly release/rollback */
 	if (on_error_rollback_savepoint)
 	{

@@ -73,6 +73,18 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+      <term><option>-b</></term>
+      <term><option>--echo-errors</></term>
+      <listitem>
+      <para>
+      Print failed SQL commands to standard error output. This is
+      equivalent to setting the variable <varname>ECHO</varname> to
+      <literal>errors</literal>.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
       <term><option>-c <replaceable class="parameter">command</replaceable></></term>
       <term><option>--command=<replaceable class="parameter">command</replaceable></></term>
       <listitem>
@@ -2812,7 +2824,9 @@ bar
         <literal>queries</literal>,
         <application>psql</application> merely prints all queries as
         they are sent to the server. The switch for this is
-        <option>-e</option>.
+        <option>-e</option>. If set to <literal>errors</literal> then only
+        failed queries are displayed on standard error output. The switch
+        for this is <option>-b</option>.
         </para>
         </listitem>
       </varlistentry>
