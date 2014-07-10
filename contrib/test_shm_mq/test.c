@@ -18,7 +18,9 @@
 
 #include "test_shm_mq.h"
 
-PG_MODULE_MAGIC; PG_FUNCTION_INFO_V1(test_shm_mq);
+PG_MODULE_MAGIC;
+
+PG_FUNCTION_INFO_V1(test_shm_mq);
 PG_FUNCTION_INFO_V1(test_shm_mq_pipelined);
 
 void		_PG_init(void);

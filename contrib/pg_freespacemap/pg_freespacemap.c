@@ -11,7 +11,6 @@
 #include "funcapi.h"
 #include "storage/freespace.h"
 
-
 PG_MODULE_MAGIC;
 
 /*

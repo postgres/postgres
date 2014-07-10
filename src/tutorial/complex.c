@@ -12,7 +12,6 @@
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
-
 PG_MODULE_MAGIC;
 
 typedef struct Complex

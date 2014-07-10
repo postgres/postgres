@@ -108,9 +108,7 @@ do { \
 
 #endif   /* !HAVE_UUID_OSSP */
 
-
 PG_MODULE_MAGIC;
-
 
 PG_FUNCTION_INFO_V1(uuid_nil);
 PG_FUNCTION_INFO_V1(uuid_ns_dns);

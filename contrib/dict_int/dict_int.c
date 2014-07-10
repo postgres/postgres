@@ -17,7 +17,6 @@
 
 PG_MODULE_MAGIC;
 
-
 typedef struct
 {
 	int			maxlen;

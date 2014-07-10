@@ -16,7 +16,6 @@
 
 PG_MODULE_MAGIC;
 
-
 /*
  * types
  */

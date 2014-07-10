@@ -30,7 +30,6 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-
 PG_MODULE_MAGIC;
 
 /* These must be available to pg_dlsym() */

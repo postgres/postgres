@@ -58,7 +58,6 @@
 #include "snowball/libstemmer/stem_UTF_8_swedish.h"
 #include "snowball/libstemmer/stem_UTF_8_turkish.h"
 
-
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(dsnowball_init);

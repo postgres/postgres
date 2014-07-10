@@ -18,7 +18,6 @@
 
 PG_MODULE_MAGIC;
 
-
 /* These prototypes just prevent possible warnings from gcc. */
 
 int			add_one(int arg);

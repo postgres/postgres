@@ -23,9 +23,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-
 PG_MODULE_MAGIC;
-
 
 /*
  * Copy from s (for source) to r (for result), wrapping with q (quote)

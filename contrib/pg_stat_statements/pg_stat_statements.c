@@ -76,7 +76,6 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
-
 PG_MODULE_MAGIC;
 
 /* Location of permanent stats file (valid when database is shut down) */

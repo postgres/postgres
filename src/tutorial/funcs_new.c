@@ -16,7 +16,6 @@
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/geo_decls.h"	/* for point type */
 
-
 PG_MODULE_MAGIC;
 
 /* These prototypes just prevent possible warnings from gcc. */

@@ -37,7 +37,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
-
 PG_MODULE_MAGIC;
 
 /* Default CPU cost to start up a foreign query. */

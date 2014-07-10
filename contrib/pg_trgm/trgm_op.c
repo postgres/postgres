@@ -11,7 +11,6 @@
 #include "tsearch/ts_locale.h"
 #include "utils/memutils.h"
 
-
 PG_MODULE_MAGIC;
 
 float4		trgm_limit = 0.3f;

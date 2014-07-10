@@ -18,9 +18,7 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 
-
 PG_MODULE_MAGIC;
-
 
 static Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
 static Datum X509_NAME_to_text(X509_NAME *name);

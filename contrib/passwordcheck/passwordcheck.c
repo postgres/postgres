@@ -24,7 +24,6 @@
 #include "fmgr.h"
 #include "libpq/md5.h"
 
-
 PG_MODULE_MAGIC;
 
 /* passwords shorter than this will be rejected */

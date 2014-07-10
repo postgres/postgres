@@ -19,7 +19,6 @@
 
 PG_MODULE_MAGIC;
 
-
 /*
  * Record structure holding the to be exposed cache data.
  */

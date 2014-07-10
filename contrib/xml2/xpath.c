@@ -23,7 +23,6 @@
 #include <libxml/xmlerror.h>
 #include <libxml/parserInternals.h>
 
-
 PG_MODULE_MAGIC;
 
 /* exported for use by xslt_proc.c */

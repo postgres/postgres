@@ -38,7 +38,6 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
-
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pgrowlocks);

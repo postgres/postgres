@@ -60,7 +60,6 @@ EXTERN_C void boot_PostgreSQL__InServer__SPI(pTHX_ CV *cv);
 
 PG_MODULE_MAGIC;
 
-
 /**********************************************************************
  * Information associated with a Perl interpreter.  We have one interpreter
  * that is used for all plperlu (untrusted) functions.  For plperl (trusted)

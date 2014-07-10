@@ -12,7 +12,6 @@
 #include "libpq/be-fsstubs.h"
 #include "utils/rel.h"
 
-
 PG_MODULE_MAGIC;
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
