@@ -400,6 +400,47 @@ GetFdwRoutineForRelation(Relation relation, bool makecopy)
 
 
 /*
+ * IsImportableForeignTable - filter table names for IMPORT FOREIGN SCHEMA
+ *
+ * Returns TRUE if given table name should be imported according to the
+ * statement's import filter options.
+ */
+bool
+IsImportableForeignTable(const char *tablename,
+						 ImportForeignSchemaStmt *stmt)
+{
+	ListCell   *lc;
+
+	switch (stmt->list_type)
+	{
+		case FDW_IMPORT_SCHEMA_ALL:
+			return true;
+
+		case FDW_IMPORT_SCHEMA_LIMIT_TO:
+			foreach(lc, stmt->table_list)
+			{
+				RangeVar   *rv = (RangeVar *) lfirst(lc);
+
+				if (strcmp(tablename, rv->relname) == 0)
+					return true;
+			}
+			return false;
+
+		case FDW_IMPORT_SCHEMA_EXCEPT:
+			foreach(lc, stmt->table_list)
+			{
+				RangeVar   *rv = (RangeVar *) lfirst(lc);
+
+				if (strcmp(tablename, rv->relname) == 0)
+					return false;
+			}
+			return true;
+	}
+	return false;				/* shouldn't get here */
+}
+
+
+/*
  * deflist_to_tuplestore - Helper function to convert DefElem list to
  * tuplestore usable in SRF.
  */

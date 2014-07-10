@@ -100,6 +100,9 @@ typedef bool (*AnalyzeForeignTable_function) (Relation relation,
 												 AcquireSampleRowsFunc *func,
 													BlockNumber *totalpages);
 
+typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
+														   Oid serverOid);
+
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
  * function.  It provides pointers to the callback functions needed by the
@@ -144,6 +147,9 @@ typedef struct FdwRoutine
 
 	/* Support functions for ANALYZE */
 	AnalyzeForeignTable_function AnalyzeForeignTable;
+
+	/* Support functions for IMPORT FOREIGN SCHEMA */
+	ImportForeignSchema_function ImportForeignSchema;
 } FdwRoutine;
 
 
@@ -151,5 +157,7 @@ typedef struct FdwRoutine
 extern FdwRoutine *GetFdwRoutine(Oid fdwhandler);
 extern FdwRoutine *GetFdwRoutineByRelId(Oid relid);
 extern FdwRoutine *GetFdwRoutineForRelation(Relation relation, bool makecopy);
+extern bool IsImportableForeignTable(const char *tablename,
+						 ImportForeignSchemaStmt *stmt);
 
 #endif   /* FDWAPI_H */

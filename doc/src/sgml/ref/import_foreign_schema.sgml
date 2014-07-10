@@ -1,0 +1,168 @@
+<!--
+doc/src/sgml/ref/import_foreign_schema.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-IMPORTFOREIGNSCHEMA">
+ <indexterm zone="sql-importforeignschema">
+  <primary>IMPORT FOREIGN SCHEMA</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>IMPORT FOREIGN SCHEMA</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>IMPORT FOREIGN SCHEMA</refname>
+  <refpurpose>import table definitions from a foreign server</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
+[ { LIMIT TO | EXCEPT } ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] ) ]
+FROM SERVER <replaceable class="PARAMETER">server_name</replaceable>
+INTO <replaceable class="PARAMETER">local_schema</replaceable>
+[ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-description">
+  <title>Description</title>
+
+  <para>
+   <command>IMPORT FOREIGN SCHEMA</command> creates foreign tables that
+   represent tables existing on a foreign server.  The new foreign tables
+   will be owned by the user issuing the command and are created with
+   the correct column definitions and options to match the remote tables.
+  </para>
+
+  <para>
+   By default, all tables and views existing in a particular schema on the
+   foreign server are imported.  Optionally, the list of tables can be limited
+   to a specified subset, or specific tables can be excluded.  The new foreign
+   tables are all created in the target schema, which must already exist.
+  </para>
+
+  <para>
+   To use <command>IMPORT FOREIGN SCHEMA</command>, the user must have
+   <literal>USAGE</literal> privilege on the foreign server, as well as
+   <literal>CREATE</literal> privilege on the target schema.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">remote_schema</replaceable></term>
+    <listitem>
+     <para>
+      The remote schema to import from. The specific meaning of a remote schema
+      depends on the foreign data wrapper in use.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>LIMIT TO ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] )</literal></term>
+    <listitem>
+     <para>
+      Import only foreign tables matching one of the given table names.
+      Other tables existing in the foreign schema will be ignored.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>EXCEPT ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] )</literal></term>
+    <listitem>
+     <para>
+      Exclude specified foreign tables from the import.  All tables
+      existing in the foreign schema will be imported except the
+      ones listed here.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">server_name</replaceable></term>
+    <listitem>
+     <para>
+      The foreign server to import from.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">local_schema</replaceable></term>
+    <listitem>
+     <para>
+      The schema in which the imported foreign tables will be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
+    <listitem>
+     <para>
+      Options to be used during the import.
+      The allowed option names and values are specific to each foreign
+      data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-examples">
+  <title>Examples</title>
+
+  <para>
+   Import table definitions from a remote schema <structname>foreign_films</>
+   on server <structname>film_server</>, creating the foreign tables in
+   local schema <structname>films</>:
+
+<programlisting>
+IMPORT FOREIGN SCHEMA foreign_films
+    FROM SERVER film_server INTO films;
+</programlisting>
+   </para>
+
+  <para>
+   As above, but import only the two tables <structname>actors</> and
+   <literal>directors</> (if they exist):
+
+<programlisting>
+IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
+    FROM SERVER film_server INTO films;
+</programlisting>
+   </para>
+
+ </refsect1>
+
+ <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   The <command>IMPORT FOREIGN SCHEMA</command> command conforms to the
+   <acronym>SQL</acronym> standard, except that the <literal>OPTIONS</>
+   clause is a <productname>PostgreSQL</> extension.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createforeigntable"></member>
+   <member><xref linkend="sql-createserver"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

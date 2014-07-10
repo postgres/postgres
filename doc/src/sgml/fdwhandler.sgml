@@ -696,6 +696,66 @@ AcquireSampleRowsFunc (Relation relation, int elevel,
 
    </sect2>
 
+   <sect2 id="fdw-callbacks-import">
+    <title>FDW Routines For <command>IMPORT FOREIGN SCHEMA</></title>
+
+    <para>
+<programlisting>
+List *
+ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
+</programlisting>
+
+     Obtain a list of foreign table creation commands.  This function is
+     called when executing <xref linkend="sql-importforeignschema">, and is
+     passed the parse tree for that statement, as well as the OID of the
+     foreign server to use.  It should return a list of C strings, each of
+     which must contain a <xref linkend="sql-createforeigntable"> command.
+     These strings will be parsed and executed by the core server.
+    </para>
+
+    <para>
+     Within the <structname>ImportForeignSchemaStmt</> struct,
+     <structfield>remote_schema</> is the name of the remote schema from
+     which tables are to be imported.
+     <structfield>list_type</> identifies how to filter table names:
+     <literal>FDW_IMPORT_SCHEMA_ALL</> means that all tables in the remote
+     schema should be imported (in this case <structfield>table_list</> is
+     empty), <literal>FDW_IMPORT_SCHEMA_LIMIT_TO</> means to include only
+     tables listed in <structfield>table_list</>,
+     and <literal>FDW_IMPORT_SCHEMA_EXCEPT</> means to exclude the tables
+     listed in <structfield>table_list</>.
+     <structfield>options</> is a list of options used for the import process.
+     The meanings of the options are up to the FDW.
+     For example, an FDW could use an option to define whether the
+     <literal>NOT NULL</> attributes of columns should be imported.
+     These options need not have anything to do with those supported by the
+     FDW as database object options.
+    </para>
+
+    <para>
+     The FDW may ignore the <structfield>local_schema</> field of
+     the <structname>ImportForeignSchemaStmt</>, because the core server
+     will automatically insert that name into the parsed <command>CREATE
+     FOREIGN TABLE</> commands.
+    </para>
+
+    <para>
+     The FDW does not have to concern itself with implementing the filtering
+     specified by <structfield>list_type</> and <structfield>table_list</>,
+     either, as the core server will automatically skip any returned commands
+     for tables excluded according to those options.  However, it's often
+     useful to avoid the work of creating commands for excluded tables in the
+     first place.  The function <function>IsImportableForeignTable()</> may be
+     useful to test whether a given foreign-table name will pass the filter.
+    </para>
+
+    <para>
+     If the FDW does not support importing table definitions, the
+     <function>ImportForeignSchema</> pointer can be set to <literal>NULL</>.
+    </para>
+
+   </sect2>
+
    </sect1>
 
    <sect1 id="fdw-helpers">

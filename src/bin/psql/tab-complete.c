@@ -876,8 +876,9 @@ psql_completion(const char *text, int start, int end)
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
 		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
-		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN", "FETCH",
-		"GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
+		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
+		"FETCH", "GRANT", "IMPORT", "INSERT", "LISTEN", "LOAD", "LOCK",
+		"MOVE", "NOTIFY", "PREPARE",
 		"REASSIGN", "REFRESH", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
 		"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
 		"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES", "WITH",
@@ -2946,6 +2947,13 @@ psql_completion(const char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "FROM") == 0 &&
 			 pg_strcasecmp(prev_wd, "GROUP") == 0)
 		COMPLETE_WITH_CONST("BY");
+
+/* IMPORT FOREIGN SCHEMA */
+	else if (pg_strcasecmp(prev_wd, "IMPORT") == 0)
+		COMPLETE_WITH_CONST("FOREIGN SCHEMA");
+	else if (pg_strcasecmp(prev2_wd, "IMPORT") == 0 &&
+			 pg_strcasecmp(prev_wd, "FOREIGN") == 0)
+		COMPLETE_WITH_CONST("SCHEMA");
 
 /* INSERT */
 	/* Complete INSERT with "INTO" */

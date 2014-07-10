@@ -131,6 +131,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY explain            SYSTEM "explain.sgml">
 <!ENTITY fetch              SYSTEM "fetch.sgml">
 <!ENTITY grant              SYSTEM "grant.sgml">
+<!ENTITY importForeignSchema SYSTEM "import_foreign_schema.sgml">
 <!ENTITY insert             SYSTEM "insert.sgml">
 <!ENTITY listen             SYSTEM "listen.sgml">
 <!ENTITY load               SYSTEM "load.sgml">

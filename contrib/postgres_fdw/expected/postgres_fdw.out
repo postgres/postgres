@@ -2834,3 +2834,233 @@ NOTICE:  NEW: (13,"test triggered !")
  (0,27)
 (1 row)
 
+-- ===================================================================
+-- test IMPORT FOREIGN SCHEMA
+-- ===================================================================
+CREATE SCHEMA import_source;
+CREATE TABLE import_source.t1 (c1 int, c2 varchar NOT NULL);
+CREATE TABLE import_source.t2 (c1 int default 42, c2 varchar NULL, c3 text collate "POSIX");
+CREATE TYPE typ1 AS (m1 int, m2 varchar);
+CREATE TABLE import_source.t3 (c1 timestamptz default now(), c2 typ1);
+CREATE TABLE import_source."x 4" (c1 float8, "C 2" text, c3 varchar(42));
+CREATE TABLE import_source."x 5" (c1 float8);
+ALTER TABLE import_source."x 5" DROP COLUMN c1;
+CREATE SCHEMA import_dest1;
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
+\det+ import_dest1
+                                     List of foreign tables
+    Schema    | Table |  Server  |                   FDW Options                   | Description 
+--------------+-------+----------+-------------------------------------------------+-------------
+ import_dest1 | t1    | loopback | (schema_name 'import_source', table_name 't1')  | 
+ import_dest1 | t2    | loopback | (schema_name 'import_source', table_name 't2')  | 
+ import_dest1 | t3    | loopback | (schema_name 'import_source', table_name 't3')  | 
+ import_dest1 | x 4   | loopback | (schema_name 'import_source', table_name 'x 4') | 
+ import_dest1 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
+(5 rows)
+
+\d import_dest1.*
+               Foreign table "import_dest1.t1"
+ Column |       Type        | Modifiers |    FDW Options     
+--------+-------------------+-----------+--------------------
+ c1     | integer           |           | (column_name 'c1')
+ c2     | character varying | not null  | (column_name 'c2')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't1')
+
+                 Foreign table "import_dest1.t2"
+ Column |       Type        |   Modifiers   |    FDW Options     
+--------+-------------------+---------------+--------------------
+ c1     | integer           |               | (column_name 'c1')
+ c2     | character varying |               | (column_name 'c2')
+ c3     | text              | collate POSIX | (column_name 'c3')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't2')
+
+                  Foreign table "import_dest1.t3"
+ Column |           Type           | Modifiers |    FDW Options     
+--------+--------------------------+-----------+--------------------
+ c1     | timestamp with time zone |           | (column_name 'c1')
+ c2     | typ1                     |           | (column_name 'c2')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't3')
+
+                 Foreign table "import_dest1.x 4"
+ Column |         Type          | Modifiers |     FDW Options     
+--------+-----------------------+-----------+---------------------
+ c1     | double precision      |           | (column_name 'c1')
+ C 2    | text                  |           | (column_name 'C 2')
+ c3     | character varying(42) |           | (column_name 'c3')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 'x 4')
+
+    Foreign table "import_dest1.x 5"
+ Column | Type | Modifiers | FDW Options 
+--------+------+-----------+-------------
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 'x 5')
+
+-- Options
+CREATE SCHEMA import_dest2;
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
+  OPTIONS (import_default 'true');
+\det+ import_dest2
+                                     List of foreign tables
+    Schema    | Table |  Server  |                   FDW Options                   | Description 
+--------------+-------+----------+-------------------------------------------------+-------------
+ import_dest2 | t1    | loopback | (schema_name 'import_source', table_name 't1')  | 
+ import_dest2 | t2    | loopback | (schema_name 'import_source', table_name 't2')  | 
+ import_dest2 | t3    | loopback | (schema_name 'import_source', table_name 't3')  | 
+ import_dest2 | x 4   | loopback | (schema_name 'import_source', table_name 'x 4') | 
+ import_dest2 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
+(5 rows)
+
+\d import_dest2.*
+               Foreign table "import_dest2.t1"
+ Column |       Type        | Modifiers |    FDW Options     
+--------+-------------------+-----------+--------------------
+ c1     | integer           |           | (column_name 'c1')
+ c2     | character varying | not null  | (column_name 'c2')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't1')
+
+                 Foreign table "import_dest2.t2"
+ Column |       Type        |   Modifiers   |    FDW Options     
+--------+-------------------+---------------+--------------------
+ c1     | integer           | default 42    | (column_name 'c1')
+ c2     | character varying |               | (column_name 'c2')
+ c3     | text              | collate POSIX | (column_name 'c3')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't2')
+
+                    Foreign table "import_dest2.t3"
+ Column |           Type           |   Modifiers   |    FDW Options     
+--------+--------------------------+---------------+--------------------
+ c1     | timestamp with time zone | default now() | (column_name 'c1')
+ c2     | typ1                     |               | (column_name 'c2')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't3')
+
+                 Foreign table "import_dest2.x 4"
+ Column |         Type          | Modifiers |     FDW Options     
+--------+-----------------------+-----------+---------------------
+ c1     | double precision      |           | (column_name 'c1')
+ C 2    | text                  |           | (column_name 'C 2')
+ c3     | character varying(42) |           | (column_name 'c3')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 'x 4')
+
+    Foreign table "import_dest2.x 5"
+ Column | Type | Modifiers | FDW Options 
+--------+------+-----------+-------------
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 'x 5')
+
+CREATE SCHEMA import_dest3;
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
+  OPTIONS (import_collate 'false', import_not_null 'false');
+\det+ import_dest3
+                                     List of foreign tables
+    Schema    | Table |  Server  |                   FDW Options                   | Description 
+--------------+-------+----------+-------------------------------------------------+-------------
+ import_dest3 | t1    | loopback | (schema_name 'import_source', table_name 't1')  | 
+ import_dest3 | t2    | loopback | (schema_name 'import_source', table_name 't2')  | 
+ import_dest3 | t3    | loopback | (schema_name 'import_source', table_name 't3')  | 
+ import_dest3 | x 4   | loopback | (schema_name 'import_source', table_name 'x 4') | 
+ import_dest3 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
+(5 rows)
+
+\d import_dest3.*
+               Foreign table "import_dest3.t1"
+ Column |       Type        | Modifiers |    FDW Options     
+--------+-------------------+-----------+--------------------
+ c1     | integer           |           | (column_name 'c1')
+ c2     | character varying |           | (column_name 'c2')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't1')
+
+               Foreign table "import_dest3.t2"
+ Column |       Type        | Modifiers |    FDW Options     
+--------+-------------------+-----------+--------------------
+ c1     | integer           |           | (column_name 'c1')
+ c2     | character varying |           | (column_name 'c2')
+ c3     | text              |           | (column_name 'c3')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't2')
+
+                  Foreign table "import_dest3.t3"
+ Column |           Type           | Modifiers |    FDW Options     
+--------+--------------------------+-----------+--------------------
+ c1     | timestamp with time zone |           | (column_name 'c1')
+ c2     | typ1                     |           | (column_name 'c2')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 't3')
+
+                 Foreign table "import_dest3.x 4"
+ Column |         Type          | Modifiers |     FDW Options     
+--------+-----------------------+-----------+---------------------
+ c1     | double precision      |           | (column_name 'c1')
+ C 2    | text                  |           | (column_name 'C 2')
+ c3     | character varying(42) |           | (column_name 'c3')
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 'x 4')
+
+    Foreign table "import_dest3.x 5"
+ Column | Type | Modifiers | FDW Options 
+--------+------+-----------+-------------
+Server: loopback
+FDW Options: (schema_name 'import_source', table_name 'x 5')
+
+-- Check LIMIT TO and EXCEPT
+CREATE SCHEMA import_dest4;
+IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
+  FROM SERVER loopback INTO import_dest4;
+\det+ import_dest4
+                                     List of foreign tables
+    Schema    | Table |  Server  |                  FDW Options                   | Description 
+--------------+-------+----------+------------------------------------------------+-------------
+ import_dest4 | t1    | loopback | (schema_name 'import_source', table_name 't1') | 
+(1 row)
+
+IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch)
+  FROM SERVER loopback INTO import_dest4;
+\det+ import_dest4
+                                     List of foreign tables
+    Schema    | Table |  Server  |                   FDW Options                   | Description 
+--------------+-------+----------+-------------------------------------------------+-------------
+ import_dest4 | t1    | loopback | (schema_name 'import_source', table_name 't1')  | 
+ import_dest4 | t2    | loopback | (schema_name 'import_source', table_name 't2')  | 
+ import_dest4 | t3    | loopback | (schema_name 'import_source', table_name 't3')  | 
+ import_dest4 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
+(4 rows)
+
+-- Assorted error cases
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest4;
+ERROR:  relation "t1" already exists
+CONTEXT:  importing foreign table "t1"
+IMPORT FOREIGN SCHEMA nonesuch FROM SERVER loopback INTO import_dest4;
+ERROR:  schema "nonesuch" is not present on foreign server "loopback"
+IMPORT FOREIGN SCHEMA nonesuch FROM SERVER loopback INTO notthere;
+ERROR:  schema "notthere" does not exist
+IMPORT FOREIGN SCHEMA nonesuch FROM SERVER nowhere INTO notthere;
+ERROR:  server "nowhere" does not exist
+-- Check case of a type present only on the remote server.
+-- We can fake this by dropping the type locally in our transaction.
+CREATE TYPE "Colors" AS ENUM ('red', 'green', 'blue');
+CREATE TABLE import_source.t5 (c1 int, c2 text collate "C", "Col" "Colors");
+CREATE SCHEMA import_dest5;
+BEGIN;
+DROP TYPE "Colors" CASCADE;
+NOTICE:  drop cascades to table import_source.t5 column Col
+IMPORT FOREIGN SCHEMA import_source LIMIT TO (t5)
+  FROM SERVER loopback INTO import_dest5;  -- ERROR
+ERROR:  type "public.Colors" does not exist
+LINE 4:   "Col" public."Colors" OPTIONS (column_name 'Col')
+                ^
+QUERY:  CREATE FOREIGN TABLE t5 (
+  c1 integer OPTIONS (column_name 'c1'),
+  c2 text OPTIONS (column_name 'c2') COLLATE pg_catalog."C",
+  "Col" public."Colors" OPTIONS (column_name 'Col')
+) SERVER loopback
+OPTIONS (schema_name 'import_source', table_name 't5');
+CONTEXT:  importing foreign table "t5"
+ROLLBACK;

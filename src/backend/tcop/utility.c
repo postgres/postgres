@@ -202,6 +202,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterTableSpaceOptionsStmt:
 		case T_AlterTableSpaceMoveStmt:
 		case T_CreateForeignTableStmt:
+		case T_ImportForeignSchemaStmt:
 		case T_SecLabelStmt:
 			PreventCommandIfReadOnly(CreateCommandTag(parsetree));
 			break;
@@ -1196,6 +1197,10 @@ ProcessUtilitySlow(Node *parsetree,
 				RemoveUserMapping((DropUserMappingStmt *) parsetree);
 				break;
 
+			case T_ImportForeignSchemaStmt:
+				ImportForeignSchema((ImportForeignSchemaStmt *) parsetree);
+				break;
+
 			case T_CompositeTypeStmt:	/* CREATE TYPE (composite) */
 				{
 					CompositeTypeStmt *stmt = (CompositeTypeStmt *) parsetree;
@@ -1851,6 +1856,10 @@ CreateCommandTag(Node *parsetree)
 
 		case T_CreateForeignTableStmt:
 			tag = "CREATE FOREIGN TABLE";
+			break;
+
+		case T_ImportForeignSchemaStmt:
+			tag = "IMPORT FOREIGN SCHEMA";
 			break;
 
 		case T_DropStmt:
@@ -2518,6 +2527,7 @@ GetCommandLogLevel(Node *parsetree)
 		case T_CreateUserMappingStmt:
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
+		case T_ImportForeignSchemaStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

@@ -159,6 +159,7 @@
    &explain;
    &fetch;
    &grant;
+   &importForeignSchema;
    &insert;
    &listen;
    &load;

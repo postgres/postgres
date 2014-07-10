@@ -604,6 +604,12 @@
         <entry align="center"><literal>X</literal></entry>
        </row>
        <row>
+        <entry align="left"><literal>IMPORT FOREIGN SCHEMA</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
         <entry align="left"><literal>SELECT INTO</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>

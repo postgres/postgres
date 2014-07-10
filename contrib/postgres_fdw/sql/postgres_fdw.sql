@@ -609,3 +609,60 @@ UPDATE rem1 SET f2 = 'testo';
 
 -- Test returning a system attribute
 INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid;
+
+-- ===================================================================
+-- test IMPORT FOREIGN SCHEMA
+-- ===================================================================
+
+CREATE SCHEMA import_source;
+CREATE TABLE import_source.t1 (c1 int, c2 varchar NOT NULL);
+CREATE TABLE import_source.t2 (c1 int default 42, c2 varchar NULL, c3 text collate "POSIX");
+CREATE TYPE typ1 AS (m1 int, m2 varchar);
+CREATE TABLE import_source.t3 (c1 timestamptz default now(), c2 typ1);
+CREATE TABLE import_source."x 4" (c1 float8, "C 2" text, c3 varchar(42));
+CREATE TABLE import_source."x 5" (c1 float8);
+ALTER TABLE import_source."x 5" DROP COLUMN c1;
+
+CREATE SCHEMA import_dest1;
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
+\det+ import_dest1
+\d import_dest1.*
+
+-- Options
+CREATE SCHEMA import_dest2;
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
+  OPTIONS (import_default 'true');
+\det+ import_dest2
+\d import_dest2.*
+CREATE SCHEMA import_dest3;
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
+  OPTIONS (import_collate 'false', import_not_null 'false');
+\det+ import_dest3
+\d import_dest3.*
+
+-- Check LIMIT TO and EXCEPT
+CREATE SCHEMA import_dest4;
+IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
+  FROM SERVER loopback INTO import_dest4;
+\det+ import_dest4
+IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch)
+  FROM SERVER loopback INTO import_dest4;
+\det+ import_dest4
+
+-- Assorted error cases
+IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest4;
+IMPORT FOREIGN SCHEMA nonesuch FROM SERVER loopback INTO import_dest4;
+IMPORT FOREIGN SCHEMA nonesuch FROM SERVER loopback INTO notthere;
+IMPORT FOREIGN SCHEMA nonesuch FROM SERVER nowhere INTO notthere;
+
+-- Check case of a type present only on the remote server.
+-- We can fake this by dropping the type locally in our transaction.
+CREATE TYPE "Colors" AS ENUM ('red', 'green', 'blue');
+CREATE TABLE import_source.t5 (c1 int, c2 text collate "C", "Col" "Colors");
+
+CREATE SCHEMA import_dest5;
+BEGIN;
+DROP TYPE "Colors" CASCADE;
+IMPORT FOREIGN SCHEMA import_source LIMIT TO (t5)
+  FROM SERVER loopback INTO import_dest5;  -- ERROR
+ROLLBACK;

@@ -231,6 +231,7 @@ SERVER film_server;
    <member><xref linkend="sql-dropforeigntable"></member>
    <member><xref linkend="sql-createtable"></member>
    <member><xref linkend="sql-createserver"></member>
+   <member><xref linkend="sql-importforeignschema"></member>
   </simplelist>
  </refsect1>
 </refentry>

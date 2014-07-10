@@ -15,8 +15,8 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
-#include "access/xact.h"
 #include "access/reloptions.h"
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -27,14 +27,26 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
+#include "foreign/fdwapi.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+
+
+typedef struct
+{
+	char	   *tablename;
+	char	   *cmd;
+} import_error_callback_arg;
+
+/* Internal functions */
+static void import_error_callback(void *arg);
 
 
 /*
@@ -1426,4 +1438,134 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	heap_close(ftrel, RowExclusiveLock);
+}
+
+/*
+ * Import a foreign schema
+ */
+void
+ImportForeignSchema(ImportForeignSchemaStmt *stmt)
+{
+	ForeignServer *server;
+	ForeignDataWrapper *fdw;
+	FdwRoutine *fdw_routine;
+	AclResult	aclresult;
+	List	   *cmd_list;
+	ListCell   *lc;
+
+	/* Check that the foreign server exists and that we have USAGE on it */
+	server = GetForeignServerByName(stmt->server_name, false);
+	aclresult = pg_foreign_server_aclcheck(server->serverid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, server->servername);
+
+	/* Check that the schema exists and we have CREATE permissions on it */
+	(void) LookupCreationNamespace(stmt->local_schema);
+
+	/* Get the FDW and check it supports IMPORT */
+	fdw = GetForeignDataWrapper(server->fdwid);
+	if (!OidIsValid(fdw->fdwhandler))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("foreign-data wrapper \"%s\" has no handler",
+						fdw->fdwname)));
+	fdw_routine = GetFdwRoutine(fdw->fdwhandler);
+	if (fdw_routine->ImportForeignSchema == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_NO_SCHEMAS),
+				 errmsg("foreign-data wrapper \"%s\" does not support IMPORT FOREIGN SCHEMA",
+						fdw->fdwname)));
+
+	/* Call FDW to get a list of commands */
+	cmd_list = fdw_routine->ImportForeignSchema(stmt, server->serverid);
+
+	/* Parse and execute each command */
+	foreach(lc, cmd_list)
+	{
+		char	   *cmd = (char *) lfirst(lc);
+		import_error_callback_arg callback_arg;
+		ErrorContextCallback sqlerrcontext;
+		List	   *raw_parsetree_list;
+		ListCell   *lc2;
+
+		/*
+		 * Setup error traceback support for ereport().  This is so that any
+		 * error in the generated SQL will be displayed nicely.
+		 */
+		callback_arg.tablename = NULL;	/* not known yet */
+		callback_arg.cmd = cmd;
+		sqlerrcontext.callback = import_error_callback;
+		sqlerrcontext.arg = (void *) &callback_arg;
+		sqlerrcontext.previous = error_context_stack;
+		error_context_stack = &sqlerrcontext;
+
+		/*
+		 * Parse the SQL string into a list of raw parse trees.
+		 */
+		raw_parsetree_list = pg_parse_query(cmd);
+
+		/*
+		 * Process each parse tree (we allow the FDW to put more than one
+		 * command per string, though this isn't really advised).
+		 */
+		foreach(lc2, raw_parsetree_list)
+		{
+			CreateForeignTableStmt *cstmt = lfirst(lc2);
+
+			/*
+			 * Because we only allow CreateForeignTableStmt, we can skip parse
+			 * analysis, rewrite, and planning steps here.
+			 */
+			if (!IsA(cstmt, CreateForeignTableStmt))
+				elog(ERROR,
+					 "foreign-data wrapper \"%s\" returned incorrect statement type %d",
+					 fdw->fdwname, (int) nodeTag(cstmt));
+
+			/* Ignore commands for tables excluded by filter options */
+			if (!IsImportableForeignTable(cstmt->base.relation->relname, stmt))
+				continue;
+
+			/* Enable reporting of current table's name on error */
+			callback_arg.tablename = cstmt->base.relation->relname;
+
+			/* Ensure creation schema is the one given in IMPORT statement */
+			cstmt->base.relation->schemaname = pstrdup(stmt->local_schema);
+
+			/* Execute statement */
+			ProcessUtility((Node *) cstmt,
+						   cmd,
+						   PROCESS_UTILITY_SUBCOMMAND, NULL,
+						   None_Receiver, NULL);
+
+			/* Be sure to advance the command counter between subcommands */
+			CommandCounterIncrement();
+
+			callback_arg.tablename = NULL;
+		}
+
+		error_context_stack = sqlerrcontext.previous;
+	}
+}
+
+/*
+ * error context callback to let us supply the failing SQL statement's text
+ */
+static void
+import_error_callback(void *arg)
+{
+	import_error_callback_arg *callback_arg = (import_error_callback_arg *) arg;
+	int			syntaxerrposition;
+
+	/* If it's a syntax error, convert to internal syntax error report */
+	syntaxerrposition = geterrposition();
+	if (syntaxerrposition > 0)
+	{
+		errposition(0);
+		internalerrposition(syntaxerrposition);
+		internalerrquery(callback_arg->cmd);
+	}
+
+	if (callback_arg->tablename)
+		errcontext("importing foreign table \"%s\"",
+				   callback_arg->tablename);
 }

@@ -3069,8 +3069,9 @@ ANALYZE measurement;
     For additional information, see
     <xref linkend="sql-createforeigndatawrapper">,
     <xref linkend="sql-createserver">,
-    <xref linkend="sql-createusermapping">, and
-    <xref linkend="sql-createforeigntable">.
+    <xref linkend="sql-createusermapping">,
+    <xref linkend="sql-createforeigntable">, and
+    <xref linkend="sql-importforeignschema">.
    </para>
  </sect1>
 
