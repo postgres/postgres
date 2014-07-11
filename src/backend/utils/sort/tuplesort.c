@@ -1140,7 +1140,7 @@ tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
 void
 tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 							  ItemPointer self, Datum *values,
-                              bool *isnull)
+							  bool *isnull)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
