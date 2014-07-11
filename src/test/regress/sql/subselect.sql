@@ -427,3 +427,13 @@ select * from int4_tbl o where (f1, f1) in
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
 reset enable_hashjoin;
+
+--
+-- check for over-optimization of whole-row Var referencing an Append plan
+--
+select (select q from
+         (select 1,2,3 where f1 > 0
+          union all
+          select 4,5,6.0 where f1 <= 0
+         ) q )
+from int4_tbl;
