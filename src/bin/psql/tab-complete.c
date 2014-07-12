@@ -1428,7 +1428,7 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const list_DATABASE[] =
 		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE", "CONNECTION LIMIT",
-		NULL};
+		"LC_COLLATE", "LC_CTYPE", NULL};
 
 		COMPLETE_WITH_LIST(list_DATABASE);
 	}
