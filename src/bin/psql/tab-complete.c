@@ -3352,6 +3352,13 @@ psql_completion(const char *text, int start, int end)
 
 			COMPLETE_WITH_LIST(my_list);
 		}
+		else if (pg_strcasecmp(prev2_wd, "search_path") == 0)
+		{
+			COMPLETE_WITH_QUERY(Query_for_list_of_schemas
+								" AND nspname not like 'pg\\_toast%%' "
+								" AND nspname not like 'pg\\_temp%%' "
+								" UNION SELECT 'DEFAULT' ");
+		}
 		else
 		{
 			static const char *const my_list[] =
