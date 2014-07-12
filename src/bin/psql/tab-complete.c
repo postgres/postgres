@@ -2114,7 +2114,8 @@ psql_completion(const char *text, int start, int end)
 	{
 		static const char *const list_DATABASE[] =
 		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE", "IS_TEMPLATE",
-		"ALLOW_CONNECTIONS", "CONNECTION LIMIT", NULL};
+		"ALLOW_CONNECTIONS", "CONNECTION LIMIT", "LC_COLLATE", "LC_CTYPE",
+		NULL};
 
 		COMPLETE_WITH_LIST(list_DATABASE);
 	}
