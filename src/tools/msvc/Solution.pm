@@ -164,9 +164,9 @@ sub GenerateFiles
 		  || confess "Could not write to pg_config.h\n";
 		while (<I>)
 		{
-			s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}"};
+			s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}$self->{options}->{extraver}"};
 			s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
-s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
+			s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}$self->{options}->{extraver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
 			print O;
 		}
 		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
@@ -625,14 +625,15 @@ sub GetFakeConfigure
 	$cfg .= ' --enable-nls' if ($self->{options}->{nls});
 	$cfg .= ' --with-ldap'  if ($self->{options}->{ldap});
 	$cfg .= ' --without-zlib' unless ($self->{options}->{zlib});
-	$cfg .= ' --with-openssl'   if ($self->{options}->{ssl});
-	$cfg .= ' --with-ossp-uuid' if ($self->{options}->{uuid});
-	$cfg .= ' --with-libxml'    if ($self->{options}->{xml});
-	$cfg .= ' --with-libxslt'   if ($self->{options}->{xslt});
-	$cfg .= ' --with-gssapi'    if ($self->{options}->{gss});
-	$cfg .= ' --with-tcl'       if ($self->{options}->{tcl});
-	$cfg .= ' --with-perl'      if ($self->{options}->{perl});
-	$cfg .= ' --with-python'    if ($self->{options}->{python});
+	$cfg .= ' --with-extra-version' if ($self->{options}->{extraver});
+	$cfg .= ' --with-openssl'       if ($self->{options}->{ssl});
+	$cfg .= ' --with-ossp-uuid'     if ($self->{options}->{uuid});
+	$cfg .= ' --with-libxml'        if ($self->{options}->{xml});
+	$cfg .= ' --with-libxslt'       if ($self->{options}->{xslt});
+	$cfg .= ' --with-gssapi'        if ($self->{options}->{gss});
+	$cfg .= ' --with-tcl'           if ($self->{options}->{tcl});
+	$cfg .= ' --with-perl'          if ($self->{options}->{perl});
+	$cfg .= ' --with-python'        if ($self->{options}->{python});
 
 	return $cfg;
 }
