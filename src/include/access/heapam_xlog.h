@@ -69,6 +69,8 @@
 #define XLOG_HEAP_CONTAINS_NEW_TUPLE		(1<<4)
 #define XLOG_HEAP_PREFIX_FROM_OLD			(1<<5)
 #define XLOG_HEAP_SUFFIX_FROM_OLD			(1<<6)
+/* last xl_heap_multi_insert record for one heap_multi_insert() call */
+#define XLOG_HEAP_LAST_MULTI_INSERT			(1<<7)
 
 /* convenience macro for checking whether any form of old tuple was logged */
 #define XLOG_HEAP_CONTAINS_OLD						\

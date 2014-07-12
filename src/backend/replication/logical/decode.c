@@ -802,8 +802,16 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			tuple->header.t_hoff = xlhdr->t_hoff;
 		}
 
-		/* reset toast reassembly only after the last chunk */
-		change->data.tp.clear_toast_afterwards = (i + 1) == xlrec->ntuples;
+		/*
+		 * Reset toast reassembly state only after the last row in the last
+		 * xl_multi_insert_tuple record emitted by one heap_multi_insert()
+		 * call.
+		 */
+		if (xlrec->flags & XLOG_HEAP_LAST_MULTI_INSERT &&
+			(i + 1) == xlrec->ntuples)
+			change->data.tp.clear_toast_afterwards = true;
+		else
+			change->data.tp.clear_toast_afterwards = false;
 
 		ReorderBufferQueueChange(ctx->reorder, r->xl_xid,
 								 buf->origptr, change);

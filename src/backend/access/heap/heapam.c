@@ -2515,6 +2515,14 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 				info |= XLOG_HEAP_INIT_PAGE;
 			}
 
+			/*
+			 * Signal that this is the last xl_heap_multi_insert record
+			 * emitted by this call to heap_multi_insert(). Needed for logical
+			 * decoding so it knows when to cleanup temporary data.
+			 */
+			if (ndone + nthispage == ntuples)
+				xlrec->flags |= XLOG_HEAP_LAST_MULTI_INSERT;
+
 			recptr = XLogInsert(RM_HEAP2_ID, info, rdata);
 
 			PageSetLSN(page, recptr);
