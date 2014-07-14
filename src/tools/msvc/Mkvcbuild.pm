@@ -390,8 +390,8 @@ sub mkvcbuild
 
 	my $pgevent = $solution->AddProject('pgevent', 'dll', 'bin');
 	$pgevent->AddFiles('src\bin\pgevent', 'pgevent.c', 'pgmsgevent.rc');
-	$pgevent->AddResourceFile('src\bin\pgevent',
-		'Eventlog message formatter');
+	$pgevent->AddResourceFile('src\bin\pgevent', 'Eventlog message formatter',
+		'win32');
 	$pgevent->RemoveFile('src\bin\pgevent\win32ver.rc');
 	$pgevent->UseDef('src\bin\pgevent\pgevent.def');
 	$pgevent->DisableLinkerWarnings('4104');
@@ -573,7 +573,8 @@ sub mkvcbuild
 		$proj->AddIncludeDir('src\bin\pg_dump');
 		$proj->AddIncludeDir('src\bin\psql');
 		$proj->AddReference($libpq, $libpgcommon, $libpgport);
-		$proj->AddResourceFile('src\bin\scripts', 'PostgreSQL Utility');
+		$proj->AddResourceFile('src\bin\scripts', 'PostgreSQL Utility',
+			'win32');
 		$proj->AddLibrary('ws2_32.lib');
 	}
 
