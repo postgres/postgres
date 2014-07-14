@@ -533,7 +533,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	reloptions = transformRelOptions((Datum) 0, stmt->options, NULL, validnsps,
 									 true, false);
 
-	(void) heap_reloptions(relkind, reloptions, true);
+	if (relkind == RELKIND_VIEW)
+		(void) view_reloptions(reloptions, true);
+	else
+		(void) heap_reloptions(relkind, reloptions, true);
 
 	if (stmt->ofTypename)
 	{
@@ -8889,9 +8892,11 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-		case RELKIND_VIEW:
 		case RELKIND_MATVIEW:
 			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
+			break;
+		case RELKIND_VIEW:
+			(void) view_reloptions(newOptions, true);
 			break;
 		case RELKIND_INDEX:
 			(void) index_reloptions(rel->rd_am->amoptions, newOptions, true);

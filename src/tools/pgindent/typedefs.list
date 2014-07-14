@@ -1955,6 +1955,7 @@ VariableSpace
 VariableStatData
 Vfd
 ViewCheckOption
+ViewOptions
 ViewStmt
 VirtualTransactionId
 Vsrt
