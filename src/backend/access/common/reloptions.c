@@ -834,9 +834,11 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-		case RELKIND_VIEW:
 		case RELKIND_MATVIEW:
 			options = heap_reloptions(classForm->relkind, datum, false);
+			break;
+		case RELKIND_VIEW:
+			options = view_reloptions(datum, false);
 			break;
 		case RELKIND_INDEX:
 			options = index_reloptions(amoptions, datum, false);
@@ -1200,10 +1202,6 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)},
-		{"security_barrier", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, security_barrier)},
-		{"check_option", RELOPT_TYPE_STRING,
-		offsetof(StdRdOptions, check_option_offset)},
 		{"user_catalog_table", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, user_catalog_table)}
 	};
@@ -1222,6 +1220,38 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 	pfree(options);
 
 	return (bytea *) rdopts;
+}
+
+/*
+ * Option parser for views
+ */
+bytea *
+view_reloptions(Datum reloptions, bool validate)
+{
+	relopt_value *options;
+	ViewOptions *vopts;
+	int			numoptions;
+	static const relopt_parse_elt tab[] = {
+		{"security_barrier", RELOPT_TYPE_BOOL,
+		offsetof(ViewOptions, security_barrier)},
+		{"check_option", RELOPT_TYPE_STRING,
+		offsetof(ViewOptions, check_option_offset)}
+	};
+
+	options = parseRelOptions(reloptions, validate, RELOPT_KIND_VIEW, &numoptions);
+
+	/* if none set, we're done */
+	if (numoptions == 0)
+		return NULL;
+
+	vopts = allocateReloptStruct(sizeof(ViewOptions), options, numoptions);
+
+	fillRelOptions((void *) vopts, sizeof(ViewOptions), options, numoptions,
+				   validate, tab, lengthof(tab));
+
+	pfree(options);
+
+	return (bytea *) vopts;
 }
 
 /*
@@ -1248,8 +1278,6 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 		case RELKIND_RELATION:
 		case RELKIND_MATVIEW:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
-		case RELKIND_VIEW:
-			return default_reloptions(reloptions, validate, RELOPT_KIND_VIEW);
 		default:
 			/* other relkinds are not supported */
 			return NULL;
