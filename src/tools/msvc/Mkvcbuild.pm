@@ -524,7 +524,7 @@ sub mkvcbuild
 
 	$mf =
 	  Project::read_file('src\backend\utils\mb\conversion_procs\Makefile');
-	$mf =~ s{\\s*[\r\n]+}{}mg;
+	$mf =~ s{\\\r?\n}{}g;
 	$mf =~ m{SUBDIRS\s*=\s*(.*)$}m
 	  || die 'Could not match in conversion makefile' . "\n";
 	foreach my $sub (split /\s+/, $1)
@@ -536,7 +536,7 @@ sub mkvcbuild
 	}
 
 	$mf = Project::read_file('src\bin\scripts\Makefile');
-	$mf =~ s{\\s*[\r\n]+}{}mg;
+	$mf =~ s{\\\r?\n}{}g;
 	$mf =~ m{PROGRAMS\s*=\s*(.*)$}m
 	  || die 'Could not match in bin\scripts\Makefile' . "\n";
 	foreach my $prg (split /\s+/, $1)
@@ -674,7 +674,7 @@ sub GenerateContribSqlFiles
 {
 	my $n  = shift;
 	my $mf = shift;
-	$mf =~ s{\\\s*[\r\n]+}{}mg;
+	$mf =~ s{\\\r?\n}{}g;
 	if ($mf =~ /^DATA_built\s*=\s*(.*)$/mg)
 	{
 		my $l = $1;

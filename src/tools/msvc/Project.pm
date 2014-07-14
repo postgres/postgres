@@ -193,7 +193,7 @@ sub AddDir
 	my $mf = <$MF>;
 	close($MF);
 
-	$mf =~ s{\\\s*[\r\n]+}{}mg;
+	$mf =~ s{\\\r?\n}{}g;
 	if ($mf =~ m{^(?:SUB)?DIRS[^=]*=\s*(.*)$}mg)
 	{
 		foreach my $subdir (split /\s+/, $1)

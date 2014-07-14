@@ -358,7 +358,7 @@ sub fetchTests
 	close($handle);
 	my $t = "";
 
-	$m =~ s/\\[\r\n]*//gs;
+	$m =~ s{\\\r?\n}{}g;
 	if ($m =~ /^REGRESS\s*=\s*(.*)$/gm)
 	{
 		$t = $1;
