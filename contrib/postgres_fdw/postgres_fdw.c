@@ -2261,7 +2261,6 @@ static void
 store_returning_result(PgFdwModifyState *fmstate,
 					   TupleTableSlot *slot, PGresult *res)
 {
-	/* PGresult must be released before leaving this function. */
 	PG_TRY();
 	{
 		HeapTuple	newtup;
