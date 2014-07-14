@@ -474,8 +474,10 @@ sub mkvcbuild
 		push @contrib_excludes, 'uuid-ossp';
 	}
 
-	# Pgcrypto makefile too complex to parse....
-	my $pgcrypto = $solution->AddProject('pgcrypto', 'dll', 'crypto');
+	# AddProject() does not recognize the constructs used to populate OBJS in
+	# the pgcrypto Makefile, so it will discover no files.
+	my $pgcrypto =
+	  $solution->AddProject('pgcrypto', 'dll', 'crypto', 'contrib\\pgcrypto');
 	$pgcrypto->AddFiles(
 		'contrib\pgcrypto', 'pgcrypto.c',
 		'px.c',             'px-hmac.c',
@@ -527,18 +529,9 @@ sub mkvcbuild
 	  || die 'Could not match in conversion makefile' . "\n";
 	foreach my $sub (split /\s+/, $1)
 	{
-		my $mf = Project::read_file(
-			'src\backend\utils\mb\conversion_procs\\' . $sub . '\Makefile');
-		my $p = $solution->AddProject($sub, 'dll', 'conversion procs');
-		$p->AddFile('src\backend\utils\mb\conversion_procs\\'
-			  . $sub . '\\'
-			  . $sub
-			  . '.c');
-		if ($mf =~ m{^SRCS\s*\+=\s*(.*)$}m)
-		{
-			$p->AddFile(
-				'src\backend\utils\mb\conversion_procs\\' . $sub . '\\' . $1);
-		}
+		my $dir = 'src\backend\utils\mb\conversion_procs\\' . $sub;
+		my $p = $solution->AddProject($sub, 'dll', 'conversion procs', $dir);
+		$p->AddFile("$dir\\$sub.c");    # implicit source file
 		$p->AddReference($postgres);
 	}
 
@@ -646,44 +639,17 @@ sub AddContrib
 	if ($mf =~ /^MODULE_big\s*=\s*(.*)$/mg)
 	{
 		my $dn = $1;
-		$mf =~ s{\\\s*[\r\n]+}{}mg;
-		my $proj = $solution->AddProject($dn, 'dll', 'contrib');
-		$mf =~ /^OBJS\s*=\s*(.*)$/gm
-		  || croak "Could not find objects in MODULE_big for $n\n";
-		my $objs = $1;
-		while ($objs =~ /\b([\w-]+\.o)\b/g)
-		{
-			my $o = $1;
-			$o =~ s/\.o$/.c/;
-			$proj->AddFile('contrib\\' . $n . '\\' . $o);
-		}
+		my $proj =
+		  $solution->AddProject($dn, 'dll', 'contrib', 'contrib\\' . $n);
 		$proj->AddReference($postgres);
-		if ($mf =~ /^SUBDIRS\s*:?=\s*(.*)$/mg)
-		{
-			foreach my $d (split /\s+/, $1)
-			{
-				my $mf2 = Project::read_file(
-					'contrib\\' . $n . '\\' . $d . '\Makefile');
-				$mf2 =~ s{\\\s*[\r\n]+}{}mg;
-				$mf2 =~ /^SUBOBJS\s*=\s*(.*)$/gm
-				  || croak
-				  "Could not find objects in MODULE_big for $n, subdir $d\n";
-				$objs = $1;
-				while ($objs =~ /\b([\w-]+\.o)\b/g)
-				{
-					my $o = $1;
-					$o =~ s/\.o$/.c/;
-					$proj->AddFile('contrib\\' . $n . '\\' . $d . '\\' . $o);
-				}
-			}
-		}
 		AdjustContribProj($proj);
 	}
 	elsif ($mf =~ /^MODULES\s*=\s*(.*)$/mg)
 	{
 		foreach my $mod (split /\s+/, $1)
 		{
-			my $proj = $solution->AddProject($mod, 'dll', 'contrib');
+			my $proj =
+			  $solution->AddProject($mod, 'dll', 'contrib', 'contrib\\' . $n);
 			$proj->AddFile('contrib\\' . $n . '\\' . $mod . '.c');
 			$proj->AddReference($postgres);
 			AdjustContribProj($proj);
@@ -691,17 +657,8 @@ sub AddContrib
 	}
 	elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg)
 	{
-		my $proj = $solution->AddProject($1, 'exe', 'contrib');
-		$mf =~ s{\\\s*[\r\n]+}{}mg;
-		$mf =~ /^OBJS\s*=\s*(.*)$/gm
-		  || croak "Could not find objects in PROGRAM for $n\n";
-		my $objs = $1;
-		while ($objs =~ /\b([\w-]+\.o)\b/g)
-		{
-			my $o = $1;
-			$o =~ s/\.o$/.c/;
-			$proj->AddFile('contrib\\' . $n . '\\' . $o);
-		}
+		my $proj =
+		  $solution->AddProject($1, 'exe', 'contrib', 'contrib\\' . $n);
 		AdjustContribProj($proj);
 	}
 	else
@@ -717,6 +674,7 @@ sub GenerateContribSqlFiles
 {
 	my $n  = shift;
 	my $mf = shift;
+	$mf =~ s{\\\s*[\r\n]+}{}mg;
 	if ($mf =~ /^DATA_built\s*=\s*(.*)$/mg)
 	{
 		my $l = $1;

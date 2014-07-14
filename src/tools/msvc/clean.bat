@@ -19,6 +19,8 @@ if exist pgsql.suo del /q /a:H pgsql.suo
 del /s /q src\bin\win32ver.rc 2> NUL
 del /s /q src\interfaces\win32ver.rc 2> NUL
 if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
+for /d %%f in (contrib\*) do if exist %%f\win32ver.rc del /q %%f\win32ver.rc
+for /d %%f in (src\backend\utils\mb\conversion_procs\*) do if exist %%f\win32ver.rc del /q %%f\win32ver.rc
 
 REM Delete files created with GenerateFiles() in Solution.pm
 if exist src\include\pg_config.h del /q src\include\pg_config.h
