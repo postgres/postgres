@@ -4,7 +4,7 @@ PGFILEDESC = "pg_archivecleanup - cleans archive when used with streaming replic
 PGAPPICON = win32
 
 PROGRAM = pg_archivecleanup
-OBJS	= pg_archivecleanup.o
+OBJS	= pg_archivecleanup.o $(WIN32RES)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

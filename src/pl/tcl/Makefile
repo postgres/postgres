@@ -34,10 +34,11 @@ ifneq ($(PORTNAME), win32)
 SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
 endif
 
+PGFILEDESC = "PL/Tcl - procedural language"
 
 NAME = pltcl
 
-OBJS = pltcl.o
+OBJS = pltcl.o $(WIN32RES)
 
 DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
        pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql

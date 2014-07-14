@@ -4,6 +4,7 @@ MODULES = worker_spi
 
 EXTENSION = worker_spi
 DATA = worker_spi--1.0.sql
+PGFILEDESC = "worker_spi - background worker example"
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

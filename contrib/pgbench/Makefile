@@ -4,7 +4,7 @@ PGFILEDESC = "pgbench - a simple program for running benchmark tests"
 PGAPPICON = win32
 
 PROGRAM = pgbench
-OBJS	= pgbench.o
+OBJS	= pgbench.o $(WIN32RES)
 
 PG_CPPFLAGS = -I$(libpq_srcdir)
 PG_LIBS = $(libpq_pgport) $(PTHREAD_LIBS)

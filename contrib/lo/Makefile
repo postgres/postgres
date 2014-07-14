@@ -4,6 +4,7 @@ MODULES = lo
 
 EXTENSION = lo
 DATA = lo--1.0.sql lo--unpackaged--1.0.sql
+PGFILEDESC = "lo - management for large objects"
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

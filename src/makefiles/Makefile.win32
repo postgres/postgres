@@ -75,5 +75,5 @@ win32ver.o: win32ver.rc
 	$(WINDRES) -i $< -o $@ --include-dir=$(top_builddir)/src/include --include-dir=$(srcdir)
 
 # Rule for building a shared library from a single .o file
-%.dll: %.o
-	$(CC) $(CFLAGS) -shared -o $@ $< -Wl,--export-all-symbols $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)
+%.dll: %.o $(WIN32RES)
+	$(CC) $(CFLAGS) -shared -o $@ $^ -Wl,--export-all-symbols $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)

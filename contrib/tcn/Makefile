@@ -4,6 +4,7 @@ MODULES = tcn
 
 EXTENSION = tcn
 DATA = tcn--1.0.sql
+PGFILEDESC = "tcn - trigger function notifying listeners"
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

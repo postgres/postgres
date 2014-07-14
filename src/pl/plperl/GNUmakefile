@@ -26,10 +26,11 @@ override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
 
 rpathdir = $(perl_archlibexp)/CORE
 
+PGFILEDESC = "PL/Perl - procedural language"
 
 NAME = plperl
 
-OBJS = plperl.o SPI.o Util.o
+OBJS = plperl.o SPI.o Util.o $(WIN32RES)
 
 DATA = plperl.control plperl--1.0.sql plperl--unpackaged--1.0.sql \
        plperlu.control plperlu--1.0.sql plperlu--unpackaged--1.0.sql

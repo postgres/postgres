@@ -1,10 +1,11 @@
 # contrib/seg/Makefile
 
 MODULE_big = seg
-OBJS = seg.o segparse.o
+OBJS = seg.o segparse.o $(WIN32RES)
 
 EXTENSION = seg
 DATA = seg--1.0.sql seg--unpackaged--1.0.sql
+PGFILEDESC = "seg - line segment data type"
 
 REGRESS = seg
 

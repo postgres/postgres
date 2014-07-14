@@ -2,8 +2,9 @@
 
 MODULE_big = sepgsql
 OBJS = hooks.o selinux.o uavc.o label.o dml.o \
-	database.o schema.o relation.o proc.o
+	database.o schema.o relation.o proc.o $(WIN32RES)
 DATA_built = sepgsql.sql
+PGFILEDESC = "sepgsql - SELinux integration"
 
 # Note: because we don't tell the Makefile there are any regression tests,
 # we have to clean those result files explicitly

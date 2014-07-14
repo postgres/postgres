@@ -1,6 +1,6 @@
 # contrib/pg_xlogdump/Makefile
 
-PGFILEDESC = "pg_xlogdump"
+PGFILEDESC = "pg_xlogdump - decode and display WAL"
 PGAPPICON=win32
 
 PROGRAM = pg_xlogdump

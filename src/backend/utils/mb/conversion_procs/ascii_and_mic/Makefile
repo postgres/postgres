@@ -8,5 +8,6 @@ top_builddir = ../../../../../..
 include $(top_builddir)/src/Makefile.global
 
 NAME		= ascii_and_mic
+PGFILEDESC	= "ascii <-> mic text conversions"
 
 include $(srcdir)/../proc.mk

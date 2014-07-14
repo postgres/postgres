@@ -4,7 +4,7 @@ PGFILEDESC = "pg_test_fsync - test various disk sync methods"
 PGAPPICON = win32
 
 PROGRAM  = pg_test_fsync
-OBJS = pg_test_fsync.o
+OBJS = pg_test_fsync.o $(WIN32RES)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

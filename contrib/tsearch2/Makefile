@@ -4,6 +4,7 @@ MODULES = tsearch2
 
 EXTENSION = tsearch2
 DATA = tsearch2--1.0.sql tsearch2--unpackaged--1.0.sql
+PGFILEDESC = "tsearch2 - backward-compatible text search functionality"
 
 REGRESS = tsearch2
 

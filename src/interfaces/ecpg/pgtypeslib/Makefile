@@ -13,6 +13,7 @@ subdir = src/interfaces/ecpg/pgtypeslib
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
+PGFILEDESC = "pgtypes - library for data type mapping"
 NAME= pgtypes
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 6
@@ -30,7 +31,7 @@ SHLIB_EXPORTS = exports.txt
 
 OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o interval.o \
 	pgstrcasecmp.o \
-	$(filter rint.o snprintf.o, $(LIBOBJS))
+	$(filter rint.o snprintf.o, $(LIBOBJS)) $(WIN32RES)
 
 all: all-lib
 

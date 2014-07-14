@@ -4,6 +4,7 @@ MODULES = tablefunc
 
 EXTENSION = tablefunc
 DATA = tablefunc--1.0.sql tablefunc--unpackaged--1.0.sql
+PGFILEDESC = "tablefunc - various functions that return tables"
 
 REGRESS = tablefunc
 

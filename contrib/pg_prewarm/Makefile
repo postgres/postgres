@@ -1,10 +1,11 @@
 # contrib/pg_prewarm/Makefile
 
 MODULE_big = pg_prewarm
-OBJS = pg_prewarm.o
+OBJS = pg_prewarm.o $(WIN32RES)
 
 EXTENSION = pg_prewarm
 DATA = pg_prewarm--1.0.sql
+PGFILEDESC = "pg_prewarm - preload relation data into system buffer cache"
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

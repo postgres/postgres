@@ -9,7 +9,7 @@
 #
 #-------------------------------------------------------------------------
 
-PGFILEDESC = "pg_basebackup - takes a streaming base backup of a PostgreSQL instance"
+PGFILEDESC = "pg_basebackup/pg_receivexlog/pg_recvlogical - streaming WAL and backup receivers"
 PGAPPICON=win32
 
 subdir = src/bin/pg_basebackup

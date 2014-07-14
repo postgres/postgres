@@ -13,6 +13,7 @@ subdir = src/interfaces/ecpg/compatlib
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
+PGFILEDESC = "ECPG compat - compatibility library for ECPG"
 NAME= ecpg_compat
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 7
@@ -30,7 +31,7 @@ SHLIB_EXPORTS = exports.txt
 # Need to recompile any libpgport object files
 LIBS := $(filter-out -lpgport, $(LIBS))
 
-OBJS= informix.o $(filter snprintf.o, $(LIBOBJS))
+OBJS= informix.o $(filter snprintf.o, $(LIBOBJS)) $(WIN32RES)
 
 PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
 

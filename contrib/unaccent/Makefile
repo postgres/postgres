@@ -1,11 +1,12 @@
 # contrib/unaccent/Makefile
 
 MODULE_big = unaccent
-OBJS = unaccent.o
+OBJS = unaccent.o $(WIN32RES)
 
 EXTENSION = unaccent
 DATA = unaccent--1.0.sql unaccent--unpackaged--1.0.sql
 DATA_TSEARCH = unaccent.rules
+PGFILEDESC = "unaccent - text search dictionary that removes accents"
 
 REGRESS = unaccent
 

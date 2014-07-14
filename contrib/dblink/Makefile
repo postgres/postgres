@@ -1,13 +1,14 @@
 # contrib/dblink/Makefile
 
 MODULE_big = dblink
-OBJS	= dblink.o
+OBJS	= dblink.o $(WIN32RES)
 PG_CPPFLAGS = -I$(libpq_srcdir)
 SHLIB_LINK = $(libpq)
 SHLIB_PREREQS = submake-libpq
 
 EXTENSION = dblink
 DATA = dblink--1.1.sql dblink--1.0--1.1.sql dblink--unpackaged--1.0.sql
+PGFILEDESC = "dblink - connect to other PostgreSQL databases"
 
 REGRESS = dblink
 

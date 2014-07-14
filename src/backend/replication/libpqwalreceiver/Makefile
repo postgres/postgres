@@ -14,9 +14,10 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 
-OBJS = libpqwalreceiver.o
+OBJS = libpqwalreceiver.o $(WIN32RES)
 SHLIB_LINK = $(libpq)
 SHLIB_PREREQS = submake-libpq
+PGFILEDESC = "libpqwalreceiver - receive WAL during streaming replication"
 NAME = libpqwalreceiver
 
 all: all-shared-lib

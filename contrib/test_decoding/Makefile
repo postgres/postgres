@@ -1,6 +1,7 @@
 # contrib/test_decoding/Makefile
 
 MODULES = test_decoding
+PGFILEDESC = "test_decoding - example of a logical decoding output plugin"
 
 # Note: because we don't tell the Makefile there are any regression tests,
 # we have to clean those result files explicitly

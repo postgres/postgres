@@ -4,7 +4,7 @@ PGFILEDESC = "pg_test_timing - test timing overhead"
 PGAPPICON = win32
 
 PROGRAM  = pg_test_timing
-OBJS = pg_test_timing.o
+OBJS = pg_test_timing.o $(WIN32RES)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

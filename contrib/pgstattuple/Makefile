@@ -1,10 +1,11 @@
 # contrib/pgstattuple/Makefile
 
 MODULE_big	= pgstattuple
-OBJS		= pgstattuple.o pgstatindex.o
+OBJS		= pgstattuple.o pgstatindex.o $(WIN32RES)
 
 EXTENSION = pgstattuple
 DATA = pgstattuple--1.2.sql pgstattuple--1.1--1.2.sql pgstattuple--1.0--1.1.sql pgstattuple--unpackaged--1.0.sql
+PGFILEDESC = "pgstattuple - tuple-level statistics"
 
 REGRESS = pgstattuple
 
