@@ -1937,13 +1937,16 @@ show_tidbitmap_info(BitmapHeapScanState *planstate, ExplainState *es)
 	}
 	else
 	{
-		appendStringInfoSpaces(es->str, es->indent * 2);
-		appendStringInfoString(es->str, "Heap Blocks:");
-		if (planstate->exact_pages > 0)
-			appendStringInfo(es->str, " exact=%ld", planstate->exact_pages);
-		if (planstate->lossy_pages > 0)
-			appendStringInfo(es->str, " lossy=%ld", planstate->lossy_pages);
-		appendStringInfoChar(es->str, '\n');
+		if (planstate->exact_pages > 0 || planstate->lossy_pages > 0)
+		{
+			appendStringInfoSpaces(es->str, es->indent * 2);
+			appendStringInfoString(es->str, "Heap Blocks:");
+			if (planstate->exact_pages > 0)
+				appendStringInfo(es->str, " exact=%ld", planstate->exact_pages);
+			if (planstate->lossy_pages > 0)
+				appendStringInfo(es->str, " lossy=%ld", planstate->lossy_pages);
+			appendStringInfoChar(es->str, '\n');
+		}
 	}
 }
 
