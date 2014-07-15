@@ -240,7 +240,7 @@ usage(void)
   pg_upgrade [OPTION]...\n\
 \n\
 Options:\n\
-  -b, --old-bindir=BINDIR      old cluster executable directory\n\
+  -b, --old-bindir=BINDIR       old cluster executable directory\n\
   -B, --new-bindir=BINDIR       new cluster executable directory\n\
   -c, --check                   check clusters only, don't change any data\n\
   -d, --old-datadir=DATADIR     old cluster data directory\n\
