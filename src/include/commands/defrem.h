@@ -104,6 +104,7 @@ extern void RemoveTSDictionaries(DropStmt *drop);
 extern void RemoveTSDictionaryById(Oid dictId);
 extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern void AlterTSDictionaryOwner(List *name, Oid newOwnerId);
+extern void AlterTSDictionaryOwner_oid(Oid dictId, Oid newOwnerId);
 
 extern void DefineTSTemplate(List *names, List *parameters);
 extern void RenameTSTemplate(List *oldname, const char *newname);
@@ -116,6 +117,7 @@ extern void RemoveTSConfigurations(DropStmt *stmt);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);
+extern void AlterTSConfigurationOwner_oid(Oid cfgId, Oid newOwnerId);
 
 extern text *serialize_deflist(List *deflist);
 extern List *deserialize_deflist(Datum txt);
