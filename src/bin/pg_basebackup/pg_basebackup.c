@@ -232,7 +232,8 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
-	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"));
+	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+			 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
 	printf(_("  -R, --write-recovery-conf\n"
 			 "                         write recovery.conf after backup\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
