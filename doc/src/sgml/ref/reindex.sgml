@@ -46,7 +46,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
 
     <listitem>
      <para>
-      An index has become <quote>bloated</>, that it is contains many
+      An index has become <quote>bloated</>, that is it contains many
       empty or nearly-empty pages.  This can occur with B-tree indexes in
       <productname>PostgreSQL</productname> under certain uncommon access
       patterns. <command>REINDEX</command> provides a way to reduce
@@ -204,7 +204,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    but not reads of the index's parent table.  It also takes an exclusive lock
    on the specific index being processed, which will block reads that attempt
    to use that index.  In contrast, <command>DROP INDEX</> momentarily takes
-   exclusive lock on the parent table, blocking both writes and reads.  The
+   an exclusive lock on the parent table, blocking both writes and reads.  The
    subsequent <command>CREATE INDEX</> locks out writes but not reads; since
    the index is not there, no read will attempt to use it, meaning that there
    will be no blocking but reads might be forced into expensive sequential
