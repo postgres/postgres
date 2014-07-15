@@ -420,6 +420,10 @@ extern void unsetenv(const char *name);
 extern void srandom(unsigned int seed);
 #endif
 
+#ifndef HAVE_SSL_GET_CURRENT_COMPRESSION
+#define SSL_get_current_compression(x) 0
+#endif
+
 /* thread.h */
 extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 

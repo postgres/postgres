@@ -433,6 +433,9 @@
 /* Define to 1 if you have the `srandom' function. */
 #undef HAVE_SRANDOM
 
+/* Define to 1 if you have the `SSL_get_current_compression' function. */
+#undef HAVE_SSL_GET_CURRENT_COMPRESSION
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
