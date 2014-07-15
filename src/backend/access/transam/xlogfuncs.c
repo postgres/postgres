@@ -144,7 +144,7 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			 errmsg("WAL level not sufficient for creating a restore point"),
-				 errhint("wal_level must be set to \"archive\" or \"hot_standby\" at server start.")));
+				 errhint("wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start.")));
 
 	restore_name_str = text_to_cstring(restore_name);
 

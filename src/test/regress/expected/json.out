@@ -1152,11 +1152,11 @@ SELECT json_build_object(1,2);
 SELECT json_build_object(null,2);
 ERROR:  arg 1: key cannot be null
 SELECT json_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
-ERROR:  key value must be scalar, not array, composite or json
+ERROR:  key value must be scalar, not array, composite, or json
 SELECT json_build_object(json '{"a":1,"b":2}', 3);
-ERROR:  key value must be scalar, not array, composite or json
+ERROR:  key value must be scalar, not array, composite, or json
 SELECT json_build_object('{1,2,3}'::int[], 3);
-ERROR:  key value must be scalar, not array, composite or json
+ERROR:  key value must be scalar, not array, composite, or json
 CREATE TEMP TABLE foo (serial_num int, name text, type text);
 INSERT INTO foo VALUES (847001,'t15','GE1043');
 INSERT INTO foo VALUES (847002,'t16','GE1043');

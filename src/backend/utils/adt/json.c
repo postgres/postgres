@@ -1347,7 +1347,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 		 tcategory == JSONTYPE_CAST))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		  errmsg("key value must be scalar, not array, composite or json")));
+		  errmsg("key value must be scalar, not array, composite, or json")));
 
 	switch (tcategory)
 	{
