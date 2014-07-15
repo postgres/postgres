@@ -107,6 +107,7 @@ extern void RenameTSDictionary(List *oldname, const char *newname);
 extern void RemoveTSDictionaryById(Oid dictId);
 extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern void AlterTSDictionaryOwner(List *name, Oid newOwnerId);
+extern void AlterTSDictionaryOwner_oid(Oid dictId, Oid newOwnerId);
 extern void AlterTSDictionaryNamespace(List *name, const char *newschema);
 extern Oid	AlterTSDictionaryNamespace_oid(Oid dictId, Oid newNspOid);
 
@@ -121,6 +122,7 @@ extern void RenameTSConfiguration(List *oldname, const char *newname);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);
+extern void AlterTSConfigurationOwner_oid(Oid cfgId, Oid newOwnerId);
 extern void AlterTSConfigurationNamespace(List *name, const char *newschema);
 extern Oid	AlterTSConfigurationNamespace_oid(Oid cfgId, Oid newNspOid);
 
