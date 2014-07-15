@@ -1584,7 +1584,10 @@ The commands accepted in walsender mode are:
       </term>
       <listitem>
       <para>
-          The standby's current xmin.
+          The standby's current xmin. This may be 0, if the standby is
+          sending notification that Hot Standby feedback will no
+          longer be sent on this connection. Later non-zero messages may
+          reinitiate the feedback mechanism.
       </para>
       </listitem>
       </varlistentry>
