@@ -4209,13 +4209,13 @@ DATA(insert OID = 3196 (  json_object_agg_finalfn	 PGNSP PGUID 12 1 0 0 0 f f f 
 DESCR("json object aggregate final function");
 DATA(insert OID = 3197 (  json_object_agg		   PGNSP PGUID 12 1 0 0 0 t f f f f f i 2 0 114 "2276 2276" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("aggregate input into a json object");
-DATA(insert OID = 3198 (  json_build_array	   PGNSP PGUID 12 1 0 2276 0 f f f f f f i 1 0 114 "2276" "{2276}" "{v}" _null_ _null_ json_build_array _null_ _null_ _null_ ));
+DATA(insert OID = 3198 (  json_build_array	   PGNSP PGUID 12 1 0 2276 0 f f f f f f s 1 0 114 "2276" "{2276}" "{v}" _null_ _null_ json_build_array _null_ _null_ _null_ ));
 DESCR("build a json array from any inputs");
-DATA(insert OID = 3199 (  json_build_array	   PGNSP PGUID 12 1 0 0 0 f f f f f f i 0 0 114  "" _null_ _null_ _null_ _null_ json_build_array_noargs _null_ _null_ _null_ ));
+DATA(insert OID = 3199 (  json_build_array	   PGNSP PGUID 12 1 0 0 0 f f f f f f s 0 0 114  "" _null_ _null_ _null_ _null_ json_build_array_noargs _null_ _null_ _null_ ));
 DESCR("build an empty json array");
-DATA(insert OID = 3200 (  json_build_object    PGNSP PGUID 12 1 0 2276 0 f f f f f f i 1 0 114 "2276" "{2276}" "{v}" _null_ _null_ json_build_object _null_ _null_ _null_ ));
+DATA(insert OID = 3200 (  json_build_object    PGNSP PGUID 12 1 0 2276 0 f f f f f f s 1 0 114 "2276" "{2276}" "{v}" _null_ _null_ json_build_object _null_ _null_ _null_ ));
 DESCR("build a json object from pairwise key/value inputs");
-DATA(insert OID = 3201 (  json_build_object    PGNSP PGUID 12 1 0 0 0 f f f f f f i 0 0 114  "" _null_ _null_ _null_ _null_ json_build_object_noargs _null_ _null_ _null_ ));
+DATA(insert OID = 3201 (  json_build_object    PGNSP PGUID 12 1 0 0 0 f f f f f f s 0 0 114  "" _null_ _null_ _null_ _null_ json_build_object_noargs _null_ _null_ _null_ ));
 DESCR("build an empty json object");
 DATA(insert OID = 3202 (  json_object	 PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 114 "1009" _null_ _null_ _null_ _null_ json_object _null_ _null_ _null_ ));
 DESCR("map text arrayof key value pais to json object");
