@@ -891,7 +891,7 @@ fi
 AC_CHECK_LIB(m, main)
 AC_SEARCH_LIBS(setproctitle, util)
 AC_SEARCH_LIBS(dlopen, dl)
-AC_SEARCH_LIBS(socket, [socket wsock32])
+AC_SEARCH_LIBS(socket, [socket ws2_32])
 AC_SEARCH_LIBS(shl_load, dld)
 # We only use libld in port/dynloader/aix.c
 case $host_os in

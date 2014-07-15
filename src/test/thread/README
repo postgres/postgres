@@ -40,7 +40,7 @@ to test your system however, you can do so as follows:
     -D_POSIX_PTHREAD_SEMANTICS \
     -I../../../src/include/port/win32 \
     thread_test.c \
-    -lwsock32 \
+    -lws2_32 \
     -lpthreadgc2
 
 3) Run thread_test.exe. You should see output like:

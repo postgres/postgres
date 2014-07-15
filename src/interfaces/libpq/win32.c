@@ -248,9 +248,6 @@ struct MessageDLL
 		"winsock.dll", 0, 0
 	},
 	{
-		"wsock32.dll", 0, 0
-	},
-	{
 		"ws2_32.dll", 0, 0
 	},
 	{

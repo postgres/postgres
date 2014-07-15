@@ -44,7 +44,7 @@ my @contrib_uselibpgcommon = (
 	'pg_test_fsync', 'pg_test_timing',
 	'pg_upgrade',    'pg_xlogdump',
 	'vacuumlo');
-my $contrib_extralibs = { 'pgbench' => ['wsock32.lib'] };
+my $contrib_extralibs = { 'pgbench' => ['ws2_32.lib'] };
 my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
@@ -113,9 +113,8 @@ sub mkvcbuild
 	$postgres->AddFiles('src\backend\replication', 'repl_scanner.l',
 		'repl_gram.y');
 	$postgres->AddDefine('BUILDING_DLL');
-	$postgres->AddLibrary('wsock32.lib');
-	$postgres->AddLibrary('ws2_32.lib');
 	$postgres->AddLibrary('secur32.lib');
+	$postgres->AddLibrary('ws2_32.lib');
 	$postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
 	$postgres->FullExportDLL('postgres.lib');
 
@@ -270,7 +269,6 @@ sub mkvcbuild
 	$libpq->AddDefine('FRONTEND');
 	$libpq->AddDefine('UNSAFE_STAT_OK');
 	$libpq->AddIncludeDir('src\port');
-	$libpq->AddLibrary('wsock32.lib');
 	$libpq->AddLibrary('secur32.lib');
 	$libpq->AddLibrary('ws2_32.lib');
 	$libpq->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
@@ -300,7 +298,7 @@ sub mkvcbuild
 	$libecpg->AddIncludeDir('src\interfaces\libpq');
 	$libecpg->AddIncludeDir('src\port');
 	$libecpg->UseDef('src\interfaces\ecpg\ecpglib\ecpglib.def');
-	$libecpg->AddLibrary('wsock32.lib');
+	$libecpg->AddLibrary('ws2_32.lib');
 	$libecpg->AddReference($libpq, $pgtypes, $libpgport);
 
 	my $libecpgcompat = $solution->AddProject(
@@ -345,7 +343,7 @@ sub mkvcbuild
 	$isolation_tester->AddIncludeDir('src\interfaces\libpq');
 	$isolation_tester->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$isolation_tester->AddDefine('FRONTEND');
-	$isolation_tester->AddLibrary('wsock32.lib');
+	$isolation_tester->AddLibrary('ws2_32.lib');
 	$isolation_tester->AddReference($libpq, $libpgcommon, $libpgport);
 
 	my $pgregress_isolation =
@@ -363,7 +361,6 @@ sub mkvcbuild
 	$initdb->AddIncludeDir('src\interfaces\libpq');
 	$initdb->AddIncludeDir('src\timezone');
 	$initdb->AddDefine('FRONTEND');
-	$initdb->AddLibrary('wsock32.lib');
 	$initdb->AddLibrary('ws2_32.lib');
 
 	my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
@@ -507,7 +504,7 @@ sub mkvcbuild
 			'pgp-mpi-internal.c', 'imath.c');
 	}
 	$pgcrypto->AddReference($postgres);
-	$pgcrypto->AddLibrary('wsock32.lib');
+	$pgcrypto->AddLibrary('ws2_32.lib');
 	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
 	GenerateContribSqlFiles('pgcrypto', $mf);
 

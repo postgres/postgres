@@ -7659,7 +7659,7 @@ return socket ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' socket wsock32; do
+for ac_lib in '' socket ws2_32; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else

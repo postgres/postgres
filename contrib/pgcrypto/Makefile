@@ -55,7 +55,7 @@ SHLIB_LINK += $(filter -lcrypto -lz, $(LIBS))
 ifeq ($(PORTNAME), win32)
 SHLIB_LINK += $(filter -leay32, $(LIBS))
 # those must be at the end
-SHLIB_LINK += -lwsock32 -lws2_32
+SHLIB_LINK += -lws2_32
 endif
 
 rijndael.o: rijndael.tbl
