@@ -35,6 +35,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/conversioncmds.h"
@@ -1391,6 +1393,14 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 				case ForeignDataWrapperRelationId:
 					AlterForeignDataWrapperOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case TSConfigRelationId:
+					AlterTSConfigurationOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case TSDictionaryRelationId:
+					AlterTSDictionaryOwner_oid(sdepForm->objid, newrole);
 					break;
 
 				default:

@@ -827,21 +827,15 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 }
 
 /*
- * ALTER TEXT SEARCH DICTIONARY OWNER
+ * Internal routine for changing the owner of a text search dictionary
  */
-void
-AlterTSDictionaryOwner(List *name, Oid newOwnerId)
+static void
+AlterTSDictionaryOwner_internal(Relation rel, Oid dictId, Oid newOwnerId)
 {
 	HeapTuple	tup;
-	Relation	rel;
-	Oid			dictId;
 	Oid			namespaceOid;
 	AclResult	aclresult;
 	Form_pg_ts_dict form;
-
-	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
-
-	dictId = TSDictionaryGetDictid(name, false);
 
 	tup = SearchSysCacheCopy1(TSDICTOID, ObjectIdGetDatum(dictId));
 
@@ -860,7 +854,7 @@ AlterTSDictionaryOwner(List *name, Oid newOwnerId)
 			/* must be owner */
 			if (!pg_ts_dict_ownercheck(dictId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
-							   NameListToString(name));
+							   NameStr(form->dictname));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -882,8 +876,39 @@ AlterTSDictionaryOwner(List *name, Oid newOwnerId)
 								newOwnerId);
 	}
 
-	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+}
+
+/*
+ * ALTER TEXT SEARCH DICTIONARY OWNER
+ */
+void
+AlterTSDictionaryOwner(List *name, Oid newOwnerId)
+{
+	Relation	rel;
+	Oid			dictId;
+
+	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
+	dictId = TSDictionaryGetDictid(name, false);
+
+	AlterTSDictionaryOwner_internal(rel, dictId, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Change text search dictionary owner, by OID
+ */
+void
+AlterTSDictionaryOwner_oid(Oid dictId, Oid newOwnerId)
+{
+	Relation	rel;
+
+	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
+
+	AlterTSDictionaryOwner_internal(rel, dictId, newOwnerId);
+
+	heap_close(rel, NoLock);
 }
 
 /* ---------------------- TS Template commands -----------------------*/
@@ -1612,21 +1637,15 @@ RemoveTSConfigurationById(Oid cfgId)
 }
 
 /*
- * ALTER TEXT SEARCH CONFIGURATION OWNER
+ * Internal routine for changing the owner of a text search configuration
  */
-void
-AlterTSConfigurationOwner(List *name, Oid newOwnerId)
+static void
+AlterTSConfigurationOwner_internal(Relation rel, Oid cfgId, Oid newOwnerId)
 {
 	HeapTuple	tup;
-	Relation	rel;
-	Oid			cfgId;
 	AclResult	aclresult;
 	Oid			namespaceOid;
 	Form_pg_ts_config form;
-
-	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
-	cfgId = TSConfigGetCfgid(name, false);
 
 	tup = SearchSysCacheCopy1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 
@@ -1645,7 +1664,7 @@ AlterTSConfigurationOwner(List *name, Oid newOwnerId)
 			/* must be owner */
 			if (!pg_ts_config_ownercheck(cfgId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
-							   NameListToString(name));
+							   NameStr(form->cfgname));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -1667,9 +1686,38 @@ AlterTSConfigurationOwner(List *name, Oid newOwnerId)
 								newOwnerId);
 	}
 
-	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 }
+
+/*
+ * ALTER TEXT SEARCH CONFIGURATION OWNER
+ */
+void
+AlterTSConfigurationOwner(List *name, Oid newOwnerId)
+{
+	Relation	rel;
+	Oid			cfgId;
+
+	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
+	cfgId = TSConfigGetCfgid(name, false);
+
+	AlterTSConfigurationOwner_internal(rel, cfgId, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
+void
+AlterTSConfigurationOwner_oid(Oid cfgId, Oid newOwnerId)
+{
+	Relation	rel;
+
+	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
+
+	AlterTSConfigurationOwner_internal(rel, cfgId, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
 
 /*
  * ALTER TEXT SEARCH CONFIGURATION - main entry point
