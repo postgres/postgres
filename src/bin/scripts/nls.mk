@@ -6,5 +6,5 @@ GETTEXT_FILES    = createdb.c createlang.c createuser.c \
                    clusterdb.c vacuumdb.c reindexdb.c \
                    pg_isready.c \
                    common.c \
-                   ../../common/fe_memutils.c
+                   ../../common/fe_memutils.c ../../common/username.c
 GETTEXT_TRIGGERS = simple_prompt yesno_prompt
