@@ -396,18 +396,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-r</option></term>
-      <term><option>--report-latencies</option></term>
-      <listitem>
-       <para>
-        Report the average per-statement latency (execution time from the
-        perspective of the client) of each command after the benchmark
-        finishes.  See below for details.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-P</option> <replaceable>sec</></term>
       <term><option>--progress=</option><replaceable>sec</></term>
       <listitem>
@@ -417,6 +405,18 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         last report, and the transaction latency average and standard
         deviation since the last report.  Under throttling (<option>-R</>), it
         also includes the average schedule lag time since the last report.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-r</option></term>
+      <term><option>--report-latencies</option></term>
+      <listitem>
+       <para>
+        Report the average per-statement latency (execution time from the
+        perspective of the client) of each command after the benchmark
+        finishes.  See below for details.
        </para>
       </listitem>
      </varlistentry>
