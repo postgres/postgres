@@ -9663,7 +9663,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			  errmsg("WAL level not sufficient for making an online backup"),
-				 errhint("wal_level must be set to \"archive\", \"hot_standby\" or \"logical\" at server start.")));
+				 errhint("wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start.")));
 
 	if (strlen(backupidstr) > MAXPGPATH)
 		ereport(ERROR,
@@ -9999,7 +9999,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			  errmsg("WAL level not sufficient for making an online backup"),
-				 errhint("wal_level must be set to \"archive\", \"hot_standby\" or \"logical\" at server start.")));
+				 errhint("wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start.")));
 
 	/*
 	 * OK to update backup counters and forcePageWrites
