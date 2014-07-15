@@ -8509,6 +8509,17 @@ else
   as_fn_error $? "library 'ssl' is required for OpenSSL" "$LINENO" 5
 fi
 
+     for ac_func in SSL_get_current_compression
+do :
+  ac_fn_c_check_func "$LINENO" "SSL_get_current_compression" "ac_cv_func_SSL_get_current_compression"
+if test "x$ac_cv_func_SSL_get_current_compression" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SSL_GET_CURRENT_COMPRESSION 1
+_ACEOF
+
+fi
+done
+
   else
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing CRYPTO_new_ex_data" >&5
 $as_echo_n "checking for library containing CRYPTO_new_ex_data... " >&6; }
