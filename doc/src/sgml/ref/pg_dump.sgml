@@ -651,17 +651,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--if-exists</option></term>
-      <listitem>
-       <para>
-        Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
-        clause) when cleaning database objects.  This option is not valid
-        unless <option>--clean</> is also specified.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--disable-dollar-quoting</></term>
       <listitem>
        <para>
@@ -712,6 +701,17 @@ PostgreSQL documentation
        </para>
        <para>
         To exclude data for all tables in the database, see <option>--schema-only</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--if-exists</option></term>
+      <listitem>
+       <para>
+        Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
+        clause) when cleaning database objects.  This option is not valid
+        unless <option>--clean</> is also specified.
        </para>
       </listitem>
      </varlistentry>
