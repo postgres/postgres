@@ -1465,7 +1465,7 @@ get_object_property_data(Oid class_id)
 	}
 
 	ereport(ERROR,
-			(errmsg_internal("unrecognized class id: %u", class_id)));
+			(errmsg_internal("unrecognized class ID: %u", class_id)));
 
 	return NULL;				/* keep MSC compiler happy */
 }
