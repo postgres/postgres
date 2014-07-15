@@ -1011,8 +1011,9 @@ testdb=&gt;
         Lists tablespaces. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only tablespaces whose names match the pattern are shown.
-        If <literal>+</literal> is appended to the command name, each object
-        is listed with its associated permissions.
+        If <literal>+</literal> is appended to the command name, each tablespace
+        is listed with its associated options, on-disk size, permissions and
+        description.
         </para>
         </listitem>
       </varlistentry>
