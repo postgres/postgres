@@ -40,6 +40,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/dbcommands.h"
@@ -1394,6 +1396,8 @@ shdepReassignOwned(List *roleids, Oid newrole)
 				case ExtensionRelationId:
 				case TableSpaceRelationId:
 				case DatabaseRelationId:
+				case TSConfigRelationId:
+				case TSDictionaryRelationId:
 					{
 						Oid			classId = sdepForm->classid;
 						Relation	catalog;
