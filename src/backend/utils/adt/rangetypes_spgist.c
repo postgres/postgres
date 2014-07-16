@@ -54,6 +54,12 @@ static int16 getQuadrant(TypeCacheEntry *typcache, RangeType *centroid,
 			RangeType *tst);
 static int	bound_cmp(const void *a, const void *b, void *arg);
 
+static int adjacent_inner_consistent(TypeCacheEntry *typcache,
+						  RangeBound *arg, RangeBound *centroid,
+						  RangeBound *prev);
+static int adjacent_cmp_bounds(TypeCacheEntry *typcache, RangeBound *arg,
+					RangeBound *centroid);
+
 /*
  * SP-GiST 'config' interface function.
  */
@@ -441,6 +447,11 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			bool		empty;
 			RangeType  *range = NULL;
 
+			RangeType  *prevCentroid = NULL;
+			RangeBound	prevLower,
+						prevUpper;
+			bool		prevEmpty;
+
 			/* Restrictions on range bounds according to scan strategy */
 			RangeBound *minLower = NULL,
 					   *maxLower = NULL,
@@ -550,109 +561,53 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 						break;	/* Skip to strictEmpty check. */
 
 					/*
-					 * which1 is bitmask for possibility to be adjacent with
-					 * lower bound of argument. which2 is bitmask for
-					 * possibility to be adjacent with upper bound of
-					 * argument.
-					 */
-					which1 = which2 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
-
-					/*
 					 * Previously selected quadrant could exclude possibility
 					 * for lower or upper bounds to be adjacent. Deserialize
 					 * previous centroid range if present for checking this.
 					 */
 					if (in->reconstructedValue != (Datum) 0)
 					{
-						RangeType  *prevCentroid;
-						RangeBound	prevLower,
-									prevUpper;
-						bool		prevEmpty;
-						int			cmp1,
-									cmp2;
-
 						prevCentroid = DatumGetRangeType(in->reconstructedValue);
 						range_deserialize(typcache, prevCentroid,
 										  &prevLower, &prevUpper, &prevEmpty);
-
-						/*
-						 * Check if lower bound of argument is not in a
-						 * quadrant we visited in the previous step.
-						 */
-						cmp1 = range_cmp_bounds(typcache, &lower, &prevUpper);
-						cmp2 = range_cmp_bounds(typcache, &centroidUpper,
-												&prevUpper);
-						if ((cmp2 < 0 && cmp1 > 0) || (cmp2 > 0 && cmp1 < 0))
-							which1 = 0;
-
-						/*
-						 * Check if upper bound of argument is not in a
-						 * quadrant we visited in the previous step.
-						 */
-						cmp1 = range_cmp_bounds(typcache, &upper, &prevLower);
-						cmp2 = range_cmp_bounds(typcache, &centroidLower,
-												&prevLower);
-						if ((cmp2 < 0 && cmp1 > 0) || (cmp2 > 0 && cmp1 < 0))
-							which2 = 0;
 					}
 
-					if (which1)
-					{
-						/*
-						 * For a range's upper bound to be adjacent to the
-						 * argument's lower bound, it will be found along the
-						 * line adjacent to (and just below) Y=lower.
-						 * Therefore, if the argument's lower bound is less
-						 * than the centroid's upper bound, the line falls in
-						 * quadrants 2 and 3; if greater, the line falls in
-						 * quadrants 1 and 4.
-						 *
-						 * The above is true even when the argument's lower
-						 * bound is greater and adjacent to the centroid's
-						 * upper bound. If the argument's lower bound is
-						 * greater than the centroid's upper bound, then the
-						 * lowest value that an adjacent range could have is
-						 * that of the centroid's upper bound, which still
-						 * falls in quadrants 1 and 4.
-						 *
-						 * In the edge case, where the argument's lower bound
-						 * is equal to the cetroid's upper bound, there may be
-						 * adjacent ranges in any quadrant.
-						 */
-						cmp = range_cmp_bounds(typcache, &lower,
-											   &centroidUpper);
-						if (cmp < 0)
-							which1 &= (1 << 2) | (1 << 3);
-						else if (cmp > 0)
-							which1 &= (1 << 1) | (1 << 4);
-					}
+					/*
+					 * For a range's upper bound to be adjacent to the
+					 * argument's lower bound, it will be found along the line
+					 * adjacent to (and just below) Y=lower. Therefore, if the
+					 * argument's lower bound is less than the centroid's
+					 * upper bound, the line falls in quadrants 2 and 3; if
+					 * greater, the line falls in quadrants 1 and 4. (see
+					 * adjacent_cmp_bounds for description of edge cases).
+					 */
+					cmp = adjacent_inner_consistent(typcache, &lower,
+													&centroidUpper,
+											prevCentroid ? &prevUpper : NULL);
+					if (cmp > 0)
+						which1 = (1 << 1) | (1 << 4);
+					else if (cmp < 0)
+						which1 = (1 << 2) | (1 << 3);
+					else
+						which1 = 0;
 
-					if (which2)
-					{
-						/*
-						 * For a range's lower bound to be adjacent to the
-						 * argument's upper bound, it will be found along the
-						 * line adjacent to (and just right of) X=upper.
-						 * Therefore, if the argument's upper bound is less
-						 * than (and not adjacent to) the centroid's upper
-						 * bound, the line falls in quadrants 3 and 4; if
-						 * greater or equal to, the line falls in quadrants 1
-						 * and 2.
-						 *
-						 * The edge case is when the argument's upper bound is
-						 * less than and adjacent to the centroid's lower
-						 * bound. In that case, adjacent ranges may be in any
-						 * quadrant.
-						 */
-						cmp = range_cmp_bounds(typcache, &lower,
-											   &centroidUpper);
-						if (cmp < 0 &&
-							!bounds_adjacent(typcache, upper, centroidLower))
-							which1 &= (1 << 3) | (1 << 4);
-						else if (cmp > 0)
-							which1 &= (1 << 1) | (1 << 2);
-					}
+					/*
+					 * Also search for ranges's adjacent to argument's upper
+					 * bound. They will be found along the line adjacent to
+					 * (and just right of) X=upper, which falls in quadrants
+					 * 3 and 4, or 1 and 2.
+					 */
+					cmp = adjacent_inner_consistent(typcache, &upper,
+													&centroidLower,
+											prevCentroid ? &prevLower : NULL);
+					if (cmp > 0)
+						which2 = (1 << 1) | (1 << 2);
+					else if (cmp < 0)
+						which2 = (1 << 3) | (1 << 4);
+					else
+						which2 = 0;
 
+					/* We must chase down ranges adjacent to either bound. */
 					which &= which1 | which2;
 
 					needPrevious = true;
@@ -805,6 +760,146 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * adjacent_cmp_bounds
+ *
+ * Given an argument and centroid bound, this function determines if any
+ * bounds that are adjacent to the argument are smaller than, or greater than
+ * or equal to centroid. For brevity, we call the arg < centroid "left", and
+ * arg >= centroid case "right". This corresponds to how the quadrants are
+ * arranged, if you imagine that "left" is equivalent to "down" and "right"
+ * is equivalent to "up".
+ *
+ * For the "left" case, returns -1, and for the "right" case, returns 1.
+ */
+static int
+adjacent_cmp_bounds(TypeCacheEntry *typcache, RangeBound *arg,
+					RangeBound *centroid)
+{
+	int			cmp;
+
+	Assert(arg->lower != centroid->lower);
+
+	cmp = range_cmp_bounds(typcache, arg,  centroid);
+
+	if (centroid->lower)
+	{
+		/*------
+		 * The argument is an upper bound, we are searching for adjacent lower
+		 * bounds. A matching adjacent lower bound must be *larger* than the
+		 * argument, but only just.
+		 *
+		 * The following table illustrates the desired result with a fixed
+		 * argument bound, and different centroids. The CMP column shows
+		 * the value of 'cmp' variable, and ADJ shows whether the argument
+		 * and centroid are adjacent, per bounds_adjacent(). (N) means we
+		 * don't need to check for that case, because it's implied by CMP.
+		 * With the argument range [..., 500), the adjacent range we're
+		 * searching for is [500, ...):
+		 *
+		 *  ARGUMENT   CENTROID     CMP   ADJ
+		 *  [..., 500) [498, ...)    >    (N)   [500, ...) is to the right
+		 *  [..., 500) [499, ...)    =    (N)   [500, ...) is to the right
+		 *  [..., 500) [500, ...)    <     Y    [500, ...) is to the right
+		 *  [..., 500) [501, ...)    <     N    [500, ...) is to the left
+		 *
+		 * So, we must search left when the argument is smaller than, and not
+		 * adjacent, to the centroid. Otherwise search right.
+		 *------
+		 */
+		if (cmp < 0 && !bounds_adjacent(typcache, *arg, *centroid))
+			return -1;
+		else
+			return 1;
+	}
+	else
+	{
+		/*------
+		 * The argument is a lower bound, we are searching for adjacent upper
+		 * bounds. A matching adjacent upper bound must be *smaller* than the
+		 * argument, but only just.
+		 *
+		 *  ARGUMENT   CENTROID     CMP   ADJ
+		 *  [500, ...) [..., 499)    >    (N)   [..., 500) is to the right
+		 *  [500, ...) [..., 500)    >    (Y)   [..., 500) is to the right
+		 *  [500, ...) [..., 501)    =    (N)   [..., 500) is to the left
+		 *  [500, ...) [..., 502)    <    (N)   [..., 500) is to the left
+		 *
+		 * We must search left when the argument is smaller than or equal to
+		 * the centroid. Otherwise search right. We don't need to check
+		 * whether the argument is adjacent with the centroid, because it
+		 * doesn't matter.
+		 *------
+		 */
+		if (cmp <= 0)
+			return -1;
+		else
+			return 1;
+	}
+}
+
+/*----------
+ * adjacent_inner_consistent
+ *
+ * Like adjacent_cmp_bounds, but also takes into account the previous
+ * level's centroid. We might've traversed left (or right) at the previous
+ * node, in search for ranges adjacent to the other bound, even though we
+ * already ruled out the possibility for any matches in that direction for
+ * this bound. By comparing the argument with the previous centroid, and
+ * the previous centroid with the current centroid, we can determine which
+ * direction we should've moved in at previous level, and which direction we
+ * actually moved.
+ *
+ * If there can be any matches to the left, returns -1. If to the right,
+ * returns 1. If there can be no matches below this centroid, because we
+ * already ruled them out at the previous level, returns 0.
+ *
+ * XXX: Comparing just the previous and current level isn't foolproof; we
+ * might still search some branches unnecessarily. For example, imagine that
+ * we are searching for value 15, and we traverse the following centroids
+ * (only considering one bound for the moment):
+ *
+ * Level 1: 20
+ * Level 2: 50
+ * Level 3: 25
+ *
+ * At this point, previous centroid is 50, current centroid is 25, and the
+ * target value is to the left. But because we already moved right from
+ * centroid 20 to 50 in the first level, there cannot be any values < 20 in
+ * the current branch. But we don't know that just by looking at the previous
+ * and current centroid, so we traverse left, unnecessarily. The reason we are
+ * down this branch is that we're searching for matches with the *other*
+ * bound. If we kept track of which bound we are searching for explicitly,
+ * instead of deducing that from the previous and current centroid, we could
+ * avoid some unnecessary work.
+ *----------
+ */
+static int
+adjacent_inner_consistent(TypeCacheEntry *typcache, RangeBound *arg,
+						  RangeBound *centroid, RangeBound *prev)
+{
+	if (prev)
+	{
+		int			prevcmp;
+		int			cmp;
+
+		/*
+		 * Which direction were we supposed to traverse at previous level,
+		 * left or right?
+		 */
+		prevcmp = adjacent_cmp_bounds(typcache, arg, prev);
+
+		/* and which direction did we actually go? */
+		cmp = range_cmp_bounds(typcache, centroid, prev);
+
+		/* if the two don't agree, there's nothing to see here */
+		if ((prevcmp < 0 && cmp >= 0) || (prevcmp > 0 && cmp < 0))
+			return 0;
+	}
+
+	return adjacent_cmp_bounds(typcache, arg, centroid);
 }
 
 /*
