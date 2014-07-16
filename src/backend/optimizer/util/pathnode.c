@@ -22,8 +22,9 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
-#include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
@@ -38,8 +39,6 @@ typedef enum
 } PathCostComparison;
 
 static List *translate_sub_tlist(List *tlist, int relid);
-static bool query_is_distinct_for(Query *query, List *colnos, List *opids);
-static Oid	distinct_col_search(int colno, List *colnos, List *opids);
 
 
 /*****************************************************************************
@@ -1312,25 +1311,29 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	if (rel->rtekind == RTE_SUBQUERY)
 	{
 		RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
-		List	   *sub_tlist_colnos;
 
-		sub_tlist_colnos = translate_sub_tlist(uniq_exprs, rel->relid);
-
-		if (sub_tlist_colnos &&
-			query_is_distinct_for(rte->subquery,
-								  sub_tlist_colnos, in_operators))
+		if (query_supports_distinctness(rte->subquery))
 		{
-			pathnode->umethod = UNIQUE_PATH_NOOP;
-			pathnode->path.rows = rel->rows;
-			pathnode->path.startup_cost = subpath->startup_cost;
-			pathnode->path.total_cost = subpath->total_cost;
-			pathnode->path.pathkeys = subpath->pathkeys;
+			List	   *sub_tlist_colnos;
 
-			rel->cheapest_unique_path = (Path *) pathnode;
+			sub_tlist_colnos = translate_sub_tlist(uniq_exprs, rel->relid);
 
-			MemoryContextSwitchTo(oldcontext);
+			if (sub_tlist_colnos &&
+				query_is_distinct_for(rte->subquery,
+									  sub_tlist_colnos, in_operators))
+			{
+				pathnode->umethod = UNIQUE_PATH_NOOP;
+				pathnode->path.rows = rel->rows;
+				pathnode->path.startup_cost = subpath->startup_cost;
+				pathnode->path.total_cost = subpath->total_cost;
+				pathnode->path.pathkeys = subpath->pathkeys;
 
-			return pathnode;
+				rel->cheapest_unique_path = (Path *) pathnode;
+
+				MemoryContextSwitchTo(oldcontext);
+
+				return pathnode;
+			}
 		}
 	}
 
@@ -1448,161 +1451,6 @@ translate_sub_tlist(List *tlist, int relid)
 		result = lappend_int(result, var->varattno);
 	}
 	return result;
-}
-
-/*
- * query_is_distinct_for - does query never return duplicates of the
- *		specified columns?
- *
- * colnos is an integer list of output column numbers (resno's).  We are
- * interested in whether rows consisting of just these columns are certain
- * to be distinct.  "Distinctness" is defined according to whether the
- * corresponding upper-level equality operators listed in opids would think
- * the values are distinct.  (Note: the opids entries could be cross-type
- * operators, and thus not exactly the equality operators that the subquery
- * would use itself.  We use equality_ops_are_compatible() to check
- * compatibility.  That looks at btree or hash opfamily membership, and so
- * should give trustworthy answers for all operators that we might need
- * to deal with here.)
- */
-static bool
-query_is_distinct_for(Query *query, List *colnos, List *opids)
-{
-	ListCell   *l;
-	Oid			opid;
-
-	Assert(list_length(colnos) == list_length(opids));
-
-	/*
-	 * A set-returning function in the query's targetlist can result in
-	 * returning duplicate rows, if the SRF is evaluated after the
-	 * de-duplication step; so we play it safe and say "no" if there are any
-	 * SRFs.  (We could be certain that it's okay if SRFs appear only in the
-	 * specified columns, since those must be evaluated before de-duplication;
-	 * but it doesn't presently seem worth the complication to check that.)
-	 */
-	if (expression_returns_set((Node *) query->targetList))
-		return false;
-
-	/*
-	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
-	 * columns in the DISTINCT clause appear in colnos and operator semantics
-	 * match.
-	 */
-	if (query->distinctClause)
-	{
-		foreach(l, query->distinctClause)
-		{
-			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
-			TargetEntry *tle = get_sortgroupclause_tle(sgc,
-													   query->targetList);
-
-			opid = distinct_col_search(tle->resno, colnos, opids);
-			if (!OidIsValid(opid) ||
-				!equality_ops_are_compatible(opid, sgc->eqop))
-				break;			/* exit early if no match */
-		}
-		if (l == NULL)			/* had matches for all? */
-			return true;
-	}
-
-	/*
-	 * Similarly, GROUP BY guarantees uniqueness if all the grouped columns
-	 * appear in colnos and operator semantics match.
-	 */
-	if (query->groupClause)
-	{
-		foreach(l, query->groupClause)
-		{
-			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
-			TargetEntry *tle = get_sortgroupclause_tle(sgc,
-													   query->targetList);
-
-			opid = distinct_col_search(tle->resno, colnos, opids);
-			if (!OidIsValid(opid) ||
-				!equality_ops_are_compatible(opid, sgc->eqop))
-				break;			/* exit early if no match */
-		}
-		if (l == NULL)			/* had matches for all? */
-			return true;
-	}
-	else
-	{
-		/*
-		 * If we have no GROUP BY, but do have aggregates or HAVING, then the
-		 * result is at most one row so it's surely unique, for any operators.
-		 */
-		if (query->hasAggs || query->havingQual)
-			return true;
-	}
-
-	/*
-	 * UNION, INTERSECT, EXCEPT guarantee uniqueness of the whole output row,
-	 * except with ALL.
-	 */
-	if (query->setOperations)
-	{
-		SetOperationStmt *topop = (SetOperationStmt *) query->setOperations;
-
-		Assert(IsA(topop, SetOperationStmt));
-		Assert(topop->op != SETOP_NONE);
-
-		if (!topop->all)
-		{
-			ListCell   *lg;
-
-			/* We're good if all the nonjunk output columns are in colnos */
-			lg = list_head(topop->groupClauses);
-			foreach(l, query->targetList)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(l);
-				SortGroupClause *sgc;
-
-				if (tle->resjunk)
-					continue;	/* ignore resjunk columns */
-
-				/* non-resjunk columns should have grouping clauses */
-				Assert(lg != NULL);
-				sgc = (SortGroupClause *) lfirst(lg);
-				lg = lnext(lg);
-
-				opid = distinct_col_search(tle->resno, colnos, opids);
-				if (!OidIsValid(opid) ||
-					!equality_ops_are_compatible(opid, sgc->eqop))
-					break;		/* exit early if no match */
-			}
-			if (l == NULL)		/* had matches for all? */
-				return true;
-		}
-	}
-
-	/*
-	 * XXX Are there any other cases in which we can easily see the result
-	 * must be distinct?
-	 */
-
-	return false;
-}
-
-/*
- * distinct_col_search - subroutine for query_is_distinct_for
- *
- * If colno is in colnos, return the corresponding element of opids,
- * else return InvalidOid.  (We expect colnos does not contain duplicates,
- * so the result is well-defined.)
- */
-static Oid
-distinct_col_search(int colno, List *colnos, List *opids)
-{
-	ListCell   *lc1,
-			   *lc2;
-
-	forboth(lc1, colnos, lc2, opids)
-	{
-		if (colno == lfirst_int(lc1))
-			return lfirst_oid(lc2);
-	}
-	return InvalidOid;
 }
 
 /*

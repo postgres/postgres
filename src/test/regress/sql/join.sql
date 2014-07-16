@@ -919,9 +919,11 @@ begin;
 CREATE TEMP TABLE a (id int PRIMARY KEY, b_id int);
 CREATE TEMP TABLE b (id int PRIMARY KEY, c_id int);
 CREATE TEMP TABLE c (id int PRIMARY KEY);
+CREATE TEMP TABLE d (a int, b int);
 INSERT INTO a VALUES (0, 0), (1, NULL);
 INSERT INTO b VALUES (0, 0), (1, NULL);
 INSERT INTO c VALUES (0), (1);
+INSERT INTO d VALUES (1,3), (2,2), (3,1);
 
 -- all three cases should be optimizable into a simple seqscan
 explain (costs off) SELECT a.* FROM a LEFT JOIN b ON a.b_id = b.id;
@@ -935,6 +937,39 @@ explain (costs off)
 select id from a where id in (
 	select b.id from b left join c on b.id = c.id
 );
+
+-- check that join removal works for a left join when joining a subquery
+-- that is guaranteed to be unique by its GROUP BY clause
+explain (costs off)
+select d.* from d left join (select * from b group by b.id, b.c_id) s
+  on d.a = s.id and d.b = s.c_id;
+
+-- similarly, but keying off a DISTINCT clause
+explain (costs off)
+select d.* from d left join (select distinct * from b) s
+  on d.a = s.id and d.b = s.c_id;
+
+-- join removal is not possible when the GROUP BY contains a column that is
+-- not in the join condition
+explain (costs off)
+select d.* from d left join (select * from b group by b.id, b.c_id) s
+  on d.a = s.id;
+
+-- similarly, but keying off a DISTINCT clause
+explain (costs off)
+select d.* from d left join (select distinct * from b) s
+  on d.a = s.id;
+
+-- check join removal works when uniqueness of the join condition is enforced
+-- by a UNION
+explain (costs off)
+select d.* from d left join (select id from a union select id from b) s
+  on d.a = s.id;
+
+-- check join removal with a cross-type comparison operator
+explain (costs off)
+select i8.* from int8_tbl i8 left join (select f1 from int4_tbl group by f1) i4
+  on i8.q1 = i4.f1;
 
 rollback;
 

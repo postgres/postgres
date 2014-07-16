@@ -22,17 +22,21 @@
  */
 #include "postgres.h"
 
+#include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
-#include "optimizer/var.h"
+#include "optimizer/tlist.h"
+#include "utils/lsyscache.h"
 
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid,
 					  Relids joinrelids);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
+static Oid	distinct_col_search(int colno, List *colnos, List *opids);
 
 
 /*
@@ -147,18 +151,15 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	int			innerrelid;
 	RelOptInfo *innerrel;
+	Query	   *subquery = NULL;
 	Relids		joinrelids;
 	List	   *clause_list = NIL;
 	ListCell   *l;
 	int			attroff;
 
 	/*
-	 * Currently, we only know how to remove left joins to a baserel with
-	 * unique indexes.  We can check most of these criteria pretty trivially
-	 * to avoid doing useless extra work.  But checking whether any of the
-	 * indexes are unique would require iterating over the indexlist, so for
-	 * now we just make sure there are indexes of some sort or other.  If none
-	 * of them are unique, join removal will still fail, just slightly later.
+	 * Must be a non-delaying left join to a single baserel, else we aren't
+	 * going to be able to do anything with it.
 	 */
 	if (sjinfo->jointype != JOIN_LEFT ||
 		sjinfo->delay_upper_joins ||
@@ -168,10 +169,38 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	innerrelid = bms_singleton_member(sjinfo->min_righthand);
 	innerrel = find_base_rel(root, innerrelid);
 
-	if (innerrel->reloptkind != RELOPT_BASEREL ||
-		innerrel->rtekind != RTE_RELATION ||
-		innerrel->indexlist == NIL)
+	if (innerrel->reloptkind != RELOPT_BASEREL)
 		return false;
+
+	/*
+	 * Before we go to the effort of checking whether any innerrel variables
+	 * are needed above the join, make a quick check to eliminate cases in
+	 * which we will surely be unable to prove uniqueness of the innerrel.
+	 */
+	if (innerrel->rtekind == RTE_RELATION)
+	{
+		/*
+		 * For a plain-relation innerrel, we only know how to prove uniqueness
+		 * by reference to unique indexes.  If there are no indexes then
+		 * there's certainly no unique indexes so there's no point in going
+		 * further.
+		 */
+		if (innerrel->indexlist == NIL)
+			return false;
+	}
+	else if (innerrel->rtekind == RTE_SUBQUERY)
+	{
+		subquery = root->simple_rte_array[innerrelid]->subquery;
+
+		/*
+		 * If the subquery has no qualities that support distinctness proofs
+		 * then there's no point in going further.
+		 */
+		if (!query_supports_distinctness(subquery))
+			return false;
+	}
+	else
+		return false;			/* unsupported rtekind */
 
 	/* Compute the relid set for the join we are considering */
 	joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
@@ -272,12 +301,64 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * relation_has_unique_index_for automatically adds any usable restriction
-	 * clauses for the innerrel, so we needn't do that here.
+	 * clauses for the innerrel, so we needn't do that here.  (XXX we are not
+	 * considering restriction clauses for subqueries; is that worth doing?)
 	 */
 
-	/* Now examine the indexes to see if we have a matching unique index */
-	if (relation_has_unique_index_for(root, innerrel, clause_list, NIL, NIL))
-		return true;
+	if (innerrel->rtekind == RTE_RELATION)
+	{
+		/* Now examine the indexes to see if we have a matching unique index */
+		if (relation_has_unique_index_for(root, innerrel, clause_list, NIL, NIL))
+			return true;
+	}
+	else	/* innerrel->rtekind == RTE_SUBQUERY */
+	{
+		List	   *colnos = NIL;
+		List	   *opids = NIL;
+
+		/*
+		 * Build the argument lists for query_is_distinct_for: a list of
+		 * output column numbers that the query needs to be distinct over, and
+		 * a list of equality operators that the output columns need to be
+		 * distinct according to.
+		 */
+		foreach(l, clause_list)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			Oid			op;
+			Var		   *var;
+
+			/*
+			 * Get the equality operator we need uniqueness according to.
+			 * (This might be a cross-type operator and thus not exactly the
+			 * same operator the subquery would consider; that's all right
+			 * since query_is_distinct_for can resolve such cases.)  The
+			 * mergejoinability test above should have selected only OpExprs.
+			 */
+			Assert(IsA(rinfo->clause, OpExpr));
+			op = ((OpExpr *) rinfo->clause)->opno;
+
+			/* clause_sides_match_join identified the inner side for us */
+			if (rinfo->outer_is_left)
+				var = (Var *) get_rightop(rinfo->clause);
+			else
+				var = (Var *) get_leftop(rinfo->clause);
+
+			/*
+			 * If inner side isn't a Var referencing a subquery output column,
+			 * this clause doesn't help us.
+			 */
+			if (!var || !IsA(var, Var) ||
+				var->varno != innerrelid || var->varlevelsup != 0)
+				continue;
+
+			colnos = lappend_int(colnos, var->varattno);
+			opids = lappend_oid(opids, op);
+		}
+
+		if (query_is_distinct_for(subquery, colnos, opids))
+			return true;
+	}
 
 	/*
 	 * Some day it would be nice to check for other methods of establishing
@@ -480,4 +561,190 @@ remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved)
 	}
 
 	return result;
+}
+
+
+/*
+ * query_supports_distinctness - could the query possibly be proven distinct
+ *		on some set of output columns?
+ *
+ * This is effectively a pre-checking function for query_is_distinct_for().
+ * It must return TRUE if query_is_distinct_for() could possibly return TRUE
+ * with this query, but it should not expend a lot of cycles.  The idea is
+ * that callers can avoid doing possibly-expensive processing to compute
+ * query_is_distinct_for()'s argument lists if the call could not possibly
+ * succeed.
+ */
+bool
+query_supports_distinctness(Query *query)
+{
+	if (query->distinctClause != NIL ||
+		query->groupClause != NIL ||
+		query->hasAggs ||
+		query->havingQual ||
+		query->setOperations)
+		return true;
+
+	return false;
+}
+
+/*
+ * query_is_distinct_for - does query never return duplicates of the
+ *		specified columns?
+ *
+ * query is a not-yet-planned subquery (in current usage, it's always from
+ * a subquery RTE, which the planner avoids scribbling on).
+ *
+ * colnos is an integer list of output column numbers (resno's).  We are
+ * interested in whether rows consisting of just these columns are certain
+ * to be distinct.  "Distinctness" is defined according to whether the
+ * corresponding upper-level equality operators listed in opids would think
+ * the values are distinct.  (Note: the opids entries could be cross-type
+ * operators, and thus not exactly the equality operators that the subquery
+ * would use itself.  We use equality_ops_are_compatible() to check
+ * compatibility.  That looks at btree or hash opfamily membership, and so
+ * should give trustworthy answers for all operators that we might need
+ * to deal with here.)
+ */
+bool
+query_is_distinct_for(Query *query, List *colnos, List *opids)
+{
+	ListCell   *l;
+	Oid			opid;
+
+	Assert(list_length(colnos) == list_length(opids));
+
+	/*
+	 * A set-returning function in the query's targetlist can result in
+	 * returning duplicate rows, if the SRF is evaluated after the
+	 * de-duplication step; so we play it safe and say "no" if there are any
+	 * SRFs.  (We could be certain that it's okay if SRFs appear only in the
+	 * specified columns, since those must be evaluated before de-duplication;
+	 * but it doesn't presently seem worth the complication to check that.)
+	 */
+	if (expression_returns_set((Node *) query->targetList))
+		return false;
+
+	/*
+	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
+	 * columns in the DISTINCT clause appear in colnos and operator semantics
+	 * match.
+	 */
+	if (query->distinctClause)
+	{
+		foreach(l, query->distinctClause)
+		{
+			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
+			TargetEntry *tle = get_sortgroupclause_tle(sgc,
+													   query->targetList);
+
+			opid = distinct_col_search(tle->resno, colnos, opids);
+			if (!OidIsValid(opid) ||
+				!equality_ops_are_compatible(opid, sgc->eqop))
+				break;			/* exit early if no match */
+		}
+		if (l == NULL)			/* had matches for all? */
+			return true;
+	}
+
+	/*
+	 * Similarly, GROUP BY guarantees uniqueness if all the grouped columns
+	 * appear in colnos and operator semantics match.
+	 */
+	if (query->groupClause)
+	{
+		foreach(l, query->groupClause)
+		{
+			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
+			TargetEntry *tle = get_sortgroupclause_tle(sgc,
+													   query->targetList);
+
+			opid = distinct_col_search(tle->resno, colnos, opids);
+			if (!OidIsValid(opid) ||
+				!equality_ops_are_compatible(opid, sgc->eqop))
+				break;			/* exit early if no match */
+		}
+		if (l == NULL)			/* had matches for all? */
+			return true;
+	}
+	else
+	{
+		/*
+		 * If we have no GROUP BY, but do have aggregates or HAVING, then the
+		 * result is at most one row so it's surely unique, for any operators.
+		 */
+		if (query->hasAggs || query->havingQual)
+			return true;
+	}
+
+	/*
+	 * UNION, INTERSECT, EXCEPT guarantee uniqueness of the whole output row,
+	 * except with ALL.
+	 */
+	if (query->setOperations)
+	{
+		SetOperationStmt *topop = (SetOperationStmt *) query->setOperations;
+
+		Assert(IsA(topop, SetOperationStmt));
+		Assert(topop->op != SETOP_NONE);
+
+		if (!topop->all)
+		{
+			ListCell   *lg;
+
+			/* We're good if all the nonjunk output columns are in colnos */
+			lg = list_head(topop->groupClauses);
+			foreach(l, query->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(l);
+				SortGroupClause *sgc;
+
+				if (tle->resjunk)
+					continue;	/* ignore resjunk columns */
+
+				/* non-resjunk columns should have grouping clauses */
+				Assert(lg != NULL);
+				sgc = (SortGroupClause *) lfirst(lg);
+				lg = lnext(lg);
+
+				opid = distinct_col_search(tle->resno, colnos, opids);
+				if (!OidIsValid(opid) ||
+					!equality_ops_are_compatible(opid, sgc->eqop))
+					break;		/* exit early if no match */
+			}
+			if (l == NULL)		/* had matches for all? */
+				return true;
+		}
+	}
+
+	/*
+	 * XXX Are there any other cases in which we can easily see the result
+	 * must be distinct?
+	 *
+	 * If you do add more smarts to this function, be sure to update
+	 * query_supports_distinctness() to match.
+	 */
+
+	return false;
+}
+
+/*
+ * distinct_col_search - subroutine for query_is_distinct_for
+ *
+ * If colno is in colnos, return the corresponding element of opids,
+ * else return InvalidOid.  (Ordinarily colnos would not contain duplicates,
+ * but if it does, we arbitrarily select the first match.)
+ */
+static Oid
+distinct_col_search(int colno, List *colnos, List *opids)
+{
+	ListCell   *lc1,
+			   *lc2;
+
+	forboth(lc1, colnos, lc2, opids)
+	{
+		if (colno == lfirst_int(lc1))
+			return lfirst_oid(lc2);
+	}
+	return InvalidOid;
 }

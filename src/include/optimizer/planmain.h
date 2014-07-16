@@ -122,6 +122,8 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
  * prototypes for plan/analyzejoins.c
  */
 extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
+extern bool query_supports_distinctness(Query *query);
+extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 
 /*
  * prototypes for plan/setrefs.c
