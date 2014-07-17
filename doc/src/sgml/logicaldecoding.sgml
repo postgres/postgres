@@ -310,7 +310,7 @@ CTRL-C
     </indexterm>
     <para>
      An output plugin is loaded by dynamically loading a shared library with
-     the output plugin's name as the library basename. The normal library
+     the output plugin's name as the library base name. The normal library
      search path is used to locate the library. To provide the required output
      plugin callbacks and to indicate that the library is actually an output
      plugin it needs to provide a function named
@@ -362,8 +362,8 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
      various callbacks it needs to provide.
     </para>
     <para>
-     Concurrent transactions are decoded in commit order and only changes
-     belonging to a specific transaction are decoded inbetween
+     Concurrent transactions are decoded in commit order, and only changes
+     belonging to a specific transaction are decoded between
      the <literal>begin</literal> and <literal>commit</literal>
      callbacks. Transactions that were rolled back explicitly or implicitly
      never get
@@ -432,7 +432,7 @@ typedef void (*LogicalDecodeShutdownCB) (
      <title>Transaction Begin Callback</title>
      <para>
       The required <function>begin_cb</function> callback is called whenever a
-      start of a commited transaction has been decoded. Aborted transactions
+      start of a committed transaction has been decoded. Aborted transactions
       and their contents never get decoded.
 <programlisting>
 typedef void (*LogicalDecodeBeginCB) (
@@ -441,7 +441,7 @@ typedef void (*LogicalDecodeBeginCB) (
 );
 </programlisting>
       The <parameter>txn</parameter> parameter contains meta information about
-      the transaction, like the timestamp at which it has been committed and
+      the transaction, like the time stamp at which it has been committed and
       its XID.
      </para>
    </sect3>
@@ -469,7 +469,7 @@ typedef void (*LogicalDecodeCommitCB) (
       individual row modification inside a transaction, may it be
       an <command>INSERT</command>, <command>UPDATE</command>
       or <command>DELETE</command>. Even if the original command modified
-      several rows at once the callback will be called indvidually for each
+      several rows at once the callback will be called individually for each
       row.
 <programlisting>
 typedef void (*LogicalDecodeChangeCB) (

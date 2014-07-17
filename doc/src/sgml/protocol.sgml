@@ -1302,7 +1302,7 @@
 
 <para>
 To initiate streaming replication, the frontend sends the
-<literal>replication</> parameter in the startup message. A boolean value
+<literal>replication</> parameter in the startup message. A Boolean value
 of <literal>true</> tells the backend to go into walsender mode, wherein a
 small set of replication commands can be issued instead of SQL statements. Only
 the simple query protocol can be used in walsender mode.

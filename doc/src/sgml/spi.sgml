@@ -1179,7 +1179,7 @@ SPIPlanPtr SPI_prepare_params(const char * <parameter>command</parameter>,
     <term><literal>void * <parameter>parserSetupArg</parameter></literal></term>
     <listitem>
      <para>
-      passthrough argument for <parameter>parserSetup</parameter>
+      pass-through argument for <parameter>parserSetup</parameter>
      </para>
     </listitem>
    </varlistentry>

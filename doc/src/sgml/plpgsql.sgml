@@ -2714,7 +2714,7 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
         <row>
          <entry><literal>PG_DATATYPE_NAME</literal></entry>
          <entry>text</entry>
-         <entry>the name of datatype related to exception</entry>
+         <entry>the name of data type related to exception</entry>
         </row>
         <row>
          <entry><literal>MESSAGE_TEXT</literal></entry>

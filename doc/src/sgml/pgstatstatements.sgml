@@ -199,7 +199,7 @@
 
   <para>
    For security reasons, non-superusers are not allowed to see the SQL
-   text or queryid of queries executed by other users.  They can see
+   text or <structfield>queryid</structfield> of queries executed by other users.  They can see
    the statistics, however, if the view has been installed in their
    database.
   </para>

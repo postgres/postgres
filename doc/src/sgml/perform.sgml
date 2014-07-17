@@ -442,7 +442,7 @@ WHERE t1.unique1 &lt; 10 AND t2.unique2 &lt; 10 AND t1.hundred &lt; t2.hundred;
    <para>
     Notice that here the planner has chosen to <quote>materialize</> the inner
     relation of the join, by putting a Materialize plan node atop it.  This
-    means that the <literal>t2</> indexscan will be done just once, even
+    means that the <literal>t2</> index scan will be done just once, even
     though the nested-loop join node needs to read that data ten times, once
     for each row from the outer relation.  The Materialize node saves the data
     in memory as it's read, and then returns the data from memory on each

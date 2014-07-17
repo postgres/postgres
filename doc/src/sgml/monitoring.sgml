@@ -647,7 +647,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <row>
      <entry><structfield>backend_xid</structfield></entry>
      <entry><type>xid</type></entry>
-     <entry>Toplevel transaction identifier of this backend, if any.</entry>
+     <entry>Top-level transaction identifier of this backend, if any.</entry>
     </row>
     <row>
      <entry><structfield>backend_xmin</structfield></entry>

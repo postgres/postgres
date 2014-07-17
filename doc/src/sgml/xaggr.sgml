@@ -217,8 +217,8 @@ CREATE AGGREGATE sum (complex)
 
   <para>
    The forward transition function for moving-aggregate mode is not allowed
-   to return NULL as the new state value.  If the inverse transition
-   function returns NULL, this is taken as an indication that the inverse
+   to return null as the new state value.  If the inverse transition
+   function returns null, this is taken as an indication that the inverse
    function cannot reverse the state calculation for this particular input,
    and so the aggregate calculation will be redone from scratch for the
    current frame starting position.  This convention allows moving-aggregate
@@ -352,7 +352,7 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
    no SQL-level equivalent for it.  To address this case, it is possible to
    declare the final function as taking extra <quote>dummy</> arguments
    that match the input arguments of the aggregate.  Such dummy arguments
-   are always passed as NULLs since no specific value is available when the
+   are always passed as null values since no specific value is available when the
    final function is called.  Their only use is to allow a polymorphic
    final function's result type to be connected to the aggregate's input
    type(s).  For example, the definition of the built-in
@@ -484,7 +484,7 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    While normal aggregates can often be implemented with support
    functions written in <application>PL/pgSQL</application> or another
    PL language, ordered-set aggregates generally have to be written in
-   C, since their state values aren't definable as any SQL datatype.
+   C, since their state values aren't definable as any SQL data type.
    (In the above example, notice that the state value is declared as
    type <type>internal</> &mdash; this is typical.)
   </para>
@@ -496,7 +496,7 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    same definition as for normal aggregates, but note that the direct
    arguments (if any) are not provided.  The final function receives
    the last state value, the values of the direct arguments if any,
-   and (if <literal>finalfunc_extra</> is specified) NULL values
+   and (if <literal>finalfunc_extra</> is specified) null values
    corresponding to the aggregated input(s).  As with normal
    aggregates, <literal>finalfunc_extra</> is only really useful if the
    aggregate is polymorphic; then the extra dummy argument(s) are needed

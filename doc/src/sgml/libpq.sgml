@@ -136,7 +136,7 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       </para>
 
       <para>
-       If  any  parameter is NULL or an emptry string, the corresponding
+       If  any  parameter is <symbol>NULL</symbol> or an emptry string, the corresponding
        environment variable (see <xref linkend="libpq-envars">) is checked.
        If the  environment  variable is not set either, then the indicated
        built-in defaults are used.

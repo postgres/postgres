@@ -1338,7 +1338,7 @@ export PG_OOM_ADJUST_VALUE=0
     setting <varname>vm.nr_hugepages</varname>. To estimate the number of
     necessary huge pages start <productname>PostgreSQL</productname> without
     huge pages enabled and check the <varname>VmPeak</varname> value from the
-    proc filesystem:
+    proc file system:
 <programlisting>
 $ <userinput>head -1 /path/to/data/directory/postmaster.pid</userinput>
 4170

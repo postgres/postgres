@@ -427,7 +427,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         on master and the time on the current standby. Delays
         in transfer because of networks or cascading replication configurations
         may reduce the actual wait time significantly. If the system
-        clocks on master and standby are not synchronised, this may lead to
+        clocks on master and standby are not synchronized, this may lead to
         recovery applying records earlier than expected; but that is not a
         major issue because useful settings of the parameter are much larger
         than typical time deviations between servers. Be careful to allow for
@@ -445,7 +445,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </para>
        <para>
         This parameter is intended for use with streaming replication deployments,
-        however, if the parameter is specified it will be honoured in all cases.
+        however, if the parameter is specified it will be honored in all cases.
         Synchronous replication is not affected by this setting because there is
         not yet any setting to request synchronous apply of transaction commits.
         <varname>hot_standby_feedback</> will be delayed by use of this feature

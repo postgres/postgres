@@ -4487,7 +4487,7 @@ SELECT * FROM pg_attribute
    <para>
     The <type>pg_lsn</type> data type can be used to store LSN (Log Sequence
     Number) data which is a pointer to a location in the XLOG. This type is a
-    representation of XLogRecPtr and an internal system type of
+    representation of <type>XLogRecPtr</type> and an internal system type of
     <productname>PostgreSQL</productname>.
    </para>
 
