@@ -155,6 +155,11 @@
 #define DEFAULT_PGSOCKET_DIR  "/tmp"
 
 /*
+ * This is the default event source for Windows event log.
+ */
+#define DEFAULT_EVENT_SOURCE  "PostgreSQL"
+
+/*
  * The random() function is expected to yield values between 0 and
  * MAX_RANDOM_VALUE.  Currently, all known implementations yield
  * 0..2^31-1, so we just hardwire this constant.  We could do a

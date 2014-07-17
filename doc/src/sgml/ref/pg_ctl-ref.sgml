@@ -420,6 +420,22 @@ PostgreSQL documentation
 
    <variablelist>
     <varlistentry>
+     <term><option>-e <replaceable class="parameter">source</replaceable></option></term>
+     <listitem>
+      <para>
+       Name of the event source for <application>pg_ctl</application> to use
+       for logging to the event log when running as a Windows service.  The
+       default is <literal>PostgreSQL</literal>.  Note that this only controls
+       the logging from <application>pg_ctl</application> itself - once
+       started, the server will use the event source specified
+       by <xref linkend="guc-event-source">.  Should the server fail during
+       early startup, it may also log using the default event
+       source <literal>PostgreSQL</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-N <replaceable class="parameter">servicename</replaceable></option></term>
      <listitem>
       <para>

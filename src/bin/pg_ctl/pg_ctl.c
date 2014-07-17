@@ -89,6 +89,7 @@ static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
 static char *exec_path = NULL;
+static char *event_source = NULL;
 static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
@@ -178,7 +179,8 @@ write_eventlog(int level, const char *line)
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
-		evtHandle = RegisterEventSource(NULL, "PostgreSQL");
+		evtHandle = RegisterEventSource(NULL,
+						event_source ? event_source : DEFAULT_EVENT_SOURCE);
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -1406,6 +1408,9 @@ pgwin32_CommandLine(bool registration)
 		free(dataDir);
 	}
 
+	if (registration && event_source != NULL)
+		appendPQExpBuffer(cmdLine, " -e \"%s\"", event_source);
+
 	if (registration && do_wait)
 		appendPQExpBuffer(cmdLine, " -w");
 
@@ -1878,6 +1883,10 @@ do_help(void)
 	printf(_("\nCommon options:\n"));
 	printf(_("  -D, --pgdata=DATADIR   location of the database storage area\n"));
 	printf(_("  -s, --silent           only print errors, no informational messages\n"));
+#if defined(WIN32) || defined(__CYGWIN__)
+	printf(_("  -e SOURCE              event source to use for logging when running\n"
+			 "                         as a service\n"));
+#endif
 	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -w                     wait until operation completes\n"));
@@ -2140,7 +2149,7 @@ main(int argc, char **argv)
 	/* process command-line options */
 	while (optind < argc)
 	{
-		while ((c = getopt_long(argc, argv, "cD:l:m:N:o:p:P:sS:t:U:wW", long_options, &option_index)) != -1)
+		while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:sS:t:U:wW", long_options, &option_index)) != -1)
 		{
 			switch (c)
 			{
@@ -2167,6 +2176,9 @@ main(int argc, char **argv)
 					break;
 				case 'm':
 					set_mode(optarg);
+					break;
+				case 'e':
+					event_source = pg_strdup(optarg);
 					break;
 				case 'N':
 					register_servicename = pg_strdup(optarg);
