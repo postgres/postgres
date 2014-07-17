@@ -568,7 +568,7 @@
       <row>
        <entry><function>consistent</></entry>
        <entry>
-        determine whether value matches query condition (boolean variant)
+        determine whether value matches query condition (Boolean variant)
         (optional if support function 6 is present)
        </entry>
        <entry>4</entry>

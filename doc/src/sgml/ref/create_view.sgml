@@ -358,7 +358,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    <para>
     If an automatically updatable view is marked with the
     <literal>security_barrier</> property then all the view's <literal>WHERE</>
-    conditions (and any conditions using operators which are marked as LEAKPROOF)
+    conditions (and any conditions using operators which are marked as <literal>LEAKPROOF</literal>)
     will always be evaluated before any conditions that a user of the view has
     added.   See <xref linkend="rules-privileges"> for full details.  Note that,
     due to this, rows which are not ultimately returned (because they do not

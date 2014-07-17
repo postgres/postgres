@@ -1894,7 +1894,7 @@ if (!triggered)
     might want to make adjustments to handle the period when
     <varname>hot_standby_feedback</> feedback is not being provided.
     For example, consider increasing <varname>max_standby_archive_delay</>
-    so that queries are not rapidly cancelled by conflicts in WAL archive
+    so that queries are not rapidly canceled by conflicts in WAL archive
     files during disconnected periods.  You should also consider increasing
     <varname>max_standby_streaming_delay</> to avoid rapid cancellations
     by newly-arrived streaming WAL entries after reconnection.

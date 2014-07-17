@@ -354,7 +354,7 @@ SELECT '"foo"'::jsonb ? 'foo';
     keys or key/value pairs occurring within a large number of
     <type>jsonb</> documents (datums).
     Two GIN <quote>operator classes</> are provided, offering different
-    performance and flexibility tradeoffs.
+    performance and flexibility trade-offs.
   </para>
   <para>
     The default GIN operator class for <type>jsonb</> supports queries with

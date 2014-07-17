@@ -69,7 +69,7 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   <structfield>bgw_flags</> is a bitwise-or'd bitmask indicating the
+   <structfield>bgw_flags</> is a bitwise-or'd bit mask indicating the
    capabilities that the module wants.  Possible values are
    <literal>BGWORKER_SHMEM_ACCESS</literal> (requesting shared memory access)
    and <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> (requesting the
@@ -114,14 +114,14 @@ typedef struct BackgroundWorker
    passed at registration time. <structfield>bgw_main</structfield> may be
    NULL; in that case, <structfield>bgw_library_name</structfield> and
    <structfield>bgw_function_name</structfield> will be used to determine
-   the entrypoint.  This is useful for background workers launched after
+   the entry point.  This is useful for background workers launched after
    postmaster startup, where the postmaster does not have the requisite
    library loaded.
   </para>
 
   <para>
    <structfield>bgw_library_name</structfield> is the name of a library in
-   which the initial entrypoint for the background worker should be sought.
+   which the initial entry point for the background worker should be sought.
    It is ignored unless <structfield>bgw_main</structfield> is NULL.
    But if <structfield>bgw_main</structfield> is NULL, then the named library
    will be dynamically loaded by the worker process and
@@ -131,7 +131,7 @@ typedef struct BackgroundWorker
 
   <para>
    <structfield>bgw_function_name</structfield> is the name of a function in
-   a dynamically loaded library which should be used as the initial entrypoint
+   a dynamically loaded library which should be used as the initial entry point
    for a new background worker.  It is ignored unless
    <structfield>bgw_main</structfield> is NULL.
   </para>

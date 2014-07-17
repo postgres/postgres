@@ -154,7 +154,7 @@
       </entry>
       <entry>
        <para>
-        Like <function>xpath_nodeset(document, query, toptag, itemtag)</> but result omits toptag.
+        Like <function>xpath_nodeset(document, query, toptag, itemtag)</> but result omits <literal>toptag</literal>.
        </para>
       </entry>
      </row>
@@ -460,7 +460,7 @@ xslt_process(text document, text stylesheet, text paramlist) returns text
 
   <para>
    Development of this module was sponsored by Torchbox Ltd. (www.torchbox.com).
-   It has the same BSD licence as PostgreSQL.
+   It has the same BSD license as PostgreSQL.
   </para>
  </sect2>
 

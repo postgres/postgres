@@ -111,13 +111,13 @@
 
     <listitem>
      <para>
-      Tighten checks for multi-dimensional <link
+      Tighten checks for multidimensional <link
       linkend="arrays">array</link> input (Bruce Momjian)
      </para>
 
      <para>
       Previously an input array string that started with a single-element
-      array dimension could later contain multi-dimensional segments,
+      array dimension could later contain multidimensional segments,
       e.g. <literal>'{{1}, {2,3}}'::int[]</>.
      </para>
     </listitem>
@@ -198,7 +198,7 @@
     <listitem>
      <para>
       Rename <link linkend="SQL-EXPLAIN"><command>EXPLAIN
-      ANALYZE</></link>'s "total runtime" output to "execution time"
+      ANALYZE</></link>'s <quote>total runtime</quote> output to <quote>execution time</quote>
       (Tom Lane)
      </para>
 
@@ -565,7 +565,7 @@
 
       <listitem>
        <para>
-        Improve speed of accesessing many different <link
+        Improve speed of accessing many different <link
         linkend="SQL-CREATESEQUENCE">sequences</link> in the same session
         (David Rowley)
        </para>
@@ -775,7 +775,7 @@
 
       <listitem>
        <para>
-        Allow printf-style space padding to be specified in <link
+        Allow <function>printf</function>-style space padding to be specified in <link
         linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
         (David Rowley)
        </para>
@@ -1098,7 +1098,7 @@
 
         <para>
          Previously only unquoted matching strings would be imported
-         as NULLs.
+         as null values.
         </para>
        </listitem>
 
@@ -1370,23 +1370,23 @@
        <listitem>
         <para>
          Add structured (non-text) data type (<link
-         linkend="datatype-json"><type>JSONB</></link>) for storing
-         <type>JSON</> data (Oleg Bartunov, Teodor Sigaev, Alexander
+         linkend="datatype-json"><type>jsonb</></link>) for storing
+         JSON data (Oleg Bartunov, Teodor Sigaev, Alexander
          Korotkov, Peter Geoghegan, and Andrew Dunstan)
         </para>
 
         <para>
-         This allows for faster access to values in the <type>JSON</>
-         document and faster and more useful indexing of <type>JSON</>.
-         Scalar values in <type>JSONB</> documents are typed as appropriate
+         This allows for faster access to values in the JSON
+         document and faster and more useful indexing of JSON.
+         Scalar values in <type>jsonb</> documents are typed as appropriate
          scalar SQL types.
         </para>
        </listitem>
 
        <listitem>
         <para>
-         Add new <type>JSON</> functions to allow for the construction
-         of arbitrarily complex json trees (Andrew Dunstan, Laurence Rowe)
+         Add new JSON functions to allow for the construction
+         of arbitrarily complex JSON trees (Andrew Dunstan, Laurence Rowe)
         </para>
 
         <para>
@@ -1402,7 +1402,7 @@
         <para>
          Add <link
          linkend="functions-json-processing-table"><function>json_typeof()</></link>
-         to return the data type of a <type>JSON</> value (Andrew Tipton)
+         to return the data type of a <type>json</> value (Andrew Tipton)
         </para>
        </listitem>
 
@@ -1782,14 +1782,14 @@
 
       <listitem>
        <para>
-        Allow <function>sizeof()</> in <link linkend="ecpg">ecpg</link>
+        Allow <function>sizeof()</> in <link linkend="ecpg">ECPG</link>
         C array definitions (Michael Meskes)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <link linkend="ecpg">ecpg</link> properly handle nesting
+        Have <link linkend="ecpg">ECPG</link> properly handle nesting
         requirements in C and <acronym>SQL</> mode for C-style comments
         (Michael Meskes)
        </para>
@@ -1871,12 +1871,12 @@
        <listitem>
         <para>
          Have <application>psql</> <command>\d+</> output an
-         <literal>OID</> line only if an oid column exists in a table
+         <literal>OID</> line only if an <literal>oid</literal> column exists in a table
          (Bruce Momjian)
         </para>
 
         <para>
-         Previously, the presence or absence of an oid column was always
+         Previously, the presence or absence of an <literal>oid</literal> column was always
          reported.
         </para>
        </listitem>
@@ -2251,7 +2251,7 @@
 
       <listitem>
        <para>
-        Avoid most uses of dlltool in <productname>Cygwin</> and
+        Avoid most uses of <command>dlltool</command> in <productname>Cygwin</> and
         <productname>Mingw</> builds (Marco Atzeri, Hiroshi Inoue)
        </para>
       </listitem>
@@ -2294,7 +2294,7 @@
 
        <para>
         This allows the creation of version 4 <acronym>UUID</>s without
-        requiring the installation of uuid-ossp.
+        requiring the installation of <literal>uuid-ossp</literal>.
        </para>
       </listitem>
 
@@ -2317,11 +2317,11 @@
       <listitem>
        <para>
         Have <link linkend="pgstattuple"><application>pgstattuple</></link>
-        functions use regclass-type arguments (Satoshi Nagayasu)
+        functions use <type>regclass</type>-type arguments (Satoshi Nagayasu)
        </para>
 
        <para>
-        While text-type arguments are still supported, they will be
+        While <type>text</type>-type arguments are still supported, they will be
         removed in a later major release.
        </para>
       </listitem>

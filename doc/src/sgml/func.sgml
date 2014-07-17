@@ -10086,7 +10086,7 @@ table2-mapping
 
    <para>
    <xref linkend="functions-json-op-table"> shows the operators that
-   are available for use with the two JSON datatypes (see <xref
+   are available for use with the two JSON data types (see <xref
    linkend="datatype-json">).
   </para>
 
@@ -10162,7 +10162,7 @@ table2-mapping
    The standard comparison operators shown in  <xref
    linkend="functions-comparison-table"> are available for
    <type>jsonb</type>, but not for <type>json</type>. They follow the
-   ordering rules for btree operations outlined at <xref
+   ordering rules for B-tree operations outlined at <xref
    linkend="json-indexing">.
   </para>
   <para>
@@ -10269,7 +10269,7 @@ table2-mapping
          (recursively) to arrays and objects; otherwise, if there is a cast
          from the type to <type>json</type>, the cast function will be used to
          perform the conversion; otherwise, a JSON scalar value is produced.
-         For any scalar type other than a number, a boolean, or a null value,
+         For any scalar type other than a number, a Boolean, or a null value,
          the text representation will be used, properly quoted and escaped
          so that it is a valid JSON string.
        </entry>
@@ -14007,7 +14007,7 @@ AND
    These operators compare the internal binary representation of the two
    rows.  Two rows might have a different binary representation even
    though comparisons of the two rows with the equality operator is true.
-   The ordering of rows under these comparision operators is deterministic
+   The ordering of rows under these comparison operators is deterministic
    but not otherwise meaningful.  These operators are used internally for
    materialized views and might be useful for other specialized purposes
    such as replication but are not intended to be generally useful for
@@ -15461,32 +15461,32 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>to_regclass(<parameter>rel_name</parameter>)</function></literal></entry>
        <entry><type>regclass</type></entry>
-       <entry>get the oid of the named relation</entry>
+       <entry>get the OID of the named relation</entry>
       </row>
       <row>
        <entry><literal><function>to_regproc(<parameter>func_name</parameter>)</function></literal></entry>
        <entry><type>regproc</type></entry>
-       <entry>get the oid of the named function</entry>
+       <entry>get the OID of the named function</entry>
       </row>
       <row>
        <entry><literal><function>to_regprocedure(<parameter>func_name</parameter>)</function></literal></entry>
        <entry><type>regprocedure</type></entry>
-       <entry>get the oid of the named function</entry>
+       <entry>get the OID of the named function</entry>
       </row>
       <row>
        <entry><literal><function>to_regoper(<parameter>operator_name</parameter>)</function></literal></entry>
        <entry><type>regoper</type></entry>
-       <entry>get the oid of the named operator</entry>
+       <entry>get the OID of the named operator</entry>
       </row>
       <row>
        <entry><literal><function>to_regoperator(<parameter>operator_name</parameter>)</function></literal></entry>
        <entry><type>regoperator</type></entry>
-       <entry>get the oid of the named operator</entry>
+       <entry>get the OID of the named operator</entry>
       </row>
       <row>
        <entry><literal><function>to_regtype(<parameter>type_name</parameter>)</function></literal></entry>
        <entry><type>regtype</type></entry>
-       <entry>get the oid of the named type</entry>
+       <entry>get the OID of the named type</entry>
       </row>
      </tbody>
     </tgroup>
@@ -16619,8 +16619,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         Creates a new physical replication slot named
         <parameter>slot_name</parameter>. Streaming changes from a physical slot
-        is only possible with the walsender protocol - see <xref
-        linkend="protocol-replication">. Corresponds to the walsender protocol
+        is only possible with the streaming-replication protocol - see <xref
+        linkend="protocol-replication">. Corresponds to the replication protocol
         command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>.
        </entry>
       </row>
@@ -16636,7 +16636,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
        <entry>
         Drops the physical or logical replication slot
-        named <parameter>slot_name</parameter>. Same as walsender protocol
+        named <parameter>slot_name</parameter>. Same as replication protocol
         command <literal>DROP_REPLICATION_SLOT</>.
        </entry>
       </row>

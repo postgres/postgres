@@ -2603,7 +2603,7 @@ include_dir 'conf.d'
        <para>
         The name of a standby server for this purpose is the
         <varname>application_name</> setting of the standby, as set in the
-        <varname>primary_conninfo</> of the standby's walreceiver.  There is
+        <varname>primary_conninfo</> of the standby's WAL receiver.  There is
         no mechanism to enforce uniqueness. In case of duplicates one of the
         matching standbys will be chosen to be the synchronous standby, though
         exactly which one is indeterminate.

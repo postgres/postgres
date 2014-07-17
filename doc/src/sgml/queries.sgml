@@ -650,7 +650,7 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
      Table functions may also be combined using the <literal>ROWS FROM</>
      syntax, with the results returned in parallel columns; the number of
      result rows in this case is that of the largest function result, with
-     smaller results padded with NULLs to match.
+     smaller results padded with null values to match.
     </para>
 
 <synopsis>

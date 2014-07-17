@@ -183,7 +183,7 @@ PostgreSQL documentation
 
    <para>
     The following command-line options control the location and format of the
-    output and other replication behaviour:
+    output and other replication behavior:
 
     <variablelist>
 

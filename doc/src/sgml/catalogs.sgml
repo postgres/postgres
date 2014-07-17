@@ -408,13 +408,13 @@
       <entry><structfield>aggfinalextra</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True to pass extra dummy arguments to aggfinalfn</entry>
+      <entry>True to pass extra dummy arguments to <structfield>aggfinalfn</structfield></entry>
      </row>
      <row>
       <entry><structfield>aggmfinalextra</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True to pass extra dummy arguments to aggmfinalfn</entry>
+      <entry>True to pass extra dummy arguments to <structfield>aggmfinalfn</structfield></entry>
      </row>
      <row>
       <entry><structfield>aggsortop</structfield></entry>
@@ -838,7 +838,7 @@
       <entry><structfield>amopsortfamily</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>.oid</literal></entry>
-      <entry>The btree operator family this entry sorts according to, if an
+      <entry>The B-tree operator family this entry sorts according to, if an
        ordering operator; zero if a search operator</entry>
      </row>
 
@@ -853,7 +853,7 @@
    <replaceable>indexed_column</>
    <replaceable>operator</>
    <replaceable>constant</>.
-   Obviously, such an operator must return boolean, and its left-hand input
+   Obviously, such an operator must return <type>boolean</type>, and its left-hand input
    type must match the index's column data type.
   </para>
 
@@ -868,13 +868,13 @@
    its left-hand input type must match the index's column data type.
    The exact semantics of the <literal>ORDER BY</> are specified by the
    <structfield>amopsortfamily</structfield> column, which must reference
-   a btree operator family for the operator's result type.
+   a B-tree operator family for the operator's result type.
   </para>
 
   <note>
    <para>
     At present, it's assumed that the sort order for an ordering operator
-    is the default for the referenced opfamily, i.e., <literal>ASC NULLS
+    is the default for the referenced operator family, i.e., <literal>ASC NULLS
     LAST</>.  This might someday be relaxed by adding additional columns
     to specify sort options explicitly.
    </para>
@@ -974,7 +974,7 @@
    these match the input data type(s) of the support procedure itself, for
    others not.  There is a notion of <quote>default</> support procedures for
    an index, which are those with <structfield>amproclefttype</> and
-   <structfield>amprocrighttype</> both equal to the index opclass's
+   <structfield>amprocrighttype</> both equal to the index operator class's
    <structfield>opcintype</>.
   </para>
 
@@ -1959,7 +1959,7 @@
        <literal>d</> = default (primary key, if any),
        <literal>n</> = nothing,
        <literal>f</> = all columns
-       <literal>i</> = index with indisreplident set, or default
+       <literal>i</> = index with <structfield>indisreplident</structfield> set, or default
       </entry>
      </row>
 
@@ -5261,7 +5261,7 @@
       <entry><structfield>plugin</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>The basename of the shared object containing the output plugin this logical slot is using, or null for physical slots.</entry>
+      <entry>The base name of the shared object containing the output plugin this logical slot is using, or null for physical slots.</entry>
      </row>
 
      <row>
@@ -5275,7 +5275,7 @@
       <entry><structfield>datoid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
-      <entry>The oid of the database this slot is associated with, or
+      <entry>The OID of the database this slot is associated with, or
       null. Only logical slots have an associated database.</entry>
      </row>
 
