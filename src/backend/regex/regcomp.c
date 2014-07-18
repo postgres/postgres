@@ -1656,8 +1656,9 @@ freesrnode(struct vars * v,		/* might be NULL */
 		freecnfa(&sr->cnfa);
 	sr->flags = 0;
 
-	if (v != NULL)
+	if (v != NULL && v->treechain != NULL)
 	{
+		/* we're still parsing, maybe we can reuse the subre */
 		sr->left = v->treefree;
 		v->treefree = sr;
 	}
@@ -1703,6 +1704,20 @@ numst(struct subre * t,
 
 /*
  * markst - mark tree nodes as INUSE
+ *
+ * Note: this is a great deal more subtle than it looks.  During initial
+ * parsing of a regex, all subres are linked into the treechain list;
+ * discarded ones are also linked into the treefree list for possible reuse.
+ * After we are done creating all subres required for a regex, we run markst()
+ * then cleanst(), which results in discarding all subres not reachable from
+ * v->tree.  We then clear v->treechain, indicating that subres must be found
+ * by descending from v->tree.  This changes the behavior of freesubre(): it
+ * will henceforth FREE() unwanted subres rather than sticking them into the
+ * treefree list.  (Doing that any earlier would result in dangling links in
+ * the treechain list.)  This all means that freev() will clean up correctly
+ * if invoked before or after markst()+cleanst(); but it would not work if
+ * called partway through this state conversion, so we mustn't error out
+ * in or between these two functions.
  */
 static void
 markst(struct subre * t)
@@ -1800,25 +1815,27 @@ newlacon(struct vars * v,
 		 int pos)
 {
 	int			n;
+	struct subre *newlacons;
 	struct subre *sub;
 
 	if (v->nlacons == 0)
 	{
-		v->lacons = (struct subre *) MALLOC(2 * sizeof(struct subre));
 		n = 1;					/* skip 0th */
-		v->nlacons = 2;
+		newlacons = (struct subre *) MALLOC(2 * sizeof(struct subre));
 	}
 	else
 	{
-		v->lacons = (struct subre *) REALLOC(v->lacons,
-									(v->nlacons + 1) * sizeof(struct subre));
-		n = v->nlacons++;
+		n = v->nlacons;
+		newlacons = (struct subre *) REALLOC(v->lacons,
+											 (n + 1) * sizeof(struct subre));
 	}
-	if (v->lacons == NULL)
+	if (newlacons == NULL)
 	{
 		ERR(REG_ESPACE);
 		return 0;
 	}
+	v->lacons = newlacons;
+	v->nlacons = n + 1;
 	sub = &v->lacons[n];
 	sub->begin = begin;
 	sub->end = end;
