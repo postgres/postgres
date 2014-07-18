@@ -288,10 +288,9 @@ make prefix=/usr/local/pgsql.new install
     <title>Adjust authentication</title>
 
     <para>
-     <command>pg_upgrade</> will connect to the old and new servers several times,
-     so you might want to set authentication to <literal>trust</>
-     or <literal>peer</> in <filename>pg_hba.conf</>, or if using
-     <literal>md5</> authentication, use a <filename>~/.pgpass</> file
+     <command>pg_upgrade</> will connect to the old and new servers several
+     times, so you might want to set authentication to <literal>peer</>
+     in <filename>pg_hba.conf</> or use a <filename>~/.pgpass</> file
      (see <xref linkend="libpq-pgpass">).
     </para>
    </step>
@@ -406,10 +405,9 @@ pg_upgrade.exe
     <title>Restore <filename>pg_hba.conf</></title>
 
     <para>
-     If you modified <filename>pg_hba.conf</> to use <literal>trust</>,
-     restore its original authentication settings.  It might also be
-     necessary to adjust other configurations files in the new cluster to
-     match the old cluster, e.g. <filename>postgresql.conf</>.
+     If you modified <filename>pg_hba.conf</>, restore its original settings.
+     It might also be necessary to adjust other configuration files in the new
+     cluster to match the old cluster, e.g. <filename>postgresql.conf</>.
     </para>
    </step>
 
