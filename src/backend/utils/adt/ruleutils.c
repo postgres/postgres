@@ -2937,7 +2937,16 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 		i = 0;
 		foreach(lc, rte->eref->colnames)
 		{
-			real_colnames[i] = strVal(lfirst(lc));
+			/*
+			 * If the column name shown in eref is an empty string, then it's
+			 * a column that was dropped at the time of parsing the query, so
+			 * treat it as dropped.
+			 */
+			char	   *cname = strVal(lfirst(lc));
+
+			if (cname[0] == '\0')
+				cname = NULL;
+			real_colnames[i] = cname;
 			i++;
 		}
 	}

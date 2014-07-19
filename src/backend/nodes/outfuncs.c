@@ -2469,8 +2469,14 @@ _outValue(StringInfo str, const Value *value)
 			appendStringInfoString(str, value->val.str);
 			break;
 		case T_String:
+
+			/*
+			 * We use _outToken to provide escaping of the string's content,
+			 * but we don't want it to do anything with an empty string.
+			 */
 			appendStringInfoChar(str, '"');
-			_outToken(str, value->val.str);
+			if (value->val.str[0] != '\0')
+				_outToken(str, value->val.str);
 			appendStringInfoChar(str, '"');
 			break;
 		case T_BitString:
