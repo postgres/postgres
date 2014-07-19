@@ -1332,6 +1332,58 @@ select pg_get_viewdef('vv6', true);
       JOIN tt13 USING (z);
 (1 row)
 
+--
+-- Check some cases involving dropped columns in a function's rowtype result
+--
+create table tt14t (f1 text, f2 text, f3 text, f4 text);
+insert into tt14t values('foo', 'bar', 'baz', 'quux');
+alter table tt14t drop column f2;
+create function tt14f() returns setof tt14t as
+$$
+declare
+    rec1 record;
+begin
+    for rec1 in select * from tt14t
+    loop
+        return next rec1;
+    end loop;
+end;
+$$
+language plpgsql;
+create view tt14v as select t.* from tt14f() t;
+select pg_get_viewdef('tt14v', true);
+         pg_get_viewdef         
+--------------------------------
+  SELECT t.f1,                 +
+     t.f3,                     +
+     t.f4                      +
+    FROM tt14f() t(f1, f3, f4);
+(1 row)
+
+select * from tt14v;
+ f1  | f3  |  f4  
+-----+-----+------
+ foo | baz | quux
+(1 row)
+
+-- this perhaps should be rejected, but it isn't:
+alter table tt14t drop column f3;
+-- f3 is still in the view but will read as nulls
+select pg_get_viewdef('tt14v', true);
+         pg_get_viewdef         
+--------------------------------
+  SELECT t.f1,                 +
+     t.f3,                     +
+     t.f4                      +
+    FROM tt14f() t(f1, f3, f4);
+(1 row)
+
+select * from tt14v;
+ f1  | f3 |  f4  
+-----+----+------
+ foo |    | quux
+(1 row)
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
