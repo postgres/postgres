@@ -239,13 +239,13 @@ Rule	Egypt	1990	1994	-	May	 1	1:00	1:00	S
 # http://www.worldtimezone.com/dst_news/dst_news_egypt04.html
 # </a>
 Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S
-Rule	Egypt	1995	2005	-	Sep	lastThu	23:00s	0	-
+Rule	Egypt	1995	2005	-	Sep	lastThu	24:00	0	-
 # From Steffen Thorsen (2006-09-19):
 # The Egyptian Gazette, issue 41,090 (2006-09-18), page 1, reports:
 # Egypt will turn back clocks by one hour at the midnight of Thursday
 # after observing the daylight saving time since May.
 # http://news.gom.com.eg/gazette/pdf/2006/09/18/01.pdf
-Rule	Egypt	2006	only	-	Sep	21	23:00s	0	-
+Rule	Egypt	2006	only	-	Sep	21	24:00	0	-
 # From Dirk Losch (2007-08-14):
 # I received a mail from an airline which says that the daylight
 # saving time in Egypt will end in the night of 2007-09-06 to 2007-09-07.
@@ -254,7 +254,7 @@ Rule	Egypt	2006	only	-	Sep	21	23:00s	0	-
 # http://www.timeanddate.com/worldclock/city.html?n=53
 # From Steffen Thorsen (2007-09-04): The official information...:
 # http://www.sis.gov.eg/En/EgyptOnline/Miscellaneous/000002/0207000000000000001580.htm
-Rule	Egypt	2007	only	-	Sep	Thu>=1	23:00s	0	-
+Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-
 # From Abdelrahman Hassan (2007-09-06):
 # Due to the Hijri (lunar Islamic calendar) year being 11 days shorter
 # than the year of the Gregorian calendar, Ramadan shifts earlier each
@@ -335,11 +335,85 @@ Rule	Egypt	2007	only	-	Sep	Thu>=1	23:00s	0	-
 # http://www.worldtimezone.com/dst_news/dst_news_egypt02.html
 # </a>
 
-Rule	Egypt	2008	only	-	Aug	lastThu	23:00s	0	-
-Rule	Egypt	2009	only	-	Aug	20	23:00s	0	-
-Rule	Egypt	2010	only	-	Aug	11	0:00	0	-
-Rule	Egypt	2010	only	-	Sep	10	0:00	1:00	S
-Rule	Egypt	2010	only	-	Sep	lastThu	23:00s	0	-
+# From Ahmad El-Dardiry (2014-05-07):
+# Egypt is to change back to Daylight system on May 15
+# http://english.ahram.org.eg/NewsContent/1/64/100735/Egypt/Politics-/Egypts-government-to-reapply-daylight-saving-time-.aspx
+
+# From Gunther Vermier (2015-05-13):
+# our Egypt office confirms that the change will be at 15 May "midnight" (24:00)
+
+# From Imed Chihi (2014-06-04):
+# We have finally "located" a precise official reference about the DST changes
+# in Egypt.  The Ministers Cabinet decision is explained at
+# http://www.cabinet.gov.eg/Media/CabinetMeetingsDetails.aspx?id=347 ...
+# [T]his (Arabic) site is not accessible outside Egypt, but the page ...
+# translates into: "With regard to daylight saving time, it is scheduled to
+# take effect at exactly twelve o'clock this evening, Thursday, 15 MAY 2014,
+# to be suspended by twelve o'clock on the evening of Thursday, 26 JUN 2014,
+# and re-established again at the end of the month of Ramadan, at twelve
+# o'clock on the evening of Thursday, 31 JUL 2014."  This statement has been
+# reproduced by other (more accessible) sites[, e.g.,]...
+# http://elgornal.net/news/news.aspx?id=4699258
+
+# From Paul Eggert (2014-06-04):
+# Sarah El Deeb and Lee Keath of AP report that the Egyptian government says
+# the change is because of blackouts in Cairo, even though Ahram Online (cited
+# above) says DST had no affect on electricity consumption.  There is
+# no information about when DST will end this fall.  See:
+# http://abcnews.go.com/International/wireStory/el-sissi-pushes-egyptians-line-23614833
+#
+# For now, guess that later spring and fall transitions will use
+# 2010's rules, and guess that Egypt will switch to standard time at
+# 24:00 the last Thursday before Ramadan, and back to DST at 00:00 the
+# first Friday after Ramadan.  To implement this,
+# transition dates for 2015 through 2037 were determined by running
+# the following program under GNU Emacs 24.3, with the results integrated
+# by hand into the table below.  Ramadan again intrudes on the guessed
+# DST starting in 2038, but that's beyond our somewhat-arbitrary cutoff.
+# (let ((islamic-year 1436))
+#   (while (< islamic-year 1460)
+#     (let ((a (calendar-islamic-to-absolute (list 9 1 islamic-year)))
+#           (b (calendar-islamic-to-absolute (list 10 1 islamic-year)))
+#           (friday 5))
+#       (while (/= friday (mod a 7))
+#         (setq a (1- a)))
+#       (while (/= friday (mod b 7))
+#         (setq b (1+ b)))
+#       (setq a (1- a))
+#       (setq b (1- b))
+#       (setq a (calendar-gregorian-from-absolute a))
+#       (setq b (calendar-gregorian-from-absolute b))
+#       (insert
+#        (format
+#         (concat "Rule\tEgypt\t%d\tonly\t-\t%s\t%2d\t24:00\t0\t-\n"
+#                 "Rule\tEgypt\t%d\tonly\t-\t%s\t%2d\t24:00\t1:00\tS\n")
+#         (car (cdr (cdr a))) (calendar-month-name (car a) t) (car (cdr a))
+#         (car (cdr (cdr b))) (calendar-month-name (car b) t) (car (cdr b)))))
+#     (setq islamic-year (+ 1 islamic-year))))
+Rule	Egypt	2008	only	-	Aug	lastThu	24:00	0	-
+Rule	Egypt	2009	only	-	Aug	20	24:00	0	-
+Rule	Egypt	2010	only	-	Aug	10	24:00	0	-
+Rule	Egypt	2010	only	-	Sep	 9	24:00	1:00	S
+Rule	Egypt	2010	only	-	Sep	lastThu	24:00	0	-
+Rule	Egypt	2014	only	-	May	15	24:00	1:00	S
+Rule	Egypt	2014	only	-	Jun	26	24:00	0	-
+Rule	Egypt	2014	only	-	Jul	31	24:00	1:00	S
+Rule	Egypt	2014	max	-	Sep	lastThu	24:00	0	-
+Rule	Egypt	2015	2019	-	Apr	lastFri	 0:00s	1:00	S
+Rule	Egypt	2015	only	-	Jun	11	24:00	0	-
+Rule	Egypt	2015	only	-	Jul	23	24:00	1:00	S
+Rule	Egypt	2016	only	-	Jun	 2	24:00	0	-
+Rule	Egypt	2016	only	-	Jul	 7	24:00	1:00	S
+Rule	Egypt	2017	only	-	May	25	24:00	0	-
+Rule	Egypt	2017	only	-	Jun	29	24:00	1:00	S
+Rule	Egypt	2018	only	-	May	10	24:00	0	-
+Rule	Egypt	2018	only	-	Jun	14	24:00	1:00	S
+Rule	Egypt	2019	only	-	May	 2	24:00	0	-
+Rule	Egypt	2019	only	-	Jun	 6	24:00	1:00	S
+Rule	Egypt	2020	only	-	May	28	24:00	1:00	S
+Rule	Egypt	2021	only	-	May	13	24:00	1:00	S
+Rule	Egypt	2022	only	-	May	 5	24:00	1:00	S
+Rule	Egypt	2023	max	-	Apr	lastFri	 0:00s	1:00	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Cairo	2:05:09 -	LMT	1900 Oct
@@ -868,39 +942,39 @@ Zone	Indian/Mayotte	3:00:56 -	LMT	1911 Jul	# Mamoutzou
 # Another source (specifying the time for start and end in the decree):
 # http://www.lemag.ma/Heure-d-ete-au-Maroc-jusqu-au-27-octobre_a75620.html
 
-# From Paul Eggert (2013-10-03):
-# To estimate what the Moroccan government will do in future years,
-# transition dates for 2014 through 2038 were determined by running
-# the following program under GNU Emacs 24.3:
-#
-# (let ((islamic-year 1435))
-#   (while (< islamic-year 1461)
-#     (let ((a
-#	     (calendar-gregorian-from-absolute
-#	      (calendar-islamic-to-absolute (list 9 1 islamic-year))))
-#	    (b
-#	     (calendar-gregorian-from-absolute
-#	      (calendar-islamic-to-absolute (list 10 1 islamic-year)))))
-#	(insert
-#	 (format
-#	  (concat "Rule\tMorocco\t%d\tonly\t-\t%s\t %2d\t 3:00\t0\t-\n"
-#		  "Rule\tMorocco\t%d\tonly\t-\t%s\t %2d\t 2:00\t1:00\tS\n")
-#	  (car (cdr (cdr a))) (calendar-month-name (car a) t) (car (cdr a))
-#	  (car (cdr (cdr b))) (calendar-month-name (car b) t) (car (cdr b)))))
+# From Sebastien Willemijns (2014-03-18):
+# http://www.afriquinfos.com/articles/2014/3/18/maroc-heure-dete-avancez-tous-horloges-247891.asp
+
+# From Milamber Space Network (2014-06-05):
+# The Moroccan government has recently announced that the country will return
+# to standard time at 03:00 on Saturday, June 28, 2014 local time....  DST
+# will resume again at 02:00 on Saturday, August 2, 2014....
+# http://www.mmsp.gov.ma/fr/actualites.aspx?id=586
+
+# From Paul Eggert (2014-06-05):
+# For now, guess that later spring and fall transitions will use 2014's rules,
+# and guess that Morocco will switch to standard time at 03:00 the last
+# Saturday before Ramadan, and back to DST at 02:00 the first Saturday after
+# Ramadan.  To implement this, transition dates for 2015 through 2037 were
+# determined by running the following program under GNU Emacs 24.3, with the
+# results integrated by hand into the table below.
+# (let ((islamic-year 1436))
+#   (while (< islamic-year 1460)
+#     (let ((a (calendar-islamic-to-absolute (list 9 1 islamic-year)))
+#           (b (calendar-islamic-to-absolute (list 10 1 islamic-year)))
+#           (saturday 6))
+#       (while (/= saturday (mod (setq a (1- a)) 7)))
+#       (while (/= saturday (mod b 7))
+#         (setq b (1+ b)))
+#       (setq a (calendar-gregorian-from-absolute a))
+#       (setq b (calendar-gregorian-from-absolute b))
+#       (insert
+#        (format
+#         (concat "Rule\tMorocco\t%d\tonly\t-\t%s\t%2d\t 3:00\t0\t-\n"
+#                 "Rule\tMorocco\t%d\tonly\t-\t%s\t%2d\t 2:00\t1:00\tS\n")
+#         (car (cdr (cdr a))) (calendar-month-name (car a) t) (car (cdr a))
+#         (car (cdr (cdr b))) (calendar-month-name (car b) t) (car (cdr b)))))
 #     (setq islamic-year (+ 1 islamic-year))))
-#
-# with spring-forward transitions removed for 2023-2025, when the
-# normal spring-forward date falls during the estimated Ramadan; with
-# all transitions removed for 2026-2035, where the estimated Ramadan
-# falls entirely outside daylight-saving time; and with fall-back
-# transitions removed for 2036-2037, where the normal fall-back
-# date falls during the estimated Ramadan.  Normally, the table would
-# stop after 2037 because 32-bit time_t values roll around early in 2038,
-# but that would imply a prediction of perpetual DST after March 2038
-# due to the year-2037 glitches.  So, this table instead stops after
-# 2038, the first non-glitchy year after the 32-bit rollover.
-# An advantage of stopping after 2038 is that it lets zic guess
-# TZ='WET0WEST,M3.5.0,M10.5.0/3' for time stamps far in the future.
 
 # RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 
@@ -922,46 +996,44 @@ Rule	Morocco	1978	only	-	Aug	 4	 0:00	0	-
 Rule	Morocco	2008	only	-	Jun	 1	 0:00	1:00	S
 Rule	Morocco	2008	only	-	Sep	 1	 0:00	0	-
 Rule	Morocco	2009	only	-	Jun	 1	 0:00	1:00	S
-Rule	Morocco	2009	only	-	Aug	 21	 0:00	0	-
+Rule	Morocco	2009	only	-	Aug	21	 0:00	0	-
 Rule	Morocco	2010	only	-	May	 2	 0:00	1:00	S
 Rule	Morocco	2010	only	-	Aug	 8	 0:00	0	-
 Rule	Morocco	2011	only	-	Apr	 3	 0:00	1:00	S
-Rule	Morocco	2011	only	-	Jul	 31	 0	0	-
-Rule	Morocco	2012	2013	-	Apr	 lastSun 2:00	1:00	S
-Rule	Morocco	2012	only	-	Sep	 30	 3:00	0	-
-Rule	Morocco	2012	only	-	Jul	 20	 3:00	0	-
-Rule	Morocco	2012	only	-	Aug	 20	 2:00	1:00	S
-Rule	Morocco	2013	only	-	Jul	  7	 3:00	0	-
-Rule	Morocco	2013	only	-	Aug	 10	 2:00	1:00	S
-Rule	Morocco	2013	2035	-	Oct	 lastSun 3:00	0	-
-Rule	Morocco	2014	2022	-	Mar	 lastSun 2:00	1:00	S
-Rule	Morocco	2014	only	-	Jun	 29	 3:00	0	-
-Rule	Morocco	2014	only	-	Jul	 29	 2:00	1:00	S
-Rule	Morocco	2015	only	-	Jun	 18	 3:00	0	-
-Rule	Morocco	2015	only	-	Jul	 18	 2:00	1:00	S
-Rule	Morocco	2016	only	-	Jun	  7	 3:00	0	-
-Rule	Morocco	2016	only	-	Jul	  7	 2:00	1:00	S
-Rule	Morocco	2017	only	-	May	 27	 3:00	0	-
-Rule	Morocco	2017	only	-	Jun	 26	 2:00	1:00	S
-Rule	Morocco	2018	only	-	May	 16	 3:00	0	-
-Rule	Morocco	2018	only	-	Jun	 15	 2:00	1:00	S
-Rule	Morocco	2019	only	-	May	  6	 3:00	0	-
-Rule	Morocco	2019	only	-	Jun	  5	 2:00	1:00	S
-Rule	Morocco	2020	only	-	Apr	 24	 3:00	0	-
-Rule	Morocco	2020	only	-	May	 24	 2:00	1:00	S
-Rule	Morocco	2021	only	-	Apr	 13	 3:00	0	-
-Rule	Morocco	2021	only	-	May	 13	 2:00	1:00	S
-Rule	Morocco	2022	only	-	Apr	  3	 3:00	0	-
-Rule	Morocco	2022	only	-	May	  3	 2:00	1:00	S
-Rule	Morocco	2023	only	-	Apr	 22	 2:00	1:00	S
-Rule	Morocco	2024	only	-	Apr	 10	 2:00	1:00	S
-Rule	Morocco	2025	only	-	Mar	 31	 2:00	1:00	S
-Rule	Morocco	2026	max	-	Mar	 lastSun 2:00	1:00	S
-Rule	Morocco	2036	only	-	Oct	 21	 3:00	0	-
-Rule	Morocco	2037	only	-	Oct	 11	 3:00	0	-
-Rule	Morocco	2038	only	-	Sep	 30	 3:00	0	-
-Rule	Morocco	2038	only	-	Oct	 30	 2:00	1:00	S
-Rule	Morocco	2038	max	-	Oct	 lastSun 3:00	0	-
+Rule	Morocco	2011	only	-	Jul	31	 0	0	-
+Rule	Morocco	2012	2013	-	Apr	lastSun	 2:00	1:00	S
+Rule	Morocco	2012	only	-	Sep	30	 3:00	0	-
+Rule	Morocco	2012	only	-	Jul	20	 3:00	0	-
+Rule	Morocco	2012	only	-	Aug	20	 2:00	1:00	S
+Rule	Morocco	2013	only	-	Jul	 7	 3:00	0	-
+Rule	Morocco	2013	only	-	Aug	10	 2:00	1:00	S
+Rule	Morocco	2013	max	-	Oct	lastSun	 3:00	0	-
+Rule	Morocco	2014	2022	-	Mar	lastSun	 2:00	1:00	S
+Rule	Morocco	2014	only	-	Jun	28	 3:00	0	-
+Rule	Morocco	2014	only	-	Aug	 2	 2:00	1:00	S
+Rule	Morocco	2015	only	-	Jun	13	 3:00	0	-
+Rule	Morocco	2015	only	-	Jul	18	 2:00	1:00	S
+Rule	Morocco	2016	only	-	Jun	 4	 3:00	0	-
+Rule	Morocco	2016	only	-	Jul	 9	 2:00	1:00	S
+Rule	Morocco	2017	only	-	May	20	 3:00	0	-
+Rule	Morocco	2017	only	-	Jul	 1	 2:00	1:00	S
+Rule	Morocco	2018	only	-	May	12	 3:00	0	-
+Rule	Morocco	2018	only	-	Jun	16	 2:00	1:00	S
+Rule	Morocco	2019	only	-	May	 4	 3:00	0	-
+Rule	Morocco	2019	only	-	Jun	 8	 2:00	1:00	S
+Rule	Morocco	2020	only	-	Apr	18	 3:00	0	-
+Rule	Morocco	2020	only	-	May	30	 2:00	1:00	S
+Rule	Morocco	2021	only	-	Apr	10	 3:00	0	-
+Rule	Morocco	2021	only	-	May	15	 2:00	1:00	S
+Rule	Morocco	2022	only	-	Apr	 2	 3:00	0	-
+Rule	Morocco	2022	only	-	May	 7	 2:00	1:00	S
+Rule	Morocco	2023	only	-	Apr	22	 2:00	1:00	S
+Rule	Morocco	2024	only	-	Apr	13	 2:00	1:00	S
+Rule	Morocco	2025	only	-	Apr	 5	 2:00	1:00	S
+Rule	Morocco	2026	max	-	Mar	lastSun	 2:00	1:00	S
+Rule	Morocco	2035	only	-	Oct	27	 3:00	0	-
+Rule	Morocco	2036	only	-	Oct	18	 3:00	0	-
+Rule	Morocco	2037	only	-	Oct	10	 3:00	0	-
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Africa/Casablanca	-0:30:20 -	LMT	1913 Oct 26
