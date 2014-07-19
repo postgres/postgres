@@ -6,7 +6,7 @@
 # go ahead and edit the file (and please send any changes to
 # tz@iana.org for general use in the future).
 
-# From Paul Eggert (2006-03-22):
+# From Paul Eggert (2014-05-31):
 # A good source for time zone historical data outside the U.S. is
 # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
 # San Diego: ACS Publications, Inc. (2003).
@@ -17,6 +17,9 @@
 # published semiannually.  Law sent in several helpful summaries
 # of the IATA's data after 1990.
 #
+# A reliable and entertaining source about time zones is
+# Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
+#
 # Except where otherwise noted, Shanks & Pottenger is the source for
 # entries through 1991, and IATA SSIM is the source for entries afterwards.
 #
@@ -26,9 +29,9 @@
 #	Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated),
 #	which I found in the UCLA library.
 #
-#	<a href="http://www.pettswoodvillage.co.uk/Daylight_Savings_William_Willett.pdf">
 #	William Willett, The Waste of Daylight, 19th edition
-#	</a> (1914-03)
+#	<http://cs.ucla.edu/~eggert/The-Waste-of-Daylight-19th.pdf>
+#	[PDF] (1914-03)
 #
 #	Milne J. Civil time. Geogr J. 1899 Feb;13(2):173-94
 #	<http://www.jstor.org/stable/1774359>.  He writes:
@@ -58,10 +61,7 @@
 #        1:00       CET CEST CEMT Central Europe
 #        1:00:14    SET           Swedish (1879-1899)*
 #        2:00       EET EEST      Eastern Europe
-#        3:00       MSK MSD       Moscow
-#
-# A reliable and entertaining source about time zones, especially in Britain,
-# Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
+#        3:00       MSK MSD  MSM* Moscow
 
 # From Peter Ilieve (1994-12-04),
 # The original six [EU members]: Belgium, France, (West) Germany, Italy,
@@ -558,11 +558,11 @@ Rule	Russia	1917	only	-	Dec	28	 0:00	0	MMT	# Moscow Mean Time
 Rule	Russia	1918	only	-	May	31	22:00	2:00	MDST	# Moscow Double Summer Time
 Rule	Russia	1918	only	-	Sep	16	 1:00	1:00	MST
 Rule	Russia	1919	only	-	May	31	23:00	2:00	MDST
-Rule	Russia	1919	only	-	Jul	 1	 2:00	1:00	S
-Rule	Russia	1919	only	-	Aug	16	 0:00	0	-
-Rule	Russia	1921	only	-	Feb	14	23:00	1:00	S
-Rule	Russia	1921	only	-	Mar	20	23:00	2:00	M # Midsummer
-Rule	Russia	1921	only	-	Sep	 1	 0:00	1:00	S
+Rule	Russia	1919	only	-	Jul	 1	 2:00	1:00	MSD
+Rule	Russia	1919	only	-	Aug	16	 0:00	0	MSK
+Rule	Russia	1921	only	-	Feb	14	23:00	1:00	MSD
+Rule	Russia	1921	only	-	Mar	20	23:00	2:00	MSM # Midsummer
+Rule	Russia	1921	only	-	Sep	 1	 0:00	1:00	MSD
 Rule	Russia	1921	only	-	Oct	 1	 0:00	0	-
 # Act No.925 of the Council of Ministers of the USSR (1980-10-24):
 Rule	Russia	1981	1984	-	Apr	 1	 0:00	1:00	S
@@ -2217,6 +2217,7 @@ Zone Europe/Kaliningrad	 1:22:00 -	LMT	1893 Apr
 Zone Europe/Moscow	 2:30:20 -	LMT	1880
 			 2:30	-	MMT	1916 Jul  3 # Moscow Mean Time
 			 2:30:48 Russia	%s	1919 Jul  1 2:00
+			 3:00	Russia	%s	1921 Oct
 			 3:00	Russia	MSK/MSD	1922 Oct
 			 2:00	-	EET	1930 Jun 21
 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
@@ -2375,7 +2376,7 @@ Zone Asia/Yakutsk	 8:38:40 -	LMT	1919 Dec 15
 Zone Asia/Vladivostok	 8:47:44 -	LMT	1922 Nov 15
 			 9:00	-	VLAT	1930 Jun 21 # Vladivostok Time
 			10:00	Russia	VLA%sT	1991 Mar 31 2:00s
-			 9:00	Russia	VLA%sST	1992 Jan 19 2:00s
+			 9:00	Russia	VLA%sT	1992 Jan 19 2:00s
 			10:00	Russia	VLA%sT	2011 Mar 27 2:00s
 			11:00	-	VLAT
 
@@ -2963,7 +2964,15 @@ Zone Europe/Simferopol	2:16:24 -	LMT	1880
 # Assume it happened in March by not changing the clocks.
 			3:00	Russia	MSK/MSD	1997
 			3:00	-	MSK	1997 Mar lastSun 1:00u
-			2:00	EU	EE%sT
+# From Alexander Krivenyshev (2014-03-17):
+# time change at 2:00 (2am) on March 30, 2014
+# http://vz.ru/news/2014/3/17/677464.html
+# From Paul Eggert (2014-03-30):
+# Simferopol and Sevastopol reportedly changed their central town clocks
+# late the previous day, but this appears to have been ceremonial
+# and the discrepancies are small enough to not worry about.
+			2:00	EU	EE%sT	2014 Mar 30 2:00
+			4:00	-	MSK
 
 # Vatican City
 # See Europe/Rome.
