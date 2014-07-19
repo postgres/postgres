@@ -250,23 +250,13 @@ Zone Antarctica/Macquarie 0	-	zzz	1899 Nov
 Zone Indian/Christmas	7:02:52 -	LMT	1895 Feb
 			7:00	-	CXT	# Christmas Island Time
 
-# Cook Is
-# From Shanks & Pottenger:
-# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Cook	1978	only	-	Nov	12	0:00	0:30	HS
-Rule	Cook	1979	1991	-	Mar	Sun>=1	0:00	0	-
-Rule	Cook	1979	1990	-	Oct	lastSun	0:00	0:30	HS
-# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone Pacific/Rarotonga	-10:39:04 -	LMT	1901		# Avarua
-			-10:30	-	CKT	1978 Nov 12	# Cook Is Time
-			-10:00	Cook	CK%sT
-
-# Cocos
+# Cocos (Keeling) Is
 # These islands were ruled by the Ross family from about 1830 to 1978.
 # We don't know when standard time was introduced; for now, we guess 1900.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Indian/Cocos	6:27:40	-	LMT	1900
 			6:30	-	CCT	# Cocos Islands Time
+
 
 # Fiji
 
@@ -473,7 +463,8 @@ Rule	NZ	1934	1940	-	Apr	lastSun	2:00	0	M
 Rule	NZ	1934	1940	-	Sep	lastSun	2:00	0:30	S
 Rule	NZ	1946	only	-	Jan	 1	0:00	0	S
 # Since 1957 Chatham has been 45 minutes ahead of NZ, but there's no
-# convenient notation for this so we must duplicate the Rule lines.
+# convenient single notation for the date and time of this transition
+# so we must duplicate the Rule lines.
 Rule	NZ	1974	only	-	Nov	Sun>=1	2:00s	1:00	D
 Rule	Chatham	1974	only	-	Nov	Sun>=1	2:45s	1:00	D
 Rule	NZ	1975	only	-	Feb	lastSun	2:00s	0	S
@@ -510,6 +501,17 @@ Link Pacific/Auckland Antarctica/McMurdo
 # scientific station operated 1941/1995;
 # previously whalers, sealers, pastoralists, and scientific personnel wintered
 # was probably like Pacific/Auckland
+
+# Cook Is
+# From Shanks & Pottenger:
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Cook	1978	only	-	Nov	12	0:00	0:30	HS
+Rule	Cook	1979	1991	-	Mar	Sun>=1	0:00	0	-
+Rule	Cook	1979	1990	-	Oct	lastSun	0:00	0:30	HS
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone Pacific/Rarotonga	-10:39:04 -	LMT	1901		# Avarua
+			-10:30	-	CKT	1978 Nov 12	# Cook Is Time
+			-10:00	Cook	CK%sT
 
 ###############################################################################
 
@@ -763,14 +765,29 @@ Zone Pacific/Funafuti	11:56:52 -	LMT	1901
 
 # Johnston
 #
-# From Paul Eggert (2013-09-03):
+# From Paul Eggert (2014-03-11):
+# Sometimes Johnston kept Hawaii time, and sometimes it was an hour behind.
+# Details are uncertain.  We have no data for Johnston after 1970, so
+# treat it like Hawaii for now.
+#
 # In his memoirs of June 6th to October 4, 1945
 # <http://www.315bw.org/Herb_Bach.htm> (2005), Herbert C. Bach writes,
 # "We started our letdown to Kwajalein Atoll and landed there at 5:00 AM
 # Johnston time, 1:30 AM Kwajalein time."  This was in June 1945, and
 # confirms that Johnston kept the same time as Honolulu in summer 1945.
-# We have no better information, so for now, assume this has been true
-# indefinitely into the past.
+#
+# From Lyle McElhaney (2014-03-11):
+# [W]hen JI was being used for that [atomic bomb] testing, the time being used
+# was not Hawaiian time but rather the same time being used on the ships,
+# which had a GMT offset of -11 hours.  This apparently applied to at least the
+# time from Operation Newsreel (Hardtack I/Teak shot, 1958-08-01) to the last
+# Operation Fishbowl shot (Tightrope, 1962-11-04).... [See] Herman Hoerlin,
+# "The United States High-Altitude Test Experience: A Review Emphasizing the
+# Impact on the Environment", Los Alamos LA-6405, Oct 1976
+# <http://www.fas.org/sgp/othergov/doe/lanl/docs1/00322994.pdf>.
+# See the table on page 4 where he lists GMT and local times for the tests; a
+# footnote for the JI tests reads that local time is "JI time = Hawaii Time
+# Minus One Hour".
 #
 # See 'northamerica' for Pacific/Johnston.
 
