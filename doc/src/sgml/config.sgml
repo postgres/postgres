@@ -2424,7 +2424,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-hot-standby-feedback" xreflabel="hot_standby">
+     <varlistentry id="guc-hot-standby-feedback" xreflabel="hot_standby_feedback">
       <term><varname>hot_standby_feedback</varname> (<type>boolean</type>)</term>
       <indexterm>
        <primary><varname>hot_standby_feedback</> configuration parameter</primary>
