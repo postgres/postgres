@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-12-01 23:10+0000\n"
-"PO-Revision-Date: 2013-03-04 22:15-0500\n"
+"PO-Revision-Date: 2014-07-20 23:01-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -140,7 +140,7 @@ msgstr "Unix-Domain-Socket-Pfad »%s« ist zu lang (maximal %d Bytes)\n"
 #: fe-connect.c:867
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "konnte Hostname »%s« nicht in Adresse übersetzen: %s\n"
+msgstr "konnte Hostnamen »%s« nicht in Adresse übersetzen: %s\n"
 
 #: fe-connect.c:871
 #, c-format

@@ -1,5 +1,5 @@
 # German message translation file for pg_resetxlog
-# Peter Eisentraut <peter_e@gmx.net>, 2002 - 2009.
+# Peter Eisentraut <peter_e@gmx.net>, 2002 - 2014.
 #
 # Use these quotes: »%s«
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-01-19 19:14+0000\n"
-"PO-Revision-Date: 2009-01-19 23:07+0200\n"
+"POT-Creation-Date: 2014-07-08 18:33+0000\n"
+"PO-Revision-Date: 2014-07-10 21:48-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -98,12 +98,12 @@ msgstr "Sie müssen %s als PostgreSQL-Superuser ausführen.\n"
 msgid "%s: could not change directory to \"%s\": %s\n"
 msgstr "%s: konnte nicht in Verzeichnis »%s« wechseln: %s\n"
 
-#: pg_resetxlog.c:278 pg_resetxlog.c:391
+#: pg_resetxlog.c:276 pg_resetxlog.c:391
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
 
-#: pg_resetxlog.c:284
+#: pg_resetxlog.c:283
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
@@ -113,7 +113,7 @@ msgstr ""
 "Läuft der Server?  Wenn nicht, dann Sperrdatei löschen und nochmal "
 "versuchen.\n"
 
-#: pg_resetxlog.c:340
+#: pg_resetxlog.c:339
 #, c-format
 msgid ""
 "\n"
@@ -123,7 +123,7 @@ msgstr ""
 "Wenn diese Werte akzeptabel scheinen, dann benutzen Sie -f um das\n"
 "Zurücksetzen zu erzwingen.\n"
 
-#: pg_resetxlog.c:352
+#: pg_resetxlog.c:351
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -327,37 +327,42 @@ msgstr "%s: konnte pg_control-Datei nicht erstellen: %s\n"
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%sL konnte pg_control-Datei nicht schreiben: %s\n"
 
-#: pg_resetxlog.c:660 pg_resetxlog.c:910
+#: pg_resetxlog.c:660 pg_resetxlog.c:970
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: fsync-Fehler: %s\n"
 
-#: pg_resetxlog.c:698 pg_resetxlog.c:773
+#: pg_resetxlog.c:698 pg_resetxlog.c:774 pg_resetxlog.c:831
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: konnte Verzeichnis »%s« nicht öffnen: %s\n"
 
-#: pg_resetxlog.c:742 pg_resetxlog.c:806
+#: pg_resetxlog.c:737 pg_resetxlog.c:802 pg_resetxlog.c:860
 #, c-format
-msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s: konnte aus dem Verzeichnis »%s« nicht lesen: %s\n"
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: konnte Verzeichnis »%s« nicht lesen: %s\n"
 
-#: pg_resetxlog.c:787
+#: pg_resetxlog.c:744 pg_resetxlog.c:809 pg_resetxlog.c:867
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "%s: konnte Verzeichnis »%s« nicht schließen: %s\n"
+
+#: pg_resetxlog.c:787 pg_resetxlog.c:845
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht löschen: %s\n"
 
-#: pg_resetxlog.c:877
+#: pg_resetxlog.c:937
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht öffnen: %s\n"
 
-#: pg_resetxlog.c:888 pg_resetxlog.c:902
+#: pg_resetxlog.c:948 pg_resetxlog.c:962
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht schreiben: %s\n"
 
-#: pg_resetxlog.c:921
+#: pg_resetxlog.c:981
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -366,7 +371,7 @@ msgstr ""
 "%s setzt den PostgreSQL-Transaktionslog zurück.\n"
 "\n"
 
-#: pg_resetxlog.c:922
+#: pg_resetxlog.c:982
 #, c-format
 msgid ""
 "Usage:\n"
@@ -377,17 +382,22 @@ msgstr ""
 "  %s [OPTION]... DATENVERZEICHNIS\n"
 "\n"
 
-#: pg_resetxlog.c:923
+#: pg_resetxlog.c:983
 #, c-format
 msgid "Options:\n"
 msgstr "Optionen:\n"
 
-#: pg_resetxlog.c:924
+#: pg_resetxlog.c:984
+#, c-format
+msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
+msgstr "  -e XIDEPOCHE    nächste Transaktions-ID-Epoche setzen\n"
+
+#: pg_resetxlog.c:985
 #, c-format
 msgid "  -f              force update to be done\n"
 msgstr "  -f              Änderung erzwingen\n"
 
-#: pg_resetxlog.c:925
+#: pg_resetxlog.c:986
 #, c-format
 msgid ""
 "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
@@ -396,12 +406,12 @@ msgstr ""
 "  -l TLI,DATEIID,SEG\n"
 "                  minimale WAL-Startposition für neuen Log erzwingen\n"
 
-#: pg_resetxlog.c:926
+#: pg_resetxlog.c:987
 #, c-format
 msgid "  -m XID          set next multitransaction ID\n"
 msgstr "  -m XID          nächste Multitransaktions-ID setzen\n"
 
-#: pg_resetxlog.c:927
+#: pg_resetxlog.c:988
 #, c-format
 msgid ""
 "  -n              no update, just show extracted control values (for "
@@ -409,37 +419,32 @@ msgid ""
 msgstr ""
 "  -n              keine Änderung, nur Kontrolldaten anzeigen (zum Testen)\n"
 
-#: pg_resetxlog.c:928
+#: pg_resetxlog.c:989
 #, c-format
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          nächste OID setzen\n"
 
-#: pg_resetxlog.c:929
+#: pg_resetxlog.c:990
 #, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
 msgstr "  -O OFFSET       nächsten Multitransaktions-Offset setzen\n"
 
-#: pg_resetxlog.c:930
+#: pg_resetxlog.c:991
 #, c-format
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID          nächste Transaktions-ID setzen\n"
 
-#: pg_resetxlog.c:931
-#, c-format
-msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
-msgstr "  -e XIDEPOCHE    nächste Transaktions-ID-Epoche setzen\n"
-
-#: pg_resetxlog.c:932
+#: pg_resetxlog.c:992
 #, c-format
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          diese Hilfe anzeigen, dann beenden\n"
 
-#: pg_resetxlog.c:933
+#: pg_resetxlog.c:993
 #, c-format
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version       Versionsinformationen anzeigen, dann beenden\n"
 
-#: pg_resetxlog.c:934
+#: pg_resetxlog.c:994
 #, c-format
 msgid ""
 "\n"
