@@ -745,13 +745,13 @@ vac_update_relstats(Relation relation,
 	 * which case we don't want to forget the work it already did.  However,
 	 * if the stored relfrozenxid is "in the future", then it must be corrupt
 	 * and it seems best to overwrite it with the cutoff we used this time.
-	 * See vac_update_datfrozenxid() concerning what we consider to be "in the
-	 * future".
+	 * This should match vac_update_datfrozenxid() concerning what we consider
+	 * to be "in the future".
 	 */
 	if (TransactionIdIsNormal(frozenxid) &&
 		pgcform->relfrozenxid != frozenxid &&
 		(TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid) ||
-		 TransactionIdPrecedes(GetOldestXmin(NULL, true),
+		 TransactionIdPrecedes(ReadNewTransactionId(),
 							   pgcform->relfrozenxid)))
 	{
 		pgcform->relfrozenxid = frozenxid;
@@ -762,7 +762,7 @@ vac_update_relstats(Relation relation,
 	if (MultiXactIdIsValid(minmulti) &&
 		pgcform->relminmxid != minmulti &&
 		(MultiXactIdPrecedes(pgcform->relminmxid, minmulti) ||
-		 MultiXactIdPrecedes(GetOldestMultiXactId(), pgcform->relminmxid)))
+		 MultiXactIdPrecedes(ReadNextMultiXactId(), pgcform->relminmxid)))
 	{
 		pgcform->relminmxid = minmulti;
 		dirty = true;
@@ -803,8 +803,8 @@ vac_update_datfrozenxid(void)
 	SysScanDesc scan;
 	HeapTuple	classTup;
 	TransactionId newFrozenXid;
-	TransactionId lastSaneFrozenXid;
 	MultiXactId newMinMulti;
+	TransactionId lastSaneFrozenXid;
 	MultiXactId lastSaneMinMulti;
 	bool		bogus = false;
 	bool		dirty = false;
@@ -815,13 +815,21 @@ vac_update_datfrozenxid(void)
 	 * committed pg_class entries for new tables; see AddNewRelationTuple().
 	 * So we cannot produce a wrong minimum by starting with this.
 	 */
-	newFrozenXid = lastSaneFrozenXid = GetOldestXmin(NULL, true);
+	newFrozenXid = GetOldestXmin(NULL, true);
 
 	/*
 	 * Similarly, initialize the MultiXact "min" with the value that would be
 	 * used on pg_class for new tables.  See AddNewRelationTuple().
 	 */
-	newMinMulti = lastSaneMinMulti = GetOldestMultiXactId();
+	newMinMulti = GetOldestMultiXactId();
+
+	/*
+	 * Identify the latest relfrozenxid and relminmxid values that we could
+	 * validly see during the scan.  These are conservative values, but it's
+	 * not really worth trying to be more exact.
+	 */
+	lastSaneFrozenXid = ReadNewTransactionId();
+	lastSaneMinMulti = ReadNextMultiXactId();
 
 	/*
 	 * We must seqscan pg_class to find the minimum Xid, because there is no
