@@ -3,21 +3,22 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
+# grzegorz <begina.felicysym@wp.eu>, 2014.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-24 13:06+0000\n"
-"PO-Revision-Date: 2011-09-22 21:56+0200\n"
-"Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"POT-Creation-Date: 2014-03-21 18:52+0000\n"
+"PO-Revision-Date: 2014-03-22 21:56+0200\n"
+"Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
+"Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Virtaal 0.7.1-beta1\n"
+"X-Generator: Virtaal 0.7.1\n"
 
 #: plpython.c:418
 #, c-format
@@ -336,7 +337,12 @@ msgstr "%s"
 msgid "out of memory"
 msgstr "brak pamięci"
 
-#: plpython.c:3702
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr ""
-"nie można zmienić obiektu unikodowego Python na kodowanie serwera PostgreSQL"
+#: plpython.c:3695
+#, fuzzy
+msgid "could not convert Python Unicode object to bytes"
+msgstr "nie można zmienić obiektu unikodowego Python na bajty"
+
+#: plpython.c:3700
+#, fuzzy
+msgid "could not extract bytes from encoded string"
+msgstr "nie można wyciągnąć bajtów z kodowanego ciągu znaków"
