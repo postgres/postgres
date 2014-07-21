@@ -141,10 +141,8 @@ Branch: REL9_0_STABLE [d034e9b3b] 2014-04-08 14:52:07 +0300
      </para>
 
      <para>
-      This is unnecessary, and what's worse is it could lead to wrong
-      answers from concurrent scans of the index.  That was not an issue
-      when the code was written, but in Hot Standby operation it's important
-      to leave the link in place.
+      This error could lead to transiently wrong answers from GiST index
+      scans performed in Hot Standby.
      </para>
     </listitem>
 
@@ -223,19 +221,6 @@ Branch: REL9_3_STABLE [95aa823eb] 2014-04-17 17:47:58 +0300
     </listitem>
 
 <!--
-Author: Simon Riggs <simon@2ndQuadrant.com>
-Branch: REL9_2_STABLE [2dde11a63] 2014-07-15 14:40:23 +0100
-Branch: REL9_1_STABLE [8ebf5f720] 2014-07-15 14:45:44 +0100
--->
-
-    <listitem>
-     <para>
-      Fix feedback status when <xref linkend="guc-hot-standby-feedback"> is
-      turned off on-the-fly (Simon Riggs)
-     </para>
-    </listitem>
-
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master Release: REL9_4_BR [0f928a85e] 2014-05-05 14:43:39 -0400
 Branch: REL9_3_STABLE [4f4ef042f] 2014-05-05 14:43:42 -0400
@@ -262,23 +247,6 @@ Branch: REL9_3_STABLE [c0bd128c8] 2014-04-24 15:41:55 -0300
      <para>
       Fix race condition when updating a tuple concurrently locked by
       another process (Andres Freund, &Aacute;lvaro Herrera)
-     </para>
-    </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_2_STABLE [187ae1730] 2014-06-09 21:28:56 -0400
--->
-
-    <listitem>
-     <para>
-      Fix planner's mishandling of nested PlaceHolderVars generated in
-      nested-nestloop plans (Tom Lane)
-     </para>
-
-     <para>
-      This oversight could result in <quote>variable not found in subplan
-      target lists</> errors, or in silently wrong query results.
      </para>
     </listitem>
 
@@ -913,6 +881,13 @@ Branch: REL9_3_STABLE [b4eeb9d58] 2014-05-06 13:04:30 +0200
 Branch: REL9_2_STABLE [3a024c110] 2014-05-06 13:14:01 +0200
 Branch: REL9_1_STABLE [fb66e88cf] 2014-05-06 13:20:22 +0200
 Branch: REL9_0_STABLE [91c8c106f] 2014-05-06 13:24:13 +0200
+
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master Release: REL9_4_BR [f91796853] 2014-04-09 11:23:38 +0200
+Branch: REL9_3_STABLE [3b8fda676] 2014-04-09 11:38:40 +0200
+Branch: REL9_2_STABLE [2b3136de9] 2014-04-09 11:43:13 +0200
+Branch: REL9_1_STABLE [0de106836] 2014-04-09 12:04:33 +0200
+Branch: REL9_0_STABLE [0c2eb989e] 2014-04-09 12:12:32 +0200
 -->
 
     <listitem>
@@ -1006,6 +981,11 @@ Author: Bruce Momjian <bruce@momjian.us>
 Branch: master [a61daa14d] 2014-07-02 15:29:38 -0400
 Branch: REL9_4_STABLE [b446a384b] 2014-07-02 15:29:38 -0400
 Branch: REL9_3_STABLE [3d2e18510] 2014-07-02 15:29:38 -0400
+
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [78db307bb] 2014-07-21 11:41:53 -0400
+Branch: REL9_4_STABLE [d122387d7] 2014-07-21 11:42:00 -0400
+Branch: REL9_3_STABLE [e7984cca0] 2014-07-21 11:42:05 -0400
 -->
 
     <listitem>
@@ -1013,13 +993,16 @@ Branch: REL9_3_STABLE [3d2e18510] 2014-07-02 15:29:38 -0400
       In <application>pg_upgrade</>,
       preserve <structname>pg_database</>.<structfield>datminmxid</>
       and <structname>pg_class</>.<structfield>relminmxid</> values from the
-      old cluster, or insert reasonable values when upgrading from pre-9.3
-      (Bruce Momjian, &Aacute;lvaro Herrera)
+      old cluster, or insert reasonable values when upgrading from pre-9.3;
+      also defend against unreasonable values in the core server
+      (Bruce Momjian, &Aacute;lvaro Herrera, Tom Lane)
      </para>
 
      <para>
-      This avoids a scenario in which autovacuum might insist on scanning the
-      entire cluster's contents immediately upon starting the new cluster.
+      These changes prevent scenarios in which autovacuum might insist on
+      scanning the entire cluster's contents immediately upon starting the
+      new cluster, or in which tracking of unfrozen MXID values might be
+      disabled completely.
      </para>
     </listitem>
 
