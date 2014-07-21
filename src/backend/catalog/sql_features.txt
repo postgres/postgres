@@ -461,7 +461,7 @@ T321	Basic SQL-invoked routines	07	PARAMETERS view	YES
 T322	Declared data type attributes			NO	
 T323	Explicit security for external routines			YES	
 T324	Explicit security for SQL routines			NO	
-T325	Qualified SQL parameter references			NO	
+T325	Qualified SQL parameter references			YES	
 T326	Table functions			NO	
 T331	Basic roles			YES	
 T332	Extended roles			NO	mostly supported
