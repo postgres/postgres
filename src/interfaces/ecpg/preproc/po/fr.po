@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-22 04:10+0000\n"
-"PO-Revision-Date: 2012-07-22 19:00+0100\n"
+"POT-Creation-Date: 2014-05-17 11:07+0000\n"
+"PO-Revision-Date: 2014-05-17 15:23+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
@@ -18,20 +18,19 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: descriptor.c:64
 #, c-format
 msgid "variable \"%s\" must have a numeric type"
 msgstr "la variable « %s » doit avoir un type numeric"
 
-#: descriptor.c:124
-#: descriptor.c:146
+#: descriptor.c:124 descriptor.c:146
 #, c-format
 msgid "descriptor \"%s\" does not exist"
 msgstr "le descripteur « %s » n'existe pas"
 
-#: descriptor.c:161
-#: descriptor.c:210
+#: descriptor.c:161 descriptor.c:210
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "l'élément d'en-tête du descripteur « %d » n'existe pas"
@@ -87,7 +86,8 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"  -c             produit automatiquement le code C à partir du code SQL embarqué ;\n"
+"  -c             produit automatiquement le code C à partir du code SQL "
+"embarqué ;\n"
 "                 ceci affecte EXEC SQL TYPE\n"
 
 #: ecpg.c:43
@@ -111,8 +111,11 @@ msgstr "  -D SYMBOLE     définit SYMBOLE\n"
 
 #: ecpg.c:49
 #, c-format
-msgid "  -h             parse a header file, this option includes option \"-c\"\n"
-msgstr "  -h             analyse un fichier d'en-tête, cette option inclut l'option « -c »\n"
+msgid ""
+"  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr ""
+"  -h             analyse un fichier d'en-tête, cette option inclut l'option "
+"« -c »\n"
 
 #: ecpg.c:50
 #, c-format
@@ -135,7 +138,8 @@ msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
-"  -r OPTION      indique le comportement à l'exécution ; OPTION peut valoir :\n"
+"  -r OPTION      indique le comportement à l'exécution ; OPTION peut "
+"valoir :\n"
 "                 « no_indicator », « prepare », « questionmarks »\n"
 
 #: ecpg.c:55
@@ -179,158 +183,160 @@ msgstr ""
 "\n"
 "Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 
-#: ecpg.c:182
-#: ecpg.c:333
-#: ecpg.c:343
+#: ecpg.c:143
+#, c-format
+#| msgid "%s: could not locate matching postgres executable"
+msgid "%s: could not locate my own executable path\n"
+msgstr "%s : n'a pas pu localiser mon propre exécutable\n"
+
+#: ecpg.c:186 ecpg.c:337 ecpg.c:347
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
 
-#: ecpg.c:221
-#: ecpg.c:234
-#: ecpg.c:250
-#: ecpg.c:275
+#: ecpg.c:225 ecpg.c:238 ecpg.c:254 ecpg.c:279
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayer « %s --help » pour plus d'informations.\n"
 
-#: ecpg.c:245
+#: ecpg.c:249
 #, c-format
 msgid "%s: parser debug support (-d) not available\n"
 msgstr "%s : support de débogage de l'analyseur (-d) non disponible\n"
 
-#: ecpg.c:263
+#: ecpg.c:267
 #, c-format
 msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
 msgstr "%s, le préprocesseur C embarqué de PostgreSQL, version %d.%d.%d\n"
 
-#: ecpg.c:265
+#: ecpg.c:269
 #, c-format
 msgid "EXEC SQL INCLUDE ... search starts here:\n"
 msgstr "la recherche EXEC SQL INCLUDE ... commence ici :\n"
 
-#: ecpg.c:268
+#: ecpg.c:272
 #, c-format
 msgid "end of search list\n"
 msgstr "fin de la liste de recherche\n"
 
-#: ecpg.c:274
+#: ecpg.c:278
 #, c-format
 msgid "%s: no input files specified\n"
 msgstr "%s : aucun fichier précisé en entrée\n"
 
-#: ecpg.c:466
+#: ecpg.c:470
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "le curseur « %s » est déclaré mais non ouvert"
 
-#: ecpg.c:479
-#: preproc.y:109
+#: ecpg.c:483 preproc.y:125
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "n'a pas pu supprimer le fichier « %s » en sortie\n"
 
-#: pgc.l:403
+#: pgc.l:421
 #, c-format
 msgid "unterminated /* comment"
 msgstr "commentaire /* non terminé"
 
-#: pgc.l:416
+#: pgc.l:434
 #, c-format
 msgid "invalid bit string literal"
 msgstr "chaîne bit litéral invalide"
 
-#: pgc.l:425
+#: pgc.l:443
 #, c-format
 msgid "unterminated bit string literal"
 msgstr "chaîne bit litéral non terminée"
 
-#: pgc.l:441
+#: pgc.l:459
 #, c-format
 msgid "unterminated hexadecimal string literal"
 msgstr "chaîne hexadécimale litéralle non terminée"
 
-#: pgc.l:519
+#: pgc.l:537
 #, c-format
 msgid "unterminated quoted string"
 msgstr "chaîne entre guillemets non terminée"
 
-#: pgc.l:574
-#: pgc.l:587
+#: pgc.l:592 pgc.l:605
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "identifiant délimité de taille zéro"
 
-#: pgc.l:595
+#: pgc.l:613
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "identifiant entre guillemet non terminé"
 
-#: pgc.l:941
+#: pgc.l:867
+#, c-format
+#| msgid "unterminated /* comment"
+msgid "nested /* ... */ comments"
+msgstr "commentaires /* ... */ imbriqués"
+
+#: pgc.l:960
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "identifiant manquant dans la commande EXEC SQL UNDEF"
 
-#: pgc.l:987
-#: pgc.l:1001
+#: pgc.l:1006 pgc.l:1020
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "correspondance manquante « EXEC SQL IFDEF » / « EXEC SQL IFNDEF »"
 
-#: pgc.l:990
-#: pgc.l:1003
-#: pgc.l:1179
+#: pgc.l:1009 pgc.l:1022 pgc.l:1198
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "« EXEC SQL ENDIF; » manquant"
 
-#: pgc.l:1019
-#: pgc.l:1038
+#: pgc.l:1038 pgc.l:1057
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "plusieurs EXEC SQL ELSE"
 
-#: pgc.l:1060
-#: pgc.l:1074
+#: pgc.l:1079 pgc.l:1093
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "EXEC SQL ENDIF différent"
 
-#: pgc.l:1094
+#: pgc.l:1113
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "trop de conditions EXEC SQL IFDEF imbriquées"
 
-#: pgc.l:1127
+#: pgc.l:1146
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "identifiant manquant dans la commande EXEC SQL IFDEF"
 
-#: pgc.l:1136
+#: pgc.l:1155
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "identifiant manquant dans la commande EXEC SQL DEFINE"
 
-#: pgc.l:1169
+#: pgc.l:1188
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "erreur de syntaxe dans la commande EXEC SQL INCLUDE"
 
-#: pgc.l:1218
+#: pgc.l:1237
 #, c-format
-msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
+msgid ""
+"internal error: unreachable state; please report this to <pgsql-"
+"bugs@postgresql.org>"
 msgstr ""
 "erreur interne : l'état ne peut être atteint ; merci de rapporter ceci à\n"
 "<pgsql-bugs@postgresql.org>"
 
-#: pgc.l:1343
+#: pgc.l:1362
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr ""
 "Erreur : le chemin d'en-tête « %s/%s » est trop long sur la ligne %d,\n"
 "ignoré\n"
 
-#: pgc.l:1365
+#: pgc.l:1385
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "n'a pas pu ouvrir le fichier d'en-tête « %s » sur la ligne %d"
@@ -339,254 +345,235 @@ msgstr "n'a pas pu ouvrir le fichier d'en-tête « %s » sur la ligne %d"
 msgid "syntax error"
 msgstr "erreur de syntaxe"
 
-#: preproc.y:81
+#: preproc.y:79
 #, c-format
 msgid "WARNING: "
 msgstr "ATTENTION : "
 
-#: preproc.y:85
+#: preproc.y:82
 #, c-format
 msgid "ERROR: "
 msgstr "ERREUR : "
 
-#: preproc.y:491
+#: preproc.y:506
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "le curseur « %s » n'existe pas"
 
-#: preproc.y:520
+#: preproc.y:535
 #, c-format
 msgid "initializer not allowed in type definition"
 msgstr "initialiseur non autorisé dans la définition du type"
 
-#: preproc.y:522
+#: preproc.y:537
 #, c-format
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "le nom du type « string » est réservé dans le mode Informix"
 
-#: preproc.y:529
-#: preproc.y:13273
+#: preproc.y:544 preproc.y:13853
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "le type « %s » est déjà défini"
 
-#: preproc.y:553
-#: preproc.y:13926
-#: preproc.y:14247
-#: variable.c:610
+#: preproc.y:568 preproc.y:14511 preproc.y:14832 variable.c:618
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr ""
 "les tableaux multi-dimensionnels pour les types de données simples ne sont\n"
 "pas supportés"
 
-#: preproc.y:1526
+#: preproc.y:1577
 #, c-format
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "option AT non autorisée dans une instruction CLOSE DATABASE"
 
-#: preproc.y:1723
+#: preproc.y:1780
 #, c-format
 msgid "AT option not allowed in CONNECT statement"
 msgstr "option AT non autorisée dans une instruction CONNECT"
 
-#: preproc.y:1757
+#: preproc.y:1814
 #, c-format
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "option AT non autorisée dans une instruction DISCONNECT"
 
-#: preproc.y:1812
+#: preproc.y:1869
 #, c-format
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "option AT non autorisée dans une instruction SET CONNECTION"
 
-#: preproc.y:1834
+#: preproc.y:1891
 #, c-format
 msgid "AT option not allowed in TYPE statement"
 msgstr "option AT non autorisée dans une instruction TYPE"
 
-#: preproc.y:1843
+#: preproc.y:1900
 #, c-format
 msgid "AT option not allowed in VAR statement"
 msgstr "option AT non autorisée dans une instruction VAR"
 
-#: preproc.y:1850
+#: preproc.y:1907
 #, c-format
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "option AT non autorisée dans une instruction WHENEVER"
 
-#: preproc.y:2204
-#: preproc.y:3489
-#: preproc.y:4654
-#: preproc.y:4663
-#: preproc.y:4948
-#: preproc.y:7339
-#: preproc.y:7344
-#: preproc.y:7349
-#: preproc.y:9691
-#: preproc.y:10238
+#: preproc.y:2155 preproc.y:2160 preproc.y:2276 preproc.y:3614 preproc.y:4866
+#: preproc.y:4875 preproc.y:5159 preproc.y:6562 preproc.y:7683 preproc.y:7688
+#: preproc.y:10142 preproc.y:10739
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "la fonctionnalité non supportée sera passée au serveur"
 
-#: preproc.y:2446
+#: preproc.y:2518
 #, c-format
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL n'est pas implanté"
 
-#: preproc.y:2889
-#: preproc.y:2900
-#, c-format
-msgid "COPY TO STDIN is not possible"
-msgstr "COPY TO STDIN n'est pas possible"
-
-#: preproc.y:2891
-#, c-format
-msgid "COPY FROM STDOUT is not possible"
-msgstr "COPY FROM STDOUT n'est pas possible"
-
-#: preproc.y:2893
+#: preproc.y:3002
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN n'est pas implanté"
 
-#: preproc.y:8153
-#: preproc.y:12862
+#: preproc.y:8520 preproc.y:13442
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr ""
-"l'utilisation de la variable « %s » dans différentes instructions de déclaration\n"
+"l'utilisation de la variable « %s » dans différentes instructions de "
+"déclaration\n"
 "n'est pas supportée"
 
-#: preproc.y:8155
-#: preproc.y:12864
+#: preproc.y:8522 preproc.y:13444
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "le curseur « %s » est déjà défini"
 
-#: preproc.y:8573
+#: preproc.y:8940
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "la syntaxe obsolète LIMIT #,# a été passée au serveur"
 
-#: preproc.y:8808
+#: preproc.y:9176 preproc.y:9183
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "la sous-requête du FROM doit avoir un alias"
 
-#: preproc.y:12592
+#: preproc.y:13172
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS ne peut pas indiquer INTO"
 
-#: preproc.y:12628
+#: preproc.y:13208
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "« @ » attendu, « %s » trouvé"
 
-#: preproc.y:12640
+#: preproc.y:13220
 #, c-format
-msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
+msgid ""
+"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
+"supported"
 msgstr ""
 "seuls les protocoles « tcp » et « unix » et les types de base de données\n"
 "« postgresql » sont supportés"
 
-#: preproc.y:12643
+#: preproc.y:13223
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "« :// » attendu, « %s » trouvé"
 
-#: preproc.y:12648
+#: preproc.y:13228
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
-msgstr "les sockets de domaine Unix fonctionnent seulement sur « localhost », mais pas sur « %s »"
+msgstr ""
+"les sockets de domaine Unix fonctionnent seulement sur « localhost », mais "
+"pas sur « %s »"
 
-#: preproc.y:12674
+#: preproc.y:13254
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "« postgresql » attendu, « %s » trouvé"
 
-#: preproc.y:12677
+#: preproc.y:13257
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "type de connexion invalide : %s"
 
-#: preproc.y:12686
+#: preproc.y:13266
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "« @ » ou « :// » attendu, « %s » trouvé"
 
-#: preproc.y:12761
-#: preproc.y:12779
+#: preproc.y:13341 preproc.y:13359
 #, c-format
 msgid "invalid data type"
 msgstr "type de données invalide"
 
-#: preproc.y:12790
-#: preproc.y:12807
+#: preproc.y:13370 preproc.y:13387
 #, c-format
 msgid "incomplete statement"
 msgstr "instruction incomplète"
 
-#: preproc.y:12793
-#: preproc.y:12810
+#: preproc.y:13373 preproc.y:13390
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "jeton « %s » non reconnu"
 
-#: preproc.y:13084
+#: preproc.y:13664
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr ""
 "seuls les types de données numeric et decimal ont des arguments de\n"
 "précision et d'échelle"
 
-#: preproc.y:13096
+#: preproc.y:13676
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "interval de spécification non autorisé ici"
 
-#: preproc.y:13248
-#: preproc.y:13300
+#: preproc.y:13828 preproc.y:13880
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "trop de niveaux dans la définition de structure/union imbriquée"
 
-#: preproc.y:13434
+#: preproc.y:14019
 #, c-format
 msgid "pointers to varchar are not implemented"
-msgstr "les pointeurs sur des chaînes de caractères (varchar) ne sont pas implantés"
+msgstr ""
+"les pointeurs sur des chaînes de caractères (varchar) ne sont pas implantés"
 
-#: preproc.y:13621
-#: preproc.y:13646
+#: preproc.y:14206 preproc.y:14231
 #, c-format
 msgid "using unsupported DESCRIBE statement"
 msgstr "utilisation de l'instruction DESCRIBE non supporté"
 
-#: preproc.y:13893
+#: preproc.y:14478
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "initialiseur non autorisé dans la commande EXEC SQL VAR"
 
-#: preproc.y:14205
+#: preproc.y:14790
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "les tableaux d'indicateurs ne sont pas autorisés en entrée"
 
+#: preproc.y:15011
+#, c-format
+#| msgid "initializer not allowed in type definition"
+msgid "operator not allowed in variable definition"
+msgstr "opérateur non autorisé dans la définition de la variable"
+
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:14459
+#: preproc.y:15049
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s sur ou près de « %s »"
 
-#: type.c:18
-#: type.c:30
+#: type.c:18 type.c:30
 #, c-format
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: type.c:212
-#: type.c:590
+#: type.c:212 type.c:664
 #, c-format
 msgid "unrecognized variable type code %d"
 msgstr "code %d du type de variable non reconnu"
@@ -594,7 +581,8 @@ msgstr "code %d du type de variable non reconnu"
 #: type.c:261
 #, c-format
 msgid "variable \"%s\" is hidden by a local variable of a different type"
-msgstr "la variable « %s » est cachée par une variable locale d'un type différent"
+msgstr ""
+"la variable « %s » est cachée par une variable locale d'un type différent"
 
 #: type.c:263
 #, c-format
@@ -603,7 +591,8 @@ msgstr "la variable « %s » est cachée par une variable locale"
 
 #: type.c:275
 #, c-format
-msgid "indicator variable \"%s\" is hidden by a local variable of a different type"
+msgid ""
+"indicator variable \"%s\" is hidden by a local variable of a different type"
 msgstr ""
 "la variable indicateur « %s » est caché par une variable locale d'un type\n"
 "différent"
@@ -625,78 +614,73 @@ msgstr ""
 "les tableaux imbriqués ne sont pas supportés (sauf les chaînes de\n"
 "caractères)"
 
-#: type.c:322
+#: type.c:331
 #, c-format
 msgid "indicator for struct has to be a struct"
 msgstr "l'indicateur d'un struct doit être un struct"
 
-#: type.c:331
-#: type.c:339
-#: type.c:347
+#: type.c:351 type.c:372 type.c:392
 #, c-format
 msgid "indicator for simple data type has to be simple"
 msgstr "l'indicateur d'un type de données simple doit être simple"
 
-#: type.c:649
+#: type.c:723
 #, c-format
 msgid "unrecognized descriptor item code %d"
 msgstr "code %d de l'élément du descripteur non reconnu"
 
-#: variable.c:89
-#: variable.c:112
+#: variable.c:89 variable.c:116
 #, c-format
 msgid "incorrectly formed variable \"%s\""
 msgstr "variable « %s » mal formée"
 
-#: variable.c:135
+#: variable.c:139
 #, c-format
 msgid "variable \"%s\" is not a pointer"
 msgstr "la variable « %s » n'est pas un pointeur"
 
-#: variable.c:138
-#: variable.c:163
+#: variable.c:142 variable.c:167
 #, c-format
 msgid "variable \"%s\" is not a pointer to a structure or a union"
-msgstr "la variable « %s » n'est pas un pointeur vers une structure ou une union"
+msgstr ""
+"la variable « %s » n'est pas un pointeur vers une structure ou une union"
 
-#: variable.c:150
+#: variable.c:154
 #, c-format
 msgid "variable \"%s\" is neither a structure nor a union"
 msgstr "la variable « %s » n'est ni une structure ni une union"
 
-#: variable.c:160
+#: variable.c:164
 #, c-format
 msgid "variable \"%s\" is not an array"
 msgstr "la variable « %s » n'est pas un tableau"
 
-#: variable.c:229
-#: variable.c:251
+#: variable.c:233 variable.c:255
 #, c-format
 msgid "variable \"%s\" is not declared"
 msgstr "la variable « %s » n'est pas déclarée"
 
-#: variable.c:484
+#: variable.c:492
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "la variable d'indicateur doit avoir un type integer"
 
-#: variable.c:496
+#: variable.c:504
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "nom « %s » non reconnu pour un type de données"
 
-#: variable.c:507
-#: variable.c:515
-#: variable.c:532
-#: variable.c:535
+#: variable.c:515 variable.c:523 variable.c:540 variable.c:543
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "les tableaux multidimensionnels ne sont pas supportés"
 
-#: variable.c:524
+#: variable.c:532
 #, c-format
-msgid "multilevel pointers (more than 2 levels) are not supported; found %d level"
-msgid_plural "multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgid ""
+"multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural ""
+"multilevel pointers (more than 2 levels) are not supported; found %d levels"
 msgstr[0] ""
 "les pointeurs multi-niveaux (plus de deux) ne sont pas supportés :\n"
 "%d niveau trouvé"
@@ -704,24 +688,31 @@ msgstr[1] ""
 "les pointeurs multi-niveaux (plus de deux) ne sont pas supportés :\n"
 "%d niveaux trouvés"
 
-#: variable.c:529
+#: variable.c:537
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "ce type de données ne supporte pas les pointeurs de pointeur"
 
-#: variable.c:549
+#: variable.c:557
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
-msgstr "les tableaux multidimensionnels ne sont pas supportés pour les structures"
+msgstr ""
+"les tableaux multidimensionnels ne sont pas supportés pour les structures"
 
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "NEW utilisé dans une requête qui n'est pas dans une règle"
-
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "OLD utilisé dans une requête qui n'est pas dans une règle"
+#~ msgid "AT option not allowed in DEALLOCATE statement"
+#~ msgstr "option AT non autorisée dans une instruction DEALLOCATE"
 
 #~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 #~ msgstr "une contrainte déclarée INITIALLY DEFERRED doit être DEFERRABLE"
 
-#~ msgid "AT option not allowed in DEALLOCATE statement"
-#~ msgstr "option AT non autorisée dans une instruction DEALLOCATE"
+#~ msgid "OLD used in query that is not in a rule"
+#~ msgstr "OLD utilisé dans une requête qui n'est pas dans une règle"
+
+#~ msgid "NEW used in query that is not in a rule"
+#~ msgstr "NEW utilisé dans une requête qui n'est pas dans une règle"
+
+#~ msgid "COPY FROM STDOUT is not possible"
+#~ msgstr "COPY FROM STDOUT n'est pas possible"
+
+#~ msgid "COPY TO STDIN is not possible"
+#~ msgstr "COPY TO STDIN n'est pas possible"
