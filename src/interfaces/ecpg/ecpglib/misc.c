@@ -260,7 +260,7 @@ ecpg_log(const char *format,...)
 	if (!simple_debug)
 		return;
 
-	/* internationalize the error message string */
+	/* localize the error message string */
 	intl_format = ecpg_gettext(format);
 
 	/*

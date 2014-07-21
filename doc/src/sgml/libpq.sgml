@@ -6878,7 +6878,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGLOCALEDIR</envar></primary>
       </indexterm>
       <envar>PGLOCALEDIR</envar> sets the directory containing the
-      <literal>locale</> files for message internationalization.
+      <literal>locale</> files for message localization.
      </para>
     </listitem>
    </itemizedlist>
