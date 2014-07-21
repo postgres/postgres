@@ -1,23 +1,23 @@
 # Polish message translation file for pg_basebackup
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-#
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
+# grzegorz <begina.felicysym@wp.eu>, 2014.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-29 22:55+0000\n"
-"PO-Revision-Date: 2011-09-30 09:52-0300\n"
-"Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"POT-Creation-Date: 2014-03-21 18:46+0000\n"
+"PO-Revision-Date: 2014-03-22 21:35+0200\n"
+"Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
+"Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Virtaal 0.7.1-beta1\n"
+"X-Generator: Virtaal 0.7.1\n"
 
 #: pg_basebackup.c:96 pg_basebackup.c:110
 #, c-format
@@ -172,7 +172,7 @@ msgstr ""
 "\n"
 "Błędy proszę przesyłać na adres <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_basebackup.c:167 pg_basebackup.c:604
+#: pg_basebackup.c:167 pg_basebackup.c:622
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: nie można utworzyć katalogu \"%s\": %s\n"
@@ -211,149 +211,169 @@ msgstr[0] "%s/%s kB (%d%%), %d/%d przestrzeń tabel"
 msgstr[1] "%s/%s kB (%d%%), %d/%d przestrzenie tabel"
 msgstr[2] "%s/%s kB (%d%%), %d/%d przestrzeni tabel"
 
-#: pg_basebackup.c:295 pg_basebackup.c:313 pg_basebackup.c:337
+#: pg_basebackup.c:295 pg_basebackup.c:314 pg_basebackup.c:338
 #, c-format
 msgid "%s: could not set compression level %i: %s\n"
 msgstr "%s: nie można ustawić poziomu kompresji %i: %s\n"
 
-#: pg_basebackup.c:356
+#: pg_basebackup.c:357
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: nie można utworzyć spakowanego pliku \"%s\": %s\n"
 
-#: pg_basebackup.c:367 pg_basebackup.c:643
+#: pg_basebackup.c:368 pg_basebackup.c:661
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: nie można utworzyć pliku \"%s\": %s\n"
 
-#: pg_basebackup.c:379 pg_basebackup.c:516
+#: pg_basebackup.c:380 pg_basebackup.c:534
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s: nie można pobrać strumienia danych COPY: %s"
 
-#: pg_basebackup.c:411 pg_basebackup.c:457
+#: pg_basebackup.c:412 pg_basebackup.c:466
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: nie można pisać do spakowanego pliku \"%s\": %s\n"
 
-#: pg_basebackup.c:420 pg_basebackup.c:466 pg_basebackup.c:683
+#: pg_basebackup.c:422 pg_basebackup.c:476 pg_basebackup.c:701
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: nie można pisać do pliku \"%s\": %s\n"
 
-#: pg_basebackup.c:447 pg_basebackup.c:545
+#: pg_basebackup.c:433
+#, c-format
+msgid "%s: could not close compressed file \"%s\": %s\n"
+msgstr "%s: nie można zamknąć spakowanego pliku \"%s\": %s\n"
+
+#: pg_basebackup.c:445
+#, c-format
+msgid "%s: could not close file \"%s\": %s\n"
+msgstr "%s: nie można zamknąć pliku \"%s\": %s\n"
+
+#: pg_basebackup.c:456 pg_basebackup.c:563
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: nie można odczytać danych COPY: %s"
 
-#: pg_basebackup.c:559
+#: pg_basebackup.c:516
+#, c-format
+msgid "%s: received invalid directory (too long): %s\n"
+msgstr "%s: otrzymano niepoprawny katalog (za długi): %s\n"
+
+#: pg_basebackup.c:577
 #, c-format
 msgid "%s: invalid tar block header size: %i\n"
 msgstr "%s: nieprawidłowy rozmiar nagłówka bloku tar: %i\n"
 
-#: pg_basebackup.c:567
+#: pg_basebackup.c:585
 #, c-format
 msgid "%s: could not parse file size\n"
 msgstr "%s: nie można odczytać rozmiaru pliku\n"
 
-#: pg_basebackup.c:575
+#: pg_basebackup.c:593
 #, c-format
 msgid "%s: could not parse file mode\n"
 msgstr "%s: nie można odczytać trybu pliku\n"
 
-#: pg_basebackup.c:610
+#: pg_basebackup.c:628
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s: nie można ustawić uprawnień do folderu \"%s\": %s\n"
 
-#: pg_basebackup.c:623
+#: pg_basebackup.c:641
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s: nie można utworzyć linku symbolicznego dla \"%s\" na \"%s\": %s\n"
 
-#: pg_basebackup.c:630
+#: pg_basebackup.c:648
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s: nierozpoznany wskaźnik linku \"%c\"\n"
 
-#: pg_basebackup.c:650
+#: pg_basebackup.c:668
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s: nie można ustawić uprawnień do pliku \"%s\": %s\n"
 
-#: pg_basebackup.c:708
+#: pg_basebackup.c:726
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: strumień COPY zakończony zanim skończył się ostatni plik\n"
 
-#: pg_basebackup.c:769
+#: pg_basebackup.c:787
 msgid "Password: "
 msgstr "Hasło: "
 
-#: pg_basebackup.c:789
+#: pg_basebackup.c:807
 #, c-format
 msgid "%s: could not connect to server: %s"
 msgstr "%s: nie można połączyć z serwerem: %s"
 
-#: pg_basebackup.c:829
+#: pg_basebackup.c:848
+#, c-format
+msgid "%s: unsupported server version %s\n"
+msgstr "%s: nieobsługiwana wersja serwera %s\n"
+
+#: pg_basebackup.c:866
 #, c-format
 msgid "%s: could not send base backup command: %s"
 msgstr "%s: nie można wysłać polecenia wykonania kopii zapasowej bazy: %s"
 
-#: pg_basebackup.c:840
+#: pg_basebackup.c:877
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: nie można zainicjować kopii zapasowej bazy: %s"
 
-#: pg_basebackup.c:846
+#: pg_basebackup.c:883
 #, c-format
 msgid "%s: no start point returned from server\n"
 msgstr "%s: nie zwrócono punktu startowego z serwera\n"
 
-#: pg_basebackup.c:862
+#: pg_basebackup.c:897
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: nie można pobrać nagłówka kopii zapasowej: %s"
 
-#: pg_basebackup.c:868
+#: pg_basebackup.c:903
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: nie zwrócono żadnych danych z serwera\n"
 
-#: pg_basebackup.c:896
+#: pg_basebackup.c:931
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %i\n"
 msgstr ""
 "%s: można zapisać tylko pojedynczą przestrzeń tabel do stdout, baza danych "
 "ma %i\n"
 
-#: pg_basebackup.c:925
+#: pg_basebackup.c:960
 #, c-format
-msgid "%s: could not get WAL end position from server\n"
-msgstr "%s: nie można pobrać pozycji końca WAL z serwera\n"
+msgid "%s: could not get WAL end position from server: %s"
+msgstr "%s: nie można pobrać pozycji końca WAL z serwera: %s"
 
-#: pg_basebackup.c:931
+#: pg_basebackup.c:966
 #, c-format
 msgid "%s: no WAL end position returned from server\n"
 msgstr "%s: nie zwrócono pozycji końca WAL z serwera\n"
 
-#: pg_basebackup.c:943
+#: pg_basebackup.c:977
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: ostateczne pobieranie nie powiodło się: %s"
 
-#: pg_basebackup.c:1017
+#: pg_basebackup.c:1051
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr ""
 "%s: niepoprawny format wyjścia \"%s\", musi być \"plain\" lub \"tar\"\n"
 
-#: pg_basebackup.c:1039
+#: pg_basebackup.c:1073
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: niepoprawny poziom kompresji \"%s\"\n"
 
-#: pg_basebackup.c:1051
+#: pg_basebackup.c:1085
 #, c-format
 msgid ""
 "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
@@ -361,28 +381,28 @@ msgstr ""
 "%s: niepoprawny argument checkpoint \"%s\", musi być \"fast\" lub \"spread"
 "\"\n"
 
-#: pg_basebackup.c:1082 pg_basebackup.c:1096 pg_basebackup.c:1107
-#: pg_basebackup.c:1120
+#: pg_basebackup.c:1116 pg_basebackup.c:1130 pg_basebackup.c:1141
+#: pg_basebackup.c:1154
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
-#: pg_basebackup.c:1094
+#: pg_basebackup.c:1128
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: za duża ilość parametrów (pierwszy to \"%s\")\n"
 
-#: pg_basebackup.c:1106
+#: pg_basebackup.c:1140
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: nie wskazano folderu docelowego\n"
 
-#: pg_basebackup.c:1118
+#: pg_basebackup.c:1152
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: tylko kopie zapasowe w trybie tar mogą być spakowane\n"
 
-#: pg_basebackup.c:1129
+#: pg_basebackup.c:1163
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: ta kompilacja nie obsługuje kompresji\n"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-03-15 18:40+0000\n"
+"POT-Creation-Date: 2014-05-16 07:54+0000\n"
 "PO-Revision-Date: 2014-03-16 00:03+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
@@ -96,7 +96,7 @@ msgstr ""
 "n'a pas pu envoyer le message de tests sur la socket du récupérateur de\n"
 "statistiques : %m"
 
-#: postmaster/pgstat.c:448 postmaster/pgstat.c:2996
+#: postmaster/pgstat.c:448 postmaster/pgstat.c:2997
 #, c-format
 msgid "select() failed in statistics collector: %m"
 msgstr "échec du select() dans le récupérateur de statistiques : %m"
@@ -147,61 +147,61 @@ msgid "must be superuser to reset statistics counters"
 msgstr ""
 "doit être super-utilisateur pour réinitialiser les compteurs statistiques"
 
-#: postmaster/pgstat.c:1184 utils/adt/pgstatfuncs.c:1548
+#: postmaster/pgstat.c:1184 utils/adt/pgstatfuncs.c:1549
 #, c-format
 msgid "unrecognized reset target: \"%s\""
 msgstr "cible reset non reconnu : « %s »"
 
-#: postmaster/pgstat.c:1185 utils/adt/pgstatfuncs.c:1549
+#: postmaster/pgstat.c:1185 utils/adt/pgstatfuncs.c:1550
 msgid "Target must be \"bgwriter\"."
 msgstr "La cible doit être « bgwriter »."
 
-#: postmaster/pgstat.c:2975
+#: postmaster/pgstat.c:2976
 #, c-format
 msgid "poll() failed in statistics collector: %m"
 msgstr "échec du poll() dans le récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:3020
+#: postmaster/pgstat.c:3021
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "n'a pas pu lire le message des statistiques : %m"
 
-#: postmaster/pgstat.c:3291
+#: postmaster/pgstat.c:3292
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier temporaire des statistiques « %s » : %m"
 
-#: postmaster/pgstat.c:3363
+#: postmaster/pgstat.c:3364
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier temporaire des statistiques « %s » : %m"
 
-#: postmaster/pgstat.c:3372
+#: postmaster/pgstat.c:3373
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "n'a pas pu fermer le fichier temporaire des statistiques « %s » : %m"
 
-#: postmaster/pgstat.c:3380
+#: postmaster/pgstat.c:3381
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr ""
 "n'a pas pu renommer le fichier temporaire des statistiques « %s » en\n"
 "« %s » : %m"
 
-#: postmaster/pgstat.c:3486 postmaster/pgstat.c:3715
+#: postmaster/pgstat.c:3487 postmaster/pgstat.c:3716
 #, c-format
 msgid "could not open statistics file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de statistiques « %s » : %m"
 
-#: postmaster/pgstat.c:3498 postmaster/pgstat.c:3508 postmaster/pgstat.c:3530
-#: postmaster/pgstat.c:3545 postmaster/pgstat.c:3608 postmaster/pgstat.c:3626
-#: postmaster/pgstat.c:3642 postmaster/pgstat.c:3660 postmaster/pgstat.c:3676
-#: postmaster/pgstat.c:3727 postmaster/pgstat.c:3738
+#: postmaster/pgstat.c:3499 postmaster/pgstat.c:3509 postmaster/pgstat.c:3531
+#: postmaster/pgstat.c:3546 postmaster/pgstat.c:3609 postmaster/pgstat.c:3627
+#: postmaster/pgstat.c:3643 postmaster/pgstat.c:3661 postmaster/pgstat.c:3677
+#: postmaster/pgstat.c:3728 postmaster/pgstat.c:3739
 #, c-format
 msgid "corrupted statistics file \"%s\""
 msgstr "fichier de statistiques « %s » corrompu"
 
-#: postmaster/pgstat.c:4036
+#: postmaster/pgstat.c:4037
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr ""
 "corruption de la table hachée de la base de données lors du lancement\n"
@@ -263,51 +263,51 @@ msgstr "autovacuum non exécuté à cause d'une mauvaise configuration"
 msgid "Enable the \"track_counts\" option."
 msgstr "Activez l'option « track_counts »."
 
-#: postmaster/syslogger.c:418
+#: postmaster/syslogger.c:407
 #, c-format
 msgid "select() failed in logger process: %m"
 msgstr "échec de select() dans le processus des journaux applicatifs : %m"
 
-#: postmaster/syslogger.c:430 postmaster/syslogger.c:1014
+#: postmaster/syslogger.c:419 postmaster/syslogger.c:1003
 #, c-format
 msgid "could not read from logger pipe: %m"
 msgstr "n'a pas pu lire à partir du tube des journaux applicatifs : %m"
 
-#: postmaster/syslogger.c:477
+#: postmaster/syslogger.c:466
 msgid "logger shutting down"
 msgstr "arrêt en cours des journaux applicatifs"
 
-#: postmaster/syslogger.c:521 postmaster/syslogger.c:535
+#: postmaster/syslogger.c:510 postmaster/syslogger.c:524
 #, c-format
 msgid "could not create pipe for syslog: %m"
 msgstr "n'a pas pu créer un tube pour syslog : %m"
 
-#: postmaster/syslogger.c:571
+#: postmaster/syslogger.c:560
 #, c-format
 msgid "could not fork system logger: %m"
 msgstr "n'a pas pu lancer le processus des journaux applicatifs : %m"
 
-#: postmaster/syslogger.c:602
+#: postmaster/syslogger.c:591
 #, c-format
 msgid "could not redirect stdout: %m"
 msgstr "n'a pas pu rediriger la sortie (stdout) : %m"
 
-#: postmaster/syslogger.c:607 postmaster/syslogger.c:625
+#: postmaster/syslogger.c:596 postmaster/syslogger.c:614
 #, c-format
 msgid "could not redirect stderr: %m"
 msgstr "n'a pas pu rediriger la sortie des erreurs (stderr) : %m"
 
-#: postmaster/syslogger.c:969
+#: postmaster/syslogger.c:958
 #, c-format
 msgid "could not write to log file: %s\n"
 msgstr "n'a pas pu écrire dans le journal applicatif : %s\n"
 
-#: postmaster/syslogger.c:1095
+#: postmaster/syslogger.c:1084
 #, c-format
 msgid "could not open log file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier applicatif « %s » : %m"
 
-#: postmaster/syslogger.c:1157 postmaster/syslogger.c:1201
+#: postmaster/syslogger.c:1146 postmaster/syslogger.c:1190
 msgid "disabling automatic rotation (use SIGHUP to re-enable)"
 msgstr ""
 "désactivation de la rotation automatique (utilisez SIGHUP pour la réactiver)"
@@ -385,49 +385,49 @@ msgstr "n'a pas pu accéder au répertoire du statut des archives « %s » : %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "n'a pas pu renommer le fichier « %s » en « %s » : %m"
 
-#: postmaster/postmaster.c:569
+#: postmaster/postmaster.c:598
 #, c-format
 msgid "%s: invalid argument for option -f: \"%s\"\n"
 msgstr "%s : argument invalide pour l'option -f : « %s »\n"
 
-#: postmaster/postmaster.c:655
+#: postmaster/postmaster.c:684
 #, c-format
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s : argument invalide pour l'option -t : « %s »\n"
 
-#: postmaster/postmaster.c:678 bootstrap/bootstrap.c:269 tcop/postgres.c:3448
+#: postmaster/postmaster.c:707 bootstrap/bootstrap.c:269 tcop/postgres.c:3448
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s requiert une valeur"
 
-#: postmaster/postmaster.c:683 bootstrap/bootstrap.c:274 tcop/postgres.c:3453
+#: postmaster/postmaster.c:712 bootstrap/bootstrap.c:274 tcop/postgres.c:3453
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s requiert une valeur"
 
-#: postmaster/postmaster.c:695 postmaster/postmaster.c:708
+#: postmaster/postmaster.c:724 postmaster/postmaster.c:737
 #: bootstrap/bootstrap.c:285
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: postmaster/postmaster.c:706
+#: postmaster/postmaster.c:735
 #, c-format
 msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s : argument invalide : « %s »\n"
 
-#: postmaster/postmaster.c:731
+#: postmaster/postmaster.c:760
 #, c-format
 msgid "%s: superuser_reserved_connections must be less than max_connections\n"
 msgstr ""
 "%s : superuser_reserved_connections doit être inférieur à max_connections\n"
 
-#: postmaster/postmaster.c:736
+#: postmaster/postmaster.c:765
 #, c-format
 msgid "%s: max_wal_senders must be less than max_connections\n"
 msgstr "%s : max_wal_senders doit être inférieur à max_connections\n"
 
-#: postmaster/postmaster.c:741
+#: postmaster/postmaster.c:770
 msgid ""
 "WAL archival (archive_mode=on) requires wal_level \"archive\" or "
 "\"hot_standby\""
@@ -435,7 +435,7 @@ msgstr ""
 "l'archivage des journaux de transactions (archive_mode=on) nécessite que\n"
 "le paramètre wal_level soit initialisé avec « archive » ou « hot_standby »"
 
-#: postmaster/postmaster.c:744
+#: postmaster/postmaster.c:773
 msgid ""
 "WAL streaming (max_wal_senders > 0) requires wal_level \"archive\" or "
 "\"hot_standby\""
@@ -443,37 +443,37 @@ msgstr ""
 "l'envoi d'un flux de transactions (max_wal_senders > 0) nécessite que\n"
 "le paramètre wal_level soit initialisé avec « archive » ou « hot_standby »"
 
-#: postmaster/postmaster.c:752
+#: postmaster/postmaster.c:781
 #, c-format
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr "%s : tables datetoken invalide, merci de corriger\n"
 
-#: postmaster/postmaster.c:852
+#: postmaster/postmaster.c:881
 msgid "invalid list syntax for \"listen_addresses\""
 msgstr "syntaxe de liste invalide pour le paramètre « listen_addresses »"
 
-#: postmaster/postmaster.c:882
+#: postmaster/postmaster.c:911
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "n'a pas pu créer le socket d'écoute pour « %s »"
 
-#: postmaster/postmaster.c:888
+#: postmaster/postmaster.c:917
 msgid "could not create any TCP/IP sockets"
 msgstr "n'a pas pu créer de socket TCP/IP"
 
-#: postmaster/postmaster.c:939
+#: postmaster/postmaster.c:968
 msgid "could not create Unix-domain socket"
 msgstr "n'a pas pu créer le socket domaine Unix"
 
-#: postmaster/postmaster.c:947
+#: postmaster/postmaster.c:976
 msgid "no socket created for listening"
 msgstr "pas de socket créé pour l'écoute"
 
-#: postmaster/postmaster.c:986
+#: postmaster/postmaster.c:1015
 msgid "could not create I/O completion port for child queue"
 msgstr "n'a pas pu créer un port de terminaison I/O pour la queue"
 
-#: postmaster/postmaster.c:1030
+#: postmaster/postmaster.c:1059
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire le fichier PID externe « %s » : %s\n"
@@ -488,7 +488,7 @@ msgid "%s: could not locate matching postgres executable"
 msgstr "%s : n'a pas pu localiser l'exécutable postgres correspondant"
 
 #: postmaster/postmaster.c:1172 utils/misc/tzparser.c:323 utils/adt/misc.c:213
-#: utils/adt/genfile.c:353 commands/tablespace.c:689 commands/tablespace.c:699
+#: utils/adt/genfile.c:353 commands/tablespace.c:706 commands/tablespace.c:716
 #: storage/file/fd.c:1682 storage/file/copydir.c:67 storage/file/copydir.c:106
 #, c-format
 msgid "could not open directory \"%s\": %m"
@@ -641,8 +641,8 @@ msgid "PID %d in cancel request did not match any process"
 msgstr "le PID %d dans la demande d'annulation ne correspond à aucun processus"
 
 #: postmaster/postmaster.c:2010 postmaster/postmaster.c:2041
-#: postmaster/postmaster.c:3243 postmaster/postmaster.c:3922
-#: postmaster/postmaster.c:4007 postmaster/postmaster.c:4624
+#: postmaster/postmaster.c:3243 postmaster/postmaster.c:3930
+#: postmaster/postmaster.c:4015 postmaster/postmaster.c:4632
 #: utils/hash/dynahash.c:368 utils/hash/dynahash.c:445
 #: utils/hash/dynahash.c:959 utils/misc/guc.c:3298 utils/misc/guc.c:3311
 #: utils/misc/guc.c:3324 utils/misc/tzparser.c:455 utils/init/miscinit.c:150
@@ -652,7 +652,7 @@ msgstr "le PID %d dans la demande d'annulation ne correspond à aucun processus"
 #: utils/adt/regexp.c:219 utils/adt/varlena.c:3472 utils/adt/varlena.c:3493
 #: utils/adt/formatting.c:1524 utils/adt/formatting.c:1640
 #: utils/adt/formatting.c:1757 lib/stringinfo.c:266 commands/sequence.c:1014
-#: libpq/auth.c:1022 libpq/auth.c:1382 libpq/auth.c:1450 libpq/auth.c:1852
+#: libpq/auth.c:1032 libpq/auth.c:1392 libpq/auth.c:1460 libpq/auth.c:1862
 #: storage/file/fd.c:364 storage/file/fd.c:761 storage/file/fd.c:879
 #: storage/file/fd.c:1443 storage/ipc/procarray.c:849
 #: storage/ipc/procarray.c:1260 storage/ipc/procarray.c:1267
@@ -787,104 +787,104 @@ msgstr "n'a pas pu lancer le nouveau processus fils pour la connexion : %m"
 msgid "could not fork new process for connection: "
 msgstr "n'a pas pu lancer le nouveau processus fils pour la connexion : "
 
-#: postmaster/postmaster.c:3467
+#: postmaster/postmaster.c:3460
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "connexion reçue : hôte=%s port=%s"
 
-#: postmaster/postmaster.c:3472
+#: postmaster/postmaster.c:3465
 #, c-format
 msgid "connection received: host=%s"
 msgstr "connexion reçue : hôte=%s"
 
-#: postmaster/postmaster.c:3697 access/transam/xlog.c:2397
+#: postmaster/postmaster.c:3705 access/transam/xlog.c:2398
 #: access/transam/xlog.c:2530 access/transam/xlog.c:4463
-#: access/transam/xlog.c:9187 access/transam/xlog.c:9431
+#: access/transam/xlog.c:9189 access/transam/xlog.c:9433
 #: storage/file/copydir.c:172 storage/smgr/md.c:289
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier « %s » : %m"
 
-#: postmaster/postmaster.c:3707 postmaster/postmaster.c:3717
-#: utils/misc/guc.c:7432 utils/misc/guc.c:7457 utils/init/miscinit.c:1097
+#: postmaster/postmaster.c:3715 postmaster/postmaster.c:3725
+#: utils/misc/guc.c:7446 utils/misc/guc.c:7471 utils/init/miscinit.c:1097
 #: utils/init/miscinit.c:1106 utils/init/miscinit.c:1113
-#: access/transam/xlog.c:2429 access/transam/xlog.c:2562
+#: access/transam/xlog.c:2430 access/transam/xlog.c:2562
 #: access/transam/xlog.c:4515 access/transam/xlog.c:4578
 #: storage/file/copydir.c:197
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "n'a pas pu écrire dans le fichier « %s » : %m"
 
-#: postmaster/postmaster.c:3736
+#: postmaster/postmaster.c:3744
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "n'a pas pu exécuter le processus serveur « %s » : %m"
 
-#: postmaster/postmaster.c:4257
+#: postmaster/postmaster.c:4265
 msgid "database system is ready to accept read only connections"
 msgstr ""
 "le système de bases de données est prêt pour accepter les connexions en "
 "lecture seule"
 
-#: postmaster/postmaster.c:4527
+#: postmaster/postmaster.c:4535
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "n'a pas pu lancer le processus fils de démarrage : %m"
 
-#: postmaster/postmaster.c:4531
+#: postmaster/postmaster.c:4539
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr ""
 "n'a pas pu créer un processus fils du processus d'écriture en tâche de\n"
 "fond : %m"
 
-#: postmaster/postmaster.c:4535
+#: postmaster/postmaster.c:4543
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr ""
 "n'a pas pu créer un processus fils du processus d'écriture des journaux de\n"
 "transaction : %m"
 
-#: postmaster/postmaster.c:4539
+#: postmaster/postmaster.c:4547
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr ""
 "n'a pas pu créer un processus fils de réception des journaux de\n"
 "transactions : %m"
 
-#: postmaster/postmaster.c:4543
+#: postmaster/postmaster.c:4551
 #, c-format
 msgid "could not fork process: %m"
 msgstr "n'a pas pu lancer le processus fils : %m"
 
-#: postmaster/postmaster.c:4828
+#: postmaster/postmaster.c:4836
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "n'a pas pu dupliquer la socket %d pour le serveur : code d'erreur %d"
 
-#: postmaster/postmaster.c:4860
+#: postmaster/postmaster.c:4868
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "n'a pas pu créer la socket héritée : code d'erreur %d\n"
 
-#: postmaster/postmaster.c:4889 postmaster/postmaster.c:4896
+#: postmaster/postmaster.c:4897 postmaster/postmaster.c:4904
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "n'a pas pu lire le fichier de configuration serveur « %s » : %s\n"
 
-#: postmaster/postmaster.c:4905
+#: postmaster/postmaster.c:4913
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "n'a pas pu supprimer le fichier « %s » : %s\n"
 
-#: postmaster/postmaster.c:4922
+#: postmaster/postmaster.c:4930
 #, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr ""
 "n'a pas pu exécuter MapViewOfFile sur les variables de configuration : code\n"
 "d'erreur %d\n"
 
-#: postmaster/postmaster.c:4931
+#: postmaster/postmaster.c:4939
 #, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr ""
@@ -892,18 +892,18 @@ msgstr ""
 "code\n"
 "d'erreur %d\n"
 
-#: postmaster/postmaster.c:4938
+#: postmaster/postmaster.c:4946
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr ""
 "n'a pas pu fermer le lien vers les variables des paramètres du serveur :\n"
 "code d'erreur %d\n"
 
-#: postmaster/postmaster.c:5083
+#: postmaster/postmaster.c:5091
 msgid "could not read exit code for process\n"
 msgstr "n'a pas pu lire le code de sortie du processus\n"
 
-#: postmaster/postmaster.c:5088
+#: postmaster/postmaster.c:5096
 msgid "could not post child completion status\n"
 msgstr "n'a pas pu poster le statut de fin de l'enfant\n"
 
@@ -2801,8 +2801,8 @@ msgstr ""
 "Les unités valides pour ce paramètre sont « ms », « s », « min », « h » et\n"
 "« d »."
 
-#: utils/misc/guc.c:5100 utils/misc/guc.c:5869 utils/misc/guc.c:5921
-#: utils/misc/guc.c:6594 utils/misc/guc.c:6753 utils/misc/guc.c:7932
+#: utils/misc/guc.c:5100 utils/misc/guc.c:5883 utils/misc/guc.c:5935
+#: utils/misc/guc.c:6608 utils/misc/guc.c:6767 utils/misc/guc.c:7952
 #: guc-file.l:203
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
@@ -2813,8 +2813,8 @@ msgstr "paramètre de configuration « %s » non reconnu"
 msgid "parameter \"%s\" cannot be changed"
 msgstr "le paramètre « %s » ne peut pas être changé"
 
-#: utils/misc/guc.c:5162 utils/misc/guc.c:5336 utils/misc/guc.c:5433
-#: utils/misc/guc.c:5527 utils/misc/guc.c:5641 utils/misc/guc.c:5742
+#: utils/misc/guc.c:5162 utils/misc/guc.c:5350 utils/misc/guc.c:5447
+#: utils/misc/guc.c:5541 utils/misc/guc.c:5655 utils/misc/guc.c:5756
 #: guc-file.l:250
 #, c-format
 msgid "parameter \"%s\" cannot be changed without restarting the server"
@@ -2826,47 +2826,47 @@ msgstr ""
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "le paramètre « %s » ne peut pas être modifié maintenant"
 
-#: utils/misc/guc.c:5203
+#: utils/misc/guc.c:5217
 #, c-format
 msgid "parameter \"%s\" cannot be set after connection start"
 msgstr ""
 "le paramètre « %s » ne peut pas être initialisé après le lancement du serveur"
 
-#: utils/misc/guc.c:5213 utils/misc/guc.c:7947
+#: utils/misc/guc.c:5227 utils/misc/guc.c:7967
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "droit refusé pour initialiser le paramètre « %s »"
 
-#: utils/misc/guc.c:5251
+#: utils/misc/guc.c:5265
 #, c-format
 msgid "cannot set parameter \"%s\" within security-definer function"
 msgstr ""
 "ne peut pas configurer le paramètre « %s » à l'intérieur d'une fonction\n"
 "SECURITY DEFINER"
 
-#: utils/misc/guc.c:5259 utils/init/miscinit.c:381
+#: utils/misc/guc.c:5273 utils/init/miscinit.c:381
 #, c-format
 msgid "cannot set parameter \"%s\" within security-restricted operation"
 msgstr ""
 "ne peut pas configurer le paramètre « %s » à l'intérieur d'une fonction\n"
 "restreinte pour sécurité"
 
-#: utils/misc/guc.c:5309 access/transam/xlog.c:5338 access/transam/xlog.c:5429
+#: utils/misc/guc.c:5323 access/transam/xlog.c:5338 access/transam/xlog.c:5429
 #: access/transam/xlog.c:5440 commands/extension.c:527
 #: commands/extension.c:535
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "le paramètre « %s » requiert une valeur booléenne"
 
-#: utils/misc/guc.c:5397 utils/misc/guc.c:5711 utils/misc/guc.c:8111
-#: utils/misc/guc.c:8145
+#: utils/misc/guc.c:5411 utils/misc/guc.c:5725 utils/misc/guc.c:8131
+#: utils/misc/guc.c:8165
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "valeur invalide pour le paramètre « %s » : « %s »"
 
-#: utils/misc/guc.c:5399 utils/misc/guc.c:5713 utils/misc/guc.c:8014
-#: utils/misc/guc.c:8048 utils/misc/guc.c:8082 utils/misc/guc.c:8116
-#: utils/misc/guc.c:8151 commands/tablecmds.c:696 commands/user.c:957
+#: utils/misc/guc.c:5413 utils/misc/guc.c:5727 utils/misc/guc.c:8034
+#: utils/misc/guc.c:8068 utils/misc/guc.c:8102 utils/misc/guc.c:8136
+#: utils/misc/guc.c:8171 commands/tablecmds.c:696 commands/user.c:957
 #: storage/lmgr/proc.c:1077 storage/lmgr/deadlock.c:951
 #: catalog/objectaddress.c:315 catalog/dependency.c:937
 #: catalog/dependency.c:938 catalog/dependency.c:944 catalog/dependency.c:945
@@ -2875,73 +2875,73 @@ msgstr "valeur invalide pour le paramètre « %s » : « %s »"
 msgid "%s"
 msgstr "%s"
 
-#: utils/misc/guc.c:5406
+#: utils/misc/guc.c:5420
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr ""
 "%d est en dehors des limites valides pour le paramètre « %s » (%d .. %d)"
 
-#: utils/misc/guc.c:5492
+#: utils/misc/guc.c:5506
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "le paramètre « %s » requiert une valeur numérique"
 
-#: utils/misc/guc.c:5500
+#: utils/misc/guc.c:5514
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr ""
 "%g est en dehors des limites valides pour le paramètre « %s » (%g .. %g)"
 
-#: utils/misc/guc.c:5877 utils/misc/guc.c:5925 utils/misc/guc.c:6757
+#: utils/misc/guc.c:5891 utils/misc/guc.c:5939 utils/misc/guc.c:6771
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "doit être super-utilisateur pour examiner « %s »"
 
-#: utils/misc/guc.c:5991
+#: utils/misc/guc.c:6005
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s prend un seul argument"
 
-#: utils/misc/guc.c:6224
+#: utils/misc/guc.c:6238
 msgid "SET requires parameter name"
 msgstr "SET requiert le nom du paramètre"
 
-#: utils/misc/guc.c:6339
+#: utils/misc/guc.c:6353
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "tentative de redéfinition du paramètre « %s »"
 
-#: utils/misc/guc.c:7527 utils/init/miscinit.c:1055
+#: utils/misc/guc.c:7547 utils/init/miscinit.c:1055
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "n'a pas pu lire à partir du fichier « %s » : %m"
 
-#: utils/misc/guc.c:7648
+#: utils/misc/guc.c:7668
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "n'a pas pu analyser la configuration du paramètre « %s »"
 
-#: utils/misc/guc.c:8009 utils/misc/guc.c:8043
+#: utils/misc/guc.c:8029 utils/misc/guc.c:8063
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "valeur invalide pour le paramètre « %s » : %d"
 
-#: utils/misc/guc.c:8077
+#: utils/misc/guc.c:8097
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "valeur invalide pour le paramètre « %s » : %g"
 
-#: utils/misc/guc.c:8181 commands/variable.c:59 commands/tablespace.c:1167
+#: utils/misc/guc.c:8201 commands/variable.c:59 commands/tablespace.c:1184
 #: replication/syncrep.c:661 catalog/namespace.c:3559
 msgid "List syntax is invalid."
 msgstr "La syntaxe de la liste est invalide."
 
-#: utils/misc/guc.c:8205 commands/variable.c:160
+#: utils/misc/guc.c:8225 commands/variable.c:160
 #, c-format
 msgid "Unrecognized key word: \"%s\"."
 msgstr "Mot clé non reconnu : « %s »"
 
-#: utils/misc/guc.c:8267
+#: utils/misc/guc.c:8287
 msgid ""
 "\"temp_buffers\" cannot be changed after any temporary tables have been "
 "accessed in the session."
@@ -2949,28 +2949,28 @@ msgstr ""
 "« temp_buffers » ne peut pas être modifié après que des tables temporaires "
 "aient été utilisées dans la session."
 
-#: utils/misc/guc.c:8279
+#: utils/misc/guc.c:8299
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF n'est plus supporté"
 
-#: utils/misc/guc.c:8354
+#: utils/misc/guc.c:8374
 msgid "assertion checking is not supported by this build"
 msgstr ""
 "la vérification de l'assertion n'a pas été intégrée lors de la compilation"
 
-#: utils/misc/guc.c:8367
+#: utils/misc/guc.c:8387
 msgid "Bonjour is not supported by this build"
 msgstr "Bonjour n'est pas supporté dans cette installation"
 
-#: utils/misc/guc.c:8380
+#: utils/misc/guc.c:8400
 msgid "SSL is not supported by this build"
 msgstr "SSL n'est pas supporté dans cette installation"
 
-#: utils/misc/guc.c:8392
+#: utils/misc/guc.c:8412
 msgid "Cannot enable parameter when \"log_statement_stats\" is true."
 msgstr "Ne peut pas activer le paramètre avec « log_statement_stats » à true."
 
-#: utils/misc/guc.c:8404
+#: utils/misc/guc.c:8424
 msgid ""
 "Cannot enable \"log_statement_stats\" when \"log_parser_stats\", "
 "\"log_planner_stats\", or \"log_executor_stats\" is true."
@@ -2998,7 +2998,7 @@ msgstr ""
 "n'a pas pu ouvrir le fichier de configuration « %s » : profondeur\n"
 "d'imbrication dépassé"
 
-#: guc-file.l:409 libpq/hba.c:1683
+#: guc-file.l:409 libpq/hba.c:1695
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de configuration « %s » : %m"
@@ -3671,9 +3671,9 @@ msgstr ""
 
 #: utils/fmgr/funcapi.c:60 utils/mmgr/portalmem.c:985 commands/prepare.c:751
 #: commands/extension.c:1711 commands/extension.c:1820
-#: commands/extension.c:2013 foreign/foreign.c:350 executor/functions.c:785
-#: executor/execQual.c:1704 executor/execQual.c:1729 executor/execQual.c:2089
-#: executor/execQual.c:5242 replication/walsender.c:1421
+#: commands/extension.c:2013 foreign/foreign.c:350 executor/functions.c:784
+#: executor/execQual.c:1690 executor/execQual.c:1715 executor/execQual.c:2075
+#: executor/execQual.c:5228 replication/walsender.c:1432
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "la fonction avec set-value a été appelé dans un contexte qui n'accepte pas\n"
@@ -3803,7 +3803,7 @@ msgstr "ne peut pas préparer une transaction qui a créé un curseur WITH HOLD"
 
 #: utils/mmgr/portalmem.c:989 commands/prepare.c:755 commands/extension.c:1715
 #: commands/extension.c:1824 commands/extension.c:2017 foreign/foreign.c:355
-#: replication/walsender.c:1425
+#: replication/walsender.c:1436
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "mode matérialisé requis mais interdit dans ce contexte"
 
@@ -4067,7 +4067,7 @@ msgstr "nombre de dimensions invalides : %d"
 #: utils/adt/array_userfuncs.c:430 utils/adt/arrayfuncs.c:228
 #: utils/adt/arrayfuncs.c:507 utils/adt/arrayfuncs.c:1242
 #: utils/adt/arrayfuncs.c:2915 utils/adt/arrayfuncs.c:4940
-#: executor/execQual.c:303 executor/execQual.c:331 executor/execQual.c:3101
+#: executor/execQual.c:303 executor/execQual.c:331 executor/execQual.c:3087
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr ""
@@ -4695,8 +4695,8 @@ msgstr ""
 #: utils/adt/formatting.c:1747 utils/adt/formatting.c:1809
 msgid "could not determine which collation to use for initcap() function"
 msgstr ""
-"n'a pas pu déterminer le collationnement à utiliser pour la fonction "
-"initcap()"
+"n'a pas pu déterminer le collationnement à utiliser pour la fonction initcap"
+"()"
 
 #: utils/adt/formatting.c:2086
 msgid "invalid combination of date conventions"
@@ -4866,8 +4866,8 @@ msgstr "la taille du tableau de bits dépasse le maximum permis (%d)"
 #, c-format
 msgid "bit string length %d does not match type bit(%d)"
 msgstr ""
-"la longueur (en bits) de la chaîne %d ne doit pas correspondre au type "
-"bit(%d)"
+"la longueur (en bits) de la chaîne %d ne doit pas correspondre au type bit"
+"(%d)"
 
 #: utils/adt/varbit.c:198 utils/adt/varbit.c:510
 #, c-format
@@ -4943,8 +4943,8 @@ msgstr "%d n'est pas un code d'encodage valide"
 
 #: utils/adt/dbsize.c:65 utils/adt/dbsize.c:211 utils/adt/dbsize.c:279
 #: utils/adt/genfile.c:107 utils/adt/genfile.c:279 access/transam/xlog.c:2932
-#: access/transam/xlog.c:3097 access/transam/xlog.c:9172
-#: access/transam/xlog.c:9351 storage/file/copydir.c:86
+#: access/transam/xlog.c:3097 access/transam/xlog.c:9174
+#: access/transam/xlog.c:9353 storage/file/copydir.c:86
 #: storage/file/copydir.c:125
 #, c-format
 msgid "could not stat file \"%s\": %m"
@@ -5078,18 +5078,18 @@ msgstr "valeur d'un octet invalide dans la valeur de « macaddr » : « %s »"
 msgid "type %s is not a domain"
 msgstr "le type %s n'est pas un domaine"
 
-#: utils/adt/domains.c:128 executor/execQual.c:3893
+#: utils/adt/domains.c:128 executor/execQual.c:3879
 #, c-format
 msgid "domain %s does not allow null values"
 msgstr "le domaine %s n'autorise pas les valeurs NULL"
 
-#: utils/adt/domains.c:164 executor/execQual.c:3922
+#: utils/adt/domains.c:164 executor/execQual.c:3908
 #, c-format
 msgid "value for domain %s violates check constraint \"%s\""
 msgstr ""
 "la valeur pour le domaine %s viole la contrainte de vérification « %s »"
 
-#: utils/adt/ruleutils.c:1580 utils/adt/acl.c:2772 commands/tablecmds.c:4525
+#: utils/adt/ruleutils.c:1581 utils/adt/acl.c:2772 commands/tablecmds.c:4525
 #: commands/tablecmds.c:4617 commands/tablecmds.c:4664
 #: commands/tablecmds.c:4760 commands/tablecmds.c:4804
 #: commands/tablecmds.c:4883 commands/tablecmds.c:4967
@@ -5102,20 +5102,20 @@ msgstr ""
 msgid "column \"%s\" of relation \"%s\" does not exist"
 msgstr "la colonne « %s » de la relation « %s » n'existe pas"
 
-#: utils/adt/ruleutils.c:1696 commands/functioncmds.c:1007
+#: utils/adt/ruleutils.c:1697 commands/functioncmds.c:1007
 #: commands/functioncmds.c:1107 commands/functioncmds.c:1170
 #: commands/functioncmds.c:1321
 #, c-format
 msgid "\"%s\" is an aggregate function"
 msgstr "« %s » est une fonction d'agrégat"
 
-#: utils/adt/ruleutils.c:2429
+#: utils/adt/ruleutils.c:2430
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "la règle « %s » a un type d'événement %d non supporté"
 
-#: utils/adt/ruleutils.c:5891 utils/adt/ruleutils.c:5946
-#: utils/adt/ruleutils.c:5983 utils/adt/regproc.c:635 utils/adt/regproc.c:1485
+#: utils/adt/ruleutils.c:5904 utils/adt/ruleutils.c:5959
+#: utils/adt/ruleutils.c:5996 utils/adt/regproc.c:635 utils/adt/regproc.c:1485
 msgid "too many arguments"
 msgstr "trop d'arguments"
 
@@ -5247,8 +5247,8 @@ msgstr "les dimensions du tableau sont incompatibles avec le tableau litéral"
 msgid "malformed array literal: \"%s\""
 msgstr "tableau litéral mal formé : « %s »"
 
-#: utils/adt/arrayfuncs.c:542 executor/execQual.c:3121
-#: executor/execQual.c:3148
+#: utils/adt/arrayfuncs.c:542 executor/execQual.c:3107
+#: executor/execQual.c:3134
 msgid ""
 "multidimensional arrays must have array expressions with matching dimensions"
 msgstr ""
@@ -5263,7 +5263,7 @@ msgstr "drapeaux de tableau invalides"
 msgid "wrong element type"
 msgstr "mauvais type d'élément"
 
-#: utils/adt/arrayfuncs.c:1411 utils/adt/rowtypes.c:572 libpq/pqformat.c:556
+#: utils/adt/arrayfuncs.c:1411 utils/adt/rowtypes.c:573 libpq/pqformat.c:556
 #: libpq/pqformat.c:574 libpq/pqformat.c:595
 msgid "insufficient data left in message"
 msgstr "données insuffisantes laissées dans le message"
@@ -5316,13 +5316,13 @@ msgstr ""
 "ne peut pas comparer des tableaux ayant des types d'éléments différents"
 
 #: utils/adt/arrayfuncs.c:3176 utils/adt/arrayfuncs.c:3695
-#: utils/adt/rowtypes.c:1185 parser/parse_oper.c:225
+#: utils/adt/rowtypes.c:1186 parser/parse_oper.c:225
 #, c-format
 msgid "could not identify an equality operator for type %s"
 msgstr "n'a pas pu identifier un opérateur d'égalité pour le type %s"
 
-#: utils/adt/arrayfuncs.c:3378 utils/adt/rowtypes.c:950
-#: executor/execQual.c:4913
+#: utils/adt/arrayfuncs.c:3378 utils/adt/rowtypes.c:951
+#: executor/execQual.c:4899
 #, c-format
 msgid "could not identify a comparison function for type %s"
 msgstr "n'a pas pu identifier une fonction de comparaison pour le type %s"
@@ -5565,9 +5565,9 @@ msgid "could not seek in file \"%s\": %m"
 msgstr "n'a pas pu parcourir le fichier « %s » : %m"
 
 #: utils/adt/genfile.c:138 access/transam/xlog.c:2543
-#: access/transam/xlog.c:4494 access/transam/xlog.c:9363
-#: access/transam/xlog.c:9376 access/transam/xlog.c:9910
-#: access/transam/xlog.c:9945 storage/file/copydir.c:186
+#: access/transam/xlog.c:4494 access/transam/xlog.c:9365
+#: access/transam/xlog.c:9378 access/transam/xlog.c:9912
+#: access/transam/xlog.c:9947 storage/file/copydir.c:186
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "n'a pas pu lire le fichier « %s » : %m"
@@ -5607,59 +5607,59 @@ msgstr ""
 msgid "invalid input syntax for uuid: \"%s\""
 msgstr "syntaxe invalide en entrée pour l'uuid : « %s »"
 
-#: utils/adt/rowtypes.c:99 utils/adt/rowtypes.c:488
+#: utils/adt/rowtypes.c:100 utils/adt/rowtypes.c:489
 msgid "input of anonymous composite types is not implemented"
 msgstr "l'ajout de colonnes ayant un type composé n'est pas implémenté"
 
-#: utils/adt/rowtypes.c:152 utils/adt/rowtypes.c:180 utils/adt/rowtypes.c:203
-#: utils/adt/rowtypes.c:211 utils/adt/rowtypes.c:263 utils/adt/rowtypes.c:271
+#: utils/adt/rowtypes.c:153 utils/adt/rowtypes.c:181 utils/adt/rowtypes.c:204
+#: utils/adt/rowtypes.c:212 utils/adt/rowtypes.c:264 utils/adt/rowtypes.c:272
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "enregistrement litéral invalide : « %s »"
 
-#: utils/adt/rowtypes.c:153
+#: utils/adt/rowtypes.c:154
 msgid "Missing left parenthesis."
 msgstr "Parenthèse gauche manquante"
 
-#: utils/adt/rowtypes.c:181
+#: utils/adt/rowtypes.c:182
 msgid "Too few columns."
 msgstr "Pas assez de colonnes."
 
-#: utils/adt/rowtypes.c:205 utils/adt/rowtypes.c:213
+#: utils/adt/rowtypes.c:206 utils/adt/rowtypes.c:214
 msgid "Unexpected end of input."
 msgstr "Fin de l'entrée inattendue."
 
-#: utils/adt/rowtypes.c:264
+#: utils/adt/rowtypes.c:265
 msgid "Too many columns."
 msgstr "Trop de colonnes."
 
-#: utils/adt/rowtypes.c:272
+#: utils/adt/rowtypes.c:273
 msgid "Junk after right parenthesis."
 msgstr "Problème après la parenthèse droite."
 
-#: utils/adt/rowtypes.c:537
+#: utils/adt/rowtypes.c:538
 #, c-format
 msgid "wrong number of columns: %d, expected %d"
 msgstr "mauvais nombre de colonnes : %d, alors que %d attendu"
 
-#: utils/adt/rowtypes.c:564
+#: utils/adt/rowtypes.c:565
 #, c-format
 msgid "wrong data type: %u, expected %u"
 msgstr "mauvais type de données : %u, alors que %u attendu"
 
-#: utils/adt/rowtypes.c:625
+#: utils/adt/rowtypes.c:626
 #, c-format
 msgid "improper binary format in record column %d"
 msgstr "format binaire invalide dans l'enregistrement de la colonne %d"
 
-#: utils/adt/rowtypes.c:925 utils/adt/rowtypes.c:1160
+#: utils/adt/rowtypes.c:926 utils/adt/rowtypes.c:1161
 #, c-format
 msgid "cannot compare dissimilar column types %s and %s at record column %d"
 msgstr ""
 "ne peut pas comparer les types de colonnes non similaires %s et %s pour la\n"
 "colonne %d de l'enregistrement"
 
-#: utils/adt/rowtypes.c:1011 utils/adt/rowtypes.c:1231
+#: utils/adt/rowtypes.c:1012 utils/adt/rowtypes.c:1232
 msgid "cannot compare record types with different numbers of columns"
 msgstr ""
 "ne peut pas comparer les types d'enregistrement avec des numéros différents\n"
@@ -6185,15 +6185,15 @@ msgstr ""
 msgid "line %d of configuration file \"%s\": \"%s\""
 msgstr "ligne %d du fichier de configuration « %s » : « %s »"
 
-#: tsearch/ts_locale.c:182 libpq/hba.c:781 libpq/hba.c:797 libpq/hba.c:833
-#: libpq/hba.c:855 libpq/hba.c:864 libpq/hba.c:887 libpq/hba.c:899
-#: libpq/hba.c:912 libpq/hba.c:927 libpq/hba.c:982 libpq/hba.c:1002
-#: libpq/hba.c:1016 libpq/hba.c:1033 libpq/hba.c:1046 libpq/hba.c:1062
-#: libpq/hba.c:1077 libpq/hba.c:1119 libpq/hba.c:1151 libpq/hba.c:1162
-#: libpq/hba.c:1182 libpq/hba.c:1193 libpq/hba.c:1204 libpq/hba.c:1221
-#: libpq/hba.c:1242 libpq/hba.c:1272 libpq/hba.c:1284 libpq/hba.c:1297
-#: libpq/hba.c:1331 libpq/hba.c:1405 libpq/hba.c:1423 libpq/hba.c:1444
-#: libpq/hba.c:1475 libpq/hba.c:1485
+#: tsearch/ts_locale.c:182 libpq/hba.c:793 libpq/hba.c:809 libpq/hba.c:845
+#: libpq/hba.c:867 libpq/hba.c:876 libpq/hba.c:899 libpq/hba.c:911
+#: libpq/hba.c:924 libpq/hba.c:939 libpq/hba.c:994 libpq/hba.c:1014
+#: libpq/hba.c:1028 libpq/hba.c:1045 libpq/hba.c:1058 libpq/hba.c:1074
+#: libpq/hba.c:1089 libpq/hba.c:1131 libpq/hba.c:1163 libpq/hba.c:1174
+#: libpq/hba.c:1194 libpq/hba.c:1205 libpq/hba.c:1216 libpq/hba.c:1233
+#: libpq/hba.c:1254 libpq/hba.c:1284 libpq/hba.c:1296 libpq/hba.c:1309
+#: libpq/hba.c:1343 libpq/hba.c:1417 libpq/hba.c:1435 libpq/hba.c:1456
+#: libpq/hba.c:1487 libpq/hba.c:1497
 #, c-format
 msgid "line %d of configuration file \"%s\""
 msgstr "ligne %d du fichier de configuration « %s »"
@@ -6819,7 +6819,7 @@ msgstr "L'attribut « %s » du type %s n'existe pas dans le type %s."
 msgid "number of index columns (%d) exceeds limit (%d)"
 msgstr "le nombre de colonnes indexées (%d) dépasse la limite (%d)"
 
-#: access/common/indextuple.c:168
+#: access/common/indextuple.c:173
 #, c-format
 msgid "index row requires %lu bytes, maximum size is %lu"
 msgstr "la ligne index requiert %lu octets, la taille maximum est %lu"
@@ -6884,7 +6884,7 @@ msgstr "Les valeurs valides sont entre « %f » et « %f »."
 msgid "column \"%s\" cannot be declared SETOF"
 msgstr "la colonne « %s » ne peut pas être déclarée SETOF"
 
-#: access/common/heaptuple.c:646 access/common/heaptuple.c:1398
+#: access/common/heaptuple.c:680 access/common/heaptuple.c:1418
 #, c-format
 msgid "number of columns (%d) exceeds limit (%d)"
 msgstr "le nombre de colonnes (%d) dépasse la limite (%d)"
@@ -6917,7 +6917,7 @@ msgstr "l'index « %s » contient une page zéro inattendue au bloc %u"
 #: access/hash/hashutil.c:173 access/hash/hashutil.c:184
 #: access/hash/hashutil.c:196 access/hash/hashutil.c:217
 #: access/nbtree/nbtpage.c:436 access/nbtree/nbtpage.c:447
-#: access/gist/gist.c:731 access/gist/gistutil.c:635
+#: access/gist/gist.c:745 access/gist/gistutil.c:635
 #: access/gist/gistutil.c:646 access/gist/gistvacuum.c:274
 msgid "Please REINDEX it."
 msgstr "Merci d'exécuter REINDEX sur cet objet."
@@ -6978,19 +6978,19 @@ msgstr ""
 "tables temporaires"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2837
+#: access/transam/xact.c:2851
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s ne peut pas être exécuté dans un bloc de transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2847
+#: access/transam/xact.c:2861
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s ne peut pas être exécuté dans un sous-bloc de transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2857
+#: access/transam/xact.c:2871
 #, c-format
 msgid "%s cannot be executed from a function or multi-command string"
 msgstr ""
@@ -6998,26 +6998,26 @@ msgstr ""
 "contenant plusieurs commandes"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2908
+#: access/transam/xact.c:2922
 #, c-format
 msgid "%s can only be used in transaction blocks"
 msgstr "%s peut seulement être utilisé dans des blocs de transaction"
 
-#: access/transam/xact.c:3090
+#: access/transam/xact.c:3104
 msgid "there is already a transaction in progress"
 msgstr "une transaction est déjà en cours"
 
-#: access/transam/xact.c:3257 access/transam/xact.c:3349
+#: access/transam/xact.c:3271 access/transam/xact.c:3363
 msgid "there is no transaction in progress"
 msgstr "aucune transaction en cours"
 
-#: access/transam/xact.c:3443 access/transam/xact.c:3493
-#: access/transam/xact.c:3499 access/transam/xact.c:3543
-#: access/transam/xact.c:3591 access/transam/xact.c:3597
+#: access/transam/xact.c:3457 access/transam/xact.c:3507
+#: access/transam/xact.c:3513 access/transam/xact.c:3557
+#: access/transam/xact.c:3605 access/transam/xact.c:3611
 msgid "no such savepoint"
 msgstr "aucun point de sauvegarde"
 
-#: access/transam/xact.c:4244
+#: access/transam/xact.c:4258
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr ""
 "ne peut pas avoir plus de 2^32-1 sous-transactions dans une transaction"
@@ -7087,105 +7087,105 @@ msgstr ""
 "la limite de réinitialisation de l'identifiant de transaction est %u,\n"
 "limité par la base de données d'OID %u"
 
-#: access/transam/twophase.c:250
+#: access/transam/twophase.c:326
 #, c-format
 msgid "transaction identifier \"%s\" is too long"
 msgstr "l'identifiant de la transaction « %s » est trop long"
 
-#: access/transam/twophase.c:257
+#: access/transam/twophase.c:333
 msgid "prepared transactions are disabled"
 msgstr "les transactions préparées sont désactivées"
 
-#: access/transam/twophase.c:258
+#: access/transam/twophase.c:334
 msgid "Set max_prepared_transactions to a nonzero value."
 msgstr "Configure max_prepared_transactions à une valeur différente de zéro."
 
-#: access/transam/twophase.c:291
+#: access/transam/twophase.c:353
 #, c-format
 msgid "transaction identifier \"%s\" is already in use"
 msgstr "l'identifiant de la transaction « %s » est déjà utilisé"
 
-#: access/transam/twophase.c:300
+#: access/transam/twophase.c:362
 msgid "maximum number of prepared transactions reached"
 msgstr "nombre maximum de transactions préparées obtenu"
 
-#: access/transam/twophase.c:301
+#: access/transam/twophase.c:363
 #, c-format
 msgid "Increase max_prepared_transactions (currently %d)."
 msgstr "Augmentez max_prepared_transactions (actuellement %d)."
 
-#: access/transam/twophase.c:421
+#: access/transam/twophase.c:494
 #, c-format
 msgid "prepared transaction with identifier \"%s\" is busy"
 msgstr "la transaction préparée d'identifiant « %s » est occupée"
 
-#: access/transam/twophase.c:429
+#: access/transam/twophase.c:500
 msgid "permission denied to finish prepared transaction"
 msgstr "droit refusé pour terminer la transaction préparée"
 
-#: access/transam/twophase.c:430
+#: access/transam/twophase.c:501
 msgid "Must be superuser or the user that prepared the transaction."
 msgstr ""
 "Doit être super-utilisateur ou l'utilisateur qui a préparé la transaction."
 
-#: access/transam/twophase.c:441
+#: access/transam/twophase.c:512
 msgid "prepared transaction belongs to another database"
 msgstr "la transaction préparée appartient à une autre base de données"
 
-#: access/transam/twophase.c:442
+#: access/transam/twophase.c:513
 msgid ""
 "Connect to the database where the transaction was prepared to finish it."
 msgstr ""
 "Connectez-vous à la base de données où la transaction a été préparée pour\n"
 "la terminer."
 
-#: access/transam/twophase.c:456
+#: access/transam/twophase.c:528
 #, c-format
 msgid "prepared transaction with identifier \"%s\" does not exist"
 msgstr "la transaction préparée d'identifiant « %s » n'existe pas"
 
-#: access/transam/twophase.c:939
+#: access/transam/twophase.c:1011
 msgid "two-phase state file maximum length exceeded"
 msgstr ""
 "longueur maximale dépassée pour le fichier de statut de la validation en\n"
 "deux phase"
 
-#: access/transam/twophase.c:957
+#: access/transam/twophase.c:1029
 #, c-format
 msgid "could not create two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu créer le fichier de statut de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:971 access/transam/twophase.c:988
-#: access/transam/twophase.c:1044 access/transam/twophase.c:1464
-#: access/transam/twophase.c:1471
+#: access/transam/twophase.c:1043 access/transam/twophase.c:1060
+#: access/transam/twophase.c:1116 access/transam/twophase.c:1545
+#: access/transam/twophase.c:1552
 #, c-format
 msgid "could not write two-phase state file: %m"
 msgstr ""
 "n'a pas pu écrire dans le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:997
+#: access/transam/twophase.c:1069
 #, c-format
 msgid "could not seek in two-phase state file: %m"
 msgstr ""
 "n'a pas pu se déplacer dans le fichier de statut de la validation en deux\n"
 "phases : %m"
 
-#: access/transam/twophase.c:1050 access/transam/twophase.c:1489
+#: access/transam/twophase.c:1122 access/transam/twophase.c:1570
 #, c-format
 msgid "could not close two-phase state file: %m"
 msgstr ""
 "n'a pas pu fermer le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:1130 access/transam/twophase.c:1569
+#: access/transam/twophase.c:1209 access/transam/twophase.c:1650
 #, c-format
 msgid "could not open two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu ouvrir le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1147
+#: access/transam/twophase.c:1226
 #, c-format
 msgid "could not stat two-phase state file \"%s\": %m"
 msgstr ""
@@ -7193,65 +7193,65 @@ msgstr ""
 "validation\n"
 "en deux phases nommé « %s » : %m"
 
-#: access/transam/twophase.c:1179
+#: access/transam/twophase.c:1258
 #, c-format
 msgid "could not read two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu lire le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1271
+#: access/transam/twophase.c:1350
 #, c-format
 msgid "two-phase state file for transaction %u is corrupt"
 msgstr ""
 "le fichier d'état de la validation en deux phases est corrompu pour la\n"
 "transaction %u"
 
-#: access/transam/twophase.c:1426
+#: access/transam/twophase.c:1507
 #, c-format
 msgid "could not remove two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu supprimer le fichier d'état de la validation en deux phases\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1455
+#: access/transam/twophase.c:1536
 #, c-format
 msgid "could not recreate two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu re-créer le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1483
+#: access/transam/twophase.c:1564
 #, c-format
 msgid "could not fsync two-phase state file: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le fichier d'état de la\n"
 "validation en deux phases : %m"
 
-#: access/transam/twophase.c:1578
+#: access/transam/twophase.c:1659
 #, c-format
 msgid "could not fsync two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le fichier d'état de la\n"
 "validation en deux phases nommé « %s » : %m"
 
-#: access/transam/twophase.c:1585
+#: access/transam/twophase.c:1666
 #, c-format
 msgid "could not close two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu fermer le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1650
+#: access/transam/twophase.c:1731
 #, c-format
 msgid "removing future two-phase state file \"%s\""
 msgstr ""
 "suppression du futur fichier d'état de la validation en deux phases nommé « "
 "%s »"
 
-#: access/transam/twophase.c:1666 access/transam/twophase.c:1677
-#: access/transam/twophase.c:1790 access/transam/twophase.c:1801
-#: access/transam/twophase.c:1874
+#: access/transam/twophase.c:1747 access/transam/twophase.c:1758
+#: access/transam/twophase.c:1871 access/transam/twophase.c:1882
+#: access/transam/twophase.c:1955
 #, c-format
 msgid "removing corrupt two-phase state file \"%s\""
 msgstr ""
@@ -7259,14 +7259,14 @@ msgstr ""
 "nommé\n"
 "« %s »"
 
-#: access/transam/twophase.c:1779 access/transam/twophase.c:1863
+#: access/transam/twophase.c:1860 access/transam/twophase.c:1944
 #, c-format
 msgid "removing stale two-phase state file \"%s\""
 msgstr ""
 "suppression du vieux fichier d'état de la validation en deux phases nommé « "
 "%s »"
 
-#: access/transam/twophase.c:1881
+#: access/transam/twophase.c:1962
 #, c-format
 msgid "recovering prepared transaction %u"
 msgstr "récupération de la transaction préparée %u"
@@ -7333,8 +7333,8 @@ msgstr "n'a pas pu créer le fichier de statut d'archivage « %s » : %m"
 msgid "could not write archive status file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier de statut d'archivage « %s » : %m"
 
-#: access/transam/xlog.c:1803 access/transam/xlog.c:10543
-#: replication/walreceiver.c:515 replication/walsender.c:1013
+#: access/transam/xlog.c:1803 access/transam/xlog.c:10545
+#: replication/walreceiver.c:515 replication/walsender.c:1024
 #, c-format
 msgid "could not seek in log file %u, segment %u to offset %u: %m"
 msgstr ""
@@ -7353,9 +7353,9 @@ msgstr ""
 msgid "updated min recovery point to %X/%X"
 msgstr "mise à jour du point minimum de restauration sur %X/%X"
 
-#: access/transam/xlog.c:2372 access/transam/xlog.c:2476
+#: access/transam/xlog.c:2373 access/transam/xlog.c:2476
 #: access/transam/xlog.c:2705 access/transam/xlog.c:2776
-#: access/transam/xlog.c:2833 replication/walsender.c:1001
+#: access/transam/xlog.c:2833 replication/walsender.c:1012
 #, c-format
 msgid "could not open file \"%s\" (log file %u, segment %u): %m"
 msgstr ""
@@ -7403,7 +7403,7 @@ msgstr ""
 msgid "could not close log file %u, segment %u: %m"
 msgstr "n'a pas pu fermer le journal de transactions %u, segment %u : %m"
 
-#: access/transam/xlog.c:2940 access/transam/xlog.c:9381 storage/smgr/md.c:371
+#: access/transam/xlog.c:2940 access/transam/xlog.c:9383 storage/smgr/md.c:371
 #: storage/smgr/md.c:420 storage/smgr/md.c:1251
 #, c-format
 msgid "could not remove file \"%s\": %m"
@@ -8383,19 +8383,19 @@ msgstr "la ré-exécution en restauration commence à %X/%X"
 msgid "restore point \"%s\" created at %X/%X"
 msgstr "point de restauration « %s » créé à %X/%X"
 
-#: access/transam/xlog.c:8520
+#: access/transam/xlog.c:8522
 msgid "online backup was canceled, recovery cannot continue"
 msgstr ""
 "la sauvegarde en ligne a été annulée, la restauration ne peut pas continuer"
 
-#: access/transam/xlog.c:8583
+#: access/transam/xlog.c:8585
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
 msgstr ""
 "identifiant timeline %u inattendu (après %u) dans l'enregistrement du point\n"
 "de vérification"
 
-#: access/transam/xlog.c:8628
+#: access/transam/xlog.c:8630
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr ""
@@ -8403,77 +8403,77 @@ msgstr ""
 "du\n"
 "point de vérification"
 
-#: access/transam/xlog.c:8892 access/transam/xlog.c:8916
+#: access/transam/xlog.c:8894 access/transam/xlog.c:8918
 #, c-format
 msgid "could not fsync log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le journal des transactions %u,\n"
 "segment %u : %m"
 
-#: access/transam/xlog.c:8924
+#: access/transam/xlog.c:8926
 #, c-format
 msgid "could not fsync write-through log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le journal des transactions %u,\n"
 "segment %u : %m"
 
-#: access/transam/xlog.c:8933
+#: access/transam/xlog.c:8935
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fdatasync) le journal de transactions\n"
 "%u, segment %u : %m"
 
-#: access/transam/xlog.c:8971 access/transam/xlog.c:9258
+#: access/transam/xlog.c:8973 access/transam/xlog.c:9260
 msgid "must be superuser or replication role to run a backup"
 msgstr ""
 "doit être super-utilisateur ou avoir l'attribut de réplication pour exécuter "
 "une sauvegarde"
 
-#: access/transam/xlog.c:9022 access/transam/xlog.c:9304
-#: access/transam/xlog.c:9567 access/transam/xlog.c:9599
-#: access/transam/xlog.c:9640 access/transam/xlog.c:9673
-#: access/transam/xlog.c:9780 access/transam/xlog.c:9855
+#: access/transam/xlog.c:9024 access/transam/xlog.c:9306
+#: access/transam/xlog.c:9569 access/transam/xlog.c:9601
+#: access/transam/xlog.c:9642 access/transam/xlog.c:9675
+#: access/transam/xlog.c:9782 access/transam/xlog.c:9857
 msgid "recovery is in progress"
 msgstr "restauration en cours"
 
-#: access/transam/xlog.c:9023 access/transam/xlog.c:9305
-#: access/transam/xlog.c:9568 access/transam/xlog.c:9600
-#: access/transam/xlog.c:9641 access/transam/xlog.c:9674
+#: access/transam/xlog.c:9025 access/transam/xlog.c:9307
+#: access/transam/xlog.c:9570 access/transam/xlog.c:9602
+#: access/transam/xlog.c:9643 access/transam/xlog.c:9676
 msgid "WAL control functions cannot be executed during recovery."
 msgstr ""
 "les fonctions de contrôle des journaux de transactions ne peuvent pas\n"
 "être exécutées lors de la restauration."
 
-#: access/transam/xlog.c:9028 access/transam/xlog.c:9310
+#: access/transam/xlog.c:9030 access/transam/xlog.c:9312
 msgid "WAL level not sufficient for making an online backup"
 msgstr ""
 "Le niveau de journalisation (configuré par wal_level) n'est pas suffisant "
 "pour\n"
 "faire une sauvegarde en ligne."
 
-#: access/transam/xlog.c:9029 access/transam/xlog.c:9311
-#: access/transam/xlog.c:9606
+#: access/transam/xlog.c:9031 access/transam/xlog.c:9313
+#: access/transam/xlog.c:9608
 msgid ""
 "wal_level must be set to \"archive\" or \"hot_standby\" at server start."
 msgstr ""
 "wal_level doit être configuré à « archive » ou « hot_standby » au démarrage\n"
 "du serveur."
 
-#: access/transam/xlog.c:9034
+#: access/transam/xlog.c:9036
 #, c-format
 msgid "backup label too long (max %d bytes)"
 msgstr "label de sauvegarde trop long (%d octets maximum)"
 
-#: access/transam/xlog.c:9075 access/transam/xlog.c:9178
+#: access/transam/xlog.c:9077 access/transam/xlog.c:9180
 msgid "a backup is already in progress"
 msgstr "une sauvegarde est déjà en cours"
 
-#: access/transam/xlog.c:9076
+#: access/transam/xlog.c:9078
 msgid "Run pg_stop_backup() and try again."
 msgstr "Exécutez pg_stop_backup() et tentez de nouveau."
 
-#: access/transam/xlog.c:9179
+#: access/transam/xlog.c:9181
 #, c-format
 msgid ""
 "If you're sure there is no backup in progress, remove file \"%s\" and try "
@@ -8482,29 +8482,29 @@ msgstr ""
 "Si vous êtes certain qu'aucune sauvegarde n'est en cours, supprimez le\n"
 "fichier « %s » et recommencez de nouveau."
 
-#: access/transam/xlog.c:9194 access/transam/xlog.c:9443
+#: access/transam/xlog.c:9196 access/transam/xlog.c:9445
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "impossible d'écrire le fichier « %s » : %m"
 
-#: access/transam/xlog.c:9355
+#: access/transam/xlog.c:9357
 msgid "a backup is not in progress"
 msgstr "une sauvegarde n'est pas en cours"
 
-#: access/transam/xlog.c:9394 access/transam/xlog.c:9925
-#: access/transam/xlog.c:9931
+#: access/transam/xlog.c:9396 access/transam/xlog.c:9927
+#: access/transam/xlog.c:9933
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "données invalides dans le fichier « %s »"
 
-#: access/transam/xlog.c:9492
+#: access/transam/xlog.c:9494
 msgid ""
 "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
 msgstr ""
 "nettoyage de pg_stop_backup terminé, en attente des journaux de transactions "
 "requis à archiver"
 
-#: access/transam/xlog.c:9502
+#: access/transam/xlog.c:9504
 #, c-format
 msgid ""
 "pg_stop_backup still waiting for all required WAL segments to be archived "
@@ -8513,7 +8513,7 @@ msgstr ""
 "pg_stop_backup toujours en attente de la fin de l'archivage des segments de\n"
 "journaux de transactions requis (%d secondes passées)"
 
-#: access/transam/xlog.c:9504
+#: access/transam/xlog.c:9506
 msgid ""
 "Check that your archive_command is executing properly.  pg_stop_backup can "
 "be canceled safely, but the database backup will not be usable without all "
@@ -8523,13 +8523,13 @@ msgstr ""
 "peut être annulé avec sûreté mais la sauvegarde de la base ne sera pas\n"
 "utilisable sans tous les segments WAL."
 
-#: access/transam/xlog.c:9511
+#: access/transam/xlog.c:9513
 msgid "pg_stop_backup complete, all required WAL segments have been archived"
 msgstr ""
 "pg_stop_backup terminé, tous les journaux de transactions requis ont été "
 "archivés"
 
-#: access/transam/xlog.c:9515
+#: access/transam/xlog.c:9517
 msgid ""
 "WAL archiving is not enabled; you must ensure that all required WAL segments "
 "are copied through other means to complete the backup"
@@ -8538,75 +8538,75 @@ msgstr ""
 "vous devez vous assurer que tous les fichiers requis des journaux de\n"
 "transactions sont copiés par d'autre moyens pour terminer la sauvegarde."
 
-#: access/transam/xlog.c:9562
+#: access/transam/xlog.c:9564
 msgid "must be superuser to switch transaction log files"
 msgstr "doit être super-utilisateur pour changer de journal de transactions"
 
-#: access/transam/xlog.c:9594
+#: access/transam/xlog.c:9596
 msgid "must be superuser to create a restore point"
 msgstr "doit être super-utilisateur pour créer un point de restauration"
 
-#: access/transam/xlog.c:9605
+#: access/transam/xlog.c:9607
 msgid "WAL level not sufficient for creating a restore point"
 msgstr ""
 "le niveau de journalisation (configuré par wal_level) n'est pas suffisant "
 "pour\n"
 "créer un point de restauration"
 
-#: access/transam/xlog.c:9613
+#: access/transam/xlog.c:9615
 #, c-format
 msgid "value too long for restore point (maximum %d characters)"
 msgstr ""
 "valeur trop longue pour le point de restauration (%d caractères maximum)"
 
-#: access/transam/xlog.c:9781
+#: access/transam/xlog.c:9783
 msgid "pg_xlogfile_name_offset() cannot be executed during recovery."
 msgstr ""
 "pg_xlogfile_name_offset() ne peut pas être exécuté lors de la restauration."
 
-#: access/transam/xlog.c:9791 access/transam/xlog.c:9863
+#: access/transam/xlog.c:9793 access/transam/xlog.c:9865
 #, c-format
 msgid "could not parse transaction log location \"%s\""
 msgstr "n'a pas pu analyser l'emplacement du journal des transactions « %s »"
 
-#: access/transam/xlog.c:9856
+#: access/transam/xlog.c:9858
 msgid "pg_xlogfile_name() cannot be executed during recovery."
 msgstr "pg_xlogfile_name() ne peut pas être exécuté lors de la restauration."
 
-#: access/transam/xlog.c:9967
+#: access/transam/xlog.c:9969
 #, c-format
 msgid "xlog redo %s"
 msgstr "xlog redo %s"
 
-#: access/transam/xlog.c:10007
+#: access/transam/xlog.c:10009
 msgid "online backup mode canceled"
 msgstr "mode de sauvegarde en ligne annulé"
 
-#: access/transam/xlog.c:10008
+#: access/transam/xlog.c:10010
 #, c-format
 msgid "\"%s\" was renamed to \"%s\"."
 msgstr "« %s » a été renommé en « %s »."
 
-#: access/transam/xlog.c:10015
+#: access/transam/xlog.c:10017
 msgid "online backup mode was not canceled"
 msgstr "le mode de sauvegarde en ligne n'a pas été annulé"
 
-#: access/transam/xlog.c:10016
+#: access/transam/xlog.c:10018
 #, c-format
 msgid "Could not rename \"%s\" to \"%s\": %m."
 msgstr "N'a pas pu renommer « %s » en « %s » : %m"
 
-#: access/transam/xlog.c:10529 access/transam/xlog.c:10551
+#: access/transam/xlog.c:10531 access/transam/xlog.c:10553
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u: %m"
 msgstr ""
 "n'a pas pu lire le journal de transactions %u, segment %u, décalage %u : %m"
 
-#: access/transam/xlog.c:10640
+#: access/transam/xlog.c:10642
 msgid "received promote request"
 msgstr "a reçu une demande de promotion"
 
-#: access/transam/xlog.c:10653
+#: access/transam/xlog.c:10655
 #, c-format
 msgid "trigger file found: %s"
 msgstr "fichier trigger trouvé : %s"
@@ -8686,12 +8686,12 @@ msgstr "« %s » n'est pas un index"
 msgid "unlogged GiST indexes are not supported"
 msgstr "les index GiST non tracés ne sont pas supportés"
 
-#: access/gist/gist.c:728 access/gist/gistvacuum.c:271
+#: access/gist/gist.c:742 access/gist/gistvacuum.c:271
 #, c-format
 msgid "index \"%s\" contains an inner tuple marked as invalid"
 msgstr "l'index « %s » contient une ligne interne marquée comme invalide"
 
-#: access/gist/gist.c:730 access/gist/gistvacuum.c:273
+#: access/gist/gist.c:744 access/gist/gistvacuum.c:273
 msgid ""
 "This is caused by an incomplete page split at crash recovery before "
 "upgrading to PostgreSQL 9.1."
@@ -9857,7 +9857,7 @@ msgstr ""
 "  %d lignes dans l'échantillon,\n"
 "  %.0f lignes totales estimées"
 
-#: commands/analyze.c:1499 executor/execQual.c:2848
+#: commands/analyze.c:1499 executor/execQual.c:2834
 msgid "could not convert row type"
 msgstr "n'a pas pu convertir le type de ligne"
 
@@ -11021,7 +11021,7 @@ msgstr ""
 
 #: commands/dbcommands.c:1273 commands/dbcommands.c:1752
 #: commands/dbcommands.c:1966 commands/dbcommands.c:2014
-#: commands/tablespace.c:584
+#: commands/tablespace.c:583
 #, c-format
 msgid "some useless files may be left behind in old database directory \"%s\""
 msgstr ""
@@ -11749,7 +11749,7 @@ msgstr ""
 
 #: commands/tablespace.c:158 commands/tablespace.c:175
 #: commands/tablespace.c:186 commands/tablespace.c:194
-#: commands/tablespace.c:603 storage/file/copydir.c:61
+#: commands/tablespace.c:602 storage/file/copydir.c:61
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "n'a pas pu créer le répertoire « %s » : %m"
@@ -11786,16 +11786,16 @@ msgstr "le chemin du tablespace doit être un chemin absolu"
 msgid "tablespace location \"%s\" is too long"
 msgstr "le chemin du tablespace « %s » est trop long"
 
-#: commands/tablespace.c:293 commands/tablespace.c:857
+#: commands/tablespace.c:293 commands/tablespace.c:874
 #, c-format
 msgid "unacceptable tablespace name \"%s\""
 msgstr "nom inacceptable pour le tablespace « %s »"
 
-#: commands/tablespace.c:295 commands/tablespace.c:858
+#: commands/tablespace.c:295 commands/tablespace.c:875
 msgid "The prefix \"pg_\" is reserved for system tablespaces."
 msgstr "Le préfixe « pg_ » est réservé pour les tablespaces système."
 
-#: commands/tablespace.c:305 commands/tablespace.c:870
+#: commands/tablespace.c:305 commands/tablespace.c:887
 #, c-format
 msgid "tablespace \"%s\" already exists"
 msgstr "le tablespace « %s » existe déjà"
@@ -11805,10 +11805,10 @@ msgstr "le tablespace « %s » existe déjà"
 msgid "tablespaces are not supported on this platform"
 msgstr "les tablespaces ne sont pas supportés sur cette plateforme"
 
-#: commands/tablespace.c:415 commands/tablespace.c:841
-#: commands/tablespace.c:908 commands/tablespace.c:1013
-#: commands/tablespace.c:1079 commands/tablespace.c:1217
-#: commands/tablespace.c:1417
+#: commands/tablespace.c:415 commands/tablespace.c:858
+#: commands/tablespace.c:925 commands/tablespace.c:1030
+#: commands/tablespace.c:1096 commands/tablespace.c:1234
+#: commands/tablespace.c:1434
 #, c-format
 msgid "tablespace \"%s\" does not exist"
 msgstr "le tablespace « %s » n'existe pas"
@@ -11823,52 +11823,52 @@ msgstr "le tablespace « %s » n'existe pas, poursuite du traitement"
 msgid "tablespace \"%s\" is not empty"
 msgstr "le tablespace « %s » n'est pas vide"
 
-#: commands/tablespace.c:560
+#: commands/tablespace.c:561
 #, c-format
 msgid "directory \"%s\" does not exist"
 msgstr "le répertoire « %s » n'existe pas"
 
-#: commands/tablespace.c:561
+#: commands/tablespace.c:562
 msgid "Create this directory for the tablespace before restarting the server."
 msgstr "Créer le répertoire pour ce tablespace avant de redémarrer le serveur."
 
-#: commands/tablespace.c:566
+#: commands/tablespace.c:567
 #, c-format
 msgid "could not set permissions on directory \"%s\": %m"
 msgstr "n'a pas pu configurer les droits du répertoire « %s » : %m"
 
-#: commands/tablespace.c:598
+#: commands/tablespace.c:597
 #, c-format
 msgid "directory \"%s\" already in use as a tablespace"
 msgstr "répertoire « %s » déjà en cours d'utilisation"
 
-#: commands/tablespace.c:613 commands/tablespace.c:777
-#, c-format
-msgid "could not remove symbolic link \"%s\": %m"
-msgstr "n'a pas pu supprimer le lien symbolique « %s » : %m"
-
-#: commands/tablespace.c:623
-#, c-format
-msgid "could not create symbolic link \"%s\": %m"
-msgstr "n'a pas pu créer le lien symbolique « %s » : %m"
-
-#: commands/tablespace.c:729 commands/tablespace.c:742
-#: commands/tablespace.c:766
+#: commands/tablespace.c:621 commands/tablespace.c:746
+#: commands/tablespace.c:759 commands/tablespace.c:783
 #, c-format
 msgid "could not remove directory \"%s\": %m"
 msgstr "n'a pas pu supprimer le répertoire « %s » : %m"
 
-#: commands/tablespace.c:1084
+#: commands/tablespace.c:629 commands/tablespace.c:794
+#, c-format
+msgid "could not remove symbolic link \"%s\": %m"
+msgstr "n'a pas pu supprimer le lien symbolique « %s » : %m"
+
+#: commands/tablespace.c:640
+#, c-format
+msgid "could not create symbolic link \"%s\": %m"
+msgstr "n'a pas pu créer le lien symbolique « %s » : %m"
+
+#: commands/tablespace.c:1101
 #, c-format
 msgid "Tablespace \"%s\" does not exist."
 msgstr "Le tablespace « %s » n'existe pas."
 
-#: commands/tablespace.c:1516
+#: commands/tablespace.c:1533
 #, c-format
 msgid "directories for tablespace %u could not be removed"
 msgstr "les répertoires du tablespace %u n'ont pas pu être supprimés"
 
-#: commands/tablespace.c:1518
+#: commands/tablespace.c:1535
 msgid "You can remove the directories manually if necessary."
 msgstr "Vous pouvez supprimer les répertoires manuellement si nécessaire."
 
@@ -13031,7 +13031,7 @@ msgid "%s is not allowed in a SQL function"
 msgstr "%s n'est pas autorisé dans une fonction SQL"
 
 #. translator: %s is a SQL statement name
-#: executor/functions.c:302 executor/spi.c:1256 executor/spi.c:1891
+#: executor/functions.c:302 executor/spi.c:1251 executor/spi.c:1886
 #, c-format
 msgid "%s is not allowed in a non-volatile function"
 msgstr "%s n'est pas autorisé dans une fonction non volatile"
@@ -13045,66 +13045,66 @@ msgstr ""
 "n'a pas pu déterminer le type du résultat actuel pour la fonction déclarant\n"
 "renvoyer le type %s"
 
-#: executor/functions.c:1146
+#: executor/functions.c:1145
 #, c-format
 msgid "SQL function \"%s\" statement %d"
 msgstr "fonction SQL « %s », instruction %d"
 
-#: executor/functions.c:1162 catalog/pg_proc.c:916
+#: executor/functions.c:1161 catalog/pg_proc.c:916
 #, c-format
 msgid "SQL function \"%s\""
 msgstr "Fonction SQL « %s »"
 
-#: executor/functions.c:1172
+#: executor/functions.c:1171
 #, c-format
 msgid "SQL function \"%s\" during startup"
 msgstr "fonction SQL « %s » lors du lancement"
 
-#: executor/functions.c:1332 executor/functions.c:1368
-#: executor/functions.c:1380 executor/functions.c:1493
-#: executor/functions.c:1526 executor/functions.c:1556
+#: executor/functions.c:1331 executor/functions.c:1367
+#: executor/functions.c:1379 executor/functions.c:1492
+#: executor/functions.c:1525 executor/functions.c:1555
 #, c-format
 msgid "return type mismatch in function declared to return %s"
 msgstr ""
 "le type de retour ne correspond pas à la fonction déclarant renvoyer %s"
 
-#: executor/functions.c:1334
+#: executor/functions.c:1333
 msgid ""
 "Function's final statement must be SELECT or INSERT/UPDATE/DELETE RETURNING."
 msgstr ""
 "L'instruction finale de la fonction doit être un SELECT ou un\n"
 "INSERT/UPDATE/DELETE RETURNING."
 
-#: executor/functions.c:1370
+#: executor/functions.c:1369
 msgid "Final statement must return exactly one column."
 msgstr "L'instruction finale doit renvoyer exactement une colonne."
 
-#: executor/functions.c:1382
+#: executor/functions.c:1381
 #, c-format
 msgid "Actual return type is %s."
 msgstr "Le code de retour réel est %s."
 
-#: executor/functions.c:1495
+#: executor/functions.c:1494
 msgid "Final statement returns too many columns."
 msgstr "L'instruction finale renvoie beaucoup trop de colonnes."
 
-#: executor/functions.c:1528
+#: executor/functions.c:1527
 #, c-format
 msgid "Final statement returns %s instead of %s at column %d."
 msgstr "L'instruction finale renvoie %s au lieu de %s pour la colonne %d."
 
-#: executor/functions.c:1558
+#: executor/functions.c:1557
 msgid "Final statement returns too few columns."
 msgstr "L'instruction finale renvoie trop peu de colonnes."
 
-#: executor/functions.c:1607
+#: executor/functions.c:1606
 #, c-format
 msgid "return type %s is not supported for SQL functions"
 msgstr "le type de retour %s n'est pas supporté pour les fonctions SQL"
 
 #: executor/nodeModifyTable.c:82 executor/nodeModifyTable.c:92
 #: executor/nodeModifyTable.c:109 executor/nodeModifyTable.c:117
-#: executor/execQual.c:837 executor/execQual.c:854 executor/execQual.c:1014
+#: executor/execQual.c:837 executor/execQual.c:854 executor/execQual.c:1000
 msgid "table row type and query-specified row type do not match"
 msgstr ""
 "Le type de ligne de la table et celui spécifié par la requête ne "
@@ -13278,25 +13278,25 @@ msgstr "Vérifiez les appels manquants à « SPI_finish »."
 msgid "subtransaction left non-empty SPI stack"
 msgstr "sous-transaction gauche non vide dans la pile SPI"
 
-#: executor/spi.c:1137
+#: executor/spi.c:1132
 msgid "cannot open multi-query plan as cursor"
 msgstr "ne peut pas ouvrir le plan à plusieurs requêtes comme curseur"
 
 #. translator: %s is name of a SQL command, eg INSERT
-#: executor/spi.c:1142
+#: executor/spi.c:1137
 #, c-format
 msgid "cannot open %s query as cursor"
 msgstr "ne peut pas ouvrir la requête %s comme curseur"
 
-#: executor/spi.c:1233 parser/analyze.c:2213
+#: executor/spi.c:1228 parser/analyze.c:2213
 msgid "DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"
 msgstr "DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE n'est pas supporté"
 
-#: executor/spi.c:1234 parser/analyze.c:2214
+#: executor/spi.c:1229 parser/analyze.c:2214
 msgid "Scrollable cursors must be READ ONLY."
 msgstr "Les curseurs déplaçables doivent être en lecture seule (READ ONLY)."
 
-#: executor/spi.c:2157
+#: executor/spi.c:2152
 #, c-format
 msgid "SQL statement \"%s\""
 msgstr "instruction SQL « %s »"
@@ -13352,7 +13352,7 @@ msgstr "le curseur « %s » n'est pas positionné sur une ligne"
 msgid "cursor \"%s\" is not a simply updatable scan of table \"%s\""
 msgstr "le curseur « %s » n'est pas un parcours modifiable de la table « %s »"
 
-#: executor/execCurrent.c:230 executor/execQual.c:1126
+#: executor/execCurrent.c:230 executor/execQual.c:1112
 #, c-format
 msgid ""
 "type of parameter %d (%s) does not match that when preparing the plan (%s)"
@@ -13360,7 +13360,7 @@ msgstr ""
 "le type de paramètre %d (%s) ne correspond pas à ce qui est préparé dans le "
 "plan (%s)"
 
-#: executor/execCurrent.c:242 executor/execQual.c:1138
+#: executor/execCurrent.c:242 executor/execQual.c:1124
 #, c-format
 msgid "no value found for parameter %d"
 msgstr "aucune valeur trouvée pour le paramètre %d"
@@ -13369,12 +13369,12 @@ msgstr "aucune valeur trouvée pour le paramètre %d"
 msgid "array subscript in assignment must not be null"
 msgstr "l'indice du tableau dans l'affectation ne doit pas être NULL"
 
-#: executor/execQual.c:637 executor/execQual.c:4019
+#: executor/execQual.c:637 executor/execQual.c:4005
 #, c-format
 msgid "attribute %d has wrong type"
 msgstr "l'attribut %d a un type invalide"
 
-#: executor/execQual.c:638 executor/execQual.c:4020
+#: executor/execQual.c:638 executor/execQual.c:4006
 #, c-format
 msgid "Table has type %s, but query expects %s."
 msgstr "La table a le type %s alors que la requête attend %s."
@@ -13388,14 +13388,14 @@ msgstr[0] ""
 msgstr[1] ""
 "La ligne de la table contient %d attributs alors que la requête en attend %d."
 
-#: executor/execQual.c:1015 executor/execQual.c:1612
+#: executor/execQual.c:1001 executor/execQual.c:1598
 #, c-format
 msgid "Physical storage mismatch on dropped attribute at ordinal position %d."
 msgstr ""
 "Le stockage physique ne correspond pas à l'attribut supprimé à la position\n"
 "ordinale %d."
 
-#: executor/execQual.c:1291 parser/parse_func.c:91 parser/parse_func.c:323
+#: executor/execQual.c:1277 parser/parse_func.c:91 parser/parse_func.c:323
 #: parser/parse_func.c:640
 #, c-format
 msgid "cannot pass more than %d argument to a function"
@@ -13403,12 +13403,12 @@ msgid_plural "cannot pass more than %d arguments to a function"
 msgstr[0] "ne peut pas passer plus de %d argument à une fonction"
 msgstr[1] "ne peut pas passer plus de %d arguments à une fonction"
 
-#: executor/execQual.c:1480
+#: executor/execQual.c:1466
 msgid "functions and operators can take at most one set argument"
 msgstr ""
 "les fonctions et opérateurs peuvent prendre au plus un argument d'ensemble"
 
-#: executor/execQual.c:1530
+#: executor/execQual.c:1516
 msgid ""
 "function returning setof record called in context that cannot accept type "
 "record"
@@ -13416,13 +13416,13 @@ msgstr ""
 "la fonction renvoyant des lignes a été appelée dans un contexte qui\n"
 "n'accepte pas un ensemble"
 
-#: executor/execQual.c:1585 executor/execQual.c:1601 executor/execQual.c:1611
+#: executor/execQual.c:1571 executor/execQual.c:1587 executor/execQual.c:1597
 msgid "function return row and query-specified return row do not match"
 msgstr ""
 "la ligne de retour spécifiée par la requête et la ligne de retour de la "
 "fonction ne correspondent pas"
 
-#: executor/execQual.c:1586
+#: executor/execQual.c:1572
 #, c-format
 msgid "Returned row contains %d attribute, but query expects %d."
 msgid_plural "Returned row contains %d attributes, but query expects %d."
@@ -13431,49 +13431,49 @@ msgstr[0] ""
 msgstr[1] ""
 "La ligne renvoyée contient %d attributs mais la requête en attend %d."
 
-#: executor/execQual.c:1602
+#: executor/execQual.c:1588
 #, c-format
 msgid "Returned type %s at ordinal position %d, but query expects %s."
 msgstr ""
 "A renvoyé le type %s à la position ordinale %d, mais la requête attend %s."
 
-#: executor/execQual.c:1836 executor/execQual.c:2260
+#: executor/execQual.c:1822 executor/execQual.c:2246
 msgid "table-function protocol for materialize mode was not followed"
 msgstr ""
 "le protocole de la fonction table pour le mode matérialisé n'a pas été "
 "respecté"
 
-#: executor/execQual.c:1856 executor/execQual.c:2267
+#: executor/execQual.c:1842 executor/execQual.c:2253
 #, c-format
 msgid "unrecognized table-function returnMode: %d"
 msgstr "returnMode de la fonction table non reconnu : %d"
 
-#: executor/execQual.c:2177
+#: executor/execQual.c:2163
 msgid "function returning set of rows cannot return null value"
 msgstr ""
 "la fonction renvoyant un ensemble de lignes ne peut pas renvoyer une valeur\n"
 "NULL"
 
-#: executor/execQual.c:2234
+#: executor/execQual.c:2220
 msgid "rows returned by function are not all of the same row type"
 msgstr ""
 "les lignes renvoyées par la fonction ne sont pas toutes du même type ligne"
 
-#: executor/execQual.c:2449
+#: executor/execQual.c:2435
 msgid "IS DISTINCT FROM does not support set arguments"
 msgstr "IS DISTINCT FROM ne supporte pas les arguments d'ensemble"
 
-#: executor/execQual.c:2526
+#: executor/execQual.c:2512
 msgid "op ANY/ALL (array) does not support set arguments"
 msgstr ""
 "l'opérateur ANY/ALL (pour les types array) ne supporte pas les arguments\n"
 "d'ensemble"
 
-#: executor/execQual.c:3079
+#: executor/execQual.c:3065
 msgid "cannot merge incompatible arrays"
 msgstr "ne peut pas fusionner les tableaux incompatibles"
 
-#: executor/execQual.c:3080
+#: executor/execQual.c:3066
 #, c-format
 msgid ""
 "Array with element type %s cannot be included in ARRAY construct with "
@@ -13482,25 +13482,25 @@ msgstr ""
 "Le tableau avec le type d'élément %s ne peut pas être inclus dans la "
 "construction ARRAY avec le type d'élément %s."
 
-#: executor/execQual.c:3663
+#: executor/execQual.c:3649
 msgid "NULLIF does not support set arguments"
 msgstr "NULLIF ne supporte pas les arguments d'ensemble"
 
-#: executor/execQual.c:4415 optimizer/util/clauses.c:573
+#: executor/execQual.c:4401 optimizer/util/clauses.c:573
 #: parser/parse_agg.c:164
 msgid "aggregate function calls cannot be nested"
 msgstr "les appels à la fonction d'agrégat ne peuvent pas être imbriqués"
 
-#: executor/execQual.c:4453 optimizer/util/clauses.c:647
+#: executor/execQual.c:4439 optimizer/util/clauses.c:647
 #: parser/parse_agg.c:211
 msgid "window function calls cannot be nested"
 msgstr "les appels à la fonction window ne peuvent pas être imbriqués"
 
-#: executor/execQual.c:4665
+#: executor/execQual.c:4651
 msgid "target type is not an array"
 msgstr "le type cible n'est pas un tableau"
 
-#: executor/execQual.c:4778
+#: executor/execQual.c:4764
 #, c-format
 msgid "ROW() column has type %s instead of type %s"
 msgstr "une colonne ROW() a le type %s au lieu du type %s"
@@ -13554,12 +13554,12 @@ msgstr "type de message « %c » inattendu"
 msgid "standby \"%s\" has now caught up with primary"
 msgstr "le serveur standby « %s » a maintenant rattrapé le serveur primaire"
 
-#: replication/walsender.c:844
+#: replication/walsender.c:855
 msgid "terminating walsender process due to replication timeout"
 msgstr ""
 "arrêt du processus walreceiver suite à l'expiration du délai de réplication"
 
-#: replication/walsender.c:911
+#: replication/walsender.c:922
 #, c-format
 msgid ""
 "number of requested standby connections exceeds max_wal_senders (currently "
@@ -13568,12 +13568,12 @@ msgstr ""
 "le nombre de connexions demandées par le serveur en attente dépasse\n"
 "max_wal_senders (actuellement %d)"
 
-#: replication/walsender.c:995 replication/walsender.c:1057
+#: replication/walsender.c:1006 replication/walsender.c:1068
 #, c-format
 msgid "requested WAL segment %s has already been removed"
 msgstr "le segment demandé du journal de transaction, %s, a déjà été supprimé"
 
-#: replication/walsender.c:1028
+#: replication/walsender.c:1039
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u, length %lu: %m"
 msgstr ""
@@ -13710,14 +13710,14 @@ msgstr "réponse invalide du serveur principal"
 msgid "Expected 1 tuple with 3 fields, got %d tuples with %d fields."
 msgstr "Attendait 1 ligne avec 3 champs, a obtenu %d lignes avec %d champs."
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:140
+#: replication/libpqwalreceiver/libpqwalreceiver.c:141
 msgid "database system identifier differs between the primary and standby"
 msgstr ""
 "l'identifiant du système de bases de données diffère entre le serveur "
 "principal\n"
 "et le serveur en attente"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:141
+#: replication/libpqwalreceiver/libpqwalreceiver.c:142
 #, c-format
 msgid "The primary's identifier is %s, the standby's identifier is %s."
 msgstr ""
@@ -13725,44 +13725,44 @@ msgstr ""
 "attente\n"
 "est %s."
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:153
+#: replication/libpqwalreceiver/libpqwalreceiver.c:154
 #, c-format
 msgid "timeline %u of the primary does not match recovery target timeline %u"
 msgstr ""
 "le timeline %u du serveur principal ne correspond pas au timeline %u de la\n"
 "cible de restauration"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:165
+#: replication/libpqwalreceiver/libpqwalreceiver.c:166
 #, c-format
 msgid "could not start WAL streaming: %s"
 msgstr "n'a pas pu démarrer l'envoi des WAL : %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:171
+#: replication/libpqwalreceiver/libpqwalreceiver.c:172
 msgid "streaming replication successfully connected to primary"
 msgstr "réplication de flux connecté avec succès au serveur principal"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:193
+#: replication/libpqwalreceiver/libpqwalreceiver.c:194
 msgid "socket not open"
 msgstr "socket non ouvert"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:233 port/pg_latch.c:265
+#: replication/libpqwalreceiver/libpqwalreceiver.c:234 port/pg_latch.c:265
 #: port/unix_latch.c:265
 #, c-format
 msgid "select() failed: %m"
 msgstr "échec de select() : %m"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:367
-#: replication/libpqwalreceiver/libpqwalreceiver.c:388
-#: replication/libpqwalreceiver/libpqwalreceiver.c:393
+#: replication/libpqwalreceiver/libpqwalreceiver.c:368
+#: replication/libpqwalreceiver/libpqwalreceiver.c:389
+#: replication/libpqwalreceiver/libpqwalreceiver.c:394
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "n'a pas pu recevoir des données du flux de WAL : %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:384
+#: replication/libpqwalreceiver/libpqwalreceiver.c:385
 msgid "replication terminated by primary server"
 msgstr "réplication terminée par le serveur primaire"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:415
+#: replication/libpqwalreceiver/libpqwalreceiver.c:416
 #, c-format
 msgid "could not send data to WAL stream: %s"
 msgstr "n'a pas pu transmettre les données au flux WAL : %s"
@@ -14207,11 +14207,11 @@ msgstr "Voir les journaux applicatifs du serveur pour plus de détails."
 msgid "connection requires a valid client certificate"
 msgstr "la connexion requiert un certificat client valide"
 
-#: libpq/auth.c:400 libpq/auth.c:416 libpq/auth.c:464 libpq/auth.c:482
+#: libpq/auth.c:400 libpq/auth.c:416 libpq/auth.c:474 libpq/auth.c:492
 msgid "SSL on"
 msgstr "SSL actif"
 
-#: libpq/auth.c:400 libpq/auth.c:416 libpq/auth.c:464 libpq/auth.c:482
+#: libpq/auth.c:400 libpq/auth.c:416 libpq/auth.c:474 libpq/auth.c:492
 msgid "SSL off"
 msgstr "SSL inactif"
 
@@ -14255,21 +14255,31 @@ msgid "Client IP address resolved to \"%s\", forward lookup matches."
 msgstr ""
 "Adresse IP du client résolue en « %s », la recherche inverse correspond bien."
 
-#: libpq/auth.c:451
+#: libpq/auth.c:452
 #, c-format
 msgid "Client IP address resolved to \"%s\", forward lookup not checked."
 msgstr ""
 "Adresse IP du client résolue en « %s », la recherche inverse n'est pas "
 "vérifiée."
 
-#: libpq/auth.c:453
+#: libpq/auth.c:455
 #, c-format
 msgid "Client IP address resolved to \"%s\", forward lookup does not match."
 msgstr ""
 "Adresse IP du client résolue en « %s », la recherche inverse ne correspond "
 "pas."
 
-#: libpq/auth.c:462
+#: libpq/auth.c:458
+#, fuzzy, c-format
+msgid "Could not translate client host name \"%s\" to IP address: %s."
+msgstr "n'a pas pu traduire le nom d'hôte « %s » en adresse : %s"
+
+#: libpq/auth.c:463
+#, fuzzy, c-format
+msgid "Could not resolve client IP address to a host name: %s."
+msgstr "n'a pas pu obtenir l'adresse du client depuis la socket : %s\n"
+
+#: libpq/auth.c:472
 #, c-format
 msgid ""
 "no pg_hba.conf entry for replication connection from host \"%s\", user \"%s"
@@ -14279,7 +14289,7 @@ msgstr ""
 "de\n"
 "l'hôte « %s », utilisateur « %s », %s"
 
-#: libpq/auth.c:469
+#: libpq/auth.c:479
 #, c-format
 msgid ""
 "no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\""
@@ -14288,127 +14298,127 @@ msgstr ""
 "de\n"
 "l'hôte « %s », utilisateur « %s »"
 
-#: libpq/auth.c:479
+#: libpq/auth.c:489
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
 msgstr ""
 "aucune entrée dans pg_hba.conf pour l'hôte « %s », utilisateur « %s »,\n"
 "base de données « %s », %s"
 
-#: libpq/auth.c:487
+#: libpq/auth.c:497
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\""
 msgstr ""
 "aucune entrée dans pg_hba.conf pour l'hôte « %s », utilisateur « %s »,\n"
 "base de données « %s »"
 
-#: libpq/auth.c:539 libpq/hba.c:1118
+#: libpq/auth.c:549 libpq/hba.c:1130
 msgid ""
 "MD5 authentication is not supported when \"db_user_namespace\" is enabled"
 msgstr ""
 "l'authentification MD5 n'est pas supportée quand « db_user_namespace » est "
 "activé"
 
-#: libpq/auth.c:663
+#: libpq/auth.c:673
 #, c-format
 msgid "expected password response, got message type %d"
 msgstr "en attente du mot de passe, a reçu un type de message %d"
 
-#: libpq/auth.c:691
+#: libpq/auth.c:701
 msgid "invalid password packet size"
 msgstr "taille du paquet du mot de passe invalide"
 
-#: libpq/auth.c:695
+#: libpq/auth.c:705
 msgid "received password packet"
 msgstr "paquet du mot de passe reçu"
 
-#: libpq/auth.c:753
+#: libpq/auth.c:763
 #, c-format
 msgid "Kerberos initialization returned error %d"
 msgstr "l'initialisation de Kerberos a retourné l'erreur %d"
 
-#: libpq/auth.c:763
+#: libpq/auth.c:773
 #, c-format
 msgid "Kerberos keytab resolving returned error %d"
 msgstr "la résolution keytab de Kerberos a renvoyé l'erreur %d"
 
-#: libpq/auth.c:787
+#: libpq/auth.c:797
 #, c-format
 msgid "Kerberos sname_to_principal(\"%s\", \"%s\") returned error %d"
 msgstr "sname_to_principal(« %s », « %s ») de Kerberos a renvoyé l'erreur %d"
 
-#: libpq/auth.c:832
+#: libpq/auth.c:842
 #, c-format
 msgid "Kerberos recvauth returned error %d"
 msgstr "recvauth de Kerberos a renvoyé l'erreur %d"
 
-#: libpq/auth.c:855
+#: libpq/auth.c:865
 #, c-format
 msgid "Kerberos unparse_name returned error %d"
 msgstr "unparse_name de Kerberos a renvoyé l'erreur %d"
 
-#: libpq/auth.c:1003
+#: libpq/auth.c:1013
 msgid "GSSAPI is not supported in protocol version 2"
 msgstr "GSSAPI n'est pas supporté dans le protocole de version 2"
 
-#: libpq/auth.c:1058
+#: libpq/auth.c:1068
 #, c-format
 msgid "expected GSS response, got message type %d"
 msgstr "en attente d'une réponse GSS, a reçu un message de type %d"
 
-#: libpq/auth.c:1121
+#: libpq/auth.c:1131
 msgid "accepting GSS security context failed"
 msgstr "échec de l'acceptation du contexte de sécurité GSS"
 
-#: libpq/auth.c:1147
+#: libpq/auth.c:1157
 msgid "retrieving GSS user name failed"
 msgstr "échec lors de la récupération du nom de l'utilisateur avec GSS"
 
-#: libpq/auth.c:1264
+#: libpq/auth.c:1274
 msgid "SSPI is not supported in protocol version 2"
 msgstr "SSPI n'est pas supporté dans le protocole de version 2"
 
-#: libpq/auth.c:1279
+#: libpq/auth.c:1289
 msgid "could not acquire SSPI credentials"
 msgstr "n'a pas pu obtenir les pièces d'identité SSPI"
 
-#: libpq/auth.c:1296
+#: libpq/auth.c:1306
 #, c-format
 msgid "expected SSPI response, got message type %d"
 msgstr "en attente d'une réponse SSPI, a reçu un message de type %d"
 
-#: libpq/auth.c:1368
+#: libpq/auth.c:1378
 msgid "could not accept SSPI security context"
 msgstr "n'a pas pu accepter le contexte de sécurité SSPI"
 
-#: libpq/auth.c:1430
+#: libpq/auth.c:1440
 msgid "could not get token from SSPI security context"
 msgstr "n'a pas pu obtenir le jeton du contexte de sécurité SSPI"
 
-#: libpq/auth.c:1674
+#: libpq/auth.c:1684
 #, c-format
 msgid "could not create socket for Ident connection: %m"
 msgstr "n'a pas pu créer le socket pour la connexion Ident : %m"
 
-#: libpq/auth.c:1689
+#: libpq/auth.c:1699
 #, c-format
 msgid "could not bind to local address \"%s\": %m"
 msgstr "n'a pas pu se lier à l'adresse locale « %s » : %m"
 
-#: libpq/auth.c:1701
+#: libpq/auth.c:1711
 #, c-format
 msgid "could not connect to Ident server at address \"%s\", port %s: %m"
 msgstr ""
 "n'a pas pu se connecter au serveur Ident à l'adresse « %s », port %s : %m"
 
-#: libpq/auth.c:1721
+#: libpq/auth.c:1731
 #, c-format
 msgid "could not send query to Ident server at address \"%s\", port %s: %m"
 msgstr ""
 "n'a pas pu envoyer la requête au serveur Ident à l'adresse « %s », port %s : "
 "%m"
 
-#: libpq/auth.c:1736
+#: libpq/auth.c:1746
 #, c-format
 msgid ""
 "could not receive response from Ident server at address \"%s\", port %s: %m"
@@ -14417,102 +14427,102 @@ msgstr ""
 "%s :\n"
 "%m"
 
-#: libpq/auth.c:1746
+#: libpq/auth.c:1756
 #, c-format
 msgid "invalidly formatted response from Ident server: \"%s\""
 msgstr "réponse mal formatée du serveur Ident : « %s »"
 
-#: libpq/auth.c:1785
+#: libpq/auth.c:1795
 msgid "peer authentication is not supported on this platform"
 msgstr ""
 "la méthode d'authentification «peer n'est pas supportée sur cette plateforme"
 
-#: libpq/auth.c:1789
+#: libpq/auth.c:1799
 #, c-format
 msgid "could not get peer credentials: %m"
 msgstr "n'a pas pu obtenir l'authentification de l'autre : %m"
 
-#: libpq/auth.c:1798
+#: libpq/auth.c:1808
 #, c-format
 msgid "local user with ID %d does not exist"
 msgstr "l'utilisateur local dont l'identifiant est %d n'existe pas"
 
-#: libpq/auth.c:1881 libpq/auth.c:2153 libpq/auth.c:2513
+#: libpq/auth.c:1891 libpq/auth.c:2163 libpq/auth.c:2523
 msgid "empty password returned by client"
 msgstr "mot de passe vide renvoyé par le client"
 
-#: libpq/auth.c:1891
+#: libpq/auth.c:1901
 #, c-format
 msgid "error from underlying PAM layer: %s"
 msgstr "erreur provenant de la couche PAM : %s"
 
-#: libpq/auth.c:1960
+#: libpq/auth.c:1970
 #, c-format
 msgid "could not create PAM authenticator: %s"
 msgstr "n'a pas pu créer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:1971
+#: libpq/auth.c:1981
 #, c-format
 msgid "pam_set_item(PAM_USER) failed: %s"
 msgstr "pam_set_item(PAM_USER) a échoué : %s"
 
-#: libpq/auth.c:1982
+#: libpq/auth.c:1992
 #, c-format
 msgid "pam_set_item(PAM_CONV) failed: %s"
 msgstr "pam_set_item(PAM_CONV) a échoué : %s"
 
-#: libpq/auth.c:1993
+#: libpq/auth.c:2003
 #, c-format
 msgid "pam_authenticate failed: %s"
 msgstr "pam_authenticate a échoué : %s"
 
-#: libpq/auth.c:2004
+#: libpq/auth.c:2014
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
 msgstr "pam_acct_mgmt a échoué : %s"
 
-#: libpq/auth.c:2015
+#: libpq/auth.c:2025
 #, c-format
 msgid "could not release PAM authenticator: %s"
 msgstr "n'a pas pu fermer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:2048 libpq/auth.c:2052
+#: libpq/auth.c:2058 libpq/auth.c:2062
 #, c-format
 msgid "could not initialize LDAP: error code %d"
 msgstr "n'a pas pu initialiser LDAP : code d'erreur %d"
 
-#: libpq/auth.c:2062
+#: libpq/auth.c:2072
 #, c-format
 msgid "could not set LDAP protocol version: error code %d"
 msgstr "n'a pas pu initialiser la version du protocole LDAP : code d'erreur %d"
 
-#: libpq/auth.c:2091
+#: libpq/auth.c:2101
 msgid "could not load wldap32.dll"
 msgstr "n'a pas pu charger wldap32.dll"
 
-#: libpq/auth.c:2099
+#: libpq/auth.c:2109
 msgid "could not load function _ldap_start_tls_sA in wldap32.dll"
 msgstr "n'a pas pu charger la fonction _ldap_start_tls_sA de wldap32.dll"
 
-#: libpq/auth.c:2100
+#: libpq/auth.c:2110
 msgid "LDAP over SSL is not supported on this platform."
 msgstr "LDAP via SSL n'est pas supporté sur cette plateforme."
 
-#: libpq/auth.c:2115
+#: libpq/auth.c:2125
 #, c-format
 msgid "could not start LDAP TLS session: error code %d"
 msgstr "n'a pas pu démarrer la session TLS LDAP : code d'erreur %d"
 
-#: libpq/auth.c:2137
+#: libpq/auth.c:2147
 msgid "LDAP server not specified"
 msgstr "serveur LDAP non précisé"
 
-#: libpq/auth.c:2189
+#: libpq/auth.c:2199
 msgid "invalid character in user name for LDAP authentication"
 msgstr ""
 "caractère invalide dans le nom de l'utilisateur pour l'authentification LDAP"
 
-#: libpq/auth.c:2204
+#: libpq/auth.c:2214
 #, c-format
 msgid ""
 "could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": "
@@ -14522,21 +14532,21 @@ msgstr ""
 "le\n"
 "serveur « %s » : code d'erreur %d"
 
-#: libpq/auth.c:2229
+#: libpq/auth.c:2239
 #, c-format
 msgid "could not search LDAP for filter \"%s\" on server \"%s\": error code %d"
 msgstr ""
 "n'a pas pu rechercher dans LDAP pour filtrer « %s » sur le serveur « %s » :\n"
 "code d'erreur %d"
 
-#: libpq/auth.c:2239
+#: libpq/auth.c:2249
 #, c-format
 msgid "LDAP search failed for filter \"%s\" on server \"%s\": no such user"
 msgstr ""
 "échec de la recherche LDAP pour le filtre « %s » sur le serveur « %s » :\n"
 "utilisateur non trouvé"
 
-#: libpq/auth.c:2243
+#: libpq/auth.c:2253
 #, c-format
 msgid ""
 "LDAP search failed for filter \"%s\" on server \"%s\": user is not unique "
@@ -14545,7 +14555,7 @@ msgstr ""
 "échec de la recherche LDAP pour le filtre « %s » sur le serveur « %s » :\n"
 "utilisateur non unique (%ld correspondances)"
 
-#: libpq/auth.c:2260
+#: libpq/auth.c:2270
 #, c-format
 msgid ""
 "could not get dn for the first entry matching \"%s\" on server \"%s\": %s"
@@ -14553,21 +14563,21 @@ msgstr ""
 "n'a pas pu obtenir le dn pour la première entrée correspondante « %s » sur\n"
 "le serveur « %s » : %s"
 
-#: libpq/auth.c:2280
+#: libpq/auth.c:2290
 #, c-format
 msgid "could not unbind after searching for user \"%s\" on server \"%s\": %s"
 msgstr ""
 "n'a pas pu exécuter le unbind après la recherche de l'utilisateur « %s »\n"
 "sur le serveur « %s » : %s"
 
-#: libpq/auth.c:2317
+#: libpq/auth.c:2327
 #, c-format
 msgid "LDAP login failed for user \"%s\" on server \"%s\": error code %d"
 msgstr ""
 "échec de connexion LDAP pour l'utilisateur « %s » sur le serveur « %s » :\n"
 "code d'erreur %d"
 
-#: libpq/auth.c:2345
+#: libpq/auth.c:2355
 #, c-format
 msgid ""
 "certificate authentication failed for user \"%s\": client certificate "
@@ -14576,94 +14586,94 @@ msgstr ""
 "l'authentification par le certificat a échoué pour l'utilisateur « %s » :\n"
 "le certificat du client ne contient aucun nom d'utilisateur"
 
-#: libpq/auth.c:2469
+#: libpq/auth.c:2479
 msgid "RADIUS server not specified"
 msgstr "serveur RADIUS non précisé"
 
-#: libpq/auth.c:2476
+#: libpq/auth.c:2486
 msgid "RADIUS secret not specified"
 msgstr "secret RADIUS non précisé"
 
-#: libpq/auth.c:2492 libpq/hba.c:1403
+#: libpq/auth.c:2502 libpq/hba.c:1415
 #, c-format
 msgid "could not translate RADIUS server name \"%s\" to address: %s"
 msgstr ""
 "n'a pas pu traduire le nom du serveur RADIUS « %s » en une adresse : %s"
 
-#: libpq/auth.c:2520
+#: libpq/auth.c:2530
 msgid ""
 "RADIUS authentication does not support passwords longer than 16 characters"
 msgstr ""
 "l'authentification RADIUS ne supporte pas les mots de passe de plus de 16\n"
 "caractères"
 
-#: libpq/auth.c:2531
+#: libpq/auth.c:2541
 msgid "could not generate random encryption vector"
 msgstr "n'a pas pu générer le vecteur de chiffrement aléatoire"
 
-#: libpq/auth.c:2554
+#: libpq/auth.c:2564
 msgid "could not perform MD5 encryption of password"
 msgstr "n'a pas pu réaliser le chiffrement MD5 du mot de passe"
 
-#: libpq/auth.c:2576
+#: libpq/auth.c:2586
 #, c-format
 msgid "could not create RADIUS socket: %m"
 msgstr "n'a pas pu créer le socket RADIUS : %m"
 
-#: libpq/auth.c:2597
+#: libpq/auth.c:2607
 #, c-format
 msgid "could not bind local RADIUS socket: %m"
 msgstr "n'a pas pu se lier à la socket RADIUS : %m"
 
-#: libpq/auth.c:2607
+#: libpq/auth.c:2617
 #, c-format
 msgid "could not send RADIUS packet: %m"
 msgstr "n'a pas pu transmettre le paquet RADIUS : %m"
 
-#: libpq/auth.c:2636 libpq/auth.c:2661
+#: libpq/auth.c:2646 libpq/auth.c:2671
 msgid "timeout waiting for RADIUS response"
 msgstr "dépassement du délai pour la réponse du RADIUS"
 
-#: libpq/auth.c:2654
+#: libpq/auth.c:2664
 #, c-format
 msgid "could not check status on RADIUS socket: %m"
 msgstr "n'a pas pu vérifier le statut sur la socket RADIUS : %m"
 
-#: libpq/auth.c:2683
+#: libpq/auth.c:2693
 #, c-format
 msgid "could not read RADIUS response: %m"
 msgstr "n'a pas pu lire la réponse RADIUS : %m"
 
-#: libpq/auth.c:2695 libpq/auth.c:2699
+#: libpq/auth.c:2705 libpq/auth.c:2709
 #, c-format
 msgid "RADIUS response was sent from incorrect port: %i"
 msgstr "la réponse RADIUS a été envoyée à partir d'un mauvais port : %i"
 
-#: libpq/auth.c:2708
+#: libpq/auth.c:2718
 #, c-format
 msgid "RADIUS response too short: %i"
 msgstr "réponse RADIUS trop courte : %i"
 
-#: libpq/auth.c:2715
+#: libpq/auth.c:2725
 #, c-format
 msgid "RADIUS response has corrupt length: %i (actual length %i)"
 msgstr "la réponse RADIUS a une longueur corrompue : %i (longueur actuelle %i)"
 
-#: libpq/auth.c:2723
+#: libpq/auth.c:2733
 #, c-format
 msgid "RADIUS response is to a different request: %i (should be %i)"
 msgstr ""
 "la réponse RADIUS correspond à une demande différente : %i (devrait être %i)"
 
-#: libpq/auth.c:2748
+#: libpq/auth.c:2758
 msgid "could not perform MD5 encryption of received packet"
 msgstr "n'a pas pu réaliser le chiffrement MD5 du paquet reçu"
 
-#: libpq/auth.c:2757
+#: libpq/auth.c:2767
 msgid "RADIUS response has incorrect MD5 signature"
 msgstr "la réponse RADIUS a une signature MD5 erronée"
 
-#: libpq/auth.c:2774
+#: libpq/auth.c:2784
 #, c-format
 msgid "RADIUS response has invalid code (%i) for user \"%s\""
 msgstr "la réponse RADIUS a un code invalide (%i) pour l'utilisateur « %s »"
@@ -14680,13 +14690,8 @@ msgstr ""
 "n'a pas pu ouvrir le fichier d'authentification secondaire « @%s » comme\n"
 "« %s » : %m"
 
-#: libpq/hba.c:628
-#, c-format
-msgid "could not translate host name \"%s\" to address: %s"
-msgstr "n'a pas pu traduire le nom d'hôte « %s » en adresse : %s"
-
 #. translator: the second %s is a list of auth methods
-#: libpq/hba.c:779
+#: libpq/hba.c:791
 #, c-format
 msgid ""
 "authentication option \"%s\" is only valid for authentication methods %s"
@@ -14694,133 +14699,133 @@ msgstr ""
 "l'option d'authentification « %s » est seulement valide pour les méthodes\n"
 "d'authentification « %s »"
 
-#: libpq/hba.c:795
+#: libpq/hba.c:807
 #, c-format
 msgid "authentication method \"%s\" requires argument \"%s\" to be set"
 msgstr ""
 "la méthode d'authentification « %s » requiert un argument « %s » pour "
 "êtremise en place"
 
-#: libpq/hba.c:832
+#: libpq/hba.c:844
 msgid "local connections are not supported by this build"
 msgstr "les connexions locales ne sont pas supportées dans cette installation"
 
-#: libpq/hba.c:853
+#: libpq/hba.c:865
 msgid "hostssl requires SSL to be turned on"
 msgstr "hostssl requiert que SSL soit activé"
 
-#: libpq/hba.c:854
+#: libpq/hba.c:866
 msgid "Set ssl = on in postgresql.conf."
 msgstr "Configurez ssl = on dans le postgresql.conf."
 
-#: libpq/hba.c:862
+#: libpq/hba.c:874
 msgid "hostssl is not supported by this build"
 msgstr "hostssl n'est pas supporté par cette installation"
 
-#: libpq/hba.c:863
+#: libpq/hba.c:875
 msgid "Compile with --with-openssl to use SSL connections."
 msgstr "Compilez avec --with-ssl pour utiliser les connexions SSL"
 
-#: libpq/hba.c:885
+#: libpq/hba.c:897
 #, c-format
 msgid "invalid connection type \"%s\""
 msgstr "type de connexion « %s » invalide"
 
-#: libpq/hba.c:898
+#: libpq/hba.c:910
 msgid "end-of-line before database specification"
 msgstr "fin de ligne avant la spécification de la base de données"
 
-#: libpq/hba.c:911
+#: libpq/hba.c:923
 msgid "end-of-line before role specification"
 msgstr "fin de ligne avant la spécification du rôle"
 
-#: libpq/hba.c:926
+#: libpq/hba.c:938
 msgid "end-of-line before IP address specification"
 msgstr "fin de ligne avant la spécification de l'adresse IP"
 
-#: libpq/hba.c:980
+#: libpq/hba.c:992
 #, c-format
 msgid "invalid IP address \"%s\": %s"
 msgstr "adresse IP « %s » invalide : %s"
 
-#: libpq/hba.c:1000
+#: libpq/hba.c:1012
 #, c-format
 msgid "specifying both host name and CIDR mask is invalid: \"%s\""
 msgstr "spécifier le nom d'hôte et le masque CIDR n'est pas valide : « %s »"
 
-#: libpq/hba.c:1014
+#: libpq/hba.c:1026
 #, c-format
 msgid "invalid CIDR mask in address \"%s\""
 msgstr "masque CIDR invalide dans l'adresse « %s »"
 
-#: libpq/hba.c:1032
+#: libpq/hba.c:1044
 msgid "end-of-line before netmask specification"
 msgstr "fin de ligne avant la spécification du masque réseau"
 
-#: libpq/hba.c:1044
+#: libpq/hba.c:1056
 #, c-format
 msgid "invalid IP mask \"%s\": %s"
 msgstr "masque IP « %s » invalide : %s"
 
-#: libpq/hba.c:1061
+#: libpq/hba.c:1073
 msgid "IP address and mask do not match"
 msgstr "l'adresse IP et le masque ne correspondent pas"
 
-#: libpq/hba.c:1076
+#: libpq/hba.c:1088
 msgid "end-of-line before authentication method"
 msgstr "fin de ligne avant la méthode d'authentification"
 
-#: libpq/hba.c:1149
+#: libpq/hba.c:1161
 #, c-format
 msgid "invalid authentication method \"%s\""
 msgstr "méthode d'authentification « %s » invalide"
 
-#: libpq/hba.c:1160
+#: libpq/hba.c:1172
 #, c-format
 msgid "invalid authentication method \"%s\": not supported by this build"
 msgstr ""
 "méthode d'authentification « %s » invalide : non supportée sur cette\n"
 "installation"
 
-#: libpq/hba.c:1181
+#: libpq/hba.c:1193
 msgid "krb5 authentication is not supported on local sockets"
 msgstr ""
 "l'authentification krb5 n'est pas supportée sur les connexions locales par\n"
 "socket"
 
-#: libpq/hba.c:1192
+#: libpq/hba.c:1204
 msgid "gssapi authentication is not supported on local sockets"
 msgstr ""
 "l'authentification gssapi n'est pas supportée sur les connexions locales "
 "par\n"
 "socket"
 
-#: libpq/hba.c:1203
+#: libpq/hba.c:1215
 msgid "peer authentication is only supported on local sockets"
 msgstr ""
 "l'authentification peer est seulement supportée sur les connexions locales "
 "par\n"
 "socket"
 
-#: libpq/hba.c:1220
+#: libpq/hba.c:1232
 msgid "cert authentication is only supported on hostssl connections"
 msgstr ""
 "l'authentification cert est seulement supportée sur les connexions hostssl"
 
-#: libpq/hba.c:1241
+#: libpq/hba.c:1253
 #, c-format
 msgid "authentication option not in name=value format: %s"
 msgstr "l'option d'authentification n'est pas dans le format nom=valeur : %s"
 
-#: libpq/hba.c:1257
+#: libpq/hba.c:1269
 msgid "ident, peer, krb5, gssapi, sspi and cert"
 msgstr "ident, peer, krb5, gssapi, sspi et cert"
 
-#: libpq/hba.c:1271
+#: libpq/hba.c:1283
 msgid "clientcert can only be configured for \"hostssl\" rows"
 msgstr "clientcert peut seulement être configuré pour les lignes « hostssl »"
 
-#: libpq/hba.c:1282
+#: libpq/hba.c:1294
 msgid ""
 "client certificates can only be checked if a root certificate store is "
 "available"
@@ -14828,37 +14833,37 @@ msgstr ""
 "les certificats cert peuvent seulement être vérifiés si un emplacement de\n"
 "certificat racine est disponible"
 
-#: libpq/hba.c:1283
+#: libpq/hba.c:1295
 msgid "Make sure the root.crt file is present and readable."
 msgstr ""
 "Assurez-vous que le certificat racine (root.crt) est présent et lisible"
 
-#: libpq/hba.c:1296
+#: libpq/hba.c:1308
 msgid "clientcert can not be set to 0 when using \"cert\" authentication"
 msgstr ""
 "clientcert ne peut pas être initialisé à 0 si vous utilisez "
 "l'authentification « cert »"
 
-#: libpq/hba.c:1330
+#: libpq/hba.c:1342
 #, c-format
 msgid "invalid LDAP port number: \"%s\""
 msgstr "numéro de port LDAP invalide : « %s »"
 
-#: libpq/hba.c:1376 libpq/hba.c:1384
+#: libpq/hba.c:1388 libpq/hba.c:1396
 msgid "krb5, gssapi and sspi"
 msgstr "krb5, gssapi et sspi"
 
-#: libpq/hba.c:1422
+#: libpq/hba.c:1434
 #, c-format
 msgid "invalid RADIUS port number: \"%s\""
 msgstr "numéro de port RADIUS invalide : « %s »"
 
-#: libpq/hba.c:1442
+#: libpq/hba.c:1454
 #, c-format
 msgid "unrecognized authentication option name: \"%s\""
 msgstr "nom d'option de l'authentification inconnu : « %s »"
 
-#: libpq/hba.c:1474
+#: libpq/hba.c:1486
 msgid ""
 "cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, or ldapsearchattribute "
 "together with ldapprefix"
@@ -14866,7 +14871,7 @@ msgstr ""
 "ne peut pas utiliser ldapbasedn, ldapbinddn, ldapbindpasswd\n"
 "ou ldapsearchattribute avec ldapprefix"
 
-#: libpq/hba.c:1484
+#: libpq/hba.c:1496
 msgid ""
 "authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix"
 "\", or \"ldapsuffix\" to be set"
@@ -14874,18 +14879,18 @@ msgstr ""
 "la méthode d'authentification « ldap » requiert un argument « ldapbasedn »,\n"
 "« ldapprefix » ou « ldapsuffix » pour être mise en place"
 
-#: libpq/hba.c:1815
+#: libpq/hba.c:1827
 #, c-format
 msgid "invalid regular expression \"%s\": %s"
 msgstr "expression rationnelle invalide « %s » : %s"
 
-#: libpq/hba.c:1838
+#: libpq/hba.c:1850
 #, c-format
 msgid "regular expression match for \"%s\" failed: %s"
 msgstr ""
 "la correspondance de l'expression rationnelle pour « %s » a échoué : %s"
 
-#: libpq/hba.c:1856
+#: libpq/hba.c:1868
 #, c-format
 msgid ""
 "regular expression \"%s\" has no subexpressions as requested by "
@@ -14894,12 +14899,12 @@ msgstr ""
 "l'expression rationnelle « %s » n'a pas de sous-expressions comme celle\n"
 "demandée par la référence dans « %s »"
 
-#: libpq/hba.c:1922
+#: libpq/hba.c:1934
 #, c-format
 msgid "missing entry in file \"%s\" at end of line %d"
 msgstr "entrée manquante dans le fichier « %s » à la fin de la ligne %d"
 
-#: libpq/hba.c:1963
+#: libpq/hba.c:1975
 #, c-format
 msgid "provided user name (%s) and authenticated user name (%s) do not match"
 msgstr ""
@@ -14907,14 +14912,14 @@ msgstr ""
 "ne\n"
 "correspondent pas"
 
-#: libpq/hba.c:1984
+#: libpq/hba.c:1996
 #, c-format
 msgid "no match in usermap \"%s\" for user \"%s\" authenticated as \"%s\""
 msgstr ""
 "pas de correspondance dans la usermap « %s » pour l'utilisateur « %s »\n"
 "authentifié en tant que « %s »"
 
-#: libpq/hba.c:2008
+#: libpq/hba.c:2020
 #, c-format
 msgid "could not open usermap file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier usermap « %s » : %m"
@@ -15019,7 +15024,7 @@ msgstr ""
 "dépassement de maxAllocatedDescs (%d) lors de l'ouverture du répertoire « %s "
 "»"
 
-#: storage/file/fd.c:1702
+#: storage/file/fd.c:1698
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "n'a pas pu lire le répertoire « %s » : %m"
@@ -15117,8 +15122,8 @@ msgstr "le « Large Object » %u n'a pas été ouvert en écriture"
 msgid "large object %u was already dropped"
 msgstr "le « Large Object » %u a déjà été supprimé"
 
-#: storage/page/bufpage.c:143 storage/page/bufpage.c:390
-#: storage/page/bufpage.c:623 storage/page/bufpage.c:753
+#: storage/page/bufpage.c:144 storage/page/bufpage.c:389
+#: storage/page/bufpage.c:621 storage/page/bufpage.c:753
 #, c-format
 msgid "corrupted page pointers: lower = %u, upper = %u, special = %u"
 msgstr ""
@@ -15130,12 +15135,12 @@ msgstr ""
 msgid "corrupted item pointer: %u"
 msgstr "pointeur d'élément corrompu : %u"
 
-#: storage/page/bufpage.c:444 storage/page/bufpage.c:805
+#: storage/page/bufpage.c:444 storage/page/bufpage.c:804
 #, c-format
 msgid "corrupted item lengths: total %u, available space %u"
 msgstr "longueurs d'élément corrompus : total %u, espace disponible %u"
 
-#: storage/page/bufpage.c:642 storage/page/bufpage.c:778
+#: storage/page/bufpage.c:640 storage/page/bufpage.c:777
 #, c-format
 msgid "corrupted item pointer: offset = %u, size = %u"
 msgstr "pointeur d'élément corrompu : décalage = %u, taille = %u"
@@ -19528,19 +19533,24 @@ msgstr "n'a pas pu obtenir la jonction pour « %s » : %s\n"
 msgid "could not open directory \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
 
-#: ../port/dirmod.c:480
+#: ../port/dirmod.c:476
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
 
-#: ../port/dirmod.c:563
+#: ../port/dirmod.c:488
+#, fuzzy, c-format
+msgid "could not close directory \"%s\": %s\n"
+msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
+
+#: ../port/dirmod.c:567
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
 msgstr ""
 "n'a pas pu récupérer les informations sur le fichier ou répertoire\n"
 "« %s » : %s\n"
 
-#: ../port/dirmod.c:590 ../port/dirmod.c:607
+#: ../port/dirmod.c:594 ../port/dirmod.c:611
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "n'a pas pu supprimer le fichier ou répertoire « %s » : %s\n"
