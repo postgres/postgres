@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2013.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.3\n"
+"Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-18 17:47-0300\n"
+"POT-Creation-Date: 2014-05-17 16:05-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -44,17 +44,17 @@ msgstr[1] "Sequência esperada de %d argumentos, recebeu %d: %s"
 msgid "iterating a closed cursor"
 msgstr "iterando um cursor fechado"
 
-#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:413
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterando um cursor em uma subtransação abortada"
 
-#: plpy_cursorobject.c:407
+#: plpy_cursorobject.c:405
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "busca em um cursor fechado"
 
-#: plpy_cursorobject.c:486
+#: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "fechando um cursor em uma subtransação abortada"
@@ -139,77 +139,77 @@ msgstr "ao criar valor de retorno"
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "não pode criar novo dicionário ao construir argumentos do gatilho"
 
-#: plpy_exec.c:665
+#: plpy_exec.c:663
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] removido, não pode modificar registro"
 
-#: plpy_exec.c:668
+#: plpy_exec.c:667
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] não é um dicionário"
 
-#: plpy_exec.c:692
+#: plpy_exec.c:691
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "chave do dicionário TD[\"new\"] na posição %d não é uma cadeia de caracteres"
 
-#: plpy_exec.c:698
+#: plpy_exec.c:697
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "chave \"%s\" encontrada em TD[\"new\"] não existe como uma coluna no registro do gatilho"
 
-#: plpy_exec.c:779
+#: plpy_exec.c:777
 #, c-format
 msgid "while modifying trigger row"
 msgstr "ao modificar registro de gatilho"
 
-#: plpy_exec.c:840
+#: plpy_exec.c:838
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "forçado a abortar subtransação que não foi concluída"
 
-#: plpy_main.c:102
+#: plpy_main.c:93
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "versão do Python não corresponde na sessão"
 
-#: plpy_main.c:103
+#: plpy_main.c:94
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Esta sessão utilizou Python versão %d, e agora está tentando utilizar Python versão %d."
 
-#: plpy_main.c:105
+#: plpy_main.c:96
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Inicie uma nova sessão para utilizar uma versão diferente do Python."
 
-#: plpy_main.c:120
+#: plpy_main.c:111
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "erro não interceptado na inicialização"
 
-#: plpy_main.c:143
+#: plpy_main.c:134
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "não pôde importar módulo \"__main__\""
 
-#: plpy_main.c:148
+#: plpy_main.c:139
 #, c-format
 msgid "could not create globals"
 msgstr "não pôde criar globais"
 
-#: plpy_main.c:152
+#: plpy_main.c:143
 #, c-format
 msgid "could not initialize globals"
 msgstr "não pôde inicializar globais"
 
-#: plpy_main.c:352
+#: plpy_main.c:347
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "função PL/Python \"%s\""
 
-#: plpy_main.c:359
+#: plpy_main.c:354
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloco de código PL/Python anônimo"
@@ -253,7 +253,7 @@ msgstr "não pode analisar mensagem de erro em plpy.elog"
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: plpy_procedure.c:205 plpy_typeio.c:408
+#: plpy_procedure.c:205 plpy_typeio.c:409
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funções PL/Python não podem retornar tipo %s"
@@ -313,11 +313,6 @@ msgstr "SPI_execute_plan falhou: %s"
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute falhou: %s"
 
-#: plpy_spi.c:440
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "erro desconhecido em PLy_spi_execute_fetch_result"
-
 #: plpy_subxactobject.c:122
 #, c-format
 msgid "this subtransaction has already been entered"
@@ -338,82 +333,97 @@ msgstr "essa subtransação não foi iniciada"
 msgid "there is no subtransaction to exit from"
 msgstr "não há uma subtransação a ser concluída"
 
-#: plpy_typeio.c:293
+#: plpy_typeio.c:294
 #, c-format
 msgid "could not create new dictionary"
 msgstr "não pôde criar novo dicionário"
 
-#: plpy_typeio.c:410
+#: plpy_typeio.c:411
 #, c-format
 msgid "PL/Python does not support conversion to arrays of row types."
 msgstr "PL/Python não suporta conversão para matrizes de tipos row."
 
-#: plpy_typeio.c:595
+#: plpy_typeio.c:540
+#, c-format
+msgid "could not import a module for Decimal constructor"
+msgstr "não pôde importar módulo para construtor Decimal"
+
+#: plpy_typeio.c:544
+#, c-format
+msgid "no Decimal attribute in module"
+msgstr "nenhum atributo Decimal no módulo"
+
+#: plpy_typeio.c:550
+#, c-format
+msgid "conversion from numeric to Decimal failed"
+msgstr "conversão de numeric para Decimal falhou"
+
+#: plpy_typeio.c:619
 #, c-format
 msgid "cannot convert multidimensional array to Python list"
 msgstr "não pode converter matriz multidimensional para lista Python"
 
-#: plpy_typeio.c:596
+#: plpy_typeio.c:620
 #, c-format
 msgid "PL/Python only supports one-dimensional arrays."
 msgstr "PL/Python só suporta matrizes unidimensionais."
 
-#: plpy_typeio.c:602
+#: plpy_typeio.c:626
 #, c-format
 msgid "could not create new Python list"
 msgstr "não pôde criar nova lista Python"
 
-#: plpy_typeio.c:661
+#: plpy_typeio.c:685
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "não pôde criar representação de bytes de um objeto Python"
 
-#: plpy_typeio.c:753
+#: plpy_typeio.c:777
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "não pôde criar representação de cadeia de caracteres de um objeto Python"
 
-#: plpy_typeio.c:764
+#: plpy_typeio.c:788
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "não pôde converter objeto Python em cstring: representação de cadeia de caracteres Python parece conter bytes nulos"
 
-#: plpy_typeio.c:798
+#: plpy_typeio.c:823
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "valor de retorno da função do tipo matriz retorna tipo que não é uma sequência Python"
 
-#: plpy_typeio.c:897
+#: plpy_typeio.c:930
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "chave \"%s\" não foi encontrada no mapeamento"
 
-#: plpy_typeio.c:898
+#: plpy_typeio.c:931
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Para retornar nulo em uma coluna, adicionar o valor None no mapeamento cuja chave é o nome da coluna."
 
-#: plpy_typeio.c:946
+#: plpy_typeio.c:979
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "tamanho da sequência retornada não combina com número de colunas no registro"
 
-#: plpy_typeio.c:1054
+#: plpy_typeio.c:1087
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atributo \"%s\" não existe no objeto Python"
 
-#: plpy_typeio.c:1055
+#: plpy_typeio.c:1088
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Para retornar nulo na coluna, deixe o objeto retornado ter um atributo cuja chave é o nome do coluna e o valor é None."
 
-#: plpy_util.c:70
+#: plpy_util.c:72
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
 msgstr "não pôde converter objeto Unicode Python para bytes"
 
-#: plpy_util.c:75
+#: plpy_util.c:78
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "não pôde extrair bytes de cadeia de caracteres codificada"

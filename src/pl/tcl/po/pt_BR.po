@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for pltcl
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2013.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.3\n"
+"Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-05-06 18:00-0300\n"
+"POT-Creation-Date: 2014-05-17 16:06-0300\n"
 "PO-Revision-Date: 2009-05-06 18:00-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -16,12 +16,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pltcl.c:1157
+#: pltcl.c:1210
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1158
+#: pltcl.c:1211
 #, c-format
 msgid ""
 "%s\n"
@@ -30,27 +30,27 @@ msgstr ""
 "%s\n"
 "na função PL/Tcl \"%s\""
 
-#: pltcl.c:1262 pltcl.c:1269
+#: pltcl.c:1319 pltcl.c:1326
 #, c-format
 msgid "out of memory"
 msgstr "sem memória"
 
-#: pltcl.c:1316
+#: pltcl.c:1374
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: pltcl.c:1325
+#: pltcl.c:1383
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "funções PL/Tcl não podem retornar tipo %s"
 
-#: pltcl.c:1337
+#: pltcl.c:1395
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "funções PL/Tcl não podem retornar tipos compostos"
 
-#: pltcl.c:1376
+#: pltcl.c:1434
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "funções PL/Tcl não podem aceitar tipo %s"
