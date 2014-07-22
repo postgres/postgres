@@ -13663,6 +13663,17 @@ fi
 
 fi
 
+# PGAC_LDAP_SAFE
+# --------------
+# PostgreSQL sometimes loads libldap_r and plain libldap into the same
+# process.  Check for OpenLDAP versions known not to tolerate doing so; assume
+# non-OpenLDAP implementations are safe.  The dblink test suite exercises the
+# hazardous interaction directly.
+
+
+
+
+
 if test "$with_ldap" = yes ; then
   if test "$PORTNAME" != "win32"; then
 
@@ -13820,6 +13831,72 @@ fi
 
 done
 
+     { $as_echo "$as_me:$LINENO: checking for compatible LDAP implementation" >&5
+$as_echo_n "checking for compatible LDAP implementation... " >&6; }
+if test "${pgac_cv_ldap_safe+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <ldap.h>
+#if !defined(LDAP_VENDOR_VERSION) || \
+     (defined(LDAP_API_FEATURE_X_OPENLDAP) && \
+      LDAP_VENDOR_VERSION >= 20424 && LDAP_VENDOR_VERSION <= 20431)
+choke me
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  pgac_cv_ldap_safe=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	pgac_cv_ldap_safe=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_ldap_safe" >&5
+$as_echo "$pgac_cv_ldap_safe" >&6; }
+
+if test "$pgac_cv_ldap_safe" != yes; then
+  { $as_echo "$as_me:$LINENO: WARNING:
+*** With OpenLDAP versions 2.4.24 through 2.4.31, inclusive, each backend
+*** process that loads libpq (via WAL receiver, dblink, or postgres_fdw) and
+*** also uses LDAP will crash on exit." >&5
+$as_echo "$as_me: WARNING:
+*** With OpenLDAP versions 2.4.24 through 2.4.31, inclusive, each backend
+*** process that loads libpq (via WAL receiver, dblink, or postgres_fdw) and
+*** also uses LDAP will crash on exit." >&2;}
+fi
   else
 
 for ac_header in winldap.h
