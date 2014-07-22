@@ -7,7 +7,9 @@ SHLIB_LINK = $(libpq)
 
 DATA_built = dblink.sql 
 DATA = uninstall_dblink.sql 
-REGRESS = dblink
+REGRESS = paths dblink
+REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB) --dlpath=$(top_builddir)/src/test/regress
+EXTRA_CLEAN = sql/paths.sql expected/paths.out
 
 
 # the db name is hard-coded in the tests
