@@ -6,6 +6,7 @@
 
 #include <float.h>
 #include <math.h>
+#include <signal.h>
 
 #include "access/htup_details.h"
 #include "access/transam.h"
@@ -16,6 +17,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/rel.h"
@@ -821,4 +823,45 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	 * function into a container type (record, array, etc) it should be OK.
 	 */
 	PG_RETURN_POINTER(newtup->t_data);
+}
+
+PG_FUNCTION_INFO_V1(regress_putenv);
+
+Datum
+regress_putenv(PG_FUNCTION_ARGS)
+{
+	MemoryContext oldcontext;
+	char	   *envbuf;
+
+	if (!superuser())
+		elog(ERROR, "must be superuser to change environment variables");
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	envbuf = text_to_cstring((text *) PG_GETARG_POINTER(0));
+	MemoryContextSwitchTo(oldcontext);
+
+	if (putenv(envbuf) != 0)
+		elog(ERROR, "could not set environment variable: %m");
+
+	PG_RETURN_VOID();
+}
+
+/* Sleep until no process has a given PID. */
+PG_FUNCTION_INFO_V1(wait_pid);
+
+Datum
+wait_pid(PG_FUNCTION_ARGS)
+{
+	int			pid = PG_GETARG_INT32(0);
+
+	if (!superuser())
+		elog(ERROR, "must be superuser to check PID liveness");
+
+	while (kill(pid, 0) == 0)
+		pg_usleep(50000);
+
+	if (errno != ESRCH)
+		elog(ERROR, "could not check PID %d liveness: %m", pid);
+
+	PG_RETURN_VOID();
 }
