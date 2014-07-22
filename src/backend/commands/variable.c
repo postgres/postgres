@@ -372,6 +372,13 @@ check_timezone(char **newval, void **extra, GucSource source)
 		}
 	}
 
+	/* Test for failure in pg_tzset_offset, which we assume is out-of-range */
+	if (!myextra.session_timezone)
+	{
+		GUC_check_errdetail("UTC timezone offset is out of range.");
+		return false;
+	}
+
 	/*
 	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 *
