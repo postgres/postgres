@@ -33,3 +33,4 @@ src/backend/regex/re_syntax.n		-whitespace
 src/backend/snowball/libstemmer/*.c	-whitespace
 src/backend/utils/mb/Unicode/*-std.txt	-whitespace
 src/include/snowball/libstemmer/*	-whitespace
+src/timezone/data/*			-whitespace
