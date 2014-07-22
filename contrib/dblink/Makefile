@@ -10,7 +10,9 @@ EXTENSION = dblink
 DATA = dblink--1.1.sql dblink--1.0--1.1.sql dblink--unpackaged--1.0.sql
 PGFILEDESC = "dblink - connect to other PostgreSQL databases"
 
-REGRESS = dblink
+REGRESS = paths dblink
+REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
+EXTRA_CLEAN = sql/paths.sql expected/paths.out
 
 # the db name is hard-coded in the tests
 override USE_MODULE_DB =
