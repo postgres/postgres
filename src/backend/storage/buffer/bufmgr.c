@@ -2032,8 +2032,8 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 }
 
 /*
- * RelationGetNumberOfBlocks
- *		Determines the current number of pages in the relation.
+ * RelationGetNumberOfBlocksInFork
+ *		Determines the current number of pages in the specified relation fork.
  */
 BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
