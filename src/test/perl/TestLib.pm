@@ -39,6 +39,12 @@ BEGIN
 	  }
 }
 
+# Set to untranslated messages, to be able to compare program output
+# with expected strings.
+delete $ENV{LANGUAGE};
+delete $ENV{LC_ALL};
+$ENV{LC_MESSAGES} = 'C';
+
 delete $ENV{PGCONNECT_TIMEOUT};
 delete $ENV{PGDATA};
 delete $ENV{PGDATABASE};
