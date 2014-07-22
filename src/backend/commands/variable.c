@@ -241,6 +241,8 @@ assign_timezone(const char *value, bool doit, GucSource source)
 	char	   *result;
 	char	   *endptr;
 	double		hours;
+	int			new_ctimezone;
+	pg_tz	   *new_tz;
 
 	/*
 	 * Check for INTERVAL 'foo'
@@ -294,16 +296,28 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			pfree(interval);
 			return NULL;
 		}
+
+		/* Here we change from SQL to Unix sign convention */
+#ifdef HAVE_INT64_TIMESTAMP
+		new_ctimezone = -(interval->time / USECS_PER_SEC);
+#else
+		new_ctimezone = -interval->time;
+#endif
+		new_tz = pg_tzset_offset(new_ctimezone);
+
+		if (!new_tz)
+		{
+			ereport(GUC_complaint_elevel(source),
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid interval value for time zone: out of range")));
+			pfree(interval);
+			return NULL;
+		}
+
 		if (doit)
 		{
-			/* Here we change from SQL to Unix sign convention */
-#ifdef HAVE_INT64_TIMESTAMP
-			CTimeZone = -(interval->time / USECS_PER_SEC);
-#else
-			CTimeZone = -interval->time;
-#endif
-			session_timezone = pg_tzset_offset(CTimeZone);
-
+			CTimeZone = new_ctimezone;
+			session_timezone = new_tz;
 			HasCTZSet = true;
 		}
 		pfree(interval);
@@ -316,11 +330,22 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		hours = strtod(value, &endptr);
 		if (endptr != value && *endptr == '\0')
 		{
+			/* Here we change from SQL to Unix sign convention */
+			new_ctimezone = -hours * SECS_PER_HOUR;
+			new_tz = pg_tzset_offset(new_ctimezone);
+
+			if (!new_tz)
+			{
+				ereport(GUC_complaint_elevel(source),
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid value for time zone: out of range")));
+				return NULL;
+			}
+
 			if (doit)
 			{
-				/* Here we change from SQL to Unix sign convention */
-				CTimeZone = -hours * SECS_PER_HOUR;
-				session_timezone = pg_tzset_offset(CTimeZone);
+				CTimeZone = new_ctimezone;
+				session_timezone = new_tz;
 				HasCTZSet = true;
 			}
 		}
@@ -352,8 +377,6 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			/*
 			 * Otherwise assume it is a timezone name, and try to load it.
 			 */
-			pg_tz	   *new_tz;
-
 			new_tz = pg_tzset(value);
 
 			if (!new_tz)
