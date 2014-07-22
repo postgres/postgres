@@ -65,6 +65,34 @@ SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
+-- The first-level connection's backend will crash on exit given OpenLDAP
+-- [2.4.24, 2.4.31].  We won't see evidence of any crash until the victim
+-- process terminates and the postmaster responds.  If process termination
+-- entails writing a core dump, that can take awhile.  Wait for the process to
+-- vanish.  At that point, the postmaster has called waitpid() on the crashed
+-- process, and it will accept no new connections until it has reinitialized
+-- the cluster.  (We can't exploit pg_stat_activity, because the crash happens
+-- after the backend updates shared memory to reflect its impending exit.)
+DO $pl$
+DECLARE
+	detail text;
+BEGIN
+	PERFORM wait_pid(crash_pid)
+	FROM dblink('dbname=contrib_regression', $$
+		SELECT pg_backend_pid() FROM dblink(
+			'service=test_ldap dbname=contrib_regression',
+			-- This string concatenation is a hack to shoehorn a
+			-- set_pgservicefile call into the SQL statement.
+			'SELECT 1' || set_pgservicefile('pg_service.conf')
+		) t(c int)
+	$$) AS t(crash_pid int);
+EXCEPTION WHEN OTHERS THEN
+	GET STACKED DIAGNOSTICS detail = PG_EXCEPTION_DETAIL;
+	-- Expected error in a non-LDAP build.
+	IF NOT detail LIKE 'syntax error in service file%' THEN RAISE; END IF;
+END
+$pl$;
+
 -- create a persistent connection
 SELECT dblink_connect('dbname=contrib_regression');
 
