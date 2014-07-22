@@ -349,6 +349,13 @@ check_timezone(char **newval, void **extra, GucSource source)
 		}
 	}
 
+	/* Test for failure in pg_tzset_offset, which we assume is out-of-range */
+	if (!new_tz)
+	{
+		GUC_check_errdetail("UTC timezone offset is out of range.");
+		return false;
+	}
+
 	/*
 	 * Pass back data for assign_timezone to use
 	 */
