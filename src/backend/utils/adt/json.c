@@ -2184,10 +2184,6 @@ json_object(PG_FUNCTION_ARGS)
 					 errmsg("null value not allowed for object key")));
 
 		v = TextDatumGetCString(in_datums[i * 2]);
-		if (v[0] == '\0')
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("empty value not allowed for object key")));
 		if (i > 0)
 			appendStringInfoString(&result, ", ");
 		escape_json(&result, v);
@@ -2272,10 +2268,6 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 					 errmsg("null value not allowed for object key")));
 
 		v = TextDatumGetCString(key_datums[i]);
-		if (v[0] == '\0')
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("empty value not allowed for object key")));
 		if (i > 0)
 			appendStringInfoString(&result, ", ");
 		escape_json(&result, v);

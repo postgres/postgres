@@ -1209,9 +1209,13 @@ ERROR:  mismatched array dimensions
 -- null key error
 select json_object('{a,b,NULL,"d e f"}','{1,2,3,"a b c"}');
 ERROR:  null value not allowed for object key
--- empty key error
+-- empty key is allowed
 select json_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
-ERROR:  empty value not allowed for object key
+                     json_object                     
+-----------------------------------------------------
+ {"a" : "1", "b" : "2", "" : "3", "d e f" : "a b c"}
+(1 row)
+
 -- json_to_record and json_to_recordset
 select * from json_to_record('{"a":1,"b":"foo","c":"bar"}')
     as x(a int, b text, d text);
