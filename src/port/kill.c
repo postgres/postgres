@@ -50,13 +50,28 @@ pgkill(int pid, int sig)
 		return 0;
 	}
 
-	if (GetLastError() == ERROR_FILE_NOT_FOUND)
-		errno = ESRCH;
-	else if (GetLastError() == ERROR_ACCESS_DENIED)
-		errno = EPERM;
-	else
-		errno = EINVAL;
-	return -1;
+	switch (GetLastError())
+	{
+		case ERROR_BROKEN_PIPE:
+		case ERROR_BAD_PIPE:
+
+			/*
+			 * These arise transiently as a process is exiting.  Treat them
+			 * like POSIX treats a zombie process, reporting success.
+			 */
+			return 0;
+
+		case ERROR_FILE_NOT_FOUND:
+			/* pipe fully gone, so treat the process as gone */
+			errno = ESRCH;
+			return -1;
+		case ERROR_ACCESS_DENIED:
+			errno = EPERM;
+			return -1;
+		default:
+			errno = EINVAL;		/* unexpected */
+			return -1;
+	}
 }
 
 #endif
