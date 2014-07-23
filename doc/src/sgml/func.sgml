@@ -16928,20 +16928,40 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    <function>pg_relation_size</> accepts the OID or name of a table, index or
-    toast table, and returns the on-disk size in bytes.
-    Specifying <literal>'main'</literal> or leaving out the second argument
-    returns the size of the main data fork of the relation.
-    Specifying <literal>'fsm'</literal> returns the size of the Free Space
-    Map (see <xref linkend="storage-fsm">) associated with the relation.
-    Specifying <literal>'vm'</literal> returns the size of the Visibility
-    Map (see <xref linkend="storage-vm">) associated with the relation.
-    Specifying <literal>'init'</literal> returns the size of the
-    initialization fork, if any, associated with the relation.
-    Note that this function shows the size of only one fork;
-    for most purposes it is more convenient to use the higher-level
-    functions <function>pg_total_relation_size</> or
-    <function>pg_table_size</>.
+    <function>pg_relation_size</> accepts the OID or name of a table, index
+    or toast table, and returns the on-disk size in bytes of one fork of
+    that relation.  (Note that for most purposes it is more convenient to
+    use the higher-level functions <function>pg_total_relation_size</>
+    or <function>pg_table_size</>, which sum the sizes of all forks.)
+    With one argument, it returns the size of the main data fork of the
+    relation.  The second argument can be provided to specify which fork
+    to examine:
+    <itemizedlist spacing="compact">
+     <listitem>
+      <para>
+       <literal>'main'</literal> returns the size of the main
+       data fork of the relation.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>'fsm'</literal> returns the size of the Free Space Map
+       (see <xref linkend="storage-fsm">) associated with the relation.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>'vm'</literal> returns the size of the Visibility Map
+       (see <xref linkend="storage-vm">) associated with the relation.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>'init'</literal> returns the size of the initialization
+       fork, if any, associated with the relation.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
