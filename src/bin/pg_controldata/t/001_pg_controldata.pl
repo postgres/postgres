@@ -11,6 +11,6 @@ program_options_handling_ok('pg_controldata');
 command_fails(['pg_controldata'], 'pg_controldata without arguments fails');
 command_fails([ 'pg_controldata', 'nonexistent' ],
 	'pg_controldata with nonexistent directory fails');
-system_or_bail "initdb -D $tempdir/data -A trust >/dev/null";
+system_or_bail "initdb -D '$tempdir'/data -A trust >/dev/null";
 command_like([ 'pg_controldata', "$tempdir/data" ],
 	qr/checkpoint/, 'pg_controldata produces output');

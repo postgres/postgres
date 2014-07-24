@@ -88,7 +88,7 @@ sub start_test_server
 
 	my $tempdir_short = tempdir_short;
 
-	system "initdb -D $tempdir/pgdata -A trust -N >/dev/null";
+	system "initdb -D '$tempdir'/pgdata -A trust -N >/dev/null";
 	$ret = system 'pg_ctl', '-D', "$tempdir/pgdata", '-s', '-w', '-l',
 	  "$tempdir/logfile", '-o',
 	  "--fsync=off -k $tempdir_short --listen-addresses='' --log-statement=all",
@@ -223,7 +223,7 @@ sub issues_sql_like
 		truncate $test_server_logfile, 0;
 		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
 		ok($result, "@$cmd exit code 0");
-		my $log = `cat $test_server_logfile`;
+		my $log = `cat '$test_server_logfile'`;
 		like($log, $expected_sql, "$test_name: SQL found in server log");
 	};
 }
