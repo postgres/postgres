@@ -676,7 +676,10 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, void *data, bool nowait,
 
 		/* Bail out if the queue has been detached. */
 		if (detached)
+		{
+			*bytes_written = sent;
 			return SHM_MQ_DETACHED;
+		}
 
 		if (available == 0)
 		{
@@ -691,12 +694,16 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, void *data, bool nowait,
 				if (nowait)
 				{
 					if (shm_mq_get_receiver(mq) == NULL)
+					{
+						*bytes_written = sent;
 						return SHM_MQ_WOULD_BLOCK;
+					}
 				}
 				else if (!shm_mq_wait_internal(mq, &mq->mq_receiver,
 											   mqh->mqh_handle))
 				{
 					mq->mq_detached = true;
+					*bytes_written = sent;
 					return SHM_MQ_DETACHED;
 				}
 				mqh->mqh_counterparty_attached = true;
