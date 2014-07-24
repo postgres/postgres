@@ -18,27 +18,27 @@ command_fails([ 'initdb', '-S', "$tempdir/data3" ],
 mkdir "$tempdir/data4" or BAIL_OUT($!);
 command_ok([ 'initdb', "$tempdir/data4" ], 'existing empty data directory');
 
-system_or_bail "rm -rf $tempdir/*";
+system_or_bail "rm -rf '$tempdir'/*";
 
 command_ok([ 'initdb', "$tempdir/data", '-X', "$tempdir/pgxlog" ],
 	'separate xlog directory');
 
-system_or_bail "rm -rf $tempdir/*";
+system_or_bail "rm -rf '$tempdir'/*";
 command_fails(
 	[ 'initdb', "$tempdir/data", '-X', 'pgxlog' ],
 	'relative xlog directory not allowed');
 
-system_or_bail "rm -rf $tempdir/*";
+system_or_bail "rm -rf '$tempdir'/*";
 mkdir "$tempdir/pgxlog";
 command_ok([ 'initdb', "$tempdir/data", '-X', "$tempdir/pgxlog" ],
 	'existing empty xlog directory');
 
-system_or_bail "rm -rf $tempdir/*";
+system_or_bail "rm -rf '$tempdir'/*";
 mkdir "$tempdir/pgxlog";
 mkdir "$tempdir/pgxlog/lost+found";
 command_fails([ 'initdb', "$tempdir/data", '-X', "$tempdir/pgxlog" ],
 	'existing nonempty xlog directory');
 
-system_or_bail "rm -rf $tempdir/*";
+system_or_bail "rm -rf '$tempdir'/*";
 command_ok([ 'initdb', "$tempdir/data", '-T', 'german' ],
 	'select default dictionary');
