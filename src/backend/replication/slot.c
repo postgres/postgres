@@ -1192,6 +1192,24 @@ RestoreSlotFromDisk(const char *name)
 				(errmsg("replication slot file %s: checksum mismatch, is %u, should be %u",
 						path, checksum, cp.checksum)));
 
+	/*
+	 * If we crashed with an ephemeral slot active, don't restore but delete
+	 * it.
+	 */
+	if (cp.slotdata.persistency != RS_PERSISTENT)
+	{
+		sprintf(path, "pg_replslot/%s", name);
+
+		if (!rmtree(path, true))
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not remove directory \"%s\"", path)));
+		}
+		fsync_fname("pg_replslot", true);
+		return;
+	}
+
 	/* nothing can be active yet, don't lock anything */
 	for (i = 0; i < max_replication_slots; i++)
 	{
@@ -1205,10 +1223,6 @@ RestoreSlotFromDisk(const char *name)
 		/* restore the entire set of persistent data */
 		memcpy(&slot->data, &cp.slotdata,
 			   sizeof(ReplicationSlotPersistentData));
-
-		/* Don't restore the slot if it's not parked as persistent. */
-		if (slot->data.persistency != RS_PERSISTENT)
-			return;
 
 		/* initialize in memory state */
 		slot->effective_xmin = cp.slotdata.xmin;
