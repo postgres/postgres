@@ -1956,7 +1956,7 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\pset <replaceable class="parameter">option</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
+        <term><literal>\pset [ <replaceable class="parameter">option</replaceable> [ <replaceable class="parameter">value</replaceable> ] ]</literal></term>
 
         <listitem>
         <para>
@@ -1970,6 +1970,11 @@ lo_import 152801
         behavior is mentioned, then omitting
         <replaceable class="parameter">value</replaceable> just results in
         the current setting being displayed.
+        </para>
+
+        <para>
+        <command>\pset</command> without any arguments displays the current status
+        of all printing options.
         </para>
 
         <para>
@@ -2310,11 +2315,6 @@ lo_import 152801
         <command>\t</command>, <command>\T</command>, and <command>\x</command>.
         </para>
         </tip>
-
-        <para>
-        <command>\pset</command> without any arguments displays the current status
-        of all printing options.
-        </para>
 
         </listitem>
       </varlistentry>
