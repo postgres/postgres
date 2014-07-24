@@ -2878,7 +2878,7 @@ LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 	 * Decrement strong lock count.  This logic is needed only for 2PC.
 	 */
 	if (decrement_strong_lock_count
-		&& ConflictsWithRelationFastPath(&lock->tag, lockmode))
+		&& ConflictsWithRelationFastPath(locktag, lockmode))
 	{
 		uint32		fasthashcode = FastPathStrongLockHashPartition(hashcode);
 
