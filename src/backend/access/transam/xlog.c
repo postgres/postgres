@@ -4815,6 +4815,11 @@ XLOGShmemInit(void)
 	{
 		/* both should be present or neither */
 		Assert(foundCFile && foundXLog);
+
+		/* Initialize local copy of WALInsertLocks and register the tranche */
+		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
+		LWLockRegisterTranche(XLogCtl->Insert.WALInsertLockTrancheId,
+							  &XLogCtl->Insert.WALInsertLockTranche);
 		return;
 	}
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
@@ -7594,11 +7599,6 @@ InitXLOGAccess(void)
 	/* ThisTimeLineID doesn't change so we need no lock to copy it */
 	ThisTimeLineID = XLogCtl->ThisTimeLineID;
 	Assert(ThisTimeLineID != 0 || IsBootstrapProcessingMode());
-
-	/* Initialize our copy of WALInsertLocks and register the tranche */
-	WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
-	LWLockRegisterTranche(XLogCtl->Insert.WALInsertLockTrancheId,
-						  &XLogCtl->Insert.WALInsertLockTranche);
 
 	/* Use GetRedoRecPtr to copy the RedoRecPtr safely */
 	(void) GetRedoRecPtr();
