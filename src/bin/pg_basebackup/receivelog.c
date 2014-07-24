@@ -1094,7 +1094,7 @@ CopyStreamReceive(PGconn *conn, long timeout, char **buffer)
 		 * No data available. Wait for some to appear, but not longer than
 		 * the specified timeout, so that we can ping the server.
 		 */
-		if (timeout > 0)
+		if (timeout != 0)
 		{
 			int		ret;
 
