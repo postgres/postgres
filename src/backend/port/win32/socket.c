@@ -623,7 +623,8 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 		return 0;
 	}
 
-	if (r == WAIT_OBJECT_0 + numevents)
+	/* Signal-like events. */
+	if (r == WAIT_OBJECT_0 + numevents || r == WAIT_IO_COMPLETION)
 	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
