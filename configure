@@ -9475,17 +9475,6 @@ fi
 
 fi
 
-# PGAC_LDAP_SAFE
-# --------------
-# PostgreSQL sometimes loads libldap_r and plain libldap into the same
-# process.  Check for OpenLDAP versions known not to tolerate doing so; assume
-# non-OpenLDAP implementations are safe.  The dblink test suite exercises the
-# hazardous interaction directly.
-
-
-
-
-
 if test "$with_ldap" = yes ; then
   if test "$PORTNAME" != "win32"; then
      for ac_header in ldap.h
