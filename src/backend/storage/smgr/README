@@ -50,7 +50,7 @@ independently of the main data file, while still treating it all as a single
 physical relation in system catalogs.
 
 It is assumed that the main fork, fork number 0 or MAIN_FORKNUM, always
-exists. Fork numbers are assigned in src/include/storage/relfilenode.h.
+exists. Fork numbers are assigned in src/include/common/relpath.h.
 Functions in smgr.c and md.c take an extra fork number argument, in addition
 to relfilenode and block number, to identify which relation fork you want to
 access. Since most code wants to access the main fork, a shortcut version of
