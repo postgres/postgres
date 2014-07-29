@@ -165,7 +165,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 				allow_old = !(infomask & HEAP_LOCK_MASK) &&
 					(infomask & HEAP_XMAX_LOCK_ONLY);
-				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old);
+				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old,
+												 false);
 				if (nmembers == -1)
 				{
 					values[Atnum_xids] = "{0}";

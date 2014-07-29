@@ -428,7 +428,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	 * caller of this function does a check that the multixact is no longer
 	 * running.
 	 */
-	nmembers = GetMultiXactIdMembers(multi, &members, false);
+	nmembers = GetMultiXactIdMembers(multi, &members, false, false);
 
 	if (nmembers < 0)
 	{
@@ -517,7 +517,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
  * a pg_upgraded share-locked tuple.
  */
 bool
-MultiXactIdIsRunning(MultiXactId multi)
+MultiXactIdIsRunning(MultiXactId multi, bool isLockOnly)
 {
 	MultiXactMember *members;
 	int			nmembers;
@@ -529,7 +529,7 @@ MultiXactIdIsRunning(MultiXactId multi)
 	 * "false" here means we assume our callers have checked that the given
 	 * multi cannot possibly come from a pg_upgraded database.
 	 */
-	nmembers = GetMultiXactIdMembers(multi, &members, false);
+	nmembers = GetMultiXactIdMembers(multi, &members, false, isLockOnly);
 
 	if (nmembers < 0)
 	{
@@ -1095,10 +1095,15 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  * the value currently known as the next to assign, raise an error.  Previously
  * these also returned -1, but since this can lead to the wrong visibility
  * results, it is dangerous to do that.
+ *
+ * onlyLock must be set to true if caller is certain that the given multi
+ * is used only to lock tuples; can be false without loss of correctness,
+ * but passing a true means we can return quickly without checking for
+ * old updates.
  */
 int
 GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
-					  bool allow_old)
+					  bool allow_old, bool onlyLock)
 {
 	int			pageno;
 	int			prev_pageno;
@@ -1131,6 +1136,19 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 
 	/* Set our OldestVisibleMXactId[] entry if we didn't already */
 	MultiXactIdSetOldestVisible();
+
+	/*
+	 * If we know the multi is used only for locking and not for updates,
+	 * then we can skip checking if the value is older than our oldest
+	 * visible multi.  It cannot possibly still be running.
+	 */
+	if (onlyLock &&
+		MultiXactIdPrecedes(multi, OldestVisibleMXactId[MyBackendId]))
+	{
+		debug_elog2(DEBUG2, "GetMembers: a locker-only multi is too old");
+		*members = NULL;
+		return -1;
+	}
 
 	/*
 	 * We check known limits on MultiXact before resorting to the SLRU area.
@@ -1335,7 +1353,7 @@ MultiXactHasRunningRemoteMembers(MultiXactId multi)
 	int			nmembers;
 	int			i;
 
-	nmembers = GetMultiXactIdMembers(multi, &members, true);
+	nmembers = GetMultiXactIdMembers(multi, &members, true, false);
 	if (nmembers <= 0)
 		return false;
 
@@ -2807,7 +2825,8 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 
 		multi = palloc(sizeof(mxact));
 		/* no need to allow for old values here */
-		multi->nmembers = GetMultiXactIdMembers(mxid, &multi->members, false);
+		multi->nmembers = GetMultiXactIdMembers(mxid, &multi->members, false,
+												false);
 		multi->iter = 0;
 
 		tupdesc = CreateTemplateTupleDesc(2, false);
