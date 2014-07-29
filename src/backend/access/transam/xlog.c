@@ -4494,6 +4494,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	bool		stopsHere;
 	uint8		record_info;
 	TimestampTz recordXtime;
+	TransactionId recordXid;
 	char		recordRPName[MAXFNAMELEN];
 
 	/* We only consider stopping at COMMIT, ABORT or RESTORE POINT records */
@@ -4506,6 +4507,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 
 		recordXactCommitData = (xl_xact_commit_compact *) XLogRecGetData(record);
 		recordXtime = recordXactCommitData->xact_time;
+		recordXid = record->xl_xid;
 	}
 	else if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_COMMIT)
 	{
@@ -4513,6 +4515,15 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 
 		recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
 		recordXtime = recordXactCommitData->xact_time;
+		recordXid = record->xl_xid;
+	}
+	else if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_COMMIT_PREPARED)
+	{
+		xl_xact_commit_prepared *recordXactCommitData;
+
+		recordXactCommitData = (xl_xact_commit_prepared *) XLogRecGetData(record);
+		recordXtime = recordXactCommitData->crec.xact_time;
+		recordXid = recordXactCommitData->xid;
 	}
 	else if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_ABORT)
 	{
@@ -4520,6 +4531,15 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 
 		recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
 		recordXtime = recordXactAbortData->xact_time;
+		recordXid = record->xl_xid;
+	}
+	else if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_ABORT_PREPARED)
+	{
+		xl_xact_abort_prepared *recordXactAbortData;
+
+		recordXactAbortData = (xl_xact_abort_prepared *) XLogRecGetData(record);
+		recordXtime = recordXactAbortData->arec.xact_time;
+		recordXid = recordXactAbortData->xid;
 	}
 	else if (record->xl_rmid == RM_XLOG_ID && record_info == XLOG_RESTORE_POINT)
 	{
@@ -4527,6 +4547,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 
 		recordRestorePointData = (xl_restore_point *) XLogRecGetData(record);
 		recordXtime = recordRestorePointData->rp_time;
+		recordXid = InvalidTransactionId;
 		strlcpy(recordRPName, recordRestorePointData->rp_name, MAXFNAMELEN);
 	}
 	else
@@ -4555,7 +4576,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 		 * they complete. A higher numbered xid will complete before you about
 		 * 50% of the time...
 		 */
-		stopsHere = (record->xl_xid == recoveryTargetXid);
+		stopsHere = (recordXid == recoveryTargetXid);
 		if (stopsHere)
 			*includeThis = recoveryTargetInclusive;
 	}
@@ -4590,11 +4611,13 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 
 	if (stopsHere)
 	{
-		recoveryStopXid = record->xl_xid;
+		recoveryStopXid = recordXid;
 		recoveryStopTime = recordXtime;
 		recoveryStopAfter = *includeThis;
 
-		if (record_info == XLOG_XACT_COMMIT_COMPACT || record_info == XLOG_XACT_COMMIT)
+		if (record_info == XLOG_XACT_COMMIT_COMPACT ||
+			record_info == XLOG_XACT_COMMIT ||
+			record_info == XLOG_XACT_COMMIT_PREPARED)
 		{
 			if (recoveryStopAfter)
 				ereport(LOG,
@@ -4607,7 +4630,8 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 								recoveryStopXid,
 								timestamptz_to_str(recoveryStopTime))));
 		}
-		else if (record_info == XLOG_XACT_ABORT)
+		else if (record_info == XLOG_XACT_ABORT ||
+				 record_info == XLOG_XACT_ABORT_PREPARED)
 		{
 			if (recoveryStopAfter)
 				ereport(LOG,
