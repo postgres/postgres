@@ -5489,7 +5489,7 @@ recoveryStopsBefore(XLogRecord *record)
 		isCommit = true;
 		recordXid = record->xl_xid;
 	}
-	if (record_info == XLOG_XACT_COMMIT_PREPARED)
+	else if (record_info == XLOG_XACT_COMMIT_PREPARED)
 	{
 		isCommit = true;
 		recordXid = ((xl_xact_commit_prepared *) XLogRecGetData(record))->xid;
