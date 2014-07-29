@@ -5457,9 +5457,19 @@ getRecordTimestamp(XLogRecord *record, TimestampTz *recordXtime)
 		*recordXtime = ((xl_xact_commit *) XLogRecGetData(record))->xact_time;
 		return true;
 	}
+	if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_COMMIT_PREPARED)
+	{
+		*recordXtime = ((xl_xact_commit_prepared *) XLogRecGetData(record))->crec.xact_time;
+		return true;
+	}
 	if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_ABORT)
 	{
 		*recordXtime = ((xl_xact_abort *) XLogRecGetData(record))->xact_time;
+		return true;
+	}
+	if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_ABORT_PREPARED)
+	{
+		*recordXtime = ((xl_xact_abort_prepared *) XLogRecGetData(record))->arec.xact_time;
 		return true;
 	}
 	return false;
@@ -5480,6 +5490,7 @@ recoveryStopsBefore(XLogRecord *record)
 	uint8		record_info;
 	bool		isCommit;
 	TimestampTz recordXtime = 0;
+	TransactionId recordXid;
 
 	/* Check if we should stop as soon as reaching consistency */
 	if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE && reachedConsistency)
@@ -5498,10 +5509,27 @@ recoveryStopsBefore(XLogRecord *record)
 	if (record->xl_rmid != RM_XACT_ID)
 		return false;
 	record_info = record->xl_info & ~XLR_INFO_MASK;
+
 	if (record_info == XLOG_XACT_COMMIT_COMPACT || record_info == XLOG_XACT_COMMIT)
+	{
 		isCommit = true;
+		recordXid = record->xl_xid;
+	}
+	if (record_info == XLOG_XACT_COMMIT_PREPARED)
+	{
+		isCommit = true;
+		recordXid = ((xl_xact_commit_prepared *) XLogRecGetData(record))->xid;
+	}
 	else if (record_info == XLOG_XACT_ABORT)
+	{
 		isCommit = false;
+		recordXid = record->xl_xid;
+	}
+	else if (record_info == XLOG_XACT_ABORT_PREPARED)
+	{
+		isCommit = false;
+		recordXid = ((xl_xact_abort_prepared *) XLogRecGetData(record))->xid;
+	}
 	else
 		return false;
 
@@ -5516,7 +5544,7 @@ recoveryStopsBefore(XLogRecord *record)
 		 * they complete. A higher numbered xid will complete before you about
 		 * 50% of the time...
 		 */
-		stopsHere = (record->xl_xid == recoveryTargetXid);
+		stopsHere = (recordXid == recoveryTargetXid);
 	}
 
 	if (recoveryTarget == RECOVERY_TARGET_TIME &&
@@ -5536,7 +5564,7 @@ recoveryStopsBefore(XLogRecord *record)
 	if (stopsHere)
 	{
 		recoveryStopAfter = false;
-		recoveryStopXid = record->xl_xid;
+		recoveryStopXid = recordXid;
 		recoveryStopTime = recordXtime;
 		recoveryStopName[0] = '\0';
 
@@ -5602,11 +5630,23 @@ recoveryStopsAfter(XLogRecord *record)
 	if (record->xl_rmid == RM_XACT_ID &&
 		(record_info == XLOG_XACT_COMMIT_COMPACT ||
 		 record_info == XLOG_XACT_COMMIT ||
-		 record_info == XLOG_XACT_ABORT))
+		 record_info == XLOG_XACT_COMMIT_PREPARED ||
+		 record_info == XLOG_XACT_ABORT ||
+		 record_info == XLOG_XACT_ABORT_PREPARED))
 	{
+		TransactionId recordXid;
+
 		/* Update the last applied transaction timestamp */
 		if (getRecordTimestamp(record, &recordXtime))
 			SetLatestXTime(recordXtime);
+
+		/* Extract the XID of the committed/aborted transaction */
+		if (record_info == XLOG_XACT_COMMIT_PREPARED)
+			recordXid = ((xl_xact_commit_prepared *) XLogRecGetData(record))->xid;
+		else if (record_info == XLOG_XACT_ABORT_PREPARED)
+			recordXid = ((xl_xact_abort_prepared *) XLogRecGetData(record))->xid;
+		else
+			recordXid = record->xl_xid;
 
 		/*
 		 * There can be only one transaction end record with this exact
@@ -5618,21 +5658,24 @@ recoveryStopsAfter(XLogRecord *record)
 		 * 50% of the time...
 		 */
 		if (recoveryTarget == RECOVERY_TARGET_XID && recoveryTargetInclusive &&
-			record->xl_xid == recoveryTargetXid)
+			recordXid == recoveryTargetXid)
 		{
 			recoveryStopAfter = true;
-			recoveryStopXid = record->xl_xid;
+			recoveryStopXid = recordXid;
 			recoveryStopTime = recordXtime;
 			recoveryStopName[0] = '\0';
 
-			if (record_info == XLOG_XACT_COMMIT_COMPACT || record_info == XLOG_XACT_COMMIT)
+			if (record_info == XLOG_XACT_COMMIT_COMPACT ||
+				record_info == XLOG_XACT_COMMIT ||
+				record_info == XLOG_XACT_COMMIT_PREPARED)
 			{
 				ereport(LOG,
 						(errmsg("recovery stopping after commit of transaction %u, time %s",
 								recoveryStopXid,
 								timestamptz_to_str(recoveryStopTime))));
 			}
-			else if (record_info == XLOG_XACT_ABORT)
+			else if (record_info == XLOG_XACT_ABORT ||
+					 record_info == XLOG_XACT_ABORT_PREPARED)
 			{
 				ereport(LOG,
 						(errmsg("recovery stopping after abort of transaction %u, time %s",
@@ -5745,7 +5788,8 @@ recoveryApplyDelay(XLogRecord *record)
 	record_info = record->xl_info & ~XLR_INFO_MASK;
 	if (!(record->xl_rmid == RM_XACT_ID &&
 		  (record_info == XLOG_XACT_COMMIT_COMPACT ||
-		   record_info == XLOG_XACT_COMMIT)))
+		   record_info == XLOG_XACT_COMMIT ||
+		   record_info == XLOG_XACT_COMMIT_PREPARED)))
 		return false;
 
 	if (!getRecordTimestamp(record, &xtime))
