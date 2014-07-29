@@ -114,7 +114,7 @@ postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, N
  0/16E0B90 | 690 | COMMIT 690
 (3 rows)
 
-postgres=# -- You can also peek ahead in the change stream without consuming changes
+postgres=# -- The next call to pg_logical_slot_peek_changes() returns the same changes again
 postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL);
  location  | xid |                     data
 -----------+-----+-----------------------------------------------
