@@ -5627,17 +5627,13 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 
 			/*
 			 * It's an update; should we keep it?  If the transaction is known
-			 * aborted then it's okay to ignore it, otherwise not.  However,
-			 * if the Xid is older than the cutoff_xid, we must remove it.
-			 * Note that such an old updater cannot possibly be committed,
-			 * because HeapTupleSatisfiesVacuum would have returned
+			 * aborted or crashed then it's okay to ignore it, otherwise not.
+			 * Note that an updater older than cutoff_xid cannot possibly be
+			 * committed, because HeapTupleSatisfiesVacuum would have returned
 			 * HEAPTUPLE_DEAD and we would not be trying to freeze the tuple.
 			 *
-			 * Note the TransactionIdDidAbort() test is just an optimization
-			 * and not strictly necessary for correctness.
-			 *
 			 * As with all tuple visibility routines, it's critical to test
-			 * TransactionIdIsInProgress before the transam.c routines,
+			 * TransactionIdIsInProgress before TransactionIdDidCommit,
 			 * because of race conditions explained in detail in tqual.c.
 			 */
 			if (TransactionIdIsCurrentTransactionId(xid) ||
@@ -5646,46 +5642,40 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 				Assert(!TransactionIdIsValid(update_xid));
 				update_xid = xid;
 			}
-			else if (!TransactionIdDidAbort(xid))
+			else if (TransactionIdDidCommit(xid))
 			{
 				/*
-				 * Test whether to tell caller to set HEAP_XMAX_COMMITTED
-				 * while we have the Xid still in cache.  Note this can only
-				 * be done if the transaction is known not running.
+				 * The transaction committed, so we can tell caller to set
+				 * HEAP_XMAX_COMMITTED.  (We can only do this because we know
+				 * the transaction is not running.)
 				 */
-				if (TransactionIdDidCommit(xid))
-					update_committed = true;
 				Assert(!TransactionIdIsValid(update_xid));
+				update_committed = true;
 				update_xid = xid;
 			}
 
 			/*
+			 * Not in progress, not committed -- must be aborted or crashed;
+			 * we can ignore it.
+			 */
+
+			/*
+			 * Since the tuple wasn't marked HEAPTUPLE_DEAD by vacuum, the
+			 * update Xid cannot possibly be older than the xid cutoff.
+			 */
+			Assert(!TransactionIdIsValid(update_xid) ||
+				   !TransactionIdPrecedes(update_xid, cutoff_xid));
+
+			/*
 			 * If we determined that it's an Xid corresponding to an update
 			 * that must be retained, additionally add it to the list of
-			 * members of the new Multis, in case we end up using that.  (We
+			 * members of the new Multi, in case we end up using that.  (We
 			 * might still decide to use only an update Xid and not a multi,
 			 * but it's easier to maintain the list as we walk the old members
 			 * list.)
-			 *
-			 * It is possible to end up with a very old updater Xid that
-			 * crashed and thus did not mark itself as aborted in pg_clog.
-			 * That would manifest as a pre-cutoff Xid.  Make sure to ignore
-			 * it.
 			 */
 			if (TransactionIdIsValid(update_xid))
-			{
-				if (!TransactionIdPrecedes(update_xid, cutoff_xid))
-				{
-					newmembers[nnewmembers++] = members[i];
-				}
-				else
-				{
-					/* cannot have committed: would be HEAPTUPLE_DEAD */
-					Assert(!TransactionIdDidCommit(update_xid));
-					update_xid = InvalidTransactionId;
-					update_committed = false;
-				}
-			}
+				newmembers[nnewmembers++] = members[i];
 		}
 		else
 		{
