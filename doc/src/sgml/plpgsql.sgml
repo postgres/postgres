@@ -2641,18 +2641,9 @@ SELECT merge_db(1, 'dennis');
      expected.
     </para>
     </example>
-  </sect2>
-
-   <sect2 id="plpgsql-diagnostics">
-    <title>Getting Diagnostics Information</title>
-
-    <indexterm>
-     <primary>diagnostics</primary>
-     <secondary>in PL/pgSQL</secondary>
-    </indexterm>
 
    <sect3 id="plpgsql-exception-diagnostics">
-    <title>Obtaining information about an error</title>
+    <title>Obtaining Information About an Error</title>
 
     <para>
      Exception handlers frequently need to identify the specific error that
@@ -2686,7 +2677,7 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
     </para>
 
      <table id="plpgsql-exception-diagnostics-values">
-      <title>Error diagnostics values</title>
+      <title>Error Diagnostics Values</title>
       <tgroup cols="3">
        <thead>
         <row>
@@ -2704,17 +2695,17 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
         <row>
          <entry><literal>COLUMN_NAME</literal></entry>
          <entry>text</entry>
-         <entry>the name of column related to exception</entry>
+         <entry>the name of the column related to exception</entry>
         </row>
         <row>
          <entry><literal>CONSTRAINT_NAME</literal></entry>
          <entry>text</entry>
-         <entry>the name of constraint related to exception</entry>
+         <entry>the name of the constraint related to exception</entry>
         </row>
         <row>
          <entry><literal>PG_DATATYPE_NAME</literal></entry>
          <entry>text</entry>
-         <entry>the name of data type related to exception</entry>
+         <entry>the name of the data type related to exception</entry>
         </row>
         <row>
          <entry><literal>MESSAGE_TEXT</literal></entry>
@@ -2724,12 +2715,12 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
         <row>
          <entry><literal>TABLE_NAME</literal></entry>
          <entry>text</entry>
-         <entry>the name of table related to exception</entry>
+         <entry>the name of the table related to exception</entry>
         </row>
         <row>
          <entry><literal>SCHEMA_NAME</literal></entry>
          <entry>text</entry>
-         <entry>the name of schema related to exception</entry>
+         <entry>the name of the schema related to exception</entry>
         </row>
         <row>
          <entry><literal>PG_EXCEPTION_DETAIL</literal></entry>
@@ -2773,17 +2764,16 @@ END;
 </programlisting>
     </para>
    </sect3>
+  </sect2>
 
-  <sect3 id="plpgsql-get-diagnostics-context">
-   <title>Obtaining the call stack context information</title>
-
-   <para>
+  <sect2 id="plpgsql-get-diagnostics-context">
+   <title>Obtaining the Call Stack Context Information</title>
 
 <synopsis>
 GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>PG_CONTEXT</replaceable> <optional> , ... </optional>;
 </synopsis>
 
-
+   <para>
     Calling <command>GET DIAGNOSTICS</command> with status
     item <varname>PG_CONTEXT</> will return a text string with line(s) of
     text describing the call stack.  The first row refers to the
@@ -2820,7 +2810,6 @@ PL/pgSQL function outer_func() line 3 at RETURN
 </programlisting>
 
    </para>
-  </sect3>
   </sect2>
   </sect1>
 
@@ -3567,7 +3556,7 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
   </indexterm>
 
   <sect2 id="plpgsql-dml-trigger">
-   <title>Triggers on data changes</title>
+   <title>Triggers on Data Changes</title>
 
    <para>
     <application>PL/pgSQL</application> can be used to define trigger
@@ -4119,7 +4108,7 @@ SELECT * FROM sales_summary_bytime;
 </sect2>
 
   <sect2 id="plpgsql-event-trigger">
-   <title>Triggers on events</title>
+   <title>Triggers on Events</title>
 
    <para>
     <application>PL/pgSQL</application> can be used to define event
@@ -4712,7 +4701,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
 
   </sect2>
   <sect2 id="plpgsql-extra-checks">
-   <title>Additional compile-time checks</title>
+   <title>Additional Compile-time Checks</title>
 
    <para>
     To aid the user in finding instances of simple but common problems before
