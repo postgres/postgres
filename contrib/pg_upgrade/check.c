@@ -700,7 +700,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 /*
  *	check_is_super_user()
  *
- *	Check we are superuser, and out user id and user count
+ *	Check we are superuser, and output user id and user count
  */
 static void
 check_is_super_user(ClusterInfo *cluster)
