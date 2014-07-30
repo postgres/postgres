@@ -98,6 +98,8 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
+#define MIN_GAUSSIAN_THRESHOLD		2.0	/* minimum threshold for gauss */
+
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
 
@@ -469,6 +471,76 @@ getrand(TState *thread, int64 min, int64 max)
 	 * CPUs.
 	 */
 	return min + (int64) ((max - min + 1) * pg_erand48(thread->random_state));
+}
+
+/*
+ * random number generator: exponential distribution from min to max inclusive.
+ * the threshold is so that the density of probability for the last cut-off max
+ * value is exp(-threshold).
+ */
+static int64
+getExponentialRand(TState *thread, int64 min, int64 max, double threshold)
+{
+	double cut, uniform, rand;
+	Assert(threshold > 0.0);
+	cut = exp(-threshold);
+	/* erand in [0, 1), uniform in (0, 1] */
+	uniform = 1.0 - pg_erand48(thread->random_state);
+	/*
+	 * inner expresion in (cut, 1] (if threshold > 0),
+	 * rand in [0, 1)
+	 */
+	Assert((1.0 - cut) != 0.0);
+	rand = - log(cut + (1.0 - cut) * uniform) / threshold;
+	/* return int64 random number within between min and max */
+	return min + (int64)((max - min + 1) * rand);
+}
+
+/* random number generator: gaussian distribution from min to max inclusive */
+static int64
+getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
+{
+	double		stdev;
+	double		rand;
+
+	/*
+	 * Get user specified random number from this loop, with
+	 * -threshold < stdev <= threshold
+	 *
+	 * This loop is executed until the number is in the expected range.
+	 *
+	 * As the minimum threshold is 2.0, the probability of looping is low:
+	 * sqrt(-2 ln(r)) <= 2 => r >= e^{-2} ~ 0.135, then when taking the average
+	 * sinus multiplier as 2/pi, we have a 8.6% looping probability in the
+	 * worst case. For a 5.0 threshold value, the looping probability
+	 * is about e^{-5} * 2 / pi ~ 0.43%.
+	 */
+	do
+	{
+		/*
+		 * pg_erand48 generates [0,1), but for the basic version of the
+		 * Box-Muller transform the two uniformly distributed random numbers
+		 * are expected in (0, 1] (see http://en.wikipedia.org/wiki/Box_muller)
+		 */
+		double rand1 = 1.0 - pg_erand48(thread->random_state);
+		double rand2 = 1.0 - pg_erand48(thread->random_state);
+
+		/* Box-Muller basic form transform */
+		double var_sqrt = sqrt(-2.0 * log(rand1));
+		stdev = var_sqrt * sin(2.0 * M_PI * rand2);
+
+		/*
+		 * we may try with cos, but there may be a bias induced if the previous
+		 * value fails the test. To be on the safe side, let us try over.
+		 */
+	}
+	while (stdev < -threshold || stdev >= threshold);
+
+	/* stdev is in [-threshold, threshold), normalization to [0,1) */
+	rand = (stdev + threshold) / (threshold * 2.0);
+
+	/* return int64 random number within between min and max */
+	return min + (int64)((max - min + 1) * rand);
 }
 
 /* call PQexec() and exit() on failure */
@@ -1319,6 +1391,7 @@ top:
 			char	   *var;
 			int64		min,
 						max;
+			double		threshold = 0;
 			char		res[64];
 
 			if (*argv[2] == ':')
@@ -1364,11 +1437,11 @@ top:
 			}
 
 			/*
-			 * getrand() needs to be able to subtract max from min and add one
-			 * to the result without overflowing.  Since we know max > min, we
-			 * can detect overflow just by checking for a negative result. But
-			 * we must check both that the subtraction doesn't overflow, and
-			 * that adding one to the result doesn't overflow either.
+			 * Generate random number functions need to be able to subtract
+			 * max from min and add one to the result without overflowing.
+			 * Since we know max > min, we can detect overflow just by checking
+			 * for a negative result. But we must check both that the subtraction
+			 * doesn't overflow, and that adding one to the result doesn't overflow either.
 			 */
 			if (max - min < 0 || (max - min) + 1 < 0)
 			{
@@ -1377,10 +1450,64 @@ top:
 				return true;
 			}
 
+			if (argc == 4 || /* uniform without or with "uniform" keyword */
+				(argc == 5 && pg_strcasecmp(argv[4], "uniform") == 0))
+			{
 #ifdef DEBUG
-			printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n", min, max, getrand(thread, min, max));
+				printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n", min, max, getrand(thread, min, max));
 #endif
-			snprintf(res, sizeof(res), INT64_FORMAT, getrand(thread, min, max));
+				snprintf(res, sizeof(res), INT64_FORMAT, getrand(thread, min, max));
+			}
+			else if (argc == 6 &&
+					 ((pg_strcasecmp(argv[4], "gaussian") == 0) ||
+					  (pg_strcasecmp(argv[4], "exponential") == 0)))
+			{
+				if (*argv[5] == ':')
+				{
+					if ((var = getVariable(st, argv[5] + 1)) == NULL)
+					{
+						fprintf(stderr, "%s: invalid threshold number %s\n", argv[0], argv[5]);
+						st->ecnt++;
+						return true;
+					}
+					threshold = strtod(var, NULL);
+				}
+				else
+					threshold = strtod(argv[5], NULL);
+
+				if (pg_strcasecmp(argv[4], "gaussian") == 0)
+				{
+					if (threshold < MIN_GAUSSIAN_THRESHOLD)
+					{
+						fprintf(stderr, "%s: gaussian threshold must be at least %f\n,", argv[5], MIN_GAUSSIAN_THRESHOLD);
+						st->ecnt++;
+						return true;
+					}
+#ifdef DEBUG
+					printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n", min, max, getGaussianRand(thread, min, max, threshold));
+#endif
+					snprintf(res, sizeof(res), INT64_FORMAT, getGaussianRand(thread, min, max, threshold));
+				}
+				else if (pg_strcasecmp(argv[4], "exponential") == 0)
+				{
+					if (threshold <= 0.0)
+					{
+						fprintf(stderr, "%s: exponential threshold must be strictly positive\n,", argv[5]);
+						st->ecnt++;
+						return true;
+					}
+#ifdef DEBUG
+					printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n", min, max, getExponentialRand(thread, min, max, threshold));
+#endif
+					snprintf(res, sizeof(res), INT64_FORMAT, getExponentialRand(thread, min, max, threshold));
+				}
+			}
+			else /* this means an error somewhere in the parsing phase... */
+			{
+				fprintf(stderr, "%s: unexpected arguments\n", argv[0]);
+				st->ecnt++;
+				return true;
+			}
 
 			if (!putVariable(st, argv[0], argv[1], res))
 			{
@@ -1914,15 +2041,51 @@ process_commands(char *buf)
 
 		if (pg_strcasecmp(my_commands->argv[0], "setrandom") == 0)
 		{
+			/* parsing:
+			 * \setrandom variable min max [uniform]
+			 * \setrandom variable min max (gaussian|exponential) threshold
+			 */
+
 			if (my_commands->argc < 4)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
 				exit(1);
 			}
+			/* argc >= 4 */
 
-			for (j = 4; j < my_commands->argc; j++)
-				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
-						my_commands->argv[0], my_commands->argv[j]);
+			if (my_commands->argc == 4 || /* uniform without/with "uniform" keyword */
+				(my_commands->argc == 5 &&
+				 pg_strcasecmp(my_commands->argv[4], "uniform") == 0))
+			{
+				/* nothing to do */
+			}
+			else if (/* argc >= 5 */
+					 (pg_strcasecmp(my_commands->argv[4], "gaussian") == 0) ||
+					 (pg_strcasecmp(my_commands->argv[4], "exponential") == 0))
+			{
+				if (my_commands->argc < 6)
+				{
+					fprintf(stderr, "%s(%s): missing threshold argument\n", my_commands->argv[0], my_commands->argv[4]);
+					exit(1);
+				}
+				else if (my_commands->argc > 6)
+				{
+					fprintf(stderr, "%s(%s): too many arguments (extra:",
+							my_commands->argv[0], my_commands->argv[4]);
+					for (j = 6; j < my_commands->argc; j++)
+						fprintf(stderr, " %s", my_commands->argv[j]);
+					fprintf(stderr, ")\n");
+					exit(1);
+				}
+			}
+			else /* cannot parse, unexpected arguments */
+			{
+				fprintf(stderr, "%s: unexpected arguments (bad:", my_commands->argv[0]);
+				for (j = 4; j < my_commands->argc; j++)
+					fprintf(stderr, " %s", my_commands->argv[j]);
+				fprintf(stderr, ")\n");
+				exit(1);
+			}
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "set") == 0)
 		{

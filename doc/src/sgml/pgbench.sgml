@@ -748,8 +748,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</></literal>
-    </term>
+     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | [ { gaussian | exponential } <replaceable>threshold</> ] ]</literal>
+     </term>
 
     <listitem>
      <para>
@@ -761,9 +761,64 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </para>
 
      <para>
+      By default, or when <literal>uniform</> is specified, all values in the
+      range are drawn with equal probability.  Specifiying <literal>gaussian</>
+      or  <literal>exponential</> options modifies this behavior; each
+      requires a mandatory threshold which determines the precise shape of the
+      distribution.
+     </para>
+
+     <para>
+      For a Gaussian distribution, the interval is mapped onto a standard
+      normal distribution (the classical bell-shaped Gaussian curve) truncated
+      at <literal>-threshold</> on the left and <literal>+threshold</>
+      on the right.
+      To be precise, if <literal>PHI(x)</> is the cumulative distribution
+      function of the standard normal distribution, with mean <literal>mu</>
+      defined as <literal>(max + min) / 2.0</>, then value <replaceable>i</>
+      between <replaceable>min</> and <replaceable>max</> inclusive is drawn
+      with probability:
+      <literal>
+        (PHI(2.0 * threshold * (i - min - mu + 0.5) / (max - min + 1)) -
+         PHI(2.0 * threshold * (i - min - mu - 0.5) / (max - min + 1))) /
+         (2.0 * PHI(threshold) - 1.0)
+      </>
+      Intuitively, the larger the <replaceable>threshold</>, the more
+      frequently values close to the middle of the interval are drawn, and the
+      less frequently values close to the <replaceable>min</> and
+      <replaceable>max</> bounds.
+      About 67% of values are drawn from the middle <literal>1.0 / threshold</>
+      and 95% in the middle <literal>2.0 / threshold</>; for instance, if
+      <replaceable>threshold</> is 4.0, 67% of values are drawn from the middle
+      quarter and 95% from the middle half of the interval.
+      The minimum <replaceable>threshold</> is 2.0 for performance of
+      the Box-Muller transform.
+     </para>
+
+     <para>
+      For an exponential distribution, the <replaceable>threshold</>
+      parameter controls the distribution by truncating a quickly-decreasing
+      exponential distribution at <replaceable>threshold</>, and then
+      projecting onto integers between the bounds.
+      To be precise, value <replaceable>i</> between <replaceable>min</> and
+      <replaceable>max</> inclusive is drawn with probability:
+      <literal>(exp(-threshold*(i-min)/(max+1-min)) -
+       exp(-threshold*(i+1-min)/(max+1-min))) / (1.0 - exp(-threshold))</>.
+      Intuitively, the larger the <replaceable>threshold</>, the more
+      frequently values close to <replaceable>min</> are accessed, and the
+      less frequently values close to <replaceable>max</> are accessed.
+      The closer to 0 the threshold, the flatter (more uniform) the access
+      distribution.
+      A crude approximation of the distribution is that the most frequent 1%
+      values in the range, close to <replaceable>min</>, are drawn
+      <replaceable>threshold</>%  of the time.
+      The <replaceable>threshold</> value must be strictly positive.
+     </para>
+
+     <para>
       Example:
 <programlisting>
-\setrandom aid 1 :naccounts
+\setrandom aid 1 :naccounts gaussian 5.0
 </programlisting></para>
     </listitem>
    </varlistentry>
