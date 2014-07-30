@@ -4566,6 +4566,9 @@ SubPostmasterMain(int argc, char *argv[])
 	{
 		int			cookie;
 
+		/* do this as early as possible; in particular, before InitProcess() */
+		IsBackgroundWorker = true;
+
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
 
