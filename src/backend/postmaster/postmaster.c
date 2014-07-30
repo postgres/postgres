@@ -4668,6 +4668,9 @@ SubPostmasterMain(int argc, char *argv[])
 	{
 		int			shmem_slot;
 
+		/* do this as early as possible; in particular, before InitProcess() */
+		IsBackgroundWorker = true;
+
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
 
