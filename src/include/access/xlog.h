@@ -15,7 +15,9 @@
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
+#include "storage/block.h"
 #include "storage/buf.h"
+#include "storage/relfilenode.h"
 #include "utils/pg_crc.h"
 
 /*
@@ -286,6 +288,9 @@ extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 extern int	XLogFileInit(XLogSegNo segno, bool *use_existent, bool use_lock);
 extern int	XLogFileOpen(XLogSegNo segno);
 
+extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
+			BlockNumber blk, char *page, bool page_std);
+extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 
 extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);

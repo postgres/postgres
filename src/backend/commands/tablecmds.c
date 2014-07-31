@@ -16,7 +16,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/heapam_xlog.h"
 #include "access/multixact.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"

@@ -32,7 +32,7 @@
 #define XLOG_HEAP_UPDATE		0x20
 /* 0x030 is free, was XLOG_HEAP_MOVE */
 #define XLOG_HEAP_HOT_UPDATE	0x40
-#define XLOG_HEAP_NEWPAGE		0x50
+/* 0x050 is free, was XLOG_HEAP_NEWPAGE */
 #define XLOG_HEAP_LOCK			0x60
 #define XLOG_HEAP_INPLACE		0x70
 
@@ -239,20 +239,6 @@ typedef struct xl_heap_cleanup_info
 
 #define SizeOfHeapCleanupInfo (sizeof(xl_heap_cleanup_info))
 
-/* This is for replacing a page's contents in toto */
-/* NB: this is used for indexes as well as heaps */
-typedef struct xl_heap_newpage
-{
-	RelFileNode node;
-	ForkNumber	forknum;
-	BlockNumber blkno;			/* location of new page */
-	uint16		hole_offset;	/* number of bytes before "hole" */
-	uint16		hole_length;	/* number of bytes in "hole" */
-	/* entire page contents (minus the hole) follow at end of record */
-} xl_heap_newpage;
-
-#define SizeOfHeapNewpage	(offsetof(xl_heap_newpage, hole_length) + sizeof(uint16))
-
 /* flags for infobits_set */
 #define XLHL_XMAX_IS_MULTI		0x01
 #define XLHL_XMAX_LOCK_ONLY		0x02
@@ -393,8 +379,5 @@ extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
 						  xl_heap_freeze_tuple *xlrec_tp);
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
 				 Buffer vm_buffer, TransactionId cutoff_xid);
-extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-			BlockNumber blk, Page page, bool page_std);
-extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 
 #endif   /* HEAPAM_XLOG_H */

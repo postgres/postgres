@@ -98,15 +98,6 @@ heap_desc(StringInfo buf, XLogRecord *record)
 						 ItemPointerGetOffsetNumber(&(xlrec->newtid)),
 						 xlrec->new_xmax);
 	}
-	else if (info == XLOG_HEAP_NEWPAGE)
-	{
-		xl_heap_newpage *xlrec = (xl_heap_newpage *) rec;
-
-		appendStringInfo(buf, "newpage: rel %u/%u/%u; fork %u, blk %u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->forknum,
-						 xlrec->blkno);
-	}
 	else if (info == XLOG_HEAP_LOCK)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;

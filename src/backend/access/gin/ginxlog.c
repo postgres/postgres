@@ -558,7 +558,8 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 }
 
 /*
- * This is functionally the same as heap_xlog_newpage.
+ * VACUUM_PAGE record contains simply a full image of the page, similar to
+ * a XLOG_FPI record.
  */
 static void
 ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)

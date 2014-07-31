@@ -435,14 +435,6 @@ DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				DecodeDelete(ctx, buf);
 			break;
 
-		case XLOG_HEAP_NEWPAGE:
-
-			/*
-			 * This is only used in places like indexams and CLUSTER which
-			 * don't contain changes relevant for logical replication.
-			 */
-			break;
-
 		case XLOG_HEAP_INPLACE:
 
 			/*

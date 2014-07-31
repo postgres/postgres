@@ -18,7 +18,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam_xlog.h"
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "catalog/index.h"

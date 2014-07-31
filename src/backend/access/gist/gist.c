@@ -16,7 +16,6 @@
 
 #include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/heapam_xlog.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
 #include "miscadmin.h"

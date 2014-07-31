@@ -4084,7 +4084,14 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 	 * reset it here since it will be set before being written.
 	 */
 
-	PageSetLSN(page, lsn);
+	/*
+	 * The page may be uninitialized. If so, we can't set the LSN because that
+	 * would corrupt the page.
+	 */
+	if (!PageIsNew(page))
+	{
+		PageSetLSN(page, lsn);
+	}
 	MarkBufferDirty(buffer);
 
 	if (!keep_buffer)
@@ -8986,6 +8993,128 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 	}
 
 	return recptr;
+}
+
+/*
+ * Write a WAL record containing a full image of a page. Caller is responsible
+ * for writing the page to disk after calling this routine.
+ *
+ * Note: If you're using this function, you should be building pages in private
+ * memory and writing them directly to smgr.  If you're using buffers, call
+ * log_newpage_buffer instead.
+ *
+ * If the page follows the standard page layout, with a PageHeader and unused
+ * space between pd_lower and pd_upper, set 'page_std' to TRUE. That allows
+ * the unused space to be left out from the WAL record, making it smaller.
+ */
+XLogRecPtr
+log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
+			Page page, bool page_std)
+{
+	BkpBlock	bkpb;
+	XLogRecPtr	recptr;
+	XLogRecData rdata[3];
+
+	/* NO ELOG(ERROR) from here till newpage op is logged */
+	START_CRIT_SECTION();
+
+	bkpb.node = *rnode;
+	bkpb.fork = forkNum;
+	bkpb.block = blkno;
+
+	if (page_std)
+	{
+		/* Assume we can omit data between pd_lower and pd_upper */
+		uint16		lower = ((PageHeader) page)->pd_lower;
+		uint16		upper = ((PageHeader) page)->pd_upper;
+
+		if (lower >= SizeOfPageHeaderData &&
+			upper > lower &&
+			upper <= BLCKSZ)
+		{
+			bkpb.hole_offset = lower;
+			bkpb.hole_length = upper - lower;
+		}
+		else
+		{
+			/* No "hole" to compress out */
+			bkpb.hole_offset = 0;
+			bkpb.hole_length = 0;
+		}
+	}
+	else
+	{
+		/* Not a standard page header, don't try to eliminate "hole" */
+		bkpb.hole_offset = 0;
+		bkpb.hole_length = 0;
+	}
+
+	rdata[0].data = (char *) &bkpb;
+	rdata[0].len = sizeof(BkpBlock);
+	rdata[0].buffer = InvalidBuffer;
+	rdata[0].next = &(rdata[1]);
+
+	if (bkpb.hole_length == 0)
+	{
+		rdata[1].data = (char *) page;
+		rdata[1].len = BLCKSZ;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].next = NULL;
+	}
+	else
+	{
+		/* must skip the hole */
+		rdata[1].data = (char *) page;
+		rdata[1].len = bkpb.hole_offset;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].next = &rdata[2];
+
+		rdata[2].data = (char *) page + (bkpb.hole_offset + bkpb.hole_length);
+		rdata[2].len = BLCKSZ - (bkpb.hole_offset + bkpb.hole_length);
+		rdata[2].buffer = InvalidBuffer;
+		rdata[2].next = NULL;
+	}
+
+	recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI, rdata);
+
+	/*
+	 * The page may be uninitialized. If so, we can't set the LSN because that
+	 * would corrupt the page.
+	 */
+	if (!PageIsNew(page))
+	{
+		PageSetLSN(page, recptr);
+	}
+
+	END_CRIT_SECTION();
+
+	return recptr;
+}
+
+/*
+ * Write a WAL record containing a full image of a page.
+ *
+ * Caller should initialize the buffer and mark it dirty before calling this
+ * function.  This function will set the page LSN.
+ *
+ * If the page follows the standard page layout, with a PageHeader and unused
+ * space between pd_lower and pd_upper, set 'page_std' to TRUE. That allows
+ * the unused space to be left out from the WAL record, making it smaller.
+ */
+XLogRecPtr
+log_newpage_buffer(Buffer buffer, bool page_std)
+{
+	Page		page = BufferGetPage(buffer);
+	RelFileNode rnode;
+	ForkNumber	forkNum;
+	BlockNumber blkno;
+
+	/* Shared buffers should be modified in a critical section. */
+	Assert(CritSectionCount > 0);
+
+	BufferGetTag(buffer, &rnode, &forkNum, &blkno);
+
+	return log_newpage(&rnode, forkNum, blkno, page, page_std);
 }
 
 /*

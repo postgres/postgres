@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
-#include "access/heapam_xlog.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
