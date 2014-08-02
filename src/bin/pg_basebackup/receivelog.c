@@ -1082,7 +1082,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 
 					xlogoff = 0;
 
-					if (still_sending && stream_stop(blockpos, timeline, false))
+					if (still_sending && stream_stop(blockpos, timeline, true))
 					{
 						if (PQputCopyEnd(conn, NULL) <= 0 || PQflush(conn))
 						{
