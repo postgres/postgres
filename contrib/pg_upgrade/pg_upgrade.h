@@ -256,8 +256,6 @@ typedef struct
 	char		major_version_str[64];	/* string PG_VERSION of cluster */
 	uint32		bin_version;	/* version returned from pg_ctl */
 	Oid			pg_database_oid;	/* OID of pg_database relation */
-	Oid			install_role_oid;		/* OID of connected role */
-	Oid			role_count;		/* number of roles defined in the cluster */
 	const char *tablespace_suffix;		/* directory specification */
 } ClusterInfo;
 

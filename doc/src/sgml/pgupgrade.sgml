@@ -164,7 +164,7 @@
      <varlistentry>
       <term><option>-U</option> <replaceable>username</></term>
       <term><option>--username=</option><replaceable>username</></term>
-      <listitem><para>cluster's super user name; environment
+      <listitem><para>cluster's install user name; environment
       variable <envar>PGUSER</></para></listitem>
      </varlistentry>
 

@@ -9,6 +9,7 @@
 
 #include "postgres_fe.h"
 
+#include "catalog/pg_authid.h"
 #include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
@@ -19,7 +20,7 @@ static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
 static bool equivalent_locale(const char *loca, const char *locb);
 static bool equivalent_encoding(const char *chara, const char *charb);
-static void check_is_super_user(ClusterInfo *cluster);
+static void check_is_install_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
@@ -94,7 +95,7 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	/*
 	 * Check for various failure cases
 	 */
-	check_is_super_user(&old_cluster);
+	check_is_install_user(&old_cluster);
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
@@ -158,22 +159,7 @@ check_new_cluster(void)
 	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
 		check_hard_link();
 
-	check_is_super_user(&new_cluster);
-
-	/*
-	 * We don't restore our own user, so both clusters must match have
-	 * matching install-user oids.
-	 */
-	if (old_cluster.install_role_oid != new_cluster.install_role_oid)
-		pg_fatal("Old and new cluster install users have different values for pg_authid.oid.\n");
-
-	/*
-	 * We only allow the install user in the new cluster because other defined
-	 * users might match users defined in the old cluster and generate an
-	 * error during pg_dump restore.
-	 */
-	if (new_cluster.role_count != 1)
-		pg_fatal("Only the install user can be defined in the new cluster.\n");
+	check_is_install_user(&new_cluster);
 
 	check_for_prepared_transactions(&new_cluster);
 }
@@ -698,17 +684,18 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 
 
 /*
- *	check_is_super_user()
+ *	check_is_install_user()
  *
- *	Check we are superuser, and output user id and user count
+ *	Check we are the install user, and that the new cluster
+ *	has no other users.
  */
 static void
-check_is_super_user(ClusterInfo *cluster)
+check_is_install_user(ClusterInfo *cluster)
 {
 	PGresult   *res;
 	PGconn	   *conn = connectToServer(cluster, "template1");
 
-	prep_status("Checking database user is a superuser");
+	prep_status("Checking database user is the install user");
 
 	/* Can't use pg_authid because only superusers can view it. */
 	res = executeQueryOrDie(conn,
@@ -716,11 +703,15 @@ check_is_super_user(ClusterInfo *cluster)
 							"FROM pg_catalog.pg_roles "
 							"WHERE rolname = current_user");
 
-	if (PQntuples(res) != 1 || strcmp(PQgetvalue(res, 0, 0), "t") != 0)
-		pg_fatal("database user \"%s\" is not a superuser\n",
+	/*
+	 * We only allow the install user in the new cluster (see comment below)
+	 * and we preserve pg_authid.oid, so this must be the install user in
+	 * the old cluster too.
+	 */
+	if (PQntuples(res) != 1 ||
+		atooid(PQgetvalue(res, 0, 1)) != BOOTSTRAP_SUPERUSERID)
+		pg_fatal("database user \"%s\" is not the install user\n",
 				 os_info.user);
-
-	cluster->install_role_oid = atooid(PQgetvalue(res, 0, 1));
 
 	PQclear(res);
 
@@ -731,7 +722,13 @@ check_is_super_user(ClusterInfo *cluster)
 	if (PQntuples(res) != 1)
 		pg_fatal("could not determine the number of users\n");
 
-	cluster->role_count = atoi(PQgetvalue(res, 0, 0));
+	/*
+	 * We only allow the install user in the new cluster because other defined
+	 * users might match users defined in the old cluster and generate an
+	 * error during pg_dump restore.
+	 */
+	if (cluster == &new_cluster && atooid(PQgetvalue(res, 0, 0)) != 1)
+		pg_fatal("Only the install user can be defined in the new cluster.\n");
 
 	PQclear(res);
 
