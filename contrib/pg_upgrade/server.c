@@ -202,12 +202,13 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 #endif
 
 	/*
-	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
-	 * vacuums can still happen, so we set autovacuum_freeze_max_age and
-	 * autovacuum_multixact_freeze_max_age to their maximums.  We assume all
-	 * datfrozenxid, relfrozenxid, and relminmxid values are less than a gap
-	 * of 2000000000 from the current xid counter, so autovacuum will not
-	 * touch them.
+	 * Since PG 9.1, we have used -b to disable autovacuum.  For earlier
+	 * releases, setting autovacuum=off disables cleanup vacuum and analyze,
+	 * but freeze vacuums can still happen, so we set autovacuum_freeze_max_age
+	 * to its maximum.  (autovacuum_multixact_freeze_max_age was introduced
+	 * after 9.1, so there is no need to set that.)  We assume all datfrozenxid
+	 * and relfrozenxid values are less than a gap of 2000000000 from the current
+	 * xid counter, so autovacuum will not touch them.
 	 *
 	 * Turn off durability requirements to improve object creation speed, and
 	 * we only modify the new cluster, so only use it there.  If there is a
@@ -215,13 +216,11 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * win on ext4.
 	 */
 	snprintf(cmd, sizeof(cmd),
-		  "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s %s%s%s\" start",
+		  "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s %s%s\" start",
 		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? " -b" :
 			 " -c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 (GET_MAJOR_VERSION(cluster->major_version) >= 903) ?
-			 " -c autovacuum_multixact_freeze_max_age=2000000000" : "",
 			 (cluster == &new_cluster) ?
 	  " -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
 			 cluster->pgopts ? cluster->pgopts : "", socket_string);
