@@ -1910,7 +1910,7 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 	if (val_type == InvalidOid || val_type == UNKNOWNOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("arg 1: could not determine data type")));
+				 errmsg("could not determine data type for argument %d", 1)));
 
 	add_json(arg, false, state, val_type, true);
 
@@ -1934,7 +1934,7 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 	if (val_type == InvalidOid || val_type == UNKNOWNOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("arg 2: could not determine data type")));
+				 errmsg("could not determine data type for argument %d", 2)));
 
 	add_json(arg, PG_ARGISNULL(2), state, val_type, false);
 
@@ -1980,7 +1980,8 @@ json_build_object(PG_FUNCTION_ARGS)
 	if (nargs % 2 != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid number or arguments: object must be matched key value pairs")));
+				 errmsg("invalid number or arguments"),
+				 errhint("Object must be matched key value pairs.")));
 
 	result = makeStringInfo();
 
@@ -1994,7 +1995,8 @@ json_build_object(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(i))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: key cannot be null", i + 1)));
+					 errmsg("argument %d cannot be null", i + 1),
+					 errhint("Object keys should be text.")));
 		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
 
 		/*
@@ -2016,7 +2018,8 @@ json_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: could not determine data type", i + 1)));
+					 errmsg("could not determine data type for argument %d",
+							i + 1)));
 		appendStringInfoString(result, sep);
 		sep = ", ";
 		add_json(arg, false, result, val_type, true);
@@ -2042,7 +2045,8 @@ json_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: could not determine data type", i + 2)));
+					 errmsg("could not determine data type for argument %d",
+							i + 2)));
 		add_json(arg, PG_ARGISNULL(i + 1), result, val_type, false);
 
 	}
@@ -2099,7 +2103,8 @@ json_build_array(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: could not determine data type", i + 1)));
+					 errmsg("could not determine data type for argument %d",
+							i + 1)));
 		appendStringInfoString(result, sep);
 		sep = ", ";
 		add_json(arg, PG_ARGISNULL(i), result, val_type, false);

@@ -1150,7 +1150,8 @@ SELECT json_build_object(1,2);
 
 -- keys must be scalar and not null
 SELECT json_build_object(null,2);
-ERROR:  arg 1: key cannot be null
+ERROR:  argument 1 cannot be null
+HINT:  Object keys should be text.
 SELECT json_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
 ERROR:  key value must be scalar, not array, composite, or json
 SELECT json_build_object(json '{"a":1,"b":2}', 3);
