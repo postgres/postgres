@@ -88,7 +88,7 @@ ExecScanFetch(ScanState *node,
  *		Scans the relation using the 'access method' indicated and
  *		returns the next qualifying tuple in the direction specified
  *		in the global variable ExecDirection.
- *		The access method returns the next tuple and execScan() is
+ *		The access method returns the next tuple and ExecScan() is
  *		responsible for checking the tuple returned against the qual-clause.
  *
  *		A 'recheck method' must also be provided that can check an
