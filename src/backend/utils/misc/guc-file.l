@@ -562,7 +562,9 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	{
 		char	   *opt_name = NULL;
 		char	   *opt_value = NULL;
-		ConfigVariable *item;
+		ConfigVariable *item,
+					   *cur_item = NULL,
+					   *prev_item = NULL;
 
 		if (token == GUC_EOL)	/* empty or comment line */
 			continue;
@@ -645,13 +647,41 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		}
 		else
 		{
-			/* ordinary variable, append to list */
+			/*
+			 * ordinary variable, append to list.  For multiple items of
+			 * same parameter, retain only which comes later.
+			 */
 			item = palloc(sizeof *item);
 			item->name = opt_name;
 			item->value = opt_value;
 			item->filename = pstrdup(config_file);
 			item->sourceline = ConfigFileLineno-1;
 			item->next = NULL;
+
+			/* Remove the existing item of same parameter from the list */
+			for (cur_item = *head_p; cur_item; prev_item = cur_item,
+					 cur_item = cur_item->next)
+			{
+				if (strcmp(item->name, cur_item->name) == 0)
+				{
+					if (prev_item == NULL)
+						*head_p = cur_item->next;
+					else
+					{
+						prev_item->next = cur_item->next;
+						/*
+						 * On removing last item in list, we need to update tail
+						 * to ensure that list will be maintianed.
+						 */
+						if (prev_item->next == NULL)
+							*tail_p = prev_item;
+					}
+
+					pfree(cur_item);
+					break;
+				}
+			}
+
 			if (*head_p == NULL)
 				*head_p = item;
 			else
