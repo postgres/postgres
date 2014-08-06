@@ -230,19 +230,19 @@ MJExamineQuals(List *mergeclauses,
 				 qual->opno);
 
 		/* And get the matching support or comparison function */
+		Assert(clause->ssup.comparator == NULL);
 		sortfunc = get_opfamily_proc(opfamily,
 									 op_lefttype,
 									 op_righttype,
 									 BTSORTSUPPORT_PROC);
 		if (OidIsValid(sortfunc))
 		{
-			/* The sort support function should provide a comparator */
+			/* The sort support function can provide a comparator */
 			OidFunctionCall1(sortfunc, PointerGetDatum(&clause->ssup));
-			Assert(clause->ssup.comparator != NULL);
 		}
-		else
+		if (clause->ssup.comparator == NULL)
 		{
-			/* opfamily doesn't provide sort support, get comparison func */
+			/* support not available, get comparison func */
 			sortfunc = get_opfamily_proc(opfamily,
 										 op_lefttype,
 										 op_righttype,

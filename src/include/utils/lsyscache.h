@@ -50,8 +50,6 @@ extern Oid get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 					int16 strategy);
 extern bool get_ordering_op_properties(Oid opno,
 						   Oid *opfamily, Oid *opcintype, int16 *strategy);
-extern bool get_sort_function_for_ordering_op(Oid opno, Oid *sortfunc,
-								  bool *issupport, bool *reverse);
 extern Oid	get_equality_op_for_ordering_op(Oid opno, bool *reverse);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);

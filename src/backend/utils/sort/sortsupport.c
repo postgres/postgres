@@ -18,6 +18,7 @@
 /* See sortsupport.h */
 #define SORTSUPPORT_INCLUDE_DEFINITIONS
 
+#include "access/nbtree.h"
 #include "fmgr.h"
 #include "utils/lsyscache.h"
 #include "utils/sortsupport.h"
@@ -94,24 +95,43 @@ PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup)
 void
 PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup)
 {
-	Oid			sortFunction;
-	bool		issupport;
+	Oid			sortSupportFunction;
+	Oid			opfamily;
+	Oid			opcintype;
+	int16		strategy;
 
-	if (!get_sort_function_for_ordering_op(orderingOp,
-										   &sortFunction,
-										   &issupport,
-										   &ssup->ssup_reverse))
+	Assert(ssup->comparator == NULL);
+
+	/* Find the operator in pg_amop */
+	if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
+									&strategy))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 orderingOp);
+	ssup->ssup_reverse = (strategy == BTGreaterStrategyNumber);
 
-	if (issupport)
+	/* Look for a sort support function */
+	sortSupportFunction = get_opfamily_proc(opfamily, opcintype, opcintype,
+											BTSORTSUPPORT_PROC);
+	if (OidIsValid(sortSupportFunction))
 	{
-		/* The sort support function should provide a comparator */
-		OidFunctionCall1(sortFunction, PointerGetDatum(ssup));
-		Assert(ssup->comparator != NULL);
+		/*
+		 * The sort support function can provide a comparator, but it can
+		 * also choose not to so (e.g. based on the selected collation).
+		 */
+		OidFunctionCall1(sortSupportFunction, PointerGetDatum(ssup));
 	}
-	else
+
+	if (ssup->comparator == NULL)
 	{
+		Oid			sortFunction;
+
+		sortFunction = get_opfamily_proc(opfamily, opcintype, opcintype,
+										 BTORDER_PROC);
+
+		if (!OidIsValid(sortFunction))
+			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+				 BTORDER_PROC, opcintype, opcintype, opfamily);
+
 		/* We'll use a shim to call the old-style btree comparator */
 		PrepareSortSupportComparisonShim(sortFunction, ssup);
 	}
