@@ -14,6 +14,11 @@
 #ifndef BINARY_UPGRADE_H
 #define BINARY_UPGRADE_H
 
+#include "catalog/pg_authid.h"
+
+/* pick a OID that will never be used for TOAST tables */
+#define OPTIONALLY_CREATE_TOAST_OID	BOOTSTRAP_SUPERUSERID
+
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_oid;
 extern PGDLLIMPORT Oid binary_upgrade_next_array_pg_type_oid;
 extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_type_oid;
