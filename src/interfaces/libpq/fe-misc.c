@@ -744,9 +744,10 @@ retry3:
 	 * the file selected for reading already.
 	 *
 	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then
-	 * data could arrive before we make the pqReadReady() test.  So we must
-	 * play dumb and assume there is more data, relying on the SSL layer to
-	 * detect true EOF.
+	 * data could arrive before we make the pqReadReady() test, but the
+	 * second SSL_read() could still say WANT_READ because the data received
+	 * was not a complete SSL record.  So we must play dumb and assume there
+	 * is more data, relying on the SSL layer to detect true EOF.
 	 */
 
 #ifdef USE_SSL
