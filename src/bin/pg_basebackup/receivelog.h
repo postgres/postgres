@@ -16,4 +16,5 @@ extern bool ReceiveXlogStream(PGconn *conn,
 				  char *basedir,
 				  stream_stop_callback stream_stop,
 				  int standby_message_timeout,
-				  char *partial_suffix);
+				  char *partial_suffix,
+				  int fsync_interval);

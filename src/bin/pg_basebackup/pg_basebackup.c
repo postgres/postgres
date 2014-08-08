@@ -371,7 +371,7 @@ LogStreamerMain(logstreamer_param *param)
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
 						   reached_end_position, standby_message_timeout,
-						   NULL))
+						   NULL, 0))
 
 		/*
 		 * Any errors will already have been reported in the function process,

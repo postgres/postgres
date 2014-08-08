@@ -36,6 +36,7 @@ static char *basedir = NULL;
 static int	verbose = 0;
 static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static int	fsync_interval = 0; /* 0 = default */
 static volatile bool time_to_abort = false;
 
 
@@ -62,6 +63,8 @@ usage(void)
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
+	printf(_("  -F  --fsync-interval=INTERVAL\n"
+			 "                         frequency of syncs to transaction log files (in seconds)\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -330,7 +333,8 @@ StreamLog(void)
 				starttli);
 
 	ReceiveXlogStream(conn, startpos, starttli, NULL, basedir,
-					  stop_streaming, standby_message_timeout, ".partial");
+					  stop_streaming, standby_message_timeout, ".partial",
+					  fsync_interval);
 
 	PQfinish(conn);
 }
@@ -360,6 +364,7 @@ main(int argc, char **argv)
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
 		{"no-loop", no_argument, NULL, 'n'},
+		{"fsync-interval", required_argument, NULL, 'F'},
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"status-interval", required_argument, NULL, 's'},
@@ -389,7 +394,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:d:h:p:U:s:nwWv",
+	while ((c = getopt_long(argc, argv, "D:d:h:p:U:s:nF:wWv",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -436,6 +441,15 @@ main(int argc, char **argv)
 			case 'n':
 				noloop = 1;
 				break;
+		case 'F':
+			fsync_interval = atoi(optarg) * 1000;
+			if (fsync_interval < -1000)
+			{
+				fprintf(stderr, _("%s: invalid fsync interval \"%s\"\n"),
+						progname, optarg);
+				exit(1);
+			}
+			break;
 			case 'v':
 				verbose++;
 				break;

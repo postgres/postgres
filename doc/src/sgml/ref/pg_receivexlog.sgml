@@ -106,6 +106,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+       <term><option>-F <replaceable class="parameter">interval</replaceable></option></term>
+       <term><option>--fsync-interval=<replaceable class="parameter">interval</replaceable></option></term>
+       <listitem>
+        <para>
+        Specifies the maximum time to issue sync commands to ensure the
+        received WAL file is safely flushed to disk, in seconds. The default
+        value is zero, which disables issuing fsyncs except when WAL file is
+        closed. If <literal>-1</literal> is specified, WAL file is flushed as
+        soon as possible, that is, as soon as there are WAL data which has
+        not been flushed yet.
+        </para>
+       </listitem>
+      </varlistentry>
+
+     <varlistentry>
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>
       <listitem>
