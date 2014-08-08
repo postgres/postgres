@@ -528,7 +528,7 @@
     the <structfield>relfrozenxid</> column of a table's
     <structname>pg_class</> row contains the freeze cutoff XID that was used
     by the last whole-table <command>VACUUM</> for that table.  All rows
-    inserted by transactions with XIDs XIDs older than this cutoff XID are
+    inserted by transactions with XIDs older than this cutoff XID are
     guaranteed to have been frozen.  Similarly,
     the <structfield>datfrozenxid</> column of a database's
     <structname>pg_database</> row is a lower bound on the unfrozen XIDs
