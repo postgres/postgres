@@ -153,7 +153,7 @@ _PG_init(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("plpgsql.print_strict_params",
-							 gettext_noop("Print information about parameters in the DETAIL part of the error messages generated on INTO .. STRICT failures."),
+							 gettext_noop("Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."),
 							 NULL,
 							 &plpgsql_print_strict_params,
 							 false,
@@ -161,7 +161,7 @@ _PG_init(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomStringVariable("plpgsql.extra_warnings",
-							   gettext_noop("List of programming constructs which should produce a warning."),
+							   gettext_noop("List of programming constructs that should produce a warning."),
 							   NULL,
 							   &plpgsql_extra_warnings_string,
 							   "none",
@@ -171,7 +171,7 @@ _PG_init(void)
 							   NULL);
 
 	DefineCustomStringVariable("plpgsql.extra_errors",
-							   gettext_noop("List of programming constructs which should produce an error."),
+							   gettext_noop("List of programming constructs that should produce an error."),
 							   NULL,
 							   &plpgsql_extra_errors_string,
 							   "none",

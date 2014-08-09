@@ -1083,7 +1083,7 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
 	if (th->fileLen < 0)
-		exit_horribly(modulename, "could not determine seek position in file: %s\n",
+		exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
 					  strerror(errno));
 	fseeko(tmp, 0, SEEK_SET);
 

@@ -338,7 +338,7 @@ main(int argc, char *argv[])
 
 	if (if_exists && !output_clean)
 	{
-		fprintf(stderr, _("%s: option --if-exists requires -c/--clean option\n"),
+		fprintf(stderr, _("%s: option --if-exists requires option -c/--clean\n"),
 				progname);
 		exit_nicely(1);
 	}

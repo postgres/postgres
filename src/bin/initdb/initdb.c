@@ -2548,7 +2548,7 @@ check_locale_name(int category, const char *locale, char **canonname)
 	save = setlocale(category, NULL);
 	if (!save)
 	{
-		fprintf(stderr, _("%s: setlocale failed\n"),
+		fprintf(stderr, _("%s: setlocale() failed\n"),
 				progname);
 		exit(1);
 	}
