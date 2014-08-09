@@ -843,9 +843,8 @@ json_categorize_type(Oid typoid,
 {
 	bool		typisvarlena;
 
-	/*
-	 * We should look through domains here, but we'll wait till 9.4.
-	 */
+	/* Look through any domain */
+	typoid = getBaseType(typoid);
 
 	/* We'll usually need to return the type output function */
 	getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
