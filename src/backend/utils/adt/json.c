@@ -354,8 +354,9 @@ static void
 parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 {
 	/*
-	 * an object field is "fieldname" : value where value can be a scalar,
-	 * object or array
+	 * An object field is "fieldname" : value where value can be a scalar,
+	 * object or array.  Note: in user-facing docs and error messages, we
+	 * generally call a field name a "key".
 	 */
 
 	char	   *fname = NULL;	/* keep compiler quiet */
@@ -1890,7 +1891,6 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field name must not be null")));
 
-
 	val_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
 
 	/*
@@ -1976,12 +1976,11 @@ json_build_object(PG_FUNCTION_ARGS)
 	StringInfo	result;
 	Oid			val_type;
 
-
 	if (nargs % 2 != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid number or arguments"),
-				 errhint("Object must be matched key value pairs.")));
+				 errmsg("argument list must have even number of elements"),
+				 errhint("The arguments of json_build_object() must consist of alternating keys and values.")));
 
 	result = makeStringInfo();
 
@@ -1989,7 +1988,6 @@ json_build_object(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs; i += 2)
 	{
-
 		/* process key */
 
 		if (PG_ARGISNULL(i))
@@ -2006,10 +2004,7 @@ json_build_object(PG_FUNCTION_ARGS)
 		if (val_type == UNKNOWNOID && get_fn_expr_arg_stable(fcinfo->flinfo, i))
 		{
 			val_type = TEXTOID;
-			if (PG_ARGISNULL(i))
-				arg = (Datum) 0;
-			else
-				arg = CStringGetTextDatum(PG_GETARG_POINTER(i));
+			arg = CStringGetTextDatum(PG_GETARG_POINTER(i));
 		}
 		else
 		{
@@ -2048,12 +2043,11 @@ json_build_object(PG_FUNCTION_ARGS)
 					 errmsg("could not determine data type for argument %d",
 							i + 2)));
 		add_json(arg, PG_ARGISNULL(i + 1), result, val_type, false);
-
 	}
+
 	appendStringInfoChar(result, '}');
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
-
 }
 
 /*
@@ -2127,9 +2121,8 @@ json_build_array_noargs(PG_FUNCTION_ARGS)
 /*
  * SQL function json_object(text[])
  *
- * take a one or two dimensional array of text as name vale pairs
+ * take a one or two dimensional array of text as key/value pairs
  * for a json object.
- *
  */
 Datum
 json_object(PG_FUNCTION_ARGS)
@@ -2219,7 +2212,7 @@ json_object(PG_FUNCTION_ARGS)
 /*
  * SQL function json_object(text[], text[])
  *
- * take separate name and value arrays of text to construct a json object
+ * take separate key and value arrays of text to construct a json object
  * pairwise.
  */
 Datum
@@ -2299,7 +2292,6 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 	pfree(result.data);
 
 	PG_RETURN_TEXT_P(rval);
-
 }
 
 
