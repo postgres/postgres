@@ -1123,13 +1123,13 @@ update_tablespace_symlink(Oid oid, const char *old_dir)
 
 		if (unlink(linkloc) != 0 && errno != ENOENT)
 		{
-			fprintf(stderr, _("%s: could not remove symbolic link \"%s\": %s"),
+			fprintf(stderr, _("%s: could not remove symbolic link \"%s\": %s\n"),
 					progname, linkloc, strerror(errno));
 			disconnect_and_exit(1);
 		}
 		if (symlink(new_dir, linkloc) != 0)
 		{
-			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s"),
+			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
 					progname, linkloc, strerror(errno));
 			disconnect_and_exit(1);
 		}

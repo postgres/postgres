@@ -582,7 +582,7 @@ main(int argc, char **argv)
 	}
 
 	if (if_exists && !outputClean)
-		exit_horribly(NULL, "option --if-exists requires -c/--clean option\n");
+		exit_horribly(NULL, "option --if-exists requires option -c/--clean\n");
 
 	/* Identify archive format to emit */
 	archiveFormat = parseArchiveFormat(format, &archiveMode);

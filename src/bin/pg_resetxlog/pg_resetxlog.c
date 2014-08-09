@@ -683,7 +683,7 @@ PrintNewControlValues()
 
 	if (set_xid_epoch != -1)
 	{
-		printf(_("NextXID Epoch:                        %u\n"),
+		printf(_("NextXID epoch:                        %u\n"),
 			   ControlFile.checkPointCopy.nextXidEpoch);
 	}
 }

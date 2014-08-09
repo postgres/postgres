@@ -2509,7 +2509,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 		if (popt->topt.default_footer)
 			printf(_("Default footer (%s) is on.\n"), param);
 		else
-			printf(_("Default footer (%s) is off."), param);
+			printf(_("Default footer (%s) is off.\n"), param);
 	}
 
 	/* show format */
