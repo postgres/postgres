@@ -10317,7 +10317,7 @@ table2-mapping
        <entry>
          Builds a JSON object out of a variadic argument list.  By
          convention, the argument list consists of alternating
-         names and values.
+         keys and values.
        </entry>
        <entry><literal>json_build_object('foo',1,'bar',2)</literal></entry>
        <entry><literal>{"foo": 1, "bar": 2}</literal></entry>
@@ -10329,9 +10329,9 @@ table2-mapping
        <entry>
          Builds a JSON object out of a text array.  The array must have either
          exactly one dimension with an even number of members, in which case
-         they are taken as alternating name/value pairs, or two dimensions
+         they are taken as alternating key/value pairs, or two dimensions
          such that each inner array has exactly two elements, which
-         are taken as a name/value pair.
+         are taken as a key/value pair.
        </entry>
        <entry><para><literal>json_object('{a, 1, b, "def", c, 3.5}')</></para>
         <para><literal>json_object('{{a, 1},{b, "def"},{c, 3.5}}')</></para></entry>
@@ -10715,9 +10715,9 @@ table2-mapping
       <function>json_to_record</> and <function>json_to_recordset</>,
       type coercion from the JSON is <quote>best effort</> and may not result
       in desired values for some types.  JSON keys are matched to
-      identical field names in the target row type, and fields that do
-      not exist in the JSON will simply be NULL.  JSON keys that do not
-      appear in the target row type will be omitted from the output.
+      identical column names in the target row type.  JSON fields that do not
+      appear in the target row type will be omitted from the output, and
+      target columns that do not match any JSON field will simply be NULL.
     </para>
   </note>
 
