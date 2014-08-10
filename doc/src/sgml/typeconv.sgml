@@ -185,7 +185,9 @@ That is, if a query is well-formed and the types already match, then the query s
 without spending extra time in the parser and without introducing unnecessary implicit conversion
 calls in the query.
 </para>
+</listitem>
 
+<listitem>
 <para>
 Additionally, if a query usually requires an implicit conversion for a function, and
 if then the user defines a new function with the correct argument types, the parser
@@ -209,7 +211,7 @@ should use this new function and no longer do implicit conversion to use the old
    The specific operator that is referenced by an operator expression
    is determined using the following procedure.
    Note that this procedure is indirectly affected
-   by the precedence of the involved operators, since that will determine
+   by the precedence of the operators involved, since that will determine
    which sub-expressions are taken to be the inputs of which operators.
    See <xref linkend="sql-precedence"> for more information.
   </para>
@@ -217,7 +219,7 @@ should use this new function and no longer do implicit conversion to use the old
 <procedure>
 <title>Operator Type Resolution</title>
 
-<step performance="required">
+<step id="op-resol-select" performance="required">
 <para>
 Select the operators to be considered from the
 <classname>pg_operator</classname> system catalog.  If a non-schema-qualified
@@ -240,7 +242,7 @@ search path position.
 </substeps>
 </step>
 
-<step performance="required">
+<step id="op-resol-exact-match" performance="required">
 <para>
 Check for an operator accepting exactly the input argument types.
 If one exists (there can be only one exact match in the set of
@@ -248,7 +250,7 @@ operators considered), use it.
 </para>
 
 <substeps>
-<step performance="optional">
+<step id="op-resol-exact-unknown" performance="optional">
 <para>
 If one argument of a binary operator invocation is of the <type>unknown</type> type,
 then assume it is the same type as the other argument for this check.
@@ -256,10 +258,17 @@ Invocations involving two <type>unknown</type> inputs, or a unary operator
 with an <type>unknown</type> input, will never find a match at this step.
 </para>
 </step>
+<step id="op-resol-exact-domain" performance="optional">
+<para>
+If one argument of a binary operator invocation is of the <type>unknown</type>
+type and the other is of a domain type, next check to see if there is an
+operator accepting exactly the domain's base type on both sides; if so, use it.
+</para>
+</step>
 </substeps>
 </step>
 
-<step performance="required">
+<step id="op-resol-best-match" performance="required">
 <para>
 Look for the best match.
 </para>
@@ -275,9 +284,15 @@ candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
+If any input argument is of a domain type, treat it as being of the
+domain's base type for all subsequent steps.  This ensures that domains
+act like their base types for purposes of ambiguous-operator resolution.
+</para>
+</step>
+<step performance="required">
+<para>
 Run through all candidates and keep those with the most exact matches
-on input types.  (Domains are considered the same as their base type
-for this purpose.)  Keep all candidates if none have exact matches.
+on input types.  Keep all candidates if none have exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
@@ -308,7 +323,7 @@ Keep all candidates if none survive these tests.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
-<step performance="required">
+<step id="op-resol-last-unknown" performance="required">
 <para>
 If there are both <type>unknown</type> and known-type arguments, and all
 the known-type arguments have the same type, assume that the
@@ -476,12 +491,52 @@ array inclusion (<type>anyarray</> <literal>&lt;@</> <type>anyarray</>)
 and range inclusion (<type>anyelement</> <literal>&lt;@</> <type>anyrange</>).
 Since none of these polymorphic pseudo-types (see <xref
 linkend="datatype-pseudo">) are considered preferred, the parser cannot
-resolve the ambiguity on that basis.  However, the last resolution rule tells
+resolve the ambiguity on that basis.
+However, <xref linkend="op-resol-last-unknown"> tells
 it to assume that the unknown-type literal is of the same type as the other
 input, that is, integer array.  Now only one of the two operators can match,
 so array inclusion is selected.  (Had range inclusion been selected, we would
 have gotten an error, because the string does not have the right format to be
 a range literal.)
+</para>
+</example>
+
+<example>
+<title>Custom Operator on a Domain Type</title>
+
+<para>
+Users sometimes try to declare operators applying just to a domain type.
+This is possible but is not nearly as useful as it might seem, because the
+operator resolution rules are designed to select operators applying to the
+domain's base type.  As an example consider
+<screen>
+CREATE DOMAIN mytext AS text CHECK(...);
+CREATE FUNCTION mytext_eq_text (mytext, text) RETURNS boolean AS ...;
+CREATE OPERATOR = (procedure=mytext_eq_text, leftarg=mytext, rightarg=text);
+CREATE TABLE mytable (val mytext);
+
+SELECT * FROM mytable WHERE val = 'foo';
+</screen>
+This query will not use the custom operator.  The parser will first see if
+there is a <type>mytext</> <literal>=</> <type>mytext</> operator
+(<xref linkend="op-resol-exact-unknown">), which there is not;
+then it will consider the domain's base type <type>text</>, and see if
+there is a <type>text</> <literal>=</> <type>text</> operator
+(<xref linkend="op-resol-exact-domain">), which there is;
+so it resolves the <type>unknown</>-type literal as <type>text</> and
+uses the <type>text</> <literal>=</> <type>text</> operator.
+The only way to get the custom operator to be used is to explicitly cast
+the literal:
+<screen>
+SELECT * FROM mytable WHERE val = text 'foo';
+</screen>
+so that the <type>mytext</> <literal>=</> <type>text</> operator is found
+immediately according to the exact-match rule.  If the best-match rules
+are reached, they actively discriminate against operators on domain types.
+If they did not, such an operator would create too many ambiguous-operator
+failures, because the casting rules always consider a domain as castable
+to or from its base type, and so the domain operator would be considered
+usable in all the same cases as a similarly-named operator on the base type.
 </para>
 </example>
 
@@ -600,9 +655,15 @@ candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
+If any input argument is of a domain type, treat it as being of the
+domain's base type for all subsequent steps.  This ensures that domains
+act like their base types for purposes of ambiguous-function resolution.
+</para>
+</step>
+<step performance="required">
+<para>
 Run through all candidates and keep those with the most exact matches
-on input types.  (Domains are considered the same as their base type
-for this purpose.)  Keep all candidates if none have exact matches.
+on input types.  Keep all candidates if none have exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
@@ -898,8 +959,23 @@ and Related Constructs</title>
 <step performance="required">
 <para>
 If all inputs are of the same type, and it is not <type>unknown</type>,
-resolve as that type.  Otherwise, replace any domain types in the list with
-their underlying base types.
+resolve as that type.
+</para>
+</step>
+
+<step performance="required">
+<para>
+If any input is of a domain type, treat it as being of the
+domain's base type for all subsequent steps.
+  <footnote>
+   <para>
+    Somewhat like the treatment of domain inputs for operators and
+    functions, this behavior allows a domain type to be preserved through
+    a <literal>UNION</> or similar construct, so long as the user is
+    careful to ensure that all inputs are implicitly or explicitly of that
+    exact type.  Otherwise the domain's base type will be preferred.
+   </para>
+  </footnote>
 </para>
 </step>
 
