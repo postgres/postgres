@@ -28,11 +28,12 @@
     <listitem>
      <para>
       <function>get_raw_page</function> reads the specified block of the named
-      table and returns a copy as a <type>bytea</> value.  This allows a
+      relation and returns a copy as a <type>bytea</> value.  This allows a
       single time-consistent copy of the block to be obtained.
       <replaceable>fork</replaceable> should be <literal>'main'</literal> for
-      the main data fork, or <literal>'fsm'</literal> for the free space map,
-      or <literal>'vm'</literal> for the visibility map.
+      the main data fork, <literal>'fsm'</literal> for the free space map,
+      <literal>'vm'</literal> for the visibility map, or <literal>'init'</literal>
+      for the initialization fork.
      </para>
     </listitem>
    </varlistentry>
