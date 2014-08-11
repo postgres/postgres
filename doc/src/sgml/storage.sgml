@@ -232,8 +232,8 @@ The <function>pg_relation_filepath()</> function shows the entire path
 as a substitute for remembering many of the above rules.  But keep in
 mind that this function just gives the name of the first segment of the
 main fork of the relation &mdash; you may need to append a segment number
-and/or <literal>_fsm</> or <literal>_vm</> to find all the files associated
-with the relation.
+and/or <literal>_fsm</>, <literal>_vm</>, or <literal>_init</> to find all
+the files associated with the relation.
 </para>
 
 <para>
