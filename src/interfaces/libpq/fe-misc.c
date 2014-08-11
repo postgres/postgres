@@ -751,7 +751,7 @@ retry3:
 	 */
 
 #ifdef USE_SSL
-	if (conn->ssl)
+	if (conn->ssl_in_use)
 		return 0;
 #endif
 
@@ -1051,7 +1051,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 		return -1;
 	}
 
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 	/* Check for SSL library buffering read bytes */
 	if (forRead && conn->ssl && SSL_pending(conn->ssl) > 0)
 	{

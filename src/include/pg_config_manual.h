@@ -145,6 +145,15 @@
 #endif
 
 /*
+ * USE_SSL code should be compiled only when compiling with an SSL
+ * implementation.  (Currently, only OpenSSL is supported, but we might add
+ * more implementations in the future.)
+ */
+#ifdef USE_OPENSSL
+#define USE_SSL
+#endif
+
+/*
  * This is the default directory in which AF_UNIX socket files are
  * placed.  Caution: changing this risks breaking your existing client
  * applications, which are likely to continue to look in the old

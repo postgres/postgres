@@ -778,14 +778,14 @@
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
 
+/* Define to build with OpenSSL support. (--with-openssl) */
+#undef USE_OPENSSL
+
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
 
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
-
-/* Define to build with (Open)SSL support. (--with-openssl) */
-#undef USE_SSL
 
 /* Define to select SysV-style semaphores. */
 #undef USE_SYSV_SEMAPHORES

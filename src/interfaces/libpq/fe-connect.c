@@ -1961,7 +1961,7 @@ keep_going:						/* We will come back to here until there is
 					conn->allow_ssl_try = false;
 				}
 				if (conn->allow_ssl_try && !conn->wait_ssl_try &&
-					conn->ssl == NULL)
+					!conn->ssl_in_use)
 				{
 					ProtocolVersion pv;
 
@@ -2040,7 +2040,7 @@ keep_going:						/* We will come back to here until there is
 				 * On first time through, get the postmaster's response to our
 				 * SSL negotiation packet.
 				 */
-				if (conn->ssl == NULL)
+				if (!conn->ssl_in_use)
 				{
 					/*
 					 * We use pqReadData here since it has the logic to
@@ -2310,7 +2310,7 @@ keep_going:						/* We will come back to here until there is
 					 * connection already, then retry with an SSL connection
 					 */
 					if (conn->sslmode[0] == 'a' /* "allow" */
-						&& conn->ssl == NULL
+						&& !conn->ssl_in_use
 						&& conn->allow_ssl_try
 						&& conn->wait_ssl_try)
 					{
@@ -2709,6 +2709,7 @@ makeEmptyPGconn(void)
 #ifdef USE_SSL
 	conn->allow_ssl_try = true;
 	conn->wait_ssl_try = false;
+	conn->ssl_in_use = false;
 #endif
 
 	/*

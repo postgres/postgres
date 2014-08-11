@@ -44,6 +44,10 @@ OBJS += ip.o md5.o
 # utils/mb
 OBJS += encnames.o wchar.o
 
+ifeq ($(with_openssl),yes)
+OBJS += fe-secure-openssl.o
+endif
+
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
 endif

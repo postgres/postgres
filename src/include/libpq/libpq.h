@@ -82,5 +82,14 @@ extern int	secure_open_server(Port *port);
 extern void secure_close(Port *port);
 extern ssize_t secure_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_write(Port *port, void *ptr, size_t len);
+extern ssize_t secure_raw_read(Port *port, void *ptr, size_t len);
+extern ssize_t secure_raw_write(Port *port, const void *ptr, size_t len);
+
+extern bool ssl_loaded_verify_locations;
+
+/* GUCs */
+extern char *SSLCipherSuites;
+extern char *SSLECDHCurve;
+extern bool SSLPreferServerCiphers;
 
 #endif   /* LIBPQ_H */

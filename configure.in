@@ -657,7 +657,7 @@ AC_MSG_RESULT([$with_bonjour])
 #
 AC_MSG_CHECKING([whether to build with OpenSSL support])
 PGAC_ARG_BOOL(with, openssl, no, [build with OpenSSL support],
-              [AC_DEFINE([USE_SSL], 1, [Define to build with (Open)SSL support. (--with-openssl)])])
+              [AC_DEFINE([USE_OPENSSL], 1, [Define to build with OpenSSL support. (--with-openssl)])])
 AC_MSG_RESULT([$with_openssl])
 AC_SUBST(with_openssl)
 

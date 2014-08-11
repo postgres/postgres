@@ -21,7 +21,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #endif
@@ -184,17 +184,33 @@ typedef struct Port
 #endif
 
 	/*
-	 * SSL structures (keep these last so that USE_SSL doesn't affect
-	 * locations of other fields)
+	 * SSL structures (keep these last so that the locations of other fields
+	 * are the same whether or not you build with SSL)
 	 */
 #ifdef USE_SSL
+	bool		ssl_in_use;
+	char	   *peer_cn;
+	bool		peer_cert_valid;
+#endif
+#ifdef USE_OPENSSL
 	SSL		   *ssl;
 	X509	   *peer;
-	char	   *peer_cn;
 	unsigned long count;
 #endif
 } Port;
 
+#ifdef USE_SSL
+/*
+ * These functions are implemented by the glue code specific to each
+ * SSL implementation (e.g. be-secure-openssl.c)
+ */
+extern void be_tls_init(void);
+extern int be_tls_open_server(Port *port);
+extern void be_tls_close(Port *port);
+extern ssize_t be_tls_read(Port *port, void *ptr, size_t len);
+extern ssize_t be_tls_write(Port *port, void *ptr, size_t len);
+
+#endif
 
 extern ProtocolVersion FrontendProtocol;
 

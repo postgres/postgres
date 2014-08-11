@@ -73,14 +73,14 @@ typedef struct
 #endif
 #endif   /* ENABLE_SSPI */
 
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
 #define USE_SSL_ENGINE
 #endif
-#endif   /* USE_SSL */
+#endif   /* USE_OPENSSL */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -427,6 +427,8 @@ struct pg_conn
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
 	bool		wait_ssl_try;	/* Delay SSL negotiation until after
 								 * attempting normal connection */
+	bool		ssl_in_use;
+#ifdef USE_OPENSSL
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
 #ifdef USE_SSL_ENGINE
@@ -435,6 +437,7 @@ struct pg_conn
 	void	   *engine;			/* dummy field to keep struct the same if
 								 * OpenSSL version changes */
 #endif
+#endif   /* USE_OPENSSL */
 #endif   /* USE_SSL */
 
 #ifdef ENABLE_GSS
@@ -481,6 +484,24 @@ struct pg_cancel
  * direct use of this array is deprecated; call PQresStatus() instead.
  */
 extern char *const pgresStatus[];
+
+
+#ifdef USE_SSL
+
+#ifndef WIN32
+#define USER_CERT_FILE		".postgresql/postgresql.crt"
+#define USER_KEY_FILE		".postgresql/postgresql.key"
+#define ROOT_CERT_FILE		".postgresql/root.crt"
+#define ROOT_CRL_FILE		".postgresql/root.crl"
+#else
+/* On Windows, the "home" directory is already PostgreSQL-specific */
+#define USER_CERT_FILE		"postgresql.crt"
+#define USER_KEY_FILE		"postgresql.key"
+#define ROOT_CERT_FILE		"root.crt"
+#define ROOT_CRL_FILE		"root.crl"
+#endif
+
+#endif   /* USE_SSL */
 
 /* ----------------
  * Internal functions of libpq
@@ -603,12 +624,24 @@ extern PostgresPollingStatusType pqsecure_open_client(PGconn *);
 extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
+extern ssize_t pqsecure_raw_read(PGconn *, void *ptr, size_t len);
+extern ssize_t pqsecure_raw_write(PGconn *, const void *ptr, size_t len);
 
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 extern int	pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
 extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
 				 bool got_epipe);
 #endif
+
+/*
+ * The SSL implementatation provides these functions (fe-secure-openssl.c)
+ */
+extern void pgtls_init_library(bool do_ssl, int do_crypto);
+extern int pgtls_init(PGconn *conn);
+extern PostgresPollingStatusType pgtls_open_client(PGconn *conn);
+extern void pgtls_close(PGconn *conn);
+extern ssize_t pgtls_read(PGconn *conn, void *ptr, size_t len);
+extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
 
 /*
  * this is so that we can check if a connection is non-blocking internally

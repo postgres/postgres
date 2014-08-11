@@ -5492,7 +5492,7 @@ if test "${with_openssl+set}" = set; then :
   case $withval in
     yes)
 
-$as_echo "#define USE_SSL 1" >>confdefs.h
+$as_echo "#define USE_OPENSSL 1" >>confdefs.h
 
       ;;
     no)

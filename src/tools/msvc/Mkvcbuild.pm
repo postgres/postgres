@@ -117,6 +117,12 @@ sub mkvcbuild
 	$postgres->AddLibrary('ws2_32.lib');
 	$postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
 	$postgres->FullExportDLL('postgres.lib');
+	# The OBJS scraper doesn't know about ifdefs, so remove be-secure-openssl.c
+	# if building without OpenSSL
+	if (!$solution->{options}->{openssl})
+	{
+		$postgres->RemoveFile('src\backend\libpq\be-secure-openssl.c');
+	}
 
 	my $snowball = $solution->AddProject('dict_snowball', 'dll', '',
 		'src\backend\snowball');
@@ -276,6 +282,12 @@ sub mkvcbuild
 	$libpq->ReplaceFile('src\interfaces\libpq\libpqrc.c',
 		'src\interfaces\libpq\libpq.rc');
 	$libpq->AddReference($libpgport);
+	# The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
+	# if building without OpenSSL
+	if (!$solution->{options}->{openssl})
+	{
+		$libpq->RemoveFile('src\interfaces\libpq\fe-secure-openssl.c');
+	}
 
 	my $libpqwalreceiver =
 	  $solution->AddProject('libpqwalreceiver', 'dll', '',

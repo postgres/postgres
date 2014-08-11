@@ -182,7 +182,7 @@ sub GenerateFiles
 		  if ($self->{options}->{integer_datetimes});
 		print O "#define USE_LDAP 1\n"   if ($self->{options}->{ldap});
 		print O "#define HAVE_LIBZ 1\n"  if ($self->{options}->{zlib});
-		print O "#define USE_SSL 1\n"    if ($self->{options}->{openssl});
+		print O "#define USE_OPENSSL 1\n" if ($self->{options}->{openssl});
 		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 
 		print O "#define BLCKSZ ", 1024 * $self->{options}->{blocksize}, "\n";
@@ -628,7 +628,7 @@ sub GetFakeConfigure
 	$cfg .= ' --with-ldap'  if ($self->{options}->{ldap});
 	$cfg .= ' --without-zlib' unless ($self->{options}->{zlib});
 	$cfg .= ' --with-extra-version' if ($self->{options}->{extraver});
-	$cfg .= ' --with-openssl'       if ($self->{options}->{ssl});
+	$cfg .= ' --with-openssl'       if ($self->{options}->{openssl});
 	$cfg .= ' --with-ossp-uuid'     if ($self->{options}->{uuid});
 	$cfg .= ' --with-libxml'        if ($self->{options}->{xml});
 	$cfg .= ' --with-libxslt'       if ($self->{options}->{xslt});

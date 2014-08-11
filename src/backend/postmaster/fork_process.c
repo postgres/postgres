@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 #include <openssl/rand.h>
 #endif
 
@@ -110,7 +110,7 @@ fork_process(void)
 		/*
 		 * Make sure processes do not share OpenSSL randomness state.
 		 */
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 		RAND_cleanup();
 #endif
 	}

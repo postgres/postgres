@@ -1685,7 +1685,7 @@ check_hba(hbaPort *port)
 
 			/* Check SSL state */
 #ifdef USE_SSL
-			if (port->ssl)
+			if (port->ssl_in_use)
 			{
 				/* Connection is SSL, match both "host" and "hostssl" */
 				if (hba->conntype == ctHostNoSSL)
