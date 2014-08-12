@@ -45,6 +45,8 @@ static unsigned int ConfigFileLineno;
 static const char *GUC_flex_fatal_errmsg;
 static sigjmp_buf *GUC_flex_fatal_jmp;
 
+static void FreeConfigVariable(ConfigVariable *item);
+
 /* flex fails to supply a prototype for yylex, so provide one */
 int GUC_yylex(void);
 
@@ -151,14 +153,66 @@ ProcessConfigFile(GucContext context)
 	 * file is in the data directory, we can't read it until the DataDir has
 	 * been set.
 	 */
-	if (DataDir &&
-		!ParseConfigFile(PG_AUTOCONF_FILENAME, NULL, false, 0, elevel,
-						 &head, &tail))
+	if (DataDir)
 	{
-		/* Syntax error(s) detected in the file, so bail out */
-		error = true;
-		ErrorConfFile = PG_AUTOCONF_FILENAME;
-		goto cleanup_list;
+		if (!ParseConfigFile(PG_AUTOCONF_FILENAME, NULL, false, 0, elevel,
+							 &head, &tail))
+		{
+			/* Syntax error(s) detected in the file, so bail out */
+			error = true;
+			ErrorConfFile = PG_AUTOCONF_FILENAME;
+			goto cleanup_list;
+		}
+	}
+	else
+	{
+		ConfigVariable *prev = NULL;
+
+		/*
+		 * Pick up only the data_directory if DataDir is not set, which
+		 * means that the configuration file is read for the first time and
+		 * PG_AUTOCONF_FILENAME file cannot be read yet. In this case,
+		 * we shouldn't pick any settings except the data_directory
+		 * from postgresql.conf because they might be overwritten
+		 * with the settings in PG_AUTOCONF_FILENAME file which will be
+		 * read later. OTOH, since it's ensured that data_directory doesn't
+		 * exist in PG_AUTOCONF_FILENAME file, it will never be overwritten
+		 * later.
+		 */
+		for (item = head; item;)
+		{
+			ConfigVariable *ptr = item;
+
+			item = item->next;
+			if (strcmp(ptr->name, "data_directory") != 0)
+			{
+				if (prev == NULL)
+					head = ptr->next;
+				else
+				{
+					prev->next = ptr->next;
+					/*
+					 * On removing last item in list, we need to update tail
+					 * to ensure that list will be maintianed.
+					 */
+					if (prev->next == NULL)
+						tail = prev;
+				}
+				FreeConfigVariable(ptr);
+			}
+			else
+				prev = ptr;
+		}
+
+		/*
+		 * Quick exit if data_directory is not present in list.
+		 *
+		 * Don't remember when we last successfully loaded the config file in
+		 * this case because that time will be set soon by subsequent load of
+		 * the config file.
+		 */
+		if (head == NULL)
+			return;
 	}
 
 	/*
@@ -677,7 +731,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 							*tail_p = prev_item;
 					}
 
-					pfree(cur_item);
+					FreeConfigVariable(cur_item);
 					break;
 				}
 			}
@@ -858,6 +912,21 @@ cleanup:
 }
 
 /*
+ * Free a ConfigVariable
+ */
+static void
+FreeConfigVariable(ConfigVariable *item)
+{
+	if (item != NULL)
+	{
+		pfree(item->name);
+		pfree(item->value);
+		pfree(item->filename);
+		pfree(item);
+	}
+}
+
+/*
  * Free a list of ConfigVariables, including the names and the values
  */
 void
@@ -870,10 +939,7 @@ FreeConfigVariables(ConfigVariable *list)
 	{
 		ConfigVariable *next = item->next;
 
-		pfree(item->name);
-		pfree(item->value);
-		pfree(item->filename);
-		pfree(item);
+		FreeConfigVariable(item);
 		item = next;
 	}
 }
