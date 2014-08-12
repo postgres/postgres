@@ -2520,6 +2520,9 @@ main(int argc, char **argv)
 	char	   *filename = NULL;
 	bool		scale_given = false;
 
+	bool		benchmarking_option_set = false;
+	bool		initialization_option_set = false;
+
 	CState	   *state;			/* status of clients */
 	TState	   *threads;		/* array of thread */
 
@@ -2599,11 +2602,14 @@ main(int argc, char **argv)
 				break;
 			case 'S':
 				ttype = 1;
+				benchmarking_option_set = true;
 				break;
 			case 'N':
 				ttype = 2;
+				benchmarking_option_set = true;
 				break;
 			case 'c':
+				benchmarking_option_set = true;
 				nclients = atoi(optarg);
 				if (nclients <= 0 || nclients > MAXCLIENTS)
 				{
@@ -2629,6 +2635,7 @@ main(int argc, char **argv)
 #endif   /* HAVE_GETRLIMIT */
 				break;
 			case 'j':			/* jobs */
+				benchmarking_option_set = true;
 				nthreads = atoi(optarg);
 				if (nthreads <= 0)
 				{
@@ -2637,9 +2644,11 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'C':
+				benchmarking_option_set = true;
 				is_connect = true;
 				break;
 			case 'r':
+				benchmarking_option_set = true;
 				is_latencies = true;
 				break;
 			case 's':
@@ -2652,6 +2661,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 't':
+				benchmarking_option_set = true;
 				if (duration > 0)
 				{
 					fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both.\n");
@@ -2665,6 +2675,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'T':
+				benchmarking_option_set = true;
 				if (nxacts > 0)
 				{
 					fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both.\n");
@@ -2681,12 +2692,15 @@ main(int argc, char **argv)
 				login = pg_strdup(optarg);
 				break;
 			case 'l':
+				benchmarking_option_set = true;
 				use_log = true;
 				break;
 			case 'q':
+				initialization_option_set = true;
 				use_quiet = true;
 				break;
 			case 'f':
+				benchmarking_option_set = true;
 				ttype = 3;
 				filename = pg_strdup(optarg);
 				if (process_file(filename) == false || *sql_files[num_files - 1] == NULL)
@@ -2695,6 +2709,8 @@ main(int argc, char **argv)
 			case 'D':
 				{
 					char	   *p;
+
+					benchmarking_option_set = true;
 
 					if ((p = strchr(optarg, '=')) == NULL || p == optarg || *(p + 1) == '\0')
 					{
@@ -2708,6 +2724,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'F':
+				initialization_option_set = true;
 				fillfactor = atoi(optarg);
 				if ((fillfactor < 10) || (fillfactor > 100))
 				{
@@ -2716,6 +2733,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'M':
+				benchmarking_option_set = true;
 				if (num_files > 0)
 				{
 					fprintf(stderr, "query mode (-M) should be specifiled before transaction scripts (-f)\n");
@@ -2731,6 +2749,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'P':
+				benchmarking_option_set = true;
 				progress = atoi(optarg);
 				if (progress <= 0)
 				{
@@ -2745,6 +2764,8 @@ main(int argc, char **argv)
 					/* get a double from the beginning of option value */
 					double		throttle_value = atof(optarg);
 
+					benchmarking_option_set = true;
+
 					if (throttle_value <= 0.0)
 					{
 						fprintf(stderr, "invalid rate limit: %s\n", optarg);
@@ -2756,14 +2777,19 @@ main(int argc, char **argv)
 				break;
 			case 0:
 				/* This covers long options which take no argument. */
+				if (foreign_keys || unlogged_tables)
+					initialization_option_set = true;
 				break;
 			case 2:				/* tablespace */
+				initialization_option_set = true;
 				tablespace = pg_strdup(optarg);
 				break;
 			case 3:				/* index-tablespace */
+				initialization_option_set = true;
 				index_tablespace = pg_strdup(optarg);
 				break;
 			case 4:
+				benchmarking_option_set = true;
 				sample_rate = atof(optarg);
 				if (sample_rate <= 0.0 || sample_rate > 1.0)
 				{
@@ -2776,6 +2802,7 @@ main(int argc, char **argv)
 				fprintf(stderr, "--aggregate-interval is not currently supported on Windows");
 				exit(1);
 #else
+				benchmarking_option_set = true;
 				agg_interval = atoi(optarg);
 				if (agg_interval <= 0)
 				{
@@ -2808,8 +2835,22 @@ main(int argc, char **argv)
 
 	if (is_init_mode)
 	{
+		if (benchmarking_option_set)
+		{
+			fprintf(stderr, "some options cannot be used in initialization (-i) mode\n");
+			exit(1);
+		}
+
 		init(is_no_vacuum);
 		exit(0);
+	}
+	else
+	{
+		if (initialization_option_set)
+		{
+			fprintf(stderr, "some options cannot be used in benchmarking mode\n");
+			exit(1);
+		}
 	}
 
 	/* Use DEFAULT_NXACTS if neither nxacts nor duration is specified. */
@@ -2826,13 +2867,6 @@ main(int argc, char **argv)
 	if (sample_rate > 0.0 && !use_log)
 	{
 		fprintf(stderr, "log sampling rate is allowed only when logging transactions (-l) \n");
-		exit(1);
-	}
-
-	/* -q may be used only with -i */
-	if (use_quiet && !is_init_mode)
-	{
-		fprintf(stderr, "quiet-logging is allowed only in initialization mode (-i)\n");
 		exit(1);
 	}
 
