@@ -748,7 +748,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | [ { gaussian | exponential } <replaceable>threshold</> ] ]</literal>
+     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | { gaussian | exponential } <replaceable>threshold</> ]</literal>
      </term>
 
     <listitem>
