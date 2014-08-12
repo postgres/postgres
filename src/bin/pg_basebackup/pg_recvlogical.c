@@ -814,15 +814,15 @@ main(int argc, char **argv)
 
 	if (do_drop_slot && (do_create_slot || do_start_slot))
 	{
-		fprintf(stderr, _("%s: cannot use --init or --start together with --stop\n"), progname);
+		fprintf(stderr, _("%s: cannot use --create or --start together with --drop\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
 	}
 
-	if (startpos && (do_create_slot || do_drop_slot))
+	if (startpos != InvalidXLogRecPtr && (do_create_slot || do_drop_slot))
 	{
-		fprintf(stderr, _("%s: cannot use --init or --stop together with --startpos\n"), progname);
+		fprintf(stderr, _("%s: cannot use --create or --drop together with --startpos\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
