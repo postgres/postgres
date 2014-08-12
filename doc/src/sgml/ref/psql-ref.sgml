@@ -2827,7 +2827,9 @@ bar
         they are sent to the server. The switch for this is
         <option>-e</option>. If set to <literal>errors</literal> then only
         failed queries are displayed on standard error output. The switch
-        for this is <option>-b</option>.
+        for this is <option>-b</option>. If unset, or if set to
+        <literal>none</literal> (or any other value than those above) then
+        no queries are displayed.
         </para>
         </listitem>
       </varlistentry>
@@ -2892,8 +2894,9 @@ bar
          list. If set to a value of <literal>ignoredups</literal>, lines
          matching the previous history line are not entered. A value of
          <literal>ignoreboth</literal> combines the two options. If
-         unset, or if set to any other value than those above, all lines
-         read in interactive mode are saved on the history list.
+         unset, or if set to <literal>none</literal> (or any other value
+         than those above), all lines read in interactive mode are
+         saved on the history list.
         </para>
         <note>
         <para>

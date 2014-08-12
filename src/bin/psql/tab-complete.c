@@ -813,8 +813,11 @@ static char *_complete_from_query(int is_schema_query,
 					 const char *text, int state);
 static char *complete_from_list(const char *text, int state);
 static char *complete_from_const(const char *text, int state);
+static void append_variable_names(char ***varnames, int *nvars,
+								  int *maxvars, const char *varname,
+								  const char *prefix, const char *suffix);
 static char **complete_from_variables(const char *text,
-						const char *prefix, const char *suffix);
+					  const char *prefix, const char *suffix, bool need_value);
 static char *complete_from_files(const char *text, int state);
 
 static char *pg_strdup_keyword_case(const char *s, const char *ref);
@@ -925,11 +928,11 @@ psql_completion(const char *text, int start, int end)
 	else if (text[0] == ':' && text[1] != ':')
 	{
 		if (text[1] == '\'')
-			matches = complete_from_variables(text, ":'", "'");
+			matches = complete_from_variables(text, ":'", "'", true);
 		else if (text[1] == '"')
-			matches = complete_from_variables(text, ":\"", "\"");
+			matches = complete_from_variables(text, ":\"", "\"", true);
 		else
-			matches = complete_from_variables(text, ":", "");
+			matches = complete_from_variables(text, ":", "", true);
 	}
 
 	/* If no previous word, suggest one of the basic sql commands */
@@ -3604,9 +3607,71 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_LIST_CS(my_list);
 		}
 	}
+	else if (strcmp(prev_wd, "\\unset") == 0)
+	{
+		matches = complete_from_variables(text, "", "", true);
+	}
 	else if (strcmp(prev_wd, "\\set") == 0)
 	{
-		matches = complete_from_variables(text, "", "");
+		matches = complete_from_variables(text, "", "", false);
+	}
+	else if (strcmp(prev2_wd, "\\set") == 0)
+	{
+		static const char *const boolean_value_list[] =
+		{"on", "off", NULL};
+
+		if (strcmp(prev_wd, "AUTOCOMMIT") == 0)
+			COMPLETE_WITH_LIST_CS(boolean_value_list);
+		else if (strcmp(prev_wd, "COMP_KEYWORD_CASE") == 0)
+		{
+			static const char *const my_list[] =
+			{"lower", "upper", "preserve-lower", "preserve-upper", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
+		else if (strcmp(prev_wd, "ECHO") == 0)
+		{
+			static const char *const my_list[] =
+			{"errors", "queries", "all", "none", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
+		else if (strcmp(prev_wd, "ECHO_HIDDEN") == 0)
+		{
+			static const char *const my_list[] =
+			{"noexec", "off", "on", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
+		else if (strcmp(prev_wd, "HISTCONTROL") == 0)
+		{
+			static const char *const my_list[] =
+			{"ignorespace", "ignoredups", "ignoreboth", "none", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
+		else if (strcmp(prev_wd, "ON_ERROR_ROLLBACK") == 0)
+		{
+			static const char *const my_list[] =
+			{"on", "off", "interactive", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
+		else if (strcmp(prev_wd, "ON_ERROR_STOP") == 0)
+			COMPLETE_WITH_LIST_CS(boolean_value_list);
+		else if (strcmp(prev_wd, "QUIET") == 0)
+			COMPLETE_WITH_LIST_CS(boolean_value_list);
+		else if (strcmp(prev_wd, "SINGLELINE") == 0)
+			COMPLETE_WITH_LIST_CS(boolean_value_list);
+		else if (strcmp(prev_wd, "SINGLESTEP") == 0)
+			COMPLETE_WITH_LIST_CS(boolean_value_list);
+		else if (strcmp(prev_wd, "VERBOSITY") == 0)
+		{
+			static const char *const my_list[] =
+			{"default", "verbose", "terse", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
 	}
 	else if (strcmp(prev_wd, "\\sf") == 0 || strcmp(prev_wd, "\\sf+") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
@@ -4053,12 +4118,39 @@ complete_from_const(const char *text, int state)
 
 
 /*
+ * This function appends the variable name with prefix and suffix to
+ * the variable names array.
+ */
+static void
+append_variable_names(char ***varnames, int *nvars,
+					  int *maxvars, const char *varname,
+					  const char *prefix, const char *suffix)
+{
+	if (*nvars >= *maxvars)
+	{
+		*maxvars *= 2;
+		*varnames = (char **) realloc(*varnames,
+									  ((*maxvars) + 1) * sizeof(char *));
+		if (!(*varnames))
+		{
+			psql_error("out of memory\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	(*varnames)[(*nvars)++] = psprintf("%s%s%s", prefix, varname, suffix);
+}
+
+
+/*
  * This function supports completion with the name of a psql variable.
  * The variable names can be prefixed and suffixed with additional text
- * to support quoting usages.
+ * to support quoting usages. If need_value is true, only the variables
+ * that have the set values are picked up.
  */
 static char **
-complete_from_variables(const char *text, const char *prefix, const char *suffix)
+complete_from_variables(const char *text, const char *prefix, const char *suffix,
+						bool need_value)
 {
 	char	  **matches;
 	char	  **varnames;
@@ -4067,23 +4159,34 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
 	int			i;
 	struct _variable *ptr;
 
+	static const char *const known_varnames[] = {
+		"AUTOCOMMIT", "COMP_KEYWORD_CASE", "DBNAME", "ECHO", "ECHO_HIDDEN",
+		"ENCODING", "FETCH_COUNT", "HISTCONTROL", "HISTFILE", "HISTSIZE",
+		"HOST", "IGNOREEOF", "LASTOID", "ON_ERROR_ROLLBACK", "ON_ERROR_STOP",
+		"PORT", "PROMPT1", "PROMPT2", "PROMPT3", "QUIET", "SINGLELINE",
+		"SINGLESTEP", "USER", "VERBOSITY",	NULL
+	};
+
 	varnames = (char **) pg_malloc((maxvars + 1) * sizeof(char *));
+
+	if (!need_value)
+	{
+		for (i = 0; known_varnames[i] && nvars < maxvars; i++)
+			append_variable_names(&varnames, &nvars, &maxvars,
+								  known_varnames[i], prefix, suffix);
+	}
 
 	for (ptr = pset.vars->next; ptr; ptr = ptr->next)
 	{
-		if (nvars >= maxvars)
+		if (need_value && !(ptr->value))
+			continue;
+		for (i = 0; known_varnames[i]; i++)	/* remove duplicate entry */
 		{
-			maxvars *= 2;
-			varnames = (char **) realloc(varnames,
-										 (maxvars + 1) * sizeof(char *));
-			if (!varnames)
-			{
-				psql_error("out of memory\n");
-				exit(EXIT_FAILURE);
-			}
+			if (strcmp(ptr->name, known_varnames[i]) == 0)
+				continue;
 		}
-
-		varnames[nvars++] = psprintf("%s%s%s", prefix, ptr->name, suffix);
+		append_variable_names(&varnames, &nvars, &maxvars, ptr->name,
+							  prefix, suffix);
 	}
 
 	varnames[nvars] = NULL;
