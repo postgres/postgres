@@ -1203,9 +1203,11 @@ WalSndWaitForWal(XLogRecPtr loc)
 		 * possibly are waiting for a later location. So we send pings
 		 * containing the flush location every now and then.
 		 */
-		if (MyWalSnd->flush < sentPtr && !waiting_for_ping_response)
+		if (MyWalSnd->flush < sentPtr &&
+			MyWalSnd->write < sentPtr &&
+			!waiting_for_ping_response)
 		{
-			WalSndKeepalive(true);
+			WalSndKeepalive(false);
 			waiting_for_ping_response = true;
 		}
 
