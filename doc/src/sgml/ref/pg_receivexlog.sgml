@@ -227,6 +227,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-S <replaceable>slotname</replaceable></option></term>
       <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
       <listitem>
         <para>
