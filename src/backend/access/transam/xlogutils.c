@@ -242,6 +242,87 @@ XLogCheckInvalidPages(void)
 	invalid_page_tab = NULL;
 }
 
+
+/*
+ * XLogReadBufferForRedo
+ *		Read a page during XLOG replay
+ *
+ * Reads a block referenced by a WAL record into shared buffer cache, and
+ * determines what needs to be done to redo the changes to it.  If the WAL
+ * record includes a full-page image of the page, it is restored.
+ *
+ * 'lsn' is the LSN of the record being replayed.  It is compared with the
+ * page's LSN to determine if the record has already been replayed.
+ * 'rnode' and 'blkno' point to the block being replayed (main fork number
+ * is implied, use XLogReadBufferForRedoExtended for other forks).
+ * 'block_index' identifies the backup block in the record for the page.
+ *
+ * Returns one of the following:
+ *
+ *	BLK_NEEDS_REDO	- changes from the WAL record need to be applied
+ *	BLK_DONE		- block doesn't need replaying
+ *	BLK_RESTORED	- block was restored from a full-page image included in
+ *					  the record
+ *	BLK_NOTFOUND	- block was not found (because it was truncated away by
+ *					  an operation later in the WAL stream)
+ *
+ * On return, the buffer is locked in exclusive-mode, and returned in *buf.
+ * Note that the buffer is locked and returned even if it doesn't need
+ * replaying.  (Getting the buffer lock is not really necessary during
+ * single-process crash recovery, but some subroutines such as MarkBufferDirty
+ * will complain if we don't have the lock.  In hot standby mode it's
+ * definitely necessary.)
+ */
+XLogRedoAction
+XLogReadBufferForRedo(XLogRecPtr lsn, XLogRecord *record, int block_index,
+					  RelFileNode rnode, BlockNumber blkno,
+					  Buffer *buf)
+{
+	return XLogReadBufferForRedoExtended(lsn, record, block_index,
+										 rnode, MAIN_FORKNUM, blkno,
+										 RBM_NORMAL, false, buf);
+}
+
+/*
+ * XLogReadBufferForRedoExtended
+ *		Like XLogReadBufferForRedo, but with extra options.
+ *
+ * If mode is RBM_ZERO or RBM_ZERO_ON_ERROR, if the page doesn't exist, the
+ * relation is extended with all-zeroes pages up to the referenced block
+ * number.  In RBM_ZERO mode, the return value is always BLK_NEEDS_REDO.
+ *
+ * If 'get_cleanup_lock' is true, a "cleanup lock" is acquired on the buffer
+ * using LockBufferForCleanup(), instead of a regular exclusive lock.
+ */
+XLogRedoAction
+XLogReadBufferForRedoExtended(XLogRecPtr lsn, XLogRecord *record,
+							  int block_index, RelFileNode rnode,
+							  ForkNumber forkno, BlockNumber blkno,
+							  ReadBufferMode mode, bool get_cleanup_lock,
+							  Buffer *buf)
+{
+	if (record->xl_info & XLR_BKP_BLOCK(block_index))
+	{
+		*buf = RestoreBackupBlock(lsn, record, block_index,
+								  get_cleanup_lock, true);
+		return BLK_RESTORED;
+	}
+	else
+	{
+		*buf = XLogReadBufferExtended(rnode, forkno, blkno, mode);
+		if (BufferIsValid(*buf))
+		{
+			LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
+			if (lsn <= PageGetLSN(BufferGetPage(*buf)))
+				return BLK_DONE;
+			else
+				return BLK_NEEDS_REDO;
+		}
+		else
+			return BLK_NOTFOUND;
+	}
+}
+
 /*
  * XLogReadBuffer
  *		Read a page during XLOG replay.

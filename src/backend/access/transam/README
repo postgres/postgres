@@ -500,33 +500,28 @@ incrementally update the page, the rdata array *must* mention the buffer
 ID at least once; otherwise there is no defense against torn-page problems.
 The standard replay-routine pattern for this case is
 
-	if (record->xl_info & XLR_BKP_BLOCK(N))
+	if (XLogReadBufferForRedo(lsn, record, N, rnode, blkno, &buffer) == BLK_NEEDS_REDO)
 	{
-		/* apply the change from the full-page image */
-		(void) RestoreBackupBlock(lsn, record, N, false, false);
-		return;
-	}
+		page = (Page) BufferGetPage(buffer);
 
-	buffer = XLogReadBuffer(rnode, blkno, false);
-	if (!BufferIsValid(buffer))
-	{
-		/* page has been deleted, so we need do nothing */
-		return;
-	}
-	page = (Page) BufferGetPage(buffer);
+		... apply the change ...
 
-	if (XLByteLE(lsn, PageGetLSN(page)))
-	{
-		/* changes are already applied */
+		PageSetLSN(page, lsn);
+		MarkBufferDirty(buffer);
+	}
+	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
-		return;
-	}
 
-	... apply the change ...
-
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
+XLogReadBufferForRedo reads the page from disk, and checks what action needs to
+be taken to the page.  If the XLR_BKP_BLOCK(N) flag is set, it restores the
+full page image and returns BLK_RESTORED.  If there is no full page image, but
+page cannot be found or if the change has already been replayed (i.e. the
+page's LSN >= the record we're replaying), it returns BLK_NOTFOUND or BLK_DONE,
+respectively.  Usually, the redo routine only needs to pay attention to the
+BLK_NEEDS_REDO return code, which means that the routine should apply the
+incremental change.  In any case, the caller is responsible for unlocking and
+releasing the buffer.  Note that XLogReadBufferForRedo returns the buffer
+locked even if no redo is required, unless the page does not exist.
 
 As noted above, for a multi-page update you need to be able to determine
 which XLR_BKP_BLOCK(N) flag applies to each page.  If a WAL record reflects
@@ -539,31 +534,8 @@ per the above discussion, fully-rewritable buffers shouldn't be mentioned in
 When replaying a WAL record that describes changes on multiple pages, you
 must be careful to lock the pages properly to prevent concurrent Hot Standby
 queries from seeing an inconsistent state.  If this requires that two
-or more buffer locks be held concurrently, the coding pattern shown above
-is too simplistic, since it assumes the routine can exit as soon as it's
-known the current page requires no modification.  Instead, you might have
-something like
-
-	if (record->xl_info & XLR_BKP_BLOCK(0))
-	{
-		/* apply the change from the full-page image */
-		buffer0 = RestoreBackupBlock(lsn, record, 0, false, true);
-	}
-	else
-	{
-		buffer0 = XLogReadBuffer(rnode, blkno, false);
-		if (BufferIsValid(buffer0))
-		{
-			... apply the change if not already done ...
-			MarkBufferDirty(buffer0);
-		}
-	}
-
-	... similarly apply the changes for remaining pages ...
-
-	/* and now we can release the lock on the first page */
-	if (BufferIsValid(buffer0))
-		UnlockReleaseBuffer(buffer0);
+or more buffer locks be held concurrently, you must lock the pages in
+appropriate order, and not release the locks until all the changes are done.
 
 Note that we must only use PageSetLSN/PageGetLSN() when we know the action
 is serialised. Only Startup process may modify data blocks during recovery,
