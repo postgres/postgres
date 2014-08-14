@@ -1905,7 +1905,7 @@ do_help(void)
 	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
 	 "                         (PostgreSQL server executable) or initdb\n"));
 	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
-	printf(_("\nOptions for stop, restart, or promote:\n"));
+	printf(_("\nOptions for stop or restart:\n"));
 	printf(_("  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"));
 
 	printf(_("\nShutdown modes are:\n"));
