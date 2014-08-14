@@ -153,10 +153,6 @@
 ;; The rules in the default stylesheet for productname format it as a
 ;; paragraph.  This may be suitable for productname directly within
 ;; *info, but it's nonsense when productname is used inline, as we do.
-(mode set-titlepage-recto-mode
-  (element (para productname) ($charseq$)))
-(mode set-titlepage-verso-mode
-  (element (para productname) ($charseq$)))
 (mode book-titlepage-recto-mode
   (element (para productname) ($charseq$)))
 (mode book-titlepage-verso-mode
@@ -218,16 +214,9 @@
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
   (cond ((string=? (gi nd) (normalize "book")) 2)
-        ((string=? (gi nd) (normalize "set")) 2)
         ((string=? (gi nd) (normalize "part")) 2)
         ((string=? (gi nd) (normalize "chapter")) 2)
         (else 1)))
-
-;; Put a horizontal line in the set TOC (just like the book TOC looks)
-(define (set-titlepage-separator side)
-  (if (equal? side 'recto)
-      (make empty-element gi: "HR")
-      (empty-sosofo)))
 
 ;; Add character encoding and time of creation into HTML header
 (define %html-header-tags%
