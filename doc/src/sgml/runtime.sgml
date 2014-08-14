@@ -747,14 +747,13 @@ psql: could not connect to server: No such file or directory
 <screen>
 <prompt>#</prompt> <userinput>sysctl kern.ipc.shmall=32768</userinput>
 <prompt>#</prompt> <userinput>sysctl kern.ipc.shmmax=134217728</userinput>
-<prompt>#</prompt> <userinput>sysctl kern.ipc.semmap=256</userinput>
 </screen>
-        To have these settings persist over reboots, modify
+        To make these settings persist over reboots, modify
         <filename>/etc/sysctl.conf</filename>.
        </para>
 
        <para>
-        The remaining semaphore settings are read-only as far as
+        These semaphore-related settings are read-only as far as
         <command>sysctl</command> is concerned, but can be set in
         <filename>/boot/loader.conf</filename>:
 <programlisting>
@@ -763,7 +762,10 @@ kern.ipc.semmns=512
 kern.ipc.semmnu=256
 </programlisting>
         After modifying these values a reboot is required for the new
-        settings to take affect.
+        settings to take effect.
+        (Note: FreeBSD does not use <varname>SEMMAP</>.  Older versions
+        would accept but ignore a setting for <literal>kern.ipc.semmap</>;
+        newer versions reject it altogether.)
        </para>
 
        <para>
