@@ -614,6 +614,8 @@ DATA(insert OID = 3135 ( btnamesortsupport PGNSP PGUID 12 1 0 0 0 f f f f t f i 
 DESCR("sort support");
 DATA(insert OID = 360 (  bttextcmp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ bttextcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3255 ( bttextsortsupport PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ bttextsortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 377 (  cash_cmp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "790 790" _null_ _null_ _null_ _null_ cash_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 380 (  btreltimecmp	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "703 703" _null_ _null_ _null_ _null_ btreltimecmp _null_ _null_ _null_ ));

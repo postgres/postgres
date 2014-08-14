@@ -28,7 +28,9 @@
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
+#include "utils/sortsupport.h"
 
 
 /* GUC variable */
@@ -50,12 +52,32 @@ typedef struct
 	int			skiptable[256]; /* skip distance for given mismatched char */
 } TextPositionState;
 
+typedef struct
+{
+	char			   *buf1;		/* 1st string */
+	char			   *buf2;		/* 2nd string */
+	int					buflen1;
+	int					buflen2;
+#ifdef HAVE_LOCALE_T
+	pg_locale_t locale;
+#endif
+} TextSortSupport;
+
+/*
+ * This should be large enough that most strings will fit, but small enough
+ * that we feel comfortable putting it on the stack
+ */
+#define TEXTBUFLEN		1024
+
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
 #define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
+static void btsortsupport_worker(SortSupport ssup, Oid collid);
+static int bttextfastcmp_c(Datum x, Datum y, SortSupport ssup);
+static int bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup);
 static int32 text_length(Datum str);
 static text *text_catenate(text *t1, text *t2);
 static text *text_substring(Datum str,
@@ -1356,10 +1378,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 	}
 	else
 	{
-#define STACKBUFLEN		1024
-
-		char		a1buf[STACKBUFLEN];
-		char		a2buf[STACKBUFLEN];
+		char		a1buf[TEXTBUFLEN];
+		char		a2buf[TEXTBUFLEN];
 		char	   *a1p,
 				   *a2p;
 
@@ -1393,24 +1413,24 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 			int			a2len;
 			int			r;
 
-			if (len1 >= STACKBUFLEN / 2)
+			if (len1 >= TEXTBUFLEN / 2)
 			{
 				a1len = len1 * 2 + 2;
 				a1p = palloc(a1len);
 			}
 			else
 			{
-				a1len = STACKBUFLEN;
+				a1len = TEXTBUFLEN;
 				a1p = a1buf;
 			}
-			if (len2 >= STACKBUFLEN / 2)
+			if (len2 >= TEXTBUFLEN / 2)
 			{
 				a2len = len2 * 2 + 2;
 				a2p = palloc(a2len);
 			}
 			else
 			{
-				a2len = STACKBUFLEN;
+				a2len = TEXTBUFLEN;
 				a2p = a2buf;
 			}
 
@@ -1475,11 +1495,11 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 		}
 #endif   /* WIN32 */
 
-		if (len1 >= STACKBUFLEN)
+		if (len1 >= TEXTBUFLEN)
 			a1p = (char *) palloc(len1 + 1);
 		else
 			a1p = a1buf;
-		if (len2 >= STACKBUFLEN)
+		if (len2 >= TEXTBUFLEN)
 			a2p = (char *) palloc(len2 + 1);
 		else
 			a2p = a2buf;
@@ -1683,6 +1703,186 @@ bttextcmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+Datum
+bttextsortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport		ssup = (SortSupport) PG_GETARG_POINTER(0);
+	Oid				collid = ssup->ssup_collation;
+	MemoryContext	oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+
+	btsortsupport_worker(ssup, collid);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_RETURN_VOID();
+}
+
+static void
+btsortsupport_worker(SortSupport ssup, Oid collid)
+{
+	TextSortSupport	   *tss;
+
+	/*
+	 * If LC_COLLATE = C, we can make things quite a bit faster by using
+	 * memcmp() rather than strcoll().  To minimize the per-comparison
+	 * overhead, we make this decision just once for the whole sort.
+	 */
+	if (lc_collate_is_c(collid))
+	{
+		ssup->comparator = bttextfastcmp_c;
+		return;
+	}
+
+	/*
+	 * WIN32 requires complex hacks when the database encoding is UTF-8 (except
+	 * when using the "C" collation).  For now, we don't optimize that case.
+	 */
+#ifdef WIN32
+	if (GetDatabaseEncoding() == PG_UTF8)
+		return;
+#endif
+
+	/*
+	 * We may need a collation-sensitive comparison.  To make things faster,
+	 * we'll figure out the collation based on the locale id and cache the
+	 * result.  Also, since strxfrm()/strcoll() require NUL-terminated inputs,
+	 * prepare one or two palloc'd buffers to use as temporary workspace.  In
+	 * the ad-hoc comparison case we only use palloc'd buffers when we need
+	 * more space than we're comfortable allocating on the stack, but here we
+	 * can keep the buffers around for the whole sort, so it makes sense to
+	 * allocate them once and use them unconditionally.
+	 */
+	tss = palloc(sizeof(TextSortSupport));
+#ifdef HAVE_LOCALE_T
+	tss->locale = 0;
+#endif
+
+	if (collid != DEFAULT_COLLATION_OID)
+	{
+		if (!OidIsValid(collid))
+		{
+			/*
+			 * This typically means that the parser could not resolve a
+			 * conflict of implicit collations, so report it that way.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_COLLATION),
+					 errmsg("could not determine which collation to use for string comparison"),
+					 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		}
+#ifdef HAVE_LOCALE_T
+		tss->locale = pg_newlocale_from_collation(collid);
+#endif
+	}
+
+	tss->buf1 = palloc(TEXTBUFLEN);
+	tss->buflen1 = TEXTBUFLEN;
+	tss->buf2 = palloc(TEXTBUFLEN);
+	tss->buflen2 = TEXTBUFLEN;
+
+	ssup->ssup_extra = tss;
+	ssup->comparator = bttextfastcmp_locale;
+}
+
+/*
+ * sortsupport comparison func (for C locale case)
+ */
+static int
+bttextfastcmp_c(Datum x, Datum y, SortSupport ssup)
+{
+	text	   *arg1 = DatumGetTextPP(x);
+	text	   *arg2 = DatumGetTextPP(y);
+	char	   *a1p,
+			   *a2p;
+	int			len1,
+				len2,
+				result;
+
+	a1p = VARDATA_ANY(arg1);
+	a2p = VARDATA_ANY(arg2);
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	result = memcmp(a1p, a2p, Min(len1, len2));
+	if ((result == 0) && (len1 != len2))
+		result = (len1 < len2) ? -1 : 1;
+
+	/* We can't afford to leak memory here. */
+	if (PointerGetDatum(arg1) != x)
+		pfree(arg1);
+	if (PointerGetDatum(arg2) != y)
+		pfree(arg2);
+
+	return result;
+}
+
+/*
+ * sortsupport comparison func (for locale case)
+ */
+static int
+bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
+{
+	text			   *arg1 = DatumGetTextPP(x);
+	text			   *arg2 = DatumGetTextPP(y);
+	TextSortSupport	   *tss = (TextSortSupport *) ssup->ssup_extra;
+
+	/* working state */
+	char			   *a1p,
+					   *a2p;
+	int					len1,
+						len2,
+						result;
+
+	a1p = VARDATA_ANY(arg1);
+	a2p = VARDATA_ANY(arg2);
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	if (len1 >= tss->buflen1)
+	{
+		pfree(tss->buf1);
+		tss->buflen1 = Max(len1 + 1, Min(tss->buflen1 * 2, MaxAllocSize));
+		tss->buf1 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen1);
+	}
+	if (len2 >= tss->buflen2)
+	{
+		pfree(tss->buf2);
+		tss->buflen1 = Max(len2 + 1, Min(tss->buflen2 * 2, MaxAllocSize));
+		tss->buf2 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen2);
+	}
+
+	memcpy(tss->buf1, a1p, len1);
+	tss->buf1[len1] = '\0';
+	memcpy(tss->buf2, a2p, len2);
+	tss->buf2[len2] = '\0';
+
+#ifdef HAVE_LOCALE_T
+	if (tss->locale)
+		result = strcoll_l(tss->buf1, tss->buf2, tss->locale);
+	else
+#endif
+		result = strcoll(tss->buf1, tss->buf2);
+
+	/*
+	 * In some locales strcoll() can claim that nonidentical strings are equal.
+	 * Believing that would be bad news for a number of reasons, so we follow
+	 * Perl's lead and sort "equal" strings according to strcmp().
+	 */
+	if (result == 0)
+		result = strcmp(tss->buf1, tss->buf2);
+
+	/* We can't afford to leak memory here. */
+	if (PointerGetDatum(arg1) != x)
+		pfree(arg1);
+	if (PointerGetDatum(arg2) != y)
+		pfree(arg2);
+
+	return result;
+}
 
 Datum
 text_larger(PG_FUNCTION_ARGS)

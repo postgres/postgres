@@ -316,6 +316,7 @@ extern Datum bttintervalcmp(PG_FUNCTION_ARGS);
 extern Datum btcharcmp(PG_FUNCTION_ARGS);
 extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
+extern Datum bttextsortsupport(PG_FUNCTION_ARGS);
 
 /*
  *		Per-opclass sort support functions for new btrees.  Like the
