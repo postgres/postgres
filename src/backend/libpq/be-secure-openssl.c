@@ -1042,4 +1042,3 @@ SSLerrmessage(void)
 	snprintf(errbuf, sizeof(errbuf), _("SSL error code %lu"), errcode);
 	return errbuf;
 }
-
