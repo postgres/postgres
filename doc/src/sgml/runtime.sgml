@@ -787,25 +787,27 @@ options "SEMMNS=240"
         <command>loader</command> interfaces.  The following
         parameters can be set using <command>sysctl</command>:
 <screen>
-<prompt>$</prompt> <userinput>sysctl -w kern.ipc.shmall=32768</userinput>
-<prompt>$</prompt> <userinput>sysctl -w kern.ipc.shmmax=134217728</userinput>
-<prompt>$</prompt> <userinput>sysctl -w kern.ipc.semmap=256</userinput>
+<prompt>#</prompt> <userinput>sysctl kern.ipc.shmall=32768</userinput>
+<prompt>#</prompt> <userinput>sysctl kern.ipc.shmmax=134217728</userinput>
 </screen>
-        To have these settings persist over reboots, modify
+        To make these settings persist over reboots, modify
         <filename>/etc/sysctl.conf</filename>.
        </para>
 
        <para>
-        The remaining semaphore settings are read-only as far as
-        <command>sysctl</command> is concerned, but can be changed
-        before boot using the <command>loader</command> prompt:
-<screen>
-<prompt>(loader)</prompt> <userinput>set kern.ipc.semmni=256</userinput>
-<prompt>(loader)</prompt> <userinput>set kern.ipc.semmns=512</userinput>
-<prompt>(loader)</prompt> <userinput>set kern.ipc.semmnu=256</userinput>
-</screen>
-        Similarly these can be saved between reboots in
-        <filename>/boot/loader.conf</filename>.
+        These semaphore-related settings are read-only as far as
+        <command>sysctl</command> is concerned, but can be set in
+        <filename>/boot/loader.conf</filename>:
+<programlisting>
+kern.ipc.semmni=256
+kern.ipc.semmns=512
+kern.ipc.semmnu=256
+</programlisting>
+        After modifying these values a reboot is required for the new
+        settings to take effect.
+        (Note: FreeBSD does not use <varname>SEMMAP</>.  Older versions
+        would accept but ignore a setting for <literal>kern.ipc.semmap</>;
+        newer versions reject it altogether.)
        </para>
 
        <para>
