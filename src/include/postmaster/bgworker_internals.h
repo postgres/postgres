@@ -46,7 +46,7 @@ extern void BackgroundWorkerStopNotifications(pid_t pid);
 extern void ResetBackgroundWorkerCrashTimes(void);
 
 /* Function to start a background worker, called from postmaster.c */
-extern void StartBackgroundWorker(void);
+extern void StartBackgroundWorker(void) __attribute__((noreturn));
 
 #ifdef EXEC_BACKEND
 extern BackgroundWorker *BackgroundWorkerEntry(int slotno);

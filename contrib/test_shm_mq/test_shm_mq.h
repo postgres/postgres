@@ -40,6 +40,6 @@ extern void test_shm_mq_setup(int64 queue_size, int32 nworkers,
 				  shm_mq_handle **input);
 
 /* Main entrypoint for a worker. */
-extern void test_shm_mq_main(Datum);
+extern void test_shm_mq_main(Datum) __attribute__((noreturn));
 
 #endif
