@@ -781,8 +781,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <literal>
         (PHI(2.0 * threshold * (i - min - mu + 0.5) / (max - min + 1)) -
          PHI(2.0 * threshold * (i - min - mu - 0.5) / (max - min + 1))) /
-         (2.0 * PHI(threshold) - 1.0)
-      </>
+         (2.0 * PHI(threshold) - 1.0)</>.
       Intuitively, the larger the <replaceable>threshold</>, the more
       frequently values close to the middle of the interval are drawn, and the
       less frequently values close to the <replaceable>min</> and
