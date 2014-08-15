@@ -229,6 +229,26 @@ parseCommandLine(int argc, char *argv[])
 							 "PGDATAOLD", "-d", "old cluster data resides");
 	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
 							 "PGDATANEW", "-D", "new cluster data resides");
+
+#ifndef WIN32
+	/*
+	 * On Windows, initdb --sync-only will fail with a "Permission denied"
+	 * error on file pg_upgrade_utility.log if pg_upgrade is run inside
+	 * the new cluster directory, so we do a check here.
+	 */
+	{
+		char	cwd[MAXPGPATH], new_cluster_pgdata[MAXPGPATH];
+
+		strlcpy(new_cluster_pgdata, new_cluster.pgdata, MAXPGPATH);
+		canonicalize_path(new_cluster_pgdata);
+		
+		if (!getcwd(cwd, MAXPGPATH))
+			pg_fatal("cannot find current directory\n");
+		canonicalize_path(cwd);
+		if (path_is_prefix_of_path(new_cluster_pgdata, cwd))
+			pg_fatal("cannot run pg_upgrade from inside the new cluster data directory on Windows\n");
+	}
+#endif
 }
 
 
