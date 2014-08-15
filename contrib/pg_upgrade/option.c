@@ -230,7 +230,7 @@ parseCommandLine(int argc, char *argv[])
 	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
 							 "PGDATANEW", "-D", "new cluster data resides");
 
-#ifndef WIN32
+#ifdef WIN32
 	/*
 	 * On Windows, initdb --sync-only will fail with a "Permission denied"
 	 * error on file pg_upgrade_utility.log if pg_upgrade is run inside
