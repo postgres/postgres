@@ -104,10 +104,9 @@ typedef struct JsonbValue JsonbValue;
  * To encode the length and offset of the variable-length portion of each
  * node in a compact way, the JEntry stores only the end offset within the
  * variable-length portion of the container node. For the first JEntry in the
- * container's JEntry array, that equals to the length of the node data. For
- * convenience, the JENTRY_ISFIRST flag is set. The begin offset and length
- * of the rest of the entries can be calculated using the end offset of the
- * previous JEntry in the array.
+ * container's JEntry array, that equals to the length of the node data.  The
+ * begin offset and length of the rest of the entries can be calculated using
+ * the end offset of the previous JEntry in the array.
  *
  * Overall, the Jsonb struct requires 4-bytes alignment. Within the struct,
  * the variable-length portion of some node types is aligned to a 4-byte
@@ -124,7 +123,7 @@ typedef struct JsonbValue JsonbValue;
  * The least significant 28 bits store the end offset of the entry (see
  * JBE_ENDPOS, JBE_OFF, JBE_LEN macros below). The next three bits
  * are used to store the type of the entry. The most significant bit
- * is set on the first entry in an array of JEntrys.
+ * is unused, and should be set to zero.
  */
 typedef uint32 JEntry;
 
@@ -140,7 +139,6 @@ typedef uint32 JEntry;
 #define JENTRY_ISCONTAINER		0x50000000		/* array or object */
 
 /* Note possible multiple evaluations */
-#define JBE_ISFIRST(je_)		(((je_) & JENTRY_ISFIRST) != 0)
 #define JBE_ISSTRING(je_)		(((je_) & JENTRY_TYPEMASK) == JENTRY_ISSTRING)
 #define JBE_ISNUMERIC(je_)		(((je_) & JENTRY_TYPEMASK) == JENTRY_ISNUMERIC)
 #define JBE_ISCONTAINER(je_)	(((je_) & JENTRY_TYPEMASK) == JENTRY_ISCONTAINER)
