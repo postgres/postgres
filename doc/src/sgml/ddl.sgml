@@ -2136,7 +2136,7 @@ WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
    following <command>INSERT</command> statement will fail:
 <programlisting>
 INSERT INTO cities (name, population, altitude, state)
-VALUES ('New York', NULL, NULL, 'NY');
+VALUES ('Albany', NULL, NULL, 'NY');
 </programlisting>
    We might hope that the data would somehow be routed to the
    <structname>capitals</structname> table, but this does not happen:
