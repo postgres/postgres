@@ -241,7 +241,7 @@ parseCommandLine(int argc, char *argv[])
 
 		strlcpy(new_cluster_pgdata, new_cluster.pgdata, MAXPGPATH);
 		canonicalize_path(new_cluster_pgdata);
-		
+
 		if (!getcwd(cwd, MAXPGPATH))
 			pg_fatal("cannot find current directory\n");
 		canonicalize_path(cwd);
