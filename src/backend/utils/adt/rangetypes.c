@@ -917,12 +917,12 @@ range_overright_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 
 	/* An empty range is neither before nor after any other range */
 	if (empty1 || empty2)
-		PG_RETURN_BOOL(false);
+		return false;
 
 	if (range_cmp_bounds(typcache, &lower1, &lower2) >= 0)
-		PG_RETURN_BOOL(true);
+		return true;
 
-	PG_RETURN_BOOL(false);
+	return false;
 }
 
 /* does not extend to left of? */
