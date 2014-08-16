@@ -4,9 +4,10 @@
 -- pg_operator, pg_proc, pg_cast, pg_aggregate, pg_am,
 -- pg_amop, pg_amproc, pg_opclass, pg_opfamily.
 --
--- Every test failures in this file should be closely inspected. The
--- description of the failing test should be read carefully before
--- adjusting the expected output.
+-- Every test failure in this file should be closely inspected.
+-- The description of the failing test should be read carefully before
+-- adjusting the expected output.  In most cases, the queries should
+-- not find *any* matching entries.
 --
 -- NB: we assume the oidjoins test will have caught any dangling links,
 -- that is OID or REGPROC fields that are not zero and do not match some
@@ -480,6 +481,22 @@ WHERE p1.oprnegate = p2.oid AND
      p2.oprresult != 'bool'::regtype OR
      p1.oid != p2.oprnegate OR
      p1.oid = p2.oid);
+
+-- Make a list of the names of operators that are claimed to be commutator
+-- pairs.  This list will grow over time, but before accepting a new entry
+-- make sure you didn't link the wrong operators.
+
+SELECT DISTINCT o1.oprname AS op1, o2.oprname AS op2
+FROM pg_operator o1, pg_operator o2
+WHERE o1.oprcom = o2.oid AND o1.oprname <= o2.oprname
+ORDER BY 1, 2;
+
+-- Likewise for negator pairs.
+
+SELECT DISTINCT o1.oprname AS op1, o2.oprname AS op2
+FROM pg_operator o1, pg_operator o2
+WHERE o1.oprnegate = o2.oid AND o1.oprname <= o2.oprname
+ORDER BY 1, 2;
 
 -- A mergejoinable or hashjoinable operator must be binary, must return
 -- boolean, and must have a commutator (itself, unless it's a cross-type
