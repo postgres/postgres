@@ -180,6 +180,10 @@
   </xsl:template>
 
 
+  <!-- http://sourceforge.net/p/docbook/bugs/1340/ -->
+  <xsl:template match="indexterm"/>
+
+
 <!-- Gentext customization -->
 
 <!-- see http://www.sagehill.net/docbookxsl/CustomGentext.html -->
