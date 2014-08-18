@@ -120,7 +120,7 @@
 
     <listitem>
      <para>
-      When converting values of type <type>timestamp</>
+      When converting values of type <type>date</>, <type>timestamp</>
       or <type>timestamptz</>
       to <link linkend="datatype-json"><type>JSON</type></link>, render the
       values in a format compliant with ISO 8601 (Andrew Dunstan)
@@ -129,7 +129,10 @@
      <para>
       Previously such values were rendered according to the current
       <xref linkend="guc-datestyle"> setting; but many JSON processors
-      require timestamps to be in ISO 8601 format.
+      require timestamps to be in ISO 8601 format.  If necessary, the
+      previous behavior can be obtained by explicitly casting the datetime
+      value to <type>text</> before passing it to the JSON conversion
+      function.
      </para>
     </listitem>
 
