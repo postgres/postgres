@@ -75,12 +75,17 @@
 #include "utils/memutils.h"
 
 
+static int my_sock_read(BIO *h, char *buf, int size);
+static int my_sock_write(BIO *h, const char *buf, int size);
+static BIO_METHOD *my_BIO_s_socket(void);
+static int my_SSL_set_fd(Port *port, int fd);
 
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
+static void initialize_ecdh(void);
 static const char *SSLerrmessage(void);
 
 /* are we in the middle of a renegotiation? */
@@ -153,478 +158,10 @@ AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
 KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 -----END DH PARAMETERS-----\n";
 
-/*
- *	Write data to a secure connection.
- */
-ssize_t
-be_tls_write(Port *port, void *ptr, size_t len)
-{
-	ssize_t		n;
-	int			err;
-
-	/*
-	 * If SSL renegotiations are enabled and we're getting close to the
-	 * limit, start one now; but avoid it if there's one already in
-	 * progress.  Request the renegotiation 1kB before the limit has
-	 * actually expired.
-	 */
-	if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
-		port->count > (ssl_renegotiation_limit - 1) * 1024L)
-	{
-		in_ssl_renegotiation = true;
-
-		/*
-		 * The way we determine that a renegotiation has completed is by
-		 * observing OpenSSL's internal renegotiation counter.  Make sure
-		 * we start out at zero, and assume that the renegotiation is
-		 * complete when the counter advances.
-		 *
-		 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't
-		 * seem to work in testing.
-		 */
-		SSL_clear_num_renegotiations(port->ssl);
-
-		SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
-								   sizeof(SSL_context));
-		if (SSL_renegotiate(port->ssl) <= 0)
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("SSL failure during renegotiation start")));
-		else
-		{
-			int			retries;
-
-			/*
-			 * A handshake can fail, so be prepared to retry it, but only
-			 * a few times.
-			 */
-			for (retries = 0;; retries++)
-			{
-				if (SSL_do_handshake(port->ssl) > 0)
-					break;	/* done */
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL handshake failure on renegotiation, retrying")));
-				if (retries >= 20)
-					ereport(FATAL,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("unable to complete SSL handshake")));
-			}
-		}
-	}
-
-wloop:
-	errno = 0;
-	n = SSL_write(port->ssl, ptr, len);
-	err = SSL_get_error(port->ssl, n);
-	switch (err)
-	{
-		case SSL_ERROR_NONE:
-			port->count += n;
-			break;
-		case SSL_ERROR_WANT_READ:
-		case SSL_ERROR_WANT_WRITE:
-#ifdef WIN32
-			pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
-										(err == SSL_ERROR_WANT_READ) ?
-									FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
-										INFINITE);
-#endif
-			goto wloop;
-		case SSL_ERROR_SYSCALL:
-			/* leave it to caller to ereport the value of errno */
-			if (n != -1)
-			{
-				errno = ECONNRESET;
-				n = -1;
-			}
-			break;
-		case SSL_ERROR_SSL:
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("SSL error: %s", SSLerrmessage())));
-			/* fall through */
-		case SSL_ERROR_ZERO_RETURN:
-			errno = ECONNRESET;
-			n = -1;
-			break;
-		default:
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("unrecognized SSL error code: %d",
-							err)));
-			errno = ECONNRESET;
-			n = -1;
-			break;
-	}
-
-	if (n >= 0)
-	{
-		/* is renegotiation complete? */
-		if (in_ssl_renegotiation &&
-			SSL_num_renegotiations(port->ssl) >= 1)
-		{
-			in_ssl_renegotiation = false;
-			port->count = 0;
-		}
-
-		/*
-		 * if renegotiation is still ongoing, and we've gone beyond the
-		 * limit, kill the connection now -- continuing to use it can be
-		 * considered a security problem.
-		 */
-		if (in_ssl_renegotiation &&
-			port->count > ssl_renegotiation_limit * 1024L)
-			ereport(FATAL,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("SSL failed to renegotiate connection before limit expired")));
-	}
-
-	return n;
-}
 
 /* ------------------------------------------------------------ */
-/*						OpenSSL specific code					*/
+/*						 Public interface						*/
 /* ------------------------------------------------------------ */
-
-/*
- * Private substitute BIO: this does the sending and receiving using send() and
- * recv() instead. This is so that we can enable and disable interrupts
- * just while calling recv(). We cannot have interrupts occurring while
- * the bulk of openssl runs, because it uses malloc() and possibly other
- * non-reentrant libc facilities. We also need to call send() and recv()
- * directly so it gets passed through the socket/signals layer on Win32.
- *
- * These functions are closely modelled on the standard socket BIO in OpenSSL;
- * see sock_read() and sock_write() in OpenSSL's crypto/bio/bss_sock.c.
- * XXX OpenSSL 1.0.1e considers many more errcodes than just EINTR as reasons
- * to retry; do we need to adopt their logic for that?
- */
-
-static bool my_bio_initialized = false;
-static BIO_METHOD my_bio_methods;
-
-static int
-my_sock_read(BIO *h, char *buf, int size)
-{
-	int			res = 0;
-
-	if (buf != NULL)
-	{
-		res = secure_raw_read(((Port *)h->ptr), buf, size);
-		BIO_clear_retry_flags(h);
-		if (res <= 0)
-		{
-			/* If we were interrupted, tell caller to retry */
-			if (errno == EINTR)
-			{
-				BIO_set_retry_read(h);
-			}
-		}
-	}
-
-	return res;
-}
-
-static int
-my_sock_write(BIO *h, const char *buf, int size)
-{
-	int			res = 0;
-
-	res = secure_raw_write(((Port *) h->ptr), buf, size);
-	BIO_clear_retry_flags(h);
-	if (res <= 0)
-	{
-		if (errno == EINTR)
-		{
-			BIO_set_retry_write(h);
-		}
-	}
-
-	return res;
-}
-
-static BIO_METHOD *
-my_BIO_s_socket(void)
-{
-	if (!my_bio_initialized)
-	{
-		memcpy(&my_bio_methods, BIO_s_socket(), sizeof(BIO_METHOD));
-		my_bio_methods.bread = my_sock_read;
-		my_bio_methods.bwrite = my_sock_write;
-		my_bio_initialized = true;
-	}
-	return &my_bio_methods;
-}
-
-/* This should exactly match openssl's SSL_set_fd except for using my BIO */
-static int
-my_SSL_set_fd(Port *port, int fd)
-{
-	int			ret = 0;
-	BIO		   *bio = NULL;
-
-	bio = BIO_new(my_BIO_s_socket());
-
-	if (bio == NULL)
-	{
-		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
-		goto err;
-	}
-	/* Use 'ptr' to store pointer to PGconn */
-	bio->ptr = port;
-
-	BIO_set_fd(bio, fd, BIO_NOCLOSE);
-	SSL_set_bio(port->ssl, bio, bio);
-	ret = 1;
-err:
-	return ret;
-}
-
-/*
- *	Load precomputed DH parameters.
- *
- *	To prevent "downgrade" attacks, we perform a number of checks
- *	to verify that the DBA-generated DH parameters file contains
- *	what we expect it to contain.
- */
-static DH  *
-load_dh_file(int keylength)
-{
-	FILE	   *fp;
-	char		fnbuf[MAXPGPATH];
-	DH		   *dh = NULL;
-	int			codes;
-
-	/* attempt to open file.  It's not an error if it doesn't exist. */
-	snprintf(fnbuf, sizeof(fnbuf), "dh%d.pem", keylength);
-	if ((fp = fopen(fnbuf, "r")) == NULL)
-		return NULL;
-
-/*	flock(fileno(fp), LOCK_SH); */
-	dh = PEM_read_DHparams(fp, NULL, NULL, NULL);
-/*	flock(fileno(fp), LOCK_UN); */
-	fclose(fp);
-
-	/* is the prime the correct size? */
-	if (dh != NULL && 8 * DH_size(dh) < keylength)
-	{
-		elog(LOG, "DH errors (%s): %d bits expected, %d bits found",
-			 fnbuf, keylength, 8 * DH_size(dh));
-		dh = NULL;
-	}
-
-	/* make sure the DH parameters are usable */
-	if (dh != NULL)
-	{
-		if (DH_check(dh, &codes) == 0)
-		{
-			elog(LOG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
-			return NULL;
-		}
-		if (codes & DH_CHECK_P_NOT_PRIME)
-		{
-			elog(LOG, "DH error (%s): p is not prime", fnbuf);
-			return NULL;
-		}
-		if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
-			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
-		{
-			elog(LOG,
-				 "DH error (%s): neither suitable generator or safe prime",
-				 fnbuf);
-			return NULL;
-		}
-	}
-
-	return dh;
-}
-
-/*
- *	Load hardcoded DH parameters.
- *
- *	To prevent problems if the DH parameters files don't even
- *	exist, we can load DH parameters hardcoded into this file.
- */
-static DH  *
-load_dh_buffer(const char *buffer, size_t len)
-{
-	BIO		   *bio;
-	DH		   *dh = NULL;
-
-	bio = BIO_new_mem_buf((char *) buffer, len);
-	if (bio == NULL)
-		return NULL;
-	dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-	if (dh == NULL)
-		ereport(DEBUG2,
-				(errmsg_internal("DH load buffer: %s",
-								 SSLerrmessage())));
-	BIO_free(bio);
-
-	return dh;
-}
-
-/*
- *	Generate an ephemeral DH key.  Because this can take a long
- *	time to compute, we can use precomputed parameters of the
- *	common key sizes.
- *
- *	Since few sites will bother to precompute these parameter
- *	files, we also provide a fallback to the parameters provided
- *	by the OpenSSL project.
- *
- *	These values can be static (once loaded or computed) since
- *	the OpenSSL library can efficiently generate random keys from
- *	the information provided.
- */
-static DH  *
-tmp_dh_cb(SSL *s, int is_export, int keylength)
-{
-	DH		   *r = NULL;
-	static DH  *dh = NULL;
-	static DH  *dh512 = NULL;
-	static DH  *dh1024 = NULL;
-	static DH  *dh2048 = NULL;
-	static DH  *dh4096 = NULL;
-
-	switch (keylength)
-	{
-		case 512:
-			if (dh512 == NULL)
-				dh512 = load_dh_file(keylength);
-			if (dh512 == NULL)
-				dh512 = load_dh_buffer(file_dh512, sizeof file_dh512);
-			r = dh512;
-			break;
-
-		case 1024:
-			if (dh1024 == NULL)
-				dh1024 = load_dh_file(keylength);
-			if (dh1024 == NULL)
-				dh1024 = load_dh_buffer(file_dh1024, sizeof file_dh1024);
-			r = dh1024;
-			break;
-
-		case 2048:
-			if (dh2048 == NULL)
-				dh2048 = load_dh_file(keylength);
-			if (dh2048 == NULL)
-				dh2048 = load_dh_buffer(file_dh2048, sizeof file_dh2048);
-			r = dh2048;
-			break;
-
-		case 4096:
-			if (dh4096 == NULL)
-				dh4096 = load_dh_file(keylength);
-			if (dh4096 == NULL)
-				dh4096 = load_dh_buffer(file_dh4096, sizeof file_dh4096);
-			r = dh4096;
-			break;
-
-		default:
-			if (dh == NULL)
-				dh = load_dh_file(keylength);
-			r = dh;
-	}
-
-	/* this may take a long time, but it may be necessary... */
-	if (r == NULL || 8 * DH_size(r) < keylength)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("DH: generating parameters (%d bits)",
-								 keylength)));
-		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
-	}
-
-	return r;
-}
-
-/*
- *	Certificate verification callback
- *
- *	This callback allows us to log intermediate problems during
- *	verification, but for now we'll see if the final error message
- *	contains enough information.
- *
- *	This callback also allows us to override the default acceptance
- *	criteria (e.g., accepting self-signed or expired certs), but
- *	for now we accept the default checks.
- */
-static int
-verify_cb(int ok, X509_STORE_CTX *ctx)
-{
-	return ok;
-}
-
-/*
- *	This callback is used to copy SSL information messages
- *	into the PostgreSQL log.
- */
-static void
-info_cb(const SSL *ssl, int type, int args)
-{
-	switch (type)
-	{
-		case SSL_CB_HANDSHAKE_START:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: handshake start")));
-			break;
-		case SSL_CB_HANDSHAKE_DONE:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: handshake done")));
-			break;
-		case SSL_CB_ACCEPT_LOOP:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: accept loop")));
-			break;
-		case SSL_CB_ACCEPT_EXIT:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: accept exit (%d)", args)));
-			break;
-		case SSL_CB_CONNECT_LOOP:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: connect loop")));
-			break;
-		case SSL_CB_CONNECT_EXIT:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: connect exit (%d)", args)));
-			break;
-		case SSL_CB_READ_ALERT:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: read alert (0x%04x)", args)));
-			break;
-		case SSL_CB_WRITE_ALERT:
-			ereport(DEBUG4,
-					(errmsg_internal("SSL: write alert (0x%04x)", args)));
-			break;
-	}
-}
-
-#if (OPENSSL_VERSION_NUMBER >= 0x0090800fL) && !defined(OPENSSL_NO_ECDH)
-static void
-initialize_ecdh(void)
-{
-	EC_KEY	   *ecdh;
-	int			nid;
-
-	nid = OBJ_sn2nid(SSLECDHCurve);
-	if (!nid)
-		ereport(FATAL,
-				(errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
-
-	ecdh = EC_KEY_new_by_curve_name(nid);
-	if (!ecdh)
-		ereport(FATAL,
-				(errmsg("ECDH: could not create key")));
-
-	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_ECDH_USE);
-	SSL_CTX_set_tmp_ecdh(SSL_context, ecdh);
-	EC_KEY_free(ecdh);
-}
-#else
-#define initialize_ecdh()
-#endif
 
 /*
  *	Initialize global SSL context.
@@ -959,6 +496,9 @@ be_tls_close(Port *port)
 	}
 }
 
+/*
+ *	Read data from a secure connection.
+ */
 ssize_t
 be_tls_read(Port *port, void *ptr, size_t len)
 {
@@ -1017,6 +557,477 @@ rloop:
 	}
 
 	return n;
+}
+
+/*
+ *	Write data to a secure connection.
+ */
+ssize_t
+be_tls_write(Port *port, void *ptr, size_t len)
+{
+	ssize_t		n;
+	int			err;
+
+	/*
+	 * If SSL renegotiations are enabled and we're getting close to the
+	 * limit, start one now; but avoid it if there's one already in
+	 * progress.  Request the renegotiation 1kB before the limit has
+	 * actually expired.
+	 */
+	if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
+		port->count > (ssl_renegotiation_limit - 1) * 1024L)
+	{
+		in_ssl_renegotiation = true;
+
+		/*
+		 * The way we determine that a renegotiation has completed is by
+		 * observing OpenSSL's internal renegotiation counter.  Make sure
+		 * we start out at zero, and assume that the renegotiation is
+		 * complete when the counter advances.
+		 *
+		 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't
+		 * seem to work in testing.
+		 */
+		SSL_clear_num_renegotiations(port->ssl);
+
+		SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
+								   sizeof(SSL_context));
+		if (SSL_renegotiate(port->ssl) <= 0)
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("SSL failure during renegotiation start")));
+		else
+		{
+			int			retries;
+
+			/*
+			 * A handshake can fail, so be prepared to retry it, but only
+			 * a few times.
+			 */
+			for (retries = 0;; retries++)
+			{
+				if (SSL_do_handshake(port->ssl) > 0)
+					break;	/* done */
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL handshake failure on renegotiation, retrying")));
+				if (retries >= 20)
+					ereport(FATAL,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							 errmsg("unable to complete SSL handshake")));
+			}
+		}
+	}
+
+wloop:
+	errno = 0;
+	n = SSL_write(port->ssl, ptr, len);
+	err = SSL_get_error(port->ssl, n);
+	switch (err)
+	{
+		case SSL_ERROR_NONE:
+			port->count += n;
+			break;
+		case SSL_ERROR_WANT_READ:
+		case SSL_ERROR_WANT_WRITE:
+#ifdef WIN32
+			pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
+										(err == SSL_ERROR_WANT_READ) ?
+									FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
+										INFINITE);
+#endif
+			goto wloop;
+		case SSL_ERROR_SYSCALL:
+			/* leave it to caller to ereport the value of errno */
+			if (n != -1)
+			{
+				errno = ECONNRESET;
+				n = -1;
+			}
+			break;
+		case SSL_ERROR_SSL:
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("SSL error: %s", SSLerrmessage())));
+			/* fall through */
+		case SSL_ERROR_ZERO_RETURN:
+			errno = ECONNRESET;
+			n = -1;
+			break;
+		default:
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("unrecognized SSL error code: %d",
+							err)));
+			errno = ECONNRESET;
+			n = -1;
+			break;
+	}
+
+	if (n >= 0)
+	{
+		/* is renegotiation complete? */
+		if (in_ssl_renegotiation &&
+			SSL_num_renegotiations(port->ssl) >= 1)
+		{
+			in_ssl_renegotiation = false;
+			port->count = 0;
+		}
+
+		/*
+		 * if renegotiation is still ongoing, and we've gone beyond the
+		 * limit, kill the connection now -- continuing to use it can be
+		 * considered a security problem.
+		 */
+		if (in_ssl_renegotiation &&
+			port->count > ssl_renegotiation_limit * 1024L)
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("SSL failed to renegotiate connection before limit expired")));
+	}
+
+	return n;
+}
+
+/* ------------------------------------------------------------ */
+/*						Internal functions						*/
+/* ------------------------------------------------------------ */
+
+/*
+ * Private substitute BIO: this does the sending and receiving using send() and
+ * recv() instead. This is so that we can enable and disable interrupts
+ * just while calling recv(). We cannot have interrupts occurring while
+ * the bulk of openssl runs, because it uses malloc() and possibly other
+ * non-reentrant libc facilities. We also need to call send() and recv()
+ * directly so it gets passed through the socket/signals layer on Win32.
+ *
+ * These functions are closely modelled on the standard socket BIO in OpenSSL;
+ * see sock_read() and sock_write() in OpenSSL's crypto/bio/bss_sock.c.
+ * XXX OpenSSL 1.0.1e considers many more errcodes than just EINTR as reasons
+ * to retry; do we need to adopt their logic for that?
+ */
+
+static bool my_bio_initialized = false;
+static BIO_METHOD my_bio_methods;
+
+static int
+my_sock_read(BIO *h, char *buf, int size)
+{
+	int			res = 0;
+
+	if (buf != NULL)
+	{
+		res = secure_raw_read(((Port *)h->ptr), buf, size);
+		BIO_clear_retry_flags(h);
+		if (res <= 0)
+		{
+			/* If we were interrupted, tell caller to retry */
+			if (errno == EINTR)
+			{
+				BIO_set_retry_read(h);
+			}
+		}
+	}
+
+	return res;
+}
+
+static int
+my_sock_write(BIO *h, const char *buf, int size)
+{
+	int			res = 0;
+
+	res = secure_raw_write(((Port *) h->ptr), buf, size);
+	BIO_clear_retry_flags(h);
+	if (res <= 0)
+	{
+		if (errno == EINTR)
+		{
+			BIO_set_retry_write(h);
+		}
+	}
+
+	return res;
+}
+
+static BIO_METHOD *
+my_BIO_s_socket(void)
+{
+	if (!my_bio_initialized)
+	{
+		memcpy(&my_bio_methods, BIO_s_socket(), sizeof(BIO_METHOD));
+		my_bio_methods.bread = my_sock_read;
+		my_bio_methods.bwrite = my_sock_write;
+		my_bio_initialized = true;
+	}
+	return &my_bio_methods;
+}
+
+/* This should exactly match openssl's SSL_set_fd except for using my BIO */
+static int
+my_SSL_set_fd(Port *port, int fd)
+{
+	int			ret = 0;
+	BIO		   *bio = NULL;
+
+	bio = BIO_new(my_BIO_s_socket());
+
+	if (bio == NULL)
+	{
+		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
+		goto err;
+	}
+	/* Use 'ptr' to store pointer to PGconn */
+	bio->ptr = port;
+
+	BIO_set_fd(bio, fd, BIO_NOCLOSE);
+	SSL_set_bio(port->ssl, bio, bio);
+	ret = 1;
+err:
+	return ret;
+}
+
+/*
+ *	Load precomputed DH parameters.
+ *
+ *	To prevent "downgrade" attacks, we perform a number of checks
+ *	to verify that the DBA-generated DH parameters file contains
+ *	what we expect it to contain.
+ */
+static DH  *
+load_dh_file(int keylength)
+{
+	FILE	   *fp;
+	char		fnbuf[MAXPGPATH];
+	DH		   *dh = NULL;
+	int			codes;
+
+	/* attempt to open file.  It's not an error if it doesn't exist. */
+	snprintf(fnbuf, sizeof(fnbuf), "dh%d.pem", keylength);
+	if ((fp = fopen(fnbuf, "r")) == NULL)
+		return NULL;
+
+/*	flock(fileno(fp), LOCK_SH); */
+	dh = PEM_read_DHparams(fp, NULL, NULL, NULL);
+/*	flock(fileno(fp), LOCK_UN); */
+	fclose(fp);
+
+	/* is the prime the correct size? */
+	if (dh != NULL && 8 * DH_size(dh) < keylength)
+	{
+		elog(LOG, "DH errors (%s): %d bits expected, %d bits found",
+			 fnbuf, keylength, 8 * DH_size(dh));
+		dh = NULL;
+	}
+
+	/* make sure the DH parameters are usable */
+	if (dh != NULL)
+	{
+		if (DH_check(dh, &codes) == 0)
+		{
+			elog(LOG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
+			return NULL;
+		}
+		if (codes & DH_CHECK_P_NOT_PRIME)
+		{
+			elog(LOG, "DH error (%s): p is not prime", fnbuf);
+			return NULL;
+		}
+		if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
+			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
+		{
+			elog(LOG,
+				 "DH error (%s): neither suitable generator or safe prime",
+				 fnbuf);
+			return NULL;
+		}
+	}
+
+	return dh;
+}
+
+/*
+ *	Load hardcoded DH parameters.
+ *
+ *	To prevent problems if the DH parameters files don't even
+ *	exist, we can load DH parameters hardcoded into this file.
+ */
+static DH  *
+load_dh_buffer(const char *buffer, size_t len)
+{
+	BIO		   *bio;
+	DH		   *dh = NULL;
+
+	bio = BIO_new_mem_buf((char *) buffer, len);
+	if (bio == NULL)
+		return NULL;
+	dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+	if (dh == NULL)
+		ereport(DEBUG2,
+				(errmsg_internal("DH load buffer: %s",
+								 SSLerrmessage())));
+	BIO_free(bio);
+
+	return dh;
+}
+
+/*
+ *	Generate an ephemeral DH key.  Because this can take a long
+ *	time to compute, we can use precomputed parameters of the
+ *	common key sizes.
+ *
+ *	Since few sites will bother to precompute these parameter
+ *	files, we also provide a fallback to the parameters provided
+ *	by the OpenSSL project.
+ *
+ *	These values can be static (once loaded or computed) since
+ *	the OpenSSL library can efficiently generate random keys from
+ *	the information provided.
+ */
+static DH  *
+tmp_dh_cb(SSL *s, int is_export, int keylength)
+{
+	DH		   *r = NULL;
+	static DH  *dh = NULL;
+	static DH  *dh512 = NULL;
+	static DH  *dh1024 = NULL;
+	static DH  *dh2048 = NULL;
+	static DH  *dh4096 = NULL;
+
+	switch (keylength)
+	{
+		case 512:
+			if (dh512 == NULL)
+				dh512 = load_dh_file(keylength);
+			if (dh512 == NULL)
+				dh512 = load_dh_buffer(file_dh512, sizeof file_dh512);
+			r = dh512;
+			break;
+
+		case 1024:
+			if (dh1024 == NULL)
+				dh1024 = load_dh_file(keylength);
+			if (dh1024 == NULL)
+				dh1024 = load_dh_buffer(file_dh1024, sizeof file_dh1024);
+			r = dh1024;
+			break;
+
+		case 2048:
+			if (dh2048 == NULL)
+				dh2048 = load_dh_file(keylength);
+			if (dh2048 == NULL)
+				dh2048 = load_dh_buffer(file_dh2048, sizeof file_dh2048);
+			r = dh2048;
+			break;
+
+		case 4096:
+			if (dh4096 == NULL)
+				dh4096 = load_dh_file(keylength);
+			if (dh4096 == NULL)
+				dh4096 = load_dh_buffer(file_dh4096, sizeof file_dh4096);
+			r = dh4096;
+			break;
+
+		default:
+			if (dh == NULL)
+				dh = load_dh_file(keylength);
+			r = dh;
+	}
+
+	/* this may take a long time, but it may be necessary... */
+	if (r == NULL || 8 * DH_size(r) < keylength)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("DH: generating parameters (%d bits)",
+								 keylength)));
+		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
+	}
+
+	return r;
+}
+
+/*
+ *	Certificate verification callback
+ *
+ *	This callback allows us to log intermediate problems during
+ *	verification, but for now we'll see if the final error message
+ *	contains enough information.
+ *
+ *	This callback also allows us to override the default acceptance
+ *	criteria (e.g., accepting self-signed or expired certs), but
+ *	for now we accept the default checks.
+ */
+static int
+verify_cb(int ok, X509_STORE_CTX *ctx)
+{
+	return ok;
+}
+
+/*
+ *	This callback is used to copy SSL information messages
+ *	into the PostgreSQL log.
+ */
+static void
+info_cb(const SSL *ssl, int type, int args)
+{
+	switch (type)
+	{
+		case SSL_CB_HANDSHAKE_START:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: handshake start")));
+			break;
+		case SSL_CB_HANDSHAKE_DONE:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: handshake done")));
+			break;
+		case SSL_CB_ACCEPT_LOOP:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: accept loop")));
+			break;
+		case SSL_CB_ACCEPT_EXIT:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: accept exit (%d)", args)));
+			break;
+		case SSL_CB_CONNECT_LOOP:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: connect loop")));
+			break;
+		case SSL_CB_CONNECT_EXIT:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: connect exit (%d)", args)));
+			break;
+		case SSL_CB_READ_ALERT:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: read alert (0x%04x)", args)));
+			break;
+		case SSL_CB_WRITE_ALERT:
+			ereport(DEBUG4,
+					(errmsg_internal("SSL: write alert (0x%04x)", args)));
+			break;
+	}
+}
+
+static void
+initialize_ecdh(void)
+{
+#if (OPENSSL_VERSION_NUMBER >= 0x0090800fL) && !defined(OPENSSL_NO_ECDH)
+	EC_KEY	   *ecdh;
+	int			nid;
+
+	nid = OBJ_sn2nid(SSLECDHCurve);
+	if (!nid)
+		ereport(FATAL,
+				(errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
+
+	ecdh = EC_KEY_new_by_curve_name(nid);
+	if (!ecdh)
+		ereport(FATAL,
+				(errmsg("ECDH: could not create key")));
+
+	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_ECDH_USE);
+	SSL_CTX_set_tmp_ecdh(SSL_context, ecdh);
+	EC_KEY_free(ecdh);
+#endif
 }
 
 /*
