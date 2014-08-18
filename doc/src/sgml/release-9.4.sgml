@@ -1813,14 +1813,6 @@
 
       <listitem>
        <para>
-        Add ability to wrap long lines in <application>psql</>'s
-        <literal>expanded</> mode by using <command>\pset format wrapped</>
-        (Sergey Muraviov)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Suppress <quote>No rows</quote> output in <application>psql</> <link
         linkend="APP-PSQL-meta-commands"><option>expanded</></link>
         mode when the footer is disabled (Bruce Momjian)
