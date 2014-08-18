@@ -1327,7 +1327,9 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
 The commands accepted in walsender mode are:
 <variablelist>
   <varlistentry>
-    <term>IDENTIFY_SYSTEM</term>
+    <term>IDENTIFY_SYSTEM
+     <indexterm><primary>IDENTIFY_SYSTEM</primary></indexterm>
+    </term>
     <listitem>
      <para>
       Requests the server to identify itself. Server replies with a result
@@ -1390,7 +1392,9 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>TIMELINE_HISTORY <replaceable class="parameter">tli</replaceable></term>
+    <term>TIMELINE_HISTORY <replaceable class="parameter">tli</replaceable>
+     <indexterm><primary>TIMELINE_HISTORY</primary></indexterm>
+    </term>
     <listitem>
      <para>
       Requests the server to send over the timeline history file for timeline
@@ -1406,7 +1410,7 @@ The commands accepted in walsender mode are:
       </term>
       <listitem>
       <para>
-       Filename of the timeline history file, e.g 00000002.history.
+       Filename of the timeline history file, e.g <filename>00000002.history</>.
       </para>
       </listitem>
       </varlistentry>
@@ -1428,7 +1432,9 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>CREATE_REPLICATION_SLOT <replaceable class="parameter">slot_name</> { <literal>PHYSICAL</> | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> } <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm></term>
+    <term>CREATE_REPLICATION_SLOT <replaceable class="parameter">slot_name</> { <literal>PHYSICAL</> | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> }
+     <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
+    </term>
     <listitem>
      <para>
       Create a physical or logical replication
@@ -1460,7 +1466,9 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>START_REPLICATION [<literal>SLOT</literal> <replaceable class="parameter">slot_name</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]</term>
+    <term>START_REPLICATION [<literal>SLOT</literal> <replaceable class="parameter">slot_name</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]
+     <indexterm><primary>START_REPLICATION</primary></indexterm>
+    </term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
@@ -1850,7 +1858,9 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>DROP_REPLICATION_SLOT <replaceable class="parameter">slot_name</></term>
+    <term>DROP_REPLICATION_SLOT <replaceable class="parameter">slot_name</>
+     <indexterm><primary>DROP_REPLICATION_SLOT</primary></indexterm>
+    </term>
     <listitem>
      <para>
       Drops a replication slot, freeing any reserved server-side resources. If
@@ -1870,7 +1880,9 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>]</term>
+    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>]
+     <indexterm><primary>BASE_BACKUP</primary></indexterm>
+    </term>
     <listitem>
      <para>
       Instructs the server to start streaming a base backup.
