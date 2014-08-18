@@ -1160,7 +1160,9 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				dformatsize = 0;
 	struct lineptr *hlineptr,
 			   *dlineptr;
-	bool		is_pager = false;
+	bool		is_pager = false,
+				hmultiline = false,
+				dmultiline = false;
 	int			output_columns = 0;		/* Width of interactive console */
 
 	if (cancel_pressed)
@@ -1196,7 +1198,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if (width > hwidth)
 			hwidth = width;
 		if (height > hheight)
+		{
 			hheight = height;
+			hmultiline = true;
+		}
 		if (fs > hformatsize)
 			hformatsize = fs;
 	}
@@ -1213,7 +1218,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if (width > dwidth)
 			dwidth = width;
 		if (height > dheight)
+		{
 			dheight = height;
+			dmultiline = true;
+		}
 		if (fs > dformatsize)
 			dformatsize = fs;
 	}
@@ -1258,45 +1266,82 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	if (cont->opt->format == PRINT_WRAPPED)
 	{
 		/*
-		 * Calculate the available width to wrap the columns to after
-		 * subtracting the maximum header width and separators. At a minimum
-		 * enough to print "[ RECORD N ]"
+		 * Separators width
 		 */
 		unsigned int width,
-					swidth;
+					min_width,
+					swidth,
+					iwidth = 0;
 
 		if (opt_border == 0)
-			swidth = 1;			/* "header data" */
-		else if (opt_border == 1)
-			swidth = 3;			/* "header | data" */
-		else
-			swidth = 7;			/* "| header | data |" */
-
-		/* Wrap to maximum width */
-		width = dwidth + swidth + hwidth;
-		if ((output_columns > 0) && (width > output_columns))
 		{
-			dwidth = output_columns - hwidth - swidth;
-			width = output_columns;
+			/*
+			 * For border = 0, one space in the middle.
+			 */
+			swidth = 1;
+		}
+		else if (opt_border == 1)
+		{
+			/*
+			 * For border = 1, one for the pipe (|) in the middle
+			 * between the two spaces.
+			 */
+			swidth = 3;
+		}
+		else
+			/*
+			 * For border = 2, two more for the pipes (|) at the begging and
+			 * at the end of the lines.
+			 */
+			swidth = 7;
+
+		if ((opt_border < 2) &&
+			((hmultiline && 
+			(format == &pg_asciiformat_old)) ||
+			(dmultiline && 
+			(format != &pg_asciiformat_old))))
+			iwidth++; /* for newline indicators */
+
+		min_width = hwidth + iwidth + swidth + 3;
+
+		/* 
+		 * Record header width
+		 */
+		if (!opt_tuples_only)
+		{
+			/* 
+			 * Record number
+			 */
+			unsigned int rwidth = 1 + log10(cont->nrows);
+			if (opt_border == 0)
+				rwidth += 9;	/* "* RECORD " */
+			else if (opt_border == 1)
+				rwidth += 12;	/* "-[ RECORD  ]" */
+			else
+				rwidth += 15;	/* "+-[ RECORD  ]-+" */
+
+			if (rwidth > min_width)
+				min_width = rwidth;
 		}
 
 		/* Wrap to minimum width */
-		if (!opt_tuples_only)
+		width = hwidth + iwidth + swidth + dwidth;
+		if ((width < min_width) || (output_columns < min_width))
+			width = min_width - hwidth - iwidth - swidth;
+		else if (output_columns > 0)
+			/*
+			 * Wrap to maximum width
+			 */
+			width = output_columns - hwidth - iwidth - swidth;
+
+		if ((width < dwidth) || (dheight > 1))
 		{
-			int			delta = 1 + log10(cont->nrows) - width;
-
-			if (opt_border == 0)
-				delta += 6;		/* "* RECORD " */
-			else if (opt_border == 1)
-				delta += 10;	/* "-[ RECORD  ]" */
-			else
-				delta += 15;	/* "+-[ RECORD  ]-+" */
-
-			if (delta > 0)
-				dwidth += delta;
+			dmultiline = true;
+			if ((opt_border == 0) && 
+				(format != &pg_asciiformat_old))
+				width--; /* for wrap indicators */
 		}
-		else if (dwidth < 3)
-			dwidth = 3;
+		dwidth = width;
 	}
 
 	/* print records */
@@ -1321,11 +1366,17 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		/* Print record header (e.g. "[ RECORD N ]") above each record */
 		if (i % cont->ncolumns == 0)
 		{
+			unsigned int lhwidth = hwidth;
+			if ((opt_border < 2) &&
+				(hmultiline) && 
+				(format == &pg_asciiformat_old))
+				lhwidth++; /* for newline indicators */
+
 			if (!opt_tuples_only)
-				print_aligned_vertical_line(cont, record++, hwidth, dwidth,
-											pos, fout);
+				print_aligned_vertical_line(cont, record++, lhwidth,
+											dwidth, pos, fout);
 			else if (i != 0 || !cont->opt->start_table || opt_border == 2)
-				print_aligned_vertical_line(cont, 0, hwidth, dwidth,
+				print_aligned_vertical_line(cont, 0, lhwidth, dwidth,
 											pos, fout);
 		}
 
@@ -1354,35 +1405,62 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			/* Header (never wrapped so just need to deal with newlines) */
 			if (!hcomplete)
 			{
-				int			swidth,
-							twidth = hwidth + 1;
-
-				fputs(hline ? format->header_nl_left : " ", fout);
-				strlen_max_width(hlineptr[hline].ptr, &twidth,
+				int			swidth = hwidth,
+							target_width = hwidth;
+				/*
+				 * Left spacer or new line indicator
+				 */
+				if ((opt_border == 2) ||
+					(hmultiline && (format == &pg_asciiformat_old)))
+					fputs(hline ? format->header_nl_left : " ", fout);
+				/*
+				 * Header text
+				 */
+				strlen_max_width(hlineptr[hline].ptr, &target_width,
 								 encoding);
 				fprintf(fout, "%-s", hlineptr[hline].ptr);
 
-				swidth = hwidth - twidth;
-				if (swidth > 0) /* spacer */
+				/*
+				 * Spacer
+				 */
+				swidth -= target_width;
+				if (swidth > 0)
 					fprintf(fout, "%*s", swidth, " ");
 
+				/* 
+				 * New line indicator or separator's space
+				 */
 				if (hlineptr[hline + 1].ptr)
 				{
 					/* More lines after this one due to a newline */
-					fputs(format->header_nl_right, fout);
+					if ((opt_border > 0) ||
+						(hmultiline && (format != &pg_asciiformat_old)))
+						fputs(format->header_nl_right, fout);
 					hline++;
 				}
 				else
 				{
 					/* This was the last line of the header */
-					fputs(" ", fout);
+					if ((opt_border > 0) ||
+						(hmultiline && (format != &pg_asciiformat_old)))
+						fputs(" ", fout);
 					hcomplete = 1;
 				}
 			}
 			else
 			{
-				/* Header exhausted but more data for column */
-				fprintf(fout, "%*s", hwidth + 2, "");
+				unsigned int swidth = hwidth + opt_border;
+				if ((opt_border < 2) &&
+					(hmultiline) &&
+					(format == &pg_asciiformat_old))
+					swidth++;
+
+				if ((opt_border == 0) && 
+					(format != &pg_asciiformat_old) &&
+					(hmultiline))
+					swidth++;
+
+				fprintf(fout, "%*s", swidth, " ");
 			}
 
 			/* Separator */
@@ -1401,13 +1479,18 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			/* Data */
 			if (!dcomplete)
 			{
-				int			target_width,
+				int			target_width = dwidth,
 							bytes_to_output,
-							swidth;
+							swidth = dwidth;
 
+				/*
+				 * Left spacer on wrap indicator
+				 */
 				fputs(!dcomplete && !offset ? " " : format->wrap_left, fout);
 
-				target_width = dwidth;
+				/*
+				 * Data text
+				 */
 				bytes_to_output = strlen_max_width(dlineptr[dline].ptr + offset,
 												   &target_width, encoding);
 				fputnbytes(fout, (char *) (dlineptr[dline].ptr + offset),
@@ -1416,20 +1499,30 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				chars_to_output -= target_width;
 				offset += bytes_to_output;
 
-				/* spacer */
-				swidth = dwidth - target_width;
-				if (swidth > 0)
-					fprintf(fout, "%*s", swidth, "");
+				/* Spacer */
+				swidth -= target_width;
 
 				if (chars_to_output)
 				{
 					/* continuing a wrapped column */
-					fputs(format->wrap_right, fout);
+					if ((opt_border > 1) ||
+						(dmultiline && (format != &pg_asciiformat_old)))
+					{
+						if (swidth > 0)
+							fprintf(fout, "%*s", swidth, " ");
+						fputs(format->wrap_right, fout);
+					}
 				}
 				else if (dlineptr[dline + 1].ptr)
 				{
 					/* reached a newline in the column */
-					fputs(format->nl_right, fout);
+					if ((opt_border > 1) ||
+						(dmultiline && (format != &pg_asciiformat_old)))
+					{
+						if (swidth > 0)
+							fprintf(fout, "%*s", swidth, " ");
+						fputs(format->nl_right, fout);
+					}
 					dline++;
 					offset = 0;
 					chars_to_output = dlineptr[dline].width;
@@ -1437,10 +1530,16 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				else
 				{
 					/* reached the end of the cell */
-					fputs(" ", fout);
+					if (opt_border > 1)
+					{
+						if (swidth > 0)
+							fprintf(fout, "%*s", swidth, " ");
+						fputs(" ", fout);
+					}
 					dcomplete = 1;
 				}
 
+				/* Right border */
 				if (opt_border == 2)
 					fputs(dformat->rightvrule, fout);
 
