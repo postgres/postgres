@@ -224,10 +224,7 @@ SELECT * FROM <replaceable>name</replaceable>;
   <para>
    Sequences are based on <type>bigint</> arithmetic, so the range
    cannot exceed the range of an eight-byte integer
-   (-9223372036854775808 to 9223372036854775807).  On some older
-   platforms, there might be no compiler support for eight-byte
-   integers, in which case sequences use regular <type>integer</>
-   arithmetic (range -2147483648 to +2147483647).
+   (-9223372036854775808 to 9223372036854775807).
   </para>
 
   <para>
