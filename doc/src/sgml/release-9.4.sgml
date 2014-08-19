@@ -193,6 +193,18 @@
 
     <listitem>
      <para>
+      Writable foreign data wrappers must return all columns when the foreign
+      table has an <literal>AFTER ROW</> trigger (Noah Misch)
+     </para>
+
+     <para>
+      Previously, foreign tables never had triggers, and
+      the <literal>RETURNING</> clause alone dictated the columns required.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Rename <link linkend="SQL-EXPLAIN"><command>EXPLAIN
       ANALYZE</></link>'s <quote>total runtime</quote> output
       to <quote>execution time</quote> (Tom Lane)
