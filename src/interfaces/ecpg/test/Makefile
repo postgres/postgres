@@ -1,5 +1,8 @@
 # src/interfaces/ecpg/test/Makefile
 
+PGFILEDESC = "ECPG Test - regression tests for ECPG"
+PGAPPICON = win32
+
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
@@ -12,8 +15,6 @@ override CPPFLAGS := \
 	'-DSHELLPROG="$(SHELL)"' \
 	'-DDLSUFFIX="$(DLSUFFIX)"' \
 	$(CPPFLAGS)
-
-PGFILEDESC = "ECPG Test - regression tests for ECPG"
 
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)

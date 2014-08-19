@@ -183,15 +183,7 @@ sub UseDef
 sub AddDir
 {
 	my ($self, $reldir) = @_;
-	my $MF;
-
-	my $t = $/;
-	undef $/;
-	open($MF, "$reldir\\Makefile")
-	  || open($MF, "$reldir\\GNUMakefile")
-	  || croak "Could not open $reldir\\Makefile\n";
-	my $mf = <$MF>;
-	close($MF);
+	my $mf = read_makefile($reldir);
 
 	$mf =~ s{\\\r?\n}{}g;
 	if ($mf =~ m{^(?:SUB)?DIRS[^=]*=\s*(.*)$}mg)
@@ -292,7 +284,15 @@ sub AddDir
 		$mf =~ s{$replace_re}{}m;
 	}
 
-	# See if this Makefile contains a description, and should have a RC file
+	$self->AddDirResourceFile($reldir);
+}
+
+# If the directory's Makefile bears a description string, add a resource file.
+sub AddDirResourceFile
+{
+	my ($self, $reldir) = @_;
+	my $mf = read_makefile($reldir);
+
 	if ($mf =~ /^PGFILEDESC\s*=\s*\"([^\"]+)\"/m)
 	{
 		my $desc = $1;
@@ -300,7 +300,6 @@ sub AddDir
 		if ($mf =~ /^PGAPPICON\s*=\s*(.*)$/m) { $ico = $1; }
 		$self->AddResourceFile($reldir, $desc, $ico);
 	}
-	$/ = $t;
 }
 
 sub AddResourceFile
@@ -402,6 +401,23 @@ sub read_file
 
 	undef $/;
 	open($F, $filename) || croak "Could not open file $filename\n";
+	my $txt = <$F>;
+	close($F);
+	$/ = $t;
+
+	return $txt;
+}
+
+sub read_makefile
+{
+	my $reldir = shift;
+	my $F;
+	my $t = $/;
+
+	undef $/;
+	open($F, "$reldir\\GNUmakefile")
+	  || open($F, "$reldir\\Makefile")
+	  || croak "Could not open $reldir\\Makefile\n";
 	my $txt = <$F>;
 	close($F);
 	$/ = $t;

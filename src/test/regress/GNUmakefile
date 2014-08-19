@@ -10,6 +10,9 @@
 #
 #-------------------------------------------------------------------------
 
+PGFILEDESC = "pg_regress - test driver"
+PGAPPICON = win32
+
 subdir = src/test/regress
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
@@ -43,7 +46,7 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 
 all: pg_regress$(X)
 
-pg_regress$(X): pg_regress.o pg_regress_main.o | submake-libpgport
+pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
@@ -66,7 +69,7 @@ uninstall:
 # Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE C.
 
 NAME = regress
-OBJS = regress.o
+OBJS = $(WIN32RES) regress.o
 
 include $(top_srcdir)/src/Makefile.shlib
 

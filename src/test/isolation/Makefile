@@ -2,6 +2,9 @@
 # Makefile for isolation tests
 #
 
+PGFILEDESC = "pg_isolation_regress/isolationtester - multi-client test driver"
+PGAPPICON = win32
+
 subdir = src/test/isolation
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
@@ -11,7 +14,7 @@ PSQLDIR = $(bindir)
 
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPFLAGS)
 
-OBJS =  specparse.o isolationtester.o
+OBJS =  specparse.o isolationtester.o $(WIN32RES)
 
 all: isolationtester$(X) pg_isolation_regress$(X)
 
@@ -21,7 +24,7 @@ submake-regress:
 pg_regress.o: | submake-regress
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pg_regress.o .
 
-pg_isolation_regress$(X): isolation_main.o pg_regress.o
+pg_isolation_regress$(X): isolation_main.o pg_regress.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
