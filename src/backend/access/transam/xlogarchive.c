@@ -459,7 +459,8 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 							xlogfpath, oldpath)));
 		}
 #else
-		strncpy(oldpath, xlogfpath, MAXPGPATH);
+		/* same-size buffers, so this never truncates */
+		strlcpy(oldpath, xlogfpath, MAXPGPATH);
 #endif
 		if (unlink(oldpath) != 0)
 			ereport(FATAL,
