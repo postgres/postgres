@@ -432,6 +432,45 @@ SELECT (test_json->>3) IS NULL AS expect_true FROM test_jsonb WHERE json_type = 
  t
 (1 row)
 
+-- corner cases
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> null::text;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> null::int;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 1;
+ERROR:  cannot call jsonb_array_element (jsonb -> int) on an object
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 'z';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 1;
+  ?column?   
+-------------
+ {"b": "cc"}
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 3;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 'z';
+ERROR:  cannot call jsonb_object_field (jsonb -> text) on an array
+select '"foo"'::jsonb -> 1;
+ERROR:  cannot call jsonb_array_element (jsonb -> int) on a scalar
+select '"foo"'::jsonb -> 'z';
+ERROR:  cannot call jsonb_object_field (jsonb -> text) on a scalar
 -- equality and inequality
 SELECT '{"x":"y"}'::jsonb = '{"x":"y"}'::jsonb;
  ?column? 
@@ -1178,63 +1217,138 @@ SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>array['f2','1'];
  1
 (1 row)
 
--- same using array literals
-SELECT '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>'{f4,f6}';
- ?column?  
------------
- "stringy"
-(1 row)
-
-SELECT '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>'{f2}';
- ?column?  
------------
- {"f3": 1}
-(1 row)
-
-SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>'{f2,0}';
+-- corner cases for same
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array[]::text[];
  ?column? 
 ----------
- "f3"
+ 
 (1 row)
 
-SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>'{f2,1}';
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a'];
+      ?column?       
+---------------------
+ {"b": {"c": "foo"}}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b'];
+   ?column?   
+--------------
+ {"c": "foo"}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b','c'];
  ?column? 
 ----------
- 1
+ "foo"
 (1 row)
 
-SELECT '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>'{f4,f6}';
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b','c','d'];
  ?column? 
 ----------
- stringy
+ 
 (1 row)
 
-SELECT '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>'{f2}';
- ?column?  
------------
- {"f3": 1}
-(1 row)
-
-SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>'{f2,0}';
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','z','c'];
  ?column? 
 ----------
- f3
+ 
 (1 row)
 
-SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>'{f2,1}';
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb #> array['a','1','b'];
  ?column? 
 ----------
- 1
+ "cc"
 (1 row)
 
--- same on jsonb scalars (expecting errors)
-SELECT '42'::jsonb#>array['f2'];
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb #> array['a','z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb #> array['1','b'];
+ ?column? 
+----------
+ "cc"
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb #> array['z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '"foo"'::jsonb #> array['z'];
 ERROR:  cannot extract path from a scalar
-SELECT '42'::jsonb#>array['0'];
+select '42'::jsonb #> array['f2'];
 ERROR:  cannot extract path from a scalar
-SELECT '42'::jsonb#>>array['f2'];
+select '42'::jsonb #> array['0'];
 ERROR:  cannot extract path from a scalar
-SELECT '42'::jsonb#>>array['0'];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array[]::text[];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a'];
+      ?column?       
+---------------------
+ {"b": {"c": "foo"}}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b'];
+   ?column?   
+--------------
+ {"c": "foo"}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b','c'];
+ ?column? 
+----------
+ foo
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b','c','d'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','z','c'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb #>> array['a','1','b'];
+ ?column? 
+----------
+ cc
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb #>> array['a','z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb #>> array['1','b'];
+ ?column? 
+----------
+ cc
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb #>> array['z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '"foo"'::jsonb #>> array['z'];
+ERROR:  cannot extract path from a scalar
+select '42'::jsonb #>> array['f2'];
+ERROR:  cannot extract path from a scalar
+select '42'::jsonb #>> array['0'];
 ERROR:  cannot extract path from a scalar
 -- array_elements
 SELECT jsonb_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]');
