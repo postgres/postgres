@@ -499,7 +499,7 @@
 
 # - Statement Behavior -
 
-#search_path = '"$user",public'		# schema names
+#search_path = '"$user", public'	# schema names
 #default_tablespace = ''		# a tablespace name, '' uses the default
 #temp_tablespaces = ''			# a list of tablespace names, '' uses
 					# only default tablespace

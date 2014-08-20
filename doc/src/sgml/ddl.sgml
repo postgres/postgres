@@ -1746,7 +1746,7 @@ SHOW search_path;
 <screen>
  search_path
 --------------
- "$user",public
+ "$user", public
 </screen>
     The first element specifies that a schema with the same name as
     the current user is to be searched.  If no such schema exists,
