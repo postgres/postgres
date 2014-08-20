@@ -453,6 +453,12 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 'z';
  
 (1 row)
 
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> '';
+ ?column? 
+----------
+ 
+(1 row)
+
 select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 1;
   ?column?   
 -------------
@@ -471,6 +477,50 @@ select '"foo"'::jsonb -> 1;
 ERROR:  cannot call jsonb_array_element (jsonb -> int) on a scalar
 select '"foo"'::jsonb -> 'z';
 ERROR:  cannot call jsonb_object_field (jsonb -> text) on a scalar
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::text;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::int;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> 1;
+ERROR:  cannot call jsonb_array_element_text on an object
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> 'z';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> '';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 1;
+  ?column?   
+-------------
+ {"b": "cc"}
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 3;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 'z';
+ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on an array
+select '"foo"'::jsonb ->> 1;
+ERROR:  cannot call jsonb_array_element_text on a scalar
+select '"foo"'::jsonb ->> 'z';
+ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on a scalar
 -- equality and inequality
 SELECT '{"x":"y"}'::jsonb = '{"x":"y"}'::jsonb;
  ?column? 
@@ -1218,7 +1268,7 @@ SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>array['f2','1'];
 (1 row)
 
 -- corner cases for same
-select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array[]::text[];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> '{}';
  ?column? 
 ----------
  
@@ -1228,6 +1278,14 @@ select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a'];
       ?column?       
 ---------------------
  {"b": {"c": "foo"}}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a', null];
+ERROR:  cannot call jsonb_extract_path with null path elements
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a', ''];
+ ?column? 
+----------
+ 
 (1 row)
 
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b'];
@@ -1284,7 +1342,7 @@ select '42'::jsonb #> array['f2'];
 ERROR:  cannot extract path from a scalar
 select '42'::jsonb #> array['0'];
 ERROR:  cannot extract path from a scalar
-select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array[]::text[];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> '{}';
  ?column? 
 ----------
  
@@ -1294,6 +1352,14 @@ select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a'];
       ?column?       
 ---------------------
  {"b": {"c": "foo"}}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a', null];
+ERROR:  cannot call jsonb_extract_path_text with null path elements
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a', ''];
+ ?column? 
+----------
+ 
 (1 row)
 
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b'];
