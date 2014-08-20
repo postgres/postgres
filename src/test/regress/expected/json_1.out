@@ -674,6 +674,12 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 'z';
  
 (1 row)
 
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> '';
+ ?column? 
+----------
+ 
+(1 row)
+
 select '[{"b": "c"}, {"b": "cc"}]'::json -> 1;
   ?column?   
 -------------
@@ -691,6 +697,50 @@ ERROR:  cannot extract field from a non-object
 select '"foo"'::json -> 1;
 ERROR:  cannot extract element from a scalar
 select '"foo"'::json -> 'z';
+ERROR:  cannot extract element from a scalar
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json ->> null::text;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json ->> null::int;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json ->> 1;
+ERROR:  cannot extract array element from a non-array
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json ->> 'z';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json ->> '';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json ->> 1;
+  ?column?   
+-------------
+ {"b": "cc"}
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json ->> 3;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json ->> 'z';
+ERROR:  cannot extract field from a non-object
+select '"foo"'::json ->> 1;
+ERROR:  cannot extract element from a scalar
+select '"foo"'::json ->> 'z';
 ERROR:  cannot extract element from a scalar
 -- array length
 SELECT json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]');
@@ -871,7 +921,7 @@ select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>array['f2','1'];
 (1 row)
 
 -- corner cases for same
-select '{"a": {"b":{"c": "foo"}}}'::json #> array[]::text[];
+select '{"a": {"b":{"c": "foo"}}}'::json #> '{}';
  ?column? 
 ----------
  
@@ -883,6 +933,10 @@ select '{"a": {"b":{"c": "foo"}}}'::json #> array['a'];
  {"b":{"c": "foo"}}
 (1 row)
 
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a', null];
+ERROR:  cannot call json_extract_path with null path elements
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a', ''];
+ERROR:  cannot call json_extract_path with empty path elements
 select '{"a": {"b":{"c": "foo"}}}'::json #> array['a','b'];
    ?column?   
 --------------
@@ -949,7 +1003,7 @@ select '42'::json #> array['0'];
  
 (1 row)
 
-select '{"a": {"b":{"c": "foo"}}}'::json #>> array[]::text[];
+select '{"a": {"b":{"c": "foo"}}}'::json #>> '{}';
  ?column? 
 ----------
  
@@ -961,6 +1015,10 @@ select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a'];
  {"b":{"c": "foo"}}
 (1 row)
 
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a', null];
+ERROR:  cannot call json_extract_path_text with null path elements
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a', ''];
+ERROR:  cannot call json_extract_path_text with empty path elements
 select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a','b'];
    ?column?   
 --------------

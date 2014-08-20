@@ -113,11 +113,23 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> null::text;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> null::int;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 1;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 'z';
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> '';
 select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 1;
 select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 3;
 select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 'z';
 select '"foo"'::jsonb -> 1;
 select '"foo"'::jsonb -> 'z';
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::text;
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::int;
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> 1;
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> 'z';
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> '';
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 1;
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 3;
+select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 'z';
+select '"foo"'::jsonb ->> 1;
+select '"foo"'::jsonb ->> 'z';
 
 -- equality and inequality
 SELECT '{"x":"y"}'::jsonb = '{"x":"y"}'::jsonb;
@@ -270,8 +282,10 @@ SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>array['f2','0'];
 SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>array['f2','1'];
 
 -- corner cases for same
-select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array[]::text[];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> '{}';
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a'];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a', null];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a', ''];
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b'];
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b','c'];
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a','b','c','d'];
@@ -284,8 +298,10 @@ select '"foo"'::jsonb #> array['z'];
 select '42'::jsonb #> array['f2'];
 select '42'::jsonb #> array['0'];
 
-select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array[]::text[];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> '{}';
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a'];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a', null];
+select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a', ''];
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b'];
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b','c'];
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a','b','c','d'];
