@@ -653,6 +653,45 @@ where json_type = 'array';
  t
 (1 row)
 
+-- corner cases
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> null::text;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> null::int;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 1;
+ERROR:  cannot extract array element from a non-array
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 'z';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json -> 1;
+  ?column?   
+-------------
+ {"b": "cc"}
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json -> 3;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json -> 'z';
+ERROR:  cannot extract field from a non-object
+select '"foo"'::json -> 1;
+ERROR:  cannot extract element from a scalar
+select '"foo"'::json -> 'z';
+ERROR:  cannot extract element from a scalar
 -- array length
 SELECT json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]');
  json_array_length 
@@ -831,53 +870,161 @@ select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>array['f2','1'];
  1
 (1 row)
 
--- same using array literals
-select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f4,f6}';
- ?column?  
------------
- "stringy"
-(1 row)
-
-select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f2}';
+-- corner cases for same
+select '{"a": {"b":{"c": "foo"}}}'::json #> array[]::text[];
  ?column? 
 ----------
- {"f3":1}
+ 
 (1 row)
 
-select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f2,0}';
- ?column? 
-----------
- "f3"
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a'];
+      ?column?      
+--------------------
+ {"b":{"c": "foo"}}
 (1 row)
 
-select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f2,1}';
- ?column? 
-----------
- 1
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a','b'];
+   ?column?   
+--------------
+ {"c": "foo"}
 (1 row)
 
-select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f4,f6}';
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a','b','c'];
  ?column? 
 ----------
- stringy
+ "foo"
 (1 row)
 
-select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2}';
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a','b','c','d'];
  ?column? 
 ----------
- {"f3":1}
+ 
 (1 row)
 
-select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2,0}';
+select '{"a": {"b":{"c": "foo"}}}'::json #> array['a','z','c'];
  ?column? 
 ----------
- f3
+ 
 (1 row)
 
-select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2,1}';
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json #> array['a','1','b'];
  ?column? 
 ----------
- 1
+ "cc"
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json #> array['a','z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json #> array['1','b'];
+ ?column? 
+----------
+ "cc"
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json #> array['z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '"foo"'::json #> array['z'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '42'::json #> array['f2'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '42'::json #> array['0'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array[]::text[];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a'];
+      ?column?      
+--------------------
+ {"b":{"c": "foo"}}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a','b'];
+   ?column?   
+--------------
+ {"c": "foo"}
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a','b','c'];
+ ?column? 
+----------
+ foo
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a','b','c','d'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": {"b":{"c": "foo"}}}'::json #>> array['a','z','c'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json #>> array['a','1','b'];
+ ?column? 
+----------
+ cc
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json #>> array['a','z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json #>> array['1','b'];
+ ?column? 
+----------
+ cc
+(1 row)
+
+select '[{"b": "c"}, {"b": "cc"}]'::json #>> array['z','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '"foo"'::json #>> array['z'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '42'::json #>> array['f2'];
+ ?column? 
+----------
+ 
+(1 row)
+
+select '42'::json #>> array['0'];
+ ?column? 
+----------
+ 
 (1 row)
 
 -- array_elements

@@ -726,6 +726,13 @@ get_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
 
+	/*
+	 * If the array is empty, return NULL; this is dubious but it's what 9.3
+	 * did.
+	 */
+	if (npath <= 0)
+		PG_RETURN_NULL();
+
 	tpath = palloc(npath * sizeof(char *));
 	ipath = palloc(npath * sizeof(int));
 
@@ -1100,11 +1107,11 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
+	Jsonb	   *res;
 	Datum	   *pathtext;
 	bool	   *pathnulls;
 	int			npath;
 	int			i;
-	Jsonb	   *res;
 	bool		have_object = false,
 				have_array = false;
 	JsonbValue *jbvp = NULL;
@@ -1119,6 +1126,13 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
+
+	/*
+	 * If the array is empty, return NULL; this is dubious but it's what 9.3
+	 * did.
+	 */
+	if (npath <= 0)
+		PG_RETURN_NULL();
 
 	if (JB_ROOT_IS_OBJECT(jb))
 		have_object = true;
