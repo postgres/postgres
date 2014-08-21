@@ -31,6 +31,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -597,6 +599,17 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       moves the data file(s) associated with the table to the new tablespace.
       Indexes on the table, if any, are not moved; but they can be moved
       separately with additional <literal>SET TABLESPACE</literal> commands.
+      All tables in the current database in a tablespace can be moved by using
+      the <literal>ALL IN TABLESPACE</literal> form, which will lock all tables
+      to be moved first and then move each one.  This form also supports
+      <literal>OWNED BY</literal>, which will only move tables owned by the
+      roles specified.  If the <literal>NOWAIT</literal> option is specified
+      then the command will fail if it is unable to acquire all of the locks
+      required immediately.  Note that system catalogs are not moved by this
+      command, use <command>ALTER DATABASE</command> or explicit
+      <command>ALTER TABLE</command> invocations instead if desired.  The
+      <literal>information_schema</literal> relations are not considered part
+      of the system catalogs and will be moved.
       See also
       <xref linkend="SQL-CREATETABLESPACE">.
      </para>
@@ -649,7 +662,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
-   All the actions except <literal>RENAME</literal> and <literal>SET SCHEMA</>
+   All the actions except <literal>RENAME</literal>,
+   <literal>SET TABLESPACE</literal> and <literal>SET SCHEMA</literal>
    can be combined into
    a list of multiple alterations to apply in parallel.  For example, it
    is possible to add several columns and/or alter the type of several
@@ -659,8 +673,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    You must own the table to use <command>ALTER TABLE</>.
-   To change the schema of a table, you must also have
-   <literal>CREATE</literal> privilege on the new schema.
+   To change the schema or tablespace of a table, you must also have
+   <literal>CREATE</literal> privilege on the new schema or tablespace.
    To add the table as a new child of a parent table, you must own the
    parent table as well.
    To alter the owner, you must also be a direct or indirect member of the new

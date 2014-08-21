@@ -93,9 +93,10 @@ CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
 ERROR:  permission denied for tablespace testspace
 \c -
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
-ALTER TABLESPACE testspace_renamed MOVE ALL TO pg_default;
+ALTER TABLE ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
+ALTER INDEX ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
 -- Should show notice that nothing was done
-ALTER TABLESPACE testspace_renamed MOVE ALL TO pg_default;
+ALTER TABLE ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
 NOTICE:  no matching relations in tablespace "testspace_renamed" found
 -- Should succeed
 DROP TABLESPACE testspace_renamed;

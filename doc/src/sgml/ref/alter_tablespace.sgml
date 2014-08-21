@@ -25,7 +25,6 @@ ALTER TABLESPACE <replaceable>name</replaceable> RENAME TO <replaceable>new_name
 ALTER TABLESPACE <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 ALTER TABLESPACE <replaceable>name</replaceable> SET ( <replaceable class="PARAMETER">tablespace_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
 ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PARAMETER">tablespace_option</replaceable> [, ... ] )
-ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES | MATERIALIZED VIEWS } [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ...] ] TO <replaceable>new_tablespace</replaceable> [ NOWAIT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -45,44 +44,6 @@ ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES |
    (Note that superusers have these privileges automatically.)
   </para>
 
-  <para>
-   <literal>ALTER TABLESPACE ... MOVE</literal> moves objects between
-   tablespaces.  <literal>ALL</literal> will move all tables, indexes and
-   materialized views; specifying <literal>TABLES</literal> will move only
-   tables (but not their indexes), <literal>INDEXES</literal> will only move
-   indexes (including those underneath materialized views, but not tables),
-   and <literal>MATERIALIZED VIEWS</literal> will only move the table relation
-   of the materialized view (but no indexes associated with it).  Users can
-   also specify a list of roles whose objects are to be moved, using
-   <literal>OWNED BY</literal>.
-  </para>
-
-  <para>
-   Users must have <literal>CREATE</literal> rights on the new tablespace and
-   be considered an owner (either directly or indirectly) of all objects to be
-   moved.  Note that the superuser is considered an owner of all objects, and
-   therefore an <literal>ALTER TABLESPACE ... MOVE ALL</literal> issued by the
-   superuser will move all objects in the current database that are in the
-   tablespace.  (Attempting to move objects without the required rights will
-   result in an error.  Non-superusers can use <literal>OWNED BY</literal> in
-   such cases, to restrict the set of objects moved to those with the required
-   rights.)
-  </para>
-
-  <para>
-   All objects to be moved will be locked immediately by the command.  If the
-   <literal>NOWAIT</literal> is specified, it will cause the command to fail
-   if it is unable to acquire the locks.
-  </para>
-
-  <para>
-   System catalogs will not be moved by this command.  To move a whole
-   database, use <command>ALTER DATABASE</command>, or call <command>ALTER
-   TABLE</command> on the individual system catalogs.  Note that relations in
-   <literal>information_schema</literal> will be moved, just as any other
-   normal database objects, if the user is the superuser or considered an
-   owner of the relations in <literal>information_schema</literal>.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -136,38 +97,6 @@ ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES |
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><replaceable class="parameter">role_name</replaceable></term>
-    <listitem>
-     <para>
-      Role whose objects are to be moved.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">new_tablespace</replaceable></term>
-    <listitem>
-     <para>
-      The name of the tablespace to move objects into.  The user must have
-      <literal>CREATE</literal> rights on the new tablespace to move objects into that
-      tablespace, unless the tablespace being moved into is the default
-      tablespace for the database connected to.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>NOWAIT</term>
-    <listitem>
-     <para>
-      The <literal>NOWAIT</literal> option causes the <command>ALTER TABLESPACE</command> command to fail immediately
-      if it is unable to acquire the necessary lock on all of the objects being
-      moved.
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
  </refsect1>
 
@@ -185,13 +114,6 @@ ALTER TABLESPACE index_space RENAME TO fast_raid;
    Change the owner of tablespace <literal>index_space</literal>:
 <programlisting>
 ALTER TABLESPACE index_space OWNER TO mary;
-</programlisting></para>
-
-  <para>
-   Move all of the objects from the default tablespace to
-   the <literal>fast_raid</literal> tablespace:
-<programlisting>
-ALTER TABLESPACE pg_default MOVE ALL TO fast_raid;
 </programlisting></para>
  </refsect1>
 
