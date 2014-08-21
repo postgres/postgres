@@ -106,6 +106,13 @@
       <entry>Clock-sweep access count</entry>
      </row>
 
+     <row>
+      <entry><structfield>pinning_backends</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Number of backends pinning this buffer</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

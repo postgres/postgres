@@ -1,4 +1,4 @@
-/* contrib/pg_buffercache/pg_buffercache--1.0.sql */
+/* contrib/pg_buffercache/pg_buffercache--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_buffercache" to load this file. \quit
@@ -13,7 +13,8 @@ LANGUAGE C;
 CREATE VIEW pg_buffercache AS
 	SELECT P.* FROM pg_buffercache_pages() AS P
 	(bufferid integer, relfilenode oid, reltablespace oid, reldatabase oid,
-	 relforknumber int2, relblocknumber int8, isdirty bool, usagecount int2);
+	 relforknumber int2, relblocknumber int8, isdirty bool, usagecount int2,
+	 pinning_backends int4);
 
 -- Don't want these to be available to public.
 REVOKE ALL ON FUNCTION pg_buffercache_pages() FROM PUBLIC;
