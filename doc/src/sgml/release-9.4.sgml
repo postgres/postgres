@@ -1224,7 +1224,10 @@
       <listitem>
        <para>
         Allow moving groups of objects from one tablespace to another
-        using <xref linkend="SQL-ALTERTABLESPACE"> ... <literal>MOVE</>
+        using <literal>ALL IN TABLESPACE ... SET TABLESPACE</> with
+        <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></link>
+        <link linkend="SQL-ALTERINDEX"><command>ALTER INDEX</></link> and
+        <link linkend="SQL-ALTERMATERIALIZEDVIEW"><command>ALTER MATERIALIZED VIEW</></link>
         (Stephen Frost)
        </para>
       </listitem>

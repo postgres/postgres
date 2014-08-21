@@ -29,6 +29,8 @@ ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</repla
     RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 

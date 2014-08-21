@@ -25,6 +25,8 @@ ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RENA
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
+ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -63,6 +65,17 @@ ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RESE
      <para>
       This form changes the index's tablespace to the specified tablespace and
       moves the data file(s) associated with the index to the new tablespace.
+      To change the tablespace of an index, you must own the index and have
+      <literal>CREATE</literal> privilege on the new tablespace.
+      All indexes in the current database in a tablespace can be moved by using
+      the <literal>ALL IN TABLESPACE</literal> form, which will lock all
+      indexes to be moved and then move each one.  This form also supports
+      <literal>OWNED BY</literal>, which will only move indexes owned by the
+      roles specified.  If the <literal>NOWAIT</literal> option is specified
+      then the command will fail if it is unable to acquire all of the locks
+      required immediately.  Note that system catalogs will not be moved by
+      this command, use <command>ALTER DATABASE</command> or explicit
+      <command>ALTER INDEX</command> invocations instead if desired.
       See also
       <xref linkend="SQL-CREATETABLESPACE">.
      </para>

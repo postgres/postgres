@@ -35,6 +35,8 @@ extern void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, L
 
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
+extern Oid	AlterTableMoveAll(AlterTableMoveAllStmt *stmt);
+
 extern Oid	AlterTableNamespace(AlterObjectSchemaStmt *stmt);
 
 extern void AlterTableNamespaceInternal(Relation rel, Oid oldNspOid,
