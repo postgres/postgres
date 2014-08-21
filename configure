@@ -13095,20 +13095,20 @@ fi
 
 if test "$HAVE_LONG_LONG_INT_64" = yes ; then
   if test $pgac_need_repl_snprintf = no; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking snprintf format for long long int" >&5
-$as_echo_n "checking snprintf format for long long int... " >&6; }
-if ${pgac_cv_snprintf_long_long_int_format+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking snprintf length modifier for long long int" >&5
+$as_echo_n "checking snprintf length modifier for long long int... " >&6; }
+if ${pgac_cv_snprintf_long_long_int_modifier+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  for pgac_format in '%lld' '%qd' '%I64d'; do
+  for pgac_modifier in 'll' 'q' 'I64'; do
 if test "$cross_compiling" = yes; then :
-  pgac_cv_snprintf_long_long_int_format=cross; break
+  pgac_cv_snprintf_long_long_int_modifier=cross; break
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
 typedef long long int ac_int64;
-#define INT64_FORMAT "$pgac_format"
+#define INT64_FORMAT "%${pgac_modifier}d"
 
 ac_int64 a = 20000001;
 ac_int64 b = 40000005;
@@ -13132,7 +13132,7 @@ main() {
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
-  pgac_cv_snprintf_long_long_int_format=$pgac_format; break
+  pgac_cv_snprintf_long_long_int_modifier=$pgac_modifier; break
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
@@ -13141,44 +13141,36 @@ fi
 done
 fi
 
-LONG_LONG_INT_FORMAT=''
+LONG_LONG_INT_MODIFIER=''
 
-case $pgac_cv_snprintf_long_long_int_format in
+case $pgac_cv_snprintf_long_long_int_modifier in
   cross) { $as_echo "$as_me:${as_lineno-$LINENO}: result: cannot test (not on host machine)" >&5
 $as_echo "cannot test (not on host machine)" >&6; };;
-  ?*)    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_snprintf_long_long_int_format" >&5
-$as_echo "$pgac_cv_snprintf_long_long_int_format" >&6; }
-         LONG_LONG_INT_FORMAT=$pgac_cv_snprintf_long_long_int_format;;
+  ?*)    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_snprintf_long_long_int_modifier" >&5
+$as_echo "$pgac_cv_snprintf_long_long_int_modifier" >&6; }
+         LONG_LONG_INT_MODIFIER=$pgac_cv_snprintf_long_long_int_modifier;;
   *)     { $as_echo "$as_me:${as_lineno-$LINENO}: result: none" >&5
 $as_echo "none" >&6; };;
 esac
-    if test "$LONG_LONG_INT_FORMAT" = ""; then
+    if test "$LONG_LONG_INT_MODIFIER" = ""; then
       # Force usage of our own snprintf, since system snprintf is broken
       pgac_need_repl_snprintf=yes
-      LONG_LONG_INT_FORMAT='%lld'
+      LONG_LONG_INT_MODIFIER='ll'
     fi
   else
     # Here if we previously decided we needed to use our own snprintf
-    LONG_LONG_INT_FORMAT='%lld'
+    LONG_LONG_INT_MODIFIER='ll'
   fi
-  LONG_LONG_UINT_FORMAT=`echo "$LONG_LONG_INT_FORMAT" | sed 's/d$/u/'`
-  INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
-  UINT64_FORMAT="\"$LONG_LONG_UINT_FORMAT\""
 else
   # Here if we are not using 'long long int' at all
-  INT64_FORMAT='"%ld"'
-  UINT64_FORMAT='"%lu"'
+  LONG_LONG_INT_MODIFIER='l'
 fi
 
-
-cat >>confdefs.h <<_ACEOF
-#define INT64_FORMAT $INT64_FORMAT
-_ACEOF
-
+INT64_MODIFIER="\"$LONG_LONG_INT_MODIFIER\""
 
 
 cat >>confdefs.h <<_ACEOF
-#define UINT64_FORMAT $UINT64_FORMAT
+#define INT64_MODIFIER $INT64_MODIFIER
 _ACEOF
 
 

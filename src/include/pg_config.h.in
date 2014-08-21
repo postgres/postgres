@@ -653,8 +653,8 @@
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #undef HAVE__VA_ARGS
 
-/* Define to the appropriate snprintf format for 64-bit ints. */
-#undef INT64_FORMAT
+/* Define to the appropriate snprintf length modifier for 64-bit ints. */
+#undef INT64_MODIFIER
 
 /* Define to 1 if `locale_t' requires <xlocale.h>. */
 #undef LOCALE_T_IN_XLOCALE
@@ -743,9 +743,6 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
-
-/* Define to the appropriate snprintf format for unsigned 64-bit ints. */
-#undef UINT64_FORMAT
 
 /* Define to 1 to build with assertion checks. (--enable-cassert) */
 #undef USE_ASSERT_CHECKING

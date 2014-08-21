@@ -288,6 +288,9 @@ typedef unsigned long long int uint64;
 #define UINT64CONST(x) ((uint64) x)
 #endif
 
+/* snprintf format strings to use for 64-bit integers */
+#define INT64_FORMAT "%" INT64_MODIFIER "d"
+#define UINT64_FORMAT "%" INT64_MODIFIER "u"
 
 /* Select timestamp representation (float8 or int64) */
 #ifdef USE_INTEGER_DATETIMES

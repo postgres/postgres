@@ -221,22 +221,22 @@ HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
 
 
-# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
+# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
 # ---------------------------------------
-# Determine which format snprintf uses for long long int.  We handle
-# %lld, %qd, %I64d.  The result is in shell variable
-# LONG_LONG_INT_FORMAT.
+# Determine which length modifier snprintf uses for long long int.  We
+# handle ll, q, and I64.  The result is in shell variable
+# LONG_LONG_INT_MODIFIER.
 #
 # MinGW uses '%I64d', though gcc throws an warning with -Wall,
 # while '%lld' doesn't generate a warning, but doesn't work.
 #
-AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
-[AC_MSG_CHECKING([snprintf format for long long int])
-AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
-[for pgac_format in '%lld' '%qd' '%I64d'; do
+AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER],
+[AC_MSG_CHECKING([snprintf length modifier for long long int])
+AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_modifier,
+[for pgac_modifier in 'll' 'q' 'I64'; do
 AC_TRY_RUN([#include <stdio.h>
 typedef long long int ac_int64;
-#define INT64_FORMAT "$pgac_format"
+#define INT64_FORMAT "%${pgac_modifier}d"
 
 ac_int64 a = 20000001;
 ac_int64 b = 40000005;
@@ -258,19 +258,19 @@ int does_int64_snprintf_work()
 main() {
   exit(! does_int64_snprintf_work());
 }],
-[pgac_cv_snprintf_long_long_int_format=$pgac_format; break],
+[pgac_cv_snprintf_long_long_int_modifier=$pgac_modifier; break],
 [],
-[pgac_cv_snprintf_long_long_int_format=cross; break])
+[pgac_cv_snprintf_long_long_int_modifier=cross; break])
 done])dnl AC_CACHE_VAL
 
-LONG_LONG_INT_FORMAT=''
+LONG_LONG_INT_MODIFIER=''
 
-case $pgac_cv_snprintf_long_long_int_format in
+case $pgac_cv_snprintf_long_long_int_modifier in
   cross) AC_MSG_RESULT([cannot test (not on host machine)]);;
-  ?*)    AC_MSG_RESULT([$pgac_cv_snprintf_long_long_int_format])
-         LONG_LONG_INT_FORMAT=$pgac_cv_snprintf_long_long_int_format;;
+  ?*)    AC_MSG_RESULT([$pgac_cv_snprintf_long_long_int_modifier])
+         LONG_LONG_INT_MODIFIER=$pgac_cv_snprintf_long_long_int_modifier;;
   *)     AC_MSG_RESULT(none);;
-esac])# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
+esac])# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
 
 
 # PGAC_FUNC_SNPRINTF_ARG_CONTROL

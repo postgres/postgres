@@ -1642,30 +1642,25 @@ fi
 
 if test "$HAVE_LONG_LONG_INT_64" = yes ; then
   if test $pgac_need_repl_snprintf = no; then
-    PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
-    if test "$LONG_LONG_INT_FORMAT" = ""; then
+    PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
+    if test "$LONG_LONG_INT_MODIFIER" = ""; then
       # Force usage of our own snprintf, since system snprintf is broken
       pgac_need_repl_snprintf=yes
-      LONG_LONG_INT_FORMAT='%lld'
+      LONG_LONG_INT_MODIFIER='ll'
     fi
   else
     # Here if we previously decided we needed to use our own snprintf
-    LONG_LONG_INT_FORMAT='%lld'
+    LONG_LONG_INT_MODIFIER='ll'
   fi
-  LONG_LONG_UINT_FORMAT=`echo "$LONG_LONG_INT_FORMAT" | sed 's/d$/u/'`
-  INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
-  UINT64_FORMAT="\"$LONG_LONG_UINT_FORMAT\""
 else
   # Here if we are not using 'long long int' at all
-  INT64_FORMAT='"%ld"'
-  UINT64_FORMAT='"%lu"'
+  LONG_LONG_INT_MODIFIER='l'
 fi
 
-AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT,
-                   [Define to the appropriate snprintf format for 64-bit ints.])
+INT64_MODIFIER="\"$LONG_LONG_INT_MODIFIER\""
 
-AC_DEFINE_UNQUOTED(UINT64_FORMAT, $UINT64_FORMAT,
-                   [Define to the appropriate snprintf format for unsigned 64-bit ints.])
+AC_DEFINE_UNQUOTED(INT64_MODIFIER, $INT64_MODIFIER,
+                   [Define to the appropriate snprintf length modifier for 64-bit ints.])
 
 # Also force use of our snprintf if the system's doesn't support the %z flag.
 if test "$pgac_need_repl_snprintf" = no; then
