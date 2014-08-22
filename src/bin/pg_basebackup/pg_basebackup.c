@@ -1260,9 +1260,9 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					/*
 					 * Symbolic link
 					 *
-					 * It's most likely a link in pg_tblspc directory, to
-					 * the location of a tablespace. Apply any tablespace
-					 * mapping given on the command line (--tablespace).
+					 * It's most likely a link in pg_tblspc directory, to the
+					 * location of a tablespace. Apply any tablespace mapping
+					 * given on the command line (--tablespace-mapping).
 					 * (We blindly apply the mapping without checking that
 					 * the link really is inside pg_tblspc. We don't expect
 					 * there to be other symlinks in a data directory, but
