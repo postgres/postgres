@@ -311,9 +311,17 @@ INSERT INTO test_jsonb VALUES
 ('array','["zero", "one","two",null,"four","five", [1,2,3],{"f1":9}]'),
 ('object','{"field1":"val1","field2":"val2","field3":null, "field4": 4, "field5": [1,2,3], "field6": {"f1":9}}');
 SELECT test_json -> 'x' FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_object_field (jsonb -> text) on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json -> 'x' FROM test_jsonb WHERE json_type = 'array';
-ERROR:  cannot call jsonb_object_field (jsonb -> text) on an array
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json -> 'x' FROM test_jsonb WHERE json_type = 'object';
  ?column? 
 ----------
@@ -327,9 +335,17 @@ SELECT test_json -> 'field2' FROM test_jsonb WHERE json_type = 'object';
 (1 row)
 
 SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'array';
-ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on an array
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'object';
  ?column? 
 ----------
@@ -337,7 +353,11 @@ SELECT test_json ->> 'field2' FROM test_jsonb WHERE json_type = 'object';
 (1 row)
 
 SELECT test_json -> 2 FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_array_element (jsonb -> int) on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json -> 2 FROM test_jsonb WHERE json_type = 'array';
  ?column? 
 ----------
@@ -351,7 +371,11 @@ SELECT test_json -> 9 FROM test_jsonb WHERE json_type = 'array';
 (1 row)
 
 SELECT test_json -> 2 FROM test_jsonb WHERE json_type = 'object';
-ERROR:  cannot call jsonb_array_element (jsonb -> int) on an object
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json ->> 6 FROM test_jsonb WHERE json_type = 'array';
  ?column?  
 -----------
@@ -383,7 +407,11 @@ SELECT test_json ->> 'field6' FROM test_jsonb WHERE json_type = 'object';
 (1 row)
 
 SELECT test_json ->> 2 FROM test_jsonb WHERE json_type = 'scalar';
-ERROR:  cannot call jsonb_array_element_text on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT test_json ->> 2 FROM test_jsonb WHERE json_type = 'array';
  ?column? 
 ----------
@@ -391,7 +419,11 @@ SELECT test_json ->> 2 FROM test_jsonb WHERE json_type = 'array';
 (1 row)
 
 SELECT test_json ->> 2 FROM test_jsonb WHERE json_type = 'object';
-ERROR:  cannot call jsonb_array_element_text on an object
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT jsonb_object_keys(test_json) FROM test_jsonb WHERE json_type = 'scalar';
 ERROR:  cannot call jsonb_object_keys on a scalar
 SELECT jsonb_object_keys(test_json) FROM test_jsonb WHERE json_type = 'array';
@@ -446,7 +478,11 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> null::int;
 (1 row)
 
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 1;
-ERROR:  cannot call jsonb_array_element (jsonb -> int) on an object
+ ?column? 
+----------
+ 
+(1 row)
+
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb -> 'z';
  ?column? 
 ----------
@@ -472,11 +508,29 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 3;
 (1 row)
 
 select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 'z';
-ERROR:  cannot call jsonb_object_field (jsonb -> text) on an array
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": "c", "b": null}'::jsonb -> 'b';
+ ?column? 
+----------
+ null
+(1 row)
+
 select '"foo"'::jsonb -> 1;
-ERROR:  cannot call jsonb_array_element (jsonb -> int) on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '"foo"'::jsonb -> 'z';
-ERROR:  cannot call jsonb_object_field (jsonb -> text) on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::text;
  ?column? 
 ----------
@@ -490,7 +544,11 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::int;
 (1 row)
 
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> 1;
-ERROR:  cannot call jsonb_array_element_text on an object
+ ?column? 
+----------
+ 
+(1 row)
+
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> 'z';
  ?column? 
 ----------
@@ -516,11 +574,29 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 3;
 (1 row)
 
 select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 'z';
-ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on an array
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": "c", "b": null}'::jsonb ->> 'b';
+ ?column? 
+----------
+ 
+(1 row)
+
 select '"foo"'::jsonb ->> 1;
-ERROR:  cannot call jsonb_array_element_text on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '"foo"'::jsonb ->> 'z';
-ERROR:  cannot call jsonb_object_field_text (jsonb ->> text) on a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 -- equality and inequality
 SELECT '{"x":"y"}'::jsonb = '{"x":"y"}'::jsonb;
  ?column? 
@@ -1269,9 +1345,33 @@ SELECT '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::jsonb#>>array['f2','1'];
 
 -- corner cases for same
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> '{}';
+          ?column?          
+----------------------------
+ {"a": {"b": {"c": "foo"}}}
+(1 row)
+
+select '[1,2,3]'::jsonb #> '{}';
+ ?column?  
+-----------
+ [1, 2, 3]
+(1 row)
+
+select '"foo"'::jsonb #> '{}';
  ?column? 
 ----------
- 
+ "foo"
+(1 row)
+
+select '42'::jsonb #> '{}';
+ ?column? 
+----------
+ 42
+(1 row)
+
+select 'null'::jsonb #> '{}';
+ ?column? 
+----------
+ null
 (1 row)
 
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a'];
@@ -1281,7 +1381,11 @@ select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a'];
 (1 row)
 
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a', null];
-ERROR:  cannot call jsonb_extract_path with null path elements
+ ?column? 
+----------
+ 
+(1 row)
+
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #> array['a', ''];
  ?column? 
 ----------
@@ -1336,13 +1440,55 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb #> array['z','b'];
  
 (1 row)
 
+select '[{"b": "c"}, {"b": null}]'::jsonb #> array['1','b'];
+ ?column? 
+----------
+ null
+(1 row)
+
 select '"foo"'::jsonb #> array['z'];
-ERROR:  cannot extract path from a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '42'::jsonb #> array['f2'];
-ERROR:  cannot extract path from a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '42'::jsonb #> array['0'];
-ERROR:  cannot extract path from a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> '{}';
+          ?column?          
+----------------------------
+ {"a": {"b": {"c": "foo"}}}
+(1 row)
+
+select '[1,2,3]'::jsonb #>> '{}';
+ ?column?  
+-----------
+ [1, 2, 3]
+(1 row)
+
+select '"foo"'::jsonb #>> '{}';
+ ?column? 
+----------
+ foo
+(1 row)
+
+select '42'::jsonb #>> '{}';
+ ?column? 
+----------
+ 42
+(1 row)
+
+select 'null'::jsonb #>> '{}';
  ?column? 
 ----------
  
@@ -1355,7 +1501,11 @@ select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a'];
 (1 row)
 
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a', null];
-ERROR:  cannot call jsonb_extract_path_text with null path elements
+ ?column? 
+----------
+ 
+(1 row)
+
 select '{"a": {"b":{"c": "foo"}}}'::jsonb #>> array['a', ''];
  ?column? 
 ----------
@@ -1410,12 +1560,30 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb #>> array['z','b'];
  
 (1 row)
 
+select '[{"b": "c"}, {"b": null}]'::jsonb #>> array['1','b'];
+ ?column? 
+----------
+ 
+(1 row)
+
 select '"foo"'::jsonb #>> array['z'];
-ERROR:  cannot extract path from a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '42'::jsonb #>> array['f2'];
-ERROR:  cannot extract path from a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 select '42'::jsonb #>> array['0'];
-ERROR:  cannot extract path from a scalar
+ ?column? 
+----------
+ 
+(1 row)
+
 -- array_elements
 SELECT jsonb_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]');
     jsonb_array_elements    
@@ -2105,7 +2273,11 @@ SELECT '{"n":null,"a":1,"b":[1,2],"c":{"1":2},"d":{"1":[2,3]}}'::jsonb -> 'e';
 (1 row)
 
 SELECT '{"n":null,"a":1,"b":[1,2],"c":{"1":2},"d":{"1":[2,3]}}'::jsonb -> 0; --expecting error
-ERROR:  cannot call jsonb_array_element (jsonb -> int) on an object
+ ?column? 
+----------
+ 
+(1 row)
+
 SELECT '["a","b","c",[1,2],null]'::jsonb -> 0;
  ?column? 
 ----------

@@ -10152,10 +10152,14 @@ table2-mapping
   <note>
    <para>
     There are parallel variants of these operators for both the
-    <type>json</type> and <type>jsonb</type> types.  The operators
+    <type>json</type> and <type>jsonb</type> types.
+    The field/element/path extraction operators
     return the same type as their left-hand input (either <type>json</type>
     or <type>jsonb</type>), except for those specified as
     returning <type>text</>, which coerce the value to text.
+    The field/element/path extraction operators return NULL, rather than
+    failing, if the JSON input does not have the right structure to match
+    the request; for example if no such element exists.
    </para>
   </note>
   <para>
