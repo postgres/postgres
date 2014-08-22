@@ -63,6 +63,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     SET WITHOUT CLUSTER
     SET WITH OIDS
     SET WITHOUT OIDS
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+    SET {LOGGED | UNLOGGED}
     SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
     INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
@@ -70,7 +72,6 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     OF <replaceable class="PARAMETER">type_name</replaceable>
     NOT OF
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
     REPLICA IDENTITY {DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING}
 
 <phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
@@ -479,6 +480,42 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
+    <term><literal>SET TABLESPACE</literal></term>
+    <listitem>
+     <para>
+      This form changes the table's tablespace to the specified tablespace and
+      moves the data file(s) associated with the table to the new tablespace.
+      Indexes on the table, if any, are not moved; but they can be moved
+      separately with additional <literal>SET TABLESPACE</literal> commands.
+      All tables in the current database in a tablespace can be moved by using
+      the <literal>ALL IN TABLESPACE</literal> form, which will lock all tables
+      to be moved first and then move each one.  This form also supports
+      <literal>OWNED BY</literal>, which will only move tables owned by the
+      roles specified.  If the <literal>NOWAIT</literal> option is specified
+      then the command will fail if it is unable to acquire all of the locks
+      required immediately.  Note that system catalogs are not moved by this
+      command, use <command>ALTER DATABASE</command> or explicit
+      <command>ALTER TABLE</command> invocations instead if desired.  The
+      <literal>information_schema</literal> relations are not considered part
+      of the system catalogs and will be moved.
+      See also
+      <xref linkend="SQL-CREATETABLESPACE">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET {LOGGED | UNLOGGED}</literal></term>
+    <listitem>
+     <para>
+      This form changes the table from unlogged to logged or vice-versa
+      (see <xref linkend="SQL-CREATETABLE-UNLOGGED">).  It cannot be applied
+      to a temporary table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -587,31 +624,6 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      <para>
       This form changes the owner of the table, sequence, view, materialized view,
       or foreign table to the specified user.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>SET TABLESPACE</literal></term>
-    <listitem>
-     <para>
-      This form changes the table's tablespace to the specified tablespace and
-      moves the data file(s) associated with the table to the new tablespace.
-      Indexes on the table, if any, are not moved; but they can be moved
-      separately with additional <literal>SET TABLESPACE</literal> commands.
-      All tables in the current database in a tablespace can be moved by using
-      the <literal>ALL IN TABLESPACE</literal> form, which will lock all tables
-      to be moved first and then move each one.  This form also supports
-      <literal>OWNED BY</literal>, which will only move tables owned by the
-      roles specified.  If the <literal>NOWAIT</literal> option is specified
-      then the command will fail if it is unable to acquire all of the locks
-      required immediately.  Note that system catalogs are not moved by this
-      command, use <command>ALTER DATABASE</command> or explicit
-      <command>ALTER TABLE</command> invocations instead if desired.  The
-      <literal>information_schema</literal> relations are not considered part
-      of the system catalogs and will be moved.
-      See also
-      <xref linkend="SQL-CREATETABLESPACE">.
      </para>
     </listitem>
    </varlistentry>

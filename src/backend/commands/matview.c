@@ -147,6 +147,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	DestReceiver *dest;
 	bool		concurrent;
 	LOCKMODE	lockmode;
+	char		relpersistence;
 
 	/* Determine strength of lock needed. */
 	concurrent = stmt->concurrent;
@@ -233,9 +234,15 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	/* Concurrent refresh builds new data in temp tablespace, and does diff. */
 	if (concurrent)
+	{
 		tableSpace = GetDefaultTablespace(RELPERSISTENCE_TEMP);
+		relpersistence = RELPERSISTENCE_TEMP;
+	}
 	else
+	{
 		tableSpace = matviewRel->rd_rel->reltablespace;
+		relpersistence = matviewRel->rd_rel->relpersistence;
+	}
 
 	owner = matviewRel->rd_rel->relowner;
 
@@ -244,7 +251,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * it against access by any other process until commit (by which time it
 	 * will be gone).
 	 */
-	OIDNewHeap = make_new_heap(matviewOid, tableSpace, concurrent,
+	OIDNewHeap = make_new_heap(matviewOid, tableSpace, relpersistence,
 							   ExclusiveLock);
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
 	dest = CreateTransientRelDestReceiver(OIDNewHeap);

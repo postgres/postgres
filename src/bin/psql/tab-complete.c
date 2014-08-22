@@ -1641,12 +1641,12 @@ psql_completion(const char *text, int start, int end)
 		completion_info_charp = prev3_wd;
 		COMPLETE_WITH_QUERY(Query_for_index_of_table);
 	}
-	/* If we have TABLE <sth> SET, provide WITHOUT,TABLESPACE and SCHEMA */
+	/* If we have TABLE <sth> SET, provide list of attributes and '(' */
 	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev_wd, "SET") == 0)
 	{
 		static const char *const list_TABLESET[] =
-		{"(", "WITHOUT", "TABLESPACE", "SCHEMA", NULL};
+		{"(", "LOGGED", "SCHEMA", "TABLESPACE", "UNLOGGED", "WITH", "WITHOUT", NULL};
 
 		COMPLETE_WITH_LIST(list_TABLESET);
 	}

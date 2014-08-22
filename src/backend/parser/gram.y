@@ -577,7 +577,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	LABEL LANGUAGE LARGE_P LAST_P LATERAL_P
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
-	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P
+	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P LOGGED
 
 	MAPPING MATCH MATERIALIZED MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
@@ -2112,6 +2112,20 @@ alter_table_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropCluster;
 					n->name = NULL;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> SET LOGGED  */
+			| SET LOGGED
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetLogged;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> SET UNLOGGED  */
+			| SET UNLOGGED
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetUnLogged;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ENABLE TRIGGER <trig> */
@@ -12963,6 +12977,7 @@ unreserved_keyword:
 			| LOCAL
 			| LOCATION
 			| LOCK_P
+			| LOGGED
 			| MAPPING
 			| MATCH
 			| MATERIALIZED
