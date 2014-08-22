@@ -85,7 +85,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 
 		/*
 		 * To smoothly support upgrades from version 1.0 of this extension
-		 * transparently handle the (non-)existance of the pinning_backends
+		 * transparently handle the (non-)existence of the pinning_backends
 		 * column. We unfortunately have to get the result type for that... -
 		 * we can't use the result type determined by the function definition
 		 * without potentially crashing when somebody uses the old (or even
