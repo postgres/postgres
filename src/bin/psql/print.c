@@ -1296,20 +1296,20 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			swidth = 7;
 
 		if ((opt_border < 2) &&
-			((hmultiline && 
+			((hmultiline &&
 			(format == &pg_asciiformat_old)) ||
-			(dmultiline && 
+			(dmultiline &&
 			(format != &pg_asciiformat_old))))
 			iwidth++; /* for newline indicators */
 
 		min_width = hwidth + iwidth + swidth + 3;
 
-		/* 
+		/*
 		 * Record header width
 		 */
 		if (!opt_tuples_only)
 		{
-			/* 
+			/*
 			 * Record number
 			 */
 			unsigned int rwidth = 1 + log10(cont->nrows);
@@ -1337,7 +1337,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if ((width < dwidth) || (dheight > 1))
 		{
 			dmultiline = true;
-			if ((opt_border == 0) && 
+			if ((opt_border == 0) &&
 				(format != &pg_asciiformat_old))
 				width--; /* for wrap indicators */
 		}
@@ -1368,7 +1368,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		{
 			unsigned int lhwidth = hwidth;
 			if ((opt_border < 2) &&
-				(hmultiline) && 
+				(hmultiline) &&
 				(format == &pg_asciiformat_old))
 				lhwidth++; /* for newline indicators */
 
@@ -1427,7 +1427,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				if (swidth > 0)
 					fprintf(fout, "%*s", swidth, " ");
 
-				/* 
+				/*
 				 * New line indicator or separator's space
 				 */
 				if (hlineptr[hline + 1].ptr)
@@ -1455,7 +1455,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 					(format == &pg_asciiformat_old))
 					swidth++;
 
-				if ((opt_border == 0) && 
+				if ((opt_border == 0) &&
 					(format != &pg_asciiformat_old) &&
 					(hmultiline))
 					swidth++;
