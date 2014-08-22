@@ -415,9 +415,6 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc -&gt; 'tags' ? 'qui'
     the <literal>"tags"</> key is common, defining an index like this
     may be worthwhile:
 <programlisting>
--- Note that the "jsonb -&gt; text" operator can only be called on a JSON
--- object, so as a consequence of creating this index the root of each
--- "jdoc" value must be an object.  This is enforced during insertion.
 CREATE INDEX idxgintags ON api USING gin ((jdoc -&gt; 'tags'));
 </programlisting>
     Now, the <literal>WHERE</> clause <literal>jdoc -&gt; 'tags' ? 'qui'</>

@@ -138,6 +138,39 @@
 
     <listitem>
      <para>
+      The <link linkend="functions-json-op-table"><type>json</type>
+      <literal>#&gt;</> <type>text[]</> path extraction operator</link> now
+      returns its lefthand input, not NULL, if the array is empty (Tom Lane)
+     </para>
+
+     <para>
+      This is consistent with the notion that this represents zero
+      applications of the simple field/element extraction
+      operator <literal>-&gt;</>.  Similarly, <type>json</type>
+      <literal>#&gt;&gt;</> <type>text[]</> with an empty array merely
+      coerces its lefthand input to text.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Corner cases in
+      the <link linkend="functions-json-op-table"><type>JSON</type>
+      field/element/path extraction operators</link> now return NULL rather
+      than raising an error (Tom Lane)
+     </para>
+
+     <para>
+      For example, applying field extraction to a JSON array now yields NULL
+      not an error.  This is more consistent (since some comparable cases such
+      as no-such-field already returned NULL), and it makes it safe to create
+      expression indexes that use these operators, since they will now not
+      throw errors for any valid JSON input.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Cause consecutive whitespace in <link
       linkend="functions-formatting-table"><function>to_timestamp()</></link>
       and <function>to_date()</> format strings to consume a corresponding

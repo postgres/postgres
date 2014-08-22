@@ -40,21 +40,20 @@ static void okeys_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* semantic action functions for json_get* functions */
 static void get_object_start(void *state);
+static void get_object_end(void *state);
 static void get_object_field_start(void *state, char *fname, bool isnull);
 static void get_object_field_end(void *state, char *fname, bool isnull);
 static void get_array_start(void *state);
+static void get_array_end(void *state);
 static void get_array_element_start(void *state, bool isnull);
 static void get_array_element_end(void *state, bool isnull);
 static void get_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* common worker function for json getter functions */
-static Datum get_path_all(FunctionCallInfo fcinfo, const char *funcname,
-			 bool as_text);
-static text *get_worker(text *json, char *field, int elem_index,
-		   char **tpath, int *ipath, int npath,
+static Datum get_path_all(FunctionCallInfo fcinfo, bool as_text);
+static text *get_worker(text *json, char **tpath, int *ipath, int npath,
 		   bool normalize_results);
-static Datum get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname,
-				   bool as_text);
+static Datum get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text);
 
 /* semantic action functions for json_array_length */
 static void alen_object_start(void *state);
@@ -116,14 +115,6 @@ static JsonbValue *findJsonbValueFromContainerLen(JsonbContainer *container,
 							   char *key,
 							   uint32 keylen);
 
-/* search type classification for json_get* functions */
-typedef enum
-{
-	JSON_SEARCH_OBJECT = 1,
-	JSON_SEARCH_ARRAY,
-	JSON_SEARCH_PATH
-} JsonSearch;
-
 /* state for json_object_keys */
 typedef struct OkeysState
 {
@@ -138,21 +129,15 @@ typedef struct OkeysState
 typedef struct GetState
 {
 	JsonLexContext *lex;
-	JsonSearch	search_type;
-	int			search_index;
-	int			array_index;
-	char	   *search_term;
-	char	   *result_start;
 	text	   *tresult;
-	bool		result_is_null;
+	char	   *result_start;
 	bool		normalize_results;
 	bool		next_scalar;
-	char	  **path;
-	int			npath;
-	char	  **current_path;
-	bool	   *pathok;
-	int		   *array_level_index;
-	int		   *path_level_index;
+	int			npath;			/* length of each path-related array */
+	char	  **path_names;		/* field name(s) being sought */
+	int		   *path_indexes;	/* array index(es) being sought */
+	bool	   *pathok;			/* is path matched to current depth? */
+	int		   *array_cur_index;	/* current element index at each path level */
 } GetState;
 
 /* state for json_array_length */
@@ -455,11 +440,11 @@ Datum
 json_object_field(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
-	text	   *fname = PG_GETARG_TEXT_P(1);
+	text	   *fname = PG_GETARG_TEXT_PP(1);
 	char	   *fnamestr = text_to_cstring(fname);
 	text	   *result;
 
-	result = get_worker(json, fnamestr, -1, NULL, NULL, -1, false);
+	result = get_worker(json, &fnamestr, NULL, 1, false);
 
 	if (result != NULL)
 		PG_RETURN_TEXT_P(result);
@@ -474,21 +459,12 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	JsonbValue *v;
 
-	if (JB_ROOT_IS_SCALAR(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on a scalar",
-						"jsonb_object_field (jsonb -> text)")));
-	else if (JB_ROOT_IS_ARRAY(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on an array",
-						"jsonb_object_field (jsonb -> text)")));
-
-	Assert(JB_ROOT_IS_OBJECT(jb));
+	if (!JB_ROOT_IS_OBJECT(jb))
+		PG_RETURN_NULL();
 
 	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
-								   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+									   VARDATA_ANY(key),
+									   VARSIZE_ANY_EXHDR(key));
 
 	if (v != NULL)
 		PG_RETURN_JSONB(JsonbValueToJsonb(v));
@@ -500,11 +476,11 @@ Datum
 json_object_field_text(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
-	text	   *fname = PG_GETARG_TEXT_P(1);
+	text	   *fname = PG_GETARG_TEXT_PP(1);
 	char	   *fnamestr = text_to_cstring(fname);
 	text	   *result;
 
-	result = get_worker(json, fnamestr, -1, NULL, NULL, -1, true);
+	result = get_worker(json, &fnamestr, NULL, 1, true);
 
 	if (result != NULL)
 		PG_RETURN_TEXT_P(result);
@@ -519,21 +495,12 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	JsonbValue *v;
 
-	if (JB_ROOT_IS_SCALAR(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on a scalar",
-						"jsonb_object_field_text (jsonb ->> text)")));
-	else if (JB_ROOT_IS_ARRAY(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on an array",
-						"jsonb_object_field_text (jsonb ->> text)")));
-
-	Assert(JB_ROOT_IS_OBJECT(jb));
+	if (!JB_ROOT_IS_OBJECT(jb))
+		PG_RETURN_NULL();
 
 	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
-								   VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+									   VARDATA_ANY(key),
+									   VARSIZE_ANY_EXHDR(key));
 
 	if (v != NULL)
 	{
@@ -579,7 +546,7 @@ json_array_element(PG_FUNCTION_ARGS)
 	int			element = PG_GETARG_INT32(1);
 	text	   *result;
 
-	result = get_worker(json, NULL, element, NULL, NULL, -1, false);
+	result = get_worker(json, NULL, &element, 1, false);
 
 	if (result != NULL)
 		PG_RETURN_TEXT_P(result);
@@ -594,18 +561,8 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 	int			element = PG_GETARG_INT32(1);
 	JsonbValue *v;
 
-	if (JB_ROOT_IS_SCALAR(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on a scalar",
-						"jsonb_array_element (jsonb -> int)")));
-	else if (JB_ROOT_IS_OBJECT(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on an object",
-						"jsonb_array_element (jsonb -> int)")));
-
-	Assert(JB_ROOT_IS_ARRAY(jb));
+	if (!JB_ROOT_IS_ARRAY(jb))
+		PG_RETURN_NULL();
 
 	v = getIthJsonbValueFromContainer(&jb->root, element);
 	if (v != NULL)
@@ -621,7 +578,7 @@ json_array_element_text(PG_FUNCTION_ARGS)
 	int			element = PG_GETARG_INT32(1);
 	text	   *result;
 
-	result = get_worker(json, NULL, element, NULL, NULL, -1, true);
+	result = get_worker(json, NULL, &element, 1, true);
 
 	if (result != NULL)
 		PG_RETURN_TEXT_P(result);
@@ -636,18 +593,8 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 	int			element = PG_GETARG_INT32(1);
 	JsonbValue *v;
 
-	if (JB_ROOT_IS_SCALAR(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on a scalar",
-						"jsonb_array_element_text")));
-	else if (JB_ROOT_IS_OBJECT(jb))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s on an object",
-						"jsonb_array_element_text")));
-
-	Assert(JB_ROOT_IS_ARRAY(jb));
+	if (!JB_ROOT_IS_ARRAY(jb))
+		PG_RETURN_NULL();
 
 	v = getIthJsonbValueFromContainer(&jb->root, element);
 	if (v != NULL)
@@ -690,20 +637,20 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 Datum
 json_extract_path(PG_FUNCTION_ARGS)
 {
-	return get_path_all(fcinfo, "json_extract_path", false);
+	return get_path_all(fcinfo, false);
 }
 
 Datum
 json_extract_path_text(PG_FUNCTION_ARGS)
 {
-	return get_path_all(fcinfo, "json_extract_path_text", true);
+	return get_path_all(fcinfo, true);
 }
 
 /*
  * common routine for extract_path functions
  */
 static Datum
-get_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
+get_path_all(FunctionCallInfo fcinfo, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
@@ -714,55 +661,54 @@ get_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	char	  **tpath;
 	int		   *ipath;
 	int			i;
-	long		ind;
-	char	   *endptr;
 
+	/*
+	 * If the array contains any null elements, return NULL, on the grounds
+	 * that you'd have gotten NULL if any RHS value were NULL in a nested
+	 * series of applications of the -> operator.  (Note: because we also
+	 * return NULL for error cases such as no-such-field, this is true
+	 * regardless of the contents of the rest of the array.)
+	 */
 	if (array_contains_nulls(path))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s with null path elements",
-						funcname)));
+		PG_RETURN_NULL();
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
-
-	/*
-	 * If the array is empty, return NULL; this is dubious but it's what 9.3
-	 * did.
-	 */
-	if (npath <= 0)
-		PG_RETURN_NULL();
 
 	tpath = palloc(npath * sizeof(char *));
 	ipath = palloc(npath * sizeof(int));
 
 	for (i = 0; i < npath; i++)
 	{
+		Assert(!pathnulls[i]);
 		tpath[i] = TextDatumGetCString(pathtext[i]);
-		if (*tpath[i] == '\0')
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call %s with empty path elements",
-							funcname)));
 
 		/*
 		 * we have no idea at this stage what structure the document is so
 		 * just convert anything in the path that we can to an integer and set
 		 * all the other integers to -1 which will never match.
 		 */
-		ind = strtol(tpath[i], &endptr, 10);
-		if (*endptr == '\0' && ind <= INT_MAX && ind >= 0)
-			ipath[i] = (int) ind;
+		if (*tpath[i] != '\0')
+		{
+			long		ind;
+			char	   *endptr;
+
+			errno = 0;
+			ind = strtol(tpath[i], &endptr, 10);
+			if (*endptr == '\0' && errno == 0 && ind <= INT_MAX && ind >= 0)
+				ipath[i] = (int) ind;
+			else
+				ipath[i] = -1;
+		}
 		else
 			ipath[i] = -1;
 	}
 
-	result = get_worker(json, NULL, -1, tpath, ipath, npath, as_text);
+	result = get_worker(json, tpath, ipath, npath, as_text);
 
 	if (result != NULL)
 		PG_RETURN_TEXT_P(result);
 	else
-		/* null is NULL, regardless */
 		PG_RETURN_NULL();
 }
 
@@ -770,55 +716,42 @@ get_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
  * get_worker
  *
  * common worker for all the json getter functions
+ *
+ * json: JSON object (in text form)
+ * tpath[]: field name(s) to extract
+ * ipath[]: array index(es) (zero-based) to extract
+ * npath: length of tpath[] and/or ipath[]
+ * normalize_results: true to de-escape string and null scalars
+ *
+ * tpath can be NULL, or any one tpath[] entry can be NULL, if an object
+ * field is not to be matched at that nesting level.  Similarly, ipath can
+ * be NULL, or any one ipath[] entry can be -1, if an array element is not
+ * to be matched at that nesting level.
  */
 static text *
 get_worker(text *json,
-		   char *field,
-		   int elem_index,
 		   char **tpath,
 		   int *ipath,
 		   int npath,
 		   bool normalize_results)
 {
-	GetState   *state;
 	JsonLexContext *lex = makeJsonLexContext(json, true);
-	JsonSemAction *sem;
+	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
+	GetState   *state = palloc0(sizeof(GetState));
 
-	/* only allowed to use one of these */
-	Assert(elem_index < 0 || (tpath == NULL && ipath == NULL && field == NULL));
-	Assert(tpath == NULL || field == NULL);
-
-	state = palloc0(sizeof(GetState));
-	sem = palloc0(sizeof(JsonSemAction));
+	Assert(npath >= 0);
 
 	state->lex = lex;
 	/* is it "_as_text" variant? */
 	state->normalize_results = normalize_results;
-	if (field != NULL)
-	{
-		/* single text argument */
-		state->search_type = JSON_SEARCH_OBJECT;
-		state->search_term = field;
-	}
-	else if (tpath != NULL)
-	{
-		/* path array argument */
-		state->search_type = JSON_SEARCH_PATH;
-		state->path = tpath;
-		state->npath = npath;
-		state->current_path = palloc(sizeof(char *) * npath);
-		state->pathok = palloc0(sizeof(bool) * npath);
+	state->npath = npath;
+	state->path_names = tpath;
+	state->path_indexes = ipath;
+	state->pathok = palloc0(sizeof(bool) * npath);
+	state->array_cur_index = palloc(sizeof(int) * npath);
+
+	if (npath > 0)
 		state->pathok[0] = true;
-		state->array_level_index = palloc(sizeof(int) * npath);
-		state->path_level_index = ipath;
-	}
-	else
-	{
-		/* single integer argument */
-		state->search_type = JSON_SEARCH_ARRAY;
-		state->search_index = elem_index;
-		state->array_index = -1;
-	}
 
 	sem->semstate = (void *) state;
 
@@ -826,16 +759,22 @@ get_worker(text *json,
 	 * Not all variants need all the semantic routines. Only set the ones that
 	 * are actually needed for maximum efficiency.
 	 */
-	sem->object_start = get_object_start;
-	sem->array_start = get_array_start;
 	sem->scalar = get_scalar;
-	if (field != NULL || tpath != NULL)
+	if (npath == 0)
+	{
+		sem->object_start = get_object_start;
+		sem->object_end = get_object_end;
+		sem->array_start = get_array_start;
+		sem->array_end = get_array_end;
+	}
+	if (tpath != NULL)
 	{
 		sem->object_field_start = get_object_field_start;
 		sem->object_field_end = get_object_field_end;
 	}
-	if (field == NULL)
+	if (ipath != NULL)
 	{
+		sem->array_start = get_array_start;
 		sem->array_element_start = get_array_element_start;
 		sem->array_element_end = get_array_element_end;
 	}
@@ -849,12 +788,33 @@ static void
 get_object_start(void *state)
 {
 	GetState   *_state = (GetState *) state;
+	int			lex_level = _state->lex->lex_level;
 
-	/* json structure check */
-	if (_state->lex->lex_level == 0 && _state->search_type == JSON_SEARCH_ARRAY)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot extract array element from a non-array")));
+	if (lex_level == 0 && _state->npath == 0)
+	{
+		/*
+		 * Special case: we should match the entire object.  We only need this
+		 * at outermost level because at nested levels the match will have
+		 * been started by the outer field or array element callback.
+		 */
+		_state->result_start = _state->lex->token_start;
+	}
+}
+
+static void
+get_object_end(void *state)
+{
+	GetState   *_state = (GetState *) state;
+	int			lex_level = _state->lex->lex_level;
+
+	if (lex_level == 0 && _state->npath == 0)
+	{
+		/* Special case: return the entire object */
+		char	   *start = _state->result_start;
+		int			len = _state->lex->prev_token_terminator - start;
+
+		_state->tresult = cstring_to_text_with_len(start, len);
+	}
 }
 
 static void
@@ -864,35 +824,30 @@ get_object_field_start(void *state, char *fname, bool isnull)
 	bool		get_next = false;
 	int			lex_level = _state->lex->lex_level;
 
-	if (lex_level == 1 && _state->search_type == JSON_SEARCH_OBJECT &&
-		strcmp(fname, _state->search_term) == 0)
+	if (lex_level <= _state->npath &&
+		_state->pathok[lex_level - 1] &&
+		_state->path_names != NULL &&
+		_state->path_names[lex_level - 1] != NULL &&
+		strcmp(fname, _state->path_names[lex_level - 1]) == 0)
 	{
-		_state->tresult = NULL;
-		_state->result_start = NULL;
-		get_next = true;
-	}
-	else if (_state->search_type == JSON_SEARCH_PATH &&
-			 lex_level <= _state->npath &&
-			 _state->pathok[_state->lex->lex_level - 1] &&
-			 strcmp(fname, _state->path[lex_level - 1]) == 0)
-	{
-		/* path search, path so far is ok,	and we have a match */
-
-		/* this object overrides any previous matching object */
-		_state->tresult = NULL;
-		_state->result_start = NULL;
-
-		/* if not at end of path just mark path ok */
 		if (lex_level < _state->npath)
+		{
+			/* if not at end of path just mark path ok */
 			_state->pathok[lex_level] = true;
-
-		/* end of path, so we want this value */
-		if (lex_level == _state->npath)
+		}
+		else
+		{
+			/* end of path, so we want this value */
 			get_next = true;
+		}
 	}
 
 	if (get_next)
 	{
+		/* this object overrides any previous matching object */
+		_state->tresult = NULL;
+		_state->result_start = NULL;
+
 		if (_state->normalize_results &&
 			_state->lex->token_type == JSON_TOKEN_STRING)
 		{
@@ -914,26 +869,26 @@ get_object_field_end(void *state, char *fname, bool isnull)
 	bool		get_last = false;
 	int			lex_level = _state->lex->lex_level;
 
-	/* same tests as in get_object_field_start, mutatis mutandis */
-	if (lex_level == 1 && _state->search_type == JSON_SEARCH_OBJECT &&
-		strcmp(fname, _state->search_term) == 0)
+	/* same tests as in get_object_field_start */
+	if (lex_level <= _state->npath &&
+		_state->pathok[lex_level - 1] &&
+		_state->path_names != NULL &&
+		_state->path_names[lex_level - 1] != NULL &&
+		strcmp(fname, _state->path_names[lex_level - 1]) == 0)
 	{
-		get_last = true;
-	}
-	else if (_state->search_type == JSON_SEARCH_PATH &&
-			 lex_level <= _state->npath &&
-			 _state->pathok[lex_level - 1] &&
-			 strcmp(fname, _state->path[lex_level - 1]) == 0)
-	{
-		/* done with this field so reset pathok */
 		if (lex_level < _state->npath)
+		{
+			/* done with this field so reset pathok */
 			_state->pathok[lex_level] = false;
-
-		if (lex_level == _state->npath)
+		}
+		else
+		{
+			/* end of path, so we want this value */
 			get_last = true;
+		}
 	}
 
-	/* for as_test variants our work is already done */
+	/* for as_text scalar case, our work is already done */
 	if (get_last && _state->result_start != NULL)
 	{
 		/*
@@ -941,19 +896,19 @@ get_object_field_end(void *state, char *fname, bool isnull)
 		 * start up to the end of the previous token (the lexer is by now
 		 * ahead of us on whatever came after what we're interested in).
 		 */
-		int			len = _state->lex->prev_token_terminator - _state->result_start;
-
 		if (isnull && _state->normalize_results)
 			_state->tresult = (text *) NULL;
 		else
-			_state->tresult = cstring_to_text_with_len(_state->result_start, len);
-	}
+		{
+			char	   *start = _state->result_start;
+			int			len = _state->lex->prev_token_terminator - start;
 
-	/*
-	 * don't need to reset _state->result_start b/c we're only returning one
-	 * datum, the conditions should not occur more than once, and this lets us
-	 * check cheaply that they don't (see object_field_start() )
-	 */
+			_state->tresult = cstring_to_text_with_len(start, len);
+		}
+
+		/* this should be unnecessary but let's do it for cleanliness: */
+		_state->result_start = NULL;
+	}
 }
 
 static void
@@ -962,19 +917,36 @@ get_array_start(void *state)
 	GetState   *_state = (GetState *) state;
 	int			lex_level = _state->lex->lex_level;
 
-	/* json structure check */
-	if (lex_level == 0 && _state->search_type == JSON_SEARCH_OBJECT)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot extract field from a non-object")));
+	if (lex_level < _state->npath)
+	{
+		/* Initialize counting of elements in this array */
+		_state->array_cur_index[lex_level] = -1;
+	}
+	else if (lex_level == 0 && _state->npath == 0)
+	{
+		/*
+		 * Special case: we should match the entire array.  We only need this
+		 * at outermost level because at nested levels the match will have
+		 * been started by the outer field or array element callback.
+		 */
+		_state->result_start = _state->lex->token_start;
+	}
+}
 
-	/*
-	 * initialize array count for this nesting level. Note: the lex_level seen
-	 * by array_start is one less than that seen by the elements of the array.
-	 */
-	if (_state->search_type == JSON_SEARCH_PATH &&
-		lex_level < _state->npath)
-		_state->array_level_index[lex_level] = -1;
+static void
+get_array_end(void *state)
+{
+	GetState   *_state = (GetState *) state;
+	int			lex_level = _state->lex->lex_level;
+
+	if (lex_level == 0 && _state->npath == 0)
+	{
+		/* Special case: return the entire array */
+		char	   *start = _state->result_start;
+		int			len = _state->lex->prev_token_terminator - start;
+
+		_state->tresult = cstring_to_text_with_len(start, len);
+	}
 }
 
 static void
@@ -984,44 +956,33 @@ get_array_element_start(void *state, bool isnull)
 	bool		get_next = false;
 	int			lex_level = _state->lex->lex_level;
 
-	if (lex_level == 1 && _state->search_type == JSON_SEARCH_ARRAY)
+	/* Update array element counter */
+	if (lex_level <= _state->npath)
+		_state->array_cur_index[lex_level - 1]++;
+
+	if (lex_level <= _state->npath &&
+		_state->pathok[lex_level - 1] &&
+		_state->path_indexes != NULL &&
+		_state->array_cur_index[lex_level - 1] == _state->path_indexes[lex_level - 1])
 	{
-		/* single integer search */
-		_state->array_index++;
-		if (_state->array_index == _state->search_index)
-			get_next = true;
-	}
-	else if (_state->search_type == JSON_SEARCH_PATH &&
-			 lex_level <= _state->npath &&
-			 _state->pathok[lex_level - 1])
-	{
-		/*
-		 * path search, path so far is ok
-		 *
-		 * increment the array counter. no point doing this if we already know
-		 * the path is bad.
-		 *
-		 * then check if we have a match.
-		 */
-		if (++_state->array_level_index[lex_level - 1] ==
-			_state->path_level_index[lex_level - 1])
+		if (lex_level < _state->npath)
 		{
-			if (lex_level == _state->npath)
-			{
-				/* match and at end of path, so get value */
-				get_next = true;
-			}
-			else
-			{
-				/* not at end of path just mark path ok */
-				_state->pathok[lex_level] = true;
-			}
+			/* if not at end of path just mark path ok */
+			_state->pathok[lex_level] = true;
+		}
+		else
+		{
+			/* end of path, so we want this value */
+			get_next = true;
 		}
 	}
 
 	/* same logic as for objects */
 	if (get_next)
 	{
+		_state->tresult = NULL;
+		_state->result_start = NULL;
+
 		if (_state->normalize_results &&
 			_state->lex->token_type == JSON_TOKEN_STRING)
 		{
@@ -1041,34 +1002,38 @@ get_array_element_end(void *state, bool isnull)
 	bool		get_last = false;
 	int			lex_level = _state->lex->lex_level;
 
-	/* same logic as in get_object_end, modified for arrays */
-
-	if (lex_level == 1 && _state->search_type == JSON_SEARCH_ARRAY &&
-		_state->array_index == _state->search_index)
+	/* same tests as in get_array_element_start */
+	if (lex_level <= _state->npath &&
+		_state->pathok[lex_level - 1] &&
+		_state->path_indexes != NULL &&
+		_state->array_cur_index[lex_level - 1] == _state->path_indexes[lex_level - 1])
 	{
-		get_last = true;
-	}
-	else if (_state->search_type == JSON_SEARCH_PATH &&
-			 lex_level <= _state->npath &&
-			 _state->pathok[lex_level - 1] &&
-			 _state->array_level_index[lex_level - 1] ==
-			 _state->path_level_index[lex_level - 1])
-	{
-		/* done with this element so reset pathok */
 		if (lex_level < _state->npath)
+		{
+			/* done with this element so reset pathok */
 			_state->pathok[lex_level] = false;
-
-		if (lex_level == _state->npath)
+		}
+		else
+		{
+			/* end of path, so we want this value */
 			get_last = true;
+		}
 	}
+
+	/* same logic as for objects */
 	if (get_last && _state->result_start != NULL)
 	{
-		int			len = _state->lex->prev_token_terminator - _state->result_start;
-
 		if (isnull && _state->normalize_results)
 			_state->tresult = (text *) NULL;
 		else
-			_state->tresult = cstring_to_text_with_len(_state->result_start, len);
+		{
+			char	   *start = _state->result_start;
+			int			len = _state->lex->prev_token_terminator - start;
+
+			_state->tresult = cstring_to_text_with_len(start, len);
+		}
+
+		_state->result_start = NULL;
 	}
 }
 
@@ -1076,11 +1041,34 @@ static void
 get_scalar(void *state, char *token, JsonTokenType tokentype)
 {
 	GetState   *_state = (GetState *) state;
+	int			lex_level = _state->lex->lex_level;
 
-	if (_state->lex->lex_level == 0 && _state->search_type != JSON_SEARCH_PATH)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot extract element from a scalar")));
+	/* Check for whole-object match */
+	if (lex_level == 0 && _state->npath == 0)
+	{
+		if (_state->normalize_results && tokentype == JSON_TOKEN_STRING)
+		{
+			/* we want the de-escaped string */
+			_state->next_scalar = true;
+		}
+		else if (_state->normalize_results && tokentype == JSON_TOKEN_NULL)
+		{
+			_state->tresult = (text *) NULL;
+		}
+		else
+		{
+			/*
+			 * This is a bit hokey: we will suppress whitespace after the
+			 * scalar token, but not whitespace before it.  Probably not worth
+			 * doing our own space-skipping to avoid that.
+			 */
+			char	   *start = _state->lex->input;
+			int			len = _state->lex->prev_token_terminator - start;
+
+			_state->tresult = cstring_to_text_with_len(start, len);
+		}
+	}
+
 	if (_state->next_scalar)
 	{
 		/* a de-escaped text value is wanted, so supply it */
@@ -1093,17 +1081,17 @@ get_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 jsonb_extract_path(PG_FUNCTION_ARGS)
 {
-	return get_jsonb_path_all(fcinfo, "jsonb_extract_path", false);
+	return get_jsonb_path_all(fcinfo, false);
 }
 
 Datum
 jsonb_extract_path_text(PG_FUNCTION_ARGS)
 {
-	return get_jsonb_path_all(fcinfo, "jsonb_extract_path_text", true);
+	return get_jsonb_path_all(fcinfo, true);
 }
 
 static Datum
-get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
+get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
@@ -1118,28 +1106,56 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	JsonbValue	tv;
 	JsonbContainer *container;
 
+	/*
+	 * If the array contains any null elements, return NULL, on the grounds
+	 * that you'd have gotten NULL if any RHS value were NULL in a nested
+	 * series of applications of the -> operator.  (Note: because we also
+	 * return NULL for error cases such as no-such-field, this is true
+	 * regardless of the contents of the rest of the array.)
+	 */
 	if (array_contains_nulls(path))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot call %s with null path elements",
-						funcname)));
+		PG_RETURN_NULL();
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
 
-	/*
-	 * If the array is empty, return NULL; this is dubious but it's what 9.3
-	 * did.
-	 */
-	if (npath <= 0)
-		PG_RETURN_NULL();
+	/* Identify whether we have object, array, or scalar at top-level */
+	container = &jb->root;
 
 	if (JB_ROOT_IS_OBJECT(jb))
 		have_object = true;
 	else if (JB_ROOT_IS_ARRAY(jb) && !JB_ROOT_IS_SCALAR(jb))
 		have_array = true;
+	else
+	{
+		Assert(JB_ROOT_IS_ARRAY(jb) && JB_ROOT_IS_SCALAR(jb));
+		/* Extract the scalar value, if it is what we'll return */
+		if (npath <= 0)
+			jbvp = getIthJsonbValueFromContainer(container, 0);
+	}
 
-	container = &jb->root;
+	/*
+	 * If the array is empty, return the entire LHS object, on the grounds
+	 * that we should do zero field or element extractions.  For the
+	 * non-scalar case we can just hand back the object without much work. For
+	 * the scalar case, fall through and deal with the value below the loop.
+	 * (This inconsistency arises because there's no easy way to generate a
+	 * JsonbValue directly for root-level containers.)
+	 */
+	if (npath <= 0 && jbvp == NULL)
+	{
+		if (as_text)
+		{
+			PG_RETURN_TEXT_P(cstring_to_text(JsonbToCString(NULL,
+															container,
+															VARSIZE(jb))));
+		}
+		else
+		{
+			/* not text mode - just hand back the jsonb */
+			PG_RETURN_JSONB(jb);
+		}
+	}
 
 	for (i = 0; i < npath; i++)
 	{
@@ -1157,18 +1173,17 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 			char	   *indextext = TextDatumGetCString(pathtext[i]);
 			char	   *endptr;
 
+			errno = 0;
 			lindex = strtol(indextext, &endptr, 10);
-			if (*endptr != '\0' || lindex > INT_MAX || lindex < 0)
+			if (endptr == indextext || *endptr != '\0' || errno != 0 ||
+				lindex > INT_MAX || lindex < 0)
 				PG_RETURN_NULL();
 			index = (uint32) lindex;
 			jbvp = getIthJsonbValueFromContainer(container, index);
 		}
 		else
 		{
-			if (i == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("cannot extract path from a scalar")));
+			/* scalar, extraction yields a null */
 			PG_RETURN_NULL();
 		}
 
@@ -1196,9 +1211,11 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 
 	if (as_text)
 	{
+		/* special-case outputs for string and null values */
 		if (jbvp->type == jbvString)
-			PG_RETURN_TEXT_P(cstring_to_text_with_len(jbvp->val.string.val, jbvp->val.string.len));
-		else if (jbvp->type == jbvNull)
+			PG_RETURN_TEXT_P(cstring_to_text_with_len(jbvp->val.string.val,
+													  jbvp->val.string.len));
+		if (jbvp->type == jbvNull)
 			PG_RETURN_NULL();
 	}
 
