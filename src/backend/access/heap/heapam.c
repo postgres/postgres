@@ -955,7 +955,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 #if defined(DISABLE_COMPLEX_MACRO)
 /*
  * This is formatted so oddly so that the correspondence to the macro
- * definition in access/htup.h is maintained.
+ * definition in access/htup_details.h is maintained.
  */
 Datum
 fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
