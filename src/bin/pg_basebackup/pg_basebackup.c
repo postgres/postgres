@@ -109,7 +109,6 @@ static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 					 bool segment_finished);
 
 static const char *get_tablespace_mapping(const char *dir);
-static void update_tablespace_symlink(Oid oid, const char *old_dir);
 static void tablespace_list_append(const char *arg);
 
 
@@ -1110,34 +1109,6 @@ get_tablespace_mapping(const char *dir)
 
 
 /*
- * Update symlinks to reflect relocated tablespace.
- */
-static void
-update_tablespace_symlink(Oid oid, const char *old_dir)
-{
-	const char *new_dir = get_tablespace_mapping(old_dir);
-
-	if (strcmp(old_dir, new_dir) != 0)
-	{
-		char	   *linkloc = psprintf("%s/pg_tblspc/%d", basedir, oid);
-
-		if (unlink(linkloc) != 0 && errno != ENOENT)
-		{
-			fprintf(stderr, _("%s: could not remove symbolic link \"%s\": %s\n"),
-					progname, linkloc, strerror(errno));
-			disconnect_and_exit(1);
-		}
-		if (symlink(new_dir, linkloc) != 0)
-		{
-			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
-					progname, linkloc, strerror(errno));
-			disconnect_and_exit(1);
-		}
-	}
-}
-
-
-/*
  * Receive a tar format stream from the connection to the server, and unpack
  * the contents of it into a directory. Only files, directories and
  * symlinks are supported, no other kinds of special files.
@@ -1151,16 +1122,20 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 {
 	char		current_path[MAXPGPATH];
 	char		filename[MAXPGPATH];
+	const char *mapped_tblspc_path;
 	int			current_len_left;
 	int			current_padding = 0;
-	bool		basetablespace = PQgetisnull(res, rownum, 0);
+	bool		basetablespace;
 	char	   *copybuf = NULL;
 	FILE	   *file = NULL;
 
+	basetablespace = PQgetisnull(res, rownum, 0);
 	if (basetablespace)
 		strlcpy(current_path, basedir, sizeof(current_path));
 	else
-		strlcpy(current_path, get_tablespace_mapping(PQgetvalue(res, rownum, 1)), sizeof(current_path));
+		strlcpy(current_path,
+				get_tablespace_mapping(PQgetvalue(res, rownum, 1)),
+				sizeof(current_path));
 
 	/*
 	 * Get the COPY data
@@ -1284,13 +1259,25 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 				{
 					/*
 					 * Symbolic link
+					 *
+					 * It's most likely a link in pg_tblspc directory, to
+					 * the location of a tablespace. Apply any tablespace
+					 * mapping given on the command line (--tablespace).
+					 * (We blindly apply the mapping without checking that
+					 * the link really is inside pg_tblspc. We don't expect
+					 * there to be other symlinks in a data directory, but
+					 * if there are, you can call it an undocumented feature
+					 * that you can map them too.)
 					 */
 					filename[strlen(filename) - 1] = '\0';		/* Remove trailing slash */
-					if (symlink(&copybuf[157], filename) != 0)
+
+					mapped_tblspc_path = get_tablespace_mapping(&copybuf[157]);
+					if (symlink(mapped_tblspc_path, filename) != 0)
 					{
 						fprintf(stderr,
 								_("%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"),
-						 progname, filename, &copybuf[157], strerror(errno));
+								progname, filename, mapped_tblspc_path,
+								strerror(errno));
 						disconnect_and_exit(1);
 					}
 				}
@@ -1791,17 +1778,6 @@ BaseBackup(void)
 	{
 		progress_report(PQntuples(res), NULL, true);
 		fprintf(stderr, "\n");	/* Need to move to next line */
-	}
-
-	if (format == 'p' && tablespace_dirs.head != NULL)
-	{
-		for (i = 0; i < PQntuples(res); i++)
-		{
-			Oid			tblspc_oid = atooid(PQgetvalue(res, i, 0));
-
-			if (tblspc_oid)
-				update_tablespace_symlink(tblspc_oid, PQgetvalue(res, i, 1));
-		}
 	}
 
 	PQclear(res);
