@@ -3552,8 +3552,6 @@ CheckConstraintFetch(Relation relation)
 	SysScanDesc conscan;
 	ScanKeyData skey[1];
 	HeapTuple	htup;
-	Datum		val;
-	bool		isnull;
 	int			found = 0;
 
 	ScanKeyInit(&skey[0],
@@ -3568,6 +3566,9 @@ CheckConstraintFetch(Relation relation)
 	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
 	{
 		Form_pg_constraint conform = (Form_pg_constraint) GETSTRUCT(htup);
+		Datum		val;
+		bool		isnull;
+		char	   *s;
 
 		/* We want check constraints only */
 		if (conform->contype != CONSTRAINT_CHECK)
@@ -3590,8 +3591,11 @@ CheckConstraintFetch(Relation relation)
 			elog(ERROR, "null conbin for rel %s",
 				 RelationGetRelationName(relation));
 
-		check[found].ccbin = MemoryContextStrdup(CacheMemoryContext,
-												 TextDatumGetCString(val));
+		/* detoast and convert to cstring in caller's context */
+		s = TextDatumGetCString(val);
+		check[found].ccbin = MemoryContextStrdup(CacheMemoryContext, s);
+		pfree(s);
+
 		found++;
 	}
 
