@@ -118,6 +118,7 @@ optionally_create_toast_tables(void)
 		/* Suppress NOTICE output from non-existant constraints */
 		PQclear(executeQueryOrDie(conn, "SET client_min_messages = warning;"));
 		PQclear(executeQueryOrDie(conn, "SET log_min_messages = warning;"));
+		PQclear(executeQueryOrDie(conn, "SET log_min_error_statement = warning;"));
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -138,6 +139,7 @@ optionally_create_toast_tables(void)
 
 		PQclear(executeQueryOrDie(conn, "RESET client_min_messages;"));
 		PQclear(executeQueryOrDie(conn, "RESET log_min_messages;"));
+		PQclear(executeQueryOrDie(conn, "RESET log_min_error_statement;"));
 
 		PQfinish(conn);
 	}
