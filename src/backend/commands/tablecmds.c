@@ -3175,19 +3175,23 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_SetLogged:		/* SET LOGGED */
 			ATSimplePermissions(rel, ATT_TABLE);
 			tab->chgPersistence = ATPrepChangePersistence(rel, true);
-			tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
-			/* force rewrite if necessary */
+			/* force rewrite if necessary; see comment in ATRewriteTables */
 			if (tab->chgPersistence)
+			{
 				tab->rewrite = true;
+				tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
+			}
 			pass = AT_PASS_MISC;
 			break;
 		case AT_SetUnLogged:	/* SET UNLOGGED */
 			ATSimplePermissions(rel, ATT_TABLE);
 			tab->chgPersistence = ATPrepChangePersistence(rel, false);
-			tab->newrelpersistence = RELPERSISTENCE_UNLOGGED;
-			/* force rewrite if necessary */
+			/* force rewrite if necessary; see comment in ATRewriteTables */
 			if (tab->chgPersistence)
+			{
 				tab->rewrite = true;
+				tab->newrelpersistence = RELPERSISTENCE_UNLOGGED;
+			}
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AddOids:		/* SET WITH OIDS */
