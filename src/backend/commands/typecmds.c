@@ -596,37 +596,37 @@ DefineType(List *names, List *parameters)
 	/* alignment must be 'i' or 'd' for arrays */
 	alignment = (alignment == 'd') ? 'd' : 'i';
 
-	typoid = TypeCreate(array_oid,		/* force assignment of this type OID */
-						array_type,		/* type name */
-						typeNamespace,	/* namespace */
-						InvalidOid,		/* relation oid (n/a here) */
-						0,		/* relation kind (ditto) */
-						GetUserId(),	/* owner's ID */
-						-1,		/* internal size (always varlena) */
-						TYPTYPE_BASE,	/* type-type (base type) */
-						TYPCATEGORY_ARRAY,		/* type-category (array) */
-						false,	/* array types are never preferred */
-						delimiter,		/* array element delimiter */
-						F_ARRAY_IN,		/* input procedure */
-						F_ARRAY_OUT,	/* output procedure */
-						F_ARRAY_RECV,	/* receive procedure */
-						F_ARRAY_SEND,	/* send procedure */
-						typmodinOid,	/* typmodin procedure */
-						typmodoutOid,	/* typmodout procedure */
-						F_ARRAY_TYPANALYZE,		/* analyze procedure */
-						typoid, /* element type ID */
-						true,	/* yes this is an array type */
-						InvalidOid,		/* no further array type */
-						InvalidOid,		/* base type ID */
-						NULL,	/* never a default type value */
-						NULL,	/* binary default isn't sent either */
-						false,	/* never passed by value */
-						alignment,		/* see above */
-						'x',	/* ARRAY is always toastable */
-						-1,		/* typMod (Domains only) */
-						0,		/* Array dimensions of typbasetype */
-						false,	/* Type NOT NULL */
-						collation);		/* type's collation */
+	TypeCreate(array_oid,		/* force assignment of this type OID */
+			   array_type,		/* type name */
+			   typeNamespace,	/* namespace */
+			   InvalidOid,		/* relation oid (n/a here) */
+			   0,		/* relation kind (ditto) */
+			   GetUserId(),	/* owner's ID */
+			   -1,		/* internal size (always varlena) */
+			   TYPTYPE_BASE,	/* type-type (base type) */
+			   TYPCATEGORY_ARRAY,		/* type-category (array) */
+			   false,	/* array types are never preferred */
+			   delimiter,		/* array element delimiter */
+			   F_ARRAY_IN,		/* input procedure */
+			   F_ARRAY_OUT,	/* output procedure */
+			   F_ARRAY_RECV,	/* receive procedure */
+			   F_ARRAY_SEND,	/* send procedure */
+			   typmodinOid,	/* typmodin procedure */
+			   typmodoutOid,	/* typmodout procedure */
+			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
+			   typoid, /* element type ID */
+			   true,	/* yes this is an array type */
+			   InvalidOid,		/* no further array type */
+			   InvalidOid,		/* base type ID */
+			   NULL,	/* never a default type value */
+			   NULL,	/* binary default isn't sent either */
+			   false,	/* never passed by value */
+			   alignment,		/* see above */
+			   'x',	/* ARRAY is always toastable */
+			   -1,		/* typMod (Domains only) */
+			   0,		/* Array dimensions of typbasetype */
+			   false,	/* Type NOT NULL */
+			   collation);		/* type's collation */
 
 	pfree(array_type);
 
