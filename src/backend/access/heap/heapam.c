@@ -2818,7 +2818,7 @@ l1:
 		if (result == HeapTupleSelfUpdated)
 			hufd->cmax = HeapTupleHeaderGetCmax(tp.t_data);
 		else
-			hufd->cmax = 0;		/* for lack of an InvalidCommandId value */
+			hufd->cmax = InvalidCommandId;
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, &(tp.t_self), LockTupleExclusive);
@@ -3415,7 +3415,7 @@ l2:
 		if (result == HeapTupleSelfUpdated)
 			hufd->cmax = HeapTupleHeaderGetCmax(oldtup.t_data);
 		else
-			hufd->cmax = 0;		/* for lack of an InvalidCommandId value */
+			hufd->cmax = InvalidCommandId;
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
@@ -4573,7 +4573,7 @@ failed:
 		if (result == HeapTupleSelfUpdated)
 			hufd->cmax = HeapTupleHeaderGetCmax(tuple->t_data);
 		else
-			hufd->cmax = 0;		/* for lack of an InvalidCommandId value */
+			hufd->cmax = InvalidCommandId;
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, tid, mode);
