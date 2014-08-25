@@ -130,14 +130,16 @@
       <term><option>-o</option> <replaceable class="parameter">options</replaceable></term>
       <term><option>--old-options</option> <replaceable class="parameter">options</replaceable></term>
       <listitem><para>options to be passed directly to the
-      old <command>postgres</command> command</para></listitem>
+      old <command>postgres</command> command;  multiple
+      option invocations are appended</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-O</option> <replaceable class="parameter">options</replaceable></term>
       <term><option>--new-options</option> <replaceable class="parameter">options</replaceable></term>
       <listitem><para>options to be passed directly to the
-      new <command>postgres</command> command</para></listitem>
+      new <command>postgres</command> command;  multiple
+      option invocations are appended</para></listitem>
      </varlistentry>
 
      <varlistentry>

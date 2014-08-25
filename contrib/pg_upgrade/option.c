@@ -137,17 +137,35 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			case 'o':
-				old_cluster.pgopts = pg_strdup(optarg);
+				/* append option? */
+				if (!old_cluster.pgopts)
+					old_cluster.pgopts = pg_strdup(optarg);
+				else
+				{
+					char *old_pgopts = old_cluster.pgopts;
+
+					old_cluster.pgopts = psprintf("%s %s", old_pgopts, optarg);
+					free(old_pgopts);
+				}
 				break;
 
 			case 'O':
-				new_cluster.pgopts = pg_strdup(optarg);
+				/* append option? */
+				if (!new_cluster.pgopts)
+					new_cluster.pgopts = pg_strdup(optarg);
+				else
+				{
+					char *new_pgopts = new_cluster.pgopts;
+
+					new_cluster.pgopts = psprintf("%s %s", new_pgopts, optarg);
+					free(new_pgopts);
+				}
 				break;
 
 				/*
 				 * Someday, the port number option could be removed and passed
 				 * using -o/-O, but that requires postmaster -C to be
-				 * supported on all old/new versions.
+				 * supported on all old/new versions (added in PG 9.2).
 				 */
 			case 'p':
 				if ((old_cluster.port = atoi(optarg)) <= 0)

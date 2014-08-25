@@ -288,7 +288,8 @@ PostgreSQL documentation
         class="parameter">extra-options</replaceable> are passed to
         all server processes started by this
         <command>postgres</command> process.  If the option string contains
-        any spaces, the entire string must be quoted.
+        any spaces, the entire string must be quoted;  multiple
+        option invocations are appended.
        </para>
 
        <para>

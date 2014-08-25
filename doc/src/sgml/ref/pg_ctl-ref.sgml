@@ -302,7 +302,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies options to be passed directly to the
-        <command>postgres</command> command.
+        <command>postgres</command> command;  multiple
+        option invocations are appended.
        </para>
        <para>
         The options should usually be surrounded by single or double

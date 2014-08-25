@@ -2184,7 +2184,16 @@ main(int argc, char **argv)
 					register_servicename = pg_strdup(optarg);
 					break;
 				case 'o':
-					post_opts = pg_strdup(optarg);
+					/* append option? */
+					if (!post_opts)
+						post_opts = pg_strdup(optarg);
+					else
+					{
+						char *old_post_opts = post_opts;
+
+						post_opts = psprintf("%s %s", old_post_opts, optarg);
+						free(old_post_opts);
+					}
 					break;
 				case 'p':
 					exec_path = pg_strdup(optarg);
