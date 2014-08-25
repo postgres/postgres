@@ -152,7 +152,7 @@ typedef struct AlteredTableInfo
 	bool		new_notnull;	/* T if we added new NOT NULL constraints */
 	bool		rewrite;		/* T if a rewrite is forced */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
-	bool		chgLoggedness;	/* T if SET LOGGED/UNLOGGED is used */
+	bool		chgPersistence; /* T if SET LOGGED/UNLOGGED is used */
 	char		newrelpersistence;		/* if above is true */
 	/* Objects to rebuild after completing ALTER TYPE operations */
 	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
@@ -388,8 +388,8 @@ static void change_owner_recurse_to_sequences(Oid relationOid,
 static void ATExecClusterOn(Relation rel, const char *indexName,
 				LOCKMODE lockmode);
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
-static bool ATPrepChangeLoggedness(Relation rel, bool toLogged);
-static void ATChangeIndexesLoggedness(Oid relid, char relpersistence);
+static bool ATPrepChangePersistence(Relation rel, bool toLogged);
+static void ATChangeIndexesPersistence(Oid relid, char relpersistence);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
@@ -3174,19 +3174,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_SetLogged:		/* SET LOGGED */
 			ATSimplePermissions(rel, ATT_TABLE);
-			tab->chgLoggedness = ATPrepChangeLoggedness(rel, true);
+			tab->chgPersistence = ATPrepChangePersistence(rel, true);
 			tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
 			/* force rewrite if necessary */
-			if (tab->chgLoggedness)
+			if (tab->chgPersistence)
 				tab->rewrite = true;
 			pass = AT_PASS_MISC;
 			break;
 		case AT_SetUnLogged:	/* SET UNLOGGED */
 			ATSimplePermissions(rel, ATT_TABLE);
-			tab->chgLoggedness = ATPrepChangeLoggedness(rel, false);
+			tab->chgPersistence = ATPrepChangePersistence(rel, false);
 			tab->newrelpersistence = RELPERSISTENCE_UNLOGGED;
 			/* force rewrite if necessary */
-			if (tab->chgLoggedness)
+			if (tab->chgPersistence)
 				tab->rewrite = true;
 			pass = AT_PASS_MISC;
 			break;
@@ -3618,6 +3618,13 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 		 * We only need to rewrite the table if at least one column needs to
 		 * be recomputed, we are adding/removing the OID column, or we are
 		 * changing its persistence.
+		 *
+		 * There are two reasons for requiring a rewrite when changing
+		 * persistence: on one hand, we need to ensure that the buffers
+		 * belonging to each of the two relations are marked with or without
+		 * BM_PERMANENT properly.  On the other hand, since rewriting creates
+		 * and assigns a new relfilenode, we automatically create or drop an
+		 * init fork for the relation as appropriate.
 		 */
 		if (tab->rewrite)
 		{
@@ -3668,7 +3675,7 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			 * Select persistence of transient table (same as original unless
 			 * user requested a change)
 			 */
-			persistence = tab->chgLoggedness ?
+			persistence = tab->chgPersistence ?
 				tab->newrelpersistence : OldHeap->rd_rel->relpersistence;
 
 			heap_close(OldHeap, NoLock);
@@ -3705,8 +3712,8 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			 * because the rewrite step might read the indexes, and that would
 			 * cause buffers for them to have the wrong setting.
 			 */
-			if (tab->chgLoggedness)
-				ATChangeIndexesLoggedness(tab->relid, tab->newrelpersistence);
+			if (tab->chgPersistence)
+				ATChangeIndexesPersistence(tab->relid, tab->newrelpersistence);
 
 			/*
 			 * Swap the physical files of the old and new heaps, then rebuild
@@ -4119,7 +4126,7 @@ ATGetQueueEntry(List **wqueue, Relation rel)
 	tab->relkind = rel->rd_rel->relkind;
 	tab->oldDesc = CreateTupleDescCopy(RelationGetDescr(rel));
 	tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
-	tab->chgLoggedness = false;
+	tab->chgPersistence = false;
 
 	*wqueue = lappend(*wqueue, tab);
 
@@ -10678,7 +10685,7 @@ ATExecGenericOptions(Relation rel, List *options)
  * checks are skipped), otherwise true.
  */
 static bool
-ATPrepChangeLoggedness(Relation rel, bool toLogged)
+ATPrepChangePersistence(Relation rel, bool toLogged)
 {
 	Relation	pg_constraint;
 	HeapTuple	tuple;
@@ -10722,7 +10729,7 @@ ATPrepChangeLoggedness(Relation rel, bool toLogged)
 
 	/*
 	 * Scan conrelid if changing to permanent, else confrelid.  This also
-	 * determines whether an useful index exists.
+	 * determines whether a useful index exists.
 	 */
 	ScanKeyInit(&skey[0],
 				toLogged ? Anum_pg_constraint_conrelid :
@@ -10792,7 +10799,7 @@ ATPrepChangeLoggedness(Relation rel, bool toLogged)
  * given persistence.
  */
 static void
-ATChangeIndexesLoggedness(Oid relid, char relpersistence)
+ATChangeIndexesPersistence(Oid relid, char relpersistence)
 {
 	Relation	rel;
 	Relation	pg_class;
