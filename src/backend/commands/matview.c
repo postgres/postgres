@@ -132,7 +132,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  * The matview's "populated" state is changed based on whether the contents
  * reflect the result set of the materialized view's query.
  */
-void
+Oid
 ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 				   ParamListInfo params, char *completionTag)
 {
@@ -281,6 +281,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	}
 	else
 		refresh_by_heap_swap(matviewOid, OIDNewHeap);
+
+	return matviewOid;
 }
 
 /*

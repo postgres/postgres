@@ -19,7 +19,7 @@
 #include "tcop/dest.h"
 
 
-extern void ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
+extern Oid	ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 				  ParamListInfo params, char *completionTag);
 
 extern int	GetIntoRelEFlags(IntoClause *intoClause);
