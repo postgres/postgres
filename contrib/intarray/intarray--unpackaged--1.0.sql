@@ -1,7 +1,7 @@
 /* contrib/intarray/intarray--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION intarray" to load this file. \quit
+\echo Use "CREATE EXTENSION intarray FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION intarray ADD type query_int;
 ALTER EXTENSION intarray ADD function bqarr_in(cstring);

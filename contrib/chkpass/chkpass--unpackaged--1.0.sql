@@ -1,7 +1,7 @@
 /* contrib/chkpass/chkpass--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION chkpass" to load this file. \quit
+\echo Use "CREATE EXTENSION chkpass FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION chkpass ADD type chkpass;
 ALTER EXTENSION chkpass ADD function chkpass_in(cstring);

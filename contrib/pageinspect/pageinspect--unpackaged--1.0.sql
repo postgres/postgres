@@ -1,7 +1,7 @@
 /* contrib/pageinspect/pageinspect--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION pageinspect" to load this file. \quit
+\echo Use "CREATE EXTENSION pageinspect FROM unpackaged" to load this file. \quit
 
 DROP FUNCTION heap_page_items(bytea);
 CREATE FUNCTION heap_page_items(IN page bytea,
