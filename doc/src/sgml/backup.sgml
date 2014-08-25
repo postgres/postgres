@@ -28,7 +28,7 @@
   <title><acronym>SQL</> Dump</title>
 
   <para>
-   The idea behind this dump method is to generate a text file with SQL
+   The idea behind this dump method is to generate a file with SQL
    commands that, when fed back to the server, will recreate the
    database in the same state as it was at the time of the dump.
    <productname>PostgreSQL</> provides the utility program
@@ -39,6 +39,9 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
 </synopsis>
    As you see, <application>pg_dump</> writes its result to the
    standard output. We will see below how this can be useful.
+   While the above command creates a text file, <application>pg_dump</>
+   can create files in other formats that allow for parallism and more
+   fine-grained control of object restoration.
   </para>
 
   <para>
@@ -98,20 +101,11 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    exclusive lock, such as most forms of <command>ALTER TABLE</command>.)
   </para>
 
-  <important>
-   <para>
-    If your database schema relies on OIDs (for instance, as foreign
-    keys) you must instruct <application>pg_dump</> to dump the OIDs
-    as well. To do this, use the <option>-o</option> command-line
-    option.
-   </para>
-  </important>
-
   <sect2 id="backup-dump-restore">
    <title>Restoring the Dump</title>
 
    <para>
-    The text files created by <application>pg_dump</> are intended to
+    Text files created by <application>pg_dump</> are intended to
     be read in by the <application>psql</application> program. The
     general command form to restore a dump is
 <synopsis>
@@ -127,6 +121,8 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     supports options similar to <application>pg_dump</> for specifying
     the database server to connect to and the user name to use. See
     the <xref linkend="app-psql"> reference page for more information.
+    Non-text file dumps are restored using the <xref
+    linkend="app-pgrestore"> utility.
    </para>
 
    <para>
@@ -225,7 +221,14 @@ psql -f <replaceable class="parameter">infile</replaceable> postgres
     roles, tablespaces, and empty databases, then invoking
     <application>pg_dump</> for each database.  This means that while
     each database will be internally consistent, the snapshots of
-    different databases might not be exactly in-sync.
+    different databases are not sychronized.
+   </para>
+
+   <para>
+    Cluster-wide data can be dumped alone using the
+    <application>pg_dumpall</> <option>--globals-only</> option.
+    This is necessary to fully backup the cluster if running the
+    <application>pg_dump</> command on individual databases.
    </para>
   </sect2>
 
