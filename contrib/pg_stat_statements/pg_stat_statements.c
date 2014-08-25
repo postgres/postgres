@@ -955,10 +955,13 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 	 * calculated from the query tree) would be used to accumulate costs of
 	 * ensuing EXECUTEs.  This would be confusing, and inconsistent with other
 	 * cases where planning time is not included at all.
+	 *
+	 * Likewise, we don't track execution of DEALLOCATE.
 	 */
 	if (pgss_track_utility && pgss_enabled() &&
 		!IsA(parsetree, ExecuteStmt) &&
-		!IsA(parsetree, PrepareStmt))
+		!IsA(parsetree, PrepareStmt) &&
+		!IsA(parsetree, DeallocateStmt))
 	{
 		instr_time	start;
 		instr_time	duration;
