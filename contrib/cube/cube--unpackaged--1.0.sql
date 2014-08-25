@@ -1,7 +1,7 @@
 /* contrib/cube/cube--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION cube" to load this file. \quit
+\echo Use "CREATE EXTENSION cube FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION cube ADD type cube;
 ALTER EXTENSION cube ADD function cube_in(cstring);
