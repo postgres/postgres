@@ -1517,8 +1517,9 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    For <emphasis>major</> releases of <productname>PostgreSQL</>, the
    internal data storage format is subject to change, thus complicating
    upgrades.  The traditional method for moving data to a new major version
-   is to dump and reload the database.  Other methods are available,
-   as discussed below.
+   is to dump and reload the database, though this can be slow.  A
+   faster method is <xref linkend="pgupgrade">.  Replication methods are
+   also available, as discussed below.
   </para>
 
   <para>
@@ -1593,12 +1594,14 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
   </variablelist>
 
-  <sect2 id="upgrade-methods-pgdump">
-   <title>Upgrading Data via <application>pg_dump</></title>
+  <sect2 id="upgrading-via-pgdumpall">
+   <title>Upgrading Data via <application>pg_dumpall</></title>
 
    <para>
-    To dump data from one major version of <productname>PostgreSQL</> and
-    reload it in another, you must use <application>pg_dump</>; file system
+    One upgrade method is to dump data from one major version of
+    <productname>PostgreSQL</> and reload it in another &mdash;  to do
+    this, you must use a <emphasis>logical</> backup tool like
+    <application>pg_dumpall</>; file system
     level backup methods will not work. (There are checks in place that prevent
     you from using a data directory with an incompatible version of
     <productname>PostgreSQL</productname>, so no great harm can be done by
@@ -1607,7 +1610,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <para>
     It is recommended that you use the <application>pg_dump</> and
-    <application>pg_dumpall</> programs from the newer version of
+    <application>pg_dumpall</> programs from the <emphasis>newer</>
+    version of
     <productname>PostgreSQL</>, to take advantage of enhancements
     that might have been made in these programs.  Current releases of the
     dump programs can read data from any server version back to 7.0.
@@ -1642,14 +1646,12 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 <screen>
 <userinput>pg_dumpall &gt; <replaceable>outputfile</></userinput>
 </screen>
-      If you need to preserve OIDs (such as when using them as
-      foreign keys), then use the <option>-o</option> option when running
-      <application>pg_dumpall</>.
      </para>
 
      <para>
       To make the backup, you can use the <application>pg_dumpall</application>
-      command from the version you are currently running.  For best
+      command from the version you are currently running;  see <xref
+      linkend="backup-dump-all"> for more details.  For best
       results, however, try to use the <application>pg_dumpall</application>
       command from <productname>PostgreSQL</productname> &version;,
       since this version contains bug fixes and improvements over older
@@ -1683,7 +1685,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     <step>
      <para>
       If restoring from backup, rename or delete the old installation
-      directory.  It is a good idea to rename the directory, rather than
+      directory if it is not version-specific.  It is a good idea to
+      rename the directory, rather than
       delete it, in case you have trouble and need to revert to it.  Keep
       in mind the directory might consume significant disk space.  To rename
       the directory, use a command like this:
@@ -1755,15 +1758,23 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
   </sect2>
 
-  <sect2 id="upgrading-methods-other">
-   <title>Non-Dump Upgrade Methods</title>
+  <sect2 id="upgrading-via-pg-upgrade">
+   <title>Upgrading Data via <application>pg_upgrade</></title>
 
    <para>
-    The <link linkend="pgupgrade">pg_upgrade</link> module allows an
-    installation to be migrated in-place from one major
-    <productname>PostgreSQL</> version to the next.  Upgrades can be
-    performed in minutes.
+    The <xref linkend="pgupgrade"> module allows an installation to
+    be migrated in-place from one major <productname>PostgreSQL</>
+    version to another.  Upgrades can be performed in minutes,
+    particularly with <option>--link</> mode.  It requires steps similar to
+    <application>pg_dumpall</> above, e.g.  starting/stopping the server,
+    running <application>initdb</>.  The <application>pg_upgrade</> <link
+    linkend="pgupgrade">documentation</> outlines the necessary steps.
    </para>
+
+  </sect2>
+
+  <sect2 id="upgrading-via-replication">
+   <title>Upgrading Data via Replication</title>
 
    <para>
     It is also possible to use certain replication methods, such as
