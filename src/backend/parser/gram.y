@@ -4610,9 +4610,7 @@ TriggerFuncArgs:
 TriggerFuncArg:
 			Iconst
 				{
-					char buf[64];
-					snprintf(buf, sizeof(buf), "%d", $1);
-					$$ = makeString(pstrdup(buf));
+					$$ = makeString(psprintf("%d", $1));
 				}
 			| FCONST								{ $$ = makeString($1); }
 			| Sconst								{ $$ = makeString($1); }
