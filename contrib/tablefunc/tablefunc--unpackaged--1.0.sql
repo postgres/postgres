@@ -1,7 +1,7 @@
 /* contrib/tablefunc/tablefunc--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION tablefunc" to load this file. \quit
+\echo Use "CREATE EXTENSION tablefunc FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION tablefunc ADD function normal_rand(integer,double precision,double precision);
 ALTER EXTENSION tablefunc ADD function crosstab(text);

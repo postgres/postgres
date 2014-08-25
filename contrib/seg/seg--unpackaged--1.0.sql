@@ -1,7 +1,7 @@
 /* contrib/seg/seg--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION seg" to load this file. \quit
+\echo Use "CREATE EXTENSION seg FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION seg ADD type seg;
 ALTER EXTENSION seg ADD function seg_in(cstring);
