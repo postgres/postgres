@@ -1,7 +1,7 @@
 /* contrib/pgcrypto/pgcrypto--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION pgcrypto" to load this file. \quit
+\echo Use "CREATE EXTENSION pgcrypto FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION pgcrypto ADD function digest(text,text);
 ALTER EXTENSION pgcrypto ADD function digest(bytea,text);

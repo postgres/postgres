@@ -1,7 +1,7 @@
 /* contrib/btree_gist/btree_gist--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION btree_gist" to load this file. \quit
+\echo Use "CREATE EXTENSION btree_gist FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION btree_gist ADD type gbtreekey4;
 ALTER EXTENSION btree_gist ADD function gbtreekey4_in(cstring);
