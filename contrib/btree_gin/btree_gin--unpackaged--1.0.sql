@@ -1,7 +1,7 @@
 /* contrib/btree_gin/btree_gin--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION btree_gin" to load this file. \quit
+\echo Use "CREATE EXTENSION btree_gin FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION btree_gin ADD function gin_btree_consistent(internal,smallint,anyelement,integer,internal,internal);
 ALTER EXTENSION btree_gin ADD function gin_extract_value_int2(smallint,internal);

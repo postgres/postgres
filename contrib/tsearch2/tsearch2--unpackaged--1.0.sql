@@ -1,7 +1,7 @@
 /* contrib/tsearch2/tsearch2--unpackaged--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION tsearch2" to load this file. \quit
+\echo Use "CREATE EXTENSION tsearch2 FROM unpackaged" to load this file. \quit
 
 ALTER EXTENSION tsearch2 ADD type @extschema@.tsvector;
 ALTER EXTENSION tsearch2 ADD type @extschema@.tsquery;
