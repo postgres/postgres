@@ -59,12 +59,13 @@ static void transientrel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static void refresh_matview_datafill(DestReceiver *dest, Query *query,
-						 const char *queryString, Oid relowner);
+						 const char *queryString);
 
 static char *make_temptable_name_n(char *tempname, int n);
 static void mv_GenerateOper(StringInfo buf, Oid opoid);
 
-static void refresh_by_match_merge(Oid matviewOid, Oid tempOid);
+static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
+						 int save_sec_context);
 static void refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap);
 
 static void OpenMatViewIncrementalMaintenance(void);
@@ -142,11 +143,14 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	List	   *actions;
 	Query	   *dataQuery;
 	Oid			tableSpace;
-	Oid			owner;
+	Oid			relowner;
 	Oid			OIDNewHeap;
 	DestReceiver *dest;
 	bool		concurrent;
 	LOCKMODE	lockmode;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 
 	/* Determine strength of lock needed. */
 	concurrent = stmt->concurrent;
@@ -231,13 +235,24 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 */
 	SetMatViewPopulatedState(matviewRel, !stmt->skipData);
 
+	relowner = matviewRel->rd_rel->relowner;
+
+	/*
+	 * Switch to the owner's userid, so that any functions are run as that
+	 * user.  Also arrange to make GUC variable changes local to this command.
+	 * Don't lock it down too tight to create a temporary table just yet.  We
+	 * will switch modes when we are about to execute user code.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(relowner,
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+	save_nestlevel = NewGUCNestLevel();
+
 	/* Concurrent refresh builds new data in temp tablespace, and does diff. */
 	if (concurrent)
 		tableSpace = GetDefaultTablespace(RELPERSISTENCE_TEMP);
 	else
 		tableSpace = matviewRel->rd_rel->reltablespace;
-
-	owner = matviewRel->rd_rel->relowner;
 
 	/*
 	 * Create the transient table that will receive the regenerated data. Lock
@@ -249,9 +264,15 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
 	dest = CreateTransientRelDestReceiver(OIDNewHeap);
 
+	/*
+	 * Now lock down security-restricted operations.
+	 */
+	SetUserIdAndSecContext(relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+
 	/* Generate the data, if wanted. */
 	if (!stmt->skipData)
-		refresh_matview_datafill(dest, dataQuery, queryString, owner);
+		refresh_matview_datafill(dest, dataQuery, queryString);
 
 	heap_close(matviewRel, NoLock);
 
@@ -262,7 +283,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 		PG_TRY();
 		{
-			refresh_by_match_merge(matviewOid, OIDNewHeap);
+			refresh_by_match_merge(matviewOid, OIDNewHeap, relowner,
+								   save_sec_context);
 		}
 		PG_CATCH();
 		{
@@ -274,6 +296,12 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	}
 	else
 		refresh_by_heap_swap(matviewOid, OIDNewHeap);
+
+	/* Roll back any GUC changes */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*
@@ -281,25 +309,12 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
  */
 static void
 refresh_matview_datafill(DestReceiver *dest, Query *query,
-						 const char *queryString, Oid relowner)
+						 const char *queryString)
 {
 	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
-	Oid			save_userid;
-	int			save_sec_context;
-	int			save_nestlevel;
 	Query	   *copied_query;
-
-	/*
-	 * Switch to the owner's userid, so that any functions are run as that
-	 * user.  Also lock down security-restricted operations and arrange to
-	 * make GUC variable changes local to this command.
-	 */
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(relowner,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-	save_nestlevel = NewGUCNestLevel();
 
 	/* Lock and rewrite, using a copy to preserve the original query. */
 	copied_query = copyObject(query);
@@ -344,12 +359,6 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 	FreeQueryDesc(queryDesc);
 
 	PopActiveSnapshot();
-
-	/* Roll back any GUC changes */
-	AtEOXact_GUC(false, save_nestlevel);
-
-	/* Restore userid and security context */
-	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 DestReceiver *
@@ -520,7 +529,8 @@ mv_GenerateOper(StringInfo buf, Oid opoid)
  * this command.
  */
 static void
-refresh_by_match_merge(Oid matviewOid, Oid tempOid)
+refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
+					   int save_sec_context)
 {
 	StringInfoData querybuf;
 	Relation	matviewRel;
@@ -534,9 +544,6 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	ListCell   *indexoidscan;
 	int16		relnatts;
 	bool	   *usedForQual;
-	Oid			save_userid;
-	int			save_sec_context;
-	int			save_nestlevel;
 
 	initStringInfo(&querybuf);
 	matviewRel = heap_open(matviewOid, NoLock);
@@ -586,6 +593,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 				 errdetail("Row: %s",
 			SPI_getvalue(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1))));
 	}
+
+	SetUserIdAndSecContext(relowner,
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Start building the query for creating the diff table. */
 	resetStringInfo(&querybuf);
@@ -681,9 +691,12 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_UTILITY)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
 
+	SetUserIdAndSecContext(relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+
 	/*
 	 * We have no further use for data from the "full-data" temp table, but we
-	 * must keep it around because its type is reference from the diff table.
+	 * must keep it around because its type is referenced from the diff table.
 	 */
 
 	/* Analyze the diff table. */
@@ -693,16 +706,6 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
 
 	OpenMatViewIncrementalMaintenance();
-
-	/*
-	 * Switch to the owner's userid, so that any functions are run as that
-	 * user.  Also lock down security-restricted operations and arrange to
-	 * make GUC variable changes local to this command.
-	 */
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(matviewRel->rd_rel->relowner,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-	save_nestlevel = NewGUCNestLevel();
 
 	/* Deletes must come before inserts; do them first. */
 	resetStringInfo(&querybuf);
@@ -723,12 +726,6 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 					 matviewname, diffname);
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_INSERT)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
-
-	/* Roll back any GUC changes */
-	AtEOXact_GUC(false, save_nestlevel);
-
-	/* Restore userid and security context */
-	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* We're done maintaining the materialized view. */
 	CloseMatViewIncrementalMaintenance();
