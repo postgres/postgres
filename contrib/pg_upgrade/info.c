@@ -332,8 +332,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		 * pg_dump only dumps valid indexes;  testing indisready is necessary in
 		 * 9.2, and harmless in earlier/later versions.
 		 */
-			" 		i.indisvalid IS DISTINCT FROM false AND "
-			" 		i.indisready IS DISTINCT FROM false AND "
+			"		i.indisvalid IS DISTINCT FROM false AND "
+			"		i.indisready IS DISTINCT FROM false AND "
 		/* exclude possible orphaned temp tables */
 			"	  ((n.nspname !~ '^pg_temp_' AND "
 			"	    n.nspname !~ '^pg_toast_temp_' AND "
@@ -347,7 +347,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		 * We have to gather the TOAST tables in later steps because we
 		 * can't schema-qualify TOAST tables.
 		 */
- 		 /* get TOAST heap */
+		 /* get TOAST heap */
 			"	toast_heap (reloid) AS ( "
 			"	SELECT reltoastrelid "
 			"	FROM regular_heap JOIN pg_catalog.pg_class c "
