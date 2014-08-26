@@ -125,13 +125,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	cluster->controldata.lc_collate = NULL;
 	cluster->controldata.lc_ctype = NULL;
 
-	/* Only in <= 8.3 */
-	if (GET_MAJOR_VERSION(cluster->major_version) <= 803)
-	{
-		cluster->controldata.float8_pass_by_value = false;
-		got_float8_pass_by_value = true;
-	}
-
 	/* Only in <= 9.2 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
 	{
@@ -143,23 +136,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	while (fgets(bufin, sizeof(bufin), output))
 	{
 		pg_log(PG_VERBOSE, "%s", bufin);
-
-#ifdef WIN32
-
-		/*
-		 * Due to an installer bug, LANG=C doesn't work for PG 8.3.3, but does
-		 * work 8.2.6 and 8.3.7, so check for non-ASCII output and suggest a
-		 * minor upgrade.
-		 */
-		if (GET_MAJOR_VERSION(cluster->major_version) <= 803)
-		{
-			for (p = bufin; *p; p++)
-				if (!isascii((unsigned char) *p))
-					pg_fatal("The 8.3 cluster's pg_controldata is incapable of outputting ASCII, even\n"
-							 "with LANG=C.  You must upgrade this cluster to a newer version of PostgreSQL\n"
-							 "8.3 to fix this bug.  PostgreSQL 8.3.7 and later are known to work properly.\n");
-		}
-#endif
 
 		if ((p = strstr(bufin, "pg_control version number:")) != NULL)
 		{
@@ -550,7 +526,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_date_is_int)
 			pg_log(PG_REPORT, "  dates/times are integers?\n");
 
-		/* value added in Postgres 8.4 */
 		if (!got_float8_pass_by_value)
 			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
@@ -598,17 +573,7 @@ check_control_data(ControlData *oldctrl,
 		pg_fatal("old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
-	{
-		pg_log(PG_WARNING,
-			   "\nOld and new pg_controldata date/time storage types do not match.\n");
-
-		/*
-		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more verbose
-		 */
-		pg_fatal("You will need to rebuild the new server with configure option\n"
-				 "--disable-integer-datetimes or get server binaries built with those\n"
-				 "options.\n");
-	}
+		pg_fatal("old and new pg_controldata date/time storage types do not match\n");
 
 	/*
 	 * We might eventually allow upgrades from checksum to no-checksum

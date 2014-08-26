@@ -73,7 +73,7 @@ output_check_banner(bool live_check)
 
 
 void
-check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
+check_and_dump_old_cluster(bool live_check)
 {
 	/* -- OLD -- */
 
@@ -99,29 +99,6 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
-
-	/* old = PG 8.3 checks? */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
-	{
-		old_8_3_check_for_name_data_type_usage(&old_cluster);
-		old_8_3_check_for_tsquery_usage(&old_cluster);
-		old_8_3_check_ltree_usage(&old_cluster);
-		if (user_opts.check)
-		{
-			old_8_3_rebuild_tsvector_tables(&old_cluster, true);
-			old_8_3_invalidate_hash_gin_indexes(&old_cluster, true);
-			old_8_3_invalidate_bpchar_pattern_ops_indexes(&old_cluster, true);
-		}
-		else
-
-			/*
-			 * While we have the old server running, create the script to
-			 * properly restore its sequence values but we report this at the
-			 * end.
-			 */
-			*sequence_script_file_name =
-				old_8_3_create_sequence_script(&old_cluster);
-	}
 
 	/* Pre-PG 9.4 had a different 'line' data type internal format */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 903)
@@ -183,31 +160,8 @@ report_clusters_compatible(void)
 
 
 void
-issue_warnings(char *sequence_script_file_name)
+issue_warnings(void)
 {
-	/* old = PG 8.3 warnings? */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
-	{
-		start_postmaster(&new_cluster, true);
-
-		/* restore proper sequence values using file created from old server */
-		if (sequence_script_file_name)
-		{
-			prep_status("Adjusting sequences");
-			exec_prog(UTILITY_LOG_FILE, NULL, true,
-					  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
-					  new_cluster.bindir, cluster_conn_opts(&new_cluster),
-					  sequence_script_file_name);
-			unlink(sequence_script_file_name);
-			check_ok();
-		}
-
-		old_8_3_rebuild_tsvector_tables(&new_cluster, false);
-		old_8_3_invalidate_hash_gin_indexes(&new_cluster, false);
-		old_8_3_invalidate_bpchar_pattern_ops_indexes(&new_cluster, false);
-		stop_postmaster(false);
-	}
-
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 	{
@@ -262,8 +216,8 @@ check_cluster_versions(void)
 	 * upgrades
 	 */
 
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 803)
-		pg_fatal("This utility can only upgrade from PostgreSQL version 8.3 and later.\n");
+	if (GET_MAJOR_VERSION(old_cluster.major_version) < 804)
+		pg_fatal("This utility can only upgrade from PostgreSQL version 8.4 and later.\n");
 
 	/* Only current PG version is supported as a target */
 	if (GET_MAJOR_VERSION(new_cluster.major_version) != GET_MAJOR_VERSION(PG_VERSION_NUM))

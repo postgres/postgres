@@ -69,7 +69,6 @@ char	   *output_files[] = {
 int
 main(int argc, char **argv)
 {
-	char	   *sequence_script_file_name = NULL;
 	char	   *analyze_script_file_name = NULL;
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
@@ -90,7 +89,7 @@ main(int argc, char **argv)
 
 	check_cluster_compatibility(live_check);
 
-	check_and_dump_old_cluster(live_check, &sequence_script_file_name);
+	check_and_dump_old_cluster(live_check);
 
 
 	/* -- NEW -- */
@@ -157,7 +156,7 @@ main(int argc, char **argv)
 	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 
-	issue_warnings(sequence_script_file_name);
+	issue_warnings();
 
 	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
@@ -167,7 +166,6 @@ main(int argc, char **argv)
 
 	pg_free(analyze_script_file_name);
 	pg_free(deletion_script_file_name);
-	pg_free(sequence_script_file_name);
 
 	cleanup();
 

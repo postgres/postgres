@@ -313,11 +313,10 @@ extern OSInfo os_info;
 /* check.c */
 
 void		output_check_banner(bool live_check);
-void check_and_dump_old_cluster(bool live_check,
-						   char **sequence_script_file_name);
+void check_and_dump_old_cluster(bool live_check);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
-void		issue_warnings(char *sequence_script_file_name);
+void		issue_warnings(void);
 void output_completion_banner(char *analyze_script_file_name,
 						 char *deletion_script_file_name);
 void		check_cluster_versions(void);
@@ -470,17 +469,6 @@ void		pg_putenv(const char *var, const char *val);
 void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 										 bool check_mode);
 void old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
-
-/* version_old_8_3.c */
-
-void		old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster);
-void		old_8_3_check_for_tsquery_usage(ClusterInfo *cluster);
-void		old_8_3_check_ltree_usage(ClusterInfo *cluster);
-void		old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode);
-void		old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode);
-void old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
-											  bool check_mode);
-char	   *old_8_3_create_sequence_script(ClusterInfo *cluster);
 
 /* parallel.c */
 void
