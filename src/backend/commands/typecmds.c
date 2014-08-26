@@ -1986,9 +1986,14 @@ AssignTypeArrayOid(void)
 {
 	Oid			type_array_oid;
 
-	/* Use binary-upgrade override for pg_type.typarray, if supplied. */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_array_pg_type_oid))
+	/* Use binary-upgrade override for pg_type.typarray? */
+	if (IsBinaryUpgrade)
 	{
+		if (!OidIsValid(binary_upgrade_next_array_pg_type_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("pg_type array OID value not set when in binary upgrade mode")));
+
 		type_array_oid = binary_upgrade_next_array_pg_type_oid;
 		binary_upgrade_next_array_pg_type_oid = InvalidOid;
 	}

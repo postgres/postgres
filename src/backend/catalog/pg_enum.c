@@ -341,8 +341,13 @@ restart:
 	}
 
 	/* Get a new OID for the new label */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_enum_oid))
+	if (IsBinaryUpgrade)
 	{
+		if (!OidIsValid(binary_upgrade_next_pg_enum_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("pg_enum OID value not set when in binary upgrade mode")));
+
 		/*
 		 * Use binary-upgrade override for pg_enum.oid, if supplied. During
 		 * binary upgrade, all pg_enum.oid's are set this way so they are

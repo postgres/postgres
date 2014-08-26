@@ -126,9 +126,14 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-	/* Use binary-upgrade override for pg_type.oid, if supplied. */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_type_oid))
+	/* Use binary-upgrade override for pg_type.oid? */
+	if (IsBinaryUpgrade)
 	{
+		if (!OidIsValid(binary_upgrade_next_pg_type_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("pg_type OID value not set when in binary upgrade mode")));
+
 		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
 		binary_upgrade_next_pg_type_oid = InvalidOid;
 	}
@@ -437,8 +442,13 @@ TypeCreate(Oid newTypeOid,
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
 		/* Use binary-upgrade override for pg_type.oid, if supplied. */
-		else if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_type_oid))
+		else if (IsBinaryUpgrade)
 		{
+			if (!OidIsValid(binary_upgrade_next_pg_type_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("pg_type OID value not set when in binary upgrade mode")));
+
 			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
 			binary_upgrade_next_pg_type_oid = InvalidOid;
 		}

@@ -379,10 +379,15 @@ CreateRole(CreateRoleStmt *stmt)
 
 	/*
 	 * pg_largeobject_metadata contains pg_authid.oid's, so we use the
-	 * binary-upgrade override, if specified.
+	 * binary-upgrade override.
 	 */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_authid_oid))
+	if (IsBinaryUpgrade)
 	{
+		if (!OidIsValid(binary_upgrade_next_pg_authid_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("pg_authid OID value not set when in binary upgrade mode")));
+
 		HeapTupleSetOid(tuple, binary_upgrade_next_pg_authid_oid);
 		binary_upgrade_next_pg_authid_oid = InvalidOid;
 	}
