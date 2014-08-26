@@ -3,8 +3,12 @@
 -- ===================================================================
 CREATE EXTENSION postgres_fdw;
 CREATE SERVER testserver1 FOREIGN DATA WRAPPER postgres_fdw;
-CREATE SERVER loopback FOREIGN DATA WRAPPER postgres_fdw
-  OPTIONS (dbname 'contrib_regression');
+DO $d$
+    BEGIN
+        EXECUTE $$CREATE SERVER loopback FOREIGN DATA WRAPPER postgres_fdw
+            OPTIONS (dbname '$$||current_database()||$$');$$;
+    END;
+$d$;
 CREATE USER MAPPING FOR public SERVER testserver1
 	OPTIONS (user 'value', password 'value');
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;

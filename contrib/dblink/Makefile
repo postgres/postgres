@@ -14,9 +14,6 @@ REGRESS = paths dblink
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 EXTRA_CLEAN = sql/paths.sql expected/paths.out
 
-# the db name is hard-coded in the tests
-override USE_MODULE_DB =
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

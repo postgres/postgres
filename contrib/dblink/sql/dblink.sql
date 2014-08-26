@@ -55,9 +55,13 @@ SELECT dblink_build_sql_update('"MySchema"."Foo"','1 2',2,'{"0", "a"}','{"99", "
 -- build a delete statement based on a local tuple,
 SELECT dblink_build_sql_delete('"MySchema"."Foo"','1 2',2,'{"0", "a"}');
 
+CREATE FUNCTION connection_parameters() RETURNS text LANGUAGE SQL AS $f$
+       SELECT $$dbname='$$||current_database()||$$'$$;
+$f$;
+
 -- regular old dblink
 SELECT *
-FROM dblink('dbname=contrib_regression','SELECT * FROM foo') AS t(a int, b text, c text[])
+FROM dblink(connection_parameters(),'SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- should generate "connection not available" error
@@ -78,9 +82,9 @@ DECLARE
 	detail text;
 BEGIN
 	PERFORM wait_pid(crash_pid)
-	FROM dblink('dbname=contrib_regression', $$
+	FROM dblink(connection_parameters(), $$
 		SELECT pg_backend_pid() FROM dblink(
-			'service=test_ldap dbname=contrib_regression',
+			'service=test_ldap '||connection_parameters(),
 			-- This string concatenation is a hack to shoehorn a
 			-- set_pgservicefile call into the SQL statement.
 			'SELECT 1' || set_pgservicefile('pg_service.conf')
@@ -94,7 +98,7 @@ END
 $pl$;
 
 -- create a persistent connection
-SELECT dblink_connect('dbname=contrib_regression');
+SELECT dblink_connect(connection_parameters());
 
 -- use the persistent connection
 SELECT *
@@ -155,10 +159,10 @@ WHERE t.a > 7;
 
 -- put more data into our slave table, first using arbitrary connection syntax
 -- but truncate the actual return value so we can use diff to check for success
-SELECT substr(dblink_exec('dbname=contrib_regression','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
+SELECT substr(dblink_exec(connection_parameters(),'INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
 
 -- create a persistent connection
-SELECT dblink_connect('dbname=contrib_regression');
+SELECT dblink_connect(connection_parameters());
 
 -- put more data into our slave table, using persistent connection syntax
 -- but truncate the actual return value so we can use diff to check for success
@@ -204,7 +208,7 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- create a named persistent connection
-SELECT dblink_connect('myconn','dbname=contrib_regression');
+SELECT dblink_connect('myconn',connection_parameters());
 
 -- use the named persistent connection
 SELECT *
@@ -218,10 +222,10 @@ WHERE t.a > 7;
 
 -- create a second named persistent connection
 -- should error with "duplicate connection name"
-SELECT dblink_connect('myconn','dbname=contrib_regression');
+SELECT dblink_connect('myconn',connection_parameters());
 
 -- create a second named persistent connection with a new name
-SELECT dblink_connect('myconn2','dbname=contrib_regression');
+SELECT dblink_connect('myconn2',connection_parameters());
 
 -- use the second named persistent connection
 SELECT *
@@ -307,7 +311,7 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- create a named persistent connection
-SELECT dblink_connect('myconn','dbname=contrib_regression');
+SELECT dblink_connect('myconn',connection_parameters());
 
 -- put more data into our slave table, using named persistent connection syntax
 -- but truncate the actual return value so we can use diff to check for success
@@ -341,15 +345,15 @@ SELECT dblink_disconnect('myconn');
 SELECT dblink_disconnect('myconn');
 
 -- test asynchronous queries
-SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+SELECT dblink_connect('dtest1', connection_parameters());
 SELECT * from
  dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
 
-SELECT dblink_connect('dtest2', 'dbname=contrib_regression');
+SELECT dblink_connect('dtest2', connection_parameters());
 SELECT * from
  dblink_send_query('dtest2', 'select * from foo where f1 > 2 and f1 < 7') as t1;
 
-SELECT dblink_connect('dtest3', 'dbname=contrib_regression');
+SELECT dblink_connect('dtest3', connection_parameters());
 SELECT * from
  dblink_send_query('dtest3', 'select * from foo where f1 > 6') as t1;
 
@@ -378,7 +382,7 @@ SELECT dblink_disconnect('dtest3');
 
 SELECT * from result;
 
-SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+SELECT dblink_connect('dtest1', connection_parameters());
 SELECT * from
  dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
 
@@ -388,8 +392,13 @@ SELECT dblink_disconnect('dtest1');
 
 -- test foreign data wrapper functionality
 CREATE ROLE dblink_regression_test;
-CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (dbname 'contrib_regression');
+DO $d$
+    BEGIN
+        EXECUTE $$CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
+            OPTIONS (dbname '$$||current_database()||$$')$$;
+    END;
+$d$;
+
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
@@ -412,7 +421,7 @@ DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
 
 -- test asynchronous notifications
-SELECT dblink_connect('dbname=contrib_regression');
+SELECT dblink_connect(connection_parameters());
 
 --should return listen
 SELECT dblink_exec('LISTEN regression');
@@ -458,7 +467,7 @@ SELECT dblink_build_sql_delete('test_dropped', '1', 1,
 SET datestyle = ISO, MDY;
 SET intervalstyle = postgres;
 SET timezone = UTC;
-SELECT dblink_connect('myconn','dbname=contrib_regression');
+SELECT dblink_connect('myconn',connection_parameters());
 SELECT dblink_exec('myconn', 'SET datestyle = GERMAN, DMY;');
 
 -- single row synchronous case
