@@ -913,7 +913,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			relation->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
-			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
+			if (isTempOrTempToastNamespace(relation->rd_rel->relnamespace))
 			{
 				relation->rd_backend = MyBackendId;
 				relation->rd_islocaltemp = true;
@@ -2811,7 +2811,7 @@ RelationBuildLocalRelation(const char *relname,
 			rel->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
-			Assert(isTempOrToastNamespace(relnamespace));
+			Assert(isTempOrTempToastNamespace(relnamespace));
 			rel->rd_backend = MyBackendId;
 			rel->rd_islocaltemp = true;
 			break;

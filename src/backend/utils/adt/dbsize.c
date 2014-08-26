@@ -836,7 +836,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 			backend = InvalidBackendId;
 			break;
 		case RELPERSISTENCE_TEMP:
-			if (isTempOrToastNamespace(relform->relnamespace))
+			if (isTempOrTempToastNamespace(relform->relnamespace))
 				backend = MyBackendId;
 			else
 			{
