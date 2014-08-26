@@ -307,8 +307,6 @@ static void initialize_reloptions(void);
 static void parse_one_reloption(relopt_value *option, char *text_str,
 					int text_len, bool validate);
 
-static bool is_valid_reloption(char *name);
-
 /*
  * initialize_reloptions
  *		initialization routine, must be called before parsing
@@ -381,25 +379,6 @@ initialize_reloptions(void)
 
 	/* flag the work is complete */
 	need_initialization = false;
-}
-
-/*
- * is_valid_reloption
- *		check if a reloption exists
- *
- */
-static bool
-is_valid_reloption(char *name)
-{
-	int i;
-
-	for (i = 0; relOpts[i]; i++)
-	{
-		if (pg_strcasecmp(relOpts[i]->name, name) == 0)
-			return true;
-	}
-
-	return false;
 }
 
 /*
@@ -693,11 +672,6 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 
 		if (isReset)
 		{
-			if (!is_valid_reloption(def->defname))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized parameter \"%s\"", def->defname)));
-
 			if (def->arg != NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),

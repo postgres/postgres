@@ -115,11 +115,6 @@ optionally_create_toast_tables(void)
 								"c.relkind IN ('r', 'm') AND "
 								"c.reltoastrelid = 0");
 
-		/* Suppress NOTICE output from non-existant constraints */
-		PQclear(executeQueryOrDie(conn, "SET client_min_messages = warning;"));
-		PQclear(executeQueryOrDie(conn, "SET log_min_messages = warning;"));
-		PQclear(executeQueryOrDie(conn, "SET log_min_error_statement = warning;"));
-
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
 		i_relname = PQfnumber(res, "relname");
@@ -130,16 +125,12 @@ optionally_create_toast_tables(void)
 					OPTIONALLY_CREATE_TOAST_OID));
 
 			/* dummy command that also triggers check for required TOAST table */
-			PQclear(executeQueryOrDie(conn, "ALTER TABLE %s.%s DROP CONSTRAINT IF EXISTS binary_upgrade_dummy_constraint;",
+			PQclear(executeQueryOrDie(conn, "ALTER TABLE %s.%s RESET (binary_upgrade_dummy_option);",
 					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
 					quote_identifier(PQgetvalue(res, rowno, i_relname))));
 		}
 
 		PQclear(res);
-
-		PQclear(executeQueryOrDie(conn, "RESET client_min_messages;"));
-		PQclear(executeQueryOrDie(conn, "RESET log_min_messages;"));
-		PQclear(executeQueryOrDie(conn, "RESET log_min_error_statement;"));
 
 		PQfinish(conn);
 	}
