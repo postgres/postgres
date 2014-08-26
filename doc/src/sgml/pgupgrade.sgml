@@ -65,7 +65,7 @@
  </para>
 
   <para>
-   pg_upgrade supports upgrades from 8.3.X and later to the current
+   pg_upgrade supports upgrades from 8.4.X and later to the current
    major release of <productname>PostgreSQL</>, including snapshot and alpha releases.
   </para>
  </refsect1>
@@ -314,12 +314,7 @@ pg_ctl -D /opt/PostgreSQL/9.0 stop
 NET STOP postgresql-8.4
 NET STOP postgresql-9.0
 </programlisting>
-
-     or
-
-<programlisting>
-NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different service name)
-</programlisting></para>
+    </para>
    </step>
 
    <step>
@@ -576,81 +571,6 @@ psql --username postgres --file script.sql postgres
    and copies must be created simultaneously or while the database server
    is down.
   </para>
-
- <refsect2>
-  <title>Limitations in Upgrading from PostgreSQL 8.3</title>
-
-  <para>
-   Upgrading <emphasis>from</emphasis> PostgreSQL 8.3 has additional restrictions not present
-   when upgrading from later PostgreSQL releases.  For example,
-   pg_upgrade will not work for upgrading from 8.3 if a user column
-   is defined as:
-   <itemizedlist>
-    <listitem>
-     <para>
-      a <type>tsquery</> data type
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      data type <type>name</> and is not the first column
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   You must drop any such columns and upgrade them manually.
-  </para>
-
-  <para>
-   pg_upgrade will not work if the <filename>ltree</>
-   contrib module is installed in a database.
-  </para>
-
-  <para>
-   pg_upgrade will require a table rebuild if:
-   <itemizedlist>
-    <listitem>
-     <para>
-      a user column is of data type <type>tsvector</type>
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   pg_upgrade will require a reindex if:
-   <itemizedlist>
-    <listitem>
-     <para>
-      an index is of type hash or GIN
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      an index uses <function>bpchar_pattern_ops</>
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   Also, the default datetime storage format changed to integer after
-   <productname>PostgreSQL</> 8.3. pg_upgrade will check that the datetime storage format
-   used by the old and new clusters match. Make sure your new cluster is
-   built with the configure flag <option>--disable-integer-datetimes</>.
-  </para>
-
-  <para>
-   For Windows users, note that due to different integer datetimes settings
-   used by the graphical installer and the MSI installer, it is only
-   possible to upgrade from version 8.3 of the installer distribution to
-   version 8.4 or later of the installer distribution. It is not
-   possible to upgrade from the MSI installer to the new graphical installer.
-  </para>
-
- </refsect2>
 
  </refsect1>
 
