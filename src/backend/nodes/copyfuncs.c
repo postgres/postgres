@@ -3330,6 +3330,7 @@ _copyCreateSeqStmt(const CreateSeqStmt *from)
 	COPY_NODE_FIELD(sequence);
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(ownerId);
+	COPY_SCALAR_FIELD(if_not_exists);
 
 	return newnode;
 }

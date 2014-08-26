@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+CREATE [ TEMPORARY | TEMP ] [ IF NOT EXISTS ] SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
@@ -85,6 +85,18 @@ SELECT * FROM <replaceable>name</replaceable>;
       permanent sequences with the same name are not visible (in this
       session) while the temporary sequence exists, unless they are
       referenced with schema-qualified names.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>IF NOT EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if a relation with the same name already exists.
+      A notice is issued in this case. Note that there is no guarantee that
+      the existing relation is anything like the sequence that would have
+      been created - it might not even be a sequence.
      </para>
     </listitem>
    </varlistentry>

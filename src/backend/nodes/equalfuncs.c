@@ -1566,6 +1566,7 @@ _equalCreateSeqStmt(const CreateSeqStmt *a, const CreateSeqStmt *b)
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(ownerId);
+	COMPARE_SCALAR_FIELD(if_not_exists);
 
 	return true;
 }

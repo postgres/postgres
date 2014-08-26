@@ -59,6 +59,7 @@ SELECT nextval('serialTest2_f6_seq');
 
 -- basic sequence operations using both text and oid references
 CREATE SEQUENCE sequence_test;
+CREATE SEQUENCE IF NOT EXISTS sequence_test;
 
 SELECT nextval('sequence_test'::text);
 SELECT nextval('sequence_test'::regclass);
