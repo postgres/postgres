@@ -56,7 +56,7 @@ SELECT dblink_build_sql_update('"MySchema"."Foo"','1 2',2,'{"0", "a"}','{"99", "
 SELECT dblink_build_sql_delete('"MySchema"."Foo"','1 2',2,'{"0", "a"}');
 
 CREATE FUNCTION connection_parameters() RETURNS text LANGUAGE SQL AS $f$
-       SELECT $$dbname='$$||current_database()||$$'$$;
+       SELECT $$dbname='$$||current_database()||$$' port=$$||current_setting('port');
 $f$;
 
 -- regular old dblink
@@ -395,7 +395,9 @@ CREATE ROLE dblink_regression_test;
 DO $d$
     BEGIN
         EXECUTE $$CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-            OPTIONS (dbname '$$||current_database()||$$')$$;
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
     END;
 $d$;
 

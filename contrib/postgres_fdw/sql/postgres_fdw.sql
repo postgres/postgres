@@ -8,7 +8,9 @@ CREATE SERVER testserver1 FOREIGN DATA WRAPPER postgres_fdw;
 DO $d$
     BEGIN
         EXECUTE $$CREATE SERVER loopback FOREIGN DATA WRAPPER postgres_fdw
-            OPTIONS (dbname '$$||current_database()||$$');$$;
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
     END;
 $d$;
 
