@@ -1851,7 +1851,7 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	if (len2 >= tss->buflen2)
 	{
 		pfree(tss->buf2);
-		tss->buflen1 = Max(len2 + 1, Min(tss->buflen2 * 2, MaxAllocSize));
+		tss->buflen2 = Max(len2 + 1, Min(tss->buflen2 * 2, MaxAllocSize));
 		tss->buf2 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen2);
 	}
 
