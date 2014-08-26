@@ -320,71 +320,75 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 
 	snprintf(query, sizeof(query),
-			 "CREATE TEMPORARY TABLE info_rels (reloid) AS SELECT c.oid "
-			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
-			 "	   ON c.relnamespace = n.oid "
-			 "LEFT OUTER JOIN pg_catalog.pg_index i "
-			 "	   ON c.oid = i.indexrelid "
-			 "WHERE relkind IN ('r', 'm', 'i', 'S') AND "
-
-	/*
-	 * pg_dump only dumps valid indexes;  testing indisready is necessary in
-	 * 9.2, and harmless in earlier/later versions.
-	 */
-			 " i.indisvalid IS DISTINCT FROM false AND "
-			 " i.indisready IS DISTINCT FROM false AND "
-	/* exclude possible orphaned temp tables */
-			 "  ((n.nspname !~ '^pg_temp_' AND "
-			 "    n.nspname !~ '^pg_toast_temp_' AND "
-	/* skip pg_toast because toast index have relkind == 'i', not 't' */
-			 "    n.nspname NOT IN ('pg_catalog', 'information_schema', "
-			 "						'binary_upgrade', 'pg_toast') AND "
-			 "	  c.oid >= %u) "
-			 "  OR (n.nspname = 'pg_catalog' AND "
-	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) ));",
-			 FirstNormalObjectId,
-	/* does pg_largeobject_metadata need to be migrated? */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
-	"" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'");
-
-	PQclear(executeQueryOrDie(conn, "%s", query));
-
-	/*
-	 * Get TOAST tables and indexes;  we have to gather the TOAST tables in
-	 * later steps because we can't schema-qualify TOAST tables.
-	 */
-	PQclear(executeQueryOrDie(conn,
-							  "INSERT INTO info_rels "
-							  "SELECT reltoastrelid "
-							  "FROM info_rels i JOIN pg_catalog.pg_class c "
-							  "		ON i.reloid = c.oid "
-						  "		AND c.reltoastrelid != %u", InvalidOid));
-	PQclear(executeQueryOrDie(conn,
-							  "INSERT INTO info_rels "
-							  "SELECT indexrelid "
-							  "FROM pg_index "
-							  "WHERE indisvalid "
-							  "    AND indrelid IN (SELECT reltoastrelid "
-							  "        FROM info_rels i "
-							  "            JOIN pg_catalog.pg_class c "
-							  "            ON i.reloid = c.oid "
-							  "            AND c.reltoastrelid != %u)",
-							  InvalidOid));
-
-	snprintf(query, sizeof(query),
-			 "SELECT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, c.reltablespace, %s "
-			 "FROM info_rels i JOIN pg_catalog.pg_class c "
-			 "		ON i.reloid = c.oid "
-			 "  JOIN pg_catalog.pg_namespace n "
-			 "	   ON c.relnamespace = n.oid "
-			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-			 "	   ON c.reltablespace = t.oid "
+		/* get regular heap */
+			"WITH regular_heap (reloid) AS ( "
+			"	SELECT c.oid "
+			"	FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
+			"		   ON c.relnamespace = n.oid "
+			"	LEFT OUTER JOIN pg_catalog.pg_index i "
+			"		   ON c.oid = i.indexrelid "
+			"	WHERE relkind IN ('r', 'm', 'i', 'S') AND "
+		/*
+		 * pg_dump only dumps valid indexes;  testing indisready is necessary in
+		 * 9.2, and harmless in earlier/later versions.
+		 */
+			" 		i.indisvalid IS DISTINCT FROM false AND "
+			" 		i.indisready IS DISTINCT FROM false AND "
+		/* exclude possible orphaned temp tables */
+			"	  ((n.nspname !~ '^pg_temp_' AND "
+			"	    n.nspname !~ '^pg_toast_temp_' AND "
+		/* skip pg_toast because toast index have relkind == 'i', not 't' */
+			"	    n.nspname NOT IN ('pg_catalog', 'information_schema', "
+			"							'binary_upgrade', 'pg_toast') AND "
+			"		  c.oid >= %u) OR "
+			"	  (n.nspname = 'pg_catalog' AND "
+	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) ))), "
+		/*
+		 * We have to gather the TOAST tables in later steps because we
+		 * can't schema-qualify TOAST tables.
+		 */
+ 		 /* get TOAST heap */
+			"	toast_heap (reloid) AS ( "
+			"	SELECT reltoastrelid "
+			"	FROM regular_heap JOIN pg_catalog.pg_class c "
+			"		ON regular_heap.reloid = c.oid "
+			"		AND c.reltoastrelid != %u), "
+		 /* get indexes on regular and TOAST heap */
+			"	all_index (reloid) AS ( "
+			"	SELECT indexrelid "
+			"	FROM pg_index "
+			"	WHERE indisvalid "
+			"    AND indrelid IN (SELECT reltoastrelid "
+			"        FROM (SELECT reloid FROM regular_heap "
+			"			   UNION ALL "
+			"			   SELECT reloid FROM toast_heap) all_heap "
+			"            JOIN pg_catalog.pg_class c "
+			"            ON all_heap.reloid = c.oid "
+			"            AND c.reltoastrelid != %u)) "
+		/* get all rels */
+			"SELECT c.oid, n.nspname, c.relname, "
+			"	c.relfilenode, c.reltablespace, %s "
+			"FROM (SELECT reloid FROM regular_heap "
+			"	   UNION ALL "
+			"	   SELECT reloid FROM toast_heap  "
+			"	   UNION ALL "
+			"	   SELECT reloid FROM all_index) all_rels "
+			"  JOIN pg_catalog.pg_class c "
+			"		ON all_rels.reloid = c.oid "
+			"  JOIN pg_catalog.pg_namespace n "
+			"	   ON c.relnamespace = n.oid "
+			"  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
+			"	   ON c.reltablespace = t.oid "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
-			 "ORDER BY 1;",
+			"ORDER BY 1;",
+			FirstNormalObjectId,
+	/* does pg_largeobject_metadata need to be migrated? */
+			(GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
+	"" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'",
+	InvalidOid, InvalidOid,
 	/* 9.2 removed the spclocation column */
-			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
-			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+			(GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
+			"t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
