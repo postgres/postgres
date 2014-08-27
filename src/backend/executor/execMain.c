@@ -1863,7 +1863,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	/*
 	 * Get and lock the updated version of the row; if fail, return NULL.
 	 */
-	copyTuple = EvalPlanQualFetch(estate, relation, lockmode,
+	copyTuple = EvalPlanQualFetch(estate, relation, lockmode, false /* wait */,
 								  tid, priorXmax);
 
 	if (copyTuple == NULL)
@@ -1922,6 +1922,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
  *	estate - executor state data
  *	relation - table containing tuple
  *	lockmode - requested tuple lock mode
+ *	noWait - wait mode to pass to heap_lock_tuple
  *	*tid - t_ctid from the outdated tuple (ie, next updated version)
  *	priorXmax - t_xmax from the outdated tuple
  *
@@ -1934,7 +1935,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
  * but we use "int" to avoid having to include heapam.h in executor.h.
  */
 HeapTuple
-EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
+EvalPlanQualFetch(EState *estate, Relation relation, int lockmode, bool noWait,
 				  ItemPointer tid, TransactionId priorXmax)
 {
 	HeapTuple	copyTuple = NULL;
@@ -1978,14 +1979,23 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 
 			/*
 			 * If tuple is being updated by other transaction then we have to
-			 * wait for its commit/abort.
+			 * wait for its commit/abort, or die trying.
 			 */
 			if (TransactionIdIsValid(SnapshotDirty.xmax))
 			{
 				ReleaseBuffer(buffer);
-				XactLockTableWait(SnapshotDirty.xmax,
-								  relation, &tuple.t_data->t_ctid,
-								  XLTW_FetchUpdated);
+				if (noWait)
+				{
+					if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
+						ereport(ERROR,
+								(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+								 errmsg("could not obtain lock on row in relation \"%s\"",
+										RelationGetRelationName(relation))));
+				}
+				else
+					XactLockTableWait(SnapshotDirty.xmax,
+									  relation, &tuple.t_data->t_ctid,
+									  XLTW_FetchUpdated);
 				continue;		/* loop back to repeat heap_fetch */
 			}
 
@@ -2012,7 +2022,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 */
 			test = heap_lock_tuple(relation, &tuple,
 								   estate->es_output_cid,
-								   lockmode, false /* wait */ ,
+								   lockmode, noWait,
 								   false, &buffer, &hufd);
 			/* We now have two pins on the buffer, get rid of one */
 			ReleaseBuffer(buffer);

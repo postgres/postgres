@@ -1,0 +1,37 @@
+Parsed test spec with 3 sessions
+
+starting permutation: sl1_prep upd_getlock sl1_exec upd_doupdate lk1_doforshare upd_releaselock
+step sl1_prep: 
+	PREPARE sl1_run AS SELECT id FROM test_nowait WHERE pg_advisory_lock(0) is not null FOR UPDATE NOWAIT;
+
+step upd_getlock: 
+	SELECT pg_advisory_lock(0);
+
+pg_advisory_lock
+
+               
+step sl1_exec: 
+	BEGIN ISOLATION LEVEL READ COMMITTED;
+	EXECUTE sl1_run;
+	SELECT xmin, xmax, ctid, * FROM test_nowait;
+ <waiting ...>
+step upd_doupdate: 
+	BEGIN ISOLATION LEVEL READ COMMITTED;
+	UPDATE test_nowait SET value = value WHERE id % 2 = 0;
+	COMMIT;
+
+step lk1_doforshare: 
+	BEGIN ISOLATION LEVEL READ COMMITTED;
+	SELECT id FROM test_nowait WHERE id % 2 = 0 FOR SHARE;
+
+id             
+
+2              
+step upd_releaselock: 
+	SELECT pg_advisory_unlock(0);
+
+pg_advisory_unlock
+
+t              
+step sl1_exec: <... completed>
+error in steps upd_releaselock sl1_exec: ERROR:  could not obtain lock on row in relation "test_nowait"
