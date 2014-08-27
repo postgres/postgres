@@ -1,3 +1,17 @@
+/*-------------------------------------------------------------------------
+ *
+ * streamutil.h
+ *
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *		  src/bin/pg_basebackup/streamutil.h
+ *-------------------------------------------------------------------------
+ */
+
+#ifndef STREAMUTIL_H
+#define STREAMUTIL_H
+
 #include "libpq-fe.h"
 
 extern const char *progname;
@@ -22,3 +36,5 @@ extern bool feTimestampDifferenceExceeds(int64 start_time, int64 stop_time,
 							 int msec);
 extern void fe_sendint64(int64 i, char *buf);
 extern int64 fe_recvint64(char *buf);
+
+#endif	/* STREAMUTIL_H */
