@@ -2274,8 +2274,9 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Maximum time between automatic WAL checkpoints, in
-        seconds. The default is five minutes (<literal>5min</>).
+        Maximum time between automatic WAL checkpoints, in seconds.
+        The valid range is between 30 seconds and one hour.
+        The default is five minutes (<literal>5min</>).
         Increasing this parameter can increase the amount of time needed
         for crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -2294,7 +2295,6 @@ include_dir 'conf.d'
        <para>
         Specifies the target of checkpoint completion, as a fraction of
         total time between checkpoints. The default is 0.5.
-
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
