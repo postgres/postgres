@@ -92,7 +92,6 @@ typedef struct relopt_int
 	int			default_val;
 	int			min;
 	int			max;
-	int			flags;
 } relopt_int;
 
 typedef struct relopt_real
@@ -245,7 +244,7 @@ extern relopt_kind add_reloption_kind(void);
 extern void add_bool_reloption(bits32 kinds, char *name, char *desc,
 				   bool default_val);
 extern void add_int_reloption(bits32 kinds, char *name, char *desc,
-				  int default_val, int min_val, int max_val, int flags_val);
+				  int default_val, int min_val, int max_val);
 extern void add_real_reloption(bits32 kinds, char *name, char *desc,
 				   double default_val, double min_val, double max_val);
 extern void add_string_reloption(bits32 kinds, char *name, char *desc,
