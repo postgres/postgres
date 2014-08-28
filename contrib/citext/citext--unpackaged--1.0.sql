@@ -105,7 +105,12 @@ UPDATE pg_catalog.pg_attribute SET attcollation = 100
 FROM typeoids
 WHERE atttypid = typeoids.typoid;
 
-UPDATE pg_catalog.pg_index SET indcollation[0] = 100
+-- Updating the index indcollations is particularly tedious, but since we
+-- don't currently allow SQL assignment to individual elements of oidvectors,
+-- there's little choice.
+
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, '^0', '100')::pg_catalog.oidvector
 WHERE indclass[0] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -115,7 +120,8 @@ WHERE indclass[0] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[1] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[1] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -125,7 +131,8 @@ WHERE indclass[1] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[2] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[2] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -135,7 +142,8 @@ WHERE indclass[2] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[3] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[3] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -145,7 +153,8 @@ WHERE indclass[3] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[4] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[4] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -155,7 +164,8 @@ WHERE indclass[4] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[5] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[5] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -165,7 +175,8 @@ WHERE indclass[5] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[6] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[6] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
@@ -175,7 +186,8 @@ WHERE indclass[6] IN (
   WHERE opcintype = typeoids.typoid
 );
 
-UPDATE pg_catalog.pg_index SET indcollation[7] = 100
+UPDATE pg_catalog.pg_index SET indcollation =
+  pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[7] IN (
   WITH RECURSIVE typeoids(typoid) AS
     ( SELECT 'citext'::pg_catalog.regtype UNION
