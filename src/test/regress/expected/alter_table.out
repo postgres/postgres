@@ -1811,6 +1811,20 @@ Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
 
+-- Set a storage parameter with unit
+CREATE TABLE test_param_unit (a text) WITH (autovacuum_vacuum_cost_delay = '80ms');
+ALTER TABLE test_param_unit SET (autovacuum_vacuum_cost_delay = '3min');
+ERROR:  value 3min out of bounds for option "autovacuum_vacuum_cost_delay"
+DETAIL:  Valid values are between "0" and "100".
+ALTER TABLE test_param_unit SET (autovacuum_analyze_threshold = '3min'); -- fails
+ERROR:  invalid value for integer option "autovacuum_analyze_threshold": 3min
+\d+ test_param_unit
+                  Table "public.test_param_unit"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text |           | extended |              | 
+Options: autovacuum_vacuum_cost_delay=80ms
+
 --
 -- lock levels
 --

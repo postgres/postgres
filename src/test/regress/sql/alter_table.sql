@@ -1254,6 +1254,12 @@ ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 \d test_inh_check
 \d test_inh_check_child
 
+-- Set a storage parameter with unit
+CREATE TABLE test_param_unit (a text) WITH (autovacuum_vacuum_cost_delay = '80ms');
+ALTER TABLE test_param_unit SET (autovacuum_vacuum_cost_delay = '3min');
+ALTER TABLE test_param_unit SET (autovacuum_analyze_threshold = '3min'); -- fails
+\d+ test_param_unit
+
 --
 -- lock levels
 --

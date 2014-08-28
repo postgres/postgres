@@ -97,7 +97,7 @@ static relopt_int intRelOpts[] =
 			"Packs table pages only to this percentage",
 			RELOPT_KIND_HEAP
 		},
-		HEAP_DEFAULT_FILLFACTOR, HEAP_MIN_FILLFACTOR, 100
+		HEAP_DEFAULT_FILLFACTOR, HEAP_MIN_FILLFACTOR, 100, 0
 	},
 	{
 		{
@@ -105,7 +105,7 @@ static relopt_int intRelOpts[] =
 			"Packs btree index pages only to this percentage",
 			RELOPT_KIND_BTREE
 		},
-		BTREE_DEFAULT_FILLFACTOR, BTREE_MIN_FILLFACTOR, 100
+		BTREE_DEFAULT_FILLFACTOR, BTREE_MIN_FILLFACTOR, 100, 0
 	},
 	{
 		{
@@ -113,7 +113,7 @@ static relopt_int intRelOpts[] =
 			"Packs hash index pages only to this percentage",
 			RELOPT_KIND_HASH
 		},
-		HASH_DEFAULT_FILLFACTOR, HASH_MIN_FILLFACTOR, 100
+		HASH_DEFAULT_FILLFACTOR, HASH_MIN_FILLFACTOR, 100, 0
 	},
 	{
 		{
@@ -121,7 +121,7 @@ static relopt_int intRelOpts[] =
 			"Packs gist index pages only to this percentage",
 			RELOPT_KIND_GIST
 		},
-		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
+		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100, 0
 	},
 	{
 		{
@@ -129,7 +129,7 @@ static relopt_int intRelOpts[] =
 			"Packs spgist index pages only to this percentage",
 			RELOPT_KIND_SPGIST
 		},
-		SPGIST_DEFAULT_FILLFACTOR, SPGIST_MIN_FILLFACTOR, 100
+		SPGIST_DEFAULT_FILLFACTOR, SPGIST_MIN_FILLFACTOR, 100, 0
 	},
 	{
 		{
@@ -137,7 +137,7 @@ static relopt_int intRelOpts[] =
 			"Minimum number of tuple updates or deletes prior to vacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 0, INT_MAX
+		-1, 0, INT_MAX, 0
 	},
 	{
 		{
@@ -145,7 +145,7 @@ static relopt_int intRelOpts[] =
 			"Minimum number of tuple inserts, updates or deletes prior to analyze",
 			RELOPT_KIND_HEAP
 		},
-		-1, 0, INT_MAX
+		-1, 0, INT_MAX, 0
 	},
 	{
 		{
@@ -153,7 +153,7 @@ static relopt_int intRelOpts[] =
 			"Vacuum cost delay in milliseconds, for autovacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 0, 100
+		-1, 0, 100, GUC_UNIT_MS
 	},
 	{
 		{
@@ -161,7 +161,7 @@ static relopt_int intRelOpts[] =
 			"Vacuum cost amount available before napping, for autovacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 1, 10000
+		-1, 1, 10000, 0
 	},
 	{
 		{
@@ -169,7 +169,7 @@ static relopt_int intRelOpts[] =
 			"Minimum age at which VACUUM should freeze a table row, for autovacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 0, 1000000000
+		-1, 0, 1000000000, 0
 	},
 	{
 		{
@@ -177,7 +177,7 @@ static relopt_int intRelOpts[] =
 			"Minimum multixact age at which VACUUM should freeze a row multixact's, for autovacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 0, 1000000000
+		-1, 0, 1000000000, 0
 	},
 	{
 		{
@@ -185,7 +185,7 @@ static relopt_int intRelOpts[] =
 			"Age at which to autovacuum a table to prevent transaction ID wraparound",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 100000000, 2000000000
+		-1, 100000000, 2000000000, 0
 	},
 	{
 		{
@@ -193,21 +193,21 @@ static relopt_int intRelOpts[] =
 			"Multixact age at which to autovacuum a table to prevent multixact wraparound",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 100000000, 2000000000
+		-1, 100000000, 2000000000, 0
 	},
 	{
 		{
 			"autovacuum_freeze_table_age",
 			"Age at which VACUUM should perform a full table sweep to freeze row versions",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
-		}, -1, 0, 2000000000
+		}, -1, 0, 2000000000, 0
 	},
 	{
 		{
 			"autovacuum_multixact_freeze_table_age",
 			"Age of multixact at which VACUUM should perform a full table sweep to freeze row versions",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
-		}, -1, 0, 2000000000
+		}, -1, 0, 2000000000, 0
 	},
 
 	/* list terminator */
@@ -503,7 +503,7 @@ add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
  */
 void
 add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
-				  int min_val, int max_val)
+				  int min_val, int max_val, int flags_val)
 {
 	relopt_int *newoption;
 
@@ -512,6 +512,7 @@ add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
 	newoption->default_val = default_val;
 	newoption->min = min_val;
 	newoption->max = max_val;
+	newoption->flags = flags_val;
 
 	add_reloption((relopt_gen *) newoption);
 }
@@ -1000,12 +1001,15 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 		case RELOPT_TYPE_INT:
 			{
 				relopt_int *optint = (relopt_int *) option->gen;
+				const char *hintmsg;
 
-				parsed = parse_int(value, &option->values.int_val, 0, NULL);
+				parsed = parse_int(value, &option->values.int_val,
+								   optint->flags, &hintmsg);
 				if (validate && !parsed)
 					ereport(ERROR,
 					   (errmsg("invalid value for integer option \"%s\": %s",
-							   option->gen->name, value)));
+							   option->gen->name, value),
+						hintmsg ? errhint("%s", _(hintmsg)) : 0));
 				if (validate && (option->values.int_val < optint->min ||
 								 option->values.int_val > optint->max))
 					ereport(ERROR,
