@@ -688,11 +688,16 @@ similar_escape(PG_FUNCTION_ARGS)
 		elen = VARSIZE_ANY_EXHDR(esc_text);
 		if (elen == 0)
 			e = NULL;			/* no escape character */
-		else if (elen != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
-					 errmsg("invalid escape string"),
-				  errhint("Escape string must be empty or one character.")));
+		else
+		{
+			int			escape_mblen = pg_mbstrlen_with_len(e, elen);
+
+			if (escape_mblen > 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
+						 errmsg("invalid escape string"),
+						 errhint("Escape string must be empty or one character.")));
+		}
 	}
 
 	/*----------
@@ -724,6 +729,54 @@ similar_escape(PG_FUNCTION_ARGS)
 	{
 		char		pchar = *p;
 
+		/*
+		 * If both the escape character and the current character from the
+		 * pattern are multi-byte, we need to take the slow path.
+		 *
+		 * But if one of them is single-byte, we can process the pattern one
+		 * byte at a time, ignoring multi-byte characters.  (This works
+		 * because all server-encodings have the property that a valid
+		 * multi-byte character representation cannot contain the
+		 * representation of a valid single-byte character.)
+		 */
+
+		if (elen > 1)
+		{
+			int mblen = pg_mblen(p);
+			if (mblen > 1)
+			{
+				/* slow, multi-byte path */
+				if (afterescape)
+				{
+					*r++ = '\\';
+					memcpy(r, p, mblen);
+					r += mblen;
+					afterescape = false;
+				}
+				else if (e && elen == mblen && memcmp(e, p, mblen) == 0)
+				{
+					/* SQL99 escape character; do not send to output */
+					afterescape = true;
+				}
+				else
+				{
+					/*
+					 * We know it's a multi-byte character, so we don't need
+					 * to do all the comparisons to single-byte characters
+					 * that we do below.
+					 */
+					memcpy(r, p, mblen);
+					r += mblen;
+				}
+
+				p += mblen;
+				plen -= mblen;
+
+				continue;
+			}
+		}
+
+		/* fast path */
 		if (afterescape)
 		{
 			if (pchar == '"' && !incharclass)	/* for SUBSTRING patterns */
