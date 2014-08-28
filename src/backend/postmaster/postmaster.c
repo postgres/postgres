@@ -4083,8 +4083,7 @@ BackendRun(Port *port)
 
 	/*
 	 * Pass any backend switches specified with -o on the postmaster's own
-	 * command line.  We assume these are secure.  (It's OK to mangle
-	 * ExtraOptions now, since we're safely inside a subprocess.)
+	 * command line.  We assume these are secure.
 	 */
 	pg_split_opts(av, &ac, ExtraOptions);
 

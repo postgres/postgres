@@ -4734,7 +4734,10 @@ StartupMessage (F)
                 set at backend start time might be listed.  Such settings
                 will be applied during backend start (after parsing the
                 command-line options if any).  The values will act as
-                session defaults.
+                session defaults.  Spaces in option values need to be escaped
+                with a backslash (<literal>\</>). A literal backslash can be
+                passed by escaping it with another backslash
+                (i.e <literal>\\</>).
 </para>
 </listitem>
 </varlistentry>

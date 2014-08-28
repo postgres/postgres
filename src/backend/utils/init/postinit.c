@@ -409,32 +409,57 @@ InitCommunication(void)
 /*
  * pg_split_opts -- split a string of options and append it to an argv array
  *
- * NB: the input string is destructively modified!	Also, caller is responsible
- * for ensuring the argv array is large enough.  The maximum possible number
- * of arguments added by this routine is (strlen(optstr) + 1) / 2.
+ * The caller is responsible for ensuring the argv array is large enough.  The
+ * maximum possible number of arguments added by this routine is
+ * (strlen(optstr) + 1) / 2.
  *
- * Since no current POSTGRES arguments require any quoting characters,
- * we can use the simple-minded tactic of assuming each set of space-
- * delimited characters is a separate argv element.
- *
- * If you don't like that, well, we *used* to pass the whole option string
- * as ONE argument to execl(), which was even less intelligent...
+ * Because some option values can contain spaces we allow escaping using
+ * backslashes, with \\ representing a literal backslash.
  */
 void
 pg_split_opts(char **argv, int *argcp, char *optstr)
 {
+	StringInfoData s;
+
+	initStringInfo(&s);
+
 	while (*optstr)
 	{
+		bool last_was_escape = false;
+
+		resetStringInfo(&s);
+
+		/* skip over leading space */
 		while (isspace((unsigned char) *optstr))
 			optstr++;
+
 		if (*optstr == '\0')
 			break;
-		argv[(*argcp)++] = optstr;
-		while (*optstr && !isspace((unsigned char) *optstr))
+
+		/*
+		 * Parse a single option + value, stopping at the first space, unless
+		 * it's escaped.
+		 */
+		while (*optstr)
+		{
+			if (isspace(*optstr) && !last_was_escape)
+				break;
+
+			if (!last_was_escape && *optstr == '\\')
+				last_was_escape = true;
+			else
+			{
+				last_was_escape = false;
+				appendStringInfoChar(&s, *optstr);
+			}
+
 			optstr++;
-		if (*optstr)
-			*optstr++ = '\0';
+		}
+
+		/* now store the option */
+		argv[(*argcp)++] = pstrdup(s.data);
 	}
+	resetStringInfo(&s);
 }
 
 /*
@@ -981,7 +1006,6 @@ process_startup_options(Port *port, bool am_superuser)
 
 		av[ac++] = "postgres";
 
-		/* Note this mangles port->cmdline_options */
 		pg_split_opts(av, &ac, port->cmdline_options);
 
 		av[ac] = NULL;
