@@ -343,8 +343,8 @@ do_copy(const char *args)
 
 		/* make sure the specified file is not a directory */
 		if ((result = fstat(fileno(copystream), &st)) < 0)
-			psql_error("could not stat file: %s\n",
-					   strerror(errno));
+			psql_error("could not stat file \"%s\": %s\n",
+					   options->file, strerror(errno));
 
 		if (result == 0 && S_ISDIR(st.st_mode))
 			psql_error("%s: cannot copy from/to a directory\n",

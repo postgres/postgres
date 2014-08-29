@@ -52,7 +52,7 @@ validateWithCheckOption(char *value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid value for \"check_option\" option"),
-				 errdetail("Valid values are \"local\", and \"cascaded\".")));
+				 errdetail("Valid values are \"local\" and \"cascaded\".")));
 	}
 }
 

@@ -270,7 +270,7 @@ exec_command(const char *cmd,
 			pw = getpwuid(user_id);
 			if (!pw)
 			{
-				psql_error("could not get home directory for user id %ld: %s\n",
+				psql_error("could not get home directory for user ID %ld: %s\n",
 						   (long) user_id,
 						 errno ? strerror(errno) : _("user does not exist"));
 				exit(EXIT_FAILURE);

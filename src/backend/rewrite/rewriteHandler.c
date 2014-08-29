@@ -2088,10 +2088,10 @@ view_query_is_auto_updatable(Query *viewquery, bool check_cols)
 	 * unique row in the underlying base relation.
 	 */
 	if (viewquery->hasAggs)
-		return gettext_noop("Views that return aggregate functions are not automatically updatable");
+		return gettext_noop("Views that return aggregate functions are not automatically updatable.");
 
 	if (viewquery->hasWindowFuncs)
-		return gettext_noop("Views that return window functions are not automatically updatable");
+		return gettext_noop("Views that return window functions are not automatically updatable.");
 
 	if (expression_returns_set((Node *) viewquery->targetList))
 		return gettext_noop("Views that return set-returning functions are not automatically updatable.");

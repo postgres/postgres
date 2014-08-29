@@ -151,11 +151,11 @@ DETAIL:  Views containing HAVING are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view4;
 ERROR:  cannot delete from view "ro_view4"
-DETAIL:  Views that return aggregate functions are not automatically updatable
+DETAIL:  Views that return aggregate functions are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view5;
 ERROR:  cannot delete from view "ro_view5"
-DETAIL:  Views that return window functions are not automatically updatable
+DETAIL:  Views that return window functions are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view6;
 ERROR:  cannot delete from view "ro_view6"
@@ -1497,7 +1497,7 @@ SELECT * FROM base_tbl;
 
 ALTER VIEW rw_view1 SET (check_option=here); -- invalid
 ERROR:  invalid value for "check_option" option
-DETAIL:  Valid values are "local", and "cascaded".
+DETAIL:  Valid values are "local" and "cascaded".
 ALTER VIEW rw_view1 SET (check_option=local);
 INSERT INTO rw_view2 VALUES (-20); -- should fail
 ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
