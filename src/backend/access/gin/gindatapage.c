@@ -641,20 +641,24 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 			{
 				lastleftinfo = dlist_container(leafSegmentInfo, node, leaf->lastleft);
 
-				segsize = SizeOfGinPostingList(lastleftinfo->seg);
-				if (append)
+				/* ignore deleted segments */
+				if (lastleftinfo->action != GIN_SEGMENT_DELETE)
 				{
-					if ((leaf->lsize - segsize) - (leaf->lsize - segsize) < BLCKSZ / 4)
-						break;
-				}
-				else
-				{
-					if ((leaf->lsize - segsize) - (leaf->rsize + segsize) < 0)
-						break;
-				}
+					segsize = SizeOfGinPostingList(lastleftinfo->seg);
+					if (append)
+					{
+						if ((leaf->lsize - segsize) - (leaf->lsize - segsize) < BLCKSZ / 4)
+							break;
+					}
+					else
+					{
+						if ((leaf->lsize - segsize) - (leaf->rsize + segsize) < 0)
+							break;
+					}
 
-				leaf->lsize -= segsize;
-				leaf->rsize += segsize;
+					leaf->lsize -= segsize;
+					leaf->rsize += segsize;
+				}
 				leaf->lastleft = dlist_prev_node(&leaf->segments, leaf->lastleft);
 			}
 		}
