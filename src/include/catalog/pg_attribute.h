@@ -136,7 +136,11 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	/* Is dropped (ie, logically invisible) or not */
 	bool		attisdropped;
 
-	/* Has a local definition (hence, do not drop when attinhcount is 0) */
+	/*
+	 * Has a local definition (hence, do not drop when attinhcount is 0)
+	 * This is set and remains set if the column was _ever_
+	 * local/not-inherited, e.g. this can be set by ALTER TABLE NO INHERIT.
+	 */
 	bool		attislocal;
 
 	/* Number of times inherited from direct parent relation(s) */
