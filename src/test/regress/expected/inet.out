@@ -204,6 +204,18 @@ SELECT '' AS ten, i, c,
      | ::4.3.2.1/24     | ::ffff:1.2.3.4/128 | t  | t  | f  | f  | f  | t  | f  | f   | t   | t   | t
 (17 rows)
 
+SELECT max(i) AS max, min(i) AS min FROM INET_TBL;
+     max     |    min    
+-------------+-----------
+ 10:23::ffff | 9.1.2.3/8
+(1 row)
+
+SELECT max(c) AS max, min(c) AS min FROM INET_TBL;
+       max       |    min     
+-----------------+------------
+ 10:23::8000/113 | 10.0.0.0/8
+(1 row)
+
 -- check the conversion to/from text and set_netmask
 SELECT '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
  ten |   set_masklen    

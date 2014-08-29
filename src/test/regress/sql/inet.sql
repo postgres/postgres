@@ -56,6 +56,9 @@ SELECT '' AS ten, i, c,
   i && c AS ovr
   FROM INET_TBL;
 
+SELECT max(i) AS max, min(i) AS min FROM INET_TBL;
+SELECT max(c) AS max, min(c) AS min FROM INET_TBL;
+
 -- check the conversion to/from text and set_netmask
 SELECT '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
 

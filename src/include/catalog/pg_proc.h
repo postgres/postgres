@@ -2122,6 +2122,10 @@ DATA(insert OID = 922 (  network_le			PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 1
 DATA(insert OID = 923 (  network_gt			PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_gt _null_ _null_ _null_ ));
 DATA(insert OID = 924 (  network_ge			PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_ge _null_ _null_ _null_ ));
 DATA(insert OID = 925 (  network_ne			PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_ne _null_ _null_ _null_ ));
+DATA(insert OID = 3562 (  network_larger	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 "869 869" _null_ _null_ _null_ _null_	network_larger _null_ _null_ _null_ ));
+DESCR("larger of two");
+DATA(insert OID = 3563 (  network_smaller	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 "869 869" _null_ _null_ _null_ _null_	network_smaller _null_ _null_ _null_ ));
+DESCR("smaller of two");
 DATA(insert OID = 926 (  network_cmp		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "869 869" _null_ _null_ _null_ _null_	network_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 927 (  network_sub		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_sub _null_ _null_ _null_ ));
@@ -3163,6 +3167,8 @@ DATA(insert OID = 2244 (  max				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 1042 "
 DESCR("maximum value of all bpchar input values");
 DATA(insert OID = 2797 (  max				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 27 "27" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("maximum value of all tid input values");
+DATA(insert OID = 3564 (  max				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 869 "869" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
+DESCR("maximum value of all inet input values");
 
 DATA(insert OID = 2131 (  min				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 20 "20" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("minimum value of all bigint input values");
@@ -3202,6 +3208,8 @@ DATA(insert OID = 2245 (  min				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 1042 "
 DESCR("minimum value of all bpchar input values");
 DATA(insert OID = 2798 (  min				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 27 "27" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("minimum value of all tid input values");
+DATA(insert OID = 3565 (  min				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 869 "869" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
+DESCR("minimum value of all inet input values");
 
 /* count has two forms: count(any) and count(*) */
 DATA(insert OID = 2147 (  count				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 20 "2276" _null_ _null_ _null_ _null_	aggregate_dummy _null_ _null_ _null_ ));

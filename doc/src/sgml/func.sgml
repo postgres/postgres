@@ -12192,7 +12192,8 @@ NULL baz</literallayout>(3 rows)</entry>
        </indexterm>
        <function>max(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
-      <entry>any array, numeric, string, or date/time type</entry>
+      <entry>any numeric, string, date/time, network, or enum type,
+             or arrays of these types</entry>
       <entry>same as argument type</entry>
       <entry>
        maximum value of <replaceable
@@ -12208,7 +12209,8 @@ NULL baz</literallayout>(3 rows)</entry>
        </indexterm>
        <function>min(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
-      <entry>any array, numeric, string, or date/time type</entry>
+      <entry>any numeric, string, date/time, network, or enum type,
+             or arrays of these types</entry>
       <entry>same as argument type</entry>
       <entry>
        minimum value of <replaceable
