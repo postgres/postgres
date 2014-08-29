@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ALTER TABLESPACE</refname>
-  <refpurpose>change the definition of a tablespace or affect objects of a tablespace</refpurpose>
+  <refpurpose>change the definition of a tablespace</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
