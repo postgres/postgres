@@ -11840,10 +11840,9 @@ esac
 
 # System's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
-# (Note: the AC_REPLACE_FUNCS probe fails on Windows, where the available
-# versions of getaddrinfo don't follow normal C call protocol.  This is OK
-# because we want to use our own getaddrinfo.c on Windows anyway.)
-if test x"$ac_cv_type_struct_addrinfo" = xyes ; then
+# We use only our own getaddrinfo.c on Windows, but it's time to revisit that.
+if test x"$ac_cv_type_struct_addrinfo" = xyes && \
+   test "$PORTNAME" != "win32"; then
   ac_fn_c_check_func "$LINENO" "getaddrinfo" "ac_cv_func_getaddrinfo"
 if test "x$ac_cv_func_getaddrinfo" = xyes; then :
   $as_echo "#define HAVE_GETADDRINFO 1" >>confdefs.h
