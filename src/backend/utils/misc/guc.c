@@ -6834,7 +6834,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 		if (rename(AutoConfTmpFileName, AutoConfFileName) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not rename file \"%s\" to \"%s\" : %m",
+					 errmsg("could not rename file \"%s\" to \"%s\": %m",
 							AutoConfTmpFileName, AutoConfFileName)));
 	}
 	PG_CATCH();
