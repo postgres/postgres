@@ -16469,7 +16469,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_xlog_replay_pause()</function></literal>
         </entry>
        <entry><type>void</type></entry>
-       <entry>Pauses recovery immediately.
+       <entry>Pauses recovery immediately (restricted to superusers).
        </entry>
       </row>
       <row>
@@ -16477,7 +16477,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_xlog_replay_resume()</function></literal>
         </entry>
        <entry><type>void</type></entry>
-       <entry>Restarts recovery if it was paused.
+       <entry>Restarts recovery if it was paused (restricted to superusers).
        </entry>
       </row>
      </tbody>
@@ -16585,7 +16585,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     for controlling and interacting with replication features.
     See <xref linkend="streaming-replication">
     and <xref linkend="streaming-replication-slots"> for information about the
-    underlying features.
+    underlying features.  Use of these functions is restricted to superusers.
    </para>
 
    <para>

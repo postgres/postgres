@@ -382,11 +382,6 @@ pg_xlog_replay_resume(PG_FUNCTION_ARGS)
 Datum
 pg_is_xlog_replay_paused(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to control recovery"))));
-
 	if (!RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
