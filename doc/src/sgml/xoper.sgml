@@ -189,7 +189,7 @@ SELECT (a + b) AS c FROM test_complex;
 
    <para>
     Unlike commutators, a pair of unary operators could validly be marked
-    as each others' negators; that would mean (A x) equals NOT (B x)
+    as each other's negators; that would mean (A x) equals NOT (B x)
     for all x, or the equivalent for right unary operators.
    </para>
 

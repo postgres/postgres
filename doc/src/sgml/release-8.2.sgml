@@ -5883,7 +5883,7 @@
       <para>
        The new syntax is <link linkend="SQL-CREATEINDEX"><command>CREATE
        INDEX CONCURRENTLY</></link>.  The default behavior is
-       still to block table modification while a index is being
+       still to block table modification while an index is being
        created.
       </para>
      </listitem>

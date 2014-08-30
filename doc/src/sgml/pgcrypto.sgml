@@ -592,7 +592,7 @@ pgp_pub_encrypt_bytea(data bytea, key bytea [, options text ]) returns bytea
 </synopsis>
    <para>
     Encrypt <parameter>data</> with a public PGP key <parameter>key</>.
-    Giving this function a secret key will produce a error.
+    Giving this function a secret key will produce an error.
    </para>
    <para>
     The <parameter>options</> parameter can contain option settings,

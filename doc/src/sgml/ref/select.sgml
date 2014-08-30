@@ -1312,7 +1312,7 @@ KEY SHARE
     is also acquired by any <command>DELETE</> on a row, and also by an
     <command>UPDATE</> that modifies the values on certain columns.  Currently,
     the set of columns considered for the <command>UPDATE</> case are those that
-    have an unique index on them that can be used in a foreign key (so partial
+    have a unique index on them that can be used in a foreign key (so partial
     indexes and expressional indexes are not considered), but this may change
     in the future.
     Also, if an <command>UPDATE</command>, <command>DELETE</command>,
