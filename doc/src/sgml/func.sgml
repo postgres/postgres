@@ -15608,7 +15608,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <parameter>schema</> is the schema name that the object belongs in, or
    <literal>NULL</> for object types that do not belong to schemas;
    <parameter>name</> is the name of the object, quoted if necessary, only
-   present if it can be used (alongside schema name, if pertinent) as an unique
+   present if it can be used (alongside schema name, if pertinent) as a unique
    identifier of the object, otherwise <literal>NULL</>;
    <parameter>identity</> is the complete object identity, with the precise format
    depending on object type, and each part within the format being
@@ -17583,7 +17583,7 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
         <entry><type>text</type></entry>
         <entry>
          Name of the object, if the combination of schema and name can be
-         used as an unique identifier for the object; otherwise <literal>NULL</>.
+         used as a unique identifier for the object; otherwise <literal>NULL</>.
          No quoting is applied, and name is never schema-qualified.
         </entry>
        </row>

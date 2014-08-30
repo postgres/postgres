@@ -762,7 +762,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <para>
       By default, or when <literal>uniform</> is specified, all values in the
-      range are drawn with equal probability.  Specifiying <literal>gaussian</>
+      range are drawn with equal probability.  Specifying <literal>gaussian</>
       or  <literal>exponential</> options modifies this behavior; each
       requires a mandatory threshold which determines the precise shape of the
       distribution.
@@ -950,7 +950,7 @@ END;
    (useful when multiple scripts were specified with <option>-f</>),
    and <replaceable>time_epoch</>/<replaceable>time_us</> are a
    UNIX epoch format timestamp and an offset
-   in microseconds (suitable for creating a ISO 8601
+   in microseconds (suitable for creating an ISO 8601
    timestamp with fractional seconds) showing when
    the transaction completed.
   </para>

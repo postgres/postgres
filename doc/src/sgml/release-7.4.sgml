@@ -3797,7 +3797,7 @@ DROP SCHEMA information_schema CASCADE;
     </para>
     <para>
      This enabled <command>GRANT</command> to give other users the
-     ability to grant privileges on a object.
+     ability to grant privileges on an object.
     </para>
    </listitem>
   </itemizedlist>

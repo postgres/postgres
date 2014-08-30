@@ -46,7 +46,7 @@
      <listitem>
       <para>
        Add <link linkend="datatype-json"><type>jsonb</></link>, a more
-       capable and efficient data type for for storing <acronym>JSON</> data
+       capable and efficient data type for storing <acronym>JSON</> data
       </para>
      </listitem>
 
@@ -1400,7 +1400,7 @@
        <listitem>
         <para>
          Add <link linkend="datatype-json"><type>jsonb</></link>, a more
-         capable and efficient data type for for storing <acronym>JSON</> data
+         capable and efficient data type for storing <acronym>JSON</> data
          (Oleg Bartunov, Teodor Sigaev, Alexander
          Korotkov, Peter Geoghegan, Andrew Dunstan)
         </para>

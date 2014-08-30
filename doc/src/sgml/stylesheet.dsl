@@ -617,7 +617,7 @@
 
 ;; By default, the part and reference title pages get wrong page
 ;; numbers: The first title page gets roman numerals carried over from
-;; preface/toc -- we want arabic numerals.  We also need to make sure
+;; preface/toc -- we want Arabic numerals.  We also need to make sure
 ;; that page-number-restart is set of #f explicitly, because otherwise
 ;; it will carry over from the previous component, which is not good.
 ;;

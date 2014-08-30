@@ -2098,7 +2098,7 @@ DELETE FROM parts
     statements in <literal>WITH</>, the order in which the specified updates
     actually happen is unpredictable.  All the statements are executed with
     the same <firstterm>snapshot</> (see <xref linkend="mvcc">), so they
-    cannot <quote>see</> each others' effects on the target tables.  This
+    cannot <quote>see</> one another's effects on the target tables.  This
     alleviates the effects of the unpredictability of the actual order of row
     updates, and means that <literal>RETURNING</> data is the only way to
     communicate changes between different <literal>WITH</> sub-statements and

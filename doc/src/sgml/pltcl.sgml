@@ -51,7 +51,7 @@
     Sometimes it is desirable to write Tcl functions that are not restricted
     to safe Tcl.  For example, one might want a Tcl function that sends
     email.  To handle these cases, there is a variant of <application>PL/Tcl</> called <literal>PL/TclU</>
-    (for untrusted Tcl).  This is the exact same language except that a full
+    (for untrusted Tcl).  This is exactly the same language except that a full
     Tcl interpreter is used.  <emphasis>If <application>PL/TclU</> is used, it must be
     installed as an untrusted procedural language</emphasis> so that only
     database superusers can create functions in it.  The writer of a <application>PL/TclU</>

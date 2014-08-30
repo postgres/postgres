@@ -1258,7 +1258,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      correctly.  Advisory locks can be useful for locking strategies
      that are an awkward fit for the MVCC model.
      For example, a common use of advisory locks is to emulate pessimistic
-     locking strategies typical of so called <quote>flat file</> data
+     locking strategies typical of so-called <quote>flat file</> data
      management systems.
      While a flag stored in a table could be used for the same purpose,
      advisory locks are faster, avoid table bloat, and are automatically
