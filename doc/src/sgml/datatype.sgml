@@ -2329,7 +2329,7 @@ January 8 04:05:06 1999 PST
    <para>
     Time zones, and time-zone conventions, are influenced by
     political decisions, not just earth geometry. Time zones around the
-    world became somewhat standardized during the 1900's,
+    world became somewhat standardized during the 1900s,
     but continue to be prone to arbitrary changes, particularly with
     respect to daylight-savings rules.
     <productname>PostgreSQL</productname> uses the widely-used

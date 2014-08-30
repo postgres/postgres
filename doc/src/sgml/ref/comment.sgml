@@ -290,7 +290,7 @@ COMMENT ON SERVER myserver IS 'my foreign server';
 COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
 COMMENT ON TABLESPACE my_tablespace IS 'Tablespace for indexes';
 COMMENT ON TEXT SEARCH CONFIGURATION my_config IS 'Special word filtering';
-COMMENT ON TEXT SEARCH DICTIONARY swedish IS 'Snowball stemmer for swedish language';
+COMMENT ON TEXT SEARCH DICTIONARY swedish IS 'Snowball stemmer for Swedish language';
 COMMENT ON TEXT SEARCH PARSER my_parser IS 'Splits text into words';
 COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'Snowball stemmer';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';

@@ -4849,7 +4849,7 @@ New DECLARE and FETCH feature(Thomas)
 libpq's internal structures now not exported(Tom)
 Allow up to 8 key indexes(Bruce)
 Remove ARCHIVE key word, that is no longer used(Thomas)
-pg_dump -n flag to suppress quotes around indentifiers
+pg_dump -n flag to suppress quotes around identifiers
 disable system columns for views(Jan)
 new INET and CIDR types for network addresses(TomH, Paul)
 no more double quotes in psql output
@@ -5250,7 +5250,7 @@ Support SQL92 syntax for type coercion of literal strings
        (e.g. "DATETIME 'now'")(Thomas)
 Add conversions for int2, int4, and OID types to and from text(Thomas)
 Use shared lock when building indexes(Vadim)
-Free memory allocated for an user query inside transaction block after
+Free memory allocated for a user query inside transaction block after
        this query is done, was turned off in &lt;= 6.2.1(Vadim)
 New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
 New <productname>PostgreSQL</productname> Procedural Language (PL) backend interface(Jan)
@@ -6514,7 +6514,7 @@ Incompatible changes:
 New tools:
  * pgperl - a Perl (4.036) interface to Postgres95
  * pg_dump - a utility for dumping out a postgres database into a
-        script file containing query commands. The script files are in a ASCII
+        script file containing query commands. The script files are in an ASCII
         format and can be used to reconstruct the database, even on other
         machines and other architectures. (Also good for converting
         a Postgres 4.2 database to Postgres95 database.)
