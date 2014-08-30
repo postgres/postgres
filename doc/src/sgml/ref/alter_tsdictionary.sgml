@@ -126,7 +126,7 @@ ALTER TEXT SEARCH DICTIONARY my_dict ( StopWords = newrussian );
 </programlisting>
 
   <para>
-   The following example command changes the language option to dutch,
+   The following example command changes the language option to <literal>dutch</>,
    and removes the stopword option entirely.
   </para>
 
