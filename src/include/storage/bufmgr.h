@@ -55,7 +55,6 @@ extern int	target_prefetch_pages;
 
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;
-extern PGDLLIMPORT int32 *PrivateRefCount;
 
 /* in localbuf.c */
 extern PGDLLIMPORT int NLocBuffer;
@@ -99,24 +98,6 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 ( \
 	AssertMacro((bufnum) <= NBuffers && (bufnum) >= -NLocBuffer), \
 	(bufnum) != InvalidBuffer  \
-)
-
-/*
- * BufferIsPinned
- *		True iff the buffer is pinned (also checks for valid buffer number).
- *
- *		NOTE: what we check here is that *this* backend holds a pin on
- *		the buffer.  We do not care whether some other backend does.
- */
-#define BufferIsPinned(bufnum) \
-( \
-	!BufferIsValid(bufnum) ? \
-		false \
-	: \
-		BufferIsLocal(bufnum) ? \
-			(LocalRefCount[-(bufnum) - 1] > 0) \
-		: \
-			(PrivateRefCount[(bufnum) - 1] > 0) \
 )
 
 /*

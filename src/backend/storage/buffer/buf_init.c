@@ -20,7 +20,6 @@
 
 BufferDesc *BufferDescriptors;
 char	   *BufferBlocks;
-int32	   *PrivateRefCount;
 
 
 /*
@@ -50,16 +49,9 @@ int32	   *PrivateRefCount;
  *
  * refcount --	Counts the number of processes holding pins on a buffer.
  *		A buffer is pinned during IO and immediately after a BufferAlloc().
- *		Pins must be released before end of transaction.
- *
- * PrivateRefCount -- Each buffer also has a private refcount that keeps
- *		track of the number of times the buffer is pinned in the current
- *		process.    This is used for two purposes: first, if we pin a
- *		a buffer more than once, we only need to change the shared refcount
- *		once, thus only lock the shared state once; second, when a transaction
- *		aborts, it should only unpin the buffers exactly the number of times it
- *		has pinned them, so that it will not blow away buffers of another
- *		backend.
+ *		Pins must be released before end of transaction.  For efficiency the
+ *		shared refcount isn't increased if a individual backend pins a buffer
+ *		multiple times. Check the PrivateRefCount infrastructure in bufmgr.c.
  */
 
 
@@ -127,31 +119,6 @@ InitBufferPool(void)
 
 	/* Init other shared buffer-management stuff */
 	StrategyInitialize(!foundDescs);
-}
-
-/*
- * Initialize access to shared buffer pool
- *
- * This is called during backend startup (whether standalone or under the
- * postmaster).  It sets up for this backend's access to the already-existing
- * buffer pool.
- *
- * NB: this is called before InitProcess(), so we do not have a PGPROC and
- * cannot do LWLockAcquire; hence we can't actually access stuff in
- * shared memory yet.  We are only initializing local data here.
- * (See also InitBufferPoolBackend, over in bufmgr.c.)
- */
-void
-InitBufferPoolAccess(void)
-{
-	/*
-	 * Allocate and zero local arrays of per-buffer info.
-	 */
-	PrivateRefCount = (int32 *) calloc(NBuffers, sizeof(int32));
-	if (!PrivateRefCount)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 }
 
 /*

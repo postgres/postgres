@@ -37,7 +37,7 @@ typedef struct
 	/*
 	 * An int32 is sufficiently large, as MAX_BACKENDS prevents a buffer from
 	 * being pinned by too many backends and each backend will only pin once
-	 * because of bufmgr.c's PrivateRefCount array.
+	 * because of bufmgr.c's PrivateRefCount infrastructure.
 	 */
 	int32		pinning_backends;
 } BufferCachePagesRec;
