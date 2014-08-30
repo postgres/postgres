@@ -2425,7 +2425,7 @@ more sample word(s) : more indexed word(s)
 </programlisting>
 
     where  the colon (<symbol>:</symbol>) symbol acts as a delimiter between a
-    a phrase and its replacement.
+    phrase and its replacement.
    </para>
 
    <para>
