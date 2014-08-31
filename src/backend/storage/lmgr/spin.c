@@ -30,7 +30,9 @@
 #include "storage/spin.h"
 
 
+#ifndef HAVE_SPINLOCKS
 PGSemaphore SpinlockSemaArray;
+#endif
 
 /*
  * Report the amount of shared memory needed to store semaphores for spinlock
