@@ -85,8 +85,8 @@ static LWLock *held_lwlocks[MAX_SIMUL_LWLOCKS];
 static int	lock_addin_request = 0;
 static bool lock_addin_request_allowed = true;
 
-static bool LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr,
-					uint64 val);
+static inline bool LWLockAcquireCommon(LWLock *l, LWLockMode mode,
+					uint64 *valptr, uint64 val);
 
 #ifdef LWLOCK_STATS
 typedef struct lwlock_stats_key
@@ -510,7 +510,7 @@ LWLockAcquireWithVar(LWLock *l, uint64 *valptr, uint64 val)
 }
 
 /* internal function to implement LWLockAcquire and LWLockAcquireWithVar */
-static bool
+static inline bool
 LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 {
 	volatile LWLock *lock = l;
