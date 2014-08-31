@@ -243,8 +243,8 @@ struct SnapBuild
  * Starting a transaction -- which we need to do while exporting a snapshot --
  * removes knowledge about the previously used resowner, so we save it here.
  */
-ResourceOwner SavedResourceOwnerDuringExport = NULL;
-bool		ExportInProgress = false;
+static ResourceOwner SavedResourceOwnerDuringExport = NULL;
+static bool	ExportInProgress = false;
 
 /* transaction state manipulation functions */
 static void SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid);
