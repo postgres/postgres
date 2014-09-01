@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS replication_example;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 CREATE TABLE replication_example(id SERIAL PRIMARY KEY, somedata int, text varchar(120));
 INSERT INTO replication_example(somedata) VALUES (1);
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
 BEGIN;
 INSERT INTO replication_example(somedata) VALUES (2);
@@ -56,7 +56,7 @@ COMMIT;
 -- make old files go away
 CHECKPOINT;
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 SELECT pg_drop_replication_slot('regression_slot');
 
 DROP TABLE IF EXISTS replication_example;

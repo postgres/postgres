@@ -11,7 +11,7 @@ CREATE TABLE lr_test(data text);
 SET ROLE lr_superuser;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 INSERT INTO lr_test VALUES('lr_superuser_init');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 SELECT pg_drop_replication_slot('regression_slot');
 RESET ROLE;
 
@@ -19,7 +19,7 @@ RESET ROLE;
 SET ROLE lr_replication;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 INSERT INTO lr_test VALUES('lr_superuser_init');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 SELECT pg_drop_replication_slot('regression_slot');
 RESET ROLE;
 
@@ -27,7 +27,7 @@ RESET ROLE;
 SET ROLE lr_normal;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 INSERT INTO lr_test VALUES('lr_superuser_init');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 SELECT pg_drop_replication_slot('regression_slot');
 RESET ROLE;
 

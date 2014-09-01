@@ -58,19 +58,17 @@ SELECT txid_current() = 0;
 
 -- don't show yet, haven't committed
 INSERT INTO nobarf(data) VALUES('2');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
                            data                            
 -----------------------------------------------------------
  BEGIN
- COMMIT
- BEGIN
  table public.nobarf: INSERT: id[integer]:1 data[text]:'1'
  COMMIT
-(5 rows)
+(3 rows)
 
 COMMIT;
 INSERT INTO nobarf(data) VALUES('3');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
                            data                            
 -----------------------------------------------------------
  BEGIN

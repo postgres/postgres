@@ -9,15 +9,13 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 
 CREATE TABLE replication_example(id SERIAL PRIMARY KEY, somedata int, text varchar(120));
 INSERT INTO replication_example(somedata) VALUES (1);
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
                                                    data                                                   
 ----------------------------------------------------------------------------------------------------------
  BEGIN
- COMMIT
- BEGIN
  table public.replication_example: INSERT: id[integer]:1 somedata[integer]:1 text[character varying]:null
  COMMIT
-(5 rows)
+(3 rows)
 
 BEGIN;
 INSERT INTO replication_example(somedata) VALUES (2);
@@ -58,7 +56,7 @@ INSERT INTO replication_example(somedata, testcolumn1, testcolumn3) VALUES (7, 5
 COMMIT;
 -- make old files go away
 CHECKPOINT;
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
                                                                                        data                                                                                       
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN
@@ -70,33 +68,13 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  table public.replication_example: INSERT: id[integer]:5 somedata[integer]:4 text[character varying]:null testcolumn1[integer]:2 testcolumn2[integer]:1
  COMMIT
  BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
  table public.replication_example: INSERT: id[integer]:6 somedata[integer]:5 text[character varying]:null testcolumn1[integer]:3 testcolumn2[integer]:null
  COMMIT
  BEGIN
  table public.replication_example: INSERT: id[integer]:7 somedata[integer]:6 text[character varying]:null testcolumn1[integer]:4 testcolumn2[integer]:null
  table public.replication_example: INSERT: id[integer]:8 somedata[integer]:7 text[character varying]:null testcolumn1[integer]:5 testcolumn2[integer]:null testcolumn3[integer]:1
  COMMIT
-(35 rows)
+(15 rows)
 
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 
