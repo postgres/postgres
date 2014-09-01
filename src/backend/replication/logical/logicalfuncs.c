@@ -394,7 +394,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		MemoryContextSwitchTo(oldcontext);
 
 		/*
-		 * Check whether the output pluggin writes textual output if that's
+		 * Check whether the output plugin writes textual output if that's
 		 * what we need.
 		 */
 		if (!binary &&
