@@ -48,13 +48,9 @@ CREATE TABLE toasted_copy (
 );
 ALTER TABLE toasted_copy ALTER COLUMN data SET STORAGE EXTERNAL;
 \copy toasted_copy FROM STDIN
-SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
                                                                                                   substr                                                                                                  
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- BEGIN
- COMMIT
- BEGIN
- COMMIT
  BEGIN
  table public.xpto: INSERT: id[integer]:1 toasted_col1[text]:'1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374
  COMMIT
@@ -71,12 +67,6 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  table public.xpto: DELETE: id[integer]:1
  COMMIT
  BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
- COMMIT
- BEGIN
  table public.toasted_key: INSERT: id[integer]:1 toasted_key[text]:'1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
  COMMIT
  BEGIN
@@ -87,10 +77,6 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  COMMIT
  BEGIN
  table public.toasted_key: DELETE: toasted_key[text]:'123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567
- COMMIT
- BEGIN
- COMMIT
- BEGIN
  COMMIT
  BEGIN
  table public.toasted_copy: INSERT: id[integer]:1 data[text]:'untoasted1'
@@ -297,7 +283,7 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  table public.toasted_copy: INSERT: id[integer]:202 data[text]:'untoasted199'
  table public.toasted_copy: INSERT: id[integer]:203 data[text]:'untoasted200'
  COMMIT
-(246 rows)
+(232 rows)
 
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 

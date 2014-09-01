@@ -259,5 +259,5 @@ ALTER TABLE toasted_copy ALTER COLUMN data SET STORAGE EXTERNAL;
 202	untoasted199
 203	untoasted200
 \.
-SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 SELECT pg_drop_replication_slot('regression_slot');
