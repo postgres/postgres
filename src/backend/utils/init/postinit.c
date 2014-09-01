@@ -442,7 +442,7 @@ pg_split_opts(char **argv, int *argcp, char *optstr)
 		 */
 		while (*optstr)
 		{
-			if (isspace(*optstr) && !last_was_escape)
+			if (isspace((unsigned char) *optstr) && !last_was_escape)
 				break;
 
 			if (!last_was_escape && *optstr == '\\')
