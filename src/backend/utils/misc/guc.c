@@ -6691,6 +6691,8 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
  * This function takes all previous configuration parameters
  * set by ALTER SYSTEM command and the currently set ones
  * and write them all to the automatic configuration file.
+ * It just writes an empty file incase user wants to reset
+ * all the parameters.
  *
  * The configuration parameters are written to a temporary
  * file then renamed to the final name.
@@ -6705,6 +6707,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 {
 	char	   *name;
 	char	   *value;
+	bool		resetall = false;
 	int			Tmpfd = -1;
 	FILE	   *infile;
 	struct config_generic *record;
@@ -6732,37 +6735,48 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 			break;
 
 		case VAR_SET_DEFAULT:
+		case VAR_RESET:
 			value = NULL;
 			break;
+
+		case VAR_RESET_ALL:
+			value = NULL;
+			resetall = true;
+			break;
+
 		default:
 			elog(ERROR, "unrecognized alter system stmt type: %d",
 				 altersysstmt->setstmt->kind);
 			break;
 	}
 
-	record = find_option(name, false, LOG);
-	if (record == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+	/* If we're resetting everything, there's no need to validate anything */
+	if (!resetall)
+	{
+		record = find_option(name, false, LOG);
+		if (record == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+				   errmsg("unrecognized configuration parameter \"%s\"", name)));
 
-	/*
-	 * Don't allow the parameters which can't be set in configuration
-	 * files to be set in PG_AUTOCONF_FILENAME file.
-	 */
-	if ((record->context == PGC_INTERNAL) ||
-		(record->flags & GUC_DISALLOW_IN_FILE) ||
-		(record->flags & GUC_DISALLOW_IN_AUTO_FILE))
-		 ereport(ERROR,
-				 (errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-				  errmsg("parameter \"%s\" cannot be changed",
-						 name)));
+		/*
+		 * Don't allow the parameters which can't be set in configuration
+		 * files to be set in PG_AUTOCONF_FILENAME file.
+		 */
+		if ((record->context == PGC_INTERNAL) ||
+			(record->flags & GUC_DISALLOW_IN_FILE) ||
+			(record->flags & GUC_DISALLOW_IN_AUTO_FILE))
+			 ereport(ERROR,
+					 (errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+					  errmsg("parameter \"%s\" cannot be changed",
+							 name)));
 
-	if (!validate_conf_option(record, name, value, PGC_S_FILE,
-							  ERROR, true, NULL,
-							  &newextra))
-		ereport(ERROR,
-		(errmsg("invalid value for parameter \"%s\": \"%s\"", name, value)));
+		if (!validate_conf_option(record, name, value, PGC_S_FILE,
+								  ERROR, true, NULL,
+								  &newextra))
+			ereport(ERROR,
+			(errmsg("invalid value for parameter \"%s\": \"%s\"", name, value)));
+	}
 
 
 	/*
@@ -6794,26 +6808,34 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 
 	PG_TRY();
 	{
-		if (stat(AutoConfFileName, &st) == 0)
-		{
-			/* open file PG_AUTOCONF_FILENAME */
-			infile = AllocateFile(AutoConfFileName, "r");
-			if (infile == NULL)
-				ereport(ERROR,
-						(errmsg("failed to open auto conf file \"%s\": %m ",
-								AutoConfFileName)));
-
-			/* parse it */
-			ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail);
-
-			FreeFile(infile);
-		}
-
 		/*
-		 * replace with new value if the configuration parameter already
-		 * exists OR add it as a new cofiguration parameter in the file.
+		 * If we're going to reset everything, then don't open the file, don't
+		 * parse it, and don't do anything with the configuration list.  Just
+		 * write out an empty file.
 		 */
-		replace_auto_config_value(&head, &tail, AutoConfFileName, name, value);
+		if (!resetall)
+		{
+			if (stat(AutoConfFileName, &st) == 0)
+			{
+				/* open file PG_AUTOCONF_FILENAME */
+				infile = AllocateFile(AutoConfFileName, "r");
+				if (infile == NULL)
+					ereport(ERROR,
+							(errmsg("failed to open auto conf file \"%s\": %m ",
+									AutoConfFileName)));
+
+				/* parse it */
+				ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail);
+
+				FreeFile(infile);
+			}
+
+			/*
+			 * replace with new value if the configuration parameter already
+			 * exists OR add it as a new cofiguration parameter in the file.
+			 */
+			replace_auto_config_value(&head, &tail, AutoConfFileName, name, value);
+		}
 
 		/* Write and sync the new contents to the temporary file */
 		write_auto_conf_file(Tmpfd, AutoConfTmpFileName, &head);
