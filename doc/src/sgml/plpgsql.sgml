@@ -3403,6 +3403,9 @@ RAISE ;
     Inside the format string, <literal>%</literal> is replaced by the
     string representation of the next optional argument's value. Write
     <literal>%%</literal> to emit a literal <literal>%</literal>.
+    The number of arguments must match the number of <literal>%</>
+    placeholders in the format string, or an error is raised during
+    the compilation of the function.
    </para>
 
    <para>

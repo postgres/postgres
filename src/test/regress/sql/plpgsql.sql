@@ -2078,8 +2078,6 @@ begin
 end;
 $$ language plpgsql;
 
-select raise_test1(5);
-
 create function raise_test2(int) returns int as $$
 begin
     raise notice 'This message has too few parameters: %, %, %', $1, $1;
@@ -2087,7 +2085,14 @@ begin
 end;
 $$ language plpgsql;
 
-select raise_test2(10);
+create function raise_test3(int) returns int as $$
+begin
+    raise notice 'This message has no parameters (despite having %% signs in it)!';
+    return $1;
+end;
+$$ language plpgsql;
+
+select raise_test3(1);
 
 -- Test re-RAISE inside a nested exception block.  This case is allowed
 -- by Oracle's PL/SQL but was handled differently by PG before 9.1.

@@ -2939,10 +2939,9 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 					continue;
 				}
 
+				/* should have been checked at compile time */
 				if (current_param == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-						  errmsg("too few parameters specified for RAISE")));
+					elog(ERROR, "unexpected RAISE parameter list length");
 
 				paramvalue = exec_eval_expr(estate,
 									  (PLpgSQL_expr *) lfirst(current_param),
@@ -2963,14 +2962,9 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 				appendStringInfoChar(&ds, cp[0]);
 		}
 
-		/*
-		 * If more parameters were specified than were required to process the
-		 * format string, throw an error
-		 */
+		/* should have been checked at compile time */
 		if (current_param != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("too many parameters specified for RAISE")));
+			elog(ERROR, "unexpected RAISE parameter list length");
 
 		err_message = ds.data;
 		/* No pfree(ds.data), the pfree(err_message) does it */

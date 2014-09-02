@@ -2446,18 +2446,29 @@ begin
     return $1;
 end;
 $$ language plpgsql;
-select raise_test1(5);
 ERROR:  too many parameters specified for RAISE
-CONTEXT:  PL/pgSQL function raise_test1(integer) line 3 at RAISE
+CONTEXT:  compilation of PL/pgSQL function "raise_test1" near line 3
 create function raise_test2(int) returns int as $$
 begin
     raise notice 'This message has too few parameters: %, %, %', $1, $1;
     return $1;
 end;
 $$ language plpgsql;
-select raise_test2(10);
 ERROR:  too few parameters specified for RAISE
-CONTEXT:  PL/pgSQL function raise_test2(integer) line 3 at RAISE
+CONTEXT:  compilation of PL/pgSQL function "raise_test2" near line 3
+create function raise_test3(int) returns int as $$
+begin
+    raise notice 'This message has no parameters (despite having %% signs in it)!';
+    return $1;
+end;
+$$ language plpgsql;
+select raise_test3(1);
+NOTICE:  This message has no parameters (despite having % signs in it)!
+ raise_test3 
+-------------
+           1
+(1 row)
+
 -- Test re-RAISE inside a nested exception block.  This case is allowed
 -- by Oracle's PL/SQL but was handled differently by PG before 9.1.
 CREATE FUNCTION reraise_test() RETURNS void AS $$
