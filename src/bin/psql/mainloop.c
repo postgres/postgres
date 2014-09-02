@@ -58,6 +58,7 @@ MainLoop(FILE *source)
 	pset.cur_cmd_source = source;
 	pset.cur_cmd_interactive = ((source == stdin) && !pset.notty);
 	pset.lineno = 0;
+	pset.stmt_lineno = 1;
 
 	/* Create working state */
 	scan_state = psql_scan_create();
@@ -110,6 +111,7 @@ MainLoop(FILE *source)
 			count_eof = 0;
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
+			pset.stmt_lineno = 1;
 			cancel_pressed = false;
 
 			if (pset.cur_cmd_interactive)
@@ -225,7 +227,10 @@ MainLoop(FILE *source)
 		{
 			PsqlScanResult scan_result;
 			promptStatus_t prompt_tmp = prompt_status;
+			size_t		pos_in_query;
+			char	   *tmp_line;
 
+			pos_in_query = query_buf->len;
 			scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
 			prompt_status = prompt_tmp;
 
@@ -234,6 +239,22 @@ MainLoop(FILE *source)
 				psql_error("out of memory\n");
 				exit(EXIT_FAILURE);
 			}
+
+			/*
+			 * Increase statement line number counter for each linebreak added
+			 * to the query buffer by the last psql_scan() call. There only
+			 * will be ones to add when navigating to a statement in
+			 * readline's history containing newlines.
+			 */
+			tmp_line = query_buf->data + pos_in_query;
+			while (*tmp_line != '\0')
+			{
+				if (*(tmp_line++) == '\n')
+					pset.stmt_lineno++;
+			}
+
+			if (scan_result == PSCAN_EOL)
+				pset.stmt_lineno++;
 
 			/*
 			 * Send command if semicolon found, or if end of line and we're in
@@ -256,6 +277,7 @@ MainLoop(FILE *source)
 				/* execute query */
 				success = SendQuery(query_buf->data);
 				slashCmdStatus = success ? PSQL_CMD_SEND : PSQL_CMD_ERROR;
+				pset.stmt_lineno = 1;
 
 				/* transfer query to previous_buf by pointer-swapping */
 				{
@@ -303,6 +325,7 @@ MainLoop(FILE *source)
 												 query_buf : previous_buf);
 
 				success = slashCmdStatus != PSQL_CMD_ERROR;
+				pset.stmt_lineno = 1;
 
 				if ((slashCmdStatus == PSQL_CMD_SEND || slashCmdStatus == PSQL_CMD_NEWEDIT) &&
 					query_buf->len == 0)

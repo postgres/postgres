@@ -44,6 +44,7 @@
  *		in prompt2 -, *, ', or ";
  *		in prompt3 nothing
  * %x - transaction status: empty, *, !, ? (unknown or no connection)
+ * %l - The line number inside the current statement, starting from 1.
  * %? - the error code of the last query (not yet implemented)
  * %% - a percent sign
  *
@@ -227,6 +228,10 @@ get_prompt(promptStatus_t status)
 								buf[0] = '?';
 								break;
 						}
+					break;
+
+				case 'l':
+					snprintf(buf, sizeof(buf), UINT64_FORMAT, pset.stmt_lineno);
 					break;
 
 				case '?':

@@ -3316,6 +3316,15 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
       </varlistentry>
 
       <varlistentry>
+        <term><literal>%l</literal></term>
+        <listitem>
+         <para>
+          The line number inside the current statement, starting from <literal>1</>.
+         </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>%</literal><replaceable class="parameter">digits</replaceable></term>
         <listitem>
         <para>
