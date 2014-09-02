@@ -22,6 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER SYSTEM SET <replaceable class="PARAMETER">configuration_parameter</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+
+ALTER SYSTEM RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
+ALTER SYSTEM RESET ALL
 </synopsis>
  </refsynopsisdiv>
 
@@ -30,10 +33,12 @@ ALTER SYSTEM SET <replaceable class="PARAMETER">configuration_parameter</replace
 
   <para>
    <command>ALTER SYSTEM</command> writes the configuration parameter
-   values to the <filename>postgresql.auto.conf</filename> file. With
-   <literal>DEFAULT</literal>, it removes a configuration entry from
-   <filename>postgresql.auto.conf</filename> file. The values will be
-   effective after reload of server configuration (SIGHUP) or in next
+   values to the <filename>postgresql.auto.conf</filename> file.
+   Setting the parameter to <literal>DEFAULT</literal>, or using the
+   <command>RESET</command> variant, removes the configuration entry from
+   <filename>postgresql.auto.conf</filename> file. Use <literal>RESET
+   ALL</literal> to clear all configuration entries.  The values will
+   be effective after reload of server configuration (SIGHUP) or in next
    server start based on the type of configuration parameter modified.
   </para>
 

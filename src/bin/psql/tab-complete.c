@@ -545,7 +545,8 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "SELECT name FROM "\
 " (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
 "  WHERE context != 'internal') ss "\
-" WHERE substring(name,1,%d)='%s'"
+" WHERE substring(name,1,%d)='%s'"\
+" UNION ALL SELECT 'all' ss"
 
 #define Query_for_list_of_set_vars \
 "SELECT name FROM "\
@@ -963,7 +964,7 @@ psql_completion(const char *text, int start, int end)
 		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
 			"EVENT TRIGGER", "EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
-			"ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM SET", "TABLE",
+			"ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM", "TABLE",
 			"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
 
@@ -1328,10 +1329,20 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTER_SERVER);
 	}
-	/* ALTER SYSTEM SET <name> */
+	/* ALTER SYSTEM SET, RESET, RESET ALL */
+	else if (pg_strcasecmp(prev2_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev_wd, "SYSTEM") == 0)
+	{
+		static const char *const list_ALTERSYSTEM[] =
+		{"SET", "RESET", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERSYSTEM);
+	}
+	/* ALTER SYSTEM SET|RESET <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "SYSTEM") == 0 &&
-			 pg_strcasecmp(prev_wd, "SET") == 0)
+			 (pg_strcasecmp(prev_wd, "SET") == 0 ||
+			 pg_strcasecmp(prev_wd, "RESET") == 0))
 		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
 	/* ALTER VIEW <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
