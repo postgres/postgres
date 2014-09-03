@@ -1756,11 +1756,15 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	 */
 	if (inhSchema != NIL)
 	{
+		int		schema_attno = 0;
+
 		foreach(entry, schema)
 		{
 			ColumnDef  *newdef = lfirst(entry);
 			char	   *attributeName = newdef->colname;
 			int			exist_attno;
+
+			schema_attno++;
 
 			/*
 			 * Does it conflict with some previously inherited column?
@@ -1780,9 +1784,14 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				 * Yes, try to merge the two column definitions. They must
 				 * have the same type, typmod, and collation.
 				 */
-				ereport(NOTICE,
-				   (errmsg("merging column \"%s\" with inherited definition",
-						   attributeName)));
+				 if (exist_attno == schema_attno)
+					ereport(NOTICE,
+					   (errmsg("merging column \"%s\" with inherited definition",
+							   attributeName)));
+				else
+					ereport(NOTICE,
+					   (errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
+						errdetail("User-specified column moved to the position of the inherited column.")));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
 				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
 				typenameTypeIdAndMod(NULL, newdef->typeName, &newTypeId, &newtypmod);
