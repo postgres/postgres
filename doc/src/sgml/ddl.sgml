@@ -546,7 +546,9 @@ CREATE TABLE products (
 
    <para>
     Adding a unique constraint will automatically create a unique btree
-    index on the column or group of columns used in the constraint.
+    index on the column or group of columns used in the constraint. 
+    A uniqueness constraint on only some rows can be enforced by creating
+    a <link linkend="indexes-partial">partial index</link>.
    </para>
 
    <indexterm>
