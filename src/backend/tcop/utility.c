@@ -2308,6 +2308,9 @@ GetCommandLogLevel(Node *parsetree)
 {
 	LogStmtLevel lev;
 
+	if (parsetree == NULL)
+		return LOGSTMT_ALL;
+
 	switch (nodeTag(parsetree))
 	{
 			/* raw plannable queries */
