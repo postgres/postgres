@@ -497,6 +497,102 @@ PSQLexec(const char *query, bool start_xact)
 }
 
 
+/*
+ * PSQLexecWatch
+ *
+ * This function is used for \watch command to send the query to
+ * the server and print out the results.
+ *
+ * Returns 1 if the query executed successfully, 0 if it cannot be repeated,
+ * e.g., because of the interrupt, -1 on error.
+ */
+int
+PSQLexecWatch(const char *query, const printQueryOpt *opt)
+{
+	PGresult   *res;
+	double	elapsed_msec = 0;
+	instr_time	before;
+	instr_time	after;
+
+	if (!pset.db)
+	{
+		psql_error("You are currently not connected to a database.\n");
+		return 0;
+	}
+
+	SetCancelConn();
+
+	if (pset.timing)
+		INSTR_TIME_SET_CURRENT(before);
+
+	res = PQexec(pset.db, query);
+
+	ResetCancelConn();
+
+	if (!AcceptResult(res))
+	{
+		PQclear(res);
+		return 0;
+	}
+
+	if (pset.timing)
+	{
+		INSTR_TIME_SET_CURRENT(after);
+		INSTR_TIME_SUBTRACT(after, before);
+		elapsed_msec = INSTR_TIME_GET_MILLISEC(after);
+	}
+
+	/*
+	 * If SIGINT is sent while the query is processing, the interrupt
+	 * will be consumed.  The user's intention, though, is to cancel
+	 * the entire watch process, so detect a sent cancellation request and
+	 * exit in this case.
+	 */
+	if (cancel_pressed)
+	{
+		PQclear(res);
+		return 0;
+	}
+
+	switch (PQresultStatus(res))
+	{
+		case PGRES_TUPLES_OK:
+			printQuery(res, opt, pset.queryFout, pset.logfile);
+			break;
+
+		case PGRES_COMMAND_OK:
+			fprintf(pset.queryFout, "%s\n%s\n\n", opt->title, PQcmdStatus(res));
+			break;
+
+		case PGRES_EMPTY_QUERY:
+			psql_error(_("\\watch cannot be used with an empty query\n"));
+			PQclear(res);
+			return -1;
+
+		case PGRES_COPY_OUT:
+		case PGRES_COPY_IN:
+		case PGRES_COPY_BOTH:
+			psql_error(_("\\watch cannot be used with COPY\n"));
+			PQclear(res);
+			return -1;
+
+		default:
+			psql_error(_("unexpected result status for \\watch\n"));
+			PQclear(res);
+			return -1;
+	}
+
+	PQclear(res);
+
+	fflush(pset.queryFout);
+
+	/* Possible microtiming output */
+	if (pset.timing)
+		printf(_("Time: %.3f ms\n"), elapsed_msec);
+
+	return 1;
+}
+
 
 /*
  * PrintNotifications: check for asynchronous notifications, and print them out

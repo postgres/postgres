@@ -12,6 +12,8 @@
 #include <setjmp.h>
 #include "libpq-fe.h"
 
+#include "print.h"
+
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 extern bool setQFout(const char *fname);
@@ -37,6 +39,7 @@ extern void SetCancelConn(void);
 extern void ResetCancelConn(void);
 
 extern PGresult *PSQLexec(const char *query, bool start_xact);
+extern int PSQLexecWatch(const char *query, const printQueryOpt *opt);
 
 extern bool SendQuery(const char *query);
 

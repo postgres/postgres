@@ -2687,7 +2687,7 @@ do_watch(PQExpBuffer query_buf, long sleep)
 
 	for (;;)
 	{
-		PGresult   *res;
+		int	res;
 		time_t		timer;
 		long		i;
 
@@ -2700,65 +2700,22 @@ do_watch(PQExpBuffer query_buf, long sleep)
 				 sleep, asctime(localtime(&timer)));
 		myopt.title = title;
 
-		/*
-		 * Run the query.  We use PSQLexec, which is kind of cheating, but
-		 * SendQuery doesn't let us suppress autocommit behavior.
-		 */
-		res = PSQLexec(query_buf->data, false);
-
-		/* PSQLexec handles failure results and returns NULL */
-		if (res == NULL)
-			break;
+		/* Run the query and print out the results */
+		res = PSQLexecWatch(query_buf->data, &myopt);
 
 		/*
-		 * If SIGINT is sent while the query is processing, PSQLexec will
-		 * consume the interrupt.  The user's intention, though, is to cancel
-		 * the entire watch process, so detect a sent cancellation request and
-		 * exit in this case.
+		 * PSQLexecWatch handles the case where we can no longer
+		 * repeat the query, and returns 0 or -1.
 		 */
-		if (cancel_pressed)
-		{
-			PQclear(res);
+		if (res == 0)
 			break;
-		}
-
-		switch (PQresultStatus(res))
-		{
-			case PGRES_TUPLES_OK:
-				printQuery(res, &myopt, pset.queryFout, pset.logfile);
-				break;
-
-			case PGRES_COMMAND_OK:
-				fprintf(pset.queryFout, "%s\n%s\n\n", title, PQcmdStatus(res));
-				break;
-
-			case PGRES_EMPTY_QUERY:
-				psql_error(_("\\watch cannot be used with an empty query\n"));
-				PQclear(res);
-				return false;
-
-			case PGRES_COPY_OUT:
-			case PGRES_COPY_IN:
-			case PGRES_COPY_BOTH:
-				psql_error(_("\\watch cannot be used with COPY\n"));
-				PQclear(res);
-				return false;
-
-			default:
-				/* other cases should have been handled by PSQLexec */
-				psql_error(_("unexpected result status for \\watch\n"));
-				PQclear(res);
-				return false;
-		}
-
-		PQclear(res);
-
-		fflush(pset.queryFout);
+		if (res == -1)
+			return false;
 
 		/*
 		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
-		 * through the loop since it's conceivable something inside PSQLexec
-		 * could change sigint_interrupt_jmp.
+		 * through the loop since it's conceivable something inside
+		 * PSQLexecWatch could change sigint_interrupt_jmp.
 		 */
 		if (sigsetjmp(sigint_interrupt_jmp, 1) != 0)
 			break;
