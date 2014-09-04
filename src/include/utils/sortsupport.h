@@ -20,8 +20,8 @@
  * multiple acceleration mechanisms to be supported, but no opclass is
  * required to provide all of them.  The BTSORTSUPPORT function should
  * simply not set any function pointers for mechanisms it doesn't support.
- * (However, all opclasses that provide BTSORTSUPPORT are required to provide
- * the comparator function.)
+ * Opclasses that provide BTSORTSUPPORT and don't provide a comparator
+ * function will have a shim set up by sort support automatically.
  *
  * All sort support functions will be passed the address of the
  * SortSupportData struct when called, so they can use it to store
