@@ -1300,10 +1300,6 @@ gen_random_uuid() returns uuid
      <para>Comparison of crypt-des, crypt-md5 and bcrypt algorithms.</para>
     </listitem>
     <listitem>
-     <para><ulink url="http://csrc.nist.gov/cryptval/des.htm"></ulink></para>
-     <para>Standards for DES, 3DES and AES.</para>
-    </listitem>
-    <listitem>
      <para>
       <ulink url="http://en.wikipedia.org/wiki/Fortuna_(PRNG)"></ulink>
      </para>
