@@ -964,12 +964,15 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	teSection	curSection;
 	OutputContext sav;
 	const char *fmtName;
+	struct tm  *tm = localtime(&AH->createDate);
+	char		stamp_str[64];
 
 	sav = SaveOutput(AH);
 	if (ropt->filename)
 		SetOutput(AH, ropt->filename, 0 /* no compression */ );
 
-	ahprintf(AH, ";\n; Archive created at %s", ctime(&AH->createDate));
+	strftime(stamp_str, sizeof(stamp_str), "%Y-%m-%d %H:%M:%S %z", tm);
+	ahprintf(AH, ";\n; Archive created at %s\n", stamp_str);
 	ahprintf(AH, ";     dbname: %s\n;     TOC Entries: %d\n;     Compression: %d\n",
 			 AH->archdbname, AH->tocCount, AH->compression);
 
@@ -3455,21 +3458,9 @@ checkSeek(FILE *fp)
 static void
 dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim)
 {
-	char		buf[256];
+	char		buf[64];
 
-	/*
-	 * We don't print the timezone on Win32, because the names are long and
-	 * localized, which means they may contain characters in various random
-	 * encodings; this has been seen to cause encoding errors when reading the
-	 * dump script.
-	 */
-	if (strftime(buf, sizeof(buf),
-#ifndef WIN32
-				 "%Y-%m-%d %H:%M:%S %Z",
-#else
-				 "%Y-%m-%d %H:%M:%S",
-#endif
-				 localtime(&tim)) != 0)
+	if (strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S %z", localtime(&tim)) != 0)
 		ahprintf(AH, "-- %s %s\n\n", msg, buf);
 }
 

@@ -2039,22 +2039,10 @@ executeCommand(PGconn *conn, const char *query)
 static void
 dumpTimestamp(char *msg)
 {
-	char		buf[256];
+	char		buf[64];
 	time_t		now = time(NULL);
 
-	/*
-	 * We don't print the timezone on Win32, because the names are long and
-	 * localized, which means they may contain characters in various random
-	 * encodings; this has been seen to cause encoding errors when reading the
-	 * dump script.
-	 */
-	if (strftime(buf, sizeof(buf),
-#ifndef WIN32
-				 "%Y-%m-%d %H:%M:%S %Z",
-#else
-				 "%Y-%m-%d %H:%M:%S",
-#endif
-				 localtime(&now)) != 0)
+	if (strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S %z", localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
 }
 
