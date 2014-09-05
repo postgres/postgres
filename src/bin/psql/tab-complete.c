@@ -1694,6 +1694,9 @@ psql_completion(const char *text, int start, int end)
 			"autovacuum_freeze_max_age",
 			"autovacuum_freeze_min_age",
 			"autovacuum_freeze_table_age",
+			"autovacuum_multixact_freeze_max_age",
+			"autovacuum_multixact_freeze_min_age",
+			"autovacuum_multixact_freeze_table_age",
 			"autovacuum_vacuum_cost_delay",
 			"autovacuum_vacuum_cost_limit",
 			"autovacuum_vacuum_scale_factor",
@@ -1703,10 +1706,14 @@ psql_completion(const char *text, int start, int end)
 			"toast.autovacuum_freeze_max_age",
 			"toast.autovacuum_freeze_min_age",
 			"toast.autovacuum_freeze_table_age",
+			"toast.autovacuum_multixact_freeze_max_age",
+			"toast.autovacuum_multixact_freeze_min_age",
+			"toast.autovacuum_multixact_freeze_table_age",
 			"toast.autovacuum_vacuum_cost_delay",
 			"toast.autovacuum_vacuum_cost_limit",
 			"toast.autovacuum_vacuum_scale_factor",
 			"toast.autovacuum_vacuum_threshold",
+			"user_catalog_table",
 			NULL
 		};
 
