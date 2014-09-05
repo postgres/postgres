@@ -2350,7 +2350,7 @@ ReorderBufferRestoreCleanup(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		if (unlink(path) != 0 && errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not unlink file \"%s\": %m", path)));
+					 errmsg("could not remove file \"%s\": %m", path)));
 	}
 }
 
@@ -2407,7 +2407,7 @@ StartupReorderBuffer(void)
 				if (unlink(path) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-							 errmsg("could not unlink file \"%s\": %m",
+							 errmsg("could not remove file \"%s\": %m",
 									path)));
 			}
 		}

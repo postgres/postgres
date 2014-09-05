@@ -1161,7 +1161,7 @@ heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r)
 	if (lseek(fd, xlrec->offset, SEEK_SET) != xlrec->offset)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek to the end of file \"%s\": %m",
+				 errmsg("could not seek to end of file \"%s\": %m",
 						path)));
 
 	data = XLogRecGetData(r) + sizeof(*xlrec);
@@ -1255,7 +1255,7 @@ CheckPointLogicalRewriteHeap(void)
 			if (unlink(path) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not unlink file \"%s\": %m", path)));
+						 errmsg("could not remove file \"%s\": %m", path)));
 		}
 		else
 		{
