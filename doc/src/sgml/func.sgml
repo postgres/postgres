@@ -13050,7 +13050,8 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    <firstterm>Window functions</firstterm> provide the ability to perform
    calculations across sets of rows that are related to the current query
    row.  See <xref linkend="tutorial-window"> for an introduction to this
-   feature.
+   feature, and <xref linkend="syntax-window-functions"> for syntax
+   details.
   </para>
 
   <para>
