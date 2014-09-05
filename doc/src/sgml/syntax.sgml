@@ -1877,7 +1877,7 @@ UNBOUNDED FOLLOWING
     first <firstterm>peer</> row (a row that <literal>ORDER BY</> considers
     equivalent to the current row), while a <replaceable>frame_end</> of
     <literal>CURRENT ROW</> means the frame ends with the last equivalent
-    peer.  In <literal>ROWS</> mode, <literal>CURRENT ROW</> simply means
+    <literal>ORDER BY</> peer.  In <literal>ROWS</> mode, <literal>CURRENT ROW</> simply means
     the current row.
    </para>
 
@@ -1897,7 +1897,7 @@ UNBOUNDED FOLLOWING
     which is the same as <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND
     CURRENT ROW</>.  With <literal>ORDER BY</>, this sets the frame to be
     all rows from the partition start up through the current row's last
-    peer.  Without <literal>ORDER BY</>, all rows of the partition are
+    <literal>ORDER BY</> peer.  Without <literal>ORDER BY</>, all rows of the partition are
     included in the window frame, since all rows become peers of the current
     row.
    </para>

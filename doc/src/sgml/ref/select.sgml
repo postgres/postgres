@@ -792,8 +792,9 @@ UNBOUNDED FOLLOWING
     The default framing option is <literal>RANGE UNBOUNDED PRECEDING</>,
     which is the same as <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND
     CURRENT ROW</>; it sets the frame to be all rows from the partition start
-    up through the current row's last peer in the <literal>ORDER BY</>
-    ordering (which means all rows if there is no <literal>ORDER BY</>).
+    up through the current row's last peer (a row that <literal>ORDER
+    BY</> considers equivalent to the current row, or all rows if there
+    is no <literal>ORDER BY</>).
     In general, <literal>UNBOUNDED PRECEDING</> means that the frame
     starts with the first row of the partition, and similarly
     <literal>UNBOUNDED FOLLOWING</> means that the frame ends with the last
@@ -817,7 +818,7 @@ UNBOUNDED FOLLOWING
     results if the <literal>ORDER BY</> ordering does not order the rows
     uniquely.  The <literal>RANGE</> options are designed to ensure that
     rows that are peers in the <literal>ORDER BY</> ordering are treated
-    alike; any two peer rows will be both in or both not in the frame.
+    alike; all peer rows will be in the same frame.
    </para>
 
    <para>
