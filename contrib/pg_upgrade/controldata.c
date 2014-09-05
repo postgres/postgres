@@ -209,16 +209,20 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
 		{
-			char	   *op = strchr(p, '/');
+			p = strchr(p, ':');
 
-			if (op == NULL)
-				op = strchr(p, ':');
-
-			if (op == NULL || strlen(op) <= 1)
+			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
 
-			op++;				/* removing ':' char */
-			cluster->controldata.chkpnt_nxtxid = str2uint(op);
+			p++;				/* removing ':' char */
+			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
+
+			p = strchr(p, '/');
+			if (p == NULL || strlen(p) <= 1)
+				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* removing '/' char */
+			cluster->controldata.chkpnt_nxtxid = str2uint(p);
 			got_xid = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextOID:")) != NULL)

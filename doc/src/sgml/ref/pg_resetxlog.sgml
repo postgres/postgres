@@ -166,7 +166,8 @@ PostgreSQL documentation
       except in the field that is set by <command>pg_resetxlog</command>,
       so any value will work so far as the database itself is concerned.
       You might need to adjust this value to ensure that replication
-      systems such as <application>Slony-I</> work correctly &mdash;
+      systems such as <application>Slony-I</> and
+      <application>Skytools</> work correctly &mdash;
       if so, an appropriate value should be obtainable from the state of
       the downstream replicated database.
      </para>
