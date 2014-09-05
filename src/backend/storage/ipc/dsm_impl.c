@@ -332,7 +332,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 
 		ereport(elevel,
 				(errcode_for_dynamic_shared_memory(),
-		 errmsg("could not resize shared memory segment %s to %zu bytes: %m",
+		 errmsg("could not resize shared memory segment \"%s\" to %zu bytes: %m",
 				name, request_size)));
 		return false;
 	}
@@ -875,7 +875,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 		ereport(elevel,
 				(errcode_for_dynamic_shared_memory(),
-		 errmsg("could not resize shared memory segment %s to %zu bytes: %m",
+		 errmsg("could not resize shared memory segment \"%s\" to %zu bytes: %m",
 				name, request_size)));
 		return false;
 	}
@@ -923,7 +923,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-					 errmsg("could not resize shared memory segment %s to %zu bytes: %m",
+					 errmsg("could not resize shared memory segment \"%s\" to %zu bytes: %m",
 							name, request_size)));
 			return false;
 		}

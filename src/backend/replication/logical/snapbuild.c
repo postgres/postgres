@@ -1506,7 +1506,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	if (unlink(tmppath) != 0 && errno != ENOENT)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not unlink file \"%s\": %m", path)));
+				 errmsg("could not remove file \"%s\": %m", path)));
 
 	needed_length = sizeof(SnapBuildOnDisk) +
 		sizeof(TransactionId) * builder->running.xcnt_space +
@@ -1857,7 +1857,7 @@ CheckPointSnapBuild(void)
 		if (sscanf(snap_de->d_name, "%X-%X.snap", &hi, &lo) != 2)
 		{
 			ereport(LOG,
-					(errmsg("could not parse filename \"%s\"", path)));
+					(errmsg("could not parse file name \"%s\"", path)));
 			continue;
 		}
 
@@ -1877,7 +1877,7 @@ CheckPointSnapBuild(void)
 			{
 				ereport(LOG,
 						(errcode_for_file_access(),
-						 errmsg("could not unlink file \"%s\": %m",
+						 errmsg("could not remove file \"%s\": %m",
 								path)));
 				continue;
 			}

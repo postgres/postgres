@@ -183,7 +183,7 @@ ReplicationSlotValidateName(const char *name, int elevel)
 					(errcode(ERRCODE_INVALID_NAME),
 			errmsg("replication slot name \"%s\" contains invalid character",
 				   name),
-					 errhint("Replication slot names may only contain letters, numbers and the underscore character.")));
+					 errhint("Replication slot names may only contain letters, numbers, and the underscore character.")));
 			return false;
 		}
 	}
@@ -454,7 +454,7 @@ ReplicationSlotDropAcquired(void)
 
 		ereport(fail_softly ? WARNING : ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\": %m",
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						path, tmppath)));
 	}
 
@@ -1041,7 +1041,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	{
 		ereport(elevel,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\": %m",
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tmppath, path)));
 		return;
 	}
@@ -1092,7 +1092,7 @@ RestoreSlotFromDisk(const char *name)
 	if (unlink(path) < 0 && errno != ENOENT)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not unlink file \"%s\": %m", path)));
+				 errmsg("could not remove file \"%s\": %m", path)));
 
 	sprintf(path, "pg_replslot/%s/state", name);
 

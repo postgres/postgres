@@ -247,7 +247,7 @@ SELECT * FROM tvvm;
 REFRESH MATERIALIZED VIEW tmm;
 REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm;
 ERROR:  cannot refresh materialized view "public.tvmm" concurrently
-HINT:  Create a UNIQUE index with no WHERE clause on one or more columns of the materialized view.
+HINT:  Create a unique index with no WHERE clause on one or more columns of the materialized view.
 REFRESH MATERIALIZED VIEW tvmm;
 REFRESH MATERIALIZED VIEW tvvm;
 EXPLAIN (costs off)

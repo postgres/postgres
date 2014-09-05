@@ -680,7 +680,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			   errmsg("cannot refresh materialized view \"%s\" concurrently",
 					  matviewname),
-				 errhint("Create a UNIQUE index with no WHERE clause on one or more columns of the materialized view.")));
+				 errhint("Create a unique index with no WHERE clause on one or more columns of the materialized view.")));
 
 	appendStringInfoString(&querybuf,
 						   " AND newdata OPERATOR(pg_catalog.*=) mv) "

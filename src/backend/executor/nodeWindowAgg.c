@@ -344,13 +344,13 @@ advance_windowaggregate(WindowAggState *winstate,
 	winstate->curaggcontext = NULL;
 
 	/*
-	 * Moving-aggregate transition functions must not return NULL, see
+	 * Moving-aggregate transition functions must not return null, see
 	 * advance_windowaggregate_base().
 	 */
 	if (fcinfo->isnull && OidIsValid(peraggstate->invtransfn_oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-		errmsg("moving-aggregate transition function must not return NULL")));
+		errmsg("moving-aggregate transition function must not return null")));
 
 	/*
 	 * We must track the number of rows included in transValue, since to
