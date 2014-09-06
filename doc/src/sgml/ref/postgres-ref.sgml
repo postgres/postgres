@@ -571,9 +571,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Send all server log output to <replaceable
-        class="parameter">filename</replaceable>.  In normal multiuser
-        mode, this option is ignored, and <systemitem>stderr</> is
-        used by all processes.
+        class="parameter">filename</replaceable>.  This option is only
+        honored when supplied as a command-line option.
        </para>
       </listitem>
      </varlistentry>
