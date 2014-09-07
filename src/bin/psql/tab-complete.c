@@ -953,6 +953,13 @@ psql_completion(const char *text, int start, int end)
 
 /* ALTER */
 
+	/* ALTER TABLE */
+	else if (pg_strcasecmp(prev2_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev_wd, "TABLE") == 0)
+	{
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   "UNION SELECT 'ALL IN TABLESPACE'");
+	}
 	/*
 	 * complete with what you can alter (TABLE, GROUP, USER, ...) unless we're
 	 * in ALTER TABLE sth ALTER
@@ -969,6 +976,25 @@ psql_completion(const char *text, int start, int end)
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
+	}
+	/* ALTER TABLE,INDEX,MATERIALIZED VIEW xxx ALL IN TABLESPACE xxx */
+	else if (pg_strcasecmp(prev4_wd, "ALL") == 0 &&
+			 pg_strcasecmp(prev3_wd, "IN") == 0 &&
+			 pg_strcasecmp(prev2_wd, "TABLESPACE") == 0)
+	{
+		static const char *const list_ALTERALLINTSPC[] =
+			{"SET TABLESPACE", "OWNED BY", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERALLINTSPC);
+	}
+	/* ALTER TABLE,INDEX,MATERIALIZED VIEW xxx ALL IN TABLESPACE xxx OWNED BY */
+	else if (pg_strcasecmp(prev6_wd, "ALL") == 0 &&
+			 pg_strcasecmp(prev5_wd, "IN") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLESPACE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "OWNED") == 0 &&
+			 pg_strcasecmp(prev4_wd, "BY") == 0)
+	{
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	}
 	/* ALTER AGGREGATE,FUNCTION <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
@@ -1106,6 +1132,13 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_ALTER_FOREIGN_TABLE);
 	}
 
+	/* ALTER INDEX */
+	else if (pg_strcasecmp(prev2_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev_wd, "INDEX") == 0)
+	{
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
+								   "UNION SELECT 'ALL IN TABLESPACE'");
+	}
 	/* ALTER INDEX <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "INDEX") == 0)
@@ -1169,7 +1202,8 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "MATERIALIZED") == 0 &&
 			 pg_strcasecmp(prev_wd, "VIEW") == 0)
 	{
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews,
+								   "UNION SELECT 'ALL IN TABLESPACE'");
 	}
 
 	/* ALTER USER,ROLE <name> */
@@ -1749,12 +1783,12 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("IDENTITY");
 	}
 
-	/* ALTER TABLESPACE <foo> with RENAME TO, OWNER TO, SET, RESET, MOVE */
+	/* ALTER TABLESPACE <foo> with RENAME TO, OWNER TO, SET, RESET */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TABLESPACE") == 0)
 	{
 		static const char *const list_ALTERTSPC[] =
-		{"RENAME TO", "OWNER TO", "SET", "RESET", "MOVE", NULL};
+		{"RENAME TO", "OWNER TO", "SET", "RESET", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERTSPC);
 	}
@@ -1775,27 +1809,6 @@ psql_completion(const char *text, int start, int end)
 		{"seq_page_cost", "random_page_cost", NULL};
 
 		COMPLETE_WITH_LIST(list_TABLESPACEOPTIONS);
-	}
-	/* ALTER TABLESPACE <foo> MOVE ALL|TABLES|INDEXES|MATERIALIZED VIEWS */
-	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
-			 pg_strcasecmp(prev3_wd, "TABLESPACE") == 0 &&
-			 pg_strcasecmp(prev_wd, "MOVE") == 0)
-	{
-		static const char *const list_TABLESPACEMOVETARGETS[] =
-		{"ALL", "TABLES", "INDEXES", "MATERIALIZED VIEWS", NULL};
-
-		COMPLETE_WITH_LIST(list_TABLESPACEMOVETARGETS);
-	}
-	else if ((pg_strcasecmp(prev4_wd, "TABLESPACE") == 0 &&
-			  pg_strcasecmp(prev2_wd, "MOVE") == 0) ||
-			 (pg_strcasecmp(prev5_wd, "TABLESPACE") == 0 &&
-			  pg_strcasecmp(prev3_wd, "MOVE") == 0 &&
-			  pg_strcasecmp(prev2_wd, "MATERIALIZED") == 0))
-	{
-		static const char *const list_TABLESPACEMOVEOPTIONS[] =
-		{"OWNED BY", "TO", NULL};
-
-		COMPLETE_WITH_LIST(list_TABLESPACEMOVEOPTIONS);
 	}
 
 	/* ALTER TEXT SEARCH */
@@ -2798,9 +2811,8 @@ psql_completion(const char *text, int start, int end)
 	 * but we may as well tab-complete both: perhaps some users prefer one
 	 * variant or the other.
 	 */
-	else if ((pg_strcasecmp(prev3_wd, "FETCH") == 0 ||
-			  pg_strcasecmp(prev3_wd, "MOVE") == 0) &&
-			 pg_strcasecmp(prev_wd, "TO") != 0)
+	else if (pg_strcasecmp(prev3_wd, "FETCH") == 0 ||
+			 pg_strcasecmp(prev3_wd, "MOVE") == 0)
 	{
 		static const char *const list_FROMIN[] =
 		{"FROM", "IN", NULL};
