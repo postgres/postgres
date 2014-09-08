@@ -42,7 +42,8 @@ char	   *gets_interactive(const char *prompt);
 char	   *gets_fromFile(FILE *source);
 
 void		initializeInput(int flags);
-bool		saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag);
+
+bool		printHistory(const char *fname, unsigned short int pager);
 
 void		pg_append_history(const char *s, PQExpBuffer history_buf);
 void		pg_send_history(PQExpBuffer history_buf);
