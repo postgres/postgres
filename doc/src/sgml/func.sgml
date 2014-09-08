@@ -12246,14 +12246,13 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>
        <type>smallint</type>, <type>int</type>,
        <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, <type>numeric</type>, or
-       <type>interval</type>
+       precision</type>, <type>numeric</type>,
+       <type>interval</type>, or <type>money</>
       </entry>
       <entry>
        <type>bigint</type> for <type>smallint</type> or
        <type>int</type> arguments, <type>numeric</type> for
-       <type>bigint</type> arguments, <type>double precision</type>
-       for floating-point arguments, otherwise the same as the
+       <type>bigint</type> arguments, otherwise the same as the
        argument data type
       </entry>
       <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
