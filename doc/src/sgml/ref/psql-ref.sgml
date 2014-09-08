@@ -261,7 +261,8 @@ EOF
       <term><option>--no-readline</></term>
       <listitem>
       <para>
-       Do not use readline for line editing and do not use the history.
+       Do not use <application>Readline</application> for line editing and do
+       not use the command history.
        This can be useful to turn off tab expansion when cutting and pasting.
       </para>
       </listitem>
@@ -2173,12 +2174,13 @@ lo_import 152801
         <term><literal>\s [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Print or save the command line history to <replaceable
-        class="parameter">filename</replaceable>. If <replaceable
-        class="parameter">filename</replaceable> is omitted, the history
-        is written to the standard output. This option is only available
-        if <application>psql</application> is configured to use the
-        <acronym>GNU</acronym> <application>Readline</application> library.
+        Print <application>psql</application>'s command line history
+        to <replaceable class="parameter">filename</replaceable>.
+        If <replaceable class="parameter">filename</replaceable> is omitted,
+        the history is written to the standard output (using the pager if
+        appropriate).  This command is not available
+        if <application>psql</application> was built
+        without <application>Readline</application> support.
         </para>
         </listitem>
       </varlistentry>
