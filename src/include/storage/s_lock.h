@@ -383,6 +383,12 @@ tas(volatile slock_t *lock)
 
 
 #if defined(__sparc__)		/* Sparc */
+/*
+ * Solaris has always run sparc processors in TSO (total store) mode, but
+ * linux didn't use to and the *BSDs still don't. So, be careful about
+ * acquire/release semantics. The CPU will treat superflous membars as NOPs,
+ * so it's just code space.
+ */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -404,8 +410,49 @@ tas(volatile slock_t *lock)
 :		"=r"(_res), "+m"(*lock)
 :		"r"(lock)
 :		"memory");
+#if defined(__sparcv7)
+	/*
+	 * No stbar or membar available, luckily no actually produced hardware
+	 * requires a barrier.
+	 */
+#elif defined(__sparcv8)
+	/* stbar is available (and required for both PSO, RMO), membar isn't */
+	__asm__ __volatile__ ("stbar	 \n":::"memory");
+#else
+	/*
+	 * #LoadStore (RMO) | #LoadLoad (RMO) together are the appropriate acquire
+	 * barrier for sparcv8+ upwards.
+	 */
+	__asm__ __volatile__ ("membar #LoadStore | #LoadLoad \n":::"memory");
+#endif
 	return (int) _res;
 }
+
+#if defined(__sparcv7)
+/*
+ * No stbar or membar available, luckily no actually produced hardware
+ * requires a barrier.
+ */
+#define S_UNLOCK(lock)		(*((volatile slock_t *) (lock)) = 0)
+#elif  __sparcv8
+/* stbar is available (and required for both PSO, RMO), membar isn't */
+#define S_UNLOCK(lock)	\
+do \
+{ \
+	__asm__ __volatile__ ("stbar	 \n":::"memory"); \
+	*((volatile slock_t *) (lock)) = 0; \
+} while (0)
+#else
+/*
+ * #LoadStore (RMO) | #StoreStore (RMO, PSO) together are the appropriate
+ * release barrier for sparcv8+ upwards.
+ */
+do \
+{ \
+	__asm__ __volatile__ ("membar #LoadStore | #StoreStore \n":::"memory"); \
+	*((volatile slock_t *) (lock)) = 0; \
+} while (0)
+#endif
 
 #endif	 /* __sparc__ */
 
@@ -907,7 +954,7 @@ typedef int slock_t;
 #endif	 /* _AIX */
 
 
-/* These are in s_lock.c */
+/* These are in sunstudio_(sparc|x86).s */
 
 
 #if defined(sun3)		/* Sun3 */
