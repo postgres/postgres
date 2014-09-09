@@ -1706,3 +1706,126 @@ select length(md5((f1[1]).c2)) from dest;
 
 drop table dest;
 drop type textandtext;
+-- Tests for polymorphic-array form of width_bucket()
+-- this exercises the varwidth and float8 code paths
+SELECT
+    op,
+    width_bucket(op::numeric, ARRAY[1, 3, 5, 10.0]::numeric[]) AS wb_n1,
+    width_bucket(op::numeric, ARRAY[0, 5.5, 9.99]::numeric[]) AS wb_n2,
+    width_bucket(op::numeric, ARRAY[-6, -5, 2.0]::numeric[]) AS wb_n3,
+    width_bucket(op::float8, ARRAY[1, 3, 5, 10.0]::float8[]) AS wb_f1,
+    width_bucket(op::float8, ARRAY[0, 5.5, 9.99]::float8[]) AS wb_f2,
+    width_bucket(op::float8, ARRAY[-6, -5, 2.0]::float8[]) AS wb_f3
+FROM (VALUES
+  (-5.2),
+  (-0.0000000001),
+  (0.000000000001),
+  (1),
+  (1.99999999999999),
+  (2),
+  (2.00000000000001),
+  (3),
+  (4),
+  (4.5),
+  (5),
+  (5.5),
+  (6),
+  (7),
+  (8),
+  (9),
+  (9.99999999999999),
+  (10),
+  (10.0000000000001)
+) v(op);
+        op        | wb_n1 | wb_n2 | wb_n3 | wb_f1 | wb_f2 | wb_f3 
+------------------+-------+-------+-------+-------+-------+-------
+             -5.2 |     0 |     0 |     1 |     0 |     0 |     1
+    -0.0000000001 |     0 |     0 |     2 |     0 |     0 |     2
+   0.000000000001 |     0 |     1 |     2 |     0 |     1 |     2
+                1 |     1 |     1 |     2 |     1 |     1 |     2
+ 1.99999999999999 |     1 |     1 |     2 |     1 |     1 |     2
+                2 |     1 |     1 |     3 |     1 |     1 |     3
+ 2.00000000000001 |     1 |     1 |     3 |     1 |     1 |     3
+                3 |     2 |     1 |     3 |     2 |     1 |     3
+                4 |     2 |     1 |     3 |     2 |     1 |     3
+              4.5 |     2 |     1 |     3 |     2 |     1 |     3
+                5 |     3 |     1 |     3 |     3 |     1 |     3
+              5.5 |     3 |     2 |     3 |     3 |     2 |     3
+                6 |     3 |     2 |     3 |     3 |     2 |     3
+                7 |     3 |     2 |     3 |     3 |     2 |     3
+                8 |     3 |     2 |     3 |     3 |     2 |     3
+                9 |     3 |     2 |     3 |     3 |     2 |     3
+ 9.99999999999999 |     3 |     3 |     3 |     3 |     3 |     3
+               10 |     4 |     3 |     3 |     4 |     3 |     3
+ 10.0000000000001 |     4 |     3 |     3 |     4 |     3 |     3
+(19 rows)
+
+-- ensure float8 path handles NaN properly
+SELECT
+    op,
+    width_bucket(op, ARRAY[1, 3, 9, 'NaN', 'NaN']::float8[]) AS wb
+FROM (VALUES
+  (-5.2::float8),
+  (4::float8),
+  (77::float8),
+  ('NaN'::float8)
+) v(op);
+  op  | wb 
+------+----
+ -5.2 |  0
+    4 |  2
+   77 |  3
+  NaN |  5
+(4 rows)
+
+-- these exercise the generic fixed-width code path
+SELECT
+    op,
+    width_bucket(op, ARRAY[1, 3, 5, 10]) AS wb_1
+FROM generate_series(0,11) as op;
+ op | wb_1 
+----+------
+  0 |    0
+  1 |    1
+  2 |    1
+  3 |    2
+  4 |    2
+  5 |    3
+  6 |    3
+  7 |    3
+  8 |    3
+  9 |    3
+ 10 |    4
+ 11 |    4
+(12 rows)
+
+SELECT width_bucket(now(),
+                    array['yesterday', 'today', 'tomorrow']::timestamptz[]);
+ width_bucket 
+--------------
+            2
+(1 row)
+
+-- corner cases
+SELECT width_bucket(5, ARRAY[3]);
+ width_bucket 
+--------------
+            1
+(1 row)
+
+SELECT width_bucket(5, '{}');
+ width_bucket 
+--------------
+            0
+(1 row)
+
+-- error cases
+SELECT width_bucket('5'::text, ARRAY[3, 4]::integer[]);
+ERROR:  function width_bucket(text, integer[]) does not exist
+LINE 1: SELECT width_bucket('5'::text, ARRAY[3, 4]::integer[]);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT width_bucket(5, ARRAY[3, 4, NULL]);
+ERROR:  thresholds array must not contain NULLs
+SELECT width_bucket(5, ARRAY[ARRAY[1, 2], ARRAY[3, 4]]);
+ERROR:  thresholds must be one-dimensional array

@@ -901,24 +901,39 @@
         <indexterm>
          <primary>width_bucket</primary>
         </indexterm>
-        <literal><function>width_bucket(<parameter>op</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>int</type>)</function></literal>
-       </entry>
+        <literal><function>width_bucket(<parameter>operand</parameter> <type>dp</type>, <parameter>b1</parameter> <type>dp</type>, <parameter>b2</parameter> <type>dp</type>, <parameter>count</parameter> <type>int</type>)</function></literal></entry>
        <entry><type>int</type></entry>
-       <entry>return the bucket to which <parameter>operand</> would
-       be assigned in an equidepth histogram with <parameter>count</>
-       buckets, in the range <parameter>b1</> to <parameter>b2</></entry>
+       <entry>return the bucket number to which <parameter>operand</> would
+       be assigned in a histogram having <parameter>count</> equal-width
+       buckets spanning the range <parameter>b1</> to <parameter>b2</>;
+       returns <literal>0</> or <literal><parameter>count</>+1</literal> for
+       an input outside the range</entry>
        <entry><literal>width_bucket(5.35, 0.024, 10.06, 5)</literal></entry>
        <entry><literal>3</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>width_bucket(<parameter>op</parameter> <type>dp</type>, <parameter>b1</parameter> <type>dp</type>, <parameter>b2</parameter> <type>dp</type>, <parameter>count</parameter> <type>int</type>)</function></literal></entry>
+       <entry><literal><function>width_bucket(<parameter>operand</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>int</type>)</function></literal></entry>
        <entry><type>int</type></entry>
-       <entry>return the bucket to which <parameter>operand</> would
-       be assigned in an equidepth histogram with <parameter>count</>
-       buckets, in the range <parameter>b1</> to <parameter>b2</></entry>
+       <entry>return the bucket number to which <parameter>operand</> would
+       be assigned in a histogram having <parameter>count</> equal-width
+       buckets spanning the range <parameter>b1</> to <parameter>b2</>;
+       returns <literal>0</> or <literal><parameter>count</>+1</literal> for
+       an input outside the range</entry>
        <entry><literal>width_bucket(5.35, 0.024, 10.06, 5)</literal></entry>
        <entry><literal>3</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>width_bucket(<parameter>operand</parameter> <type>anyelement</type>, <parameter>thresholds</parameter> <type>anyarray</type>)</function></literal></entry>
+       <entry><type>int</type></entry>
+       <entry>return the bucket number to which <parameter>operand</> would
+       be assigned given an array listing the lower bounds of the buckets;
+       returns <literal>0</> for an input less than the first lower bound;
+       the <parameter>thresholds</> array <emphasis>must be sorted</>,
+       smallest first, or unexpected results will be obtained</entry>
+       <entry><literal>width_bucket(now(), array['yesterday', 'today', 'tomorrow']::timestamptz[])</literal></entry>
+       <entry><literal>2</literal></entry>
       </row>
      </tbody>
     </tgroup>

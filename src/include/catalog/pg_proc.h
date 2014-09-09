@@ -514,7 +514,7 @@ DATA(insert OID = 308 (  float84le		   PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 
 DATA(insert OID = 309 (  float84gt		   PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84gt _null_ _null_ _null_ ));
 DATA(insert OID = 310 (  float84ge		   PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84ge _null_ _null_ _null_ ));
 DATA(insert OID = 320 ( width_bucket	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 4 0 23 "701 701 701 23" _null_ _null_ _null_ _null_ width_bucket_float8 _null_ _null_ _null_ ));
-DESCR("bucket number of operand in equidepth histogram");
+DESCR("bucket number of operand in equal-width histogram");
 
 DATA(insert OID = 311 (  float8			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 701 "700" _null_ _null_ _null_ _null_	ftod _null_ _null_ _null_ ));
 DESCR("convert float4 to float8");
@@ -885,6 +885,8 @@ DATA(insert OID = 2334 (  array_agg_finalfn   PGNSP PGUID 12 1 0 0 0 f f f f f f
 DESCR("aggregate final function");
 DATA(insert OID = 2335 (  array_agg		   PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 2277 "2283" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("concatenate aggregate input into an array");
+DATA(insert OID = 3218 ( width_bucket	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "2283 2277" _null_ _null_ _null_ _null_ width_bucket_array _null_ _null_ _null_ ));
+DESCR("bucket number of operand given a sorted array of bucket lower bounds");
 DATA(insert OID = 3816 (  array_typanalyze PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 16 "2281" _null_ _null_ _null_ _null_ array_typanalyze _null_ _null_ _null_ ));
 DESCR("array typanalyze");
 DATA(insert OID = 3817 (  arraycontsel	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ arraycontsel _null_ _null_ _null_ ));
@@ -2301,7 +2303,7 @@ DESCR("trunc(x/y)");
 DATA(insert OID = 1980 ( numeric_div_trunc		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_div_trunc _null_ _null_ _null_ ));
 DESCR("trunc(x/y)");
 DATA(insert OID = 2170 ( width_bucket			PGNSP PGUID 12 1 0 0 0 f f f f t f i 4 0 23 "1700 1700 1700 23" _null_ _null_ _null_ _null_ width_bucket_numeric _null_ _null_ _null_ ));
-DESCR("bucket number of operand in equidepth histogram");
+DESCR("bucket number of operand in equal-width histogram");
 
 DATA(insert OID = 1747 ( time_pl_interval		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1083 "1083 1186" _null_ _null_ _null_ _null_	time_pl_interval _null_ _null_ _null_ ));
 DATA(insert OID = 1748 ( time_mi_interval		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1083 "1083 1186" _null_ _null_ _null_ _null_	time_mi_interval _null_ _null_ _null_ ));
