@@ -279,7 +279,7 @@ apt-get install docbook docbook-dsssl docbook-xsl openjade1.3 opensp xsltproc
   </sect2>
 
   <sect2>
-   <title>Mac OS X</title>
+   <title>OS X</title>
 
    <para>
     If you use MacPorts, the following will get you set up:

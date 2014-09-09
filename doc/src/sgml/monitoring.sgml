@@ -1923,7 +1923,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    Currently, the
    <ulink url="https://en.wikipedia.org/wiki/DTrace">DTrace</ulink>
    utility is supported, which, at the time of this writing, is available
-   on Solaris, Mac OS X, FreeBSD, NetBSD, and Oracle Linux.  The
+   on Solaris, OS X, FreeBSD, NetBSD, and Oracle Linux.  The
    <ulink url="http://sourceware.org/systemtap/">SystemTap</ulink> project
    for Linux provides a DTrace equivalent and can also be used.  Supporting other dynamic
    tracing utilities is theoretically possible by changing the definitions for
