@@ -925,8 +925,8 @@ option        SEMMAP=256
 
 
      <varlistentry>
-      <term><systemitem class="osname">Mac OS X</>
-      <indexterm><primary>Mac OS X</><secondary>IPC configuration</></>
+      <term><systemitem class="osname">OS X</>
+      <indexterm><primary>OS X</><secondary>IPC configuration</></>
       </term>
       <listitem>
        <para>

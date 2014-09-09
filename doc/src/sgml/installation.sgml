@@ -864,7 +864,7 @@ su - postgres
        <listitem>
         <para>
          Build with Bonjour support.  This requires Bonjour support
-         in your operating system.  Recommended on Mac OS X.
+         in your operating system.  Recommended on OS X.
         </para>
        </listitem>
       </varlistentry>
@@ -890,7 +890,7 @@ su - postgres
           <para>
            <option>e2fs</> to use the UUID library created by
            the <literal>e2fsprogs</> project; this library is present in most
-           Linux systems and in Mac OS X, and can be obtained for other
+           Linux systems and in OS X, and can be obtained for other
            platforms as well
           </para>
          </listitem>
@@ -1991,7 +1991,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    <productname>PostgreSQL</> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
-   FreeBSD, OpenBSD, NetBSD, Mac OS X, AIX, HP/UX, Solaris, Tru64 Unix,
+   FreeBSD, OpenBSD, NetBSD, OS X, AIX, HP/UX, Solaris, Tru64 Unix,
+   FreeBSD, OpenBSD, NetBSD, OS X, AIX, HP/UX, Solaris,
    and UnixWare.  Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in

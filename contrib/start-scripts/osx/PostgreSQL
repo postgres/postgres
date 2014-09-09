@@ -4,7 +4,7 @@
 # PostgreSQL RDBMS Server
 ##
 
-# PostgreSQL boot time startup script for Darwin/Mac OS X. To install, change
+# PostgreSQL boot time startup script for OS X. To install, change
 # the "prefix", "PGDATA", "PGUSER", and "PGLOG" variables below as
 # necessary. Next, create a new directory, "/Library/StartupItems/PostgreSQL".
 # Then copy this script and the accompanying "StartupParameters.plist" file
