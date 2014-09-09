@@ -178,6 +178,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 	{
 		Node	   *orarg = (Node *) lfirst(lc);
 		List	   *subclauses = NIL;
+		Node	   *subclause;
 
 		/* OR arguments should be ANDs or sub-RestrictInfos */
 		if (and_clause(orarg))
@@ -226,9 +227,16 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 
 		/*
 		 * OK, add subclause(s) to the result OR.  If we found more than one,
-		 * we need an AND node.
+		 * we need an AND node.  But if we found only one, and it is itself an
+		 * OR node, add its subclauses to the result instead; this is needed
+		 * to preserve AND/OR flatness (ie, no OR directly underneath OR).
 		 */
-		clauselist = lappend(clauselist, make_ands_explicit(subclauses));
+		subclause = (Node *) make_ands_explicit(subclauses);
+		if (or_clause(subclause))
+			clauselist = list_concat(clauselist,
+								  list_copy(((BoolExpr *) subclause)->args));
+		else
+			clauselist = lappend(clauselist, subclause);
 	}
 
 	/*
