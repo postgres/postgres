@@ -77,6 +77,8 @@ static void process_psqlrc_file(char *filename);
 static void showVersion(void);
 static void EstablishVariableSpace(void);
 
+#define NOPAGER		0
+
 /*
  *
  * main
@@ -95,9 +97,9 @@ main(int argc, char *argv[])
 
 	if (argc > 1)
 	{
-		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		if ((strcmp(argv[1], "-?") == 0) || (argc == 2 && (strcmp(argv[1], "--help") == 0)))
 		{
-			usage();
+			usage(NOPAGER);
 			exit(EXIT_SUCCESS);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
@@ -383,7 +385,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"password", no_argument, NULL, 'W'},
 		{"expanded", no_argument, NULL, 'x'},
 		{"no-psqlrc", no_argument, NULL, 'X'},
-		{"help", no_argument, NULL, '?'},
+		{"help", optional_argument, NULL, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -557,20 +559,31 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case '?':
 				/* Actual help option given */
-				if (strcmp(argv[optind - 1], "--help") == 0 || strcmp(argv[optind - 1], "-?") == 0)
+				if (strcmp(argv[optind - 1], "-?") == 0)
 				{
-					usage();
+					usage(NOPAGER);
 					exit(EXIT_SUCCESS);
 				}
 				/* unknown option reported by getopt */
 				else
+					goto unknown_option;
+				break;
+			case 1:
 				{
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-							pset.progname);
-					exit(EXIT_FAILURE);
+					if (!optarg || strcmp(optarg, "options") == 0)
+						usage(NOPAGER);
+					else if (optarg && strcmp(optarg, "commands") == 0)
+						slashUsage(NOPAGER);
+					else if (optarg && strcmp(optarg, "variables") == 0)
+						helpVariables(NOPAGER);
+					else
+						goto unknown_option;
+
+					exit(EXIT_SUCCESS);
 				}
 				break;
 			default:
+			unknown_option:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 						pset.progname);
 				exit(EXIT_FAILURE);

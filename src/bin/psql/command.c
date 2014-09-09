@@ -1491,7 +1491,19 @@ exec_command(const char *cmd,
 
 	/* \? -- slash command help */
 	else if (strcmp(cmd, "?") == 0)
-		slashUsage(pset.popt.topt.pager);
+	{
+		char	   *opt0 = psql_scan_slash_option(scan_state,
+													OT_NORMAL, NULL, false);
+
+		if (!opt0 || strcmp(opt0, "commands") == 0)
+			slashUsage(pset.popt.topt.pager);
+		else if (strcmp(opt0, "options") == 0)
+			usage(pset.popt.topt.pager);
+		else if (strcmp(opt0, "variables") == 0)
+			helpVariables(pset.popt.topt.pager);
+		else
+			slashUsage(pset.popt.topt.pager);
+	}
 
 #if 0
 

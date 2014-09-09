@@ -3543,6 +3543,13 @@ psql_completion(const char *text, int start, int end)
 
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
+	else if (strcmp(prev_wd, "\\?") == 0)
+	{
+		static const char *const my_list[] =
+		{"commands", "options", "variables", NULL};
+
+		COMPLETE_WITH_LIST_CS(my_list);
+	}
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 
