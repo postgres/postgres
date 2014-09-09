@@ -2827,6 +2827,33 @@ select * from tenk1 a join tenk1 b on
                            Index Cond: (unique2 = 3)
 (12 rows)
 
+explain (costs off)
+select * from tenk1 a join tenk1 b on
+  (a.unique1 = 1 and b.unique1 = 2) or
+  ((a.unique2 = 3 or a.unique2 = 7) and b.hundred = 4);
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR (((a.unique2 = 3) OR (a.unique2 = 7)) AND (b.hundred = 4)))
+   ->  Bitmap Heap Scan on tenk1 b
+         Recheck Cond: ((unique1 = 2) OR (hundred = 4))
+         ->  BitmapOr
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: (unique1 = 2)
+               ->  Bitmap Index Scan on tenk1_hundred
+                     Index Cond: (hundred = 4)
+   ->  Materialize
+         ->  Bitmap Heap Scan on tenk1 a
+               Recheck Cond: ((unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
+               ->  BitmapOr
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 = 1)
+                     ->  Bitmap Index Scan on tenk1_unique2
+                           Index Cond: (unique2 = 3)
+                     ->  Bitmap Index Scan on tenk1_unique2
+                           Index Cond: (unique2 = 7)
+(19 rows)
+
 --
 -- test placement of movable quals in a parameterized join tree
 --
