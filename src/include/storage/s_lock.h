@@ -457,6 +457,7 @@ do \
  * #LoadStore (RMO) | #StoreStore (RMO, PSO) together are the appropriate
  * release barrier for sparcv8+ upwards.
  */
+#define S_UNLOCK(lock)	\
 do \
 { \
 	__asm__ __volatile__ ("membar #LoadStore | #StoreStore \n":::"memory"); \
