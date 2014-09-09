@@ -1400,11 +1400,15 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			doc->encoding = xmlStrdup((const xmlChar *) "UTF-8");
 			doc->standalone = standalone;
 
-			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
-												   utf8string + count, NULL);
-			if (res_code != 0 || xmlerrcxt->err_occurred)
-				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
-							"invalid XML content");
+			/* allow empty content */
+			if (*(utf8string + count))
+			{
+				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
+													   utf8string + count, NULL);
+				if (res_code != 0 || xmlerrcxt->err_occurred)
+					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
+								"invalid XML content");
+			}
 		}
 	}
 	PG_CATCH();

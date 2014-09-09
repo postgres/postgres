@@ -60,6 +60,8 @@ SELECT xmlelement(name foo, xmlattributes('infinity'::timestamp as bar));
 SELECT xmlelement(name foo, xmlattributes('<>&"''' as funny, xml 'b<a/>r' as funnier));
 
 
+SELECT xmlparse(content '');
+SELECT xmlparse(content '  ');
 SELECT xmlparse(content 'abc');
 SELECT xmlparse(content '<abc>x</abc>');
 SELECT xmlparse(content '<invalidentity>&</invalidentity>');
@@ -69,6 +71,8 @@ SELECT xmlparse(content '<relativens xmlns=''relative''/>');
 SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
 SELECT xmlparse(content '<nosuchprefix:tag/>');
 
+SELECT xmlparse(document '');
+SELECT xmlparse(document '   ');
 SELECT xmlparse(document 'abc');
 SELECT xmlparse(document '<abc>x</abc>');
 SELECT xmlparse(document '<invalidentity>&</abc>');

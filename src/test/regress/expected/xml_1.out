@@ -164,6 +164,14 @@ SELECT xmlelement(name foo, xmlattributes('<>&"''' as funny, xml 'b<a/>r' as fun
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '  ');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content 'abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
@@ -193,6 +201,14 @@ ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<nosuchprefix:tag/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '   ');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
