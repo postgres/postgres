@@ -55,14 +55,16 @@
  *	on Alpha TAS() will "fail" if interrupted.  Therefore a retry loop must
  *	always be used, even if you are certain the lock is free.
  *
- *	Another caution for users of these macros is that it is the caller's
- *	responsibility to ensure that the compiler doesn't re-order accesses
- *	to shared memory to precede the actual lock acquisition, or follow the
- *	lock release.  Typically we handle this by using volatile-qualified
- *	pointers to refer to both the spinlock itself and the shared data
- *	structure being accessed within the spinlocked critical section.
- *	That fixes it because compilers are not allowed to re-order accesses
- *	to volatile objects relative to other such accesses.
+ *	It is the responsibility of these macros to make sure that the compiler
+ *	does not re-order accesses to shared memory to precede the actual lock
+ *	acquisition, or follow the lock release.  Prior to PostgreSQL 9.5, this
+ *	was the caller's responsibility, which meant that callers had to use
+ *	volatile-qualified pointers to refer to both the spinlock itself and the
+ *	shared data being accessed within the spinlocked critical section.  This
+ *	was notationally awkward, easy to forget (and thus error-prone), and
+ *	prevented some useful compiler optimizations.  For these reasons, we
+ *	now require that the macros themselves prevent compiler re-ordering,
+ *	so that the caller doesn't need to take special precautions.
  *
  *	On platforms with weak memory ordering, the TAS(), TAS_SPIN(), and
  *	S_UNLOCK() macros must further include hardware-level memory fence
@@ -399,9 +401,9 @@ tas(volatile slock_t *lock)
 #if defined(__sparcv7)
 /*
  * No stbar or membar available, luckily no actually produced hardware
- * requires a barrier.
+ * requires a barrier.  We fall through to the default gcc definition of
+ * S_UNLOCK in this case.
  */
-#define S_UNLOCK(lock)		(*((volatile slock_t *) (lock)) = 0)
 #elif  __sparcv8
 /* stbar is available (and required for both PSO, RMO), membar isn't */
 #define S_UNLOCK(lock)	\
@@ -484,14 +486,14 @@ tas(volatile slock_t *lock)
 #define S_UNLOCK(lock)	\
 do \
 { \
-	__asm__ __volatile__ ("	lwsync \n"); \
+	__asm__ __volatile__ ("	lwsync \n" ::: "memory"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
 #else
 #define S_UNLOCK(lock)	\
 do \
 { \
-	__asm__ __volatile__ ("	sync \n"); \
+	__asm__ __volatile__ ("	sync \n" ::: "memory"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
 #endif /* USE_PPC_LWSYNC */
@@ -599,7 +601,9 @@ do \
 		"       .set noreorder      \n" \
 		"       .set nomacro        \n" \
 		"       sync                \n" \
-		"       .set pop              "); \
+		"       .set pop              "
+:
+:		"memory");
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
 
@@ -657,6 +661,23 @@ tas(volatile slock_t *lock)
 typedef unsigned char slock_t;
 #endif
 
+/*
+ * Note that this implementation is unsafe for any platform that can speculate
+ * a memory access (either load or store) after a following store.  That
+ * happens not to be possible x86 and most legacy architectures (some are
+ * single-processor!), but many modern systems have weaker memory ordering.
+ * Those that do must define their own version S_UNLOCK() rather than relying
+ * on this one.
+ */
+#if !defined(S_UNLOCK)
+#if defined(__INTEL_COMPILER)
+#define S_UNLOCK(lock)	\
+	do { __memory_barrier(); *(lock) = 0; } while (0)
+#else
+#define S_UNLOCK(lock)	\
+	do { __asm__ __volatile__("" : : : "memory");  *(lock) = 0; } while (0)
+#endif
+#endif
 
 #endif	/* defined(__GNUC__) || defined(__INTEL_COMPILER) */
 
@@ -730,9 +751,13 @@ tas(volatile slock_t *lock)
 	return (lockval == 0);
 }
 
-#endif /* __GNUC__ */
+#define S_UNLOCK(lock)	\
+	do { \
+		__asm__ __volatile__("" : : : "memory"); \
+		*TAS_ACTIVE_WORD(lock) = -1; \
+	} while (0)
 
-#define S_UNLOCK(lock)	(*TAS_ACTIVE_WORD(lock) = -1)
+#endif /* __GNUC__ */
 
 #define S_INIT_LOCK(lock) \
 	do { \
@@ -770,6 +795,8 @@ typedef unsigned int slock_t;
 #define TAS(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
 /* On IA64, it's a win to use a non-locking test before the xchg proper */
 #define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
+#define S_UNLOCK(lock)	\
+	do { _Asm_sched_fence(); (*(lock)) = 0); } while (0)
 
 #endif	/* HPUX on IA64, non gcc */
 
@@ -832,6 +859,12 @@ spin_delay(void)
 }
 #endif
 
+#include <intrin.h>
+#pragma intrinsic(_ReadWriteBarrier)
+
+#define S_UNLOCK(lock)	\
+	do { _ReadWriteBarrier(); (*(lock)) = 0); } while (0)
+
 #endif
 
 
@@ -882,7 +915,25 @@ extern int	tas_sema(volatile slock_t *lock);
 #endif	 /* S_LOCK_FREE */
 
 #if !defined(S_UNLOCK)
-#define S_UNLOCK(lock)		(*((volatile slock_t *) (lock)) = 0)
+/*
+ * Our default implementation of S_UNLOCK is essentially *(lock) = 0.  This
+ * is unsafe if the platform can speculate a memory access (either load or
+ * store) after a following store; platforms where this is possible must
+ * define their own S_UNLOCK.  But CPU reordering is not the only concern:
+ * if we simply defined S_UNLOCK() as an inline macro, the compiler might
+ * reorder instructions from inside the critical section to occur after the
+ * lock release.  Since the compiler probably can't know what the external
+ * function s_unlock is doing, putting the same logic there should be adequate.
+ * A sufficiently-smart globally optimizing compiler could break that
+ * assumption, though, and the cost of a function call for every spinlock
+ * release may hurt performance significantly, so we use this implementation
+ * only for platforms where we don't know of a suitable intrinsic.  For the
+ * most part, those are relatively obscure platform/compiler combinations to
+ * which the PostgreSQL project does not have access.
+ */
+#define USE_DEFAULT_S_UNLOCK
+extern void s_unlock(volatile s_lock *lock);
+#define S_UNLOCK(lock)		s_unlock(lock)
 #endif	 /* S_UNLOCK */
 
 #if !defined(S_INIT_LOCK)

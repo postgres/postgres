@@ -154,6 +154,18 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	return delays;
 }
 
+#ifdef USE_DEFAULT_S_UNLOCK
+void
+s_unlock(slock_t *lock)
+{
+#ifdef TAS_ACTIVE_WORD
+	/* HP's PA-RISC */
+	*TAS_ACTIVE_WORD(lock) = -1;
+#else
+	*lock = 0;
+#endif
+}
+#endif
 
 /*
  * Set local copy of spins_per_delay during backend startup.
