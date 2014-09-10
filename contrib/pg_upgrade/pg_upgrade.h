@@ -116,6 +116,12 @@ extern char *output_files[];
 #define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
 
 /*
+ * large object chunk size added to pg_controldata,
+ * commit 5f93c37805e7485488480916b4585e098d3cc883
+ */
+#define LARGE_OBJECT_SIZE_PG_CONTROL_VER 942
+
+/*
  * Each relation is represented by a relinfo structure.
  */
 typedef struct
@@ -203,6 +209,7 @@ typedef struct
 	uint32		ident;
 	uint32		index;
 	uint32		toast;
+	uint32		large_object;
 	bool		date_is_int;
 	bool		float8_pass_by_value;
 	bool		data_checksum_version;
