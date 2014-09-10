@@ -102,6 +102,25 @@ typedef struct HashSkewBucket
 #define SKEW_WORK_MEM_PERCENT  2
 #define SKEW_MIN_OUTER_FRACTION  0.01
 
+/*
+ * To reduce palloc overhead, the HashJoinTuples for the current batch are
+ * packed in 32kB buffers instead of pallocing each tuple individually.
+ */
+typedef struct HashMemoryChunkData
+{
+	int			ntuples;	/* number of tuples stored in this chunk */
+	size_t		maxlen;		/* size of the buffer holding the tuples */
+	size_t		used;		/* number of buffer bytes already used */
+
+	struct HashMemoryChunkData *next; /* pointer to the next chunk (linked list) */
+
+	char		data[1];	/* buffer allocated at the end */
+} HashMemoryChunkData;
+
+typedef struct HashMemoryChunkData *HashMemoryChunk;
+
+#define HASH_CHUNK_SIZE			(32 * 1024L)
+#define HASH_CHUNK_THRESHOLD	(HASH_CHUNK_SIZE / 4)
 
 typedef struct HashJoinTableData
 {
@@ -157,6 +176,9 @@ typedef struct HashJoinTableData
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
+
+	/* used for dense allocation of tuples (into linked chunks) */
+	HashMemoryChunk chunks;		/*  one list for the whole batch */
 }	HashJoinTableData;
 
 #endif   /* HASHJOIN_H */
