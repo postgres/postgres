@@ -640,7 +640,12 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
      possible multixact ID still appearing in any tuple of that table.
      If this value is older than
      <xref linkend="guc-vacuum-multixact-freeze-table-age">, a whole-table
-     scan is forced.  Whole-table <command>VACUUM</> scans, regardless of
+     scan is forced.  <function>mxid_age()</> can be used on
+     <structname>pg_class</>.<structfield>relminmxid</> to find its age.
+    </para>
+
+    <para>
+     Whole-table <command>VACUUM</> scans, regardless of
      what causes them, enable advancing the value for that table.
      Eventually, as all tables in all databases are scanned and their
      oldest multixact values are advanced, on-disk storage for older

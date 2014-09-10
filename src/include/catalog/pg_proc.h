@@ -1279,6 +1279,8 @@ DATA(insert OID = 1180 (  abstime		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7
 DESCR("convert timestamp with time zone to abstime");
 DATA(insert OID = 1181 (  age			   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 23 "28" _null_ _null_ _null_ _null_ xid_age _null_ _null_ _null_ ));
 DESCR("age of a transaction ID, in transactions before current transaction");
+DATA(insert OID = 3939 (  mxid_age		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 23 "28" _null_ _null_ _null_ _null_ mxid_age _null_ _null_ _null_ ));
+DESCR("age of a multi-transaction ID, in multi-transactions before current multi-transaction");
 
 DATA(insert OID = 1188 (  timestamptz_mi   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1186 "1184 1184" _null_ _null_ _null_ _null_ timestamp_mi _null_ _null_ _null_ ));
 DATA(insert OID = 1189 (  timestamptz_pl_interval PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 1184 "1184 1186" _null_ _null_ _null_ _null_ timestamptz_pl_interval _null_ _null_ _null_ ));

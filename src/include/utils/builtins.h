@@ -845,6 +845,7 @@ extern Datum xidrecv(PG_FUNCTION_ARGS);
 extern Datum xidsend(PG_FUNCTION_ARGS);
 extern Datum xideq(PG_FUNCTION_ARGS);
 extern Datum xid_age(PG_FUNCTION_ARGS);
+extern Datum mxid_age(PG_FUNCTION_ARGS);
 extern int	xidComparator(const void *arg1, const void *arg2);
 extern Datum cidin(PG_FUNCTION_ARGS);
 extern Datum cidout(PG_FUNCTION_ARGS);
