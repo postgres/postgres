@@ -932,7 +932,7 @@ extern int	tas_sema(volatile slock_t *lock);
  * which the PostgreSQL project does not have access.
  */
 #define USE_DEFAULT_S_UNLOCK
-extern void s_unlock(volatile s_lock *lock);
+extern void s_unlock(volatile slock_t *lock);
 #define S_UNLOCK(lock)		s_unlock(lock)
 #endif	 /* S_UNLOCK */
 
