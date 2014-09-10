@@ -863,7 +863,7 @@ spin_delay(void)
 #pragma intrinsic(_ReadWriteBarrier)
 
 #define S_UNLOCK(lock)	\
-	do { _ReadWriteBarrier(); (*(lock)) = 0); } while (0)
+	do { _ReadWriteBarrier(); (*(lock)) = 0; } while (0)
 
 #endif
 
