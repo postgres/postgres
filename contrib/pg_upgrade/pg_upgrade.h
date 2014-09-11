@@ -188,6 +188,7 @@ typedef struct
 	char		nextxlogfile[25];
 	uint32		chkpnt_tli;
 	uint32		chkpnt_nxtxid;
+	uint32		chkpnt_nxtepoch;
 	uint32		chkpnt_nxtoid;
 	uint32		chkpnt_nxtmulti;
 	uint32		chkpnt_nxtmxoff;
