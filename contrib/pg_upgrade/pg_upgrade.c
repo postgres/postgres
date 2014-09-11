@@ -422,11 +422,15 @@ copy_clog_xlog_xid(void)
 	/* copy old commit logs to new data dir */
 	copy_subdir_files("pg_clog");
 
-	/* set the next transaction id of the new cluster */
-	prep_status("Setting next transaction ID for new cluster");
+	/* set the next transaction id and epoch of the new cluster */
+	prep_status("Setting next transaction ID and epoch for new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
 			  "\"%s/pg_resetxlog\" -f -x %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid,
+			  new_cluster.pgdata);
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/pg_resetxlog\" -f -e %u \"%s\"",
+			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtepoch,
 			  new_cluster.pgdata);
 	check_ok();
 
