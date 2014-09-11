@@ -403,8 +403,10 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         Show progress report every <literal>sec</> seconds.  The report
         includes the time since the beginning of the run, the tps since the
         last report, and the transaction latency average and standard
-        deviation since the last report.  Under throttling (<option>-R</>), it
-        also includes the average schedule lag time since the last report.
+        deviation since the last report.  Under throttling (<option>-R</>),
+        the latency is computed with respect to the transaction scheduled
+        start time, not the actual transaction beginning time, thus it also
+        includes the average schedule lag time.
        </para>
       </listitem>
      </varlistentry>
@@ -440,29 +442,25 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         possible for later ones to catch up again.
        </para>
        <para>
-        When throttling is active, the average and maximum transaction
-        schedule lag time are reported in ms.  This is the delay between
-        the original scheduled transaction time and the actual transaction
-        start times.  The schedule lag shows whether a transaction was
-        started on time or late.  Once a client starts running behind its
-        schedule, every following transaction can continue to be penalized
-        for schedule lag.  If faster transactions are able to catch up, it's
-        possible for them to get back on schedule again.  The lag measurement
-        of every transaction is shown when pgbench is run with debugging
-        output.
+        When throttling is active, the transaction latency reported at the
+        end of the run is calculated from the scheduled start times, so it
+        includes the time each transaction had to wait for the previous
+        transaction to finish. The wait time is called the schedule lag time,
+        and its average and maximum are also reported separately. The
+        transaction latency with respect to the actual transaction start time,
+        i.e. the time spent executing the transaction in the database, can be
+        computed by subtracting the schedule lag time from the reported
+        latency.
        </para>
+
        <para>
-        High rate limit schedule lag values, that is lag values that are large
-        compared to the actual transaction latency, indicate that something is
-        amiss in the throttling process.  High schedule lag can highlight a subtle
-        problem there even if the target rate limit is met in the end.  One
-        possible cause of schedule lag is insufficient pgbench threads to
-        handle all of the clients.  To improve that, consider reducing the
-        number of clients, increasing the number of threads in pgbench, or
-        running pgbench on a separate host.  Another possibility is that the
-        database is not keeping up with the load at some point.  When that
-        happens, you will have to reduce the expected transaction rate to
-        lower schedule lag.
+        A high schedule lag time is an indication that the system cannot
+        process transactions at the specified rate, with the chosen number of
+        clients and threads. When the average transaction execution time is
+        longer than the scheduled interval between each transaction, each
+        successive transaction will fall further behind, and the schedule lag
+        time will keep increasing the longer the test run is. When that
+        happens, you will have to reduce the specified transaction rate.
        </para>
       </listitem>
      </varlistentry>
@@ -888,7 +886,7 @@ END;
    The format of the log is:
 
 <synopsis>
-<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</>
+<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</> [<replaceable>schedule_lag</replaceable>]
 </synopsis>
 
    where <replaceable>time</> is the total elapsed transaction time in microseconds,
@@ -898,7 +896,10 @@ END;
    UNIX epoch format timestamp and an offset
    in microseconds (suitable for creating an ISO 8601
    timestamp with fractional seconds) showing when
-   the transaction completed.
+   the transaction completed. The last field, <replaceable>schedule_lag</>, is
+   the difference between the transaction's scheduled start time, and the
+   time it actually started, in microseconds. It is only present when the
+   <option>--rate</> option is used.
   </para>
 
   <para>
@@ -924,7 +925,7 @@ END;
    With the <option>--aggregate-interval</option> option, the logs use a bit different format:
 
 <synopsis>
-<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</>
+<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> [<replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</>]
 </synopsis>
 
    where <replaceable>interval_start</> is the start of the interval (UNIX epoch
@@ -935,7 +936,11 @@ END;
    <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The last two
    fields are <replaceable>min_latency</> - a minimum latency within the interval, and
    <replaceable>max_latency</> - maximum latency within the interval. A transaction is
-   counted into the interval when it was committed.
+   counted into the interval when it was committed. The last four fields, 
+   <replaceable>lag_sum</>, <replaceable>lag_2_sum</>, <replaceable>min_lag</>, and <replaceable>max_lag</>, are only present if the --rate option is used.
+   They are calculated from the time each transaction had to wait for the
+   previous one to finish, i.e. the difference between each transaction's
+   scheduled start time and the time it actually started.
   </para>
 
   <para>
