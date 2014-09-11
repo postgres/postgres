@@ -491,7 +491,7 @@ DefineIndex(Oid relationId,
 
 	if (strcmp(accessMethodName, "hash") == 0)
 		ereport(WARNING,
-				(errmsg("hash indexes are not WAL-logged so they are not crash-safe and cannot be used on streaming standbys")));
+				(errmsg("hash indexes are not WAL-logged and thus are not crash-safe and cannot be used on standby servers")));
 
 	if (stmt->unique && !accessMethodForm->amcanunique)
 		ereport(ERROR,

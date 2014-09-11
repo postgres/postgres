@@ -39,7 +39,7 @@ SELECT * FROM macaddr_data;
 
 CREATE INDEX macaddr_data_btree ON macaddr_data USING btree (b);
 CREATE INDEX macaddr_data_hash ON macaddr_data USING hash (b);
-WARNING:  hash indexes are not WAL-logged so they are not crash-safe and cannot be used on streaming standbys
+WARNING:  hash indexes are not WAL-logged and thus are not crash-safe and cannot be used on standby servers
 SELECT a, b, trunc(b) FROM macaddr_data ORDER BY 2, 1;
  a  |         b         |       trunc       
 ----+-------------------+-------------------
