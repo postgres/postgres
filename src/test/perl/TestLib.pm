@@ -36,7 +36,14 @@ BEGIN
 	} or do
 	{
 		plan skip_all => "IPC::Run not available";
-	  }
+	};
+
+	eval {
+		Test::More->VERSION('0.93_01');
+	} or do
+	{
+		plan skip_all => "version of Test::More is too old to support subplans";
+	};
 }
 
 # Set to untranslated messages, to be able to compare program output
