@@ -1192,7 +1192,7 @@ top:
 					 * anyway
 					 */
 					fprintf(logfile, "%d %d %.0f %d 0 0",
-							st->id, st->cnt, usec, st->use_file);
+							st->id, st->cnt, latency, st->use_file);
 #endif
 					if (throttle_delay)
 						fprintf(logfile, " %.0f", lag);
