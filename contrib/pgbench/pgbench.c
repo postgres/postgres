@@ -552,6 +552,25 @@ getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
 	return min + (int64)((max - min + 1) * rand);
 }
 
+/*
+ * random number generator: generate a value, such that the series of values
+ * will approximate a Poisson distribution centered on the given value.
+ */
+static int64
+getPoissonRand(TState *thread, int64 center)
+{
+	/*
+	 * Use inverse transform sampling to generate a value > 0, such that the
+	 * expected (i.e. average) value is the given argument.
+	 */
+	double uniform;
+
+	/* erand in [0, 1), uniform in (0, 1] */
+	uniform = 1.0 - pg_erand48(thread->random_state);
+
+	return (int64) (-log(uniform) * ((double) center) + 0.5);
+}
+
 /* call PQexec() and exit() on failure */
 static void
 executeStatement(PGconn *con, const char *sql)
@@ -1009,21 +1028,13 @@ top:
 	if (throttle_delay && !st->is_throttled)
 	{
 		/*
-		 * Use inverse transform sampling to randomly generate a delay, such
-		 * that the series of delays will approximate a Poisson distribution
-		 * centered on the throttle_delay time.
-		 *
-		 * 10000 implies a 9.2 (-log(1/10000)) to 0.0 (log 1) delay
-		 * multiplier, and results in a 0.055 % target underestimation bias:
-		 *
-		 * SELECT 1.0/AVG(-LN(i/10000.0)) FROM generate_series(1,10000) AS i;
-		 * = 1.000552717032611116335474
+		 * Generate a delay such that the series of delays will approximate a
+		 * Poisson distribution centered on the throttle_delay time.
 		 *
 		 * If transactions are too slow or a given wait is shorter than a
 		 * transaction, the next transaction will start right away.
 		 */
-		int64		wait = (int64) (throttle_delay *
-				  1.00055271703 * -log(getrand(thread, 1, 10000) / 10000.0));
+		int64		wait = getPoissonRand(thread, throttle_delay);
 
 		thread->throttle_trigger += wait;
 
