@@ -15,6 +15,9 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#ifdef _MSC_VER
+#include <float.h>				/* for _isnan */
+#endif
 #include <math.h>
 
 #include "access/htup_details.h"
