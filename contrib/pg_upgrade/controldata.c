@@ -488,7 +488,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
 		!got_walseg || !got_ident || !got_index || !got_toast ||
 		(!got_large_object &&
-		 cluster->controldata.cat_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER) ||
+		 cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER) ||
 		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
 	{
 		pg_log(PG_REPORT,
@@ -542,7 +542,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			pg_log(PG_REPORT, "  maximum TOAST chunk size\n");
 
 		if (!got_large_object &&
-			cluster->controldata.cat_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER)
+			cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER)
 			pg_log(PG_REPORT, "  large-object chunk size\n");
 
 		if (!got_date_is_int)
@@ -594,7 +594,9 @@ check_control_data(ControlData *oldctrl,
 	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
 		pg_fatal("old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
 
-	if (oldctrl->large_object == 0 || oldctrl->large_object != newctrl->large_object)
+	/* large_object added in 9.5, so it might not exist in the old cluster */
+	if (oldctrl->large_object != 0 &&
+		oldctrl->large_object != newctrl->large_object)
 		pg_fatal("old and new pg_controldata large-object chunk sizes are invalid or do not match\n");
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
