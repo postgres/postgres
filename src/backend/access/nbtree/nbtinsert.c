@@ -1740,8 +1740,7 @@ _bt_insert_parent(Relation rel,
 		{
 			BTPageOpaque lpageop;
 
-			if (!InRecovery)
-				elog(DEBUG2, "concurrent ROOT page split");
+			elog(DEBUG2, "concurrent ROOT page split");
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			/* Find the leftmost page at the next level up */
 			pbuf = _bt_get_endpoint(rel, lpageop->btpo.level + 1, false);
