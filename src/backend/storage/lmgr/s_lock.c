@@ -156,7 +156,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 
 #ifdef USE_DEFAULT_S_UNLOCK
 void
-s_unlock(slock_t *lock)
+s_unlock(volatile slock_t *lock)
 {
 #ifdef TAS_ACTIVE_WORD
 	/* HP's PA-RISC */
