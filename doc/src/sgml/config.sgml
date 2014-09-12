@@ -4672,6 +4672,22 @@ FROM pg_stat_activity;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-replication-commands" xreflabel="log_replication_commands">
+      <term><varname>log_replication_commands</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>log_replication_commands</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Causes each replication command to be logged in the server log.
+        See <xref linkend="protocol-replication"> for more information about
+        replication command. The default value is <literal>off</>.
+        Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-log-temp-files" xreflabel="log_temp_files">
       <term><varname>log_temp_files</varname> (<type>integer</type>)
       <indexterm>

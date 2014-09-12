@@ -925,6 +925,15 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"log_replication_commands", PGC_SUSET, LOGGING_WHAT,
+			gettext_noop("Logs each replication command."),
+			NULL
+		},
+		&log_replication_commands,
+		false,
+		NULL, NULL, NULL
+	},
+	{
 		{"debug_assertions", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows whether the running server has assertion checks enabled."),
 			NULL,

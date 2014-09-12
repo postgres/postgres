@@ -1306,6 +1306,8 @@ To initiate streaming replication, the frontend sends the
 of <literal>true</> tells the backend to go into walsender mode, wherein a
 small set of replication commands can be issued instead of SQL statements. Only
 the simple query protocol can be used in walsender mode.
+Replication commands are logged in the server log when
+<xref linkend="guc-log-replication-commands"> is enabled.
 Passing <literal>database</> as the value instructs walsender to connect to
 the database specified in the <literal>dbname</> parameter, which will allow
 the connection to be used for logical replication from that database.

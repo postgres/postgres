@@ -431,6 +431,7 @@
 					# e.g. '<%u%%%d> '
 #log_lock_waits = off			# log lock waits >= deadlock_timeout
 #log_statement = 'none'			# none, ddl, mod, all
+#log_replication_commands = off
 #log_temp_files = -1			# log temporary files equal or larger
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
