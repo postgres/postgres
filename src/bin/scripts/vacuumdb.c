@@ -16,10 +16,10 @@
 
 
 static void vacuum_one_database(const char *dbname, bool full, bool verbose,
-	bool and_analyze, bool analyze_only, bool analyze_in_stages, bool freeze,
+	bool and_analyze, bool analyze_only, bool analyze_in_stages, int stage, bool freeze,
 					const char *table, const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
-					const char *progname, bool echo);
+					const char *progname, bool echo, bool quiet);
 static void vacuum_all_databases(bool full, bool verbose, bool and_analyze,
 					 bool analyze_only, bool analyze_in_stages, bool freeze,
 					 const char *maintenance_db,
@@ -217,18 +217,18 @@ main(int argc, char *argv[])
 			for (cell = tables.head; cell; cell = cell->next)
 			{
 				vacuum_one_database(dbname, full, verbose, and_analyze,
-									analyze_only, analyze_in_stages,
+									analyze_only, analyze_in_stages, -1,
 									freeze, cell->val,
 									host, port, username, prompt_password,
-									progname, echo);
+									progname, echo, quiet);
 			}
 		}
 		else
 			vacuum_one_database(dbname, full, verbose, and_analyze,
-								analyze_only, analyze_in_stages,
+								analyze_only, analyze_in_stages, -1,
 								freeze, NULL,
 								host, port, username, prompt_password,
-								progname, echo);
+								progname, echo, quiet);
 	}
 
 	exit(0);
@@ -254,10 +254,10 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo, const char *dbname,
 
 static void
 vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyze,
-   bool analyze_only, bool analyze_in_stages, bool freeze, const char *table,
+	bool analyze_only, bool analyze_in_stages, int stage, bool freeze, const char *table,
 					const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
-					const char *progname, bool echo)
+					const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
 
@@ -334,14 +334,36 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 			gettext_noop("Generating medium optimizer statistics (10 targets)"),
 			gettext_noop("Generating default (full) optimizer statistics")
 		};
-		int			i;
 
-		for (i = 0; i < 3; i++)
+		if (stage == -1)
 		{
-			puts(gettext(stage_messages[i]));
-			executeCommand(conn, stage_commands[i], progname, echo);
+			int		i;
+
+			/* Run all stages. */
+			for (i = 0; i < 3; i++)
+			{
+				if (!quiet)
+				{
+					puts(gettext(stage_messages[i]));
+					fflush(stdout);
+				}
+				executeCommand(conn, stage_commands[i], progname, echo);
+				run_vacuum_command(conn, sql.data, echo, dbname, table, progname);
+			}
+		}
+		else
+		{
+			/* Otherwise, we got a stage from vacuum_all_databases(), so run
+			 * only that one. */
+			if (!quiet)
+			{
+				puts(gettext(stage_messages[stage]));
+				fflush(stdout);
+			}
+			executeCommand(conn, stage_commands[stage], progname, echo);
 			run_vacuum_command(conn, sql.data, echo, dbname, table, progname);
 		}
+
 	}
 	else
 		run_vacuum_command(conn, sql.data, echo, dbname, NULL, progname);
@@ -360,27 +382,36 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 {
 	PGconn	   *conn;
 	PGresult   *result;
-	int			i;
+	int			stage;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
 									  username, prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
-	for (i = 0; i < PQntuples(result); i++)
+	/* If analyzing in stages, then run through all stages.  Otherwise just
+	 * run once, passing -1 as the stage. */
+	for (stage = (analyze_in_stages ? 0 : -1);
+		 stage < (analyze_in_stages ? 3 : 0);
+		 stage++)
 	{
-		char	   *dbname = PQgetvalue(result, i, 0);
+		int			i;
 
-		if (!quiet)
+		for (i = 0; i < PQntuples(result); i++)
 		{
-			printf(_("%s: vacuuming database \"%s\"\n"), progname, dbname);
-			fflush(stdout);
-		}
+			char	   *dbname = PQgetvalue(result, i, 0);
 
-		vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
-							analyze_in_stages,
-						 freeze, NULL, host, port, username, prompt_password,
-							progname, echo);
+			if (!quiet)
+			{
+				printf(_("%s: vacuuming database \"%s\"\n"), progname, dbname);
+				fflush(stdout);
+			}
+
+			vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
+								analyze_in_stages, stage,
+							freeze, NULL, host, port, username, prompt_password,
+								progname, echo, quiet);
+		}
 	}
 
 	PQclear(result);
