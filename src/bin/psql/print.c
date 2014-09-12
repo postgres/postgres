@@ -89,35 +89,97 @@ const printTextFormat pg_asciiformat_old =
 	false
 };
 
-const printTextFormat pg_utf8format =
-{
-	"unicode",
+/* Default unicode linestyle format */
+const printTextFormat pg_utf8format;
+
+typedef struct unicodeStyleRowFormat {
+	const char *horizontal;
+	const char *vertical_and_right[2];
+	const char *vertical_and_left[2];
+} unicodeStyleRowFormat;
+
+typedef struct unicodeStyleColumnFormat {
+	const char *vertical;
+	const char *vertical_and_horizontal[2];
+	const char *up_and_horizontal[2];
+	const char *down_and_horizontal[2];
+} unicodeStyleColumnFormat;
+
+typedef struct unicodeStyleBorderFormat {
+	const char *up_and_right;
+	const char *vertical;
+	const char *down_and_right;
+	const char *horizontal;
+	const char *down_and_left;
+	const char *left_and_right;
+} unicodeStyleBorderFormat;
+
+typedef struct unicodeStyleFormat {
+	unicodeStyleRowFormat row_style[2];
+	unicodeStyleColumnFormat column_style[2];
+	unicodeStyleBorderFormat border_style[2];
+	const char *header_nl_left;
+	const char *header_nl_right;
+	const char *nl_left;
+	const char *nl_right;
+	const char *wrap_left;
+	const char *wrap_right;
+	bool wrap_right_border;
+} unicodeStyleFormat;
+
+const unicodeStyleFormat unicode_style = {
 	{
-		/* ─, ┌, ┬, ┐ */
-		{"\342\224\200", "\342\224\214", "\342\224\254", "\342\224\220"},
-		/* ─, ├, ┼, ┤ */
-		{"\342\224\200", "\342\224\234", "\342\224\274", "\342\224\244"},
-		/* ─, └, ┴, ┘ */
-		{"\342\224\200", "\342\224\224", "\342\224\264", "\342\224\230"},
-		/* N/A, │, │, │ */
-		{"", "\342\224\202", "\342\224\202", "\342\224\202"}
+		{
+			/* ─ */
+			"\342\224\200",
+			/* ├╟ */
+			{"\342\224\234", "\342\225\237"},
+			/* ┤╢ */
+			{"\342\224\244", "\342\225\242"},
+		},
+		{
+			/* ═ */
+			"\342\225\220",
+			/* ╞╠ */
+			{"\342\225\236", "\342\225\240"},
+			/* ╡╣ */
+			{"\342\225\241", "\342\225\243"},
+		},
 	},
-	/* │ */
-	"\342\224\202",
-	/* │ */
-	"\342\224\202",
-	/* │ */
-	"\342\224\202",
+	{
+		{
+			/* │ */
+			"\342\224\202",
+			/* ┼╪ */
+			{"\342\224\274", "\342\225\252"},
+			/* ┴╧ */
+			{"\342\224\264", "\342\225\247"},
+			/* ┬╤ */
+			{"\342\224\254", "\342\225\244"},
+		},
+		{
+			/* ║ */
+			"\342\225\221",
+			/* ╫╬ */
+			{"\342\225\253", "\342\225\254"},
+			/* ╨╩ */
+			{"\342\225\250", "\342\225\251"},
+			/* ╥╦ */
+			{"\342\225\245", "\342\225\246"},
+		},
+	},
+	{
+		/* └│┌─┐┘ */
+		{"\342\224\224", "\342\224\202", "\342\224\214", "\342\224\200", "\342\224\220", "\342\224\230"},
+		/* ╚║╔═╗╝ */
+		{"\342\225\232", "\342\225\221", "\342\225\224", "\342\225\220", "\342\225\227", "\342\225\235"},
+	},
 	" ",
-	/* ↵ */
-	"\342\206\265",
+	"\342\206\265", /* ↵ */
 	" ",
-	/* ↵ */
-	"\342\206\265",
-	/* … */
-	"\342\200\246",
-	/* … */
-	"\342\200\246",
+	"\342\206\265", /* ↵ */
+	"\342\200\246", /* … */
+	"\342\200\246", /* … */
 	true
 };
 
@@ -1289,7 +1351,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		}
 		else
 			/*
-			 * For border = 2, two more for the pipes (|) at the begging and
+			 * For border = 2, two more for the pipes (|) at the beginning and
 			 * at the end of the lines.
 			 */
 			swidth = 7;
@@ -2950,6 +3012,58 @@ get_line_style(const printTableOpt *opt)
 		return opt->line_style;
 	else
 		return &pg_asciiformat;
+}
+
+void
+refresh_utf8format(const printTableOpt *opt)
+{
+	printTextFormat *popt =  (printTextFormat *) &pg_utf8format;
+
+	const unicodeStyleBorderFormat *border;
+	const unicodeStyleRowFormat *header;
+	const unicodeStyleColumnFormat *column;
+
+	popt->name = "unicode";
+
+	border = &unicode_style.border_style[opt->unicode_border_linestyle];
+	header = &unicode_style.row_style[opt->unicode_header_linestyle];
+	column = &unicode_style.column_style[opt->unicode_column_linestyle];
+
+	popt->lrule[PRINT_RULE_TOP].hrule = border->horizontal;
+	popt->lrule[PRINT_RULE_TOP].leftvrule = border->down_and_right;
+	popt->lrule[PRINT_RULE_TOP].midvrule = column->down_and_horizontal[opt->unicode_border_linestyle];
+	popt->lrule[PRINT_RULE_TOP].rightvrule = border->down_and_left;
+
+	popt->lrule[PRINT_RULE_MIDDLE].hrule = header->horizontal;
+	popt->lrule[PRINT_RULE_MIDDLE].leftvrule = header->vertical_and_right[opt->unicode_border_linestyle];
+	popt->lrule[PRINT_RULE_MIDDLE].midvrule = column->vertical_and_horizontal[opt->unicode_header_linestyle];
+	popt->lrule[PRINT_RULE_MIDDLE].rightvrule = header->vertical_and_left[opt->unicode_border_linestyle];
+
+	popt->lrule[PRINT_RULE_BOTTOM].hrule = border->horizontal;
+	popt->lrule[PRINT_RULE_BOTTOM].leftvrule = border->up_and_right;
+	popt->lrule[PRINT_RULE_BOTTOM].midvrule = column->up_and_horizontal[opt->unicode_border_linestyle];
+	popt->lrule[PRINT_RULE_BOTTOM].rightvrule = border->left_and_right;
+
+	/* N/A */
+	popt->lrule[PRINT_RULE_DATA].hrule = "";
+	popt->lrule[PRINT_RULE_DATA].leftvrule = border->vertical;
+	popt->lrule[PRINT_RULE_DATA].midvrule = column->vertical;
+	popt->lrule[PRINT_RULE_DATA].rightvrule = border->vertical;
+
+	popt->midvrule_nl = column->vertical;
+	popt->midvrule_wrap = column->vertical;
+	popt->midvrule_blank = column->vertical;
+
+	/* Same for all unicode today */
+	popt->header_nl_left = unicode_style.header_nl_left;
+	popt->header_nl_right = unicode_style.header_nl_right;
+	popt->nl_left = unicode_style.nl_left;
+	popt->nl_right = unicode_style.nl_right;
+	popt->wrap_left = unicode_style.wrap_left;
+	popt->wrap_right = unicode_style.wrap_right;
+	popt->wrap_right_border = unicode_style.wrap_right_border;
+
+	return;
 }
 
 /*

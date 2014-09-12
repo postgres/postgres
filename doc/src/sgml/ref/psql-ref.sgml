@@ -1996,12 +1996,12 @@ lo_import 152801
           the number the more borders and lines the tables will have,
           but this depends on the particular format. In
           <acronym>HTML</acronym> format, this will translate directly
-          into the <literal>border=...</literal> attribute; in the
-          other formats only values 0 (no border), 1 (internal dividing lines),
-          and 2 (table frame) make sense.
+          into the <literal>border=...</literal> attribute; in
           <literal>latex</literal> and <literal>latex-longtable</literal>
-          also support a <literal>border</literal> value of 3 which adds
-          a dividing line between each row.
+          formats, a value of 3 will add a dividing line between each row; in
+          the other formats only values 0 (no border), 1 (internal dividing
+          lines), and 2 (table frame) make sense and values above 2 will be
+          treated the same as <literal>border = 2</literal>.
           </para>
           </listitem>
           </varlistentry>
@@ -2303,6 +2303,36 @@ lo_import 152801
           Regular output includes extra information such
           as column headers, titles, and various footers. In tuples-only
           mode, only actual table data is shown.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>unicode_border_style</literal></term>
+          <listitem>
+          <para>
+          Sets the border drawing style for the unicode linestyle to one
+          of <literal>single</literal> or <literal>double</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>unicode_column_style</literal></term>
+          <listitem>
+          <para>
+          Sets the column drawing style for the unicode linestyle to one
+          of <literal>single</literal> or <literal>double</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>unicode_header_style</literal></term>
+          <listitem>
+          <para>
+          Sets the header drawing style for the unicode linestyle to one
+          of <literal>single</literal> or <literal>double</literal>.
           </para>
           </listitem>
           </varlistentry>

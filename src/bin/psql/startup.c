@@ -26,6 +26,7 @@
 #include "help.h"
 #include "input.h"
 #include "mainloop.h"
+#include "print.h"
 #include "settings.h"
 
 
@@ -131,6 +132,13 @@ main(int argc, char *argv[])
 	pset.popt.topt.start_table = true;
 	pset.popt.topt.stop_table = true;
 	pset.popt.topt.default_footer = true;
+
+	pset.popt.topt.unicode_border_linestyle = UNICODE_LINESTYLE_SINGLE;
+	pset.popt.topt.unicode_column_linestyle = UNICODE_LINESTYLE_SINGLE;
+	pset.popt.topt.unicode_header_linestyle = UNICODE_LINESTYLE_SINGLE;
+
+	refresh_utf8format(&(pset.popt.topt));
+
 	/* We must get COLUMNS here before readline() sets it */
 	pset.popt.topt.env_columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 0;
 

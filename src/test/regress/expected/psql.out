@@ -68,6 +68,9 @@ Record separator (recordsep) is <newline>.
 Table attributes (tableattr) unset.
 Title (title) unset.
 Tuples only (tuples_only) is off.
+Unicode border linestyle is "single".
+Unicode column linestyle is "single".
+Unicode border linestyle is "single".
 -- test multi-line headers, wrapping, and newline indicators
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
 

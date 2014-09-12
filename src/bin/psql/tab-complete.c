@@ -3622,7 +3622,8 @@ psql_completion(const char *text, int start, int end)
 		{"border", "columns", "expanded", "fieldsep", "fieldsep_zero",
 			"footer", "format", "linestyle", "null", "numericlocale",
 			"pager", "recordsep", "recordsep_zero", "tableattr", "title",
-		"tuples_only", NULL};
+			"tuples_only", "unicode_border_linestyle",
+		"unicode_column_linestyle", "unicode_header_linestyle", NULL};
 
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
@@ -3642,6 +3643,16 @@ psql_completion(const char *text, int start, int end)
 			{"ascii", "old-ascii", "unicode", NULL};
 
 			COMPLETE_WITH_LIST_CS(my_list);
+		}
+		else if (strcmp(prev_wd, "unicode_border_linestyle") == 0 ||
+				 strcmp(prev_wd, "unicode_column_linestyle") == 0 ||
+				 strcmp(prev_wd, "unicode_header_linestyle") == 0)
+		{
+			static const char *const my_list[] =
+			{"single", "double", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+
 		}
 	}
 	else if (strcmp(prev_wd, "\\unset") == 0)

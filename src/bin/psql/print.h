@@ -68,6 +68,12 @@ typedef struct printTextFormat
 										 * marks when border=0? */
 } printTextFormat;
 
+typedef enum unicode_linestyle
+{
+	UNICODE_LINESTYLE_SINGLE = 0,
+	UNICODE_LINESTYLE_DOUBLE
+} unicode_linestyle;
+
 struct separator
 {
 	char	   *separator;
@@ -97,6 +103,9 @@ typedef struct printTableOpt
 	int			encoding;		/* character encoding */
 	int			env_columns;	/* $COLUMNS on psql start, 0 is unset */
 	int			columns;		/* target width for wrapped format */
+	unicode_linestyle	unicode_border_linestyle;
+	unicode_linestyle	unicode_column_linestyle;
+	unicode_linestyle	unicode_header_linestyle;
 } printTableOpt;
 
 /*
@@ -178,6 +187,7 @@ extern void printQuery(const PGresult *result, const printQueryOpt *opt,
 
 extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);
+extern void refresh_utf8format(const printTableOpt *opt);
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

@@ -1054,6 +1054,9 @@ exec_command(const char *cmd,
 				"footer", "format", "linestyle", "null",
 				"numericlocale", "pager", "recordsep",
 				"tableattr", "title", "tuples_only",
+				"unicode_border_linestyle",
+				"unicode_column_linestyle",
+				"unicode_header_linestyle",
 				NULL
 			};
 
@@ -2248,6 +2251,41 @@ _align2string(enum printFormat in)
 	return "unknown";
 }
 
+/*
+ * Parse entered unicode linestyle. Returns true, when entered string is
+ * known linestyle: single, double else returns false.
+ */
+static bool
+set_unicode_line_style(printQueryOpt *popt, const char *value, size_t vallen,
+					   unicode_linestyle *linestyle)
+{
+	if (pg_strncasecmp("single", value, vallen) == 0)
+		*linestyle = UNICODE_LINESTYLE_SINGLE;
+	else if (pg_strncasecmp("double", value, vallen) == 0)
+		*linestyle = UNICODE_LINESTYLE_DOUBLE;
+	else
+		return false;
+
+	/* input is ok, generate new unicode style */
+	refresh_utf8format(&(popt->topt));
+
+	return true;
+}
+
+static const char *
+_unicode_linestyle2string(int linestyle)
+{
+	switch (linestyle)
+	{
+		case UNICODE_LINESTYLE_SINGLE:
+			return "single";
+			break;
+		case UNICODE_LINESTYLE_DOUBLE:
+			return "double";
+			break;
+	}
+	return "unknown";
+}
 
 bool
 do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
@@ -2303,6 +2341,45 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			return false;
 		}
 
+	}
+
+	/* set unicode border line style */
+	else if (strcmp(param, "unicode_border_linestyle") == 0)
+	{
+		if (!value)
+			;
+		else if (!set_unicode_line_style(popt, value, vallen,
+										 &popt->topt.unicode_border_linestyle))
+		{
+			psql_error("\\pset: allowed unicode border linestyle are single, double\n");
+			return false;
+		}
+	}
+
+	/* set unicode column line style */
+	else if (strcmp(param, "unicode_column_linestyle") == 0)
+	{
+		if (!value)
+			;
+		else if (!set_unicode_line_style(popt, value, vallen,
+										 &popt->topt.unicode_column_linestyle))
+		{
+			psql_error("\\pset: allowed unicode column linestyle are single, double\n");
+			return false;
+		}
+	}
+
+	/* set unicode header line style */
+	else if (strcmp(param, "unicode_header_linestyle") == 0)
+	{
+		if (!value)
+			;
+		else if (!set_unicode_line_style(popt, value, vallen,
+										 &popt->topt.unicode_header_linestyle))
+		{
+			psql_error("\\pset: allowed unicode header linestyle are single, double\n");
+			return false;
+		}
 	}
 
 	/* set border style/width */
@@ -2599,6 +2676,25 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Tuples only (%s) is on.\n"), param);
 		else
 			printf(_("Tuples only (%s) is off.\n"), param);
+	}
+
+	/* unicode style formatting */
+	else if (strcmp(param, "unicode_border_linestyle") == 0)
+	{
+		printf(_("Unicode border linestyle is \"%s\".\n"),
+				_unicode_linestyle2string(popt->topt.unicode_border_linestyle));
+	}
+
+	else if (strcmp(param, "unicode_column_linestyle") == 0)
+	{
+		printf(_("Unicode column linestyle is \"%s\".\n"),
+				_unicode_linestyle2string(popt->topt.unicode_column_linestyle));
+	}
+
+	else if (strcmp(param, "unicode_header_linestyle") == 0)
+	{
+		printf(_("Unicode border linestyle is \"%s\".\n"),
+				_unicode_linestyle2string(popt->topt.unicode_header_linestyle));
 	}
 
 	else
