@@ -1085,16 +1085,15 @@ cleanup:
 
 
 static void
-print_aligned_vertical_line(const printTableContent *cont,
+print_aligned_vertical_line(const printTextFormat *format,
+							const unsigned short opt_border,
 							unsigned long record,
 							unsigned int hwidth,
 							unsigned int dwidth,
 							printTextRule pos,
 							FILE *fout)
 {
-	const printTextFormat *format = get_line_style(cont->opt);
 	const printTextLineFormat *lformat = &format->lrule[pos];
-	unsigned short opt_border = cont->opt->border;
 	unsigned int i;
 	int			reclen = 0;
 
@@ -1255,11 +1254,11 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if (i % cont->ncolumns == 0)
 		{
 			if (!opt_tuples_only)
-				print_aligned_vertical_line(cont, record++, hwidth, dwidth,
-											pos, fout);
+				print_aligned_vertical_line(format, opt_border, record++,
+											hwidth, dwidth, pos, fout);
 			else if (i != 0 || !cont->opt->start_table || opt_border == 2)
-				print_aligned_vertical_line(cont, 0, hwidth, dwidth,
-											pos, fout);
+				print_aligned_vertical_line(format, opt_border, 0, hwidth,
+											dwidth, pos, fout);
 		}
 
 		/* Format the header */
@@ -1318,7 +1317,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	if (cont->opt->stop_table)
 	{
 		if (opt_border == 2 && !cancel_pressed)
-			print_aligned_vertical_line(cont, 0, hwidth, dwidth,
+			print_aligned_vertical_line(format, opt_border, 0, hwidth, dwidth,
 										PRINT_RULE_BOTTOM, fout);
 
 		/* print footers */
