@@ -1390,3 +1390,22 @@ select div(12345678901234567890, 123) * 123 + 12345678901234567890 % 123;
  12345678901234567890
 (1 row)
 
+--
+-- Test code path for raising to integer powers
+--
+select 10.0 ^ -2147483648 as rounds_to_zero;
+   rounds_to_zero   
+--------------------
+ 0.0000000000000000
+(1 row)
+
+select 10.0 ^ -2147483647 as rounds_to_zero;
+   rounds_to_zero   
+--------------------
+ 0.0000000000000000
+(1 row)
+
+select 10.0 ^ 2147483647 as overflows;
+ERROR:  value overflows numeric format
+select 117743296169.0 ^ 1000000000 as overflows;
+ERROR:  value overflows numeric format
