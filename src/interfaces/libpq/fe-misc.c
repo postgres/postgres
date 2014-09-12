@@ -1210,14 +1210,14 @@ PQenv2encoding(void)
 
 #ifdef ENABLE_NLS
 
-char *
-libpq_gettext(const char *msgid)
+static void
+libpq_binddomain()
 {
 	static bool already_bound = false;
 
 	if (!already_bound)
 	{
-		/* dgettext() preserves errno, but bindtextdomain() doesn't */
+		/* bindtextdomain() does not preserve errno */
 #ifdef WIN32
 		int			save_errno = GetLastError();
 #else
@@ -1237,8 +1237,20 @@ libpq_gettext(const char *msgid)
 		errno = save_errno;
 #endif
 	}
+}
 
+char *
+libpq_gettext(const char *msgid)
+{
+	libpq_binddomain();
 	return dgettext(PG_TEXTDOMAIN("libpq"), msgid);
+}
+
+char *
+libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
+{
+	libpq_binddomain();
+	return dngettext(PG_TEXTDOMAIN("libpq"), msgid, msgid_plural, n);
 }
 
 #endif   /* ENABLE_NLS */

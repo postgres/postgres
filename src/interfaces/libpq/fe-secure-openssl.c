@@ -60,9 +60,13 @@
 #ifdef USE_SSL_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/x509v3.h>
 
 static bool verify_peer_name_matches_certificate(PGconn *);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
+static int	verify_peer_name_matches_certificate_name(PGconn *conn,
+												  ASN1_STRING *name,
+												  char **store_name);
 static void destroy_ssl_system(void);
 static int	initialize_SSL(PGconn *conn);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
@@ -473,15 +477,97 @@ wildcard_certificate_match(const char *pattern, const char *string)
 
 
 /*
- *	Verify that common name resolves to peer.
+ * Check if a name from a server's certificate matches the peer's hostname.
+ *
+ * Returns 1 if the name matches, and 0 if it does not. On error, returns
+ * -1, and sets the libpq error message.
+ *
+ * The name extracted from the certificate is returned in *store_name. The
+ * caller is responsible for freeing it.
+ */
+static int
+verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
+										  char **store_name)
+{
+	int			len;
+	char	   *name;
+	unsigned char *namedata;
+	int			result;
+
+	*store_name = NULL;
+
+	/* Should not happen... */
+	if (name_entry == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+				  libpq_gettext("SSL certificate's name entry is missing\n"));
+		return -1;
+	}
+
+	/*
+	 * GEN_DNS can be only IA5String, equivalent to US ASCII.
+	 *
+	 * There is no guarantee the string returned from the certificate is
+	 * NULL-terminated, so make a copy that is.
+	 */
+	namedata = ASN1_STRING_data(name_entry);
+	len = ASN1_STRING_length(name_entry);
+	name = malloc(len + 1);
+	if (name == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return -1;
+	}
+	memcpy(name, namedata, len);
+	name[len] = '\0';
+
+	/*
+	 * Reject embedded NULLs in certificate common or alternative name to
+	 * prevent attacks like CVE-2009-4034.
+	 */
+	if (len != strlen(name))
+	{
+		free(name);
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("SSL certificate's name contains embedded null\n"));
+		return -1;
+	}
+
+	if (pg_strcasecmp(name, conn->pghost) == 0)
+	{
+		/* Exact name match */
+		result = 1;
+	}
+	else if (wildcard_certificate_match(name, conn->pghost))
+	{
+		/* Matched wildcard name */
+		result = 1;
+	}
+	else
+	{
+		result = 0;
+	}
+
+	*store_name = name;
+	return result;
+}
+
+/*
+ *	Verify that the server certificate matches the hostname we connected to.
+ *
+ * The certificate's Common Name and Subject Alternative Names are considered.
  */
 static bool
 verify_peer_name_matches_certificate(PGconn *conn)
 {
-	char	   *peer_cn;
-	int			r;
-	int			len;
-	bool		result;
+	int			names_examined = 0;
+	bool		found_match = false;
+	bool		got_error = false;
+	char	   *first_name = NULL;
+	STACK_OF(GENERAL_NAME) *peer_san;
+	int 		i;
+	int			rc;
 
 	/*
 	 * If told not to verify the peer name, don't do it. Return true
@@ -490,81 +576,123 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
 
-	/*
-	 * Extract the common name from the certificate.
-	 *
-	 * XXX: Should support alternate names here
-	 */
-	/* First find out the name's length and allocate a buffer for it. */
-	len = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-									NID_commonName, NULL, 0);
-	if (len == -1)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not get server common name from server certificate\n"));
-		return false;
-	}
-	peer_cn = malloc(len + 1);
-	if (peer_cn == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
-		return false;
-	}
-
-	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-								  NID_commonName, peer_cn, len + 1);
-	if (r != len)
-	{
-		/* Got different length than on the first call. Shouldn't happen. */
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not get server common name from server certificate\n"));
-		free(peer_cn);
-		return false;
-	}
-	peer_cn[len] = '\0';
-
-	/*
-	 * Reject embedded NULLs in certificate common name to prevent attacks
-	 * like CVE-2009-4034.
-	 */
-	if (len != strlen(peer_cn))
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL certificate's common name contains embedded null\n"));
-		free(peer_cn);
-		return false;
-	}
-
-	/*
-	 * We got the peer's common name. Now compare it against the originally
-	 * given hostname.
-	 */
+	/* Check that we have a hostname to compare with. */
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
-		result = false;
+		return false;
 	}
+
+	/*
+	 * First, get the Subject Alternative Names (SANs) from the certificate,
+	 * and compare them against the originally given hostname.
+	 */
+	peer_san = (STACK_OF(GENERAL_NAME) *)
+		X509_get_ext_d2i(conn->peer, NID_subject_alt_name, NULL, NULL);
+
+	if (peer_san)
+	{
+		int			san_len = sk_GENERAL_NAME_num(peer_san);
+
+		for (i = 0; i < san_len; i++)
+		{
+			const GENERAL_NAME *name = sk_GENERAL_NAME_value(peer_san, i);
+
+			if (name->type == GEN_DNS)
+			{
+				char	   *alt_name;
+
+				names_examined++;
+				rc = verify_peer_name_matches_certificate_name(conn,
+															   name->d.dNSName,
+															   &alt_name);
+				if (rc == -1)
+					got_error = true;
+				if (rc == 1)
+					found_match = true;
+
+				if (alt_name)
+				{
+					if (!first_name)
+						first_name = alt_name;
+					else
+						free(alt_name);
+				}
+			}
+			if (found_match || got_error)
+				break;
+		}
+		sk_GENERAL_NAME_free(peer_san);
+	}
+	/*
+	 * If there is no subjectAltName extension, check the Common Name.
+	 *
+	 * (Per RFC 2818 and RFC 6125, if the subjectAltName extension is present,
+	 * the CN must be ignored.)
+	 */
 	else
 	{
-		if (pg_strcasecmp(peer_cn, conn->pghost) == 0)
-			/* Exact name match */
-			result = true;
-		else if (wildcard_certificate_match(peer_cn, conn->pghost))
-			/* Matched wildcard certificate */
-			result = true;
-		else
+		X509_NAME  *subject_name;
+
+		subject_name = X509_get_subject_name(conn->peer);
+		if (subject_name != NULL)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("server common name \"%s\" does not match host name \"%s\"\n"),
-							  peer_cn, conn->pghost);
-			result = false;
+			int			cn_index;
+
+			cn_index = X509_NAME_get_index_by_NID(subject_name,
+												  NID_commonName, -1);
+			if (cn_index >= 0)
+			{
+				names_examined++;
+				rc = verify_peer_name_matches_certificate_name(
+					conn,
+					X509_NAME_ENTRY_get_data(
+						X509_NAME_get_entry(subject_name, cn_index)),
+					&first_name);
+
+				if (rc == -1)
+					got_error = true;
+				else if (rc == 1)
+					found_match = true;
+			}
 		}
 	}
 
-	free(peer_cn);
-	return result;
+	if (!found_match && !got_error)
+	{
+		/*
+		 * No match. Include the name from the server certificate in the
+		 * error message, to aid debugging broken configurations. If there
+		 * are multiple names, only print the first one to avoid an overly
+		 * long error message.
+		 */
+		if (names_examined > 1)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_ngettext("server certificate for \"%s\" (and %d other name) does not match host name \"%s\"\n",
+											 "server certificate for \"%s\" (and %d other names) does not match host name \"%s\"\n",
+											 names_examined - 1),
+							  first_name, names_examined - 1, conn->pghost);
+		}
+		else if (names_examined == 1)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("server certificate for \"%s\" does not match host name \"%s\"\n"),
+							  first_name, conn->pghost);
+		}
+		else
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not get server's hostname from server certificate\n"));
+		}
+	}
+
+	/* clean up */
+	if (first_name)
+		free(first_name);
+
+	return found_match && !got_error;
 }
 
 #ifdef ENABLE_THREAD_SAFETY

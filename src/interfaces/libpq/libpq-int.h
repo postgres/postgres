@@ -653,8 +653,12 @@ extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
 extern char *
 libpq_gettext(const char *msgid)
 __attribute__((format_arg(1)));
+extern char *
+libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
+__attribute__((format_arg(1))) __attribute__((format_arg(2)));
 #else
 #define libpq_gettext(x) (x)
+#define libpq_ngettext(s, p, n) ((n) == 1 ? (s) : (p))
 #endif
 
 /*
