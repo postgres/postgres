@@ -5440,10 +5440,12 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 static void
 power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 {
+	unsigned int mask;
 	bool		neg;
 	NumericVar	base_prod;
 	int			local_rscale;
 
+	/* Handle some common special cases, as well as corner cases */
 	switch (exp)
 	{
 		case 0:
@@ -5477,23 +5479,43 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 	 * pattern of exp.  We do the multiplications with some extra precision.
 	 */
 	neg = (exp < 0);
-	exp = Abs(exp);
+	mask = Abs(exp);
 
 	local_rscale = rscale + MUL_GUARD_DIGITS * 2;
 
 	init_var(&base_prod);
 	set_var_from_var(base, &base_prod);
 
-	if (exp & 1)
+	if (mask & 1)
 		set_var_from_var(base, result);
 	else
 		set_var_from_var(&const_one, result);
 
-	while ((exp >>= 1) > 0)
+	while ((mask >>= 1) > 0)
 	{
 		mul_var(&base_prod, &base_prod, &base_prod, local_rscale);
-		if (exp & 1)
+		if (mask & 1)
 			mul_var(&base_prod, result, result, local_rscale);
+
+		/*
+		 * When abs(base) > 1, the number of digits to the left of the decimal
+		 * point in base_prod doubles at each iteration, so if exp is large we
+		 * could easily spend large amounts of time and memory space doing the
+		 * multiplications.  But once the weight exceeds what will fit in
+		 * int16, the final result is guaranteed to overflow (or underflow, if
+		 * exp < 0), so we can give up before wasting too many cycles.
+		 */
+		if (base_prod.weight > SHRT_MAX || result->weight > SHRT_MAX)
+		{
+			/* overflow, unless neg, in which case result should be 0 */
+			if (!neg)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("value overflows numeric format")));
+			zero_var(result);
+			neg = false;
+			break;
+		}
 	}
 
 	free_var(&base_prod);

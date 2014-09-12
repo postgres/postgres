@@ -828,3 +828,12 @@ select 12345678901234567890 % 123;
 select 12345678901234567890 / 123;
 select div(12345678901234567890, 123);
 select div(12345678901234567890, 123) * 123 + 12345678901234567890 % 123;
+
+--
+-- Test code path for raising to integer powers
+--
+
+select 10.0 ^ -2147483648 as rounds_to_zero;
+select 10.0 ^ -2147483647 as rounds_to_zero;
+select 10.0 ^ 2147483647 as overflows;
+select 117743296169.0 ^ 1000000000 as overflows;
