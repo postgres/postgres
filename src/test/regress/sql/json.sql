@@ -98,7 +98,31 @@ FROM generate_series(1,3) AS x;
 SELECT row_to_json(q,true)
 FROM rows q;
 
+SELECT row_to_json(q,pretty := true)
+FROM rows q;
+
 SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, false, false) FROM x;
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, false, true) FROM x;
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, ignore_nulls := true) FROM x;
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, ignore_nulls := true, pretty := true) FROM x;
+
 
 -- to_json, timestamps
 

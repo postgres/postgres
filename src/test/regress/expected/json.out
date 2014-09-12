@@ -397,11 +397,69 @@ FROM rows q;
   "y":"txt3"}
 (3 rows)
 
+SELECT row_to_json(q,pretty := true)
+FROM rows q;
+ row_to_json  
+--------------
+ {"x":1,     +
+  "y":"txt1"}
+ {"x":2,     +
+  "y":"txt2"}
+ {"x":3,     +
+  "y":"txt3"}
+(3 rows)
+
 SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
       row_to_json      
 -----------------------
  {"f1":[5,6,7,8,9,10]}
 (1 row)
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, false, false) FROM x;
+         row_to_json          
+------------------------------
+ {"a":10,"b":20,"c":30}
+ {"a":10,"b":null,"c":null}
+ {"a":null,"b":null,"c":null}
+(3 rows)
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, false, true) FROM x;
+      row_to_json       
+------------------------
+ {"a":10,"b":20,"c":30}
+ {"a":10}
+ {}
+(3 rows)
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, ignore_nulls := true) FROM x;
+      row_to_json       
+------------------------
+ {"a":10,"b":20,"c":30}
+ {"a":10}
+ {}
+(3 rows)
+
+WITH x AS (SELECT a,b,c FROM (VALUES(10,20,30),
+                             (10,NULL, NULL),
+                             (NULL, NULL, NULL)) g(a,b,c))
+ SELECT row_to_json(x, ignore_nulls := true, pretty := true) FROM x;
+ row_to_json 
+-------------
+ {"a":10,   +
+  "b":20,   +
+  "c":30}
+ {"a":10}
+ {}
+(3 rows)
 
 -- to_json, timestamps
 select to_json(timestamp '2014-05-28 12:22:35.614298');
