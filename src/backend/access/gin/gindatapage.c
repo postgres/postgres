@@ -621,9 +621,9 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		/*
 		 * Had to split.
 		 *
-		 * We already divided the segments between the left and the right
-		 * page. The left page was filled as full as possible, and the rest
-		 * overflowed to the right page. When building a new index, that's
+		 * leafRepackItems already divided the segments between the left and
+		 * the right page. It filled the left page as full as possible, and
+		 * put the rest to the right page. When building a new index, that's
 		 * good, because the table is scanned from beginning to end and there
 		 * won't be any more insertions to the left page during the build.
 		 * This packs the index as tight as possible. But otherwise, split
@@ -631,9 +631,10 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		 * until they're balanced.
 		 *
 		 * As a further heuristic, when appending items to the end of the
-		 * page, split 75/25, one the assumption that subsequent insertions
-		 * will probably also go to the end. This packs the index somewhat
-		 * tighter when appending to a table, which is very common.
+		 * page, try make the left page 75% full, one the assumption that
+		 * subsequent insertions will probably also go to the end. This packs
+		 * the index somewhat tighter when appending to a table, which is very
+		 * common.
 		 */
 		if (!btree->isBuild)
 		{
@@ -645,14 +646,18 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 				if (lastleftinfo->action != GIN_SEGMENT_DELETE)
 				{
 					segsize = SizeOfGinPostingList(lastleftinfo->seg);
+
+					/*
+					 * Note that we check that the right page doesn't become
+					 * more full than the left page even when appending. It's
+					 * possible that we added enough items to make both pages
+					 * more than 75% full.
+					 */
+					if ((leaf->lsize - segsize) - (leaf->rsize + segsize) < 0)
+						break;
 					if (append)
 					{
-						if ((leaf->lsize - segsize) - (leaf->lsize - segsize) < BLCKSZ / 4)
-							break;
-					}
-					else
-					{
-						if ((leaf->lsize - segsize) - (leaf->rsize + segsize) < 0)
+						if ((leaf->lsize - segsize) < (BLCKSZ * 3) / 4)
 							break;
 					}
 
