@@ -386,7 +386,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators, bool keepNulls)
  */
 
 /* Target bucket loading (tuples per bucket) */
-#define NTUP_PER_BUCKET			10
+#define NTUP_PER_BUCKET			1
 
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
@@ -396,12 +396,13 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 {
 	int			tupsize;
 	double		inner_rel_bytes;
+	long		bucket_bytes;
 	long		hash_table_bytes;
 	long		skew_table_bytes;
 	long		max_pointers;
-	int			nbatch;
+	int			nbatch = 1;
 	int			nbuckets;
-	int			i;
+	double		dbuckets;
 
 	/* Force a plausible relation size if no info */
 	if (ntuples <= 0.0)
@@ -460,56 +461,61 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 	/*
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
-	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
-	 * sufficient.  The Min() steps limit the results so that the pointer
-	 * arrays we'll try to allocate do not exceed work_mem.
+	 * memory is filled, assuming a single batch.  The Min() step limits the
+	 * results so that the pointer arrays we'll try to allocate do not exceed
+	 * work_mem.
 	 */
 	max_pointers = (work_mem * 1024L) / sizeof(void *);
 	/* also ensure we avoid integer overflow in nbatch and nbuckets */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
+	dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
+	dbuckets = Min(dbuckets, max_pointers);
+	nbuckets = Max((int) dbuckets, 1024);
+	nbuckets = 1 << my_log2(nbuckets);
+	bucket_bytes = sizeof(HashJoinTuple) * nbuckets;
 
-	if (inner_rel_bytes > hash_table_bytes)
+	/*
+	 * If there's not enough space to store the projected number of tuples
+	 * and the required bucket headers, we will need multiple batches.
+	 */
+	if (inner_rel_bytes + bucket_bytes > hash_table_bytes)
 	{
 		/* We'll need multiple batches */
 		long		lbuckets;
 		double		dbatch;
 		int			minbatch;
+		long		bucket_size;
 
-		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
+		/*
+		 * Estimate the number of buckets we'll want to have when work_mem
+		 * is entirely full.  Each bucket will contain a bucket pointer plus
+		 * NTUP_PER_BUCKET tuples, whose projected size already includes
+		 * overhead for the hash code, pointer to the next tuple, etc.
+		 */
+		bucket_size = (tupsize * NTUP_PER_BUCKET + sizeof(HashJoinTuple));
+		lbuckets = 1 << my_log2(hash_table_bytes / bucket_size);
 		lbuckets = Min(lbuckets, max_pointers);
 		nbuckets = (int) lbuckets;
+		bucket_bytes = nbuckets * sizeof(HashJoinTuple);
 
-		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
+		/*
+		 * Buckets are simple pointers to hashjoin tuples, while tupsize
+		 * includes the pointer, hash code, and MinimalTupleData.  So buckets
+		 * should never really exceed 25% of work_mem (even for
+		 * NTUP_PER_BUCKET=1); except maybe * for work_mem values that are
+		 * not 2^N bytes, where we might get more * because of doubling.
+		 * So let's look for 50% here.
+		 */
+		Assert(bucket_bytes <= hash_table_bytes / 2);
+
+		/* Calculate required number of batches. */
+		dbatch = ceil(inner_rel_bytes / (hash_table_bytes - bucket_bytes));
 		dbatch = Min(dbatch, max_pointers);
 		minbatch = (int) dbatch;
 		nbatch = 2;
 		while (nbatch < minbatch)
 			nbatch <<= 1;
 	}
-	else
-	{
-		/* We expect the hashtable to fit in memory */
-		double		dbuckets;
-
-		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
-		dbuckets = Min(dbuckets, max_pointers);
-		nbuckets = (int) dbuckets;
-
-		nbatch = 1;
-	}
-
-	/*
-	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.  We also force nbuckets to not
-	 * be real small, by starting the search at 2^10.  (Note: above we made
-	 * sure that nbuckets is not more than INT_MAX / 2, so this loop cannot
-	 * overflow, nor can the final shift to recalculate nbuckets.)
-	 */
-	i = 10;
-	while ((1 << i) < nbuckets)
-		i++;
-	nbuckets = (1 << i);
 
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
@@ -754,7 +760,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		hashtable->spaceUsed += hashTupleSize;
 		if (hashtable->spaceUsed > hashtable->spacePeak)
 			hashtable->spacePeak = hashtable->spaceUsed;
-		if (hashtable->spaceUsed > hashtable->spaceAllowed)
+		if (hashtable->spaceUsed + hashtable->nbuckets * sizeof(HashJoinTuple)
+			> hashtable->spaceAllowed)
 			ExecHashIncreaseNumBatches(hashtable);
 	}
 	else
