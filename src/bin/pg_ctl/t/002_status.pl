@@ -1,10 +1,13 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 my $tempdir = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
+
+command_exit_is([ 'pg_ctl', 'status', '-D', "$tempdir/nonexistent" ],
+	4, 'pg_ctl status with nonexistent directory');
 
 system_or_bail "initdb -D '$tempdir'/data -A trust >/dev/null";
 open CONF, ">>$tempdir/data/postgresql.conf";

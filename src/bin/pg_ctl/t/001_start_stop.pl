@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 10;
+use Test::More tests => 11;
 
 my $tempdir = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
@@ -9,6 +9,9 @@ my $tempdir_short = TestLib::tempdir_short;
 program_help_ok('pg_ctl');
 program_version_ok('pg_ctl');
 program_options_handling_ok('pg_ctl');
+
+command_exit_is([ 'pg_ctl', 'start', '-D', "$tempdir/nonexistent" ],
+				1, 'pg_ctl start with nonexistent directory');
 
 command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data" ], 'pg_ctl initdb');
 open CONF, ">>$tempdir/data/postgresql.conf";
