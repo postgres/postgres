@@ -310,7 +310,7 @@ typedef struct
 				zero_start,		/* position of first zero	  */
 				zero_end,		/* position of last zero	  */
 				need_locale;	/* needs it locale		  */
-} FmtDesc;
+} NUMDesc;
 
 /* ----------
  * Flags for NUMBER version
@@ -377,7 +377,7 @@ typedef struct
 	FormatNode	format[NUM_CACHE_SIZE + 1];
 	char		str[NUM_CACHE_SIZE + 1];
 	int			age;
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 } NUMCacheEntry;
 
 /* global cache for --- date/time part */
@@ -910,7 +910,7 @@ static const int NUM_index[KeyWord_INDEX_SIZE] = {
 typedef struct NUMProc
 {
 	bool		is_to_char;
-	FmtDesc    *Fmt;			/* number description		*/
+	NUMDesc    *Num;			/* number description		*/
 
 	int			sign,			/* '-' or '+'			*/
 				sign_wrote,		/* was sign write		*/
@@ -923,8 +923,8 @@ typedef struct NUMProc
 				read_post,		/* to_number - number of dec. digit */
 				read_pre;		/* to_number - number non-dec. digit */
 
-	char	   *numstr,			/* string with number	*/
-			   *numstr_p,		/* pointer to current number position */
+	char	   *number,			/* string with number	*/
+			   *number_p,		/* pointer to current number position */
 			   *inout,			/* in / out buffer	*/
 			   *inout_p,		/* pointer to current inout position */
 			   *last_relevant,	/* last relevant number after decimal point */
@@ -944,9 +944,9 @@ typedef struct NUMProc
 static const KeyWord *index_seq_search(char *str, const KeyWord *kw,
 				 const int *index);
 static const KeySuffix *suff_search(char *str, const KeySuffix *suf, int type);
-static void FmtDesc_prepare(FmtDesc *Fmt, FormatNode *n);
+static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
-			 const KeySuffix *suf, const int *index, int ver, FmtDesc *Fmt);
+			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
 			TmToChar *in, char *out, Oid collid);
@@ -971,14 +971,14 @@ static int	from_char_seq_search(int *dest, char **src, const char *const * array
 static void do_to_timestamp(text *date_txt, text *fmt,
 				struct pg_tm * tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
-static FormatNode *NUM_cache(int len, FmtDesc *Fmt, text *pars_str, bool *shouldFree);
+static FormatNode *NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
-static char *NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
-			  char *numstr, int from_char_input_len, int to_char_out_pre_spaces,
+static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
+			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
@@ -1035,11 +1035,11 @@ suff_search(char *str, const KeySuffix *suf, int type)
 }
 
 /* ----------
- * Prepare FmtDesc (number description struct) via FormatNode struct
+ * Prepare NUMDesc (number description struct) via FormatNode struct
  * ----------
  */
 static void
-FmtDesc_prepare(FmtDesc *Fmt, FormatNode *n)
+NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 {
 	if (n->type != NODE_TYPE_ACTION)
 		return;
@@ -1050,7 +1050,7 @@ FmtDesc_prepare(FmtDesc *Fmt, FormatNode *n)
 	 */
 	PG_TRY();
 	{
-		if (IS_EEEE(Fmt) && n->key->id != NUM_E)
+		if (IS_EEEE(num) && n->key->id != NUM_E)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("\"EEEE\" must be the last pattern used")));
@@ -1058,156 +1058,156 @@ FmtDesc_prepare(FmtDesc *Fmt, FormatNode *n)
 		switch (n->key->id)
 		{
 			case NUM_9:
-				if (IS_BRACKET(Fmt))
+				if (IS_BRACKET(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("\"9\" must be ahead of \"PR\"")));
-				if (IS_MULTI(Fmt))
+				if (IS_MULTI(num))
 				{
-					++Fmt->multi;
+					++num->multi;
 					break;
 				}
-				if (IS_DECIMAL(Fmt))
-					++Fmt->post;
+				if (IS_DECIMAL(num))
+					++num->post;
 				else
-					++Fmt->pre;
+					++num->pre;
 				break;
 
 			case NUM_0:
-				if (IS_BRACKET(Fmt))
+				if (IS_BRACKET(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("\"0\" must be ahead of \"PR\"")));
-				if (!IS_ZERO(Fmt) && !IS_DECIMAL(Fmt))
+				if (!IS_ZERO(num) && !IS_DECIMAL(num))
 				{
-					Fmt->flag |= NUM_F_ZERO;
-					Fmt->zero_start = Fmt->pre + 1;
+					num->flag |= NUM_F_ZERO;
+					num->zero_start = num->pre + 1;
 				}
-				if (!IS_DECIMAL(Fmt))
-					++Fmt->pre;
+				if (!IS_DECIMAL(num))
+					++num->pre;
 				else
-					++Fmt->post;
+					++num->post;
 
-				Fmt->zero_end = Fmt->pre + Fmt->post;
+				num->zero_end = num->pre + num->post;
 				break;
 
 			case NUM_B:
-				if (Fmt->pre == 0 && Fmt->post == 0 && (!IS_ZERO(Fmt)))
-					Fmt->flag |= NUM_F_BLANK;
+				if (num->pre == 0 && num->post == 0 && (!IS_ZERO(num)))
+					num->flag |= NUM_F_BLANK;
 				break;
 
 			case NUM_D:
-				Fmt->flag |= NUM_F_LDECIMAL;
-				Fmt->need_locale = TRUE;
+				num->flag |= NUM_F_LDECIMAL;
+				num->need_locale = TRUE;
 				/* FALLTHROUGH */
 			case NUM_DEC:
-				if (IS_DECIMAL(Fmt))
+				if (IS_DECIMAL(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple decimal points")));
-				if (IS_MULTI(Fmt))
+				if (IS_MULTI(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("cannot use \"V\" and decimal point together")));
-				Fmt->flag |= NUM_F_DECIMAL;
+				num->flag |= NUM_F_DECIMAL;
 				break;
 
 			case NUM_FM:
-				Fmt->flag |= NUM_F_FILLMODE;
+				num->flag |= NUM_F_FILLMODE;
 				break;
 
 			case NUM_S:
-				if (IS_LSIGN(Fmt))
+				if (IS_LSIGN(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"S\" twice")));
-				if (IS_PLUS(Fmt) || IS_MINUS(Fmt) || IS_BRACKET(Fmt))
+				if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
-				if (!IS_DECIMAL(Fmt))
+				if (!IS_DECIMAL(num))
 				{
-					Fmt->lsign = NUM_LSIGN_PRE;
-					Fmt->pre_lsign_num = Fmt->pre;
-					Fmt->need_locale = TRUE;
-					Fmt->flag |= NUM_F_LSIGN;
+					num->lsign = NUM_LSIGN_PRE;
+					num->pre_lsign_num = num->pre;
+					num->need_locale = TRUE;
+					num->flag |= NUM_F_LSIGN;
 				}
-				else if (Fmt->lsign == NUM_LSIGN_NONE)
+				else if (num->lsign == NUM_LSIGN_NONE)
 				{
-					Fmt->lsign = NUM_LSIGN_POST;
-					Fmt->need_locale = TRUE;
-					Fmt->flag |= NUM_F_LSIGN;
+					num->lsign = NUM_LSIGN_POST;
+					num->need_locale = TRUE;
+					num->flag |= NUM_F_LSIGN;
 				}
 				break;
 
 			case NUM_MI:
-				if (IS_LSIGN(Fmt))
+				if (IS_LSIGN(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"S\" and \"MI\" together")));
-				Fmt->flag |= NUM_F_MINUS;
-				if (IS_DECIMAL(Fmt))
-					Fmt->flag |= NUM_F_MINUS_POST;
+				num->flag |= NUM_F_MINUS;
+				if (IS_DECIMAL(num))
+					num->flag |= NUM_F_MINUS_POST;
 				break;
 
 			case NUM_PL:
-				if (IS_LSIGN(Fmt))
+				if (IS_LSIGN(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"S\" and \"PL\" together")));
-				Fmt->flag |= NUM_F_PLUS;
-				if (IS_DECIMAL(Fmt))
-					Fmt->flag |= NUM_F_PLUS_POST;
+				num->flag |= NUM_F_PLUS;
+				if (IS_DECIMAL(num))
+					num->flag |= NUM_F_PLUS_POST;
 				break;
 
 			case NUM_SG:
-				if (IS_LSIGN(Fmt))
+				if (IS_LSIGN(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"S\" and \"SG\" together")));
-				Fmt->flag |= NUM_F_MINUS;
-				Fmt->flag |= NUM_F_PLUS;
+				num->flag |= NUM_F_MINUS;
+				num->flag |= NUM_F_PLUS;
 				break;
 
 			case NUM_PR:
-				if (IS_LSIGN(Fmt) || IS_PLUS(Fmt) || IS_MINUS(Fmt))
+				if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
-				Fmt->flag |= NUM_F_BRACKET;
+				num->flag |= NUM_F_BRACKET;
 				break;
 
 			case NUM_rn:
 			case NUM_RN:
-				Fmt->flag |= NUM_F_ROMAN;
+				num->flag |= NUM_F_ROMAN;
 				break;
 
 			case NUM_L:
 			case NUM_G:
-				Fmt->need_locale = TRUE;
+				num->need_locale = TRUE;
 				break;
 
 			case NUM_V:
-				if (IS_DECIMAL(Fmt))
+				if (IS_DECIMAL(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("cannot use \"V\" and decimal point together")));
-				Fmt->flag |= NUM_F_MULTI;
+				num->flag |= NUM_F_MULTI;
 				break;
 
 			case NUM_E:
-				if (IS_EEEE(Fmt))
+				if (IS_EEEE(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot use \"EEEE\" twice")));
-				if (IS_BLANK(Fmt) || IS_FILLMODE(Fmt) || IS_LSIGN(Fmt) ||
-					IS_BRACKET(Fmt) || IS_MINUS(Fmt) || IS_PLUS(Fmt) ||
-					IS_ROMAN(Fmt) || IS_MULTI(Fmt))
+				if (IS_BLANK(num) || IS_FILLMODE(num) || IS_LSIGN(num) ||
+					IS_BRACKET(num) || IS_MINUS(num) || IS_PLUS(num) ||
+					IS_ROMAN(num) || IS_MULTI(num))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 					   errmsg("\"EEEE\" is incompatible with other formats"),
 							 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
-				Fmt->flag |= NUM_F_EEEE;
+				num->flag |= NUM_F_EEEE;
 				break;
 		}
 	}
@@ -1231,7 +1231,7 @@ FmtDesc_prepare(FmtDesc *Fmt, FormatNode *n)
  */
 static void
 parse_format(FormatNode *node, char *str, const KeyWord *kw,
-			 const KeySuffix *suf, const int *index, int ver, FmtDesc *Fmt)
+			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
 {
 	const KeySuffix *s;
 	FormatNode *n;
@@ -1271,10 +1271,10 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 				str += n->key->len;
 
 			/*
-			 * NUM version: Prepare global FmtDesc struct
+			 * NUM version: Prepare global NUMDesc struct
 			 */
 			if (ver == NUM_TYPE)
-				FmtDesc_prepare(Fmt, n);
+				NUMDesc_prepare(Num, n);
 
 			/*
 			 * Postfix
@@ -3772,7 +3772,7 @@ NUM_cache_getnew(char *str)
 		++n_NUMCache;
 	}
 
-	zeroize_NUM(&ent->Fmt);
+	zeroize_NUM(&ent->Num);
 
 	last_NUMCacheEntry = ent;
 	return ent;
@@ -3821,7 +3821,7 @@ NUM_cache_remove(NUMCacheEntry *ent)
  * ----------
  */
 static FormatNode *
-NUM_cache(int len, FmtDesc *Fmt, text *pars_str, bool *shouldFree)
+NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 {
 	FormatNode *format = NULL;
 	char	   *str;
@@ -3839,10 +3839,10 @@ NUM_cache(int len, FmtDesc *Fmt, text *pars_str, bool *shouldFree)
 
 		*shouldFree = true;
 
-		zeroize_NUM(Fmt);
+		zeroize_NUM(Num);
 
 		parse_format(format, str, NUM_keywords,
-					 NULL, NUM_index, NUM_TYPE, Fmt);
+					 NULL, NUM_index, NUM_TYPE, Num);
 
 		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 	}
@@ -3864,7 +3864,7 @@ NUM_cache(int len, FmtDesc *Fmt, text *pars_str, bool *shouldFree)
 			 * to the cache.
 			 */
 			parse_format(ent->format, str, NUM_keywords,
-						 NULL, NUM_index, NUM_TYPE, &ent->Fmt);
+						 NULL, NUM_index, NUM_TYPE, &ent->Num);
 
 			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 		}
@@ -3874,15 +3874,15 @@ NUM_cache(int len, FmtDesc *Fmt, text *pars_str, bool *shouldFree)
 		/*
 		 * Copy cache to used struct
 		 */
-		Fmt->flag = ent->Fmt.flag;
-		Fmt->lsign = ent->Fmt.lsign;
-		Fmt->pre = ent->Fmt.pre;
-		Fmt->post = ent->Fmt.post;
-		Fmt->pre_lsign_num = ent->Fmt.pre_lsign_num;
-		Fmt->need_locale = ent->Fmt.need_locale;
-		Fmt->multi = ent->Fmt.multi;
-		Fmt->zero_start = ent->Fmt.zero_start;
-		Fmt->zero_end = ent->Fmt.zero_end;
+		Num->flag = ent->Num.flag;
+		Num->lsign = ent->Num.lsign;
+		Num->pre = ent->Num.pre;
+		Num->post = ent->Num.post;
+		Num->pre_lsign_num = ent->Num.pre_lsign_num;
+		Num->need_locale = ent->Num.need_locale;
+		Num->multi = ent->Num.multi;
+		Num->zero_start = ent->Num.zero_start;
+		Num->zero_end = ent->Num.zero_end;
 	}
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -3947,7 +3947,7 @@ int_to_roman(int number)
 static void
 NUM_prepare_locale(NUMProc *Np)
 {
-	if (Np->Fmt->need_locale)
+	if (Np->Num->need_locale)
 	{
 		struct lconv *lconv;
 
@@ -3978,7 +3978,7 @@ NUM_prepare_locale(NUMProc *Np)
 		else
 			Np->decimal = ".";
 
-		if (!IS_LDECIMAL(Np->Fmt))
+		if (!IS_LDECIMAL(Np->Num))
 			Np->decimal = ".";
 
 		/*
@@ -4079,7 +4079,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 	/*
 	 * read sign before number
 	 */
-	if (*Np->numstr == ' ' && (id == NUM_0 || id == NUM_9) &&
+	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9) &&
 		(Np->read_pre + Np->read_post) == 0)
 	{
 #ifdef DEBUG_TO_FROM_CHAR
@@ -4090,7 +4090,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		/*
 		 * locale sign
 		 */
-		if (IS_LSIGN(Np->Fmt) && Np->Fmt->lsign == NUM_LSIGN_PRE)
+		if (IS_LSIGN(Np->Num) && Np->Num->lsign == NUM_LSIGN_PRE)
 		{
 			int			x = 0;
 
@@ -4102,14 +4102,14 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 				strncmp(Np->inout_p, Np->L_negative_sign, x) == 0)
 			{
 				Np->inout_p += x;
-				*Np->numstr = '-';
+				*Np->number = '-';
 			}
 			else if ((x = strlen(Np->L_positive_sign)) &&
 					 AMOUNT_TEST(x) &&
 					 strncmp(Np->inout_p, Np->L_positive_sign, x) == 0)
 			{
 				Np->inout_p += x;
-				*Np->numstr = '+';
+				*Np->number = '+';
 			}
 		}
 		else
@@ -4121,15 +4121,15 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 			/*
 			 * simple + - < >
 			 */
-			if (*Np->inout_p == '-' || (IS_BRACKET(Np->Fmt) &&
+			if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
 										*Np->inout_p == '<'))
 			{
-				*Np->numstr = '-';		/* set - */
+				*Np->number = '-';		/* set - */
 				Np->inout_p++;
 			}
 			else if (*Np->inout_p == '+')
 			{
-				*Np->numstr = '+';		/* set + */
+				*Np->number = '+';		/* set + */
 				Np->inout_p++;
 			}
 		}
@@ -4139,7 +4139,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		return;
 
 #ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, "Scan for numbers (%c), current number: '%s'", *Np->inout_p, Np->numstr);
+	elog(DEBUG_elog_output, "Scan for numbers (%c), current number: '%s'", *Np->inout_p, Np->number);
 #endif
 
 	/*
@@ -4147,11 +4147,11 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 	 */
 	if (isdigit((unsigned char) *Np->inout_p))
 	{
-		if (Np->read_dec && Np->read_post == Np->Fmt->post)
+		if (Np->read_dec && Np->read_post == Np->Num->post)
 			return;
 
-		*Np->numstr_p = *Np->inout_p;
-		Np->numstr_p++;
+		*Np->number_p = *Np->inout_p;
+		Np->number_p++;
 
 		if (Np->read_dec)
 			Np->read_post++;
@@ -4164,10 +4164,10 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		elog(DEBUG_elog_output, "Read digit (%c)", *Np->inout_p);
 #endif
 	}
-	else if (IS_DECIMAL(Np->Fmt) && Np->read_dec == FALSE)
+	else if (IS_DECIMAL(Np->Num) && Np->read_dec == FALSE)
 	{
 		/*
-		 * We need not test IS_LDECIMAL(Np->Fmt) explicitly here, because
+		 * We need not test IS_LDECIMAL(Np->Num) explicitly here, because
 		 * Np->decimal is always just "." if we don't have a D format token.
 		 * So we just unconditionally match to Np->decimal.
 		 */
@@ -4180,8 +4180,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		if (x && AMOUNT_TEST(x) && strncmp(Np->inout_p, Np->decimal, x) == 0)
 		{
 			Np->inout_p += x - 1;
-			*Np->numstr_p = '.';
-			Np->numstr_p++;
+			*Np->number_p = '.';
+			Np->number_p++;
 			Np->read_dec = TRUE;
 			isread = TRUE;
 		}
@@ -4199,14 +4199,14 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 	 * FM9999.9999999S	   -> 123.001- 9.9S			   -> .5- FM9.999999MI ->
 	 * 5.01-
 	 */
-	if (*Np->numstr == ' ' && Np->read_pre + Np->read_post > 0)
+	if (*Np->number == ' ' && Np->read_pre + Np->read_post > 0)
 	{
 		/*
 		 * locale sign (NUM_S) is always anchored behind a last number, if: -
 		 * locale sign expected - last read char was NUM_0/9 or NUM_DEC - and
 		 * next char is not digit
 		 */
-		if (IS_LSIGN(Np->Fmt) && isread &&
+		if (IS_LSIGN(Np->Num) && isread &&
 			(Np->inout_p + 1) <= Np->inout + input_len &&
 			!isdigit((unsigned char) *(Np->inout_p + 1)))
 		{
@@ -4221,16 +4221,16 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 				strncmp(Np->inout_p, Np->L_negative_sign, x) == 0)
 			{
 				Np->inout_p += x - 1;	/* -1 .. NUM_processor() do inout_p++ */
-				*Np->numstr = '-';
+				*Np->number = '-';
 			}
 			else if ((x = strlen(Np->L_positive_sign)) &&
 					 AMOUNT_TEST(x) &&
 					 strncmp(Np->inout_p, Np->L_positive_sign, x) == 0)
 			{
 				Np->inout_p += x - 1;	/* -1 .. NUM_processor() do inout_p++ */
-				*Np->numstr = '+';
+				*Np->number = '+';
 			}
-			if (*Np->numstr == ' ')
+			if (*Np->number == ' ')
 				/* no sign read */
 				Np->inout_p = tmp;
 		}
@@ -4241,12 +4241,12 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		 *
 		 * FM9.999999MI			   -> 5.01-
 		 *
-		 * if (.... && IS_LSIGN(Np->Fmt)==FALSE) prevents read wrong formats
+		 * if (.... && IS_LSIGN(Np->Num)==FALSE) prevents read wrong formats
 		 * like to_number('1 -', '9S') where sign is not anchored to last
 		 * number.
 		 */
-		else if (isread == FALSE && IS_LSIGN(Np->Fmt) == FALSE &&
-				 (IS_PLUS(Np->Fmt) || IS_MINUS(Np->Fmt)))
+		else if (isread == FALSE && IS_LSIGN(Np->Num) == FALSE &&
+				 (IS_PLUS(Np->Num) || IS_MINUS(Np->Num)))
 		{
 #ifdef DEBUG_TO_FROM_CHAR
 			elog(DEBUG_elog_output, "Try read simple post-sign (%c)", *Np->inout_p);
@@ -4257,16 +4257,16 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 			 */
 			if (*Np->inout_p == '-' || *Np->inout_p == '+')
 				/* NUM_processor() do inout_p++ */
-				*Np->numstr = *Np->inout_p;
+				*Np->number = *Np->inout_p;
 		}
 	}
 }
 
 #define IS_PREDEC_SPACE(_n) \
-		(IS_ZERO((_n)->Fmt)==FALSE && \
-		 (_n)->numstr == (_n)->numstr_p && \
-		 *(_n)->numstr == '0' && \
-				 (_n)->Fmt->post != 0)
+		(IS_ZERO((_n)->Num)==FALSE && \
+		 (_n)->number == (_n)->number_p && \
+		 *(_n)->number == '0' && \
+				 (_n)->Num->post != 0)
 
 /* ----------
  * Add digit or sign to number-string
@@ -4277,7 +4277,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 {
 	int			end;
 
-	if (IS_ROMAN(Np->Fmt))
+	if (IS_ROMAN(Np->Num))
 		return;
 
 	/* Note: in this elog() output not set '\0' in 'inout' */
@@ -4292,7 +4292,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		 "SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: \"%s\", INOUT: \"%s\"",
 		 Np->sign_wrote,
 		 Np->num_curr,
-		 Np->numstr_p,
+		 Np->number_p,
 		 Np->inout);
 #endif
 	Np->num_in = FALSE;
@@ -4302,12 +4302,12 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	 * handle "9.9" --> " .1"
 	 */
 	if (Np->sign_wrote == FALSE &&
-		(Np->num_curr >= Np->out_pre_spaces || (IS_ZERO(Np->Fmt) && Np->Fmt->zero_start == Np->num_curr)) &&
+		(Np->num_curr >= Np->out_pre_spaces || (IS_ZERO(Np->Num) && Np->Num->zero_start == Np->num_curr)) &&
 		(IS_PREDEC_SPACE(Np) == FALSE || (Np->last_relevant && *Np->last_relevant == '.')))
 	{
-		if (IS_LSIGN(Np->Fmt))
+		if (IS_LSIGN(Np->Num))
 		{
-			if (Np->Fmt->lsign == NUM_LSIGN_PRE)
+			if (Np->Num->lsign == NUM_LSIGN_PRE)
 			{
 				if (Np->sign == '-')
 					strcpy(Np->inout_p, Np->L_negative_sign);
@@ -4317,7 +4317,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				Np->sign_wrote = TRUE;
 			}
 		}
-		else if (IS_BRACKET(Np->Fmt))
+		else if (IS_BRACKET(Np->Num))
 		{
 			*Np->inout_p = Np->sign == '+' ? ' ' : '<';
 			++Np->inout_p;
@@ -4325,7 +4325,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		}
 		else if (Np->sign == '+')
 		{
-			if (!IS_FILLMODE(Np->Fmt))
+			if (!IS_FILLMODE(Np->Num))
 			{
 				*Np->inout_p = ' ';		/* Write + */
 				++Np->inout_p;
@@ -4347,20 +4347,20 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	if (id == NUM_9 || id == NUM_0 || id == NUM_D || id == NUM_DEC)
 	{
 		if (Np->num_curr < Np->out_pre_spaces &&
-			(Np->Fmt->zero_start > Np->num_curr || !IS_ZERO(Np->Fmt)))
+			(Np->Num->zero_start > Np->num_curr || !IS_ZERO(Np->Num)))
 		{
 			/*
 			 * Write blank space
 			 */
-			if (!IS_FILLMODE(Np->Fmt))
+			if (!IS_FILLMODE(Np->Num))
 			{
 				*Np->inout_p = ' ';		/* Write ' ' */
 				++Np->inout_p;
 			}
 		}
-		else if (IS_ZERO(Np->Fmt) &&
+		else if (IS_ZERO(Np->Num) &&
 				 Np->num_curr < Np->out_pre_spaces &&
-				 Np->Fmt->zero_start <= Np->num_curr)
+				 Np->Num->zero_start <= Np->num_curr)
 		{
 			/*
 			 * Write ZERO
@@ -4374,7 +4374,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			/*
 			 * Write Decimal point
 			 */
-			if (*Np->numstr_p == '.')
+			if (*Np->number_p == '.')
 			{
 				if (!Np->last_relevant || *Np->last_relevant != '.')
 				{
@@ -4385,7 +4385,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				/*
 				 * Ora 'n' -- FM9.9 --> 'n.'
 				 */
-				else if (IS_FILLMODE(Np->Fmt) &&
+				else if (IS_FILLMODE(Np->Num) &&
 						 Np->last_relevant && *Np->last_relevant == '.')
 				{
 					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
@@ -4397,7 +4397,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				/*
 				 * Write Digits
 				 */
-				if (Np->last_relevant && Np->numstr_p > Np->last_relevant &&
+				if (Np->last_relevant && Np->number_p > Np->last_relevant &&
 					id != NUM_0)
 					;
 
@@ -4406,7 +4406,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				 */
 				else if (IS_PREDEC_SPACE(Np))
 				{
-					if (!IS_FILLMODE(Np->Fmt))
+					if (!IS_FILLMODE(Np->Num))
 					{
 						*Np->inout_p = ' ';
 						++Np->inout_p;
@@ -4423,27 +4423,27 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				}
 				else
 				{
-					*Np->inout_p = *Np->numstr_p;		/* Write DIGIT */
+					*Np->inout_p = *Np->number_p;		/* Write DIGIT */
 					++Np->inout_p;
 					Np->num_in = TRUE;
 				}
 			}
-			++Np->numstr_p;
+			++Np->number_p;
 		}
 
-		end = Np->num_count + (Np->out_pre_spaces ? 1 : 0) + (IS_DECIMAL(Np->Fmt) ? 1 : 0);
+		end = Np->num_count + (Np->out_pre_spaces ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
 
-		if (Np->last_relevant && Np->last_relevant == Np->numstr_p)
+		if (Np->last_relevant && Np->last_relevant == Np->number_p)
 			end = Np->num_curr;
 
 		if (Np->num_curr + 1 == end)
 		{
-			if (Np->sign_wrote == TRUE && IS_BRACKET(Np->Fmt))
+			if (Np->sign_wrote == TRUE && IS_BRACKET(Np->Num))
 			{
 				*Np->inout_p = Np->sign == '+' ? ' ' : '>';
 				++Np->inout_p;
 			}
-			else if (IS_LSIGN(Np->Fmt) && Np->Fmt->lsign == NUM_LSIGN_POST)
+			else if (IS_LSIGN(Np->Num) && Np->Num->lsign == NUM_LSIGN_POST)
 			{
 				if (Np->sign == '-')
 					strcpy(Np->inout_p, Np->L_negative_sign);
@@ -4458,8 +4458,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 }
 
 static char *
-NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
-			  char *numstr, int from_char_input_len, int to_char_out_pre_spaces,
+NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
+			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;
@@ -4468,48 +4468,48 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 
 	MemSet(Np, 0, sizeof(NUMProc));
 
-	Np->Fmt = Fmt;
+	Np->Num = Num;
 	Np->is_to_char = is_to_char;
-	Np->numstr = numstr;
+	Np->number = number;
 	Np->inout = inout;
 	Np->last_relevant = NULL;
 	Np->read_post = 0;
 	Np->read_pre = 0;
 	Np->read_dec = FALSE;
 
-	if (Np->Fmt->zero_start)
-		--Np->Fmt->zero_start;
+	if (Np->Num->zero_start)
+		--Np->Num->zero_start;
 
-	if (IS_EEEE(Np->Fmt))
+	if (IS_EEEE(Np->Num))
 	{
 		if (!Np->is_to_char)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("\"EEEE\" not supported for input")));
-		return strcpy(inout, numstr);
+		return strcpy(inout, number);
 	}
 
 	/*
 	 * Roman correction
 	 */
-	if (IS_ROMAN(Np->Fmt))
+	if (IS_ROMAN(Np->Num))
 	{
 		if (!Np->is_to_char)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("\"RN\" not supported for input")));
 
-		Np->Fmt->lsign = Np->Fmt->pre_lsign_num = Np->Fmt->post =
-			Np->Fmt->pre = Np->out_pre_spaces = Np->sign = 0;
+		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->post =
+			Np->Num->pre = Np->out_pre_spaces = Np->sign = 0;
 
-		if (IS_FILLMODE(Np->Fmt))
+		if (IS_FILLMODE(Np->Num))
 		{
-			Np->Fmt->flag = 0;
-			Np->Fmt->flag |= NUM_F_FILLMODE;
+			Np->Num->flag = 0;
+			Np->Num->flag |= NUM_F_FILLMODE;
 		}
 		else
-			Np->Fmt->flag = 0;
-		Np->Fmt->flag |= NUM_F_ROMAN;
+			Np->Num->flag = 0;
+		Np->Num->flag |= NUM_F_ROMAN;
 	}
 
 	/*
@@ -4520,9 +4520,9 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 		Np->sign = sign;
 
 		/* MI/PL/SG - write sign itself and not in number */
-		if (IS_PLUS(Np->Fmt) || IS_MINUS(Np->Fmt))
+		if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
 		{
-			if (IS_PLUS(Np->Fmt) && IS_MINUS(Np->Fmt) == FALSE)
+			if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num) == FALSE)
 				Np->sign_wrote = FALSE; /* need sign */
 			else
 				Np->sign_wrote = TRUE;	/* needn't sign */
@@ -4531,21 +4531,21 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 		{
 			if (Np->sign != '-')
 			{
-				if (IS_BRACKET(Np->Fmt) && IS_FILLMODE(Np->Fmt))
-					Np->Fmt->flag &= ~NUM_F_BRACKET;
-				if (IS_MINUS(Np->Fmt))
-					Np->Fmt->flag &= ~NUM_F_MINUS;
+				if (IS_BRACKET(Np->Num) && IS_FILLMODE(Np->Num))
+					Np->Num->flag &= ~NUM_F_BRACKET;
+				if (IS_MINUS(Np->Num))
+					Np->Num->flag &= ~NUM_F_MINUS;
 			}
-			else if (Np->sign != '+' && IS_PLUS(Np->Fmt))
-				Np->Fmt->flag &= ~NUM_F_PLUS;
+			else if (Np->sign != '+' && IS_PLUS(Np->Num))
+				Np->Num->flag &= ~NUM_F_PLUS;
 
-			if (Np->sign == '+' && IS_FILLMODE(Np->Fmt) && IS_LSIGN(Np->Fmt) == FALSE)
+			if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num) == FALSE)
 				Np->sign_wrote = TRUE;	/* needn't sign */
 			else
 				Np->sign_wrote = FALSE; /* need sign */
 
-			if (Np->Fmt->lsign == NUM_LSIGN_PRE && Np->Fmt->pre == Np->Fmt->pre_lsign_num)
-				Np->Fmt->lsign = NUM_LSIGN_POST;
+			if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
+				Np->Num->lsign = NUM_LSIGN_POST;
 		}
 	}
 	else
@@ -4554,25 +4554,25 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 	/*
 	 * Count
 	 */
-	Np->num_count = Np->Fmt->post + Np->Fmt->pre - 1;
+	Np->num_count = Np->Num->post + Np->Num->pre - 1;
 
 	if (is_to_char)
 	{
 		Np->out_pre_spaces = to_char_out_pre_spaces;
 
-		if (IS_FILLMODE(Np->Fmt) && IS_DECIMAL(Np->Fmt))
+		if (IS_FILLMODE(Np->Num) && IS_DECIMAL(Np->Num))
 		{
-			Np->last_relevant = get_last_relevant_decnum(Np->numstr);
+			Np->last_relevant = get_last_relevant_decnum(Np->number);
 
 			/*
 			 * If any '0' specifiers are present, make sure we don't strip
 			 * those digits.
 			 */
-			if (Np->last_relevant && Np->Fmt->zero_end > Np->out_pre_spaces)
+			if (Np->last_relevant && Np->Num->zero_end > Np->out_pre_spaces)
 			{
 				char	   *last_zero;
 
-				last_zero = Np->numstr + (Np->Fmt->zero_end - Np->out_pre_spaces);
+				last_zero = Np->number + (Np->Num->zero_end - Np->out_pre_spaces);
 				if (Np->last_relevant < last_zero)
 					Np->last_relevant = last_zero;
 			}
@@ -4584,8 +4584,8 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 	else
 	{
 		Np->out_pre_spaces = 0;
-		*Np->numstr = ' ';		/* sign space */
-		*(Np->numstr + 1) = '\0';
+		*Np->number = ' ';		/* sign space */
+		*(Np->number + 1) = '\0';
 	}
 
 	Np->num_in = 0;
@@ -4595,22 +4595,22 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 	elog(DEBUG_elog_output,
 		 "\n\tSIGN: '%c'\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s\n\tBRACKET: %s\n\tPLUS: %s\n\tMINUS: %s\n\tFILLMODE: %s\n\tROMAN: %s\n\tEEEE: %s",
 		 Np->sign,
-		 Np->numstr,
-		 Np->Fmt->pre,
-		 Np->Fmt->post,
+		 Np->number,
+		 Np->Num->pre,
+		 Np->Num->post,
 		 Np->num_count,
 		 Np->out_pre_spaces,
 		 Np->sign_wrote ? "Yes" : "No",
-		 IS_ZERO(Np->Fmt) ? "Yes" : "No",
-		 Np->Fmt->zero_start,
-		 Np->Fmt->zero_end,
+		 IS_ZERO(Np->Num) ? "Yes" : "No",
+		 Np->Num->zero_start,
+		 Np->Num->zero_end,
 		 Np->last_relevant ? Np->last_relevant : "<not set>",
-		 IS_BRACKET(Np->Fmt) ? "Yes" : "No",
-		 IS_PLUS(Np->Fmt) ? "Yes" : "No",
-		 IS_MINUS(Np->Fmt) ? "Yes" : "No",
-		 IS_FILLMODE(Np->Fmt) ? "Yes" : "No",
-		 IS_ROMAN(Np->Fmt) ? "Yes" : "No",
-		 IS_EEEE(Np->Fmt) ? "Yes" : "No"
+		 IS_BRACKET(Np->Num) ? "Yes" : "No",
+		 IS_PLUS(Np->Num) ? "Yes" : "No",
+		 IS_MINUS(Np->Num) ? "Yes" : "No",
+		 IS_FILLMODE(Np->Num) ? "Yes" : "No",
+		 IS_ROMAN(Np->Num) ? "Yes" : "No",
+		 IS_EEEE(Np->Num) ? "Yes" : "No"
 		);
 #endif
 
@@ -4623,9 +4623,9 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 	 * Processor direct cycle
 	 */
 	if (Np->is_to_char)
-		Np->numstr_p = Np->numstr;
+		Np->number_p = Np->number;
 	else
-		Np->numstr_p = Np->numstr + 1;	/* first char is space for sign */
+		Np->number_p = Np->number + 1;	/* first char is space for sign */
 
 	for (n = node, Np->inout_p = Np->inout; n->type != NODE_TYPE_END; n++)
 	{
@@ -4673,7 +4673,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					{
 						if (!Np->num_in)
 						{
-							if (IS_FILLMODE(Np->Fmt))
+							if (IS_FILLMODE(Np->Num))
 								continue;
 							else
 								*Np->inout_p = ' ';
@@ -4685,7 +4685,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					{
 						if (!Np->num_in)
 						{
-							if (IS_FILLMODE(Np->Fmt))
+							if (IS_FILLMODE(Np->Num))
 								continue;
 						}
 					}
@@ -4696,7 +4696,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					{
 						if (!Np->num_in)
 						{
-							if (IS_FILLMODE(Np->Fmt))
+							if (IS_FILLMODE(Np->Num))
 								continue;
 							else
 							{
@@ -4716,7 +4716,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					{
 						if (!Np->num_in)
 						{
-							if (IS_FILLMODE(Np->Fmt))
+							if (IS_FILLMODE(Np->Num))
 								continue;
 						}
 						Np->inout_p += strlen(Np->L_thousands_sep) - 1;
@@ -4734,48 +4734,48 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					break;
 
 				case NUM_RN:
-					if (IS_FILLMODE(Np->Fmt))
+					if (IS_FILLMODE(Np->Num))
 					{
-						strcpy(Np->inout_p, Np->numstr_p);
+						strcpy(Np->inout_p, Np->number_p);
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
 					{
-						sprintf(Np->inout_p, "%15s", Np->numstr_p);
+						sprintf(Np->inout_p, "%15s", Np->number_p);
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					break;
 
 				case NUM_rn:
-					if (IS_FILLMODE(Np->Fmt))
+					if (IS_FILLMODE(Np->Num))
 					{
-						strcpy(Np->inout_p, asc_tolower_z(Np->numstr_p));
+						strcpy(Np->inout_p, asc_tolower_z(Np->number_p));
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
 					{
-						sprintf(Np->inout_p, "%15s", asc_tolower_z(Np->numstr_p));
+						sprintf(Np->inout_p, "%15s", asc_tolower_z(Np->number_p));
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					break;
 
 				case NUM_th:
-					if (IS_ROMAN(Np->Fmt) || *Np->numstr == '#' ||
-						Np->sign == '-' || IS_DECIMAL(Np->Fmt))
+					if (IS_ROMAN(Np->Num) || *Np->number == '#' ||
+						Np->sign == '-' || IS_DECIMAL(Np->Num))
 						continue;
 
 					if (Np->is_to_char)
-						strcpy(Np->inout_p, get_th(Np->numstr, TH_LOWER));
+						strcpy(Np->inout_p, get_th(Np->number, TH_LOWER));
 					Np->inout_p += 1;
 					break;
 
 				case NUM_TH:
-					if (IS_ROMAN(Np->Fmt) || *Np->numstr == '#' ||
-						Np->sign == '-' || IS_DECIMAL(Np->Fmt))
+					if (IS_ROMAN(Np->Num) || *Np->number == '#' ||
+						Np->sign == '-' || IS_DECIMAL(Np->Num))
 						continue;
 
 					if (Np->is_to_char)
-						strcpy(Np->inout_p, get_th(Np->numstr, TH_UPPER));
+						strcpy(Np->inout_p, get_th(Np->number, TH_UPPER));
 					Np->inout_p += 1;
 					break;
 
@@ -4784,7 +4784,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					{
 						if (Np->sign == '-')
 							*Np->inout_p = '-';
-						else if (IS_FILLMODE(Np->Fmt))
+						else if (IS_FILLMODE(Np->Num))
 							continue;
 						else
 							*Np->inout_p = ' ';
@@ -4792,7 +4792,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					else
 					{
 						if (*Np->inout_p == '-')
-							*Np->numstr = '-';
+							*Np->number = '-';
 					}
 					break;
 
@@ -4801,7 +4801,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					{
 						if (Np->sign == '+')
 							*Np->inout_p = '+';
-						else if (IS_FILLMODE(Np->Fmt))
+						else if (IS_FILLMODE(Np->Num))
 							continue;
 						else
 							*Np->inout_p = ' ';
@@ -4809,7 +4809,7 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					else
 					{
 						if (*Np->inout_p == '+')
-							*Np->numstr = '+';
+							*Np->number = '+';
 					}
 					break;
 
@@ -4820,9 +4820,9 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 					else
 					{
 						if (*Np->inout_p == '-')
-							*Np->numstr = '-';
+							*Np->number = '-';
 						else if (*Np->inout_p == '+')
-							*Np->numstr = '+';
+							*Np->number = '+';
 					}
 					break;
 
@@ -4850,20 +4850,20 @@ NUM_processor(FormatNode *node, FmtDesc *Fmt, char *inout,
 	}
 	else
 	{
-		if (*(Np->numstr_p - 1) == '.')
-			*(Np->numstr_p - 1) = '\0';
+		if (*(Np->number_p - 1) == '.')
+			*(Np->number_p - 1) = '\0';
 		else
-			*Np->numstr_p = '\0';
+			*Np->number_p = '\0';
 
 		/*
 		 * Correction - precision of dec. number
 		 */
-		Np->Fmt->post = Np->read_post;
+		Np->Num->post = Np->read_post;
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "TO_NUMBER (numstr): '%s'", Np->numstr);
+		elog(DEBUG_elog_output, "TO_NUMBER (number): '%s'", Np->number);
 #endif
-		return Np->numstr;
+		return Np->number;
 	}
 }
 
@@ -4878,7 +4878,7 @@ do { \
 	if (len <= 0 || len >= (INT_MAX-VARHDRSZ)/NUM_MAX_ITEM_SIZ)		\
 		PG_RETURN_TEXT_P(cstring_to_text("")); \
 	result	= (text *) palloc0((len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\
-	format	= NUM_cache(len, &Fmt, fmt, &shouldFree);		\
+	format	= NUM_cache(len, &Num, fmt, &shouldFree);		\
 } while (0)
 
 /* ----------
@@ -4889,7 +4889,7 @@ do { \
 do { \
 	int		len; \
 									\
-	NUM_processor(format, &Fmt, VARDATA(result), numstr, 0, out_pre_spaces, sign, true, PG_GET_COLLATION()); \
+	NUM_processor(format, &Num, VARDATA(result), numstr, 0, out_pre_spaces, sign, true, PG_GET_COLLATION()); \
 									\
 	if (shouldFree)					\
 		pfree(format);				\
@@ -4912,7 +4912,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 {
 	text	   *value = PG_GETARG_TEXT_P(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 	Datum		result;
 	FormatNode *format;
 	char	   *numstr;
@@ -4926,15 +4926,15 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	if (len <= 0 || len >= INT_MAX / NUM_MAX_ITEM_SIZ)
 		PG_RETURN_NULL();
 
-	format = NUM_cache(len, &Fmt, fmt, &shouldFree);
+	format = NUM_cache(len, &Num, fmt, &shouldFree);
 
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
-	NUM_processor(format, &Fmt, VARDATA(value), numstr,
+	NUM_processor(format, &Num, VARDATA(value), numstr,
 				  VARSIZE(value) - VARHDRSZ, 0, 0, false, PG_GET_COLLATION());
 
-	scale = Fmt.post;
-	precision = Max(0, Fmt.pre) + scale;
+	scale = Num.post;
+	precision = Max(0, Num.pre) + scale;
 
 	if (shouldFree)
 		pfree(format);
@@ -4956,7 +4956,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 {
 	Numeric		value = PG_GETARG_NUMERIC(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
 	bool		shouldFree;
@@ -4972,7 +4972,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	/*
 	 * On DateType depend part (numeric)
 	 */
-	if (IS_ROMAN(&Fmt))
+	if (IS_ROMAN(&Num))
 	{
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
 												NumericGetDatum(value),
@@ -4981,9 +4981,9 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
 													   NumericGetDatum(x))));
 	}
-	else if (IS_EEEE(&Fmt))
+	else if (IS_EEEE(&Num))
 	{
-		orgnum = numeric_out_sci(value, Fmt.post);
+		orgnum = numeric_out_sci(value, Num.post);
 
 		/*
 		 * numeric_out_sci() does not emit a sign for positive numbers.  We
@@ -4996,10 +4996,10 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			 * Allow 6 characters for the leading sign, the decimal point,
 			 * "e", the exponent's sign and two exponent digits.
 			 */
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 7);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 6);
+			numstr = (char *) palloc(Num.pre + Num.post + 7);
+			fill_str(numstr, '#', Num.pre + Num.post + 6);
 			*numstr = ' ';
-			*(numstr + Fmt.pre + 1) = '.';
+			*(numstr + Num.pre + 1) = '.';
 		}
 		else if (*orgnum != '-')
 		{
@@ -5017,12 +5017,12 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		int			numstr_pre_len;
 		Numeric		val = value;
 
-		if (IS_MULTI(&Fmt))
+		if (IS_MULTI(&Num))
 		{
 			Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
 														 Int32GetDatum(10)));
 			Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-												  Int32GetDatum(Fmt.multi)));
+												  Int32GetDatum(Num.multi)));
 
 			x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
 													NumericGetDatum(a),
@@ -5030,12 +5030,12 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			val = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
 													  NumericGetDatum(value),
 													  NumericGetDatum(x)));
-			Fmt.pre += Fmt.multi;
+			Num.pre += Num.multi;
 		}
 
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
 												NumericGetDatum(val),
-												Int32GetDatum(Fmt.post)));
+												Int32GetDatum(Num.post)));
 		orgnum = DatumGetCString(DirectFunctionCall1(numeric_out,
 													 NumericGetDatum(x)));
 
@@ -5056,14 +5056,14 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			numstr_pre_len = strlen(numstr);
 
 		/* needs padding? */
-		if (numstr_pre_len < Fmt.pre)
-			out_pre_spaces = Fmt.pre - numstr_pre_len;
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
 		/* overflowed prefix digit format? */
-		else if (numstr_pre_len > Fmt.pre)
+		else if (numstr_pre_len > Num.pre)
 		{
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 2);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 1);
-			*(numstr + Fmt.pre) = '.';
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
+			*(numstr + Num.pre) = '.';
 		}
 	}
 
@@ -5080,7 +5080,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 {
 	int32		value = PG_GETARG_INT32(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
 	bool		shouldFree;
@@ -5094,15 +5094,15 @@ int4_to_char(PG_FUNCTION_ARGS)
 	/*
 	 * On DateType depend part (int32)
 	 */
-	if (IS_ROMAN(&Fmt))
+	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman(value);
-	else if (IS_EEEE(&Fmt))
+	else if (IS_EEEE(&Num))
 	{
 		/* we can do it easily because float8 won't lose any precision */
 		float8		val = (float8) value;
 
 		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Fmt.post, val);
+		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, val);
 
 		/*
 		 * Swap a leading positive sign for a space.
@@ -5116,11 +5116,11 @@ int4_to_char(PG_FUNCTION_ARGS)
 	{
 		int			numstr_pre_len;
 
-		if (IS_MULTI(&Fmt))
+		if (IS_MULTI(&Num))
 		{
 			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
-														 Int32GetDatum(value * ((int32) pow((double) 10, (double) Fmt.multi)))));
-			Fmt.pre += Fmt.multi;
+														 Int32GetDatum(value * ((int32) pow((double) 10, (double) Num.multi)))));
+			Num.pre += Num.multi;
 		}
 		else
 		{
@@ -5139,26 +5139,26 @@ int4_to_char(PG_FUNCTION_ARGS)
 		numstr_pre_len = strlen(orgnum);
 
 		/* post-decimal digits?  Pad out with zeros. */
-		if (Fmt.post)
+		if (Num.post)
 		{
-			numstr = (char *) palloc(numstr_pre_len + Fmt.post + 2);
+			numstr = (char *) palloc(numstr_pre_len + Num.post + 2);
 			strcpy(numstr, orgnum);
 			*(numstr + numstr_pre_len) = '.';
-			memset(numstr + numstr_pre_len + 1, '0', Fmt.post);
-			*(numstr + numstr_pre_len + Fmt.post + 1) = '\0';
+			memset(numstr + numstr_pre_len + 1, '0', Num.post);
+			*(numstr + numstr_pre_len + Num.post + 1) = '\0';
 		}
 		else
 			numstr = orgnum;
 
 		/* needs padding? */
-		if (numstr_pre_len < Fmt.pre)
-			out_pre_spaces = Fmt.pre - numstr_pre_len;
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
 		/* overflowed prefix digit format? */
-		else if (numstr_pre_len > Fmt.pre)
+		else if (numstr_pre_len > Num.pre)
 		{
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 2);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 1);
-			*(numstr + Fmt.pre) = '.';
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
+			*(numstr + Num.pre) = '.';
 		}
 	}
 
@@ -5175,7 +5175,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 {
 	int64		value = PG_GETARG_INT64(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
 	bool		shouldFree;
@@ -5189,20 +5189,20 @@ int8_to_char(PG_FUNCTION_ARGS)
 	/*
 	 * On DateType depend part (int32)
 	 */
-	if (IS_ROMAN(&Fmt))
+	if (IS_ROMAN(&Num))
 	{
 		/* Currently don't support int8 conversion to roman... */
 		numstr = orgnum = int_to_roman(DatumGetInt32(
 						  DirectFunctionCall1(int84, Int64GetDatum(value))));
 	}
-	else if (IS_EEEE(&Fmt))
+	else if (IS_EEEE(&Num))
 	{
 		/* to avoid loss of precision, must go via numeric not float8 */
 		Numeric		val;
 
 		val = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
 												  Int64GetDatum(value)));
-		orgnum = numeric_out_sci(val, Fmt.post);
+		orgnum = numeric_out_sci(val, Num.post);
 
 		/*
 		 * numeric_out_sci() does not emit a sign for positive numbers.  We
@@ -5224,15 +5224,15 @@ int8_to_char(PG_FUNCTION_ARGS)
 	{
 		int			numstr_pre_len;
 
-		if (IS_MULTI(&Fmt))
+		if (IS_MULTI(&Num))
 		{
-			double		multi = pow((double) 10, (double) Fmt.multi);
+			double		multi = pow((double) 10, (double) Num.multi);
 
 			value = DatumGetInt64(DirectFunctionCall2(int8mul,
 													  Int64GetDatum(value),
 												   DirectFunctionCall1(dtoi8,
 													Float8GetDatum(multi))));
-			Fmt.pre += Fmt.multi;
+			Num.pre += Num.multi;
 		}
 
 		orgnum = DatumGetCString(DirectFunctionCall1(int8out,
@@ -5249,26 +5249,26 @@ int8_to_char(PG_FUNCTION_ARGS)
 		numstr_pre_len = strlen(orgnum);
 
 		/* post-decimal digits?  Pad out with zeros. */
-		if (Fmt.post)
+		if (Num.post)
 		{
-			numstr = (char *) palloc(numstr_pre_len + Fmt.post + 2);
+			numstr = (char *) palloc(numstr_pre_len + Num.post + 2);
 			strcpy(numstr, orgnum);
 			*(numstr + numstr_pre_len) = '.';
-			memset(numstr + numstr_pre_len + 1, '0', Fmt.post);
-			*(numstr + numstr_pre_len + Fmt.post + 1) = '\0';
+			memset(numstr + numstr_pre_len + 1, '0', Num.post);
+			*(numstr + numstr_pre_len + Num.post + 1) = '\0';
 		}
 		else
 			numstr = orgnum;
 
 		/* needs padding? */
-		if (numstr_pre_len < Fmt.pre)
-			out_pre_spaces = Fmt.pre - numstr_pre_len;
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
 		/* overflowed prefix digit format? */
-		else if (numstr_pre_len > Fmt.pre)
+		else if (numstr_pre_len > Num.pre)
 		{
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 2);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 1);
-			*(numstr + Fmt.pre) = '.';
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
+			*(numstr + Num.pre) = '.';
 		}
 	}
 
@@ -5285,7 +5285,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 {
 	float4		value = PG_GETARG_FLOAT4(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
 	bool		shouldFree;
@@ -5297,9 +5297,9 @@ float4_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_prepare;
 
-	if (IS_ROMAN(&Fmt))
+	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman((int) rint(value));
-	else if (IS_EEEE(&Fmt))
+	else if (IS_EEEE(&Num))
 	{
 		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		if (isnan(value) || is_infinite(value))
@@ -5308,14 +5308,14 @@ float4_to_char(PG_FUNCTION_ARGS)
 			 * Allow 6 characters for the leading sign, the decimal point,
 			 * "e", the exponent's sign and two exponent digits.
 			 */
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 7);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 6);
+			numstr = (char *) palloc(Num.pre + Num.post + 7);
+			fill_str(numstr, '#', Num.pre + Num.post + 6);
 			*numstr = ' ';
-			*(numstr + Fmt.pre + 1) = '.';
+			*(numstr + Num.pre + 1) = '.';
 		}
 		else
 		{
-			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Fmt.post, value);
+			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
 
 			/*
 			 * Swap a leading positive sign for a space.
@@ -5331,12 +5331,12 @@ float4_to_char(PG_FUNCTION_ARGS)
 		float4		val = value;
 		int			numstr_pre_len;
 
-		if (IS_MULTI(&Fmt))
+		if (IS_MULTI(&Num))
 		{
-			float		multi = pow((double) 10, (double) Fmt.multi);
+			float		multi = pow((double) 10, (double) Num.multi);
 
 			val = value * multi;
-			Fmt.pre += Fmt.multi;
+			Num.pre += Num.multi;
 		}
 
 		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
@@ -5345,10 +5345,10 @@ float4_to_char(PG_FUNCTION_ARGS)
 
 		/* adjust post digits to fit max float digits */
 		if (numstr_pre_len >= FLT_DIG)
-			Fmt.post = 0;
-		else if (numstr_pre_len + Fmt.post > FLT_DIG)
-			Fmt.post = FLT_DIG - numstr_pre_len;
-		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.*f", Fmt.post, val);
+			Num.post = 0;
+		else if (numstr_pre_len + Num.post > FLT_DIG)
+			Num.post = FLT_DIG - numstr_pre_len;
+		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -5367,14 +5367,14 @@ float4_to_char(PG_FUNCTION_ARGS)
 			numstr_pre_len = strlen(numstr);
 
 		/* needs padding? */
-		if (numstr_pre_len < Fmt.pre)
-			out_pre_spaces = Fmt.pre - numstr_pre_len;
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
 		/* overflowed prefix digit format? */
-		else if (numstr_pre_len > Fmt.pre)
+		else if (numstr_pre_len > Num.pre)
 		{
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 2);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 1);
-			*(numstr + Fmt.pre) = '.';
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
+			*(numstr + Num.pre) = '.';
 		}
 	}
 
@@ -5391,7 +5391,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 {
 	float8		value = PG_GETARG_FLOAT8(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FmtDesc		Fmt;
+	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result;
 	bool		shouldFree;
@@ -5403,9 +5403,9 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_prepare;
 
-	if (IS_ROMAN(&Fmt))
+	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman((int) rint(value));
-	else if (IS_EEEE(&Fmt))
+	else if (IS_EEEE(&Num))
 	{
 		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		if (isnan(value) || is_infinite(value))
@@ -5414,14 +5414,14 @@ float8_to_char(PG_FUNCTION_ARGS)
 			 * Allow 6 characters for the leading sign, the decimal point,
 			 * "e", the exponent's sign and two exponent digits.
 			 */
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 7);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 6);
+			numstr = (char *) palloc(Num.pre + Num.post + 7);
+			fill_str(numstr, '#', Num.pre + Num.post + 6);
 			*numstr = ' ';
-			*(numstr + Fmt.pre + 1) = '.';
+			*(numstr + Num.pre + 1) = '.';
 		}
 		else
 		{
-			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Fmt.post, value);
+			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
 
 			/*
 			 * Swap a leading positive sign for a space.
@@ -5437,22 +5437,22 @@ float8_to_char(PG_FUNCTION_ARGS)
 		float8		val = value;
 		int			numstr_pre_len;
 
-		if (IS_MULTI(&Fmt))
+		if (IS_MULTI(&Num))
 		{
-			double		multi = pow((double) 10, (double) Fmt.multi);
+			double		multi = pow((double) 10, (double) Num.multi);
 
 			val = value * multi;
-			Fmt.pre += Fmt.multi;
+			Num.pre += Num.multi;
 		}
 		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		numstr_pre_len = snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.0f", fabs(val));
 
 		/* adjust post digits to fit max double digits */
 		if (numstr_pre_len >= DBL_DIG)
-			Fmt.post = 0;
-		else if (numstr_pre_len + Fmt.post > DBL_DIG)
-			Fmt.post = DBL_DIG - numstr_pre_len;
-		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.*f", Fmt.post, val);
+			Num.post = 0;
+		else if (numstr_pre_len + Num.post > DBL_DIG)
+			Num.post = DBL_DIG - numstr_pre_len;
+		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -5471,14 +5471,14 @@ float8_to_char(PG_FUNCTION_ARGS)
 			numstr_pre_len = strlen(numstr);
 
 		/* needs padding? */
-		if (numstr_pre_len < Fmt.pre)
-			out_pre_spaces = Fmt.pre - numstr_pre_len;
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
 		/* overflowed prefix digit format? */
-		else if (numstr_pre_len > Fmt.pre)
+		else if (numstr_pre_len > Num.pre)
 		{
-			numstr = (char *) palloc(Fmt.pre + Fmt.post + 2);
-			fill_str(numstr, '#', Fmt.pre + Fmt.post + 1);
-			*(numstr + Fmt.pre) = '.';
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
+			*(numstr + Num.pre) = '.';
 		}
 	}
 
