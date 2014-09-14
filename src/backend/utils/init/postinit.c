@@ -425,7 +425,7 @@ pg_split_opts(char **argv, int *argcp, char *optstr)
 
 	while (*optstr)
 	{
-		bool last_was_escape = false;
+		bool		last_was_escape = false;
 
 		resetStringInfo(&s);
 
@@ -982,7 +982,7 @@ process_startup_options(Port *port, bool am_superuser)
 	GucContext	gucctx;
 	ListCell   *gucopts;
 
-	gucctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
+	gucctx = am_superuser ? PGC_SU_BACKEND : PGC_BACKEND;
 
 	/*
 	 * First process any command-line switches that were included in the

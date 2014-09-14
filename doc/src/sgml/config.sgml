@@ -4345,8 +4345,9 @@ local0.*    /var/log/postgresql
        <para>
         Causes each attempted connection to the server to be logged,
         as well as successful completion of client authentication.
-        This parameter cannot be changed after session start.
-        The default is off.
+        Only superusers can change this parameter at session start,
+        and it cannot be changed at all within a session.
+        The default is <literal>off</>.
        </para>
 
        <note>
@@ -4368,11 +4369,12 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
        <para>
-        This outputs a line in the server log similar to
-        <varname>log_connections</varname> but at session termination,
-        and includes the duration of the session.  This is off by
-        default.
-        This parameter cannot be changed after session start.
+        Causes session terminations to be logged.  The log output
+        provides information similar to <varname>log_connections</varname>,
+        plus the duration of the session.
+        Only superusers can change this parameter at session start,
+        and it cannot be changed at all within a session.
+        The default is <literal>off</>.
        </para>
       </listitem>
      </varlistentry>

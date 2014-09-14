@@ -3258,7 +3258,7 @@ get_stats_option_name(const char *arg)
  * argv[0] is ignored in either case (it's assumed to be the program name).
  *
  * ctx is PGC_POSTMASTER for secure options, PGC_BACKEND for insecure options
- * coming from the client, or PGC_SUSET for insecure options coming from
+ * coming from the client, or PGC_SU_BACKEND for insecure options coming from
  * a superuser client.
  *
  * If a database name is present in the command line arguments, it's
