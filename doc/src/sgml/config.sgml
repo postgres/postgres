@@ -5678,8 +5678,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         this feature is to allow debugging or performance-measurement
         libraries to be loaded into specific sessions without an explicit
         <command>LOAD</> command being given.  For example, debugging could
-        be enabled for all sessions under a given user name by setting
-        this parameter with <command>ALTER ROLE SET</>.
+        be enabled for a session by setting this parameter via the
+        <envar>PGOPTIONS</envar> environment variable.
        </para>
 
        <para>
