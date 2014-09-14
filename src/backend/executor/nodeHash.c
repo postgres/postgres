@@ -625,7 +625,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	 * buckets now and not have to keep track which tuples in the buckets have
 	 * already been processed. We will free the old chunks as we go.
 	 */
-	memset(hashtable->buckets, 0, sizeof(HashJoinTuple *) * hashtable->nbuckets);
+	memset(hashtable->buckets, 0, sizeof(HashJoinTuple) * hashtable->nbuckets);
 	oldchunks = hashtable->chunks;
 	hashtable->chunks = NULL;
 
