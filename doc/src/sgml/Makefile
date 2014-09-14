@@ -27,26 +27,28 @@ all: html man
 distprep: html distprep-man
 
 
+ifndef DBTOEPUB
+DBTOEPUB = $(missing) dbtoepub
+endif
+
 ifndef JADE
-JADE = jade
+JADE = $(missing) jade
 endif
 SGMLINCLUDE = -D . -D $(srcdir)
 
 ifndef NSGMLS
-NSGMLS = nsgmls
+NSGMLS = $(missing) nsgmls
 endif
 
 ifndef OSX
-OSX = osx
+OSX = $(missing) osx
 endif
 
 ifndef XSLTPROC
-XSLTPROC = xsltproc
+XSLTPROC = $(missing) xsltproc
 endif
 
 override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
-
-DBTOEPUB ?= dbtoepub
 
 
 GENERATED_SGML = bookindex.sgml version.sgml \
