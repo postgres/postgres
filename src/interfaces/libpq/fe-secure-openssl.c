@@ -626,12 +626,13 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		sk_GENERAL_NAME_free(peer_san);
 	}
 	/*
-	 * If there is no subjectAltName extension, check the Common Name.
+	 * If there is no subjectAltName extension of type dNSName, check the
+	 * Common Name.
 	 *
-	 * (Per RFC 2818 and RFC 6125, if the subjectAltName extension is present,
-	 * the CN must be ignored.)
+	 * (Per RFC 2818 and RFC 6125, if the subjectAltName extension of type
+	 * dNSName is present, the CN must be ignored.)
 	 */
-	else
+	if (names_examined == 0)
 	{
 		X509_NAME  *subject_name;
 
