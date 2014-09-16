@@ -614,7 +614,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><function>GinLogicValue triConsistent(GinLogicValue check[], StrategyNumber n, Datum query,
+     <term><function>GinTernaryValue triConsistent(GinTernaryValue check[], StrategyNumber n, Datum query,
         int32 nkeys, Pointer extra_data[],
         Datum queryKeys[], bool nullFlags[])</></term>
      <listitem>
