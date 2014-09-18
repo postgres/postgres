@@ -327,7 +327,8 @@ int main()
    */
   bufz[0] = '\0';  /* in case snprintf fails to emit anything */
   snprintf(bufz, sizeof(bufz), "%zu", ~((size_t) 0));
-  snprintf(buf64, sizeof(buf64), UINT64_FORMAT, (PG_INT64_TYPE) ~((size_t) 0));
+  snprintf(buf64, sizeof(buf64), "%" INT64_MODIFIER "u",
+    (unsigned PG_INT64_TYPE) ~((size_t) 0));
   if (strcmp(bufz, buf64) != 0)
     return 1;
   return 0;
