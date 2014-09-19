@@ -25,6 +25,7 @@
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
+#include "rewrite/rowsecurity.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -1670,48 +1671,91 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		 * Collect the RIR rules that we must apply
 		 */
 		rules = rel->rd_rules;
-		if (rules == NULL)
+		if (rules != NULL)
 		{
-			heap_close(rel, NoLock);
-			continue;
-		}
-		locks = NIL;
-		for (i = 0; i < rules->numLocks; i++)
-		{
-			rule = rules->rules[i];
-			if (rule->event != CMD_SELECT)
-				continue;
-
-			locks = lappend(locks, rule);
-		}
-
-		/*
-		 * If we found any, apply them --- but first check for recursion!
-		 */
-		if (locks != NIL)
-		{
-			ListCell   *l;
-
-			if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("infinite recursion detected in rules for relation \"%s\"",
-								RelationGetRelationName(rel))));
-			activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
-
-			foreach(l, locks)
+			locks = NIL;
+			for (i = 0; i < rules->numLocks; i++)
 			{
-				rule = lfirst(l);
+				rule = rules->rules[i];
+				if (rule->event != CMD_SELECT)
+					continue;
 
-				parsetree = ApplyRetrieveRule(parsetree,
-											  rule,
-											  rt_index,
-											  rel,
-											  activeRIRs,
-											  forUpdatePushedDown);
+				locks = lappend(locks, rule);
 			}
 
-			activeRIRs = list_delete_first(activeRIRs);
+			/*
+			 * If we found any, apply them --- but first check for recursion!
+			 */
+			if (locks != NIL)
+			{
+				ListCell   *l;
+
+				if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("infinite recursion detected in rules for relation \"%s\"",
+									RelationGetRelationName(rel))));
+				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
+
+				foreach(l, locks)
+				{
+					rule = lfirst(l);
+
+					parsetree = ApplyRetrieveRule(parsetree,
+												  rule,
+												  rt_index,
+												  rel,
+												  activeRIRs,
+												  forUpdatePushedDown);
+				}
+
+				activeRIRs = list_delete_first(activeRIRs);
+			}
+		}
+		/*
+		 * If the RTE has row-security quals, apply them and recurse into the
+		 * securityQuals.
+		 */
+		if (prepend_row_security_policies(parsetree, rte, rt_index))
+		{
+			/*
+			 * We applied security quals, check for infinite recursion and
+			 * then expand any nested queries.
+			 */
+			if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("infinite recursion detected in row-security policy for relation \"%s\"",
+									RelationGetRelationName(rel))));
+
+			/*
+			 * Make sure we check for recursion in either securityQuals or
+			 * WITH CHECK quals.
+			 */
+			if (rte->securityQuals != NIL)
+			{
+				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
+
+				expression_tree_walker( (Node*) rte->securityQuals,
+										fireRIRonSubLink, (void*)activeRIRs );
+
+				activeRIRs = list_delete_first(activeRIRs);
+			}
+
+			if (parsetree->withCheckOptions != NIL)
+			{
+				WithCheckOption    *wco;
+				List			   *quals = NIL;
+
+				wco = (WithCheckOption *) makeNode(WithCheckOption);
+				quals = lcons(wco->qual, quals);
+
+				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
+
+				expression_tree_walker( (Node*) quals, fireRIRonSubLink,
+									   (void*)activeRIRs);
+			}
+
 		}
 
 		heap_close(rel, NoLock);

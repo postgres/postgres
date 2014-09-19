@@ -371,6 +371,15 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 												  list_length(objname) - 1));
 			}
 			break;
+		case OBJECT_POLICY:
+			if (!owningrel_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("policy \"%s\" for relation \"%s\" does not exist, skipping");
+				name = strVal(llast(objname));
+				args = NameListToString(list_truncate(list_copy(objname),
+												  list_length(objname) - 1));
+			}
+			break;
 		case OBJECT_EVENT_TRIGGER:
 			msg = gettext_noop("event trigger \"%s\" does not exist, skipping");
 			name = NameListToString(objname);

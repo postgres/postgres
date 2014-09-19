@@ -53,6 +53,7 @@
    &alterOperator;
    &alterOperatorClass;
    &alterOperatorFamily;
+   &alterPolicy;
    &alterRole;
    &alterRule;
    &alterSchema;
@@ -97,6 +98,7 @@
    &createOperator;
    &createOperatorClass;
    &createOperatorFamily;
+   &createPolicy;
    &createRole;
    &createRule;
    &createSchema;
@@ -138,6 +140,7 @@
    &dropOperatorClass;
    &dropOperatorFamily;
    &dropOwned;
+   &dropPolicy;
    &dropRole;
    &dropRule;
    &dropSchema;

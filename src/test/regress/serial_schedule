@@ -101,6 +101,7 @@ test: collate
 test: matview
 test: lock
 test: replica_identity
+test: rowsecurity
 test: alter_generic
 test: misc
 test: psql

@@ -1,0 +1,2236 @@
+--
+-- Test of Row-level security feature
+--
+-- Clean up in case a prior regression run failed
+-- Suppress NOTICE messages when users/groups don't exist
+SET client_min_messages TO 'warning';
+DROP USER IF EXISTS rls_regress_user0;
+DROP USER IF EXISTS rls_regress_user1;
+DROP USER IF EXISTS rls_regress_user2;
+DROP USER IF EXISTS rls_regress_exempt_user;
+DROP ROLE IF EXISTS rls_regress_group1;
+DROP ROLE IF EXISTS rls_regress_group2;
+DROP SCHEMA IF EXISTS rls_regress_schema CASCADE;
+RESET client_min_messages;
+-- initial setup
+CREATE USER rls_regress_user0;
+CREATE USER rls_regress_user1;
+CREATE USER rls_regress_user2;
+CREATE USER rls_regress_exempt_user BYPASSRLS;
+CREATE ROLE rls_regress_group1 NOLOGIN;
+CREATE ROLE rls_regress_group2 NOLOGIN;
+GRANT rls_regress_group1 TO rls_regress_user1;
+GRANT rls_regress_group2 TO rls_regress_user2;
+CREATE SCHEMA rls_regress_schema;
+GRANT ALL ON SCHEMA rls_regress_schema to public;
+SET search_path = rls_regress_schema;
+-- setup of malicious function
+CREATE OR REPLACE FUNCTION f_leak(text) RETURNS bool
+    COST 0.0000001 LANGUAGE plpgsql
+    AS 'BEGIN RAISE NOTICE ''f_leak => %'', $1; RETURN true; END';
+GRANT EXECUTE ON FUNCTION f_leak(text) TO public;
+-- BASIC Row-Level Security Scenario
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE uaccount (
+    pguser      name primary key,
+    seclv       int
+);
+GRANT SELECT ON uaccount TO public;
+INSERT INTO uaccount VALUES
+    ('rls_regress_user0', 99),
+    ('rls_regress_user1', 1),
+    ('rls_regress_user2', 2),
+    ('rls_regress_user3', 3);
+CREATE TABLE category (
+    cid        int primary key,
+    cname      text
+);
+GRANT ALL ON category TO public;
+INSERT INTO category VALUES
+    (11, 'novel'),
+    (22, 'science fiction'),
+    (33, 'technology'),
+    (44, 'manga');
+CREATE TABLE document (
+    did         int primary key,
+    cid         int references category(cid),
+    dlevel      int not null,
+    dauthor     name,
+    dtitle      text
+);
+GRANT ALL ON document TO public;
+INSERT INTO document VALUES
+    ( 1, 11, 1, 'rls_regress_user1', 'my first novel'),
+    ( 2, 11, 2, 'rls_regress_user1', 'my second novel'),
+    ( 3, 22, 2, 'rls_regress_user1', 'my science fiction'),
+    ( 4, 44, 1, 'rls_regress_user1', 'my first manga'),
+    ( 5, 44, 2, 'rls_regress_user1', 'my second manga'),
+    ( 6, 22, 1, 'rls_regress_user2', 'great science fiction'),
+    ( 7, 33, 2, 'rls_regress_user2', 'great technology book'),
+    ( 8, 44, 1, 'rls_regress_user2', 'great manga');
+ALTER TABLE document ENABLE ROW LEVEL SECURITY;
+-- user's security level must be higher that or equal to document's
+CREATE POLICY p1 ON document
+    USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
+-- viewpoint from rls_regress_user1
+SET SESSION AUTHORIZATION rls_regress_user1;
+SET row_security TO ON;
+SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my first manga
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great manga
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   8 |  44 |      1 | rls_regress_user2 | great manga
+(4 rows)
+
+SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my first manga
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great manga
+ cid | did | dlevel |      dauthor      |        dtitle         |      cname      
+-----+-----+--------+-------------------+-----------------------+-----------------
+  11 |   1 |      1 | rls_regress_user1 | my first novel        | novel
+  44 |   4 |      1 | rls_regress_user1 | my first manga        | manga
+  22 |   6 |      1 | rls_regress_user2 | great science fiction | science fiction
+  44 |   8 |      1 | rls_regress_user2 | great manga           | manga
+(4 rows)
+
+-- viewpoint from rls_regress_user2
+SET SESSION AUTHORIZATION rls_regress_user2;
+SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my science fiction
+NOTICE:  f_leak => my first manga
+NOTICE:  f_leak => my second manga
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => great manga
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+(8 rows)
+
+SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my science fiction
+NOTICE:  f_leak => my first manga
+NOTICE:  f_leak => my second manga
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => great manga
+ cid | did | dlevel |      dauthor      |        dtitle         |      cname      
+-----+-----+--------+-------------------+-----------------------+-----------------
+  11 |   1 |      1 | rls_regress_user1 | my first novel        | novel
+  11 |   2 |      2 | rls_regress_user1 | my second novel       | novel
+  22 |   3 |      2 | rls_regress_user1 | my science fiction    | science fiction
+  44 |   4 |      1 | rls_regress_user1 | my first manga        | manga
+  44 |   5 |      2 | rls_regress_user1 | my second manga       | manga
+  22 |   6 |      1 | rls_regress_user2 | great science fiction | science fiction
+  33 |   7 |      2 | rls_regress_user2 | great technology book | technology
+  44 |   8 |      1 | rls_regress_user2 | great manga           | manga
+(8 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Subquery Scan on document
+   Filter: f_leak(document.dtitle)
+   ->  Seq Scan on document document_1
+         Filter: (dlevel <= $0)
+         InitPlan 1 (returns $0)
+           ->  Index Scan using uaccount_pkey on uaccount
+                 Index Cond: (pguser = "current_user"())
+(7 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (category.cid = document.cid)
+   ->  Seq Scan on category
+   ->  Hash
+         ->  Subquery Scan on document
+               Filter: f_leak(document.dtitle)
+               ->  Seq Scan on document document_1
+                     Filter: (dlevel <= $0)
+                     InitPlan 1 (returns $0)
+                       ->  Index Scan using uaccount_pkey on uaccount
+                             Index Cond: (pguser = "current_user"())
+(11 rows)
+
+-- only owner can change row-level security
+ALTER POLICY p1 ON document USING (true);    --fail
+ERROR:  must be owner of relation document
+DROP POLICY p1 ON document;                  --fail
+ERROR:  must be owner of relation document
+SET SESSION AUTHORIZATION rls_regress_user0;
+ALTER POLICY p1 ON document USING (dauthor = current_user);
+-- viewpoint from rls_regress_user1 again
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my science fiction
+NOTICE:  f_leak => my first manga
+NOTICE:  f_leak => my second manga
+ did | cid | dlevel |      dauthor      |       dtitle       
+-----+-----+--------+-------------------+--------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+(5 rows)
+
+SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER by did;
+NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my second novel
+NOTICE:  f_leak => my science fiction
+NOTICE:  f_leak => my first manga
+NOTICE:  f_leak => my second manga
+ cid | did | dlevel |      dauthor      |       dtitle       |      cname      
+-----+-----+--------+-------------------+--------------------+-----------------
+  11 |   1 |      1 | rls_regress_user1 | my first novel     | novel
+  11 |   2 |      2 | rls_regress_user1 | my second novel    | novel
+  22 |   3 |      2 | rls_regress_user1 | my science fiction | science fiction
+  44 |   4 |      1 | rls_regress_user1 | my first manga     | manga
+  44 |   5 |      2 | rls_regress_user1 | my second manga    | manga
+(5 rows)
+
+-- viewpoint from rls_regres_user2 again
+SET SESSION AUTHORIZATION rls_regress_user2;
+SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => great manga
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+(3 rows)
+
+SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER by did;
+NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => great manga
+ cid | did | dlevel |      dauthor      |        dtitle         |      cname      
+-----+-----+--------+-------------------+-----------------------+-----------------
+  22 |   6 |      1 | rls_regress_user2 | great science fiction | science fiction
+  33 |   7 |      2 | rls_regress_user2 | great technology book | technology
+  44 |   8 |      1 | rls_regress_user2 | great manga           | manga
+(3 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
+                  QUERY PLAN                  
+----------------------------------------------
+ Subquery Scan on document
+   Filter: f_leak(document.dtitle)
+   ->  Seq Scan on document document_1
+         Filter: (dauthor = "current_user"())
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop
+   ->  Subquery Scan on document
+         Filter: f_leak(document.dtitle)
+         ->  Seq Scan on document document_1
+               Filter: (dauthor = "current_user"())
+   ->  Index Scan using category_pkey on category
+         Index Cond: (cid = document.cid)
+(7 rows)
+
+-- interaction of FK/PK constraints
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE POLICY p2 ON category
+    USING (CASE WHEN current_user = 'rls_regress_user1' THEN cid IN (11, 33)
+           WHEN current_user = 'rls_regress_user2' THEN cid IN (22, 44)
+           ELSE false END);
+ALTER TABLE category ENABLE ROW LEVEL SECURITY;
+-- cannot delete PK referenced by invisible FK
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+ did | cid | dlevel |      dauthor      |       dtitle       | cid |   cname    
+-----+-----+--------+-------------------+--------------------+-----+------------
+   2 |  11 |      2 | rls_regress_user1 | my second novel    |  11 | novel
+   1 |  11 |      1 | rls_regress_user1 | my first novel     |  11 | novel
+     |     |        |                   |                    |  33 | technology
+   5 |  44 |      2 | rls_regress_user1 | my second manga    |     | 
+   4 |  44 |      1 | rls_regress_user1 | my first manga     |     | 
+   3 |  22 |      2 | rls_regress_user1 | my science fiction |     | 
+(6 rows)
+
+DELETE FROM category WHERE cid = 33;    -- fails with FK violation
+ERROR:  update or delete on table "category" violates foreign key constraint "document_cid_fkey" on table "document"
+DETAIL:  Key (cid)=(33) is still referenced from table "document".
+-- cannot insert FK referencing invisible PK
+SET SESSION AUTHORIZATION rls_regress_user2;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+ did | cid | dlevel |      dauthor      |        dtitle         | cid |      cname      
+-----+-----+--------+-------------------+-----------------------+-----+-----------------
+   6 |  22 |      1 | rls_regress_user2 | great science fiction |  22 | science fiction
+   8 |  44 |      1 | rls_regress_user2 | great manga           |  44 | manga
+   7 |  33 |      2 | rls_regress_user2 | great technology book |     | 
+(3 rows)
+
+INSERT INTO document VALUES (10, 33, 1, current_user, 'hoge');
+-- UNIQUE or PRIMARY KEY constraint violation DOES reveal presence of row
+SET SESSION AUTHORIZATION rls_regress_user1;
+INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user1', 'my third manga'); -- Must fail with unique violation, revealing presence of did we can't see
+ERROR:  duplicate key value violates unique constraint "document_pkey"
+DETAIL:  Key (did)=(8) already exists.
+SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
+ did | cid | dlevel | dauthor | dtitle 
+-----+-----+--------+---------+--------
+(0 rows)
+
+-- database superuser cannot bypass RLS policy when enabled
+RESET SESSION AUTHORIZATION;
+SET row_security TO ON;
+SELECT * FROM document;
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+  10 |  33 |      1 | rls_regress_user2 | hoge
+(9 rows)
+
+SELECT * FROM category;
+ cid |      cname      
+-----+-----------------
+  11 | novel
+  22 | science fiction
+  33 | technology
+  44 | manga
+(4 rows)
+
+-- database superuser cannot bypass RLS policy when FORCE enabled.
+RESET SESSION AUTHORIZATION;
+SET row_security TO FORCE;
+SELECT * FROM document;
+ did | cid | dlevel | dauthor | dtitle 
+-----+-----+--------+---------+--------
+(0 rows)
+
+SELECT * FROM category;
+ cid | cname 
+-----+-------
+(0 rows)
+
+-- database superuser can bypass RLS policy when disabled
+RESET SESSION AUTHORIZATION;
+SET row_security TO OFF;
+SELECT * FROM document;
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+  10 |  33 |      1 | rls_regress_user2 | hoge
+(9 rows)
+
+SELECT * FROM category;
+ cid |      cname      
+-----+-----------------
+  11 | novel
+  22 | science fiction
+  33 | technology
+  44 | manga
+(4 rows)
+
+-- database non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION rls_regress_exempt_user;
+SET row_security TO OFF;
+SELECT * FROM document;
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+  10 |  33 |      1 | rls_regress_user2 | hoge
+(9 rows)
+
+SELECT * FROM category;
+ cid |      cname      
+-----+-----------------
+  11 | novel
+  22 | science fiction
+  33 | technology
+  44 | manga
+(4 rows)
+
+-- RLS policy applies to table owner when FORCE enabled.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security TO FORCE;
+SELECT * FROM document;
+ did | cid | dlevel | dauthor | dtitle 
+-----+-----+--------+---------+--------
+(0 rows)
+
+SELECT * FROM category;
+ cid | cname 
+-----+-------
+(0 rows)
+
+-- RLS policy does not apply to table owner when RLS enabled.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security TO ON;
+SELECT * FROM document;
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+  10 |  33 |      1 | rls_regress_user2 | hoge
+(9 rows)
+
+SELECT * FROM category;
+ cid |      cname      
+-----+-----------------
+  11 | novel
+  22 | science fiction
+  33 | technology
+  44 | manga
+(4 rows)
+
+-- RLS policy does not apply to table owner when RLS disabled.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security TO OFF;
+SELECT * FROM document;
+ did | cid | dlevel |      dauthor      |        dtitle         
+-----+-----+--------+-------------------+-----------------------
+   1 |  11 |      1 | rls_regress_user1 | my first novel
+   2 |  11 |      2 | rls_regress_user1 | my second novel
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   4 |  44 |      1 | rls_regress_user1 | my first manga
+   5 |  44 |      2 | rls_regress_user1 | my second manga
+   6 |  22 |      1 | rls_regress_user2 | great science fiction
+   7 |  33 |      2 | rls_regress_user2 | great technology book
+   8 |  44 |      1 | rls_regress_user2 | great manga
+  10 |  33 |      1 | rls_regress_user2 | hoge
+(9 rows)
+
+SELECT * FROM category;
+ cid |      cname      
+-----+-----------------
+  11 | novel
+  22 | science fiction
+  33 | technology
+  44 | manga
+(4 rows)
+
+--
+-- Table inheritance and RLS policy
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security TO ON;
+CREATE TABLE t1 (a int, junk1 text, b text) WITH OIDS;
+ALTER TABLE t1 DROP COLUMN junk1;    -- just a disturbing factor
+GRANT ALL ON t1 TO public;
+COPY t1 FROM stdin WITH (oids);
+CREATE TABLE t2 (c float) INHERITS (t1);
+COPY t2 FROM stdin WITH (oids);
+CREATE TABLE t3 (c text, b text, a int) WITH OIDS;
+ALTER TABLE t3 INHERIT t1;
+COPY t3(a,b,c) FROM stdin WITH (oids);
+CREATE POLICY p1 ON t1 FOR ALL TO PUBLIC USING (a % 2 = 0); -- be even number
+CREATE POLICY p2 ON t2 FOR ALL TO PUBLIC USING (a % 2 = 1); -- be odd number
+ALTER TABLE t1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE t2 ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM t1;
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+ 2 | bcd
+ 4 | def
+ 2 | yyy
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+          QUERY PLAN           
+-------------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: ((a % 2) = 0)
+   ->  Seq Scan on t2
+         Filter: ((a % 2) = 0)
+   ->  Seq Scan on t3
+         Filter: ((a % 2) = 0)
+(7 rows)
+
+SELECT * FROM t1 WHERE f_leak(b);
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => def
+NOTICE:  f_leak => yyy
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+ 2 | bcd
+ 4 | def
+ 2 | yyy
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
+             QUERY PLAN              
+-------------------------------------
+ Subquery Scan on t1
+   Filter: f_leak(t1.b)
+   ->  Append
+         ->  Seq Scan on t1 t1_1
+               Filter: ((a % 2) = 0)
+         ->  Seq Scan on t2
+               Filter: ((a % 2) = 0)
+         ->  Seq Scan on t3
+               Filter: ((a % 2) = 0)
+(9 rows)
+
+-- reference to system column
+SELECT oid, * FROM t1;
+ oid | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 104 | 4 | ddd
+ 202 | 2 | bcd
+ 204 | 4 | def
+ 302 | 2 | yyy
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
+          QUERY PLAN           
+-------------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: ((a % 2) = 0)
+   ->  Seq Scan on t2
+         Filter: ((a % 2) = 0)
+   ->  Seq Scan on t3
+         Filter: ((a % 2) = 0)
+(7 rows)
+
+-- reference to whole-row reference
+SELECT *, t1 FROM t1;
+ a |  b  |   t1    
+---+-----+---------
+ 2 | bbb | (2,bbb)
+ 4 | ddd | (4,ddd)
+ 2 | bcd | (2,bcd)
+ 4 | def | (4,def)
+ 2 | yyy | (2,yyy)
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
+          QUERY PLAN           
+-------------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: ((a % 2) = 0)
+   ->  Seq Scan on t2
+         Filter: ((a % 2) = 0)
+   ->  Seq Scan on t3
+         Filter: ((a % 2) = 0)
+(7 rows)
+
+-- for share/update lock
+SELECT * FROM t1 FOR SHARE;
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+ 2 | bcd
+ 4 | def
+ 2 | yyy
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ LockRows
+   ->  Subquery Scan on t1
+         ->  LockRows
+               ->  Result
+                     ->  Append
+                           ->  Seq Scan on t1 t1_1
+                                 Filter: ((a % 2) = 0)
+                           ->  Seq Scan on t2
+                                 Filter: ((a % 2) = 0)
+                           ->  Seq Scan on t3
+                                 Filter: ((a % 2) = 0)
+(11 rows)
+
+SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => def
+NOTICE:  f_leak => yyy
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+ 2 | bcd
+ 4 | def
+ 2 | yyy
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ LockRows
+   ->  Subquery Scan on t1
+         Filter: f_leak(t1.b)
+         ->  LockRows
+               ->  Result
+                     ->  Append
+                           ->  Seq Scan on t1 t1_1
+                                 Filter: ((a % 2) = 0)
+                           ->  Seq Scan on t2
+                                 Filter: ((a % 2) = 0)
+                           ->  Seq Scan on t3
+                                 Filter: ((a % 2) = 0)
+(12 rows)
+
+-- superuser is allowed to bypass RLS checks
+RESET SESSION AUTHORIZATION;
+SET row_security TO OFF;
+SELECT * FROM t1 WHERE f_leak(b);
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ccc
+NOTICE:  f_leak => ddd
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => cde
+NOTICE:  f_leak => def
+NOTICE:  f_leak => xxx
+NOTICE:  f_leak => yyy
+NOTICE:  f_leak => zzz
+ a |  b  
+---+-----
+ 1 | aaa
+ 2 | bbb
+ 3 | ccc
+ 4 | ddd
+ 1 | abc
+ 2 | bcd
+ 3 | cde
+ 4 | def
+ 1 | xxx
+ 2 | yyy
+ 3 | zzz
+(11 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
+        QUERY PLAN         
+---------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: f_leak(b)
+   ->  Seq Scan on t2
+         Filter: f_leak(b)
+   ->  Seq Scan on t3
+         Filter: f_leak(b)
+(7 rows)
+
+-- non-superuser with bypass privilege can bypass RLS policy when disabled
+SET SESSION AUTHORIZATION rls_regress_exempt_user;
+SET row_security TO OFF;
+SELECT * FROM t1 WHERE f_leak(b);
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ccc
+NOTICE:  f_leak => ddd
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => cde
+NOTICE:  f_leak => def
+NOTICE:  f_leak => xxx
+NOTICE:  f_leak => yyy
+NOTICE:  f_leak => zzz
+ a |  b  
+---+-----
+ 1 | aaa
+ 2 | bbb
+ 3 | ccc
+ 4 | ddd
+ 1 | abc
+ 2 | bcd
+ 3 | cde
+ 4 | def
+ 1 | xxx
+ 2 | yyy
+ 3 | zzz
+(11 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
+        QUERY PLAN         
+---------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: f_leak(b)
+   ->  Seq Scan on t2
+         Filter: f_leak(b)
+   ->  Seq Scan on t3
+         Filter: f_leak(b)
+(7 rows)
+
+----- Dependencies -----
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security TO ON;
+CREATE TABLE dependee (x integer, y integer);
+CREATE TABLE dependent (x integer, y integer);
+CREATE POLICY d1 ON dependent FOR ALL
+    TO PUBLIC
+    USING (x = (SELECT d.x FROM dependee d WHERE d.y = y));
+DROP TABLE dependee; -- Should fail without CASCADE due to dependency on row-security qual?
+ERROR:  cannot drop table dependee because other objects depend on it
+DETAIL:  policy d1 on table dependent depends on table dependee
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP TABLE dependee CASCADE;
+NOTICE:  drop cascades to policy d1 on table dependent
+EXPLAIN (COSTS OFF) SELECT * FROM dependent; -- After drop, should be unqualified
+      QUERY PLAN       
+-----------------------
+ Seq Scan on dependent
+(1 row)
+
+-----   RECURSION    ----
+--
+-- Simple recursion
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE rec1 (x integer, y integer);
+CREATE POLICY r1 ON rec1 USING (x = (SELECT r.x FROM rec1 r WHERE y = r.y));
+ALTER TABLE rec1 ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM rec1; -- fail, direct recursion
+ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+--
+-- Mutual recursion
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE rec2 (a integer, b integer);
+ALTER POLICY r1 ON rec1 USING (x = (SELECT a FROM rec2 WHERE b = y));
+CREATE POLICY r2 ON rec2 USING (a = (SELECT x FROM rec1 WHERE y = b));
+ALTER TABLE rec2 ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM rec1;    -- fail, mutual recursion
+ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+--
+-- Mutual recursion via views
+--
+SET SESSION AUTHORIZATION rls_regress_user1;
+CREATE VIEW rec1v AS SELECT * FROM rec1;
+CREATE VIEW rec2v AS SELECT * FROM rec2;
+SET SESSION AUTHORIZATION rls_regress_user0;
+ALTER POLICY r1 ON rec1 USING (x = (SELECT a FROM rec2v WHERE b = y));
+ALTER POLICY r2 ON rec2 USING (a = (SELECT x FROM rec1v WHERE y = b));
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM rec1;    -- fail, mutual recursion via views
+ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+--
+-- Mutual recursion via .s.b views
+--
+SET SESSION AUTHORIZATION rls_regress_user1;
+DROP VIEW rec1v, rec2v CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to policy r1 on table rec1
+drop cascades to policy r2 on table rec2
+CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
+CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE POLICY r1 ON rec1 USING (x = (SELECT a FROM rec2v WHERE b = y));
+CREATE POLICY r2 ON rec2 USING (a = (SELECT x FROM rec1v WHERE y = b));
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM rec1;    -- fail, mutual recursion via s.b. views
+ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+--
+-- recursive RLS and VIEWs in policy
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE s1 (a int, b text);
+INSERT INTO s1 (SELECT x, md5(x::text) FROM generate_series(-10,10) x);
+CREATE TABLE s2 (x int, y text);
+INSERT INTO s2 (SELECT x, md5(x::text) FROM generate_series(-6,6) x);
+GRANT SELECT ON s1, s2 TO rls_regress_user1;
+CREATE POLICY p1 ON s1 USING (a in (select x from s2 where y like '%2f%'));
+CREATE POLICY p2 ON s2 USING (x in (select a from s1 where b like '%22%'));
+CREATE POLICY p3 ON s1 FOR INSERT WITH CHECK (a = (SELECT a FROM s1));
+ALTER TABLE s1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE s2 ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+CREATE VIEW v2 AS SELECT * FROM s2 WHERE y like '%af%';
+SELECT * FROM s1 WHERE f_leak(b); -- fail (infinite recursion)
+ERROR:  infinite recursion detected in row-security policy for relation "s1"
+INSERT INTO s1 VALUES (1, 'foo'); -- fail (infinite recursion)
+ERROR:  infinite recursion detected in row-security policy for relation "s1"
+SET SESSION AUTHORIZATION rls_regress_user0;
+DROP POLICY p3 on s1;
+ALTER POLICY p2 ON s2 USING (x % 2 = 0);
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM s1 WHERE f_leak(b);	-- OK
+NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
+NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
+ a |                b                 
+---+----------------------------------
+ 2 | c81e728d9d4c2f636f067f89cc14862c
+ 4 | a87ff679a2f3e71d9181a67b7542122c
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM only s1 WHERE f_leak(b);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Subquery Scan on s1
+   Filter: f_leak(s1.b)
+   ->  Hash Join
+         Hash Cond: (s1_1.a = s2.x)
+         ->  Seq Scan on s1 s1_1
+         ->  Hash
+               ->  HashAggregate
+                     Group Key: s2.x
+                     ->  Subquery Scan on s2
+                           Filter: (s2.y ~~ '%2f%'::text)
+                           ->  Seq Scan on s2 s2_1
+                                 Filter: ((x % 2) = 0)
+(12 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+ALTER POLICY p1 ON s1 USING (a in (select x from v2)); -- using VIEW in RLS policy
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM s1 WHERE f_leak(b);	-- OK
+NOTICE:  f_leak => 0267aaf632e87a63288a08331f22c7c3
+NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
+ a  |                b                 
+----+----------------------------------
+ -4 | 0267aaf632e87a63288a08331f22c7c3
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Subquery Scan on s1
+   Filter: f_leak(s1.b)
+   ->  Hash Join
+         Hash Cond: (s1_1.a = s2.x)
+         ->  Seq Scan on s1 s1_1
+         ->  Hash
+               ->  HashAggregate
+                     Group Key: s2.x
+                     ->  Subquery Scan on s2
+                           Filter: (s2.y ~~ '%af%'::text)
+                           ->  Seq Scan on s2 s2_1
+                                 Filter: ((x % 2) = 0)
+(12 rows)
+
+SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
+ xx | x  |                y                 
+----+----+----------------------------------
+ -6 | -6 | 596a3d04481816330f07e4f97510c28f
+ -4 | -4 | 0267aaf632e87a63288a08331f22c7c3
+  2 |  2 | c81e728d9d4c2f636f067f89cc14862c
+(3 rows)
+
+EXPLAIN (COSTS OFF) SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Subquery Scan on s2
+   Filter: (s2.y ~~ '%28%'::text)
+   ->  Seq Scan on s2 s2_1
+         Filter: ((x % 2) = 0)
+   SubPlan 1
+     ->  Limit
+           ->  Subquery Scan on s1
+                 ->  Nested Loop Semi Join
+                       Join Filter: (s1_1.a = s2_2.x)
+                       ->  Seq Scan on s1 s1_1
+                       ->  Materialize
+                             ->  Subquery Scan on s2_2
+                                   Filter: (s2_2.y ~~ '%af%'::text)
+                                   ->  Seq Scan on s2 s2_3
+                                         Filter: ((x % 2) = 0)
+(15 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+ALTER POLICY p2 ON s2 USING (x in (select a from s1 where b like '%d2%'));
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM s1 WHERE f_leak(b);	-- fail (infinite recursion via view)
+ERROR:  infinite recursion detected in row-security policy for relation "s1"
+-- prepared statement with rls_regress_user0 privilege
+PREPARE p1(int) AS SELECT * FROM t1 WHERE a <= $1;
+EXECUTE p1(2);
+ a |  b  
+---+-----
+ 2 | bbb
+ 2 | bcd
+ 2 | yyy
+(3 rows)
+
+EXPLAIN (COSTS OFF) EXECUTE p1(2);
+                  QUERY PLAN                  
+----------------------------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: ((a <= 2) AND ((a % 2) = 0))
+   ->  Seq Scan on t2
+         Filter: ((a <= 2) AND ((a % 2) = 0))
+   ->  Seq Scan on t3
+         Filter: ((a <= 2) AND ((a % 2) = 0))
+(7 rows)
+
+-- superuser is allowed to bypass RLS checks
+RESET SESSION AUTHORIZATION;
+SET row_security TO OFF;
+SELECT * FROM t1 WHERE f_leak(b);
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ccc
+NOTICE:  f_leak => ddd
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => cde
+NOTICE:  f_leak => def
+NOTICE:  f_leak => xxx
+NOTICE:  f_leak => yyy
+NOTICE:  f_leak => zzz
+ a |  b  
+---+-----
+ 1 | aaa
+ 2 | bbb
+ 3 | ccc
+ 4 | ddd
+ 1 | abc
+ 2 | bcd
+ 3 | cde
+ 4 | def
+ 1 | xxx
+ 2 | yyy
+ 3 | zzz
+(11 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
+        QUERY PLAN         
+---------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: f_leak(b)
+   ->  Seq Scan on t2
+         Filter: f_leak(b)
+   ->  Seq Scan on t3
+         Filter: f_leak(b)
+(7 rows)
+
+-- plan cache should be invalidated
+EXECUTE p1(2);
+ a |  b  
+---+-----
+ 1 | aaa
+ 2 | bbb
+ 1 | abc
+ 2 | bcd
+ 1 | xxx
+ 2 | yyy
+(6 rows)
+
+EXPLAIN (COSTS OFF) EXECUTE p1(2);
+        QUERY PLAN        
+--------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: (a <= 2)
+   ->  Seq Scan on t2
+         Filter: (a <= 2)
+   ->  Seq Scan on t3
+         Filter: (a <= 2)
+(7 rows)
+
+PREPARE p2(int) AS SELECT * FROM t1 WHERE a = $1;
+EXECUTE p2(2);
+ a |  b  
+---+-----
+ 2 | bbb
+ 2 | bcd
+ 2 | yyy
+(3 rows)
+
+EXPLAIN (COSTS OFF) EXECUTE p2(2);
+       QUERY PLAN        
+-------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: (a = 2)
+   ->  Seq Scan on t2
+         Filter: (a = 2)
+   ->  Seq Scan on t3
+         Filter: (a = 2)
+(7 rows)
+
+-- also, case when privilege switch from superuser
+SET SESSION AUTHORIZATION rls_regress_user1;
+SET row_security TO ON;
+EXECUTE p2(2);
+ a |  b  
+---+-----
+ 2 | bbb
+ 2 | bcd
+ 2 | yyy
+(3 rows)
+
+EXPLAIN (COSTS OFF) EXECUTE p2(2);
+                 QUERY PLAN                  
+---------------------------------------------
+ Append
+   ->  Seq Scan on t1
+         Filter: ((a = 2) AND ((a % 2) = 0))
+   ->  Seq Scan on t2
+         Filter: ((a = 2) AND ((a % 2) = 0))
+   ->  Seq Scan on t3
+         Filter: ((a = 2) AND ((a % 2) = 0))
+(7 rows)
+
+--
+-- UPDATE / DELETE and Row-level security
+--
+SET SESSION AUTHORIZATION rls_regress_user1;
+EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
+             QUERY PLAN              
+-------------------------------------
+ Update on t1 t1_3
+   ->  Subquery Scan on t1
+         Filter: f_leak(t1.b)
+         ->  Seq Scan on t1 t1_4
+               Filter: ((a % 2) = 0)
+   ->  Subquery Scan on t1_1
+         Filter: f_leak(t1_1.b)
+         ->  Seq Scan on t2
+               Filter: ((a % 2) = 0)
+   ->  Subquery Scan on t1_2
+         Filter: f_leak(t1_2.b)
+         ->  Seq Scan on t3
+               Filter: ((a % 2) = 0)
+(13 rows)
+
+UPDATE t1 SET b = b || b WHERE f_leak(b);
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => def
+NOTICE:  f_leak => yyy
+EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
+             QUERY PLAN              
+-------------------------------------
+ Update on t1 t1_1
+   ->  Subquery Scan on t1
+         Filter: f_leak(t1.b)
+         ->  Seq Scan on t1 t1_2
+               Filter: ((a % 2) = 0)
+(5 rows)
+
+UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
+NOTICE:  f_leak => bbbbbb
+NOTICE:  f_leak => dddddd
+-- returning clause with system column
+UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+ oid | a |      b      |       t1        
+-----+---+-------------+-----------------
+ 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
+ 104 | 4 | dddddd_updt | (4,dddddd_updt)
+(2 rows)
+
+UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => bcdbcd
+NOTICE:  f_leak => defdef
+NOTICE:  f_leak => yyyyyy
+ a |      b      
+---+-------------
+ 2 | bbbbbb_updt
+ 4 | dddddd_updt
+ 2 | bcdbcd
+ 4 | defdef
+ 2 | yyyyyy
+(5 rows)
+
+UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => bcdbcd
+NOTICE:  f_leak => defdef
+NOTICE:  f_leak => yyyyyy
+ oid | a |      b      |       t1        
+-----+---+-------------+-----------------
+ 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
+ 104 | 4 | dddddd_updt | (4,dddddd_updt)
+ 202 | 2 | bcdbcd      | (2,bcdbcd)
+ 204 | 4 | defdef      | (4,defdef)
+ 302 | 2 | yyyyyy      | (2,yyyyyy)
+(5 rows)
+
+RESET SESSION AUTHORIZATION;
+SET row_security TO OFF;
+SELECT * FROM t1;
+ a |      b      
+---+-------------
+ 1 | aaa
+ 3 | ccc
+ 2 | bbbbbb_updt
+ 4 | dddddd_updt
+ 1 | abc
+ 3 | cde
+ 2 | bcdbcd
+ 4 | defdef
+ 1 | xxx
+ 3 | zzz
+ 2 | yyyyyy
+(11 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+SET row_security TO ON;
+EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
+             QUERY PLAN              
+-------------------------------------
+ Delete on t1 t1_1
+   ->  Subquery Scan on t1
+         Filter: f_leak(t1.b)
+         ->  Seq Scan on t1 t1_2
+               Filter: ((a % 2) = 0)
+(5 rows)
+
+EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
+             QUERY PLAN              
+-------------------------------------
+ Delete on t1 t1_3
+   ->  Subquery Scan on t1
+         Filter: f_leak(t1.b)
+         ->  Seq Scan on t1 t1_4
+               Filter: ((a % 2) = 0)
+   ->  Subquery Scan on t1_1
+         Filter: f_leak(t1_1.b)
+         ->  Seq Scan on t2
+               Filter: ((a % 2) = 0)
+   ->  Subquery Scan on t1_2
+         Filter: f_leak(t1_2.b)
+         ->  Seq Scan on t3
+               Filter: ((a % 2) = 0)
+(13 rows)
+
+DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+ oid | a |      b      |       t1        
+-----+---+-------------+-----------------
+ 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
+ 104 | 4 | dddddd_updt | (4,dddddd_updt)
+(2 rows)
+
+DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bcdbcd
+NOTICE:  f_leak => defdef
+NOTICE:  f_leak => yyyyyy
+ oid | a |   b    |     t1     
+-----+---+--------+------------
+ 202 | 2 | bcdbcd | (2,bcdbcd)
+ 204 | 4 | defdef | (4,defdef)
+ 302 | 2 | yyyyyy | (2,yyyyyy)
+(3 rows)
+
+--
+-- ROLE/GROUP
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE z1 (a int, b text);
+GRANT SELECT ON z1 TO rls_regress_group1, rls_regress_group2,
+    rls_regress_user1, rls_regress_user2;
+INSERT INTO z1 VALUES
+    (1, 'aaa'),
+    (2, 'bbb'),
+    (3, 'ccc'),
+    (4, 'ddd');
+CREATE POLICY p1 ON z1 TO rls_regress_group1 USING (a % 2 = 0);
+CREATE POLICY p2 ON z1 TO rls_regress_group2 USING (a % 2 = 1);
+ALTER TABLE z1 ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM z1 WHERE f_leak(b);
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+SET ROLE rls_regress_group1;
+SELECT * FROM z1 WHERE f_leak(b);
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user2;
+SELECT * FROM z1 WHERE f_leak(b);
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => ccc
+ a |  b  
+---+-----
+ 1 | aaa
+ 3 | ccc
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 1)
+(4 rows)
+
+SET ROLE rls_regress_group2;
+SELECT * FROM z1 WHERE f_leak(b);
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => ccc
+ a |  b  
+---+-----
+ 1 | aaa
+ 3 | ccc
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 1)
+(4 rows)
+
+--
+-- Views should follow policy for view owner.
+--
+-- View and Table owner are the same.
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE VIEW rls_view AS SELECT * FROM z1 WHERE f_leak(b);
+GRANT SELECT ON rls_view TO rls_regress_user1;
+-- Query as role that is not owner of view or table.  Should return all records.
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM rls_view;
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ccc
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 1 | aaa
+ 2 | bbb
+ 3 | ccc
+ 4 | ddd
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
+     QUERY PLAN      
+---------------------
+ Seq Scan on z1
+   Filter: f_leak(b)
+(2 rows)
+
+-- Query as view/table owner.  Should return all records.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SELECT * FROM rls_view;
+NOTICE:  f_leak => aaa
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ccc
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 1 | aaa
+ 2 | bbb
+ 3 | ccc
+ 4 | ddd
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
+     QUERY PLAN      
+---------------------
+ Seq Scan on z1
+   Filter: f_leak(b)
+(2 rows)
+
+DROP VIEW rls_view;
+-- View and Table owners are different.
+SET SESSION AUTHORIZATION rls_regress_user1;
+CREATE VIEW rls_view AS SELECT * FROM z1 WHERE f_leak(b);
+GRANT SELECT ON rls_view TO rls_regress_user0;
+-- Query as role that is not owner of view but is owner of table.
+-- Should return records based on view owner policies.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SELECT * FROM rls_view;
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+-- Query as role that is not owner of table but is owner of view.
+-- Should return records based on view owner policies.
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM rls_view;
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+-- Query as role that is not the owner of the table or view without permissions.
+SET SESSION AUTHORIZATION rls_regress_user2;
+SELECT * FROM rls_view; --fail - permission denied.
+ERROR:  permission denied for relation rls_view
+EXPLAIN (COSTS OFF) SELECT * FROM rls_view; --fail - permission denied.
+ERROR:  permission denied for relation rls_view
+-- Query as role that is not the owner of the table or view with permissions.
+SET SESSION AUTHORIZATION rls_regress_user1;
+GRANT SELECT ON rls_view TO rls_regress_user2;
+SELECT * FROM rls_view;
+NOTICE:  f_leak => bbb
+NOTICE:  f_leak => ddd
+ a |  b  
+---+-----
+ 2 | bbb
+ 4 | ddd
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
+          QUERY PLAN           
+-------------------------------
+ Subquery Scan on z1
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+DROP VIEW rls_view;
+--
+-- Command specific
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE x1 (a int, b text, c text);
+GRANT ALL ON x1 TO PUBLIC;
+INSERT INTO x1 VALUES
+    (1, 'abc', 'rls_regress_user1'),
+    (2, 'bcd', 'rls_regress_user1'),
+    (3, 'cde', 'rls_regress_user2'),
+    (4, 'def', 'rls_regress_user2'),
+    (5, 'efg', 'rls_regress_user1'),
+    (6, 'fgh', 'rls_regress_user1'),
+    (7, 'fgh', 'rls_regress_user2'),
+    (8, 'fgh', 'rls_regress_user2');
+CREATE POLICY p0 ON x1 FOR ALL USING (c = current_user);
+CREATE POLICY p1 ON x1 FOR SELECT USING (a % 2 = 0);
+CREATE POLICY p2 ON x1 FOR INSERT WITH CHECK (a % 2 = 1);
+CREATE POLICY p3 ON x1 FOR UPDATE USING (a % 2 = 0);
+CREATE POLICY p4 ON x1 FOR DELETE USING (a < 8);
+ALTER TABLE x1 ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM x1 WHERE f_leak(b) ORDER BY a ASC;
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => def
+NOTICE:  f_leak => efg
+NOTICE:  f_leak => fgh
+NOTICE:  f_leak => fgh
+ a |  b  |         c         
+---+-----+-------------------
+ 1 | abc | rls_regress_user1
+ 2 | bcd | rls_regress_user1
+ 4 | def | rls_regress_user2
+ 5 | efg | rls_regress_user1
+ 6 | fgh | rls_regress_user1
+ 8 | fgh | rls_regress_user2
+(6 rows)
+
+UPDATE x1 SET b = b || '_updt' WHERE f_leak(b) RETURNING *;
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => bcd
+NOTICE:  f_leak => def
+NOTICE:  f_leak => efg
+NOTICE:  f_leak => fgh
+NOTICE:  f_leak => fgh
+ a |    b     |         c         
+---+----------+-------------------
+ 1 | abc_updt | rls_regress_user1
+ 2 | bcd_updt | rls_regress_user1
+ 4 | def_updt | rls_regress_user2
+ 5 | efg_updt | rls_regress_user1
+ 6 | fgh_updt | rls_regress_user1
+ 8 | fgh_updt | rls_regress_user2
+(6 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user2;
+SELECT * FROM x1 WHERE f_leak(b) ORDER BY a ASC;
+NOTICE:  f_leak => cde
+NOTICE:  f_leak => fgh
+NOTICE:  f_leak => bcd_updt
+NOTICE:  f_leak => def_updt
+NOTICE:  f_leak => fgh_updt
+NOTICE:  f_leak => fgh_updt
+ a |    b     |         c         
+---+----------+-------------------
+ 2 | bcd_updt | rls_regress_user1
+ 3 | cde      | rls_regress_user2
+ 4 | def_updt | rls_regress_user2
+ 6 | fgh_updt | rls_regress_user1
+ 7 | fgh      | rls_regress_user2
+ 8 | fgh_updt | rls_regress_user2
+(6 rows)
+
+UPDATE x1 SET b = b || '_updt' WHERE f_leak(b) RETURNING *;
+NOTICE:  f_leak => cde
+NOTICE:  f_leak => fgh
+NOTICE:  f_leak => bcd_updt
+NOTICE:  f_leak => def_updt
+NOTICE:  f_leak => fgh_updt
+NOTICE:  f_leak => fgh_updt
+ a |       b       |         c         
+---+---------------+-------------------
+ 3 | cde_updt      | rls_regress_user2
+ 7 | fgh_updt      | rls_regress_user2
+ 2 | bcd_updt_updt | rls_regress_user1
+ 4 | def_updt_updt | rls_regress_user2
+ 6 | fgh_updt_updt | rls_regress_user1
+ 8 | fgh_updt_updt | rls_regress_user2
+(6 rows)
+
+DELETE FROM x1 WHERE f_leak(b) RETURNING *;
+NOTICE:  f_leak => abc_updt
+NOTICE:  f_leak => efg_updt
+NOTICE:  f_leak => cde_updt
+NOTICE:  f_leak => fgh_updt
+NOTICE:  f_leak => bcd_updt_updt
+NOTICE:  f_leak => def_updt_updt
+NOTICE:  f_leak => fgh_updt_updt
+NOTICE:  f_leak => fgh_updt_updt
+ a |       b       |         c         
+---+---------------+-------------------
+ 1 | abc_updt      | rls_regress_user1
+ 5 | efg_updt      | rls_regress_user1
+ 3 | cde_updt      | rls_regress_user2
+ 7 | fgh_updt      | rls_regress_user2
+ 2 | bcd_updt_updt | rls_regress_user1
+ 4 | def_updt_updt | rls_regress_user2
+ 6 | fgh_updt_updt | rls_regress_user1
+ 8 | fgh_updt_updt | rls_regress_user2
+(8 rows)
+
+--
+-- Duplicate Policy Names
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE y1 (a int, b text);
+CREATE TABLE y2 (a int, b text);
+GRANT ALL ON y1, y2 TO rls_regress_user1;
+CREATE POLICY p1 ON y1 FOR ALL USING (a % 2 = 0);
+CREATE POLICY p2 ON y1 FOR SELECT USING (a > 2);
+CREATE POLICY p1 ON y1 FOR SELECT USING (a % 2 = 1);  --fail
+ERROR:  policy "p1" for relation "y1" already exists
+CREATE POLICY p1 ON y2 FOR ALL USING (a % 2 = 0);  --OK
+ALTER TABLE y1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE y2 ENABLE ROW LEVEL SECURITY;
+--
+-- Expression structure with SBV
+--
+-- Create view as table owner.  RLS should NOT be applied.
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE VIEW rls_sbv WITH (security_barrier) AS
+    SELECT * FROM y1 WHERE f_leak(b);
+EXPLAIN (COSTS OFF) SELECT * FROM rls_sbv WHERE (a = 1);
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on y1
+   Filter: (f_leak(b) AND (a = 1))
+(2 rows)
+
+DROP VIEW rls_sbv;
+-- Create view as role that does not own table.  RLS should be applied.
+SET SESSION AUTHORIZATION rls_regress_user1;
+CREATE VIEW rls_sbv WITH (security_barrier) AS
+    SELECT * FROM y1 WHERE f_leak(b);
+EXPLAIN (COSTS OFF) SELECT * FROM rls_sbv WHERE (a = 1);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Subquery Scan on y1
+   Filter: f_leak(y1.b)
+   ->  Seq Scan on y1 y1_1
+         Filter: ((a = 1) AND ((a > 2) OR ((a % 2) = 0)))
+(4 rows)
+
+DROP VIEW rls_sbv;
+--
+-- Expression structure
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+INSERT INTO y2 (SELECT x, md5(x::text) FROM generate_series(0,20) x);
+CREATE POLICY p2 ON y2 USING (a % 3 = 0);
+CREATE POLICY p3 ON y2 USING (a % 4 = 0);
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM y2 WHERE f_leak(b);
+NOTICE:  f_leak => cfcd208495d565ef66e7dff9f98764da
+NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
+NOTICE:  f_leak => eccbc87e4b5ce2fe28308fd9f2a7baf3
+NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
+NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
+NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
+NOTICE:  f_leak => 45c48cce2e2d7fbdea1afc51c7c6ad26
+NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
+NOTICE:  f_leak => c20ad4d76fe97759aa27a0c99bff6710
+NOTICE:  f_leak => aab3238922bcc25a6f606eb525ffdc56
+NOTICE:  f_leak => 9bf31c7ff062936a96d3c8bd1f8f2ff3
+NOTICE:  f_leak => c74d97b01eae257e44aa9d5bade97baf
+NOTICE:  f_leak => 6f4922f45568161a8cdf4ad2299f6d23
+NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+(14 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Subquery Scan on y2
+   Filter: f_leak(y2.b)
+   ->  Seq Scan on y2 y2_1
+         Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
+(4 rows)
+
+--
+-- Plancache invalidate on user change.
+--
+RESET SESSION AUTHORIZATION;
+DROP TABLE t1 CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table t2
+drop cascades to table t3
+CREATE TABLE t1 (a integer);
+GRANT SELECT ON t1 TO rls_regress_user1, rls_regress_user2;
+CREATE POLICY p1 ON t1 TO rls_regress_user1 USING ((a % 2) = 0);
+CREATE POLICY p2 ON t1 TO rls_regress_user2 USING ((a % 4) = 0);
+ALTER TABLE t1 ENABLE ROW LEVEL SECURITY;
+SET ROLE rls_regress_user1;
+PREPARE role_inval AS SELECT * FROM t1;
+EXPLAIN (COSTS OFF) EXECUTE role_inval;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on t1
+   Filter: ((a % 2) = 0)
+(2 rows)
+
+SET ROLE rls_regress_user2;
+EXPLAIN (COSTS OFF) EXECUTE role_inval;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on t1
+   Filter: ((a % 4) = 0)
+(2 rows)
+
+--
+-- CTE and RLS
+--
+RESET SESSION AUTHORIZATION;
+DROP TABLE t1 CASCADE;
+CREATE TABLE t1 (a integer, b text);
+CREATE POLICY p1 ON t1 USING (a % 2 = 0);
+ALTER TABLE t1 ENABLE ROW LEVEL SECURITY;
+GRANT ALL ON t1 TO rls_regress_user1;
+INSERT INTO t1 (SELECT x, md5(x::text) FROM generate_series(0,20) x);
+SET SESSION AUTHORIZATION rls_regress_user1;
+WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
+NOTICE:  f_leak => cfcd208495d565ef66e7dff9f98764da
+NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
+NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
+NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
+NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
+NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
+NOTICE:  f_leak => c20ad4d76fe97759aa27a0c99bff6710
+NOTICE:  f_leak => aab3238922bcc25a6f606eb525ffdc56
+NOTICE:  f_leak => c74d97b01eae257e44aa9d5bade97baf
+NOTICE:  f_leak => 6f4922f45568161a8cdf4ad2299f6d23
+NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+(11 rows)
+
+EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
+              QUERY PLAN               
+---------------------------------------
+ CTE Scan on cte1
+   CTE cte1
+     ->  Subquery Scan on t1
+           Filter: f_leak(t1.b)
+           ->  Seq Scan on t1 t1_1
+                 Filter: ((a % 2) = 0)
+(6 rows)
+
+WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
+ERROR:  new row violates WITH CHECK OPTION for "t1"
+DETAIL:  Failing row contains (1, cfcd208495d565ef66e7dff9f98764da).
+WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+(11 rows)
+
+WITH cte1 AS (INSERT INTO t1 VALUES (21, 'Fail') RETURNING *) SELECT * FROM cte1; --fail
+ERROR:  new row violates WITH CHECK OPTION for "t1"
+DETAIL:  Failing row contains (21, Fail).
+WITH cte1 AS (INSERT INTO t1 VALUES (20, 'Success') RETURNING *) SELECT * FROM cte1; --ok
+ a  |    b    
+----+---------
+ 20 | Success
+(1 row)
+
+--
+-- Rename Policy
+--
+RESET SESSION AUTHORIZATION;
+ALTER POLICY p1 ON t1 RENAME TO p1; --fail
+ERROR:  row-policy "p1" for table "t1" already exists
+SELECT rsecpolname, relname
+    FROM pg_rowsecurity rs
+    JOIN pg_class pc ON (pc.oid = rs.rsecrelid)
+    WHERE relname = 't1';
+ rsecpolname | relname 
+-------------+---------
+ p1          | t1
+(1 row)
+
+ALTER POLICY p1 ON t1 RENAME TO p2; --ok
+SELECT rsecpolname, relname
+    FROM pg_rowsecurity rs
+    JOIN pg_class pc ON (pc.oid = rs.rsecrelid)
+    WHERE relname = 't1';
+ rsecpolname | relname 
+-------------+---------
+ p2          | t1
+(1 row)
+
+--
+-- Check INSERT SELECT
+--
+SET SESSION AUTHORIZATION rls_regress_user1;
+CREATE TABLE t2 (a integer, b text);
+INSERT INTO t2 (SELECT * FROM t1);
+EXPLAIN (COSTS OFF) INSERT INTO t2 (SELECT * FROM t1);
+          QUERY PLAN           
+-------------------------------
+ Insert on t2
+   ->  Seq Scan on t1
+         Filter: ((a % 2) = 0)
+(3 rows)
+
+SELECT * FROM t2;
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+ 20 | Success
+(12 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t2;
+   QUERY PLAN   
+----------------
+ Seq Scan on t2
+(1 row)
+
+CREATE TABLE t3 AS SELECT * FROM t1;
+SELECT * FROM t3;
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+ 20 | Success
+(12 rows)
+
+SELECT * INTO t4 FROM t1;
+SELECT * FROM t4;
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+ 20 | Success
+(12 rows)
+
+--
+-- RLS with JOIN
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE blog (id integer, author text, post text);
+CREATE TABLE comment (blog_id integer, message text);
+GRANT ALL ON blog, comment TO rls_regress_user1;
+CREATE POLICY blog_1 ON blog USING (id % 2 = 0);
+ALTER TABLE blog ENABLE ROW LEVEL SECURITY;
+INSERT INTO blog VALUES
+    (1, 'alice', 'blog #1'),
+    (2, 'bob', 'blog #1'),
+    (3, 'alice', 'blog #2'),
+    (4, 'alice', 'blog #3'),
+    (5, 'john', 'blog #1');
+INSERT INTO comment VALUES
+    (1, 'cool blog'),
+    (1, 'fun blog'),
+    (3, 'crazy blog'),
+    (5, 'what?'),
+    (4, 'insane!'),
+    (2, 'who did it?');
+SET SESSION AUTHORIZATION rls_regress_user1;
+-- Check RLS JOIN with Non-RLS.
+SELECT id, author, message FROM blog JOIN comment ON id = blog_id;
+ id | author |   message   
+----+--------+-------------
+  4 | alice  | insane!
+  2 | bob    | who did it?
+(2 rows)
+
+-- Check Non-RLS JOIN with RLS.
+SELECT id, author, message FROM comment JOIN blog ON id = blog_id;
+ id | author |   message   
+----+--------+-------------
+  4 | alice  | insane!
+  2 | bob    | who did it?
+(2 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE POLICY comment_1 ON comment USING (blog_id < 4);
+ALTER TABLE comment ENABLE ROW LEVEL SECURITY;
+SET SESSION AUTHORIZATION rls_regress_user1;
+-- Check RLS JOIN RLS
+SELECT id, author, message FROM blog JOIN comment ON id = blog_id;
+ id | author |   message   
+----+--------+-------------
+  2 | bob    | who did it?
+(1 row)
+
+SELECT id, author, message FROM comment JOIN blog ON id = blog_id;
+ id | author |   message   
+----+--------+-------------
+  2 | bob    | who did it?
+(1 row)
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+DROP TABLE blog, comment;
+--
+-- Default Deny Policy
+--
+RESET SESSION AUTHORIZATION;
+DROP POLICY p2 ON t1;
+ALTER TABLE t1 OWNER TO rls_regress_user0;
+-- Check that default deny does not apply to superuser.
+RESET SESSION AUTHORIZATION;
+SELECT * FROM t1;
+ a  |                b                 
+----+----------------------------------
+  1 | c4ca4238a0b923820dcc509a6f75849b
+  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
+  5 | e4da3b7fbbce2345d7772b0674a318d5
+  7 | 8f14e45fceea167a5a36dedd4bea2543
+  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
+ 11 | 6512bd43d9caa6e02c990b0a82652dca
+ 13 | c51ce410c124a10e0db5e4b97fc2af39
+ 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
+ 17 | 70efdf2ec9b086079795c442636b55fb
+ 19 | 1f0e3dad99908345f7439f8ffabdffc4
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+ 20 | Success
+(22 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+   QUERY PLAN   
+----------------
+ Seq Scan on t1
+(1 row)
+
+-- Check that default deny does not apply to table owner.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SELECT * FROM t1;
+ a  |                b                 
+----+----------------------------------
+  1 | c4ca4238a0b923820dcc509a6f75849b
+  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
+  5 | e4da3b7fbbce2345d7772b0674a318d5
+  7 | 8f14e45fceea167a5a36dedd4bea2543
+  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
+ 11 | 6512bd43d9caa6e02c990b0a82652dca
+ 13 | c51ce410c124a10e0db5e4b97fc2af39
+ 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
+ 17 | 70efdf2ec9b086079795c442636b55fb
+ 19 | 1f0e3dad99908345f7439f8ffabdffc4
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+ 20 | Success
+(22 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+   QUERY PLAN   
+----------------
+ Seq Scan on t1
+(1 row)
+
+-- Check that default deny does apply to superuser when RLS force.
+SET row_security TO FORCE;
+RESET SESSION AUTHORIZATION;
+SELECT * FROM t1;
+ a | b 
+---+---
+(0 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+-- Check that default deny does apply to table owner when RLS force.
+SET SESSION AUTHORIZATION rls_regress_user0;
+SELECT * FROM t1;
+ a | b 
+---+---
+(0 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+-- Check that default deny applies to non-owner/non-superuser when RLS on.
+SET SESSION AUTHORIZATION rls_regress_user1;
+SET row_security TO ON;
+SELECT * FROM t1;
+ a | b 
+---+---
+(0 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM t1;
+ a | b 
+---+---
+(0 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM t1;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+--
+-- Event Triggers
+--
+RESET SESSION AUTHORIZATION;
+CREATE TABLE event_trigger_test (a integer, b text);
+CREATE OR REPLACE FUNCTION start_command()
+RETURNS event_trigger AS $$
+BEGIN
+RAISE NOTICE '% - ddl_command_start', tg_tag;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION end_command()
+RETURNS event_trigger AS $$
+BEGIN
+RAISE NOTICE '% - ddl_command_end', tg_tag;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION drop_sql_command()
+RETURNS event_trigger AS $$
+BEGIN
+RAISE NOTICE '% - sql_drop', tg_tag;
+END;
+$$ LANGUAGE plpgsql;
+CREATE EVENT TRIGGER start_rls_command ON ddl_command_start
+    WHEN TAG IN ('CREATE POLICY', 'ALTER POLICY', 'DROP POLICY') EXECUTE PROCEDURE start_command();
+CREATE EVENT TRIGGER end_rls_command ON ddl_command_end
+    WHEN TAG IN ('CREATE POLICY', 'ALTER POLICY', 'DROP POLICY') EXECUTE PROCEDURE end_command();
+CREATE EVENT TRIGGER sql_drop_command ON sql_drop
+    WHEN TAG IN ('DROP POLICY') EXECUTE PROCEDURE drop_sql_command();
+CREATE POLICY p1 ON event_trigger_test USING (FALSE);
+NOTICE:  CREATE POLICY - ddl_command_start
+NOTICE:  CREATE POLICY - ddl_command_end
+ALTER POLICY p1 ON event_trigger_test USING (TRUE);
+NOTICE:  ALTER POLICY - ddl_command_start
+NOTICE:  ALTER POLICY - ddl_command_end
+ALTER POLICY p1 ON event_trigger_test RENAME TO p2;
+NOTICE:  ALTER POLICY - ddl_command_start
+NOTICE:  ALTER POLICY - ddl_command_end
+DROP POLICY p2 ON event_trigger_test;
+NOTICE:  DROP POLICY - ddl_command_start
+NOTICE:  DROP POLICY - sql_drop
+NOTICE:  DROP POLICY - ddl_command_end
+DROP EVENT TRIGGER start_rls_command;
+DROP EVENT TRIGGER end_rls_command;
+DROP EVENT TRIGGER sql_drop_command;
+--
+-- COPY TO/FROM
+--
+RESET SESSION AUTHORIZATION;
+DROP TABLE copy_t CASCADE;
+ERROR:  table "copy_t" does not exist
+CREATE TABLE copy_t (a integer, b text);
+CREATE POLICY p1 ON copy_t USING (a % 2 = 0);
+ALTER TABLE copy_t ENABLE ROW LEVEL SECURITY;
+GRANT ALL ON copy_t TO rls_regress_user1, rls_regress_exempt_user;
+INSERT INTO copy_t (SELECT x, md5(x::text) FROM generate_series(0,10) x);
+-- Check COPY TO as Superuser/owner.
+RESET SESSION AUTHORIZATION;
+SET row_security TO OFF;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
+0,cfcd208495d565ef66e7dff9f98764da
+1,c4ca4238a0b923820dcc509a6f75849b
+2,c81e728d9d4c2f636f067f89cc14862c
+3,eccbc87e4b5ce2fe28308fd9f2a7baf3
+4,a87ff679a2f3e71d9181a67b7542122c
+5,e4da3b7fbbce2345d7772b0674a318d5
+6,1679091c5a880faf6fb5e6087eb1b2dc
+7,8f14e45fceea167a5a36dedd4bea2543
+8,c9f0f895fb98ab9159f51fd0297e236d
+9,45c48cce2e2d7fbdea1afc51c7c6ad26
+10,d3d9446802a44259755d38e6d163e820
+SET row_security TO ON;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
+0,cfcd208495d565ef66e7dff9f98764da
+1,c4ca4238a0b923820dcc509a6f75849b
+2,c81e728d9d4c2f636f067f89cc14862c
+3,eccbc87e4b5ce2fe28308fd9f2a7baf3
+4,a87ff679a2f3e71d9181a67b7542122c
+5,e4da3b7fbbce2345d7772b0674a318d5
+6,1679091c5a880faf6fb5e6087eb1b2dc
+7,8f14e45fceea167a5a36dedd4bea2543
+8,c9f0f895fb98ab9159f51fd0297e236d
+9,45c48cce2e2d7fbdea1afc51c7c6ad26
+10,d3d9446802a44259755d38e6d163e820
+SET row_security TO FORCE;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
+0,cfcd208495d565ef66e7dff9f98764da
+2,c81e728d9d4c2f636f067f89cc14862c
+4,a87ff679a2f3e71d9181a67b7542122c
+6,1679091c5a880faf6fb5e6087eb1b2dc
+8,c9f0f895fb98ab9159f51fd0297e236d
+10,d3d9446802a44259755d38e6d163e820
+-- Check COPY TO as user with permissions.
+SET SESSION AUTHORIZATION rls_regress_user1;
+SET row_security TO OFF;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
+ERROR:  insufficient privilege to bypass row security.
+SET row_security TO ON;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
+0,cfcd208495d565ef66e7dff9f98764da
+2,c81e728d9d4c2f636f067f89cc14862c
+4,a87ff679a2f3e71d9181a67b7542122c
+6,1679091c5a880faf6fb5e6087eb1b2dc
+8,c9f0f895fb98ab9159f51fd0297e236d
+10,d3d9446802a44259755d38e6d163e820
+SET row_security TO FORCE;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
+0,cfcd208495d565ef66e7dff9f98764da
+2,c81e728d9d4c2f636f067f89cc14862c
+4,a87ff679a2f3e71d9181a67b7542122c
+6,1679091c5a880faf6fb5e6087eb1b2dc
+8,c9f0f895fb98ab9159f51fd0297e236d
+10,d3d9446802a44259755d38e6d163e820
+-- Check COPY TO as user with permissions and BYPASSRLS
+SET SESSION AUTHORIZATION rls_regress_exempt_user;
+SET row_security TO OFF;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
+0,cfcd208495d565ef66e7dff9f98764da
+1,c4ca4238a0b923820dcc509a6f75849b
+2,c81e728d9d4c2f636f067f89cc14862c
+3,eccbc87e4b5ce2fe28308fd9f2a7baf3
+4,a87ff679a2f3e71d9181a67b7542122c
+5,e4da3b7fbbce2345d7772b0674a318d5
+6,1679091c5a880faf6fb5e6087eb1b2dc
+7,8f14e45fceea167a5a36dedd4bea2543
+8,c9f0f895fb98ab9159f51fd0297e236d
+9,45c48cce2e2d7fbdea1afc51c7c6ad26
+10,d3d9446802a44259755d38e6d163e820
+SET row_security TO ON;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
+0,cfcd208495d565ef66e7dff9f98764da
+2,c81e728d9d4c2f636f067f89cc14862c
+4,a87ff679a2f3e71d9181a67b7542122c
+6,1679091c5a880faf6fb5e6087eb1b2dc
+8,c9f0f895fb98ab9159f51fd0297e236d
+10,d3d9446802a44259755d38e6d163e820
+SET row_security TO FORCE;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
+0,cfcd208495d565ef66e7dff9f98764da
+2,c81e728d9d4c2f636f067f89cc14862c
+4,a87ff679a2f3e71d9181a67b7542122c
+6,1679091c5a880faf6fb5e6087eb1b2dc
+8,c9f0f895fb98ab9159f51fd0297e236d
+10,d3d9446802a44259755d38e6d163e820
+-- Check COPY TO as user without permissions.SET row_security TO OFF;
+SET SESSION AUTHORIZATION rls_regress_user2;
+SET row_security TO OFF;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
+ERROR:  insufficient privilege to bypass row security.
+SET row_security TO ON;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - permission denied
+ERROR:  permission denied for relation copy_t
+SET row_security TO FORCE;
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - permission denied
+ERROR:  permission denied for relation copy_t
+-- Check COPY FROM as Superuser/owner.
+RESET SESSION AUTHORIZATION;
+SET row_security TO OFF;
+COPY copy_t FROM STDIN; --ok
+SET row_security TO ON;
+COPY copy_t FROM STDIN; --ok
+SET row_security TO FORCE;
+COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
+ERROR:  COPY FROM not supported with row security.
+HINT:  Use direct INSERT statements instead.
+-- Check COPY FROM as user with permissions.
+SET SESSION AUTHORIZATION rls_regress_user1;
+SET row_security TO OFF;
+COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
+ERROR:  insufficient privilege to bypass row security.
+SET row_security TO ON;
+COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
+ERROR:  COPY FROM not supported with row security.
+HINT:  Use direct INSERT statements instead.
+SET row_security TO FORCE;
+COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
+ERROR:  COPY FROM not supported with row security.
+HINT:  Use direct INSERT statements instead.
+-- Check COPY TO as user with permissions and BYPASSRLS
+SET SESSION AUTHORIZATION rls_regress_exempt_user;
+SET row_security TO OFF;
+COPY copy_t FROM STDIN; --ok
+SET row_security TO ON;
+COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
+ERROR:  COPY FROM not supported with row security.
+HINT:  Use direct INSERT statements instead.
+SET row_security TO FORCE;
+COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
+ERROR:  COPY FROM not supported with row security.
+HINT:  Use direct INSERT statements instead.
+-- Check COPY FROM as user without permissions.
+SET SESSION AUTHORIZATION rls_regress_user2;
+SET row_security TO OFF;
+COPY copy_t FROM STDIN; --fail - permission denied.
+ERROR:  permission denied for relation copy_t
+SET row_security TO ON;
+COPY copy_t FROM STDIN; --fail - permission denied.
+ERROR:  permission denied for relation copy_t
+SET row_security TO FORCE;
+COPY copy_t FROM STDIN; --fail - permission denied.
+ERROR:  permission denied for relation copy_t
+RESET SESSION AUTHORIZATION;
+DROP TABLE copy_t;
+--
+-- Clean up objects
+--
+RESET SESSION AUTHORIZATION;
+DROP SCHEMA rls_regress_schema CASCADE;
+NOTICE:  drop cascades to 24 other objects
+DETAIL:  drop cascades to function f_leak(text)
+drop cascades to table uaccount
+drop cascades to table category
+drop cascades to table document
+drop cascades to table dependent
+drop cascades to table rec1
+drop cascades to table rec2
+drop cascades to view rec1v
+drop cascades to view rec2v
+drop cascades to table s1
+drop cascades to table s2
+drop cascades to view v2
+drop cascades to table z1
+drop cascades to table x1
+drop cascades to table y1
+drop cascades to table y2
+drop cascades to table t1
+drop cascades to table t2
+drop cascades to table t3
+drop cascades to table t4
+drop cascades to table event_trigger_test
+drop cascades to function start_command()
+drop cascades to function end_command()
+drop cascades to function drop_sql_command()
+DROP USER rls_regress_user0;
+DROP USER rls_regress_user1;
+DROP USER rls_regress_user2;

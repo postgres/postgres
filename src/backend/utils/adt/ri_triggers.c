@@ -2303,6 +2303,18 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	if (!ExecCheckRTPerms(list_make2(fkrte, pkrte), false))
 		return false;
 
+	/*
+	 * Also punt if RLS is enabled on either table unless this role has the
+	 * bypassrls right or is the table owner of the table(s) involved which
+	 * have RLS enabled.
+	 */
+	if (!has_bypassrls_privilege(GetUserId()) &&
+		((pk_rel->rd_rel->relhasrowsecurity &&
+		  !pg_class_ownercheck(pkrte->relid, GetUserId())) ||
+		 (fk_rel->rd_rel->relhasrowsecurity &&
+		  !pg_class_ownercheck(fkrte->relid, GetUserId()))))
+		return false;
+
 	/*----------
 	 * The query string built is:
 	 *	SELECT fk.keycols FROM ONLY relname fk
@@ -2956,6 +2968,7 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	Relation	query_rel;
 	Oid			save_userid;
 	int			save_sec_context;
+	int			temp_sec_context;
 
 	/*
 	 * Use the query type code to determine whether the query is run against
@@ -2968,8 +2981,22 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 
 	/* Switch to proper UID to perform check as */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	/*
+	 * Row-level security should be disabled in the case where a foreign-key
+	 * relation is queried to check existence of tuples that references the
+	 * primary-key being modified.
+	 */
+	temp_sec_context = save_sec_context | SECURITY_LOCAL_USERID_CHANGE;
+	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK
+		|| qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_FROM_PK
+		|| qkey->constr_queryno == RI_PLAN_RESTRICT_DEL_CHECKREF
+		|| qkey->constr_queryno == RI_PLAN_RESTRICT_UPD_CHECKREF)
+		temp_sec_context |= SECURITY_ROW_LEVEL_DISABLED;
+
+
 	SetUserIdAndSecContext(RelationGetForm(query_rel)->relowner,
-						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+						   temp_sec_context);
 
 	/* Create the plan */
 	qplan = SPI_prepare(querystr, nargs, argtypes);

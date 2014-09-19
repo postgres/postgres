@@ -55,6 +55,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/schemapg.h"
 #include "catalog/storage.h"
+#include "commands/policy.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -965,6 +966,11 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		RelationBuildTriggers(relation);
 	else
 		relation->trigdesc = NULL;
+
+	if (relation->rd_rel->relhasrowsecurity)
+		RelationBuildRowSecurity(relation);
+	else
+		relation->rsdesc = NULL;
 
 	/*
 	 * if it's an index, initialize index-related information
@@ -1936,6 +1942,8 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
 		MemoryContextDelete(relation->rd_rulescxt);
+	if (relation->rsdesc)
+		MemoryContextDelete(relation->rsdesc->rscxt);
 	if (relation->rd_fdwroutine)
 		pfree(relation->rd_fdwroutine);
 	pfree(relation);
@@ -3242,8 +3250,8 @@ RelationCacheInitializePhase3(void)
 	 * wrong in the results from formrdesc or the relcache cache file. If we
 	 * faked up relcache entries using formrdesc, then read the real pg_class
 	 * rows and replace the fake entries with them. Also, if any of the
-	 * relcache entries have rules or triggers, load that info the hard way
-	 * since it isn't recorded in the cache file.
+	 * relcache entries have rules, triggers, or security policies, load that
+	 * info the hard way since it isn't recorded in the cache file.
 	 *
 	 * Whenever we access the catalogs to read data, there is a possibility of
 	 * a shared-inval cache flush causing relcache entries to be removed.
@@ -3331,6 +3339,21 @@ RelationCacheInitializePhase3(void)
 			RelationBuildTriggers(relation);
 			if (relation->trigdesc == NULL)
 				relation->rd_rel->relhastriggers = false;
+			restart = true;
+		}
+
+		/*
+		 * Re-load the row security policies if the relation has them, since
+		 * they are not preserved in the cache.  Note that we can never NOT
+		 * have a policy while relhasrowsecurity is true-
+		 * RelationBuildRowSecurity will create a single default-deny policy
+		 * if there is no policy defined in pg_rowsecurity.
+		 */
+		if (relation->rd_rel->relhasrowsecurity && relation->rsdesc == NULL)
+		{
+			RelationBuildRowSecurity(relation);
+
+			Assert (relation->rsdesc != NULL);
 			restart = true;
 		}
 
@@ -4706,6 +4729,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
 		rel->trigdesc = NULL;
+		rel->rsdesc = NULL;
 		rel->rd_indexprs = NIL;
 		rel->rd_indpred = NIL;
 		rel->rd_exclops = NULL;

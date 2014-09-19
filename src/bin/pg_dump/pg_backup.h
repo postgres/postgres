@@ -150,6 +150,7 @@ typedef struct _restoreOptions
 	bool		single_txn;
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
+	int			enable_row_security;
 } RestoreOptions;
 
 typedef void (*SetupWorkerPtr) (Archive *AH, RestoreOptions *ropt);

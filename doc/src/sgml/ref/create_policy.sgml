@@ -1,0 +1,318 @@
+<!--
+doc/src/sgml/ref/create_policy.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEPOLICY">
+ <indexterm zone="sql-createpolicy">
+  <primary>CREATE POLICY</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE POLICY</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE POLICY</refname>
+  <refpurpose>define a new row-security policy for a table</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
+    [ FOR { ALL | SELECT | INSERT | UPDATE | DELETE } ]
+    [ TO { <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] ]
+    [ USING ( <replaceable class="parameter">expression</replaceable> ) ]
+    [ WITH CHECK ( <replaceable class="parameter">check_expression</replaceable> ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   The <command>CREATE POLICY</command> command defines a new row-security
+   policy for a table.  Note that row-security must also be enabled on the
+   table using <command>ALTER TABLE</command> in order for created policies
+   to be applied.
+  </para>
+
+  <para>
+   A row-security policy is an expression which is added to the security-barrier
+   qualifications of queries which are run against the table the policy is on,
+   or an expression which is added to the with-check options for a table and
+   which is applied to rows which would be added to the table.
+   The security-barrier qualifications will always be evaluated prior to any
+   user-defined functions or user-provided WHERE clauses, while the with-check
+   expression will be evaluated against the rows which are going to be added to
+   the table.  By adding policies to a table, a user can limit the rows which a
+   given user can select, insert, update, or delete.  This capability is also
+   known as Row-Level Security or RLS.
+  </para>
+
+  <para>
+   Policy names are per-table, therefore one policy name can be used for many
+   different tables and have a definition for each table which is appropriate to
+   that table.
+  </para>
+
+  <para>
+   Policies can be applied for specific commands or for specific roles.  The
+   default for newly created policies is that they apply for all commands and
+   roles, unless otherwise specified.  If multiple policies apply to a given
+   query, they will be combined using OR.
+  </para>
+
+  <para>
+   Note that while row-security policies will be applied for explicit queries
+   against tables in the system, they are not applied when the system is
+   performing internal referential integrity checks or validating constraints.
+   This means there are indirect ways to determine that a given value exists.
+   An example of this is attempting to insert a duplicate value
+   into a column which is the primary key or has a unique constraint.  If the
+   insert fails then the user can infer that the value already exists (this
+   example assumes that the user is permitted by policy to insert
+   records which they are not allowed to see).  Another example is where a user
+   is allowed to insert into a table which references another, otherwise hidden
+   table.  Existence can be determined by the user inserting values into the
+   referencing table, where success would indicate that the value exists in the
+   referenced table.  These issues can be addressed by carefully crafting
+   policies which prevent users from being able to insert, delete, or update
+   records at all which might possibly indicate a value they are not otherwise
+   able to see, or by using generated values (eg: surrogate keys) instead.
+  </para>
+
+  <para>
+   Regarding how policy expressions interact with the user: as the expressions
+   are added to the user's query directly, they will be run with the rights of
+   the user running the overall query.  Therefore, users who are using a given
+   policy must be able to access any tables or functions referenced in the
+   expression or they will simply receive a permission denied error when
+   attempting to query the RLS-enabled table.  This does not change how views
+   work, however.  As with normal queries and views, permission checks and
+   policies for the tables which are referenced by a view will use the view
+   owner's rights and any policies which apply to the view owner.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the policy to be created.  This must be distinct from the
+      name of any other policy for the table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table the
+      policy applies to.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">command</replaceable></term>
+    <listitem>
+     <para>
+      The command to which the policy applies.  Valid options are
+      <command>ALL</command>, <command>SELECT</command>,
+      <command>INSERT</command>, <command>UPDATE</command>,
+      and <command>DELETE</command>.
+      <command>ALL</command> is the default.
+      See below for specifics regarding how these are applied.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">role_name</replaceable></term>
+    <listitem>
+     <para>
+      The roles to which the policy is to be applied.  The default is
+      <literal>PUBLIC</literal>, which will apply the policy to all roles.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">expression</replaceable></term>
+    <listitem>
+     <para>
+      Any <acronym>SQL</acronym> conditional expression (returning
+      <type>boolean</type>).  The conditional expression cannot contain
+      any aggregate or window functions.  This expression will be added
+      to queries to filter out the records which are visible to the query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">check_expression</replaceable></term>
+    <listitem>
+     <para>
+      Any <acronym>SQL</acronym> conditional expression (returning
+      <type>boolean</type>).  The condition expression cannot contain
+      any aggregate or window functions.  This expression will be added
+      to queries which are attempting to add records to the table as
+      with-check options, and an error will be thrown if this condition
+      returns false for any records being added.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+   <title>Per-Command policies</title>
+
+   <variablelist>
+
+     <varlistentry id="SQL-CREATEPOLICY-ALL">
+      <term><literal>ALL</></term>
+      <listitem>
+       <para>
+         Using <literal>ALL</literal> for a policy means that it will apply
+         to all commands, regardless of the type of command.  If an
+         <literal>ALL</literal> policy exists and more specific policies
+         exist, then both the <literal>ALL</literal> policy and the more
+         specific policy (or policies) will be combined using
+         <literal>OR</literal>, as usual for overlapping policies.
+         Additionally, <literal>ALL</literal> policies will be applied to
+         both the selection side of a query and the modification side, using
+         the USING policy for both if only a USING policy has been defined.
+
+         As an example, if an <literal>UPDATE</literal> is issued, then the
+         <literal>ALL</literal> policy will be applicable to both what the
+         <literal>UPDATE</literal> will be able to select out as rows to be
+         updated (with the USING expression being applied), and it will be
+         applied to rows which result from the <literal>UPDATE</literal>
+         statement, to check if they are permitted to be added to the table
+         (using the WITH CHECK expression, if defined, and the USING expression
+         otherwise).  If an INSERT or UPDATE command attempts to add rows to
+         the table which do not pass the <literal>ALL</literal> WITH CHECK
+         (or USING, if no WITH CHECK expression is defined) expression, the
+         command will error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="SQL-CREATEPOLICY-SELECT">
+      <term><literal>SELECT</></term>
+      <listitem>
+       <para>
+         Using <literal>SELECT</literal> for a policy means that it will apply
+         to <literal>SELECT</literal> commands.  The result is that only those
+         records from the relation which pass the <literal>SELECT</literal>
+         policy will be returned, even if other records exist in the relation.
+         The <literal>SELECT</literal> policy only accepts the USING expression
+         as it only ever applies in cases where records are being retrived from
+         the relation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="SQL-CREATEPOLICY-INSERT">
+      <term><literal>INSERT</></term>
+      <listitem>
+       <para>
+         Using <literal>INSERT</literal> for a policy means that it will apply
+         to <literal>INSERT</literal> commands.  Rows being inserted which do
+         not pass this policy will result in a policy violation ERROR and the
+         entire <literal>INSERT</literal> command will be aborted.  The
+         <literal>INSERT</literal> policy only accepts the WITH CHECK expression
+         as it only ever applies in cases where records are being added to the
+         relation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="SQL-CREATEPOLICY-UPDATE">
+      <term><literal>DELETE</></term>
+      <listitem>
+       <para>
+         Using <literal>UPDATE</literal> for a policy means that it will apply
+         to <literal>UPDATE</literal> commands.  As <literal>UPDATE</literal>
+         involves pulling an existing record and then making changes to some
+         portion (but possibly not all) of the record, the
+         <literal>UPDATE</literal> policy accepts both a USING expression and
+         a WITH CHECK expression.  The USING expression will be used to
+         determine which records the <literal>UPDATE</literal> command will
+         see to operate against, while the <literal>WITH CHECK</literal>
+         expression defines what rows are allowed to be added back into the
+         relation (similar to the <literal>INSERT</literal> policy).
+         Any rows whose resulting values do not pass the
+         <literal>WITH CHECK</literal> expression will cause an ERROR and the
+         entire command will be aborted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="SQL-CREATEPOLICY-DELETE">
+      <term><literal>DELETE</></term>
+      <listitem>
+       <para>
+         Using <literal>DELETE</literal> for a policy means that it will apply
+         to <literal>DELETE</literal> commands.  Only rows which pass this
+         policy will be seen by a <literal>DELETE</literal> command.  Rows may
+         be visible through a <literal>SELECT</literal> which are not seen by a
+         <literal>DELETE</literal>, as they do not pass the USING expression
+         for the <literal>DELETE</literal>, and rows which are not visible
+         through the <literal>SELECT</literal> policy may be deleted if they
+         pass the <literal>DELETE</literal> USING policy.  The
+         <literal>DELETE</literal> policy only accept the USING expression as
+         it only ever applies in cases where records are being extracted from
+         the relation for deletion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   You must be the owner of a table to create or change policies for it.
+  </para>
+
+  <para>
+   In order to maintain <firstterm>referential integrity</firstterm> between
+   two related tables, row-security policies are not applied when the system
+   performs checks on foreign key constraints.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE POLICY</command> is a <productname>PostgreSQL</productname>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterpolicy"></member>
+   <member><xref linkend="sql-droppolicy"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

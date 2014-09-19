@@ -137,6 +137,7 @@ static int	no_security_labels = 0;
 static int	no_synchronized_snapshots = 0;
 static int	no_unlogged_table_data = 0;
 static int	serializable_deferrable = 0;
+static int	enable_row_security = 0;
 
 
 static void help(const char *progname);
@@ -247,6 +248,7 @@ static char *myFormatType(const char *typname, int32 typmod);
 static void getBlobs(Archive *fout);
 static void dumpBlob(Archive *fout, BlobInfo *binfo);
 static int	dumpBlobs(Archive *fout, void *arg);
+static void dumpRowSecurity(Archive *fout, RowSecurityInfo *rsinfo);
 static void dumpDatabase(Archive *AH);
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
@@ -345,6 +347,7 @@ main(int argc, char **argv)
 		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"enable-row-security", no_argument, &enable_row_security, 1},
 		{"exclude-table-data", required_argument, NULL, 4},
 		{"if-exists", no_argument, &if_exists, 1},
 		{"inserts", no_argument, &dump_inserts, 1},
@@ -825,6 +828,7 @@ main(int argc, char **argv)
 	ropt->noTablespace = outputNoTablespaces;
 	ropt->disable_triggers = disable_triggers;
 	ropt->use_setsessauth = use_setsessauth;
+	ropt->enable_row_security = enable_row_security;
 
 	if (compressLevel == -1)
 		ropt->compression = 0;
@@ -897,6 +901,7 @@ help(const char *progname)
 	printf(_("  --column-inserts             dump data as INSERT commands with column names\n"));
 	printf(_("  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
+	printf(_("  --enable-row-security        enable row level security\n"));
 	printf(_("  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
@@ -1049,6 +1054,14 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 		}
 		else
 			AH->sync_snapshot_id = get_synchronized_snapshot(AH);
+	}
+
+	if (AH->remoteVersion >= 90500)
+	{
+		if (enable_row_security)
+			ExecuteSqlStatement(AH, "SET row_security TO ON");
+		else
+			ExecuteSqlStatement(AH, "SET row_security TO OFF");
 	}
 }
 
@@ -2757,6 +2770,240 @@ dumpBlobs(Archive *fout, void *arg)
 	return 1;
 }
 
+/*
+ * getRowSecurity
+ *    get information about every row-security policy on a dumpable table.
+ */
+void
+getRowSecurity(Archive *fout, TableInfo tblinfo[], int numTables)
+{
+	PQExpBuffer		query = createPQExpBuffer();
+	PGresult	   *res;
+	RowSecurityInfo *rsinfo;
+	int				i_oid;
+	int				i_tableoid;
+	int				i_rsecpolname;
+	int				i_rseccmd;
+	int				i_rsecroles;
+	int				i_rsecqual;
+	int				i_rsecwithcheck;
+	int				i, j, ntups;
+
+	if (fout->remoteVersion < 90500)
+		return;
+
+	for (i = 0; i < numTables; i++)
+	{
+		TableInfo *tbinfo = &tblinfo[i];
+
+		/* Ignore row-security on tables not to be dumped */
+		if (!tbinfo->dobj.dump)
+			continue;
+
+		if (g_verbose)
+			write_msg(NULL, "reading row-security enabled for table \"%s\"",
+					  tbinfo->dobj.name);
+
+		/*
+		 * Get row-security enabled information for the table.
+		 * We represent RLS enabled on a table by creating RowSecurityInfo
+		 * object with an empty policy.
+		 */
+		if (tbinfo->hasrowsec)
+		{
+			/*
+			 * Note: use tableoid 0 so that this object won't be mistaken for
+			 * something that pg_depend entries apply to.
+			 */
+			rsinfo = pg_malloc(sizeof(RowSecurityInfo));
+			rsinfo->dobj.objType = DO_ROW_SECURITY;
+			rsinfo->dobj.catId.tableoid = 0;
+			rsinfo->dobj.catId.oid = tbinfo->dobj.catId.oid;
+			AssignDumpId(&rsinfo->dobj);
+			rsinfo->dobj.namespace = tbinfo->dobj.namespace;
+			rsinfo->dobj.name = pg_strdup(tbinfo->dobj.name);
+			rsinfo->rstable = tbinfo;
+			rsinfo->rsecpolname = NULL;
+			rsinfo->rseccmd = NULL;
+			rsinfo->rsecroles = NULL;
+			rsinfo->rsecqual = NULL;
+			rsinfo->rsecwithcheck = NULL;
+		}
+
+		if (g_verbose)
+			write_msg(NULL, "reading row-security policies for table \"%s\"\n",
+					  tbinfo->dobj.name);
+
+		/*
+		 * select table schema to ensure regproc name is qualified if needed
+		 */
+		selectSourceSchema(fout, tbinfo->dobj.namespace->dobj.name);
+
+		resetPQExpBuffer(query);
+
+		/* Get the policies for the table. */
+		appendPQExpBuffer(query,
+						  "SELECT oid, tableoid, s.rsecpolname, s.rseccmd, "
+						  "CASE WHEN s.rsecroles = '{0}' THEN 'PUBLIC' ELSE "
+						  "   array_to_string(ARRAY(SELECT rolname from pg_roles WHERE oid = ANY(s.rsecroles)), ', ') END AS rsecroles, "
+						  "pg_get_expr(s.rsecqual, s.rsecrelid) AS rsecqual, "
+						  "pg_get_expr(s.rsecwithcheck, s.rsecrelid) AS rsecwithcheck "
+						  "FROM pg_catalog.pg_rowsecurity s "
+						  "WHERE rsecrelid = '%u'",
+						  tbinfo->dobj.catId.oid);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+		ntups = PQntuples(res);
+
+		if (ntups == 0)
+		{
+			/*
+			 * No explicit policies to handle (only the default-deny policy,
+			 * which is handled as part of the table definition.  Clean up and
+			 * return.
+			 */
+			PQclear(res);
+			continue;
+		}
+
+		i_oid = PQfnumber(res, "oid");
+		i_tableoid = PQfnumber(res, "tableoid");
+		i_rsecpolname = PQfnumber(res, "rsecpolname");
+		i_rseccmd = PQfnumber(res, "rseccmd");
+		i_rsecroles = PQfnumber(res, "rsecroles");
+		i_rsecqual = PQfnumber(res, "rsecqual");
+		i_rsecwithcheck = PQfnumber(res, "rsecwithcheck");
+
+		rsinfo = pg_malloc(ntups * sizeof(RowSecurityInfo));
+
+		for (j = 0; j < ntups; j++)
+		{
+			rsinfo[j].dobj.objType = DO_ROW_SECURITY;
+			rsinfo[j].dobj.catId.tableoid =
+				atooid(PQgetvalue(res, j, i_tableoid));
+			rsinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
+			AssignDumpId(&rsinfo[j].dobj);
+			rsinfo[j].dobj.namespace = tbinfo->dobj.namespace;
+			rsinfo[j].rstable = tbinfo;
+			rsinfo[j].rsecpolname = pg_strdup(PQgetvalue(res, j,
+														 i_rsecpolname));
+
+			rsinfo[j].dobj.name = pg_strdup(rsinfo[j].rsecpolname);
+
+			if (PQgetisnull(res, j, i_rseccmd))
+				rsinfo[j].rseccmd = NULL;
+			else
+				rsinfo[j].rseccmd = pg_strdup(PQgetvalue(res, j, i_rseccmd));
+
+			rsinfo[j].rsecroles = pg_strdup(PQgetvalue(res, j, i_rsecroles));
+
+			if (PQgetisnull(res, j, i_rsecqual))
+				rsinfo[j].rsecqual = NULL;
+			else
+				rsinfo[j].rsecqual = pg_strdup(PQgetvalue(res, j, i_rsecqual));
+
+			if (PQgetisnull(res, j, i_rsecwithcheck))
+				rsinfo[j].rsecwithcheck = NULL;
+			else
+				rsinfo[j].rsecwithcheck
+					= pg_strdup(PQgetvalue(res, j, i_rsecwithcheck));
+		}
+		PQclear(res);
+	}
+	destroyPQExpBuffer(query);
+}
+
+/*
+ * dumpRowSecurity
+ *    dump the definition of the given row-security policy
+ */
+static void
+dumpRowSecurity(Archive *fout, RowSecurityInfo *rsinfo)
+{
+	TableInfo  *tbinfo = rsinfo->rstable;
+	PQExpBuffer query;
+	PQExpBuffer delqry;
+	const char *cmd;
+
+	if (dataOnly)
+		return;
+
+	/*
+	 * If rsecpolname is NULL, then this record is just indicating that ROW
+	 * LEVEL SECURITY is enabled for the table.
+	 * Dump as ALTER TABLE <table> ENABLE ROW LEVEL SECURITY.
+	 */
+	if (rsinfo->rsecpolname == NULL)
+	{
+		query = createPQExpBuffer();
+
+		appendPQExpBuffer(query, "ALTER TABLE %s ENABLE ROW LEVEL SECURITY;",
+						  fmtId(rsinfo->dobj.name));
+
+		ArchiveEntry(fout, rsinfo->dobj.catId, rsinfo->dobj.dumpId,
+					 rsinfo->dobj.name,
+					 rsinfo->dobj.namespace->dobj.name,
+					 NULL,
+					 tbinfo->rolname, false,
+					 "ROW SECURITY", SECTION_NONE,
+					 query->data, "", NULL,
+					 NULL, 0,
+					 NULL, NULL);
+
+		destroyPQExpBuffer(query);
+		return;
+	}
+
+	if (!rsinfo->rseccmd)
+		cmd = "ALL";
+	else if (strcmp(rsinfo->rseccmd, "r") == 0)
+		cmd = "SELECT";
+	else if (strcmp(rsinfo->rseccmd, "a") == 0)
+		cmd = "INSERT";
+	else if (strcmp(rsinfo->rseccmd, "u") == 0)
+		cmd = "UPDATE";
+	else if (strcmp(rsinfo->rseccmd, "d") == 0)
+		cmd = "DELETE";
+	else
+	{
+		write_msg(NULL, "unexpected command type: '%s'\n", rsinfo->rseccmd);
+		exit_nicely(1);
+	}
+
+	query = createPQExpBuffer();
+	delqry = createPQExpBuffer();
+
+	appendPQExpBuffer(query, "CREATE POLICY %s ON %s FOR %s",
+					  rsinfo->rsecpolname, fmtId(tbinfo->dobj.name), cmd);
+
+	if (rsinfo->rsecroles != NULL)
+		appendPQExpBuffer(query, " TO %s", rsinfo->rsecroles);
+
+	if (rsinfo->rsecqual != NULL)
+		appendPQExpBuffer(query, " USING %s", rsinfo->rsecqual);
+
+	if (rsinfo->rsecwithcheck != NULL)
+		appendPQExpBuffer(query, " WITH CHECK %s", rsinfo->rsecwithcheck);
+
+	appendPQExpBuffer(query, ";\n");
+
+	appendPQExpBuffer(delqry, "DROP POLICY %s ON %s;\n",
+					  rsinfo->rsecpolname, fmtId(tbinfo->dobj.name));
+
+	ArchiveEntry(fout, rsinfo->dobj.catId, rsinfo->dobj.dumpId,
+				 rsinfo->dobj.name,
+				 rsinfo->dobj.namespace->dobj.name,
+				 NULL,
+				 tbinfo->rolname, false,
+				 "ROW SECURITY", SECTION_POST_DATA,
+				 query->data, delqry->data, NULL,
+				 NULL, 0,
+				 NULL, NULL);
+
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(delqry);
+}
+
 static void
 binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 										 PQExpBuffer upgrade_buffer,
@@ -4287,6 +4534,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_relhastriggers;
 	int			i_relhasindex;
 	int			i_relhasrules;
+	int			i_relhasrowsec;
 	int			i_relhasoids;
 	int			i_relfrozenxid;
 	int			i_relminmxid;
@@ -4328,7 +4576,7 @@ getTables(Archive *fout, int *numTables)
 	 * we cannot correctly identify inherited columns, owned sequences, etc.
 	 */
 
-	if (fout->remoteVersion >= 90400)
+	if (fout->remoteVersion >= 90500)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -4340,6 +4588,48 @@ getTables(Archive *fout, int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "c.relhasrowsecurity, "
+						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
+						  "tc.relfrozenxid AS tfrozenxid, "
+						  "tc.relminmxid AS tminmxid, "
+						  "c.relpersistence, c.relispopulated, "
+						  "c.relreplident, c.relpages, "
+						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
+						  "d.refobjid AS owning_tab, "
+						  "d.refobjsubid AS owning_col, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
+						  "array_to_string(array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded'), ', ') AS reloptions, "
+						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
+						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
+						  "array_to_string(array(SELECT 'toast.' || x FROM unnest(tc.reloptions) x), ', ') AS toast_reloptions "
+						  "FROM pg_class c "
+						  "LEFT JOIN pg_depend d ON "
+						  "(c.relkind = '%c' AND "
+						  "d.classid = c.tableoid AND d.objid = c.oid AND "
+						  "d.objsubid = 0 AND "
+						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
+					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "ORDER BY c.oid",
+						  username_subquery,
+						  RELKIND_SEQUENCE,
+						  RELKIND_RELATION, RELKIND_SEQUENCE,
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
+						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
+	}
+	else if (fout->remoteVersion >= 90400)
+	{
+		/*
+		 * Left join to pick up dependency info linking sequences to their
+		 * owning column, if any (note this dependency is AUTO as of 8.2)
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT c.tableoid, c.oid, c.relname, "
+						  "c.relacl, c.relkind, c.relnamespace, "
+						  "(%s c.relowner) AS rolname, "
+						  "c.relchecks, c.relhastriggers, "
+						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "tc.relminmxid AS tminmxid, "
@@ -4380,6 +4670,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "tc.relminmxid AS tminmxid, "
@@ -4420,6 +4711,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "0 AS tminmxid, "
@@ -4458,6 +4750,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "0 AS tminmxid, "
@@ -4495,6 +4788,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "0 AS tminmxid, "
@@ -4532,6 +4826,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s c.relowner) AS rolname, "
 					  "c.relchecks, (c.reltriggers <> 0) AS relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "0 AS tminmxid, "
@@ -4569,6 +4864,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "0 AS relfrozenxid, 0 AS relminmxid,"
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, 0 AS tminmxid,"
@@ -4605,6 +4901,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "0 AS relfrozenxid, 0 AS relminmxid,"
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, 0 AS tminmxid,"
@@ -4637,6 +4934,7 @@ getTables(Archive *fout, int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "0 AS relfrozenxid, 0 AS relminmxid,"
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, 0 AS tminmxid,"
@@ -4664,6 +4962,7 @@ getTables(Archive *fout, int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "0 AS relfrozenxid, 0 AS relminmxid,"
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, 0 AS tminmxid,"
@@ -4701,6 +5000,7 @@ getTables(Archive *fout, int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
+						  "'f'::bool AS relhasrowsecurity, "
 						  "0 AS relfrozenxid, 0 AS relminmxid,"
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, 0 AS tminmxid,"
@@ -4748,6 +5048,7 @@ getTables(Archive *fout, int *numTables)
 	i_relhastriggers = PQfnumber(res, "relhastriggers");
 	i_relhasindex = PQfnumber(res, "relhasindex");
 	i_relhasrules = PQfnumber(res, "relhasrules");
+	i_relhasrowsec = PQfnumber(res, "relhasrowsecurity");
 	i_relhasoids = PQfnumber(res, "relhasoids");
 	i_relfrozenxid = PQfnumber(res, "relfrozenxid");
 	i_relminmxid = PQfnumber(res, "relminmxid");
@@ -4799,6 +5100,7 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
 		tblinfo[i].hasrules = (strcmp(PQgetvalue(res, i, i_relhasrules), "t") == 0);
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
+		tblinfo[i].hasrowsec = (strcmp(PQgetvalue(res, i, i_relhasrowsec), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].relispopulated = (strcmp(PQgetvalue(res, i, i_relispopulated), "t") == 0);
 		tblinfo[i].relreplident = *(PQgetvalue(res, i, i_relreplident));
@@ -7929,6 +8231,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 						 "", "", NULL,
 						 NULL, 0,
 						 dumpBlobs, NULL);
+			break;
+		case DO_ROW_SECURITY:
+			dumpRowSecurity(fout, (RowSecurityInfo *) dobj);
 			break;
 		case DO_PRE_DATA_BOUNDARY:
 		case DO_POST_DATA_BOUNDARY:
@@ -15332,6 +15637,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_TRIGGER:
 			case DO_EVENT_TRIGGER:
 			case DO_DEFAULT_ACL:
+			case DO_ROW_SECURITY:
 				/* Post-data objects: must come after the post-data boundary */
 				addObjectDependency(dobj, postDataBound->dumpId);
 				break;

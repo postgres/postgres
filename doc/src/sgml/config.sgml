@@ -5429,6 +5429,46 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-row-security" xreflabel="row_security">
+      <term><varname>row_security</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>row_security</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This variable controls if row security policies are to be applied
+        to queries which are run against tables that have row security enabled.
+        The default is 'on'.  When set to 'on', all users, except superusers
+        and the owner of the table, will have the row policies for the table
+        applied to their queries.  The table owner and superuser can request
+        that row policies be applied to their queries by setting this to
+        'force'.  Lastly, this can also be set to 'off' which will bypass row
+        policies for the table, if possible, and error if not.
+       </para>
+
+       <para>
+        For a user who is not a superuser and not the table owner to bypass
+        row policies for the table, they must have the BYPASSRLS role attribute.
+        If this is set to 'off' and the user queries a table which has row
+        policies enabled and the user does not have the right to bypass
+        row policies then a permission denied error will be returned.
+       </para>
+
+       <para>
+        The allowed values of <varname>row_security</> are
+        <literal>on</> (apply normally- not to superuser or table owner),
+        <literal>off</> (fail if row security would be applied), and
+        <literal>force</> (apply always- even to superuser and table owner).
+       </para>
+
+       <para>
+        For more information on row security policies,
+        see <xref linkend="SQL-CREATEPOLICY">.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-default-tablespace" xreflabel="default_tablespace">
       <term><varname>default_tablespace</varname> (<type>string</type>)
       <indexterm>

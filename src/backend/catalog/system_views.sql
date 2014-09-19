@@ -19,6 +19,7 @@ CREATE VIEW pg_roles AS
         rolconnlimit,
         '********'::text as rolpassword,
         rolvaliduntil,
+        rolbypassrls,
         setconfig as rolconfig,
         pg_authid.oid
     FROM pg_authid LEFT JOIN pg_db_role_setting s
@@ -62,6 +63,34 @@ CREATE VIEW pg_user AS
         useconfig
     FROM pg_shadow;
 
+CREATE VIEW pg_policies AS
+    SELECT
+        rs.rsecpolname AS policyname,
+        (SELECT relname FROM pg_catalog.pg_class WHERE oid = rs.rsecrelid) AS tablename,
+        CASE
+            WHEN rs.rsecroles = '{0}' THEN
+                string_to_array('public', '')
+            ELSE
+                ARRAY
+                (
+                    SELECT rolname
+                    FROM pg_catalog.pg_authid
+                    WHERE oid = ANY (rs.rsecroles) ORDER BY 1
+                )
+        END AS roles,
+		CASE WHEN rs.rseccmd IS NULL THEN 'ALL' ELSE
+			CASE rs.rseccmd
+                WHEN 'r' THEN 'SELECT'
+                WHEN 'a' THEN 'INSERT'
+                WHEN 'u' THEN 'UPDATE'
+                WHEN 'd' THEN 'DELETE'
+            END
+        END AS cmd,
+        pg_catalog.pg_get_expr(rs.rsecqual, rs.rsecrelid) AS qual,
+        pg_catalog.pg_get_expr(rs.rsecwithcheck, rs.rsecrelid) AS with_check
+    FROM pg_catalog.pg_rowsecurity rs
+    ORDER BY 1;
+
 CREATE VIEW pg_rules AS
     SELECT
         N.nspname AS schemaname,
@@ -89,7 +118,8 @@ CREATE VIEW pg_tables AS
         T.spcname AS tablespace,
         C.relhasindex AS hasindexes,
         C.relhasrules AS hasrules,
-        C.relhastriggers AS hastriggers
+        C.relhastriggers AS hastriggers,
+        C.relhasrowsecurity AS hasrowsecurity
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
          LEFT JOIN pg_tablespace T ON (T.oid = C.reltablespace)
     WHERE C.relkind = 'r';

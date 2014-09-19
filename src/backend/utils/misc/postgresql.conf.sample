@@ -90,6 +90,7 @@
 #ssl_crl_file = ''			# (change requires restart)
 #password_encryption = on
 #db_user_namespace = off
+#row_security = on
 
 # GSSAPI using Kerberos
 #krb_server_keyfile = ''

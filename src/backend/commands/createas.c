@@ -36,6 +36,7 @@
 #include "miscadmin.h"
 #include "parser/parse_clause.h"
 #include "rewrite/rewriteHandler.h"
+#include "rewrite/rowsecurity.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -418,6 +419,19 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 								attnum - FirstLowInvalidHeapAttributeNumber);
 
 	ExecCheckRTPerms(list_make1(rte), true);
+
+	/*
+	 * Make sure the constructed table does not have RLS enabled.
+	 *
+	 * check_enable_rls() will ereport(ERROR) itself if the user has requested
+	 * something invalid, and otherwise will return RLS_ENABLED if RLS should
+	 * be enabled here.  We don't actually support that currently, so throw
+	 * our own ereport(ERROR) if that happens.
+	 */
+	if (check_enable_rls(intoRelationId, InvalidOid) == RLS_ENABLED)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 (errmsg("policies not yet implemented for this command"))));
 
 	/*
 	 * Tentatively mark the target as populated, if it's a matview and we're

@@ -1425,39 +1425,39 @@ grant select on dep_priv_test to regressuser4 with grant option;
 set session role regressuser4;
 grant select on dep_priv_test to regressuser5;
 \dp dep_priv_test
-                                       Access privileges
- Schema |     Name      | Type  |         Access privileges         | Column access privileges 
---------+---------------+-------+-----------------------------------+--------------------------
- public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
-        |               |       | regressuser2=r*/regressuser1     +| 
-        |               |       | regressuser3=r*/regressuser1     +| 
-        |               |       | regressuser4=r*/regressuser2     +| 
-        |               |       | regressuser4=r*/regressuser3     +| 
-        |               |       | regressuser5=r/regressuser4       | 
+                                         Access privileges
+ Schema |     Name      | Type  |         Access privileges         | Column privileges | Policies 
+--------+---------------+-------+-----------------------------------+-------------------+----------
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+|                   | 
+        |               |       | regressuser2=r*/regressuser1     +|                   | 
+        |               |       | regressuser3=r*/regressuser1     +|                   | 
+        |               |       | regressuser4=r*/regressuser2     +|                   | 
+        |               |       | regressuser4=r*/regressuser3     +|                   | 
+        |               |       | regressuser5=r/regressuser4       |                   | 
 (1 row)
 
 set session role regressuser2;
 revoke select on dep_priv_test from regressuser4 cascade;
 \dp dep_priv_test
-                                       Access privileges
- Schema |     Name      | Type  |         Access privileges         | Column access privileges 
---------+---------------+-------+-----------------------------------+--------------------------
- public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
-        |               |       | regressuser2=r*/regressuser1     +| 
-        |               |       | regressuser3=r*/regressuser1     +| 
-        |               |       | regressuser4=r*/regressuser3     +| 
-        |               |       | regressuser5=r/regressuser4       | 
+                                         Access privileges
+ Schema |     Name      | Type  |         Access privileges         | Column privileges | Policies 
+--------+---------------+-------+-----------------------------------+-------------------+----------
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+|                   | 
+        |               |       | regressuser2=r*/regressuser1     +|                   | 
+        |               |       | regressuser3=r*/regressuser1     +|                   | 
+        |               |       | regressuser4=r*/regressuser3     +|                   | 
+        |               |       | regressuser5=r/regressuser4       |                   | 
 (1 row)
 
 set session role regressuser3;
 revoke select on dep_priv_test from regressuser4 cascade;
 \dp dep_priv_test
-                                       Access privileges
- Schema |     Name      | Type  |         Access privileges         | Column access privileges 
---------+---------------+-------+-----------------------------------+--------------------------
- public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
-        |               |       | regressuser2=r*/regressuser1     +| 
-        |               |       | regressuser3=r*/regressuser1      | 
+                                         Access privileges
+ Schema |     Name      | Type  |         Access privileges         | Column privileges | Policies 
+--------+---------------+-------+-----------------------------------+-------------------+----------
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+|                   | 
+        |               |       | regressuser2=r*/regressuser1     +|                   | 
+        |               |       | regressuser3=r*/regressuser1      |                   | 
 (1 row)
 
 set session role regressuser1;

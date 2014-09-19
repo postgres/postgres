@@ -42,6 +42,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_rowsecurity.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
@@ -55,6 +56,7 @@
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
+#include "commands/policy.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
@@ -344,6 +346,18 @@ static const ObjectPropertyType ObjectProperty[] =
 		false
 	},
 	{
+		RowSecurityRelationId,
+		RowSecurityOidIndexId,
+		-1,
+		-1,
+		Anum_pg_rowsecurity_rsecpolname,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
+		false
+	},
+	{
 		EventTriggerRelationId,
 		EventTriggerOidIndexId,
 		EVENTTRIGGEROID,
@@ -517,6 +531,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_RULE:
 			case OBJECT_TRIGGER:
 			case OBJECT_CONSTRAINT:
+			case OBJECT_POLICY:
 				address = get_object_address_relobject(objtype, objname,
 													   &relation, missing_ok);
 				break;
@@ -982,6 +997,13 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 					InvalidOid;
 				address.objectSubId = 0;
 				break;
+			case OBJECT_POLICY:
+				address.classId = RowSecurityRelationId;
+				address.objectId = relation ?
+					get_relation_policy_oid(reloid, depname, missing_ok) :
+					InvalidOid;
+				address.objectSubId = 0;
+				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				/* placate compiler, which doesn't know elog won't return */
@@ -1155,6 +1177,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_COLUMN:
 		case OBJECT_RULE:
 		case OBJECT_TRIGGER:
+		case OBJECT_POLICY:
 		case OBJECT_CONSTRAINT:
 			if (!pg_class_ownercheck(RelationGetRelid(relation), roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
@@ -2163,6 +2186,41 @@ getObjectDescription(const ObjectAddress *object)
 				appendStringInfo(&buffer, _("event trigger %s"),
 				 NameStr(((Form_pg_event_trigger) GETSTRUCT(tup))->evtname));
 				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_ROWSECURITY:
+			{
+				Relation	rsec_rel;
+				ScanKeyData	skey[1];
+				SysScanDesc	sscan;
+				HeapTuple	tuple;
+				Form_pg_rowsecurity form_rsec;
+
+				rsec_rel = heap_open(RowSecurityRelationId, AccessShareLock);
+
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
+
+				sscan = systable_beginscan(rsec_rel, RowSecurityOidIndexId,
+										   true, NULL, 1, skey);
+
+				tuple = systable_getnext(sscan);
+
+				if (!HeapTupleIsValid(tuple))
+					elog(ERROR, "cache lookup failed for row-security relation %u",
+						 object->objectId);
+
+				form_rsec = (Form_pg_rowsecurity) GETSTRUCT(tuple);
+
+				appendStringInfo(&buffer, _("policy %s on "),
+								 NameStr(form_rsec->rsecpolname));
+				getRelationDescription(&buffer, form_rsec->rsecrelid);
+
+				systable_endscan(sscan);
+				heap_close(rsec_rel, AccessShareLock);
 				break;
 			}
 

@@ -1395,18 +1395,18 @@ SELECT * FROM information_schema.views WHERE table_name = 'rw_view1';
 
 INSERT INTO rw_view1 VALUES(3,4); -- ok
 INSERT INTO rw_view1 VALUES(4,3); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (4, 3).
 INSERT INTO rw_view1 VALUES(5,null); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (5, null).
 UPDATE rw_view1 SET b = 5 WHERE a = 3; -- ok
 UPDATE rw_view1 SET b = -5 WHERE a = 3; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (3, -5).
 INSERT INTO rw_view1(a) VALUES (9); -- ok
 INSERT INTO rw_view1(a) VALUES (10); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (10, 10).
 SELECT * FROM base_tbl;
  a | b  
@@ -1445,11 +1445,11 @@ SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
 (1 row)
 
 INSERT INTO rw_view2 VALUES (-5); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (-5).
 INSERT INTO rw_view2 VALUES (5); -- ok
 INSERT INTO rw_view2 VALUES (15); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (15).
 SELECT * FROM base_tbl;
  a 
@@ -1458,10 +1458,10 @@ SELECT * FROM base_tbl;
 (1 row)
 
 UPDATE rw_view2 SET a = a - 10; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (-5).
 UPDATE rw_view2 SET a = a + 10; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (15).
 CREATE OR REPLACE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
   WITH LOCAL CHECK OPTION;
@@ -1486,7 +1486,7 @@ SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
 
 INSERT INTO rw_view2 VALUES (-10); -- ok, but not in view
 INSERT INTO rw_view2 VALUES (20); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (20).
 SELECT * FROM base_tbl;
   a  
@@ -1500,10 +1500,10 @@ ERROR:  invalid value for "check_option" option
 DETAIL:  Valid values are "local" and "cascaded".
 ALTER VIEW rw_view1 SET (check_option=local);
 INSERT INTO rw_view2 VALUES (-20); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (-20).
 INSERT INTO rw_view2 VALUES (30); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (30).
 ALTER VIEW rw_view2 RESET (check_option);
 \d+ rw_view2
@@ -1559,7 +1559,7 @@ INSERT INTO rw_view1 VALUES (1); -- ok
 INSERT INTO rw_view2 VALUES (-2); -- ok, but not in view
 INSERT INTO rw_view2 VALUES (2); -- ok
 INSERT INTO rw_view3 VALUES (-3); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (-3).
 INSERT INTO rw_view3 VALUES (3); -- ok
 DROP TABLE base_tbl CASCADE;
@@ -1577,11 +1577,11 @@ CREATE VIEW rw_view1 AS
   WITH CHECK OPTION;
 INSERT INTO rw_view1 VALUES (5); -- ok
 INSERT INTO rw_view1 VALUES (15); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (15).
 UPDATE rw_view1 SET a = a + 5; -- ok
 UPDATE rw_view1 SET a = a + 5; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (15).
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (5);
                           QUERY PLAN                           
@@ -1629,10 +1629,10 @@ CREATE TRIGGER base_tbl_trig BEFORE INSERT OR UPDATE ON base_tbl
 CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a < b WITH CHECK OPTION;
 INSERT INTO rw_view1 VALUES (5,0); -- ok
 INSERT INTO rw_view1 VALUES (15, 20); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (15, 10).
 UPDATE rw_view1 SET a = 20, b = 30; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view1"
 DETAIL:  Failing row contains (20, 10).
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
@@ -1663,12 +1663,12 @@ CREATE TRIGGER rw_view1_trig
 CREATE VIEW rw_view2 AS
   SELECT * FROM rw_view1 WHERE a > 0 WITH LOCAL CHECK OPTION;
 INSERT INTO rw_view2 VALUES (-5); -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (-5).
 INSERT INTO rw_view2 VALUES (5); -- ok
 INSERT INTO rw_view2 VALUES (50); -- ok, but not in view
 UPDATE rw_view2 SET a = a - 10; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
+ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
 DETAIL:  Failing row contains (-5).
 SELECT * FROM base_tbl;
  a  | b  

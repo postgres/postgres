@@ -85,6 +85,7 @@ static event_trigger_support_data event_trigger_support[] = {
 	{"OPERATOR", true},
 	{"OPERATOR CLASS", true},
 	{"OPERATOR FAMILY", true},
+	{"POLICY", true},
 	{"ROLE", false},
 	{"RULE", true},
 	{"SCHEMA", true},
@@ -936,6 +937,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_OPCLASS:
 		case OBJECT_OPERATOR:
 		case OBJECT_OPFAMILY:
+		case OBJECT_POLICY:
 		case OBJECT_RULE:
 		case OBJECT_SCHEMA:
 		case OBJECT_SEQUENCE:
@@ -995,6 +997,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_USER_MAPPING:
 		case OCLASS_DEFACL:
 		case OCLASS_EXTENSION:
+		case OCLASS_ROWSECURITY:
 			return true;
 
 		case MAX_OCLASS:

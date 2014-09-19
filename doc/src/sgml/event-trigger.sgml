@@ -196,6 +196,12 @@
         <entry align="center"><literal>-</literal></entry>
        </row>
        <row>
+        <entry align="left"><literal>ALTER POLICY</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
         <entry align="left"><literal>ALTER SCHEMA</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
@@ -347,6 +353,12 @@
        </row>
        <row>
         <entry align="left"><literal>CREATE OPERATOR FAMILY</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>CREATE POLICY</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>-</literal></entry>
@@ -521,6 +533,12 @@
        </row>
        <row>
         <entry align="left"><literal>DROP OWNED</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>DROP POLICY</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
