@@ -51,9 +51,9 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] 
    restrictive lock mode possible. <command>LOCK TABLE</command>
    provides for cases when you might need more restrictive locking.
    For example, suppose an application runs a transaction at the
-   Read Committed isolation level and needs to ensure that data in a
-   table remains stable for the duration of the transaction. To
-   achieve this you could obtain <literal>SHARE</> lock mode over the
+   <literal>READ COMMITTED</> isolation level and needs to ensure that
+   data in a table remains stable for the duration of the transaction.
+   To achieve this you could obtain <literal>SHARE</> lock mode over the
    table before querying. This will prevent concurrent data changes
    and ensure subsequent reads of the table see a stable view of
    committed data, because <literal>SHARE</> lock mode conflicts with
