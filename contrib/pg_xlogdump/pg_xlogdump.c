@@ -41,12 +41,30 @@ typedef struct XLogDumpConfig
 	int			stop_after_records;
 	int			already_displayed_records;
 	bool		follow;
+	bool		stats;
+	bool		stats_per_record;
 
 	/* filter options */
 	int			filter_by_rmgr;
 	TransactionId filter_by_xid;
 	bool		filter_by_xid_enabled;
 } XLogDumpConfig;
+
+typedef struct Stats
+{
+	uint64		count;
+	uint64		rec_len;
+	uint64		fpi_len;
+} Stats;
+
+#define MAX_XLINFO_TYPES 16
+
+typedef struct XLogDumpStats
+{
+	uint64		count;
+	Stats		rmgr_stats[RM_NEXT_ID];
+	Stats		record_stats[RM_NEXT_ID][MAX_XLINFO_TYPES];
+} XLogDumpStats;
 
 static void
 fatal_error(const char *fmt,...)
@@ -322,22 +340,49 @@ XLogDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 }
 
 /*
+ * Store per-rmgr and per-record statistics for a given record.
+ */
+static void
+XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats, XLogRecPtr ReadRecPtr, XLogRecord *record)
+{
+	RmgrId		rmid;
+	uint8		recid;
+
+	stats->count++;
+
+	/* Update per-rmgr statistics */
+
+	rmid = record->xl_rmid;
+
+	stats->rmgr_stats[rmid].count++;
+	stats->rmgr_stats[rmid].rec_len +=
+		record->xl_len + SizeOfXLogRecord;
+	stats->rmgr_stats[rmid].fpi_len +=
+		record->xl_tot_len - (record->xl_len + SizeOfXLogRecord);
+
+	/*
+	 * Update per-record statistics, where the record is identified by a
+	 * combination of the RmgrId and the four bits of the xl_info field
+	 * that are the rmgr's domain (resulting in sixteen possible entries
+	 * per RmgrId).
+	 */
+
+	recid = record->xl_info >> 4;
+
+	stats->record_stats[rmid][recid].count++;
+	stats->record_stats[rmid][recid].rec_len +=
+		record->xl_len + SizeOfXLogRecord;
+	stats->record_stats[rmid][recid].fpi_len +=
+		record->xl_tot_len - (record->xl_len + SizeOfXLogRecord);
+}
+
+/*
  * Print a record to stdout
  */
 static void
 XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord *record)
 {
 	const RmgrDescData *desc = &RmgrDescTable[record->xl_rmid];
-
-	if (config->filter_by_rmgr != -1 &&
-		config->filter_by_rmgr != record->xl_rmid)
-		return;
-
-	if (config->filter_by_xid_enabled &&
-		config->filter_by_xid != record->xl_xid)
-		return;
-
-	config->already_displayed_records++;
 
 	printf("rmgr: %-11s len (rec/tot): %6u/%6u, tx: %10u, lsn: %X/%08X, prev %X/%08X, bkp: %u%u%u%u, desc: %s ",
 		   desc->rm_name,
@@ -381,6 +426,134 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord 
 	}
 }
 
+/*
+ * Display a single row of record counts and sizes for an rmgr or record.
+ */
+static void
+XLogDumpStatsRow(const char *name,
+				 uint64 n, double n_pct,
+				 uint64 rec_len, double rec_len_pct,
+				 uint64 fpi_len, double fpi_len_pct,
+				 uint64 total_len, double total_len_pct)
+{
+	printf("%-27s "
+		   "%20" INT64_MODIFIER "u (%6.02f) "
+		   "%20" INT64_MODIFIER "u (%6.02f) "
+		   "%20" INT64_MODIFIER "u (%6.02f) "
+		   "%20" INT64_MODIFIER "u (%6.02f)\n",
+		   name, n, n_pct, rec_len, rec_len_pct, fpi_len, fpi_len_pct,
+		   total_len, total_len_pct);
+}
+
+
+/*
+ * Display summary statistics about the records seen so far.
+ */
+static void
+XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
+{
+	int			ri, rj;
+	uint64		total_count = 0;
+	uint64		total_rec_len = 0;
+	uint64		total_fpi_len = 0;
+	uint64		total_len = 0;
+
+	/* ---
+	 * Make a first pass to calculate column totals:
+	 * count(*),
+	 * sum(xl_len+SizeOfXLogRecord),
+	 * sum(xl_tot_len-xl_len-SizeOfXLogRecord), and
+	 * sum(xl_tot_len).
+	 * These are used to calculate percentages for each record type.
+	 * ---
+	 */
+
+	for (ri = 0; ri < RM_NEXT_ID; ri++)
+	{
+		total_count += stats->rmgr_stats[ri].count;
+		total_rec_len += stats->rmgr_stats[ri].rec_len;
+		total_fpi_len += stats->rmgr_stats[ri].fpi_len;
+	}
+	total_len = total_rec_len+total_fpi_len;
+
+	/*
+	 * 27 is strlen("Transaction/COMMIT_PREPARED"),
+	 * 20 is strlen(2^64), 8 is strlen("(100.00%)")
+	 */
+
+	printf("%-27s %20s %8s %20s %8s %20s %8s %20s %8s\n"
+		   "%-27s %20s %8s %20s %8s %20s %8s %20s %8s\n",
+		   "Type", "N", "(%)", "Record size", "(%)", "FPI size", "(%)", "Combined size", "(%)",
+		   "----", "-", "---", "-----------", "---", "--------", "---", "-------------", "---");
+
+	for (ri = 0; ri < RM_NEXT_ID; ri++)
+	{
+		uint64		count, rec_len, fpi_len, tot_len;
+		const RmgrDescData *desc = &RmgrDescTable[ri];
+
+		if (!config->stats_per_record)
+		{
+			count = stats->rmgr_stats[ri].count;
+			rec_len = stats->rmgr_stats[ri].rec_len;
+			fpi_len = stats->rmgr_stats[ri].fpi_len;
+			tot_len = rec_len + fpi_len;
+
+			XLogDumpStatsRow(desc->rm_name,
+							 count, 100 * (double) count / total_count,
+							 rec_len, 100 * (double) rec_len / total_rec_len,
+							 fpi_len, 100 * (double) fpi_len / total_fpi_len,
+							 tot_len, 100 * (double) tot_len / total_len);
+		}
+		else
+		{
+			for (rj = 0; rj < MAX_XLINFO_TYPES; rj++)
+			{
+				const char *id;
+
+				count = stats->record_stats[ri][rj].count;
+				rec_len = stats->record_stats[ri][rj].rec_len;
+				fpi_len = stats->record_stats[ri][rj].fpi_len;
+				tot_len = rec_len + fpi_len;
+
+				/* Skip undefined combinations and ones that didn't occur */
+				if (count == 0)
+					continue;
+
+				/* the upper four bits in xl_info are the rmgr's */
+				id = desc->rm_identify(rj << 4);
+				if (id == NULL)
+					id = psprintf("UNKNOWN (%x)", rj << 4);
+
+				XLogDumpStatsRow(psprintf("%s/%s", desc->rm_name, id),
+								 count, 100 * (double) count / total_count,
+								 rec_len, 100 * (double) rec_len / total_rec_len,
+								 fpi_len, 100 * (double) fpi_len / total_fpi_len,
+								 tot_len, 100 * (double) tot_len / total_len);
+			}
+		}
+	}
+
+	printf("%-27s %20s %8s %20s %8s %20s %8s %20s\n",
+		   "", "--------", "", "--------", "", "--------", "", "--------");
+
+	/*
+	 * The percentages in earlier rows were calculated against the
+	 * column total, but the ones that follow are against the row total.
+	 * Note that these are displayed with a % symbol to differentiate
+	 * them from the earlier ones, and are thus up to 9 characters long.
+	 */
+
+	printf("%-27s "
+		   "%20" INT64_MODIFIER "u %-9s"
+		   "%20" INT64_MODIFIER "u %-9s"
+		   "%20" INT64_MODIFIER "u %-9s"
+		   "%20" INT64_MODIFIER "u %-6s\n",
+		   "Total", stats->count, "",
+		   total_rec_len, psprintf("[%.02f%%]", 100 * (double)total_rec_len / total_len),
+		   total_fpi_len, psprintf("[%.02f%%]", 100 * (double)total_fpi_len / total_len),
+		   total_len, "[100%]");
+}
+
 static void
 usage(void)
 {
@@ -402,6 +575,8 @@ usage(void)
 	printf("                         (default: 1 or the value used in STARTSEG)\n");
 	printf("  -V, --version          output version information, then exit\n");
 	printf("  -x, --xid=XID          only show records with TransactionId XID\n");
+	printf("  -z, --stats[=record]   show statistics instead of records\n");
+	printf("                         (optionally, show per-record statistics)\n");
 	printf("  -?, --help             show this help, then exit\n");
 }
 
@@ -413,6 +588,7 @@ main(int argc, char **argv)
 	XLogReaderState *xlogreader_state;
 	XLogDumpPrivate private;
 	XLogDumpConfig config;
+	XLogDumpStats stats;
 	XLogRecord *record;
 	XLogRecPtr	first_record;
 	char	   *errormsg;
@@ -429,6 +605,7 @@ main(int argc, char **argv)
 		{"timeline", required_argument, NULL, 't'},
 		{"xid", required_argument, NULL, 'x'},
 		{"version", no_argument, NULL, 'V'},
+		{"stats", optional_argument, NULL, 'z'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -439,6 +616,7 @@ main(int argc, char **argv)
 
 	memset(&private, 0, sizeof(XLogDumpPrivate));
 	memset(&config, 0, sizeof(XLogDumpConfig));
+	memset(&stats, 0, sizeof(XLogDumpStats));
 
 	private.timeline = 1;
 	private.startptr = InvalidXLogRecPtr;
@@ -452,6 +630,8 @@ main(int argc, char **argv)
 	config.filter_by_rmgr = -1;
 	config.filter_by_xid = InvalidTransactionId;
 	config.filter_by_xid_enabled = false;
+	config.stats = false;
+	config.stats_per_record = false;
 
 	if (argc <= 1)
 	{
@@ -459,7 +639,7 @@ main(int argc, char **argv)
 		goto bad_argument;
 	}
 
-	while ((option = getopt_long(argc, argv, "be:?fn:p:r:s:t:Vx:",
+	while ((option = getopt_long(argc, argv, "be:?fn:p:r:s:t:Vx:z",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -551,6 +731,21 @@ main(int argc, char **argv)
 					goto bad_argument;
 				}
 				config.filter_by_xid_enabled = true;
+				break;
+			case 'z':
+				config.stats = true;
+				config.stats_per_record = false;
+				if (optarg)
+				{
+					if (strcmp(optarg, "record") == 0)
+						config.stats_per_record = true;
+					else if (strcmp(optarg, "rmgr") != 0)
+					{
+						fprintf(stderr, "%s: unrecognised argument to --stats: %s\n",
+								progname, optarg);
+						goto bad_argument;
+					}
+				}
 				break;
 			default:
 				goto bad_argument;
@@ -712,13 +907,31 @@ main(int argc, char **argv)
 
 		/* after reading the first record, continue at next one */
 		first_record = InvalidXLogRecPtr;
-		XLogDumpDisplayRecord(&config, xlogreader_state->ReadRecPtr, record);
+
+		/* apply all specified filters */
+		if (config.filter_by_rmgr != -1 &&
+			config.filter_by_rmgr != record->xl_rmid)
+			continue;
+
+		if (config.filter_by_xid_enabled &&
+			config.filter_by_xid != record->xl_xid)
+			continue;
+
+		/* process the record */
+		if (config.stats == true)
+			XLogDumpCountRecord(&config, &stats, xlogreader_state->ReadRecPtr, record);
+		else
+			XLogDumpDisplayRecord(&config, xlogreader_state->ReadRecPtr, record);
 
 		/* check whether we printed enough */
+		config.already_displayed_records++;
 		if (config.stop_after_records > 0 &&
 			config.already_displayed_records >= config.stop_after_records)
 			break;
 	}
+
+	if (config.stats == true)
+		XLogDumpDisplayStats(&config, &stats);
 
 	if (errormsg)
 		fatal_error("error in WAL record at %X/%X: %s\n",

@@ -180,6 +180,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-z</option></term>
+      <term><option>--stats[=record]</option></term>
+      <listitem>
+       <para>
+        Display summary statistics (number and size of records and
+        full-page images) instead of individual records. Optionally
+        generate statistics per-record instead of per-rmgr.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-?</></term>
       <term><option>--help</></term>
        <listitem>
