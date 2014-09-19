@@ -518,7 +518,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 {
 	bool		OK;
 	char		buf[COPYBUFSIZ];
-	bool		showprompt = false;
+	bool		showprompt;
 
 	/*
 	 * Establish longjmp destination for exiting from wait-for-input. (This is
@@ -545,6 +545,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 			puts(_("Enter data to be copied followed by a newline.\n"
 				   "End with a backslash and a period on a line by itself."));
 	}
+	else
+		showprompt = false;
 
 	OK = true;
 
