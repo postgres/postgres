@@ -60,5 +60,6 @@ extern void RelationMapInitializePhase3(void);
 
 extern void relmap_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void relmap_desc(StringInfo buf, XLogRecord *record);
+extern const char *relmap_identify(uint8 info);
 
 #endif   /* RELMAPPER_H */

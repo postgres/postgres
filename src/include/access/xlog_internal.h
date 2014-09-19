@@ -239,6 +239,14 @@ struct XLogRecord;
  * This struct must be kept in sync with the PG_RMGR definition in
  * rmgr.c.
  *
+ * rm_identify must return a name for the record based on xl_info (without
+ * reference to the rmid). For example, XLOG_BTREE_VACUUM would be named
+ * "VACUUM". rm_desc can then be called to obtain additional detail for the
+ * record, if available (e.g. the last block).
+ *
+ * The return value from rm_identify is a pointer to a statically allocated
+ * buffer, and only valid until the next invocation of the callback.
+ *
  * RmgrTable[] is indexed by RmgrId values (see rmgrlist.h).
  */
 typedef struct RmgrData
@@ -246,6 +254,7 @@ typedef struct RmgrData
 	const char *rm_name;
 	void		(*rm_redo) (XLogRecPtr lsn, struct XLogRecord *rptr);
 	void		(*rm_desc) (StringInfo buf, struct XLogRecord *rptr);
+	const char *(*rm_identify) (uint8 info);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
 } RmgrData;

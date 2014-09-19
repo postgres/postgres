@@ -726,5 +726,6 @@ extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
  */
 extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void btree_desc(StringInfo buf, XLogRecord *record);
+extern const char *btree_identify(uint8 info);
 
 #endif   /* NBTREE_H */

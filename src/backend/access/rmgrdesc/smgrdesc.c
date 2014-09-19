@@ -29,7 +29,7 @@ smgr_desc(StringInfo buf, XLogRecord *record)
 		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
 		char	   *path = relpathperm(xlrec->rnode, xlrec->forkNum);
 
-		appendStringInfo(buf, "file create: %s", path);
+		appendStringInfo(buf, "%s", path);
 		pfree(path);
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)
@@ -37,10 +37,25 @@ smgr_desc(StringInfo buf, XLogRecord *record)
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
 		char	   *path = relpathperm(xlrec->rnode, MAIN_FORKNUM);
 
-		appendStringInfo(buf, "file truncate: %s to %u blocks", path,
-						 xlrec->blkno);
+		appendStringInfo(buf, "%s to %u blocks", path, xlrec->blkno);
 		pfree(path);
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+}
+
+const char *
+smgr_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_SMGR_CREATE:
+			id = "CREATE";
+			break;
+		case XLOG_SMGR_TRUNCATE:
+			id = "TRUNCATE";
+			break;
+	}
+
+	return id;
 }

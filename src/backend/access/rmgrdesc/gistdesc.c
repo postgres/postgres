@@ -50,20 +50,37 @@ gist_desc(StringInfo buf, XLogRecord *record)
 	switch (info)
 	{
 		case XLOG_GIST_PAGE_UPDATE:
-			appendStringInfoString(buf, "page_update: ");
 			out_gistxlogPageUpdate(buf, (gistxlogPageUpdate *) rec);
 			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			out_gistxlogPageSplit(buf, (gistxlogPageSplit *) rec);
 			break;
 		case XLOG_GIST_CREATE_INDEX:
-			appendStringInfo(buf, "create_index: rel %u/%u/%u",
+			appendStringInfo(buf, "rel %u/%u/%u",
 							 ((RelFileNode *) rec)->spcNode,
 							 ((RelFileNode *) rec)->dbNode,
 							 ((RelFileNode *) rec)->relNode);
 			break;
-		default:
-			appendStringInfo(buf, "unknown gist op code %u", info);
+	}
+}
+
+const char *
+gist_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_GIST_PAGE_UPDATE:
+			id = "PAGE_UPDATE";
+			break;
+		case XLOG_GIST_PAGE_SPLIT:
+			id = "PAGE_SPLIT";
+			break;
+		case XLOG_GIST_CREATE_INDEX:
+			id = "CREATE_INDEX";
 			break;
 	}
+
+	return id;
 }

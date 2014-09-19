@@ -45,5 +45,6 @@ extern void log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum);
 
 extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void smgr_desc(StringInfo buf, XLogRecord *record);
+extern const char *smgr_identify(uint8 info);
 
 #endif   /* STORAGE_XLOG_H */

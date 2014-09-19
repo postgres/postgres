@@ -49,5 +49,6 @@ extern void TruncateCLOG(TransactionId oldestXact);
 
 extern void clog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void clog_desc(StringInfo buf, XLogRecord *record);
+extern const char *clog_identify(uint8 info);
 
 #endif   /* CLOG_H */

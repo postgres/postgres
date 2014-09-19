@@ -20,3 +20,9 @@ void
 hash_desc(StringInfo buf, XLogRecord *record)
 {
 }
+
+const char *
+hash_identify(uint8 info)
+{
+	return NULL;
+}

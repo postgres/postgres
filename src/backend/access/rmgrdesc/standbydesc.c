@@ -21,7 +21,7 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 {
 	int			i;
 
-	appendStringInfo(buf, " nextXid %u latestCompletedXid %u oldestRunningXid %u",
+	appendStringInfo(buf, "nextXid %u latestCompletedXid %u oldestRunningXid %u",
 					 xlrec->nextXid,
 					 xlrec->latestCompletedXid,
 					 xlrec->oldestRunningXid);
@@ -47,10 +47,8 @@ standby_desc(StringInfo buf, XLogRecord *record)
 		xl_standby_locks *xlrec = (xl_standby_locks *) rec;
 		int			i;
 
-		appendStringInfoString(buf, "AccessExclusive locks:");
-
 		for (i = 0; i < xlrec->nlocks; i++)
-			appendStringInfo(buf, " xid %u db %u rel %u",
+			appendStringInfo(buf, "xid %u db %u rel %u ",
 							 xlrec->locks[i].xid, xlrec->locks[i].dbOid,
 							 xlrec->locks[i].relOid);
 	}
@@ -58,9 +56,24 @@ standby_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_running_xacts *xlrec = (xl_running_xacts *) rec;
 
-		appendStringInfoString(buf, "running xacts:");
 		standby_desc_running_xacts(buf, xlrec);
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+}
+
+const char *
+standby_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_STANDBY_LOCK:
+			id = "LOCK";
+			break;
+		case XLOG_RUNNING_XACTS:
+			id = "RUNNING_XACTS";
+			break;
+	}
+
+	return id;
 }

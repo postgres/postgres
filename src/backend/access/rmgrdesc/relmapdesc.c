@@ -26,9 +26,22 @@ relmap_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_relmap_update *xlrec = (xl_relmap_update *) rec;
 
-		appendStringInfo(buf, "update relmap: database %u tablespace %u size %u",
+		appendStringInfo(buf, "database %u tablespace %u size %u",
 						 xlrec->dbid, xlrec->tsid, xlrec->nbytes);
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+}
+
+const char *
+relmap_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_RELMAP_UPDATE:
+			id = "UPDATE";
+			break;
+	}
+
+	return id;
 }

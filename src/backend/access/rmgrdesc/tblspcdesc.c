@@ -27,15 +27,30 @@ tblspc_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_tblspc_create_rec *xlrec = (xl_tblspc_create_rec *) rec;
 
-		appendStringInfo(buf, "create tablespace: %u \"%s\"",
-						 xlrec->ts_id, xlrec->ts_path);
+		appendStringInfo(buf, "%u \"%s\"", xlrec->ts_id, xlrec->ts_path);
 	}
 	else if (info == XLOG_TBLSPC_DROP)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) rec;
 
-		appendStringInfo(buf, "drop tablespace: %u", xlrec->ts_id);
+		appendStringInfo(buf, "%u", xlrec->ts_id);
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+}
+
+const char *
+tblspc_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_TBLSPC_CREATE:
+			id = "CREATE";
+			break;
+		case XLOG_TBLSPC_DROP:
+			id = "DROP";
+			break;
+	}
+
+	return id;
 }

@@ -339,7 +339,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord 
 
 	config->already_displayed_records++;
 
-	printf("rmgr: %-11s len (rec/tot): %6u/%6u, tx: %10u, lsn: %X/%08X, prev %X/%08X, bkp: %u%u%u%u, desc: ",
+	printf("rmgr: %-11s len (rec/tot): %6u/%6u, tx: %10u, lsn: %X/%08X, prev %X/%08X, bkp: %u%u%u%u, desc: %s ",
 		   desc->rm_name,
 		   record->xl_len, record->xl_tot_len,
 		   record->xl_xid,
@@ -348,7 +348,8 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord 
 		   !!(XLR_BKP_BLOCK(0) & record->xl_info),
 		   !!(XLR_BKP_BLOCK(1) & record->xl_info),
 		   !!(XLR_BKP_BLOCK(2) & record->xl_info),
-		   !!(XLR_BKP_BLOCK(3) & record->xl_info));
+		   !!(XLR_BKP_BLOCK(3) & record->xl_info),
+		   desc->rm_identify(record->xl_info));
 
 	/* the desc routine will printf the description directly to stdout */
 	desc->rm_desc(NULL, record);

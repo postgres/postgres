@@ -57,5 +57,6 @@ extern bool directory_is_empty(const char *path);
 
 extern void tblspc_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void tblspc_desc(StringInfo buf, XLogRecord *rptr);
+extern const char *tblspc_identify(uint8 info);
 
 #endif   /* TABLESPACE_H */

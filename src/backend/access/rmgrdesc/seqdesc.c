@@ -25,13 +25,22 @@ seq_desc(StringInfo buf, XLogRecord *record)
 	xl_seq_rec *xlrec = (xl_seq_rec *) rec;
 
 	if (info == XLOG_SEQ_LOG)
-		appendStringInfoString(buf, "log: ");
-	else
+		appendStringInfo(buf, "rel %u/%u/%u",
+						 xlrec->node.spcNode, xlrec->node.dbNode,
+						 xlrec->node.relNode);
+}
+
+const char *
+seq_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
 	{
-		appendStringInfoString(buf, "UNKNOWN");
-		return;
+		case XLOG_SEQ_LOG:
+			id = "LOG";
+			break;
 	}
 
-	appendStringInfo(buf, "rel %u/%u/%u",
-			   xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
+	return id;
 }

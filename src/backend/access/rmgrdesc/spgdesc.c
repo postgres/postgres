@@ -32,32 +32,32 @@ spg_desc(StringInfo buf, XLogRecord *record)
 	switch (info)
 	{
 		case XLOG_SPGIST_CREATE_INDEX:
-			appendStringInfo(buf, "create_index: rel %u/%u/%u",
+			appendStringInfo(buf, "rel %u/%u/%u",
 							 ((RelFileNode *) rec)->spcNode,
 							 ((RelFileNode *) rec)->dbNode,
 							 ((RelFileNode *) rec)->relNode);
 			break;
 		case XLOG_SPGIST_ADD_LEAF:
 			out_target(buf, ((spgxlogAddLeaf *) rec)->node);
-			appendStringInfo(buf, "add leaf to page: %u",
+			appendStringInfo(buf, "%u",
 							 ((spgxlogAddLeaf *) rec)->blknoLeaf);
 			break;
 		case XLOG_SPGIST_MOVE_LEAFS:
 			out_target(buf, ((spgxlogMoveLeafs *) rec)->node);
-			appendStringInfo(buf, "move %u leafs from page %u to page %u",
+			appendStringInfo(buf, "%u leafs from page %u to page %u",
 							 ((spgxlogMoveLeafs *) rec)->nMoves,
 							 ((spgxlogMoveLeafs *) rec)->blknoSrc,
 							 ((spgxlogMoveLeafs *) rec)->blknoDst);
 			break;
 		case XLOG_SPGIST_ADD_NODE:
 			out_target(buf, ((spgxlogAddNode *) rec)->node);
-			appendStringInfo(buf, "add node to %u:%u",
+			appendStringInfo(buf, "%u:%u",
 							 ((spgxlogAddNode *) rec)->blkno,
 							 ((spgxlogAddNode *) rec)->offnum);
 			break;
 		case XLOG_SPGIST_SPLIT_TUPLE:
 			out_target(buf, ((spgxlogSplitTuple *) rec)->node);
-			appendStringInfo(buf, "split node %u:%u to %u:%u",
+			appendStringInfo(buf, "%u:%u to %u:%u",
 							 ((spgxlogSplitTuple *) rec)->blknoPrefix,
 							 ((spgxlogSplitTuple *) rec)->offnumPrefix,
 							 ((spgxlogSplitTuple *) rec)->blknoPostfix,
@@ -65,26 +65,61 @@ spg_desc(StringInfo buf, XLogRecord *record)
 			break;
 		case XLOG_SPGIST_PICKSPLIT:
 			out_target(buf, ((spgxlogPickSplit *) rec)->node);
-			appendStringInfoString(buf, "split leaf page");
 			break;
 		case XLOG_SPGIST_VACUUM_LEAF:
 			out_target(buf, ((spgxlogVacuumLeaf *) rec)->node);
-			appendStringInfo(buf, "vacuum leaf tuples on page %u",
+			appendStringInfo(buf, "page %u",
 							 ((spgxlogVacuumLeaf *) rec)->blkno);
 			break;
 		case XLOG_SPGIST_VACUUM_ROOT:
 			out_target(buf, ((spgxlogVacuumRoot *) rec)->node);
-			appendStringInfo(buf, "vacuum leaf tuples on root page %u",
+			appendStringInfo(buf, "page %u",
 							 ((spgxlogVacuumRoot *) rec)->blkno);
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
 			out_target(buf, ((spgxlogVacuumRedirect *) rec)->node);
-			appendStringInfo(buf, "vacuum redirect tuples on page %u, newest XID %u",
+			appendStringInfo(buf, "page %u, newest XID %u",
 							 ((spgxlogVacuumRedirect *) rec)->blkno,
 						 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
 			break;
-		default:
-			appendStringInfo(buf, "unknown spgist op code %u", info);
+	}
+}
+
+const char *
+spg_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_SPGIST_CREATE_INDEX:
+			id = "CREATE_INDEX";
+			break;
+		case XLOG_SPGIST_ADD_LEAF:
+			id = "ADD_LEAF";
+			break;
+		case XLOG_SPGIST_MOVE_LEAFS:
+			id = "MOVE_LEAFS";
+			break;
+		case XLOG_SPGIST_ADD_NODE:
+			id = "ADD_NODE";
+			break;
+		case XLOG_SPGIST_SPLIT_TUPLE:
+			id = "SPLIT_TUPLE";
+			break;
+		case XLOG_SPGIST_PICKSPLIT:
+			id = "PICKSPLIT";
+			break;
+		case XLOG_SPGIST_VACUUM_LEAF:
+			id = "VACUUM_LEAF";
+			break;
+		case XLOG_SPGIST_VACUUM_ROOT:
+			id = "VACUUM_ROOT";
+			break;
+		case XLOG_SPGIST_VACUUM_REDIRECT:
+			id = "VACUUM_REDIRECT";
 			break;
 	}
+
+	return id;
 }

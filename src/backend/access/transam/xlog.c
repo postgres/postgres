@@ -799,6 +799,7 @@ static bool CheckForStandbyTrigger(void);
 #ifdef WAL_DEBUG
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
+static void xlog_outdesc(StringInfo buf, RmgrId rmid, XLogRecord *record);
 static void pg_start_backup_callback(int code, Datum arg);
 static bool read_backup_label(XLogRecPtr *checkPointLoc,
 				  bool *backupEndRequired, bool *backupFromStandby);
@@ -1287,7 +1288,7 @@ begin:;
 				appendBinaryStringInfo(&recordbuf, rdata->data, rdata->len);
 
 			appendStringInfoString(&buf, " - ");
-			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, (XLogRecord *) recordbuf.data);
+			xlog_outdesc(&buf, rechdr->xl_rmid, (XLogRecord *) recordbuf.data);
 		}
 		elog(LOG, "%s", buf.data);
 
@@ -6710,7 +6711,7 @@ StartupXLOG(void)
 							 (uint32) (EndRecPtr >> 32), (uint32) EndRecPtr);
 					xlog_outrec(&buf, record);
 					appendStringInfoString(&buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(&buf, record);
+					xlog_outdesc(&buf, record->xl_rmid, record);
 					elog(LOG, "%s", buf.data);
 					pfree(buf.data);
 				}
@@ -9624,10 +9625,29 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 		if (record->xl_info & XLR_BKP_BLOCK(i))
 			appendStringInfo(buf, "; bkpb%d", i);
 	}
-
-	appendStringInfo(buf, ": %s", RmgrTable[record->xl_rmid].rm_name);
 }
 #endif   /* WAL_DEBUG */
+
+/*
+ * Returns a string describing an XLogRecord, consisting of its identity
+ * optionally followed by a colon, a space, and a further description.
+ */
+static void
+xlog_outdesc(StringInfo buf, RmgrId rmid, XLogRecord *record)
+{
+	const char *id;
+
+	appendStringInfoString(buf, RmgrTable[rmid].rm_name);
+	appendStringInfoChar(buf, '/');
+
+	id = RmgrTable[rmid].rm_identify(record->xl_info);
+	if (id == NULL)
+		appendStringInfo(buf, "UNKNOWN (%X): ", record->xl_info);
+	else
+		appendStringInfo(buf, "%s: ", id);
+
+	RmgrTable[rmid].rm_desc(buf, record);
+}
 
 
 /*
@@ -10664,7 +10684,7 @@ rm_redo_error_callback(void *arg)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-	RmgrTable[record->xl_rmid].rm_desc(&buf, record);
+	xlog_outdesc(&buf, record->xl_rmid, record);
 
 	/* don't bother emitting empty description */
 	if (buf.len > 0)

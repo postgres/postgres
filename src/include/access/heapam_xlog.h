@@ -357,8 +357,10 @@ extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 
 extern void heap_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void heap_desc(StringInfo buf, XLogRecord *record);
+extern const char *heap_identify(uint8 info);
 extern void heap2_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void heap2_desc(StringInfo buf, XLogRecord *record);
+extern const char *heap2_identify(uint8 info);
 extern void heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r);
 
 extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,

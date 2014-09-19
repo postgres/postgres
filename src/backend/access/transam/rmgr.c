@@ -25,8 +25,8 @@
 #include "utils/relmapper.h"
 
 /* must be kept in sync with RmgrData definition in xlog_internal.h */
-#define PG_RMGR(symname,name,redo,desc,startup,cleanup) \
-	{ name, redo, desc, startup, cleanup },
+#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup) \
+	{ name, redo, desc, identify, startup, cleanup },
 
 const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 #include "access/rmgrlist.h"

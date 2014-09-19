@@ -28,7 +28,7 @@ dbase_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) rec;
 
-		appendStringInfo(buf, "create db: copy dir %u/%u to %u/%u",
+		appendStringInfo(buf, "copy dir %u/%u to %u/%u",
 						 xlrec->src_db_id, xlrec->src_tablespace_id,
 						 xlrec->db_id, xlrec->tablespace_id);
 	}
@@ -36,9 +36,25 @@ dbase_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
 
-		appendStringInfo(buf, "drop db: dir %u/%u",
+		appendStringInfo(buf, "dir %u/%u",
 						 xlrec->db_id, xlrec->tablespace_id);
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+}
+
+const char *
+dbase_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_DBASE_CREATE:
+			id = "CREATE";
+			break;
+		case XLOG_DBASE_DROP:
+			id = "DROP";
+			break;
+	}
+
+	return id;
 }

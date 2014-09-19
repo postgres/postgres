@@ -304,6 +304,7 @@ extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
 
 extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void xlog_desc(StringInfo buf, XLogRecord *record);
+extern const char *xlog_identify(uint8 info);
 
 extern void issue_xlog_fsync(int fd, XLogSegNo segno);
 

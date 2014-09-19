@@ -42,7 +42,7 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-		appendStringInfo(buf, "checkpoint: redo %X/%X; "
+		appendStringInfo(buf, "redo %X/%X; "
 						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; multi %u; offset %u; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest running xid %u; %s",
@@ -61,33 +61,24 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 						 checkpoint->oldestActiveXid,
 				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
-	else if (info == XLOG_NOOP)
-	{
-		appendStringInfoString(buf, "xlog no-op");
-	}
 	else if (info == XLOG_NEXTOID)
 	{
 		Oid			nextOid;
 
 		memcpy(&nextOid, rec, sizeof(Oid));
-		appendStringInfo(buf, "nextOid: %u", nextOid);
-	}
-	else if (info == XLOG_SWITCH)
-	{
-		appendStringInfoString(buf, "xlog switch");
+		appendStringInfo(buf, "%u", nextOid);
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{
 		xl_restore_point *xlrec = (xl_restore_point *) rec;
 
-		appendStringInfo(buf, "restore point: %s", xlrec->rp_name);
-
+		appendStringInfo(buf, "%s", xlrec->rp_name);
 	}
 	else if (info == XLOG_FPI)
 	{
 		BkpBlock   *bkp = (BkpBlock *) rec;
 
-		appendStringInfo(buf, "full-page image: %s block %u",
+		appendStringInfo(buf, "%s block %u",
 						 relpathperm(bkp->node, bkp->fork),
 						 bkp->block);
 	}
@@ -96,7 +87,7 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 		XLogRecPtr	startpoint;
 
 		memcpy(&startpoint, rec, sizeof(XLogRecPtr));
-		appendStringInfo(buf, "backup end: %X/%X",
+		appendStringInfo(buf, "%X/%X",
 						 (uint32) (startpoint >> 32), (uint32) startpoint);
 	}
 	else if (info == XLOG_PARAMETER_CHANGE)
@@ -118,7 +109,7 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 			}
 		}
 
-		appendStringInfo(buf, "parameter change: max_connections=%d max_worker_processes=%d max_prepared_xacts=%d max_locks_per_xact=%d wal_level=%s",
+		appendStringInfo(buf, "max_connections=%d max_worker_processes=%d max_prepared_xacts=%d max_locks_per_xact=%d wal_level=%s",
 						 xlrec.MaxConnections,
 						 xlrec.max_worker_processes,
 						 xlrec.max_prepared_xacts,
@@ -130,17 +121,60 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 		bool		fpw;
 
 		memcpy(&fpw, rec, sizeof(bool));
-		appendStringInfo(buf, "full_page_writes: %s", fpw ? "true" : "false");
+		appendStringInfo(buf, "%s", fpw ? "true" : "false");
 	}
 	else if (info == XLOG_END_OF_RECOVERY)
 	{
 		xl_end_of_recovery xlrec;
 
 		memcpy(&xlrec, rec, sizeof(xl_end_of_recovery));
-		appendStringInfo(buf, "end_of_recovery: tli %u; prev tli %u; time %s",
+		appendStringInfo(buf, "tli %u; prev tli %u; time %s",
 						 xlrec.ThisTimeLineID, xlrec.PrevTimeLineID,
 						 timestamptz_to_str(xlrec.end_time));
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+}
+
+const char *
+xlog_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info)
+	{
+		case XLOG_CHECKPOINT_SHUTDOWN:
+			id = "CHECKPOINT_SHUTDOWN";
+			break;
+		case XLOG_CHECKPOINT_ONLINE:
+			id = "CHECKPOINT_ONLINE";
+			break;
+		case XLOG_NOOP:
+			id = "NOOP";
+			break;
+		case XLOG_NEXTOID:
+			id = "NEXTOID";
+			break;
+		case XLOG_SWITCH:
+			id = "SWITCH";
+			break;
+		case XLOG_BACKUP_END:
+			id = "BACKUP_END";
+			break;
+		case XLOG_PARAMETER_CHANGE:
+			id = "PARAMETER_CHANGE";
+			break;
+		case XLOG_RESTORE_POINT:
+			id = "RESTORE_POINT";
+			break;
+		case XLOG_FPW_CHANGE:
+			id = "FPW_CHANGE";
+			break;
+		case XLOG_END_OF_RECOVERY:
+			id = "END_OF_RECOVERY";
+			break;
+		case XLOG_FPI:
+			id = "FPI";
+			break;
+	}
+
+	return id;
 }
