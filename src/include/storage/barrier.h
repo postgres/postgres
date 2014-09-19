@@ -70,7 +70,7 @@ extern slock_t dummy_spinlock;
  * "lock; addl" has worked for longer than "mfence".
  */
 #define pg_memory_barrier()		\
-	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
+	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory", "cc")
 #define pg_read_barrier()		pg_compiler_barrier()
 #define pg_write_barrier()		pg_compiler_barrier()
 #elif defined(__x86_64__)		/* 64 bit x86 */
@@ -84,7 +84,7 @@ extern slock_t dummy_spinlock;
  * do those things, a compiler barrier should be enough.
  */
 #define pg_memory_barrier()		\
-	__asm__ __volatile__ ("lock; addl $0,0(%%rsp)" : : : "memory")
+	__asm__ __volatile__ ("lock; addl $0,0(%%rsp)" : : : "memory", "cc")
 #define pg_read_barrier()		pg_compiler_barrier()
 #define pg_write_barrier()		pg_compiler_barrier()
 #elif defined(__ia64__) || defined(__ia64)
