@@ -26,7 +26,7 @@ static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_buffers = false;
 static bool auto_explain_log_triggers = false;
-static bool auto_explain_log_timing = false;
+static bool auto_explain_log_timing = true;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static bool auto_explain_log_nested_statements = false;
 
@@ -200,8 +200,6 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				queryDesc->instrument_options |= INSTRUMENT_TIMER;
 			else
 				queryDesc->instrument_options |= INSTRUMENT_ROWS;
-
-
 			if (auto_explain_log_buffers)
 				queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
 		}
@@ -302,6 +300,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es.analyze = (queryDesc->instrument_options && auto_explain_log_analyze);
 			es.verbose = auto_explain_log_verbose;
 			es.buffers = (es.analyze && auto_explain_log_buffers);
+			es.timing = (es.analyze && auto_explain_log_timing);
 			es.format = auto_explain_log_format;
 
 			ExplainBeginOutput(&es);
