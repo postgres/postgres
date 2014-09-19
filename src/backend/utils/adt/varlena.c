@@ -1405,6 +1405,18 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 #endif
 		}
 
+		/*
+		 * memcmp() can't tell us which of two unequal strings sorts first, but
+		 * it's a cheap way to tell if they're equal.  Testing shows that
+		 * memcmp() followed by strcoll() is only trivially slower than
+		 * strcoll() by itself, so we don't lose much if this doesn't work out
+		 * very often, and if it does - for example, because there are many
+		 * equal strings in the input - then we win big by avoiding expensive
+		 * collation-aware comparisons.
+		 */
+		if (len1 == len2 && memcmp(arg1, arg2, len1) == 0)
+			return 0;
+
 #ifdef WIN32
 		/* Win32 does not have UTF-8, so we need to map to UTF-16 */
 		if (GetDatabaseEncoding() == PG_UTF8)
@@ -1842,6 +1854,13 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
+	/* Fast pre-check for equality, as discussed in varstr_cmp() */
+	if (len1 == len2 && memcmp(a1p, a2p, len1) == 0)
+	{
+		result = 0;
+		goto done;
+	}
+
 	if (len1 >= tss->buflen1)
 	{
 		pfree(tss->buf1);
@@ -1875,6 +1894,7 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	if (result == 0)
 		result = strcmp(tss->buf1, tss->buf2);
 
+done:
 	/* We can't afford to leak memory here. */
 	if (PointerGetDatum(arg1) != x)
 		pfree(arg1);
