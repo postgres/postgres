@@ -45,7 +45,7 @@
 
 static void RangeVarCallbackForPolicy(const RangeVar *rv,
 				Oid relid, Oid oldrelid, void *arg);
-static const char parse_row_security_command(const char *cmd_name);
+static char parse_row_security_command(const char *cmd_name);
 static ArrayType* rls_role_list_to_array(List *roles);
 
 /*
@@ -102,7 +102,7 @@ RangeVarCallbackForPolicy(const RangeVar *rv, Oid relid, Oid oldrelid,
  *			  'insert', 'update' and 'delete'.
  *
  */
-static const char
+static char
 parse_row_security_command(const char *cmd_name)
 {
 	char cmd;
