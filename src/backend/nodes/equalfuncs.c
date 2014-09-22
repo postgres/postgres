@@ -1790,7 +1790,7 @@ static bool
 _equalCreateEventTrigStmt(const CreateEventTrigStmt *a, const CreateEventTrigStmt *b)
 {
 	COMPARE_STRING_FIELD(trigname);
-	COMPARE_SCALAR_FIELD(eventname);
+	COMPARE_STRING_FIELD(eventname);
 	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(whenclause);
 
