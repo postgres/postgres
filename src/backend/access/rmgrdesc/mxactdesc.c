@@ -77,7 +77,7 @@ multixact_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_MULTIXACT_ZERO_OFF_PAGE:
 			id = "ZERO_OFF_PAGE";

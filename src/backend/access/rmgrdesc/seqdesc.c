@@ -35,7 +35,7 @@ seq_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_SEQ_LOG:
 			id = "LOG";

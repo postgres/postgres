@@ -244,9 +244,6 @@ struct XLogRecord;
  * "VACUUM". rm_desc can then be called to obtain additional detail for the
  * record, if available (e.g. the last block).
  *
- * The return value from rm_identify is a pointer to a statically allocated
- * buffer, and only valid until the next invocation of the callback.
- *
  * RmgrTable[] is indexed by RmgrId values (see rmgrlist.h).
  */
 typedef struct RmgrData

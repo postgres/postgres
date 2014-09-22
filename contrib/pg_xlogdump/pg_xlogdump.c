@@ -382,7 +382,12 @@ XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats, XLogRecPtr Rea
 static void
 XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord *record)
 {
+	const char	   *id;
 	const RmgrDescData *desc = &RmgrDescTable[record->xl_rmid];
+
+	id = desc->rm_identify(record->xl_info);
+	if (id == NULL)
+		id = psprintf("UNKNOWN (%x)", record->xl_info & ~XLR_INFO_MASK);
 
 	printf("rmgr: %-11s len (rec/tot): %6u/%6u, tx: %10u, lsn: %X/%08X, prev %X/%08X, bkp: %u%u%u%u, desc: %s ",
 		   desc->rm_name,
@@ -394,7 +399,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogRecPtr ReadRecPtr, XLogRecord 
 		   !!(XLR_BKP_BLOCK(1) & record->xl_info),
 		   !!(XLR_BKP_BLOCK(2) & record->xl_info),
 		   !!(XLR_BKP_BLOCK(3) & record->xl_info),
-		   desc->rm_identify(record->xl_info));
+		   id);
 
 	/* the desc routine will printf the description directly to stdout */
 	desc->rm_desc(NULL, record);

@@ -166,26 +166,18 @@ heap2_desc(StringInfo buf, XLogRecord *record)
 	}
 }
 
-static const char *
-append_init(const char *str)
-{
-	static char x[32];
-
-	strcpy(x, str);
-	strcat(x, "+INIT");
-
-	return x;
-}
-
 const char *
 heap_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info & XLOG_HEAP_OPMASK)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_HEAP_INSERT:
 			id = "INSERT";
+			break;
+		case XLOG_HEAP_INSERT | XLOG_HEAP_INIT_PAGE:
+			id = "INSERT+INIT";
 			break;
 		case XLOG_HEAP_DELETE:
 			id = "DELETE";
@@ -193,8 +185,14 @@ heap_identify(uint8 info)
 		case XLOG_HEAP_UPDATE:
 			id = "UPDATE";
 			break;
+		case XLOG_HEAP_UPDATE | XLOG_HEAP_INIT_PAGE:
+			id = "UPDATE+INIT";
+			break;
 		case XLOG_HEAP_HOT_UPDATE:
 			id = "HOT_UPDATE";
+			break;
+		case XLOG_HEAP_HOT_UPDATE | XLOG_HEAP_INIT_PAGE:
+			id = "HOT_UPDATE+INIT";
 			break;
 		case XLOG_HEAP_LOCK:
 			id = "LOCK";
@@ -204,9 +202,6 @@ heap_identify(uint8 info)
 			break;
 	}
 
-	if (info & XLOG_HEAP_INIT_PAGE)
-		id = append_init(id);
-
 	return id;
 }
 
@@ -215,7 +210,7 @@ heap2_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info & XLOG_HEAP_OPMASK)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_HEAP2_CLEAN:
 			id = "CLEAN";
@@ -232,6 +227,9 @@ heap2_identify(uint8 info)
 		case XLOG_HEAP2_MULTI_INSERT:
 			id = "MULTI_INSERT";
 			break;
+		case XLOG_HEAP2_MULTI_INSERT | XLOG_HEAP_INIT_PAGE:
+			id = "MULTI_INSERT+INIT";
+			break;
 		case XLOG_HEAP2_LOCK_UPDATED:
 			id = "LOCK_UPDATED";
 			break;
@@ -242,9 +240,6 @@ heap2_identify(uint8 info)
 			id = "REWRITE";
 			break;
 	}
-
-	if (info & XLOG_HEAP_INIT_PAGE)
-		id = append_init(id);
 
 	return id;
 }

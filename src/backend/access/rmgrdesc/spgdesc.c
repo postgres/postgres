@@ -90,7 +90,7 @@ spg_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_SPGIST_CREATE_INDEX:
 			id = "CREATE_INDEX";

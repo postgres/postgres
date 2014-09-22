@@ -9642,7 +9642,8 @@ xlog_outdesc(StringInfo buf, RmgrId rmid, XLogRecord *record)
 
 	id = RmgrTable[rmid].rm_identify(record->xl_info);
 	if (id == NULL)
-		appendStringInfo(buf, "UNKNOWN (%X): ", record->xl_info);
+		appendStringInfo(buf, "UNKNOWN (%X): ",
+						 record->xl_info & ~XLR_INFO_MASK);
 	else
 		appendStringInfo(buf, "%s: ", id);
 

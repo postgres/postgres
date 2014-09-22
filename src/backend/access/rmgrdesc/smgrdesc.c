@@ -47,7 +47,7 @@ smgr_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_SMGR_CREATE:
 			id = "CREATE";

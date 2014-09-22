@@ -37,7 +37,7 @@ clog_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info)
+	switch (info & ~XLR_INFO_MASK)
 	{
 		case CLOG_ZEROPAGE:
 			id = "ZEROPAGE";
