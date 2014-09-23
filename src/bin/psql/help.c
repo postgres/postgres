@@ -305,7 +305,7 @@ helpVariables(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(81, pager);
+	output = PageOutput(85, pager);
 
 	fprintf(output, _("List of specially treated variables.\n"));
 
@@ -364,6 +364,10 @@ helpVariables(unsigned short int pager)
 					 "                     column width of left aligned data type in latex format\n"));
 	fprintf(output, _("  title              set the table title for any subsequently printed tables\n"));
 	fprintf(output, _("  tuples_only        if set, only actual table data is shown\n"));
+	fprintf(output, _("  unicode_border_linestyle\n"));
+	fprintf(output, _("  unicode_column_linestyle\n"));
+	fprintf(output, _("  unicode_header_linestyle\n"
+					 "                     set the style of unicode line drawing [single, double]\n"));
 
 	fprintf(output, _("\nEnvironment variables:\n"));
 	fprintf(output, _("Usage:\n"));
