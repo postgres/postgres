@@ -707,6 +707,25 @@ INSERT INTO rw_view3 VALUES (3); -- ok
 
 DROP TABLE base_tbl CASCADE;
 
+-- WITH CHECK OPTION with scalar array ops
+
+CREATE TABLE base_tbl (a int, b int[]);
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a = ANY (b)
+  WITH CHECK OPTION;
+
+INSERT INTO rw_view1 VALUES (1, ARRAY[1,2,3]); -- ok
+INSERT INTO rw_view1 VALUES (10, ARRAY[4,5]); -- should fail
+
+UPDATE rw_view1 SET b[2] = -b[2] WHERE a = 1; -- ok
+UPDATE rw_view1 SET b[1] = -b[1] WHERE a = 1; -- should fail
+
+PREPARE ins(int, int[]) AS INSERT INTO rw_view1 VALUES($1, $2);
+EXECUTE ins(2, ARRAY[1,2,3]); -- ok
+EXECUTE ins(10, ARRAY[4,5]); -- should fail
+DEALLOCATE PREPARE ins;
+
+DROP TABLE base_tbl CASCADE;
+
 -- WITH CHECK OPTION with subquery
 
 CREATE TABLE base_tbl (a int);

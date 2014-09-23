@@ -1567,6 +1567,26 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to view rw_view1
 drop cascades to view rw_view2
 drop cascades to view rw_view3
+-- WITH CHECK OPTION with scalar array ops
+CREATE TABLE base_tbl (a int, b int[]);
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a = ANY (b)
+  WITH CHECK OPTION;
+INSERT INTO rw_view1 VALUES (1, ARRAY[1,2,3]); -- ok
+INSERT INTO rw_view1 VALUES (10, ARRAY[4,5]); -- should fail
+ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+DETAIL:  Failing row contains (10, {4,5}).
+UPDATE rw_view1 SET b[2] = -b[2] WHERE a = 1; -- ok
+UPDATE rw_view1 SET b[1] = -b[1] WHERE a = 1; -- should fail
+ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+DETAIL:  Failing row contains (1, {-1,-2,3}).
+PREPARE ins(int, int[]) AS INSERT INTO rw_view1 VALUES($1, $2);
+EXECUTE ins(2, ARRAY[1,2,3]); -- ok
+EXECUTE ins(10, ARRAY[4,5]); -- should fail
+ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+DETAIL:  Failing row contains (10, {4,5}).
+DEALLOCATE PREPARE ins;
+DROP TABLE base_tbl CASCADE;
+NOTICE:  drop cascades to view rw_view1
 -- WITH CHECK OPTION with subquery
 CREATE TABLE base_tbl (a int);
 CREATE TABLE ref_tbl (a int PRIMARY KEY);

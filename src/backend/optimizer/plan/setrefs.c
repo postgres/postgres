@@ -693,6 +693,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				Assert(splan->plan.targetlist == NIL);
 				Assert(splan->plan.qual == NIL);
 
+				splan->withCheckOptionLists =
+					fix_scan_list(root, splan->withCheckOptionLists, rtoffset);
+
 				if (splan->returningLists)
 				{
 					List	   *newRL = NIL;
