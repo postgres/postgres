@@ -1535,7 +1535,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    be added through data modification commands.  By default, tables do
    not have any policies and all rows are visible and able to be added,
    subject to the regular <xref linkend="ddl-priv"> system.  This is
-   also known to as Row Level Security.
+   also known as Row Level Security.
   </para>
 
   <para>
@@ -1550,10 +1550,10 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    Row security policies can be specific to commands, or to roles, or to
-   both.  The commands available are <literal>SELECT</>, <literal>INSERT</>,
-   <literal>UPDATE</>, and <literal>DELETE</>.  Multiple roles can be
-   assigned to a given policy and normal role membership and inheiritance
-   rules apply.
+   both.  The commands available are <literal>ALL</literal>,
+   <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>, and
+   <literal>DELETE</>.  Multiple roles can be assigned to a given policy
+   and normal role membership and inheiritance rules apply.
   </para>
 
   <para>

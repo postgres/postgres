@@ -108,7 +108,7 @@ parse_row_security_command(const char *cmd_name)
 	char cmd;
 
 	if (!cmd_name)
-		elog(ERROR, "unregonized command");
+		elog(ERROR, "unrecognized command");
 
 	if (strcmp(cmd_name, "all") == 0)
 		cmd = 0;
