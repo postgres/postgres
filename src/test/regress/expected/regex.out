@@ -188,3 +188,11 @@ select regexp_matches('Programmer', '(\w)(.*?\1)', 'g');
  {m,m}
 (2 rows)
 
+-- Test for proper matching of non-greedy iteration (bug #11478)
+select regexp_matches('foo/bar/baz',
+                      '^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$', '');
+ regexp_matches 
+----------------
+ {foo,bar,baz}
+(1 row)
+
