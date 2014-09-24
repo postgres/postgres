@@ -2071,10 +2071,10 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
                ->  Append
                      ->  Seq Scan on public.t12
                            Output: t12.a
-                           Filter: (t1_5.a = t12.a)
+                           Filter: (t12.a = 3)
                      ->  Seq Scan on public.t111
                            Output: t111.a
-                           Filter: (t1_5.a = t111.a)
+                           Filter: (t111.a = 3)
    ->  Subquery Scan on t1_1
          Output: 100, t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
          Filter: snoop(t1_1.a)
@@ -2086,10 +2086,10 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
                ->  Append
                      ->  Seq Scan on public.t12 t12_1
                            Output: t12_1.a
-                           Filter: (t11.a = t12_1.a)
+                           Filter: (t12_1.a = 3)
                      ->  Seq Scan on public.t111 t111_1
                            Output: t111_1.a
-                           Filter: (t11.a = t111_1.a)
+                           Filter: (t111_1.a = 3)
    ->  Subquery Scan on t1_2
          Output: 100, t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
          Filter: snoop(t1_2.a)
@@ -2101,10 +2101,10 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
                ->  Append
                      ->  Seq Scan on public.t12 t12_3
                            Output: t12_3.a
-                           Filter: (t12_2.a = t12_3.a)
+                           Filter: (t12_3.a = 3)
                      ->  Seq Scan on public.t111 t111_2
                            Output: t111_2.a
-                           Filter: (t12_2.a = t111_2.a)
+                           Filter: (t111_2.a = 3)
    ->  Subquery Scan on t1_3
          Output: 100, t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
          Filter: snoop(t1_3.a)
@@ -2116,10 +2116,10 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
                ->  Append
                      ->  Seq Scan on public.t12 t12_4
                            Output: t12_4.a
-                           Filter: (t111_3.a = t12_4.a)
+                           Filter: (t12_4.a = 3)
                      ->  Seq Scan on public.t111 t111_4
                            Output: t111_4.a
-                           Filter: (t111_3.a = t111_4.a)
+                           Filter: (t111_4.a = 3)
 (61 rows)
 
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
@@ -2149,10 +2149,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                ->  Append
                      ->  Seq Scan on public.t12
                            Output: t12.a
-                           Filter: (t1_5.a = t12.a)
+                           Filter: (t12.a = 8)
                      ->  Seq Scan on public.t111
                            Output: t111.a
-                           Filter: (t1_5.a = t111.a)
+                           Filter: (t111.a = 8)
    ->  Subquery Scan on t1_1
          Output: (t1_1.a + 1), t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
          Filter: snoop(t1_1.a)
@@ -2164,10 +2164,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                ->  Append
                      ->  Seq Scan on public.t12 t12_1
                            Output: t12_1.a
-                           Filter: (t11.a = t12_1.a)
+                           Filter: (t12_1.a = 8)
                      ->  Seq Scan on public.t111 t111_1
                            Output: t111_1.a
-                           Filter: (t11.a = t111_1.a)
+                           Filter: (t111_1.a = 8)
    ->  Subquery Scan on t1_2
          Output: (t1_2.a + 1), t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
          Filter: snoop(t1_2.a)
@@ -2179,10 +2179,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                ->  Append
                      ->  Seq Scan on public.t12 t12_3
                            Output: t12_3.a
-                           Filter: (t12_2.a = t12_3.a)
+                           Filter: (t12_3.a = 8)
                      ->  Seq Scan on public.t111 t111_2
                            Output: t111_2.a
-                           Filter: (t12_2.a = t111_2.a)
+                           Filter: (t111_2.a = 8)
    ->  Subquery Scan on t1_3
          Output: (t1_3.a + 1), t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
          Filter: snoop(t1_3.a)
@@ -2194,10 +2194,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                ->  Append
                      ->  Seq Scan on public.t12 t12_4
                            Output: t12_4.a
-                           Filter: (t111_3.a = t12_4.a)
+                           Filter: (t12_4.a = 8)
                      ->  Seq Scan on public.t111 t111_4
                            Output: t111_4.a
-                           Filter: (t111_3.a = t111_4.a)
+                           Filter: (t111_4.a = 8)
 (61 rows)
 
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
