@@ -246,7 +246,7 @@ typedef struct _tableInfo
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
-	bool		hasrowsec;		/* does it have any row-security policy? */
+	bool		rowsec;			/* does it have any row-security policy? */
 	bool		hasoids;		/* does it have OIDs? */
 	uint32		frozenxid;		/* for restore frozen xid */
 	uint32		minmxid;		/* for restore min multi xid */

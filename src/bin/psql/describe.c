@@ -1204,7 +1204,7 @@ describeOneTableDetails(const char *schemaname,
 		bool		hasindex;
 		bool		hasrules;
 		bool		hastriggers;
-		bool		hasrowsecurity;
+		bool		rowsecurity;
 		bool		hasoids;
 		Oid			tablespace;
 		char	   *reloptions;
@@ -1230,7 +1230,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
-						  "c.relhastriggers, c.relhasrowsecurity, c.relhasoids, "
+						  "c.relhastriggers, c.relrowsecurity, c.relhasoids, "
 						  "%s, c.reltablespace, "
 						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END, "
 						  "c.relpersistence, c.relreplident\n"
@@ -1355,7 +1355,7 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 2), "t") == 0;
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 3), "t") == 0;
 	tableinfo.hastriggers = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
-	tableinfo.hasrowsecurity = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
+	tableinfo.rowsecurity = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 6), "t") == 0;
 	tableinfo.reloptions = (pset.sversion >= 80200) ?
 		pg_strdup(PQgetvalue(res, 0, 7)) : NULL;
@@ -1998,18 +1998,17 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-
+		/* print any row-level policies */
 		if (pset.sversion >= 90500)
+		{
 			appendPQExpBuffer(&buf,
 				",\n pg_catalog.pg_get_expr(rs.rsecqual, c.oid) as \"%s\"",
 				gettext_noop("Row-security"));
-	if (verbose && pset.sversion >= 90500)
-		appendPQExpBuffer(&buf,
-			 "\n     LEFT JOIN pg_rowsecurity rs ON rs.rsecrelid = c.oid");
 
-		/* print any row-level policies */
-		if (tableinfo.hasrowsecurity)
-		{
+			if (verbose)
+				appendPQExpBuffer(&buf,
+					"\n     LEFT JOIN pg_rowsecurity rs ON rs.rsecrelid = c.oid");
+
 			printfPQExpBuffer(&buf,
 						   "SELECT rs.rsecpolname,\n"
 						   "CASE WHEN rs.rsecroles = '{0}' THEN NULL ELSE array(select rolname from pg_roles where oid = any (rs.rsecroles) order by 1) END,\n"
@@ -2019,41 +2018,53 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_rowsecurity rs\n"
 				  "WHERE rs.rsecrelid = '%s' ORDER BY 1;",
 							  oid);
+
 			result = PSQLexec(buf.data, false);
 			if (!result)
 				goto error_return;
 			else
 				tuples = PQntuples(result);
 
-			if (tuples > 0)
-			{
+			/*
+			 * Handle cases where RLS is enabled and there are policies,
+			 * or there aren't policies, or RLS isn't enabled but there
+			 * are policies
+			 */
+			if (tableinfo.rowsecurity && tuples > 0)
 				printTableAddFooter(&cont, _("Policies:"));
-				for (i = 0; i < tuples; i++)
+
+			if (tableinfo.rowsecurity && tuples == 0)
+				printTableAddFooter(&cont, _("Policies (Row Security Enabled): (None)"));
+
+			if (!tableinfo.rowsecurity && tuples > 0)
+				printTableAddFooter(&cont, _("Policies (Row Security Disabled):"));
+
+			/* Might be an empty set - that's ok */
+			for (i = 0; i < tuples; i++)
+			{
+				printfPQExpBuffer(&buf, "    POLICY \"%s\"",
+									  PQgetvalue(result, i, 0));
+
+				if (!PQgetisnull(result, i, 4))
+					appendPQExpBuffer(&buf, " (%s)",
+									  PQgetvalue(result, i, 4));
+
+				if (!PQgetisnull(result, i, 2))
+					appendPQExpBuffer(&buf, " EXPRESSION %s",
+									  PQgetvalue(result, i, 2));
+
+				if (!PQgetisnull(result, i, 3))
+					appendPQExpBuffer(&buf, " WITH CHECK %s",
+									  PQgetvalue(result, i, 3));
+
+				printTableAddFooter(&cont, buf.data);
+
+				if (!PQgetisnull(result, i, 1))
 				{
-					printfPQExpBuffer(&buf, "    POLICY \"%s\"",
-										  PQgetvalue(result, i, 0));
-
-					if (!PQgetisnull(result, i, 4))
-						appendPQExpBuffer(&buf, " (%s)",
-										  PQgetvalue(result, i, 4));
-
-					if (!PQgetisnull(result, i, 2))
-						appendPQExpBuffer(&buf, " EXPRESSION %s",
-										  PQgetvalue(result, i, 2));
-
-					if (!PQgetisnull(result, i, 3))
-						appendPQExpBuffer(&buf, " WITH CHECK %s",
-										  PQgetvalue(result, i, 3));
+					printfPQExpBuffer(&buf, "          APPLIED TO %s",
+									  PQgetvalue(result, i, 1));
 
 					printTableAddFooter(&cont, buf.data);
-
-					if (!PQgetisnull(result, i, 1))
-					{
-						printfPQExpBuffer(&buf, "          APPLIED TO %s",
-										  PQgetvalue(result, i, 1));
-
-						printTableAddFooter(&cont, buf.data);
-					}
 				}
 			}
 			PQclear(result);
@@ -2707,6 +2718,10 @@ describeRoles(const char *pattern, bool verbose)
 		if (pset.sversion >= 90100)
 			if (strcmp(PQgetvalue(res, i, (verbose ? 10 : 9)), "t") == 0)
 				add_role_attribute(&buf, _("Replication"));
+
+		if (pset.sversion >= 90500)
+			if (strcmp(PQgetvalue(res, i, (verbose ? 11 : 10)), "t") == 0)
+				add_role_attribute(&buf, _("Bypass RLS"));
 
 		conns = atoi(PQgetvalue(res, i, 6));
 		if (conns >= 0)

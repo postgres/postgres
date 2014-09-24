@@ -240,7 +240,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      </varlistentry>
 
      <varlistentry id="SQL-CREATEPOLICY-UPDATE">
-      <term><literal>DELETE</></term>
+      <term><literal>UPDATE</></term>
       <listitem>
        <para>
          Using <literal>UPDATE</literal> for a policy means that it will apply

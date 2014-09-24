@@ -429,7 +429,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       These forms control the application of row security policies belonging
       to the table.  If enabled and no policies exist for the table, then a
       default-deny policy is applied.  Note that policies can exist for a table
-      even if row level security is disabled- in this case, the policies will
+      even if row level security is disabled - in this case, the policies will
       NOT be applied and the policies will be ignored.
       See also
       <xref linkend="SQL-CREATEPOLICY">.

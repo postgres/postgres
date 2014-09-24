@@ -1941,8 +1941,9 @@
      </row>
 
      <row>
-      <entry><structfield>relhasrowsecurity</structfield></entry>
+      <entry><structfield>relrowsecurity</structfield></entry>
       <entry><type>bool</type></entry>
+      <entry></entry>
       <entry>
        True if table has row-security enabled; see
        <link linkend="catalog-pg-rowsecurity"><structname>pg_rowsecurity</structname></link> catalog
@@ -5415,7 +5416,7 @@
 
   <note>
    <para>
-    <literal>pg_class.relhasrowsecurity</literal>
+    <literal>pg_class.relrowsecurity</literal>
     True if the table has row-security enabled.
     Must be true if the table has a row-security policy in this catalog.
    </para>
@@ -9228,10 +9229,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry>True if table has (or once had) triggers</entry>
      </row>
      <row>
-      <entry><structfield>hasrowsecurity</structfield></entry>
+      <entry><structfield>rowsecurity</structfield></entry>
       <entry><type>boolean</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasrowsecurity</literal></entry>
-      <entry>True if table has row security enabled</entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relrowsecurity</literal></entry>
+      <entry>True if row security is enabled on the table</entry>
      </row>
     </tbody>
    </tgroup>

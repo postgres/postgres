@@ -2309,9 +2309,9 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 * have RLS enabled.
 	 */
 	if (!has_bypassrls_privilege(GetUserId()) &&
-		((pk_rel->rd_rel->relhasrowsecurity &&
+		((pk_rel->rd_rel->relrowsecurity &&
 		  !pg_class_ownercheck(pkrte->relid, GetUserId())) ||
-		 (fk_rel->rd_rel->relhasrowsecurity &&
+		 (fk_rel->rd_rel->relrowsecurity &&
 		  !pg_class_ownercheck(fkrte->relid, GetUserId()))))
 		return false;
 

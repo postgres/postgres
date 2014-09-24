@@ -16,6 +16,7 @@
 #define POLICY_H
 
 #include "nodes/parsenodes.h"
+#include "utils/relcache.h"
 
 extern void RelationBuildRowSecurity(Relation relation);
 
@@ -24,10 +25,10 @@ extern void RemovePolicyById(Oid policy_id);
 extern Oid CreatePolicy(CreatePolicyStmt *stmt);
 extern Oid AlterPolicy(AlterPolicyStmt *stmt);
 
-Oid get_relation_policy_oid(Oid relid,
-							const char *policy_name, bool missing_ok);
+extern Oid get_relation_policy_oid(Oid relid, const char *policy_name,
+						bool missing_ok);
 
-Oid rename_policy(RenameStmt *stmt);
+extern Oid rename_policy(RenameStmt *stmt);
 
 
 #endif   /* POLICY_H */

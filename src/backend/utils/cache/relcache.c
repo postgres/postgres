@@ -847,6 +847,87 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 	return true;
 }
 
+/*
+ *		equalPolicy
+ *
+ *		Determine whether two policies are equivalent
+ */
+static bool
+equalPolicy(RowSecurityPolicy *policy1, RowSecurityPolicy *policy2)
+{
+	int			i;
+	Oid        *r1,
+	           *r2;
+
+	if (policy1 != NULL)
+	{
+		if (policy2 == NULL)
+			return false;
+
+		if (policy1->rsecid != policy2->rsecid)
+			return false;
+		if (policy1->cmd != policy2->cmd)
+			return false;
+		if (policy1->hassublinks != policy2->hassublinks);
+			return false;
+		if (strcmp(policy1->policy_name,policy2->policy_name) != 0)
+			return false;
+		if (ARR_DIMS(policy1->roles)[0] != ARR_DIMS(policy2->roles)[0])
+			return false;
+
+		r1 = (Oid *) ARR_DATA_PTR(policy1->roles);
+		r2 = (Oid *) ARR_DATA_PTR(policy2->roles);
+
+		for (i = 0; i < ARR_DIMS(policy1->roles)[0]; i++)
+		{
+			if (r1[i] != r2[i])
+				return false;
+		}
+
+		if (!equal(policy1->qual, policy1->qual))
+			return false;
+		if (!equal(policy1->with_check_qual, policy2->with_check_qual))
+			return false;
+	}
+	else if (policy2 != NULL)
+		return false;
+
+	return true;
+}
+
+/*
+ *		equalRSDesc
+ *
+ *		Determine whether two RowSecurityDesc's are equivalent
+ */
+static bool
+equalRSDesc(RowSecurityDesc *rsdesc1, RowSecurityDesc *rsdesc2)
+{
+	ListCell 	*lc,
+				*rc;
+
+	if (rsdesc1 == NULL && rsdesc2 == NULL)
+		return true;
+
+	if ((rsdesc1 != NULL && rsdesc2 == NULL) ||
+		(rsdesc1 == NULL && rsdesc2 != NULL))
+		return false;
+
+	if (list_length(rsdesc1->policies) != list_length(rsdesc2->policies))
+		return false;
+
+	/* RelationBuildRowSecurity should build policies in order */
+	forboth(lc, rsdesc1->policies, rc, rsdesc2->policies)
+	{
+		RowSecurityPolicy	   *l = (RowSecurityPolicy *) lfirst(lc);
+		RowSecurityPolicy	   *r = (RowSecurityPolicy *) lfirst(rc);
+
+		if (!equalPolicy(l,r))
+			return false;
+	}
+
+	return false;
+}
 
 /*
  *		RelationBuildDesc
@@ -967,7 +1048,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	else
 		relation->trigdesc = NULL;
 
-	if (relation->rd_rel->relhasrowsecurity)
+	if (relation->rd_rel->relrowsecurity)
 		RelationBuildRowSecurity(relation);
 	else
 		relation->rsdesc = NULL;
@@ -2104,6 +2185,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		Oid			save_relid = RelationGetRelid(relation);
 		bool		keep_tupdesc;
 		bool		keep_rules;
+		bool		keep_policies;
 
 		/* Build temporary entry, but don't link it into hashtable */
 		newrel = RelationBuildDesc(save_relid, false);
@@ -2117,6 +2199,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
+		keep_policies = equalRSDesc(relation->rsdesc, newrel->rsdesc);
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
@@ -2165,6 +2248,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(RuleLock *, rd_rules);
 			SWAPFIELD(MemoryContext, rd_rulescxt);
 		}
+		if (keep_policies)
+			SWAPFIELD(RowSecurityDesc *, rsdesc);
 		/* toast OID override must be preserved */
 		SWAPFIELD(Oid, rd_toastoid);
 		/* pgstat_info must be preserved */
@@ -3345,11 +3430,11 @@ RelationCacheInitializePhase3(void)
 		/*
 		 * Re-load the row security policies if the relation has them, since
 		 * they are not preserved in the cache.  Note that we can never NOT
-		 * have a policy while relhasrowsecurity is true-
+		 * have a policy while relrowsecurity is true,
 		 * RelationBuildRowSecurity will create a single default-deny policy
 		 * if there is no policy defined in pg_rowsecurity.
 		 */
-		if (relation->rd_rel->relhasrowsecurity && relation->rsdesc == NULL)
+		if (relation->rd_rel->relrowsecurity && relation->rsdesc == NULL)
 		{
 			RelationBuildRowSecurity(relation);
 

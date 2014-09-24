@@ -688,6 +688,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--enable-row-security</></term>
+      <listitem>
+       <para>
+        This option is relevant only when dumping the contents of a table
+        which has row security.  By default, pg_dump will set
+        <literal>ROW_SECURITY</literal> to <literal>OFF</literal>, to ensure
+        that all data is dumped from the table.  If the user does not have
+        sufficient privileges to bypass row security, then an error is thrown.
+        This parameter instructs <application>pg_dump</application> to set
+        row_security to 'ON' instead, allowing the user to dump the contents
+        of the table which they have access to.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--exclude-table-data=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>

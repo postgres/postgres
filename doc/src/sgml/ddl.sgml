@@ -1508,6 +1508,174 @@ REVOKE ALL ON accounts FROM PUBLIC;
   </para>
  </sect1>
 
+ <sect1 id="ddl-rowsecurity">
+  <title>Row Security Policies</title>
+
+  <indexterm zone="ddl-rowsecurity">
+   <primary>rowsecurity</primary>
+  </indexterm>
+
+  <indexterm zone="ddl-rowsecurity">
+   <primary>rls</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>policies</primary>
+   <see>policy</see>
+  </indexterm>
+
+  <indexterm zone="ddl-rowsecurity">
+   <primary>POLICY</primary>
+  </indexterm>
+
+  <para>
+   In addition to the <xref linkend="ddl-priv"> system available through
+   <xref linkend="sql-grant">, tables can have row security policies
+   which limit the rows returned for normal queries and rows which can
+   be added through data modification commands.  By default, tables do
+   not have any policies and all rows are visible and able to be added,
+   subject to the regular <xref linkend="ddl-priv"> system.  This is
+   also known to as Row Level Security.
+  </para>
+
+  <para>
+   When row security is enabled on a table with
+   <xref linkend="sql-altertable">, all normal access to the table
+   (excluding the owner) for selecting rows or adding rows must be through
+   a policy.  If no policy exists for the table, a default-deny policy is
+   used and no rows are visible or can be added.  Privileges which operate
+   at the whole table level such as <literal>TRUNCATE</>, and
+   <literal>REFERENCES</> are not subject to row security.
+  </para>
+
+  <para>
+   Row security policies can be specific to commands, or to roles, or to
+   both.  The commands available are <literal>SELECT</>, <literal>INSERT</>,
+   <literal>UPDATE</>, and <literal>DELETE</>.  Multiple roles can be
+   assigned to a given policy and normal role membership and inheiritance
+   rules apply.
+  </para>
+
+  <para>
+   To specify which rows are visible and what rows can be added to the
+   table with row security, an expression is required which returns a
+   boolean result.  This expression will be evaluated for each row prior
+   to other conditionals or functions which are part of the query.  The
+   one exception to this rule are <literal>leakproof</literal> functions,
+   which are guaranteed to not leak information.  Two expressions may be
+   specified to provide independent control over the rows which are
+   visible and the rows which are allowed to be added.  The expression
+   is run as part of the query and with the privileges of the user
+   running the query, however, security definer functions can be used in
+   the expression.
+  </para>
+
+  <para>
+   Enabling and disabling row security, as well as adding policies to a
+   table, is always the privilege of the owner only.
+  </para>
+
+  <para>
+   Policies are created using the <xref linkend="sql-createpolicy">
+   command, altered using the <xref linkend="sql-alterpolicy"> command,
+   and dropped using the <xref linkend="sql-droppolicy"> command.  To
+   enable and disable row security for a given table, use the
+   <xref linkend="sql-altertable"> command.
+  </para>
+
+  <para>
+   The table owners and superusers bypass the row security system when
+   querying a table, by default.  Row security can be enabled for
+   superusers and table owners by setting
+   <xref linkend="guc-row-security"> to <literal>force</literal>.  Any
+   user can request that row security be bypassed by setting
+   <xref linkend="guc-row-security"> to <literal>off</literal>.  If
+   the user does not have privileges to bypass row security when
+   querying a given table then an error will be returned instead.  Other
+   users can be granted the ability to bypass the row security system
+   with the <literal>BYPASSRLS</literal> role attribute.  This
+   attribute can only be set by a superuser.
+  </para>
+
+  <para>
+   Each policy has a name and multiple policies can be defined for a
+   table.  As policies are table-specific, each policy for a table must
+   have a unique name.  Different tables may have policies with the
+   same name.
+  </para>
+
+  <para>
+   When multiple policies apply to a given query, they are combined using
+   <literal>OR</literal>, similar to how a given role has the privileges
+   of all roles which they are a member of.
+  </para>
+
+  <para>
+   Referential integrity checks, such as unique or primary key constraints
+   and foreign key references, will bypass row security to ensure that
+   data integrity is maintained.  Care must be taken when developing
+   schemas and row level policies to avoid a "covert channel" leak of
+   information through these referntial integrity checks.
+  </para>
+
+  <para>
+   To enable row security for a table,
+   the <command>ALTER TABLE</command> is used.  For example, to enable
+   row level security for the table accounts, use:
+  </para>
+
+<programlisting>
+-- Create the table first
+CREATE TABLE accounts (manager text, company text, contact_email text);
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+</programlisting>
+
+  <para>
+   To create a policy on the account relation to allow the managers role
+   to view the rows of their accounts, the <command>CREATE POLICY</command>
+   command can be used:
+  </para>
+
+<programlisting>
+CREATE POLICY account_managers ON accounts TO managers
+    USING (manager = current_user);
+</programlisting>
+
+  <para>
+   If no role is specified, or the special <quote>user</quote> name
+   <literal>PUBLIC</literal> is used, then the policy applies to all
+   users on the system.  To allow all users to view their own row in
+   a user table, a simple policy can be used:
+  </para>
+
+<programlisting>
+CREATE POLICY user_policy ON users
+    USING (user = current_user);
+</programlisting>
+
+  <para>
+   To use a different policy for rows which are being added to the
+   table from those rows which are visible, the WITH CHECK clause
+   can be used.  This would allow all users to view all rows in the
+   users table, but only modify their own:
+  </para>
+
+<programlisting>
+CREATE POLICY user_policy ON users
+    USING (true)
+    WITH CHECK (user = current_user);
+</programlisting>
+
+  <para>
+   Row security can be disabled with the <command>ALTER TABLE</command>
+   also.  Note that disabling row security does not remove the
+   policies which are defined on the table, they are simply ignored
+   and all rows are visible and able to be added, subject to the
+   normal privileges system.
+  </para>
+
+ </sect1>
+
  <sect1 id="ddl-schemas">
   <title>Schemas</title>
 

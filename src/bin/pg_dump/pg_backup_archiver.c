@@ -376,10 +376,13 @@ RestoreArchive(Archive *AHX)
 	/*
 	 * Enable row-security if necessary.
 	 */
-	if (!ropt->enable_row_security)
-		ahprintf(AH, "SET row_security = off;\n");
-	else
-		ahprintf(AH, "SET row_security = on;\n");
+	if (PQserverVersion(AH->connection) >= 90500)
+	{
+		if (!ropt->enable_row_security)
+			ahprintf(AH, "SET row_security = off;\n");
+		else
+			ahprintf(AH, "SET row_security = on;\n");
+	}
 
 	/*
 	 * Establish important parameter values right away.

@@ -108,7 +108,7 @@ parse_row_security_command(const char *cmd_name)
 	char cmd;
 
 	if (!cmd_name)
-		elog(ERROR, "Unregonized command.");
+		elog(ERROR, "unregonized command");
 
 	if (strcmp(cmd_name, "all") == 0)
 		cmd = 0;
@@ -121,8 +121,7 @@ parse_row_security_command(const char *cmd_name)
 	else if (strcmp(cmd_name, "delete") == 0)
 		cmd = ACL_DELETE_CHR;
 	else
-		elog(ERROR, "Unregonized command.");
-		/* error unrecognized command */
+		elog(ERROR, "unregonized command");
 
 	return cmd;
 }
@@ -422,8 +421,8 @@ RemovePolicyById(Oid policy_id)
 	heap_close(rel, AccessExclusiveLock);
 
 	/*
-	 * Note that, unlike some of the other flags in pg_class, relhasrowsecurity
-	 * is not just an indication of if policies exist.  When relhasrowsecurity
+	 * Note that, unlike some of the other flags in pg_class, relrowsecurity
+	 * is not just an indication of if policies exist.  When relrowsecurity
 	 * is set (which can be done directly by the user or indirectly by creating
 	 * a policy on the table), then all access to the relation must be through
 	 * a policy.  If no policy is defined for the relation then a default-deny
@@ -484,7 +483,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	if (rseccmd == ACL_INSERT_CHR && stmt->qual != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Only WITH CHECK expression allowed for INSERT")));
+				 errmsg("only WITH CHECK expression allowed for INSERT")));
 
 
 	/* Collect role ids */
@@ -731,7 +730,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	if (!HeapTupleIsValid(rsec_tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("policy '%s' for does not exist on table %s",
+				 errmsg("policy \"%s\" on table \"%s\" does not exist",
 						stmt->policy_name,
 						RelationGetRelationName(target_table))));
 
@@ -850,7 +849,7 @@ rename_policy(RenameStmt *stmt)
 
 	pg_rowsecurity_rel = heap_open(RowSecurityRelationId, RowExclusiveLock);
 
-	/* First pass- check for conflict */
+	/* First pass -- check for conflict */
 
 	/* Add key - row security relation id. */
 	ScanKeyInit(&skey[0],
@@ -868,7 +867,7 @@ rename_policy(RenameStmt *stmt)
 							   RowSecurityRelidPolnameIndexId, true, NULL, 2,
 							   skey);
 
-	if (HeapTupleIsValid(rsec_tuple = systable_getnext(sscan)))
+	if (HeapTupleIsValid(systable_getnext(sscan)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("row-policy \"%s\" for table \"%s\" already exists",

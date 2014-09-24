@@ -65,7 +65,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	bool		relhasrules;	/* has (or has had) any rules */
 	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) derived classes */
-	bool		relhasrowsecurity;	/* has (or has had) row-security policy */
+	bool		relrowsecurity;	/* row-security is enabled or not */
 	bool		relispopulated; /* matview currently holds query results */
 	char		relreplident;	/* see REPLICA_IDENTITY_xxx constants  */
 	TransactionId relfrozenxid; /* all Xids < this are frozen in this rel */
@@ -119,7 +119,7 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relhasrules		21
 #define Anum_pg_class_relhastriggers	22
 #define Anum_pg_class_relhassubclass	23
-#define Anum_pg_class_relhasrowsecurity	24
+#define Anum_pg_class_relrowsecurity	24
 #define Anum_pg_class_relispopulated	25
 #define Anum_pg_class_relreplident		26
 #define Anum_pg_class_relfrozenxid		27

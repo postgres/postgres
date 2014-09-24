@@ -61,7 +61,7 @@ static void process_policies(List *policies, int rt_index,
 							 Expr **final_qual,
 							 Expr **final_with_check_qual,
 							 bool *hassublinks);
-static bool check_role_for_policy(RowSecurityPolicy *policy, Oid user_id);
+static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 
 /*
  * hook to allow extensions to apply their own security policy
@@ -177,7 +177,7 @@ prepend_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index)
 	 * all of them OR'd together.  However, to avoid the situation of an
 	 * extension granting more access to a table than the internal policies
 	 * would allow, the extension's policies are AND'd with the internal
-	 * policies.  In other words- extensions can only provide further
+	 * policies.  In other words - extensions can only provide further
 	 * filtering of the result set (or further reduce the set of records
 	 * allowed to be added).
 	 *
@@ -305,7 +305,8 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 		policy = (RowSecurityPolicy *) lfirst(item);
 
 		/* Always add ALL policies, if they exist. */
-		if (policy->cmd == '\0' && check_role_for_policy(policy, user_id))
+		if (policy->cmd == '\0' &&
+				check_role_for_policy(policy->roles, user_id))
 			policies = lcons(policy, policies);
 
 		/* Build the list of policies to return. */
@@ -313,23 +314,23 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 		{
 			case CMD_SELECT:
 				if (policy->cmd == ACL_SELECT_CHR
-					&& check_role_for_policy(policy, user_id))
+					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			case CMD_INSERT:
 				/* If INSERT then only need to add the WITH CHECK qual */
 				if (policy->cmd == ACL_INSERT_CHR
-					&& check_role_for_policy(policy, user_id))
+					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			case CMD_UPDATE:
 				if (policy->cmd == ACL_UPDATE_CHR
-					&& check_role_for_policy(policy, user_id))
+					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			case CMD_DELETE:
 				if (policy->cmd == ACL_DELETE_CHR
-					&& check_role_for_policy(policy, user_id))
+					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			default:
@@ -473,7 +474,7 @@ check_enable_rls(Oid relid, Oid checkAsUser)
 {
 	HeapTuple		tuple;
 	Form_pg_class	classform;
-	bool			relhasrowsecurity;
+	bool			relrowsecurity;
 	Oid				user_id = checkAsUser ? checkAsUser : GetUserId();
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
@@ -482,12 +483,12 @@ check_enable_rls(Oid relid, Oid checkAsUser)
 
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
-	relhasrowsecurity = classform->relhasrowsecurity;
+	relrowsecurity = classform->relrowsecurity;
 
 	ReleaseSysCache(tuple);
 
 	/* Nothing to do if the relation does not have RLS */
-	if (!relhasrowsecurity)
+	if (!relrowsecurity)
 		return RLS_NONE;
 
 	/*
@@ -537,19 +538,19 @@ check_enable_rls(Oid relid, Oid checkAsUser)
  * check_role_for_policy -
  *   determines if the policy should be applied for the current role
  */
-bool
-check_role_for_policy(RowSecurityPolicy *policy, Oid user_id)
+static bool
+check_role_for_policy(ArrayType *policy_roles, Oid user_id)
 {
 	int			i;
-	Oid		   *roles = (Oid *) ARR_DATA_PTR(policy->roles);
+	Oid		   *roles = (Oid *) ARR_DATA_PTR(policy_roles);
 
 	/* Quick fall-thru for policies applied to all roles */
 	if (roles[0] == ACL_ID_PUBLIC)
 		return true;
 
-	for (i = 0; i < ARR_DIMS(policy->roles)[0]; i++)
+	for (i = 0; i < ARR_DIMS(policy_roles)[0]; i++)
 	{
-		if (is_member_of_role(user_id, roles[i]))
+		if (has_privs_of_role(user_id, roles[i]))
 			return true;
 	}
 

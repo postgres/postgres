@@ -5457,9 +5457,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         The allowed values of <varname>row_security</> are
-        <literal>on</> (apply normally- not to superuser or table owner),
+        <literal>on</> (apply normally - not to superuser or table owner),
         <literal>off</> (fail if row security would be applied), and
-        <literal>force</> (apply always- even to superuser and table owner).
+        <literal>force</> (apply always - even to superuser and table owner).
        </para>
 
        <para>

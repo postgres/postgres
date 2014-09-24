@@ -119,7 +119,7 @@ CREATE VIEW pg_tables AS
         C.relhasindex AS hasindexes,
         C.relhasrules AS hasrules,
         C.relhastriggers AS hastriggers,
-        C.relhasrowsecurity AS hasrowsecurity
+        C.relrowsecurity AS rowsecurity
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
          LEFT JOIN pg_tablespace T ON (T.oid = C.reltablespace)
     WHERE C.relkind = 'r';
