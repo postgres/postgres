@@ -4218,9 +4218,9 @@ DESCR("build a json object from pairwise key/value inputs");
 DATA(insert OID = 3201 (  json_build_object    PGNSP PGUID 12 1 0 0 0 f f f f f f s 0 0 114  "" _null_ _null_ _null_ _null_ json_build_object_noargs _null_ _null_ _null_ ));
 DESCR("build an empty json object");
 DATA(insert OID = 3202 (  json_object	 PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 114 "1009" _null_ _null_ _null_ _null_ json_object _null_ _null_ _null_ ));
-DESCR("map text arrayof key value pais to json object");
+DESCR("map text array of key value pairs to json object");
 DATA(insert OID = 3203 (  json_object	 PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 114 "1009 1009" _null_ _null_ _null_ _null_ json_object_two_arg _null_ _null_ _null_ ));
-DESCR("map text arrayof key value pais to json object");
+DESCR("map text arrays of keys and values to json object");
 DATA(insert OID = 3176 (  to_json	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 114 "2283" _null_ _null_ _null_ _null_ to_json _null_ _null_ _null_ ));
 DESCR("map input to json");
 
