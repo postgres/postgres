@@ -1190,6 +1190,10 @@ creviterdissect(struct vars * v,
 			(k >= min_matches || min_matches - k < end - limit))
 			limit++;
 
+		/* if this is the last allowed sub-match, it must reach to the end */
+		if (k >= max_matches)
+			limit = end;
+
 		/* try to find an endpoint for the k'th sub-match */
 		endpts[k] = shortest(v, d, endpts[k - 1], limit, end,
 							 (chr **) NULL, (int *) NULL);
