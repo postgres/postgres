@@ -582,6 +582,7 @@ typedef NameData *Name;
 #define AssertMacro(condition)	((void)true)
 #define AssertArg(condition)
 #define AssertState(condition)
+#define AssertPointerAlignment(ptr, bndr)	((void)true)
 #define Trap(condition, errorType)
 #define TrapMacro(condition, errorType) (true)
 
@@ -592,6 +593,7 @@ typedef NameData *Name;
 #define AssertMacro(p)	((void) assert(p))
 #define AssertArg(condition) assert(condition)
 #define AssertState(condition) assert(condition)
+#define AssertPointerAlignment(ptr, bndr)	((void)true)
 #else							/* USE_ASSERT_CHECKING && !FRONTEND */
 
 /*
@@ -628,8 +630,15 @@ typedef NameData *Name;
 
 #define AssertState(condition) \
 		Trap(!(condition), "BadState")
-#endif   /* USE_ASSERT_CHECKING && !FRONTEND */
 
+/*
+ * Check that `ptr' is `bndr' aligned.
+ */
+#define AssertPointerAlignment(ptr, bndr) \
+	Trap(TYPEALIGN(bndr, (uintptr_t)(ptr)) != (uintptr_t)(ptr), \
+		 "UnalignedPointer")
+
+#endif   /* USE_ASSERT_CHECKING && !FRONTEND */
 
 /*
  * Macros to support compile-time assertion checks.
@@ -856,11 +865,21 @@ typedef NameData *Name;
  * The header must also declare the functions' prototypes, protected by
  * !PG_USE_INLINE.
  */
+
+/* declarations which are only visible when not inlining and in the .c file */
 #ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE static inline
 #else
 #define STATIC_IF_INLINE
 #endif   /* PG_USE_INLINE */
+
+/* declarations which are marked inline when inlining, extern otherwise */
+#ifdef PG_USE_INLINE
+#define STATIC_IF_INLINE_DECLARE static inline
+#else
+#define STATIC_IF_INLINE_DECLARE extern
+#endif   /* PG_USE_INLINE */
+
 
 /* ----------------------------------------------------------------
  *				Section 8:	random stuff

@@ -179,6 +179,12 @@ PGAC_ARG_BOOL(enable, spinlocks, yes,
               [do not use spinlocks])
 
 #
+# Atomic operations
+#
+PGAC_ARG_BOOL(enable, atomics, yes,
+              [do not use atomic operations])
+
+#
 # --enable-debug adds -g to compiler flags
 #
 PGAC_ARG_BOOL(enable, debug, no,
@@ -936,6 +942,13 @@ else
 *** Not using spinlocks will cause poor performance.])
 fi
 
+if test "$enable_atomics" = yes; then
+  AC_DEFINE(HAVE_ATOMICS, 1, [Define to 1 if you want to use atomics if available.])
+else
+  AC_MSG_WARN([
+*** Not using atomic operations will cause poor performance.])
+fi
+
 if test "$with_gssapi" = yes ; then
   if test "$PORTNAME" != "win32"; then
     AC_SEARCH_LIBS(gss_init_sec_context, [gssapi_krb5 gss 'gssapi -lkrb5 -lcrypto'], [],
@@ -1003,7 +1016,7 @@ AC_SUBST(UUID_LIBS)
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1467,17 +1480,6 @@ fi
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
 
-AC_CACHE_CHECK([for builtin locking functions], pgac_cv_gcc_int_atomics,
-[AC_TRY_LINK([],
-  [int lock = 0;
-   __sync_lock_test_and_set(&lock, 1);
-   __sync_lock_release(&lock);],
-  [pgac_cv_gcc_int_atomics="yes"],
-  [pgac_cv_gcc_int_atomics="no"])])
-if test x"$pgac_cv_gcc_int_atomics" = x"yes"; then
-  AC_DEFINE(HAVE_GCC_INT_ATOMICS, 1, [Define to 1 if you have __sync_lock_test_and_set(int *) and friends.])
-fi
-
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"
 
@@ -1746,6 +1748,14 @@ AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 # C, but is missing on some old platforms.
 AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
 
+# Check for various atomic operations now that we have checked how to declare
+# 64bit integers.
+PGAC_HAVE_GCC__SYNC_CHAR_TAS
+PGAC_HAVE_GCC__SYNC_INT32_TAS
+PGAC_HAVE_GCC__SYNC_INT32_CAS
+PGAC_HAVE_GCC__SYNC_INT64_CAS
+PGAC_HAVE_GCC__ATOMIC_INT32_CAS
+PGAC_HAVE_GCC__ATOMIC_INT64_CAS
 
 if test "$PORTNAME" != "win32"
 then

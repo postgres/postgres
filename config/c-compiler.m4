@@ -300,3 +300,101 @@ if test x"$Ac_cachevar" = x"yes"; then
 fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_PROG_CC_LDFLAGS_OPT
+
+# PGAC_HAVE_GCC__SYNC_CHAR_TAS
+# -------------------------
+# Check if the C compiler understands __sync_lock_test_and_set(char),
+# and define HAVE_GCC__SYNC_CHAR_TAS
+#
+# NB: There are platforms where test_and_set is available but compare_and_swap
+# is not, so test this separately.
+# NB: Some platforms only do 32bit tas, others only do 8bit tas. Test both.
+AC_DEFUN([PGAC_HAVE_GCC__SYNC_CHAR_TAS],
+[AC_CACHE_CHECK(for builtin __sync char locking functions, pgac_cv_gcc_sync_char_tas,
+[AC_TRY_LINK([],
+  [char lock = 0;
+   __sync_lock_test_and_set(&lock, 1);
+   __sync_lock_release(&lock);],
+  [pgac_cv_gcc_sync_char_tas="yes"],
+  [pgac_cv_gcc_sync_char_tas="no"])])
+if test x"$pgac_cv_gcc_sync_char_tas" = x"yes"; then
+  AC_DEFINE(HAVE_GCC__SYNC_CHAR_TAS, 1, [Define to 1 if you have __sync_lock_test_and_set(char *) and friends.])
+fi])# PGAC_HAVE_GCC__SYNC_CHAR_TAS
+
+# PGAC_HAVE_GCC__SYNC_INT32_TAS
+# -------------------------
+# Check if the C compiler understands __sync_lock_test_and_set(),
+# and define HAVE_GCC__SYNC_INT32_TAS
+AC_DEFUN([PGAC_HAVE_GCC__SYNC_INT32_TAS],
+[AC_CACHE_CHECK(for builtin __sync int32 locking functions, pgac_cv_gcc_sync_int32_tas,
+[AC_TRY_LINK([],
+  [int lock = 0;
+   __sync_lock_test_and_set(&lock, 1);
+   __sync_lock_release(&lock);],
+  [pgac_cv_gcc_sync_int32_tas="yes"],
+  [pgac_cv_gcc_sync_int32_tas="no"])])
+if test x"$pgac_cv_gcc_sync_int32_tas" = x"yes"; then
+  AC_DEFINE(HAVE_GCC__SYNC_INT32_TAS, 1, [Define to 1 if you have __sync_lock_test_and_set(int *) and friends.])
+fi])# PGAC_HAVE_GCC__SYNC_INT32_TAS
+
+# PGAC_HAVE_GCC__SYNC_INT32_CAS
+# -------------------------
+# Check if the C compiler understands __sync_compare_and_swap() for 32bit
+# types, and define HAVE_GCC__SYNC_INT32_CAS if so.
+AC_DEFUN([PGAC_HAVE_GCC__SYNC_INT32_CAS],
+[AC_CACHE_CHECK(for builtin __sync int32 atomic operations, pgac_cv_gcc_sync_int32_cas,
+[AC_TRY_LINK([],
+  [int val = 0;
+   __sync_val_compare_and_swap(&val, 0, 37);],
+  [pgac_cv_gcc_sync_int32_cas="yes"],
+  [pgac_cv_gcc_sync_int32_cas="no"])])
+if test x"$pgac_cv_gcc_sync_int32_cas" = x"yes"; then
+  AC_DEFINE(HAVE_GCC__SYNC_INT32_CAS, 1, [Define to 1 if you have __sync_compare_and_swap(int *, int, int).])
+fi])# PGAC_HAVE_GCC__SYNC_INT32_CAS
+
+# PGAC_HAVE_GCC__SYNC_INT64_CAS
+# -------------------------
+# Check if the C compiler understands __sync_compare_and_swap() for 64bit
+# types, and define HAVE_GCC__SYNC_INT64_CAS if so.
+AC_DEFUN([PGAC_HAVE_GCC__SYNC_INT64_CAS],
+[AC_CACHE_CHECK(for builtin __sync int64 atomic operations, pgac_cv_gcc_sync_int64_cas,
+[AC_TRY_LINK([],
+  [PG_INT64_TYPE lock = 0;
+   __sync_val_compare_and_swap(&lock, 0, (PG_INT64_TYPE) 37);],
+  [pgac_cv_gcc_sync_int64_cas="yes"],
+  [pgac_cv_gcc_sync_int64_cas="no"])])
+if test x"$pgac_cv_gcc_sync_int64_cas" = x"yes"; then
+  AC_DEFINE(HAVE_GCC__SYNC_INT64_CAS, 1, [Define to 1 if you have __sync_compare_and_swap(int64 *, int64, int64).])
+fi])# PGAC_HAVE_GCC__SYNC_INT64_CAS
+
+# PGAC_HAVE_GCC__ATOMIC_INT32_CAS
+# -------------------------
+# Check if the C compiler understands __atomic_compare_exchange_n() for 32bit
+# types, and define HAVE_GCC__ATOMIC_INT32_CAS if so.
+AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT32_CAS],
+[AC_CACHE_CHECK(for builtin __atomic int32 atomic operations, pgac_cv_gcc_atomic_int32_cas,
+[AC_TRY_LINK([],
+  [int val = 0;
+   int expect = 0;
+   __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);],
+  [pgac_cv_gcc_atomic_int32_cas="yes"],
+  [pgac_cv_gcc_atomic_int32_cas="no"])])
+if test x"$pgac_cv_gcc_atomic_int32_cas" = x"yes"; then
+  AC_DEFINE(HAVE_GCC__ATOMIC_INT32_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int *, int *, int).])
+fi])# PGAC_HAVE_GCC__ATOMIC_INT32_CAS
+
+# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
+# -------------------------
+# Check if the C compiler understands __atomic_compare_exchange_n() for 64bit
+# types, and define HAVE_GCC__ATOMIC_INT64_CAS if so.
+AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
+[AC_CACHE_CHECK(for builtin __atomic int64 atomic operations, pgac_cv_gcc_atomic_int64_cas,
+[AC_TRY_LINK([],
+  [PG_INT64_TYPE val = 0;
+   PG_INT64_TYPE expect = 0;
+   __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);],
+  [pgac_cv_gcc_atomic_int64_cas="yes"],
+  [pgac_cv_gcc_atomic_int64_cas="no"])])
+if test x"$pgac_cv_gcc_atomic_int64_cas" = x"yes"; then
+  AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).])
+fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS

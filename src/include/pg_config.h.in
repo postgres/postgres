@@ -87,6 +87,12 @@
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
+/* Define to 1 if you want to use atomics if available. */
+#undef HAVE_ATOMICS
+
+/* Define to 1 if you have the <atomic.h> header file. */
+#undef HAVE_ATOMIC_H
+
 /* Define to 1 if you have the `cbrt' function. */
 #undef HAVE_CBRT
 
@@ -173,8 +179,24 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #undef HAVE_FUNCNAME__FUNCTION
 
+/* Define to 1 if you have __atomic_compare_exchange_n(int *, int *, int). */
+#undef HAVE_GCC__ATOMIC_INT32_CAS
+
+/* Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).
+   */
+#undef HAVE_GCC__ATOMIC_INT64_CAS
+
+/* Define to 1 if you have __sync_lock_test_and_set(char *) and friends. */
+#undef HAVE_GCC__SYNC_CHAR_TAS
+
+/* Define to 1 if you have __sync_compare_and_swap(int *, int, int). */
+#undef HAVE_GCC__SYNC_INT32_CAS
+
 /* Define to 1 if you have __sync_lock_test_and_set(int *) and friends. */
-#undef HAVE_GCC_INT_ATOMICS
+#undef HAVE_GCC__SYNC_INT32_TAS
+
+/* Define to 1 if you have __sync_compare_and_swap(int64 *, int64, int64). */
+#undef HAVE_GCC__SYNC_INT64_CAS
 
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO

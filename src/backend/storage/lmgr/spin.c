@@ -67,7 +67,7 @@ SpinlockSemas(void)
 int
 SpinlockSemas(void)
 {
-	return NUM_SPINLOCK_SEMAPHORES;
+	return NUM_SPINLOCK_SEMAPHORES + NUM_ATOMICS_SEMAPHORES;
 }
 
 /*
@@ -77,8 +77,9 @@ extern void
 SpinlockSemaInit(PGSemaphore spinsemas)
 {
 	int			i;
+	int			nsemas = SpinlockSemas();
 
-	for (i = 0; i < NUM_SPINLOCK_SEMAPHORES; ++i)
+	for (i = 0; i < nsemas; ++i)
 		PGSemaphoreCreate(&spinsemas[i]);
 	SpinlockSemaArray = spinsemas;
 }
@@ -88,7 +89,7 @@ SpinlockSemaInit(PGSemaphore spinsemas)
  */
 
 void
-s_init_lock_sema(volatile slock_t *lock)
+s_init_lock_sema(volatile slock_t *lock, bool nested)
 {
 	static int	counter = 0;
 

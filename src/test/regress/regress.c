@@ -18,6 +18,7 @@
 #include "executor/executor.h"
 #include "executor/spi.h"
 #include "miscadmin.h"
+#include "port/atomics.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/rel.h"
@@ -864,4 +865,242 @@ wait_pid(PG_FUNCTION_ARGS)
 		elog(ERROR, "could not check PID %d liveness: %m", pid);
 
 	PG_RETURN_VOID();
+}
+
+#ifndef PG_HAVE_ATOMIC_FLAG_SIMULATION
+static void
+test_atomic_flag(void)
+{
+	pg_atomic_flag flag;
+
+	pg_atomic_init_flag(&flag);
+
+	if (!pg_atomic_unlocked_test_flag(&flag))
+		elog(ERROR, "flag: unexpectedly set");
+
+	if (!pg_atomic_test_set_flag(&flag))
+		elog(ERROR, "flag: couldn't set");
+
+	if (pg_atomic_unlocked_test_flag(&flag))
+		elog(ERROR, "flag: unexpectedly unset");
+
+	if (pg_atomic_test_set_flag(&flag))
+		elog(ERROR, "flag: set spuriously #2");
+
+	pg_atomic_clear_flag(&flag);
+
+	if (!pg_atomic_unlocked_test_flag(&flag))
+		elog(ERROR, "flag: unexpectedly set #2");
+
+	if (!pg_atomic_test_set_flag(&flag))
+		elog(ERROR, "flag: couldn't set");
+
+	pg_atomic_clear_flag(&flag);
+}
+#endif /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
+
+static void
+test_atomic_uint32(void)
+{
+	pg_atomic_uint32 var;
+	uint32 expected;
+	int i;
+
+	pg_atomic_init_u32(&var, 0);
+
+	if (pg_atomic_read_u32(&var) != 0)
+		elog(ERROR, "atomic_read_u32() #1 wrong");
+
+	pg_atomic_write_u32(&var, 3);
+
+	if (pg_atomic_read_u32(&var) != 3)
+		elog(ERROR, "atomic_read_u32() #2 wrong");
+
+	if (pg_atomic_fetch_add_u32(&var, 1) != 3)
+		elog(ERROR, "atomic_fetch_add_u32() #1 wrong");
+
+	if (pg_atomic_fetch_sub_u32(&var, 1) != 4)
+		elog(ERROR, "atomic_fetch_sub_u32() #1 wrong");
+
+	if (pg_atomic_sub_fetch_u32(&var, 3) != 0)
+		elog(ERROR, "atomic_sub_fetch_u32() #1 wrong");
+
+	if (pg_atomic_add_fetch_u32(&var, 10) != 10)
+		elog(ERROR, "atomic_add_fetch_u32() #1 wrong");
+
+	if (pg_atomic_exchange_u32(&var, 5) != 10)
+		elog(ERROR, "pg_atomic_exchange_u32() #1 wrong");
+
+	if (pg_atomic_exchange_u32(&var, 0) != 5)
+		elog(ERROR, "pg_atomic_exchange_u32() #0 wrong");
+
+	/* test around numerical limits */
+	if (pg_atomic_fetch_add_u32(&var, INT_MAX) != 0)
+		elog(ERROR, "pg_atomic_fetch_add_u32() #2 wrong");
+
+	if (pg_atomic_fetch_add_u32(&var, INT_MAX) != INT_MAX)
+		elog(ERROR, "pg_atomic_add_fetch_u32() #3 wrong");
+
+	pg_atomic_fetch_add_u32(&var, 1); /* top up to UINT_MAX */
+
+	if (pg_atomic_read_u32(&var) != UINT_MAX)
+		elog(ERROR, "atomic_read_u32() #2 wrong");
+
+	if (pg_atomic_fetch_sub_u32(&var, INT_MAX) != UINT_MAX)
+		elog(ERROR, "pg_atomic_fetch_sub_u32() #2 wrong");
+
+	if (pg_atomic_read_u32(&var) != (uint32)INT_MAX + 1)
+		elog(ERROR, "atomic_read_u32() #3 wrong: %u", pg_atomic_read_u32(&var));
+
+	expected = pg_atomic_sub_fetch_u32(&var, INT_MAX);
+	if (expected != 1)
+		elog(ERROR, "pg_atomic_sub_fetch_u32() #3 wrong: %u", expected);
+
+	pg_atomic_sub_fetch_u32(&var, 1);
+
+	/* fail exchange because of old expected */
+	expected = 10;
+	if (pg_atomic_compare_exchange_u32(&var, &expected, 1))
+		elog(ERROR, "atomic_compare_exchange_u32() changed value spuriously");
+
+	/* CAS is allowed to fail due to interrupts, try a couple of times */
+	for (i = 0; i < 1000; i++)
+	{
+		expected = 0;
+		if (!pg_atomic_compare_exchange_u32(&var, &expected, 1))
+			break;
+	}
+	if (i == 1000)
+		elog(ERROR, "atomic_compare_exchange_u32() never succeeded");
+	if (pg_atomic_read_u32(&var) != 1)
+		elog(ERROR, "atomic_compare_exchange_u32() didn't set value properly");
+
+	pg_atomic_write_u32(&var, 0);
+
+	/* try setting flagbits */
+	if (pg_atomic_fetch_or_u32(&var, 1) & 1)
+		elog(ERROR, "pg_atomic_fetch_or_u32() #1 wrong");
+
+	if (!(pg_atomic_fetch_or_u32(&var, 2) & 1))
+		elog(ERROR, "pg_atomic_fetch_or_u32() #2 wrong");
+
+	if (pg_atomic_read_u32(&var) != 3)
+		elog(ERROR, "invalid result after pg_atomic_fetch_or_u32()");
+
+	/* try clearing flagbits */
+	if ((pg_atomic_fetch_and_u32(&var, ~2) & 3) != 3)
+		elog(ERROR, "pg_atomic_fetch_and_u32() #1 wrong");
+
+	if (pg_atomic_fetch_and_u32(&var, ~1) != 1)
+		elog(ERROR, "pg_atomic_fetch_and_u32() #2 wrong: is %u",
+			 pg_atomic_read_u32(&var));
+	/* no bits set anymore */
+	if (pg_atomic_fetch_and_u32(&var, ~0) != 0)
+		elog(ERROR, "pg_atomic_fetch_and_u32() #3 wrong");
+}
+
+#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
+static void
+test_atomic_uint64(void)
+{
+	pg_atomic_uint64 var;
+	uint64 expected;
+	int i;
+
+	pg_atomic_init_u64(&var, 0);
+
+	if (pg_atomic_read_u64(&var) != 0)
+		elog(ERROR, "atomic_read_u64() #1 wrong");
+
+	pg_atomic_write_u64(&var, 3);
+
+	if (pg_atomic_read_u64(&var) != 3)
+		elog(ERROR, "atomic_read_u64() #2 wrong");
+
+	if (pg_atomic_fetch_add_u64(&var, 1) != 3)
+		elog(ERROR, "atomic_fetch_add_u64() #1 wrong");
+
+	if (pg_atomic_fetch_sub_u64(&var, 1) != 4)
+		elog(ERROR, "atomic_fetch_sub_u64() #1 wrong");
+
+	if (pg_atomic_sub_fetch_u64(&var, 3) != 0)
+		elog(ERROR, "atomic_sub_fetch_u64() #1 wrong");
+
+	if (pg_atomic_add_fetch_u64(&var, 10) != 10)
+		elog(ERROR, "atomic_add_fetch_u64() #1 wrong");
+
+	if (pg_atomic_exchange_u64(&var, 5) != 10)
+		elog(ERROR, "pg_atomic_exchange_u64() #1 wrong");
+
+	if (pg_atomic_exchange_u64(&var, 0) != 5)
+		elog(ERROR, "pg_atomic_exchange_u64() #0 wrong");
+
+	/* fail exchange because of old expected */
+	expected = 10;
+	if (pg_atomic_compare_exchange_u64(&var, &expected, 1))
+		elog(ERROR, "atomic_compare_exchange_u64() changed value spuriously");
+
+	/* CAS is allowed to fail due to interrupts, try a couple of times */
+	for (i = 0; i < 100; i++)
+	{
+		expected = 0;
+		if (!pg_atomic_compare_exchange_u64(&var, &expected, 1))
+			break;
+	}
+	if (i == 100)
+		elog(ERROR, "atomic_compare_exchange_u64() never succeeded");
+	if (pg_atomic_read_u64(&var) != 1)
+		elog(ERROR, "atomic_compare_exchange_u64() didn't set value properly");
+
+	pg_atomic_write_u64(&var, 0);
+
+	/* try setting flagbits */
+	if (pg_atomic_fetch_or_u64(&var, 1) & 1)
+		elog(ERROR, "pg_atomic_fetch_or_u64() #1 wrong");
+
+	if (!(pg_atomic_fetch_or_u64(&var, 2) & 1))
+		elog(ERROR, "pg_atomic_fetch_or_u64() #2 wrong");
+
+	if (pg_atomic_read_u64(&var) != 3)
+		elog(ERROR, "invalid result after pg_atomic_fetch_or_u64()");
+
+	/* try clearing flagbits */
+	if ((pg_atomic_fetch_and_u64(&var, ~2) & 3) != 3)
+		elog(ERROR, "pg_atomic_fetch_and_u64() #1 wrong");
+
+	if (pg_atomic_fetch_and_u64(&var, ~1) != 1)
+		elog(ERROR, "pg_atomic_fetch_and_u64() #2 wrong: is "UINT64_FORMAT,
+			 pg_atomic_read_u64(&var));
+	/* no bits set anymore */
+	if (pg_atomic_fetch_and_u64(&var, ~0) != 0)
+		elog(ERROR, "pg_atomic_fetch_and_u64() #3 wrong");
+}
+#endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
+
+
+PG_FUNCTION_INFO_V1(test_atomic_ops);
+Datum
+test_atomic_ops(PG_FUNCTION_ARGS)
+{
+	/* ---
+	 * Can't run the test under the semaphore emulation, it doesn't handle
+	 * checking two edge cases well:
+	 * - pg_atomic_unlocked_test_flag() always returns true
+	 * - locking a already locked flag blocks
+	 * it seems better to not test the semaphore fallback here, than weaken
+	 * the checks for the other cases. The semaphore code will be the same
+	 * everywhere, whereas the efficient implementations wont.
+	 * ---
+	 */
+#ifndef PG_HAVE_ATOMIC_FLAG_SIMULATION
+	test_atomic_flag();
+#endif
+
+	test_atomic_uint32();
+
+#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
+	test_atomic_uint64();
+#endif
+
+	PG_RETURN_BOOL(true);
 }

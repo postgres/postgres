@@ -309,7 +309,7 @@ tas(volatile slock_t *lock)
  * than other widths.
  */
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(__aarch64)
-#ifdef HAVE_GCC_INT_ATOMICS
+#ifdef HAVE_GCC__SYNC_INT32_TAS
 #define HAS_TEST_AND_SET
 
 #define TAS(lock) tas(lock)
@@ -324,7 +324,7 @@ tas(volatile slock_t *lock)
 
 #define S_UNLOCK(lock) __sync_lock_release(lock)
 
-#endif	 /* HAVE_GCC_INT_ATOMICS */
+#endif	 /* HAVE_GCC__SYNC_INT32_TAS */
 #endif	 /* __arm__ || __arm || __aarch64__ || __aarch64 */
 
 
@@ -889,12 +889,12 @@ typedef int slock_t;
 
 extern bool s_lock_free_sema(volatile slock_t *lock);
 extern void s_unlock_sema(volatile slock_t *lock);
-extern void s_init_lock_sema(volatile slock_t *lock);
+extern void s_init_lock_sema(volatile slock_t *lock, bool nested);
 extern int	tas_sema(volatile slock_t *lock);
 
 #define S_LOCK_FREE(lock)	s_lock_free_sema(lock)
 #define S_UNLOCK(lock)	 s_unlock_sema(lock)
-#define S_INIT_LOCK(lock)	s_init_lock_sema(lock)
+#define S_INIT_LOCK(lock)	s_init_lock_sema(lock, false)
 #define TAS(lock)	tas_sema(lock)
 
 
@@ -955,6 +955,7 @@ extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 #define TAS_SPIN(lock)	TAS(lock)
 #endif	 /* TAS_SPIN */
 
+extern slock_t dummy_spinlock;
 
 /*
  * Platform-independent out-of-line support routines

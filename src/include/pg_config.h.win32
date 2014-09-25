@@ -334,6 +334,9 @@
 /* Define to 1 if you have spinlocks. */
 #define HAVE_SPINLOCKS 1
 
+/* Define to 1 if you have atomics. */
+#define HAVE_ATOMICS 1
+
 /* Define to 1 if you have the `srandom' function. */
 /* #undef HAVE_SRANDOM */
 

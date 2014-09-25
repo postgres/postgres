@@ -64,3 +64,8 @@ DROP TABLE lock_tbl2;
 DROP TABLE lock_tbl1;
 DROP SCHEMA lock_schema1 CASCADE;
 DROP ROLE regress_rol_lock1;
+
+
+-- atomic ops tests
+RESET search_path;
+SELECT test_atomic_ops();

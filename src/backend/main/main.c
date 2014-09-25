@@ -30,6 +30,7 @@
 #include "common/username.h"
 #include "postmaster/postmaster.h"
 #include "storage/barrier.h"
+#include "storage/s_lock.h"
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
