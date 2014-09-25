@@ -89,7 +89,7 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
  * if you remove a lock, consider leaving a gap in the numbering sequence for
  * the benefit of DTrace and other external debugging scripts.
  */
-#define BufFreelistLock				(&MainLWLockArray[0].lock)
+/* 0 is available; was formerly BufFreelistLock */
 #define ShmemIndexLock				(&MainLWLockArray[1].lock)
 #define OidGenLock					(&MainLWLockArray[2].lock)
 #define XidGenLock					(&MainLWLockArray[3].lock)

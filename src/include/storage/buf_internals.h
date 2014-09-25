@@ -115,7 +115,7 @@ typedef struct buftag
  * Note: buf_hdr_lock must be held to examine or change the tag, flags,
  * usage_count, refcount, or wait_backend_pid fields.  buf_id field never
  * changes after initialization, so does not need locking.  freeNext is
- * protected by the BufFreelistLock not buf_hdr_lock.  The LWLocks can take
+ * protected by the buffer_strategy_lock not buf_hdr_lock.  The LWLocks can take
  * care of themselves.  The buf_hdr_lock is *not* used to control access to
  * the data in the buffer!
  *
@@ -185,8 +185,7 @@ extern BufferDesc *LocalBufferDescriptors;
  */
 
 /* freelist.c */
-extern volatile BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy,
-				  bool *lock_held);
+extern volatile BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy);
 extern void StrategyFreeBuffer(volatile BufferDesc *buf);
 extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
 					 volatile BufferDesc *buf);

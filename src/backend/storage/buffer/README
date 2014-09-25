@@ -125,14 +125,12 @@ bits of the tag's hash value.  The rules stated above apply to each partition
 independently.  If it is necessary to lock more than one partition at a time,
 they must be locked in partition-number order to avoid risk of deadlock.
 
-* A separate system-wide LWLock, the BufFreelistLock, provides mutual
+* A separate system-wide spinlock, buffer_strategy_lock, provides mutual
 exclusion for operations that access the buffer free list or select
-buffers for replacement.  This is always taken in exclusive mode since
-there are no read-only operations on those data structures.  The buffer
-management policy is designed so that BufFreelistLock need not be taken
-except in paths that will require I/O, and thus will be slow anyway.
-(Details appear below.)  It is never necessary to hold the BufMappingLock
-and the BufFreelistLock at the same time.
+buffers for replacement.  A spinlock is used here rather than a lightweight
+lock for efficiency; no other locks of any sort should be acquired while
+buffer_strategy_lock is held.  This is essential to allow buffer replacement
+to happen in multiple backends with reasonable concurrency.
 
 * Each buffer header contains a spinlock that must be taken when examining
 or changing fields of that buffer header.  This allows operations such as
@@ -165,7 +163,7 @@ consider their pages unlikely to be needed soon; however, the current
 algorithm never does that.  The list is singly-linked using fields in the
 buffer headers; we maintain head and tail pointers in global variables.
 (Note: although the list links are in the buffer headers, they are
-considered to be protected by the BufFreelistLock, not the buffer-header
+considered to be protected by the buffer_strategy_lock, not the buffer-header
 spinlocks.)  To choose a victim buffer to recycle when there are no free
 buffers available, we use a simple clock-sweep algorithm, which avoids the
 need to take system-wide locks during common operations.  It works like
@@ -178,25 +176,26 @@ buffer reference count, so it's nearly free.)
 
 The "clock hand" is a buffer index, nextVictimBuffer, that moves circularly
 through all the available buffers.  nextVictimBuffer is protected by the
-BufFreelistLock.
+buffer_strategy_lock.
 
 The algorithm for a process that needs to obtain a victim buffer is:
 
-1. Obtain BufFreelistLock.
+1. Obtain buffer_strategy_lock.
 
-2. If buffer free list is nonempty, remove its head buffer.  If the buffer
-is pinned or has a nonzero usage count, it cannot be used; ignore it and
-return to the start of step 2.  Otherwise, pin the buffer, release
-BufFreelistLock, and return the buffer.
+2. If buffer free list is nonempty, remove its head buffer.  Release
+buffer_strategy_lock.  If the buffer is pinned or has a nonzero usage count,
+it cannot be used; ignore it go back to step 1.  Otherwise, pin the buffer,
+and return it.
 
-3. Otherwise, select the buffer pointed to by nextVictimBuffer, and
-circularly advance nextVictimBuffer for next time.
+3. Otherwise, the buffer free list is empty.  Select the buffer pointed to by
+nextVictimBuffer, and circularly advance nextVictimBuffer for next time.
+Release buffer_strategy_lock.
 
 4. If the selected buffer is pinned or has a nonzero usage count, it cannot
-be used.  Decrement its usage count (if nonzero) and return to step 3 to
-examine the next buffer.
+be used.  Decrement its usage count (if nonzero), reacquire
+buffer_strategy_lock, and return to step 3 to examine the next buffer.
 
-5. Pin the selected buffer, release BufFreelistLock, and return the buffer.
+5. Pin the selected buffer, and return.
 
 (Note that if the selected buffer is dirty, we will have to write it out
 before we can recycle it; if someone else pins the buffer meanwhile we will
@@ -259,7 +258,7 @@ dirty and not pinned nor marked with a positive usage count.  It pins,
 writes, and releases any such buffer.
 
 If we can assume that reading nextVictimBuffer is an atomic action, then
-the writer doesn't even need to take the BufFreelistLock in order to look
+the writer doesn't even need to take buffer_strategy_lock in order to look
 for buffers to write; it needs only to spinlock each buffer header for long
 enough to check the dirtybit.  Even without that assumption, the writer
 only needs to take the lock long enough to read the variable value, not

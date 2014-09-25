@@ -889,15 +889,11 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	/* Loop here in case we have to try another victim buffer */
 	for (;;)
 	{
-		bool		lock_held;
-
 		/*
 		 * Select a victim buffer.  The buffer is returned with its header
-		 * spinlock still held!  Also (in most cases) the BufFreelistLock is
-		 * still held, since it would be bad to hold the spinlock while
-		 * possibly waking up other processes.
+		 * spinlock still held!
 		 */
-		buf = StrategyGetBuffer(strategy, &lock_held);
+		buf = StrategyGetBuffer(strategy);
 
 		Assert(buf->refcount == 0);
 
@@ -906,10 +902,6 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 		/* Pin the buffer and then release the buffer spinlock */
 		PinBuffer_Locked(buf);
-
-		/* Now it's safe to release the freelist lock */
-		if (lock_held)
-			LWLockRelease(BufFreelistLock);
 
 		/*
 		 * If the buffer was dirty, try to write it out.  There is a race
