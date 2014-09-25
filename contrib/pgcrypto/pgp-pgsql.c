@@ -31,6 +31,7 @@
 
 #include "postgres.h"
 
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
@@ -820,23 +821,20 @@ pg_armor(PG_FUNCTION_ARGS)
 {
 	bytea	   *data;
 	text	   *res;
-	int			data_len,
-				res_len,
-				guess_len;
+	int			data_len;
+	StringInfoData buf;
 
 	data = PG_GETARG_BYTEA_P(0);
 	data_len = VARSIZE(data) - VARHDRSZ;
 
-	guess_len = pgp_armor_enc_len(data_len);
-	res = palloc(VARHDRSZ + guess_len);
+	initStringInfo(&buf);
 
-	res_len = pgp_armor_encode((uint8 *) VARDATA(data), data_len,
-							   (uint8 *) VARDATA(res));
-	if (res_len > guess_len)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("Overflow - encode estimate too small")));
-	SET_VARSIZE(res, VARHDRSZ + res_len);
+	pgp_armor_encode((uint8 *) VARDATA(data), data_len, &buf);
+
+	res = palloc(VARHDRSZ + buf.len);
+	SET_VARSIZE(res, VARHDRSZ + buf.len);
+	memcpy(VARDATA(res), buf.data, buf.len);
+	pfree(buf.data);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);
@@ -847,27 +845,24 @@ pg_dearmor(PG_FUNCTION_ARGS)
 {
 	text	   *data;
 	bytea	   *res;
-	int			data_len,
-				res_len,
-				guess_len;
+	int			data_len;
+	int			ret;
+	StringInfoData buf;
 
 	data = PG_GETARG_TEXT_P(0);
 	data_len = VARSIZE(data) - VARHDRSZ;
 
-	guess_len = pgp_armor_dec_len(data_len);
-	res = palloc(VARHDRSZ + guess_len);
+	initStringInfo(&buf);
 
-	res_len = pgp_armor_decode((uint8 *) VARDATA(data), data_len,
-							   (uint8 *) VARDATA(res));
-	if (res_len < 0)
+	ret = pgp_armor_decode((uint8 *) VARDATA(data), data_len, &buf);
+	if (ret < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("%s", px_strerror(res_len))));
-	if (res_len > guess_len)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("Overflow - decode estimate too small")));
-	SET_VARSIZE(res, VARHDRSZ + res_len);
+				 errmsg("%s", px_strerror(ret))));
+	res = palloc(VARHDRSZ + buf.len);
+	SET_VARSIZE(res, VARHDRSZ + buf.len);
+	memcpy(VARDATA(res), buf.data, buf.len);
+	pfree(buf.data);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);

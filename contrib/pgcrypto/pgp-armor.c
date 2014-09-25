@@ -203,38 +203,33 @@ crc24(const uint8 *data, unsigned len)
 	return crc & 0xffffffL;
 }
 
-int
-pgp_armor_encode(const uint8 *src, unsigned len, uint8 *dst)
+void
+pgp_armor_encode(const uint8 *src, int len, StringInfo dst)
 {
-	int			n;
-	uint8	   *pos = dst;
+	int			res;
+	unsigned	b64len;
 	unsigned	crc = crc24(src, len);
 
-	n = strlen(armor_header);
-	memcpy(pos, armor_header, n);
-	pos += n;
+	appendStringInfoString(dst, armor_header);
 
-	n = b64_encode(src, len, pos);
-	pos += n;
+	/* make sure we have enough room to b64_encode() */
+	b64len = b64_enc_len(len);
+	enlargeStringInfo(dst, (int) b64len);
+	res = b64_encode(src, len, (uint8 *) dst->data + dst->len);
+	if (res > b64len)
+		elog(FATAL, "overflow - encode estimate too small");
+	dst->len += res;
 
-	if (*(pos - 1) != '\n')
-		*pos++ = '\n';
+	if (*(dst->data + dst->len - 1) != '\n')
+		appendStringInfoChar(dst, '\n');
 
-	*pos++ = '=';
-	pos[3] = _base64[crc & 0x3f];
-	crc >>= 6;
-	pos[2] = _base64[crc & 0x3f];
-	crc >>= 6;
-	pos[1] = _base64[crc & 0x3f];
-	crc >>= 6;
-	pos[0] = _base64[crc & 0x3f];
-	pos += 4;
+	appendStringInfoChar(dst, '=');
+	appendStringInfoChar(dst, _base64[(crc >> 18) & 0x3f]);
+	appendStringInfoChar(dst, _base64[(crc >> 12) & 0x3f]);
+	appendStringInfoChar(dst, _base64[(crc >> 6) & 0x3f]);
+	appendStringInfoChar(dst, _base64[crc & 0x3f]);
 
-	n = strlen(armor_footer);
-	memcpy(pos, armor_footer, n);
-	pos += n;
-
-	return pos - dst;
+	appendStringInfoString(dst, armor_footer);
 }
 
 static const uint8 *
@@ -309,7 +304,7 @@ find_header(const uint8 *data, const uint8 *datend,
 }
 
 int
-pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
+pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 {
 	const uint8 *p = src;
 	const uint8 *data_end = src + len;
@@ -319,6 +314,7 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 	const uint8 *base64_end = NULL;
 	uint8		buf[4];
 	int			hlen;
+	int			blen;
 	int			res = PXE_PGP_CORRUPT_ARMOR;
 
 	/* armor start */
@@ -360,23 +356,18 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 	crc = (((long) buf[0]) << 16) + (((long) buf[1]) << 8) + (long) buf[2];
 
 	/* decode data */
-	res = b64_decode(base64_start, base64_end - base64_start, dst);
-
-	/* check crc */
-	if (res >= 0 && crc24(dst, res) != crc)
-		res = PXE_PGP_CORRUPT_ARMOR;
+	blen = (int) b64_dec_len(len);
+	enlargeStringInfo(dst, blen);
+	res = b64_decode(base64_start, base64_end - base64_start, (uint8 *) dst->data);
+	if (res > blen)
+		elog(FATAL, "overflow - decode estimate too small");
+	if (res >= 0)
+	{
+		if (crc24((uint8 *) dst->data, res) == crc)
+			dst->len += res;
+		else
+			res = PXE_PGP_CORRUPT_ARMOR;
+	}
 out:
 	return res;
-}
-
-unsigned
-pgp_armor_enc_len(unsigned len)
-{
-	return b64_enc_len(len) + strlen(armor_header) + strlen(armor_footer) + 16;
-}
-
-unsigned
-pgp_armor_dec_len(unsigned len)
-{
-	return b64_dec_len(len);
 }
