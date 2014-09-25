@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	MultiXactId set_oldestmxid = 0;
 	char	   *endptr;
 	char	   *endptr2;
-	char	   *DataDir;
+	char	   *DataDir = NULL;
 	int			fd;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_resetxlog"));
@@ -111,10 +111,14 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "fl:m:no:O:x:e:")) != -1)
+	while ((c = getopt(argc, argv, "D:fl:m:no:O:x:e:")) != -1)
 	{
 		switch (c)
 		{
+			case 'D':
+				DataDir = optarg;
+				break;
+
 			case 'f':
 				force = true;
 				break;
@@ -233,12 +237,14 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (optind == argc)
+	if (DataDir == NULL && optind == argc)
 	{
 		fprintf(stderr, _("%s: no data directory specified\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
+	if (DataDir == NULL)
+		DataDir = argv[optind];
 
 	/*
 	 * Don't allow pg_resetxlog to be run as root, to avoid overwriting the
@@ -256,8 +262,6 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 #endif
-
-	DataDir = argv[optind];
 
 	if (chdir(DataDir) < 0)
 	{
@@ -1077,7 +1081,7 @@ static void
 usage(void)
 {
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
-	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
+	printf(_("Usage:\n  %s [OPTION]... {[-D] DATADIR}\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
 	printf(_("  -f               force update to be done\n"));

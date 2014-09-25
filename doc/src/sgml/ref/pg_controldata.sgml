@@ -23,7 +23,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_controldata</command>
    <arg choice="opt"><replaceable class="parameter">option</replaceable></arg>
-   <arg choice="opt"><replaceable class="parameter">datadir</replaceable></arg>
+   <arg choice="opt"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

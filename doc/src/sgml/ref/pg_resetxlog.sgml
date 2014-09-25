@@ -30,7 +30,7 @@ PostgreSQL documentation
    <arg choice="opt"><option>-m</option> <replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></arg>
    <arg choice="opt"><option>-O</option> <replaceable class="parameter">mxoff</replaceable></arg>
    <arg choice="opt"><option>-l</option> <replaceable class="parameter">xlogfile</replaceable></arg>
-   <arg choice="plain"><replaceable>datadir</replaceable></arg>
+   <arg choice="req"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
