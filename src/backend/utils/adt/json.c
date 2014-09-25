@@ -1948,7 +1948,7 @@ json_object_agg_finalfn(PG_FUNCTION_ARGS)
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
 	if (state == NULL)
-		PG_RETURN_TEXT_P(cstring_to_text("{}"));
+		PG_RETURN_NULL();
 
 	appendStringInfoString(state, " }");
 
