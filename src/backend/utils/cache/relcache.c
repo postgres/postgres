@@ -856,8 +856,8 @@ static bool
 equalPolicy(RowSecurityPolicy *policy1, RowSecurityPolicy *policy2)
 {
 	int			i;
-	Oid        *r1,
-	           *r2;
+	Oid		   *r1,
+			   *r2;
 
 	if (policy1 != NULL)
 	{
