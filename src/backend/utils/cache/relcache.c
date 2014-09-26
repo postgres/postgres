@@ -868,7 +868,7 @@ equalPolicy(RowSecurityPolicy *policy1, RowSecurityPolicy *policy2)
 			return false;
 		if (policy1->cmd != policy2->cmd)
 			return false;
-		if (policy1->hassublinks != policy2->hassublinks);
+		if (policy1->hassublinks != policy2->hassublinks)
 			return false;
 		if (strcmp(policy1->policy_name,policy2->policy_name) != 0)
 			return false;
@@ -926,7 +926,7 @@ equalRSDesc(RowSecurityDesc *rsdesc1, RowSecurityDesc *rsdesc2)
 			return false;
 	}
 
-	return false;
+	return true;
 }
 
 /*

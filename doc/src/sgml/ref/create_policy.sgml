@@ -81,7 +81,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    referenced table.  These issues can be addressed by carefully crafting
    policies which prevent users from being able to insert, delete, or update
    records at all which might possibly indicate a value they are not otherwise
-   able to see, or by using generated values (eg: surrogate keys) instead.
+   able to see, or by using generated values (e.g.: surrogate keys) instead.
   </para>
 
   <para>
@@ -218,7 +218,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          records from the relation which pass the <literal>SELECT</literal>
          policy will be returned, even if other records exist in the relation.
          The <literal>SELECT</literal> policy only accepts the USING expression
-         as it only ever applies in cases where records are being retrived from
+         as it only ever applies in cases where records are being retrieved from
          the relation.
        </para>
       </listitem>
@@ -272,7 +272,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          for the <literal>DELETE</literal>, and rows which are not visible
          through the <literal>SELECT</literal> policy may be deleted if they
          pass the <literal>DELETE</literal> USING policy.  The
-         <literal>DELETE</literal> policy only accept the USING expression as
+         <literal>DELETE</literal> policy only accepts the USING expression as
          it only ever applies in cases where records are being extracted from
          the relation for deletion.
        </para>

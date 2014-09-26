@@ -69,7 +69,7 @@ INSERT INTO document VALUES
     ( 7, 33, 2, 'rls_regress_user2', 'great technology book'),
     ( 8, 44, 1, 'rls_regress_user2', 'great manga');
 ALTER TABLE document ENABLE ROW LEVEL SECURITY;
--- user's security level must be higher that or equal to document's
+-- user's security level must be higher than or equal to document's
 CREATE POLICY p1 ON document
     USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
 -- viewpoint from rls_regress_user1
@@ -280,7 +280,7 @@ SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
 ERROR:  update or delete on table "category" violates foreign key constraint "document_cid_fkey" on table "document"
 DETAIL:  Key (cid)=(33) is still referenced from table "document".
--- cannot insert FK referencing invisible PK
+-- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
  did | cid | dlevel |      dauthor      |        dtitle         | cid |      cname      
@@ -301,7 +301,7 @@ SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 -----+-----+--------+---------+--------
 (0 rows)
 
--- database superuser cannot bypass RLS policy when enabled
+-- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;
 SELECT * FROM document;
@@ -327,7 +327,7 @@ SELECT * FROM category;
   44 | manga
 (4 rows)
 
--- database superuser cannot bypass RLS policy when FORCE enabled.
+-- database superuser does not bypass RLS policy when FORCE enabled.
 RESET SESSION AUTHORIZATION;
 SET row_security TO FORCE;
 SELECT * FROM document;
@@ -340,7 +340,7 @@ SELECT * FROM category;
 -----+-------
 (0 rows)
 
--- database superuser can bypass RLS policy when disabled
+-- database superuser does bypass RLS policy when disabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 SELECT * FROM document;

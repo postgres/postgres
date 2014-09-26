@@ -84,7 +84,7 @@ INSERT INTO document VALUES
 
 ALTER TABLE document ENABLE ROW LEVEL SECURITY;
 
--- user's security level must be higher that or equal to document's
+-- user's security level must be higher than or equal to document's
 CREATE POLICY p1 ON document
     USING (dlevel <= (SELECT seclv FROM uaccount WHERE pguser = current_user));
 
@@ -136,7 +136,7 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
 
--- cannot insert FK referencing invisible PK
+-- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
 INSERT INTO document VALUES (10, 33, 1, current_user, 'hoge');
@@ -146,19 +146,19 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user1', 'my third manga'); -- Must fail with unique violation, revealing presence of did we can't see
 SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 
--- database superuser cannot bypass RLS policy when enabled
+-- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;
 SELECT * FROM document;
 SELECT * FROM category;
 
--- database superuser cannot bypass RLS policy when FORCE enabled.
+-- database superuser does not bypass RLS policy when FORCE enabled.
 RESET SESSION AUTHORIZATION;
 SET row_security TO FORCE;
 SELECT * FROM document;
 SELECT * FROM category;
 
--- database superuser can bypass RLS policy when disabled
+-- database superuser does bypass RLS policy when disabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 SELECT * FROM document;

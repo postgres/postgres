@@ -94,7 +94,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
       security-barrier qualification to queries which use the table
       automatically.  If multiple policies are being applied for a given
       table then they are all combined and added using OR.  The USING
-      expression applies to records which are being retrived from the table.
+      expression applies to records which are being retrieved from the table.
      </para>
     </listitem>
    </varlistentry>
