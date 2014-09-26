@@ -32,6 +32,8 @@
 #define pg_memory_barrier_impl()	MemoryBarrier()
 #endif
 
+#if defined(HAVE_ATOMICS)
+
 #define PG_HAVE_ATOMIC_U32_SUPPORT
 typedef struct pg_atomic_uint32
 {
@@ -44,8 +46,12 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value;
 } pg_atomic_uint64;
 
+#endif /* defined(HAVE_ATOMICS) */
+
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
+
+#if defined(HAVE_ATOMICS)
 
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
 static inline bool
@@ -99,5 +105,7 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 	return _InterlockedExchangeAdd64(&ptr->value, add_);
 }
 #endif /* _WIN64 */
+
+#endif /* HAVE_ATOMICS */
 
 #endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

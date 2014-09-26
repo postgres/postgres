@@ -17,6 +17,8 @@
  * -------------------------------------------------------------------------
  */
 
+#if defined(HAVE_ATOMICS)
+
 /* Older versions of the compiler don't have atomic.h... */
 #ifdef HAVE_ATOMIC_H
 
@@ -36,8 +38,12 @@ typedef struct pg_atomic_uint64
 
 #endif /* HAVE_ATOMIC_H */
 
+#endif /* defined(HAVE_ATOMICS) */
+
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
+
+#if defined(HAVE_ATOMICS)
 
 #ifdef HAVE_ATOMIC_H
 
@@ -70,5 +76,7 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 }
 
 #endif /* HAVE_ATOMIC_H */
+
+#endif /* defined(HAVE_ATOMICS) */
 
 #endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

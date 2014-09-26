@@ -16,6 +16,8 @@
  * -------------------------------------------------------------------------
  */
 
+#if defined(HAVE_ATOMICS)
+
 #include <atomic.h>
 
 #define PG_HAVE_ATOMIC_U32_SUPPORT
@@ -35,7 +37,11 @@ typedef struct pg_atomic_uint64
 
 #endif /* __64BIT__ */
 
+#endif /* defined(HAVE_ATOMICS) */
+
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
+
+#if defined(HAVE_ATOMICS)
 
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
 static inline bool
@@ -69,7 +75,6 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
 	return __fetch_and_add(&ptr->value, add_);
 }
-#endif
 
 #ifdef PG_HAVE_ATOMIC_U64_SUPPORT
 
@@ -96,8 +101,9 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
 	return __fetch_and_addlp(&ptr->value, add_);
 }
-#endif
 
 #endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
+
+#endif /* defined(HAVE_ATOMICS) */
 
 #endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

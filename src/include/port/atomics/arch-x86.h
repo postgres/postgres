@@ -78,6 +78,7 @@ typedef struct pg_atomic_uint64
 #endif
 
 #endif /* defined(HAVE_ATOMICS) */
+
 #endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
@@ -158,6 +159,18 @@ pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 :
 :		"memory");
 	return _res == 0;
+}
+
+#define PG_HAVE_ATOMIC_CLEAR_FLAG
+static inline void
+pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr)
+{
+	/*
+	 * On a TSO architecture like x86 it's sufficient to use a compiler
+	 * barrier to achieve release semantics.
+	 */
+	__asm__ __volatile__("" ::: "memory");
+	ptr->value = 0;
 }
 
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32

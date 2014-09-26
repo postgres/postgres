@@ -40,19 +40,19 @@
  * definitions where possible, and use this only as a fallback.
  */
 #if !defined(pg_memory_barrier_impl)
-#	if defined(HAVE_GCC__ATOMIC_INT64_CAS)
+#	if defined(HAVE_GCC__ATOMIC_INT32_CAS)
 #		define pg_memory_barrier_impl()		__atomic_thread_fence(__ATOMIC_SEQ_CST)
 #	elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
 #		define pg_memory_barrier_impl()		__sync_synchronize()
 #	endif
 #endif /* !defined(pg_memory_barrier_impl) */
 
-#if !defined(pg_read_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT64_CAS)
+#if !defined(pg_read_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
 /* acquire semantics include read barrier semantics */
 #		define pg_read_barrier_impl()		__atomic_thread_fence(__ATOMIC_ACQUIRE)
 #endif
 
-#if !defined(pg_write_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT64_CAS)
+#if !defined(pg_write_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
 /* release semantics include write barrier semantics */
 #		define pg_write_barrier_impl()		__atomic_thread_fence(__ATOMIC_RELEASE)
 #endif
@@ -139,13 +139,7 @@ pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
 static inline void
 pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	/*
-	 * XXX: It would be nicer to use __sync_lock_release here, but gcc insists
-	 * on making that an atomic op which is far to expensive and a stronger
-	 * guarantee than what we actually need.
-	 */
-	pg_write_barrier_impl();
-	ptr->value = 0;
+	__sync_lock_release(&ptr->value);
 }
 #endif
 

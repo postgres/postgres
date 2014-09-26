@@ -25,6 +25,10 @@
 
 #include <machine/sys/inline.h>
 
+#define pg_compiler_barrier_impl()	_Asm_sched_fence()
+
+#if defined(HAVE_ATOMICS)
+
 /* IA64 always has 32/64 bit atomics */
 
 #define PG_HAVE_ATOMIC_U32_SUPPORT
@@ -39,9 +43,12 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value;
 } pg_atomic_uint64;
 
-#define pg_compiler_barrier_impl()	_Asm_sched_fence()
+#endif /* defined(HAVE_ATOMICS) */
+
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
+
+#if defined(HAVE_ATOMICS)
 
 #define MINOR_FENCE (_Asm_fence) (_UP_CALL_FENCE | _UP_SYS_FENCE | \
 								 _DOWN_CALL_FENCE | _DOWN_SYS_FENCE )
@@ -95,5 +102,7 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 }
 
 #undef MINOR_FENCE
+
+#endif /* defined(HAVE_ATOMICS) */
 
 #endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
