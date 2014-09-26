@@ -4137,11 +4137,14 @@ identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 		return;
 
 	/*
-	 * We assume the item requires exclusive lock on each TABLE DATA item
-	 * listed among its dependencies.  (This was originally a dependency on
-	 * the TABLE, but fix_dependencies repointed it to the data item. Note
-	 * that all the entry types we are interested in here are POST_DATA, so
-	 * they will all have been changed this way.)
+	 * We assume the entry requires exclusive lock on each TABLE or TABLE DATA
+	 * item listed among its dependencies.  Originally all of these would have
+	 * been TABLE items, but repoint_table_dependencies would have repointed
+	 * them to the TABLE DATA items if those are present (which they might not
+	 * be, eg in a schema-only dump).  Note that all of the entries we are
+	 * processing here are POST_DATA; otherwise there might be a significant
+	 * difference between a dependency on a table and a dependency on its
+	 * data, so that closer analysis would be needed here.
 	 */
 	lockids = (DumpId *) pg_malloc(te->nDeps * sizeof(DumpId));
 	nlockids = 0;
@@ -4150,7 +4153,8 @@ identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 		DumpId		depid = te->dependencies[i];
 
 		if (depid <= AH->maxDumpId && AH->tocsByDumpId[depid] != NULL &&
-			strcmp(AH->tocsByDumpId[depid]->desc, "TABLE DATA") == 0)
+			((strcmp(AH->tocsByDumpId[depid]->desc, "TABLE DATA") == 0) ||
+			  strcmp(AH->tocsByDumpId[depid]->desc, "TABLE") == 0))
 			lockids[nlockids++] = depid;
 	}
 
