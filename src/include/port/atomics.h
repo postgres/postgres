@@ -346,7 +346,7 @@ pg_atomic_compare_exchange_u32(volatile pg_atomic_uint32 *ptr,
 /*
  * pg_atomic_fetch_add_u32 - atomically add to variable
  *
- * Returns the the value of ptr before the arithmetic operation.
+ * Returns the value of ptr before the arithmetic operation.
  *
  * Full barrier semantics.
  */
@@ -360,8 +360,8 @@ pg_atomic_fetch_add_u32(volatile pg_atomic_uint32 *ptr, int32 add_)
 /*
  * pg_atomic_fetch_sub_u32 - atomically subtract from variable
  *
- * Returns the the value of ptr before the arithmetic operation. Note that
- * sub_ may not be INT_MIN due to platform limitations.
+ * Returns the value of ptr before the arithmetic operation. Note that sub_
+ * may not be INT_MIN due to platform limitations.
  *
  * Full barrier semantics.
  */
@@ -376,7 +376,7 @@ pg_atomic_fetch_sub_u32(volatile pg_atomic_uint32 *ptr, int32 sub_)
 /*
  * pg_atomic_fetch_and_u32 - atomically bit-and and_ with variable
  *
- * Returns the the value of ptr before the arithmetic operation.
+ * Returns the value of ptr before the arithmetic operation.
  *
  * Full barrier semantics.
  */
@@ -390,7 +390,7 @@ pg_atomic_fetch_and_u32(volatile pg_atomic_uint32 *ptr, uint32 and_)
 /*
  * pg_atomic_fetch_or_u32 - atomically bit-or or_ with variable
  *
- * Returns the the value of ptr before the arithmetic operation.
+ * Returns the value of ptr before the arithmetic operation.
  *
  * Full barrier semantics.
  */
@@ -404,7 +404,7 @@ pg_atomic_fetch_or_u32(volatile pg_atomic_uint32 *ptr, uint32 or_)
 /*
  * pg_atomic_add_fetch_u32 - atomically add to variable
  *
- * Returns the the value of ptr after the arithmetic operation.
+ * Returns the value of ptr after the arithmetic operation.
  *
  * Full barrier semantics.
  */
@@ -418,8 +418,8 @@ pg_atomic_add_fetch_u32(volatile pg_atomic_uint32 *ptr, int32 add_)
 /*
  * pg_atomic_sub_fetch_u32 - atomically subtract from variable
  *
- * Returns the the value of ptr after the arithmetic operation. Note that sub_
- * may not be INT_MIN due to platform limitations.
+ * Returns the value of ptr after the arithmetic operation. Note that sub_ may
+ * not be INT_MIN due to platform limitations.
  *
  * Full barrier semantics.
  */
