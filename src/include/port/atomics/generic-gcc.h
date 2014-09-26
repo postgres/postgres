@@ -108,8 +108,11 @@ typedef struct pg_atomic_uint64
  */
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
 
-#if !defined(PG_HAVE_ATOMIC_TEST_SET_FLAG) && \
-	(defined(HAVE_GCC__SYNC_CHAR_TAS) || defined(HAVE_GCC__SYNC_INT32_TAS))
+#ifdef PG_HAVE_ATOMIC_FLAG_SUPPORT
+
+#if defined(HAVE_GCC__SYNC_CHAR_TAS) || defined(HAVE_GCC__SYNC_INT32_TAS)
+
+#ifndef PG_HAVE_ATOMIC_TEST_SET_FLAG
 #define PG_HAVE_ATOMIC_TEST_SET_FLAG
 static inline bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
@@ -118,7 +121,9 @@ pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 	/* some platform only support a 1 here */
 	return __sync_lock_test_and_set(&ptr->value, 1) == 0;
 }
-#endif /* !defined(PG_HAVE_ATOMIC_TEST_SET_FLAG) && defined(HAVE_GCC__SYNC_*_TAS) */
+#endif
+
+#endif /* defined(HAVE_GCC__SYNC_*_TAS) */
 
 #ifndef PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
 #define PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
@@ -152,6 +157,8 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 	pg_atomic_clear_flag_impl(ptr);
 }
 #endif
+
+#endif /* defined(PG_HAVE_ATOMIC_FLAG_SUPPORT) */
 
 /* prefer __atomic, it has a better API */
 #if !defined(PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
