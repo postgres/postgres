@@ -10309,13 +10309,11 @@ table2-mapping
       </row>
       <row>
        <entry>
-         <literal>row_to_json(rowval record [, pretty bool [, ignore_nulls bool] ])</literal>
+         <literal>row_to_json(record [, pretty_bool])</literal>
        </entry>
        <entry>
          Returns the row as a JSON object. Line feeds will be added between
-         level-1 elements if <parameter>pretty_bool</parameter> is true. Elements
-         with NULL values will be skipped when <parameter>ignore_nulls</parameter>
-         is true.
+         level-1 elements if <parameter>pretty_bool</parameter> is true.
        </entry>
        <entry><literal>row_to_json(row(1,'foo'))</literal></entry>
        <entry><literal>{"f1":1,"f2":"foo"}</literal></entry>

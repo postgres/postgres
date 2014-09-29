@@ -897,17 +897,3 @@ RETURNS interval
 LANGUAGE INTERNAL
 STRICT IMMUTABLE
 AS 'make_interval';
-
-CREATE OR REPLACE FUNCTION
-  row_to_json(rowval record, pretty boolean DEFAULT false, ignore_nulls boolean DEFAULT false)
-RETURNS json
-LANGUAGE INTERNAL
-STRICT STABLE
-AS 'row_to_json';
-
-CREATE OR REPLACE FUNCTION
-  array_to_json(arrayval anyarray, pretty boolean DEFAULT false)
-RETURNS json
-LANGUAGE INTERNAL
-STRICT STABLE
-AS 'array_to_json';

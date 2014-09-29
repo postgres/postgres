@@ -79,8 +79,7 @@ static void report_invalid_token(JsonLexContext *lex);
 static int	report_json_context(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
 static void composite_to_json(Datum composite, StringInfo result,
-				  bool use_line_feeds,
-				  bool ignore_nulls);
+				  bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 				  Datum *vals, bool *nulls, int *valcount,
 				  JsonTypeCategory tcategory, Oid outfuncoid,
@@ -1366,7 +1365,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			array_to_json_internal(val, result, false);
 			break;
 		case JSONTYPE_COMPOSITE:
-			composite_to_json(val, result, false, false);
+			composite_to_json(val, result, false);
 			break;
 		case JSONTYPE_BOOL:
 			outputstr = DatumGetBool(val) ? "true" : "false";
@@ -1591,8 +1590,7 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
  * Turn a composite / record into JSON.
  */
 static void
-composite_to_json(Datum composite, StringInfo result, bool use_line_feeds,
-				  bool ignore_nulls)
+composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 {
 	HeapTupleHeader td;
 	Oid			tupType;
@@ -1631,12 +1629,6 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds,
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
 
-		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
-
-		/* Don't serialize NULL field when we don't want it */
-		if (isnull && ignore_nulls)
-			continue;
-
 		if (needsep)
 			appendStringInfoString(result, sep);
 		needsep = true;
@@ -1644,6 +1636,8 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds,
 		attname = NameStr(tupdesc->attrs[i]->attname);
 		escape_json(result, attname);
 		appendStringInfoChar(result, ':');
+
+		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
 		if (isnull)
 		{
@@ -1693,10 +1687,26 @@ add_json(Datum val, bool is_null, StringInfo result,
 }
 
 /*
- * SQL function array_to_json(row, prettybool)
+ * SQL function array_to_json(row)
  */
 extern Datum
 array_to_json(PG_FUNCTION_ARGS)
+{
+	Datum		array = PG_GETARG_DATUM(0);
+	StringInfo	result;
+
+	result = makeStringInfo();
+
+	array_to_json_internal(array, result, false);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+}
+
+/*
+ * SQL function array_to_json(row, prettybool)
+ */
+extern Datum
+array_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
@@ -1710,19 +1720,34 @@ array_to_json(PG_FUNCTION_ARGS)
 }
 
 /*
- * SQL function row_to_json(rowval record, pretty bool, ignore_nulls bool)
+ * SQL function row_to_json(row)
  */
 extern Datum
 row_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	bool		ignore_nulls = PG_GETARG_BOOL(2);
 	StringInfo	result;
 
 	result = makeStringInfo();
 
-	composite_to_json(array, result, use_line_feeds, ignore_nulls);
+	composite_to_json(array, result, false);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+}
+
+/*
+ * SQL function row_to_json(row, prettybool)
+ */
+extern Datum
+row_to_json_pretty(PG_FUNCTION_ARGS)
+{
+	Datum		array = PG_GETARG_DATUM(0);
+	bool		use_line_feeds = PG_GETARG_BOOL(1);
+	StringInfo	result;
+
+	result = makeStringInfo();
+
+	composite_to_json(array, result, use_line_feeds);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
