@@ -58,8 +58,8 @@ PostgreSQL documentation
        <para>
         Create a new logical replication slot with the name specified in
         <option>--slot</option>, using the output plugin
-        <option>--plugin</option>, then exit. The slot is created for the
-        database given in <option>--dbname</option>.
+        <option>--plugin</option>. The slot is created for the database
+        given in <option>--dbname</option>.
        </para>
       </listitem>
      </varlistentry>
