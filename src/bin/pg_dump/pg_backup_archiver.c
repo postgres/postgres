@@ -428,60 +428,75 @@ RestoreArchive(Archive *AHX)
 					}
 					else
 					{
-						char		buffer[40];
-						char	   *mark;
-						char	   *dropStmt = pg_strdup(te->dropStmt);
-						char	   *dropStmtPtr = dropStmt;
-						PQExpBuffer ftStmt = createPQExpBuffer();
-
 						/*
-						 * Need to inject IF EXISTS clause after ALTER TABLE
-						 * part in ALTER TABLE .. DROP statement
+						 * Inject an appropriate spelling of "if exists".  For
+						 * large objects, we have a separate routine that
+						 * knows how to do it, without depending on
+						 * te->dropStmt; use that.  For other objects we need
+						 * to parse the command.
+						 *
 						 */
-						if (strncmp(dropStmt, "ALTER TABLE", 11) == 0)
+						if (strncmp(te->desc, "BLOB", 4) == 0)
 						{
-							appendPQExpBuffer(ftStmt,
-											  "ALTER TABLE IF EXISTS");
-							dropStmt = dropStmt + 11;
+							DropBlobIfExists(AH, te->catalogId.oid);
 						}
-
-						/*
-						 * ALTER TABLE..ALTER COLUMN..DROP DEFAULT does not
-						 * support the IF EXISTS clause, and therefore we
-						 * simply emit the original command for such objects.
-						 * For other objects, we need to extract the first
-						 * part of the DROP which includes the object type.
-						 * Most of the time this matches te->desc, so search
-						 * for that; however for the different kinds of
-						 * CONSTRAINTs, we know to search for hardcoded "DROP
-						 * CONSTRAINT" instead.
-						 */
-						if (strcmp(te->desc, "DEFAULT") == 0)
-							appendPQExpBuffer(ftStmt, "%s", dropStmt);
 						else
 						{
-							if (strcmp(te->desc, "CONSTRAINT") == 0 ||
-								strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
-								strcmp(te->desc, "FK CONSTRAINT") == 0)
-								strcpy(buffer, "DROP CONSTRAINT");
+							char		buffer[40];
+							char	   *mark;
+							char	   *dropStmt = pg_strdup(te->dropStmt);
+							char	   *dropStmtPtr = dropStmt;
+							PQExpBuffer ftStmt = createPQExpBuffer();
+
+							/*
+							 * Need to inject IF EXISTS clause after ALTER
+							 * TABLE part in ALTER TABLE .. DROP statement
+							 */
+							if (strncmp(dropStmt, "ALTER TABLE", 11) == 0)
+							{
+								appendPQExpBuffer(ftStmt,
+												  "ALTER TABLE IF EXISTS");
+								dropStmt = dropStmt + 11;
+							}
+
+							/*
+							 * ALTER TABLE..ALTER COLUMN..DROP DEFAULT does
+							 * not support the IF EXISTS clause, and therefore
+							 * we simply emit the original command for such
+							 * objects. For other objects, we need to extract
+							 * the first part of the DROP which includes the
+							 * object type. Most of the time this matches
+							 * te->desc, so search for that; however for the
+							 * different kinds of CONSTRAINTs, we know to
+							 * search for hardcoded "DROP CONSTRAINT" instead.
+							 */
+							if (strcmp(te->desc, "DEFAULT") == 0)
+								appendPQExpBuffer(ftStmt, "%s", dropStmt);
 							else
-								snprintf(buffer, sizeof(buffer), "DROP %s",
-										 te->desc);
+							{
+								if (strcmp(te->desc, "CONSTRAINT") == 0 ||
+								 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
+									strcmp(te->desc, "FK CONSTRAINT") == 0)
+									strcpy(buffer, "DROP CONSTRAINT");
+								else
+									snprintf(buffer, sizeof(buffer), "DROP %s",
+											 te->desc);
 
-							mark = strstr(dropStmt, buffer);
-							Assert(mark != NULL);
+								mark = strstr(dropStmt, buffer);
+								Assert(mark != NULL);
 
-							*mark = '\0';
-							appendPQExpBuffer(ftStmt, "%s%s IF EXISTS%s",
-											  dropStmt, buffer,
-											  mark + strlen(buffer));
+								*mark = '\0';
+								appendPQExpBuffer(ftStmt, "%s%s IF EXISTS%s",
+												  dropStmt, buffer,
+												  mark + strlen(buffer));
+							}
+
+							ahprintf(AH, "%s", ftStmt->data);
+
+							destroyPQExpBuffer(ftStmt);
+
+							pg_free(dropStmtPtr);
 						}
-
-						ahprintf(AH, "%s", ftStmt->data);
-
-						destroyPQExpBuffer(ftStmt);
-
-						pg_free(dropStmtPtr);
 					}
 				}
 			}
