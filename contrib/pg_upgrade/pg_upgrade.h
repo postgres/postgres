@@ -108,6 +108,11 @@ extern char *output_files[];
 #define VISIBILITY_MAP_CRASHSAFE_CAT_VER 201107031
 
 /*
+ * change in JSONB format during 9.4 beta
+ */
+#define JSONB_FORMAT_CHANGE_CAT_VER 201409291
+
+/*
  * pg_multixact format changed in 9.3 commit 0ac5ad5134f2769ccbaefec73844f85,
  * ("Improve concurrency of foreign key locking") which also updated catalog
  * version to this value.  pg_upgrade behavior depends on whether old and new
