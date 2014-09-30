@@ -24,6 +24,7 @@ static void check_is_install_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
+static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
 static void get_bin_version(ClusterInfo *cluster);
 static char *get_canonical_locale_name(int category, const char *locale);
 
@@ -99,6 +100,9 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
+	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904 &&
+		old_cluster.controldata.cat_ver < JSONB_FORMAT_CHANGE_CAT_VER)
+		check_for_jsonb_9_4_usage(&old_cluster);
 
 	/* Pre-PG 9.4 had a different 'line' data type internal format */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 903)
@@ -908,6 +912,96 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
 				 "remove the problem tables and restart the upgrade.  A list of the problem\n"
 				 "columns is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
+}
+
+
+/*
+ * check_for_jsonb_9_4_usage()
+ *
+ *	JSONB changed its storage format during 9.4 beta, so check for it.
+ */
+static void
+check_for_jsonb_9_4_usage(ClusterInfo *cluster)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for JSONB user data types");
+
+	snprintf(output_path, sizeof(output_path), "tables_using_jsonb.txt");
+
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_nspname,
+					i_relname,
+					i_attname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		/*
+		 * While several relkinds don't store any data, e.g. views, they can
+		 * be used to define data types of other columns, so we check all
+		 * relkinds.
+		 */
+		res = executeQueryOrDie(conn,
+								"SELECT n.nspname, c.relname, a.attname "
+								"FROM	pg_catalog.pg_class c, "
+								"		pg_catalog.pg_namespace n, "
+								"		pg_catalog.pg_attribute a "
+								"WHERE	c.oid = a.attrelid AND "
+								"		NOT a.attisdropped AND "
+								"		a.atttypid = 'pg_catalog.jsonb'::pg_catalog.regtype AND "
+								"		c.relnamespace = n.oid AND "
+		/* exclude possible orphaned temp tables */
+								"  		n.nspname !~ '^pg_temp_' AND "
+							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+
+		ntups = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_relname = PQfnumber(res, "relname");
+		i_attname = PQfnumber(res, "attname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("Could not open file \"%s\": %s\n",
+						 output_path, getErrorText(errno));
+			if (!db_used)
+			{
+				fprintf(script, "Database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  %s.%s.%s\n",
+					PQgetvalue(res, rowno, i_nspname),
+					PQgetvalue(res, rowno, i_relname),
+					PQgetvalue(res, rowno, i_attname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("Your installation contains one of the JSONB data types in user tables.\n"
+		 "The internal format of JSONB changed during 9.4 beta so this cluster cannot currently\n"
+				 "be upgraded.  You can remove the problem tables and restart the upgrade.  A list\n"
+				 "of the problem columns is in the file:\n"
 				 "    %s\n\n", output_path);
 	}
 	else

@@ -122,6 +122,11 @@ extern char *output_files[];
 #define LARGE_OBJECT_SIZE_PG_CONTROL_VER 942
 
 /*
+ * change in JSONB format during 9.4 beta
+ */
+#define JSONB_FORMAT_CHANGE_CAT_VER 201409291
+
+/*
  * Each relation is represented by a relinfo structure.
  */
 typedef struct
