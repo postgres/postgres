@@ -70,12 +70,14 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
   <para>
    <command>COPY</command> with a file name instructs the
    <productname>PostgreSQL</productname> server to directly read from
-   or write to a file. The file must be accessible to the server and
-   the name must be specified from the viewpoint of the server. When
-   <literal>PROGRAM</literal> is specified, the server executes the
-   given command, and reads from its standard input, or writes to its
-   standard output. The command must be specified from the viewpoint of the
-   server, and be executable by the <literal>postgres</> user. When
+   or write to a file. The file must be accessible by the
+   <productname>PostgreSQL</productname> user (the user ID the server
+   runs as) and the name must be specified from the viewpoint of the
+   server. When <literal>PROGRAM</literal> is specified, the server
+   executes the given command and reads from the standard output of the
+   program, or writes to the standard input of the program. The command
+   must be specified from the viewpoint of the server, and be executable
+   by the <productname>PostgreSQL</productname> user.  When
    <literal>STDIN</literal> or <literal>STDOUT</literal> is
    specified, data is transmitted via the connection between the
    client and the server.
