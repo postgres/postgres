@@ -216,7 +216,7 @@
  * bytes of wasted memory. The default is 128, which should be large enough
  * for all supported platforms.
  */
-#define CACHE_LINE_SIZE		128
+#define PG_CACHE_LINE_SIZE		128
 
 /*
  *------------------------------------------------------------------------

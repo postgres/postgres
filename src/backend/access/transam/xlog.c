@@ -408,7 +408,7 @@ typedef struct
 typedef union WALInsertLockPadded
 {
 	WALInsertLock l;
-	char		pad[CACHE_LINE_SIZE];
+	char		pad[PG_CACHE_LINE_SIZE];
 } WALInsertLockPadded;
 
 /*
@@ -435,7 +435,7 @@ typedef struct XLogCtlInsert
 	 * read on every WAL insertion, but updated rarely, and we don't want
 	 * those reads to steal the cache line containing Curr/PrevBytePos.
 	 */
-	char		pad[CACHE_LINE_SIZE];
+	char		pad[PG_CACHE_LINE_SIZE];
 
 	/*
 	 * fullPageWrites is the master copy used by all backends to determine
