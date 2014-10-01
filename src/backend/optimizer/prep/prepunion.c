@@ -1979,3 +1979,26 @@ adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
 
 	return new_tlist;
 }
+
+/*
+ * adjust_appendrel_attrs_multilevel
+ *	  Apply Var translations from a toplevel appendrel parent down to a child.
+ *
+ * In some cases we need to translate expressions referencing a baserel
+ * to reference an appendrel child that's multiple levels removed from it.
+ */
+Node *
+adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
+								  RelOptInfo *child_rel)
+{
+	AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, child_rel);
+	RelOptInfo *parent_rel = find_base_rel(root, appinfo->parent_relid);
+
+	/* If parent is also a child, first recurse to apply its translations */
+	if (parent_rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		node = adjust_appendrel_attrs_multilevel(root, node, parent_rel);
+	else
+		Assert(parent_rel->reloptkind == RELOPT_BASEREL);
+	/* Now translate for this child */
+	return adjust_appendrel_attrs(root, node, appinfo);
+}

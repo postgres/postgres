@@ -145,6 +145,8 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 extern RelOptInfo *build_empty_join_rel(PlannerInfo *root);
 extern AppendRelInfo *find_childrel_appendrelinfo(PlannerInfo *root,
 							RelOptInfo *rel);
+extern RelOptInfo *find_childrel_top_parent(PlannerInfo *root, RelOptInfo *rel);
+extern Relids find_childrel_parents(PlannerInfo *root, RelOptInfo *rel);
 extern ParamPathInfo *get_baserel_parampathinfo(PlannerInfo *root,
 						  RelOptInfo *baserel,
 						  Relids required_outer);
