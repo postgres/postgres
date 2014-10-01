@@ -2144,17 +2144,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"xloginsert_locks", PGC_POSTMASTER, WAL_SETTINGS,
-			gettext_noop("Sets the number of locks used for concurrent xlog insertions."),
-			NULL,
-			GUC_NOT_IN_SAMPLE
-		},
-		&num_xloginsert_locks,
-		8, 1, 1000,
-		NULL, NULL, NULL
-	},
-
-	{
 		/* see max_connections */
 		{"max_wal_senders", PGC_POSTMASTER, REPLICATION_SENDING,
 			gettext_noop("Sets the maximum number of simultaneously running WAL sender processes."),
