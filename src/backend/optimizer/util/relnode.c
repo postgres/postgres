@@ -677,7 +677,8 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
  *		Get the AppendRelInfo associated with an appendrel child rel.
  *
  * This search could be eliminated by storing a link in child RelOptInfos,
- * but for now it doesn't seem performance-critical.
+ * but for now it doesn't seem performance-critical.  (Also, it might be
+ * difficult to maintain such a link during mutation of the append_rel_list.)
  */
 AppendRelInfo *
 find_childrel_appendrelinfo(PlannerInfo *root, RelOptInfo *rel)
@@ -698,6 +699,62 @@ find_childrel_appendrelinfo(PlannerInfo *root, RelOptInfo *rel)
 	/* should have found the entry ... */
 	elog(ERROR, "child rel %d not found in append_rel_list", relid);
 	return NULL;				/* not reached */
+}
+
+
+/*
+ * find_childrel_top_parent
+ *		Fetch the topmost appendrel parent rel of an appendrel child rel.
+ *
+ * Since appendrels can be nested, a child could have multiple levels of
+ * appendrel ancestors.  This function locates the topmost ancestor,
+ * which will be a regular baserel not an otherrel.
+ */
+RelOptInfo *
+find_childrel_top_parent(PlannerInfo *root, RelOptInfo *rel)
+{
+	do
+	{
+		AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, rel);
+		Index		prelid = appinfo->parent_relid;
+
+		/* traverse up to the parent rel, loop if it's also a child rel */
+		rel = find_base_rel(root, prelid);
+	} while (rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+
+	Assert(rel->reloptkind == RELOPT_BASEREL);
+
+	return rel;
+}
+
+
+/*
+ * find_childrel_parents
+ *		Compute the set of parent relids of an appendrel child rel.
+ *
+ * Since appendrels can be nested, a child could have multiple levels of
+ * appendrel ancestors.  This function computes a Relids set of all the
+ * parent relation IDs.
+ */
+Relids
+find_childrel_parents(PlannerInfo *root, RelOptInfo *rel)
+{
+	Relids		result = NULL;
+
+	do
+	{
+		AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, rel);
+		Index		prelid = appinfo->parent_relid;
+
+		result = bms_add_member(result, prelid);
+
+		/* traverse up to the parent rel, loop if it's also a child rel */
+		rel = find_base_rel(root, prelid);
+	} while (rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+
+	Assert(rel->reloptkind == RELOPT_BASEREL);
+
+	return result;
 }
 
 

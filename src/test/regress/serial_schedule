@@ -112,6 +112,7 @@ test: xmlmap
 test: functional_deps
 test: advisory_lock
 test: json
+test: equivclass
 test: plancache
 test: limit
 test: plpgsql

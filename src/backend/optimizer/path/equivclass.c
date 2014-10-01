@@ -48,7 +48,7 @@ static List *generate_join_implied_equalities_broken(PlannerInfo *root,
 										Relids nominal_join_relids,
 										Relids outer_relids,
 										Relids nominal_inner_relids,
-										AppendRelInfo *inner_appinfo);
+										RelOptInfo *inner_rel);
 static Oid select_equality_operator(EquivalenceClass *ec,
 						 Oid lefttype, Oid righttype);
 static RestrictInfo *create_join_clause(PlannerInfo *root,
@@ -1000,22 +1000,18 @@ generate_join_implied_equalities(PlannerInfo *root,
 	Relids		inner_relids = inner_rel->relids;
 	Relids		nominal_inner_relids;
 	Relids		nominal_join_relids;
-	AppendRelInfo *inner_appinfo;
 	ListCell   *lc;
 
 	/* If inner rel is a child, extra setup work is needed */
 	if (inner_rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
 	{
-		/* Lookup parent->child translation data */
-		inner_appinfo = find_childrel_appendrelinfo(root, inner_rel);
-		/* Construct relids for the parent rel */
-		nominal_inner_relids = bms_make_singleton(inner_appinfo->parent_relid);
+		/* Fetch relid set for the topmost parent rel */
+		nominal_inner_relids = find_childrel_top_parent(root, inner_rel)->relids;
 		/* ECs will be marked with the parent's relid, not the child's */
 		nominal_join_relids = bms_union(outer_relids, nominal_inner_relids);
 	}
 	else
 	{
-		inner_appinfo = NULL;
 		nominal_inner_relids = inner_relids;
 		nominal_join_relids = join_relids;
 	}
@@ -1051,7 +1047,7 @@ generate_join_implied_equalities(PlannerInfo *root,
 														 nominal_join_relids,
 															  outer_relids,
 														nominal_inner_relids,
-															  inner_appinfo);
+															  inner_rel);
 
 		result = list_concat(result, sublist);
 	}
@@ -1244,7 +1240,7 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 										Relids nominal_join_relids,
 										Relids outer_relids,
 										Relids nominal_inner_relids,
-										AppendRelInfo *inner_appinfo)
+										RelOptInfo *inner_rel)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -1266,10 +1262,16 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 	 * RestrictInfos that are not listed in ec_derives, but there shouldn't be
 	 * any duplication, and it's a sufficiently narrow corner case that we
 	 * shouldn't sweat too much over it anyway.
+	 *
+	 * Since inner_rel might be an indirect descendant of the baserel
+	 * mentioned in the ec_sources clauses, we have to be prepared to apply
+	 * multiple levels of Var translation.
 	 */
-	if (inner_appinfo)
-		result = (List *) adjust_appendrel_attrs(root, (Node *) result,
-												 inner_appinfo);
+	if (inner_rel->reloptkind == RELOPT_OTHER_MEMBER_REL &&
+		result != NIL)
+		result = (List *) adjust_appendrel_attrs_multilevel(root,
+															(Node *) result,
+															inner_rel);
 
 	return result;
 }
@@ -2061,14 +2063,14 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 	List	   *result = NIL;
 	RelOptInfo *rel = index->rel;
 	bool		is_child_rel = (rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
-	Index		parent_relid;
+	Relids		parent_relids;
 	ListCell   *lc1;
 
-	/* If it's a child rel, we'll need to know what its parent is */
+	/* If it's a child rel, we'll need to know what its parent(s) are */
 	if (is_child_rel)
-		parent_relid = find_childrel_appendrelinfo(root, rel)->parent_relid;
+		parent_relids = find_childrel_parents(root, rel);
 	else
-		parent_relid = 0;		/* not used, but keep compiler quiet */
+		parent_relids = NULL;	/* not used, but keep compiler quiet */
 
 	foreach(lc1, root->eq_classes)
 	{
@@ -2135,10 +2137,10 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 
 			/*
 			 * Also, if this is a child rel, avoid generating a useless join
-			 * to its parent rel.
+			 * to its parent rel(s).
 			 */
 			if (is_child_rel &&
-				bms_is_member(parent_relid, other_em->em_relids))
+				bms_overlap(parent_relids, other_em->em_relids))
 				continue;
 
 			eq_op = select_equality_operator(cur_ec,
