@@ -192,7 +192,6 @@ extern bool EnableHotStandby;
 extern bool fullPageWrites;
 extern bool wal_log_hints;
 extern bool log_checkpoints;
-extern int	num_xloginsert_locks;
 
 /* WAL levels */
 typedef enum WalLevel
