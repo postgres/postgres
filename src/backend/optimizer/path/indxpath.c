@@ -2628,16 +2628,11 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 	 * Add on any equivalence-derivable join clauses.  Computing the correct
 	 * relid sets for generate_join_implied_equalities is slightly tricky
 	 * because the rel could be a child rel rather than a true baserel, and in
-	 * that case we must remove its parent's relid from all_baserels.
+	 * that case we must remove its parents' relid(s) from all_baserels.
 	 */
 	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
-	{
-		/* Lookup parent->child translation data */
-		AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, rel);
-
 		otherrels = bms_difference(root->all_baserels,
-								   bms_make_singleton(appinfo->parent_relid));
-	}
+								   find_childrel_parents(root, rel));
 	else
 		otherrels = bms_difference(root->all_baserels, rel->relids);
 
