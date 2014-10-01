@@ -951,7 +951,7 @@ main(int argc, char **argv)
 
 	while (true)
 	{
-		StreamLog();
+		StreamLogicalLog();
 		if (time_to_abort)
 		{
 			/*
