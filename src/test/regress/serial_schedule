@@ -103,6 +103,7 @@ test: tsdicts
 test: foreign_data
 test: window
 test: xmlmap
+test: equivclass
 test: plancache
 test: limit
 test: plpgsql
