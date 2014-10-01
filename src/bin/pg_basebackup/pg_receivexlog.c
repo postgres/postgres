@@ -253,13 +253,8 @@ FindStreamingStart(uint32 *tli)
 static void
 StreamLog(void)
 {
-	PGresult   *res;
-	XLogRecPtr	startpos;
-	uint32		starttli;
-	XLogRecPtr	serverpos;
-	uint32		servertli;
-	uint32		hi,
-				lo;
+	XLogRecPtr	startpos, serverpos;
+	TimeLineID	starttli, servertli;
 
 	/*
 	 * Connect in replication mode to the server
@@ -280,33 +275,12 @@ StreamLog(void)
 	}
 
 	/*
-	 * Run IDENTIFY_SYSTEM so we can get the timeline and current xlog
-	 * position.
+	 * Identify server, obtaining start LSN position and current timeline ID
+	 * at the same time, necessary if not valid data can be found in the
+	 * existing output directory.
 	 */
-	res = PQexec(conn, "IDENTIFY_SYSTEM");
-	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
-				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
+	if (!RunIdentifySystem(conn, NULL, &servertli, &serverpos, NULL))
 		disconnect_and_exit(1);
-	}
-	if (PQntuples(res) != 1 || PQnfields(res) < 3)
-	{
-		fprintf(stderr,
-				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"),
-				progname, PQntuples(res), PQnfields(res), 1, 3);
-		disconnect_and_exit(1);
-	}
-	servertli = atoi(PQgetvalue(res, 0, 1));
-	if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
-	{
-		fprintf(stderr,
-				_("%s: could not parse transaction log location \"%s\"\n"),
-				progname, PQgetvalue(res, 0, 2));
-		disconnect_and_exit(1);
-	}
-	serverpos = ((uint64) hi) << 32 | lo;
-	PQclear(res);
 
 	/*
 	 * Figure out where to start streaming.

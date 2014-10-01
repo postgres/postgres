@@ -1569,8 +1569,8 @@ BaseBackup(void)
 {
 	PGresult   *res;
 	char	   *sysidentifier;
-	uint32		latesttli;
-	uint32		starttli;
+	TimeLineID	latesttli;
+	TimeLineID	starttli;
 	char	   *basebkp;
 	char		escaped_label[MAXPGPATH];
 	char	   *maxrate_clause = NULL;
@@ -1624,23 +1624,8 @@ BaseBackup(void)
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline
 	 */
-	res = PQexec(conn, "IDENTIFY_SYSTEM");
-	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
-				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
+	if (!RunIdentifySystem(conn, &sysidentifier, &latesttli, NULL, NULL))
 		disconnect_and_exit(1);
-	}
-	if (PQntuples(res) != 1 || PQnfields(res) < 3)
-	{
-		fprintf(stderr,
-				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"),
-				progname, PQntuples(res), PQnfields(res), 1, 3);
-		disconnect_and_exit(1);
-	}
-	sysidentifier = pg_strdup(PQgetvalue(res, 0, 0));
-	latesttli = atoi(PQgetvalue(res, 0, 1));
-	PQclear(res);
 
 	/*
 	 * Start the actual backup
