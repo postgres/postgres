@@ -902,7 +902,12 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
  * of the EC back into the main restrictinfo datastructures.  Multi-relation
  * clauses will be regurgitated later by generate_join_implied_equalities().
  * (We do it this way to maintain continuity with the case that ec_broken
- * becomes set only after we've gone up a join level or two.)
+ * becomes set only after we've gone up a join level or two.)  However, for
+ * an EC that contains constants, we can adopt a simpler strategy and just
+ * throw back all the source RestrictInfos immediately; that works because
+ * we know that such an EC can't become broken later.  (This rule justifies
+ * ignoring ec_has_const ECs in generate_join_implied_equalities, even when
+ * they are broken.)
  */
 static void
 generate_base_implied_equalities_broken(PlannerInfo *root,
@@ -914,7 +919,8 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(lc);
 
-		if (bms_membership(restrictinfo->required_relids) != BMS_MULTIPLE)
+		if (ec->ec_has_const ||
+			bms_membership(restrictinfo->required_relids) != BMS_MULTIPLE)
 			distribute_restrictinfo_to_rels(root, restrictinfo);
 	}
 }
