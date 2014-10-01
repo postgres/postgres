@@ -691,12 +691,38 @@ pgp_key_id(bytea) returns text
    </indexterm>
 
 <synopsis>
-armor(data bytea) returns text
+armor(data bytea [ , keys text[], values text[] ]) returns text
 dearmor(data text) returns bytea
 </synopsis>
    <para>
     These functions wrap/unwrap binary data into PGP ASCII-armor format,
     which is basically Base64 with CRC and additional formatting.
+   </para>
+
+   <para>
+    If the <parameter>keys</> and <parameter>values</> arrays are specified,
+    an <firstterm>armor header</> is added to the armored format for each
+    key/value pair. Both arrays must be single-dimensional, and they must
+    be of the same length.  The keys and values cannot contain any non-ASCII
+    characters.
+   </para>
+  </sect3>
+
+  <sect3>
+   <title><function>pgp_armor_headers</function></title>
+
+   <indexterm>
+    <primary>pgp_armor_headers</primary>
+   </indexterm>
+
+<synopsis>
+pgp_armor_headers(data text, key out text, value out text) returns setof record
+</synopsis>
+   <para>
+    <function>pgp_armor_headers()</> extracts the armor headers from
+    <parameter>data</>.  The return value is a set of rows with two columns,
+    key and value.  If the keys or values contain any non-ASCII characters,
+    they are treated as UTF-8.
    </para>
   </sect3>
 

@@ -32,8 +32,11 @@
 #include "postgres.h"
 
 #include "lib/stringinfo.h"
+#include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/array.h"
+#include "funcapi.h"
 
 #include "mbuf.h"
 #include "px.h"
@@ -56,6 +59,7 @@ PG_FUNCTION_INFO_V1(pgp_key_id_w);
 
 PG_FUNCTION_INFO_V1(pg_armor);
 PG_FUNCTION_INFO_V1(pg_dearmor);
+PG_FUNCTION_INFO_V1(pgp_armor_headers);
 
 /*
  * Mix a block of data into RNG.
@@ -146,6 +150,19 @@ static text *
 convert_to_utf8(text *src)
 {
 	return convert_charset(src, GetDatabaseEncoding(), PG_UTF8);
+}
+
+static bool
+string_is_ascii(const char *str)
+{
+	const char *p;
+
+	for (p = str; *p; p++)
+	{
+		if (IS_HIGHBIT_SET(*p))
+			return false;
+	}
+	return true;
 }
 
 static void
@@ -816,6 +833,100 @@ pgp_pub_decrypt_text(PG_FUNCTION_ARGS)
  * Wrappers for PGP ascii armor
  */
 
+/*
+ * Helper function for pgp_armor. Converts arrays of keys and values into
+ * plain C arrays, and checks that they don't contain invalid characters.
+ */
+static int
+parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
+					   char ***p_keys, char ***p_values)
+{
+	int		nkdims = ARR_NDIM(key_array);
+	int		nvdims = ARR_NDIM(val_array);
+	char   **keys,
+		   **values;
+	Datum  *key_datums,
+		   *val_datums;
+	bool   *key_nulls,
+		   *val_nulls;
+	int		key_count,
+			val_count;
+	int		i;
+
+	if (nkdims > 1 || nkdims != nvdims)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				errmsg("wrong number of array subscripts")));
+	if (nkdims == 0)
+		return 0;
+
+	deconstruct_array(key_array,
+					  TEXTOID, -1, false, 'i',
+					  &key_datums, &key_nulls, &key_count);
+
+	deconstruct_array(val_array,
+					  TEXTOID, -1, false, 'i',
+					  &val_datums, &val_nulls, &val_count);
+
+	if (key_count != val_count)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("mismatched array dimensions")));
+
+	keys = (char **) palloc(sizeof(char *) * key_count);
+	values = (char **) palloc(sizeof(char *) * val_count);
+
+	for (i = 0; i < key_count; i++)
+	{
+		char *v;
+
+		/* Check that the key doesn't contain anything funny */
+		if (key_nulls[i])
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("null value not allowed for header key")));
+
+		v = TextDatumGetCString(key_datums[i]);
+
+		if (!string_is_ascii(v))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("header key must not contain non-ASCII characters")));
+		if (strstr(v, ": "))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("header key must not contain \": \"")));
+		if (strchr(v, '\n'))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("header key must not contain newlines")));
+		keys[i] = v;
+
+		/* And the same for the value */
+		if (val_nulls[i])
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("null value not allowed for header value")));
+
+		v = TextDatumGetCString(val_datums[i]);
+
+		if (!string_is_ascii(v))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("header value must not contain non-ASCII characters")));
+		if (strchr(v, '\n'))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("header value must not contain newlines")));
+
+		values[i] = v;
+	}
+
+	*p_keys = keys;
+	*p_values = values;
+	return key_count;
+}
+
 Datum
 pg_armor(PG_FUNCTION_ARGS)
 {
@@ -823,13 +934,27 @@ pg_armor(PG_FUNCTION_ARGS)
 	text	   *res;
 	int			data_len;
 	StringInfoData buf;
+	int			num_headers;
+	char	  **keys = NULL,
+			  **values = NULL;
 
 	data = PG_GETARG_BYTEA_P(0);
 	data_len = VARSIZE(data) - VARHDRSZ;
+	if (PG_NARGS() == 3)
+	{
+		num_headers = parse_key_value_arrays(PG_GETARG_ARRAYTYPE_P(1),
+											 PG_GETARG_ARRAYTYPE_P(2),
+											 &keys, &values);
+	}
+	else if (PG_NARGS() == 1)
+		num_headers = 0;
+	else
+		elog(ERROR, "unexpected number of arguments %d", PG_NARGS());
 
 	initStringInfo(&buf);
 
-	pgp_armor_encode((uint8 *) VARDATA(data), data_len, &buf);
+	pgp_armor_encode((uint8 *) VARDATA(data), data_len, &buf,
+					 num_headers, keys, values);
 
 	res = palloc(VARHDRSZ + buf.len);
 	SET_VARSIZE(res, VARHDRSZ + buf.len);
@@ -867,6 +992,82 @@ pg_dearmor(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);
 }
+
+/* cross-call state for pgp_armor_headers */
+typedef struct
+{
+	int			nheaders;
+	char	  **keys;
+	char	  **values;
+} pgp_armor_headers_state;
+
+Datum
+pgp_armor_headers(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	pgp_armor_headers_state *state;
+	char	   *utf8key;
+	char	   *utf8val;
+	HeapTuple	tuple;
+	TupleDesc	tupdesc;
+	AttInMetadata *attinmeta;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		text	   *data = PG_GETARG_TEXT_PP(0);
+		int			res;
+		MemoryContext oldcontext;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* we need the state allocated in the multi call context */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* Build a tuple descriptor for our result type */
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+
+		state = (pgp_armor_headers_state *) palloc(sizeof(pgp_armor_headers_state));
+
+		res = pgp_extract_armor_headers((uint8 *) VARDATA_ANY(data),
+										VARSIZE_ANY_EXHDR(data),
+										&state->nheaders, &state->keys,
+										&state->values);
+		if (res < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+					 errmsg("%s", px_strerror(res))));
+
+		MemoryContextSwitchTo(oldcontext);
+		funcctx->user_fctx = state;
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	state = (pgp_armor_headers_state *) funcctx->user_fctx;
+
+	if (funcctx->call_cntr >= state->nheaders)
+		SRF_RETURN_DONE(funcctx);
+	else
+	{
+		char	  *values[2];
+
+		/* we assume that the keys (and values) are in UTF-8. */
+		utf8key = state->keys[funcctx->call_cntr];
+		utf8val = state->values[funcctx->call_cntr];
+
+		values[0] = pg_any_to_server(utf8key, strlen(utf8key), PG_UTF8);
+		values[1] = pg_any_to_server(utf8val, strlen(utf8val), PG_UTF8);
+
+		/* build a tuple */
+		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+	}
+}
+
+
 
 /*
  * Wrappers for PGP key id

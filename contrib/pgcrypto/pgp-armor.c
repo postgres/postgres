@@ -178,7 +178,7 @@ b64_dec_len(unsigned srclen)
  * PGP armor
  */
 
-static const char *armor_header = "-----BEGIN PGP MESSAGE-----\n\n";
+static const char *armor_header = "-----BEGIN PGP MESSAGE-----\n";
 static const char *armor_footer = "\n-----END PGP MESSAGE-----\n";
 
 /* CRC24 implementation from rfc2440 */
@@ -204,17 +204,24 @@ crc24(const uint8 *data, unsigned len)
 }
 
 void
-pgp_armor_encode(const uint8 *src, int len, StringInfo dst)
+pgp_armor_encode(const uint8 *src, unsigned len, StringInfo dst,
+				 int num_headers, char **keys, char **values)
 {
+	int			n;
 	int			res;
 	unsigned	b64len;
 	unsigned	crc = crc24(src, len);
 
 	appendStringInfoString(dst, armor_header);
 
+	for (n = 0; n < num_headers; n++)
+		appendStringInfo(dst, "%s: %s\n", keys[n], values[n]);
+	appendStringInfoChar(dst, '\n');
+
 	/* make sure we have enough room to b64_encode() */
 	b64len = b64_enc_len(len);
 	enlargeStringInfo(dst, (int) b64len);
+
 	res = b64_encode(src, len, (uint8 *) dst->data + dst->len);
 	if (res > b64len)
 		elog(FATAL, "overflow - encode estimate too small");
@@ -370,4 +377,112 @@ pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 	}
 out:
 	return res;
+}
+
+/*
+ * Extracts all armor headers from an ASCII-armored input.
+ *
+ * Returns 0 on success, or PXE_* error code on error. On success, the
+ * number of headers and their keys and values are returned in *nheaders,
+ * *nkeys and *nvalues.
+ */
+int
+pgp_extract_armor_headers(const uint8 *src, unsigned len,
+						  int *nheaders, char ***keys, char ***values)
+{
+	const uint8 *data_end = src + len;
+	const uint8 *p;
+	const uint8 *base64_start;
+	const uint8 *armor_start;
+	const uint8 *armor_end;
+	Size		armor_len;
+	char	   *line;
+	char	   *nextline;
+	char	   *eol,
+				*colon;
+	int			hlen;
+	char	   *buf;
+	int			hdrlines;
+	int			n;
+
+	/* armor start */
+	hlen = find_header(src, data_end, &armor_start, 0);
+	if (hlen <= 0)
+		return PXE_PGP_CORRUPT_ARMOR;
+	armor_start += hlen;
+
+	/* armor end */
+	hlen = find_header(armor_start, data_end, &armor_end, 1);
+	if (hlen <= 0)
+		return PXE_PGP_CORRUPT_ARMOR;
+
+	/* Count the number of armor header lines. */
+	hdrlines = 0;
+	p = armor_start;
+	while (p < armor_end && *p != '\n' && *p != '\r')
+	{
+		p = memchr(p, '\n', armor_end - p);
+		if (!p)
+			return PXE_PGP_CORRUPT_ARMOR;
+
+		/* step to start of next line */
+		p++;
+		hdrlines++;
+	}
+	base64_start = p;
+
+	/*
+	 * Make a modifiable copy of the part of the input that contains the
+	 * headers. The returned key/value pointers will point inside the buffer.
+	 */
+	armor_len = base64_start - armor_start;
+	buf = palloc(armor_len + 1);
+	memcpy(buf, armor_start, armor_len);
+	buf[armor_len] = '\0';
+
+	/* Allocate return arrays */
+	*keys = (char **) palloc(hdrlines * sizeof(char *));
+	*values = (char **) palloc(hdrlines * sizeof(char *));
+
+	/*
+	 * Split the header lines at newlines and ": " separators, and collect
+	 * pointers to the keys and values in the return arrays.
+	 */
+	n = 0;
+	line = buf;
+	for (;;)
+	{
+		/* find end of line */
+		eol = strchr(line, '\n');
+		if (!eol)
+			break;
+		nextline = eol + 1;
+		/* if the line ends in CR + LF, strip the CR */
+		if (eol > line && *(eol - 1) == '\r')
+			eol--;
+		*eol = '\0';
+
+		/* find colon+space separating the key and value */
+		colon = strstr(line, ": ");
+		if (!colon)
+			return PXE_PGP_CORRUPT_ARMOR;
+		*colon = '\0';
+
+		/* shouldn't happen, we counted the number of lines beforehand */
+		if (n >= hdrlines)
+			elog(ERROR, "unexpected number of armor header lines");
+
+		(*keys)[n] = line;
+		(*values)[n] = colon + 2;
+		n++;
+
+		/* step to start of next line */
+		line = nextline;
+	}
+
+	if (n != hdrlines)
+		elog(ERROR, "unexpected number of armor header lines");
+
+	*nheaders = n;
+	return 0;
 }

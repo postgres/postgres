@@ -102,3 +102,271 @@ em9va2E=
 -----END PGP MESSAGE-----
 ');
 ERROR:  Corrupt ascii-armor
+-- corrupt (no space after the colon)
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+foo:
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ERROR:  Corrupt ascii-armor
+-- corrupt (no empty line)
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ERROR:  Corrupt ascii-armor
+-- no headers
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ key | value 
+-----+-------
+(0 rows)
+
+-- header with empty value
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+foo: 
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ key | value 
+-----+-------
+ foo | 
+(1 row)
+
+-- simple
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+fookey: foovalue
+barkey: barvalue
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+  key   |  value   
+--------+----------
+ fookey | foovalue
+ barkey | barvalue
+(2 rows)
+
+-- insane keys, part 1
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+insane:key : 
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+     key     | value 
+-------------+-------
+ insane:key  | 
+(1 row)
+
+-- insane keys, part 2
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+insane:key : text value here
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+     key     |      value      
+-------------+-----------------
+ insane:key  | text value here
+(1 row)
+
+-- long value
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+long: this value is more than 76 characters long, but it should still parse correctly as that''s permitted by RFC 4880
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ key  |                                                      value                                                      
+------+-----------------------------------------------------------------------------------------------------------------
+ long | this value is more than 76 characters long, but it should still parse correctly as that's permitted by RFC 4880
+(1 row)
+
+-- long value, split up
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+long: this value is more than 76 characters long, but it should still 
+long: parse correctly as that''s permitted by RFC 4880
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ key  |                              value                               
+------+------------------------------------------------------------------
+ long | this value is more than 76 characters long, but it should still 
+ long | parse correctly as that's permitted by RFC 4880
+(2 rows)
+
+-- long value, split up, part 2
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+long: this value is more than 
+long: 76 characters long, but it should still 
+long: parse correctly as that''s permitted by RFC 4880
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+ key  |                      value                      
+------+-------------------------------------------------
+ long | this value is more than 
+ long | 76 characters long, but it should still 
+ long | parse correctly as that's permitted by RFC 4880
+(3 rows)
+
+-- long value, split up, part 3
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+emptykey: 
+long: this value is more than 
+emptykey: 
+long: 76 characters long, but it should still 
+emptykey: 
+long: parse correctly as that''s permitted by RFC 4880
+emptykey: 
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+');
+   key    |                      value                      
+----------+-------------------------------------------------
+ emptykey | 
+ long     | this value is more than 
+ emptykey | 
+ long     | 76 characters long, but it should still 
+ emptykey | 
+ long     | parse correctly as that's permitted by RFC 4880
+ emptykey | 
+(7 rows)
+
+select * from pgp_armor_headers('
+-----BEGIN PGP MESSAGE-----
+Comment: dat1.blowfish.sha1.mdc.s2k3.z0
+
+jA0EBAMCfFNwxnvodX9g0jwB4n4s26/g5VmKzVab1bX1SmwY7gvgvlWdF3jKisvS
+yA6Ce1QTMK3KdL2MPfamsTUSAML8huCJMwYQFfE=
+=JcP+
+-----END PGP MESSAGE-----
+');
+   key   |             value              
+---------+--------------------------------
+ Comment | dat1.blowfish.sha1.mdc.s2k3.z0
+(1 row)
+
+-- test CR+LF line endings
+select * from pgp_armor_headers(replace('
+-----BEGIN PGP MESSAGE-----
+fookey: foovalue
+barkey: barvalue
+
+em9va2E=
+=ZZZZ
+-----END PGP MESSAGE-----
+', E'\n', E'\r\n'));
+  key   |  value   
+--------+----------
+ fookey | foovalue
+ barkey | barvalue
+(2 rows)
+
+-- test header generation
+select armor('zooka', array['foo'], array['bar']);
+            armor            
+-----------------------------
+ -----BEGIN PGP MESSAGE-----+
+ foo: bar                   +
+                            +
+ em9va2E=                   +
+ =D5cR                      +
+ -----END PGP MESSAGE-----  +
+ 
+(1 row)
+
+select armor('zooka', array['Version', 'Comment'], array['Created by pgcrypto', 'PostgreSQL, the world''s most advanced open source database']);
+                                armor                                
+---------------------------------------------------------------------
+ -----BEGIN PGP MESSAGE-----                                        +
+ Version: Created by pgcrypto                                       +
+ Comment: PostgreSQL, the world's most advanced open source database+
+                                                                    +
+ em9va2E=                                                           +
+ =D5cR                                                              +
+ -----END PGP MESSAGE-----                                          +
+ 
+(1 row)
+
+select * from pgp_armor_headers(
+  armor('zooka', array['Version', 'Comment'],
+                 array['Created by pgcrypto', 'PostgreSQL, the world''s most advanced open source database']));
+   key   |                           value                            
+---------+------------------------------------------------------------
+ Version | Created by pgcrypto
+ Comment | PostgreSQL, the world's most advanced open source database
+(2 rows)
+
+-- error/corner cases
+select armor('', array['foo'], array['too', 'many']);
+ERROR:  mismatched array dimensions
+select armor('', array['too', 'many'], array['foo']);
+ERROR:  mismatched array dimensions
+select armor('', array[['']], array['foo']);
+ERROR:  wrong number of array subscripts
+select armor('', array['foo'], array[['']]);
+ERROR:  wrong number of array subscripts
+select armor('', array[null], array['foo']);
+ERROR:  null value not allowed for header key
+select armor('', array['foo'], array[null]);
+ERROR:  null value not allowed for header value
+select armor('', '[0:0]={"foo"}', array['foo']);
+            armor            
+-----------------------------
+ -----BEGIN PGP MESSAGE-----+
+ foo: foo                   +
+                            +
+ =twTO                      +
+ -----END PGP MESSAGE-----  +
+ 
+(1 row)
+
+select armor('', array['foo'], '[0:0]={"foo"}');
+            armor            
+-----------------------------
+ -----BEGIN PGP MESSAGE-----+
+ foo: foo                   +
+                            +
+ =twTO                      +
+ -----END PGP MESSAGE-----  +
+ 
+(1 row)
+
+select armor('', array[E'embedded\nnewline'], array['foo']);
+ERROR:  header key must not contain newlines
+select armor('', array['foo'], array[E'embedded\nnewline']);
+ERROR:  header value must not contain newlines
+select armor('', array['embedded: colon+space'], array['foo']);
+ERROR:  header key must not contain ": "
