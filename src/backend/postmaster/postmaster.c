@@ -1482,6 +1482,8 @@ DetermineSleepTime(struct timeval * timeout)
 
 /*
  * Main idle loop of postmaster
+ *
+ * NB: Needs to be called with signals blocked
  */
 static int
 ServerLoop(void)
@@ -1503,34 +1505,38 @@ ServerLoop(void)
 		/*
 		 * Wait for a connection request to arrive.
 		 *
+		 * We block all signals except while sleeping. That makes it safe for
+		 * signal handlers, which again block all signals while executing, to
+		 * do nontrivial work.
+		 *
 		 * If we are in PM_WAIT_DEAD_END state, then we don't want to accept
-		 * any new connections, so we don't call select() at all; just sleep
-		 * for a little bit with signals unblocked.
+		 * any new connections, so we don't call select(), and just sleep.
 		 */
 		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
 
-		PG_SETMASK(&UnBlockSig);
-
 		if (pmState == PM_WAIT_DEAD_END)
 		{
+			PG_SETMASK(&UnBlockSig);
+
 			pg_usleep(100000L); /* 100 msec seems reasonable */
 			selres = 0;
+
+			PG_SETMASK(&BlockSig);
 		}
 		else
 		{
 			/* must set timeout each time; some OSes change it! */
 			struct timeval timeout;
 
+			/* Needs to run with blocked signals! */
 			DetermineSleepTime(&timeout);
 
-			selres = select(nSockets, &rmask, NULL, NULL, &timeout);
-		}
+			PG_SETMASK(&UnBlockSig);
 
-		/*
-		 * Block all signals until we wait again.  (This makes it safe for our
-		 * signal handlers to do nontrivial work.)
-		 */
-		PG_SETMASK(&BlockSig);
+			selres = select(nSockets, &rmask, NULL, NULL, &timeout);
+
+			PG_SETMASK(&BlockSig);
+		}
 
 		/* Now check the select() result */
 		if (selres < 0)
