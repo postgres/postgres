@@ -14,7 +14,7 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'for
 
 -- fails, binary plugin, textual consumer
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '1');
-ERROR:  output plugin cannot produce binary output
+ERROR:  logical decoding output plugin "test_decoding" produces binary output, but "pg_logical_slot_get_changes(name,pg_lsn,integer,text[])" expects textual data
 -- succeeds, textual plugin, binary consumer
 SELECT data FROM pg_logical_slot_get_binary_changes('regression_slot', NULL, NULL, 'force-binary', '0');
  data 
