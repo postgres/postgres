@@ -20,7 +20,7 @@ all: pg_config.h pg_config_ext.h pg_config_os.h
 SUBDIRS = access bootstrap catalog commands common datatype executor foreign \
 	lib libpq mb nodes optimizer parser postmaster regex replication \
 	rewrite storage tcop snowball snowball/libstemmer tsearch \
-	tsearch/dicts utils port port/win32 port/win32_msvc \
+	tsearch/dicts utils port port/atomics port/win32 port/win32_msvc \
 	port/win32_msvc/sys port/win32/arpa port/win32/netinet \
 	port/win32/sys portability
 
