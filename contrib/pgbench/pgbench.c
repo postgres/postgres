@@ -2809,7 +2809,7 @@ main(int argc, char **argv)
 				benchmarking_option_set = true;
 				if (num_files > 0)
 				{
-					fprintf(stderr, "query mode (-M) should be specifiled before transaction scripts (-f)\n");
+					fprintf(stderr, "query mode (-M) should be specified before transaction scripts (-f)\n");
 					exit(1);
 				}
 				for (querymode = 0; querymode < NUM_QUERYMODE; querymode++)
