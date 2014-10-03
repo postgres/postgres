@@ -792,10 +792,13 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    </para>
 
    <para>
-    When multiple workers are running, the cost limit is
+    When multiple workers are running, the cost delay parameters are
     <quote>balanced</quote> among all the running workers, so that the
-    total impact on the system is the same, regardless of the number
-    of workers actually running.
+    total I/O impact on the system is the same regardless of the number
+    of workers actually running.  However, any workers processing tables whose
+    <literal>autovacuum_vacuum_cost_delay</> or
+    <literal>autovacuum_vacuum_cost_limit</> have been set are not considered
+    in the balancing algorithm.
    </para>
   </sect2>
  </sect1>
