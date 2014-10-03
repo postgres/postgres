@@ -884,13 +884,13 @@ process_matched_tle(TargetEntry *src_tle,
 	 *		UPDATE tab SET col.fld1.subfld1 = x, col.fld2.subfld2 = y
 	 * The two expressions produced by the parser will look like
 	 *		FieldStore(col, fld1, FieldStore(placeholder, subfld1, x))
-	 *		FieldStore(col, fld2, FieldStore(placeholder, subfld2, x))
+	 *		FieldStore(col, fld2, FieldStore(placeholder, subfld2, y))
 	 * However, we can ignore the substructure and just consider the top
 	 * FieldStore or ArrayRef from each assignment, because it works to
 	 * combine these as
 	 *		FieldStore(FieldStore(col, fld1,
 	 *							  FieldStore(placeholder, subfld1, x)),
-	 *				   fld2, FieldStore(placeholder, subfld2, x))
+	 *				   fld2, FieldStore(placeholder, subfld2, y))
 	 * Note the leftmost expression goes on the inside so that the
 	 * assignments appear to occur left-to-right.
 	 *
