@@ -1264,6 +1264,23 @@ gistSplit(Relation r,
 	int			i;
 	SplitedPageLayout *res = NULL;
 
+	/* this should never recurse very deeply, but better safe than sorry */
+	check_stack_depth();
+
+	/* there's no point in splitting an empty page */
+	Assert(len > 0);
+
+	/*
+	 * If a single tuple doesn't fit on a page, no amount of splitting will
+	 * help.
+	 */
+	if (len == 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   IndexTupleSize(itup[0]), GiSTPageSize,
+				   RelationGetRelationName(r))));
+
 	memset(v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
 	memset(v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
 	gistSplitByKey(r, page, itup, len, giststate, &v, 0);
