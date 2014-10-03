@@ -16,7 +16,8 @@ ChST    36000    # Chamorro Standard Time (lower case "h" is as in zic)
                  #     (Pacific/Saipan)
 CHUT    36000    # Chuuk Time
                  #     (Pacific/Chuuk)
-CKT     43200    # Cook Islands Time (not in zic)
+CKT    -36000    # Cook Islands Time (caution: this used to mean 43200)
+                 #     (Pacific/Rarotonga)
 EASST  -18000 D  # Easter Island Summer Time (Chile)
                  #     (Pacific/Easter)
 # CONFLICT! EAST is not unique
@@ -24,8 +25,10 @@ EASST  -18000 D  # Easter Island Summer Time (Chile)
 #  - EAST: East Australian Standard Time (Australia)
 EAST   -21600    # Easter Island Time (Chile)
                  #     (Pacific/Easter)
-FJST   -46800 D  # Fiji Summer Time (not in zic)
-FJT    -43200    # Fiji Time (not in zic)
+FJST    46800 D  # Fiji Summer Time (caution: this used to mean -46800)
+                 #     (Pacific/Fiji)
+FJT     43200    # Fiji Time (caution: this used to mean -43200)
+                 #     (Pacific/Fiji)
 GALT   -21600    # Galapagos Time
                  #     (Pacific/Galapagos)
 GAMT   -32400    # Gambier Time
@@ -85,7 +88,8 @@ TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
 TKT     46800    # Tokelau Time (caution: this used to mean -36000)
                  #     (Pacific/Fakaofo)
-TOT     46800    # Tonga Time (not in zic)
+TOT     46800    # Tonga Time
+                 #     (Pacific/Tongatapu)
 TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
                  #     (Pacific/Truk)
 TVT     43200    # Tuvalu Time

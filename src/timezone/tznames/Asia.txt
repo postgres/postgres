@@ -7,15 +7,9 @@
 # src/timezone/tznames/Asia.txt
 #
 
-# CONFLICT! ADT is not unique
-# Other timezones:
-# - ADT: Atlantic Daylight Time (America)
-ADT     14400 D  # Arabia Daylight Time
-                 #     (Asia/Baghdad)
 AFT     16200    # Afghanistan Time
                  #     (Asia/Kabul)
-ALMST   25200 D  # Alma-Ata Summer Time
-                 #     (Asia/Almaty)
+ALMST   25200 D  # Alma-Ata Summer Time (obsolete)
 ALMT    21600    # Alma-Ata Time
                  #     (Asia/Almaty)
 # CONFLICT! AMST is not unique
@@ -28,14 +22,10 @@ AMST    18000 D  # Armenia Summer Time
 #  - AMT: Amazon Time (America)
 AMT     14400    # Armenia Time
                  #     (Asia/Yerevan)
-ANAST   46800 D  # Anadyr Summer Time
-                 #     (Asia/Anadyr)
+ANAST   46800 D  # Anadyr Summer Time (obsolete)
 ANAT    43200    # Anadyr Time
                  #     (Asia/Anadyr)
-AQTT    18000    # Aqtau Time
-                 # Aqtobe Time
-                 #     (Asia/Aqtau)
-                 #     (Asia/Aqtobe)
+AQTT    18000    # Aqtau Time (obsolete)
 # CONFLICT! AST is not unique
 # Other timezones:
 #  - AST: Atlantic Standard Time (America)
@@ -64,7 +54,6 @@ BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
 CCT     28800    # China Coastal Time (not in zic)
 CHOST   36000 D  # Choibalsan Summer Time (obsolete)
-                 #     (Asia/Choibalsan)
 CHOT    28800    # Choibalsan Time (caution: this used to mean 32400)
                  #     (Asia/Choibalsan)
 CIT     28800    # Central Indonesia Time (obsolete, WITA is now preferred)
@@ -127,8 +116,7 @@ GST     14400    # Gulf Standard Time
                  #     (Asia/Dubai)
                  #     (Asia/Muscat)
 HKT     28800    # Hong Kong Time (not in zic)
-HOVST   28800 D  # Hovd Summer Time
-                 #     (Asia/Hovd)
+HOVST   28800 D  # Hovd Summer Time (obsolete)
 HOVT    25200    # Hovd Time
                  #     (Asia/Hovd)
 ICT     25200    # Indochina Time
@@ -137,10 +125,10 @@ ICT     25200    # Indochina Time
                  #     (Asia/Saigon)
                  #     (Asia/Vientiane)
 IDT     10800 D  # Israel Daylight Time
+                 #     (Asia/Jerusalem)
 IRDT    16200 D  # Iran Daylight Time
                  #     (Asia/Tehran)
 IRKST   32400 D  # Irkutsk Summer Time (obsolete)
-                 #     (Asia/Irkutsk)
 IRKT    32400    # Irkutsk Time (caution: this used to mean 28800)
                  #     (Asia/Irkutsk)
 IRST    12600    # Iran Standard Time
@@ -157,6 +145,7 @@ IST     19800    # Indian Standard Time
 # - IST: Irish Summer Time (Europe)
 # - IST: Indian Standard Time (Asia)
 IST      7200    # Israel Standard Time
+                 #     (Asia/Jerusalem)
 JAYT    32400    # Jayapura Time (Indonesia) (not in zic)
 JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
@@ -166,15 +155,12 @@ KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
 KGT     21600    # Kyrgyzstan Time (caution: this used to mean 18000)
                  #     (Asia/Bishkek)
 KRAST   28800 D  # Krasnoyarsk Summer Time (obsolete)
-                 #     (Asia/Krasnoyarsk)
 KRAT    28800    # Krasnoyarsk Time (caution: this used to mean 25200)
                  #     (Asia/Krasnoyarsk)
 KST     32400    # Korean Standard Time
                  #     (Asia/Pyongyang)
-LKT     21600    # Lanka Time
-                 #     (Asia/Colombo)
+LKT     21600    # Lanka Time (obsolete)
 MAGST   43200 D  # Magadan Summer Time (obsolete)
-                 #     (Asia/Magadan)
 MAGT    43200    # Magadan Time (caution: this used to mean 39600)
                  #     (Asia/Magadan)
 MMT     23400    # Myanmar Time
@@ -183,31 +169,28 @@ MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
 NOVST   25200 D  # Novosibirsk Summer Time (obsolete)
-                 #     (Asia/Novosibirsk)
 NOVT    25200    # Novosibirsk Time (caution: this used to mean 21600)
                  #     (Asia/Novosibirsk)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
 OMSST   25200 D  # Omsk Summer Time (obsolete)
-                 #     (Asia/Omsk)
 OMST    25200    # Omsk Time (caution: this used to mean 21600)
                  #     (Asia/Omsk)
 ORAT    18000    # Oral Time
                  #     (Asia/Oral)
-PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
-                 #     (Asia/Kamchatka)
+PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time (obsolete)
 PETT    43200    # Petropavlovsk-Kamchatski Time
                  #     (Asia/Kamchatka)
-PHT     28800    # Philippine Time (not in zic)
+PHT     28800    # Philippine Time
+                 #     (Asia/Manila)
 PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
 QYZT    21600    # Kizilorda Time
                  #     (Asia/Qyzylorda)
-SAKST   39600 D  # Sakhalin Summer Time
-                 #     (Asia/Sakhalin)
-SAKT    36000    # Sakhalin Time
+SAKST   39600 D  # Sakhalin Summer Time (obsolete)
+SAKT    39600    # Sakhalin Time (caution: this used to mean 36000)
                  #     (Asia/Sakhalin)
 SGT     28800    # Singapore Time
                  #     (Asia/Singapore)
@@ -217,8 +200,7 @@ TLT     32400    # East Timor Time
                  #     (Asia/Dili)
 TMT     18000    # Turkmenistan Time
                  #     (Asia/Ashgabat)
-ULAST   32400 D  # Ulan Bator Summer Time
-                 #     (Asia/Ulaanbaatar)
+ULAST   32400 D  # Ulan Bator Summer Time (obsolete)
 ULAT    28800    # Ulan Bator Time
                  #     (Asia/Ulaanbaatar)
 UZST    21600 D  # Uzbekistan Summer Time
@@ -228,7 +210,6 @@ UZT     18000    # Uzbekistan Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
 VLAST   39600 D  # Vladivostok Summer Time (obsolete)
-                 #     (Asia/Vladivostok)
 VLAT    39600    # Vladivostok Time (caution: this used to mean 36000)
                  #     (Asia/Vladivostok)
 WIB     25200    # Waktu Indonesia Barat
@@ -239,10 +220,8 @@ WIT     32400    # Waktu Indonesia Timur (caution: this used to mean 25200)
 WITA    28800    # Waktu Indonesia Tengah
                  #     (Asia/Makassar)
 YAKST   36000 D  # Yakutsk Summer Time (obsolete)
-                 #     (Asia/Yakutsk)
 YAKT    36000    # Yakutsk Time (caution: this used to mean 32400)
                  #     (Asia/Yakutsk)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
-                 #     (Asia/Yekaterinburg)
 YEKT    21600    # Yekaterinburg Time (caution: this used to mean 18000)
                  #     (Asia/Yekaterinburg)
