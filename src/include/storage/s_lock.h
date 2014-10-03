@@ -796,7 +796,7 @@ typedef unsigned int slock_t;
 /* On IA64, it's a win to use a non-locking test before the xchg proper */
 #define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
 #define S_UNLOCK(lock)	\
-	do { _Asm_sched_fence(); (*(lock)) = 0); } while (0)
+	do { _Asm_sched_fence(); (*(lock)) = 0; } while (0)
 
 #endif	/* HPUX on IA64, non gcc */
 
