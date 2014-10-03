@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ TEMPORARY | TEMP ] [ IF NOT EXISTS ] SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
