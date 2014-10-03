@@ -65,8 +65,9 @@ CREATE VIEW pg_user AS
 
 CREATE VIEW pg_policies AS
     SELECT
+        N.nspname AS schemaname,
+        C.relname AS tablename,
         rs.rsecpolname AS policyname,
-        (SELECT relname FROM pg_catalog.pg_class WHERE oid = rs.rsecrelid) AS tablename,
         CASE
             WHEN rs.rsecroles = '{0}' THEN
                 string_to_array('public', '')
@@ -78,8 +79,8 @@ CREATE VIEW pg_policies AS
                     WHERE oid = ANY (rs.rsecroles) ORDER BY 1
                 )
         END AS roles,
-		CASE WHEN rs.rseccmd IS NULL THEN 'ALL' ELSE
-			CASE rs.rseccmd
+        CASE WHEN rs.rseccmd IS NULL THEN 'ALL' ELSE
+            CASE rs.rseccmd
                 WHEN 'r' THEN 'SELECT'
                 WHEN 'a' THEN 'INSERT'
                 WHEN 'u' THEN 'UPDATE'
@@ -89,7 +90,8 @@ CREATE VIEW pg_policies AS
         pg_catalog.pg_get_expr(rs.rsecqual, rs.rsecrelid) AS qual,
         pg_catalog.pg_get_expr(rs.rsecwithcheck, rs.rsecrelid) AS with_check
     FROM pg_catalog.pg_rowsecurity rs
-    ORDER BY 1;
+    JOIN pg_catalog.pg_class C ON (C.oid = rs.rsecrelid)
+    LEFT JOIN pg_catalog.pg_namespace N ON (N.oid = C.relnamespace);
 
 CREATE VIEW pg_rules AS
     SELECT

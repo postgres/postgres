@@ -2011,10 +2011,15 @@ describeOneTableDetails(const char *schemaname,
 
 			printfPQExpBuffer(&buf,
 						   "SELECT rs.rsecpolname,\n"
-						   "CASE WHEN rs.rsecroles = '{0}' THEN NULL ELSE array(select rolname from pg_roles where oid = any (rs.rsecroles) order by 1) END,\n"
+						   "CASE WHEN rs.rsecroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (rs.rsecroles) order by 1),',') END,\n"
 						   "pg_catalog.pg_get_expr(rs.rsecqual, rs.rsecrelid),\n"
 						   "pg_catalog.pg_get_expr(rs.rsecwithcheck, rs.rsecrelid),\n"
-						   "rs.rseccmd AS cmd\n"
+						   "CASE rs.rseccmd \n"
+						   "WHEN 'r' THEN 'SELECT'\n"
+						   "WHEN 'u' THEN 'UPDATE'\n"
+						   "WHEN 'a' THEN 'INSERT'\n"
+						   "WHEN 'd' THEN 'DELETE'\n"
+						   "END AS cmd\n"
 							  "FROM pg_catalog.pg_rowsecurity rs\n"
 				  "WHERE rs.rsecrelid = '%s' ORDER BY 1;",
 							  oid);
@@ -2046,26 +2051,25 @@ describeOneTableDetails(const char *schemaname,
 									  PQgetvalue(result, i, 0));
 
 				if (!PQgetisnull(result, i, 4))
-					appendPQExpBuffer(&buf, " (%s)",
+					appendPQExpBuffer(&buf, " FOR %s",
 									  PQgetvalue(result, i, 4));
 
+				if (!PQgetisnull(result, i, 1))
+				{
+					appendPQExpBuffer(&buf, "\n      TO %s",
+									  PQgetvalue(result, i, 1));
+				}
+
 				if (!PQgetisnull(result, i, 2))
-					appendPQExpBuffer(&buf, " EXPRESSION %s",
+					appendPQExpBuffer(&buf, "\n      USING %s",
 									  PQgetvalue(result, i, 2));
 
 				if (!PQgetisnull(result, i, 3))
-					appendPQExpBuffer(&buf, " WITH CHECK %s",
+					appendPQExpBuffer(&buf, "\n      WITH CHECK %s",
 									  PQgetvalue(result, i, 3));
 
 				printTableAddFooter(&cont, buf.data);
 
-				if (!PQgetisnull(result, i, 1))
-				{
-					printfPQExpBuffer(&buf, "          APPLIED TO %s",
-									  PQgetvalue(result, i, 1));
-
-					printTableAddFooter(&cont, buf.data);
-				}
 			}
 			PQclear(result);
 		}

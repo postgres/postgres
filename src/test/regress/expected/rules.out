@@ -1353,10 +1353,9 @@ pg_matviews| SELECT n.nspname AS schemaname,
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
      LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = 'm'::"char");
-pg_policies| SELECT rs.rsecpolname AS policyname,
-    ( SELECT pg_class.relname
-           FROM pg_class
-          WHERE (pg_class.oid = rs.rsecrelid)) AS tablename,
+pg_policies| SELECT n.nspname AS schemaname,
+    c.relname AS tablename,
+    rs.rsecpolname AS policyname,
         CASE
             WHEN (rs.rsecroles = '{0}'::oid[]) THEN (string_to_array('public'::text, ''::text))::name[]
             ELSE ARRAY( SELECT pg_authid.rolname
@@ -1377,8 +1376,9 @@ pg_policies| SELECT rs.rsecpolname AS policyname,
         END AS cmd,
     pg_get_expr(rs.rsecqual, rs.rsecrelid) AS qual,
     pg_get_expr(rs.rsecwithcheck, rs.rsecrelid) AS with_check
-   FROM pg_rowsecurity rs
-  ORDER BY rs.rsecpolname;
+   FROM ((pg_rowsecurity rs
+     JOIN pg_class c ON ((c.oid = rs.rsecrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)));
 pg_prepared_statements| SELECT p.name,
     p.statement,
     p.prepare_time,

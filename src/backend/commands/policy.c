@@ -556,7 +556,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 
 	values[Anum_pg_rowsecurity_rsecrelid - 1] = ObjectIdGetDatum(table_id);
 	values[Anum_pg_rowsecurity_rsecpolname - 1]
-		= CStringGetDatum(stmt->policy_name);
+		= DirectFunctionCall1(namein, CStringGetDatum(stmt->policy_name));
 
 	if (rseccmd)
 		values[Anum_pg_rowsecurity_rseccmd - 1] = CharGetDatum(rseccmd);
