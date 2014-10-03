@@ -192,6 +192,7 @@ typedef struct autovac_table
 	int			at_multixact_freeze_table_age;
 	int			at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
+	bool		at_dobalance;
 	bool		at_wraparound;
 	char	   *at_relname;
 	char	   *at_nspname;
@@ -222,6 +223,7 @@ typedef struct WorkerInfoData
 	Oid			wi_tableoid;
 	PGPROC	   *wi_proc;
 	TimestampTz wi_launchtime;
+	bool		wi_dobalance;
 	int			wi_cost_delay;
 	int			wi_cost_limit;
 	int			wi_cost_limit_base;
@@ -1717,6 +1719,7 @@ FreeWorkerInfo(int code, Datum arg)
 		MyWorkerInfo->wi_tableoid = InvalidOid;
 		MyWorkerInfo->wi_proc = NULL;
 		MyWorkerInfo->wi_launchtime = 0;
+		MyWorkerInfo->wi_dobalance = false;
 		MyWorkerInfo->wi_cost_delay = 0;
 		MyWorkerInfo->wi_cost_limit = 0;
 		MyWorkerInfo->wi_cost_limit_base = 0;
@@ -1777,17 +1780,19 @@ autovac_balance_cost(void)
 	if (vac_cost_limit <= 0 || vac_cost_delay <= 0)
 		return;
 
-	/* caculate the total base cost limit of active workers */
+	/* calculate the total base cost limit of participating active workers */
 	cost_total = 0.0;
 	dlist_foreach(iter, &AutoVacuumShmem->av_runningWorkers)
 	{
 		WorkerInfo	worker = dlist_container(WorkerInfoData, wi_links, iter.cur);
 
 		if (worker->wi_proc != NULL &&
+			worker->wi_dobalance &&
 			worker->wi_cost_limit_base > 0 && worker->wi_cost_delay > 0)
 			cost_total +=
 				(double) worker->wi_cost_limit_base / worker->wi_cost_delay;
 	}
+
 	/* there are no cost limits -- nothing to do */
 	if (cost_total <= 0)
 		return;
@@ -1802,6 +1807,7 @@ autovac_balance_cost(void)
 		WorkerInfo	worker = dlist_container(WorkerInfoData, wi_links, iter.cur);
 
 		if (worker->wi_proc != NULL &&
+			worker->wi_dobalance &&
 			worker->wi_cost_limit_base > 0 && worker->wi_cost_delay > 0)
 		{
 			int			limit = (int)
@@ -1816,12 +1822,14 @@ autovac_balance_cost(void)
 			worker->wi_cost_limit = Max(Min(limit,
 											worker->wi_cost_limit_base),
 										1);
+		}
 
-			elog(DEBUG2, "autovac_balance_cost(pid=%u db=%u, rel=%u, cost_limit=%d, cost_limit_base=%d, cost_delay=%d)",
+		if (worker->wi_proc != NULL)
+			elog(DEBUG2, "autovac_balance_cost(pid=%u db=%u, rel=%u, dobalance=%s cost_limit=%d, cost_limit_base=%d, cost_delay=%d)",
 				 worker->wi_proc->pid, worker->wi_dboid, worker->wi_tableoid,
+				 worker->wi_dobalance ? "yes" : "no",
 				 worker->wi_cost_limit, worker->wi_cost_limit_base,
 				 worker->wi_cost_delay);
-		}
 	}
 }
 
@@ -2287,6 +2295,7 @@ do_autovacuum(void)
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
 
 		/* advertise my cost delay parameters for the balancing algorithm */
+		MyWorkerInfo->wi_dobalance = tab->at_dobalance;
 		MyWorkerInfo->wi_cost_delay = tab->at_vacuum_cost_delay;
 		MyWorkerInfo->wi_cost_limit = tab->at_vacuum_cost_limit;
 		MyWorkerInfo->wi_cost_limit_base = tab->at_vacuum_cost_limit;
@@ -2593,6 +2602,14 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_relname = NULL;
 		tab->at_nspname = NULL;
 		tab->at_datname = NULL;
+
+		/*
+		 * If any of the cost delay parameters has been set individually for
+		 * this table, disable the balancing algorithm.
+		 */
+		tab->at_dobalance =
+			!(avopts && (avopts->vacuum_cost_limit > 0 ||
+						 avopts->vacuum_cost_delay > 0));
 	}
 
 	heap_freetuple(classTup);
