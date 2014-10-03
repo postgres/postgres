@@ -1770,7 +1770,25 @@ writezone(const char *name, const char *string)
 			if (pass == 1)
 				puttzcode((long) ats[i], fp);
 			else
+			{
 				puttzcode64(ats[i], fp);
+
+				/* Print current timezone abbreviations if requested */
+				if (print_abbrevs &&
+					(ats[i] >= print_cutoff || i == thistimelim - 1))
+				{
+					unsigned char tm = typemap[types[i]];
+					char	   *thisabbrev = &thischars[indmap[abbrinds[tm]]];
+
+					/* filter out assorted junk entries */
+					if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
+						strcmp(thisabbrev, "zzz") != 0)
+						fprintf(stdout, "%s\t%ld%s\n",
+								thisabbrev,
+								gmtoffs[tm],
+								isdsts[tm] ? "\tD" : "");
+				}
+			}
 		for (i = thistimei; i < thistimelim; ++i)
 		{
 			unsigned char uc;
@@ -1787,21 +1805,6 @@ writezone(const char *name, const char *string)
 				puttzcode(gmtoffs[i], fp);
 				(void) putc(isdsts[i], fp);
 				(void) putc((unsigned char) indmap[abbrinds[i]], fp);
-
-				/* Print current timezone abbreviations if requested */
-				if (print_abbrevs && pass == 2 &&
-					(ats[i] >= print_cutoff || i == typecnt - 1))
-				{
-					char	   *thisabbrev = &thischars[indmap[abbrinds[i]]];
-
-					/* filter out assorted junk entries */
-					if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
-						strcmp(thisabbrev, "zzz") != 0)
-						fprintf(stdout, "%s\t%ld%s\n",
-								thisabbrev,
-								gmtoffs[i],
-								isdsts[i] ? "\tD" : "");
-				}
 			}
 		if (thischarcnt != 0)
 			(void) fwrite((void *) thischars,
