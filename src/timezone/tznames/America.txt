@@ -18,9 +18,6 @@ ACT    -18000    # Acre Time
 ACST   -14400 D  # Acre Summer Time (not in zic)
                  #     (America/Eirunepe)
                  #     (America/Rio_Branco)
-# CONFLICT! ADT is not unique
-# Other timezones:
-#  - ADT: Arabic Daylight Time (Asia)
 ADT    -10800 D  # Atlantic Daylight Time
                  #     (America/Glace_Bay)
                  #     (America/Goose_Bay)
@@ -235,9 +232,9 @@ GMT         0    # Greenwich Mean Time
                  #     (Europe/London)
 GYT    -14400    # Guyana Time
                  #     (America/Guyana)
-HADT   -32400 D  # Hawaii-Aleutain Daylight Time
+HADT   -32400 D  # Hawaii-Aleutian Daylight Time
                  #     (America/Adak)
-HAST   -36000    # Hawaii-Aleutain Standard Time
+HAST   -36000    # Hawaii-Aleutian Standard Time
                  #     (America/Adak)
 MDT    -21600 D  # Mexico Mountain Daylight Time
                  # Mountain Daylight Time
@@ -294,8 +291,10 @@ PYT    -14400    # Paraguay Time
                  #     (America/Asuncion)
 SRT    -10800    # Suriname Time
                  #     (America/Paramaribo)
-UYST    -7200 D  # Uruguay Summer Time (not in zic)
-UYT    -10800    # Uruguay Time (not in zic)
+UYST    -7200 D  # Uruguay Summer Time
+                 #     (America/Montevideo)
+UYT    -10800    # Uruguay Time
+                 #     (America/Montevideo)
 VET    -16200    # Venezuela Time (caution: this used to mean -14400)
                  #     (America/Caracas)
 WGST    -7200 D  # Western Greenland Summer Time
