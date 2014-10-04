@@ -8,25 +8,42 @@
 #
 
 ACSST   37800 D  # Central Australia (not in zic)
-# CONFLICT! ACST is not unique
-# Other timezones:
-#  - ACST: Acre Summer Time (America)
-ACST    34200    # Central Australia Standard Time (not in zic)
+ACDT    37800 D  # Australian Central Daylight Time
+                 #     (Australia/Adelaide)
+                 #     (Australia/Broken_Hill)
+                 #     (Australia/Darwin)
+ACST    34200    # Australian Central Standard Time
+                 #     (Australia/Adelaide)
+                 #     (Australia/Broken_Hill)
+                 #     (Australia/Darwin)
+ACWST   31500    # Australian Central Western Standard Time
+                 #     (Australia/Eucla)
 AESST   39600 D  # Australia Eastern Summer Standard Time (not in zic)
-AEST    36000    # Australia Eastern Standard Time (not in zic)
+AEDT    39600 D  # Australian Eastern Daylight Time
+                 #     (Australia/Brisbane)
+                 #     (Australia/Currie)
+                 #     (Australia/Hobart)
+                 #     (Australia/Lindeman)
+                 #     (Australia/Melbourne)
+                 #     (Australia/Sydney)
+AEST    36000    # Australian Eastern Standard Time
+                 #     (Australia/Brisbane)
+                 #     (Australia/Currie)
+                 #     (Australia/Hobart)
+                 #     (Australia/Lindeman)
+                 #     (Australia/Melbourne)
+                 #     (Australia/Sydney)
 AWSST   32400 D  # Australia Western Summer Standard Time (not in zic)
-AWST    28800    # Australia Western Standard Time (not in zic)
+AWST    28800    # Australian Western Standard Time
+                 #     (Australia/Perth)
 CADT    37800 D  # Central Australia Daylight-Saving Time (not in zic)
 CAST    34200    # Central Australia Standard Time (not in zic)
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (America)
 #  - CST: Cuba Central Standard Time (America)
-CST     34200    # Central Standard Time (Australia)
-                 #     (Australia/Adelaide)
-                 #     (Australia/Broken_Hill)
-CWST    31500    # Central Western Standard Time (Australia)
-                 #     (Australia/Eucla)
+CST     34200    # Central Standard Time (not in zic)
+CWST    31500    # Central Western Standard Time (not in zic)
 # CONFLICT! EAST is not unique
 # Other timezones:
 #  - EAST: Easter Island Time (Chile) (Pacific)
@@ -34,21 +51,17 @@ EAST    36000    # East Australian Standard Time (not in zic)
 # CONFLICT! EST is not unique
 # Other timezones:
 #  - EST: Eastern Standard Time (America)
-EST     36000    # Eastern Standard Time (Australia)
-                 #     (Australia/Currie)
-                 #     (Australia/Hobart)
-                 #     (Australia/Melbourne)
-                 #     (Australia/Sydney)
-                 #     (Australia/Currie)
-                 #     (Australia/Hobart)
-                 #     (Australia/Melbourne)
-                 #     (Australia/Sydney)
-LHDT    39600 D  # Lord Howe Daylight Time, Australia (not in zic)
-LHST    37800    # Lord Howe Standard Time (Australia)
+EST     36000    # Eastern Standard Time (not in zic)
+LHDT    39600 D  # Lord Howe Daylight Time
+                 #     (Australia/Lord_Howe)
+LHST    37800    # Lord Howe Standard Time
                  #     (Australia/Lord_Howe)
 LIGT    36000    # Melbourne, Australia (not in zic)
 NZT     43200    # New Zealand Time (not in zic)
 SADT    37800 D  # South Australian Daylight-Saving Time (not in zic)
+# CONFLICT! SAST is not unique
+# Other timezones:
+#  - SAST South Africa Standard Time
 SAST    34200    # South Australian Standard Time (not in zic)
 SAT     34200    # South Australian Standard Time (not in zic)
 WADT    28800 D  # West Australian Daylight-Saving Time (not in zic)
@@ -57,6 +70,4 @@ WDT     32400 D  # West Australian Daylight-Saving Time (not in zic)
 # CONFLICT! WST is not unique
 # Other timezones:
 #  - WST: West Samoa Time
-WST     28800    # Western Standard Time (Australia)
-                 #     (Antarctica/Casey)
-                 #     (Australia/Perth)
+WST     28800    # Western Standard Time (not in zic)

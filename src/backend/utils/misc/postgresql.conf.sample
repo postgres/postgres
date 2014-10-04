@@ -528,7 +528,7 @@
 #timezone_abbreviations = 'Default'     # Select the set of available time zone
 					# abbreviations.  Currently, there are
 					#   Default
-					#   Australia
+					#   Australia (historical usage)
 					#   India
 					# You can create your own file in
 					# share/timezonesets/.

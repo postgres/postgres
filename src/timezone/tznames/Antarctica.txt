@@ -7,6 +7,9 @@
 # src/timezone/tznames/Antarctica.txt
 #
 
+AWST    28800    # Australian Western Standard Time
+                 #     (Antarctica/Casey)
+                 #     (Australia/Perth)
 CLST   -10800 D  # Chile Summer Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
@@ -33,9 +36,3 @@ SYOT    10800    # Syowa Time
                  #     (Antarctica/Syowa)
 VOST    21600    # Vostok time
                  #     (Antarctica/Vostok)
-# CONFLICT! WST is not unique
-# Other timezones:
-#  - WST: West Samoa Time
-WST     28800    # Western Standard Time (Australia)
-                 #     (Antarctica/Casey)
-                 #     (Australia/Perth)
