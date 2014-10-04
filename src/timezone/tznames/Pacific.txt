@@ -48,7 +48,8 @@ MHT     43200    # Kwajalein Time
                  #     (Pacific/Kwajalein)
                  #     (Pacific/Majuro)
 MPT     36000    # North Mariana Islands Time (not in zic)
-NCT     39600    # New Caledonia Time (not in zic)
+NCT     39600    # New Caledonia Time
+                 #     (Pacific/Noumea)
 # CONFLICT! NFT is not unique
 # Other timezones:
 #  - NFT: Newfoundland Time (America)
@@ -94,16 +95,18 @@ TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
                  #     (Pacific/Truk)
 TVT     43200    # Tuvalu Time
                  #     (Pacific/Funafuti)
-VUT     39600    # Vanuata Time (not in zic)
+VUT     39600    # Vanuata Time
+                 #     (Pacific/Efate)
 WAKT    43200    # Wake Time
                  #     (Pacific/Wake)
 WFT     43200    # Wallis and Futuna Time
                  #     (Pacific/Wallis)
+WSDT    50400 D  # West Samoa Daylight Time
+                 #     (Pacific/Apia)
+WSST    46800    # West Samoa Standard Time
+                 #     (Pacific/Apia)
 # CONFLICT! WST is not unique
 # Other timezones:
 #  - WST: Western Standard Time (Australia)
-WSDT    50400 D  # West Samoa Daylight Time
-                 #     (Pacific/Apia)
-WST     46800    # West Samoa Time (caution: this used to mean -39600)
-                 #     (Pacific/Apia)
+WST     46800    # West Samoa Time (caution: this used to mean -39600) (not in zic)
 YAPT    36000    # Yap Time (Micronesia) (not in zic)

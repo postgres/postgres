@@ -14,10 +14,8 @@ ACT    -18000    # Acre Time
                  #     (America/Rio_Branco)
 # CONFLICT! ACST is not unique
 # Other timezones:
-#  - ACST: Central Australia Standard Time (Australia)
-ACST   -14400 D  # Acre Summer Time (not in zic)
-                 #     (America/Eirunepe)
-                 #     (America/Rio_Branco)
+#  - ACST: Australian Central Standard Time
+ACST   -14400 D  # Acre Summer Time (obsolete, not in zic)
 ADT    -10800 D  # Atlantic Daylight Time
                  #     (America/Glace_Bay)
                  #     (America/Goose_Bay)
