@@ -1,5 +1,9 @@
 # Time zone configuration file for set "Australia"
 
+# The abbreviations set up by this file are no longer in widespread use,
+# and should be avoided when possible.  Use this file if you need backwards
+# compatibility with old applications or data.
+
 # In order to use this file, you need to set the run-time parameter
 # timezone_abbreviations to 'Australia'.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
@@ -15,21 +19,9 @@
 # in case of a conflict.
 @OVERRIDE
 
-ACST    34200    # Central Australia Standard Time (not in zic)
-CST     34200    # Central Standard Time (Australia)
-                 #     (Australia/Adelaide)
-                 #     (Australia/Broken_Hill)
-EAST    36000    # East Australian Standard Time (Australia) (not in zic)
-EST     36000    # Eastern Standard Time (Australia)
-                 #     (Australia/Currie)
-                 #     (Australia/Hobart)
-                 #     (Australia/Melbourne)
-                 #     (Australia/Sydney)
-                 #     (Australia/Currie)
-                 #     (Australia/Hobart)
-                 #     (Australia/Melbourne)
-                 #     (Australia/Sydney)
+CST     34200    # Central Standard Time (not in zic)
+EAST    36000    # East Australian Standard Time (not in zic)
+EST     36000    # Eastern Standard Time (not in zic)
+SAST    34200    # South Australian Standard Time (not in zic)
 SAT     34200    # South Australian Standard Time (not in zic)
-WST     28800    # Western Standard Time (Australia)
-                 #     (Antarctica/Casey)
-                 #     (Australia/Perth)
+WST     28800    # Western Standard Time (not in zic)

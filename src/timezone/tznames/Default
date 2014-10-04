@@ -21,6 +21,8 @@ EAT     10800    # East Africa Time
                  #     (Indian/Antananarivo)
                  #     (Indian/Comoro)
                  #     (Indian/Mayotte)
+SAST     7200    # South Africa Standard Time
+                 #     (Africa/Johannesburg)
 WAT      3600    # West Africa Time
                  #     (Africa/Bangui)
                  #     (Africa/Brazzaville)
@@ -40,9 +42,6 @@ WAT      3600    # West Africa Time
 # Acre time is sometimes called Acre Standard Time (AST) which leads to a
 # conflict with AST (see below at AST)
 ACT    -18000    # Acre Time
-                 #     (America/Eirunepe)
-                 #     (America/Rio_Branco)
-ACST   -14400 D  # Acre Summer Time
                  #     (America/Eirunepe)
                  #     (America/Rio_Branco)
 AKDT   -28800 D  # Alaska Daylight Time
@@ -289,7 +288,7 @@ ICT     25200    # Indochina Time
 IDT     10800 D  # Israel Daylight Time
                  #     (Asia/Jerusalem)
 IRKST   32400 D  # Irkutsk Summer Time (obsolete)
-IRKT    32400    # Irkutsk Time (caution: this used to mean 28800)
+IRKT    28800    # Irkutsk Time (caution: this used to mean 32400)
                  #     (Asia/Irkutsk)
 IRT     12600    # Iran Time (not in zic)
 # CONFLICT! IST is not unique
@@ -307,13 +306,13 @@ KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
 KGT     21600    # Kyrgyzstan Time (caution: this used to mean 18000)
                  #     (Asia/Bishkek)
 KRAST   28800 D  # Krasnoyarsk Summer Time (obsolete)
-KRAT    28800    # Krasnoyarsk Time (caution: this used to mean 25200)
+KRAT    25200    # Krasnoyarsk Time (caution: this used to mean 28800)
                  #     (Asia/Krasnoyarsk)
 KST     32400    # Korean Standard Time
                  #     (Asia/Pyongyang)
 LKT     21600    # Lanka Time (obsolete)
 MAGST   43200 D  # Magadan Summer Time (obsolete)
-MAGT    43200    # Magadan Time (caution: this used to mean 39600)
+MAGT    36000    # Magadan Time (caution: this used to mean 43200)
                  #     (Asia/Magadan)
 MMT     23400    # Myanmar Time
                  #     (Asia/Rangoon)
@@ -321,12 +320,12 @@ MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
 NOVST   25200 D  # Novosibirsk Summer Time (obsolete)
-NOVT    25200    # Novosibirsk Time (caution: this used to mean 21600)
+NOVT    21600    # Novosibirsk Time (caution: this used to mean 25200)
                  #     (Asia/Novosibirsk)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
 OMSST   25200 D  # Omsk Summer Time (obsolete)
-OMST    25200    # Omsk Time (caution: this used to mean 21600)
+OMST    21600    # Omsk Time (caution: this used to mean 25200)
                  #     (Asia/Omsk)
 PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time (obsolete)
 PETT    43200    # Petropavlovsk-Kamchatski Time
@@ -353,13 +352,15 @@ UZT     18000    # Uzbekistan Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
 VLAST   39600 D  # Vladivostok Summer Time (obsolete)
-VLAT    39600    # Vladivostok Time (caution: this used to mean 36000)
+VLAT    36000    # Vladivostok Time (caution: this used to mean 39600)
                  #     (Asia/Vladivostok)
+XJT     21600    # Xinjiang Time
+                 #     (Asia/Urumqi)
 YAKST   36000 D  # Yakutsk Summer Time (obsolete)
-YAKT    36000    # Yakutsk Time (caution: this used to mean 32400)
+YAKT    32400    # Yakutsk Time (caution: this used to mean 36000)
                  #     (Asia/Yakutsk)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
-YEKT    21600    # Yekaterinburg Time (caution: this used to mean 18000)
+YEKT    18000    # Yekaterinburg Time (caution: this used to mean 21600)
                  #     (Asia/Yekaterinburg)
 
 #################### ATLANTIC ####################
@@ -411,20 +412,44 @@ FKT    -14400    # Falkland Islands Time (obsolete)
 
 #################### AUSTRALIA ####################
 
-ACSST   37800 D  # Central Australia (not in zic)
-AESST   39600 D  # Australia Eastern Summer Standard Time (not in zic)
-AEST    36000    # Australia Eastern Standard Time (not in zic)
+ACSST   37800 D  # Australian Central Summer Standard Time (not in zic)
+ACDT    37800 D  # Australian Central Daylight Time
+                 #     (Australia/Adelaide)
+                 #     (Australia/Broken_Hill)
+                 #     (Australia/Darwin)
+ACST    34200    # Australian Central Standard Time
+                 #     (Australia/Adelaide)
+                 #     (Australia/Broken_Hill)
+                 #     (Australia/Darwin)
+ACWST   31500    # Australian Central Western Standard Time
+                 #     (Australia/Eucla)
+AESST   39600 D  # Australian Eastern Summer Standard Time (not in zic)
+AEDT    39600 D  # Australian Eastern Daylight Time
+                 #     (Australia/Brisbane)
+                 #     (Australia/Currie)
+                 #     (Australia/Hobart)
+                 #     (Australia/Lindeman)
+                 #     (Australia/Melbourne)
+                 #     (Australia/Sydney)
+AEST    36000    # Australian Eastern Standard Time
+                 #     (Australia/Brisbane)
+                 #     (Australia/Currie)
+                 #     (Australia/Hobart)
+                 #     (Australia/Lindeman)
+                 #     (Australia/Melbourne)
+                 #     (Australia/Sydney)
 AWSST   32400 D  # Australia Western Summer Standard Time (not in zic)
-AWST    28800    # Australia Western Standard Time (not in zic)
+AWST    28800    # Australian Western Standard Time
+                 #     (Australia/Perth)
 CADT    37800 D  # Central Australia Daylight-Saving Time (not in zic)
 CAST    34200    # Central Australia Standard Time (not in zic)
-LHDT    39600 D  # Lord Howe Daylight Time, Australia (not in zic)
-LHST    37800    # Lord Howe Standard Time (Australia)
+LHDT    39600 D  # Lord Howe Daylight Time
+                 #     (Australia/Lord_Howe)
+LHST    37800    # Lord Howe Standard Time
                  #     (Australia/Lord_Howe)
 LIGT    36000    # Melbourne, Australia (not in zic)
 NZT     43200    # New Zealand Time (not in zic)
 SADT    37800 D  # South Australian Daylight-Saving Time (not in zic)
-SAST    34200    # South Australian Standard Time (not in zic)
 WADT    28800 D  # West Australian Daylight-Saving Time (not in zic)
 WAST    25200    # West Australian Standard Time (not in zic)
 WDT     32400 D  # West Australian Daylight-Saving Time (not in zic)
@@ -614,10 +639,9 @@ MET      3600    # Middle Europe Time (not in zic)
 METDST   7200 D  # Middle Europe Summer Time (not in zic)
 MEZ      3600    # Mitteleuropaeische Zeit (German) (not in zic)
 MSD     14400 D  # Moscow Daylight Time (obsolete)
-MSK     14400    # Moscow Time (caution: this used to mean 10800)
+MSK     10800    # Moscow Time (caution: this used to mean 14400)
                  #     (Europe/Moscow)
-VOLT    14400    # Volgograd Time
-                 #     (Europe/Volgograd)
+VOLT    14400    # Volgograd Time (obsolete)
 WET         0    # Western Europe Time
                  #     (Africa/Casablanca)
                  #     (Africa/El_Aaiun)
@@ -717,10 +741,10 @@ TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
                  #     (Pacific/Truk)
 TVT     43200    # Tuvalu Time
                  #     (Pacific/Funafuti)
-VUT     39600    # Vanuata Time (not in zic)
+VUT     39600    # Vanuata Time
+                 #     (Pacific/Efate)
 WAKT    43200    # Wake Time
                  #     (Pacific/Wake)
 WFT     43200    # Wallis and Futuna Time
                  #     (Pacific/Wallis)
 YAPT    36000    # Yap Time (Micronesia) (not in zic)
-
