@@ -7,7 +7,8 @@
   <note>
    <title>Release Date</title>
    <simpara>2014-??-??</simpara>
-   <simpara>Current as of 2014-08-17</simpara>
+   <simpara>Current as of 2014-10-05</simpara>
+   <!-- Be sure to remove "delta from 9.4beta" items below before final! -->
   </note>
 
   <sect2>
@@ -88,6 +89,22 @@
    </para>
 
    <itemizedlist>
+
+    <!-- delta from 9.4beta2, be sure to remove before final: -->
+    <listitem>
+     <para>
+      Change on-disk format of <type>jsonb</> data
+      (Heikki Linnakangas and Tom Lane)
+     </para>
+
+     <para>
+      The on-disk representation was changed after 9.4beta2 to improve
+      efficiency.  <application>pg_upgrade</> will refuse to upgrade any
+      9.4beta1 or 9.4beta2 database containing <type>jsonb</> columns; you
+      will need to use <application>pg_dumpall</> instead to migrate such
+      databases.
+     </para>
+    </listitem>
 
     <listitem>
      <para>
@@ -226,18 +243,6 @@
 
     <listitem>
      <para>
-      Writable foreign data wrappers must return all columns when the foreign
-      table has an <literal>AFTER ROW</> trigger (Noah Misch)
-     </para>
-
-     <para>
-      Previously, foreign tables never had triggers, and
-      the <literal>RETURNING</> clause alone dictated the columns required.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Rename <link linkend="SQL-EXPLAIN"><command>EXPLAIN
       ANALYZE</></link>'s <quote>total runtime</quote> output
       to <quote>execution time</quote> (Tom Lane)
@@ -262,6 +267,22 @@
       The new output is properly interpreted by <command>SET TIME ZONE</>
       when passed as a simple string, whereas the old output required
       special treatment to be re-parsed correctly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Foreign data wrappers that support updating foreign tables must
+      consider the possible presence of <literal>AFTER ROW</> triggers
+      (Noah Misch)
+     </para>
+
+     <para>
+      When an <literal>AFTER ROW</> trigger is present, all columns of the
+      table must be returned by updating actions, since the trigger might
+      inspect any or all of them.  Previously, foreign tables never had
+      triggers, so the FDW might optimize away fetching columns not mentioned
+      in the <literal>RETURNING</> clause (if any).
      </para>
     </listitem>
 
@@ -386,6 +407,27 @@
      <para>
       Previously this option was spelled <option>-u</> or <option>--user</>,
       but that was inconsistent with other tools.
+     </para>
+    </listitem>
+
+    <!-- delta from 9.4beta2, be sure to remove before final: -->
+    <listitem>
+     <para>
+      Update time zone data files to tzdata release 2014h for DST law
+      changes in Russia and elsewhere
+     </para>
+
+     <para>
+      This change is more significant than most time zone updates because
+      many Russian zone abbreviations are changing meaning, including IRKT,
+      KRAT, MAGT, MSK, NOVT, OMST, SAKT, VLAT, YAKT, and YEKT.  Also, IANA
+      has formally recognized abbreviations of the form
+      A<replaceable>x</>ST/A<replaceable>x</>DT for Australian timezones,
+      so adopt those names as part of the <quote>Default</> abbreviation
+      set in <productname>PostgreSQL</>.  The <quote>Australia</>
+      abbreviation set now need be selected only if it's desired to use
+      historical abbreviations that conflict with abbreviations commonly
+      used elsewhere, such as EST or SAST.
      </para>
     </listitem>
 
@@ -1099,6 +1141,14 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Ensure that <link linkend="SQL-SELECT"><literal>SELECT ... FOR UPDATE
+        NOWAIT</></link> does not wait in corner cases involving
+        already-concurrently-updated tuples (Craig Ringer and Thomas Munro)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
    </sect3>
@@ -1257,11 +1307,9 @@
       <listitem>
        <para>
         Allow moving groups of objects from one tablespace to another
-        using <literal>ALL IN TABLESPACE ... SET TABLESPACE</> with
-        <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></link>
-        <link linkend="SQL-ALTERINDEX"><command>ALTER INDEX</></link> and
-        <link linkend="SQL-ALTERMATERIALIZEDVIEW"><command>ALTER MATERIALIZED VIEW</></link>
-        (Stephen Frost)
+        using the <literal>ALL IN TABLESPACE ... SET TABLESPACE</> form of
+        <xref linkend="SQL-ALTERTABLE">, <xref linkend="SQL-ALTERINDEX">, or
+        <xref linkend="SQL-ALTERMATERIALIZEDVIEW"> (Stephen Frost)
        </para>
       </listitem>
 
@@ -2498,9 +2546,21 @@
        </para>
 
        <para>
-        This allows monitoring tools to only fetch query text for newly
-        created entries, improving performance for repeated querying of the
-        statistics.
+        This allows monitoring tools to fetch query text only for
+        just-created entries, improving performance during repeated querying
+        of the statistics.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make <application>pg_stat_statements</> ignore <command>DEALLOCATE</>
+        commands (Fabien Coelho)
+       </para>
+
+       <para>
+        It already ignored <command>PREPARE</>, as well as planning time in
+        general, so this seems more consistent.
        </para>
       </listitem>
 
