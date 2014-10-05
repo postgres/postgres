@@ -961,8 +961,9 @@ gistSplit(Relation r,
 	if (len == 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   IndexTupleSize(itup[0]), GiSTPageSize,
+			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+				   (unsigned long) IndexTupleSize(itup[0]),
+				   (unsigned long) GiSTPageSize,
 				   RelationGetRelationName(r))));
 
 	memset(v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
