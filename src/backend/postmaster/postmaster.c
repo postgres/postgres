@@ -4752,7 +4752,6 @@ static void
 sigusr1_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-	bool		start_bgworker = false;
 
 	PG_SETMASK(&BlockSig);
 
@@ -4760,7 +4759,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE))
 	{
 		BackgroundWorkerStateChange();
-		start_bgworker = true;
+		StartWorkerNeeded = true;
 	}
 
 	/*
@@ -4801,10 +4800,10 @@ sigusr1_handler(SIGNAL_ARGS)
 
 		pmState = PM_HOT_STANDBY;
 		/* Some workers may be scheduled to start now */
-		start_bgworker = true;
+		StartWorkerNeeded = true;
 	}
 
-	if (start_bgworker)
+	if (StartWorkerNeeded || HaveCrashedWorker)
 		maybe_start_bgworker();
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER) &&
