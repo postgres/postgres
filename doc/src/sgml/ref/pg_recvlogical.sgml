@@ -53,7 +53,7 @@ PostgreSQL documentation
     <variablelist>
 
      <varlistentry>
-      <term><option>--create</option></term>
+      <term><option>--create-slot</option></term>
       <listitem>
        <para>
         Create a new logical replication slot with the name specified in
@@ -82,7 +82,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--drop</option></term>
+      <term><option>--drop-slot</option></term>
       <listitem>
        <para>
         Drop the replication slot with the name specified
@@ -266,8 +266,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         In <option>--start</option> mode, use the existing logical replication slot named
-        <replaceable>slot_name</replaceable>. In <option>--create</option> mode, create the
-        slot with this name. In <option>--drop</option> mode, delete the slot with this name.
+        <replaceable>slot_name</replaceable>. In <option>--create-slot</option>
+        mode, create the slot with this name. In <option>--drop-slot</option>
+        mode, delete the slot with this name.
        </para>
       </listitem>
      </varlistentry>

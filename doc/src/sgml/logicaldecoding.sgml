@@ -149,7 +149,7 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
     another connection.
    </para>
 <programlisting>
-# pg_recvlogical -d postgres --slot test --create
+# pg_recvlogical -d postgres --slot test --create-slot
 # pg_recvlogical -d postgres --slot test --start -f -
 CTRL-Z
 # psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
@@ -158,7 +158,7 @@ BEGIN 693
 table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
 CTRL-C
-# pg_recvlogical -d postgres --slot test --drop
+# pg_recvlogical -d postgres --slot test --drop-slot
 </programlisting>
   </sect1>
   <sect1 id="logicaldecoding-explanation">
