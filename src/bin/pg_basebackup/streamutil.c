@@ -251,6 +251,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
+
+		PQclear(res);
 		return false;
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) < 3)
@@ -258,6 +260,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 		fprintf(stderr,
 				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"),
 				progname, PQntuples(res), PQnfields(res), 1, 3);
+
+		PQclear(res);
 		return false;
 	}
 
@@ -277,6 +281,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 			fprintf(stderr,
 					_("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 2));
+
+			PQclear(res);
 			return false;
 		}
 		*startpos = ((uint64) hi) << 32 | lo;
@@ -331,6 +337,9 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, query->data, PQerrorMessage(conn));
+
+		destroyPQExpBuffer(query);
+		PQclear(res);
 		return false;
 	}
 
@@ -340,6 +349,9 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 				_("%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"),
 				progname, slot_name,
 				PQntuples(res), PQnfields(res), 1, 4);
+
+		destroyPQExpBuffer(query);
+		PQclear(res);
 		return false;
 	}
 
@@ -353,11 +365,15 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 			fprintf(stderr,
 					_("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 1));
+
+			destroyPQExpBuffer(query);
+			PQclear(res);
 			return false;
 		}
 		*startpos = ((uint64) hi) << 32 | lo;
 	}
 
+	destroyPQExpBuffer(query);
 	PQclear(res);
 	return true;
 }
@@ -384,6 +400,9 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, query->data, PQerrorMessage(conn));
+
+		destroyPQExpBuffer(query);
+		PQclear(res);
 		return false;
 	}
 
@@ -393,6 +412,9 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 				_("%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"),
 				progname, slot_name,
 				PQntuples(res), PQnfields(res), 0, 0);
+
+		destroyPQExpBuffer(query);
+		PQclear(res);
 		return false;
 	}
 
