@@ -523,7 +523,7 @@ msgstr "      --auth-host=METHOD    ローカルなTCP/IP接続向けのデフ�
 #: initdb.c:2739
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
-msgstr "      --auth-host=METHOD    ローカルソケット接続向けのデフォルトの認証方式です\n"
+msgstr "      --auth-local=METHOD   ローカルソケット接続向けのデフォルトの認証方式です\n"
 
 #: initdb.c:2740
 #, c-format

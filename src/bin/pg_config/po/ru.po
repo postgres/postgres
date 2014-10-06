@@ -24,52 +24,50 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-12 23:16+0000\n"
-"PO-Revision-Date: 2013-03-13 17:15+0400\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2014-08-02 06:42+0000\n"
+"PO-Revision-Date: 2014-08-14 22:47+0400\n"
+"Last-Translator: Dmitriy Olshevskiy <olshevskiy87@bk.ru>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Russian\n"
-"X-Poedit-Country: RUSSIAN FEDERATION\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Poedit 1.6.7\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "не удалось определить текущий каталог: %s"
 
-#: ../../port/exec.c:146
+#: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "неверный исполняемый файл \"%s\""
 
-#: ../../port/exec.c:195
+#: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "не удалось прочитать исполняемый файл \"%s\""
 
-#: ../../port/exec.c:202
+#: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "не удалось найти запускаемый файл \"%s\""
 
-#: ../../port/exec.c:257 ../../port/exec.c:293
+#: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
 msgstr "не удалось перейти в каталог \"%s\": %s"
 
-#: ../../port/exec.c:272
+#: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "не удалось прочитать символическую ссылку \"%s\""
 
-#: ../../port/exec.c:523
+#: ../../common/exec.c:523
 #, c-format
 msgid "pclose failed: %s"
 msgstr "ошибка pclose: %s"
@@ -259,7 +257,7 @@ msgid ""
 "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
 "built\n"
 msgstr ""
-"  --ldflags_sl          показать, с каким значение LDFLAGS_SL собран "
+"  --ldflags_sl          показать, с каким значением LDFLAGS_SL собран "
 "PostgreSQL\n"
 
 #: pg_config.c:455
@@ -310,17 +308,17 @@ msgstr "%s: не удалось найти свой исполняемый фа�
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: неверный аргумент: %s\n"
 
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "дочерний процесс завершился с кодом возврата %d"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "дочерний процесс прерван исключением 0x%X"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "дочерний процесс завершён по сигналу %s"
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
 
 #~ msgid "child process was terminated by signal %d"
 #~ msgstr "дочерний процесс завершён по сигналу %d"
 
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "дочерний процесс завершён по сигналу %s"
+
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "дочерний процесс прерван исключением 0x%X"
+
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "дочерний процесс завершился с кодом возврата %d"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 16:01-0300\n"
+"POT-Creation-Date: 2014-09-14 23:08-0300\n"
 "PO-Revision-Date: 2005-10-04 22:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -52,7 +52,8 @@ msgid "pclose failed: %s"
 msgstr "pclose falhou: %s"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83
+#: ../../common/fe_memutils.c:83 ../../port/path.c:598 ../../port/path.c:636
+#: ../../port/path.c:653
 #, c-format
 msgid "out of memory\n"
 msgstr "sem memória\n"
@@ -96,6 +97,11 @@ msgstr "processo filho foi terminado pelo sinal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"
+
+#: ../../port/path.c:620
+#, c-format
+msgid "could not get current working directory: %s\n"
+msgstr "não pôde obter diretório de trabalho atual: %s\n"
 
 #: pg_ctl.c:259
 #, c-format
@@ -645,10 +651,10 @@ msgstr "  -p CAMINHO-DO-POSTGRES normalmente não é necessário\n"
 #, c-format
 msgid ""
 "\n"
-"Options for stop, restart, or promote:\n"
+"Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Opções para parada, reinício ou promoção:\n"
+"Opções para parada ou reinício:\n"
 
 #: pg_ctl.c:1900
 #, c-format

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 16:05-0300\n"
+"POT-Creation-Date: 2014-09-14 23:11-0300\n"
 "PO-Revision-Date: 2010-07-08 17:13-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -161,11 +161,17 @@ msgstr "função de gatilho não pode retornar um conjunto"
 msgid "returned row structure does not match the structure of the triggering table"
 msgstr "estrutura de registro retornada não corresponde a estrutura da tabela que disparou o evento"
 
+#. translator: last %s is a phrase such as "during statement block
+#. local variable initialization"
+#.
 #: pl_exec.c:916
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "função PL/pgSQL %s linha %d %s"
 
+#. translator: last %s is a phrase such as "while storing call
+#. arguments into local variables"
+#.
 #: pl_exec.c:927
 #, c-format
 msgid "PL/pgSQL function %s %s"
@@ -774,15 +780,15 @@ msgid "Sets handling of conflicts between PL/pgSQL variable names and table colu
 msgstr "Define resolução de conflitos entre nomes de variáveis PL/pgSQL e nomes de colunas de tabelas."
 
 #: pl_handler.c:156
-msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO .. STRICT failures."
-msgstr "Mostra informação sobre parâmetros na parte DETALHE das mensagens de erro geradas nas falhas INTO .. STRICT."
+msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
+msgstr "Mostra informação sobre parâmetros na parte DETALHE das mensagens de erro geradas nas falhas INTO ... STRICT."
 
 #: pl_handler.c:164
-msgid "List of programming constructs which should produce a warning."
+msgid "List of programming constructs that should produce a warning."
 msgstr "Lista de construções de programação que devem produzir um aviso."
 
 #: pl_handler.c:174
-msgid "List of programming constructs which should produce an error."
+msgid "List of programming constructs that should produce an error."
 msgstr "Lista de construções de programação que devem produzir um erro."
 
 #. translator: %s is typically the translation of "syntax error"

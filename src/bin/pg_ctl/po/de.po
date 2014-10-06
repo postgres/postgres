@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-15 20:12+0000\n"
-"PO-Revision-Date: 2014-05-15 22:19-0400\n"
+"POT-Creation-Date: 2014-08-29 22:42+0000\n"
+"PO-Revision-Date: 2014-08-29 21:10-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -52,7 +52,8 @@ msgid "pclose failed: %s"
 msgstr "pclose fehlgeschlagen: %s"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83
+#: ../../common/fe_memutils.c:83 ../../port/path.c:598 ../../port/path.c:636
+#: ../../port/path.c:653
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
@@ -96,6 +97,11 @@ msgstr "Kindprozess wurde von Signal %d beendet"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
+
+#: ../../port/path.c:620
+#, c-format
+msgid "could not get current working directory: %s\n"
+msgstr "konnte aktuelles Arbeitsverzeichnis nicht ermitteln: %s\n"
 
 #: pg_ctl.c:259
 #, c-format
@@ -653,10 +659,10 @@ msgstr "  -p PFAD-ZU-POSTGRES    normalerweise nicht notwendig\n"
 #, c-format
 msgid ""
 "\n"
-"Options for stop, restart, or promote:\n"
+"Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Optionen für Anhalten, Neustart oder Beförderung (Promote):\n"
+"Optionen für Anhalten oder Neustart:\n"
 
 #: pg_ctl.c:1900
 #, c-format

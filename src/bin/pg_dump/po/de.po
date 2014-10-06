@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-07-20 02:42+0000\n"
-"PO-Revision-Date: 2014-07-20 22:29-0400\n"
+"POT-Creation-Date: 2014-08-23 05:12+0000\n"
+"PO-Revision-Date: 2014-08-23 17:14-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -934,6 +934,7 @@ msgid "unrecognized data block type %d while restoring archive\n"
 msgstr "unerkannter Datenblocktyp %d beim Wiederherstellen des Archivs gefunden\n"
 
 #: pg_backup_custom.c:708 pg_backup_custom.c:758 pg_backup_custom.c:907
+#: pg_backup_tar.c:1086
 #, c-format
 msgid "could not determine seek position in archive file: %s\n"
 msgstr "konnte Positionszeiger in Archivdatei nicht ermitteln: %s\n"
@@ -1210,12 +1211,6 @@ msgstr "unerwartete Syntax der COPY-Anweisung: „%s“\n"
 msgid "invalid OID for large object (%u)\n"
 msgstr "Large Object hat ungültige Oid (%u)\n"
 
-#: pg_backup_tar.c:1086
-#, fuzzy, c-format
-#| msgid "could not determine seek position in archive file: %s\n"
-msgid "could not determine seek position in file: %s\n"
-msgstr "konnte Positionszeiger in Archivdatei nicht ermitteln: %s\n"
-
 #: pg_backup_tar.c:1095
 #, c-format
 msgid "archive member too large for tar format\n"
@@ -1317,7 +1312,7 @@ msgstr "(Die INSERT-Anweisung kann OIDs nicht setzen.)\n"
 
 #: pg_dump.c:585
 #, c-format
-msgid "option --if-exists requires -c/--clean option\n"
+msgid "option --if-exists requires option -c/--clean\n"
 msgstr "Option --if-exists benötigt Option -c/--clean\n"
 
 #: pg_dump.c:613
@@ -1669,7 +1664,7 @@ msgstr ""
 "PGDATABASE verwendet.\n"
 "\n"
 
-#: pg_dump.c:925 pg_dumpall.c:598 pg_restore.c:482
+#: pg_dump.c:925 pg_dumpall.c:598 pg_restore.c:485
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
@@ -2000,42 +1995,42 @@ msgstr[1] "Anfrage ergab %d Zeilen anstatt einer: %s\n"
 msgid "sorter"
 msgstr "Sortierer"
 
-#: pg_dump_sort.c:465
+#: pg_dump_sort.c:466
 #, c-format
 msgid "invalid dumpId %d\n"
 msgstr "ungültige dumpId %d\n"
 
-#: pg_dump_sort.c:471
+#: pg_dump_sort.c:472
 #, c-format
 msgid "invalid dependency %d\n"
 msgstr "ungültige Abhängigkeit %d\n"
 
-#: pg_dump_sort.c:685
+#: pg_dump_sort.c:705
 #, c-format
 msgid "could not identify dependency loop\n"
 msgstr "konnte Abhängigkeitsschleife nicht bestimmen\n"
 
-#: pg_dump_sort.c:1191
+#: pg_dump_sort.c:1227
 #, c-format
 msgid "NOTICE: there are circular foreign-key constraints among these table(s):\n"
 msgstr "HINWEIS: Es gibt zirkuläre Fremdschlüssel-Constraints zwischen dieser/n Tabelle(n):\n"
 
-#: pg_dump_sort.c:1193 pg_dump_sort.c:1213
+#: pg_dump_sort.c:1229 pg_dump_sort.c:1249
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
-#: pg_dump_sort.c:1194
+#: pg_dump_sort.c:1230
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n"
 msgstr "Möglicherweise kann der Dump nur wiederhergestellt werden, wenn --disable-triggers verwendet wird oder die Constraints vorübergehend entfernt werden.\n"
 
-#: pg_dump_sort.c:1195
+#: pg_dump_sort.c:1231
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem.\n"
 msgstr "Führen Sie einen vollen Dump statt eines Dumps mit --data-only durch, um dieses Problem zu vermeiden.\n"
 
-#: pg_dump_sort.c:1207
+#: pg_dump_sort.c:1243
 #, c-format
 msgid "WARNING: could not resolve dependency loop among these items:\n"
 msgstr "WARNUNG: konnte Abhängigkeitsschleife zwischen diesen Elementen nicht auflösen:\n"
@@ -2074,8 +2069,8 @@ msgstr "%s: Optionen -g/--globals-only und -t/--tablespaces-only können nicht z
 
 #: pg_dumpall.c:341 pg_restore.c:343
 #, c-format
-msgid "%s: option --if-exists requires -c/--clean option\n"
-msgstr ""
+msgid "%s: option --if-exists requires option -c/--clean\n"
+msgstr "%s: Option --if-exists benötigt Option -c/--clean\n"
 
 #: pg_dumpall.c:348
 #, c-format
@@ -2349,9 +2344,8 @@ msgid "  -e, --exit-on-error          exit on error, default is to continue\n"
 msgstr "  -e, --exit-on-error          bei Fehler beenden, Voreinstellung ist fortsetzen\n"
 
 #: pg_restore.c:449
-#, fuzzy, c-format
-#| msgid "  -I, --index=NAME             restore named index\n"
-msgid "  -I, --index=NAME             restore named indexes\n"
+#, c-format
+msgid "  -I, --index=NAME             restore named index\n"
 msgstr "  -I, --index=NAME             benannten Index wiederherstellen\n"
 
 #: pg_restore.c:450
@@ -2372,15 +2366,13 @@ msgstr ""
 "                               Sortierung der Ausgabe verwenden\n"
 
 #: pg_restore.c:453
-#, fuzzy, c-format
-#| msgid "  -n, --schema=NAME            restore only objects in this schema\n"
-msgid "  -n, --schema=NAME            restore only objects in these schemas\n"
+#, c-format
+msgid "  -n, --schema=NAME            restore only objects in this schema\n"
 msgstr "  -n, --schema=NAME            nur Objekte in diesem Schema wiederherstellen\n"
 
 #: pg_restore.c:455
-#, fuzzy, c-format
-#| msgid "  -P, --function=NAME(args)    restore named function\n"
-msgid "  -P, --function=NAME(args)    restore named functions\n"
+#, c-format
+msgid "  -P, --function=NAME(args)    restore named function\n"
 msgstr "  -P, --function=NAME(args)    benannte Funktion wiederherstellen\n"
 
 #: pg_restore.c:456
@@ -2394,15 +2386,13 @@ msgid "  -S, --superuser=NAME         superuser user name to use for disabling t
 msgstr "  -S, --superuser=NAME         Name des Superusers, um Trigger auszuschalten\n"
 
 #: pg_restore.c:458
-#, fuzzy, c-format
-#| msgid "  -t, --table=NAME             restore named table(s)\n"
-msgid "  -t, --table=NAME             restore named tables\n"
-msgstr "  -t, --table=NAME             benannte Tabelle(n) wiederherstellen\n"
+#, c-format
+msgid "  -t, --table=NAME             restore named table\n"
+msgstr "  -t, --table=NAME             benannte Tabelle wiederherstellen\n"
 
 #: pg_restore.c:459
-#, fuzzy, c-format
-#| msgid "  -T, --trigger=NAME           restore named trigger\n"
-msgid "  -T, --trigger=NAME           restore named triggers\n"
+#, c-format
+msgid "  -T, --trigger=NAME           restore named trigger\n"
 msgstr "  -T, --trigger=NAME           benannten Trigger wiederherstellen\n"
 
 #: pg_restore.c:460
@@ -2435,9 +2425,8 @@ msgid "  --no-tablespaces             do not restore tablespace assignments\n"
 msgstr "  --no-tablespaces             Tablespace-Zuordnungen nicht wiederherstellen\n"
 
 #: pg_restore.c:468
-#, fuzzy, c-format
-#| msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
-msgid "  --section=SECTION            restore named sections (pre-data, data, or post-data)\n"
+#, c-format
+msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
 msgstr ""
 "  --section=ABSCHNITT          angegebenen Abschnitt wiederherstellen (pre-data,\n"
 "                               data oder post-data)\n"
@@ -2451,33 +2440,20 @@ msgstr "  --role=ROLLENNAME        vor der Wiederherstellung SET ROLE ausführen
 #, c-format
 msgid ""
 "\n"
+"The options -I, -n, -P, -t, -T, and --section can be combined and specified\n"
+"multiple times to select multiple objects.\n"
+msgstr ""
+"\n"
+"Die Optionen -I, -n, -P, -t, -T und --section können kombiniert und mehrfach\n"
+"angegeben werden, um mehrere Objekte auszuwählen.\n"
+
+#: pg_restore.c:484
+#, c-format
+msgid ""
+"\n"
 "If no input file name is supplied, then standard input is used.\n"
 "\n"
 msgstr ""
 "\n"
 "Wenn keine Eingabedatei angegeben ist, wird die Standardeingabe verwendet.\n"
 "\n"
-
-#~ msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
-#~ msgstr "tatsächliche Dateiposition stimmt nicht mit erwarteter überein (%s und %s)\n"
-
-#~ msgid "could not output padding at end of tar member\n"
-#~ msgstr "konnte Tar-Mitglied am Ende nicht auffüllen\n"
-
-#~ msgid "could not write null block at end of tar archive\n"
-#~ msgstr "konnte Nullblock am Ende des Tar-Archivs nicht schreiben\n"
-
-#~ msgid "could not write byte\n"
-#~ msgstr "konnte Byte nicht schreiben\n"
-
-#~ msgid "could not write byte: %s\n"
-#~ msgstr "konnte Byte nicht schreiben: %s\n"
-
-#~ msgid "unexpected end of file\n"
-#~ msgstr "unerwartetes Dateiende\n"
-
-#~ msgid "could not write to custom output routine\n"
-#~ msgstr "konnte nicht zur Custom-Ausgaberoutine schreiben\n"
-
-#~ msgid "could not write to output file: %s\n"
-#~ msgstr "konnte nicht in Ausgabedatei schreiben: %s\n"

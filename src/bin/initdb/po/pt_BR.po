@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 15:51-0300\n"
+"POT-Creation-Date: 2014-09-14 23:05-0300\n"
 "PO-Revision-Date: 2010-09-25 00:45+0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -86,6 +86,20 @@ msgstr "não pôde executar stat no arquivo ou  diretório \"%s\": %s\n"
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "não pôde remover arquivo ou  diretório \"%s\": %s\n"
+
+#: ../../common/username.c:45
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "não pôde encontrar ID de usuário efetivo %ld: %s"
+
+#: ../../common/username.c:47
+msgid "user does not exist"
+msgstr "usuário não existe"
+
+#: ../../common/username.c:61
+#, c-format
+msgid "user name lookup failure: %s"
+msgstr "falhou ao pesquisar nome de usuário: %s"
 
 #: ../../common/wait_error.c:47
 #, c-format
@@ -441,8 +455,8 @@ msgstr "ok\n"
 
 #: initdb.c:2555
 #, c-format
-msgid "%s: setlocale failed\n"
-msgstr "%s: setlocale falhou\n"
+msgid "%s: setlocale() failed\n"
+msgstr "%s: setlocale() falhou\n"
 
 #: initdb.c:2573
 #, c-format
