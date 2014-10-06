@@ -91,9 +91,9 @@ usage(void)
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOT        name of the logical replication slot\n"));
 	printf(_("\nAction to be performed:\n"));
-	printf(_("      --create           create a new replication slot (for the slot's name see --slot)\n"));
+	printf(_("      --create-slot      create a new replication slot (for the slot's name see --slot)\n"));
+	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
 	printf(_("      --start            start streaming in a replication slot (for the slot's name see --slot)\n"));
-	printf(_("      --drop             drop the replication slot (for the slot's name see --slot)\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
@@ -619,9 +619,9 @@ main(int argc, char **argv)
 		{"status-interval", required_argument, NULL, 's'},
 		{"slot", required_argument, NULL, 'S'},
 /* action */
-		{"create", no_argument, NULL, 1},
+		{"create-slot", no_argument, NULL, 1},
 		{"start", no_argument, NULL, 2},
-		{"drop", no_argument, NULL, 3},
+		{"drop-slot", no_argument, NULL, 3},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -814,7 +814,7 @@ main(int argc, char **argv)
 
 	if (do_drop_slot && (do_create_slot || do_start_slot))
 	{
-		fprintf(stderr, _("%s: cannot use --create or --start together with --drop\n"), progname);
+		fprintf(stderr, _("%s: cannot use --create-slot or --start together with --drop-slot\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -822,7 +822,7 @@ main(int argc, char **argv)
 
 	if (startpos != InvalidXLogRecPtr && (do_create_slot || do_drop_slot))
 	{
-		fprintf(stderr, _("%s: cannot use --create or --drop together with --startpos\n"), progname);
+		fprintf(stderr, _("%s: cannot use --create-slot or --drop-slot together with --startpos\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
