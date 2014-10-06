@@ -6,6 +6,7 @@
 # pgtranslation Id: pg_controldata.po,v 1.3 2011/05/14 01:57:42 alvherre Exp $
 #
 # ChangeLog:
+#   - May 20, 2013: Alexander Lakhin <exclusion@gmail.com>.
 #   - March 14, 2013: Updates for 9.3. Alexander Lakhin <exclusion@gmail.com>.
 #   - June 27, 2012: Updates for 9.2. Alexander Lakhin <exclusion@gmail.com>.
 #   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
@@ -20,20 +21,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-05-20 02:18+0000\n"
-"PO-Revision-Date: 2013-05-20 20:10+0400\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2014-08-02 06:42+0000\n"
+"PO-Revision-Date: 2014-08-14 22:51+0400\n"
+"Last-Translator: Dmitriy Olshevskiy <olshevskiy87@bk.ru>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Russian\n"
-"X-Poedit-Country: RUSSIAN FEDERATION\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Poedit 1.6.7\n"
 
 #: pg_controldata.c:34
 #, c-format
@@ -124,31 +123,31 @@ msgstr "в работе"
 msgid "unrecognized status code"
 msgstr "нераспознанный код состояния"
 
-#: pg_controldata.c:81
+#: pg_controldata.c:83
 msgid "unrecognized wal_level"
 msgstr "нераспознанный уровень WAL"
 
-#: pg_controldata.c:126
+#: pg_controldata.c:128
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: каталог данных не указан\n"
 
-#: pg_controldata.c:127
+#: pg_controldata.c:129
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_controldata.c:135
+#: pg_controldata.c:137
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
 
-#: pg_controldata.c:142
+#: pg_controldata.c:144
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: не удалось прочитать файл \"%s\": %s\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:158
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -161,12 +160,12 @@ msgstr ""
 "Следующая информация может быть недостоверной.\n"
 "\n"
 
-#: pg_controldata.c:190
+#: pg_controldata.c:192
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Номер версии pg_control:              %u\n"
 
-#: pg_controldata.c:193
+#: pg_controldata.c:195
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
@@ -180,258 +179,267 @@ msgstr ""
 "этой программой. В этом случае результаты будут неверными и\n"
 "установленный PostgreSQL будет несовместим с этим каталогом данных.\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:199
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Номер версии каталога:                %u\n"
 
-#: pg_controldata.c:199
+#: pg_controldata.c:201
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Идентификатор системы баз данных:     %s\n"
 
-#: pg_controldata.c:201
+#: pg_controldata.c:203
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Состояние кластера БД:                %s\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:205
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Последнее обновление pg_control:      %s\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:207
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Положение последней конт. точки:      %X/%X\n"
 
-#: pg_controldata.c:208
+#: pg_controldata.c:210
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Положение предыдущей конт. точки:     %X/%X\n"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:213
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Положение REDO последней конт. точки: %X/%X\n"
 
-#: pg_controldata.c:214
+#: pg_controldata.c:216
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "Файл WAL c REDO последней к.т.:       %s\n"
 
-#: pg_controldata.c:216
+#: pg_controldata.c:218
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Линия времени последней конт. точки:  %u\n"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:220
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "Пред. линия времени последней к.т.:   %u\n"
 
-#: pg_controldata.c:220
+#: pg_controldata.c:222
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Режим full_page_writes последней к.т: %s\n"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:223 pg_controldata.c:264
 msgid "off"
 msgstr "выкл."
 
-#: pg_controldata.c:221
+#: pg_controldata.c:223 pg_controldata.c:264
 msgid "on"
 msgstr "вкл."
 
-#: pg_controldata.c:222
+#: pg_controldata.c:224
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "NextXID последней конт. точки:        %u/%u\n"
 
-#: pg_controldata.c:225
+#: pg_controldata.c:227
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID последней конт. точки:        %u\n"
 
-#: pg_controldata.c:227
+#: pg_controldata.c:229
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId послед. конт. точки:  %u\n"
 
-#: pg_controldata.c:229
+#: pg_controldata.c:231
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset послед. конт. точки:  %u\n"
 
-#: pg_controldata.c:231
+#: pg_controldata.c:233
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID последней конт. точки:      %u\n"
 
-#: pg_controldata.c:233
+#: pg_controldata.c:235
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "БД с oldestXID последней конт. точки: %u\n"
 
-#: pg_controldata.c:235
+#: pg_controldata.c:237
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "oldestActiveXID последней к.т.:       %u\n"
 
-#: pg_controldata.c:237
+#: pg_controldata.c:239
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "oldestMultiXid последней конт. точки: %u\n"
 
-#: pg_controldata.c:239
+#: pg_controldata.c:241
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "БД с oldestMulti последней к.т.:      %u\n"
 
-#: pg_controldata.c:241
+#: pg_controldata.c:243
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Время последней контрольной точки:    %s\n"
 
-#: pg_controldata.c:243
+#: pg_controldata.c:245
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
 msgstr "Фиктивный LSN для нежурналир. таблиц: %X/%X\n"
 
-#: pg_controldata.c:246
+#: pg_controldata.c:248
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Мин. положение конца восстановления:  %X/%X\n"
 
-#: pg_controldata.c:249
+#: pg_controldata.c:251
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
 msgstr "Линия времени мин. положения к.в.:    %u\n"
 
-#: pg_controldata.c:251
+#: pg_controldata.c:253
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "Положение начала копии:               %X/%X\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:256
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
 msgstr "Положение конца копии:                %X/%X\n"
 
-#: pg_controldata.c:257
+#: pg_controldata.c:259
 #, c-format
 msgid "End-of-backup record required:        %s\n"
 msgstr "Требуется запись конец-копии:         %s\n"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:260
 msgid "no"
 msgstr "нет"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:260
 msgid "yes"
 msgstr "да"
 
-#: pg_controldata.c:259
+#: pg_controldata.c:261
 #, c-format
 msgid "Current wal_level setting:            %s\n"
 msgstr "Текущее значение wal_level:           %s\n"
 
-#: pg_controldata.c:261
+#: pg_controldata.c:263
+#, c-format
+msgid "Current wal_log_hints setting:        %s\n"
+msgstr "Текущее значение wal_log_hints:       %s\n"
+
+#: pg_controldata.c:265
 #, c-format
 msgid "Current max_connections setting:      %d\n"
 msgstr "Текущее значение max_connections:     %d\n"
 
-#: pg_controldata.c:263
+#: pg_controldata.c:267
+#, c-format
+msgid "Current max_worker_processes setting: %d\n"
+msgstr "Текущее значение max_worker_processes:%d\n"
+
+#: pg_controldata.c:269
 #, c-format
 msgid "Current max_prepared_xacts setting:   %d\n"
 msgstr "Текущее значение max_prepared_xacts:  %d\n"
 
-#: pg_controldata.c:265
+#: pg_controldata.c:271
 #, c-format
 msgid "Current max_locks_per_xact setting:   %d\n"
 msgstr "Текущее значение max_locks_per_xact:  %d\n"
 
-#: pg_controldata.c:267
+#: pg_controldata.c:273
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Макс. предел выравнивания данных:     %u\n"
 
-#: pg_controldata.c:270
+#: pg_controldata.c:276
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Размер блока БД:                      %u\n"
 
-#: pg_controldata.c:272
+#: pg_controldata.c:278
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Блоков в макс. сегменте отношений:    %u\n"
 
-#: pg_controldata.c:274
+#: pg_controldata.c:280
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Размер блока WAL:                     %u\n"
 
-#: pg_controldata.c:276
+#: pg_controldata.c:282
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Байт в сегменте WAL:                  %u\n"
 
-#: pg_controldata.c:278
+#: pg_controldata.c:284
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Максимальная длина идентификаторов:   %u\n"
 
-#: pg_controldata.c:280
+#: pg_controldata.c:286
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Максимальное число колонок в индексе: %u\n"
 
-#: pg_controldata.c:282
+#: pg_controldata.c:288
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Максимальный размер порции TOAST:     %u\n"
 
-#: pg_controldata.c:284
+#: pg_controldata.c:290
+#, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "Размер порции большого объекта:       %u\n"
+
+#: pg_controldata.c:292
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Формат хранения даты/времени:         %s\n"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:293
 msgid "64-bit integers"
 msgstr "64-битные целые"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:293
 msgid "floating-point numbers"
 msgstr "числа с плавающей точкой"
 
-#: pg_controldata.c:286
+#: pg_controldata.c:294
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Передача аргумента Float4:            %s\n"
 
-#: pg_controldata.c:287 pg_controldata.c:289
+#: pg_controldata.c:295 pg_controldata.c:297
 msgid "by reference"
 msgstr "по ссылке"
 
-#: pg_controldata.c:287 pg_controldata.c:289
+#: pg_controldata.c:295 pg_controldata.c:297
 msgid "by value"
 msgstr "по значению"
 
-#: pg_controldata.c:288
+#: pg_controldata.c:296
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Передача аргумента Float8:            %s\n"
 
-#: pg_controldata.c:290
+#: pg_controldata.c:298
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Версия контрольных сумм страниц:      %u\n"
-
-#~ msgid "disabled"
-#~ msgstr "отключен"
-
-#~ msgid "enabled"
-#~ msgstr "включен"
 
 #~ msgid ""
 #~ "Usage:\n"
@@ -447,3 +455,9 @@ msgstr "Версия контрольных сумм страниц:      %u\n"
 #~ "Параметры:\n"
 #~ "  --help         показать эту справку и выйти\n"
 #~ "  --version      показать версию и выйти\n"
+
+#~ msgid "enabled"
+#~ msgstr "включен"
+
+#~ msgid "disabled"
+#~ msgstr "отключен"

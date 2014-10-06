@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1 beta 2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-08-18 13:05+0900\n"
-"PO-Revision-Date: 2013-08-18 16:46+0900\n"
+"PO-Revision-Date: 2014-08-16 16:41+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -8653,7 +8653,7 @@ msgstr "集約%uは入力データ型と遷移用の型間で互換性が必要�
 #: executor/nodeHashjoin.c:823 executor/nodeHashjoin.c:853
 #, c-format
 msgid "could not rewind hash-join temporary file: %m"
-msgstr "ハッシュ結合用一時ファイルを巻き戻しできません"
+msgstr "ハッシュ結合用一時ファイルを巻き戻しできません: %m"
 
 #: executor/nodeHashjoin.c:888 executor/nodeHashjoin.c:894
 #, c-format
@@ -12603,7 +12603,7 @@ msgstr "統計情報コレクタのソケットから試験メッセージを入
 #: postmaster/pgstat.c:495
 #, c-format
 msgid "could not receive test message on socket for statistics collector: %m"
-msgstr "統計情報コレクタのソケットから試験メッセージを受信できませんでした"
+msgstr "統計情報コレクタのソケットから試験メッセージを受信できませんでした: %m"
 
 #: postmaster/pgstat.c:505
 #, c-format

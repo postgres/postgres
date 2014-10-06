@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-07-20 02:42+0000\n"
-"PO-Revision-Date: 2014-07-20 21:32-0400\n"
+"POT-Creation-Date: 2014-08-23 03:42+0000\n"
+"PO-Revision-Date: 2014-08-23 00:28-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -89,19 +89,17 @@ msgstr "konnte Datei oder Verzeichnis „%s“ nicht entfernen: %s\n"
 
 #: ../../common/username.c:45
 #, c-format
-msgid "failed to look up effective user id %ld: %s"
-msgstr ""
+msgid "could not look up effective user ID %ld: %s"
+msgstr "konnte effektive Benutzer-ID %ld nicht nachschlagen: %s"
 
 #: ../../common/username.c:47
-#, fuzzy
-#| msgid "server \"%s\" does not exist"
 msgid "user does not exist"
-msgstr "Server „%s“ existiert nicht"
+msgstr "Benutzer existiert nicht"
 
 #: ../../common/username.c:61
 #, c-format
 msgid "user name lookup failure: %s"
-msgstr ""
+msgstr "Fehler beim Nachschlagen des Benutzernamens: %s"
 
 #: ../../common/wait_error.c:47
 #, c-format
@@ -457,10 +455,9 @@ msgid "ok\n"
 msgstr "ok\n"
 
 #: initdb.c:2555
-#, fuzzy, c-format
-#| msgid "%s: select() failed: %s\n"
-msgid "%s: setlocale failed\n"
-msgstr "%s: select() fehlgeschlagen: %s\n"
+#, c-format
+msgid "%s: setlocale() failed\n"
+msgstr "%s: setlocale() fehlgeschlagen\n"
 
 #: initdb.c:2573
 #, c-format
@@ -475,7 +472,7 @@ msgstr "%s: ungültiger Locale-Name „%s“\n"
 #: initdb.c:2595
 #, c-format
 msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
-msgstr ""
+msgstr "%s: ungültige Locale-Einstellungen; prüfen Sie die Umgebungsvariablen LANG und LC_*\n"
 
 #: initdb.c:2623
 #, c-format

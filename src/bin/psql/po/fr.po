@@ -1281,7 +1281,7 @@ msgstr "Rôle"
 
 #: describe.c:2573
 msgid "Database"
-msgstr "Vase de données"
+msgstr "Base de données"
 
 #: describe.c:2574
 msgid "Settings"

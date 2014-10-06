@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 16:00-0300\n"
+"POT-Creation-Date: 2014-09-14 23:08-0300\n"
 "PO-Revision-Date: 2005-10-04 23:00-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -384,36 +384,41 @@ msgstr "Tamanho máximo do bloco TOAST:                       %u\n"
 
 #: pg_controldata.c:290
 #, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "Tamanho máximo do bloco de objeto grande:            %u\n"
+
+#: pg_controldata.c:292
+#, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tipo de data/hora do repositório:                    %s\n"
 
-#: pg_controldata.c:291
+#: pg_controldata.c:293
 msgid "64-bit integers"
 msgstr "inteiros de 64 bits"
 
-#: pg_controldata.c:291
+#: pg_controldata.c:293
 msgid "floating-point numbers"
 msgstr "números de ponto flutuante"
 
-#: pg_controldata.c:292
+#: pg_controldata.c:294
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Passagem de argumento float4:                        %s\n"
 
-#: pg_controldata.c:293 pg_controldata.c:295
+#: pg_controldata.c:295 pg_controldata.c:297
 msgid "by reference"
 msgstr "por referência"
 
-#: pg_controldata.c:293 pg_controldata.c:295
+#: pg_controldata.c:295 pg_controldata.c:297
 msgid "by value"
 msgstr "por valor"
 
-#: pg_controldata.c:294
+#: pg_controldata.c:296
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Passagem de argumento float8:                        %s\n"
 
-#: pg_controldata.c:296
+#: pg_controldata.c:298
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Versão da verificação de páginas de dados:           %u\n"

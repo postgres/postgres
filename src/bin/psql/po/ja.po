@@ -6,8 +6,8 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1 beta2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-08-18 12:11+0900\n"
-"PO-Revision-Date: 2013-08-18 12:35+0900\n"
-"Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
+"PO-Revision-Date: 2014-05-20 02:38+0900\n"
+"Last-Translator: SAWADA Masahiko <sawada.mshk@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1134,7 +1134,7 @@ msgstr "継承"
 #: describe.c:2236
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
-msgstr "子テーブルの数：%d（\\d で一覧表示）"
+msgstr "子テーブルの数：%d（\\d+ で一覧表示）"
 
 #: describe.c:2243
 msgid "Child tables"
@@ -1234,7 +1234,7 @@ msgstr "ロール"
 #: describe.c:2573
 #| msgid "database %s"
 msgid "Database"
-msgstr "データベース %s"
+msgstr "データベース"
 
 #: describe.c:2574
 msgid "Settings"
@@ -1827,7 +1827,7 @@ msgid ""
 "  -z, --field-separator-zero\n"
 "                           set field separator to zero byte\n"
 msgstr ""
-"  -F, --field-separator-zero\n"
+"  -z, --field-separator-zero\n"
 "                           区切り文字をゼロバイトに設定\n"
 
 #: help.c:128
@@ -1836,7 +1836,7 @@ msgid ""
 "  -0, --record-separator-zero\n"
 "                           set record separator to zero byte\n"
 msgstr ""
-"  -R, --record-separator-zero\n"
+"  -0, --record-separator-zero\n"
 "                           レコード区切り文字をゼロバイトに設定\n"
 
 #: help.c:131
@@ -1948,7 +1948,7 @@ msgstr "  \\e [ファイル] [行番号] 現在の問い合わせバッファ(�
 #: help.c:183
 #, c-format
 msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
-msgstr "  \\e [関数名 [行番号]]   関数定義を外部エディタで編集する\n"
+msgstr "  \\ef [関数名 [行番号]]  関数定義を外部エディタで編集する\n"
 
 #: help.c:184
 #, c-format
@@ -2144,7 +2144,7 @@ msgstr "  \\do[S]  [名前]         演算子の一覧を表示する\n"
 #: help.c:228
 #, c-format
 msgid "  \\dO[S+] [PATTERN]      list collations\n"
-msgstr "  \\dD[S+]  [パターン]     照合順序の一覧を表示する\n"
+msgstr "  \\dO[S+]  [パターン]     照合順序の一覧を表示する\n"
 
 #: help.c:229
 #, c-format

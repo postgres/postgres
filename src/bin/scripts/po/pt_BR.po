@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 16:03-0300\n"
+"POT-Creation-Date: 2014-09-14 23:10-0300\n"
 "PO-Revision-Date: 2005-10-06 00:21-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -26,6 +26,20 @@ msgstr "sem memória\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "não pode duplicar ponteiro nulo (erro interno)\n"
+
+#: ../../common/username.c:45
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "não pôde encontrar ID de usuário efetivo %ld: %s"
+
+#: ../../common/username.c:47
+msgid "user does not exist"
+msgstr "usuário não existe"
+
+#: ../../common/username.c:61
+#, c-format
+msgid "user name lookup failure: %s"
+msgstr "falhou ao pesquisar nome de usuário: %s"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:168
@@ -80,19 +94,19 @@ msgstr ""
 
 #: clusterdb.c:262 createdb.c:252 createlang.c:236 createuser.c:348
 #: dropdb.c:155 droplang.c:237 dropuser.c:156 pg_isready.c:222 reindexdb.c:342
-#: vacuumdb.c:394
+#: vacuumdb.c:425
 #, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
-#: clusterdb.c:263 reindexdb.c:343 vacuumdb.c:395
+#: clusterdb.c:263 reindexdb.c:343 vacuumdb.c:426
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPÇÃO]... [NOMEBD]\n"
 
 #: clusterdb.c:264 createdb.c:254 createlang.c:238 createuser.c:350
 #: dropdb.c:157 droplang.c:239 dropuser.c:158 pg_isready.c:225 reindexdb.c:344
-#: vacuumdb.c:396
+#: vacuumdb.c:427
 #, c-format
 msgid ""
 "\n"
@@ -146,7 +160,7 @@ msgstr "  -?, --help                mostra essa ajuda e termina\n"
 
 #: clusterdb.c:273 createdb.c:265 createlang.c:244 createuser.c:374
 #: dropdb.c:163 droplang.c:245 dropuser.c:165 pg_isready.c:231 reindexdb.c:354
-#: vacuumdb.c:411
+#: vacuumdb.c:442
 #, c-format
 msgid ""
 "\n"
@@ -156,36 +170,36 @@ msgstr ""
 "Opções de conexão:\n"
 
 #: clusterdb.c:274 createlang.c:245 createuser.c:375 dropdb.c:164
-#: droplang.c:246 dropuser.c:166 reindexdb.c:355 vacuumdb.c:412
+#: droplang.c:246 dropuser.c:166 reindexdb.c:355 vacuumdb.c:443
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=MÁQUINA        máquina do servidor de banco de dados ou diretório do soquete\n"
 
 #: clusterdb.c:275 createlang.c:246 createuser.c:376 dropdb.c:165
-#: droplang.c:247 dropuser.c:167 reindexdb.c:356 vacuumdb.c:413
+#: droplang.c:247 dropuser.c:167 reindexdb.c:356 vacuumdb.c:444
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORTA          porta do servidor de banco de dados\n"
 
 #: clusterdb.c:276 createlang.c:247 dropdb.c:166 droplang.c:248
-#: reindexdb.c:357 vacuumdb.c:414
+#: reindexdb.c:357 vacuumdb.c:445
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USUÁRIO    nome do usuário para se conectar\n"
 
 #: clusterdb.c:277 createlang.c:248 createuser.c:378 dropdb.c:167
-#: droplang.c:249 dropuser.c:169 reindexdb.c:358 vacuumdb.c:415
+#: droplang.c:249 dropuser.c:169 reindexdb.c:358 vacuumdb.c:446
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         nunca pergunta senha\n"
 
 #: clusterdb.c:278 createlang.c:249 createuser.c:379 dropdb.c:168
-#: droplang.c:250 dropuser.c:170 reindexdb.c:359 vacuumdb.c:416
+#: droplang.c:250 dropuser.c:170 reindexdb.c:359 vacuumdb.c:447
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            pergunta senha\n"
 
-#: clusterdb.c:279 dropdb.c:169 reindexdb.c:360 vacuumdb.c:417
+#: clusterdb.c:279 dropdb.c:169 reindexdb.c:360 vacuumdb.c:448
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=NOMEBD   especifica um banco de dados para manutenção\n"
@@ -201,7 +215,7 @@ msgstr ""
 
 #: clusterdb.c:281 createdb.c:273 createlang.c:250 createuser.c:380
 #: dropdb.c:170 droplang.c:251 dropuser.c:171 pg_isready.c:236 reindexdb.c:362
-#: vacuumdb.c:419
+#: vacuumdb.c:450
 #, c-format
 msgid ""
 "\n"
@@ -927,12 +941,12 @@ msgstr "Gerando estatísticas parciais para otimizador (10 alvos)"
 msgid "Generating default (full) optimizer statistics"
 msgstr "Gerando estatísticas padrão (completa) para otimizador"
 
-#: vacuumdb.c:376
+#: vacuumdb.c:406
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: limpando banco de dados \"%s\"\n"
 
-#: vacuumdb.c:393
+#: vacuumdb.c:424
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -941,62 +955,62 @@ msgstr ""
 "%s limpa e analisa um banco de dados PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:397
+#: vacuumdb.c:428
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       limpa todos bancos de dados\n"
 
-#: vacuumdb.c:398
+#: vacuumdb.c:429
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=NOMEBD             banco de dados a ser limpo\n"
 
-#: vacuumdb.c:399
+#: vacuumdb.c:430
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      mostra os comandos enviados ao servidor\n"
 
-#: vacuumdb.c:400
+#: vacuumdb.c:431
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      faz uma limpeza completa\n"
 
-#: vacuumdb.c:401
+#: vacuumdb.c:432
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    congela informação sobre transação de registros\n"
 
-#: vacuumdb.c:402
+#: vacuumdb.c:433
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     não exibe nenhuma mensagem\n"
 
-#: vacuumdb.c:403
+#: vacuumdb.c:434
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr "  -t, --table='TABELA[(COLUNAS)]' limpa somente tabela(s) específica(s)\n"
 
-#: vacuumdb.c:404
+#: vacuumdb.c:435
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   mostra muitas mensagens\n"
 
-#: vacuumdb.c:405
+#: vacuumdb.c:436
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   mostra informação sobre a versão e termina\n"
 
-#: vacuumdb.c:406
+#: vacuumdb.c:437
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   atualiza estatísticas do otimizador\n"
 
-#: vacuumdb.c:407
+#: vacuumdb.c:438
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics\n"
 msgstr "  -Z, --analyze-only              atualiza somente estatísticas do otimizador\n"
 
-#: vacuumdb.c:408
+#: vacuumdb.c:439
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
@@ -1005,12 +1019,12 @@ msgstr ""
 "      --analyze-in-stages         atualiza somente estatísticas do otimizador, em\n"
 "                                  múltiplos estágios para resultados mais rápidos\n"
 
-#: vacuumdb.c:410
+#: vacuumdb.c:441
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      mostra essa ajuda e termina\n"
 
-#: vacuumdb.c:418
+#: vacuumdb.c:449
 #, c-format
 msgid ""
 "\n"
