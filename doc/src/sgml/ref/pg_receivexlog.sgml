@@ -255,8 +255,37 @@ PostgreSQL documentation
          to make sure that <application>pg_receivexlog</> cannot become the
          synchronous standby through an incautious setting of
          <xref linkend="guc-synchronous-standby-names">; it does not flush
-         data frequently enough for this to work correctly.
+         data frequently enough for this to work correctly. In
+         <option>--create-slot</option> mode, create the slot with this name.
+         In <option>--drop-slot</option> mode, delete the slot with this name.
         </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    <application>pg_receivexlog</application> can perform one of the two
+    following actions in order to control physical replication slots:
+
+    <variablelist>
+     <varlistentry>
+      <term><option>--create-slot</option></term>
+      <listitem>
+       <para>
+        Create a new physical replication slot with the name specified in
+        <option>--slot</option>, then start to stream WAL.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--drop-slot</option></term>
+      <listitem>
+       <para>
+        Drop the replication slot with the name specified in
+        <option>--slot</option>, then exit.
+       </para>
       </listitem>
      </varlistentry>
     </variablelist>
