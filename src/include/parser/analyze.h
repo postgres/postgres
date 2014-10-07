@@ -39,6 +39,7 @@ extern bool analyze_requires_snapshot(Node *parseTree);
 extern char *LCS_asString(LockClauseStrength strength);
 extern void CheckSelectLocking(Query *qry, LockClauseStrength strength);
 extern void applyLockingClause(Query *qry, Index rtindex,
-				   LockClauseStrength strength, bool noWait, bool pushedDown);
+				   LockClauseStrength strength,
+				   LockWaitPolicy waitPolicy, bool pushedDown);
 
 #endif   /* ANALYZE_H */

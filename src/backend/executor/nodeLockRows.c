@@ -133,11 +133,15 @@ lnext:
 
 		test = heap_lock_tuple(erm->relation, &tuple,
 							   estate->es_output_cid,
-							   lockmode, erm->noWait, true,
+							   lockmode, erm->waitPolicy, true,
 							   &buffer, &hufd);
 		ReleaseBuffer(buffer);
 		switch (test)
 		{
+			case HeapTupleWouldBlock:
+				/* couldn't lock tuple in SKIP LOCKED mode */
+				goto lnext;
+
 			case HeapTupleSelfUpdated:
 
 				/*
@@ -170,12 +174,15 @@ lnext:
 				}
 
 				/* updated, so fetch and lock the updated version */
-				copyTuple = EvalPlanQualFetch(estate, erm->relation, lockmode, erm->noWait,
-											  &hufd.ctid, hufd.xmax);
+				copyTuple = EvalPlanQualFetch(estate, erm->relation, lockmode,
+											  erm->waitPolicy, &hufd.ctid, hufd.xmax);
 
 				if (copyTuple == NULL)
 				{
-					/* Tuple was deleted, so don't return it */
+					/*
+					 * Tuple was deleted; or it's locked and we're under SKIP
+					 * LOCKED policy, so don't return it
+					 */
 					goto lnext;
 				}
 				/* remember the actually locked tuple's TID */

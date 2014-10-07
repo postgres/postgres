@@ -233,19 +233,19 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 				{
 					case ROW_MARK_EXCLUSIVE:
 						applyLockingClause(subquery, 1, LCS_FORUPDATE,
-										   rc->noWait, false);
+										   rc->waitPolicy, false);
 						break;
 					case ROW_MARK_NOKEYEXCLUSIVE:
 						applyLockingClause(subquery, 1, LCS_FORNOKEYUPDATE,
-										   rc->noWait, false);
+										   rc->waitPolicy, false);
 						break;
 					case ROW_MARK_SHARE:
 						applyLockingClause(subquery, 1, LCS_FORSHARE,
-										   rc->noWait, false);
+										   rc->waitPolicy, false);
 						break;
 					case ROW_MARK_KEYSHARE:
 						applyLockingClause(subquery, 1, LCS_FORKEYSHARE,
-										   rc->noWait, false);
+										   rc->waitPolicy, false);
 						break;
 					case ROW_MARK_REFERENCE:
 					case ROW_MARK_COPY:

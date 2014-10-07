@@ -4446,8 +4446,10 @@ get_select_query_def(Query *query, deparse_context *context,
 			appendStringInfo(buf, " OF %s",
 							 quote_identifier(get_rtable_name(rc->rti,
 															  context)));
-			if (rc->noWait)
+			if (rc->waitPolicy == LockWaitError)
 				appendStringInfoString(buf, " NOWAIT");
+			else if (rc->waitPolicy == LockWaitSkip)
+				appendStringInfoString(buf, " SKIP LOCKED");
 		}
 	}
 

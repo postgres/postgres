@@ -1,0 +1,19 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s2a s1a s2b s2c s2d s2e s1b s2f
+step s2a: SELECT pg_advisory_lock(0);
+pg_advisory_lock
+
+               
+step s1a: SELECT * FROM foo WHERE pg_advisory_lock(0) IS NOT NULL ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED; <waiting ...>
+step s2b: UPDATE foo SET data = data WHERE id = 1;
+step s2c: BEGIN;
+step s2d: UPDATE foo SET data = data WHERE id = 1;
+step s2e: SELECT pg_advisory_unlock(0);
+pg_advisory_unlock
+
+t              
+step s1a: <... completed>
+error in steps s2e s1a: ERROR:  could not serialize access due to concurrent update
+step s1b: COMMIT;
+step s2f: COMMIT;

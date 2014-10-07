@@ -104,7 +104,8 @@ typedef enum
 	HeapTupleInvisible,
 	HeapTupleSelfUpdated,
 	HeapTupleUpdated,
-	HeapTupleBeingUpdated
+	HeapTupleBeingUpdated,
+	HeapTupleWouldBlock	/* can be returned by heap_tuple_lock */
 } HTSU_Result;
 
 #endif   /* SNAPSHOT_H */

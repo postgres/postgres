@@ -1,0 +1,19 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1a s2a s3a s1b s2b s3b
+step s1a: SELECT * FROM queue ORDER BY id FOR UPDATE LIMIT 1;
+id             data           status         
+
+1              foo            NEW            
+step s2a: SELECT * FROM queue ORDER BY id FOR UPDATE LIMIT 1; <waiting ...>
+step s3a: SELECT * FROM queue ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1;
+id             data           status         
+
+2              bar            NEW            
+step s1b: COMMIT;
+step s2a: <... completed>
+id             data           status         
+
+1              foo            NEW            
+step s2b: COMMIT;
+step s3b: COMMIT;

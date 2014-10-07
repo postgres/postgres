@@ -1389,7 +1389,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrc->prti = rti;
 			newrc->rowmarkId = oldrc->rowmarkId;
 			newrc->markType = oldrc->markType;
-			newrc->noWait = oldrc->noWait;
+			newrc->waitPolicy = oldrc->waitPolicy;
 			newrc->isParent = false;
 
 			root->rowMarks = lappend(root->rowMarks, newrc);
