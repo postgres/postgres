@@ -121,7 +121,7 @@ parse_row_security_command(const char *cmd_name)
 	else if (strcmp(cmd_name, "delete") == 0)
 		cmd = ACL_DELETE_CHR;
 	else
-		elog(ERROR, "unregonized command");
+		elog(ERROR, "unrecognized command");
 
 	return cmd;
 }
