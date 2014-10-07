@@ -1675,6 +1675,7 @@ DecodePosixTimezone(char *str, int *tzp)
  *
  * The "lowstr" work buffer must have at least strlen(timestr) + MAXDATEFIELDS
  * bytes of space.  On output, field[] entries will point into it.
+ * The field[] and ftype[] arrays must have at least MAXDATEFIELDS entries.
  */
 int
 ParseDateTime(char *timestr, char *lowstr,
@@ -1688,9 +1689,9 @@ ParseDateTime(char *timestr, char *lowstr,
 	while (*(*endstr) != '\0')
 	{
 		/* Record start of current field */
-		field[nf] = lp;
 		if (nf >= MAXDATEFIELDS)
 			return -1;
+		field[nf] = lp;
 
 		/* leading digit? then date or time */
 		if (isdigit((unsigned char) *(*endstr)))
