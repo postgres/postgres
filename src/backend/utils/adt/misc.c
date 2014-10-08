@@ -35,6 +35,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/lsyscache.h"
+#include "utils/ruleutils.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"

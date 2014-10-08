@@ -676,13 +676,10 @@ extern Datum pg_get_viewdef_name(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef_name_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef_ext(PG_FUNCTION_ARGS);
-extern char *pg_get_indexdef_string(Oid indexrelid);
-extern char *pg_get_indexdef_columns(Oid indexrelid, bool pretty);
 extern Datum pg_get_triggerdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_triggerdef_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef_ext(PG_FUNCTION_ARGS);
-extern char *pg_get_constraintdef_string(Oid constraintId);
 extern Datum pg_get_expr(PG_FUNCTION_ARGS);
 extern Datum pg_get_expr_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
@@ -692,17 +689,9 @@ extern Datum pg_get_function_arguments(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_identity_arguments(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_result(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_arg_default(PG_FUNCTION_ARGS);
-extern char *deparse_expression(Node *expr, List *dpcontext,
-				   bool forceprefix, bool showimplicit);
-extern List *deparse_context_for(const char *aliasname, Oid relid);
-extern List *deparse_context_for_planstate(Node *planstate, List *ancestors,
-							  List *rtable, List *rtable_names);
-extern List *select_rtable_names_for_explain(List *rtable,
-								Bitmapset *rels_used);
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);
-extern char *generate_collation_name(Oid collid);
 
 
 /* tid.c */

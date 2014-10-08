@@ -28,6 +28,7 @@
 #include "utils/json.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/tuplesort.h"
 #include "utils/xml.h"
