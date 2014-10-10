@@ -14,12 +14,10 @@
 #include "pg_upgrade.h"
 
 
-static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_cluster_is_empty(void);
-static void check_locale_and_encoding(ControlData *oldctrl,
-						  ControlData *newctrl);
-static bool equivalent_locale(const char *loca, const char *locb);
-static bool equivalent_encoding(const char *chara, const char *charb);
+static void check_databases_are_compatible(void);
+static void check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb);
+static bool equivalent_locale(int category, const char *loca, const char *locb);
 static void check_is_install_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
@@ -81,8 +79,6 @@ check_and_dump_old_cluster(bool live_check)
 	if (!live_check)
 		start_postmaster(&old_cluster, true);
 
-	set_locale_and_encoding(&old_cluster);
-
 	get_pg_database_relfilenode(&old_cluster);
 
 	/* Extract a list of databases and tables from the old cluster */
@@ -127,13 +123,10 @@ check_and_dump_old_cluster(bool live_check)
 void
 check_new_cluster(void)
 {
-	set_locale_and_encoding(&new_cluster);
-
-	check_locale_and_encoding(&old_cluster.controldata, &new_cluster.controldata);
-
 	get_db_and_rel_infos(&new_cluster);
 
 	check_new_cluster_is_empty();
+	check_databases_are_compatible();
 
 	check_loadable_libraries();
 
@@ -279,93 +272,25 @@ check_cluster_compatibility(bool live_check)
 
 
 /*
- * set_locale_and_encoding()
- *
- * query the database to get the template0 locale
- */
-static void
-set_locale_and_encoding(ClusterInfo *cluster)
-{
-	ControlData *ctrl = &cluster->controldata;
-	PGconn	   *conn;
-	PGresult   *res;
-	int			i_encoding;
-	int			cluster_version = cluster->major_version;
-
-	conn = connectToServer(cluster, "template1");
-
-	/* for pg < 80400, we got the values from pg_controldata */
-	if (cluster_version >= 80400)
-	{
-		int			i_datcollate;
-		int			i_datctype;
-
-		res = executeQueryOrDie(conn,
-								"SELECT datcollate, datctype "
-								"FROM	pg_catalog.pg_database "
-								"WHERE	datname = 'template0' ");
-		assert(PQntuples(res) == 1);
-
-		i_datcollate = PQfnumber(res, "datcollate");
-		i_datctype = PQfnumber(res, "datctype");
-
-		if (GET_MAJOR_VERSION(cluster->major_version) < 902)
-		{
-			/*
-			 * Pre-9.2 did not canonicalize the supplied locale names to match
-			 * what the system returns, while 9.2+ does, so convert pre-9.2 to
-			 * match.
-			 */
-			ctrl->lc_collate = get_canonical_locale_name(LC_COLLATE,
-								pg_strdup(PQgetvalue(res, 0, i_datcollate)));
-			ctrl->lc_ctype = get_canonical_locale_name(LC_CTYPE,
-								  pg_strdup(PQgetvalue(res, 0, i_datctype)));
-		}
-		else
-		{
-			ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
-			ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
-		}
-
-		PQclear(res);
-	}
-
-	res = executeQueryOrDie(conn,
-							"SELECT pg_catalog.pg_encoding_to_char(encoding) "
-							"FROM	pg_catalog.pg_database "
-							"WHERE	datname = 'template0' ");
-	assert(PQntuples(res) == 1);
-
-	i_encoding = PQfnumber(res, "pg_encoding_to_char");
-	ctrl->encoding = pg_strdup(PQgetvalue(res, 0, i_encoding));
-
-	PQclear(res);
-
-	PQfinish(conn);
-}
-
-
-/*
  * check_locale_and_encoding()
  *
- * Check that old and new locale and encoding match.  Even though the backend
- * tries to canonicalize stored locale names, the platform often doesn't
- * cooperate, so it's entirely possible that one DB thinks its locale is
- * "en_US.UTF-8" while the other says "en_US.utf8".  Try to be forgiving.
+ * Check that locale and encoding of a database in the old and new clusters
+ * are compatible.
  */
 static void
-check_locale_and_encoding(ControlData *oldctrl,
-						  ControlData *newctrl)
+check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb)
 {
-	if (!equivalent_locale(oldctrl->lc_collate, newctrl->lc_collate))
-		pg_fatal("lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
-				 oldctrl->lc_collate, newctrl->lc_collate);
-	if (!equivalent_locale(oldctrl->lc_ctype, newctrl->lc_ctype))
-		pg_fatal("lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
-				 oldctrl->lc_ctype, newctrl->lc_ctype);
-	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
-		pg_fatal("encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
-				 oldctrl->encoding, newctrl->encoding);
+	if (olddb->db_encoding != newdb->db_encoding)
+		pg_fatal("encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name,
+				 pg_encoding_to_char(olddb->db_encoding),
+				 pg_encoding_to_char(newdb->db_encoding));
+	if (!equivalent_locale(LC_COLLATE, olddb->db_collate, newdb->db_collate))
+		pg_fatal("lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name, olddb->db_collate, newdb->db_collate);
+	if (!equivalent_locale(LC_CTYPE, olddb->db_ctype, newdb->db_ctype))
+		pg_fatal("lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name, olddb->db_ctype, newdb->db_ctype);
 }
 
 /*
@@ -373,61 +298,46 @@ check_locale_and_encoding(ControlData *oldctrl,
  *
  * Best effort locale-name comparison.  Return false if we are not 100% sure
  * the locales are equivalent.
+ *
+ * Note: The encoding parts of the names are ignored. This function is
+ * currently used to compare locale names stored in pg_database, and
+ * pg_database contains a separate encoding field. That's compared directly
+ * in check_locale_and_encoding().
  */
 static bool
-equivalent_locale(const char *loca, const char *locb)
+equivalent_locale(int category, const char *loca, const char *locb)
 {
 	const char *chara = strrchr(loca, '.');
 	const char *charb = strrchr(locb, '.');
-	int			lencmp;
-
-	/* If they don't both contain an encoding part, just do strcasecmp(). */
-	if (!chara || !charb)
-		return (pg_strcasecmp(loca, locb) == 0);
-
-	/*
-	 * Compare the encoding parts.  Windows tends to use code page numbers for
-	 * the encoding part, which equivalent_encoding() won't like, so accept if
-	 * the strings are case-insensitive equal; otherwise use
-	 * equivalent_encoding() to compare.
-	 */
-	if (pg_strcasecmp(chara + 1, charb + 1) != 0 &&
-		!equivalent_encoding(chara + 1, charb + 1))
-		return false;
+	char	   *canona;
+	char	   *canonb;
+	int			lena;
+	int			lenb;
 
 	/*
-	 * OK, compare the locale identifiers (e.g. en_US part of en_US.utf8).
-	 *
-	 * It's tempting to ignore non-alphanumeric chars here, but for now it's
-	 * not clear that that's necessary; just do case-insensitive comparison.
+	 * If the names are equal, the locales are equivalent. Checking this
+	 * first avoids calling setlocale() in the common case that the names
+	 * are equal. That's a good thing, if setlocale() is buggy, for example.
 	 */
-	lencmp = chara - loca;
-	if (lencmp != charb - locb)
-		return false;
+	if (pg_strcasecmp(loca, locb) == 0)
+		return true;
 
-	return (pg_strncasecmp(loca, locb, lencmp) == 0);
-}
+	/*
+	 * Not identical. Canonicalize both names, remove the encoding parts,
+	 * and try again.
+	 */
+	canona = get_canonical_locale_name(category, loca);
+	chara = strrchr(canona, '.');
+	lena = chara ? (chara - canona) : strlen(canona);
 
-/*
- * equivalent_encoding()
- *
- * Best effort encoding-name comparison.  Return true only if the encodings
- * are valid server-side encodings and known equivalent.
- *
- * Because the lookup in pg_valid_server_encoding() does case folding and
- * ignores non-alphanumeric characters, this will recognize many popular
- * variant spellings as equivalent, eg "utf8" and "UTF-8" will match.
- */
-static bool
-equivalent_encoding(const char *chara, const char *charb)
-{
-	int			enca = pg_valid_server_encoding(chara);
-	int			encb = pg_valid_server_encoding(charb);
+	canonb = get_canonical_locale_name(category, locb);
+	charb = strrchr(canonb, '.');
+	lenb = charb ? (charb - canonb) : strlen(canonb);
 
-	if (enca < 0 || encb < 0)
-		return false;
+	if (lena == lenb && pg_strncasecmp(canona, canonb, lena) == 0)
+		return true;
 
-	return (enca == encb);
+	return false;
 }
 
 
@@ -450,7 +360,35 @@ check_new_cluster_is_empty(void)
 						 new_cluster.dbarr.dbs[dbnum].db_name);
 		}
 	}
+}
 
+/*
+ * Check that every database that already exists in the new cluster is
+ * compatible with the corresponding database in the old one.
+ */
+static void
+check_databases_are_compatible(void)
+{
+	int			newdbnum;
+	int			olddbnum;
+	DbInfo	   *newdbinfo;
+	DbInfo	   *olddbinfo;
+
+	for (newdbnum = 0; newdbnum < new_cluster.dbarr.ndbs; newdbnum++)
+	{
+		newdbinfo = &new_cluster.dbarr.dbs[newdbnum];
+
+		/* Find the corresponding database in the old cluster */
+		for (olddbnum = 0; olddbnum < old_cluster.dbarr.ndbs; olddbnum++)
+		{
+			olddbinfo = &old_cluster.dbarr.dbs[olddbnum];
+			if (strcmp(newdbinfo->db_name, olddbinfo->db_name) == 0)
+			{
+				check_locale_and_encoding(olddbinfo, newdbinfo);
+				break;
+			}
+		}
+	}
 }
 
 

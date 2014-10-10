@@ -239,11 +239,15 @@ get_db_infos(ClusterInfo *cluster)
 	DbInfo	   *dbinfos;
 	int			i_datname,
 				i_oid,
+				i_encoding,
+				i_datcollate,
+				i_datctype,
 				i_spclocation;
 	char		query[QUERY_ALLOC];
 
 	snprintf(query, sizeof(query),
-			 "SELECT d.oid, d.datname, %s "
+			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, "
+			 "%s AS spclocation "
 			 "FROM pg_catalog.pg_database d "
 			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 " ON d.dattablespace = t.oid "
@@ -252,12 +256,15 @@ get_db_infos(ClusterInfo *cluster)
 			 "ORDER BY 2",
 	/* 9.2 removed the spclocation column */
 			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
-			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid)");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
 	i_oid = PQfnumber(res, "oid");
 	i_datname = PQfnumber(res, "datname");
+	i_encoding = PQfnumber(res, "encoding");
+	i_datcollate = PQfnumber(res, "datcollate");
+	i_datctype = PQfnumber(res, "datctype");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	ntups = PQntuples(res);
@@ -267,6 +274,9 @@ get_db_infos(ClusterInfo *cluster)
 	{
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
 		dbinfos[tupnum].db_name = pg_strdup(PQgetvalue(res, tupnum, i_datname));
+		dbinfos[tupnum].db_encoding = atoi(PQgetvalue(res, tupnum, i_encoding));
+		dbinfos[tupnum].db_collate = pg_strdup(PQgetvalue(res, tupnum, i_datcollate));
+		dbinfos[tupnum].db_ctype = pg_strdup(PQgetvalue(res, tupnum, i_datctype));
 		snprintf(dbinfos[tupnum].db_tablespace, sizeof(dbinfos[tupnum].db_tablespace), "%s",
 				 PQgetvalue(res, tupnum, i_spclocation));
 	}

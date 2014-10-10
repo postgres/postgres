@@ -122,10 +122,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		pg_fatal("Could not get control data using %s: %s\n",
 				 cmd, getErrorText(errno));
 
-	/* Only pre-8.4 has these so if they are not set below we will check later */
-	cluster->controldata.lc_collate = NULL;
-	cluster->controldata.lc_ctype = NULL;
-
 	/* Only in <= 9.2 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
 	{
@@ -403,36 +399,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			/* used later for contrib check */
 			cluster->controldata.data_checksum_version = str2uint(p);
 			got_data_checksum_version = true;
-		}
-		/* In pre-8.4 only */
-		else if ((p = strstr(bufin, "LC_COLLATE:")) != NULL)
-		{
-			p = strchr(p, ':');
-
-			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			p++;				/* remove ':' char */
-			/* skip leading spaces and remove trailing newline */
-			p += strspn(p, " ");
-			if (strlen(p) > 0 && *(p + strlen(p) - 1) == '\n')
-				*(p + strlen(p) - 1) = '\0';
-			cluster->controldata.lc_collate = pg_strdup(p);
-		}
-		/* In pre-8.4 only */
-		else if ((p = strstr(bufin, "LC_CTYPE:")) != NULL)
-		{
-			p = strchr(p, ':');
-
-			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			p++;				/* remove ':' char */
-			/* skip leading spaces and remove trailing newline */
-			p += strspn(p, " ");
-			if (strlen(p) > 0 && *(p + strlen(p) - 1) == '\n')
-				*(p + strlen(p) - 1) = '\0';
-			cluster->controldata.lc_ctype = pg_strdup(p);
 		}
 	}
 

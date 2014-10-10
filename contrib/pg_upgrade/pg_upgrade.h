@@ -180,6 +180,9 @@ typedef struct
 	char	   *db_name;		/* database name */
 	char		db_tablespace[MAXPGPATH];		/* database default tablespace
 												 * path */
+	char	   *db_collate;
+	char	   *db_ctype;
+	int			db_encoding;
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 } DbInfo;
 
@@ -218,9 +221,6 @@ typedef struct
 	bool		date_is_int;
 	bool		float8_pass_by_value;
 	bool		data_checksum_version;
-	char	   *lc_collate;
-	char	   *lc_ctype;
-	char	   *encoding;
 } ControlData;
 
 /*
