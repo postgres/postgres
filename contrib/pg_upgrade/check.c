@@ -307,8 +307,8 @@ check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb)
 static bool
 equivalent_locale(int category, const char *loca, const char *locb)
 {
-	const char *chara = strrchr(loca, '.');
-	const char *charb = strrchr(locb, '.');
+	const char *chara;
+	const char *charb;
 	char	   *canona;
 	char	   *canonb;
 	int			lena;
