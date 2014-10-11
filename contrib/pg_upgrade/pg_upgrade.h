@@ -76,6 +76,7 @@ extern char *output_files[];
 #define PATH_SEPARATOR		'/'
 #define RM_CMD				"rm -f"
 #define RMDIR_CMD			"rm -rf"
+#define SCRIPT_PREFIX		"./"
 #define SCRIPT_EXT			"sh"
 #define ECHO_QUOTE	"'"
 #define ECHO_BLANK	""
@@ -86,6 +87,7 @@ extern char *output_files[];
 #define PATH_SEPARATOR		'\\'
 #define RM_CMD				"DEL /q"
 #define RMDIR_CMD			"RMDIR /s/q"
+#define SCRIPT_PREFIX		""
 #define SCRIPT_EXT			"bat"
 #define EXE_EXT				".exe"
 #define ECHO_QUOTE	""

@@ -408,7 +408,8 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	if (os_info.user_specified)
 		user_specification = psprintf("-U \"%s\" ", os_info.user);
 
-	*analyze_script_file_name = psprintf("analyze_new_cluster.%s", SCRIPT_EXT);
+	*analyze_script_file_name = psprintf("%sanalyze_new_cluster.%s",
+										 SCRIPT_PREFIX, SCRIPT_EXT);
 
 	if ((script = fopen_priv(*analyze_script_file_name, "w")) == NULL)
 		pg_fatal("Could not open file \"%s\": %s\n",
@@ -489,7 +490,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	int			tblnum;
 	char		old_cluster_pgdata[MAXPGPATH];
 
-	*deletion_script_file_name = psprintf("delete_old_cluster.%s", SCRIPT_EXT);
+	*deletion_script_file_name = psprintf("%sdelete_old_cluster.%s",
+										  SCRIPT_PREFIX, SCRIPT_EXT);
 
 	/*
 	 * Some users (oddly) create tablespaces inside the cluster data
