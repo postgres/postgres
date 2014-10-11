@@ -269,6 +269,12 @@ SELECT '"foo"'::jsonb @> '"foo"'::jsonb;
 -- The array on the right side is contained within the one on the left:
 SELECT '[1, 2, 3]'::jsonb @> '[1, 3]'::jsonb;
 
+-- Order of array elements is not significant, so this is also true:
+SELECT '[1, 2, 3]'::jsonb @> '[3, 1]'::jsonb;
+
+-- Duplicate array elements don't matter either:
+SELECT '[1, 2, 3]'::jsonb @> '[1, 2, 2]'::jsonb;
+
 -- The object with a single pair on the right side is contained
 -- within the object on the left side:
 SELECT '{"product": "PostgreSQL", "version": 9.4, "jsonb":true}'::jsonb @> '{"version":9.4}'::jsonb;
@@ -288,8 +294,10 @@ SELECT '{"foo": {"bar": "baz"}}'::jsonb @> '{"bar": "baz"}'::jsonb;  -- yields f
    The general principle is that the contained object must match the
    containing object as to structure and data contents, possibly after
    discarding some non-matching array elements or object key/value pairs
-   from the containing object.  However, the order of array elements is
-   not significant when doing a containment match.
+   from the containing object.
+   But remember that the order of array elements is not significant when
+   doing a containment match, and duplicate array elements are effectively
+   considered only once.
   </para>
 
   <para>
