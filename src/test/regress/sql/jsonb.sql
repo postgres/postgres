@@ -156,6 +156,13 @@ SELECT '{"a":"b", "b":1, "c":null}'::jsonb @> '{"a":"c"}';
 SELECT '{"a":"b", "b":1, "c":null}'::jsonb @> '{"a":"b"}';
 SELECT '{"a":"b", "b":1, "c":null}'::jsonb @> '{"a":"b", "c":"q"}';
 
+SELECT '[1,2]'::jsonb @> '[1,2,2]'::jsonb;
+SELECT '[1,1,2]'::jsonb @> '[1,2,2]'::jsonb;
+SELECT '[[1,2]]'::jsonb @> '[[1,2,2]]'::jsonb;
+SELECT '[1,2,2]'::jsonb <@ '[1,2]'::jsonb;
+SELECT '[1,2,2]'::jsonb <@ '[1,1,2]'::jsonb;
+SELECT '[[1,2,2]]'::jsonb <@ '[[1,2]]'::jsonb;
+
 SELECT jsonb_contained('{"a":"b"}', '{"a":"b", "b":1, "c":null}');
 SELECT jsonb_contained('{"a":"b", "c":null}', '{"a":"b", "b":1, "c":null}');
 SELECT jsonb_contained('{"a":"b", "g":null}', '{"a":"b", "b":1, "c":null}');
