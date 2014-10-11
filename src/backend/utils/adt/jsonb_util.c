@@ -957,13 +957,24 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 	}
 	else if (rcont == WJB_BEGIN_OBJECT)
 	{
-		JsonbValue *lhsVal;		/* lhsVal is from pair in lhs object */
-
+		Assert(vval.type == jbvObject);
 		Assert(vcontained.type == jbvObject);
+
+		/*
+		 * If the lhs has fewer pairs than the rhs, it can't possibly contain
+		 * the rhs.  (This conclusion is safe only because we de-duplicate
+		 * keys in all Jsonb objects; thus there can be no corresponding
+		 * optimization in the array case.)  The case probably won't arise
+		 * often, but since it's such a cheap check we may as well make it.
+		 */
+		if (vval.val.object.nPairs < vcontained.val.object.nPairs)
+			return false;
 
 		/* Work through rhs "is it contained within?" object */
 		for (;;)
 		{
+			JsonbValue *lhsVal; /* lhsVal is from pair in lhs object */
+
 			rcont = JsonbIteratorNext(mContained, &vcontained, false);
 
 			/*
@@ -1047,6 +1058,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 		JsonbValue *lhsConts = NULL;
 		uint32		nLhsElems = vval.val.array.nElems;
 
+		Assert(vval.type == jbvArray);
 		Assert(vcontained.type == jbvArray);
 
 		/*

@@ -57,7 +57,7 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < elem_count; i++)
 	{
-		JsonbValue strVal;
+		JsonbValue	strVal;
 
 		if (key_nulls[i])
 			continue;
@@ -90,7 +90,7 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < elem_count; i++)
 	{
-		JsonbValue strVal;
+		JsonbValue	strVal;
 
 		if (key_nulls[i])
 			continue;
@@ -117,8 +117,7 @@ jsonb_contains(PG_FUNCTION_ARGS)
 	JsonbIterator *it1,
 			   *it2;
 
-	if (JB_ROOT_COUNT(val) < JB_ROOT_COUNT(tmpl) ||
-		JB_ROOT_IS_OBJECT(val) != JB_ROOT_IS_OBJECT(tmpl))
+	if (JB_ROOT_IS_OBJECT(val) != JB_ROOT_IS_OBJECT(tmpl))
 		PG_RETURN_BOOL(false);
 
 	it1 = JsonbIteratorInit(&val->root);
@@ -137,8 +136,7 @@ jsonb_contained(PG_FUNCTION_ARGS)
 	JsonbIterator *it1,
 			   *it2;
 
-	if (JB_ROOT_COUNT(val) < JB_ROOT_COUNT(tmpl) ||
-		JB_ROOT_IS_OBJECT(val) != JB_ROOT_IS_OBJECT(tmpl))
+	if (JB_ROOT_IS_OBJECT(val) != JB_ROOT_IS_OBJECT(tmpl))
 		PG_RETURN_BOOL(false);
 
 	it1 = JsonbIteratorInit(&val->root);
