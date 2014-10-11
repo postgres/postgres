@@ -1227,8 +1227,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This represents a not-null constraint.  It is possible to
-       change this column to enable or disable the constraint.
+       This represents a not-null constraint.
       </entry>
      </row>
 
