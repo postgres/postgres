@@ -839,7 +839,7 @@ dropdb(const char *dbname, bool missing_ok)
 	if (ReplicationSlotsCountDBSlots(db_id, &nslots, &nslots_active))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("database \"%s\" is used by a logical decoding slot",
+				 errmsg("database \"%s\" is used by a logical replication slot",
 						dbname),
 				 errdetail_plural("There is %d slot, %d of them active.",
 								  "There are %d slots, %d of them active.",

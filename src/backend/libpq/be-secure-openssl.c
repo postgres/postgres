@@ -614,7 +614,7 @@ be_tls_write(Port *port, void *ptr, size_t len)
 				if (retries >= 20)
 					ereport(FATAL,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("unable to complete SSL handshake")));
+							 errmsg("could not complete SSL handshake on renegotiation, too many failures")));
 			}
 		}
 	}

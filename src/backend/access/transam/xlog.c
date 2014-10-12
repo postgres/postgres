@@ -5193,8 +5193,8 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid recovery_target parameter"),
-						 errhint("The only allowed value is 'immediate'")));
+						 errmsg("invalid value for recovery parameter \"recovery_target\""),
+						 errhint("The only allowed value is \"immediate\".")));
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target = '%s'",
 									 item->value)));
@@ -5257,7 +5257,7 @@ readRecoveryCommandFile(void)
 								"recovery_min_apply_delay"),
 						 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 			ereport(DEBUG2,
-					(errmsg("recovery_min_apply_delay = '%s'", item->value)));
+					(errmsg_internal("recovery_min_apply_delay = '%s'", item->value)));
 		}
 		else
 			ereport(FATAL,
