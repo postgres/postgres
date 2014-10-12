@@ -66,9 +66,12 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
+	printf(_("  -F  --fsync-interval=SECS\n"
+			 "                         time between fsyncs to transaction log files (default: %d)\n"), (fsync_interval / 1000));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
-	printf(_("  -F  --fsync-interval=INTERVAL\n"
-			 "                         frequency of syncs to transaction log files (in seconds)\n"));
+	printf(_("  -s, --status-interval=SECS\n"
+			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
+	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -76,12 +79,9 @@ usage(void)
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
 	printf(_("  -h, --host=HOSTNAME    database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT        database server port number\n"));
-	printf(_("  -s, --status-interval=INTERVAL\n"
-			 "                         time between status packets sent to server (in seconds)\n"));
 	printf(_("  -U, --username=NAME    connect as specified database user\n"));
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
-	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("\nOptional actions:\n"));
 	printf(_("      --create-slot      create a new replication slot (for the slot's name see --slot)\n"));
 	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
