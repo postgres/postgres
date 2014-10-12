@@ -62,15 +62,27 @@ static void disconnect_and_exit(int code);
 static void
 usage(void)
 {
-	printf(_("%s receives PostgreSQL logical change stream.\n\n"),
+	printf(_("%s receives PostgreSQL logical change streams.\n\n"),
 		   progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
+	printf(_("\nAction to be performed:\n"));
+	printf(_("      --create-slot      create a new replication slot (for the slot's name see --slot)\n"));
+	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
+	printf(_("      --start            start streaming in a replication slot (for the slot's name see --slot)\n"));
 	printf(_("\nOptions:\n"));
-	printf(_("  -f, --file=FILE        receive log into this file. - for stdout\n"));
+	printf(_("  -f, --file=FILE        receive log into this file, - for stdout\n"));
 	printf(_("  -F  --fsync-interval=SECS\n"
-			 "                         frequency of syncs to the output file (default: %d)\n"), (fsync_interval / 1000));
+			 "                         time between fsyncs to the output file (default: %d)\n"), (fsync_interval / 1000));
+	printf(_("  -I, --startpos=LSN     where in an existing slot should the streaming start\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
+	printf(_("  -o, --option=NAME[=VALUE]\n"
+			 "                         pass option NAME with optional value VALUE to the\n"
+			 "                         output plugin\n"));
+	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"), plugin);
+	printf(_("  -s, --status-interval=SECS\n"
+			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
+	printf(_("  -S, --slot=SLOTNAME    name of the logical replication slot\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -81,19 +93,6 @@ usage(void)
 	printf(_("  -U, --username=NAME    connect as specified database user\n"));
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
-	printf(_("\nReplication options:\n"));
-	printf(_("  -I, --startpos=PTR     where in an existing slot should the streaming start\n"));
-	printf(_("  -o, --option=NAME[=VALUE]\n"
-			 "                         specify option NAME with optional value VALUE, to be passed\n"
-			 "                         to the output plugin\n"));
-	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"), plugin);
-	printf(_("  -s, --status-interval=SECS\n"
-			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
-	printf(_("  -S, --slot=SLOT        name of the logical replication slot\n"));
-	printf(_("\nAction to be performed:\n"));
-	printf(_("      --create-slot      create a new replication slot (for the slot's name see --slot)\n"));
-	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
-	printf(_("      --start            start streaming in a replication slot (for the slot's name see --slot)\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
