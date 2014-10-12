@@ -8945,7 +8945,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 			if (view_updatable_error)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("WITH CHECK OPTION is supported only on auto-updatable views"),
+						 errmsg("WITH CHECK OPTION is supported only on automatically updatable views"),
 						 errhint("%s", view_updatable_error)));
 		}
 	}

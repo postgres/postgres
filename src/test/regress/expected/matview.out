@@ -411,7 +411,7 @@ REFRESH MATERIALIZED VIEW mv;
 ERROR:  could not create unique index "mv_a_idx"
 DETAIL:  Key (a)=(1) is duplicated.
 REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
-ERROR:  new data for "mv" contains duplicate rows without any NULL columns
+ERROR:  new data for "mv" contains duplicate rows without any null columns
 DETAIL:  Row: (1,10)
 DROP TABLE foo CASCADE;
 NOTICE:  drop cascades to materialized view mv

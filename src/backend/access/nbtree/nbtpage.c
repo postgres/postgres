@@ -1186,7 +1186,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 						(errcode(ERRCODE_INDEX_CORRUPTED),
 					errmsg("index \"%s\" contains a half-dead internal page",
 						   RelationGetRelationName(rel)),
-						 errhint("This can be caused by an interrupt VACUUM in version 9.3 or older, before upgrade. Please REINDEX it.")));
+						 errhint("This can be caused by an interrupted VACUUM in version 9.3 or older, before upgrade. Please REINDEX it.")));
 			_bt_relbuf(rel, buf);
 			return ndeleted;
 		}
