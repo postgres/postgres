@@ -5781,7 +5781,9 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
-       <literal>TM</literal> does not include trailing blanks.
+       <literal>TM</literal> does not include trailing blanks. 
+       <function>to_timestamp</> and <function>to_date</> ignore
+       the <literal>TM</literal> modifier.
       </para>
      </listitem>
 
