@@ -1361,6 +1361,13 @@ $ <userinput>sysctl -w vm.nr_hugepages=3170</userinput>
    </para>
 
    <para>
+    It is also necessary to give the database server operating system
+    user permission to use huge pages by setting
+    <varname>vm.hugetlb_shm_group</> via <application>sysctl</>, and
+    permission to lock memory with <command>ulimit -l</>.
+   </para>
+
+   <para>
     The default behavior for huge pages in
     <productname>PostgreSQL</productname> is to use them when possible and
     to fallback to normal pages when failing. To enforce the use of huge
