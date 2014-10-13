@@ -1901,18 +1901,21 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
 			ExplainPropertyLong("Hash Buckets", hashtable->nbuckets, es);
+			ExplainPropertyLong("Original Hash Buckets",
+								hashtable->nbuckets_original, es);
 			ExplainPropertyLong("Hash Batches", hashtable->nbatch, es);
 			ExplainPropertyLong("Original Hash Batches",
 								hashtable->nbatch_original, es);
 			ExplainPropertyLong("Peak Memory Usage", spacePeakKb, es);
 		}
-		else if (hashtable->nbatch_original != hashtable->nbatch)
+		else if ((hashtable->nbatch_original != hashtable->nbatch) ||
+				 (hashtable->nbuckets_original != hashtable->nbuckets))
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
-			"Buckets: %d  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
-							 hashtable->nbuckets, hashtable->nbatch,
-							 hashtable->nbatch_original, spacePeakKb);
+			"Buckets: %d (originally %d)  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
+							 hashtable->nbuckets, hashtable->nbuckets_original,
+							 hashtable->nbatch, hashtable->nbatch_original, spacePeakKb);
 		}
 		else
 		{

@@ -127,6 +127,10 @@ typedef struct HashJoinTableData
 	int			nbuckets;		/* # buckets in the in-memory hash table */
 	int			log2_nbuckets;	/* its log2 (nbuckets must be a power of 2) */
 
+	int			nbuckets_original;	/* # buckets when starting the first hash */
+	int			nbuckets_optimal;	/* optimal # buckets (per batch) */
+	int			log2_nbuckets_optimal;	/* same as log2_nbuckets optimal */
+
 	/* buckets[i] is head of list of tuples in i'th in-memory bucket */
 	struct HashJoinTupleData **buckets;
 	/* buckets array is per-batch storage, as are all the tuples */
@@ -148,6 +152,7 @@ typedef struct HashJoinTableData
 	bool		growEnabled;	/* flag to shut off nbatch increases */
 
 	double		totalTuples;	/* # tuples obtained from inner plan */
+	double		skewTuples;		/* # tuples inserted into skew tuples */
 
 	/*
 	 * These arrays are allocated for the life of the hash join, but only if
