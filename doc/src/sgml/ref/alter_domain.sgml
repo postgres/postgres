@@ -272,7 +272,8 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    Currently, <command>ALTER DOMAIN ADD CONSTRAINT</> and
-   <command>ALTER DOMAIN SET NOT NULL</> will fail if the named domain or
+   <command>ALTER DOMAIN SET NOT NULL</> will fail if the validated named
+   domain or
    any derived domain is used within a composite-type column of any
    table in the database.  They should eventually be improved to be
    able to verify the new constraint for such nested columns.
