@@ -87,7 +87,7 @@ static int	des_cipher(const char *in, char *out, long salt, int num_iter);
  * define "B64" to be the declaration for a 64 bit integer.
  * XXX this feature is currently unused, see "endian" comment below.
  */
-#define B64 __int64
+/* #define B64 int64 */
 
 /*
  * define "LARGEDATA" to get faster permutations, by using about 72 kilobytes
