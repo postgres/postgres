@@ -302,7 +302,7 @@ PROVE_FLAGS = --verbose
 
 # prepend to path if already set, else just set it
 define add_to_path
-$(1)='$(if $($(1)),$(2):$$$(1),$(2))'
+$(1)="$(if $($(1)),$(2):$$$(1),$(2))"
 endef
 
 # platform-specific environment variable to set shared library path
