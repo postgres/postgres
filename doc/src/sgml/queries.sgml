@@ -245,24 +245,42 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         condition: it takes a Boolean value expression of the same
         kind as is used in a <literal>WHERE</> clause.  A pair of rows
         from <replaceable>T1</> and <replaceable>T2</> match if the
-        <literal>ON</> expression evaluates to true for them.
+        <literal>ON</> expression evaluates to true.
        </para>
 
        <para>
-        <literal>USING</> is a shorthand notation: it takes a
-        comma-separated list of column names, which the joined tables
-        must have in common, and forms a join condition specifying
-        equality of each of these pairs of columns.  Furthermore, the
-        output of <literal>JOIN USING</> has one column for each of
-        the equated pairs of input columns, followed by the
-        remaining columns from each table.  Thus, <literal>USING (a, b,
-        c)</literal> is equivalent to <literal>ON (t1.a = t2.a AND
-        t1.b = t2.b AND t1.c = t2.c)</literal> with the exception that
-        if <literal>ON</> is used there will be two columns
-        <literal>a</>, <literal>b</>, and <literal>c</> in the result,
-        whereas with <literal>USING</> there will be only one of each
-        (and they will appear first if <command>SELECT *</> is used).
+        The <literal>USING</> clause allows you to take advantage of
+        the specific situation where both sides of the join use the
+        same name for the joining columns.  It takes a
+        comma-separated list of the shared column names
+        and forms a join using the equals operator.  Furthermore, the
+        output of <literal>JOIN USING</> has one column for each of the
+        listed columns, followed by the remaining columns from each table.
        </para>
+
+       <para>The output column difference between <literal>ON</> and
+       <literal>USING</> when invoking <literal>SELECT *</> is:</para>
+         <itemizedlist>
+          <listitem>
+           <para>
+            <literal>ON</> - all columns from <replaceable>T1</> followed
+            by all columns from <replaceable>T2</>
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+            <literal>USING</> - all join columns, one copy each
+            and in the listed order, followed by non-join columns
+            in <replaceable>T1</> followed by non-join columns in
+            <replaceable>T2</>
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+            Examples provided below
+           </para>
+          </listitem>
+         </itemizedlist>
 
        <para>
         <indexterm>
@@ -280,6 +298,17 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         columns, <literal>NATURAL</literal> behaves like
         <literal>CROSS JOIN</literal>.
        </para>
+
+       <note>
+        <para>
+         <literal>USING</literal> is reasonably safe from column changes
+         in the joined relations since only the specific columns mentioned
+         are considered.  <literal>NATURAL</> is considerably more problematic
+         if you are referring to relations only by name (views and tables)
+         since any schema changes to either relation that cause a new matching
+         column name to be present will cause the join to consider that new column.
+        </para>
+       </note>
 
        <para>
         The possible types of qualified join are:
