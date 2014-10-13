@@ -345,6 +345,24 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>-L</option> <replaceable>limit</></term>
+      <term><option>--latency-limit=</option><replaceable>limit</></term>
+      <listitem>
+       <para>
+        Transaction which last more than <replaceable>limit</> milliseconds
+        are counted and reported separately, as <firstterm>late</>.
+       </para>
+       <para>
+        When throttling is used (<option>--rate=...</>), transactions that
+        lag behind schedule by more than <replaceable>limit</> ms, and thus
+        have no hope of meeting the latency limit, are not sent to the server
+        at all. They are counted and reported separately as
+        <firstterm>skipped</>.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-M</option> <replaceable>querymode</></term>
       <term><option>--protocol=</option><replaceable>querymode</></term>
       <listitem>
@@ -451,6 +469,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         i.e. the time spent executing the transaction in the database, can be
         computed by subtracting the schedule lag time from the reported
         latency.
+       </para>
+
+       <para>
+        If <option>--latency-limit</> is used together with <option>--rate</>,
+        a transaction can lag behind so much that it is already over the
+        latency limit when the previous transaction ends, because the latency
+        is calculated from the scheduled start time. Such transactions are
+        not sent to the server, but are skipped altogether and counted
+        separately.
        </para>
 
        <para>
@@ -940,7 +967,7 @@ END;
    The format of the log is:
 
 <synopsis>
-<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</> [<replaceable>schedule_lag</replaceable>]
+<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional><replaceable>schedule_lag</replaceable></optional>
 </synopsis>
 
    where <replaceable>time</> is the total elapsed transaction time in microseconds,
@@ -950,20 +977,40 @@ END;
    UNIX epoch format timestamp and an offset
    in microseconds (suitable for creating an ISO 8601
    timestamp with fractional seconds) showing when
-   the transaction completed. The last field, <replaceable>schedule_lag</>, is
-   the difference between the transaction's scheduled start time, and the
-   time it actually started, in microseconds. It is only present when the
-   <option>--rate</> option is used.
+   the transaction completed.
+   Field <replaceable>schedule_lag</> is the difference between the
+   transaction's scheduled start time, and the time it actually started, in
+   microseconds. It is only present when the <option>--rate</> option is used.
+   The last field <replaceable>skipped_transactions</> reports the number of
+   transactions skipped because they were too far behind schedule. It is only
+   present when both options <option>--rate</> and <option>--latency-limit</>
+   are used.
   </para>
 
   <para>
-   Here are example outputs:
+   Here is a snippet of the log file generated:
 <screen>
  0 199 2241 0 1175850568 995598
  0 200 2465 0 1175850568 998079
  0 201 2513 0 1175850569 608
  0 202 2038 0 1175850569 2663
-</screen></para>
+</screen>
+
+   Another example with --rate=100 and --latency-limit=5 (note the additional
+   <replaceable>schedule_lag</> column):
+<screen>
+ 0 81 4621 0 1412881037 912698 3005
+ 0 82 6173 0 1412881037 914578 4304
+ 0 83 skipped 0 1412881037 914578 5217
+ 0 83 skipped 0 1412881037 914578 5099
+ 0 83 4722 0 1412881037 916203 3108
+ 0 84 4142 0 1412881037 918023 2333
+ 0 85 2465 0 1412881037 919759 740
+</screen>
+   In this example, transaction 82 was late, because it's latency (6.173 ms) was
+   over the 5 ms limit. The next two transactions were skipped, because they
+   were already late before they were even started.
+  </para>
 
   <para>
    When running a long test on hardware that can handle a lot of transactions,
@@ -979,7 +1026,7 @@ END;
    With the <option>--aggregate-interval</option> option, the logs use a bit different format:
 
 <synopsis>
-<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> [<replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</>]
+<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> <optional><replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</> <optional><replaceable>skipped_transactions</></optional></optional>
 </synopsis>
 
    where <replaceable>interval_start</> is the start of the interval (UNIX epoch
@@ -990,8 +1037,11 @@ END;
    <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The last two
    fields are <replaceable>min_latency</> - a minimum latency within the interval, and
    <replaceable>max_latency</> - maximum latency within the interval. A transaction is
-   counted into the interval when it was committed. The last four fields, 
-   <replaceable>lag_sum</>, <replaceable>lag_2_sum</>, <replaceable>min_lag</>, and <replaceable>max_lag</>, are only present if the --rate option is used.
+   counted into the interval when it was committed. The fields in the end,
+   <replaceable>lag_sum</>, <replaceable>lag_2_sum</>, <replaceable>min_lag</>,
+   and <replaceable>max_lag</>, are only present if the <option>--rate</>
+   option is used. The very last one, <replaceable>skipped_transactions</>,
+   is only present if the option <option>--latency-limit</> is present, too.
    They are calculated from the time each transaction had to wait for the
    previous one to finish, i.e. the difference between each transaction's
    scheduled start time and the time it actually started.
