@@ -70,14 +70,7 @@
  *		- ExecSeqScan() calls ExecStoreTuple() to take the result
  *		  tuple from ExecProject() and place it into the result tuple slot.
  *
- *		- ExecutePlan() calls ExecSelect(), which passes the result slot
- *		  to printtup(), which uses slot_getallattrs() to extract the
- *		  individual Datums for printing.
- *
- *		At ExecutorEnd()
- *		----------------
- *		- EndPlan() calls ExecResetTupleTable() to clean up any remaining
- *		  tuples left over from executing the query.
+ *		- ExecutePlan() calls the output function.
  *
  *		The important thing to watch in the executor code is how pointers
  *		to the slots containing tuples are passed instead of the tuples
