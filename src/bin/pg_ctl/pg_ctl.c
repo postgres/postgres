@@ -1456,7 +1456,9 @@ pgwin32_doRegister(void)
 	   NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not register service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
+		write_stderr(_("%s: could not register service \"%s\": error code %lu\n"),
+					 progname, register_servicename,
+					 (unsigned long) GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1484,14 +1486,18 @@ pgwin32_doUnregister(void)
 	if ((hService = OpenService(hSCM, register_servicename, DELETE)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not open service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
+		write_stderr(_("%s: could not open service \"%s\": error code %lu\n"),
+					 progname, register_servicename,
+					 (unsigned long) GetLastError());
 		exit(1);
 	}
 	if (!DeleteService(hService))
 	{
 		CloseServiceHandle(hService);
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not unregister service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
+		write_stderr(_("%s: could not unregister service \"%s\": error code %lu\n"),
+					 progname, register_servicename,
+					 (unsigned long) GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1627,7 +1633,9 @@ pgwin32_doRunAsService(void)
 
 	if (StartServiceCtrlDispatcher(st) == 0)
 	{
-		write_stderr(_("%s: could not start service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
+		write_stderr(_("%s: could not start service \"%s\": error code %lu\n"),
+					 progname, register_servicename,
+					 (unsigned long) GetLastError());
 		exit(1);
 	}
 }
@@ -1708,7 +1716,14 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	/* Open the current token to use as a base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		write_stderr(_("%s: could not open process token: error code %lu\n"), progname, GetLastError());
+		/*
+		 * Most Windows targets make DWORD a 32-bit unsigned long.  Cygwin
+		 * x86_64, an LP64 target, makes it a 32-bit unsigned int.  In code
+		 * built for Cygwin as well as for native Windows targets, cast DWORD
+		 * before printing.
+		 */
+		write_stderr(_("%s: could not open process token: error code %lu\n"),
+					 progname, (unsigned long) GetLastError());
 		return 0;
 	}
 
@@ -1721,7 +1736,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &dropSids[1].Sid))
 	{
-		write_stderr(_("%s: could not allocate SIDs: error code %lu\n"), progname, GetLastError());
+		write_stderr(_("%s: could not allocate SIDs: error code %lu\n"),
+					 progname, (unsigned long) GetLastError());
 		return 0;
 	}
 
@@ -1740,7 +1756,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 
 	if (!b)
 	{
-		write_stderr(_("%s: could not create restricted token: error code %lu\n"), progname, GetLastError());
+		write_stderr(_("%s: could not create restricted token: error code %lu\n"),
+					 progname, (unsigned long) GetLastError());
 		return 0;
 	}
 
@@ -1791,7 +1808,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 				HANDLE		job;
 				char		jobname[128];
 
-				sprintf(jobname, "PostgreSQL_%lu", processInfo->dwProcessId);
+				sprintf(jobname, "PostgreSQL_%lu",
+						(unsigned long) processInfo->dwProcessId);
 
 				job = _CreateJobObject(NULL, jobname);
 				if (job)
