@@ -13,9 +13,11 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
+
 #include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
-#include "parallel.h"
+#include "pg_dump.h"
 
 /* translator: this is a module name */
 static const char *modulename = gettext_noop("sorter");

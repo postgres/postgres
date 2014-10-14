@@ -23,27 +23,16 @@
 #ifndef PG_BACKUP_H
 #define PG_BACKUP_H
 
-#include "postgres_fe.h"
-
-#include "pg_dump.h"
 #include "dumputils.h"
-
 #include "libpq-fe.h"
 
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-#define oidcmp(x,y) ( ((x) < (y) ? -1 : ((x) > (y)) ?  1 : 0) )
-#define oideq(x,y) ( (x) == (y) )
-#define oidle(x,y) ( (x) <= (y) )
-#define oidge(x,y) ( (x) >= (y) )
-#define oidzero(x) ( (x) == 0 )
-
-enum trivalue
+typedef enum trivalue
 {
 	TRI_DEFAULT,
 	TRI_NO,
 	TRI_YES
-};
+} trivalue;
 
 typedef enum _archiveFormat
 {
@@ -73,7 +62,7 @@ typedef enum _teSection
  *	We may want to have some more user-readable data, but in the mean
  *	time this gives us some abstraction and type checking.
  */
-struct Archive
+typedef struct Archive
 {
 	int			verbose;
 	char	   *remoteVersionStr;		/* server's version string */
@@ -96,9 +85,7 @@ struct Archive
 	int			n_errors;		/* number of errors (if no die) */
 
 	/* The rest is private */
-};
-
-typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
+} Archive;
 
 typedef struct _restoreOptions
 {
@@ -109,17 +96,24 @@ typedef struct _restoreOptions
 										 * restore */
 	int			use_setsessauth;/* Use SET SESSION AUTHORIZATION commands
 								 * instead of OWNER TO */
-	int			no_security_labels;		/* Skip security label entries */
 	char	   *superuser;		/* Username to use as superuser */
 	char	   *use_role;		/* Issue SET ROLE to this */
 	int			dropSchema;
+	int			disable_dollar_quoting;
+	int			dump_inserts;
+	int			column_inserts;
 	int			if_exists;
+	int			no_security_labels;		/* Skip security label entries */
+
 	const char *filename;
 	int			dataOnly;
 	int			schemaOnly;
 	int			dumpSections;
 	int			verbose;
 	int			aclsSkip;
+	const char *lockWaitTimeout;
+	int			include_everything;
+
 	int			tocSummary;
 	char	   *tocFile;
 	int			format;
@@ -142,7 +136,7 @@ typedef struct _restoreOptions
 	char	   *pghost;
 	char	   *username;
 	int			noDataForFailedTables;
-	enum trivalue promptPassword;
+	trivalue	promptPassword;
 	int			exit_on_error;
 	int			compression;
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
@@ -153,7 +147,76 @@ typedef struct _restoreOptions
 	int			enable_row_security;
 } RestoreOptions;
 
-typedef void (*SetupWorkerPtr) (Archive *AH, RestoreOptions *ropt);
+typedef struct _dumpOptions
+{
+	const char *dbname;
+	const char *pghost;
+	const char *pgport;
+	const char *username;
+	bool		oids;
+
+	int			binary_upgrade;
+
+	/* various user-settable parameters */
+	bool		schemaOnly;
+	bool		dataOnly;
+	int			dumpSections;	/* bitmask of chosen sections */
+	bool		aclsSkip;
+	const char *lockWaitTimeout;
+
+	/* flags for various command-line long options */
+	int			disable_dollar_quoting;
+	int			dump_inserts;
+	int			column_inserts;
+	int			if_exists;
+	int			no_security_labels;
+	int			no_synchronized_snapshots;
+	int			no_unlogged_table_data;
+	int			serializable_deferrable;
+	int			quote_all_identifiers;
+	int			disable_triggers;
+	int			outputNoTablespaces;
+	int			use_setsessauth;
+	int			enable_row_security;
+
+	/* default, if no "inclusion" switches appear, is to dump everything */
+	bool		include_everything;
+
+	int			outputClean;
+	int			outputCreateDB;
+	bool		outputBlobs;
+	int			outputNoOwner;
+	char	   *outputSuperuser;
+} DumpOptions;
+
+
+/*
+ * pg_dump uses two different mechanisms for identifying database objects:
+ *
+ * CatalogId represents an object by the tableoid and oid of its defining
+ * entry in the system catalogs.  We need this to interpret pg_depend entries,
+ * for instance.
+ *
+ * DumpId is a simple sequential integer counter assigned as dumpable objects
+ * are identified during a pg_dump run.  We use DumpId internally in preference
+ * to CatalogId for two reasons: it's more compact, and we can assign DumpIds
+ * to "objects" that don't have a separate CatalogId.  For example, it is
+ * convenient to consider a table, its data, and its ACL as three separate
+ * dumpable "objects" with distinct DumpIds --- this lets us reason about the
+ * order in which to dump these things.
+ */
+
+typedef struct
+{
+	Oid			tableoid;
+	Oid			oid;
+} CatalogId;
+
+typedef int DumpId;
+
+typedef int (*DataDumperPtr) (Archive *AH, DumpOptions *dopt, void *userArg);
+
+typedef void (*SetupWorkerPtr) (Archive *AH, DumpOptions *dopt, RestoreOptions *ropt);
 
 /*
  * Main archiver interface.
@@ -164,7 +227,7 @@ extern void ConnectDatabase(Archive *AH,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-				enum trivalue prompt_password);
+				trivalue prompt_password);
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 
@@ -186,7 +249,7 @@ extern void WriteData(Archive *AH, const void *data, size_t dLen);
 extern int	StartBlob(Archive *AH, Oid oid);
 extern int	EndBlob(Archive *AH, Oid oid);
 
-extern void CloseArchive(Archive *AH);
+extern void CloseArchive(Archive *AH, DumpOptions *dopt);
 
 extern void SetArchiveRestoreOptions(Archive *AH, RestoreOptions *ropt);
 
@@ -204,6 +267,9 @@ extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);
 
 extern RestoreOptions *NewRestoreOptions(void);
+
+extern DumpOptions *NewDumpOptions(void);
+extern DumpOptions *dumpOptionsFromRestoreOptions(RestoreOptions *ropt);
 
 /* Rearrange and filter TOC entries */
 extern void SortTocFromFile(Archive *AHX, RestoreOptions *ropt);

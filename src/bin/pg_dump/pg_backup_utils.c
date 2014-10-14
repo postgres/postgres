@@ -14,7 +14,6 @@
 #include "postgres_fe.h"
 
 #include "pg_backup_utils.h"
-#include "parallel.h"
 
 /* Globals exported by this file */
 const char *progname = NULL;

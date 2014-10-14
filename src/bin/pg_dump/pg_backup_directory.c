@@ -32,10 +32,11 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
 #include "compress_io.h"
-#include "pg_backup_utils.h"
 #include "parallel.h"
+#include "pg_backup_utils.h"
 
 #include <dirent.h>
 #include <sys/stat.h>
@@ -71,7 +72,7 @@ static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
-static void _CloseArchive(ArchiveHandle *AH);
+static void _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt);
 static void _ReopenArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 
@@ -92,7 +93,7 @@ static char *_MasterStartParallelItem(ArchiveHandle *AH, TocEntry *te, T_Action 
 static int _MasterEndParallelItem(ArchiveHandle *AH, TocEntry *te,
 					   const char *str, T_Action act);
 static char *_WorkerJobRestoreDirectory(ArchiveHandle *AH, TocEntry *te);
-static char *_WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te);
+static char *_WorkerJobDumpDirectory(ArchiveHandle *AH, DumpOptions *dopt, TocEntry *te);
 
 static void setFilePath(ArchiveHandle *AH, char *buf,
 			const char *relativeFilename);
@@ -566,7 +567,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
  *		WriteDataChunks		to save all DATA & BLOBs.
  */
 static void
-_CloseArchive(ArchiveHandle *AH)
+_CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
@@ -578,7 +579,7 @@ _CloseArchive(ArchiveHandle *AH)
 		setFilePath(AH, fname, "toc.dat");
 
 		/* this will actually fork the processes for a parallel backup */
-		ctx->pstate = ParallelBackupStart(AH, NULL);
+		ctx->pstate = ParallelBackupStart(AH, dopt, NULL);
 
 		/* The TOC is always created uncompressed */
 		tocFH = cfopen_write(fname, PG_BINARY_W, 0);
@@ -599,7 +600,7 @@ _CloseArchive(ArchiveHandle *AH)
 		if (cfclose(tocFH) != 0)
 			exit_horribly(modulename, "could not close TOC file: %s\n",
 						  strerror(errno));
-		WriteDataChunks(AH, ctx->pstate);
+		WriteDataChunks(AH, dopt, ctx->pstate);
 
 		ParallelBackupEnd(AH, ctx->pstate);
 	}
@@ -790,7 +791,7 @@ _MasterStartParallelItem(ArchiveHandle *AH, TocEntry *te, T_Action act)
  * function of the respective dump format.
  */
 static char *
-_WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te)
+_WorkerJobDumpDirectory(ArchiveHandle *AH, DumpOptions *dopt, TocEntry *te)
 {
 	/*
 	 * short fixed-size string + some ID so far, this needs to be malloc'ed
@@ -809,7 +810,7 @@ _WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te)
 	 * succeed... A failure will be detected by the parent when the child dies
 	 * unexpectedly.
 	 */
-	WriteDataChunksForTocEntry(AH, te);
+	WriteDataChunksForTocEntry(AH, dopt, te);
 
 	snprintf(buf, buflen, "OK DUMP %d", te->dumpId);
 

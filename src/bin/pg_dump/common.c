@@ -13,8 +13,11 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
+
 #include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
+#include "pg_dump.h"
 
 #include <ctype.h>
 
@@ -64,7 +67,7 @@ static DumpableObject **nspinfoindex;
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
-static void flagInhAttrs(TableInfo *tblinfo, int numTables);
+static void flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables);
 static DumpableObject **buildIndexArray(void *objArray, int numObjs,
 				Size objSize);
 static int	DOCatalogIdCompare(const void *p1, const void *p2);
@@ -78,7 +81,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  *	  Collect information about all potentially dumpable objects
  */
 TableInfo *
-getSchemaData(Archive *fout, int *numTablesPtr)
+getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 {
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
@@ -114,7 +117,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined tables\n");
-	tblinfo = getTables(fout, &numTables);
+	tblinfo = getTables(fout, dopt, &numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
 	/* Do this after we've built tblinfoindex */
@@ -122,11 +125,11 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(fout, &numExtensions);
+	extinfo = getExtensions(fout, dopt, &numExtensions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
-	funinfo = getFuncs(fout, &numFuncs);
+	funinfo = getFuncs(fout, dopt, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
 	/* this must be after getTables and getFuncs */
@@ -142,7 +145,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined aggregate functions\n");
-	getAggregates(fout, &numAggregates);
+	getAggregates(fout, dopt, &numAggregates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operators\n");
@@ -183,7 +186,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
-	getDefaultACLs(fout, &numDefaultACLs);
+	getDefaultACLs(fout, dopt, &numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
@@ -213,7 +216,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "finding extension members\n");
-	getExtensionMembership(fout, extinfo, numExtensions);
+	getExtensionMembership(fout, dopt, extinfo, numExtensions);
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
@@ -222,11 +225,11 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading column info for interesting tables\n");
-	getTableAttrs(fout, tblinfo, numTables);
+	getTableAttrs(fout, dopt, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "flagging inherited columns in subtables\n");
-	flagInhAttrs(tblinfo, numTables);
+	flagInhAttrs(dopt, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading indexes\n");
@@ -307,7 +310,7 @@ flagInhTables(TableInfo *tblinfo, int numTables,
  * modifies tblinfo
  */
 static void
-flagInhAttrs(TableInfo *tblinfo, int numTables)
+flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 {
 	int			i,
 				j,
@@ -384,7 +387,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 				attrDef->adef_expr = pg_strdup("NULL");
 
 				/* Will column be dumped explicitly? */
-				if (shouldPrintColumn(tbinfo, j))
+				if (shouldPrintColumn(dopt, tbinfo, j))
 				{
 					attrDef->separate = false;
 					/* No dependency needed: NULL cannot have dependencies */

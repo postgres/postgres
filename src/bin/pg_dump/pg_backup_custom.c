@@ -23,6 +23,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
 #include "compress_io.h"
 #include "parallel.h"
@@ -41,7 +42,7 @@ static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
-static void _CloseArchive(ArchiveHandle *AH);
+static void _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt);
 static void _ReopenArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -687,14 +688,14 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
  * the process of saving it to files. No data should be written prior
  * to this point, since the user could sort the TOC after creating it.
  *
- * If an archive is to be written, this toutine must call:
+ * If an archive is to be written, this routine must call:
  *		WriteHead			to save the archive header
  *		WriteToc			to save the TOC entries
  *		WriteDataChunks		to save all DATA & BLOBs.
  *
  */
 static void
-_CloseArchive(ArchiveHandle *AH)
+_CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	pgoff_t		tpos;
@@ -709,7 +710,7 @@ _CloseArchive(ArchiveHandle *AH)
 						  strerror(errno));
 		WriteToc(AH);
 		ctx->dataStart = _getFilePos(AH, ctx);
-		WriteDataChunks(AH, NULL);
+		WriteDataChunks(AH, dopt, NULL);
 
 		/*
 		 * If possible, re-write the TOC in order to update the data offset

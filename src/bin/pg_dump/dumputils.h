@@ -12,12 +12,28 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #ifndef DUMPUTILS_H
 #define DUMPUTILS_H
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
+
+/*
+ * Data structures for simple lists of OIDs and strings.  The support for
+ * these is very primitive compared to the backend's List facilities, but
+ * it's all we need in pg_dump.
+ */
+typedef struct SimpleOidListCell
+{
+	struct SimpleOidListCell *next;
+	Oid			val;
+} SimpleOidListCell;
+
+typedef struct SimpleOidList
+{
+	SimpleOidListCell *head;
+	SimpleOidListCell *tail;
+} SimpleOidList;
 
 typedef struct SimpleStringListCell
 {
@@ -31,6 +47,7 @@ typedef struct SimpleStringList
 	SimpleStringListCell *tail;
 } SimpleStringList;
 
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 extern int	quote_all_identifiers;
 extern PQExpBuffer (*getLocalPQExpBuffer) (void);

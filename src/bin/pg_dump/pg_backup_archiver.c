@@ -19,10 +19,12 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
+#include "parallel.h"
+#include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
-#include "parallel.h"
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -107,6 +109,61 @@ static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
 static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
 
 /*
+ * Allocate a new DumpOptions block.
+ * This is mainly so we can initialize it, but also for future expansion.
+ * We pg_malloc0 the structure, so we don't need to initialize whatever is
+ * 0, NULL or false anyway.
+ */
+DumpOptions *
+NewDumpOptions(void)
+{
+	DumpOptions *opts;
+
+	opts = (DumpOptions *) pg_malloc0(sizeof(DumpOptions));
+
+	/* set any fields that shouldn't default to zeroes */
+	opts->include_everything = true;
+	opts->dumpSections = DUMP_UNSECTIONED;
+
+	return opts;
+}
+
+/*
+ * Create a freshly allocated DumpOptions with options equivalent to those
+ * found in the given RestoreOptions.
+ */
+DumpOptions *
+dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
+{
+	DumpOptions *dopt = NewDumpOptions();
+
+	/* this is the inverse of what's at the end of pg_dump.c's main() */
+	dopt->outputClean = ropt->dropSchema;
+	dopt->dataOnly = ropt->dataOnly;
+	dopt->schemaOnly = ropt->schemaOnly;
+	dopt->if_exists = ropt->if_exists;
+	dopt->column_inserts = ropt->column_inserts;
+	dopt->dumpSections = ropt->dumpSections;
+	dopt->aclsSkip = ropt->aclsSkip;
+	dopt->outputSuperuser = ropt->superuser;
+	dopt->outputCreateDB = ropt->createDB;
+	dopt->outputNoOwner = ropt->noOwner;
+	dopt->outputNoTablespaces = ropt->noTablespace;
+	dopt->disable_triggers = ropt->disable_triggers;
+	dopt->use_setsessauth = ropt->use_setsessauth;
+
+	dopt->disable_dollar_quoting = ropt->disable_dollar_quoting;
+	dopt->dump_inserts = ropt->dump_inserts;
+	dopt->no_security_labels = ropt->no_security_labels;
+	dopt->lockWaitTimeout = ropt->lockWaitTimeout;
+	dopt->include_everything = ropt->include_everything;
+	dopt->enable_row_security = ropt->enable_row_security;
+
+	return dopt;
+}
+
+
+/*
  *	Wrapper functions.
  *
  *	The objective it to make writing new formats and dumpers as simple
@@ -120,7 +177,7 @@ static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
  * setup doesn't need to know anything much, so it's defined here.
  */
 static void
-setupRestoreWorker(Archive *AHX, RestoreOptions *ropt)
+setupRestoreWorker(Archive *AHX, DumpOptions *dopt, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
@@ -152,12 +209,12 @@ OpenArchive(const char *FileSpec, const ArchiveFormat fmt)
 
 /* Public */
 void
-CloseArchive(Archive *AHX)
+CloseArchive(Archive *AHX, DumpOptions *dopt)
 {
 	int			res = 0;
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
-	(*AH->ClosePtr) (AH);
+	(*AH->ClosePtr) (AH, dopt);
 
 	/* Close the output */
 	if (AH->gzOut)
@@ -368,7 +425,7 @@ RestoreArchive(Archive *AHX)
 	if (ropt->single_txn)
 	{
 		if (AH->connection)
-			StartTransaction(AH);
+			StartTransaction(AHX);
 		else
 			ahprintf(AH, "BEGIN;\n\n");
 	}
@@ -548,7 +605,7 @@ RestoreArchive(Archive *AHX)
 		Assert(AH->connection == NULL);
 
 		/* ParallelBackupStart() will actually fork the processes */
-		pstate = ParallelBackupStart(AH, ropt);
+		pstate = ParallelBackupStart(AH, NULL, ropt);
 		restore_toc_entries_parallel(AH, pstate, &pending_list);
 		ParallelBackupEnd(AH, pstate);
 
@@ -586,7 +643,7 @@ RestoreArchive(Archive *AHX)
 	if (ropt->single_txn)
 	{
 		if (AH->connection)
-			CommitTransaction(AH);
+			CommitTransaction(AHX);
 		else
 			ahprintf(AH, "COMMIT;\n\n");
 	}
@@ -767,7 +824,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 						 * Parallel restore is always talking directly to a
 						 * server, so no need to see if we should issue BEGIN.
 						 */
-						StartTransaction(AH);
+						StartTransaction(&AH->public);
 
 						/*
 						 * If the server version is >= 8.4, make sure we issue
@@ -798,12 +855,12 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					 */
 					if (AH->outputKind == OUTPUT_COPYDATA &&
 						RestoringToDB(AH))
-						EndDBCopyMode(AH, te);
+						EndDBCopyMode(&AH->public, te->tag);
 					AH->outputKind = OUTPUT_SQLCMDS;
 
 					/* close out the transaction started above */
 					if (is_parallel && te->created)
-						CommitTransaction(AH);
+						CommitTransaction(&AH->public);
 
 					_enableTriggersIfNecessary(AH, te, ropt);
 				}
@@ -1099,7 +1156,7 @@ StartRestoreBlobs(ArchiveHandle *AH)
 	if (!AH->ropt->single_txn)
 	{
 		if (AH->connection)
-			StartTransaction(AH);
+			StartTransaction(&AH->public);
 		else
 			ahprintf(AH, "BEGIN;\n\n");
 	}
@@ -1116,7 +1173,7 @@ EndRestoreBlobs(ArchiveHandle *AH)
 	if (!AH->ropt->single_txn)
 	{
 		if (AH->connection)
-			CommitTransaction(AH);
+			CommitTransaction(&AH->public);
 		else
 			ahprintf(AH, "COMMIT;\n\n");
 	}
@@ -1573,7 +1630,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		 * connected then send it to the DB.
 		 */
 		if (RestoringToDB(AH))
-			bytes_written = ExecuteSqlCommandBuf(AH, (const char *) ptr, size * nmemb);
+			bytes_written = ExecuteSqlCommandBuf(&AH->public, (const char *) ptr, size * nmemb);
 		else
 			bytes_written = fwrite(ptr, size, nmemb, AH->OF) * size;
 	}
@@ -2240,7 +2297,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 }
 
 void
-WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
+WriteDataChunks(ArchiveHandle *AH, DumpOptions *dopt, ParallelState *pstate)
 {
 	TocEntry   *te;
 
@@ -2263,13 +2320,13 @@ WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
 			DispatchJobForTocEntry(AH, pstate, te, ACT_DUMP);
 		}
 		else
-			WriteDataChunksForTocEntry(AH, te);
+			WriteDataChunksForTocEntry(AH, dopt, te);
 	}
 	EnsureWorkersFinished(AH, pstate);
 }
 
 void
-WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te)
+WriteDataChunksForTocEntry(ArchiveHandle *AH, DumpOptions *dopt, TocEntry *te)
 {
 	StartDataPtr startPtr;
 	EndDataPtr	endPtr;
@@ -2293,7 +2350,7 @@ WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te)
 	/*
 	 * The user-provided DataDumper routine needs to call AH->WriteData
 	 */
-	(*te->dataDumper) ((Archive *) AH, te->dataDumperArg);
+	(*te->dataDumper) ((Archive *) AH, dopt, te->dataDumperArg);
 
 	if (endPtr != NULL)
 		(*endPtr) (AH, te);

@@ -14,50 +14,14 @@
 #ifndef PG_DUMP_H
 #define PG_DUMP_H
 
-#include "postgres_fe.h"
+#include "pg_backup.h"
 
-/*
- * pg_dump uses two different mechanisms for identifying database objects:
- *
- * CatalogId represents an object by the tableoid and oid of its defining
- * entry in the system catalogs.  We need this to interpret pg_depend entries,
- * for instance.
- *
- * DumpId is a simple sequential integer counter assigned as dumpable objects
- * are identified during a pg_dump run.  We use DumpId internally in preference
- * to CatalogId for two reasons: it's more compact, and we can assign DumpIds
- * to "objects" that don't have a separate CatalogId.  For example, it is
- * convenient to consider a table, its data, and its ACL as three separate
- * dumpable "objects" with distinct DumpIds --- this lets us reason about the
- * order in which to dump these things.
- */
 
-typedef struct
-{
-	Oid			tableoid;
-	Oid			oid;
-} CatalogId;
-
-typedef int DumpId;
-
-/*
- * Data structures for simple lists of OIDs and strings.  The support for
- * these is very primitive compared to the backend's List facilities, but
- * it's all we need in pg_dump.
- */
-
-typedef struct SimpleOidListCell
-{
-	struct SimpleOidListCell *next;
-	Oid			val;
-} SimpleOidListCell;
-
-typedef struct SimpleOidList
-{
-	SimpleOidListCell *head;
-	SimpleOidListCell *tail;
-} SimpleOidList;
-
+#define oidcmp(x,y) ( ((x) < (y) ? -1 : ((x) > (y)) ?  1 : 0) )
+#define oideq(x,y) ( (x) == (y) )
+#define oidle(x,y) ( (x) <= (y) )
+#define oidge(x,y) ( (x) >= (y) )
+#define oidzero(x) ( (x) == 0 )
 
 /*
  * The data structures used to store system catalog information.  Every
@@ -519,18 +483,7 @@ extern char g_opaque_type[10];	/* name for the opaque type */
  *	common utility functions
  */
 
-struct Archive;
-typedef struct Archive Archive;
-
-extern TableInfo *getSchemaData(Archive *, int *numTablesPtr);
-
-typedef enum _OidOptions
-{
-	zeroAsOpaque = 1,
-	zeroAsAny = 2,
-	zeroAsStar = 4,
-	zeroAsNone = 8
-} OidOptions;
+extern TableInfo *getSchemaData(Archive *, DumpOptions *dopt, int *numTablesPtr);
 
 extern void AssignDumpId(DumpableObject *dobj);
 extern DumpId createDumpId(void);
@@ -564,16 +517,16 @@ extern void sortDataAndIndexObjectsBySize(DumpableObject **objs, int numObjs);
  * version specific routines
  */
 extern NamespaceInfo *getNamespaces(Archive *fout, int *numNamespaces);
-extern ExtensionInfo *getExtensions(Archive *fout, int *numExtensions);
+extern ExtensionInfo *getExtensions(Archive *fout, DumpOptions *dopt, int *numExtensions);
 extern TypeInfo *getTypes(Archive *fout, int *numTypes);
-extern FuncInfo *getFuncs(Archive *fout, int *numFuncs);
-extern AggInfo *getAggregates(Archive *fout, int *numAggregates);
+extern FuncInfo *getFuncs(Archive *fout, DumpOptions *dopt, int *numFuncs);
+extern AggInfo *getAggregates(Archive *fout, DumpOptions *dopt, int *numAggregates);
 extern OprInfo *getOperators(Archive *fout, int *numOperators);
 extern OpclassInfo *getOpclasses(Archive *fout, int *numOpclasses);
 extern OpfamilyInfo *getOpfamilies(Archive *fout, int *numOpfamilies);
 extern CollInfo *getCollations(Archive *fout, int *numCollations);
 extern ConvInfo *getConversions(Archive *fout, int *numConversions);
-extern TableInfo *getTables(Archive *fout, int *numTables);
+extern TableInfo *getTables(Archive *fout, DumpOptions *dopt, int *numTables);
 extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
@@ -582,8 +535,8 @@ extern RuleInfo *getRules(Archive *fout, int *numRules);
 extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);
 extern ProcLangInfo *getProcLangs(Archive *fout, int *numProcLangs);
 extern CastInfo *getCasts(Archive *fout, int *numCasts);
-extern void getTableAttrs(Archive *fout, TableInfo *tbinfo, int numTables);
-extern bool shouldPrintColumn(TableInfo *tbinfo, int colno);
+extern void getTableAttrs(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo, int numTables);
+extern bool shouldPrintColumn(DumpOptions *dopt, TableInfo *tbinfo, int colno);
 extern TSParserInfo *getTSParsers(Archive *fout, int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(Archive *fout, int *numTSTemplates);
@@ -592,8 +545,8 @@ extern FdwInfo *getForeignDataWrappers(Archive *fout,
 					   int *numForeignDataWrappers);
 extern ForeignServerInfo *getForeignServers(Archive *fout,
 				  int *numForeignServers);
-extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
-extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
+extern DefaultACLInfo *getDefaultACLs(Archive *fout, DumpOptions *dopt, int *numDefaultACLs);
+extern void getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[],
 					   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getRowSecurity(Archive *fout, TableInfo tblinfo[], int numTables);

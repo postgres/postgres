@@ -57,7 +57,7 @@ static void buildShSecLabels(PGconn *conn, const char *catalog_name,
 				 uint32 objectId, PQExpBuffer buffer,
 				 const char *target, const char *objname);
 static PGconn *connectDatabase(const char *dbname, const char *connstr, const char *pghost, const char *pgport,
-	  const char *pguser, enum trivalue prompt_password, bool fail_on_error);
+	  const char *pguser, trivalue prompt_password, bool fail_on_error);
 static char *constructConnStr(const char **keywords, const char **values);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
 	char	   *use_role = NULL;
-	enum trivalue prompt_password = TRI_DEFAULT;
+	trivalue	prompt_password = TRI_DEFAULT;
 	bool		data_only = false;
 	bool		globals_only = false;
 	bool		output_clean = false;
@@ -1765,7 +1765,7 @@ buildShSecLabels(PGconn *conn, const char *catalog_name, uint32 objectId,
 static PGconn *
 connectDatabase(const char *dbname, const char *connection_string,
 				const char *pghost, const char *pgport, const char *pguser,
-				enum trivalue prompt_password, bool fail_on_error)
+				trivalue prompt_password, bool fail_on_error)
 {
 	PGconn	   *conn;
 	bool		new_pass;

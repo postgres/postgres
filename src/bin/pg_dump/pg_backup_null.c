@@ -21,12 +21,10 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
 #include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
-#include "parallel.h"
-
-#include <unistd.h>				/* for dup */
 
 #include "libpq/libpq-fs.h"
 
@@ -35,7 +33,7 @@ static void _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static void _CloseArchive(ArchiveHandle *AH);
+static void _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
 static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
@@ -198,12 +196,16 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
 	if (te->dataDumper)
 	{
+		DumpOptions *dopt;
+
 		AH->currToc = te;
 
 		if (strcmp(te->desc, "BLOBS") == 0)
 			_StartBlobs(AH, te);
 
-		(*te->dataDumper) ((Archive *) AH, te->dataDumperArg);
+		dopt = dumpOptionsFromRestoreOptions(ropt);
+		(*te->dataDumper) ((Archive *) AH, dopt, te->dataDumperArg);
+		pg_free(dopt);
 
 		if (strcmp(te->desc, "BLOBS") == 0)
 			_EndBlobs(AH, te);
@@ -227,7 +229,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 }
 
 static void
-_CloseArchive(ArchiveHandle *AH)
+_CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
 {
 	/* Nothing to do */
 }

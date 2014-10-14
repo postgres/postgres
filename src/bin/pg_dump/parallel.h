@@ -19,10 +19,7 @@
 #ifndef PG_DUMP_PARALLEL_H
 #define PG_DUMP_PARALLEL_H
 
-#include "pg_backup_db.h"
-
-struct _archiveHandle;
-struct _tocEntry;
+#include "pg_backup_archiver.h"
 
 typedef enum
 {
@@ -35,8 +32,8 @@ typedef enum
 /* Arguments needed for a worker process */
 typedef struct ParallelArgs
 {
-	struct _archiveHandle *AH;
-	struct _tocEntry *te;
+	ArchiveHandle	*AH;
+	TocEntry *te;
 } ParallelArgs;
 
 /* State for each parallel activity slot */
@@ -74,22 +71,19 @@ extern void init_parallel_dump_utils(void);
 
 extern int	GetIdleWorker(ParallelState *pstate);
 extern bool IsEveryWorkerIdle(ParallelState *pstate);
-extern void ListenToWorkers(struct _archiveHandle * AH, ParallelState *pstate, bool do_wait);
+extern void ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait);
 extern int	ReapWorkerStatus(ParallelState *pstate, int *status);
-extern void EnsureIdleWorker(struct _archiveHandle * AH, ParallelState *pstate);
-extern void EnsureWorkersFinished(struct _archiveHandle * AH, ParallelState *pstate);
+extern void EnsureIdleWorker(ArchiveHandle *AH, ParallelState *pstate);
+extern void EnsureWorkersFinished(ArchiveHandle *AH, ParallelState *pstate);
 
-extern ParallelState *ParallelBackupStart(struct _archiveHandle * AH,
+extern ParallelState *ParallelBackupStart(ArchiveHandle *AH,
+					DumpOptions *dopt,
 					RestoreOptions *ropt);
-extern void DispatchJobForTocEntry(struct _archiveHandle * AH,
+extern void DispatchJobForTocEntry(ArchiveHandle *AH,
 					   ParallelState *pstate,
-					   struct _tocEntry * te, T_Action act);
-extern void ParallelBackupEnd(struct _archiveHandle * AH, ParallelState *pstate);
+					   TocEntry *te, T_Action act);
+extern void ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate);
 
-extern void checkAborting(struct _archiveHandle * AH);
-
-extern void
-exit_horribly(const char *modulename, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
+extern void checkAborting(ArchiveHandle *AH);
 
 #endif   /* PG_DUMP_PARALLEL_H */

@@ -38,12 +38,13 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
-#include "pg_backup_archiver.h"
-#include "pg_backup_utils.h"
+#include "getopt_long.h"
+
 #include "dumputils.h"
 #include "parallel.h"
-#include "getopt_long.h"
+#include "pg_backup_utils.h"
 
 #include <ctype.h>
 
@@ -423,7 +424,7 @@ main(int argc, char **argv)
 	/* AH may be freed in CloseArchive? */
 	exit_code = AH->n_errors ? 1 : 0;
 
-	CloseArchive(AH);
+	CloseArchive(AH, NULL);
 
 	return exit_code;
 }

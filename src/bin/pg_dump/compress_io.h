@@ -15,7 +15,6 @@
 #ifndef __COMPRESS_IO__
 #define __COMPRESS_IO__
 
-#include "postgres_fe.h"
 #include "pg_backup_archiver.h"
 
 /* Initial buffer sizes used in zlib compression. */
