@@ -47,6 +47,7 @@ typedef struct
 {
 	ArchiveHandle *AH;
 	RestoreOptions *ropt;
+	DumpOptions *dopt;
 	int			worker;
 	int			pipeRead;
 	int			pipeWrite;
@@ -464,12 +465,13 @@ init_spawned_worker_win32(WorkerInfo *wi)
 	ArchiveHandle *AH;
 	int			pipefd[2] = {wi->pipeRead, wi->pipeWrite};
 	int			worker = wi->worker;
+	DumpOptions *dopt = wi->dopt;
 	RestoreOptions *ropt = wi->ropt;
 
 	AH = CloneArchive(wi->AH);
 
 	free(wi);
-	SetupWorker(AH, pipefd, worker, ropt);
+	SetupWorker(AH, pipefd, worker, dopt, ropt);
 
 	DeCloneArchive(AH);
 	_endthreadex(0);
@@ -546,6 +548,7 @@ ParallelBackupStart(ArchiveHandle *AH, DumpOptions *dopt, RestoreOptions *ropt)
 		wi = (WorkerInfo *) pg_malloc(sizeof(WorkerInfo));
 
 		wi->ropt = ropt;
+		wi->dopt = dopt;
 		wi->worker = i;
 		wi->AH = AH;
 		wi->pipeRead = pstate->parallelSlot[i].pipeRevRead = pipeMW[PIPE_READ];
