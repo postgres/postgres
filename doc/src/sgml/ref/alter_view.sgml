@@ -28,11 +28,6 @@ ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAM
 ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">view_option_name</replaceable> [= <replaceable class="parameter">view_option_value</replaceable>] [, ... ] )
 ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET ( <replaceable class="parameter">view_option_name</replaceable> [, ... ] )
-
-<phrase>where <replaceable class="parameter">view_option_name</replaceable> can be one of:</phrase>
-
-    security_barrier [ <replaceable class="parameter">boolean</replaceable> ]
-    check_option [ <replaceable class="parameter">text</replaceable> (<literal>local</literal> or <literal>cascaded</literal>) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -122,19 +117,32 @@ ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">view_option_name</replaceable></term>
+    <term><literal>SET ( <replaceable class="parameter">view_option_name</replaceable> [= <replaceable class="parameter">view_option_value</replaceable>] [, ... ] )</literal></term>
+    <term><literal>RESET ( <replaceable class="parameter">view_option_name</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
-      The name of a view option to be set or reset.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">view_option_value</replaceable></term>
-    <listitem>
-     <para>
-      The new value for a view option.
+      Sets or resets a view option.  Currently supported options are:
+      <variablelist>
+       <varlistentry>
+        <term><literal>check_option</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Changes the check option of the view.  The value must
+          be <literal>local</literal> or <literal>cascaded</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>security_barrier</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Changes the security-barrier property of the view.  The value must
+          be Boolean value, such as <literal>true</literal>
+          or <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
      </para>
     </listitem>
    </varlistentry>
