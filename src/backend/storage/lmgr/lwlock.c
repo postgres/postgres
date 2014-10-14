@@ -482,6 +482,7 @@ static inline bool
 LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 {
 	volatile LWLock *lock = l;
+	volatile uint64 *valp = valptr;
 	PGPROC	   *proc = MyProc;
 	bool		retry = false;
 	bool		result = true;
@@ -637,8 +638,8 @@ LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 	}
 
 	/* If there's a variable associated with this lock, initialize it */
-	if (valptr)
-		*valptr = val;
+	if (valp)
+		*valp = val;
 
 	/* We are done updating shared state of the lock itself. */
 	SpinLockRelease(&lock->mutex);
