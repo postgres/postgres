@@ -192,7 +192,7 @@ typedef struct BackgroundWorker
    opaque handle that can subsequently be passed to
    <function>GetBackgroundWorkerPid(<parameter>BackgroundWorkerHandle *</parameter>, <parameter>pid_t *</parameter>)</function> or
    <function>TerminateBackgroundWorker(<parameter>BackgroundWorkerHandle *</parameter>)</function>.
-   <function>GetBackgroundWorker</> can be used to poll the status of the
+   <function>GetBackgroundWorkerPid</> can be used to poll the status of the
    worker: a return value of <literal>BGWH_NOT_YET_STARTED</> indicates that
    the worker has not yet been started by the postmaster;
    <literal>BGWH_STOPPED</literal> indicates that it has been started but is
