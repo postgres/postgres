@@ -976,6 +976,12 @@ LWLockWaitForVar(LWLock *l, uint64 *valptr, uint64 oldval, uint64 *newval)
 			lock->tail = proc;
 		lock->head = proc;
 
+		/*
+		 * Set releaseOK, to make sure we get woken up as soon as the lock is
+		 * released.
+		 */
+		lock->releaseOK = true;
+
 		/* Can release the mutex now */
 		SpinLockRelease(&lock->mutex);
 
