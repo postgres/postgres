@@ -301,6 +301,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es.verbose = auto_explain_log_verbose;
 			es.buffers = (es.analyze && auto_explain_log_buffers);
 			es.timing = (es.analyze && auto_explain_log_timing);
+			es.summary = es.analyze;
 			es.format = auto_explain_log_format;
 
 			ExplainBeginOutput(&es);

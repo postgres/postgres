@@ -145,8 +145,8 @@ ROLLBACK;
      <para>
       Include information on the estimated startup and total cost of each
       plan node, as well as the estimated number of rows and the estimated
-      width of each row.  Also, include the time spent planning the query,
-      if available.  This parameter defaults to <literal>TRUE</literal>.
+      width of each row.
+      This parameter defaults to <literal>TRUE</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -291,8 +291,7 @@ EXPLAIN SELECT * FROM foo;
                        QUERY PLAN
 ---------------------------------------------------------
  Seq Scan on foo  (cost=0.00..155.00 rows=10000 width=4)
- Planning time: 0.114 ms
-(2 rows)
+(1 row)
 </programlisting>
   </para>
 
@@ -312,8 +311,7 @@ EXPLAIN (FORMAT JSON) SELECT * FROM foo;
        "Total Cost": 155.00,   +
        "Plan Rows": 10000,     +
        "Plan Width": 4         +
-     }.                        +
-     "Planning Time": 0.114    +
+     }                         +
    }                           +
  ]
 (1 row)
@@ -332,8 +330,7 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
 --------------------------------------------------------------
  Index Scan using fi on foo  (cost=0.00..5.98 rows=1 width=4)
    Index Cond: (i = 4)
- Planning time: 0.073 ms
-(3 rows)
+(2 rows)
 </programlisting>
   </para>
 
@@ -353,8 +350,7 @@ EXPLAIN (FORMAT YAML) SELECT * FROM foo WHERE i='4';
      Total Cost: 5.98         +
      Plan Rows: 1             +
      Plan Width: 4            +
-     Index Cond: "(i = 4)"    +
-   Planning Time: 0.073
+     Index Cond: "(i = 4)"    
 (1 row)
 </programlisting>
 
@@ -386,7 +382,6 @@ EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
  Aggregate  (cost=23.93..23.93 rows=1 width=4)
    -&gt;  Index Scan using fi on foo  (cost=0.00..23.92 rows=6 width=4)
          Index Cond: (i &lt; 10)
- Planning time: 0.088 ms
 (3 rows)
 </programlisting>
   </para>
@@ -410,7 +405,7 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
          Index Cond: ((id &gt; $1) AND (id &lt; $2))
  Planning time: 0.197 ms
  Execution time: 0.225 ms
-(5 rows)
+(6 rows)
 </programlisting>
   </para>
 

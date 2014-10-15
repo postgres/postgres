@@ -89,7 +89,6 @@ EXPLAIN SELECT * FROM tenk1;
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..458.00 rows=10000 width=244)
- Planning time: 0.113 ms
 </screen>
    </para>
 
@@ -163,12 +162,6 @@ EXPLAIN SELECT * FROM tenk1;
    </para>
 
    <para>
-    The <literal>Planning time</literal> shown is the time it took to generate
-    the query plan from the parsed query and optimize it. It does not include
-    rewriting and parsing.
-   </para>
-
-   <para>
     Returning to our example:
 
 <screen>
@@ -177,7 +170,6 @@ EXPLAIN SELECT * FROM tenk1;
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..458.00 rows=10000 width=244)
- Planning time: 0.113 ms
 </screen>
    </para>
 
@@ -206,7 +198,6 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
 ------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..483.00 rows=7001 width=244)
    Filter: (unique1 &lt; 7000)
- Planning time: 0.104 ms
 </screen>
 
     Notice that the <command>EXPLAIN</> output shows the <literal>WHERE</>
@@ -243,7 +234,6 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
    Recheck Cond: (unique1 &lt; 100)
    -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
          Index Cond: (unique1 &lt; 100)
- Planning time: 0.093 ms
 </screen>
 
     Here the planner has decided to use a two-step plan: the child plan
@@ -272,7 +262,6 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND stringu1 = 'xxx';
    Filter: (stringu1 = 'xxx'::name)
    -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
          Index Cond: (unique1 &lt; 100)
- Planning time: 0.089 ms
 </screen>
 
     The added condition <literal>stringu1 = 'xxx'</literal> reduces the
@@ -294,7 +283,6 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 = 42;
 -----------------------------------------------------------------------------
  Index Scan using tenk1_unique1 on tenk1  (cost=0.29..8.30 rows=1 width=244)
    Index Cond: (unique1 = 42)
- Planning time: 0.076 ms
 </screen>
 
     In this type of plan the table rows are fetched in index order, which
@@ -323,7 +311,6 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
                Index Cond: (unique1 &lt; 100)
          -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..19.78 rows=999 width=0)
                Index Cond: (unique2 &gt; 9000)
- Planning time: 0.094 ms
 </screen>
 
     But this requires visiting both indexes, so it's not necessarily a win
@@ -344,7 +331,6 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000 LIMIT 2
    -&gt;  Index Scan using tenk1_unique2 on tenk1  (cost=0.29..71.27 rows=10 width=244)
          Index Cond: (unique2 &gt; 9000)
          Filter: (unique1 &lt; 100)
- Planning time: 0.087 ms
 </screen>
    </para>
 
@@ -378,7 +364,6 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
                Index Cond: (unique1 &lt; 10)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.91 rows=1 width=244)
          Index Cond: (unique2 = t1.unique2)
- Planning time: 0.117 ms
 </screen>
    </para>
 
@@ -430,7 +415,6 @@ WHERE t1.unique1 &lt; 10 AND t2.unique2 &lt; 10 AND t1.hundred &lt; t2.hundred;
    -&gt;  Materialize  (cost=0.29..8.51 rows=10 width=244)
          -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..8.46 rows=10 width=244)
                Index Cond: (unique2 &lt; 10)
- Planning time: 0.119 ms
 </screen>
 
     The condition <literal>t1.hundred &lt; t2.hundred</literal> can't be
@@ -478,7 +462,6 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
                Recheck Cond: (unique1 &lt; 100)
                -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
                      Index Cond: (unique1 &lt; 100)
- Planning time: 0.182 ms
 </screen>
    </para>
 
@@ -509,7 +492,6 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    -&gt;  Sort  (cost=197.83..200.33 rows=1000 width=244)
          Sort Key: t2.unique2
          -&gt;  Seq Scan on onek t2  (cost=0.00..148.00 rows=1000 width=244)
- Planning time: 0.195 ms
 </screen>
    </para>
 
@@ -546,7 +528,6 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    -&gt;  Index Scan using tenk1_unique2 on tenk1 t1  (cost=0.29..656.28 rows=101 width=244)
          Filter: (unique1 &lt; 100)
    -&gt;  Index Scan using onek_unique2 on onek t2  (cost=0.28..224.79 rows=1000 width=244)
- Planning time: 0.176 ms
 </screen>
 
     which shows that the planner thinks that sorting <literal>onek</> by
@@ -778,6 +759,12 @@ ROLLBACK;
     estimates to account for that work.  That's because the work to be done is
     the same for every correct query plan, so it doesn't affect planning
     decisions.
+   </para>
+
+   <para>
+    The <literal>Planning time</literal> shown by <command>EXPLAIN
+    ANALYZE</command> is the time it took to generate the query plan from the
+    parsed query and optimize it. It does not include parsing or rewriting.
    </para>
 
    <para>
