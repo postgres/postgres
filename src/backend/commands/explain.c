@@ -191,6 +191,9 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
 
+	/* currently, summary option is not exposed to users; just set it */
+	es.summary = es.analyze;
+
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
 	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
@@ -431,7 +434,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	/*
 	 * We always collect timing for the entire statement, even when node-level
-	 * timing is off, so we don't look at es->timing here.
+	 * timing is off, so we don't look at es->timing here.  (We could skip
+	 * this if !es->summary, but it's hardly worth the complication.)
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
 
@@ -493,7 +497,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	/* Create textual dump of plan tree */
 	ExplainPrintPlan(es, queryDesc);
 
-	if (es->costs && planduration)
+	if (es->summary && planduration)
 	{
 		double		plantime = INSTR_TIME_GET_DOUBLE(*planduration);
 
@@ -526,7 +530,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	totaltime += elapsed_time(&starttime);
 
-	if (es->analyze)
+	if (es->summary)
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfo(es->str, "Execution time: %.3f ms\n",
