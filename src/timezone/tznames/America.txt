@@ -47,7 +47,7 @@ AMT    -14400    # Amazon Time
                  #     (America/Cuiaba)
                  #     (America/Manaus)
                  #     (America/Porto_Velho)
-ART    -10800    # Argentina Time
+ART    America/Argentina/Buenos_Aires  # Argentina Time
                  #     (America/Argentina/Buenos_Aires)
                  #     (America/Argentina/Cordoba)
                  #     (America/Argentina/Tucuman)
@@ -58,7 +58,7 @@ ART    -10800    # Argentina Time
                  #     (America/Argentina/Mendoza)
                  #     (America/Argentina/Rio_Gallegos)
                  #     (America/Argentina/Ushuaia)
-ARST    -7200 D  # Argentina Summer Time
+ARST    America/Argentina/Buenos_Aires  # Argentina Summer Time
 # CONFLICT! AST is not unique
 # Other timezones:
 #  - AST: Arabic Standard Time (Asia)
@@ -228,7 +228,7 @@ GMT         0    # Greenwich Mean Time
                  #     (Etc/GMT)
                  #     (Europe/Dublin)
                  #     (Europe/London)
-GYT    -14400    # Guyana Time
+GYT    America/Guyana  # Guyana Time
                  #     (America/Guyana)
 HADT   -32400 D  # Hawaii-Aleutian Daylight Time
                  #     (America/Adak)
@@ -285,15 +285,15 @@ PST    -28800    # Pacific Standard Time
                  #     (Pacific/Pitcairn)
 PYST   -10800 D  # Paraguay Summer Time
                  #     (America/Asuncion)
-PYT    -14400    # Paraguay Time
+PYT    America/Asuncion  # Paraguay Time
                  #     (America/Asuncion)
-SRT    -10800    # Suriname Time
+SRT    America/Paramaribo  # Suriname Time
                  #     (America/Paramaribo)
 UYST    -7200 D  # Uruguay Summer Time
                  #     (America/Montevideo)
 UYT    -10800    # Uruguay Time
                  #     (America/Montevideo)
-VET    -16200    # Venezuela Time (caution: this used to mean -14400)
+VET    America/Caracas  # Venezuela Time
                  #     (America/Caracas)
 WGST    -7200 D  # Western Greenland Summer Time
                  #     (America/Godthab)

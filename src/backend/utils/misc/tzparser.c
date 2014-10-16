@@ -65,15 +65,6 @@ validateTzEntry(tzEntry *tzentry)
 						tzentry->filename, tzentry->lineno)));
 		return false;
 	}
-	if (tzentry->offset % 900 != 0)
-	{
-		ereport(tz_elevel,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone offset %d is not a multiple of 900 sec (15 min) in time zone file \"%s\", line %d",
-						tzentry->offset,
-						tzentry->filename, tzentry->lineno)));
-		return false;
-	}
 
 	/*
 	 * Sanity-check the offset: shouldn't exceed 14 hours
@@ -99,7 +90,11 @@ validateTzEntry(tzEntry *tzentry)
 }
 
 /*
- * Attempt to parse the line as a timezone abbrev spec (name, offset, dst)
+ * Attempt to parse the line as a timezone abbrev spec
+ *
+ * Valid formats are:
+ *	name  zone
+ *	name  offset  dst
  *
  * Returns TRUE if OK, else false; data is stored in *tzentry
  */
@@ -124,7 +119,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 						filename, lineno)));
 		return false;
 	}
-	tzentry->abbrev = abbrev;
+	tzentry->abbrev = pstrdup(abbrev);
 
 	offset = strtok(NULL, WHITESPACE);
 	if (!offset)
@@ -135,27 +130,45 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 				filename, lineno)));
 		return false;
 	}
-	tzentry->offset = strtol(offset, &offset_endptr, 10);
-	if (offset_endptr == offset || *offset_endptr != '\0')
-	{
-		ereport(tz_elevel,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid number for time zone offset in time zone file \"%s\", line %d",
-						filename, lineno)));
-		return false;
-	}
 
-	is_dst = strtok(NULL, WHITESPACE);
-	if (is_dst && pg_strcasecmp(is_dst, "D") == 0)
+	/* We assume zone names don't begin with a digit or sign */
+	if (isdigit((unsigned char) *offset) || *offset == '+' || *offset == '-')
 	{
-		tzentry->is_dst = true;
-		remain = strtok(NULL, WHITESPACE);
+		tzentry->zone = NULL;
+		tzentry->offset = strtol(offset, &offset_endptr, 10);
+		if (offset_endptr == offset || *offset_endptr != '\0')
+		{
+			ereport(tz_elevel,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid number for time zone offset in time zone file \"%s\", line %d",
+							filename, lineno)));
+			return false;
+		}
+
+		is_dst = strtok(NULL, WHITESPACE);
+		if (is_dst && pg_strcasecmp(is_dst, "D") == 0)
+		{
+			tzentry->is_dst = true;
+			remain = strtok(NULL, WHITESPACE);
+		}
+		else
+		{
+			/* there was no 'D' dst specifier */
+			tzentry->is_dst = false;
+			remain = is_dst;
+		}
 	}
 	else
 	{
-		/* there was no 'D' dst specifier */
+		/*
+		 * Assume entry is a zone name.  We do not try to validate it by
+		 * looking up the zone, because that would force loading of a lot of
+		 * zones that probably will never be used in the current session.
+		 */
+		tzentry->zone = pstrdup(offset);
+		tzentry->offset = 0;
 		tzentry->is_dst = false;
-		remain = is_dst;
+		remain = strtok(NULL, WHITESPACE);
 	}
 
 	if (!remain)				/* no more non-whitespace chars */
@@ -215,8 +228,11 @@ addToArray(tzEntry **base, int *arraysize, int n,
 			/*
 			 * Found a duplicate entry; complain unless it's the same.
 			 */
-			if (midptr->offset == entry->offset &&
-				midptr->is_dst == entry->is_dst)
+			if ((midptr->zone == NULL && entry->zone == NULL &&
+				 midptr->offset == entry->offset &&
+				 midptr->is_dst == entry->is_dst) ||
+				(midptr->zone != NULL && entry->zone != NULL &&
+				 strcmp(midptr->zone, entry->zone) == 0))
 			{
 				/* return unchanged array */
 				return n;
@@ -224,6 +240,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
 			if (override)
 			{
 				/* same abbrev but something is different, override */
+				midptr->zone = entry->zone;
 				midptr->offset = entry->offset;
 				midptr->is_dst = entry->is_dst;
 				return n;
@@ -254,9 +271,6 @@ addToArray(tzEntry **base, int *arraysize, int n,
 	memmove(arrayptr + 1, arrayptr, (n - low) * sizeof(tzEntry));
 
 	memcpy(arrayptr, entry, sizeof(tzEntry));
-
-	/* Must dup the abbrev to ensure it survives */
-	arrayptr->abbrev = pstrdup(entry->abbrev);
 
 	return n + 1;
 }
@@ -481,7 +495,7 @@ load_tzoffsets(const char *filename, bool doit, int elevel)
 
 	/* If no errors and we should apply the result, pass it to datetime.c */
 	if (n >= 0 && doit)
-		InstallTimeZoneAbbrevs(array, n);
+		n = InstallTimeZoneAbbrevs(array, n);
 
 	/* Clean up */
 	MemoryContextSwitchTo(oldContext);

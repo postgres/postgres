@@ -77,7 +77,7 @@
 #define BC		1
 
 /*
- * Fields for time decoding.
+ * Field types for time decoding.
  *
  * Can't have more of these than there are bits in an unsigned int
  * since these are turned into bit masks during parsing and decoding.
@@ -93,9 +93,9 @@
 #define YEAR	2
 #define DAY		3
 #define JULIAN	4
-#define TZ		5
-#define DTZ		6
-#define DTZMOD	7
+#define TZ		5				/* fixed-offset timezone abbreviation */
+#define DTZ		6				/* fixed-offset timezone abbrev, DST */
+#define DYNTZ	7				/* dynamic timezone abbreviation */
 #define IGNORE_DTF	8
 #define AMPM	9
 #define HOUR	10
@@ -119,18 +119,24 @@
 #define DECADE		25
 #define CENTURY		26
 #define MILLENNIUM	27
+/* hack for parsing two-word timezone specs "MET DST" etc */
+#define DTZMOD	28				/* "DST" as a separate word */
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
 
 /*
  * Token field definitions for time parsing and decoding.
- * These need to fit into the datetkn table type.
- * At the moment, that means keep them within [-127,127].
- * These are also used for bit masks in DecodeDateDelta()
+ *
+ * Some field type codes (see above) use these as the "value" in datetktbl[].
+ * These are also used for bit masks in DecodeDateTime and friends
  *	so actually restrict them to within [0,31] for now.
  * - thomas 97/06/19
- * Not all of these fields are used for masks in DecodeDateDelta
+ * Not all of these fields are used for masks in DecodeDateTime
  *	so allow some larger than 31. - thomas 1997-11-17
+ *
+ * Caution: there are undocumented assumptions in the code that most of these
+ * values are not equal to IGNORE_DTF nor RESERV.  Be very careful when
+ * renumbering values in either of these apparently-independent lists :-(
  */
 
 #define DTK_NUMBER		0
@@ -203,10 +209,26 @@
 /* keep this struct small; it gets used a lot */
 typedef struct
 {
-	char		token[TOKMAXLEN];
-	char		type;
-	char		value;			/* this may be unsigned, alas */
+	char		token[TOKMAXLEN + 1];	/* always NUL-terminated */
+	char		type;			/* see field type codes above */
+	int32		value;			/* meaning depends on type */
 } datetkn;
+
+/* one of its uses is in tables of time zone abbreviations */
+typedef struct TimeZoneAbbrevTable
+{
+	Size		tblsize;		/* size in bytes of TimeZoneAbbrevTable */
+	int			numabbrevs;		/* number of entries in abbrevs[] array */
+	datetkn		abbrevs[1];		/* VARIABLE LENGTH ARRAY */
+	/* DynamicZoneAbbrev(s) may follow the abbrevs[] array */
+} TimeZoneAbbrevTable;
+
+/* auxiliary data for a dynamic time zone abbreviation (non-fixed-offset) */
+typedef struct DynamicZoneAbbrev
+{
+	pg_tz	   *tz;				/* NULL if not yet looked up */
+	char		zone[1];		/* zone name (var length, NUL-terminated) */
+} DynamicZoneAbbrev;
 
 
 /* FMODULO()
@@ -310,19 +332,24 @@ extern void DateTimeParseError(int dterr, const char *str,
 				   const char *datatype);
 
 extern int	DetermineTimeZoneOffset(struct pg_tm * tm, pg_tz *tzp);
+extern int	DetermineTimeZoneAbbrevOffset(struct pg_tm * tm, const char *abbr, pg_tz *tzp);
+extern int DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
+								pg_tz *tzp, int *isdst);
 
 extern void EncodeDateOnly(struct pg_tm * tm, int style, char *str);
 extern void EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str);
 extern void EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str);
 extern void EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str);
 
+extern int DecodeTimezoneAbbrev(int field, char *lowtoken,
+					 int *offset, pg_tz **tz);
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);
 
 extern int	j2day(int jd);
 
 extern bool CheckDateTokenTables(void);
-extern void InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n);
+extern int	InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n);
 
 extern Datum pg_timezone_abbrevs(PG_FUNCTION_ARGS);
 extern Datum pg_timezone_names(PG_FUNCTION_ARGS);

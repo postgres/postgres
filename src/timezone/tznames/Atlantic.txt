@@ -48,11 +48,11 @@ AZOST       0 D  # Azores Summer Time
                  #     (Atlantic/Azores)
 AZOT    -3600    # Azores Time
                  #     (Atlantic/Azores)
-CVT     -3600    # Cape Verde Time
+CVT     Atlantic/Cape_Verde  # Cape Verde Time
                  #     (Atlantic/Cape_Verde)
-FKST   -10800    # Falkland Islands Summer Time (now used all year round)
+FKST    Atlantic/Stanley  # Falkland Islands Summer/Standard Time
                  #     (Atlantic/Stanley)
-FKT    -14400    # Falkland Islands Time (obsolete)
+FKT     Atlantic/Stanley  # Falkland Islands Time (obsolete)
 GMT         0    # Greenwich Mean Time
                  #     (Africa/Abidjan)
                  #     (Africa/Bamako)
