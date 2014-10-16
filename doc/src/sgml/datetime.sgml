@@ -374,22 +374,27 @@
     these formats:
 
 <synopsis>
-<replaceable>time_zone_name</replaceable> <replaceable>offset</replaceable>
-<replaceable>time_zone_name</replaceable> <replaceable>offset</replaceable> D
+<replaceable>zone_abbreviation</replaceable> <replaceable>offset</replaceable>
+<replaceable>zone_abbreviation</replaceable> <replaceable>offset</replaceable> D
+<replaceable>zone_abbreviation</replaceable> <replaceable>time_zone_name</replaceable>
 @INCLUDE <replaceable>file_name</replaceable>
 @OVERRIDE
 </synopsis>
    </para>
 
    <para>
-    A <replaceable>time_zone_name</replaceable> is just the abbreviation
-    being defined.  The <replaceable>offset</replaceable> is the zone's
+    A <replaceable>zone_abbreviation</replaceable> is just the abbreviation
+    being defined.  The <replaceable>offset</replaceable> is the equivalent
     offset in seconds from UTC, positive being east from Greenwich and
     negative being west.  For example, -18000 would be five hours west
     of Greenwich, or North American east coast standard time.  <literal>D</>
-    indicates that the zone name represents local daylight-savings time
-    rather than standard time. Since all known time zone offsets are on
-    15 minute boundaries, the number of seconds has to be a multiple of 900.
+    indicates that the zone name represents local daylight-savings time rather
+    than standard time.  Alternatively, a <replaceable>time_zone_name</> can
+    be given, in which case that time zone definition is consulted, and the
+    abbreviation's meaning in that zone is used.  This alternative is
+    recommended only for abbreviations whose meaning has historically varied,
+    as looking up the meaning is noticeably more expensive than just using
+    a fixed integer value.
    </para>
 
    <para>
@@ -400,9 +405,9 @@
 
    <para>
     The <literal>@OVERRIDE</> syntax indicates that subsequent entries in the
-    file can override previous entries (i.e., entries obtained from included
-    files).  Without this, conflicting definitions of the same timezone
-    abbreviation are considered an error.
+    file can override previous entries (typically, entries obtained from
+    included files).  Without this, conflicting definitions of the same
+    timezone abbreviation are considered an error.
    </para>
 
    <para>
@@ -410,14 +415,14 @@
     all the non-conflicting time zone abbreviations for most of the world.
     Additional files <filename>Australia</> and <filename>India</> are
     provided for those regions: these files first include the
-    <literal>Default</> file and then add or modify timezones as needed.
+    <literal>Default</> file and then add or modify abbreviations as needed.
    </para>
 
    <para>
     For reference purposes, a standard installation also contains files
     <filename>Africa.txt</>, <filename>America.txt</>, etc, containing
     information about every time zone abbreviation known to be in use
-    according to the <literal>zoneinfo</> timezone database.  The zone name
+    according to the IANA timezone database.  The zone name
     definitions found in these files can be copied and pasted into a custom
     configuration file as needed.  Note that these files cannot be directly
     referenced as <varname>timezone_abbreviations</> settings, because of
@@ -426,9 +431,9 @@
 
    <note>
     <para>
-     If an error occurs while reading the time zone data sets, no new value is
-     applied but the old set is kept. If the error occurs while starting the
-     database, startup fails.
+     If an error occurs while reading the time zone abbreviation set, no new
+     value is applied and the old set is kept. If the error occurs while
+     starting the database, startup fails.
     </para>
    </note>
 

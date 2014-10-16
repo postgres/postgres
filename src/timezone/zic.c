@@ -1775,7 +1775,7 @@ writezone(const char *name, const char *string)
 
 				/* Print current timezone abbreviations if requested */
 				if (print_abbrevs &&
-					(ats[i] >= print_cutoff || i == thistimelim - 1))
+					(i == thistimelim - 1 || ats[i + 1] > print_cutoff))
 				{
 					unsigned char tm = typemap[types[i]];
 					char	   *thisabbrev = &thischars[indmap[abbrinds[tm]]];
