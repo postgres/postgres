@@ -1108,7 +1108,7 @@ su - postgres
         <para>
          <productname>PostgreSQL</> includes its own time zone database,
          which it requires for date and time operations.  This time zone
-         database is in fact compatible with the <quote>zoneinfo</> time zone
+         database is in fact compatible with the IANA time zone
          database provided by many operating systems such as FreeBSD,
          Linux, and Solaris, so it would be redundant to install it again.
          When this option is used, the system-supplied time zone database

@@ -23,7 +23,7 @@ EAT     10800    # East Africa Time
                  #     (Indian/Antananarivo)
                  #     (Indian/Comoro)
                  #     (Indian/Mayotte)
-IOT     21600    # British Indian Ocean Territory (Chagos) (there was a timezone change recently in 1996)
+IOT     Indian/Chagos  # British Indian Ocean Territory (Chagos)
                  #     (Indian/Chagos)
 MUT     14400    # Mauritius Island Time
                  #     (Indian/Mauritius)
