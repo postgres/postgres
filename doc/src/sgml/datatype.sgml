@@ -2325,7 +2325,7 @@ January 8 04:05:06 1999 PST
     but continue to be prone to arbitrary changes, particularly with
     respect to daylight-savings rules.
     <productname>PostgreSQL</productname> uses the widely-used
-    <literal>zoneinfo</> (Olson) time zone database for information about
+    IANA (Olson) time zone database for information about
     historical time zone rules.  For times in the future, the assumption
     is that the latest known rules for a given time zone will
     continue to be observed indefinitely far into the future.
@@ -2390,8 +2390,8 @@ January 8 04:05:06 1999 PST
         The recognized time zone names are listed in the
         <literal>pg_timezone_names</literal> view (see <xref
         linkend="view-pg-timezone-names">).
-        <productname>PostgreSQL</productname> uses the widely-used
-        <literal>zoneinfo</> time zone data for this purpose, so the same
+        <productname>PostgreSQL</productname> uses the widely-used IANA
+        time zone data for this purpose, so the same time zone
         names are also recognized by much other software.
        </para>
       </listitem>
@@ -2427,7 +2427,7 @@ January 8 04:05:06 1999 PST
         When a daylight-savings zone abbreviation is present,
         it is assumed to be used
         according to the same daylight-savings transition rules used in the
-        <literal>zoneinfo</> time zone database's <filename>posixrules</> entry.
+        IANA time zone database's <filename>posixrules</> entry.
         In a standard <productname>PostgreSQL</productname> installation,
         <filename>posixrules</> is the same as <literal>US/Eastern</>, so
         that POSIX-style time zone specifications follow USA daylight-savings
@@ -2438,9 +2438,25 @@ January 8 04:05:06 1999 PST
      </itemizedlist>
 
      In short, this is the difference between abbreviations
-     and full names: abbreviations always represent a fixed offset from
-     UTC, whereas most of the full names imply a local daylight-savings time
-     rule, and so have two possible UTC offsets.
+     and full names: abbreviations represent a specific offset from UTC,
+     whereas many of the full names imply a local daylight-savings time
+     rule, and so have two possible UTC offsets.  As an example,
+     <literal>2014-06-04 12:00 America/New_York</> represents noon local
+     time in New York, which for this particular date was Eastern Daylight
+     Time (UTC-4).  So <literal>2014-06-04 12:00 EDT</> specifies that
+     same time instant.  But <literal>2014-06-04 12:00 EST</> specifies
+     noon Eastern Standard Time (UTC-5), regardless of whether daylight
+     savings was nominally in effect on that date.
+    </para>
+
+    <para>
+     To complicate matters, some jurisdictions have used the same timezone
+     abbreviation to mean different UTC offsets at different times; for
+     example, in Moscow <literal>MSK</> has meant UTC+3 in some years and
+     UTC+4 in others.  <application>PostgreSQL</> interprets such
+     abbreviations according to whatever they meant (or had most recently
+     meant) on the specified date; but, as with the <literal>EST</> example
+     above, this is not necessarily the same as local civil time on that date.
     </para>
 
     <para>
@@ -2457,13 +2473,14 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     In all cases, timezone names are recognized case-insensitively.
-     (This is a change from <productname>PostgreSQL</productname> versions
-     prior to 8.2, which were case-sensitive in some contexts but not others.)
+     In all cases, timezone names and abbreviations are recognized
+     case-insensitively.  (This is a change from <productname>PostgreSQL</>
+     versions prior to 8.2, which were case-sensitive in some contexts but
+     not others.)
     </para>
 
     <para>
-     Neither full names nor abbreviations are hard-wired into the server;
+     Neither timezone names nor abbreviations are hard-wired into the server;
      they are obtained from configuration files stored under
      <filename>.../share/timezone/</> and <filename>.../share/timezonesets/</>
      of the installation directory

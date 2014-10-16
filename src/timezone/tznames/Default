@@ -54,7 +54,7 @@ AKST   -32400    # Alaska Standard Time
                  #     (America/Juneau)
                  #     (America/Nome)
                  #     (America/Yakutat)
-ART    -10800    # Argentina Time
+ART    America/Argentina/Buenos_Aires  # Argentina Time
                  #     (America/Argentina/Buenos_Aires)
                  #     (America/Argentina/Cordoba)
                  #     (America/Argentina/Tucuman)
@@ -65,7 +65,7 @@ ART    -10800    # Argentina Time
                  #     (America/Argentina/Mendoza)
                  #     (America/Argentina/Rio_Gallegos)
                  #     (America/Argentina/Ushuaia)
-ARST    -7200 D  # Argentina Summer Time
+ARST    America/Argentina/Buenos_Aires  # Argentina Summer Time
 BOT    -14400    # Bolivia Time
                  #     (America/La_Paz)
 BRA    -10800    # Brazil Time (not in zic)
@@ -170,7 +170,7 @@ FNST    -3600 D  # Fernando de Noronha Summer Time (not in zic)
                  #     (America/Noronha)
 GFT    -10800    # French Guiana Time
                  #     (America/Cayenne)
-GYT    -14400    # Guyana Time
+GYT    America/Guyana  # Guyana Time
                  #     (America/Guyana)
 MDT    -21600 D  # Mexico Mountain Daylight Time
                  # Mountain Daylight Time
@@ -219,13 +219,13 @@ PST    -28800    # Pacific Standard Time
                  #     (Pacific/Pitcairn)
 PYST   -10800 D  # Paraguay Summer Time
                  #     (America/Asuncion)
-PYT    -14400    # Paraguay Time
+PYT    America/Asuncion  # Paraguay Time
                  #     (America/Asuncion)
 UYST    -7200 D  # Uruguay Summer Time
                  #     (America/Montevideo)
 UYT    -10800    # Uruguay Time
                  #     (America/Montevideo)
-VET    -16200    # Venezuela Time (caution: this used to mean -14400)
+VET    America/Caracas  # Venezuela Time
                  #     (America/Caracas)
 WGST    -7200 D  # Western Greenland Summer Time
                  #     (America/Godthab)
@@ -234,13 +234,13 @@ WGT    -10800    # West Greenland Time
 
 #################### ANTARCTICA ####################
 
-DAVT    25200    # Davis Time (Antarctica)
+DAVT    Antarctica/Davis  # Davis Time (Antarctica)
                  #     (Antarctica/Davis)
 DDUT    36000    # Dumont-d'Urville Time (Antarctica)
                  #     (Antarctica/DumontDUrville)
                  #     (Antarctica/Palmer)
                  #     (America/Santiago)
-MAWT    18000    # Mawson Time (Antarctica) (caution: this used to mean 21600)
+MAWT    Antarctica/Mawson  # Mawson Time (Antarctica)
                  #     (Antarctica/Mawson)
 
 #################### ASIA ####################
@@ -253,19 +253,19 @@ ALMST   25200 D  # Alma-Ata Summer Time (obsolete)
 # CONFLICT! AMST is not unique
 # Other timezones:
 #  - AMST: Amazon Summer Time (America)
-AMST    18000 D  # Armenia Summer Time
+AMST    Asia/Yerevan  # Armenia Summer Time
                  #     (Asia/Yerevan)
 # CONFLICT! AMT is not unique
 # Other timezones:
 #  - AMT: Amazon Time (America)
-AMT     14400    # Armenia Time
+AMT     Asia/Yerevan  # Armenia Time
                  #     (Asia/Yerevan)
-ANAST   46800 D  # Anadyr Summer Time (obsolete)
-ANAT    43200    # Anadyr Time
+ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
+ANAT    Asia/Anadyr  # Anadyr Time
                  #     (Asia/Anadyr)
-AZST    18000 D  # Azerbaijan Summer Time
+AZST    Asia/Baku  # Azerbaijan Summer Time
                  #     (Asia/Baku)
-AZT     14400    # Azerbaijan Time
+AZT     Asia/Baku  # Azerbaijan Time
                  #     (Asia/Baku)
 BDT     21600    # Bangladesh Time
                  #     (Asia/Dhaka)
@@ -275,9 +275,8 @@ BORT    28800    # Borneo Time (Indonesia) (not in zic)
 BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
 CCT     28800    # China Coastal Time (not in zic)
-GEST    14400 D  # Georgia Summer Time (obsolete)
-                 #     (Asia/Tbilisi)
-GET     14400    # Georgia Time (caution: this used to mean 10800)
+GEST    Asia/Tbilisi  # Georgia Summer Time (obsolete)
+GET     Asia/Tbilisi  # Georgia Time
                  #     (Asia/Tbilisi)
 HKT     28800    # Hong Kong Time (not in zic)
 ICT     25200    # Indochina Time
@@ -287,8 +286,8 @@ ICT     25200    # Indochina Time
                  #     (Asia/Vientiane)
 IDT     10800 D  # Israel Daylight Time
                  #     (Asia/Jerusalem)
-IRKST   32400 D  # Irkutsk Summer Time (obsolete)
-IRKT    28800    # Irkutsk Time (caution: this used to mean 32400)
+IRKST   Asia/Irkutsk  # Irkutsk Summer Time (obsolete)
+IRKT    Asia/Irkutsk  # Irkutsk Time
                  #     (Asia/Irkutsk)
 IRT     12600    # Iran Time (not in zic)
 # CONFLICT! IST is not unique
@@ -302,33 +301,32 @@ JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
 KDT     36000 D  # Korean Daylight Time (not in zic)
 KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
+KGT     Asia/Bishkek  # Kyrgyzstan Time
                  #     (Asia/Bishkek)
-KGT     21600    # Kyrgyzstan Time (caution: this used to mean 18000)
-                 #     (Asia/Bishkek)
-KRAST   28800 D  # Krasnoyarsk Summer Time (obsolete)
-KRAT    25200    # Krasnoyarsk Time (caution: this used to mean 28800)
+KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
+KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
                  #     (Asia/Krasnoyarsk)
 KST     32400    # Korean Standard Time
                  #     (Asia/Pyongyang)
-LKT     21600    # Lanka Time (obsolete)
-MAGST   43200 D  # Magadan Summer Time (obsolete)
-MAGT    36000    # Magadan Time (caution: this used to mean 43200)
+LKT     Asia/Colombo  # Lanka Time (obsolete)
+MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
+MAGT    Asia/Magadan  # Magadan Time
                  #     (Asia/Magadan)
 MMT     23400    # Myanmar Time
                  #     (Asia/Rangoon)
 MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
-NOVST   25200 D  # Novosibirsk Summer Time (obsolete)
-NOVT    21600    # Novosibirsk Time (caution: this used to mean 25200)
+NOVST   Asia/Novosibirsk  # Novosibirsk Summer Time (obsolete)
+NOVT    Asia/Novosibirsk  # Novosibirsk Time
                  #     (Asia/Novosibirsk)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
-OMSST   25200 D  # Omsk Summer Time (obsolete)
-OMST    21600    # Omsk Time (caution: this used to mean 25200)
+OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
+OMST    Asia/Omsk  # Omsk Time
                  #     (Asia/Omsk)
-PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time (obsolete)
-PETT    43200    # Petropavlovsk-Kamchatski Time
+PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
+PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time
                  #     (Asia/Kamchatka)
 PHT     28800    # Philippine Time
                  #     (Asia/Manila)
@@ -336,14 +334,14 @@ PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
-SGT     28800    # Singapore Time
+SGT     Asia/Singapore  # Singapore Time
                  #     (Asia/Singapore)
 TJT     18000    # Tajikistan Time
                  #     (Asia/Dushanbe)
-TMT     18000    # Turkmenistan Time
+TMT     Asia/Ashgabat  # Turkmenistan Time
                  #     (Asia/Ashgabat)
 ULAST   32400 D  # Ulan Bator Summer Time (obsolete)
-ULAT    28800    # Ulan Bator Time
+ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
                  #     (Asia/Ulaanbaatar)
 UZST    21600 D  # Uzbekistan Summer Time
                  #     (Asia/Samarkand)
@@ -351,16 +349,16 @@ UZST    21600 D  # Uzbekistan Summer Time
 UZT     18000    # Uzbekistan Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
-VLAST   39600 D  # Vladivostok Summer Time (obsolete)
-VLAT    36000    # Vladivostok Time (caution: this used to mean 39600)
+VLAST   Asia/Vladivostok  # Vladivostok Summer Time (obsolete)
+VLAT    Asia/Vladivostok  # Vladivostok Time
                  #     (Asia/Vladivostok)
 XJT     21600    # Xinjiang Time
                  #     (Asia/Urumqi)
-YAKST   36000 D  # Yakutsk Summer Time (obsolete)
-YAKT    32400    # Yakutsk Time (caution: this used to mean 36000)
+YAKST   Asia/Yakutsk  # Yakutsk Summer Time (obsolete)
+YAKT    Asia/Yakutsk  # Yakutsk Time
                  #     (Asia/Yakutsk)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
-YEKT    18000    # Yekaterinburg Time (caution: this used to mean 21600)
+YEKT    Asia/Yekaterinburg  # Yekaterinburg Time
                  #     (Asia/Yekaterinburg)
 
 #################### ATLANTIC ####################
@@ -406,9 +404,9 @@ AZOST       0 D  # Azores Summer Time
                  #     (Atlantic/Azores)
 AZOT    -3600    # Azores Time
                  #     (Atlantic/Azores)
-FKST   -10800    # Falkland Islands Summer Time (now used all year round)
+FKST    Atlantic/Stanley  # Falkland Islands Summer/Standard Time
                  #     (Atlantic/Stanley)
-FKT    -14400    # Falkland Islands Time (obsolete)
+FKT     Atlantic/Stanley  # Falkland Islands Time (obsolete)
 
 #################### AUSTRALIA ####################
 
@@ -443,7 +441,7 @@ AWST    28800    # Australian Western Standard Time
                  #     (Australia/Perth)
 CADT    37800 D  # Central Australia Daylight-Saving Time (not in zic)
 CAST    34200    # Central Australia Standard Time (not in zic)
-LHDT    39600 D  # Lord Howe Daylight Time
+LHDT    Australia/Lord_Howe  # Lord Howe Daylight Time
                  #     (Australia/Lord_Howe)
 LHST    37800    # Lord Howe Standard Time
                  #     (Australia/Lord_Howe)
@@ -639,9 +637,10 @@ MET      3600    # Middle Europe Time (not in zic)
 METDST   7200 D  # Middle Europe Summer Time (not in zic)
 MEZ      3600    # Mitteleuropaeische Zeit (German) (not in zic)
 MSD     14400 D  # Moscow Daylight Time (obsolete)
-MSK     10800    # Moscow Time (caution: this used to mean 14400)
+MSK     Europe/Moscow  # Moscow Time
                  #     (Europe/Moscow)
-VOLT    14400    # Volgograd Time (obsolete)
+                 #     (Europe/Volgograd)
+VOLT    Europe/Volgograd  # Volgograd Time (obsolete)
 WET         0    # Western Europe Time
                  #     (Africa/Casablanca)
                  #     (Africa/El_Aaiun)
@@ -659,7 +658,7 @@ WETDST   3600 D  # Western Europe Summer Time
 
 CXT     25200    # Christmas Island Time (Indian Ocean)
                  #     (Indian/Christmas)
-IOT     21600    # British Indian Ocean Territory (Chagos) (there was a timezone change recently in 1996)
+IOT     Indian/Chagos  # British Indian Ocean Territory (Chagos)
                  #     (Indian/Chagos)
 MUT     14400    # Mauritius Island Time
                  #     (Indian/Mauritius)
@@ -682,11 +681,11 @@ CHAST   45900    # Chatham Standard Time (New Zealand)
                  #     (Pacific/Chatham)
 CHUT    36000    # Chuuk Time
                  #     (Pacific/Chuuk)
-CKT    -36000    # Cook Islands Time (caution: this used to mean 43200)
+CKT     Pacific/Rarotonga  # Cook Islands Time
                  #     (Pacific/Rarotonga)
-EASST  -18000 D  # Easter Island Summer Time (Chile)
+EASST   Pacific/Easter  # Easter Island Summer Time (Chile)
                  #     (Pacific/Easter)
-EAST   -21600    # Easter Island Time (Chile)
+EAST    Pacific/Easter  # Easter Island Time (Chile)
                  #     (Pacific/Easter)
 FJST    46800 D  # Fiji Summer Time
                  #     (Pacific/Fiji)
@@ -701,9 +700,9 @@ GILT    43200    # Gilbert Islands Time
 HST    -36000    # Hawaiian Standard Time
                  #     (Pacific/Honolulu)
                  #     (Pacific/Johnston)
-KOST    39600    # Kosrae Time
+KOST    Pacific/Kosrae  # Kosrae Time
                  #     (Pacific/Kosrae)
-LINT    50400    # Line Islands Time (Kiribati)
+LINT    Pacific/Kiritimati  # Line Islands Time (Kiribati)
                  #     (Pacific/Kiritimati)
 MART   -34200    # Marquesas Time
                  #     (Pacific/Marquesas)
@@ -715,7 +714,7 @@ MPT     36000    # North Mariana Islands Time (not in zic)
 # Other timezones:
 #  - NFT: Norfolk Time (Pacific)
 NFT    -12600    # Newfoundland Time (not in zic)
-NUT    -39600    # Niue Time
+NUT     Pacific/Niue  # Niue Time
                  #     (Pacific/Niue)
 NZDT    46800 D  # New Zealand Daylight Time
                  #     (Antarctica/McMurdo)
@@ -725,7 +724,7 @@ NZST    43200    # New Zealand Standard Time
                  #     (Pacific/Auckland)
 PGT     36000    # Papua New Guinea Time
                  #     (Pacific/Port_Moresby)
-PHOT    46800    # Phoenix Islands Time (Kiribati)
+PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati)
                  #     (Pacific/Enderbury)
 PONT    39600    # Ponape Time (Micronesia)
                  #     (Pacific/Ponape)
@@ -733,7 +732,7 @@ PWT     32400    # Palau Time
                  #     (Pacific/Palau)
 TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
-TKT     46800    # Tokelau Time (caution: this used to mean -36000)
+TKT     Pacific/Fakaofo  # Tokelau Time
                  #     (Pacific/Fakaofo)
 TOT     46800    # Tonga Time
                  #     (Pacific/Tongatapu)

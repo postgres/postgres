@@ -16,14 +16,14 @@ ChST    36000    # Chamorro Standard Time (lower case "h" is as in zic)
                  #     (Pacific/Saipan)
 CHUT    36000    # Chuuk Time
                  #     (Pacific/Chuuk)
-CKT    -36000    # Cook Islands Time (caution: this used to mean 43200)
+CKT     Pacific/Rarotonga  # Cook Islands Time
                  #     (Pacific/Rarotonga)
-EASST  -18000 D  # Easter Island Summer Time (Chile)
+EASST   Pacific/Easter  # Easter Island Summer Time (Chile)
                  #     (Pacific/Easter)
 # CONFLICT! EAST is not unique
 # Other timezones:
 #  - EAST: East Australian Standard Time (Australia)
-EAST   -21600    # Easter Island Time (Chile)
+EAST    Pacific/Easter  # Easter Island Time (Chile)
                  #     (Pacific/Easter)
 FJST    46800 D  # Fiji Summer Time (caution: this used to mean -46800)
                  #     (Pacific/Fiji)
@@ -38,9 +38,9 @@ GILT    43200    # Gilbert Islands Time
 HST    -36000    # Hawaiian Standard Time
                  #     (Pacific/Honolulu)
                  #     (Pacific/Johnston)
-KOST    39600    # Kosrae Time
+KOST    Pacific/Kosrae  # Kosrae Time
                  #     (Pacific/Kosrae)
-LINT    50400    # Line Islands Time (Kiribati)
+LINT    Pacific/Kiritimati  # Line Islands Time (Kiribati)
                  #     (Pacific/Kiritimati)
 MART   -34200    # Marquesas Time
                  #     (Pacific/Marquesas)
@@ -55,9 +55,9 @@ NCT     39600    # New Caledonia Time
 #  - NFT: Newfoundland Time (America)
 NFT     41400    # Norfolk Time
                  #     (Pacific/Norfolk)
-NRT     43200    # Nauru Time
+NRT     Pacific/Nauru  # Nauru Time
                  #     (Pacific/Nauru)
-NUT    -39600    # Niue Time
+NUT     Pacific/Niue  # Niue Time
                  #     (Pacific/Niue)
 NZDT    46800 D  # New Zealand Daylight Time
                  #     (Antarctica/McMurdo)
@@ -67,7 +67,7 @@ NZST    43200    # New Zealand Standard Time
                  #     (Pacific/Auckland)
 PGT     36000    # Papua New Guinea Time
                  #     (Pacific/Port_Moresby)
-PHOT    46800    # Phoenix Islands Time (Kiribati)
+PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati)
                  #     (Pacific/Enderbury)
 PONT    39600    # Ponape Time (Micronesia)
                  #     (Pacific/Ponape)
@@ -87,7 +87,7 @@ SST    -39600    # South Sumatran Time
                  #     (Pacific/Pago_Pago)
 TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
-TKT     46800    # Tokelau Time (caution: this used to mean -36000)
+TKT     Pacific/Fakaofo  # Tokelau Time
                  #     (Pacific/Fakaofo)
 TOT     46800    # Tonga Time
                  #     (Pacific/Tongatapu)
