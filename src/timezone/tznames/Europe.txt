@@ -186,12 +186,13 @@ MET      3600    # Middle Europe Time (not in zic)
 METDST   7200 D  # Middle Europe Summer Time (not in zic)
 MEZ      3600    # Mitteleuropäische Zeit (German) (not in zic)
 MSD     14400 D  # Moscow Daylight Time (obsolete)
-MSK     10800    # Moscow Time (caution: this used to mean 14400)
+MSK     Europe/Moscow  # Moscow Time
                  #     (Europe/Moscow)
-SAMST   18000 D  # Samara Summer Time (obsolete)
-SAMT    14400    # Samara Time
+                 #     (Europe/Volgograd)
+SAMST   Europe/Samara  # Samara Summer Time (obsolete)
+SAMT    Europe/Samara  # Samara Time
                  #     (Europe/Samara)
-VOLT    14400    # Volgograd Time (obsolete)
+VOLT    Europe/Volgograd  # Volgograd Time (obsolete)
 WEST     3600 D  # Western Europe Summer Time
                  #     (Africa/Casablanca)
                  #     (Atlantic/Canary)
