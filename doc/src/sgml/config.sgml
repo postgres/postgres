@@ -5221,9 +5221,9 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Sets the collection of time zone abbreviations that will be accepted
         by the server for datetime input.  The default is <literal>'Default'</>,
         which is a collection that works in most of the world; there are
-        also <literal>'Australia'</literal> and <literal>'India'</literal>, and other collections can be defined
-        for a particular installation.  See <xref
-        linkend="datetime-appendix"> for more information.
+        also <literal>'Australia'</literal> and <literal>'India'</literal>,
+        and other collections can be defined for a particular installation.
+        See <xref linkend="datetime-config-files"> for more information.
        </para>
       </listitem>
      </varlistentry>

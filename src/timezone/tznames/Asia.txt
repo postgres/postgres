@@ -15,17 +15,19 @@ ALMT    21600    # Alma-Ata Time
 # CONFLICT! AMST is not unique
 # Other timezones:
 #  - AMST: Amazon Summer Time (America)
-AMST    18000 D  # Armenia Summer Time
+AMST    Asia/Yerevan  # Armenia Summer Time
                  #     (Asia/Yerevan)
 # CONFLICT! AMT is not unique
 # Other timezones:
 #  - AMT: Amazon Time (America)
-AMT     14400    # Armenia Time
+AMT     Asia/Yerevan  # Armenia Time
                  #     (Asia/Yerevan)
-ANAST   46800 D  # Anadyr Summer Time (obsolete)
-ANAT    43200    # Anadyr Time
+ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
+ANAT    Asia/Anadyr  # Anadyr Time
                  #     (Asia/Anadyr)
-AQTT    18000    # Aqtau Time (obsolete)
+AQTST   Asia/Aqtau  # Aqtau Summer Time (obsolete)
+AQTT    Asia/Aqtau  # Aqtau Time
+                 #     (Asia/Aqtau)
 # CONFLICT! AST is not unique
 # Other timezones:
 #  - AST: Atlantic Standard Time (America)
@@ -41,9 +43,9 @@ AST     10800    # Arabia Standard Time
                  #     (Asia/Kuwait)
                  #     (Asia/Qatar)
                  #     (Asia/Riyadh)
-AZST    18000 D  # Azerbaijan Summer Time
+AZST    Asia/Baku  # Azerbaijan Summer Time
                  #     (Asia/Baku)
-AZT     14400    # Azerbaijan Time
+AZT     Asia/Baku  # Azerbaijan Time
                  #     (Asia/Baku)
 BDT     21600    # Bangladesh Time
                  #     (Asia/Dhaka)
@@ -54,7 +56,7 @@ BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
 CCT     28800    # China Coastal Time (not in zic)
 CHOST   36000 D  # Choibalsan Summer Time (obsolete)
-CHOT    28800    # Choibalsan Time (caution: this used to mean 32400)
+CHOT    Asia/Choibalsan  # Choibalsan Time
                  #     (Asia/Choibalsan)
 CIT     28800    # Central Indonesia Time (obsolete, WITA is now preferred)
 EEST    10800 D  # East-Egypt Summer Time
@@ -105,9 +107,8 @@ EET      7200    # East-Egypt Time
                  #     (Europe/Vilnius)
                  #     (Europe/Zaporozhye)
 EIT     32400    # East Indonesia Time (obsolete, WIT is now preferred)
-GEST    14400 D  # Georgia Summer Time (obsolete)
-                 #     (Asia/Tbilisi)
-GET     14400    # Georgia Time (caution: this used to mean 10800)
+GEST    Asia/Tbilisi  # Georgia Summer Time (obsolete)
+GET     Asia/Tbilisi  # Georgia Time
                  #     (Asia/Tbilisi)
 # CONFLICT! GST is not unique
 # Other timezones:
@@ -117,7 +118,7 @@ GST     14400    # Gulf Standard Time
                  #     (Asia/Muscat)
 HKT     28800    # Hong Kong Time (not in zic)
 HOVST   28800 D  # Hovd Summer Time (obsolete)
-HOVT    25200    # Hovd Time
+HOVT    Asia/Hovd  # Hovd Time
                  #     (Asia/Hovd)
 ICT     25200    # Indochina Time
                  #     (Asia/Bangkok)
@@ -126,12 +127,12 @@ ICT     25200    # Indochina Time
                  #     (Asia/Vientiane)
 IDT     10800 D  # Israel Daylight Time
                  #     (Asia/Jerusalem)
-IRDT    16200 D  # Iran Daylight Time
+IRDT    Asia/Tehran  # Iran Daylight Time
                  #     (Asia/Tehran)
-IRKST   32400 D  # Irkutsk Summer Time (obsolete)
-IRKT    28800    # Irkutsk Time (caution: this used to mean 32400)
+IRKST   Asia/Irkutsk  # Irkutsk Summer Time (obsolete)
+IRKT    Asia/Irkutsk  # Irkutsk Time
                  #     (Asia/Irkutsk)
-IRST    12600    # Iran Standard Time
+IRST    Asia/Tehran  # Iran Standard Time
                  #     (Asia/Tehran)
 IRT     12600    # Iran Time (not in zic)
 # CONFLICT! IST is not unique
@@ -151,35 +152,34 @@ JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
 KDT     36000 D  # Korean Daylight Time (not in zic)
 KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
+KGT     Asia/Bishkek  # Kyrgyzstan Time
                  #     (Asia/Bishkek)
-KGT     21600    # Kyrgyzstan Time (caution: this used to mean 18000)
-                 #     (Asia/Bishkek)
-KRAST   28800 D  # Krasnoyarsk Summer Time (obsolete)
-KRAT    25200    # Krasnoyarsk Time (caution: this used to mean 28800)
+KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
+KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
                  #     (Asia/Krasnoyarsk)
 KST     32400    # Korean Standard Time
                  #     (Asia/Pyongyang)
-LKT     21600    # Lanka Time (obsolete)
-MAGST   43200 D  # Magadan Summer Time (obsolete)
-MAGT    36000    # Magadan Time (caution: this used to mean 43200)
+LKT     Asia/Colombo  # Lanka Time (obsolete)
+MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
+MAGT    Asia/Magadan  # Magadan Time
                  #     (Asia/Magadan)
 MMT     23400    # Myanmar Time
                  #     (Asia/Rangoon)
 MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
-NOVST   25200 D  # Novosibirsk Summer Time (obsolete)
-NOVT    21600    # Novosibirsk Time (caution: this used to mean 25200)
+NOVST   Asia/Novosibirsk  # Novosibirsk Summer Time (obsolete)
+NOVT    Asia/Novosibirsk  # Novosibirsk Time
                  #     (Asia/Novosibirsk)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
-OMSST   25200 D  # Omsk Summer Time (obsolete)
-OMST    21600    # Omsk Time (caution: this used to mean 25200)
+OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
+OMST    Asia/Omsk  # Omsk Time
                  #     (Asia/Omsk)
-ORAT    18000    # Oral Time
+ORAT    Asia/Oral  # Oral Time
                  #     (Asia/Oral)
-PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time (obsolete)
-PETT    43200    # Petropavlovsk-Kamchatski Time
+PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
+PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time
                  #     (Asia/Kamchatka)
 PHT     28800    # Philippine Time
                  #     (Asia/Manila)
@@ -189,10 +189,10 @@ PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
 QYZT    21600    # Kizilorda Time
                  #     (Asia/Qyzylorda)
-SAKST   39600 D  # Sakhalin Summer Time (obsolete)
-SAKT    36000    # Sakhalin Time (caution: this used to mean 39600)
+SAKST   Asia/Sakhalin  # Sakhalin Summer Time (obsolete)
+SAKT    Asia/Sakhalin  # Sakhalin Time
                  #     (Asia/Sakhalin)
-SGT     28800    # Singapore Time
+SGT     Asia/Singapore  # Singapore Time
                  #     (Asia/Singapore)
 SRET    39600    # Srednekolymsk Time
                  #     (Asia/Srednekolymsk)
@@ -200,10 +200,10 @@ TJT     18000    # Tajikistan Time
                  #     (Asia/Dushanbe)
 TLT     32400    # East Timor Time
                  #     (Asia/Dili)
-TMT     18000    # Turkmenistan Time
+TMT     Asia/Ashgabat  # Turkmenistan Time
                  #     (Asia/Ashgabat)
 ULAST   32400 D  # Ulan Bator Summer Time (obsolete)
-ULAT    28800    # Ulan Bator Time
+ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
                  #     (Asia/Ulaanbaatar)
 UZST    21600 D  # Uzbekistan Summer Time
                  #     (Asia/Samarkand)
@@ -211,8 +211,8 @@ UZST    21600 D  # Uzbekistan Summer Time
 UZT     18000    # Uzbekistan Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
-VLAST   39600 D  # Vladivostok Summer Time (obsolete)
-VLAT    36000    # Vladivostok Time (caution: this used to mean 39600)
+VLAST   Asia/Vladivostok  # Vladivostok Summer Time (obsolete)
+VLAT    Asia/Vladivostok  # Vladivostok Time
                  #     (Asia/Vladivostok)
 WIB     25200    # Waktu Indonesia Barat
                  #     (Asia/Jakarta)
@@ -223,9 +223,9 @@ WITA    28800    # Waktu Indonesia Tengah
                  #     (Asia/Makassar)
 XJT     21600    # Xinjiang Time
                  #     (Asia/Urumqi)
-YAKST   36000 D  # Yakutsk Summer Time (obsolete)
-YAKT    32400    # Yakutsk Time (caution: this used to mean 36000)
+YAKST   Asia/Yakutsk  # Yakutsk Summer Time (obsolete)
+YAKT    Asia/Yakutsk  # Yakutsk Time
                  #     (Asia/Yakutsk)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
-YEKT    18000    # Yekaterinburg Time (caution: this used to mean 21600)
+YEKT    Asia/Yekaterinburg  # Yekaterinburg Time
                  #     (Asia/Yekaterinburg)

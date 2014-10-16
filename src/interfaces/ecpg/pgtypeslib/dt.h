@@ -42,6 +42,7 @@ typedef double fsec_t;
 
 
 #define DAGO			"ago"
+#define DCURRENT		"current"
 #define EPOCH			"epoch"
 #define INVALID			"invalid"
 #define EARLY			"-infinity"
@@ -68,7 +69,6 @@ typedef double fsec_t;
 #define DA_D			"ad"
 #define DB_C			"bc"
 #define DTIMEZONE		"timezone"
-#define DCURRENT		   "current"
 
 /*
  * Fundamental time field definitions for parsing.
@@ -85,7 +85,7 @@ typedef double fsec_t;
 #define BC		1
 
 /*
- * Fields for time decoding.
+ * Field types for time decoding.
  *
  * Can't have more of these than there are bits in an unsigned int
  * since these are turned into bit masks during parsing and decoding.
@@ -103,9 +103,9 @@ typedef double fsec_t;
 #define YEAR	2
 #define DAY		3
 #define JULIAN	4
-#define TZ		5
-#define DTZ		6
-#define DTZMOD	7
+#define TZ		5				/* fixed-offset timezone abbreviation */
+#define DTZ		6				/* fixed-offset timezone abbrev, DST */
+#define DYNTZ	7				/* dynamic timezone abbr (unimplemented) */
 #define IGNORE_DTF	8
 #define AMPM	9
 #define HOUR	10
@@ -124,19 +124,25 @@ typedef double fsec_t;
 /* generic fields to help with parsing */
 #define ISODATE 22
 #define ISOTIME 23
+/* hack for parsing two-word timezone specs "MET DST" etc */
+#define DTZMOD	28				/* "DST" as a separate word */
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
 
 
 /*
  * Token field definitions for time parsing and decoding.
- * These need to fit into the datetkn table type.
- * At the moment, that means keep them within [-127,127].
- * These are also used for bit masks in DecodeDateDelta()
+ *
+ * Some field type codes (see above) use these as the "value" in datetktbl[].
+ * These are also used for bit masks in DecodeDateTime and friends
  *	so actually restrict them to within [0,31] for now.
  * - thomas 97/06/19
- * Not all of these fields are used for masks in DecodeDateDelta
+ * Not all of these fields are used for masks in DecodeDateTime
  *	so allow some larger than 31. - thomas 1997-11-17
+ *
+ * Caution: there are undocumented assumptions in the code that most of these
+ * values are not equal to IGNORE_DTF nor RESERV.  Be very careful when
+ * renumbering values in either of these apparently-independent lists :-(
  */
 
 #define DTK_NUMBER		0
@@ -207,13 +213,9 @@ typedef double fsec_t;
 /* keep this struct small; it gets used a lot */
 typedef struct
 {
-#if defined(_AIX)
-	char	   *token;
-#else
-	char		token[TOKMAXLEN];
-#endif   /* _AIX */
-	char		type;
-	char		value;			/* this may be unsigned, alas */
+	char		token[TOKMAXLEN + 1];	/* always NUL-terminated */
+	char		type;			/* see field type codes above */
+	int32		value;			/* meaning depends on type */
 } datetkn;
 
 

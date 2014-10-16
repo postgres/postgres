@@ -16,11 +16,11 @@ CLST   -10800 D  # Chile Summer Time
 CLT    -14400    # Chile Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
-DAVT    25200    # Davis Time (Antarctica)
+DAVT    Antarctica/Davis  # Davis Time (Antarctica)
                  #     (Antarctica/Davis)
 DDUT    36000    # Dumont-d`Urville Time (Antarctica)
                  #     (Antarctica/DumontDUrville)
-MAWT    18000    # Mawson Time (Antarctica) (caution: this used to mean 21600)
+MAWT    Antarctica/Mawson  # Mawson Time (Antarctica)
                  #     (Antarctica/Mawson)
 MIST    39600    # Macquarie Island Time
                  #     (Antarctica/Macquarie)
