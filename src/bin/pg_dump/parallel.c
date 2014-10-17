@@ -1331,7 +1331,8 @@ readMessageFromPipe(int fd)
 static int
 pgpipe(int handles[2])
 {
-	pgsocket		s, tmp_sock;
+	pgsocket	s,
+				tmp_sock;
 	struct sockaddr_in serv_addr;
 	int			len = sizeof(serv_addr);
 

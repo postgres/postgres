@@ -57,7 +57,7 @@ static void buildShSecLabels(PGconn *conn, const char *catalog_name,
 				 uint32 objectId, PQExpBuffer buffer,
 				 const char *target, const char *objname);
 static PGconn *connectDatabase(const char *dbname, const char *connstr, const char *pghost, const char *pgport,
-	  const char *pguser, trivalue prompt_password, bool fail_on_error);
+		   const char *pguser, trivalue prompt_password, bool fail_on_error);
 static char *constructConnStr(const char **keywords, const char **values);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
@@ -1277,7 +1277,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
+					  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
@@ -1287,7 +1287,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
@@ -1297,7 +1297,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
@@ -1307,7 +1307,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
@@ -1419,7 +1419,7 @@ dumpCreateDB(PGconn *conn)
 			{
 				appendPQExpBufferStr(buf, "-- For binary upgrade, set datfrozenxid and datminmxid.\n");
 				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database "
-								  "SET datfrozenxid = '%u', datminmxid = '%u' "
+								"SET datfrozenxid = '%u', datminmxid = '%u' "
 								  "WHERE datname = ",
 								  dbfrozenxid, dbminmxid);
 				appendStringLiteralConn(buf, dbname, conn);

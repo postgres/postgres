@@ -32,8 +32,8 @@ typedef enum
 /* Arguments needed for a worker process */
 typedef struct ParallelArgs
 {
-	ArchiveHandle	*AH;
-	TocEntry *te;
+	ArchiveHandle *AH;
+	TocEntry   *te;
 } ParallelArgs;
 
 /* State for each parallel activity slot */
