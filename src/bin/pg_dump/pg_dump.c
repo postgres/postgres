@@ -2939,7 +2939,7 @@ dumpRowSecurity(Archive *fout, DumpOptions *dopt, RowSecurityInfo *rsinfo)
 		cmd = "SELECT";
 	else if (strcmp(rsinfo->rseccmd, "a") == 0)
 		cmd = "INSERT";
-	else if (strcmp(rsinfo->rseccmd, "u") == 0)
+	else if (strcmp(rsinfo->rseccmd, "w") == 0)
 		cmd = "UPDATE";
 	else if (strcmp(rsinfo->rseccmd, "d") == 0)
 		cmd = "DELETE";
