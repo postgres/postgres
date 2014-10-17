@@ -9273,7 +9273,6 @@ dumpCompositeType(Archive *fout, DumpOptions *dopt, TypeInfo *tyinfo)
 	int			i_attalign;
 	int			i_attisdropped;
 	int			i_attcollation;
-	int			i_typrelid;
 	int			i;
 	int			actual_atts;
 
@@ -9294,8 +9293,7 @@ dumpCompositeType(Archive *fout, DumpOptions *dopt, TypeInfo *tyinfo)
 			"pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
 						  "a.attlen, a.attalign, a.attisdropped, "
 						  "CASE WHEN a.attcollation <> at.typcollation "
-						  "THEN a.attcollation ELSE 0 END AS attcollation, "
-						  "ct.typrelid "
+						  "THEN a.attcollation ELSE 0 END AS attcollation "
 						  "FROM pg_catalog.pg_type ct "
 				"JOIN pg_catalog.pg_attribute a ON a.attrelid = ct.typrelid "
 					"LEFT JOIN pg_catalog.pg_type at ON at.oid = a.atttypid "
@@ -9313,8 +9311,7 @@ dumpCompositeType(Archive *fout, DumpOptions *dopt, TypeInfo *tyinfo)
 		appendPQExpBuffer(query, "SELECT a.attname, "
 			"pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
 						  "a.attlen, a.attalign, a.attisdropped, "
-						  "0 AS attcollation, "
-						  "ct.typrelid "
+						  "0 AS attcollation "
 					 "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a "
 						  "WHERE ct.oid = '%u'::pg_catalog.oid "
 						  "AND a.attrelid = ct.typrelid "
@@ -9332,15 +9329,12 @@ dumpCompositeType(Archive *fout, DumpOptions *dopt, TypeInfo *tyinfo)
 	i_attalign = PQfnumber(res, "attalign");
 	i_attisdropped = PQfnumber(res, "attisdropped");
 	i_attcollation = PQfnumber(res, "attcollation");
-	i_typrelid = PQfnumber(res, "typrelid");
 
 	if (dopt->binary_upgrade)
 	{
-		Oid			typrelid = atooid(PQgetvalue(res, 0, i_typrelid));
-
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid);
-		binary_upgrade_set_pg_class_oids(fout, q, typrelid, false);
+		binary_upgrade_set_pg_class_oids(fout, q, tyinfo->typrelid, false);
 	}
 
 	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
