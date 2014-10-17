@@ -293,7 +293,8 @@ StreamLog(void)
 	/*
 	 * Connect in replication mode to the server
 	 */
-	conn = GetConnection();
+	if (conn == NULL)
+		conn = GetConnection();
 	if (!conn)
 		/* Error message already written in GetConnection() */
 		return;
@@ -345,6 +346,7 @@ StreamLog(void)
 					  fsync_interval);
 
 	PQfinish(conn);
+	conn = NULL;
 }
 
 /*
@@ -590,6 +592,11 @@ main(int argc, char **argv)
 		if (!CreateReplicationSlot(conn, replication_slot, NULL, NULL, true))
 			disconnect_and_exit(1);
 	}
+
+	/*
+	 * Don't close the connection here so that subsequent StreamLog()
+	 * can reuse it.
+	 */
 
 	while (true)
 	{
