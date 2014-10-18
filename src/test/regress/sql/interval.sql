@@ -183,8 +183,6 @@ SELECT interval '123 2:03 -2:04'; -- not ok, redundant hh:mm fields
 SELECT interval(0) '1 day 01:23:45.6789';
 SELECT interval(2) '1 day 01:23:45.6789';
 SELECT interval '12:34.5678' minute to second(2);  -- per SQL spec
-SELECT interval(2) '12:34.5678' minute to second;  -- historical PG
-SELECT interval(2) '12:34.5678' minute to second(2);  -- syntax error
 SELECT interval '1.234' second;
 SELECT interval '1.234' second(2);
 SELECT interval '1 2.345' day to second(2);
