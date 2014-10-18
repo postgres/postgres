@@ -1470,7 +1470,10 @@ _outPathInfo(StringInfo str, const Path *node)
 {
 	WRITE_ENUM_FIELD(pathtype, NodeTag);
 	appendStringInfo(str, " :parent_relids ");
-	_outBitmapset(str, node->parent->relids);
+	if (node->parent)
+		_outBitmapset(str, node->parent->relids);
+	else
+		_outBitmapset(str, NULL);
 	appendStringInfo(str, " :required_outer ");
 	if (node->param_info)
 		_outBitmapset(str, node->param_info->ppi_req_outer);
