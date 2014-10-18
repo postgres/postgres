@@ -403,6 +403,10 @@ extern int	getopt(int nargc, char *const * nargv, const char *ostr);
 extern int	isinf(double x);
 #endif
 
+#ifndef HAVE_MKDTEMP
+extern char *mkdtemp(char *path);
+#endif
+
 #ifndef HAVE_RINT
 extern double rint(double x);
 #endif
@@ -463,8 +467,5 @@ extern void qsort_arg(void *base, size_t nel, size_t elsize,
 
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype);
-
-/* port/mkdtemp.c */
-extern char *mkdtemp(char *path);
 
 #endif   /* PG_PORT_H */
