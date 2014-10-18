@@ -11,7 +11,7 @@ CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
 CREATE INDEX test_replica_identity_hash ON test_replica_identity USING hash (nonkey);
-WARNING:  hash indexes are not WAL-logged and thus are not crash-safe and cannot be used on standby servers
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
 CREATE UNIQUE INDEX test_replica_identity_expr ON test_replica_identity (keya, keyb, (3));
 CREATE UNIQUE INDEX test_replica_identity_partial ON test_replica_identity (keya, keyb) WHERE keyb != '3';
 -- default is 'd'/DEFAULT for user created tables

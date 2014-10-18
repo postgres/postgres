@@ -474,7 +474,8 @@ Indexes:
     Also, changes to hash indexes are not replicated over streaming or
     file-based replication after the initial base backup, so they
     give wrong answers to queries that subsequently use them.
-    For these reasons, hash index use is presently discouraged.
+    Hash indexes are also not properly restored during point-in-time
+    recovery.  For these reasons, hash index use is presently discouraged.
    </para>
   </caution>
 

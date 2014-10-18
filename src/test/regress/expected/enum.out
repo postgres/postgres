@@ -383,7 +383,7 @@ DROP INDEX enumtest_btree;
 -- Hash index / opclass with the = operator
 --
 CREATE INDEX enumtest_hash ON enumtest USING hash (col);
-WARNING:  hash indexes are not WAL-logged and thus are not crash-safe and cannot be used on standby servers
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
 SELECT * FROM enumtest WHERE col = 'orange';
   col   
 --------
