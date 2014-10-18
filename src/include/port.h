@@ -390,6 +390,10 @@ extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
 extern int	isinf(double x);
 #endif
 
+#ifndef HAVE_MKDTEMP
+extern char *mkdtemp(char *path);
+#endif
+
 #ifndef HAVE_RINT
 extern double rint(double x);
 #endif
@@ -465,9 +469,6 @@ extern int	pg_check_dir(const char *dir);
 
 /* port/pgmkdirp.c */
 extern int	pg_mkdir_p(char *path, int omode);
-
-/* port/mkdtemp.c */
-extern char *mkdtemp(char *path);
 
 /* port/pqsignal.c */
 typedef void (*pqsigfunc) (int signo);
