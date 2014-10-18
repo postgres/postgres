@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_receivexlog</refname>
-  <refpurpose>streams transaction logs from a <productname>PostgreSQL</productname> cluster</refpurpose>
+  <refpurpose>stream transaction logs from a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -71,10 +71,6 @@ PostgreSQL documentation
  <refsect1>
   <title>Options</title>
 
-   <para>
-    The following command-line options control the location and format of the
-    output.
-
     <variablelist>
      <varlistentry>
       <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
@@ -88,12 +84,7 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
-   <para>
-    The following command-line options control the running of the program.
 
-    <variablelist>
      <varlistentry>
       <term><option>-n</option></term>
       <term><option>--no-loop</option></term>
@@ -106,6 +97,39 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
+      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the number of seconds between status packets sent back to the
+        server. This allows for easier monitoring of the progress from server.
+        A value of zero disables the periodic status updates completely,
+        although an update will still be sent when requested by the server, to
+        avoid timeout disconnect. The default value is 10 seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S <replaceable>slotname</replaceable></option></term>
+      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
+      <listitem>
+        <para>
+         Require <application>pg_receivexlog</application> to use an existing
+         replication slot (see <xref linkend="streaming-replication-slots">).
+         When this option is used, <application>pg_receivexlog</> will report
+         a flush position to the server, indicating when each segment has been
+         synchronized to disk so that the server can remove that segment if it
+         is not otherwise needed.  When using this parameter, it is important
+         to make sure that <application>pg_receivexlog</> cannot become the
+         synchronous standby through an incautious setting of
+         <xref linkend="guc-synchronous-standby-names">; it does not flush
+         data frequently enough for this to work correctly.
+        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>
       <listitem>
@@ -114,9 +138,7 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-
     </variablelist>
-   </para>
 
    <para>
     The following command-line options control the database connection parameters.
@@ -167,20 +189,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
-      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
-      <listitem>
-       <para>
-        Specifies the number of seconds between status packets sent back to the
-        server. This allows for easier monitoring of the progress from server.
-        A value of zero disables the periodic status updates completely,
-        although an update will still be sent when requested by the server, to
-        avoid timeout disconnect. The default value is 10 seconds.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-U <replaceable>username</replaceable></option></term>
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
@@ -223,25 +231,6 @@ PostgreSQL documentation
         In some cases it is worth typing <option>-W</> to avoid the extra
         connection attempt.
        </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-S <replaceable>slotname</replaceable></option></term>
-      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
-      <listitem>
-        <para>
-         Require <application>pg_receivexlog</application> to use an existing
-         replication slot (see <xref linkend="streaming-replication-slots">).
-         When this option is used, <application>pg_receivexlog</> will report
-         a flush position to the server, indicating when each segment has been
-         synchronized to disk so that the server can remove that segment if it
-         is not otherwise needed.  When using this parameter, it is important
-         to make sure that <application>pg_receivexlog</> cannot become the
-         synchronous standby through an incautious setting of
-         <xref linkend="guc-synchronous-standby-names">; it does not flush
-         data frequently enough for this to work correctly.
-        </para>
       </listitem>
      </varlistentry>
     </variablelist>
