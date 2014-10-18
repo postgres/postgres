@@ -77,8 +77,10 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
    Only the database owner or a superuser can do this; you must also have
    create privilege for the new tablespace.
    This command physically moves any tables or indexes in the database's old
-   default tablespace to the new tablespace.  Note that tables and indexes
-   in non-default tablespaces are not affected.
+   default tablespace to the new tablespace.  The new default tablespace
+   for this database must be empty, and no one can be connected to
+   the database.  Tables and indexes in non-default tablespaces are
+   unaffected.
   </para>
 
   <para>
