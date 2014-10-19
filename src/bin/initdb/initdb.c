@@ -1288,7 +1288,7 @@ setup_config(void)
 	conflines = replace_token(conflines, "#dynamic_shared_memory_type = posix",
 							  repltok);
 
-#if !USE_PREFETCH
+#ifndef USE_PREFETCH
 	conflines = replace_token(conflines,
 							  "#effective_io_concurrency = 1",
 							  "#effective_io_concurrency = 0");
