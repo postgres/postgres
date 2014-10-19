@@ -54,23 +54,25 @@ no rows returned for \gset
 \unset FETCH_COUNT
 -- show all pset options
 \pset
-Border style (border) is 1.
-Target width (columns) unset.
-Expanded display (expanded) is off.
-Field separator (fieldsep) is "|".
-Default footer (footer) is on.
-Output format (format) is aligned.
-Line style (linestyle) is ascii.
-Null display (null) is "".
-Locale-adjusted numeric output (numericlocale) is off.
-Pager (pager) is used for long output.
-Record separator (recordsep) is <newline>.
-Table attributes (tableattr) unset.
-Title (title) unset.
-Tuples only (tuples_only) is off.
-Unicode border linestyle is "single".
-Unicode column linestyle is "single".
-Unicode border linestyle is "single".
+border                   1
+columns                  0
+expanded                 off
+fieldsep                 '|'
+fieldsep_zero            off
+footer                   on
+format                   aligned
+linestyle                ascii
+null                     ''
+numericlocale            off
+pager                    1
+recordsep                '\n'
+recordsep_zero           off
+tableattr                
+title                    
+tuples_only              off
+unicode_border_linestyle single
+unicode_column_linestyle single
+unicode_header_linestyle single
 -- test multi-line headers, wrapping, and newline indicators
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
 
