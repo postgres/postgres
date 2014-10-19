@@ -1892,6 +1892,10 @@ include_dir 'conf.d'
          in an error.  On some operating systems (e.g., Solaris), the function
          is present but does not actually do anything.
         </para>
+
+        <para>
+         The default is 1 on supported systems, otherwise 0.
+        </para>
        </listitem>
       </varlistentry>
 
