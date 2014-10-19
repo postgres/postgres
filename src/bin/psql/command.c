@@ -69,6 +69,7 @@ static void minimal_error_message(PGresult *res);
 
 static void printSSLInfo(void);
 static bool printPsetInfo(const char *param, struct printQueryOpt *popt);
+static char *pset_value_string(const char *param, struct printQueryOpt *popt);
 
 #ifdef WIN32
 static void checkWin32Codepage(void);
@@ -1050,15 +1051,19 @@ exec_command(const char *cmd,
 
 			int			i;
 			static const char *const my_list[] = {
-				"border", "columns", "expanded", "fieldsep",
+				"border", "columns", "expanded", "fieldsep", "fieldsep_zero",
 				"footer", "format", "linestyle", "null",
-				"numericlocale", "pager", "recordsep",
+				"numericlocale", "pager", "recordsep", "recordsep_zero",
 				"tableattr", "title", "tuples_only",
 				NULL
 			};
 
 			for (i = 0; my_list[i] != NULL; i++)
-				printPsetInfo(my_list[i], &pset.popt);
+			{
+				char   *val = pset_value_string(my_list[i], &pset.popt);
+				printf("%-14s %s\n", my_list[i], val);
+				free(val);
+			}
 
 			success = true;
 		}
@@ -2199,10 +2204,6 @@ error:
 
 
 
-/*
- * do_pset
- *
- */
 static const char *
 _align2string(enum printFormat in)
 {
@@ -2237,6 +2238,10 @@ _align2string(enum printFormat in)
 }
 
 
+/*
+ * do_pset
+ *
+ */
 bool
 do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 {
@@ -2447,80 +2452,69 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 
 	/* show border style/width */
 	if (strcmp(param, "border") == 0)
-	{
-		if (!popt->topt.border)
-			printf(_("Border style (%s) unset.\n"), param);
-		else
-			printf(_("Border style (%s) is %d.\n"), param,
-				   popt->topt.border);
-	}
+		printf(_("Border style is %d.\n"), popt->topt.border);
 
 	/* show the target width for the wrapped format */
 	else if (strcmp(param, "columns") == 0)
 	{
 		if (!popt->topt.columns)
-			printf(_("Target width (%s) unset.\n"), param);
+			printf(_("Target width is unset.\n"));
 		else
-			printf(_("Target width (%s) is %d.\n"), param,
-				   popt->topt.columns);
+			printf(_("Target width is %d.\n"), popt->topt.columns);
 	}
 
 	/* show expanded/vertical mode */
 	else if (strcmp(param, "x") == 0 || strcmp(param, "expanded") == 0 || strcmp(param, "vertical") == 0)
 	{
 		if (popt->topt.expanded == 1)
-			printf(_("Expanded display (%s) is on.\n"), param);
+			printf(_("Expanded display is on.\n"));
 		else if (popt->topt.expanded == 2)
-			printf(_("Expanded display (%s) is used automatically.\n"), param);
+			printf(_("Expanded display is used automatically.\n"));
 		else
-			printf(_("Expanded display (%s) is off.\n"), param);
+			printf(_("Expanded display is off.\n"));
 	}
 
 	/* show field separator for unaligned text */
 	else if (strcmp(param, "fieldsep") == 0)
 	{
 		if (popt->topt.fieldSep.separator_zero)
-			printf(_("Field separator (%s) is zero byte.\n"), param);
+			printf(_("Field separator is zero byte.\n"));
 		else
-			printf(_("Field separator (%s) is \"%s\".\n"), param,
+			printf(_("Field separator is \"%s\".\n"),
 				   popt->topt.fieldSep.separator);
 	}
 
 	else if (strcmp(param, "fieldsep_zero") == 0)
 	{
-		printf(_("Field separator (%s) is zero byte.\n"), param);
+		printf(_("Field separator is zero byte.\n"));
 	}
 
 	/* show disable "(x rows)" footer */
 	else if (strcmp(param, "footer") == 0)
 	{
 		if (popt->topt.default_footer)
-			printf(_("Default footer (%s) is on.\n"), param);
+			printf(_("Default footer is on.\n"));
 		else
-			printf(_("Default footer (%s) is off.\n"), param);
+			printf(_("Default footer is off.\n"));
 	}
 
 	/* show format */
 	else if (strcmp(param, "format") == 0)
 	{
-		if (!popt->topt.format)
-			printf(_("Output format (%s) is aligned.\n"), param);
-		else
-			printf(_("Output format (%s) is %s.\n"), param,
-				   _align2string(popt->topt.format));
+		printf(_("Output format is %s.\n"), _align2string(popt->topt.format));
 	}
 
 	/* show table line style */
 	else if (strcmp(param, "linestyle") == 0)
 	{
-		printf(_("Line style (%s) is %s.\n"), param,
+		printf(_("Line style is %s.\n"),
 			   get_line_style(&popt->topt)->name);
 	}
 
 	/* show null display */
 	else if (strcmp(param, "null") == 0)
 	{
-		printf(_("Null display (%s) is \"%s\".\n"), param,
+		printf(_("Null display is \"%s\".\n"),
 			   popt->nullPrint ? popt->nullPrint : "");
 	}
 
@@ -2528,65 +2522,65 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	else if (strcmp(param, "numericlocale") == 0)
 	{
 		if (popt->topt.numericLocale)
-			printf(_("Locale-adjusted numeric output (%s) is on.\n"), param);
+			printf(_("Locale-adjusted numeric output is on.\n"));
 		else
-			printf(_("Locale-adjusted numeric output (%s) is off.\n"), param);
+			printf(_("Locale-adjusted numeric output is off.\n"));
 	}
 
 	/* show toggle use of pager */
 	else if (strcmp(param, "pager") == 0)
 	{
 		if (popt->topt.pager == 1)
-			printf(_("Pager (%s) is used for long output.\n"), param);
+			printf(_("Pager is used for long output.\n"));
 		else if (popt->topt.pager == 2)
-			printf(_("Pager (%s) is always used.\n"), param);
+			printf(_("Pager is always used.\n"));
 		else
-			printf(_("Pager usage (%s) is off.\n"), param);
+			printf(_("Pager usage is off.\n"));
 	}
 
 	/* show record separator for unaligned text */
 	else if (strcmp(param, "recordsep") == 0)
 	{
 		if (popt->topt.recordSep.separator_zero)
-			printf(_("Record separator (%s) is zero byte.\n"), param);
+			printf(_("Record separator is zero byte.\n"));
 		else if (strcmp(popt->topt.recordSep.separator, "\n") == 0)
-			printf(_("Record separator (%s) is <newline>.\n"), param);
+			printf(_("Record separator is <newline>.\n"));
 		else
-			printf(_("Record separator (%s) is \"%s\".\n"), param,
+			printf(_("Record separator is \"%s\".\n"),
 				   popt->topt.recordSep.separator);
 	}
 
 	else if (strcmp(param, "recordsep_zero") == 0)
 	{
-		printf(_("Record separator (%s) is zero byte.\n"), param);
+		printf(_("Record separator is zero byte.\n"));
 	}
 
 	/* show HTML table tag options */
 	else if (strcmp(param, "T") == 0 || strcmp(param, "tableattr") == 0)
 	{
 		if (popt->topt.tableAttr)
-			printf(_("Table attributes (%s) are \"%s\".\n"), param,
+			printf(_("Table attributes are \"%s\".\n"),
 				   popt->topt.tableAttr);
 		else
-			printf(_("Table attributes (%s) unset.\n"), param);
+			printf(_("Table attributes unset.\n"));
 	}
 
 	/* show title override */
 	else if (strcmp(param, "title") == 0)
 	{
 		if (popt->title)
-			printf(_("Title (%s) is \"%s\".\n"), param, popt->title);
+			printf(_("Title is \"%s\".\n"), popt->title);
 		else
-			printf(_("Title (%s) unset.\n"), param);
+			printf(_("Title is unset.\n"));
 	}
 
 	/* show toggle between full and tuples-only format */
 	else if (strcmp(param, "t") == 0 || strcmp(param, "tuples_only") == 0)
 	{
 		if (popt->topt.tuples_only)
-			printf(_("Tuples only (%s) is on.\n"), param);
+			printf(_("Tuples only is on.\n"));
 		else
-			printf(_("Tuples only (%s) is off.\n"), param);
+			printf(_("Tuples only is off.\n"));
 	}
 
 	else
@@ -2596,6 +2590,101 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	}
 
 	return true;
+}
+
+
+static const char *
+pset_bool_string(bool val)
+{
+	return val ? "on" : "off";
+}
+
+
+static char *
+pset_quoted_string(const char *str)
+{
+	char	   *ret = pg_malloc(strlen(str) * 2 + 2);
+	char	   *r = ret;
+
+	*r++ = '\'';
+
+	for (; *str; str++)
+	{
+		if (*str == '\n')
+		{
+			*r++ = '\\';
+			*r++ = 'n';
+		}
+		else if (*str == '\'')
+		{
+			*r++ = '\\';
+			*r++ = '\'';
+		}
+		else
+			*r++ = *str;
+	}
+
+	*r++ = '\'';
+	*r = '\0';
+
+	return ret;
+}
+
+
+/*
+ * Return a malloc'ed string for the \pset value.
+ *
+ * Note that for some string parameters, print.c distinguishes between unset
+ * and empty string, but for others it doesn't.  This function should produce
+ * output that produces the correct setting when fed back into \pset.
+ */
+static char *
+pset_value_string(const char *param, struct printQueryOpt *popt)
+{
+	Assert(param != NULL);
+
+	if (strcmp(param, "border") == 0)
+		return psprintf("%d", popt->topt.border);
+	else if (strcmp(param, "columns") == 0)
+		return psprintf("%d", popt->topt.columns);
+	else if (strcmp(param, "expanded") == 0)
+		return pstrdup(popt->topt.expanded == 2
+					   ? "auto"
+					   : pset_bool_string(popt->topt.expanded));
+	else if (strcmp(param, "fieldsep") == 0)
+		return pset_quoted_string(popt->topt.fieldSep.separator
+								  ? popt->topt.fieldSep.separator
+								  : "");
+	else if (strcmp(param, "fieldsep_zero") == 0)
+		return pstrdup(pset_bool_string(popt->topt.fieldSep.separator_zero));
+	else if (strcmp(param, "footer") == 0)
+		return pstrdup(pset_bool_string(popt->topt.default_footer));
+	else if (strcmp(param, "format") == 0)
+		return psprintf("%s", _align2string(popt->topt.format));
+	else if (strcmp(param, "linestyle") == 0)
+		return psprintf("%s", get_line_style(&popt->topt)->name);
+	else if (strcmp(param, "null") == 0)
+		return pset_quoted_string(popt->nullPrint
+								  ? popt->nullPrint
+								  : "");
+	else if (strcmp(param, "numericlocale") == 0)
+		return pstrdup(pset_bool_string(popt->topt.numericLocale));
+	else if (strcmp(param, "pager") == 0)
+		return psprintf("%d", popt->topt.pager);
+	else if (strcmp(param, "recordsep") == 0)
+		return pset_quoted_string(popt->topt.recordSep.separator
+								  ? popt->topt.recordSep.separator
+								  : "");
+	else if (strcmp(param, "recordsep_zero") == 0)
+		return pstrdup(pset_bool_string(popt->topt.recordSep.separator_zero));
+	else if (strcmp(param, "tableattr") == 0)
+		return popt->topt.tableAttr ? pset_quoted_string(popt->topt.tableAttr) : pstrdup("");
+	else if (strcmp(param, "title") == 0)
+		return popt->title ? pset_quoted_string(popt->title) : pstrdup("");
+	else if (strcmp(param, "tuples_only") == 0)
+		return pstrdup(pset_bool_string(popt->topt.tuples_only));
+	else
+		return pstrdup("ERROR");
 }
 
 
