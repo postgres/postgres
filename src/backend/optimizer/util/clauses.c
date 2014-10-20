@@ -3196,10 +3196,19 @@ eval_const_expressions_mutator(Node *node,
 				 * But it can arise while simplifying functions.)  Also, we
 				 * can optimize field selection from a RowExpr construct.
 				 *
-				 * We must however check that the declared type of the field
-				 * is still the same as when the FieldSelect was created ---
-				 * this can change if someone did ALTER COLUMN TYPE on the
-				 * rowtype.
+				 * However, replacing a whole-row Var in this way has a
+				 * pitfall: if we've already built the reltargetlist for the
+				 * source relation, then the whole-row Var is scheduled to be
+				 * produced by the relation scan, but the simple Var probably
+				 * isn't, which will lead to a failure in setrefs.c.  This is
+				 * not a problem when handling simple single-level queries, in
+				 * which expression simplification always happens first.  It
+				 * is a risk for lateral references from subqueries, though.
+				 * To avoid such failures, don't optimize uplevel references.
+				 *
+				 * We must also check that the declared type of the field is
+				 * still the same as when the FieldSelect was created --- this
+				 * can change if someone did ALTER COLUMN TYPE on the rowtype.
 				 */
 				FieldSelect *fselect = (FieldSelect *) node;
 				FieldSelect *newfselect;
@@ -3208,7 +3217,8 @@ eval_const_expressions_mutator(Node *node,
 				arg = eval_const_expressions_mutator((Node *) fselect->arg,
 													 context);
 				if (arg && IsA(arg, Var) &&
-					((Var *) arg)->varattno == InvalidAttrNumber)
+					((Var *) arg)->varattno == InvalidAttrNumber &&
+					((Var *) arg)->varlevelsup == 0)
 				{
 					if (rowtype_field_matches(((Var *) arg)->vartype,
 											  fselect->fieldnum,
