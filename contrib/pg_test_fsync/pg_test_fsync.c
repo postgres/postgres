@@ -23,9 +23,9 @@
 
 #define XLOG_BLCKSZ_K	(XLOG_BLCKSZ / 1024)
 
-#define LABEL_FORMAT		"        %-32s"
+#define LABEL_FORMAT		"        %-30s"
 #define NA_FORMAT			"%20s"
-#define OPS_FORMAT			"%11.3f ops/sec  %6.0f usecs/op"
+#define OPS_FORMAT			"%13.3f ops/sec  %6.0f usecs/op"
 #define USECS_SEC			1000000
 
 /* These are macros to avoid timing the function call overhead. */
@@ -242,8 +242,7 @@ test_sync(int writes_per_op)
 		printf("\nCompare file sync methods using one %dkB write:\n", XLOG_BLCKSZ_K);
 	else
 		printf("\nCompare file sync methods using two %dkB writes:\n", XLOG_BLCKSZ_K);
-	printf("(in wal_sync_method preference order, except fdatasync\n");
-	printf("is Linux's default)\n");
+	printf("(in wal_sync_method preference order, except fdatasync is Linux's default)\n");
 
 	/*
 	 * Test open_datasync if available
@@ -398,8 +397,8 @@ static void
 test_open_syncs(void)
 {
 	printf("\nCompare open_sync with different write sizes:\n");
-	printf("(This is designed to compare the cost of writing 16kB\n");
-	printf("in different write open_sync sizes.)\n");
+	printf("(This is designed to compare the cost of writing 16kB in different write\n"
+		   "open_sync sizes.)\n");
 
 	test_open_sync(" 1 * 16kB open_sync write", 16);
 	test_open_sync(" 2 *  8kB open_sync writes", 8);
@@ -459,8 +458,8 @@ test_file_descriptor_sync(void)
 	 * on platforms which support it.
 	 */
 	printf("\nTest if fsync on non-write file descriptor is honored:\n");
-	printf("(If the times are similar, fsync() can sync data written\n");
-	printf("on a different descriptor.)\n");
+	printf("(If the times are similar, fsync() can sync data written on a different\n"
+		   "descriptor.)\n");
 
 	/*
 	 * first write, fsync and close, which is the normal behavior without
@@ -524,7 +523,7 @@ test_non_sync(void)
 	/*
 	 * Test a simple write without fsync
 	 */
-	printf("\nNon-Sync'ed %dkB writes:\n", XLOG_BLCKSZ_K);
+	printf("\nNon-sync'ed %dkB writes:\n", XLOG_BLCKSZ_K);
 	printf(LABEL_FORMAT, "write");
 	fflush(stdout);
 
