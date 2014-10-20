@@ -7764,18 +7764,8 @@ ShutdownXLOG(int code, Datum arg)
 static void
 LogCheckpointStart(int flags, bool restartpoint)
 {
-	const char *msg;
-
-	/*
-	 * XXX: This is hopelessly untranslatable. We could call gettext_noop for
-	 * the main message, but what about all the flags?
-	 */
-	if (restartpoint)
-		msg = "restartpoint starting:%s%s%s%s%s%s%s%s";
-	else
-		msg = "checkpoint starting:%s%s%s%s%s%s%s%s";
-
-	elog(LOG, msg,
+	elog(LOG, "%s starting:%s%s%s%s%s%s%s%s",
+		 restartpoint ? "restartpoint" : "checkpoint",
 		 (flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
 		 (flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
 		 (flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
@@ -7847,38 +7837,22 @@ LogCheckpointEnd(bool restartpoint)
 	average_secs = (long) (average_sync_time / 1000000);
 	average_usecs = average_sync_time - (uint64) average_secs *1000000;
 
-	if (restartpoint)
-		elog(LOG, "restartpoint complete: wrote %d buffers (%.1f%%); "
-			 "%d transaction log file(s) added, %d removed, %d recycled; "
-			 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
-			 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s",
-			 CheckpointStats.ckpt_bufs_written,
-			 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
-			 CheckpointStats.ckpt_segs_added,
-			 CheckpointStats.ckpt_segs_removed,
-			 CheckpointStats.ckpt_segs_recycled,
-			 write_secs, write_usecs / 1000,
-			 sync_secs, sync_usecs / 1000,
-			 total_secs, total_usecs / 1000,
-			 CheckpointStats.ckpt_sync_rels,
-			 longest_secs, longest_usecs / 1000,
-			 average_secs, average_usecs / 1000);
-	else
-		elog(LOG, "checkpoint complete: wrote %d buffers (%.1f%%); "
-			 "%d transaction log file(s) added, %d removed, %d recycled; "
-			 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
-			 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s",
-			 CheckpointStats.ckpt_bufs_written,
-			 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
-			 CheckpointStats.ckpt_segs_added,
-			 CheckpointStats.ckpt_segs_removed,
-			 CheckpointStats.ckpt_segs_recycled,
-			 write_secs, write_usecs / 1000,
-			 sync_secs, sync_usecs / 1000,
-			 total_secs, total_usecs / 1000,
-			 CheckpointStats.ckpt_sync_rels,
-			 longest_secs, longest_usecs / 1000,
-			 average_secs, average_usecs / 1000);
+	elog(LOG, "%s complete: wrote %d buffers (%.1f%%); "
+		 "%d transaction log file(s) added, %d removed, %d recycled; "
+		 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
+		 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s",
+		 restartpoint ? "restartpoint" : "checkpoint",
+		 CheckpointStats.ckpt_bufs_written,
+		 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
+		 CheckpointStats.ckpt_segs_added,
+		 CheckpointStats.ckpt_segs_removed,
+		 CheckpointStats.ckpt_segs_recycled,
+		 write_secs, write_usecs / 1000,
+		 sync_secs, sync_usecs / 1000,
+		 total_secs, total_usecs / 1000,
+		 CheckpointStats.ckpt_sync_rels,
+		 longest_secs, longest_usecs / 1000,
+		 average_secs, average_usecs / 1000);
 }
 
 /*
