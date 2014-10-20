@@ -7892,6 +7892,7 @@ LogCheckpointEnd(bool restartpoint)
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occurred
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN or
  *		CHECKPOINT_END_OF_RECOVERY).
+ *	CHECKPOINT_FLUSH_ALL: also flush buffers of unlogged tables.
  *
  * Note: flags contains other bits, of interest here only for logging purposes.
  * In particular note that this routine is synchronous and does not pay

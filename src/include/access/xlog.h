@@ -248,13 +248,13 @@ extern bool XLOG_DEBUG;
 												 * recovery */
 #define CHECKPOINT_IMMEDIATE	0x0004	/* Do it without delays */
 #define CHECKPOINT_FORCE		0x0008	/* Force even if no activity */
-/* These are important to RequestCheckpoint */
-#define CHECKPOINT_WAIT			0x0010	/* Wait for completion */
-/* These indicate the cause of a checkpoint request */
-#define CHECKPOINT_CAUSE_XLOG	0x0020	/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0040	/* Elapsed time */
-#define CHECKPOINT_FLUSH_ALL	0x0080	/* Flush all pages, including those
+#define CHECKPOINT_FLUSH_ALL	0x0010	/* Flush all pages, including those
 										 * belonging to unlogged tables */
+/* These are important to RequestCheckpoint */
+#define CHECKPOINT_WAIT			0x0020	/* Wait for completion */
+/* These indicate the cause of a checkpoint request */
+#define CHECKPOINT_CAUSE_XLOG	0x0040	/* XLOG consumption */
+#define CHECKPOINT_CAUSE_TIME	0x0080	/* Elapsed time */
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
