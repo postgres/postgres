@@ -608,3 +608,23 @@ SELECT *,
         END)
 FROM
   (VALUES (1,''), (2,'0000000049404'), (3,'FROM 10000000876')) v(id, str);
+
+-- check whole-row-Var handling in nested lateral functions (bug #11703)
+
+create function extractq2(t int8_tbl) returns int8 as $$
+  select t.q2
+$$ language sql immutable;
+
+explain (verbose, costs off)
+select x from int8_tbl, extractq2(int8_tbl) f(x);
+
+select x from int8_tbl, extractq2(int8_tbl) f(x);
+
+create function extractq2_2(t int8_tbl) returns table(ret1 int8) as $$
+  select extractq2(t)
+$$ language sql immutable;
+
+explain (verbose, costs off)
+select x from int8_tbl, extractq2_2(int8_tbl) f(x);
+
+select x from int8_tbl, extractq2_2(int8_tbl) f(x);
