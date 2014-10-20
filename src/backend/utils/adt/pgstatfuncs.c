@@ -1712,7 +1712,7 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/* Reset a a single counter in the current database */
+/* Reset a single counter in the current database */
 Datum
 pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS)
 {

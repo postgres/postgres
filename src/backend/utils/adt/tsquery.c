@@ -456,10 +456,10 @@ findoprnd(QueryItem *ptr, int size)
 
 
 /*
- * Each value (operand) in the query is be passed to pushval. pushval can
+ * Each value (operand) in the query is passed to pushval. pushval can
  * transform the simple value to an arbitrarily complex expression using
  * pushValue and pushOperator. It must push a single value with pushValue,
- * a complete expression with all operands, or a a stopword placeholder
+ * a complete expression with all operands, or a stopword placeholder
  * with pushStop, otherwise the prefix notation representation will be broken,
  * having an operator with no operand.
  *

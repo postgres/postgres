@@ -306,7 +306,7 @@ checkcondition_arr(void *checkval, QueryOperand *val)
 	/* Loop invariant: StopLow <= val < StopHigh */
 
 	/*
-	 * we are not able to find a a prefix by hash value
+	 * we are not able to find a prefix by hash value
 	 */
 	if (val->prefix)
 		return true;
@@ -329,7 +329,7 @@ static bool
 checkcondition_bit(void *checkval, QueryOperand *val)
 {
 	/*
-	 * we are not able to find a a prefix in signature tree
+	 * we are not able to find a prefix in signature tree
 	 */
 	if (val->prefix)
 		return true;
