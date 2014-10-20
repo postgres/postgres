@@ -753,7 +753,7 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
  * initiating streaming with the START_STREAMING command.
  *
  * If the COPY ends (not necessarily successfully) due a message from the
- * server, returns a PGresult and sets sets *stoppos to the last byte written.
+ * server, returns a PGresult and sets *stoppos to the last byte written.
  * On any other sort of error, returns NULL.
  */
 static PGresult *

@@ -574,7 +574,7 @@ StartReplication(StartReplicationCmd *cmd)
 			 * to find the requested WAL segment in pg_xlog.
 			 *
 			 * XXX: we could be more strict here and only allow a startpoint
-			 * that's older than the switchpoint, if it it's still in the same
+			 * that's older than the switchpoint, if it's still in the same
 			 * WAL segment.
 			 */
 			if (!XLogRecPtrIsInvalid(switchpoint) &&
