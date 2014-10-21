@@ -149,6 +149,20 @@
     </varlistentry>
 
     <varlistentry>
+     <term><ulink url="http://xmlsoft.org/">Libxml2</ulink> for <command>xmllint</command></term>
+     <listitem>
+      <para>
+       This library and the <command>xmllint</command> tool it contains are
+       used for processing XML.  Many developers will already
+       have <application>Libxml2</application> installed, because it is also
+       used when building the PostgreSQL code.  Note, however,
+       that <command>xmllint</command> might need to be installed from a
+       separate subpackage.
+      </para>
+     </listitem>
+     </varlistentry>
+
+    <varlistentry>
      <term><ulink url="http://xmlsoft.org/XSLT/">Libxslt</ulink> for <command>xsltproc</command></term>
      <listitem>
       <para>
@@ -255,7 +269,7 @@ yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install docbook docbook-dsssl docbook-xsl openjade1.3 opensp xsltproc
+apt-get install docbook docbook-dsssl docbook-xsl libxml2-utils openjade1.3 opensp xsltproc
 </programlisting>
    </para>
   </sect2>

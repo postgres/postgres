@@ -44,6 +44,10 @@ ifndef OSX
 OSX = $(missing) osx
 endif
 
+ifndef XMLLINT
+XMLLINT = $(missing) xmllint
+endif
+
 ifndef XSLTPROC
 XSLTPROC = $(missing) xsltproc
 endif
@@ -78,6 +82,7 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 man distprep-man: man-stamp
 
 man-stamp: stylesheet-man.xsl postgres.xml
+	$(XMLLINT) --noout --valid postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
 	touch $@
 
@@ -254,11 +259,13 @@ endif
 xslthtml: xslthtml-stamp
 
 xslthtml-stamp: stylesheet.xsl postgres.xml
+	$(XMLLINT) --noout --valid postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^
 	cp $(srcdir)/stylesheet.css html/
 	touch $@
 
 htmlhelp: stylesheet-hh.xsl postgres.xml
+	$(XMLLINT) --noout --valid postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
 
 %-A4.fo.tmp: stylesheet-fo.xsl %.xml
@@ -268,7 +275,6 @@ htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
 
 FOP = fop
-XMLLINT = xmllint
 
 # reformat FO output so that locations of errors are easier to find
 %.fo: %.fo.tmp
@@ -281,6 +287,7 @@ XMLLINT = xmllint
 
 epub: postgres.epub
 postgres.epub: postgres.xml
+	$(XMLLINT) --noout --valid $<
 	$(DBTOEPUB) $<
 
 
