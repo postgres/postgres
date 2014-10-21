@@ -3645,6 +3645,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
       <member><literal>'08002b:010203'</></member>
       <member><literal>'08002b-010203'</></member>
       <member><literal>'0800.2b01.0203'</></member>
+      <member><literal>'0800-2b01-0203'</></member>
       <member><literal>'08002b010203'</></member>
      </simplelist>
 
@@ -3666,7 +3667,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
 
     <para>
-     The remaining four input formats are not part of any standard.
+     The remaining five input formats are not part of any standard.
     </para>
    </sect2>
 

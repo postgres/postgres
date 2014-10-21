@@ -57,6 +57,9 @@ macaddr_in(PG_FUNCTION_ARGS)
 		count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x%1s",
 					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
+		count = sscanf(str, "%2x%2x-%2x%2x-%2x%2x%1s",
+					   &a, &b, &c, &d, &e, &f, junk);
+	if (count != 6)
 		count = sscanf(str, "%2x%2x%2x%2x%2x%2x%1s",
 					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
