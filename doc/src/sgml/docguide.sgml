@@ -209,7 +209,7 @@
   </sect2>
 
   <sect2>
-   <title>FreeBSD Installation</title>
+   <title>Installation on FreeBSD</title>
 
    <para>
     The FreeBSD Documentation Project is itself a heavy user of
@@ -219,19 +219,22 @@
     documentation on FreeBSD.
     <itemizedlist>
      <listitem>
-      <para><filename>textproc/sp</filename></para>
+      <para><filename>textproc/docbook-sgml</filename></para>
      </listitem>
      <listitem>
-      <para><filename>textproc/openjade</filename></para>
+      <para><filename>textproc/docbook-xml</filename></para>
      </listitem>
      <listitem>
-      <para><filename>textproc/iso8879</filename></para>
+      <para><filename>textproc/docbook-xsl</filename></para>
      </listitem>
      <listitem>
       <para><filename>textproc/dsssl-docbook-modular</filename></para>
      </listitem>
      <listitem>
-      <para><filename>textproc/docbook-420</filename></para>
+      <para><filename>textproc/libxslt</filename></para>
+     </listitem>
+     <listitem>
+      <para><filename>textproc/openjade</filename></para>
      </listitem>
     </itemizedlist>
    </para>
@@ -240,22 +243,6 @@
     A number of things from <filename>/usr/ports/print</filename>
     (<filename>tex</filename>, <filename>jadetex</filename>) might
     also be of interest.
-   </para>
-
-   <para>
-    It's possible that the ports do not update the main catalog file
-    in <filename>/usr/local/share/sgml/catalog.ports</filename> or that the
-    order isn't proper.  Be sure to have the following lines in the beginning
-    of the file:
-<programlisting>
-CATALOG "openjade/catalog"
-CATALOG "iso8879/catalog"
-CATALOG "docbook/dsssl/modular/catalog"
-CATALOG "docbook/4.2/catalog"
-</programlisting>
-    If you do not want to edit the file you can also set the
-    environment variable <envar>SGML_CATALOG_FILES</envar> to a
-    colon-separated list of catalog files (such as the one above).
    </para>
 
    <para>
