@@ -193,18 +193,13 @@
   </para>
 
   <sect2>
-   <title><productname>Linux</productname> <acronym>RPM</acronym> Installation</title>
+   <title>Installation on Fedora, RHEL, and Derivatives</title>
 
    <para>
-    Most vendors provide a complete RPM set for DocBook processing in
-    their distribution.  Look for an <quote>SGML</quote> option while
-    installing, or the following packages:
-    <filename>sgml-common</filename>, <filename>docbook</filename>,
-    <filename>stylesheets</filename>, <filename>openjade</filename>
-    (or <filename>jade</filename>).  You may also need <filename>sgml-tools</filename>
-    and either <filename>xsltproc</filename> or <filename>libxslt</>.  If your
-    distributor does not provide these then you should be able to make
-    use of the packages from some other, reasonably compatible vendor.
+    To install the required packages, use:
+<programlisting>
+yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
+</programlisting>
    </para>
   </sect2>
 
