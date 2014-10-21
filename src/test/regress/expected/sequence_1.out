@@ -91,6 +91,8 @@ SELECT nextval('serialTest2_f6_seq');
 
 -- basic sequence operations using both text and oid references
 CREATE SEQUENCE sequence_test;
+CREATE SEQUENCE IF NOT EXISTS sequence_test;
+NOTICE:  relation "sequence_test" already exists, skipping
 SELECT nextval('sequence_test'::text);
  nextval 
 ---------
@@ -163,6 +165,9 @@ SELECT nextval('sequence_test'::text);
       99
 (1 row)
 
+DISCARD SEQUENCES;
+SELECT currval('sequence_test'::regclass);
+ERROR:  currval of sequence "sequence_test" is not yet defined in this session
 DROP SEQUENCE sequence_test;
 -- renaming sequences
 CREATE SEQUENCE foo_seq;
@@ -341,6 +346,9 @@ SELECT lastval();
       99
 (1 row)
 
+DISCARD SEQUENCES;
+SELECT lastval();
+ERROR:  lastval is not yet defined in this session
 CREATE SEQUENCE seq2;
 SELECT nextval('seq2');
  nextval 
