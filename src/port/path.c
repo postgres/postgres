@@ -785,9 +785,11 @@ get_home_path(char *ret_path)
 	char	   *tmppath;
 
 	/*
-	 * Note: We use getenv here because the more modern
-	 * SHGetSpecialFolderPath() will force us to link with shell32.lib which
-	 * eats valuable desktop heap.
+	 * Note: We use getenv() here because the more modern SHGetFolderPath()
+	 * would force the backend to link with shell32.lib, which eats valuable
+	 * desktop heap.  XXX This function is used only in psql, which already
+	 * brings in shell32 via libpq.  Moving this function to its own file
+	 * would keep it out of the backend, freeing it from this concern.
 	 */
 	tmppath = getenv("APPDATA");
 	if (!tmppath)

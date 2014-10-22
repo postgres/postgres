@@ -547,10 +547,9 @@ LIBOBJS = @LIBOBJS@
 
 LIBS := -lpgcommon -lpgport $(LIBS)
 
-# to make ws2_32.lib the last library, and always link with shfolder,
-# so SHGetFolderName isn't picked up from shell32.dll
+# to make ws2_32.lib the last library
 ifeq ($(PORTNAME),win32)
-LIBS += -lws2_32 -lshfolder
+LIBS += -lws2_32
 endif
 
 # Not really standard libc functions, used by the backend.
