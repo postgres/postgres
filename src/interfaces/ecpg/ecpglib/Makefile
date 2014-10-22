@@ -39,11 +39,6 @@ SHLIB_PREREQS = submake-libpq submake-pgtypeslib
 
 SHLIB_EXPORTS = exports.txt
 
-ifeq ($(PORTNAME), win32)
-# Link to shfolder.dll instead of shell32.dll
-SHLIB_LINK += -lshfolder
-endif
-
 PKG_CONFIG_REQUIRES_PRIVATE = libpq libpgtypes
 
 all: all-lib
