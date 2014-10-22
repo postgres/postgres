@@ -16,10 +16,6 @@
 #include "extern.h"
 #include "preproc.h"
 
-/* Globals from keywords.c */
-extern const ScanKeyword SQLScanKeywords[];
-extern const int NumSQLScanKeywords;
-
 /*
  * List of (keyword-name, keyword-token-value) pairs.
  *

@@ -17,6 +17,7 @@
 
 #include "parser/keywords.h"
 #include "type.h"
+#include "extern.h"
 #include "preproc.h"
 
 #define PG_KEYWORD(a,b,c) {a,b,c},

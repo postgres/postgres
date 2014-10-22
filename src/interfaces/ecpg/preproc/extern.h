@@ -58,6 +58,10 @@ extern struct when when_error,
 			when_warn;
 extern struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH];
 
+/* Globals from keywords.c */
+extern const ScanKeyword SQLScanKeywords[];
+extern const int NumSQLScanKeywords;
+
 /* functions */
 
 extern const char *get_dtype(enum ECPGdtype);
