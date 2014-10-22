@@ -76,4 +76,4 @@ win32ver.o: win32ver.rc
 
 # Rule for building a shared library from a single .o file
 %.dll: %.o $(WIN32RES)
-	$(CC) $(CFLAGS) -shared -o $@ $^ -Wl,--export-all-symbols $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)
+	$(CC) $(CFLAGS) -shared -static-libgcc -o $@ $^ -Wl,--export-all-symbols $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)

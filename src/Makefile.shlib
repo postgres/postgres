@@ -371,16 +371,22 @@ else
 
 $(stlib): $(shlib) ;
 
+# XXX A backend that loads a module linked with libgcc_s_dw2-1.dll will exit
+# uncleanly, hence -static-libgcc.  (Last verified with MinGW-w64 compilers
+# from i686-4.9.1-release-win32-dwarf-rt_v3-rev1.)  Shared libgcc has better
+# support for C++/Java exceptions; while core PostgreSQL does not use them, it
+# would be nice to support shared libgcc for the benefit of extensions.
+#
 # If SHLIB_EXPORTS is set, the rules below will build a .def file from that.
 # Else we just use --export-all-symbols.
 ifeq (,$(SHLIB_EXPORTS))
 $(shlib): $(OBJS) | $(SHLIB_PREREQS)
-	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--export-all-symbols -Wl,--out-implib=$(stlib)
+	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--export-all-symbols -Wl,--out-implib=$(stlib)
 else
 DLL_DEFFILE = lib$(NAME)dll.def
 
 $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
-	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(DLL_DEFFILE) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--out-implib=$(stlib)
+	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(DLL_DEFFILE) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--out-implib=$(stlib)
 endif
 
 endif # PORTNAME == cgywin
