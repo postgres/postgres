@@ -3176,9 +3176,8 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 					   Tuplesortstate *state)
 {
 	/*
-	 * This is similar to _bt_tuplecompare(), but we have already done the
-	 * index_getattr calls for the first column, and we need to keep track of
-	 * whether any null fields are present.  Also see the special treatment
+	 * This is similar to comparetup_heap(), but expects index tuples.  There
+	 * is also special handling for enforcing uniqueness, and special treatment
 	 * for equal keys at the end.
 	 */
 	ScanKey		scanKey = state->indexScanKey;
