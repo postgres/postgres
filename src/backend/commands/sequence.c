@@ -546,8 +546,8 @@ nextval_internal(Oid relid)
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
-	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK &&
-		pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
+	if (pg_class_aclcheck(elm->relid, GetUserId(),
+						  ACL_USAGE | ACL_UPDATE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
@@ -759,8 +759,8 @@ currval_oid(PG_FUNCTION_ARGS)
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
-	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK &&
-		pg_class_aclcheck(elm->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
+	if (pg_class_aclcheck(elm->relid, GetUserId(),
+						  ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
@@ -801,8 +801,8 @@ lastval(PG_FUNCTION_ARGS)
 	/* nextval() must have already been called for this sequence */
 	Assert(last_used_seq->last_valid);
 
-	if (pg_class_aclcheck(last_used_seq->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK &&
-		pg_class_aclcheck(last_used_seq->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
+	if (pg_class_aclcheck(last_used_seq->relid, GetUserId(),
+						  ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
