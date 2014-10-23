@@ -36,22 +36,25 @@ do LockTuple as well, if there is any conflict, to ensure that they don't
 starve out waiting exclusive-lockers.  However, if there is not any active
 conflict for a tuple, we don't incur any extra overhead.
 
-We provide four levels of tuple locking strength: SELECT FOR KEY UPDATE is
-super-exclusive locking (used to delete tuples and more generally to update
-tuples modifying the values of the columns that make up the key of the tuple);
-SELECT FOR UPDATE is a standards-compliant exclusive lock; SELECT FOR SHARE
-implements shared locks; and finally SELECT FOR KEY SHARE is a super-weak mode
-that does not conflict with exclusive mode, but conflicts with SELECT FOR KEY
-UPDATE.  This last mode implements a mode just strong enough to implement RI
-checks, i.e. it ensures that tuples do not go away from under a check, without
-blocking when some other transaction that want to update the tuple without
-changing its key.
+We provide four levels of tuple locking strength: SELECT FOR UPDATE obtains an
+exclusive lock which prevents any kind of modification of the tuple. This is
+the lock level that is implicitly taken by DELETE operations, and also by
+UPDATE operations if they modify any of the tuple's key fields. SELECT FOR NO
+KEY UPDATE likewise obtains an exclusive lock, but only prevents tuple removal
+and modifications which might alter the tuple's key. This is the lock that is
+implicitly taken by UPDATE operations which leave all key fields unchanged.
+SELECT FOR SHARE obtains a shared lock which prevents any kind of tuple
+modification. Finally, SELECT FOR KEY SHARE obtains a shared lock which only
+prevents tuple removal and modifications of key fields. This last mode
+implements a mode just strong enough to implement RI checks, i.e. it ensures
+that tuples do not go away from under a check, without blocking when some
+other transaction that want to update the tuple without changing its key.
 
 The conflict table is:
 
-                KEY UPDATE        UPDATE        SHARE        KEY SHARE
-KEY UPDATE       conflict        conflict      conflict      conflict
-UPDATE           conflict        conflict      conflict
+                  UPDATE       NO KEY UPDATE    SHARE        KEY SHARE
+UPDATE           conflict        conflict      conflict      conflict
+NO KEY UPDATE    conflict        conflict      conflict
 SHARE            conflict        conflict
 KEY SHARE        conflict
 
@@ -127,7 +130,7 @@ The following infomask bits are applicable:
   the member flags.  If HEAP_XMAX_IS_MULTI is not set and HEAP_XMAX_LOCK_ONLY
   is set, then one of these *must* be set as well.
   Note there is no infomask bit for a SELECT FOR SHARE lock.  Also there is no
-  separate bit for a SELECT FOR KEY UPDATE lock; this is implemented by the
+  separate bit for a SELECT FOR NO KEY UPDATE lock; this is implemented by the
   HEAP_KEYS_UPDATED bit.
 
 - HEAP_KEYS_UPDATED
