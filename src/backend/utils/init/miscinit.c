@@ -222,6 +222,16 @@ SetSessionUserId(Oid userid, bool is_superuser)
 	CurrentUserId = userid;
 }
 
+/*
+ * GetAuthenticatedUserId - get the authenticated user ID
+ */
+Oid
+GetAuthenticatedUserId(void)
+{
+	AssertState(OidIsValid(AuthenticatedUserId));
+	return AuthenticatedUserId;
+}
+
 
 /*
  * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
