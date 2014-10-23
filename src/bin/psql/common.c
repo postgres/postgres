@@ -426,10 +426,6 @@ AcceptResult(const PGresult *result)
  * This is the way to send "backdoor" queries (those not directly entered
  * by the user). It is subject to -E but not -e.
  *
- * In autocommit-off mode, a new transaction block is started if start_xact
- * is true; nothing special is done when start_xact is false.  Typically,
- * start_xact = false is used for SELECTs and explicit BEGIN/COMMIT commands.
- *
  * Caller is responsible for handling the ensuing processing if a COPY
  * command is sent.
  *
@@ -437,7 +433,7 @@ AcceptResult(const PGresult *result)
  * caller uses this path to issue "SET CLIENT_ENCODING".
  */
 PGresult *
-PSQLexec(const char *query, bool start_xact)
+PSQLexec(const char *query)
 {
 	PGresult   *res;
 
@@ -467,21 +463,6 @@ PSQLexec(const char *query, bool start_xact)
 	}
 
 	SetCancelConn();
-
-	if (start_xact &&
-		!pset.autocommit &&
-		PQtransactionStatus(pset.db) == PQTRANS_IDLE)
-	{
-		res = PQexec(pset.db, "BEGIN");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			psql_error("%s", PQerrorMessage(pset.db));
-			PQclear(res);
-			ResetCancelConn();
-			return NULL;
-		}
-		PQclear(res);
-	}
 
 	res = PQexec(pset.db, query);
 

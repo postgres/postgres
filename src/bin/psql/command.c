@@ -967,7 +967,7 @@ exec_command(const char *cmd,
 				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD ",
 								  fmtId(user));
 				appendStringLiteralConn(&buf, encrypted_password, pset.db);
-				res = PSQLexec(buf.data, false);
+				res = PSQLexec(buf.data);
 				termPQExpBuffer(&buf);
 				if (!res)
 					success = false;
@@ -2181,7 +2181,7 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 
 	if (single_txn)
 	{
-		if ((res = PSQLexec("BEGIN", false)) == NULL)
+		if ((res = PSQLexec("BEGIN")) == NULL)
 		{
 			if (pset.on_error_stop)
 			{
@@ -2197,7 +2197,7 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 
 	if (single_txn)
 	{
-		if ((res = PSQLexec("COMMIT", false)) == NULL)
+		if ((res = PSQLexec("COMMIT")) == NULL)
 		{
 			if (pset.on_error_stop)
 			{

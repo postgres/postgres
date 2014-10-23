@@ -73,7 +73,7 @@ start_lo_xact(const char *operation, bool *own_transaction)
 	{
 		case PQTRANS_IDLE:
 			/* need to start our own xact */
-			if (!(res = PSQLexec("BEGIN", false)))
+			if (!(res = PSQLexec("BEGIN")))
 				return false;
 			PQclear(res);
 			*own_transaction = true;
@@ -103,9 +103,9 @@ finish_lo_xact(const char *operation, bool own_transaction)
 	if (own_transaction && pset.autocommit)
 	{
 		/* close out our own xact */
-		if (!(res = PSQLexec("COMMIT", false)))
+		if (!(res = PSQLexec("COMMIT")))
 		{
-			res = PSQLexec("ROLLBACK", false);
+			res = PSQLexec("ROLLBACK");
 			PQclear(res);
 			return false;
 		}
@@ -126,7 +126,7 @@ fail_lo_xact(const char *operation, bool own_transaction)
 	if (own_transaction && pset.autocommit)
 	{
 		/* close out our own xact */
-		res = PSQLexec("ROLLBACK", false);
+		res = PSQLexec("ROLLBACK");
 		PQclear(res);
 	}
 
@@ -209,7 +209,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		bufptr += PQescapeStringConn(pset.db, bufptr, comment_arg, slen, NULL);
 		strcpy(bufptr, "'");
 
-		if (!(res = PSQLexec(cmdbuf, false)))
+		if (!(res = PSQLexec(cmdbuf)))
 		{
 			free(cmdbuf);
 			return fail_lo_xact("\\lo_import", own_transaction);
@@ -301,7 +301,7 @@ do_lo_list(void)
 				 gettext_noop("Description"));
 	}
 
-	res = PSQLexec(buf, false);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
