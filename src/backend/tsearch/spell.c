@@ -525,6 +525,9 @@ addFlagValue(IspellDict *Conf, char *s, uint32 val)
 	Conf->usecompound = true;
 }
 
+/*
+ * Import an affix file that follows MySpell or Hunspell format
+ */
 static void
 NIImportOOAffixes(IspellDict *Conf, const char *filename)
 {
@@ -685,6 +688,10 @@ nextline:
  * import affixes
  *
  * Note caller must already have applied get_tsearch_config_filename
+ *
+ * This function is responsible for parsing ispell ("old format") affix files.
+ * If we realize that the file contains new-format commands, we pass off the
+ * work to NIImportOOAffixes(), which will re-read the whole file.
  */
 void
 NIImportAffixes(IspellDict *Conf, const char *filename)
@@ -763,13 +770,6 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 
 			while (*s && t_isspace(s))
 				s += pg_mblen(s);
-			oldformat = true;
-
-			/* allow only single-encoded flags */
-			if (pg_mblen(s) != 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("multibyte flag character is not allowed")));
 
 			if (*s == '*')
 			{
@@ -785,26 +785,30 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 			if (*s == '\\')
 				s++;
 
-			/* allow only single-encoded flags */
-			if (pg_mblen(s) != 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("multibyte flag character is not allowed")));
+			/*
+			 * An old-format flag is a single ASCII character; we expect it to
+			 * be followed by EOL, whitespace, or ':'.  Otherwise this is a
+			 * new-format flag command.
+			 */
+			if (*s && pg_mblen(s) == 1)
+			{
+				flag = *(unsigned char *) s;
+				s++;
+				if (*s == '\0' || *s == '#' || *s == '\n' || *s == ':' ||
+					t_isspace(s))
+				{
+					oldformat = true;
+					goto nextline;
+				}
+			}
+			goto isnewformat;
+		}
+		if (STRNCMP(recoded, "COMPOUNDFLAG") == 0 ||
+			STRNCMP(recoded, "COMPOUNDMIN") == 0 ||
+			STRNCMP(recoded, "PFX") == 0 ||
+			STRNCMP(recoded, "SFX") == 0)
+			goto isnewformat;
 
-			flag = *(unsigned char *) s;
-			goto nextline;
-		}
-		if (STRNCMP(recoded, "COMPOUNDFLAG") == 0 || STRNCMP(recoded, "COMPOUNDMIN") == 0 ||
-			STRNCMP(recoded, "PFX") == 0 || STRNCMP(recoded, "SFX") == 0)
-		{
-			if (oldformat)
-				ereport(ERROR,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("wrong affix file format for flag")));
-			tsearch_readline_end(&trst);
-			NIImportOOAffixes(Conf, filename);
-			return;
-		}
 		if ((!suffixes) && (!prefixes))
 			goto nextline;
 
@@ -818,6 +822,16 @@ nextline:
 		pfree(pstr);
 	}
 	tsearch_readline_end(&trst);
+	return;
+
+isnewformat:
+	if (oldformat)
+		ereport(ERROR,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+		errmsg("affix file contains both old-style and new-style commands")));
+	tsearch_readline_end(&trst);
+
+	NIImportOOAffixes(Conf, filename);
 }
 
 static int
@@ -1435,6 +1449,10 @@ static int
 CheckCompoundAffixes(CMPDAffix **ptr, char *word, int len, bool CheckInPlace)
 {
 	bool		issuffix;
+
+	/* in case CompoundAffix is null: */
+	if (*ptr == NULL)
+		return -1;
 
 	if (CheckInPlace)
 	{
