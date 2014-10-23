@@ -5786,7 +5786,7 @@ static void
 exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 {
 	char		recoveryPath[MAXPGPATH];
-	char		xlogpath[MAXPGPATH];
+	char		xlogfname[MAXFNAMELEN];
 
 	/*
 	 * We are no longer in archive recovery state.
@@ -5814,18 +5814,20 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	 * for the new timeline.
 	 *
 	 * Notify the archiver that the last WAL segment of the old timeline is
-	 * ready to copy to archival storage. Otherwise, it is not archived for a
-	 * while.
+	 * ready to copy to archival storage if its .done file doesn't exist
+	 * (e.g., if it's the restored WAL file, it's expected to have .done file).
+	 * Otherwise, it is not archived for a while.
 	 */
 	if (endTLI != ThisTimeLineID)
 	{
 		XLogFileCopy(endLogId, endLogSeg,
 					 endTLI, endLogId, endLogSeg);
 
+		/* Create .ready file only when neither .ready nor .done files exist */
 		if (XLogArchivingActive())
 		{
-			XLogFileName(xlogpath, endTLI, endLogId, endLogSeg);
-			XLogArchiveNotify(xlogpath);
+			XLogFileName(xlogfname, endTLI, endLogId, endLogSeg);
+			XLogArchiveCheckDone(xlogfname);
 		}
 	}
 
@@ -5833,8 +5835,8 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	 * Let's just make real sure there are not .ready or .done flags posted
 	 * for the new segment.
 	 */
-	XLogFileName(xlogpath, ThisTimeLineID, endLogId, endLogSeg);
-	XLogArchiveCleanup(xlogpath);
+	XLogFileName(xlogfname, ThisTimeLineID, endLogId, endLogSeg);
+	XLogArchiveCleanup(xlogfname);
 
 	/*
 	 * Since there might be a partial WAL segment named RECOVERYXLOG, get rid
