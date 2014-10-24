@@ -9,6 +9,7 @@
 
 #include "postgres.h"
 
+#include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
 
@@ -16,6 +17,8 @@ static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_cluster_is_empty(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
+static bool equivalent_locale(int category, const char *loca, const char *locb);
+static bool equivalent_encoding(const char *chara, const char *charb);
 static void check_is_super_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
@@ -360,23 +363,8 @@ set_locale_and_encoding(ClusterInfo *cluster)
 		i_datcollate = PQfnumber(res, "datcollate");
 		i_datctype = PQfnumber(res, "datctype");
 
-		if (GET_MAJOR_VERSION(cluster->major_version) < 902)
-		{
-			/*
-			 *	Pre-9.2 did not canonicalize the supplied locale names
-			 *	to match what the system returns, while 9.2+ does, so
-			 *	convert pre-9.2 to match.
-			 */
-			ctrl->lc_collate = get_canonical_locale_name(LC_COLLATE,
-							   pg_strdup(PQgetvalue(res, 0, i_datcollate)));
-			ctrl->lc_ctype = get_canonical_locale_name(LC_CTYPE,
-							   pg_strdup(PQgetvalue(res, 0, i_datctype)));
- 		}
-		else
-		{
-	 		ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
-			ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
-		}
+		ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
+		ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
 
 		PQclear(res);
 	}
@@ -406,23 +394,87 @@ static void
 check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
-	/*
-	 *	These are often defined with inconsistent case, so use pg_strcasecmp().
-	 *	They also often use inconsistent hyphenation, which we cannot fix, e.g.
-	 *	UTF-8 vs. UTF8, so at least we display the mismatching values.
-	 */
-	if (pg_strcasecmp(oldctrl->lc_collate, newctrl->lc_collate) != 0)
+	if (!equivalent_locale(LC_COLLATE, oldctrl->lc_collate, newctrl->lc_collate))
 		pg_log(PG_FATAL,
 			   "lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
 			   oldctrl->lc_collate, newctrl->lc_collate);
-	if (pg_strcasecmp(oldctrl->lc_ctype, newctrl->lc_ctype) != 0)
+	if (!equivalent_locale(LC_CTYPE, oldctrl->lc_ctype, newctrl->lc_ctype))
 		pg_log(PG_FATAL,
 			   "lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
 			   oldctrl->lc_ctype, newctrl->lc_ctype);
-	if (pg_strcasecmp(oldctrl->encoding, newctrl->encoding) != 0)
+	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
 		pg_log(PG_FATAL,
 			   "encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
 			   oldctrl->encoding, newctrl->encoding);
+}
+
+/*
+ * equivalent_locale()
+ *
+ * Best effort locale-name comparison.  Return false if we are not 100% sure
+ * the locales are equivalent.
+ *
+ * Note: The encoding parts of the names are ignored. This function is
+ * currently used to compare locale names stored in pg_database, and
+ * pg_database contains a separate encoding field. That's compared directly
+ * in check_locale_and_encoding().
+ */
+static bool
+equivalent_locale(int category, const char *loca, const char *locb)
+{
+	const char *chara;
+	const char *charb;
+	char	   *canona;
+	char	   *canonb;
+	int			lena;
+	int			lenb;
+
+	/*
+	 * If the names are equal, the locales are equivalent. Checking this
+	 * first avoids calling setlocale() in the common case that the names
+	 * are equal. That's a good thing, if setlocale() is buggy, for example.
+	 */
+	if (pg_strcasecmp(loca, locb) == 0)
+		return true;
+
+	/*
+	 * Not identical. Canonicalize both names, remove the encoding parts,
+	 * and try again.
+	 */
+	canona = get_canonical_locale_name(category, loca);
+	chara = strrchr(canona, '.');
+	lena = chara ? (chara - canona) : strlen(canona);
+
+	canonb = get_canonical_locale_name(category, locb);
+	charb = strrchr(canonb, '.');
+	lenb = charb ? (charb - canonb) : strlen(canonb);
+
+	if (lena == lenb && pg_strncasecmp(canona, canonb, lena) == 0)
+		return true;
+
+	return false;
+}
+
+/*
+ * equivalent_encoding()
+ *
+ * Best effort encoding-name comparison.  Return true only if the encodings
+ * are valid server-side encodings and known equivalent.
+ *
+ * Because the lookup in pg_valid_server_encoding() does case folding and
+ * ignores non-alphanumeric characters, this will recognize many popular
+ * variant spellings as equivalent, eg "utf8" and "UTF-8" will match.
+ */
+static bool
+equivalent_encoding(const char *chara, const char *charb)
+{
+	int			enca = pg_valid_server_encoding(chara);
+	int			encb = pg_valid_server_encoding(charb);
+
+	if (enca < 0 || encb < 0)
+		return false;
+
+	return (enca == encb);
 }
 
 
