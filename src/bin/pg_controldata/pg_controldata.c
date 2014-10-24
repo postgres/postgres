@@ -26,6 +26,7 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
+#include "pg_getopt.h"
 
 
 static void
