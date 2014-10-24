@@ -9,15 +9,26 @@
  *	  src/port/win32setlocale.c
  *
  *
- * Windows has a problem with locale names that have a dot in the country
- * name. For example:
+ * The setlocale() function in Windows is broken in two ways. First, it
+ * has a problem with locale names that have a dot in the country name. For
+ * example:
  *
  * "Chinese (Traditional)_Hong Kong S.A.R..950"
  *
- * For some reason, setlocale() doesn't accept that. Fortunately, Windows'
- * setlocale() accepts various alternative names for such countries, so we
- * provide a wrapper setlocale() function that maps the troublemaking locale
- * names to accepted aliases.
+ * For some reason, setlocale() doesn't accept that as argument, even though
+ * setlocale(LC_ALL, NULL) returns exactly that. Fortunately, it accepts
+ * various alternative names for such countries, so to work around the broken
+ * setlocale() function, we map the troublemaking locale names to accepted
+ * aliases, before calling setlocale().
+ *
+ * The second problem is that the locale name for "Norwegian (Bokm&aring;l)"
+ * contains a non-ASCII character. That's problematic, because it's not clear
+ * what encoding the locale name itself is supposed to be in, when you
+ * haven't yet set a locale. Also, it causes problems when the cluster
+ * contains databases with different encodings, as the locale name is stored
+ * in the pg_database system catalog. To work around that, when setlocale()
+ * returns that locale name, map it to a pure-ASCII alias for the same
+ * locale.
  *-------------------------------------------------------------------------
  */
 
@@ -27,11 +38,23 @@
 
 struct locale_map
 {
-	const char *locale_name_part;		/* string in locale name to replace */
-	const char *replacement;	/* string to replace it with */
+	/*
+	 * String in locale name to replace. Can be a single string (end is NULL),
+	 * or separate start and end strings. If two strings are given, the
+	 * locale name must contain both of them, and everything between them
+	 * is replaced. This is used for a poor-man's regexp search, allowing
+	 * replacement of "start.*end".
+	 */
+	const char *locale_name_start;
+	const char *locale_name_end;
+
+	const char *replacement;	/* string to replace the match with */
 };
 
-static const struct locale_map locale_map_list[] = {
+/*
+ * Mappings applied before calling setlocale(), to the argument.
+ */
+static const struct locale_map locale_map_argument[] = {
 	/*
 	 * "HKG" is listed here:
 	 * http://msdn.microsoft.com/en-us/library/cdax410z%28v=vs.71%29.aspx
@@ -40,8 +63,8 @@ static const struct locale_map locale_map_list[] = {
 	 * "ARE" is the ISO-3166 three-letter code for U.A.E. It is not on the
 	 * above list, but seems to work anyway.
 	 */
-	{"Hong Kong S.A.R.", "HKG"},
-	{"U.A.E.", "ARE"},
+	{"Hong Kong S.A.R.", NULL, "HKG"},
+	{"U.A.E.", NULL, "ARE"},
 
 	/*
 	 * The ISO-3166 country code for Macau S.A.R. is MAC, but Windows doesn't
@@ -56,60 +79,107 @@ static const struct locale_map locale_map_list[] = {
 	 *
 	 * Some versions of Windows spell it "Macau", others "Macao".
 	 */
-	{"Chinese (Traditional)_Macau S.A.R..950", "ZHM"},
-	{"Chinese_Macau S.A.R..950", "ZHM"},
-	{"Chinese (Traditional)_Macao S.A.R..950", "ZHM"},
-	{"Chinese_Macao S.A.R..950", "ZHM"}
+	{"Chinese (Traditional)_Macau S.A.R..950", NULL, "ZHM"},
+	{"Chinese_Macau S.A.R..950", NULL, "ZHM"},
+	{"Chinese (Traditional)_Macao S.A.R..950", NULL, "ZHM"},
+	{"Chinese_Macao S.A.R..950", NULL, "ZHM"},
+	{NULL, NULL, NULL}
 };
+
+/*
+ * Mappings applied after calling setlocale(), to its return value.
+ */
+static const struct locale_map locale_map_result[] = {
+	/*
+	 * "Norwegian (Bokm&aring;l)" locale name contains the a-ring character.
+	 * Map it to a pure-ASCII alias.
+	 *
+	 * It's not clear what encoding setlocale() uses when it returns the
+	 * locale name, so to play it safe, we search for "Norwegian (Bok*l)".
+	 */
+	{"Norwegian (Bokm", "l)", "norwegian-bokmal"},
+	{NULL, NULL, NULL}
+};
+
+#define MAX_LOCALE_NAME_LEN		100
+
+static char *
+map_locale(struct locale_map *map, char *locale)
+{
+	static char aliasbuf[MAX_LOCALE_NAME_LEN];
+	int			i;
+
+	/* Check if the locale name matches any of the problematic ones. */
+	for (i = 0; map[i].locale_name_start != NULL; i++)
+	{
+		const char *needle_start = map[i].locale_name_start;
+		const char *needle_end = map[i].locale_name_end;
+		const char *replacement = map[i].replacement;
+		char	   *match;
+		char	   *match_start = NULL;
+		char	   *match_end = NULL;
+
+		match = strstr(locale, needle_start);
+		if (match)
+		{
+			/*
+			 * Found a match for the first part. If this was a two-part
+			 * replacement, find the second part.
+			 */
+			match_start = match;
+			if (needle_end)
+			{
+				match = strstr(match_start + strlen(needle_start), needle_end);
+				if (match)
+					match_end = match + strlen(needle_end);
+				else
+					match_start = NULL;
+			}
+			else
+				match_end = match_start + strlen(needle_start);
+		}
+
+		if (match_start)
+		{
+			/* Found a match. Replace the matched string. */
+			int			matchpos = match_start - locale;
+			int			replacementlen = strlen(replacement);
+			char	   *rest = match_end;
+			int			restlen = strlen(rest);
+
+			/* check that the result fits in the static buffer */
+			if (matchpos + replacementlen + restlen + 1 > MAX_LOCALE_NAME_LEN)
+				return NULL;
+
+			memcpy(&aliasbuf[0], &locale[0], matchpos);
+			memcpy(&aliasbuf[matchpos], replacement, replacementlen);
+			/* includes null terminator */
+			memcpy(&aliasbuf[matchpos + replacementlen], rest, restlen + 1);
+
+			return aliasbuf;
+		}
+	}
+
+	/* no match, just return the original string */
+	return locale;
+}
 
 char *
 pgwin32_setlocale(int category, const char *locale)
 {
+	char	   *argument;
 	char	   *result;
-	char	   *alias;
-	int			i;
 
 	if (locale == NULL)
-		return setlocale(category, locale);
-
-	/* Check if the locale name matches any of the problematic ones. */
-	alias = NULL;
-	for (i = 0; i < lengthof(locale_map_list); i++)
-	{
-		const char *needle = locale_map_list[i].locale_name_part;
-		const char *replacement = locale_map_list[i].replacement;
-		char	   *match;
-
-		match = strstr(locale, needle);
-		if (match != NULL)
-		{
-			/* Found a match. Replace the matched string. */
-			int			matchpos = match - locale;
-			int			replacementlen = strlen(replacement);
-			char	   *rest = match + strlen(needle);
-			int			restlen = strlen(rest);
-
-			alias = malloc(matchpos + replacementlen + restlen + 1);
-			if (!alias)
-				return NULL;
-
-			memcpy(&alias[0], &locale[0], matchpos);
-			memcpy(&alias[matchpos], replacement, replacementlen);
-			memcpy(&alias[matchpos + replacementlen], rest, restlen + 1);		/* includes null
-																				 * terminator */
-
-			break;
-		}
-	}
+		argument = NULL;
+	else
+		argument = map_locale(locale_map_argument, locale);
 
 	/* Call the real setlocale() function */
-	if (alias)
-	{
-		result = setlocale(category, alias);
-		free(alias);
-	}
-	else
-		result = setlocale(category, locale);
+	result = setlocale(category, argument);
+
+	if (result)
+		result = map_locale(locale_map_result, result);
 
 	return result;
 }
