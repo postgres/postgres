@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 	ControlFileData ControlFile;
 	int			fd;
 	char		ControlFilePath[MAXPGPATH];
-	char	   *DataDir;
+	char	   *DataDir = NULL;
 	pg_crc32	crc;
 	time_t		time_tmp;
 	char		pgctime_str[128];
@@ -100,6 +100,7 @@ main(int argc, char *argv[])
 	const char *progname;
 	XLogSegNo	segno;
 	char		xlogfilename[MAXFNAMELEN];
+	int			c;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_controldata"));
 
@@ -119,10 +120,28 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (argc > 1)
-		DataDir = argv[1];
-	else
-		DataDir = getenv("PGDATA");
+	while ((c = getopt(argc, argv, "D:")) != -1)
+	{
+		switch (c)
+		{
+			case 'D':
+				DataDir = optarg;
+				break;
+
+			default:
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				exit(1);
+		}
+	}
+
+	if (DataDir == NULL)
+	{
+		if (optind < argc)
+			DataDir = argv[optind++];
+		else
+			DataDir = getenv("PGDATA");
+	}
+
 	if (DataDir == NULL)
 	{
 		fprintf(stderr, _("%s: no data directory specified\n"), progname);
