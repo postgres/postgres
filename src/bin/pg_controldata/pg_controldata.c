@@ -142,6 +142,16 @@ main(int argc, char *argv[])
 			DataDir = getenv("PGDATA");
 	}
 
+	/* Complain if any arguments remain */
+	if (optind < argc)
+	{
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
 	if (DataDir == NULL)
 	{
 		fprintf(stderr, _("%s: no data directory specified\n"), progname);
