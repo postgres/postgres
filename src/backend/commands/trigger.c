@@ -4332,7 +4332,7 @@ AfterTriggerEnlargeQueryState(void)
 
 	if (afterTriggers.maxquerydepth == 0)
 	{
-		int			new_alloc = Max(afterTriggers.query_depth, 8);
+		int			new_alloc = Max(afterTriggers.query_depth + 1, 8);
 
 		afterTriggers.query_stack = (AfterTriggerEventList *)
 			MemoryContextAlloc(TopTransactionContext,
@@ -4346,7 +4346,8 @@ AfterTriggerEnlargeQueryState(void)
 	{
 		/* repalloc will keep the stack in the same context */
 		int			old_alloc = afterTriggers.maxquerydepth;
-		int			new_alloc = Max(afterTriggers.query_depth, old_alloc * 2);
+		int			new_alloc = Max(afterTriggers.query_depth + 1,
+									old_alloc * 2);
 
 		afterTriggers.query_stack = (AfterTriggerEventList *)
 			repalloc(afterTriggers.query_stack,
