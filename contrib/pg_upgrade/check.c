@@ -17,7 +17,7 @@ static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_cluster_is_empty(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
-static bool equivalent_locale(const char *loca, const char *locb);
+static bool equivalent_locale(int category, const char *loca, const char *locb);
 static bool equivalent_encoding(const char *chara, const char *charb);
 static void check_is_super_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
@@ -370,23 +370,8 @@ set_locale_and_encoding(ClusterInfo *cluster)
 		i_datcollate = PQfnumber(res, "datcollate");
 		i_datctype = PQfnumber(res, "datctype");
 
-		if (GET_MAJOR_VERSION(cluster->major_version) < 902)
-		{
-			/*
-			 * Pre-9.2 did not canonicalize the supplied locale names to match
-			 * what the system returns, while 9.2+ does, so convert pre-9.2 to
-			 * match.
-			 */
-			ctrl->lc_collate = get_canonical_locale_name(LC_COLLATE,
-								pg_strdup(PQgetvalue(res, 0, i_datcollate)));
-			ctrl->lc_ctype = get_canonical_locale_name(LC_CTYPE,
-								  pg_strdup(PQgetvalue(res, 0, i_datctype)));
-		}
-		else
-		{
-			ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
-			ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
-		}
+		ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
+		ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
 
 		PQclear(res);
 	}
@@ -418,10 +403,10 @@ static void
 check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
-	if (!equivalent_locale(oldctrl->lc_collate, newctrl->lc_collate))
+	if (!equivalent_locale(LC_COLLATE, oldctrl->lc_collate, newctrl->lc_collate))
 		pg_fatal("lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
 				 oldctrl->lc_collate, newctrl->lc_collate);
-	if (!equivalent_locale(oldctrl->lc_ctype, newctrl->lc_ctype))
+	if (!equivalent_locale(LC_CTYPE, oldctrl->lc_ctype, newctrl->lc_ctype))
 		pg_fatal("lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
 				 oldctrl->lc_ctype, newctrl->lc_ctype);
 	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
@@ -434,39 +419,46 @@ check_locale_and_encoding(ControlData *oldctrl,
  *
  * Best effort locale-name comparison.  Return false if we are not 100% sure
  * the locales are equivalent.
+ *
+ * Note: The encoding parts of the names are ignored. This function is
+ * currently used to compare locale names stored in pg_database, and
+ * pg_database contains a separate encoding field. That's compared directly
+ * in check_locale_and_encoding().
  */
 static bool
-equivalent_locale(const char *loca, const char *locb)
+equivalent_locale(int category, const char *loca, const char *locb)
 {
-	const char *chara = strrchr(loca, '.');
-	const char *charb = strrchr(locb, '.');
-	int			lencmp;
-
-	/* If they don't both contain an encoding part, just do strcasecmp(). */
-	if (!chara || !charb)
-		return (pg_strcasecmp(loca, locb) == 0);
-
-	/*
-	 * Compare the encoding parts.  Windows tends to use code page numbers for
-	 * the encoding part, which equivalent_encoding() won't like, so accept if
-	 * the strings are case-insensitive equal; otherwise use
-	 * equivalent_encoding() to compare.
-	 */
-	if (pg_strcasecmp(chara + 1, charb + 1) != 0 &&
-		!equivalent_encoding(chara + 1, charb + 1))
-		return false;
+	const char *chara;
+	const char *charb;
+	char	   *canona;
+	char	   *canonb;
+	int			lena;
+	int			lenb;
 
 	/*
-	 * OK, compare the locale identifiers (e.g. en_US part of en_US.utf8).
-	 *
-	 * It's tempting to ignore non-alphanumeric chars here, but for now it's
-	 * not clear that that's necessary; just do case-insensitive comparison.
+	 * If the names are equal, the locales are equivalent. Checking this
+	 * first avoids calling setlocale() in the common case that the names
+	 * are equal. That's a good thing, if setlocale() is buggy, for example.
 	 */
-	lencmp = chara - loca;
-	if (lencmp != charb - locb)
-		return false;
+	if (pg_strcasecmp(loca, locb) == 0)
+		return true;
 
-	return (pg_strncasecmp(loca, locb, lencmp) == 0);
+	/*
+	 * Not identical. Canonicalize both names, remove the encoding parts,
+	 * and try again.
+	 */
+	canona = get_canonical_locale_name(category, loca);
+	chara = strrchr(canona, '.');
+	lena = chara ? (chara - canona) : strlen(canona);
+
+	canonb = get_canonical_locale_name(category, locb);
+	charb = strrchr(canonb, '.');
+	lenb = charb ? (charb - canonb) : strlen(canonb);
+
+	if (lena == lenb && pg_strncasecmp(canona, canonb, lena) == 0)
+		return true;
+
+	return false;
 }
 
 /*
