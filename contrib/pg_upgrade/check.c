@@ -395,14 +395,17 @@ check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
 	if (!equivalent_locale(LC_COLLATE, oldctrl->lc_collate, newctrl->lc_collate))
-		pg_fatal("lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
-				 oldctrl->lc_collate, newctrl->lc_collate);
+		pg_log(PG_FATAL,
+			   "lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
+			   oldctrl->lc_collate, newctrl->lc_collate);
 	if (!equivalent_locale(LC_CTYPE, oldctrl->lc_ctype, newctrl->lc_ctype))
-		pg_fatal("lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
-				 oldctrl->lc_ctype, newctrl->lc_ctype);
+		pg_log(PG_FATAL,
+			   "lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
+			   oldctrl->lc_ctype, newctrl->lc_ctype);
 	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
-		pg_fatal("encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
-				 oldctrl->encoding, newctrl->encoding);
+		pg_log(PG_FATAL,
+			   "encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
+			   oldctrl->encoding, newctrl->encoding);
 }
 
 /*
