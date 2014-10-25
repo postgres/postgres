@@ -340,6 +340,9 @@
 /* Define to 1 if `long long int' works and is 64 bits. */
 #undef HAVE_LONG_LONG_INT_64
 
+/* Define to 1 if you have the <mbarrier.h> header file. */
+#undef HAVE_MBARRIER_H
+
 /* Define to 1 if you have the `mbstowcs_l' function. */
 #undef HAVE_MBSTOWCS_L
 
