@@ -2603,7 +2603,7 @@ pset_bool_string(bool val)
 static char *
 pset_quoted_string(const char *str)
 {
-	char	   *ret = pg_malloc(strlen(str) * 2 + 2);
+	char	   *ret = pg_malloc(strlen(str) * 2 + 3);
 	char	   *r = ret;
 
 	*r++ = '\'';
