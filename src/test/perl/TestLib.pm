@@ -44,6 +44,14 @@ BEGIN
 	{
 		plan skip_all => "version of Test::More is too old to support subplans";
 	};
+
+	eval {
+		require Test::Simple;
+		Test::Simple->VERSION('0.98');
+	} or do
+	{
+		plan skip_all => "version of Test::Simple is too old to support subplans properly";
+	};
 }
 
 # Set to untranslated messages, to be able to compare program output
