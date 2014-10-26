@@ -297,7 +297,7 @@ BZIP2	= bzip2
 # Testing
 
 PROVE = @PROVE@
-PG_PROVE_FLAGS = --ext='.pl' -I $(top_srcdir)/src/test/perl/
+PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
 PROVE_FLAGS = --verbose
 
 # prepend to path if already set, else just set it
@@ -311,13 +311,13 @@ $(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),ai
 endef
 
 define prove_installcheck
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
 
 define prove_check
 $(MKDIR_P) tmp_check/log
 $(MAKE) -C $(top_builddir) DESTDIR='$(CURDIR)'/tmp_check/install install >'$(CURDIR)'/tmp_check/log/install.log 2>&1
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(CURDIR)/tmp_check/install$(libdir)) PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(CURDIR)/tmp_check/install$(libdir)) PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
 
 # Installation.
