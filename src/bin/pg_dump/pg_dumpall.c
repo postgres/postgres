@@ -48,7 +48,7 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 					   const char *type, const char *name, const char *type2,
 					   const char *name2);
 static void dumpDatabases(PGconn *conn);
-static void dumpTimestamp(char *msg);
+static void dumpTimestamp(const char *msg);
 static void doShellQuoting(PQExpBuffer buf, const char *str);
 static void doConnStrQuoting(PQExpBuffer buf, const char *str);
 
@@ -2058,12 +2058,12 @@ executeCommand(PGconn *conn, const char *query)
  * dumpTimestamp
  */
 static void
-dumpTimestamp(char *msg)
+dumpTimestamp(const char *msg)
 {
 	char		buf[64];
 	time_t		now = time(NULL);
 
-	if (strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S %z", localtime(&now)) != 0)
+	if (strftime(buf, sizeof(buf), PGDUMP_STRFTIME_FMT, localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
 }
 
