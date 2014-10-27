@@ -427,13 +427,13 @@ UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMN
 
 lib$(NAME)dll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for MS VC++' >$@
-	echo 'LIBRARY LIB$(UC_NAME)' >>$@
+	echo 'LIBRARY LIB$(UC_NAME).dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for MS VC++' >$@
-	echo 'LIBRARY LIB$(UC_NAME)D' >>$@
+	echo 'LIBRARY LIB$(UC_NAME)D.dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
