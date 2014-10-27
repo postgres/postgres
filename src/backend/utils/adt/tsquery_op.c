@@ -213,63 +213,112 @@ makeTSQuerySign(TSQuery a)
 	return sign;
 }
 
+static char **
+collectTSQueryValues(TSQuery a, int *nvalues_p)
+{
+	QueryItem  *ptr = GETQUERY(a);
+	char	   *operand = GETOPERAND(a);
+	char	  **values;
+	int			nvalues = 0;
+	int			i;
+
+	values = (char **) palloc(sizeof(char *) * a->size);
+
+	for (i = 0; i < a->size; i++)
+	{
+		if (ptr->type == QI_VAL)
+		{
+			int			len = ptr->qoperand.length;
+			char	   *val;
+
+			val = palloc(len + 1);
+			memcpy(val, operand + ptr->qoperand.distance, len);
+			val[len] = '\0';
+
+			values[nvalues++] = val;
+		}
+		ptr++;
+	}
+
+	*nvalues_p = nvalues;
+	return values;
+}
+
+static int
+cmp_string(const void *a, const void *b)
+{
+	const char *sa = *((const char **) a);
+	const char *sb = *((const char **) b);
+	return strcmp(sa, sb);
+}
+
+static int
+remove_duplicates(char **strings, int n)
+{
+	if (n <= 1)
+		return n;
+	else
+	{
+		int			i;
+		char	   *prev = strings[0];
+		int			new_n = 1;
+
+		for (i = 1; i < n; i++)
+		{
+			if (strcmp(strings[i], prev) != 0)
+			{
+				strings[new_n++] = strings[i];
+				prev = strings[i];
+			}
+		}
+		return new_n;
+	}
+}
+
 Datum
 tsq_mcontains(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	TSQuery		ex = PG_GETARG_TSQUERY(1);
-	TSQuerySign sq,
-				se;
-	int			i,
-				j;
-	QueryItem  *iq,
-			   *ie;
+	char	  **query_values;
+	int			query_nvalues;
+	char	  **ex_values;
+	int			ex_nvalues;
+	bool		result = true;
 
-	if (query->size < ex->size)
+	/* Extract the query terms into arrays */
+	query_values = collectTSQueryValues(query, &query_nvalues);
+	ex_values = collectTSQueryValues(ex, &ex_nvalues);
+
+	/* Sort and remove duplicates from both arrays */
+	qsort(query_values, query_nvalues, sizeof(char *), cmp_string);
+	query_nvalues = remove_duplicates(query_values, query_nvalues);
+	qsort(ex_values, ex_nvalues, sizeof(char *), cmp_string);
+	ex_nvalues = remove_duplicates(ex_values, ex_nvalues);
+
+	if (ex_nvalues > query_nvalues)
+		result = false;
+	else
 	{
-		PG_FREE_IF_COPY(query, 0);
-		PG_FREE_IF_COPY(ex, 1);
+		int i;
+		int j = 0;
 
-		PG_RETURN_BOOL(false);
-	}
-
-	sq = makeTSQuerySign(query);
-	se = makeTSQuerySign(ex);
-
-	if ((sq & se) != se)
-	{
-		PG_FREE_IF_COPY(query, 0);
-		PG_FREE_IF_COPY(ex, 1);
-
-		PG_RETURN_BOOL(false);
-	}
-
-	iq = GETQUERY(query);
-	ie = GETQUERY(ex);
-
-	for (i = 0; i < ex->size; i++)
-	{
-		if (ie[i].type != QI_VAL)
-			continue;
-		for (j = 0; j < query->size; j++)
+		for (i = 0; i < ex_nvalues; i++)
 		{
-			if (iq[j].type == QI_VAL &&
-				ie[i].qoperand.valcrc == iq[j].qoperand.valcrc)
+			for (; j < query_nvalues; j++)
+			{
+				if (strcmp(ex_values[i], query_values[j]) == 0)
+					break;
+			}
+			if (j == query_nvalues)
+			{
+				result = false;
 				break;
-		}
-		if (j >= query->size)
-		{
-			PG_FREE_IF_COPY(query, 0);
-			PG_FREE_IF_COPY(ex, 1);
-
-			PG_RETURN_BOOL(false);
+			}
 		}
 	}
 
-	PG_FREE_IF_COPY(query, 0);
-	PG_FREE_IF_COPY(ex, 1);
-
-	PG_RETURN_BOOL(true);
+	PG_RETURN_BOOL(result);
 }
 
 Datum
