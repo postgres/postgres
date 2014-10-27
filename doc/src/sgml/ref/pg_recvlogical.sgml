@@ -230,7 +230,7 @@ PostgreSQL documentation
     <variablelist>
       <varlistentry>
        <term><option>-d <replaceable>database</replaceable></option></term>
-       <term><option>--dbname <replaceable>database</replaceable></option></term>
+       <term><option>--dbname=<replaceable>database</replaceable></option></term>
        <listitem>
         <para>
          The database to connect to.  See the description of the actions for
@@ -243,7 +243,7 @@ PostgreSQL documentation
 
       <varlistentry>
        <term><option>-h <replaceable>hostname-or-ip</replaceable></option></term>
-       <term><option>--host <replaceable>hostname-or-ip</replaceable></option></term>
+       <term><option>--host=<replaceable>hostname-or-ip</replaceable></option></term>
        <listitem>
         <para>
          Specifies the host name of the machine on which the server is
@@ -257,7 +257,7 @@ PostgreSQL documentation
 
       <varlistentry>
        <term><option>-p <replaceable>port</replaceable></option></term>
-       <term><option>--port <replaceable>port</replaceable></option></term>
+       <term><option>--port=<replaceable>port</replaceable></option></term>
        <listitem>
         <para>
          Specifies the TCP port or local Unix domain socket file
@@ -270,7 +270,7 @@ PostgreSQL documentation
 
       <varlistentry>
        <term><option>-U <replaceable>user</replaceable></option></term>
-       <term><option>--username <replaceable>user</replaceable></option></term>
+       <term><option>--username=<replaceable>user</replaceable></option></term>
        <listitem>
         <para>
          Username to connect as.  Defaults to current operating system user
