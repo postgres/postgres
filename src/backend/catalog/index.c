@@ -1784,14 +1784,6 @@ index_update_stats(Relation rel,
 	 * trying to change the pg_class row to the same thing, so it doesn't
 	 * matter which goes first).
 	 *
-	 * 4. Even with just a single CREATE INDEX, there's a risk factor because
-	 * someone else might be trying to open the rel while we commit, and this
-	 * creates a race condition as to whether he will see both or neither of
-	 * the pg_class row versions as valid.  Again, a non-transactional update
-	 * avoids the risk.  It is indeterminate which state of the row the other
-	 * process will see, but it doesn't matter (if he's only taking
-	 * AccessShareLock, then it's not critical that he see relhasindex true).
-	 *
 	 * It is safe to use a non-transactional update even though our
 	 * transaction could still fail before committing.  Setting relhasindex
 	 * true is safe even if there are no indexes (VACUUM will eventually fix
