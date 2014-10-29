@@ -37,21 +37,6 @@ BEGIN
 	{
 		plan skip_all => "IPC::Run not available";
 	};
-
-	eval {
-		Test::More->VERSION('0.93_01');
-	} or do
-	{
-		plan skip_all => "version of Test::More is too old to support subplans";
-	};
-
-	eval {
-		require Test::Simple;
-		Test::Simple->VERSION('0.98');
-	} or do
-	{
-		plan skip_all => "version of Test::Simple is too old to support subplans properly";
-	};
 }
 
 # Set to untranslated messages, to be able to compare program output
@@ -180,67 +165,51 @@ sub command_exit_is
 sub program_help_ok
 {
 	my ($cmd) = @_;
-	subtest "$cmd --help" => sub {
-		plan tests => 3;
-		my ($stdout, $stderr);
-		my $result = run [ $cmd, '--help' ], '>', \$stdout, '2>', \$stderr;
-		ok($result, "$cmd --help exit code 0");
-		isnt($stdout, '', "$cmd --help goes to stdout");
-		is($stderr, '', "$cmd --help nothing to stderr");
-	};
+	my ($stdout, $stderr);
+	my $result = run [ $cmd, '--help' ], '>', \$stdout, '2>', \$stderr;
+	ok($result, "$cmd --help exit code 0");
+	isnt($stdout, '', "$cmd --help goes to stdout");
+	is($stderr, '', "$cmd --help nothing to stderr");
 }
 
 sub program_version_ok
 {
 	my ($cmd) = @_;
-	subtest "$cmd --version" => sub {
-		plan tests => 3;
-		my ($stdout, $stderr);
-		my $result = run [ $cmd, '--version' ], '>', \$stdout, '2>', \$stderr;
-		ok($result, "$cmd --version exit code 0");
-		isnt($stdout, '', "$cmd --version goes to stdout");
-		is($stderr, '', "$cmd --version nothing to stderr");
-	};
+	my ($stdout, $stderr);
+	my $result = run [ $cmd, '--version' ], '>', \$stdout, '2>', \$stderr;
+	ok($result, "$cmd --version exit code 0");
+	isnt($stdout, '', "$cmd --version goes to stdout");
+	is($stderr, '', "$cmd --version nothing to stderr");
 }
 
 sub program_options_handling_ok
 {
 	my ($cmd) = @_;
-	subtest "$cmd options handling" => sub {
-		plan tests => 2;
-		my ($stdout, $stderr);
-		my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout,
-		  '2>', \$stderr;
-		ok(!$result, "$cmd with invalid option nonzero exit code");
-		isnt($stderr, '', "$cmd with invalid option prints error message");
-	};
+	my ($stdout, $stderr);
+	my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout, '2>', \$stderr;
+	ok(!$result, "$cmd with invalid option nonzero exit code");
+	isnt($stderr, '', "$cmd with invalid option prints error message");
 }
 
 sub command_like
 {
 	my ($cmd, $expected_stdout, $test_name) = @_;
-	subtest $test_name => sub {
-		plan tests => 3;
-		my ($stdout, $stderr);
-		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
-		ok($result, "@$cmd exit code 0");
-		is($stderr, '', "@$cmd no stderr");
-		like($stdout, $expected_stdout, "$test_name: matches");
-	};
+	my ($stdout, $stderr);
+	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok($result, "@$cmd exit code 0");
+	is($stderr, '', "@$cmd no stderr");
+	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
 sub issues_sql_like
 {
 	my ($cmd, $expected_sql, $test_name) = @_;
-	subtest $test_name => sub {
-		plan tests => 2;
-		my ($stdout, $stderr);
-		truncate $test_server_logfile, 0;
-		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
-		ok($result, "@$cmd exit code 0");
-		my $log = `cat '$test_server_logfile'`;
-		like($log, $expected_sql, "$test_name: SQL found in server log");
-	};
+	my ($stdout, $stderr);
+	truncate $test_server_logfile, 0;
+	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok($result, "@$cmd exit code 0");
+	my $log = `cat '$test_server_logfile'`;
+	like($log, $expected_sql, "$test_name: SQL found in server log");
 }
 
 1;

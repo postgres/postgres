@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 6;
+use Test::More tests => 13;
 
 program_help_ok('clusterdb');
 program_version_ok('clusterdb');

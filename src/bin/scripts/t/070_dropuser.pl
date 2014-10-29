@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 5;
+use Test::More tests => 11;
 
 program_help_ok('dropuser');
 program_version_ok('dropuser');

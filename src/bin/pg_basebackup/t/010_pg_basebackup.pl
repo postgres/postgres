@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Cwd;
 use TestLib;
-use Test::More tests => 28;
+use Test::More tests => 33;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
