@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 5;
+use Test::More tests => 10;
 
 program_help_ok('pg_isready');
 program_version_ok('pg_isready');

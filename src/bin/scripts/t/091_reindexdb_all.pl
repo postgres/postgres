@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 my $tempdir = tempdir;
 start_test_server $tempdir;

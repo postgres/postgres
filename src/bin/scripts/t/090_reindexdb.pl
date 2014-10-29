@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 7;
+use Test::More tests => 16;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
