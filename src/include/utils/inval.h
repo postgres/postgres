@@ -25,10 +25,6 @@ typedef void (*RelcacheCallbackFunction) (Datum arg, Oid relid);
 
 extern void AcceptInvalidationMessages(void);
 
-extern void AtStart_Inval(void);
-
-extern void AtSubStart_Inval(void);
-
 extern void AtEOXact_Inval(bool isCommit);
 
 extern void AtEOSubXact_Inval(bool isCommit);
