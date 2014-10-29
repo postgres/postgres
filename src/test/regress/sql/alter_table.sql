@@ -1151,6 +1151,16 @@ ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 \d test_inh_check
 \d test_inh_check_child
 
+-- check for rollback of ANALYZE corrupting table property flags (bug #11638)
+CREATE TABLE check_fk_presence_1 (id int PRIMARY KEY, t text);
+CREATE TABLE check_fk_presence_2 (id int REFERENCES check_fk_presence_1, t text);
+BEGIN;
+ALTER TABLE check_fk_presence_2 DROP CONSTRAINT check_fk_presence_2_id_fkey;
+ANALYZE check_fk_presence_2;
+ROLLBACK;
+\d check_fk_presence_2
+DROP TABLE check_fk_presence_1, check_fk_presence_2;
+
 --
 -- lock levels
 --
