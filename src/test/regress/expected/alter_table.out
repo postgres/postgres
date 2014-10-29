@@ -1544,6 +1544,24 @@ select non_strict(NULL);
  
 (1 row)
 
+-- check for rollback of ANALYZE corrupting table property flags (bug #11638)
+CREATE TABLE check_fk_presence_1 (id int PRIMARY KEY, t text);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "check_fk_presence_1_pkey" for table "check_fk_presence_1"
+CREATE TABLE check_fk_presence_2 (id int REFERENCES check_fk_presence_1, t text);
+BEGIN;
+ALTER TABLE check_fk_presence_2 DROP CONSTRAINT check_fk_presence_2_id_fkey;
+ANALYZE check_fk_presence_2;
+ROLLBACK;
+\d check_fk_presence_2
+Table "public.check_fk_presence_2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ id     | integer | 
+ t      | text    | 
+Foreign-key constraints:
+    "check_fk_presence_2_id_fkey" FOREIGN KEY (id) REFERENCES check_fk_presence_1(id)
+
+DROP TABLE check_fk_presence_1, check_fk_presence_2;
 --
 -- alter object set schema
 --

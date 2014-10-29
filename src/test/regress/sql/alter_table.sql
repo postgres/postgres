@@ -1124,6 +1124,16 @@ select non_strict(NULL);
 alter function non_strict(text) returns null on null input;
 select non_strict(NULL);
 
+-- check for rollback of ANALYZE corrupting table property flags (bug #11638)
+CREATE TABLE check_fk_presence_1 (id int PRIMARY KEY, t text);
+CREATE TABLE check_fk_presence_2 (id int REFERENCES check_fk_presence_1, t text);
+BEGIN;
+ALTER TABLE check_fk_presence_2 DROP CONSTRAINT check_fk_presence_2_id_fkey;
+ANALYZE check_fk_presence_2;
+ROLLBACK;
+\d check_fk_presence_2
+DROP TABLE check_fk_presence_1, check_fk_presence_2;
+
 --
 -- alter object set schema
 --
