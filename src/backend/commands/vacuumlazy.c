@@ -309,7 +309,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						new_rel_allvisible,
 						vacrelstats->hasindex,
 						new_frozen_xid,
-						new_min_multi);
+						new_min_multi,
+						false);
 
 	/* report results to the stats collector, too */
 	new_live_tuples = new_rel_tuples - vacrelstats->new_dead_tuples;
@@ -1377,7 +1378,8 @@ lazy_cleanup_index(Relation indrel,
 							0,
 							false,
 							InvalidTransactionId,
-							InvalidMultiXactId);
+							InvalidMultiXactId,
+							false);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
