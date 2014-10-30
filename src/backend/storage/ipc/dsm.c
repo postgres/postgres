@@ -8,7 +8,7 @@
  * facilities provided by dsm_impl.h and dsm_impl.c, mappings and segments
  * created using this module will be cleaned up automatically.  Mappings
  * will be removed when the resource owner under which they were created
- * is cleaned up, unless dsm_keep_mapping() is used, in which case they
+ * is cleaned up, unless dsm_pin_mapping() is used, in which case they
  * have session lifespan.  Segments will be removed when there are no
  * remaining mappings, or at postmaster shutdown in any case.  After a
  * hard postmaster crash, remaining segments will be removed, if they
@@ -786,7 +786,7 @@ dsm_detach(dsm_segment *seg)
  * only.
  */
 void
-dsm_keep_mapping(dsm_segment *seg)
+dsm_pin_mapping(dsm_segment *seg)
 {
 	if (seg->resowner != NULL)
 	{
@@ -804,11 +804,11 @@ dsm_keep_mapping(dsm_segment *seg)
  *
  * Note that this function does not arrange for the current process to
  * keep the segment mapped indefinitely; if that behavior is desired,
- * dsm_keep_mapping() should be used from each process that needs to
+ * dsm_pin_mapping() should be used from each process that needs to
  * retain the mapping.
  */
 void
-dsm_keep_segment(dsm_segment *seg)
+dsm_pin_segment(dsm_segment *seg)
 {
 	/*
 	 * Bump reference count for this segment in shared memory. This will
@@ -819,7 +819,7 @@ dsm_keep_segment(dsm_segment *seg)
 	dsm_control->item[seg->control_slot].refcnt++;
 	LWLockRelease(DynamicSharedMemoryControlLock);
 
-	dsm_impl_keep_segment(seg->handle, seg->impl_private);
+	dsm_impl_pin_segment(seg->handle, seg->impl_private);
 }
 
 /*
