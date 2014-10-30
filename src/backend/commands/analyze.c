@@ -86,7 +86,7 @@ static BufferAccessStrategy vac_strategy;
 
 static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
-			   bool inh, int elevel);
+			   bool inh, bool in_outer_xact, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -114,7 +114,8 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
  *	analyze_rel() -- analyze one relation
  */
 void
-analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
+analyze_rel(Oid relid, VacuumStmt *vacstmt,
+			bool in_outer_xact, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 	int			elevel;
@@ -264,13 +265,15 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
+	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+				   false, in_outer_xact, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, true, elevel);
+		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+					   true, in_outer_xact, elevel);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -300,7 +303,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 static void
 do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
-			   bool inh, int elevel)
+			   bool inh, bool in_outer_xact, int elevel)
 {
 	int			attr_cnt,
 				tcnt,
@@ -583,7 +586,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							visibilitymap_count(onerel),
 							hasindex,
 							InvalidTransactionId,
-							InvalidMultiXactId);
+							InvalidMultiXactId,
+							in_outer_xact);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -604,7 +608,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 								0,
 								false,
 								InvalidTransactionId,
-								InvalidMultiXactId);
+								InvalidMultiXactId,
+								in_outer_xact);
 		}
 	}
 
