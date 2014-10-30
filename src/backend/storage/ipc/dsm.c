@@ -796,6 +796,24 @@ dsm_pin_mapping(dsm_segment *seg)
 }
 
 /*
+ * Arrange to remove a dynamic shared memory mapping at cleanup time.
+ *
+ * dsm_pin_mapping() can be used to preserve a mapping for the entire
+ * lifetime of a process; this function reverses that decision, making
+ * the segment owned by the current resource owner.  This may be useful
+ * just before performing some operation that will invalidate the segment
+ * for future use by this backend.
+ */
+void
+dsm_unpin_mapping(dsm_segment *seg)
+{
+	Assert(seg->resowner == NULL);
+	ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
+	seg->resowner = CurrentResourceOwner;
+	ResourceOwnerRememberDSM(seg->resowner, seg);
+}
+
+/*
  * Keep a dynamic shared memory segment until postmaster shutdown.
  *
  * This function should not be called more than once per segment;
