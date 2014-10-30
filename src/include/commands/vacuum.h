@@ -153,7 +153,8 @@ extern void vac_update_relstats(Relation relation,
 					double num_tuples,
 					BlockNumber num_all_visible_pages,
 					bool hasindex,
-					TransactionId frozenxid);
+					TransactionId frozenxid,
+					bool in_outer_xact);
 extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,
 					  bool sharedRel,
 					  TransactionId *oldestXmin,
@@ -168,7 +169,7 @@ extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy);
+			bool in_outer_xact, BufferAccessStrategy bstrategy);
 extern bool std_typanalyze(VacAttrStats *stats);
 extern double anl_random_fract(void);
 extern double anl_init_selection_state(int n);

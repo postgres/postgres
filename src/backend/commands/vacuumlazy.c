@@ -284,7 +284,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						new_rel_tuples,
 						new_rel_allvisible,
 						vacrelstats->hasindex,
-						new_frozen_xid);
+						new_frozen_xid,
+						false);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -1283,7 +1284,8 @@ lazy_cleanup_index(Relation indrel,
 							stats->num_index_tuples,
 							0,
 							false,
-							InvalidTransactionId);
+							InvalidTransactionId,
+							false);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
