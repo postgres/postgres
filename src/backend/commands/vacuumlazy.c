@@ -266,7 +266,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vac_update_relstats(onerel,
 						new_rel_pages, new_rel_tuples,
 						vacrelstats->hasindex,
-						new_frozen_xid);
+						new_frozen_xid,
+						false);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -1091,7 +1092,9 @@ lazy_cleanup_index(Relation indrel,
 	if (!stats->estimated_count)
 		vac_update_relstats(indrel,
 							stats->num_pages, stats->num_index_tuples,
-							false, InvalidTransactionId);
+							false,
+							InvalidTransactionId,
+							false);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",

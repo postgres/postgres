@@ -84,7 +84,8 @@ static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh);
+static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   bool inh, bool in_outer_xact);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -116,7 +117,8 @@ static bool std_typanalyze(VacAttrStats *stats);
  *	analyze_rel() -- analyze one relation
  */
 void
-analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
+analyze_rel(Oid relid, VacuumStmt *vacstmt,
+			bool in_outer_xact, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 
@@ -228,13 +230,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, false);
+	do_analyze_rel(onerel, vacstmt, false, in_outer_xact);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, true);
+		do_analyze_rel(onerel, vacstmt, true, in_outer_xact);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -257,7 +259,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
  *	do_analyze_rel() -- analyze one relation, recursively or not
  */
 static void
-do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
+do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   bool inh, bool in_outer_xact)
 {
 	int			attr_cnt,
 				tcnt,
@@ -534,7 +537,10 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	if (!inh)
 		vac_update_relstats(onerel,
 							RelationGetNumberOfBlocks(onerel),
-							totalrows, hasindex, InvalidTransactionId);
+							totalrows,
+							hasindex,
+							InvalidTransactionId,
+							in_outer_xact);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -551,7 +557,10 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
 								RelationGetNumberOfBlocks(Irel[ind]),
-								totalindexrows, false, InvalidTransactionId);
+								totalindexrows,
+								false,
+								InvalidTransactionId,
+								in_outer_xact);
 		}
 	}
 
