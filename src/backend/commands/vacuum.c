@@ -204,6 +204,8 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 */
 	if (use_own_xacts)
 	{
+		Assert(!in_outer_xact);
+
 		/* ActiveSnapshot is not set by autovacuum */
 		if (ActiveSnapshotSet())
 			PopActiveSnapshot();
@@ -243,7 +245,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 					PushActiveSnapshot(GetTransactionSnapshot());
 				}
 
-				analyze_rel(relid, vacstmt, vac_strategy);
+				analyze_rel(relid, vacstmt, in_outer_xact, vac_strategy);
 
 				if (use_own_xacts)
 				{
@@ -557,20 +559,21 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
  *		DDL flags such as relhasindex, by clearing them if no longer correct.
  *		It's safe to do this in VACUUM, which can't run in parallel with
  *		CREATE INDEX/RULE/TRIGGER and can't be part of a transaction block.
- *		However, it's *not* safe to do it in an ANALYZE that's within a
- *		transaction block, because for example the current transaction might
+ *		However, it's *not* safe to do it in an ANALYZE that's within an
+ *		outer transaction, because for example the current transaction might
  *		have dropped the last index; then we'd think relhasindex should be
  *		cleared, but if the transaction later rolls back this would be wrong.
- *		So we refrain from updating the DDL flags if we're inside a
- *		transaction block.  This is OK since postponing the flag maintenance
- *		is always allowable.
+ *		So we refrain from updating the DDL flags if we're inside an outer
+ *		transaction.  This is OK since postponing the flag maintenance is
+ *		always allowable.
  *
  *		This routine is shared by VACUUM and ANALYZE.
  */
 void
 vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
-					bool hasindex, TransactionId frozenxid)
+					bool hasindex, TransactionId frozenxid,
+					bool in_outer_xact)
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;
@@ -601,9 +604,9 @@ vac_update_relstats(Relation relation,
 		dirty = true;
 	}
 
-	/* Apply DDL updates, but not inside a transaction block (see above) */
+	/* Apply DDL updates, but not inside an outer transaction (see above) */
 
-	if (!IsTransactionBlock())
+	if (!in_outer_xact)
 	{
 		/*
 		 * If we didn't find any indexes, reset relhasindex.
