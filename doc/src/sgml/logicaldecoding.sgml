@@ -157,7 +157,7 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
 <programlisting>
 $ pg_recvlogical -d postgres --slot test --create-slot
 $ pg_recvlogical -d postgres --slot test --start -f -
-<keycombo action="simul"><keycap>Control</><keycap>D</></>
+<keycombo action="simul"><keycap>Control</><keycap>Z</></>
 $ psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
 $ fg
 BEGIN 693
@@ -314,7 +314,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
 
    <para>
     Synchronous replication (see <xref linkend="synchronous-replication">) is
-    only supported on replication slots used over the streaming-replication interface. The
+    only supported on replication slots used over the streaming replication interface. The
     function interface and additional, non-core interfaces do not support
     synchronous replication.
    </para>
