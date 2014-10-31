@@ -17,16 +17,15 @@
 
   <para>
    The format in which those changes are streamed is determined by the output
-   plugin used.  An example plugin is provided, and additional plugins can be
+   plugin used.  An example plugin is provided in the PostgreSQL distribution.
+   Additional plugins can be
    written to extend the choice of available formats without modifying any
    core code.
    Every output plugin has access to each individual new row produced
    by <command>INSERT</command> and the new row version created
    by <command>UPDATE</command>.  Availability of old row versions for
    <command>UPDATE</command> and <command>DELETE</command> depends on
-   the configured
-   <link linkend="SQL-CREATETABLE-REPLICA-IDENTITY"><literal>REPLICA
-   IDENTITY</literal></link>.
+   the configured replica identity (see <xref linkend="SQL-CREATETABLE-REPLICA-IDENTITY">).
   </para>
 
   <para>
@@ -40,17 +39,21 @@
   </para>
 
   <sect1 id="logicaldecoding-example">
-   <title>Logical Decoding Example</title>
+   <title>Logical Decoding Examples</title>
+
    <para>
-    The following example demonstrates the SQL interface.
+    The following example demonstrates controlling logical decoding using the
+    SQL interface.
    </para>
+
    <para>
     Before you can use logical decoding, you must set
     <xref linkend="guc-wal-level"> to <literal>logical</literal> and
-    <xref linkend="guc-max-replication-slots"> to at least 1.
-    Then, you should connect to the target database (in the example
+    <xref linkend="guc-max-replication-slots"> to at least 1.  Then, you
+    should connect to the target database (in the example
     below, <literal>postgres</literal>) as a superuser.
    </para>
+
 <programlisting>
 postgres=# -- Create a slot named 'regression_slot' using the output plugin 'test_decoding'
 postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
@@ -140,40 +143,47 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
 
 (1 row)
 </programlisting>
+
    <para>
-    The following example shows usage of the walsender interface using
-    the <link linkend="app-pgrecvlogical"><command>pg_recvlogical</command></link>
-    shell command. It requires the replication configurations to be allowed
-    (see <xref linkend="streaming-replication-authentication">)
-    and <varname>max_wal_senders</varname> to be set sufficiently high for
-    another connection.
+    The following example shows how logical decoding is controlled over the
+    streaming replication protocol, using the
+    program <xref linkend="app-pgrecvlogical"> included in the PostgreSQL
+    distribution.  This requires that client authentication is set up to allow
+    replication connections
+    (see <xref linkend="streaming-replication-authentication">) and
+    that <varname>max_wal_senders</varname> is set sufficiently high to an
+    additional connection.
    </para>
 <programlisting>
-# pg_recvlogical -d postgres --slot test --create-slot
-# pg_recvlogical -d postgres --slot test --start -f -
-CTRL-Z
-# psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
-# fg
+$ pg_recvlogical -d postgres --slot test --create-slot
+$ pg_recvlogical -d postgres --slot test --start -f -
+<keycombo action="simul"><keycap>Control</><keycap>D</></>
+$ psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
+$ fg
 BEGIN 693
 table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
-CTRL-C
-# pg_recvlogical -d postgres --slot test --drop-slot
+<keycombo action="simul"><keycap>Control</><keycap>C</></>
+$ pg_recvlogical -d postgres --slot test --drop-slot
 </programlisting>
   </sect1>
+
   <sect1 id="logicaldecoding-explanation">
    <title>Logical Decoding Concepts</title>
    <sect2>
     <title>Logical Decoding</title>
+
     <indexterm>
      <primary>Logical Decoding</primary>
     </indexterm>
+
     <para>
      Logical decoding is the process of extracting all persistent changes
      to a database's tables into a coherent, easy to understand format which
      can be interpreted without detailed knowledge of the database's internal
      state.
     </para>
+
     <para>
      In <productname>PostgreSQL</productname>, logical decoding is implemented
      by decoding the contents of the <link linkend="wal">write-ahead
@@ -184,34 +194,40 @@ CTRL-C
 
    <sect2>
     <title>Replication Slots</title>
+
     <indexterm>
      <primary>replication slot</primary>
      <secondary>logical replication</secondary>
     </indexterm>
+
     <para>
      In the context of logical replication, a slot represents a stream of
-     changes which can be replayed to a client in the order they were made on
+     changes that can be replayed to a client in the order they were made on
      the origin server. Each slot streams a sequence of changes from a single
      database, sending each change exactly once (except when peeking forward
      in the stream).
     </para>
+
     <note>
      <para><productname>PostgreSQL</productname> also has streaming replication slots
      (see <xref linkend="streaming-replication">), but they are used somewhat
      differently there.
      </para>
     </note>
+
     <para>
-     Replication slots have an identifier which is unique across all databases
+     A replication slot has an identifier that is unique across all databases
      in a <productname>PostgreSQL</productname> cluster. Slots persist
      independently of the connection using them and are crash-safe.
     </para>
+
     <para>
      Multiple independent slots may exist for a single database. Each slot has
      its own state, allowing different consumers to receive changes from
      different points in the database change stream. For most applications, a
      separate slot will be required for each consumer.
     </para>
+
     <para>
      A logical replication slot knows nothing about the state of the
      receiver(s).  It's even possible to have multiple different receivers using
@@ -219,17 +235,19 @@ CTRL-C
      on from when the last receiver stopped consuming them. Only one receiver
      may consume changes from a slot at any given time.
     </para>
+
     <note>
      <para>
       Replication slots persist across crashes and know nothing about the state
       of their consumer(s). They will prevent removal of required resources
       even when there is no connection using them. This consumes storage
       because neither required WAL nor required rows from the system catalogs
-      can be removed by VACUUM as long as they are required by a replication
-      slot, so if a slot is no longer required it should be dropped.
+      can be removed by <command>VACUUM</command> as long as they are required by a replication
+      slot.  So if a slot is no longer required it should be dropped.
      </para>
     </note>
    </sect2>
+
    <sect2>
     <title>Output Plugins</title>
     <para>
@@ -237,63 +255,84 @@ CTRL-C
      representation into the format the consumer of a replication slot desires.
     </para>
    </sect2>
+
    <sect2>
     <title>Exported Snapshots</title>
     <para>
-     When a new replication slot is created using the walsender interface a
-     snapshot is exported
-     (see <xref linkend="functions-snapshot-synchronization">) which will show
+     When a new replication slot is created using the streaming replication interface,
+     a snapshot is exported
+     (see <xref linkend="functions-snapshot-synchronization">), which will show
      exactly the state of the database after which all changes will be
      included in the change stream. This can be used to create a new replica by
      using <link linkend="sql-set-transaction"><literal>SET TRANSACTION
      SNAPSHOT</literal></link> to read the state of the database at the moment
      the slot was created. This transaction can then be used to dump the
-     database's state at that point in time which afterwards can be updated
+     database's state at that point in time, which afterwards can be updated
      using the slot's contents without losing any changes.
     </para>
    </sect2>
   </sect1>
+
   <sect1 id="logicaldecoding-walsender">
    <title>Streaming Replication Protocol Interface</title>
+
    <para>
-    The <literal>CREATE_REPLICATION_SLOT slot_name LOGICAL
-    options</literal>, <literal>DROP_REPLICATION_SLOT slot_name</literal>
-    and <literal>START_REPLICATION SLOT slot_name LOGICAL options</literal>
-    commands can be used to create, drop and stream changes from a replication
-    slot respectively. These commands are only available over a replication
+    The commands
+    <itemizedlist>
+     <listitem>
+      <para><literal>CREATE_REPLICATION_SLOT <replaceable>slot_name</replaceable> LOGICAL <replaceable>options</replaceable></literal></para>
+     </listitem>
+
+     <listitem>
+      <para><literal>DROP_REPLICATION_SLOT <replaceable>slot_name</replaceable></literal></para>
+     </listitem>
+
+     <listitem>
+      <para><literal>START_REPLICATION SLOT <replaceable>slot_name</replaceable> LOGICAL <replaceable>options</replaceable></literal></para>
+     </listitem>
+    </itemizedlist>
+    are used to create, drop, and stream changes from a replication
+    slot, respectively. These commands are only available over a replication
     connection; they cannot be used via SQL.
-    See <xref linkend="protocol-replication">.
+    See <xref linkend="protocol-replication"> for details on these commands.
    </para>
+
    <para>
-    The <command>pg_recvlogical</command> command
-    (see <xref linkend="app-pgrecvlogical">) can be used to control logical
-    decoding over a walsender connection.
+    The command <xref linkend="app-pgrecvlogical"> can be used to control
+    logical decoding over a streaming replication connection.  (It is uses
+    these commands internally.)
    </para>
   </sect1>
+
   <sect1 id="logicaldecoding-sql">
    <title>Logical Decoding <acronym>SQL</acronym> Interface</title>
+
    <para>
      See <xref linkend="functions-replication"> for detailed documentation on
      the SQL-level API for interacting with logical decoding.
    </para>
+
    <para>
     Synchronous replication (see <xref linkend="synchronous-replication">) is
-    only supported on replication slots used over the walsender interface. The
+    only supported on replication slots used over the streaming-replication interface. The
     function interface and additional, non-core interfaces do not support
     synchronous replication.
    </para>
   </sect1>
+
   <sect1 id="logicaldecoding-catalogs">
-   <title>System catalogs related to logical decoding</title>
+   <title>System Catalogs Related to Logical Decoding</title>
+
    <para>
     The <link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link>
     view and the
     <link linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
     view provide information about the current state of replication slots and
-    walsender connections respectively. These views apply to both physical and
+    streaming replication connections respectively. These views apply to both physical and
     logical replication.
    </para>
   </sect1>
+
   <sect1 id="logicaldecoding-output-plugin">
    <title>Logical Decoding Output Plugins</title>
    <para>
@@ -338,6 +377,7 @@ typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
 
    <sect2 id="logicaldecoding-capabilities">
     <title>Capabilities</title>
+
     <para>
      To decode, format and output changes, output plugins can use most of the
      backend's normal infrastructure, including calling output functions. Read
@@ -349,55 +389,60 @@ typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
 ALTER TABLE user_catalog_table SET (user_catalog_table = true);
 CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
 </programlisting>
-     Any actions leading to xid assignment are prohibited. That, among others,
-     includes writing to tables, performing DDL changes and
+     Any actions leading to transaction ID assignment are prohibited. That, among others,
+     includes writing to tables, performing DDL changes, and
      calling <literal>txid_current()</literal>.
     </para>
    </sect2>
 
    <sect2 id="logicaldecoding-output-mode">
     <title>Output Modes</title>
+
     <para>
      Output plugin callbacks can pass data to the consumer in nearly arbitrary
      formats. For some use cases, like viewing the changes via SQL, returning
-     data in a datatype that can contain arbitrary data (i.e. bytea) is
+     data in a data type that can contain arbitrary data (e.g., <type>bytea</type>) is
      cumbersome. If the output plugin only outputs textual data in the
-     server's encoding it can declare that by
+     server's encoding, it can declare that by
      setting <literal>OutputPluginOptions.output_mode</>
      to <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</> instead
      of <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</> in
      the <link linkend="logicaldecoding-output-plugin-startup">startup
-     callback</>. In that case all the data has to be in the server's encoding
-     so a <type>text</> can contain it. This is checked in assertion enabled
+     callback</>. In that case, all the data has to be in the server's encoding
+     so that a <type>text</> datum can contain it. This is checked in assertion-enabled
      builds.
     </para>
    </sect2>
 
    <sect2 id="logicaldecoding-output-plugin-callbacks">
     <title>Output Plugin Callbacks</title>
+
     <para>
      An output plugin gets notified about changes that are happening via
      various callbacks it needs to provide.
     </para>
+
     <para>
      Concurrent transactions are decoded in commit order, and only changes
      belonging to a specific transaction are decoded between
      the <literal>begin</literal> and <literal>commit</literal>
      callbacks. Transactions that were rolled back explicitly or implicitly
      never get
-     decoded. Successful <link linkend="SQL-SAVEPOINT">SAVEPOINTs</link> are
+     decoded. Successful savepoints are
      folded into the transaction containing them in the order they were
      executed within that transaction.
     </para>
+
     <note>
      <para>
       Only transactions that have already safely been flushed to disk will be
-      decoded. That can lead to a COMMIT not immediately being decoded in a
+      decoded. That can lead to a <command>COMMIT</command> not immediately being decoded in a
       directly following <literal>pg_logical_slot_get_changes()</literal>
       when <varname>synchronous_commit</varname> is set
       to <literal>off</literal>.
      </para>
     </note>
+
     <sect3 id="logicaldecoding-output-plugin-startup">
      <title>Startup Callback</title>
      <para>
@@ -426,6 +471,7 @@ typedef struct OutputPluginOptions
       or <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</literal>. See also
       <xref linkend="logicaldecoding-output-mode"/>.
      </para>
+
      <para>
       The startup callback should validate the options present in
       <literal>ctx-&gt;output_plugin_options</literal>. If the output plugin
@@ -433,8 +479,10 @@ typedef struct OutputPluginOptions
       use <literal>ctx-&gt;output_plugin_private</literal> to store it.
      </para>
     </sect3>
+
     <sect3 id="logicaldecoding-output-plugin-shutdown">
      <title>Shutdown Callback</title>
+
      <para>
       The optional <function>shutdown_cb</function> callback is called
       whenever a formerly active replication slot is not used anymore and can
@@ -446,9 +494,11 @@ typedef void (*LogicalDecodeShutdownCB) (
 );
 </programlisting>
      </para>
-   </sect3>
+    </sect3>
+
     <sect3 id="logicaldecoding-output-plugin-begin">
      <title>Transaction Begin Callback</title>
+
      <para>
       The required <function>begin_cb</function> callback is called whenever a
       start of a committed transaction has been decoded. Aborted transactions
@@ -463,9 +513,11 @@ typedef void (*LogicalDecodeBeginCB) (
       the transaction, like the time stamp at which it has been committed and
       its XID.
      </para>
-   </sect3>
+    </sect3>
+
     <sect3 id="logicaldecoding-output-plugin-commit">
      <title>Transaction End Callback</title>
+
      <para>
       The required <function>commit_cb</function> callback is called whenever
       a transaction commit has been
@@ -480,13 +532,14 @@ typedef void (*LogicalDecodeCommitCB) (
 </programlisting>
      </para>
     </sect3>
+
     <sect3 id="logicaldecoding-output-plugin-change">
-     <title>Callback called for each individual change in a
-     transaction</title>
+     <title>Change Callback</title>
+
      <para>
       The required <function>change_cb</function> callback is called for every
       individual row modification inside a transaction, may it be
-      an <command>INSERT</command>, <command>UPDATE</command>
+      an <command>INSERT</command>, <command>UPDATE</command>,
       or <command>DELETE</command>. Even if the original command modified
       several rows at once the callback will be called individually for each
       row.
@@ -506,6 +559,7 @@ typedef void (*LogicalDecodeChangeCB) (
       <parameter>change</parameter> describing the row modification are passed
       in.
      </para>
+
      <note>
       <para>
        Only changes in user defined tables that are not unlogged
@@ -516,20 +570,23 @@ typedef void (*LogicalDecodeChangeCB) (
      </note>
     </sect3>
    </sect2>
+
    <sect2 id="logicaldecoding-output-plugin-output">
-    <title>Functions for producing output from an output plugin</title>
+    <title>Functions for Producing Output</title>
+
     <para>
      To actually produce output, output plugins can write data to
      the <literal>StringInfo</literal> output buffer
      in <literal>ctx-&gt;out</literal> when inside
-     the <function>begin_cb</function>, <function>commit_cb</function>
+     the <function>begin_cb</function>, <function>commit_cb</function>,
      or <function>change_cb</function> callbacks. Before writing to the output
-     buffer <function>OutputPluginPrepareWrite(ctx, last_write)</function> has
+     buffer, <function>OutputPluginPrepareWrite(ctx, last_write)</function> has
      to be called, and after finishing writing to the
-     buffer <function>OutputPluginWrite(ctx, last_write)</function> has to be
+     buffer, <function>OutputPluginWrite(ctx, last_write)</function> has to be
      called to perform the write. The <parameter>last_write</parameter>
      indicates whether a particular write was the callback's last write.
     </para>
+
     <para>
      The following example shows how to output data to the consumer of an
      output plugin:
@@ -541,8 +598,10 @@ OutputPluginWrite(ctx, true);
     </para>
    </sect2>
   </sect1>
+
   <sect1 id="logicaldecoding-writer">
    <title>Logical Decoding Output Writers</title>
+
    <para>
     It is possible to add more output methods for logical decoding.
     For details, see
@@ -552,19 +611,22 @@ OutputPluginWrite(ctx, true);
     (see <xref linkend="logicaldecoding-output-plugin-output">).
    </para>
   </sect1>
+
   <sect1 id="logicaldecoding-synchronous">
-   <title>Synchronous replication support for Logical Decoding</title>
+   <title>Synchronous Replication Support for Logical Decoding</title>
+
    <para>
-    Logical decoding may be used to to build
+    Logical decoding can be used to to build
     <link linkend="synchronous-replication">synchronous
     replication</link> solutions with the same user interface as synchronous
     replication for <link linkend="streaming-replication">streaming
-    replication</link>.  To do this, the walsender interface
+    replication</link>.  To do this, the streaming replication interface
     (see <xref linkend="logicaldecoding-walsender">) must be used to stream out
     data. Clients have to send <literal>Standby status update (F)</literal>
     (see <xref linkend="protocol-replication">) messages, just like streaming
     replication clients do.
    </para>
+
    <note>
     <para>
      A synchronous replica receiving changes via logical decoding will work in

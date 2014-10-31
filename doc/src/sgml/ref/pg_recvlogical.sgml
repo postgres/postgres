@@ -356,6 +356,14 @@ PostgreSQL documentation
  </refsect1>
 
  <refsect1>
+  <title>Examples</title>
+
+  <para>
+   See <xref linkend="logicaldecoding-example"> for an example.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>See Also</title>
 
   <simplelist type="inline">
