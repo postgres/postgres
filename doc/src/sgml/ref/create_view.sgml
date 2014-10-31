@@ -25,11 +25,6 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
     [ WITH ( <replaceable class="PARAMETER">view_option_name</replaceable> [= <replaceable class="PARAMETER">view_option_value</replaceable>] [, ... ] ) ]
     AS <replaceable class="PARAMETER">query</replaceable>
     [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
-
-<phrase>where <replaceable class="parameter">view_option_name</replaceable> can be one of:</phrase>
-
-    security_barrier [ <replaceable class="parameter">boolean</replaceable> ]
-    check_option [ <replaceable class="parameter">text</replaceable> (<literal>local</literal> or <literal>cascaded</literal>) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -131,17 +126,7 @@ CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replac
 
       <variablelist>
        <varlistentry>
-        <term><literal>security_barrier(boolean)</literal></term>
-        <listitem>
-         <para>
-          This should be used if the view is intended to provide row-level
-          security.  See <xref linkend="rules-privileges"> for full details.
-         </para>
-        </listitem>
-       </varlistentry>
-
-       <varlistentry>
-        <term><literal>check_option(text)</literal></term>
+        <term><literal>check_option</literal> (<type>string</type>)</term>
         <listitem>
          <para>
           This parameter may be either <literal>local</> or
@@ -149,6 +134,16 @@ CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replac
           <literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</> (see below).
           This option can be changed on existing views using <xref
           linkend="sql-alterview">.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>security_barrier</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          This should be used if the view is intended to provide row-level
+          security.  See <xref linkend="rules-privileges"> for full details.
          </para>
         </listitem>
        </varlistentry>
