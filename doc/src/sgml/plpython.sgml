@@ -1023,7 +1023,11 @@ rv = plpy.execute(plan, ["name"], 5)
       <xref linkend="plpython-sharing">). For example:
 <programlisting>
 CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
-    plan = SD.setdefault("plan", plpy.prepare("SELECT 1"))
+    if "plan" in SD:
+        plan = SD["plan"]
+    else:
+        plan = plpy.prepare("SELECT 1")
+        SD["plan"] = plan
     # rest of function
 $$ LANGUAGE plpythonu;
 </programlisting>
