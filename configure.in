@@ -224,6 +224,13 @@ AC_SUBST(DTRACEFLAGS)])
 AC_SUBST(enable_dtrace)
 
 #
+# TAP tests
+#
+PGAC_ARG_BOOL(enable, tap-tests, no,
+              [enable TAP tests (requires Perl and IPC::Run)])
+AC_SUBST(enable_tap_tests)
+
+#
 # Block size
 #
 AC_MSG_CHECKING([for block size])
@@ -1908,7 +1915,15 @@ AC_CHECK_PROGS(OSX, [osx sgml2xml sx])
 #
 # Check for test tools
 #
-AC_CHECK_PROGS(PROVE, prove)
+if test "$enable_tap_tests" = yes; then
+  AC_CHECK_PROGS(PROVE, prove)
+  if test -z "$PROVE"; then
+    AC_MSG_ERROR([prove not found])
+  fi
+  if test -z "$PERL"; then
+    AC_MSG_ERROR([Perl not found])
+  fi
+fi
 
 # Thread testing
 

@@ -25,19 +25,9 @@ our @EXPORT = qw(
 use Cwd;
 use File::Spec;
 use File::Temp ();
+use IPC::Run qw(run start);
 use Test::More;
 
-BEGIN
-{
-	eval {
-		require IPC::Run;
-		import IPC::Run qw(run start);
-		1;
-	} or do
-	{
-		plan skip_all => "IPC::Run not available";
-	};
-}
 
 # Set to untranslated messages, to be able to compare program output
 # with expected strings.
