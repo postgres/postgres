@@ -174,6 +174,7 @@ enable_nls	= @enable_nls@
 enable_debug	= @enable_debug@
 enable_dtrace	= @enable_dtrace@
 enable_coverage	= @enable_coverage@
+enable_tap_tests	= @enable_tap_tests@
 enable_thread_safety	= @enable_thread_safety@
 
 python_enable_shared	= @python_enable_shared@
@@ -310,6 +311,8 @@ define ld_library_path_var
 $(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,LD_LIBRARY_PATH))
 endef
 
+ifeq ($(enable_tap_tests),yes)
+
 define prove_installcheck
 cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
@@ -319,6 +322,11 @@ $(MKDIR_P) tmp_check/log
 $(MAKE) -C $(top_builddir) DESTDIR='$(CURDIR)'/tmp_check/install install >'$(CURDIR)'/tmp_check/log/install.log 2>&1
 cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(CURDIR)/tmp_check/install$(libdir)) PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
+
+else
+prove_installcheck = @echo "TAP tests not enabled"
+prove_check = $(prove_installcheck)
+endif
 
 # Installation.
 

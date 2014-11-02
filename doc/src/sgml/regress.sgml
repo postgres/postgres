@@ -676,7 +676,7 @@ make -C src/bin check PROVE_FLAGS='--reverse'
 
    <para>
     The tests written in Perl require the Perl
-    module <literal>IPC::Run</literal>, otherwise most tests will be skipped.
+    module <literal>IPC::Run</literal>.
     This module is available from CPAN or an operating system package.
    </para>
   </sect1>

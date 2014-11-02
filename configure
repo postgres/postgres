@@ -729,6 +729,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+enable_tap_tests
 enable_dtrace
 DTRACEFLAGS
 DTRACE
@@ -808,6 +809,7 @@ enable_debug
 enable_profiling
 enable_coverage
 enable_dtrace
+enable_tap_tests
 with_blocksize
 with_segsize
 with_wal_blocksize
@@ -1477,6 +1479,7 @@ Optional Features:
   --enable-profiling      build with profiling enabled
   --enable-coverage       build with coverage testing instrumentation
   --enable-dtrace         build with DTrace support
+  --enable-tap-tests      enable TAP tests (requires Perl and IPC::Run)
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
   --disable-thread-safety disable thread-safety in client libraries
@@ -3459,6 +3462,34 @@ fi
 
 else
   enable_dtrace=no
+
+fi
+
+
+
+
+#
+# TAP tests
+#
+
+
+# Check whether --enable-tap-tests was given.
+if test "${enable_tap_tests+set}" = set; then :
+  enableval=$enable_tap_tests;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --enable-tap-tests option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  enable_tap_tests=no
 
 fi
 
@@ -14785,7 +14816,8 @@ done
 #
 # Check for test tools
 #
-for ac_prog in prove
+if test "$enable_tap_tests" = yes; then
+  for ac_prog in prove
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -14827,6 +14859,13 @@ fi
   test -n "$PROVE" && break
 done
 
+  if test -z "$PROVE"; then
+    as_fn_error $? "prove not found" "$LINENO" 5
+  fi
+  if test -z "$PERL"; then
+    as_fn_error $? "Perl not found" "$LINENO" 5
+  fi
+fi
 
 # Thread testing
 

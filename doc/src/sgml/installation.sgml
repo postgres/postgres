@@ -1271,6 +1271,16 @@ su - postgres
        </listitem>
       </varlistentry>
 
+      <varlistentry>
+       <term><option>--enable-tap-tests</option></term>
+       <listitem>
+        <para>
+         Enable tests using the Perl TAP tools.  This requires a Perl
+         installation and the Perl module <literal>IPC::Run</literal>.
+         See <xref linkend="regress-tap"> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
     </para>
 
