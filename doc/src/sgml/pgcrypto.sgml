@@ -802,11 +802,11 @@ Applies to: pgp_sym_encrypt, pgp_pub_encrypt
   </sect4>
 
   <sect4>
-   <title>enable-session-key</title>
+   <title>sess-key</title>
 
    <para>
     Use separate session key.  Public-key encryption always uses a separate
-    session key; this is for symmetric-key encryption, which by default
+    session key; this option is for symmetric-key encryption, which by default
     uses the S2K key directly.
    </para>
 <literallayout>
