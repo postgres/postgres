@@ -76,8 +76,8 @@ OBJS += libpython${pytverstr}.a
 libpython${pytverstr}.a: python${pytverstr}.def
 	dlltool --dllname python${pytverstr}.dll --def python${pytverstr}.def --output-lib libpython${pytverstr}.a
 
-python${pytverstr}.def: $(PYTHONDLL)
-	pexports $^ > $@
+python${pytverstr}.def:
+	pexports $(PYTHONDLL) > $@
 
 endif # win32
 
