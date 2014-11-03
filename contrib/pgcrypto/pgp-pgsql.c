@@ -260,7 +260,10 @@ set_arg(PGP_Context *ctx, char *key, char *val,
 		res = pgp_set_convert_crlf(ctx, atoi(val));
 	else if (strcmp(key, "unicode-mode") == 0)
 		res = pgp_set_unicode_mode(ctx, atoi(val));
-	/* decrypt debug */
+	/*
+	 * The remaining options are for debugging/testing and are therefore not
+	 * documented in the user-facing docs.
+	 */
 	else if (ex != NULL && strcmp(key, "debug") == 0)
 		ex->debug = atoi(val);
 	else if (ex != NULL && strcmp(key, "expect-cipher-algo") == 0)
