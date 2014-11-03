@@ -422,19 +422,19 @@ distprep: lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
 UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
 lib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for MS VC++' >$@
+	echo '; DEF file for win32.mak release build and for Makefile.shlib (MinGW)' >$@
 	echo 'LIBRARY LIB$(UC_NAME).dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for MS VC++' >$@
+	echo '; DEF file for win32.mak debug build' >$@
 	echo 'LIBRARY LIB$(UC_NAME)D.dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 blib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for Borland C++ Builder' >$@
+	echo '; DEF file for bcc32.mak (Borland C++ Builder)' >$@
 	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    _\1@ \2/' $< >>$@
