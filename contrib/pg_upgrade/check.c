@@ -9,6 +9,7 @@
 
 #include "postgres_fe.h"
 
+#include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
 
