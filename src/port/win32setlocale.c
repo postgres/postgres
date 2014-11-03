@@ -103,8 +103,8 @@ static const struct locale_map locale_map_result[] = {
 
 #define MAX_LOCALE_NAME_LEN		100
 
-static char *
-map_locale(struct locale_map *map, char *locale)
+static const char *
+map_locale(const struct locale_map *map, const char *locale)
 {
 	static char aliasbuf[MAX_LOCALE_NAME_LEN];
 	int			i;
@@ -167,7 +167,7 @@ map_locale(struct locale_map *map, char *locale)
 char *
 pgwin32_setlocale(int category, const char *locale)
 {
-	char	   *argument;
+	const char *argument;
 	char	   *result;
 
 	if (locale == NULL)
@@ -178,8 +178,12 @@ pgwin32_setlocale(int category, const char *locale)
 	/* Call the real setlocale() function */
 	result = setlocale(category, argument);
 
+	/*
+	 * setlocale() is specified to return a "char *" that the caller is
+	 * forbidden to modify, so casting away the "const" is innocuous.
+	 */
 	if (result)
-		result = map_locale(locale_map_result, result);
+		result = (char *) map_locale(locale_map_result, result);
 
 	return result;
 }
