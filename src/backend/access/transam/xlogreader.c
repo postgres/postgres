@@ -684,8 +684,8 @@ ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 		return false;
 	}
 	remaining -= SizeOfXLogRecord + len;
-	INIT_CRC32(crc);
-	COMP_CRC32(crc, XLogRecGetData(record), len);
+	INIT_CRC32C(crc);
+	COMP_CRC32C(crc, XLogRecGetData(record), len);
 
 	/* Add in the backup blocks, if any */
 	blk = (char *) XLogRecGetData(record) + len;
@@ -722,7 +722,7 @@ ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 			return false;
 		}
 		remaining -= blen;
-		COMP_CRC32(crc, blk, blen);
+		COMP_CRC32C(crc, blk, blen);
 		blk += blen;
 	}
 
@@ -736,10 +736,10 @@ ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 	}
 
 	/* Finally include the record header */
-	COMP_CRC32(crc, (char *) record, offsetof(XLogRecord, xl_crc));
-	FIN_CRC32(crc);
+	COMP_CRC32C(crc, (char *) record, offsetof(XLogRecord, xl_crc));
+	FIN_CRC32C(crc);
 
-	if (!EQ_CRC32(record->xl_crc, crc))
+	if (!EQ_CRC32C(record->xl_crc, crc))
 	{
 		report_invalid_record(state,
 			   "incorrect resource manager data checksum in record at %X/%X",

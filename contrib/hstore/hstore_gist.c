@@ -6,8 +6,8 @@
 #include "access/gist.h"
 #include "access/skey.h"
 #include "catalog/pg_type.h"
+#include "utils/pg_crc.h"
 
-#include "crc32.h"
 #include "hstore.h"
 
 /* bigint defines */
@@ -67,6 +67,20 @@ typedef struct
 #define GETENTRY(vec,pos) ((GISTTYPE *) DatumGetPointer((vec)->vector[(pos)].key))
 
 #define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
+
+/* shorthand for calculating CRC-32 of a single chunk of data. */
+static pg_crc32
+crc32_sz(char *buf, int size)
+{
+	pg_crc32 crc;
+
+	INIT_TRADITIONAL_CRC32(crc);
+	COMP_TRADITIONAL_CRC32(crc, buf, size);
+	FIN_TRADITIONAL_CRC32(crc);
+
+	return crc;
+}
+
 
 PG_FUNCTION_INFO_V1(ghstore_in);
 PG_FUNCTION_INFO_V1(ghstore_out);

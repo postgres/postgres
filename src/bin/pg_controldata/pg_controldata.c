@@ -178,13 +178,13 @@ main(int argc, char *argv[])
 	close(fd);
 
 	/* Check the CRC. */
-	INIT_CRC32(crc);
-	COMP_CRC32(crc,
-			   (char *) &ControlFile,
-			   offsetof(ControlFileData, crc));
-	FIN_CRC32(crc);
+	INIT_CRC32C(crc);
+	COMP_CRC32C(crc,
+				(char *) &ControlFile,
+				offsetof(ControlFileData, crc));
+	FIN_CRC32C(crc);
 
-	if (!EQ_CRC32(crc, ControlFile.crc))
+	if (!EQ_CRC32C(crc, ControlFile.crc))
 		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
 				 "Either the file is corrupt, or it has a different layout than this program\n"
 				 "is expecting.  The results below are untrustworthy.\n\n"));

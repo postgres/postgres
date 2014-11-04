@@ -1059,9 +1059,9 @@ begin:;
 	 * the whole record in the order: rdata, then backup blocks, then record
 	 * header.
 	 */
-	INIT_CRC32(rdata_crc);
+	INIT_CRC32C(rdata_crc);
 	for (rdt = rdata; rdt != NULL; rdt = rdt->next)
-		COMP_CRC32(rdata_crc, rdt->data, rdt->len);
+		COMP_CRC32C(rdata_crc, rdt->data, rdt->len);
 
 	/*
 	 * Construct record header (prev-link is filled in later, after reserving
@@ -1076,7 +1076,7 @@ begin:;
 	rechdr->xl_info = info;
 	rechdr->xl_rmid = rmid;
 	rechdr->xl_prev = InvalidXLogRecPtr;
-	COMP_CRC32(rdata_crc, ((char *) rechdr), offsetof(XLogRecord, xl_prev));
+	COMP_CRC32C(rdata_crc, ((char *) rechdr), offsetof(XLogRecord, xl_prev));
 
 	hdr_rdt.next = rdata;
 	hdr_rdt.data = (char *) rechdr;
@@ -1193,8 +1193,8 @@ begin:;
 		 * Now that xl_prev has been filled in, finish CRC calculation of the
 		 * record header.
 		 */
-		COMP_CRC32(rdata_crc, ((char *) &rechdr->xl_prev), sizeof(XLogRecPtr));
-		FIN_CRC32(rdata_crc);
+		COMP_CRC32C(rdata_crc, ((char *) &rechdr->xl_prev), sizeof(XLogRecPtr));
+		FIN_CRC32C(rdata_crc);
 		rechdr->xl_crc = rdata_crc;
 
 		/*
@@ -4344,11 +4344,11 @@ WriteControlFile(void)
 	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
 
 	/* Contents are protected with a CRC */
-	INIT_CRC32(ControlFile->crc);
-	COMP_CRC32(ControlFile->crc,
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
-	FIN_CRC32(ControlFile->crc);
+	INIT_CRC32C(ControlFile->crc);
+	COMP_CRC32C(ControlFile->crc,
+				(char *) ControlFile,
+				offsetof(ControlFileData, crc));
+	FIN_CRC32C(ControlFile->crc);
 
 	/*
 	 * We write out PG_CONTROL_SIZE bytes into pg_control, zero-padding the
@@ -4444,13 +4444,13 @@ ReadControlFile(void)
 				 errhint("It looks like you need to initdb.")));
 
 	/* Now check the CRC. */
-	INIT_CRC32(crc);
-	COMP_CRC32(crc,
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
-	FIN_CRC32(crc);
+	INIT_CRC32C(crc);
+	COMP_CRC32C(crc,
+				(char *) ControlFile,
+				offsetof(ControlFileData, crc));
+	FIN_CRC32C(crc);
 
-	if (!EQ_CRC32(crc, ControlFile->crc))
+	if (!EQ_CRC32C(crc, ControlFile->crc))
 		ereport(FATAL,
 				(errmsg("incorrect checksum in control file")));
 
@@ -4593,11 +4593,11 @@ UpdateControlFile(void)
 {
 	int			fd;
 
-	INIT_CRC32(ControlFile->crc);
-	COMP_CRC32(ControlFile->crc,
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
-	FIN_CRC32(ControlFile->crc);
+	INIT_CRC32C(ControlFile->crc);
+	COMP_CRC32C(ControlFile->crc,
+				(char *) ControlFile,
+				offsetof(ControlFileData, crc));
+	FIN_CRC32C(ControlFile->crc);
 
 	fd = BasicOpenFile(XLOG_CONTROL_FILE,
 					   O_RDWR | PG_BINARY,
@@ -4975,10 +4975,10 @@ BootStrapXLOG(void)
 	record->xl_rmid = RM_XLOG_ID;
 	memcpy(XLogRecGetData(record), &checkPoint, sizeof(checkPoint));
 
-	INIT_CRC32(crc);
-	COMP_CRC32(crc, &checkPoint, sizeof(checkPoint));
-	COMP_CRC32(crc, (char *) record, offsetof(XLogRecord, xl_crc));
-	FIN_CRC32(crc);
+	INIT_CRC32C(crc);
+	COMP_CRC32C(crc, &checkPoint, sizeof(checkPoint));
+	COMP_CRC32C(crc, (char *) record, offsetof(XLogRecord, xl_crc));
+	FIN_CRC32C(crc);
 	record->xl_crc = crc;
 
 	/* Create first XLOG segment file */

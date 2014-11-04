@@ -84,7 +84,7 @@ typedef struct RelMapFile
 	int32		magic;			/* always RELMAPPER_FILEMAGIC */
 	int32		num_mappings;	/* number of valid RelMapping entries */
 	RelMapping	mappings[MAX_MAPPINGS];
-	int32		crc;			/* CRC of all above */
+	pg_crc32	crc;			/* CRC of all above */
 	int32		pad;			/* to make the struct size be 512 exactly */
 } RelMapFile;
 
@@ -673,11 +673,11 @@ load_relmap_file(bool shared)
 						mapfilename)));
 
 	/* verify the CRC */
-	INIT_CRC32(crc);
-	COMP_CRC32(crc, (char *) map, offsetof(RelMapFile, crc));
-	FIN_CRC32(crc);
+	INIT_CRC32C(crc);
+	COMP_CRC32C(crc, (char *) map, offsetof(RelMapFile, crc));
+	FIN_CRC32C(crc);
 
-	if (!EQ_CRC32(crc, map->crc))
+	if (!EQ_CRC32C(crc, map->crc))
 		ereport(FATAL,
 		  (errmsg("relation mapping file \"%s\" contains incorrect checksum",
 				  mapfilename)));
@@ -719,9 +719,9 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	if (newmap->num_mappings < 0 || newmap->num_mappings > MAX_MAPPINGS)
 		elog(ERROR, "attempt to write bogus relation mapping");
 
-	INIT_CRC32(newmap->crc);
-	COMP_CRC32(newmap->crc, (char *) newmap, offsetof(RelMapFile, crc));
-	FIN_CRC32(newmap->crc);
+	INIT_CRC32C(newmap->crc);
+	COMP_CRC32C(newmap->crc, (char *) newmap, offsetof(RelMapFile, crc));
+	FIN_CRC32C(newmap->crc);
 
 	/*
 	 * Open the target file.  We prefer to do this before entering the

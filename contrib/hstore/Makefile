@@ -2,7 +2,7 @@
 
 MODULE_big = hstore
 OBJS = hstore_io.o hstore_op.o hstore_gist.o hstore_gin.o hstore_compat.o \
-	crc32.o $(WIN32RES)
+	$(WIN32RES)
 
 EXTENSION = hstore
 DATA = hstore--1.3.sql hstore--1.2--1.3.sql \

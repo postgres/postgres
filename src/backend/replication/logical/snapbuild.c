@@ -1517,9 +1517,9 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	ondisk->magic = SNAPBUILD_MAGIC;
 	ondisk->version = SNAPBUILD_VERSION;
 	ondisk->length = needed_length;
-	INIT_CRC32(ondisk->checksum);
-	COMP_CRC32(ondisk->checksum,
-			   ((char *) ondisk) + SnapBuildOnDiskNotChecksummedSize,
+	INIT_CRC32C(ondisk->checksum);
+	COMP_CRC32C(ondisk->checksum,
+				((char *) ondisk) + SnapBuildOnDiskNotChecksummedSize,
 			SnapBuildOnDiskConstantSize - SnapBuildOnDiskNotChecksummedSize);
 	ondisk_c += sizeof(SnapBuildOnDisk);
 
@@ -1531,20 +1531,20 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	ondisk->builder.running.xip = NULL;
 	ondisk->builder.committed.xip = NULL;
 
-	COMP_CRC32(ondisk->checksum,
-			   &ondisk->builder,
-			   sizeof(SnapBuild));
+	COMP_CRC32C(ondisk->checksum,
+				&ondisk->builder,
+				sizeof(SnapBuild));
 
 	/* copy running xacts */
 	sz = sizeof(TransactionId) * builder->running.xcnt_space;
 	memcpy(ondisk_c, builder->running.xip, sz);
-	COMP_CRC32(ondisk->checksum, ondisk_c, sz);
+	COMP_CRC32C(ondisk->checksum, ondisk_c, sz);
 	ondisk_c += sz;
 
 	/* copy committed xacts */
 	sz = sizeof(TransactionId) * builder->committed.xcnt;
 	memcpy(ondisk_c, builder->committed.xip, sz);
-	COMP_CRC32(ondisk->checksum, ondisk_c, sz);
+	COMP_CRC32C(ondisk->checksum, ondisk_c, sz);
 	ondisk_c += sz;
 
 	/* we have valid data now, open tempfile and write it there */
@@ -1672,8 +1672,8 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 				(errmsg("snapbuild state file \"%s\" has unsupported version %u instead of %u",
 						path, ondisk.version, SNAPBUILD_VERSION)));
 
-	INIT_CRC32(checksum);
-	COMP_CRC32(checksum,
+	INIT_CRC32C(checksum);
+	COMP_CRC32C(checksum,
 			   ((char *) &ondisk) + SnapBuildOnDiskNotChecksummedSize,
 			SnapBuildOnDiskConstantSize - SnapBuildOnDiskNotChecksummedSize);
 
@@ -1687,7 +1687,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
 						path, readBytes, (int) sizeof(SnapBuild))));
 	}
-	COMP_CRC32(checksum, &ondisk.builder, sizeof(SnapBuild));
+	COMP_CRC32C(checksum, &ondisk.builder, sizeof(SnapBuild));
 
 	/* restore running xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.running.xcnt_space;
@@ -1701,7 +1701,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
 						path, readBytes, (int) sz)));
 	}
-	COMP_CRC32(checksum, ondisk.builder.running.xip, sz);
+	COMP_CRC32C(checksum, ondisk.builder.running.xip, sz);
 
 	/* restore committed xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;
@@ -1715,12 +1715,12 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
 						path, readBytes, (int) sz)));
 	}
-	COMP_CRC32(checksum, ondisk.builder.committed.xip, sz);
+	COMP_CRC32C(checksum, ondisk.builder.committed.xip, sz);
 
 	CloseTransientFile(fd);
 
 	/* verify checksum of what we've read */
-	if (!EQ_CRC32(checksum, ondisk.checksum))
+	if (!EQ_CRC32C(checksum, ondisk.checksum))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("snapbuild state file %s: checksum mismatch, is %u, should be %u",

@@ -993,7 +993,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	}
 
 	cp.magic = SLOT_MAGIC;
-	INIT_CRC32(cp.checksum);
+	INIT_CRC32C(cp.checksum);
 	cp.version = 1;
 	cp.length = ReplicationSlotOnDiskDynamicSize;
 
@@ -1003,9 +1003,9 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 
 	SpinLockRelease(&slot->mutex);
 
-	COMP_CRC32(cp.checksum,
-			   (char *) (&cp) + ReplicationSlotOnDiskConstantSize,
-			   ReplicationSlotOnDiskDynamicSize);
+	COMP_CRC32C(cp.checksum,
+				(char *) (&cp) + ReplicationSlotOnDiskConstantSize,
+				ReplicationSlotOnDiskDynamicSize);
 
 	if ((write(fd, &cp, sizeof(cp))) != sizeof(cp))
 	{
@@ -1181,13 +1181,13 @@ RestoreSlotFromDisk(const char *name)
 
 	CloseTransientFile(fd);
 
-	/* now verify the CRC32 */
-	INIT_CRC32(checksum);
-	COMP_CRC32(checksum,
-			   (char *) &cp + ReplicationSlotOnDiskConstantSize,
-			   ReplicationSlotOnDiskDynamicSize);
+	/* now verify the CRC */
+	INIT_CRC32C(checksum);
+	COMP_CRC32C(checksum,
+				(char *) &cp + ReplicationSlotOnDiskConstantSize,
+				ReplicationSlotOnDiskDynamicSize);
 
-	if (!EQ_CRC32(checksum, cp.checksum))
+	if (!EQ_CRC32C(checksum, cp.checksum))
 		ereport(PANIC,
 				(errmsg("replication slot file %s: checksum mismatch, is %u, should be %u",
 						path, checksum, cp.checksum)));

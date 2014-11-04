@@ -847,9 +847,9 @@ TwoPhaseGetDummyProc(TransactionId xid)
  *	6. TwoPhaseRecordOnDisk
  *	7. ...
  *	8. TwoPhaseRecordOnDisk (end sentinel, rmid == TWOPHASE_RM_END_ID)
- *	9. CRC32
+ *	9. checksum (CRC-32C)
  *
- * Each segment except the final CRC32 is MAXALIGN'd.
+ * Each segment except the final checksum is MAXALIGN'd.
  */
 
 /*
@@ -1056,11 +1056,11 @@ EndPrepare(GlobalTransaction gxact)
 						path)));
 
 	/* Write data to file, and calculate CRC as we pass over it */
-	INIT_CRC32(statefile_crc);
+	INIT_CRC32C(statefile_crc);
 
 	for (record = records.head; record != NULL; record = record->next)
 	{
-		COMP_CRC32(statefile_crc, record->data, record->len);
+		COMP_CRC32C(statefile_crc, record->data, record->len);
 		if ((write(fd, record->data, record->len)) != record->len)
 		{
 			CloseTransientFile(fd);
@@ -1070,7 +1070,7 @@ EndPrepare(GlobalTransaction gxact)
 		}
 	}
 
-	FIN_CRC32(statefile_crc);
+	FIN_CRC32C(statefile_crc);
 
 	/*
 	 * Write a deliberately bogus CRC to the state file; this is just paranoia
@@ -1289,13 +1289,13 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 		return NULL;
 	}
 
-	INIT_CRC32(calc_crc);
-	COMP_CRC32(calc_crc, buf, crc_offset);
-	FIN_CRC32(calc_crc);
+	INIT_CRC32C(calc_crc);
+	COMP_CRC32C(calc_crc, buf, crc_offset);
+	FIN_CRC32C(calc_crc);
 
 	file_crc = *((pg_crc32 *) (buf + crc_offset));
 
-	if (!EQ_CRC32(calc_crc, file_crc))
+	if (!EQ_CRC32C(calc_crc, file_crc))
 	{
 		pfree(buf);
 		return NULL;
@@ -1540,9 +1540,9 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	int			fd;
 
 	/* Recompute CRC */
-	INIT_CRC32(statefile_crc);
-	COMP_CRC32(statefile_crc, content, len);
-	FIN_CRC32(statefile_crc);
+	INIT_CRC32C(statefile_crc);
+	COMP_CRC32C(statefile_crc, content, len);
+	FIN_CRC32C(statefile_crc);
 
 	TwoPhaseFilePath(path, xid);
 
