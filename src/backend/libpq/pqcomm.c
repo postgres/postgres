@@ -105,6 +105,8 @@ char	   *Unix_socket_group;
 /* Where the Unix socket files are (list of palloc'd strings) */
 static List *sock_paths = NIL;
 
+PQcommMethods *PqCommMethods;
+
 
 /*
  * Buffers for low-level I/O.
