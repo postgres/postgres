@@ -4,24 +4,24 @@
 CREATE FUNCTION widget_in(cstring)
    RETURNS widget
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C STRICT;
+   LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  type "widget" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION widget_out(widget)
    RETURNS cstring
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C STRICT;
+   LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type widget is only a shell
 CREATE FUNCTION int44in(cstring)
    RETURNS city_budget
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C STRICT;
+   LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  type "city_budget" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION int44out(city_budget)
    RETURNS cstring
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C STRICT;
+   LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type city_budget is only a shell
 CREATE FUNCTION check_primary_key ()
 	RETURNS trigger

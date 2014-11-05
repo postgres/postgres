@@ -44,19 +44,19 @@ CREATE TYPE text_w_default;
 CREATE FUNCTION int42_in(cstring)
    RETURNS int42
    AS 'int4in'
-   LANGUAGE internal STRICT;
+   LANGUAGE internal STRICT IMMUTABLE;
 CREATE FUNCTION int42_out(int42)
    RETURNS cstring
    AS 'int4out'
-   LANGUAGE internal STRICT;
+   LANGUAGE internal STRICT IMMUTABLE;
 CREATE FUNCTION text_w_default_in(cstring)
    RETURNS text_w_default
    AS 'textin'
-   LANGUAGE internal STRICT;
+   LANGUAGE internal STRICT IMMUTABLE;
 CREATE FUNCTION text_w_default_out(text_w_default)
    RETURNS cstring
    AS 'textout'
-   LANGUAGE internal STRICT;
+   LANGUAGE internal STRICT IMMUTABLE;
 
 CREATE TYPE int42 (
    internallength = 4,

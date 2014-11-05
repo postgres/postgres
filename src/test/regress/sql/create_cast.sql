@@ -8,11 +8,11 @@ CREATE TYPE casttesttype;
 CREATE FUNCTION casttesttype_in(cstring)
    RETURNS casttesttype
    AS 'textin'
-   LANGUAGE internal STRICT;
+   LANGUAGE internal STRICT IMMUTABLE;
 CREATE FUNCTION casttesttype_out(casttesttype)
    RETURNS cstring
    AS 'textout'
-   LANGUAGE internal STRICT;
+   LANGUAGE internal STRICT IMMUTABLE;
 
 CREATE TYPE casttesttype (
    internallength = variable,

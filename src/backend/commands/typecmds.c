@@ -547,6 +547,52 @@ DefineType(List *names, List *parameters)
 					   NameListToString(analyzeName));
 #endif
 
+	/*
+	 * Print warnings if any of the type's I/O functions are marked volatile.
+	 * There is a general assumption that I/O functions are stable or
+	 * immutable; this allows us for example to mark record_in/record_out
+	 * stable rather than volatile.  Ideally we would throw errors not just
+	 * warnings here; but since this check is new as of 9.5, and since the
+	 * volatility marking might be just an error-of-omission and not a true
+	 * indication of how the function behaves, we'll let it pass as a warning
+	 * for now.
+	 */
+	if (inputOid && func_volatile(inputOid) == PROVOLATILE_VOLATILE)
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type input function %s should not be volatile",
+						NameListToString(inputName))));
+	if (outputOid && func_volatile(outputOid) == PROVOLATILE_VOLATILE)
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type output function %s should not be volatile",
+						NameListToString(outputName))));
+	if (receiveOid && func_volatile(receiveOid) == PROVOLATILE_VOLATILE)
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type receive function %s should not be volatile",
+						NameListToString(receiveName))));
+	if (sendOid && func_volatile(sendOid) == PROVOLATILE_VOLATILE)
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type send function %s should not be volatile",
+						NameListToString(sendName))));
+	if (typmodinOid && func_volatile(typmodinOid) == PROVOLATILE_VOLATILE)
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type modifier input function %s should not be volatile",
+						NameListToString(typmodinName))));
+	if (typmodoutOid && func_volatile(typmodoutOid) == PROVOLATILE_VOLATILE)
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type modifier output function %s should not be volatile",
+						NameListToString(typmodoutName))));
+
+	/*
+	 * OK, we're done checking, time to make the type.  We must assign the
+	 * array type OID ahead of calling TypeCreate, since the base type and
+	 * array type each refer to the other.
+	 */
 	array_oid = AssignTypeArrayOid();
 
 	/*
