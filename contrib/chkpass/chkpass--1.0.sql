@@ -10,12 +10,15 @@
 CREATE FUNCTION chkpass_in(cstring)
 	RETURNS chkpass
 	AS 'MODULE_PATHNAME'
-	LANGUAGE C STRICT;
+	LANGUAGE C STRICT VOLATILE;
+-- Note: chkpass_in actually is volatile, because of its use of random().
+-- In hindsight that was a bad idea, but there's no way to change it without
+-- breaking some usage patterns.
 
 CREATE FUNCTION chkpass_out(chkpass)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
-	LANGUAGE C STRICT;
+	LANGUAGE C STRICT IMMUTABLE;
 
 CREATE TYPE chkpass (
 	internallength = 16,
