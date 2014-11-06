@@ -4877,8 +4877,11 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 #endif
 
 	/* The history file can be archived immediately. */
-	TLHistoryFileName(histfname, newTLI);
-	XLogArchiveNotify(histfname);
+	if (XLogArchivingActive())
+	{
+		TLHistoryFileName(histfname, newTLI);
+		XLogArchiveNotify(histfname);
+	}
 }
 
 /*
