@@ -271,6 +271,11 @@ extern const char *const months[];		/* months (3-char abbreviations) */
 extern const char *const days[];	/* days (full names) */
 extern const int day_tab[2][13];
 
+/*
+ * These are the rules for the Gregorian calendar, which was adopted in 1582.
+ * However, we use this calculation for all prior years as well because the
+ * SQL standard specifies use of the Gregorian calendar.
+ */
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
 
