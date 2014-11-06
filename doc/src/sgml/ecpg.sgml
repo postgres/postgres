@@ -476,7 +476,7 @@ EXEC SQL COMMIT;
    In the default mode, statements are committed only when
    <command>EXEC SQL COMMIT</command> is issued. The embedded SQL
    interface also supports autocommit of transactions (similar to
-   <application>libpq</> behavior) via the <option>-t</option>
+   <application>psql</>'s default behavior) via the <option>-t</option>
    command-line option to <command>ecpg</command> (see <xref
    linkend="app-ecpg">) or via the <literal>EXEC SQL SET AUTOCOMMIT TO
    ON</literal> statement. In autocommit mode, each command is

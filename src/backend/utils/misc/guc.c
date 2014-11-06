@@ -171,7 +171,6 @@ static void assign_syslog_facility(int newval, void *extra);
 static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
-static bool check_phony_autocommit(bool *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
 static bool check_stage_log_stats(bool *newval, void **extra, GucSource source);
@@ -488,7 +487,6 @@ int			huge_pages;
  * and is kept in sync by assign_hooks.
  */
 static char *syslog_ident_str;
-static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
 static char *client_encoding_string;
@@ -1249,17 +1247,6 @@ static struct config_bool ConfigureNamesBool[] =
 		&Db_user_namespace,
 		false,
 		NULL, NULL, NULL
-	},
-	{
-		/* only here for backwards compatibility */
-		{"autocommit", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("This parameter doesn't do anything."),
-			gettext_noop("It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients."),
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&phony_autocommit,
-		true,
-		check_phony_autocommit, NULL, NULL
 	},
 	{
 		{"default_transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
@@ -9174,18 +9161,6 @@ check_temp_buffers(int *newval, void **extra, GucSource source)
 	if (NLocBuffer && NLocBuffer != *newval)
 	{
 		GUC_check_errdetail("\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session.");
-		return false;
-	}
-	return true;
-}
-
-static bool
-check_phony_autocommit(bool *newval, void **extra, GucSource source)
-{
-	if (!*newval)
-	{
-		GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
-		GUC_check_errmsg("SET AUTOCOMMIT TO OFF is no longer supported");
 		return false;
 	}
 	return true;
