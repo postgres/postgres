@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "access/timeline.h"
+#include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xlogdefs.h"
 #include "storage/fd.h"
@@ -437,8 +438,11 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 #endif
 
 	/* The history file can be archived immediately. */
-	TLHistoryFileName(histfname, newTLI);
-	XLogArchiveNotify(histfname);
+	if (XLogArchivingActive())
+	{
+		TLHistoryFileName(histfname, newTLI);
+		XLogArchiveNotify(histfname);
+	}
 }
 
 /*
