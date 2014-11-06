@@ -54,6 +54,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/htup_details.h"
 #include "commands/tablespace.h"
 #include "executor/executor.h"

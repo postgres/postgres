@@ -14,9 +14,11 @@
 #ifndef XACT_H
 #define XACT_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
 #include "storage/relfilenode.h"
+#include "utils/datetime.h"
 
 
 /*

@@ -13,8 +13,9 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
 #include "fmgr.h"
+#include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 #include "storage/relfilenode.h"
 

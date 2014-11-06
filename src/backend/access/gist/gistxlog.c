@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/gist_private.h"
+#include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "utils/memutils.h"
 

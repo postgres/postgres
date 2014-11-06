@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/xloginsert.h"
 #include "access/spgist_private.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"

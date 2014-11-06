@@ -11,7 +11,7 @@
 #ifndef XLOG_UTILS_H
 #define XLOG_UTILS_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
 #include "storage/bufmgr.h"
 
 
@@ -46,6 +46,12 @@ extern XLogRedoAction XLogReadBufferForRedoExtended(XLogRecPtr lsn,
 extern Buffer XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init);
 extern Buffer XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 					   BlockNumber blkno, ReadBufferMode mode);
+
+extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
+				   int block_index,
+				   bool get_cleanup_lock, bool keep_buffer);
+extern Buffer RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb,
+						 char *blk, bool get_cleanup_lock, bool keep_buffer);
 
 extern Relation CreateFakeRelcacheEntry(RelFileNode rnode);
 extern void FreeFakeRelcacheEntry(Relation fakerel);

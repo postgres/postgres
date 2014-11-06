@@ -69,6 +69,7 @@
 
 #include "miscadmin.h"
 #include "access/xact.h"
+#include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "pgstat.h"

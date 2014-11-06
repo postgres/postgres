@@ -14,7 +14,8 @@
 #ifndef TABLESPACE_H
 #define TABLESPACE_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
 /* XLOG stuff */

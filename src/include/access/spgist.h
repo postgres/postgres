@@ -15,8 +15,9 @@
 #define SPGIST_H
 
 #include "access/skey.h"
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
 #include "fmgr.h"
+#include "lib/stringinfo.h"
 
 
 /* reloption parameters */

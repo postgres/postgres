@@ -11,7 +11,8 @@
 #ifndef CLOG_H
 #define CLOG_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 
 /*
  * Possible transaction statuses --- note that all-zeroes is the initial

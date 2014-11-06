@@ -20,6 +20,7 @@
 
 #include "access/nbtree.h"
 #include "access/relscan.h"
+#include "access/xlog.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "storage/indexfsm.h"

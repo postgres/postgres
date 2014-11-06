@@ -10,6 +10,7 @@
 #define DECODE_H
 
 #include "access/xlogreader.h"
+#include "access/xlogrecord.h"
 #include "replication/reorderbuffer.h"
 #include "replication/logical.h"
 

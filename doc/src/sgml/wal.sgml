@@ -578,12 +578,12 @@
 
   <para>
    There are two commonly used internal <acronym>WAL</acronym> functions:
-   <function>XLogInsert</function> and <function>XLogFlush</function>.
-   <function>XLogInsert</function> is used to place a new record into
+   <function>XLogInsertRecord</function> and <function>XLogFlush</function>.
+   <function>XLogInsertRecord</function> is used to place a new record into
    the <acronym>WAL</acronym> buffers in shared memory. If there is no
-   space for the new record, <function>XLogInsert</function> will have
+   space for the new record, <function>XLogInsertRecord</function> will have
    to write (move to kernel cache) a few filled <acronym>WAL</acronym>
-   buffers. This is undesirable because <function>XLogInsert</function>
+   buffers. This is undesirable because <function>XLogInsertRecord</function>
    is used on every database low level modification (for example, row
    insertion) at a time when an exclusive lock is held on affected
    data pages, so the operation needs to be as fast as possible.  What
@@ -594,7 +594,7 @@
    made, for the most part, at transaction commit time to ensure that
    transaction records are flushed to permanent storage. On systems
    with high log output, <function>XLogFlush</function> requests might
-   not occur often enough to prevent <function>XLogInsert</function>
+   not occur often enough to prevent <function>XLogInsertRecord</function>
    from having to do writes.  On such systems
    one should increase the number of <acronym>WAL</acronym> buffers by
    modifying the <xref linkend="guc-wal-buffers"> parameter.  When
@@ -683,7 +683,7 @@
    Enabling the <xref linkend="guc-wal-debug"> configuration parameter
    (provided that <productname>PostgreSQL</productname> has been
    compiled with support for it) will result in each
-   <function>XLogInsert</function> and <function>XLogFlush</function>
+   <function>XLogInsertRecord</function> and <function>XLogFlush</function>
    <acronym>WAL</acronym> call being logged to the server log. This
    option might be replaced by a more general mechanism in the future.
   </para>
@@ -708,7 +708,7 @@
    building the server).  Each segment is divided into pages, normally
    8 kB each (this size can be changed via the <option>--with-wal-blocksize</>
    configure option).  The log record headers are described in
-   <filename>access/xlog.h</filename>; the record content is dependent
+   <filename>access/xlogrecord.h</filename>; the record content is dependent
    on the type of event that is being logged.  Segment files are given
    ever-increasing numbers as names, starting at
    <filename>000000010000000000000000</filename>.  The numbers do not wrap,

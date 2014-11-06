@@ -14,7 +14,8 @@
 #ifndef STORAGE_XLOG_H
 #define STORAGE_XLOG_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 

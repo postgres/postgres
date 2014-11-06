@@ -17,6 +17,8 @@
 #include "access/heapam_xlog.h"
 #include "access/nbtree.h"
 #include "access/transam.h"
+#include "access/xlog.h"
+#include "access/xlogutils.h"
 #include "storage/procarray.h"
 #include "miscadmin.h"
 

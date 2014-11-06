@@ -113,6 +113,7 @@
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
+#include "access/xloginsert.h"
 
 #include "catalog/catalog.h"
 

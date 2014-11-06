@@ -24,6 +24,8 @@
 
 #include "access/nbtree.h"
 #include "access/transam.h"
+#include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"

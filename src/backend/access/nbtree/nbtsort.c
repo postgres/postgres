@@ -67,6 +67,8 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"

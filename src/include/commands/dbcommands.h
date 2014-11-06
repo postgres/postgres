@@ -14,7 +14,8 @@
 #ifndef DBCOMMANDS_H
 #define DBCOMMANDS_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
 /* XLOG stuff */

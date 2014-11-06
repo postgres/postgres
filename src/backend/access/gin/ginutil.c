@@ -16,6 +16,7 @@
 
 #include "access/gin_private.h"
 #include "access/reloptions.h"
+#include "access/xloginsert.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"

@@ -17,9 +17,10 @@
 #include "access/genam.h"
 #include "access/itup.h"
 #include "access/sdir.h"
-#include "access/xlog.h"
-#include "access/xlogutils.h"
+#include "access/xlogrecord.h"
 #include "catalog/pg_index.h"
+#include "lib/stringinfo.h"
+#include "storage/bufmgr.h"
 
 /* There's room for a 16-bit vacuum cycle ID in BTPageOpaqueData */
 typedef uint16 BTCycleId;

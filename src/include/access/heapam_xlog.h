@@ -15,7 +15,9 @@
 #define HEAPAM_XLOG_H
 
 #include "access/htup.h"
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
+#include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"

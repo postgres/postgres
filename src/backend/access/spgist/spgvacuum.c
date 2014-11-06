@@ -18,6 +18,7 @@
 #include "access/genam.h"
 #include "access/spgist_private.h"
 #include "access/transam.h"
+#include "access/xloginsert.h"
 #include "catalog/storage_xlog.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"

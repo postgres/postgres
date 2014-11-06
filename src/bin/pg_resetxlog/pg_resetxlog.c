@@ -48,6 +48,7 @@
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/multixact.h"
+#include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"

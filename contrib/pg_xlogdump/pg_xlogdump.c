@@ -15,8 +15,8 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#include "access/xlog.h"
 #include "access/xlogreader.h"
+#include "access/xlogrecord.h"
 #include "access/transam.h"
 #include "common/fe_memutils.h"
 #include "getopt_long.h"

@@ -13,67 +13,11 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
+#include "access/xloginsert.h"
+#include "access/xlogrecord.h"
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/relfilenode.h"
-#include "utils/pg_crc.h"
 
-/*
- * The overall layout of an XLOG record is:
- *		Fixed-size header (XLogRecord struct)
- *		rmgr-specific data
- *		BkpBlock
- *		backup block data
- *		BkpBlock
- *		backup block data
- *		...
- *
- * where there can be zero to four backup blocks (as signaled by xl_info flag
- * bits).  XLogRecord structs always start on MAXALIGN boundaries in the WAL
- * files, and we round up SizeOfXLogRecord so that the rmgr data is also
- * guaranteed to begin on a MAXALIGN boundary.  However, no padding is added
- * to align BkpBlock structs or backup block data.
- *
- * NOTE: xl_len counts only the rmgr data, not the XLogRecord header,
- * and also not any backup blocks.  xl_tot_len counts everything.  Neither
- * length field is rounded up to an alignment boundary.
- */
-typedef struct XLogRecord
-{
-	uint32		xl_tot_len;		/* total len of entire record */
-	TransactionId xl_xid;		/* xact id */
-	uint32		xl_len;			/* total len of rmgr data */
-	uint8		xl_info;		/* flag bits, see below */
-	RmgrId		xl_rmid;		/* resource manager for this record */
-	/* 2 bytes of padding here, initialize to zero */
-	XLogRecPtr	xl_prev;		/* ptr to previous record in log */
-	pg_crc32	xl_crc;			/* CRC for this record */
-
-	/* If MAXALIGN==8, there are 4 wasted bytes here */
-
-	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
-
-} XLogRecord;
-
-#define SizeOfXLogRecord	MAXALIGN(sizeof(XLogRecord))
-
-#define XLogRecGetData(record)	((char*) (record) + SizeOfXLogRecord)
-
-/*
- * XLOG uses only low 4 bits of xl_info.  High 4 bits may be used by rmgr.
- */
-#define XLR_INFO_MASK			0x0F
-
-/*
- * If we backed up any disk blocks with the XLOG record, we use flag bits in
- * xl_info to signal it.  We support backup of up to 4 disk blocks per XLOG
- * record.
- */
-#define XLR_BKP_BLOCK_MASK		0x0F	/* all info bits used for bkp blocks */
-#define XLR_MAX_BKP_BLOCKS		4
-#define XLR_BKP_BLOCK(iblk)		(0x08 >> (iblk))		/* iblk in 0..3 */
 
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
@@ -82,45 +26,6 @@ typedef struct XLogRecord
 #define SYNC_METHOD_FSYNC_WRITETHROUGH	3
 #define SYNC_METHOD_OPEN_DSYNC	4		/* for O_DSYNC */
 extern int	sync_method;
-
-/*
- * The rmgr data to be written by XLogInsert() is defined by a chain of
- * one or more XLogRecData structs.  (Multiple structs would be used when
- * parts of the source data aren't physically adjacent in memory, or when
- * multiple associated buffers need to be specified.)
- *
- * If buffer is valid then XLOG will check if buffer must be backed up
- * (ie, whether this is first change of that page since last checkpoint).
- * If so, the whole page contents are attached to the XLOG record, and XLOG
- * sets XLR_BKP_BLOCK(N) bit in xl_info.  Note that the buffer must be pinned
- * and exclusive-locked by the caller, so that it won't change under us.
- * NB: when the buffer is backed up, we DO NOT insert the data pointed to by
- * this XLogRecData struct into the XLOG record, since we assume it's present
- * in the buffer.  Therefore, rmgr redo routines MUST pay attention to
- * XLR_BKP_BLOCK(N) to know what is actually stored in the XLOG record.
- * The N'th XLR_BKP_BLOCK bit corresponds to the N'th distinct buffer
- * value (ignoring InvalidBuffer) appearing in the rdata chain.
- *
- * When buffer is valid, caller must set buffer_std to indicate whether the
- * page uses standard pd_lower/pd_upper header fields.  If this is true, then
- * XLOG is allowed to omit the free space between pd_lower and pd_upper from
- * the backed-up page image.  Note that even when buffer_std is false, the
- * page MUST have an LSN field as its first eight bytes!
- *
- * Note: data can be NULL to indicate no rmgr data associated with this chain
- * entry.  This can be sensible (ie, not a wasted entry) if buffer is valid.
- * The implication is that the buffer has been changed by the operation being
- * logged, and so may need to be backed up, but the change can be redone using
- * only information already present elsewhere in the XLOG entry.
- */
-typedef struct XLogRecData
-{
-	char	   *data;			/* start of rmgr data to include */
-	uint32		len;			/* length of rmgr data to include */
-	Buffer		buffer;			/* buffer associated with data, if any */
-	bool		buffer_std;		/* buffer has standard pd_lower/pd_upper */
-	struct XLogRecData *next;	/* next struct in chain, or NULL */
-} XLogRecData;
 
 extern PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
 
@@ -281,27 +186,17 @@ typedef struct CheckpointStatsData
 
 extern CheckpointStatsData CheckpointStats;
 
-extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
-extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
+extern XLogRecPtr XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 extern int	XLogFileInit(XLogSegNo segno, bool *use_existent, bool use_lock);
 extern int	XLogFileOpen(XLogSegNo segno);
 
-extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-			BlockNumber blk, char *page, bool page_std);
-extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
-extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
-
 extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);
 extern XLogSegNo XLogGetLastRemovedSegno(void);
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
 extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
-
-extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
-				   int block_index,
-				   bool get_cleanup_lock, bool keep_buffer);
 
 extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void xlog_desc(StringInfo buf, XLogRecord *record);
@@ -338,6 +233,7 @@ extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr XLogRestorePoint(const char *rpName);
 extern void UpdateFullPageWrites(void);
+extern void GetFullPageWriteInfo(XLogRecPtr *RedoRecPtr_p, bool *doPageWrites_p);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);

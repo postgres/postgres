@@ -10,7 +10,8 @@
 #ifndef GIN_H
 #define GIN_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 #include "storage/block.h"
 #include "utils/relcache.h"
 

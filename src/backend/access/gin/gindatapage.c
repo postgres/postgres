@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/xloginsert.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"

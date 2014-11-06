@@ -14,7 +14,8 @@
 #ifndef RELMAPPER_H
 #define RELMAPPER_H
 
-#include "access/xlog.h"
+#include "access/xlogrecord.h"
+#include "lib/stringinfo.h"
 
 /* ----------------
  *		relmap-related XLOG entries
