@@ -60,7 +60,8 @@ extern Oid index_create(Relation heapRelation,
 			 bool allow_system_table_mods,
 			 bool skip_build,
 			 bool concurrent,
-			 bool is_internal);
+			 bool is_internal,
+			 bool if_not_exists);
 
 extern void index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
