@@ -103,10 +103,10 @@ test: lock
 test: replica_identity
 test: rowsecurity
 test: alter_generic
+test: brin
 test: misc
 test: psql
 test: async
-test: brin
 test: rules
 test: event_trigger
 test: select_views
