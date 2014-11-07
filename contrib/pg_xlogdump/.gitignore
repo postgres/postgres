@@ -1,5 +1,6 @@
 /pg_xlogdump
 # Source files copied from src/backend/access/
+/brindesc.c
 /clogdesc.c
 /dbasedesc.c
 /gindesc.c
