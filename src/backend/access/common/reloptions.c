@@ -209,6 +209,13 @@ static relopt_int intRelOpts[] =
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		}, -1, 0, 2000000000
 	},
+	{
+		{
+			"pages_per_range",
+			"Number of pages that each page range covers in a BRIN index",
+			RELOPT_KIND_BRIN
+		}, 128, 1, 131072
+	},
 
 	/* list terminator */
 	{{NULL}}

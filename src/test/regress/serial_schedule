@@ -106,6 +106,7 @@ test: alter_generic
 test: misc
 test: psql
 test: async
+test: brin
 test: rules
 test: event_trigger
 test: select_views

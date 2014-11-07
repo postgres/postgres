@@ -565,6 +565,35 @@ DESCR("btree(internal)");
 DATA(insert OID = 2785 (  btoptions		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  btoptions _null_ _null_ _null_ ));
 DESCR("btree(internal)");
 
+DATA(insert OID = 3789 (  bringetbitmap	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 20 "2281 2281" _null_ _null_ _null_ _null_	bringetbitmap _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3790 (  brininsert		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 6 0 16 "2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	brininsert _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3791 (  brinbeginscan	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_	brinbeginscan _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3792 (  brinrescan		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 5 0 2278 "2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ brinrescan _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3793 (  brinendscan		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ brinendscan _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3794 (  brinmarkpos		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ brinmarkpos _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3795 (  brinrestrpos		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ brinrestrpos _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3796 (  brinbuild		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ brinbuild _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3797 (  brinbuildempty	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ brinbuildempty _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3798 (  brinbulkdelete	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 4 0 2281 "2281 2281 2281 2281" _null_ _null_ _null_ _null_ brinbulkdelete _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3799 (  brinvacuumcleanup   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ brinvacuumcleanup _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3800 (  brincostestimate   PGNSP PGUID 12 1 0 0 0 f f f f t f v 7 0 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ brincostestimate _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3801 (  brinoptions		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  brinoptions _null_ _null_ _null_ ));
+DESCR("brin(internal)");
+DATA(insert OID = 3952 (  brin_summarize_new_values PGNSP PGUID 12 1 0 0 0 f f f f f f v 1 0 23 "2205" _null_ _null_ _null_ _null_ brin_summarize_new_values _null_ _null_ _null_ ));
+DESCR("brin: standalone scan new table pages");
+
 DATA(insert OID = 339 (  poly_same		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_same _null_ _null_ _null_ ));
 DATA(insert OID = 340 (  poly_contain	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_contain _null_ _null_ _null_ ));
 DATA(insert OID = 341 (  poly_left		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_left _null_ _null_ _null_ ));
@@ -4077,6 +4106,16 @@ DESCR("GIN array support (obsolete)");
 DATA(insert OID = 2747 (  arrayoverlap		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arrayoverlap _null_ _null_ _null_ ));
 DATA(insert OID = 2748 (  arraycontains		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arraycontains _null_ _null_ _null_ ));
 DATA(insert OID = 2749 (  arraycontained	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arraycontained _null_ _null_ _null_ ));
+
+/* BRIN minmax */
+DATA(insert OID = 3383 ( brin_minmax_opcinfo PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ minmaxOpcInfo _null_ _null_ _null_ ));
+DESCR("BRIN minmax support");
+DATA(insert OID = 3384 ( brin_minmax_add_value PGNSP PGUID 12 1 0 0 0 f f f f t f i 4 0 16 "2281 2281 2281 2281" _null_ _null_ _null_ _null_ minmaxAddValue _null_ _null_ _null_ ));
+DESCR("BRIN minmax support");
+DATA(insert OID = 3385 ( brin_minmax_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 16 "2281 2281 2281" _null_ _null_ _null_ _null_ minmaxConsistent _null_ _null_ _null_ ));
+DESCR("BRIN minmax support");
+DATA(insert OID = 3386 ( brin_minmax_union PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 16 "2281 2281 2281" _null_ _null_ _null_ _null_ minmaxUnion _null_ _null_ _null_ ));
+DESCR("BRIN minmax support");
 
 /* userlock replacements */
 DATA(insert OID = 2880 (  pg_advisory_lock				PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "20" _null_ _null_ _null_ _null_ pg_advisory_lock_int8 _null_ _null_ _null_ ));

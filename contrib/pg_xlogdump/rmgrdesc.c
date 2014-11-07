@@ -8,6 +8,7 @@
 #define FRONTEND 1
 #include "postgres.h"
 
+#include "access/brin_xlog.h"
 #include "access/clog.h"
 #include "access/gin.h"
 #include "access/gist_private.h"

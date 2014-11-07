@@ -1195,11 +1195,13 @@ WHERE NOT (
   -- GIN has six support functions. 1-3 are mandatory, 5 is optional, and
   --   at least one of 4 and 6 must be given.
   -- SP-GiST has five support functions, all mandatory
+  -- BRIN has four mandatory support functions, and a bunch of optionals
   amname = 'btree' AND procnums @> '{1}' OR
   amname = 'hash' AND procnums = '{1}' OR
   amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
   amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
-  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}'
+  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}' OR
+  amname = 'brin' AND procnums @> '{1, 2, 3, 4}'
 );
 
 -- Also, check if there are any pg_opclass entries that don't seem to have
@@ -1218,7 +1220,8 @@ WHERE NOT (
   amname = 'hash' AND procnums = '{1}' OR
   amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
   amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
-  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}'
+  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}' OR
+  amname = 'brin' AND procnums @> '{1, 2, 3, 4}'
 );
 
 -- Unfortunately, we can't check the amproc link very well because the

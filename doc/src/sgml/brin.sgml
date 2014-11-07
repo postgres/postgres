@@ -1,0 +1,490 @@
+<!-- doc/src/sgml/brin.sgml -->
+
+<chapter id="BRIN">
+<title>BRIN Indexes</title>
+
+   <indexterm>
+    <primary>index</primary>
+    <secondary>BRIN</secondary>
+   </indexterm>
+
+<sect1 id="brin-intro">
+ <title>Introduction</title>
+
+ <para>
+  <acronym>BRIN</acronym> stands for Block Range Index.
+  <acronym>BRIN</acronym> is designed for handling very large tables
+  in which certain columns have some natural correlation with their
+  physical location within the table.
+  A <firstterm>block range</> is a group of pages that are physically
+  adjacent in the table; for each block range, some summary info is stored
+  by the index.
+  For example, a table storing a store's sale orders might have
+  a date column on which each order was placed, and most of the time
+  the entries for earlier orders will appear earlier in the table as well;
+  a table storing a ZIP code column might have all codes for a city
+  grouped together naturally.
+ </para>
+
+ <para>
+  <acronym>BRIN</acronym> indexes can satisfy queries via regular bitmap
+  index scans, and will return all tuples in all pages within each range if
+  the summary info stored by the index is <firstterm>consistent</> with the
+  query conditions.
+  The query executor is in charge of rechecking these tuples and discarding
+  those that do not match the query conditions &mdash; in other words, these
+  indexes are lossy.
+  Because a <acronym>BRIN</acronym> index is very small, scanning the index
+  adds little overhead compared to a sequential scan, but may avoid scanning
+  large parts of the table that are known not to contain matching tuples.
+ </para>
+
+ <para>
+  The specific data that a <acronym>BRIN</acronym> index will store,
+  as well as the specific queries that the index will be able to satisfy,
+  depend on the operator class selected for each column of the index.
+  Data types having a linear sort order can have operator classes that
+  store the minimum and maximum value within each block range, for instance;
+  geometrical types might store the bounding box for all the objects
+  in the block range.
+ </para>
+  
+ <para>
+  The size of the block range is determined at index creation time by
+  the <literal>pages_per_range</> storage parameter.  The number of index
+  entries will be equal to the size of the relation in pages divided by
+  the selected value for <literal>pages_per_range</>.  Therefore, the smaller
+  the number, the larger the index becomes (because of the need to
+  store more index entries), but at the same time the summary data stored can
+  be more precise and more data blocks can be skipped during an index scan.
+ </para>
+</sect1>
+
+<sect1 id="brin-builtin-opclasses">
+ <title>Built-in Operator Classes</title>
+
+ <para>
+  The core <productname>PostgreSQL</productname> distribution includes
+  includes the <acronym>BRIN</acronym> operator classes shown in 
+  <xref linkend="brin-builtin-opclasses-table">.
+ </para>
+
+ <para>
+  The <firstterm>minmax</>
+  operator classes store the minimum and the maximum values appearing
+  in the indexed column within the range.
+ </para>
+
+ <table id="brin-builtin-opclasses-table">
+  <title>Built-in <acronym>BRIN</acronym> Operator Classes</title>
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Name</entry>
+     <entry>Indexed Data Type</entry>
+     <entry>Indexable Operators</entry>
+    </row>
+   </thead>
+   <tbody>
+    <row>
+     <entry><literal>bytea_minmax_ops</literal></entry>
+     <entry><type>bytea</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>char_minmax_ops</literal></entry>
+     <entry><type>"char"</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>name_minmax_ops</literal></entry>
+     <entry><type>name</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>int8_minmax_ops</literal></entry>
+     <entry><type>bigint</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>int2_minmax_ops</literal></entry>
+     <entry><type>smallint</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>int4_minmax_ops</literal></entry>
+     <entry><type>integer</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>text_minmax_ops</literal></entry>
+     <entry><type>text</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>oid_minmax_ops</literal></entry>
+     <entry><type>oid</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>tid_minmax_ops</literal></entry>
+     <entry><type>tid</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>float4_minmax_ops</literal></entry>
+     <entry><type>real</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>float8_minmax_ops</literal></entry>
+     <entry><type>double precision</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>abstime_minmax_ops</literal></entry>
+     <entry><type>abstime</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>reltime_minmax_ops</literal></entry>
+     <entry><type>reltime</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>macaddr_minmax_ops</literal></entry>
+     <entry><type>macaddr</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>inet_minmax_ops</literal></entry>
+     <entry><type>inet</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>bpchar_minmax_ops</literal></entry>
+     <entry><type>character</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>date_minmax_ops</literal></entry>
+     <entry><type>date</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>time_minmax_ops</literal></entry>
+     <entry><type>time without time zone</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>timestamp_minmax_ops</literal></entry>
+     <entry><type>timestamp without time zone</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>timestamptz_minmax_ops</literal></entry>
+     <entry><type>timestamp with time zone</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>interval_minmax_ops</literal></entry>
+     <entry><type>interval</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>timetz_minmax_ops</literal></entry>
+     <entry><type>time with time zone</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>bit_minmax_ops</literal></entry>
+     <entry><type>bit</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>varbit_minmax_ops</literal></entry>
+     <entry><type>bit varying</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>numeric_minmax_ops</literal></entry>
+     <entry><type>numeric</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>uuid_minmax_ops</literal></entry>
+     <entry><type>uuid</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>pg_lsn_minmax_ops</literal></entry>
+     <entry><type>pg_lsn</type></entry>
+     <entry>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+   </tbody>
+  </tgroup>
+ </table>
+</sect1>
+
+<sect1 id="brin-extensibility">
+ <title>Extensibility</title>
+
+ <para>
+  The <acronym>BRIN</acronym> interface has a high level of abstraction,
+  requiring the access method implementer only to implement the semantics
+  of the data type being accessed.  The <acronym>BRIN</acronym> layer
+  itself takes care of concurrency, logging and searching the index structure.
+ </para>
+
+ <para>
+  All it takes to get a <acronym>BRIN</acronym> access method working is to
+  implement a few user-defined methods, which define the behavior of
+  summary values stored in the index and the way they interact with
+  scan keys.
+  In short, <acronym>BRIN</acronym> combines
+  extensibility with generality, code reuse, and a clean interface.
+ </para>
+
+ <para>
+  There are four methods that an operator class for <acronym>BRIN</acronym>
+  must provide:
+
+  <variablelist>
+   <varlistentry>
+    <term><function>BrinOpcInfo *opcInfo(Oid type_oid)</></term>
+    <listitem>
+     <para>
+      Returns internal information about the indexed columns' summary data.
+      The return value must point to a palloc'd <structname>BrinOpcInfo</>,
+      which has this definition:
+<programlisting>
+typedef struct BrinOpcInfo
+{
+    /* Number of columns stored in an index column of this opclass */
+    uint16      oi_nstored;
+
+    /* Opaque pointer for the opclass' private use */
+    void       *oi_opaque;
+
+    /* Type IDs of the stored columns */
+    Oid         oi_typids[FLEXIBLE_ARRAY_MEMBER];
+} BrinOpcInfo;
+</programlisting>
+      <structname>BrinOpcInfo</>.<structfield>oi_opaque</> can be used by the
+      operator class routines to pass information between support procedures
+      during an index scan.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><function>bool consistent(BrinDesc *bdesc, BrinValues *column,
+       ScanKey key)</function></term>
+    <listitem>
+     <para>
+      Returns whether the ScanKey is consistent with the given indexed
+      values for a range.
+      The attribute number to use is passed as part of the scan key.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><function>bool addValue(BrinDesc *bdesc, BrinValues *column,
+       Datum newval, bool isnull)</function></term>
+    <listitem>
+     <para>
+      Given an index tuple and an indexed value, modifies the indicated
+      attribute of the tuple so that it additionally represents the new value.
+      If any modification was done to the tuple, <literal>true</literal> is
+      returned.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><function>bool unionTuples(BrinDesc *bdesc, BrinValues *a,
+       BrinValues *b)</function></term>
+    <listitem>
+     <para>
+      Consolidates two index tuples. Given two index tuples, modifies the
+      indicated attribute of the first of them so that it represents both tuples.
+      The second tuple is not modified.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  To implement these methods in a generic way, the operator class
+  defines its own internal support functions.
+  (For instance, <quote>min/max</> operator classes implements
+  support functions for the four inequality operators for the data type.)
+  Additionally, the operator class must supply appropriate
+  operator entries,
+  to enable the optimizer to use the index when those operators are
+  used in queries.
+ </para>
+</sect1>
+</chapter>

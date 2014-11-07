@@ -116,7 +116,8 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>PostgreSQL</productname> provides several index types:
-   B-tree, Hash, GiST, SP-GiST and GIN.  Each index type uses a different
+   B-tree, Hash, GiST, SP-GiST, GIN and BRIN.
+   Each index type uses a different
    algorithm that is best suited to different types of queries.
    By default, the <command>CREATE INDEX</command> command creates
    B-tree indexes, which fit the most common situations.
@@ -325,6 +326,39 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    Many other GIN operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GIN">.
+  </para>
+
+  <para>
+   <indexterm>
+    <primary>index</primary>
+    <secondary>BRIN</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>BRIN</primary>
+    <see>index</see>
+   </indexterm>
+   BRIN indexes (a shorthand for Block Range indexes)
+   store summaries about the values stored in consecutive table physical block ranges.
+   Like GiST, SP-GiST and GIN,
+   BRIN can support many different indexing strategies,
+   and the particular operators with which a BRIN index can be used
+   vary depending on the indexing strategy.
+   For datatypes that have a linear sort order, the indexed data
+   corresponds to the minimum and maximum values of the
+   values in the column for each block range,
+   which support indexed queries using these operators:
+
+   <simplelist>
+    <member><literal>&lt;</literal></member>
+    <member><literal>&lt;=</literal></member>
+    <member><literal>=</literal></member>
+    <member><literal>&gt;=</literal></member>
+    <member><literal>&gt;</literal></member>
+   </simplelist>
+
+   The BRIN operator classes included in the standard distribution are
+   documented in <xref linkend="brin-builtin-opclasses-table">.
+   For more information see <xref linkend="BRIN">.
   </para>
  </sect1>
 

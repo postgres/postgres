@@ -132,6 +132,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
 		case RM_GIST_ID:
 		case RM_SEQ_ID:
 		case RM_SPGIST_ID:
+		case RM_BRIN_ID:
 			break;
 		case RM_NEXT_ID:
 			elog(ERROR, "unexpected RM_NEXT_ID rmgr_id: %u", (RmgrIds) buf.record.xl_rmid);

@@ -132,5 +132,7 @@ DESCR("GIN index access method");
 DATA(insert OID = 4000 (  spgist	0 5 f f f f f t f t f f f 0 spginsert spgbeginscan spggettuple spggetbitmap spgrescan spgendscan spgmarkpos spgrestrpos spgbuild spgbuildempty spgbulkdelete spgvacuumcleanup spgcanreturn spgcostestimate spgoptions ));
 DESCR("SP-GiST index access method");
 #define SPGIST_AM_OID 4000
+DATA(insert OID = 3580 (  brin	5 14 f f f f t t f t t f f 0 brininsert brinbeginscan - bringetbitmap brinrescan brinendscan brinmarkpos brinrestrpos brinbuild brinbuildempty brinbulkdelete brinvacuumcleanup - brincostestimate brinoptions ));
+#define BRIN_AM_OID 3580
 
 #endif   /* PG_AM_H */

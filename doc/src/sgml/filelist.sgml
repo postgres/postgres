@@ -87,6 +87,7 @@
 <!ENTITY gist       SYSTEM "gist.sgml">
 <!ENTITY spgist     SYSTEM "spgist.sgml">
 <!ENTITY gin        SYSTEM "gin.sgml">
+<!ENTITY brin       SYSTEM "brin.sgml">
 <!ENTITY planstats    SYSTEM "planstats.sgml">
 <!ENTITY indexam    SYSTEM "indexam.sgml">
 <!ENTITY nls        SYSTEM "nls.sgml">

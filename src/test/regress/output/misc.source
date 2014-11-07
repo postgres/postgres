@@ -591,6 +591,8 @@ SELECT user_relns() AS user_relns
  bb
  box_tbl
  bprime
+ brinopers
+ brintest
  bt_f8_heap
  bt_i4_heap
  bt_name_heap
@@ -698,7 +700,7 @@ SELECT user_relns() AS user_relns
  tvvmv
  varchar_tbl
  xacttest
-(120 rows)
+(122 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

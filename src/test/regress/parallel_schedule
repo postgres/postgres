@@ -83,7 +83,7 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 # ----------
 # Another group of parallel tests
 # ----------
-test: privileges security_label collate matview lock replica_identity rowsecurity
+test: brin privileges security_label collate matview lock replica_identity rowsecurity
 
 # ----------
 # Another group of parallel tests

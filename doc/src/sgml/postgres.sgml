@@ -247,6 +247,7 @@
   &gist;
   &spgist;
   &gin;
+  &brin;
   &storage;
   &bki;
   &planstats;

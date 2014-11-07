@@ -6081,7 +6081,7 @@ genericcostestimate(PlannerInfo *root,
 	else
 		numIndexPages = 1.0;
 
-	/* fetch estimated page cost for schema containing index */
+	/* fetch estimated page cost for tablespace containing index */
 	get_tablespace_page_costs(index->reltablespace,
 							  &spc_random_page_cost,
 							  NULL);
@@ -7162,7 +7162,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 											   JOIN_INNER,
 											   NULL);
 
-	/* fetch estimated page cost for schema containing index */
+	/* fetch estimated page cost for tablespace containing index */
 	get_tablespace_page_costs(index->reltablespace,
 							  &spc_random_page_cost,
 							  NULL);
@@ -7346,6 +7346,76 @@ gincostestimate(PG_FUNCTION_ARGS)
 	*indexStartupCost += qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
 	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * BRIN has search behavior completely different from other index types
+ */
+Datum
+brincostestimate(PG_FUNCTION_ARGS)
+{
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	double		loop_count = PG_GETARG_FLOAT8(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	IndexOptInfo *index = path->indexinfo;
+	List	   *indexQuals = path->indexquals;
+	List	   *indexOrderBys = path->indexorderbys;
+	double		numPages = index->pages;
+	double		numTuples = index->tuples;
+	Cost		spc_seq_page_cost;
+	Cost		spc_random_page_cost;
+	QualCost	index_qual_cost;
+	double		qual_op_cost;
+	double		qual_arg_cost;
+
+	/* fetch estimated page cost for tablespace containing index */
+	get_tablespace_page_costs(index->reltablespace,
+							  &spc_random_page_cost,
+							  &spc_seq_page_cost);
+
+	/*
+	 * BRIN indexes are always read in full; use that as startup cost.
+	 * XXX maybe only include revmap pages here?
+	 */
+	*indexStartupCost = spc_seq_page_cost * numPages * loop_count;
+
+	/*
+	 * To read a BRIN index there might be a bit of back and forth over regular
+	 * pages, as revmap might point to them out of sequential order; calculate
+	 * this as reading the whole index in random order.
+	 */
+	*indexTotalCost = spc_random_page_cost * numPages * loop_count;
+
+	*indexSelectivity =
+		clauselist_selectivity(root, path->indexquals,
+							   path->indexinfo->rel->relid,
+							   JOIN_INNER, NULL);
+	*indexCorrelation = 1;
+
+	/*
+	 * Add on index qual eval costs, much as in genericcostestimate.
+	 */
+	cost_qual_eval(&index_qual_cost, indexQuals, root);
+	qual_arg_cost = index_qual_cost.startup + index_qual_cost.per_tuple;
+	cost_qual_eval(&index_qual_cost, indexOrderBys, root);
+	qual_arg_cost += index_qual_cost.startup + index_qual_cost.per_tuple;
+	qual_op_cost = cpu_operator_cost *
+		(list_length(indexQuals) + list_length(indexOrderBys));
+	qual_arg_cost -= qual_op_cost;
+	if (qual_arg_cost < 0)		/* just in case... */
+		qual_arg_cost = 0;
+
+	*indexStartupCost += qual_arg_cost;
+	*indexTotalCost += qual_arg_cost;
+	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
+
+	/* XXX what about pages_per_range? */
 
 	PG_RETURN_VOID();
 }

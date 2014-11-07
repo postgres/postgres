@@ -198,6 +198,110 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
 
    <varlistentry>
     <term>
+     <function>brin_page_type(page bytea) returns text</function>
+     <indexterm>
+      <primary>brin_page_type</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>brin_page_type</function> returns the page type of the given
+      <acronym>BRIN</acronym> index page, or throws an error if the page is
+      not a valid <acronym>BRIN</acronym> page.  For example:
+<screen>
+brintest=# select brin_page_type(get_raw_page('brinidx', 0));
+ brin_page_type 
+----------------
+ meta
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>brin_metapage_info(page bytea) returns record</function>
+     <indexterm>
+      <primary>brin_metapage_info</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>brin_metapage_info</function> returns assorted information
+      about a <acronym>BRIN</acronym> index metapage.  For example:
+<screen>
+brintest=# select * from brin_metapage_info(get_raw_page('brinidx', 0));
+   magic    | version | pagesperrange | lastrevmappage 
+------------+---------+---------------+----------------
+ 0xA8109CFA |       1 |             4 |              2
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>brin_revmap_data(page bytea) returns setof tid</function>
+     <indexterm>
+      <primary>brin_revmap_data</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>brin_revmap_data</function> returns the list of tuple
+      identifiers in a <acronym>BRIN</acronym> index range map page.
+      For example:
+<screen>
+brintest=# select * from brin_revmap_data(get_raw_page('brinidx', 2)) limit 5;
+  pages  
+---------
+ (6,137)
+ (6,138)
+ (6,139)
+ (6,140)
+ (6,141)
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>brin_page_items(page bytea, index oid) returns setof record</function>
+     <indexterm>
+      <primary>brin_page_items</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>brin_page_items</function> returns the data stored in the
+      <acronym>BRIN</acronym> data page.  For example:
+<screen>
+brintest=# select * from brin_page_items(get_raw_page('brinidx', 5),
+brintest(#                               'brinidx')
+brintest-# order by blknum, attnum limit 6;
+ itemoffset | blknum | attnum | allnulls | hasnulls | placeholder |    value     
+------------+--------+--------+----------+----------+-------------+--------------
+        137 |      0 |      1 | t        | f        | f           | 
+        137 |      0 |      2 | f        | f        | f           | {1 .. 88}
+        138 |      4 |      1 | t        | f        | f           | 
+        138 |      4 |      2 | f        | f        | f           | {89 .. 176}
+        139 |      8 |      1 | t        | f        | f           | 
+        139 |      8 |      2 | f        | f        | f           | {177 .. 264}
+</screen>
+      The returned columns correspond to the fields in the
+      <structname>BrinMemTuple</> and <structname>BrinValues</> structs.
+      See <filename>src/include/access/brin_tuple.h</> for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <function>fsm_page_contents(page bytea) returns text</function>
      <indexterm>
       <primary>fsm_page_contents</primary>

@@ -12,6 +12,7 @@
 #include "access/gist_private.h"
 #include "access/hash.h"
 #include "access/heapam_xlog.h"
+#include "access/brin_xlog.h"
 #include "access/multixact.h"
 #include "access/nbtree.h"
 #include "access/spgist.h"

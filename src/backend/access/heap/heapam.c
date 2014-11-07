@@ -272,6 +272,8 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 		scan->rs_startblock = 0;
 	}
 
+	scan->rs_initblock = 0;
+	scan->rs_numblocks = InvalidBlockNumber;
 	scan->rs_inited = false;
 	scan->rs_ctup.t_data = NULL;
 	ItemPointerSetInvalid(&scan->rs_ctup.t_self);
@@ -295,6 +297,14 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	 */
 	if (!scan->rs_bitmapscan)
 		pgstat_count_heap_scan(scan->rs_rd);
+}
+
+void
+heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk, BlockNumber numBlks)
+{
+	scan->rs_startblock = startBlk;
+	scan->rs_initblock = startBlk;
+	scan->rs_numblocks = numBlks;
 }
 
 /*
@@ -637,7 +647,8 @@ heapgettup(HeapScanDesc scan,
 		 */
 		if (backward)
 		{
-			finished = (page == scan->rs_startblock);
+			finished = (page == scan->rs_startblock) ||
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
 			if (page == 0)
 				page = scan->rs_nblocks;
 			page--;
@@ -647,7 +658,8 @@ heapgettup(HeapScanDesc scan,
 			page++;
 			if (page >= scan->rs_nblocks)
 				page = 0;
-			finished = (page == scan->rs_startblock);
+			finished = (page == scan->rs_startblock) ||
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
 
 			/*
 			 * Report our new scan position for synchronization purposes. We
@@ -898,7 +910,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 		 */
 		if (backward)
 		{
-			finished = (page == scan->rs_startblock);
+			finished = (page == scan->rs_startblock) ||
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
 			if (page == 0)
 				page = scan->rs_nblocks;
 			page--;
@@ -908,7 +921,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 			page++;
 			if (page >= scan->rs_nblocks)
 				page = 0;
-			finished = (page == scan->rs_startblock);
+			finished = (page == scan->rs_startblock) ||
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
 
 			/*
 			 * Report our new scan position for synchronization purposes. We

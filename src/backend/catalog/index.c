@@ -2104,6 +2104,27 @@ IndexBuildHeapScan(Relation heapRelation,
 				   IndexBuildCallback callback,
 				   void *callback_state)
 {
+	return IndexBuildHeapRangeScan(heapRelation, indexRelation,
+								   indexInfo, allow_sync,
+								   0, InvalidBlockNumber,
+								   callback, callback_state);
+}
+
+/*
+ * As above, except that instead of scanning the complete heap, only the given
+ * number of blocks are scanned.  Scan to end-of-rel can be signalled by
+ * passing InvalidBlockNumber as numblocks.
+ */
+double
+IndexBuildHeapRangeScan(Relation heapRelation,
+						Relation indexRelation,
+						IndexInfo *indexInfo,
+						bool allow_sync,
+						BlockNumber start_blockno,
+						BlockNumber numblocks,
+						IndexBuildCallback callback,
+						void *callback_state)
+{
 	bool		is_system_catalog;
 	bool		checking_uniqueness;
 	HeapScanDesc scan;
@@ -2173,6 +2194,9 @@ IndexBuildHeapScan(Relation heapRelation,
 								NULL,	/* scan key */
 								true,	/* buffer access strategy OK */
 								allow_sync);	/* syncscan OK? */
+
+	/* set our scan endpoints */
+	heap_setscanlimits(scan, start_blockno, numblocks);
 
 	reltuples = 0;
 

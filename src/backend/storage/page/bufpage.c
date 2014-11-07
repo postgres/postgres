@@ -399,7 +399,8 @@ PageRestoreTempPage(Page tempPage, Page oldPage)
 }
 
 /*
- * sorting support for PageRepairFragmentation and PageIndexMultiDelete
+ * sorting support for PageRepairFragmentation, PageIndexMultiDelete,
+ * PageIndexDeleteNoCompact
  */
 typedef struct itemIdSortData
 {
@@ -896,6 +897,182 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	phdr->pd_upper = upper;
 }
 
+/*
+ * PageIndexDeleteNoCompact
+ *		Delete the given items for an index page, and defragment the resulting
+ *		free space, but do not compact the item pointers array.
+ *
+ * itemnos is the array of tuples to delete; nitems is its size.  maxIdxTuples
+ * is the maximum number of tuples that can exist in a page.
+ *
+ * Unused items at the end of the array are removed.
+ *
+ * This is used for index AMs that require that existing TIDs of live tuples
+ * remain unchanged.
+ */
+void
+PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos, int nitems)
+{
+	PageHeader	phdr = (PageHeader) page;
+	LocationIndex pd_lower = phdr->pd_lower;
+	LocationIndex pd_upper = phdr->pd_upper;
+	LocationIndex pd_special = phdr->pd_special;
+	int			nline;
+	bool		empty;
+	OffsetNumber offnum;
+	int			nextitm;
+
+	/*
+	 * As with PageRepairFragmentation, paranoia seems justified.
+	 */
+	if (pd_lower < SizeOfPageHeaderData ||
+		pd_lower > pd_upper ||
+		pd_upper > pd_special ||
+		pd_special > BLCKSZ ||
+		pd_special != MAXALIGN(pd_special))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
+						pd_lower, pd_upper, pd_special)));
+
+	/*
+	 * Scan the existing item pointer array and mark as unused those that are
+	 * in our kill-list; make sure any non-interesting ones are marked unused
+	 * as well.
+	 */
+	nline = PageGetMaxOffsetNumber(page);
+	empty = true;
+	nextitm = 0;
+	for (offnum = FirstOffsetNumber; offnum <= nline; offnum = OffsetNumberNext(offnum))
+	{
+		ItemId		lp;
+		ItemLength	itemlen;
+		ItemOffset	offset;
+
+		lp = PageGetItemId(page, offnum);
+
+		itemlen = ItemIdGetLength(lp);
+		offset = ItemIdGetOffset(lp);
+
+		if (ItemIdIsUsed(lp))
+		{
+			if (offset < pd_upper ||
+				(offset + itemlen) > pd_special ||
+				offset != MAXALIGN(offset))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg("corrupted item pointer: offset = %u, length = %u",
+								offset, (unsigned int) itemlen)));
+
+			if (nextitm < nitems && offnum == itemnos[nextitm])
+			{
+				/* this one is on our list to delete, so mark it unused */
+				ItemIdSetUnused(lp);
+				nextitm++;
+			}
+			else if (ItemIdHasStorage(lp))
+			{
+				/* This one's live -- must do the compaction dance */
+				empty = false;
+			}
+			else
+			{
+				/* get rid of this one too */
+				ItemIdSetUnused(lp);
+			}
+		}
+	}
+
+	/* this will catch invalid or out-of-order itemnos[] */
+	if (nextitm != nitems)
+		elog(ERROR, "incorrect index offsets supplied");
+
+	if (empty)
+	{
+		/* Page is completely empty, so just reset it quickly */
+		phdr->pd_lower = SizeOfPageHeaderData;
+		phdr->pd_upper = pd_special;
+	}
+	else
+	{
+		/* There are live items: need to compact the page the hard way */
+		itemIdSortData itemidbase[MaxOffsetNumber];
+		itemIdSort	itemidptr;
+		int			i;
+		Size		totallen;
+		Offset		upper;
+
+		/*
+		 * Scan the page taking note of each item that we need to preserve.
+		 * This includes both live items (those that contain data) and
+		 * interspersed unused ones.  It's critical to preserve these unused
+		 * items, because otherwise the offset numbers for later live items
+		 * would change, which is not acceptable.  Unused items might get used
+		 * again later; that is fine.
+		 */
+		itemidptr = itemidbase;
+		totallen = 0;
+		for (i = 0; i < nline; i++, itemidptr++)
+		{
+			ItemId		lp;
+
+			itemidptr->offsetindex = i;
+
+			lp = PageGetItemId(page, i + 1);
+			if (ItemIdHasStorage(lp))
+			{
+				itemidptr->itemoff = ItemIdGetOffset(lp);
+				itemidptr->alignedlen = MAXALIGN(ItemIdGetLength(lp));
+				totallen += itemidptr->alignedlen;
+			}
+			else
+			{
+				itemidptr->itemoff = 0;
+				itemidptr->alignedlen = 0;
+			}
+		}
+		/* By here, there are exactly nline elements in itemidbase array */
+
+		if (totallen > (Size) (pd_special - pd_lower))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("corrupted item lengths: total %u, available space %u",
+							(unsigned int) totallen, pd_special - pd_lower)));
+
+		/* sort itemIdSortData array into decreasing itemoff order */
+		qsort((char *) itemidbase, nline, sizeof(itemIdSortData),
+			  itemoffcompare);
+
+		/*
+		 * Defragment the data areas of each tuple, being careful to preserve
+		 * each item's position in the linp array.
+		 */
+		upper = pd_special;
+		PageClearHasFreeLinePointers(page);
+		for (i = 0, itemidptr = itemidbase; i < nline; i++, itemidptr++)
+		{
+			ItemId		lp;
+
+			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
+			if (itemidptr->alignedlen == 0)
+			{
+				PageSetHasFreeLinePointers(page);
+				ItemIdSetUnused(lp);
+				continue;
+			}
+			upper -= itemidptr->alignedlen;
+			memmove((char *) page + upper,
+					(char *) page + itemidptr->itemoff,
+					itemidptr->alignedlen);
+			lp->lp_off = upper;
+			/* lp_flags and lp_len remain the same as originally */
+		}
+
+		/* Set the new page limits */
+		phdr->pd_upper = upper;
+		phdr->pd_lower = SizeOfPageHeaderData + i * sizeof(ItemIdData);
+	}
+}
 
 /*
  * Set checksum for a page in shared buffers.
