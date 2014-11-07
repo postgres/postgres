@@ -452,7 +452,7 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 	xlrec.node = index->rd_node;
 	STORE_STATE(&bds->spgstate, xlrec.stateSrc);
 
-	ACCEPT_RDATA_DATA(&xlrec, sizeof(xlrec), 0);
+	ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogVacuumRoot, 0);
 	/* sizeof(xlrec) should be a multiple of sizeof(OffsetNumber) */
 	ACCEPT_RDATA_DATA(toDelete, sizeof(OffsetNumber) * xlrec.nDelete, 1);
 	ACCEPT_RDATA_BUFFER(buffer, 2);
@@ -585,7 +585,7 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 	{
 		XLogRecPtr	recptr;
 
-		ACCEPT_RDATA_DATA(&xlrec, sizeof(xlrec), 0);
+		ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogVacuumRedirect, 0);
 		ACCEPT_RDATA_DATA(itemToPlaceholder, sizeof(OffsetNumber) * xlrec.nToPlaceholder, 1);
 		ACCEPT_RDATA_BUFFER(buffer, 2);
 
