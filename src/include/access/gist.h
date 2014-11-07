@@ -147,8 +147,6 @@ typedef struct GISTENTRY
 
 #define GistPageIsLeaf(page)	( GistPageGetOpaque(page)->flags & F_LEAF)
 #define GIST_LEAF(entry) (GistPageIsLeaf((entry)->page))
-#define GistPageSetLeaf(page)	( GistPageGetOpaque(page)->flags |= F_LEAF)
-#define GistPageSetNonLeaf(page)	( GistPageGetOpaque(page)->flags &= ~F_LEAF)
 
 #define GistPageIsDeleted(page) ( GistPageGetOpaque(page)->flags & F_DELETED)
 #define GistPageSetDeleted(page)	( GistPageGetOpaque(page)->flags |= F_DELETED)
