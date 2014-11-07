@@ -1067,11 +1067,8 @@ XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn)
 			/*
 			 * We have to piece together the WAL record data from the
 			 * XLogRecData entries, so that we can pass it to the rm_desc
-			 * function as one contiguous chunk. (but we can leave out any
-			 * extra entries we created for backup blocks)
+			 * function as one contiguous chunk.
 			 */
-			rdt_lastnormal->next = NULL;
-
 			initStringInfo(&recordbuf);
 			appendBinaryStringInfo(&recordbuf, (char *) rechdr, sizeof(XLogRecord));
 			for (; rdata != NULL; rdata = rdata->next)
