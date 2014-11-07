@@ -21,6 +21,7 @@
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeBitmapOr.h"
 #include "executor/nodeCtescan.h"
+#include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
 #include "executor/nodeGroup.h"
@@ -49,6 +50,7 @@
 #include "executor/nodeWindowAgg.h"
 #include "executor/nodeWorktablescan.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/relation.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -197,6 +199,10 @@ ExecReScan(PlanState *node)
 			ExecReScanForeignScan((ForeignScanState *) node);
 			break;
 
+		case T_CustomScanState:
+			ExecReScanCustomScan((CustomScanState *) node);
+			break;
+
 		case T_NestLoopState:
 			ExecReScanNestLoop((NestLoopState *) node);
 			break;
@@ -291,6 +297,10 @@ ExecMarkPos(PlanState *node)
 			ExecValuesMarkPos((ValuesScanState *) node);
 			break;
 
+		case T_CustomScanState:
+			ExecCustomMarkPos((CustomScanState *) node);
+			break;
+
 		case T_MaterialState:
 			ExecMaterialMarkPos((MaterialState *) node);
 			break;
@@ -348,6 +358,10 @@ ExecRestrPos(PlanState *node)
 			ExecValuesRestrPos((ValuesScanState *) node);
 			break;
 
+		case T_CustomScanState:
+			ExecCustomRestrPos((CustomScanState *) node);
+			break;
+
 		case T_MaterialState:
 			ExecMaterialRestrPos((MaterialState *) node);
 			break;
@@ -379,9 +393,9 @@ ExecRestrPos(PlanState *node)
  * and valuesscan support is actually useless code at present.)
  */
 bool
-ExecSupportsMarkRestore(NodeTag plantype)
+ExecSupportsMarkRestore(Path *pathnode)
 {
-	switch (plantype)
+	switch (pathnode->pathtype)
 	{
 		case T_SeqScan:
 		case T_IndexScan:
@@ -402,6 +416,16 @@ ExecSupportsMarkRestore(NodeTag plantype)
 			 * gating Result plans, only base-case Results.
 			 */
 			return false;
+
+		case T_CustomScan:
+			{
+				CustomPath *cpath = (CustomPath *) pathnode;
+
+				Assert(IsA(cpath, CustomPath));
+				if (cpath->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
+					return true;
+			}
+			break;
 
 		default:
 			break;
@@ -464,6 +488,16 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_SubqueryScan:
 			return ExecSupportsBackwardScan(((SubqueryScan *) node)->subplan) &&
 				TargetListSupportsBackwardScan(node->targetlist);
+
+		case T_CustomScan:
+			{
+				uint32	flags = ((CustomScan *) node)->flags;
+
+				if (TargetListSupportsBackwardScan(node->targetlist) &&
+					(flags & CUSTOMPATH_SUPPORT_BACKWARD_SCAN) != 0)
+					return true;
+			}
+			return false;
 
 		case T_Material:
 		case T_Sort:

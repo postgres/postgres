@@ -402,6 +402,9 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Consider TID scans */
 	create_tidscan_paths(root, rel);
 
+	/* Consider custom scans, if any */
+	create_customscan_paths(root, rel, rte);
+
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);
 }

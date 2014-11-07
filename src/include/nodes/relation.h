@@ -15,6 +15,7 @@
 #define RELATION_H
 
 #include "access/sdir.h"
+#include "lib/stringinfo.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
 #include "storage/block.h"
@@ -882,6 +883,47 @@ typedef struct ForeignPath
 	Path		path;
 	List	   *fdw_private;
 } ForeignPath;
+
+/*
+ * CustomPath represents a scan by some out-of-core extension.
+ *
+ * We provide a set of hooks here - which the provider must take care to
+ * set up correctly - to allow extensions to supply their own methods of
+ * scanning a relation.  For example, a provider might provide GPU
+ * acceleration, a cache-based scan, or some other kind of logic we haven't
+ * dreamed up yet.
+ *
+ * Core code should avoid assuming that the CustomPath is only as large as
+ * the structure declared here; providers are expected to make it the first
+ * element in a larger structure.
+ */
+
+struct CustomPathMethods;
+struct Plan;		/* not to include plannodes.h here */
+
+#define CUSTOMPATH_SUPPORT_BACKWARD_SCAN	0x0001
+#define CUSTOMPATH_SUPPORT_MARK_RESTORE		0x0002
+
+typedef struct CustomPath
+{
+	Path        path;
+	uint32		flags;
+	const struct CustomPathMethods *methods;
+} CustomPath;
+
+typedef struct CustomPathMethods
+{
+	const char *CustomName;
+	void	(*CreateCustomScanPath)(PlannerInfo *root,
+									RelOptInfo *baserel,
+									RangeTblEntry *rte);
+	struct Plan	*(*PlanCustomPath)(PlannerInfo *root,
+								   RelOptInfo *rel,
+								   CustomPath *best_path,
+								   List *tlist,
+								   List *clauses);
+	void    (*TextOutCustomPath)(StringInfo str, const CustomPath *node);
+} CustomPathMethods;
 
 /*
  * AppendPath represents an Append plan, ie, successive execution of

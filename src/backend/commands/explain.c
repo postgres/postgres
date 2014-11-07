@@ -724,6 +724,7 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_ForeignScan:
+		case T_CustomScan:
 			*rels_used = bms_add_member(*rels_used,
 										((Scan *) plan)->scanrelid);
 			break;
@@ -853,6 +854,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	const char *sname;			/* node type name for non-text output */
 	const char *strategy = NULL;
 	const char *operation = NULL;
+	const char *custom_name = NULL;
 	int			save_indent = es->indent;
 	bool		haschildren;
 
@@ -940,6 +942,14 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_ForeignScan:
 			pname = sname = "Foreign Scan";
+			break;
+		case T_CustomScan:
+			sname = "Custom Scan";
+			custom_name = ((CustomScan *) plan)->methods->CustomName;
+			if (custom_name)
+				pname = psprintf("Custom Scan (%s)", custom_name);
+			else
+				pname = sname;
 			break;
 		case T_Material:
 			pname = sname = "Materialize";
@@ -1042,6 +1052,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyText("Parent Relationship", relationship, es);
 		if (plan_name)
 			ExplainPropertyText("Subplan Name", plan_name, es);
+		if (custom_name)
+			ExplainPropertyText("Custom Plan Provider", custom_name, es);
 	}
 
 	switch (nodeTag(plan))
@@ -1055,6 +1067,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_ForeignScan:
+		case T_CustomScan:
 			ExplainScanTarget((Scan *) plan, es);
 			break;
 		case T_IndexScan:
@@ -1357,6 +1370,18 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			show_foreignscan_info((ForeignScanState *) planstate, es);
+			break;
+		case T_CustomScan:
+			{
+				CustomScanState *css = (CustomScanState *) planstate;
+
+				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+				if (plan->qual)
+					show_instrumentation_count("Rows Removed by Filter", 1,
+											   planstate, es);
+				if (css->methods->ExplainCustomScan)
+					css->methods->ExplainCustomScan(css, ancestors, es);
+			}
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,

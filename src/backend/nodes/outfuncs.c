@@ -564,6 +564,18 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 }
 
 static void
+_outCustomScan(StringInfo str, const CustomScan *node)
+{
+	WRITE_NODE_TYPE("CUSTOMSCAN");
+
+	_outScanInfo(str, (const Scan *) node);
+	WRITE_UINT_FIELD(flags);
+	appendStringInfo(str, " :methods");
+	_outToken(str, node->methods->CustomName);
+	node->methods->TextOutCustomScan(str, node);
+}
+
+static void
 _outJoin(StringInfo str, const Join *node)
 {
 	WRITE_NODE_TYPE("JOIN");
@@ -1582,6 +1594,17 @@ _outForeignPath(StringInfo str, const ForeignPath *node)
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_NODE_FIELD(fdw_private);
+}
+
+static void
+_outCustomPath(StringInfo str, const CustomPath *node)
+{
+	WRITE_NODE_TYPE("CUSTOMPATH");
+	_outPathInfo(str, (const Path *) node);
+	WRITE_UINT_FIELD(flags);
+	appendStringInfo(str, " :methods");
+	_outToken(str, node->methods->CustomName);
+	node->methods->TextOutCustomPath(str, node);
 }
 
 static void
@@ -2855,6 +2878,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_ForeignScan:
 				_outForeignScan(str, obj);
 				break;
+			case T_CustomScan:
+				_outCustomScan(str, obj);
+				break;
 			case T_Join:
 				_outJoin(str, obj);
 				break;
@@ -3062,6 +3088,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_ForeignPath:
 				_outForeignPath(str, obj);
+				break;
+			case T_CustomPath:
+				_outCustomPath(str, obj);
 				break;
 			case T_AppendPath:
 				_outAppendPath(str, obj);

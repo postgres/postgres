@@ -27,6 +27,7 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/selfuncs.h"
 
 
@@ -1925,4 +1926,50 @@ reparameterize_path(PlannerInfo *root, Path *path,
 			break;
 	}
 	return NULL;
+}
+
+/*****************************************************************************
+ *     creation of custom-plan paths
+ *****************************************************************************/
+
+static List	   *custom_path_providers = NIL;
+
+/*
+ * register_custom_path_provider
+ *
+ * Register a table of callback functions which implements a custom-path
+ * provider.  This allows extension to provide additional (hopefully faster)
+ * methods of scanning a relation.
+ */
+void
+register_custom_path_provider(CustomPathMethods *cpp_methods)
+{
+	MemoryContext	oldcxt;
+
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	custom_path_providers = lappend(custom_path_providers, cpp_methods);
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * create_customscan_paths
+ *
+ * Invoke custom path provider callbacks.  If the callback determines that
+ * the custom-path provider can handle this relation, it can add one or more
+ * paths using add_path().
+ */
+void
+create_customscan_paths(PlannerInfo *root,
+						RelOptInfo *baserel,
+						RangeTblEntry *rte)
+{
+	ListCell	   *cell;
+
+	foreach (cell, custom_path_providers)
+	{
+		const CustomPathMethods *cpp_methods = lfirst(cell);
+
+		if (cpp_methods->CreateCustomScanPath)
+			cpp_methods->CreateCustomScanPath(root, baserel, rte);
+	}
 }

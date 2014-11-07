@@ -2283,6 +2283,27 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
+		case T_CustomScan:
+			{
+				CustomScan *custom_scan = (CustomScan *) plan;
+
+				context.paramids = bms_add_members(context.paramids,
+												   scan_params);
+				/*
+				 * custom-scan provider is responsible to apply
+				 * finalize_primnode() on the expression node of
+				 * its private fields, but no need to apply it
+				 * on the tlist and qual of Plan node because it
+				 * is already done above.
+				 */
+				if (custom_scan->methods->FinalizeCustomScan)
+					custom_scan->methods->FinalizeCustomScan(root,
+															 custom_scan,
+															 finalize_primnode,
+															 (void *)&context);
+			}
+			break;
+
 		case T_ModifyTable:
 			{
 				ModifyTable *mtplan = (ModifyTable *) plan;

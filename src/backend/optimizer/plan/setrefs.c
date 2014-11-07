@@ -94,7 +94,6 @@ static Plan *set_subqueryscan_references(PlannerInfo *root,
 							SubqueryScan *plan,
 							int rtoffset);
 static bool trivial_subqueryscan(SubqueryScan *plan);
-static Node *fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset);
 static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
 static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
 static void set_join_references(PlannerInfo *root, Join *join, int rtoffset);
@@ -576,6 +575,27 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, splan->scan.plan.qual, rtoffset);
 				splan->fdw_exprs =
 					fix_scan_list(root, splan->fdw_exprs, rtoffset);
+			}
+			break;
+
+		case T_CustomScan:
+			{
+				CustomScan *cscan = (CustomScan *) plan;
+
+				cscan->scan.scanrelid += rtoffset;
+				cscan->scan.plan.targetlist =
+					fix_scan_list(root, cscan->scan.plan.targetlist, rtoffset);
+				cscan->scan.plan.qual =
+					fix_scan_list(root, cscan->scan.plan.qual, rtoffset);
+				/*
+				 * The core implementation applies the routine to fixup
+				 * varno on the target-list and scan qualifier.
+				 * If custom-scan has additional expression nodes on its
+				 * private fields, it has to apply same fixup on them.
+				 * Otherwise, the custom-plan provider can skip this callback.
+				 */
+				if (cscan->methods->SetCustomScanRef)
+					cscan->methods->SetCustomScanRef(root, cscan, rtoffset);
 			}
 			break;
 
@@ -1063,7 +1083,7 @@ copyVar(Var *var)
  * We assume it's okay to update opcode info in-place.  So this could possibly
  * scribble on the planner's input data structures, but it's OK.
  */
-static void
+void
 fix_expr_common(PlannerInfo *root, Node *node)
 {
 	/* We assume callers won't call us on a NULL pointer */
@@ -1161,7 +1181,7 @@ fix_param_node(PlannerInfo *root, Param *p)
  * looking up operator opcode info for OpExpr and related nodes,
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
  */
-static Node *
+Node *
 fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 {
 	fix_scan_expr_context context;
