@@ -49,8 +49,15 @@ command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup", '-Ft' ],
 	'tar format');
 ok(-f "$tempdir/tarbackup/base.tar", 'backup tar was created');
 
+# Create a temporary directory in the system location and symlink it
+# to our physical temp location.  That way we can use shorter names
+# for the tablespace directories, which hopefully won't run afoul of
+# the 99 character length limit.
+my $shorter_tempdir = tempdir_short . "/tempdir";
+symlink "$tempdir", $shorter_tempdir;
+
 mkdir "$tempdir/tblspc1";
-psql 'postgres', "CREATE TABLESPACE tblspc1 LOCATION '$tempdir/tblspc1';";
+psql 'postgres', "CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';";
 psql 'postgres', "CREATE TABLE test1 (a int) TABLESPACE tblspc1;";
 command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup2", '-Ft' ],
 	'tar format with tablespaces');
@@ -65,7 +72,7 @@ command_fails(
 command_ok(
 	[   'pg_basebackup',    '-D',
 		"$tempdir/backup1", '-Fp',
-		"-T$tempdir/tblspc1=$tempdir/tbackup/tblspc1" ],
+		"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1" ],
 	'plain format with tablespaces succeeds with tablespace mapping');
 ok(-d "$tempdir/tbackup/tblspc1", 'tablespace was relocated');
 opendir(my $dh, "$tempdir/pgdata/pg_tblspc") or die;
@@ -81,11 +88,11 @@ closedir $dh;
 mkdir "$tempdir/tbl=spc2";
 psql 'postgres', "DROP TABLE test1;";
 psql 'postgres', "DROP TABLESPACE tblspc1;";
-psql 'postgres', "CREATE TABLESPACE tblspc2 LOCATION '$tempdir/tbl=spc2';";
+psql 'postgres', "CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';";
 command_ok(
 	[   'pg_basebackup',    '-D',
 		"$tempdir/backup3", '-Fp',
-		"-T$tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2" ],
+		"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2" ],
 	'mapping tablespace with = sign in path');
 ok(-d "$tempdir/tbackup/tbl=spc2", 'tablespace with = sign was relocated');
 
