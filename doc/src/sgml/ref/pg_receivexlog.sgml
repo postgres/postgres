@@ -282,17 +282,14 @@ PostgreSQL documentation
 
   <para>
    When using <application>pg_receivexlog</application> instead of
-   <xref linkend="guc-archive-command">, the server will continue to
-   recycle transaction log files even if the backups are not properly
-   archived, since there is no command that fails. This can be worked
-   around by having an <xref linkend="guc-archive-command"> that fails
-   when the file has not been properly archived yet, for example:
-<programlisting>
-archive_command = 'sleep 5 &amp;&amp; test -f /mnt/server/archivedir/%f'
-</programlisting>
-   The initial timeout is necessary because
-   <application>pg_receivexlog</application> works using asynchronous
-   replication and can therefore be slightly behind the master.
+   <xref linkend="guc-archive-command"> as the main WAL backup method, it is
+   strongly recommended to use replication slots.  Otherwise, the server is
+   free to recycle or remove transaction log files before they are backed up,
+   because it does not have any information, either
+   from <xref linkend="guc-archive-command"> or the replication slots, about
+   how far the WAL stream has been archived.  Note, however, that a
+   replication slot will fill up the server's disk space if the receiver does
+   not keep up with fetching the WAL data.
   </para>
 
  </refsect1>
