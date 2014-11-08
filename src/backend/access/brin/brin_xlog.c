@@ -144,7 +144,7 @@ brin_xlog_update(XLogRecPtr lsn, XLogRecord *record)
 
 	/* First remove the old tuple */
 	blkno = ItemPointerGetBlockNumber(&(xlrec->oldtid));
-	action = XLogReadBufferForRedo(lsn, record, 2, xlrec->new.node,
+	action = XLogReadBufferForRedo(lsn, record, 2, xlrec->insert.node,
 								   blkno, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
@@ -164,7 +164,7 @@ brin_xlog_update(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* Then insert the new tuple and update revmap, like in an insertion. */
-	brin_xlog_insert_update(lsn, record, &xlrec->new, newtup);
+	brin_xlog_insert_update(lsn, record, &xlrec->insert, newtup);
 
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);

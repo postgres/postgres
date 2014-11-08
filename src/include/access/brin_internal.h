@@ -72,13 +72,12 @@ typedef struct BrinDesc
 #define BRIN_PROCNUM_UNION			4
 /* procedure numbers up to 10 are reserved for BRIN future expansion */
 
-#define BRIN_DEBUG
+#undef BRIN_DEBUG
 
-/* we allow debug if using GCC; otherwise don't bother */
-#if defined(BRIN_DEBUG) && defined(__GNUC__)
-#define BRIN_elog(level, ...)		elog(level, __VA_ARGS__)
+#ifdef BRIN_DEBUG
+#define BRIN_elog(args)			elog args
 #else
-#define BRIN_elog(a)	void(0)
+#define BRIN_elog(args)			((void) 0)
 #endif
 
 /* brin.c */

@@ -49,14 +49,14 @@ brin_desc(StringInfo buf, XLogRecord *record)
 		xl_brin_update *xlrec = (xl_brin_update *) rec;
 
 		appendStringInfo(buf, "rel %u/%u/%u heapBlk %u revmapBlk %u pagesPerRange %u old TID (%u,%u) TID (%u,%u)",
-						 xlrec->new.node.spcNode, xlrec->new.node.dbNode,
-						 xlrec->new.node.relNode,
-						 xlrec->new.heapBlk, xlrec->new.revmapBlk,
-						 xlrec->new.pagesPerRange,
+						 xlrec->insert.node.spcNode, xlrec->insert.node.dbNode,
+						 xlrec->insert.node.relNode,
+						 xlrec->insert.heapBlk, xlrec->insert.revmapBlk,
+						 xlrec->insert.pagesPerRange,
 						 ItemPointerGetBlockNumber(&xlrec->oldtid),
 						 ItemPointerGetOffsetNumber(&xlrec->oldtid),
-						 ItemPointerGetBlockNumber(&xlrec->new.tid),
-						 ItemPointerGetOffsetNumber(&xlrec->new.tid));
+						 ItemPointerGetBlockNumber(&xlrec->insert.tid),
+						 ItemPointerGetOffsetNumber(&xlrec->insert.tid));
 	}
 	else if (info == XLOG_BRIN_SAMEPAGE_UPDATE)
 	{

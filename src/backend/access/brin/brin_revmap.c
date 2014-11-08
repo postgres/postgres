@@ -331,10 +331,6 @@ revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk)
 	Assert(mapBlk != BRIN_METAPAGE_BLKNO &&
 		   mapBlk <= revmap->rm_lastRevmapPage);
 
-	BRIN_elog(DEBUG2, "getting revmap page for logical page %lu (physical %u) for heap %u",
-			  HEAPBLK_TO_REVMAP_BLK(revmap->rm_pagesPerRange, heapBlk),
-			  mapBlk, heapBlk);
-
 	/*
 	 * Obtain the buffer from which we need to read.  If we already have the
 	 * correct buffer in our access struct, use that; otherwise, release that,

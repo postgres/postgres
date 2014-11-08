@@ -247,11 +247,9 @@ brininsert(PG_FUNCTION_ARGS)
 			 * the same page though, so downstream we must be prepared to cope
 			 * if this turns out to not be possible after all.
 			 */
-			samepage = brin_can_do_samepage_update(buf, origsz, newsz);
-
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
 			newtup = brin_form_tuple(bdesc, heapBlk, dtup, &newsz);
+			samepage = brin_can_do_samepage_update(buf, origsz, newsz);
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 			/*
 			 * Try to update the tuple.  If this doesn't work for whatever
@@ -589,9 +587,10 @@ brinbuildCallback(Relation index,
 	while (thisblock > state->bs_currRangeStart + state->bs_pagesPerRange - 1)
 	{
 
-		BRIN_elog(DEBUG2, "brinbuildCallback: completed a range: %u--%u",
-				  state->bs_currRangeStart,
-				  state->bs_currRangeStart + state->bs_pagesPerRange);
+		BRIN_elog((DEBUG2,
+				   "brinbuildCallback: completed a range: %u--%u",
+				   state->bs_currRangeStart,
+				   state->bs_currRangeStart + state->bs_pagesPerRange));
 
 		/* create the index tuple and insert it */
 		form_and_insert_tuple(state);

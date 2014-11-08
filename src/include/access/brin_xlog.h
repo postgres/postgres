@@ -76,10 +76,10 @@ typedef struct xl_brin_insert
 typedef struct xl_brin_update
 {
 	ItemPointerData oldtid;
-	xl_brin_insert new;
+	xl_brin_insert insert;
 } xl_brin_update;
 
-#define SizeOfBrinUpdate	(offsetof(xl_brin_update, new) + SizeOfBrinInsert)
+#define SizeOfBrinUpdate	(offsetof(xl_brin_update, insert) + SizeOfBrinInsert)
 
 /* This is what we need to know about a BRIN tuple samepage update */
 typedef struct xl_brin_samepage_update

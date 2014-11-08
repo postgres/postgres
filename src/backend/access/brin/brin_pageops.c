@@ -216,12 +216,12 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 
 			info = XLOG_BRIN_UPDATE | (extended ? XLOG_BRIN_INIT_PAGE : 0);
 
-			xlrec.new.node = idxrel->rd_node;
-			ItemPointerSet(&xlrec.new.tid, BufferGetBlockNumber(newbuf), newoff);
-			xlrec.new.heapBlk = heapBlk;
-			xlrec.new.tuplen = newsz;
-			xlrec.new.revmapBlk = BufferGetBlockNumber(revmapbuf);
-			xlrec.new.pagesPerRange = pagesPerRange;
+			xlrec.insert.node = idxrel->rd_node;
+			ItemPointerSet(&xlrec.insert.tid, BufferGetBlockNumber(newbuf), newoff);
+			xlrec.insert.heapBlk = heapBlk;
+			xlrec.insert.tuplen = newsz;
+			xlrec.insert.revmapBlk = BufferGetBlockNumber(revmapbuf);
+			xlrec.insert.pagesPerRange = pagesPerRange;
 			ItemPointerSet(&xlrec.oldtid, BufferGetBlockNumber(oldbuf), oldoff);
 
 			rdata[0].data = (char *) &xlrec;
@@ -342,8 +342,8 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		elog(ERROR, "could not insert new index tuple to page");
 	MarkBufferDirty(*buffer);
 
-	BRIN_elog(DEBUG2, "inserted tuple (%u,%u) for range starting at %u",
-			  blk, off, heapBlk);
+	BRIN_elog((DEBUG2, "inserted tuple (%u,%u) for range starting at %u",
+			   blk, off, heapBlk));
 
 	ItemPointerSet(&tid, blk, off);
 	brinSetHeapBlockItemptr(revmapbuf, pagesPerRange, heapBlk, tid);
@@ -593,8 +593,8 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 			newblk = BufferGetBlockNumber(buf);
 			*was_extended = extended = true;
 
-			BRIN_elog(DEBUG2, "brin_getinsertbuffer: extending to page %u",
-					  BufferGetBlockNumber(buf));
+			BRIN_elog((DEBUG2, "brin_getinsertbuffer: extending to page %u",
+					   BufferGetBlockNumber(buf)));
 		}
 		else if (newblk == oldblk)
 		{
