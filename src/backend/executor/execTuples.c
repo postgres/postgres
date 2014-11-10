@@ -985,6 +985,49 @@ ExecTypeFromExprList(List *exprList, List *namesList)
 }
 
 /*
+ * ExecTypeSetColNames - set column names in a TupleDesc
+ *
+ * Column names must be provided as an alias list (list of String nodes).
+ * We set names only in TupleDesc columns that lacked one before.
+ */
+void
+ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
+{
+	bool		modified = false;
+	int			colno = 0;
+	ListCell   *lc;
+
+	foreach(lc, namesList)
+	{
+		char	   *cname = strVal(lfirst(lc));
+		Form_pg_attribute attr;
+
+		/* Guard against too-long names list */
+		if (colno >= typeInfo->natts)
+			break;
+		attr = typeInfo->attrs[colno++];
+
+		/* Ignore empty aliases (these must be for dropped columns) */
+		if (cname[0] == '\0')
+			continue;
+
+		/* Change tupdesc only if we didn't have a name before */
+		if (NameStr(attr->attname)[0] == '\0')
+		{
+			namestrcpy(&(attr->attname), cname);
+			modified = true;
+		}
+	}
+
+	/* If we modified the tupdesc, it's now a new record type */
+	if (modified)
+	{
+		typeInfo->tdtypeid = RECORDOID;
+		typeInfo->tdtypmod = -1;
+	}
+}
+
+/*
  * BlessTupleDesc - make a completed tuple descriptor useful for SRFs
  *
  * Rowtype Datums returned by a function must contain valid type information.

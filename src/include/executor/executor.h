@@ -264,6 +264,7 @@ extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 extern TupleDesc ExecTypeFromTL(List *targetList, bool hasoid);
 extern TupleDesc ExecCleanTypeFromTL(List *targetList, bool hasoid);
 extern TupleDesc ExecTypeFromExprList(List *exprList, List *namesList);
+extern void ExecTypeSetColNames(TupleDesc typeInfo, List *namesList);
 extern void UpdateChangedParamSet(PlanState *node, Bitmapset *newchg);
 
 typedef struct TupOutputState

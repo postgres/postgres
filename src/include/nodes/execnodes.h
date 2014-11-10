@@ -574,6 +574,7 @@ typedef struct WholeRowVarExprState
 	ExprState	xprstate;
 	struct PlanState *parent;	/* parent PlanState, or NULL if none */
 	JunkFilter *wrv_junkFilter; /* JunkFilter to remove resjunk cols */
+	TupleDesc	wrv_tupdesc;	/* descriptor for resulting tuples */
 } WholeRowVarExprState;
 
 /* ----------------
