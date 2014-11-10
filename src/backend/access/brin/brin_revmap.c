@@ -110,7 +110,7 @@ brinRevmapTerminate(BrinRevmap *revmap)
 void
 brinRevmapExtend(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	BlockNumber	mapBlk;
+	BlockNumber	mapBlk PG_USED_FOR_ASSERTS_ONLY;
 
 	mapBlk = revmap_extend_and_get_blkno(revmap, heapBlk);
 
