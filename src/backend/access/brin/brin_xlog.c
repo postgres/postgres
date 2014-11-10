@@ -60,9 +60,11 @@ brin_xlog_insert_update(XLogRecPtr lsn, XLogRecord *record,
 	 */
 	if (record->xl_info & XLOG_BRIN_INIT_PAGE)
 	{
-		XLogReadBufferForRedoExtended(lsn, record, 0,
-									  xlrec->node, MAIN_FORKNUM, blkno,
-									  RBM_ZERO, false, &buffer);
+		/*
+		 * No full-page image here.  Don't try to read it, because there
+		 * might be one for the revmap buffer, below.
+		 */
+		buffer = XLogReadBuffer(xlrec->node, blkno, true);
 		page = BufferGetPage(buffer);
 		brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 		action = BLK_NEEDS_REDO;
@@ -97,7 +99,9 @@ brin_xlog_insert_update(XLogRecPtr lsn, XLogRecord *record,
 		UnlockReleaseBuffer(buffer);
 
 	/* update the revmap */
-	action = XLogReadBufferForRedo(lsn, record, 1, xlrec->node,
+	action = XLogReadBufferForRedo(lsn, record,
+								   record->xl_info & XLOG_BRIN_INIT_PAGE ? 0 : 1,
+								   xlrec->node,
 								   xlrec->revmapBlk, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
