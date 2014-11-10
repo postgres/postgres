@@ -126,7 +126,7 @@ that page range is complete and new tuples belong in a new page range that
 hasn't yet been summarized.  Those insertions do not create a new index
 entry; instead, the page range remains unsummarized until later.
 
-Wehn VACUUM is run on the table, all unsummarized page ranges are
+Whenever VACUUM is run on the table, all unsummarized page ranges are
 summarized.  This action can also be invoked by the user via
 brin_summarize_new_values().  Both these procedures scan all the
 unsummarized ranges, and create a summary tuple.  Again, this includes the

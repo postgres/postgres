@@ -64,7 +64,7 @@
  <title>Built-in Operator Classes</title>
 
  <para>
-  The core <productname>PostgreSQL</productname> distribution includes
+  The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>BRIN</acronym> operator classes shown in 
   <xref linkend="brin-builtin-opclasses-table">.
  </para>

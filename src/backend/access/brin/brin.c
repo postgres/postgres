@@ -107,9 +107,11 @@ brininsert(PG_FUNCTION_ARGS)
 		BrinMemTuple *dtup;
 		BlockNumber heapBlk;
 		int			keyno;
-		BrinTuple  *tmptup PG_USED_FOR_ASSERTS_ONLY;
-		BrinMemTuple *tmpdtup PG_USED_FOR_ASSERTS_ONLY;
-		Size tmpsiz PG_USED_FOR_ASSERTS_ONLY;
+#ifdef USE_ASSERT_CHECKING
+		BrinTuple  *tmptup;
+		BrinMemTuple *tmpdtup;
+		Size 		tmpsiz;
+#endif
 
 		CHECK_FOR_INTERRUPTS();
 

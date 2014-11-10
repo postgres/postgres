@@ -95,7 +95,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	BrinTuple  *rettuple;
 	int			keyno;
 	int			idxattno;
-	uint16		phony_infomask;
+	uint16		phony_infomask = 0;
 	bits8	   *phony_nullbitmap;
 	Size		len,
 				hoff,

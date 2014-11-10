@@ -57,8 +57,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
   <para>
    <productname>PostgreSQL</productname> provides the index methods
-   B-tree, hash, GiST, SP-GiST, and GIN.  Users can also define their own index
-   methods, but that is fairly complicated.
+   B-tree, hash, GiST, SP-GiST, GIN, and BRIN.  Users can also define their own
+   index methods, but that is fairly complicated.
   </para>
 
   <para>
@@ -166,7 +166,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, <literal>spgist</> and <literal>gin</>.
+        <literal>gist</literal>, <literal>spgist</>, <literal>gin</>, and
+        <literal>brin</>.
         The default method is <literal>btree</literal>.
        </para>
       </listitem>
@@ -492,7 +493,7 @@ Indexes:
   </caution>
 
   <para>
-   Currently, only the B-tree, GiST and GIN index methods support
+   Currently, only the B-tree, GiST, GIN, and BRIN index methods support
    multicolumn indexes. Up to 32 fields can be specified by default.
    (This limit can be altered when building
    <productname>PostgreSQL</productname>.)  Only B-tree currently
