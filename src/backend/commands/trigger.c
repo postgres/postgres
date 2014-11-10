@@ -4776,7 +4776,7 @@ AfterTriggerPendingOnRel(Oid relid)
 	 * if TRUNCATE/etc is executed by a function or trigger within an updating
 	 * query on the same relation, which is pretty perverse, but let's check.
 	 */
-	for (depth = 0; depth <= afterTriggers.query_depth; depth++)
+	for (depth = 0; depth <= afterTriggers.query_depth && depth < afterTriggers.maxquerydepth; depth++)
 	{
 		for_each_event_chunk(event, chunk, afterTriggers.query_stack[depth])
 		{
