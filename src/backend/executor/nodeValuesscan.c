@@ -25,7 +25,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
-#include "parser/parsetree.h"
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
@@ -189,8 +188,6 @@ ValuesScanState *
 ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 {
 	ValuesScanState *scanstate;
-	RangeTblEntry *rte = rt_fetch(node->scan.scanrelid,
-								  estate->es_range_table);
 	TupleDesc	tupdesc;
 	ListCell   *vtl;
 	int			i;
@@ -242,8 +239,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * get info about values list
 	 */
-	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists),
-								   rte->eref->colnames);
+	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
 
 	ExecAssignScanType(&scanstate->ss, tupdesc);
 

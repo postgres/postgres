@@ -227,3 +227,47 @@ select cast (row('Jim', 'Beam') as text);
 select (row('Jim', 'Beam'))::text;
 select text(row('Jim', 'Beam'));  -- error
 select (row('Jim', 'Beam')).text;  -- error
+
+--
+-- Test that composite values are seen to have the correct column names
+-- (bug #11210 and other reports)
+--
+
+select row_to_json(i) from int8_tbl i;
+select row_to_json(i) from int8_tbl i(x,y);
+
+create temp view vv1 as select * from int8_tbl;
+select row_to_json(i) from vv1 i;
+select row_to_json(i) from vv1 i(x,y);
+
+select row_to_json(ss) from
+  (select q1, q2 from int8_tbl) as ss;
+select row_to_json(ss) from
+  (select q1, q2 from int8_tbl offset 0) as ss;
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl) as ss;
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl offset 0) as ss;
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl) as ss(x,y);
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl offset 0) as ss(x,y);
+
+explain (costs off)
+select row_to_json(q) from
+  (select thousand, tenthous from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q;
+select row_to_json(q) from
+  (select thousand, tenthous from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q;
+select row_to_json(q) from
+  (select thousand as x, tenthous as y from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q;
+select row_to_json(q) from
+  (select thousand as x, tenthous as y from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q(a,b);
+
+create temp table tt1 as select * from int8_tbl limit 2;
+create temp table tt2 () inherits(tt1);
+insert into tt2 values(0,0);
+select row_to_json(r) from (select q2,q1 from tt1 offset 0) r;

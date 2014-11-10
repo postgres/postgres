@@ -26,7 +26,6 @@
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
@@ -279,8 +278,6 @@ FunctionScanState *
 ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 {
 	FunctionScanState *scanstate;
-	RangeTblEntry *rte = rt_fetch(node->scan.scanrelid,
-								  estate->es_range_table);
 	int			nfuncs = list_length(node->functions);
 	TupleDesc	scan_tupdesc;
 	int			i,
@@ -492,22 +489,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		}
 
 		Assert(attno == natts);
-	}
-
-	/*
-	 * Make sure the scan result tupdesc has the column names the query
-	 * expects.  This affects the output of constructs like row_to_json which
-	 * read the column names from the passed-in tupdesc.
-	 */
-	i = 0;
-	foreach(lc, rte->eref->colnames)
-	{
-		char	   *attname = strVal(lfirst(lc));
-
-		if (i >= scan_tupdesc->natts)
-			break;				/* shouldn't happen, but just in case */
-		namestrcpy(&(scan_tupdesc->attrs[i]->attname), attname);
-		i++;
 	}
 
 	ExecAssignScanType(&scanstate->ss, scan_tupdesc);

@@ -50,6 +50,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planner.h"
 #include "parser/parse_coerce.h"
+#include "parser/parsetree.h"
 #include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -712,6 +713,8 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
+	TupleDesc	output_tupdesc;
+	MemoryContext oldcontext;
 	bool		needslow = false;
 
 	if (isDone)
@@ -787,8 +790,6 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 			/* If so, build the junkfilter in the query memory context */
 			if (junk_filter_needed)
 			{
-				MemoryContext oldcontext;
-
 				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 				wrvstate->wrv_junkFilter =
 					ExecInitJunkFilter(subplan->plan->targetlist,
@@ -860,10 +861,60 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 				needslow = true;	/* need runtime check for null */
 		}
 
+		/*
+		 * Use the variable's declared rowtype as the descriptor for the
+		 * output values, modulo possibly assigning new column names below. In
+		 * particular, we *must* absorb any attisdropped markings.
+		 */
+		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		output_tupdesc = CreateTupleDescCopy(var_tupdesc);
+		MemoryContextSwitchTo(oldcontext);
+
 		ReleaseTupleDesc(var_tupdesc);
 	}
+	else
+	{
+		/*
+		 * In the RECORD case, we use the input slot's rowtype as the
+		 * descriptor for the output values, modulo possibly assigning new
+		 * column names below.
+		 */
+		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		output_tupdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
+		MemoryContextSwitchTo(oldcontext);
+	}
 
-	/* Skip the checking on future executions of node */
+	/*
+	 * Construct a tuple descriptor for the composite values we'll produce,
+	 * and make sure its record type is "blessed".  The main reason to do this
+	 * is to be sure that operations such as row_to_json() will see the
+	 * desired column names when they look up the descriptor from the type
+	 * information embedded in the composite values.
+	 *
+	 * We already got the correct physical datatype info above, but now we
+	 * should try to find the source RTE and adopt its column aliases, in case
+	 * they are different from the original rowtype's names.  For example, in
+	 * "SELECT foo(t) FROM tab t(x,y)", the first two columns in the composite
+	 * output should be named "x" and "y" regardless of tab's column names.
+	 *
+	 * If we can't locate the RTE, assume the column names we've got are OK.
+	 * (As of this writing, the only cases where we can't locate the RTE are
+	 * in execution of trigger WHEN clauses, and then the Var will have the
+	 * trigger's relation's rowtype, so its names are fine.)
+	 */
+	if (econtext->ecxt_estate &&
+		variable->varno <= list_length(econtext->ecxt_estate->es_range_table))
+	{
+		RangeTblEntry *rte = rt_fetch(variable->varno,
+									  econtext->ecxt_estate->es_range_table);
+
+		ExecTypeSetColNames(output_tupdesc, rte->eref->colnames);
+	}
+
+	/* Bless the tupdesc if needed, and save it in the execution state */
+	wrvstate->wrv_tupdesc = BlessTupleDesc(output_tupdesc);
+
+	/* Skip all the above on future executions of node */
 	if (needslow)
 		wrvstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalWholeRowSlow;
 	else
@@ -886,7 +937,6 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
-	TupleDesc	slot_tupdesc;
 	HeapTupleHeader dtuple;
 
 	if (isDone)
@@ -917,33 +967,15 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
 	/*
-	 * If it's a RECORD Var, we'll use the slot's type ID info.  It's likely
-	 * that the slot's type is also RECORD; if so, make sure it's been
-	 * "blessed", so that the Datum can be interpreted later.  (Note: we must
-	 * do this here, not in ExecEvalWholeRowVar, because some plan trees may
-	 * return different slots at different times.  We have to be ready to
-	 * bless additional slots during the run.)
-	 */
-	slot_tupdesc = slot->tts_tupleDescriptor;
-	if (variable->vartype == RECORDOID &&
-		slot_tupdesc->tdtypeid == RECORDOID &&
-		slot_tupdesc->tdtypmod < 0)
-		assign_record_type_typmod(slot_tupdesc);
-
-	/*
 	 * Copy the slot tuple and make sure any toasted fields get detoasted.
 	 */
 	dtuple = DatumGetHeapTupleHeader(ExecFetchSlotTupleDatum(slot));
 
 	/*
-	 * If the Var identifies a named composite type, label the datum with that
-	 * type; otherwise we'll use the slot's info.
+	 * Label the datum with the composite type info we identified before.
 	 */
-	if (variable->vartype != RECORDOID)
-	{
-		HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
-		HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
-	}
+	HeapTupleHeaderSetTypeId(dtuple, wrvstate->wrv_tupdesc->tdtypeid);
+	HeapTupleHeaderSetTypMod(dtuple, wrvstate->wrv_tupdesc->tdtypmod);
 
 	return PointerGetDatum(dtuple);
 }
@@ -997,8 +1029,9 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	tuple = ExecFetchSlotTuple(slot);
 	tupleDesc = slot->tts_tupleDescriptor;
 
+	/* wrv_tupdesc is a good enough representation of the Var's rowtype */
 	Assert(variable->vartype != RECORDOID);
-	var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
+	var_tupdesc = wrvstate->wrv_tupdesc;
 
 	/* Check to see if any dropped attributes are non-null */
 	for (i = 0; i < var_tupdesc->natts; i++)
@@ -1025,12 +1058,10 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	dtuple = DatumGetHeapTupleHeader(ExecFetchSlotTupleDatum(slot));
 
 	/*
-	 * Reset datum's type ID fields to match the Var.
+	 * Label the datum with the composite type info we identified before.
 	 */
-	HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
-	HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
-
-	ReleaseTupleDesc(var_tupdesc);
+	HeapTupleHeaderSetTypeId(dtuple, wrvstate->wrv_tupdesc->tdtypeid);
+	HeapTupleHeaderSetTypMod(dtuple, wrvstate->wrv_tupdesc->tdtypmod);
 
 	return PointerGetDatum(dtuple);
 }
@@ -2850,8 +2881,14 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 		cstate->initialized = false;
 	}
 
-	Assert(HeapTupleHeaderGetTypeId(tuple) == cstate->indesc->tdtypeid);
-	Assert(HeapTupleHeaderGetTypMod(tuple) == cstate->indesc->tdtypmod);
+	/*
+	 * We used to be able to assert that incoming tuples are marked with
+	 * exactly the rowtype of cstate->indesc.  However, now that
+	 * ExecEvalWholeRowVar might change the tuples' marking to plain RECORD
+	 * due to inserting aliases, we can only make this weak test:
+	 */
+	Assert(HeapTupleHeaderGetTypeId(tuple) == cstate->indesc->tdtypeid ||
+		   HeapTupleHeaderGetTypeId(tuple) == RECORDOID);
 
 	/* if first time through, initialize conversion map */
 	if (!cstate->initialized)
@@ -4375,6 +4412,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				WholeRowVarExprState *wstate = makeNode(WholeRowVarExprState);
 
 				wstate->parent = parent;
+				wstate->wrv_tupdesc = NULL;
 				wstate->wrv_junkFilter = NULL;
 				state = (ExprState *) wstate;
 				state->evalfunc = (ExprStateEvalFunc) ExecEvalWholeRowVar;
@@ -4778,17 +4816,18 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				/* Build tupdesc to describe result tuples */
 				if (rowexpr->row_typeid == RECORDOID)
 				{
-					/* generic record, use runtime type assignment */
-					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args,
-														   rowexpr->colnames);
-					BlessTupleDesc(rstate->tupdesc);
-					/* we won't need to redo this at runtime */
+					/* generic record, use types of given expressions */
+					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args);
 				}
 				else
 				{
 					/* it's been cast to a named type, use that */
 					rstate->tupdesc = lookup_rowtype_tupdesc_copy(rowexpr->row_typeid, -1);
 				}
+				/* In either case, adopt RowExpr's column aliases */
+				ExecTypeSetColNames(rstate->tupdesc, rowexpr->colnames);
+				/* Bless the tupdesc in case it's now of type RECORD */
+				BlessTupleDesc(rstate->tupdesc);
 				/* Set up evaluation, skipping any deleted columns */
 				Assert(list_length(rowexpr->args) <= rstate->tupdesc->natts);
 				attrs = rstate->tupdesc->attrs;

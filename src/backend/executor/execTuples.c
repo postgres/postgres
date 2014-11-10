@@ -943,28 +943,25 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 /*
  * ExecTypeFromExprList - build a tuple descriptor from a list of Exprs
  *
- * Caller must also supply a list of field names (String nodes).
+ * This is roughly like ExecTypeFromTL, but we work from bare expressions
+ * not TargetEntrys.  No names are attached to the tupledesc's columns.
  */
 TupleDesc
-ExecTypeFromExprList(List *exprList, List *namesList)
+ExecTypeFromExprList(List *exprList)
 {
 	TupleDesc	typeInfo;
-	ListCell   *le;
-	ListCell   *ln;
+	ListCell   *lc;
 	int			cur_resno = 1;
-
-	Assert(list_length(exprList) == list_length(namesList));
 
 	typeInfo = CreateTemplateTupleDesc(list_length(exprList), false);
 
-	forboth(le, exprList, ln, namesList)
+	foreach(lc, exprList)
 	{
-		Node	   *e = lfirst(le);
-		char	   *n = strVal(lfirst(ln));
+		Node	   *e = lfirst(lc);
 
 		TupleDescInitEntry(typeInfo,
 						   cur_resno,
-						   n,
+						   NULL,
 						   exprType(e),
 						   exprTypmod(e),
 						   0);
@@ -975,6 +972,54 @@ ExecTypeFromExprList(List *exprList, List *namesList)
 	}
 
 	return typeInfo;
+}
+
+/*
+ * ExecTypeSetColNames - set column names in a TupleDesc
+ *
+ * Column names must be provided as an alias list (list of String nodes).
+ *
+ * For some callers, the supplied tupdesc has a named rowtype (not RECORD)
+ * and it is moderately likely that the alias list matches the column names
+ * already present in the tupdesc.  If we do change any column names then
+ * we must reset the tupdesc's type to anonymous RECORD; but we avoid doing
+ * so if no names change.
+ */
+void
+ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
+{
+	bool		modified = false;
+	int			colno = 0;
+	ListCell   *lc;
+
+	foreach(lc, namesList)
+	{
+		char	   *cname = strVal(lfirst(lc));
+		Form_pg_attribute attr;
+
+		/* Guard against too-long names list */
+		if (colno >= typeInfo->natts)
+			break;
+		attr = typeInfo->attrs[colno++];
+
+		/* Ignore empty aliases (these must be for dropped columns) */
+		if (cname[0] == '\0')
+			continue;
+
+		/* Change tupdesc only if alias is actually different */
+		if (strcmp(cname, NameStr(attr->attname)) != 0)
+		{
+			namestrcpy(&(attr->attname), cname);
+			modified = true;
+		}
+	}
+
+	/* If we modified the tupdesc, it's now a new record type */
+	if (modified)
+	{
+		typeInfo->tdtypeid = RECORDOID;
+		typeInfo->tdtypmod = -1;
+	}
 }
 
 /*
