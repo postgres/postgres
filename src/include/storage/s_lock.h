@@ -601,9 +601,9 @@ do \
 		"       .set noreorder      \n" \
 		"       .set nomacro        \n" \
 		"       sync                \n" \
-		"       .set pop              "
-:
-:		"memory");
+		"       .set pop              " \
+: \
+:		"memory"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
 
