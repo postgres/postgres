@@ -476,3 +476,164 @@ select (row('Jim', 'Beam')).text;  -- error
 ERROR:  could not identify column "text" in record data type
 LINE 1: select (row('Jim', 'Beam')).text;
                 ^
+--
+-- Test that composite values are seen to have the correct column names
+-- (bug #11210 and other reports)
+--
+select row_to_json(i) from int8_tbl i;
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+select row_to_json(i) from int8_tbl i(x,y);
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+create temp view vv1 as select * from int8_tbl;
+select row_to_json(i) from vv1 i;
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+select row_to_json(i) from vv1 i(x,y);
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+select row_to_json(ss) from
+  (select q1, q2 from int8_tbl) as ss;
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+select row_to_json(ss) from
+  (select q1, q2 from int8_tbl offset 0) as ss;
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl) as ss;
+                 row_to_json                  
+----------------------------------------------
+ {"a":123,"b":456}
+ {"a":123,"b":4567890123456789}
+ {"a":4567890123456789,"b":123}
+ {"a":4567890123456789,"b":4567890123456789}
+ {"a":4567890123456789,"b":-4567890123456789}
+(5 rows)
+
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl offset 0) as ss;
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl) as ss(x,y);
+                 row_to_json                  
+----------------------------------------------
+ {"x":123,"y":456}
+ {"x":123,"y":4567890123456789}
+ {"x":4567890123456789,"y":123}
+ {"x":4567890123456789,"y":4567890123456789}
+ {"x":4567890123456789,"y":-4567890123456789}
+(5 rows)
+
+select row_to_json(ss) from
+  (select q1 as a, q2 as b from int8_tbl offset 0) as ss(x,y);
+                  row_to_json                   
+------------------------------------------------
+ {"q1":123,"q2":456}
+ {"q1":123,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":123}
+ {"q1":4567890123456789,"q2":4567890123456789}
+ {"q1":4567890123456789,"q2":-4567890123456789}
+(5 rows)
+
+explain (costs off)
+select row_to_json(q) from
+  (select thousand, tenthous from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Subquery Scan on q
+   ->  Limit
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+               Index Cond: ((thousand = 42) AND (tenthous < 2000))
+(4 rows)
+
+select row_to_json(q) from
+  (select thousand, tenthous from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q;
+           row_to_json           
+---------------------------------
+ {"thousand":42,"tenthous":42}
+ {"thousand":42,"tenthous":1042}
+(2 rows)
+
+select row_to_json(q) from
+  (select thousand as x, tenthous as y from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q;
+    row_to_json    
+-------------------
+ {"x":42,"y":42}
+ {"x":42,"y":1042}
+(2 rows)
+
+select row_to_json(q) from
+  (select thousand as x, tenthous as y from tenk1
+   where thousand = 42 and tenthous < 2000 offset 0) q(a,b);
+    row_to_json    
+-------------------
+ {"a":42,"b":42}
+ {"a":42,"b":1042}
+(2 rows)
+
+create temp table tt1 as select * from int8_tbl limit 2;
+create temp table tt2 () inherits(tt1);
+insert into tt2 values(0,0);
+select row_to_json(r) from (select q2,q1 from tt1 offset 0) r;
+           row_to_json            
+----------------------------------
+ {"q2":456,"q1":123}
+ {"q2":4567890123456789,"q1":123}
+ {"q2":0,"q1":0}
+(3 rows)
+
