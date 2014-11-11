@@ -264,3 +264,7 @@ a3nsOzKTXUfS9VyaXo8IrncM6n7fdaXpwba/3tNsAhJG4lDv1k4g9v8Ix2dfv6Rs
 -----END PGP MESSAGE-----
 '), 'key', 'convert-crlf=1'), 'sha1'), 'hex');
 -- expected: 7efefcab38467f7484d6fa43dc86cf5281bd78e2
+
+-- check BUG #11905, problem with messages 6 less than a power of 2.
+select pgp_sym_decrypt(pgp_sym_encrypt(repeat('x',65530),'1'),'1') = repeat('x',65530);
+-- expected: true
