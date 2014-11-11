@@ -1172,7 +1172,7 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "(") == 0)
 	{
 		static const char *const list_INDEXOPTIONS[] =
-		{"fillfactor", "fastupdate", NULL};
+		{"fillfactor", "fastupdate", "pending_list_cleanup_size", NULL};
 
 		COMPLETE_WITH_LIST(list_INDEXOPTIONS);
 	}

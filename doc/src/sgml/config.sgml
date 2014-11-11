@@ -5911,6 +5911,27 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-pending-list-cleanup-size" xreflabel="pending_list_cleanup_size">
+      <term><varname>pending_list_cleanup_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>pending_list_cleanup_size</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the maximum size of the GIN pending list which is used
+        when <literal>fastupdate</> is enabled. If the list grows
+        larger than this maximum size, it is cleaned up by moving
+        the entries in it to the main GIN data structure in bulk.
+        The default is four megabytes (<literal>4MB</>). This setting
+        can be overridden for individual GIN indexes by changing
+        storage parameters.
+         See <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
+         for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
      <sect2 id="runtime-config-client-format">

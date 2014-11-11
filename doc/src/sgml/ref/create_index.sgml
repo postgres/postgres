@@ -300,7 +300,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry>
-    <term><literal>FILLFACTOR</></term>
+    <term><literal>fillfactor</></term>
     <listitem>
      <para>
       The fillfactor for an index is a percentage that determines how full
@@ -327,7 +327,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry>
-    <term><literal>BUFFERING</></term>
+    <term><literal>buffering</></term>
     <listitem>
     <para>
      Determines whether the buffering build technique described in
@@ -341,12 +341,12 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
 
    <para>
-    GIN indexes accept a different parameter:
+    GIN indexes accept different parameters:
    </para>
 
    <variablelist>
    <varlistentry>
-    <term><literal>FASTUPDATE</></term>
+    <term><literal>fastupdate</></term>
     <listitem>
     <para>
      This setting controls usage of the fast update technique described in
@@ -359,13 +359,24 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
     <note>
      <para>
-      Turning <literal>FASTUPDATE</> off via <command>ALTER INDEX</> prevents
+      Turning <literal>fastupdate</> off via <command>ALTER INDEX</> prevents
       future insertions from going into the list of pending index entries,
       but does not in itself flush previous entries.  You might want to
       <command>VACUUM</> the table afterward to ensure the pending list is
       emptied.
      </para>
     </note>
+    </listitem>
+   </varlistentry>
+   </variablelist>
+   <variablelist>
+   <varlistentry>
+    <term><literal>pending_list_cleanup_size</></term>
+    <listitem>
+    <para>
+     Custom <xref linkend="guc-pending-list-cleanup-size"> parameter.
+     This value is specified in kilobytes.
+    </para>
     </listitem>
    </varlistentry>
    </variablelist>

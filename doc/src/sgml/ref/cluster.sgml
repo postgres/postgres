@@ -46,7 +46,7 @@ CLUSTER [VERBOSE]
    not clustered.  That is, no attempt is made to store new or
    updated rows according to their index order.  (If one wishes, one can
    periodically recluster by issuing the command again.  Also, setting
-   the table's <literal>FILLFACTOR</literal> storage parameter to less than
+   the table's <literal>fillfactor</literal> storage parameter to less than
    100% can aid in preserving cluster ordering during updates, since updated
    rows are kept on the same page if enough space is available there.)
   </para>

@@ -728,8 +728,8 @@
    from the indexed item). As of <productname>PostgreSQL</productname> 8.4,
    <acronym>GIN</> is capable of postponing much of this work by inserting
    new tuples into a temporary, unsorted list of pending entries.
-   When the table is vacuumed, or if the pending list becomes too large
-   (larger than <xref linkend="guc-work-mem">), the entries are moved to the
+   When the table is vacuumed, or if the pending list becomes larger than
+   <xref linkend="guc-pending-list-cleanup-size">, the entries are moved to the
    main <acronym>GIN</acronym> data structure using the same bulk insert
    techniques used during initial index creation.  This greatly improves
    <acronym>GIN</acronym> index update speed, even counting the additional
@@ -750,7 +750,7 @@
   <para>
    If consistent response time is more important than update speed,
    use of pending entries can be disabled by turning off the
-   <literal>FASTUPDATE</literal> storage parameter for a
+   <literal>fastupdate</literal> storage parameter for a
    <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex">
    for details.
   </para>
@@ -812,18 +812,26 @@
   </varlistentry>
 
   <varlistentry>
-   <term><xref linkend="guc-work-mem"></term>
+   <term><xref linkend="guc-pending-list-cleanup-size"></term>
    <listitem>
     <para>
      During a series of insertions into an existing <acronym>GIN</acronym>
-     index that has <literal>FASTUPDATE</> enabled, the system will clean up
+     index that has <literal>fastupdate</> enabled, the system will clean up
      the pending-entry list whenever the list grows larger than
-     <varname>work_mem</>.  To avoid fluctuations in observed response time,
-     it's desirable to have pending-list cleanup occur in the background
-     (i.e., via autovacuum).  Foreground cleanup operations can be avoided by
-     increasing <varname>work_mem</> or making autovacuum more aggressive.
-     However, enlarging <varname>work_mem</> means that if a foreground
-     cleanup does occur, it will take even longer.
+     <varname>pending_list_cleanup_size</>. To avoid fluctuations in observed
+     response time, it's desirable to have pending-list cleanup occur in the
+     background (i.e., via autovacuum).  Foreground cleanup operations
+     can be avoided by increasing <varname>pending_list_cleanup_size</>
+     or making autovacuum more aggressive.
+     However, enlarging the threshold of the cleanup operation means that
+     if a foreground cleanup does occur, it will take even longer.
+    </para>
+    <para>
+     <varname>pending_list_cleanup_size</> can be overridden for individual
+     GIN indexes by changing storage parameters, and which allows each
+     GIN index to have its own cleanup threshold.
+     For example, it's possible to increase the threshold only for the GIN
+     index which can be updated heavily, and decrease it otherwise.
     </para>
    </listitem>
   </varlistentry>

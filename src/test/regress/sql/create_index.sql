@@ -655,6 +655,13 @@ SELECT COUNT(*) FROM array_gin_test WHERE a @> '{2}';
 DROP TABLE array_gin_test;
 
 --
+-- Test GIN index's reloptions
+--
+CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
+  WITH (FASTUPDATE=on, PENDING_LIST_CLEANUP_SIZE=128);
+\d+ gin_relopts_test
+
+--
 -- HASH
 --
 CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);

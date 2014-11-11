@@ -25,6 +25,8 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
+/* GUC parameter */
+int			pending_list_cleanup_size = 0;
 
 #define GIN_PAGE_FREESIZE \
 	( BLCKSZ - MAXALIGN(SizeOfPageHeaderData) - MAXALIGN(sizeof(GinPageOpaqueData)) )
@@ -228,6 +230,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	ginxlogUpdateMeta data;
 	bool		separateList = false;
 	bool		needCleanup = false;
+	int			cleanupSize;
 
 	if (collector->ntuples == 0)
 		return;
@@ -422,11 +425,13 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	 * ginInsertCleanup could take significant amount of time, so we prefer to
 	 * call it when it can do all the work in a single collection cycle. In
 	 * non-vacuum mode, it shouldn't require maintenance_work_mem, so fire it
-	 * while pending list is still small enough to fit into work_mem.
+	 * while pending list is still small enough to fit into
+	 * pending_list_cleanup_size.
 	 *
 	 * ginInsertCleanup() should not be called inside our CRIT_SECTION.
 	 */
-	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > work_mem * 1024L)
+	cleanupSize = GinGetPendingListCleanupSize(index);
+	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > cleanupSize * 1024L)
 		needCleanup = true;
 
 	UnlockReleaseBuffer(metabuffer);

@@ -315,12 +315,18 @@ typedef struct GinOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	bool		useFastUpdate;	/* use fast updates? */
+	int			pendingListCleanupSize;	/* maximum size of pending list */
 } GinOptions;
 
 #define GIN_DEFAULT_USE_FASTUPDATE	true
 #define GinGetUseFastUpdate(relation) \
 	((relation)->rd_options ? \
 	 ((GinOptions *) (relation)->rd_options)->useFastUpdate : GIN_DEFAULT_USE_FASTUPDATE)
+#define GinGetPendingListCleanupSize(relation) \
+	((relation)->rd_options && \
+	 ((GinOptions *) (relation)->rd_options)->pendingListCleanupSize != -1 ? \
+	 ((GinOptions *) (relation)->rd_options)->pendingListCleanupSize : \
+	 pending_list_cleanup_size)
 
 
 /* Macros for buffer lock/unlock operations */

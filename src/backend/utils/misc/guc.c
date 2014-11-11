@@ -96,14 +96,6 @@
 #define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
 #endif
 
-/* upper limit for GUC variables measured in kilobytes of memory */
-/* note that various places assume the byte size fits in a "long" variable */
-#if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4
-#define MAX_KILOBYTES	INT_MAX
-#else
-#define MAX_KILOBYTES	(INT_MAX / 1024)
-#endif
-
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
 #define KB_PER_TB (1024*1024*1024)
@@ -2547,6 +2539,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&pgstat_track_activity_query_size,
 		1024, 100, 102400,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"pending_list_cleanup_size", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the maximum size of the pending list for GIN index."),
+			 NULL,
+			GUC_UNIT_KB
+		},
+		&pending_list_cleanup_size,
+		4096, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
