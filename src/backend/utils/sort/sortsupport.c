@@ -167,7 +167,6 @@ PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
 
 	Assert(ssup->comparator == NULL);
 
-	/* Find the operator in pg_amop */
 	if (indexRel->rd_rel->relam != BTREE_AM_OID)
 		elog(ERROR, "unexpected non-btree AM: %u", indexRel->rd_rel->relam);
 	if (strategy != BTGreaterStrategyNumber &&
