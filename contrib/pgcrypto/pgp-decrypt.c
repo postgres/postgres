@@ -182,7 +182,7 @@ pktreader_pull(void *priv, PullFilter *src, int len,
 	if (pkt->type == PKT_CONTEXT)
 		return pullf_read(src, len, data_p);
 
-	if (pkt->len == 0)
+	while (pkt->len == 0)
 	{
 		/* this was last chunk in stream */
 		if (pkt->type == PKT_NORMAL)
