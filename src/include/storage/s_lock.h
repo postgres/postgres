@@ -158,7 +158,7 @@ tas(volatile slock_t *lock)
 		"	xchgb	%0,%1	\n"
 		"1: \n"
 :		"+q"(_res), "+m"(*lock)
-:
+:		/* no inputs */
 :		"memory", "cc");
 	return (int) _res;
 }
@@ -225,7 +225,7 @@ tas(volatile slock_t *lock)
 		"	lock			\n"
 		"	xchgb	%0,%1	\n"
 :		"+q"(_res), "+m"(*lock)
-:
+:		/* no inputs */
 :		"memory", "cc");
 	return (int) _res;
 }
@@ -519,7 +519,7 @@ tas(volatile slock_t *lock)
 		"	tas		%1		\n"
 		"	sne		%0		\n"
 :		"=d"(rv), "+m"(*lock)
-:
+:		/* no inputs */
 :		"memory", "cc");
 	return rv;
 }
@@ -586,7 +586,7 @@ tas(volatile slock_t *lock)
 		"       sync                \n"
 		"       .set pop              "
 :		"=&r" (_res), "=&r" (_tmp), "+R" (*_l)
-:
+:		/* no inputs */
 :		"memory");
 	return _res;
 }
@@ -602,7 +602,8 @@ do \
 		"       .set nomacro        \n" \
 		"       sync                \n" \
 		"       .set pop              " \
-: \
+:		/* no outputs */ \
+:		/* no inputs */	\
 :		"memory"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
