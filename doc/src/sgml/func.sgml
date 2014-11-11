@@ -14076,8 +14076,8 @@ AND
     <tbody>
      <row>
       <entry><literal><function>generate_series(<parameter>start</parameter>, <parameter>stop</parameter>)</function></literal></entry>
-      <entry><type>int</type> or <type>bigint</type></entry>
-      <entry><type>setof int</type> or <type>setof bigint</type> (same as argument type)</entry>
+      <entry><type>int</type>, <type>bigint</type> or <type>numeric</type></entry>
+      <entry><type>setof int</type>, <type>setof bigint</type>, or <type>setof numeric</type> (same as argument type)</entry>
       <entry>
        Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
        with a step size of one
@@ -14086,8 +14086,8 @@ AND
 
      <row>
       <entry><literal><function>generate_series(<parameter>start</parameter>, <parameter>stop</parameter>, <parameter>step</parameter>)</function></literal></entry>
-      <entry><type>int</type> or <type>bigint</type></entry>
-      <entry><type>setof int</type> or <type>setof bigint</type> (same as argument type)</entry>
+      <entry><type>int</type>, <type>bigint</type> or <type>numeric</type></entry>
+      <entry><type>setof int</type>, <type>setof bigint</type> or <type>setof numeric</type> (same as argument type)</entry>
       <entry>
        Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
        with a step size of <parameter>step</parameter>
@@ -14136,6 +14136,14 @@ SELECT * FROM generate_series(4,3);
  generate_series
 -----------------
 (0 rows)
+
+SELECT generate_series(1.1, 4, 1.3);
+ generate_series 
+-----------------
+             1.1
+             2.4
+             3.7
+(3 rows)
 
 -- this example relies on the date-plus-integer operator
 SELECT current_date + s.a AS dates FROM generate_series(0,14,7) AS s(a);

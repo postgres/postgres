@@ -1409,3 +1409,55 @@ select 10.0 ^ 2147483647 as overflows;
 ERROR:  value overflows numeric format
 select 117743296169.0 ^ 1000000000 as overflows;
 ERROR:  value overflows numeric format
+--
+-- Tests for generate_series
+--
+select * from generate_series(0.0::numeric, 4.0::numeric);
+ generate_series 
+-----------------
+             0.0
+             1.0
+             2.0
+             3.0
+             4.0
+(5 rows)
+
+select * from generate_series(0.1::numeric, 4.0::numeric, 1.3::numeric);
+ generate_series 
+-----------------
+             0.1
+             1.4
+             2.7
+             4.0
+(4 rows)
+
+select * from generate_series(4.0::numeric, -1.5::numeric, -2.2::numeric);
+ generate_series 
+-----------------
+             4.0
+             1.8
+            -0.4
+(3 rows)
+
+-- Trigger errors
+select * from generate_series(-100::numeric, 100::numeric, 0::numeric);
+ERROR:  step size cannot equal zero
+select * from generate_series(-100::numeric, 100::numeric, 'nan'::numeric);
+ERROR:  step size cannot be NaN
+select * from generate_series('nan'::numeric, 100::numeric, 10::numeric);
+ERROR:  start value cannot be NaN
+select * from generate_series(0::numeric, 'nan'::numeric, 10::numeric);
+ERROR:  stop value cannot be NaN
+-- Checks maximum, output is truncated
+select (i / (10::numeric ^ 131071))::numeric(1,0)
+	from generate_series(6 * (10::numeric ^ 131071),
+			     9 * (10::numeric ^ 131071),
+			     10::numeric ^ 131071) as a(i);
+ numeric 
+---------
+       6
+       7
+       8
+       9
+(4 rows)
+

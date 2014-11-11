@@ -3952,6 +3952,10 @@ DATA(insert OID = 1068 (  generate_series PGNSP PGUID 12 1 1000 0 0 f f f f t t 
 DESCR("non-persistent series generator");
 DATA(insert OID = 1069 (  generate_series PGNSP PGUID 12 1 1000 0 0 f f f f t t i 2 0 20 "20 20" _null_ _null_ _null_ _null_ generate_series_int8 _null_ _null_ _null_ ));
 DESCR("non-persistent series generator");
+DATA(insert OID = 3259 (  generate_series PGNSP PGUID 12 1 1000 0 0 f f f f t t i 3 0 1700 "1700 1700 1700" _null_ _null_ _null_ _null_ generate_series_step_numeric _null_ _null_ _null_ ));
+DESCR("non-persistent series generator");
+DATA(insert OID = 3260 (  generate_series PGNSP PGUID 12 1 1000 0 0 f f f f t t i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_ generate_series_numeric _null_ _null_ _null_ ));
+DESCR("non-persistent series generator");
 DATA(insert OID = 938  (  generate_series PGNSP PGUID 12 1 1000 0 0 f f f f t t i 3 0 1114 "1114 1114 1186" _null_ _null_ _null_ _null_ generate_series_timestamp _null_ _null_ _null_ ));
 DESCR("non-persistent series generator");
 DATA(insert OID = 939  (  generate_series PGNSP PGUID 12 1 1000 0 0 f f f f t t s 3 0 1184 "1184 1184 1186" _null_ _null_ _null_ _null_ generate_series_timestamptz _null_ _null_ _null_ ));
