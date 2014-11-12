@@ -1406,7 +1406,7 @@ typedef struct SnapBuildOnDisk
 	offsetof(SnapBuildOnDisk, version)
 
 #define SNAPBUILD_MAGIC 0x51A1E001
-#define SNAPBUILD_VERSION 1
+#define SNAPBUILD_VERSION 2
 
 /*
  * Store/Load a snapshot from disk, depending on the snapshot builder's state.
@@ -1551,6 +1551,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	memcpy(ondisk_c, builder->committed.xip, sz);
 	COMP_CRC32C(ondisk->checksum, ondisk_c, sz);
 	ondisk_c += sz;
+
+	FIN_CRC32C(ondisk->checksum);
 
 	/* we have valid data now, open tempfile and write it there */
 	fd = OpenTransientFile(tmppath,
@@ -1723,6 +1725,8 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	COMP_CRC32C(checksum, ondisk.builder.committed.xip, sz);
 
 	CloseTransientFile(fd);
+
+	FIN_CRC32C(checksum);
 
 	/* verify checksum of what we've read */
 	if (!EQ_CRC32C(checksum, ondisk.checksum))
