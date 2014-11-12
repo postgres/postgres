@@ -1,0 +1,43 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s2txid s1init s3txid s2alter s2c s1insert s1checkpoint s1start s1insert s1alter s1insert s1start
+step s2txid: BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT txid_current() IS NULL;
+?column?       
+
+f              
+step s1init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding'); <waiting ...>
+step s3txid: BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT txid_current() IS NULL;
+?column?       
+
+f              
+step s2alter: ALTER TABLE do_write ADD COLUMN addedbys2 int;
+step s2c: COMMIT;
+step s1init: <... completed>
+?column?       
+
+init           
+step s1insert: INSERT INTO do_write DEFAULT VALUES;
+step s1checkpoint: CHECKPOINT;
+step s1start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
+data           
+
+BEGIN          
+table public.do_write: INSERT: id[integer]:1 addedbys2[integer]:null
+COMMIT         
+step s1insert: INSERT INTO do_write DEFAULT VALUES;
+step s1alter: ALTER TABLE do_write ADD COLUMN addedbys1 int;
+step s1insert: INSERT INTO do_write DEFAULT VALUES;
+step s1start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
+data           
+
+BEGIN          
+table public.do_write: INSERT: id[integer]:2 addedbys2[integer]:null
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.do_write: INSERT: id[integer]:3 addedbys2[integer]:null addedbys1[integer]:null
+COMMIT         
+?column?       
+
+stop           
