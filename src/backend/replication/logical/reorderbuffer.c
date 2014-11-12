@@ -2198,7 +2198,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		else if (readBytes != sizeof(ReorderBufferDiskChange))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("incomplete read from reorderbuffer spill file: read %d instead of %u bytes",
+					 errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
 							readBytes,
 							(uint32) sizeof(ReorderBufferDiskChange))));
 

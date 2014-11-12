@@ -598,8 +598,10 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 	snapname = ExportSnapshot(snap);
 
 	ereport(LOG,
-			(errmsg("exported logical decoding snapshot: \"%s\" with %u xids",
-					snapname, snap->xcnt)));
+			(errmsg_plural("exported logical decoding snapshot: \"%s\" with %u transaction ID",
+						   "exported logical decoding snapshot: \"%s\" with %u transaction IDs",
+						   snap->xcnt,
+						   snapname, snap->xcnt)));
 	return snapname;
 }
 
@@ -901,7 +903,7 @@ SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid)
 			ereport(LOG,
 				  (errmsg("logical decoding found consistent point at %X/%X",
 						  (uint32) (lsn >> 32), (uint32) lsn),
-				errdetail("xid %u finished, no running transactions anymore",
+				errdetail("Transaction ID %u finished; no more running transactions.",
 						  xid)));
 			builder->state = SNAPBUILD_CONSISTENT;
 		}
@@ -1228,9 +1230,9 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 									builder->initial_xmin_horizon))
 	{
 		ereport(DEBUG1,
-				(errmsg("skipping snapshot at %X/%X while building logical decoding snapshot, xmin horizon too low",
+				(errmsg_internal("skipping snapshot at %X/%X while building logical decoding snapshot, xmin horizon too low",
 						(uint32) (lsn >> 32), (uint32) lsn),
-				 errdetail("initial xmin horizon of %u vs the snapshot's %u",
+				 errdetail_internal("initial xmin horizon of %u vs the snapshot's %u",
 				 builder->initial_xmin_horizon, running->oldestRunningXid)));
 		return true;
 	}
@@ -1324,7 +1326,10 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		ereport(LOG,
 			(errmsg("logical decoding found initial starting point at %X/%X",
 					(uint32) (lsn >> 32), (uint32) lsn),
-			 errdetail("%u xacts need to finish", (uint32) builder->running.xcnt)));
+			 errdetail_plural("%u transaction needs to finish.",
+							  "%u transactions need to finish.",
+							  builder->running.xcnt,
+							  (uint32) builder->running.xcnt)));
 
 		/*
 		 * Iterate through all xids, wait for them to finish.

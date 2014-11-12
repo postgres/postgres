@@ -218,7 +218,7 @@ CreateInitDecodingContext(char *plugin,
 	if (slot->data.database == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot use physical replication slot created for logical decoding")));
+				 errmsg("cannot use physical replication slot for logical decoding")));
 
 	if (slot->data.database != MyDatabaseId)
 		ereport(ERROR,
@@ -410,7 +410,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	MemoryContextSwitchTo(old_context);
 
 	ereport(LOG,
-			(errmsg("starting logical decoding for slot %s",
+			(errmsg("starting logical decoding for slot \"%s\"",
 					NameStr(slot->data.name)),
 			 errdetail("streaming transactions committing after %X/%X, reading WAL from %X/%X",
 					   (uint32) (slot->data.confirmed_flush >> 32),

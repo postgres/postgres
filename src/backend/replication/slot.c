@@ -797,8 +797,7 @@ CheckPointReplicationSlots(void)
 {
 	int			i;
 
-	ereport(DEBUG1,
-			(errmsg("performing replication slot checkpoint")));
+	elog(DEBUG1, "performing replication slot checkpoint");
 
 	/*
 	 * Prevent any slot from being created/dropped while we're active. As we
@@ -834,8 +833,7 @@ StartupReplicationSlots(void)
 	DIR		   *replication_dir;
 	struct dirent *replication_de;
 
-	ereport(DEBUG1,
-			(errmsg("starting up replication slots")));
+	elog(DEBUG1, "starting up replication slots");
 
 	/* restore all slots by iterating over all on-disk entries */
 	replication_dir = AllocateDir("pg_replslot");
