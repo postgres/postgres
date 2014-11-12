@@ -139,7 +139,7 @@ InitPlanCache(void)
  * Once constructed, the cached plan can be made longer-lived, if needed,
  * by calling SaveCachedPlan.
  *
- * raw_parse_tree: output of raw_parser()
+ * raw_parse_tree: output of raw_parser(), or NULL if empty query
  * query_string: original query text
  * commandTag: compile-time-constant tag for query, or NULL if empty query
  */
@@ -221,7 +221,7 @@ CreateCachedPlan(Node *raw_parse_tree,
  * invalidation, so plan use must be completed in the current transaction,
  * and DDL that might invalidate the querytree_list must be avoided as well.
  *
- * raw_parse_tree: output of raw_parser()
+ * raw_parse_tree: output of raw_parser(), or NULL if empty query
  * query_string: original query text
  * commandTag: compile-time-constant tag for query, or NULL if empty query
  */
@@ -659,7 +659,9 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	 * the cache.
 	 */
 	rawtree = copyObject(plansource->raw_parse_tree);
-	if (plansource->parserSetup != NULL)
+	if (rawtree == NULL)
+		tlist = NIL;
+	else if (plansource->parserSetup != NULL)
 		tlist = pg_analyze_and_rewrite_params(rawtree,
 											  plansource->query_string,
 											  plansource->parserSetup,
@@ -887,6 +889,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 */
 	snapshot_set = false;
 	if (!ActiveSnapshotSet() &&
+		plansource->raw_parse_tree &&
 		analyze_requires_snapshot(plansource->raw_parse_tree))
 	{
 		PushActiveSnapshot(GetTransactionSnapshot());

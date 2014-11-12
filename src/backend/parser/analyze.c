@@ -288,16 +288,12 @@ transformStmt(ParseState *pstate, Node *parseTree)
  *		Returns true if a snapshot must be set before doing parse analysis
  *		on the given raw parse tree.
  *
- * Classification here should match transformStmt(); but we also have to
- * allow a NULL input (for Parse/Bind of an empty query string).
+ * Classification here should match transformStmt().
  */
 bool
 analyze_requires_snapshot(Node *parseTree)
 {
 	bool		result;
-
-	if (parseTree == NULL)
-		return false;
 
 	switch (nodeTag(parseTree))
 	{

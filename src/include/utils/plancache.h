@@ -76,7 +76,7 @@
 typedef struct CachedPlanSource
 {
 	int			magic;			/* should equal CACHEDPLANSOURCE_MAGIC */
-	Node	   *raw_parse_tree; /* output of raw_parser() */
+	Node	   *raw_parse_tree; /* output of raw_parser(), or NULL */
 	const char *query_string;	/* source text of query */
 	const char *commandTag;		/* command tag (a constant!), or NULL */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
