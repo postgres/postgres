@@ -91,7 +91,7 @@ ALTER TABLESPACE testspace OWNER TO tablespace_testuser1;
 SET SESSION ROLE tablespace_testuser2;
 CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
 ERROR:  permission denied for tablespace testspace
-\c -
+RESET ROLE;
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
 ALTER TABLE ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
 ALTER INDEX ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;

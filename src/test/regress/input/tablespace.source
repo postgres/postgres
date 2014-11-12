@@ -71,8 +71,7 @@ ALTER TABLESPACE testspace OWNER TO tablespace_testuser1;
 
 SET SESSION ROLE tablespace_testuser2;
 CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
-
-\c -
+RESET ROLE;
 
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
 
