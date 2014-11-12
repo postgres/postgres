@@ -493,6 +493,13 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		 * but we can't tell them apart from important data files that we
 		 * mustn't delete.  So instead, we force a checkpoint which will clean
 		 * out any lingering files, and try again.
+		 *
+		 * XXX On Windows, an unlinked file persists in the directory listing
+		 * until no process retains an open handle for the file.  The DDL
+		 * commands that schedule files for unlink send invalidation messages
+		 * directing other PostgreSQL processes to close the files.  DROP
+		 * TABLESPACE should not give up on the tablespace becoming empty
+		 * until all relevant invalidation processing is complete.
 		 */
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 		if (!destroy_tablespace_directories(tablespaceoid, false))
