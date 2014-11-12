@@ -2184,9 +2184,6 @@ GetCommandLogLevel(Node *parsetree)
 {
 	LogStmtLevel lev;
 
-	if (parsetree == NULL)
-		return LOGSTMT_ALL;
-
 	switch (nodeTag(parsetree))
 	{
 			/* raw plannable queries */
@@ -2290,7 +2287,7 @@ GetCommandLogLevel(Node *parsetree)
 
 				/* Look through an EXECUTE to the referenced stmt */
 				ps = FetchPreparedStatement(stmt->name, false);
-				if (ps)
+				if (ps && ps->plansource->raw_parse_tree)
 					lev = GetCommandLogLevel(ps->plansource->raw_parse_tree);
 				else
 					lev = LOGSTMT_ALL;
