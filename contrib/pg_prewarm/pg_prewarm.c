@@ -159,6 +159,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		 */
 		for (block = first_block; block <= last_block; ++block)
 		{
+			CHECK_FOR_INTERRUPTS();
 			PrefetchBuffer(rel, forkNumber, block);
 			++blocks_done;
 		}
@@ -177,6 +178,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		 */
 		for (block = first_block; block <= last_block; ++block)
 		{
+			CHECK_FOR_INTERRUPTS();
 			smgrread(rel->rd_smgr, forkNumber, block, blockbuffer);
 			++blocks_done;
 		}
@@ -190,6 +192,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		{
 			Buffer		buf;
 
+			CHECK_FOR_INTERRUPTS();
 			buf = ReadBufferExtended(rel, forkNumber, block, RBM_NORMAL, NULL);
 			ReleaseBuffer(buf);
 			++blocks_done;
