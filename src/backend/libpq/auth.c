@@ -1590,7 +1590,7 @@ auth_peer(hbaPort *port)
 	if (!pw)
 	{
 		ereport(LOG,
-				(errmsg("failed to look up local user id %ld: %s",
+				(errmsg("could not to look up local user ID %ld: %s",
 		   (long) uid, errno ? strerror(errno) : _("user does not exist"))));
 		return STATUS_ERROR;
 	}

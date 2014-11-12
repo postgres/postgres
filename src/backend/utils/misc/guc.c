@@ -900,7 +900,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"wal_log_hints", PGC_POSTMASTER, WAL_SETTINGS,
-			gettext_noop("Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications"),
+			gettext_noop("Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications."),
 			NULL
 		},
 		&wal_log_hints,
@@ -3504,7 +3504,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"huge_pages", PGC_POSTMASTER, RESOURCES_MEM,
-			gettext_noop("Use of huge pages on Linux"),
+			gettext_noop("Use of huge pages on Linux."),
 			NULL
 		},
 		&huge_pages,
@@ -6608,7 +6608,7 @@ write_auto_conf_file(int fd, const char *filename, ConfigVariable **head_p)
 	 */
 	if (write(fd, buf.data, buf.len) < 0)
 		ereport(ERROR,
-				(errmsg("failed to write to \"%s\" file", filename)));
+				(errmsg("could not write to file \"%s\": %m", filename)));
 	resetStringInfo(&buf);
 
 	/*
@@ -6633,7 +6633,7 @@ write_auto_conf_file(int fd, const char *filename, ConfigVariable **head_p)
 
 		if (write(fd, buf.data, buf.len) < 0)
 			ereport(ERROR,
-					(errmsg("failed to write to \"%s\" file", filename)));
+					(errmsg("could not write to file \"%s\": %m", filename)));
 		resetStringInfo(&buf);
 	}
 
@@ -6838,7 +6838,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	if (Tmpfd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("failed to open auto conf temp file \"%s\": %m",
+				 errmsg("could not open file \"%s\": %m",
 						AutoConfTmpFileName)));
 
 	PG_TRY();
@@ -6856,8 +6856,8 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 				infile = AllocateFile(AutoConfFileName, "r");
 				if (infile == NULL)
 					ereport(ERROR,
-						  (errmsg("failed to open auto conf file \"%s\": %m",
-								  AutoConfFileName)));
+							(errmsg("could not open file \"%s\": %m",
+									AutoConfFileName)));
 
 				/* parse it */
 				ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail);
