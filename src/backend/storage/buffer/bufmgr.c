@@ -214,13 +214,18 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * valid, the page is zeroed instead of throwing an error. This is intended
  * for non-critical data, where the caller is prepared to repair errors.
  *
- * In RBM_ZERO mode, if the page isn't in buffer cache already, it's filled
- * with zeros instead of reading it from disk.  Useful when the caller is
- * going to fill the page from scratch, since this saves I/O and avoids
+ * In RBM_ZERO_AND_LOCK mode, if the page isn't in buffer cache already, it's
+ * filled with zeros instead of reading it from disk.  Useful when the caller
+ * is going to fill the page from scratch, since this saves I/O and avoids
  * unnecessary failure if the page-on-disk has corrupt page headers.
+ * The page is returned locked to ensure that the caller has a chance to
+ * initialize the page before it's made visible to others.
  * Caution: do not use this mode to read a page that is beyond the relation's
  * current physical EOF; that is likely to cause problems in md.c when
  * the page is modified and written out. P_NEW is OK, though.
+ *
+ * RBM_ZERO_AND_CLEANUP_LOCK is the same as RBM_ZERO_AND_LOCK, but acquires
+ * a cleanup-strength lock on the page.
  *
  * RBM_NORMAL_NO_LOG mode is treated the same as RBM_NORMAL here.
  *
@@ -363,6 +368,18 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  isExtend,
 											  found);
 
+			/*
+			 * In RBM_ZERO_AND_LOCK mode, the caller expects the buffer to
+			 * be already locked on return.
+			 */
+			if (!isLocalBuf)
+			{
+				if (mode == RBM_ZERO_AND_LOCK)
+					LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
+				else if (mode == RBM_ZERO_AND_CLEANUP_LOCK)
+					LockBufferForCleanup(BufferDescriptorGetBuffer(bufHdr));
+			}
+
 			return BufferDescriptorGetBuffer(bufHdr);
 		}
 
@@ -444,8 +461,11 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 * Read in the page, unless the caller intends to overwrite it and
 		 * just wants us to allocate a buffer.
 		 */
-		if (mode == RBM_ZERO)
+		if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK ||
+			mode == RBM_DO_NOT_USE)
+		{
 			MemSet((char *) bufBlock, 0, BLCKSZ);
+		}
 		else
 		{
 			instr_time	io_start,
@@ -485,6 +505,19 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			}
 		}
 	}
+
+	/*
+	 * In RBM_ZERO_AND_LOCK mode, grab the buffer content lock before marking
+	 * the page as valid, to make sure that no other backend sees the zeroed
+	 * page before the caller has had a chance to initialize it.
+	 *
+	 * Since no-one else can be looking at the page contents yet, there is no
+	 * difference between an exclusive lock and a cleanup-strength lock.
+	 * (Note that we cannot use LockBuffer() of LockBufferForCleanup() here,
+	 * because they assert that the buffer is already valid.)
+	 */
+	if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
+		LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
 
 	if (isLocalBuf)
 	{
