@@ -158,9 +158,8 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 	if (blkno == P_NEW)
 		elog(ERROR, "hash AM does not use P_NEW");
 
-	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO, NULL);
-
-	LockBuffer(buf, HASH_WRITE);
+	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO_AND_LOCK,
+							 NULL);
 
 	/* ref count and lock type are correct */
 
@@ -201,11 +200,13 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno)
 		if (BufferGetBlockNumber(buf) != blkno)
 			elog(ERROR, "unexpected hash relation size: %u, should be %u",
 				 BufferGetBlockNumber(buf), blkno);
+		LockBuffer(buf, HASH_WRITE);
 	}
 	else
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO, NULL);
-
-	LockBuffer(buf, HASH_WRITE);
+	{
+		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO_AND_LOCK,
+								 NULL);
+	}
 
 	/* ref count and lock type are correct */
 
