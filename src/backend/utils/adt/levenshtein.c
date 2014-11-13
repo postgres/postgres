@@ -1,41 +1,34 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * levenshtein.c
+ *	  Levenshtein distance implementation.
  *
- * Functions for "fuzzy" comparison of strings
+ * Original author:  Joe Conway <mail@joeconway.com>
  *
- * Joe Conway <mail@joeconway.com>
+ * This file is included by varlena.c twice, to provide matching code for (1)
+ * Levenshtein distance with custom costings, and (2) Levenshtein distance with
+ * custom costings and a "max" value above which exact distances are not
+ * interesting.  Before the inclusion, we rely on the presence of the inline
+ * function rest_of_char_same().
+ *
+ * Written based on a description of the algorithm by Michael Gilleland found
+ * at http://www.merriampark.com/ld.htm.  Also looked at levenshtein.c in the
+ * PHP 4.0.6 distribution for inspiration.  Configurable penalty costs
+ * extension is introduced by Volkan YAZICI <volkan.yazici@gmail.com.
  *
  * Copyright (c) 2001-2014, PostgreSQL Global Development Group
- * ALL RIGHTS RESERVED;
  *
- * levenshtein()
- * -------------
- * Written based on a description of the algorithm by Michael Gilleland
- * found at http://www.merriampark.com/ld.htm
- * Also looked at levenshtein.c in the PHP 4.0.6 distribution for
- * inspiration.
- * Configurable penalty costs extension is introduced by Volkan
- * YAZICI <volkan.yazici@gmail.com>.
+ * IDENTIFICATION
+ *	src/backend/utils/adt/levenshtein.c
+ *
+ *-------------------------------------------------------------------------
  */
-
-/*
- * External declarations for exported functions
- */
-#ifdef LEVENSHTEIN_LESS_EQUAL
-static int levenshtein_less_equal_internal(text *s, text *t,
-								int ins_c, int del_c, int sub_c, int max_d);
-#else
-static int levenshtein_internal(text *s, text *t,
-					 int ins_c, int del_c, int sub_c);
-#endif
-
 #define MAX_LEVENSHTEIN_STRLEN		255
 
-
 /*
- * Calculates Levenshtein distance metric between supplied strings. Generally
- * (1, 1, 1) penalty costs suffices for common cases, but your mileage may
- * vary.
+ * Calculates Levenshtein distance metric between supplied csrings, which are
+ * not necessarily null-terminated.  Generally (1, 1, 1) penalty costs suffices
+ * for common cases, but your mileage may vary.
  *
  * One way to compute Levenshtein distance is to incrementally construct
  * an (m+1)x(n+1) matrix where cell (i, j) represents the minimum number
@@ -63,30 +56,27 @@ static int levenshtein_internal(text *s, text *t,
  * identify the portion of the matrix close to the diagonal which can still
  * affect the final answer.
  */
-static int
+int
 #ifdef LEVENSHTEIN_LESS_EQUAL
-levenshtein_less_equal_internal(text *s, text *t,
-								int ins_c, int del_c, int sub_c, int max_d)
+varstr_levenshtein_less_equal(const char *source, int slen, const char *target,
+							  int tlen, int ins_c, int del_c, int sub_c,
+							  int max_d)
 #else
-levenshtein_internal(text *s, text *t,
-					 int ins_c, int del_c, int sub_c)
+varstr_levenshtein(const char *source, int slen, const char *target, int tlen,
+				   int ins_c, int del_c, int sub_c)
 #endif
 {
 	int			m,
-				n,
-				s_bytes,
-				t_bytes;
+				n;
 	int		   *prev;
 	int		   *curr;
 	int		   *s_char_len = NULL;
 	int			i,
 				j;
-	const char *s_data;
-	const char *t_data;
 	const char *y;
 
 	/*
-	 * For levenshtein_less_equal_internal, we have real variables called
+	 * For varstr_levenshtein_less_equal, we have real variables called
 	 * start_column and stop_column; otherwise it's just short-hand for 0 and
 	 * m.
 	 */
@@ -105,15 +95,8 @@ levenshtein_internal(text *s, text *t,
 #define STOP_COLUMN m
 #endif
 
-	/* Extract a pointer to the actual character data. */
-	s_data = VARDATA_ANY(s);
-	t_data = VARDATA_ANY(t);
-
-	/* Determine length of each string in bytes and characters. */
-	s_bytes = VARSIZE_ANY_EXHDR(s);
-	t_bytes = VARSIZE_ANY_EXHDR(t);
-	m = pg_mbstrlen_with_len(s_data, s_bytes);
-	n = pg_mbstrlen_with_len(t_data, t_bytes);
+	m = pg_mbstrlen_with_len(source, slen);
+	n = pg_mbstrlen_with_len(target, tlen);
 
 	/*
 	 * We can transform an empty s into t with n insertions, or a non-empty t
@@ -193,10 +176,10 @@ levenshtein_internal(text *s, text *t,
 	 * multi-byte characters, we still build the array, so that the fast-path
 	 * needn't deal with the case where the array hasn't been initialized.
 	 */
-	if (m != s_bytes || n != t_bytes)
+	if (m != slen || n != tlen)
 	{
 		int			i;
-		const char *cp = s_data;
+		const char *cp = source;
 
 		s_char_len = (int *) palloc((m + 1) * sizeof(int));
 		for (i = 0; i < m; ++i)
@@ -223,11 +206,11 @@ levenshtein_internal(text *s, text *t,
 		prev[i] = i * del_c;
 
 	/* Loop through rows of the notional array */
-	for (y = t_data, j = 1; j < n; j++)
+	for (y = target, j = 1; j < n; j++)
 	{
 		int		   *temp;
-		const char *x = s_data;
-		int			y_char_len = n != t_bytes + 1 ? pg_mblen(y) : 1;
+		const char *x = source;
+		int			y_char_len = n != tlen + 1 ? pg_mblen(y) : 1;
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
 
@@ -384,7 +367,7 @@ levenshtein_internal(text *s, text *t,
 				prev[start_column] = max_d + 1;
 				curr[start_column] = max_d + 1;
 				if (start_column != 0)
-					s_data += (s_char_len != NULL) ? s_char_len[start_column - 1] : 1;
+					source += (s_char_len != NULL) ? s_char_len[start_column - 1] : 1;
 				start_column++;
 			}
 

@@ -1546,7 +1546,6 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 	return result;
 }
 
-
 /* text_cmp()
  * Internal comparison function for text strings.
  * Returns -1, 0 or 1
@@ -4747,3 +4746,24 @@ text_format_nv(PG_FUNCTION_ARGS)
 {
 	return text_format(fcinfo);
 }
+
+/*
+ * Helper function for Levenshtein distance functions. Faster than memcmp(),
+ * for this use case.
+ */
+static inline bool
+rest_of_char_same(const char *s1, const char *s2, int len)
+{
+	while (len > 0)
+	{
+		len--;
+		if (s1[len] != s2[len])
+			return false;
+	}
+	return true;
+}
+
+/* Expand each Levenshtein distance variant */
+#include "levenshtein.c"
+#define LEVENSHTEIN_LESS_EQUAL
+#include "levenshtein.c"

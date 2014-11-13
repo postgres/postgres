@@ -38,4 +38,6 @@ OBJS = acl.o arrayfuncs.o array_selfuncs.o array_typanalyze.o \
 
 like.o: like.c like_match.c
 
+varlena.o: varlena.c levenshtein.c
+
 include $(top_srcdir)/src/backend/common.mk
