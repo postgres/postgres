@@ -7556,7 +7556,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	{
 		XLogReadBufferForRedoExtended(lsn, record, 0,
 									  target_node, MAIN_FORKNUM, blkno,
-									  RBM_ZERO, false, &buffer);
+									  RBM_ZERO_AND_LOCK, false, &buffer);
 		page = BufferGetPage(buffer);
 		PageInit(page, BufferGetPageSize(buffer), 0);
 		action = BLK_NEEDS_REDO;
@@ -7683,7 +7683,7 @@ heap_xlog_multi_insert(XLogRecPtr lsn, XLogRecord *record)
 	{
 		XLogReadBufferForRedoExtended(lsn, record, 0,
 									  rnode, MAIN_FORKNUM, blkno,
-									  RBM_ZERO, false, &buffer);
+									  RBM_ZERO_AND_LOCK, false, &buffer);
 		page = BufferGetPage(buffer);
 		PageInit(page, BufferGetPageSize(buffer), 0);
 		action = BLK_NEEDS_REDO;
@@ -7876,7 +7876,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool hot_update)
 	{
 		XLogReadBufferForRedoExtended(lsn, record, 1,
 									  rnode, MAIN_FORKNUM, newblk,
-									  RBM_ZERO, false, &nbuffer);
+									  RBM_ZERO_AND_LOCK, false, &nbuffer);
 		page = (Page) BufferGetPage(nbuffer);
 		PageInit(page, BufferGetPageSize(nbuffer), 0);
 		newaction = BLK_NEEDS_REDO;
