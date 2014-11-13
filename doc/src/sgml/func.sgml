@@ -12904,6 +12904,11 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    simply produces a null result.
   </para>
 
+  <indexterm>
+   <primary>hypothetical-set aggregate</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+
   <para>
    Each of the aggregates listed in
    <xref linkend="functions-hypothetical-table"> is associated with a
