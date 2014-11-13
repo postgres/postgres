@@ -4054,12 +4054,8 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 	Page		page;
 
 	buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
-									RBM_ZERO);
+			get_cleanup_lock ? RBM_ZERO_AND_CLEANUP_LOCK : RBM_ZERO_AND_LOCK);
 	Assert(BufferIsValid(buffer));
-	if (get_cleanup_lock)
-		LockBufferForCleanup(buffer);
-	else
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	page = (Page) BufferGetPage(buffer);
 
