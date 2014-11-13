@@ -688,7 +688,7 @@ dumpRoles(PGconn *conn)
 						  "ORDER BY 2");
 	else
 		printfPQExpBuffer(buf,
-						  "SELECT 0, usename as rolname, "
+						  "SELECT 0 as oid, usename as rolname, "
 						  "usesuper as rolsuper, "
 						  "true as rolinherit, "
 						  "usesuper as rolcreaterole, "
@@ -702,7 +702,7 @@ dumpRoles(PGconn *conn)
 						  "usename = current_user AS is_current_user "
 						  "FROM pg_shadow "
 						  "UNION ALL "
-						  "SELECT 0, groname as rolname, "
+						  "SELECT 0 as oid, groname as rolname, "
 						  "false as rolsuper, "
 						  "true as rolinherit, "
 						  "false as rolcreaterole, "
@@ -712,7 +712,8 @@ dumpRoles(PGconn *conn)
 						  "null::text as rolpassword, "
 						  "null::abstime as rolvaliduntil, "
 						  "false as rolreplication, "
-						  "null as rolcomment, false "
+						  "null as rolcomment, "
+						  "false AS is_current_user "
 						  "FROM pg_group "
 						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
 						  " WHERE usename = groname) "
