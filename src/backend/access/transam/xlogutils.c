@@ -312,7 +312,10 @@ XLogReadBufferForRedoExtended(XLogRecPtr lsn, XLogRecord *record,
 		*buf = XLogReadBufferExtended(rnode, forkno, blkno, mode);
 		if (BufferIsValid(*buf))
 		{
-			LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
+			if (get_cleanup_lock)
+				LockBufferForCleanup(*buf);
+			else
+				LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
 			if (lsn <= PageGetLSN(BufferGetPage(*buf)))
 				return BLK_DONE;
 			else
