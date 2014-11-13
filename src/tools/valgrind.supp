@@ -45,7 +45,7 @@
 	padding_XLogRecData_CRC
 	Memcheck:Value8
 
-	fun:XLogInsert
+	fun:XLogInsertRecord
 }
 
 {
