@@ -28,7 +28,7 @@
  *
  * As the percentage of transactions modifying the catalog normally is fairly
  * small in comparisons to ones only manipulating user data, we keep track of
- * the committed catalog modifying ones inside (xmin, xmax) instead of keeping
+ * the committed catalog modifying ones inside [xmin, xmax) instead of keeping
  * track of all running transactions like it's done in a normal snapshot. Note
  * that we're generally only looking at transactions that have acquired an
  * xid. That is we keep a list of transactions between snapshot->(xmin, xmax)
@@ -1250,10 +1250,11 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 			/* can decode everything after this */
 			builder->start_decoding_at = lsn + 1;
 
-		builder->xmin = running->oldestRunningXid;
-		builder->xmax = running->latestCompletedXid;
-		TransactionIdAdvance(builder->xmax);
+		/* As no transactions were running xmin/xmax can be trivially set. */
+		builder->xmin = running->nextXid; /* < are finished */
+		builder->xmax = running->nextXid; /* >= are running */
 
+		/* so we can safely use the faster comparisons */
 		Assert(TransactionIdIsNormal(builder->xmin));
 		Assert(TransactionIdIsNormal(builder->xmax));
 
@@ -1294,9 +1295,14 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		 * instead of running transactions we don't need to know anything
 		 * about uncommitted subtransactions.
 		 */
-		builder->xmin = running->oldestRunningXid;
-		builder->xmax = running->latestCompletedXid;
-		TransactionIdAdvance(builder->xmax);
+
+		/*
+		 * Start with an xmin/xmax that's correct for future, when all the
+		 * currently running transactions have finished. We'll update both
+		 * while waiting for the pending transactions to finish.
+		 */
+		builder->xmin = running->nextXid; /* < are finished */
+		builder->xmax = running->nextXid;  /* >= are running */
 
 		/* so we can safely use the faster comparisons */
 		Assert(TransactionIdIsNormal(builder->xmin));
