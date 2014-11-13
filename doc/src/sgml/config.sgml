@@ -5911,10 +5911,10 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-pending-list-cleanup-size" xreflabel="pending_list_cleanup_size">
-      <term><varname>pending_list_cleanup_size</varname> (<type>integer</type>)
+     <varlistentry id="guc-gin-pending-list-limit" xreflabel="gin_pending_list_limit">
+      <term><varname>gin_pending_list_limit</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>pending_list_cleanup_size</> configuration parameter</primary>
+       <primary><varname>gin_pending_list_limit</> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>

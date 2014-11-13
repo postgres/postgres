@@ -326,7 +326,7 @@ typedef struct GinOptions
 	((relation)->rd_options && \
 	 ((GinOptions *) (relation)->rd_options)->pendingListCleanupSize != -1 ? \
 	 ((GinOptions *) (relation)->rd_options)->pendingListCleanupSize : \
-	 pending_list_cleanup_size)
+	 gin_pending_list_limit)
 
 
 /* Macros for buffer lock/unlock operations */

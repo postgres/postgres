@@ -371,10 +371,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
    <variablelist>
    <varlistentry>
-    <term><literal>pending_list_cleanup_size</></term>
+    <term><literal>gin_pending_list_limit</></term>
     <listitem>
     <para>
-     Custom <xref linkend="guc-pending-list-cleanup-size"> parameter.
+     Custom <xref linkend="guc-gin-pending-list-limit"> parameter.
      This value is specified in kilobytes.
     </para>
     </listitem>

@@ -729,7 +729,7 @@
    <acronym>GIN</> is capable of postponing much of this work by inserting
    new tuples into a temporary, unsorted list of pending entries.
    When the table is vacuumed, or if the pending list becomes larger than
-   <xref linkend="guc-pending-list-cleanup-size">, the entries are moved to the
+   <xref linkend="guc-gin-pending-list-limit">, the entries are moved to the
    main <acronym>GIN</acronym> data structure using the same bulk insert
    techniques used during initial index creation.  This greatly improves
    <acronym>GIN</acronym> index update speed, even counting the additional
@@ -812,22 +812,22 @@
   </varlistentry>
 
   <varlistentry>
-   <term><xref linkend="guc-pending-list-cleanup-size"></term>
+   <term><xref linkend="guc-gin-pending-list-limit"></term>
    <listitem>
     <para>
      During a series of insertions into an existing <acronym>GIN</acronym>
      index that has <literal>fastupdate</> enabled, the system will clean up
      the pending-entry list whenever the list grows larger than
-     <varname>pending_list_cleanup_size</>. To avoid fluctuations in observed
+     <varname>gin_pending_list_limit</>. To avoid fluctuations in observed
      response time, it's desirable to have pending-list cleanup occur in the
      background (i.e., via autovacuum).  Foreground cleanup operations
-     can be avoided by increasing <varname>pending_list_cleanup_size</>
+     can be avoided by increasing <varname>gin_pending_list_limit</>
      or making autovacuum more aggressive.
      However, enlarging the threshold of the cleanup operation means that
      if a foreground cleanup does occur, it will take even longer.
     </para>
     <para>
-     <varname>pending_list_cleanup_size</> can be overridden for individual
+     <varname>gin_pending_list_limit</> can be overridden for individual
      GIN indexes by changing storage parameters, and which allows each
      GIN index to have its own cleanup threshold.
      For example, it's possible to increase the threshold only for the GIN

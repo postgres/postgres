@@ -519,7 +519,7 @@
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
-#pending_list_cleanup_size = 4MB
+#gin_pending_list_limit = 4MB
 
 # - Locale and Formatting -
 

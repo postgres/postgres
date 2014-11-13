@@ -2543,12 +2543,12 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"pending_list_cleanup_size", PGC_USERSET, CLIENT_CONN_STATEMENT,
+		{"gin_pending_list_limit", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum size of the pending list for GIN index."),
 			 NULL,
 			GUC_UNIT_KB
 		},
-		&pending_list_cleanup_size,
+		&gin_pending_list_limit,
 		4096, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},

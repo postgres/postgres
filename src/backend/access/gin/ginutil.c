@@ -526,7 +526,7 @@ ginoptions(PG_FUNCTION_ARGS)
 	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"fastupdate", RELOPT_TYPE_BOOL, offsetof(GinOptions, useFastUpdate)},
-		{"pending_list_cleanup_size", RELOPT_TYPE_INT, offsetof(GinOptions,
+		{"gin_pending_list_limit", RELOPT_TYPE_INT, offsetof(GinOptions,
 																pendingListCleanupSize)}
 	};
 

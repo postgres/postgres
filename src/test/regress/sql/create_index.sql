@@ -658,7 +658,7 @@ DROP TABLE array_gin_test;
 -- Test GIN index's reloptions
 --
 CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
-  WITH (FASTUPDATE=on, PENDING_LIST_CLEANUP_SIZE=128);
+  WITH (FASTUPDATE=on, GIN_PENDING_LIST_LIMIT=128);
 \d+ gin_relopts_test
 
 --

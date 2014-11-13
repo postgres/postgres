@@ -218,7 +218,7 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
-			"pending_list_cleanup_size",
+			"gin_pending_list_limit",
 			"Maximum size of the pending list for this GIN index, in kilobytes.",
 			RELOPT_KIND_GIN
 		},

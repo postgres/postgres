@@ -26,7 +26,7 @@
 #include "utils/rel.h"
 
 /* GUC parameter */
-int			pending_list_cleanup_size = 0;
+int			gin_pending_list_limit = 0;
 
 #define GIN_PAGE_FREESIZE \
 	( BLCKSZ - MAXALIGN(SizeOfPageHeaderData) - MAXALIGN(sizeof(GinPageOpaqueData)) )
@@ -426,7 +426,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	 * call it when it can do all the work in a single collection cycle. In
 	 * non-vacuum mode, it shouldn't require maintenance_work_mem, so fire it
 	 * while pending list is still small enough to fit into
-	 * pending_list_cleanup_size.
+	 * gin_pending_list_limit.
 	 *
 	 * ginInsertCleanup() should not be called inside our CRIT_SECTION.
 	 */
