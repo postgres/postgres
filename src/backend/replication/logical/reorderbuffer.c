@@ -1264,8 +1264,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 	volatile CommandId command_id = FirstCommandId;
 	volatile Snapshot snapshot_now = NULL;
-	volatile bool txn_started = false;
-	volatile bool subtxn_started = false;
+	volatile bool using_subtxn = false;
 
 	txn = ReorderBufferTXNByXid(rb, xid, false, NULL, InvalidXLogRecPtr,
 								false);
@@ -1305,7 +1304,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 	PG_TRY();
 	{
-		txn_started = false;
 
 		/*
 		 * Decoding needs access to syscaches et al., which in turn use
@@ -1317,16 +1315,12 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 		 * When we're called via the SQL SRF there's already a transaction
 		 * started, so start an explicit subtransaction there.
 		 */
-		if (IsTransactionOrTransactionBlock())
-		{
+		using_subtxn = IsTransactionOrTransactionBlock();
+
+		if (using_subtxn)
 			BeginInternalSubTransaction("replay");
-			subtxn_started = true;
-		}
 		else
-		{
 			StartTransactionCommand();
-			txn_started = true;
-		}
 
 		rb->begin(rb, txn);
 
@@ -1489,22 +1483,22 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 			elog(ERROR, "output plugin used XID %u",
 				 GetCurrentTransactionId());
 
-		/* make sure there's no cache pollution */
-		ReorderBufferExecuteInvalidations(rb, txn);
-
 		/* cleanup */
 		TeardownHistoricSnapshot(false);
 
 		/*
-		 * Abort subtransaction or the transaction as a whole has the right
+		 * Aborting the current (sub-)transaction as a whole has the right
 		 * semantics. We want all locks acquired in here to be released, not
 		 * reassigned to the parent and we do not want any database access
 		 * have persistent effects.
 		 */
-		if (subtxn_started)
+		AbortCurrentTransaction();
+
+		/* make sure there's no cache pollution */
+		ReorderBufferExecuteInvalidations(rb, txn);
+
+		if (using_subtxn)
 			RollbackAndReleaseCurrentSubTransaction();
-		else if (txn_started)
-			AbortCurrentTransaction();
 
 		if (snapshot_now->copied)
 			ReorderBufferFreeSnap(rb, snapshot_now);
@@ -1520,19 +1514,20 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 		TeardownHistoricSnapshot(true);
 
+		/*
+		 * Force cache invalidation to happen outside of a valid transaction
+		 * to prevent catalog access as we just caught an error.
+		 */
+		AbortCurrentTransaction();
+
+		/* make sure there's no cache pollution */
+		ReorderBufferExecuteInvalidations(rb, txn);
+
+		if (using_subtxn)
+			RollbackAndReleaseCurrentSubTransaction();
+
 		if (snapshot_now->copied)
 			ReorderBufferFreeSnap(rb, snapshot_now);
-
-		if (subtxn_started)
-			RollbackAndReleaseCurrentSubTransaction();
-		else if (txn_started)
-			AbortCurrentTransaction();
-
-		/*
-		 * Invalidations in an aborted transactions aren't allowed to do
-		 * catalog access, so we don't need to still have the snapshot setup.
-		 */
-		ReorderBufferExecuteInvalidations(rb, txn);
 
 		/* remove potential on-disk data, and deallocate */
 		ReorderBufferCleanupTXN(rb, txn);
@@ -1645,20 +1640,24 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 	 */
 	if (txn->base_snapshot != NULL && txn->ninvalidations > 0)
 	{
-		/* setup snapshot to perform the invalidations in */
-		SetupHistoricSnapshot(txn->base_snapshot, txn->tuplecid_hash);
-		PG_TRY();
-		{
-			ReorderBufferExecuteInvalidations(rb, txn);
-			TeardownHistoricSnapshot(false);
-		}
-		PG_CATCH();
-		{
-			/* cleanup */
-			TeardownHistoricSnapshot(true);
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+		bool use_subtxn = IsTransactionOrTransactionBlock();
+
+		if (use_subtxn)
+			BeginInternalSubTransaction("replay");
+
+		/*
+		 * Force invalidations to happen outside of a valid transaction - that
+		 * way entries will just be marked as invalid without accessing the
+		 * catalog. That's advantageous because we don't need to setup the
+		 * full state necessary for catalog access.
+		 */
+		if (use_subtxn)
+			AbortCurrentTransaction();
+
+		ReorderBufferExecuteInvalidations(rb, txn);
+
+		if (use_subtxn)
+			RollbackAndReleaseCurrentSubTransaction();
 	}
 	else
 		Assert(txn->ninvalidations == 0);
