@@ -257,7 +257,8 @@ XLogCheckInvalidPages(void)
  * The returned buffer is exclusively-locked.
  *
  * For historical reasons, instead of a ReadBufferMode argument, this only
- * supports RBM_ZERO (init == true) and RBM_NORMAL (init == false) modes.
+ * supports RBM_ZERO_AND_LOCK (init == true) and RBM_NORMAL (init == false)
+ * modes.
  */
 Buffer
 XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
@@ -265,8 +266,8 @@ XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
 	Buffer		buf;
 
 	buf = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
-								 init ? RBM_ZERO : RBM_NORMAL);
-	if (BufferIsValid(buf))
+								 init ? RBM_ZERO_AND_LOCK : RBM_NORMAL);
+	if (BufferIsValid(buf) && !init)
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	return buf;
@@ -285,8 +286,8 @@ XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
  * dropped or truncated. If we don't see evidence of that later in the WAL
  * sequence, we'll complain at the end of WAL replay.)
  *
- * In RBM_ZERO and RBM_ZERO_ON_ERROR modes, if the page doesn't exist, the
- * relation is extended with all-zeroes pages up to the given block number.
+ * In RBM_ZERO_* modes, if the page doesn't exist, the relation is extended
+ * with all-zeroes pages up to the given block number.
  *
  * In RBM_NORMAL_NO_LOG mode, we return InvalidBuffer if the page doesn't
  * exist, and we don't check for all-zeroes.  Thus, no log entry is made
@@ -340,7 +341,11 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 		do
 		{
 			if (buffer != InvalidBuffer)
+			{
+				if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
+					LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				ReleaseBuffer(buffer);
+			}
 			buffer = ReadBufferWithoutRelcache(rnode, forknum,
 											   P_NEW, mode, NULL);
 		}
@@ -348,6 +353,8 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 		/* Handle the corner case that P_NEW returns non-consecutive pages */
 		if (BufferGetBlockNumber(buffer) != blkno)
 		{
+			if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
 			buffer = ReadBufferWithoutRelcache(rnode, forknum, blkno,
 											   mode, NULL);
