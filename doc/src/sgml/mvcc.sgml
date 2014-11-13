@@ -1106,30 +1106,108 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
     <para>
      In addition to table-level locks, there are row-level locks, which
-     can be exclusive or shared locks.  An exclusive row-level lock on a
-     specific row is automatically acquired when the row is updated or
-     deleted.  The lock is held until the transaction commits or rolls
-     back, just like table-level locks.  Row-level locks do
-     not affect data querying; they block only <emphasis>writers to the same
-     row</emphasis>.
+     are listed as below with the contexts in which they are used
+     automatically by <productname>PostgreSQL</productname>.  See
+     <xref linkend="row-lock-compatibility"> for a complete table of
+     row-level lock conflicts.  Note that a transaction can hold
+     conflicting locks on the same row, even in different subtransactions;
+     but other than that, two transactions can never hold conflicting locks
+     on the same row.  Row-level locks do not affect data querying; they
+     block only <emphasis>writers and lockers</emphasis> to the same row.
     </para>
 
-    <para>
-     To acquire an exclusive row-level lock on a row without actually
-     modifying the row, select the row with <command>SELECT FOR
-     UPDATE</command>.  Note that once the row-level lock is acquired,
-     the transaction can update the row multiple times without
-     fear of conflicts.
-    </para>
+     <variablelist>
+      <title>Row-level Lock Modes</title>
+      <varlistentry>
+       <term>
+        <literal>FOR UPDATE</literal>
+       </term>
+       <listitem>
+        <para>
+         <literal>FOR UPDATE</literal> causes the rows retrieved by the
+         <command>SELECT</command> statement to be locked as though for
+         update.  This prevents them from being locked, modified or deleted by
+         other transactions until the current transaction ends.  That is,
+         other transactions that attempt <command>UPDATE</command>,
+         <command>DELETE</command>,
+         <command>SELECT FOR UPDATE</command>,
+         <command>SELECT FOR NO KEY UPDATE</command>,
+         <command>SELECT FOR SHARE</command> or
+         <command>SELECT FOR KEY SHARE</command>
+         of these rows will be blocked until the current transaction ends;
+         conversely, <command>SELECT FOR UPDATE</command> will wait for a
+         concurrent transaction that has run any of those commands on the
+         same row,
+         and will then lock and return the updated row (or no row, if the
+         row was deleted).  Within a <literal>REPEATABLE READ</> or
+         <literal>SERIALIZABLE</> transaction,
+         however, an error will be thrown if a row to be locked has changed
+         since the transaction started.  For further discussion see
+         <xref linkend="applevel-consistency">.
+        </para>
+        <para>
+         The <literal>FOR UPDATE</> lock mode
+         is also acquired by any <command>DELETE</> on a row, and also by an
+         <command>UPDATE</> that modifies the values on certain columns.  Currently,
+         the set of columns considered for the <command>UPDATE</> case are those that
+         have a unique index on them that can be used in a foreign key (so partial
+         indexes and expressional indexes are not considered), but this may change
+         in the future.
+        </para>
+       </listitem>
+      </varlistentry>
 
-    <para>
-     To acquire a shared row-level lock on a row, select the row with
-     <command>SELECT FOR SHARE</command>.  A shared lock does not prevent
-     other transactions from acquiring the same shared lock.  However,
-     no transaction is allowed to update, delete, or exclusively lock a
-     row on which any other transaction holds a shared lock.  Any attempt
-     to do so will block until the shared lock(s) have been released.
-    </para>
+      <varlistentry>
+       <term>
+        <literal>FOR NO KEY UPDATE</literal>
+       </term>
+       <listitem>
+        <para>
+         Behaves similarly to <literal>FOR UPDATE</>, except that the lock
+         acquired is weaker: this lock will not block
+         <literal>SELECT FOR KEY SHARE</> commands that attempt to acquire
+         a lock on the same rows. This lock mode is also acquired by any
+         <command>UPDATE</> that does not acquire a <literal>FOR UPDATE</> lock.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        <literal>FOR SHARE</literal>
+       </term>
+       <listitem>
+        <para>
+         Behaves similarly to <literal>FOR NO KEY UPDATE</>, except that it
+         acquires a shared lock rather than exclusive lock on each retrieved
+         row.  A shared lock blocks other transactions from performing
+         <command>UPDATE</command>, <command>DELETE</command>,
+         <command>SELECT FOR UPDATE</command> or
+         <command>SELECT FOR NO KEY UPDATE</> on these rows, but it does not
+         prevent them from performing <command>SELECT FOR SHARE</command> or
+         <command>SELECT FOR KEY SHARE</command>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        <literal>FOR KEY SHARE</literal>
+       </term>
+       <listitem>
+        <para>
+         Behaves similarly to <literal>FOR SHARE</literal>, except that the
+         lock is weaker: <literal>SELECT FOR UPDATE</> is blocked, but not
+         <literal>SELECT FOR NO KEY UPDATE</>.  A key-shared lock blocks
+         other transactions from performing <command>DELETE</command> or
+         any <command>UPDATE</command> that changes the key values, but not
+         other <command>UPDATE</>, and neither does it prevent
+         <command>SELECT FOR NO KEY UPDATE</>, <command>SELECT FOR SHARE</>,
+         or <command>SELECT FOR KEY SHARE</>.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
 
     <para>
      <productname>PostgreSQL</productname> doesn't remember any
@@ -1139,11 +1217,62 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      UPDATE</command> modifies selected rows to mark them locked, and so
      will result in disk writes.
     </para>
+
+    <table tocentry="1" id="row-lock-compatibility">
+     <title>Conflicting Row-level Locks</title>
+     <tgroup cols="5">
+      <colspec colnum="2" colname="lockst">
+      <colspec colnum="5" colname="lockend">
+      <spanspec namest="lockst" nameend="lockend" spanname="lockreq">
+      <thead>
+       <row>
+        <entry morerows="1">Requested Lock Mode</entry>
+        <entry spanname="lockreq">Current Lock Mode</entry>
+       </row>
+       <row>
+        <entry>FOR KEY SHARE</entry>
+        <entry>FOR SHARE</entry>
+        <entry>FOR NO KEY UPDATE</entry>
+        <entry>FOR UPDATE</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>FOR KEY SHARE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+       </row>
+       <row>
+        <entry>FOR SHARE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+       </row>
+       <row>
+        <entry>FOR NO KEY UPDATE</entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+       </row>
+       <row>
+        <entry>FOR UPDATE</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
    </sect2>
 
    <sect2 id="locking-pages">
     <title>Page-level Locks</title>
-  
+
     <para>
      In addition to table and row locks, page-level share/exclusive locks are
      used to control read/write access to table pages in the shared buffer
