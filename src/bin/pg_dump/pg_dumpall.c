@@ -679,7 +679,7 @@ dumpRoles(PGconn *conn)
 						  "ORDER BY 2");
 	else
 		printfPQExpBuffer(buf,
-						  "SELECT 0, usename as rolname, "
+						  "SELECT 0 as oid, usename as rolname, "
 						  "usesuper as rolsuper, "
 						  "true as rolinherit, "
 						  "usesuper as rolcreaterole, "
@@ -692,7 +692,7 @@ dumpRoles(PGconn *conn)
 						  "null as rolcomment "
 						  "FROM pg_shadow "
 						  "UNION ALL "
-						  "SELECT 0, groname as rolname, "
+						  "SELECT 0 as oid, groname as rolname, "
 						  "false as rolsuper, "
 						  "true as rolinherit, "
 						  "false as rolcreaterole, "
