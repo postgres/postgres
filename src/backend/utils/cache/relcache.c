@@ -64,6 +64,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "rewrite/rewriteDefine.h"
+#include "rewrite/rowsecurity.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/array.h"
@@ -1052,7 +1053,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	if (relation->rd_rel->relrowsecurity)
 		RelationBuildRowSecurity(relation);
 	else
-		relation->rsdesc = NULL;
+		relation->rd_rsdesc = NULL;
 
 	/*
 	 * if it's an index, initialize index-related information
@@ -2024,8 +2025,8 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
 		MemoryContextDelete(relation->rd_rulescxt);
-	if (relation->rsdesc)
-		MemoryContextDelete(relation->rsdesc->rscxt);
+	if (relation->rd_rsdesc)
+		MemoryContextDelete(relation->rd_rsdesc->rscxt);
 	if (relation->rd_fdwroutine)
 		pfree(relation->rd_fdwroutine);
 	pfree(relation);
@@ -2200,7 +2201,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
-		keep_policies = equalRSDesc(relation->rsdesc, newrel->rsdesc);
+		keep_policies = equalRSDesc(relation->rd_rsdesc, newrel->rd_rsdesc);
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
@@ -2250,7 +2251,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(MemoryContext, rd_rulescxt);
 		}
 		if (keep_policies)
-			SWAPFIELD(RowSecurityDesc *, rsdesc);
+			SWAPFIELD(RowSecurityDesc *, rd_rsdesc);
 		/* toast OID override must be preserved */
 		SWAPFIELD(Oid, rd_toastoid);
 		/* pgstat_info must be preserved */
@@ -3435,11 +3436,11 @@ RelationCacheInitializePhase3(void)
 		 * RelationBuildRowSecurity will create a single default-deny policy
 		 * if there is no policy defined in pg_rowsecurity.
 		 */
-		if (relation->rd_rel->relrowsecurity && relation->rsdesc == NULL)
+		if (relation->rd_rel->relrowsecurity && relation->rd_rsdesc == NULL)
 		{
 			RelationBuildRowSecurity(relation);
 
-			Assert (relation->rsdesc != NULL);
+			Assert (relation->rd_rsdesc != NULL);
 			restart = true;
 		}
 
@@ -4815,7 +4816,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
 		rel->trigdesc = NULL;
-		rel->rsdesc = NULL;
+		rel->rd_rsdesc = NULL;
 		rel->rd_indexprs = NIL;
 		rel->rd_indpred = NIL;
 		rel->rd_exclops = NULL;

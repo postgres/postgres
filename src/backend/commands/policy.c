@@ -32,6 +32,7 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rowsecurity.h"
 #include "storage/lock.h"
 #include "utils/acl.h"
 #include "utils/array.h"
@@ -358,7 +359,7 @@ RelationBuildRowSecurity(Relation relation)
 	systable_endscan(sscan);
 	heap_close(catalog, AccessShareLock);
 
-	relation->rsdesc = rsdesc;
+	relation->rd_rsdesc = rsdesc;
 }
 
 /*

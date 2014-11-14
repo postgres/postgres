@@ -300,7 +300,7 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 	 * There must always be at least one policy defined (may be the simple
 	 * 'default-deny' policy, if none are explicitly defined on the table).
 	 */
-	foreach(item, relation->rsdesc->policies)
+	foreach(item, relation->rd_rsdesc->policies)
 	{
 		policy = (RowSecurityPolicy *) lfirst(item);
 
