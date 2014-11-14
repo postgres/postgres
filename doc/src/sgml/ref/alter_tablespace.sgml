@@ -33,8 +33,7 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PAR
 
   <para>
    <command>ALTER TABLESPACE</command> can be used to change the definition of
-   a tablespace or to migrate objects in the current database between
-   tablespaces.
+   a tablespace.
   </para>
 
   <para>
