@@ -380,6 +380,23 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </listitem>
    </varlistentry>
    </variablelist>
+
+   <para>
+    <acronym>BRIN</> indexes accept a different parameter:
+   </para>
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>pages_per_range</></term>
+    <listitem>
+    <para>
+     Defines the number of table blocks that make up one block range for
+     each entry of a <acronym>BRIN</> index (see <xref linkend="brin-intro">
+     for more details).  The default is <literal>128</>.
+    </para>
+    </listitem>
+   </varlistentry>
+   </variablelist>
   </refsect2>
 
   <refsect2 id="SQL-CREATEINDEX-CONCURRENTLY">
