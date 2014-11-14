@@ -1258,6 +1258,7 @@ retry:
 		{
 			/* Corner case 2: next multixact is still being filled in */
 			LWLockRelease(MultiXactOffsetControlLock);
+			CHECK_FOR_INTERRUPTS();
 			pg_usleep(1000L);
 			goto retry;
 		}
