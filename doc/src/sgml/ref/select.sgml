@@ -109,9 +109,11 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 
     <listitem>
      <para>
-      If the <literal>GROUP BY</literal> clause is specified, the
+      If the <literal>GROUP BY</literal> clause is specified,
+      or if there are aggregate function calls, the
       output is combined into groups of rows that match on one or more
-      values.  If the <literal>HAVING</literal> clause is present, it
+      values, and the results of aggregate functions are computed.
+      If the <literal>HAVING</literal> clause is present, it
       eliminates groups that do not satisfy the given condition.  (See
       <xref linkend="sql-groupby" endterm="sql-groupby-title"> and
       <xref linkend="sql-having" endterm="sql-having-title"> below.)
@@ -637,22 +639,35 @@ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...]
 
    <para>
     Aggregate functions, if any are used, are computed across all rows
-    making up each group, producing a separate value for each group
-    (whereas without <literal>GROUP BY</literal>, an aggregate
-    produces a single value computed across all the selected rows).
-    The set of rows fed to the aggregate function can be further filtered by
+    making up each group, producing a separate value for each group.
+    (If there are aggregate functions but no <literal>GROUP BY</literal>
+    clause, the query is treated as having a single group comprising all
+    the selected rows.)
+    The set of rows fed to each aggregate function can be further filtered by
     attaching a <literal>FILTER</literal> clause to the aggregate function
     call; see <xref linkend="syntax-aggregates"> for more information.  When
     a <literal>FILTER</literal> clause is present, only those rows matching it
-    are included.
-    When <literal>GROUP BY</literal> is present, it is not valid for
+    are included in the input to that aggregate function.
+   </para>
+
+   <para>
+    When <literal>GROUP BY</literal> is present,
+    or any aggregate functions are present, it is not valid for
     the <command>SELECT</command> list expressions to refer to
-    ungrouped columns except within aggregate functions or if the
+    ungrouped columns except within aggregate functions or when the
     ungrouped column is functionally dependent on the grouped columns,
     since there would otherwise be more than one possible value to
     return for an ungrouped column.  A functional dependency exists if
     the grouped columns (or a subset thereof) are the primary key of
     the table containing the ungrouped column.
+   </para>
+
+   <para>
+    Keep in mind that all aggregate functions are evaluated before
+    evaluating any <quote>scalar</> expressions in the <literal>HAVING</>
+    clause or <literal>SELECT</> list.  This means that, for example,
+    a <literal>CASE</> expression cannot be used to skip evaluation of
+    an aggregate function; see <xref linkend="syntax-express-eval">.
    </para>
 
    <para>
@@ -683,7 +698,8 @@ HAVING <replaceable class="parameter">condition</replaceable>
     created by <literal>GROUP BY</literal>.  Each column referenced in
     <replaceable class="parameter">condition</replaceable> must
     unambiguously reference a grouping column, unless the reference
-    appears within an aggregate function.
+    appears within an aggregate function or the ungrouped column is
+    functionally dependent on the grouping columns.
    </para>
 
    <para>
