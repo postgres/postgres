@@ -1,5 +1,3 @@
-SET synchronous_commit = 0;
-
 CREATE TABLE brintest (byteacol bytea,
 	charcol "char",
 	namecol name,
@@ -25,7 +23,7 @@ CREATE TABLE brintest (byteacol bytea,
 	numericcol numeric,
 	uuidcol uuid,
 	lsncol pg_lsn
-) WITH (fillfactor=50);
+) WITH (fillfactor=10);
 
 INSERT INTO brintest SELECT
 	repeat(stringu1, 42)::bytea,
@@ -52,7 +50,10 @@ INSERT INTO brintest SELECT
 	tenthous::numeric(36,30) * fivethous * even / (hundred + 1),
 	format('%s%s-%s-%s-%s-%s%s%s', to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'))::uuid,
 	format('%s/%s%s', odd, even, tenthous)::pg_lsn
-FROM tenk1;
+FROM tenk1 LIMIT 5;
+
+-- throw in some NULL-only tuples too
+INSERT INTO brintest SELECT NULL FROM tenk1 LIMIT 25;
 
 CREATE INDEX brinidx ON brintest USING brin (
 	byteacol,
@@ -82,6 +83,7 @@ CREATE INDEX brinidx ON brintest USING brin (
 	lsncol
 ) with (pages_per_range = 1);
 
+BEGIN;
 CREATE TABLE brinopers (colname name, op text[], value text[],
 	check (cardinality(op) = cardinality(value)));
 
@@ -109,7 +111,8 @@ INSERT INTO brinopers VALUES ('macaddrcol', '{>, >=, =, <=, <}', '{ff:fe:00:00:0
 INSERT INTO brinopers VALUES ('bitcol', '{>, >=, =, <=, <}', '{1111111000, 1111111000, 0000000010, 0000000010, 0000000010}');
 INSERT INTO brinopers VALUES ('varbitcol', '{>, >=, =, <=, <}', '{1111111111111000, 1111111111111000, 0000000000000100, 0000000000000100, 0000000000000100}');
 INSERT INTO brinopers VALUES ('uuidcol', '{>, >=, =, <=, <}', '{99989998-9998-9998-9998-999899989998, 99989998-9998-9998-9998-999899989998, 00040004-0004-0004-0004-000400040004, 00040004-0004-0004-0004-000400040004, 00040004-0004-0004-0004-000400040005}');
-INSERT INTO brinopers VALUES ('lsncol', '{>, >=, =, <=, <}', '{198/1999799, 198/1999799, 30/312815, 0/1200, 0/1200}');
+INSERT INTO brinopers VALUES ('lsncol', '{>, >=, =, <=, <, IS, IS NOT}', '{198/1999799, 198/1999799, 30/312815, 0/1200, 0/1200, NULL, NULL}');
+COMMIT;
 
 DO $x$
 DECLARE
@@ -128,7 +131,7 @@ BEGIN
 				-- run the query using the brin index
                 SET enable_seqscan = 0;
                 SET enable_bitmapscan = 1;
-                EXECUTE format('create temp table %s (tid tid) /* ON COMMIT DROP*/', tabname);
+                EXECUTE format('create temp table %s (tid tid) ON COMMIT DROP', tabname);
                 EXECUTE query;
 
 				-- run the query using a seqscan
@@ -136,7 +139,7 @@ BEGIN
                 SET enable_bitmapscan = 0;
 				query = format($y$INSERT INTO %s SELECT ctid FROM brintest WHERE %s %s %L $y$,
                         tabname_ss, r.colname, r.oper, r.value);
-                EXECUTE format('create temp table %s (tid tid) /* ON COMMIT DROP */', tabname_ss);
+                EXECUTE format('create temp table %s (tid tid) ON COMMIT DROP', tabname_ss);
                 EXECUTE query;
 
 				-- make sure both return the same results
@@ -175,10 +178,9 @@ INSERT INTO brintest SELECT
 	tenthous::numeric(36,30) * fivethous * even / (hundred + 1),
 	format('%s%s-%s-%s-%s-%s%s%s', to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'))::uuid,
 	format('%s/%s%s', odd, even, tenthous)::pg_lsn
-FROM tenk1;
+FROM tenk1 LIMIT 5 OFFSET 5;
 
 SELECT brin_summarize_new_values('brinidx'::regclass);
 
 UPDATE brintest SET int8col = int8col * int4col;
-
-SET synchronous_commit = 1;
+UPDATE brintest SET textcol = '' WHERE textcol IS NOT NULL;
