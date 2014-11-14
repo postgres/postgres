@@ -1268,7 +1268,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		ereport(LOG,
 				(errmsg("logical decoding found consistent point at %X/%X",
 						(uint32) (lsn >> 32), (uint32) lsn),
-				 errdetail("running xacts with xcnt == 0")));
+				 errdetail("There are no running transactions.")));
 
 		return false;
 	}
@@ -1799,7 +1799,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	ereport(LOG,
 			(errmsg("logical decoding found consistent point at %X/%X",
 					(uint32) (lsn >> 32), (uint32) lsn),
-			 errdetail("found initial snapshot in snapbuild file")));
+			 errdetail("Logical decoding will begin using saved snapshot.")));
 	return true;
 
 snapshot_not_interesting:
