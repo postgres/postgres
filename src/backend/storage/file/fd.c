@@ -346,6 +346,62 @@ pg_flush_data(int fd, off_t offset, off_t amount)
 
 
 /*
+ * fsync_fname -- fsync a file or directory, handling errors properly
+ *
+ * Try to fsync a file or directory. When doing the latter, ignore errors that
+ * indicate the OS just doesn't allow/require fsyncing directories.
+ */
+void
+fsync_fname(char *fname, bool isdir)
+{
+	int			fd;
+	int			returncode;
+
+	/*
+	 * Some OSs require directories to be opened read-only whereas other
+	 * systems don't allow us to fsync files opened read-only; so we need both
+	 * cases here
+	 */
+	if (!isdir)
+		fd = BasicOpenFile(fname,
+						   O_RDWR | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
+	else
+		fd = BasicOpenFile(fname,
+						   O_RDONLY | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
+
+	/*
+	 * Some OSs don't allow us to open directories at all (Windows returns
+	 * EACCES)
+	 */
+	if (fd < 0 && isdir && (errno == EISDIR || errno == EACCES))
+		return;
+
+	else if (fd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", fname)));
+
+	returncode = pg_fsync(fd);
+
+	/* Some OSs don't allow us to fsync directories at all */
+	if (returncode != 0 && isdir && errno == EBADF)
+	{
+		close(fd);
+		return;
+	}
+
+	if (returncode != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m", fname)));
+
+	close(fd);
+}
+
+
+/*
  * InitFileAccess --- initialize this module during backend startup
  *
  * This is called during either normal or standalone backend start.
