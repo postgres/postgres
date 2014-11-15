@@ -589,7 +589,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
 					 swap_toast_by_content, false, true,
-					 frozenXid, cutoffMulti);
+					 frozenXid, cutoffMulti,
+					 OldHeap->rd_rel->relpersistence);
 }
 
 
@@ -1475,7 +1476,8 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool check_constraints,
 				 bool is_internal,
 				 TransactionId frozenXid,
-				 MultiXactId cutoffMulti)
+				 MultiXactId cutoffMulti,
+				 char newrelpersistence)
 {
 	ObjectAddress object;
 	Oid			mapped_tables[4];
@@ -1519,6 +1521,16 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	reindex_flags = REINDEX_REL_SUPPRESS_INDEX_USE;
 	if (check_constraints)
 		reindex_flags |= REINDEX_REL_CHECK_CONSTRAINTS;
+
+	/*
+	 * Ensure that the indexes have the same persistence as the parent
+	 * relation.
+	 */
+	if (newrelpersistence == RELPERSISTENCE_UNLOGGED)
+		reindex_flags |= REINDEX_REL_FORCE_INDEXES_UNLOGGED;
+	else if (newrelpersistence == RELPERSISTENCE_PERMANENT)
+		reindex_flags |= REINDEX_REL_FORCE_INDEXES_PERMANENT;
+
 	reindex_relation(OIDOldHeap, reindex_flags);
 
 	/*

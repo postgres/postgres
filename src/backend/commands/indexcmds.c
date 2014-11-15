@@ -1689,7 +1689,7 @@ ReindexIndex(RangeVar *indexRelation)
 									  RangeVarCallbackForReindexIndex,
 									  (void *) &heapOid);
 
-	reindex_index(indOid, false);
+	reindex_index(indOid, false, indexRelation->relpersistence);
 
 	return indOid;
 }

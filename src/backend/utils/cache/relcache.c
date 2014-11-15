@@ -3078,6 +3078,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 	}
 	classform->relfrozenxid = freezeXid;
 	classform->relminmxid = minmulti;
+	classform->relpersistence = relation->rd_rel->relpersistence;
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
