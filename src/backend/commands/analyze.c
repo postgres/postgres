@@ -1483,6 +1483,10 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		/* CCI because we already updated the pg_class row in this command */
 		CommandCounterIncrement();
 		SetRelationHasSubclass(RelationGetRelid(onerel), false);
+		ereport(elevel,
+				(errmsg("skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no child tables",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
 		return 0;
 	}
 
