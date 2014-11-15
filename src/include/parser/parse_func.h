@@ -18,18 +18,6 @@
 #include "parser/parse_node.h"
 
 
-/*
- *	This structure is used to explore the inheritance hierarchy above
- *	nodes in the type tree in order to disambiguate among polymorphic
- *	functions.
- */
-typedef struct _InhPaths
-{
-	int			nsupers;		/* number of superclasses */
-	Oid			self;			/* this class */
-	Oid		   *supervec;		/* vector of superclasses */
-}	InhPaths;
-
 /* Result codes for func_get_detail */
 typedef enum
 {
