@@ -36,6 +36,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 
