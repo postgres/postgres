@@ -147,9 +147,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> also supports reporting of the exact
-   command currently being executed by other server processes.  This
-   facility is independent of the collector process.
+   <productname>PostgreSQL</productname> also supports reporting dynamic
+   information about exactly what is going on in the system right now, such as
+   the exact command currently being executed by other server processes, and
+   which other connections exist in the system.  This facility is independent
+   of the collector process.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -211,18 +213,21 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
  </sect2>
 
  <sect2 id="monitoring-stats-views">
-  <title>Viewing Collected Statistics</title>
+  <title>Viewing Statistics</title>
 
   <para>
    Several predefined views, listed in <xref
-   linkend="monitoring-stats-views-table">, are available to show the results
+   linkend="monitoring-stats-dynamic-views-table">, are available to show
+   the current state of the system. There are also several other
+   views, listed in <xref
+   linkend="monitoring-stats-views-table">, available to show the results
    of statistics collection.  Alternatively, one can
    build custom views using the underlying statistics functions, as discussed
    in <xref linkend="monitoring-stats-functions">.
   </para>
 
   <para>
-   When using the statistics to monitor current activity, it is important
+   When using the statistics to monitor collected data, it is important
    to realize that the information does not update instantaneously.
    Each individual server process transmits new statistical counts to
    the collector just before going idle; so a query or transaction still in
@@ -263,8 +268,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    stated above; instead they update continuously throughout the transaction.
   </para>
 
-  <table id="monitoring-stats-views-table">
-   <title>Standard Statistics Views</title>
+  <table id="monitoring-stats-dynamic-views-table">
+   <title>Dynamic Statistics Views</title>
 
    <tgroup cols="2">
     <thead>
@@ -288,6 +293,30 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_replication</><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
+      <entry>One row per WAL sender process, showing statistics about
+       replication to that sender's connected standby server.
+       See <xref linkend="pg-stat-replication-view"> for details.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="monitoring-stats-views-table">
+   <title>Collected Statistics Views</title>
+
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>View Name</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
       <entry><structname>pg_stat_archiver</><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        WAL archiver process's activity. See
@@ -307,6 +336,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_database</><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
        <xref linkend="pg-stat-database-view"> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_database_conflicts</><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
+      <entry>
+       One row per database, showing database-wide statistics about
+       query cancels due to conflict with recovery on standby servers.
+       See <xref linkend="pg-stat-database-conflicts-view"> for details.
       </entry>
      </row>
 
@@ -451,23 +489,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Similar to <structname>pg_stat_user_functions</>, but counts only
       calls during the current transaction (which are <emphasis>not</>
       yet included in <structname>pg_stat_user_functions</>).</entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_replication</><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
-      <entry>One row per WAL sender process, showing statistics about
-       replication to that sender's connected standby server.
-       See <xref linkend="pg-stat-replication-view"> for details.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structname>pg_stat_database_conflicts</><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
-      <entry>
-       One row per database, showing database-wide statistics about
-       query cancels due to conflict with recovery on standby servers.
-       See <xref linkend="pg-stat-database-conflicts-view"> for details.
-      </entry>
      </row>
 
     </tbody>
@@ -683,6 +704,127 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     somewhere in the system.
    </para>
   </note>
+
+  <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
+   <title><structname>pg_stat_replication</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of a WAL sender process</entry>
+    </row>
+    <row>
+     <entry><structfield>usesysid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of the user logged into this WAL sender process</entry>
+    </row>
+    <row>
+     <entry><structfield>usename</></entry>
+     <entry><type>name</></entry>
+     <entry>Name of the user logged into this WAL sender process</entry>
+    </row>
+    <row>
+     <entry><structfield>application_name</></entry>
+     <entry><type>text</></entry>
+     <entry>Name of the application that is connected
+      to this WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>client_addr</></entry>
+     <entry><type>inet</></entry>
+     <entry>IP address of the client connected to this WAL sender.
+      If this field is null, it indicates that the client is
+      connected via a Unix socket on the server machine.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>client_hostname</></entry>
+     <entry><type>text</></entry>
+     <entry>Host name of the connected client, as reported by a
+      reverse DNS lookup of <structfield>client_addr</>. This field will
+      only be non-null for IP connections, and only when <xref
+      linkend="guc-log-hostname"> is enabled.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>client_port</></entry>
+     <entry><type>integer</></entry>
+     <entry>TCP port number that the client is using for communication
+      with this WAL sender, or <literal>-1</> if a Unix socket is used
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>backend_start</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Time when this process was started, i.e., when the
+      client connected to this WAL sender
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>backend_xmin</structfield></entry>
+     <entry><type>xid</type></entry>
+     <entry>This standby's <literal>xmin</> horizon reported
+     by <xref linkend="guc-hot-standby-feedback">.</entry>
+    </row>
+    <row>
+     <entry><structfield>state</></entry>
+     <entry><type>text</></entry>
+     <entry>Current WAL sender state</entry>
+    </row>
+    <row>
+     <entry><structfield>sent_location</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position sent on this connection</entry>
+    </row>
+    <row>
+     <entry><structfield>write_location</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position written to disk by this standby
+      server</entry>
+    </row>
+    <row>
+     <entry><structfield>flush_location</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position flushed to disk by this standby
+      server</entry>
+    </row>
+    <row>
+     <entry><structfield>replay_location</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position replayed into the database on this
+      standby server</entry>
+    </row>
+    <row>
+     <entry><structfield>sync_priority</></entry>
+     <entry><type>integer</></entry>
+     <entry>Priority of this standby server for being chosen as the
+      synchronous standby</entry>
+    </row>
+    <row>
+     <entry><structfield>sync_state</></entry>
+     <entry><type>text</></entry>
+     <entry>Synchronous state of this standby server</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_replication</structname> view will contain one row
+   per WAL sender process, showing statistics about replication to that
+   sender's connected standby server.  Only directly connected standbys are
+   listed; no information is available about downstream standby servers.
+  </para>
+
 
   <table id="pg-stat-archiver-view" xreflabel="pg_stat_archiver">
    <title><structname>pg_stat_archiver</structname> View</title>
@@ -963,6 +1105,70 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   <para>
    The <structname>pg_stat_database</structname> view will contain one row
    for each database in the cluster, showing database-wide statistics.
+  </para>
+
+  <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">
+   <title><structname>pg_stat_database_conflicts</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>datid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of a database</entry>
+    </row>
+    <row>
+     <entry><structfield>datname</></entry>
+     <entry><type>name</></entry>
+     <entry>Name of this database</entry>
+    </row>
+    <row>
+     <entry><structfield>confl_tablespace</></entry>
+     <entry><type>bigint</></entry>
+     <entry>Number of queries in this database that have been canceled due to
+      dropped tablespaces</entry>
+    </row>
+    <row>
+     <entry><structfield>confl_lock</></entry>
+     <entry><type>bigint</></entry>
+     <entry>Number of queries in this database that have been canceled due to
+      lock timeouts</entry>
+    </row>
+    <row>
+     <entry><structfield>confl_snapshot</></entry>
+     <entry><type>bigint</></entry>
+     <entry>Number of queries in this database that have been canceled due to
+      old snapshots</entry>
+    </row>
+    <row>
+     <entry><structfield>confl_bufferpin</></entry>
+     <entry><type>bigint</></entry>
+     <entry>Number of queries in this database that have been canceled due to
+      pinned buffers</entry>
+    </row>
+    <row>
+     <entry><structfield>confl_deadlock</></entry>
+     <entry><type>bigint</></entry>
+     <entry>Number of queries in this database that have been canceled due to
+      deadlocks</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_database_conflicts</structname> view will contain
+   one row per database, showing database-wide statistics about
+   query cancels occurring due to conflicts with recovery on standby servers.
+   This view will only contain information on standby servers, since
+   conflicts do not occur on master servers.
   </para>
 
   <table id="pg-stat-all-tables-view" xreflabel="pg_stat_all_tables">
@@ -1443,190 +1649,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    one row for each tracked function, showing statistics about executions of
    that function.  The <xref linkend="guc-track-functions"> parameter
    controls exactly which functions are tracked.
-  </para>
-
-  <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
-   <title><structname>pg_stat_replication</structname> View</title>
-   <tgroup cols="3">
-    <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-   <tbody>
-    <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
-     <entry>Process ID of a WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>usesysid</></entry>
-     <entry><type>oid</></entry>
-     <entry>OID of the user logged into this WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>usename</></entry>
-     <entry><type>name</></entry>
-     <entry>Name of the user logged into this WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>application_name</></entry>
-     <entry><type>text</></entry>
-     <entry>Name of the application that is connected
-      to this WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>client_addr</></entry>
-     <entry><type>inet</></entry>
-     <entry>IP address of the client connected to this WAL sender.
-      If this field is null, it indicates that the client is
-      connected via a Unix socket on the server machine.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_hostname</></entry>
-     <entry><type>text</></entry>
-     <entry>Host name of the connected client, as reported by a
-      reverse DNS lookup of <structfield>client_addr</>. This field will
-      only be non-null for IP connections, and only when <xref
-      linkend="guc-log-hostname"> is enabled.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_port</></entry>
-     <entry><type>integer</></entry>
-     <entry>TCP port number that the client is using for communication
-      with this WAL sender, or <literal>-1</> if a Unix socket is used
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_start</></entry>
-     <entry><type>timestamp with time zone</></entry>
-     <entry>Time when this process was started, i.e., when the
-      client connected to this WAL sender
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_xmin</structfield></entry>
-     <entry><type>xid</type></entry>
-     <entry>This standby's <literal>xmin</> horizon reported
-     by <xref linkend="guc-hot-standby-feedback">.</entry>
-    </row>
-    <row>
-     <entry><structfield>state</></entry>
-     <entry><type>text</></entry>
-     <entry>Current WAL sender state</entry>
-    </row>
-    <row>
-     <entry><structfield>sent_location</></entry>
-     <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position sent on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>write_location</></entry>
-     <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position written to disk by this standby
-      server</entry>
-    </row>
-    <row>
-     <entry><structfield>flush_location</></entry>
-     <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position flushed to disk by this standby
-      server</entry>
-    </row>
-    <row>
-     <entry><structfield>replay_location</></entry>
-     <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position replayed into the database on this
-      standby server</entry>
-    </row>
-    <row>
-     <entry><structfield>sync_priority</></entry>
-     <entry><type>integer</></entry>
-     <entry>Priority of this standby server for being chosen as the
-      synchronous standby</entry>
-    </row>
-    <row>
-     <entry><structfield>sync_state</></entry>
-     <entry><type>text</></entry>
-     <entry>Synchronous state of this standby server</entry>
-    </row>
-   </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   The <structname>pg_stat_replication</structname> view will contain one row
-   per WAL sender process, showing statistics about replication to that
-   sender's connected standby server.  Only directly connected standbys are
-   listed; no information is available about downstream standby servers.
-  </para>
-
-  <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">
-   <title><structname>pg_stat_database_conflicts</structname> View</title>
-   <tgroup cols="3">
-    <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-   <tbody>
-    <row>
-     <entry><structfield>datid</></entry>
-     <entry><type>oid</></entry>
-     <entry>OID of a database</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</></entry>
-     <entry><type>name</></entry>
-     <entry>Name of this database</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_tablespace</></entry>
-     <entry><type>bigint</></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      dropped tablespaces</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_lock</></entry>
-     <entry><type>bigint</></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      lock timeouts</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_snapshot</></entry>
-     <entry><type>bigint</></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      old snapshots</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_bufferpin</></entry>
-     <entry><type>bigint</></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      pinned buffers</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_deadlock</></entry>
-     <entry><type>bigint</></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      deadlocks</entry>
-    </row>
-   </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   The <structname>pg_stat_database_conflicts</structname> view will contain
-   one row per database, showing database-wide statistics about
-   query cancels occurring due to conflicts with recovery on standby servers.
-   This view will only contain information on standby servers, since
-   conflicts do not occur on master servers.
   </para>
 
  </sect2>
