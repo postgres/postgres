@@ -413,6 +413,17 @@ PostgreSQL documentation
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><envar>TZ</envar></term>
+
+    <listitem>
+     <para>
+      Specifies the time zone, using full time zone names, which the created
+      database cluster should use.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
 
   <para>
