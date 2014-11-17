@@ -848,6 +848,27 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+       <term><option>--snapshot=<replaceable class="parameter">snapshotname</replaceable></option></term>
+       <listitem>
+         <para>
+          Use the specifed synchronized snapshot when making a dump of the
+          database (see
+          <xref linkend="functions-snapshot-synchronization-table"> for more
+          details).
+         </para>
+         <para>
+          This option is useful when needing to synchronize the dump with
+          a logical replication slot (see <xref linkend="logicaldecoding">)
+          or with a concurrent session.
+         </para>
+         <para>
+          In the case of a parallel dump, the snapshot name defined by this
+          option is used rather than taking a new snapshot.
+         </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--serializable-deferrable</option></term>
       <listitem>
        <para>
