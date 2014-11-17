@@ -481,9 +481,10 @@ ZULU        0    # Zulu
 
 #################### EUROPE ####################
 
+# CONFLICT! BST is not unique
+# Other timezones:
+#  - BST: Bougainville Standard Time (Papua New Guinea)
 BST      3600 D  # British Summer Time
-                 # Brazil Standard Time
-                 # Bering Summer Time
                  #     (Europe/London)
 BDST     7200 D  # British Double Summer Time
 CEST     7200 D  # Central Europe Summer Time
@@ -629,7 +630,7 @@ EETDST  10800 D  # East-Egypt Summertime
                  #     (Europe/Uzhgorod)
                  #     (Europe/Vilnius)
                  #     (Europe/Zaporozhye)
-FET     10800    # Further-eastern European Time
+FET     10800    # Further-eastern European Time (obsolete)
                  #     (Europe/Kaliningrad)
                  #     (Europe/Minsk)
 MEST     7200 D  # Middle Europe Summer Time (not in zic)
