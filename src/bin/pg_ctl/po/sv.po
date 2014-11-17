@@ -1,173 +1,188 @@
 # Swedish message translation file for pg_ctl
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006.
+# Dennis BjÃ¶rklund <db@zigo.dhs.org>, 2004, 2005, 2006.
 # Magnus Hagander <magnus@hagander.net>, 2010.
-# Mats Erik Andersson <bsd@gisladisker.se>, 2013.
+# Mats Erik Andersson <bsd@gisladisker.se>, 2013, 2014.
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.3\n"
+"Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-09-02 00:26+0000\n"
-"PO-Revision-Date: 2013-09-02 01:26-0400\n"
+"POT-Creation-Date: 2014-08-20 23:12+0000\n"
+"PO-Revision-Date: 2014-09-04 23:21+0200\n"
 "Last-Translator: Mats Erik Andersson <bsd@gisladisker.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "kunde inte identifiera aktuella katalogen: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "ogiltig binÃ¤r \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "kunde inte lÃ¤sa binÃ¤r \"%s\""
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "kunde inte hitta en \"%s\" att kÃ¶ra"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "kunde inte byta katalog till \"%s\": %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "kunde inte lÃ¤sa symbolisk lÃ¤nk \"%s\""
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "pclose misslyckades: %s"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83
 #, c-format
 msgid "out of memory\n"
-msgstr "slut på minnet\n"
+msgstr "slut pÃ¥ minnet\n"
 
 #: ../../common/fe_memutils.c:77
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
-#, c-format
-msgid "could not identify current directory: %s"
-msgstr "kunde inte identifiera aktuella katalogen: %s"
-
-#: ../../port/exec.c:146
-#, c-format
-msgid "invalid binary \"%s\""
-msgstr "ogiltig binär \"%s\""
-
-#: ../../port/exec.c:195
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "kunde inte läsa binär \"%s\""
-
-#: ../../port/exec.c:202
-#, c-format
-msgid "could not find a \"%s\" to execute"
-msgstr "kunde inte hitta en \"%s\" att köra"
-
-#: ../../port/exec.c:257 ../../port/exec.c:293
-#, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "kunde inte byta katalog till \"%s\": %s"
-
-#: ../../port/exec.c:272
-#, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "kunde inte läsa symbolisk länk \"%s\""
-
-#: ../../port/exec.c:523
-#, c-format
-msgid "pclose failed: %s"
-msgstr "pclose misslyckades: %s"
-
-#: ../../port/wait_error.c:47
+#: ../../common/wait_error.c:47
 #, c-format
 msgid "command not executable"
-msgstr "kommandot är inte utförbart"
+msgstr "kommandot Ã¤r inte utfÃ¶rbart"
 
-#: ../../port/wait_error.c:51
+#: ../../common/wait_error.c:51
 #, c-format
 msgid "command not found"
-msgstr "kommandot kan ej återfinnas"
+msgstr "kommandot kan ej Ã¥terfinnas"
 
-#: ../../port/wait_error.c:56
+#: ../../common/wait_error.c:56
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "barnprocess avslutade med kod %d"
 
-#: ../../port/wait_error.c:63
+#: ../../common/wait_error.c:63
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "barnprocess terminerades av felkod 0x%X"
 
-#: ../../port/wait_error.c:73
+#: ../../common/wait_error.c:73
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "barnprocess terminerades av signal %s"
 
-#: ../../port/wait_error.c:77
+#: ../../common/wait_error.c:77
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "barnprocess terminerades av signal %d"
 
-#: ../../port/wait_error.c:82
+#: ../../common/wait_error.c:82
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "barnprocess avslutade med okänd statuskod %d"
+msgstr "barnprocess avslutade med okÃ¤nd statuskod %d"
 
-#: pg_ctl.c:253
+#: pg_ctl.c:259
 #, c-format
-msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s: kunde inte öppna PID-fil \"%s\": %s\n"
+msgid "%s: directory \"%s\" does not exist\n"
+msgstr "%s: katalogen \"%s\" existerar inte\n"
 
 #: pg_ctl.c:262
 #, c-format
-msgid "%s: the PID file \"%s\" is empty\n"
-msgstr "%s: PID-filen \"%s\" är tom\n"
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: kunde inte komma Ã¥t katalogen \"%s\": %s\n"
 
-#: pg_ctl.c:265
+#: pg_ctl.c:275
+#, c-format
+msgid "%s: directory \"%s\" is not a database cluster directory\n"
+msgstr "%s: katalogen \"%s\" innehÃ¥ller inte nÃ¥got databaskluster\n"
+
+#: pg_ctl.c:288
+#, c-format
+msgid "%s: could not open PID file \"%s\": %s\n"
+msgstr "%s: kunde inte Ã¶ppna PID-fil \"%s\": %s\n"
+
+#: pg_ctl.c:297
+#, c-format
+msgid "%s: the PID file \"%s\" is empty\n"
+msgstr "%s: PID-filen \"%s\" Ã¤r tom\n"
+
+#: pg_ctl.c:300
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
 msgstr "%s: ogiltig data i PID-fil \"%s\"\n"
 
-#: pg_ctl.c:477
+#: pg_ctl.c:531
 #, c-format
 msgid ""
 "\n"
 "%s: -w option is not supported when starting a pre-9.1 server\n"
 msgstr ""
 "\n"
-"%s: växeln -w stöds inte av server i version före 9.1\n"
+"%s: vÃ¤xeln -w stÃ¶ds inte av server i version fÃ¶re 9.1\n"
 
-#: pg_ctl.c:547
+#: pg_ctl.c:601
 #, c-format
 msgid ""
 "\n"
 "%s: -w option cannot use a relative socket directory specification\n"
 msgstr ""
 "\n"
-"%s: växeln -w kan inte nyttja uttag (socket) med relativ sökväg\n"
+"%s: vÃ¤xeln -w kan inte nyttja uttag (socket) med relativ sÃ¶kvÃ¤g\n"
 
-#: pg_ctl.c:595
+#: pg_ctl.c:656
 #, c-format
 msgid ""
 "\n"
 "%s: this data directory appears to be running a pre-existing postmaster\n"
 msgstr ""
 "\n"
-"%s: denna databaskatalog tycks köras av en redan driftsatt postmaster\n"
+"%s: denna databaskatalog tycks kÃ¶ras av en redan driftsatt postmaster\n"
 
-#: pg_ctl.c:645
+#: pg_ctl.c:706
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
-msgstr "%s: kan inte sätta storlek på core-fil. Förbjudes av hård begränsning.\n"
+msgstr "%s: kan inte sÃ¤tta storlek pÃ¥ core-fil. FÃ¶rbjudes av hÃ¥rd begrÃ¤nsning.\n"
 
-#: pg_ctl.c:670
+#: pg_ctl.c:731
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s: kunde inte läsa filen \"%s\"\n"
+msgstr "%s: kunde inte lÃ¤sa filen \"%s\"\n"
 
-#: pg_ctl.c:675
+#: pg_ctl.c:736
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s: inställningsfilen \"%s\" måste ha en enda rad\n"
+msgstr "%s: instÃ¤llningsfilen \"%s\" mÃ¥ste ha en enda rad\n"
 
-#: pg_ctl.c:723
+#: pg_ctl.c:787
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Programmet \"%s\" behövs av %s men hittades inte i samma\n"
+"Programmet \"%s\" behÃ¶vs av %s men hittades inte i samma\n"
 "katalog som \"%s\".\n"
 "Kontrollera din installation.\n"
 
-#: pg_ctl.c:729
+#: pg_ctl.c:793
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -175,366 +190,366 @@ msgid ""
 "Check your installation.\n"
 msgstr ""
 "Programmet \"%s\" hittades av \"%s\"\n"
-"men är inte av samma version som %s.\n"
+"men Ã¤r inte av samma version som %s.\n"
 "Kontrollera din installation.\n"
 
-#: pg_ctl.c:762
+#: pg_ctl.c:826
 #, c-format
 msgid "%s: database system initialization failed\n"
 msgstr "%s: skapande av databaskluster misslyckades\n"
 
-#: pg_ctl.c:777
+#: pg_ctl.c:841
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
-msgstr "%s: en annan server verkar köra; försöker starta servern ändå\n"
+msgstr "%s: en annan server verkar kÃ¶ra; fÃ¶rsÃ¶ker starta servern Ã¤ndÃ¥\n"
 
-#: pg_ctl.c:814
+#: pg_ctl.c:878
 #, c-format
 msgid "%s: could not start server: exit code was %d\n"
 msgstr "%s: kunde inte starta servern: avslutningskoden var %d\n"
 
-#: pg_ctl.c:821
+#: pg_ctl.c:885
 msgid "waiting for server to start..."
-msgstr "väntar på att servern skall starta..."
+msgstr "vÃ¤ntar pÃ¥ att servern skall starta..."
 
-#: pg_ctl.c:826 pg_ctl.c:927 pg_ctl.c:1018
+#: pg_ctl.c:890 pg_ctl.c:991 pg_ctl.c:1082
 msgid " done\n"
 msgstr " klar\n"
 
-#: pg_ctl.c:827
+#: pg_ctl.c:891
 msgid "server started\n"
 msgstr "servern startad\n"
 
-#: pg_ctl.c:830 pg_ctl.c:834
+#: pg_ctl.c:894 pg_ctl.c:898
 msgid " stopped waiting\n"
-msgstr " avslutade väntan\n"
+msgstr " avslutade vÃ¤ntan\n"
 
-#: pg_ctl.c:831
+#: pg_ctl.c:895
 msgid "server is still starting up\n"
-msgstr "servern är fortfarande i startläge\n"
+msgstr "servern Ã¤r fortfarande i startlÃ¤ge\n"
 
-#: pg_ctl.c:835
+#: pg_ctl.c:899
 #, c-format
 msgid ""
 "%s: could not start server\n"
 "Examine the log output.\n"
 msgstr ""
 "%s: kunde inte starta servern\n"
-"Undersök logg-utskriften.\n"
+"UndersÃ¶k logg-utskriften.\n"
 
-#: pg_ctl.c:841 pg_ctl.c:919 pg_ctl.c:1009
+#: pg_ctl.c:905 pg_ctl.c:983 pg_ctl.c:1073
 msgid " failed\n"
 msgstr " misslyckades\n"
 
-#: pg_ctl.c:842
+#: pg_ctl.c:906
 #, c-format
 msgid "%s: could not wait for server because of misconfiguration\n"
-msgstr "%s: kunde inte invänta server på grund av felinställning\n"
+msgstr "%s: kunde inte invÃ¤nta server pÃ¥ grund av felinstÃ¤llning\n"
 
-#: pg_ctl.c:848
+#: pg_ctl.c:912
 msgid "server starting\n"
 msgstr "servern startar\n"
 
-#: pg_ctl.c:863 pg_ctl.c:949 pg_ctl.c:1039 pg_ctl.c:1079
+#: pg_ctl.c:927 pg_ctl.c:1013 pg_ctl.c:1103 pg_ctl.c:1143
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: PID-filen \"%s\" finns inte\n"
 
-#: pg_ctl.c:864 pg_ctl.c:951 pg_ctl.c:1040 pg_ctl.c:1080
+#: pg_ctl.c:928 pg_ctl.c:1015 pg_ctl.c:1104 pg_ctl.c:1144
 msgid "Is server running?\n"
-msgstr "Kör servern?\n"
+msgstr "KÃ¶r servern?\n"
 
-#: pg_ctl.c:870
+#: pg_ctl.c:934
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
-msgstr "%s: kan inte stanna servern. En-användar-server kör (PID: %ld).\n"
+msgstr "%s: kan inte stanna servern. En-anvÃ¤ndar-server kÃ¶r (PID: %ld).\n"
 
-#: pg_ctl.c:878 pg_ctl.c:973
+#: pg_ctl.c:942 pg_ctl.c:1037
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s: kunde inte skicka stopp-signal (PID: %ld): %s\n"
 
-#: pg_ctl.c:885
+#: pg_ctl.c:949
 msgid "server shutting down\n"
-msgstr "servern stänger ner\n"
+msgstr "servern stÃ¤nger ner\n"
 
-#: pg_ctl.c:900 pg_ctl.c:988
+#: pg_ctl.c:964 pg_ctl.c:1052
 msgid ""
 "WARNING: online backup mode is active\n"
 "Shutdown will not complete until pg_stop_backup() is called.\n"
 "\n"
 msgstr ""
-"VARNING: Läget för backup i drift är i gång.\n"
-"Nedstängning är inte fullständig förr än att pg_stop_backup() har anropats.\n"
+"VARNING: LÃ¤get fÃ¶r backup i drift Ã¤r i gÃ¥ng.\n"
+"NedstÃ¤ngning Ã¤r inte fullstÃ¤ndig fÃ¶rr Ã¤n att pg_stop_backup() har anropats.\n"
 "\n"
 
-#: pg_ctl.c:904 pg_ctl.c:992
+#: pg_ctl.c:968 pg_ctl.c:1056
 msgid "waiting for server to shut down..."
-msgstr "väntar på att servern skall stänga ner..."
+msgstr "vÃ¤ntar pÃ¥ att servern skall stÃ¤nga ner..."
 
-#: pg_ctl.c:921 pg_ctl.c:1011
+#: pg_ctl.c:985 pg_ctl.c:1075
 #, c-format
 msgid "%s: server does not shut down\n"
-msgstr "%s: servern stänger inte ner\n"
+msgstr "%s: servern stÃ¤nger inte ner\n"
 
-#: pg_ctl.c:923 pg_ctl.c:1013
+#: pg_ctl.c:987 pg_ctl.c:1077
 msgid ""
 "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
 msgstr ""
-"TIPS: Växeln \"-m fast\" avslutar sessioner omedelbart, i stället för att\n"
-"vänta på deras självvalda avslut.\n"
+"TIPS: VÃ¤xeln \"-m fast\" avslutar sessioner omedelbart, i stÃ¤llet fÃ¶r att\n"
+"vÃ¤nta pÃ¥ deras sjÃ¤lvvalda avslut.\n"
 
-#: pg_ctl.c:929 pg_ctl.c:1019
+#: pg_ctl.c:993 pg_ctl.c:1083
 msgid "server stopped\n"
 msgstr "servern stoppad\n"
 
-#: pg_ctl.c:952 pg_ctl.c:1025
+#: pg_ctl.c:1016 pg_ctl.c:1089
 msgid "starting server anyway\n"
-msgstr "startar servern ändå\n"
+msgstr "startar servern Ã¤ndÃ¥\n"
 
-#: pg_ctl.c:961
+#: pg_ctl.c:1025
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
-msgstr "%s: kan inte starta om servern. Servern kör (PID: %ld).\n"
+msgstr "%s: kan inte starta om servern. Servern kÃ¶r (PID: %ld).\n"
 
-#: pg_ctl.c:964 pg_ctl.c:1049
+#: pg_ctl.c:1028 pg_ctl.c:1113
 msgid "Please terminate the single-user server and try again.\n"
-msgstr "Var vänlig att stanna en-användar-servern och försök sedan igen.\n"
+msgstr "Var vÃ¤nlig att stanna en-anvÃ¤ndar-servern och fÃ¶rsÃ¶k sedan igen.\n"
 
-#: pg_ctl.c:1023
+#: pg_ctl.c:1087
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
 msgstr "%s: gamla serverprocessen (PID: %ld) verkar vara borta\n"
 
-#: pg_ctl.c:1046
+#: pg_ctl.c:1110
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
-msgstr "%s: kan inte ladda om servern. En-användar-server kör (PID: %ld)\n"
+msgstr "%s: kan inte ladda om servern. En-anvÃ¤ndar-server kÃ¶r (PID: %ld)\n"
 
-#: pg_ctl.c:1055
+#: pg_ctl.c:1119
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
 msgstr "%s: kunde inte skicka \"reload\"-signalen (PID: %ld): %s\n"
 
-#: pg_ctl.c:1060
+#: pg_ctl.c:1124
 msgid "server signaled\n"
 msgstr "servern signalerad\n"
 
-#: pg_ctl.c:1086
+#: pg_ctl.c:1150
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
-msgstr "%s: kan inte uppgradera servern. En-användar-server kör (PID: %ld)\n"
+msgstr "%s: kan inte uppgradera servern. En-anvÃ¤ndar-server kÃ¶r (PID: %ld)\n"
 
-#: pg_ctl.c:1095
+#: pg_ctl.c:1159
 #, c-format
 msgid "%s: cannot promote server; server is not in standby mode\n"
-msgstr "%s: kan inte uppgradera servern. Servern står ej i beredskapsläge.\n"
+msgstr "%s: kan inte uppgradera servern. Servern stÃ¥r ej i beredskapslÃ¤ge.\n"
 
-#: pg_ctl.c:1110
+#: pg_ctl.c:1174
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
 msgstr "%s: kunde inte skapa signalfil vid uppgradering \"%s\": %s\n"
 
-#: pg_ctl.c:1116
+#: pg_ctl.c:1180
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
 msgstr "%s: kunde inte skriva signalfil vid uppgradering \"%s\": %s\n"
 
-#: pg_ctl.c:1124
+#: pg_ctl.c:1188
 #, c-format
 msgid "%s: could not send promote signal (PID: %ld): %s\n"
 msgstr "%s: kunde inte skicka uppgraderingssignal (PID: %ld): %s\n"
 
-#: pg_ctl.c:1127
+#: pg_ctl.c:1191
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
-msgstr "%s: kunde inte avlägsna signalfil vid uppgradering \"%s\": %s\n"
+msgstr "%s: kunde inte avlÃ¤gsna signalfil vid uppgradering \"%s\": %s\n"
 
-#: pg_ctl.c:1132
+#: pg_ctl.c:1196
 msgid "server promoting\n"
 msgstr "servern uppgraderar\n"
 
-#: pg_ctl.c:1179
+#: pg_ctl.c:1243
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
-msgstr "%s: en-användar-server kör (PID: %ld)\n"
+msgstr "%s: en-anvÃ¤ndar-server kÃ¶r (PID: %ld)\n"
 
-#: pg_ctl.c:1191
+#: pg_ctl.c:1256
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
-msgstr "%s: servern kör (PID: %ld)\n"
+msgstr "%s: servern kÃ¶r (PID: %ld)\n"
 
-#: pg_ctl.c:1202
+#: pg_ctl.c:1272
 #, c-format
 msgid "%s: no server running\n"
-msgstr "%s: ingen server kör\n"
+msgstr "%s: ingen server kÃ¶r\n"
 
-#: pg_ctl.c:1220
+#: pg_ctl.c:1290
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
 msgstr "%s: kunde inte skicka signal %d (PID: %ld): %s\n"
 
-#: pg_ctl.c:1254
+#: pg_ctl.c:1347
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: kunde inte hitta det egna programmets körbara fil\n"
+msgstr "%s: kunde inte hitta det egna programmets kÃ¶rbara fil\n"
 
-#: pg_ctl.c:1264
+#: pg_ctl.c:1357
 #, c-format
 msgid "%s: could not find postgres program executable\n"
-msgstr "%s: kunde inte hitta körbar postgres\n"
+msgstr "%s: kunde inte hitta kÃ¶rbar postgres\n"
 
-#: pg_ctl.c:1329 pg_ctl.c:1361
+#: pg_ctl.c:1437 pg_ctl.c:1469
 #, c-format
 msgid "%s: could not open service manager\n"
-msgstr "%s: kunde inte öppna tjänstehanteraren\n"
+msgstr "%s: kunde inte Ã¶ppna tjÃ¤nstehanteraren\n"
 
-#: pg_ctl.c:1335
+#: pg_ctl.c:1443
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s: tjänsten \"%s\" är redan registrerad\n"
+msgstr "%s: tjÃ¤nsten \"%s\" Ã¤r redan registrerad\n"
 
-#: pg_ctl.c:1346
+#: pg_ctl.c:1454
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
-msgstr "%s: kunde inte registrera tjänsten \"%s\": felkod %lu\n"
+msgstr "%s: kunde inte registrera tjÃ¤nsten \"%s\": felkod %lu\n"
 
-#: pg_ctl.c:1367
+#: pg_ctl.c:1475
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s: tjänsten \"%s\" är inte registrerad\n"
+msgstr "%s: tjÃ¤nsten \"%s\" Ã¤r inte registrerad\n"
 
-#: pg_ctl.c:1374
+#: pg_ctl.c:1482
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
-msgstr "%s: kunde inte öppna tjänsten \"%s\": felkod %lu\n"
+msgstr "%s: kunde inte Ã¶ppna tjÃ¤nsten \"%s\": felkod %lu\n"
 
-#: pg_ctl.c:1381
+#: pg_ctl.c:1489
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
-msgstr "%s: kunde inte avregistrera tjänsten \"%s\": felkod %lu\n"
+msgstr "%s: kunde inte avregistrera tjÃ¤nsten \"%s\": felkod %lu\n"
 
-#: pg_ctl.c:1466
+#: pg_ctl.c:1574
 msgid "Waiting for server startup...\n"
-msgstr "Väntar på serverstart...\n"
+msgstr "VÃ¤ntar pÃ¥ serverstart...\n"
 
-#: pg_ctl.c:1469
+#: pg_ctl.c:1577
 msgid "Timed out waiting for server startup\n"
-msgstr "Tidsfristen ute vid väntan på serverstart\n"
+msgstr "Tidsfristen ute vid vÃ¤ntan pÃ¥ serverstart\n"
 
-#: pg_ctl.c:1473
+#: pg_ctl.c:1581
 msgid "Server started and accepting connections\n"
-msgstr "Server startad och godtager nu förbindelser\n"
+msgstr "Server startad och godtager nu fÃ¶rbindelser\n"
 
-#: pg_ctl.c:1517
+#: pg_ctl.c:1625
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
-msgstr "%s: kunde inte starta tjänsten \"%s\": felkod %lu\n"
+msgstr "%s: kunde inte starta tjÃ¤nsten \"%s\": felkod %lu\n"
 
-#: pg_ctl.c:1589
+#: pg_ctl.c:1697
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: VARNING: restriktiva styrmärken (token) stöds inte av plattformen\n"
+msgstr "%s: VARNING: restriktiva styrmÃ¤rken (token) stÃ¶ds inte av plattformen\n"
 
-#: pg_ctl.c:1598
+#: pg_ctl.c:1706
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s kunde inte skapa processmärke (token): felkod %lu\n"
+msgstr "%s kunde inte skapa processmÃ¤rke (token): felkod %lu\n"
 
-#: pg_ctl.c:1611
+#: pg_ctl.c:1719
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: kunde inte tilldela SID: felkod %lu\n"
 
-#: pg_ctl.c:1630
+#: pg_ctl.c:1738
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: kunde inte skapa restriktivt styrmärke (token): felkod %lu\n"
+msgstr "%s: kunde inte skapa restriktivt styrmÃ¤rke (token): felkod %lu\n"
 
-#: pg_ctl.c:1668
+#: pg_ctl.c:1771
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
 msgstr "%s: VARNING: Kunde inte finna alla styrobjekt i systemets API\n"
 
-#: pg_ctl.c:1754
+#: pg_ctl.c:1853
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Försök med \"%s --help\" för mer information.\n"
+msgstr "FÃ¶rsÃ¶k med \"%s --help\" fÃ¶r mer information.\n"
 
-#: pg_ctl.c:1762
+#: pg_ctl.c:1861
 #, c-format
 msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s är ett verktyg för att initiera, starta, stanna och att kontrollera PostgreSQL-tjänsten.\n"
+"%s Ã¤r ett verktyg fÃ¶r att initiera, starta, stanna och att kontrollera PostgreSQL-tjÃ¤nsten.\n"
 "\n"
 
-#: pg_ctl.c:1763
+#: pg_ctl.c:1862
 #, c-format
 msgid "Usage:\n"
-msgstr "Användning:\n"
+msgstr "AnvÃ¤ndning:\n"
 
-#: pg_ctl.c:1764
+#: pg_ctl.c:1863
 #, c-format
 msgid "  %s init[db]               [-D DATADIR] [-s] [-o \"OPTIONS\"]\n"
 msgstr "  %s init[db]               [-D DATAKAT] [-s] [-o \"FLAGGOR\"]\n"
 
-#: pg_ctl.c:1765
+#: pg_ctl.c:1864
 #, c-format
 msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
 msgstr "  %s start   [-w] [-t SEK] [-D DATAKAT] [-s] [-l FILNAMN] [-o \"FLAGGOR\"]\n"
 
-#: pg_ctl.c:1766
+#: pg_ctl.c:1865
 #, c-format
 msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-t SEK] [-D DATAKAT] [-s] [-m STÄNGNINGSMETOD]\n"
+msgstr "  %s stop    [-W] [-t SEK] [-D DATAKAT] [-s] [-m STÃ„NGNINGSMETOD]\n"
 
-#: pg_ctl.c:1767
+#: pg_ctl.c:1866
 #, c-format
 msgid ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 "                 [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s restart [-w] [-t SEK] [-D DATAKAT] [-s] [-m STÄNGNINGSMETOD]\n"
+"  %s restart [-w] [-t SEK] [-D DATAKAT] [-s] [-m STÃ„NGNINGSMETOD]\n"
 "                 [-o \"FLAGGOR\"]\n"
 
-#: pg_ctl.c:1769
+#: pg_ctl.c:1868
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
 msgstr "  %s reload  [-D DATAKAT] [-s]\n"
 
-#: pg_ctl.c:1770
+#: pg_ctl.c:1869
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
 msgstr "  %s status  [-D DATAKAT]\n"
 
-#: pg_ctl.c:1771
+#: pg_ctl.c:1870
 #, c-format
 msgid "  %s promote [-D DATADIR] [-s]\n"
 msgstr "  %s promote [-D DATAKAT] [-s]\n"
 
-#: pg_ctl.c:1772
+#: pg_ctl.c:1871
 #, c-format
 msgid "  %s kill    SIGNALNAME PID\n"
 msgstr "  %s kill    SIGNALNAMN PID\n"
 
-#: pg_ctl.c:1774
+#: pg_ctl.c:1873
 #, c-format
 msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s register   [-N TJÄNSTNAMN] [-U ANVÄNDARNAMN] [-P LÖSENORD] [-D DATAKAT]\n"
-"                    [-S STARTSÄTT] [-w] [-t SEK] [-o \"FLAGGOR\"]\n"
+"  %s register   [-N TJÃ„NSTNAMN] [-U ANVÃ„NDARNAMN] [-P LÃ–SENORD] [-D DATAKAT]\n"
+"                    [-S STARTSÃ„TT] [-w] [-t SEK] [-o \"FLAGGOR\"]\n"
 
-#: pg_ctl.c:1776
+#: pg_ctl.c:1875
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
-msgstr "  %s unregister [-N TJÄNSTNAMN]\n"
+msgstr "  %s unregister [-N TJÃ„NSTNAMN]\n"
 
-#: pg_ctl.c:1779
+#: pg_ctl.c:1878
 #, c-format
 msgid ""
 "\n"
@@ -543,191 +558,191 @@ msgstr ""
 "\n"
 "Generella flaggor:\n"
 
-#: pg_ctl.c:1780
+#: pg_ctl.c:1879
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata=DATAKAT   plats för databasens lagringsarea\n"
+msgstr "  -D, --pgdata=DATAKAT   plats fÃ¶r databasens lagringsarea\n"
 
-#: pg_ctl.c:1781
+#: pg_ctl.c:1880
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr "  -s, --silent           skriv bara ut fel, inga informationsmeddelanden\n"
 
-#: pg_ctl.c:1782
+#: pg_ctl.c:1881
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
-msgstr "  -t, --timeout=SEK      antal sekunder att vänta när växeln -w används\n"
+msgstr "  -t, --timeout=SEK      antal sekunder att vÃ¤nta nÃ¤r vÃ¤xeln -w anvÃ¤nds\n"
 
-#: pg_ctl.c:1783
+#: pg_ctl.c:1882
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          visa versionsinformation, avsluta sedan\n"
 
-#: pg_ctl.c:1784
+#: pg_ctl.c:1883
 #, c-format
 msgid "  -w                     wait until operation completes\n"
-msgstr "  -w                     vänta på att operationen slutförs\n"
+msgstr "  -w                     vÃ¤nta pÃ¥ att operationen slutfÃ¶rs\n"
 
-#: pg_ctl.c:1785
+#: pg_ctl.c:1884
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W                     vänta inte på att operationen slutförs\n"
+msgstr "  -W                     vÃ¤nta inte pÃ¥ att operationen slutfÃ¶rs\n"
 
-#: pg_ctl.c:1786
+#: pg_ctl.c:1885
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help             visa den här hjälpen, avsluta sedan\n"
+msgstr "  -?, --help             visa den hÃ¤r hjÃ¤lpen, avsluta sedan\n"
 
-#: pg_ctl.c:1787
+#: pg_ctl.c:1886
 #, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(Standard är att vänta på nedstängning men inte vänta på start eller omstart.)\n"
+"(Standard Ã¤r att vÃ¤nta pÃ¥ nedstÃ¤ngning men inte vÃ¤nta pÃ¥ start eller omstart.)\n"
 "\n"
 
-#: pg_ctl.c:1788
+#: pg_ctl.c:1887
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
-msgstr "Om flaggan -D inte har angivits så används omgivningsvariabeln PGDATA.\n"
+msgstr "Om flaggan -D inte har angivits sÃ¥ anvÃ¤nds omgivningsvariabeln PGDATA.\n"
 
-#: pg_ctl.c:1790
+#: pg_ctl.c:1889
 #, c-format
 msgid ""
 "\n"
 "Options for start or restart:\n"
 msgstr ""
 "\n"
-"Flaggor för start eller omstart:\n"
+"Flaggor fÃ¶r start eller omstart:\n"
 
-#: pg_ctl.c:1792
+#: pg_ctl.c:1891
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
-msgstr "  -c, --core-files       tillåt postgres att skapa core-filer\n"
+msgstr "  -c, --core-files       tillÃ¥t postgres att skapa core-filer\n"
 
-#: pg_ctl.c:1794
+#: pg_ctl.c:1893
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
-msgstr "  -c, --core-files       inte giltigt för denna plattform\n"
+msgstr "  -c, --core-files       inte giltigt fÃ¶r denna plattform\n"
 
-#: pg_ctl.c:1796
+#: pg_ctl.c:1895
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr "  -l, --log=FILNAMN      skriv (eller tillfoga) server-loggen till FILNAMN\n"
 
-#: pg_ctl.c:1797
+#: pg_ctl.c:1896
 #, c-format
 msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
 "  -o FLAGGOR             kommandoradsflaggor som skickas vidare till postgres\n"
-"                         (PostgreSQL-serverns körbara fil) eller till initdb\n"
+"                         (PostgreSQL-serverns kÃ¶rbara fil) eller till initdb\n"
 
-#: pg_ctl.c:1799
+#: pg_ctl.c:1898
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr ""
-"  -p SÖKVÄG-TILL-POSTGRES\n"
-"                         behövs normalt inte\n"
+"  -p SÃ–KVÃ„G-TILL-POSTGRES\n"
+"                         behÃ¶vs normalt inte\n"
 
-#: pg_ctl.c:1800
+#: pg_ctl.c:1899
 #, c-format
 msgid ""
 "\n"
-"Options for stop, restart, or promote:\n"
+"Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Flaggor för stopp, omstart eller uppgradering:\n"
+"Flaggor fÃ¶r stopp eller omstart:\n"
 
-#: pg_ctl.c:1801
+#: pg_ctl.c:1900
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr "  -m, --mode=METOD       METOD kan vara \"smart\", \"fast\" eller \"immediate\"\n"
 
-#: pg_ctl.c:1803
+#: pg_ctl.c:1902
 #, c-format
 msgid ""
 "\n"
 "Shutdown modes are:\n"
 msgstr ""
 "\n"
-"Stängningsmetoder är:\n"
+"StÃ¤ngningsmetoder Ã¤r:\n"
 
-#: pg_ctl.c:1804
+#: pg_ctl.c:1903
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart       stäng när alla klienter har kopplat ner\n"
+msgstr "  smart       stÃ¤ng nÃ¤r alla klienter har kopplat ner\n"
 
-#: pg_ctl.c:1805
+#: pg_ctl.c:1904
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
-msgstr "  fast        stäng direkt, en kontrollerad nedstängning\n"
+msgstr "  fast        stÃ¤ng direkt, en kontrollerad nedstÃ¤ngning\n"
 
-#: pg_ctl.c:1806
+#: pg_ctl.c:1905
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
-msgstr "  immediate   stäng direkt. Vid omstart kommer återställning att utföras\n"
+msgstr "  immediate   stÃ¤ng direkt. Vid omstart kommer Ã¥terstÃ¤llning att utfÃ¶ras\n"
 
-#: pg_ctl.c:1808
+#: pg_ctl.c:1907
 #, c-format
 msgid ""
 "\n"
 "Allowed signal names for kill:\n"
 msgstr ""
 "\n"
-"Tillåtna signalnamn för \"kill\":\n"
+"TillÃ¥tna signalnamn fÃ¶r \"kill\":\n"
 
-#: pg_ctl.c:1812
+#: pg_ctl.c:1911
 #, c-format
 msgid ""
 "\n"
 "Options for register and unregister:\n"
 msgstr ""
 "\n"
-"Flaggor för registrering och avregistrering:\n"
+"Flaggor fÃ¶r registrering och avregistrering:\n"
 
-#: pg_ctl.c:1813
+#: pg_ctl.c:1912
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N TJÄNSTENAMN  tjänstenamn att registrera PostgreSQL-servern med\n"
+msgstr "  -N TJÃ„NSTENAMN  tjÃ¤nstenamn att registrera PostgreSQL-servern med\n"
 
-#: pg_ctl.c:1814
+#: pg_ctl.c:1913
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
-msgstr "  -P LÖSENORD     lösenord för konto vid registrering av PostgreSQL-servern\n"
+msgstr "  -P LÃ–SENORD     lÃ¶senord fÃ¶r konto vid registrering av PostgreSQL-servern\n"
 
-#: pg_ctl.c:1815
+#: pg_ctl.c:1914
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr "  -U NAMN         användarnamn för konto vid registrering av PostgreSQL-servern\n"
+msgstr "  -U NAMN         anvÃ¤ndarnamn fÃ¶r konto vid registrering av PostgreSQL-servern\n"
 
-#: pg_ctl.c:1816
+#: pg_ctl.c:1915
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
-msgstr "  -S STARTSÄTT    sätt för tjänstestart att registrera för PostgreSQL-servern\n"
+msgstr "  -S STARTSÃ„TT    sÃ¤tt fÃ¶r tjÃ¤nstestart att registrera fÃ¶r PostgreSQL-servern\n"
 
-#: pg_ctl.c:1818
+#: pg_ctl.c:1917
 #, c-format
 msgid ""
 "\n"
 "Start types are:\n"
 msgstr ""
 "\n"
-"Startmetoder är:\n"
+"Startmetoder Ã¤r:\n"
 
-#: pg_ctl.c:1819
+#: pg_ctl.c:1918
 #, c-format
 msgid "  auto       start service automatically during system startup (default)\n"
-msgstr "  auto       starta tjänsten automatiskt vid systemstart (förval)\n"
+msgstr "  auto       starta tjÃ¤nsten automatiskt vid systemstart (fÃ¶rval)\n"
 
-#: pg_ctl.c:1820
+#: pg_ctl.c:1919
 #, c-format
 msgid "  demand     start service on demand\n"
-msgstr "  demand     starta tjänsten vid behov\n"
+msgstr "  demand     starta tjÃ¤nsten vid behov\n"
 
-#: pg_ctl.c:1823
+#: pg_ctl.c:1922
 #, c-format
 msgid ""
 "\n"
@@ -736,63 +751,70 @@ msgstr ""
 "\n"
 "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_ctl.c:1848
+#: pg_ctl.c:1947
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: ogiltig stängningsmetod \"%s\"\n"
+msgstr "%s: ogiltig stÃ¤ngningsmetod \"%s\"\n"
 
-#: pg_ctl.c:1880
+#: pg_ctl.c:1979
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: ogiltigt signalnamn \"%s\"\n"
 
-#: pg_ctl.c:1897
+#: pg_ctl.c:1996
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
 msgstr "%s: ogiltigt startvillkor \"%s\"\n"
 
-#: pg_ctl.c:1950
+#: pg_ctl.c:2051
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
-msgstr "%s: kunde inte bestämma databaskatalogen från kommandot \"%s\"\n"
+msgstr "%s: kunde inte bestÃ¤mma databaskatalogen frÃ¥n kommandot \"%s\"\n"
 
-#: pg_ctl.c:2023
+#: pg_ctl.c:2123
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s: kan inte köras som root\n"
-"Logga in (t.ex. med \"su\") som den opriviligerade användare vilken\n"
-"skall äga serverprocessen.\n"
+"%s: kan inte kÃ¶ras som root\n"
+"Logga in (t.ex. med \"su\") som den opriviligerade anvÃ¤ndare vilken\n"
+"skall Ã¤ga serverprocessen.\n"
 
-#: pg_ctl.c:2094
+#: pg_ctl.c:2190
 #, c-format
 msgid "%s: -S option not supported on this platform\n"
-msgstr "%s: växeln -S stöds inte på denna plattform\n"
+msgstr "%s: vÃ¤xeln -S stÃ¶ds inte pÃ¥ denna plattform\n"
 
-#: pg_ctl.c:2136
+#: pg_ctl.c:2228
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: för många kommandoradsargument (det första är \"%s\")\n"
+msgstr "%s: fÃ¶r mÃ¥nga kommandoradsargument (det fÃ¶rsta Ã¤r \"%s\")\n"
 
-#: pg_ctl.c:2160
+#: pg_ctl.c:2252
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
-msgstr "%s: saknar argument till \"kill\"-läget\n"
+msgstr "%s: saknar argument till \"kill\"-lÃ¤get\n"
 
-#: pg_ctl.c:2178
+#: pg_ctl.c:2270
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: ogiltigt operationsläge \"%s\"\n"
+msgstr "%s: ogiltigt operationslÃ¤ge \"%s\"\n"
 
-#: pg_ctl.c:2188
+#: pg_ctl.c:2280
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: ingen operation angiven\n"
 
-#: pg_ctl.c:2209
+#: pg_ctl.c:2301
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA är inte satt\n"
+msgstr "%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA Ã¤r inte satt\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Options for stop, restart, or promote:\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Flaggor fÃ¶r stopp, omstart eller uppgradering:\n"
