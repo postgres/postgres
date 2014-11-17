@@ -1567,7 +1567,6 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	int			targetlevel;
 	ItemPointer leafhikey;
 	BlockNumber nextchild;
-	BlockNumber topblkno;
 
 	page = BufferGetPage(leafbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1591,11 +1590,10 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	if (ItemPointerIsValid(leafhikey))
 	{
-		topblkno = ItemPointerGetBlockNumber(leafhikey);
-		target = topblkno;
+		target = ItemPointerGetBlockNumber(leafhikey);
 
 		/* fetch the block number of the topmost parent's left sibling */
-		buf = _bt_getbuf(rel, topblkno, BT_READ);
+		buf = _bt_getbuf(rel, target, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		leftsib = opaque->btpo_prev;
@@ -1609,7 +1607,6 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	}
 	else
 	{
-		topblkno = InvalidBlockNumber;
 		target = leafblkno;
 
 		buf = leafbuf;
@@ -1694,9 +1691,11 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 			elog(ERROR, "half-dead page changed status unexpectedly in block %u of index \"%s\"",
 				 target, RelationGetRelationName(rel));
 
-		/* remember the next child down in the branch. */
+		/* remember the next non-leaf child down in the branch. */
 		itemid = PageGetItemId(page, P_FIRSTDATAKEY(opaque));
 		nextchild = ItemPointerGetBlockNumber(&((IndexTuple) PageGetItem(page, itemid))->t_tid);
+		if (nextchild == leafblkno)
+			nextchild = InvalidBlockNumber;
 	}
 
 	/*
@@ -1782,7 +1781,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	if (target != leafblkno)
 	{
-		if (nextchild == leafblkno)
+		if (nextchild == InvalidBlockNumber)
 			ItemPointerSetInvalid(leafhikey);
 		else
 			ItemPointerSet(leafhikey, nextchild, P_HIKEY);
