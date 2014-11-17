@@ -3005,10 +3005,14 @@ RelationBuildLocalRelation(const char *relname,
  * The relation is marked with relfrozenxid = freezeXid (InvalidTransactionId
  * must be passed for indexes and sequences).  This should be a lower bound on
  * the XIDs that will be put into the new relation contents.
+ *
+ * The new filenode's persistence is set to the given value.  This is useful
+ * for the cases that are changing the relation's persistence; other callers
+ * need to pass the original relpersistence value.
  */
 void
-RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
-						  MultiXactId minmulti)
+RelationSetNewRelfilenode(Relation relation, char persistence,
+						  TransactionId freezeXid, MultiXactId minmulti)
 {
 	Oid			newrelfilenode;
 	RelFileNodeBackend newrnode;
@@ -3025,7 +3029,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL,
-									   relation->rd_rel->relpersistence);
+									   persistence);
 
 	/*
 	 * Get a writable copy of the pg_class tuple for the given relation.
@@ -3048,7 +3052,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 	newrnode.node = relation->rd_node;
 	newrnode.node.relNode = newrelfilenode;
 	newrnode.backend = relation->rd_backend;
-	RelationCreateStorage(newrnode.node, relation->rd_rel->relpersistence);
+	RelationCreateStorage(newrnode.node, persistence);
 	smgrclosenode(newrnode);
 
 	/*
@@ -3078,7 +3082,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 	}
 	classform->relfrozenxid = freezeXid;
 	classform->relminmxid = minmulti;
-	classform->relpersistence = relation->rd_rel->relpersistence;
+	classform->relpersistence = persistence;
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);

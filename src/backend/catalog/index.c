@@ -3191,11 +3191,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence)
 			indexInfo->ii_ExclusionStrats = NULL;
 		}
 
-		/* Set the relpersistence of the new index */
-		iRel->rd_rel->relpersistence = persistence;
-
 		/* We'll build a new physical relation for the index */
-		RelationSetNewRelfilenode(iRel, InvalidTransactionId,
+		RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
 								  InvalidMultiXactId);
 
 		/* Initialize the index and rebuild */
