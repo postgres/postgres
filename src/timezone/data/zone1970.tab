@@ -264,7 +264,8 @@ PE	-1203-07703	America/Lima
 PF	-1732-14934	Pacific/Tahiti	Society Islands
 PF	-0900-13930	Pacific/Marquesas	Marquesas Islands
 PF	-2308-13457	Pacific/Gambier	Gambier Islands
-PG	-0930+14710	Pacific/Port_Moresby
+PG	-0930+14710	Pacific/Port_Moresby	most locations
+PG	-0613+15534	Pacific/Bougainville	Bougainville
 PH	+1435+12100	Asia/Manila
 PK	+2452+06703	Asia/Karachi
 PL	+5215+02100	Europe/Warsaw
@@ -315,7 +316,7 @@ SY	+3330+03618	Asia/Damascus
 TC	+2128-07108	America/Grand_Turk
 TD	+1207+01503	Africa/Ndjamena
 TF	-492110+0701303	Indian/Kerguelen	Kerguelen, St Paul I, Amsterdam I
-TH,KH,LA,VN	+1345+10031	Asia/Bangkok
+TH,KH,LA,VN	+1345+10031	Asia/Bangkok	most of Indochina
 TJ	+3835+06848	Asia/Dushanbe
 TK	-0922-17114	Pacific/Fakaofo
 TL	-0833+12535	Asia/Dili
@@ -363,6 +364,7 @@ UY	-3453-05611	America/Montevideo
 UZ	+3940+06648	Asia/Samarkand	west Uzbekistan
 UZ	+4120+06918	Asia/Tashkent	east Uzbekistan
 VE	+1030-06656	America/Caracas
+VN	+1045+10640	Asia/Ho_Chi_Minh	south Vietnam
 VU	-1740+16825	Pacific/Efate
 WF	-1318-17610	Pacific/Wallis
 WS	-1350-17144	Pacific/Apia
