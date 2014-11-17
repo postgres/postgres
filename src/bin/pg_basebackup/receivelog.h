@@ -31,6 +31,6 @@ extern bool ReceiveXlogStream(PGconn *conn,
 				  stream_stop_callback stream_stop,
 				  int standby_message_timeout,
 				  char *partial_suffix,
-				  int fsync_interval);
+				  bool synchronous);
 
 #endif	/* RECEIVELOG_H */

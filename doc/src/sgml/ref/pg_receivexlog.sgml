@@ -49,6 +49,13 @@ PostgreSQL documentation
   </para>
 
   <para>
+   Unlike the standby's WAL receiver, <application>pg_receivexlog</>
+   flushes WAL data only when WAL file is closed, by default.
+   <literal>--synchronous</> option must be specified to flush WAL data
+   in real time and ensure it's safely flushed to disk.
+  </para>
+
+  <para>
    The transaction log is streamed over a regular
    <productname>PostgreSQL</productname> connection, and uses the replication
    protocol. The connection must be made with a superuser or a user
@@ -86,21 +93,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-F <replaceable class="parameter">interval</replaceable></option></term>
-       <term><option>--fsync-interval=<replaceable class="parameter">interval</replaceable></option></term>
-       <listitem>
-        <para>
-        Specifies the maximum time to issue sync commands to ensure the
-        received WAL file is safely flushed to disk, in seconds. The default
-        value is zero, which disables issuing fsyncs except when WAL file is
-        closed. If <literal>-1</literal> is specified, WAL file is flushed as
-        soon as possible, that is, as soon as there are WAL data which has
-        not been flushed yet.
-        </para>
-       </listitem>
-      </varlistentry>
-
-     <varlistentry>
       <term><option>-n</option></term>
       <term><option>--no-loop</option></term>
       <listitem>
@@ -135,12 +127,22 @@ PostgreSQL documentation
          When this option is used, <application>pg_receivexlog</> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
-         is not otherwise needed.  When using this parameter, it is important
-         to make sure that <application>pg_receivexlog</> cannot become the
-         synchronous standby through an incautious setting of
-         <xref linkend="guc-synchronous-standby-names">; it does not flush
-         data frequently enough for this to work correctly.
+         is not otherwise needed. <literal>--synchronous</literal> option must
+         be specified when making <application>pg_receivexlog</> run as
+         synchronous standby by using replication slot. Otherwise WAL data
+         cannot be flushed frequently enough for this to work correctly.
         </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--synchronous</option></term>
+      <listitem>
+       <para>
+        Issue sync commands as soon as there is WAL data which has not been
+        flushed yet. Also status packets are sent back to the server just after
+        WAL data is flushed whatever <literal>--status-interval</> is set to.
+       </para>
       </listitem>
      </varlistentry>
 
