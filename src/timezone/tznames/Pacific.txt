@@ -7,6 +7,11 @@
 # src/timezone/tznames/Pacific.txt
 #
 
+# CONFLICT! BST is not unique
+# Other timezones:
+#  - BST: British Summer Time
+BST     39600    # Bougainville Standard Time (Papua New Guinea)
+                 #     (Pacific/Bougainville)
 CHADT   49500 D  # Chatham Daylight Time (New Zealand)
                  #     (Pacific/Chatham)
 CHAST   45900    # Chatham Standard Time (New Zealand)

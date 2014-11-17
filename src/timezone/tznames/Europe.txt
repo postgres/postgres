@@ -7,9 +7,10 @@
 # src/timezone/tznames/Europe.txt
 #
 
+# CONFLICT! BST is not unique
+# Other timezones:
+#  - BST: Bougainville Standard Time (Papua New Guinea)
 BST      3600 D  # British Summer Time
-                 # Brazil Standard Time
-                 # Bering Summer Time
                  #     (Europe/London)
 CEST     7200 D  # Central Europe Summer Time
                  #     (Africa/Ceuta)
@@ -154,7 +155,7 @@ EETDST  10800 D  # East-Egypt Summertime
                  #     (Europe/Uzhgorod)
                  #     (Europe/Vilnius)
                  #     (Europe/Zaporozhye)
-FET     10800    # Further-eastern European Time
+FET     10800    # Further-eastern European Time (obsolete)
                  #     (Europe/Kaliningrad)
                  #     (Europe/Minsk)
 GMT         0    # Greenwich Mean Time
