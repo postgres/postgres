@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2014-??-??</simpara>
-   <simpara>Current as of 2014-10-05</simpara>
+   <simpara>Current as of 2014-11-17</simpara>
    <!-- Be sure to remove "delta from 9.4beta" items below before final! -->
   </note>
 
@@ -103,6 +103,23 @@
       9.4beta1 or 9.4beta2 database containing <type>jsonb</> columns; you
       will need to use <application>pg_dumpall</> instead to migrate such
       databases.
+     </para>
+    </listitem>
+
+    <!-- delta from 9.4beta3, be sure to remove before final: -->
+    <listitem>
+     <para>
+      Fix representation of numeric values in <type>jsonb</> GIN indexes
+      (Tom Lane)
+     </para>
+
+     <para>
+      Numeric items within <type>jsonb</> values are converted to strings
+      for storage in GIN <literal>jsonb_ops</> indexes.  In 9.4beta3,
+      trailing zeroes in such items were mishandled.  Beta testers
+      should <command>REINDEX</> any such indexes after upgrading, to ensure
+      that searches for numeric values will find the expected rows.  Note
+      that <literal>jsonb_path_ops</> indexes were not affected by this bug.
      </para>
     </listitem>
 
@@ -231,6 +248,22 @@
       literal or <literal>NULL</>; a cast to an appropriate array data type
       will now be required.  Note that this does not affect parameters not
       marked <literal>VARIADIC</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that whole-row variables expose the expected column names
+      to functions that pay attention to column names within composite
+      arguments (Tom Lane)
+     </para>
+
+     <para>
+      Constructs like <literal>row_to_json(tab.*)</> now always emit column
+      names that match the column aliases visible for table <literal>tab</>
+      at the point of the call.  In previous releases the emitted column
+      names would sometimes be the table's actual column names regardless
+      of any aliases assigned in the query.
      </para>
     </listitem>
 
@@ -413,14 +446,16 @@
     <!-- delta from 9.4beta2, be sure to remove before final: -->
     <listitem>
      <para>
-      Update time zone data files to tzdata release 2014h for DST law
+      Update time zone data files to tzdata release 2014j for DST law
       changes in Russia and elsewhere
      </para>
 
      <para>
       This change is more significant than most time zone updates because
       many Russian zone abbreviations are changing meaning, including IRKT,
-      KRAT, MAGT, MSK, NOVT, OMST, SAKT, VLAT, YAKT, and YEKT.  Also, IANA
+      KRAT, MAGT, MSK, NOVT, OMST, SAKT, VLAT, YAKT, and YEKT.
+      <productname>PostgreSQL</> will now associate the correct UTC offset
+      with these abbreviations depending on the given date.  Also, IANA
       has formally recognized abbreviations of the form
       A<replaceable>x</>ST/A<replaceable>x</>DT for Australian timezones,
       so adopt those names as part of the <quote>Default</> abbreviation
@@ -1424,6 +1459,24 @@
 
       <listitem>
        <para>
+        Support time zone abbreviations that change from time to time
+        (Tom Lane)
+       </para>
+
+       <para>
+        Previously, <productname>PostgreSQL</> assumed that the UTC offset
+        associated with a time zone abbreviation (such as <literal>EST</>)
+        never changes in the usage of any particular locale.  However this
+        assumption fails in the real world, so introduce the ability for a
+        zone abbreviation to represent a UTC offset that sometimes changes.
+        Update the zone abbreviation definition files to make use of this
+        feature in timezone locales that have changed the UTC offset of their
+        abbreviations since 1970 (according to the IANA timezone database).
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Allow 5+ digit years for non-<acronym>ISO</> <link
         linkend="datatype-datetime"><type>timestamp</></link> and
         <type>date</> strings, where appropriate (Bruce Momjian)
@@ -2012,7 +2065,7 @@
 
        <listitem>
         <para>
-         Allow <application>psql</> <command>\pset</> with no arguments
+         Allow <application>psql</>'s <command>\pset</> with no arguments
          to show all settings (Gilles Darold)
         </para>
        </listitem>
@@ -2240,6 +2293,13 @@
        <para>
         Add Test Anything Protocol (<acronym>TAP</>) tests for client
         programs (Peter Eisentraut)
+       </para>
+
+       <para>
+        Currently, these tests are run by <literal>make check-world</>
+        only if the <option>--enable-tap-tests</> option was given
+        to <application>configure</>.
+        This might become the default in some future release.
        </para>
       </listitem>
 
