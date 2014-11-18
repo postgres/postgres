@@ -1429,6 +1429,13 @@ _bt_checkkeys(IndexScanDesc scan,
 		bool		isNull;
 		Datum		test;
 
+		/*
+		 * If the scan key has already matched we can skip this key, as
+		 * long as the index tuple does not contain NULL values.
+		 */
+		if (key->sk_flags & SK_BT_MATCHED && !IndexTupleHasNulls(tuple))
+			continue;
+
 		/* row-comparison keys need special processing */
 		if (key->sk_flags & SK_ROW_HEADER)
 		{
