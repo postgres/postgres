@@ -3820,13 +3820,8 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 		if (nvars >= maxvars)
 		{
 			maxvars *= 2;
-			varnames = (char **) realloc(varnames,
-										 (maxvars + 1) * sizeof(char *));
-			if (!varnames)
-			{
-				psql_error("out of memory\n");
-				exit(EXIT_FAILURE);
-			}
+			varnames = (char **) pg_realloc(varnames,
+											(maxvars + 1) * sizeof(char *));
 		}
 
 		buffer = (char *) pg_malloc(strlen(ptr->name) + overhead);

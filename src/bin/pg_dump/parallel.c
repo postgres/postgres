@@ -1300,7 +1300,7 @@ readMessageFromPipe(int fd)
 		{
 			/* could be any number */
 			bufsize += 16;
-			msg = (char *) realloc(msg, bufsize);
+			msg = (char *) pg_realloc(msg, bufsize);
 		}
 	}
 
@@ -1308,7 +1308,7 @@ readMessageFromPipe(int fd)
 	 * Worker has closed the connection, make sure to clean up before return
 	 * since we are not returning msg (but did allocate it).
 	 */
-	free(msg);
+	pg_free(msg);
 
 	return NULL;
 }
