@@ -3,31 +3,27 @@
 # src/tools/find_typedef
 
 # This script attempts to find all typedef's in the postgres binaries
-# by using 'nm' to report all typedef debugging symbols.
+# by using 'objdump' or local equivalent to print typedef debugging symbols.
+# We need this because pgindent needs a list of typedef names.
 #
-# For this program to work, you must have compiled all binaries with
+# For this program to work, you must have compiled all code with
 # debugging symbols.
 #
-# This is run on Linux, so you may need to make changes.
+# We intentionally examine all files in the targeted directories so as to
+# find both .o files and executables.  Therefore, ignore error messages about
+# unsuitable files being fed to objdump.
 #
-# Ignore the nm errors about a file not being a binary file.
+# This is known to work on Linux and on some BSDen, including Mac OS X.
 #
-# It gets typedefs by reading "STABS":
+# Caution: on the platforms we use, this only prints typedefs that are used
+# to declare at least one variable or struct field.  If you have say
+# "typedef struct foo { ... } foo;", and then the structure is only ever
+# referenced as "struct foo", "foo" will not be reported as a typedef,
+# causing pgindent to indent the typedef definition oddly.  This is not a
+# huge problem, since by definition there's just the one misindented line.
 #
+# We get typedefs by reading "STABS":
 #    http://www.informatik.uni-frankfurt.de/doc/texi/stabs_toc.html
-#
-#    objdump:
-#       -G, --stabs  Display (in raw form) any STABS info in the file
-#
-#       --stabs
-#         Display the contents of the .stab, .stab.index, and
-#         .stab.excl sections from an ELF file.  This is only
-#         useful on systems (such as Solaris  2.0)  in  which
-#         .stab debugging symbol-table entries are carried in
-#         an ELF section.  In most other file formats, debug-
-#         ging  symbol-table  entries  are  interleaved  with
-#         linkage symbols, and are visible in the --syms out-
-#         put.
 
 
 if [ "$#" -eq 0 -o ! -d "$1" ]
@@ -39,11 +35,6 @@ for DIR
 do	# if objdump -W is recognized, only one line of error should appear
 	if [ `objdump -W 2>&1 | wc -l` -eq 1 ]
 	then	# Linux
-		# Unfortunately the Linux version doesn't show unreferenced typedefs.
-		# The problem is that they are still in the source code so should be
-		# indented properly.  However, I think pgindent only cares about
-		# the typedef references, not the definitions, so I think it might
-		# be fine
 		objdump -W "$DIR"/* |
 		egrep -A3 '\(DW_TAG_typedef\)' |
 		awk ' $2 == "DW_AT_name" {print $NF}'
