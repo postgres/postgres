@@ -4331,13 +4331,8 @@ append_variable_names(char ***varnames, int *nvars,
 	if (*nvars >= *maxvars)
 	{
 		*maxvars *= 2;
-		*varnames = (char **) realloc(*varnames,
-									  ((*maxvars) + 1) * sizeof(char *));
-		if (!(*varnames))
-		{
-			psql_error("out of memory\n");
-			exit(EXIT_FAILURE);
-		}
+		*varnames = (char **) pg_realloc(*varnames,
+										 ((*maxvars) + 1) * sizeof(char *));
 	}
 
 	(*varnames)[(*nvars)++] = psprintf("%s%s%s", prefix, varname, suffix);
