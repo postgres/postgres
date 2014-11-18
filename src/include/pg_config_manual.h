@@ -321,7 +321,6 @@
  */
 /* #define HEAPDEBUGALL */
 /* #define ACLDEBUG */
-/* #define RTDEBUG */
 
 /*
  * Automatic configuration file name for ALTER SYSTEM.
