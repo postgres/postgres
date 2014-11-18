@@ -3975,13 +3975,8 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
 		if (nvars >= maxvars)
 		{
 			maxvars *= 2;
-			varnames = (char **) realloc(varnames,
-										 (maxvars + 1) * sizeof(char *));
-			if (!varnames)
-			{
-				psql_error("out of memory\n");
-				exit(EXIT_FAILURE);
-			}
+			varnames = (char **) pg_realloc(varnames,
+											(maxvars + 1) * sizeof(char *));
 		}
 
 		varnames[nvars++] = psprintf("%s%s%s", prefix, ptr->name, suffix);
