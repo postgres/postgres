@@ -919,7 +919,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			if (replyRequested && still_sending)
 			{
 				if (reportFlushPosition && lastFlushPosition < blockpos &&
-					walfile != 1)
+					walfile != -1)
 				{
 					/*
 					 * If a valid flush location needs to be reported,
