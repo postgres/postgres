@@ -1020,6 +1020,25 @@ ProcessKeepaliveMsg(PGconn *conn, char *copybuf, int len,
 	/* If the server requested an immediate reply, send one. */
 	if (replyRequested && still_sending)
 	{
+		if (reportFlushPosition && lastFlushPosition < blockpos &&
+			walfile != 1)
+		{
+			/*
+			 * If a valid flush location needs to be reported,
+			 * flush the current WAL file so that the latest flush
+			 * location is sent back to the server. This is necessary to
+			 * see whether the last WAL data has been successfully
+			 * replicated or not, at the normal shutdown of the server.
+			 */
+			if (fsync(walfile) != 0)
+			{
+				fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
+						progname, current_walfile_name, strerror(errno));
+				return false;
+			}
+			lastFlushPosition = blockpos;
+		}
+
 		now = feGetCurrentTimestamp();
 		if (!sendFeedback(conn, blockpos, now, false))
 			return false;
