@@ -95,6 +95,10 @@ test: update
 test: delete
 test: namespace
 test: prepared_xacts
+test: brin
+test: gin
+test: gist
+test: spgist
 test: privileges
 test: security_label
 test: collate
@@ -103,7 +107,6 @@ test: lock
 test: replica_identity
 test: rowsecurity
 test: alter_generic
-test: brin
 test: misc
 test: psql
 test: async

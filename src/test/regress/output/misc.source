@@ -597,6 +597,7 @@ SELECT user_relns() AS user_relns
  bt_i4_heap
  bt_name_heap
  bt_txt_heap
+ btree_tall_tbl
  c
  c_star
  char_tbl
@@ -622,6 +623,8 @@ SELECT user_relns() AS user_relns
  float4_tbl
  float8_tbl
  func_index_heap
+ gin_test_tbl
+ gist_point_tbl
  hash_f8_heap
  hash_i4_heap
  hash_name_heap
@@ -671,6 +674,8 @@ SELECT user_relns() AS user_relns
  road
  shighway
  slow_emp4000
+ spgist_point_tbl
+ spgist_text_tbl
  street
  stud_emp
  student
@@ -700,7 +705,7 @@ SELECT user_relns() AS user_relns
  tvvmv
  varchar_tbl
  xacttest
-(122 rows)
+(127 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
