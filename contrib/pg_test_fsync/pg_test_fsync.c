@@ -206,8 +206,6 @@ test_sync(int writes_per_op)
 	}
 	else
 	{
-		if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
-			die("could not open output file");
 		gettimeofday(&start_t, NULL);
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
