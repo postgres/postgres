@@ -1937,14 +1937,17 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 								hashtable->nbatch_original, es);
 			ExplainPropertyLong("Peak Memory Usage", spacePeakKb, es);
 		}
-		else if ((hashtable->nbatch_original != hashtable->nbatch) ||
-				 (hashtable->nbuckets_original != hashtable->nbuckets))
+		else if (hashtable->nbatch_original != hashtable->nbatch ||
+				 hashtable->nbuckets_original != hashtable->nbuckets)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
-			"Buckets: %d (originally %d)  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
-							 hashtable->nbuckets, hashtable->nbuckets_original,
-							 hashtable->nbatch, hashtable->nbatch_original, spacePeakKb);
+							 "Buckets: %d (originally %d)  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
+							 hashtable->nbuckets,
+							 hashtable->nbuckets_original,
+							 hashtable->nbatch,
+							 hashtable->nbatch_original,
+							 spacePeakKb);
 		}
 		else
 		{
@@ -2144,6 +2147,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_ForeignScan:
+		case T_CustomScan:
 		case T_ModifyTable:
 			/* Assert it's on a real relation */
 			Assert(rte->rtekind == RTE_RELATION);
