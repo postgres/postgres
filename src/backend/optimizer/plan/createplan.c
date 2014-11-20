@@ -553,6 +553,7 @@ disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_ForeignScan:
+		case T_CustomScan:
 			plan->targetlist = build_path_tlist(root, path);
 			break;
 		default:
