@@ -124,40 +124,33 @@ all: all-lib
 endif # MODULE_big
 
 
-install: all installdirs installcontrol installdata installdatatsearch installdocs installscripts
+install: all installdirs
+ifneq (,$(EXTENSION))
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(addsuffix .control, $(EXTENSION))) '$(DESTDIR)$(datadir)/extension/'
+endif # EXTENSION
+ifneq (,$(DATA)$(DATA_built))
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) $(DATA_built) '$(DESTDIR)$(datadir)/$(datamoduledir)/'
+endif # DATA
+ifneq (,$(DATA_TSEARCH))
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA_TSEARCH)) '$(DESTDIR)$(datadir)/tsearch_data/'
+endif # DATA_TSEARCH
 ifdef MODULES
 	$(INSTALL_SHLIB) $(addsuffix $(DLSUFFIX), $(MODULES)) '$(DESTDIR)$(pkglibdir)/'
 endif # MODULES
+ifdef DOCS
+ifdef docdir
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DOCS)) '$(DESTDIR)$(docdir)/$(docmoduledir)/'
+endif # docdir
+endif # DOCS
 ifdef PROGRAM
 	$(INSTALL_PROGRAM) $(PROGRAM)$(X) '$(DESTDIR)$(bindir)'
 endif # PROGRAM
-
-installcontrol: $(addsuffix .control, $(EXTENSION)) | installdirs
-ifneq (,$(EXTENSION))
-	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/extension/'
-endif
-
-installdata: $(DATA) $(DATA_built) | installdirs
-ifneq (,$(DATA)$(DATA_built))
-	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/$(datamoduledir)/'
-endif
-
-installdatatsearch: $(DATA_TSEARCH) | installdirs
-ifneq (,$(DATA_TSEARCH))
-	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/tsearch_data/'
-endif
-
-installdocs: $(DOCS) | installdirs
-ifdef DOCS
-ifdef docdir
-	$(INSTALL_DATA) $^ '$(DESTDIR)$(docdir)/$(docmoduledir)/'
-endif # docdir
-endif # DOCS
-
-installscripts: $(SCRIPTS) $(SCRIPTS_built) | installdirs
 ifdef SCRIPTS
-	$(INSTALL_SCRIPT) $^ '$(DESTDIR)$(bindir)/'
+	$(INSTALL_SCRIPT) $(addprefix $(srcdir)/, $(SCRIPTS)) '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS
+ifdef SCRIPTS_built
+	$(INSTALL_SCRIPT) $(SCRIPTS_built) '$(DESTDIR)$(bindir)/'
+endif # SCRIPTS_built
 
 ifdef MODULE_big
 install: install-lib
