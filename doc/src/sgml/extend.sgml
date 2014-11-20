@@ -1180,10 +1180,10 @@ make -f /path/to/extension/source/tree/Makefile install
     way to how it is done for the core code. One way to do this is using the
     core script <filename>config/prep_buildtree</>. Once this has been done
     you can build by setting the <literal>make</literal> variable
-    <varname>USE_VPATH</varname> like this:
+    <varname>VPATH</varname> like this:
 <programlisting>
-make USE_VPATH=/path/to/extension/source/tree
-make USE_VPATH=/path/to/extension/source/tree install
+make VPATH=/path/to/extension/source/tree
+make VPATH=/path/to/extension/source/tree install
 </programlisting>
     This procedure can work with a greater variety of directory layouts.
    </para>
