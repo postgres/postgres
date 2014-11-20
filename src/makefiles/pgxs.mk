@@ -9,11 +9,12 @@
 # Use the following layout for your Makefile:
 #
 #   [variable assignments, see below]
-#   [custom rules, rarely necessary]
 #
 #   PG_CONFIG = pg_config
 #   PGXS := $(shell $(PG_CONFIG) --pgxs)
 #   include $(PGXS)
+#
+#   [custom rules, rarely necessary]
 #
 # Set one of these three variables to specify what is built:
 #
