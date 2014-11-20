@@ -63,11 +63,10 @@ top_builddir := $(dir $(PGXS))../..
 include $(top_builddir)/src/Makefile.global
 
 top_srcdir = $(top_builddir)
-# If USE_VPATH is set or Makefile is not in current directory we are building
-# the extension with VPATH so we set the variable here
-ifdef USE_VPATH
-srcdir = $(USE_VPATH)
-VPATH = $(USE_VPATH)
+# If VPATH is set or Makefile is not in current directory we are building
+# the extension with VPATH so we set the variable here.
+ifdef VPATH
+srcdir = $(VPATH)
 else
 ifeq ($(CURDIR),$(dir $(firstword $(MAKEFILE_LIST))))
 srcdir = .
