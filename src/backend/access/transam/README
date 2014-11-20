@@ -440,96 +440,164 @@ happen before the WAL record is inserted; see notes in SyncOneBuffer().)
 Note that marking a buffer dirty with MarkBufferDirty() should only
 happen iff you write a WAL record; see Writing Hints below.
 
-5. If the relation requires WAL-logging, build a WAL log record and pass it
-to XLogInsert(); then update the page's LSN using the returned XLOG
-location.  For instance,
+5. If the relation requires WAL-logging, build a WAL record using
+XLogBeginInsert and XLogRegister* functions, and insert it.  (See
+"Constructing a WAL record" below).  Then update the page's LSN using the
+returned XLOG location.  For instance,
 
-		recptr = XLogInsert(rmgr_id, info, rdata);
+		XLogBeginInsert();
+		XLogRegisterBuffer(...)
+		XLogRegisterData(...)
+		recptr = XLogInsert(rmgr_id, info);
 
 		PageSetLSN(dp, recptr);
-		// Note that we no longer do PageSetTLI() from 9.3 onwards
-		// since that field on a page has now changed its meaning.
 
 6. END_CRIT_SECTION()
 
 7. Unlock and unpin the buffer(s).
 
-XLogInsert's "rdata" argument is an array of pointer/size items identifying
-chunks of data to be written in the XLOG record, plus optional shared-buffer
-IDs for chunks that are in shared buffers rather than temporary variables.
-The "rdata" array must mention (at least once) each of the shared buffers
-being modified, unless the action is such that the WAL replay routine can
-reconstruct the entire page contents.  XLogInsert includes the logic that
-tests to see whether a shared buffer has been modified since the last
-checkpoint.  If not, the entire page contents are logged rather than just the
-portion(s) pointed to by "rdata".
+Complex changes (such as a multilevel index insertion) normally need to be
+described by a series of atomic-action WAL records.  The intermediate states
+must be self-consistent, so that if the replay is interrupted between any
+two actions, the system is fully functional.  In btree indexes, for example,
+a page split requires a new page to be allocated, and an insertion of a new
+key in the parent btree level, but for locking reasons this has to be
+reflected by two separate WAL records.  Replaying the first record, to
+allocate the new page and move tuples to it, sets a flag on the page to
+indicate that the key has not been inserted to the parent yet.  Replaying the
+second record clears the flag.  This intermediate state is never seen by
+other backends during normal operation, because the lock on the child page
+is held across the two actions, but will be seen if the operation is
+interrupted before writing the second WAL record.  The search algorithm works
+with the intermediate state as normal, but if an insertion encounters a page
+with the incomplete-split flag set, it will finish the interrupted split by
+inserting the key to the parent, before proceeding.
 
-Because XLogInsert drops the rdata components associated with buffers it
-chooses to log in full, the WAL replay routines normally need to test to see
-which buffers were handled that way --- otherwise they may be misled about
-what the XLOG record actually contains.  XLOG records that describe multi-page
-changes therefore require some care to design: you must be certain that you
-know what data is indicated by each "BKP" bit.  An example of the trickiness
-is that in a HEAP_UPDATE record, BKP(0) normally is associated with the source
-page and BKP(1) is associated with the destination page --- but if these are
-the same page, only BKP(0) would have been set.
 
-For this reason as well as the risk of deadlocking on buffer locks, it's best
-to design WAL records so that they reflect small atomic actions involving just
-one or a few pages.  The current XLOG infrastructure cannot handle WAL records
-involving references to more than four shared buffers, anyway.
+Constructing a WAL record
+-------------------------
 
-In the case where the WAL record contains enough information to re-generate
-the entire contents of a page, do *not* show that page's buffer ID in the
-rdata array, even if some of the rdata items point into the buffer.  This is
-because you don't want XLogInsert to log the whole page contents.  The
-standard replay-routine pattern for this case is
+A WAL record consists of a header common to all WAL record types,
+record-specific data, and information about the data blocks modified.  Each
+modified data block is identified by an ID number, and can optionally have
+more record-specific data associated with the block.  If XLogInsert decides
+that a full-page image of a block needs to be taken, the data associated
+with that block is not included.
 
-	buffer = XLogReadBuffer(rnode, blkno, true);
-	Assert(BufferIsValid(buffer));
-	page = (Page) BufferGetPage(buffer);
+The API for constructing a WAL record consists of five functions:
+XLogBeginInsert, XLogRegisterBuffer, XLogRegisterData, XLogRegisterBufData,
+and XLogInsert.  First, call XLogBeginInsert().  Then register all the buffers
+modified, and data needed to replay the changes, using XLogRegister*
+functions.  Finally, insert the constructed record to the WAL by calling
+XLogInsert().
 
-	... initialize the page ...
+	XLogBeginInsert();
 
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
+	/* register buffers modified as part of this WAL-logged action */
+	XLogRegisterBuffer(0, lbuffer, REGBUF_STANDARD);
+	XLogRegisterBuffer(1, rbuffer, REGBUF_STANDARD);
 
-In the case where the WAL record provides only enough information to
-incrementally update the page, the rdata array *must* mention the buffer
-ID at least once; otherwise there is no defense against torn-page problems.
-The standard replay-routine pattern for this case is
+	/* register data that is always included in the WAL record */
+	XLogRegisterData(&xlrec, SizeOfFictionalAction);
 
-	if (XLogReadBufferForRedo(lsn, record, N, rnode, blkno, &buffer) == BLK_NEEDS_REDO)
-	{
-		page = (Page) BufferGetPage(buffer);
+	/*
+	 * register data associated with a buffer. This will not be included
+	 * in the record if a full-page image is taken.
+	 */
+	XLogRegisterBufData(0, tuple->data, tuple->len);
 
-		... apply the change ...
+	/* more data associated with the buffer */
+	XLogRegisterBufData(0, data2, len2);
 
-		PageSetLSN(page, lsn);
-		MarkBufferDirty(buffer);
-	}
-	if (BufferIsValid(buffer))
-		UnlockReleaseBuffer(buffer);
+	/*
+	 * Ok, all the data and buffers to include in the WAL record have
+	 * been registered. Insert the record.
+	 */
+	recptr = XLogInsert(RM_FOO_ID, XLOG_FOOBAR_DO_STUFF);
 
-XLogReadBufferForRedo reads the page from disk, and checks what action needs to
-be taken to the page.  If the XLR_BKP_BLOCK(N) flag is set, it restores the
-full page image and returns BLK_RESTORED.  If there is no full page image, but
-page cannot be found or if the change has already been replayed (i.e. the
-page's LSN >= the record we're replaying), it returns BLK_NOTFOUND or BLK_DONE,
-respectively.  Usually, the redo routine only needs to pay attention to the
-BLK_NEEDS_REDO return code, which means that the routine should apply the
-incremental change.  In any case, the caller is responsible for unlocking and
-releasing the buffer.  Note that XLogReadBufferForRedo returns the buffer
-locked even if no redo is required, unless the page does not exist.
+Details of the API functions:
 
-As noted above, for a multi-page update you need to be able to determine
-which XLR_BKP_BLOCK(N) flag applies to each page.  If a WAL record reflects
-a combination of fully-rewritable and incremental updates, then the rewritable
-pages don't count for the XLR_BKP_BLOCK(N) numbering.  (XLR_BKP_BLOCK(N) is
-associated with the N'th distinct buffer ID seen in the "rdata" array, and
-per the above discussion, fully-rewritable buffers shouldn't be mentioned in
-"rdata".)
+void XLogBeginInsert(void)
+
+    Must be called before XLogRegisterBuffer and XLogRegisterData.
+
+void XLogResetInsertion(void)
+
+    Clear any currently registered data and buffers from the WAL record
+    construction workspace.  This is only needed if you have already called
+    XLogBeginInsert(), but decide to not insert the record after all.
+
+void XLogEnsureRecordSpace(int max_block_id, int nrdatas)
+
+    Normally, the WAL record construction buffers have the following limits:
+
+    * highest block ID that can be used is 4 (allowing five block references)
+    * Max 20 chunks of registered data
+
+    These default limits are enough for most record types that change some
+    on-disk structures.  For the odd case that requires more data, or needs to
+    modify more buffers, these limits can be raised by calling
+    XLogEnsureRecordSpace().  XLogEnsureRecordSpace() must be called before
+    XLogBeginInsert(), and outside a critical section.
+
+void XLogRegisterBuffer(uint8 block_id, Buffer buf, uint8 flags);
+
+    XLogRegisterBuffer adds information about a data block to the WAL record.
+    block_id is an arbitrary number used to identify this page reference in
+    the redo routine.  The information needed to re-find the page at redo -
+    relfilenode, fork, and block number - are included in the WAL record.
+
+    XLogInsert will automatically include a full copy of the page contents, if
+    this is the first modification of the buffer since the last checkpoint.
+    It is important to register every buffer modified by the action with
+    XLogRegisterBuffer, to avoid torn-page hazards.
+
+    The flags control when and how the buffer contents are included in the
+    WAL record.  Normally, a full-page image is taken only if the page has not
+    been modified since the last checkpoint, and only if full_page_writes=on
+    or an online backup is in progress.  The REGBUF_FORCE_IMAGE flag can be
+    used to force a full-page image to always be included; that is useful
+    e.g. for an operation that rewrites most of the page, so that tracking the
+    details is not worth it.  For the rare case where it is not necessary to
+    protect from torn pages, REGBUF_NO_IMAGE flag can be used to suppress
+    full page image from being taken.  REGBUF_WILL_INIT also suppresses a full
+    page image, but the redo routine must re-generate the page from scratch,
+    without looking at the old page contents.  Re-initializing the page
+    protects from torn page hazards like a full page image does.
+
+    The REGBUF_STANDARD flag can be specified together with the other flags to
+    indicate that the page follows the standard page layout.  It causes the
+    area between pd_lower and pd_upper to be left out from the image, reducing
+    WAL volume.
+
+    If the REGBUF_KEEP_DATA flag is given, any per-buffer data registered with
+    XLogRegisterBufData() is included in the WAL record even if a full-page
+    image is taken.
+
+void XLogRegisterData(char *data, int len);
+
+    XLogRegisterData is used to include arbitrary data in the WAL record.  If
+    XLogRegisterData() is called multiple times, the data are appended, and
+    will be made available to the redo routine as one contiguous chunk.
+
+void XLogRegisterBufData(uint8 block_id, char *data, int len);
+
+    XLogRegisterBufData is used to include data associated with a particular
+    buffer that was registered earlier with XLogRegisterBuffer().  If
+    XLogRegisterBufData() is called multiple times with the same block ID, the
+    data are appended, and will be made available to the redo routine as one
+    contiguous chunk.
+
+    If a full-page image of the buffer is taken at insertion, the data is not
+    included in the WAL record, unless the REGBUF_KEEP_DATA flag is used.
+
+
+Writing a REDO routine
+----------------------
+
+A REDO routine uses the data and page references included in the WAL record
+to reconstruct the new state of the page.  The record decoding functions
+and macros in xlogreader.c/h can be used to extract the data from the record.
 
 When replaying a WAL record that describes changes on multiple pages, you
 must be careful to lock the pages properly to prevent concurrent Hot Standby
@@ -545,23 +613,6 @@ either an exclusive buffer lock or a shared lock plus buffer header lock,
 or be writing the data block directly rather than through shared buffers
 while holding AccessExclusiveLock on the relation.
 
-Due to all these constraints, complex changes (such as a multilevel index
-insertion) normally need to be described by a series of atomic-action WAL
-records. The intermediate states must be self-consistent, so that if the
-replay is interrupted between any two actions, the system is fully
-functional. In btree indexes, for example, a page split requires a new page
-to be allocated, and an insertion of a new key in the parent btree level,
-but for locking reasons this has to be reflected by two separate WAL
-records. Replaying the first record, to allocate the new page and move
-tuples to it, sets a flag on the page to indicate that the key has not been
-inserted to the parent yet. Replaying the second record clears the flag.
-This intermediate state is never seen by other backends during normal
-operation, because the lock on the child page is held across the two
-actions, but will be seen if the operation is interrupted before writing
-the second WAL record. The search algorithm works with the intermediate
-state as normal, but if an insertion encounters a page with the
-incomplete-split flag set, it will finish the interrupted split by
-inserting the key to the parent, before proceeding.
 
 Writing Hints
 -------------

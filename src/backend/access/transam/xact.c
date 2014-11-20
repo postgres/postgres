@@ -571,7 +571,6 @@ AssignTransactionId(TransactionState s)
 		if (nUnreportedXids >= PGPROC_MAX_CACHED_SUBXIDS ||
 			log_unknown_top)
 		{
-			XLogRecData rdata[2];
 			xl_xact_assignment xlrec;
 
 			/*
@@ -582,17 +581,12 @@ AssignTransactionId(TransactionState s)
 			Assert(TransactionIdIsValid(xlrec.xtop));
 			xlrec.nsubxacts = nUnreportedXids;
 
-			rdata[0].data = (char *) &xlrec;
-			rdata[0].len = MinSizeOfXactAssignment;
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].next = &rdata[1];
+			XLogBeginInsert();
+			XLogRegisterData((char *) &xlrec, MinSizeOfXactAssignment);
+			XLogRegisterData((char *) unreportedXids,
+							 nUnreportedXids * sizeof(TransactionId));
 
-			rdata[1].data = (char *) unreportedXids;
-			rdata[1].len = nUnreportedXids * sizeof(TransactionId);
-			rdata[1].buffer = InvalidBuffer;
-			rdata[1].next = NULL;
-
-			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_ASSIGNMENT, rdata);
+			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_ASSIGNMENT);
 
 			nUnreportedXids = 0;
 			/* mark top, not current xact as having been logged */
@@ -1087,8 +1081,6 @@ RecordTransactionCommit(void)
 		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit ||
 			XLogLogicalInfoActive())
 		{
-			XLogRecData rdata[4];
-			int			lastrdata = 0;
 			xl_xact_commit xlrec;
 
 			/*
@@ -1107,63 +1099,38 @@ RecordTransactionCommit(void)
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
 			xlrec.nmsgs = nmsgs;
-			rdata[0].data = (char *) (&xlrec);
-			rdata[0].len = MinSizeOfXactCommit;
-			rdata[0].buffer = InvalidBuffer;
+
+			XLogBeginInsert();
+			XLogRegisterData((char *) (&xlrec), MinSizeOfXactCommit);
 			/* dump rels to delete */
 			if (nrels > 0)
-			{
-				rdata[0].next = &(rdata[1]);
-				rdata[1].data = (char *) rels;
-				rdata[1].len = nrels * sizeof(RelFileNode);
-				rdata[1].buffer = InvalidBuffer;
-				lastrdata = 1;
-			}
+				XLogRegisterData((char *) rels,
+								 nrels * sizeof(RelFileNode));
 			/* dump committed child Xids */
 			if (nchildren > 0)
-			{
-				rdata[lastrdata].next = &(rdata[2]);
-				rdata[2].data = (char *) children;
-				rdata[2].len = nchildren * sizeof(TransactionId);
-				rdata[2].buffer = InvalidBuffer;
-				lastrdata = 2;
-			}
+				XLogRegisterData((char *) children,
+								 nchildren * sizeof(TransactionId));
 			/* dump shared cache invalidation messages */
 			if (nmsgs > 0)
-			{
-				rdata[lastrdata].next = &(rdata[3]);
-				rdata[3].data = (char *) invalMessages;
-				rdata[3].len = nmsgs * sizeof(SharedInvalidationMessage);
-				rdata[3].buffer = InvalidBuffer;
-				lastrdata = 3;
-			}
-			rdata[lastrdata].next = NULL;
-
-			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, rdata);
+				XLogRegisterData((char *) invalMessages,
+								 nmsgs * sizeof(SharedInvalidationMessage));
+			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT);
 		}
 		else
 		{
-			XLogRecData rdata[2];
-			int			lastrdata = 0;
 			xl_xact_commit_compact xlrec;
 
 			xlrec.xact_time = xactStopTimestamp;
 			xlrec.nsubxacts = nchildren;
-			rdata[0].data = (char *) (&xlrec);
-			rdata[0].len = MinSizeOfXactCommitCompact;
-			rdata[0].buffer = InvalidBuffer;
+
+			XLogBeginInsert();
+			XLogRegisterData((char *) (&xlrec), MinSizeOfXactCommitCompact);
 			/* dump committed child Xids */
 			if (nchildren > 0)
-			{
-				rdata[0].next = &(rdata[1]);
-				rdata[1].data = (char *) children;
-				rdata[1].len = nchildren * sizeof(TransactionId);
-				rdata[1].buffer = InvalidBuffer;
-				lastrdata = 1;
-			}
-			rdata[lastrdata].next = NULL;
+				XLogRegisterData((char *) children,
+								 nchildren * sizeof(TransactionId));
 
-			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT, rdata);
+			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT);
 		}
 	}
 
@@ -1436,8 +1403,6 @@ RecordTransactionAbort(bool isSubXact)
 	RelFileNode *rels;
 	int			nchildren;
 	TransactionId *children;
-	XLogRecData rdata[3];
-	int			lastrdata = 0;
 	xl_xact_abort xlrec;
 
 	/*
@@ -1486,30 +1451,20 @@ RecordTransactionAbort(bool isSubXact)
 	}
 	xlrec.nrels = nrels;
 	xlrec.nsubxacts = nchildren;
-	rdata[0].data = (char *) (&xlrec);
-	rdata[0].len = MinSizeOfXactAbort;
-	rdata[0].buffer = InvalidBuffer;
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) (&xlrec), MinSizeOfXactAbort);
+
 	/* dump rels to delete */
 	if (nrels > 0)
-	{
-		rdata[0].next = &(rdata[1]);
-		rdata[1].data = (char *) rels;
-		rdata[1].len = nrels * sizeof(RelFileNode);
-		rdata[1].buffer = InvalidBuffer;
-		lastrdata = 1;
-	}
+		XLogRegisterData((char *) rels, nrels * sizeof(RelFileNode));
+
 	/* dump committed child Xids */
 	if (nchildren > 0)
-	{
-		rdata[lastrdata].next = &(rdata[2]);
-		rdata[2].data = (char *) children;
-		rdata[2].len = nchildren * sizeof(TransactionId);
-		rdata[2].buffer = InvalidBuffer;
-		lastrdata = 2;
-	}
-	rdata[lastrdata].next = NULL;
+		XLogRegisterData((char *) children,
+						 nchildren * sizeof(TransactionId));
 
-	(void) XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, rdata);
+	(void) XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT);
 
 	/*
 	 * Report the latest async abort LSN, so that the WAL writer knows to
@@ -2350,6 +2305,9 @@ AbortTransaction(void)
 	/* Clean up buffer I/O and buffer context locks, too */
 	AbortBufferIO();
 	UnlockBuffers();
+
+	/* Reset WAL record construction state */
+	XLogResetInsertion();
 
 	/*
 	 * Also clean up any open wait for lock, since the lock manager will choke
@@ -4299,6 +4257,9 @@ AbortSubTransaction(void)
 	AbortBufferIO();
 	UnlockBuffers();
 
+	/* Reset WAL record construction state */
+	XLogResetInsertion();
+
 	/*
 	 * Also clean up any open wait for lock, since the lock manager will choke
 	 * if we try to wait for another lock before doing this.
@@ -4938,42 +4899,42 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 }
 
 void
-xact_redo(XLogRecPtr lsn, XLogRecord *record)
+xact_redo(XLogReaderState *record)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	/* Backup blocks are not used in xact records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+	Assert(!XLogRecHasAnyBlockRefs(record));
 
 	if (info == XLOG_XACT_COMMIT_COMPACT)
 	{
 		xl_xact_commit_compact *xlrec = (xl_xact_commit_compact *) XLogRecGetData(record);
 
-		xact_redo_commit_compact(xlrec, record->xl_xid, lsn);
+		xact_redo_commit_compact(xlrec, XLogRecGetXid(record), record->EndRecPtr);
 	}
 	else if (info == XLOG_XACT_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
 
-		xact_redo_commit(xlrec, record->xl_xid, lsn);
+		xact_redo_commit(xlrec, XLogRecGetXid(record), record->EndRecPtr);
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) XLogRecGetData(record);
 
-		xact_redo_abort(xlrec, record->xl_xid);
+		xact_redo_abort(xlrec, XLogRecGetXid(record));
 	}
 	else if (info == XLOG_XACT_PREPARE)
 	{
 		/* the record contents are exactly the 2PC file */
-		RecreateTwoPhaseFile(record->xl_xid,
-							 XLogRecGetData(record), record->xl_len);
+		RecreateTwoPhaseFile(XLogRecGetXid(record),
+						  XLogRecGetData(record), XLogRecGetDataLen(record));
 	}
 	else if (info == XLOG_XACT_COMMIT_PREPARED)
 	{
 		xl_xact_commit_prepared *xlrec = (xl_xact_commit_prepared *) XLogRecGetData(record);
 
-		xact_redo_commit(&xlrec->crec, xlrec->xid, lsn);
+		xact_redo_commit(&xlrec->crec, xlrec->xid, record->EndRecPtr);
 		RemoveTwoPhaseFile(xlrec->xid, false);
 	}
 	else if (info == XLOG_XACT_ABORT_PREPARED)

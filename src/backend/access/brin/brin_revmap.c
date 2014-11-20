@@ -477,23 +477,16 @@ revmap_physical_extend(BrinRevmap *revmap)
 	{
 		xl_brin_revmap_extend xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 
-		xlrec.node = revmap->rm_irel->rd_node;
 		xlrec.targetBlk = mapBlk;
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBrinRevmapExtend;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].buffer_std = false;
-		rdata[0].next = &(rdata[1]);
 
-		rdata[1].data = (char *) NULL;
-		rdata[1].len = 0;
-		rdata[1].buffer = revmap->rm_metaBuf;
-		rdata[1].buffer_std = false;
-		rdata[1].next = NULL;
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfBrinRevmapExtend);
+		XLogRegisterBuffer(0, revmap->rm_metaBuf, 0);
 
-		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_REVMAP_EXTEND, rdata);
+		XLogRegisterBuffer(1, buf, REGBUF_WILL_INIT);
+
+		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_REVMAP_EXTEND);
 		PageSetLSN(metapage, recptr);
 		PageSetLSN(page, recptr);
 	}

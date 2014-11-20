@@ -14,7 +14,7 @@
 #ifndef TABLESPACE_H
 #define TABLESPACE_H
 
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
@@ -56,8 +56,8 @@ extern char *get_tablespace_name(Oid spc_oid);
 
 extern bool directory_is_empty(const char *path);
 
-extern void tblspc_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void tblspc_desc(StringInfo buf, XLogRecord *rptr);
+extern void tblspc_redo(XLogReaderState *rptr);
+extern void tblspc_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *tblspc_identify(uint8 info);
 
 #endif   /* TABLESPACE_H */

@@ -15,7 +15,7 @@
 #define HEAPAM_XLOG_H
 
 #include "access/htup.h"
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
@@ -78,27 +78,11 @@
 #define XLOG_HEAP_CONTAINS_OLD						\
 	(XLOG_HEAP_CONTAINS_OLD_TUPLE | XLOG_HEAP_CONTAINS_OLD_KEY)
 
-/*
- * All what we need to find changed tuple
- *
- * NB: on most machines, sizeof(xl_heaptid) will include some trailing pad
- * bytes for alignment.  We don't want to store the pad space in the XLOG,
- * so use SizeOfHeapTid for space calculations.  Similar comments apply for
- * the other xl_FOO structs.
- */
-typedef struct xl_heaptid
-{
-	RelFileNode node;
-	ItemPointerData tid;		/* changed tuple id */
-} xl_heaptid;
-
-#define SizeOfHeapTid		(offsetof(xl_heaptid, tid) + SizeOfIptrData)
-
 /* This is what we need to know about delete */
 typedef struct xl_heap_delete
 {
-	xl_heaptid	target;			/* deleted tuple id */
 	TransactionId xmax;			/* xmax of the deleted tuple */
+	OffsetNumber offnum;		/* deleted tuple's offset */
 	uint8		infobits_set;	/* infomask bits */
 	uint8		flags;
 } xl_heap_delete;
@@ -122,45 +106,33 @@ typedef struct xl_heap_header
 
 #define SizeOfHeapHeader	(offsetof(xl_heap_header, t_hoff) + sizeof(uint8))
 
-/*
- * Variant of xl_heap_header that contains the length of the tuple, which is
- * useful if the length of the tuple cannot be computed using the overall
- * record length. E.g. because there are several tuples inside a single
- * record.
- */
-typedef struct xl_heap_header_len
-{
-	uint16		t_len;
-	xl_heap_header header;
-} xl_heap_header_len;
-
-#define SizeOfHeapHeaderLen (offsetof(xl_heap_header_len, header) + SizeOfHeapHeader)
-
 /* This is what we need to know about insert */
 typedef struct xl_heap_insert
 {
-	xl_heaptid	target;			/* inserted tuple id */
+	OffsetNumber offnum;		/* inserted tuple's offset */
 	uint8		flags;
-	/* xl_heap_header & TUPLE DATA FOLLOWS AT END OF STRUCT */
+
+	/* xl_heap_header & TUPLE DATA in backup block 0 */
 } xl_heap_insert;
 
 #define SizeOfHeapInsert	(offsetof(xl_heap_insert, flags) + sizeof(uint8))
 
 /*
- * This is what we need to know about a multi-insert. The record consists of
- * xl_heap_multi_insert header, followed by a xl_multi_insert_tuple and tuple
- * data for each tuple. 'offsets' array is omitted if the whole page is
- * reinitialized (XLOG_HEAP_INIT_PAGE)
+ * This is what we need to know about a multi-insert.
+ *
+ * The main data of the record consists of this xl_heap_multi_insert header.
+ * 'offsets' array is omitted if the whole page is reinitialized
+ * (XLOG_HEAP_INIT_PAGE).
+ *
+ * In block 0's data portion, there is an xl_multi_insert_tuple struct,
+ * followed by the tuple data for each tuple. There is padding to align
+ * each xl_multi_insert struct.
  */
 typedef struct xl_heap_multi_insert
 {
-	RelFileNode node;
-	BlockNumber blkno;
 	uint8		flags;
 	uint16		ntuples;
 	OffsetNumber offsets[1];
-
-	/* TUPLE DATA (xl_multi_insert_tuples) FOLLOW AT END OF STRUCT */
 } xl_heap_multi_insert;
 
 #define SizeOfHeapMultiInsert	offsetof(xl_heap_multi_insert, offsets)
@@ -176,34 +148,39 @@ typedef struct xl_multi_insert_tuple
 
 #define SizeOfMultiInsertTuple	(offsetof(xl_multi_insert_tuple, t_hoff) + sizeof(uint8))
 
-/* This is what we need to know about update|hot_update */
+/*
+ * This is what we need to know about update|hot_update
+ *
+ * Backup blk 0: new page
+ *
+ * If XLOG_HEAP_PREFIX_FROM_OLD or XLOG_HEAP_SUFFIX_FROM_OLD flags are set,
+ * the prefix and/or suffix come first, as one or two uint16s.
+ *
+ * After that, xl_heap_header and new tuple data follow.  The new tuple
+ * data doesn't include the prefix and suffix, which are copied from the
+ * old tuple on replay.
+ *
+ * If HEAP_CONTAINS_NEW_TUPLE_DATA flag is given, the tuple data is
+ * included even if a full-page image was taken.
+ *
+ * Backup blk 1: old page, if different. (no data, just a reference to the blk)
+ */
 typedef struct xl_heap_update
 {
-	xl_heaptid	target;			/* deleted tuple id */
 	TransactionId old_xmax;		/* xmax of the old tuple */
-	TransactionId new_xmax;		/* xmax of the new tuple */
-	ItemPointerData newtid;		/* new inserted tuple id */
+	OffsetNumber old_offnum;	/* old tuple's offset */
 	uint8		old_infobits_set;		/* infomask bits to set on old tuple */
 	uint8		flags;
+	TransactionId new_xmax;		/* xmax of the new tuple */
+	OffsetNumber new_offnum;	/* new tuple's offset */
 
 	/*
-	 * If XLOG_HEAP_PREFIX_FROM_OLD or XLOG_HEAP_SUFFIX_FROM_OLD flags are
-	 * set, the prefix and/or suffix come next, as one or two uint16s.
-	 *
-	 * After that, xl_heap_header_len and new tuple data follow.  The new
-	 * tuple data and length don't include the prefix and suffix, which are
-	 * copied from the old tuple on replay.  The new tuple data is omitted if
-	 * a full-page image of the page was taken (unless the
-	 * XLOG_HEAP_CONTAINS_NEW_TUPLE flag is set, in which case it's included
-	 * anyway).
-	 *
 	 * If XLOG_HEAP_CONTAINS_OLD_TUPLE or XLOG_HEAP_CONTAINS_OLD_KEY flags are
-	 * set, another xl_heap_header_len struct and tuple data for the old tuple
-	 * follows.
+	 * set, a xl_heap_header struct and tuple data for the old tuple follows.
 	 */
 } xl_heap_update;
 
-#define SizeOfHeapUpdate	(offsetof(xl_heap_update, flags) + sizeof(uint8))
+#define SizeOfHeapUpdate	(offsetof(xl_heap_update, new_offnum) + sizeof(OffsetNumber))
 
 /*
  * This is what we need to know about vacuum page cleanup/redirect
@@ -218,12 +195,10 @@ typedef struct xl_heap_update
  */
 typedef struct xl_heap_clean
 {
-	RelFileNode node;
-	BlockNumber block;
 	TransactionId latestRemovedXid;
 	uint16		nredirected;
 	uint16		ndead;
-	/* OFFSET NUMBERS FOLLOW */
+	/* OFFSET NUMBERS are in the block reference 0 */
 } xl_heap_clean;
 
 #define SizeOfHeapClean (offsetof(xl_heap_clean, ndead) + sizeof(uint16))
@@ -251,8 +226,8 @@ typedef struct xl_heap_cleanup_info
 /* This is what we need to know about lock */
 typedef struct xl_heap_lock
 {
-	xl_heaptid	target;			/* locked tuple id */
 	TransactionId locking_xid;	/* might be a MultiXactId not xid */
+	OffsetNumber offnum;		/* locked tuple's offset on page */
 	int8		infobits_set;	/* infomask and infomask2 bits to set */
 } xl_heap_lock;
 
@@ -261,8 +236,8 @@ typedef struct xl_heap_lock
 /* This is what we need to know about locking an updated version of a row */
 typedef struct xl_heap_lock_updated
 {
-	xl_heaptid	target;
 	TransactionId xmax;
+	OffsetNumber offnum;
 	uint8		infobits_set;
 } xl_heap_lock_updated;
 
@@ -271,11 +246,11 @@ typedef struct xl_heap_lock_updated
 /* This is what we need to know about in-place update */
 typedef struct xl_heap_inplace
 {
-	xl_heaptid	target;			/* updated tuple id */
+	OffsetNumber offnum;		/* updated tuple's offset on page */
 	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_inplace;
 
-#define SizeOfHeapInplace	(offsetof(xl_heap_inplace, target) + SizeOfHeapTid)
+#define SizeOfHeapInplace	(offsetof(xl_heap_inplace, offnum) + sizeof(OffsetNumber))
 
 /*
  * This struct represents a 'freeze plan', which is what we need to know about
@@ -296,23 +271,26 @@ typedef struct xl_heap_freeze_tuple
 
 /*
  * This is what we need to know about a block being frozen during vacuum
+ *
+ * Backup block 0's data contains an array of xl_heap_freeze_tuple structs,
+ * one for each tuple.
  */
 typedef struct xl_heap_freeze_page
 {
-	RelFileNode node;
-	BlockNumber block;
 	TransactionId cutoff_xid;
 	uint16		ntuples;
-	xl_heap_freeze_tuple tuples[FLEXIBLE_ARRAY_MEMBER];
 } xl_heap_freeze_page;
 
-#define SizeOfHeapFreezePage offsetof(xl_heap_freeze_page, tuples)
+#define SizeOfHeapFreezePage (offsetof(xl_heap_freeze_page, ntuples) + sizeof(uint16))
 
-/* This is what we need to know about setting a visibility map bit */
+/*
+ * This is what we need to know about setting a visibility map bit
+ *
+ * Backup blk 0: visibility map buffer
+ * Backup blk 1: heap buffer
+ */
 typedef struct xl_heap_visible
 {
-	RelFileNode node;
-	BlockNumber block;
 	TransactionId cutoff_xid;
 } xl_heap_visible;
 
@@ -338,10 +316,11 @@ typedef struct xl_heap_new_cid
 	/*
 	 * Store the relfilenode/ctid pair to facilitate lookups.
 	 */
-	xl_heaptid	target;
+	RelFileNode target_node;
+	ItemPointerData target_tid;
 } xl_heap_new_cid;
 
-#define SizeOfHeapNewCid (offsetof(xl_heap_new_cid, target) + SizeOfHeapTid)
+#define SizeOfHeapNewCid (offsetof(xl_heap_new_cid, target_tid) + sizeof(ItemPointerData))
 
 /* logical rewrite xlog record header */
 typedef struct xl_heap_rewrite_mapping
@@ -357,13 +336,13 @@ typedef struct xl_heap_rewrite_mapping
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 									   TransactionId *latestRemovedXid);
 
-extern void heap_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void heap_desc(StringInfo buf, XLogRecord *record);
+extern void heap_redo(XLogReaderState *record);
+extern void heap_desc(StringInfo buf, XLogReaderState *record);
 extern const char *heap_identify(uint8 info);
-extern void heap2_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void heap2_desc(StringInfo buf, XLogRecord *record);
+extern void heap2_redo(XLogReaderState *record);
+extern void heap2_desc(StringInfo buf, XLogReaderState *record);
 extern const char *heap2_identify(uint8 info);
-extern void heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r);
+extern void heap_xlog_logical_rewrite(XLogReaderState *r);
 
 extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
 					  TransactionId latestRemovedXid);

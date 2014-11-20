@@ -34,6 +34,7 @@
 #include "miscadmin.h"
 
 #include "access/xact.h"
+#include "access/xlog_internal.h"
 
 #include "replication/decode.h"
 #include "replication/logical.h"
@@ -455,12 +456,12 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		record = XLogReadRecord(ctx->reader, startptr, &err);
 		if (err)
 			elog(ERROR, "%s", err);
-
-		Assert(record);
+		if (!record)
+			elog(ERROR, "no record found");		/* shouldn't happen */
 
 		startptr = InvalidXLogRecPtr;
 
-		LogicalDecodingProcessRecord(ctx, record);
+		LogicalDecodingProcessRecord(ctx, ctx->reader);
 
 		/* only continue till we found a consistent spot */
 		if (DecodingContextReady(ctx))

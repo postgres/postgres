@@ -17,7 +17,7 @@
 #include "access/hash.h"
 
 void
-hash_desc(StringInfo buf, XLogRecord *record)
+hash_desc(StringInfo buf, XLogReaderState *record)
 {
 }
 

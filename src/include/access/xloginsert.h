@@ -18,49 +18,43 @@
 #include "storage/relfilenode.h"
 
 /*
- * The rmgr data to be written by XLogInsert() is defined by a chain of
- * one or more XLogRecData structs.  (Multiple structs would be used when
- * parts of the source data aren't physically adjacent in memory, or when
- * multiple associated buffers need to be specified.)
- *
- * If buffer is valid then XLOG will check if buffer must be backed up
- * (ie, whether this is first change of that page since last checkpoint).
- * If so, the whole page contents are attached to the XLOG record, and XLOG
- * sets XLR_BKP_BLOCK(N) bit in xl_info.  Note that the buffer must be pinned
- * and exclusive-locked by the caller, so that it won't change under us.
- * NB: when the buffer is backed up, we DO NOT insert the data pointed to by
- * this XLogRecData struct into the XLOG record, since we assume it's present
- * in the buffer.  Therefore, rmgr redo routines MUST pay attention to
- * XLR_BKP_BLOCK(N) to know what is actually stored in the XLOG record.
- * The N'th XLR_BKP_BLOCK bit corresponds to the N'th distinct buffer
- * value (ignoring InvalidBuffer) appearing in the rdata chain.
- *
- * When buffer is valid, caller must set buffer_std to indicate whether the
- * page uses standard pd_lower/pd_upper header fields.  If this is true, then
- * XLOG is allowed to omit the free space between pd_lower and pd_upper from
- * the backed-up page image.  Note that even when buffer_std is false, the
- * page MUST have an LSN field as its first eight bytes!
- *
- * Note: data can be NULL to indicate no rmgr data associated with this chain
- * entry.  This can be sensible (ie, not a wasted entry) if buffer is valid.
- * The implication is that the buffer has been changed by the operation being
- * logged, and so may need to be backed up, but the change can be redone using
- * only information already present elsewhere in the XLOG entry.
+ * The minimum size of the WAL construction working area. If you need to
+ * register more than XLR_NORMAL_MAX_BLOCK_ID block references or have more
+ * than XLR_NORMAL_RDATAS data chunks in a single WAL record, you must call
+ * XLogEnsureRecordSpace() first to allocate more working memory.
  */
-typedef struct XLogRecData
-{
-	char	   *data;			/* start of rmgr data to include */
-	uint32		len;			/* length of rmgr data to include */
-	Buffer		buffer;			/* buffer associated with data, if any */
-	bool		buffer_std;		/* buffer has standard pd_lower/pd_upper */
-	struct XLogRecData *next;	/* next struct in chain, or NULL */
-} XLogRecData;
+#define XLR_NORMAL_MAX_BLOCK_ID		4
+#define XLR_NORMAL_RDATAS			20
 
-extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
+/* flags for XLogRegisterBuffer */
+#define REGBUF_FORCE_IMAGE	0x01	/* force a full-page image */
+#define REGBUF_NO_IMAGE		0x02	/* don't take a full-page image */
+#define REGBUF_WILL_INIT	(0x04 | 0x02)	/* page will be re-initialized at
+									 * replay (implies NO_IMAGE) */
+#define REGBUF_STANDARD		0x08	/* page follows "standard" page layout,
+									 * (data between pd_lower and pd_upper
+									 * will be skipped) */
+#define REGBUF_KEEP_DATA	0x10	/* include data even if a full-page image
+									 * is taken */
+
+/* prototypes for public functions in xloginsert.c: */
+extern void XLogBeginInsert(void);
+extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info);
+extern void XLogEnsureRecordSpace(int nbuffers, int ndatas);
+extern void XLogRegisterData(char *data, int len);
+extern void XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags);
+extern void XLogRegisterBlock(uint8 block_id, RelFileNode *rnode,
+				  ForkNumber forknum, BlockNumber blknum, char *page,
+				  uint8 flags);
+extern void XLogRegisterBufData(uint8 block_id, char *data, int len);
+extern void XLogResetInsertion(void);
+extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
+
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 			BlockNumber blk, char *page, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
-extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
+
+extern void InitXLogInsert(void);
 
 #endif   /* XLOGINSERT_H */

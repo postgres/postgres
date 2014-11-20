@@ -15,6 +15,6 @@
 #include "replication/logical.h"
 
 void LogicalDecodingProcessRecord(LogicalDecodingContext *ctx,
-							 XLogRecord *record);
+							 XLogReaderState *record);
 
 #endif

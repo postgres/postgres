@@ -18,10 +18,10 @@
 
 
 void
-clog_desc(StringInfo buf, XLogRecord *record)
+clog_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info == CLOG_ZEROPAGE || info == CLOG_TRUNCATE)
 	{

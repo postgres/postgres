@@ -89,10 +89,6 @@ xlogVacuumPage(Relation index, Buffer buffer)
 {
 	Page		page = BufferGetPage(buffer);
 	XLogRecPtr	recptr;
-	XLogRecData rdata[3];
-	ginxlogVacuumPage xlrec;
-	uint16		lower;
-	uint16		upper;
 
 	/* This is only used for entry tree leaf pages. */
 	Assert(!GinPageIsData(page));
@@ -101,57 +97,14 @@ xlogVacuumPage(Relation index, Buffer buffer)
 	if (!RelationNeedsWAL(index))
 		return;
 
-	xlrec.node = index->rd_node;
-	xlrec.blkno = BufferGetBlockNumber(buffer);
+	/*
+	 * Always create a full image, we don't track the changes on the page at
+	 * any more fine-grained level. This could obviously be improved...
+	 */
+	XLogBeginInsert();
+	XLogRegisterBuffer(0, buffer, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
 
-	/* Assume we can omit data between pd_lower and pd_upper */
-	lower = ((PageHeader) page)->pd_lower;
-	upper = ((PageHeader) page)->pd_upper;
-
-	Assert(lower < BLCKSZ);
-	Assert(upper < BLCKSZ);
-
-	if (lower >= SizeOfPageHeaderData &&
-		upper > lower &&
-		upper <= BLCKSZ)
-	{
-		xlrec.hole_offset = lower;
-		xlrec.hole_length = upper - lower;
-	}
-	else
-	{
-		/* No "hole" to compress out */
-		xlrec.hole_offset = 0;
-		xlrec.hole_length = 0;
-	}
-
-	rdata[0].data = (char *) &xlrec;
-	rdata[0].len = sizeof(ginxlogVacuumPage);
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].next = &rdata[1];
-
-	if (xlrec.hole_length == 0)
-	{
-		rdata[1].data = (char *) page;
-		rdata[1].len = BLCKSZ;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
-	}
-	else
-	{
-		/* must skip the hole */
-		rdata[1].data = (char *) page;
-		rdata[1].len = xlrec.hole_offset;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = &rdata[2];
-
-		rdata[2].data = (char *) page + (xlrec.hole_offset + xlrec.hole_length);
-		rdata[2].len = BLCKSZ - (xlrec.hole_offset + xlrec.hole_length);
-		rdata[2].buffer = InvalidBuffer;
-		rdata[2].next = NULL;
-	}
-
-	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_VACUUM_PAGE, rdata);
+	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_VACUUM_PAGE);
 	PageSetLSN(page, recptr);
 }
 
@@ -292,48 +245,27 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	if (RelationNeedsWAL(gvs->index))
 	{
 		XLogRecPtr	recptr;
-		XLogRecData rdata[4];
 		ginxlogDeletePage data;
 
-		data.node = gvs->index->rd_node;
-		data.blkno = deleteBlkno;
-		data.parentBlkno = parentBlkno;
+		/*
+		 * We can't pass REGBUF_STANDARD for the deleted page, because we
+		 * didn't set pd_lower on pre-9.4 versions. The page might've been
+		 * binary-upgraded from an older version, and hence not have pd_lower
+		 * set correctly. Ditto for the left page, but removing the item from
+		 * the parent updated its pd_lower, so we know that's OK at this
+		 * point.
+		 */
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, dBuffer, 0);
+		XLogRegisterBuffer(1, pBuffer, REGBUF_STANDARD);
+		XLogRegisterBuffer(2, lBuffer, 0);
+
 		data.parentOffset = myoff;
-		data.leftBlkno = leftBlkno;
 		data.rightLink = GinPageGetOpaque(page)->rightlink;
 
-		/*
-		 * We can't pass buffer_std = TRUE, because we didn't set pd_lower on
-		 * pre-9.4 versions. The page might've been binary-upgraded from an
-		 * older version, and hence not have pd_lower set correctly. Ditto for
-		 * the left page, but removing the item from the parent updated its
-		 * pd_lower, so we know that's OK at this point.
-		 */
-		rdata[0].buffer = dBuffer;
-		rdata[0].buffer_std = FALSE;
-		rdata[0].data = NULL;
-		rdata[0].len = 0;
-		rdata[0].next = rdata + 1;
+		XLogRegisterData((char *) &data, sizeof(ginxlogDeletePage));
 
-		rdata[1].buffer = pBuffer;
-		rdata[1].buffer_std = TRUE;
-		rdata[1].data = NULL;
-		rdata[1].len = 0;
-		rdata[1].next = rdata + 2;
-
-		rdata[2].buffer = lBuffer;
-		rdata[2].buffer_std = FALSE;
-		rdata[2].data = NULL;
-		rdata[2].len = 0;
-		rdata[2].next = rdata + 3;
-
-		rdata[3].buffer = InvalidBuffer;
-		rdata[3].buffer_std = FALSE;
-		rdata[3].len = sizeof(ginxlogDeletePage);
-		rdata[3].data = (char *) &data;
-		rdata[3].next = NULL;
-
-		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_PAGE, rdata);
+		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_PAGE);
 		PageSetLSN(page, recptr);
 		PageSetLSN(parentPage, recptr);
 		PageSetLSN(BufferGetPage(lBuffer), recptr);

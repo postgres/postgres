@@ -17,15 +17,6 @@
 #include "access/heapam_xlog.h"
 
 static void
-out_target(StringInfo buf, xl_heaptid *target)
-{
-	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
-			 target->node.spcNode, target->node.dbNode, target->node.relNode,
-					 ItemPointerGetBlockNumber(&(target->tid)),
-					 ItemPointerGetOffsetNumber(&(target->tid)));
-}
-
-static void
 out_infobits(StringInfo buf, uint8 infobits)
 {
 	if (infobits & XLHL_XMAX_IS_MULTI)
@@ -41,23 +32,23 @@ out_infobits(StringInfo buf, uint8 infobits)
 }
 
 void
-heap_desc(StringInfo buf, XLogRecord *record)
+heap_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP_INSERT)
 	{
 		xl_heap_insert *xlrec = (xl_heap_insert *) rec;
 
-		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "off %u", xlrec->offnum);
 	}
 	else if (info == XLOG_HEAP_DELETE)
 	{
 		xl_heap_delete *xlrec = (xl_heap_delete *) rec;
 
-		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "off %u", xlrec->offnum);
 		appendStringInfoChar(buf, ' ');
 		out_infobits(buf, xlrec->infobits_set);
 	}
@@ -65,24 +56,24 @@ heap_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		out_target(buf, &(xlrec->target));
-		appendStringInfo(buf, " xmax %u ", xlrec->old_xmax);
+		appendStringInfo(buf, "off %u xmax %u",
+						 xlrec->old_offnum,
+						 xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
-		appendStringInfo(buf, "; new tid %u/%u xmax %u",
-						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
-						 ItemPointerGetOffsetNumber(&(xlrec->newtid)),
+		appendStringInfo(buf, "; new off %u xmax %u",
+						 xlrec->new_offnum,
 						 xlrec->new_xmax);
 	}
 	else if (info == XLOG_HEAP_HOT_UPDATE)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		out_target(buf, &(xlrec->target));
-		appendStringInfo(buf, " xmax %u ", xlrec->old_xmax);
+		appendStringInfo(buf, "off %u xmax %u",
+						 xlrec->old_offnum,
+						 xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
-		appendStringInfo(buf, "; new tid %u/%u xmax %u",
-						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
-						 ItemPointerGetOffsetNumber(&(xlrec->newtid)),
+		appendStringInfo(buf, "; new off %u xmax %u",
+						 xlrec->new_offnum,
 						 xlrec->new_xmax);
 	}
 	else if (info == XLOG_HEAP_LOCK)
@@ -90,40 +81,34 @@ heap_desc(StringInfo buf, XLogRecord *record)
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
 		appendStringInfo(buf, "xid %u: ", xlrec->locking_xid);
-		out_target(buf, &(xlrec->target));
-		appendStringInfoChar(buf, ' ');
+		appendStringInfo(buf, "off %u ", xlrec->offnum);
 		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_INPLACE)
 	{
 		xl_heap_inplace *xlrec = (xl_heap_inplace *) rec;
 
-		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "off %u", xlrec->offnum);
 	}
 }
 void
-heap2_desc(StringInfo buf, XLogRecord *record)
+heap2_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP2_CLEAN)
 	{
 		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u; blk %u remxid %u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->block,
-						 xlrec->latestRemovedXid);
+		appendStringInfo(buf, "remxid %u", xlrec->latestRemovedXid);
 	}
 	else if (info == XLOG_HEAP2_FREEZE_PAGE)
 	{
 		xl_heap_freeze_page *xlrec = (xl_heap_freeze_page *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u; blk %u; cutoff xid %u ntuples %u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->block,
+		appendStringInfo(buf, "cutoff xid %u ntuples %u",
 						 xlrec->cutoff_xid, xlrec->ntuples);
 	}
 	else if (info == XLOG_HEAP2_CLEANUP_INFO)
@@ -136,17 +121,13 @@ heap2_desc(StringInfo buf, XLogRecord *record)
 	{
 		xl_heap_visible *xlrec = (xl_heap_visible *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u; blk %u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->block);
+		appendStringInfo(buf, "cutoff xid %u", xlrec->cutoff_xid);
 	}
 	else if (info == XLOG_HEAP2_MULTI_INSERT)
 	{
 		xl_heap_multi_insert *xlrec = (xl_heap_multi_insert *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u; blk %u; %d tuples",
-				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
-						 xlrec->blkno, xlrec->ntuples);
+		appendStringInfo(buf, "%d tuples", xlrec->ntuples);
 	}
 	else if (info == XLOG_HEAP2_LOCK_UPDATED)
 	{
@@ -154,13 +135,18 @@ heap2_desc(StringInfo buf, XLogRecord *record)
 
 		appendStringInfo(buf, "xmax %u msk %04x; ", xlrec->xmax,
 						 xlrec->infobits_set);
-		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "off %u", xlrec->offnum);
 	}
 	else if (info == XLOG_HEAP2_NEW_CID)
 	{
 		xl_heap_new_cid *xlrec = (xl_heap_new_cid *) rec;
 
-		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
+						 xlrec->target_node.spcNode,
+						 xlrec->target_node.dbNode,
+						 xlrec->target_node.relNode,
+						 ItemPointerGetBlockNumber(&(xlrec->target_tid)),
+						 ItemPointerGetOffsetNumber(&(xlrec->target_tid)));
 		appendStringInfo(buf, "; cmin: %u, cmax: %u, combo: %u",
 						 xlrec->cmin, xlrec->cmax, xlrec->combocid);
 	}

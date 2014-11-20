@@ -13,7 +13,7 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
@@ -77,8 +77,8 @@ extern Oid	AlterSequence(AlterSeqStmt *stmt);
 extern void ResetSequence(Oid seq_relid);
 extern void ResetSequenceCaches(void);
 
-extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void seq_desc(StringInfo buf, XLogRecord *rptr);
+extern void seq_redo(XLogReaderState *rptr);
+extern void seq_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *seq_identify(uint8 info);
 
 #endif   /* SEQUENCE_H */

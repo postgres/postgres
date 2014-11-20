@@ -20,17 +20,15 @@
  * xlog replay routines
  */
 static void
-brin_xlog_createidx(XLogRecPtr lsn, XLogRecord *record)
+brin_xlog_createidx(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_brin_createidx *xlrec = (xl_brin_createidx *) XLogRecGetData(record);
 	Buffer		buf;
 	Page		page;
 
-	/* Backup blocks are not used in create_index records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
 	/* create the index' metapage */
-	buf = XLogReadBuffer(xlrec->node, BRIN_METAPAGE_BLKNO, true);
+	buf = XLogInitBufferForRedo(record, 0);
 	Assert(BufferIsValid(buf));
 	page = (Page) BufferGetPage(buf);
 	brin_metapage_init(page, xlrec->pagesPerRange, xlrec->version);
@@ -44,51 +42,47 @@ brin_xlog_createidx(XLogRecPtr lsn, XLogRecord *record)
  * revmap.
  */
 static void
-brin_xlog_insert_update(XLogRecPtr lsn, XLogRecord *record,
-						xl_brin_insert *xlrec, BrinTuple *tuple)
+brin_xlog_insert_update(XLogReaderState *record,
+						xl_brin_insert *xlrec)
 {
-	BlockNumber blkno;
+	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		buffer;
 	Page		page;
 	XLogRedoAction action;
-
-	blkno = ItemPointerGetBlockNumber(&xlrec->tid);
 
 	/*
 	 * If we inserted the first and only tuple on the page, re-initialize the
 	 * page from scratch.
 	 */
-	if (record->xl_info & XLOG_BRIN_INIT_PAGE)
+	if (XLogRecGetInfo(record) & XLOG_BRIN_INIT_PAGE)
 	{
-		/*
-		 * No full-page image here.  Don't try to read it, because there
-		 * might be one for the revmap buffer, below.
-		 */
-		buffer = XLogReadBuffer(xlrec->node, blkno, true);
+		buffer = XLogInitBufferForRedo(record, 0);
 		page = BufferGetPage(buffer);
 		brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 		action = BLK_NEEDS_REDO;
 	}
 	else
 	{
-		action = XLogReadBufferForRedo(lsn, record, 0,
-									   xlrec->node, blkno, &buffer);
+		action = XLogReadBufferForRedo(record, 0, &buffer);
 	}
 
 	/* insert the index item into the page */
 	if (action == BLK_NEEDS_REDO)
 	{
 		OffsetNumber offnum;
+		BrinTuple  *tuple;
+		Size		tuplen;
+
+		tuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
 
 		Assert(tuple->bt_blkno == xlrec->heapBlk);
 
 		page = (Page) BufferGetPage(buffer);
-		offnum = ItemPointerGetOffsetNumber(&(xlrec->tid));
+		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
 			elog(PANIC, "brin_xlog_insert_update: invalid max offset number");
 
-		offnum = PageAddItem(page, (Item) tuple, xlrec->tuplen, offnum, true,
-							 false);
+		offnum = PageAddItem(page, (Item) tuple, tuplen, offnum, true, false);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "brin_xlog_insert_update: failed to add tuple");
 
@@ -99,16 +93,17 @@ brin_xlog_insert_update(XLogRecPtr lsn, XLogRecord *record,
 		UnlockReleaseBuffer(buffer);
 
 	/* update the revmap */
-	action = XLogReadBufferForRedo(lsn, record,
-								   record->xl_info & XLOG_BRIN_INIT_PAGE ? 0 : 1,
-								   xlrec->node,
-								   xlrec->revmapBlk, &buffer);
+	action = XLogReadBufferForRedo(record, 1, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
+		ItemPointerData tid;
+		BlockNumber blkno = BufferGetBlockNumber(buffer);
+
+		ItemPointerSet(&tid, blkno, xlrec->offnum);
 		page = (Page) BufferGetPage(buffer);
 
 		brinSetHeapBlockItemptr(buffer, xlrec->pagesPerRange, xlrec->heapBlk,
-								xlrec->tid);
+								tid);
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);
 	}
@@ -122,34 +117,26 @@ brin_xlog_insert_update(XLogRecPtr lsn, XLogRecord *record,
  * replay a BRIN index insertion
  */
 static void
-brin_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
+brin_xlog_insert(XLogReaderState *record)
 {
 	xl_brin_insert *xlrec = (xl_brin_insert *) XLogRecGetData(record);
-	BrinTuple  *newtup;
 
-	newtup = (BrinTuple *) ((char *) xlrec + SizeOfBrinInsert);
-
-	brin_xlog_insert_update(lsn, record, xlrec, newtup);
+	brin_xlog_insert_update(record, xlrec);
 }
 
 /*
  * replay a BRIN index update
  */
 static void
-brin_xlog_update(XLogRecPtr lsn, XLogRecord *record)
+brin_xlog_update(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_brin_update *xlrec = (xl_brin_update *) XLogRecGetData(record);
-	BlockNumber blkno;
 	Buffer		buffer;
-	BrinTuple  *newtup;
 	XLogRedoAction action;
 
-	newtup = (BrinTuple *) ((char *) xlrec + SizeOfBrinUpdate);
-
 	/* First remove the old tuple */
-	blkno = ItemPointerGetBlockNumber(&(xlrec->oldtid));
-	action = XLogReadBufferForRedo(lsn, record, 2, xlrec->insert.node,
-								   blkno, &buffer);
+	action = XLogReadBufferForRedo(record, 2, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
 		Page		page;
@@ -157,7 +144,7 @@ brin_xlog_update(XLogRecPtr lsn, XLogRecord *record)
 
 		page = (Page) BufferGetPage(buffer);
 
-		offnum = ItemPointerGetOffsetNumber(&(xlrec->oldtid));
+		offnum = xlrec->oldOffnum;
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
 			elog(PANIC, "brin_xlog_update: invalid max offset number");
 
@@ -168,7 +155,7 @@ brin_xlog_update(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* Then insert the new tuple and update revmap, like in an insertion. */
-	brin_xlog_insert_update(lsn, record, &xlrec->insert, newtup);
+	brin_xlog_insert_update(record, &xlrec->insert);
 
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
@@ -178,30 +165,27 @@ brin_xlog_update(XLogRecPtr lsn, XLogRecord *record)
  * Update a tuple on a single page.
  */
 static void
-brin_xlog_samepage_update(XLogRecPtr lsn, XLogRecord *record)
+brin_xlog_samepage_update(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_brin_samepage_update *xlrec;
-	BlockNumber blkno;
 	Buffer		buffer;
 	XLogRedoAction action;
 
 	xlrec = (xl_brin_samepage_update *) XLogRecGetData(record);
-	blkno = ItemPointerGetBlockNumber(&(xlrec->tid));
-	action = XLogReadBufferForRedo(lsn, record, 0, xlrec->node, blkno,
-								   &buffer);
+	action = XLogReadBufferForRedo(record, 0, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
-		int			tuplen;
+		Size		tuplen;
 		BrinTuple  *mmtuple;
 		Page		page;
 		OffsetNumber offnum;
 
-		tuplen = record->xl_len - SizeOfBrinSamepageUpdate;
-		mmtuple = (BrinTuple *) ((char *) xlrec + SizeOfBrinSamepageUpdate);
+		mmtuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
 
 		page = (Page) BufferGetPage(buffer);
 
-		offnum = ItemPointerGetOffsetNumber(&(xlrec->tid));
+		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
 			elog(PANIC, "brin_xlog_samepage_update: invalid max offset number");
 
@@ -223,18 +207,23 @@ brin_xlog_samepage_update(XLogRecPtr lsn, XLogRecord *record)
  * Replay a revmap page extension
  */
 static void
-brin_xlog_revmap_extend(XLogRecPtr lsn, XLogRecord *record)
+brin_xlog_revmap_extend(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_brin_revmap_extend *xlrec;
 	Buffer		metabuf;
 	Buffer		buf;
 	Page		page;
+	BlockNumber targetBlk;
 	XLogRedoAction action;
 
 	xlrec = (xl_brin_revmap_extend *) XLogRecGetData(record);
+
+	XLogRecGetBlockTag(record, 1, NULL, NULL, &targetBlk);
+	Assert(xlrec->targetBlk == targetBlk);
+
 	/* Update the metapage */
-	action = XLogReadBufferForRedo(lsn, record, 0, xlrec->node,
-								   BRIN_METAPAGE_BLKNO, &metabuf);
+	action = XLogReadBufferForRedo(record, 0, &metabuf);
 	if (action == BLK_NEEDS_REDO)
 	{
 		Page		metapg;
@@ -255,7 +244,7 @@ brin_xlog_revmap_extend(XLogRecPtr lsn, XLogRecord *record)
 	 * image here.
 	 */
 
-	buf = XLogReadBuffer(xlrec->node, xlrec->targetBlk, true);
+	buf = XLogInitBufferForRedo(record, 1);
 	page = (Page) BufferGetPage(buf);
 	brin_page_init(page, BRIN_PAGETYPE_REVMAP);
 
@@ -268,26 +257,26 @@ brin_xlog_revmap_extend(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-brin_redo(XLogRecPtr lsn, XLogRecord *record)
+brin_redo(XLogReaderState *record)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	switch (info & XLOG_BRIN_OPMASK)
 	{
 		case XLOG_BRIN_CREATE_INDEX:
-			brin_xlog_createidx(lsn, record);
+			brin_xlog_createidx(record);
 			break;
 		case XLOG_BRIN_INSERT:
-			brin_xlog_insert(lsn, record);
+			brin_xlog_insert(record);
 			break;
 		case XLOG_BRIN_UPDATE:
-			brin_xlog_update(lsn, record);
+			brin_xlog_update(record);
 			break;
 		case XLOG_BRIN_SAMEPAGE_UPDATE:
-			brin_xlog_samepage_update(lsn, record);
+			brin_xlog_samepage_update(record);
 			break;
 		case XLOG_BRIN_REVMAP_EXTEND:
-			brin_xlog_revmap_extend(lsn, record);
+			brin_xlog_revmap_extend(record);
 			break;
 		default:
 			elog(PANIC, "brin_redo: unknown op code %u", info);

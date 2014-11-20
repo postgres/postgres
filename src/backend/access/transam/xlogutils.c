@@ -253,9 +253,8 @@ XLogCheckInvalidPages(void)
  *
  * 'lsn' is the LSN of the record being replayed.  It is compared with the
  * page's LSN to determine if the record has already been replayed.
- * 'rnode' and 'blkno' point to the block being replayed (main fork number
- * is implied, use XLogReadBufferForRedoExtended for other forks).
- * 'block_index' identifies the backup block in the record for the page.
+ * 'block_id' is the ID number the block was registered with, when the WAL
+ * record was created.
  *
  * Returns one of the following:
  *
@@ -272,15 +271,36 @@ XLogCheckInvalidPages(void)
  * single-process crash recovery, but some subroutines such as MarkBufferDirty
  * will complain if we don't have the lock.  In hot standby mode it's
  * definitely necessary.)
+ *
+ * Note: when a backup block is available in XLOG, we restore it
+ * unconditionally, even if the page in the database appears newer.  This is
+ * to protect ourselves against database pages that were partially or
+ * incorrectly written during a crash.  We assume that the XLOG data must be
+ * good because it has passed a CRC check, while the database page might not
+ * be.  This will force us to replay all subsequent modifications of the page
+ * that appear in XLOG, rather than possibly ignoring them as already
+ * applied, but that's not a huge drawback.
  */
 XLogRedoAction
-XLogReadBufferForRedo(XLogRecPtr lsn, XLogRecord *record, int block_index,
-					  RelFileNode rnode, BlockNumber blkno,
+XLogReadBufferForRedo(XLogReaderState *record, uint8 block_id,
 					  Buffer *buf)
 {
-	return XLogReadBufferForRedoExtended(lsn, record, block_index,
-										 rnode, MAIN_FORKNUM, blkno,
-										 RBM_NORMAL, false, buf);
+	return XLogReadBufferForRedoExtended(record, block_id, RBM_NORMAL,
+										 false, buf);
+}
+
+/*
+ * Pin and lock a buffer referenced by a WAL record, for the purpose of
+ * re-initializing it.
+ */
+Buffer
+XLogInitBufferForRedo(XLogReaderState *record, uint8 block_id)
+{
+	Buffer		buf;
+
+	XLogReadBufferForRedoExtended(record, block_id, RBM_ZERO_AND_LOCK, false,
+								  &buf);
+	return buf;
 }
 
 /*
@@ -299,21 +319,54 @@ XLogReadBufferForRedo(XLogRecPtr lsn, XLogRecord *record, int block_index,
  * using LockBufferForCleanup(), instead of a regular exclusive lock.
  */
 XLogRedoAction
-XLogReadBufferForRedoExtended(XLogRecPtr lsn, XLogRecord *record,
-							  int block_index, RelFileNode rnode,
-							  ForkNumber forkno, BlockNumber blkno,
+XLogReadBufferForRedoExtended(XLogReaderState *record,
+							  uint8 block_id,
 							  ReadBufferMode mode, bool get_cleanup_lock,
 							  Buffer *buf)
 {
-	if (record->xl_info & XLR_BKP_BLOCK(block_index))
+	XLogRecPtr	lsn = record->EndRecPtr;
+	RelFileNode rnode;
+	ForkNumber	forknum;
+	BlockNumber blkno;
+	Page		page;
+
+	if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
 	{
-		*buf = RestoreBackupBlock(lsn, record, block_index,
-								  get_cleanup_lock, true);
+		/* Caller specified a bogus block_id */
+		elog(PANIC, "failed to locate backup block with ID %d", block_id);
+	}
+
+	/* If it's a full-page image, restore it. */
+	if (XLogRecHasBlockImage(record, block_id))
+	{
+		*buf = XLogReadBufferExtended(rnode, forknum, blkno,
+		   get_cleanup_lock ? RBM_ZERO_AND_CLEANUP_LOCK : RBM_ZERO_AND_LOCK);
+		page = BufferGetPage(*buf);
+		if (!RestoreBlockImage(record, block_id, page))
+			elog(ERROR, "failed to restore block image");
+
+		/*
+		 * The page may be uninitialized. If so, we can't set the LSN because
+		 * that would corrupt the page.
+		 */
+		if (!PageIsNew(page))
+		{
+			PageSetLSN(page, lsn);
+		}
+
+		MarkBufferDirty(*buf);
+
 		return BLK_RESTORED;
 	}
 	else
 	{
-		*buf = XLogReadBufferExtended(rnode, forkno, blkno, mode);
+		if ((record->blocks[block_id].flags & BKPBLOCK_WILL_INIT) != 0 &&
+			mode != RBM_ZERO_AND_LOCK && mode != RBM_ZERO_AND_CLEANUP_LOCK)
+		{
+			elog(PANIC, "block with WILL_INIT flag in WAL record must be zeroed by redo routine");
+		}
+
+		*buf = XLogReadBufferExtended(rnode, forknum, blkno, mode);
 		if (BufferIsValid(*buf))
 		{
 			if (mode != RBM_ZERO_AND_LOCK && mode != RBM_ZERO_AND_CLEANUP_LOCK)
@@ -331,37 +384,6 @@ XLogReadBufferForRedoExtended(XLogRecPtr lsn, XLogRecord *record,
 		else
 			return BLK_NOTFOUND;
 	}
-}
-
-/*
- * XLogReadBuffer
- *		Read a page during XLOG replay.
- *
- * This is a shorthand of XLogReadBufferExtended() followed by
- * LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE), for reading from the main
- * fork.
- *
- * (Getting the buffer lock is not really necessary during single-process
- * crash recovery, but some subroutines such as MarkBufferDirty will complain
- * if we don't have the lock.  In hot standby mode it's definitely necessary.)
- *
- * The returned buffer is exclusively-locked.
- *
- * For historical reasons, instead of a ReadBufferMode argument, this only
- * supports RBM_ZERO_AND_LOCK (init == true) and RBM_NORMAL (init == false)
- * modes.
- */
-Buffer
-XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
-{
-	Buffer		buf;
-
-	buf = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
-								 init ? RBM_ZERO_AND_LOCK : RBM_NORMAL);
-	if (BufferIsValid(buf) && !init)
-		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-
-	return buf;
 }
 
 /*
@@ -383,6 +405,11 @@ XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
  * In RBM_NORMAL_NO_LOG mode, we return InvalidBuffer if the page doesn't
  * exist, and we don't check for all-zeroes.  Thus, no log entry is made
  * to imply that the page should be dropped or truncated later.
+ *
+ * NB: A redo function should normally not call this directly. To get a page
+ * to modify, use XLogReplayBuffer instead. It is important that all pages
+ * modified by a WAL record are registered in the WAL records, or they will be
+ * invisible to tools that that need to know which pages are modified.
  */
 Buffer
 XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
@@ -469,124 +496,6 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 			return InvalidBuffer;
 		}
 	}
-
-	return buffer;
-}
-
-/*
- * Restore a full-page image from a backup block attached to an XLOG record.
- *
- * lsn: LSN of the XLOG record being replayed
- * record: the complete XLOG record
- * block_index: which backup block to restore (0 .. XLR_MAX_BKP_BLOCKS - 1)
- * get_cleanup_lock: TRUE to get a cleanup rather than plain exclusive lock
- * keep_buffer: TRUE to return the buffer still locked and pinned
- *
- * Returns the buffer number containing the page.  Note this is not terribly
- * useful unless keep_buffer is specified as TRUE.
- *
- * Note: when a backup block is available in XLOG, we restore it
- * unconditionally, even if the page in the database appears newer.
- * This is to protect ourselves against database pages that were partially
- * or incorrectly written during a crash.  We assume that the XLOG data
- * must be good because it has passed a CRC check, while the database
- * page might not be.  This will force us to replay all subsequent
- * modifications of the page that appear in XLOG, rather than possibly
- * ignoring them as already applied, but that's not a huge drawback.
- *
- * If 'get_cleanup_lock' is true, a cleanup lock is obtained on the buffer,
- * else a normal exclusive lock is used.  During crash recovery, that's just
- * pro forma because there can't be any regular backends in the system, but
- * in hot standby mode the distinction is important.
- *
- * If 'keep_buffer' is true, return without releasing the buffer lock and pin;
- * then caller is responsible for doing UnlockReleaseBuffer() later.  This
- * is needed in some cases when replaying XLOG records that touch multiple
- * pages, to prevent inconsistent states from being visible to other backends.
- * (Again, that's only important in hot standby mode.)
- */
-Buffer
-RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record, int block_index,
-				   bool get_cleanup_lock, bool keep_buffer)
-{
-	BkpBlock	bkpb;
-	char	   *blk;
-	int			i;
-
-	/* Locate requested BkpBlock in the record */
-	blk = (char *) XLogRecGetData(record) + record->xl_len;
-	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
-	{
-		if (!(record->xl_info & XLR_BKP_BLOCK(i)))
-			continue;
-
-		memcpy(&bkpb, blk, sizeof(BkpBlock));
-		blk += sizeof(BkpBlock);
-
-		if (i == block_index)
-		{
-			/* Found it, apply the update */
-			return RestoreBackupBlockContents(lsn, bkpb, blk, get_cleanup_lock,
-											  keep_buffer);
-		}
-
-		blk += BLCKSZ - bkpb.hole_length;
-	}
-
-	/* Caller specified a bogus block_index */
-	elog(ERROR, "failed to restore block_index %d", block_index);
-	return InvalidBuffer;		/* keep compiler quiet */
-}
-
-/*
- * Workhorse for RestoreBackupBlock usable without an xlog record
- *
- * Restores a full-page image from BkpBlock and a data pointer.
- */
-Buffer
-RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
-						   bool get_cleanup_lock, bool keep_buffer)
-{
-	Buffer		buffer;
-	Page		page;
-
-	buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
-									get_cleanup_lock ? RBM_ZERO_AND_CLEANUP_LOCK : RBM_ZERO_AND_LOCK);
-	Assert(BufferIsValid(buffer));
-
-	page = (Page) BufferGetPage(buffer);
-
-	if (bkpb.hole_length == 0)
-	{
-		memcpy((char *) page, blk, BLCKSZ);
-	}
-	else
-	{
-		memcpy((char *) page, blk, bkpb.hole_offset);
-		/* must zero-fill the hole */
-		MemSet((char *) page + bkpb.hole_offset, 0, bkpb.hole_length);
-		memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
-			   blk + bkpb.hole_offset,
-			   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
-	}
-
-	/*
-	 * The checksum value on this page is currently invalid. We don't need to
-	 * reset it here since it will be set before being written.
-	 */
-
-	/*
-	 * The page may be uninitialized. If so, we can't set the LSN because that
-	 * would corrupt the page.
-	 */
-	if (!PageIsNew(page))
-	{
-		PageSetLSN(page, lsn);
-	}
-	MarkBufferDirty(buffer);
-
-	if (!keep_buffer)
-		UnlockReleaseBuffer(buffer);
 
 	return buffer;
 }

@@ -700,7 +700,7 @@ hashvacuumcleanup(PG_FUNCTION_ARGS)
 
 
 void
-hash_redo(XLogRecPtr lsn, XLogRecord *record)
+hash_redo(XLogReaderState *record)
 {
 	elog(PANIC, "hash_redo: unimplemented");
 }

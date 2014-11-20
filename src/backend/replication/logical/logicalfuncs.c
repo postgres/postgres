@@ -21,6 +21,8 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 
+#include "access/xlog_internal.h"
+
 #include "catalog/pg_type.h"
 
 #include "nodes/makefuncs.h"
@@ -431,7 +433,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			 * store the description into our tuplestore.
 			 */
 			if (record != NULL)
-				LogicalDecodingProcessRecord(ctx, record);
+				LogicalDecodingProcessRecord(ctx, ctx->reader);
 
 			/* check limits */
 			if (upto_lsn != InvalidXLogRecPtr &&

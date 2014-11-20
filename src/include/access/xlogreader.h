@@ -14,12 +14,18 @@
  *
  *		The basic idea is to allocate an XLogReaderState via
  *		XLogReaderAllocate(), and call XLogReadRecord() until it returns NULL.
+ *
+ *		After reading a record with XLogReadRecord(), it's decomposed into
+ *		the per-block and main data parts, and the parts can be accessed
+ *		with the XLogRec* macros and functions. You can also decode a
+ *		record that's already constructed in memory, without reading from
+ *		disk, by calling the DecodeXLogRecord() function.
  *-------------------------------------------------------------------------
  */
 #ifndef XLOGREADER_H
 #define XLOGREADER_H
 
-#include "access/xlog_internal.h"
+#include "access/xlogrecord.h"
 
 typedef struct XLogReaderState XLogReaderState;
 
@@ -30,6 +36,32 @@ typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
 										   XLogRecPtr targetRecPtr,
 										   char *readBuf,
 										   TimeLineID *pageTLI);
+
+typedef struct
+{
+	/* Is this block ref in use? */
+	bool		in_use;
+
+	/* Identify the block this refers to */
+	RelFileNode rnode;
+	ForkNumber	forknum;
+	BlockNumber blkno;
+
+	/* copy of the fork_flags field from the XLogRecordBlockHeader */
+	uint8		flags;
+
+	/* Information on full-page image, if any */
+	bool		has_image;
+	char	   *bkp_image;
+	uint16		hole_offset;
+	uint16		hole_length;
+
+	/* Buffer holding the rmgr-specific data associated with this block */
+	bool		has_data;
+	char	   *data;
+	uint16		data_len;
+	uint16		data_bufsz;
+} DecodedBkpBlock;
 
 struct XLogReaderState
 {
@@ -79,6 +111,25 @@ struct XLogReaderState
 	XLogRecPtr	ReadRecPtr;		/* start of last record read */
 	XLogRecPtr	EndRecPtr;		/* end+1 of last record read */
 
+
+	/* ----------------------------------------
+	 * Decoded representation of current record
+	 *
+	 * Use XLogRecGet* functions to investigate the record; these fields
+	 * should not be accessed directly.
+	 * ----------------------------------------
+	 */
+	XLogRecord *decoded_record; /* currently decoded record */
+
+	char	   *main_data;		/* record's main data portion */
+	uint32		main_data_len;	/* main data portion's length */
+	uint32		main_data_bufsz;	/* allocated size of the buffer */
+
+	/* information about blocks referenced by the record. */
+	DecodedBkpBlock blocks[XLR_MAX_BLOCK_ID + 1];
+
+	int			max_block_id;	/* highest block_id in use (-1 if none) */
+
 	/* ----------------------------------------
 	 * private/internal state
 	 * ----------------------------------------
@@ -122,5 +173,29 @@ extern struct XLogRecord *XLogReadRecord(XLogReaderState *state,
 #ifdef FRONTEND
 extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
 #endif   /* FRONTEND */
+
+/* Functions for decoding an XLogRecord */
+
+extern bool DecodeXLogRecord(XLogReaderState *state, XLogRecord *record,
+				 char **errmsg);
+
+#define XLogRecGetTotalLen(decoder) ((decoder)->decoded_record->xl_tot_len)
+#define XLogRecGetPrev(decoder) ((decoder)->decoded_record->xl_prev)
+#define XLogRecGetInfo(decoder) ((decoder)->decoded_record->xl_info)
+#define XLogRecGetRmid(decoder) ((decoder)->decoded_record->xl_rmid)
+#define XLogRecGetXid(decoder) ((decoder)->decoded_record->xl_xid)
+#define XLogRecGetData(decoder) ((decoder)->main_data)
+#define XLogRecGetDataLen(decoder) ((decoder)->main_data_len)
+#define XLogRecHasAnyBlockRefs(decoder) ((decoder)->max_block_id >= 0)
+#define XLogRecHasBlockRef(decoder, block_id) \
+	((decoder)->blocks[block_id].in_use)
+#define XLogRecHasBlockImage(decoder, block_id) \
+	((decoder)->blocks[block_id].has_image)
+
+extern bool RestoreBlockImage(XLogReaderState *recoder, uint8 block_id, char *dst);
+extern char *XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len);
+extern bool XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
+				   RelFileNode *rnode, ForkNumber *forknum,
+				   BlockNumber *blknum);
 
 #endif   /* XLOGREADER_H */

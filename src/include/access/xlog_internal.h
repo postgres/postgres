@@ -20,7 +20,7 @@
 #define XLOG_INTERNAL_H
 
 #include "access/xlogdefs.h"
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 #include "pgtime.h"
@@ -31,7 +31,7 @@
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD080	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD081	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -204,6 +204,17 @@ typedef struct xl_end_of_recovery
 } xl_end_of_recovery;
 
 /*
+ * The functions in xloginsert.c construct a chain of XLogRecData structs
+ * to represent the final WAL record.
+ */
+typedef struct XLogRecData
+{
+	struct XLogRecData *next;	/* next struct in chain, or NULL */
+	char	   *data;			/* start of rmgr data to include */
+	uint32		len;			/* length of rmgr data to include */
+} XLogRecData;
+
+/*
  * Method table for resource managers.
  *
  * This struct must be kept in sync with the PG_RMGR definition in
@@ -219,8 +230,8 @@ typedef struct xl_end_of_recovery
 typedef struct RmgrData
 {
 	const char *rm_name;
-	void		(*rm_redo) (XLogRecPtr lsn, XLogRecord *rptr);
-	void		(*rm_desc) (StringInfo buf, XLogRecord *rptr);
+	void		(*rm_redo) (XLogReaderState *record);
+	void		(*rm_desc) (StringInfo buf, XLogReaderState *record);
 	const char *(*rm_identify) (uint8 info);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);

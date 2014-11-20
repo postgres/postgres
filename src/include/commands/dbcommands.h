@@ -14,7 +14,7 @@
 #ifndef DBCOMMANDS_H
 #define DBCOMMANDS_H
 
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
@@ -63,8 +63,8 @@ extern Oid	AlterDatabaseOwner(const char *dbname, Oid newOwnerId);
 extern Oid	get_database_oid(const char *dbname, bool missingok);
 extern char *get_database_name(Oid dbid);
 
-extern void dbase_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void dbase_desc(StringInfo buf, XLogRecord *rptr);
+extern void dbase_redo(XLogReaderState *rptr);
+extern void dbase_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *dbase_identify(uint8 info);
 
 extern void check_encoding_locale_matches(int encoding, const char *collate, const char *ctype);

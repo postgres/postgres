@@ -22,7 +22,7 @@
 static void entrySplitPage(GinBtree btree, Buffer origbuf,
 			   GinBtreeStack *stack,
 			   void *insertPayload,
-			   BlockNumber updateblkno, XLogRecData **prdata,
+			   BlockNumber updateblkno,
 			   Page *newlpage, Page *newrpage);
 
 /*
@@ -515,33 +515,33 @@ entryPreparePage(GinBtree btree, Page page, OffsetNumber off,
  * On insertion to an internal node, in addition to inserting the given item,
  * the downlink of the existing item at 'off' is updated to point to
  * 'updateblkno'.
+ *
+ * On INSERTED, registers the buffer as buffer ID 0, with data.
+ * On SPLIT, returns rdata that represents the split pages in *prdata.
  */
 static GinPlaceToPageRC
 entryPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 				 void *insertPayload, BlockNumber updateblkno,
-				 XLogRecData **prdata, Page *newlpage, Page *newrpage)
+				 Page *newlpage, Page *newrpage)
 {
 	GinBtreeEntryInsertData *insertData = insertPayload;
 	Page		page = BufferGetPage(buf);
 	OffsetNumber off = stack->off;
 	OffsetNumber placed;
-	int			cnt = 0;
 
-	/* these must be static so they can be returned to caller */
-	static XLogRecData rdata[3];
+	/* this must be static so it can be returned to caller. */
 	static ginxlogInsertEntry data;
 
 	/* quick exit if it doesn't fit */
 	if (!entryIsEnoughSpace(btree, buf, off, insertData))
 	{
 		entrySplitPage(btree, buf, stack, insertPayload, updateblkno,
-					   prdata, newlpage, newrpage);
+					   newlpage, newrpage);
 		return SPLIT;
 	}
 
 	START_CRIT_SECTION();
 
-	*prdata = rdata;
 	entryPreparePage(btree, page, off, insertData, updateblkno);
 
 	placed = PageAddItem(page,
@@ -552,21 +552,17 @@ entryPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		elog(ERROR, "failed to add item to index page in \"%s\"",
 			 RelationGetRelationName(btree->index));
 
-	data.isDelete = insertData->isDelete;
-	data.offset = off;
+	if (RelationNeedsWAL(btree->index))
+	{
+		data.isDelete = insertData->isDelete;
+		data.offset = off;
 
-	rdata[cnt].buffer = buf;
-	rdata[cnt].buffer_std = true;
-	rdata[cnt].data = (char *) &data;
-	rdata[cnt].len = offsetof(ginxlogInsertEntry, tuple);
-	rdata[cnt].next = &rdata[cnt + 1];
-	cnt++;
-
-	rdata[cnt].buffer = buf;
-	rdata[cnt].buffer_std = true;
-	rdata[cnt].data = (char *) insertData->entry;
-	rdata[cnt].len = IndexTupleSize(insertData->entry);
-	rdata[cnt].next = NULL;
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+		XLogRegisterBufData(0, (char *) &data,
+							offsetof(ginxlogInsertEntry, tuple));
+		XLogRegisterBufData(0, (char *) insertData->entry,
+							IndexTupleSize(insertData->entry));
+	}
 
 	return INSERTED;
 }
@@ -581,7 +577,7 @@ static void
 entrySplitPage(GinBtree btree, Buffer origbuf,
 			   GinBtreeStack *stack,
 			   void *insertPayload,
-			   BlockNumber updateblkno, XLogRecData **prdata,
+			   BlockNumber updateblkno,
 			   Page *newlpage, Page *newrpage)
 {
 	GinBtreeEntryInsertData *insertData = insertPayload;
@@ -590,7 +586,6 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 				maxoff,
 				separator = InvalidOffsetNumber;
 	Size		totalsize = 0;
-	Size		tupstoresize;
 	Size		lsize = 0,
 				size;
 	char	   *ptr;
@@ -599,13 +594,8 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	Page		lpage = PageGetTempPageCopy(BufferGetPage(origbuf));
 	Page		rpage = PageGetTempPageCopy(BufferGetPage(origbuf));
 	Size		pageSize = PageGetPageSize(lpage);
+	char		tupstore[2 * BLCKSZ];
 
-	/* these must be static so they can be returned to caller */
-	static XLogRecData rdata[2];
-	static ginxlogSplitEntry data;
-	static char tupstore[2 * BLCKSZ];
-
-	*prdata = rdata;
 	entryPreparePage(btree, lpage, off, insertData, updateblkno);
 
 	/*
@@ -638,7 +628,6 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 		ptr += size;
 		totalsize += size + sizeof(ItemIdData);
 	}
-	tupstoresize = ptr - tupstore;
 
 	/*
 	 * Initialize the left and right pages, and copy all the tuples back to
@@ -672,19 +661,6 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 				 RelationGetRelationName(btree->index));
 		ptr += MAXALIGN(IndexTupleSize(itup));
 	}
-
-	data.separator = separator;
-	data.nitem = maxoff;
-
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].data = (char *) &data;
-	rdata[0].len = sizeof(ginxlogSplitEntry);
-	rdata[0].next = &rdata[1];
-
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].data = tupstore;
-	rdata[1].len = tupstoresize;
-	rdata[1].next = NULL;
 
 	*newlpage = lpage;
 	*newrpage = rpage;

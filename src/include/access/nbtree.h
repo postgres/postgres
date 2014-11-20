@@ -17,7 +17,7 @@
 #include "access/genam.h"
 #include "access/itup.h"
 #include "access/sdir.h"
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "catalog/pg_index.h"
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
@@ -228,15 +228,6 @@ typedef struct BTMetaPageData
 										 * FSM */
 
 /*
- * All that we need to find changed index tuple
- */
-typedef struct xl_btreetid
-{
-	RelFileNode node;
-	ItemPointerData tid;		/* changed tuple id */
-} xl_btreetid;
-
-/*
  * All that we need to regenerate the meta-data page
  */
 typedef struct xl_btree_metadata
@@ -252,16 +243,17 @@ typedef struct xl_btree_metadata
  *
  * This data record is used for INSERT_LEAF, INSERT_UPPER, INSERT_META.
  * Note that INSERT_META implies it's not a leaf page.
+ *
+ * Backup Blk 0: original page (data contains the inserted tuple)
+ * Backup Blk 1: child's left sibling, if INSERT_UPPER or INSERT_META
+ * Backup Blk 2: xl_btree_metadata, if INSERT_META
  */
 typedef struct xl_btree_insert
 {
-	xl_btreetid target;			/* inserted tuple id */
-	/* BlockNumber finishes_split field FOLLOWS IF NOT XLOG_BTREE_INSERT_LEAF */
-	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_INSERT_META */
-	/* INDEX TUPLE FOLLOWS AT END OF STRUCT */
+	OffsetNumber offnum;
 } xl_btree_insert;
 
-#define SizeOfBtreeInsert	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
+#define SizeOfBtreeInsert	(offsetof(xl_btree_insert, offnum) + sizeof(OffsetNumber))
 
 /*
  * On insert with split, we save all the items going into the right sibling
@@ -278,45 +270,41 @@ typedef struct xl_btree_insert
  * the root page, and thus that a newroot record rather than an insert or
  * split record should follow.  Note that a split record never carries a
  * metapage update --- we'll do that in the parent-level update.
+ *
+ * Backup Blk 0: original page / new left page
+ *
+ * The left page's data portion contains the new item, if it's the _L variant.
+ * (In the _R variants, the new item is one of the right page's tuples.)
+ * If level > 0, an IndexTuple representing the HIKEY of the left page
+ * follows.  We don't need this on leaf pages, because it's the same as the
+ * leftmost key in the new right page.
+ *
+ * Backup Blk 1: new right page
+ *
+ * The right page's data portion contains the right page's tuples in the
+ * form used by _bt_restore_page.
+ *
+ * Backup Blk 2: next block (orig page's rightlink), if any
+ * Backup Blk 3: child's left sibling, if non-leaf split
  */
 typedef struct xl_btree_split
 {
-	RelFileNode node;
-	BlockNumber leftsib;		/* orig page / new left page */
-	BlockNumber rightsib;		/* new right page */
-	BlockNumber rnext;			/* next block (orig page's rightlink) */
 	uint32		level;			/* tree level of page being split */
 	OffsetNumber firstright;	/* first item moved to right page */
-
-	/*
-	 * In the _L variants, next are OffsetNumber newitemoff and the new item.
-	 * (In the _R variants, the new item is one of the right page's tuples.)
-	 * The new item, but not newitemoff, is suppressed if XLogInsert chooses
-	 * to store the left page's whole page image.
-	 *
-	 * If level > 0, an IndexTuple representing the HIKEY of the left page
-	 * follows.  We don't need this on leaf pages, because it's the same as
-	 * the leftmost key in the new right page.  Also, it's suppressed if
-	 * XLogInsert chooses to store the left page's whole page image.
-	 *
-	 * If level > 0, BlockNumber of the page whose incomplete-split flag this
-	 * insertion clears. (not aligned)
-	 *
-	 * Last are the right page's tuples in the form used by _bt_restore_page.
-	 */
+	OffsetNumber newitemoff;	/* new item's offset (if placed on left page) */
 } xl_btree_split;
 
-#define SizeOfBtreeSplit	(offsetof(xl_btree_split, firstright) + sizeof(OffsetNumber))
+#define SizeOfBtreeSplit	(offsetof(xl_btree_split, newitemoff) + sizeof(OffsetNumber))
 
 /*
  * This is what we need to know about delete of individual leaf index tuples.
  * The WAL record can represent deletion of any number of index tuples on a
  * single index page when *not* executed by VACUUM.
+ *
+ * Backup Blk 0: index page
  */
 typedef struct xl_btree_delete
 {
-	RelFileNode node;			/* RelFileNode of the index */
-	BlockNumber block;
 	RelFileNode hnode;			/* RelFileNode of the heap the index currently
 								 * points at */
 	int			nitems;
@@ -361,8 +349,6 @@ typedef struct xl_btree_reuse_page
  */
 typedef struct xl_btree_vacuum
 {
-	RelFileNode node;
-	BlockNumber block;
 	BlockNumber lastBlockVacuumed;
 
 	/* TARGET OFFSET NUMBERS FOLLOW */
@@ -376,10 +362,13 @@ typedef struct xl_btree_vacuum
  * remove this tuple's downlink and the *following* tuple's key).  Note that
  * the leaf page is empty, so we don't need to store its content --- it is
  * just reinitialized during recovery using the rest of the fields.
+ *
+ * Backup Blk 0: leaf block
+ * Backup Blk 1: top parent
  */
 typedef struct xl_btree_mark_page_halfdead
 {
-	xl_btreetid target;			/* deleted tuple id in parent page */
+	OffsetNumber poffset;		/* deleted tuple id in parent page */
 
 	/* information needed to recreate the leaf page: */
 	BlockNumber leafblk;		/* leaf block ultimately being deleted */
@@ -394,11 +383,15 @@ typedef struct xl_btree_mark_page_halfdead
  * This is what we need to know about deletion of a btree page.  Note we do
  * not store any content for the deleted page --- it is just rewritten as empty
  * during recovery, apart from resetting the btpo.xact.
+ *
+ * Backup Blk 0: target block being deleted
+ * Backup Blk 1: target block's left sibling, if any
+ * Backup Blk 2: target block's right sibling
+ * Backup Blk 3: leaf block (if different from target)
+ * Backup Blk 4: metapage (if rightsib becomes new fast root)
  */
 typedef struct xl_btree_unlink_page
 {
-	RelFileNode node;
-	BlockNumber deadblk;		/* target block being deleted */
 	BlockNumber leftsib;		/* target block's left sibling, if any */
 	BlockNumber rightsib;		/* target block's right sibling */
 
@@ -406,7 +399,6 @@ typedef struct xl_btree_unlink_page
 	 * Information needed to recreate the leaf page, when target is an
 	 * internal page.
 	 */
-	BlockNumber leafblk;
 	BlockNumber leafleftsib;
 	BlockNumber leafrightsib;
 	BlockNumber topparent;		/* next child down in the branch */
@@ -423,13 +415,15 @@ typedef struct xl_btree_unlink_page
  *
  * Note that although this implies rewriting the metadata page, we don't need
  * an xl_btree_metadata record --- the rootblk and level are sufficient.
+ *
+ * Backup Blk 0: new root page (2 tuples as payload, if splitting old root)
+ * Backup Blk 1: left child (if splitting an old root)
+ * Backup Blk 2: metapage
  */
 typedef struct xl_btree_newroot
 {
-	RelFileNode node;
-	BlockNumber rootblk;		/* location of new root */
+	BlockNumber rootblk;		/* location of new root (redundant with blk 0) */
 	uint32		level;			/* its tree level */
-	/* 0 or 2 INDEX TUPLES FOLLOW AT END OF STRUCT */
 } xl_btree_newroot;
 
 #define SizeOfBtreeNewroot	(offsetof(xl_btree_newroot, level) + sizeof(uint32))
@@ -726,8 +720,8 @@ extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
 /*
  * prototypes for functions in nbtxlog.c
  */
-extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void btree_desc(StringInfo buf, XLogRecord *record);
+extern void btree_redo(XLogReaderState *record);
+extern void btree_desc(StringInfo buf, XLogReaderState *record);
 extern const char *btree_identify(uint8 info);
 
 #endif   /* NBTREE_H */

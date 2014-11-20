@@ -17,64 +17,49 @@
 #include "access/brin_xlog.h"
 
 void
-brin_desc(StringInfo buf, XLogRecord *record)
+brin_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	info &= XLOG_BRIN_OPMASK;
 	if (info == XLOG_BRIN_CREATE_INDEX)
 	{
 		xl_brin_createidx *xlrec = (xl_brin_createidx *) rec;
 
-		appendStringInfo(buf, "v%d pagesPerRange %u rel %u/%u/%u",
-						 xlrec->version, xlrec->pagesPerRange,
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode);
+		appendStringInfo(buf, "v%d pagesPerRange %u",
+						 xlrec->version, xlrec->pagesPerRange);
 	}
 	else if (info == XLOG_BRIN_INSERT)
 	{
 		xl_brin_insert *xlrec = (xl_brin_insert *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u heapBlk %u revmapBlk %u pagesPerRange %u TID (%u,%u)",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode,
-						 xlrec->heapBlk, xlrec->revmapBlk,
+		appendStringInfo(buf, "heapBlk %u pagesPerRange %u offnum %u",
+						 xlrec->heapBlk,
 						 xlrec->pagesPerRange,
-						 ItemPointerGetBlockNumber(&xlrec->tid),
-						 ItemPointerGetOffsetNumber(&xlrec->tid));
+						 xlrec->offnum);
 	}
 	else if (info == XLOG_BRIN_UPDATE)
 	{
 		xl_brin_update *xlrec = (xl_brin_update *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u heapBlk %u revmapBlk %u pagesPerRange %u old TID (%u,%u) TID (%u,%u)",
-						 xlrec->insert.node.spcNode, xlrec->insert.node.dbNode,
-						 xlrec->insert.node.relNode,
-						 xlrec->insert.heapBlk, xlrec->insert.revmapBlk,
+		appendStringInfo(buf, "heapBlk %u pagesPerRange %u old offnum %u, new offnum %u",
+						 xlrec->insert.heapBlk,
 						 xlrec->insert.pagesPerRange,
-						 ItemPointerGetBlockNumber(&xlrec->oldtid),
-						 ItemPointerGetOffsetNumber(&xlrec->oldtid),
-						 ItemPointerGetBlockNumber(&xlrec->insert.tid),
-						 ItemPointerGetOffsetNumber(&xlrec->insert.tid));
+						 xlrec->oldOffnum,
+						 xlrec->insert.offnum);
 	}
 	else if (info == XLOG_BRIN_SAMEPAGE_UPDATE)
 	{
 		xl_brin_samepage_update *xlrec = (xl_brin_samepage_update *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u TID (%u,%u)",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode,
-						 ItemPointerGetBlockNumber(&xlrec->tid),
-						 ItemPointerGetOffsetNumber(&xlrec->tid));
+		appendStringInfo(buf, "offnum %u", xlrec->offnum);
 	}
 	else if (info == XLOG_BRIN_REVMAP_EXTEND)
 	{
 		xl_brin_revmap_extend *xlrec = (xl_brin_revmap_extend *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/%u targetBlk %u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->targetBlk);
+		appendStringInfo(buf, "targetBlk %u", xlrec->targetBlk);
 	}
 }
 

@@ -14,7 +14,7 @@
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
 #include "access/xloginsert.h"
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 
@@ -186,7 +186,9 @@ typedef struct CheckpointStatsData
 
 extern CheckpointStatsData CheckpointStats;
 
-extern XLogRecPtr XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn);
+struct XLogRecData;
+
+extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata, XLogRecPtr fpw_lsn);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
@@ -198,8 +200,8 @@ extern XLogSegNo XLogGetLastRemovedSegno(void);
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
 extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
 
-extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void xlog_desc(StringInfo buf, XLogRecord *record);
+extern void xlog_redo(XLogReaderState *record);
+extern void xlog_desc(StringInfo buf, XLogReaderState *record);
 extern const char *xlog_identify(uint8 info);
 
 extern void issue_xlog_fsync(int fd, XLogSegNo segno);

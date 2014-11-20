@@ -20,18 +20,15 @@
 static MemoryContext opCtx;		/* working memory for operations */
 
 static void
-ginRedoClearIncompleteSplit(XLogRecPtr lsn, XLogRecord *record,
-							int block_index,
-							RelFileNode node, BlockNumber blkno)
+ginRedoClearIncompleteSplit(XLogReaderState *record, uint8 block_id)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		buffer;
 	Page		page;
 
-	if (XLogReadBufferForRedo(lsn, record, block_index, node, blkno, &buffer)
-		== BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedo(record, block_id, &buffer) == BLK_NEEDS_REDO)
 	{
 		page = (Page) BufferGetPage(buffer);
-
 		GinPageGetOpaque(page)->flags &= ~GIN_INCOMPLETE_SPLIT;
 
 		PageSetLSN(page, lsn);
@@ -42,18 +39,15 @@ ginRedoClearIncompleteSplit(XLogRecPtr lsn, XLogRecord *record,
 }
 
 static void
-ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
+ginRedoCreateIndex(XLogReaderState *record)
 {
-	RelFileNode *node = (RelFileNode *) XLogRecGetData(record);
+	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		RootBuffer,
 				MetaBuffer;
 	Page		page;
 
-	/* Backup blocks are not used in create_index records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
-	MetaBuffer = XLogReadBuffer(*node, GIN_METAPAGE_BLKNO, true);
-	Assert(BufferIsValid(MetaBuffer));
+	MetaBuffer = XLogInitBufferForRedo(record, 0);
+	Assert(BufferGetBlockNumber(MetaBuffer) == GIN_METAPAGE_BLKNO);
 	page = (Page) BufferGetPage(MetaBuffer);
 
 	GinInitMetabuffer(MetaBuffer);
@@ -61,8 +55,8 @@ ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(MetaBuffer);
 
-	RootBuffer = XLogReadBuffer(*node, GIN_ROOT_BLKNO, true);
-	Assert(BufferIsValid(RootBuffer));
+	RootBuffer = XLogInitBufferForRedo(record, 1);
+	Assert(BufferGetBlockNumber(RootBuffer) == GIN_ROOT_BLKNO);
 	page = (Page) BufferGetPage(RootBuffer);
 
 	GinInitBuffer(RootBuffer, GIN_LEAF);
@@ -75,18 +69,15 @@ ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-ginRedoCreatePTree(XLogRecPtr lsn, XLogRecord *record)
+ginRedoCreatePTree(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	ginxlogCreatePostingTree *data = (ginxlogCreatePostingTree *) XLogRecGetData(record);
 	char	   *ptr;
 	Buffer		buffer;
 	Page		page;
 
-	/* Backup blocks are not used in create_ptree records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
-	buffer = XLogReadBuffer(data->node, data->blkno, true);
-	Assert(BufferIsValid(buffer));
+	buffer = XLogInitBufferForRedo(record, 0);
 	page = (Page) BufferGetPage(buffer);
 
 	GinInitBuffer(buffer, GIN_DATA | GIN_LEAF | GIN_COMPRESSED);
@@ -328,16 +319,16 @@ ginRedoInsertData(Buffer buffer, bool isLeaf, BlockNumber rightblkno, void *rdat
 }
 
 static void
-ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
+ginRedoInsert(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	ginxlogInsert *data = (ginxlogInsert *) XLogRecGetData(record);
 	Buffer		buffer;
-	char	   *payload;
+#ifdef NOT_USED
 	BlockNumber leftChildBlkno = InvalidBlockNumber;
+#endif
 	BlockNumber rightChildBlkno = InvalidBlockNumber;
 	bool		isLeaf = (data->flags & GIN_INSERT_ISLEAF) != 0;
-
-	payload = XLogRecGetData(record) + sizeof(ginxlogInsert);
 
 	/*
 	 * First clear incomplete-split flag on child page if this finishes a
@@ -345,18 +336,23 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 	 */
 	if (!isLeaf)
 	{
+		char	   *payload = XLogRecGetData(record) + sizeof(ginxlogInsert);
+
+#ifdef NOT_USED
 		leftChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
+#endif
 		payload += sizeof(BlockIdData);
 		rightChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
 		payload += sizeof(BlockIdData);
 
-		ginRedoClearIncompleteSplit(lsn, record, 0, data->node, leftChildBlkno);
+		ginRedoClearIncompleteSplit(record, 1);
 	}
 
-	if (XLogReadBufferForRedo(lsn, record, isLeaf ? 0 : 1, data->node,
-							  data->blkno, &buffer) == BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
 		Page		page = BufferGetPage(buffer);
+		Size		len;
+		char	   *payload = XLogRecGetBlockData(record, 0, &len);
 
 		/* How to insert the payload is tree-type specific */
 		if (data->flags & GIN_INSERT_ISDATA)
@@ -378,161 +374,33 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-ginRedoSplitEntry(Page lpage, Page rpage, void *rdata)
-{
-	ginxlogSplitEntry *data = (ginxlogSplitEntry *) rdata;
-	IndexTuple	itup = (IndexTuple) ((char *) rdata + sizeof(ginxlogSplitEntry));
-	OffsetNumber i;
-
-	for (i = 0; i < data->separator; i++)
-	{
-		if (PageAddItem(lpage, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
-			elog(ERROR, "failed to add item to gin index page");
-		itup = (IndexTuple) (((char *) itup) + MAXALIGN(IndexTupleSize(itup)));
-	}
-
-	for (i = data->separator; i < data->nitem; i++)
-	{
-		if (PageAddItem(rpage, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
-			elog(ERROR, "failed to add item to gin index page");
-		itup = (IndexTuple) (((char *) itup) + MAXALIGN(IndexTupleSize(itup)));
-	}
-}
-
-static void
-ginRedoSplitData(Page lpage, Page rpage, void *rdata)
-{
-	bool		isleaf = GinPageIsLeaf(lpage);
-
-	if (isleaf)
-	{
-		ginxlogSplitDataLeaf *data = (ginxlogSplitDataLeaf *) rdata;
-		Pointer		lptr = (Pointer) rdata + sizeof(ginxlogSplitDataLeaf);
-		Pointer		rptr = lptr + data->lsize;
-
-		Assert(data->lsize > 0 && data->lsize <= GinDataPageMaxDataSize);
-		Assert(data->rsize > 0 && data->rsize <= GinDataPageMaxDataSize);
-
-		memcpy(GinDataLeafPageGetPostingList(lpage), lptr, data->lsize);
-		memcpy(GinDataLeafPageGetPostingList(rpage), rptr, data->rsize);
-
-		GinDataPageSetDataSize(lpage, data->lsize);
-		GinDataPageSetDataSize(rpage, data->rsize);
-		*GinDataPageGetRightBound(lpage) = data->lrightbound;
-		*GinDataPageGetRightBound(rpage) = data->rrightbound;
-	}
-	else
-	{
-		ginxlogSplitDataInternal *data = (ginxlogSplitDataInternal *) rdata;
-		PostingItem *items = (PostingItem *) ((char *) rdata + sizeof(ginxlogSplitDataInternal));
-		OffsetNumber i;
-		OffsetNumber maxoff;
-
-		for (i = 0; i < data->separator; i++)
-			GinDataPageAddPostingItem(lpage, &items[i], InvalidOffsetNumber);
-		for (i = data->separator; i < data->nitem; i++)
-			GinDataPageAddPostingItem(rpage, &items[i], InvalidOffsetNumber);
-
-		/* set up right key */
-		maxoff = GinPageGetOpaque(lpage)->maxoff;
-		*GinDataPageGetRightBound(lpage) = GinDataPageGetPostingItem(lpage, maxoff)->key;
-		*GinDataPageGetRightBound(rpage) = data->rightbound;
-	}
-}
-
-static void
-ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
+ginRedoSplit(XLogReaderState *record)
 {
 	ginxlogSplit *data = (ginxlogSplit *) XLogRecGetData(record);
 	Buffer		lbuffer,
-				rbuffer;
-	Page		lpage,
-				rpage;
-	uint32		flags;
-	uint32		lflags,
-				rflags;
-	char	   *payload;
+				rbuffer,
+				rootbuf;
 	bool		isLeaf = (data->flags & GIN_INSERT_ISLEAF) != 0;
-	bool		isData = (data->flags & GIN_INSERT_ISDATA) != 0;
 	bool		isRoot = (data->flags & GIN_SPLIT_ROOT) != 0;
-
-	payload = XLogRecGetData(record) + sizeof(ginxlogSplit);
 
 	/*
 	 * First clear incomplete-split flag on child page if this finishes a
 	 * split
 	 */
 	if (!isLeaf)
-		ginRedoClearIncompleteSplit(lsn, record, 0, data->node, data->leftChildBlkno);
+		ginRedoClearIncompleteSplit(record, 3);
 
-	flags = 0;
-	if (isLeaf)
-		flags |= GIN_LEAF;
-	if (isData)
-		flags |= GIN_DATA;
-	if (isLeaf && isData)
-		flags |= GIN_COMPRESSED;
+	if (XLogReadBufferForRedo(record, 0, &lbuffer) != BLK_RESTORED)
+		elog(ERROR, "GIN split record did not contain a full-page image of left page");
 
-	lflags = rflags = flags;
-	if (!isRoot)
-		lflags |= GIN_INCOMPLETE_SPLIT;
-
-	lbuffer = XLogReadBuffer(data->node, data->lblkno, true);
-	Assert(BufferIsValid(lbuffer));
-	lpage = (Page) BufferGetPage(lbuffer);
-	GinInitBuffer(lbuffer, lflags);
-
-	rbuffer = XLogReadBuffer(data->node, data->rblkno, true);
-	Assert(BufferIsValid(rbuffer));
-	rpage = (Page) BufferGetPage(rbuffer);
-	GinInitBuffer(rbuffer, rflags);
-
-	GinPageGetOpaque(lpage)->rightlink = BufferGetBlockNumber(rbuffer);
-	GinPageGetOpaque(rpage)->rightlink = isRoot ? InvalidBlockNumber : data->rrlink;
-
-	/* Do the tree-type specific portion to restore the page contents */
-	if (isData)
-		ginRedoSplitData(lpage, rpage, payload);
-	else
-		ginRedoSplitEntry(lpage, rpage, payload);
-
-	PageSetLSN(rpage, lsn);
-	MarkBufferDirty(rbuffer);
-
-	PageSetLSN(lpage, lsn);
-	MarkBufferDirty(lbuffer);
+	if (XLogReadBufferForRedo(record, 1, &rbuffer) != BLK_RESTORED)
+		elog(ERROR, "GIN split record did not contain a full-page image of right page");
 
 	if (isRoot)
 	{
-		BlockNumber rootBlkno = data->rrlink;
-		Buffer		rootBuf = XLogReadBuffer(data->node, rootBlkno, true);
-		Page		rootPage = BufferGetPage(rootBuf);
-
-		GinInitBuffer(rootBuf, flags & ~GIN_LEAF & ~GIN_COMPRESSED);
-
-		if (isData)
-		{
-			Assert(rootBlkno != GIN_ROOT_BLKNO);
-			ginDataFillRoot(NULL, BufferGetPage(rootBuf),
-							BufferGetBlockNumber(lbuffer),
-							BufferGetPage(lbuffer),
-							BufferGetBlockNumber(rbuffer),
-							BufferGetPage(rbuffer));
-		}
-		else
-		{
-			Assert(rootBlkno == GIN_ROOT_BLKNO);
-			ginEntryFillRoot(NULL, BufferGetPage(rootBuf),
-							 BufferGetBlockNumber(lbuffer),
-							 BufferGetPage(lbuffer),
-							 BufferGetBlockNumber(rbuffer),
-							 BufferGetPage(rbuffer));
-		}
-
-		PageSetLSN(rootPage, lsn);
-
-		MarkBufferDirty(rootBuf);
-		UnlockReleaseBuffer(rootBuf);
+		if (XLogReadBufferForRedo(record, 2, &rootbuf) != BLK_RESTORED)
+			elog(ERROR, "GIN split record did not contain a full-page image of root page");
+		UnlockReleaseBuffer(rootbuf);
 	}
 
 	UnlockReleaseBuffer(rbuffer);
@@ -544,54 +412,30 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
  * a XLOG_FPI record.
  */
 static void
-ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
+ginRedoVacuumPage(XLogReaderState *record)
 {
-	ginxlogVacuumPage *xlrec = (ginxlogVacuumPage *) XLogRecGetData(record);
-	char	   *blk = ((char *) xlrec) + sizeof(ginxlogVacuumPage);
 	Buffer		buffer;
-	Page		page;
 
-	Assert(xlrec->hole_offset < BLCKSZ);
-	Assert(xlrec->hole_length < BLCKSZ);
-
-	/* Backup blocks are not used, we'll re-initialize the page always. */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
-	buffer = XLogReadBuffer(xlrec->node, xlrec->blkno, true);
-	if (!BufferIsValid(buffer))
-		return;
-	page = (Page) BufferGetPage(buffer);
-
-	if (xlrec->hole_length == 0)
+	if (XLogReadBufferForRedo(record, 0, &buffer) != BLK_RESTORED)
 	{
-		memcpy((char *) page, blk, BLCKSZ);
+		elog(ERROR, "replay of gin entry tree page vacuum did not restore the page");
 	}
-	else
-	{
-		memcpy((char *) page, blk, xlrec->hole_offset);
-		/* must zero-fill the hole */
-		MemSet((char *) page + xlrec->hole_offset, 0, xlrec->hole_length);
-		memcpy((char *) page + (xlrec->hole_offset + xlrec->hole_length),
-			   blk + xlrec->hole_offset,
-			   BLCKSZ - (xlrec->hole_offset + xlrec->hole_length));
-	}
-
-	PageSetLSN(page, lsn);
-
-	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
 
 static void
-ginRedoVacuumDataLeafPage(XLogRecPtr lsn, XLogRecord *record)
+ginRedoVacuumDataLeafPage(XLogReaderState *record)
 {
-	ginxlogVacuumDataLeafPage *xlrec = (ginxlogVacuumDataLeafPage *) XLogRecGetData(record);
+	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		buffer;
 
-	if (XLogReadBufferForRedo(lsn, record, 0, xlrec->node, xlrec->blkno,
-							  &buffer) == BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
 		Page		page = BufferGetPage(buffer);
+		Size		len;
+		ginxlogVacuumDataLeafPage *xlrec;
+
+		xlrec = (ginxlogVacuumDataLeafPage *) XLogRecGetBlockData(record, 0, &len);
 
 		Assert(GinPageIsLeaf(page));
 		Assert(GinPageIsData(page));
@@ -605,30 +449,27 @@ ginRedoVacuumDataLeafPage(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
+ginRedoDeletePage(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	ginxlogDeletePage *data = (ginxlogDeletePage *) XLogRecGetData(record);
 	Buffer		dbuffer;
 	Buffer		pbuffer;
 	Buffer		lbuffer;
 	Page		page;
 
-	if (XLogReadBufferForRedo(lsn, record, 0, data->node, data->blkno, &dbuffer)
-		== BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedo(record, 0, &dbuffer) == BLK_NEEDS_REDO)
 	{
 		page = BufferGetPage(dbuffer);
-
 		Assert(GinPageIsData(page));
 		GinPageGetOpaque(page)->flags = GIN_DELETED;
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(dbuffer);
 	}
 
-	if (XLogReadBufferForRedo(lsn, record, 1, data->node, data->parentBlkno,
-							  &pbuffer) == BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedo(record, 1, &pbuffer) == BLK_NEEDS_REDO)
 	{
 		page = BufferGetPage(pbuffer);
-
 		Assert(GinPageIsData(page));
 		Assert(!GinPageIsLeaf(page));
 		GinPageDeletePostingItem(page, data->parentOffset);
@@ -636,11 +477,9 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		MarkBufferDirty(pbuffer);
 	}
 
-	if (XLogReadBufferForRedo(lsn, record, 2, data->node, data->leftBlkno,
-							  &lbuffer) == BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedo(record, 2, &lbuffer) == BLK_NEEDS_REDO)
 	{
 		page = BufferGetPage(lbuffer);
-
 		Assert(GinPageIsData(page));
 		GinPageGetOpaque(page)->rightlink = data->rightLink;
 		PageSetLSN(page, lsn);
@@ -656,8 +495,9 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
+ginRedoUpdateMetapage(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	ginxlogUpdateMeta *data = (ginxlogUpdateMeta *) XLogRecGetData(record);
 	Buffer		metabuffer;
 	Page		metapage;
@@ -668,9 +508,8 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 	 * image, so restore the metapage unconditionally without looking at the
 	 * LSN, to avoid torn page hazards.
 	 */
-	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
-	if (!BufferIsValid(metabuffer))
-		return;					/* assume index was deleted, nothing to do */
+	metabuffer = XLogInitBufferForRedo(record, 0);
+	Assert(BufferGetBlockNumber(metabuffer) == GIN_METAPAGE_BLKNO);
 	metapage = BufferGetPage(metabuffer);
 
 	memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
@@ -682,17 +521,18 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 		/*
 		 * insert into tail page
 		 */
-		if (XLogReadBufferForRedo(lsn, record, 0, data->node,
-								  data->metadata.tail, &buffer)
-			== BLK_NEEDS_REDO)
+		if (XLogReadBufferForRedo(record, 1, &buffer) == BLK_NEEDS_REDO)
 		{
 			Page		page = BufferGetPage(buffer);
 			OffsetNumber off;
 			int			i;
 			Size		tupsize;
+			char	   *payload;
 			IndexTuple	tuples;
+			Size		totaltupsize;
 
-			tuples = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogUpdateMeta));
+			payload = XLogRecGetBlockData(record, 1, &totaltupsize);
+			tuples = (IndexTuple) payload;
 
 			if (PageIsEmpty(page))
 				off = FirstOffsetNumber;
@@ -711,6 +551,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 
 				off++;
 			}
+			Assert(payload + totaltupsize == (char *) tuples);
 
 			/*
 			 * Increase counter of heap tuples
@@ -728,8 +569,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 		/*
 		 * New tail
 		 */
-		if (XLogReadBufferForRedo(lsn, record, 0, data->node, data->prevTail,
-								  &buffer) == BLK_NEEDS_REDO)
+		if (XLogReadBufferForRedo(record, 1, &buffer) == BLK_NEEDS_REDO)
 		{
 			Page		page = BufferGetPage(buffer);
 
@@ -746,8 +586,9 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
+ginRedoInsertListPage(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	ginxlogInsertListPage *data = (ginxlogInsertListPage *) XLogRecGetData(record);
 	Buffer		buffer;
 	Page		page;
@@ -755,15 +596,12 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 				off = FirstOffsetNumber;
 	int			i,
 				tupsize;
-	IndexTuple	tuples = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsertListPage));
+	char	   *payload;
+	IndexTuple	tuples;
+	Size		totaltupsize;
 
-	/*
-	 * Backup blocks are not used, we always re-initialize the page.
-	 */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
-	buffer = XLogReadBuffer(data->node, data->blkno, true);
-	Assert(BufferIsValid(buffer));
+	/* We always re-initialize the page. */
+	buffer = XLogInitBufferForRedo(record, 0);
 	page = BufferGetPage(buffer);
 
 	GinInitBuffer(buffer, GIN_LIST);
@@ -779,6 +617,9 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 		GinPageGetOpaque(page)->maxoff = 0;
 	}
 
+	payload = XLogRecGetBlockData(record, 0, &totaltupsize);
+
+	tuples = (IndexTuple) payload;
 	for (i = 0; i < data->ntuples; i++)
 	{
 		tupsize = IndexTupleSize(tuples);
@@ -791,6 +632,7 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 		tuples = (IndexTuple) (((char *) tuples) + tupsize);
 		off++;
 	}
+	Assert((char *) tuples == payload + totaltupsize);
 
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buffer);
@@ -799,20 +641,19 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
+ginRedoDeleteListPages(XLogReaderState *record)
 {
+	XLogRecPtr	lsn = record->EndRecPtr;
 	ginxlogDeleteListPages *data = (ginxlogDeleteListPages *) XLogRecGetData(record);
 	Buffer		metabuffer;
 	Page		metapage;
 	int			i;
 
-	/* Backup blocks are not used in delete_listpage records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
-	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
-	if (!BufferIsValid(metabuffer))
-		return;					/* assume index was deleted, nothing to do */
+	metabuffer = XLogInitBufferForRedo(record, 0);
+	Assert(BufferGetBlockNumber(metabuffer) == GIN_METAPAGE_BLKNO);
 	metapage = BufferGetPage(metabuffer);
+
+	GinInitPage(metapage, GIN_META, BufferGetPageSize(metabuffer));
 
 	memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 	PageSetLSN(metapage, lsn);
@@ -838,7 +679,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 		Buffer		buffer;
 		Page		page;
 
-		buffer = XLogReadBuffer(data->node, data->toDelete[i], true);
+		buffer = XLogInitBufferForRedo(record, i + 1);
 		page = BufferGetPage(buffer);
 		GinInitBuffer(buffer, GIN_DELETED);
 
@@ -851,9 +692,9 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-gin_redo(XLogRecPtr lsn, XLogRecord *record)
+gin_redo(XLogReaderState *record)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 	MemoryContext oldCtx;
 
 	/*
@@ -866,34 +707,34 @@ gin_redo(XLogRecPtr lsn, XLogRecord *record)
 	switch (info)
 	{
 		case XLOG_GIN_CREATE_INDEX:
-			ginRedoCreateIndex(lsn, record);
+			ginRedoCreateIndex(record);
 			break;
 		case XLOG_GIN_CREATE_PTREE:
-			ginRedoCreatePTree(lsn, record);
+			ginRedoCreatePTree(record);
 			break;
 		case XLOG_GIN_INSERT:
-			ginRedoInsert(lsn, record);
+			ginRedoInsert(record);
 			break;
 		case XLOG_GIN_SPLIT:
-			ginRedoSplit(lsn, record);
+			ginRedoSplit(record);
 			break;
 		case XLOG_GIN_VACUUM_PAGE:
-			ginRedoVacuumPage(lsn, record);
+			ginRedoVacuumPage(record);
 			break;
 		case XLOG_GIN_VACUUM_DATA_LEAF_PAGE:
-			ginRedoVacuumDataLeafPage(lsn, record);
+			ginRedoVacuumDataLeafPage(record);
 			break;
 		case XLOG_GIN_DELETE_PAGE:
-			ginRedoDeletePage(lsn, record);
+			ginRedoDeletePage(record);
 			break;
 		case XLOG_GIN_UPDATE_META_PAGE:
-			ginRedoUpdateMetapage(lsn, record);
+			ginRedoUpdateMetapage(record);
 			break;
 		case XLOG_GIN_INSERT_LISTPAGE:
-			ginRedoInsertListPage(lsn, record);
+			ginRedoInsertListPage(record);
 			break;
 		case XLOG_GIN_DELETE_LISTPAGE:
-			ginRedoDeleteListPages(lsn, record);
+			ginRedoDeleteListPages(record);
 			break;
 		default:
 			elog(PANIC, "gin_redo: unknown op code %u", info);

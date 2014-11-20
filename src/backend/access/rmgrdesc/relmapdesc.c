@@ -17,10 +17,10 @@
 #include "utils/relmapper.h"
 
 void
-relmap_desc(StringInfo buf, XLogRecord *record)
+relmap_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info == XLOG_RELMAP_UPDATE)
 	{

@@ -666,19 +666,16 @@ brinbuild(PG_FUNCTION_ARGS)
 	{
 		xl_brin_createidx xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata;
 		Page		page;
 
-		xlrec.node = index->rd_node;
 		xlrec.version = BRIN_CURRENT_VERSION;
 		xlrec.pagesPerRange = BrinGetPagesPerRange(index);
 
-		rdata.buffer = InvalidBuffer;
-		rdata.data = (char *) &xlrec;
-		rdata.len = SizeOfBrinCreateIdx;
-		rdata.next = NULL;
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfBrinCreateIdx);
+		XLogRegisterBuffer(0, meta, REGBUF_WILL_INIT);
 
-		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_CREATE_INDEX, &rdata);
+		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_CREATE_INDEX);
 
 		page = BufferGetPage(meta);
 		PageSetLSN(page, recptr);

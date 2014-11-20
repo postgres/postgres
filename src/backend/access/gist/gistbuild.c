@@ -183,14 +183,11 @@ gistbuild(PG_FUNCTION_ARGS)
 	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr	recptr;
-		XLogRecData rdata;
 
-		rdata.data = (char *) &(index->rd_node);
-		rdata.len = sizeof(RelFileNode);
-		rdata.buffer = InvalidBuffer;
-		rdata.next = NULL;
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
 
-		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_CREATE_INDEX, &rdata);
+		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_CREATE_INDEX);
 		PageSetLSN(page, recptr);
 	}
 	else

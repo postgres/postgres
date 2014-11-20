@@ -236,18 +236,25 @@ _bt_getroot(Relation rel, int access)
 		{
 			xl_btree_newroot xlrec;
 			XLogRecPtr	recptr;
-			XLogRecData rdata;
+			xl_btree_metadata md;
 
-			xlrec.node = rel->rd_node;
+			XLogBeginInsert();
+			XLogRegisterBuffer(0, rootbuf, REGBUF_WILL_INIT);
+			XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT);
+
+			md.root = rootblkno;
+			md.level = 0;
+			md.fastroot = rootblkno;
+			md.fastlevel = 0;
+
+			XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));
+
 			xlrec.rootblk = rootblkno;
 			xlrec.level = 0;
 
-			rdata.data = (char *) &xlrec;
-			rdata.len = SizeOfBtreeNewroot;
-			rdata.buffer = InvalidBuffer;
-			rdata.next = NULL;
+			XLogRegisterData((char *) &xlrec, SizeOfBtreeNewroot);
 
-			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, &rdata);
+			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT);
 
 			PageSetLSN(rootpage, recptr);
 			PageSetLSN(metapg, recptr);
@@ -528,39 +535,23 @@ _bt_checkpage(Relation rel, Buffer buf)
 static void
 _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedXid)
 {
-	if (!RelationNeedsWAL(rel))
-		return;
-
-	/* No ereport(ERROR) until changes are logged */
-	START_CRIT_SECTION();
+	xl_btree_reuse_page xlrec_reuse;
 
 	/*
-	 * We don't do MarkBufferDirty here because we're about to initialise the
-	 * page, and nobody else can see it yet.
+	 * Note that we don't register the buffer with the record, because this
+	 * operation doesn't modify the page. This record only exists to provide a
+	 * conflict point for Hot Standby.
 	 */
 
 	/* XLOG stuff */
-	{
-		XLogRecData rdata[1];
-		xl_btree_reuse_page xlrec_reuse;
+	xlrec_reuse.node = rel->rd_node;
+	xlrec_reuse.block = blkno;
+	xlrec_reuse.latestRemovedXid = latestRemovedXid;
 
-		xlrec_reuse.node = rel->rd_node;
-		xlrec_reuse.block = blkno;
-		xlrec_reuse.latestRemovedXid = latestRemovedXid;
-		rdata[0].data = (char *) &xlrec_reuse;
-		rdata[0].len = SizeOfBtreeReusePage;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = NULL;
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec_reuse, SizeOfBtreeReusePage);
 
-		XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
-
-		/*
-		 * We don't do PageSetLSN here because we're about to initialise the
-		 * page, so no need.
-		 */
-	}
-
-	END_CRIT_SECTION();
+	XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE);
 }
 
 /*
@@ -633,7 +624,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 					 * WAL record that will allow us to conflict with queries
 					 * running on standby.
 					 */
-					if (XLogStandbyInfoActive())
+					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
 					{
 						BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -830,17 +821,13 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	if (RelationNeedsWAL(rel))
 	{
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 		xl_btree_vacuum xlrec_vacuum;
 
-		xlrec_vacuum.node = rel->rd_node;
-		xlrec_vacuum.block = BufferGetBlockNumber(buf);
-
 		xlrec_vacuum.lastBlockVacuumed = lastBlockVacuumed;
-		rdata[0].data = (char *) &xlrec_vacuum;
-		rdata[0].len = SizeOfBtreeVacuum;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
+
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+		XLogRegisterData((char *) &xlrec_vacuum, SizeOfBtreeVacuum);
 
 		/*
 		 * The target-offsets array is not in the buffer, but pretend that it
@@ -848,20 +835,9 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 		 * need not be stored too.
 		 */
 		if (nitems > 0)
-		{
-			rdata[1].data = (char *) itemnos;
-			rdata[1].len = nitems * sizeof(OffsetNumber);
-		}
-		else
-		{
-			rdata[1].data = NULL;
-			rdata[1].len = 0;
-		}
-		rdata[1].buffer = buf;
-		rdata[1].buffer_std = true;
-		rdata[1].next = NULL;
+			XLogRegisterBufData(0, (char *) itemnos, nitems * sizeof(OffsetNumber));
 
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM);
 
 		PageSetLSN(page, recptr);
 	}
@@ -919,36 +895,23 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	if (RelationNeedsWAL(rel))
 	{
 		XLogRecPtr	recptr;
-		XLogRecData rdata[3];
 		xl_btree_delete xlrec_delete;
 
-		xlrec_delete.node = rel->rd_node;
 		xlrec_delete.hnode = heapRel->rd_node;
-		xlrec_delete.block = BufferGetBlockNumber(buf);
 		xlrec_delete.nitems = nitems;
 
-		rdata[0].data = (char *) &xlrec_delete;
-		rdata[0].len = SizeOfBtreeDelete;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+		XLogRegisterData((char *) &xlrec_delete, SizeOfBtreeDelete);
 
 		/*
 		 * We need the target-offsets array whether or not we store the whole
 		 * buffer, to allow us to find the latestRemovedXid on a standby
 		 * server.
 		 */
-		rdata[1].data = (char *) itemnos;
-		rdata[1].len = nitems * sizeof(OffsetNumber);
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = &(rdata[2]);
+		XLogRegisterData((char *) itemnos, nitems * sizeof(OffsetNumber));
 
-		rdata[2].data = NULL;
-		rdata[2].len = 0;
-		rdata[2].buffer = buf;
-		rdata[2].buffer_std = true;
-		rdata[2].next = NULL;
-
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE);
 
 		PageSetLSN(page, recptr);
 	}
@@ -1493,33 +1456,26 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	{
 		xl_btree_mark_page_halfdead xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 
-		xlrec.target.node = rel->rd_node;
-		ItemPointerSet(&(xlrec.target.tid), BufferGetBlockNumber(topparent), topoff);
+		xlrec.poffset = topoff;
 		xlrec.leafblk = leafblkno;
 		if (target != leafblkno)
 			xlrec.topparent = target;
 		else
 			xlrec.topparent = InvalidBlockNumber;
 
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, leafbuf, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(1, topparent, REGBUF_STANDARD);
+
 		page = BufferGetPage(leafbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		xlrec.leftblk = opaque->btpo_prev;
 		xlrec.rightblk = opaque->btpo_next;
 
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeMarkPageHalfDead;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
+		XLogRegisterData((char *) &xlrec, SizeOfBtreeMarkPageHalfDead);
 
-		rdata[1].data = NULL;
-		rdata[1].len = 0;
-		rdata[1].buffer = topparent;
-		rdata[1].buffer_std = true;
-		rdata[1].next = NULL;
-
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_MARK_PAGE_HALFDEAD, rdata);
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_MARK_PAGE_HALFDEAD);
 
 		page = BufferGetPage(topparent);
 		PageSetLSN(page, recptr);
@@ -1826,63 +1782,44 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 		xl_btree_metadata xlmeta;
 		uint8		xlinfo;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[4];
-		XLogRecData *nextrdata;
 
-		xlrec.node = rel->rd_node;
+		XLogBeginInsert();
+
+		XLogRegisterBuffer(0, buf, REGBUF_WILL_INIT);
+		if (BufferIsValid(lbuf))
+			XLogRegisterBuffer(1, lbuf, REGBUF_STANDARD);
+		XLogRegisterBuffer(2, rbuf, REGBUF_STANDARD);
+		if (target != leafblkno)
+			XLogRegisterBuffer(3, leafbuf, REGBUF_WILL_INIT);
 
 		/* information on the unlinked block */
-		xlrec.deadblk = target;
 		xlrec.leftsib = leftsib;
 		xlrec.rightsib = rightsib;
 		xlrec.btpo_xact = opaque->btpo.xact;
 
 		/* information needed to recreate the leaf block (if not the target) */
-		xlrec.leafblk = leafblkno;
 		xlrec.leafleftsib = leafleftsib;
 		xlrec.leafrightsib = leafrightsib;
 		xlrec.topparent = nextchild;
 
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeUnlinkPage;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = nextrdata = &(rdata[1]);
+		XLogRegisterData((char *) &xlrec, SizeOfBtreeUnlinkPage);
 
 		if (BufferIsValid(metabuf))
 		{
+			XLogRegisterBuffer(4, metabuf, REGBUF_WILL_INIT);
+
 			xlmeta.root = metad->btm_root;
 			xlmeta.level = metad->btm_level;
 			xlmeta.fastroot = metad->btm_fastroot;
 			xlmeta.fastlevel = metad->btm_fastlevel;
 
-			nextrdata->data = (char *) &xlmeta;
-			nextrdata->len = sizeof(xl_btree_metadata);
-			nextrdata->buffer = InvalidBuffer;
-			nextrdata->next = nextrdata + 1;
-			nextrdata++;
+			XLogRegisterBufData(4, (char *) &xlmeta, sizeof(xl_btree_metadata));
 			xlinfo = XLOG_BTREE_UNLINK_PAGE_META;
 		}
 		else
 			xlinfo = XLOG_BTREE_UNLINK_PAGE;
 
-		nextrdata->data = NULL;
-		nextrdata->len = 0;
-		nextrdata->buffer = rbuf;
-		nextrdata->buffer_std = true;
-		nextrdata->next = NULL;
-
-		if (BufferIsValid(lbuf))
-		{
-			nextrdata->next = nextrdata + 1;
-			nextrdata++;
-			nextrdata->data = NULL;
-			nextrdata->len = 0;
-			nextrdata->buffer = lbuf;
-			nextrdata->buffer_std = true;
-			nextrdata->next = NULL;
-		}
-
-		recptr = XLogInsert(RM_BTREE_ID, xlinfo, rdata);
+		recptr = XLogInsert(RM_BTREE_ID, xlinfo);
 
 		if (BufferIsValid(metabuf))
 		{

@@ -140,27 +140,19 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		/* XLOG stuff */
 		if (RelationNeedsWAL(idxrel))
 		{
-			BlockNumber blk = BufferGetBlockNumber(oldbuf);
 			xl_brin_samepage_update xlrec;
 			XLogRecPtr	recptr;
-			XLogRecData rdata[2];
 			uint8		info = XLOG_BRIN_SAMEPAGE_UPDATE;
 
-			xlrec.node = idxrel->rd_node;
-			ItemPointerSetBlockNumber(&xlrec.tid, blk);
-			ItemPointerSetOffsetNumber(&xlrec.tid, oldoff);
-			rdata[0].data = (char *) &xlrec;
-			rdata[0].len = SizeOfBrinSamepageUpdate;
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].next = &(rdata[1]);
+			xlrec.offnum = oldoff;
 
-			rdata[1].data = (char *) newtup;
-			rdata[1].len = newsz;
-			rdata[1].buffer = oldbuf;
-			rdata[1].buffer_std = true;
-			rdata[1].next = NULL;
+			XLogBeginInsert();
+			XLogRegisterData((char *) &xlrec, SizeOfBrinSamepageUpdate);
 
-			recptr = XLogInsert(RM_BRIN_ID, info, rdata);
+			XLogRegisterBuffer(0, oldbuf, REGBUF_STANDARD);
+			XLogRegisterBufData(0, (char *) newtup, newsz);
+
+			recptr = XLogInsert(RM_BRIN_ID, info);
 
 			PageSetLSN(oldpage, recptr);
 		}
@@ -211,43 +203,30 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		{
 			xl_brin_update xlrec;
 			XLogRecPtr	recptr;
-			XLogRecData rdata[4];
 			uint8		info;
 
 			info = XLOG_BRIN_UPDATE | (extended ? XLOG_BRIN_INIT_PAGE : 0);
 
-			xlrec.insert.node = idxrel->rd_node;
-			ItemPointerSet(&xlrec.insert.tid, BufferGetBlockNumber(newbuf), newoff);
+			xlrec.insert.offnum = newoff;
 			xlrec.insert.heapBlk = heapBlk;
-			xlrec.insert.tuplen = newsz;
-			xlrec.insert.revmapBlk = BufferGetBlockNumber(revmapbuf);
 			xlrec.insert.pagesPerRange = pagesPerRange;
-			ItemPointerSet(&xlrec.oldtid, BufferGetBlockNumber(oldbuf), oldoff);
+			xlrec.oldOffnum = oldoff;
 
-			rdata[0].data = (char *) &xlrec;
-			rdata[0].len = SizeOfBrinUpdate;
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].next = &(rdata[1]);
+			XLogBeginInsert();
 
-			rdata[1].data = (char *) newtup;
-			rdata[1].len = newsz;
-			rdata[1].buffer = extended ? InvalidBuffer : newbuf;
-			rdata[1].buffer_std = true;
-			rdata[1].next = &(rdata[2]);
+			/* new page */
+			XLogRegisterData((char *) &xlrec, SizeOfBrinUpdate);
 
-			rdata[2].data = (char *) NULL;
-			rdata[2].len = 0;
-			rdata[2].buffer = revmapbuf;
-			rdata[2].buffer_std = true;
-			rdata[2].next = &(rdata[3]);
+			XLogRegisterBuffer(0, newbuf, REGBUF_STANDARD | (extended ? REGBUF_WILL_INIT : 0));
+			XLogRegisterBufData(0, (char *) newtup, newsz);
 
-			rdata[3].data = (char *) NULL;
-			rdata[3].len = 0;
-			rdata[3].buffer = oldbuf;
-			rdata[3].buffer_std = true;
-			rdata[3].next = NULL;
+			/* revmap page */
+			XLogRegisterBuffer(1, revmapbuf, REGBUF_STANDARD);
 
-			recptr = XLogInsert(RM_BRIN_ID, info, rdata);
+			/* old page */
+			XLogRegisterBuffer(2, oldbuf, REGBUF_STANDARD);
+
+			recptr = XLogInsert(RM_BRIN_ID, info);
 
 			PageSetLSN(oldpage, recptr);
 			PageSetLSN(newpage, recptr);
@@ -354,36 +333,22 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	{
 		xl_brin_insert xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[3];
 		uint8		info;
 
 		info = XLOG_BRIN_INSERT | (extended ? XLOG_BRIN_INIT_PAGE : 0);
-		xlrec.node = idxrel->rd_node;
 		xlrec.heapBlk = heapBlk;
 		xlrec.pagesPerRange = pagesPerRange;
-		xlrec.revmapBlk = BufferGetBlockNumber(revmapbuf);
-		xlrec.tuplen = itemsz;
-		ItemPointerSet(&xlrec.tid, blk, off);
+		xlrec.offnum = off;
 
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBrinInsert;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].buffer_std = false;
-		rdata[0].next = &(rdata[1]);
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfBrinInsert);
 
-		rdata[1].data = (char *) tup;
-		rdata[1].len = itemsz;
-		rdata[1].buffer = extended ? InvalidBuffer : *buffer;
-		rdata[1].buffer_std = true;
-		rdata[1].next = &(rdata[2]);
+		XLogRegisterBuffer(0, *buffer, REGBUF_STANDARD | (extended ? REGBUF_WILL_INIT : 0));
+		XLogRegisterBufData(0, (char *) tup, itemsz);
 
-		rdata[2].data = (char *) NULL;
-		rdata[2].len = 0;
-		rdata[2].buffer = revmapbuf;
-		rdata[2].buffer_std = false;
-		rdata[2].next = NULL;
+		XLogRegisterBuffer(1, revmapbuf, 0);
 
-		recptr = XLogInsert(RM_BRIN_ID, info, rdata);
+		recptr = XLogInsert(RM_BRIN_ID, info);
 
 		PageSetLSN(page, recptr);
 		PageSetLSN(BufferGetPage(revmapbuf), recptr);

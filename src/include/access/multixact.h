@@ -11,7 +11,7 @@
 #ifndef MULTIXACT_H
 #define MULTIXACT_H
 
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 
 
@@ -135,8 +135,8 @@ extern void multixact_twophase_postcommit(TransactionId xid, uint16 info,
 extern void multixact_twophase_postabort(TransactionId xid, uint16 info,
 							 void *recdata, uint32 len);
 
-extern void multixact_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void multixact_desc(StringInfo buf, XLogRecord *record);
+extern void multixact_redo(XLogReaderState *record);
+extern void multixact_desc(StringInfo buf, XLogReaderState *record);
 extern const char *multixact_identify(uint8 info);
 extern char *mxid_to_string(MultiXactId multi, int nmembers,
 			   MultiXactMember *members);

@@ -14,7 +14,7 @@
 #ifndef STANDBY_H
 #define STANDBY_H
 
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "storage/lock.h"
 #include "storage/procsignal.h"
@@ -82,8 +82,8 @@ typedef struct xl_running_xacts
 
 
 /* Recovery handlers for the Standby Rmgr (RM_STANDBY_ID) */
-extern void standby_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void standby_desc(StringInfo buf, XLogRecord *record);
+extern void standby_redo(XLogReaderState *record);
+extern void standby_desc(StringInfo buf, XLogReaderState *record);
 extern const char *standby_identify(uint8 info);
 
 /*

@@ -16,70 +16,66 @@
 
 #include "access/spgist_private.h"
 
-static void
-out_target(StringInfo buf, RelFileNode node)
-{
-	appendStringInfo(buf, "rel %u/%u/%u ",
-					 node.spcNode, node.dbNode, node.relNode);
-}
-
 void
-spg_desc(StringInfo buf, XLogRecord *record)
+spg_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	switch (info)
 	{
 		case XLOG_SPGIST_CREATE_INDEX:
-			appendStringInfo(buf, "rel %u/%u/%u",
-							 ((RelFileNode *) rec)->spcNode,
-							 ((RelFileNode *) rec)->dbNode,
-							 ((RelFileNode *) rec)->relNode);
 			break;
 		case XLOG_SPGIST_ADD_LEAF:
-			out_target(buf, ((spgxlogAddLeaf *) rec)->node);
-			appendStringInfo(buf, "%u",
-							 ((spgxlogAddLeaf *) rec)->blknoLeaf);
+			{
+				spgxlogAddLeaf *xlrec = (spgxlogAddLeaf *) rec;
+
+				appendStringInfo(buf, "add leaf to page");
+				appendStringInfo(buf, "; off %u; headoff %u; parentoff %u",
+								 xlrec->offnumLeaf, xlrec->offnumHeadLeaf,
+								 xlrec->offnumParent);
+				if (xlrec->newPage)
+					appendStringInfo(buf, " (newpage)");
+				if (xlrec->storesNulls)
+					appendStringInfo(buf, " (nulls)");
+			}
 			break;
 		case XLOG_SPGIST_MOVE_LEAFS:
-			out_target(buf, ((spgxlogMoveLeafs *) rec)->node);
-			appendStringInfo(buf, "%u leafs from page %u to page %u",
-							 ((spgxlogMoveLeafs *) rec)->nMoves,
-							 ((spgxlogMoveLeafs *) rec)->blknoSrc,
-							 ((spgxlogMoveLeafs *) rec)->blknoDst);
+			appendStringInfo(buf, "%u leafs",
+							 ((spgxlogMoveLeafs *) rec)->nMoves);
 			break;
 		case XLOG_SPGIST_ADD_NODE:
-			out_target(buf, ((spgxlogAddNode *) rec)->node);
-			appendStringInfo(buf, "%u:%u",
-							 ((spgxlogAddNode *) rec)->blkno,
+			appendStringInfo(buf, "off %u",
 							 ((spgxlogAddNode *) rec)->offnum);
 			break;
 		case XLOG_SPGIST_SPLIT_TUPLE:
-			out_target(buf, ((spgxlogSplitTuple *) rec)->node);
-			appendStringInfo(buf, "%u:%u to %u:%u",
-							 ((spgxlogSplitTuple *) rec)->blknoPrefix,
+			appendStringInfo(buf, "prefix off: %u, postfix off: %u (same %d, new %d)",
 							 ((spgxlogSplitTuple *) rec)->offnumPrefix,
-							 ((spgxlogSplitTuple *) rec)->blknoPostfix,
-							 ((spgxlogSplitTuple *) rec)->offnumPostfix);
+							 ((spgxlogSplitTuple *) rec)->offnumPostfix,
+							 ((spgxlogSplitTuple *) rec)->postfixBlkSame,
+							 ((spgxlogSplitTuple *) rec)->newPage
+				);
 			break;
 		case XLOG_SPGIST_PICKSPLIT:
-			out_target(buf, ((spgxlogPickSplit *) rec)->node);
+			{
+				spgxlogPickSplit *xlrec = (spgxlogPickSplit *) rec;
+
+				appendStringInfo(buf, "ndel %u; nins %u",
+								 xlrec->nDelete, xlrec->nInsert);
+				if (xlrec->innerIsParent)
+					appendStringInfo(buf, " (innerIsParent)");
+				if (xlrec->isRootSplit)
+					appendStringInfo(buf, " (isRootSplit)");
+			}
 			break;
 		case XLOG_SPGIST_VACUUM_LEAF:
-			out_target(buf, ((spgxlogVacuumLeaf *) rec)->node);
-			appendStringInfo(buf, "page %u",
-							 ((spgxlogVacuumLeaf *) rec)->blkno);
+			/* no further information */
 			break;
 		case XLOG_SPGIST_VACUUM_ROOT:
-			out_target(buf, ((spgxlogVacuumRoot *) rec)->node);
-			appendStringInfo(buf, "page %u",
-							 ((spgxlogVacuumRoot *) rec)->blkno);
+			/* no further information */
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
-			out_target(buf, ((spgxlogVacuumRedirect *) rec)->node);
-			appendStringInfo(buf, "page %u, newest XID %u",
-							 ((spgxlogVacuumRedirect *) rec)->blkno,
+			appendStringInfo(buf, "newest XID %u",
 						 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
 			break;
 	}

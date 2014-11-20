@@ -605,19 +605,17 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 	{
 		XLogRecPtr	recptr;
 		ginxlogUpdateMeta data;
-		XLogRecData rdata;
 
 		data.node = index->rd_node;
 		data.ntuples = 0;
 		data.newRightlink = data.prevTail = InvalidBlockNumber;
 		memcpy(&data.metadata, metadata, sizeof(GinMetaPageData));
 
-		rdata.buffer = InvalidBuffer;
-		rdata.data = (char *) &data;
-		rdata.len = sizeof(ginxlogUpdateMeta);
-		rdata.next = NULL;
+		XLogBeginInsert();
+		XLogRegisterData((char *) &data, sizeof(ginxlogUpdateMeta));
+		XLogRegisterBuffer(0, metabuffer, REGBUF_WILL_INIT);
 
-		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE, &rdata);
+		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);
 		PageSetLSN(metapage, recptr);
 	}
 

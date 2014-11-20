@@ -498,6 +498,7 @@ do { \
  * you can, say, fit 2 tuples of size MaxHeapTupleSize/2 on the same page.
  */
 #define MaxHeapTupleSize  (BLCKSZ - MAXALIGN(SizeOfPageHeaderData + sizeof(ItemIdData)))
+#define MinHeapTupleSize  MAXALIGN(offsetof(HeapTupleHeaderData, t_bits))
 
 /*
  * MaxHeapTuplesPerPage is an upper bound on the number of tuples that can

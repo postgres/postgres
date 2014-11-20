@@ -865,7 +865,6 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 	hash_seq_init(&seq_status, state->rs_logical_mappings);
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
-		XLogRecData rdata[2];
 		char	   *waldata;
 		char	   *waldata_start;
 		xl_heap_rewrite_mapping xlrec;
@@ -888,11 +887,6 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		xlrec.mapped_db = dboid;
 		xlrec.offset = src->off;
 		xlrec.start_lsn = state->rs_begin_lsn;
-
-		rdata[0].data = (char *) (&xlrec);
-		rdata[0].len = sizeof(xlrec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
 
 		/* write all mappings consecutively */
 		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
@@ -934,13 +928,12 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 							written, len)));
 		src->off += len;
 
-		rdata[1].data = waldata_start;
-		rdata[1].len = len;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		XLogBeginInsert();
+		XLogRegisterData((char *) (&xlrec), sizeof(xlrec));
+		XLogRegisterData(waldata_start, len);
 
 		/* write xlog record */
-		XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_REWRITE, rdata);
+		XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_REWRITE);
 
 		pfree(waldata_start);
 	}
@@ -1123,7 +1116,7 @@ logical_rewrite_heap_tuple(RewriteState state, ItemPointerData old_tid,
  * Replay XLOG_HEAP2_REWRITE records
  */
 void
-heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r)
+heap_xlog_logical_rewrite(XLogReaderState *r)
 {
 	char		path[MAXPGPATH];
 	int			fd;
@@ -1138,7 +1131,7 @@ heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r)
 			 xlrec->mapped_db, xlrec->mapped_rel,
 			 (uint32) (xlrec->start_lsn >> 32),
 			 (uint32) xlrec->start_lsn,
-			 xlrec->mapped_xid, r->xl_xid);
+			 xlrec->mapped_xid, XLogRecGetXid(r));
 
 	fd = OpenTransientFile(path,
 						   O_CREAT | O_WRONLY | PG_BINARY,

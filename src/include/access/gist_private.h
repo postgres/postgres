@@ -16,7 +16,7 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "fmgr.h"
 #include "storage/bufmgr.h"
 #include "storage/buffile.h"
@@ -185,34 +185,33 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 #define XLOG_GIST_CREATE_INDEX		0x50
  /* #define XLOG_GIST_PAGE_DELETE		 0x60 */	/* not used anymore */
 
+/*
+ * Backup Blk 0: updated page.
+ * Backup Blk 1: If this operation completes a page split, by inserting a
+ *				 downlink for the split page, the left half of the split
+ */
 typedef struct gistxlogPageUpdate
 {
-	RelFileNode node;
-	BlockNumber blkno;
-
-	/*
-	 * If this operation completes a page split, by inserting a downlink for
-	 * the split page, leftchild points to the left half of the split.
-	 */
-	BlockNumber leftchild;
-
 	/* number of deleted offsets */
 	uint16		ntodelete;
+	uint16		ntoinsert;
 
 	/*
-	 * follow: 1. todelete OffsetNumbers 2. tuples to insert
+	 * In payload of blk 0 : 1. todelete OffsetNumbers 2. tuples to insert
 	 */
 } gistxlogPageUpdate;
 
+/*
+ * Backup Blk 0: If this operation completes a page split, by inserting a
+ *				 downlink for the split page, the left half of the split
+ * Backup Blk 1 - npage: split pages (1 is the original page)
+ */
 typedef struct gistxlogPageSplit
 {
-	RelFileNode node;
-	BlockNumber origblkno;		/* splitted page */
 	BlockNumber origrlink;		/* rightlink of the page before split */
 	GistNSN		orignsn;		/* NSN of the page before split */
 	bool		origleaf;		/* was splitted page a leaf page? */
 
-	BlockNumber leftchild;		/* like in gistxlogPageUpdate */
 	uint16		npage;			/* # of pages in the split */
 	bool		markfollowright;	/* set F_FOLLOW_RIGHT flags */
 
@@ -451,8 +450,8 @@ extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);
 
 /* gistxlog.c */
-extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void gist_desc(StringInfo buf, XLogRecord *record);
+extern void gist_redo(XLogReaderState *record);
+extern void gist_desc(StringInfo buf, XLogReaderState *record);
 extern const char *gist_identify(uint8 info);
 extern void gist_xlog_startup(void);
 extern void gist_xlog_cleanup(void);

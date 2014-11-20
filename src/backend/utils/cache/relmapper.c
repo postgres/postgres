@@ -754,7 +754,6 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	if (write_wal)
 	{
 		xl_relmap_update xlrec;
-		XLogRecData rdata[2];
 		XLogRecPtr	lsn;
 
 		/* now errors are fatal ... */
@@ -764,16 +763,11 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		xlrec.tsid = tsid;
 		xlrec.nbytes = sizeof(RelMapFile);
 
-		rdata[0].data = (char *) (&xlrec);
-		rdata[0].len = MinSizeOfRelmapUpdate;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
-		rdata[1].data = (char *) newmap;
-		rdata[1].len = sizeof(RelMapFile);
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		XLogBeginInsert();
+		XLogRegisterData((char *) (&xlrec), MinSizeOfRelmapUpdate);
+		XLogRegisterData((char *) newmap, sizeof(RelMapFile));
 
-		lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE, rdata);
+		lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE);
 
 		/* As always, WAL must hit the disk before the data update does */
 		XLogFlush(lsn);
@@ -907,12 +901,12 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
  * RELMAP resource manager's routines
  */
 void
-relmap_redo(XLogRecPtr lsn, XLogRecord *record)
+relmap_redo(XLogReaderState *record)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	/* Backup blocks are not used in relmap records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+	Assert(!XLogRecHasAnyBlockRefs(record));
 
 	if (info == XLOG_RELMAP_UPDATE)
 	{

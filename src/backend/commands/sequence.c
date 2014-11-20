@@ -372,20 +372,16 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
+
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_WILL_INIT);
 
 		xlrec.node = rel->rd_node;
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = sizeof(xl_seq_rec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
 
-		rdata[1].data = (char *) tuple->t_data;
-		rdata[1].len = tuple->t_len;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		XLogRegisterData((char *) &xlrec, sizeof(xl_seq_rec));
+		XLogRegisterData((char *) tuple->t_data, tuple->t_len);
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG);
 
 		PageSetLSN(page, recptr);
 	}
@@ -454,21 +450,17 @@ AlterSequence(AlterSeqStmt *stmt)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 		Page		page = BufferGetPage(buf);
 
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_WILL_INIT);
+
 		xlrec.node = seqrel->rd_node;
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = sizeof(xl_seq_rec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
+		XLogRegisterData((char *) &xlrec, sizeof(xl_seq_rec));
 
-		rdata[1].data = (char *) seqtuple.t_data;
-		rdata[1].len = seqtuple.t_len;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		XLogRegisterData((char *) seqtuple.t_data, seqtuple.t_len);
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG);
 
 		PageSetLSN(page, recptr);
 	}
@@ -706,7 +698,6 @@ nextval_internal(Oid relid)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 
 		/*
 		 * We don't log the current state of the tuple, but rather the state
@@ -714,6 +705,8 @@ nextval_internal(Oid relid)
 		 * that many future WAL records, at the cost that we lose those
 		 * sequence values if we crash.
 		 */
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_WILL_INIT);
 
 		/* set values that will be saved in xlog */
 		seq->last_value = next;
@@ -721,17 +714,11 @@ nextval_internal(Oid relid)
 		seq->log_cnt = 0;
 
 		xlrec.node = seqrel->rd_node;
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = sizeof(xl_seq_rec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
 
-		rdata[1].data = (char *) seqtuple.t_data;
-		rdata[1].len = seqtuple.t_len;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		XLogRegisterData((char *) &xlrec, sizeof(xl_seq_rec));
+		XLogRegisterData((char *) seqtuple.t_data, seqtuple.t_len);
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG);
 
 		PageSetLSN(page, recptr);
 	}
@@ -894,21 +881,16 @@ do_setval(Oid relid, int64 next, bool iscalled)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 		Page		page = BufferGetPage(buf);
 
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_WILL_INIT);
+
 		xlrec.node = seqrel->rd_node;
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = sizeof(xl_seq_rec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
+		XLogRegisterData((char *) &xlrec, sizeof(xl_seq_rec));
+		XLogRegisterData((char *) seqtuple.t_data, seqtuple.t_len);
 
-		rdata[1].data = (char *) seqtuple.t_data;
-		rdata[1].len = seqtuple.t_len;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
-
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG);
 
 		PageSetLSN(page, recptr);
 	}
@@ -1552,9 +1534,10 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 
 
 void
-seq_redo(XLogRecPtr lsn, XLogRecord *record)
+seq_redo(XLogReaderState *record)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	XLogRecPtr	lsn = record->EndRecPtr;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 	Buffer		buffer;
 	Page		page;
 	Page		localpage;
@@ -1563,14 +1546,10 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	xl_seq_rec *xlrec = (xl_seq_rec *) XLogRecGetData(record);
 	sequence_magic *sm;
 
-	/* Backup blocks are not used in seq records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
-
 	if (info != XLOG_SEQ_LOG)
 		elog(PANIC, "seq_redo: unknown op code %u", info);
 
-	buffer = XLogReadBuffer(xlrec->node, 0, true);
-	Assert(BufferIsValid(buffer));
+	buffer = XLogInitBufferForRedo(record, 0);
 	page = (Page) BufferGetPage(buffer);
 
 	/*
@@ -1589,7 +1568,7 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	sm->magic = SEQ_MAGIC;
 
 	item = (char *) xlrec + sizeof(xl_seq_rec);
-	itemsz = record->xl_len - sizeof(xl_seq_rec);
+	itemsz = XLogRecGetDataLen(record) - sizeof(xl_seq_rec);
 
 	if (PageAddItem(localpage, (Item) item, itemsz,
 					FirstOffsetNumber, false, false) == InvalidOffsetNumber)

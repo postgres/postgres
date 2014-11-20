@@ -11,7 +11,7 @@
 #ifndef CLOG_H
 #define CLOG_H
 
-#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 
 /*
@@ -48,8 +48,8 @@ extern void TruncateCLOG(TransactionId oldestXact);
 #define CLOG_ZEROPAGE		0x00
 #define CLOG_TRUNCATE		0x10
 
-extern void clog_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void clog_desc(StringInfo buf, XLogRecord *record);
+extern void clog_redo(XLogReaderState *record);
+extern void clog_desc(StringInfo buf, XLogReaderState *record);
 extern const char *clog_identify(uint8 info);
 
 #endif   /* CLOG_H */

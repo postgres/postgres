@@ -2444,7 +2444,7 @@ XLogSendLogical(void)
 
 	if (record != NULL)
 	{
-		LogicalDecodingProcessRecord(logical_decoding_ctx, record);
+		LogicalDecodingProcessRecord(logical_decoding_ctx, logical_decoding_ctx->reader);
 
 		sentPtr = logical_decoding_ctx->reader->EndRecPtr;
 	}

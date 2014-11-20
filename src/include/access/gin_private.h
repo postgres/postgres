@@ -13,7 +13,6 @@
 #include "access/genam.h"
 #include "access/gin.h"
 #include "access/itup.h"
-#include "access/xloginsert.h"
 #include "fmgr.h"
 #include "storage/bufmgr.h"
 #include "utils/rbtree.h"
@@ -397,22 +396,22 @@ typedef struct
 
 typedef struct ginxlogCreatePostingTree
 {
-	RelFileNode node;
-	BlockNumber blkno;
 	uint32		size;
 	/* A compressed posting list follows */
 } ginxlogCreatePostingTree;
 
-#define XLOG_GIN_INSERT  0x20
-
 /*
  * The format of the insertion record varies depending on the page type.
  * ginxlogInsert is the common part between all variants.
+ *
+ * Backup Blk 0: target page
+ * Backup Blk 1: left child, if this insertion finishes an incomplete split
  */
+
+#define XLOG_GIN_INSERT  0x20
+
 typedef struct
 {
-	RelFileNode node;
-	BlockNumber blkno;
 	uint16		flags;			/* GIN_SPLIT_ISLEAF and/or GIN_SPLIT_ISDATA */
 
 	/*
@@ -477,14 +476,17 @@ typedef struct
 	PostingItem newitem;
 } ginxlogInsertDataInternal;
 
-
+/*
+ * Backup Blk 0: new left page (= original page, if not root split)
+ * Backup Blk 1: new right page
+ * Backup Blk 2: original page / new root page, if root split
+ * Backup Blk 3: left child, if this insertion completes an earlier split
+ */
 #define XLOG_GIN_SPLIT	0x30
 
 typedef struct ginxlogSplit
 {
 	RelFileNode node;
-	BlockNumber lblkno;
-	BlockNumber rblkno;
 	BlockNumber rrlink;			/* right link, or root's blocknumber if root
 								 * split */
 	BlockNumber leftChildBlkno; /* valid on a non-leaf split */
@@ -538,15 +540,6 @@ typedef struct
  */
 #define XLOG_GIN_VACUUM_PAGE	0x40
 
-typedef struct ginxlogVacuumPage
-{
-	RelFileNode node;
-	BlockNumber blkno;
-	uint16		hole_offset;	/* number of bytes before "hole" */
-	uint16		hole_length;	/* number of bytes in "hole" */
-	/* entire page contents (minus the hole) follow at end of record */
-} ginxlogVacuumPage;
-
 /*
  * Vacuuming posting tree leaf page is WAL-logged like recompression caused
  * by insertion.
@@ -555,26 +548,28 @@ typedef struct ginxlogVacuumPage
 
 typedef struct ginxlogVacuumDataLeafPage
 {
-	RelFileNode node;
-	BlockNumber blkno;
-
 	ginxlogRecompressDataLeaf data;
 } ginxlogVacuumDataLeafPage;
 
+/*
+ * Backup Blk 0: deleted page
+ * Backup Blk 1: parent
+ * Backup Blk 2: left sibling
+ */
 #define XLOG_GIN_DELETE_PAGE	0x50
 
 typedef struct ginxlogDeletePage
 {
-	RelFileNode node;
-	BlockNumber blkno;
-	BlockNumber parentBlkno;
 	OffsetNumber parentOffset;
-	BlockNumber leftBlkno;
 	BlockNumber rightLink;
 } ginxlogDeletePage;
 
 #define XLOG_GIN_UPDATE_META_PAGE 0x60
 
+/*
+ * Backup Blk 0: metapage
+ * Backup Blk 1: tail page
+ */
 typedef struct ginxlogUpdateMeta
 {
 	RelFileNode node;
@@ -591,22 +586,29 @@ typedef struct ginxlogUpdateMeta
 
 typedef struct ginxlogInsertListPage
 {
-	RelFileNode node;
-	BlockNumber blkno;
 	BlockNumber rightlink;
 	int32		ntuples;
 	/* array of inserted tuples follows */
 } ginxlogInsertListPage;
 
+/*
+ * Backup Blk 0: metapage
+ * Backup Blk 1 to (ndeleted + 1): deleted pages
+ */
+
 #define XLOG_GIN_DELETE_LISTPAGE  0x80
 
-#define GIN_NDELETE_AT_ONCE 16
+/*
+ * The WAL record for deleting list pages must contain a block reference to
+ * all the deleted pages, so the number of pages that can be deleted in one
+ * record is limited by XLR_MAX_BLOCK_ID. (block_id 0 is used for the
+ * metapage.)
+ */
+#define GIN_NDELETE_AT_ONCE Min(16, XLR_MAX_BLOCK_ID - 1)
 typedef struct ginxlogDeleteListPages
 {
-	RelFileNode node;
 	GinMetaPageData metadata;
 	int32		ndeleted;
-	BlockNumber toDelete[GIN_NDELETE_AT_ONCE];
 } ginxlogDeleteListPages;
 
 
@@ -673,7 +675,7 @@ typedef struct GinBtreeData
 
 	/* insert methods */
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
-	GinPlaceToPageRC (*placeToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, XLogRecData **, Page *, Page *);
+	GinPlaceToPageRC (*placeToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, Page *, Page *);
 	void	   *(*prepareDownlink) (GinBtree, Buffer);
 	void		(*fillRoot) (GinBtree, Page, BlockNumber, Page, BlockNumber, Page);
 

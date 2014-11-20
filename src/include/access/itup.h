@@ -133,6 +133,7 @@ typedef IndexAttributeBitMapData *IndexAttributeBitMap;
  * IndexTupleData struct.  We arrive at the divisor because each tuple
  * must be maxaligned, and it must have an associated item pointer.
  */
+#define MinIndexTupleSize MAXALIGN(sizeof(IndexTupleData) + 1)
 #define MaxIndexTuplesPerPage	\
 	((int) ((BLCKSZ - SizeOfPageHeaderData) / \
 			(MAXALIGN(sizeof(IndexTupleData) + 1) + sizeof(ItemIdData))))
