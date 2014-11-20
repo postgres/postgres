@@ -1929,10 +1929,10 @@ reparameterize_path(PlannerInfo *root, Path *path,
 }
 
 /*****************************************************************************
- *     creation of custom-plan paths
+ *	   creation of custom-plan paths
  *****************************************************************************/
 
-static List	   *custom_path_providers = NIL;
+static List *custom_path_providers = NIL;
 
 /*
  * register_custom_path_provider
@@ -1942,12 +1942,13 @@ static List	   *custom_path_providers = NIL;
  * methods of scanning a relation.
  */
 void
-register_custom_path_provider(CustomPathMethods *cpp_methods)
+register_custom_path_provider(const CustomPathMethods *cpp_methods)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-	custom_path_providers = lappend(custom_path_providers, cpp_methods);
+	custom_path_providers = lappend(custom_path_providers,
+									(void *) cpp_methods);
 	MemoryContextSwitchTo(oldcxt);
 }
 
@@ -1963,9 +1964,9 @@ create_customscan_paths(PlannerInfo *root,
 						RelOptInfo *baserel,
 						RangeTblEntry *rte)
 {
-	ListCell	   *cell;
+	ListCell   *cell;
 
-	foreach (cell, custom_path_providers)
+	foreach(cell, custom_path_providers)
 	{
 		const CustomPathMethods *cpp_methods = lfirst(cell);
 

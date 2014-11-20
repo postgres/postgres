@@ -381,11 +381,14 @@ ExecRestrPos(PlanState *node)
 }
 
 /*
- * ExecSupportsMarkRestore - does a plan type support mark/restore?
+ * ExecSupportsMarkRestore - does a Path support mark/restore?
+ *
+ * This is used during planning and so must accept a Path, not a Plan.
+ * We keep it here to be adjacent to the routines above, which also must
+ * know which plan types support mark/restore.
  *
  * XXX Ideally, all plan node types would support mark/restore, and this
  * wouldn't be needed.  For now, this had better match the routines above.
- * But note the test is on Plan nodetype, not PlanState nodetype.
  *
  * (However, since the only present use of mark/restore is in mergejoin,
  * there is no need to support mark/restore in any plan type that is not
@@ -395,6 +398,11 @@ ExecRestrPos(PlanState *node)
 bool
 ExecSupportsMarkRestore(Path *pathnode)
 {
+	/*
+	 * For consistency with the routines above, we do not examine the nodeTag
+	 * but rather the pathtype, which is the Plan node type the Path would
+	 * produce.
+	 */
 	switch (pathnode->pathtype)
 	{
 		case T_SeqScan:
@@ -406,26 +414,22 @@ ExecSupportsMarkRestore(Path *pathnode)
 		case T_Sort:
 			return true;
 
+		case T_CustomScan:
+			Assert(IsA(pathnode, CustomPath));
+			if (((CustomPath *) pathnode)->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
+				return true;
+			return false;
+
 		case T_Result:
 
 			/*
-			 * T_Result only supports mark/restore if it has a child plan that
-			 * does, so we do not have enough information to give a really
-			 * correct answer.  However, for current uses it's enough to
-			 * always say "false", because this routine is not asked about
-			 * gating Result plans, only base-case Results.
+			 * Although Result supports mark/restore if it has a child plan
+			 * that does, we presently come here only for ResultPath nodes,
+			 * which represent Result plans without a child plan.  So there is
+			 * nothing to recurse to and we can just say "false".
 			 */
+			Assert(IsA(pathnode, ResultPath));
 			return false;
-
-		case T_CustomScan:
-			{
-				CustomPath *cpath = (CustomPath *) pathnode;
-
-				Assert(IsA(cpath, CustomPath));
-				if (cpath->flags & CUSTOMPATH_SUPPORT_MARK_RESTORE)
-					return true;
-			}
-			break;
 
 		default:
 			break;
@@ -491,10 +495,10 @@ ExecSupportsBackwardScan(Plan *node)
 
 		case T_CustomScan:
 			{
-				uint32	flags = ((CustomScan *) node)->flags;
+				uint32		flags = ((CustomScan *) node)->flags;
 
-				if (TargetListSupportsBackwardScan(node->targetlist) &&
-					(flags & CUSTOMPATH_SUPPORT_BACKWARD_SCAN) != 0)
+				if ((flags & CUSTOMPATH_SUPPORT_BACKWARD_SCAN) &&
+					TargetListSupportsBackwardScan(node->targetlist))
 					return true;
 			}
 			return false;

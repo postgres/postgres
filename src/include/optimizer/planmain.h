@@ -130,9 +130,8 @@ extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
  * prototypes for plan/setrefs.c
  */
 extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
-extern void fix_opfuncids(Node *node);
 extern Node *fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset);
-extern void fix_expr_common(PlannerInfo *root, Node *node);
+extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);

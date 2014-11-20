@@ -587,12 +587,13 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, cscan->scan.plan.targetlist, rtoffset);
 				cscan->scan.plan.qual =
 					fix_scan_list(root, cscan->scan.plan.qual, rtoffset);
+
 				/*
-				 * The core implementation applies the routine to fixup
-				 * varno on the target-list and scan qualifier.
-				 * If custom-scan has additional expression nodes on its
-				 * private fields, it has to apply same fixup on them.
-				 * Otherwise, the custom-plan provider can skip this callback.
+				 * The core implementation applies the routine to fixup varno
+				 * on the target-list and scan qualifier. If custom-scan has
+				 * additional expression nodes on its private fields, it has
+				 * to apply same fixup on them. Otherwise, the custom-plan
+				 * provider can skip this callback.
 				 */
 				if (cscan->methods->SetCustomScanRef)
 					cscan->methods->SetCustomScanRef(root, cscan, rtoffset);
@@ -1083,7 +1084,7 @@ copyVar(Var *var)
  * We assume it's okay to update opcode info in-place.  So this could possibly
  * scribble on the planner's input data structures, but it's OK.
  */
-void
+static void
 fix_expr_common(PlannerInfo *root, Node *node)
 {
 	/* We assume callers won't call us on a NULL pointer */

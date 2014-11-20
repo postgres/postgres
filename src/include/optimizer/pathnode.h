@@ -131,11 +131,11 @@ extern Path *reparameterize_path(PlannerInfo *root, Path *path,
 /*
  * Interface definition of custom-scan providers
  */
-extern void register_custom_path_provider(CustomPathMethods *cpp_methods);
+extern void register_custom_path_provider(const CustomPathMethods *cpp_methods);
 
 extern void create_customscan_paths(PlannerInfo *root,
-									RelOptInfo *baserel,
-									RangeTblEntry *rte);
+						RelOptInfo *baserel,
+						RangeTblEntry *rte);
 
 /*
  * prototypes for relnode.c

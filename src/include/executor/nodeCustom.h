@@ -11,14 +11,14 @@
  */
 #ifndef NODECUSTOM_H
 #define NODECUSTOM_H
-#include "nodes/plannodes.h"
+
 #include "nodes/execnodes.h"
 
 /*
  * General executor code
  */
 extern CustomScanState *ExecInitCustomScan(CustomScan *custom_scan,
-										   EState *estate, int eflags);
+				   EState *estate, int eflags);
 extern TupleTableSlot *ExecCustomScan(CustomScanState *node);
 extern Node *MultiExecCustomScan(CustomScanState *node);
 extern void ExecEndCustomScan(CustomScanState *node);
@@ -27,4 +27,4 @@ extern void ExecReScanCustomScan(CustomScanState *node);
 extern void ExecCustomMarkPos(CustomScanState *node);
 extern void ExecCustomRestrPos(CustomScanState *node);
 
-#endif	/* NODECUSTOM_H */
+#endif   /* NODECUSTOM_H */

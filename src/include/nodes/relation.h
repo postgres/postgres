@@ -897,33 +897,33 @@ typedef struct ForeignPath
  * the structure declared here; providers are expected to make it the first
  * element in a larger structure.
  */
-
-struct CustomPathMethods;
-struct Plan;		/* not to include plannodes.h here */
+struct CustomPath;
 
 #define CUSTOMPATH_SUPPORT_BACKWARD_SCAN	0x0001
 #define CUSTOMPATH_SUPPORT_MARK_RESTORE		0x0002
 
-typedef struct CustomPath
-{
-	Path        path;
-	uint32		flags;
-	const struct CustomPathMethods *methods;
-} CustomPath;
-
 typedef struct CustomPathMethods
 {
 	const char *CustomName;
-	void	(*CreateCustomScanPath)(PlannerInfo *root,
-									RelOptInfo *baserel,
-									RangeTblEntry *rte);
-	struct Plan	*(*PlanCustomPath)(PlannerInfo *root,
-								   RelOptInfo *rel,
-								   CustomPath *best_path,
-								   List *tlist,
-								   List *clauses);
-	void    (*TextOutCustomPath)(StringInfo str, const CustomPath *node);
+
+	void		(*CreateCustomScanPath) (PlannerInfo *root,
+													 RelOptInfo *baserel,
+													 RangeTblEntry *rte);
+	struct Plan *(*PlanCustomPath) (PlannerInfo *root,
+												RelOptInfo *rel,
+												struct CustomPath *best_path,
+												List *tlist,
+												List *clauses);
+	void		(*TextOutCustomPath) (StringInfo str,
+											  const struct CustomPath *node);
 } CustomPathMethods;
+
+typedef struct CustomPath
+{
+	Path		path;
+	uint32		flags;			/* mask of CUSTOMPATH_* flags, see above */
+	const CustomPathMethods *methods;
+} CustomPath;
 
 /*
  * AppendPath represents an Append plan, ie, successive execution of

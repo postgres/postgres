@@ -18,7 +18,6 @@
 #include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
 #include "nodes/primnodes.h"
-#include "nodes/relation.h"
 #include "utils/lockwaitpolicy.h"
 
 
@@ -486,32 +485,35 @@ typedef struct ForeignScan
 } ForeignScan;
 
 /* ----------------
- *     CustomScan node
+ *	   CustomScan node
  * ----------------
  */
-struct CustomScanMethods;
-
-typedef struct CustomScan
-{
-	Scan		scan;
-	uint32		flags;	/* mask of CUSTOMPATH_* flags defined in relation.h */
-	struct CustomScanMethods *methods;
-} CustomScan;
+struct PlannerInfo;				/* avoid including relation.h here */
+struct CustomScan;
 
 typedef struct CustomScanMethods
 {
 	const char *CustomName;
-	void	   (*SetCustomScanRef)(struct PlannerInfo *root,
-								   CustomScan *cscan,
-								   int rtoffset);
-	void	   (*FinalizeCustomScan)(struct PlannerInfo *root,
-									 CustomScan *cscan,
-									 bool (*finalize_primnode)(),
-									 void *finalize_context);
-	Node	  *(*CreateCustomScanState)(CustomScan *cscan);
-	void	   (*TextOutCustomScan)(StringInfo str, const CustomScan *node);
-	CustomScan *(*CopyCustomScan)(const CustomScan *from);
+
+	void		(*SetCustomScanRef) (struct PlannerInfo *root,
+												 struct CustomScan *cscan,
+												 int rtoffset);
+	void		(*FinalizeCustomScan) (struct PlannerInfo *root,
+												   struct CustomScan *cscan,
+												bool (*finalize_primnode) (),
+												   void *finalize_context);
+	Node	   *(*CreateCustomScanState) (struct CustomScan *cscan);
+	void		(*TextOutCustomScan) (StringInfo str,
+											  const struct CustomScan *node);
+	struct CustomScan *(*CopyCustomScan) (const struct CustomScan *from);
 } CustomScanMethods;
+
+typedef struct CustomScan
+{
+	Scan		scan;
+	uint32		flags;			/* mask of CUSTOMPATH_* flags, see relation.h */
+	const CustomScanMethods *methods;
+} CustomScan;
 
 /*
  * ==========
@@ -864,7 +866,7 @@ typedef struct PlanRowMark
 	Index		prti;			/* range table index of parent relation */
 	Index		rowmarkId;		/* unique identifier for resjunk columns */
 	RowMarkType markType;		/* see enum above */
-	LockWaitPolicy waitPolicy;  /* NOWAIT and SKIP LOCKED options */
+	LockWaitPolicy waitPolicy;	/* NOWAIT and SKIP LOCKED options */
 	bool		isParent;		/* true if this is a "dummy" parent entry */
 } PlanRowMark;
 

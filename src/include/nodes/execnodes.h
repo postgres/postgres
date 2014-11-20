@@ -19,7 +19,6 @@
 #include "executor/instrument.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 #include "utils/reltrigger.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
@@ -1512,38 +1511,38 @@ typedef struct ForeignScanState
  *		CustomScan nodes are used to execute custom code within executor.
  * ----------------
  */
-struct CustomExecMethods;
-struct ExplainState;	/* to avoid to include explain.h here */
+struct ExplainState;			/* avoid including explain.h here */
+struct CustomScanState;
+
+typedef struct CustomExecMethods
+{
+	const char *CustomName;
+
+	/* EXECUTOR methods */
+	void		(*BeginCustomScan) (struct CustomScanState *node,
+												EState *estate,
+												int eflags);
+	TupleTableSlot *(*ExecCustomScan) (struct CustomScanState *node);
+	void		(*EndCustomScan) (struct CustomScanState *node);
+	void		(*ReScanCustomScan) (struct CustomScanState *node);
+	void		(*MarkPosCustomScan) (struct CustomScanState *node);
+	void		(*RestrPosCustomScan) (struct CustomScanState *node);
+
+	/* EXPLAIN support */
+	void		(*ExplainCustomScan) (struct CustomScanState *node,
+												  List *ancestors,
+												  struct ExplainState *es);
+	Node	   *(*GetSpecialCustomVar) (struct CustomScanState *node,
+													Var *varnode,
+													PlanState **child_ps);
+} CustomExecMethods;
 
 typedef struct CustomScanState
 {
 	ScanState	ss;
-	uint32		flags;	/* mask of CUSTOMPATH_* flags defined in relation.h*/
-	const struct CustomExecMethods *methods;
+	uint32		flags;			/* mask of CUSTOMPATH_* flags, see relation.h */
+	const CustomExecMethods *methods;
 } CustomScanState;
-
-typedef struct CustomExecMethods
-{
-	const char     *CustomName;
-
-	/* EXECUTOR methods */
-	void    (*BeginCustomScan)(CustomScanState *node,
-							   EState *estate,
-							   int eflags);
-	TupleTableSlot *(*ExecCustomScan)(CustomScanState *node);
-	void	(*EndCustomScan)(CustomScanState *node);
-	void	(*ReScanCustomScan)(CustomScanState *node);
-	void	(*MarkPosCustomScan)(CustomScanState *node);
-	void	(*RestrPosCustomScan)(CustomScanState *node);
-
-	/* EXPLAIN support */
-	void    (*ExplainCustomScan)(CustomScanState *node,
-								 List *ancestors,
-								 struct ExplainState *es);
-	Node   *(*GetSpecialCustomVar)(CustomScanState *node,
-								   Var *varnode,
-								   PlanState **child_ps);
-} CustomExecMethods;
 
 /* ----------------------------------------------------------------
  *				 Join State Information
