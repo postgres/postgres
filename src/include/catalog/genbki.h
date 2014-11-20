@@ -22,6 +22,13 @@
 /* Introduces a catalog's structure definition */
 #define CATALOG(name,oid)	typedef struct CppConcat(FormData_,name)
 
+/* Options that may appear after CATALOG (on the same line) */
+#define BKI_BOOTSTRAP
+#define BKI_SHARED_RELATION
+#define BKI_WITHOUT_OIDS
+#define BKI_ROWTYPE_OID(oid)
+#define BKI_SCHEMA_MACRO
+
 /*
  * This is never defined; it's here only for documentation.
  *
@@ -32,21 +39,10 @@
  */
 #undef CATALOG_VARLEN
 
-/* Options that may appear after CATALOG (on the same line) */
-#define BKI_BOOTSTRAP
-#define BKI_SHARED_RELATION
-#define BKI_WITHOUT_OIDS
-#define BKI_ROWTYPE_OID(oid)
-#define BKI_SCHEMA_MACRO
-
 /* Declarations that provide the initial content of a catalog */
 /* In C, these need to expand into some harmless, repeatable declaration */
 #define DATA(x)   extern int no_such_variable
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
-
-/* PHONY type definitions for use in catalog structure definitions only */
-typedef int aclitem;
-typedef int pg_node_tree;
 
 #endif   /* GENBKI_H */
