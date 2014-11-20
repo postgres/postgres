@@ -258,13 +258,15 @@ search_plan_tree(PlanState *node, Oid table_oid)
 	switch (nodeTag(node))
 	{
 			/*
-			 * scan nodes can all be treated alike
+			 * Relation scan nodes can all be treated alike
 			 */
 		case T_SeqScanState:
 		case T_IndexScanState:
 		case T_IndexOnlyScanState:
 		case T_BitmapHeapScanState:
 		case T_TidScanState:
+		case T_ForeignScanState:
+		case T_CustomScanState:
 			{
 				ScanState  *sstate = (ScanState *) node;
 
