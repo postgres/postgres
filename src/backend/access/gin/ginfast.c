@@ -552,7 +552,8 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 		 * prepare the XLogInsert machinery for that before entering the
 		 * critical section.
 		 */
-		XLogEnsureRecordSpace(data.ndeleted, 0);
+		if (RelationNeedsWAL(index))
+			XLogEnsureRecordSpace(data.ndeleted, 0);
 
 		START_CRIT_SECTION();
 
