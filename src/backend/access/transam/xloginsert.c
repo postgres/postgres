@@ -435,12 +435,12 @@ XLogInsert(RmgrId rmid, uint8 info)
  * XLogRecData chain, ready for insertion with XLogInsertRecord().
  *
  * The record header fields are filled in, except for the xl_prev field. The
- * calculated CRC does not include xl_prev either.
+ * calculated CRC does not include the record header yet.
  *
  * If there are any registered buffers, and a full-page image was not taken
- * of all them, *page_writes_omitted is set to true. This signals that the
- * assembled record is only good for insertion on the assumption that the
- * RedoRecPtr and doPageWrites values were up-to-date.
+ * of all of them, *fpw_lsn is set to the lowest LSN among such pages. This
+ * signals that the assembled record is only good for insertion on the
+ * assumption that the RedoRecPtr and doPageWrites values were up-to-date.
  */
 static XLogRecData *
 XLogRecordAssemble(RmgrId rmid, uint8 info,
