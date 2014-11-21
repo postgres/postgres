@@ -836,7 +836,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			{
 				unsigned int extra_lines;
 
-				extra_lines = (width - 1) / width_wrap[i] + nl_lines;
+				/* don't count the first line of nl_lines - it's not "extra" */
+				extra_lines = ((width - 1) / width_wrap[i]) + nl_lines - 1;
 				if (extra_lines > extra_row_output_lines)
 					extra_row_output_lines = extra_lines;
 			}
