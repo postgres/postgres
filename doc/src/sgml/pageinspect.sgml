@@ -302,6 +302,91 @@ brintest-# order by blknum, attnum limit 6;
 
    <varlistentry>
     <term>
+     <function>gin_metapage_info(page bytea) returns record</function>
+     <indexterm>
+      <primary>gin_metapage_info</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>gin_metapage_info</function> returns information about
+      a <acronym>GIN</acronym> index metapage.  For example:
+<screen>
+test=# SELECT * FROM gin_metapage_info(get_raw_page('gin_index', 0));
+-[ RECORD 1 ]----+-----------
+pending_head     | 4294967295
+pending_tail     | 4294967295
+tail_free_size   | 0
+n_pending_pages  | 0
+n_pending_tuples | 0
+n_total_pages    | 7
+n_entry_pages    | 6
+n_data_pages     | 0
+n_entries        | 693
+version          | 2
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>gin_page_opaque_info(page bytea) returns record</function>
+     <indexterm>
+      <primary>gin_page_opaque_info</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>gin_page_opaque_info</function> returns information about
+      a <acronym>GIN</acronym> index opaque area, like the page type.
+      For example:
+<screen>
+test=# SELECT * FROM gin_page_opaque_info(get_raw_page('gin_index', 2));
+ rightlink | maxoff |         flags
+-----------+--------+------------------------
+         5 |      0 | {data,leaf,compressed}
+(1 row)
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>gin_leafpage_items(page bytea) returns setof record</function>
+     <indexterm>
+      <primary>gin_leafpage_items</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>gin_leafpage_items</function> returns information about
+      the data stored in a <acronym>GIN</acronym> leaf page.  For example:
+<screen>
+ test=# SELECT first_tid, nbytes, tids[0:5] as some_tids
+        FROM gin_leafpage_items(get_raw_page('gin_test_idx', 2));
+ first_tid | nbytes |                        some_tids                       
+  
+-----------+--------+----------------------------------------------------------
+ (8,41)    |    244 | {"(8,41)","(8,43)","(8,44)","(8,45)","(8,46)"}
+ (10,45)   |    248 | {"(10,45)","(10,46)","(10,47)","(10,48)","(10,49)"}
+ (12,52)   |    248 | {"(12,52)","(12,53)","(12,54)","(12,55)","(12,56)"}
+ (14,59)   |    320 | {"(14,59)","(14,60)","(14,61)","(14,62)","(14,63)"}
+ (167,16)  |    376 | {"(167,16)","(167,17)","(167,18)","(167,19)","(167,20)"}
+ (170,30)  |    376 | {"(170,30)","(170,31)","(170,32)","(170,33)","(170,34)"}
+ (173,44)  |    197 | {"(173,44)","(173,45)","(173,46)","(173,47)","(173,48)"}
+(7 rows)
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <function>fsm_page_contents(page bytea) returns text</function>
      <indexterm>
       <primary>fsm_page_contents</primary>
