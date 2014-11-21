@@ -603,17 +603,24 @@ _copyForeignScan(const ForeignScan *from)
 static CustomScan *
 _copyCustomScan(const CustomScan *from)
 {
-	CustomScan		   *newnode;
+	CustomScan *newnode = makeNode(CustomScan);
 
-	newnode = from->methods->CopyCustomScan(from);
-	Assert(nodeTag(newnode) == nodeTag(from));
-
-	CopyScanFields((const Scan *) from, (Scan *) newnode);
-	COPY_SCALAR_FIELD(flags);
 	/*
-	 * NOTE: The method field of CustomScan is required to be a pointer
-	 * to a static table of callback functions. So, we don't copy the
-	 * table itself, just reference the original one.
+	 * copy node superclass fields
+	 */
+	CopyScanFields((const Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(flags);
+	COPY_NODE_FIELD(custom_exprs);
+	COPY_NODE_FIELD(custom_private);
+
+	/*
+	 * NOTE: The method field of CustomScan is required to be a pointer to a
+	 * static table of callback functions.  So we don't copy the table itself,
+	 * just reference the original one.
 	 */
 	COPY_SCALAR_FIELD(methods);
 

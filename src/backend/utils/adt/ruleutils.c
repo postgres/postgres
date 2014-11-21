@@ -5493,26 +5493,6 @@ get_utility_query_def(Query *query, deparse_context *context)
 	}
 }
 
-/*
- * GetSpecialCustomVar
- *
- * If a custom-scan provider uses a special varnode, this function will be
- * called when deparsing; it should return an Expr node to be reversed-listed
- * in lieu of the special Var.
- */
-static Node *
-GetSpecialCustomVar(CustomScanState *css, Var *varnode, PlanState **child_ps)
-{
-	Assert(IsA(css, CustomScanState));
-	Assert(IS_SPECIAL_VARNO(varnode->varno));
-
-	if (!css->methods->GetSpecialCustomVar)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("%s does not support special varno reference",
-						css->methods->CustomName)));
-	return (Node *) css->methods->GetSpecialCustomVar(css, varnode, child_ps);
-}
 
 /*
  * Display a Var appropriately.
@@ -5542,8 +5522,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	int			netlevelsup;
 	deparse_namespace *dpns;
 	deparse_columns *colinfo;
-	PlanState  *child_ps = NULL;
-	Node	   *expr;
 	char	   *refname;
 	char	   *attname;
 
@@ -5567,29 +5545,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		refname = (char *) list_nth(dpns->rtable_names, var->varno - 1);
 		colinfo = deparse_columns_fetch(var->varno, dpns);
 		attnum = var->varattno;
-	}
-	else if (IS_SPECIAL_VARNO(var->varno) &&
-			 IsA(dpns->planstate, CustomScanState) &&
-			 (expr = GetSpecialCustomVar((CustomScanState *) dpns->planstate,
-										 var, &child_ps)) != NULL)
-	{
-		deparse_namespace	save_dpns;
-
-		if (child_ps)
-			push_child_plan(dpns, child_ps, &save_dpns);
-		/*
-		 * Force parentheses because our caller probably assumed a Var is a
-		 * simple expression.
-		 */
-		if (!IsA(expr, Var))
-			appendStringInfoChar(buf, '(');
-		get_rule_expr((Node *) expr, context, true);
-		if (!IsA(expr, Var))
-			appendStringInfoChar(buf, ')');
-
-		if (child_ps)
-			pop_child_plan(dpns, &save_dpns);
-		return NULL;
 	}
 	else if (var->varno == OUTER_VAR && dpns->outer_tlist)
 	{
@@ -5805,7 +5760,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	AttrNumber	attnum;
 	int			netlevelsup;
 	deparse_namespace *dpns;
-	PlanState  *child_ps = NULL;
 	TupleDesc	tupleDesc;
 	Node	   *expr;
 
@@ -5879,30 +5833,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	{
 		rte = rt_fetch(var->varno, dpns->rtable);
 		attnum = var->varattno;
-	}
-	else if (IS_SPECIAL_VARNO(var->varno) &&
-			 IsA(dpns->planstate, CustomScanState) &&
-			 (expr = GetSpecialCustomVar((CustomScanState *) dpns->planstate,
-										 var, &child_ps)) != NULL)
-	{
-		StringInfo		saved = context->buf;
-		StringInfoData	temp;
-		deparse_namespace save_dpns;
-
-		initStringInfo(&temp);
-		context->buf = &temp;
-
-		if (child_ps)
-			push_child_plan(dpns, child_ps, &save_dpns);
-		if (!IsA(expr, Var))
-			appendStringInfoChar(context->buf, '(');
-		get_rule_expr((Node *) expr, context, true);
-		if (!IsA(expr, Var))
-			appendStringInfoChar(context->buf, ')');
-		if (child_ps)
-			pop_child_plan(dpns, &save_dpns);
-		context->buf = saved;
-		return temp.data;
 	}
 	else if (var->varno == OUTER_VAR && dpns->outer_tlist)
 	{

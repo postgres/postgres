@@ -1503,9 +1503,16 @@ typedef struct ForeignScanState
 } ForeignScanState;
 
 /* ----------------
- * CustomScanState information
+ *	 CustomScanState information
  *
  *		CustomScan nodes are used to execute custom code within executor.
+ *
+ * Core code must avoid assuming that the CustomScanState is only as large as
+ * the structure declared here; providers are allowed to make it the first
+ * element in a larger structure, and typically would need to do so.  The
+ * struct is actually allocated by the CreateCustomScanState method associated
+ * with the plan node.  Any additional fields can be initialized there, or in
+ * the BeginCustomScan method.
  * ----------------
  */
 struct ExplainState;			/* avoid including explain.h here */
@@ -1515,7 +1522,7 @@ typedef struct CustomExecMethods
 {
 	const char *CustomName;
 
-	/* EXECUTOR methods */
+	/* Executor methods: mark/restore are optional, the rest are required */
 	void		(*BeginCustomScan) (struct CustomScanState *node,
 												EState *estate,
 												int eflags);
@@ -1525,13 +1532,10 @@ typedef struct CustomExecMethods
 	void		(*MarkPosCustomScan) (struct CustomScanState *node);
 	void		(*RestrPosCustomScan) (struct CustomScanState *node);
 
-	/* EXPLAIN support */
+	/* Optional: print additional information in EXPLAIN */
 	void		(*ExplainCustomScan) (struct CustomScanState *node,
 												  List *ancestors,
 												  struct ExplainState *es);
-	Node	   *(*GetSpecialCustomVar) (struct CustomScanState *node,
-													Var *varnode,
-													PlanState **child_ps);
 } CustomExecMethods;
 
 typedef struct CustomScanState

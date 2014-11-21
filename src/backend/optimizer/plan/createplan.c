@@ -77,7 +77,7 @@ static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_pa
 						  List *tlist, List *scan_clauses);
 static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 						List *tlist, List *scan_clauses);
-static Plan *create_customscan_plan(PlannerInfo *root,
+static CustomScan *create_customscan_plan(PlannerInfo *root,
 					   CustomPath *best_path,
 					   List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
@@ -86,6 +86,7 @@ static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
 					  Plan *outer_plan, Plan *inner_plan);
 static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
+static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
 static void process_subquery_nestloop_params(PlannerInfo *root,
 								 List *subplan_params);
@@ -413,10 +414,10 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 			break;
 
 		case T_CustomScan:
-			plan = create_customscan_plan(root,
-										  (CustomPath *) best_path,
-										  tlist,
-										  scan_clauses);
+			plan = (Plan *) create_customscan_plan(root,
+												   (CustomPath *) best_path,
+												   tlist,
+												   scan_clauses);
 			break;
 
 		default:
@@ -2022,11 +2023,11 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
  *
  * Transform a CustomPath into a Plan.
  */
-static Plan *
+static CustomScan *
 create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 					   List *tlist, List *scan_clauses)
 {
-	Plan	   *plan;
+	CustomScan *cplan;
 	RelOptInfo *rel = best_path->path.parent;
 
 	/*
@@ -2045,23 +2046,35 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 	 * Invoke custom plan provider to create the Plan node represented by the
 	 * CustomPath.
 	 */
-	plan = best_path->methods->PlanCustomPath(root, rel, best_path, tlist,
-											  scan_clauses);
-
-	/*
-	 * NOTE: unlike create_foreignscan_plan(), it is the responsibility of the
-	 * custom plan provider to replace outer-relation variables with nestloop
-	 * params, because we cannot know what expression trees may be held in
-	 * private fields.
-	 */
+	cplan = (CustomScan *) best_path->methods->PlanCustomPath(root,
+															  rel,
+															  best_path,
+															  tlist,
+															  scan_clauses);
+	Assert(IsA(cplan, CustomScan));
 
 	/*
 	 * Copy cost data from Path to Plan; no need to make custom-plan providers
 	 * do this
 	 */
-	copy_path_costsize(plan, &best_path->path);
+	copy_path_costsize(&cplan->scan.plan, &best_path->path);
 
-	return plan;
+	/*
+	 * Replace any outer-relation variables with nestloop params in the qual
+	 * and custom_exprs expressions.  We do this last so that the custom-plan
+	 * provider doesn't have to be involved.  (Note that parts of custom_exprs
+	 * could have come from join clauses, so doing this beforehand on the
+	 * scan_clauses wouldn't work.)
+	 */
+	if (best_path->path.param_info)
+	{
+		cplan->scan.plan.qual = (List *)
+			replace_nestloop_params(root, (Node *) cplan->scan.plan.qual);
+		cplan->custom_exprs = (List *)
+			replace_nestloop_params(root, (Node *) cplan->custom_exprs);
+	}
+
+	return cplan;
 }
 
 
@@ -2598,7 +2611,7 @@ create_hashjoin_plan(PlannerInfo *root,
  * root->curOuterRels are replaced by Params, and entries are added to
  * root->curOuterParams if not already present.
  */
-Node *
+static Node *
 replace_nestloop_params(PlannerInfo *root, Node *expr)
 {
 	/* No setup needed for tree walk, so away we go */

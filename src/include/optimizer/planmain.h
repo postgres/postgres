@@ -86,7 +86,6 @@ extern ModifyTable *make_modifytable(PlannerInfo *root,
 				 List *withCheckOptionLists, List *returningLists,
 				 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
-extern Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 
 /*
  * prototypes for plan/initsplan.c
@@ -130,7 +129,6 @@ extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
  * prototypes for plan/setrefs.c
  */
 extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
-extern Node *fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset);
 extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
