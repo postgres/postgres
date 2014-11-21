@@ -23,6 +23,13 @@
 extern bool enable_geqo;
 extern int	geqo_threshold;
 
+/* Hook for plugins to get control in set_rel_pathlist() */
+typedef void (*set_rel_pathlist_hook_type) (PlannerInfo *root,
+														RelOptInfo *rel,
+														Index rti,
+														RangeTblEntry *rte);
+extern PGDLLIMPORT set_rel_pathlist_hook_type set_rel_pathlist_hook;
+
 /* Hook for plugins to replace standard_join_search() */
 typedef RelOptInfo *(*join_search_hook_type) (PlannerInfo *root,
 														  int levels_needed,

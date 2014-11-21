@@ -906,9 +906,6 @@ typedef struct CustomPathMethods
 {
 	const char *CustomName;
 
-	void		(*CreateCustomScanPath) (PlannerInfo *root,
-													 RelOptInfo *baserel,
-													 RangeTblEntry *rte);
 	struct Plan *(*PlanCustomPath) (PlannerInfo *root,
 												RelOptInfo *rel,
 												struct CustomPath *best_path,
