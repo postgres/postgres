@@ -19,8 +19,6 @@
 extern TidScanState *ExecInitTidScan(TidScan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecTidScan(TidScanState *node);
 extern void ExecEndTidScan(TidScanState *node);
-extern void ExecTidMarkPos(TidScanState *node);
-extern void ExecTidRestrPos(TidScanState *node);
 extern void ExecReScanTidScan(TidScanState *node);
 
 #endif   /* NODETIDSCAN_H */

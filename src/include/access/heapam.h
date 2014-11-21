@@ -161,9 +161,6 @@ extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
 				   HeapTuple tup);
 
-extern void heap_markpos(HeapScanDesc scan);
-extern void heap_restrpos(HeapScanDesc scan);
-
 extern void heap_sync(Relation relation);
 
 /* in heap/pruneheap.c */

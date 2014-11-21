@@ -19,8 +19,6 @@
  *		ExecInitSeqScan			creates and initializes a seqscan node.
  *		ExecEndSeqScan			releases any storage allocated.
  *		ExecReScanSeqScan		rescans the relation
- *		ExecSeqMarkPos			marks scan position
- *		ExecSeqRestrPos			restores scan position
  */
 #include "postgres.h"
 
@@ -273,40 +271,4 @@ ExecReScanSeqScan(SeqScanState *node)
 				NULL);			/* new scan keys */
 
 	ExecScanReScan((ScanState *) node);
-}
-
-/* ----------------------------------------------------------------
- *		ExecSeqMarkPos(node)
- *
- *		Marks scan position.
- * ----------------------------------------------------------------
- */
-void
-ExecSeqMarkPos(SeqScanState *node)
-{
-	HeapScanDesc scan = node->ss_currentScanDesc;
-
-	heap_markpos(scan);
-}
-
-/* ----------------------------------------------------------------
- *		ExecSeqRestrPos
- *
- *		Restores scan position.
- * ----------------------------------------------------------------
- */
-void
-ExecSeqRestrPos(SeqScanState *node)
-{
-	HeapScanDesc scan = node->ss_currentScanDesc;
-
-	/*
-	 * Clear any reference to the previously returned tuple.  This is needed
-	 * because the slot is simply pointing at scan->rs_cbuf, which
-	 * heap_restrpos will change; we'd have an internally inconsistent slot if
-	 * we didn't do this.
-	 */
-	ExecClearTuple(node->ss_ScanTupleSlot);
-
-	heap_restrpos(scan);
 }

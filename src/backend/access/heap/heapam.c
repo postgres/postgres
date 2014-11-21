@@ -27,8 +27,6 @@
  *		heap_multi_insert - insert multiple tuples into a relation
  *		heap_delete		- delete a tuple from a relation
  *		heap_update		- replace a tuple in a relation with another tuple
- *		heap_markpos	- mark scan position
- *		heap_restrpos	- restore position to marked location
  *		heap_sync		- sync heap, for when no WAL has been written
  *
  * NOTES
@@ -279,9 +277,6 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	ItemPointerSetInvalid(&scan->rs_ctup.t_self);
 	scan->rs_cbuf = InvalidBuffer;
 	scan->rs_cblock = InvalidBlockNumber;
-
-	/* we don't have a marked position... */
-	ItemPointerSetInvalid(&(scan->rs_mctid));
 
 	/* page-at-a-time fields are always invalid when not rs_inited */
 
@@ -6315,71 +6310,6 @@ heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	}
 
 	return false;
-}
-
-/* ----------------
- *		heap_markpos	- mark scan position
- * ----------------
- */
-void
-heap_markpos(HeapScanDesc scan)
-{
-	/* Note: no locking manipulations needed */
-
-	if (scan->rs_ctup.t_data != NULL)
-	{
-		scan->rs_mctid = scan->rs_ctup.t_self;
-		if (scan->rs_pageatatime)
-			scan->rs_mindex = scan->rs_cindex;
-	}
-	else
-		ItemPointerSetInvalid(&scan->rs_mctid);
-}
-
-/* ----------------
- *		heap_restrpos	- restore position to marked location
- * ----------------
- */
-void
-heap_restrpos(HeapScanDesc scan)
-{
-	/* XXX no amrestrpos checking that ammarkpos called */
-
-	if (!ItemPointerIsValid(&scan->rs_mctid))
-	{
-		scan->rs_ctup.t_data = NULL;
-
-		/*
-		 * unpin scan buffers
-		 */
-		if (BufferIsValid(scan->rs_cbuf))
-			ReleaseBuffer(scan->rs_cbuf);
-		scan->rs_cbuf = InvalidBuffer;
-		scan->rs_cblock = InvalidBlockNumber;
-		scan->rs_inited = false;
-	}
-	else
-	{
-		/*
-		 * If we reached end of scan, rs_inited will now be false.  We must
-		 * reset it to true to keep heapgettup from doing the wrong thing.
-		 */
-		scan->rs_inited = true;
-		scan->rs_ctup.t_self = scan->rs_mctid;
-		if (scan->rs_pageatatime)
-		{
-			scan->rs_cindex = scan->rs_mindex;
-			heapgettup_pagemode(scan,
-								NoMovementScanDirection,
-								0,		/* needn't recheck scan keys */
-								NULL);
-		}
-		else
-			heapgettup(scan,
-					   NoMovementScanDirection,
-					   0,		/* needn't recheck scan keys */
-					   NULL);
-	}
 }
 
 /*

@@ -19,8 +19,6 @@
 extern ValuesScanState *ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecValuesScan(ValuesScanState *node);
 extern void ExecEndValuesScan(ValuesScanState *node);
-extern void ExecValuesMarkPos(ValuesScanState *node);
-extern void ExecValuesRestrPos(ValuesScanState *node);
 extern void ExecReScanValuesScan(ValuesScanState *node);
 
 #endif   /* NODEVALUESSCAN_H */

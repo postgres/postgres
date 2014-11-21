@@ -19,8 +19,6 @@
  *		ExecInitTidScan		creates and initializes state info.
  *		ExecReScanTidScan	rescans the tid relation.
  *		ExecEndTidScan		releases all storage.
- *		ExecTidMarkPos		marks scan position.
- *		ExecTidRestrPos		restores scan position.
  */
 #include "postgres.h"
 
@@ -438,34 +436,6 @@ ExecEndTidScan(TidScanState *node)
 	 * close the heap relation.
 	 */
 	ExecCloseScanRelation(node->ss.ss_currentRelation);
-}
-
-/* ----------------------------------------------------------------
- *		ExecTidMarkPos
- *
- *		Marks scan position by marking the current tid.
- *		Returns nothing.
- * ----------------------------------------------------------------
- */
-void
-ExecTidMarkPos(TidScanState *node)
-{
-	node->tss_MarkTidPtr = node->tss_TidPtr;
-}
-
-/* ----------------------------------------------------------------
- *		ExecTidRestrPos
- *
- *		Restores scan position by restoring the current tid.
- *		Returns nothing.
- *
- *		XXX Assumes previously marked scan position belongs to current tid
- * ----------------------------------------------------------------
- */
-void
-ExecTidRestrPos(TidScanState *node)
-{
-	node->tss_TidPtr = node->tss_MarkTidPtr;
 }
 
 /* ----------------------------------------------------------------
