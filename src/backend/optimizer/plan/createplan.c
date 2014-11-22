@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "access/skey.h"
+#include "access/sysattr.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -1881,6 +1882,8 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	RelOptInfo *rel = best_path->path.parent;
 	Index		scan_relid = rel->relid;
 	RangeTblEntry *rte;
+	Bitmapset  *attrs_used = NULL;
+	ListCell   *lc;
 	int			i;
 
 	/* it should be a base rel... */
@@ -1928,16 +1931,33 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	 * Detect whether any system columns are requested from rel.  This is a
 	 * bit of a kluge and might go away someday, so we intentionally leave it
 	 * out of the API presented to FDWs.
+	 *
+	 * First, examine all the attributes needed for joins or final output.
+	 * Note: we must look at reltargetlist, not the attr_needed data, because
+	 * attr_needed isn't computed for inheritance child rels.
 	 */
-	scan_plan->fsSystemCol = false;
-	for (i = rel->min_attr; i < 0; i++)
+	pull_varattnos((Node *) rel->reltargetlist, rel->relid, &attrs_used);
+
+	/* Add all the attributes used by restriction clauses. */
+	foreach(lc, rel->baserestrictinfo)
 	{
-		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		pull_varattnos((Node *) rinfo->clause, rel->relid, &attrs_used);
+	}
+
+	/* Now, are any system columns requested from rel? */
+	scan_plan->fsSystemCol = false;
+	for (i = FirstLowInvalidHeapAttributeNumber + 1; i < 0; i++)
+	{
+		if (bms_is_member(i - FirstLowInvalidHeapAttributeNumber, attrs_used))
 		{
 			scan_plan->fsSystemCol = true;
 			break;
 		}
 	}
+
+	bms_free(attrs_used);
 
 	return scan_plan;
 }
