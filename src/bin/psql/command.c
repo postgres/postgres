@@ -2925,6 +2925,34 @@ do_watch(PQExpBuffer query_buf, long sleep)
 }
 
 /*
+ * a little code borrowed from PSQLexec() to manage ECHO_HIDDEN output.
+ * returns true unless we have ECHO_HIDDEN_NOEXEC.
+ */
+static bool
+lookup_function_echo_hidden(char * query)
+{
+	if (pset.echo_hidden != PSQL_ECHO_HIDDEN_OFF)
+	{
+		printf(_("********* QUERY **********\n"
+				 "%s\n"
+				 "**************************\n\n"), query);
+		fflush(stdout);
+		if (pset.logfile)
+		{
+			fprintf(pset.logfile,
+					_("********* QUERY **********\n"
+					  "%s\n"
+					  "**************************\n\n"), query);
+			fflush(pset.logfile);
+		}
+
+		if (pset.echo_hidden == PSQL_ECHO_HIDDEN_NOEXEC)
+			return false;
+	}
+	return true;
+}
+
+/*
  * This function takes a function description, e.g. "x" or "x(int)", and
  * issues a query on the given connection to retrieve the function's OID
  * using a cast to regproc or regprocedure (as appropriate). The result,
@@ -2945,8 +2973,9 @@ lookup_function_oid(const char *desc, Oid *foid)
 	appendStringLiteralConn(query, desc, pset.db);
 	appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
 					  strchr(desc, '(') ? "regprocedure" : "regproc");
-
-	res = PSQLexec(query->data);
+	if (!lookup_function_echo_hidden(query->data))
+		return false;
+	res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 		*foid = atooid(PQgetvalue(res, 0, 0));
 	else
@@ -2975,7 +3004,9 @@ get_create_function_cmd(Oid oid, PQExpBuffer buf)
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);
 
-	res = PSQLexec(query->data);
+	if (!lookup_function_echo_hidden(query->data))
+		return false;
+	res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 	{
 		resetPQExpBuffer(buf);
