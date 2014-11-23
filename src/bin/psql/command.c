@@ -2974,7 +2974,10 @@ lookup_function_oid(const char *desc, Oid *foid)
 	appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
 					  strchr(desc, '(') ? "regprocedure" : "regproc");
 	if (!lookup_function_echo_hidden(query->data))
+	{
+		destroyPQExpBuffer(query);
 		return false;
+	}
 	res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 		*foid = atooid(PQgetvalue(res, 0, 0));
@@ -3005,7 +3008,10 @@ get_create_function_cmd(Oid oid, PQExpBuffer buf)
 	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);
 
 	if (!lookup_function_echo_hidden(query->data))
+	{
+		destroyPQExpBuffer(query);
 		return false;
+	}
 	res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 	{
