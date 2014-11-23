@@ -188,22 +188,6 @@
 #define MAX_RANDOM_VALUE  (0x7FFFFFFF)
 
 /*
- * Set the format style used by gcc to check printf type functions. We really
- * want the "gnu_printf" style set, which includes what glibc uses, such
- * as %m for error strings and %lld for 64 bit long longs. But not all gcc
- * compilers are known to support it, so we just use "printf" which all
- * gcc versions alive are known to support, except on Windows where
- * using "gnu_printf" style makes a dramatic difference. Maybe someday
- * we'll have a configure test for this, if we ever discover use of more
- * variants to be necessary.
- */
-#ifdef WIN32
-#define PG_PRINTF_ATTRIBUTE gnu_printf
-#else
-#define PG_PRINTF_ATTRIBUTE printf
-#endif
-
-/*
  * On PPC machines, decide whether to use the mutex hint bit in LWARX
  * instructions.  Setting the hint bit will slightly improve spinlock
  * performance on POWER6 and later machines, but does nothing before that,

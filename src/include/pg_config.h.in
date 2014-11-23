@@ -718,6 +718,9 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
+/* Define to gnu_printf if compiler supports it, else printf. */
+#undef PG_PRINTF_ATTRIBUTE
+
 /* Define to 1 if "static inline" works without unwanted warnings from
    compilations where static inline functions are defined but not called. */
 #undef PG_USE_INLINE

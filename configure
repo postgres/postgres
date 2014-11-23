@@ -10094,6 +10094,42 @@ _ACEOF
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for printf format archetype" >&5
+$as_echo_n "checking for printf format archetype... " >&6; }
+if ${pgac_cv_printf_archetype+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+extern int
+pgac_write(int ignore, const char *fmt,...)
+__attribute__((format(gnu_printf, 2, 3)));
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_printf_archetype=gnu_printf
+else
+  pgac_cv_printf_archetype=printf
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_printf_archetype" >&5
+$as_echo "$pgac_cv_printf_archetype" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define PG_PRINTF_ATTRIBUTE $pgac_cv_printf_archetype
+_ACEOF
+
+
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for flexible array members" >&5
 $as_echo_n "checking for flexible array members... " >&6; }
