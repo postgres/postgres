@@ -93,6 +93,19 @@ select q1, float8(count(*)) / (select count(*) from int8_tbl)
 from int8_tbl group by q1 order by q1;
 
 --
+-- Check EXISTS simplification with LIMIT
+--
+explain (costs off)
+select * from int4_tbl o where exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit null);
+explain (costs off)
+select * from int4_tbl o where not exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit 1);
+explain (costs off)
+select * from int4_tbl o where exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit 0);
+
+--
 -- Test cases to catch unpleasant interactions between IN-join processing
 -- and subquery pullup.
 --

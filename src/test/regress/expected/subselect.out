@@ -222,6 +222,46 @@ from int8_tbl group by q1 order by q1;
 (2 rows)
 
 --
+-- Check EXISTS simplification with LIMIT
+--
+explain (costs off)
+select * from int4_tbl o where exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit null);
+             QUERY PLAN             
+------------------------------------
+ Hash Semi Join
+   Hash Cond: (o.f1 = i.f1)
+   ->  Seq Scan on int4_tbl o
+   ->  Hash
+         ->  Seq Scan on int4_tbl i
+(5 rows)
+
+explain (costs off)
+select * from int4_tbl o where not exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit 1);
+             QUERY PLAN             
+------------------------------------
+ Hash Anti Join
+   Hash Cond: (o.f1 = i.f1)
+   ->  Seq Scan on int4_tbl o
+   ->  Hash
+         ->  Seq Scan on int4_tbl i
+(5 rows)
+
+explain (costs off)
+select * from int4_tbl o where exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit 0);
+              QUERY PLAN              
+--------------------------------------
+ Seq Scan on int4_tbl o
+   Filter: (SubPlan 1)
+   SubPlan 1
+     ->  Limit
+           ->  Seq Scan on int4_tbl i
+                 Filter: (f1 = o.f1)
+(6 rows)
+
+--
 -- Test cases to catch unpleasant interactions between IN-join processing
 -- and subquery pullup.
 --
