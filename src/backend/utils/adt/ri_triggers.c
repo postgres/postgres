@@ -2422,7 +2422,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	snprintf(workmembuf, sizeof(workmembuf), "%d", maintenance_work_mem);
 	(void) set_config_option("work_mem", workmembuf,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_SAVE, true, 0);
+							 GUC_ACTION_SAVE, true, 0, false);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");

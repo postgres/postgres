@@ -2104,15 +2104,15 @@ set_transmission_modes(void)
 	if (DateStyle != USE_ISO_DATES)
 		(void) set_config_option("datestyle", "ISO",
 								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0);
+								 GUC_ACTION_SAVE, true, 0, false);
 	if (IntervalStyle != INTSTYLE_POSTGRES)
 		(void) set_config_option("intervalstyle", "postgres",
 								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0);
+								 GUC_ACTION_SAVE, true, 0, false);
 	if (extra_float_digits < 3)
 		(void) set_config_option("extra_float_digits", "3",
 								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0);
+								 GUC_ACTION_SAVE, true, 0, false);
 
 	return nestlevel;
 }

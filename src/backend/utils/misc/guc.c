@@ -110,6 +110,12 @@
 #define S_PER_D (60 * 60 * 24)
 #define MS_PER_D (1000 * 60 * 60 * 24)
 
+/*
+ * Precision with which REAL type guc values are to be printed for GUC
+ * serialization.
+ */
+#define REALTYPE_PRECISION 17
+
 /* XXX these should appear in other modules' header files */
 extern bool Log_disconnections;
 extern int	CommitDelay;
@@ -136,6 +142,10 @@ char	   *GUC_check_errmsg_string;
 char	   *GUC_check_errdetail_string;
 char	   *GUC_check_errhint_string;
 
+static void
+do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
+/* This lets gcc check the format string for consistency. */
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 
 static void set_config_sourcefile(const char *name, char *sourcefile,
 					  int sourceline);
@@ -5612,7 +5622,8 @@ validate_conf_option(struct config_generic * record, const char *name,
 int
 set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
-				  GucAction action, bool changeVal, int elevel)
+				  GucAction action, bool changeVal, int elevel,
+				  bool is_reload)
 {
 	struct config_generic *record;
 	bool		prohibitValueChange = false;
@@ -5726,18 +5737,13 @@ set_config_option(const char *name, const char *value,
 				 * nondefault settings from the CONFIG_EXEC_PARAMS file during
 				 * backend start.  In that case we must accept PGC_SIGHUP
 				 * settings, so as to have the same value as if we'd forked
-				 * from the postmaster.  We detect this situation by checking
-				 * IsInitProcessingMode, which is a bit ugly, but it doesn't
-				 * seem worth passing down an explicit flag saying we're doing
-				 * read_nondefault_variables().
+				 * from the postmaster.  This can also happen when using
+				 * RestoreGUCState() within a background worker that needs to
+				 * have the same settings as the user backend that started it.
+				 * is_reload will be true when either situation applies.
 				 */
-#ifdef EXEC_BACKEND
-				if (IsUnderPostmaster && !IsInitProcessingMode())
+				if (IsUnderPostmaster && !is_reload)
 					return -1;
-#else
-				if (IsUnderPostmaster)
-					return -1;
-#endif
 			}
 			else if (context != PGC_POSTMASTER &&
 					 context != PGC_BACKEND &&
@@ -6343,7 +6349,7 @@ SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source)
 {
 	(void) set_config_option(name, value, context, source,
-							 GUC_ACTION_SET, true, 0);
+							 GUC_ACTION_SET, true, 0, false);
 }
 
 
@@ -6923,9 +6929,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
-									 action,
-									 true,
-									 0);
+									 action, true, 0, false);
 			break;
 		case VAR_SET_MULTI:
 
@@ -7012,9 +7016,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 NULL,
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
-									 action,
-									 true,
-									 0);
+									 action, true, 0, false);
 			break;
 		case VAR_RESET_ALL:
 			ResetAllOptions();
@@ -7059,8 +7061,7 @@ SetPGVariable(const char *name, List *args, bool is_local)
 							 (superuser() ? PGC_SUSET : PGC_USERSET),
 							 PGC_S_SESSION,
 							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-							 true,
-							 0);
+							 true, 0, false);
 }
 
 /*
@@ -7103,8 +7104,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 							 (superuser() ? PGC_SUSET : PGC_USERSET),
 							 PGC_S_SESSION,
 							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-							 true,
-							 0);
+							 true, 0, false);
 
 	/* get the new current value */
 	new_value = GetConfigOptionByName(name, NULL);
@@ -7225,7 +7225,7 @@ define_custom_variable(struct config_generic * variable)
 		(void) set_config_option(name, pHolder->reset_val,
 								 pHolder->gen.reset_scontext,
 								 pHolder->gen.reset_source,
-								 GUC_ACTION_SET, true, WARNING);
+								 GUC_ACTION_SET, true, WARNING, false);
 	/* That should not have resulted in stacking anything */
 	Assert(variable->stack == NULL);
 
@@ -7281,30 +7281,35 @@ reapply_stacked_values(struct config_generic * variable,
 			case GUC_SAVE:
 				(void) set_config_option(name, curvalue,
 										 curscontext, cursource,
-										 GUC_ACTION_SAVE, true, WARNING);
+										 GUC_ACTION_SAVE, true,
+										 WARNING, false);
 				break;
 
 			case GUC_SET:
 				(void) set_config_option(name, curvalue,
 										 curscontext, cursource,
-										 GUC_ACTION_SET, true, WARNING);
+										 GUC_ACTION_SET, true,
+										 WARNING, false);
 				break;
 
 			case GUC_LOCAL:
 				(void) set_config_option(name, curvalue,
 										 curscontext, cursource,
-										 GUC_ACTION_LOCAL, true, WARNING);
+										 GUC_ACTION_LOCAL, true,
+										 WARNING, false);
 				break;
 
 			case GUC_SET_LOCAL:
 				/* first, apply the masked value as SET */
 				(void) set_config_option(name, stack->masked.val.stringval,
 									   stack->masked_scontext, PGC_S_SESSION,
-										 GUC_ACTION_SET, true, WARNING);
+										 GUC_ACTION_SET, true,
+										 WARNING, false);
 				/* then apply the current value as LOCAL */
 				(void) set_config_option(name, curvalue,
 										 curscontext, cursource,
-										 GUC_ACTION_LOCAL, true, WARNING);
+										 GUC_ACTION_LOCAL, true,
+										 WARNING, false);
 				break;
 		}
 
@@ -7328,7 +7333,7 @@ reapply_stacked_values(struct config_generic * variable,
 		{
 			(void) set_config_option(name, curvalue,
 									 curscontext, cursource,
-									 GUC_ACTION_SET, true, WARNING);
+									 GUC_ACTION_SET, true, WARNING, false);
 			variable->stack = NULL;
 		}
 	}
@@ -8452,7 +8457,7 @@ read_nondefault_variables(void)
 
 		(void) set_config_option(varname, varvalue,
 								 varscontext, varsource,
-								 GUC_ACTION_SET, true, 0);
+								 GUC_ACTION_SET, true, 0, true);
 		if (varsourcefile[0])
 			set_config_sourcefile(varname, varsourcefile, varsourceline);
 
@@ -8465,6 +8470,398 @@ read_nondefault_variables(void)
 }
 #endif   /* EXEC_BACKEND */
 
+/*
+ * can_skip_gucvar:
+ * When serializing, determine whether to skip this GUC.  When restoring, the
+ * negation of this test determines whether to restore the compiled-in default
+ * value before processing serialized values.
+ *
+ * A PGC_S_DEFAULT setting on the serialize side will typically match new
+ * postmaster children, but that can be false when got_SIGHUP == true and the
+ * pending configuration change modifies this setting.  Nonetheless, we omit
+ * PGC_S_DEFAULT settings from serialization and make up for that by restoring
+ * defaults before applying serialized values.
+ *
+ * PGC_POSTMASTER variables always have the same value in every child of a
+ * particular postmaster.  Most PGC_INTERNAL variables are compile-time
+ * constants; a few, like server_encoding and lc_ctype, are handled specially
+ * outside the serialize/restore procedure.  Therefore, SerializeGUCState()
+ * never sends these, and and RestoreGUCState() never changes them.
+ */
+static bool
+can_skip_gucvar(struct config_generic * gconf)
+{
+	return gconf->context == PGC_POSTMASTER ||
+		gconf->context == PGC_INTERNAL || gconf->source == PGC_S_DEFAULT;
+}
+
+/*
+ * estimate_variable_size:
+ * Estimate max size for dumping the given GUC variable.
+ */
+static Size
+estimate_variable_size(struct config_generic * gconf)
+{
+	Size		size;
+	Size		valsize;
+
+	if (can_skip_gucvar(gconf))
+		return 0;
+
+	size = 0;
+
+	size = add_size(size, strlen(gconf->name) + 1);
+
+	/* Get the maximum display length of the GUC value. */
+	switch (gconf->vartype)
+	{
+		case PGC_BOOL:
+			{
+				valsize = 5;	/* max(strlen('true'), strlen('false')) */
+			}
+			break;
+
+		case PGC_INT:
+			{
+				struct config_int *conf = (struct config_int *) gconf;
+
+				/*
+				 * Instead of getting the exact display length, use max
+				 * length.  Also reduce the max length for typical ranges of
+				 * small values.  Maximum value is 2147483647, i.e. 10 chars.
+				 * Include one byte for sign.
+				 */
+				if (abs(*conf->variable) < 1000)
+					valsize = 3 + 1;
+				else
+					valsize = 10 + 1;
+			}
+			break;
+
+		case PGC_REAL:
+			{
+				/*
+				 * We are going to print it with %.17g. Account for sign,
+				 * decimal point, and e+nnn notation. E.g.
+				 * -3.9932904234000002e+110
+				 */
+				valsize = REALTYPE_PRECISION + 1 + 1 + 5;
+			}
+			break;
+
+		case PGC_STRING:
+			{
+				struct config_string *conf = (struct config_string *) gconf;
+
+				valsize = strlen(*conf->variable);
+			}
+			break;
+
+		case PGC_ENUM:
+			{
+				struct config_enum *conf = (struct config_enum *) gconf;
+
+				valsize = strlen(config_enum_lookup_by_value(conf, *conf->variable));
+			}
+			break;
+	}
+
+	/* Allow space for terminating zero-byte */
+	size = add_size(size, valsize + 1);
+
+	if (gconf->sourcefile)
+		size = add_size(size, strlen(gconf->sourcefile));
+
+	/* Allow space for terminating zero-byte */
+	size = add_size(size, 1);
+
+	/* Include line whenever we include file. */
+	if (gconf->sourcefile)
+		size = add_size(size, sizeof(gconf->sourceline));
+
+	size = add_size(size, sizeof(gconf->source));
+	size = add_size(size, sizeof(gconf->scontext));
+
+	return size;
+}
+
+/*
+ * EstimateGUCStateSpace:
+ * Returns the size needed to store the GUC state for the current process
+ */
+Size
+EstimateGUCStateSpace(void)
+{
+	Size		size;
+	int			i;
+
+	/* Add space reqd for saving the data size of the guc state */
+	size = sizeof(Size);
+
+	/* Add up the space needed for each GUC variable */
+	for (i = 0; i < num_guc_variables; i++)
+		size = add_size(size,
+						estimate_variable_size(guc_variables[i]));
+
+	return size;
+}
+
+/*
+ * do_serialize:
+ * Copies the formatted string into the destination.  Moves ahead the
+ * destination pointer, and decrements the maxbytes by that many bytes. If
+ * maxbytes is not sufficient to copy the string, error out.
+ */
+static void
+do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
+{
+	va_list		vargs;
+	int			n;
+
+	if (*maxbytes <= 0)
+		elog(ERROR, "not enough space to serialize GUC state");
+
+	va_start(vargs, fmt);
+	n = vsnprintf(*destptr, *maxbytes, fmt, vargs);
+	va_end(vargs);
+
+	/*
+	 * Cater to portability hazards in the vsnprintf() return value just like
+	 * appendPQExpBufferVA() does.  Note that this requires an extra byte of
+	 * slack at the end of the buffer.  Since serialize_variable() ends with a
+	 * do_serialize_binary() rather than a do_serialize(), we'll always have
+	 * that slack; estimate_variable_size() need not add a byte for it.
+	 */
+	if (n < 0 || n >= *maxbytes - 1)
+	{
+		if (n < 0 && errno != 0 && errno != ENOMEM)
+			/* Shouldn't happen. Better show errno description. */
+			elog(ERROR, "vsnprintf failed: %m");
+		else
+			elog(ERROR, "not enough space to serialize GUC state");
+	}
+
+	/* Shift the destptr ahead of the null terminator */
+	*destptr += n + 1;
+	*maxbytes -= n + 1;
+}
+
+/* Binary copy version of do_serialize() */
+static void
+do_serialize_binary(char **destptr, Size *maxbytes, void *val, Size valsize)
+{
+	if (valsize > *maxbytes)
+		elog(ERROR, "not enough space to serialize GUC state");
+
+	memcpy(*destptr, val, valsize);
+	*destptr += valsize;
+	*maxbytes -= valsize;
+}
+
+/*
+ * serialize_variable:
+ * Dumps name, value and other information of a GUC variable into destptr.
+ */
+static void
+serialize_variable(char **destptr, Size *maxbytes,
+				   struct config_generic * gconf)
+{
+	if (can_skip_gucvar(gconf))
+		return;
+
+	do_serialize(destptr, maxbytes, "%s", gconf->name);
+
+	switch (gconf->vartype)
+	{
+		case PGC_BOOL:
+			{
+				struct config_bool *conf = (struct config_bool *) gconf;
+
+				do_serialize(destptr, maxbytes,
+							 (*conf->variable ? "true" : "false"));
+			}
+			break;
+
+		case PGC_INT:
+			{
+				struct config_int *conf = (struct config_int *) gconf;
+
+				do_serialize(destptr, maxbytes, "%d", *conf->variable);
+			}
+			break;
+
+		case PGC_REAL:
+			{
+				struct config_real *conf = (struct config_real *) gconf;
+
+				do_serialize(destptr, maxbytes, "%.*g",
+							 REALTYPE_PRECISION, *conf->variable);
+			}
+			break;
+
+		case PGC_STRING:
+			{
+				struct config_string *conf = (struct config_string *) gconf;
+
+				do_serialize(destptr, maxbytes, "%s", *conf->variable);
+			}
+			break;
+
+		case PGC_ENUM:
+			{
+				struct config_enum *conf = (struct config_enum *) gconf;
+
+				do_serialize(destptr, maxbytes, "%s",
+						 config_enum_lookup_by_value(conf, *conf->variable));
+			}
+			break;
+	}
+
+	do_serialize(destptr, maxbytes, "%s",
+				 (gconf->sourcefile ? gconf->sourcefile : ""));
+
+	if (gconf->sourcefile)
+		do_serialize_binary(destptr, maxbytes, &gconf->sourceline,
+							sizeof(gconf->sourceline));
+
+	do_serialize_binary(destptr, maxbytes, &gconf->source,
+						sizeof(gconf->source));
+	do_serialize_binary(destptr, maxbytes, &gconf->scontext,
+						sizeof(gconf->scontext));
+}
+
+/*
+ * SerializeGUCState:
+ * Dumps the complete GUC state onto the memory location at start_address.
+ */
+void
+SerializeGUCState(Size maxsize, char *start_address)
+{
+	char	   *curptr;
+	Size		actual_size;
+	Size		bytes_left;
+	int			i;
+	int			i_role;
+
+	/* Reserve space for saving the actual size of the guc state */
+	curptr = start_address + sizeof(actual_size);
+	bytes_left = maxsize - sizeof(actual_size);
+
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		/*
+		 * It's pretty ugly, but we've got to force "role" to be initialized
+		 * after "session_authorization"; otherwise, the latter will override
+		 * the former.
+		 */
+		if (strcmp(guc_variables[i]->name, "role") == 0)
+			i_role = i;
+		else
+			serialize_variable(&curptr, &bytes_left, guc_variables[i]);
+	}
+	serialize_variable(&curptr, &bytes_left, guc_variables[i_role]);
+
+	/* Store actual size without assuming alignment of start_address. */
+	actual_size = maxsize - bytes_left - sizeof(actual_size);
+	memcpy(start_address, &actual_size, sizeof(actual_size));
+}
+
+/*
+ * read_gucstate:
+ * Actually it does not read anything, just returns the srcptr. But it does
+ * move the srcptr past the terminating zero byte, so that the caller is ready
+ * to read the next string.
+ */
+static char *
+read_gucstate(char **srcptr, char *srcend)
+{
+	char	   *retptr = *srcptr;
+	char	   *ptr;
+
+	if (*srcptr >= srcend)
+		elog(ERROR, "incomplete GUC state");
+
+	/* The string variables are all null terminated */
+	for (ptr = *srcptr; ptr < srcend && *ptr != '\0'; ptr++)
+		;
+
+	if (ptr > srcend)
+		elog(ERROR, "could not find null terminator in GUC state");
+
+	/* Set the new position to the byte following the terminating NUL */
+	*srcptr = ptr + 1;
+
+	return retptr;
+}
+
+/* Binary read version of read_gucstate(). Copies into dest */
+static void
+read_gucstate_binary(char **srcptr, char *srcend, void *dest, Size size)
+{
+	if (*srcptr + size > srcend)
+		elog(ERROR, "incomplete GUC state");
+
+	memcpy(dest, *srcptr, size);
+	*srcptr += size;
+}
+
+/*
+ * RestoreGUCState:
+ * Reads the GUC state at the specified address and updates the GUCs with the
+ * values read from the GUC state.
+ */
+void
+RestoreGUCState(void *gucstate)
+{
+	char	   *varname,
+			   *varvalue,
+			   *varsourcefile;
+	int			varsourceline;
+	GucSource	varsource;
+	GucContext	varscontext;
+	char	   *srcptr = (char *) gucstate;
+	char	   *srcend;
+	Size		len;
+	int			i;
+
+	/* See comment at can_skip_gucvar(). */
+	for (i = 0; i < num_guc_variables; i++)
+		if (!can_skip_gucvar(guc_variables[i]))
+			InitializeOneGUCOption(guc_variables[i]);
+
+	/* First item is the length of the subsequent data */
+	memcpy(&len, gucstate, sizeof(len));
+
+	srcptr += sizeof(len);
+	srcend = srcptr + len;
+
+	while (srcptr < srcend)
+	{
+		int		result;
+
+		if ((varname = read_gucstate(&srcptr, srcend)) == NULL)
+			break;
+
+		varvalue = read_gucstate(&srcptr, srcend);
+		varsourcefile = read_gucstate(&srcptr, srcend);
+		if (varsourcefile[0])
+			read_gucstate_binary(&srcptr, srcend,
+								 &varsourceline, sizeof(varsourceline));
+		read_gucstate_binary(&srcptr, srcend,
+							 &varsource, sizeof(varsource));
+		read_gucstate_binary(&srcptr, srcend,
+							 &varscontext, sizeof(varscontext));
+
+		result = set_config_option(varname, varvalue, varscontext, varsource,
+								   GUC_ACTION_SET, true, ERROR, true);
+		if (result <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("parameter \"%s\" could not be set", varname)));
+		if (varsourcefile[0])
+			set_config_sourcefile(varname, varsourcefile, varsourceline);
+	}
+}
 
 /*
  * A little "long argument" simulation, although not quite GNU
@@ -8555,7 +8952,7 @@ ProcessGUCArray(ArrayType *array,
 
 		(void) set_config_option(name, value,
 								 context, source,
-								 action, true, 0);
+								 action, true, 0, false);
 
 		free(name);
 		if (value)
@@ -8858,7 +9255,7 @@ validate_option_array_item(const char *name, const char *value,
 	/* test for permissions and valid option value */
 	(void) set_config_option(name, value,
 							 superuser() ? PGC_SUSET : PGC_USERSET,
-							 PGC_S_TEST, GUC_ACTION_SET, false, 0);
+							 PGC_S_TEST, GUC_ACTION_SET, false, 0, false);
 
 	return true;
 }
