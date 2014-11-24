@@ -786,7 +786,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 		BufferGetTag(buffer, &rnode, &forkno, &blkno);
 		XLogRegisterBlock(0, &rnode, forkno, blkno, copied_buffer, flags);
 
-		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI);
+		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI_FOR_HINT);
 	}
 
 	return recptr;

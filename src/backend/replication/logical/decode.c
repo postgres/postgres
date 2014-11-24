@@ -170,6 +170,7 @@ DecodeXLogOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		case XLOG_PARAMETER_CHANGE:
 		case XLOG_RESTORE_POINT:
 		case XLOG_FPW_CHANGE:
+		case XLOG_FPI_FOR_HINT:
 		case XLOG_FPI:
 			break;
 		default:
