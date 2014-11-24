@@ -11,8 +11,25 @@ use a simplified version of the deletion logic described in Lanin and
 Shasha (V. Lanin and D. Shasha, A Symmetric Concurrent B-Tree Algorithm,
 Proceedings of 1986 Fall Joint Computer Conference, pp 380-389).
 
-The Lehman and Yao Algorithm and Insertions
--------------------------------------------
+The basic Lehman & Yao Algorithm
+--------------------------------
+
+Compared to a classic B-tree, L&Y adds a right-link pointer to each page,
+to the page's right sibling.  It also adds a "high key" to each page, which
+is an upper bound on the keys that are allowed on that page.  These two
+additions make it possible detect a concurrent page split, which allows the
+tree to be searched without holding any read locks (except to keep a single
+page from being modified while reading it).
+
+When a search follows a downlink to a child page, it compares the page's
+high key with the search key.  If the search key is greater than the high
+key, the page must've been split concurrently, and you must follow the
+right-link to find the new page containing the key range you're looking
+for.  This might need to be repeated, if the page has been split more than
+once.
+
+Differences to the Lehman & Yao algorithm
+-----------------------------------------
 
 We have made the following changes in order to incorporate the L&Y algorithm
 into Postgres:
