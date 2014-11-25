@@ -280,7 +280,7 @@ static bool connectOptions2(PGconn *conn);
 static int	connectDBStart(PGconn *conn);
 static int	connectDBComplete(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
-static void fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
+static bool fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
@@ -452,7 +452,11 @@ PQconnectStartParams(const char **keywords,
 	/*
 	 * Move option values into conn structure
 	 */
-	fillPGconn(conn, connOptions);
+	if (!fillPGconn(conn, connOptions))
+	{
+		PQconninfoFree(connOptions);
+		return conn;
+	}
 
 	/*
 	 * Free the option info - all is in conn now
@@ -532,59 +536,53 @@ PQconnectStart(const char *conninfo)
 	return conn;
 }
 
-static void
+/*
+ * Move option values into conn structure
+ *
+ * Don't put anything cute here --- intelligence should be in
+ * connectOptions2 ...
+ *
+ * Returns true on success. On failure, returns false and sets error message.
+ */
+#define FILL_CONN_OPTION(dst, name) \
+	do \
+	{ \
+		tmp = conninfo_getval(connOptions, name); \
+		if (tmp) \
+		{ \
+			dst = strdup(tmp); \
+			if (dst == NULL) \
+				goto oom_error; \
+		} \
+		else \
+			dst = NULL; \
+	} while(0)
+
+static bool
 fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
 	char	   *tmp;
 
-	/*
-	 * Move option values into conn structure
-	 *
-	 * Don't put anything cute here --- intelligence should be in
-	 * connectOptions2 ...
-	 *
-	 * XXX: probably worth checking strdup() return value here...
-	 */
-	tmp = conninfo_getval(connOptions, "hostaddr");
-	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "host");
-	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "port");
-	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "tty");
-	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "options");
-	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "application_name");
-	conn->appname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "fallback_application_name");
-	conn->fbappname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "user");
-	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "password");
-	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "connect_timeout");
-	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives");
-	conn->keepalives = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_idle");
-	conn->keepalives_idle = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_interval");
-	conn->keepalives_interval = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_count");
-	conn->keepalives_count = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslmode");
-	conn->sslmode = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslkey");
-	conn->sslkey = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcert");
-	conn->sslcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslrootcert");
-	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcrl");
-	conn->sslcrl = tmp ? strdup(tmp) : NULL;
+	FILL_CONN_OPTION(conn->pghostaddr, "hostaddr");
+	FILL_CONN_OPTION(conn->pghost, "host");
+	FILL_CONN_OPTION(conn->pgport, "port");
+	FILL_CONN_OPTION(conn->pgtty, "tty");
+	FILL_CONN_OPTION(conn->pgoptions, "options");
+	FILL_CONN_OPTION(conn->appname, "application_name");
+	FILL_CONN_OPTION(conn->fbappname, "fallback_application_name");
+	FILL_CONN_OPTION(conn->dbName, "dbname");
+	FILL_CONN_OPTION(conn->pguser, "user");
+	FILL_CONN_OPTION(conn->pgpass, "password");
+	FILL_CONN_OPTION(conn->connect_timeout, "connect_timeout");
+	FILL_CONN_OPTION(conn->keepalives, "keepalives");
+	FILL_CONN_OPTION(conn->keepalives_idle, "keepalives_idle");
+	FILL_CONN_OPTION(conn->keepalives_interval, "keepalives_interval");
+	FILL_CONN_OPTION(conn->keepalives_count, "keepalives_count");
+	FILL_CONN_OPTION(conn->sslmode, "sslmode");
+	FILL_CONN_OPTION(conn->sslkey, "sslkey");
+	FILL_CONN_OPTION(conn->sslcert, "sslcert");
+	FILL_CONN_OPTION(conn->sslrootcert, "sslrootcert");
+	FILL_CONN_OPTION(conn->sslcrl, "sslcrl");
 #ifdef USE_SSL
 	tmp = conninfo_getval(connOptions, "requiressl");
 	if (tmp && tmp[0] == '1')
@@ -593,18 +591,24 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 		if (conn->sslmode)
 			free(conn->sslmode);
 		conn->sslmode = strdup("require");
+		if (!conn->sslmode)
+			return false;
 	}
 #endif
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "krbsrvname");
-	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
+	FILL_CONN_OPTION(conn->krbsrvname, "krbsrvname");
 #endif
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "gsslib");
-	conn->gsslib = tmp ? strdup(tmp) : NULL;
+	FILL_CONN_OPTION(conn->gsslib, "gsslib");
 #endif
-	tmp = conninfo_getval(connOptions, "replication");
-	conn->replication = tmp ? strdup(tmp) : NULL;
+	FILL_CONN_OPTION(conn->replication, "replication");
+
+	return true;
+
+oom_error:
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("out of memory\n"));
+	return false;
 }
 
 /*
@@ -637,7 +641,12 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Move option values into conn structure
 	 */
-	fillPGconn(conn, connOptions);
+	if (!fillPGconn(conn, connOptions))
+	{
+		conn->status = CONNECTION_BAD;
+		PQconninfoFree(connOptions);
+		return false;
+	}
 
 	/*
 	 * Free the option info - all is in conn now
@@ -667,6 +676,8 @@ connectOptions2(PGconn *conn)
 		if (conn->dbName)
 			free(conn->dbName);
 		conn->dbName = strdup(conn->pguser);
+		if (!conn->dbName)
+			goto oom_error;
 	}
 
 	/*
@@ -679,7 +690,12 @@ connectOptions2(PGconn *conn)
 		conn->pgpass = PasswordFromFile(conn->pghost, conn->pgport,
 										conn->dbName, conn->pguser);
 		if (conn->pgpass == NULL)
+		{
 			conn->pgpass = strdup(DefaultPassword);
+			if (!conn->pgpass)
+				goto oom_error;
+
+		}
 		else
 			conn->dot_pgpass_used = true;
 	}
@@ -737,7 +753,11 @@ connectOptions2(PGconn *conn)
 #endif
 	}
 	else
+	{
 		conn->sslmode = strdup(DefaultSSLMode);
+		if (!conn->sslmode)
+			goto oom_error;
+	}
 
 	/*
 	 * Only if we get this far is it appropriate to try to connect. (We need a
@@ -747,6 +767,12 @@ connectOptions2(PGconn *conn)
 	conn->options_valid = true;
 
 	return true;
+
+oom_error:
+	conn->status = CONNECTION_BAD;
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("out of memory\n"));
+	return false;
 }
 
 /*
@@ -829,6 +855,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			if (conn->dbName)
 				free(conn->dbName);
 			conn->dbName = strdup(dbName);
+			if (!conn->dbName)
+				goto oom_error;
 		}
 	}
 
@@ -841,6 +869,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pghost)
 			free(conn->pghost);
 		conn->pghost = strdup(pghost);
+		if (!conn->pghost)
+			goto oom_error;
 	}
 
 	if (pgport && pgport[0] != '\0')
@@ -848,6 +878,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgport)
 			free(conn->pgport);
 		conn->pgport = strdup(pgport);
+		if (!conn->pgport)
+			goto oom_error;
 	}
 
 	if (pgoptions && pgoptions[0] != '\0')
@@ -855,6 +887,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgoptions)
 			free(conn->pgoptions);
 		conn->pgoptions = strdup(pgoptions);
+		if (!conn->pgoptions)
+			goto oom_error;
 	}
 
 	if (pgtty && pgtty[0] != '\0')
@@ -862,6 +896,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgtty)
 			free(conn->pgtty);
 		conn->pgtty = strdup(pgtty);
+		if (!conn->pgtty)
+			goto oom_error;
 	}
 
 	if (login && login[0] != '\0')
@@ -869,6 +905,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pguser)
 			free(conn->pguser);
 		conn->pguser = strdup(login);
+		if (!conn->pguser)
+			goto oom_error;
 	}
 
 	if (pwd && pwd[0] != '\0')
@@ -876,6 +914,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgpass)
 			free(conn->pgpass);
 		conn->pgpass = strdup(pwd);
+		if (!conn->pgpass)
+			goto oom_error;
 	}
 
 	/*
@@ -890,6 +930,12 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	if (connectDBStart(conn))
 		(void) connectDBComplete(conn);
 
+	return conn;
+
+oom_error:
+	conn->status = CONNECTION_BAD;
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("out of memory\n"));
 	return conn;
 }
 
@@ -3530,7 +3576,16 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				if (strcmp(options[i].keyword, optname) == 0)
 				{
 					if (options[i].val == NULL)
+					{
 						options[i].val = strdup(optval);
+						if (!options[i].val)
+						{
+							printfPQExpBuffer(errorMessage,
+											libpq_gettext("out of memory\n"));
+							free(result);
+							return 3;
+						}
+					}
 					found_keyword = true;
 					break;
 				}
@@ -3753,6 +3808,13 @@ parseServiceFile(const char *serviceFile,
 					{
 						if (options[i].val == NULL)
 							options[i].val = strdup(val);
+						if (!options[i].val)
+						{
+							printfPQExpBuffer(errorMessage,
+											libpq_gettext("out of memory\n"));
+							fclose(f);
+							return 3;
+						}
 						found_keyword = true;
 						break;
 					}
@@ -4180,6 +4242,14 @@ conninfo_array_parse(const char **keywords, const char **values,
 								if (options[k].val)
 									free(options[k].val);
 								options[k].val = strdup(str_option->val);
+								if (!options[k].val)
+								{
+									printfPQExpBuffer(errorMessage,
+													  libpq_gettext("out of memory\n"));
+									PQconninfoFree(options);
+									PQconninfoFree(str_options);
+									return NULL;
+								}
 								break;
 							}
 						}
@@ -4199,6 +4269,7 @@ conninfo_array_parse(const char **keywords, const char **values,
 					printfPQExpBuffer(errorMessage,
 									  libpq_gettext("out of memory\n"));
 					PQconninfoFree(options);
+					PQconninfoFree(str_options);
 					return NULL;
 				}
 			}
