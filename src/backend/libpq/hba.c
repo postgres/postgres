@@ -925,15 +925,13 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 			return NULL;
 #endif
 		}
-#ifdef USE_SSL
 		else if (token->string[4] == 'n')		/* "hostnossl" */
 		{
 			parsedline->conntype = ctHostNoSSL;
 		}
-#endif
 		else
 		{
-			/* "host", or "hostnossl" and SSL support not built in */
+			/* "host" */
 			parsedline->conntype = ctHost;
 		}
 	}							/* record type */
@@ -1684,7 +1682,6 @@ check_hba(hbaPort *port)
 				continue;
 
 			/* Check SSL state */
-#ifdef USE_SSL
 			if (port->ssl_in_use)
 			{
 				/* Connection is SSL, match both "host" and "hostssl" */
@@ -1697,11 +1694,6 @@ check_hba(hbaPort *port)
 				if (hba->conntype == ctHostSSL)
 					continue;
 			}
-#else
-			/* No SSL support, so reject "hostssl" lines */
-			if (hba->conntype == ctHostSSL)
-				continue;
-#endif
 
 			/* Check IP address */
 			switch (hba->ip_cmp_method)

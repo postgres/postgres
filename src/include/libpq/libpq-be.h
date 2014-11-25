@@ -184,14 +184,16 @@ typedef struct Port
 #endif
 
 	/*
-	 * SSL structures (keep these last so that the locations of other fields
-	 * are the same whether or not you build with SSL)
+	 * SSL structures.
 	 */
-#ifdef USE_SSL
 	bool		ssl_in_use;
 	char	   *peer_cn;
 	bool		peer_cert_valid;
-#endif
+
+	/*
+	 * OpenSSL structures. (Keep these last so that the locations of other
+	 * fields are the same whether or not you build with OpenSSL.)
+	 */
 #ifdef USE_OPENSSL
 	SSL		   *ssl;
 	X509	   *peer;

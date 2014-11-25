@@ -35,7 +35,7 @@ PG_FUNCTION_INFO_V1(ssl_is_used);
 Datum
 ssl_is_used(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL(MyProcPort->ssl != NULL);
+	PG_RETURN_BOOL(MyProcPort->ssl_in_use);
 }
 
 
