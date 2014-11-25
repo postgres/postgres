@@ -231,7 +231,7 @@ ExecScanSubPlan(SubPlanState *node,
 	bool		found = false;	/* TRUE if got at least one subplan tuple */
 	ListCell   *pvar;
 	ListCell   *l;
-	ArrayBuildState *astate = NULL;
+	ArrayBuildStateAny *astate = NULL;
 
 	/*
 	 * MULTIEXPR subplans, when "executed", just return NULL; but first we
@@ -258,6 +258,11 @@ ExecScanSubPlan(SubPlanState *node,
 		*isNull = true;
 		return (Datum) 0;
 	}
+
+	/* Initialize ArrayBuildStateAny in caller's context, if needed */
+	if (subLinkType == ARRAY_SUBLINK)
+		astate = initArrayResultAny(subplan->firstColType,
+									CurrentMemoryContext);
 
 	/*
 	 * We are probably in a short-lived expression-evaluation context. Switch
@@ -366,8 +371,8 @@ ExecScanSubPlan(SubPlanState *node,
 			/* stash away current value */
 			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
-			astate = accumArrayResult(astate, dvalue, disnull,
-									  subplan->firstColType, oldcontext);
+			astate = accumArrayResultAny(astate, dvalue, disnull,
+										 subplan->firstColType, oldcontext);
 			/* keep scanning subplan to collect all values */
 			continue;
 		}
@@ -437,10 +442,7 @@ ExecScanSubPlan(SubPlanState *node,
 	if (subLinkType == ARRAY_SUBLINK)
 	{
 		/* We return the result in the caller's context */
-		if (astate != NULL)
-			result = makeArrayResult(astate, oldcontext);
-		else
-			result = PointerGetDatum(construct_empty_array(subplan->firstColType));
+		result = makeArrayResultAny(astate, oldcontext, true);
 	}
 	else if (!found)
 	{
@@ -951,13 +953,18 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	ListCell   *pvar;
 	ListCell   *l;
 	bool		found = false;
-	ArrayBuildState *astate = NULL;
+	ArrayBuildStateAny *astate = NULL;
 
 	if (subLinkType == ANY_SUBLINK ||
 		subLinkType == ALL_SUBLINK)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 	if (subLinkType == CTE_SUBLINK)
 		elog(ERROR, "CTE subplans should not be executed via ExecSetParamPlan");
+
+	/* Initialize ArrayBuildStateAny in caller's context, if needed */
+	if (subLinkType == ARRAY_SUBLINK)
+		astate = initArrayResultAny(subplan->firstColType,
+									CurrentMemoryContext);
 
 	/*
 	 * Must switch to per-query memory context.
@@ -1018,8 +1025,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 			/* stash away current value */
 			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
-			astate = accumArrayResult(astate, dvalue, disnull,
-									  subplan->firstColType, oldcontext);
+			astate = accumArrayResultAny(astate, dvalue, disnull,
+										 subplan->firstColType, oldcontext);
 			/* keep scanning subplan to collect all values */
 			continue;
 		}
@@ -1072,14 +1079,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		 */
 		if (node->curArray != PointerGetDatum(NULL))
 			pfree(DatumGetPointer(node->curArray));
-		if (astate != NULL)
-			node->curArray = makeArrayResult(astate,
-											 econtext->ecxt_per_query_memory);
-		else
-		{
-			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			node->curArray = PointerGetDatum(construct_empty_array(subplan->firstColType));
-		}
+		node->curArray = makeArrayResultAny(astate,
+											econtext->ecxt_per_query_memory,
+											true);
 		prm->execPlan = NULL;
 		prm->value = node->curArray;
 		prm->isnull = false;

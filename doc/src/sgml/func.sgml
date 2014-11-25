@@ -12035,12 +12035,27 @@ NULL baz</literallayout>(3 rows)</entry>
        <function>array_agg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       any
+       any non-array type
       </entry>
       <entry>
        array of the argument type
       </entry>
       <entry>input values, including nulls, concatenated into an array</entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>array_agg(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       any array type
+      </entry>
+      <entry>
+       same as argument data type
+      </entry>
+      <entry>input arrays concatenated into array of one higher dimension
+       (inputs must all have same dimensionality,
+        and cannot be empty or NULL)</entry>
      </row>
 
      <row>

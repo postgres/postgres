@@ -359,12 +359,12 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
    aggregate <function>array_agg</> is equivalent to
 
 <programlisting>
-CREATE FUNCTION array_agg_transfn(internal, anyelement)
+CREATE FUNCTION array_agg_transfn(internal, anynonarray)
   RETURNS internal ...;
-CREATE FUNCTION array_agg_finalfn(internal, anyelement)
+CREATE FUNCTION array_agg_finalfn(internal, anynonarray)
   RETURNS anyarray ...;
 
-CREATE AGGREGATE array_agg (anyelement)
+CREATE AGGREGATE array_agg (anynonarray)
 (
     sfunc = array_agg_transfn,
     stype = internal,
@@ -376,7 +376,7 @@ CREATE AGGREGATE array_agg (anyelement)
    Here, the <literal>finalfunc_extra</> option specifies that the final
    function receives, in addition to the state value, extra dummy
    argument(s) corresponding to the aggregate's input argument(s).
-   The extra <type>anyelement</> argument allows the declaration
+   The extra <type>anynonarray</> argument allows the declaration
    of <function>array_agg_finalfn</> to be valid.
   </para>
 

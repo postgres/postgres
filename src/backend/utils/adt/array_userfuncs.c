@@ -471,7 +471,7 @@ create_singleton_array(FunctionCallInfo fcinfo,
 
 
 /*
- * ARRAY_AGG aggregate function
+ * ARRAY_AGG(anynonarray) aggregate function
  */
 Datum
 array_agg_transfn(PG_FUNCTION_ARGS)
@@ -485,6 +485,12 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
+
+	/*
+	 * Note: we do not need a run-time check about whether arg1_typeid is a
+	 * valid array element type, because the parser would have verified that
+	 * while resolving the input/result types of this polymorphic aggregate.
+	 */
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -516,18 +522,13 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	int			dims[1];
 	int			lbs[1];
 
-	/*
-	 * Test for null before Asserting we are in right context.  This is to
-	 * avoid possible Assert failure in 8.4beta installations, where it is
-	 * possible for users to create NULL constants of type internal.
-	 */
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();		/* returns null iff no input values */
-
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
+	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
+
+	if (state == NULL)
+		PG_RETURN_NULL();		/* returns null iff no input values */
 
 	dims[0] = state->nelems;
 	lbs[0] = 1;
@@ -541,6 +542,73 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	result = makeMdArrayResult(state, 1, dims, lbs,
 							   CurrentMemoryContext,
 							   false);
+
+	PG_RETURN_DATUM(result);
+}
+
+/*
+ * ARRAY_AGG(anyarray) aggregate function
+ */
+Datum
+array_agg_array_transfn(PG_FUNCTION_ARGS)
+{
+	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	MemoryContext aggcontext;
+	ArrayBuildStateArr *state;
+
+	if (arg1_typeid == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data type")));
+
+	/*
+	 * Note: we do not need a run-time check about whether arg1_typeid is a
+	 * valid array type, because the parser would have verified that while
+	 * resolving the input/result types of this polymorphic aggregate.
+	 */
+
+	if (!AggCheckCallContext(fcinfo, &aggcontext))
+	{
+		/* cannot be called directly because of internal-type argument */
+		elog(ERROR, "array_agg_array_transfn called in non-aggregate context");
+	}
+
+	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+	state = accumArrayResultArr(state,
+								PG_GETARG_DATUM(1),
+								PG_ARGISNULL(1),
+								arg1_typeid,
+								aggcontext);
+
+	/*
+	 * The transition type for array_agg() is declared to be "internal", which
+	 * is a pass-by-value type the same size as a pointer.  So we can safely
+	 * pass the ArrayBuildStateArr pointer through nodeAgg.c's machinations.
+	 */
+	PG_RETURN_POINTER(state);
+}
+
+Datum
+array_agg_array_finalfn(PG_FUNCTION_ARGS)
+{
+	Datum		result;
+	ArrayBuildStateArr *state;
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(AggCheckCallContext(fcinfo, NULL));
+
+	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+
+	if (state == NULL)
+		PG_RETURN_NULL();		/* returns null iff no input values */
+
+	/*
+	 * Make the result.  We cannot release the ArrayBuildStateArr because
+	 * sometimes aggregate final functions are re-executed.  Rather, it is
+	 * nodeAgg.c's responsibility to reset the aggcontext when it's safe to do
+	 * so.
+	 */
+	result = makeArrayResultArr(state, CurrentMemoryContext, false);
 
 	PG_RETURN_DATUM(result);
 }

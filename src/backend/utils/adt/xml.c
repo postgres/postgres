@@ -143,7 +143,7 @@ static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 		  bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur);
 static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-					   ArrayBuildState **astate);
+					   ArrayBuildState *astate);
 #endif   /* USE_LIBXML */
 
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
@@ -3648,7 +3648,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 
 /*
  * Convert an XML XPath object (the result of evaluating an XPath expression)
- * to an array of xml values, which is returned at *astate.  The function
+ * to an array of xml values, which are appended to astate.  The function
  * result value is the number of elements in the array.
  *
  * If "astate" is NULL then we don't generate the array value, but we still
@@ -3660,15 +3660,12 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
  */
 static int
 xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-					   ArrayBuildState **astate)
+					   ArrayBuildState *astate)
 {
 	int			result = 0;
 	Datum		datum;
 	Oid			datumtype;
 	char	   *result_str;
-
-	if (astate != NULL)
-		*astate = NULL;
 
 	switch (xpathobj->type)
 	{
@@ -3683,9 +3680,8 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					for (i = 0; i < result; i++)
 					{
 						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
-						*astate = accumArrayResult(*astate, datum,
-												   false, XMLOID,
-												   CurrentMemoryContext);
+						(void) accumArrayResult(astate, datum, false,
+												XMLOID, CurrentMemoryContext);
 					}
 				}
 			}
@@ -3721,9 +3717,8 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 	/* Common code for scalar-value cases */
 	result_str = map_sql_value_to_xml_value(datum, datumtype, true);
 	datum = PointerGetDatum(cstring_to_xmltype(result_str));
-	*astate = accumArrayResult(*astate, datum,
-							   false, XMLOID,
-							   CurrentMemoryContext);
+	(void) accumArrayResult(astate, datum, false,
+							XMLOID, CurrentMemoryContext);
 	return 1;
 }
 
@@ -3741,7 +3736,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
  */
 static void
 xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
-			   int *res_nitems, ArrayBuildState **astate)
+			   int *res_nitems, ArrayBuildState *astate)
 {
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlParserCtxtPtr ctxt = NULL;
@@ -3933,16 +3928,12 @@ xpath(PG_FUNCTION_ARGS)
 	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
 	xmltype    *data = PG_GETARG_XML_P(1);
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
-	int			res_nitems;
 	ArrayBuildState *astate;
 
+	astate = initArrayResult(XMLOID, CurrentMemoryContext);
 	xpath_internal(xpath_expr_text, data, namespaces,
-				   &res_nitems, &astate);
-
-	if (res_nitems == 0)
-		PG_RETURN_ARRAYTYPE_P(construct_empty_array(XMLOID));
-	else
-		PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+				   NULL, astate);
+	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
 #else
 	NO_XML_SUPPORT();
 	return 0;

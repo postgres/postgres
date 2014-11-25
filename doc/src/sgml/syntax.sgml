@@ -2239,11 +2239,22 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
 -----------------------------------------------------------------------
  {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31,2412,2413}
 (1 row)
+
+SELECT ARRAY(SELECT ARRAY[i, i*2] FROM generate_series(1,5) AS a(i));
+              array
+----------------------------------
+ {{1,2},{2,4},{3,6},{4,8},{5,10}}
+(1 row)
 </programlisting>
-   The subquery must return a single column. The resulting
+   The subquery must return a single column.
+   If the subquery's output column is of a non-array type, the resulting
    one-dimensional array will have an element for each row in the
    subquery result, with an element type matching that of the
    subquery's output column.
+   If the subquery's output column is of an array type, the result will be
+   an array of the same type but one higher dimension; in this case all
+   the subquery rows must yield arrays of identical dimensionality, else
+   the result would not be rectangular.
   </para>
 
   <para>
