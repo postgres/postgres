@@ -8741,9 +8741,10 @@ SerializeGUCState(Size maxsize, char *start_address)
 	Size		actual_size;
 	Size		bytes_left;
 	int			i;
-	int			i_role;
+	int			i_role = -1;
 
 	/* Reserve space for saving the actual size of the guc state */
+	Assert(maxsize > sizeof(actual_size));
 	curptr = start_address + sizeof(actual_size);
 	bytes_left = maxsize - sizeof(actual_size);
 
@@ -8759,7 +8760,8 @@ SerializeGUCState(Size maxsize, char *start_address)
 		else
 			serialize_variable(&curptr, &bytes_left, guc_variables[i]);
 	}
-	serialize_variable(&curptr, &bytes_left, guc_variables[i_role]);
+	if (i_role >= 0)
+		serialize_variable(&curptr, &bytes_left, guc_variables[i_role]);
 
 	/* Store actual size without assuming alignment of start_address. */
 	actual_size = maxsize - bytes_left - sizeof(actual_size);
