@@ -33,6 +33,7 @@ sub Catalogs
 	my %RENAME_ATTTYPE = (
 		'int16'         => 'int2',
 		'int32'         => 'int4',
+		'int64'         => 'int8',
 		'Oid'           => 'oid',
 		'NameData'      => 'name',
 		'TransactionId' => 'xid');
