@@ -4221,9 +4221,9 @@ conninfo_array_parse(const char **keywords, const char **values,
 			}
 
 			/*
-			 * If we are on the dbname parameter, and we have a parsed
-			 * conninfo string, copy those parameters across, overriding any
-			 * existing previous settings
+			 * If we are on the first dbname parameter, and we have a parsed
+			 * connection string, copy those parameters across, overriding any
+			 * existing previous settings.
 			 */
 			if (strcmp(pname, "dbname") == 0 && str_options)
 			{
@@ -4255,6 +4255,12 @@ conninfo_array_parse(const char **keywords, const char **values,
 						}
 					}
 				}
+				/*
+				 * Forget the parsed connection string, so that any subsequent
+				 * dbname parameters will not be expanded.
+				 */
+				PQconninfoFree(str_options);
+				str_options = NULL;
 			}
 			else
 			{
