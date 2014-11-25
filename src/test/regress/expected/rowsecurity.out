@@ -774,10 +774,10 @@ ERROR:  infinite recursion detected in row-security policy for relation "rec1"
 -- Mutual recursion via .s.b views
 --
 SET SESSION AUTHORIZATION rls_regress_user1;
+-- Suppress NOTICE messages when doing a cascaded drop.
+SET client_min_messages TO 'warning';
 DROP VIEW rec1v, rec2v CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to policy r1 on table rec1
-drop cascades to policy r2 on table rec2
+RESET client_min_messages;
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
 SET SESSION AUTHORIZATION rls_regress_user0;
@@ -1606,10 +1606,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;
+-- Suppress NOTICE messages when doing a cascaded drop.
+SET client_min_messages TO 'warning';
 DROP TABLE t1 CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table t2
-drop cascades to table t3
+RESET client_min_messages;
 CREATE TABLE t1 (a integer);
 GRANT SELECT ON t1 TO rls_regress_user1, rls_regress_user2;
 CREATE POLICY p1 ON t1 TO rls_regress_user1 USING ((a % 2) = 0);
@@ -2205,32 +2205,10 @@ DROP TABLE copy_t;
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
+-- Suppress NOTICE messages when doing a cascaded drop.
+SET client_min_messages TO 'warning';
 DROP SCHEMA rls_regress_schema CASCADE;
-NOTICE:  drop cascades to 24 other objects
-DETAIL:  drop cascades to function f_leak(text)
-drop cascades to table uaccount
-drop cascades to table category
-drop cascades to table document
-drop cascades to table dependent
-drop cascades to table rec1
-drop cascades to table rec2
-drop cascades to view rec1v
-drop cascades to view rec2v
-drop cascades to table s1
-drop cascades to table s2
-drop cascades to view v2
-drop cascades to table z1
-drop cascades to table x1
-drop cascades to table y1
-drop cascades to table y2
-drop cascades to table t1
-drop cascades to table t2
-drop cascades to table t3
-drop cascades to table t4
-drop cascades to table event_trigger_test
-drop cascades to function start_command()
-drop cascades to function end_command()
-drop cascades to function drop_sql_command()
+RESET client_min_messages;
 DROP USER rls_regress_user0;
 DROP USER rls_regress_user1;
 DROP USER rls_regress_user2;

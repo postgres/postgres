@@ -321,7 +321,12 @@ SELECT * FROM rec1;    -- fail, mutual recursion via views
 -- Mutual recursion via .s.b views
 --
 SET SESSION AUTHORIZATION rls_regress_user1;
+-- Suppress NOTICE messages when doing a cascaded drop.
+SET client_min_messages TO 'warning';
+
 DROP VIEW rec1v, rec2v CASCADE;
+RESET client_min_messages;
+
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
 SET SESSION AUTHORIZATION rls_regress_user0;
@@ -601,7 +606,12 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;
+-- Suppress NOTICE messages when doing a cascaded drop.
+SET client_min_messages TO 'warning';
+
 DROP TABLE t1 CASCADE;
+RESET client_min_messages;
+
 CREATE TABLE t1 (a integer);
 
 GRANT SELECT ON t1 TO rls_regress_user1, rls_regress_user2;
@@ -914,7 +924,11 @@ DROP TABLE copy_t;
 --
 RESET SESSION AUTHORIZATION;
 
+-- Suppress NOTICE messages when doing a cascaded drop.
+SET client_min_messages TO 'warning';
+
 DROP SCHEMA rls_regress_schema CASCADE;
+RESET client_min_messages;
 
 DROP USER rls_regress_user0;
 DROP USER rls_regress_user1;
