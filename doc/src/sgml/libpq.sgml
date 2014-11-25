@@ -124,7 +124,10 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       <para>
        When <literal>expand_dbname</literal> is non-zero, the
        <parameter>dbname</parameter> key word value is allowed to be recognized
-       as a connection string. More details on the possible formats appear in
+       as a connection string. Only the first occurrence of
+       <parameter>dbname</parameter> is expanded this way, any subsequent
+       <parameter>dbname</parameter> value is processed as plain database name. More
+       details on the possible connection string formats appear in
        <xref linkend="libpq-connstring">.
       </para>
 
