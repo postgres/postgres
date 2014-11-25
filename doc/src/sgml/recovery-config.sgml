@@ -300,8 +300,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
-     </variablelist>
-
      <varlistentry id="action-at-recovery-target"
                    xreflabel="action_at_recovery_target">
       <term><varname>action_at_recovery_target</varname> (<type>enum</type>)
