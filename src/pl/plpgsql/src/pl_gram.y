@@ -2315,32 +2315,46 @@ unreserved_keyword	:
 				| K_ALIAS
 				| K_ARRAY
 				| K_BACKWARD
+				| K_CLOSE
+				| K_COLLATE
 				| K_COLUMN
 				| K_COLUMN_NAME
 				| K_CONSTANT
 				| K_CONSTRAINT
 				| K_CONSTRAINT_NAME
+				| K_CONTINUE
 				| K_CURRENT
 				| K_CURSOR
 				| K_DATATYPE
 				| K_DEBUG
+				| K_DEFAULT
 				| K_DETAIL
+				| K_DIAGNOSTICS
 				| K_DUMP
+				| K_ELSIF
 				| K_ERRCODE
 				| K_ERROR
+				| K_EXCEPTION
+				| K_EXIT
+				| K_FETCH
 				| K_FIRST
 				| K_FORWARD
+				| K_GET
 				| K_HINT
 				| K_INFO
+				| K_INSERT
 				| K_IS
 				| K_LAST
 				| K_LOG
 				| K_MESSAGE
 				| K_MESSAGE_TEXT
+				| K_MOVE
 				| K_NEXT
 				| K_NO
 				| K_NOTICE
+				| K_OPEN
 				| K_OPTION
+				| K_PERFORM
 				| K_PG_CONTEXT
 				| K_PG_DATATYPE_NAME
 				| K_PG_EXCEPTION_CONTEXT
@@ -2349,8 +2363,10 @@ unreserved_keyword	:
 				| K_PRINT_STRICT_PARAMS
 				| K_PRIOR
 				| K_QUERY
+				| K_RAISE
 				| K_RELATIVE
 				| K_RESULT_OID
+				| K_RETURN
 				| K_RETURNED_SQLSTATE
 				| K_REVERSE
 				| K_ROW_COUNT

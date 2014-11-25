@@ -31,21 +31,28 @@ IdentifierLookup plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
  *
  * We keep reserved and unreserved keywords in separate arrays.  The
  * reserved keywords are passed to the core scanner, so they will be
- * recognized before (and instead of) any variable name.  Unreserved
- * words are checked for separately, after determining that the identifier
+ * recognized before (and instead of) any variable name.  Unreserved words
+ * are checked for separately, usually after determining that the identifier
  * isn't a known variable name.  If plpgsql_IdentifierLookup is DECLARE then
  * no variable names will be recognized, so the unreserved words always work.
  * (Note in particular that this helps us avoid reserving keywords that are
  * only needed in DECLARE sections.)
  *
  * In certain contexts it is desirable to prefer recognizing an unreserved
- * keyword over recognizing a variable name.  Those cases are handled in
- * pl_gram.y using tok_is_keyword().
+ * keyword over recognizing a variable name.  In particular, at the start
+ * of a statement we should prefer unreserved keywords unless the statement
+ * looks like an assignment (i.e., first token is followed by ':=' or '[').
+ * This rule allows most statement-introducing keywords to be kept unreserved.
+ * (We still have to reserve initial keywords that might follow a block
+ * label, unfortunately, since the method used to determine if we are at
+ * start of statement doesn't recognize such cases.  We'd also have to
+ * reserve any keyword that could legitimately be followed by ':=' or '['.)
+ * Some additional cases are handled in pl_gram.y using tok_is_keyword().
  *
- * For the most part, the reserved keywords are those that start a PL/pgSQL
- * statement (and so would conflict with an assignment to a variable of the
- * same name).  We also don't sweat it much about reserving keywords that
- * are reserved in the core grammar.  Try to avoid reserving other words.
+ * We try to avoid reserving more keywords than we have to; but there's
+ * little point in not reserving a word if it's reserved in the core grammar.
+ * Currently, the following words are reserved here but not in the core:
+ * BEGIN BY DECLARE EXECUTE FOREACH IF LOOP STRICT WHILE
  */
 
 /*
@@ -63,37 +70,20 @@ static const ScanKeyword reserved_keywords[] = {
 	PG_KEYWORD("begin", K_BEGIN, RESERVED_KEYWORD)
 	PG_KEYWORD("by", K_BY, RESERVED_KEYWORD)
 	PG_KEYWORD("case", K_CASE, RESERVED_KEYWORD)
-	PG_KEYWORD("close", K_CLOSE, RESERVED_KEYWORD)
-	PG_KEYWORD("collate", K_COLLATE, RESERVED_KEYWORD)
-	PG_KEYWORD("continue", K_CONTINUE, RESERVED_KEYWORD)
 	PG_KEYWORD("declare", K_DECLARE, RESERVED_KEYWORD)
-	PG_KEYWORD("default", K_DEFAULT, RESERVED_KEYWORD)
-	PG_KEYWORD("diagnostics", K_DIAGNOSTICS, RESERVED_KEYWORD)
 	PG_KEYWORD("else", K_ELSE, RESERVED_KEYWORD)
-	PG_KEYWORD("elseif", K_ELSIF, RESERVED_KEYWORD)
-	PG_KEYWORD("elsif", K_ELSIF, RESERVED_KEYWORD)
 	PG_KEYWORD("end", K_END, RESERVED_KEYWORD)
-	PG_KEYWORD("exception", K_EXCEPTION, RESERVED_KEYWORD)
 	PG_KEYWORD("execute", K_EXECUTE, RESERVED_KEYWORD)
-	PG_KEYWORD("exit", K_EXIT, RESERVED_KEYWORD)
-	PG_KEYWORD("fetch", K_FETCH, RESERVED_KEYWORD)
 	PG_KEYWORD("for", K_FOR, RESERVED_KEYWORD)
 	PG_KEYWORD("foreach", K_FOREACH, RESERVED_KEYWORD)
 	PG_KEYWORD("from", K_FROM, RESERVED_KEYWORD)
-	PG_KEYWORD("get", K_GET, RESERVED_KEYWORD)
 	PG_KEYWORD("if", K_IF, RESERVED_KEYWORD)
 	PG_KEYWORD("in", K_IN, RESERVED_KEYWORD)
-	PG_KEYWORD("insert", K_INSERT, RESERVED_KEYWORD)
 	PG_KEYWORD("into", K_INTO, RESERVED_KEYWORD)
 	PG_KEYWORD("loop", K_LOOP, RESERVED_KEYWORD)
-	PG_KEYWORD("move", K_MOVE, RESERVED_KEYWORD)
 	PG_KEYWORD("not", K_NOT, RESERVED_KEYWORD)
 	PG_KEYWORD("null", K_NULL, RESERVED_KEYWORD)
-	PG_KEYWORD("open", K_OPEN, RESERVED_KEYWORD)
 	PG_KEYWORD("or", K_OR, RESERVED_KEYWORD)
-	PG_KEYWORD("perform", K_PERFORM, RESERVED_KEYWORD)
-	PG_KEYWORD("raise", K_RAISE, RESERVED_KEYWORD)
-	PG_KEYWORD("return", K_RETURN, RESERVED_KEYWORD)
 	PG_KEYWORD("strict", K_STRICT, RESERVED_KEYWORD)
 	PG_KEYWORD("then", K_THEN, RESERVED_KEYWORD)
 	PG_KEYWORD("to", K_TO, RESERVED_KEYWORD)
@@ -109,32 +99,47 @@ static const ScanKeyword unreserved_keywords[] = {
 	PG_KEYWORD("alias", K_ALIAS, UNRESERVED_KEYWORD)
 	PG_KEYWORD("array", K_ARRAY, UNRESERVED_KEYWORD)
 	PG_KEYWORD("backward", K_BACKWARD, UNRESERVED_KEYWORD)
+	PG_KEYWORD("close", K_CLOSE, UNRESERVED_KEYWORD)
+	PG_KEYWORD("collate", K_COLLATE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("column", K_COLUMN, UNRESERVED_KEYWORD)
 	PG_KEYWORD("column_name", K_COLUMN_NAME, UNRESERVED_KEYWORD)
 	PG_KEYWORD("constant", K_CONSTANT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("constraint", K_CONSTRAINT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("constraint_name", K_CONSTRAINT_NAME, UNRESERVED_KEYWORD)
+	PG_KEYWORD("continue", K_CONTINUE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("current", K_CURRENT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("cursor", K_CURSOR, UNRESERVED_KEYWORD)
 	PG_KEYWORD("datatype", K_DATATYPE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("debug", K_DEBUG, UNRESERVED_KEYWORD)
+	PG_KEYWORD("default", K_DEFAULT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("detail", K_DETAIL, UNRESERVED_KEYWORD)
+	PG_KEYWORD("diagnostics", K_DIAGNOSTICS, UNRESERVED_KEYWORD)
 	PG_KEYWORD("dump", K_DUMP, UNRESERVED_KEYWORD)
+	PG_KEYWORD("elseif", K_ELSIF, UNRESERVED_KEYWORD)
+	PG_KEYWORD("elsif", K_ELSIF, UNRESERVED_KEYWORD)
 	PG_KEYWORD("errcode", K_ERRCODE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("error", K_ERROR, UNRESERVED_KEYWORD)
+	PG_KEYWORD("exception", K_EXCEPTION, UNRESERVED_KEYWORD)
+	PG_KEYWORD("exit", K_EXIT, UNRESERVED_KEYWORD)
+	PG_KEYWORD("fetch", K_FETCH, UNRESERVED_KEYWORD)
 	PG_KEYWORD("first", K_FIRST, UNRESERVED_KEYWORD)
 	PG_KEYWORD("forward", K_FORWARD, UNRESERVED_KEYWORD)
+	PG_KEYWORD("get", K_GET, UNRESERVED_KEYWORD)
 	PG_KEYWORD("hint", K_HINT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("info", K_INFO, UNRESERVED_KEYWORD)
+	PG_KEYWORD("insert", K_INSERT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("is", K_IS, UNRESERVED_KEYWORD)
 	PG_KEYWORD("last", K_LAST, UNRESERVED_KEYWORD)
 	PG_KEYWORD("log", K_LOG, UNRESERVED_KEYWORD)
 	PG_KEYWORD("message", K_MESSAGE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("message_text", K_MESSAGE_TEXT, UNRESERVED_KEYWORD)
+	PG_KEYWORD("move", K_MOVE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("next", K_NEXT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("no", K_NO, UNRESERVED_KEYWORD)
 	PG_KEYWORD("notice", K_NOTICE, UNRESERVED_KEYWORD)
+	PG_KEYWORD("open", K_OPEN, UNRESERVED_KEYWORD)
 	PG_KEYWORD("option", K_OPTION, UNRESERVED_KEYWORD)
+	PG_KEYWORD("perform", K_PERFORM, UNRESERVED_KEYWORD)
 	PG_KEYWORD("pg_context", K_PG_CONTEXT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("pg_datatype_name", K_PG_DATATYPE_NAME, UNRESERVED_KEYWORD)
 	PG_KEYWORD("pg_exception_context", K_PG_EXCEPTION_CONTEXT, UNRESERVED_KEYWORD)
@@ -143,8 +148,10 @@ static const ScanKeyword unreserved_keywords[] = {
 	PG_KEYWORD("print_strict_params", K_PRINT_STRICT_PARAMS, UNRESERVED_KEYWORD)
 	PG_KEYWORD("prior", K_PRIOR, UNRESERVED_KEYWORD)
 	PG_KEYWORD("query", K_QUERY, UNRESERVED_KEYWORD)
+	PG_KEYWORD("raise", K_RAISE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("relative", K_RELATIVE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("result_oid", K_RESULT_OID, UNRESERVED_KEYWORD)
+	PG_KEYWORD("return", K_RETURN, UNRESERVED_KEYWORD)
 	PG_KEYWORD("returned_sqlstate", K_RETURNED_SQLSTATE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("reverse", K_REVERSE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("row_count", K_ROW_COUNT, UNRESERVED_KEYWORD)
@@ -165,6 +172,19 @@ static const ScanKeyword unreserved_keywords[] = {
 };
 
 static const int num_unreserved_keywords = lengthof(unreserved_keywords);
+
+/*
+ * This macro must recognize all tokens that can immediately precede a
+ * PL/pgSQL executable statement (that is, proc_sect or proc_stmt in the
+ * grammar).  Fortunately, there are not very many, so hard-coding in this
+ * fashion seems sufficient.
+ */
+#define AT_STMT_START(prev_token) \
+	((prev_token) == ';' || \
+	 (prev_token) == K_BEGIN || \
+	 (prev_token) == K_THEN || \
+	 (prev_token) == K_ELSE || \
+	 (prev_token) == K_LOOP)
 
 
 /* Auxiliary data about a token (other than the token type) */
@@ -191,6 +211,9 @@ static const char *scanorig;
 
 /* Current token's length (corresponds to plpgsql_yylval and plpgsql_yylloc) */
 static int	plpgsql_yyleng;
+
+/* Current token's code (corresponds to plpgsql_yylval and plpgsql_yylloc) */
+static int	plpgsql_yytoken;
 
 /* Token pushback stack */
 #define MAX_PUSHBACKS 4
@@ -315,31 +338,75 @@ plpgsql_yylex(void)
 		{
 			/* not A.B, so just process A */
 			push_back_token(tok2, &aux2);
-			if (plpgsql_parse_word(aux1.lval.str,
-								   core_yy.scanbuf + aux1.lloc,
-								   &aux1.lval.wdatum,
-								   &aux1.lval.word))
-				tok1 = T_DATUM;
-			else if (!aux1.lval.word.quoted &&
-					 (kw = ScanKeywordLookup(aux1.lval.word.ident,
-											 unreserved_keywords,
-											 num_unreserved_keywords)))
+
+			/*
+			 * If we are at start of statement, prefer unreserved keywords
+			 * over variable names, unless the next token is assignment or
+			 * '[', in which case prefer variable names.  (Note we need not
+			 * consider '.' as the next token; that case was handled above,
+			 * and we always prefer variable names in that case.)  If we are
+			 * not at start of statement, always prefer variable names over
+			 * unreserved keywords.
+			 */
+			if (AT_STMT_START(plpgsql_yytoken) &&
+				!(tok2 == '=' || tok2 == COLON_EQUALS || tok2 == '['))
 			{
-				aux1.lval.keyword = kw->name;
-				tok1 = kw->value;
+				/* try for unreserved keyword, then for variable name */
+				if (core_yy.scanbuf[aux1.lloc] != '"' &&
+					(kw = ScanKeywordLookup(aux1.lval.str,
+											unreserved_keywords,
+											num_unreserved_keywords)))
+				{
+					aux1.lval.keyword = kw->name;
+					tok1 = kw->value;
+				}
+				else if (plpgsql_parse_word(aux1.lval.str,
+											core_yy.scanbuf + aux1.lloc,
+											&aux1.lval.wdatum,
+											&aux1.lval.word))
+					tok1 = T_DATUM;
+				else
+					tok1 = T_WORD;
 			}
 			else
-				tok1 = T_WORD;
+			{
+				/* try for variable name, then for unreserved keyword */
+				if (plpgsql_parse_word(aux1.lval.str,
+									   core_yy.scanbuf + aux1.lloc,
+									   &aux1.lval.wdatum,
+									   &aux1.lval.word))
+					tok1 = T_DATUM;
+				else if (!aux1.lval.word.quoted &&
+						 (kw = ScanKeywordLookup(aux1.lval.word.ident,
+												 unreserved_keywords,
+												 num_unreserved_keywords)))
+				{
+					aux1.lval.keyword = kw->name;
+					tok1 = kw->value;
+				}
+				else
+					tok1 = T_WORD;
+			}
 		}
 	}
 	else
 	{
-		/* Not a potential plpgsql variable name, just return the data */
+		/*
+		 * Not a potential plpgsql variable name, just return the data.
+		 *
+		 * Note that we also come through here if the grammar pushed back a
+		 * T_DATUM, T_CWORD, T_WORD, or unreserved-keyword token returned by a
+		 * previous lookup cycle; thus, pushbacks do not incur extra lookup
+		 * work, since we'll never do the above code twice for the same token.
+		 * This property also makes it safe to rely on the old value of
+		 * plpgsql_yytoken in the is-this-start-of-statement test above.
+		 */
 	}
 
 	plpgsql_yylval = aux1.lval;
 	plpgsql_yylloc = aux1.lloc;
 	plpgsql_yyleng = aux1.leng;
+	plpgsql_yytoken = tok1;
 	return tok1;
 }
 
@@ -645,6 +712,7 @@ plpgsql_scanner_init(const char *str)
 
 	/* Other setup */
 	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
+	plpgsql_yytoken = 0;
 
 	num_pushbacks = 0;
 
