@@ -4378,10 +4378,11 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * Defaults are supplied (from a service file, environment variables, etc)
  * for unspecified options, but only if use_defaults is TRUE.
  *
- * If expand_dbname is non-zero, and the value passed for keyword "dbname" is a
- * connection string (as indicated by recognized_connection_string) then parse
- * and process it, overriding any previously processed conflicting
- * keywords. Subsequent keywords will take precedence, however.
+ * If expand_dbname is non-zero, and the value passed for the first occurrence
+ * of "dbname" keyword is a connection string (as indicated by
+ * recognized_connection_string) then parse and process it, overriding any
+ * previously processed conflicting keywords. Subsequent keywords will take
+ * precedence, however.
  */
 static PQconninfoOption *
 conninfo_array_parse(const char *const * keywords, const char *const * values,
@@ -4457,7 +4458,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 			}
 
 			/*
-			 * If we are on the dbname parameter, and we have a parsed
+			 * If we are on the first dbname parameter, and we have a parsed
 			 * connection string, copy those parameters across, overriding any
 			 * existing previous settings.
 			 */
@@ -4491,6 +4492,12 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 						}
 					}
 				}
+				/*
+				 * Forget the parsed connection string, so that any subsequent
+				 * dbname parameters will not be expanded.
+				 */
+				PQconninfoFree(dbname_options);
+				dbname_options = NULL;
 			}
 			else
 			{
