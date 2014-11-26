@@ -8503,7 +8503,7 @@ static Size
 estimate_variable_size(struct config_generic * gconf)
 {
 	Size		size;
-	Size		valsize;
+	Size		valsize = 0;
 
 	if (can_skip_gucvar(gconf))
 		return 0;
