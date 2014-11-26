@@ -526,8 +526,6 @@ extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
 extern Size LockShmemSize(void);
 extern LockData *GetLockStatusData(void);
 
-extern void ReportLockTableError(bool report);
-
 typedef struct xl_standby_lock
 {
 	TransactionId xid;			/* xid of holder of AccessExclusiveLock */
