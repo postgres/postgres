@@ -316,6 +316,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         Finally <literal>shutdown</> will stop the server after reaching the
         recovery target.
        </para>
+       <para>
         The intended use of <literal>pause</> setting is to allow queries to be
         executed against the database to check if this recovery target is the
         most desirable point for recovery. The paused state can be resumed by
