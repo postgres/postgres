@@ -1715,7 +1715,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			}
 		}
 		/*
-		 * If the RTE has row-security quals, apply them and recurse into the
+		 * If the RTE has row security quals, apply them and recurse into the
 		 * securityQuals.
 		 */
 		if (prepend_row_security_policies(parsetree, rte, rt_index))
@@ -1727,7 +1727,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("infinite recursion detected in row-security policy for relation \"%s\"",
+							 errmsg("infinite recursion detected in policy for relation \"%s\"",
 									RelationGetRelationName(rel))));
 
 			/*

@@ -282,12 +282,13 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 /* non-export function prototypes */
 static CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
-		  const char *queryString, List *attnamelist, List *options);
+		  const char *queryString, const Oid queryRelId, List *attnamelist,
+		  List *options);
 static void EndCopy(CopyState cstate);
 static void ClosePipeToProgram(CopyState cstate);
 static CopyState BeginCopyTo(Relation rel, Node *query, const char *queryString,
-			const char *filename, bool is_program, List *attnamelist,
-			List *options);
+			const Oid queryRelId, const char *filename, bool is_program,
+			List *attnamelist, List *options);
 static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
@@ -843,7 +844,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		ExecCheckRTPerms(list_make1(rte), true);
 
 		/*
-		 * Permission check for row security.
+		 * Permission check for row security policies.
 		 *
 		 * check_enable_rls will ereport(ERROR) if the user has requested
 		 * something invalid and will otherwise indicate if we should enable
@@ -866,7 +867,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			if (is_from)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("COPY FROM not supported with row security."),
+						 errmsg("COPY FROM not supported with row level security."),
 						 errhint("Use direct INSERT statements instead.")));
 
 			/* Build target list */
@@ -886,7 +887,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			target->location = 1;
 
 			/* Build FROM clause */
-			from = makeRangeVar(NULL, RelationGetRelationName(rel), 1);
+			from = stmt->relation;
 
 			/* Build query */
 			select = makeNode(SelectStmt);
@@ -894,8 +895,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			select->fromClause = list_make1(from);
 
 			query = (Node*) select;
-
-			relid = InvalidOid;
 
 			/* Close the handle to the relation as it is no longer needed. */
 			heap_close(rel, (is_from ? RowExclusiveLock : AccessShareLock));
@@ -926,7 +925,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	}
 	else
 	{
-		cstate = BeginCopyTo(rel, query, queryString,
+		cstate = BeginCopyTo(rel, query, queryString, relid,
 							 stmt->filename, stmt->is_program,
 							 stmt->attlist, stmt->options);
 		*processed = DoCopyTo(cstate);	/* copy from database to file */
@@ -1304,6 +1303,7 @@ BeginCopy(bool is_from,
 		  Relation rel,
 		  Node *raw_query,
 		  const char *queryString,
+		  const Oid queryRelId,
 		  List *attnamelist,
 		  List *options)
 {
@@ -1393,6 +1393,30 @@ BeginCopy(bool is_from,
 
 		/* plan the query */
 		plan = planner(query, 0, NULL);
+
+		/*
+		 * If we were passed in a relid, make sure we got the same one back
+		 * after planning out the query.  It's possible that it changed between
+		 * when we checked the policies on the table and decided to use a query
+		 * and now.
+		 */
+		if (queryRelId != InvalidOid)
+		{
+			Oid relid = linitial_oid(plan->relationOids);
+
+			/*
+			 * There should only be one relationOid in this case, since we will
+			 * only get here when we have changed the command for the user from
+			 * a "COPY relation TO" to "COPY (SELECT * FROM relation) TO", to
+			 * allow row level security policies to be applied.
+			 */
+			Assert(list_length(plan->relationOids) == 1);
+
+			if (relid != queryRelId)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("relation referenced by COPY statement has changed")));
+		}
 
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees
@@ -1595,6 +1619,7 @@ static CopyState
 BeginCopyTo(Relation rel,
 			Node *query,
 			const char *queryString,
+			const Oid queryRelId,
 			const char *filename,
 			bool is_program,
 			List *attnamelist,
@@ -1636,7 +1661,8 @@ BeginCopyTo(Relation rel,
 							RelationGetRelationName(rel))));
 	}
 
-	cstate = BeginCopy(false, rel, query, queryString, attnamelist, options);
+	cstate = BeginCopy(false, rel, query, queryString, queryRelId, attnamelist,
+					   options);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
 	if (pipe)
@@ -2565,7 +2591,7 @@ BeginCopyFrom(Relation rel,
 	MemoryContext oldcontext;
 	bool		volatile_defexprs;
 
-	cstate = BeginCopy(true, rel, NULL, NULL, attnamelist, options);
+	cstate = BeginCopy(true, rel, NULL, NULL, InvalidOid, attnamelist, options);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
 	/* Initialize state variables */

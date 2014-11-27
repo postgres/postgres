@@ -1558,8 +1558,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    To specify which rows are visible and what rows can be added to the
-   table with row security, an expression is required which returns a
-   boolean result.  This expression will be evaluated for each row prior
+   table with row level security, an expression is required which returns
+   a boolean result.  This expression will be evaluated for each row prior
    to other conditionals or functions which are part of the query.  The
    one exception to this rule are <literal>leakproof</literal> functions,
    which are guaranteed to not leak information.  Two expressions may be

@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP POLICY</refname>
-  <refpurpose>remove a row-security policy from a table</refpurpose>
+  <refpurpose>remove a policy from a table</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -29,11 +29,11 @@ DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <
   <title>Description</title>
 
   <para>
-   <command>DROP POLICY</command> removes the specified row-security policy
-   from the table.  Note that if the last policy is removed for a table and
-   the table still has ROW POLICY enabled via <command>ALTER TABLE</command>,
-   then the default-deny policy will be used.  <command>ALTER TABLE</command>
-   can be used to disable row security for a table using
+   <command>DROP POLICY</command> removes the specified policy from the table.
+   Note that if the last policy is removed for a table and the table still has
+   row level security enabled via <command>ALTER TABLE</command>, then the
+   default-deny policy will be used.  <command>ALTER TABLE</command> can be used
+   to disable row level security for a table using
    <literal>DISABLE ROW SECURITY</literal>, whether policies for the table
    exist or not.
   </para>
@@ -80,8 +80,8 @@ DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <
   <title>Examples</title>
 
   <para>
-   To drop the row-security policy called <literal>p1</literal> on the
-   table named <literal>my_table</literal>:
+   To drop the policy called <literal>p1</literal> on the table named
+   <literal>my_table</literal>:
 
    <programlisting>
     DROP POLICY p1 ON my_table;

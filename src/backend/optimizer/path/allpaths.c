@@ -1171,7 +1171,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * If the subquery has the "security_barrier" flag, it means the subquery
-	 * originated from a view that must enforce row-level security.  Then we
+	 * originated from a view that must enforce row level security.  Then we
 	 * must not push down quals that contain leaky functions.  (Ideally this
 	 * would be checked inside subquery_is_pushdown_safe, but since we don't
 	 * currently pass the RTE to that function, we must do it here.)

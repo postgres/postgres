@@ -1,6 +1,6 @@
 /*
  * rewrite/rowsecurity.c
- *    Routines to support policies for row-level security.
+ *    Routines to support policies for row level security (aka RLS).
  *
  * Policies in PostgreSQL provide a mechanism to limit what records are
  * returned to a user and what records a user is permitted to add to a table.
@@ -38,7 +38,7 @@
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits_fn.h"
-#include "catalog/pg_rowsecurity.h"
+#include "catalog/pg_policy.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -72,8 +72,8 @@ static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 row_security_policy_hook_type	row_security_policy_hook = NULL;
 
 /*
- * Check the given RTE to see whether it's already had row-security quals
- * expanded and, if not, prepend any row-security rules from built-in or
+ * Check the given RTE to see whether it's already had row security quals
+ * expanded and, if not, prepend any row security rules from built-in or
  * plug-in sources to the securityQuals. The security quals are rewritten (for
  * view expansion, etc) before being added to the RTE.
  *
@@ -154,14 +154,14 @@ prepend_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index)
 	/*
 	 * Check if this is only the default-deny policy.
 	 *
-	 * Normally, if the table has row-security enabled but there are
+	 * Normally, if the table has row security enabled but there are
 	 * no policies, we use a default-deny policy and not allow anything.
 	 * However, when an extension uses the hook to add their own
 	 * policies, we don't want to include the default deny policy or
 	 * there won't be any way for a user to use an extension exclusively
 	 * for the policies to be used.
 	 */
-	if (((RowSecurityPolicy *) linitial(rowsec_policies))->rsecid
+	if (((RowSecurityPolicy *) linitial(rowsec_policies))->policy_id
 			== InvalidOid)
 		defaultDeny = true;
 
@@ -353,7 +353,7 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 
 		policy = palloc0(sizeof(RowSecurityPolicy));
 		policy->policy_name = pstrdup("default-deny policy");
-		policy->rsecid = InvalidOid;
+		policy->policy_id = InvalidOid;
 		policy->cmd = '\0';
 		policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true,
 										'i');

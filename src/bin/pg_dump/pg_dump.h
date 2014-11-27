@@ -76,7 +76,7 @@ typedef enum
 	DO_POST_DATA_BOUNDARY,
 	DO_EVENT_TRIGGER,
 	DO_REFRESH_MATVIEW,
-	DO_ROW_SECURITY
+	DO_POLICY
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -210,7 +210,7 @@ typedef struct _tableInfo
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
-	bool		rowsec;			/* is row-security enabled? */
+	bool		rowsec;			/* is row security enabled? */
 	bool		hasoids;		/* does it have OIDs? */
 	uint32		frozenxid;		/* for restore frozen xid */
 	uint32		minmxid;		/* for restore min multi xid */
@@ -453,21 +453,21 @@ typedef struct _blobInfo
 } BlobInfo;
 
 /*
- * The RowSecurityInfo struct is used to represent row policies on a table and
+ * The PolicyInfo struct is used to represent policies on a table and
  * to indicate if a table has RLS enabled (ENABLE ROW SECURITY).  If
- * rsecpolname is NULL, then the record indicates ENABLE ROW SECURITY, while if
+ * polname is NULL, then the record indicates ENABLE ROW SECURITY, while if
  * it's non-NULL then this is a regular policy definition.
  */
-typedef struct _rowSecurityInfo
+typedef struct _policyInfo
 {
 	DumpableObject dobj;
-	TableInfo  *rstable;
-	char	   *rsecpolname;	/* null indicates RLS is enabled on rel */
-	char	   *rseccmd;
-	char	   *rsecroles;
-	char	   *rsecqual;
-	char	   *rsecwithcheck;
-} RowSecurityInfo;
+	TableInfo  *poltable;
+	char	   *polname;	/* null indicates RLS is enabled on rel */
+	char	   *polcmd;
+	char	   *polroles;
+	char	   *polqual;
+	char	   *polwithcheck;
+} PolicyInfo;
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -549,6 +549,6 @@ extern DefaultACLInfo *getDefaultACLs(Archive *fout, DumpOptions *dopt, int *num
 extern void getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[],
 					   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
-extern void getRowSecurity(Archive *fout, TableInfo tblinfo[], int numTables);
+extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
 
 #endif   /* PG_DUMP_H */

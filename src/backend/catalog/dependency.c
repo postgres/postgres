@@ -43,9 +43,9 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
+#include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
-#include "catalog/pg_rowsecurity.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_ts_config.h"
@@ -156,7 +156,8 @@ static const Oid object_classes[MAX_OCLASS] = {
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
-	EventTriggerRelationId		/* OCLASS_EVENT_TRIGGER */
+	EventTriggerRelationId,		/* OCLASS_EVENT_TRIGGER */
+	PolicyRelationId			/* OCLASS_POLICY */
 };
 
 
@@ -1251,7 +1252,7 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveEventTriggerById(object->objectId);
 			break;
 
-		case OCLASS_ROWSECURITY:
+		case OCLASS_POLICY:
 			RemovePolicyById(object->objectId);
 			break;
 
@@ -2361,8 +2362,8 @@ getObjectClass(const ObjectAddress *object)
 		case EventTriggerRelationId:
 			return OCLASS_EVENT_TRIGGER;
 
-		case RowSecurityRelationId:
-			return OCLASS_ROWSECURITY;
+		case PolicyRelationId:
+			return OCLASS_POLICY;
 	}
 
 	/* shouldn't get here */

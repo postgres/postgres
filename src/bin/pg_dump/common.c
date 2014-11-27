@@ -248,8 +248,8 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	getRules(fout, &numRules);
 
 	if (g_verbose)
-		write_msg(NULL, "reading row-security policies\n");
-	getRowSecurity(fout, tblinfo, numTables);
+		write_msg(NULL, "reading policies\n");
+	getPolicies(fout, tblinfo, numTables);
 
 	*numTablesPtr = numTables;
 	return tblinfo;

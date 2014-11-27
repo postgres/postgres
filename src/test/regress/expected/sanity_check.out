@@ -118,10 +118,10 @@ pg_opclass|t
 pg_operator|t
 pg_opfamily|t
 pg_pltemplate|t
+pg_policy|t
 pg_proc|t
 pg_range|t
 pg_rewrite|t
-pg_rowsecurity|t
 pg_seclabel|t
 pg_shdepend|t
 pg_shdescription|t

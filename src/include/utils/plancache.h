@@ -109,9 +109,9 @@ typedef struct CachedPlanSource
 	double		generic_cost;	/* cost of generic plan, or -1 if not known */
 	double		total_custom_cost;		/* total cost of custom plans so far */
 	int			num_custom_plans;		/* number of plans included in total */
-	bool		has_rls;				/* planned with row-security? */
+	bool		hasRowSecurity;			/* planned with row security? */
 	int			row_security_env;		/* row security setting when planned */
-	bool		rowSecurityDisabled;	/* is row-security disabled? */
+	bool		rowSecurityDisabled;	/* is row security disabled? */
 } CachedPlanSource;
 
 /*

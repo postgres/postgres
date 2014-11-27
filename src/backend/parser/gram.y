@@ -5535,7 +5535,7 @@ opt_restart_seqs:
  *	COMMENT ON [ [ CONVERSION | COLLATION | DATABASE | DOMAIN |
  *                 EXTENSION | EVENT TRIGGER | FOREIGN DATA WRAPPER |
  *                 FOREIGN TABLE | INDEX | [PROCEDURAL] LANGUAGE |
- *                 MATERIALIZED VIEW | ROLE | SCHEMA | SEQUENCE |
+ *                 MATERIALIZED VIEW | POLICY | ROLE | SCHEMA | SEQUENCE |
  *                 SERVER | TABLE | TABLESPACE |
  *                 TEXT SEARCH CONFIGURATION | TEXT SEARCH DICTIONARY |
  *                 TEXT SEARCH PARSER | TEXT SEARCH TEMPLATE | TYPE |
@@ -5596,6 +5596,15 @@ CommentStmt:
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_CONSTRAINT;
+					n->objname = lappend($6, makeString($4));
+					n->objargs = NIL;
+					n->comment = $8;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON POLICY name ON any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_POLICY;
 					n->objname = lappend($6, makeString($4));
 					n->objargs = NIL;
 					n->comment = $8;

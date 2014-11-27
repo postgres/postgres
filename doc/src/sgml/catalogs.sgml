@@ -239,8 +239,8 @@
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-rowsecurity"><structname>pg_rowsecurity</structname></link></entry>
-      <entry>table row-level security policies</entry>
+      <entry><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link></entry>
+      <entry>table policies</entry>
      </row>
 
      <row>
@@ -1944,8 +1944,8 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if table has row-security enabled; see
-       <link linkend="catalog-pg-rowsecurity"><structname>pg_rowsecurity</structname></link> catalog
+       True if table has row level security enabled; see
+       <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
       </entry>
      </row>
 
@@ -5342,15 +5342,15 @@
   </table>
  </sect1>
 
- <sect1 id="catalog-pg-rowsecurity">
-  <title><structname>pg_rowsecurity</structname></title>
+ <sect1 id="catalog-pg-policy">
+  <title><structname>pg_policy</structname></title>
 
-  <indexterm zone="catalog-pg-rowsecurity">
-   <primary>pg_rowsecurity</primary>
+  <indexterm zone="catalog-pg-policy">
+   <primary>pg_policy</primary>
   </indexterm>
 
   <para>
-   The catalog <structname>pg_rowsecurity</structname> stores row-level
+   The catalog <structname>pg_policy</structname> stores row-level
    security policies for each table.  A policy includes the kind of
    command which it applies to (or all commands), the roles which it
    applies to, the expression to be added as a security-barrier
@@ -5361,7 +5361,7 @@
 
   <table>
 
-   <title><structname>pg_rowsecurity</structname> Columns</title>
+   <title><structname>pg_policy</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -5375,42 +5375,42 @@
 
     <tbody>
      <row>
-      <entry><structfield>rsecpolname</structfield></entry>
+      <entry><structfield>polname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>The name of the row-security policy</entry>
+      <entry>The name of the policy</entry>
      </row>
 
      <row>
-      <entry><structfield>rsecrelid</structfield></entry>
+      <entry><structfield>polrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The table to which the row-security policy belongs</entry>
+      <entry>The table to which the policy belongs</entry>
      </row>
 
      <row>
-      <entry><structfield>rseccmd</structfield></entry>
+      <entry><structfield>polcmd</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
-      <entry>The command type to which the row-security policy is applied.</entry>
+      <entry>The command type to which the policy is applied.</entry>
      </row>
 
      <row>
-      <entry><structfield>rsecroles</structfield></entry>
+      <entry><structfield>polroles</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
-      <entry>The roles to which the row-security policy is applied.</entry>
+      <entry>The roles to which the policy is applied.</entry>
      </row>
 
      <row>
-      <entry><structfield>rsecqual</structfield></entry>
+      <entry><structfield>polqual</structfield></entry>
       <entry><type>pg_node_tree</type></entry>
       <entry></entry>
       <entry>The expression tree to be added to the security barrier qualifications for queries which use the table.</entry>
      </row>
 
      <row>
-      <entry><structfield>rsecwithcheck</structfield></entry>
+      <entry><structfield>polwithcheck</structfield></entry>
       <entry><type>pg_node_tree</type></entry>
       <entry></entry>
       <entry>The expression tree to be added to the with check qualifications for queries which attempt to add rows to the table.</entry>
@@ -5423,8 +5423,8 @@
   <note>
    <para>
     <literal>pg_class.relrowsecurity</literal>
-    True if the table has row-security enabled.  Policies will not be applied
-    unless row-security is enabled on the table.
+    True if the table has row security enabled.  Policies will not be applied
+    unless row security is enabled on the table.
    </para>
   </note>
 

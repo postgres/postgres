@@ -2109,7 +2109,7 @@ extract_query_dependencies(Node *query,
 	glob.type = T_PlannerGlobal;
 	glob.relationOids = NIL;
 	glob.invalItems = NIL;
-	glob.has_rls = false;
+	glob.hasRowSecurity = false;
 
 	MemSet(&root, 0, sizeof(root));
 	root.type = T_PlannerInfo;
@@ -2119,7 +2119,7 @@ extract_query_dependencies(Node *query,
 
 	*relationOids = glob.relationOids;
 	*invalItems = glob.invalItems;
-	*hasRowSecurity = glob.has_rls;
+	*hasRowSecurity = glob.hasRowSecurity;
 }
 
 static bool
@@ -2135,8 +2135,8 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		Query	   *query = (Query *) node;
 		ListCell   *lc;
 
-		/* Collect row-security information */
-		context->glob->has_rls = query->hasRowSecurity;
+		/* Collect row security information */
+		context->glob->hasRowSecurity = query->hasRowSecurity;
 
 		if (query->commandType == CMD_UTILITY)
 		{

@@ -102,7 +102,7 @@ SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
 
--- only owner can change row-level security
+-- only owner can change policies
 ALTER POLICY p1 ON document USING (true);    --fail
 DROP POLICY p1 ON document;                  --fail
 
@@ -274,7 +274,7 @@ CREATE POLICY d1 ON dependent FOR ALL
     TO PUBLIC
     USING (x = (SELECT d.x FROM dependee d WHERE d.y = y));
 
-DROP TABLE dependee; -- Should fail without CASCADE due to dependency on row-security qual?
+DROP TABLE dependee; -- Should fail without CASCADE due to dependency on row security qual?
 
 DROP TABLE dependee CASCADE;
 
@@ -659,16 +659,16 @@ WITH cte1 AS (INSERT INTO t1 VALUES (20, 'Success') RETURNING *) SELECT * FROM c
 RESET SESSION AUTHORIZATION;
 ALTER POLICY p1 ON t1 RENAME TO p1; --fail
 
-SELECT rsecpolname, relname
-    FROM pg_rowsecurity rs
-    JOIN pg_class pc ON (pc.oid = rs.rsecrelid)
+SELECT polname, relname
+    FROM pg_policy pol
+    JOIN pg_class pc ON (pc.oid = pol.polrelid)
     WHERE relname = 't1';
 
 ALTER POLICY p1 ON t1 RENAME TO p2; --ok
 
-SELECT rsecpolname, relname
-    FROM pg_rowsecurity rs
-    JOIN pg_class pc ON (pc.oid = rs.rsecrelid)
+SELECT polname, relname
+    FROM pg_policy pol
+    JOIN pg_class pc ON (pc.oid = pol.polrelid)
     WHERE relname = 't1';
 
 --

@@ -28,8 +28,8 @@ static const char *modulename = gettext_noop("sorter");
  * by OID.  (This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)  Note: collations,
  * extensions, text search, foreign-data, materialized view, event trigger,
- * and default ACL objects can't really happen here, so the rather bogus
- * priorities for them don't matter.
+ * policies, and default ACL objects can't really happen here, so the rather
+ * bogus priorities for them don't matter.
  *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
@@ -73,7 +73,7 @@ static const int oldObjectTypePriority[] =
 	13,							/* DO_POST_DATA_BOUNDARY */
 	20,							/* DO_EVENT_TRIGGER */
 	15,							/* DO_REFRESH_MATVIEW */
-	21							/* DO_ROW_SECURITY */
+	21							/* DO_POLICY */
 };
 
 /*
@@ -122,7 +122,7 @@ static const int newObjectTypePriority[] =
 	25,							/* DO_POST_DATA_BOUNDARY */
 	32,							/* DO_EVENT_TRIGGER */
 	33,							/* DO_REFRESH_MATVIEW */
-	34							/* DO_ROW_SECURITY */
+	34							/* DO_POLICY */
 };
 
 static DumpId preDataBoundId;
@@ -1438,9 +1438,9 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "BLOB DATA  (ID %d)",
 					 obj->dumpId);
 			return;
-		case DO_ROW_SECURITY:
+		case DO_POLICY:
 			snprintf(buf, bufsize,
-					 "ROW-SECURITY POLICY (ID %d OID %u)",
+					 "POLICY (ID %d OID %u)",
 					 obj->dumpId, obj->catId.oid);
 			return;
 		case DO_PRE_DATA_BOUNDARY:

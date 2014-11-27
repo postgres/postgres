@@ -42,7 +42,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_rowsecurity.h"
+#include "catalog/pg_policy.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
@@ -346,11 +346,11 @@ static const ObjectPropertyType ObjectProperty[] =
 		false
 	},
 	{
-		RowSecurityRelationId,
-		RowSecurityOidIndexId,
+		PolicyRelationId,
+		PolicyOidIndexId,
 		-1,
 		-1,
-		Anum_pg_rowsecurity_rsecpolname,
+		Anum_pg_policy_polname,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -998,7 +998,7 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 				address.objectSubId = 0;
 				break;
 			case OBJECT_POLICY:
-				address.classId = RowSecurityRelationId;
+				address.classId = PolicyRelationId;
 				address.objectId = relation ?
 					get_relation_policy_oid(reloid, depname, missing_ok) :
 					InvalidOid;
@@ -2189,38 +2189,38 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-		case OCLASS_ROWSECURITY:
+		case OCLASS_POLICY:
 			{
-				Relation	rsec_rel;
+				Relation	policy_rel;
 				ScanKeyData	skey[1];
 				SysScanDesc	sscan;
 				HeapTuple	tuple;
-				Form_pg_rowsecurity form_rsec;
+				Form_pg_policy form_policy;
 
-				rsec_rel = heap_open(RowSecurityRelationId, AccessShareLock);
+				policy_rel = heap_open(PolicyRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							ObjectIdAttributeNumber,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
-				sscan = systable_beginscan(rsec_rel, RowSecurityOidIndexId,
+				sscan = systable_beginscan(policy_rel, PolicyOidIndexId,
 										   true, NULL, 1, skey);
 
 				tuple = systable_getnext(sscan);
 
 				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "cache lookup failed for row-security relation %u",
+					elog(ERROR, "cache lookup failed for policy %u",
 						 object->objectId);
 
-				form_rsec = (Form_pg_rowsecurity) GETSTRUCT(tuple);
+				form_policy = (Form_pg_policy) GETSTRUCT(tuple);
 
 				appendStringInfo(&buffer, _("policy %s on "),
-								 NameStr(form_rsec->rsecpolname));
-				getRelationDescription(&buffer, form_rsec->rsecrelid);
+								 NameStr(form_policy->polname));
+				getRelationDescription(&buffer, form_policy->polrelid);
 
 				systable_endscan(sscan);
-				heap_close(rsec_rel, AccessShareLock);
+				heap_close(policy_rel, AccessShareLock);
 				break;
 			}
 
@@ -2633,6 +2633,10 @@ getObjectTypeDescription(const ObjectAddress *object)
 
 		case OCLASS_EVENT_TRIGGER:
 			appendStringInfoString(&buffer, "event trigger");
+			break;
+
+		case OCLASS_POLICY:
+			appendStringInfoString(&buffer, "policy");
 			break;
 
 		default:
@@ -3116,6 +3120,30 @@ getObjectIdentity(const ObjectAddress *object)
 				getRelationIdentity(&buffer, trig->tgrelid);
 
 				heap_close(trigDesc, AccessShareLock);
+				break;
+			}
+
+		case OCLASS_POLICY:
+			{
+				Relation	polDesc;
+				HeapTuple	tup;
+				Form_pg_policy policy;
+
+				polDesc = heap_open(PolicyRelationId, AccessShareLock);
+
+				tup = get_catalog_object_by_oid(polDesc, object->objectId);
+
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "could not find tuple for policy %u",
+						 object->objectId);
+
+				policy = (Form_pg_policy) GETSTRUCT(tup);
+
+				appendStringInfo(&buffer, "%s on ",
+								 quote_identifier(NameStr(policy->polname)));
+				getRelationIdentity(&buffer, policy->polrelid);
+
+				heap_close(polDesc, AccessShareLock);
 				break;
 			}
 

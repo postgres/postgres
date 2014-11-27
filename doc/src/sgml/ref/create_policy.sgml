@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE POLICY</refname>
-  <refpurpose>define a new row-security policy for a table</refpurpose>
+  <refpurpose>define a new policy for a table</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -33,14 +33,13 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   <title>Description</title>
 
   <para>
-   The <command>CREATE POLICY</command> command defines a new row-security
-   policy for a table.  Note that row-security must also be enabled on the
-   table using <command>ALTER TABLE</command> in order for created policies
-   to be applied.
+   The <command>CREATE POLICY</command> command defines a new policy for a
+   table.  Note that row level security must also be enabled on the table using
+   <command>ALTER TABLE</command> in order for created policies to be applied.
   </para>
 
   <para>
-   A row-security policy is an expression which is added to the security-barrier
+   A policy is an expression which is added to the security-barrier
    qualifications of queries which are run against the table the policy is on,
    or an expression which is added to the with-check options for a table and
    which is applied to rows which would be added to the table.
@@ -49,7 +48,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    expression will be evaluated against the rows which are going to be added to
    the table.  By adding policies to a table, a user can limit the rows which a
    given user can select, insert, update, or delete.  This capability is also
-   known as Row-Level Security or RLS.
+   known as Row Level Security or RLS.
   </para>
 
   <para>
@@ -66,22 +65,22 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   </para>
 
   <para>
-   Note that while row-security policies will be applied for explicit queries
-   against tables in the system, they are not applied when the system is
-   performing internal referential integrity checks or validating constraints.
-   This means there are indirect ways to determine that a given value exists.
-   An example of this is attempting to insert a duplicate value
-   into a column which is the primary key or has a unique constraint.  If the
-   insert fails then the user can infer that the value already exists (this
-   example assumes that the user is permitted by policy to insert
-   records which they are not allowed to see).  Another example is where a user
-   is allowed to insert into a table which references another, otherwise hidden
-   table.  Existence can be determined by the user inserting values into the
-   referencing table, where success would indicate that the value exists in the
-   referenced table.  These issues can be addressed by carefully crafting
-   policies which prevent users from being able to insert, delete, or update
-   records at all which might possibly indicate a value they are not otherwise
-   able to see, or by using generated values (e.g.: surrogate keys) instead.
+   Note that while policies will be applied for explicit queries against tables
+   in the system, they are not applied when the system is performing internal
+   referential integrity checks or validating constraints.  This means there are
+   indirect ways to determine that a given value exists.  An example of this is
+   attempting to insert a duplicate value into a column which is the primary key
+   or has a unique constraint.  If the insert fails then the user can infer that
+   the value already exists (this example assumes that the user is permitted by
+   policy to insert records which they are not allowed to see).  Another example
+   is where a user is allowed to insert into a table which references another,
+   otherwise hidden table.  Existence can be determined by the user inserting
+   values into the referencing table, where success would indicate that the
+   value exists in the referenced table.  These issues can be addressed by
+   carefully crafting policies which prevent users from being able to insert,
+   delete, or update records at all which might possibly indicate a value they
+   are not otherwise able to see, or by using generated values (e.g.: surrogate
+   keys) instead.
   </para>
 
   <para>
@@ -291,8 +290,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
 
   <para>
    In order to maintain <firstterm>referential integrity</firstterm> between
-   two related tables, row-security policies are not applied when the system
-   performs checks on foreign key constraints.
+   two related tables, policies are not applied when the system performs
+   checks on foreign key constraints.
   </para>
 
  </refsect1>

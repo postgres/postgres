@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ALTER POLICY</refname>
-  <refpurpose>change the definition of a row-security policy</refpurpose>
+  <refpurpose>change the definition of a policy</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -34,7 +34,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
 
   <para>
    <command>ALTER POLICY</command> changes the <replaceable class="parameter">
-   definition</replaceable> of an existing row-security policy.
+   definition</replaceable> of an existing policy.
   </para>
 
   <para>

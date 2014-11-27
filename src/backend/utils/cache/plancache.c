@@ -207,7 +207,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource->generic_cost = -1;
 	plansource->total_custom_cost = 0;
 	plansource->num_custom_plans = 0;
-	plansource->has_rls = false;
+	plansource->hasRowSecurity = false;
 	plansource->rowSecurityDisabled
 		= (security_context & SECURITY_ROW_LEVEL_DISABLED) != 0;
 	plansource->row_security_env = row_security;
@@ -383,7 +383,7 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 		extract_query_dependencies((Node *) querytree_list,
 								   &plansource->relationOids,
 								   &plansource->invalItems,
-								   &plansource->has_rls);
+								   &plansource->hasRowSecurity);
 
 		/*
 		 * Also save the current search_path in the query_context.  (This
@@ -617,7 +617,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	 */
 	if (plansource->is_valid
 		&& !plansource->rowSecurityDisabled
-		&& plansource->has_rls
+		&& plansource->hasRowSecurity
 		&& (plansource->planUserId != GetUserId()
 			|| plansource->row_security_env != row_security))
 		plansource->is_valid = false;
@@ -766,7 +766,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	extract_query_dependencies((Node *) qlist,
 							   &plansource->relationOids,
 							   &plansource->invalItems,
-							   &plansource->has_rls);
+							   &plansource->hasRowSecurity);
 
 	/*
 	 * Also save the current search_path in the query_context.  (This should

@@ -2133,7 +2133,7 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
 </para>
 
 <para>
-    When it is necessary for a view to provide row-level security, the
+    When it is necessary for a view to provide row level security, the
     <literal>security_barrier</literal> attribute should be applied to
     the view.  This prevents maliciously-chosen functions and operators from
     being invoked on rows until after the view has done its work.  For

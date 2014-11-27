@@ -997,7 +997,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_USER_MAPPING:
 		case OCLASS_DEFACL:
 		case OCLASS_EXTENSION:
-		case OCLASS_ROWSECURITY:
+		case OCLASS_POLICY:
 			return true;
 
 		case MAX_OCLASS:

@@ -173,7 +173,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
                              Index Cond: (pguser = "current_user"())
 (11 rows)
 
--- only owner can change row-level security
+-- only owner can change policies
 ALTER POLICY p1 ON document USING (true);    --fail
 ERROR:  must be owner of relation document
 DROP POLICY p1 ON document;                  --fail
@@ -724,7 +724,7 @@ CREATE TABLE dependent (x integer, y integer);
 CREATE POLICY d1 ON dependent FOR ALL
     TO PUBLIC
     USING (x = (SELECT d.x FROM dependee d WHERE d.y = y));
-DROP TABLE dependee; -- Should fail without CASCADE due to dependency on row-security qual?
+DROP TABLE dependee; -- Should fail without CASCADE due to dependency on row security qual?
 ERROR:  cannot drop table dependee because other objects depend on it
 DETAIL:  policy d1 on table dependent depends on table dependee
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
@@ -746,7 +746,7 @@ CREATE POLICY r1 ON rec1 USING (x = (SELECT r.x FROM rec1 r WHERE y = r.y));
 ALTER TABLE rec1 ENABLE ROW LEVEL SECURITY;
 SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM rec1; -- fail, direct recursion
-ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+ERROR:  infinite recursion detected in policy for relation "rec1"
 --
 -- Mutual recursion
 --
@@ -757,7 +757,7 @@ CREATE POLICY r2 ON rec2 USING (a = (SELECT x FROM rec1 WHERE y = b));
 ALTER TABLE rec2 ENABLE ROW LEVEL SECURITY;
 SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM rec1;    -- fail, mutual recursion
-ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+ERROR:  infinite recursion detected in policy for relation "rec1"
 --
 -- Mutual recursion via views
 --
@@ -769,7 +769,7 @@ ALTER POLICY r1 ON rec1 USING (x = (SELECT a FROM rec2v WHERE b = y));
 ALTER POLICY r2 ON rec2 USING (a = (SELECT x FROM rec1v WHERE y = b));
 SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM rec1;    -- fail, mutual recursion via views
-ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+ERROR:  infinite recursion detected in policy for relation "rec1"
 --
 -- Mutual recursion via .s.b views
 --
@@ -785,7 +785,7 @@ CREATE POLICY r1 ON rec1 USING (x = (SELECT a FROM rec2v WHERE b = y));
 CREATE POLICY r2 ON rec2 USING (a = (SELECT x FROM rec1v WHERE y = b));
 SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM rec1;    -- fail, mutual recursion via s.b. views
-ERROR:  infinite recursion detected in row-security policy for relation "rec1"
+ERROR:  infinite recursion detected in policy for relation "rec1"
 --
 -- recursive RLS and VIEWs in policy
 --
@@ -803,9 +803,9 @@ ALTER TABLE s2 ENABLE ROW LEVEL SECURITY;
 SET SESSION AUTHORIZATION rls_regress_user1;
 CREATE VIEW v2 AS SELECT * FROM s2 WHERE y like '%af%';
 SELECT * FROM s1 WHERE f_leak(b); -- fail (infinite recursion)
-ERROR:  infinite recursion detected in row-security policy for relation "s1"
+ERROR:  infinite recursion detected in policy for relation "s1"
 INSERT INTO s1 VALUES (1, 'foo'); -- fail (infinite recursion)
-ERROR:  infinite recursion detected in row-security policy for relation "s1"
+ERROR:  infinite recursion detected in policy for relation "s1"
 SET SESSION AUTHORIZATION rls_regress_user0;
 DROP POLICY p3 on s1;
 ALTER POLICY p2 ON s2 USING (x % 2 = 0);
@@ -897,7 +897,7 @@ SET SESSION AUTHORIZATION rls_regress_user0;
 ALTER POLICY p2 ON s2 USING (x in (select a from s1 where b like '%d2%'));
 SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM s1 WHERE f_leak(b);	-- fail (infinite recursion via view)
-ERROR:  infinite recursion detected in row-security policy for relation "s1"
+ERROR:  infinite recursion detected in policy for relation "s1"
 -- prepared statement with rls_regress_user0 privilege
 PREPARE p1(int) AS SELECT * FROM t1 WHERE a <= $1;
 EXECUTE p1(2);
@@ -1714,24 +1714,24 @@ WITH cte1 AS (INSERT INTO t1 VALUES (20, 'Success') RETURNING *) SELECT * FROM c
 --
 RESET SESSION AUTHORIZATION;
 ALTER POLICY p1 ON t1 RENAME TO p1; --fail
-ERROR:  row-policy "p1" for table "t1" already exists
-SELECT rsecpolname, relname
-    FROM pg_rowsecurity rs
-    JOIN pg_class pc ON (pc.oid = rs.rsecrelid)
+ERROR:  policy "p1" for table "t1" already exists
+SELECT polname, relname
+    FROM pg_policy pol
+    JOIN pg_class pc ON (pc.oid = pol.polrelid)
     WHERE relname = 't1';
- rsecpolname | relname 
--------------+---------
- p1          | t1
+ polname | relname 
+---------+---------
+ p1      | t1
 (1 row)
 
 ALTER POLICY p1 ON t1 RENAME TO p2; --ok
-SELECT rsecpolname, relname
-    FROM pg_rowsecurity rs
-    JOIN pg_class pc ON (pc.oid = rs.rsecrelid)
+SELECT polname, relname
+    FROM pg_policy pol
+    JOIN pg_class pc ON (pc.oid = pol.polrelid)
     WHERE relname = 't1';
- rsecpolname | relname 
--------------+---------
- p2          | t1
+ polname | relname 
+---------+---------
+ p2      | t1
 (1 row)
 
 --
@@ -2161,7 +2161,7 @@ SET row_security TO ON;
 COPY copy_t FROM STDIN; --ok
 SET row_security TO FORCE;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-ERROR:  COPY FROM not supported with row security.
+ERROR:  COPY FROM not supported with row level security.
 HINT:  Use direct INSERT statements instead.
 -- Check COPY FROM as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
@@ -2170,11 +2170,11 @@ COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
 ERROR:  insufficient privilege to bypass row security.
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-ERROR:  COPY FROM not supported with row security.
+ERROR:  COPY FROM not supported with row level security.
 HINT:  Use direct INSERT statements instead.
 SET row_security TO FORCE;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-ERROR:  COPY FROM not supported with row security.
+ERROR:  COPY FROM not supported with row level security.
 HINT:  Use direct INSERT statements instead.
 -- Check COPY TO as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
@@ -2182,11 +2182,11 @@ SET row_security TO OFF;
 COPY copy_t FROM STDIN; --ok
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-ERROR:  COPY FROM not supported with row security.
+ERROR:  COPY FROM not supported with row level security.
 HINT:  Use direct INSERT statements instead.
 SET row_security TO FORCE;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-ERROR:  COPY FROM not supported with row security.
+ERROR:  COPY FROM not supported with row level security.
 HINT:  Use direct INSERT statements instead.
 -- Check COPY FROM as user without permissions.
 SET SESSION AUTHORIZATION rls_regress_user2;

@@ -106,7 +106,7 @@ typedef struct RelationData
 	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 	/* use "struct" here to avoid needing to include rowsecurity.h: */
-	struct RowSecurityDesc *rd_rsdesc;	/* Row-security policies, or NULL */
+	struct RowSecurityDesc *rd_rsdesc;	/* row security policies, or NULL */
 
 	/* data managed by RelationGetIndexList: */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */

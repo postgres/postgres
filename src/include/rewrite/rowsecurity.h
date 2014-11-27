@@ -19,7 +19,7 @@
 
 typedef struct RowSecurityPolicy
 {
-	Oid					rsecid;			/* OID of the policy */
+	Oid					policy_id;		/* OID of the policy */
 	char			   *policy_name;	/* Name of the policy */
 	char				cmd;			/* Type of command policy is for */
 	ArrayType		   *roles;			/* Array of roles policy is for */
@@ -30,8 +30,8 @@ typedef struct RowSecurityPolicy
 
 typedef struct RowSecurityDesc
 {
-	MemoryContext		rscxt;		/* row-security memory context */
-	List			   *policies;	/* list of row-security policies */
+	MemoryContext		rscxt;		/* row security memory context */
+	List			   *policies;	/* list of row security policies */
 } RowSecurityDesc;
 
 /* GUC variable */
