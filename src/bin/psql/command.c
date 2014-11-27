@@ -2868,7 +2868,6 @@ do_watch(PQExpBuffer query_buf, long sleep)
 	 * Set up rendering options, in particular, disable the pager, because
 	 * nobody wants to be prompted while watching the output of 'watch'.
 	 */
-	myopt.nullPrint = NULL;
 	myopt.topt.pager = 0;
 
 	for (;;)
