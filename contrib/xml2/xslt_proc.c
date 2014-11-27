@@ -140,10 +140,10 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	if (xslt_sec_prefs_error)
 	{
+		xsltFreeTransformContext(xslt_ctxt);
+		xsltFreeSecurityPrefs(xslt_sec_prefs);
 		xsltFreeStylesheet(stylesheet);
 		xmlFreeDoc(doctree);
-		xsltFreeSecurityPrefs(xslt_sec_prefs);
-		xsltFreeTransformContext(xslt_ctxt);
 		xsltCleanupGlobals();
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"could not set libxslt security preferences");
@@ -154,10 +154,10 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	if (restree == NULL)
 	{
+		xsltFreeTransformContext(xslt_ctxt);
+		xsltFreeSecurityPrefs(xslt_sec_prefs);
 		xsltFreeStylesheet(stylesheet);
 		xmlFreeDoc(doctree);
-		xsltFreeSecurityPrefs(xslt_sec_prefs);
-		xsltFreeTransformContext(xslt_ctxt);
 		xsltCleanupGlobals();
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"failed to apply stylesheet");
@@ -165,11 +165,11 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
 
-	xsltFreeStylesheet(stylesheet);
 	xmlFreeDoc(restree);
-	xmlFreeDoc(doctree);
-	xsltFreeSecurityPrefs(xslt_sec_prefs);
 	xsltFreeTransformContext(xslt_ctxt);
+	xsltFreeSecurityPrefs(xslt_sec_prefs);
+	xsltFreeStylesheet(stylesheet);
+	xmlFreeDoc(doctree);
 
 	xsltCleanupGlobals();
 
