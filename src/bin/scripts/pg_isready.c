@@ -196,19 +196,19 @@ main(int argc, char **argv)
 		switch (rv)
 		{
 			case PQPING_OK:
-				printf("accepting connections\n");
+				printf(_("accepting connections\n"));
 				break;
 			case PQPING_REJECT:
-				printf("rejecting connections\n");
+				printf(_("rejecting connections\n"));
 				break;
 			case PQPING_NO_RESPONSE:
-				printf("no response\n");
+				printf(_("no response\n"));
 				break;
 			case PQPING_NO_ATTEMPT:
-				printf("no attempt\n");
+				printf(_("no attempt\n"));
 				break;
 			default:
-				printf("unknown\n");
+				printf(_("unknown\n"));
 		}
 	}
 
