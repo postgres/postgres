@@ -840,10 +840,7 @@ parent transaction to complete.
 
 Not all transactional behaviour is emulated, for example we do not insert
 a transaction entry into the lock table, nor do we maintain the transaction
-stack in memory. Clog entries are made normally. Multixact is not maintained
-because its purpose is to record tuple level locks that an application has
-requested to prevent other tuple locks. Since tuple locks cannot be obtained at
-all, there is never any conflict and so there is no reason to update multixact.
+stack in memory. Clog and multixact entries are made normally.
 Subtrans is maintained during recovery but the details of the transaction
 tree are ignored and all subtransactions reference the top-level TransactionId
 directly. Since commit is atomic this provides correct lock wait behaviour
