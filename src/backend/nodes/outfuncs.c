@@ -184,15 +184,13 @@ _outList(StringInfo str, const List *node)
 static void
 _outBitmapset(StringInfo str, const Bitmapset *bms)
 {
-	Bitmapset  *tmpset;
 	int			x;
 
 	appendStringInfoChar(str, '(');
 	appendStringInfoChar(str, 'b');
-	tmpset = bms_copy(bms);
-	while ((x = bms_first_member(tmpset)) >= 0)
+	x = -1;
+	while ((x = bms_next_member(bms, x)) >= 0)
 		appendStringInfo(str, " %d", x);
-	bms_free(tmpset);
 	appendStringInfoChar(str, ')');
 }
 

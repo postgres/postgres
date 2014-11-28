@@ -773,11 +773,10 @@ static Relids
 alias_relid_set(PlannerInfo *root, Relids relids)
 {
 	Relids		result = NULL;
-	Relids		tmprelids;
 	int			rtindex;
 
-	tmprelids = bms_copy(relids);
-	while ((rtindex = bms_first_member(tmprelids)) >= 0)
+	rtindex = -1;
+	while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
 	{
 		RangeTblEntry *rte = rt_fetch(rtindex, root->parse->rtable);
 
@@ -786,6 +785,5 @@ alias_relid_set(PlannerInfo *root, Relids relids)
 		else
 			result = bms_add_member(result, rtindex);
 	}
-	bms_free(tmprelids);
 	return result;
 }

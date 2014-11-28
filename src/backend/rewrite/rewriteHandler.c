@@ -2456,11 +2456,10 @@ static Bitmapset *
 adjust_view_column_set(Bitmapset *cols, List *targetlist)
 {
 	Bitmapset  *result = NULL;
-	Bitmapset  *tmpcols;
-	AttrNumber	col;
+	int			col;
 
-	tmpcols = bms_copy(cols);
-	while ((col = bms_first_member(tmpcols)) >= 0)
+	col = -1;
+	while ((col = bms_next_member(cols, col)) >= 0)
 	{
 		/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
 		AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
@@ -2510,7 +2509,6 @@ adjust_view_column_set(Bitmapset *cols, List *targetlist)
 					 attno);
 		}
 	}
-	bms_free(tmpcols);
 
 	return result;
 }

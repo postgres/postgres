@@ -1875,9 +1875,8 @@ get_loop_count(PlannerInfo *root, Relids outer_relids)
 	{
 		int			relid;
 
-		/* Need a working copy since bms_first_member is destructive */
-		outer_relids = bms_copy(outer_relids);
-		while ((relid = bms_first_member(outer_relids)) >= 0)
+		relid = -1;
+		while ((relid = bms_next_member(outer_relids, relid)) >= 0)
 		{
 			RelOptInfo *outer_rel;
 
@@ -1900,7 +1899,6 @@ get_loop_count(PlannerInfo *root, Relids outer_relids)
 			if (result == 1.0 || result > outer_rel->rows)
 				result = outer_rel->rows;
 		}
-		bms_free(outer_relids);
 	}
 	return result;
 }
