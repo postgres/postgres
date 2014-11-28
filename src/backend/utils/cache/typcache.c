@@ -17,20 +17,16 @@
  * is kept in the type cache.
  *
  * Once created, a type cache entry lives as long as the backend does, so
- * there is no need for a call to release a cache entry.  (For present uses,
+ * there is no need for a call to release a cache entry.  If the type is
+ * dropped, the cache entry simply becomes wasted storage.  (For present uses,
  * it would be okay to flush type cache entries at the ends of transactions,
  * if we needed to reclaim space.)
  *
- * There is presently no provision for clearing out a cache entry if the
- * stored data becomes obsolete.  (The code will work if a type acquires
- * opclasses it didn't have before while a backend runs --- but not if the
- * definition of an existing opclass is altered.)  However, the relcache
- * doesn't cope with opclasses changing under it, either, so this seems
- * a low-priority problem.
- *
- * We do support clearing the tuple descriptor and operator/function parts
- * of a rowtype's cache entry, since those may need to change as a consequence
- * of ALTER TABLE.
+ * We have some provisions for updating cache entries if the stored data
+ * becomes obsolete.  Information dependent on opclasses is cleared if we
+ * detect updates to pg_opclass.  We also support clearing the tuple
+ * descriptor and operator/function parts of a rowtype's cache entry,
+ * since those may need to change as a consequence of ALTER TABLE.
  *
  *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
@@ -70,13 +66,20 @@
 static HTAB *TypeCacheHash = NULL;
 
 /* Private flag bits in the TypeCacheEntry.flags field */
-#define TCFLAGS_CHECKED_ELEM_PROPERTIES		0x0001
-#define TCFLAGS_HAVE_ELEM_EQUALITY			0x0002
-#define TCFLAGS_HAVE_ELEM_COMPARE			0x0004
-#define TCFLAGS_HAVE_ELEM_HASHING			0x0008
-#define TCFLAGS_CHECKED_FIELD_PROPERTIES	0x0010
-#define TCFLAGS_HAVE_FIELD_EQUALITY			0x0020
-#define TCFLAGS_HAVE_FIELD_COMPARE			0x0040
+#define TCFLAGS_CHECKED_BTREE_OPCLASS		0x0001
+#define TCFLAGS_CHECKED_HASH_OPCLASS		0x0002
+#define TCFLAGS_CHECKED_EQ_OPR				0x0004
+#define TCFLAGS_CHECKED_LT_OPR				0x0008
+#define TCFLAGS_CHECKED_GT_OPR				0x0010
+#define TCFLAGS_CHECKED_CMP_PROC			0x0020
+#define TCFLAGS_CHECKED_HASH_PROC			0x0040
+#define TCFLAGS_CHECKED_ELEM_PROPERTIES		0x0080
+#define TCFLAGS_HAVE_ELEM_EQUALITY			0x0100
+#define TCFLAGS_HAVE_ELEM_COMPARE			0x0200
+#define TCFLAGS_HAVE_ELEM_HASHING			0x0400
+#define TCFLAGS_CHECKED_FIELD_PROPERTIES	0x0800
+#define TCFLAGS_HAVE_FIELD_EQUALITY			0x1000
+#define TCFLAGS_HAVE_FIELD_COMPARE			0x2000
 
 /* Private information to support comparisons of enum values */
 typedef struct
@@ -132,6 +135,7 @@ static bool record_fields_have_equality(TypeCacheEntry *typentry);
 static bool record_fields_have_compare(TypeCacheEntry *typentry);
 static void cache_record_field_properties(TypeCacheEntry *typentry);
 static void TypeCacheRelCallback(Datum arg, Oid relid);
+static void TypeCacheOpcCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void load_enum_cache_data(TypeCacheEntry *tcache);
 static EnumItem *find_enumitem(TypeCacheEnumData *enumdata, Oid arg);
 static int	enum_oid_cmp(const void *left, const void *right);
@@ -166,8 +170,9 @@ lookup_type_cache(Oid type_id, int flags)
 		TypeCacheHash = hash_create("Type information cache", 64,
 									&ctl, HASH_ELEM | HASH_FUNCTION);
 
-		/* Also set up a callback for relcache SI invalidations */
+		/* Also set up callbacks for SI invalidations */
 		CacheRegisterRelcacheCallback(TypeCacheRelCallback, (Datum) 0);
+		CacheRegisterSyscacheCallback(CLAOID, TypeCacheOpcCallback, (Datum) 0);
 
 		/* Also make sure CacheMemoryContext exists */
 		if (!CacheMemoryContext)
@@ -217,13 +222,14 @@ lookup_type_cache(Oid type_id, int flags)
 	}
 
 	/*
-	 * If we haven't already found the opclasses, try to do so
+	 * Look up opclasses if we haven't already and any dependent info is
+	 * requested.
 	 */
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_LT_OPR | TYPECACHE_GT_OPR |
 				  TYPECACHE_CMP_PROC |
 				  TYPECACHE_EQ_OPR_FINFO | TYPECACHE_CMP_PROC_FINFO |
 				  TYPECACHE_BTREE_OPFAMILY)) &&
-		typentry->btree_opf == InvalidOid)
+		!(typentry->flags & TCFLAGS_CHECKED_BTREE_OPCLASS))
 	{
 		Oid			opclass;
 
@@ -233,38 +239,36 @@ lookup_type_cache(Oid type_id, int flags)
 			typentry->btree_opf = get_opclass_family(opclass);
 			typentry->btree_opintype = get_opclass_input_type(opclass);
 		}
-		/* If no btree opclass, we force lookup of the hash opclass */
-		if (typentry->btree_opf == InvalidOid)
-		{
-			if (typentry->hash_opf == InvalidOid)
-			{
-				opclass = GetDefaultOpClass(type_id, HASH_AM_OID);
-				if (OidIsValid(opclass))
-				{
-					typentry->hash_opf = get_opclass_family(opclass);
-					typentry->hash_opintype = get_opclass_input_type(opclass);
-				}
-			}
-		}
 		else
 		{
-			/*
-			 * In case we find a btree opclass where previously we only found
-			 * a hash opclass, reset eq_opr and derived information so that we
-			 * can fetch the btree equality operator instead of the hash
-			 * equality operator.  (They're probably the same operator, but we
-			 * don't assume that here.)
-			 */
-			typentry->eq_opr = InvalidOid;
-			typentry->eq_opr_finfo.fn_oid = InvalidOid;
-			typentry->hash_proc = InvalidOid;
-			typentry->hash_proc_finfo.fn_oid = InvalidOid;
+			typentry->btree_opf = typentry->btree_opintype = InvalidOid;
 		}
+
+		/*
+		 * Reset information derived from btree opclass.  Note in particular
+		 * that we'll redetermine the eq_opr even if we previously found one;
+		 * this matters in case a btree opclass has been added to a type that
+		 * previously had only a hash opclass.
+		 */
+		typentry->flags &= ~(TCFLAGS_CHECKED_EQ_OPR |
+							 TCFLAGS_CHECKED_LT_OPR |
+							 TCFLAGS_CHECKED_GT_OPR |
+							 TCFLAGS_CHECKED_CMP_PROC);
+		typentry->flags |= TCFLAGS_CHECKED_BTREE_OPCLASS;
 	}
+
+	/*
+	 * If we need to look up equality operator, and there's no btree opclass,
+	 * force lookup of hash opclass.
+	 */
+	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
+		!(typentry->flags & TCFLAGS_CHECKED_EQ_OPR) &&
+		typentry->btree_opf == InvalidOid)
+		flags |= TYPECACHE_HASH_OPFAMILY;
 
 	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO |
 				  TYPECACHE_HASH_OPFAMILY)) &&
-		typentry->hash_opf == InvalidOid)
+		!(typentry->flags & TCFLAGS_CHECKED_HASH_OPCLASS))
 	{
 		Oid			opclass;
 
@@ -274,11 +278,25 @@ lookup_type_cache(Oid type_id, int flags)
 			typentry->hash_opf = get_opclass_family(opclass);
 			typentry->hash_opintype = get_opclass_input_type(opclass);
 		}
+		else
+		{
+			typentry->hash_opf = typentry->hash_opintype = InvalidOid;
+		}
+
+		/*
+		 * Reset information derived from hash opclass.  We do *not* reset the
+		 * eq_opr; if we already found one from the btree opclass, that
+		 * decision is still good.
+		 */
+		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
+		typentry->flags |= TCFLAGS_CHECKED_HASH_OPCLASS;
 	}
 
-	/* Look for requested operators and functions */
+	/*
+	 * Look for requested operators and functions, if we haven't already.
+	 */
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
-		typentry->eq_opr == InvalidOid)
+		!(typentry->flags & TCFLAGS_CHECKED_EQ_OPR))
 	{
 		Oid			eq_opr = InvalidOid;
 
@@ -307,6 +325,10 @@ lookup_type_cache(Oid type_id, int flags)
 				 !record_fields_have_equality(typentry))
 			eq_opr = InvalidOid;
 
+		/* Force update of eq_opr_finfo only if we're changing state */
+		if (typentry->eq_opr != eq_opr)
+			typentry->eq_opr_finfo.fn_oid = InvalidOid;
+
 		typentry->eq_opr = eq_opr;
 
 		/*
@@ -314,10 +336,11 @@ lookup_type_cache(Oid type_id, int flags)
 		 * equality operator.  This is so we can ensure that the hash function
 		 * matches the operator.
 		 */
-		typentry->hash_proc = InvalidOid;
-		typentry->hash_proc_finfo.fn_oid = InvalidOid;
+		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
+		typentry->flags |= TCFLAGS_CHECKED_EQ_OPR;
 	}
-	if ((flags & TYPECACHE_LT_OPR) && typentry->lt_opr == InvalidOid)
+	if ((flags & TYPECACHE_LT_OPR) &&
+		!(typentry->flags & TCFLAGS_CHECKED_LT_OPR))
 	{
 		Oid			lt_opr = InvalidOid;
 
@@ -336,8 +359,10 @@ lookup_type_cache(Oid type_id, int flags)
 			lt_opr = InvalidOid;
 
 		typentry->lt_opr = lt_opr;
+		typentry->flags |= TCFLAGS_CHECKED_LT_OPR;
 	}
-	if ((flags & TYPECACHE_GT_OPR) && typentry->gt_opr == InvalidOid)
+	if ((flags & TYPECACHE_GT_OPR) &&
+		!(typentry->flags & TCFLAGS_CHECKED_GT_OPR))
 	{
 		Oid			gt_opr = InvalidOid;
 
@@ -356,9 +381,10 @@ lookup_type_cache(Oid type_id, int flags)
 			gt_opr = InvalidOid;
 
 		typentry->gt_opr = gt_opr;
+		typentry->flags |= TCFLAGS_CHECKED_GT_OPR;
 	}
 	if ((flags & (TYPECACHE_CMP_PROC | TYPECACHE_CMP_PROC_FINFO)) &&
-		typentry->cmp_proc == InvalidOid)
+		!(typentry->flags & TCFLAGS_CHECKED_CMP_PROC))
 	{
 		Oid			cmp_proc = InvalidOid;
 
@@ -376,10 +402,15 @@ lookup_type_cache(Oid type_id, int flags)
 				 !record_fields_have_compare(typentry))
 			cmp_proc = InvalidOid;
 
+		/* Force update of cmp_proc_finfo only if we're changing state */
+		if (typentry->cmp_proc != cmp_proc)
+			typentry->cmp_proc_finfo.fn_oid = InvalidOid;
+
 		typentry->cmp_proc = cmp_proc;
+		typentry->flags |= TCFLAGS_CHECKED_CMP_PROC;
 	}
 	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO)) &&
-		typentry->hash_proc == InvalidOid)
+		!(typentry->flags & TCFLAGS_CHECKED_HASH_PROC))
 	{
 		Oid			hash_proc = InvalidOid;
 
@@ -407,7 +438,12 @@ lookup_type_cache(Oid type_id, int flags)
 			!array_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
 
+		/* Force update of hash_proc_finfo only if we're changing state */
+		if (typentry->hash_proc != hash_proc)
+			typentry->hash_proc_finfo.fn_oid = InvalidOid;
+
 		typentry->hash_proc = hash_proc;
+		typentry->flags |= TCFLAGS_CHECKED_HASH_PROC;
 	}
 
 	/*
@@ -416,6 +452,11 @@ lookup_type_cache(Oid type_id, int flags)
 	 * Note: we tell fmgr the finfo structures live in CacheMemoryContext,
 	 * which is not quite right (they're really in the hash table's private
 	 * memory context) but this will do for our purposes.
+	 *
+	 * Note: the code above avoids invalidating the finfo structs unless the
+	 * referenced operator/function OID actually changes.  This is to prevent
+	 * unnecessary leakage of any subsidiary data attached to an finfo, since
+	 * that would cause session-lifespan memory leaks.
 	 */
 	if ((flags & TYPECACHE_EQ_OPR_FINFO) &&
 		typentry->eq_opr_finfo.fn_oid == InvalidOid &&
@@ -928,15 +969,38 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 			typentry->tupDesc = NULL;
 		}
 
-		/* Reset equality/comparison/hashing information */
-		typentry->eq_opr = InvalidOid;
-		typentry->lt_opr = InvalidOid;
-		typentry->gt_opr = InvalidOid;
-		typentry->cmp_proc = InvalidOid;
-		typentry->hash_proc = InvalidOid;
-		typentry->eq_opr_finfo.fn_oid = InvalidOid;
-		typentry->cmp_proc_finfo.fn_oid = InvalidOid;
-		typentry->hash_proc_finfo.fn_oid = InvalidOid;
+		/* Reset equality/comparison/hashing validity information */
+		typentry->flags = 0;
+	}
+}
+
+/*
+ * TypeCacheOpcCallback
+ *		Syscache inval callback function
+ *
+ * This is called when a syscache invalidation event occurs for any pg_opclass
+ * row.  In principle we could probably just invalidate data dependent on the
+ * particular opclass, but since updates on pg_opclass are rare in production
+ * it doesn't seem worth a lot of complication: we just mark all cached data
+ * invalid.
+ *
+ * Note that we don't bother watching for updates on pg_amop or pg_amproc.
+ * This should be safe because ALTER OPERATOR FAMILY ADD/DROP OPERATOR/FUNCTION
+ * is not allowed to be used to add/drop the primary operators and functions
+ * of an opclass, only cross-type members of a family; and the latter sorts
+ * of members are not going to get cached here.
+ */
+static void
+TypeCacheOpcCallback(Datum arg, int cacheid, uint32 hashvalue)
+{
+	HASH_SEQ_STATUS status;
+	TypeCacheEntry *typentry;
+
+	/* TypeCacheHash must exist, else this callback wouldn't be registered */
+	hash_seq_init(&status, TypeCacheHash);
+	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
+	{
+		/* Reset equality/comparison/hashing validity information */
 		typentry->flags = 0;
 	}
 }
