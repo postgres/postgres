@@ -3145,20 +3145,44 @@ CopyOverrideSearchPath(OverrideSearchPath *path)
 bool
 OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
 {
-	/* Easiest way to do this is GetOverrideSearchPath() and compare */
-	bool		result;
-	OverrideSearchPath *cur;
+	ListCell   *lc,
+			   *lcp;
 
-	cur = GetOverrideSearchPath(CurrentMemoryContext);
-	if (path->addCatalog == cur->addCatalog &&
-		path->addTemp == cur->addTemp &&
-		equal(path->schemas, cur->schemas))
-		result = true;
-	else
-		result = false;
-	list_free(cur->schemas);
-	pfree(cur);
-	return result;
+	recomputeNamespacePath();
+
+	/* We scan down the activeSearchPath to see if it matches the input. */
+	lc = list_head(activeSearchPath);
+
+	/* If path->addTemp, first item should be my temp namespace. */
+	if (path->addTemp)
+	{
+		if (lc && lfirst_oid(lc) == myTempNamespace)
+			lc = lnext(lc);
+		else
+			return false;
+	}
+	/* If path->addCatalog, next item should be pg_catalog. */
+	if (path->addCatalog)
+	{
+		if (lc && lfirst_oid(lc) == PG_CATALOG_NAMESPACE)
+			lc = lnext(lc);
+		else
+			return false;
+	}
+	/* We should now be looking at the activeCreationNamespace. */
+	if (activeCreationNamespace != (lc ? lfirst_oid(lc) : InvalidOid))
+		return false;
+	/* The remainder of activeSearchPath should match path->schemas. */
+	foreach(lcp, path->schemas)
+	{
+		if (lc && lfirst_oid(lc) == lfirst_oid(lcp))
+			lc = lnext(lc);
+		else
+			return false;
+	}
+	if (lc)
+		return false;
+	return true;
 }
 
 /*
