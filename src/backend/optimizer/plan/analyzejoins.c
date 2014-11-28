@@ -162,11 +162,12 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * going to be able to do anything with it.
 	 */
 	if (sjinfo->jointype != JOIN_LEFT ||
-		sjinfo->delay_upper_joins ||
-		bms_membership(sjinfo->min_righthand) != BMS_SINGLETON)
+		sjinfo->delay_upper_joins)
 		return false;
 
-	innerrelid = bms_singleton_member(sjinfo->min_righthand);
+	if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))
+		return false;
+
 	innerrel = find_base_rel(root, innerrelid);
 
 	if (innerrel->reloptkind != RELOPT_BASEREL)

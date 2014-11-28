@@ -525,6 +525,50 @@ bms_singleton_member(const Bitmapset *a)
 }
 
 /*
+ * bms_get_singleton_member
+ *
+ * Test whether the given set is a singleton.
+ * If so, set *member to the value of its sole member, and return TRUE.
+ * If not, return FALSE, without changing *member.
+ *
+ * This is more convenient and faster than calling bms_membership() and then
+ * bms_singleton_member(), if we don't care about distinguishing empty sets
+ * from multiple-member sets.
+ */
+bool
+bms_get_singleton_member(const Bitmapset *a, int *member)
+{
+	int			result = -1;
+	int			nwords;
+	int			wordnum;
+
+	if (a == NULL)
+		return false;
+	nwords = a->nwords;
+	for (wordnum = 0; wordnum < nwords; wordnum++)
+	{
+		bitmapword	w = a->words[wordnum];
+
+		if (w != 0)
+		{
+			if (result >= 0 || HAS_MULTIPLE_ONES(w))
+				return false;
+			result = wordnum * BITS_PER_BITMAPWORD;
+			while ((w & 255) == 0)
+			{
+				w >>= 8;
+				result += 8;
+			}
+			result += rightmost_one_pos[w & 255];
+		}
+	}
+	if (result < 0)
+		return false;
+	*member = result;
+	return true;
+}
+
+/*
  * bms_num_members - count members of set
  */
 int
