@@ -891,5 +891,6 @@ InitXLogInsert(void)
 	 * Allocate a buffer to hold the header information for a WAL record.
 	 */
 	if (hdr_scratch == NULL)
-		hdr_scratch = palloc0(HEADER_SCRATCH_SIZE);
+		hdr_scratch = MemoryContextAllocZero(xloginsert_cxt,
+											 HEADER_SCRATCH_SIZE);
 }

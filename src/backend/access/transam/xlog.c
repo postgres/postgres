@@ -7254,10 +7254,9 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 }
 
 /*
- * This must be called during startup of a backend process, except that
- * it need not be called in a standalone backend (which does StartupXLOG
- * instead).  We need to initialize the local copies of ThisTimeLineID and
- * RedoRecPtr.
+ * This must be called in a backend process before creating WAL records
+ * (except in a standalone backend, which does StartupXLOG instead).  We need
+ * to initialize the local copies of ThisTimeLineID and RedoRecPtr.
  *
  * Note: before Postgres 8.0, we went to some effort to keep the postmaster
  * process's copies of ThisTimeLineID and RedoRecPtr valid too.  This was
@@ -7593,6 +7592,16 @@ CreateCheckPoint(int flags)
 	/* sanity check */
 	if (RecoveryInProgress() && (flags & CHECKPOINT_END_OF_RECOVERY) == 0)
 		elog(ERROR, "can't create a checkpoint during recovery");
+
+	/*
+	 * Initialize InitXLogInsert working areas before entering the critical
+	 * section.  Normally, this is done by the first call to
+	 * RecoveryInProgress() or LocalSetXLogInsertAllowed(), but when creating
+	 * an end-of-recovery checkpoint, the LocalSetXLogInsertAllowed call is
+	 * done below in a critical section, and InitXLogInsert cannot be called
+	 * in a critical section.
+	 */
+	InitXLogInsert();
 
 	/*
 	 * Acquire CheckpointLock to ensure only one checkpoint happens at a time.
