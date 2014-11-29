@@ -302,14 +302,33 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "conninfo") == 0)
 	{
 		char	   *db = PQdb(pset.db);
-		char	   *host = PQhost(pset.db);
 
 		if (db == NULL)
 			printf(_("You are currently not connected to a database.\n"));
 		else
 		{
+			char	   *host;
+			PQconninfoOption *connOptions;
+			PQconninfoOption *option;
+
+			host = PQhost(pset.db);
 			if (host == NULL)
 				host = DEFAULT_PGSOCKET_DIR;
+			/* A usable "hostaddr" overrides the basic sense of host. */
+			connOptions = PQconninfo(pset.db);
+			if (connOptions == NULL)
+			{
+				psql_error("out of memory\n");
+				exit(EXIT_FAILURE);
+			}
+			for (option = connOptions; option && option->keyword; option++)
+				if (strcmp(option->keyword, "hostaddr") == 0)
+				{
+					if (option->val != NULL && option->val[0] != '\0')
+						host = option->val;
+					break;
+				}
+
 			/* If the host is an absolute path, the connection is via socket */
 			if (is_absolute_path(host))
 				printf(_("You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
@@ -318,6 +337,8 @@ exec_command(const char *cmd,
 				printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
 					   db, PQuser(pset.db), host, PQport(pset.db));
 			printSSLInfo();
+
+			PQconninfoFree(connOptions);
 		}
 	}
 
