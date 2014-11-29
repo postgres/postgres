@@ -1843,14 +1843,6 @@
 
       <listitem>
        <para>
-        Add libpq function <link
-        linkend="libpq-pqhostaddr"><function>PQhostaddr()</></link>
-        to return the server's <acronym>IP</> address (Fujii Masao)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Make libpq's <link
         linkend="libpq-pqconndefaults"><function>PQconndefaults()</></link>
         function ignore invalid service files (Steve Singer, Bruce Momjian)
