@@ -592,7 +592,7 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 			free(conn->sslmode);
 		conn->sslmode = strdup("require");
 		if (!conn->sslmode)
-			return false;
+			goto oom_error;
 	}
 #endif
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
@@ -694,7 +694,6 @@ connectOptions2(PGconn *conn)
 			conn->pgpass = strdup(DefaultPassword);
 			if (!conn->pgpass)
 				goto oom_error;
-
 		}
 		else
 			conn->dot_pgpass_used = true;
