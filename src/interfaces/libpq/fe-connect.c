@@ -684,16 +684,16 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 
 	for (option = PQconninfoOptions; option->keyword; option++)
 	{
-		const char *tmp = conninfo_getval(connOptions, option->keyword);
-
-		if (tmp && option->connofs >= 0)
+		if (option->connofs >= 0)
 		{
-			char	  **connmember = (char **) ((char *) conn + option->connofs);
+			const char *tmp = conninfo_getval(connOptions, option->keyword);
 
-			if (*connmember)
-				free(*connmember);
 			if (tmp)
 			{
+				char	  **connmember = (char **) ((char *) conn + option->connofs);
+
+				if (*connmember)
+					free(*connmember);
 				*connmember = strdup(tmp);
 				if (*connmember == NULL)
 				{
@@ -702,8 +702,6 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 					return false;
 				}
 			}
-			else
-				*connmember = NULL;
 		}
 	}
 
@@ -793,7 +791,6 @@ connectOptions2(PGconn *conn)
 			conn->pgpass = strdup(DefaultPassword);
 			if (!conn->pgpass)
 				goto oom_error;
-
 		}
 		else
 			conn->dot_pgpass_used = true;
