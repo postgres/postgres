@@ -1,4 +1,4 @@
-/* contrib/test_parser/test_parser--1.0.sql */
+/* src/test/modules/test_parser/test_parser--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION test_parser" to load this file. \quit

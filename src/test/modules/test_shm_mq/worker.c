@@ -9,10 +9,10 @@
  *		but it should be possible to use much of the control logic just
  *		as presented here.
  *
- * Copyright (C) 2013, PostgreSQL Global Development Group
+ * Copyright (C) 2013-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		contrib/test_shm_mq/worker.c
+ *		src/test/modules/test_shm_mq/worker.c
  *
  * -------------------------------------------------------------------------
  */

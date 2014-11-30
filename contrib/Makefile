@@ -16,7 +16,6 @@ SUBDIRS = \
 		dblink		\
 		dict_int	\
 		dict_xsyn	\
-		dummy_seclabel	\
 		earthdistance	\
 		file_fdw	\
 		fuzzystrmatch	\
@@ -51,12 +50,9 @@ SUBDIRS = \
 		tablefunc	\
 		tcn		\
 		test_decoding	\
-		test_parser	\
-		test_shm_mq	\
 		tsearch2	\
 		unaccent	\
-		vacuumlo	\
-		worker_spi
+		vacuumlo
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo

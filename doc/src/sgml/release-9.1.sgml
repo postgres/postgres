@@ -8062,7 +8062,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
       <listitem>
        <para>
-        Add <link linkend="dummy-seclabel"><filename>dummy_seclabel</></link>
+        Add <filename>dummy_seclabel</>
         contrib module (KaiGai Kohei)
        </para>
 

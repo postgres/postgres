@@ -5,10 +5,10 @@
  *		number of background workers for shared memory message queue
  *		testing.
  *
- * Copyright (C) 2013, PostgreSQL Global Development Group
+ * Copyright (C) 2013-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		contrib/test_shm_mq/setup.c
+ *		src/test/modules/test_shm_mq/setup.c
  *
  * -------------------------------------------------------------------------
  */

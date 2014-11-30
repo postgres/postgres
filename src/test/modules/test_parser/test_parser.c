@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  contrib/test_parser/test_parser.c
+ *	  src/test/modules/test_parser/test_parser.c
  *
  *-------------------------------------------------------------------------
  */

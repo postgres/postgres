@@ -1,4 +1,4 @@
-/* contrib/test_shm_mq/test_shm_mq--1.0.sql */
+/* src/test/modules/test_shm_mq/test_shm_mq--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION test_shm_mq" to load this file. \quit

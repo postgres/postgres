@@ -503,7 +503,7 @@
        </para>
 
        <para>
-        This feature is illustrated in <xref linkend="test-shm-mq">.
+        This feature is illustrated in <filename>contrib/test_shm_mq</filename>.
        </para>
       </listitem>
 

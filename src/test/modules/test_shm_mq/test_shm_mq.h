@@ -6,7 +6,7 @@
  * Copyright (C) 2013, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		contrib/test_shm_mq/test_shm_mq.h
+ *		src/test/modules/test_shm_mq/test_shm_mq.h
  *
  * -------------------------------------------------------------------------
  */
