@@ -643,7 +643,7 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 			free(conn->sslmode);
 		conn->sslmode = strdup("require");
 		if (!conn->sslmode)
-			return false;
+			goto oom_error;
 	}
 #endif
 	FILL_CONN_OPTION(conn->requirepeer, "requirepeer");
@@ -746,7 +746,6 @@ connectOptions2(PGconn *conn)
 			conn->pgpass = strdup(DefaultPassword);
 			if (!conn->pgpass)
 				goto oom_error;
-
 		}
 		else
 			conn->dot_pgpass_used = true;
