@@ -173,6 +173,36 @@ lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 	 (c) == '_' || \
 	 IS_HIGHBIT_SET(c))
 
+/* utility function to check if a string is a valid JSON number */
+extern bool
+IsValidJsonNumber(const char * str, int len)
+{
+	bool		numeric_error;
+	JsonLexContext dummy_lex;
+
+
+	/*
+	 * json_lex_number expects a leading  '-' to have been eaten already.
+	 *
+	 * having to cast away the constness of str is ugly, but there's not much
+	 * easy alternative.
+	 */
+	if (*str == '-')
+	{
+		dummy_lex.input = (char *) str + 1;
+		dummy_lex.input_length = len - 1;
+	}
+	else
+	{
+		dummy_lex.input = (char *) str;
+		dummy_lex.input_length = len;
+	}
+
+	json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
+
+	return ! numeric_error;
+}
+
 /*
  * Input.
  */
@@ -1338,8 +1368,6 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 {
 	char	   *outputstr;
 	text	   *jsontext;
-	bool		numeric_error;
-	JsonLexContext dummy_lex;
 
 	/* callers are expected to ensure that null keys are not passed in */
 	Assert( ! (key_scalar && is_null));
@@ -1376,25 +1404,14 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			break;
 		case JSONTYPE_NUMERIC:
 			outputstr = OidOutputFunctionCall(outfuncoid, val);
-			if (key_scalar)
-			{
-				/* always quote keys */
-				escape_json(result, outputstr);
-			}
+			/*
+			 * Don't call escape_json for a non-key if it's a valid JSON
+			 * number.
+			 */
+			if (!key_scalar && IsValidJsonNumber(outputstr, strlen(outputstr)))
+				appendStringInfoString(result, outputstr);
 			else
-			{
-				/*
-				 * Don't call escape_json for a non-key if it's a valid JSON
-				 * number.
-				 */
-				dummy_lex.input = *outputstr == '-' ? outputstr + 1 : outputstr;
-				dummy_lex.input_length = strlen(dummy_lex.input);
-				json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
-				if (!numeric_error)
-					appendStringInfoString(result, outputstr);
-				else
-					escape_json(result, outputstr);
-			}
+				escape_json(result, outputstr);
 			pfree(outputstr);
 			break;
 		case JSONTYPE_DATE:

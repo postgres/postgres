@@ -12,6 +12,7 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
+#include "utils/jsonapi.h"
 #include "utils/jsonb.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1240,7 +1241,6 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
-	bool		is_number;
 	StringInfoData tmp,
 				dst;
 
@@ -1267,48 +1267,9 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 			appendStringInfoString(&dst, "false");
 		else
 		{
-			is_number = false;
 			resetStringInfo(&tmp);
 			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
-
-			/*
-			 * don't treat something with a leading zero followed by another
-			 * digit as numeric - could be a zip code or similar
-			 */
-			if (tmp.len > 0 &&
-				!(tmp.data[0] == '0' &&
-				  isdigit((unsigned char) tmp.data[1])) &&
-				strspn(tmp.data, "+-0123456789Ee.") == tmp.len)
-			{
-				/*
-				 * might be a number. See if we can input it as a numeric
-				 * value. Ignore any actual parsed value.
-				 */
-				char	   *endptr = "junk";
-				long		lval;
-
-				lval = strtol(tmp.data, &endptr, 10);
-				(void) lval;
-				if (*endptr == '\0')
-				{
-					/*
-					 * strol man page says this means the whole string is
-					 * valid
-					 */
-					is_number = true;
-				}
-				else
-				{
-					/* not an int - try a double */
-					double		dval;
-
-					dval = strtod(tmp.data, &endptr);
-					(void) dval;
-					if (*endptr == '\0')
-						is_number = true;
-				}
-			}
-			if (is_number)
+			if (IsValidJsonNumber(tmp.data, tmp.len))
 				appendBinaryStringInfo(&dst, tmp.data, tmp.len);
 			else
 				escape_json(&dst, tmp.data);
