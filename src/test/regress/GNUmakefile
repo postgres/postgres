@@ -101,9 +101,9 @@ installdirs-tests: installdirs
 	$(MKDIR_P)  $(patsubst $(srcdir)/%/,'$(DESTDIR)$(pkglibdir)/regress/%',$(sort $(dir $(regress_data_files))))
 
 
-# Get some extra C modules from contrib/spi and src/test/modules/dummy_seclabel...
+# Get some extra C modules from contrib/spi
 
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
@@ -111,22 +111,14 @@ refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 autoinc$(DLSUFFIX): $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX)
 	cp $< $@
 
-dummy_seclabel$(DLSUFFIX): $(top_builddir)/src/test/modules/dummy_seclabel/dummy_seclabel$(DLSUFFIX)
-	cp $< $@
-
 $(top_builddir)/contrib/spi/refint$(DLSUFFIX): | submake-contrib-spi ;
 
 $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX): | submake-contrib-spi ;
 
-$(top_builddir)/src/test/modules/dummy_seclabel/dummy_seclabel$(DLSUFFIX): | submake-dummy_seclabel ;
-
 submake-contrib-spi:
 	$(MAKE) -C $(top_builddir)/contrib/spi
 
-submake-dummy_seclabel:
-	$(MAKE) -C $(top_builddir)/src/test/modules/dummy_seclabel
-
-.PHONY: submake-contrib-spi submake-dummy_seclabel
+.PHONY: submake-contrib-spi
 
 # Tablespace setup
 
@@ -179,7 +171,7 @@ bigcheck: all tablespace-setup
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
+	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
 	rm -f $(output_files) $(input_files)

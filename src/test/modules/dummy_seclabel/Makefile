@@ -3,6 +3,8 @@
 MODULES = dummy_seclabel
 PGFILEDESC = "dummy_seclabel - regression testing of the SECURITY LABEL statement"
 
+REGRESS = dummy_seclabel
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
