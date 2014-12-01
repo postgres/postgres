@@ -194,7 +194,7 @@
     <listitem>
      <para>
       Data pages are not currently checksummed by default, though full page images
-      recorded in WAL records will be protected;  see<link
+      recorded in WAL records will be protected; see <link
       linkend="app-initdb-data-checksums"><application>initdb</></link>
       for details about enabling data page checksums.
      </para>
