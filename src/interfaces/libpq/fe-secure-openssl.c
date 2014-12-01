@@ -187,6 +187,15 @@ pgtls_open_client(PGconn *conn)
 }
 
 /*
+ *  Is there unread data waiting in the SSL read buffer?
+ */
+bool
+pgtls_read_pending(PGconn *conn)
+{
+	return SSL_pending(conn->ssl);
+}
+
+/*
  *	Read data from a secure connection.
  *
  * On failure, this function is responsible for putting a suitable message
