@@ -117,4 +117,11 @@ extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
 							 int len,
 							 bool need_escapes);
 
+/*
+ * Utility function to check if a string is a valid JSON number.
+ *
+ * str agrument does not need to be nul-terminated.
+ */
+extern bool IsValidJsonNumber(const char * str, int len);
+
 #endif   /* JSONAPI_H */
