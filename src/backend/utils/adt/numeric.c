@@ -704,6 +704,8 @@ numeric_recv(PG_FUNCTION_ARGS)
 	alloc_var(&value, len);
 
 	value.weight = (int16) pq_getmsgint(buf, sizeof(int16));
+	/* we allow any int16 for weight --- OK? */
+
 	value.sign = (uint16) pq_getmsgint(buf, sizeof(uint16));
 	if (!(value.sign == NUMERIC_POS ||
 		  value.sign == NUMERIC_NEG ||
@@ -713,6 +715,11 @@ numeric_recv(PG_FUNCTION_ARGS)
 				 errmsg("invalid sign in external \"numeric\" value")));
 
 	value.dscale = (uint16) pq_getmsgint(buf, sizeof(uint16));
+	if ((value.dscale & NUMERIC_DSCALE_MASK) != value.dscale)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid scale in external \"numeric\" value")));
+
 	for (i = 0; i < len; i++)
 	{
 		NumericDigit d = pq_getmsgint(buf, sizeof(NumericDigit));
@@ -723,6 +730,14 @@ numeric_recv(PG_FUNCTION_ARGS)
 					 errmsg("invalid digit in external \"numeric\" value")));
 		value.digits[i] = d;
 	}
+
+	/*
+	 * If the given dscale would hide any digits, truncate those digits away.
+	 * We could alternatively throw an error, but that would take a bunch of
+	 * extra code (about as much as trunc_var involves), and it might cause
+	 * client compatibility issues.
+	 */
+	trunc_var(&value, value.dscale);
 
 	apply_typmod(&value, typmod);
 
