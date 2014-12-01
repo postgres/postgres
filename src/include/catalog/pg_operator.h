@@ -1142,18 +1142,19 @@ DATA(insert OID = 1206 (  ">="	   PGNSP PGUID b f f 869 869	 16 1204 1203 networ
 DESCR("greater than or equal");
 DATA(insert OID = 931  (  "<<"	   PGNSP PGUID b f f 869 869	 16 933		0 network_sub networksel networkjoinsel ));
 DESCR("is subnet");
-#define OID_INET_SUB_OP				  931
+#define OID_INET_SUB_OP			931
 DATA(insert OID = 932  (  "<<="    PGNSP PGUID b f f 869 869	 16 934		0 network_subeq networksel networkjoinsel ));
 DESCR("is subnet or equal");
-#define OID_INET_SUBEQ_OP				932
+#define OID_INET_SUBEQ_OP		932
 DATA(insert OID = 933  (  ">>"	   PGNSP PGUID b f f 869 869	 16 931		0 network_sup networksel networkjoinsel ));
 DESCR("is supernet");
-#define OID_INET_SUP_OP				  933
+#define OID_INET_SUP_OP			933
 DATA(insert OID = 934  (  ">>="    PGNSP PGUID b f f 869 869	 16 932		0 network_supeq networksel networkjoinsel ));
 DESCR("is supernet or equal");
-#define OID_INET_SUPEQ_OP				934
+#define OID_INET_SUPEQ_OP		934
 DATA(insert OID = 3552	(  "&&"    PGNSP PGUID b f f 869 869	 16 3552	0 network_overlap networksel networkjoinsel ));
 DESCR("overlaps (is subnet or supernet)");
+#define OID_INET_OVERLAP_OP		3552
 
 DATA(insert OID = 2634 (  "~"	   PGNSP PGUID l f f	  0 869 869 0 0 inetnot - - ));
 DESCR("bitwise not");
