@@ -83,5 +83,12 @@ typedef struct BrinDesc
 /* brin.c */
 extern BrinDesc *brin_build_desc(Relation rel);
 extern void brin_free_desc(BrinDesc *bdesc);
+extern Datum brin_summarize_new_values(PG_FUNCTION_ARGS);
+
+/* brin_minmax.c */
+extern Datum brin_minmax_opcinfo(PG_FUNCTION_ARGS);
+extern Datum brin_minmax_add_value(PG_FUNCTION_ARGS);
+extern Datum brin_minmax_consistent(PG_FUNCTION_ARGS);
+extern Datum brin_minmax_union(PG_FUNCTION_ARGS);
 
 #endif   /* BRIN_INTERNAL_H */

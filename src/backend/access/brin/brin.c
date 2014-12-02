@@ -60,8 +60,6 @@ typedef struct BrinOpaque
 	BrinDesc   *bo_bdesc;
 } BrinOpaque;
 
-PG_FUNCTION_INFO_V1(brin_summarize_new_values);
-
 static BrinBuildState *initialize_brin_buildstate(Relation idxRel,
 						   BrinRevmap *revmap, BlockNumber pagesPerRange);
 static void terminate_brin_buildstate(BrinBuildState *state);

@@ -36,23 +36,18 @@
  */
 #define		PROCNUM_BASE			11
 
-static FmgrInfo *minmax_get_procinfo(BrinDesc *bdesc, uint16 attno,
-					uint16 procnum);
-
-PG_FUNCTION_INFO_V1(minmaxOpcInfo);
-PG_FUNCTION_INFO_V1(minmaxAddValue);
-PG_FUNCTION_INFO_V1(minmaxConsistent);
-PG_FUNCTION_INFO_V1(minmaxUnion);
-
-
 typedef struct MinmaxOpaque
 {
 	FmgrInfo	operators[MINMAX_NUM_PROCNUMS];
 	bool		inited[MINMAX_NUM_PROCNUMS];
 } MinmaxOpaque;
 
+static FmgrInfo *minmax_get_procinfo(BrinDesc *bdesc, uint16 attno,
+					uint16 procnum);
+
+
 Datum
-minmaxOpcInfo(PG_FUNCTION_ARGS)
+brin_minmax_opcinfo(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
 	BrinOpcInfo *result;
@@ -81,7 +76,7 @@ minmaxOpcInfo(PG_FUNCTION_ARGS)
  * return false and do not modify in this case.
  */
 Datum
-minmaxAddValue(PG_FUNCTION_ARGS)
+brin_minmax_add_value(PG_FUNCTION_ARGS)
 {
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *column = (BrinValues *) PG_GETARG_POINTER(1);
@@ -159,7 +154,7 @@ minmaxAddValue(PG_FUNCTION_ARGS)
  * values.  Return true if so, false otherwise.
  */
 Datum
-minmaxConsistent(PG_FUNCTION_ARGS)
+brin_minmax_consistent(PG_FUNCTION_ARGS)
 {
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *column = (BrinValues *) PG_GETARG_POINTER(1);
@@ -249,7 +244,7 @@ minmaxConsistent(PG_FUNCTION_ARGS)
  * values contained in both.  The second one is untouched.
  */
 Datum
-minmaxUnion(PG_FUNCTION_ARGS)
+brin_minmax_union(PG_FUNCTION_ARGS)
 {
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *col_a = (BrinValues *) PG_GETARG_POINTER(1);
