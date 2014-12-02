@@ -65,9 +65,10 @@ ERROR:  number of array dimensions (7) exceeds the maximum allowed (6)
 LINE 1: select plperl_sum_array('{{{{{{{1,2},{3,4}},{{5,6},{7,8}}},{...
                                 ^
 select plperl_sum_array('{{{1,2,3}, {4,5,6,7}}, {{7,8,9}, {10, 11, 12}}}');
-ERROR:  multidimensional arrays must have array expressions with matching dimensions
+ERROR:  malformed array literal: "{{{1,2,3}, {4,5,6,7}}, {{7,8,9}, {10, 11, 12}}}"
 LINE 1: select plperl_sum_array('{{{1,2,3}, {4,5,6,7}}, {{7,8,9}, {1...
                                 ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
 CREATE OR REPLACE FUNCTION plperl_concat(TEXT[]) RETURNS TEXT AS $$
 	my $array_arg = shift;
 	my $result = "";

@@ -1065,26 +1065,32 @@ select '{{1,{2}},{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,{2}},{2,3}}"
 LINE 1: select '{{1,{2}},{2,3}}'::text[];
                ^
+DETAIL:  Unexpected "{" character.
 select '{{},{}}'::text[];
 ERROR:  malformed array literal: "{{},{}}"
 LINE 1: select '{{},{}}'::text[];
                ^
+DETAIL:  Unexpected "}" character.
 select E'{{1,2},\\{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,2},\{2,3}}"
 LINE 1: select E'{{1,2},\\{2,3}}'::text[];
                ^
+DETAIL:  Unexpected "\" character.
 select '{{"1 2" x},{3}}'::text[];
 ERROR:  malformed array literal: "{{"1 2" x},{3}}"
 LINE 1: select '{{"1 2" x},{3}}'::text[];
                ^
+DETAIL:  Unexpected array element.
 select '{}}'::text[];
 ERROR:  malformed array literal: "{}}"
 LINE 1: select '{}}'::text[];
                ^
+DETAIL:  Junk after closing right brace.
 select '{ }}'::text[];
 ERROR:  malformed array literal: "{ }}"
 LINE 1: select '{ }}'::text[];
                ^
+DETAIL:  Junk after closing right brace.
 select array[];
 ERROR:  cannot determine type of empty array
 LINE 1: select array[];

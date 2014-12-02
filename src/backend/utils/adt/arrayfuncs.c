@@ -233,11 +233,13 @@ array_in(PG_FUNCTION_ARGS)
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 							ndim + 1, MAXDIM)));
 
-		for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++);
+		for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++)
+			 /* skip */ ;
 		if (q == p)				/* no digits? */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("missing dimension value")));
+					 errmsg("malformed array literal: \"%s\"", string),
+					 errdetail("\"[\" must introduce explicitly-specified array dimensions.")));
 
 		if (*q == ':')
 		{
@@ -245,11 +247,13 @@ array_in(PG_FUNCTION_ARGS)
 			*q = '\0';
 			lBound[ndim] = atoi(p);
 			p = q + 1;
-			for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++);
+			for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++)
+				 /* skip */ ;
 			if (q == p)			/* no digits? */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("missing dimension value")));
+						 errmsg("malformed array literal: \"%s\"", string),
+						 errdetail("Missing array dimension value.")));
 		}
 		else
 		{
@@ -259,7 +263,9 @@ array_in(PG_FUNCTION_ARGS)
 		if (*q != ']')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("missing \"]\" in array dimensions")));
+					 errmsg("malformed array literal: \"%s\"", string),
+					 errdetail("Missing \"%s\" after array dimensions.",
+							   "]")));
 
 		*q = '\0';
 		ub = atoi(p);
@@ -279,7 +285,8 @@ array_in(PG_FUNCTION_ARGS)
 		if (*p != '{')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("array value must start with \"{\" or dimension information")));
+					 errmsg("malformed array literal: \"%s\"", string),
+					 errdetail("Array value must start with \"{\" or dimension information.")));
 		ndim = ArrayCount(p, dim, typdelim);
 		for (i = 0; i < ndim; i++)
 			lBound[i] = 1;
@@ -293,7 +300,9 @@ array_in(PG_FUNCTION_ARGS)
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("missing assignment operator")));
+					 errmsg("malformed array literal: \"%s\"", string),
+					 errdetail("Missing \"%s\" after array dimensions.",
+							   ASSGN)));
 		p += strlen(ASSGN);
 		while (array_isspace(*p))
 			p++;
@@ -305,18 +314,21 @@ array_in(PG_FUNCTION_ARGS)
 		if (*p != '{')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("array value must start with \"{\" or dimension information")));
+					 errmsg("malformed array literal: \"%s\"", string),
+					 errdetail("Array contents must start with \"{\".")));
 		ndim_braces = ArrayCount(p, dim_braces, typdelim);
 		if (ndim_braces != ndim)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("array dimensions incompatible with array literal")));
+					 errmsg("malformed array literal: \"%s\"", string),
+					 errdetail("Specified array dimensions do not match array contents.")));
 		for (i = 0; i < ndim; ++i)
 		{
 			if (dim[i] != dim_braces[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("array dimensions incompatible with array literal")));
+						 errmsg("malformed array literal: \"%s\"", string),
+						 errdetail("Specified array dimensions do not match array contents.")));
 		}
 	}
 
@@ -446,7 +458,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 					/* Signal a premature end of the string */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", str)));
+							 errmsg("malformed array literal: \"%s\"", str),
+							 errdetail("Unexpected end of input.")));
 					break;
 				case '\\':
 
@@ -461,7 +474,9 @@ ArrayCount(const char *str, int *dim, char typdelim)
 						parse_state != ARRAY_ELEM_DELIMITED)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+							  errmsg("malformed array literal: \"%s\"", str),
+								 errdetail("Unexpected \"%c\" character.",
+										   '\\')));
 					if (parse_state != ARRAY_QUOTED_ELEM_STARTED)
 						parse_state = ARRAY_ELEM_STARTED;
 					/* skip the escaped character */
@@ -470,7 +485,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+							  errmsg("malformed array literal: \"%s\"", str),
+								 errdetail("Unexpected end of input.")));
 					break;
 				case '\"':
 
@@ -484,7 +500,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 						parse_state != ARRAY_ELEM_DELIMITED)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+							  errmsg("malformed array literal: \"%s\"", str),
+								 errdetail("Unexpected array element.")));
 					in_quotes = !in_quotes;
 					if (in_quotes)
 						parse_state = ARRAY_QUOTED_ELEM_STARTED;
@@ -504,7 +521,9 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							parse_state != ARRAY_LEVEL_DELIMITED)
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+							  errmsg("malformed array literal: \"%s\"", str),
+								errdetail("Unexpected \"%c\" character.",
+										  '{')));
 						parse_state = ARRAY_LEVEL_STARTED;
 						if (nest_level >= MAXDIM)
 							ereport(ERROR,
@@ -532,21 +551,25 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							!(nest_level == 1 && parse_state == ARRAY_LEVEL_STARTED))
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+							  errmsg("malformed array literal: \"%s\"", str),
+								errdetail("Unexpected \"%c\" character.",
+										  '}')));
 						parse_state = ARRAY_LEVEL_COMPLETED;
 						if (nest_level == 0)
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+							  errmsg("malformed array literal: \"%s\"", str),
+							 errdetail("Unmatched \"%c\" character.", '}')));
 						nest_level--;
 
 						if (nelems_last[nest_level] != 0 &&
 							nelems[nest_level] != nelems_last[nest_level])
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								errmsg("multidimensional arrays must have "
-									   "array expressions with matching "
-									   "dimensions")));
+							  errmsg("malformed array literal: \"%s\"", str),
+								errdetail("Multidimensional arrays must have "
+										  "sub-arrays with matching "
+										  "dimensions.")));
 						nelems_last[nest_level] = nelems[nest_level];
 						nelems[nest_level] = 1;
 						if (nest_level == 0)
@@ -577,7 +600,9 @@ ArrayCount(const char *str, int *dim, char typdelim)
 								parse_state != ARRAY_LEVEL_COMPLETED)
 								ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"", str)));
+								 errmsg("malformed array literal: \"%s\"", str),
+								 errdetail("Unexpected \"%c\" character.",
+										   typdelim)));
 							if (parse_state == ARRAY_LEVEL_COMPLETED)
 								parse_state = ARRAY_LEVEL_DELIMITED;
 							else
@@ -598,7 +623,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 								parse_state != ARRAY_ELEM_DELIMITED)
 								ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"", str)));
+								 errmsg("malformed array literal: \"%s\"", str),
+								 errdetail("Unexpected array element.")));
 							parse_state = ARRAY_ELEM_STARTED;
 						}
 					}
@@ -617,7 +643,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 		if (!array_isspace(*ptr++))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed array literal: \"%s\"", str)));
+					 errmsg("malformed array literal: \"%s\"", str),
+					 errdetail("Junk after closing right brace.")));
 	}
 
 	/* special case for an empty array */
@@ -704,7 +731,8 @@ ReadArrayStr(char *arrayStr,
 	 * character.
 	 *
 	 * The error checking in this routine is mostly pro-forma, since we expect
-	 * that ArrayCount() already validated the string.
+	 * that ArrayCount() already validated the string.  So we don't bother
+	 * with errdetail messages.
 	 */
 	srcptr = arrayStr;
 	while (!eoArray)
