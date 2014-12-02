@@ -210,7 +210,7 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
       <acronym>BRIN</acronym> index page, or throws an error if the page is
       not a valid <acronym>BRIN</acronym> page.  For example:
 <screen>
-brintest=# select brin_page_type(get_raw_page('brinidx', 0));
+test=# SELECT brin_page_type(get_raw_page('brinidx', 0));
  brin_page_type 
 ----------------
  meta
@@ -232,7 +232,7 @@ brintest=# select brin_page_type(get_raw_page('brinidx', 0));
       <function>brin_metapage_info</function> returns assorted information
       about a <acronym>BRIN</acronym> index metapage.  For example:
 <screen>
-brintest=# select * from brin_metapage_info(get_raw_page('brinidx', 0));
+test=# SELECT * FROM brin_metapage_info(get_raw_page('brinidx', 0));
    magic    | version | pagesperrange | lastrevmappage 
 ------------+---------+---------------+----------------
  0xA8109CFA |       1 |             4 |              2
@@ -255,7 +255,7 @@ brintest=# select * from brin_metapage_info(get_raw_page('brinidx', 0));
       identifiers in a <acronym>BRIN</acronym> index range map page.
       For example:
 <screen>
-brintest=# select * from brin_revmap_data(get_raw_page('brinidx', 2)) limit 5;
+test=# SELECT * FROM brin_revmap_data(get_raw_page('brinidx', 2)) limit 5;
   pages  
 ---------
  (6,137)
@@ -281,9 +281,9 @@ brintest=# select * from brin_revmap_data(get_raw_page('brinidx', 2)) limit 5;
       <function>brin_page_items</function> returns the data stored in the
       <acronym>BRIN</acronym> data page.  For example:
 <screen>
-brintest=# select * from brin_page_items(get_raw_page('brinidx', 5),
-brintest(#                               'brinidx')
-brintest-# order by blknum, attnum limit 6;
+test=# SELECT * FROM brin_page_items(get_raw_page('brinidx', 5),
+                                     'brinidx')
+       ORDER BY blknum, attnum LIMIT 6;
  itemoffset | blknum | attnum | allnulls | hasnulls | placeholder |    value     
 ------------+--------+--------+----------+----------+-------------+--------------
         137 |      0 |      1 | t        | f        | f           | 

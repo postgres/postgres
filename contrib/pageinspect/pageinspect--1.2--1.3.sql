@@ -21,6 +21,7 @@ LANGUAGE C STRICT;
 
 --
 -- brin_revmap_data()
+--
 CREATE FUNCTION brin_revmap_data(IN page bytea,
 	OUT pages tid)
 RETURNS SETOF tid
