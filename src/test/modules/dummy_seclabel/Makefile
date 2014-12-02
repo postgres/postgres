@@ -4,6 +4,7 @@ MODULES = dummy_seclabel
 PGFILEDESC = "dummy_seclabel - regression testing of the SECURITY LABEL statement"
 
 REGRESS = dummy_seclabel
+EXTRA_CLEAN = sql/dummy_seclabel.sql expected/dummy_seclabel.out
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
