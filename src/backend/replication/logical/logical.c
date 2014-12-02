@@ -146,10 +146,19 @@ StartupDecodingContext(List *output_plugin_options,
 	 * logical decoding backend which doesn't need to be checked individually
 	 * when computing the xmin horizon because the xmin is enforced via
 	 * replication slots.
+	 *
+	 * We can only do so if we're outside of a transaction (i.e. the case when
+	 * streaming changes via walsender), otherwise a already setup
+	 * snapshot/xid would end up being ignored. That's not a particularly
+	 * bothersome restriction since the SQL interface can't be used for
+	 * streaming anyway.
 	 */
-	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	MyPgXact->vacuumFlags |= PROC_IN_LOGICAL_DECODING;
-	LWLockRelease(ProcArrayLock);
+	if (!IsTransactionOrTransactionBlock())
+	{
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		MyPgXact->vacuumFlags |= PROC_IN_LOGICAL_DECODING;
+		LWLockRelease(ProcArrayLock);
+	}
 
 	ctx->slot = slot;
 
