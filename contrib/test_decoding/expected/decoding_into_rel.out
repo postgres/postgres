@@ -1,6 +1,8 @@
 -- test that we can insert the result of a get_changes call into a
 -- logged relation. That's really not a good idea in practical terms,
 -- but provides a nice test.
+-- predictability
+SET synchronous_commit = on;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
  ?column? 
 ----------
