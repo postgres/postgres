@@ -2674,10 +2674,11 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-track-commit-timestamp" xreflabel="track_commit_timestamp">
-      <term><varname>track_commit_timestamp</varname> (<type>bool</type>)</term>
+      <term><varname>track_commit_timestamp</varname> (<type>bool</type>)
       <indexterm>
        <primary><varname>track_commit_timestamp</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Record commit time of transactions. This parameter
