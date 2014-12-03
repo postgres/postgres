@@ -1,0 +1,4 @@
+comment = 'Test code for SECURITY LABEL feature'
+default_version = '1.0'
+module_pathname = '$libdir/dummy_seclabel'
+relocatable = true

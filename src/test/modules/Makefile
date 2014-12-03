@@ -10,4 +10,9 @@ SUBDIRS = \
 		  test_shm_mq \
 		  test_parser
 
+all: submake-errcodes
+
+submake-errcodes:
+	$(MAKE) -C $(top_builddir)/src/backend submake-errcodes
+
 $(recurse)

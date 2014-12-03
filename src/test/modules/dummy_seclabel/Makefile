@@ -3,6 +3,9 @@
 MODULES = dummy_seclabel
 PGFILEDESC = "dummy_seclabel - regression testing of the SECURITY LABEL statement"
 
+EXTENSION = dummy_seclabel
+DATA = dummy_seclabel--1.0.sql
+
 REGRESS = dummy_seclabel
 EXTRA_CLEAN = sql/dummy_seclabel.sql expected/dummy_seclabel.out
 

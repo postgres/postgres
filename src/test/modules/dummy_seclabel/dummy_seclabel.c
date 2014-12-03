@@ -21,6 +21,8 @@ PG_MODULE_MAGIC;
 /* Entrypoint of the module */
 void		_PG_init(void);
 
+PG_FUNCTION_INFO_V1(dummy_seclabel_dummy);
+
 static void
 dummy_object_relabel(const ObjectAddress *object, const char *seclabel)
 {
@@ -47,4 +49,14 @@ void
 _PG_init(void)
 {
 	register_label_provider("dummy", dummy_object_relabel);
+}
+
+/*
+ * This function is here just so that the extension is not completely empty
+ * and the dynamic library is loaded when CREATE EXTENSION runs.
+ */
+Datum
+dummy_seclabel_dummy(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_VOID();
 }
