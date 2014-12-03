@@ -840,7 +840,7 @@ parent transaction to complete.
 
 Not all transactional behaviour is emulated, for example we do not insert
 a transaction entry into the lock table, nor do we maintain the transaction
-stack in memory. Clog and multixact entries are made normally.
+stack in memory. Clog, multixact and commit_ts entries are made normally.
 Subtrans is maintained during recovery but the details of the transaction
 tree are ignored and all subtransactions reference the top-level TransactionId
 directly. Since commit is atomic this provides correct lock wait behaviour

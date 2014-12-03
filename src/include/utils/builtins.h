@@ -1187,6 +1187,10 @@ extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
 /* access/transam/multixact.c */
 extern Datum pg_get_multixact_members(PG_FUNCTION_ARGS);
 
+/* access/transam/committs.c */
+extern Datum pg_xact_commit_timestamp(PG_FUNCTION_ARGS);
+extern Datum pg_last_committed_xact(PG_FUNCTION_ARGS);
+
 /* catalogs/dependency.c */
 extern Datum pg_describe_object(PG_FUNCTION_ARGS);
 extern Datum pg_identify_object(PG_FUNCTION_ARGS);

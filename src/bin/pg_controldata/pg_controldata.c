@@ -270,6 +270,8 @@ main(int argc, char *argv[])
 		   ControlFile.checkPointCopy.oldestMulti);
 	printf(_("Latest checkpoint's oldestMulti's DB: %u\n"),
 		   ControlFile.checkPointCopy.oldestMultiDB);
+	printf(_("Latest checkpoint's oldestCommitTs:   %u\n"),
+		   ControlFile.checkPointCopy.oldestCommitTs);
 	printf(_("Time of latest checkpoint:            %s\n"),
 		   ckpttime_str);
 	printf(_("Fake LSN counter for unlogged rels:   %X/%X\n"),
@@ -300,6 +302,8 @@ main(int argc, char *argv[])
 		   ControlFile.max_prepared_xacts);
 	printf(_("Current max_locks_per_xact setting:   %d\n"),
 		   ControlFile.max_locks_per_xact);
+	printf(_("Current track_commit_timestamp setting: %s\n"),
+		   ControlFile.track_commit_timestamp ? _("on") : _("off"));
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */

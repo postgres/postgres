@@ -67,6 +67,11 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_commit_ts</></entry>
+ <entry>Subdirectory containing transaction commit timestamp data</entry>
+</row>
+
+<row>
  <entry><filename>pg_clog</></entry>
  <entry>Subdirectory containing transaction commit status data</entry>
 </row>

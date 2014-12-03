@@ -228,6 +228,8 @@
 
 #max_replication_slots = 0	# max number of replication slots
 				# (change requires restart)
+#track_commit_timestamp = off	# collect timestamp of transaction commit
+				# (change requires restart)
 
 # - Master Server -
 

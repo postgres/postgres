@@ -1297,7 +1297,7 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 
 		len = strlen(clde->d_name);
 
-		if ((len == 4 || len == 5) &&
+		if ((len == 4 || len == 5 || len == 6) &&
 			strspn(clde->d_name, "0123456789ABCDEF") == len)
 		{
 			segno = (int) strtol(clde->d_name, NULL, 16);

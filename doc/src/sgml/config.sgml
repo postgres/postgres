@@ -2673,6 +2673,20 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-track-commit-timestamp" xreflabel="track_commit_timestamp">
+      <term><varname>track_commit_timestamp</varname> (<type>bool</type>)</term>
+      <indexterm>
+       <primary><varname>track_commit_timestamp</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Record commit time of transactions. This parameter
+        can only be set in <filename>postgresql.conf</> file or on the server
+        command line. The default value is <literal>off</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
 

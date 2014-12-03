@@ -5,6 +5,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = \
+		  commit_ts \
 		  worker_spi \
 		  dummy_seclabel \
 		  test_shm_mq \

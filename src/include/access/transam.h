@@ -124,6 +124,12 @@ typedef struct VariableCacheData
 	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
 
 	/*
+	 * These fields are protected by CommitTsLock
+	 */
+	TransactionId oldestCommitTs;
+	TransactionId newestCommitTs;
+
+	/*
 	 * These fields are protected by ProcArrayLock.
 	 */
 	TransactionId latestCompletedXid;	/* newest XID that has committed or

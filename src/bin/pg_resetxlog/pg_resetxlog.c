@@ -63,6 +63,8 @@ static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
 static uint32 set_xid_epoch = (uint32) -1;
 static TransactionId set_xid = 0;
+static TransactionId set_oldest_commit_ts = 0;
+static TransactionId set_newest_commit_ts = 0;
 static Oid	set_oid = 0;
 static MultiXactId set_mxid = 0;
 static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
@@ -112,7 +114,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "D:fl:m:no:O:x:e:")) != -1)
+	while ((c = getopt(argc, argv, "c:D:e:fl:m:no:O:x:")) != -1)
 	{
 		switch (c)
 		{
@@ -132,7 +134,9 @@ main(int argc, char *argv[])
 				set_xid_epoch = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for option -e\n"), progname);
+					/*------
+					  translator: the second %s is a command line argument (-e, etc) */
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-e");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -147,7 +151,7 @@ main(int argc, char *argv[])
 				set_xid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for option -x\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-x");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -158,11 +162,42 @@ main(int argc, char *argv[])
 				}
 				break;
 
+			case 'c':
+				set_oldest_commit_ts = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != ',')
+				{
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-c");
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				set_newest_commit_ts = strtoul(endptr + 1, &endptr2, 0);
+				if (endptr2 == endptr + 1 || *endptr2 != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-c");
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+
+				if (set_oldest_commit_ts < 2 &&
+					set_oldest_commit_ts != 0)
+				{
+					fprintf(stderr, _("%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"), progname);
+					exit(1);
+				}
+
+				if (set_newest_commit_ts < 2 &&
+					set_newest_commit_ts != 0)
+				{
+					fprintf(stderr, _("%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"), progname);
+					exit(1);
+				}
+				break;
+
 			case 'o':
 				set_oid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for option -o\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-o");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -177,7 +212,7 @@ main(int argc, char *argv[])
 				set_mxid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',')
 				{
-					fprintf(stderr, _("%s: invalid argument for option -m\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-m");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -185,7 +220,7 @@ main(int argc, char *argv[])
 				set_oldestmxid = strtoul(endptr + 1, &endptr2, 0);
 				if (endptr2 == endptr + 1 || *endptr2 != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for option -m\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-m");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -211,7 +246,7 @@ main(int argc, char *argv[])
 				set_mxoff = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for option -O\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-O");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -225,7 +260,7 @@ main(int argc, char *argv[])
 			case 'l':
 				if (strspn(optarg, "01234567890ABCDEFabcdef") != 24)
 				{
-					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-l");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
@@ -344,6 +379,11 @@ main(int argc, char *argv[])
 			ControlFile.checkPointCopy.oldestXid += FirstNormalTransactionId;
 		ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
 	}
+
+	if (set_oldest_commit_ts != 0)
+		ControlFile.checkPointCopy.oldestCommitTs = set_oldest_commit_ts;
+	if (set_newest_commit_ts != 0)
+		ControlFile.checkPointCopy.newestCommitTs = set_newest_commit_ts;
 
 	if (set_oid != 0)
 		ControlFile.checkPointCopy.nextOid = set_oid;
@@ -539,6 +579,7 @@ GuessControlValues(void)
 
 	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
 	ControlFile.wal_log_hints = false;
+	ControlFile.track_commit_timestamp = false;
 	ControlFile.MaxConnections = 100;
 	ControlFile.max_worker_processes = 8;
 	ControlFile.max_prepared_xacts = 0;
@@ -621,6 +662,10 @@ PrintControlValues(bool guessed)
 		   ControlFile.checkPointCopy.oldestMulti);
 	printf(_("Latest checkpoint's oldestMulti's DB: %u\n"),
 		   ControlFile.checkPointCopy.oldestMultiDB);
+	printf(_("Latest checkpoint's oldest CommitTs:  %u\n"),
+		   ControlFile.checkPointCopy.oldestCommitTs);
+	printf(_("Latest checkpoint's newest CommitTs:  %u\n"),
+		   ControlFile.checkPointCopy.newestCommitTs);
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */
@@ -702,6 +747,17 @@ PrintNewControlValues()
 		printf(_("NextXID epoch:                        %u\n"),
 			   ControlFile.checkPointCopy.nextXidEpoch);
 	}
+
+	if (set_oldest_commit_ts != 0)
+	{
+		printf(_("oldestCommitTs:                       %u\n"),
+			   ControlFile.checkPointCopy.oldestCommitTs);
+	}
+	if (set_newest_commit_ts != 0)
+	{
+		printf(_("newestCommitTs:                       %u\n"),
+			   ControlFile.checkPointCopy.newestCommitTs);
+	}
 }
 
 
@@ -739,6 +795,7 @@ RewriteControlFile(void)
 	 */
 	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
 	ControlFile.wal_log_hints = false;
+	ControlFile.track_commit_timestamp = false;
 	ControlFile.MaxConnections = 100;
 	ControlFile.max_worker_processes = 8;
 	ControlFile.max_prepared_xacts = 0;
@@ -1099,6 +1156,8 @@ usage(void)
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... {[-D] DATADIR}\n\n"), progname);
 	printf(_("Options:\n"));
+	printf(_("  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"));
+	printf(_("                   (zero in either value means no change)\n"));
 	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
 	printf(_("  -f               force update to be done\n"));
 	printf(_("  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"));

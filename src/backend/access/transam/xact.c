@@ -20,6 +20,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "access/commit_ts.h"
 #include "access/multixact.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
@@ -1132,6 +1133,21 @@ RecordTransactionCommit(void)
 
 			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT);
 		}
+	}
+
+	/*
+	 * We only need to log the commit timestamp separately if the node
+	 * identifier is a valid value; the commit record above already contains
+	 * the timestamp info otherwise, and will be used to load it.
+	 */
+	if (markXidCommitted)
+	{
+		CommitTsNodeId		node_id;
+
+		node_id = CommitTsGetDefaultNodeId();
+		TransactionTreeSetCommitTsData(xid, nchildren, children,
+									   xactStopTimestamp,
+									   node_id, node_id != InvalidCommitTsNodeId);
 	}
 
 	/*
@@ -4644,6 +4660,7 @@ xactGetCommittedChildren(TransactionId **ptr)
  */
 static void
 xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
+						  TimestampTz commit_time,
 						  TransactionId *sub_xids, int nsubxacts,
 						  SharedInvalidationMessage *inval_msgs, int nmsgs,
 						  RelFileNode *xnodes, int nrels,
@@ -4670,6 +4687,10 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		TransactionIdAdvance(ShmemVariableCache->nextXid);
 		LWLockRelease(XidGenLock);
 	}
+
+	/* Set the transaction commit timestamp and metadata */
+	TransactionTreeSetCommitTsData(xid, nsubxacts, sub_xids,
+								   commit_time, InvalidCommitTsNodeId, false);
 
 	if (standbyState == STANDBY_DISABLED)
 	{
@@ -4790,7 +4811,8 @@ xact_redo_commit(xl_xact_commit *xlrec,
 	/* invalidation messages array follows subxids */
 	inval_msgs = (SharedInvalidationMessage *) &(subxacts[xlrec->nsubxacts]);
 
-	xact_redo_commit_internal(xid, lsn, subxacts, xlrec->nsubxacts,
+	xact_redo_commit_internal(xid, lsn, xlrec->xact_time,
+							  subxacts, xlrec->nsubxacts,
 							  inval_msgs, xlrec->nmsgs,
 							  xlrec->xnodes, xlrec->nrels,
 							  xlrec->dbId,
@@ -4805,7 +4827,8 @@ static void
 xact_redo_commit_compact(xl_xact_commit_compact *xlrec,
 						 TransactionId xid, XLogRecPtr lsn)
 {
-	xact_redo_commit_internal(xid, lsn, xlrec->subxacts, xlrec->nsubxacts,
+	xact_redo_commit_internal(xid, lsn, xlrec->xact_time,
+							  xlrec->subxacts, xlrec->nsubxacts,
 							  NULL, 0,	/* inval msgs */
 							  NULL, 0,	/* relfilenodes */
 							  InvalidOid,		/* dbId */

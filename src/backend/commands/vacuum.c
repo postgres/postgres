@@ -23,6 +23,7 @@
 #include <math.h>
 
 #include "access/clog.h"
+#include "access/commit_ts.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
@@ -1071,10 +1072,12 @@ vac_truncate_clog(TransactionId frozenXID,
 		return;
 
 	/*
-	 * Truncate CLOG to the oldest computed value.  Note we don't truncate
-	 * multixacts; that will be done by the next checkpoint.
+	 * Truncate CLOG and CommitTs to the oldest computed value.
+	 * Note we don't truncate multixacts; that will be done by the next
+	 * checkpoint.
 	 */
 	TruncateCLOG(frozenXID);
+	TruncateCommitTs(frozenXID);
 
 	/*
 	 * Update the wrap limit for GetNewTransactionId and creation of new
@@ -1084,6 +1087,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
 	SetMultiXactIdLimit(minMulti, minmulti_datoid);
+	AdvanceOldestCommitTs(frozenXID);
 }
 
 

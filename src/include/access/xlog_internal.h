@@ -186,6 +186,7 @@ typedef struct xl_parameter_change
 	int			max_locks_per_xact;
 	int			wal_level;
 	bool		wal_log_hints;
+	bool		track_commit_timestamp;
 } xl_parameter_change;
 
 /* logs restore point */

@@ -22,6 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetxlog</command>
+   <arg choice="opt"><option>-c</option> <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></arg>
    <arg choice="opt"><option>-f</option></arg>
    <arg choice="opt"><option>-n</option></arg>
    <arg choice="opt"><option>-o</option> <replaceable class="parameter">oid</replaceable></arg>
@@ -79,9 +80,12 @@ PostgreSQL documentation
   <para>
    The <option>-o</>, <option>-x</>, <option>-e</>,
    <option>-m</>, <option>-O</>,
+   <option>-c</>
    and <option>-l</>
    options allow the next OID, next transaction ID, next transaction ID's
-   epoch, next and oldest multitransaction ID, next multitransaction offset, and WAL
+   epoch, next and oldest multitransaction ID, next multitransaction offset,
+   oldest and newest transaction IDs for which the commit time can be retrieved,
+   and WAL
    starting address values to be set manually.  These are only needed when
    <command>pg_resetxlog</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  Safe values can be determined as
@@ -125,6 +129,19 @@ PostgreSQL documentation
       data directory, adding one, and then multiplying by 52352.  As above,
       the file names are in hexadecimal.  There is no simple recipe such as
       the ones above of appending zeroes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A safe value for the oldest transaction ID for which the commit time can
+      be retrieved (first part of <option>-c</>) can be determined by looking
+      for the numerically smallest file name in the directory
+      <filename>pg_committs</> under the data directory.  Conversely, a safe
+      value for the newest transaction ID for which the commit time can be
+      retrieved (second part of <option>-c</>) can be determined by looking for
+      the numerically greatest file name in the same directory.  As above, the
+      file names are in hexadecimal.
      </para>
     </listitem>
 

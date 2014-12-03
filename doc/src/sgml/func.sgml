@@ -15938,6 +15938,45 @@ SELECT collation for ('foo' COLLATE "de_DE");
     For example <literal>10:20:10,14,15</literal> means
     <literal>xmin=10, xmax=20, xip_list=10, 14, 15</literal>.
    </para>
+
+   <para>
+    The functions shown in <xref linkend="functions-commit-timestamp">
+    provide information about transactions that have been already committed.
+    These functions mainly provide information about when the transactions
+    were committed. They only provide useful data when
+    <xref linkend="guc-track-commit-timestamp"> configuration option is enabled
+    and only for transactions that were committed after it was enabled.
+   </para>
+
+   <table id="functions-commit-timestamp">
+    <title>Committed transaction information</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <indexterm><primary>pg_xact_commit_timestamp</primary></indexterm>
+        <literal><function>pg_xact_commit_timestamp(<parameter>xid</parameter>)</function></literal>
+       </entry>
+       <entry><type>timestamp with time zone</type></entry>
+       <entry>get commit timestamp of a transaction</entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm><primary>pg_last_committed_xact</primary></indexterm>
+        <literal><function>pg_last_committed_xact()</function></literal>
+       </entry>
+       <entry><parameter>xid</> <type>xid</>, <parameter>timestamp</> <type>timestamp with time zone</></entry>
+       <entry>get transaction ID and commit timestamp of latest committed transaction</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
   </sect1>
 
   <sect1 id="functions-admin">

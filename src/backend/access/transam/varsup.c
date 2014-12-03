@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/clog.h"
+#include "access/commit_ts.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -158,9 +159,10 @@ GetNewTransactionId(bool isSubXact)
 	 * XID before we zero the page.  Fortunately, a page of the commit log
 	 * holds 32K or more transactions, so we don't have to do this very often.
 	 *
-	 * Extend pg_subtrans too.
+	 * Extend pg_subtrans and pg_commit_ts too.
 	 */
 	ExtendCLOG(xid);
+	ExtendCommitTs(xid);
 	ExtendSUBTRANS(xid);
 
 	/*
