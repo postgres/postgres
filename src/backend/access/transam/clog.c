@@ -416,7 +416,7 @@ TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn)
  *
  * Testing during the PostgreSQL 9.2 development cycle revealed that on a
  * large multi-processor system, it was possible to have more CLOG page
- * requests in flight at one time than the numebr of CLOG buffers which existed
+ * requests in flight at one time than the number of CLOG buffers which existed
  * at that time, which was hardcoded to 8.  Further testing revealed that
  * performance dropped off with more than 32 CLOG buffers, possibly because
  * the linear buffer search algorithm doesn't scale well.
