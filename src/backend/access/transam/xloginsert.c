@@ -299,7 +299,7 @@ XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
  * Add data to the WAL record that's being constructed.
  *
  * The data is appended to the "main chunk", available at replay with
- * XLogGetRecData().
+ * XLogRecGetData().
  */
 void
 XLogRegisterData(char *data, int len)
