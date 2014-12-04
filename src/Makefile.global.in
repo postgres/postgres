@@ -40,6 +40,8 @@ VERSION = @PACKAGE_VERSION@
 MAJORVERSION = @PG_MAJORVERSION@
 
 # Support for VPATH builds
+# (PGXS VPATH support is handled separately in pgxs.mk)
+ifndef PGXS
 vpath_build = @vpath_build@
 abs_top_srcdir = @abs_top_srcdir@
 
@@ -51,6 +53,7 @@ top_srcdir = $(abs_top_srcdir)
 srcdir = $(top_srcdir)/$(subdir)
 VPATH = $(srcdir)
 endif
+endif # not PGXS
 
 vpathsearch = `for f in $(addsuffix /$(1),$(subst :, ,. $(VPATH))); do test -r $$f && echo $$f && break; done`
 
