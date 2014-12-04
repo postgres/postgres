@@ -1226,7 +1226,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <row>
      <entry><structfield>n_tup_upd</></entry>
      <entry><type>bigint</></entry>
-     <entry>Number of rows updated</entry>
+     <entry>Number of rows updated (includes HOT updated rows)</entry>
     </row>
     <row>
      <entry><structfield>n_tup_del</></entry>
