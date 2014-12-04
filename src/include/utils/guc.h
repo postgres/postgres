@@ -27,6 +27,13 @@
 #endif
 
 /*
+ * Automatic configuration file name for ALTER SYSTEM.
+ * This file will be used to store values of configuration parameters
+ * set by ALTER SYSTEM command.
+ */
+#define PG_AUTOCONF_FILENAME		"postgresql.auto.conf"
+
+/*
  * Certain options can only be set at certain times. The rules are
  * like this:
  *

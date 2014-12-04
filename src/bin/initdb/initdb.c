@@ -1366,7 +1366,7 @@ setup_config(void)
 	autoconflines[1] = pg_strdup("# It will be overwritten by the ALTER SYSTEM command.\n");
 	autoconflines[2] = NULL;
 
-	sprintf(path, "%s/%s", pg_data, PG_AUTOCONF_FILENAME);
+	sprintf(path, "%s/postgresql.auto.conf", pg_data);
 
 	writefile(path, autoconflines);
 	if (chmod(path, S_IRUSR | S_IWUSR) != 0)
