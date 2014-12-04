@@ -6,7 +6,6 @@ PGFILEDESC = "postgres_fdw - foreign data wrapper for PostgreSQL"
 
 PG_CPPFLAGS = -I$(libpq_srcdir)
 SHLIB_LINK = $(libpq)
-SHLIB_PREREQS = submake-libpq
 
 EXTENSION = postgres_fdw
 DATA = postgres_fdw--1.0.sql
@@ -18,6 +17,7 @@ PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
+SHLIB_PREREQS = submake-libpq
 subdir = contrib/postgres_fdw
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
