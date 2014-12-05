@@ -1292,8 +1292,12 @@ get_set_pwd(void)
 		}
 		if (!fgets(pwdbuf, sizeof(pwdbuf), pwf))
 		{
-			fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
-					progname, pwfilename, strerror(errno));
+			if (ferror(pwf))
+				fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
+						progname, pwfilename, strerror(errno));
+			else
+				fprintf(stderr, _("%s: password file \"%s\" is empty\n"),
+						progname, pwfilename);
 			exit_nicely();
 		}
 		fclose(pwf);
