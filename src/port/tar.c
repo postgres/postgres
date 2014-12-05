@@ -77,8 +77,8 @@ tarCreateHeader(char *h, const char *filename, const char *linktarget,
 		h[flen + 1] = '\0';
 	}
 
-	/* Mode 8 */
-	sprintf(&h[100], "%07o ", (int) mode);
+	/* Mode 8 - this doesn't include the file type bits (S_IFMT)  */
+	sprintf(&h[100], "%07o ", (int) (mode & 07777));
 
 	/* User ID 8 */
 	sprintf(&h[108], "%07o ", (int) uid);
