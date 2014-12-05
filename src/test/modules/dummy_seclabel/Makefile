@@ -7,7 +7,6 @@ EXTENSION = dummy_seclabel
 DATA = dummy_seclabel--1.0.sql
 
 REGRESS = dummy_seclabel
-EXTRA_CLEAN = sql/dummy_seclabel.sql expected/dummy_seclabel.out
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
