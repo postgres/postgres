@@ -105,9 +105,6 @@ char	   *Unix_socket_group;
 /* Where the Unix socket files are (list of palloc'd strings) */
 static List *sock_paths = NIL;
 
-PQcommMethods *PqCommMethods;
-
-
 /*
  * Buffers for low-level I/O.
  *
@@ -154,8 +151,6 @@ static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
 static int	Setup_AF_UNIX(char *sock_path);
 #endif   /* HAVE_UNIX_SOCKETS */
 
-PQcommMethods PQcommSocketMethods;
-
 static PQcommMethods PqCommSocketMethods = {
 	socket_comm_reset,
 	socket_flush,
@@ -167,6 +162,9 @@ static PQcommMethods PqCommSocketMethods = {
 	socket_endcopyout
 };
 
+PQcommMethods *PqCommMethods = &PqCommSocketMethods;
+
+
 
 /* --------------------------------
  *		pq_init - initialize libpq at backend startup
@@ -175,7 +173,6 @@ static PQcommMethods PqCommSocketMethods = {
 void
 pq_init(void)
 {
-	PqCommMethods = &PqCommSocketMethods;
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;
 	PqSendBuffer = MemoryContextAlloc(TopMemoryContext, PqSendBufferSize);
 	PqSendPointer = PqSendStart = PqRecvPointer = PqRecvLength = 0;
