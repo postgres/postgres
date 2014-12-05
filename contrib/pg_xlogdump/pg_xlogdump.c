@@ -351,14 +351,29 @@ XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats,
 	uint8		recid;
 	uint32		rec_len;
 	uint32		fpi_len;
+	int			block_id;
 
 	stats->count++;
 
-	/* Update per-rmgr statistics */
-
 	rmid = XLogRecGetRmid(record);
 	rec_len = XLogRecGetDataLen(record) + SizeOfXLogRecord;
-	fpi_len = record->decoded_record->xl_tot_len - rec_len;
+
+	/*
+	 * Calculate the amount of FPI data in the record. Each backup block
+	 * takes up BLCKSZ bytes, minus the "hole" length.
+	 *
+	 * XXX: We peek into xlogreader's private decoded backup blocks for the
+	 * hole_length. It doesn't seem worth it to add an accessor macro for
+	 * this.
+	 */
+	fpi_len = 0;
+	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	{
+		if (XLogRecHasBlockImage(record, block_id))
+			fpi_len += BLCKSZ - record->blocks[block_id].hole_length;
+	}
+
+	/* Update per-rmgr statistics */
 
 	stats->rmgr_stats[rmid].count++;
 	stats->rmgr_stats[rmid].rec_len += rec_len;
