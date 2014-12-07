@@ -26,6 +26,11 @@ typedef struct EventTriggerData
 	const char *tag;			/* command tag */
 } EventTriggerData;
 
+#define AT_REWRITE_ALTER_PERSISTENCE	0x01
+#define AT_REWRITE_DEFAULT_VAL			0x02
+#define AT_REWRITE_COLUMN_REWRITE		0x04
+#define AT_REWRITE_ALTER_OID			0x08
+
 /*
  * EventTriggerData is the node type that is passed as fmgr "context" info
  * when a function is called by the event trigger manager.
@@ -46,6 +51,7 @@ extern bool EventTriggerSupportsObjectClass(ObjectClass objclass);
 extern void EventTriggerDDLCommandStart(Node *parsetree);
 extern void EventTriggerDDLCommandEnd(Node *parsetree);
 extern void EventTriggerSQLDrop(Node *parsetree);
+extern void EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason);
 
 extern bool EventTriggerBeginCompleteQuery(void);
 extern void EventTriggerEndCompleteQuery(void);

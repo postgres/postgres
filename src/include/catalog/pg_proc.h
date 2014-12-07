@@ -5045,6 +5045,10 @@ DESCR("peek at binary changes from replication slot");
 /* event triggers */
 DATA(insert OID = 3566 (  pg_event_trigger_dropped_objects		PGNSP PGUID 12 10 100 0 0 f f f f t t s 0 0 2249 "" "{26,26,23,25,25,25,25}" "{o,o,o,o,o,o,o}" "{classid, objid, objsubid, object_type, schema_name, object_name, object_identity}" _null_ pg_event_trigger_dropped_objects _null_ _null_ _null_ ));
 DESCR("list objects dropped by the current command");
+DATA(insert OID = 4566 (  pg_event_trigger_table_rewrite_oid	PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 26 "" "{26}" "{o}" "{oid}" _null_ pg_event_trigger_table_rewrite_oid _null_ _null_ _null_ ));
+DESCR("return Oid of the table getting rewritten");
+DATA(insert OID = 4567 (  pg_event_trigger_table_rewrite_reason PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 23 "" _null_ _null_ _null_ _null_ pg_event_trigger_table_rewrite_reason _null_ _null_ _null_ ));
+DESCR("return reason code for table getting rewritten");
 
 /* generic transition functions for ordered-set aggregates */
 DATA(insert OID = 3970 ( ordered_set_transition			PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 2281 "2281 2276" _null_ _null_ _null_ _null_ ordered_set_transition _null_ _null_ _null_ ));

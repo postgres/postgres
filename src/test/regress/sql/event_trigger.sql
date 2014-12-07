@@ -206,3 +206,45 @@ DROP ROLE regression_bob;
 
 DROP EVENT TRIGGER regress_event_trigger_drop_objects;
 DROP EVENT TRIGGER undroppable;
+
+-- only allowed from within an event trigger function, should fail
+select pg_event_trigger_table_rewrite_oid();
+
+-- test Table Rewrite Event Trigger
+CREATE OR REPLACE FUNCTION test_evtrig_no_rewrite() RETURNS event_trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'I''m sorry Sir, No Rewrite Allowed.';
+END;
+$$;
+
+create event trigger no_rewrite_allowed on table_rewrite
+  execute procedure test_evtrig_no_rewrite();
+
+create table rewriteme (id serial primary key, foo float);
+insert into rewriteme
+     select x * 1.001 from generate_series(1, 500) as t(x);
+alter table rewriteme alter column foo type numeric;
+alter table rewriteme add column baz int default 0;
+
+-- test with more than one reason to rewrite a single table
+CREATE OR REPLACE FUNCTION test_evtrig_no_rewrite() RETURNS event_trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE NOTICE 'Table ''%'' is being rewritten (reason = %)',
+               pg_event_trigger_table_rewrite_oid()::regclass,
+               pg_event_trigger_table_rewrite_reason();
+END;
+$$;
+
+alter table rewriteme
+ add column onemore int default 0,
+ add column another int default -1,
+ alter column foo type numeric(10,4);
+
+-- shouldn't trigger a table_rewrite event
+alter table rewriteme alter column foo type numeric(12,4);
+
+drop table rewriteme;
+drop event trigger no_rewrite_allowed;
+drop function test_evtrig_no_rewrite();

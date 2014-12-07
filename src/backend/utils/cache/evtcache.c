@@ -169,6 +169,8 @@ BuildEventTriggerCache(void)
 			event = EVT_DDLCommandEnd;
 		else if (strcmp(evtevent, "sql_drop") == 0)
 			event = EVT_SQLDrop;
+		else if (strcmp(evtevent, "table_rewrite") == 0)
+			event = EVT_TableRewrite;
 		else
 			continue;
 

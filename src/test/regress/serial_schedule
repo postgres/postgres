@@ -111,7 +111,6 @@ test: misc
 test: psql
 test: async
 test: rules
-test: event_trigger
 test: select_views
 test: portals_p2
 test: foreign_key
@@ -150,4 +149,5 @@ test: returning
 test: largeobject
 test: with
 test: xml
+test: event_trigger
 test: stats
