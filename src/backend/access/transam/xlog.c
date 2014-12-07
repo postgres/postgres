@@ -229,7 +229,7 @@ static char *recoveryEndCommand = NULL;
 static char *archiveCleanupCommand = NULL;
 static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
 static bool recoveryTargetInclusive = true;
-static RecoveryTargetAction actionAtRecoveryTarget = RECOVERY_TARGET_ACTION_PAUSE;
+static RecoveryTargetAction recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
 static char *recoveryTargetName;
@@ -4654,7 +4654,7 @@ readRecoveryCommandFile(void)
 			   *head = NULL,
 			   *tail = NULL;
 	bool		recoveryPauseAtTargetSet = false;
-	bool		actionAtRecoveryTargetSet = false;
+	bool		recoveryTargetActionSet = false;
 
 
 	fd = AllocateFile(RECOVERY_COMMAND_FILE, "r");
@@ -4712,32 +4712,32 @@ readRecoveryCommandFile(void)
 					(errmsg_internal("pause_at_recovery_target = '%s'",
 									 item->value)));
 
-			actionAtRecoveryTarget = recoveryPauseAtTarget ?
+			recoveryTargetAction = recoveryPauseAtTarget ?
 									 RECOVERY_TARGET_ACTION_PAUSE :
 									 RECOVERY_TARGET_ACTION_PROMOTE;
 
 			recoveryPauseAtTargetSet = true;
 		}
-		else if (strcmp(item->name, "action_at_recovery_target") == 0)
+		else if (strcmp(item->name, "recovery_target_action") == 0)
 		{
 			if (strcmp(item->value, "pause") == 0)
-				actionAtRecoveryTarget = RECOVERY_TARGET_ACTION_PAUSE;
+				recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
 			else if (strcmp(item->value, "promote") == 0)
-				actionAtRecoveryTarget = RECOVERY_TARGET_ACTION_PROMOTE;
+				recoveryTargetAction = RECOVERY_TARGET_ACTION_PROMOTE;
 			else if (strcmp(item->value, "shutdown") == 0)
-				actionAtRecoveryTarget = RECOVERY_TARGET_ACTION_SHUTDOWN;
+				recoveryTargetAction = RECOVERY_TARGET_ACTION_SHUTDOWN;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid value for recovery parameter \"%s\"",
-								"action_at_recovery_target"),
+								"recovery_target_action"),
 						 errhint("The allowed values are \"pause\", \"promote\" and \"shutdown\".")));
 
 			ereport(DEBUG2,
-					(errmsg_internal("action_at_recovery_target = '%s'",
+					(errmsg_internal("recovery_target_action = '%s'",
 									 item->value)));
 
-			actionAtRecoveryTargetSet = true;
+			recoveryTargetActionSet = true;
 		}
 		else if (strcmp(item->name, "recovery_target_timeline") == 0)
 		{
@@ -4905,12 +4905,12 @@ readRecoveryCommandFile(void)
 	/*
 	 * Check for mutually exclusive parameters
 	 */
-	if (recoveryPauseAtTargetSet && actionAtRecoveryTargetSet)
+	if (recoveryPauseAtTargetSet && recoveryTargetActionSet)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot set both \"%s\" and \"%s\" recovery parameters",
 						"pause_at_recovery_target",
-						"action_at_recovery_target"),
+						"recovery_target_action"),
 				 errhint("The \"pause_at_recovery_target\" is deprecated.")));
 
 
@@ -4919,10 +4919,10 @@ readRecoveryCommandFile(void)
 	 * of behaviour in 9.5; prior to this we simply ignored a request
 	 * to pause if hot_standby = off, which was surprising behaviour.
 	 */
-	if (actionAtRecoveryTarget == RECOVERY_TARGET_ACTION_PAUSE &&
-		actionAtRecoveryTargetSet &&
+	if (recoveryTargetAction == RECOVERY_TARGET_ACTION_PAUSE &&
+		recoveryTargetActionSet &&
 		standbyState == STANDBY_DISABLED)
-			actionAtRecoveryTarget = RECOVERY_TARGET_ACTION_SHUTDOWN;
+			recoveryTargetAction = RECOVERY_TARGET_ACTION_SHUTDOWN;
 
 	/* Enable fetching from archive recovery area */
 	ArchiveRecoveryRequested = true;
@@ -6495,7 +6495,7 @@ StartupXLOG(void)
 				 * this, Resource Managers may choose to do permanent corrective
 				 * actions at end of recovery.
 				 */
-				switch (actionAtRecoveryTarget)
+				switch (recoveryTargetAction)
 				{
 					case RECOVERY_TARGET_ACTION_SHUTDOWN:
 							/*

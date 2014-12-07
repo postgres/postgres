@@ -94,12 +94,14 @@
 #recovery_target_timeline = 'latest'
 #
 #
-# If pause_at_recovery_target is enabled, recovery will pause when
-# the recovery target is reached. The pause state will continue until
+# If recovery_target_action = 'pause', recovery will pause when the
+# recovery target is reached. The pause state will continue until
 # pg_xlog_replay_resume() is called. This setting has no effect if
-# hot standby is not enabled, or if no recovery target is set.
+# no recovery target is set. If hot_standby is not enabled then the
+# server will shutdown instead, though you may request this in
+# any case by specifying 'shutdown'.
 #
-#pause_at_recovery_target = true
+#recovery_target_action = 'pause'
 #
 #---------------------------------------------------------------------------
 # STANDBY SERVER PARAMETERS
