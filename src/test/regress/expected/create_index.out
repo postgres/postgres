@@ -2831,3 +2831,34 @@ explain (costs off)
    Index Cond: ((thousand = 1) AND (tenthous = 1001))
 (2 rows)
 
+--
+-- REINDEX SCHEMA
+--
+REINDEX SCHEMA schema_to_reindex; -- failure, schema does not exist
+ERROR:  schema "schema_to_reindex" does not exist
+CREATE SCHEMA schema_to_reindex;
+CREATE TABLE schema_to_reindex.table1(col1 SERIAL PRIMARY KEY);
+CREATE TABLE schema_to_reindex.table2(col1 SERIAL PRIMARY KEY, col2 VARCHAR(100) NOT NULL);
+CREATE INDEX ON schema_to_reindex.table2(col2);
+REINDEX SCHEMA schema_to_reindex;
+NOTICE:  table "schema_to_reindex.table1" was reindexed
+NOTICE:  table "schema_to_reindex.table2" was reindexed
+BEGIN;
+REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
+ERROR:  REINDEX SCHEMA cannot run inside a transaction block
+END;
+-- Failure for unauthorized user
+CREATE ROLE reindexuser login;
+SET SESSION ROLE user_reindex;
+ERROR:  role "user_reindex" does not exist
+REINDEX SCHEMA schema_to_reindex;
+NOTICE:  table "schema_to_reindex.table1" was reindexed
+NOTICE:  table "schema_to_reindex.table2" was reindexed
+-- Clean up
+RESET ROLE;
+DROP ROLE user_reindex;
+ERROR:  role "user_reindex" does not exist
+DROP SCHEMA schema_to_reindex CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table schema_to_reindex.table1
+drop cascades to table schema_to_reindex.table2

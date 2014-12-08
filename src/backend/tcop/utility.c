@@ -749,14 +749,15 @@ standard_ProcessUtility(Node *parsetree,
 				PreventCommandDuringRecovery("REINDEX");
 				switch (stmt->kind)
 				{
-					case OBJECT_INDEX:
+					case REINDEX_OBJECT_INDEX:
 						ReindexIndex(stmt->relation);
 						break;
-					case OBJECT_TABLE:
-					case OBJECT_MATVIEW:
+					case REINDEX_OBJECT_TABLE:
 						ReindexTable(stmt->relation);
 						break;
-					case OBJECT_DATABASE:
+					case REINDEX_OBJECT_SCHEMA:
+					case REINDEX_OBJECT_SYSTEM:
+					case REINDEX_OBJECT_DATABASE:
 
 						/*
 						 * This cannot run inside a user transaction block; if
@@ -765,9 +766,9 @@ standard_ProcessUtility(Node *parsetree,
 						 * intended effect!
 						 */
 						PreventTransactionChain(isTopLevel,
-												"REINDEX DATABASE");
-						ReindexDatabase(stmt->name,
-										stmt->do_system, stmt->do_user);
+												(stmt->kind == REINDEX_OBJECT_SCHEMA) ?
+												"REINDEX SCHEMA" : "REINDEX DATABASE");
+						ReindexObject(stmt->name, stmt->kind);
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",

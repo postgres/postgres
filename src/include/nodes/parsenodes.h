@@ -2721,10 +2721,19 @@ typedef struct ConstraintsSetStmt
  *		REINDEX Statement
  * ----------------------
  */
+typedef enum ReindexObjectType
+{
+	REINDEX_OBJECT_INDEX,	/* index */
+	REINDEX_OBJECT_TABLE,	/* table or materialized view */
+	REINDEX_OBJECT_SCHEMA,	/* schema */
+	REINDEX_OBJECT_SYSTEM,	/* system catalogs */
+	REINDEX_OBJECT_DATABASE	/* database */
+} ReindexObjectType;
+
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	ObjectType	kind;			/* OBJECT_INDEX, OBJECT_TABLE, etc. */
+	ReindexObjectType	kind;	/* REINDEX_OBJECT_INDEX, REINDEX_OBJECT_TABLE, etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	bool		do_system;		/* include system tables in database case */

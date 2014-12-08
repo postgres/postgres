@@ -964,3 +964,26 @@ RESET enable_indexscan;
 
 explain (costs off)
   select * from tenk1 where (thousand, tenthous) in ((1,1001), (null,null));
+
+--
+-- REINDEX SCHEMA
+--
+REINDEX SCHEMA schema_to_reindex; -- failure, schema does not exist
+CREATE SCHEMA schema_to_reindex;
+CREATE TABLE schema_to_reindex.table1(col1 SERIAL PRIMARY KEY);
+CREATE TABLE schema_to_reindex.table2(col1 SERIAL PRIMARY KEY, col2 VARCHAR(100) NOT NULL);
+CREATE INDEX ON schema_to_reindex.table2(col2);
+REINDEX SCHEMA schema_to_reindex;
+BEGIN;
+REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
+END;
+
+-- Failure for unauthorized user
+CREATE ROLE reindexuser login;
+SET SESSION ROLE user_reindex;
+REINDEX SCHEMA schema_to_reindex;
+
+-- Clean up
+RESET ROLE;
+DROP ROLE user_reindex;
+DROP SCHEMA schema_to_reindex CASCADE;

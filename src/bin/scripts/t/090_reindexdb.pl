@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 16;
+use Test::More tests => 17;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
@@ -27,7 +27,10 @@ issues_sql_like(
 	[ 'reindexdb', 'postgres', '-i', 'test1x' ],
 	qr/statement: REINDEX INDEX test1x;/,
 	'reindex specific index');
-
+issues_sql_like(
+	[ 'reindexdb', 'postgres', '-S', 'pg_catalog' ],
+	qr/statement: REINDEX SCHEMA pg_catalog;/,
+	'reindex specific schema');
 issues_sql_like(
 	[ 'reindexdb', 'postgres', '-s' ],
 	qr/statement: REINDEX SYSTEM postgres;/,

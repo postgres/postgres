@@ -27,6 +27,16 @@ PostgreSQL documentation
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
+      <arg choice="plain"><option>--schema</option></arg>
+      <arg choice="plain"><option>-S</option></arg>
+     </group>
+     <replaceable>table</replaceable>
+    </arg>
+   </arg>
+
+   <arg choice="plain" rep="repeat">
+    <arg choice="opt">
+     <group choice="plain">
       <arg choice="plain"><option>--table</option></arg>
       <arg choice="plain"><option>-t</option></arg>
      </group>
@@ -157,6 +167,18 @@ PostgreSQL documentation
       <listitem>
        <para>
         Reindex database's system catalogs.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S <replaceable class="parameter">schema</replaceable></></term>
+      <term><option>--schema=<replaceable class="parameter">schema</replaceable></></term>
+      <listitem>
+       <para>
+        Reindex <replaceable class="parameter">schema</replaceable> only.
+        Multiple schemas can be reindexed by writing multiple
+        <option>-S</> switches.
        </para>
       </listitem>
      </varlistentry>
