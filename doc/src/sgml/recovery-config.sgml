@@ -289,9 +289,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        Alias for action_at_recovery_target, <literal>true</> is same as
-        action_at_recovery_target = <literal>pause</> and <literal>false</>
-        is same as action_at_recovery_target = <literal>promote</>.
+        Alias for recovery_target_action, <literal>true</> is same as
+        recovery_target_action = <literal>pause</> and <literal>false</>
+        is same as recovery_target_action = <literal>promote</>.
        </para>
        <para>
         This setting has no effect if <xref linkend="guc-hot-standby"> is not
@@ -301,10 +301,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      </varlistentry>
 
      <varlistentry id="action-at-recovery-target"
-                   xreflabel="action_at_recovery_target">
-      <term><varname>action_at_recovery_target</varname> (<type>enum</type>)
+                   xreflabel="recovery_target_action">
+      <term><varname>recovery_target_action</varname> (<type>enum</type>)
       <indexterm>
-        <primary><varname>action_at_recovery_target</> recovery parameter</primary>
+        <primary><varname>recovery_target_action</> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -336,7 +336,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </para>
        <para>
         Note that because <filename>recovery.conf</> will not be renamed when
-        <varname>action_at_recovery_target</> is set to <literal>shutdown</>,
+        <varname>recovery_target_action</> is set to <literal>shutdown</>,
         any subsequent start will end with immediate shutdown unless the
         configuration is changed or the <filename>recovery.conf</> is removed
         manually.
