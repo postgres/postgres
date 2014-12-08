@@ -31,8 +31,15 @@
 #include <sys/time.h>
 
 
-/* FILETIME of Jan 1 1970 00:00:00. */
+/* FILETIME of Jan 1 1970 00:00:00, the PostgreSQL epoch */
 static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
+
+/*
+ * FILETIME represents the number of 100-nanosecond intervals since
+ * January 1, 1601 (UTC).
+ */
+#define FILETIME_UNITS_PER_SEC	10000000L
+#define FILETIME_UNITS_PER_USEC	10
 
 /*
  * timezone information is stored outside the kernel so tzp isn't used anymore.
@@ -44,16 +51,15 @@ int
 gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
 	FILETIME	file_time;
-	SYSTEMTIME	system_time;
 	ULARGE_INTEGER ularge;
 
-	GetSystemTime(&system_time);
-	SystemTimeToFileTime(&system_time, &file_time);
+	GetSystemTimeAsFileTime(&file_time);
 	ularge.LowPart = file_time.dwLowDateTime;
 	ularge.HighPart = file_time.dwHighDateTime;
 
-	tp->tv_sec = (long) ((ularge.QuadPart - epoch) / 10000000L);
-	tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+	tp->tv_sec = (long) ((ularge.QuadPart - epoch) / FILETIME_UNITS_PER_SEC);
+	tp->tv_usec = (long) (((ularge.QuadPart - epoch) % FILETIME_UNITS_PER_SEC)
+		/ FILETIME_UNITS_PER_USEC);
 
 	return 0;
 }
