@@ -2841,8 +2841,6 @@ CREATE TABLE schema_to_reindex.table1(col1 SERIAL PRIMARY KEY);
 CREATE TABLE schema_to_reindex.table2(col1 SERIAL PRIMARY KEY, col2 VARCHAR(100) NOT NULL);
 CREATE INDEX ON schema_to_reindex.table2(col2);
 REINDEX SCHEMA schema_to_reindex;
-NOTICE:  table "schema_to_reindex.table1" was reindexed
-NOTICE:  table "schema_to_reindex.table2" was reindexed
 BEGIN;
 REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
 ERROR:  REINDEX SCHEMA cannot run inside a transaction block
@@ -2852,8 +2850,6 @@ CREATE ROLE reindexuser login;
 SET SESSION ROLE user_reindex;
 ERROR:  role "user_reindex" does not exist
 REINDEX SCHEMA schema_to_reindex;
-NOTICE:  table "schema_to_reindex.table1" was reindexed
-NOTICE:  table "schema_to_reindex.table2" was reindexed
 -- Clean up
 RESET ROLE;
 DROP ROLE user_reindex;

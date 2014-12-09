@@ -1936,7 +1936,7 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 		if (reindex_relation(relid,
 							 REINDEX_REL_PROCESS_TOAST |
 							 REINDEX_REL_CHECK_CONSTRAINTS))
-			ereport(NOTICE,
+			ereport(DEBUG1,
 					(errmsg("table \"%s.%s\" was reindexed",
 							get_namespace_name(get_rel_namespace(relid)),
 							get_rel_name(relid))));
