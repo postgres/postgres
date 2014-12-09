@@ -1,0 +1,83 @@
+src/test/ssl/README
+
+SSL regression tests
+====================
+
+This directory contains a test suite for SSL support. It tests both
+client-side functionality, i.e. verifying server certificates, and
+server-side functionality, i.e. certificate authorization.
+
+Running the tests
+=================
+
+    make check
+
+NOTE: This creates a temporary installation, and sets it up to listen for TCP
+connections on localhost. Any user on the same host is allowed to log in to
+the test installation while the tests are running. Do not run this suite
+on a multi-user system where you don't trust all local users!
+
+Certificates
+============
+
+The test suite needs a set of public/private key pairs and certificates to
+run:
+
+root_ca
+	root CA, use to sign the server and client CA certificates.
+
+server_ca
+	CA used to sign server certificates.
+
+client_ca
+	CA used to sign client certificates.
+
+server-cn-only
+server-cn-and-alt-names
+server-single-alt-name
+server-multiple-alt-names
+server-no-names
+	server certificates, with small variations in the hostnames present
+        in the certificate. Signed by server_ca.
+
+server-ss
+	same as server-cn-only, but self-signed.
+
+client
+	a client certificate, for user "ssltestuser". Signed by client_ca.
+
+client-revoked
+	like "client", but marked as revoked in the client CA's CRL.
+
+In addition, there are a few files that combine various certificates together
+in the same file:
+
+both-cas-1
+	Contains root_ca.crt, client_ca.crt and server_ca.crt, in that order.
+
+both-cas-2
+	Contains root_ca.crt, server_ca.crt and client_ca.crt, in that order.
+
+root+server_ca
+	Contains root_crt and server_ca.crt. For use as client's "sslrootcert"
+	option.
+
+root+client_ca
+	Contains root_crt and client_ca.crt. For use as server's "ssl_ca_file".
+
+There are also CRLs for each of the CAs: root.crl, server.crl and client.crl.
+
+For convenience, all of these keypairs and certificates are included in the
+ssl/ subdirectory. The Makefile also contains a rule, "make sslfiles", to
+recreate them if you need to make changes.
+
+TODO
+====
+
+* Allow the client-side of the tests to be run on different host easily.
+  Currently, you have to manually set up the certificates for the right
+  hostname, and modify the test file to skip setting up the server. And you
+  have to modify the server to accept connections from the client host.
+
+* Test having multiple server certificates, so that the private key chooses
+  the certificate to present to clients. (And the same in the client-side.)
