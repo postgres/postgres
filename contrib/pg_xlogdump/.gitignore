@@ -2,6 +2,7 @@
 # Source files copied from src/backend/access/
 /brindesc.c
 /clogdesc.c
+/committsdesc.c
 /dbasedesc.c
 /gindesc.c
 /gistdesc.c
