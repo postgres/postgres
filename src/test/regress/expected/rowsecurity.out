@@ -2212,3 +2212,6 @@ RESET client_min_messages;
 DROP USER rls_regress_user0;
 DROP USER rls_regress_user1;
 DROP USER rls_regress_user2;
+DROP USER rls_regress_exempt_user;
+DROP ROLE rls_regress_group1;
+DROP ROLE rls_regress_group2;
