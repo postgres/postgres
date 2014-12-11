@@ -2846,14 +2846,13 @@ REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
 ERROR:  REINDEX SCHEMA cannot run inside a transaction block
 END;
 -- Failure for unauthorized user
-CREATE ROLE reindexuser login;
-SET SESSION ROLE user_reindex;
-ERROR:  role "user_reindex" does not exist
+CREATE ROLE regression_reindexuser NOLOGIN;
+SET SESSION ROLE regression_reindexuser;
 REINDEX SCHEMA schema_to_reindex;
+ERROR:  must be owner of schema schema_to_reindex
 -- Clean up
 RESET ROLE;
-DROP ROLE user_reindex;
-ERROR:  role "user_reindex" does not exist
+DROP ROLE regression_reindexuser;
 DROP SCHEMA schema_to_reindex CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table schema_to_reindex.table1

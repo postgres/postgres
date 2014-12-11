@@ -979,11 +979,11 @@ REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
 END;
 
 -- Failure for unauthorized user
-CREATE ROLE reindexuser login;
-SET SESSION ROLE user_reindex;
+CREATE ROLE regression_reindexuser NOLOGIN;
+SET SESSION ROLE regression_reindexuser;
 REINDEX SCHEMA schema_to_reindex;
 
 -- Clean up
 RESET ROLE;
-DROP ROLE user_reindex;
+DROP ROLE regression_reindexuser;
 DROP SCHEMA schema_to_reindex CASCADE;
