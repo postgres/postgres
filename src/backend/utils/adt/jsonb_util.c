@@ -1377,7 +1377,7 @@ convertToJsonb(JsonbValue *val)
 	initStringInfo(&buffer);
 
 	/* Make room for the varlena header */
-	reserveFromBuffer(&buffer, sizeof(VARHDRSZ));
+	reserveFromBuffer(&buffer, VARHDRSZ);
 
 	convertJsonbValue(&buffer, &jentry, val, 0);
 
