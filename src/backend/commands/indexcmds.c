@@ -1867,16 +1867,16 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 	 */
 	if (objectKind == REINDEX_OBJECT_SCHEMA)
 	{
-		scan_keys = palloc(sizeof(ScanKeyData) * 2);
+		/*
+		 * Return all objects in schema. We filter out
+		 * inappropriate objects as we walk through results.
+		 */
+		num_keys = 1;
+		scan_keys = palloc(sizeof(ScanKeyData));
 		ScanKeyInit(&scan_keys[0],
 					Anum_pg_class_relnamespace,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objectOid));
-		ScanKeyInit(&scan_keys[1],
-					Anum_pg_class_relkind,
-					BTEqualStrategyNumber, F_CHAREQ,
-					'r');
-		num_keys = 2;
 	}
 	else
 		num_keys = 0;
@@ -1894,6 +1894,10 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 		Form_pg_class classtuple = (Form_pg_class) GETSTRUCT(tuple);
 		Oid			relid = HeapTupleGetOid(tuple);
 
+		/*
+		 * Only regular tables and matviews can have indexes,
+		 * so filter out any other kind of object.
+		 */
 		if (classtuple->relkind != RELKIND_RELATION &&
 			classtuple->relkind != RELKIND_MATVIEW)
 			continue;
