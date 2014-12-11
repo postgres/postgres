@@ -29,4 +29,4 @@ issues_sql_like(
 issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
 	qr/statement: ANALYZE;/,
-	'vacuumdb -z');
+	'vacuumdb -Z');
