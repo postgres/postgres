@@ -2155,7 +2155,7 @@ toast_open_indexes(Relation toastrel,
 	 * wrong if there is nothing.
 	 */
 	if (!found)
-		elog(ERROR, "no valid index found for toast relation with Oid %d",
+		elog(ERROR, "no valid index found for toast relation with Oid %u",
 			 RelationGetRelid(toastrel));
 
 	return res;

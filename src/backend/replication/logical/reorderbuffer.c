@@ -2458,7 +2458,7 @@ ReorderBufferToastAppendChunk(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	Pointer		chunk;
 	TupleDesc	desc = RelationGetDescr(relation);
 	Oid			chunk_id;
-	Oid			chunk_seq;
+	int32		chunk_seq;
 
 	if (txn->toast_hash == NULL)
 		ReorderBufferToastInitHash(rb, txn);
