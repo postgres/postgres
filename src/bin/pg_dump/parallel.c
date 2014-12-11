@@ -816,7 +816,7 @@ lockTableNoWait(ArchiveHandle *AH, TocEntry *te)
 					  "       pg_class.relname "
 					  "  FROM pg_class "
 					"  JOIN pg_namespace on pg_namespace.oid = relnamespace "
-					  " WHERE pg_class.oid = %d", te->catalogId.oid);
+					  " WHERE pg_class.oid = %u", te->catalogId.oid);
 
 	res = PQexec(AH->connection, query->data);
 
