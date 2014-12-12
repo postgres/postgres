@@ -2859,29 +2859,30 @@ SELECT oid, 'pg_toast_TABLE_index', relfilenode, relkind, reltoastrelid
 FROM pg_class where oid in
 	(select indexrelid from pg_index where indrelid in
 		(select reltoastrelid from reindex_before where reltoastrelid > 0));
- REINDEX SCHEMA schema_to_reindex;
+REINDEX SCHEMA schema_to_reindex;
 CREATE TABLE reindex_after AS SELECT oid, relname, relfilenode, relkind
 	FROM pg_class
 	where relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'schema_to_reindex');
-SELECT	b.relname,
-		b.relkind,
-		CASE WHEN a.relfilenode = b.relfilenode THEN 'relfilenode is unchanged'
-		ELSE 'relfilenode has changed' END
-FROM reindex_before b JOIN pg_class a ON b.oid = a.oid;
+SELECT  b.relname,
+        b.relkind,
+        CASE WHEN a.relfilenode = b.relfilenode THEN 'relfilenode is unchanged'
+        ELSE 'relfilenode has changed' END
+  FROM reindex_before b JOIN pg_class a ON b.oid = a.oid
+  ORDER BY 1;
        relname        | relkind |           case           
 ----------------------+---------+--------------------------
- table1_col1_seq      | S       | relfilenode is unchanged
- table1               | r       | relfilenode is unchanged
- table1_pkey          | i       | relfilenode has changed
- table2_col1_seq      | S       | relfilenode is unchanged
- table2               | r       | relfilenode is unchanged
- table2_pkey          | i       | relfilenode has changed
- table2_col2_idx      | i       | relfilenode has changed
  matview              | m       | relfilenode is unchanged
  matview_col1_idx     | i       | relfilenode has changed
- view                 | v       | relfilenode is unchanged
  pg_toast_TABLE       | t       | relfilenode is unchanged
  pg_toast_TABLE_index | i       | relfilenode has changed
+ table1               | r       | relfilenode is unchanged
+ table1_col1_seq      | S       | relfilenode is unchanged
+ table1_pkey          | i       | relfilenode has changed
+ table2               | r       | relfilenode is unchanged
+ table2_col1_seq      | S       | relfilenode is unchanged
+ table2_col2_idx      | i       | relfilenode has changed
+ table2_pkey          | i       | relfilenode has changed
+ view                 | v       | relfilenode is unchanged
 (12 rows)
 
 REINDEX SCHEMA schema_to_reindex;
@@ -2897,11 +2898,6 @@ ERROR:  must be owner of schema schema_to_reindex
 -- Clean up
 RESET ROLE;
 DROP ROLE regression_reindexuser;
+SET client_min_messages TO 'warning';
 DROP SCHEMA schema_to_reindex CASCADE;
-NOTICE:  drop cascades to 6 other objects
-DETAIL:  drop cascades to table table1
-drop cascades to table table2
-drop cascades to materialized view matview
-drop cascades to view view
-drop cascades to table reindex_before
-drop cascades to table reindex_after
+RESET client_min_messages;

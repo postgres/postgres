@@ -992,15 +992,16 @@ SELECT oid, 'pg_toast_TABLE_index', relfilenode, relkind, reltoastrelid
 FROM pg_class where oid in
 	(select indexrelid from pg_index where indrelid in
 		(select reltoastrelid from reindex_before where reltoastrelid > 0));
- REINDEX SCHEMA schema_to_reindex;
+REINDEX SCHEMA schema_to_reindex;
 CREATE TABLE reindex_after AS SELECT oid, relname, relfilenode, relkind
 	FROM pg_class
 	where relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'schema_to_reindex');
-SELECT	b.relname,
-		b.relkind,
-		CASE WHEN a.relfilenode = b.relfilenode THEN 'relfilenode is unchanged'
-		ELSE 'relfilenode has changed' END
-FROM reindex_before b JOIN pg_class a ON b.oid = a.oid;
+SELECT  b.relname,
+        b.relkind,
+        CASE WHEN a.relfilenode = b.relfilenode THEN 'relfilenode is unchanged'
+        ELSE 'relfilenode has changed' END
+  FROM reindex_before b JOIN pg_class a ON b.oid = a.oid
+  ORDER BY 1;
 REINDEX SCHEMA schema_to_reindex;
 BEGIN;
 REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
@@ -1014,4 +1015,6 @@ REINDEX SCHEMA schema_to_reindex;
 -- Clean up
 RESET ROLE;
 DROP ROLE regression_reindexuser;
+SET client_min_messages TO 'warning';
 DROP SCHEMA schema_to_reindex CASCADE;
+RESET client_min_messages;
