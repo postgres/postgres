@@ -160,7 +160,29 @@ lnext:
 				 */
 				if (!epq_started)
 				{
+					ListCell   *lc2;
+
 					EvalPlanQualBegin(&node->lr_epqstate, estate);
+
+					/*
+					 * Ensure that rels with already-visited rowmarks are told
+					 * not to return tuples during the first EPQ test.  We can
+					 * exit this loop once it reaches the current rowmark;
+					 * rels appearing later in the list will be set up
+					 * correctly by the EvalPlanQualSetTuple call at the top
+					 * of the loop.
+					 */
+					foreach(lc2, node->lr_arowMarks)
+					{
+						ExecAuxRowMark *aerm2 = (ExecAuxRowMark *) lfirst(lc2);
+
+						if (lc2 == lc)
+							break;
+						EvalPlanQualSetTuple(&node->lr_epqstate,
+											 aerm2->rowmark->rti,
+											 NULL);
+					}
+
 					epq_started = true;
 				}
 
