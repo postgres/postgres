@@ -2741,9 +2741,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	Tuplestorestate *tupstore;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
-	int		   *sync_priority;
-	int			priority = 0;
-	int			sync_standby = -1;
+	WalSnd	   *sync_standby;
 	int			i;
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -2772,38 +2770,10 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Get the priorities of sync standbys all in one go, to minimise lock
-	 * acquisitions and to allow us to evaluate who is the current sync
-	 * standby. This code must match the code in SyncRepReleaseWaiters().
+	 * Get the currently active synchronous standby.
 	 */
-	sync_priority = palloc(sizeof(int) * max_wal_senders);
 	LWLockAcquire(SyncRepLock, LW_SHARED);
-	for (i = 0; i < max_wal_senders; i++)
-	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
-
-		if (walsnd->pid != 0)
-		{
-			/*
-			 * Treat a standby such as a pg_basebackup background process
-			 * which always returns an invalid flush location, as an
-			 * asynchronous standby.
-			 */
-			sync_priority[i] = XLogRecPtrIsInvalid(walsnd->flush) ?
-				0 : walsnd->sync_standby_priority;
-
-			if (walsnd->state == WALSNDSTATE_STREAMING &&
-				walsnd->sync_standby_priority > 0 &&
-				(priority == 0 ||
-				 priority > walsnd->sync_standby_priority) &&
-				!XLogRecPtrIsInvalid(walsnd->flush))
-			{
-				priority = walsnd->sync_standby_priority;
-				sync_standby = i;
-			}
-		}
-	}
+	sync_standby = SyncRepGetSynchronousStandby();
 	LWLockRelease(SyncRepLock);
 
 	for (i = 0; i < max_wal_senders; i++)
@@ -2814,6 +2784,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		XLogRecPtr	write;
 		XLogRecPtr	flush;
 		XLogRecPtr	apply;
+		int			priority;
 		WalSndState state;
 		Datum		values[PG_STAT_GET_WAL_SENDERS_COLS];
 		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS];
@@ -2827,6 +2798,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		write = walsnd->write;
 		flush = walsnd->flush;
 		apply = walsnd->apply;
+		priority = walsnd->sync_standby_priority;
 		SpinLockRelease(&walsnd->mutex);
 
 		memset(nulls, 0, sizeof(nulls));
@@ -2857,15 +2829,22 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 				nulls[5] = true;
 			values[5] = LSNGetDatum(apply);
 
-			values[6] = Int32GetDatum(sync_priority[i]);
+			/*
+			 * Treat a standby such as a pg_basebackup background process
+			 * which always returns an invalid flush location, as an
+			 * asynchronous standby.
+			 */
+			priority = XLogRecPtrIsInvalid(walsnd->flush) ? 0 : priority;
+
+			values[6] = Int32GetDatum(priority);
 
 			/*
 			 * More easily understood version of standby state. This is purely
 			 * informational, not different from priority.
 			 */
-			if (sync_priority[i] == 0)
+			if (priority == 0)
 				values[7] = CStringGetTextDatum("async");
-			else if (i == sync_standby)
+			else if (walsnd == sync_standby)
 				values[7] = CStringGetTextDatum("sync");
 			else
 				values[7] = CStringGetTextDatum("potential");
@@ -2873,7 +2852,6 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
-	pfree(sync_priority);
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
