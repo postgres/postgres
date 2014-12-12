@@ -287,6 +287,10 @@ DATA(insert ( 3545	n 0 bytea_string_agg_transfn	bytea_string_agg_finalfn	-				-	
 DATA(insert ( 3175	n 0 json_agg_transfn	json_agg_finalfn			-				-				-				f f 0	2281	0	0		0	_null_ _null_ ));
 DATA(insert ( 3197	n 0 json_object_agg_transfn json_object_agg_finalfn -				-				-				f f 0	2281	0	0		0	_null_ _null_ ));
 
+/* jsonb */
+DATA(insert ( 3267	n 0 jsonb_agg_transfn	jsonb_agg_finalfn			-				-				-				f f 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3270	n 0 jsonb_object_agg_transfn jsonb_object_agg_finalfn -				-				-				f f 0	2281	0	0		0	_null_ _null_ ));
+
 /* ordered-set and hypothetical-set aggregates */
 DATA(insert ( 3972	o 1 ordered_set_transition			percentile_disc_final					-		-		-		t f 0	2281	0	0		0	_null_ _null_ ));
 DATA(insert ( 3974	o 1 ordered_set_transition			percentile_cont_float8_final			-		-		-		f f 0	2281	0	0		0	_null_ _null_ ));

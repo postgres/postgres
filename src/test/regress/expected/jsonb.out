@@ -301,6 +301,65 @@ SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
  [{"a": 1},{"b": [2, 3]}]
 (1 row)
 
+-- to_jsonb, timestamps
+select to_jsonb(timestamp '2014-05-28 12:22:35.614298');
+           to_jsonb           
+------------------------------
+ "2014-05-28T12:22:35.614298"
+(1 row)
+
+BEGIN;
+SET LOCAL TIME ZONE 10.5;
+select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
+              to_jsonb              
+------------------------------------
+ "2014-05-29T02:52:35.614298+10:30"
+(1 row)
+
+SET LOCAL TIME ZONE -8;
+select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
+              to_jsonb              
+------------------------------------
+ "2014-05-28T08:22:35.614298-08:00"
+(1 row)
+
+COMMIT;
+-- unicode escape - backslash is not escaped
+select to_jsonb(text '\uabcd');
+ to_jsonb 
+----------
+ "\uabcd"
+(1 row)
+
+-- any other backslash is escaped
+select to_jsonb(text '\abcd');
+ to_jsonb 
+----------
+ "\\abcd"
+(1 row)
+
+--jsonb_agg
+CREATE TEMP TABLE rows AS
+SELECT x, 'txt' || x as y
+FROM generate_series(1,3) AS x;
+SELECT jsonb_agg(q)
+  FROM ( SELECT $$a$$ || x AS b, y AS c,
+               ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+         FROM generate_series(1,2) x,
+              generate_series(4,5) y) q;
+                                                                                                                                                                    jsonb_agg                                                                                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ [{"b": "a1", "c": 4, "z": [{"f1": 1, "f2": [1, 2, 3]}, {"f1": 4, "f2": [4, 5, 6]}]}, {"b": "a1", "c": 5, "z": [{"f1": 1, "f2": [1, 2, 3]}, {"f1": 5, "f2": [4, 5, 6]}]}, {"b": "a2", "c": 4, "z": [{"f1": 2, "f2": [1, 2, 3]}, {"f1": 4, "f2": [4, 5, 6]}]}, {"b": "a2", "c": 5, "z": [{"f1": 2, "f2": [1, 2, 3]}, {"f1": 5, "f2": [4, 5, 6]}]}]
+(1 row)
+
+SELECT jsonb_agg(q)
+  FROM rows q;
+                               jsonb_agg                               
+-----------------------------------------------------------------------
+ [{"x": 1, "y": "txt1"}, {"x": 2, "y": "txt2"}, {"x": 3, "y": "txt3"}]
+(1 row)
+
 -- jsonb extraction functions
 CREATE TEMP TABLE test_jsonb (
        json_type text,
@@ -1254,6 +1313,120 @@ SELECT jsonb_typeof('"1.0"') AS string;
  string 
 --------
  string
+(1 row)
+
+-- jsonb_build_array, jsonb_build_object, jsonb_object_agg
+SELECT jsonb_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+                            jsonb_build_array                            
+-------------------------------------------------------------------------
+ ["a", 1, "b", 1.2, "c", true, "d", null, "e", {"x": 3, "y": [1, 2, 3]}]
+(1 row)
+
+SELECT jsonb_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+                           jsonb_build_object                            
+-------------------------------------------------------------------------
+ {"a": 1, "b": 1.2, "c": true, "d": null, "e": {"x": 3, "y": [1, 2, 3]}}
+(1 row)
+
+SELECT jsonb_build_object(
+       'a', jsonb_build_object('b',false,'c',99),
+       'd', jsonb_build_object('e',array[9,8,7]::int[],
+           'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
+                                       jsonb_build_object                                       
+------------------------------------------------------------------------------------------------
+ {"a": {"b": false, "c": 99}, "d": {"e": [9, 8, 7], "f": {"name": "pg_class", "relkind": "r"}}}
+(1 row)
+
+-- empty objects/arrays
+SELECT jsonb_build_array();
+ jsonb_build_array 
+-------------------
+ []
+(1 row)
+
+SELECT jsonb_build_object();
+ jsonb_build_object 
+--------------------
+ {}
+(1 row)
+
+-- make sure keys are quoted
+SELECT jsonb_build_object(1,2);
+ jsonb_build_object 
+--------------------
+ {"1": 2}
+(1 row)
+
+-- keys must be scalar and not null
+SELECT jsonb_build_object(null,2);
+ERROR:  arg 1: key cannot be null
+SELECT jsonb_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
+ERROR:  key value must be scalar, not array, composite or json
+SELECT jsonb_build_object(json '{"a":1,"b":2}', 3);
+ERROR:  key value must be scalar, not array, composite or json
+SELECT jsonb_build_object('{1,2,3}'::int[], 3);
+ERROR:  key value must be scalar, not array, composite or json
+CREATE TEMP TABLE foo (serial_num int, name text, type text);
+INSERT INTO foo VALUES (847001,'t15','GE1043');
+INSERT INTO foo VALUES (847002,'t16','GE1043');
+INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
+SELECT jsonb_build_object('turbines',jsonb_object_agg(serial_num,jsonb_build_object('name',name,'type',type)))
+FROM foo;
+                                                                     jsonb_build_object                                                                      
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"turbines": {"847001": {"name": "t15", "type": "GE1043"}, "847002": {"name": "t16", "type": "GE1043"}, "847003": {"name": "sub-alpha", "type": "GESS90"}}}
+(1 row)
+
+-- jsonb_object
+-- one dimension
+SELECT jsonb_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
+                   jsonb_object                    
+---------------------------------------------------
+ {"3": null, "a": "1", "b": "2", "d e f": "a b c"}
+(1 row)
+
+-- same but with two dimensions
+SELECT jsonb_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+                   jsonb_object                    
+---------------------------------------------------
+ {"3": null, "a": "1", "b": "2", "d e f": "a b c"}
+(1 row)
+
+-- odd number error
+SELECT jsonb_object('{a,b,c}');
+ERROR:  array must have even number of elements
+-- one column error
+SELECT jsonb_object('{{a},{b}}');
+ERROR:  array must have two columns
+-- too many columns error
+SELECT jsonb_object('{{a,b,c},{b,c,d}}');
+ERROR:  array must have two columns
+-- too many dimensions error
+SELECT jsonb_object('{{{a,b},{c,d}},{{b,c},{d,e}}}');
+ERROR:  wrong number of array subscripts
+--two argument form of jsonb_object
+select jsonb_object('{a,b,c,"d e f"}','{1,2,3,"a b c"}');
+                   jsonb_object                   
+--------------------------------------------------
+ {"a": "1", "b": "2", "c": "3", "d e f": "a b c"}
+(1 row)
+
+-- too many dimensions
+SELECT jsonb_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}', '{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+ERROR:  wrong number of array subscripts
+-- mismatched dimensions
+select jsonb_object('{a,b,c,"d e f",g}','{1,2,3,"a b c"}');
+ERROR:  mismatched array dimensions
+select jsonb_object('{a,b,c,"d e f"}','{1,2,3,"a b c",g}');
+ERROR:  mismatched array dimensions
+-- null key error
+select jsonb_object('{a,b,NULL,"d e f"}','{1,2,3,"a b c"}');
+ERROR:  null value not allowed for object key
+-- empty key is allowed
+select jsonb_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
+                  jsonb_object                   
+-------------------------------------------------
+ {"": "3", "a": "1", "b": "2", "d e f": "a b c"}
 (1 row)
 
 -- extract_path, extract_path_as_text

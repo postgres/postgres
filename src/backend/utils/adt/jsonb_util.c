@@ -1427,7 +1427,7 @@ convertJsonbValue(StringInfo buffer, JEntry *header, JsonbValue *val, int level)
 	else if (val->type == jbvObject)
 		convertJsonbObject(buffer, header, val, level);
 	else
-		elog(ERROR, "unknown type of jsonb container");
+		elog(ERROR, "unknown type of jsonb container to convert");
 }
 
 static void

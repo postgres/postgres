@@ -10245,9 +10245,10 @@ table2-mapping
 
   <para>
    <xref linkend="functions-json-creation-table"> shows the functions that are
-   available for creating <type>json</type> values.
-   (Currently, there are no equivalent functions for <type>jsonb</>, but you
-   can cast the result of one of these functions to <type>jsonb</>.)
+   available for creating <type>json</type> and <type>jsonb</type> values.
+   (There are no equivalent functions for <type>jsonb</>, of the <literal>row_to_json</>
+   and <literal>array_to_json</> functions. However, the <literal>to_jsonb</>
+   function supplies much the same functionality as these functions would.)
   </para>
 
   <indexterm>
@@ -10268,6 +10269,18 @@ table2-mapping
   <indexterm>
    <primary>json_object</primary>
   </indexterm>
+  <indexterm>
+   <primary>to_jsonb</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_build_array</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_build_object</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_object</primary>
+  </indexterm>
 
   <table id="functions-json-creation-table">
     <title>JSON Creation Functions</title>
@@ -10282,17 +10295,18 @@ table2-mapping
      </thead>
      <tbody>
       <row>
+       <entry><para><literal>to_json(anyelement)</literal>
+          </para><para><literal>to_jsonb(anyelement)</literal>
+       </para></entry>
        <entry>
-         <literal>to_json(anyelement)</literal>
-       </entry>
-       <entry>
-         Returns the value as JSON.  Arrays and composites are converted
+         Returns the value as <type>json</> or <type>jsonb</>.
+         Arrays and composites are converted
          (recursively) to arrays and objects; otherwise, if there is a cast
          from the type to <type>json</type>, the cast function will be used to
-         perform the conversion; otherwise, a JSON scalar value is produced.
+         perform the conversion; otherwise, a scalar value is produced.
          For any scalar type other than a number, a Boolean, or a null value,
-         the text representation will be used, properly quoted and escaped
-         so that it is a valid JSON string.
+         the text representation will be used, in such a fashion that it is a 
+         valid <type>json</> or <type>jsonb</> value.
        </entry>
        <entry><literal>to_json('Fred said "Hi."'::text)</literal></entry>
        <entry><literal>"Fred said \"Hi.\""</literal></entry>
@@ -10321,9 +10335,9 @@ table2-mapping
        <entry><literal>{"f1":1,"f2":"foo"}</literal></entry>
       </row>
       <row>
-       <entry>
-         <literal>json_build_array(VARIADIC "any")</literal>
-       </entry>
+       <entry><para><literal>json_build_array(VARIADIC "any")</literal>
+          </para><para><literal>jsonb_build_array(VARIADIC "any")</literal>
+       </para></entry>
        <entry>
          Builds a possibly-heterogeneously-typed JSON array out of a variadic
          argument list.
@@ -10332,9 +10346,9 @@ table2-mapping
        <entry><literal>[1, 2, "3", 4, 5]</literal></entry>
       </row>
       <row>
-       <entry>
-         <literal>json_build_object(VARIADIC "any")</literal>
-       </entry>
+       <entry><para><literal>json_build_object(VARIADIC "any")</literal>
+          </para><para><literal>jsonb_build_object(VARIADIC "any")</literal>
+       </para></entry>
        <entry>
          Builds a JSON object out of a variadic argument list.  By
          convention, the argument list consists of alternating
@@ -10344,9 +10358,9 @@ table2-mapping
        <entry><literal>{"foo": 1, "bar": 2}</literal></entry>
       </row>
       <row>
-       <entry>
-         <literal>json_object(text[])</literal>
-       </entry>
+       <entry><para><literal>json_object(text[])</literal>
+          </para><para><literal>jsonb_object(text[])</literal>
+       </para></entry>
        <entry>
          Builds a JSON object out of a text array.  The array must have either
          exactly one dimension with an even number of members, in which case
@@ -10359,9 +10373,9 @@ table2-mapping
        <entry><literal>{"a": "1", "b": "def", "c": "3.5"}</literal></entry>
       </row>
       <row>
-       <entry>
-         <literal>json_object(keys text[], values text[])</literal>
-       </entry>
+       <entry><para><literal>json_object(keys text[], values text[])</literal>
+          </para><para><literal>json_object(keys text[], values text[])</literal>
+       </para></entry>
        <entry>
          This form of <function>json_object</> takes keys and values pairwise from two separate
          arrays. In all other respects it is identical to the one-argument form.
@@ -10780,7 +10794,8 @@ table2-mapping
     function <function>json_agg</function> which aggregates record
     values as JSON, and the aggregate function
     <function>json_object_agg</function> which aggregates pairs of values
-    into a JSON object.
+    into a JSON object, and their <type>jsonb</type> equivalents,
+    <function>jsonb_agg</> and <function>jsonb_object_agg</>.
   </para>
 
  </sect1>
@@ -12227,6 +12242,22 @@ NULL baz</literallayout>(3 rows)</entry>
      <row>
       <entry>
        <indexterm>
+        <primary>jsonb_agg</primary>
+       </indexterm>
+       <function>jsonb_agg(<replaceable class="parameter">record</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>record</type>
+      </entry>
+      <entry>
+       <type>jsonb</type>
+      </entry>
+      <entry>aggregates records as a JSON array of objects</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
         <primary>json_object_agg</primary>
        </indexterm>
        <function>json_object_agg(<replaceable class="parameter">name</replaceable>, <replaceable class="parameter">value</replaceable>)</function>
@@ -12236,6 +12267,22 @@ NULL baz</literallayout>(3 rows)</entry>
       </entry>
       <entry>
        <type>json</type>
+      </entry>
+      <entry>aggregates name/value pairs as a JSON object</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>jsonb_object_agg</primary>
+       </indexterm>
+       <function>jsonb_object_agg(<replaceable class="parameter">name</replaceable>, <replaceable class="parameter">value</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>("any", "any")</type>
+      </entry>
+      <entry>
+       <type>jsonb</type>
       </entry>
       <entry>aggregates name/value pairs as a JSON object</entry>
      </row>
@@ -12386,8 +12433,8 @@ SELECT count(*) FROM sometable;
 
   <para>
    The aggregate functions <function>array_agg</function>,
-   <function>json_agg</function>,
-   <function>json_object_agg</function>,
+   <function>json_agg</function>, <function>jsonb_agg</function>,
+   <function>json_object_agg</function>, <function>jsonb_object_agg</function>,
    <function>string_agg</function>,
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values

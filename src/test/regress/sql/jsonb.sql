@@ -62,6 +62,41 @@ SELECT '    '::jsonb;			-- ERROR, no value
 -- make sure jsonb is passed through json generators without being escaped
 SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
 
+-- to_jsonb, timestamps
+
+select to_jsonb(timestamp '2014-05-28 12:22:35.614298');
+
+BEGIN;
+SET LOCAL TIME ZONE 10.5;
+select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
+SET LOCAL TIME ZONE -8;
+select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
+COMMIT;
+
+-- unicode escape - backslash is not escaped
+
+select to_jsonb(text '\uabcd');
+
+-- any other backslash is escaped
+
+select to_jsonb(text '\abcd');
+
+--jsonb_agg
+
+CREATE TEMP TABLE rows AS
+SELECT x, 'txt' || x as y
+FROM generate_series(1,3) AS x;
+
+SELECT jsonb_agg(q)
+  FROM ( SELECT $$a$$ || x AS b, y AS c,
+               ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+         FROM generate_series(1,2) x,
+              generate_series(4,5) y) q;
+
+SELECT jsonb_agg(q)
+  FROM rows q;
+
 -- jsonb extraction functions
 CREATE TEMP TABLE test_jsonb (
        json_type text,
@@ -262,6 +297,86 @@ SELECT jsonb_typeof('false') AS boolean;
 SELECT jsonb_typeof('"hello"') AS string;
 SELECT jsonb_typeof('"true"') AS string;
 SELECT jsonb_typeof('"1.0"') AS string;
+
+-- jsonb_build_array, jsonb_build_object, jsonb_object_agg
+
+SELECT jsonb_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+
+SELECT jsonb_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+
+SELECT jsonb_build_object(
+       'a', jsonb_build_object('b',false,'c',99),
+       'd', jsonb_build_object('e',array[9,8,7]::int[],
+           'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
+
+
+-- empty objects/arrays
+SELECT jsonb_build_array();
+
+SELECT jsonb_build_object();
+
+-- make sure keys are quoted
+SELECT jsonb_build_object(1,2);
+
+-- keys must be scalar and not null
+SELECT jsonb_build_object(null,2);
+
+SELECT jsonb_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
+
+SELECT jsonb_build_object(json '{"a":1,"b":2}', 3);
+
+SELECT jsonb_build_object('{1,2,3}'::int[], 3);
+
+CREATE TEMP TABLE foo (serial_num int, name text, type text);
+INSERT INTO foo VALUES (847001,'t15','GE1043');
+INSERT INTO foo VALUES (847002,'t16','GE1043');
+INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
+
+SELECT jsonb_build_object('turbines',jsonb_object_agg(serial_num,jsonb_build_object('name',name,'type',type)))
+FROM foo;
+
+-- jsonb_object
+
+-- one dimension
+SELECT jsonb_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
+
+-- same but with two dimensions
+SELECT jsonb_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+
+-- odd number error
+SELECT jsonb_object('{a,b,c}');
+
+-- one column error
+SELECT jsonb_object('{{a},{b}}');
+
+-- too many columns error
+SELECT jsonb_object('{{a,b,c},{b,c,d}}');
+
+-- too many dimensions error
+SELECT jsonb_object('{{{a,b},{c,d}},{{b,c},{d,e}}}');
+
+--two argument form of jsonb_object
+
+select jsonb_object('{a,b,c,"d e f"}','{1,2,3,"a b c"}');
+
+-- too many dimensions
+SELECT jsonb_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}', '{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+
+-- mismatched dimensions
+
+select jsonb_object('{a,b,c,"d e f",g}','{1,2,3,"a b c"}');
+
+select jsonb_object('{a,b,c,"d e f"}','{1,2,3,"a b c",g}');
+
+-- null key error
+
+select jsonb_object('{a,b,NULL,"d e f"}','{1,2,3,"a b c"}');
+
+-- empty key is allowed
+
+select jsonb_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
+
+
 
 -- extract_path, extract_path_as_text
 SELECT jsonb_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}','f4','f6');
