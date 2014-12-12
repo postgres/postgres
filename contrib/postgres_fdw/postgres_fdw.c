@@ -822,7 +822,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	}
 	else
 	{
-		RowMarkClause *rc = get_parse_rowmark(root->parse, baserel->relid);
+		PlanRowMark *rc = get_plan_rowmark(root->rowMarks, baserel->relid);
 
 		if (rc)
 		{
@@ -835,15 +835,18 @@ postgresGetForeignPlan(PlannerInfo *root,
 			 * complete information about, and (b) it wouldn't work anyway on
 			 * older remote servers.  Likewise, we don't worry about NOWAIT.
 			 */
-			switch (rc->strength)
+			switch (rc->markType)
 			{
-				case LCS_FORKEYSHARE:
-				case LCS_FORSHARE:
+				case ROW_MARK_EXCLUSIVE:
+				case ROW_MARK_NOKEYEXCLUSIVE:
+					appendStringInfoString(&sql, " FOR UPDATE");
+					break;
+				case ROW_MARK_SHARE:
+				case ROW_MARK_KEYSHARE:
 					appendStringInfoString(&sql, " FOR SHARE");
 					break;
-				case LCS_FORNOKEYUPDATE:
-				case LCS_FORUPDATE:
-					appendStringInfoString(&sql, " FOR UPDATE");
+				default:
+					/* nothing needed */
 					break;
 			}
 		}
