@@ -10716,6 +10716,19 @@ table2-mapping
 </programlisting>
        </entry>
       </row>
+      <row>
+       <entry><para><literal>json_strip_nulls(from_json json)</literal>
+         </para><para><literal>jsonb_strip_nulls(from_json jsonb)</literal>
+       </para></entry>
+       <entry><para><type>json</type></para><para><type>jsonb</type></para></entry>
+       <entry>
+         Returns <replaceable>from_json</replaceable>
+         with all object fields that have null values omitted. Other null values
+         are untouched.
+       </entry>
+       <entry><literal>json_strip_nulls('[{"f1":1,"f2":null},2,null,3]')</literal></entry>
+       <entry><literal>[{"f1":1},2,null,3]</literal></entry>
+       </row>
      </tbody>
     </tgroup>
    </table>
@@ -10749,6 +10762,16 @@ table2-mapping
       calling <literal>json_typeof('null'::json)</> will
       return <literal>null</>, calling <literal>json_typeof(NULL::json)</>
       will return a SQL NULL.
+    </para>
+  </note>
+
+  <note>
+    <para>
+      If the argument to <literal>json_strip_nulls</> contains duplicate
+      field names in any object, the result could be semantically somewhat
+      different, depending on the order in which they occur. This is not an
+      issue for <literal>jsonb_strip_nulls</> since jsonb values never have
+      duplicate object field names.
     </para>
   </note>
 

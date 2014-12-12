@@ -105,6 +105,15 @@ static void populate_recordset_object_end(void *state);
 static void populate_recordset_array_start(void *state);
 static void populate_recordset_array_element_start(void *state, bool isnull);
 
+/* semantic action functions for json_strip_nulls */
+static void sn_object_start(void *state);
+static void sn_object_end(void *state);
+static void sn_array_start(void *state);
+static void sn_array_end(void *state);
+static void sn_object_field_start (void *state, char *fname, bool isnull);
+static void sn_array_element_start (void *state, bool isnull);
+static void sn_scalar(void *state, char *token, JsonTokenType tokentype);
+
 /* worker function for populate_recordset and to_recordset */
 static Datum populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 						  bool have_record_arg);
@@ -224,6 +233,13 @@ typedef struct PopulateRecordsetState
 	RecordIOData *my_extra;
 	MemoryContext fn_mcxt;		/* used to stash IO funcs */
 } PopulateRecordsetState;
+
+/* state for json_strip_nulls */
+typedef struct StripnullState{
+	JsonLexContext *lex;
+	StringInfo  strval;
+	bool skip_next_null;
+} StripnullState;
 
 /* Turn a jsonb object into a record */
 static void make_row_from_rec_and_jsonb(Jsonb *element,
@@ -2995,4 +3011,185 @@ findJsonbValueFromContainerLen(JsonbContainer *container, uint32 flags,
 	k.val.string.len = keylen;
 
 	return findJsonbValueFromContainer(container, flags, &k);
+}
+
+/*
+ * Semantic actions for json_strip_nulls.
+ *
+ * Simply repeat the input on the output unless we encounter
+ * a null object field. State for this is set when the field
+ * is started and reset when the scalar action (which must be next)
+ * is called.
+ */
+
+static void
+sn_object_start(void *state)
+{
+	StripnullState *_state = (StripnullState *) state;
+	appendStringInfoCharMacro(_state->strval, '{');
+}
+
+static void
+sn_object_end(void *state)
+{
+	StripnullState *_state = (StripnullState *) state;
+	appendStringInfoCharMacro(_state->strval, '}');
+}
+
+static void
+sn_array_start(void *state)
+{
+	StripnullState *_state = (StripnullState *) state;
+	appendStringInfoCharMacro(_state->strval, '[');
+}
+
+static void
+sn_array_end(void *state)
+{
+	StripnullState *_state = (StripnullState *) state;
+	appendStringInfoCharMacro(_state->strval, ']');
+}
+
+static void
+sn_object_field_start (void *state, char *fname, bool isnull)
+{
+	StripnullState *_state = (StripnullState *) state;
+
+	if (isnull)
+	{
+		/*
+		 * The next thing must be a scalar or isnull couldn't be true,
+		 * so there is no danger of this state being carried down
+		 * into a nested  object or array. The flag will be reset in the
+		 * scalar action.
+		 */
+		_state->skip_next_null = true;
+		return;
+	}
+
+	if (_state->strval->data[_state->strval->len - 1] != '{')
+		appendStringInfoCharMacro(_state->strval, ',');
+
+	/*
+	 * Unfortunately we don't have the quoted and escaped string any more,
+	 * so we have to re-escape it.
+	 */
+	escape_json(_state->strval,fname);
+
+	appendStringInfoCharMacro(_state->strval, ':');
+}
+
+static void
+sn_array_element_start (void *state, bool isnull)
+{
+	StripnullState *_state = (StripnullState *) state;
+
+	if (_state->strval->data[_state->strval->len - 1] != '[')
+		appendStringInfoCharMacro(_state->strval, ',');
+}
+
+static void
+sn_scalar(void *state, char *token, JsonTokenType tokentype)
+{
+	StripnullState *_state = (StripnullState *) state;
+
+	if (_state->skip_next_null)
+	{
+		Assert (tokentype == JSON_TOKEN_NULL);
+		_state->skip_next_null = false;
+		return;
+	}
+
+	if (tokentype == JSON_TOKEN_STRING)
+		escape_json(_state->strval, token);
+	else
+		appendStringInfoString(_state->strval, token);
+}
+
+/*
+ * SQL function json_strip_nulls(json) -> json
+ */
+Datum
+json_strip_nulls(PG_FUNCTION_ARGS)
+{
+	text	   *json = PG_GETARG_TEXT_P(0);
+	StripnullState  *state;
+	JsonLexContext *lex;
+	JsonSemAction *sem;
+
+	lex = makeJsonLexContext(json, true);
+	state = palloc0(sizeof(StripnullState));
+	sem = palloc0(sizeof(JsonSemAction));
+
+	state->strval = makeStringInfo();
+	state->skip_next_null = false;
+	state->lex = lex;
+
+	sem->semstate = (void *) state;
+	sem->object_start = sn_object_start;
+	sem->object_end = sn_object_end;
+	sem->array_start = sn_array_start;
+	sem->array_end = sn_array_end;
+	sem->scalar = sn_scalar;
+	sem->array_element_start = sn_array_element_start;
+	sem->object_field_start = sn_object_field_start;
+
+	pg_parse_json(lex, sem);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->strval->data,
+											  state->strval->len));
+
+}
+
+/*
+ * SQL function jsonb_strip_nulls(jsonb) -> jsonb
+ */
+Datum
+jsonb_strip_nulls(PG_FUNCTION_ARGS)
+{
+	Jsonb * jb = PG_GETARG_JSONB(0);
+	JsonbIterator *it;
+	JsonbParseState *parseState = NULL;
+	JsonbValue *res = NULL;
+	int type;
+	JsonbValue v,k;
+	bool last_was_key = false;
+
+	if (JB_ROOT_IS_SCALAR(jb))
+		PG_RETURN_POINTER(jb);
+
+	it = JsonbIteratorInit(&jb->root);
+
+	while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
+	{
+		Assert( ! (type == WJB_KEY && last_was_key));
+
+		if (type == WJB_KEY)
+		{
+			/* stash the key until we know if it has a null value */
+			k = v;
+			last_was_key = true;
+			continue;
+		}
+
+		if (last_was_key)
+		{
+			/* if the last element was a key this one can't be */
+			last_was_key = false;
+
+			/* skip this field if value is null */
+			if (type == WJB_VALUE && v.type == jbvNull)
+				continue;
+
+			/* otherwise, do a delayed push of the key */
+			res = pushJsonbValue(&parseState, WJB_KEY, &k);
+		}
+
+		if (type == WJB_VALUE || type == WJB_ELEM)
+			res = pushJsonbValue(&parseState, type, &v);
+		else
+			res = pushJsonbValue(&parseState, type, NULL);
+	}
+
+	PG_RETURN_POINTER(JsonbValueToJsonb(res));
 }

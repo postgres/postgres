@@ -1586,3 +1586,53 @@ select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":fa
  2 | {"d":"bar"} | f
 (2 rows)
 
+-- json_strip_nulls
+select json_strip_nulls(null);
+ json_strip_nulls 
+------------------
+ 
+(1 row)
+
+select json_strip_nulls('1');
+ json_strip_nulls 
+------------------
+ 1
+(1 row)
+
+select json_strip_nulls('"a string"');
+ json_strip_nulls 
+------------------
+ "a string"
+(1 row)
+
+select json_strip_nulls('null');
+ json_strip_nulls 
+------------------
+ null
+(1 row)
+
+select json_strip_nulls('[1,2,null,3,4]');
+ json_strip_nulls 
+------------------
+ [1,2,null,3,4]
+(1 row)
+
+select json_strip_nulls('{"a":1,"b":null,"c":[2,null,3],"d":{"e":4,"f":null}}');
+          json_strip_nulls          
+------------------------------------
+ {"a":1,"c":[2,null,3],"d":{"e":4}}
+(1 row)
+
+select json_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
+  json_strip_nulls   
+---------------------
+ [1,{"a":1,"c":2},3]
+(1 row)
+
+-- an empty object is not null and should not be stripped
+select json_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
+ json_strip_nulls 
+------------------
+ {"a":{},"d":{}}
+(1 row)
+

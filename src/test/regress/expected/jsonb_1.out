@@ -2472,3 +2472,53 @@ SELECT '{"n":null,"a":1,"b":[1,2],"c":{"1":2},"d":{"1":[2,3]}}'::jsonb ? 'e';
  f
 (1 row)
 
+-- jsonb_strip_nulls
+select jsonb_strip_nulls(null);
+ jsonb_strip_nulls 
+-------------------
+ 
+(1 row)
+
+select jsonb_strip_nulls('1');
+ jsonb_strip_nulls 
+-------------------
+ 1
+(1 row)
+
+select jsonb_strip_nulls('"a string"');
+ jsonb_strip_nulls 
+-------------------
+ "a string"
+(1 row)
+
+select jsonb_strip_nulls('null');
+ jsonb_strip_nulls 
+-------------------
+ null
+(1 row)
+
+select jsonb_strip_nulls('[1,2,null,3,4]');
+ jsonb_strip_nulls  
+--------------------
+ [1, 2, null, 3, 4]
+(1 row)
+
+select jsonb_strip_nulls('{"a":1,"b":null,"c":[2,null,3],"d":{"e":4,"f":null}}');
+             jsonb_strip_nulls              
+--------------------------------------------
+ {"a": 1, "c": [2, null, 3], "d": {"e": 4}}
+(1 row)
+
+select jsonb_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
+    jsonb_strip_nulls     
+--------------------------
+ [1, {"a": 1, "c": 2}, 3]
+(1 row)
+
+-- an empty object is not null and should not be stripped
+select jsonb_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
+ jsonb_strip_nulls  
+--------------------
+ {"a": {}, "d": {}}
+(1 row)
+
