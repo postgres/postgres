@@ -49,3 +49,26 @@ accountid      balance
 
 checking       600            
 savings        2334           
+
+starting permutation: readp1 writep1 readp2 c1 c2
+step readp1: SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE;
+tableoid       ctid           a              b              c              
+
+c1             (0,1)          0              0              0              
+c1             (0,4)          0              1              0              
+c2             (0,1)          1              0              0              
+c2             (0,4)          1              1              0              
+c3             (0,1)          2              0              0              
+c3             (0,4)          2              1              0              
+step writep1: UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0;
+step readp2: SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; <waiting ...>
+step c1: COMMIT;
+step readp2: <... completed>
+tableoid       ctid           a              b              c              
+
+c1             (0,1)          0              0              0              
+c1             (0,4)          0              1              0              
+c2             (0,1)          1              0              0              
+c3             (0,1)          2              0              0              
+c3             (0,4)          2              1              0              
+step c2: COMMIT;
