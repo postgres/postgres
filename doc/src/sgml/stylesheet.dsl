@@ -29,7 +29,6 @@
 <!-- (applicable to all output formats) -->
 
 (define draft-mode              #f)
-(define website-stylesheet      #f)
 
 (define pgsql-docs-list "pgsql-docs@postgresql.org")
 
@@ -187,6 +186,7 @@
 (define %root-filename%         "index")
 (define %link-mailto-url%       (string-append "mailto:" pgsql-docs-list))
 (define %use-id-as-filename%    #t)
+(define website-stylesheet      #f)
 (define %stylesheet%            (if website-stylesheet "http://www.postgresql.org/media/css/docs.css" "stylesheet.css"))
 (define %graphic-default-extension% "gif")
 (define %body-attr%             '())
