@@ -90,7 +90,7 @@ sub switch_server_cert
   # restart_test_server() because that overrides listen_addresses to only all
   # Unix domain socket connections.
 
-  system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/pgdata", '-w';
-  system_or_bail 'pg_ctl', 'start', '-D', "$tempdir/pgdata", '-w', '-l',
+  system_or_bail 'pg_ctl', 'stop', '-s', '-D', "$tempdir/pgdata", '-w';
+  system_or_bail 'pg_ctl', 'start', '-s', '-D', "$tempdir/pgdata", '-w', '-l',
         "$tempdir/logfile";
 }
