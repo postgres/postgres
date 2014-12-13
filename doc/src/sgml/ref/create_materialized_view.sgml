@@ -53,6 +53,7 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
  <refsect1>
   <title>Parameters</title>
 
+  <variablelist>
    <varlistentry>
     <term><literal>IF NOT EXISTS</></term>
     <listitem>
@@ -65,7 +66,6 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     </listitem>
    </varlistentry>
 
-  <variablelist>
    <varlistentry>
     <term><replaceable>table_name</replaceable></term>
     <listitem>
