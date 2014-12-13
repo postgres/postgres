@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE MATERIALIZED VIEW <replaceable>table_name</replaceable>
+CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
     [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
@@ -52,6 +52,18 @@ CREATE MATERIALIZED VIEW <replaceable>table_name</replaceable>
 
  <refsect1>
   <title>Parameters</title>
+
+   <varlistentry>
+    <term><literal>IF NOT EXISTS</></term>
+    <listitem>
+     <para>
+      Do not throw an error if a materialized view with the same name already
+      exists. A notice is issued in this case.  Note that there is no guarantee
+      that the existing materialized view is anything like the one that would
+      have been created.
+     </para>
+    </listitem>
+   </varlistentry>
 
   <variablelist>
    <varlistentry>
