@@ -174,7 +174,4 @@ typedef struct XLogRecordDataHeaderLong
 #define XLR_BLOCK_ID_DATA_SHORT		255
 #define XLR_BLOCK_ID_DATA_LONG		254
 
-#define SizeOfXLogRecordDataHeaderLong (sizeof(uint8) + sizeof(uint32))
-
-
 #endif   /* XLOGRECORD_H */
