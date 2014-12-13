@@ -152,16 +152,18 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
   <sect1 id="recovery-target-settings">
 
     <title>Recovery Target Settings</title>
+
      <para>
       By default, recovery will recover to the end of the WAL log. The
       following parameters can be used to specify an earlier stopping point.
       At most one of <varname>recovery_target</>,
       <varname>recovery_target_name</>, <varname>recovery_target_time</>, or
-      <varname>recovery_target_xid</> can be specified.
+      <varname>recovery_target_xid</> can be used; if more than one of these
+      is specified in the configuration file, the last entry will be used.
      </para>
-     <variablelist>
 
-     <varlistentry id="recovery-target" xreflabel="recovery_target_name">
+     <variablelist>
+     <varlistentry id="recovery-target" xreflabel="recovery_target">
       <term><varname>recovery_target</varname><literal> = 'immediate'</literal>
       <indexterm>
         <primary><varname>recovery_target</> recovery parameter</primary>
@@ -189,8 +191,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        This parameter specifies the named restore point, created with
-        <function>pg_create_restore_point()</> to which recovery will proceed.
+        This parameter specifies the named restore point (created with
+        <function>pg_create_restore_point()</>) to which recovery will proceed.
        </para>
       </listitem>
      </varlistentry>
@@ -231,13 +233,13 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
      </variablelist>
+
      <para>
        The following options further specify the recovery target, and affect
        what happens when the target is reached:
      </para>
 
      <variablelist>
-
      <varlistentry id="recovery-target-inclusive"
                    xreflabel="recovery_target_inclusive">
       <term><varname>recovery_target_inclusive</varname> (<type>boolean</type>)
@@ -247,12 +249,12 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        Specifies whether we stop just after the specified recovery target
+        Specifies whether to stop just after the specified recovery target
         (<literal>true</literal>), or just before the recovery target
         (<literal>false</literal>).
-        Applies to both <xref linkend="recovery-target-time">
-        and <xref linkend="recovery-target-xid">, whichever one is
-        specified for this recovery.  This indicates whether transactions
+        Applies when either <xref linkend="recovery-target-time">
+        or <xref linkend="recovery-target-xid"> is specified.
+        This setting controls whether transactions
         having exactly the target commit time or ID, respectively, will
         be included in the recovery.  Default is <literal>true</>.
        </para>
@@ -294,10 +296,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         This is intended to allow queries to be executed against the
         database to check if this recovery target is the most desirable
         point for recovery. The paused state can be resumed by using
-        <function>pg_xlog_replay_resume()</> (See
+        <function>pg_xlog_replay_resume()</> (see
         <xref linkend="functions-recovery-control-table">), which then
         causes recovery to end. If this recovery target is not the
-        desired stopping point, then shutdown the server, change the
+        desired stopping point, then shut down the server, change the
         recovery target settings to a later target and restart to
         continue recovery.
        </para>
