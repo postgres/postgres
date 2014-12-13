@@ -533,7 +533,7 @@ select percentile_cont(array[0,0.25,0.5,0.75,1]) within group (order by thousand
 from tenk1;
 select percentile_disc(array[[null,1,0.5],[0.75,0.25,null]]) within group (order by thousand)
 from tenk1;
-select percentile_cont(array[0,1,0.25,0.75,0.5,1]) within group (order by x)
+select percentile_cont(array[0,1,0.25,0.75,0.5,1,0.3,0.32,0.35,0.38,0.4]) within group (order by x)
 from generate_series(1,6) x;
 
 select ten, mode() within group (order by string4) from tenk1 group by ten;

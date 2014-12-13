@@ -904,42 +904,50 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 
 		for (; i < num_percentiles; i++)
 		{
-			int64		target_row = pct_info[i].first_row;
-			bool		need_lerp = (pct_info[i].second_row > target_row);
+			int64		first_row = pct_info[i].first_row;
+			int64		second_row = pct_info[i].second_row;
 			int			idx = pct_info[i].idx;
 
-			/* Advance to first_row, if not already there */
-			if (target_row > rownum)
+			/*
+			 * Advance to first_row, if not already there.  Note that we might
+			 * already have rownum beyond first_row, in which case first_val
+			 * is already correct.  (This occurs when interpolating between
+			 * the same two input rows as for the previous percentile.)
+			 */
+			if (first_row > rownum)
 			{
-				if (!tuplesort_skiptuples(osastate->sortstate, target_row - rownum - 1, true))
+				if (!tuplesort_skiptuples(osastate->sortstate, first_row - rownum - 1, true))
 					elog(ERROR, "missing row in percentile_cont");
 
 				if (!tuplesort_getdatum(osastate->sortstate, true, &first_val, &isnull) || isnull)
 					elog(ERROR, "missing row in percentile_cont");
 
-				rownum = target_row;
+				rownum = first_row;
+				/* Always advance second_val to be latest input value */
+				second_val = first_val;
 			}
-			else
+			else if (first_row == rownum)
 			{
 				/*
-				 * We are already at the target row, so we must previously
-				 * have read its value into second_val.
+				 * We are already at the desired row, so we must previously
+				 * have read its value into second_val (and perhaps first_val
+				 * as well, but this assignment is harmless in that case).
 				 */
 				first_val = second_val;
 			}
 
 			/* Fetch second_row if needed */
-			if (need_lerp)
+			if (second_row > rownum)
 			{
 				if (!tuplesort_getdatum(osastate->sortstate, true, &second_val, &isnull) || isnull)
 					elog(ERROR, "missing row in percentile_cont");
 				rownum++;
 			}
-			else
-				second_val = first_val;
+			/* We should now certainly be on second_row exactly */
+			Assert(second_row == rownum);
 
 			/* Compute appropriate result */
-			if (need_lerp)
+			if (second_row > first_row)
 				result_datum[idx] = lerpfunc(first_val, second_val,
 											 pct_info[i].proportion);
 			else
