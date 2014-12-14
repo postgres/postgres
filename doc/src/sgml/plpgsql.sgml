@@ -1079,14 +1079,25 @@ END;
     </para>
 
     <para>
+     For <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
+     <literal>RETURNING</>, <application>PL/pgSQL</application> reports
+     an error for more than one returned row, even when
+     <literal>STRICT</literal> is not specified.  This is because there
+     is no option such as <literal>ORDER BY</> with which to determine
+     which affected row should be returned.
+    </para>
+
+    <para>
      If <literal>print_strict_params</> is enabled for the function,
-     you will get information about the parameters passed to the
-     query in the <literal>DETAIL</> part of the error message produced
-     when the requirements of STRICT are not met.  You can change this
-     setting on a system-wide basis by setting
+     then when an error is thrown because the requirements
+     of <literal>STRICT</> are not met, the <literal>DETAIL</> part of
+     the error message will include information about the parameters
+     passed to the query.
+     You can change the <literal>print_strict_params</>
+     setting for all functions by setting
      <varname>plpgsql.print_strict_params</>, though only subsequent
      function compilations will be affected.  You can also enable it
-     on a per-function basis by using a compiler option:
+     on a per-function basis by using a compiler option, for example:
 <programlisting>
 CREATE FUNCTION get_userid(username text) RETURNS int
 AS $$
@@ -1100,15 +1111,12 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 </programlisting>
-    </para>
-
-    <para>
-     For <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
-     <literal>RETURNING</>, <application>PL/pgSQL</application> reports
-     an error for more than one returned row, even when
-     <literal>STRICT</literal> is not specified.  This is because there
-     is no option such as <literal>ORDER BY</> with which to determine
-     which affected row should be returned.
+     On failure, this function might produce an error message such as
+<programlisting>
+ERROR:  query returned no rows
+DETAIL:  parameters: $1 = 'nosuchuser'
+CONTEXT:  PL/pgSQL function get_userid(text) line 6 at SQL statement
+</programlisting>
     </para>
 
     <note>
@@ -2767,28 +2775,36 @@ END;
   </sect2>
 
   <sect2 id="plpgsql-get-diagnostics-context">
-   <title>Obtaining the Call Stack Context Information</title>
+   <title>Obtaining Current Execution Information</title>
+
+   <para>
+    The <command>GET <optional> CURRENT </optional> DIAGNOSTICS</command>
+    command retrieves information about current execution state (whereas
+    the <command>GET STACKED DIAGNOSTICS</command> command discussed above
+    reports information about the execution state as of a previous error).
+    This command has the form:
+   </para>
 
 <synopsis>
-GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>PG_CONTEXT</replaceable> <optional> , ... </optional>;
+GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>item</replaceable> <optional> , ... </optional>;
 </synopsis>
 
    <para>
-    Calling <command>GET DIAGNOSTICS</command> with status
-    item <varname>PG_CONTEXT</> will return a text string with line(s) of
-    text describing the call stack.  The first row refers to the
+    Currently only one information item is supported.  Status
+    item <literal>PG_CONTEXT</> will return a text string with line(s) of
+    text describing the call stack.  The first line refers to the
     current function and currently executing <command>GET DIAGNOSTICS</command>
-    command.  The second and any subsequent rows refer to the calling functions
-    up the call stack.
+    command.  The second and any subsequent lines refer to calling functions
+    further up the call stack.  For example:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION public.outer_func() RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION outer_func() RETURNS integer AS $$
 BEGIN
   RETURN inner_func();
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION public.inner_func() RETURNS integer AS  $$
+CREATE OR REPLACE FUNCTION inner_func() RETURNS integer AS $$
 DECLARE
   stack text;
 BEGIN
@@ -2801,8 +2817,9 @@ $$ LANGUAGE plpgsql;
 SELECT outer_func();
 
 NOTICE:  --- Call Stack ---
-PL/pgSQL function inner_func() line 4 at GET DIAGNOSTICS
+PL/pgSQL function inner_func() line 5 at GET DIAGNOSTICS
 PL/pgSQL function outer_func() line 3 at RETURN
+CONTEXT:  PL/pgSQL function outer_func() line 3 at RETURN
  outer_func
  ------------
            1

@@ -3180,9 +3180,10 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </indexterm>
 
     <para>
-     Lines (<type>line</type>) are represented by the linear equation Ax + By
-     + C = 0, where A and B are not both zero.  Values of
-     type <type>line</type> is input and output in the following form:
+     Lines are represented by the linear
+     equation <replaceable>A</>x + <replaceable>B</>y + <replaceable>C</> = 0,
+     where <replaceable>A</> and <replaceable>B</> are not both zero.  Values
+     of type <type>line</type> are input and output in the following form:
 <synopsis>
 { <replaceable>A</replaceable>, <replaceable>B</replaceable>, <replaceable>C</replaceable> }
 </synopsis>
@@ -3200,7 +3201,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
      <literal>(<replaceable>x1</replaceable>,<replaceable>y1</replaceable>)</literal>
      and
      <literal>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</literal>
-     are two (different) points on the line.
+     are two different points on the line.
     </para>
    </sect2>
 
@@ -3216,9 +3217,9 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </indexterm>
 
     <para>
-     Line segments (<type>lseg</type>) are represented by pairs of points.
-     Values of type <type>lseg</type> are specified using any of the following
-     syntaxes:
+     Line segments are represented by pairs of points that are the endpoints
+     of the segment.  Values of type <type>lseg</type> are specified using any
+     of the following syntaxes:
 
 <synopsis>
 [ ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) ]
