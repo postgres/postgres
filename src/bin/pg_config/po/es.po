@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-26 19:18+0000\n"
-"PO-Revision-Date: 2013-08-28 15:41-0400\n"
+"POT-Creation-Date: 2014-12-15 05:41+0000\n"
+"PO-Revision-Date: 2014-12-15 10:32-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -18,37 +18,37 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "no se pudo identificar el directorio actual: %s"
 
-#: ../../port/exec.c:146
+#: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "el binario «%s» no es válido"
 
-#: ../../port/exec.c:195
+#: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "no se pudo leer el binario «%s»"
 
-#: ../../port/exec.c:202
+#: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../port/exec.c:257 ../../port/exec.c:293
+#: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
 msgstr "no se pudo cambiar el directorio a «%s»: %s"
 
-#: ../../port/exec.c:272
+#: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:523
+#: ../../common/exec.c:523
 #, c-format
 msgid "pclose failed: %s"
 msgstr "pclose falló: %s"
@@ -276,18 +276,3 @@ msgstr "%s: no se pudo encontrar el ejecutable propio\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: el argumento no es válido: %s\n"
-
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "el proceso hijo terminó con código de salida %d"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "el proceso hijo fue terminado por una excepción 0x%X"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "el proceso hijo fue terminado por una señal %s"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "el proceso hijo fue terminado por una señal %d"
-
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "el proceso hijo terminó con código no reconocido %d"
