@@ -419,8 +419,9 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Specifies the time zone, using full time zone names, which the created
-      database cluster should use.
+      Specifies the default time zone of the created database cluster.  The
+      value should be a full time zone name
+      (see <xref linkend="datatype-timezones">).
      </para>
     </listitem>
    </varlistentry>
