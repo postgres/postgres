@@ -2208,7 +2208,7 @@ main(int argc, char **argv)
 			exit(1);
 		}
 #else
-		fprintf(stderr, _("%s: symlinks are not supported on this platform"));
+		fprintf(stderr, _("%s: symlinks are not supported on this platform\n"));
 		exit(1);
 #endif
 		free(linkloc);
