@@ -2689,7 +2689,7 @@ dist_ppoly_internal(Point *pt, POLYGON *poly)
 #ifdef GEODEBUG
 		printf("dist_ppoly_internal- point inside of polygon\n");
 #endif
-		PG_RETURN_FLOAT8(0.0);
+		return 0.0;
 	}
 
 	/* initialize distance with segment between first and last points */
