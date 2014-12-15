@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (Postgresql) 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-08-23 05:12+0000\n"
-"PO-Revision-Date: 2014-08-23 15:12+0100\n"
+"PO-Revision-Date: 2014-08-25 21:16+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -1489,12 +1489,12 @@ msgstr "  -E, --encoding=CODIFICA      scarica i dati nella CODIFICA indicata\n"
 #: pg_dump.c:886
 #, c-format
 msgid "  -n, --schema=SCHEMA          dump the named schema(s) only\n"
-msgstr "  -n, --schema=SCHEMA          scarica solo lo schema o gli schemi nominati\n"
+msgstr "  -n, --schema=SCHEMA          scarica solo lo schema o gli schemi indicati\n"
 
 #: pg_dump.c:887
 #, c-format
 msgid "  -N, --exclude-schema=SCHEMA  do NOT dump the named schema(s)\n"
-msgstr "  -N, --exclude-schema=SCHEMA  non scaricare lo schema o gli schemi nominati\n"
+msgstr "  -N, --exclude-schema=SCHEMA  non scaricare lo schema o gli schemi indicati\n"
 
 #: pg_dump.c:888 pg_dumpall.c:565
 #, c-format
@@ -1525,12 +1525,12 @@ msgstr ""
 #: pg_dump.c:893
 #, c-format
 msgid "  -t, --table=TABLE            dump the named table(s) only\n"
-msgstr "  -t, --table=TABELLA          scarica solo la tabella o le tabelle nominate\n"
+msgstr "  -t, --table=TABELLA          scarica solo la tabella o le tabelle indicate\n"
 
 #: pg_dump.c:894
 #, c-format
 msgid "  -T, --exclude-table=TABLE    do NOT dump the named table(s)\n"
-msgstr "  -T, --exclude-table=TABELLA  NON scaricare la tabella o le tabelle nominate\n"
+msgstr "  -T, --exclude-table=TABELLA  NON scaricare la tabella o le tabelle indicate\n"
 
 #: pg_dump.c:895 pg_dumpall.c:571
 #, c-format
@@ -2366,7 +2366,7 @@ msgstr "  -e, --exit-on-error          esci in caso di errore, il comportamento 
 #: pg_restore.c:449
 #, c-format
 msgid "  -I, --index=NAME             restore named index\n"
-msgstr "  -I, --index=NOME             ripristina l'indice nominato\n"
+msgstr "  -I, --index=NOME             ripristina l'indice indicato\n"
 
 #: pg_restore.c:450
 #, c-format
@@ -2390,7 +2390,7 @@ msgstr "  -n, --schema=NOME            ripristina solo gli oggetti in questo sch
 #: pg_restore.c:455
 #, c-format
 msgid "  -P, --function=NAME(args)    restore named function\n"
-msgstr "  -P, --function=NOME(arg)     ripristina la funzione nominata\n"
+msgstr "  -P, --function=NOME(arg)     ripristina la funzione indicata\n"
 
 #: pg_restore.c:456
 #, c-format
@@ -2405,12 +2405,12 @@ msgstr "  -S, --superuser=NOME         nome del superutente da usare per disabil
 #: pg_restore.c:458
 #, c-format
 msgid "  -t, --table=NAME             restore named table\n"
-msgstr "  -t, --table=NOME             ripristina la tabella nominata\n"
+msgstr "  -t, --table=NOME             ripristina la tabella indicata\n"
 
 #: pg_restore.c:459
 #, c-format
 msgid "  -T, --trigger=NAME           restore named trigger\n"
-msgstr "  -T, --trigger=NOME           ripristina il trigger nominato\n"
+msgstr "  -T, --trigger=NOME           ripristina il trigger indicato\n"
 
 #: pg_restore.c:460
 #, c-format
@@ -2444,7 +2444,7 @@ msgstr "  --no-tablespaces             non ripristina le assegnazioni dei tables
 #: pg_restore.c:468
 #, c-format
 msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
-msgstr "  --section=SEZIONE            ripristina la sezione nominata (pre-data, data o post-data)\n"
+msgstr "  --section=SEZIONE            ripristina la sezione indicata (pre-data, data o post-data)\n"
 
 #: pg_restore.c:479
 #, c-format

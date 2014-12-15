@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 11:13+0000\n"
-"PO-Revision-Date: 2014-05-17 15:25+0100\n"
+"POT-Creation-Date: 2014-12-04 22:42+0000\n"
+"PO-Revision-Date: 2014-12-05 10:03+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
@@ -327,7 +327,6 @@ msgstr "Paramètrage actuel de wal_level :                       %s\n"
 
 #: pg_controldata.c:263
 #, c-format
-#| msgid "Current wal_level setting:            %s\n"
 msgid "Current wal_log_hints setting:        %s\n"
 msgstr "Paramétrage actuel de wal_log_hints :                   %s\n"
 
@@ -338,7 +337,6 @@ msgstr "Paramètrage actuel de max_connections :                 %d\n"
 
 #: pg_controldata.c:267
 #, c-format
-#| msgid "Current max_prepared_xacts setting:   %d\n"
 msgid "Current max_worker_processes setting: %d\n"
 msgstr "Paramétrage actuel de max_worker_processes :            %d\n"
 
@@ -394,36 +392,42 @@ msgstr "Longueur maximale d'un morceau TOAST :                  %u\n"
 
 #: pg_controldata.c:290
 #, c-format
+#| msgid "Maximum size of a TOAST chunk:        %u\n"
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "Taille d'un morceau de Large Object :                   %u\n"
+
+#: pg_controldata.c:292
+#, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Stockage du type date/heure :                           %s\n"
 
-#: pg_controldata.c:291
+#: pg_controldata.c:293
 msgid "64-bit integers"
 msgstr "entiers 64-bits"
 
-#: pg_controldata.c:291
+#: pg_controldata.c:293
 msgid "floating-point numbers"
 msgstr "nombres à virgule flottante"
 
-#: pg_controldata.c:292
+#: pg_controldata.c:294
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Passage d'argument float4 :                             %s\n"
 
-#: pg_controldata.c:293 pg_controldata.c:295
+#: pg_controldata.c:295 pg_controldata.c:297
 msgid "by reference"
 msgstr "par référence"
 
-#: pg_controldata.c:293 pg_controldata.c:295
+#: pg_controldata.c:295 pg_controldata.c:297
 msgid "by value"
 msgstr "par valeur"
 
-#: pg_controldata.c:294
+#: pg_controldata.c:296
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Passage d'argument float8 :                             %s\n"
 
-#: pg_controldata.c:296
+#: pg_controldata.c:298
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Version des sommes de contrôle des pages de données :   %u\n"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-11-14 02:08+0000\n"
-"PO-Revision-Date: 2014-11-16 14:39-0500\n"
+"POT-Creation-Date: 2014-12-04 22:38+0000\n"
+"PO-Revision-Date: 2014-12-08 20:14-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -497,7 +497,7 @@ msgstr "konnte Datei „%s“ nicht fsyncen: %m"
 #: access/heap/rewriteheap.c:1028 access/heap/rewriteheap.c:1148
 #: access/transam/timeline.c:315 access/transam/timeline.c:475
 #: access/transam/xlog.c:3141 access/transam/xlog.c:3276
-#: access/transam/xlog.c:9913 access/transam/xlog.c:10228
+#: access/transam/xlog.c:9915 access/transam/xlog.c:10230
 #: postmaster/postmaster.c:4216 replication/slot.c:999
 #: storage/file/copydir.c:162 storage/smgr/md.c:304 utils/time/snapmgr.c:976
 #, c-format
@@ -528,7 +528,7 @@ msgstr "konnte Positionszeiger nicht ans Ende der Datei „%s“ setzen: %m"
 msgid "could not write to file \"%s\": %m"
 msgstr "konnte nicht in Datei „%s“ schreiben: %m"
 
-#: access/heap/rewriteheap.c:1258 access/transam/xlog.c:10097
+#: access/heap/rewriteheap.c:1258 access/transam/xlog.c:10099
 #: access/transam/xlogarchive.c:114 access/transam/xlogarchive.c:467
 #: replication/logical/reorderbuffer.c:2352
 #: replication/logical/reorderbuffer.c:2409
@@ -641,14 +641,14 @@ msgstr ""
 msgid "database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database with OID %u"
 msgstr "Datenbank nimmt keine Befehle an, die neue MultiXactIds erzeugen, um Datenverlust wegen Transaktionsnummernüberlauf in Datenbank mit OID %u zu vermeiden"
 
-#: access/transam/multixact.c:1009 access/transam/multixact.c:2200
+#: access/transam/multixact.c:1009 access/transam/multixact.c:2201
 #, c-format
 msgid "database \"%s\" must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database \"%s\" must be vacuumed before %u more MultiXactIds are used"
 msgstr[0] "Datenbank „%s“ muss gevacuumt werden, bevor %u weitere MultiXactId aufgebraucht ist"
 msgstr[1] "Datenbank „%s“ muss gevacuumt werden, bevor %u weitere MultiXactIds aufgebraucht sind"
 
-#: access/transam/multixact.c:1018 access/transam/multixact.c:2209
+#: access/transam/multixact.c:1018 access/transam/multixact.c:2210
 #, c-format
 msgid "database with OID %u must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database with OID %u must be vacuumed before %u more MultiXactIds are used"
@@ -665,12 +665,12 @@ msgstr "MultiXactId %u existiert nicht mehr -- anscheinender Überlauf"
 msgid "MultiXactId %u has not been created yet -- apparent wraparound"
 msgstr "MultiXactId %u wurde noch nicht erzeugt -- anscheinender Überlauf"
 
-#: access/transam/multixact.c:2165
+#: access/transam/multixact.c:2166
 #, c-format
 msgid "MultiXactId wrap limit is %u, limited by database with OID %u"
 msgstr "Grenze für MultiXactId-Überlauf ist %u, begrenzt durch Datenbank mit OID %u"
 
-#: access/transam/multixact.c:2205 access/transam/multixact.c:2214
+#: access/transam/multixact.c:2206 access/transam/multixact.c:2215
 #: access/transam/varsup.c:137 access/transam/varsup.c:144
 #: access/transam/varsup.c:374 access/transam/varsup.c:381
 #, c-format
@@ -681,7 +681,7 @@ msgstr ""
 "Um ein Abschalten der Datenbank zu vermeiden, führen Sie ein komplettes VACUUM über diese Datenbank aus.\n"
 "Eventuell müssen Sie auch alte vorbereitete Transaktionen committen oder zurückrollen."
 
-#: access/transam/multixact.c:2798
+#: access/transam/multixact.c:2799
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "ungültige MultiXactId: %u"
@@ -774,8 +774,8 @@ msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "Zeitleisten-IDs müssen kleiner als die Zeitleisten-ID des Kindes sein."
 
 #: access/transam/timeline.c:346 access/transam/xlog.c:3289
-#: access/transam/xlog.c:10079 access/transam/xlog.c:10092
-#: access/transam/xlog.c:10460 access/transam/xlog.c:10503
+#: access/transam/xlog.c:10081 access/transam/xlog.c:10094
+#: access/transam/xlog.c:10462 access/transam/xlog.c:10505
 #: access/transam/xlogfuncs.c:468 access/transam/xlogfuncs.c:487
 #: replication/logical/reorderbuffer.c:2819 replication/walsender.c:483
 #: storage/file/copydir.c:176 utils/adt/genfile.c:139
@@ -1708,7 +1708,7 @@ msgstr "Redo beginnt bei %X/%X"
 msgid "redo done at %X/%X"
 msgstr "Redo fertig bei %X/%X"
 
-#: access/transam/xlog.c:6881 access/transam/xlog.c:8733
+#: access/transam/xlog.c:6881 access/transam/xlog.c:8735
 #, c-format
 msgid "last completed transaction was at log time %s"
 msgstr "letzte vollständige Transaktion war bei Logzeit %s"
@@ -1718,198 +1718,198 @@ msgstr "letzte vollständige Transaktion war bei Logzeit %s"
 msgid "redo is not required"
 msgstr "Redo nicht nötig"
 
-#: access/transam/xlog.c:6937
+#: access/transam/xlog.c:6947
 #, c-format
 msgid "requested recovery stop point is before consistent recovery point"
 msgstr "angeforderter Recovery-Endpunkt ist vor konsistentem Recovery-Punkt"
 
-#: access/transam/xlog.c:6953 access/transam/xlog.c:6957
+#: access/transam/xlog.c:6963 access/transam/xlog.c:6967
 #, c-format
 msgid "WAL ends before end of online backup"
 msgstr "WAL endet vor dem Ende der Online-Sicherung"
 
-#: access/transam/xlog.c:6954
+#: access/transam/xlog.c:6964
 #, c-format
 msgid "All WAL generated while online backup was taken must be available at recovery."
 msgstr "Der komplette WAL, der während der Online-Sicherung erzeugt wurde, muss bei der Wiederherstellung verfügbar sein."
 
-#: access/transam/xlog.c:6958
+#: access/transam/xlog.c:6968
 #, c-format
 msgid "Online backup started with pg_start_backup() must be ended with pg_stop_backup(), and all WAL up to that point must be available at recovery."
 msgstr "Die mit pg_start_backup() begonnene Online-Sicherung muss mit pg_stop_backup() beendet werden und der ganze WAL bis zu diesem Punkt muss bei der Wiederherstellung verfügbar sein."
 
-#: access/transam/xlog.c:6961
+#: access/transam/xlog.c:6971
 #, c-format
 msgid "WAL ends before consistent recovery point"
 msgstr "WAL endet vor einem konsistenten Wiederherstellungspunkt"
 
-#: access/transam/xlog.c:6988
+#: access/transam/xlog.c:6998
 #, c-format
 msgid "selected new timeline ID: %u"
 msgstr "gewählte neue Zeitleisten-ID: %u"
 
-#: access/transam/xlog.c:7337
+#: access/transam/xlog.c:7339
 #, c-format
 msgid "consistent recovery state reached at %X/%X"
 msgstr "konsistenter Wiederherstellungszustand erreicht bei %X/%X"
 
-#: access/transam/xlog.c:7534
+#: access/transam/xlog.c:7536
 #, c-format
 msgid "invalid primary checkpoint link in control file"
 msgstr "ungültige primäre Checkpoint-Verknüpfung in Kontrolldatei"
 
-#: access/transam/xlog.c:7538
+#: access/transam/xlog.c:7540
 #, c-format
 msgid "invalid secondary checkpoint link in control file"
 msgstr "ungültige sekundäre Checkpoint-Verknüpfung in Kontrolldatei"
 
-#: access/transam/xlog.c:7542
+#: access/transam/xlog.c:7544
 #, c-format
 msgid "invalid checkpoint link in backup_label file"
 msgstr "ungültige Checkpoint-Verknüpfung in backup_label-Datei"
 
-#: access/transam/xlog.c:7559
+#: access/transam/xlog.c:7561
 #, c-format
 msgid "invalid primary checkpoint record"
 msgstr "ungültiger primärer Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7563
+#: access/transam/xlog.c:7565
 #, c-format
 msgid "invalid secondary checkpoint record"
 msgstr "ungültiger sekundärer Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7567
+#: access/transam/xlog.c:7569
 #, c-format
 msgid "invalid checkpoint record"
 msgstr "ungültiger Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7578
+#: access/transam/xlog.c:7580
 #, c-format
 msgid "invalid resource manager ID in primary checkpoint record"
 msgstr "ungültige Resource-Manager-ID im primären Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7582
+#: access/transam/xlog.c:7584
 #, c-format
 msgid "invalid resource manager ID in secondary checkpoint record"
 msgstr "ungültige Resource-Manager-ID im sekundären Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7586
+#: access/transam/xlog.c:7588
 #, c-format
 msgid "invalid resource manager ID in checkpoint record"
 msgstr "ungültige Resource-Manager-ID im Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7598
+#: access/transam/xlog.c:7600
 #, c-format
 msgid "invalid xl_info in primary checkpoint record"
 msgstr "ungültige xl_info im primären Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7602
+#: access/transam/xlog.c:7604
 #, c-format
 msgid "invalid xl_info in secondary checkpoint record"
 msgstr "ungültige xl_info im sekundären Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7606
+#: access/transam/xlog.c:7608
 #, c-format
 msgid "invalid xl_info in checkpoint record"
 msgstr "ungültige xl_info im Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:7618
+#: access/transam/xlog.c:7620
 #, c-format
 msgid "invalid length of primary checkpoint record"
 msgstr "ungültige Länge des primären Checkpoint-Datensatzes"
 
-#: access/transam/xlog.c:7622
+#: access/transam/xlog.c:7624
 #, c-format
 msgid "invalid length of secondary checkpoint record"
 msgstr "ungültige Länge des sekundären Checkpoint-Datensatzes"
 
-#: access/transam/xlog.c:7626
+#: access/transam/xlog.c:7628
 #, c-format
 msgid "invalid length of checkpoint record"
 msgstr "ungültige Länge des Checkpoint-Datensatzes"
 
-#: access/transam/xlog.c:7786
+#: access/transam/xlog.c:7788
 #, c-format
 msgid "shutting down"
 msgstr "fahre herunter"
 
-#: access/transam/xlog.c:7809
+#: access/transam/xlog.c:7811
 #, c-format
 msgid "database system is shut down"
 msgstr "Datenbanksystem ist heruntergefahren"
 
-#: access/transam/xlog.c:8275
+#: access/transam/xlog.c:8277
 #, c-format
 msgid "concurrent transaction log activity while database system is shutting down"
 msgstr "gleichzeitige Transaktionslog-Aktivität während das Datenbanksystem herunterfährt"
 
-#: access/transam/xlog.c:8544
+#: access/transam/xlog.c:8546
 #, c-format
 msgid "skipping restartpoint, recovery has already ended"
 msgstr "Restart-Punkt übersprungen, Wiederherstellung ist bereits beendet"
 
-#: access/transam/xlog.c:8567
+#: access/transam/xlog.c:8569
 #, c-format
 msgid "skipping restartpoint, already performed at %X/%X"
 msgstr "Restart-Punkt wird übersprungen, schon bei %X/%X erledigt"
 
-#: access/transam/xlog.c:8731
+#: access/transam/xlog.c:8733
 #, c-format
 msgid "recovery restart point at %X/%X"
 msgstr "Recovery-Restart-Punkt bei %X/%X"
 
-#: access/transam/xlog.c:8876
+#: access/transam/xlog.c:8878
 #, c-format
 msgid "restore point \"%s\" created at %X/%X"
 msgstr "Restore-Punkt „%s“ erzeugt bei %X/%X"
 
-#: access/transam/xlog.c:9100
+#: access/transam/xlog.c:9102
 #, c-format
 msgid "unexpected previous timeline ID %u (current timeline ID %u) in checkpoint record"
 msgstr "unerwartete vorherige Zeitleisten-ID %u (aktuelle Zeitleisten-ID %u) im Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:9109
+#: access/transam/xlog.c:9111
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
 msgstr "unerwartete Zeitleisten-ID %u (nach %u) im Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:9125
+#: access/transam/xlog.c:9127
 #, c-format
 msgid "unexpected timeline ID %u in checkpoint record, before reaching minimum recovery point %X/%X on timeline %u"
 msgstr "unerwartete Zeitleisten-ID %u in Checkpoint-Datensatz, bevor der minimale Wiederherstellungspunkt %X/%X auf Zeitleiste %u erreicht wurde"
 
-#: access/transam/xlog.c:9193
+#: access/transam/xlog.c:9195
 #, c-format
 msgid "online backup was canceled, recovery cannot continue"
 msgstr "Online-Sicherung wurde storniert, Wiederherstellung kann nicht fortgesetzt werden"
 
-#: access/transam/xlog.c:9254 access/transam/xlog.c:9303
-#: access/transam/xlog.c:9326
+#: access/transam/xlog.c:9256 access/transam/xlog.c:9305
+#: access/transam/xlog.c:9328
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr "unerwartete Zeitleisten-ID %u (sollte %u sein) im Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:9561
+#: access/transam/xlog.c:9563
 #, c-format
 msgid "could not fsync log segment %s: %m"
 msgstr "konnte Logsegment %s nicht fsyncen: %m"
 
-#: access/transam/xlog.c:9585
+#: access/transam/xlog.c:9587
 #, c-format
 msgid "could not fsync log file %s: %m"
 msgstr "konnte Logdatei %s nicht fsyncen: %m"
 
-#: access/transam/xlog.c:9593
+#: access/transam/xlog.c:9595
 #, c-format
 msgid "could not fsync write-through log file %s: %m"
 msgstr "konnte Write-Through-Logdatei %s nicht fsyncen: %m"
 
-#: access/transam/xlog.c:9602
+#: access/transam/xlog.c:9604
 #, c-format
 msgid "could not fdatasync log file %s: %m"
 msgstr "konnte Logdatei %s nicht fdatasyncen: %m"
 
-#: access/transam/xlog.c:9680 access/transam/xlog.c:10016
+#: access/transam/xlog.c:9682 access/transam/xlog.c:10018
 #: access/transam/xlogfuncs.c:111 access/transam/xlogfuncs.c:140
 #: access/transam/xlogfuncs.c:179 access/transam/xlogfuncs.c:200
 #: access/transam/xlogfuncs.c:270 access/transam/xlogfuncs.c:326
@@ -1917,50 +1917,50 @@ msgstr "konnte Logdatei %s nicht fdatasyncen: %m"
 msgid "recovery is in progress"
 msgstr "Wiederherstellung läuft"
 
-#: access/transam/xlog.c:9681 access/transam/xlog.c:10017
+#: access/transam/xlog.c:9683 access/transam/xlog.c:10019
 #: access/transam/xlogfuncs.c:112 access/transam/xlogfuncs.c:141
 #: access/transam/xlogfuncs.c:180 access/transam/xlogfuncs.c:201
 #, c-format
 msgid "WAL control functions cannot be executed during recovery."
 msgstr "Während der Wiederherstellung können keine WAL-Kontrollfunktionen ausgeführt werden."
 
-#: access/transam/xlog.c:9690 access/transam/xlog.c:10026
+#: access/transam/xlog.c:9692 access/transam/xlog.c:10028
 #, c-format
 msgid "WAL level not sufficient for making an online backup"
 msgstr "WAL-Level nicht ausreichend, um Online-Sicherung durchzuführen"
 
-#: access/transam/xlog.c:9691 access/transam/xlog.c:10027
+#: access/transam/xlog.c:9693 access/transam/xlog.c:10029
 #: access/transam/xlogfuncs.c:147
 #, c-format
 msgid "wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start."
 msgstr "wal_level muss beim Serverstart auf „archive“, „hot_standby“ oder „logical“ gesetzt werden."
 
-#: access/transam/xlog.c:9696
+#: access/transam/xlog.c:9698
 #, c-format
 msgid "backup label too long (max %d bytes)"
 msgstr "Backup-Label zu lang (maximal %d Bytes)"
 
-#: access/transam/xlog.c:9727 access/transam/xlog.c:9904
+#: access/transam/xlog.c:9729 access/transam/xlog.c:9906
 #, c-format
 msgid "a backup is already in progress"
 msgstr "ein Backup läuft bereits"
 
-#: access/transam/xlog.c:9728
+#: access/transam/xlog.c:9730
 #, c-format
 msgid "Run pg_stop_backup() and try again."
 msgstr "Führen Sie pg_stop_backup() aus und versuchen Sie es nochmal."
 
-#: access/transam/xlog.c:9822
+#: access/transam/xlog.c:9824
 #, c-format
 msgid "WAL generated with full_page_writes=off was replayed since last restartpoint"
 msgstr "mit full_page_writes=off erzeugtes WAL wurde seit dem letzten Restart-Punkt zurückgespielt"
 
-#: access/transam/xlog.c:9824 access/transam/xlog.c:10177
+#: access/transam/xlog.c:9826 access/transam/xlog.c:10179
 #, c-format
 msgid "This means that the backup being taken on the standby is corrupt and should not be used. Enable full_page_writes and run CHECKPOINT on the master, and then try an online backup again."
 msgstr "Das bedeutet, dass die aktuelle Datensicherung auf dem Standby-Server verfälscht ist und nicht verwendet werden sollte. Schalten Sie full_page_writes ein, führen Sie CHECKPOINT aus und versuchen Sie dann die Online-Sicherung erneut."
 
-#: access/transam/xlog.c:9898 access/transam/xlog.c:10067
+#: access/transam/xlog.c:9900 access/transam/xlog.c:10069
 #: access/transam/xlogarchive.c:106 access/transam/xlogarchive.c:265
 #: guc-file.l:885 replication/basebackup.c:464 replication/basebackup.c:521
 #: replication/logical/snapbuild.c:1478 storage/file/copydir.c:72
@@ -1970,115 +1970,115 @@ msgstr "Das bedeutet, dass die aktuelle Datensicherung auf dem Standby-Server ve
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte „stat“ für Datei „%s“ nicht ausführen: %m"
 
-#: access/transam/xlog.c:9905
+#: access/transam/xlog.c:9907
 #, c-format
 msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
 msgstr "Wenn Sie sicher sind, dass noch kein Backup läuft, entfernen Sie die Datei „%s“ und versuchen Sie es noch einmal."
 
-#: access/transam/xlog.c:9922 access/transam/xlog.c:10240
+#: access/transam/xlog.c:9924 access/transam/xlog.c:10242
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "konnte Datei „%s“ nicht schreiben: %m"
 
-#: access/transam/xlog.c:10071
+#: access/transam/xlog.c:10073
 #, c-format
 msgid "a backup is not in progress"
 msgstr "es läuft kein Backup"
 
-#: access/transam/xlog.c:10110 access/transam/xlog.c:10123
-#: access/transam/xlog.c:10474 access/transam/xlog.c:10480
+#: access/transam/xlog.c:10112 access/transam/xlog.c:10125
+#: access/transam/xlog.c:10476 access/transam/xlog.c:10482
 #: access/transam/xlogfuncs.c:498
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "ungültige Daten in Datei „%s“"
 
-#: access/transam/xlog.c:10127 replication/basebackup.c:951
+#: access/transam/xlog.c:10129 replication/basebackup.c:951
 #, c-format
 msgid "the standby was promoted during online backup"
 msgstr "der Standby-Server wurde während der Online-Sicherung zum Primärserver befördert"
 
-#: access/transam/xlog.c:10128 replication/basebackup.c:952
+#: access/transam/xlog.c:10130 replication/basebackup.c:952
 #, c-format
 msgid "This means that the backup being taken is corrupt and should not be used. Try taking another online backup."
 msgstr "Das bedeutet, dass die aktuelle Online-Sicherung verfälscht ist und nicht verwendet werden sollte. Versuchen Sie, eine neue Online-Sicherung durchzuführen."
 
-#: access/transam/xlog.c:10175
+#: access/transam/xlog.c:10177
 #, c-format
 msgid "WAL generated with full_page_writes=off was replayed during online backup"
 msgstr "mit full_page_writes=off erzeugtes WAL wurde während der Online-Sicherung zurückgespielt"
 
-#: access/transam/xlog.c:10289
+#: access/transam/xlog.c:10291
 #, c-format
 msgid "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
 msgstr "Aufräumen nach pg_stop_backup beendet, warte bis die benötigten WAL-Segmente archiviert sind"
 
-#: access/transam/xlog.c:10299
+#: access/transam/xlog.c:10301
 #, c-format
 msgid "pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)"
 msgstr "pg_stop_backup wartet immer noch, bis alle benötigten WAL-Segmente archiviert sind (%d Sekunden abgelaufen)"
 
-#: access/transam/xlog.c:10301
+#: access/transam/xlog.c:10303
 #, c-format
 msgid "Check that your archive_command is executing properly.  pg_stop_backup can be canceled safely, but the database backup will not be usable without all the WAL segments."
 msgstr "Prüfen Sie, ob das archive_command korrekt ausgeführt wird. pg_stop_backup kann gefahrlos abgebrochen werden, aber die Datenbanksicherung wird ohne die fehlenden WAL-Segmente nicht benutzbar sein."
 
-#: access/transam/xlog.c:10308
+#: access/transam/xlog.c:10310
 #, c-format
 msgid "pg_stop_backup complete, all required WAL segments have been archived"
 msgstr "pg_stop_backup abgeschlossen, alle benötigten WAL-Segmente wurden archiviert"
 
-#: access/transam/xlog.c:10312
+#: access/transam/xlog.c:10314
 #, c-format
 msgid "WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup"
 msgstr "WAL-Archivierung ist nicht eingeschaltet; Sie müssen dafür sorgen, dass alle benötigten WAL-Segmente auf andere Art kopiert werden, um die Sicherung abzuschließen"
 
-#: access/transam/xlog.c:10525
+#: access/transam/xlog.c:10527
 #, c-format
 msgid "xlog redo %s"
 msgstr "xlog redo %s"
 
-#: access/transam/xlog.c:10565
+#: access/transam/xlog.c:10567
 #, c-format
 msgid "online backup mode canceled"
 msgstr "Online-Sicherungsmodus storniert"
 
-#: access/transam/xlog.c:10566
+#: access/transam/xlog.c:10568
 #, c-format
 msgid "\"%s\" was renamed to \"%s\"."
 msgstr "„%s“ wurde in „%s“ umbenannt."
 
-#: access/transam/xlog.c:10573
+#: access/transam/xlog.c:10575
 #, c-format
 msgid "online backup mode was not canceled"
 msgstr "Online-Sicherungsmodus wurde nicht storniert"
 
-#: access/transam/xlog.c:10574
+#: access/transam/xlog.c:10576
 #, c-format
 msgid "Could not rename \"%s\" to \"%s\": %m."
 msgstr "Konnte „%s“ nicht in „%s“ umbenennen: %m."
 
-#: access/transam/xlog.c:10694 replication/logical/logicalfuncs.c:169
+#: access/transam/xlog.c:10696 replication/logical/logicalfuncs.c:169
 #: replication/walreceiver.c:937 replication/walsender.c:2106
 #, c-format
 msgid "could not seek in log segment %s to offset %u: %m"
 msgstr "konnte Positionszeiger von Logsegment %s nicht auf %u setzen: %m"
 
-#: access/transam/xlog.c:10706
+#: access/transam/xlog.c:10708
 #, c-format
 msgid "could not read from log segment %s, offset %u: %m"
 msgstr "konnte nicht aus Logsegment %s, Position %u lesen: %m"
 
-#: access/transam/xlog.c:11169
+#: access/transam/xlog.c:11171
 #, c-format
 msgid "received promote request"
 msgstr "Anforderung zum Befördern empfangen"
 
-#: access/transam/xlog.c:11182
+#: access/transam/xlog.c:11184
 #, c-format
 msgid "trigger file found: %s"
 msgstr "Triggerdatei gefunden: %s"
 
-#: access/transam/xlog.c:11191
+#: access/transam/xlog.c:11193
 #, c-format
 msgid "could not stat trigger file \"%s\": %m"
 msgstr "konnte „stat“ für Trigger-Datei „%s“ nicht ausführen: %m"
@@ -8576,8 +8576,8 @@ msgstr "neue Zeile verletzt WITH CHECK OPTION für Sicht „%s“"
 
 #: executor/execQual.c:306 executor/execQual.c:334 executor/execQual.c:3157
 #: utils/adt/array_userfuncs.c:430 utils/adt/arrayfuncs.c:233
-#: utils/adt/arrayfuncs.c:512 utils/adt/arrayfuncs.c:1247
-#: utils/adt/arrayfuncs.c:2933 utils/adt/arrayfuncs.c:4958
+#: utils/adt/arrayfuncs.c:531 utils/adt/arrayfuncs.c:1275
+#: utils/adt/arrayfuncs.c:2961 utils/adt/arrayfuncs.c:4986
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "Anzahl der Arraydimensionen (%d) überschreitet erlaubtes Maximum (%d)"
@@ -8697,7 +8697,6 @@ msgid "Array with element type %s cannot be included in ARRAY construct with ele
 msgstr "Arrayelement mit Typ %s kann nicht in ARRAY-Konstrukt mit Elementtyp %s verwendet werden."
 
 #: executor/execQual.c:3177 executor/execQual.c:3204
-#: utils/adt/arrayfuncs.c:547
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "mehrdimensionale Arrays müssen Arraysausdrücke mit gleicher Anzahl Dimensionen haben"
@@ -8742,7 +8741,7 @@ msgstr "Zieltyp ist kein Array"
 msgid "ROW() column has type %s instead of type %s"
 msgstr "ROW()-Spalte hat Typ %s statt Typ %s"
 
-#: executor/execQual.c:4986 utils/adt/arrayfuncs.c:3396
+#: executor/execQual.c:4986 utils/adt/arrayfuncs.c:3424
 #: utils/adt/rowtypes.c:921
 #, c-format
 msgid "could not identify a comparison function for type %s"
@@ -10510,7 +10509,7 @@ msgid "no data left in message"
 msgstr "keine Daten in Message übrig"
 
 #: libpq/pqformat.c:556 libpq/pqformat.c:574 libpq/pqformat.c:595
-#: utils/adt/arrayfuncs.c:1416 utils/adt/rowtypes.c:561
+#: utils/adt/arrayfuncs.c:1444 utils/adt/rowtypes.c:561
 #, c-format
 msgid "insufficient data left in message"
 msgstr "nicht genug Daten in Message übrig"
@@ -11983,8 +11982,8 @@ msgstr "Operator existiert nicht: %s"
 msgid "Use an explicit ordering operator or modify the query."
 msgstr "Verwenden Sie einen ausdrücklichen Sortieroperator oder ändern Sie die Anfrage."
 
-#: parser/parse_oper.c:225 utils/adt/arrayfuncs.c:3194
-#: utils/adt/arrayfuncs.c:3713 utils/adt/arrayfuncs.c:5266
+#: parser/parse_oper.c:225 utils/adt/arrayfuncs.c:3222
+#: utils/adt/arrayfuncs.c:3741 utils/adt/arrayfuncs.c:5294
 #: utils/adt/rowtypes.c:1159
 #, c-format
 msgid "could not identify an equality operator for type %s"
@@ -13702,37 +13701,37 @@ msgstr "logische Dekodierung benötigt eine Datenbankverbindung"
 msgid "logical decoding cannot be used while in recovery"
 msgstr "logische Dekodierung kann nicht während der Wiederherstellung verwendet werden"
 
-#: replication/logical/logical.c:221 replication/logical/logical.c:372
+#: replication/logical/logical.c:230 replication/logical/logical.c:381
 #, c-format
 msgid "cannot use physical replication slot for logical decoding"
 msgstr "physischer Replikations-Slot kann nicht für logisches Dekodieren verwendet werden"
 
-#: replication/logical/logical.c:226 replication/logical/logical.c:377
+#: replication/logical/logical.c:235 replication/logical/logical.c:386
 #, c-format
 msgid "replication slot \"%s\" was not created in this database"
 msgstr "Replikations-Slot „%s“ wurde nicht in dieser Datenbank erzeugt"
 
-#: replication/logical/logical.c:233
+#: replication/logical/logical.c:242
 #, c-format
 msgid "cannot create logical replication slot in transaction that has performed writes"
 msgstr "logischer Replikations-Slot kann nicht in einer Transaktion erzeugt werden, die Schreibvorgänge ausgeführt hat"
 
-#: replication/logical/logical.c:413
+#: replication/logical/logical.c:422
 #, c-format
 msgid "starting logical decoding for slot \"%s\""
 msgstr "starte logisches Dekodieren für Slot „%s“"
 
-#: replication/logical/logical.c:415
+#: replication/logical/logical.c:424
 #, c-format
 msgid "streaming transactions committing after %X/%X, reading WAL from %X/%X"
 msgstr "Streaming beginnt bei Transaktionen, die nach %X/%X committen; lese WAL ab %X/%X"
 
-#: replication/logical/logical.c:550
+#: replication/logical/logical.c:559
 #, c-format
 msgid "slot \"%s\", output plugin \"%s\", in the %s callback, associated LSN %X/%X"
 msgstr "Slot „%s“, Ausgabe-Plugin „%s“, im Callback %s, zugehörige LSN %X/%X"
 
-#: replication/logical/logical.c:557
+#: replication/logical/logical.c:566
 #, c-format
 msgid "slot \"%s\", output plugin \"%s\", in the %s callback"
 msgstr "Slot „%s“, Ausgabe-Plugin „%s“, im Callback %s"
@@ -13757,7 +13756,7 @@ msgstr "Array muss eindimensional sein"
 msgid "array must not contain nulls"
 msgstr "Array darf keine NULL-Werte enthalten"
 
-#: replication/logical/logicalfuncs.c:361 utils/adt/json.c:2158
+#: replication/logical/logicalfuncs.c:361 utils/adt/json.c:2198
 #, c-format
 msgid "array must have even number of elements"
 msgstr "Array muss eine gerade Anzahl Elemente haben"
@@ -15865,14 +15864,14 @@ msgid "neither input type is an array"
 msgstr "keiner der Eingabedatentypen ist ein Array"
 
 #: utils/adt/array_userfuncs.c:103 utils/adt/array_userfuncs.c:113
-#: utils/adt/arrayfuncs.c:1281 utils/adt/float.c:1161 utils/adt/float.c:1220
+#: utils/adt/arrayfuncs.c:1309 utils/adt/float.c:1161 utils/adt/float.c:1220
 #: utils/adt/float.c:2771 utils/adt/float.c:2787 utils/adt/int.c:623
 #: utils/adt/int.c:652 utils/adt/int.c:673 utils/adt/int.c:704
 #: utils/adt/int.c:737 utils/adt/int.c:759 utils/adt/int.c:907
 #: utils/adt/int.c:928 utils/adt/int.c:955 utils/adt/int.c:995
 #: utils/adt/int.c:1016 utils/adt/int.c:1043 utils/adt/int.c:1076
-#: utils/adt/int.c:1159 utils/adt/int8.c:1298 utils/adt/numeric.c:2289
-#: utils/adt/numeric.c:2298 utils/adt/varbit.c:1173 utils/adt/varbit.c:1565
+#: utils/adt/int.c:1159 utils/adt/int8.c:1298 utils/adt/numeric.c:2304
+#: utils/adt/numeric.c:2313 utils/adt/varbit.c:1173 utils/adt/varbit.c:1565
 #: utils/adt/varlena.c:1013 utils/adt/varlena.c:2036
 #, c-format
 msgid "integer out of range"
@@ -15910,178 +15909,220 @@ msgstr "Arrays mit unterschiedlichen Elementdimensionen sind nicht kompatibel f�
 msgid "Arrays with differing dimensions are not compatible for concatenation."
 msgstr "Arrays mit unterschiedlichen Dimensionen sind nicht kompatibel für Aneinanderhängen."
 
-#: utils/adt/array_userfuncs.c:426 utils/adt/arrayfuncs.c:1243
-#: utils/adt/arrayfuncs.c:2929 utils/adt/arrayfuncs.c:4954
+#: utils/adt/array_userfuncs.c:426 utils/adt/arrayfuncs.c:1271
+#: utils/adt/arrayfuncs.c:2957 utils/adt/arrayfuncs.c:4982
 #, c-format
 msgid "invalid number of dimensions: %d"
 msgstr "ungültige Anzahl Dimensionen: %d"
 
-#: utils/adt/array_userfuncs.c:487 utils/adt/json.c:1675 utils/adt/json.c:1770
-#: utils/adt/json.c:1799
+#: utils/adt/array_userfuncs.c:487 utils/adt/json.c:1694 utils/adt/json.c:1789
+#: utils/adt/json.c:1820
 #, c-format
 msgid "could not determine input data type"
 msgstr "konnte Eingabedatentypen nicht bestimmen"
 
-#: utils/adt/arrayfuncs.c:240 utils/adt/arrayfuncs.c:252
-#, c-format
-msgid "missing dimension value"
-msgstr "Dimensionswert fehlt"
-
-#: utils/adt/arrayfuncs.c:262
-#, c-format
-msgid "missing \"]\" in array dimensions"
-msgstr "„]“ in Arraydimensionen fehlt"
-
-#: utils/adt/arrayfuncs.c:270 utils/adt/arrayfuncs.c:2454
-#: utils/adt/arrayfuncs.c:2482 utils/adt/arrayfuncs.c:2497
-#, c-format
-msgid "upper bound cannot be less than lower bound"
-msgstr "Obergrenze kann nicht kleiner als Untergrenze sein"
-
-#: utils/adt/arrayfuncs.c:282 utils/adt/arrayfuncs.c:308
-#, c-format
-msgid "array value must start with \"{\" or dimension information"
-msgstr "Arraywert muss mit „{“ oder Dimensionsinformationen anfangen"
-
-#: utils/adt/arrayfuncs.c:296
-#, c-format
-msgid "missing assignment operator"
-msgstr "fehlender Zuweisungsoperator"
-
-#: utils/adt/arrayfuncs.c:313 utils/adt/arrayfuncs.c:319
-#, c-format
-msgid "array dimensions incompatible with array literal"
-msgstr "Arraydimensionen sind inkompatibel mit Arraykonstante"
-
-#: utils/adt/arrayfuncs.c:449 utils/adt/arrayfuncs.c:464
-#: utils/adt/arrayfuncs.c:473 utils/adt/arrayfuncs.c:487
-#: utils/adt/arrayfuncs.c:507 utils/adt/arrayfuncs.c:535
-#: utils/adt/arrayfuncs.c:540 utils/adt/arrayfuncs.c:580
-#: utils/adt/arrayfuncs.c:601 utils/adt/arrayfuncs.c:620
-#: utils/adt/arrayfuncs.c:730 utils/adt/arrayfuncs.c:739
-#: utils/adt/arrayfuncs.c:769 utils/adt/arrayfuncs.c:784
-#: utils/adt/arrayfuncs.c:837
+#: utils/adt/arrayfuncs.c:241 utils/adt/arrayfuncs.c:255
+#: utils/adt/arrayfuncs.c:266 utils/adt/arrayfuncs.c:288
+#: utils/adt/arrayfuncs.c:303 utils/adt/arrayfuncs.c:317
+#: utils/adt/arrayfuncs.c:323 utils/adt/arrayfuncs.c:330
+#: utils/adt/arrayfuncs.c:461 utils/adt/arrayfuncs.c:477
+#: utils/adt/arrayfuncs.c:488 utils/adt/arrayfuncs.c:503
+#: utils/adt/arrayfuncs.c:524 utils/adt/arrayfuncs.c:554
+#: utils/adt/arrayfuncs.c:561 utils/adt/arrayfuncs.c:569
+#: utils/adt/arrayfuncs.c:603 utils/adt/arrayfuncs.c:626
+#: utils/adt/arrayfuncs.c:646 utils/adt/arrayfuncs.c:758
+#: utils/adt/arrayfuncs.c:767 utils/adt/arrayfuncs.c:797
+#: utils/adt/arrayfuncs.c:812 utils/adt/arrayfuncs.c:865
 #, c-format
 msgid "malformed array literal: \"%s\""
 msgstr "fehlerhafte Arraykonstante: „%s“"
 
-#: utils/adt/arrayfuncs.c:876 utils/adt/arrayfuncs.c:1478
-#: utils/adt/arrayfuncs.c:2813 utils/adt/arrayfuncs.c:2961
-#: utils/adt/arrayfuncs.c:5054 utils/adt/arrayfuncs.c:5386
+#: utils/adt/arrayfuncs.c:242
+#, c-format
+msgid "\"[\" must introduce explicitly-specified array dimensions."
+msgstr "Auf „[“ müssen explizit angegebene Array-Dimensionen folgen."
+
+#: utils/adt/arrayfuncs.c:256
+#, c-format
+msgid "Missing array dimension value."
+msgstr "Dimensionswert fehlt."
+
+#: utils/adt/arrayfuncs.c:267 utils/adt/arrayfuncs.c:304
+#, c-format
+msgid "Missing \"%s\" after array dimensions."
+msgstr "„%s“ fehlt nach Arraydimensionen."
+
+#: utils/adt/arrayfuncs.c:276 utils/adt/arrayfuncs.c:2482
+#: utils/adt/arrayfuncs.c:2510 utils/adt/arrayfuncs.c:2525
+#, c-format
+msgid "upper bound cannot be less than lower bound"
+msgstr "Obergrenze kann nicht kleiner als Untergrenze sein"
+
+#: utils/adt/arrayfuncs.c:289
+#, c-format
+msgid "Array value must start with \"{\" or dimension information."
+msgstr "Arraywert muss mit „{“ oder Dimensionsinformationen anfangen."
+
+#: utils/adt/arrayfuncs.c:318
+#, c-format
+msgid "Array contents must start with \"{\"."
+msgstr "Array-Inhalt muss mit {“ anfangen."
+
+#: utils/adt/arrayfuncs.c:324 utils/adt/arrayfuncs.c:331
+#, c-format
+msgid "Specified array dimensions do not match array contents."
+msgstr "Angegebene Array-Dimensionen stimmen nicht mit dem Array-Inhalt überein."
+
+#: utils/adt/arrayfuncs.c:462 utils/adt/arrayfuncs.c:489
+#: utils/adt/rangetypes.c:2083 utils/adt/rangetypes.c:2091
+#: utils/adt/rowtypes.c:208 utils/adt/rowtypes.c:216
+#, c-format
+msgid "Unexpected end of input."
+msgstr "Unerwartetes Ende der Eingabe."
+
+#: utils/adt/arrayfuncs.c:478 utils/adt/arrayfuncs.c:525
+#: utils/adt/arrayfuncs.c:555 utils/adt/arrayfuncs.c:604
+#, c-format
+msgid "Unexpected \"%c\" character."
+msgstr "Unerwartetes Zeichen „%c“."
+
+#: utils/adt/arrayfuncs.c:504 utils/adt/arrayfuncs.c:627
+#, c-format
+msgid "Unexpected array element."
+msgstr "Unerwartetes Arrayelement."
+
+#: utils/adt/arrayfuncs.c:562
+#, c-format
+msgid "Unmatched \"%c\" character."
+msgstr "Zeichen „%c“ ohne Gegenstück."
+
+#: utils/adt/arrayfuncs.c:570
+#, c-format
+msgid "Multidimensional arrays must have sub-arrays with matching dimensions."
+msgstr "Mehrdimensionale Arrays müssen Arraysausdrücke mit gleicher Anzahl Dimensionen haben."
+
+#: utils/adt/arrayfuncs.c:647
+#, c-format
+msgid "Junk after closing right brace."
+msgstr "Müll nach schließender rechter geschweifter Klammer."
+
+#: utils/adt/arrayfuncs.c:904 utils/adt/arrayfuncs.c:1506
+#: utils/adt/arrayfuncs.c:2841 utils/adt/arrayfuncs.c:2989
+#: utils/adt/arrayfuncs.c:5082 utils/adt/arrayfuncs.c:5414
 #: utils/adt/arrayutils.c:93 utils/adt/arrayutils.c:102
 #: utils/adt/arrayutils.c:109
 #, c-format
 msgid "array size exceeds the maximum allowed (%d)"
 msgstr "Arraygröße überschreitet erlaubtes Maximum (%d)"
 
-#: utils/adt/arrayfuncs.c:1254
+#: utils/adt/arrayfuncs.c:1282
 #, c-format
 msgid "invalid array flags"
 msgstr "ungültige Array-Flags"
 
-#: utils/adt/arrayfuncs.c:1262
+#: utils/adt/arrayfuncs.c:1290
 #, c-format
 msgid "wrong element type"
 msgstr "falscher Elementtyp"
 
-#: utils/adt/arrayfuncs.c:1312 utils/adt/rangetypes.c:325
+#: utils/adt/arrayfuncs.c:1340 utils/adt/rangetypes.c:325
 #: utils/cache/lsyscache.c:2549
 #, c-format
 msgid "no binary input function available for type %s"
 msgstr "keine binäre Eingabefunktion verfügbar für Typ %s"
 
-#: utils/adt/arrayfuncs.c:1452
+#: utils/adt/arrayfuncs.c:1480
 #, c-format
 msgid "improper binary format in array element %d"
 msgstr "falsches Binärformat in Arrayelement %d"
 
-#: utils/adt/arrayfuncs.c:1534 utils/adt/rangetypes.c:330
+#: utils/adt/arrayfuncs.c:1562 utils/adt/rangetypes.c:330
 #: utils/cache/lsyscache.c:2582
 #, c-format
 msgid "no binary output function available for type %s"
 msgstr "keine binäre Ausgabefunktion verfügbar für Typ %s"
 
-#: utils/adt/arrayfuncs.c:1921
+#: utils/adt/arrayfuncs.c:1949
 #, c-format
 msgid "slices of fixed-length arrays not implemented"
 msgstr "Auswählen von Stücken aus Arrays mit fester Länge ist nicht implementiert"
 
-#: utils/adt/arrayfuncs.c:2094 utils/adt/arrayfuncs.c:2116
-#: utils/adt/arrayfuncs.c:2150 utils/adt/arrayfuncs.c:2436
-#: utils/adt/arrayfuncs.c:4934 utils/adt/arrayfuncs.c:4966
-#: utils/adt/arrayfuncs.c:4983 utils/adt/json.c:2171 utils/adt/json.c:2246
+#: utils/adt/arrayfuncs.c:2122 utils/adt/arrayfuncs.c:2144
+#: utils/adt/arrayfuncs.c:2178 utils/adt/arrayfuncs.c:2464
+#: utils/adt/arrayfuncs.c:4962 utils/adt/arrayfuncs.c:4994
+#: utils/adt/arrayfuncs.c:5011 utils/adt/json.c:2211 utils/adt/json.c:2286
 #, c-format
 msgid "wrong number of array subscripts"
 msgstr "falsche Anzahl Arrayindizes"
 
-#: utils/adt/arrayfuncs.c:2099 utils/adt/arrayfuncs.c:2192
-#: utils/adt/arrayfuncs.c:2487
+#: utils/adt/arrayfuncs.c:2127 utils/adt/arrayfuncs.c:2220
+#: utils/adt/arrayfuncs.c:2515
 #, c-format
 msgid "array subscript out of range"
 msgstr "Arrayindex außerhalb des gültigen Bereichs"
 
-#: utils/adt/arrayfuncs.c:2104
+#: utils/adt/arrayfuncs.c:2132
 #, c-format
 msgid "cannot assign null value to an element of a fixed-length array"
 msgstr "Array mit fester Länge kann keinen NULL-Wert enthalten"
 
-#: utils/adt/arrayfuncs.c:2390
+#: utils/adt/arrayfuncs.c:2418
 #, c-format
 msgid "updates on slices of fixed-length arrays not implemented"
 msgstr "Aktualisieren von Stücken aus Arrays mit fester Länge ist nicht implementiert"
 
-#: utils/adt/arrayfuncs.c:2426 utils/adt/arrayfuncs.c:2513
+#: utils/adt/arrayfuncs.c:2454 utils/adt/arrayfuncs.c:2541
 #, c-format
 msgid "source array too small"
 msgstr "Quellarray ist zu klein"
 
-#: utils/adt/arrayfuncs.c:3068
+#: utils/adt/arrayfuncs.c:3096
 #, c-format
 msgid "null array element not allowed in this context"
 msgstr "NULL-Werte im Array sind in diesem Zusammenhang nicht erlaubt"
 
-#: utils/adt/arrayfuncs.c:3171 utils/adt/arrayfuncs.c:3379
-#: utils/adt/arrayfuncs.c:3696
+#: utils/adt/arrayfuncs.c:3199 utils/adt/arrayfuncs.c:3407
+#: utils/adt/arrayfuncs.c:3724
 #, c-format
 msgid "cannot compare arrays of different element types"
 msgstr "kann Arrays mit verschiedenen Elementtypen nicht vergleichen"
 
-#: utils/adt/arrayfuncs.c:3581 utils/adt/rangetypes.c:1212
+#: utils/adt/arrayfuncs.c:3609 utils/adt/rangetypes.c:1212
 #, c-format
 msgid "could not identify a hash function for type %s"
 msgstr "konnte keine Hash-Funktion für Typ %s ermitteln"
 
-#: utils/adt/arrayfuncs.c:4832 utils/adt/arrayfuncs.c:4872
+#: utils/adt/arrayfuncs.c:4860 utils/adt/arrayfuncs.c:4900
 #, c-format
 msgid "dimension array or low bound array cannot be null"
 msgstr "Dimensions-Array oder Untergrenzen-Array darf nicht NULL sein"
 
-#: utils/adt/arrayfuncs.c:4935 utils/adt/arrayfuncs.c:4967
+#: utils/adt/arrayfuncs.c:4963 utils/adt/arrayfuncs.c:4995
 #, c-format
 msgid "Dimension array must be one dimensional."
 msgstr "Dimensions-Array muss eindimensional sein."
 
-#: utils/adt/arrayfuncs.c:4940 utils/adt/arrayfuncs.c:4972
+#: utils/adt/arrayfuncs.c:4968 utils/adt/arrayfuncs.c:5000
 #, c-format
 msgid "wrong range of array subscripts"
 msgstr "falscher Bereich der Arrayindizes"
 
-#: utils/adt/arrayfuncs.c:4941 utils/adt/arrayfuncs.c:4973
+#: utils/adt/arrayfuncs.c:4969 utils/adt/arrayfuncs.c:5001
 #, c-format
 msgid "Lower bound of dimension array must be one."
 msgstr "Untergrenze des Dimensions-Arrays muss eins sein."
 
-#: utils/adt/arrayfuncs.c:4946 utils/adt/arrayfuncs.c:4978
+#: utils/adt/arrayfuncs.c:4974 utils/adt/arrayfuncs.c:5006
 #, c-format
 msgid "dimension values cannot be null"
 msgstr "Dimensionswerte dürfen nicht NULL sein"
 
-#: utils/adt/arrayfuncs.c:4984
+#: utils/adt/arrayfuncs.c:5012
 #, c-format
 msgid "Low bound array has different size than dimensions array."
 msgstr "Untergrenzen-Array hat andere Größe als Dimensions-Array."
 
-#: utils/adt/arrayfuncs.c:5251
+#: utils/adt/arrayfuncs.c:5279
 #, c-format
 msgid "removing elements from multidimensional arrays is not supported"
 msgstr "Entfernen von Elementen aus mehrdimensionalen Arrays wird nicht unterstützt"
@@ -16123,8 +16164,8 @@ msgstr "ungültige Eingabesyntax für Typ money: „%s“"
 #: utils/adt/int.c:861 utils/adt/int.c:969 utils/adt/int.c:1058
 #: utils/adt/int.c:1097 utils/adt/int.c:1125 utils/adt/int8.c:597
 #: utils/adt/int8.c:657 utils/adt/int8.c:897 utils/adt/int8.c:1005
-#: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:4946
-#: utils/adt/numeric.c:5229 utils/adt/timestamp.c:3357
+#: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:4961
+#: utils/adt/numeric.c:5244 utils/adt/timestamp.c:3357
 #, c-format
 msgid "division by zero"
 msgstr "Division durch Null"
@@ -16160,7 +16201,7 @@ msgstr "Datum/Zeitwert „current“ wird nicht mehr unterstützt"
 msgid "date out of range: \"%s\""
 msgstr "date ist außerhalb des gültigen Bereichs: „%s“"
 
-#: utils/adt/date.c:217 utils/adt/json.c:1412 utils/adt/xml.c:2024
+#: utils/adt/date.c:217 utils/adt/json.c:1431 utils/adt/xml.c:2024
 #, c-format
 msgid "date out of range"
 msgstr "date ist außerhalb des gültigen Bereichs"
@@ -16188,8 +16229,8 @@ msgstr "Datum ist außerhalb des gültigen Bereichs für Typ „timestamp“"
 #: utils/adt/date.c:971 utils/adt/date.c:1017 utils/adt/date.c:1617
 #: utils/adt/date.c:1653 utils/adt/date.c:2525 utils/adt/formatting.c:3287
 #: utils/adt/formatting.c:3319 utils/adt/formatting.c:3387
-#: utils/adt/json.c:1437 utils/adt/json.c:1444 utils/adt/json.c:1464
-#: utils/adt/json.c:1471 utils/adt/nabstime.c:455 utils/adt/nabstime.c:498
+#: utils/adt/json.c:1456 utils/adt/json.c:1463 utils/adt/json.c:1483
+#: utils/adt/json.c:1490 utils/adt/nabstime.c:455 utils/adt/nabstime.c:498
 #: utils/adt/nabstime.c:528 utils/adt/nabstime.c:571 utils/adt/timestamp.c:232
 #: utils/adt/timestamp.c:275 utils/adt/timestamp.c:724
 #: utils/adt/timestamp.c:753 utils/adt/timestamp.c:792
@@ -16386,7 +16427,7 @@ msgid "\"%s\" is out of range for type real"
 msgstr "„%s“ ist außerhalb des gültigen Bereichs für Typ real"
 
 #: utils/adt/float.c:417 utils/adt/float.c:491 utils/adt/float.c:515
-#: utils/adt/numeric.c:4408 utils/adt/numeric.c:4434
+#: utils/adt/numeric.c:4423 utils/adt/numeric.c:4449
 #, c-format
 msgid "invalid input syntax for type double precision: \"%s\""
 msgstr "ungültige Eingabesyntax für Typ double precision: „%s“"
@@ -16399,32 +16440,32 @@ msgstr "„%s“ ist außerhalb des gültigen Bereichs für Typ double precision
 #: utils/adt/float.c:1179 utils/adt/float.c:1237 utils/adt/int.c:349
 #: utils/adt/int.c:775 utils/adt/int.c:804 utils/adt/int.c:825
 #: utils/adt/int.c:845 utils/adt/int.c:879 utils/adt/int.c:1174
-#: utils/adt/int8.c:1323 utils/adt/numeric.c:2386 utils/adt/numeric.c:2395
+#: utils/adt/int8.c:1323 utils/adt/numeric.c:2401 utils/adt/numeric.c:2410
 #, c-format
 msgid "smallint out of range"
 msgstr "smallint ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/float.c:1363 utils/adt/numeric.c:5622
+#: utils/adt/float.c:1363 utils/adt/numeric.c:5637
 #, c-format
 msgid "cannot take square root of a negative number"
 msgstr "Quadratwurzel von negativer Zahl kann nicht ermittelt werden"
 
-#: utils/adt/float.c:1405 utils/adt/numeric.c:2206
+#: utils/adt/float.c:1405 utils/adt/numeric.c:2221
 #, c-format
 msgid "zero raised to a negative power is undefined"
 msgstr "null hoch eine negative Zahl ist undefiniert"
 
-#: utils/adt/float.c:1409 utils/adt/numeric.c:2212
+#: utils/adt/float.c:1409 utils/adt/numeric.c:2227
 #, c-format
 msgid "a negative number raised to a non-integer power yields a complex result"
 msgstr "eine negative Zahl hoch eine nicht ganze Zahl ergibt ein komplexes Ergebnis"
 
-#: utils/adt/float.c:1475 utils/adt/float.c:1505 utils/adt/numeric.c:5840
+#: utils/adt/float.c:1475 utils/adt/float.c:1505 utils/adt/numeric.c:5855
 #, c-format
 msgid "cannot take logarithm of zero"
 msgstr "Logarithmus von null kann nicht ermittelt werden"
 
-#: utils/adt/float.c:1479 utils/adt/float.c:1509 utils/adt/numeric.c:5844
+#: utils/adt/float.c:1479 utils/adt/float.c:1509 utils/adt/numeric.c:5859
 #, c-format
 msgid "cannot take logarithm of a negative number"
 msgstr "Logarithmus negativer Zahlen kann nicht ermittelt werden"
@@ -16436,12 +16477,12 @@ msgstr "Logarithmus negativer Zahlen kann nicht ermittelt werden"
 msgid "input is out of range"
 msgstr "Eingabe ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/float.c:2747 utils/adt/numeric.c:1259
+#: utils/adt/float.c:2747 utils/adt/numeric.c:1274
 #, c-format
 msgid "count must be greater than zero"
 msgstr "Anzahl muss größer als null sein"
 
-#: utils/adt/float.c:2752 utils/adt/numeric.c:1266
+#: utils/adt/float.c:2752 utils/adt/numeric.c:1281
 #, c-format
 msgid "operand, lower bound, and upper bound cannot be NaN"
 msgstr "Operand, Untergrenze und Obergrenze dürfen nicht NaN sein"
@@ -16451,7 +16492,7 @@ msgstr "Operand, Untergrenze und Obergrenze dürfen nicht NaN sein"
 msgid "lower and upper bounds must be finite"
 msgstr "Untergrenze und Obergrenze müssen endlich sein"
 
-#: utils/adt/float.c:2796 utils/adt/numeric.c:1279
+#: utils/adt/float.c:2796 utils/adt/numeric.c:1294
 #, c-format
 msgid "lower bound cannot equal upper bound"
 msgstr "Untergrenze kann nicht gleich der Obergrenze sein"
@@ -16867,7 +16908,7 @@ msgstr "Wert „%s“ ist außerhalb des gültigen Bereichs für Typ bigint"
 #: utils/adt/int8.c:964 utils/adt/int8.c:991 utils/adt/int8.c:1031
 #: utils/adt/int8.c:1052 utils/adt/int8.c:1079 utils/adt/int8.c:1112
 #: utils/adt/int8.c:1140 utils/adt/int8.c:1161 utils/adt/int8.c:1188
-#: utils/adt/int8.c:1361 utils/adt/int8.c:1400 utils/adt/numeric.c:2341
+#: utils/adt/int8.c:1361 utils/adt/int8.c:1400 utils/adt/numeric.c:2356
 #: utils/adt/varbit.c:1645
 #, c-format
 msgid "bigint out of range"
@@ -16878,161 +16919,161 @@ msgstr "bigint ist außerhalb des gültigen Bereichs"
 msgid "OID out of range"
 msgstr "OID ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/json.c:695 utils/adt/json.c:735 utils/adt/json.c:750
-#: utils/adt/json.c:761 utils/adt/json.c:771 utils/adt/json.c:807
-#: utils/adt/json.c:819 utils/adt/json.c:850 utils/adt/json.c:868
-#: utils/adt/json.c:880 utils/adt/json.c:892 utils/adt/json.c:1031
-#: utils/adt/json.c:1045 utils/adt/json.c:1056 utils/adt/json.c:1064
-#: utils/adt/json.c:1072 utils/adt/json.c:1080 utils/adt/json.c:1088
-#: utils/adt/json.c:1096 utils/adt/json.c:1104 utils/adt/json.c:1112
-#: utils/adt/json.c:1142
+#: utils/adt/json.c:726 utils/adt/json.c:766 utils/adt/json.c:781
+#: utils/adt/json.c:792 utils/adt/json.c:802 utils/adt/json.c:838
+#: utils/adt/json.c:850 utils/adt/json.c:881 utils/adt/json.c:899
+#: utils/adt/json.c:911 utils/adt/json.c:923 utils/adt/json.c:1062
+#: utils/adt/json.c:1076 utils/adt/json.c:1087 utils/adt/json.c:1095
+#: utils/adt/json.c:1103 utils/adt/json.c:1111 utils/adt/json.c:1119
+#: utils/adt/json.c:1127 utils/adt/json.c:1135 utils/adt/json.c:1143
+#: utils/adt/json.c:1173
 #, c-format
 msgid "invalid input syntax for type json"
 msgstr "ungültige Eingabesyntax für Typ json"
 
-#: utils/adt/json.c:696
+#: utils/adt/json.c:727
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Zeichen mit Wert 0x%02x muss escapt werden."
 
-#: utils/adt/json.c:736
+#: utils/adt/json.c:767
 #, c-format
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "Nach „\\u“ müssen vier Hexadezimalziffern folgen."
 
-#: utils/adt/json.c:751
+#: utils/adt/json.c:782
 #, c-format
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 
-#: utils/adt/json.c:762 utils/adt/json.c:772 utils/adt/json.c:820
-#: utils/adt/json.c:881 utils/adt/json.c:893
+#: utils/adt/json.c:793 utils/adt/json.c:803 utils/adt/json.c:851
+#: utils/adt/json.c:912 utils/adt/json.c:924
 #, c-format
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
 
-#: utils/adt/json.c:808
+#: utils/adt/json.c:839
 #, c-format
 msgid "Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."
 msgstr "Unicode-Escape-Werte können nicht für Code-Punkt-Werte über 007F verwendet werden, wenn die Serverkodierung nicht UTF8 ist."
 
-#: utils/adt/json.c:851 utils/adt/json.c:869
+#: utils/adt/json.c:882 utils/adt/json.c:900
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Escape-Sequenz „\\%s“ ist nicht gültig."
 
-#: utils/adt/json.c:1032
+#: utils/adt/json.c:1063
 #, c-format
 msgid "The input string ended unexpectedly."
 msgstr "Die Eingabezeichenkette endete unerwartet."
 
-#: utils/adt/json.c:1046
+#: utils/adt/json.c:1077
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Ende der Eingabe erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1057
+#: utils/adt/json.c:1088
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "JSON-Wert erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1065 utils/adt/json.c:1113
+#: utils/adt/json.c:1096 utils/adt/json.c:1144
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Zeichenkette erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1073
+#: utils/adt/json.c:1104
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Array-Element oder „]“ erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1081
+#: utils/adt/json.c:1112
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "„,“ oder „]“ erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1089
+#: utils/adt/json.c:1120
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Zeichenkette oder „}“ erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1097
+#: utils/adt/json.c:1128
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "„:“ erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1105
+#: utils/adt/json.c:1136
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "„,“ oder „}“ erwartet, aber „%s“ gefunden."
 
-#: utils/adt/json.c:1143
+#: utils/adt/json.c:1174
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Token „%s“ ist ungültig."
 
-#: utils/adt/json.c:1215
+#: utils/adt/json.c:1246
 #, c-format
 msgid "JSON data, line %d: %s%s%s"
 msgstr "JSON-Daten, Zeile %d: %s%s%s"
 
-#: utils/adt/json.c:1360
+#: utils/adt/json.c:1389
 #, c-format
 msgid "key value must be scalar, not array, composite, or json"
 msgstr "Schlüsselwert muss skalar sein, nicht Array, zusammengesetzt oder json"
 
-#: utils/adt/json.c:1413
+#: utils/adt/json.c:1432
 #, c-format
 msgid "JSON does not support infinite date values."
 msgstr "JSON unterstützt keine unendlichen Datumswerte."
 
-#: utils/adt/json.c:1438 utils/adt/json.c:1465
+#: utils/adt/json.c:1457 utils/adt/json.c:1484
 #, c-format
 msgid "JSON does not support infinite timestamp values."
 msgstr "JSON unterstützt keine unendlichen timestamp-Werte."
 
-#: utils/adt/json.c:1930 utils/adt/json.c:1948 utils/adt/json.c:2023
-#: utils/adt/json.c:2044 utils/adt/json.c:2103
+#: utils/adt/json.c:1951 utils/adt/json.c:1969 utils/adt/json.c:2063
+#: utils/adt/json.c:2084 utils/adt/json.c:2143
 #, c-format
 msgid "could not determine data type for argument %d"
 msgstr "konnte Datentyp von Argument %d nicht ermitteln"
 
-#: utils/adt/json.c:1935
+#: utils/adt/json.c:1956
 #, c-format
 msgid "field name must not be null"
 msgstr "Feldname darf nicht NULL sein"
 
-#: utils/adt/json.c:1998
+#: utils/adt/json.c:2038
 #, c-format
 msgid "argument list must have even number of elements"
 msgstr "Argumentliste muss gerade Anzahl Elemente haben"
 
-#: utils/adt/json.c:1999
+#: utils/adt/json.c:2039
 #, c-format
 msgid "The arguments of json_build_object() must consist of alternating keys and values."
 msgstr "Die Argumente von json_build_object() müssen abwechselnd Schlüssel und Werte sein."
 
-#: utils/adt/json.c:2029
+#: utils/adt/json.c:2069
 #, c-format
 msgid "argument %d cannot be null"
 msgstr "Argument %d darf nicht NULL sein"
 
-#: utils/adt/json.c:2030
+#: utils/adt/json.c:2070
 #, c-format
 msgid "Object keys should be text."
 msgstr "Objektschlüssel sollten Text sein."
 
-#: utils/adt/json.c:2165
+#: utils/adt/json.c:2205
 #, c-format
 msgid "array must have two columns"
 msgstr "Array muss zwei Spalten haben"
 
-#: utils/adt/json.c:2189 utils/adt/json.c:2273
+#: utils/adt/json.c:2229 utils/adt/json.c:2313
 #, c-format
 msgid "null value not allowed for object key"
 msgstr "NULL-Werte sind nicht als Objektschlüssel erlaubt"
 
-#: utils/adt/json.c:2262
+#: utils/adt/json.c:2302
 #, c-format
 msgid "mismatched array dimensions"
 msgstr "Array-Dimensionen passen nicht"
@@ -17332,8 +17373,8 @@ msgstr "Ergebnis ist außerhalb des gültigen Bereichs"
 msgid "cannot subtract inet values of different sizes"
 msgstr "Subtraktion von „inet“-Werten unterschiedlicher Größe nicht möglich"
 
-#: utils/adt/numeric.c:485 utils/adt/numeric.c:512 utils/adt/numeric.c:3689
-#: utils/adt/numeric.c:3712 utils/adt/numeric.c:3736 utils/adt/numeric.c:3743
+#: utils/adt/numeric.c:485 utils/adt/numeric.c:512 utils/adt/numeric.c:3704
+#: utils/adt/numeric.c:3727 utils/adt/numeric.c:3751 utils/adt/numeric.c:3758
 #, c-format
 msgid "invalid input syntax for type numeric: \"%s\""
 msgstr "ungültige Eingabesyntax für Typ numeric: „%s“"
@@ -17343,62 +17384,67 @@ msgstr "ungültige Eingabesyntax für Typ numeric: „%s“"
 msgid "invalid length in external \"numeric\" value"
 msgstr "ungültige Länge in externem „numeric“-Wert"
 
-#: utils/adt/numeric.c:713
+#: utils/adt/numeric.c:715
 #, c-format
 msgid "invalid sign in external \"numeric\" value"
 msgstr "ungültiges Vorzeichen in externem „numeric“-Wert"
 
-#: utils/adt/numeric.c:723
+#: utils/adt/numeric.c:721
+#, c-format
+msgid "invalid scale in external \"numeric\" value"
+msgstr "ungültige Skala in externem „numeric“-Wert"
+
+#: utils/adt/numeric.c:730
 #, c-format
 msgid "invalid digit in external \"numeric\" value"
 msgstr "ungültige Ziffer in externem „numeric“-Wert"
 
-#: utils/adt/numeric.c:906 utils/adt/numeric.c:920
+#: utils/adt/numeric.c:921 utils/adt/numeric.c:935
 #, c-format
 msgid "NUMERIC precision %d must be between 1 and %d"
 msgstr "Präzision von NUMERIC (%d) muss zwischen 1 und %d liegen"
 
-#: utils/adt/numeric.c:911
+#: utils/adt/numeric.c:926
 #, c-format
 msgid "NUMERIC scale %d must be between 0 and precision %d"
 msgstr "Skala von NUMERIC (%d) muss zwischen 0 und %d liegen"
 
-#: utils/adt/numeric.c:929
+#: utils/adt/numeric.c:944
 #, c-format
 msgid "invalid NUMERIC type modifier"
 msgstr "ungültiker Modifikator für Typ NUMERIC"
 
-#: utils/adt/numeric.c:1936 utils/adt/numeric.c:4186 utils/adt/numeric.c:6155
+#: utils/adt/numeric.c:1951 utils/adt/numeric.c:4201 utils/adt/numeric.c:6170
 #, c-format
 msgid "value overflows numeric format"
 msgstr "Wert verursacht Überlauf im „numeric“-Format"
 
-#: utils/adt/numeric.c:2267
+#: utils/adt/numeric.c:2282
 #, c-format
 msgid "cannot convert NaN to integer"
 msgstr "kann NaN nicht in integer umwandeln"
 
-#: utils/adt/numeric.c:2333
+#: utils/adt/numeric.c:2348
 #, c-format
 msgid "cannot convert NaN to bigint"
 msgstr "kann NaN nicht in bigint umwandeln"
 
-#: utils/adt/numeric.c:2378
+#: utils/adt/numeric.c:2393
 #, c-format
 msgid "cannot convert NaN to smallint"
 msgstr "kann NaN nicht in smallint umwandeln"
 
-#: utils/adt/numeric.c:4256
+#: utils/adt/numeric.c:4271
 #, c-format
 msgid "numeric field overflow"
 msgstr "Feldüberlauf bei Typ „numeric“"
 
-#: utils/adt/numeric.c:4257
+#: utils/adt/numeric.c:4272
 #, c-format
 msgid "A field with precision %d, scale %d must round to an absolute value less than %s%d."
 msgstr "Ein Feld mit Präzision %d, Skala %d muss beim Runden einen Betrag von weniger als %s%d ergeben."
 
-#: utils/adt/numeric.c:5712
+#: utils/adt/numeric.c:5727
 #, c-format
 msgid "argument for function \"exp\" too big"
 msgstr "Argument für Funktion „exp“ zu groß"
@@ -17678,12 +17724,6 @@ msgstr "Zu viele Kommas."
 #, c-format
 msgid "Junk after right parenthesis or bracket."
 msgstr "Müll nach rechter runder oder eckiger Klammer."
-
-#: utils/adt/rangetypes.c:2083 utils/adt/rangetypes.c:2091
-#: utils/adt/rowtypes.c:208 utils/adt/rowtypes.c:216
-#, c-format
-msgid "Unexpected end of input."
-msgstr "Unerwartetes Ende der Eingabe."
 
 #: utils/adt/regexp.c:285 utils/adt/regexp.c:1234 utils/adt/varlena.c:3042
 #, c-format
