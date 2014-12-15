@@ -73,6 +73,7 @@ static double dist_ps_internal(Point *pt, LSEG *lseg);
 static Point *line_interpt_internal(LINE *l1, LINE *l2);
 static bool lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start);
 static Point *lseg_interpt_internal(LSEG *l1, LSEG *l2);
+static double dist_ppoly_internal(Point *pt, POLYGON *poly);
 
 
 /*
@@ -2415,6 +2416,9 @@ lseg_interpt(PG_FUNCTION_ARGS)
  *				Minimum distance from one object to another.
  *-------------------------------------------------------------------*/
 
+/*
+ * Distance from a point to a line
+ */
 Datum
 dist_pl(PG_FUNCTION_ARGS)
 {
@@ -2431,6 +2435,9 @@ dist_pl_internal(Point *pt, LINE *line)
 				HYPOT(line->A, line->B));
 }
 
+/*
+ * Distance from a point to a lseg
+ */
 Datum
 dist_ps(PG_FUNCTION_ARGS)
 {
@@ -2494,7 +2501,7 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 }
 
 /*
- ** Distance from a point to a path
+ * Distance from a point to a path
  */
 Datum
 dist_ppath(PG_FUNCTION_ARGS)
@@ -2550,6 +2557,9 @@ dist_ppath(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
+/*
+ * Distance from a point to a box
+ */
 Datum
 dist_pb(PG_FUNCTION_ARGS)
 {
@@ -2566,7 +2576,9 @@ dist_pb(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
-
+/*
+ * Distance from a lseg to a line
+ */
 Datum
 dist_sl(PG_FUNCTION_ARGS)
 {
@@ -2589,7 +2601,9 @@ dist_sl(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
-
+/*
+ * Distance from a lseg to a box
+ */
 Datum
 dist_sb(PG_FUNCTION_ARGS)
 {
@@ -2608,7 +2622,9 @@ dist_sb(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(result);
 }
 
-
+/*
+ * Distance from a line to a box
+ */
 Datum
 dist_lb(PG_FUNCTION_ARGS)
 {
@@ -2625,21 +2641,53 @@ dist_lb(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-
+/*
+ * Distance from a circle to a polygon
+ */
 Datum
 dist_cpoly(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	POLYGON    *poly = PG_GETARG_POLYGON_P(1);
 	float8		result;
+
+	/* calculate distance to center, and subtract radius */
+	result = dist_ppoly_internal(&circle->center, poly);
+
+	result -= circle->radius;
+	if (result < 0)
+		result = 0;
+
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ * Distance from a point to a polygon
+ */
+Datum
+dist_ppoly(PG_FUNCTION_ARGS)
+{
+	Point	   *point = PG_GETARG_POINT_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(1);
+	float8		result;
+
+	result = dist_ppoly_internal(point, poly);
+
+	PG_RETURN_FLOAT8(result);
+}
+
+static double
+dist_ppoly_internal(Point *pt, POLYGON *poly)
+{
+	float8		result;
 	float8		d;
 	int			i;
 	LSEG		seg;
 
-	if (point_inside(&(circle->center), poly->npts, poly->p) != 0)
+	if (point_inside(pt, poly->npts, poly->p) != 0)
 	{
 #ifdef GEODEBUG
-		printf("dist_cpoly- center inside of polygon\n");
+		printf("dist_ppoly_internal- point inside of polygon\n");
 #endif
 		PG_RETURN_FLOAT8(0.0);
 	}
@@ -2649,9 +2697,9 @@ dist_cpoly(PG_FUNCTION_ARGS)
 	seg.p[0].y = poly->p[0].y;
 	seg.p[1].x = poly->p[poly->npts - 1].x;
 	seg.p[1].y = poly->p[poly->npts - 1].y;
-	result = dist_ps_internal(&circle->center, &seg);
+	result = dist_ps_internal(pt, &seg);
 #ifdef GEODEBUG
-	printf("dist_cpoly- segment 0/n distance is %f\n", result);
+	printf("dist_ppoly_internal- segment 0/n distance is %f\n", result);
 #endif
 
 	/* check distances for other segments */
@@ -2661,19 +2709,15 @@ dist_cpoly(PG_FUNCTION_ARGS)
 		seg.p[0].y = poly->p[i].y;
 		seg.p[1].x = poly->p[i + 1].x;
 		seg.p[1].y = poly->p[i + 1].y;
-		d = dist_ps_internal(&circle->center, &seg);
+		d = dist_ps_internal(pt, &seg);
 #ifdef GEODEBUG
-		printf("dist_cpoly- segment %d distance is %f\n", (i + 1), d);
+		printf("dist_ppoly_internal- segment %d distance is %f\n", (i + 1), d);
 #endif
 		if (d < result)
 			result = d;
 	}
 
-	result -= circle->radius;
-	if (result < 0)
-		result = 0;
-
-	PG_RETURN_FLOAT8(result);
+	return result;
 }
 
 

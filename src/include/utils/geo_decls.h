@@ -395,6 +395,7 @@ extern Datum circle_radius(PG_FUNCTION_ARGS);
 extern Datum circle_distance(PG_FUNCTION_ARGS);
 extern Datum dist_pc(PG_FUNCTION_ARGS);
 extern Datum dist_cpoly(PG_FUNCTION_ARGS);
+extern Datum dist_ppoly(PG_FUNCTION_ARGS);
 extern Datum circle_center(PG_FUNCTION_ARGS);
 extern Datum cr_circle(PG_FUNCTION_ARGS);
 extern Datum box_circle(PG_FUNCTION_ARGS);
