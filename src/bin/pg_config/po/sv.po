@@ -1,50 +1,51 @@
 # Swedish message translation file for pg_config.
-# Dennis Bjˆrklund <db@zigo.dhs.org>, 2004, 2005, 2006.
+# Dennis Bj√∂rklund <db@zigo.dhs.org>, 2004, 2005, 2006.
+# Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.3\n"
+"Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-09-02 00:26+0000\n"
-"PO-Revision-Date: 2013-09-02 01:28-0400\n"
-"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"POT-Creation-Date: 2014-11-17 21:11+0000\n"
+"PO-Revision-Date: 2014-11-22 23:54+0100\n"
+"Last-Translator: Mats Erik Andersson <bsd@gisladisker.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "kunde inte identifiera aktuella katalogen: %s"
 
-#: ../../port/exec.c:146
+#: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "ogiltig bin‰r \"%s\""
+msgstr "ogiltig bin√§rfil \"%s\""
 
-#: ../../port/exec.c:195
+#: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "kunde inte l‰sa bin‰r \"%s\""
+msgstr "kunde inte l√§sa bin√§rfil \"%s\""
 
-#: ../../port/exec.c:202
+#: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "kunde inte hitta en \"%s\" att kˆra"
+msgstr "kunde inte hitta en \"%s\" att k√∂ra"
 
-#: ../../port/exec.c:257 ../../port/exec.c:293
+#: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
 msgstr "kunde inte byta katalog till \"%s\": %s"
 
-#: ../../port/exec.c:272
+#: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "kunde inte l‰sa symbolisk l‰nk \"%s\""
+msgstr "kunde inte l√§sa symbolisk l√§nk \"%s\""
 
-#: ../../port/exec.c:523
+#: ../../common/exec.c:523
 #, c-format
 msgid "pclose failed: %s"
 msgstr "pclose misslyckades: %s"
@@ -70,7 +71,7 @@ msgstr ""
 #: pg_config.c:429
 #, c-format
 msgid "Usage:\n"
-msgstr "Anv‰ndning:\n"
+msgstr "Anv√§ndning:\n"
 
 #: pg_config.c:430
 #, c-format
@@ -84,22 +85,22 @@ msgstr ""
 #: pg_config.c:431
 #, c-format
 msgid "Options:\n"
-msgstr "Flaggor:\n"
+msgstr "Programv√§xlar:\n"
 
 #: pg_config.c:432
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              visar platsen fˆr kˆrbara filer\n"
+msgstr "  --bindir              visa filkatalog f√∂r k√∂rbara filer\n"
 
 #: pg_config.c:433
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  --docdir              visa platsen fˆr dokumentationsfiler\n"
+msgstr "  --docdir              visa filkatalog f√∂r dokumentationsfiler\n"
 
 #: pg_config.c:434
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr "  --htmldir             visa platsen fˆr HTML-dokumentationsfiler\n"
+msgstr "  --htmldir             visa filkatalog f√∂r HTML-dokumentationsfiler\n"
 
 #: pg_config.c:435
 #, c-format
@@ -107,53 +108,53 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir          visar platsen fˆr C-header-filerna till\n"
-"                        klientinterface\n"
+"  --includedir          visa filkatalog f√∂r C-header-filerna med\n"
+"                        klientgr√§nssnitt\n"
 
 #: pg_config.c:437
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       visa platsen fˆr C-header-filer\n"
+msgstr "  --pkgincludedir       visa filkatalog f√∂r C-header-filer\n"
 
 #: pg_config.c:438
 #, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   visar platsen fˆr C-header-filerna till servern\n"
+msgstr "  --includedir-server   visa filkatalog f√∂r C-header-filerna till servern\n"
 
 #: pg_config.c:439
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              visar platsen fˆr bibliotekens objektfiler\n"
+msgstr "  --libdir              visa filkatalog f√∂r bibliotekens objektfiler\n"
 
 #: pg_config.c:440
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           visar platsen fˆr dynamiskt laddade moduler\n"
+msgstr "  --pkglibdir           visa filkatalog f√∂r dynamiskt laddade moduler\n"
 
 #: pg_config.c:441
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           visa platsen fˆr lokalstˆdfiler\n"
+msgstr "  --localedir           visa filkatalog f√∂r lokalst√∂dsfiler\n"
 
 #: pg_config.c:442
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --mandir              visa platsen fˆr manualsidor\n"
+msgstr "  --mandir              visa filkatalog f√∂r manualsidor\n"
 
 #: pg_config.c:443
 #, c-format
 msgid "  --sharedir            show location of architecture-independent support files\n"
-msgstr "  --sharedir            visa platsen fˆr arkitekturoberoende filer\n"
+msgstr "  --sharedir            visa filkatalog f√∂r arkitekturoberoende filer\n"
 
 #: pg_config.c:444
 #, c-format
 msgid "  --sysconfdir          show location of system-wide configuration files\n"
-msgstr "  --sysconfdir          visa platsen fˆr systemkonfigurationsfiler\n"
+msgstr "  --sysconfdir          visa filkatalog f√∂r systemkonfigurationsfiler\n"
 
 #: pg_config.c:445
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                visar platsen fˆr makefilen till utˆkningar\n"
+msgstr "  --pgxs                visa plats f√∂r make-filen vid utvidgningar\n"
 
 #: pg_config.c:446
 #, c-format
@@ -161,58 +162,58 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           dessa flaggor gavs till \"configure\"-skriptet n‰r\n"
+"  --configure           dessa flaggor gavs till \"configure\"-skriptet n√§r\n"
 "                        PostgreSQL byggdes\n"
 
 #: pg_config.c:448
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr "  --cc                  visa v‰rdet pÂ CC som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --cc                  visa v√§rde p√• CC n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:449
 #, c-format
 msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cppflags            visa v‰rdet pÂ CPPFLAGS som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --cppflags            visa v√§rde p√• CPPFLAGS n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:450
 #, c-format
 msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cflags              visa v‰rdet pÂ CFLAGS som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --cflags              visa v√§rde p√• CFLAGS n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:451
 #, c-format
 msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --cflags_sl           visa v‰rdet pÂ CFLAGS_SL som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --cflags_sl           visa v√§rde p√• CFLAGS_SL n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:452
 #, c-format
 msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr "  --ldflags             visa v‰rdet pÂ LDFLAGS som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --ldflags             visa v√§rde p√• LDFLAGS n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:453
 #, c-format
 msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
-msgstr "  --ldflags_ex          visa v‰rdet pÂ LDFLAGS_EX som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --ldflags_ex          visa v√§rde p√• LDFLAGS_EX n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:454
 #, c-format
 msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --ldflags_sl          visa v‰rdet pÂ LDFLAGS_SL som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --ldflags_sl          visa v√§rde p√• LDFLAGS_SL n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:455
 #, c-format
 msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr "  --libs                visa v‰rdet pÂ LIBS som anv‰ndes n‰r PostgreSQL byggdes\n"
+msgstr "  --libs                visa v√§rde p√• LIBS n√§r PostgreSQL byggdes\n"
 
 #: pg_config.c:456
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
-msgstr "  --version             visa PostgreSQLs version\n"
+msgstr "  --version             visa version f√∂r PostgreSQL\n"
 
 #: pg_config.c:457
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
-msgstr "  -?, --help            visa den h‰r hj‰lpen, avsluta sedan\n"
+msgstr "  -?, --help            visa denna hj√§lp, avsluta sedan\n"
 
 #: pg_config.c:458
 #, c-format
@@ -222,7 +223,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Utan argument sÂ visas alla k‰nda v‰rden.\n"
+"Utan argument visas alla k√§nda v√§rden.\n"
 "\n"
 
 #: pg_config.c:459
@@ -233,14 +234,14 @@ msgstr "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
 #: pg_config.c:465
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Fˆrsˆk med \"%s --help\" fˆr mer information.\n"
+msgstr "F√∂rs√∂k med \"%s --help\" f√∂r mer information.\n"
 
 #: pg_config.c:504
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: kunde inte hitta min egen kˆrbara fil\n"
+msgstr "%s: Kunde inte hitta min egen k√∂rbara fil.\n"
 
 #: pg_config.c:527
 #, c-format
 msgid "%s: invalid argument: %s\n"
-msgstr "%s: ogiltigt argument: %s\n"
+msgstr "%s: Ogiltigt argument: %s\n"

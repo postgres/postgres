@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 11:07+0000\n"
-"PO-Revision-Date: 2014-05-17 15:34+0100\n"
+"POT-Creation-Date: 2014-12-04 22:37+0000\n"
+"PO-Revision-Date: 2014-12-05 10:12+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -597,7 +597,6 @@ msgstr "déclaration dupliquée"
 
 #: pl_gram.y:740 pl_gram.y:768
 #, c-format
-#| msgid "variable \"%s\" is hidden by a local variable"
 msgid "variable \"%s\" shadows a previously defined variable"
 msgstr "la variable « %s » cache une variable définie précédemment"
 
@@ -846,21 +845,26 @@ msgstr ""
 "les noms des colonnes des tables."
 
 #: pl_handler.c:156
+#| msgid ""
+#| "Print information about parameters in the DETAIL part of the error "
+#| "messages generated on INTO .. STRICT failures."
 msgid ""
 "Print information about parameters in the DETAIL part of the error messages "
-"generated on INTO .. STRICT failures."
+"generated on INTO ... STRICT failures."
 msgstr ""
 "Affiche des informations sur les paramètres dans la partie DETAIL des "
 "messages d'erreur générés pour des échecs INTO .. STRICT."
 
 #: pl_handler.c:164
-msgid "List of programming constructs which should produce a warning."
+#| msgid "List of programming constructs which should produce a warning."
+msgid "List of programming constructs that should produce a warning."
 msgstr ""
 "Liste des constructions de programmation qui devraient produire un message "
 "d'avertissement."
 
 #: pl_handler.c:174
-msgid "List of programming constructs which should produce an error."
+#| msgid "List of programming constructs which should produce an error."
+msgid "List of programming constructs that should produce an error."
 msgstr ""
 "Liste des constructions de programmation qui devraient produire une erreur."
 
@@ -876,94 +880,35 @@ msgstr "%s à la fin de l'entrée"
 msgid "%s at or near \"%s\""
 msgstr "%s sur ou près de « %s »"
 
-#~ msgid ""
-#~ "RETURN must specify a record or row variable in function returning row"
+#~ msgid "relation \"%s.%s\" does not exist"
+#~ msgstr "la relation « %s.%s » n'existe pas"
+
+#~ msgid "cursor \"%s\" closed unexpectedly"
+#~ msgstr "le curseur « %s » a été fermé de façon inattendu"
+
+#~ msgid "row \"%s\" has no field \"%s\""
+#~ msgstr "la ligne « %s » n'a aucun champ « %s »"
+
+#~ msgid "row \"%s.%s\" has no field \"%s\""
+#~ msgstr "la ligne « %s.%s » n'a aucun champ « %s »"
+
+#~ msgid "expected \"[\""
+#~ msgstr "« [ » attendu"
+
+#~ msgid "type of \"%s\" does not match that when preparing the plan"
 #~ msgstr ""
-#~ "RETURN ne peut pas indiquer une variable RECORD ou ROW dans une fonction\n"
-#~ "renvoyant une ligne"
+#~ "le type de « %s » ne correspond pas à ce qui est préparé dans le plan"
 
-#~ msgid ""
-#~ "RETURN NEXT must specify a record or row variable in function returning "
-#~ "row"
+#~ msgid "type of \"%s.%s\" does not match that when preparing the plan"
 #~ msgstr ""
-#~ "RETURN NEXT doit indiquer une variable RECORD ou ROW dans une fonction\n"
-#~ "renvoyant une ligne"
+#~ "le type de « %s.%s » ne correspond pas à ce qui est préparé dans le plan"
 
-#~ msgid "unterminated dollar-quoted string"
-#~ msgstr "chaîne entre dollars non terminée"
-
-#~ msgid "unterminated quoted string"
-#~ msgstr "chaîne entre guillemets non terminée"
-
-#~ msgid "unterminated /* comment"
-#~ msgstr "commentaire /* non terminé"
-
-#~ msgid "unterminated quoted identifier"
-#~ msgstr "identifiant entre guillemets non terminé"
-
-#~ msgid "qualified identifier cannot be used here: %s"
-#~ msgstr "l'identifiant qualifié ne peut pas être utilisé ici : %s"
-
-#~ msgid "unterminated \" in identifier: %s"
-#~ msgstr "\" non terminé dans l'identifiant : %s"
-
-#~ msgid "variable \"%s\" does not exist in the current block"
-#~ msgstr "la variable « %s » n'existe pas dans le bloc actuel"
-
-#~ msgid "expected \")\""
-#~ msgstr "« ) » attendu"
-
-#~ msgid "string literal in PL/PgSQL function \"%s\" near line %d"
+#~ msgid "type of tg_argv[%d] does not match that when preparing the plan"
 #~ msgstr ""
-#~ "chaîne littérale dans la fonction PL/pgsql « %s » près de la ligne %d"
+#~ "le type de tg_argv[%d] ne correspond pas à ce qui est préparé dans le plan"
 
-#~ msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
-#~ msgstr ""
-#~ "instruction SQL dans la fonction PL/pgsql « %s » près de la ligne %d"
-
-#~ msgid ""
-#~ "Expected record variable, row variable, or list of scalar variables "
-#~ "following INTO."
-#~ msgstr ""
-#~ "Attendait une variable RECORD, ROW ou une liste de variables scalaires\n"
-#~ "suivant INTO."
-
-#~ msgid "cannot assign to tg_argv"
-#~ msgstr "ne peut pas affecter à tg_argv"
-
-#~ msgid ""
-#~ "RETURN cannot have a parameter in function returning set; use RETURN NEXT "
-#~ "or RETURN QUERY"
-#~ msgstr ""
-#~ "RETURN ne peut pas avoir un paramètre dans une fonction renvoyant des\n"
-#~ "lignes ; utilisez RETURN NEXT ou RETURN QUERY"
-
-#~ msgid "too many variables specified in SQL statement"
-#~ msgstr "trop de variables spécifiées dans l'instruction SQL"
-
-#~ msgid "expected a cursor or refcursor variable"
-#~ msgstr "attendait une variable de type cursor ou refcursor"
-
-#~ msgid "Expected \"FOR\", to open a cursor for an unbound cursor variable."
-#~ msgstr ""
-#~ "Attendait « FOR » pour ouvrir un curseur pour une variable sans limite."
-
-#~ msgid "syntax error at \"%s\""
-#~ msgstr "erreur de syntaxe à « %s »"
-
-#~ msgid "expected an integer variable"
-#~ msgstr "attend une variable entière"
-
-#~ msgid "function has no parameter \"%s\""
-#~ msgstr "la fonction n'a pas de paramètre « %s »"
-
-#~ msgid "only positional parameters can be aliased"
-#~ msgstr "seuls les paramètres de position peuvent avoir un alias"
-
-#~ msgid "Returned type %s does not match expected type %s in column \"%s\"."
-#~ msgstr ""
-#~ "Le type %s renvoyé ne correspond pas au type %s attendu dans la colonne « "
-#~ "%s »."
+#~ msgid "N/A (dropped column)"
+#~ msgstr "N/A (colonne supprimée)"
 
 #~ msgid ""
 #~ "Number of returned columns (%d) does not match expected column count (%d)."
@@ -972,32 +917,91 @@ msgstr "%s sur ou près de « %s »"
 #~ "colonnes\n"
 #~ "attendues (%d)."
 
-#~ msgid "N/A (dropped column)"
-#~ msgstr "N/A (colonne supprimée)"
-
-#~ msgid "type of tg_argv[%d] does not match that when preparing the plan"
+#~ msgid "Returned type %s does not match expected type %s in column \"%s\"."
 #~ msgstr ""
-#~ "le type de tg_argv[%d] ne correspond pas à ce qui est préparé dans le plan"
+#~ "Le type %s renvoyé ne correspond pas au type %s attendu dans la colonne « "
+#~ "%s »."
 
-#~ msgid "type of \"%s.%s\" does not match that when preparing the plan"
+#~ msgid "only positional parameters can be aliased"
+#~ msgstr "seuls les paramètres de position peuvent avoir un alias"
+
+#~ msgid "function has no parameter \"%s\""
+#~ msgstr "la fonction n'a pas de paramètre « %s »"
+
+#~ msgid "expected an integer variable"
+#~ msgstr "attend une variable entière"
+
+#~ msgid "syntax error at \"%s\""
+#~ msgstr "erreur de syntaxe à « %s »"
+
+#~ msgid "Expected \"FOR\", to open a cursor for an unbound cursor variable."
 #~ msgstr ""
-#~ "le type de « %s.%s » ne correspond pas à ce qui est préparé dans le plan"
+#~ "Attendait « FOR » pour ouvrir un curseur pour une variable sans limite."
 
-#~ msgid "type of \"%s\" does not match that when preparing the plan"
+#~ msgid "expected a cursor or refcursor variable"
+#~ msgstr "attendait une variable de type cursor ou refcursor"
+
+#~ msgid "too many variables specified in SQL statement"
+#~ msgstr "trop de variables spécifiées dans l'instruction SQL"
+
+#~ msgid ""
+#~ "RETURN cannot have a parameter in function returning set; use RETURN NEXT "
+#~ "or RETURN QUERY"
 #~ msgstr ""
-#~ "le type de « %s » ne correspond pas à ce qui est préparé dans le plan"
+#~ "RETURN ne peut pas avoir un paramètre dans une fonction renvoyant des\n"
+#~ "lignes ; utilisez RETURN NEXT ou RETURN QUERY"
 
-#~ msgid "expected \"[\""
-#~ msgstr "« [ » attendu"
+#~ msgid "cannot assign to tg_argv"
+#~ msgstr "ne peut pas affecter à tg_argv"
 
-#~ msgid "row \"%s.%s\" has no field \"%s\""
-#~ msgstr "la ligne « %s.%s » n'a aucun champ « %s »"
+#~ msgid ""
+#~ "Expected record variable, row variable, or list of scalar variables "
+#~ "following INTO."
+#~ msgstr ""
+#~ "Attendait une variable RECORD, ROW ou une liste de variables scalaires\n"
+#~ "suivant INTO."
 
-#~ msgid "row \"%s\" has no field \"%s\""
-#~ msgstr "la ligne « %s » n'a aucun champ « %s »"
+#~ msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
+#~ msgstr ""
+#~ "instruction SQL dans la fonction PL/pgsql « %s » près de la ligne %d"
 
-#~ msgid "cursor \"%s\" closed unexpectedly"
-#~ msgstr "le curseur « %s » a été fermé de façon inattendu"
+#~ msgid "string literal in PL/PgSQL function \"%s\" near line %d"
+#~ msgstr ""
+#~ "chaîne littérale dans la fonction PL/pgsql « %s » près de la ligne %d"
 
-#~ msgid "relation \"%s.%s\" does not exist"
-#~ msgstr "la relation « %s.%s » n'existe pas"
+#~ msgid "expected \")\""
+#~ msgstr "« ) » attendu"
+
+#~ msgid "variable \"%s\" does not exist in the current block"
+#~ msgstr "la variable « %s » n'existe pas dans le bloc actuel"
+
+#~ msgid "unterminated \" in identifier: %s"
+#~ msgstr "\" non terminé dans l'identifiant : %s"
+
+#~ msgid "qualified identifier cannot be used here: %s"
+#~ msgstr "l'identifiant qualifié ne peut pas être utilisé ici : %s"
+
+#~ msgid "unterminated quoted identifier"
+#~ msgstr "identifiant entre guillemets non terminé"
+
+#~ msgid "unterminated /* comment"
+#~ msgstr "commentaire /* non terminé"
+
+#~ msgid "unterminated quoted string"
+#~ msgstr "chaîne entre guillemets non terminée"
+
+#~ msgid "unterminated dollar-quoted string"
+#~ msgstr "chaîne entre dollars non terminée"
+
+#~ msgid ""
+#~ "RETURN NEXT must specify a record or row variable in function returning "
+#~ "row"
+#~ msgstr ""
+#~ "RETURN NEXT doit indiquer une variable RECORD ou ROW dans une fonction\n"
+#~ "renvoyant une ligne"
+
+#~ msgid ""
+#~ "RETURN must specify a record or row variable in function returning row"
+#~ msgstr ""
+#~ "RETURN ne peut pas indiquer une variable RECORD ou ROW dans une fonction\n"
+#~ "renvoyant une ligne"

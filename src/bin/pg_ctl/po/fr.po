@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 11:12+0000\n"
-"PO-Revision-Date: 2014-05-17 15:27+0100\n"
+"POT-Creation-Date: 2014-12-04 22:42+0000\n"
+"PO-Revision-Date: 2014-12-05 10:04+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
@@ -55,7 +55,8 @@ msgid "pclose failed: %s"
 msgstr "échec de pclose : %s"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83
+#: ../../common/fe_memutils.c:83 ../../port/path.c:598 ../../port/path.c:636
+#: ../../port/path.c:653
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
@@ -100,9 +101,14 @@ msgstr "le processus fils a été terminé par le signal %d"
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
 
+#: ../../port/path.c:620
+#, c-format
+#| msgid "could not identify current directory: %s"
+msgid "could not get current working directory: %s\n"
+msgstr "n'a pas pu obtenir le répertoire de travail : %s\n"
+
 #: pg_ctl.c:259
 #, c-format
-#| msgid "directory \"%s\" does not exist"
 msgid "%s: directory \"%s\" does not exist\n"
 msgstr "%s : le répertoire « %s » n'existe pas\n"
 
@@ -113,7 +119,6 @@ msgstr "%s : n'a pas pu accéder au répertoire « %s » : %s\n"
 
 #: pg_ctl.c:275
 #, c-format
-#| msgid "specified data directory \"%s\" is not a directory"
 msgid "%s: directory \"%s\" is not a database cluster directory\n"
 msgstr "%s : le répertoire « %s » n'est pas un répertoire d'instance\n"
 
@@ -691,12 +696,15 @@ msgstr "  -p CHEMIN_POSTGRES       normalement pas nécessaire\n"
 
 #: pg_ctl.c:1899
 #, c-format
+#| msgid ""
+#| "\n"
+#| "Options for start or restart:\n"
 msgid ""
 "\n"
-"Options for stop, restart, or promote:\n"
+"Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Options pour l'arrêt, le redémarrage ou la promotion :\n"
+"Options pour l'arrêt ou le redémarrage :\n"
 
 #: pg_ctl.c:1900
 #, c-format
@@ -881,11 +889,17 @@ msgstr ""
 "%s : aucun répertoire de bases de données indiqué et variable\n"
 "d'environnement PGDATA non initialisée\n"
 
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
 
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s : mémoire épuisée\n"
+#~ msgid "  --help                 show this help, then exit\n"
+#~ msgstr "  --help                   affiche cette aide et quitte\n"
+
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr "  --version                affiche la version et quitte\n"
+
+#~ msgid "could not start server\n"
+#~ msgstr "n'a pas pu démarrer le serveur\n"
 
 #~ msgid ""
 #~ "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -900,14 +914,15 @@ msgstr ""
 #~ "ou d'envoyer un signal à un processus PostgreSQL\n"
 #~ "\n"
 
-#~ msgid "could not start server\n"
-#~ msgstr "n'a pas pu démarrer le serveur\n"
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s : mémoire épuisée\n"
 
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version                affiche la version et quitte\n"
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                   affiche cette aide et quitte\n"
-
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
+#~ msgid ""
+#~ "\n"
+#~ "Options for stop, restart, or promote:\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"

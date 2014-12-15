@@ -1,112 +1,112 @@
-# simplified Chinese translation file for pg_resetxlog and friends
-# Bao Wei <weibao@forevertek.com>, 2002.
+# Swedish message translation file for resetxlog.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006.
+# Peter Eisentraut <peter_e@gmx.net>, 2010.
+# Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetxlog (PostgreSQL 9.0)\n"
+"Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-11-22 21:12+0000\n"
-"PO-Revision-Date: 2014-11-28 15:14+0800\n"
-"Last-Translator: Xiong He <iihero@qq.com>\n"
-"Language-Team: Chinese (Simplified)\n"
-"Language: zh_CN\n"
+"POT-Creation-Date: 2014-11-25 16:12+0000\n"
+"PO-Revision-Date: 2014-11-29 18:32+0100\n"
+"Last-Translator: Mats Erik Andersson <bsd@gisladisker.se>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
 
 #: pg_resetxlog.c:130
 #, c-format
 msgid "%s: invalid argument for option -e\n"
-msgstr "%s: 对于选项-e 参数无效\n"
+msgstr "%s: Ogiltigt argument för växel -e.\n"
 
 #: pg_resetxlog.c:131 pg_resetxlog.c:146 pg_resetxlog.c:161 pg_resetxlog.c:176
 #: pg_resetxlog.c:184 pg_resetxlog.c:210 pg_resetxlog.c:224 pg_resetxlog.c:231
 #: pg_resetxlog.c:239
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "输入 \"%s --help\" 获取更多的信息.\n"
+msgstr "Försök med \"%s --help\" för mer information.\n"
 
 #: pg_resetxlog.c:136
 #, c-format
 msgid "%s: transaction ID epoch (-e) must not be -1\n"
-msgstr "%s: 事务ID epoch(-e) 不能为 -1\n"
+msgstr "%s: Epok (-e) för transaktions-ID får inte vara -1.\n"
 
 #: pg_resetxlog.c:145
 #, c-format
 msgid "%s: invalid argument for option -x\n"
-msgstr "%s: 为 -x 选项的无效参数\n"
+msgstr "%s: Ogiltigt argument för växel -x.\n"
 
 #: pg_resetxlog.c:151
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
-msgstr "%s: 事务 ID (-x) 不能为 0\n"
+msgstr "%s: Transaktions-ID (-x) får inte vara 0.\n"
 
 #: pg_resetxlog.c:160
 #, c-format
 msgid "%s: invalid argument for option -o\n"
-msgstr "%s: 为 -o 选项的无效参数\n"
+msgstr "%s: Ogiltigt argument för växel -o.\n"
 
 #: pg_resetxlog.c:166
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
-msgstr "%s: OID (-o) 不能为 0\n"
+msgstr "%s: OID (-o) får inte vara 0.\n"
 
 #: pg_resetxlog.c:175 pg_resetxlog.c:183
 #, c-format
 msgid "%s: invalid argument for option -m\n"
-msgstr "%s: 对于选项-m 参数无效\n"
+msgstr "%s: Ogiltigt argument för växel -m.\n"
 
 #: pg_resetxlog.c:189
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
-msgstr "%s:  多事务 ID (-m) 不能为 0\n"
+msgstr "%s: Multitransaktions-ID (-m) får inte vara 0.\n"
 
 #: pg_resetxlog.c:199
 #, c-format
 msgid "%s: oldest multitransaction ID (-m) must not be 0\n"
-msgstr "%s:  最老的多事务 ID (-m) 不能为 0\n"
+msgstr "%s: Äldsta multitransaktions-ID (-m) får inte vara 0.\n"
 
 #: pg_resetxlog.c:209
 #, c-format
 msgid "%s: invalid argument for option -O\n"
-msgstr "%s: 对于选项-O 参数无效\n"
+msgstr "%s: Ogiltigt argument för växel -O.\n"
 
 #: pg_resetxlog.c:215
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
-msgstr "%s: 多事务 偏移 (-O) 不能为-1\n"
+msgstr "%s: Multitransaktionsoffset (-O) får inte vara -1.\n"
 
 #: pg_resetxlog.c:223
 #, c-format
 msgid "%s: invalid argument for option -l\n"
-msgstr "%s: 为 -l 选项的无效参数\n"
+msgstr "%s: Ogiltigt argument för växel -l.\n"
 
 #: pg_resetxlog.c:238
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: 没有指定数据目录\n"
+msgstr "%s: Ingen datakatalog angiven.\n"
 
 #: pg_resetxlog.c:252
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
-msgstr "%s:不能由\"root\"执行\n"
+msgstr "%s: Får inte utföras av \"root\".\n"
 
 #: pg_resetxlog.c:254
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "您现在作为PostgreSQL超级用户运行%s.\n"
+msgstr "Du måste köra %s som PostgreSQL:s superanvändare.\n"
 
-# command.c:256
 #: pg_resetxlog.c:264
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
-msgstr "%s: 无法切换目录至 \"%s\": %s\n"
+msgstr "%s: Kunde inte gå till katalog \"%s\": %s\n"
 
 #: pg_resetxlog.c:277 pg_resetxlog.c:418
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: 无法打开文件 \"%s\" 读取信息: %s\n"
+msgstr "%s: Kunde inte öppna filen \"%s\" för läsning: %s\n"
 
 #: pg_resetxlog.c:284
 #, c-format
@@ -114,8 +114,8 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s: 锁文件 \"%s\" 已经存在\n"
-"是否有一个服务正在运行? 如果没有, 删除那个锁文件然后再试一次.\n"
+"%s: En låsfil \"%s\" finns på plats.\n"
+"Kör servern redan? Om inte, radera låsfilen och försök igen.\n"
 
 #: pg_resetxlog.c:366
 #, c-format
@@ -124,7 +124,8 @@ msgid ""
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"如果这些值可接受, 用 -f 强制重置.\n"
+"Om dessa värden verkar godtagbara, använd då -f för att\n"
+"framtvinga återställning.\n"
 
 #: pg_resetxlog.c:378
 #, c-format
@@ -133,14 +134,14 @@ msgid ""
 "Resetting the transaction log might cause data to be lost.\n"
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
-"数据库服务器没有彻底关闭.\n"
-"重置事务日志有可能会引起丢失数据.\n"
-"如果你仍想继续, 用 -f 强制重置.\n"
+"Databasservern stängdes inte av ordentligt. Att återställa\n"
+"transaktionsloggen kan medföra att data förloras. Om du ändå\n"
+"vill fortsätta, använd -f för att framtvinga återställning.\n"
 
 #: pg_resetxlog.c:392
 #, c-format
 msgid "Transaction log reset\n"
-msgstr "事务日志重置\n"
+msgstr "Återställning av transaktionslogg.\n"
 
 #: pg_resetxlog.c:421
 #, c-format
@@ -149,24 +150,23 @@ msgid ""
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"如果你确定数据目录路径是正确的, 运行\n"
-"  touch %s\n"
-"然后再试一次.\n"
+"Om du är säker på att sökvägen till datakatalogen är riktig,\n"
+"utför då \"touch %s\" och försök sedan igen.\n"
 
 #: pg_resetxlog.c:434
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: 无法读取文件 \"%s\": %s\n"
+msgstr "%s: Kunde inte läsa fil \"%s\": %s\n"
 
 #: pg_resetxlog.c:457
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr "%s: pg_control 已经存在, 但有无效的CRC; 带有警告的继续运行\n"
+msgstr "%s: pg_control existerar men har ogiltig CRC. Fortsätt med varsamhet.\n"
 
 #: pg_resetxlog.c:466
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: pg_control 已经存在, 但已破坏或无效版本; 忽略它\n"
+msgstr "%s: pg_control existerar men är trasig eller har okänd version. Den ignoreras.\n"
 
 #: pg_resetxlog.c:568
 #, c-format
@@ -174,182 +174,180 @@ msgid ""
 "Guessed pg_control values:\n"
 "\n"
 msgstr ""
-"猜测的 pg_control 值:\n"
+"Gissade värden för pg_control:\n"
 "\n"
 
 #: pg_resetxlog.c:570
 #, c-format
-#| msgid ""
-#| "pg_control values:\n"
-#| "\n"
 msgid ""
 "Current pg_control values:\n"
 "\n"
 msgstr ""
-"当前的 pg_control 值:\n"
+"Nuvarande värden för pg_control:\n"
 "\n"
 
+# November 26th, 2014: Insert six additional space characters
+# for best alignment with Swedish translation.
+# Translations should be checked against those of pg_controldata.
 #: pg_resetxlog.c:579
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control 版本:                      %u\n"
+msgstr "Versionsnummer för pg_control:              %u\n"
 
 #: pg_resetxlog.c:581
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Catalog 版本:                         %u\n"
+msgstr "Katalogversion:                             %u\n"
 
 #: pg_resetxlog.c:583
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "数据库系统标识符:                     %s\n"
+msgstr "Databasens systemidentifierare:             %s\n"
 
 #: pg_resetxlog.c:585
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "最新检查点的 TimeLineID:              %u\n"
+msgstr "TimeLineID vid senaste kontrollpunkt:       %u\n"
 
 #: pg_resetxlog.c:587
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "最新检查点的full_page_writes: %s\n"
+msgstr "Senaste kontrollpunktens full_page_writes:  %s\n"
 
-# help.c:48
 #: pg_resetxlog.c:588
 msgid "off"
-msgstr "关闭"
+msgstr "av"
 
-# help.c:48
 #: pg_resetxlog.c:588
 msgid "on"
-msgstr "开启"
+msgstr "på"
 
 #: pg_resetxlog.c:589
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "最新检查点的 NextXID:                     %u/%u\n"
+msgstr "NextXID vid senaste kontrollpunkt:          %u/%u\n"
 
 #: pg_resetxlog.c:592
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "最新检查点的 NextOID:                 %u\n"
+msgstr "NextOID vid senaste kontrollpunkt:          %u\n"
 
 #: pg_resetxlog.c:594
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "最新检查点的 NextMultiXactId:         %u\n"
+msgstr "NextMultiXactId vid senaste kontrollpunkt:  %u\n"
 
 #: pg_resetxlog.c:596
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "最新检查点的 NextMultiOffset:          %u\n"
+msgstr "NextMultiOffset vid senaste kontrollpunkt:  %u\n"
 
 #: pg_resetxlog.c:598
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "最新检查点的oldestXID:             %u\n"
+msgstr "oldestXID vid senaste kontrollpunkt:        %u\n"
 
 #: pg_resetxlog.c:600
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "最新检查点的oldestXID所在的数据库: %u\n"
+msgstr "DB för oldestXID vid senaste kontrollpunkt: %u\n"
 
+# FIXME: too wide
 #: pg_resetxlog.c:602
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "最新检查点的oldestActiveXID:      %u\n"
+msgstr "oldestActiveXID vid senaste kontrollpunkt:  %u\n"
 
 #: pg_resetxlog.c:604
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "最新检查点的oldestMultiXid:   %u\n"
+msgstr "oldestMultiXid vid senaste kontrollpunkt:   %u\n"
 
 #: pg_resetxlog.c:606
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "最新检查点的oldestMulti所在的数据库: %u\n"
+msgstr "DB för oldestMulti vid senaste kontrollpkt: %u\n"
 
 #: pg_resetxlog.c:608
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "最大的数据校准:                     %u\n"
+msgstr "Maximal jämkning av data (alignment):       %u\n"
 
 #: pg_resetxlog.c:611
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "数据库块大小:                         %u\n"
+msgstr "Databasens blockstorlek:                    %u\n"
 
 #: pg_resetxlog.c:613
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "大关系的每段块数:                     %u\n"
+msgstr "Block per segment i en stor relation:       %u\n"
 
 #: pg_resetxlog.c:615
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "WAL块大小:                         %u\n"
+msgstr "Blockstorlek i transaktionsloggen:          %u\n"
 
 #: pg_resetxlog.c:617
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "每一个 WAL 段字节数:                  %u\n"
+msgstr "Segmentstorlek i transaktionsloggen:        %u\n"
 
 #: pg_resetxlog.c:619
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "标示符的最大长度:                     %u\n"
+msgstr "Maximal längd för identifierare:            %u\n"
 
 #: pg_resetxlog.c:621
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "在索引中最多可用的列数:                   %u\n"
+msgstr "Maximalt antal kolonner i ett index:        %u\n"
 
 #: pg_resetxlog.c:623
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "一个TOAST区块的最大空间:                   %u\n"
+msgstr "Maximal storlek för en TOAST-enhet:         %u\n"
 
 #: pg_resetxlog.c:625
 #, c-format
-#| msgid "Maximum size of a TOAST chunk:        %u\n"
 msgid "Size of a large-object chunk:         %u\n"
-msgstr "一个大对象区块的大小:     %u\n"
+msgstr "Storlek för large-object-enheter:           %u\n"
 
 #: pg_resetxlog.c:627
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "日期/时间类型存储:                    %s\n"
+msgstr "Representation av dag och tid:              %s\n"
 
 #: pg_resetxlog.c:628
 msgid "64-bit integers"
-msgstr "64位整型"
+msgstr "64-bitars heltal"
 
 #: pg_resetxlog.c:628
 msgid "floating-point numbers"
-msgstr "浮点数"
+msgstr "flyttal"
 
 #: pg_resetxlog.c:629
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "正在传递Float4类型的参数:                    %s\n"
+msgstr "Åtkomst till float4-argument:               %s\n"
 
 #: pg_resetxlog.c:630 pg_resetxlog.c:632
 msgid "by reference"
-msgstr "由引用"
+msgstr "referens"
 
 #: pg_resetxlog.c:630 pg_resetxlog.c:632
 msgid "by value"
-msgstr "由值"
+msgstr "värdeåtkomst"
 
 #: pg_resetxlog.c:631
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "正在传递Float8类型的参数:                    %s\n"
+msgstr "Åtkomst till float8-argument:               %s\n"
 
 #: pg_resetxlog.c:633
 #, c-format
 msgid "Data page checksum version:           %u\n"
-msgstr "数据页检验和版本:        %u\n"
+msgstr "Checksummaversion för datasidor:            %u\n"
 
 #: pg_resetxlog.c:647
 #, c-format
@@ -361,120 +359,111 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"将被改变的值:\n"
+"Värden att förändra:\n"
 "\n"
 
+# November 26th, 2014: Insert additional spacing to fit
+# with the first translated text, which uses most characters.
 #: pg_resetxlog.c:650
 #, c-format
 msgid "First log segment after reset:        %s\n"
-msgstr "重置后的第一个日志段:        %s\n"
+msgstr "Första loggsegment efter återställning: %s\n"
 
 #: pg_resetxlog.c:654
 #, c-format
-#| msgid "WAL block size:                       %u\n"
 msgid "NextMultiXactId:                      %u\n"
-msgstr "下一个MultiXactId值NextMultiXactId:         %u\n"
+msgstr "NextMultiXactId:                        %u\n"
 
 #: pg_resetxlog.c:656
 #, c-format
-#| msgid "WAL block size:                       %u\n"
 msgid "OldestMultiXid:                       %u\n"
-msgstr "最老的MultiXid值OldestMultiXid:          %u\n"
+msgstr "OldestMultiXid:                         %u\n"
 
 #: pg_resetxlog.c:658
 #, c-format
-#| msgid "WAL block size:                       %u\n"
 msgid "OldestMulti's DB:                     %u\n"
-msgstr "最老的MultiXid对应的DB:     %u\n"
+msgstr "DB för OldestMulti:                     %u\n"
 
 #: pg_resetxlog.c:664
 #, c-format
-#| msgid "WAL block size:                       %u\n"
 msgid "NextMultiOffset:                      %u\n"
-msgstr "下一个偏移NextMultiOffset:           %u\n"
+msgstr "NextMultiOffset:                        %u\n"
 
 #: pg_resetxlog.c:670
 #, c-format
-#| msgid "LC_CTYPE:                             %s\n"
 msgid "NextOID:                              %u\n"
-msgstr "NextOID:                             %u\n"
+msgstr "NextOID:                                %u\n"
 
 #: pg_resetxlog.c:676
 #, c-format
-#| msgid "LC_CTYPE:                             %s\n"
 msgid "NextXID:                              %u\n"
-msgstr "NextXID:                              %u\n"
+msgstr "NextXID:                                %u\n"
 
 #: pg_resetxlog.c:678
 #, c-format
-#| msgid "LC_COLLATE:                           %s\n"
 msgid "OldestXID:                            %u\n"
-msgstr "OldestXID:                            %u\n"
+msgstr "OldestXID:                              %u\n"
 
 #: pg_resetxlog.c:680
 #, c-format
-#| msgid "WAL block size:                       %u\n"
 msgid "OldestXID's DB:                       %u\n"
-msgstr "OldestXID's DB:                       %u\n"
+msgstr "DB för OldestXID:                       %u\n"
 
 #: pg_resetxlog.c:686
 #, c-format
-#| msgid "WAL block size:                       %u\n"
 msgid "NextXID epoch:                        %u\n"
-msgstr "NextXID 末端:                        %u\n"
+msgstr "Epok för NextXID:                       %u\n"
+
 
 #: pg_resetxlog.c:751
 #, c-format
-msgid ""
-"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
-"PG_CONTROL_SIZE\n"
-msgstr "%s: 内部错误 -- sizeof(ControlFileData) 太大 ... 修复 xlog.c\n"
+msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
+msgstr "%s: Internt fel: sizeof(ControlFileData) är alltför stor. Rätta till PG_CONTROL_SIZE.\n"
 
 #: pg_resetxlog.c:766
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
-msgstr "%s: 无法创建 pg_control 文件: %s\n"
+msgstr "%s: Kunde inte skapa fil för pg_control: %s\n"
 
 #: pg_resetxlog.c:777
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
-msgstr "%s: 无法写 pg_control 文件: %s\n"
+msgstr "%s: Kunde inte skriva fil för pg_control: %s\n"
 
 #: pg_resetxlog.c:784 pg_resetxlog.c:1068
 #, c-format
 msgid "%s: fsync error: %s\n"
-msgstr "%s: fsync 错误: %s\n"
+msgstr "%s: Misslyckad fsync: %s\n"
 
 #: pg_resetxlog.c:824 pg_resetxlog.c:890 pg_resetxlog.c:941
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: 无法打开目录 \"%s\": %s\n"
+msgstr "%s: Kunde inte öppna filkatalog \"%s\": %s\n"
 
 #: pg_resetxlog.c:855 pg_resetxlog.c:912 pg_resetxlog.c:964
 #, c-format
 msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s: 无法读取目录 \"%s\": %s\n"
+msgstr "%s: Kunde inte läsa filkatalog \"%s\": %s\n"
 
 #: pg_resetxlog.c:862 pg_resetxlog.c:919 pg_resetxlog.c:971
 #, c-format
-#| msgid "%s: could not open directory \"%s\": %s\n"
 msgid "%s: could not close directory \"%s\": %s\n"
-msgstr "%s: 无法关闭目录 \"%s\": %s\n"
+msgstr "%s: Kunde inte stänga filkatalog \"%s\": %s\n"
 
 #: pg_resetxlog.c:903 pg_resetxlog.c:955
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s: 无法删除文件 \"%s\": %s\n"
+msgstr "%s: Kunde inte radera fil \"%s\": %s\n"
 
 #: pg_resetxlog.c:1035
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: 无法打开文件 \"%s\": %s\n"
+msgstr "%s: Kunde inte öppna fil \"%s\": %s\n"
 
 #: pg_resetxlog.c:1046 pg_resetxlog.c:1060
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: 无法写文件 \"%s\": %s\n"
+msgstr "%s: Kunde inte skriva fil \"%s\": %s\n"
 
 #: pg_resetxlog.c:1079
 #, c-format
@@ -482,7 +471,7 @@ msgid ""
 "%s resets the PostgreSQL transaction log.\n"
 "\n"
 msgstr ""
-"%s 重置 PostgreSQL 事务日志.\n"
+"%s återställer transaktionslogg för PostgreSQL.\n"
 "\n"
 
 #: pg_resetxlog.c:1080
@@ -492,70 +481,64 @@ msgid ""
 "  %s [OPTION]... DATADIR\n"
 "\n"
 msgstr ""
-"使用方法:\n"
-"  %s [选项]... 数据目录\n"
+"Användning:\n"
+"  %s [FLAGGA]... DATAKATALOG\n"
 "\n"
 
 #: pg_resetxlog.c:1081
 #, c-format
 msgid "Options:\n"
-msgstr "选项:\n"
+msgstr "Programväxlar:\n"
 
 #: pg_resetxlog.c:1082
 #, c-format
 msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
-msgstr "  -e XIDEPOCH      设置下一个事务ID时间单元（epoch）\n"
+msgstr "  -e XIDEPOCH      sätter epok för nästa transaktions-ID\n"
 
 #: pg_resetxlog.c:1083
 #, c-format
 msgid "  -f               force update to be done\n"
-msgstr "  -f               强制更新\n"
+msgstr "  -f               framtvinga återställning\n"
 
 #: pg_resetxlog.c:1084
 #, c-format
-msgid ""
-"  -l XLOGFILE      force minimum WAL starting location for new transaction "
-"log\n"
-msgstr "  -l XLOGFILE      为新的事务日志强制使用最小WAL日志起始位置\n"
+msgid "  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"
+msgstr "  -l XLOGFIL       ny transaktionslogg måste vara detta namn eller ett senare\n"
 
 #: pg_resetxlog.c:1085
 #, c-format
 msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
-msgstr "  -m MXID,MXID    　设置下一个事务和最老的事务ID\n"
+msgstr "  -m MXID,MXID     sätt nästa och äldsta multitransaktions-ID\n"
 
 #: pg_resetxlog.c:1086
 #, c-format
-#| msgid ""
-#| "  -n               no update, just show extracted control values (for "
-#| "testing)\n"
-msgid ""
-"  -n               no update, just show what would be done (for testing)\n"
-msgstr "  -n               未更新, 只显示将要做什么 (测试用途)\n"
+msgid "  -n               no update, just show what would be done (for testing)\n"
+msgstr "  -n               ingen updatering; visa planerade åtgärder (för testning)\n"
 
 #: pg_resetxlog.c:1087
 #, c-format
 msgid "  -o OID           set next OID\n"
-msgstr "  -o OID           设置下一个 OID\n"
+msgstr "  -o OID           sätt nästa OID\n"
 
 #: pg_resetxlog.c:1088
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
-msgstr "  -O OFFSET        设置下一个多事务（multitransaction）偏移\n"
+msgstr "  -O OFFSET        sätt nästa multitransaktionsoffset\n"
 
 #: pg_resetxlog.c:1089
 #, c-format
 msgid "  -V, --version    output version information, then exit\n"
-msgstr "  -V, --version    输出版本信息，然后退出\n"
+msgstr "  -V, --version    visa versionsinformation, avsluta sedan\n"
 
 #: pg_resetxlog.c:1090
 #, c-format
 msgid "  -x XID           set next transaction ID\n"
-msgstr "  -x XID           设置下一个事务 ID\n"
+msgstr "  -x XID           sätt nästa transaktions-ID\n"
 
 #: pg_resetxlog.c:1091
 #, c-format
 msgid "  -?, --help       show this help, then exit\n"
-msgstr "  -?, --help       显示帮助信息，然后退出\n"
+msgstr "  -?, --help       visa denna hjälp, avsluta sedan\n"
 
 #: pg_resetxlog.c:1092
 #, c-format
@@ -564,34 +547,4 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"报告错误至 <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "First log file ID after reset:        %u\n"
-#~ msgstr "重置后的第一个日志文件ID:               %u\n"
-
-#~ msgid "%s: invalid argument for -o option\n"
-#~ msgstr "%s: 为 -o 选项的无效参数\n"
-
-#~ msgid "%s: invalid argument for -x option\n"
-#~ msgstr "%s: 为 -x 选项的无效参数\n"
-
-#~ msgid "Latest checkpoint's StartUpID:        %u\n"
-#~ msgstr "最新检查点的 StartUpID:               %u\n"
-
-#~ msgid "Maximum number of function arguments: %u\n"
-#~ msgstr "函数参数的最大个数:                   %u\n"
-
-#~ msgid "%s: invalid LC_CTYPE setting\n"
-#~ msgstr "%s: 无效的 LC_CTYPE 设置\n"
-
-#~ msgid "%s: invalid LC_COLLATE setting\n"
-#~ msgstr "%s: 无效的 LC_COLLATE 设置\n"
-
-#~ msgid "  --version       output version information, then exit\n"
-#~ msgstr "  --version         输出版本信息, 然后退出\n"
-
-#~ msgid "  --help          show this help, then exit\n"
-#~ msgstr "  --help            显示此帮助信息, 然后退出\n"
-
-#~ msgid "%s: could not read from directory \"%s\": %s\n"
-#~ msgstr "%s: 无法从目录 \"%s\" 中读取: %s\n"
+"Reportera fel till <pgsql-bugs@postgresql.org>.\n"

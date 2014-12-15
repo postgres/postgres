@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:39+0000\n"
-"PO-Revision-Date: 2012-10-19 20:50+0800\n"
+"POT-Creation-Date: 2014-11-22 21:07+0000\n"
+"PO-Revision-Date: 2014-11-28 15:52+0800\n"
 "Last-Translator: Xiong He <iihero@qq.com>\n"
 "Language-Team: Weibin <ssmei_2000@yahoo.com>\n"
 "Language: zh_CN\n"
@@ -28,12 +28,12 @@ msgstr "plpy.cursor期望一个查询或一个计划"
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor将一个序列作为它的第二个参数"
 
-#: plpy_cursorobject.c:187 plpy_spi.c:222
+#: plpy_cursorobject.c:187 plpy_spi.c:223
 #, c-format
 msgid "could not execute plan"
 msgstr "无法执行计划"
 
-#: plpy_cursorobject.c:190 plpy_spi.c:225
+#: plpy_cursorobject.c:190 plpy_spi.c:226
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -45,18 +45,18 @@ msgstr[0] "期望%d序列参数,但是得到%d: %s"
 msgid "iterating a closed cursor"
 msgstr "遍历一个关闭的游标"
 
-#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:413
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "在终止的子事务里遍历一个游标"
 
 # sql_help.h:109
-#: plpy_cursorobject.c:407
+#: plpy_cursorobject.c:405
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "从关闭的游标里获取结果"
 
-#: plpy_cursorobject.c:486
+#: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "在终止的子事务里关闭一个游标"
@@ -66,85 +66,85 @@ msgstr "在终止的子事务里关闭一个游标"
 msgid "%s"
 msgstr "%s"
 
-#: plpy_exec.c:90
+#: plpy_exec.c:91
 #, c-format
 msgid "unsupported set function return mode"
 msgstr "不支持集合函数返回模式"
 
-#: plpy_exec.c:91
+#: plpy_exec.c:92
 #, c-format
 msgid ""
 "PL/Python set-returning functions only support returning only value per call."
 msgstr "PL/Python集合返回函数只支持在每次调用时返回值."
 
-#: plpy_exec.c:103
+#: plpy_exec.c:104
 #, c-format
 msgid "returned object cannot be iterated"
 msgstr "所返回的对象无法迭代"
 
-#: plpy_exec.c:104
+#: plpy_exec.c:105
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr "PL/Python集合返回函数必须返回一个可迭代的对象."
 
-#: plpy_exec.c:129
+#: plpy_exec.c:130
 #, c-format
 msgid "error fetching next item from iterator"
 msgstr "当从迭代器中取回下一个成员时出现错误"
 
-#: plpy_exec.c:164
+#: plpy_exec.c:165
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "返回类型为\"void\"的PL/Python函数不返回None"
 
-#: plpy_exec.c:288 plpy_exec.c:314
+#: plpy_exec.c:289 plpy_exec.c:315
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "在触发器存储过程出现非期望的返回值"
 
-#: plpy_exec.c:289
+#: plpy_exec.c:290
 #, c-format
 msgid "Expected None or a string."
 msgstr "期望空值或一个字符串"
 
-#: plpy_exec.c:304
+#: plpy_exec.c:305
 #, c-format
 msgid ""
 "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr "在DELETE触发器中的PL/Python 触发器函数返回 \"MODIFY\"  -- 忽略"
 
-#: plpy_exec.c:315
+#: plpy_exec.c:316
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "期望None, \"OK\", \"SKIP\", 或\"MODIFY\""
 
-#: plpy_exec.c:396
+#: plpy_exec.c:397
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "当设置参数的同时, 执行PyList_SetItem()失败"
 
-#: plpy_exec.c:400
+#: plpy_exec.c:401
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "当设置参数的同时, 执行PyDict_SetItemString()失败"
 
-#: plpy_exec.c:412
+#: plpy_exec.c:413
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr "返回值类型是记录的函数在不接受使用记录类型的环境中调用"
 
-#: plpy_exec.c:450
+#: plpy_exec.c:451
 #, c-format
 msgid "while creating return value"
 msgstr "同时在创建返回值"
 
-#: plpy_exec.c:474
+#: plpy_exec.c:475
 #, c-format
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "在构建触发器参数的同时无法创建新的字典."
 
-#: plpy_exec.c:664
+#: plpy_exec.c:663
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] 已删除，无法修改记录"
@@ -166,22 +166,22 @@ msgid ""
 "row"
 msgstr "在 TD[\"new\"]中找到的键 \"%s\"在正在触发的记录中不是作为列而存在."
 
-#: plpy_exec.c:778
+#: plpy_exec.c:777
 #, c-format
 msgid "while modifying trigger row"
 msgstr "同时正在修改触发器记录"
 
-#: plpy_exec.c:839
+#: plpy_exec.c:838
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "强行终止一个还未退出的子事务"
 
-#: plpy_main.c:101
+#: plpy_main.c:93
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "在会话中Python的主版本不匹配"
 
-#: plpy_main.c:102
+#: plpy_main.c:94
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -189,37 +189,37 @@ msgid ""
 msgstr ""
 "这个会话先前已经使用的Python主版本是%d，现在它试图使用的Python主版本是%d "
 
-#: plpy_main.c:104
+#: plpy_main.c:96
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "启动一个新的会话来使用一个不同的Python的主要版本"
 
-#: plpy_main.c:119
+#: plpy_main.c:111
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "在初始化过程中出现无法捕获的错误"
 
-#: plpy_main.c:142
+#: plpy_main.c:134
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "无法导入模块\"__main__\" "
 
-#: plpy_main.c:147
+#: plpy_main.c:139
 #, c-format
 msgid "could not create globals"
 msgstr "无法创建全局变量"
 
-#: plpy_main.c:151
+#: plpy_main.c:143
 #, c-format
 msgid "could not initialize globals"
 msgstr "无法初始化全局变量"
 
-#: plpy_main.c:351
+#: plpy_main.c:347
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "PL/Python函数\"%s\""
 
-#: plpy_main.c:358
+#: plpy_main.c:354
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "PL/Python匿名代码块"
@@ -259,27 +259,27 @@ msgstr "无法解析plpy.elog中的参数"
 msgid "could not parse error message in plpy.elog"
 msgstr "无法解析在plpy.elog中的错误消息"
 
-#: plpy_procedure.c:199
+#: plpy_procedure.c:200
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: plpy_procedure.c:204 plpy_typeio.c:406
+#: plpy_procedure.c:205 plpy_typeio.c:409
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python函数不能返回类型%s"
 
-#: plpy_procedure.c:286
+#: plpy_procedure.c:287
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python函数不能接受类型%s"
 
-#: plpy_procedure.c:382
+#: plpy_procedure.c:383
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "无法编译PL/Python函数\"%s\""
 
-#: plpy_procedure.c:385
+#: plpy_procedure.c:386
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "无法编译PL/Python中的匿名代码块"
@@ -289,45 +289,40 @@ msgstr "无法编译PL/Python中的匿名代码块"
 msgid "command did not produce a result set"
 msgstr "命令没有产生结果集"
 
-#: plpy_spi.c:56
+#: plpy_spi.c:57
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "plpy.prepare的第二个参数必须是一个序列"
 
-#: plpy_spi.c:105
+#: plpy_spi.c:106
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: 在顺序位置%d的类型名称不是string"
 
-#: plpy_spi.c:137
+#: plpy_spi.c:138
 #, c-format
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare不支持使用组合类型"
 
-#: plpy_spi.c:187
+#: plpy_spi.c:188
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute期望一个查询或一个计划"
 
-#: plpy_spi.c:206
+#: plpy_spi.c:207
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute将一个序列作为它的第二个参数"
 
-#: plpy_spi.c:330
+#: plpy_spi.c:331
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "执行SPI_execute_plan失败: %s"
 
-#: plpy_spi.c:372
+#: plpy_spi.c:373
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute执行失败: %s"
-
-#: plpy_spi.c:439
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "在PLy_spi_execute_fetch_result中出现无法识别的错误"
 
 #: plpy_subxactobject.c:122
 #, c-format
@@ -349,77 +344,94 @@ msgstr "该子事务仍没有进入"
 msgid "there is no subtransaction to exit from"
 msgstr "没有子事务可以退出"
 
-#: plpy_typeio.c:291
+#: plpy_typeio.c:294
 #, c-format
 msgid "could not create new dictionary"
 msgstr "无法创建新的字典"
 
-#: plpy_typeio.c:408
+#: plpy_typeio.c:411
 #, c-format
 msgid "PL/Python does not support conversion to arrays of row types."
 msgstr "PL/Python不支持对行类型数组的转换。"
 
-#: plpy_typeio.c:584
+#: plpy_typeio.c:540
+#, c-format
+#| msgid "could not import \"plpy\" module"
+msgid "could not import a module for Decimal constructor"
+msgstr "无法为十进制构造函数导入模块"
+
+#: plpy_typeio.c:544
+#, c-format
+msgid "no Decimal attribute in module"
+msgstr "模块中没有小数位属性"
+
+#: plpy_typeio.c:550
+#, c-format
+#| msgid "conversion from wchar_t to server encoding failed: %m"
+msgid "conversion from numeric to Decimal failed"
+msgstr "由numeric数值到Decimal小数转换失败"
+
+#: plpy_typeio.c:619
 #, c-format
 msgid "cannot convert multidimensional array to Python list"
 msgstr "无法将多维数组转换为Python列表"
 
-#: plpy_typeio.c:585
+#: plpy_typeio.c:620
 #, c-format
 msgid "PL/Python only supports one-dimensional arrays."
 msgstr "PL/Python只支持使用一维数组"
 
-#: plpy_typeio.c:591
+#: plpy_typeio.c:626
 #, c-format
 msgid "could not create new Python list"
 msgstr "无法创建新的Python列表"
 
-#: plpy_typeio.c:650
+#: plpy_typeio.c:685
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "无法创建Python对象的字节表达式"
 
-#: plpy_typeio.c:742
+#: plpy_typeio.c:777
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "无法创建Python对象的字符串表达式"
 
-#: plpy_typeio.c:753
+#: plpy_typeio.c:788
 #, c-format
 msgid ""
 "could not convert Python object into cstring: Python string representation "
 "appears to contain null bytes"
 msgstr "无法将Python对象转换为cstring: Python字符串表达式可能包含空字节"
 
-#: plpy_typeio.c:787
+#: plpy_typeio.c:823
 #, c-format
 msgid ""
 "return value of function with array return type is not a Python sequence"
 msgstr "带有数组返回类型的函数返回值不是一个Python序列"
 
-#: plpy_typeio.c:886
+#: plpy_typeio.c:930
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "在映射中没有找到键\"%s\""
 
-#: plpy_typeio.c:887
+#: plpy_typeio.c:931
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr "为了在一列中返回空值, 需要在列的后面对带有已命名键的映射添加值None"
 
-#: plpy_typeio.c:935
+#: plpy_typeio.c:979
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "所返回序列的长度与在记录中列的数量不匹配"
 
-#: plpy_typeio.c:1043
+#: plpy_typeio.c:1087
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "在Python对象中不存在属性\"%s\""
 
-#: plpy_typeio.c:1044
+#: plpy_typeio.c:1088
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
@@ -427,24 +439,45 @@ msgid ""
 msgstr ""
 "为了在一列中返回空值, 需要让返回的对象在带有值None的列后面的带有已命名属性"
 
-#: plpy_util.c:70
+#: plpy_util.c:72
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
 msgstr "无法将Python中以Unicode编码的对象转换为PostgreSQL服务器字节码"
 
-#: plpy_util.c:75
+#: plpy_util.c:78
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "无法从已编码字符串里提取相应字节码值"
 
-#~ msgid "PL/Python function \"%s\" failed"
-#~ msgstr "PL/Python函数 \"%s\" 执行失败"
+#~ msgid "PyCObject_AsVoidPtr() failed"
+#~ msgstr "执行PyCObject_AsVoidPtr()失败"
 
-#~ msgid ""
-#~ "could not create string representation of Python object in PL/Python "
-#~ "function \"%s\" while creating return value"
-#~ msgstr ""
-#~ "在创建返回值时, 无法计算在PL/Python函数\"%s\"中Python对象的字符串表达式"
+#~ msgid "PyCObject_FromVoidPtr() failed"
+#~ msgstr "执行PyCObject_FromVoidPtr()失败"
+
+#~ msgid "transaction aborted"
+#~ msgstr "事务终止"
+
+#~ msgid "invalid arguments for plpy.prepare"
+#~ msgstr " plpy.prepare的无效参数"
+
+#~ msgid "unrecognized error in PLy_spi_prepare"
+#~ msgstr "在PLy_spi_prepare中无法识别的错误"
+
+#~ msgid "unrecognized error in PLy_spi_execute_plan"
+#~ msgstr "在PLy_spi_execute_plan中出现无法识别的错误"
+
+#~ msgid "unrecognized error in PLy_spi_execute_query"
+#~ msgstr "在PLy_spi_execute_query中出现无法识别的错误"
+
+#~ msgid "could not create procedure cache"
+#~ msgstr "无法创建存储过程缓存"
+
+#~ msgid "PL/Python: %s"
+#~ msgstr "PL/Python: %s"
+
+#~ msgid "out of memory"
+#~ msgstr "内存用尽"
 
 #~ msgid ""
 #~ "could not compute string representation of Python object in PL/Python "
@@ -453,32 +486,14 @@ msgstr "无法从已编码字符串里提取相应字节码值"
 #~ "在修改触发器记录的同时无法计算在PL/Python函数\"%s\"中Python对象的字符串表"
 #~ "达式"
 
-#~ msgid "out of memory"
-#~ msgstr "内存用尽"
+#~ msgid ""
+#~ "could not create string representation of Python object in PL/Python "
+#~ "function \"%s\" while creating return value"
+#~ msgstr ""
+#~ "在创建返回值时, 无法计算在PL/Python函数\"%s\"中Python对象的字符串表达式"
 
-#~ msgid "PL/Python: %s"
-#~ msgstr "PL/Python: %s"
+#~ msgid "PL/Python function \"%s\" failed"
+#~ msgstr "PL/Python函数 \"%s\" 执行失败"
 
-#~ msgid "could not create procedure cache"
-#~ msgstr "无法创建存储过程缓存"
-
-#~ msgid "unrecognized error in PLy_spi_execute_query"
-#~ msgstr "在PLy_spi_execute_query中出现无法识别的错误"
-
-#~ msgid "unrecognized error in PLy_spi_execute_plan"
-#~ msgstr "在PLy_spi_execute_plan中出现无法识别的错误"
-
-#~ msgid "unrecognized error in PLy_spi_prepare"
-#~ msgstr "在PLy_spi_prepare中无法识别的错误"
-
-#~ msgid "invalid arguments for plpy.prepare"
-#~ msgstr " plpy.prepare的无效参数"
-
-#~ msgid "transaction aborted"
-#~ msgstr "事务终止"
-
-#~ msgid "PyCObject_FromVoidPtr() failed"
-#~ msgstr "执行PyCObject_FromVoidPtr()失败"
-
-#~ msgid "PyCObject_AsVoidPtr() failed"
-#~ msgstr "执行PyCObject_AsVoidPtr()失败"
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "在PLy_spi_execute_fetch_result中出现无法识别的错误"
