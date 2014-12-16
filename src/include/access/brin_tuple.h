@@ -24,7 +24,7 @@
 typedef struct BrinValues
 {
 	AttrNumber	bv_attno;		/* index attribute number */
-	bool		bv_hasnulls;	/* is there any nulls in the page range? */
+	bool		bv_hasnulls;	/* are there any nulls in the page range? */
 	bool		bv_allnulls;	/* are all values nulls in the page range? */
 	Datum	   *bv_values;		/* current accumulated values */
 } BrinValues;
@@ -37,7 +37,7 @@ typedef struct BrinMemTuple
 {
 	bool		bt_placeholder; /* this is a placeholder tuple */
 	BlockNumber bt_blkno;		/* heap blkno that the tuple is for */
-	MemoryContext bt_context;	/* memcxt holding the dt_column values */
+	MemoryContext bt_context;	/* memcxt holding the bt_columns values */
 	BrinValues	bt_columns[FLEXIBLE_ARRAY_MEMBER];
 } BrinMemTuple;
 
@@ -52,7 +52,7 @@ typedef struct BrinTuple
 	BlockNumber bt_blkno;
 
 	/* ---------------
-	 * mt_info is laid out in the following fashion:
+	 * bt_info is laid out in the following fashion:
 	 *
 	 * 7th (high) bit: has nulls
 	 * 6th bit: is placeholder tuple
@@ -66,7 +66,7 @@ typedef struct BrinTuple
 #define SizeOfBrinTuple (offsetof(BrinTuple, bt_info) + sizeof(uint8))
 
 /*
- * t_info manipulation macros
+ * bt_info manipulation macros
  */
 #define BRIN_OFFSET_MASK		0x1F
 /* bit 0x20 is not used at present */

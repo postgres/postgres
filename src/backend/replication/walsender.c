@@ -939,7 +939,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 
 	/*
 	 * Force a disconnect, so that the decoding code doesn't need to care
-	 * about a eventual switch from running in recovery, to running in a
+	 * about an eventual switch from running in recovery, to running in a
 	 * normal environment. Client code is expected to handle reconnects.
 	 */
 	if (am_cascading_walsender && !RecoveryInProgress())
