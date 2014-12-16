@@ -104,7 +104,7 @@ insert			{ return(INSERT_TUPLE); }
 "toast"			{ return(XTOAST); }
 
 {arrayid}		{
-					yylval.str = pstrdup(MapArrayTypeName(yytext));
+					yylval.str = MapArrayTypeName(yytext);
 					return(ID);
 				}
 {id}			{
