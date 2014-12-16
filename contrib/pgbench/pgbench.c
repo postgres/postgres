@@ -691,6 +691,7 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 	{
 		if (!timer_exceeded)
 			fprintf(stderr, "%s: cannot read the result\n", argv[0]);
+		(void) pclose(fp);
 		return false;
 	}
 	if (pclose(fp) < 0)
