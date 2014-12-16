@@ -40,7 +40,7 @@ extern void InsertOneTuple(Oid objectid);
 extern void InsertOneValue(char *value, int i);
 extern void InsertOneNull(int i);
 
-extern char *MapArrayTypeName(char *s);
+extern char *MapArrayTypeName(const char *s);
 
 extern void index_register(Oid heap, Oid ind, IndexInfo *indexInfo);
 extern void build_indices(void);
