@@ -1026,38 +1026,33 @@ AllocateAttribute(void)
 	return attribute;
 }
 
-/* ----------------
+/*
  *		MapArrayTypeName
- * XXX arrays of "basetype" are always "_basetype".
- *	   this is an evil hack inherited from rel. 3.1.
- * XXX array dimension is thrown away because we
- *	   don't support fixed-dimension arrays.  again,
- *	   sickness from 3.1.
  *
- * the string passed in must have a '[' character in it
+ * Given a type name, produce the corresponding array type name by prepending
+ * '_' and truncating as needed to fit in NAMEDATALEN-1 bytes.  This is only
+ * used in bootstrap mode, so we can get away with assuming that the input is
+ * ASCII and we don't need multibyte-aware truncation.
  *
- * the string returned is a pointer to static storage and should NOT
- * be freed by the CALLER.
- * ----------------
+ * The given string normally ends with '[]' or '[digits]'; we discard that.
+ *
+ * The result is a palloc'd string.
  */
 char *
-MapArrayTypeName(char *s)
+MapArrayTypeName(const char *s)
 {
 	int			i,
 				j;
-	static char newStr[NAMEDATALEN];	/* array type names < NAMEDATALEN long */
+	char		newStr[NAMEDATALEN];
 
-	if (s == NULL || s[0] == '\0')
-		return s;
-
-	j = 1;
 	newStr[0] = '_';
-	for (i = 0; i < NAMEDATALEN - 1 && s[i] != '['; i++, j++)
+	j = 1;
+	for (i = 0; i < NAMEDATALEN - 2 && s[i] != '['; i++, j++)
 		newStr[j] = s[i];
 
 	newStr[j] = '\0';
 
-	return newStr;
+	return pstrdup(newStr);
 }
 
 
