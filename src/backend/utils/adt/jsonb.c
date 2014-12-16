@@ -1194,7 +1194,7 @@ jsonb_build_object_noargs(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
 	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
 
 	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
@@ -1255,7 +1255,7 @@ jsonb_build_array_noargs(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
+	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
 	result.res = pushJsonbValue(&result.parseState, WJB_END_ARRAY, NULL);
 
 	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
@@ -1283,7 +1283,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
 
 	switch (ndims)
 	{
@@ -1336,7 +1336,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 		v.val.string.len = len;
 		v.val.string.val = str;
 
-		result.res = pushJsonbValue(&result.parseState, WJB_KEY, &v);
+		(void) pushJsonbValue(&result.parseState, WJB_KEY, &v);
 
 		if (in_nulls[i * 2 + 1])
 		{
@@ -1353,7 +1353,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 			v.val.string.val = str;
 		}
 
-		result.res = pushJsonbValue(&result.parseState, WJB_VALUE, &v);
+		(void) pushJsonbValue(&result.parseState, WJB_VALUE, &v);
 	}
 
 	pfree(in_datums);
@@ -1389,7 +1389,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
 
 	if (nkdims > 1 || nkdims != nvdims)
 		ereport(ERROR,
@@ -1431,7 +1431,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 		v.val.string.len = len;
 		v.val.string.val = str;
 
-		result.res = pushJsonbValue(&result.parseState, WJB_KEY, &v);
+		(void) pushJsonbValue(&result.parseState, WJB_KEY, &v);
 
 		if (val_nulls[i])
 		{
@@ -1448,7 +1448,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 			v.val.string.val = str;
 		}
 
-		result.res = pushJsonbValue(&result.parseState, WJB_VALUE, &v);
+		(void) pushJsonbValue(&result.parseState, WJB_VALUE, &v);
 	}
 
 	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
