@@ -73,11 +73,12 @@ typedef struct XLogRecord
 /*
  * Header info for block data appended to an XLOG record.
  *
+ * 'data_length' is the length of the rmgr-specific payload data associated
+ * with this block. It does not include the possible full page image, nor
+ * XLogRecordBlockHeader struct itself.
+ *
  * Note that we don't attempt to align the XLogRecordBlockHeader struct!
  * So, the struct must be copied to aligned local storage before use.
- * 'data_length' is the length of the payload data associated with this,
- * and includes the possible full-page image, and rmgr-specific data. It
- * does not include the XLogRecordBlockHeader struct itself.
  */
 typedef struct XLogRecordBlockHeader
 {
