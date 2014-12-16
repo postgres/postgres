@@ -2541,6 +2541,10 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 			   normal_xacts);
 	}
 
+	/* Remaining stats are nonsensical if we failed to execute any xacts */
+	if (normal_xacts <= 0)
+		return;
+
 	if (throttle_delay && latency_limit)
 		printf("number of transactions skipped: " INT64_FORMAT " (%.3f %%)\n",
 			   throttle_latency_skipped,
