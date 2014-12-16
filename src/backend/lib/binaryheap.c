@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * binaryheap.c
- *	  A simple binary heap implementaion
+ *	  A simple binary heap implementation
  *
  * Portions Copyright (c) 2012-2013, PostgreSQL Global Development Group
  *
