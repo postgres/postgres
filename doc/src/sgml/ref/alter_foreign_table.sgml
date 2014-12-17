@@ -42,6 +42,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable>
+    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
@@ -83,16 +85,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
       If <literal>IF EXISTS</literal> is specified and the column
       does not exist, no error is thrown. In this case a notice
       is issued instead.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>IF EXISTS</literal></term>
-    <listitem>
-     <para>
-      Do not throw an error if the foreign table does not exist. A notice is
-      issued in this case.
      </para>
     </listitem>
    </varlistentry>
@@ -153,6 +145,38 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form adds a new constraint to a foreign table, using the same
+      syntax as <xref linkend="SQL-CREATEFOREIGNTABLE">.
+      Currently only <literal>CHECK</> constraints are supported.
+     </para>
+
+     <para>
+      Unlike the case when adding a constraint to a regular table, nothing is
+      done to verify the constraint is correct; rather, this action simply
+      declares that some new condition holds for all rows in the foreign
+      table.  (See the discussion in <xref linkend="SQL-CREATEFOREIGNTABLE">.)
+      Note that constraints on foreign tables cannot be marked
+      <literal>NOT VALID</> since such constraints are simply declarative.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DROP CONSTRAINT [ IF EXISTS ]</literal></term>
+    <listitem>
+     <para>
+      This form drops the specified constraint on a foreign table.
+      If <literal>IF EXISTS</literal> is specified and the constraint
+      does not exist, no error is thrown.
+      In this case a notice is issued instead.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] TRIGGER</literal></term>
     <listitem>
      <para>
@@ -169,6 +193,21 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      <para>
       This form changes the owner of the foreign table to the
       specified user.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      Change options for the foreign table or one of its columns.
+      <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
+      specify the action to be performed.  <literal>ADD</> is assumed
+      if no operation is explicitly specified.  Duplicate option names are not
+      allowed (although it's OK for a table option and a column option to have
+      the same name).  Option names and values are also validated using the
+      foreign data wrapper library.
      </para>
     </listitem>
    </varlistentry>
@@ -192,21 +231,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
-    <listitem>
-     <para>
-      Change options for the foreign table or one of its columns.
-      <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
-      specify the action to be performed.  <literal>ADD</> is assumed
-      if no operation is explicitly specified.  Duplicate option names are not
-      allowed (although it's OK for a table option and a column option to have
-      the same name).  Option names and values are also validated using the
-      foreign data wrapper library.
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
   </para>
 
@@ -216,6 +240,12 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    a list of multiple alterations to apply in parallel.  For example, it
    is possible to add several columns and/or alter the type of several
    columns in a single command.
+  </para>
+
+  <para>
+   If the command is written as <literal>ALTER FOREIGN TABLE IF EXISTS ...</>
+   and the foreign table does not exist, no error is thrown. A notice is
+   issued in this case.
   </para>
 
   <para>
@@ -285,11 +315,29 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="PARAMETER">table_constraint</replaceable></term>
+      <listitem>
+       <para>
+        New table constraint for the foreign table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
+      <listitem>
+       <para>
+        Name of an existing constraint to drop.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
         Automatically drop objects that depend on the dropped column
-        (for example, views referencing the column).
+        or constraint (for example, views referencing the column).
        </para>
       </listitem>
      </varlistentry>
@@ -298,7 +346,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
       <term><literal>RESTRICT</literal></term>
       <listitem>
        <para>
-        Refuse to drop the column if there are any dependent
+        Refuse to drop the column or constraint if there are any dependent
         objects. This is the default behavior.
        </para>
       </listitem>
@@ -365,10 +413,10 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    <para>
     Consistency with the foreign server is not checked when a column is added
     or removed with <literal>ADD COLUMN</literal> or
-    <literal>DROP COLUMN</literal>, a <literal>NOT NULL</> constraint is
-    added, or a column type is changed with <literal>SET DATA TYPE</>.  It is
-    the user's responsibility to ensure that the table definition matches the
-    remote side.
+    <literal>DROP COLUMN</literal>, a <literal>NOT NULL</>
+    or <literal>CHECK</> constraint is added, or a column type is changed
+    with <literal>SET DATA TYPE</>.  It is the user's responsibility to ensure
+    that the table definition matches the remote side.
    </para>
 
    <para>
@@ -412,5 +460,14 @@ ALTER FOREIGN TABLE myschema.distributors OPTIONS (ADD opt1 'value', SET opt2, '
    column of a foreign table, leaving a zero-column table.  This is an
    extension of SQL, which disallows zero-column foreign tables.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createforeigntable"></member>
+   <member><xref linkend="sql-dropforeigntable"></member>
+  </simplelist>
  </refsect1>
 </refentry>

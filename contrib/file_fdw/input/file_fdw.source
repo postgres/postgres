@@ -62,7 +62,7 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
 CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
 
 CREATE FOREIGN TABLE agg_text (
-	a	int2,
+	a	int2 CHECK (a >= 0),
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'text', filename '@abs_srcdir@/data/agg.data', delimiter '	', null '\N');
@@ -72,11 +72,13 @@ CREATE FOREIGN TABLE agg_csv (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+ALTER FOREIGN TABLE agg_csv ADD CHECK (a >= 0);
 CREATE FOREIGN TABLE agg_bad (
 	a	int2,
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', delimiter ';', quote '@', escape '"', null '');
+ALTER FOREIGN TABLE agg_bad ADD CHECK (a >= 0);
 
 -- per-column options tests
 CREATE FOREIGN TABLE text_csv (
@@ -133,6 +135,18 @@ UPDATE agg_csv SET a = 1;
 DELETE FROM agg_csv WHERE a = 100;
 -- but this should be ignored
 SELECT * FROM agg_csv FOR UPDATE;
+
+-- constraint exclusion tests
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;
+\t off
+SELECT * FROM agg_csv WHERE a < 0;
+SET constraint_exclusion = 'on';
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;
+\t off
+SELECT * FROM agg_csv WHERE a < 0;
+RESET constraint_exclusion;
 
 -- privilege tests
 SET ROLE file_fdw_superuser;

@@ -269,9 +269,28 @@ CREATE FOREIGN TABLE ft1 ();                                    -- ERROR
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
 CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;                -- ERROR
 CREATE FOREIGN TABLE ft1 (
-	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
+	c1 integer OPTIONS ("param 1" 'val1') PRIMARY KEY,
 	c2 text OPTIONS (param2 'val2', param3 'val3'),
 	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value'); -- ERROR
+CREATE TABLE ref_table (id integer PRIMARY KEY);
+CREATE FOREIGN TABLE ft1 (
+	c1 integer OPTIONS ("param 1" 'val1') REFERENCES ref_table (id),
+	c2 text OPTIONS (param2 'val2', param3 'val3'),
+	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value'); -- ERROR
+DROP TABLE ref_table;
+CREATE FOREIGN TABLE ft1 (
+	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
+	c2 text OPTIONS (param2 'val2', param3 'val3'),
+	c3 date,
+	UNIQUE (c3)
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value'); -- ERROR
+CREATE FOREIGN TABLE ft1 (
+	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
+	c2 text OPTIONS (param2 'val2', param3 'val3') CHECK (c2 <> ''),
+	c3 date,
+	CHECK (c3 BETWEEN '1994-01-01'::date AND '1994-01-31'::date)
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
@@ -314,10 +333,13 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
 CREATE TABLE use_ft1_column_type (x ft1);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE integer;	-- ERROR
 DROP TABLE use_ft1_column_type;
-ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0); -- ERROR
+ALTER FOREIGN TABLE ft1 ADD PRIMARY KEY (c7);                   -- ERROR
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0) NOT VALID;  -- ERROR
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0);
+ALTER FOREIGN TABLE ft1 ALTER CONSTRAINT ft1_c9_check DEFERRABLE; -- ERROR
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c9_check;
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
-ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c1_check;
 ALTER FOREIGN TABLE ft1 SET WITH OIDS;                          -- ERROR
 ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
 ALTER FOREIGN TABLE ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');

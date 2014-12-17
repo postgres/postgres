@@ -515,21 +515,23 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				break;
 
 			case CONSTR_CHECK:
-				if (cxt->isforeign)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("constraints are not supported on foreign tables"),
-							 parser_errposition(cxt->pstate,
-												constraint->location)));
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
 				break;
 
 			case CONSTR_PRIMARY:
+				if (cxt->isforeign)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("primary key constraints are not supported on foreign tables"),
+							 parser_errposition(cxt->pstate,
+												constraint->location)));
+				/* FALL THRU */
+
 			case CONSTR_UNIQUE:
 				if (cxt->isforeign)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("constraints are not supported on foreign tables"),
+							 errmsg("unique constraints are not supported on foreign tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				if (constraint->keys == NIL)
@@ -546,7 +548,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				if (cxt->isforeign)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("constraints are not supported on foreign tables"),
+							 errmsg("foreign key constraints are not supported on foreign tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
 
@@ -605,18 +607,35 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 static void
 transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 {
-	if (cxt->isforeign)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("constraints are not supported on foreign tables"),
-				 parser_errposition(cxt->pstate,
-									constraint->location)));
-
 	switch (constraint->contype)
 	{
 		case CONSTR_PRIMARY:
+			if (cxt->isforeign)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("primary key constraints are not supported on foreign tables"),
+						 parser_errposition(cxt->pstate,
+											constraint->location)));
+			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
+			break;
+
 		case CONSTR_UNIQUE:
+			if (cxt->isforeign)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unique constraints are not supported on foreign tables"),
+						 parser_errposition(cxt->pstate,
+											constraint->location)));
+			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
+			break;
+
 		case CONSTR_EXCLUSION:
+			if (cxt->isforeign)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("exclusion constraints are not supported on foreign tables"),
+						 parser_errposition(cxt->pstate,
+											constraint->location)));
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 			break;
 
@@ -625,6 +644,12 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 			break;
 
 		case CONSTR_FOREIGN:
+			if (cxt->isforeign)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("foreign key constraints are not supported on foreign tables"),
+						 parser_errposition(cxt->pstate,
+											constraint->location)));
 			cxt->fkconstraints = lappend(cxt->fkconstraints, constraint);
 			break;
 

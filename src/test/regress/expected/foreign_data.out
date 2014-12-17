@@ -669,9 +669,37 @@ ERROR:  syntax error at or near "WITH OIDS"
 LINE 1: CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;
                                               ^
 CREATE FOREIGN TABLE ft1 (
-	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
+	c1 integer OPTIONS ("param 1" 'val1') PRIMARY KEY,
 	c2 text OPTIONS (param2 'val2', param3 'val3'),
 	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value'); -- ERROR
+ERROR:  primary key constraints are not supported on foreign tables
+LINE 2:  c1 integer OPTIONS ("param 1" 'val1') PRIMARY KEY,
+                                               ^
+CREATE TABLE ref_table (id integer PRIMARY KEY);
+CREATE FOREIGN TABLE ft1 (
+	c1 integer OPTIONS ("param 1" 'val1') REFERENCES ref_table (id),
+	c2 text OPTIONS (param2 'val2', param3 'val3'),
+	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value'); -- ERROR
+ERROR:  foreign key constraints are not supported on foreign tables
+LINE 2:  c1 integer OPTIONS ("param 1" 'val1') REFERENCES ref_table ...
+                                               ^
+DROP TABLE ref_table;
+CREATE FOREIGN TABLE ft1 (
+	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
+	c2 text OPTIONS (param2 'val2', param3 'val3'),
+	c3 date,
+	UNIQUE (c3)
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value'); -- ERROR
+ERROR:  unique constraints are not supported on foreign tables
+LINE 5:  UNIQUE (c3)
+         ^
+CREATE FOREIGN TABLE ft1 (
+	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
+	c2 text OPTIONS (param2 'val2', param3 'val3') CHECK (c2 <> ''),
+	c3 date,
+	CHECK (c3 BETWEEN '1994-01-01'::date AND '1994-01-31'::date)
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
@@ -682,6 +710,9 @@ COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
  c1     | integer | not null  | ("param 1" 'val1')             | plain    |              | ft1.c1
  c2     | text    |           | (param2 'val2', param3 'val3') | extended |              | 
  c3     | date    |           |                                | plain    |              | 
+Check constraints:
+    "ft1_c2_check" CHECK (c2 <> ''::text)
+    "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
 Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
 
@@ -740,6 +771,9 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
  c8     | text    |           | (p2 'V2')                      | extended |              | 
  c9     | integer |           |                                | plain    |              | 
  c10    | integer |           | (p1 'v1')                      | plain    |              | 
+Check constraints:
+    "ft1_c2_check" CHECK (c2 <> ''::text)
+    "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
 Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
 
@@ -748,16 +782,20 @@ CREATE TABLE use_ft1_column_type (x ft1);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE integer;	-- ERROR
 ERROR:  cannot alter foreign table "ft1" because column "use_ft1_column_type.x" uses its row type
 DROP TABLE use_ft1_column_type;
-ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0); -- ERROR
-ERROR:  constraints are not supported on foreign tables
-LINE 1: ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c...
+ALTER FOREIGN TABLE ft1 ADD PRIMARY KEY (c7);                   -- ERROR
+ERROR:  primary key constraints are not supported on foreign tables
+LINE 1: ALTER FOREIGN TABLE ft1 ADD PRIMARY KEY (c7);
                                     ^
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0) NOT VALID;  -- ERROR
+ERROR:  CHECK constraints on foreign tables cannot be marked NOT VALID
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0);
+ALTER FOREIGN TABLE ft1 ALTER CONSTRAINT ft1_c9_check DEFERRABLE; -- ERROR
+ERROR:  "ft1" is not a table
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c9_check;
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
-ERROR:  "ft1" is not a table
+ERROR:  constraint "no_const" of relation "ft1" does not exist
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
-ERROR:  "ft1" is not a table
-ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c1_check;
-ERROR:  "ft1" is not a table
+NOTICE:  constraint "no_const" of relation "ft1" does not exist, skipping
 ALTER FOREIGN TABLE ft1 SET WITH OIDS;                          -- ERROR
 ERROR:  "ft1" is not a table
 ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
@@ -785,6 +823,9 @@ ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
  c7               | integer |           | (p1 'v1', p2 'v2')
  c8               | text    |           | (p2 'V2')
  c10              | integer |           | (p1 'v1')
+Check constraints:
+    "ft1_c2_check" CHECK (c2 <> ''::text)
+    "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
 Server: s0
 FDW Options: (quote '~', "be quoted" 'value', escape '@')
 

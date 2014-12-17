@@ -2589,6 +2589,91 @@ select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
 (13 rows)
 
 -- ===================================================================
+-- test check constraints
+-- ===================================================================
+-- Consistent check constraints provide consistent results
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2positive CHECK (c2 >= 0);
+EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 < 0;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Foreign Scan on public.ft1
+         Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE ((c2 < 0))
+(4 rows)
+
+SELECT count(*) FROM ft1 WHERE c2 < 0;
+ count 
+-------
+     0
+(1 row)
+
+SET constraint_exclusion = 'on';
+EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 < 0;
+           QUERY PLAN           
+--------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Result
+         One-Time Filter: false
+(4 rows)
+
+SELECT count(*) FROM ft1 WHERE c2 < 0;
+ count 
+-------
+     0
+(1 row)
+
+RESET constraint_exclusion;
+-- check constraint is enforced on the remote side, not locally
+INSERT INTO ft1(c1, c2) VALUES(1111, -2);  -- c2positive
+ERROR:  new row for relation "T 1" violates check constraint "c2positive"
+DETAIL:  Failing row contains (1111, -2, null, null, null, null, ft1       , null).
+CONTEXT:  Remote SQL command: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+UPDATE ft1 SET c2 = -c2 WHERE c1 = 1;  -- c2positive
+ERROR:  new row for relation "T 1" violates check constraint "c2positive"
+DETAIL:  Failing row contains (1, -1, 00001_trig_update, 1970-01-02 08:00:00+00, 1970-01-02 00:00:00, 1, 1         , foo).
+CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2 WHERE ctid = $1
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c2positive;
+-- But inconsistent check constraints provide inconsistent results
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2negative CHECK (c2 < 0);
+EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 >= 0;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Foreign Scan on public.ft1
+         Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE ((c2 >= 0))
+(4 rows)
+
+SELECT count(*) FROM ft1 WHERE c2 >= 0;
+ count 
+-------
+   821
+(1 row)
+
+SET constraint_exclusion = 'on';
+EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 >= 0;
+           QUERY PLAN           
+--------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Result
+         One-Time Filter: false
+(4 rows)
+
+SELECT count(*) FROM ft1 WHERE c2 >= 0;
+ count 
+-------
+     0
+(1 row)
+
+RESET constraint_exclusion;
+-- local check constraint is not actually enforced
+INSERT INTO ft1(c1, c2) VALUES(1111, 2);
+UPDATE ft1 SET c2 = c2 + 1 WHERE c1 = 1;
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c2negative;
+-- ===================================================================
 -- test serial columns (ie, sequence-based defaults)
 -- ===================================================================
 create table loc1 (f1 serial, f2 text);
