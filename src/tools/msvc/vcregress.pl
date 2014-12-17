@@ -405,6 +405,6 @@ sub usage
 {
 	print STDERR
 	  "Usage: vcregress.pl ",
-	  "<check|installcheck|plcheck|contribcheck|ecpgcheck> [schedule]\n";
+	  "<check|installcheck|plcheck|contribcheck|isolationcheck|ecpgcheck|upgradecheck> [schedule]\n";
 	exit(1);
 }
