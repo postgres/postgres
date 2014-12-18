@@ -17,13 +17,20 @@ set -e
 unset MAKEFLAGS
 unset MAKELEVEL
 
+# Run a given "initdb" binary and overlay the regression testing
+# authentication configuration.
+standard_initdb() {
+	"$1" -N
+	../../src/test/regress/pg_regress --config-auth "$PGDATA"
+}
+
 # Establish how the server will listen for connections
 testhost=`uname -s`
 
 case $testhost in
 	MINGW*)
 		LISTEN_ADDRESSES="localhost"
-		PGHOST=""; unset PGHOST
+		PGHOST=localhost
 		;;
 	*)
 		LISTEN_ADDRESSES=""
@@ -49,11 +56,11 @@ case $testhost in
 			trap 'rm -rf "$PGHOST"' 0
 			trap 'exit 3' 1 2 13 15
 		fi
-		export PGHOST
 		;;
 esac
 
 POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES -k \"$PGHOST\""
+export PGHOST
 
 temp_root=$PWD/tmp_check
 
@@ -141,7 +148,7 @@ export EXTRA_REGRESS_OPTS
 # enable echo so the user can see what is being executed
 set -x
 
-$oldbindir/initdb -N
+standard_initdb "$oldbindir"/initdb
 $oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
@@ -181,7 +188,7 @@ fi
 
 PGDATA=$BASE_PGDATA
 
-initdb -N
+standard_initdb 'initdb'
 
 pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
 
