@@ -59,13 +59,12 @@ InitBufTable(int size)
 	/* BufferTag maps to Buffer */
 	info.keysize = sizeof(BufferTag);
 	info.entrysize = sizeof(BufferLookupEnt);
-	info.hash = tag_hash;
 	info.num_partitions = NUM_BUFFER_PARTITIONS;
 
 	SharedBufHash = ShmemInitHash("Shared Buffer Lookup Table",
 								  size, size,
 								  &info,
-								  HASH_ELEM | HASH_FUNCTION | HASH_PARTITION);
+								  HASH_ELEM | HASH_BLOBS | HASH_PARTITION);
 }
 
 /*

@@ -378,11 +378,10 @@ _PG_init(void)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(pltcl_interp_desc);
-	hash_ctl.hash = oid_hash;
 	pltcl_interp_htab = hash_create("PL/Tcl interpreters",
 									8,
 									&hash_ctl,
-									HASH_ELEM | HASH_FUNCTION);
+									HASH_ELEM | HASH_BLOBS);
 
 	/************************************************************
 	 * Create the hash table for function lookup
@@ -390,11 +389,10 @@ _PG_init(void)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(pltcl_proc_key);
 	hash_ctl.entrysize = sizeof(pltcl_proc_ptr);
-	hash_ctl.hash = tag_hash;
 	pltcl_proc_htab = hash_create("PL/Tcl functions",
 								  100,
 								  &hash_ctl,
-								  HASH_ELEM | HASH_FUNCTION);
+								  HASH_ELEM | HASH_BLOBS);
 
 	pltcl_pm_init_done = true;
 }

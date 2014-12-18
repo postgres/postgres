@@ -76,16 +76,14 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	 * nodeBuffersTab hash is association between index blocks and it's
 	 * buffers.
 	 */
+	memset(&hashCtl, 0, sizeof(hashCtl));
 	hashCtl.keysize = sizeof(BlockNumber);
 	hashCtl.entrysize = sizeof(GISTNodeBuffer);
 	hashCtl.hcxt = CurrentMemoryContext;
-	hashCtl.hash = tag_hash;
-	hashCtl.match = memcmp;
 	gfbb->nodeBuffersTab = hash_create("gistbuildbuffers",
 									   1024,
 									   &hashCtl,
-									   HASH_ELEM | HASH_CONTEXT
-									   | HASH_FUNCTION | HASH_COMPARE);
+									   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	gfbb->bufferEmptyingQueue = NIL;
 

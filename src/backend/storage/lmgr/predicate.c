@@ -286,7 +286,7 @@
  * the lock partition number from the hashcode.
  */
 #define PredicateLockTargetTagHashCode(predicatelocktargettag) \
-	(tag_hash((predicatelocktargettag), sizeof(PREDICATELOCKTARGETTAG)))
+	get_hash_value(PredicateLockTargetHash, predicatelocktargettag)
 
 /*
  * Given a predicate lock tag, and the hash for its target,
@@ -1095,7 +1095,6 @@ void
 InitPredicateLocks(void)
 {
 	HASHCTL		info;
-	int			hash_flags;
 	long		max_table_size;
 	Size		requestSize;
 	bool		found;
@@ -1113,15 +1112,14 @@ InitPredicateLocks(void)
 	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(PREDICATELOCKTARGETTAG);
 	info.entrysize = sizeof(PREDICATELOCKTARGET);
-	info.hash = tag_hash;
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
-	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION | HASH_FIXED_SIZE);
 
 	PredicateLockTargetHash = ShmemInitHash("PREDICATELOCKTARGET hash",
 											max_table_size,
 											max_table_size,
 											&info,
-											hash_flags);
+											HASH_ELEM | HASH_BLOBS |
+											HASH_PARTITION | HASH_FIXED_SIZE);
 
 	/* Assume an average of 2 xacts per target */
 	max_table_size *= 2;
@@ -1143,13 +1141,13 @@ InitPredicateLocks(void)
 	info.entrysize = sizeof(PREDICATELOCK);
 	info.hash = predicatelock_hash;
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
-	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION | HASH_FIXED_SIZE);
 
 	PredicateLockHash = ShmemInitHash("PREDICATELOCK hash",
 									  max_table_size,
 									  max_table_size,
 									  &info,
-									  hash_flags);
+									  HASH_ELEM | HASH_FUNCTION |
+									  HASH_PARTITION | HASH_FIXED_SIZE);
 
 	/*
 	 * Compute size for serializable transaction hashtable. Note these
@@ -1224,14 +1222,13 @@ InitPredicateLocks(void)
 	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(SERIALIZABLEXIDTAG);
 	info.entrysize = sizeof(SERIALIZABLEXID);
-	info.hash = tag_hash;
-	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_FIXED_SIZE);
 
 	SerializableXidHash = ShmemInitHash("SERIALIZABLEXID hash",
 										max_table_size,
 										max_table_size,
 										&info,
-										hash_flags);
+										HASH_ELEM | HASH_BLOBS |
+										HASH_FIXED_SIZE);
 
 	/*
 	 * Allocate space for tracking rw-conflicts in lists attached to the
@@ -1793,11 +1790,10 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(PREDICATELOCKTARGETTAG);
 	hash_ctl.entrysize = sizeof(LOCALPREDICATELOCK);
-	hash_ctl.hash = tag_hash;
 	LocalPredicateLockHash = hash_create("Local predicate lock",
 										 max_predicate_locks_per_xact,
 										 &hash_ctl,
-										 HASH_ELEM | HASH_FUNCTION);
+										 HASH_ELEM | HASH_BLOBS);
 
 	return snapshot;
 }

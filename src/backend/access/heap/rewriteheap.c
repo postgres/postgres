@@ -283,13 +283,12 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	hash_ctl.keysize = sizeof(TidHashKey);
 	hash_ctl.entrysize = sizeof(UnresolvedTupData);
 	hash_ctl.hcxt = state->rs_cxt;
-	hash_ctl.hash = tag_hash;
 
 	state->rs_unresolved_tups =
 		hash_create("Rewrite / Unresolved ctids",
 					128,		/* arbitrary initial size */
 					&hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	hash_ctl.entrysize = sizeof(OldToNewMappingData);
 
@@ -297,7 +296,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 		hash_create("Rewrite / Old to new tid map",
 					128,		/* arbitrary initial size */
 					&hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	MemoryContextSwitchTo(old_cxt);
 
@@ -834,13 +833,12 @@ logical_begin_heap_rewrite(RewriteState state)
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(RewriteMappingFile);
 	hash_ctl.hcxt = state->rs_cxt;
-	hash_ctl.hash = tag_hash;
 
 	state->rs_logical_mappings =
 		hash_create("Logical rewrite mapping",
 					128,		/* arbitrary initial size */
 					&hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 }
 
 /*

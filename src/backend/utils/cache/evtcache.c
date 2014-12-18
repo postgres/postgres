@@ -123,10 +123,9 @@ BuildEventTriggerCache(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
-	ctl.hash = tag_hash;
 	ctl.hcxt = EventTriggerCacheContext;
 	cache = hash_create("Event Trigger Cache", 32, &ctl,
-						HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+						HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/*
 	 * Prepare to scan pg_event_trigger in name order.

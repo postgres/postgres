@@ -120,9 +120,8 @@ lookup_ts_parser_cache(Oid prsId)
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TSParserCacheEntry);
-		ctl.hash = oid_hash;
 		TSParserCacheHash = hash_create("Tsearch parser cache", 4,
-										&ctl, HASH_ELEM | HASH_FUNCTION);
+										&ctl, HASH_ELEM | HASH_BLOBS);
 		/* Flush cache on pg_ts_parser changes */
 		CacheRegisterSyscacheCallback(TSPARSEROID, InvalidateTSCacheCallBack,
 									  PointerGetDatum(TSParserCacheHash));
@@ -219,9 +218,8 @@ lookup_ts_dictionary_cache(Oid dictId)
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TSDictionaryCacheEntry);
-		ctl.hash = oid_hash;
 		TSDictionaryCacheHash = hash_create("Tsearch dictionary cache", 8,
-											&ctl, HASH_ELEM | HASH_FUNCTION);
+											&ctl, HASH_ELEM | HASH_BLOBS);
 		/* Flush cache on pg_ts_dict and pg_ts_template changes */
 		CacheRegisterSyscacheCallback(TSDICTOID, InvalidateTSCacheCallBack,
 									  PointerGetDatum(TSDictionaryCacheHash));
@@ -368,9 +366,8 @@ init_ts_config_cache(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(TSConfigCacheEntry);
-	ctl.hash = oid_hash;
 	TSConfigCacheHash = hash_create("Tsearch configuration cache", 16,
-									&ctl, HASH_ELEM | HASH_FUNCTION);
+									&ctl, HASH_ELEM | HASH_BLOBS);
 	/* Flush cache on pg_ts_config and pg_ts_config_map changes */
 	CacheRegisterSyscacheCallback(TSCONFIGOID, InvalidateTSCacheCallBack,
 								  PointerGetDatum(TSConfigCacheHash));

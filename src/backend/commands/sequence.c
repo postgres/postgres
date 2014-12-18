@@ -986,10 +986,9 @@ create_seq_hashtable(void)
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(SeqTableData);
-	ctl.hash = oid_hash;
 
 	seqhashtab = hash_create("Sequence values", 16, &ctl,
-							 HASH_ELEM | HASH_FUNCTION);
+							 HASH_ELEM | HASH_BLOBS);
 }
 
 /*

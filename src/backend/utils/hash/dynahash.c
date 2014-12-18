@@ -26,6 +26,20 @@
  * in local memory, we typically use palloc() which will throw error on
  * failure.  The code in this file has to cope with both cases.
  *
+ * dynahash.c provides support for these types of lookup keys:
+ *
+ * 1. Null-terminated C strings (truncated if necessary to fit in keysize),
+ * compared as though by strcmp().  This is the default behavior.
+ *
+ * 2. Arbitrary binary data of size keysize, compared as though by memcmp().
+ * (Caller must ensure there are no undefined padding bits in the keys!)
+ * This is selected by specifying HASH_BLOBS flag to hash_create.
+ *
+ * 3. More complex key behavior can be selected by specifying user-supplied
+ * hashing, comparison, and/or key-copying functions.  At least a hashing
+ * function must be supplied; comparison defaults to memcmp() and key copying
+ * to memcpy() when a user-defined hashing function is selected.
+ *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -305,15 +319,32 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	hashp->tabname = (char *) (hashp + 1);
 	strcpy(hashp->tabname, tabname);
 
+	/*
+	 * Select the appropriate hash function (see comments at head of file).
+	 */
 	if (flags & HASH_FUNCTION)
 		hashp->hash = info->hash;
+	else if (flags & HASH_BLOBS)
+	{
+		/* We can optimize hashing for common key sizes */
+		Assert(flags & HASH_ELEM);
+		if (info->keysize == sizeof(uint32))
+			hashp->hash = uint32_hash;
+		else
+			hashp->hash = tag_hash;
+	}
 	else
 		hashp->hash = string_hash;		/* default hash function */
 
 	/*
 	 * If you don't specify a match function, it defaults to string_compare if
 	 * you used string_hash (either explicitly or by default) and to memcmp
-	 * otherwise.  (Prior to PostgreSQL 7.4, memcmp was always used.)
+	 * otherwise.
+	 *
+	 * Note: explicitly specifying string_hash is deprecated, because this
+	 * might not work for callers in loadable modules on some platforms due to
+	 * referencing a trampoline instead of the string_hash function proper.
+	 * Just let it default, eh?
 	 */
 	if (flags & HASH_COMPARE)
 		hashp->match = info->match;
@@ -332,6 +363,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	else
 		hashp->keycopy = memcpy;
 
+	/* And select the entry allocation function, too. */
 	if (flags & HASH_ALLOC)
 		hashp->alloc = info->alloc;
 	else

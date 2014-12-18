@@ -221,12 +221,11 @@ tbm_create_pagetable(TIDBitmap *tbm)
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(BlockNumber);
 	hash_ctl.entrysize = sizeof(PagetableEntry);
-	hash_ctl.hash = tag_hash;
 	hash_ctl.hcxt = tbm->mcxt;
 	tbm->pagetable = hash_create("TIDBitmap",
 								 128,	/* start small and extend */
 								 &hash_ctl,
-								 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+								 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* If entry1 is valid, push it into the hashtable */
 	if (tbm->status == TBM_ONE_PAGE)

@@ -226,9 +226,8 @@ PLy_add_exceptions(PyObject *plpy)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(int);
 	hash_ctl.entrysize = sizeof(PLyExceptionEntry);
-	hash_ctl.hash = tag_hash;
 	PLy_spi_exceptions = hash_create("SPI exceptions", 256,
-									 &hash_ctl, HASH_ELEM | HASH_FUNCTION);
+									 &hash_ctl, HASH_ELEM | HASH_BLOBS);
 
 	PLy_generate_spi_exceptions(excmod, PLy_exc_spi_error);
 }

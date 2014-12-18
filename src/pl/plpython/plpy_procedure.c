@@ -39,9 +39,8 @@ init_procedure_caches(void)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(PLyProcedureKey);
 	hash_ctl.entrysize = sizeof(PLyProcedureEntry);
-	hash_ctl.hash = tag_hash;
 	PLy_procedure_cache = hash_create("PL/Python procedures", 32, &hash_ctl,
-									  HASH_ELEM | HASH_FUNCTION);
+									  HASH_ELEM | HASH_BLOBS);
 }
 
 /*

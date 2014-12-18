@@ -82,10 +82,9 @@ InitializeAttoptCache(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(AttoptCacheKey);
 	ctl.entrysize = sizeof(AttoptCacheEntry);
-	ctl.hash = tag_hash;
 	AttoptCacheHash =
 		hash_create("Attopt cache", 256, &ctl,
-					HASH_ELEM | HASH_FUNCTION);
+					HASH_ELEM | HASH_BLOBS);
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (!CacheMemoryContext)

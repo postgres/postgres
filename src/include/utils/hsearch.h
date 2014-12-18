@@ -31,7 +31,7 @@ typedef int (*HashCompareFunc) (const void *key1, const void *key2,
 
 /*
  * Key copying functions must have this signature.  The return value is not
- * used.  (The definition is set up to allow memcpy() and strncpy() to be
+ * used.  (The definition is set up to allow memcpy() and strlcpy() to be
  * used directly.)
  */
 typedef void *(*HashCopyFunc) (void *dest, const void *src, Size keysize);
@@ -80,19 +80,20 @@ typedef struct HASHCTL
 } HASHCTL;
 
 /* Flags to indicate which parameters are supplied */
-#define HASH_PARTITION	0x001	/* Hashtable is used w/partitioned locking */
-#define HASH_SEGMENT	0x002	/* Set segment size */
-#define HASH_DIRSIZE	0x004	/* Set directory size (initial and max) */
-#define HASH_FFACTOR	0x008	/* Set fill factor */
-#define HASH_FUNCTION	0x010	/* Set user defined hash function */
-#define HASH_ELEM		0x020	/* Set keysize and entrysize */
-#define HASH_SHARED_MEM 0x040	/* Hashtable is in shared memory */
-#define HASH_ATTACH		0x080	/* Do not initialize hctl */
-#define HASH_ALLOC		0x100	/* Set memory allocator */
-#define HASH_CONTEXT	0x200	/* Set memory allocation context */
-#define HASH_COMPARE	0x400	/* Set user defined comparison function */
-#define HASH_KEYCOPY	0x800	/* Set user defined key-copying function */
-#define HASH_FIXED_SIZE 0x1000	/* Initial size is a hard limit */
+#define HASH_PARTITION	0x0001	/* Hashtable is used w/partitioned locking */
+#define HASH_SEGMENT	0x0002	/* Set segment size */
+#define HASH_DIRSIZE	0x0004	/* Set directory size (initial and max) */
+#define HASH_FFACTOR	0x0008	/* Set fill factor */
+#define HASH_ELEM		0x0010	/* Set keysize and entrysize */
+#define HASH_BLOBS		0x0020	/* Select support functions for binary keys */
+#define HASH_FUNCTION	0x0040	/* Set user defined hash function */
+#define HASH_COMPARE	0x0080	/* Set user defined comparison function */
+#define HASH_KEYCOPY	0x0100	/* Set user defined key-copying function */
+#define HASH_ALLOC		0x0200	/* Set memory allocator */
+#define HASH_CONTEXT	0x0400	/* Set memory allocation context */
+#define HASH_SHARED_MEM 0x0800	/* Hashtable is in shared memory */
+#define HASH_ATTACH		0x1000	/* Do not initialize hctl */
+#define HASH_FIXED_SIZE 0x2000	/* Initial size is a hard limit */
 
 
 /* max_dsize value to indicate expansible directory */
@@ -143,11 +144,17 @@ extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
 
 /*
  * prototypes for functions in hashfn.c
+ *
+ * Note: It is deprecated for callers of hash_create to explicitly specify
+ * string_hash, tag_hash, uint32_hash, or oid_hash.  Just set HASH_BLOBS or
+ * not.  Use HASH_FUNCTION only when you want something other than those.
  */
 extern uint32 string_hash(const void *key, Size keysize);
 extern uint32 tag_hash(const void *key, Size keysize);
-extern uint32 oid_hash(const void *key, Size keysize);
+extern uint32 uint32_hash(const void *key, Size keysize);
 extern uint32 bitmap_hash(const void *key, Size keysize);
 extern int	bitmap_match(const void *key1, const void *key2, Size keysize);
+
+#define oid_hash uint32_hash	/* Remove me eventually */
 
 #endif   /* HSEARCH_H */

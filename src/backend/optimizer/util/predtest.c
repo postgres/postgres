@@ -1711,9 +1711,8 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(OprProofCacheKey);
 		ctl.entrysize = sizeof(OprProofCacheEntry);
-		ctl.hash = tag_hash;
 		OprProofCacheHash = hash_create("Btree proof lookup cache", 256,
-										&ctl, HASH_ELEM | HASH_FUNCTION);
+										&ctl, HASH_ELEM | HASH_BLOBS);
 
 		/* Arrange to flush cache on pg_amop changes */
 		CacheRegisterSyscacheCallback(AMOPOPID,

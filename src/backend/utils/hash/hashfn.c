@@ -55,15 +55,15 @@ tag_hash(const void *key, Size keysize)
 }
 
 /*
- * oid_hash: hash function for keys that are OIDs
+ * uint32_hash: hash function for keys that are uint32 or int32
  *
  * (tag_hash works for this case too, but is slower)
  */
 uint32
-oid_hash(const void *key, Size keysize)
+uint32_hash(const void *key, Size keysize)
 {
-	Assert(keysize == sizeof(Oid));
-	return DatumGetUInt32(hash_uint32((uint32) *((const Oid *) key)));
+	Assert(keysize == sizeof(uint32));
+	return DatumGetUInt32(hash_uint32(*((const uint32 *) key)));
 }
 
 /*

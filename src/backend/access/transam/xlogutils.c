@@ -107,12 +107,11 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(xl_invalid_page_key);
 		ctl.entrysize = sizeof(xl_invalid_page);
-		ctl.hash = tag_hash;
 
 		invalid_page_tab = hash_create("XLOG invalid-page table",
 									   100,
 									   &ctl,
-									   HASH_ELEM | HASH_FUNCTION);
+									   HASH_ELEM | HASH_BLOBS);
 	}
 
 	/* we currently assume xl_invalid_page_key contains no padding */

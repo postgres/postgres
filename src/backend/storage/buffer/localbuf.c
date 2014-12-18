@@ -415,12 +415,11 @@ InitLocalBuffers(void)
 	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(BufferTag);
 	info.entrysize = sizeof(LocalBufferLookupEnt);
-	info.hash = tag_hash;
 
 	LocalBufHash = hash_create("Local Buffer Lookup Table",
 							   nbufs,
 							   &info,
-							   HASH_ELEM | HASH_FUNCTION);
+							   HASH_ELEM | HASH_BLOBS);
 
 	if (!LocalBufHash)
 		elog(ERROR, "could not initialize local buffer hash table");

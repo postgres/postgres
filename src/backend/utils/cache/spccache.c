@@ -81,10 +81,9 @@ InitializeTableSpaceCache(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(TableSpaceCacheEntry);
-	ctl.hash = oid_hash;
 	TableSpaceCacheHash =
 		hash_create("TableSpace cache", 16, &ctl,
-					HASH_ELEM | HASH_FUNCTION);
+					HASH_ELEM | HASH_BLOBS);
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (!CacheMemoryContext)

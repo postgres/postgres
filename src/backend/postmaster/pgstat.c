@@ -1132,12 +1132,11 @@ pgstat_collect_oids(Oid catalogid)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(Oid);
-	hash_ctl.hash = oid_hash;
 	hash_ctl.hcxt = CurrentMemoryContext;
 	htab = hash_create("Temporary table of OIDs",
 					   PGSTAT_TAB_HASH_SIZE,
 					   &hash_ctl,
-					   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+					   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	rel = heap_open(catalogid, AccessShareLock);
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
@@ -1520,11 +1519,10 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Oid);
 		hash_ctl.entrysize = sizeof(PgStat_BackendFunctionEntry);
-		hash_ctl.hash = oid_hash;
 		pgStatFunctions = hash_create("Function stat entries",
 									  PGSTAT_FUNCTION_HASH_SIZE,
 									  &hash_ctl,
-									  HASH_ELEM | HASH_FUNCTION);
+									  HASH_ELEM | HASH_BLOBS);
 	}
 
 	/* Get the stats entry for this function, create if necessary */
@@ -3483,19 +3481,17 @@ reset_dbentry_counters(PgStat_StatDBEntry *dbentry)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
-	hash_ctl.hash = oid_hash;
 	dbentry->tables = hash_create("Per-database table",
 								  PGSTAT_TAB_HASH_SIZE,
 								  &hash_ctl,
-								  HASH_ELEM | HASH_FUNCTION);
+								  HASH_ELEM | HASH_BLOBS);
 
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatFuncEntry);
-	hash_ctl.hash = oid_hash;
 	dbentry->functions = hash_create("Per-database function",
 									 PGSTAT_FUNCTION_HASH_SIZE,
 									 &hash_ctl,
-									 HASH_ELEM | HASH_FUNCTION);
+									 HASH_ELEM | HASH_BLOBS);
 }
 
 /*
@@ -3902,10 +3898,9 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatDBEntry);
-	hash_ctl.hash = oid_hash;
 	hash_ctl.hcxt = pgStatLocalContext;
 	dbhash = hash_create("Databases hash", PGSTAT_DB_HASH_SIZE, &hash_ctl,
-						 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+						 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/*
 	 * Clear out global and archiver statistics so they start from zero in
@@ -4026,21 +4021,19 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
-				hash_ctl.hash = oid_hash;
 				hash_ctl.hcxt = pgStatLocalContext;
 				dbentry->tables = hash_create("Per-database table",
 											  PGSTAT_TAB_HASH_SIZE,
 											  &hash_ctl,
-								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatFuncEntry);
-				hash_ctl.hash = oid_hash;
 				hash_ctl.hcxt = pgStatLocalContext;
 				dbentry->functions = hash_create("Per-database function",
 												 PGSTAT_FUNCTION_HASH_SIZE,
 												 &hash_ctl,
-								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 				/*
 				 * If requested, read the data from the database-specific

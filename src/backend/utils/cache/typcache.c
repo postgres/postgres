@@ -166,9 +166,8 @@ lookup_type_cache(Oid type_id, int flags)
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TypeCacheEntry);
-		ctl.hash = oid_hash;
 		TypeCacheHash = hash_create("Type information cache", 64,
-									&ctl, HASH_ELEM | HASH_FUNCTION);
+									&ctl, HASH_ELEM | HASH_BLOBS);
 
 		/* Also set up callbacks for SI invalidations */
 		CacheRegisterRelcacheCallback(TypeCacheRelCallback, (Datum) 0);
@@ -846,9 +845,8 @@ assign_record_type_typmod(TupleDesc tupDesc)
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = REC_HASH_KEYS * sizeof(Oid);
 		ctl.entrysize = sizeof(RecordCacheEntry);
-		ctl.hash = tag_hash;
 		RecordCacheHash = hash_create("Record information cache", 64,
-									  &ctl, HASH_ELEM | HASH_FUNCTION);
+									  &ctl, HASH_ELEM | HASH_BLOBS);
 
 		/* Also make sure CacheMemoryContext exists */
 		if (!CacheMemoryContext)

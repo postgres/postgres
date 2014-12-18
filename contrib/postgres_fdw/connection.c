@@ -109,12 +109,11 @@ GetConnection(ForeignServer *server, UserMapping *user,
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(ConnCacheKey);
 		ctl.entrysize = sizeof(ConnCacheEntry);
-		ctl.hash = tag_hash;
 		/* allocate ConnectionHash in the cache context */
 		ctl.hcxt = CacheMemoryContext;
 		ConnectionHash = hash_create("postgres_fdw connections", 8,
 									 &ctl,
-								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+									 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 		/*
 		 * Register some callback functions that manage connection cleanup.

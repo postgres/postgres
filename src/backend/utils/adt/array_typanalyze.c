@@ -290,12 +290,11 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	MemSet(&count_hash_ctl, 0, sizeof(count_hash_ctl));
 	count_hash_ctl.keysize = sizeof(int);
 	count_hash_ctl.entrysize = sizeof(DECountItem);
-	count_hash_ctl.hash = tag_hash;
 	count_hash_ctl.hcxt = CurrentMemoryContext;
 	count_tab = hash_create("Array distinct element count table",
 							64,
 							&count_hash_ctl,
-							HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+							HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	b_current = 1;

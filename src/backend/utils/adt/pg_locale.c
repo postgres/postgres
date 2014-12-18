@@ -875,9 +875,8 @@ lookup_collation_cache(Oid collation, bool set_flags)
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(collation_cache_entry);
-		ctl.hash = oid_hash;
 		collation_cache = hash_create("Collation cache", 100, &ctl,
-									  HASH_ELEM | HASH_FUNCTION);
+									  HASH_ELEM | HASH_BLOBS);
 	}
 
 	cache_entry = hash_search(collation_cache, &collation, HASH_ENTER, &found);

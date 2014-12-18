@@ -115,7 +115,6 @@ InitializeRelfilenodeMap(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(RelfilenodeMapKey);
 	ctl.entrysize = sizeof(RelfilenodeMapEntry);
-	ctl.hash = tag_hash;
 	ctl.hcxt = CacheMemoryContext;
 
 	/*
@@ -125,7 +124,7 @@ InitializeRelfilenodeMap(void)
 	 */
 	RelfilenodeMapHash =
 		hash_create("RelfilenodeMap cache", 1024, &ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Watch for invalidation events. */
 	CacheRegisterRelcacheCallback(RelfilenodeMapInvalidateCallback,

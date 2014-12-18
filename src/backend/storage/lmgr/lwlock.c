@@ -167,10 +167,9 @@ init_lwlock_stats(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(lwlock_stats_key);
 	ctl.entrysize = sizeof(lwlock_stats);
-	ctl.hash = tag_hash;
 	ctl.hcxt = lwlock_stats_cxt;
 	lwlock_stats_htab = hash_create("lwlock stats", 16384, &ctl,
-									HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+									HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	if (!exit_registered)
 	{
 		on_shmem_exit(print_lwlock_stats, 0);
