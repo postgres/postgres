@@ -356,17 +356,17 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							 get_namespace_name(RelationGetNamespace(onerel)),
 							 RelationGetRelationName(onerel),
 							 vacrelstats->num_index_scans);
-			appendStringInfo(&buf, _("pages: %d removed, %d remain\n"),
+			appendStringInfo(&buf, _("pages: %u removed, %u remain\n"),
 							 vacrelstats->pages_removed,
 							 vacrelstats->rel_pages);
 			if (vacrelstats->pinned_pages > 0)
 			{
 				if (scan_all)
-					appendStringInfo(&buf, _("waited for %d buffer pins\n"),
+					appendStringInfo(&buf, _("waited for %u buffer pins\n"),
 									 vacrelstats->pinned_pages);
 				else
 					appendStringInfo(&buf,
-									 _("skipped %d pages due to buffer pins\n"),
+									 _("skipped %u pages due to buffer pins\n"),
 									 vacrelstats->pinned_pages);
 			}
 			appendStringInfo(&buf,
@@ -1132,7 +1132,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	if (vacrelstats->pinned_pages > 0)
 	{
 		if (scan_all)
-			appendStringInfo(&buf, _("Waited for %d buffer pins.\n"),
+			appendStringInfo(&buf, _("Waited for %u buffer pins.\n"),
 							 vacrelstats->pinned_pages);
 		else
 			appendStringInfo(&buf, _("Skipped %u pages due to buffer pins.\n"),
