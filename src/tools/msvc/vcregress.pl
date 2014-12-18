@@ -246,6 +246,8 @@ sub fetchRegressOpts
     my $m = <$handle>;
     close($handle);
     my @opts;
+
+    $m =~ s{\\\r?\n}{}g;
     if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
     {
 
