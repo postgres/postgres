@@ -1325,11 +1325,16 @@ generate_series_step_numeric(PG_FUNCTION_ARGS)
 
 		/*
 		 * Use fctx to keep state from call to call. Seed current with the
-		 * original start value.
+		 * original start value. We must copy the start_num and stop_num
+		 * values rather than pointing to them, since we may have detoasted
+		 * them in the per-call context.
 		 */
-		init_var_from_num(start_num, &fctx->current);
-		init_var_from_num(stop_num, &fctx->stop);
+		init_var(&fctx->current);
+		init_var(&fctx->stop);
 		init_var(&fctx->step);
+
+		set_var_from_num(start_num, &fctx->current);
+		set_var_from_num(stop_num, &fctx->stop);
 		set_var_from_var(&steploc, &fctx->step);
 
 		funcctx->user_fctx = fctx;

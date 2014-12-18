@@ -1461,3 +1461,41 @@ select (i / (10::numeric ^ 131071))::numeric(1,0)
        9
 (4 rows)
 
+-- Check usage with variables
+select * from generate_series(1::numeric, 3::numeric) i, generate_series(i,3) j;
+ i | j 
+---+---
+ 1 | 1
+ 1 | 2
+ 1 | 3
+ 2 | 2
+ 2 | 3
+ 3 | 3
+(6 rows)
+
+select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,i) j;
+ i | j 
+---+---
+ 1 | 1
+ 2 | 1
+ 2 | 2
+ 3 | 1
+ 3 | 2
+ 3 | 3
+(6 rows)
+
+select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,5,i) j;
+ i | j 
+---+---
+ 1 | 1
+ 1 | 2
+ 1 | 3
+ 1 | 4
+ 1 | 5
+ 2 | 1
+ 2 | 3
+ 2 | 5
+ 3 | 1
+ 3 | 4
+(10 rows)
+

@@ -854,3 +854,7 @@ select (i / (10::numeric ^ 131071))::numeric(1,0)
 	from generate_series(6 * (10::numeric ^ 131071),
 			     9 * (10::numeric ^ 131071),
 			     10::numeric ^ 131071) as a(i);
+-- Check usage with variables
+select * from generate_series(1::numeric, 3::numeric) i, generate_series(i,3) j;
+select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,i) j;
+select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,5,i) j;
