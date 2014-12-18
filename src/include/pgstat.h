@@ -16,6 +16,7 @@
 #include "libpq/pqcomm.h"
 #include "portability/instr_time.h"
 #include "postmaster/pgarch.h"
+#include "storage/barrier.h"
 #include "utils/hsearch.h"
 #include "utils/relcache.h"
 
@@ -714,6 +715,12 @@ typedef struct PgBackendStatus
 	 * st_changecount again.  If the value hasn't changed, and if it's even,
 	 * the copy is valid; otherwise start over.  This makes updates cheap
 	 * while reads are potentially expensive, but that's the tradeoff we want.
+	 *
+	 * The above protocol needs the memory barriers to ensure that
+	 * the apparent order of execution is as it desires. Otherwise,
+	 * for example, the CPU might rearrange the code so that st_changecount
+	 * is incremented twice before the modification on a machine with
+	 * weak memory ordering. This surprising result can lead to bugs.
 	 */
 	int			st_changecount;
 
@@ -744,6 +751,43 @@ typedef struct PgBackendStatus
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;
 } PgBackendStatus;
+
+/*
+ * Macros to load and store st_changecount with the memory barriers.
+ *
+ * pgstat_increment_changecount_before() and
+ * pgstat_increment_changecount_after() need to be called before and after
+ * PgBackendStatus entries are modified, respectively. This makes sure that
+ * st_changecount is incremented around the modification.
+ *
+ * Also pgstat_save_changecount_before() and pgstat_save_changecount_after()
+ * need to be called before and after PgBackendStatus entries are copied into
+ * private memory, respectively.
+ */
+#define pgstat_increment_changecount_before(beentry)	\
+	do {	\
+		beentry->st_changecount++;	\
+		pg_write_barrier();	\
+	} while (0)
+
+#define pgstat_increment_changecount_after(beentry)	\
+	do {	\
+		pg_write_barrier();	\
+		beentry->st_changecount++;	\
+		Assert((beentry->st_changecount & 1) == 0);	\
+	} while (0)
+
+#define pgstat_save_changecount_before(beentry, save_changecount)	\
+	do {	\
+		save_changecount = beentry->st_changecount;	\
+		pg_read_barrier();	\
+	} while (0)
+
+#define pgstat_save_changecount_after(beentry, save_changecount)	\
+	do {	\
+		pg_read_barrier();	\
+		save_changecount = beentry->st_changecount;	\
+	} while (0)
 
 /* ----------
  * LocalPgBackendStatus
