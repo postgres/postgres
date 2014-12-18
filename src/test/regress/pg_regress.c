@@ -102,6 +102,7 @@ static bool port_specified_by_user = false;
 static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
 static _stringlist *extraroles = NULL;
+static char *config_auth_datadir = NULL;
 
 /* internal variables */
 static const char *progname;
@@ -973,6 +974,150 @@ initialize_environment(void)
 	convert_sourcefiles();
 	load_resultmap();
 }
+
+#ifdef ENABLE_SSPI
+/*
+ * Get account and domain/realm names for the current user.  This is based on
+ * pg_SSPI_recvauth().  The returned strings use static storage.
+ */
+static void
+current_windows_user(const char **acct, const char **dom)
+{
+	static char accountname[MAXPGPATH];
+	static char domainname[MAXPGPATH];
+	HANDLE		token;
+	TOKEN_USER *tokenuser;
+	DWORD		retlen;
+	DWORD		accountnamesize = sizeof(accountname);
+	DWORD		domainnamesize = sizeof(domainname);
+	SID_NAME_USE accountnameuse;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token))
+	{
+		fprintf(stderr,
+				_("%s: could not open process token: error code %lu\n"),
+				progname, GetLastError());
+		exit(2);
+	}
+
+	if (!GetTokenInformation(token, TokenUser, NULL, 0, &retlen) && GetLastError() != 122)
+	{
+		fprintf(stderr,
+				_("%s: could not get token user size: error code %lu\n"),
+				progname, GetLastError());
+		exit(2);
+	}
+	tokenuser = malloc(retlen);
+	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
+	{
+		fprintf(stderr,
+				_("%s: could not get token user: error code %lu\n"),
+				progname, GetLastError());
+		exit(2);
+	}
+
+	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
+						  domainname, &domainnamesize, &accountnameuse))
+	{
+		fprintf(stderr,
+				_("%s: could not look up account SID: error code %lu\n"),
+				progname, GetLastError());
+		exit(2);
+	}
+
+	free(tokenuser);
+
+	*acct = accountname;
+	*dom = domainname;
+}
+
+/*
+ * Rewrite pg_hba.conf and pg_ident.conf to use SSPI authentication.  Permit
+ * the current OS user to authenticate as the bootstrap superuser and as any
+ * user named in a --create-role option.
+ */
+static void
+config_sspi_auth(const char *pgdata)
+{
+	const char *accountname,
+			   *domainname;
+	char		username[128];
+	DWORD		sz = sizeof(username) - 1;
+	char		fname[MAXPGPATH];
+	int			res;
+	FILE	   *hba,
+			   *ident;
+	_stringlist *sl;
+
+	/*
+	 * "username", the initdb-chosen bootstrap superuser name, may always
+	 * match "accountname", the value SSPI authentication discovers.  The
+	 * underlying system functions do not clearly guarantee that.
+	 */
+	current_windows_user(&accountname, &domainname);
+	if (!GetUserName(username, &sz))
+	{
+		fprintf(stderr, _("%s: could not get current user name: %s\n"),
+				progname, strerror(errno));
+		exit(2);
+	}
+
+	/* Check a Write outcome and report any error. */
+#define CW(cond)	\
+	do { \
+		if (!(cond)) \
+		{ \
+			fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"), \
+					progname, fname, strerror(errno)); \
+			exit(2); \
+		} \
+	} while (0)
+
+	res = snprintf(fname, sizeof(fname), "%s/pg_hba.conf", pgdata);
+	if (res < 0 || res >= sizeof(fname) - 1)
+	{
+		/*
+		 * Truncating this name is a fatal error, because we must not fail to
+		 * overwrite an original trust-authentication pg_hba.conf.
+		 */
+		fprintf(stderr, _("%s: directory name too long\n"), progname);
+		exit(2);
+	}
+	hba = fopen(fname, "w");
+	if (hba == NULL)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
+				progname, fname, strerror(errno));
+		exit(2);
+	}
+	CW(fputs("# Configuration written by config_sspi_auth()\n", hba) >= 0);
+	CW(fputs("host all all 127.0.0.1/32  sspi include_realm=1 map=regress\n",
+			 hba) >= 0);
+	CW(fclose(hba) == 0);
+
+	snprintf(fname, sizeof(fname), "%s/pg_ident.conf", pgdata);
+	ident = fopen(fname, "w");
+	if (ident == NULL)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
+				progname, fname, strerror(errno));
+		exit(2);
+	}
+	CW(fputs("# Configuration written by config_sspi_auth()\n", ident) >= 0);
+
+	/*
+	 * Double-quote for the benefit of account names containing whitespace or
+	 * '#'.  Windows forbids the double-quote character itself, so don't
+	 * bother escaping embedded double-quote characters.
+	 */
+	CW(fprintf(ident, "regress  \"%s@%s\"  \"%s\"\n",
+			   accountname, domainname, username) >= 0);
+	for (sl = extraroles; sl; sl = sl->next)
+		CW(fprintf(ident, "regress  \"%s@%s\"  \"%s\"\n",
+				   accountname, domainname, sl->str) >= 0);
+	CW(fclose(ident) == 0);
+}
+#endif
 
 /*
  * Issue a command via psql, connecting to the specified database
@@ -1963,6 +2108,7 @@ help(void)
 	printf(_("Usage: %s [options...] [extra tests...]\n"), progname);
 	printf(_("\n"));
 	printf(_("Options:\n"));
+	printf(_("  --config-auth=DATADIR     update authentication settings for DATADIR\n"));
 	printf(_("  --dbname=DB               use database DB (default \"regression\")\n"));
 	printf(_("  --debug                   turn on debug mode in programs that are run\n"));
 	printf(_("  --inputdir=DIR            take input files from DIR (default \".\")\n"));
@@ -2029,6 +2175,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"create-role", required_argument, NULL, 18},
 		{"temp-config", required_argument, NULL, 19},
 		{"use-existing", no_argument, NULL, 20},
+		{"config-auth", required_argument, NULL, 24},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2122,6 +2269,14 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 20:
 				use_existing = true;
 				break;
+			case 24:
+				config_auth_datadir = strdup(optarg);
+				if (!config_auth_datadir)
+				{
+					fprintf(stderr, _("out of memory\n"));
+					exit(EXIT_FAILURE);
+				}
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
@@ -2137,6 +2292,14 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	{
 		add_stringlist_item(&extra_tests, argv[optind]);
 		optind++;
+	}
+
+	if (config_auth_datadir)
+	{
+#ifdef ENABLE_SSPI
+		config_sspi_auth(config_auth_datadir);
+#endif
+		exit(0);
 	}
 
 	if (temp_install && !port_specified_by_user)
@@ -2259,6 +2422,18 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		}
 
 		fclose(pg_conf);
+
+#ifdef ENABLE_SSPI
+
+		/*
+		 * Since we successfully used the same buffer for the much-longer
+		 * "initdb" command, this can't truncate.
+		 */
+		snprintf(buf, sizeof(buf), "%s/data", temp_install);
+		config_sspi_auth(buf);
+#elif !defined(HAVE_UNIX_SOCKETS)
+#error Platform has no means to secure the test installation.
+#endif
 
 		/*
 		 * Check if there is a postmaster running already.
