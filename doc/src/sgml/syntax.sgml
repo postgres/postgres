@@ -2428,9 +2428,36 @@ SELECT ... WHERE CASE WHEN x &gt; 0 THEN y/x &gt; 1.5 ELSE false END;
    </para>
 
    <para>
-    A limitation of this technique is that a <literal>CASE</> cannot
+    <literal>CASE</> is not a cure-all for such issues, however.
+    One limitation of the technique illustrated above is that it does not
+    prevent early evaluation of constant subexpressions.
+    As described in <xref linkend="xfunc-volatility">, functions and
+    operators marked <literal>IMMUTABLE</literal> can be evaluated when
+    the query is planned rather than when it is executed.  Thus for example
+<programlisting>
+SELECT CASE WHEN x &gt; 0 THEN x ELSE 1/0 END FROM tab;
+</programlisting>
+    is likely to result in a division-by-zero failure due to the planner
+    trying to simplify the constant subexpression,
+    even if every row in the table has <literal>x &gt; 0</> so that the
+    <literal>ELSE</> arm would never be entered at run time.
+   </para>
+
+   <para>
+    While that particular example might seem silly, related cases that don't
+    obviously involve constants can occur in queries executed within
+    functions, since the values of function arguments and local variables
+    can be inserted into queries as constants for planning purposes.
+    Within <application>PL/pgSQL</> functions, for example, using an
+    <literal>IF</>-<literal>THEN</>-<literal>ELSE</> statement to protect
+    a risky computation is much safer than just nesting it in a
+    <literal>CASE</> expression.
+   </para>
+
+   <para>
+    Another limitation of the same kind is that a <literal>CASE</> cannot
     prevent evaluation of an aggregate expression contained within it,
-    because aggregate expressions are computed before <quote>scalar</>
+    because aggregate expressions are computed before other
     expressions in a <literal>SELECT</> list or <literal>HAVING</> clause
     are considered.  For example, the following query can cause a
     division-by-zero error despite seemingly having protected against it:
