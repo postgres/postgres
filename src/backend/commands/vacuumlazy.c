@@ -105,6 +105,7 @@ typedef struct LVRelStats
 	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
+	BlockNumber	pinned_pages;	/* # of pages we could not initially lock */
 	double		scanned_tuples; /* counts only tuples on scanned pages */
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
@@ -332,6 +333,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 			TimestampDifferenceExceeds(starttime, endtime,
 									   Log_autovacuum_min_duration))
 		{
+			StringInfoData	buf;
 			TimestampDifference(starttime, endtime, &secs, &usecs);
 
 			read_rate = 0;
@@ -343,27 +345,47 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				write_rate = (double) BLCKSZ *VacuumPageDirty / (1024 * 1024) /
 							(secs + usecs / 1000000.0);
 			}
+
+			/*
+			 * This is pretty messy, but we split it up so that we can skip
+			 * emitting individual parts of the message when not applicable.
+			 */
+			initStringInfo(&buf);
+			appendStringInfo(&buf, _("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"),
+							 get_database_name(MyDatabaseId),
+							 get_namespace_name(RelationGetNamespace(onerel)),
+							 RelationGetRelationName(onerel),
+							 vacrelstats->num_index_scans);
+			appendStringInfo(&buf, _("pages: %d removed, %d remain\n"),
+							 vacrelstats->pages_removed,
+							 vacrelstats->rel_pages);
+			if (vacrelstats->pinned_pages > 0)
+			{
+				if (scan_all)
+					appendStringInfo(&buf, _("waited for %d buffer pins\n"),
+									 vacrelstats->pinned_pages);
+				else
+					appendStringInfo(&buf,
+									 _("skipped %d pages due to buffer pins\n"),
+									 vacrelstats->pinned_pages);
+			}
+			appendStringInfo(&buf,
+							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"),
+							 vacrelstats->tuples_deleted,
+							 vacrelstats->new_rel_tuples,
+							 vacrelstats->new_dead_tuples);
+			appendStringInfo(&buf,
+							 _("buffer usage: %d hits, %d misses, %d dirtied\n"),
+							 VacuumPageHit,
+							 VacuumPageMiss,
+							 VacuumPageDirty);
+			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
+							 read_rate, write_rate);
+			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
+
 			ereport(LOG,
-					(errmsg("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
-							"pages: %d removed, %d remain\n"
-							"tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"
-							"buffer usage: %d hits, %d misses, %d dirtied\n"
-					  "avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
-							"system usage: %s",
-							get_database_name(MyDatabaseId),
-							get_namespace_name(RelationGetNamespace(onerel)),
-							RelationGetRelationName(onerel),
-							vacrelstats->num_index_scans,
-							vacrelstats->pages_removed,
-							vacrelstats->rel_pages,
-							vacrelstats->tuples_deleted,
-							vacrelstats->new_rel_tuples,
-							vacrelstats->new_dead_tuples,
-							VacuumPageHit,
-							VacuumPageMiss,
-							VacuumPageDirty,
-							read_rate, write_rate,
-							pg_rusage_show(&ru0))));
+					(errmsg_internal("%s", buf.data)));
+			pfree(buf.data);
 		}
 	}
 }
@@ -438,6 +460,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	BlockNumber next_not_all_visible_block;
 	bool		skipping_all_visible_blocks;
 	xl_heap_freeze_tuple *frozen;
+	StringInfoData	buf;
 
 	pg_rusage_init(&ru0);
 
@@ -611,6 +634,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* We need buffer cleanup lock so that we can prune HOT chains. */
 		if (!ConditionalLockBufferForCleanup(buf))
 		{
+			vacrelstats->pinned_pages++;
+
 			/*
 			 * If we're not scanning the whole relation to guard against XID
 			 * wraparound, it's OK to skip vacuuming a page.  The next vacuum
@@ -1094,19 +1119,37 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 						RelationGetRelationName(onerel),
 						tups_vacuumed, vacuumed_pages)));
 
+	/*
+	 * This is pretty messy, but we split it up so that we can skip emitting
+	 * individual parts of the message when not applicable.
+	 */
+	initStringInfo(&buf);
+	appendStringInfo(&buf,
+					 _("%.0f dead row versions cannot be removed yet.\n"),
+					 nkeep);
+	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
+					 nunused);
+	if (vacrelstats->pinned_pages > 0)
+	{
+		if (scan_all)
+			appendStringInfo(&buf, _("Waited for %d buffer pins.\n"),
+							 vacrelstats->pinned_pages);
+		else
+			appendStringInfo(&buf, _("Skipped %u pages due to buffer pins.\n"),
+							 vacrelstats->pinned_pages);
+	}
+	appendStringInfo(&buf, _("%u pages are entirely empty.\n"),
+					 empty_pages);
+	appendStringInfo(&buf, _("%s."),
+					 pg_rusage_show(&ru0));
+
 	ereport(elevel,
 			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages",
 					RelationGetRelationName(onerel),
 					tups_vacuumed, num_tuples,
 					vacrelstats->scanned_pages, nblocks),
-			 errdetail("%.0f dead row versions cannot be removed yet.\n"
-					   "There were %.0f unused item pointers.\n"
-					   "%u pages are entirely empty.\n"
-					   "%s.",
-					   nkeep,
-					   nunused,
-					   empty_pages,
-					   pg_rusage_show(&ru0))));
+			 errdetail_internal("%s", buf.data)));
+	pfree(buf.data);
 }
 
 
