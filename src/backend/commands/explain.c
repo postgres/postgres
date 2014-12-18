@@ -568,7 +568,6 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 
 /*
  * ExplainPrintTriggers -
-
  *	  convert a QueryDesc's trigger statistics to text and append it to
  *	  es->str
  *
