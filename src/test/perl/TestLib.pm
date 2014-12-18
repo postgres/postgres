@@ -7,6 +7,7 @@ use Exporter 'import';
 our @EXPORT = qw(
   tempdir
   tempdir_short
+  standard_initdb
   start_test_server
   restart_test_server
   psql
@@ -69,6 +70,14 @@ sub tempdir_short
 	return File::Temp::tempdir(CLEANUP => 1);
 }
 
+sub standard_initdb
+{
+	my $pgdata = shift;
+	system_or_bail("initdb -D '$pgdata' -A trust -N >/dev/null");
+	system_or_bail("$ENV{top_srcdir}/src/test/regress/pg_regress",
+				   '--config-auth', $pgdata);
+}
+
 my ($test_server_datadir, $test_server_logfile);
 
 sub start_test_server
@@ -78,7 +87,7 @@ sub start_test_server
 
 	my $tempdir_short = tempdir_short;
 
-	system "initdb -D '$tempdir'/pgdata -A trust -N >/dev/null";
+	standard_initdb "$tempdir/pgdata";
 	$ret = system 'pg_ctl', '-D', "$tempdir/pgdata", '-s', '-w', '-l',
 	  "$tempdir/logfile", '-o',
 	  "--fsync=off -k $tempdir_short --listen-addresses='' --log-statement=all",

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 my $tempdir = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
@@ -11,6 +11,10 @@ program_version_ok('pg_ctl');
 program_options_handling_ok('pg_ctl');
 
 command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data" ], 'pg_ctl initdb');
+command_ok(
+	[   "$ENV{top_srcdir}/src/test/regress/pg_regress", '--config-auth',
+		"$tempdir/data" ],
+	'configure authentication');
 open CONF, ">>$tempdir/data/postgresql.conf";
 print CONF "listen_addresses = ''\n";
 print CONF "unix_socket_directories = '$tempdir_short'\n";
