@@ -247,6 +247,15 @@ sub contribcheck
 	exit $mstat if $mstat;
 }
 
+# Run "initdb", then reconfigure authentication.
+sub standard_initdb
+{
+	return (
+		system('initdb', '-N') == 0 and system(
+			"$topdir/$Config/pg_regress/pg_regress", '--config-auth',
+			$ENV{PGDATA}) == 0);
+}
+
 sub upgradecheck
 {
 	my $status;
@@ -258,6 +267,7 @@ sub upgradecheck
 	# i.e. only this version to this version check. That's
 	# what pg_upgrade's "make check" does.
 
+	$ENV{PGHOST} = 'localhost';
 	$ENV{PGPORT} ||= 50432;
 	my $tmp_root = "$topdir/contrib/pg_upgrade/tmp_check";
 	(mkdir $tmp_root || die $!) unless -d $tmp_root;
@@ -275,7 +285,7 @@ sub upgradecheck
 	my $logdir = "$topdir/contrib/pg_upgrade/log";
 	(mkdir $logdir || die $!) unless -d $logdir;
 	print "\nRunning initdb on old cluster\n\n";
-	system("initdb") == 0 or exit 1;
+	standard_initdb() or exit 1;
 	print "\nStarting old cluster\n\n";
 	system("pg_ctl start -l $logdir/postmaster1.log -w") == 0 or exit 1;
 	print "\nSetting up data for upgrading\n\n";
@@ -289,7 +299,7 @@ sub upgradecheck
 	system("pg_ctl -m fast stop") == 0 or exit 1;
 	$ENV{PGDATA} = "$data";
 	print "\nSetting up new cluster\n\n";
-	system("initdb") == 0 or exit 1;
+	standard_initdb() or exit 1;
 	print "\nRunning pg_upgrade\n\n";
 	system("pg_upgrade -d $data.old -D $data -b $bindir -B $bindir") == 0
 	  or exit 1;
