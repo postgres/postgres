@@ -15,7 +15,7 @@ command_exit_is([ 'pg_ctl', 'start', '-D', "$tempdir/nonexistent" ],
 
 command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data" ], 'pg_ctl initdb');
 command_ok(
-	[   "$ENV{top_srcdir}/src/test/regress/pg_regress", '--config-auth',
+	[   "$ENV{top_builddir}/src/test/regress/pg_regress", '--config-auth',
 		"$tempdir/data" ],
 	'configure authentication');
 open CONF, ">>$tempdir/data/postgresql.conf";

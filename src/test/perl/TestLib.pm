@@ -74,7 +74,7 @@ sub standard_initdb
 {
 	my $pgdata = shift;
 	system_or_bail("initdb -D '$pgdata' -A trust -N >/dev/null");
-	system_or_bail("$ENV{top_srcdir}/src/test/regress/pg_regress",
+	system_or_bail("$ENV{top_builddir}/src/test/regress/pg_regress",
 				   '--config-auth', $pgdata);
 }
 
