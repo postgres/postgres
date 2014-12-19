@@ -294,6 +294,46 @@ SELECT * FROM dropped_objects WHERE type = 'schema';
 DROP ROLE regression_bob;
 DROP EVENT TRIGGER regress_event_trigger_drop_objects;
 DROP EVENT TRIGGER undroppable;
+CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT * from pg_event_trigger_dropped_objects()
+    LOOP
+    IF NOT r.normal AND NOT r.original THEN
+        CONTINUE;
+    END IF;
+    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=%',
+        r.original, r.normal, r.object_type, r.object_identity;
+    END LOOP;
+END; $$;
+CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
+    EXECUTE PROCEDURE event_trigger_report_dropped();
+CREATE SCHEMA evttrig
+	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two')
+	CREATE INDEX one_idx ON one (col_b)
+	CREATE TABLE two (col_c INTEGER CHECK (col_c > 0) REFERENCES one DEFAULT 42);
+ALTER TABLE evttrig.two DROP COLUMN col_c;
+NOTICE:  NORMAL: orig=t normal=f type=table column identity=evttrig.two.col_c
+NOTICE:  NORMAL: orig=f normal=t type=table constraint identity=two_col_c_check on evttrig.two
+ALTER TABLE evttrig.one ALTER COLUMN col_b DROP DEFAULT;
+NOTICE:  NORMAL: orig=t normal=f type=default value identity=for evttrig.one.col_b
+ALTER TABLE evttrig.one DROP CONSTRAINT one_pkey;
+NOTICE:  NORMAL: orig=t normal=f type=table constraint identity=one_pkey on evttrig.one
+DROP INDEX evttrig.one_idx;
+NOTICE:  NORMAL: orig=t normal=f type=index identity=evttrig.one_idx
+DROP SCHEMA evttrig CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table evttrig.one
+drop cascades to table evttrig.two
+NOTICE:  NORMAL: orig=t normal=f type=schema identity=evttrig
+NOTICE:  NORMAL: orig=f normal=t type=table identity=evttrig.one
+NOTICE:  NORMAL: orig=f normal=t type=sequence identity=evttrig.one_col_a_seq
+NOTICE:  NORMAL: orig=f normal=t type=default value identity=for evttrig.one.col_a
+NOTICE:  NORMAL: orig=f normal=t type=table identity=evttrig.two
+DROP EVENT TRIGGER regress_event_trigger_report_dropped;
 -- only allowed from within an event trigger function, should fail
 select pg_event_trigger_table_rewrite_oid();
 ERROR:  pg_event_trigger_table_rewrite_oid() can only be called in a table_rewrite event trigger function

@@ -207,6 +207,36 @@ DROP ROLE regression_bob;
 DROP EVENT TRIGGER regress_event_trigger_drop_objects;
 DROP EVENT TRIGGER undroppable;
 
+CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT * from pg_event_trigger_dropped_objects()
+    LOOP
+    IF NOT r.normal AND NOT r.original THEN
+        CONTINUE;
+    END IF;
+    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=%',
+        r.original, r.normal, r.object_type, r.object_identity;
+    END LOOP;
+END; $$;
+CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
+    EXECUTE PROCEDURE event_trigger_report_dropped();
+CREATE SCHEMA evttrig
+	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two')
+	CREATE INDEX one_idx ON one (col_b)
+	CREATE TABLE two (col_c INTEGER CHECK (col_c > 0) REFERENCES one DEFAULT 42);
+
+ALTER TABLE evttrig.two DROP COLUMN col_c;
+ALTER TABLE evttrig.one ALTER COLUMN col_b DROP DEFAULT;
+ALTER TABLE evttrig.one DROP CONSTRAINT one_pkey;
+DROP INDEX evttrig.one_idx;
+DROP SCHEMA evttrig CASCADE;
+
+DROP EVENT TRIGGER regress_event_trigger_report_dropped;
+
 -- only allowed from within an event trigger function, should fail
 select pg_event_trigger_table_rewrite_oid();
 

@@ -17730,6 +17730,19 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
         <entry>Object sub-id (e.g. attribute number for columns)</entry>
        </row>
        <row>
+        <entry><literal>original</literal></entry>
+        <entry><type>bool</type></entry>
+        <entry>Flag used to identify the root object(s) of the deletion</entry>
+       </row>
+       <row>
+        <entry><literal>normal</literal></entry>
+        <entry><type>bool</type></entry>
+        <entry>
+         Flag indicating that there's a normal dependency relationship
+         in the dependency graph leading to this object
+        </entry>
+       </row>
+       <row>
         <entry><literal>object_type</literal></entry>
         <entry><type>text</type></entry>
         <entry>Type of the object</entry>

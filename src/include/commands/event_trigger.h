@@ -56,6 +56,7 @@ extern void EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason);
 extern bool EventTriggerBeginCompleteQuery(void);
 extern void EventTriggerEndCompleteQuery(void);
 extern bool trackDroppedObjectsNeeded(void);
-extern void EventTriggerSQLDropAddObject(ObjectAddress *object);
+extern void EventTriggerSQLDropAddObject(const ObjectAddress *object,
+							 bool original, bool normal);
 
 #endif   /* EVENT_TRIGGER_H */
