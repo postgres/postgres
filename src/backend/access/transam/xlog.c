@@ -7270,7 +7270,7 @@ CreateEndOfRecoveryRecord(void)
 	if (!RecoveryInProgress())
 		elog(ERROR, "can only be used to end recovery");
 
-	xlrec.end_time = time(NULL);
+	xlrec.end_time = GetCurrentTimestamp();
 
 	LWLockAcquire(WALInsertLock, LW_SHARED);
 	xlrec.ThisTimeLineID = ThisTimeLineID;
@@ -7295,7 +7295,7 @@ CreateEndOfRecoveryRecord(void)
 	 * changes to this point.
 	 */
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-	ControlFile->time = (pg_time_t) xlrec.end_time;
+	ControlFile->time = (pg_time_t) time(NULL);
 	ControlFile->minRecoveryPoint = recptr;
 	ControlFile->minRecoveryPointTLI = ThisTimeLineID;
 	UpdateControlFile();
