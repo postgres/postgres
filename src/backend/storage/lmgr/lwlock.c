@@ -647,12 +647,22 @@ LWLockRelease(LWLockId lockid)
 	 */
 	while (head != NULL)
 	{
+		/*
+		 * Try to guarantee that lwWaiting being unset only becomes visible
+		 * once the unlink from the link has completed. Otherwise the target
+		 * backend could be woken up for other reason and enqueue for a new
+		 * lock - if that happens before the list unlink happens, the list
+		 * would end up being corrupted. In later releases we can rely on
+		 * barriers, but < 9.2 doesn't yet have them - so just use volatile.
+		 */
+		volatile PGPROC *p;
+
 		LOG_LWDEBUG("LWLockRelease", lockid, "release waiter");
-		proc = head;
-		head = proc->lwWaitLink;
-		proc->lwWaitLink = NULL;
-		proc->lwWaiting = false;
-		PGSemaphoreUnlock(&proc->sem);
+		p = head;
+		head = p->lwWaitLink;
+		p->lwWaitLink = NULL;
+		p->lwWaiting = false;
+		PGSemaphoreUnlock((PGSemaphore) &p->sem);
 	}
 
 	/*
