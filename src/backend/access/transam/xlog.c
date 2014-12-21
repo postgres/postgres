@@ -5043,8 +5043,15 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 	else
 	{
 		bool		use_existent = true;
+		int			fd;
 
-		XLogFileInit(startLogSegNo, &use_existent, true);
+		fd = XLogFileInit(startLogSegNo, &use_existent, true);
+
+		if (close(fd))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not close log file %s: %m",
+							XLogFileNameP(ThisTimeLineID, startLogSegNo))));
 	}
 
 	/*
