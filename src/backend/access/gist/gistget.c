@@ -18,6 +18,7 @@
 #include "access/relscan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "lib/pairingheap.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -243,8 +244,6 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 	GISTPageOpaque opaque;
 	OffsetNumber maxoff;
 	OffsetNumber i;
-	GISTSearchTreeItem *tmpItem = so->tmpTreeItem;
-	bool		isNew;
 	MemoryContext oldcxt;
 
 	Assert(!GISTSearchItemIsHeap(*pageItem));
@@ -275,18 +274,15 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
 		/* Create new GISTSearchItem for the right sibling index page */
-		item = palloc(sizeof(GISTSearchItem));
-		item->next = NULL;
+		item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
 		item->blkno = opaque->rightlink;
 		item->data.parentlsn = pageItem->data.parentlsn;
 
 		/* Insert it into the queue using same distances as for this page */
-		tmpItem->head = item;
-		tmpItem->lastHeap = NULL;
-		memcpy(tmpItem->distances, myDistances,
+		memcpy(item->distances, myDistances,
 			   sizeof(double) * scan->numberOfOrderBys);
 
-		(void) rb_insert(so->queue, (RBNode *) tmpItem, &isNew);
+		pairingheap_add(so->queue, &item->phNode);
 
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -348,8 +344,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
 			/* Create new GISTSearchItem for this item */
-			item = palloc(sizeof(GISTSearchItem));
-			item->next = NULL;
+			item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
 
 			if (GistPageIsLeaf(page))
 			{
@@ -372,12 +367,10 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			}
 
 			/* Insert it into the queue using new distance data */
-			tmpItem->head = item;
-			tmpItem->lastHeap = GISTSearchItemIsHeap(*item) ? item : NULL;
-			memcpy(tmpItem->distances, so->distances,
+			memcpy(item->distances, so->distances,
 				   sizeof(double) * scan->numberOfOrderBys);
 
-			(void) rb_insert(so->queue, (RBNode *) tmpItem, &isNew);
+			pairingheap_add(so->queue, &item->phNode);
 
 			MemoryContextSwitchTo(oldcxt);
 		}
@@ -390,44 +383,24 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
  * Extract next item (in order) from search queue
  *
  * Returns a GISTSearchItem or NULL.  Caller must pfree item when done with it.
- *
- * NOTE: on successful return, so->curTreeItem is the GISTSearchTreeItem that
- * contained the result item.  Callers can use so->curTreeItem->distances as
- * the distances value for the item.
  */
 static GISTSearchItem *
 getNextGISTSearchItem(GISTScanOpaque so)
 {
-	for (;;)
+	GISTSearchItem *item;
+
+	if (!pairingheap_is_empty(so->queue))
 	{
-		GISTSearchItem *item;
-
-		/* Update curTreeItem if we don't have one */
-		if (so->curTreeItem == NULL)
-		{
-			so->curTreeItem = (GISTSearchTreeItem *) rb_leftmost(so->queue);
-			/* Done when tree is empty */
-			if (so->curTreeItem == NULL)
-				break;
-		}
-
-		item = so->curTreeItem->head;
-		if (item != NULL)
-		{
-			/* Delink item from chain */
-			so->curTreeItem->head = item->next;
-			if (item == so->curTreeItem->lastHeap)
-				so->curTreeItem->lastHeap = NULL;
-			/* Return item; caller is responsible to pfree it */
-			return item;
-		}
-
-		/* curTreeItem is exhausted, so remove it from rbtree */
-		rb_delete(so->queue, (RBNode *) so->curTreeItem);
-		so->curTreeItem = NULL;
+		item = (GISTSearchItem *) pairingheap_remove_first(so->queue);
+	}
+	else
+	{
+		/* Done when both heaps are empty */
+		item = NULL;
 	}
 
-	return NULL;
+	/* Return item; caller is responsible to pfree it */
+	return item;
 }
 
 /*
@@ -458,7 +431,7 @@ getNextNearest(IndexScanDesc scan)
 			/* visit an index page, extract its items into queue */
 			CHECK_FOR_INTERRUPTS();
 
-			gistScanPage(scan, item, so->curTreeItem->distances, NULL, NULL);
+			gistScanPage(scan, item, item->distances, NULL, NULL);
 		}
 
 		pfree(item);
@@ -491,7 +464,6 @@ gistgettuple(PG_FUNCTION_ARGS)
 		pgstat_count_index_scan(scan->indexRelation);
 
 		so->firstCall = false;
-		so->curTreeItem = NULL;
 		so->curPageData = so->nPageData = 0;
 
 		fakeItem.blkno = GIST_ROOT_BLKNO;
@@ -534,7 +506,7 @@ gistgettuple(PG_FUNCTION_ARGS)
 				 * this page, we fall out of the inner "do" and loop around to
 				 * return them.
 				 */
-				gistScanPage(scan, item, so->curTreeItem->distances, NULL, NULL);
+				gistScanPage(scan, item, item->distances, NULL, NULL);
 
 				pfree(item);
 			} while (so->nPageData == 0);
@@ -560,7 +532,6 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 	pgstat_count_index_scan(scan->indexRelation);
 
 	/* Begin the scan by processing the root page */
-	so->curTreeItem = NULL;
 	so->curPageData = so->nPageData = 0;
 
 	fakeItem.blkno = GIST_ROOT_BLKNO;
@@ -580,7 +551,7 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 
 		CHECK_FOR_INTERRUPTS();
 
-		gistScanPage(scan, item, so->curTreeItem->distances, tbm, &ntids);
+		gistScanPage(scan, item, item->distances, tbm, &ntids);
 
 		pfree(item);
 	}

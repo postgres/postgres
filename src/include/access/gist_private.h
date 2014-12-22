@@ -18,9 +18,9 @@
 #include "access/itup.h"
 #include "access/xlogreader.h"
 #include "fmgr.h"
+#include "lib/pairingheap.h"
 #include "storage/bufmgr.h"
 #include "storage/buffile.h"
-#include "utils/rbtree.h"
 #include "utils/hsearch.h"
 
 /*
@@ -123,7 +123,7 @@ typedef struct GISTSearchHeapItem
 /* Unvisited item, either index page or heap tuple */
 typedef struct GISTSearchItem
 {
-	struct GISTSearchItem *next;	/* list link */
+	pairingheap_node phNode;
 	BlockNumber blkno;			/* index page number, or InvalidBlockNumber */
 	union
 	{
@@ -131,24 +131,12 @@ typedef struct GISTSearchItem
 		/* we must store parentlsn to detect whether a split occurred */
 		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
 	}			data;
+	double		distances[1];	/* array with numberOfOrderBys entries */
 } GISTSearchItem;
 
 #define GISTSearchItemIsHeap(item)	((item).blkno == InvalidBlockNumber)
 
-/*
- * Within a GISTSearchTreeItem's chain, heap items always appear before
- * index-page items, since we want to visit heap items first.  lastHeap points
- * to the last heap item in the chain, or is NULL if there are none.
- */
-typedef struct GISTSearchTreeItem
-{
-	RBNode		rbnode;			/* this is an RBTree item */
-	GISTSearchItem *head;		/* first chain member */
-	GISTSearchItem *lastHeap;	/* last heap-tuple member, if any */
-	double		distances[1];	/* array with numberOfOrderBys entries */
-} GISTSearchTreeItem;
-
-#define GSTIHDRSZ offsetof(GISTSearchTreeItem, distances)
+#define SizeOfGISTSearchItem(n_distances) (offsetof(GISTSearchItem, distances) + sizeof(double) * (n_distances))
 
 /*
  * GISTScanOpaqueData: private state for a scan of a GiST index
@@ -156,15 +144,12 @@ typedef struct GISTSearchTreeItem
 typedef struct GISTScanOpaqueData
 {
 	GISTSTATE  *giststate;		/* index information, see above */
-	RBTree	   *queue;			/* queue of unvisited items */
+	pairingheap *queue;		/* queue of unvisited items */
 	MemoryContext queueCxt;		/* context holding the queue */
 	bool		qual_ok;		/* false if qual can never be satisfied */
 	bool		firstCall;		/* true until first gistgettuple call */
 
-	GISTSearchTreeItem *curTreeItem;	/* current queue item, if any */
-
 	/* pre-allocated workspace arrays */
-	GISTSearchTreeItem *tmpTreeItem;	/* workspace to pass to rb_insert */
 	double	   *distances;		/* output area for gistindex_keytest */
 
 	/* In a non-ordered search, returnable heap items are stored here: */

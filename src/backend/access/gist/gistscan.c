@@ -22,14 +22,13 @@
 
 
 /*
- * RBTree support functions for the GISTSearchTreeItem queue
+ * Pairing heap comparison function for the GISTSearchItem queue
  */
-
 static int
-GISTSearchTreeItemComparator(const RBNode *a, const RBNode *b, void *arg)
+pairingheap_GISTSearchItem_cmp(const pairingheap_node *a, const pairingheap_node *b, void *arg)
 {
-	const GISTSearchTreeItem *sa = (const GISTSearchTreeItem *) a;
-	const GISTSearchTreeItem *sb = (const GISTSearchTreeItem *) b;
+	const GISTSearchItem *sa = (const GISTSearchItem *) a;
+	const GISTSearchItem *sb = (const GISTSearchItem *) b;
 	IndexScanDesc scan = (IndexScanDesc) arg;
 	int			i;
 
@@ -37,59 +36,16 @@ GISTSearchTreeItemComparator(const RBNode *a, const RBNode *b, void *arg)
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
 		if (sa->distances[i] != sb->distances[i])
-			return (sa->distances[i] > sb->distances[i]) ? 1 : -1;
+			return (sa->distances[i] < sb->distances[i]) ? 1 : -1;
 	}
+
+	/* Heap items go before inner pages, to ensure a depth-first search */
+	if (GISTSearchItemIsHeap(*sa) && !GISTSearchItemIsHeap(*sb))
+		return -1;
+	if (!GISTSearchItemIsHeap(*sa) && GISTSearchItemIsHeap(*sb))
+		return 1;
 
 	return 0;
-}
-
-static void
-GISTSearchTreeItemCombiner(RBNode *existing, const RBNode *newrb, void *arg)
-{
-	GISTSearchTreeItem *scurrent = (GISTSearchTreeItem *) existing;
-	const GISTSearchTreeItem *snew = (const GISTSearchTreeItem *) newrb;
-	GISTSearchItem *newitem = snew->head;
-
-	/* snew should have just one item in its chain */
-	Assert(newitem && newitem->next == NULL);
-
-	/*
-	 * If new item is heap tuple, it goes to front of chain; otherwise insert
-	 * it before the first index-page item, so that index pages are visited in
-	 * LIFO order, ensuring depth-first search of index pages.  See comments
-	 * in gist_private.h.
-	 */
-	if (GISTSearchItemIsHeap(*newitem))
-	{
-		newitem->next = scurrent->head;
-		scurrent->head = newitem;
-		if (scurrent->lastHeap == NULL)
-			scurrent->lastHeap = newitem;
-	}
-	else if (scurrent->lastHeap == NULL)
-	{
-		newitem->next = scurrent->head;
-		scurrent->head = newitem;
-	}
-	else
-	{
-		newitem->next = scurrent->lastHeap->next;
-		scurrent->lastHeap->next = newitem;
-	}
-}
-
-static RBNode *
-GISTSearchTreeItemAllocator(void *arg)
-{
-	IndexScanDesc scan = (IndexScanDesc) arg;
-
-	return palloc(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys);
-}
-
-static void
-GISTSearchTreeItemDeleter(RBNode *rb, void *arg)
-{
-	pfree(rb);
 }
 
 
@@ -127,7 +83,6 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	so->queueCxt = giststate->scanCxt;	/* see gistrescan */
 
 	/* workspaces with size dependent on numberOfOrderBys: */
-	so->tmpTreeItem = palloc(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys);
 	so->distances = palloc(sizeof(double) * scan->numberOfOrderBys);
 	so->qual_ok = true;			/* in case there are zero keys */
 
@@ -188,15 +143,9 @@ gistrescan(PG_FUNCTION_ARGS)
 
 	/* create new, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
-	so->queue = rb_create(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys,
-						  GISTSearchTreeItemComparator,
-						  GISTSearchTreeItemCombiner,
-						  GISTSearchTreeItemAllocator,
-						  GISTSearchTreeItemDeleter,
-						  scan);
+	so->queue = pairingheap_allocate(pairingheap_GISTSearchItem_cmp, scan);
 	MemoryContextSwitchTo(oldCxt);
 
-	so->curTreeItem = NULL;
 	so->firstCall = true;
 
 	/* Update scan key, if a new one is given */

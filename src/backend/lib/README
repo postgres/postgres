@@ -1,0 +1,24 @@
+This directory contains a general purpose data structures, for use anywhere
+in the backend:
+
+binaryheap.c - a binary heap
+
+pairingheap.c - a pairing heap
+
+ilist.c - single and double-linked lists.
+
+stringinfo.c - an extensible string type
+
+
+Aside from the inherent characteristics of the data structures, there are a
+few practical differences between the binary heap and the pairing heap. The
+binary heap is fully allocated at creation, and cannot be expanded beyond the
+allocated size. The pairing heap on the other hand has no inherent maximum
+size, but the caller needs to allocate each element being stored in the heap,
+while the binary heap works with plain Datums or pointers.
+
+The linked-lists in ilist.c can be embedded directly into other structs, as
+opposed to the List interface in nodes/pg_list.h.
+
+In addition to these, there is an implementation of a Red-Black tree in
+src/backend/utils/adt/rbtree.c.
