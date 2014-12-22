@@ -20,13 +20,13 @@
  * Copyright (c) 2009-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/utils/misc/rbtree.c
+ *	  src/backend/lib/rbtree.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "utils/rbtree.h"
+#include "lib/rbtree.h"
 
 
 /*

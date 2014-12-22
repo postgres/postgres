@@ -5,6 +5,8 @@ binaryheap.c - a binary heap
 
 pairingheap.c - a pairing heap
 
+rbtree.c - a red-black tree
+
 ilist.c - single and double-linked lists.
 
 stringinfo.c - an extensible string type
@@ -19,6 +21,3 @@ while the binary heap works with plain Datums or pointers.
 
 The linked-lists in ilist.c can be embedded directly into other structs, as
 opposed to the List interface in nodes/pg_list.h.
-
-In addition to these, there is an implementation of a Red-Black tree in
-src/backend/utils/adt/rbtree.c.
