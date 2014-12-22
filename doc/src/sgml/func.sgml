@@ -12230,15 +12230,15 @@ NULL baz</literallayout>(3 rows)</entry>
        <indexterm>
         <primary>json_agg</primary>
        </indexterm>
-       <function>json_agg(<replaceable class="parameter">record</replaceable>)</function>
+       <function>json_agg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>record</type>
+       <type>expression</type>
       </entry>
       <entry>
        <type>json</type>
       </entry>
-      <entry>aggregates records as a JSON array of objects</entry>
+      <entry>aggregates values as a JSON array</entry>
      </row>
 
      <row>
@@ -12246,15 +12246,15 @@ NULL baz</literallayout>(3 rows)</entry>
        <indexterm>
         <primary>jsonb_agg</primary>
        </indexterm>
-       <function>jsonb_agg(<replaceable class="parameter">record</replaceable>)</function>
+       <function>jsonb_agg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>record</type>
+       <type>expression</type>
       </entry>
       <entry>
        <type>jsonb</type>
       </entry>
-      <entry>aggregates records as a JSON array of objects</entry>
+      <entry>aggregates values as a JSON array</entry>
      </row>
 
      <row>
