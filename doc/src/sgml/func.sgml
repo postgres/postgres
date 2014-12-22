@@ -12163,7 +12163,7 @@ NULL baz</literallayout>(3 rows)</entry>
        <function>json_agg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>expression</type>
+       <type>any</type>
       </entry>
       <entry>
        <type>json</type>
@@ -12179,7 +12179,7 @@ NULL baz</literallayout>(3 rows)</entry>
        <function>json_object_agg(<replaceable class="parameter">name</replaceable>, <replaceable class="parameter">value</replaceable>)</function>
       </entry>
       <entry>
-       <type>("any", "any")</type>
+       <type>(any, any)</type>
       </entry>
       <entry>
        <type>json</type>
