@@ -11575,7 +11575,7 @@ SELECT NULLIF(value, '(none)') ...
        <function>json_agg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>expression</type>
+       <type>any</type>
       </entry>
       <entry>
        <type>json</type>
