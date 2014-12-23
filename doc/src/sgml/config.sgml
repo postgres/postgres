@@ -6292,8 +6292,9 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are to be
-        preloaded at connection start.  This parameter cannot be changed after
-        the start of a particular session.  If a specified library is not
+        preloaded at connection start.
+        The parameter value only takes effect at the start of the connection.
+        Subsequent changes have no effect.  If a specified library is not
         found, the connection attempt will fail.
        </para>
 
@@ -6311,7 +6312,17 @@ SET XML OPTION { DOCUMENT | CONTENT };
        </para>
 
        <para>
-        Unless a module is specifically designed to be used in this way by
+        The intent of this feature is to allow unprivileged users to load
+        debugging or performance-measurement libraries into specific sessions
+        without requiring an explicit <command>LOAD</> command.  To that end,
+        it would be typical to set this parameter using
+        the <envar>PGOPTIONS</envar> environment variable on the client or by
+        using
+        <command>ALTER ROLE SET</>.
+       </para>
+
+       <para>
+        However, unless a module is specifically designed to be used in this way by
         non-superusers, this is usually not the right setting to use.  Look
         at <xref linkend="guc-session-preload-libraries"> instead.
        </para>
