@@ -1589,9 +1589,6 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_COLUMN:
 			tag = "ALTER TABLE";
 			break;
-		case OBJECT_CONSTRAINT:
-			tag = "ALTER TABLE";
-			break;
 		case OBJECT_CONVERSION:
 			tag = "ALTER CONVERSION";
 			break;
@@ -1599,6 +1596,7 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 			tag = "ALTER DATABASE";
 			break;
 		case OBJECT_DOMAIN:
+		case OBJECT_DOMCONSTRAINT:
 			tag = "ALTER DOMAIN";
 			break;
 		case OBJECT_EXTENSION:
@@ -1650,6 +1648,7 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 			tag = "ALTER SEQUENCE";
 			break;
 		case OBJECT_TABLE:
+		case OBJECT_TABCONSTRAINT:
 			tag = "ALTER TABLE";
 			break;
 		case OBJECT_TABLESPACE:

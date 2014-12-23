@@ -952,7 +952,7 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("Object"),
 					  gettext_noop("Description"));
 
-	/* Constraint descriptions */
+	/* Table constraint descriptions */
 	appendPQExpBuffer(&buf,
 					  "  SELECT pgc.oid as oid, pgc.tableoid AS tableoid,\n"
 					  "  n.nspname as nspname,\n"
@@ -963,7 +963,7 @@ objectDescription(const char *pattern, bool showSystem)
 					  "ON c.oid = pgc.conrelid\n"
 					  "    LEFT JOIN pg_catalog.pg_namespace n "
 					  "    ON n.oid = c.relnamespace\n",
-					  gettext_noop("constraint"));
+					  gettext_noop("table constraint"));
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
@@ -972,6 +972,29 @@ objectDescription(const char *pattern, bool showSystem)
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern,
 						  false, "n.nspname", "pgc.conname", NULL,
 						  "pg_catalog.pg_table_is_visible(c.oid)");
+
+	/* Domain constraint descriptions */
+	appendPQExpBuffer(&buf,
+					  "UNION ALL\n"
+					  "  SELECT pgc.oid as oid, pgc.tableoid AS tableoid,\n"
+					  "  n.nspname as nspname,\n"
+					  "  CAST(pgc.conname AS pg_catalog.text) as name,"
+					  "  CAST('%s' AS pg_catalog.text) as object\n"
+					  "  FROM pg_catalog.pg_constraint pgc\n"
+					  "    JOIN pg_catalog.pg_type t "
+					  "ON t.oid = pgc.contypid\n"
+					  "    LEFT JOIN pg_catalog.pg_namespace n "
+					  "    ON n.oid = t.typnamespace\n",
+					  gettext_noop("domain constraint"));
+
+	if (!showSystem && !pattern)
+		appendPQExpBufferStr(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
+							 "      AND n.nspname <> 'information_schema'\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern,
+						  false, "n.nspname", "pgc.conname", NULL,
+						  "pg_catalog.pg_type_is_visible(t.oid)");
+
 
 	/*
 	 * pg_opclass.opcmethod only available in 8.3+

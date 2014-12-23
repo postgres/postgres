@@ -478,3 +478,24 @@ UPDATE deferred_excl SET f1 = 3;
 ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
 
 DROP TABLE deferred_excl;
+
+-- Comments
+CREATE TABLE constraint_comments_tbl (a int CONSTRAINT the_constraint CHECK (a > 0));
+CREATE DOMAIN constraint_comments_dom AS int CONSTRAINT the_constraint CHECK (value > 0);
+
+COMMENT ON CONSTRAINT the_constraint ON constraint_comments_tbl IS 'yes, the comment';
+COMMENT ON CONSTRAINT the_constraint ON DOMAIN constraint_comments_dom IS 'yes, another comment';
+
+-- no such constraint
+COMMENT ON CONSTRAINT no_constraint ON constraint_comments_tbl IS 'yes, the comment';
+COMMENT ON CONSTRAINT no_constraint ON DOMAIN constraint_comments_dom IS 'yes, another comment';
+
+-- no such table/domain
+COMMENT ON CONSTRAINT the_constraint ON no_comments_tbl IS 'bad comment';
+COMMENT ON CONSTRAINT the_constraint ON DOMAIN no_comments_dom IS 'another bad comment';
+
+COMMENT ON CONSTRAINT the_constraint ON constraint_comments_tbl IS NULL;
+COMMENT ON CONSTRAINT the_constraint ON DOMAIN constraint_comments_dom IS NULL;
+
+DROP TABLE constraint_comments_tbl;
+DROP DOMAIN constraint_comments_dom;

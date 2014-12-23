@@ -305,7 +305,8 @@ ExecRenameStmt(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
 	{
-		case OBJECT_CONSTRAINT:
+		case OBJECT_TABCONSTRAINT:
+		case OBJECT_DOMCONSTRAINT:
 			return RenameConstraint(stmt);
 
 		case OBJECT_DATABASE:

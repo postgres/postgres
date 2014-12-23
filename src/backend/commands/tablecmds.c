@@ -2457,7 +2457,7 @@ RenameConstraint(RenameStmt *stmt)
 	Oid			relid = InvalidOid;
 	Oid			typid = InvalidOid;
 
-	if (stmt->relationType == OBJECT_DOMAIN)
+	if (stmt->renameType == OBJECT_DOMCONSTRAINT)
 	{
 		Relation	rel;
 		HeapTuple	tup;

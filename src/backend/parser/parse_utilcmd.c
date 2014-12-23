@@ -896,7 +896,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			{
 				CommentStmt *stmt = makeNode(CommentStmt);
 
-				stmt->objtype = OBJECT_CONSTRAINT;
+				stmt->objtype = OBJECT_TABCONSTRAINT;
 				stmt->objname = list_make3(makeString(cxt->relation->schemaname),
 										   makeString(cxt->relation->relname),
 										   makeString(n->conname));

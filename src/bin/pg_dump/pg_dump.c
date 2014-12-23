@@ -9261,6 +9261,23 @@ dumpDomain(Archive *fout, DumpOptions *dopt, TypeInfo *tyinfo)
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
+	/* Dump any per-constraint comments */
+	for (i = 0; i < tyinfo->nDomChecks; i++)
+	{
+		ConstraintInfo *domcheck = &(tyinfo->domChecks[i]);
+		PQExpBuffer	labelq = createPQExpBuffer();
+
+		appendPQExpBuffer(labelq, "CONSTRAINT %s ",
+						  fmtId(domcheck->dobj.name));
+		appendPQExpBuffer(labelq, "ON DOMAIN %s",
+						  fmtId(qtypname));
+		dumpComment(fout, dopt, labelq->data,
+					tyinfo->dobj.namespace->dobj.name,
+					tyinfo->rolname,
+					domcheck->dobj.catId, 0, tyinfo->dobj.dumpId);
+		destroyPQExpBuffer(labelq);
+	}
+
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(labelq);

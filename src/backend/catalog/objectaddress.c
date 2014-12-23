@@ -530,10 +530,27 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				break;
 			case OBJECT_RULE:
 			case OBJECT_TRIGGER:
-			case OBJECT_CONSTRAINT:
+			case OBJECT_TABCONSTRAINT:
 			case OBJECT_POLICY:
 				address = get_object_address_relobject(objtype, objname,
 													   &relation, missing_ok);
+				break;
+			case OBJECT_DOMCONSTRAINT:
+				{
+					List		   *domname;
+					ObjectAddress	domaddr;
+					char		   *constrname;
+
+					domname = list_truncate(list_copy(objname), list_length(objname) - 1);
+					constrname = strVal(llast(objname));
+					domaddr = get_object_address_type(OBJECT_DOMAIN, domname, missing_ok);
+
+					address.classId = ConstraintRelationId;
+					address.objectId = get_domain_constraint_oid(domaddr.objectId,
+															  constrname, missing_ok);
+					address.objectSubId = 0;
+
+				}
 				break;
 			case OBJECT_DATABASE:
 			case OBJECT_EXTENSION:
@@ -934,7 +951,7 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 	const char *depname;
 
 	/* Extract name of dependent object. */
-	depname = strVal(lfirst(list_tail(objname)));
+	depname = strVal(llast(objname));
 
 	/* Separate relation name from dependent object name. */
 	nnames = list_length(objname);
@@ -990,7 +1007,7 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 					get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
 				address.objectSubId = 0;
 				break;
-			case OBJECT_CONSTRAINT:
+			case OBJECT_TABCONSTRAINT:
 				address.classId = ConstraintRelationId;
 				address.objectId = relation ?
 					get_relation_constraint_oid(reloid, depname, missing_ok) :
@@ -1178,7 +1195,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_RULE:
 		case OBJECT_TRIGGER:
 		case OBJECT_POLICY:
-		case OBJECT_CONSTRAINT:
+		case OBJECT_TABCONSTRAINT:
 			if (!pg_class_ownercheck(RelationGetRelid(relation), roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 							   RelationGetRelationName(relation));
@@ -1191,6 +1208,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
 		case OBJECT_ATTRIBUTE:
+		case OBJECT_DOMCONSTRAINT:
 			if (!pg_type_ownercheck(address.objectId, roleid))
 				aclcheck_error_type(ACLCHECK_NOT_OWNER, address.objectId);
 			break;
