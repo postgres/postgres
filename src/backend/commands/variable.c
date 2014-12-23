@@ -776,7 +776,6 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	Oid			roleid;
 	bool		is_superuser;
 	role_auth_extra *myextra;
-	RoleAttr	attributes;
 
 	/* Do nothing for the boot_val default of NULL */
 	if (*newval == NULL)
@@ -801,8 +800,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	}
 
 	roleid = HeapTupleGetOid(roleTup);
-	attributes = ((Form_pg_authid) GETSTRUCT(roleTup))->rolattr;
-	is_superuser = (attributes & ROLE_ATTR_SUPERUSER);
+	is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
 
 	ReleaseSysCache(roleTup);
 
@@ -846,7 +844,6 @@ check_role(char **newval, void **extra, GucSource source)
 	Oid			roleid;
 	bool		is_superuser;
 	role_auth_extra *myextra;
-	RoleAttr	attributes;
 
 	if (strcmp(*newval, "none") == 0)
 	{
@@ -875,8 +872,7 @@ check_role(char **newval, void **extra, GucSource source)
 		}
 
 		roleid = HeapTupleGetOid(roleTup);
-		attributes = ((Form_pg_authid) GETSTRUCT(roleTup))->rolattr;
-		is_superuser = (attributes & ROLE_ATTR_SUPERUSER);
+		is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
 
 		ReleaseSysCache(roleTup);
 

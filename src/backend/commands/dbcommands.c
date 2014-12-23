@@ -85,6 +85,7 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
 			MultiXactId *dbMinMultiP,
 			Oid *dbTablespace, char **dbCollate, char **dbCtype);
+static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
 static bool check_db_file_conflict(Oid db_id);
 static int	errdetail_busy_db(int notherbackends, int npreparedxacts);
@@ -290,7 +291,7 @@ createdb(const CreatedbStmt *stmt)
 	 * "giveaway" attacks.  Note that a superuser will always have both of
 	 * these privileges a fortiori.
 	 */
-	if (!have_role_attribute(ROLE_ATTR_CREATEDB))
+	if (!have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create database")));
@@ -964,7 +965,7 @@ RenameDatabase(const char *oldname, const char *newname)
 					   oldname);
 
 	/* must have createdb rights */
-	if (!have_role_attribute(ROLE_ATTR_CREATEDB))
+	if (!have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to rename database")));
@@ -1622,7 +1623,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		 * databases.  Because superusers will always have this right, we need
 		 * no special case for them.
 		 */
-		if (!have_role_attribute(ROLE_ATTR_CREATEDB))
+		if (!have_createdb_privilege())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				   errmsg("permission denied to change owner of database")));
@@ -1798,6 +1799,26 @@ get_db_info(const char *name, LOCKMODE lockmode,
 
 	heap_close(relation, AccessShareLock);
 
+	return result;
+}
+
+/* Check if current user has createdb privileges */
+static bool
+have_createdb_privilege(void)
+{
+	bool		result = false;
+	HeapTuple	utup;
+
+	/* Superusers can always do everything */
+	if (superuser())
+		return true;
+
+	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
+		ReleaseSysCache(utup);
+	}
 	return result;
 }
 

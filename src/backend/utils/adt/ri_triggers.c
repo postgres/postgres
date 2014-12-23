@@ -2308,7 +2308,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 * bypassrls right or is the table owner of the table(s) involved which
 	 * have RLS enabled.
 	 */
-	if (!have_role_attribute(ROLE_ATTR_BYPASSRLS) &&
+	if (!has_bypassrls_privilege(GetUserId()) &&
 		((pk_rel->rd_rel->relrowsecurity &&
 		  !pg_class_ownercheck(pkrte->relid, GetUserId())) ||
 		 (fk_rel->rd_rel->relrowsecurity &&

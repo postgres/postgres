@@ -671,16 +671,10 @@ dumpRoles(PGconn *conn)
 	/* note: rolconfig is dumped later */
 	if (server_version >= 90500)
 		printfPQExpBuffer(buf,
-						  "SELECT oid, rolname, "
-						  "pg_check_role_attribute(oid, 'SUPERUSER') AS rolsuper, "
-						  "pg_check_role_attribute(oid, 'INHERIT') AS rolinherit, "
-						  "pg_check_role_attribute(oid, 'CREATEROLE') AS rolcreaterole, "
-						  "pg_check_role_attribute(oid, 'CREATEDB') AS rolcreatedb, "
-						  "pg_check_role_attribute(oid, 'CANLOGIN') AS rolcanlogin, "
-						  "pg_check_role_attribute(oid, 'REPLICATION') AS rolreplication, "
-						  "pg_check_role_attribute(oid, 'BYPASSRLS') AS rolbypassrls, "
-						  "rolconnlimit, rolpassword, "
-						  "rolvaliduntil, "
+						  "SELECT oid, rolname, rolsuper, rolinherit, "
+						  "rolcreaterole, rolcreatedb, "
+						  "rolcanlogin, rolconnlimit, rolpassword, "
+						  "rolvaliduntil, rolreplication, rolbypassrls, "
 			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
 						  "FROM pg_authid "

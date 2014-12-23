@@ -1738,7 +1738,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			}
 			else
 			{
-				if (!has_role_attribute(roleid, ROLE_ATTR_CREATEROLE))
+				if (!has_createrole_privilege(roleid))
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 							 errmsg("must have CREATEROLE privilege")));

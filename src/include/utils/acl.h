@@ -30,6 +30,13 @@
 
 
 /*
+ * typedef AclMode is declared in parsenodes.h, also the individual privilege
+ * bit meanings are defined there
+ */
+
+#define ACL_ID_PUBLIC	0		/* placeholder for id in a PUBLIC acl item */
+
+/*
  * AclItem
  *
  * Note: must be same size on all platforms, because the size is hardcoded
@@ -319,10 +326,7 @@ extern bool pg_foreign_data_wrapper_ownercheck(Oid srv_oid, Oid roleid);
 extern bool pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid);
 extern bool pg_event_trigger_ownercheck(Oid et_oid, Oid roleid);
 extern bool pg_extension_ownercheck(Oid ext_oid, Oid roleid);
-
-/* role attribute check routines */
-extern bool has_role_attribute(Oid roleid, RoleAttr attribute);
-extern bool have_role_attribute(RoleAttr attribute);
-extern bool check_role_attribute(Oid roleid, RoleAttr attribute);
+extern bool has_createrole_privilege(Oid roleid);
+extern bool has_bypassrls_privilege(Oid roleid);
 
 #endif   /* ACL_H */

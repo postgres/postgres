@@ -23,7 +23,6 @@
 #include "nodes/bitmapset.h"
 #include "nodes/primnodes.h"
 #include "nodes/value.h"
-#include "catalog/acldefs.h"
 #include "utils/lockwaitpolicy.h"
 
 /* Possible sources of a Query */
@@ -51,6 +50,33 @@ typedef enum SortByNulls
 	SORTBY_NULLS_FIRST,
 	SORTBY_NULLS_LAST
 } SortByNulls;
+
+/*
+ * Grantable rights are encoded so that we can OR them together in a bitmask.
+ * The present representation of AclItem limits us to 16 distinct rights,
+ * even though AclMode is defined as uint32.  See utils/acl.h.
+ *
+ * Caution: changing these codes breaks stored ACLs, hence forces initdb.
+ */
+typedef uint32 AclMode;			/* a bitmask of privilege bits */
+
+#define ACL_INSERT		(1<<0)	/* for relations */
+#define ACL_SELECT		(1<<1)
+#define ACL_UPDATE		(1<<2)
+#define ACL_DELETE		(1<<3)
+#define ACL_TRUNCATE	(1<<4)
+#define ACL_REFERENCES	(1<<5)
+#define ACL_TRIGGER		(1<<6)
+#define ACL_EXECUTE		(1<<7)	/* for functions */
+#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and
+								 * servers */
+#define ACL_CREATE		(1<<9)	/* for namespaces and databases */
+#define ACL_CREATE_TEMP (1<<10) /* for databases */
+#define ACL_CONNECT		(1<<11) /* for databases */
+#define N_ACL_RIGHTS	12		/* 1 plus the last 1<<x */
+#define ACL_NO_RIGHTS	0
+/* Currently, SELECT ... FOR [KEY] UPDATE/SHARE requires UPDATE privileges */
+#define ACL_SELECT_FOR_UPDATE	ACL_UPDATE
 
 
 /*****************************************************************************

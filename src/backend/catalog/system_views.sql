@@ -9,17 +9,17 @@
 CREATE VIEW pg_roles AS
     SELECT
         rolname,
-        pg_check_role_attribute(pg_authid.rolattr, 'SUPERUSER') AS rolsuper,
-        pg_check_role_attribute(pg_authid.rolattr, 'INHERIT') AS rolinherit,
-        pg_check_role_attribute(pg_authid.rolattr, 'CREATEROLE') AS rolcreaterole,
-        pg_check_role_attribute(pg_authid.rolattr, 'CREATEDB') AS rolcreatedb,
-        pg_check_role_attribute(pg_authid.rolattr, 'CATUPDATE') AS rolcatupdate,
-        pg_check_role_attribute(pg_authid.rolattr, 'CANLOGIN') AS rolcanlogin,
-        pg_check_role_attribute(pg_authid.rolattr, 'REPLICATION') AS rolreplication,
-        pg_check_role_attribute(pg_authid.rolattr, 'BYPASSRLS') AS rolbypassrls,
+        rolsuper,
+        rolinherit,
+        rolcreaterole,
+        rolcreatedb,
+        rolcatupdate,
+        rolcanlogin,
+        rolreplication,
         rolconnlimit,
         '********'::text as rolpassword,
         rolvaliduntil,
+        rolbypassrls,
         setconfig as rolconfig,
         pg_authid.oid
     FROM pg_authid LEFT JOIN pg_db_role_setting s
@@ -29,16 +29,16 @@ CREATE VIEW pg_shadow AS
     SELECT
         rolname AS usename,
         pg_authid.oid AS usesysid,
-        pg_check_role_attribute(pg_authid.rolattr, 'CREATEDB') AS usecreatedb,
-        pg_check_role_attribute(pg_authid.rolattr, 'SUPERUSER') AS usesuper,
-        pg_check_role_attribute(pg_authid.rolattr, 'CATUPDATE') AS usecatupd,
-        pg_check_role_attribute(pg_authid.rolattr, 'REPLICATION') AS userepl,
+        rolcreatedb AS usecreatedb,
+        rolsuper AS usesuper,
+        rolcatupdate AS usecatupd,
+        rolreplication AS userepl,
         rolpassword AS passwd,
         rolvaliduntil::abstime AS valuntil,
         setconfig AS useconfig
     FROM pg_authid LEFT JOIN pg_db_role_setting s
     ON (pg_authid.oid = setrole AND setdatabase = 0)
-    WHERE pg_check_role_attribute(pg_authid.rolattr, 'CANLOGIN');
+    WHERE rolcanlogin;
 
 REVOKE ALL on pg_shadow FROM public;
 
@@ -48,7 +48,7 @@ CREATE VIEW pg_group AS
         oid AS grosysid,
         ARRAY(SELECT member FROM pg_auth_members WHERE roleid = oid) AS grolist
     FROM pg_authid
-    WHERE NOT pg_check_role_attribute(pg_authid.rolattr, 'CANLOGIN');
+    WHERE NOT rolcanlogin;
 
 CREATE VIEW pg_user AS
     SELECT
