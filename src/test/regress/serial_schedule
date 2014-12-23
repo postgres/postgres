@@ -106,6 +106,7 @@ test: matview
 test: lock
 test: replica_identity
 test: rowsecurity
+test: object_address
 test: alter_generic
 test: misc
 test: psql

@@ -1,0 +1,399 @@
+--
+-- Test for pg_get_object_address
+--
+-- Clean up in case a prior regression run failed
+SET client_min_messages TO 'warning';
+DROP ROLE IF EXISTS regtest_addr_user;
+CREATE USER regtest_addr_user;
+-- Test generic object addressing/identification functions
+CREATE SCHEMA addr_nsp;
+SET search_path TO 'addr_nsp';
+CREATE FOREIGN DATA WRAPPER addr_fdw;
+CREATE SERVER addr_fserv FOREIGN DATA WRAPPER addr_fdw;
+CREATE TEXT SEARCH DICTIONARY addr_ts_dict (template=simple);
+CREATE TEXT SEARCH CONFIGURATION addr_ts_conf (copy=english);
+CREATE TEXT SEARCH TEMPLATE addr_ts_temp (lexize=dsimple_lexize);
+CREATE TEXT SEARCH PARSER addr_ts_prs
+    (start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
+CREATE TABLE addr_nsp.gentable (
+	a serial primary key CONSTRAINT a_chk CHECK (a > 0),
+	b text DEFAULT 'hello');
+CREATE VIEW addr_nsp.genview AS SELECT * from addr_nsp.gentable;
+CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
+CREATE TYPE addr_nsp.gencomptype AS (a int);
+CREATE TYPE addr_nsp.genenum AS ENUM ('one', 'two');
+CREATE FOREIGN TABLE addr_nsp.genftable (a int) SERVER addr_fserv;
+CREATE AGGREGATE addr_nsp.genaggr(int4) (sfunc = int4pl, stype = int4);
+CREATE DOMAIN addr_nsp.gendomain AS int4 CONSTRAINT domconstr CHECK (value > 0);
+CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
+CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
+CREATE POLICY genpol ON addr_nsp.gentable;
+CREATE FUNCTION addr_nsp.etrig() RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
+CREATE EVENT TRIGGER evttrig ON ddl_command_end EXECUTE PROCEDURE addr_nsp.etrig();
+-- test some error cases
+SELECT pg_get_object_address('stone', '{}', '{}');
+ERROR:  unrecognized object type "stone"
+SELECT pg_get_object_address('table', '{}', '{}');
+ERROR:  name list must be of length at least 1
+SELECT pg_get_object_address('table', '{NULL}', '{}');
+ERROR:  name or argument lists may not contain nulls
+-- unrecognized object types
+DO $$
+DECLARE
+	objtype text;
+BEGIN
+	FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
+		('toast table column'), ('view column'), ('materialized view column'),
+		('operator of access method'), ('function of access method'),
+		('user mapping')
+	LOOP
+		BEGIN
+			PERFORM pg_get_object_address(objtype, '{one}', '{}');
+		EXCEPTION WHEN invalid_parameter_value THEN
+			RAISE WARNING 'error for %: %', objtype, sqlerrm;
+		END;
+	END LOOP;
+END;
+$$;
+WARNING:  error for toast table: unsupported object type "toast table"
+WARNING:  error for index column: unsupported object type "index column"
+WARNING:  error for sequence column: unsupported object type "sequence column"
+WARNING:  error for toast table column: unsupported object type "toast table column"
+WARNING:  error for view column: unsupported object type "view column"
+WARNING:  error for materialized view column: unsupported object type "materialized view column"
+WARNING:  error for operator of access method: unsupported object type "operator of access method"
+WARNING:  error for function of access method: unsupported object type "function of access method"
+WARNING:  error for user mapping: unsupported object type "user mapping"
+DO $$
+DECLARE
+	objtype text;
+	names	text[];
+	args	text[];
+BEGIN
+	FOR objtype IN VALUES
+		('table'), ('index'), ('sequence'), ('view'),
+		('materialized view'), ('foreign table'),
+		('table column'), ('foreign table column'),
+		('aggregate'), ('function'), ('type'), ('cast'),
+		('collation'),
+		('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
+		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
+		('text search parser'), ('text search dictionary'),
+		('text search template'), ('text search configuration'),
+		('policy')
+	LOOP
+		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
+		LOOP
+			FOR args IN VALUES ('{}'), ('{integer}')
+			LOOP
+				BEGIN
+					PERFORM pg_get_object_address(objtype, names, args);
+				EXCEPTION WHEN OTHERS THEN
+						RAISE WARNING 'error for %,%,%: %', objtype, names, args, sqlerrm;
+				END;
+			END LOOP;
+		END LOOP;
+	END LOOP;
+END;
+$$;
+WARNING:  error for table,{eins},{}: relation "eins" does not exist
+WARNING:  error for table,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for table,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for table,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for table,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for table,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for index,{eins},{}: relation "eins" does not exist
+WARNING:  error for index,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for index,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for index,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for index,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for index,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for sequence,{eins},{}: relation "eins" does not exist
+WARNING:  error for sequence,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for sequence,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for sequence,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for sequence,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for sequence,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for view,{eins},{}: relation "eins" does not exist
+WARNING:  error for view,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for view,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for view,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for view,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for view,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for materialized view,{eins},{}: relation "eins" does not exist
+WARNING:  error for materialized view,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for materialized view,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for materialized view,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for materialized view,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for materialized view,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for foreign table,{eins},{}: relation "eins" does not exist
+WARNING:  error for foreign table,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for foreign table,{addr_nsp,zwei},{}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for foreign table,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for foreign table,{eins,zwei,drei},{}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for foreign table,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
+WARNING:  error for table column,{eins},{}: column name must be qualified
+WARNING:  error for table column,{eins},{integer}: column name must be qualified
+WARNING:  error for table column,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for table column,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for table column,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for table column,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for foreign table column,{eins},{}: column name must be qualified
+WARNING:  error for foreign table column,{eins},{integer}: column name must be qualified
+WARNING:  error for foreign table column,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for foreign table column,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for foreign table column,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for foreign table column,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for aggregate,{eins},{}: aggregate eins(*) does not exist
+WARNING:  error for aggregate,{eins},{integer}: aggregate eins(integer) does not exist
+WARNING:  error for aggregate,{addr_nsp,zwei},{}: aggregate addr_nsp.zwei(*) does not exist
+WARNING:  error for aggregate,{addr_nsp,zwei},{integer}: aggregate addr_nsp.zwei(integer) does not exist
+WARNING:  error for aggregate,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for aggregate,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for function,{eins},{}: function eins() does not exist
+WARNING:  error for function,{eins},{integer}: function eins(integer) does not exist
+WARNING:  error for function,{addr_nsp,zwei},{}: function addr_nsp.zwei() does not exist
+WARNING:  error for function,{addr_nsp,zwei},{integer}: function addr_nsp.zwei(integer) does not exist
+WARNING:  error for function,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for function,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for type,{eins},{}: type "eins" does not exist
+WARNING:  error for type,{eins},{integer}: type "eins" does not exist
+WARNING:  error for type,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for type,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for type,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for type,{eins,zwei,drei},{integer}: name list length must be exactly 1
+WARNING:  error for cast,{eins},{}: argument list length must be exactly 1
+WARNING:  error for cast,{eins},{integer}: type "eins" does not exist
+WARNING:  error for cast,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for cast,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for cast,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for cast,{eins,zwei,drei},{integer}: name list length must be exactly 1
+WARNING:  error for collation,{eins},{}: collation "eins" for encoding "UTF8" does not exist
+WARNING:  error for collation,{eins},{integer}: collation "eins" for encoding "UTF8" does not exist
+WARNING:  error for collation,{addr_nsp,zwei},{}: collation "addr_nsp.zwei" for encoding "UTF8" does not exist
+WARNING:  error for collation,{addr_nsp,zwei},{integer}: collation "addr_nsp.zwei" for encoding "UTF8" does not exist
+WARNING:  error for collation,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for collation,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for table constraint,{eins},{}: must specify relation and object name
+WARNING:  error for table constraint,{eins},{integer}: must specify relation and object name
+WARNING:  error for table constraint,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for table constraint,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for table constraint,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for table constraint,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for domain constraint,{eins},{}: cache lookup failed for type 0
+WARNING:  error for domain constraint,{eins},{integer}: cache lookup failed for type 0
+WARNING:  error for domain constraint,{addr_nsp,zwei},{}: type "addr_nsp" does not exist
+WARNING:  error for domain constraint,{addr_nsp,zwei},{integer}: type "addr_nsp" does not exist
+WARNING:  error for domain constraint,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for domain constraint,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for conversion,{eins},{}: conversion "eins" does not exist
+WARNING:  error for conversion,{eins},{integer}: conversion "eins" does not exist
+WARNING:  error for conversion,{addr_nsp,zwei},{}: conversion "addr_nsp.zwei" does not exist
+WARNING:  error for conversion,{addr_nsp,zwei},{integer}: conversion "addr_nsp.zwei" does not exist
+WARNING:  error for conversion,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for conversion,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for default value,{eins},{}: column name must be qualified
+WARNING:  error for default value,{eins},{integer}: column name must be qualified
+WARNING:  error for default value,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for default value,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for default value,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for default value,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for operator,{eins},{}: argument list length must be exactly 2
+WARNING:  error for operator,{eins},{integer}: argument list length must be exactly 2
+WARNING:  error for operator,{addr_nsp,zwei},{}: argument list length must be exactly 2
+WARNING:  error for operator,{addr_nsp,zwei},{integer}: argument list length must be exactly 2
+WARNING:  error for operator,{eins,zwei,drei},{}: argument list length must be exactly 2
+WARNING:  error for operator,{eins,zwei,drei},{integer}: argument list length must be exactly 2
+WARNING:  error for operator class,{eins},{}: argument list length must be exactly 1
+WARNING:  error for operator class,{eins},{integer}: access method "integer" does not exist
+WARNING:  error for operator class,{addr_nsp,zwei},{}: argument list length must be exactly 1
+WARNING:  error for operator class,{addr_nsp,zwei},{integer}: access method "integer" does not exist
+WARNING:  error for operator class,{eins,zwei,drei},{}: argument list length must be exactly 1
+WARNING:  error for operator class,{eins,zwei,drei},{integer}: access method "integer" does not exist
+WARNING:  error for operator family,{eins},{}: argument list length must be exactly 1
+WARNING:  error for operator family,{eins},{integer}: access method "integer" does not exist
+WARNING:  error for operator family,{addr_nsp,zwei},{}: argument list length must be exactly 1
+WARNING:  error for operator family,{addr_nsp,zwei},{integer}: access method "integer" does not exist
+WARNING:  error for operator family,{eins,zwei,drei},{}: argument list length must be exactly 1
+WARNING:  error for operator family,{eins,zwei,drei},{integer}: access method "integer" does not exist
+WARNING:  error for rule,{eins},{}: rule "eins" does not exist
+WARNING:  error for rule,{eins},{integer}: rule "eins" does not exist
+WARNING:  error for rule,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for rule,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for rule,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for rule,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for trigger,{eins},{}: must specify relation and object name
+WARNING:  error for trigger,{eins},{integer}: must specify relation and object name
+WARNING:  error for trigger,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for trigger,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for trigger,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for trigger,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for text search parser,{eins},{}: text search parser "eins" does not exist
+WARNING:  error for text search parser,{eins},{integer}: text search parser "eins" does not exist
+WARNING:  error for text search parser,{addr_nsp,zwei},{}: text search parser "addr_nsp.zwei" does not exist
+WARNING:  error for text search parser,{addr_nsp,zwei},{integer}: text search parser "addr_nsp.zwei" does not exist
+WARNING:  error for text search parser,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search parser,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search dictionary,{eins},{}: text search dictionary "eins" does not exist
+WARNING:  error for text search dictionary,{eins},{integer}: text search dictionary "eins" does not exist
+WARNING:  error for text search dictionary,{addr_nsp,zwei},{}: text search dictionary "addr_nsp.zwei" does not exist
+WARNING:  error for text search dictionary,{addr_nsp,zwei},{integer}: text search dictionary "addr_nsp.zwei" does not exist
+WARNING:  error for text search dictionary,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search dictionary,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search template,{eins},{}: text search template "eins" does not exist
+WARNING:  error for text search template,{eins},{integer}: text search template "eins" does not exist
+WARNING:  error for text search template,{addr_nsp,zwei},{}: text search template "addr_nsp.zwei" does not exist
+WARNING:  error for text search template,{addr_nsp,zwei},{integer}: text search template "addr_nsp.zwei" does not exist
+WARNING:  error for text search template,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search template,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search configuration,{eins},{}: text search configuration "eins" does not exist
+WARNING:  error for text search configuration,{eins},{integer}: text search configuration "eins" does not exist
+WARNING:  error for text search configuration,{addr_nsp,zwei},{}: text search configuration "addr_nsp.zwei" does not exist
+WARNING:  error for text search configuration,{addr_nsp,zwei},{integer}: text search configuration "addr_nsp.zwei" does not exist
+WARNING:  error for text search configuration,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for text search configuration,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
+WARNING:  error for policy,{eins},{}: must specify relation and object name
+WARNING:  error for policy,{eins},{integer}: must specify relation and object name
+WARNING:  error for policy,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
+WARNING:  error for policy,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
+WARNING:  error for policy,{eins,zwei,drei},{}: schema "eins" does not exist
+WARNING:  error for policy,{eins,zwei,drei},{integer}: schema "eins" does not exist
+-- these object types cannot be qualified names
+SELECT pg_get_object_address('language', '{one}', '{}');
+ERROR:  language "one" does not exist
+SELECT pg_get_object_address('language', '{one,two}', '{}');
+ERROR:  language name cannot be qualified
+SELECT pg_get_object_address('large object', '{123}', '{}');
+ERROR:  large object 123 does not exist
+SELECT pg_get_object_address('large object', '{123,456}', '{}');
+ERROR:  name list length must be exactly 1
+SELECT pg_get_object_address('large object', '{blargh}', '{}');
+ERROR:  invalid input syntax for type oid: "blargh"
+SELECT pg_get_object_address('schema', '{one}', '{}');
+ERROR:  schema "one" does not exist
+SELECT pg_get_object_address('schema', '{one,two}', '{}');
+ERROR:  schema name cannot be qualified
+SELECT pg_get_object_address('role', '{one}', '{}');
+ERROR:  role "one" does not exist
+SELECT pg_get_object_address('role', '{one,two}', '{}');
+ERROR:  role name cannot be qualified
+SELECT pg_get_object_address('database', '{one}', '{}');
+ERROR:  database "one" does not exist
+SELECT pg_get_object_address('database', '{one,two}', '{}');
+ERROR:  database name cannot be qualified
+SELECT pg_get_object_address('tablespace', '{one}', '{}');
+ERROR:  tablespace "one" does not exist
+SELECT pg_get_object_address('tablespace', '{one,two}', '{}');
+ERROR:  tablespace name cannot be qualified
+SELECT pg_get_object_address('foreign-data wrapper', '{one}', '{}');
+ERROR:  foreign-data wrapper "one" does not exist
+SELECT pg_get_object_address('foreign-data wrapper', '{one,two}', '{}');
+ERROR:  foreign-data wrapper name cannot be qualified
+SELECT pg_get_object_address('server', '{one}', '{}');
+ERROR:  server "one" does not exist
+SELECT pg_get_object_address('server', '{one,two}', '{}');
+ERROR:  server name cannot be qualified
+SELECT pg_get_object_address('extension', '{one}', '{}');
+ERROR:  extension "one" does not exist
+SELECT pg_get_object_address('extension', '{one,two}', '{}');
+ERROR:  extension name cannot be qualified
+SELECT pg_get_object_address('event trigger', '{one}', '{}');
+ERROR:  event trigger "one" does not exist
+SELECT pg_get_object_address('event trigger', '{one,two}', '{}');
+ERROR:  event trigger name cannot be qualified
+-- test successful cases
+WITH objects (type, name, args) AS (VALUES
+				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
+				('index', '{addr_nsp, gentable_pkey}', '{}'),
+				('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
+				-- toast table
+				('view', '{addr_nsp, genview}', '{}'),
+				('materialized view', '{addr_nsp, genmatview}', '{}'),
+				('foreign table', '{addr_nsp, genftable}', '{}'),
+				('table column', '{addr_nsp, gentable, b}', '{}'),
+				('foreign table column', '{addr_nsp, genftable, a}', '{}'),
+				('aggregate', '{addr_nsp, genaggr}', '{int4}'),
+				('function', '{pg_catalog, pg_identify_object}', '{pg_catalog.oid, pg_catalog.oid, int4}'),
+				('type', '{pg_catalog._int4}', '{}'),
+				('type', '{addr_nsp.gendomain}', '{}'),
+				('type', '{addr_nsp.gencomptype}', '{}'),
+				('type', '{addr_nsp.genenum}', '{}'),
+				('cast', '{int8}', '{int4}'),
+				('collation', '{default}', '{}'),
+				('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
+				('domain constraint', '{addr_nsp, gendomain, domconstr}', '{}'),
+				('conversion', '{pg_catalog, ascii_to_mic}', '{}'),
+				('default value', '{addr_nsp, gentable, b}', '{}'),
+				('language', '{plpgsql}', '{}'),
+				-- large object
+				('operator', '{+}', '{int4, int4}'),
+				('operator class', '{int4_ops}', '{btree}'),
+				('operator family', '{integer_ops}', '{btree}'),
+				-- operator of access method
+				-- function of access method
+				('rule', '{addr_nsp, genview, _RETURN}', '{}'),
+				('trigger', '{addr_nsp, gentable, t}', '{}'),
+				('schema', '{addr_nsp}', '{}'),
+				('text search parser', '{addr_ts_prs}', '{}'),
+				('text search dictionary', '{addr_ts_dict}', '{}'),
+				('text search template', '{addr_ts_temp}', '{}'),
+				('text search configuration', '{addr_ts_conf}', '{}'),
+				('role', '{regtest_addr_user}', '{}'),
+				-- database
+				-- tablespace
+				('foreign-data wrapper', '{addr_fdw}', '{}'),
+				('server', '{addr_fserv}', '{}'),
+				-- user mapping
+				-- extension
+				('event trigger', '{evttrig}', '{}'),
+				('policy', '{addr_nsp, gentable, genpol}', '{}')
+        )
+SELECT (pg_identify_object(classid, objid, subobjid)).*
+  FROM objects, pg_get_object_address(type, name, args)
+ORDER BY classid, objid;
+           type            |   schema   |       name        |                               identity                               
+---------------------------+------------+-------------------+----------------------------------------------------------------------
+ type                      | pg_catalog | _int4             | integer[]
+ type                      | addr_nsp   | gencomptype       | addr_nsp.gencomptype
+ type                      | addr_nsp   | genenum           | addr_nsp.genenum
+ type                      | addr_nsp   | gendomain         | addr_nsp.gendomain
+ function                  | pg_catalog |                   | pg_catalog.pg_identify_object(pg_catalog.oid,pg_catalog.oid,integer)
+ aggregate                 | addr_nsp   |                   | addr_nsp.genaggr(integer)
+ sequence                  | addr_nsp   | gentable_a_seq    | addr_nsp.gentable_a_seq
+ table                     | addr_nsp   | gentable          | addr_nsp.gentable
+ table column              | addr_nsp   | gentable          | addr_nsp.gentable.b
+ index                     | addr_nsp   | gentable_pkey     | addr_nsp.gentable_pkey
+ view                      | addr_nsp   | genview           | addr_nsp.genview
+ materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview
+ foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a
+ foreign table             | addr_nsp   | genftable         | addr_nsp.genftable
+ role                      |            | regtest_addr_user | regtest_addr_user
+ server                    |            | addr_fserv        | addr_fserv
+ foreign-data wrapper      |            | addr_fdw          | addr_fdw
+ default value             |            |                   | for addr_nsp.gentable.b
+ cast                      |            |                   | (bigint AS integer)
+ table constraint          | addr_nsp   |                   | a_chk on addr_nsp.gentable
+ domain constraint         | addr_nsp   |                   | domconstr on addr_nsp.gendomain
+ conversion                | pg_catalog | ascii_to_mic      | ascii_to_mic
+ language                  |            | plpgsql           | plpgsql
+ schema                    |            | addr_nsp          | addr_nsp
+ operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops for btree
+ operator                  | pg_catalog |                   | pg_catalog.+(integer,integer)
+ rule                      |            |                   | "_RETURN" on addr_nsp.genview
+ trigger                   |            |                   | t on addr_nsp.gentable
+ operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops for btree
+ policy                    |            |                   | genpol on addr_nsp.gentable
+ collation                 | pg_catalog | "default"         | pg_catalog."default"
+ event trigger             |            | evttrig           | evttrig
+ text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict
+ text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs
+ text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf
+ text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp
+(36 rows)
+
+---
+--- Cleanup resources
+---
+DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
+DROP SCHEMA addr_nsp CASCADE;
+DROP USER regtest_addr_user;

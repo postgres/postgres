@@ -431,6 +431,106 @@ static const ObjectPropertyType ObjectProperty[] =
 	}
 };
 
+/*
+ * This struct maps the string object types as returned by
+ * getObjectTypeDescription into ObjType enum values.  Note that some enum
+ * values can be obtained by different names, and that some string object types
+ * do not have corresponding values in the output enum.  The user of this map
+ * must be careful to test for invalid values being returned.
+ *
+ * To ease maintenance, this follows the order of getObjectTypeDescription.
+ */
+static const struct object_type_map
+{
+	const char *tm_name;
+	ObjectType	tm_type;
+}
+ObjectTypeMap[] =
+{
+	/* OCLASS_CLASS, all kinds of relations */
+	{ "table", OBJECT_TABLE },
+	{ "index", OBJECT_INDEX },
+	{ "sequence", OBJECT_SEQUENCE },
+	{ "toast table", -1 },		/* unmapped */
+	{ "view", OBJECT_VIEW },
+	{ "materialized view", OBJECT_MATVIEW },
+	{ "composite type", -1 },	/* unmapped */
+	{ "foreign table", OBJECT_FOREIGN_TABLE },
+	{ "table column", OBJECT_COLUMN },
+	{ "index column", -1 },		/* unmapped */
+	{ "sequence column", -1 },	/* unmapped */
+	{ "toast table column", -1 },	/* unmapped */
+	{ "view column", -1 },		/* unmapped */
+	{ "materialized view column", -1 },	/* unmapped */
+	{ "composite type column", -1 },	/* unmapped */
+	{ "foreign table column", OBJECT_COLUMN },
+	/* OCLASS_PROC */
+	{ "aggregate", OBJECT_AGGREGATE },
+	{ "function", OBJECT_FUNCTION },
+	/* OCLASS_TYPE */
+	{ "type", OBJECT_TYPE },
+	/* OCLASS_CAST */
+	{ "cast", OBJECT_CAST },
+	/* OCLASS_COLLATION */
+	{ "collation", OBJECT_COLLATION },
+	/* OCLASS_CONSTRAINT */
+	{ "table constraint", OBJECT_TABCONSTRAINT },
+	{ "domain constraint", OBJECT_DOMCONSTRAINT },
+	/* OCLASS_CONVERSION */
+	{ "conversion", OBJECT_CONVERSION },
+	/* OCLASS_DEFAULT */
+	{ "default value", OBJECT_DEFAULT },
+	/* OCLASS_LANGUAGE */
+	{ "language", OBJECT_LANGUAGE },
+	/* OCLASS_LARGEOBJECT */
+	{ "large object", OBJECT_LARGEOBJECT },
+	/* OCLASS_OPERATOR */
+	{ "operator", OBJECT_OPERATOR },
+	/* OCLASS_OPCLASS */
+	{ "operator class", OBJECT_OPCLASS },
+	/* OCLASS_OPFAMILY */
+	{ "operator family", OBJECT_OPFAMILY },
+	/* OCLASS_AMOP */
+	{ "operator of access method", -1 },	/* unmapped */
+	/* OCLASS_AMPROC */
+	{ "function of access method", -1 },	/* unmapped */
+	/* OCLASS_REWRITE */
+	{ "rule", OBJECT_RULE },
+	/* OCLASS_TRIGGER */
+	{ "trigger", OBJECT_TRIGGER },
+	/* OCLASS_SCHEMA */
+	{ "schema", OBJECT_SCHEMA },
+	/* OCLASS_TSPARSER */
+	{ "text search parser", OBJECT_TSPARSER },
+	/* OCLASS_TSDICT */
+	{ "text search dictionary", OBJECT_TSDICTIONARY },
+	/* OCLASS_TSTEMPLATE */
+	{ "text search template", OBJECT_TSTEMPLATE },
+	/* OCLASS_TSCONFIG */
+	{ "text search configuration", OBJECT_TSCONFIGURATION },
+	/* OCLASS_ROLE */
+	{ "role", OBJECT_ROLE },
+	/* OCLASS_DATABASE */
+	{ "database", OBJECT_DATABASE },
+	/* OCLASS_TBLSPACE */
+	{ "tablespace", OBJECT_TABLESPACE },
+	/* OCLASS_FDW */
+	{ "foreign-data wrapper", OBJECT_FDW },
+	/* OCLASS_FOREIGN_SERVER */
+	{ "server", OBJECT_FOREIGN_SERVER },
+	/* OCLASS_USER_MAPPING */
+	{ "user mapping", -1 },		/* unmapped */
+	/* OCLASS_DEFACL */
+	{ "default acl", -1 },		/* unmapped */
+	/* OCLASS_EXTENSION */
+	{ "extension", OBJECT_EXTENSION },
+	/* OCLASS_EVENT_TRIGGER */
+	{ "event trigger", OBJECT_EVENT_TRIGGER },
+	/* OCLASS_POLICY */
+	{ "policy", OBJECT_POLICY }
+};
+
+
 static ObjectAddress get_object_address_unqualified(ObjectType objtype,
 							   List *qualname, bool missing_ok);
 static ObjectAddress get_relation_by_qualified_name(ObjectType objtype,
@@ -441,6 +541,9 @@ static ObjectAddress get_object_address_relobject(ObjectType objtype,
 static ObjectAddress get_object_address_attribute(ObjectType objtype,
 							 List *objname, Relation *relp,
 							 LOCKMODE lockmode, bool missing_ok);
+static ObjectAddress get_object_address_attrdef(ObjectType objtype,
+						   List *objname, Relation *relp, LOCKMODE lockmode,
+						   bool missing_ok);
 static ObjectAddress get_object_address_type(ObjectType objtype,
 						List *objname, bool missing_ok);
 static ObjectAddress get_object_address_opcf(ObjectType objtype, List *objname,
@@ -527,6 +630,12 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 					get_object_address_attribute(objtype, objname,
 												 &relation, lockmode,
 												 missing_ok);
+				break;
+			case OBJECT_DEFAULT:
+				address =
+					get_object_address_attrdef(objtype, objname,
+											   &relation, lockmode,
+											   missing_ok);
 				break;
 			case OBJECT_RULE:
 			case OBJECT_TRIGGER:
@@ -1097,6 +1206,88 @@ get_object_address_attribute(ObjectType objtype, List *objname,
 }
 
 /*
+ * Find the ObjectAddress for an attribute's default value.
+ */
+static ObjectAddress
+get_object_address_attrdef(ObjectType objtype, List *objname,
+						   Relation *relp, LOCKMODE lockmode,
+						   bool missing_ok)
+{
+	ObjectAddress address;
+	List	   *relname;
+	Oid			reloid;
+	Relation	relation;
+	const char *attname;
+	AttrNumber	attnum;
+	TupleDesc	tupdesc;
+	Oid			defoid;
+
+	/* Extract relation name and open relation. */
+	if (list_length(objname) < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("column name must be qualified")));
+	attname = strVal(llast(objname));
+	relname = list_truncate(list_copy(objname), list_length(objname) - 1);
+	/* XXX no missing_ok support here */
+	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
+	reloid = RelationGetRelid(relation);
+
+	tupdesc = RelationGetDescr(relation);
+
+	/* Look up attribute number and scan pg_attrdef to find its tuple */
+	attnum = get_attnum(reloid, attname);
+	defoid = InvalidOid;
+	if (attnum != InvalidAttrNumber && tupdesc->constr != NULL)
+	{
+		Relation	attrdef;
+		ScanKeyData	keys[2];
+		SysScanDesc	scan;
+		HeapTuple	tup;
+
+		attrdef = relation_open(AttrDefaultRelationId, AccessShareLock);
+		ScanKeyInit(&keys[0],
+					Anum_pg_attrdef_adrelid,
+					BTEqualStrategyNumber,
+					F_OIDEQ,
+					ObjectIdGetDatum(reloid));
+		ScanKeyInit(&keys[1],
+					Anum_pg_attrdef_adnum,
+					BTEqualStrategyNumber,
+					F_INT2EQ,
+					Int16GetDatum(attnum));
+		scan = systable_beginscan(attrdef, AttrDefaultIndexId, true,
+								  NULL, 2, keys);
+		if (HeapTupleIsValid(tup = systable_getnext(scan)))
+			defoid = HeapTupleGetOid(tup);
+
+		systable_endscan(scan);
+		relation_close(attrdef, AccessShareLock);
+	}
+	if (!OidIsValid(defoid))
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("default value for column \"%s\" of relation \"%s\" does not exist",
+							attname, NameListToString(relname))));
+
+		address.classId = AttrDefaultRelationId;
+		address.objectId = InvalidOid;
+		address.objectSubId = InvalidAttrNumber;
+		relation_close(relation, lockmode);
+		return address;
+	}
+
+	address.classId = AttrDefaultRelationId;
+	address.objectId = defoid;
+	address.objectSubId = 0;
+
+	*relp = relation;
+	return address;
+}
+
+/*
  * Find the ObjectAddress for a type or domain
  */
 static ObjectAddress
@@ -1174,6 +1365,225 @@ get_object_address_opcf(ObjectType objtype,
 	}
 
 	return address;
+}
+
+/*
+ * Convert an array of TEXT into a List of string Values, as emitted by the
+ * parser, which is what get_object_address uses as input.
+ */
+static List *
+textarray_to_strvaluelist(ArrayType *arr)
+{
+	Datum  *elems;
+	bool   *nulls;
+	int		nelems;
+	List   *list = NIL;
+	int		i;
+
+	deconstruct_array(arr, TEXTOID, -1, false, 'i',
+					  &elems, &nulls, &nelems);
+
+	for (i = 0; i < nelems; i++)
+	{
+		if (nulls[i])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name or argument lists may not contain nulls")));
+		list = lappend(list, makeString(TextDatumGetCString(elems[i])));
+	}
+
+	return list;
+}
+
+/*
+ * SQL-callable version of get_object_address
+ */
+Datum
+pg_get_object_address(PG_FUNCTION_ARGS)
+{
+	char   *ttype = TextDatumGetCString(PG_GETARG_TEXT_P(0));
+	ArrayType *namearr = PG_GETARG_ARRAYTYPE_P(1);
+	ArrayType *argsarr = PG_GETARG_ARRAYTYPE_P(2);
+	int		itype;
+	ObjectType type;
+	List   *name;
+	List   *args;
+	ObjectAddress addr;
+	TupleDesc tupdesc;
+	Datum	values[3];
+	bool	nulls[3];
+	HeapTuple htup;
+	Relation	relation;
+
+	/* Decode object type, raise error if unknown */
+	ttype = TextDatumGetCString(PG_GETARG_TEXT_P(0));
+	itype = read_objtype_from_string(ttype);
+	if (itype < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unsupported object type \"%s\"", ttype)));
+	type = (ObjectType) itype;
+
+	/*
+	 * Convert the text array to the representation appropriate for the
+	 * given object type.  Most use a simple string Values list, but there
+	 * are some exceptions.
+	 */
+	if (type == OBJECT_TYPE || type == OBJECT_DOMAIN)
+	{
+		Datum	*elems;
+		bool	*nulls;
+		int		nelems;
+		TypeName *typname;
+
+		deconstruct_array(namearr, TEXTOID, -1, false, 'i',
+						  &elems, &nulls, &nelems);
+		if (nelems != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name list length must be exactly %d", 1)));
+		if (nulls[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name or argument lists may not contain nulls")));
+		typname = typeStringToTypeName(TextDatumGetCString(elems[0]));
+		name = typname->names;
+	}
+	else if (type == OBJECT_CAST)
+	{
+		Datum	*elems;
+		bool	*nulls;
+		int		nelems;
+
+		deconstruct_array(namearr, TEXTOID, -1, false, 'i',
+						  &elems, &nulls, &nelems);
+		if (nelems != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name list length must be exactly %d", 1)));
+		if (nulls[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name or argument lists may not contain nulls")));
+		name = list_make1(typeStringToTypeName(TextDatumGetCString(elems[0])));
+	}
+	else if (type == OBJECT_LARGEOBJECT)
+	{
+		Datum	   *elems;
+		bool	   *nulls;
+		int			nelems;
+
+		deconstruct_array(namearr, TEXTOID, -1, false, 'i',
+						  &elems, &nulls, &nelems);
+		if (nelems != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name list length must be exactly %d", 1)));
+		if (nulls[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("large object OID may not be null")));
+		name = list_make1(makeFloat(TextDatumGetCString(elems[0])));
+	}
+	else
+	{
+		name = textarray_to_strvaluelist(namearr);
+		if (list_length(name) < 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("name list must be of length at least %d", 1)));
+	}
+
+	/*
+	 * If args are given, decode them according to the object type.
+	 */
+	if (type == OBJECT_AGGREGATE ||
+		type == OBJECT_FUNCTION ||
+		type == OBJECT_OPERATOR ||
+		type == OBJECT_CAST)
+	{
+		/* in these cases, the args list must be of TypeName */
+		Datum  *elems;
+		bool   *nulls;
+		int		nelems;
+		int		i;
+
+		deconstruct_array(argsarr, TEXTOID, -1, false, 'i',
+						  &elems, &nulls, &nelems);
+
+		args = NIL;
+		for (i = 0; i < nelems; i++)
+		{
+			if (nulls[i])
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("name or argument lists may not contain nulls")));
+			args = lappend(args,
+						   typeStringToTypeName(TextDatumGetCString(elems[i])));
+		}
+	}
+	else
+	{
+		/* For all other object types, use string Values */
+		args = textarray_to_strvaluelist(argsarr);
+	}
+
+	/*
+	 * get_object_name is pretty sensitive to the length its input lists;
+	 * check that they're what it wants.
+	 */
+	switch (type)
+	{
+		case OBJECT_LARGEOBJECT:
+			if (list_length(name) != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("name list length must be %d", 1)));
+			break;
+		case OBJECT_OPCLASS:
+		case OBJECT_OPFAMILY:
+		case OBJECT_CAST:
+			if (list_length(args) != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument list length must be exactly %d", 1)));
+			break;
+		case OBJECT_OPERATOR:
+			if (list_length(args) != 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument list length must be exactly %d", 2)));
+			break;
+		default:
+			break;
+	}
+
+	addr = get_object_address(type, name, args,
+							  &relation, AccessShareLock, false);
+
+	/* We don't need the relcache entry, thank you very much */
+	if (relation)
+		relation_close(relation, AccessShareLock);
+
+	tupdesc = CreateTemplateTupleDesc(3, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "classid",
+					   OIDOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "objid",
+					   OIDOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "objsubid",
+					   INT4OID, -1, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	values[0] = ObjectIdGetDatum(addr.classId);
+	values[1] = ObjectIdGetDatum(addr.objectId);
+	values[2] = Int32GetDatum(addr.objectSubId);
+	nulls[0] = false;
+	nulls[1] = false;
+	nulls[2] = false;
+
+	htup = heap_form_tuple(tupdesc, values, nulls);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
 }
 
 /*
@@ -1385,6 +1795,34 @@ get_object_namespace(const ObjectAddress *address)
 	ReleaseSysCache(tuple);
 
 	return oid;
+}
+
+/*
+ * Return ObjectType for the given object type as given by
+ * getObjectTypeDescription; if no valid ObjectType code exists, but it's a
+ * possible output type from getObjectTypeDescription, return -1.
+ * Otherwise, an error is thrown.
+ */
+int
+read_objtype_from_string(const char *objtype)
+{
+	ObjectType	type;
+	int			i;
+
+	for (i = 0; i < lengthof(ObjectTypeMap); i++)
+	{
+		if (strcmp(ObjectTypeMap[i].tm_name, objtype) == 0)
+		{
+			type = ObjectTypeMap[i].tm_type;
+			break;
+		}
+	}
+	if (i >= lengthof(ObjectTypeMap))
+		ereport(ERROR,
+			   (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("unrecognized object type \"%s\"", objtype)));
+
+	return type;
 }
 
 /*
@@ -2518,6 +2956,8 @@ pg_identify_object(PG_FUNCTION_ARGS)
 /*
  * Return a palloc'ed string that describes the type of object that the
  * passed address is for.
+ *
+ * Keep ObjectTypeMap in sync with this.
  */
 char *
 getObjectTypeDescription(const ObjectAddress *object)
