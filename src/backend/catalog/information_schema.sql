@@ -2884,7 +2884,12 @@ CREATE VIEW user_mapping_options AS
            CAST((pg_options_to_table(um.umoptions)).option_name AS sql_identifier) AS option_name,
            CAST(CASE WHEN (umuser <> 0 AND authorization_identifier = current_user)
                        OR (umuser = 0 AND pg_has_role(srvowner, 'USAGE'))
-                       OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user) THEN (pg_options_to_table(um.umoptions)).option_value
+                       OR (
+                            SELECT pg_check_role_attribute(pg_authid.rolattr, 'SUPERUSER') AS rolsuper
+                            FROM pg_authid
+                            WHERE rolname = current_user
+                          )
+                       THEN (pg_options_to_table(um.umoptions)).option_value
                      ELSE NULL END AS character_data) AS option_value
     FROM _pg_user_mappings um;
 

@@ -58,6 +58,7 @@ superuser_arg(Oid roleid)
 {
 	bool		result;
 	HeapTuple	rtup;
+	RoleAttr	attributes;
 
 	/* Quick out for cache hit */
 	if (OidIsValid(last_roleid) && last_roleid == roleid)
@@ -71,7 +72,8 @@ superuser_arg(Oid roleid)
 	rtup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (HeapTupleIsValid(rtup))
 	{
-		result = ((Form_pg_authid) GETSTRUCT(rtup))->rolsuper;
+		attributes = ((Form_pg_authid) GETSTRUCT(rtup))->rolattr;
+		result = (attributes & ROLE_ATTR_SUPERUSER);
 		ReleaseSysCache(rtup);
 	}
 	else

@@ -521,7 +521,7 @@ check_enable_rls(Oid relid, Oid checkAsUser)
 	 */
 	if (!checkAsUser && row_security == ROW_SECURITY_OFF)
 	{
-		if (has_bypassrls_privilege(user_id))
+		if (has_role_attribute(user_id, ROLE_ATTR_BYPASSRLS))
 			/* OK to bypass */
 			return RLS_NONE_ENV;
 		else

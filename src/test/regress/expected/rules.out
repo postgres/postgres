@@ -1314,7 +1314,7 @@ pg_group| SELECT pg_authid.rolname AS groname,
            FROM pg_auth_members
           WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist
    FROM pg_authid
-  WHERE (NOT pg_authid.rolcanlogin);
+  WHERE (NOT pg_check_role_attribute(pg_authid.rolattr, 'CANLOGIN'::text));
 pg_indexes| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     i.relname AS indexname,
@@ -1405,17 +1405,17 @@ pg_replication_slots| SELECT l.slot_name,
    FROM (pg_get_replication_slots() l(slot_name, plugin, slot_type, datoid, active, xmin, catalog_xmin, restart_lsn)
      LEFT JOIN pg_database d ON ((l.datoid = d.oid)));
 pg_roles| SELECT pg_authid.rolname,
-    pg_authid.rolsuper,
-    pg_authid.rolinherit,
-    pg_authid.rolcreaterole,
-    pg_authid.rolcreatedb,
-    pg_authid.rolcatupdate,
-    pg_authid.rolcanlogin,
-    pg_authid.rolreplication,
+    pg_check_role_attribute(pg_authid.rolattr, 'SUPERUSER'::text) AS rolsuper,
+    pg_check_role_attribute(pg_authid.rolattr, 'INHERIT'::text) AS rolinherit,
+    pg_check_role_attribute(pg_authid.rolattr, 'CREATEROLE'::text) AS rolcreaterole,
+    pg_check_role_attribute(pg_authid.rolattr, 'CREATEDB'::text) AS rolcreatedb,
+    pg_check_role_attribute(pg_authid.rolattr, 'CATUPDATE'::text) AS rolcatupdate,
+    pg_check_role_attribute(pg_authid.rolattr, 'CANLOGIN'::text) AS rolcanlogin,
+    pg_check_role_attribute(pg_authid.rolattr, 'REPLICATION'::text) AS rolreplication,
+    pg_check_role_attribute(pg_authid.rolattr, 'BYPASSRLS'::text) AS rolbypassrls,
     pg_authid.rolconnlimit,
     '********'::text AS rolpassword,
     pg_authid.rolvaliduntil,
-    pg_authid.rolbypassrls,
     s.setconfig AS rolconfig,
     pg_authid.oid
    FROM (pg_authid
@@ -1608,16 +1608,16 @@ pg_settings| SELECT a.name,
    FROM pg_show_all_settings() a(name, setting, unit, category, short_desc, extra_desc, context, vartype, source, min_val, max_val, enumvals, boot_val, reset_val, sourcefile, sourceline);
 pg_shadow| SELECT pg_authid.rolname AS usename,
     pg_authid.oid AS usesysid,
-    pg_authid.rolcreatedb AS usecreatedb,
-    pg_authid.rolsuper AS usesuper,
-    pg_authid.rolcatupdate AS usecatupd,
-    pg_authid.rolreplication AS userepl,
+    pg_check_role_attribute(pg_authid.rolattr, 'CREATEDB'::text) AS usecreatedb,
+    pg_check_role_attribute(pg_authid.rolattr, 'SUPERUSER'::text) AS usesuper,
+    pg_check_role_attribute(pg_authid.rolattr, 'CATUPDATE'::text) AS usecatupd,
+    pg_check_role_attribute(pg_authid.rolattr, 'REPLICATION'::text) AS userepl,
     pg_authid.rolpassword AS passwd,
     (pg_authid.rolvaliduntil)::abstime AS valuntil,
     s.setconfig AS useconfig
    FROM (pg_authid
      LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))))
-  WHERE pg_authid.rolcanlogin;
+  WHERE pg_check_role_attribute(pg_authid.rolattr, 'CANLOGIN'::text);
 pg_stat_activity| SELECT s.datid,
     d.datname,
     s.pid,

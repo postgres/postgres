@@ -15139,6 +15139,133 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     are immediately available without doing <command>SET ROLE</>.
    </para>
 
+   <para>
+    <xref linkend="functions-info-role-attribute-table"> lists functions that
+    allow the user to query role attribute information programmatically.
+   </para>
+
+   <table id="functions-info-role-attribute-table">
+    <title>Role Attribute Inquiry Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><literal><function>pg_has_role_attribute(role, attribute)</function></literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>does role have the permissions allowed by named attribute</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_check_role_attribute(role, attribute)</function></literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>does role have the named attribute</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_check_role_attribute(role_attributes, attribute)</function></literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>is attribute set in bitmap of role attributes</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_all_role_attributes(role_attributes)</function></literal></entry>
+       <entry><type>text[]</type></entry>
+       <entry>convert bitmap of role attribute representation to text[]</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm>
+    <primary>pg_has_role_attribute</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_check_role_attribute</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_all_role_attributes</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_has_role_attribute</function> checks the attribute permissions
+    given to a role.  It will always return <literal>true</literal> for roles
+    with superuser privileges unless the attribute being checked is
+    <literal>CATUPDATE</literal> (superuser cannot bypass
+    <literal>CATUPDATE</literal> permissions). The role can be specified by name
+    and by OID. The attribute is specified by a text string which must evaluate
+    to one of the following role attributes:
+    <literal>SUPERUSER</literal>,
+    <literal>INHERIT</literal>,
+    <literal>CREATEROLE</literal>,
+    <literal>CREATEDB</literal>,
+    <literal>CATUPDATE</literal>,
+    <literal>CANLOGIN</literal>,
+    <literal>REPLICATION</literal>, or
+    <literal>BYPASSRLS</literal>. See <xref linkend="sql-createrole"> for more
+    information. For example:
+<programlisting>
+SELECT pg_has_role_attribute('joe', 'SUPERUSER');
+ pg_has_role_attribute 
+-----------------------
+ f
+(1 row)
+
+SELECT rolname, pg_has_role_attribute(oid, 'INHERIT') AS rolinherit FROM pg_roles;
+ rolname  | rolinherit 
+----------+------------
+ postgres | t
+ joe      | t
+(2 rows)
+</programlisting>
+   </para>
+
+   <para>
+    <function>pg_check_role_attribute</function> checks the attribute value given
+    to a role.  The role can be specified by name and by OID.  The attribute is
+    specified by a text string which must evaluate to a valid role attribute (see
+    <function>pg_has_role_attribute</function>).  A third variant of this function
+    allows for a bitmap representation (<literal>bigint</literal>) of attributes
+    to be given instead of a role.
+    Example:
+<programlisting>
+SELECT pg_check_role_attribute('joe', 'SUPERUSER');
+ pg_check_role_attribute 
+-------------------------
+ f
+(1 row)
+
+SELECT rolname, pg_check_role_attribute(oid, 'INHERIT') as rolinherit FROM pg_roles;
+ rolname  | rolinherit 
+----------+------------
+ postgres | t
+ joe      | t
+(2 rows)
+ t
+(1 row)
+
+
+SELECT rolname, pg_check_role_attribute(rolattr, 'SUPERUSER') AS rolsuper FROM pg_authid;
+ rolname  | rolsuper 
+----------+----------
+ postgres | t
+ joe      | f
+(2 rows)
+</programlisting>
+   </para>
+
+   <para>
+    <function>pg_all_role_attributes</function> convert a set of role attributes
+    represented by an <literal>bigint</literal> bitmap to a text array.
+    Example:
+<programlisting>
+SELECT rolname, pg_all_role_attributes(rolattr) AS attributes FROM pg_authid;
+ rolname  |                                          attributes                                           
+----------+-----------------------------------------------------------------------------------------------
+ postgres | {Superuser,Inherit,"Create Role","Create DB","Catalog Update",Login,Replication,"Bypass RLS"}
+ joe      | {Inherit,Login}
+(2 rows)
+</programlisting>
+   </para>
+
   <para>
    <xref linkend="functions-info-schema-table"> shows functions that
    determine whether a certain object is <firstterm>visible</> in the

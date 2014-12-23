@@ -27,6 +27,7 @@
 #include "miscadmin.h"
 #include "replication/walreceiver.h"
 #include "storage/smgr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/guc.h"
@@ -54,7 +55,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 
 	backupidstr = text_to_cstring(backupid);
 
-	if (!superuser() && !has_rolreplication(GetUserId()))
+	if (!have_role_attribute(ROLE_ATTR_REPLICATION))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		   errmsg("must be superuser or replication role to run a backup")));
@@ -82,7 +83,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	stoppoint;
 
-	if (!superuser() && !has_rolreplication(GetUserId()))
+	if (!have_role_attribute(ROLE_ATTR_REPLICATION))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		 (errmsg("must be superuser or replication role to run a backup"))));

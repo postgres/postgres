@@ -56,14 +56,6 @@ static void DelRoleMems(const char *rolename, Oid roleid,
 			bool admin_opt);
 
 
-/* Check if current user has createrole privileges */
-static bool
-have_createrole_privilege(void)
-{
-	return has_createrole_privilege(GetUserId());
-}
-
-
 /*
  * CREATE ROLE
  */
@@ -81,13 +73,7 @@ CreateRole(CreateRoleStmt *stmt)
 	char	   *password = NULL;	/* user password */
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
-	bool		issuper = false;	/* Make the user a superuser? */
-	bool		inherit = true; /* Auto inherit privileges? */
-	bool		createrole = false;		/* Can this user create roles? */
-	bool		createdb = false;		/* Can the user create databases? */
-	bool		canlogin = false;		/* Can this user login? */
-	bool		isreplication = false;	/* Is this a replication role? */
-	bool		bypassrls = false;		/* Is this a row security enabled role? */
+	RoleAttr	attributes;
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *addroleto = NIL;	/* roles to make this a member of */
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
@@ -109,13 +95,17 @@ CreateRole(CreateRoleStmt *stmt)
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
 
-	/* The defaults can vary depending on the original statement type */
+	/*
+	 * Every role has INHERIT by default, and CANLOGIN depends on the statement
+	 * type.
+	 */
+	attributes = ROLE_ATTR_INHERIT;
 	switch (stmt->stmt_type)
 	{
 		case ROLESTMT_ROLE:
 			break;
 		case ROLESTMT_USER:
-			canlogin = true;
+			attributes |= ROLE_ATTR_CANLOGIN;
 			/* may eventually want inherit to default to false here */
 			break;
 		case ROLESTMT_GROUP:
@@ -249,18 +239,76 @@ CreateRole(CreateRoleStmt *stmt)
 
 	if (dpassword && dpassword->arg)
 		password = strVal(dpassword->arg);
+
+	/* Set up role attributes and check permissions to set each of them */
 	if (dissuper)
-		issuper = intVal(dissuper->arg) != 0;
+	{
+		if (intVal(dissuper->arg) != 0)
+		{
+			if (!superuser())
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("must be superuser to create superusers")));
+			attributes |= ROLE_ATTR_SUPERUSER;
+		}
+		else
+			attributes &= ~ROLE_ATTR_SUPERUSER;
+	}
 	if (dinherit)
-		inherit = intVal(dinherit->arg) != 0;
+	{
+		if (intVal(dinherit->arg) != 0)
+			attributes |= ROLE_ATTR_INHERIT;
+		else
+			attributes &= ~ROLE_ATTR_INHERIT;
+	}
 	if (dcreaterole)
-		createrole = intVal(dcreaterole->arg) != 0;
+	{
+		if (intVal(dcreaterole->arg) != 0)
+			attributes |= ROLE_ATTR_CREATEROLE;
+		else
+			attributes &= ~ROLE_ATTR_CREATEROLE;
+	}
 	if (dcreatedb)
-		createdb = intVal(dcreatedb->arg) != 0;
+	{
+		if (intVal(dcreatedb->arg) != 0)
+			attributes |= ROLE_ATTR_CREATEDB;
+		else
+			attributes &= ~ROLE_ATTR_CREATEDB;
+	}
 	if (dcanlogin)
-		canlogin = intVal(dcanlogin->arg) != 0;
+	{
+		if (intVal(dcanlogin->arg) != 0)
+			attributes |= ROLE_ATTR_CANLOGIN;
+		else
+			attributes &= ~ROLE_ATTR_CANLOGIN;
+	}
 	if (disreplication)
-		isreplication = intVal(disreplication->arg) != 0;
+	{
+		if (intVal(disreplication->arg) != 0)
+		{
+			if (!superuser())
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("must be superuser to create replication users")));
+			attributes |= ROLE_ATTR_REPLICATION;
+		}
+		else
+			attributes &= ~ROLE_ATTR_REPLICATION;
+	}
+	if (dbypassRLS)
+	{
+		if (intVal(dbypassRLS->arg) != 0)
+		{
+			if (!superuser())
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("must be superuser to change bypassrls attribute")));
+			attributes |= ROLE_ATTR_BYPASSRLS;
+		}
+		else
+			attributes &= ~ROLE_ATTR_BYPASSRLS;
+	}
+
 	if (dconnlimit)
 	{
 		connlimit = intVal(dconnlimit->arg);
@@ -277,38 +325,12 @@ CreateRole(CreateRoleStmt *stmt)
 		adminmembers = (List *) dadminmembers->arg;
 	if (dvalidUntil)
 		validUntil = strVal(dvalidUntil->arg);
-	if (dbypassRLS)
-		bypassrls = intVal(dbypassRLS->arg) != 0;
 
-	/* Check some permissions first */
-	if (issuper)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create superusers")));
-	}
-	else if (isreplication)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				   errmsg("must be superuser to create replication users")));
-	}
-	else if (bypassrls)
-	{
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change bypassrls attribute.")));
-	}
-	else
-	{
-		if (!have_createrole_privilege())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to create role")));
-	}
+	/* Check permissions */
+	if (!have_role_attribute(ROLE_ATTR_CREATEROLE))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to create role")));
 
 	if (strcmp(stmt->role, "public") == 0 ||
 		strcmp(stmt->role, "none") == 0)
@@ -364,14 +386,8 @@ CreateRole(CreateRoleStmt *stmt)
 	new_record[Anum_pg_authid_rolname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->role));
 
-	new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper);
-	new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit);
-	new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(createrole);
-	new_record[Anum_pg_authid_rolcreatedb - 1] = BoolGetDatum(createdb);
-	/* superuser gets catupdate right by default */
-	new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper);
-	new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(canlogin);
-	new_record[Anum_pg_authid_rolreplication - 1] = BoolGetDatum(isreplication);
+	new_record[Anum_pg_authid_rolattr - 1] = Int64GetDatum(attributes);
+
 	new_record[Anum_pg_authid_rolconnlimit - 1] = Int32GetDatum(connlimit);
 
 	if (password)
@@ -393,8 +409,6 @@ CreateRole(CreateRoleStmt *stmt)
 
 	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
-
-	new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(bypassrls);
 
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
@@ -508,6 +522,7 @@ AlterRole(AlterRoleStmt *stmt)
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
 	Oid			roleid;
+	RoleAttr	attributes;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -658,31 +673,34 @@ AlterRole(AlterRoleStmt *stmt)
 	roleid = HeapTupleGetOid(tuple);
 
 	/*
-	 * To mess with a superuser you gotta be superuser; else you need
-	 * createrole, or just want to change your own password
+	 * To mess with a superuser or a replication user you gotta be superuser;
+	 * else you need createrole, or just want to change your own password
 	 */
-	if (((Form_pg_authid) GETSTRUCT(tuple))->rolsuper || issuper >= 0)
+
+	attributes = ((Form_pg_authid) GETSTRUCT(tuple))->rolattr;
+
+	if ((attributes & ROLE_ATTR_SUPERUSER) || issuper >= 0)
 	{
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to alter superusers")));
 	}
-	else if (((Form_pg_authid) GETSTRUCT(tuple))->rolreplication || isreplication >= 0)
+	else if ((attributes & ROLE_ATTR_REPLICATION) || isreplication >= 0)
 	{
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to alter replication users")));
 	}
-	else if (((Form_pg_authid) GETSTRUCT(tuple))->rolbypassrls || bypassrls >= 0)
+	else if ((attributes & ROLE_ATTR_BYPASSRLS) || bypassrls >= 0)
 	{
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change bypassrls attribute")));
 	}
-	else if (!have_createrole_privilege())
+	else if (!have_role_attribute(ROLE_ATTR_CREATEROLE))
 	{
 		if (!(inherit < 0 &&
 			  createrole < 0 &&
@@ -743,42 +761,70 @@ AlterRole(AlterRoleStmt *stmt)
 	 */
 	if (issuper >= 0)
 	{
-		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper > 0);
-		new_record_repl[Anum_pg_authid_rolsuper - 1] = true;
-
-		new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper > 0);
-		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = true;
+		if (issuper > 0)
+			attributes |= ROLE_ATTR_SUPERUSER | ROLE_ATTR_CATUPDATE;
+		else
+			attributes &= ~(ROLE_ATTR_SUPERUSER | ROLE_ATTR_CATUPDATE);
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
 	}
 
 	if (inherit >= 0)
 	{
-		new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit > 0);
-		new_record_repl[Anum_pg_authid_rolinherit - 1] = true;
+		if (inherit > 0)
+			attributes |= ROLE_ATTR_INHERIT;
+		else
+			attributes &= ~ROLE_ATTR_INHERIT;
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
 	}
 
 	if (createrole >= 0)
 	{
-		new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(createrole > 0);
-		new_record_repl[Anum_pg_authid_rolcreaterole - 1] = true;
+		if (createrole > 0)
+			attributes |= ROLE_ATTR_CREATEROLE;
+		else
+			attributes &= ~ROLE_ATTR_CREATEROLE;
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
 	}
 
 	if (createdb >= 0)
 	{
-		new_record[Anum_pg_authid_rolcreatedb - 1] = BoolGetDatum(createdb > 0);
-		new_record_repl[Anum_pg_authid_rolcreatedb - 1] = true;
+		if (createdb > 0)
+			attributes |= ROLE_ATTR_CREATEDB;
+		else
+			attributes &= ~ROLE_ATTR_CREATEDB;
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
 	}
 
 	if (canlogin >= 0)
 	{
-		new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(canlogin > 0);
-		new_record_repl[Anum_pg_authid_rolcanlogin - 1] = true;
+		if (canlogin > 0)
+			attributes |= ROLE_ATTR_CANLOGIN;
+		else
+			attributes &= ~ROLE_ATTR_CANLOGIN;
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
 	}
 
 	if (isreplication >= 0)
 	{
-		new_record[Anum_pg_authid_rolreplication - 1] = BoolGetDatum(isreplication > 0);
-		new_record_repl[Anum_pg_authid_rolreplication - 1] = true;
+		if (isreplication > 0)
+			attributes |= ROLE_ATTR_REPLICATION;
+		else
+			attributes &= ~ROLE_ATTR_REPLICATION;
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
 	}
+
+	if (bypassrls >= 0)
+	{
+		if (bypassrls > 0)
+			attributes |= ROLE_ATTR_BYPASSRLS;
+		else
+			attributes &= ~ROLE_ATTR_BYPASSRLS;
+		new_record_repl[Anum_pg_authid_rolattr - 1] = true;
+	}
+
+	/* If any role attributes were set, then update. */
+	if (new_record_repl[Anum_pg_authid_rolattr - 1])
+		new_record[Anum_pg_authid_rolattr - 1] = Int64GetDatum(attributes);
 
 	if (dconnlimit)
 	{
@@ -815,11 +861,6 @@ AlterRole(AlterRoleStmt *stmt)
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 	new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
 
-	if (bypassrls >= 0)
-	{
-		new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(bypassrls > 0);
-		new_record_repl[Anum_pg_authid_rolbypassrls - 1] = true;
-	}
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
 								  new_record_nulls, new_record_repl);
@@ -867,6 +908,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	HeapTuple	roletuple;
 	Oid			databaseid = InvalidOid;
 	Oid			roleid = InvalidOid;
+	RoleAttr	attributes;
 
 	if (stmt->role)
 	{
@@ -889,7 +931,8 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		 * To mess with a superuser you gotta be superuser; else you need
 		 * createrole, or just want to change your own settings
 		 */
-		if (((Form_pg_authid) GETSTRUCT(roletuple))->rolsuper)
+		attributes = ((Form_pg_authid) GETSTRUCT(roletuple))->rolattr;
+		if (attributes & ROLE_ATTR_SUPERUSER)
 		{
 			if (!superuser())
 				ereport(ERROR,
@@ -898,7 +941,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		}
 		else
 		{
-			if (!have_createrole_privilege() &&
+			if (!have_role_attribute(ROLE_ATTR_CREATEROLE) &&
 				HeapTupleGetOid(roletuple) != GetUserId())
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -951,7 +994,7 @@ DropRole(DropRoleStmt *stmt)
 				pg_auth_members_rel;
 	ListCell   *item;
 
-	if (!have_createrole_privilege())
+	if (!have_role_attribute(ROLE_ATTR_CREATEROLE))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to drop role")));
@@ -973,6 +1016,7 @@ DropRole(DropRoleStmt *stmt)
 		char	   *detail_log;
 		SysScanDesc sscan;
 		Oid			roleid;
+		RoleAttr	attributes;
 
 		tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 		if (!HeapTupleIsValid(tuple))
@@ -1013,8 +1057,8 @@ DropRole(DropRoleStmt *stmt)
 		 * roles but not superuser roles.  This is mainly to avoid the
 		 * scenario where you accidentally drop the last superuser.
 		 */
-		if (((Form_pg_authid) GETSTRUCT(tuple))->rolsuper &&
-			!superuser())
+		attributes = ((Form_pg_authid) GETSTRUCT(tuple))->rolattr;
+		if ((attributes & ROLE_ATTR_SUPERUSER) && !superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to drop superusers")));
@@ -1128,6 +1172,7 @@ RenameRole(const char *oldname, const char *newname)
 	bool		repl_repl[Natts_pg_authid];
 	int			i;
 	Oid			roleid;
+	RoleAttr	attributes;
 
 	rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	dsc = RelationGetDescr(rel);
@@ -1173,7 +1218,8 @@ RenameRole(const char *oldname, const char *newname)
 	/*
 	 * createrole is enough privilege unless you want to mess with a superuser
 	 */
-	if (((Form_pg_authid) GETSTRUCT(oldtuple))->rolsuper)
+	attributes = ((Form_pg_authid) GETSTRUCT(oldtuple))->rolattr;
+	if (attributes & ROLE_ATTR_SUPERUSER)
 	{
 		if (!superuser())
 			ereport(ERROR,
@@ -1182,7 +1228,7 @@ RenameRole(const char *oldname, const char *newname)
 	}
 	else
 	{
-		if (!have_createrole_privilege())
+		if (!have_role_attribute(ROLE_ATTR_CREATEROLE))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to rename role")));
@@ -1409,7 +1455,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	}
 	else
 	{
-		if (!have_createrole_privilege() &&
+		if (!have_role_attribute(ROLE_ATTR_CREATEROLE) &&
 			!is_admin_of_role(grantorId, roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -1555,7 +1601,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 	}
 	else
 	{
-		if (!have_createrole_privilege() &&
+		if (!have_role_attribute(ROLE_ATTR_CREATEROLE) &&
 			!is_admin_of_role(GetUserId(), roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

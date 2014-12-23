@@ -40,6 +40,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -329,24 +330,6 @@ SetUserIdAndContext(Oid userid, bool sec_def_context)
 
 
 /*
- * Check whether specified role has explicit REPLICATION privilege
- */
-bool
-has_rolreplication(Oid roleid)
-{
-	bool		result = false;
-	HeapTuple	utup;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolreplication;
-		ReleaseSysCache(utup);
-	}
-	return result;
-}
-
-/*
  * Initialize user identity during normal backend startup
  */
 void
@@ -375,7 +358,7 @@ InitializeSessionUserId(const char *rolename)
 	roleid = HeapTupleGetOid(roleTup);
 
 	AuthenticatedUserId = roleid;
-	AuthenticatedUserIsSuperuser = rform->rolsuper;
+	AuthenticatedUserIsSuperuser = (rform->rolattr & ROLE_ATTR_SUPERUSER);
 
 	/* This sets OuterUserId/CurrentUserId too */
 	SetSessionUserId(roleid, AuthenticatedUserIsSuperuser);
@@ -394,7 +377,7 @@ InitializeSessionUserId(const char *rolename)
 		/*
 		 * Is role allowed to login at all?
 		 */
-		if (!rform->rolcanlogin)
+		if (!(rform->rolattr & ROLE_ATTR_CANLOGIN))
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					 errmsg("role \"%s\" is not permitted to log in",

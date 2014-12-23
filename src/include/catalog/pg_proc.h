@@ -5136,6 +5136,19 @@ DESCR("rank of hypothetical row without gaps");
 DATA(insert OID = 3993 ( dense_rank_final	PGNSP PGUID 12 1 0 2276 0 f f f f f f i 2 0 20 "2281 2276" "{2281,2276}" "{i,v}" _null_ _null_	hypothetical_dense_rank_final _null_ _null_ _null_ ));
 DESCR("aggregate final function");
 
+/* role attribute support functions */
+DATA(insert OID = 3994 ( pg_has_role_attribute		PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ pg_has_role_attribute_id _null_ _null_ _null_ ));
+DESCR("check role attribute by role oid with superuser bypass check");
+DATA(insert OID = 3995 ( pg_has_role_attribute		PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 16 "19 25" _null_ _null_ _null_ _null_ pg_has_role_attribute_name _null_ _null_ _null_ ));
+DESCR("check role attribute by role name with superuser bypass check");
+DATA(insert OID = 3996 ( pg_check_role_attribute		PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ pg_check_role_attribute_id _null_ _null_ _null_ ));
+DESCR("check role attribute by role id");
+DATA(insert OID = 3997 ( pg_check_role_attribute		PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 16 "19 25" _null_ _null_ _null_ _null_ pg_check_role_attribute_name _null_ _null_ _null_ ));
+DESCR("check role attribute by role name");
+DATA(insert OID = 3998 ( pg_check_role_attribute		PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 16 "20 25" _null_ _null_ _null_ _null_ pg_check_role_attribute_attrs _null_ _null_ _null_ ));
+DESCR("check role attribute");
+DATA(insert OID = 3999 ( pg_all_role_attributes		PGNSP PGUID 12 10 0 0 0 f f f f t f s 1 0 1009 "20" _null_ _null_ _null_ _null_ pg_all_role_attributes _null_ _null_ _null_));
+DESCR("convert role attributes to string array");
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

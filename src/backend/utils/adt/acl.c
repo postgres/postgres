@@ -115,6 +115,7 @@ static Oid	convert_type_name(text *typename);
 static AclMode convert_type_priv_string(text *priv_type_text);
 static AclMode convert_role_priv_string(text *priv_type_text);
 static AclResult pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode);
+static RoleAttr convert_role_attr_string(text *attr_type_text);
 
 static void RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue);
 
@@ -4602,6 +4603,186 @@ pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode)
 	return ACLCHECK_NO_PRIV;
 }
 
+/*
+ * pg_has_role_attribute_id
+ *		Check that the role with the given oid has the given named role
+ *		attribute.
+ *
+ * Note: This function applies superuser checks.  Therefore, if the provided
+ * role is a superuser, then the result will always be true.
+ */
+Datum
+pg_has_role_attribute_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleoid = PG_GETARG_OID(0);
+	text	   *attr_type_text = PG_GETARG_TEXT_P(1);
+	RoleAttr	attribute;
+
+	attribute = convert_role_attr_string(attr_type_text);
+
+	PG_RETURN_BOOL(has_role_attribute(roleoid, attribute));
+}
+
+/*
+ * pg_has_role_attribute_name
+ *		Check that the named role has the given named role attribute.
+ *
+ * Note: This function applies superuser checks.  Therefore, if the provided
+ * role is a superuser, then the result will always be true.
+ */
+Datum
+pg_has_role_attribute_name(PG_FUNCTION_ARGS)
+{
+	Name		rolename = PG_GETARG_NAME(0);
+	text	   *attr_type_text = PG_GETARG_TEXT_P(1);
+	Oid			roleoid;
+	RoleAttr	attribute;
+
+	roleoid = get_role_oid(NameStr(*rolename), false);
+	attribute = convert_role_attr_string(attr_type_text);
+
+	PG_RETURN_BOOL(has_role_attribute(roleoid, attribute));
+}
+
+/*
+ * pg_check_role_attribute_id
+ *		Check that the role with the given oid has the given named role
+ *		attribute.
+ *
+ * Note: This function is different from 'pg_has_role_attribute_id_attr' in that
+ * it does *not* apply any superuser checks.  Therefore, this function will
+ * always return the set value of the attribute, despite the superuser-ness of
+ * the provided role.
+ */
+Datum
+pg_check_role_attribute_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleoid = PG_GETARG_OID(0);
+	text	   *attr_type_text = PG_GETARG_TEXT_P(1);
+	RoleAttr	attribute;
+
+	attribute = convert_role_attr_string(attr_type_text);
+
+	PG_RETURN_BOOL(check_role_attribute(roleoid, attribute));
+}
+
+/*
+ * pg_check_role_attribute_name
+ *		Check that the named role has the given named role attribute.
+ *
+ * Note: This function is different from 'pg_has_role_attribute_name_attr' in
+ * that it does *not* apply any superuser checks.  Therefore, this function will
+ * always return the set value of the attribute, despite the superuser-ness of
+ * the provided role.
+ */
+Datum
+pg_check_role_attribute_name(PG_FUNCTION_ARGS)
+{
+	Name		rolename = PG_GETARG_NAME(0);
+	text	   *attr_type_text = PG_GETARG_TEXT_P(1);
+	Oid			roleoid;
+	RoleAttr	attribute;
+
+	roleoid = get_role_oid(NameStr(*rolename), false);
+	attribute = convert_role_attr_string(attr_type_text);
+
+	PG_RETURN_BOOL(check_role_attribute(roleoid, attribute));
+}
+
+/*
+ * pg_check_role_attribute_attrs
+ *		Check that the named attribute is enabled in the given RoleAttr
+ *		representation of role attributes.
+ */
+Datum
+pg_check_role_attribute_attrs(PG_FUNCTION_ARGS)
+{
+	RoleAttr	attributes = PG_GETARG_INT64(0);
+	text	   *attr_type_text = PG_GETARG_TEXT_P(1);
+	RoleAttr	attribute;
+
+	attribute = convert_role_attr_string(attr_type_text);
+
+	PG_RETURN_BOOL(attributes & attribute);
+}
+
+/*
+ * pg_all_role_attributes
+ *		Convert a RoleAttr representation of role attributes into an array of
+ *		corresponding text values.
+ *
+ * The first and only argument is a RoleAttr (int64) representation of the
+ * role attributes.
+ */
+Datum
+pg_all_role_attributes(PG_FUNCTION_ARGS)
+{
+	RoleAttr		attributes = PG_GETARG_INT64(0);
+	Datum		   *temp_array;
+	ArrayType	   *result;
+	int				i = 0;
+
+	/*
+	 * Short-circuit the case for no attributes assigned.
+	 */
+	if (attributes == ROLE_ATTR_NONE)
+		PG_RETURN_ARRAYTYPE_P(construct_empty_array(TEXTOID));
+
+	temp_array = (Datum *) palloc(N_ROLE_ATTRIBUTES * sizeof(Datum));
+
+	/* Determine which attributes are assigned. */
+	if (attributes & ROLE_ATTR_SUPERUSER)
+		temp_array[i++] = CStringGetTextDatum(_("Superuser"));
+	if (attributes & ROLE_ATTR_INHERIT)
+		temp_array[i++] = CStringGetTextDatum(_("Inherit"));
+	if (attributes & ROLE_ATTR_CREATEROLE)
+		temp_array[i++] = CStringGetTextDatum(_("Create Role"));
+	if (attributes & ROLE_ATTR_CREATEDB)
+		temp_array[i++] = CStringGetTextDatum(_("Create DB"));
+	if (attributes & ROLE_ATTR_CATUPDATE)
+		temp_array[i++] = CStringGetTextDatum(_("Catalog Update"));
+	if (attributes & ROLE_ATTR_CANLOGIN)
+		temp_array[i++] = CStringGetTextDatum(_("Login"));
+	if (attributes & ROLE_ATTR_REPLICATION)
+		temp_array[i++] = CStringGetTextDatum(_("Replication"));
+	if (attributes & ROLE_ATTR_BYPASSRLS)
+		temp_array[i++] = CStringGetTextDatum(_("Bypass RLS"));
+
+	result = construct_array(temp_array, i, TEXTOID, -1, false, 'i');
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+/*
+ * convert_role_attr_string
+ *		Convert text string to RoleAttr value.
+ */
+static RoleAttr
+convert_role_attr_string(text *attr_type_text)
+{
+	char	   *attr_type = text_to_cstring(attr_type_text);
+
+	if (pg_strcasecmp(attr_type, "SUPERUSER") == 0)
+		return ROLE_ATTR_SUPERUSER;
+	else if (pg_strcasecmp(attr_type, "INHERIT") == 0)
+		return ROLE_ATTR_INHERIT;
+	else if (pg_strcasecmp(attr_type, "CREATEROLE") == 0)
+		return ROLE_ATTR_CREATEROLE;
+	else if (pg_strcasecmp(attr_type, "CREATEDB") == 0)
+		return ROLE_ATTR_CREATEDB;
+	else if (pg_strcasecmp(attr_type, "CATUPDATE") == 0)
+		return ROLE_ATTR_CATUPDATE;
+	else if (pg_strcasecmp(attr_type, "CANLOGIN") == 0)
+		return ROLE_ATTR_CANLOGIN;
+	else if (pg_strcasecmp(attr_type, "REPLICATION") == 0)
+		return ROLE_ATTR_REPLICATION;
+	else if (pg_strcasecmp(attr_type, "BYPASSRLS") == 0)
+		return ROLE_ATTR_BYPASSRLS;
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized role attribute: \"%s\"", attr_type)));
+}
 
 /*
  * initialization function (called by InitPostgres)
@@ -4631,23 +4812,6 @@ RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 	/* Force membership caches to be recomputed on next use */
 	cached_privs_role = InvalidOid;
 	cached_member_role = InvalidOid;
-}
-
-
-/* Check if specified role has rolinherit set */
-static bool
-has_rolinherit(Oid roleid)
-{
-	bool		result = false;
-	HeapTuple	utup;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolinherit;
-		ReleaseSysCache(utup);
-	}
-	return result;
 }
 
 
@@ -4697,7 +4861,7 @@ roles_has_privs_of(Oid roleid)
 		int			i;
 
 		/* Ignore non-inheriting roles */
-		if (!has_rolinherit(memberid))
+		if (!has_role_attribute(memberid, ROLE_ATTR_INHERIT))
 			continue;
 
 		/* Find roles that memberid is directly a member of */

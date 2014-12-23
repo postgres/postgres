@@ -176,7 +176,7 @@ sub Catalogs
 				}
 			}
 		}
-		$catalogs{$catname} = \%catalog;
+		$catalogs{$catname} = \%catalog if defined $catname;
 		close INPUT_FILE;
 	}
 	return \%catalogs;

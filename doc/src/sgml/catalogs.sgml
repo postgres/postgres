@@ -1391,56 +1391,11 @@
      </row>
 
      <row>
-      <entry><structfield>rolsuper</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>Role has superuser privileges</entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolinherit</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>Role automatically inherits privileges of roles it is a
-       member of</entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolcreaterole</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>Role can create more roles</entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolcreatedb</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>Role can create databases</entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolcatupdate</structfield></entry>
-      <entry><type>bool</type></entry>
+      <entry><structfield>rolattr</structfield></entry>
+      <entry><type>bigint</type></entry>
       <entry>
-       Role can update system catalogs directly.  (Even a superuser cannot do
-       this unless this column is true)
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolcanlogin</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>
-       Role can log in. That is, this role can be given as the initial
-       session authorization identifier
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolreplication</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>
-       Role is a replication role. That is, this role can initiate streaming
-       replication (see <xref linkend="streaming-replication">) and set/unset
-       the system backup mode using <function>pg_start_backup</> and
-       <function>pg_stop_backup</>
+       Role attributes; see <xref linkend="catalog-rolattr-bitmap-table"> and
+       <xref linkend="sql-createrole"> for details
       </entry>
      </row>
 
@@ -1474,6 +1429,96 @@
       <entry>Password expiry time (only used for password authentication);
        null if no expiration</entry>
      </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="catalog-rolattr-bitmap-table">
+   <title>Attributes in <structfield>rolattr</></title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Attribute</entry>
+      <entry>CREATE ROLE Option</entry>
+      <entry>Description</entry>
+      <entry>Position</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>Superuser</entry>
+      <entry>SUPERUSER</entry>
+      <entry>Role has superuser privileges</entry>
+      <entry><literal>0</literal></entry>
+     </row>
+
+     <row>
+      <entry>Inherit</entry>
+      <entry>INHERIT</entry>
+      <entry>
+       Role automatically inherits privileges of roles it is a member of
+      </entry>
+      <entry><literal>1</literal></entry>
+     </row>
+
+     <row>
+      <entry>Create Role</entry>
+      <entry>CREATEROLE</entry>
+      <entry>Role can create more roles</entry>
+      <entry><literal>2</literal></entry>
+     </row>
+
+     <row>
+      <entry>Create DB</entry>
+      <entry>CREATEDB</entry>
+      <entry>Role can create databases</entry>
+      <entry><literal>3</literal></entry>
+     </row>
+
+     <row>
+      <entry>Catalog Update</entry>
+      <entry>CATUPDATE</entry>
+      <entry>
+       Role can update system catalogs directly.  (Even a superuser cannot do
+       this unless this column is true)
+      </entry>
+      <entry><literal>4</literal></entry>
+     </row>
+
+     <row>
+      <entry>Can Login</entry>
+      <entry>LOGIN</entry>
+      <entry>
+       Role can log in. That is, this role can be given as the initial
+       session authorization identifier
+      </entry>
+      <entry><literal>5</literal></entry>
+     </row>
+
+     <row>
+      <entry>Replication</entry>
+      <entry>REPLICATION</entry>
+      <entry>
+       Role is a replication role. That is, this role can initiate streaming
+       replication (see <xref linkend="streaming-replication">) and set/unset
+       the system backup mode using <function>pg_start_backup</> and
+       <function>pg_stop_backup</>
+      </entry>
+      <entry><literal>6</literal></entry>
+     </row>
+
+     <row>
+      <entry>Bypass Row Level Security</entry>
+      <entry>BYPASSRLS</entry>
+      <entry>
+       Role can bypass row level security policies when <literal>row_security</>
+       is set <literal>off</>
+      </entry>
+      <entry><literal>7</literal></entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

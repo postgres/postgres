@@ -3423,26 +3423,6 @@ aclcheck_error_type(AclResult aclerr, Oid typeOid)
 }
 
 
-/* Check if given user has rolcatupdate privilege according to pg_authid */
-static bool
-has_rolcatupdate(Oid roleid)
-{
-	bool		rolcatupdate;
-	HeapTuple	tuple;
-
-	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", roleid)));
-
-	rolcatupdate = ((Form_pg_authid) GETSTRUCT(tuple))->rolcatupdate;
-
-	ReleaseSysCache(tuple);
-
-	return rolcatupdate;
-}
-
 /*
  * Relay for the various pg_*_mask routines depending on object kind
  */
@@ -3630,7 +3610,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE)) &&
 		IsSystemClass(table_oid, classForm) &&
 		classForm->relkind != RELKIND_VIEW &&
-		!has_rolcatupdate(roleid) &&
+		!has_role_attribute(roleid, ROLE_ATTR_CATUPDATE) &&
 		!allowSystemTableMods)
 	{
 #ifdef ACLDEBUG
@@ -5051,52 +5031,87 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 }
 
 /*
- * Check whether specified role has CREATEROLE privilege (or is a superuser)
+ * has_role_attribute
+ *   Check if the role with the specified id has been assigned a specific role
+ *   attribute.
  *
- * Note: roles do not have owners per se; instead we use this test in
- * places where an ownership-like permissions test is needed for a role.
- * Be sure to apply it to the role trying to do the operation, not the
- * role being operated on!	Also note that this generally should not be
- * considered enough privilege if the target role is a superuser.
- * (We don't handle that consideration here because we want to give a
- * separate error message for such cases, so the caller has to deal with it.)
+ * roleid - the oid of the role to check.
+ * attribute - the attribute to check.
+ *
+ * Note: Use this function for role attribute permission checking as it
+ * accounts for superuser status.  It will always return true for roles with
+ * superuser privileges unless the attribute being checked is CATUPDATE
+ * (superusers are not allowed to bypass CATUPDATE permissions).
+ *
+ * Note: roles do not have owners per se; instead we use this test in places
+ * where an ownership-like permissions test is needed for a role.  Be sure to
+ * apply it to the role trying to do the operation, not the role being operated
+ * on!  Also note that this generally should not be considered enough privilege
+ * if the target role is a superuser.  (We don't handle that consideration here
+ * because we want to give a separate error message for such cases, so the
+ * caller has to deal with it.)
  */
 bool
-has_createrole_privilege(Oid roleid)
+has_role_attribute(Oid roleid, RoleAttr attribute)
 {
-	bool		result = false;
-	HeapTuple	utup;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
+	/*
+	 * Superusers bypass all permission checking except in the case of CATUPDATE
+	 */
+	if (!(attribute & ROLE_ATTR_CATUPDATE) && superuser_arg(roleid))
 		return true;
 
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreaterole;
-		ReleaseSysCache(utup);
-	}
-	return result;
+	return check_role_attribute(roleid, attribute);
 }
 
+/*
+ * have_role_attribute
+ *   Convenience function for checking if the role id returned by GetUserId()
+ *   has been assigned a specific role attribute.
+ *
+ * attribute - the attribute to check.
+ */
 bool
-has_bypassrls_privilege(Oid roleid)
+have_role_attribute(RoleAttr attribute)
 {
-	bool		result = false;
-	HeapTuple	utup;
+	return has_role_attribute(GetUserId(), attribute);
+}
 
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
+/*
+ * check_role_attribute
+ *   Check if the role with the specified id has been assigned a specific role
+ *   attribute.
+ *
+ * roleid - the oid of the role to check.
+ * attribute - the attribute to check.
+ *
+ * Note: This function should only be used for checking the value of an
+ * individual attribute in the rolattr bitmap and should *not* be used for
+ * permission checking. For the purposes of permission checking use
+ * 'has_role_attribute' instead.
+ */
+bool
+check_role_attribute(Oid roleid, RoleAttr attribute)
+{
+	RoleAttr	attributes;
+	HeapTuple	tuple;
 
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolbypassrls;
-		ReleaseSysCache(utup);
-	}
-	return result;
+	/* ROLE_ATTR_NONE (zero) is not a valid attribute */
+	Assert(attribute != ROLE_ATTR_NONE);
+
+	/* Check that only one bit is set in 'attribute' */
+	Assert(!(attribute & (attribute - 1)));
+
+	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("role with OID %u does not exist", roleid)));
+
+	attributes = ((Form_pg_authid) GETSTRUCT(tuple))->rolattr;
+	ReleaseSysCache(tuple);
+
+	return (attributes & attribute);
 }
 
 /*
