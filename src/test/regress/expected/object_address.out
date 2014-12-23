@@ -75,7 +75,6 @@ BEGIN
 		('materialized view'), ('foreign table'),
 		('table column'), ('foreign table column'),
 		('aggregate'), ('function'), ('type'), ('cast'),
-		('collation'),
 		('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
@@ -168,12 +167,6 @@ WARNING:  error for cast,{addr_nsp,zwei},{}: name list length must be exactly 1
 WARNING:  error for cast,{addr_nsp,zwei},{integer}: name list length must be exactly 1
 WARNING:  error for cast,{eins,zwei,drei},{}: name list length must be exactly 1
 WARNING:  error for cast,{eins,zwei,drei},{integer}: name list length must be exactly 1
-WARNING:  error for collation,{eins},{}: collation "eins" for encoding "UTF8" does not exist
-WARNING:  error for collation,{eins},{integer}: collation "eins" for encoding "UTF8" does not exist
-WARNING:  error for collation,{addr_nsp,zwei},{}: collation "addr_nsp.zwei" for encoding "UTF8" does not exist
-WARNING:  error for collation,{addr_nsp,zwei},{integer}: collation "addr_nsp.zwei" for encoding "UTF8" does not exist
-WARNING:  error for collation,{eins,zwei,drei},{}: cross-database references are not implemented: eins.zwei.drei
-WARNING:  error for collation,{eins,zwei,drei},{integer}: cross-database references are not implemented: eins.zwei.drei
 WARNING:  error for table constraint,{eins},{}: must specify relation and object name
 WARNING:  error for table constraint,{eins},{integer}: must specify relation and object name
 WARNING:  error for table constraint,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist

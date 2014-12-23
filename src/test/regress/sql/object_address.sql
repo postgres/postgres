@@ -71,7 +71,6 @@ BEGIN
 		('materialized view'), ('foreign table'),
 		('table column'), ('foreign table column'),
 		('aggregate'), ('function'), ('type'), ('cast'),
-		('collation'),
 		('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
