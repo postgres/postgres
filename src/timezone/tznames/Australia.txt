@@ -41,6 +41,7 @@ CAST    34200    # Central Australia Standard Time (not in zic)
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (America)
+#  - CST: China Standard Time (Asia)
 #  - CST: Cuba Central Standard Time (America)
 CST     34200    # Central Standard Time (not in zic)
 CWST    31500    # Central Western Standard Time (not in zic)

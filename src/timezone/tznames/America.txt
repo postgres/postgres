@@ -137,11 +137,13 @@ COT    -18000    # Columbia Time (not in zic)
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
 #  - CST: Central Standard Time (America)
+#  - CST: China Standard Time (Asia)
 CST    -18000    # Cuba Central Standard Time (America)
                  #     (America/Havana)
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
+#  - CST: China Standard Time (Asia)
 #  - CST: Cuba Central Standard Time (America)
 CST    -21600    # Central Standard Time (America)
                  #     (America/Cancun)
