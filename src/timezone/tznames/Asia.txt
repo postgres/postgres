@@ -59,6 +59,15 @@ CHOST   36000 D  # Choibalsan Summer Time (obsolete)
 CHOT    Asia/Choibalsan  # Choibalsan Time
                  #     (Asia/Choibalsan)
 CIT     28800    # Central Indonesia Time (obsolete, WITA is now preferred)
+# CONFLICT! CST is not unique
+# Other timezones:
+#  - CST: Central Standard Time (Australia)
+#  - CST: Central Standard Time (America)
+#  - CST: Cuba Central Standard Time (America)
+CST     28800    # China Standard Time
+                 #     (Asia/Macau)
+                 #     (Asia/Shanghai)
+                 #     (Asia/Taipei)
 EEST    10800 D  # East-Egypt Summer Time
                  # Eastern Europe Summer Time
                  #     (Africa/Cairo)
