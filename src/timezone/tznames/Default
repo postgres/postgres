@@ -105,6 +105,7 @@ CLT    -14400    # Chile Time
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
+#  - CST: China Standard Time (Asia)
 #  - CST: Cuba Central Standard Time (America)
 CST    -21600    # Central Standard Time (America)
                  #     (America/Cancun)
