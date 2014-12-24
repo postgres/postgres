@@ -3754,8 +3754,6 @@ _copyReindexStmt(const ReindexStmt *from)
 	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(relation);
 	COPY_STRING_FIELD(name);
-	COPY_SCALAR_FIELD(do_system);
-	COPY_SCALAR_FIELD(do_user);
 
 	return newnode;
 }
