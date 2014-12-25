@@ -14,6 +14,7 @@
 #ifndef LWLOCK_H
 #define LWLOCK_H
 
+#include "lib/ilist.h"
 #include "storage/s_lock.h"
 
 struct PGPROC;
@@ -50,9 +51,7 @@ typedef struct LWLock
 	char		exclusive;		/* # of exclusive holders (0 or 1) */
 	int			shared;			/* # of shared holders (0..MaxBackends) */
 	int			tranche;		/* tranche ID */
-	struct PGPROC *head;		/* head of list of waiting PGPROCs */
-	struct PGPROC *tail;		/* tail of list of waiting PGPROCs */
-	/* tail is undefined when head is NULL */
+	dlist_head	waiters;		/* list of waiting PGPROCs */
 } LWLock;
 
 /*
