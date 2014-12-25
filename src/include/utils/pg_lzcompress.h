@@ -3,7 +3,7 @@
  *
  *	Definitions for the builtin LZ compressor
  *
- * src/include/common/pg_lzcompress.h
+ * src/include/utils/pg_lzcompress.h
  * ----------
  */
 
@@ -107,6 +107,6 @@ extern const PGLZ_Strategy *const PGLZ_strategy_always;
  */
 extern bool pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 			  const PGLZ_Strategy *strategy);
-extern bool pglz_decompress(const PGLZ_Header *source, char *dest);
+extern void pglz_decompress(const PGLZ_Header *source, char *dest);
 
 #endif   /* _PG_LZCOMPRESS_H_ */

@@ -37,7 +37,7 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
-#include "common/pg_lzcompress.h"
+#include "utils/pg_lzcompress.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
 #include "utils/tqual.h"
@@ -142,8 +142,7 @@ heap_tuple_untoast_attr(struct varlena * attr)
 
 			attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
 			SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			if (!pglz_decompress(tmp, VARDATA(attr)))
-				elog(ERROR, "compressed data is corrupted");
+			pglz_decompress(tmp, VARDATA(attr));
 			pfree(tmp);
 		}
 	}
@@ -168,8 +167,7 @@ heap_tuple_untoast_attr(struct varlena * attr)
 
 		attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
 		SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-		if (!pglz_decompress(tmp, VARDATA(attr)))
-			elog(ERROR, "compressed data is corrupted");
+		pglz_decompress(tmp, VARDATA(attr));
 	}
 	else if (VARATT_IS_SHORT(attr))
 	{
@@ -241,8 +239,7 @@ heap_tuple_untoast_attr_slice(struct varlena * attr,
 
 		preslice = (struct varlena *) palloc(size);
 		SET_VARSIZE(preslice, size);
-		if (!pglz_decompress(tmp, VARDATA(preslice)))
-			elog(ERROR, "compressed data is corrupted");
+		pglz_decompress(tmp, VARDATA(preslice));
 
 		if (tmp != (PGLZ_Header *) attr)
 			pfree(tmp);

@@ -27,7 +27,7 @@
  *				FALSE if not; in the latter case the contents of dest
  *				are undefined.
  *
- *			bool
+ *			void
  *			pglz_decompress(const PGLZ_Header *source, char *dest)
  *
  *				source is the compressed input.
@@ -39,10 +39,6 @@
  *
  *					The data is written to buff exactly as it was handed
  *					to pglz_compress(). No terminating zero byte is added.
- *
- *				The return value is TRUE if decompression succeeded,
- *				FALSE if not; in the latter case the contents of dest
- *				are undefined.
  *
  *		The decompression algorithm and internal data format:
  *
@@ -173,14 +169,14 @@
  *
  * Copyright (c) 1999-2014, PostgreSQL Global Development Group
  *
- * src/common/pg_lzcompress.c
+ * src/backend/utils/adt/pg_lzcompress.c
  * ----------
  */
 #include "postgres.h"
 
 #include <limits.h>
 
-#include "common/pg_lzcompress.h"
+#include "utils/pg_lzcompress.h"
 
 
 /* ----------
@@ -496,8 +492,7 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 /* ----------
  * pglz_compress -
  *
- *		Compresses source into dest using strategy. Returns false if a failure
- *		occurred, true in case of success.
+ *		Compresses source into dest using strategy.
  * ----------
  */
 bool
@@ -683,11 +678,10 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 /* ----------
  * pglz_decompress -
  *
- *		Decompresses source into dest. Returns false if a failure
- *		occurred, true in case of success.
+ *		Decompresses source into dest.
  * ----------
  */
-bool
+void
 pglz_decompress(const PGLZ_Header *source, char *dest)
 {
 	const unsigned char *sp;
@@ -777,10 +771,9 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 	 * Check we decompressed the right amount.
 	 */
 	if (dp != destend || sp != srcend)
-		return false;
+		elog(ERROR, "compressed data is corrupt");
 
 	/*
 	 * That's it.
 	 */
-	return true;
 }
