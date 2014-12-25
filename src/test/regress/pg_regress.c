@@ -1035,6 +1035,7 @@ config_sspi_auth(const char *pgdata)
 			   *domainname;
 	const char *username;
 	char	   *errstr;
+	bool		have_ipv6;
 	char		fname[MAXPGPATH];
 	int			res;
 	FILE	   *hba,
@@ -1052,6 +1053,28 @@ config_sspi_auth(const char *pgdata)
 	{
 		fprintf(stderr, "%s: %s\n", progname, errstr);
 		exit(2);
+	}
+
+	/*
+	 * Like initdb.c:setup_config(), determine whether the platform recognizes
+	 * ::1 (IPv6 loopback) as a numeric host address string.
+	 */
+	{
+		struct addrinfo *gai_result;
+		struct addrinfo hints;
+		WSADATA		wsaData;
+
+		hints.ai_flags = AI_NUMERICHOST;
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = 0;
+		hints.ai_protocol = 0;
+		hints.ai_addrlen = 0;
+		hints.ai_canonname = NULL;
+		hints.ai_addr = NULL;
+		hints.ai_next = NULL;
+
+		have_ipv6 = (WSAStartup(MAKEWORD(2, 2), &wsaData) == 0 &&
+					 getaddrinfo("::1", NULL, &hints, &gai_result) == 0);
 	}
 
 	/* Check a Write outcome and report any error. */
@@ -1085,6 +1108,9 @@ config_sspi_auth(const char *pgdata)
 	CW(fputs("# Configuration written by config_sspi_auth()\n", hba) >= 0);
 	CW(fputs("host all all 127.0.0.1/32  sspi include_realm=1 map=regress\n",
 			 hba) >= 0);
+	if (have_ipv6)
+		CW(fputs("host all all ::1/128  sspi include_realm=1 map=regress\n",
+				 hba) >= 0);
 	CW(fclose(hba) == 0);
 
 	snprintf(fname, sizeof(fname), "%s/pg_ident.conf", pgdata);

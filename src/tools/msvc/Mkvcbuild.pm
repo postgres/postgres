@@ -331,6 +331,7 @@ sub mkvcbuild
 	$pgregress_ecpg->AddIncludeDir('src\test\regress');
 	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_ecpg->AddDefine('FRONTEND');
+	$pgregress_ecpg->AddLibrary('ws2_32.lib');
 	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
 
 	my $isolation_tester =
@@ -356,6 +357,7 @@ sub mkvcbuild
 	$pgregress_isolation->AddIncludeDir('src\test\regress');
 	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_isolation->AddDefine('FRONTEND');
+	$pgregress_isolation->AddLibrary('ws2_32.lib');
 	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
 
 	# src/bin
@@ -594,6 +596,8 @@ sub mkvcbuild
 	$pgregress->AddFile('src\test\regress\pg_regress_main.c');
 	$pgregress->AddIncludeDir('src\port');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+	$pgregress->AddDefine('FRONTEND');
+	$pgregress->AddLibrary('ws2_32.lib');
 	$pgregress->AddReference($libpgcommon, $libpgport);
 
 	# fix up pg_xlogdump once it's been set up
