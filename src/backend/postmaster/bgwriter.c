@@ -373,13 +373,13 @@ BackgroundWriterMain(void)
 		if (rc == WL_TIMEOUT && can_hibernate && prev_hibernate)
 		{
 			/* Ask for notification at next buffer allocation */
-			StrategyNotifyBgWriter(&MyProc->procLatch);
+			StrategyNotifyBgWriter(MyProc->pgprocno);
 			/* Sleep ... */
 			rc = WaitLatch(&MyProc->procLatch,
 						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 						   BgWriterDelay * HIBERNATE_FACTOR);
 			/* Reset the notification request in case we timed out */
-			StrategyNotifyBgWriter(NULL);
+			StrategyNotifyBgWriter(-1);
 		}
 
 		/*

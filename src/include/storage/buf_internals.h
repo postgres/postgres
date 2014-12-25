@@ -191,7 +191,7 @@ extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
 					 volatile BufferDesc *buf);
 
 extern int	StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc);
-extern void StrategyNotifyBgWriter(Latch *bgwriterLatch);
+extern void StrategyNotifyBgWriter(int bgwprocno);
 
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
