@@ -245,7 +245,7 @@ sub contribcheck
 sub standard_initdb
 {
 	return (
-		system('initdb', '-N') == 0 and system(
+		system('initdb') == 0 and system(
 			"$topdir/$Config/pg_regress/pg_regress", '--config-auth',
 			$ENV{PGDATA}) == 0);
 }
