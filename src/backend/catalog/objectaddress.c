@@ -1534,6 +1534,12 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	 */
 	switch (type)
 	{
+		case OBJECT_DOMCONSTRAINT:
+			if (list_length(name) < 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("name list length must be at least %d", 2)));
+			break;
 		case OBJECT_LARGEOBJECT:
 			if (list_length(name) != 1)
 				ereport(ERROR,

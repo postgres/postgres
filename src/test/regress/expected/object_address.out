@@ -171,8 +171,8 @@ WARNING:  error for table constraint,{addr_nsp,zwei},{}: relation "addr_nsp" doe
 WARNING:  error for table constraint,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
 WARNING:  error for table constraint,{eins,zwei,drei},{}: schema "eins" does not exist
 WARNING:  error for table constraint,{eins,zwei,drei},{integer}: schema "eins" does not exist
-WARNING:  error for domain constraint,{eins},{}: cache lookup failed for type 0
-WARNING:  error for domain constraint,{eins},{integer}: cache lookup failed for type 0
+WARNING:  error for domain constraint,{eins},{}: name list length must be at least 2
+WARNING:  error for domain constraint,{eins},{integer}: name list length must be at least 2
 WARNING:  error for domain constraint,{addr_nsp,zwei},{}: type "addr_nsp" does not exist
 WARNING:  error for domain constraint,{addr_nsp,zwei},{integer}: type "addr_nsp" does not exist
 WARNING:  error for domain constraint,{eins,zwei,drei},{}: schema "eins" does not exist
