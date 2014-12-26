@@ -28,8 +28,6 @@ CREATE DOMAIN addr_nsp.gendomain AS int4 CONSTRAINT domconstr CHECK (value > 0);
 CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
-CREATE FUNCTION addr_nsp.etrig() RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
-CREATE EVENT TRIGGER evttrig ON ddl_command_end EXECUTE PROCEDURE addr_nsp.etrig();
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
@@ -338,7 +336,7 @@ WITH objects (type, name, args) AS (VALUES
 				('server', '{addr_fserv}', '{}'),
 				-- user mapping
 				-- extension
-				('event trigger', '{evttrig}', '{}'),
+				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}')
         )
 SELECT (pg_identify_object(classid, objid, subobjid)).*
@@ -377,12 +375,11 @@ ORDER BY classid, objid;
  operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops for btree
  policy                    |            |                   | genpol on addr_nsp.gentable
  collation                 | pg_catalog | "default"         | pg_catalog."default"
- event trigger             |            | evttrig           | evttrig
  text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp
-(36 rows)
+(35 rows)
 
 ---
 --- Cleanup resources

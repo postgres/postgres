@@ -33,9 +33,6 @@ CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
 
-CREATE FUNCTION addr_nsp.etrig() RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
-CREATE EVENT TRIGGER evttrig ON ddl_command_end EXECUTE PROCEDURE addr_nsp.etrig();
-
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 SELECT pg_get_object_address('table', '{}', '{}');
@@ -159,7 +156,7 @@ WITH objects (type, name, args) AS (VALUES
 				('server', '{addr_fserv}', '{}'),
 				-- user mapping
 				-- extension
-				('event trigger', '{evttrig}', '{}'),
+				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}')
         )
 SELECT (pg_identify_object(classid, objid, subobjid)).*
