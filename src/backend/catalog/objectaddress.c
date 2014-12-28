@@ -1416,7 +1416,6 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	Relation	relation;
 
 	/* Decode object type, raise error if unknown */
-	ttype = TextDatumGetCString(PG_GETARG_TEXT_P(0));
 	itype = read_objtype_from_string(ttype);
 	if (itype < 0)
 		ereport(ERROR,
