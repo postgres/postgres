@@ -598,7 +598,8 @@ EOF
     determined at compile time.
     Since the database server uses the same default, you will not have
     to specify the port in most cases. The default user name is your
-    Unix user name, as is the default database name. Note that you cannot
+    operating-system user name, as is the default database name.
+    Note that you cannot
     just connect to any database under any user name. Your database
     administrator should have informed you about your access rights.
     </para>
@@ -1628,14 +1629,14 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\g</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]</term>
-
+        <term><literal>\g [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\g [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Sends the current query input buffer to the server and
+        Sends the current query input buffer to the server, and
         optionally stores the query's output in <replaceable
         class="parameter">filename</replaceable> or pipes the output
-        into a separate Unix shell executing <replaceable
+        to the shell command <replaceable
         class="parameter">command</replaceable>.  The file or command is
         written to only if the query successfully returns zero or more tuples,
         not if the query fails or is a non-data-returning SQL command.
@@ -1649,7 +1650,7 @@ Tue Oct 26 21:40:57 CEST 1999
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\gset</literal> [ <replaceable class="parameter">prefix</replaceable> ]</term>
+        <term><literal>\gset [ <replaceable class="parameter">prefix</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1713,7 +1714,7 @@ hello 10
 
 
       <varlistentry>
-        <term><literal>\H</literal></term>
+        <term><literal>\H</literal> or <literal>\html</literal></term>
         <listitem>
         <para>
         Turns on <acronym>HTML</acronym> query output format. If the
@@ -1727,7 +1728,7 @@ hello 10
 
 
       <varlistentry>
-        <term><literal>\i <replaceable class="parameter">filename</replaceable></literal></term>
+        <term><literal>\i</literal> or <literal>\include</literal> <replaceable class="parameter">filename</replaceable></term>
         <listitem>
         <para>
         Reads input from the file <replaceable
@@ -1746,7 +1747,7 @@ hello 10
 
 
       <varlistentry>
-        <term><literal>\ir <replaceable class="parameter">filename</replaceable></literal></term>
+        <term><literal>\ir</literal> or <literal>\include_relative</literal> <replaceable class="parameter">filename</replaceable></term>
         <listitem>
         <para>
         The <literal>\ir</> command is similar to <literal>\i</>, but resolves
@@ -1862,15 +1863,15 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\o</literal> [ {<replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable>} ]</term>
-
+        <term><literal>\o</literal> or <literal>\out [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\o</literal> or <literal>\out [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Saves future query results to the file <replaceable
-        class="parameter">filename</replaceable> or pipes future results
-        into a separate Unix shell to execute <replaceable
-        class="parameter">command</replaceable>. If no arguments are
-        specified, the query output will be reset to the standard output.
+        Arranges to save future query results to the file <replaceable
+        class="parameter">filename</replaceable> or pipe future results
+        to the shell command <replaceable
+        class="parameter">command</replaceable>. If no argument is
+        specified, the query output is reset to the standard output.
         </para>
 
         <para><quote>Query results</quote> includes all tables, command
@@ -1891,7 +1892,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\p</literal></term>
+        <term><literal>\p</literal> or <literal>\print</literal></term>
         <listitem>
         <para>
         Print the current query buffer to the standard output.
@@ -2323,7 +2324,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\r</literal></term>
+        <term><literal>\r</literal> or <literal>\reset</literal></term>
         <listitem>
         <para>
         Resets (clears) the query buffer.
@@ -2483,12 +2484,12 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
 
 
       <varlistentry>
-        <term><literal>\w</literal> <replaceable class="parameter">filename</replaceable></term>
-        <term><literal>\w</literal> <literal>|</><replaceable class="parameter">command</replaceable></term>
+        <term><literal>\w</literal> or <literal>\write</literal> <replaceable class="parameter">filename</replaceable></term>
+        <term><literal>\w</literal> or <literal>\write</literal> <literal>|</><replaceable class="parameter">command</replaceable></term>
         <listitem>
         <para>
         Outputs the current query buffer to the file <replaceable
-        class="parameter">filename</replaceable> or pipes it to the Unix
+        class="parameter">filename</replaceable> or pipes it to the shell
         command <replaceable class="parameter">command</replaceable>.
         </para>
         </listitem>
@@ -2541,7 +2542,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         <term><literal>\! [ <replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Escapes to a separate Unix shell or executes the Unix command
+        Escapes to a separate shell or executes the shell command
         <replaceable class="parameter">command</replaceable>. The
         arguments are not further interpreted; the shell will see them
         as-is.  In particular, the variable substitution rules and
