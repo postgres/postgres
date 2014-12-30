@@ -922,7 +922,7 @@ typedef struct NUMProc
 				num_count,		/* number of write digits	*/
 				num_in,			/* is inside number		*/
 				num_curr,		/* current position in number	*/
-				num_pre,		/* space before first number	*/
+				out_pre_spaces,	/* spaces before first digit	*/
 
 				read_dec,		/* to_number - was read dec. point	*/
 				read_post,		/* to_number - number of dec. digit */
@@ -980,10 +980,11 @@ static FormatNode *NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *should
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
-static void NUM_numpart_from_char(NUMProc *Np, int id, int plen);
+static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
-static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
-			  int plen, int sign, bool is_to_char, Oid collid);
+static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
+			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
+			  int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
 
@@ -4023,7 +4024,7 @@ get_last_relevant_decnum(char *num)
  * ----------
  */
 static void
-NUM_numpart_from_char(NUMProc *Np, int id, int plen)
+NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 {
 	bool		isread = FALSE;
 
@@ -4035,8 +4036,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
 
-#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + plen)
-#define AMOUNT_TEST(_s) (plen-(Np->inout_p-Np->inout) >= _s)
+#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
+#define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
 
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
@@ -4187,7 +4188,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		 * next char is not digit
 		 */
 		if (IS_LSIGN(Np->Num) && isread &&
-			(Np->inout_p + 1) <= Np->inout + plen &&
+			(Np->inout_p + 1) <= Np->inout + input_len &&
 			!isdigit((unsigned char) *(Np->inout_p + 1)))
 		{
 			int			x;
@@ -4282,7 +4283,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	 * handle "9.9" --> " .1"
 	 */
 	if (Np->sign_wrote == FALSE &&
-		(Np->num_curr >= Np->num_pre || (IS_ZERO(Np->Num) && Np->Num->zero_start == Np->num_curr)) &&
+		(Np->num_curr >= Np->out_pre_spaces || (IS_ZERO(Np->Num) && Np->Num->zero_start == Np->num_curr)) &&
 		(IS_PREDEC_SPACE(Np) == FALSE || (Np->last_relevant && *Np->last_relevant == '.')))
 	{
 		if (IS_LSIGN(Np->Num))
@@ -4326,7 +4327,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	 */
 	if (id == NUM_9 || id == NUM_0 || id == NUM_D || id == NUM_DEC)
 	{
-		if (Np->num_curr < Np->num_pre &&
+		if (Np->num_curr < Np->out_pre_spaces &&
 			(Np->Num->zero_start > Np->num_curr || !IS_ZERO(Np->Num)))
 		{
 			/*
@@ -4339,7 +4340,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			}
 		}
 		else if (IS_ZERO(Np->Num) &&
-				 Np->num_curr < Np->num_pre &&
+				 Np->num_curr < Np->out_pre_spaces &&
 				 Np->Num->zero_start <= Np->num_curr)
 		{
 			/*
@@ -4411,7 +4412,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			++Np->number_p;
 		}
 
-		end = Np->num_count + (Np->num_pre ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
+		end = Np->num_count + (Np->out_pre_spaces ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
 
 		if (Np->last_relevant && Np->last_relevant == Np->number_p)
 			end = Np->num_curr;
@@ -4437,13 +4438,10 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	++Np->num_curr;
 }
 
-/*
- * Note: 'plen' is used in FROM_CHAR conversion and it's length of
- * input (inout). In TO_CHAR conversion it's space before first number.
- */
 static char *
-NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
-			  int plen, int sign, bool is_to_char, Oid collid)
+NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
+			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
+			  int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;
 	NUMProc		_Np,
@@ -4483,7 +4481,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					 errmsg("\"RN\" not supported for input")));
 
 		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->post =
-			Np->Num->pre = Np->num_pre = Np->sign = 0;
+			Np->Num->pre = Np->out_pre_spaces = Np->sign = 0;
 
 		if (IS_FILLMODE(Np->Num))
 		{
@@ -4541,7 +4539,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 
 	if (is_to_char)
 	{
-		Np->num_pre = plen;
+		Np->out_pre_spaces = to_char_out_pre_spaces;
 
 		if (IS_FILLMODE(Np->Num) && IS_DECIMAL(Np->Num))
 		{
@@ -4551,22 +4549,22 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			 * If any '0' specifiers are present, make sure we don't strip
 			 * those digits.
 			 */
-			if (Np->last_relevant && Np->Num->zero_end > Np->num_pre)
+			if (Np->last_relevant && Np->Num->zero_end > Np->out_pre_spaces)
 			{
 				char	   *last_zero;
 
-				last_zero = Np->number + (Np->Num->zero_end - Np->num_pre);
+				last_zero = Np->number + (Np->Num->zero_end - Np->out_pre_spaces);
 				if (Np->last_relevant < last_zero)
 					Np->last_relevant = last_zero;
 			}
 		}
 
-		if (Np->sign_wrote == FALSE && Np->num_pre == 0)
+		if (Np->sign_wrote == FALSE && Np->out_pre_spaces == 0)
 			++Np->num_count;
 	}
 	else
 	{
-		Np->num_pre = 0;
+		Np->out_pre_spaces = 0;
 		*Np->number = ' ';		/* sign space */
 		*(Np->number + 1) = '\0';
 	}
@@ -4582,7 +4580,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		 Np->Num->pre,
 		 Np->Num->post,
 		 Np->num_count,
-		 Np->num_pre,
+		 Np->out_pre_spaces,
 		 Np->sign_wrote ? "Yes" : "No",
 		 IS_ZERO(Np->Num) ? "Yes" : "No",
 		 Np->Num->zero_start,
@@ -4617,7 +4615,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			/*
 			 * Check non-string inout end
 			 */
-			if (Np->inout_p >= Np->inout + plen)
+			if (Np->inout_p >= Np->inout + from_char_input_len)
 				break;
 		}
 
@@ -4647,7 +4645,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					}
 					else
 					{
-						NUM_numpart_from_char(Np, n->key->id, plen);
+						NUM_numpart_from_char(Np, n->key->id, from_char_input_len);
 						break;	/* switch() case: */
 					}
 
@@ -4870,7 +4868,7 @@ do { \
  */
 #define NUM_TOCHAR_finish \
 do { \
-	NUM_processor(format, &Num, VARDATA(result), numstr, plen, sign, true, PG_GET_COLLATION()); \
+	NUM_processor(format, &Num, VARDATA(result), numstr, 0, out_pre_spaces, sign, true, PG_GET_COLLATION()); \
 									\
 	if (shouldFree)					\
 		pfree(format);				\
@@ -4912,7 +4910,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
 	NUM_processor(format, &Num, VARDATA(value), numstr,
-				  VARSIZE(value) - VARHDRSZ, 0, false, PG_GET_COLLATION());
+				  VARSIZE(value) - VARHDRSZ, 0, 0, false, PG_GET_COLLATION());
 
 	scale = Num.post;
 	precision = Max(0, Num.pre) + scale;
@@ -4942,7 +4940,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
-				plen = 0,
+				out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
 			   *orgnum,
@@ -4998,6 +4996,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int			numstr_pre_len;
 		Numeric		val = value;
 
 		if (IS_MULTI(&Num))
@@ -5032,14 +5031,17 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			sign = '+';
 			numstr = orgnum;
 		}
-		if ((p = strchr(numstr, '.')))
-			len = p - numstr;
-		else
-			len = strlen(numstr);
 
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		else if (len > Num.pre)
+		if ((p = strchr(numstr, '.')))
+			numstr_pre_len = p - numstr;
+		else
+			numstr_pre_len = strlen(numstr);
+
+		/* needs padding? */
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
+		/* overflowed prefix digit format? */
+		else if (numstr_pre_len > Num.pre)
 		{
 			numstr = (char *) palloc(Num.pre + Num.post + 2);
 			fill_str(numstr, '#', Num.pre + Num.post + 1);
@@ -5065,7 +5067,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
-				plen = 0,
+				out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
 			   *orgnum;
@@ -5096,6 +5098,8 @@ int4_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int			numstr_pre_len;
+
 		if (IS_MULTI(&Num))
 		{
 			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
@@ -5115,22 +5119,26 @@ int4_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 			sign = '+';
-		len = strlen(orgnum);
 
+		numstr_pre_len = strlen(orgnum);
+
+		/* post-decimal digits?  Pad out with zeros. */
 		if (Num.post)
 		{
-			numstr = (char *) palloc(len + Num.post + 2);
+			numstr = (char *) palloc(numstr_pre_len + Num.post + 2);
 			strcpy(numstr, orgnum);
-			*(numstr + len) = '.';
-			memset(numstr + len + 1, '0', Num.post);
-			*(numstr + len + Num.post + 1) = '\0';
+			*(numstr + numstr_pre_len) = '.';
+			memset(numstr + numstr_pre_len + 1, '0', Num.post);
+			*(numstr + numstr_pre_len + Num.post + 1) = '\0';
 		}
 		else
 			numstr = orgnum;
 
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		else if (len > Num.pre)
+		/* needs padding? */
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
+		/* overflowed prefix digit format? */
+		else if (numstr_pre_len > Num.pre)
 		{
 			numstr = (char *) palloc(Num.pre + Num.post + 2);
 			fill_str(numstr, '#', Num.pre + Num.post + 1);
@@ -5156,7 +5164,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
-				plen = 0,
+				out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
 			   *orgnum;
@@ -5201,6 +5209,8 @@ int8_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int			numstr_pre_len;
+
 		if (IS_MULTI(&Num))
 		{
 			double		multi = pow((double) 10, (double) Num.multi);
@@ -5222,22 +5232,26 @@ int8_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 			sign = '+';
-		len = strlen(orgnum);
 
+		numstr_pre_len = strlen(orgnum);
+
+		/* post-decimal digits?  Pad out with zeros. */
 		if (Num.post)
 		{
-			numstr = (char *) palloc(len + Num.post + 2);
+			numstr = (char *) palloc(numstr_pre_len + Num.post + 2);
 			strcpy(numstr, orgnum);
-			*(numstr + len) = '.';
-			memset(numstr + len + 1, '0', Num.post);
-			*(numstr + len + Num.post + 1) = '\0';
+			*(numstr + numstr_pre_len) = '.';
+			memset(numstr + numstr_pre_len + 1, '0', Num.post);
+			*(numstr + numstr_pre_len + Num.post + 1) = '\0';
 		}
 		else
 			numstr = orgnum;
 
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		else if (len > Num.pre)
+		/* needs padding? */
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
+		/* overflowed prefix digit format? */
+		else if (numstr_pre_len > Num.pre)
 		{
 			numstr = (char *) palloc(Num.pre + Num.post + 2);
 			fill_str(numstr, '#', Num.pre + Num.post + 1);
@@ -5263,7 +5277,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
-				plen = 0,
+				out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
 			   *orgnum,
@@ -5303,6 +5317,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int			numstr_pre_len;
 		float4		val = value;
 
 		if (IS_MULTI(&Num))
@@ -5315,13 +5330,13 @@ float4_to_char(PG_FUNCTION_ARGS)
 
 		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
 		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.0f", fabs(val));
-		len = strlen(orgnum);
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		if (len >= FLT_DIG)
+		numstr_pre_len = strlen(orgnum);
+
+		/* adjust post digits to fit max float digits */
+		if (numstr_pre_len >= FLT_DIG)
 			Num.post = 0;
-		else if (Num.post + len > FLT_DIG)
-			Num.post = FLT_DIG - len;
+		else if (numstr_pre_len + Num.post > FLT_DIG)
+			Num.post = FLT_DIG - numstr_pre_len;
 		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
@@ -5334,14 +5349,17 @@ float4_to_char(PG_FUNCTION_ARGS)
 			sign = '+';
 			numstr = orgnum;
 		}
-		if ((p = strchr(numstr, '.')))
-			len = p - numstr;
-		else
-			len = strlen(numstr);
 
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		else if (len > Num.pre)
+		if ((p = strchr(numstr, '.')))
+			numstr_pre_len = p - numstr;
+		else
+			numstr_pre_len = strlen(numstr);
+
+		/* needs padding? */
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
+		/* overflowed prefix digit format? */
+		else if (numstr_pre_len > Num.pre)
 		{
 			numstr = (char *) palloc(Num.pre + Num.post + 2);
 			fill_str(numstr, '#', Num.pre + Num.post + 1);
@@ -5367,7 +5385,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
-				plen = 0,
+				out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
 			   *orgnum,
@@ -5407,6 +5425,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int			numstr_pre_len;
 		float8		val = value;
 
 		if (IS_MULTI(&Num))
@@ -5417,13 +5436,13 @@ float8_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		len = snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.0f", fabs(val));
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		if (len >= DBL_DIG)
+		numstr_pre_len = snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.0f", fabs(val));
+
+		/* adjust post digits to fit max double digits */
+		if (numstr_pre_len >= DBL_DIG)
 			Num.post = 0;
-		else if (Num.post + len > DBL_DIG)
-			Num.post = DBL_DIG - len;
+		else if (numstr_pre_len + Num.post > DBL_DIG)
+			Num.post = DBL_DIG - numstr_pre_len;
 		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
@@ -5436,14 +5455,17 @@ float8_to_char(PG_FUNCTION_ARGS)
 			sign = '+';
 			numstr = orgnum;
 		}
-		if ((p = strchr(numstr, '.')))
-			len = p - numstr;
-		else
-			len = strlen(numstr);
 
-		if (Num.pre > len)
-			plen = Num.pre - len;
-		else if (len > Num.pre)
+		if ((p = strchr(numstr, '.')))
+			numstr_pre_len = p - numstr;
+		else
+			numstr_pre_len = strlen(numstr);
+
+		/* needs padding? */
+		if (numstr_pre_len < Num.pre)
+			out_pre_spaces = Num.pre - numstr_pre_len;
+		/* overflowed prefix digit format? */
+		else if (numstr_pre_len > Num.pre)
 		{
 			numstr = (char *) palloc(Num.pre + Num.post + 2);
 			fill_str(numstr, '#', Num.pre + Num.post + 1);
