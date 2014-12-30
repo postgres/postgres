@@ -1929,6 +1929,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 		if (cmd->argc >= MAX_ARGS)
 		{
 			fprintf(stderr, "statement has too many arguments (maximum is %d): %s\n", MAX_ARGS - 1, raw_sql);
+			pg_free(name);
 			return false;
 		}
 
@@ -2169,6 +2170,7 @@ process_file(char *filename)
 	else if ((fd = fopen(filename, "r")) == NULL)
 	{
 		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
+		pg_free(my_commands);
 		return false;
 	}
 
