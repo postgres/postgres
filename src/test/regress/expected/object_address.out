@@ -171,12 +171,12 @@ WARNING:  error for table constraint,{addr_nsp,zwei},{}: relation "addr_nsp" doe
 WARNING:  error for table constraint,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
 WARNING:  error for table constraint,{eins,zwei,drei},{}: schema "eins" does not exist
 WARNING:  error for table constraint,{eins,zwei,drei},{integer}: schema "eins" does not exist
-WARNING:  error for domain constraint,{eins},{}: name list length must be at least 2
-WARNING:  error for domain constraint,{eins},{integer}: name list length must be at least 2
-WARNING:  error for domain constraint,{addr_nsp,zwei},{}: type "addr_nsp" does not exist
-WARNING:  error for domain constraint,{addr_nsp,zwei},{integer}: type "addr_nsp" does not exist
-WARNING:  error for domain constraint,{eins,zwei,drei},{}: schema "eins" does not exist
-WARNING:  error for domain constraint,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for domain constraint,{eins},{}: argument list length must be exactly 1
+WARNING:  error for domain constraint,{eins},{integer}: type "eins" does not exist
+WARNING:  error for domain constraint,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for domain constraint,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for domain constraint,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for domain constraint,{eins,zwei,drei},{integer}: name list length must be exactly 1
 WARNING:  error for conversion,{eins},{}: conversion "eins" does not exist
 WARNING:  error for conversion,{eins},{integer}: conversion "eins" does not exist
 WARNING:  error for conversion,{addr_nsp,zwei},{}: conversion "addr_nsp.zwei" does not exist
@@ -312,7 +312,7 @@ WITH objects (type, name, args) AS (VALUES
 				('cast', '{int8}', '{int4}'),
 				('collation', '{default}', '{}'),
 				('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
-				('domain constraint', '{addr_nsp, gendomain, domconstr}', '{}'),
+				('domain constraint', '{addr_nsp.gendomain}', '{domconstr}'),
 				('conversion', '{pg_catalog, ascii_to_mic}', '{}'),
 				('default value', '{addr_nsp, gentable, b}', '{}'),
 				('language', '{plpgsql}', '{}'),
