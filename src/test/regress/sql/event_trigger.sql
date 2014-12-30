@@ -218,8 +218,9 @@ BEGIN
     IF NOT r.normal AND NOT r.original THEN
         CONTINUE;
     END IF;
-    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=%',
-        r.original, r.normal, r.object_type, r.object_identity;
+    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=% name=% args=%',
+        r.original, r.normal, r.object_type, r.object_identity,
+		r.address_names, r.address_args;
     END LOOP;
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop

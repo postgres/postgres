@@ -305,8 +305,9 @@ BEGIN
     IF NOT r.normal AND NOT r.original THEN
         CONTINUE;
     END IF;
-    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=%',
-        r.original, r.normal, r.object_type, r.object_identity;
+    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=% name=% args=%',
+        r.original, r.normal, r.object_type, r.object_identity,
+		r.address_names, r.address_args;
     END LOOP;
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
@@ -316,23 +317,23 @@ CREATE SCHEMA evttrig
 	CREATE INDEX one_idx ON one (col_b)
 	CREATE TABLE two (col_c INTEGER CHECK (col_c > 0) REFERENCES one DEFAULT 42);
 ALTER TABLE evttrig.two DROP COLUMN col_c;
-NOTICE:  NORMAL: orig=t normal=f type=table column identity=evttrig.two.col_c
-NOTICE:  NORMAL: orig=f normal=t type=table constraint identity=two_col_c_check on evttrig.two
+NOTICE:  NORMAL: orig=t normal=f type=table column identity=evttrig.two.col_c name={evttrig,two,col_c} args={}
+NOTICE:  NORMAL: orig=f normal=t type=table constraint identity=two_col_c_check on evttrig.two name={evttrig,two,two_col_c_check} args={}
 ALTER TABLE evttrig.one ALTER COLUMN col_b DROP DEFAULT;
-NOTICE:  NORMAL: orig=t normal=f type=default value identity=for evttrig.one.col_b
+NOTICE:  NORMAL: orig=t normal=f type=default value identity=for evttrig.one.col_b name={evttrig,one,col_b} args={}
 ALTER TABLE evttrig.one DROP CONSTRAINT one_pkey;
-NOTICE:  NORMAL: orig=t normal=f type=table constraint identity=one_pkey on evttrig.one
+NOTICE:  NORMAL: orig=t normal=f type=table constraint identity=one_pkey on evttrig.one name={evttrig,one,one_pkey} args={}
 DROP INDEX evttrig.one_idx;
-NOTICE:  NORMAL: orig=t normal=f type=index identity=evttrig.one_idx
+NOTICE:  NORMAL: orig=t normal=f type=index identity=evttrig.one_idx name={evttrig,one_idx} args={}
 DROP SCHEMA evttrig CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table evttrig.one
 drop cascades to table evttrig.two
-NOTICE:  NORMAL: orig=t normal=f type=schema identity=evttrig
-NOTICE:  NORMAL: orig=f normal=t type=table identity=evttrig.one
-NOTICE:  NORMAL: orig=f normal=t type=sequence identity=evttrig.one_col_a_seq
-NOTICE:  NORMAL: orig=f normal=t type=default value identity=for evttrig.one.col_a
-NOTICE:  NORMAL: orig=f normal=t type=table identity=evttrig.two
+NOTICE:  NORMAL: orig=t normal=f type=schema identity=evttrig name={evttrig} args={}
+NOTICE:  NORMAL: orig=f normal=t type=table identity=evttrig.one name={evttrig,one} args={}
+NOTICE:  NORMAL: orig=f normal=t type=sequence identity=evttrig.one_col_a_seq name={evttrig,one_col_a_seq} args={}
+NOTICE:  NORMAL: orig=f normal=t type=default value identity=for evttrig.one.col_a name={evttrig,one,col_a} args={}
+NOTICE:  NORMAL: orig=f normal=t type=table identity=evttrig.two name={evttrig,two} args={}
 DROP EVENT TRIGGER regress_event_trigger_report_dropped;
 -- only allowed from within an event trigger function, should fail
 select pg_event_trigger_table_rewrite_oid();

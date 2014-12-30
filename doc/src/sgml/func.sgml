@@ -17835,6 +17835,24 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
          identifier present in the identity is quoted if necessary.
         </entry>
        </row>
+       <row>
+        <entry><literal>address_names</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>
+         An array that, together with <literal>object_type</literal> and
+         <literal>address_args</literal>,
+         can be used by the <function>pg_get_object_address()</function> to
+         recreate the object address in a remote server containing an
+         identically named object of the same kind.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>address_args</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>
+         Complement for <literal>address_names</literal> above.
+        </entry>
+       </row>
       </tbody>
      </tgroup>
     </informaltable>

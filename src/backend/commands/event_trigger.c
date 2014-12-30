@@ -117,6 +117,8 @@ typedef struct SQLDropObject
 	const char *objname;
 	const char *objidentity;
 	const char *objecttype;
+	List	   *addrnames;
+	List	   *addrargs;
 	bool		original;
 	bool		normal;
 	slist_node	next;
@@ -1324,10 +1326,11 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 		heap_close(catalog, AccessShareLock);
 	}
 
-	/* object identity */
-	obj->objidentity = getObjectIdentity(&obj->address);
+	/* object identity, objname and objargs */
+	obj->objidentity =
+		getObjectIdentityParts(&obj->address, &obj->addrnames, &obj->addrargs);
 
-	/* and object type, too */
+	/* object type */
 	obj->objecttype = getObjectTypeDescription(&obj->address);
 
 	slist_push_head(&(currentEventTriggerState->SQLDropList), &obj->next);
@@ -1390,8 +1393,8 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 	{
 		SQLDropObject *obj;
 		int			i = 0;
-		Datum		values[9];
-		bool		nulls[9];
+		Datum		values[11];
+		bool		nulls[11];
 
 		obj = slist_container(SQLDropObject, next, iter.cur);
 
@@ -1433,6 +1436,22 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 			values[i++] = CStringGetTextDatum(obj->objidentity);
 		else
 			nulls[i++] = true;
+
+		/* address_names and address_args */
+		if (obj->addrnames)
+		{
+			values[i++] = PointerGetDatum(strlist_to_textarray(obj->addrnames));
+
+			if (obj->addrargs)
+				values[i++] = PointerGetDatum(strlist_to_textarray(obj->addrargs));
+			else
+				values[i++] = PointerGetDatum(construct_empty_array(TEXTOID));
+		}
+		else
+		{
+			nulls[i++] = true;
+			nulls[i++] = true;
+		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
