@@ -646,13 +646,11 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				break;
 			case OBJECT_DOMCONSTRAINT:
 				{
-					List		   *domname;
 					ObjectAddress	domaddr;
 					char		   *constrname;
 
-					domname = list_truncate(list_copy(objname), list_length(objname) - 1);
-					constrname = strVal(llast(objname));
-					domaddr = get_object_address_type(OBJECT_DOMAIN, domname, missing_ok);
+					domaddr = get_object_address_type(OBJECT_DOMAIN, objname, missing_ok);
+					constrname = strVal(linitial(objargs));
 
 					address.classId = ConstraintRelationId;
 					address.objectId = get_domain_constraint_oid(domaddr.objectId,
@@ -1291,14 +1289,13 @@ get_object_address_attrdef(ObjectType objtype, List *objname,
  * Find the ObjectAddress for a type or domain
  */
 static ObjectAddress
-get_object_address_type(ObjectType objtype,
-						List *objname, bool missing_ok)
+get_object_address_type(ObjectType objtype, List *objname, bool missing_ok)
 {
 	ObjectAddress address;
 	TypeName   *typename;
 	Type		tup;
 
-	typename = makeTypeNameFromNameList(objname);
+	typename = (TypeName *) linitial(objname);
 
 	address.classId = TypeRelationId;
 	address.objectId = InvalidOid;
@@ -1428,27 +1425,8 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	 * given object type.  Most use a simple string Values list, but there
 	 * are some exceptions.
 	 */
-	if (type == OBJECT_TYPE || type == OBJECT_DOMAIN)
-	{
-		Datum	*elems;
-		bool	*nulls;
-		int		nelems;
-		TypeName *typname;
-
-		deconstruct_array(namearr, TEXTOID, -1, false, 'i',
-						  &elems, &nulls, &nelems);
-		if (nelems != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("name list length must be exactly %d", 1)));
-		if (nulls[0])
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("name or argument lists may not contain nulls")));
-		typname = typeStringToTypeName(TextDatumGetCString(elems[0]));
-		name = typname->names;
-	}
-	else if (type == OBJECT_CAST)
+	if (type == OBJECT_TYPE || type == OBJECT_DOMAIN || type == OBJECT_CAST ||
+		type == OBJECT_DOMCONSTRAINT)
 	{
 		Datum	*elems;
 		bool	*nulls;
@@ -1533,18 +1511,13 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	 */
 	switch (type)
 	{
-		case OBJECT_DOMCONSTRAINT:
-			if (list_length(name) < 2)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("name list length must be at least %d", 2)));
-			break;
 		case OBJECT_LARGEOBJECT:
 			if (list_length(name) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("name list length must be %d", 1)));
+						 errmsg("name list length must be exactly %d", 1)));
 			break;
+		case OBJECT_DOMCONSTRAINT:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
 		case OBJECT_CAST:

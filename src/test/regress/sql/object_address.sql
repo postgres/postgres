@@ -132,7 +132,7 @@ WITH objects (type, name, args) AS (VALUES
 				('cast', '{int8}', '{int4}'),
 				('collation', '{default}', '{}'),
 				('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
-				('domain constraint', '{addr_nsp, gendomain, domconstr}', '{}'),
+				('domain constraint', '{addr_nsp.gendomain}', '{domconstr}'),
 				('conversion', '{pg_catalog, ascii_to_mic}', '{}'),
 				('default value', '{addr_nsp, gentable, b}', '{}'),
 				('language', '{plpgsql}', '{}'),
