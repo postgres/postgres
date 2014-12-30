@@ -339,46 +339,51 @@ WITH objects (type, name, args) AS (VALUES
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}')
         )
-SELECT (pg_identify_object(classid, objid, subobjid)).*
-  FROM objects, pg_get_object_address(type, name, args)
-ORDER BY classid, objid;
-           type            |   schema   |       name        |                               identity                               
----------------------------+------------+-------------------+----------------------------------------------------------------------
- type                      | pg_catalog | _int4             | integer[]
- type                      | addr_nsp   | gencomptype       | addr_nsp.gencomptype
- type                      | addr_nsp   | genenum           | addr_nsp.genenum
- type                      | addr_nsp   | gendomain         | addr_nsp.gendomain
- function                  | pg_catalog |                   | pg_catalog.pg_identify_object(pg_catalog.oid,pg_catalog.oid,integer)
- aggregate                 | addr_nsp   |                   | addr_nsp.genaggr(integer)
- sequence                  | addr_nsp   | gentable_a_seq    | addr_nsp.gentable_a_seq
- table                     | addr_nsp   | gentable          | addr_nsp.gentable
- table column              | addr_nsp   | gentable          | addr_nsp.gentable.b
- index                     | addr_nsp   | gentable_pkey     | addr_nsp.gentable_pkey
- view                      | addr_nsp   | genview           | addr_nsp.genview
- materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview
- foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a
- foreign table             | addr_nsp   | genftable         | addr_nsp.genftable
- role                      |            | regtest_addr_user | regtest_addr_user
- server                    |            | addr_fserv        | addr_fserv
- foreign-data wrapper      |            | addr_fdw          | addr_fdw
- default value             |            |                   | for addr_nsp.gentable.b
- cast                      |            |                   | (bigint AS integer)
- table constraint          | addr_nsp   |                   | a_chk on addr_nsp.gentable
- domain constraint         | addr_nsp   |                   | domconstr on addr_nsp.gendomain
- conversion                | pg_catalog | ascii_to_mic      | ascii_to_mic
- language                  |            | plpgsql           | plpgsql
- schema                    |            | addr_nsp          | addr_nsp
- operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops for btree
- operator                  | pg_catalog |                   | pg_catalog.+(integer,integer)
- rule                      |            |                   | "_RETURN" on addr_nsp.genview
- trigger                   |            |                   | t on addr_nsp.gentable
- operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops for btree
- policy                    |            |                   | genpol on addr_nsp.gentable
- collation                 | pg_catalog | "default"         | pg_catalog."default"
- text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict
- text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs
- text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf
- text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp
+SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
+	-- test roundtrip through pg_identify_object_as_address
+	ROW(pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)) =
+	ROW(pg_identify_object(addr2.classid, addr2.objid, addr2.subobjid))
+	  FROM objects, pg_get_object_address(type, name, args) addr1,
+			pg_identify_object_as_address(classid, objid, subobjid) ioa(typ,nms,args),
+			pg_get_object_address(typ, nms, ioa.args) as addr2
+	ORDER BY addr1.classid, addr1.objid;
+           type            |   schema   |       name        |                               identity                               | ?column? 
+---------------------------+------------+-------------------+----------------------------------------------------------------------+----------
+ type                      | pg_catalog | _int4             | integer[]                                                            | t
+ type                      | addr_nsp   | gencomptype       | addr_nsp.gencomptype                                                 | t
+ type                      | addr_nsp   | genenum           | addr_nsp.genenum                                                     | t
+ type                      | addr_nsp   | gendomain         | addr_nsp.gendomain                                                   | t
+ function                  | pg_catalog |                   | pg_catalog.pg_identify_object(pg_catalog.oid,pg_catalog.oid,integer) | t
+ aggregate                 | addr_nsp   |                   | addr_nsp.genaggr(integer)                                            | t
+ sequence                  | addr_nsp   | gentable_a_seq    | addr_nsp.gentable_a_seq                                              | t
+ table                     | addr_nsp   | gentable          | addr_nsp.gentable                                                    | t
+ table column              | addr_nsp   | gentable          | addr_nsp.gentable.b                                                  | t
+ index                     | addr_nsp   | gentable_pkey     | addr_nsp.gentable_pkey                                               | t
+ view                      | addr_nsp   | genview           | addr_nsp.genview                                                     | t
+ materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview                                                  | t
+ foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a                                                 | t
+ foreign table             | addr_nsp   | genftable         | addr_nsp.genftable                                                   | t
+ role                      |            | regtest_addr_user | regtest_addr_user                                                    | t
+ server                    |            | addr_fserv        | addr_fserv                                                           | t
+ foreign-data wrapper      |            | addr_fdw          | addr_fdw                                                             | t
+ default value             |            |                   | for addr_nsp.gentable.b                                              | t
+ cast                      |            |                   | (bigint AS integer)                                                  | t
+ table constraint          | addr_nsp   |                   | a_chk on addr_nsp.gentable                                           | t
+ domain constraint         | addr_nsp   |                   | domconstr on addr_nsp.gendomain                                      | t
+ conversion                | pg_catalog | ascii_to_mic      | ascii_to_mic                                                         | t
+ language                  |            | plpgsql           | plpgsql                                                              | t
+ schema                    |            | addr_nsp          | addr_nsp                                                             | t
+ operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops for btree                                        | t
+ operator                  | pg_catalog |                   | pg_catalog.+(integer,integer)                                        | t
+ rule                      |            |                   | "_RETURN" on addr_nsp.genview                                        | t
+ trigger                   |            |                   | t on addr_nsp.gentable                                               | t
+ operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops for btree                                     | t
+ policy                    |            |                   | genpol on addr_nsp.gentable                                          | t
+ collation                 | pg_catalog | "default"         | pg_catalog."default"                                                 | t
+ text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict                                                | t
+ text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
+ text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
+ text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
 (35 rows)
 
 ---

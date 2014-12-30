@@ -15308,14 +15308,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
-    <primary>pg_describe_object</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>pg_identify_object</primary>
-   </indexterm>
-
-   <indexterm>
     <primary>pg_get_constraintdef</primary>
    </indexterm>
 
@@ -15428,16 +15420,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>format_type(<parameter>type_oid</parameter>, <parameter>typemod</>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get SQL name of a data type</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_describe_object(<parameter>catalog_id</parameter>, <parameter>object_id</parameter>, <parameter>object_sub_id</parameter>)</function></literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get description of a database object</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_identify_object(<parameter>catalog_id</parameter> <type>oid</>, <parameter>object_id</parameter> <type>oid</>, <parameter>object_sub_id</parameter> <type>integer</>)</function></literal></entry>
-       <entry><parameter>type</> <type>text</>, <parameter>schema</> <type>text</>, <parameter>name</> <type>text</>, <parameter>identity</> <type>text</></entry>
-       <entry>get identity of a database object</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_constraintdef(<parameter>constraint_oid</parameter>)</function></literal></entry>
@@ -15708,31 +15690,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-   <function>pg_describe_object</function> returns a textual description of a database
-   object specified by catalog OID, object OID and a (possibly zero) sub-object ID.
-   This description is intended to be human-readable, and might be translated,
-   depending on server configuration.
-   This is useful to determine the identity of an object as stored in the
-   <structname>pg_depend</structname> catalog.
-  </para>
-
-  <para>
-   <function>pg_identify_object</function> returns a row containing enough information
-   to uniquely identify the database object specified by catalog OID, object OID and a
-   (possibly zero) sub-object ID.  This information is intended to be machine-readable,
-   and is never translated.
-   <parameter>type</> identifies the type of database object;
-   <parameter>schema</> is the schema name that the object belongs in, or
-   <literal>NULL</> for object types that do not belong to schemas;
-   <parameter>name</> is the name of the object, quoted if necessary, only
-   present if it can be used (alongside schema name, if pertinent) as a unique
-   identifier of the object, otherwise <literal>NULL</>;
-   <parameter>identity</> is the complete object identity, with the precise format
-   depending on object type, and each part within the format being
-   schema-qualified and quoted as necessary.
-  </para>
-
-  <para>
    <function>pg_typeof</function> returns the OID of the data type of the
    value that is passed to it.  This can be helpful for troubleshooting or
    dynamically constructing SQL queries.  The function is declared as
@@ -15788,6 +15745,112 @@ SELECT collation for ('foo' COLLATE "de_DE");
    rather than throwing an error if the name is not found (or, for
    <function>to_regproc</function> and <function>to_regoper</function>, if
    the given name matches multiple objects).
+  </para>
+
+   <indexterm>
+    <primary>pg_describe_object</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pg_identify_object</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pg_identify_object_as_address</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pg_get_object_address</primary>
+   </indexterm>
+
+  <para>
+   <xref linkend="functions-info-object-table"> lists functions related to
+   database object identification and addressing.
+  </para>
+
+   <table id="functions-info-object-table">
+    <title>Object Information and Addressing Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><literal><function>pg_describe_object(<parameter>catalog_id</parameter>, <parameter>object_id</parameter>, <parameter>object_sub_id</parameter>)</function></literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get description of a database object</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_identify_object(<parameter>catalog_id</parameter> <type>oid</>, <parameter>object_id</parameter> <type>oid</>, <parameter>object_sub_id</parameter> <type>integer</>)</function></literal></entry>
+       <entry><parameter>type</> <type>text</>, <parameter>schema</> <type>text</>, <parameter>name</> <type>text</>, <parameter>identity</> <type>text</></entry>
+       <entry>get identity of a database object</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_identify_object_as_address(<parameter>catalog_id</parameter> <type>oid</>, <parameter>object_id</parameter> <type>oid</>, <parameter>object_sub_id</parameter> <type>integer</>)</function></literal></entry>
+       <entry><parameter>type</> <type>text</>, <parameter>name</> <type>text[]</>, <parameter>args</> <type>text[]</></entry>
+       <entry>get external representation of a database object's address</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_object_address(<parameter>type</parameter> <type>text</>, <parameter>name</parameter> <type>text[]</>, <parameter>args</parameter> <type>text[]</>)</function></literal></entry>
+       <entry><parameter>catalog_id</> <type>oid</>, <parameter>object_id</> <type>oid</>, <parameter>object_sub_id</> <type>int32</></entry>
+       <entry>get address of a database object, from its external representation</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   <function>pg_describe_object</function> returns a textual description of a database
+   object specified by catalog OID, object OID and a (possibly zero) sub-object ID.
+   This description is intended to be human-readable, and might be translated,
+   depending on server configuration.
+   This is useful to determine the identity of an object as stored in the
+   <structname>pg_depend</structname> catalog.
+  </para>
+
+  <para>
+   <function>pg_identify_object</function> returns a row containing enough information
+   to uniquely identify the database object specified by catalog OID, object OID and a
+   (possibly zero) sub-object ID.  This information is intended to be machine-readable,
+   and is never translated.
+   <parameter>type</> identifies the type of database object;
+   <parameter>schema</> is the schema name that the object belongs in, or
+   <literal>NULL</> for object types that do not belong to schemas;
+   <parameter>name</> is the name of the object, quoted if necessary, only
+   present if it can be used (alongside schema name, if pertinent) as a unique
+   identifier of the object, otherwise <literal>NULL</>;
+   <parameter>identity</> is the complete object identity, with the precise format
+   depending on object type, and each part within the format being
+   schema-qualified and quoted as necessary.
+  </para>
+
+  <para>
+   <function>pg_identify_object_as_address</function> returns a row containing
+   enough information to uniquely identify the database object specified by
+   catalog OID, object OID and a (possibly zero) sub-object ID.  The returned
+   information is independent of the current server, that is, it could be used
+   to identify an identically named object in another server.
+   <parameter>type</> identifies the type of database object;
+   <parameter>name</> and <parameter>args</> are text arrays that together
+   form a reference to the object.  These three columns can be passed to
+   <function>pg_get_object_address</> to obtain the internal address
+   of the object.
+   This function is the inverse of <function>pg_get_object_address</function>.
+  </para>
+
+  <para>
+   <function>pg_get_object_address</function> returns a row containing enough
+   information to uniquely identify the database object specified by its
+   type and object name and argument arrays.  The returned values are the
+   ones that would be used in system catalogs such as <structname>pg_depend</>
+   and can be passed to other system functions such as
+   <function>pg_identify_object</> or <function>pg_describe_object</>.
+   <parameter>catalog_id</> is the OID of the system catalog containing the
+   object;
+   <parameter>object_id</> is the OID of the object itself, and
+   <parameter>object_sub_id</> is the object sub-ID, or zero if none.
+   This function is the inverse of <function>pg_identify_object_as_address</function>.
   </para>
 
    <indexterm>

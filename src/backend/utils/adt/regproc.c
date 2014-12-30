@@ -439,6 +439,41 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 }
 
 /*
+ * Output a objname/objargs representation for the procedure with the
+ * given OID.  If it doesn't exist, an error is thrown.
+ *
+ * This can be used to feed get_object_address.
+ */
+void
+format_procedure_parts(Oid procedure_oid, List **objnames, List **objargs)
+{
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+	int			nargs;
+	int			i;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procedure_oid));
+
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for procedure with OID %u", procedure_oid);
+
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	nargs = procform->pronargs;
+
+	*objnames = list_make2(get_namespace_name(procform->pronamespace),
+						   pstrdup(NameStr(procform->proname)));
+	*objargs = NIL;
+	for (i = 0; i < nargs; i++)
+	{
+		Oid		thisargtype = procform->proargtypes.values[i];
+
+		*objargs = lappend(*objargs, format_type_be_qualified(thisargtype));
+	}
+
+	ReleaseSysCache(proctup);
+}
+
+/*
  * regprocedureout		- converts proc OID to "pro_name(args)"
  */
 Datum
@@ -873,6 +908,31 @@ char *
 format_operator_qualified(Oid operator_oid)
 {
 	return format_operator_internal(operator_oid, true);
+}
+
+void
+format_operator_parts(Oid operator_oid, List **objnames, List **objargs)
+{
+	HeapTuple	opertup;
+	Form_pg_operator oprForm;
+
+	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
+	if (!HeapTupleIsValid(opertup))
+		elog(ERROR, "cache lookup failed for operator with OID %u",
+			 operator_oid);
+
+	oprForm = (Form_pg_operator) GETSTRUCT(opertup);
+	*objnames = list_make2(get_namespace_name(oprForm->oprnamespace),
+						   pstrdup(NameStr(oprForm->oprname)));
+	*objargs = NIL;
+	if (oprForm->oprleft)
+		*objargs = lappend(*objargs,
+						   format_type_be_qualified(oprForm->oprleft));
+	if (oprForm->oprright)
+		*objargs = lappend(*objargs,
+						   format_type_be_qualified(oprForm->oprright));
+
+	ReleaseSysCache(opertup);
 }
 
 /*

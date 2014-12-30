@@ -74,6 +74,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -556,8 +557,9 @@ static void getRelationTypeDescription(StringInfo buffer, Oid relid,
 						   int32 objectSubId);
 static void getProcedureTypeDescription(StringInfo buffer, Oid procid);
 static void getConstraintTypeDescription(StringInfo buffer, Oid constroid);
-static void getOpFamilyIdentity(StringInfo buffer, Oid opfid);
-static void getRelationIdentity(StringInfo buffer, Oid relid);
+static void getOpFamilyIdentity(StringInfo buffer, Oid opfid, List **objname,
+					List **objargs);
+static void getRelationIdentity(StringInfo buffer, Oid relid, List **objname);
 
 /*
  * Translate an object name and arguments (as passed by the parser) to an
@@ -2932,6 +2934,66 @@ pg_identify_object(PG_FUNCTION_ARGS)
 }
 
 /*
+ * SQL-level callable function to obtain object type + identity
+ */
+Datum
+pg_identify_object_as_address(PG_FUNCTION_ARGS)
+{
+	Oid			classid = PG_GETARG_OID(0);
+	Oid			objid = PG_GETARG_OID(1);
+	int32		subobjid = PG_GETARG_INT32(2);
+	ObjectAddress address;
+	char	   *identity;
+	List	   *names;
+	List	   *args;
+	Datum		values[3];
+	bool		nulls[3];
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+
+	address.classId = classid;
+	address.objectId = objid;
+	address.objectSubId = subobjid;
+
+	/*
+	 * Construct a tuple descriptor for the result row.  This must match this
+	 * function's pg_proc entry!
+	 */
+	tupdesc = CreateTemplateTupleDesc(3, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "type",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "object_names",
+					   TEXTARRAYOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "object_args",
+					   TEXTARRAYOID, -1, 0);
+
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	/* object type */
+	values[0] = CStringGetTextDatum(getObjectTypeDescription(&address));
+	nulls[0] = false;
+
+	/* object identity */
+	identity = getObjectIdentityParts(&address, &names, &args);
+	pfree(identity);
+
+	/* object_names */
+	values[1] = PointerGetDatum(strlist_to_textarray(names));
+	nulls[1] = false;
+
+	/* object_args */
+	if (args)
+		values[2] = PointerGetDatum(strlist_to_textarray(args));
+	else
+		values[2] = PointerGetDatum(construct_empty_array(TEXTOID));
+	nulls[2] = false;
+
+	htup = heap_form_tuple(tupdesc, values, nulls);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
+}
+
+/*
  * Return a palloc'ed string that describes the type of object that the
  * passed address is for.
  *
@@ -3187,7 +3249,7 @@ getProcedureTypeDescription(StringInfo buffer, Oid procid)
 }
 
 /*
- * Return a palloc'ed string that identifies an object.
+ * Obtain a given object's identity, as a palloc'ed string.
  *
  * This is for machine consumption, so it's not translated.  All elements are
  * schema-qualified when appropriate.
@@ -3195,14 +3257,42 @@ getProcedureTypeDescription(StringInfo buffer, Oid procid)
 char *
 getObjectIdentity(const ObjectAddress *object)
 {
+	return getObjectIdentityParts(object, NULL, NULL);
+}
+
+/*
+ * As above, but more detailed.
+ *
+ * There are two sets of return values: the identity itself as a palloc'd
+ * string is returned.  objname and objargs, if not NULL, are output parameters
+ * that receive lists of C-strings that are useful to give back to
+ * get_object_address() to reconstruct the ObjectAddress.
+ */
+char *
+getObjectIdentityParts(const ObjectAddress *object,
+					   List **objname, List **objargs)
+{
 	StringInfoData buffer;
 
 	initStringInfo(&buffer);
 
+	/*
+	 * Make sure that both objname and objargs were passed, or none was; and
+	 * initialize them to empty lists.  For objname this is useless because it
+	 * will be initialized in all cases inside the switch; but we do it anyway
+	 * so that we can test below that no branch leaves it unset.
+	 */
+	Assert(PointerIsValid(objname) == PointerIsValid(objargs));
+	if (objname)
+	{
+		*objname = NIL;
+		*objargs = NIL;
+	}
+
 	switch (getObjectClass(object))
 	{
 		case OCLASS_CLASS:
-			getRelationIdentity(&buffer, object->objectId);
+			getRelationIdentity(&buffer, object->objectId, objname);
 			if (object->objectSubId != 0)
 			{
 				char	   *attr;
@@ -3210,17 +3300,27 @@ getObjectIdentity(const ObjectAddress *object)
 				attr = get_relid_attribute_name(object->objectId,
 												object->objectSubId);
 				appendStringInfo(&buffer, ".%s", quote_identifier(attr));
+				if (objname)
+					*objname = lappend(*objname, attr);
 			}
 			break;
 
 		case OCLASS_PROC:
 			appendStringInfoString(&buffer,
 							   format_procedure_qualified(object->objectId));
+			if (objname)
+				format_procedure_parts(object->objectId, objname, objargs);
 			break;
 
 		case OCLASS_TYPE:
-			appendStringInfoString(&buffer,
-								 format_type_be_qualified(object->objectId));
+			{
+				char *typeout;
+
+				typeout = format_type_be_qualified(object->objectId);
+				appendStringInfoString(&buffer, typeout);
+				if (objname)
+					*objname = list_make1(typeout);
+			}
 			break;
 
 		case OCLASS_CAST:
@@ -3243,6 +3343,12 @@ getObjectIdentity(const ObjectAddress *object)
 							  format_type_be_qualified(castForm->castsource),
 							 format_type_be_qualified(castForm->casttarget));
 
+				if (objname)
+				{
+					*objname = list_make1(format_type_be_qualified(castForm->castsource));
+					*objargs = list_make1(format_type_be_qualified(castForm->casttarget));
+				}
+
 				heap_close(castRel, AccessShareLock);
 				break;
 			}
@@ -3263,6 +3369,8 @@ getObjectIdentity(const ObjectAddress *object)
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 												   NameStr(coll->collname)));
+				if (objname)
+					*objname = list_make2(schema, NameStr(coll->collname));
 				ReleaseSysCache(collTup);
 				break;
 			}
@@ -3283,19 +3391,25 @@ getObjectIdentity(const ObjectAddress *object)
 				{
 					appendStringInfo(&buffer, "%s on ",
 									 quote_identifier(NameStr(con->conname)));
-					getRelationIdentity(&buffer, con->conrelid);
+					getRelationIdentity(&buffer, con->conrelid, objname);
+					if (objname)
+						*objname = lappend(*objname, pstrdup(NameStr(con->conname)));
 				}
 				else
 				{
 					ObjectAddress domain;
 
+					Assert(OidIsValid(con->contypid));
 					domain.classId = TypeRelationId;
 					domain.objectId = con->contypid;
 					domain.objectSubId = 0;
 
 					appendStringInfo(&buffer, "%s on %s",
 									 quote_identifier(NameStr(con->conname)),
-									 getObjectIdentity(&domain));
+									 getObjectIdentityParts(&domain, objname, objargs));
+
+					if (objname)
+						*objargs = lappend(*objargs, pstrdup(NameStr(con->conname)));
 				}
 
 				ReleaseSysCache(conTup);
@@ -3315,6 +3429,8 @@ getObjectIdentity(const ObjectAddress *object)
 				conForm = (Form_pg_conversion) GETSTRUCT(conTup);
 				appendStringInfoString(&buffer,
 								quote_identifier(NameStr(conForm->conname)));
+				if (objname)
+					*objname = list_make1(pstrdup(NameStr(conForm->conname)));
 				ReleaseSysCache(conTup);
 				break;
 			}
@@ -3352,7 +3468,8 @@ getObjectIdentity(const ObjectAddress *object)
 				colobject.objectSubId = attrdef->adnum;
 
 				appendStringInfo(&buffer, "for %s",
-								 getObjectIdentity(&colobject));
+								 getObjectIdentityParts(&colobject,
+														objname, objargs));
 
 				systable_endscan(adscan);
 				heap_close(attrdefDesc, AccessShareLock);
@@ -3372,17 +3489,23 @@ getObjectIdentity(const ObjectAddress *object)
 				langForm = (Form_pg_language) GETSTRUCT(langTup);
 				appendStringInfoString(&buffer,
 							   quote_identifier(NameStr(langForm->lanname)));
+				if (objname)
+					*objname = list_make1(pstrdup(NameStr(langForm->lanname)));
 				ReleaseSysCache(langTup);
 				break;
 			}
 		case OCLASS_LARGEOBJECT:
 			appendStringInfo(&buffer, "%u",
 							 object->objectId);
+			if (objname)
+				*objname = list_make1(psprintf("%u", object->objectId));
 			break;
 
 		case OCLASS_OPERATOR:
 			appendStringInfoString(&buffer,
 								format_operator_qualified(object->objectId));
+			if (objname)
+				format_operator_parts(object->objectId, objname, objargs);
 			break;
 
 		case OCLASS_OPCLASS:
@@ -3413,14 +3536,19 @@ getObjectIdentity(const ObjectAddress *object)
 												 NameStr(opcForm->opcname)));
 				appendStringInfo(&buffer, " for %s",
 								 quote_identifier(NameStr(amForm->amname)));
-
+				if (objname)
+				{
+					*objname = list_make2(pstrdup(schema),
+										  pstrdup(NameStr(opcForm->opcname)));
+					*objargs = list_make1(pstrdup(NameStr(amForm->amname)));
+				}
 				ReleaseSysCache(amTup);
 				ReleaseSysCache(opcTup);
 				break;
 			}
 
 		case OCLASS_OPFAMILY:
-			getOpFamilyIdentity(&buffer, object->objectId);
+			getOpFamilyIdentity(&buffer, object->objectId, objname, objargs);
 			break;
 
 		case OCLASS_AMOP:
@@ -3431,6 +3559,10 @@ getObjectIdentity(const ObjectAddress *object)
 				SysScanDesc amscan;
 				Form_pg_amop amopForm;
 				StringInfoData opfam;
+
+				/* no objname support here */
+				if (objname)
+					*objname = NIL;
 
 				amopDesc = heap_open(AccessMethodOperatorRelationId,
 									 AccessShareLock);
@@ -3452,7 +3584,7 @@ getObjectIdentity(const ObjectAddress *object)
 				amopForm = (Form_pg_amop) GETSTRUCT(tup);
 
 				initStringInfo(&opfam);
-				getOpFamilyIdentity(&opfam, amopForm->amopfamily);
+				getOpFamilyIdentity(&opfam, amopForm->amopfamily, NULL, NULL);
 
 				appendStringInfo(&buffer, "operator %d (%s, %s) of %s",
 								 amopForm->amopstrategy,
@@ -3476,6 +3608,10 @@ getObjectIdentity(const ObjectAddress *object)
 				Form_pg_amproc amprocForm;
 				StringInfoData opfam;
 
+				/* no objname support here */
+				if (objname)
+					*objname = NIL;
+
 				amprocDesc = heap_open(AccessMethodProcedureRelationId,
 									   AccessShareLock);
 
@@ -3496,7 +3632,7 @@ getObjectIdentity(const ObjectAddress *object)
 				amprocForm = (Form_pg_amproc) GETSTRUCT(tup);
 
 				initStringInfo(&opfam);
-				getOpFamilyIdentity(&opfam, amprocForm->amprocfamily);
+				getOpFamilyIdentity(&opfam, amprocForm->amprocfamily, NULL, NULL);
 
 				appendStringInfo(&buffer, "function %d (%s, %s) of %s",
 								 amprocForm->amprocnum,
@@ -3529,7 +3665,9 @@ getObjectIdentity(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, "%s on ",
 								 quote_identifier(NameStr(rule->rulename)));
-				getRelationIdentity(&buffer, rule->ev_class);
+				getRelationIdentity(&buffer, rule->ev_class, objname);
+				if (objname)
+					*objname = lappend(*objname, NameStr(rule->rulename));
 
 				heap_close(ruleDesc, AccessShareLock);
 				break;
@@ -3553,7 +3691,9 @@ getObjectIdentity(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, "%s on ",
 								 quote_identifier(NameStr(trig->tgname)));
-				getRelationIdentity(&buffer, trig->tgrelid);
+				getRelationIdentity(&buffer, trig->tgrelid, objname);
+				if (objname)
+					*objname = lappend(*objname, NameStr(trig->tgname));
 
 				heap_close(trigDesc, AccessShareLock);
 				break;
@@ -3577,7 +3717,9 @@ getObjectIdentity(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, "%s on ",
 								 quote_identifier(NameStr(policy->polname)));
-				getRelationIdentity(&buffer, policy->polrelid);
+				getRelationIdentity(&buffer, policy->polrelid, objname);
+				if (objname)
+					*objname = lappend(*objname, NameStr(policy->polname));
 
 				heap_close(polDesc, AccessShareLock);
 				break;
@@ -3593,6 +3735,8 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				appendStringInfoString(&buffer,
 									   quote_identifier(nspname));
+				if (objname)
+					*objname = list_make1(nspname);
 				break;
 			}
 
@@ -3612,6 +3756,9 @@ getObjectIdentity(const ObjectAddress *object)
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 											  NameStr(formParser->prsname)));
+				if (objname)
+					*objname = list_make2(schema,
+										  pstrdup(NameStr(formParser->prsname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3632,6 +3779,9 @@ getObjectIdentity(const ObjectAddress *object)
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 											   NameStr(formDict->dictname)));
+				if (objname)
+					*objname = list_make2(schema,
+										  pstrdup(NameStr(formDict->dictname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3652,7 +3802,9 @@ getObjectIdentity(const ObjectAddress *object)
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 											   NameStr(formTmpl->tmplname)));
-				pfree(schema);
+				if (objname)
+					*objname = list_make2(schema,
+										  pstrdup(NameStr(formTmpl->tmplname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3673,6 +3825,9 @@ getObjectIdentity(const ObjectAddress *object)
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 												 NameStr(formCfg->cfgname)));
+				if (objname)
+					*objname = list_make2(schema,
+										  pstrdup(NameStr(formCfg->cfgname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3682,6 +3837,8 @@ getObjectIdentity(const ObjectAddress *object)
 				char	   *username;
 
 				username = GetUserNameFromId(object->objectId);
+				if (objname)
+					*objname = list_make1(username);
 				appendStringInfoString(&buffer,
 									   quote_identifier(username));
 				break;
@@ -3695,6 +3852,8 @@ getObjectIdentity(const ObjectAddress *object)
 				if (!datname)
 					elog(ERROR, "cache lookup failed for database %u",
 						 object->objectId);
+				if (objname)
+					*objname = list_make1(datname);
 				appendStringInfoString(&buffer,
 									   quote_identifier(datname));
 				break;
@@ -3708,6 +3867,8 @@ getObjectIdentity(const ObjectAddress *object)
 				if (!tblspace)
 					elog(ERROR, "cache lookup failed for tablespace %u",
 						 object->objectId);
+				if (objname)
+					*objname = list_make1(tblspace);
 				appendStringInfoString(&buffer,
 									   quote_identifier(tblspace));
 				break;
@@ -3719,6 +3880,8 @@ getObjectIdentity(const ObjectAddress *object)
 
 				fdw = GetForeignDataWrapper(object->objectId);
 				appendStringInfoString(&buffer, quote_identifier(fdw->fdwname));
+				if (objname)
+					*objname = list_make1(pstrdup(fdw->fdwname));
 				break;
 			}
 
@@ -3729,6 +3892,8 @@ getObjectIdentity(const ObjectAddress *object)
 				srv = GetForeignServer(object->objectId);
 				appendStringInfoString(&buffer,
 									   quote_identifier(srv->servername));
+				if (objname)
+					*objname = list_make1(pstrdup(srv->servername));
 				break;
 			}
 
@@ -3737,6 +3902,10 @@ getObjectIdentity(const ObjectAddress *object)
 				HeapTuple	tup;
 				Oid			useid;
 				const char *usename;
+
+				/* no objname support */
+				if (objname)
+					*objname = NIL;
 
 				tup = SearchSysCache1(USERMAPPINGOID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3762,9 +3931,12 @@ getObjectIdentity(const ObjectAddress *object)
 				Relation	defaclrel;
 				ScanKeyData skey[1];
 				SysScanDesc rcscan;
-
 				HeapTuple	tup;
 				Form_pg_default_acl defacl;
+
+				/* no objname support */
+				if (objname)
+					*objname = NIL;
 
 				defaclrel = heap_open(DefaultAclRelationId, AccessShareLock);
 
@@ -3832,6 +4004,8 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for extension %u",
 						 object->objectId);
 				appendStringInfoString(&buffer, quote_identifier(extname));
+				if (objname)
+					*objname = list_make1(extname);
 				break;
 			}
 
@@ -3839,6 +4013,10 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	tup;
 				Form_pg_event_trigger trigForm;
+
+				/* no objname support here */
+				if (objname)
+					*objname = NIL;
 
 				tup = SearchSysCache1(EVENTTRIGGEROID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3860,11 +4038,21 @@ getObjectIdentity(const ObjectAddress *object)
 			break;
 	}
 
+	/*
+	 * If a get_object_address representation was requested, make sure we are
+	 * providing one.  We don't check for objargs, because many of the cases
+	 * above leave it as NIL.
+	 */
+	if (objname && *objname == NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested object address for object type that cannot support it")));
+
 	return buffer.data;
 }
 
 static void
-getOpFamilyIdentity(StringInfo buffer, Oid opfid)
+getOpFamilyIdentity(StringInfo buffer, Oid opfid, List **objname, List **objargs)
 {
 	HeapTuple	opfTup;
 	Form_pg_opfamily opfForm;
@@ -3889,6 +4077,13 @@ getOpFamilyIdentity(StringInfo buffer, Oid opfid)
 												NameStr(opfForm->opfname)),
 					 NameStr(amForm->amname));
 
+	if (objname)
+	{
+		*objname = list_make2(pstrdup(schema),
+							  pstrdup(NameStr(opfForm->opfname)));
+		*objargs = list_make1(pstrdup(NameStr(amForm->amname)));
+	}
+
 	ReleaseSysCache(amTup);
 	ReleaseSysCache(opfTup);
 }
@@ -3898,7 +4093,7 @@ getOpFamilyIdentity(StringInfo buffer, Oid opfid)
  * StringInfo.
  */
 static void
-getRelationIdentity(StringInfo buffer, Oid relid)
+getRelationIdentity(StringInfo buffer, Oid relid, List **objname)
 {
 	HeapTuple	relTup;
 	Form_pg_class relForm;
@@ -3914,6 +4109,45 @@ getRelationIdentity(StringInfo buffer, Oid relid)
 	appendStringInfoString(buffer,
 						   quote_qualified_identifier(schema,
 												 NameStr(relForm->relname)));
+	if (objname)
+		*objname = list_make2(schema, pstrdup(NameStr(relForm->relname)));
 
 	ReleaseSysCache(relTup);
+}
+
+/*
+ * Auxiliary function to return a TEXT array out of a list of C-strings.
+ */
+ArrayType *
+strlist_to_textarray(List *list)
+{
+	ArrayType *arr;
+	Datum	*datums;
+	int		j = 0;
+	ListCell *cell;
+	MemoryContext memcxt;
+	MemoryContext oldcxt;
+
+	memcxt = AllocSetContextCreate(CurrentMemoryContext,
+								   "strlist to array",
+								   ALLOCSET_DEFAULT_MINSIZE,
+								   ALLOCSET_DEFAULT_INITSIZE,
+								   ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(memcxt);
+
+	datums = palloc(sizeof(text *) * list_length(list));
+	foreach(cell, list)
+	{
+		char   *name = lfirst(cell);
+
+		datums[j++] = CStringGetTextDatum(name);
+	}
+
+	MemoryContextSwitchTo(oldcxt);
+
+	arr = construct_array(datums, list_length(list),
+						  TEXTOID, -1, false, 'i');
+	MemoryContextDelete(memcxt);
+
+	return arr;
 }
