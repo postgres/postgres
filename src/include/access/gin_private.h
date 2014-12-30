@@ -226,10 +226,18 @@ typedef signed char GinNullCategory;
 #define GinGetPosting(itup)			((Pointer) ((char*)(itup) + GinGetPostingOffset(itup)))
 #define GinItupIsCompressed(itup)	(GinItemPointerGetBlockNumber(&(itup)->t_tid) & GIN_ITUP_COMPRESSED)
 
+/*
+ * Maximum size of an item on entry tree page. Make sure that we fit at least
+ * three items on each page. (On regular B-tree indexes, we must fit at least
+ * three items: two data items and the "high key". In GIN entry tree, we don't
+ * currently store the high key explicitly, we just use the rightmost item on
+ * the page, so it would actually be enough to fit two items.)
+ */
 #define GinMaxItemSize \
 	Min(INDEX_SIZE_MASK, \
-		MAXALIGN_DOWN(((BLCKSZ - SizeOfPageHeaderData -					\
-						MAXALIGN(sizeof(GinPageOpaqueData))) / 6 - sizeof(ItemIdData))))
+		MAXALIGN_DOWN(((BLCKSZ - \
+						MAXALIGN(SizeOfPageHeaderData + 3 * sizeof(ItemIdData)) - \
+						MAXALIGN(sizeof(GinPageOpaqueData))) / 3)))
 
 /*
  * Access macros for non-leaf entry tuples
