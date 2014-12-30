@@ -1337,12 +1337,16 @@ parseQuery(Command *cmd, const char *raw_sql)
 		if (cmd->argc >= MAX_ARGS)
 		{
 			fprintf(stderr, "statement has too many arguments (maximum is %d): %s\n", MAX_ARGS - 1, raw_sql);
+			free(name);
 			return false;
 		}
 
 		sprintf(var, "$%d", cmd->argc);
 		if ((p = replaceVariable(&sql, p, eaten, var)) == NULL)
+		{
+			free(name);
 			return false;
+		}
 
 		cmd->argv[cmd->argc] = name;
 		cmd->argc++;
@@ -1504,7 +1508,10 @@ process_commands(char *buf)
 			case QUERY_EXTENDED:
 			case QUERY_PREPARED:
 				if (!parseQuery(my_commands, p))
+				{
+					free(my_commands);
 					return NULL;
+				}
 				break;
 			default:
 				return NULL;
@@ -1560,6 +1567,7 @@ process_file(char *filename)
 			commands = process_commands(&buf[i]);
 			if (commands == NULL)
 			{
+				free(my_commands);
 				fclose(fd);
 				return false;
 			}
@@ -1630,6 +1638,7 @@ process_builtin(char *tb)
 		commands = process_commands(buf);
 		if (commands == NULL)
 		{
+			free(my_commands);
 			return NULL;
 		}
 
