@@ -3892,7 +3892,7 @@ complete_from_files(const char *text, int state)
 
 /*
  * Make a pg_strdup copy of s and convert the case according to
- * COMP_KEYWORD_CASE variable, using ref as the text that was already entered.
+ * COMP_KEYWORD_CASE setting, using ref as the text that was already entered.
  */
 static char *
 pg_strdup_keyword_case(const char *s, const char *ref)
@@ -3900,38 +3900,22 @@ pg_strdup_keyword_case(const char *s, const char *ref)
 	char	   *ret,
 			   *p;
 	unsigned char first = ref[0];
-	int			tocase;
-	const char *varval;
-
-	varval = GetVariable(pset.vars, "COMP_KEYWORD_CASE");
-	if (!varval)
-		tocase = 0;
-	else if (strcmp(varval, "lower") == 0)
-		tocase = -2;
-	else if (strcmp(varval, "preserve-lower") == 0)
-		tocase = -1;
-	else if (strcmp(varval, "preserve-upper") == 0)
-		tocase = +1;
-	else if (strcmp(varval, "upper") == 0)
-		tocase = +2;
-	else
-		tocase = 0;
-
-	/* default */
-	if (tocase == 0)
-		tocase = +1;
 
 	ret = pg_strdup(s);
 
-	if (tocase == -2
-		|| ((tocase == -1 || tocase == +1) && islower(first))
-		|| (tocase == -1 && !isalpha(first))
-		)
+	if (pset.comp_case == PSQL_COMP_CASE_LOWER ||
+		((pset.comp_case == PSQL_COMP_CASE_PRESERVE_LOWER ||
+		  pset.comp_case == PSQL_COMP_CASE_PRESERVE_UPPER) && islower(first)) ||
+		(pset.comp_case == PSQL_COMP_CASE_PRESERVE_LOWER && !isalpha(first)))
+	{
 		for (p = ret; *p; p++)
 			*p = pg_tolower((unsigned char) *p);
+	}
 	else
+	{
 		for (p = ret; *p; p++)
 			*p = pg_toupper((unsigned char) *p);
+	}
 
 	return ret;
 }
