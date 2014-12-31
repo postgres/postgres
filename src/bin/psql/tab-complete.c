@@ -2130,12 +2130,13 @@ psql_completion(const char *text, int start, int end)
 	{
 		COMPLETE_WITH_QUERY(Query_for_list_of_event_triggers);
 	}
-	else if ((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
-			  pg_strcasecmp(prev3_wd, "ON") == 0) ||
-			 (pg_strcasecmp(prev5_wd, "COMMENT") == 0 &&
-			  pg_strcasecmp(prev4_wd, "ON") == 0) ||
-			 (pg_strcasecmp(prev6_wd, "COMMENT") == 0 &&
-			  pg_strcasecmp(prev5_wd, "ON") == 0))
+	else if (((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
+			   pg_strcasecmp(prev3_wd, "ON") == 0) ||
+			  (pg_strcasecmp(prev5_wd, "COMMENT") == 0 &&
+			   pg_strcasecmp(prev4_wd, "ON") == 0) ||
+			  (pg_strcasecmp(prev6_wd, "COMMENT") == 0 &&
+			   pg_strcasecmp(prev5_wd, "ON") == 0)) &&
+			   pg_strcasecmp(prev_wd, "IS") != 0)
 		COMPLETE_WITH_CONST("IS");
 
 /* COPY */
