@@ -1025,7 +1025,7 @@ exec_command(const char *cmd,
 												 OT_NORMAL, NULL, false);
 
 		if (opt)
-			pset.timing = ParseVariableBool(opt);
+			pset.timing = ParseVariableBool(opt, "\\timing");
 		else
 			pset.timing = !pset.timing;
 		if (!pset.quiet)
@@ -1882,10 +1882,12 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	}
 
 	/* set expanded/vertical mode */
-	else if (strcmp(param, "x") == 0 || strcmp(param, "expanded") == 0 || strcmp(param, "vertical") == 0)
+	else if (strcmp(param, "x") == 0 ||
+			 strcmp(param, "expanded") == 0 ||
+			 strcmp(param, "vertical") == 0)
 	{
 		if (value)
-			popt->topt.expanded = ParseVariableBool(value);
+			popt->topt.expanded = ParseVariableBool(value, param);
 		else
 			popt->topt.expanded = !popt->topt.expanded;
 		if (!quiet)
@@ -1898,7 +1900,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	else if (strcmp(param, "numericlocale") == 0)
 	{
 		if (value)
-			popt->topt.numericLocale = ParseVariableBool(value);
+			popt->topt.numericLocale = ParseVariableBool(value, param);
 		else
 			popt->topt.numericLocale = !popt->topt.numericLocale;
 		if (!quiet)
@@ -1955,7 +1957,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	else if (strcmp(param, "t") == 0 || strcmp(param, "tuples_only") == 0)
 	{
 		if (value)
-			popt->topt.tuples_only = ParseVariableBool(value);
+			popt->topt.tuples_only = ParseVariableBool(value, param);
 		else
 			popt->topt.tuples_only = !popt->topt.tuples_only;
 		if (!quiet)
@@ -2009,10 +2011,12 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (value && pg_strcasecmp(value, "always") == 0)
 			popt->topt.pager = 2;
 		else if (value)
-			if (ParseVariableBool(value))
+		{
+			if (ParseVariableBool(value, param))
 				popt->topt.pager = 1;
 			else
 				popt->topt.pager = 0;
+		}
 		else if (popt->topt.pager == 1)
 			popt->topt.pager = 0;
 		else
@@ -2032,7 +2036,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	else if (strcmp(param, "footer") == 0)
 	{
 		if (value)
-			popt->default_footer = ParseVariableBool(value);
+			popt->default_footer = ParseVariableBool(value, param);
 		else
 			popt->default_footer = !popt->default_footer;
 		if (!quiet)

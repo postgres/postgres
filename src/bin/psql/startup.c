@@ -631,31 +631,31 @@ showVersion(void)
 static void
 autocommit_hook(const char *newval)
 {
-	pset.autocommit = ParseVariableBool(newval);
+	pset.autocommit = ParseVariableBool(newval, "AUTOCOMMIT");
 }
 
 static void
 on_error_stop_hook(const char *newval)
 {
-	pset.on_error_stop = ParseVariableBool(newval);
+	pset.on_error_stop = ParseVariableBool(newval, "ON_ERROR_STOP");
 }
 
 static void
 quiet_hook(const char *newval)
 {
-	pset.quiet = ParseVariableBool(newval);
+	pset.quiet = ParseVariableBool(newval, "QUIET");
 }
 
 static void
 singleline_hook(const char *newval)
 {
-	pset.singleline = ParseVariableBool(newval);
+	pset.singleline = ParseVariableBool(newval, "SINGLELINE");
 }
 
 static void
 singlestep_hook(const char *newval)
 {
-	pset.singlestep = ParseVariableBool(newval);
+	pset.singlestep = ParseVariableBool(newval, "SINGLESTEP");
 }
 
 static void
@@ -669,12 +669,18 @@ echo_hook(const char *newval)
 {
 	if (newval == NULL)
 		pset.echo = PSQL_ECHO_NONE;
-	else if (strcmp(newval, "queries") == 0)
+	else if (pg_strcasecmp(newval, "queries") == 0)
 		pset.echo = PSQL_ECHO_QUERIES;
-	else if (strcmp(newval, "all") == 0)
+	else if (pg_strcasecmp(newval, "all") == 0)
 		pset.echo = PSQL_ECHO_ALL;
-	else
+	else if (pg_strcasecmp(newval, "none") == 0)
 		pset.echo = PSQL_ECHO_NONE;
+	else
+	{
+		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
+				   newval, "ECHO", "none");
+		pset.echo = PSQL_ECHO_NONE;
+	}
 }
 
 static void
@@ -682,12 +688,12 @@ echo_hidden_hook(const char *newval)
 {
 	if (newval == NULL)
 		pset.echo_hidden = PSQL_ECHO_HIDDEN_OFF;
-	else if (strcmp(newval, "noexec") == 0)
+	else if (pg_strcasecmp(newval, "noexec") == 0)
 		pset.echo_hidden = PSQL_ECHO_HIDDEN_NOEXEC;
-	else if (pg_strcasecmp(newval, "off") == 0)
-		pset.echo_hidden = PSQL_ECHO_HIDDEN_OFF;
-	else
+	else if (ParseVariableBool(newval, "ECHO_HIDDEN"))
 		pset.echo_hidden = PSQL_ECHO_HIDDEN_ON;
+	else	/* ParseVariableBool printed msg if needed */
+		pset.echo_hidden = PSQL_ECHO_HIDDEN_OFF;
 }
 
 static void
@@ -697,10 +703,10 @@ on_error_rollback_hook(const char *newval)
 		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_OFF;
 	else if (pg_strcasecmp(newval, "interactive") == 0)
 		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_INTERACTIVE;
-	else if (pg_strcasecmp(newval, "off") == 0)
-		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_OFF;
-	else
+	else if (ParseVariableBool(newval, "ON_ERROR_ROLLBACK"))
 		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_ON;
+	else	/* ParseVariableBool printed msg if needed */
+		pset.on_error_rollback = PSQL_ERROR_ROLLBACK_OFF;
 }
 
 static void
@@ -708,14 +714,20 @@ histcontrol_hook(const char *newval)
 {
 	if (newval == NULL)
 		pset.histcontrol = hctl_none;
-	else if (strcmp(newval, "ignorespace") == 0)
+	else if (pg_strcasecmp(newval, "ignorespace") == 0)
 		pset.histcontrol = hctl_ignorespace;
-	else if (strcmp(newval, "ignoredups") == 0)
+	else if (pg_strcasecmp(newval, "ignoredups") == 0)
 		pset.histcontrol = hctl_ignoredups;
-	else if (strcmp(newval, "ignoreboth") == 0)
+	else if (pg_strcasecmp(newval, "ignoreboth") == 0)
 		pset.histcontrol = hctl_ignoreboth;
-	else
+	else if (pg_strcasecmp(newval, "none") == 0)
 		pset.histcontrol = hctl_none;
+	else
+	{
+		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
+				   newval, "HISTCONTROL", "none");
+		pset.histcontrol = hctl_none;
+	}
 }
 
 static void
@@ -741,14 +753,18 @@ verbosity_hook(const char *newval)
 {
 	if (newval == NULL)
 		pset.verbosity = PQERRORS_DEFAULT;
-	else if (strcmp(newval, "default") == 0)
+	else if (pg_strcasecmp(newval, "default") == 0)
 		pset.verbosity = PQERRORS_DEFAULT;
-	else if (strcmp(newval, "terse") == 0)
+	else if (pg_strcasecmp(newval, "terse") == 0)
 		pset.verbosity = PQERRORS_TERSE;
-	else if (strcmp(newval, "verbose") == 0)
+	else if (pg_strcasecmp(newval, "verbose") == 0)
 		pset.verbosity = PQERRORS_VERBOSE;
 	else
+	{
+		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
+				   newval, "VERBOSITY", "default");
 		pset.verbosity = PQERRORS_DEFAULT;
+	}
 
 	if (pset.db)
 		PQsetErrorVerbosity(pset.db, pset.verbosity);
