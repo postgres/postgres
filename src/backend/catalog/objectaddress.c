@@ -4035,13 +4035,12 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 	/*
 	 * If a get_object_address representation was requested, make sure we are
-	 * providing one.  We don't check for objargs, because many of the cases
-	 * above leave it as NIL.
+	 * providing one.  We don't check objargs, because many of the cases above
+	 * leave it as NIL.
 	 */
 	if (objname && *objname == NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("requested object address for object type that cannot support it")));
+		elog(ERROR, "requested object address for unsupported object class %d: text result \"%s\"",
+			 (int) getObjectClass(object), buffer.data);
 
 	return buffer.data;
 }
