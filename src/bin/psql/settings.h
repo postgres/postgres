@@ -27,6 +27,11 @@
 #define DEFAULT_PROMPT2 "%/%R%# "
 #define DEFAULT_PROMPT3 ">> "
 
+/*
+ * Note: these enums should generally be chosen so that zero corresponds
+ * to the default behavior.
+ */
+
 typedef enum
 {
 	PSQL_ECHO_NONE,
@@ -47,6 +52,14 @@ typedef enum
 	PSQL_ERROR_ROLLBACK_INTERACTIVE,
 	PSQL_ERROR_ROLLBACK_ON
 } PSQL_ERROR_ROLLBACK;
+
+typedef enum
+{
+	PSQL_COMP_CASE_PRESERVE_UPPER,
+	PSQL_COMP_CASE_PRESERVE_LOWER,
+	PSQL_COMP_CASE_UPPER,
+	PSQL_COMP_CASE_LOWER
+} PSQL_COMP_CASE;
 
 typedef enum
 {
@@ -108,6 +121,7 @@ typedef struct _psqlSettings
 	PSQL_ECHO	echo;
 	PSQL_ECHO_HIDDEN echo_hidden;
 	PSQL_ERROR_ROLLBACK on_error_rollback;
+	PSQL_COMP_CASE comp_case;
 	HistControl histcontrol;
 	const char *prompt1;
 	const char *prompt2;
