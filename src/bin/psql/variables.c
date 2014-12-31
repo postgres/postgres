@@ -79,11 +79,16 @@ GetVariable(VariableSpace space, const char *name)
 }
 
 /*
- * Try to interpret value as boolean value.  Valid values are: true,
- * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
+ * Try to interpret "value" as boolean value.
+ *
+ * Valid values are: true, false, yes, no, on, off, 1, 0; as well as unique
+ * prefixes thereof.
+ *
+ * "name" is the name of the variable we're assigning to, to use in error
+ * report if any.  Pass name == NULL to suppress the error report.
  */
 bool
-ParseVariableBool(const char *value)
+ParseVariableBool(const char *value, const char *name)
 {
 	size_t		len;
 
@@ -112,7 +117,9 @@ ParseVariableBool(const char *value)
 	else
 	{
 		/* NULL is treated as false, so a non-matching value is 'true' */
-		psql_error("unrecognized Boolean value; assuming \"on\"\n");
+		if (name)
+			psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
+					   value, name, "on");
 		return true;
 	}
 	/* suppress compiler warning */
