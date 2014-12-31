@@ -5529,11 +5529,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>Y,YYY</literal></entry>
-        <entry>year (4 and more digits) with comma</entry>
+        <entry>year (4 or more digits) with comma</entry>
        </row>
        <row>
         <entry><literal>YYYY</literal></entry>
-        <entry>year (4 and more digits)</entry>
+        <entry>year (4 or more digits)</entry>
        </row>
        <row>
         <entry><literal>YYY</literal></entry>
@@ -5549,19 +5549,19 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>IYYY</literal></entry>
-        <entry>ISO year (4 and more digits)</entry>
+        <entry>ISO 8601 week-numbering year (4 or more digits)</entry>
        </row>
        <row>
         <entry><literal>IYY</literal></entry>
-        <entry>last 3 digits of ISO year</entry>
+        <entry>last 3 digits of ISO 8601 week-numbering year</entry>
        </row>
        <row>
         <entry><literal>IY</literal></entry>
-        <entry>last 2 digits of ISO year</entry>
+        <entry>last 2 digits of ISO 8601 week-numbering year</entry>
        </row>
        <row>
         <entry><literal>I</literal></entry>
-        <entry>last digit of ISO year</entry>
+        <entry>last digit of ISO 8601 week-numbering year</entry>
        </row>
        <row>
         <entry><literal>BC</literal>, <literal>bc</literal>,
@@ -5631,7 +5631,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>IDDD</literal></entry>
-        <entry>ISO day of year (001-371; day 1 of the year is Monday of the first ISO week.)</entry>
+        <entry>day of ISO 8601 week-numbering year (001-371; day 1 of the year is Monday of the first ISO week)</entry>
        </row>
        <row>
         <entry><literal>DD</literal></entry>
@@ -5639,27 +5639,27 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>D</literal></entry>
-        <entry>day of the week, Sunday(<literal>1</>) to Saturday(<literal>7</>)</entry>
+        <entry>day of the week, Sunday (<literal>1</>) to Saturday (<literal>7</>)</entry>
        </row>
        <row>
         <entry><literal>ID</literal></entry>
-        <entry>ISO day of the week, Monday(<literal>1</>) to Sunday(<literal>7</>)</entry>
+        <entry>ISO 8601 day of the week, Monday (<literal>1</>) to Sunday (<literal>7</>)</entry>
        </row>
        <row>
         <entry><literal>W</literal></entry>
-        <entry>week of month (1-5) (The first week starts on the first day of the month.)</entry>
+        <entry>week of month (1-5) (the first week starts on the first day of the month)</entry>
        </row>
        <row>
         <entry><literal>WW</literal></entry>
-        <entry>week number of year (1-53) (The first week starts on the first day of the year.)</entry>
+        <entry>week number of year (1-53) (the first week starts on the first day of the year)</entry>
        </row>
        <row>
         <entry><literal>IW</literal></entry>
-        <entry>ISO week number of year (01 - 53; the first Thursday of the new year is in week 1.)</entry>
+        <entry>week number of ISO 8601 week-numbering year (01-53; the first Thursday of the year is in week 1)</entry>
        </row>
        <row>
         <entry><literal>CC</literal></entry>
-        <entry>century (2 digits) (The twenty-first century starts on 2001-01-01.)</entry>
+        <entry>century (2 digits) (the twenty-first century starts on 2001-01-01)</entry>
        </row>
        <row>
         <entry><literal>J</literal></entry>
@@ -5796,7 +5796,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        Casting does not have this behavior.
       </para>
      </listitem>
-  
+
      <listitem>
       <para>
        Ordinary text is allowed in <function>to_char</function>
@@ -5859,16 +5859,16 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
-       An ISO week date (as distinct from a Gregorian date) can be
-       specified to <function>to_timestamp</function> and
+       An ISO 8601 week-numbering date (as distinct from a Gregorian date)
+       can be specified to <function>to_timestamp</function> and
        <function>to_date</function> in one of two ways:
        <itemizedlist>
         <listitem>
          <para>
-          Year, week, and weekday:  for example <literal>to_date('2006-42-4',
-          'IYYY-IW-ID')</literal> returns the date
-          <literal>2006-10-19</literal>.  If you omit the weekday it
-          is assumed to be 1 (Monday).
+          Year, week number, and weekday:  for
+          example <literal>to_date('2006-42-4', 'IYYY-IW-ID')</literal>
+          returns the date <literal>2006-10-19</literal>.
+          If you omit the weekday it is assumed to be 1 (Monday).
          </para>
         </listitem>
         <listitem>
@@ -5880,13 +5880,25 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </itemizedlist>
       </para>
       <para>
-       Attempting to construct a date using a mixture of ISO week and
-       Gregorian date fields is nonsensical, and will cause an error.  In the
-       context of an ISO year, the concept of a <quote>month</> or <quote>day
-       of month</> has no meaning.  In the context of a Gregorian year, the
-       ISO week has no meaning.  Users should avoid mixing Gregorian and
-       ISO date specifications.
+       Attempting to enter a date using a mixture of ISO 8601 week-numbering
+       fields and Gregorian date fields is nonsensical, and will cause an
+       error.  In the context of an ISO 8601 week-numbering year, the
+       concept of a <quote>month</> or <quote>day of month</> has no
+       meaning.  In the context of a Gregorian year, the ISO week has no
+       meaning.
       </para>
+      <caution>
+       <para>
+        While <function>to_date</function> will reject a mixture of
+        Gregorian and ISO week-numbering date
+        fields, <function>to_char</function> will not, since output format
+        specifications like <literal>YYYY-MM-DD (IYYY-IDDD)</> can be
+        useful.  But avoid writing something like <literal>IYYY-MM-DD</>;
+        that would yield surprising results near the start of the year.
+        (See <xref linkend="functions-datetime-extract"> for more
+        information.)
+       </para>
+      </caution>
      </listitem>
 
      <listitem>
@@ -7090,8 +7102,8 @@ SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>dow</literal></term>
       <listitem>
        <para>
-        The day of the week as Sunday(<literal>0</>) to
-        Saturday(<literal>6</>)
+        The day of the week as Sunday (<literal>0</>) to
+        Saturday (<literal>6</>)
        </para>
 
 <screen>
@@ -7173,8 +7185,8 @@ SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>isodow</literal></term>
       <listitem>
        <para>
-        The day of the week as Monday(<literal>1</>) to
-        Sunday(<literal>7</>)
+        The day of the week as Monday (<literal>1</>) to
+        Sunday (<literal>7</>)
        </para>
 
 <screen>
@@ -7193,7 +7205,8 @@ SELECT EXTRACT(ISODOW FROM TIMESTAMP '2001-02-18 20:38:40');
       <term><literal>isoyear</literal></term>
       <listitem>
        <para>
-        The <acronym>ISO</acronym> 8601 year that the date falls in (not applicable to intervals)
+        The <acronym>ISO</acronym> 8601 week-numbering year that the date
+        falls in (not applicable to intervals)
        </para>
 
 <screen>
@@ -7204,7 +7217,11 @@ SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
 </screen>
 
        <para>
-        Each <acronym>ISO</acronym> year begins with the Monday of the week containing the 4th of January, so in early January or late December the <acronym>ISO</acronym> year may be different from the Gregorian year.  See the <literal>week</literal> field for more information.
+        Each <acronym>ISO</acronym> 8601 week-numbering year begins with the
+        Monday of the week containing the 4th of January, so in early
+        January or late December the <acronym>ISO</acronym> year may be
+        different from the Gregorian year.  See the <literal>week</literal>
+        field for more information.
        </para>
        <para>
         This field is not available in PostgreSQL releases prior to 8.3.
@@ -7364,14 +7381,14 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
       <term><literal>week</literal></term>
       <listitem>
        <para>
-        The number of the week of the year that the day is in.  By definition
-        (<acronym>ISO</acronym> 8601), weeks start on Mondays and the first
+        The number of the <acronym>ISO</acronym> 8601 week-numbering week of
+        the year.  By definition, ISO weeks start on Mondays and the first
         week of a year contains January 4 of that year.  In other words, the
         first Thursday of a year is in week 1 of that year.
        </para>
        <para>
-        In the ISO definition, it is possible for early-January dates to be
-        part of the 52nd or 53rd week of the previous year, and for
+        In the ISO week-numbering system, it is possible for early-January
+        dates to be part of the 52nd or 53rd week of the previous year, and for
         late-December dates to be part of the first week of the next year.
         For example, <literal>2005-01-01</> is part of the 53rd week of year
         2004, and <literal>2006-01-01</> is part of the 52nd week of year
