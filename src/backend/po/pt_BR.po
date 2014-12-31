@@ -13759,7 +13759,7 @@ msgstr "matriz deve ter número par de elementos"
 #: replication/logical/logicalfuncs.c:404
 #, c-format
 msgid "logical decoding output plugin \"%s\" produces binary output, but \"%s\" expects textual data"
-msgstr "plugin de saída de decodificação lógica \"%s\" produz saída binária, mas \"%s\" espera dados textuais" 
+msgstr "plugin de saída de decodificação lógica \"%s\" produz saída binária, mas \"%s\" espera dados textuais"
 
 #: replication/logical/reorderbuffer.c:2100
 #, c-format
