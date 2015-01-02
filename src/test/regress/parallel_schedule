@@ -78,15 +78,12 @@ ignore: random
 # ----------
 # Another group of parallel tests
 # ----------
-test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update delete namespace prepared_xacts
+test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update namespace prepared_xacts delete
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: brin gin gist spgist privileges security_label collate matview lock replica_identity object_address
-
-# rowsecurity creates an event trigger, so don't run it in parallel
-test: rowsecurity
+test: brin gin gist spgist privileges security_label collate matview lock replica_identity rowsecurity object_address
 
 # ----------
 # Another group of parallel tests
