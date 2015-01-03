@@ -458,9 +458,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         By default, a standby server restores WAL records from the
         primary as soon as possible. It may be useful to have a time-delayed
-        copy of the data, offering various options to correct data loss errors.
+        copy of the data, offering opportunities to correct data loss errors.
         This parameter allows you to delay recovery by a fixed period of time,
-        specified in milliseconds if no unit is specified.  For example, if
+        measured in milliseconds if no unit is specified.  For example, if
         you set this parameter to <literal>5min</literal>, the standby will
         replay each transaction commit only when the system time on the standby
         is at least five minutes past the commit time reported by the master.
@@ -469,27 +469,26 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         It is possible that the replication delay between servers exceeds the
         value of this parameter, in which case no delay is added.
         Note that the delay is calculated between the WAL timestamp as written
-        on master and the time on the current standby. Delays
-        in transfer because of networks or cascading replication configurations
+        on master and the current time on the standby. Delays in transfer
+        because of network lag or cascading replication configurations
         may reduce the actual wait time significantly. If the system
         clocks on master and standby are not synchronized, this may lead to
         recovery applying records earlier than expected; but that is not a
-        major issue because useful settings of the parameter are much larger
-        than typical time deviations between servers. Be careful to allow for
-        different timezone settings on master and standby.
+        major issue because useful settings of this parameter are much larger
+        than typical time deviations between servers.
        </para>
        <para>
-        The delay occurs only on WAL records for COMMIT and Restore Points.
-        Other records may be replayed earlier than the specified delay, which
-        is not an issue for MVCC though it may potentially increase the number
-        of recovery conflicts generated.
+        The delay occurs only on WAL records for transaction commits.
+        Other records are replayed as quickly as possible, which
+        is not a problem because MVCC visibility rules ensure their effects
+        are not visible until the corresponding commit record is applied.
        </para>
        <para>
         The delay occurs until the standby is promoted or triggered. After that
         the standby will end recovery without further waiting.
        </para>
        <para>
-        This parameter is intended for use with streaming replication deployments,
+        This parameter is intended for use with streaming replication deployments;
         however, if the parameter is specified it will be honored in all cases.
         Synchronous replication is not affected by this setting because there is
         not yet any setting to request synchronous apply of transaction commits.
