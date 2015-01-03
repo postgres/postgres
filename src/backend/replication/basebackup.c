@@ -404,6 +404,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 					errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
 			}
 
+			/* send the WAL file itself */
 			_tarWriteHeader(pathbuf, NULL, &statbuf);
 
 			while ((cnt = fread(buf, 1, Min(sizeof(buf), XLogSegSize - len), fp)) > 0)
@@ -428,7 +429,17 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			}
 
 			/* XLogSegSize is a multiple of 512, so no need for padding */
+
 			FreeFile(fp);
+
+			/*
+			 * Mark file as archived, otherwise files can get archived again
+			 * after promotion of a new node. This is in line with
+			 * walreceiver.c always doing a XLogArchiveForceDone() after a
+			 * complete segment.
+			 */
+			StatusFilePath(pathbuf, walFiles[i], ".done");
+			sendFileWithContent(pathbuf, "");
 		}
 
 		/*
@@ -452,6 +463,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 						 errmsg("could not stat file \"%s\": %m", pathbuf)));
 
 			sendFile(pathbuf, pathbuf, &statbuf, false);
+
+			/* unconditionally mark file as archived */
+			StatusFilePath(pathbuf, fname, ".done");
+			sendFileWithContent(pathbuf, "");
 		}
 
 		/* Send CopyDone message for the last tar file */
@@ -900,6 +915,15 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
 			}
 			size += 512;		/* Size of the header just added */
+
+			/*
+			 * Also send archive_status directory (by hackishly reusing
+			 * statbuf from above ...).
+			 */
+			if (!sizeonly)
+				_tarWriteHeader("./pg_xlog/archive_status", NULL, &statbuf);
+			size += 512;		/* Size of the header just added */
+
 			continue;			/* don't recurse into pg_xlog */
 		}
 

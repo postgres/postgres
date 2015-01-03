@@ -28,6 +28,7 @@
 #include <zlib.h>
 #endif
 
+#include "common/string.h"
 #include "getopt_long.h"
 
 #include "receivelog.h"
@@ -266,7 +267,7 @@ LogStreamerMain(logstreamer_param *param)
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
 						   reached_end_position, standby_message_timeout,
-						   NULL))
+						   NULL, true))
 
 		/*
 		 * Any errors will already have been reported in the function process,
@@ -290,6 +291,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	logstreamer_param *param;
 	uint32		hi,
 				lo;
+	char		statusdir[MAXPGPATH];
 
 	param = pg_malloc0(sizeof(logstreamer_param));
 	param->timeline = timeline;
@@ -324,13 +326,23 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 		/* Error message already written in GetConnection() */
 		exit(1);
 
-	/*
-	 * Always in plain format, so we can write to basedir/pg_xlog. But the
-	 * directory entry in the tar file may arrive later, so make sure it's
-	 * created before we start.
-	 */
 	snprintf(param->xlogdir, sizeof(param->xlogdir), "%s/pg_xlog", basedir);
-	verify_dir_is_empty_or_create(param->xlogdir);
+
+	/*
+	 * Create pg_xlog/archive_status (and thus pg_xlog) so we can can write to
+	 * basedir/pg_xlog as the directory entry in the tar file may arrive
+	 * later.
+	 */
+	snprintf(statusdir, sizeof(statusdir), "%s/pg_xlog/archive_status",
+			 basedir);
+
+	if (pg_mkdir_p(statusdir, S_IRWXU) != 0 && errno != EEXIST)
+	{
+		fprintf(stderr,
+				_("%s: could not create directory \"%s\": %s\n"),
+				progname, statusdir, strerror(errno));
+		disconnect_and_exit(1);
+	}
 
 	/*
 	 * Start a child process and tell it to start streaming. On Unix, this is
@@ -1003,10 +1015,12 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					{
 						/*
 						 * When streaming WAL, pg_xlog will have been created
-						 * by the wal receiver process, so just ignore failure
-						 * on that.
+						 * by the wal receiver process. So just ignore creation
+						 * failures on related directories.
 						 */
-						if (!streamwal || strcmp(filename + strlen(filename) - 8, "/pg_xlog") != 0)
+						if (!((pg_str_endswith(filename, "/pg_xlog") ||
+							   pg_str_endswith(filename, "/archive_status")) &&
+							  errno == EEXIST))
 						{
 							fprintf(stderr,
 							_("%s: could not create directory \"%s\": %s\n"),
