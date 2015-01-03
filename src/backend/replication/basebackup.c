@@ -257,7 +257,9 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		while (true)
 		{
 			/* Send another xlog segment */
+			char		sn[MAXPGPATH];
 			char		fn[MAXPGPATH];
+			char		pathbuf[MAXPGPATH];
 			int			i;
 
 			XLogFilePath(fn, ThisTimeLineID, logid, logseg);
@@ -290,6 +292,15 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			 * boundary, so padding is never necessary.
 			 */
 
+			/*
+			 * Mark file as archived, otherwise files can get archived again
+			 * after promotion of a new node. This is in line with
+			 * walreceiver.c always doing a XLogArchiveForceDone() after a
+			 * complete segment.
+			 */
+			XLogFileName(sn, ThisTimeLineID, logid, logseg);
+			StatusFilePath(pathbuf, sn, ".done");
+			sendFileWithContent(pathbuf, "");
 
 			/* Advance to the next WAL file */
 			NextLogSeg(logid, logseg);
@@ -715,6 +726,15 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
 			}
 			size += 512;		/* Size of the header just added */
+
+			/*
+			 * Also send archive_status directory (by hackishly reusing
+			 * statbuf from above ...).
+			 */
+			if (!sizeonly)
+				_tarWriteHeader("./pg_xlog/archive_status", NULL, &statbuf);
+			size += 512;		/* Size of the header just added */
+
 			continue;			/* don't recurse into pg_xlog */
 		}
 
