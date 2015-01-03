@@ -5752,7 +5752,7 @@ recoveryApplyDelay(XLogRecord *record)
 	int			microsecs;
 
 	/* nothing to do if no delay configured */
-	if (recovery_min_apply_delay == 0)
+	if (recovery_min_apply_delay <= 0)
 		return false;
 
 	/*
