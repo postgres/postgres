@@ -342,7 +342,7 @@ StreamLog(void)
 
 	ReceiveXlogStream(conn, startpos, starttli, NULL, basedir,
 					  stop_streaming, standby_message_timeout, ".partial",
-					  synchronous);
+					  synchronous, false);
 
 	PQfinish(conn);
 	conn = NULL;
