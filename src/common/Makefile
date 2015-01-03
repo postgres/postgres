@@ -23,7 +23,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS_COMMON = relpath.o
+OBJS_COMMON = relpath.o string.o
 
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o
 
