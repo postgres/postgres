@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 
 #include "access/transam.h"
+#include "common/string.h"
 #include "miscadmin.h"
 #include "replication/slot.h"
 #include "storage/fd.h"
@@ -780,24 +781,6 @@ CheckSlotRequirements(void)
 }
 
 /*
- * Returns whether the string `str' has the postfix `end'.
- */
-static bool
-string_endswith(const char *str, const char *end)
-{
-	size_t		slen = strlen(str);
-	size_t		elen = strlen(end);
-
-	/* can't be a postfix if longer */
-	if (elen > slen)
-		return false;
-
-	/* compare the end of the strings */
-	str += slen - elen;
-	return strcmp(str, end) == 0;
-}
-
-/*
  * Flush all replication slots to disk.
  *
  * This needn't actually be part of a checkpoint, but it's a convenient
@@ -864,7 +847,7 @@ StartupReplicationSlots(void)
 			continue;
 
 		/* we crashed while a slot was being setup or deleted, clean up */
-		if (string_endswith(replication_de->d_name, ".tmp"))
+		if (pg_str_endswith(replication_de->d_name, ".tmp"))
 		{
 			if (!rmtree(path, true))
 			{
