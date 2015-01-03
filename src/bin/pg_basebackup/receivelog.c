@@ -44,6 +44,35 @@ const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 static int	walfile = -1;
 
 
+static bool
+mark_file_as_archived(const char *basedir, const char *fname)
+{
+	int fd;
+	static char tmppath[MAXPGPATH];
+
+	snprintf(tmppath, sizeof(tmppath), "%s/archive_status/%s.done",
+			 basedir, fname);
+
+	fd = open(tmppath, O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+	{
+		fprintf(stderr, _("%s: could not create archive status file \"%s\": %s\n"),
+				progname, tmppath, strerror(errno));
+		return false;
+	}
+
+	if (fsync(fd) != 0)
+	{
+		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
+				progname, tmppath, strerror(errno));
+		return false;
+	}
+
+	close(fd);
+
+	return true;
+}
+
 /*
  * Open a new WAL file in the specified directory. Store the name
  * (not including the full directory) in namebuf. Assumes there is
@@ -133,7 +162,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
  * completed writing the whole segment.
  */
 static bool
-close_walfile(char *basedir, char *walname, bool segment_complete)
+close_walfile(char *basedir, char *walname, bool segment_complete,
+			  bool mark_done)
 {
 	off_t		currpos = lseek(walfile, 0, SEEK_CUR);
 
@@ -183,6 +213,19 @@ close_walfile(char *basedir, char *walname, bool segment_complete)
 		fprintf(stderr,
 				_("%s: not renaming \"%s\", segment is not complete\n"),
 				progname, walname);
+
+	/*
+	 * Mark file as archived if requested by the caller - pg_basebackup needs
+	 * to do so as files can otherwise get archived again after promotion of a
+	 * new node. This is in line with walreceiver.c always doing a
+	 * XLogArchiveForceDone() after a complete segment.
+	 */
+	if (currpos == XLOG_SEG_SIZE && mark_done)
+	{
+		/* writes error message if failed */
+		if (!mark_file_as_archived(basedir, walname))
+			return false;
+	}
 
 	return true;
 }
@@ -284,7 +327,8 @@ bool
 ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				  char *sysidentifier, char *basedir,
 				  stream_stop_callback stream_stop,
-				  int standby_message_timeout, bool rename_partial)
+				  int standby_message_timeout, bool rename_partial,
+				  bool mark_done)
 {
 	char		query[128];
 	char		current_walfile_name[MAXPGPATH];
@@ -343,7 +387,6 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		return false;
 	}
 	PQclear(res);
-
 	/*
 	 * Receive the actual xlog data
 	 */
@@ -367,7 +410,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		if (stream_stop && stream_stop(blockpos, timeline, false))
 		{
 			if (walfile != -1 && !close_walfile(basedir, current_walfile_name,
-												rename_partial))
+												rename_partial, mark_done))
 				/* Potential error message is written by close_walfile */
 				goto error;
 			return true;
@@ -579,7 +622,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			/* Did we reach the end of a WAL segment? */
 			if (blockpos.xrecoff % XLOG_SEG_SIZE == 0)
 			{
-				if (!close_walfile(basedir, current_walfile_name, false))
+				if (!close_walfile(basedir, current_walfile_name, false,
+								   mark_done))
 					/* Error message written in close_walfile() */
 					goto error;
 

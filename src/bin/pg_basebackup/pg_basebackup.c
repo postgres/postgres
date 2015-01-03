@@ -259,7 +259,7 @@ LogStreamerMain(logstreamer_param *param)
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
 						   reached_end_position, standby_message_timeout,
-						   true))
+						   true, true))
 
 		/*
 		 * Any errors will already have been reported in the function process,
@@ -281,6 +281,7 @@ static void
 StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 {
 	logstreamer_param *param;
+	char		statusdir[MAXPGPATH];
 
 	param = xmalloc0(sizeof(logstreamer_param));
 	param->timeline = timeline;
@@ -314,13 +315,23 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 		/* Error message already written in GetConnection() */
 		exit(1);
 
-	/*
-	 * Always in plain format, so we can write to basedir/pg_xlog. But the
-	 * directory entry in the tar file may arrive later, so make sure it's
-	 * created before we start.
-	 */
 	snprintf(param->xlogdir, sizeof(param->xlogdir), "%s/pg_xlog", basedir);
-	verify_dir_is_empty_or_create(param->xlogdir);
+
+	/*
+	 * Create pg_xlog/archive_status (and thus pg_xlog) so we can can write to
+	 * basedir/pg_xlog as the directory entry in the tar file may arrive
+	 * later.
+	 */
+	snprintf(statusdir, sizeof(statusdir), "%s/pg_xlog/archive_status",
+			 basedir);
+
+	if (pg_mkdir_p(statusdir, S_IRWXU) != 0 && errno != EEXIST)
+	{
+		fprintf(stderr,
+				_("%s: could not create directory \"%s\": %s\n"),
+				progname, statusdir, strerror(errno));
+		disconnect_and_exit(1);
+	}
 
 	/*
 	 * Start a child process and tell it to start streaming. On Unix, this is
@@ -403,6 +414,23 @@ verify_dir_is_empty_or_create(char *dirname)
 	}
 }
 
+/*
+ * Returns whether the string `str' has the postfix `end'.
+ */
+static bool
+pg_str_endswith(const char *str, const char *end)
+{
+	size_t		slen = strlen(str);
+	size_t		elen = strlen(end);
+
+	/* can't be a postfix if longer */
+	if (elen > slen)
+		return false;
+
+	/* compare the end of the strings */
+	str += slen - elen;
+	return strcmp(str, end) == 0;
+}
 
 /*
  * Print a progress report based on the global variables. If verbose output
@@ -835,10 +863,12 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					{
 						/*
 						 * When streaming WAL, pg_xlog will have been created
-						 * by the wal receiver process, so just ignore failure
-						 * on that.
+						 * by the wal receiver process. So just ignore creation
+						 * failures on related directories.
 						 */
-						if (!streamwal || strcmp(filename + strlen(filename) - 8, "/pg_xlog") != 0)
+						if (!((pg_str_endswith(filename, "/pg_xlog") ||
+							   pg_str_endswith(filename, "/archive_status")) &&
+							  errno == EEXIST))
 						{
 							fprintf(stderr,
 							_("%s: could not create directory \"%s\": %s\n"),
