@@ -115,7 +115,7 @@ test_timing(int32 duration)
 				end_time,
 				temp;
 
-	total_time = duration > 0 ? duration * 1000000 : 0;
+	total_time = duration > 0 ? duration * INT64CONST(1000000) : 0;
 
 	INSTR_TIME_SET_CURRENT(start_time);
 	cur = INSTR_TIME_GET_MICROSEC(start_time);
