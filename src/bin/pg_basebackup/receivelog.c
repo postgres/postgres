@@ -62,6 +62,9 @@ mark_file_as_archived(const char *basedir, const char *fname)
 	{
 		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 				progname, tmppath, strerror(errno));
+
+		close(fd);
+
 		return false;
 	}
 
