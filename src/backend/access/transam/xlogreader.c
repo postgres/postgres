@@ -833,7 +833,6 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	XLogRecPtr	found = InvalidXLogRecPtr;
 	uint32		pageHeaderSize;
 	XLogPageHeader header;
-	XLogRecord *record;
 	int			readLen;
 	char	   *errormsg;
 
@@ -875,7 +874,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	 * because either we're at the first record after the beginning of a page
 	 * or we just jumped over the remaining data of a continuation.
 	 */
-	while ((record = XLogReadRecord(state, tmpRecPtr, &errormsg)))
+	while (XLogReadRecord(state, tmpRecPtr, &errormsg) != NULL)
 	{
 		/* continue after the record */
 		tmpRecPtr = InvalidXLogRecPtr;
