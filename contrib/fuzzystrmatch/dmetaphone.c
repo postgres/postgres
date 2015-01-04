@@ -362,7 +362,10 @@ StringAt(metastring *s, int start, int length,...)
 	{
 		test = va_arg(ap, char *);
 		if (*test && (strncmp(pos, test, length) == 0))
+		{
+			va_end(ap);
 			return 1;
+		}
 	}
 	while (strcmp(test, "") != 0);
 
