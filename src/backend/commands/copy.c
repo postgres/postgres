@@ -1707,7 +1707,9 @@ BeginCopyTo(Relation rel,
 						 errmsg("could not open file \"%s\" for writing: %m",
 								cstate->filename)));
 
-			fstat(fileno(cstate->copy_file), &st);
+			if (fstat(fileno(cstate->copy_file), &st))
+				elog(ERROR, "could not stat file \"%s\": %m", cstate->filename);
+
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2718,7 +2720,9 @@ BeginCopyFrom(Relation rel,
 						 errmsg("could not open file \"%s\" for reading: %m",
 								cstate->filename)));
 
-			fstat(fileno(cstate->copy_file), &st);
+			if (fstat(fileno(cstate->copy_file), &st))
+				elog(ERROR, "could not stat file \"%s\": %m", cstate->filename);
+
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
