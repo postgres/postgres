@@ -6111,6 +6111,7 @@ DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
 	int		nmembers;
 	MultiXactMember *members;
 	bool	result = false;
+	LOCKMODE wanted = tupleLockExtraInfo[lockmode].hwlock;
 
 	allow_old = !(infomask & HEAP_LOCK_MASK) && HEAP_XMAX_IS_LOCKED_ONLY(infomask);
 	nmembers = GetMultiXactIdMembers(multi, &members, allow_old);
@@ -6121,11 +6122,12 @@ DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
 		for (i = 0; i < nmembers; i++)
 		{
 			TransactionId		memxid;
-			LockTupleMode		memlockmode;
+			LOCKMODE			memlockmode;
 
 			memlockmode = LOCKMODE_from_mxstatus(members[i].status);
+
 			/* ignore members that don't conflict with the lock we want */
-			if (!DoLockModesConflict(memlockmode, lockmode))
+			if (!DoLockModesConflict(memlockmode, wanted))
 				continue;
 
 			/* ignore members from current xact */
