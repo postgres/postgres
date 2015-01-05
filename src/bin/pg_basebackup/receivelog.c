@@ -906,7 +906,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			{
 				if (!ProcessXLogDataMsg(conn, copybuf, r, &blockpos,
 										timeline, basedir, stream_stop,
-										partial_suffix, true))
+										partial_suffix, mark_done))
 					goto error;
 
 				/*
