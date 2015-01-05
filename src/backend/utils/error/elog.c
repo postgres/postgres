@@ -1082,7 +1082,7 @@ errhidestmt(bool hide_stmt)
 }
 
 /*
- * errhidestmt --- optionally suppress CONTEXT: field of log entry
+ * errhidecontext --- optionally suppress CONTEXT: field of log entry
  *
  * This should only be used for verbose debugging messages where the repeated
  * inclusion of CONTEXT: bloats the log volume too much.
