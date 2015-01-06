@@ -3,7 +3,7 @@
  * compat.c
  *		Reimplementations of various backend functions.
  *
- * Portions Copyright (c) 2013-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2015, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/pg_xlogdump/compat.c

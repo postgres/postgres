@@ -2,7 +2,7 @@
  *
  * pg_xlogdump.c - decode and display WAL
  *
- * Copyright (c) 2013-2014, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2015, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/pg_xlogdump/pg_xlogdump.c

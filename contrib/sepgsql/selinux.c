@@ -5,7 +5,7 @@
  * Interactions between userspace and selinux in kernelspace,
  * using libselinux api.
  *
- * Copyright (c) 2010-2014, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2015, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */

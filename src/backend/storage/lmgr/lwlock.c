@@ -18,7 +18,7 @@
  * meaning of the variable is up to the caller, the lightweight lock code
  * just assigns and compares it.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

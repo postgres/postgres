@@ -2,7 +2,7 @@
  * lockwaitpolicy.h
  *	  Header file for LockWaitPolicy enum.
  *
- * Copyright (c) 2014, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2015, PostgreSQL Global Development Group
  *
  * src/include/utils/lockwaitpolicy.h
  *-------------------------------------------------------------------------

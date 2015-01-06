@@ -14,7 +14,7 @@
  * These lookup tables are for normal, not "reflected", in Williams' terms,
  * CRC.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc_tables.h
