@@ -61,7 +61,7 @@ sub wanted
 	untie @lines;
 }
 
-print
-"Manually update src/interfaces/libpq/libpq.rc.in too.\n";
-print
-"Also update ./COPYRIGHT and doc/src/sgml/legal.sgml in head and all back branches.\n";
+print "Manually update:\n";
+print "  ./src/interfaces/libpq/libpq.rc.in in head\n";
+print "  ./doc/src/sgml/legal.sgml in head and back branches\n";
+print "  ./COPYRIGHT in back branches\n";
