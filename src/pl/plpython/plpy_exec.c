@@ -89,7 +89,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("unsupported set function return mode"),
-							 errdetail("PL/Python set-returning functions only support returning only value per call.")));
+							 errdetail("PL/Python set-returning functions only support returning one value per call.")));
 				}
 				rsi->returnMode = SFRM_ValuePerCall;
 
