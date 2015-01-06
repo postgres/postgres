@@ -14769,7 +14769,7 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 		}
 		appendPQExpBufferStr(query, ";\n");
 	}
-	appendPQExpBuffer(labelq, "EVENT TRIGGER %s ",
+	appendPQExpBuffer(labelq, "EVENT TRIGGER %s",
 					  fmtId(evtinfo->dobj.name));
 
 	ArchiveEntry(fout, evtinfo->dobj.catId, evtinfo->dobj.dumpId,
@@ -14778,7 +14778,7 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 				 query->data, "", NULL, NULL, 0, NULL, NULL);
 
 	dumpComment(fout, labelq->data,
-				NULL, NULL,
+				NULL, evtinfo->evtowner,
 				evtinfo->dobj.catId, 0, evtinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(query);
