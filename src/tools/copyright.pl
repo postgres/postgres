@@ -5,6 +5,8 @@
 # Copyright (c) 2011-2015, PostgreSQL Global Development Group
 #
 # src/tools/copyright.pl
+#
+# FYI, Tie adds a trailing newline on the last line if missing.
 #################################################################
 
 use strict;
