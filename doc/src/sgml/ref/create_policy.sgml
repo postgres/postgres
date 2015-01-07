@@ -39,16 +39,18 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   </para>
 
   <para>
-   A policy is an expression which is added to the security-barrier
-   qualifications of queries which are run against the table the policy is on,
-   or an expression which is added to the with-check options for a table and
-   which is applied to rows which would be added to the table.
-   The security-barrier qualifications will always be evaluated prior to any
-   user-defined functions or user-provided WHERE clauses, while the with-check
-   expression will be evaluated against the rows which are going to be added to
-   the table.  By adding policies to a table, a user can limit the rows which a
-   given user can select, insert, update, or delete.  This capability is also
-   known as Row Level Security or RLS.
+   A policy limits the ability to SELECT, INSERT, UPDATE, or DELETE rows
+   in a table to those rows which match the relevant policy expression.
+   Existing table rows are checked against the expression specified via
+   USING, while new rows that would be created via INSERT or UPDATE are
+   checked against the expression specified via WITH CHECK.  Generally,
+   the system will enforce filter conditions imposed using security
+   policies prior to qualifications that appear in the query itself, in
+   order to the prevent the inadvertent exposure of the protected data to
+   user-defined functions which might not be trustworthy.  However,
+   functions and operators marked by the system (or the system
+   administrator) as LEAKPROOF may be evaluated before policy
+   expressions, as they are assumed to be trustworthy.
   </para>
 
   <para>
