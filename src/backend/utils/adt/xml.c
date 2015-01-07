@@ -3286,19 +3286,34 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 	if (cur->type == XML_ELEMENT_NODE)
 	{
 		xmlBufferPtr buf;
+		xmlNodePtr	cur_copy;
 
 		buf = xmlBufferCreate();
+
+		/*
+		 * The result of xmlNodeDump() won't contain namespace definitions
+		 * from parent nodes, but xmlCopyNode() duplicates a node along with
+		 * its required namespace definitions.
+		 */
+		cur_copy = xmlCopyNode(cur, 1);
+
+		if (cur_copy == NULL)
+			xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not copy node");
+
 		PG_TRY();
 		{
-			xmlNodeDump(buf, NULL, cur, 0, 1);
+			xmlNodeDump(buf, NULL, cur_copy, 0, 1);
 			result = xmlBuffer_to_xmltype(buf);
 		}
 		PG_CATCH();
 		{
+			xmlFreeNode(cur_copy);
 			xmlBufferFree(buf);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
+		xmlFreeNode(cur_copy);
 		xmlBufferFree(buf);
 	}
 	else
