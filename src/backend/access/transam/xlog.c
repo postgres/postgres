@@ -5646,7 +5646,6 @@ StartupXLOG(void)
 	XLogRecPtr	RecPtr,
 				checkPointLoc,
 				EndOfLog;
-	XLogSegNo	startLogSegNo;
 	TimeLineID	PrevTimeLineID;
 	XLogRecord *record;
 	TransactionId oldestActiveXID;
@@ -6633,7 +6632,6 @@ StartupXLOG(void)
 	 */
 	record = ReadRecord(xlogreader, LastRec, PANIC, false);
 	EndOfLog = EndRecPtr;
-	XLByteToSeg(EndOfLog, startLogSegNo);
 
 	/*
 	 * Complain if we did not roll forward far enough to render the backup
@@ -6741,9 +6739,6 @@ StartupXLOG(void)
 	 * buffer cache using the block containing the last record from the
 	 * previous incarnation.
 	 */
-	openLogSegNo = startLogSegNo;
-	openLogFile = XLogFileOpen(openLogSegNo);
-	openLogOff = 0;
 	Insert = &XLogCtl->Insert;
 	Insert->PrevBytePos = XLogRecPtrToBytePos(LastRec);
 	Insert->CurrBytePos = XLogRecPtrToBytePos(EndOfLog);
