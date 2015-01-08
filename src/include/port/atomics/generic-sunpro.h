@@ -25,14 +25,14 @@
 #define pg_compiler_barrier_impl()	__compiler_barrier()
 
 #ifndef pg_memory_barrier_impl
-#	define pg_memory_barrier_impl()		__machine_rw_barrier()
-#endif
-#ifndef pg_read_barrier_impl
 /*
- * Despite the name this is actually a full barrier. Expanding to mfence and
+ * Despite the name this is actually a full barrier. Expanding to mfence/
  * membar #StoreStore | #LoadStore | #StoreLoad | #LoadLoad on x86/sparc
  * respectively.
  */
+#	define pg_memory_barrier_impl()		__machine_rw_barrier()
+#endif
+#ifndef pg_read_barrier_impl
 #	define pg_read_barrier_impl()		__machine_r_barrier()
 #endif
 #ifndef pg_write_barrier_impl
