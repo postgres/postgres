@@ -1216,7 +1216,7 @@ PostmasterMain(int argc, char *argv[])
 	 * normal case on Windows, which offers neither fork() nor sigprocmask().
 	 */
 	if (pthread_is_threaded_np() != 0)
-		ereport(LOG,
+		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("postmaster became multithreaded during startup"),
 		 errhint("Set the LC_ALL environment variable to a valid locale.")));
@@ -4781,11 +4781,14 @@ ExitPostmaster(int status)
 	/*
 	 * There is no known cause for a postmaster to become multithreaded after
 	 * startup.  Recheck to account for the possibility of unknown causes.
+	 * This message uses LOG level, because an unclean shutdown at this point
+	 * would usually not look much different from a clean shutdown.
 	 */
 	if (pthread_is_threaded_np() != 0)
 		ereport(LOG,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("postmaster became multithreaded")));
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg_internal("postmaster became multithreaded"),
+		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
 #endif
 
 	/* should cleanup shared memory and kill all backends */
