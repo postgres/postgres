@@ -982,7 +982,6 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 
 		if (!mustwait)
 		{
-			/* XXX: remove before commit? */
 			LOG_LWDEBUG("LWLockAcquire", lock, "immediately acquired lock");
 			break;				/* got the lock */
 		}
