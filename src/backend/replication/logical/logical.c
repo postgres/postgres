@@ -162,6 +162,11 @@ StartupDecodingContext(List *output_plugin_options,
 	ctx->slot = slot;
 
 	ctx->reader = XLogReaderAllocate(read_page, ctx);
+	if (!ctx->reader)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
 	ctx->reader->private_data = ctx;
 
 	ctx->reorder = ReorderBufferAllocate();
