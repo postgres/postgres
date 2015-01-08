@@ -44,8 +44,15 @@ VACUUM (ANALYZE, FULL) vactst;
 
 CREATE TABLE vaccluster (i INT PRIMARY KEY);
 ALTER TABLE vaccluster CLUSTER ON vaccluster_pkey;
-INSERT INTO vaccluster SELECT * FROM vactst;
 CLUSTER vaccluster;
+
+CREATE FUNCTION do_analyze() RETURNS VOID VOLATILE LANGUAGE SQL
+	AS 'ANALYZE pg_am';
+CREATE FUNCTION wrap_do_analyze(c INT) RETURNS INT IMMUTABLE LANGUAGE SQL
+	AS 'SELECT $1 FROM do_analyze()';
+CREATE INDEX ON vactst(wrap_do_analyze(i));
+INSERT INTO vactst VALUES (1), (2);
+ANALYZE vactst;
 
 VACUUM FULL pg_am;
 VACUUM FULL pg_class;
