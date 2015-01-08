@@ -393,6 +393,9 @@
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
+/* Define to 1 if you have the `pthread_is_threaded_np' function. */
+#undef HAVE_PTHREAD_IS_THREADED_NP
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
