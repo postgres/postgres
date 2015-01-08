@@ -99,6 +99,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 				in_outer_xact,
 				use_own_xacts;
 	List	   *relations;
+	static bool in_vacuum = false;
 
 	/* sanity checks on options */
 	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
@@ -123,6 +124,14 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	}
 	else
 		in_outer_xact = IsInTransactionChain(isTopLevel);
+
+	/*
+	 * Due to static variables vac_context, anl_context and vac_strategy,
+	 * vacuum() is not reentrant.  This matters when VACUUM FULL or ANALYZE
+	 * calls a hostile index expression that itself calls ANALYZE.
+	 */
+	if (in_vacuum)
+		elog(ERROR, "%s cannot be executed from VACUUM or ANALYZE", stmttype);
 
 	/*
 	 * Send info about dead objects to the statistics collector, unless we are
@@ -219,6 +228,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	{
 		ListCell   *cur;
 
+		in_vacuum = true;
 		VacuumCostActive = (VacuumCostDelay > 0);
 		VacuumCostBalance = 0;
 
@@ -257,13 +267,13 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	}
 	PG_CATCH();
 	{
-		/* Make sure cost accounting is turned off after error */
+		in_vacuum = false;
 		VacuumCostActive = false;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	/* Turn off vacuum cost accounting */
+	in_vacuum = false;
 	VacuumCostActive = false;
 
 	/*
