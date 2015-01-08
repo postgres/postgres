@@ -51,6 +51,7 @@ const char *progname;
 
 
 static void startup_hacks(const char *progname);
+static void init_locale(int category, const char *locale);
 static void help(const char *progname);
 static void check_root(const char *progname);
 static char *get_current_username(const char *progname);
@@ -122,31 +123,31 @@ main(int argc, char *argv[])
 		char	   *env_locale;
 
 		if ((env_locale = getenv("LC_COLLATE")) != NULL)
-			pg_perm_setlocale(LC_COLLATE, env_locale);
+			init_locale(LC_COLLATE, env_locale);
 		else
-			pg_perm_setlocale(LC_COLLATE, "");
+			init_locale(LC_COLLATE, "");
 
 		if ((env_locale = getenv("LC_CTYPE")) != NULL)
-			pg_perm_setlocale(LC_CTYPE, env_locale);
+			init_locale(LC_CTYPE, env_locale);
 		else
-			pg_perm_setlocale(LC_CTYPE, "");
+			init_locale(LC_CTYPE, "");
 	}
 #else
-	pg_perm_setlocale(LC_COLLATE, "");
-	pg_perm_setlocale(LC_CTYPE, "");
+	init_locale(LC_COLLATE, "");
+	init_locale(LC_CTYPE, "");
 #endif
 
 #ifdef LC_MESSAGES
-	pg_perm_setlocale(LC_MESSAGES, "");
+	init_locale(LC_MESSAGES, "");
 #endif
 
 	/*
 	 * We keep these set to "C" always, except transiently in pg_locale.c; see
 	 * that file for explanations.
 	 */
-	pg_perm_setlocale(LC_MONETARY, "C");
-	pg_perm_setlocale(LC_NUMERIC, "C");
-	pg_perm_setlocale(LC_TIME, "C");
+	init_locale(LC_MONETARY, "C");
+	init_locale(LC_NUMERIC, "C");
+	init_locale(LC_TIME, "C");
 
 	/*
 	 * Now that we have absorbed as much as we wish to from the locale
@@ -276,6 +277,23 @@ startup_hacks(const char *progname)
 	}
 #endif   /* WIN32 */
 }
+
+
+/*
+ * Make the initial permanent setting for a locale category.  If that fails,
+ * perhaps due to LC_foo=invalid in the environment, use locale C.  If even
+ * that fails, perhaps due to out-of-memory, the entire startup fails with it.
+ * When this returns, we are guaranteed to have a setting for the given
+ * category's environment variable.
+ */
+static void
+init_locale(int category, const char *locale)
+{
+	if (pg_perm_setlocale(category, locale) == NULL &&
+		pg_perm_setlocale(category, "C") == NULL)
+		elog(FATAL, "could not adopt C locale");
+}
+
 
 
 /*
