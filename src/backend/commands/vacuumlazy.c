@@ -105,7 +105,7 @@ typedef struct LVRelStats
 	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
-	BlockNumber	pinned_pages;	/* # of pages we could not initially lock */
+	BlockNumber	pinskipped_pages; /* # of pages we skipped due to a pin */
 	double		scanned_tuples; /* counts only tuples on scanned pages */
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
@@ -356,19 +356,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							 get_namespace_name(RelationGetNamespace(onerel)),
 							 RelationGetRelationName(onerel),
 							 vacrelstats->num_index_scans);
-			appendStringInfo(&buf, _("pages: %u removed, %u remain\n"),
+			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u skipped due to pins\n"),
 							 vacrelstats->pages_removed,
-							 vacrelstats->rel_pages);
-			if (vacrelstats->pinned_pages > 0)
-			{
-				if (scan_all)
-					appendStringInfo(&buf, _("waited for %u buffer pins\n"),
-									 vacrelstats->pinned_pages);
-				else
-					appendStringInfo(&buf,
-									 _("skipped %u pages due to buffer pins\n"),
-									 vacrelstats->pinned_pages);
-			}
+							 vacrelstats->rel_pages,
+							 vacrelstats->pinskipped_pages);
 			appendStringInfo(&buf,
 							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"),
 							 vacrelstats->tuples_deleted,
@@ -634,8 +625,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* We need buffer cleanup lock so that we can prune HOT chains. */
 		if (!ConditionalLockBufferForCleanup(buf))
 		{
-			vacrelstats->pinned_pages++;
-
 			/*
 			 * If we're not scanning the whole relation to guard against XID
 			 * wraparound, it's OK to skip vacuuming a page.  The next vacuum
@@ -644,6 +633,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			if (!scan_all)
 			{
 				ReleaseBuffer(buf);
+				vacrelstats->pinskipped_pages++;
 				continue;
 			}
 
@@ -663,6 +653,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			{
 				UnlockReleaseBuffer(buf);
 				vacrelstats->scanned_pages++;
+				vacrelstats->pinskipped_pages++;
 				continue;
 			}
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -1129,15 +1120,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 nkeep);
 	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
 					 nunused);
-	if (vacrelstats->pinned_pages > 0)
-	{
-		if (scan_all)
-			appendStringInfo(&buf, _("Waited for %u buffer pins.\n"),
-							 vacrelstats->pinned_pages);
-		else
-			appendStringInfo(&buf, _("Skipped %u pages due to buffer pins.\n"),
-							 vacrelstats->pinned_pages);
-	}
+	appendStringInfo(&buf, _("Skipped %u pages due to buffer pins.\n"),
+					 vacrelstats->pinskipped_pages);
 	appendStringInfo(&buf, _("%u pages are entirely empty.\n"),
 					 empty_pages);
 	appendStringInfo(&buf, _("%s."),
