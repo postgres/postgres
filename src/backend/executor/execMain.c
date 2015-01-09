@@ -2024,7 +2024,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 * heap_lock_tuple() will throw an error, and so would any later
 			 * attempt to update or delete the tuple.  (We need not check cmax
 			 * because HeapTupleSatisfiesDirty will consider a tuple deleted
-			 * by our transaction dead, regardless of cmax.) Wee just checked
+			 * by our transaction dead, regardless of cmax.) We just checked
 			 * that priorXmax == xmin, so we can test that variable instead of
 			 * doing HeapTupleHeaderGetXmin again.
 			 */
