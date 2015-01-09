@@ -4,7 +4,7 @@ AVAIL_LANGUAGES  = de es fr it ja pl pt_BR ru zh_CN zh_TW
 GETTEXT_FILES    = + gettext-files
 GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
     GUC_check_errmsg GUC_check_errdetail GUC_check_errhint \
-    write_stderr yyerror parser_yyerror report_invalid_record
+    write_stderr yyerror parser_yyerror report_invalid_record:2
 GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
     GUC_check_errmsg:1:c-format \
     GUC_check_errdetail:1:c-format \
