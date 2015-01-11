@@ -765,10 +765,26 @@ static bool
 connectOptions2(PGconn *conn)
 {
 	/*
+	 * If user name was not given, fetch it.  (Most likely, the fetch will
+	 * fail, since the only way we get here is if pg_fe_getauthname() failed
+	 * during conninfo_add_defaults().  But now we want an error message.)
+	 */
+	if (conn->pguser == NULL || conn->pguser[0] == '\0')
+	{
+		if (conn->pguser)
+			free(conn->pguser);
+		conn->pguser = pg_fe_getauthname(&conn->errorMessage);
+		if (!conn->pguser)
+		{
+			conn->status = CONNECTION_BAD;
+			return false;
+		}
+	}
+
+	/*
 	 * If database name was not given, default it to equal user name
 	 */
-	if ((conn->dbName == NULL || conn->dbName[0] == '\0')
-		&& conn->pguser != NULL)
+	if (conn->dbName == NULL || conn->dbName[0] == '\0')
 	{
 		if (conn->dbName)
 			free(conn->dbName);
@@ -1967,6 +1983,7 @@ keep_going:						/* We will come back to here until there is
 					char		pwdbuf[BUFSIZ];
 					struct passwd pass_buf;
 					struct passwd *pass;
+					int			passerr;
 					uid_t		uid;
 					gid_t		gid;
 
@@ -1987,13 +2004,18 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 
-					pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
-
+					passerr = pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
 					if (pass == NULL)
 					{
-						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("local user with ID %d does not exist\n"),
-										  (int) uid);
+						if (passerr != 0)
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("could not look up local user ID %d: %s\n"),
+											  (int) uid,
+											  pqStrerror(passerr, sebuf, sizeof(sebuf)));
+						else
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("local user with ID %d does not exist\n"),
+											  (int) uid);
 						goto error_return;
 					}
 
@@ -4604,18 +4626,15 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 		}
 
 		/*
-		 * Special handling for "user" option
+		 * Special handling for "user" option.  Note that if pg_fe_getauthname
+		 * fails, we just leave the value as NULL; there's no need for this to
+		 * be an error condition if the caller provides a user name.  The only
+		 * reason we do this now at all is so that callers of PQconndefaults
+		 * will see a correct default (barring error, of course).
 		 */
 		if (strcmp(option->keyword, "user") == 0)
 		{
-			option->val = pg_fe_getauthname();
-			if (!option->val)
-			{
-				if (errorMessage)
-					printfPQExpBuffer(errorMessage,
-									  libpq_gettext("out of memory\n"));
-				return false;
-			}
+			option->val = pg_fe_getauthname(NULL);
 			continue;
 		}
 	}
@@ -5842,7 +5861,8 @@ pqGetHomeDirectory(char *buf, int bufsize)
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 
-	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+	(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
+	if (pwd == NULL)
 		return false;
 	strlcpy(buf, pwd->pw_dir, bufsize);
 	return true;

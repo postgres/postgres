@@ -26,8 +26,8 @@
 #include "common/username.h"
 
 /*
- * Returns the current user name in a static buffer, or NULL on error and
- * sets errstr
+ * Returns the current user name in a static buffer
+ * On error, returns NULL and sets *errstr to point to a palloc'd message
  */
 const char *
 get_user_name(char **errstr)
@@ -50,15 +50,17 @@ get_user_name(char **errstr)
 
 	return pw->pw_name;
 #else
-	/* UNLEN = 256, 'static' variable remains after function exit */
+	/* Microsoft recommends buffer size of UNLEN+1, where UNLEN = 256 */
+	/* "static" variable remains after function exit */
 	static char username[256 + 1];
-	DWORD		len = sizeof(username) - 1;
+	DWORD		len = sizeof(username);
 
 	*errstr = NULL;
 
 	if (!GetUserName(username, &len))
 	{
-		*errstr = psprintf(_("user name lookup failure: %s"), strerror(errno));
+		*errstr = psprintf(_("user name lookup failure: error code %lu"),
+						   GetLastError());
 		return NULL;
 	}
 
