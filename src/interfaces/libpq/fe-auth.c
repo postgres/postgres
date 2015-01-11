@@ -714,22 +714,26 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 /*
  * pg_fe_getauthname
  *
- * Returns a pointer to dynamic space containing whatever name the user
- * has authenticated to the system.  If there is an error, return NULL.
+ * Returns a pointer to malloc'd space containing whatever name the user
+ * has authenticated to the system.  If there is an error, return NULL,
+ * and put a suitable error message in *errorMessage if that's not NULL.
  */
 char *
-pg_fe_getauthname(void)
+pg_fe_getauthname(PQExpBuffer errorMessage)
 {
+	char	   *result = NULL;
 	const char *name = NULL;
-	char	   *authn;
 
 #ifdef WIN32
-	char		username[128];
-	DWORD		namesize = sizeof(username) - 1;
+	/* Microsoft recommends buffer size of UNLEN+1, where UNLEN = 256 */
+	char		username[256 + 1];
+	DWORD		namesize = sizeof(username);
 #else
+	uid_t		user_id = geteuid();
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pw = NULL;
+	int			pwerr;
 #endif
 
 	/*
@@ -741,24 +745,42 @@ pg_fe_getauthname(void)
 	 */
 	pglock_thread();
 
-	/*
-	 * We document PQconndefaults() to return NULL for a memory allocation
-	 * failure.  We don't have an API to return a user name lookup failure, so
-	 * we just assume it always succeeds.
-	 */
 #ifdef WIN32
 	if (GetUserName(username, &namesize))
 		name = username;
+	else if (errorMessage)
+		printfPQExpBuffer(errorMessage,
+				 libpq_gettext("user name lookup failure: error code %lu\n"),
+						  GetLastError());
 #else
-	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pw) == 0)
+	pwerr = pqGetpwuid(user_id, &pwdstr, pwdbuf, sizeof(pwdbuf), &pw);
+	if (pw != NULL)
 		name = pw->pw_name;
+	else if (errorMessage)
+	{
+		if (pwerr != 0)
+			printfPQExpBuffer(errorMessage,
+				   libpq_gettext("could not look up local user ID %d: %s\n"),
+							  (int) user_id,
+							  pqStrerror(pwerr, pwdbuf, sizeof(pwdbuf)));
+		else
+			printfPQExpBuffer(errorMessage,
+					 libpq_gettext("local user with ID %d does not exist\n"),
+							  (int) user_id);
+	}
 #endif
 
-	authn = name ? strdup(name) : NULL;
+	if (name)
+	{
+		result = strdup(name);
+		if (result == NULL && errorMessage)
+			printfPQExpBuffer(errorMessage,
+							  libpq_gettext("out of memory\n"));
+	}
 
 	pgunlock_thread();
 
-	return authn;
+	return result;
 }
 
 
