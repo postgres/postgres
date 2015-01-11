@@ -1527,7 +1527,6 @@ fi
 AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
 
 # Do test here with the proper thread flags
-PGAC_FUNC_GETPWUID_R_5ARG
 PGAC_FUNC_STRERROR_R_INT
 
 CFLAGS="$_CFLAGS"
