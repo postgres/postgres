@@ -279,9 +279,9 @@ main(int argc, char **argv)
 	ArchiveFormat archiveFormat = archUnknown;
 	ArchiveMode archiveMode;
 
-	DumpOptions *dopt = NewDumpOptions();
+	static DumpOptions dopt;
 
-	struct option long_options[] = {
+	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
@@ -316,26 +316,26 @@ main(int argc, char **argv)
 		/*
 		 * the following options don't have an equivalent short option letter
 		 */
-		{"attribute-inserts", no_argument, &dopt->column_inserts, 1},
-		{"binary-upgrade", no_argument, &dopt->binary_upgrade, 1},
-		{"column-inserts", no_argument, &dopt->column_inserts, 1},
-		{"disable-dollar-quoting", no_argument, &dopt->disable_dollar_quoting, 1},
-		{"disable-triggers", no_argument, &dopt->disable_triggers, 1},
-		{"enable-row-security", no_argument, &dopt->enable_row_security, 1},
+		{"attribute-inserts", no_argument, &dopt.column_inserts, 1},
+		{"binary-upgrade", no_argument, &dopt.binary_upgrade, 1},
+		{"column-inserts", no_argument, &dopt.column_inserts, 1},
+		{"disable-dollar-quoting", no_argument, &dopt.disable_dollar_quoting, 1},
+		{"disable-triggers", no_argument, &dopt.disable_triggers, 1},
+		{"enable-row-security", no_argument, &dopt.enable_row_security, 1},
 		{"exclude-table-data", required_argument, NULL, 4},
-		{"if-exists", no_argument, &dopt->if_exists, 1},
-		{"inserts", no_argument, &dopt->dump_inserts, 1},
+		{"if-exists", no_argument, &dopt.if_exists, 1},
+		{"inserts", no_argument, &dopt.dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
-		{"no-tablespaces", no_argument, &dopt->outputNoTablespaces, 1},
+		{"no-tablespaces", no_argument, &dopt.outputNoTablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"section", required_argument, NULL, 5},
-		{"serializable-deferrable", no_argument, &dopt->serializable_deferrable, 1},
+		{"serializable-deferrable", no_argument, &dopt.serializable_deferrable, 1},
 		{"snapshot", required_argument, NULL, 6},
-		{"use-set-session-authorization", no_argument, &dopt->use_setsessauth, 1},
-		{"no-security-labels", no_argument, &dopt->no_security_labels, 1},
-		{"no-synchronized-snapshots", no_argument, &dopt->no_synchronized_snapshots, 1},
-		{"no-unlogged-table-data", no_argument, &dopt->no_unlogged_table_data, 1},
+		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
+		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
+		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
+		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -374,29 +374,31 @@ main(int argc, char **argv)
 		}
 	}
 
+	InitDumpOptions(&dopt);
+
 	while ((c = getopt_long(argc, argv, "abcCd:E:f:F:h:ij:n:N:oOp:RsS:t:T:U:vwWxZ:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
 			case 'a':			/* Dump data only */
-				dopt->dataOnly = true;
+				dopt.dataOnly = true;
 				break;
 
 			case 'b':			/* Dump blobs */
-				dopt->outputBlobs = true;
+				dopt.outputBlobs = true;
 				break;
 
 			case 'c':			/* clean (i.e., drop) schema prior to create */
-				dopt->outputClean = 1;
+				dopt.outputClean = 1;
 				break;
 
 			case 'C':			/* Create DB */
-				dopt->outputCreateDB = 1;
+				dopt.outputCreateDB = 1;
 				break;
 
 			case 'd':			/* database name */
-				dopt->dbname = pg_strdup(optarg);
+				dopt.dbname = pg_strdup(optarg);
 				break;
 
 			case 'E':			/* Dump encoding */
@@ -412,7 +414,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'h':			/* server host */
-				dopt->pghost = pg_strdup(optarg);
+				dopt.pghost = pg_strdup(optarg);
 				break;
 
 			case 'i':
@@ -425,7 +427,7 @@ main(int argc, char **argv)
 
 			case 'n':			/* include schema(s) */
 				simple_string_list_append(&schema_include_patterns, optarg);
-				dopt->include_everything = false;
+				dopt.include_everything = false;
 				break;
 
 			case 'N':			/* exclude schema(s) */
@@ -433,15 +435,15 @@ main(int argc, char **argv)
 				break;
 
 			case 'o':			/* Dump oids */
-				dopt->oids = true;
+				dopt.oids = true;
 				break;
 
 			case 'O':			/* Don't reconnect to match owner */
-				dopt->outputNoOwner = 1;
+				dopt.outputNoOwner = 1;
 				break;
 
 			case 'p':			/* server port */
-				dopt->pgport = pg_strdup(optarg);
+				dopt.pgport = pg_strdup(optarg);
 				break;
 
 			case 'R':
@@ -449,16 +451,16 @@ main(int argc, char **argv)
 				break;
 
 			case 's':			/* dump schema only */
-				dopt->schemaOnly = true;
+				dopt.schemaOnly = true;
 				break;
 
 			case 'S':			/* Username for superuser in plain text output */
-				dopt->outputSuperuser = pg_strdup(optarg);
+				dopt.outputSuperuser = pg_strdup(optarg);
 				break;
 
 			case 't':			/* include table(s) */
 				simple_string_list_append(&table_include_patterns, optarg);
-				dopt->include_everything = false;
+				dopt.include_everything = false;
 				break;
 
 			case 'T':			/* exclude table(s) */
@@ -466,7 +468,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'U':
-				dopt->username = pg_strdup(optarg);
+				dopt.username = pg_strdup(optarg);
 				break;
 
 			case 'v':			/* verbose */
@@ -482,7 +484,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'x':			/* skip ACL dump */
-				dopt->aclsSkip = true;
+				dopt.aclsSkip = true;
 				break;
 
 			case 'Z':			/* Compression Level */
@@ -494,7 +496,7 @@ main(int argc, char **argv)
 				break;
 
 			case 2:				/* lock-wait-timeout */
-				dopt->lockWaitTimeout = pg_strdup(optarg);
+				dopt.lockWaitTimeout = pg_strdup(optarg);
 				break;
 
 			case 3:				/* SET ROLE */
@@ -506,7 +508,7 @@ main(int argc, char **argv)
 				break;
 
 			case 5:				/* section */
-				set_dump_section(optarg, &dopt->dumpSections);
+				set_dump_section(optarg, &dopt.dumpSections);
 				break;
 
 			case 6:				/* snapshot */
@@ -523,8 +525,8 @@ main(int argc, char **argv)
 	 * Non-option argument specifies database name as long as it wasn't
 	 * already specified with -d / --dbname
 	 */
-	if (optind < argc && dopt->dbname == NULL)
-		dopt->dbname = argv[optind++];
+	if (optind < argc && dopt.dbname == NULL)
+		dopt.dbname = argv[optind++];
 
 	/* Complain if any arguments remain */
 	if (optind < argc)
@@ -537,29 +539,29 @@ main(int argc, char **argv)
 	}
 
 	/* --column-inserts implies --inserts */
-	if (dopt->column_inserts)
-		dopt->dump_inserts = 1;
+	if (dopt.column_inserts)
+		dopt.dump_inserts = 1;
 
-	if (dopt->dataOnly && dopt->schemaOnly)
+	if (dopt.dataOnly && dopt.schemaOnly)
 	{
 		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
 		exit_nicely(1);
 	}
 
-	if (dopt->dataOnly && dopt->outputClean)
+	if (dopt.dataOnly && dopt.outputClean)
 	{
 		write_msg(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
 		exit_nicely(1);
 	}
 
-	if (dopt->dump_inserts && dopt->oids)
+	if (dopt.dump_inserts && dopt.oids)
 	{
 		write_msg(NULL, "options --inserts/--column-inserts and -o/--oids cannot be used together\n");
 		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
 		exit_nicely(1);
 	}
 
-	if (dopt->if_exists && !dopt->outputClean)
+	if (dopt.if_exists && !dopt.outputClean)
 		exit_horribly(NULL, "option --if-exists requires option -c/--clean\n");
 
 	/* Identify archive format to emit */
@@ -620,15 +622,15 @@ main(int argc, char **argv)
 	 * Open the database using the Archiver, so it knows about it. Errors mean
 	 * death.
 	 */
-	ConnectDatabase(fout, dopt->dbname, dopt->pghost, dopt->pgport, dopt->username, prompt_password);
-	setup_connection(fout, dopt, dumpencoding, dumpsnapshot, use_role);
+	ConnectDatabase(fout, dopt.dbname, dopt.pghost, dopt.pgport, dopt.username, prompt_password);
+	setup_connection(fout, &dopt, dumpencoding, dumpsnapshot, use_role);
 
 	/*
 	 * Disable security label support if server version < v9.1.x (prevents
 	 * access to nonexistent pg_seclabel catalog)
 	 */
 	if (fout->remoteVersion < 90100)
-		dopt->no_security_labels = 1;
+		dopt.no_security_labels = 1;
 
 	/*
 	 * When running against 9.0 or later, check if we are in recovery mode,
@@ -644,7 +646,7 @@ main(int argc, char **argv)
 			 * On hot standby slaves, never try to dump unlogged table data,
 			 * since it will just throw an error.
 			 */
-			dopt->no_unlogged_table_data = true;
+			dopt.no_unlogged_table_data = true;
 		}
 		PQclear(res);
 	}
@@ -659,7 +661,7 @@ main(int argc, char **argv)
 
 	/* check the version for the synchronized snapshots feature */
 	if (numWorkers > 1 && fout->remoteVersion < 90200
-		&& !dopt->no_synchronized_snapshots)
+		&& !dopt.no_synchronized_snapshots)
 		exit_horribly(NULL,
 		 "Synchronized snapshots are not supported by this server version.\n"
 		  "Run with --no-synchronized-snapshots instead if you do not need\n"
@@ -714,27 +716,27 @@ main(int argc, char **argv)
 	 * Dumping blobs is now default unless we saw an inclusion switch or -s
 	 * ... but even if we did see one of these, -b turns it back on.
 	 */
-	if (dopt->include_everything && !dopt->schemaOnly)
-		dopt->outputBlobs = true;
+	if (dopt.include_everything && !dopt.schemaOnly)
+		dopt.outputBlobs = true;
 
 	/*
 	 * Now scan the database and create DumpableObject structs for all the
 	 * objects we intend to dump.
 	 */
-	tblinfo = getSchemaData(fout, dopt, &numTables);
+	tblinfo = getSchemaData(fout, &dopt, &numTables);
 
 	if (fout->remoteVersion < 80400)
 		guessConstraintInheritance(tblinfo, numTables);
 
-	if (!dopt->schemaOnly)
+	if (!dopt.schemaOnly)
 	{
-		getTableData(dopt, tblinfo, numTables, dopt->oids);
+		getTableData(&dopt, tblinfo, numTables, dopt.oids);
 		buildMatViewRefreshDependencies(fout);
-		if (dopt->dataOnly)
+		if (dopt.dataOnly)
 			getTableDataFKConstraints();
 	}
 
-	if (dopt->outputBlobs)
+	if (dopt.outputBlobs)
 		getBlobs(fout);
 
 	/*
@@ -784,12 +786,12 @@ main(int argc, char **argv)
 	dumpStdStrings(fout);
 
 	/* The database item is always next, unless we don't want it at all */
-	if (dopt->include_everything && !dopt->dataOnly)
-		dumpDatabase(fout, dopt);
+	if (dopt.include_everything && !dopt.dataOnly)
+		dumpDatabase(fout, &dopt);
 
 	/* Now the rearrangeable objects. */
 	for (i = 0; i < numObjs; i++)
-		dumpDumpableObject(fout, dopt, dobjs[i]);
+		dumpDumpableObject(fout, &dopt, dobjs[i]);
 
 	/*
 	 * Set up options info to ensure we dump what we want.
@@ -798,25 +800,25 @@ main(int argc, char **argv)
 	ropt->filename = filename;
 
 	/* if you change this list, see dumpOptionsFromRestoreOptions */
-	ropt->dropSchema = dopt->outputClean;
-	ropt->dataOnly = dopt->dataOnly;
-	ropt->schemaOnly = dopt->schemaOnly;
-	ropt->if_exists = dopt->if_exists;
-	ropt->column_inserts = dopt->column_inserts;
-	ropt->dumpSections = dopt->dumpSections;
-	ropt->aclsSkip = dopt->aclsSkip;
-	ropt->superuser = dopt->outputSuperuser;
-	ropt->createDB = dopt->outputCreateDB;
-	ropt->noOwner = dopt->outputNoOwner;
-	ropt->noTablespace = dopt->outputNoTablespaces;
-	ropt->disable_triggers = dopt->disable_triggers;
-	ropt->use_setsessauth = dopt->use_setsessauth;
-	ropt->disable_dollar_quoting = dopt->disable_dollar_quoting;
-	ropt->dump_inserts = dopt->dump_inserts;
-	ropt->no_security_labels = dopt->no_security_labels;
-	ropt->lockWaitTimeout = dopt->lockWaitTimeout;
-	ropt->include_everything = dopt->include_everything;
-	ropt->enable_row_security = dopt->enable_row_security;
+	ropt->dropSchema = dopt.outputClean;
+	ropt->dataOnly = dopt.dataOnly;
+	ropt->schemaOnly = dopt.schemaOnly;
+	ropt->if_exists = dopt.if_exists;
+	ropt->column_inserts = dopt.column_inserts;
+	ropt->dumpSections = dopt.dumpSections;
+	ropt->aclsSkip = dopt.aclsSkip;
+	ropt->superuser = dopt.outputSuperuser;
+	ropt->createDB = dopt.outputCreateDB;
+	ropt->noOwner = dopt.outputNoOwner;
+	ropt->noTablespace = dopt.outputNoTablespaces;
+	ropt->disable_triggers = dopt.disable_triggers;
+	ropt->use_setsessauth = dopt.use_setsessauth;
+	ropt->disable_dollar_quoting = dopt.disable_dollar_quoting;
+	ropt->dump_inserts = dopt.dump_inserts;
+	ropt->no_security_labels = dopt.no_security_labels;
+	ropt->lockWaitTimeout = dopt.lockWaitTimeout;
+	ropt->include_everything = dopt.include_everything;
+	ropt->enable_row_security = dopt.enable_row_security;
 
 	if (compressLevel == -1)
 		ropt->compression = 0;
@@ -845,7 +847,7 @@ main(int argc, char **argv)
 	if (plainText)
 		RestoreArchive(fout);
 
-	CloseArchive(fout, dopt);
+	CloseArchive(fout, &dopt);
 
 	exit_nicely(0);
 }

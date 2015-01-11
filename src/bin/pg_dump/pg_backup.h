@@ -269,6 +269,7 @@ extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);
 extern RestoreOptions *NewRestoreOptions(void);
 
 extern DumpOptions *NewDumpOptions(void);
+extern void InitDumpOptions(DumpOptions *opts);
 extern DumpOptions *dumpOptionsFromRestoreOptions(RestoreOptions *ropt);
 
 /* Rearrange and filter TOC entries */
