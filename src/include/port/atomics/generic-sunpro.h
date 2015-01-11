@@ -55,7 +55,13 @@ typedef struct pg_atomic_uint32
 #define PG_HAVE_ATOMIC_U64_SUPPORT
 typedef struct pg_atomic_uint64
 {
-	volatile uint64 value;
+	/*
+	 * Syntax to enforce variable alignment should be supported by versions
+	 * supporting atomic.h, but it's hard to find accurate documentation. If
+	 * it proves to be a problem, we'll have to add more version checks for 64
+	 * bit support.
+	 */
+	volatile uint64 value __attribute__((__aligned__(8)));
 } pg_atomic_uint64;
 
 #endif /* HAVE_ATOMIC_H */

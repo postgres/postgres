@@ -32,7 +32,7 @@ typedef struct pg_atomic_uint32
 #define PG_HAVE_ATOMIC_U64_SUPPORT
 typedef struct pg_atomic_uint64
 {
-	volatile uint64 value;
+	volatile uint64 value __attribute__((__aligned__(8)));
 } pg_atomic_uint64;
 
 #endif /* __64BIT__ */
