@@ -32,6 +32,14 @@ pg_spinlock_barrier(void)
 }
 #endif
 
+#ifdef PG_HAVE_COMPILER_BARRIER_EMULATION
+void
+pg_extern_compiler_barrier(void)
+{
+	/* do nothing */
+}
+#endif
+
 
 #ifdef PG_HAVE_ATOMIC_FLAG_SIMULATION
 
