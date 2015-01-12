@@ -3414,6 +3414,9 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	bool		onfk;
 	int			idx,
 				key_idx;
+	Oid			rel_oid;
+	AclResult	aclresult;
+	bool		has_perm = true;
 
 	if (spi_err)
 		ereport(ERROR,
@@ -3432,12 +3435,14 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	if (onfk)
 	{
 		key_idx = RI_KEYPAIR_FK_IDX;
+		rel_oid = fk_rel->rd_id;
 		if (tupdesc == NULL)
 			tupdesc = fk_rel->rd_att;
 	}
 	else
 	{
 		key_idx = RI_KEYPAIR_PK_IDX;
+		rel_oid = pk_rel->rd_id;
 		if (tupdesc == NULL)
 			tupdesc = pk_rel->rd_att;
 	}
@@ -3457,45 +3462,81 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 						   RelationGetRelationName(pk_rel))));
 	}
 
-	/* Get printable versions of the keys involved */
-	initStringInfo(&key_names);
-	initStringInfo(&key_values);
-	for (idx = 0; idx < qkey->nkeypairs; idx++)
+	/*
+	 * Check permissions- if the user does not have access to view the data in
+	 * any of the key columns then we don't include the errdetail() below.
+	 *
+	 * Check table-level permissions first and, failing that, column-level
+	 * privileges.
+	 */
+	aclresult = pg_class_aclcheck(rel_oid, GetUserId(), ACL_SELECT);
+	if (aclresult != ACLCHECK_OK)
 	{
-		int			fnum = qkey->keypair[idx][key_idx];
-		char	   *name,
-				   *val;
-
-		name = SPI_fname(tupdesc, fnum);
-		val = SPI_getvalue(violator, tupdesc, fnum);
-		if (!val)
-			val = "null";
-
-		if (idx > 0)
+		/* Try for column-level permissions */
+		for (idx = 0; idx < qkey->nkeypairs; idx++)
 		{
-			appendStringInfoString(&key_names, ", ");
-			appendStringInfoString(&key_values, ", ");
+			aclresult = pg_attribute_aclcheck(rel_oid, qkey->keypair[idx][key_idx],
+											  GetUserId(),
+											  ACL_SELECT);
+			/* No access to the key */
+			if (aclresult != ACLCHECK_OK)
+			{
+				has_perm = false;
+				break;
+			}
 		}
-		appendStringInfoString(&key_names, name);
-		appendStringInfoString(&key_values, val);
+	}
+
+	if (has_perm)
+	{
+		/* Get printable versions of the keys involved */
+		initStringInfo(&key_names);
+		initStringInfo(&key_values);
+		for (idx = 0; idx < qkey->nkeypairs; idx++)
+		{
+			int			fnum = qkey->keypair[idx][key_idx];
+			char	   *name,
+					   *val;
+
+			name = SPI_fname(tupdesc, fnum);
+			val = SPI_getvalue(violator, tupdesc, fnum);
+			if (!val)
+				val = "null";
+
+			if (idx > 0)
+			{
+				appendStringInfoString(&key_names, ", ");
+				appendStringInfoString(&key_values, ", ");
+			}
+			appendStringInfoString(&key_names, name);
+			appendStringInfoString(&key_values, val);
+		}
 	}
 
 	if (onfk)
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 				 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
-						RelationGetRelationName(fk_rel), constrname),
-				 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
-						   key_names.data, key_values.data,
-						   RelationGetRelationName(pk_rel))));
+						RelationGetRelationName(fk_rel),
+						constrname),
+				 has_perm ?
+					 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
+							   key_names.data, key_values.data,
+							   RelationGetRelationName(pk_rel)) :
+					 errdetail("Key is not present in table \"%s\".",
+							   RelationGetRelationName(pk_rel))));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 				 errmsg("update or delete on table \"%s\" violates foreign key constraint \"%s\" on table \"%s\"",
 						RelationGetRelationName(pk_rel),
-						constrname, RelationGetRelationName(fk_rel)),
+						constrname,
+						RelationGetRelationName(fk_rel)),
+				 has_perm ?
 			errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 					  key_names.data, key_values.data,
+					  RelationGetRelationName(fk_rel)) :
+					errdetail("Key is still referenced from table \"%s\".",
 					  RelationGetRelationName(fk_rel))));
 }
 

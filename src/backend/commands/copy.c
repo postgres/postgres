@@ -1687,6 +1687,7 @@ CopyFrom(CopyState cstate)
 	bool		done = false;
 	bool		isnull;
 	ResultRelInfo *resultRelInfo;
+	RangeTblEntry *rte;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTableSlot *slot;
 	bool		file_has_oids;
@@ -1807,9 +1808,16 @@ CopyFrom(CopyState cstate)
 
 	ExecOpenIndices(resultRelInfo);
 
+	/* Build an RTE to make into a RangeTbl for estate */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = RelationGetRelid(cstate->rel);
+	rte->requiredPerms = ACL_INSERT;
+
 	estate->es_result_relations = resultRelInfo;
 	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
+	estate->es_range_table = list_make1(rte);
 
 	/* Set up a tuple slot too */
 	slot = ExecInitExtraTupleSlot(estate);

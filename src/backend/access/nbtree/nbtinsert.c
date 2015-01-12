@@ -376,16 +376,20 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					{
 						Datum		values[INDEX_MAX_KEYS];
 						bool		isnull[INDEX_MAX_KEYS];
+						char	   *key_desc;
 
 						index_deform_tuple(itup, RelationGetDescr(rel),
 										   values, isnull);
+
+						key_desc = BuildIndexValueDescription(rel, values,
+															  isnull);
+
 						ereport(ERROR,
 								(errcode(ERRCODE_UNIQUE_VIOLATION),
 								 errmsg("duplicate key value violates unique constraint \"%s\"",
 										RelationGetRelationName(rel)),
-								 errdetail("Key %s already exists.",
-										   BuildIndexValueDescription(rel,
-														  values, isnull))));
+								 key_desc ? errdetail("Key %s already exists.",
+													  key_desc) : 0));
 					}
 				}
 				else if (all_dead)
