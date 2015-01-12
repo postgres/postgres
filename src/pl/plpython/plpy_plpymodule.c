@@ -274,49 +274,49 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
  */
 static PyObject *PLy_output(volatile int, PyObject *, PyObject *);
 
-PyObject *
+static PyObject *
 PLy_debug(PyObject *self, PyObject *args)
 {
 	return PLy_output(DEBUG2, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_log(PyObject *self, PyObject *args)
 {
 	return PLy_output(LOG, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_info(PyObject *self, PyObject *args)
 {
 	return PLy_output(INFO, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_notice(PyObject *self, PyObject *args)
 {
 	return PLy_output(NOTICE, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_warning(PyObject *self, PyObject *args)
 {
 	return PLy_output(WARNING, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_error(PyObject *self, PyObject *args)
 {
 	return PLy_output(ERROR, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_fatal(PyObject *self, PyObject *args)
 {
 	return PLy_output(FATAL, self, args);
 }
 
-PyObject *
+static PyObject *
 PLy_quote_literal(PyObject *self, PyObject *args)
 {
 	const char *str;
@@ -333,7 +333,7 @@ PLy_quote_literal(PyObject *self, PyObject *args)
 	return ret;
 }
 
-PyObject *
+static PyObject *
 PLy_quote_nullable(PyObject *self, PyObject *args)
 {
 	const char *str;
@@ -353,7 +353,7 @@ PLy_quote_nullable(PyObject *self, PyObject *args)
 	return ret;
 }
 
-PyObject *
+static PyObject *
 PLy_quote_ident(PyObject *self, PyObject *args)
 {
 	const char *str;

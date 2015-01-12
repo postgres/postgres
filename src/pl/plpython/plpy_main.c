@@ -131,7 +131,7 @@ _PG_init(void)
  * This should only be called once from _PG_init. Initialize the Python
  * interpreter and global data.
  */
-void
+static void
 PLy_init_interp(void)
 {
 	static PyObject *PLy_interp_safe_globals = NULL;
