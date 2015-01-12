@@ -238,6 +238,31 @@ UPDATE atest5 SET one = 1; -- fail
 SELECT atest6 FROM atest6; -- ok
 COPY atest6 TO stdout; -- ok
 
+-- check error reporting with column privs
+SET SESSION AUTHORIZATION regressuser1;
+CREATE TABLE t1 (c1 int, c2 int, c3 int check (c3 < 5), primary key (c1, c2));
+GRANT SELECT (c1) ON t1 TO regressuser2;
+GRANT INSERT (c1, c2, c3) ON t1 TO regressuser2;
+GRANT UPDATE (c1, c2, c3) ON t1 TO regressuser2;
+
+-- seed data
+INSERT INTO t1 VALUES (1, 1, 1);
+INSERT INTO t1 VALUES (1, 2, 1);
+INSERT INTO t1 VALUES (2, 1, 2);
+INSERT INTO t1 VALUES (2, 2, 2);
+INSERT INTO t1 VALUES (3, 1, 3);
+
+SET SESSION AUTHORIZATION regressuser2;
+INSERT INTO t1 (c1, c2) VALUES (1, 1); -- fail, but row not shown
+UPDATE t1 SET c2 = 1; -- fail, but row not shown
+INSERT INTO t1 (c1, c2) VALUES (null, null); -- fail, but see columns being inserted
+INSERT INTO t1 (c3) VALUES (null); -- fail, but see columns being inserted or have SELECT
+INSERT INTO t1 (c1) VALUES (5); -- fail, but see columns being inserted or have SELECT
+UPDATE t1 SET c3 = 10; -- fail, but see columns with SELECT rights, or being modified
+
+SET SESSION AUTHORIZATION regressuser1;
+DROP TABLE t1;
+
 -- test column-level privileges when involved with DELETE
 SET SESSION AUTHORIZATION regressuser1;
 ALTER TABLE atest6 ADD COLUMN three integer;

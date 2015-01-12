@@ -362,6 +362,38 @@ SELECT atest6 FROM atest6; -- ok
 (0 rows)
 
 COPY atest6 TO stdout; -- ok
+-- check error reporting with column privs
+SET SESSION AUTHORIZATION regressuser1;
+CREATE TABLE t1 (c1 int, c2 int, c3 int check (c3 < 5), primary key (c1, c2));
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t1_pkey" for table "t1"
+GRANT SELECT (c1) ON t1 TO regressuser2;
+GRANT INSERT (c1, c2, c3) ON t1 TO regressuser2;
+GRANT UPDATE (c1, c2, c3) ON t1 TO regressuser2;
+-- seed data
+INSERT INTO t1 VALUES (1, 1, 1);
+INSERT INTO t1 VALUES (1, 2, 1);
+INSERT INTO t1 VALUES (2, 1, 2);
+INSERT INTO t1 VALUES (2, 2, 2);
+INSERT INTO t1 VALUES (3, 1, 3);
+SET SESSION AUTHORIZATION regressuser2;
+INSERT INTO t1 (c1, c2) VALUES (1, 1); -- fail, but row not shown
+ERROR:  duplicate key value violates unique constraint "t1_pkey"
+UPDATE t1 SET c2 = 1; -- fail, but row not shown
+ERROR:  duplicate key value violates unique constraint "t1_pkey"
+INSERT INTO t1 (c1, c2) VALUES (null, null); -- fail, but see columns being inserted
+ERROR:  null value in column "c1" violates not-null constraint
+DETAIL:  Failing row contains (c1, c2) = (null, null).
+INSERT INTO t1 (c3) VALUES (null); -- fail, but see columns being inserted or have SELECT
+ERROR:  null value in column "c1" violates not-null constraint
+DETAIL:  Failing row contains (c1, c3) = (null, null).
+INSERT INTO t1 (c1) VALUES (5); -- fail, but see columns being inserted or have SELECT
+ERROR:  null value in column "c2" violates not-null constraint
+DETAIL:  Failing row contains (c1) = (5).
+UPDATE t1 SET c3 = 10; -- fail, but see columns with SELECT rights, or being modified
+ERROR:  new row for relation "t1" violates check constraint "t1_c3_check"
+DETAIL:  Failing row contains (c1, c3) = (1, 10).
+SET SESSION AUTHORIZATION regressuser1;
+DROP TABLE t1;
 -- test column-level privileges when involved with DELETE
 SET SESSION AUTHORIZATION regressuser1;
 ALTER TABLE atest6 ADD COLUMN three integer;
