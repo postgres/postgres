@@ -48,15 +48,14 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_delete *xlrec = (xl_heap_delete *) rec;
 
-		appendStringInfo(buf, "off %u", xlrec->offnum);
-		appendStringInfoChar(buf, ' ');
+		appendStringInfo(buf, "off %u ", xlrec->offnum);
 		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_UPDATE)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		appendStringInfo(buf, "off %u xmax %u",
+		appendStringInfo(buf, "off %u xmax %u ",
 						 xlrec->old_offnum,
 						 xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
@@ -68,7 +67,7 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		appendStringInfo(buf, "off %u xmax %u",
+		appendStringInfo(buf, "off %u xmax %u ",
 						 xlrec->old_offnum,
 						 xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
@@ -80,8 +79,7 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
-		appendStringInfo(buf, "xid %u: ", xlrec->locking_xid);
-		appendStringInfo(buf, "off %u ", xlrec->offnum);
+		appendStringInfo(buf, "off %u: xid %u ", xlrec->offnum, xlrec->locking_xid);
 		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_INPLACE)
@@ -133,9 +131,8 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_lock_updated *xlrec = (xl_heap_lock_updated *) rec;
 
-		appendStringInfo(buf, "xmax %u msk %04x; ", xlrec->xmax,
-						 xlrec->infobits_set);
-		appendStringInfo(buf, "off %u", xlrec->offnum);
+		appendStringInfo(buf, "off %u: xmax %u ", xlrec->offnum, xlrec->xmax);
+		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP2_NEW_CID)
 	{
