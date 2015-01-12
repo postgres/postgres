@@ -38,12 +38,12 @@
 #include "miscadmin.h"
 #include "parser/parse_clause.h"
 #include "rewrite/rewriteHandler.h"
-#include "rewrite/rowsecurity.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/rls.h"
 #include "utils/snapmgr.h"
 
 
@@ -446,7 +446,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * be enabled here.  We don't actually support that currently, so throw
 	 * our own ereport(ERROR) if that happens.
 	 */
-	if (check_enable_rls(intoRelationId, InvalidOid) == RLS_ENABLED)
+	if (check_enable_rls(intoRelationId, InvalidOid, false) == RLS_ENABLED)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 (errmsg("policies not yet implemented for this command"))));

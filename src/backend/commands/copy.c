@@ -40,7 +40,6 @@
 #include "parser/parse_relation.h"
 #include "nodes/makefuncs.h"
 #include "rewrite/rewriteHandler.h"
-#include "rewrite/rowsecurity.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -49,6 +48,7 @@
 #include "utils/memutils.h"
 #include "utils/portal.h"
 #include "utils/rel.h"
+#include "utils/rls.h"
 #include "utils/snapmgr.h"
 
 
@@ -163,6 +163,7 @@ typedef struct CopyStateData
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
 	bool		volatile_defexprs;		/* is any of defexprs volatile? */
+	List	   *range_table;
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -789,6 +790,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	Relation	rel;
 	Oid			relid;
 	Node	   *query = NULL;
+	RangeTblEntry *rte;
 
 	/* Disallow COPY to/from file or program except to superusers. */
 	if (!pipe && !superuser())
@@ -811,7 +813,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	{
 		TupleDesc	tupDesc;
 		AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
-		RangeTblEntry *rte;
 		List	   *attnums;
 		ListCell   *cur;
 
@@ -857,7 +858,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		 * If RLS is not enabled for this, then just fall through to the
 		 * normal non-filtering relation handling.
 		 */
-		if (check_enable_rls(rte->relid, InvalidOid) == RLS_ENABLED)
+		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED)
 		{
 			SelectStmt *select;
 			ColumnRef  *cr;
@@ -920,6 +921,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 
 		cstate = BeginCopyFrom(rel, stmt->filename, stmt->is_program,
 							   stmt->attlist, stmt->options);
+		cstate->range_table = list_make1(rte);
 		*processed = CopyFrom(cstate);	/* copy from file to database */
 		EndCopyFrom(cstate);
 	}
@@ -928,6 +930,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		cstate = BeginCopyTo(rel, query, queryString, relid,
 							 stmt->filename, stmt->is_program,
 							 stmt->attlist, stmt->options);
+		cstate->range_table = list_make1(rte);
 		*processed = DoCopyTo(cstate);	/* copy from database to file */
 		EndCopyTo(cstate);
 	}
@@ -2277,6 +2280,7 @@ CopyFrom(CopyState cstate)
 	estate->es_result_relations = resultRelInfo;
 	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
+	estate->es_range_table = cstate->range_table;
 
 	/* Set up a tuple slot too */
 	myslot = ExecInitExtraTupleSlot(estate);
