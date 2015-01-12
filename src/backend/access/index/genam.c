@@ -25,9 +25,11 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
@@ -153,6 +155,11 @@ IndexScanEnd(IndexScanDesc scan)
  * form "(key_name, ...)=(key_value, ...)".  This is currently used
  * for building unique-constraint and exclusion-constraint error messages.
  *
+ * Note that if the user does not have permissions to view all of the
+ * columns involved then a NULL is returned.  Returning a partial key seems
+ * unlikely to be useful and we have no way to know which of the columns the
+ * user provided (unlike in ExecBuildSlotValueDescription).
+ *
  * The passed-in values/nulls arrays are the "raw" input to the index AM,
  * e.g. results of FormIndexDatum --- this is not necessarily what is stored
  * in the index, but it's what the user perceives to be stored.
@@ -162,13 +169,62 @@ BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull)
 {
 	StringInfoData buf;
+	Form_pg_index idxrec;
+	HeapTuple	ht_idx;
 	int			natts = indexRelation->rd_rel->relnatts;
 	int			i;
+	int			keyno;
+	Oid			indexrelid = RelationGetRelid(indexRelation);
+	Oid			indrelid;
+	AclResult	aclresult;
+
+	/*
+	 * Check permissions- if the user does not have access to view all of the
+	 * key columns then return NULL to avoid leaking data.
+	 *
+	 * First we need to check table-level SELECT access and then, if
+	 * there is no access there, check column-level permissions.
+	 */
+
+	/*
+	 * Fetch the pg_index tuple by the Oid of the index
+	 */
+	ht_idx = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexrelid));
+	if (!HeapTupleIsValid(ht_idx))
+		elog(ERROR, "cache lookup failed for index %u", indexrelid);
+	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
+
+	indrelid = idxrec->indrelid;
+	Assert(indexrelid == idxrec->indexrelid);
+
+	/* Table-level SELECT is enough, if the user has it */
+	aclresult = pg_class_aclcheck(indrelid, GetUserId(), ACL_SELECT);
+	if (aclresult != ACLCHECK_OK)
+	{
+		/*
+		 * No table-level access, so step through the columns in the
+		 * index and make sure the user has SELECT rights on all of them.
+		 */
+		for (keyno = 0; keyno < idxrec->indnatts; keyno++)
+		{
+			AttrNumber	attnum = idxrec->indkey.values[keyno];
+
+			aclresult = pg_attribute_aclcheck(indrelid, attnum, GetUserId(),
+											  ACL_SELECT);
+
+			if (aclresult != ACLCHECK_OK)
+			{
+				/* No access, so clean up and return */
+				ReleaseSysCache(ht_idx);
+				return NULL;
+			}
+		}
+	}
+	ReleaseSysCache(ht_idx);
 
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "(%s)=(",
-					 pg_get_indexdef_columns(RelationGetRelid(indexRelation),
-											 true));
+					 pg_get_indexdef_columns(indexrelid, true));
 
 	for (i = 0; i < natts; i++)
 	{
