@@ -2258,9 +2258,8 @@ MinimumActiveBackends(int min)
 		 * free list and are recycled. Its contents are nonsense in that case,
 		 * but that's acceptable for this function.
 		 */
-		if (proc == NULL)
-			continue;
-
+		if (pgprocno == -1)
+			continue;			/* do not count deleted entries */
 		if (proc == MyProc)
 			continue;			/* do not count myself */
 		if (pgxact->xid == InvalidTransactionId)
