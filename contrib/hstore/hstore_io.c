@@ -1338,7 +1338,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 	JsonbParseState *state = NULL;
 	JsonbValue *res;
 
-	res = pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+	(void) pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
 
 	for (i = 0; i < count; i++)
 	{
@@ -1349,7 +1349,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 		key.val.string.len = HS_KEYLEN(entries, i);
 		key.val.string.val = HS_KEY(entries, base, i);
 
-		res = pushJsonbValue(&state, WJB_KEY, &key);
+		(void) pushJsonbValue(&state, WJB_KEY, &key);
 
 		if (HS_VALISNULL(entries, i))
 		{
@@ -1361,7 +1361,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 			val.val.string.len = HS_VALLEN(entries, i);
 			val.val.string.val = HS_VAL(entries, base, i);
 		}
-		res = pushJsonbValue(&state, WJB_VALUE, &val);
+		(void) pushJsonbValue(&state, WJB_VALUE, &val);
 	}
 
 	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
@@ -1385,7 +1385,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 
 	initStringInfo(&tmp);
 
-	res = pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+	(void) pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
 
 	for (i = 0; i < count; i++)
 	{
@@ -1396,7 +1396,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 		key.val.string.len = HS_KEYLEN(entries, i);
 		key.val.string.val = HS_KEY(entries, base, i);
 
-		res = pushJsonbValue(&state, WJB_KEY, &key);
+		(void) pushJsonbValue(&state, WJB_KEY, &key);
 
 		if (HS_VALISNULL(entries, i))
 		{
@@ -1471,7 +1471,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 				val.val.string.val = HS_VAL(entries, base, i);
 			}
 		}
-		res = pushJsonbValue(&state, WJB_VALUE, &val);
+		(void) pushJsonbValue(&state, WJB_VALUE, &val);
 	}
 
 	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
