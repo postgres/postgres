@@ -38,12 +38,12 @@ extern void pg_spinlock_barrier(void);
 #ifndef pg_compiler_barrier_impl
 /*
  * If the compiler/arch combination does not provide compiler barriers,
- * provide a fallback. That fallback simply consists out of a function call
- * into a externally defined function.  That should guarantee compiler barrier
+ * provide a fallback.  The fallback simply consists of a function call into
+ * an externally defined function.  That should guarantee compiler barrier
  * semantics except for compilers that do inter translation unit/global
  * optimization - those better provide an actual compiler barrier.
  *
- * Using a native compiler barrier for sure is a lot faster than this...
+ * A native compiler barrier for sure is a lot faster than this...
  */
 #define PG_HAVE_COMPILER_BARRIER_EMULATION
 extern void pg_extern_compiler_barrier(void);
@@ -52,7 +52,7 @@ extern void pg_extern_compiler_barrier(void);
 
 
 /*
- * If we have atomics implementation for this platform fall back to providing
+ * If we have atomics implementation for this platform, fall back to providing
  * the atomics API using a spinlock to protect the internal state. Possibly
  * the spinlock implementation uses semaphores internally...
  *
@@ -122,7 +122,7 @@ pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
 	/*
 	 * Can't do this efficiently in the semaphore based implementation - we'd
 	 * have to try to acquire the semaphore - so always return true. That's
-	 * correct, because this is only an unlocked test anyway.Do this in the
+	 * correct, because this is only an unlocked test anyway. Do this in the
 	 * header so compilers can optimize the test away.
 	 */
 	return true;
