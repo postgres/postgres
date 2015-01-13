@@ -51,6 +51,7 @@
 #include "miscadmin.h"
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
+#include "storage/barrier.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
@@ -515,12 +516,11 @@ SetLatch(volatile Latch *latch)
 	pid_t		owner_pid;
 
 	/*
-	 * XXX there really ought to be a memory barrier operation right here, to
-	 * ensure that any flag variables we might have changed get flushed to
-	 * main memory before we check/set is_set.  Without that, we have to
-	 * require that callers provide their own synchronization for machines
-	 * with weak memory ordering (see latch.h).
+	 * The memory barrier has be to be placed here to ensure that any flag
+	 * variables possibly changed by this process have been flushed to main
+	 * memory, before we check/set is_set.
 	 */
+	pg_memory_barrier();
 
 	/* Quick exit if already set */
 	if (latch->is_set)
@@ -574,14 +574,12 @@ ResetLatch(volatile Latch *latch)
 	latch->is_set = false;
 
 	/*
-	 * XXX there really ought to be a memory barrier operation right here, to
-	 * ensure that the write to is_set gets flushed to main memory before we
+	 * Ensure that the write to is_set gets flushed to main memory before we
 	 * examine any flag variables.  Otherwise a concurrent SetLatch might
 	 * falsely conclude that it needn't signal us, even though we have missed
 	 * seeing some flag updates that SetLatch was supposed to inform us of.
-	 * For the moment, callers must supply their own synchronization of flag
-	 * variables (see latch.h).
 	 */
+	pg_memory_barrier();
 }
 
 /*

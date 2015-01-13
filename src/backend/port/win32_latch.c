@@ -27,6 +27,7 @@
 #include "miscadmin.h"
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
+#include "storage/barrier.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
@@ -293,6 +294,13 @@ SetLatch(volatile Latch *latch)
 {
 	HANDLE		handle;
 
+	/*
+	 * The memory barrier has be to be placed here to ensure that any flag
+	 * variables possibly changed by this process have been flushed to main
+	 * memory, before we check/set is_set.
+	 */
+	pg_memory_barrier();
+
 	/* Quick exit if already set */
 	if (latch->is_set)
 		return;
@@ -325,4 +333,12 @@ ResetLatch(volatile Latch *latch)
 	Assert(latch->owner_pid == MyProcPid);
 
 	latch->is_set = false;
+
+	/*
+	 * Ensure that the write to is_set gets flushed to main memory before we
+	 * examine any flag variables.  Otherwise a concurrent SetLatch might
+	 * falsely conclude that it needn't signal us, even though we have missed
+	 * seeing some flag updates that SetLatch was supposed to inform us of.
+	 */
+	pg_memory_barrier();
 }

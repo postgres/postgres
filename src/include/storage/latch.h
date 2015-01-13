@@ -57,13 +57,6 @@
  * SetLatch *after* that. SetLatch is designed to return quickly if the
  * latch is already set.
  *
- * Presently, when using a shared latch for interprocess signalling, the
- * flag variable(s) set by senders and inspected by the wait loop must
- * be protected by spinlocks or LWLocks, else it is possible to miss events
- * on machines with weak memory ordering (such as PPC).  This restriction
- * will be lifted in future by inserting suitable memory barriers into
- * SetLatch and ResetLatch.
- *
  * On some platforms, signals will not interrupt the latch wait primitive
  * by themselves.  Therefore, it is critical that any signal handler that
  * is meant to terminate a WaitLatch wait calls SetLatch.

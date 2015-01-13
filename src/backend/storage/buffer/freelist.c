@@ -214,7 +214,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 	{
 		/* reset bgwprocno first, before setting the latch */
 		StrategyControl->bgwprocno = -1;
-		pg_write_barrier();
 
 		/*
 		 * Not acquiring ProcArrayLock here which is slightly icky. It's
