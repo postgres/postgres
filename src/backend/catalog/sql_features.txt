@@ -565,20 +565,20 @@ X051	Advanced table mapping: nulls absent			YES
 X052	Advanced table mapping: null as nil			YES	
 X053	Advanced table mapping: table as forest			YES	
 X054	Advanced table mapping: table as element			YES	
-X055	Advanced table mapping: target namespace			YES	
+X055	Advanced table mapping: with target namespace			YES	
 X056	Advanced table mapping: data mapping			YES	
 X057	Advanced table mapping: metadata mapping			YES	
 X058	Advanced table mapping: base64 encoding of binary strings			YES	
 X059	Advanced table mapping: hex encoding of binary strings			YES	
-X060	XMLParse: Character string input and CONTENT option			YES	
-X061	XMLParse: Character string input and DOCUMENT option			YES	
+X060	XMLParse: character string input and CONTENT option			YES	
+X061	XMLParse: character string input and DOCUMENT option			YES	
 X065	XMLParse: BLOB input and CONTENT option			NO	
 X066	XMLParse: BLOB input and DOCUMENT option			NO	
 X068	XMLSerialize: BOM			NO	
 X069	XMLSerialize: INDENT			NO	
-X070	XMLSerialize: Character string serialization and CONTENT option			YES	
-X071	XMLSerialize: Character string serialization and DOCUMENT option			YES	
-X072	XMLSerialize: Character string serialization			YES	
+X070	XMLSerialize: character string serialization and CONTENT option			YES	
+X071	XMLSerialize: character string serialization and DOCUMENT option			YES	
+X072	XMLSerialize: character string serialization			YES	
 X073	XMLSerialize: BLOB serialization and CONTENT option			NO	
 X074	XMLSerialize: BLOB serialization and DOCUMENT option			NO	
 X075	XMLSerialize: BLOB serialization			NO	
