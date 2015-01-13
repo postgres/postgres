@@ -504,42 +504,13 @@ BootstrapModeMain(void)
 static void
 bootstrap_signals(void)
 {
-	if (IsUnderPostmaster)
-	{
-		/*
-		 * Properly accept or ignore signals the postmaster might send us
-		 */
-		pqsignal(SIGHUP, SIG_IGN);
-		pqsignal(SIGINT, SIG_IGN);		/* ignore query-cancel */
-		pqsignal(SIGTERM, die);
-		pqsignal(SIGQUIT, quickdie);
-		pqsignal(SIGALRM, SIG_IGN);
-		pqsignal(SIGPIPE, SIG_IGN);
-		pqsignal(SIGUSR1, SIG_IGN);
-		pqsignal(SIGUSR2, SIG_IGN);
+	Assert(!IsUnderPostmaster);
 
-		/*
-		 * Reset some signals that are accepted by postmaster but not here
-		 */
-		pqsignal(SIGCHLD, SIG_DFL);
-		pqsignal(SIGTTIN, SIG_DFL);
-		pqsignal(SIGTTOU, SIG_DFL);
-		pqsignal(SIGCONT, SIG_DFL);
-		pqsignal(SIGWINCH, SIG_DFL);
-
-		/*
-		 * Unblock signals (they were blocked when the postmaster forked us)
-		 */
-		PG_SETMASK(&UnBlockSig);
-	}
-	else
-	{
-		/* Set up appropriately for interactive use */
-		pqsignal(SIGHUP, die);
-		pqsignal(SIGINT, die);
-		pqsignal(SIGTERM, die);
-		pqsignal(SIGQUIT, die);
-	}
+	/* Set up appropriately for interactive use */
+	pqsignal(SIGHUP, die);
+	pqsignal(SIGINT, die);
+	pqsignal(SIGTERM, die);
+	pqsignal(SIGQUIT, die);
 }
 
 /*
