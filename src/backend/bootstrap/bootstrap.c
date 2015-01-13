@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include <time.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -191,19 +190,11 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	char	   *userDoption = NULL;
 
 	/*
-	 * initialize globals
+	 * Initialize process environment (already done if under postmaster, but
+	 * not if standalone).
 	 */
-	MyProcPid = getpid();
-
-	MyStartTime = time(NULL);
-
-	/* Compute paths, if we didn't inherit them from postmaster */
-	if (my_exec_path[0] == '\0')
-	{
-		if (find_my_exec(progname, my_exec_path) < 0)
-			elog(FATAL, "%s: could not locate my own executable path",
-				 progname);
-	}
+	if (!IsUnderPostmaster)
+		InitStandaloneProcess(argv[0]);
 
 	/*
 	 * process command arguments
@@ -515,15 +506,6 @@ bootstrap_signals(void)
 {
 	if (IsUnderPostmaster)
 	{
-		/*
-		 * If possible, make this process a group leader, so that the
-		 * postmaster can signal any child processes too.
-		 */
-#ifdef HAVE_SETSID
-		if (setsid() < 0)
-			elog(FATAL, "setsid() failed: %m");
-#endif
-
 		/*
 		 * Properly accept or ignore signals the postmaster might send us
 		 */

@@ -22,7 +22,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_SELECT_H
@@ -3536,29 +3535,11 @@ PostgresMain(int argc, char *argv[],
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_ready_for_query = true;
 
-	/*
-	 * Initialize globals (already done if under postmaster, but not if
-	 * standalone).
-	 */
+	/* Initialize startup process environment if necessary. */
 	if (!IsUnderPostmaster)
-	{
-		MyProcPid = getpid();
-
-		MyStartTime = time(NULL);
-	}
+		InitStandaloneProcess(argv[0]);
 
 	SetProcessingMode(InitProcessing);
-
-	/* Compute paths, if we didn't inherit them from postmaster */
-	if (my_exec_path[0] == '\0')
-	{
-		if (find_my_exec(argv[0], my_exec_path) < 0)
-			elog(FATAL, "%s: could not locate my own executable path",
-				 argv[0]);
-	}
-
-	if (pkglib_path[0] == '\0')
-		get_pkglib_path(my_exec_path, pkglib_path);
 
 	/*
 	 * Set default values for command-line options.
@@ -3588,11 +3569,6 @@ PostgresMain(int argc, char *argv[],
 		if (!SelectConfigFiles(userDoption, progname))
 			proc_exit(1);
 	}
-
-	/*
-	 * You might expect to see a setsid() call here, but it's not needed,
-	 * because if we are under a postmaster then BackendInitialize() did it.
-	 */
 
 	/*
 	 * Set up signal handlers and masks.

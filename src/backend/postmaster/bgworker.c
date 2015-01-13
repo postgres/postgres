@@ -13,7 +13,6 @@
 #include "postgres.h"
 
 #include <unistd.h>
-#include <time.h>
 
 #include "miscadmin.h"
 #include "libpq/pqsignal.h"
@@ -556,15 +555,7 @@ StartBackgroundWorker(void)
 	if (worker == NULL)
 		elog(FATAL, "unable to find bgworker entry");
 
-	/* we are a postmaster subprocess now */
-	IsUnderPostmaster = true;
 	IsBackgroundWorker = true;
-
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-
-	/* record Start Time for logging */
-	MyStartTime = time(NULL);
 
 	/* Identify myself via ps */
 	snprintf(buf, MAXPGPATH, "bgworker: %s", worker->bgw_name);
@@ -589,15 +580,6 @@ StartBackgroundWorker(void)
 	/* Apply PostAuthDelay */
 	if (PostAuthDelay > 0)
 		pg_usleep(PostAuthDelay * 1000000L);
-
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
 
 	/*
 	 * Set up signal handlers.

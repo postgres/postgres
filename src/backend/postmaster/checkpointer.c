@@ -197,17 +197,6 @@ CheckpointerMain(void)
 	CheckpointerShmem->checkpointer_pid = MyProcPid;
 
 	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (checkpointer probably never has
-	 * any child processes, but for consistency we make all postmaster child
-	 * processes do this.)
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
-
-	/*
 	 * Properly accept or ignore signals the postmaster might send us
 	 *
 	 * Note: we deliberately ignore SIGTERM, because during a standard Unix

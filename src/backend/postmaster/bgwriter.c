@@ -36,7 +36,6 @@
 
 #include <signal.h>
 #include <sys/time.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "access/xlog.h"
@@ -112,17 +111,6 @@ BackgroundWriterMain(void)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext bgwriter_context;
 	bool		prev_hibernate;
-
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (bgwriter probably never has any
-	 * child processes, but for consistency we make all postmaster child
-	 * processes do this.)
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
 
 	/*
 	 * Properly accept or ignore signals the postmaster might send us.

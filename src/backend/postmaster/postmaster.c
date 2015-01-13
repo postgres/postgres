@@ -3811,19 +3811,8 @@ BackendStartup(Port *port)
 	{
 		free(bn);
 
-		/*
-		 * Let's clean up ourselves as the postmaster child, and close the
-		 * postmaster's listen sockets.  (In EXEC_BACKEND case this is all
-		 * done in SubPostmasterMain.)
-		 */
-		IsUnderPostmaster = true;		/* we are a postmaster subprocess now */
-
-		MyProcPid = getpid();	/* reset MyProcPid */
-
-		MyStartTime = time(NULL);
-
-		/* We don't want the postmaster's proc_exit() handlers */
-		on_exit_reset();
+		/* Detangle from postmaster */
+		InitPostmasterChild();
 
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -3952,16 +3941,6 @@ BackendInitialize(Port *port)
 	 */
 	pq_init();					/* initialize libpq to talk to client */
 	whereToSendOutput = DestRemote;		/* now safe to ereport to client */
-
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (We do this now on the off chance
-	 * that something might spawn a child process during authentication.)
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
 
 	/*
 	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT or
@@ -4515,29 +4494,12 @@ SubPostmasterMain(int argc, char *argv[])
 {
 	Port		port;
 
-	/* Do this sooner rather than later... */
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-	MyProcPid = getpid();		/* reset MyProcPid */
-
-	MyStartTime = time(NULL);
-
-	/*
-	 * make sure stderr is in binary mode before anything can possibly be
-	 * written to it, in case it's actually the syslogger pipe, so the pipe
-	 * chunking protocol isn't disturbed. Non-logpipe data gets translated on
-	 * redirection (e.g. via pg_ctl -l) anyway.
-	 */
-#ifdef WIN32
-	_setmode(fileno(stderr), _O_BINARY);
-#endif
-
-	/* Lose the postmaster's on-exit routines (really a no-op) */
-	on_exit_reset();
-
 	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
 	whereToSendOutput = DestNone;
+
+	/* Setup as postmaster child */
+	InitPostmasterChild();
 
 	/* Setup essential subsystems (to ensure elog() behaves sanely) */
 	InitializeGUCOptions();
@@ -4717,6 +4679,8 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* do this as early as possible; in particular, before InitProcess() */
 		IsBackgroundWorker = true;
+
+		InitPostmasterChild();
 
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -5138,13 +5102,10 @@ StartChildProcess(AuxProcType type)
 
 	if (pid == 0)				/* child */
 	{
-		IsUnderPostmaster = true;		/* we are a postmaster subprocess now */
+		InitPostmasterChild();
 
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
-
-		/* Lose the postmaster's on-exit routines and port connections */
-		on_exit_reset();
 
 		/* Release postmaster's working memory context */
 		MemoryContextSwitchTo(TopMemoryContext);
@@ -5424,11 +5385,10 @@ do_start_bgworker(RegisteredBgWorker *rw)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
-
-			/* Lose the postmaster's on-exit routines */
-			on_exit_reset();
 
 			/* Do NOT release postmaster's working memory context */
 

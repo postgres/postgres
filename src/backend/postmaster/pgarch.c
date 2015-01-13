@@ -157,11 +157,10 @@ pgarch_start(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
-
-			/* Lose the postmaster's on-exit routines */
-			on_exit_reset();
 
 			/* Drop our connection to postmaster's shared memory, as well */
 			dsm_detach_all();
@@ -221,21 +220,6 @@ pgarch_forkexec(void)
 NON_EXEC_STATIC void
 PgArchiverMain(int argc, char *argv[])
 {
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-	MyProcPid = getpid();		/* reset MyProcPid */
-
-	MyStartTime = time(NULL);	/* record Start Time for logging */
-
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
-
 	InitializeLatchSupport();	/* needed for latch waits */
 
 	InitLatch(&mainloop_latch); /* initialize latch used in main loop */
