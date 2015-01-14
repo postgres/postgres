@@ -240,6 +240,12 @@ vacuumlo(const char *database, const struct _param * param)
 			fprintf(stderr, "Out of memory\n");
 			PQclear(res);
 			PQfinish(conn);
+			if (schema != NULL)
+				PQfreemem(schema);
+			if (schema != NULL)
+				PQfreemem(table);
+			if (schema != NULL)
+				PQfreemem(field);
 			return -1;
 		}
 
@@ -256,6 +262,9 @@ vacuumlo(const char *database, const struct _param * param)
 			PQclear(res2);
 			PQclear(res);
 			PQfinish(conn);
+			PQfreemem(schema);
+			PQfreemem(table);
+			PQfreemem(field);
 			return -1;
 		}
 		PQclear(res2);
