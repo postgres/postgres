@@ -1,9 +1,10 @@
 # src/template/hpux
 
+# Need this for access to many modern library features
 CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE_EXTENDED"
 
+# HP's compiler likes the spelling +O2 not -O2, so adjust default CFLAGS
 if test "$GCC" != yes ; then
-  CC="$CC -Ae"
   CFLAGS="+O2"
 fi
 
