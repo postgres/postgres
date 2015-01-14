@@ -414,6 +414,10 @@ else
   fi
 fi
 
+# CFLAGS we determined above will be added back at the end
+user_CFLAGS=$CFLAGS
+CFLAGS=""
+
 # set CFLAGS_VECTOR from the environment, if available
 if test "$ac_env_CFLAGS_VECTOR_set" = set; then
   CFLAGS_VECTOR=$ac_env_CFLAGS_VECTOR_value
@@ -425,7 +429,7 @@ fi
 # but has its own.  Also check other compiler-specific flags here.
 
 if test "$GCC" = yes -a "$ICC" = no; then
-  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
+  CFLAGS="-Wall -Wmissing-prototypes -Wpointer-arith"
   # These work in some but not all gcc versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
@@ -488,7 +492,12 @@ if test "$PORTNAME" = "win32"; then
   CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32 -DEXEC_BACKEND"
 fi
 
-# Check if the compiler still works with the template settings
+# Now that we're done automatically adding stuff to CFLAGS, put back the
+# user-specified flags (if any) at the end.  This lets users override
+# the automatic additions.
+CFLAGS="$CFLAGS $user_CFLAGS"
+
+# Check if the compiler still works with the final flag settings
 AC_MSG_CHECKING([whether the C compiler still works])
 AC_TRY_LINK([], [return 0;],
   [AC_MSG_RESULT(yes)],

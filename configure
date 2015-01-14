@@ -4386,6 +4386,10 @@ else
   fi
 fi
 
+# CFLAGS we determined above will be added back at the end
+user_CFLAGS=$CFLAGS
+CFLAGS=""
+
 # set CFLAGS_VECTOR from the environment, if available
 if test "$ac_env_CFLAGS_VECTOR_set" = set; then
   CFLAGS_VECTOR=$ac_env_CFLAGS_VECTOR_value
@@ -4397,7 +4401,7 @@ fi
 # but has its own.  Also check other compiler-specific flags here.
 
 if test "$GCC" = yes -a "$ICC" = no; then
-  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
+  CFLAGS="-Wall -Wmissing-prototypes -Wpointer-arith"
   # These work in some but not all gcc versions
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether $CC supports -Wdeclaration-after-statement... " >&6; }
@@ -4904,7 +4908,12 @@ if test "$PORTNAME" = "win32"; then
   CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32 -DEXEC_BACKEND"
 fi
 
-# Check if the compiler still works with the template settings
+# Now that we're done automatically adding stuff to CFLAGS, put back the
+# user-specified flags (if any) at the end.  This lets users override
+# the automatic additions.
+CFLAGS="$CFLAGS $user_CFLAGS"
+
+# Check if the compiler still works with the final flag settings
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler still works" >&5
 $as_echo_n "checking whether the C compiler still works... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
