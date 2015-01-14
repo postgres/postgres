@@ -190,7 +190,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       <xref linkend="planner-stats">.
      </para>
      <para>
-      SET STATISTICS acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+      <literal>SET STATISTICS</literal> acquires a
+      <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
      </para>
     </listitem>
    </varlistentry>
