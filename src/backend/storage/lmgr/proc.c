@@ -291,13 +291,6 @@ InitProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
-	 * Initialize process-local latch support.  This could fail if the kernel
-	 * is low on resources, and if so we want to exit cleanly before acquiring
-	 * any shared-memory resources.
-	 */
-	InitializeLatchSupport();
-
-	/*
 	 * Try to get a proc struct from the free list.  If this fails, we must be
 	 * out of PGPROC structures (not to mention semaphores).
 	 *
@@ -391,10 +384,12 @@ InitProcess(void)
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
 
 	/*
-	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
-	 * Note that there's no particular need to do ResetLatch here.
+	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch
+	 * on it.  That allows us to repoint the process latch, which so far
+	 * points to process local one, to the shared one.
 	 */
 	OwnLatch(&MyProc->procLatch);
+	SwitchToSharedLatch();
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
@@ -475,13 +470,6 @@ InitAuxiliaryProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
-	 * Initialize process-local latch support.  This could fail if the kernel
-	 * is low on resources, and if so we want to exit cleanly before acquiring
-	 * any shared-memory resources.
-	 */
-	InitializeLatchSupport();
-
-	/*
 	 * We use the ProcStructLock to protect assignment and releasing of
 	 * AuxiliaryProcs entries.
 	 *
@@ -547,10 +535,12 @@ InitAuxiliaryProcess(void)
 #endif
 
 	/*
-	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
-	 * Note that there's no particular need to do ResetLatch here.
+	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch
+	 * on it.  That allows us to repoint the process latch, which so far
+	 * points to process local one, to the shared one.
 	 */
 	OwnLatch(&MyProc->procLatch);
+	SwitchToSharedLatch();
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
@@ -800,10 +790,12 @@ ProcKill(int code, Datum arg)
 		ReplicationSlotRelease();
 
 	/*
-	 * Clear MyProc first; then disown the process latch.  This is so that
-	 * signal handlers won't try to clear the process latch after it's no
-	 * longer ours.
+	 * Reset MyLatch to the process local one.  This is so that signal
+	 * handlers et al can continue using the latch after the shared latch
+	 * isn't ours anymore. After that clear MyProc and disown the shared
+	 * latch.
 	 */
+	SwitchBackToLocalLatch();
 	proc = MyProc;
 	MyProc = NULL;
 	DisownLatch(&proc->procLatch);
@@ -867,10 +859,12 @@ AuxiliaryProcKill(int code, Datum arg)
 	LWLockReleaseAll();
 
 	/*
-	 * Clear MyProc first; then disown the process latch.  This is so that
-	 * signal handlers won't try to clear the process latch after it's no
-	 * longer ours.
+	 * Reset MyLatch to the process local one.  This is so that signal
+	 * handlers et al can continue using the latch after the shared latch
+	 * isn't ours anymore. After that clear MyProc and disown the shared
+	 * latch.
 	 */
+	SwitchBackToLocalLatch();
 	proc = MyProc;
 	MyProc = NULL;
 	DisownLatch(&proc->procLatch);

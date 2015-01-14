@@ -41,6 +41,15 @@ long		MyCancelKey;
 int			MyPMChildSlot;
 
 /*
+ * MyLatch points to the latch that should be used for signal handling by the
+ * current process. It will either point to a process local latch if the
+ * current process does not have a PGPROC entry in that moment, or to
+ * PGPROC->procLatch if it has. Thus it can always be used in signal handlers,
+ * without checking for its existence.
+ */
+struct Latch *MyLatch;
+
+/*
  * DataDir is the absolute path to the top level of the PGDATA directory tree.
  * Except during early startup, this is also the server's working directory;
  * most code therefore can simply use relative paths and not reference DataDir

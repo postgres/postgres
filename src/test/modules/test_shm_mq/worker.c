@@ -211,8 +211,7 @@ handle_sigterm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	if (!proc_exit_inprogress)
 	{

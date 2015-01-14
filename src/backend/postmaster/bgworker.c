@@ -942,7 +942,7 @@ WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
 			if (status != BGWH_NOT_YET_STARTED)
 				break;
 
-			rc = WaitLatch(&MyProc->procLatch,
+			rc = WaitLatch(MyLatch,
 						   WL_LATCH_SET | WL_POSTMASTER_DEATH, 0);
 
 			if (rc & WL_POSTMASTER_DEATH)
@@ -951,7 +951,7 @@ WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
 				break;
 			}
 
-			ResetLatch(&MyProc->procLatch);
+			ResetLatch(MyLatch);
 		}
 	}
 	PG_CATCH();

@@ -2607,8 +2607,7 @@ die(SIGNAL_ARGS)
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -2649,8 +2648,7 @@ StatementCancelHandler(SIGNAL_ARGS)
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -2675,8 +2673,7 @@ SigHupHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_SIGHUP = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -2814,8 +2811,7 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 	 * waiting on that latch, expecting to get interrupted by query cancels et
 	 * al., would also need to set set_latch_on_sigusr1.
 	 */
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }

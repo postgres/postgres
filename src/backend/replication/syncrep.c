@@ -162,7 +162,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		int			syncRepState;
 
 		/* Must reset the latch before testing state. */
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 
 		/*
 		 * Try checking the state without the lock first.  There's no
@@ -235,7 +235,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * Wait on latch.  Any condition that should wake us up will set the
 		 * latch, so no need for timeout.
 		 */
-		WaitLatch(&MyProc->procLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1);
+		WaitLatch(MyLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1);
 	}
 
 	/*

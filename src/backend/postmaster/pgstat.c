@@ -130,8 +130,6 @@ PgStat_MsgBgWriter BgWriterStats;
  */
 NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
 
-static Latch pgStatLatch;
-
 static struct sockaddr_storage pgStatAddr;
 
 static time_t last_pgstat_start_time;
@@ -3151,15 +3149,10 @@ PgstatCollectorMain(int argc, char *argv[])
 	PgStat_Msg	msg;
 	int			wr;
 
-	InitializeLatchSupport();	/* needed for latch waits */
-
-	/* Initialize private latch for use by signal handlers */
-	InitLatch(&pgStatLatch);
-
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except SIGHUP and SIGQUIT.  Note we don't need a SIGUSR1 handler to
-	 * support latch operations, because pgStatLatch is local not shared.
+	 * support latch operations, because we only use a local latch.
 	 */
 	pqsignal(SIGHUP, pgstat_sighup_handler);
 	pqsignal(SIGINT, SIG_IGN);
@@ -3205,7 +3198,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	for (;;)
 	{
 		/* Clear any already-pending wakeups */
-		ResetLatch(&pgStatLatch);
+		ResetLatch(MyLatch);
 
 		/*
 		 * Quit if we get SIGQUIT from the postmaster.
@@ -3363,7 +3356,7 @@ PgstatCollectorMain(int argc, char *argv[])
 
 		/* Sleep until there's something to do */
 #ifndef WIN32
-		wr = WaitLatchOrSocket(&pgStatLatch,
+		wr = WaitLatchOrSocket(MyLatch,
 					 WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
 							   pgStatSock,
 							   -1L);
@@ -3379,7 +3372,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		 * to not provoke "pgstat wait timeout" complaints from
 		 * backend_read_statsfile.
 		 */
-		wr = WaitLatchOrSocket(&pgStatLatch,
+		wr = WaitLatchOrSocket(MyLatch,
 		WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
 							   2 * 1000L /* msec */ );
@@ -3409,7 +3402,7 @@ pgstat_exit(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	need_exit = true;
-	SetLatch(&pgStatLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -3421,7 +3414,7 @@ pgstat_sighup_handler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_SIGHUP = true;
-	SetLatch(&pgStatLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }

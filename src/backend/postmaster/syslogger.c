@@ -85,7 +85,6 @@ static FILE *csvlogFile = NULL;
 NON_EXEC_STATIC pg_time_t first_syslogger_file_time = 0;
 static char *last_file_name = NULL;
 static char *last_csv_file_name = NULL;
-static Latch sysLoggerLatch;
 
 /*
  * Buffers for saving partial messages from different backends.
@@ -231,12 +230,6 @@ SysLoggerMain(int argc, char *argv[])
 	syslogPipe[1] = 0;
 #endif
 
-	InitializeLatchSupport();		/* needed for latch waits */
-
-
-	/* Initialize private latch for use by signal handlers */
-	InitLatch(&sysLoggerLatch);
-
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
 	 *
@@ -302,7 +295,7 @@ SysLoggerMain(int argc, char *argv[])
 #endif
 
 		/* Clear any already-pending wakeups */
-		ResetLatch(&sysLoggerLatch);
+		ResetLatch(MyLatch);
 
 		/*
 		 * Process any requests or signals received recently.
@@ -428,7 +421,7 @@ SysLoggerMain(int argc, char *argv[])
 		 * Sleep until there's something to do
 		 */
 #ifndef WIN32
-		rc = WaitLatchOrSocket(&sysLoggerLatch,
+		rc = WaitLatchOrSocket(MyLatch,
 							   WL_LATCH_SET | WL_SOCKET_READABLE | cur_flags,
 							   syslogPipe[0],
 							   cur_timeout);
@@ -480,7 +473,7 @@ SysLoggerMain(int argc, char *argv[])
 		 */
 		LeaveCriticalSection(&sysloggerSection);
 
-		(void) WaitLatch(&sysLoggerLatch,
+		(void) WaitLatch(MyLatch,
 						 WL_LATCH_SET | cur_flags,
 						 cur_timeout);
 
@@ -1061,7 +1054,7 @@ pipeThread(void *arg)
 		{
 			if (ftell(syslogFile) >= Log_RotationSize * 1024L ||
 				(csvlogFile != NULL && ftell(csvlogFile) >= Log_RotationSize * 1024L))
-				SetLatch(&sysLoggerLatch);
+				SetLatch(MyLatch);
 		}
 		LeaveCriticalSection(&sysloggerSection);
 	}
@@ -1073,7 +1066,7 @@ pipeThread(void *arg)
 	flush_pipe_input(logbuffer, &bytes_in_logbuffer);
 
 	/* set the latch to waken the main thread, which will quit */
-	SetLatch(&sysLoggerLatch);
+	SetLatch(MyLatch);
 
 	LeaveCriticalSection(&sysloggerSection);
 	_endthread();
@@ -1353,7 +1346,7 @@ sigHupHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_SIGHUP = true;
-	SetLatch(&sysLoggerLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -1365,7 +1358,7 @@ sigUsr1Handler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	rotation_requested = true;
-	SetLatch(&sysLoggerLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }

@@ -85,7 +85,7 @@
  * the public functions. It is defined here to allow embedding Latches as
  * part of bigger structs.
  */
-typedef struct
+typedef struct Latch
 {
 	sig_atomic_t is_set;
 	bool		is_shared;

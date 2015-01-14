@@ -284,11 +284,9 @@ handle_sig_alarm(SIGNAL_ARGS)
 
 	/*
 	 * SIGALRM is always cause for waking anything waiting on the process
-	 * latch.  Cope with MyProc not being there, as the startup process also
-	 * uses this signal handler.
+	 * latch.
 	 */
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	/*
 	 * Fire any pending timeouts, but only if we're enabled to do so.

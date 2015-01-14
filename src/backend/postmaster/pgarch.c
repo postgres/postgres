@@ -78,11 +78,6 @@ static volatile sig_atomic_t got_SIGTERM = false;
 static volatile sig_atomic_t wakened = false;
 static volatile sig_atomic_t ready_to_stop = false;
 
-/*
- * Latch used by signal handlers to wake up the sleep in the main loop.
- */
-static Latch mainloop_latch;
-
 /* ----------
  * Local function forward declarations
  * ----------
@@ -220,10 +215,6 @@ pgarch_forkexec(void)
 NON_EXEC_STATIC void
 PgArchiverMain(int argc, char *argv[])
 {
-	InitializeLatchSupport();	/* needed for latch waits */
-
-	InitLatch(&mainloop_latch); /* initialize latch used in main loop */
-
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except for SIGHUP, SIGTERM, SIGUSR1, SIGUSR2, and SIGQUIT.
@@ -269,7 +260,7 @@ ArchSigHupHandler(SIGNAL_ARGS)
 
 	/* set flag to re-read config file at next convenient time */
 	got_SIGHUP = true;
-	SetLatch(&mainloop_latch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -287,7 +278,7 @@ ArchSigTermHandler(SIGNAL_ARGS)
 	 * archive commands.
 	 */
 	got_SIGTERM = true;
-	SetLatch(&mainloop_latch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -300,7 +291,7 @@ pgarch_waken(SIGNAL_ARGS)
 
 	/* set flag that there is work to be done */
 	wakened = true;
-	SetLatch(&mainloop_latch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -313,7 +304,7 @@ pgarch_waken_stop(SIGNAL_ARGS)
 
 	/* set flag to do a final cycle and shut down afterwards */
 	ready_to_stop = true;
-	SetLatch(&mainloop_latch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -344,7 +335,7 @@ pgarch_MainLoop(void)
 	 */
 	do
 	{
-		ResetLatch(&mainloop_latch);
+		ResetLatch(MyLatch);
 
 		/* When we get SIGUSR2, we do one more archive cycle, then exit */
 		time_to_stop = ready_to_stop;
@@ -397,7 +388,7 @@ pgarch_MainLoop(void)
 			{
 				int			rc;
 
-				rc = WaitLatch(&mainloop_latch,
+				rc = WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 							   timeout * 1000L);
 				if (rc & WL_TIMEOUT)

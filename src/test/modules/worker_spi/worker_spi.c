@@ -74,8 +74,7 @@ worker_spi_sigterm(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_sigterm = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -91,8 +90,7 @@ worker_spi_sighup(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_sighup = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -227,10 +225,10 @@ worker_spi_main(Datum main_arg)
 		 * necessary, but is awakened if postmaster dies.  That way the
 		 * background process goes away immediately in an emergency.
 		 */
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   worker_spi_naptime * 1000L);
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 
 		/* emergency bailout if postmaster has died */
 		if (rc & WL_POSTMASTER_DEATH)
