@@ -435,7 +435,7 @@ CheckForExternalTrigger(void)
 		return;
 	}
 
-	if ((len = read(fd, buf, sizeof(buf))) < 0)
+	if ((len = read(fd, buf, sizeof(buf) - 1)) < 0)
 	{
 		fprintf(stderr, "WARNING: could not read \"%s\": %s\n",
 				triggerPath, strerror(errno));
