@@ -72,3 +72,35 @@ c2             (0,1)          1              0              0
 c3             (0,1)          2              0              0              
 c3             (0,4)          2              1              0              
 step c2: COMMIT;
+
+starting permutation: writep2 returningp1 c1 c2
+step writep2: UPDATE p SET b = -b WHERE a = 1 AND c = 0;
+step returningp1: 
+	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
+	  SELECT * FROM u;
+ <waiting ...>
+step c1: COMMIT;
+step returningp1: <... completed>
+a              b              c              
+
+1              0              0              
+1              0              1              
+1              0              2              
+1              -1             0              
+1              1              1              
+1              1              2              
+1              -2             0              
+1              2              1              
+1              2              2              
+1              -3             0              
+2              0              0              
+2              0              1              
+2              0              2              
+2              1              0              
+2              1              1              
+2              1              2              
+2              2              0              
+2              2              1              
+2              2              2              
+2              3              0              
+step c2: COMMIT;
