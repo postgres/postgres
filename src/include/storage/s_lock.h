@@ -752,6 +752,15 @@ tas(volatile slock_t *lock)
 	return (lockval == 0);
 }
 
+/*
+ * The hppa implementation doesn't follow the rules of this files and provides
+ * a gcc specific implementation outside of the above defined(__GNUC__). It
+ * does so to avoid duplication between the HP compiler and gcc. So undefine
+ * the generic fallback S_UNLOCK from above.
+ */
+#ifdef S_UNLOCK
+#undef S_UNLOCK
+#endif
 #define S_UNLOCK(lock)	\
 	do { \
 		__asm__ __volatile__("" : : : "memory"); \
