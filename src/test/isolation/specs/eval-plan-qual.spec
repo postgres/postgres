@@ -39,11 +39,15 @@ step "upsert1"	{
 	INSERT INTO accounts SELECT 'savings', 500
 	  WHERE NOT EXISTS (SELECT 1 FROM upsert);
 }
-# tests with table p check inheritance cases, specifically a bug where
-# nodeLockRows did the wrong thing when the first updated tuple was in
-# a non-first child table
+
+# tests with table p check inheritance cases:
+# readp1/writep1/readp2 tests a bug where nodeLockRows did the wrong thing
+# when the first updated tuple was in a non-first child table.
+# writep2/returningp1 tests a memory allocation issue
+
 step "readp1"	{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
 step "writep1"	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
+step "writep2"	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
 step "c1"	{ COMMIT; }
 
 session "s2"
@@ -59,6 +63,10 @@ step "upsert2"	{
 	  WHERE NOT EXISTS (SELECT 1 FROM upsert);
 }
 step "readp2"	{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
+step "returningp1" {
+	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
+	  SELECT * FROM u;
+}
 step "c2"	{ COMMIT; }
 
 session "s3"
@@ -70,3 +78,4 @@ permutation "wx1" "wx2" "c1" "c2" "read"
 permutation "wy1" "wy2" "c1" "c2" "read"
 permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
+permutation "writep2" "returningp1" "c1" "c2"
