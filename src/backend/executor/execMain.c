@@ -2205,6 +2205,14 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * the snapshot, rangetable, result-rel info, and external Param info.
 	 * They need their own copies of local state, including a tuple table,
 	 * es_param_exec_vals, etc.
+	 *
+	 * The ResultRelInfo array management is trickier than it looks.  We
+	 * create a fresh array for the child but copy all the content from the
+	 * parent.  This is because it's okay for the child to share any
+	 * per-relation state the parent has already created --- but if the child
+	 * sets up any ResultRelInfo fields, such as its own junkfilter, that
+	 * state must *not* propagate back to the parent.  (For one thing, the
+	 * pointed-to data is in a memory context that won't last long enough.)
 	 */
 	estate->es_direction = ForwardScanDirection;
 	estate->es_snapshot = parentestate->es_snapshot;
@@ -2213,9 +2221,19 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_plannedstmt = parentestate->es_plannedstmt;
 	estate->es_junkFilter = parentestate->es_junkFilter;
 	estate->es_output_cid = parentestate->es_output_cid;
-	estate->es_result_relations = parentestate->es_result_relations;
-	estate->es_num_result_relations = parentestate->es_num_result_relations;
-	estate->es_result_relation_info = parentestate->es_result_relation_info;
+	if (parentestate->es_num_result_relations > 0)
+	{
+		int			numResultRelations = parentestate->es_num_result_relations;
+		ResultRelInfo *resultRelInfos;
+
+		resultRelInfos = (ResultRelInfo *)
+			palloc(numResultRelations * sizeof(ResultRelInfo));
+		memcpy(resultRelInfos, parentestate->es_result_relations,
+			   numResultRelations * sizeof(ResultRelInfo));
+		estate->es_result_relations = resultRelInfos;
+		estate->es_num_result_relations = numResultRelations;
+	}
+	/* es_result_relation_info must NOT be copied */
 	/* es_trig_target_relations must NOT be copied */
 	estate->es_rowMarks = parentestate->es_rowMarks;
 	estate->es_top_eflags = parentestate->es_top_eflags;
