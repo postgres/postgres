@@ -294,32 +294,31 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 		msec = queryDesc->totaltime->total * 1000.0;
 		if (msec >= auto_explain_log_min_duration)
 		{
-			ExplainState es;
+			ExplainState *es = NewExplainState();
 
-			ExplainInitState(&es);
-			es.analyze = (queryDesc->instrument_options && auto_explain_log_analyze);
-			es.verbose = auto_explain_log_verbose;
-			es.buffers = (es.analyze && auto_explain_log_buffers);
-			es.timing = (es.analyze && auto_explain_log_timing);
-			es.summary = es.analyze;
-			es.format = auto_explain_log_format;
+			es->analyze = (queryDesc->instrument_options && auto_explain_log_analyze);
+			es->verbose = auto_explain_log_verbose;
+			es->buffers = (es->analyze && auto_explain_log_buffers);
+			es->timing = (es->analyze && auto_explain_log_timing);
+			es->summary = es->analyze;
+			es->format = auto_explain_log_format;
 
-			ExplainBeginOutput(&es);
-			ExplainQueryText(&es, queryDesc);
-			ExplainPrintPlan(&es, queryDesc);
-			if (es.analyze && auto_explain_log_triggers)
-				ExplainPrintTriggers(&es, queryDesc);
-			ExplainEndOutput(&es);
+			ExplainBeginOutput(es);
+			ExplainQueryText(es, queryDesc);
+			ExplainPrintPlan(es, queryDesc);
+			if (es->analyze && auto_explain_log_triggers)
+				ExplainPrintTriggers(es, queryDesc);
+			ExplainEndOutput(es);
 
 			/* Remove last line break */
-			if (es.str->len > 0 && es.str->data[es.str->len - 1] == '\n')
-				es.str->data[--es.str->len] = '\0';
+			if (es->str->len > 0 && es->str->data[es->str->len - 1] == '\n')
+				es->str->data[--es->str->len] = '\0';
 
 			/* Fix JSON to output an object */
 			if (auto_explain_log_format == EXPLAIN_FORMAT_JSON)
 			{
-				es.str->data[0] = '{';
-				es.str->data[es.str->len - 1] = '}';
+				es->str->data[0] = '{';
+				es->str->data[es->str->len - 1] = '}';
 			}
 
 			/*
@@ -330,10 +329,10 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			 */
 			ereport(LOG,
 					(errmsg("duration: %.3f ms  plan:\n%s",
-							msec, es.str->data),
+							msec, es->str->data),
 					 errhidestmt(true)));
 
-			pfree(es.str->data);
+			pfree(es->str->data);
 		}
 	}
 

@@ -125,14 +125,11 @@ void
 ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			 ParamListInfo params, DestReceiver *dest)
 {
-	ExplainState es;
+	ExplainState *es = NewExplainState();
 	TupOutputState *tstate;
 	List	   *rewritten;
 	ListCell   *lc;
 	bool		timing_set = false;
-
-	/* Initialize ExplainState. */
-	ExplainInitState(&es);
 
 	/* Parse options list. */
 	foreach(lc, stmt->options)
@@ -140,30 +137,30 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		DefElem    *opt = (DefElem *) lfirst(lc);
 
 		if (strcmp(opt->defname, "analyze") == 0)
-			es.analyze = defGetBoolean(opt);
+			es->analyze = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "verbose") == 0)
-			es.verbose = defGetBoolean(opt);
+			es->verbose = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "costs") == 0)
-			es.costs = defGetBoolean(opt);
+			es->costs = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "buffers") == 0)
-			es.buffers = defGetBoolean(opt);
+			es->buffers = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "timing") == 0)
 		{
 			timing_set = true;
-			es.timing = defGetBoolean(opt);
+			es->timing = defGetBoolean(opt);
 		}
 		else if (strcmp(opt->defname, "format") == 0)
 		{
 			char	   *p = defGetString(opt);
 
 			if (strcmp(p, "text") == 0)
-				es.format = EXPLAIN_FORMAT_TEXT;
+				es->format = EXPLAIN_FORMAT_TEXT;
 			else if (strcmp(p, "xml") == 0)
-				es.format = EXPLAIN_FORMAT_XML;
+				es->format = EXPLAIN_FORMAT_XML;
 			else if (strcmp(p, "json") == 0)
-				es.format = EXPLAIN_FORMAT_JSON;
+				es->format = EXPLAIN_FORMAT_JSON;
 			else if (strcmp(p, "yaml") == 0)
-				es.format = EXPLAIN_FORMAT_YAML;
+				es->format = EXPLAIN_FORMAT_YAML;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -177,22 +174,22 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 							opt->defname)));
 	}
 
-	if (es.buffers && !es.analyze)
+	if (es->buffers && !es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
 
 	/* if the timing was not set explicitly, set default value */
-	es.timing = (timing_set) ? es.timing : es.analyze;
+	es->timing = (timing_set) ? es->timing : es->analyze;
 
 	/* check that timing is used with EXPLAIN ANALYZE */
-	if (es.timing && !es.analyze)
+	if (es->timing && !es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
 
 	/* currently, summary option is not exposed to users; just set it */
-	es.summary = es.analyze;
+	es->summary = es->analyze;
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
@@ -210,7 +207,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	rewritten = QueryRewrite((Query *) copyObject(stmt->query));
 
 	/* emit opening boilerplate */
-	ExplainBeginOutput(&es);
+	ExplainBeginOutput(es);
 
 	if (rewritten == NIL)
 	{
@@ -218,8 +215,8 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		 * In the case of an INSTEAD NOTHING, tell at least that.  But in
 		 * non-text format, the output is delimited, so this isn't necessary.
 		 */
-		if (es.format == EXPLAIN_FORMAT_TEXT)
-			appendStringInfoString(es.str, "Query rewrites to nothing\n");
+		if (es->format == EXPLAIN_FORMAT_TEXT)
+			appendStringInfoString(es->str, "Query rewrites to nothing\n");
 	}
 	else
 	{
@@ -228,41 +225,44 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		/* Explain every plan */
 		foreach(l, rewritten)
 		{
-			ExplainOneQuery((Query *) lfirst(l), NULL, &es,
+			ExplainOneQuery((Query *) lfirst(l), NULL, es,
 							queryString, params);
 
 			/* Separate plans with an appropriate separator */
 			if (lnext(l) != NULL)
-				ExplainSeparatePlans(&es);
+				ExplainSeparatePlans(es);
 		}
 	}
 
 	/* emit closing boilerplate */
-	ExplainEndOutput(&es);
-	Assert(es.indent == 0);
+	ExplainEndOutput(es);
+	Assert(es->indent == 0);
 
 	/* output tuples */
 	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
-	if (es.format == EXPLAIN_FORMAT_TEXT)
-		do_text_output_multiline(tstate, es.str->data);
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+		do_text_output_multiline(tstate, es->str->data);
 	else
-		do_text_output_oneline(tstate, es.str->data);
+		do_text_output_oneline(tstate, es->str->data);
 	end_tup_output(tstate);
 
-	pfree(es.str->data);
+	pfree(es->str->data);
 }
 
 /*
- * Initialize ExplainState.
+ * Create a new ExplainState struct initialized with default options.
  */
-void
-ExplainInitState(ExplainState *es)
+ExplainState *
+NewExplainState(void)
 {
-	/* Set default options. */
-	memset(es, 0, sizeof(ExplainState));
+	ExplainState *es = (ExplainState *) palloc0(sizeof(ExplainState));
+
+	/* Set default options (most fields can be left as zeroes). */
 	es->costs = true;
 	/* Prepare output buffer. */
 	es->str = makeStringInfo();
+
+	return es;
 }
 
 /*
