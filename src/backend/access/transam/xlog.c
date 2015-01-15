@@ -8962,8 +8962,8 @@ xlog_redo(XLogReaderState *record)
 		ControlFile->max_prepared_xacts = xlrec.max_prepared_xacts;
 		ControlFile->max_locks_per_xact = xlrec.max_locks_per_xact;
 		ControlFile->wal_level = xlrec.wal_level;
-		ControlFile->wal_log_hints = wal_log_hints;
-		ControlFile->track_commit_timestamp = track_commit_timestamp;
+		ControlFile->wal_log_hints = xlrec.wal_log_hints;
+		ControlFile->track_commit_timestamp = xlrec.track_commit_timestamp;
 
 		/*
 		 * Update minRecoveryPoint to ensure that if recovery is aborted, we
