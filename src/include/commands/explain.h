@@ -24,6 +24,13 @@ typedef enum ExplainFormat
 	EXPLAIN_FORMAT_YAML
 } ExplainFormat;
 
+/* Crude hack to avoid changing sizeof(ExplainState) in released branches */
+typedef struct ExplainStateExtra
+{
+	List	   *groupingstack;	/* format-specific grouping state */
+	List	   *deparsecxt;		/* context list for deparsing expressions */
+} ExplainStateExtra;
+
 typedef struct ExplainState
 {
 	StringInfo	str;			/* output buffer */
@@ -39,7 +46,7 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 	List	   *rtable_names;	/* alias names for RTEs */
 	int			indent;			/* current indentation level */
-	List	   *grouping_stack; /* format-specific grouping state */
+	ExplainStateExtra *extra;	/* pointer to additional data */
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */
