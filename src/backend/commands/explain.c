@@ -33,6 +33,10 @@
 #include "utils/xml.h"
 
 
+/* Crude hack to avoid changing sizeof(ExplainState) in released branches */
+#define grouping_stack extra->groupingstack
+#define deparse_cxt extra->deparsecxt
+
 /* Hook for plugins to get control in ExplainOneQuery() */
 ExplainOneQuery_hook_type ExplainOneQuery_hook = NULL;
 
@@ -262,6 +266,8 @@ ExplainInitState(ExplainState *es)
 	es->costs = true;
 	/* Prepare output buffer. */
 	es->str = makeStringInfo();
+	/* Kluge to avoid changing sizeof(ExplainState) in released branches. */
+	es->extra = (ExplainStateExtra *) palloc0(sizeof(ExplainStateExtra));
 }
 
 /*
@@ -562,6 +568,8 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->rtable = queryDesc->plannedstmt->rtable;
 	ExplainPreScanNode(queryDesc->planstate, &rels_used);
 	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
+	es->deparse_cxt = deparse_context_for_plan_rtable(es->rtable,
+													  es->rtable_names);
 	ExplainNode(queryDesc->planstate, NIL, NULL, NULL, es);
 }
 
@@ -1653,10 +1661,9 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 		return;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_planstate((Node *) planstate,
-											ancestors,
-											es->rtable,
-											es->rtable_names);
+	context = set_deparse_context_planstate(es->deparse_cxt,
+											(Node *) planstate,
+											ancestors);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse each result column (we now include resjunk ones) */
@@ -1685,10 +1692,9 @@ show_expression(Node *node, const char *qlabel,
 	char	   *exprstr;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_planstate((Node *) planstate,
-											ancestors,
-											es->rtable,
-											es->rtable_names);
+	context = set_deparse_context_planstate(es->deparse_cxt,
+											(Node *) planstate,
+											ancestors);
 
 	/* Deparse the expression */
 	exprstr = deparse_expression(node, context, useprefix, false);
@@ -1830,10 +1836,9 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 		return;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_planstate((Node *) planstate,
-											ancestors,
-											es->rtable,
-											es->rtable_names);
+	context = set_deparse_context_planstate(es->deparse_cxt,
+											(Node *) planstate,
+											ancestors);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	for (keyno = 0; keyno < nkeys; keyno++)
