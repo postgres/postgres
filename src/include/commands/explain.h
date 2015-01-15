@@ -41,6 +41,7 @@ typedef struct ExplainState
 	List	   *rtable_names;	/* alias names for RTEs */
 	int			indent;			/* current indentation level */
 	List	   *grouping_stack; /* format-specific grouping state */
+	List	   *deparse_cxt;	/* context list for deparsing expressions */
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */
