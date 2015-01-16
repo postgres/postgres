@@ -97,7 +97,7 @@ static const struct locale_map locale_map_result[] = {
 	 * It's not clear what encoding setlocale() uses when it returns the
 	 * locale name, so to play it safe, we search for "Norwegian (Bok*l)".
 	 */
-	{"Norwegian (Bokm", "l)", "norwegian-bokmal"},
+	{"Norwegian (Bokm", "l)_Norway", "Norwegian_Norway"},
 	{NULL, NULL, NULL}
 };
 
