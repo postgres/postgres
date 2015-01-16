@@ -268,14 +268,14 @@ void
 tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 			   bool recheck)
 {
-	int			i;
+	int				i;
+	PagetableEntry *page = NULL;
 
 	Assert(!tbm->iterating);
 	for (i = 0; i < ntids; i++)
 	{
 		BlockNumber blk = ItemPointerGetBlockNumber(tids + i);
 		OffsetNumber off = ItemPointerGetOffsetNumber(tids + i);
-		PagetableEntry *page;
 		int			wordnum,
 					bitnum;
 
@@ -283,10 +283,18 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 		if (off < 1 || off > MAX_TUPLES_PER_PAGE)
 			elog(ERROR, "tuple offset out of range: %u", off);
 
-		if (tbm_page_is_lossy(tbm, blk))
-			continue;			/* whole page is already marked */
+		if (page == NULL || page->blockno != blk)
+		{
+			if (tbm_page_is_lossy(tbm, blk))
+				continue;	/* whole page is already marked */
 
-		page = tbm_get_pageentry(tbm, blk);
+			/*
+			 * Cache this page as it's quite likely that we'll see the same
+			 * page again in the next iteration. This will save having to
+			 * lookup the page in the hashtable again.
+			 */
+			page = tbm_get_pageentry(tbm, blk);
+		}
 
 		if (page->ischunk)
 		{
@@ -303,7 +311,11 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 		page->recheck |= recheck;
 
 		if (tbm->nentries > tbm->maxentries)
+		{
 			tbm_lossify(tbm);
+			/* Cached page could become lossy or freed */
+			page = NULL;
+		}
 	}
 }
 
