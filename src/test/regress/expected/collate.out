@@ -603,6 +603,25 @@ ALTER TABLE collate_test22 ADD FOREIGN KEY (f2) REFERENCES collate_test20;
 RESET enable_seqscan;
 RESET enable_hashjoin;
 RESET enable_nestloop;
+-- EXPLAIN
+EXPLAIN (COSTS OFF)
+  SELECT * FROM collate_test10 ORDER BY x, y;
+                  QUERY PLAN                  
+----------------------------------------------
+ Sort
+   Sort Key: x COLLATE "C", y COLLATE "POSIX"
+   ->  Seq Scan on collate_test10
+(3 rows)
+
+EXPLAIN (COSTS OFF)
+  SELECT * FROM collate_test10 ORDER BY x DESC, y COLLATE "C" ASC NULLS FIRST;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Sort
+   Sort Key: x COLLATE "C" DESC, y COLLATE "C" NULLS FIRST
+   ->  Seq Scan on collate_test10
+(3 rows)
+
 -- 9.1 bug with useless COLLATE in an expression subject to length coercion
 CREATE TEMP TABLE vctable (f1 varchar(25));
 INSERT INTO vctable VALUES ('foo' COLLATE "C");

@@ -735,7 +735,7 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Sort
-   Sort Key: (generate_series(1, 3))
+   Sort Key: (generate_series(1, 3)) DESC
    InitPlan 1 (returns $0)
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
@@ -784,7 +784,7 @@ explain (costs off)
    InitPlan 2 (returns $1)
      ->  Limit
            ->  Merge Append
-                 Sort Key: minmaxtest_1.f1
+                 Sort Key: minmaxtest_1.f1 DESC
                  ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
                        Index Cond: (f1 IS NOT NULL)
                  ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
@@ -823,7 +823,7 @@ explain (costs off)
    InitPlan 2 (returns $1)
      ->  Limit
            ->  Merge Append
-                 Sort Key: minmaxtest_1.f1
+                 Sort Key: minmaxtest_1.f1 DESC
                  ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
                        Index Cond: (f1 IS NOT NULL)
                  ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1

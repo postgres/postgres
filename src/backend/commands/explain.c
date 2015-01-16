@@ -14,12 +14,14 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "commands/createas.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "executor/hashjoin.h"
 #include "foreign/fdwapi.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
@@ -31,6 +33,7 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/tuplesort.h"
+#include "utils/typcache.h"
 #include "utils/xml.h"
 
 
@@ -83,7 +86,10 @@ static void show_group_keys(GroupState *gstate, List *ancestors,
 				ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
+					 Oid *sortOperators, Oid *collations, bool *nullsFirst,
 					 List *ancestors, ExplainState *es);
+static void show_sortorder_options(StringInfo buf, Node *sortexpr,
+					   Oid sortOperator, Oid collation, bool nullsFirst);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_tidbitmap_info(BitmapHeapScanState *planstate,
@@ -1781,6 +1787,8 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 
 	show_sort_group_keys((PlanState *) sortstate, "Sort Key",
 						 plan->numCols, plan->sortColIdx,
+						 plan->sortOperators, plan->collations,
+						 plan->nullsFirst,
 						 ancestors, es);
 }
 
@@ -1795,6 +1803,8 @@ show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 
 	show_sort_group_keys((PlanState *) mstate, "Sort Key",
 						 plan->numCols, plan->sortColIdx,
+						 plan->sortOperators, plan->collations,
+						 plan->nullsFirst,
 						 ancestors, es);
 }
 
@@ -1813,6 +1823,7 @@ show_agg_keys(AggState *astate, List *ancestors,
 		ancestors = lcons(astate, ancestors);
 		show_sort_group_keys(outerPlanState(astate), "Group Key",
 							 plan->numCols, plan->grpColIdx,
+							 NULL, NULL, NULL,
 							 ancestors, es);
 		ancestors = list_delete_first(ancestors);
 	}
@@ -1831,28 +1842,33 @@ show_group_keys(GroupState *gstate, List *ancestors,
 	ancestors = lcons(gstate, ancestors);
 	show_sort_group_keys(outerPlanState(gstate), "Group Key",
 						 plan->numCols, plan->grpColIdx,
+						 NULL, NULL, NULL,
 						 ancestors, es);
 	ancestors = list_delete_first(ancestors);
 }
 
 /*
  * Common code to show sort/group keys, which are represented in plan nodes
- * as arrays of targetlist indexes
+ * as arrays of targetlist indexes.  If it's a sort key rather than a group
+ * key, also pass sort operators/collations/nullsFirst arrays.
  */
 static void
 show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
+					 Oid *sortOperators, Oid *collations, bool *nullsFirst,
 					 List *ancestors, ExplainState *es)
 {
 	Plan	   *plan = planstate->plan;
 	List	   *context;
 	List	   *result = NIL;
+	StringInfoData sortkeybuf;
 	bool		useprefix;
 	int			keyno;
-	char	   *exprstr;
 
 	if (nkeys <= 0)
 		return;
+
+	initStringInfo(&sortkeybuf);
 
 	/* Set up deparsing context */
 	context = set_deparse_context_planstate(es->deparse_cxt,
@@ -1866,16 +1882,84 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 		AttrNumber	keyresno = keycols[keyno];
 		TargetEntry *target = get_tle_by_resno(plan->targetlist,
 											   keyresno);
+		char	   *exprstr;
 
 		if (!target)
 			elog(ERROR, "no tlist entry for key %d", keyresno);
 		/* Deparse the expression, showing any top-level cast */
 		exprstr = deparse_expression((Node *) target->expr, context,
 									 useprefix, true);
-		result = lappend(result, exprstr);
+		resetStringInfo(&sortkeybuf);
+		appendStringInfoString(&sortkeybuf, exprstr);
+		/* Append sort order information, if relevant */
+		if (sortOperators != NULL)
+			show_sortorder_options(&sortkeybuf,
+								   (Node *) target->expr,
+								   sortOperators[keyno],
+								   collations[keyno],
+								   nullsFirst[keyno]);
+		/* Emit one property-list item per sort key */
+		result = lappend(result, pstrdup(sortkeybuf.data));
 	}
 
 	ExplainPropertyList(qlabel, result, es);
+}
+
+/*
+ * Append nondefault characteristics of the sort ordering of a column to buf
+ * (collation, direction, NULLS FIRST/LAST)
+ */
+static void
+show_sortorder_options(StringInfo buf, Node *sortexpr,
+					   Oid sortOperator, Oid collation, bool nullsFirst)
+{
+	Oid			sortcoltype = exprType(sortexpr);
+	bool		reverse = false;
+	TypeCacheEntry *typentry;
+
+	typentry = lookup_type_cache(sortcoltype,
+								 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+
+	/*
+	 * Print COLLATE if it's not default.  There are some cases where this is
+	 * redundant, eg if expression is a column whose declared collation is
+	 * that collation, but it's hard to distinguish that here.
+	 */
+	if (OidIsValid(collation) && collation != DEFAULT_COLLATION_OID)
+	{
+		char	   *collname = get_collation_name(collation);
+
+		if (collname == NULL)
+			elog(ERROR, "cache lookup failed for collation %u", collation);
+		appendStringInfo(buf, " COLLATE %s", quote_identifier(collname));
+	}
+
+	/* Print direction if not ASC, or USING if non-default sort operator */
+	if (sortOperator == typentry->gt_opr)
+	{
+		appendStringInfoString(buf, " DESC");
+		reverse = true;
+	}
+	else if (sortOperator != typentry->lt_opr)
+	{
+		char	   *opname = get_opname(sortOperator);
+
+		if (opname == NULL)
+			elog(ERROR, "cache lookup failed for operator %u", sortOperator);
+		appendStringInfo(buf, " USING %s", opname);
+		/* Determine whether operator would be considered ASC or DESC */
+		(void) get_equality_op_for_ordering_op(sortOperator, &reverse);
+	}
+
+	/* Add NULLS FIRST/LAST only if it wouldn't be default */
+	if (nullsFirst && !reverse)
+	{
+		appendStringInfoString(buf, " NULLS FIRST");
+	}
+	else if (!nullsFirst && reverse)
+	{
+		appendStringInfoString(buf, " NULLS LAST");
+	}
 }
 
 /*

@@ -319,7 +319,7 @@ explain (costs off)
                      ->  Index Scan using ec1_expr4 on ec1 ec1_3
                ->  Materialize
                      ->  Sort
-                           Sort Key: ec1.f1
+                           Sort Key: ec1.f1 USING <
                            ->  Index Scan using ec1_pkey on ec1
                                  Index Cond: (ff = 42::bigint)
 (20 rows)
@@ -376,7 +376,7 @@ explain (costs off)
          ->  Index Scan using ec1_expr4 on ec1 ec1_3
    ->  Materialize
          ->  Sort
-               Sort Key: ec1.f1
+               Sort Key: ec1.f1 USING <
                ->  Index Scan using ec1_pkey on ec1
                      Index Cond: (ff = 42::bigint)
 (14 rows)

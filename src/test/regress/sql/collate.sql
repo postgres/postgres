@@ -220,6 +220,15 @@ RESET enable_seqscan;
 RESET enable_hashjoin;
 RESET enable_nestloop;
 
+
+-- EXPLAIN
+
+EXPLAIN (COSTS OFF)
+  SELECT * FROM collate_test10 ORDER BY x, y;
+EXPLAIN (COSTS OFF)
+  SELECT * FROM collate_test10 ORDER BY x DESC, y COLLATE "C" ASC NULLS FIRST;
+
+
 -- 9.1 bug with useless COLLATE in an expression subject to length coercion
 
 CREATE TEMP TABLE vctable (f1 varchar(25));
