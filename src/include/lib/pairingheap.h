@@ -30,6 +30,25 @@ typedef struct pairingheap_node
 } pairingheap_node;
 
 /*
+ * Return the containing struct of 'type' where 'membername' is the
+ * pairingheap_node pointed at by 'ptr'.
+ *
+ * This is used to convert a pairingheap_node * back to its containing struct.
+ */
+#define pairingheap_container(type, membername, ptr) \
+	(AssertVariableIsOfTypeMacro(ptr, pairingheap_node *), \
+	 AssertVariableIsOfTypeMacro(((type *) NULL)->membername, pairingheap_node),  \
+	 ((type *) ((char *) (ptr) - offsetof(type, membername))))
+
+/*
+ * Like pairingheap_container, but used when the pointer is 'const ptr'
+ */
+#define pairingheap_const_container(type, membername, ptr) \
+	(AssertVariableIsOfTypeMacro(ptr, const pairingheap_node *), \
+	 AssertVariableIsOfTypeMacro(((type *) NULL)->membername, pairingheap_node),  \
+	 ((const type *) ((const char *) (ptr) - offsetof(type, membername))))
+
+/*
  * For a max-heap, the comparator must return <0 iff a < b, 0 iff a == b,
  * and >0 iff a > b.  For a min-heap, the conditions are reversed.
  */

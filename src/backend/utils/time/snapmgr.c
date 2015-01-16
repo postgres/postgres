@@ -46,6 +46,7 @@
 
 #include "access/transam.h"
 #include "access/xact.h"
+#include "lib/pairingheap.h"
 #include "miscadmin.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
@@ -123,13 +124,14 @@ typedef struct ActiveSnapshotElt
 static ActiveSnapshotElt *ActiveSnapshot = NULL;
 
 /*
- * How many snapshots is resowner.c tracking for us?
- *
- * Note: for now, a simple counter is enough.  However, if we ever want to be
- * smarter about advancing our MyPgXact->xmin we will need to be more
- * sophisticated about this, perhaps keeping our own list of snapshots.
+ * Currently registered Snapshots.  Ordered in a heap by xmin, so that we can
+ * quickly find the one with lowest xmin, to advance our MyPgXat->xmin.
+ * resowner.c also tracks these.
  */
-static int	RegisteredSnapshots = 0;
+static int xmin_cmp(const pairingheap_node *a, const pairingheap_node *b,
+		 void *arg);
+
+static pairingheap RegisteredSnapshots = { &xmin_cmp, NULL, NULL };
 
 /* first GetTransactionSnapshot call in a transaction? */
 bool		FirstSnapshotSet = false;
@@ -150,7 +152,7 @@ static Snapshot FirstXactSnapshot = NULL;
 /* Current xact's exported snapshots (a list of Snapshot structs) */
 static List *exportedSnapshots = NIL;
 
-
+/* Prototypes for local functions */
 static Snapshot CopySnapshot(Snapshot snapshot);
 static void FreeSnapshot(Snapshot snapshot);
 static void SnapshotResetXmin(void);
@@ -183,7 +185,7 @@ GetTransactionSnapshot(void)
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)
 	{
-		Assert(RegisteredSnapshots == 0);
+		Assert(pairingheap_is_empty(&RegisteredSnapshots));
 		Assert(FirstXactSnapshot == NULL);
 
 		/*
@@ -205,7 +207,7 @@ GetTransactionSnapshot(void)
 			FirstXactSnapshot = CurrentSnapshot;
 			/* Mark it as "registered" in FirstXactSnapshot */
 			FirstXactSnapshot->regd_count++;
-			RegisteredSnapshots++;
+			pairingheap_add(&RegisteredSnapshots, &FirstXactSnapshot->ph_node);
 		}
 		else
 			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
@@ -350,7 +352,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 	/* Caller should have checked this already */
 	Assert(!FirstSnapshotSet);
 
-	Assert(RegisteredSnapshots == 0);
+	Assert(pairingheap_is_empty(&RegisteredSnapshots));
 	Assert(FirstXactSnapshot == NULL);
 	Assert(!HistoricSnapshotActive());
 
@@ -413,7 +415,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 		FirstXactSnapshot = CurrentSnapshot;
 		/* Mark it as "registered" in FirstXactSnapshot */
 		FirstXactSnapshot->regd_count++;
-		RegisteredSnapshots++;
+		pairingheap_add(&RegisteredSnapshots, &FirstXactSnapshot->ph_node);
 	}
 
 	FirstSnapshotSet = true;
@@ -639,7 +641,8 @@ RegisterSnapshotOnOwner(Snapshot snapshot, ResourceOwner owner)
 	snap->regd_count++;
 	ResourceOwnerRememberSnapshot(owner, snap);
 
-	RegisteredSnapshots++;
+	if (snap->regd_count == 1)
+		pairingheap_add(&RegisteredSnapshots, &snap->ph_node);
 
 	return snap;
 }
@@ -671,15 +674,37 @@ UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner)
 		return;
 
 	Assert(snapshot->regd_count > 0);
-	Assert(RegisteredSnapshots > 0);
+	Assert(!pairingheap_is_empty(&RegisteredSnapshots));
 
 	ResourceOwnerForgetSnapshot(owner, snapshot);
-	RegisteredSnapshots--;
-	if (--snapshot->regd_count == 0 && snapshot->active_count == 0)
+
+	snapshot->regd_count--;
+	if (snapshot->regd_count == 0)
+		pairingheap_remove(&RegisteredSnapshots, &snapshot->ph_node);
+
+	if (snapshot->regd_count == 0 && snapshot->active_count == 0)
 	{
 		FreeSnapshot(snapshot);
 		SnapshotResetXmin();
 	}
+}
+
+/*
+ * Comparison function for RegisteredSnapshots heap.  Snapshots are ordered
+ * by xmin, so that the snapshot with smallest xmin is at the top.
+ */
+static int
+xmin_cmp(const pairingheap_node *a, const pairingheap_node *b, void *arg)
+{
+	const SnapshotData *asnap = pairingheap_const_container(SnapshotData, ph_node, a);
+	const SnapshotData *bsnap = pairingheap_const_container(SnapshotData, ph_node, b);
+
+	if (TransactionIdPrecedes(asnap->xmin, bsnap->xmin))
+		return 1;
+	else if (TransactionIdFollows(asnap->xmin, bsnap->xmin))
+		return -1;
+	else
+		return 0;
 }
 
 /*
@@ -688,12 +713,31 @@ UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner)
  * If there are no more snapshots, we can reset our PGXACT->xmin to InvalidXid.
  * Note we can do this without locking because we assume that storing an Xid
  * is atomic.
+ *
+ * Even if there are some remaining snapshots, we may be able to advance our
+ * PGXACT->xmin to some degree.  This typically happens when a portal is
+ * dropped.  For efficiency, we only consider recomputing PGXACT->xmin when
+ * the active snapshot stack is empty.
  */
 static void
 SnapshotResetXmin(void)
 {
-	if (RegisteredSnapshots == 0 && ActiveSnapshot == NULL)
+	Snapshot minSnapshot;
+
+	if (ActiveSnapshot != NULL)
+		return;
+
+	if (pairingheap_is_empty(&RegisteredSnapshots))
+	{
 		MyPgXact->xmin = InvalidTransactionId;
+		return;
+	}
+
+	minSnapshot = pairingheap_container(SnapshotData, ph_node,
+									pairingheap_first(&RegisteredSnapshots));
+
+	if (TransactionIdPrecedes(MyPgXact->xmin, minSnapshot->xmin))
+		MyPgXact->xmin = minSnapshot->xmin;
 }
 
 /*
@@ -769,8 +813,8 @@ AtEOXact_Snapshot(bool isCommit)
 	if (FirstXactSnapshot != NULL)
 	{
 		Assert(FirstXactSnapshot->regd_count > 0);
-		Assert(RegisteredSnapshots > 0);
-		RegisteredSnapshots--;
+		Assert(!pairingheap_is_empty(&RegisteredSnapshots));
+		pairingheap_remove(&RegisteredSnapshots, &FirstXactSnapshot->ph_node);
 	}
 	FirstXactSnapshot = NULL;
 
@@ -782,6 +826,7 @@ AtEOXact_Snapshot(bool isCommit)
 		TransactionId myxid = GetTopTransactionId();
 		int			i;
 		char		buf[MAXPGPATH];
+		ListCell   *lc;
 
 		/*
 		 * Get rid of the files.  Unlink failure is only a WARNING because (1)
@@ -798,14 +843,13 @@ AtEOXact_Snapshot(bool isCommit)
 		/*
 		 * As with the FirstXactSnapshot, we needn't spend any effort on
 		 * cleaning up the per-snapshot data structures, but we do need to
-		 * adjust the RegisteredSnapshots count to prevent a warning below.
-		 *
-		 * Note: you might be thinking "why do we have the exportedSnapshots
-		 * list at all?  All we need is a counter!".  You're right, but we do
-		 * it this way in case we ever feel like improving xmin management.
+		 * unlink them from RegisteredSnapshots to prevent a warning below.
 		 */
-		Assert(RegisteredSnapshots >= list_length(exportedSnapshots));
-		RegisteredSnapshots -= list_length(exportedSnapshots);
+		foreach(lc, exportedSnapshots)
+		{
+			Snapshot snap = (Snapshot) lfirst(lc);
+			pairingheap_remove(&RegisteredSnapshots, &snap->ph_node);
+		}
 
 		exportedSnapshots = NIL;
 	}
@@ -815,9 +859,8 @@ AtEOXact_Snapshot(bool isCommit)
 	{
 		ActiveSnapshotElt *active;
 
-		if (RegisteredSnapshots != 0)
-			elog(WARNING, "%d registered snapshots seem to remain after cleanup",
-				 RegisteredSnapshots);
+		if (!pairingheap_is_empty(&RegisteredSnapshots))
+			elog(WARNING, "registered snapshots seem to remain after cleanup");
 
 		/* complain about unpopped active snapshots */
 		for (active = ActiveSnapshot; active != NULL; active = active->as_next)
@@ -829,7 +872,7 @@ AtEOXact_Snapshot(bool isCommit)
 	 * it'll go away with TopTransactionContext.
 	 */
 	ActiveSnapshot = NULL;
-	RegisteredSnapshots = 0;
+	pairingheap_reset(&RegisteredSnapshots);
 
 	CurrentSnapshot = NULL;
 	SecondarySnapshot = NULL;
@@ -900,8 +943,7 @@ ExportSnapshot(Snapshot snapshot)
 	 * Copy the snapshot into TopTransactionContext, add it to the
 	 * exportedSnapshots list, and mark it pseudo-registered.  We do this to
 	 * ensure that the snapshot's xmin is honored for the rest of the
-	 * transaction.  (Right now, because SnapshotResetXmin is so stupid, this
-	 * is overkill; but later we might make that routine smarter.)
+	 * transaction.
 	 */
 	snapshot = CopySnapshot(snapshot);
 
@@ -910,7 +952,7 @@ ExportSnapshot(Snapshot snapshot)
 	MemoryContextSwitchTo(oldcxt);
 
 	snapshot->regd_count++;
-	RegisteredSnapshots++;
+	pairingheap_add(&RegisteredSnapshots, &snapshot->ph_node);
 
 	/*
 	 * Fill buf with a text serialization of the snapshot, plus identification
@@ -1303,7 +1345,8 @@ DeleteAllExportedSnapshotFiles(void)
 bool
 ThereAreNoPriorRegisteredSnapshots(void)
 {
-	if (RegisteredSnapshots <= 1)
+	if (pairingheap_is_empty(&RegisteredSnapshots) ||
+		pairingheap_is_singular(&RegisteredSnapshots))
 		return true;
 
 	return false;
