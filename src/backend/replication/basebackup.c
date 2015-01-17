@@ -1294,15 +1294,21 @@ throttle(size_t increment)
 	/* Only sleep if the transfer is faster than it should be. */
 	if (sleep > 0)
 	{
-		ResetLatch(&MyWalSnd->latch);
+		ResetLatch(MyLatch);
+
+		/* We're eating a potentially set latch, so check for interrupts */
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * (TAR_SEND_SIZE / throttling_sample * elapsed_min_unit) should be
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
-		wait_result = WaitLatch(&MyWalSnd->latch,
+		wait_result = WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 								(long) (sleep / 1000));
+
+		if (wait_result & WL_LATCH_SET)
+			CHECK_FOR_INTERRUPTS();
 	}
 	else
 	{

@@ -51,10 +51,10 @@ typedef struct WalSnd
 	slock_t		mutex;
 
 	/*
-	 * Latch used by backends to wake up this walsender when it has work to
-	 * do.
+	 * Pointer to the walsender's latch. Used by backends to wake up this
+	 * walsender when it has work to do. NULL if the walsender isn't active.
 	 */
-	Latch		latch;
+	Latch		*latch;
 
 	/*
 	 * The priority order of the standby managed by this WALSender, as listed
