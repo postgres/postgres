@@ -2428,24 +2428,28 @@ dumpDatabase(Archive *fout)
 					dbCatId, 0, dbDumpId);
 	}
 
-	PQclear(res);
-
 	/* Dump shared security label. */
 	if (!no_security_labels && fout->remoteVersion >= 90200)
 	{
-		PQExpBuffer seclabelQry = createPQExpBuffer();
+		PGresult   *shres;
+		PQExpBuffer seclabelQry;
+
+		seclabelQry = createPQExpBuffer();
 
 		buildShSecLabelQuery(conn, "pg_database", dbCatId.oid, seclabelQry);
-		res = ExecuteSqlQuery(fout, seclabelQry->data, PGRES_TUPLES_OK);
+		shres = ExecuteSqlQuery(fout, seclabelQry->data, PGRES_TUPLES_OK);
 		resetPQExpBuffer(seclabelQry);
-		emitShSecLabels(conn, res, seclabelQry, "DATABASE", datname);
+		emitShSecLabels(conn, shres, seclabelQry, "DATABASE", datname);
 		if (strlen(seclabelQry->data))
 			ArchiveEntry(fout, dbCatId, createDumpId(), datname, NULL, NULL,
 						 dba, false, "SECURITY LABEL", SECTION_NONE,
 						 seclabelQry->data, "", NULL,
 						 &dbDumpId, 1, NULL, NULL);
 		destroyPQExpBuffer(seclabelQry);
+		PQclear(shres);
 	}
+
+	PQclear(res);
 
 	destroyPQExpBuffer(dbQry);
 	destroyPQExpBuffer(delQry);
