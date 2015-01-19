@@ -1066,7 +1066,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
  * least ShareUpdateExclusiveLock mode.
  *
  * For each new index tuple inserted, *numSummarized (if not NULL) is
- * incremented; for each existing tuple, numExisting (if not NULL) is
+ * incremented; for each existing tuple, *numExisting (if not NULL) is
  * incremented.
  */
 static void
