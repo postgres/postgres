@@ -2182,7 +2182,7 @@ EvalPlanQualInit(EPQState *epqstate, EState *estate,
 /*
  * EvalPlanQualSetPlan -- set or change subplan of an EPQState.
  *
- * We need this so that ModifyTuple can deal with multiple subplans.
+ * We need this so that ModifyTable can deal with multiple subplans.
  */
 void
 EvalPlanQualSetPlan(EPQState *epqstate, Plan *subplan, List *auxrowmarks)
