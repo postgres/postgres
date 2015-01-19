@@ -6830,7 +6830,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry>
          Create timestamp from year, month, day, hour, minute and seconds fields
         </entry>
-        <entry><literal>make_timestamp(1-23, 7, 15, 8, 15, 23.5)</literal></entry>
+        <entry><literal>make_timestamp(2013, 7, 15, 8, 15, 23.5)</literal></entry>
         <entry><literal>2013-07-15 08:15:23.5</literal></entry>
        </row>
 
@@ -6857,7 +6857,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
          and seconds fields. When <parameter>timezone</parameter> is not specified,
          then current time zone is used.
         </entry>
-        <entry><literal>make_timestamp(1-23, 7, 15, 8, 15, 23.5)</literal></entry>
+        <entry><literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5)</literal></entry>
         <entry><literal>2013-07-15 08:15:23.5+01</literal></entry>
        </row>
 
