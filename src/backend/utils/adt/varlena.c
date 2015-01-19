@@ -17,9 +17,11 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include "access/hash.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "lib/hyperloglog.h"
 #include "libpq/md5.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -32,6 +34,9 @@
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
 
+#ifdef DEBUG_ABBREV_KEYS
+#define DEBUG_elog_output	DEBUG1
+#endif
 
 /* GUC variable */
 int			bytea_output = BYTEA_OUTPUT_HEX;
@@ -54,10 +59,12 @@ typedef struct
 
 typedef struct
 {
-	char			   *buf1;		/* 1st string */
-	char			   *buf2;		/* 2nd string */
+	char			   *buf1;		/* 1st string, or abbreviation original string buf */
+	char			   *buf2;		/* 2nd string, or abbreviation strxfrm() buf */
 	int					buflen1;
 	int					buflen2;
+	hyperLogLogState	abbr_card;	/* Abbreviated key cardinality state */
+	hyperLogLogState	full_card;	/* Full key cardinality state */
 #ifdef HAVE_LOCALE_T
 	pg_locale_t locale;
 #endif
@@ -78,6 +85,9 @@ typedef struct
 static void btsortsupport_worker(SortSupport ssup, Oid collid);
 static int bttextfastcmp_c(Datum x, Datum y, SortSupport ssup);
 static int bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup);
+static int bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup);
+static Datum bttext_abbrev_convert(Datum original, SortSupport ssup);
+static bool bttext_abbrev_abort(int memtupcount, SortSupport ssup);
 static int32 text_length(Datum str);
 static text *text_catenate(text *t1, text *t2);
 static text *text_substring(Datum str,
@@ -1736,26 +1746,53 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 	TextSortSupport	   *tss;
 
 	/*
-	 * If LC_COLLATE = C, we can make things quite a bit faster by using
-	 * memcmp() rather than strcoll().  To minimize the per-comparison
-	 * overhead, we make this decision just once for the whole sort.
-	 */
-	if (lc_collate_is_c(collid))
-	{
-		ssup->comparator = bttextfastcmp_c;
-		return;
-	}
-
-	/*
 	 * WIN32 requires complex hacks when the database encoding is UTF-8 (except
 	 * when using the "C" collation).  For now, we don't optimize that case.
 	 */
 #ifdef WIN32
-	if (GetDatabaseEncoding() == PG_UTF8)
+	if (GetDatabaseEncoding() == PG_UTF8 && !lc_collate_is_c(collid))
 		return;
 #endif
 
 	/*
+	 * On platforms where the abbreviated key for text optimization might have
+	 * bad worst case performance, it may be useful to avoid it entirely by
+	 * disabling it at compile time.  Having only 4 byte datums could make
+	 * worst-case performance drastically more likely, for example.  Moreover,
+	 * Darwin's strxfrm() implementations is known to not effectively
+	 * concentrate a significant amount of entropy from the original string in
+	 * earlier transformed blobs.  It's possible that other supported platforms
+	 * are similarly encumbered.
+	 *
+	 * Any reasonable implementation will pack primary weights into the start
+	 * of returned blobs.  The canonical algorithm's implementation is
+	 * discussed by Unicode Technical Standard #10 ("UNICODE COLLATION
+	 * ALGORITHM"), section 4, "Main algorithm".  Section 4.3, "Form Sort Key"
+	 * is of particular interest:
+	 *
+	 * http://www.unicode.org/reports/tr10/#Step_3
+	 *
+	 * The collation algorithm standard goes on to state:
+	 *
+	 * "By default, the algorithm makes use of three fully-customizable levels.
+	 * For the Latin script, these levels correspond roughly to:
+	 *
+	 * alphabetic ordering
+	 *
+	 * diacritic ordering
+	 *
+	 * case ordering.
+	 *
+	 * A final level may be used for tie-breaking between strings not otherwise
+	 * distinguished."
+	 *
+	 * It is generally expected that most non-equal keys will have their
+	 * comparisons resolved at the primary level.  If enough comparisons can be
+	 * resolved with just 4 or 8 byte abbreviated keys, this optimization is
+	 * very effective (although if there are many tie-breakers that largely
+	 * only perform cheap memcmp() calls, that is also much faster than the
+	 * unoptimized case - see bttext_abbrev_abort()).
+	 *
 	 * We may need a collation-sensitive comparison.  To make things faster,
 	 * we'll figure out the collation based on the locale id and cache the
 	 * result.  Also, since strxfrm()/strcoll() require NUL-terminated inputs,
@@ -1788,13 +1825,47 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 #endif
 	}
 
-	tss->buf1 = palloc(TEXTBUFLEN);
-	tss->buflen1 = TEXTBUFLEN;
-	tss->buf2 = palloc(TEXTBUFLEN);
-	tss->buflen2 = TEXTBUFLEN;
+	/*
+	 * If LC_COLLATE = C, we can make things quite a bit faster by using
+	 * memcmp() rather than strcoll().  To minimize the per-comparison
+	 * overhead, we make this decision just once for the whole sort.
+	 *
+	 * There is no reason to not at least perform fmgr elision on builds where
+	 * abbreviation is disabled.
+	 */
+	if (lc_collate_is_c(collid))
+		ssup->abbrev_full_comparator = ssup->comparator = bttextfastcmp_c;
+	else
+		ssup->abbrev_full_comparator = ssup->comparator = bttextfastcmp_locale;
 
-	ssup->ssup_extra = tss;
-	ssup->comparator = bttextfastcmp_locale;
+	if (!lc_collate_is_c(collid) || ssup->abbreviate)
+	{
+		/*
+		 * Abbreviated case requires temp buffers for strxfrm() copying.
+		 * bttextfastcmp_locale() also uses these buffers (even if abbreviation
+		 * isn't used), while bttextfast_c() does not.
+		 */
+		tss->buf1 = palloc(TEXTBUFLEN);
+		tss->buflen1 = TEXTBUFLEN;
+		tss->buf2 = palloc(TEXTBUFLEN);
+		tss->buflen2 = TEXTBUFLEN;
+		ssup->ssup_extra = tss;
+	}
+
+	if (!ssup->abbreviate)
+		return;
+
+	initHyperLogLog(&tss->abbr_card, 10);
+	initHyperLogLog(&tss->full_card, 10);
+
+	/*
+	 * Change comparator to be abbreviation-based -- abbreviated version will
+	 * probably ultimately be used during sorting proper, but core code may
+	 * switch back to authoritative comparator should abbreviation be aborted
+	 */
+	ssup->comparator = bttextcmp_abbrev;
+	ssup->abbrev_converter = bttext_abbrev_convert;
+	ssup->abbrev_abort = bttext_abbrev_abort;
 }
 
 /*
@@ -1901,6 +1972,225 @@ done:
 		pfree(arg2);
 
 	return result;
+}
+
+/*
+ * Abbreviated key comparison func
+ */
+static int
+bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup)
+{
+	char   *a = (char *) &x;
+	char   *b = (char *) &y;
+	int 	result;
+
+	result = memcmp(a, b, sizeof(Datum));
+
+	/*
+	 * When result = 0, the core system will call bttextfastcmp_c() or
+	 * bttextfastcmp_locale().  Even a strcmp() on two non-truncated strxfrm()
+	 * blobs cannot indicate *equality* authoritatively, for the same reason
+	 * that there is a strcoll() tie-breaker call to strcmp() in varstr_cmp().
+	 */
+	return result;
+}
+
+/*
+ * Conversion routine for sortsupport.  Converts original text to abbreviated
+ * key representation.  Our encoding strategy is simple -- pack the first 8
+ * bytes of a strxfrm() blob into a Datum.
+ */
+static Datum
+bttext_abbrev_convert(Datum original, SortSupport ssup)
+{
+	TextSortSupport	   *tss = (TextSortSupport *) ssup->ssup_extra;
+	text			   *authoritative = DatumGetTextPP(original);
+
+	/* working state */
+	Datum				res;
+	char			   *pres;
+	int					len;
+	Size				bsize;
+	uint32				hash;
+
+	/*
+	 * Abbreviated key representation is a pass-by-value Datum that is treated
+	 * as a char array by the specialized comparator bttextcmp_abbrev().
+	 */
+	pres = (char *) &res;
+	/* memset(), so any non-overwritten bytes are NUL */
+	memset(pres, 0, sizeof(Datum));
+	len = VARSIZE_ANY_EXHDR(authoritative);
+
+	/* By convention, we use buffer 1 to store and NUL-terminate text */
+	if (len >= tss->buflen1)
+	{
+		pfree(tss->buf1);
+		tss->buflen1 = Max(len + 1, Min(tss->buflen1 * 2, MaxAllocSize));
+		tss->buf1 = palloc(tss->buflen1);
+	}
+
+	/* Just like strcoll(), strxfrm() expects a NUL-terminated string */
+	memcpy(tss->buf1, VARDATA_ANY(authoritative), len);
+	tss->buf1[len] = '\0';
+
+	/* Don't leak memory here */
+	if (PointerGetDatum(authoritative) != original)
+		pfree(authoritative);
+
+retry:
+
+	/*
+	 * There is no special handling of the C locale here, unlike with
+	 * varstr_cmp().  strxfrm() is used indifferently.
+	 */
+#ifdef HAVE_LOCALE_T
+	if (tss->locale)
+		bsize = strxfrm_l(tss->buf2, tss->buf1, tss->buflen2, tss->locale);
+	else
+#endif
+		bsize = strxfrm(tss->buf2, tss->buf1, tss->buflen2);
+
+	if (bsize >= tss->buflen2)
+	{
+		/*
+		 * The C standard states that the contents of the buffer is now
+		 * unspecified.  Grow buffer, and retry.
+		 */
+		pfree(tss->buf2);
+		tss->buflen2 = Max(bsize + 1, Min(tss->buflen2 * 2, MaxAllocSize));
+		tss->buf2 = palloc(tss->buflen2);
+		goto retry;
+	}
+
+	/*
+	 * Maintain approximate cardinality of both abbreviated keys and original,
+	 * authoritative keys using HyperLogLog.  Used as cheap insurance against
+	 * the worst case, where we do many string transformations for no saving in
+	 * full strcoll()-based comparisons.  These statistics are used by
+	 * bttext_abbrev_abort().
+	 *
+	 * First, Hash key proper, or a significant fraction of it.  Mix in length
+	 * in order to compensate for cases where differences are past
+	 * CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
+	 */
+	hash = hash_any((unsigned char *) tss->buf1, Min(len, PG_CACHE_LINE_SIZE));
+
+	if (len > PG_CACHE_LINE_SIZE)
+		hash ^= DatumGetUInt32(hash_uint32((uint32) len));
+
+	addHyperLogLog(&tss->full_card, hash);
+
+	memcpy(pres, tss->buf2, Min(sizeof(Datum), bsize));
+
+	/* Hash abbreviated key */
+#if SIZEOF_DATUM == 8
+	{
+		uint32				lohalf,
+							hihalf;
+
+		lohalf = (uint32) res;
+		hihalf = (uint32) (res >> 32);
+		hash = hash_uint32(lohalf ^ hihalf);
+	}
+#else							/* SIZEOF_DATUM != 8 */
+	hash = hash_uint32((uint32) res);
+#endif
+
+	addHyperLogLog(&tss->abbr_card, hash);
+
+	/*
+	 * Every Datum byte is always compared.  This is safe because the strxfrm()
+	 * blob is itself NUL terminated, leaving no danger of misinterpreting any
+	 * NUL bytes not intended to be interpreted as logically representing
+	 * termination.
+	 */
+	return res;
+}
+
+/*
+ * Callback for estimating effectiveness of abbreviated key optimization, using
+ * heuristic rules.  Returns value indicating if the abbreviation optimization
+ * should be aborted, based on its projected effectiveness.
+ */
+static bool
+bttext_abbrev_abort(int memtupcount, SortSupport ssup)
+{
+	TextSortSupport	   *tss = (TextSortSupport *) ssup->ssup_extra;
+	double				abbrev_distinct, key_distinct;
+
+	Assert(ssup->abbreviate);
+
+	/* Have a little patience */
+	if (memtupcount < 20)
+		return false;
+
+	abbrev_distinct = estimateHyperLogLog(&tss->abbr_card);
+	key_distinct = estimateHyperLogLog(&tss->full_card);
+
+	/*
+	 * Clamp cardinality estimates to at least one distinct value.  While NULLs
+	 * are generally disregarded, if only NULL values were seen so far, that
+	 * might misrepresent costs if we failed to clamp.
+	 */
+	if (abbrev_distinct <= 1.0)
+		abbrev_distinct = 1.0;
+
+	if (key_distinct <= 1.0)
+		key_distinct = 1.0;
+
+	/*
+	 * In the worst case all abbreviated keys are identical, while at the same
+	 * time there are differences within full key strings not captured in
+	 * abbreviations.
+	 */
+#ifdef DEBUG_ABBREV_KEYS
+	{
+		double norm_abbrev_card = abbrev_distinct / (double) memtupcount;
+
+		elog(DEBUG_elog_output, "abbrev_distinct after %d: %f (key_distinct: %f, norm_abbrev_card: %f)",
+			 memtupcount, abbrev_distinct, key_distinct, norm_abbrev_card);
+	}
+#endif
+
+	/*
+	 * If the number of distinct abbreviated keys approximately matches the
+	 * number of distinct authoritative original keys, that's reason enough to
+	 * proceed.  We can win even with a very low cardinality set if most
+	 * tie-breakers only memcmp().  This is by far the most important
+	 * consideration.
+	 *
+	 * While comparisons that are resolved at the abbreviated key level are
+	 * considerably cheaper than tie-breakers resolved with memcmp(), both of
+	 * those two outcomes are so much cheaper than a full strcoll() once
+	 * sorting is underway that it doesn't seem worth it to weigh abbreviated
+	 * cardinality against the overall size of the set in order to more
+	 * accurately model costs.  Assume that an abbreviated comparison, and an
+	 * abbreviated comparison with a cheap memcmp()-based authoritative
+	 * resolution are equivalent.
+	 */
+	if (abbrev_distinct > key_distinct * 0.05)
+		return false;
+
+	/*
+	 * Abort abbreviation strategy.
+	 *
+	 * The worst case, where all abbreviated keys are identical while all
+	 * original strings differ will typically only see a regression of about
+	 * 10% in execution time for small to medium sized lists of strings.
+	 * Whereas on modern CPUs where cache stalls are the dominant cost, we can
+	 * often expect very large improvements, particularly with sets of strings
+	 * of moderately high to high abbreviated cardinality.  There is little to
+	 * lose but much to gain, which our strategy reflects.
+	 */
+#ifdef DEBUG_ABBREV_KEYS
+	elog(DEBUG_elog_output, "would have aborted abbreviation due to worst-case at %d. abbrev_distinct: %f, key_distinct: %f",
+		 memtupcount, abbrev_distinct, key_distinct);
+	/* Actually abort only when debugging is disabled */
+	return false;
+#endif
+
+	return true;
 }
 
 Datum

@@ -2301,6 +2301,12 @@ compute_scalar_stats(VacAttrStatsP stats,
 	/* We always use the default collation for statistics */
 	ssup.ssup_collation = DEFAULT_COLLATION_OID;
 	ssup.ssup_nulls_first = false;
+	/*
+	 * For now, don't perform abbreviated key conversion, because full values
+	 * are required for MCV slot generation.  Supporting that optimization
+	 * would necessitate teaching compare_scalars() to call a tie-breaker.
+	 */
+	ssup.abbreviate = false;
 
 	PrepareSortSupportFromOrderingOp(mystats->ltopr, &ssup);
 

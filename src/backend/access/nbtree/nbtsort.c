@@ -717,6 +717,8 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			sortKey->ssup_nulls_first =
 				(scanKey->sk_flags & SK_BT_NULLS_FIRST) != 0;
 			sortKey->ssup_attno = scanKey->sk_attno;
+			/* Abbreviation is not supported here */
+			sortKey->abbreviate = false;
 
 			AssertState(sortKey->ssup_attno != 0);
 

@@ -363,6 +363,10 @@ initialize_aggregates(AggState *aggstate,
 			 * We use a plain Datum sorter when there's a single input column;
 			 * otherwise sort the full tuple.  (See comments for
 			 * process_ordered_aggregate_single.)
+			 *
+			 * In the future, we should consider forcing the
+			 * tuplesort_begin_heap() case when the abbreviated key
+			 * optimization can thereby be used, even when numInputs is 1.
 			 */
 			peraggstate->sortstate =
 				(peraggstate->numInputs == 1) ?
