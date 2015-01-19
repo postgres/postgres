@@ -486,6 +486,9 @@ endif
 endif # not win32
 endif # not cygwin
 endif # not aix
+ifneq (,$(findstring $(PORTNAME),win32 cygwin))
+	$(INSTALL_SHLIB) $< '$(DESTDIR)$(bindir)/$(shlib)'
+endif
 else # no soname
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(pkglibdir)/$(shlib)'
 endif
@@ -493,7 +496,7 @@ endif
 
 installdirs-lib:
 ifdef soname
-	$(MKDIR_P) '$(DESTDIR)$(libdir)' '$(DESTDIR)$(pkgconfigdir)'
+	$(MKDIR_P) '$(DESTDIR)$(libdir)' '$(DESTDIR)$(pkgconfigdir)' $(if $(findstring $(PORTNAME),win32 cygwin),'$(DESTDIR)$(bindir)')
 else
 	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
 endif
@@ -509,7 +512,7 @@ ifdef soname
 	rm -f '$(DESTDIR)$(libdir)/$(stlib)'
 	rm -f '$(DESTDIR)$(libdir)/$(shlib_bare)' \
 	  '$(DESTDIR)$(libdir)/$(shlib_major)' \
-	  '$(DESTDIR)$(libdir)/$(shlib)' \
+	  '$(DESTDIR)$(libdir)/$(shlib)' $(if $(findstring $(PORTNAME),win32 cygwin),'$(DESTDIR)$(bindir)/$(shlib)') \
 	  '$(DESTDIR)$(pkgconfigdir)/lib$(NAME).pc'
 else # no soname
 	rm -f '$(DESTDIR)$(pkglibdir)/$(shlib)'
