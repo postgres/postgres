@@ -3253,7 +3253,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		 * first water, but until somebody wants to debug exactly what's
 		 * happening there, this is the best we can do.  The two-second
 		 * timeout matches our pre-9.2 behavior, and needs to be short enough
-		 * to not provoke "pgstat wait timeout" complaints from
+		 * to not provoke "using stale statistics" complaints from
 		 * backend_read_statsfile.
 		 */
 		wr = WaitLatchOrSocket(&pgStatLatch,
@@ -3981,7 +3981,9 @@ backend_read_statsfile(void)
 	}
 
 	if (count >= PGSTAT_POLL_LOOP_COUNT)
-		elog(WARNING, "pgstat wait timeout");
+		ereport(LOG,
+				(errmsg("using stale statistics instead of current ones "
+						"because stats collector is not responding")));
 
 	/* Autovacuum launcher wants stats about all databases */
 	if (IsAutoVacuumLauncherProcess())
