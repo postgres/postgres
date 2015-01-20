@@ -2624,6 +2624,19 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		stop_postmaster();
 	}
 
+	/*
+	 * If there were no errors, remove the temp installation immediately to
+	 * conserve disk space.  (If there were errors, we leave the installation
+	 * in place for possible manual investigation.)
+	 */
+	if (temp_install && fail_count == 0 && fail_ignore_count == 0)
+	{
+		header(_("removing temporary installation"));
+		if (!rmtree(temp_install, true))
+			fprintf(stderr, _("\n%s: could not remove temp installation \"%s\"\n"),
+					progname, temp_install);
+	}
+
 	fclose(logfile);
 
 	/*
