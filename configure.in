@@ -294,6 +294,9 @@ choke me
   PGAC_PROG_CC_CFLAGS_OPT([-fwrapv])
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
+  # Disable loop optimizations that get confused by variable-length struct
+  # declarations in gcc 4.8+
+  PGAC_PROG_CC_CFLAGS_OPT([-fno-aggressive-loop-optimizations])
 elif test x"${CC}" = x"xlc"; then
   # AIX xlc has to have strict aliasing turned off too
   PGAC_PROG_CC_CFLAGS_OPT([-qnoansialias])
