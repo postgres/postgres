@@ -341,6 +341,7 @@ typedef int pid_t;
 #define isspace_l _isspace_l
 #define iswspace_l _iswspace_l
 #define strcoll_l _strcoll_l
+#define strxfrm_l _strxfrm_l
 #define wcscoll_l _wcscoll_l
 #define wcstombs_l _wcstombs_l
 #define mbstowcs_l _mbstowcs_l
