@@ -1744,14 +1744,22 @@ static void
 btsortsupport_worker(SortSupport ssup, Oid collid)
 {
 	TextSortSupport	   *tss;
+	bool				abbreviate = ssup->abbreviate;
 
 	/*
 	 * WIN32 requires complex hacks when the database encoding is UTF-8 (except
 	 * when using the "C" collation).  For now, we don't optimize that case.
+	 * The use of abbreviated keys is also disabled on Windows, because
+	 * strxfrm() doesn't appear to work properly on some Windows systems.
+	 * Ideally, we would use it on those systems where it's reliable and
+	 * skip it only for the rest, but at the moment we don't know how to
+	 * distinguish between the ones where it works and the ones where it
+	 * doesn't.
 	 */
 #ifdef WIN32
 	if (GetDatabaseEncoding() == PG_UTF8 && !lc_collate_is_c(collid))
 		return;
+	abbreviate = false;
 #endif
 
 	/*
@@ -1838,7 +1846,7 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 	else
 		ssup->abbrev_full_comparator = ssup->comparator = bttextfastcmp_locale;
 
-	if (!lc_collate_is_c(collid) || ssup->abbreviate)
+	if (!lc_collate_is_c(collid) || abbreviate)
 	{
 		/*
 		 * Abbreviated case requires temp buffers for strxfrm() copying.
@@ -1852,7 +1860,7 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 		ssup->ssup_extra = tss;
 	}
 
-	if (!ssup->abbreviate)
+	if (!abbreviate)
 		return;
 
 	initHyperLogLog(&tss->abbr_card, 10);
