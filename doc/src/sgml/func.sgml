@@ -831,19 +831,6 @@
       <row>
        <entry>
         <indexterm>
-         <primary>random</primary>
-        </indexterm>
-        <literal><function>random()</function></literal>
-       </entry>
-       <entry><type>dp</type></entry>
-       <entry>random value in the range 0.0 &lt;= x &lt; 1.0</entry>
-       <entry><literal>random()</literal></entry>
-       <entry></entry>
-      </row>
-
-      <row>
-       <entry>
-        <indexterm>
          <primary>round</primary>
         </indexterm>
         <literal><function>round(<type>dp</type> or <type>numeric</type>)</function></literal>
@@ -860,20 +847,6 @@
        <entry>round to <parameter>s</parameter> decimal places</entry>
        <entry><literal>round(42.4382, 2)</literal></entry>
        <entry><literal>42.44</literal></entry>
-      </row>
-
-      <row>
-       <entry>
-        <indexterm>
-         <primary>setseed</primary>
-        </indexterm>
-        <literal><function>setseed(<type>dp</type>)</function></literal>
-       </entry>
-       <entry><type>void</type></entry>
-       <entry>set seed for subsequent <literal>random()</literal> calls (value between -1.0 and
-       1.0, inclusive)</entry>
-       <entry><literal>setseed(0.54823)</literal></entry>
-       <entry></entry>
       </row>
 
       <row>
@@ -950,6 +923,56 @@
      </tbody>
     </tgroup>
    </table>
+
+  <para>
+    <xref linkend="functions-math-random-table"> shows functions for
+    generating random numbers.
+  </para>
+
+   <table id="functions-math-random-table">
+    <title>Random Functions</title>
+
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Return Type</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>random</primary>
+        </indexterm>
+        <literal><function>random()</function></literal>
+       </entry>
+       <entry><type>dp</type></entry>
+       <entry>random value in the range 0.0 &lt;= x &lt; 1.0</entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>setseed</primary>
+        </indexterm>
+        <literal><function>setseed(<type>dp</type>)</function></literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>set seed for subsequent <literal>random()</literal> calls (value between -1.0 and
+       1.0, inclusive)</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   The characteristics of the values returned by
+   <literal><function>random()</function></literal> depend
+   on the system implementation. It is not suitable for cryptographic
+   applications; see <xref linkend="pgcrypto"> module for an alternative.
+   </para>
 
   <para>
    Finally, <xref linkend="functions-math-trig-table"> shows the
