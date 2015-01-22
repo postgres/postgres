@@ -392,10 +392,10 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 		memset(repl_null, false, sizeof(repl_null));
 		memset(repl_repl, false, sizeof(repl_repl));
-	
+
 		repl_repl[Anum_pg_foreign_server_srvowner - 1] = true;
 		repl_val[Anum_pg_foreign_server_srvowner - 1] = ObjectIdGetDatum(newOwnerId);
-	
+
 		aclDatum = heap_getattr(tup,
 								Anum_pg_foreign_server_srvacl,
 								RelationGetDescr(rel),
@@ -408,7 +408,7 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			repl_repl[Anum_pg_foreign_server_srvacl - 1] = true;
 			repl_val[Anum_pg_foreign_server_srvacl - 1] = PointerGetDatum(newAcl);
 		}
-	
+
 		tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
 								repl_repl);
 
