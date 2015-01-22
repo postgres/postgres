@@ -4318,8 +4318,8 @@ int PQsetnonblocking(PGconn *conn, int arg);
       <para>
        In the nonblocking state, calls to
        <function>PQsendQuery</function>, <function>PQputline</function>,
-       <function>PQputnbytes</function>, and
-       <function>PQendcopy</function> will not block but instead return
+       <function>PQputnbytes</function>, <function>PQputCopyData</function>,
+       and <function>PQendcopy</function> will not block but instead return
        an error if they need to be called again.
       </para>
 
@@ -4961,9 +4961,9 @@ int PQputCopyData(PGconn *conn,
       <para>
        Transmits the <command>COPY</command> data in the specified
        <parameter>buffer</>, of length <parameter>nbytes</>, to the server.
-       The result is 1 if the data was sent, zero if it was not sent
-       because the attempt would block (this case is only possible if the
-       connection is in nonblocking mode), or -1 if an error occurred.
+       The result is 1 if the data was queued, zero if it was not queued
+       because of full buffers (this will only happen in nonblocking mode),
+       or -1 if an error occurred.
        (Use <function>PQerrorMessage</function> to retrieve details if
        the return value is -1.  If the value is zero, wait for write-ready
        and try again.)
@@ -5009,13 +5009,18 @@ int PQputCopyEnd(PGconn *conn,
        connections.)
       </para>
 
-      <para>
-       The result is 1 if the termination data was sent, zero if it was
-       not sent because the attempt would block (this case is only possible
-       if the connection is in nonblocking mode), or -1 if an error
-       occurred.  (Use <function>PQerrorMessage</function> to retrieve
-       details if the return value is -1.  If the value is zero, wait for
-       write-ready and try again.)
+      <para> 
+       The result is 1 if the termination message was sent; or in
+       nonblocking mode, this may only indicate that the termination
+       message was successfully queued.  (In nonblocking mode, to be
+       certain that the data has been sent, you should next wait for
+       write-ready and call <function>PQflush</>, repeating until it
+       returns zero.)  Zero indicates that the function could not queue
+       the termination message because of full buffers; this will only
+       happen in nonblocking mode.  (In this case, wait for
+       write-ready and try the <function>PQputCopyEnd</> call
+       again.)  If a hard error occurs, -1 is returned; you can use
+       <function>PQerrorMessage</function> to retrieve details.
       </para>
 
       <para>
