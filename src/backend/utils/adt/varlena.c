@@ -1743,137 +1743,118 @@ bttextsortsupport(PG_FUNCTION_ARGS)
 static void
 btsortsupport_worker(SortSupport ssup, Oid collid)
 {
-	TextSortSupport	   *tss;
 	bool				abbreviate = ssup->abbreviate;
+	bool				locale_aware = false;
+	TextSortSupport	   *tss;
+
+#ifdef HAVE_LOCALE_T
+	pg_locale_t			locale = 0;
+#endif
 
 	/*
-	 * WIN32 requires complex hacks when the database encoding is UTF-8 (except
-	 * when using the "C" collation).  For now, we don't optimize that case.
-	 * The use of abbreviated keys is also disabled on Windows, because
-	 * strxfrm() doesn't appear to work properly on some Windows systems.
-	 * Ideally, we would use it on those systems where it's reliable and
-	 * skip it only for the rest, but at the moment we don't know how to
-	 * distinguish between the ones where it works and the ones where it
-	 * doesn't.
+	 * If possible, set ssup->comparator to a function which can be used to
+	 * directly compare two datums.  If we can do this, we'll avoid the
+	 * overhead of a trip through the fmgr layer for every comparison,
+	 * which can be substantial.
+	 *
+	 * Most typically, we'll set the comparator to bttextfastcmp_locale,
+	 * which uses strcoll() to perform comparisons.  However, if LC_COLLATE
+	 * = C, we can make things quite a bit faster with bttextfastcmp_c,
+	 * which uses memcmp() rather than strcoll().
+	 *
+	 * There is a further exception on Windows.  When the database encoding
+	 * is UTF-8 and we are not using the C collation, complex hacks are
+	 * required.  We don't currently have a comparator that handles that case,
+	 * so we fall back on the slow method of having the sort code invoke
+	 * bttextcmp() via the fmgr trampoline.
+	 */
+	if (lc_collate_is_c(collid))
+		ssup->comparator = bttextfastcmp_c;
+#ifdef WIN32
+	else if (GetDatabaseEncoding() == PG_UTF8)
+		return;
+#endif
+	else
+	{
+		ssup->comparator = bttextfastcmp_locale;
+		locale_aware = true;
+
+		/*
+		 * We need a collation-sensitive comparison.  To make things faster,
+		 * we'll figure out the collation based on the locale id and cache the
+		 * result.
+		 */
+		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for string comparison"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
+#ifdef HAVE_LOCALE_T
+			tss->locale = pg_newlocale_from_collation(collid);
+#endif
+		}
+	}
+
+	/*
+	 * It's possible that there are platforms where the use of abbreviated
+	 * keys should be disabled at compile time.  Having only 4 byte datums
+	 * could make worst-case performance drastically more likely, for example.
+	 * Moreover, Darwin's strxfrm() implementations is known to not effectively
+	 * concentrate a significant amount of entropy from the original string in
+	 * earlier transformed blobs.  It's possible that other supported platforms
+	 * are similarly encumbered.  However, even in those cases, the abbreviated
+	 * keys optimization may win, and if it doesn't, the "abort abbreviation"
+	 * code may rescue us.  So, for now, we don't disable this anywhere on the
+	 * basis of performance.
+	 *
+	 * On Windows, however, strxfrm() seems to be unreliable on some machines,
+	 * so we categorically disable this optimization there.
 	 */
 #ifdef WIN32
-	if (GetDatabaseEncoding() == PG_UTF8 && !lc_collate_is_c(collid))
-		return;
 	abbreviate = false;
 #endif
 
 	/*
-	 * On platforms where the abbreviated key for text optimization might have
-	 * bad worst case performance, it may be useful to avoid it entirely by
-	 * disabling it at compile time.  Having only 4 byte datums could make
-	 * worst-case performance drastically more likely, for example.  Moreover,
-	 * Darwin's strxfrm() implementations is known to not effectively
-	 * concentrate a significant amount of entropy from the original string in
-	 * earlier transformed blobs.  It's possible that other supported platforms
-	 * are similarly encumbered.
-	 *
-	 * Any reasonable implementation will pack primary weights into the start
-	 * of returned blobs.  The canonical algorithm's implementation is
-	 * discussed by Unicode Technical Standard #10 ("UNICODE COLLATION
-	 * ALGORITHM"), section 4, "Main algorithm".  Section 4.3, "Form Sort Key"
-	 * is of particular interest:
-	 *
-	 * http://www.unicode.org/reports/tr10/#Step_3
-	 *
-	 * The collation algorithm standard goes on to state:
-	 *
-	 * "By default, the algorithm makes use of three fully-customizable levels.
-	 * For the Latin script, these levels correspond roughly to:
-	 *
-	 * alphabetic ordering
-	 *
-	 * diacritic ordering
-	 *
-	 * case ordering.
-	 *
-	 * A final level may be used for tie-breaking between strings not otherwise
-	 * distinguished."
-	 *
-	 * It is generally expected that most non-equal keys will have their
-	 * comparisons resolved at the primary level.  If enough comparisons can be
-	 * resolved with just 4 or 8 byte abbreviated keys, this optimization is
-	 * very effective (although if there are many tie-breakers that largely
-	 * only perform cheap memcmp() calls, that is also much faster than the
-	 * unoptimized case - see bttext_abbrev_abort()).
-	 *
-	 * We may need a collation-sensitive comparison.  To make things faster,
-	 * we'll figure out the collation based on the locale id and cache the
-	 * result.  Also, since strxfrm()/strcoll() require NUL-terminated inputs,
-	 * prepare one or two palloc'd buffers to use as temporary workspace.  In
-	 * the ad-hoc comparison case we only use palloc'd buffers when we need
-	 * more space than we're comfortable allocating on the stack, but here we
-	 * can keep the buffers around for the whole sort, so it makes sense to
-	 * allocate them once and use them unconditionally.
+	 * If we're using abbreviated keys, or if we're using a locale-aware
+	 * comparison, we need to initialize a TextSortSupport object.  Both cases
+	 * will make use of the temporary buffers we initialize here for scratch
+	 * space, and the abbreviation case requires additional state.
 	 */
-	tss = palloc(sizeof(TextSortSupport));
-#ifdef HAVE_LOCALE_T
-	tss->locale = 0;
-#endif
-
-	if (collid != DEFAULT_COLLATION_OID)
+	if (abbreviate || locale_aware)
 	{
-		if (!OidIsValid(collid))
-		{
-			/*
-			 * This typically means that the parser could not resolve a
-			 * conflict of implicit collations, so report it that way.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_INDETERMINATE_COLLATION),
-					 errmsg("could not determine which collation to use for string comparison"),
-					 errhint("Use the COLLATE clause to set the collation explicitly.")));
-		}
-#ifdef HAVE_LOCALE_T
-		tss->locale = pg_newlocale_from_collation(collid);
-#endif
-	}
-
-	/*
-	 * If LC_COLLATE = C, we can make things quite a bit faster by using
-	 * memcmp() rather than strcoll().  To minimize the per-comparison
-	 * overhead, we make this decision just once for the whole sort.
-	 *
-	 * There is no reason to not at least perform fmgr elision on builds where
-	 * abbreviation is disabled.
-	 */
-	if (lc_collate_is_c(collid))
-		ssup->abbrev_full_comparator = ssup->comparator = bttextfastcmp_c;
-	else
-		ssup->abbrev_full_comparator = ssup->comparator = bttextfastcmp_locale;
-
-	if (!lc_collate_is_c(collid) || abbreviate)
-	{
-		/*
-		 * Abbreviated case requires temp buffers for strxfrm() copying.
-		 * bttextfastcmp_locale() also uses these buffers (even if abbreviation
-		 * isn't used), while bttextfast_c() does not.
-		 */
+		tss = palloc(sizeof(TextSortSupport));
 		tss->buf1 = palloc(TEXTBUFLEN);
 		tss->buflen1 = TEXTBUFLEN;
 		tss->buf2 = palloc(TEXTBUFLEN);
 		tss->buflen2 = TEXTBUFLEN;
+#ifdef HAVE_LOCALE_T
+		tss->locale = locale;
+#endif
 		ssup->ssup_extra = tss;
+
+		/*
+		 * If possible, plan to use the abbreviated keys optimization.  The
+		 * core code may switch back to authoritative comparator should
+		 * abbreviation be aborted.
+		 */
+		if (abbreviate)
+		{
+			initHyperLogLog(&tss->abbr_card, 10);
+			initHyperLogLog(&tss->full_card, 10);
+			ssup->abbrev_full_comparator = ssup->comparator;
+			ssup->comparator = bttextcmp_abbrev;
+			ssup->abbrev_converter = bttext_abbrev_convert;
+			ssup->abbrev_abort = bttext_abbrev_abort;
+		}
 	}
-
-	if (!abbreviate)
-		return;
-
-	initHyperLogLog(&tss->abbr_card, 10);
-	initHyperLogLog(&tss->full_card, 10);
-
-	/*
-	 * Change comparator to be abbreviation-based -- abbreviated version will
-	 * probably ultimately be used during sorting proper, but core code may
-	 * switch back to authoritative comparator should abbreviation be aborted
-	 */
-	ssup->comparator = bttextcmp_abbrev;
-	ssup->abbrev_converter = bttext_abbrev_convert;
-	ssup->abbrev_abort = bttext_abbrev_abort;
 }
 
 /*
