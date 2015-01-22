@@ -78,6 +78,16 @@ typedef struct core_yy_extra_type
 	int			num_keywords;
 
 	/*
+	 * Scanner settings to use.  These are initialized from the corresponding
+	 * GUC variables by scanner_init().  Callers can modify them after
+	 * scanner_init() if they don't want the scanner's behavior to follow the
+	 * prevailing GUC settings.
+	 */
+	int			backslash_quote;
+	bool		escape_string_warning;
+	bool		standard_conforming_strings;
+
+	/*
 	 * literalbuf is used to accumulate literal values when multiple rules are
 	 * needed to parse a single literal.  Call startlit() to reset buffer to
 	 * empty, addlit() to add text.  NOTE: the string in literalbuf is NOT

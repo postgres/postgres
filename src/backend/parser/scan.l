@@ -505,7 +505,7 @@ other			.
 					yyextra->warn_on_first_escape = true;
 					yyextra->saw_non_ascii = false;
 					SET_YYLLOC();
-					if (standard_conforming_strings)
+					if (yyextra->standard_conforming_strings)
 						BEGIN(xq);
 					else
 						BEGIN(xe);
@@ -520,7 +520,7 @@ other			.
 				}
 {xusstart}		{
 					SET_YYLLOC();
-					if (!standard_conforming_strings)
+					if (!yyextra->standard_conforming_strings)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("unsafe use of string constant with Unicode escapes"),
@@ -622,8 +622,8 @@ other			.
 <xe>{xeescape}  {
 					if (yytext[1] == '\'')
 					{
-						if (backslash_quote == BACKSLASH_QUOTE_OFF ||
-							(backslash_quote == BACKSLASH_QUOTE_SAFE_ENCODING &&
+						if (yyextra->backslash_quote == BACKSLASH_QUOTE_OFF ||
+							(yyextra->backslash_quote == BACKSLASH_QUOTE_SAFE_ENCODING &&
 							 PG_ENCODING_IS_CLIENT_ONLY(pg_get_client_encoding())))
 							ereport(ERROR,
 									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
@@ -1074,6 +1074,10 @@ scanner_init(const char *str,
 	yyext->keywords = keywords;
 	yyext->num_keywords = num_keywords;
 
+	yyext->backslash_quote = backslash_quote;
+	yyext->escape_string_warning = escape_string_warning;
+	yyext->standard_conforming_strings = standard_conforming_strings;
+
 	/*
 	 * Make a scan buffer with special termination needed by flex.
 	 */
@@ -1433,7 +1437,7 @@ check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
 {
 	if (ychar == '\'')
 	{
-		if (yyextra->warn_on_first_escape && escape_string_warning)
+		if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
 			ereport(WARNING,
 					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 					 errmsg("nonstandard use of \\' in a string literal"),
@@ -1443,7 +1447,7 @@ check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
 	}
 	else if (ychar == '\\')
 	{
-		if (yyextra->warn_on_first_escape && escape_string_warning)
+		if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
 			ereport(WARNING,
 					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 					 errmsg("nonstandard use of \\\\ in a string literal"),
@@ -1458,7 +1462,7 @@ check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
 static void
 check_escape_warning(core_yyscan_t yyscanner)
 {
-	if (yyextra->warn_on_first_escape && escape_string_warning)
+	if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
 		ereport(WARNING,
 				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 				 errmsg("nonstandard use of escape in a string literal"),
