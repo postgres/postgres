@@ -1998,12 +1998,12 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 {
 	TextSortSupport	   *tss = (TextSortSupport *) ssup->ssup_extra;
 	text			   *authoritative = DatumGetTextPP(original);
+	char			   *authoritative_data = VARDATA_ANY(authoritative);
 
 	/* working state */
 	Datum				res;
 	char			   *pres;
 	int					len;
-	Size				bsize;
 	uint32				hash;
 
 	/*
@@ -2017,14 +2017,16 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 
 	/*
 	 * If we're using the C collation, use memcmp(), rather than strxfrm(),
-	 * to abbreviated keys.  The full comparator for the C locale is always
+	 * to abbreviate keys.  The full comparator for the C locale is always
 	 * memcmp(), and we can't risk having this give a different answer.
 	 * Besides, this should be faster, too.
 	 */
 	if (tss->collate_c)
-		memcpy(pres, VARDATA_ANY(authoritative), Min(len, sizeof(Datum)));
+		memcpy(pres, authoritative_data, Min(len, sizeof(Datum)));
 	else
 	{
+		Size			bsize;
+
 		/*
 		 * We're not using the C collation, so fall back on strxfrm.
 		 */
@@ -2067,6 +2069,14 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 							   Min(tss->buflen2 * 2, MaxAllocSize));
 			tss->buf2 = palloc(tss->buflen2);
 		}
+
+		/*
+		 * Every Datum byte is always compared.  This is safe because the
+		 * strxfrm() blob is itself NUL terminated, leaving no danger of
+		 * misinterpreting any NUL bytes not intended to be interpreted as
+		 * logically representing termination.
+		 */
+		memcpy(pres, tss->buf2, Min(sizeof(Datum), bsize));
 	}
 
 	/*
@@ -2080,14 +2090,13 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	 * in order to compensate for cases where differences are past
 	 * CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
 	 */
-	hash = hash_any((unsigned char *) tss->buf1, Min(len, PG_CACHE_LINE_SIZE));
+	hash = hash_any((unsigned char *) authoritative_data,
+					Min(len, PG_CACHE_LINE_SIZE));
 
 	if (len > PG_CACHE_LINE_SIZE)
 		hash ^= DatumGetUInt32(hash_uint32((uint32) len));
 
 	addHyperLogLog(&tss->full_card, hash);
-
-	memcpy(pres, tss->buf2, Min(sizeof(Datum), bsize));
 
 	/* Hash abbreviated key */
 #if SIZEOF_DATUM == 8
@@ -2105,12 +2114,6 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 
 	addHyperLogLog(&tss->abbr_card, hash);
 
-	/*
-	 * Every Datum byte is always compared.  This is safe because the strxfrm()
-	 * blob is itself NUL terminated, leaving no danger of misinterpreting any
-	 * NUL bytes not intended to be interpreted as logically representing
-	 * termination.
-	 */
 	return res;
 }
 
