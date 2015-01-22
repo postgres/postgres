@@ -68,7 +68,7 @@ CREATE INDEX brinidx ON brintest USING brin (
 	float4col,
 	float8col,
 	macaddrcol,
-	inetcol,
+	inetcol inet_minmax_ops,
 	bpcharcol,
 	datecol,
 	timecol,

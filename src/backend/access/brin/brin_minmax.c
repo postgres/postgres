@@ -256,23 +256,24 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 
 	Assert(col_a->bv_attno == col_b->bv_attno);
 
-	/* If there are no values in B, there's nothing to do */
+	/* Adjust "hasnulls" */
+	if (!col_a->bv_hasnulls && col_b->bv_hasnulls)
+		col_a->bv_hasnulls = true;
+
+	/* If there are no values in B, there's nothing left to do */
 	if (col_b->bv_allnulls)
 		PG_RETURN_VOID();
 
 	attno = col_a->bv_attno;
 	attr = bdesc->bd_tupdesc->attrs[attno - 1];
 
-	/* Adjust "hasnulls" */
-	if (col_b->bv_hasnulls && !col_a->bv_hasnulls)
-		col_a->bv_hasnulls = true;
-
 	/*
-	 * Adjust "allnulls".  If B has values but A doesn't, just copy the values
-	 * from B into A, and we're done.  (We cannot run the operators in this
-	 * case, because values in A might contain garbage.)
+	 * Adjust "allnulls".  If A doesn't have values, just copy the values
+	 * from B into A, and we're done.  We cannot run the operators in this
+	 * case, because values in A might contain garbage.  Note we already
+	 * established that B contains values.
 	 */
-	if (!col_b->bv_allnulls && col_a->bv_allnulls)
+	if (col_a->bv_allnulls)
 	{
 		col_a->bv_allnulls = false;
 		col_a->bv_values[0] = datumCopy(col_b->bv_values[0],

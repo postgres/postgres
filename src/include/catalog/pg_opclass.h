@@ -252,7 +252,7 @@ DATA(insert (	3580	float8_minmax_ops		PGNSP PGUID 4070   701 t 0 ));
 DATA(insert (	3580	abstime_minmax_ops		PGNSP PGUID 4072   702 t 0 ));
 DATA(insert (	3580	reltime_minmax_ops		PGNSP PGUID 4073   703 t 0 ));
 DATA(insert (	3580	macaddr_minmax_ops		PGNSP PGUID 4074   829 t 0 ));
-DATA(insert (	3580	inet_minmax_ops			PGNSP PGUID 4075   869 t 0 ));
+DATA(insert (	3580	inet_minmax_ops			PGNSP PGUID 4075   869 f 0 ));
 DATA(insert (	3580	bpchar_minmax_ops		PGNSP PGUID 4076  1042 t 0 ));
 DATA(insert (	3580	time_minmax_ops			PGNSP PGUID 4077  1083 t 0 ));
 DATA(insert (	3580	date_minmax_ops			PGNSP PGUID 4059  1082 t 0 ));
