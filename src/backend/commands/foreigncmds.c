@@ -225,6 +225,12 @@ static void
 AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 {
 	Form_pg_foreign_data_wrapper form;
+	Datum		repl_val[Natts_pg_foreign_data_wrapper];
+	bool		repl_null[Natts_pg_foreign_data_wrapper];
+	bool		repl_repl[Natts_pg_foreign_data_wrapper];
+	Acl		   *newAcl;
+	Datum		aclDatum;
+	bool		isNull;
 
 	form = (Form_pg_foreign_data_wrapper) GETSTRUCT(tup);
 
@@ -246,7 +252,27 @@ AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerI
 
 	if (form->fdwowner != newOwnerId)
 	{
-		form->fdwowner = newOwnerId;
+		memset(repl_null, false, sizeof(repl_null));
+		memset(repl_repl, false, sizeof(repl_repl));
+
+		repl_repl[Anum_pg_foreign_data_wrapper_fdwowner - 1] = true;
+		repl_val[Anum_pg_foreign_data_wrapper_fdwowner - 1] = ObjectIdGetDatum(newOwnerId);
+
+		aclDatum = heap_getattr(tup,
+								Anum_pg_foreign_data_wrapper_fdwacl,
+								RelationGetDescr(rel),
+								&isNull);
+		/* Null ACLs do not require changes */
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 form->fdwowner, newOwnerId);
+			repl_repl[Anum_pg_foreign_data_wrapper_fdwacl - 1] = true;
+			repl_val[Anum_pg_foreign_data_wrapper_fdwacl - 1] = PointerGetDatum(newAcl);
+		}
+
+		tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
+								repl_repl);
 
 		simple_heap_update(rel, &tup->t_self, tup);
 		CatalogUpdateIndexes(rel, tup);
@@ -327,6 +353,12 @@ static void
 AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 {
 	Form_pg_foreign_server form;
+	Datum		repl_val[Natts_pg_foreign_server];
+	bool		repl_null[Natts_pg_foreign_server];
+	bool		repl_repl[Natts_pg_foreign_server];
+	Acl		   *newAcl;
+	Datum		aclDatum;
+	bool		isNull;
 
 	form = (Form_pg_foreign_server) GETSTRUCT(tup);
 
@@ -358,7 +390,27 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			}
 		}
 
-		form->srvowner = newOwnerId;
+		memset(repl_null, false, sizeof(repl_null));
+		memset(repl_repl, false, sizeof(repl_repl));
+	
+		repl_repl[Anum_pg_foreign_server_srvowner - 1] = true;
+		repl_val[Anum_pg_foreign_server_srvowner - 1] = ObjectIdGetDatum(newOwnerId);
+	
+		aclDatum = heap_getattr(tup,
+								Anum_pg_foreign_server_srvacl,
+								RelationGetDescr(rel),
+								&isNull);
+		/* Null ACLs do not require changes */
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 form->srvowner, newOwnerId);
+			repl_repl[Anum_pg_foreign_server_srvacl - 1] = true;
+			repl_val[Anum_pg_foreign_server_srvacl - 1] = PointerGetDatum(newAcl);
+		}
+	
+		tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
+								repl_repl);
 
 		simple_heap_update(rel, &tup->t_self, tup);
 		CatalogUpdateIndexes(rel, tup);

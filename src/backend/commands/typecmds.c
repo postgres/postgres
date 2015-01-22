@@ -3376,12 +3376,34 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 			ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
 		else
 		{
-			/*
-			 * We can just apply the modification directly.
-			 *
-			 * okay to scribble on typTup because it's a copy
-			 */
-			typTup->typowner = newOwnerId;
+			Datum		repl_val[Natts_pg_type];
+			bool		repl_null[Natts_pg_type];
+			bool		repl_repl[Natts_pg_type];
+			Acl		   *newAcl;
+			Datum		aclDatum;
+			bool		isNull;
+
+			memset(repl_null, false, sizeof(repl_null));
+			memset(repl_repl, false, sizeof(repl_repl));
+
+			repl_repl[Anum_pg_type_typowner - 1] = true;
+			repl_val[Anum_pg_type_typowner - 1] = ObjectIdGetDatum(newOwnerId);
+
+			aclDatum = heap_getattr(tup,
+									Anum_pg_type_typacl,
+									RelationGetDescr(rel),
+									&isNull);
+			/* Null ACLs do not require changes */
+			if (!isNull)
+			{
+				newAcl = aclnewowner(DatumGetAclP(aclDatum),
+									 typTup->typowner, newOwnerId);
+				repl_repl[Anum_pg_type_typacl - 1] = true;
+				repl_val[Anum_pg_type_typacl - 1] = PointerGetDatum(newAcl);
+			}
+
+			tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
+									repl_repl);
 
 			simple_heap_update(rel, &tup->t_self, tup);
 
@@ -3424,6 +3446,12 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 	Relation	rel;
 	HeapTuple	tup;
 	Form_pg_type typTup;
+	Datum		repl_val[Natts_pg_type];
+	bool		repl_null[Natts_pg_type];
+	bool		repl_repl[Natts_pg_type];
+	Acl		   *newAcl;
+	Datum		aclDatum;
+	bool		isNull;
 
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
@@ -3432,10 +3460,27 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/*
-	 * Modify the owner --- okay to scribble on typTup because it's a copy
-	 */
-	typTup->typowner = newOwnerId;
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+
+	repl_repl[Anum_pg_type_typowner - 1] = true;
+	repl_val[Anum_pg_type_typowner - 1] = ObjectIdGetDatum(newOwnerId);
+
+	aclDatum = heap_getattr(tup,
+							Anum_pg_type_typacl,
+							RelationGetDescr(rel),
+							&isNull);
+	/* Null ACLs do not require changes */
+	if (!isNull)
+	{
+		newAcl = aclnewowner(DatumGetAclP(aclDatum),
+							 typTup->typowner, newOwnerId);
+		repl_repl[Anum_pg_type_typacl - 1] = true;
+		repl_val[Anum_pg_type_typacl - 1] = PointerGetDatum(newAcl);
+	}
+
+	tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
+							repl_repl);
 
 	simple_heap_update(rel, &tup->t_self, tup);
 
