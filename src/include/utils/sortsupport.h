@@ -165,8 +165,8 @@ typedef struct SortSupportData
 	 * may set it to NULL to indicate abbreviation should not be used (which is
 	 * something sortsupport routines need not concern themselves with).
 	 * However, sortsupport routines must not set it when it is immediately
-	 * established that abbreviation should not proceed (for abbreviation
-	 * calls, or platform-specific impediments to using abbreviation).
+	 * established that abbreviation should not proceed (e.g., for !abbreviate
+	 * calls, or due to platform-specific impediments to using abbreviation).
 	 */
 	Datum			(*abbrev_converter) (Datum original, SortSupport ssup);
 

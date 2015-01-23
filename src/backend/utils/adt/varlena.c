@@ -2088,7 +2088,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	 *
 	 * First, Hash key proper, or a significant fraction of it.  Mix in length
 	 * in order to compensate for cases where differences are past
-	 * CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
+	 * PG_CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
 	 */
 	hash = hash_any((unsigned char *) authoritative_data,
 					Min(len, PG_CACHE_LINE_SIZE));

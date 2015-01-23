@@ -3,6 +3,8 @@ in the backend:
 
 binaryheap.c - a binary heap
 
+hyperloglog.c - a streaming cardinality estimator
+
 pairingheap.c - a pairing heap
 
 rbtree.c - a red-black tree
