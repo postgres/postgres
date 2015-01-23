@@ -1160,7 +1160,7 @@ select_loop(int maxFd, fd_set *workerset)
 		i = select(maxFd + 1, workerset, NULL, NULL, NULL);
 
 		/*
-		 * If we Ctrl-C the master process , it's likely that we interrupt
+		 * If we Ctrl-C the master process, it's likely that we interrupt
 		 * select() here. The signal handler will set wantAbort == true and
 		 * the shutdown journey starts from here. Note that we'll come back
 		 * here later when we tell all workers to terminate and read their

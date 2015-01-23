@@ -19,10 +19,9 @@
 
 #include "common.h"
 
-static void SetCancelConn(PGconn *conn);
-static void ResetCancelConn(void);
 
 static PGcancel *volatile cancelConn = NULL;
+bool CancelRequested = false;
 
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;
@@ -291,7 +290,7 @@ yesno_prompt(const char *question)
  *
  * Set cancelConn to point to the current database connection.
  */
-static void
+void
 SetCancelConn(PGconn *conn)
 {
 	PGcancel   *oldCancelConn;
@@ -321,7 +320,7 @@ SetCancelConn(PGconn *conn)
  *
  * Free the current cancel connection, if any, and set to NULL.
  */
-static void
+void
 ResetCancelConn(void)
 {
 	PGcancel   *oldCancelConn;
@@ -345,9 +344,8 @@ ResetCancelConn(void)
 
 #ifndef WIN32
 /*
- * Handle interrupt signals by canceling the current command,
- * if it's being executed through executeMaintenanceCommand(),
- * and thus has a cancelConn set.
+ * Handle interrupt signals by canceling the current command, if a cancelConn
+ * is set.
  */
 static void
 handle_sigint(SIGNAL_ARGS)
@@ -359,10 +357,15 @@ handle_sigint(SIGNAL_ARGS)
 	if (cancelConn != NULL)
 	{
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
+		{
+			CancelRequested = true;
 			fprintf(stderr, _("Cancel request sent\n"));
+		}
 		else
 			fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
 	}
+	else
+		CancelRequested = true;
 
 	errno = save_errno;			/* just in case the write changed it */
 }
@@ -392,10 +395,16 @@ consoleHandler(DWORD dwCtrlType)
 		if (cancelConn != NULL)
 		{
 			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
+			{
 				fprintf(stderr, _("Cancel request sent\n"));
+				CancelRequested = true;
+			}
 			else
 				fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
 		}
+		else
+			CancelRequested = true;
+
 		LeaveCriticalSection(&cancelConnLock);
 
 		return TRUE;
