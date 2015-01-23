@@ -70,7 +70,7 @@ initHyperLogLog(hyperLogLogState *cState, uint8 bwidth)
 		elog(ERROR, "bit width must be between 4 and 16 inclusive");
 
 	cState->registerWidth = bwidth;
-	cState->nRegisters = 1 << bwidth;
+	cState->nRegisters = (Size) 1 << bwidth;
 	cState->arrSize = sizeof(uint8) * cState->nRegisters + 1;
 
 	/*
