@@ -273,8 +273,7 @@ prepend_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index)
 	 * query, then set hasSubLinks on the Query to force subLinks to be
 	 * properly expanded.
 	 */
-	if (hassublinks)
-		root->hasSubLinks = hassublinks;
+	root->hasSubLinks |= hassublinks;
 
 	/* If we got this far, we must have added quals */
 	return true;
@@ -305,36 +304,36 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 		policy = (RowSecurityPolicy *) lfirst(item);
 
 		/* Always add ALL policies, if they exist. */
-		if (policy->cmd == '\0' &&
+		if (policy->polcmd == '*' &&
 				check_role_for_policy(policy->roles, user_id))
 			policies = lcons(policy, policies);
 
-		/* Build the list of policies to return. */
+		/* Add relevant command-specific policies to the list. */
 		switch(cmd)
 		{
 			case CMD_SELECT:
-				if (policy->cmd == ACL_SELECT_CHR
+				if (policy->polcmd == ACL_SELECT_CHR
 					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			case CMD_INSERT:
 				/* If INSERT then only need to add the WITH CHECK qual */
-				if (policy->cmd == ACL_INSERT_CHR
+				if (policy->polcmd == ACL_INSERT_CHR
 					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			case CMD_UPDATE:
-				if (policy->cmd == ACL_UPDATE_CHR
+				if (policy->polcmd == ACL_UPDATE_CHR
 					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			case CMD_DELETE:
-				if (policy->cmd == ACL_DELETE_CHR
+				if (policy->polcmd == ACL_DELETE_CHR
 					&& check_role_for_policy(policy->roles, user_id))
 					policies = lcons(policy, policies);
 				break;
 			default:
-				elog(ERROR, "unrecognized command type.");
+				elog(ERROR, "unrecognized policy command type %d", (int) cmd);
 				break;
 		}
 	}
@@ -354,7 +353,7 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 		policy = palloc0(sizeof(RowSecurityPolicy));
 		policy->policy_name = pstrdup("default-deny policy");
 		policy->policy_id = InvalidOid;
-		policy->cmd = '\0';
+		policy->polcmd = '*';
 		policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true,
 										'i');
 		policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,

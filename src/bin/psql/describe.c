@@ -784,8 +784,8 @@ permissionsList(const char *pattern)
 		appendPQExpBuffer(&buf,
 						  ",\n  pg_catalog.array_to_string(ARRAY(\n"
 						  "    SELECT polname\n"
-						  "    || CASE WHEN polcmd IS NOT NULL THEN\n"
-						  "           E' (' || polcmd || E')'\n"
+						  "    || CASE WHEN polcmd != '*' THEN\n"
+						  "           E' (' || polcmd || E'):'\n"
 						  "       ELSE E':' \n"
 						  "       END\n"
 						  "    || CASE WHEN polqual IS NOT NULL THEN\n"
@@ -2031,9 +2031,10 @@ describeOneTableDetails(const char *schemaname,
 						   "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
 						   "CASE pol.polcmd \n"
 						   "WHEN 'r' THEN 'SELECT'\n"
-						   "WHEN 'u' THEN 'UPDATE'\n"
 						   "WHEN 'a' THEN 'INSERT'\n"
+						   "WHEN 'w' THEN 'UPDATE'\n"
 						   "WHEN 'd' THEN 'DELETE'\n"
+						   "WHEN '*' THEN 'ALL'\n"
 						   "END AS cmd\n"
 							  "FROM pg_catalog.pg_policy pol\n"
 				  "WHERE pol.polrelid = '%s' ORDER BY 1;",

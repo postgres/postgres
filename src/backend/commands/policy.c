@@ -28,10 +28,10 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/pg_list.h"
-#include "optimizer/clauses.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rewriteManip.h"
 #include "rewrite/rowsecurity.h"
 #include "storage/lock.h"
 #include "utils/acl.h"
@@ -109,10 +109,10 @@ parse_policy_command(const char *cmd_name)
 	char cmd;
 
 	if (!cmd_name)
-		elog(ERROR, "unrecognized command");
+		elog(ERROR, "unrecognized policy command");
 
 	if (strcmp(cmd_name, "all") == 0)
-		cmd = 0;
+		cmd = '*';
 	else if (strcmp(cmd_name, "select") == 0)
 		cmd = ACL_SELECT_CHR;
 	else if (strcmp(cmd_name, "insert") == 0)
@@ -122,7 +122,7 @@ parse_policy_command(const char *cmd_name)
 	else if (strcmp(cmd_name, "delete") == 0)
 		cmd = ACL_DELETE_CHR;
 	else
-		elog(ERROR, "unrecognized command");
+		elog(ERROR, "unrecognized policy command");
 
 	return cmd;
 }
@@ -190,43 +190,53 @@ policy_role_list_to_array(List *roles)
 }
 
 /*
- * Load row security policy from the catalog, and keep it in
- * the relation cache.
+ * Load row security policy from the catalog, and store it in
+ * the relation's relcache entry.
+ *
+ * We will always set up some kind of policy here.  If no explicit policies
+ * are found then an implicit default-deny policy is created.
  */
 void
 RelationBuildRowSecurity(Relation relation)
 {
-	Relation			catalog;
-	ScanKeyData			skey;
-	SysScanDesc			sscan;
-	HeapTuple			tuple;
-	MemoryContext		oldcxt;
-	MemoryContext		rscxt = NULL;
-	RowSecurityDesc	   *rsdesc = NULL;
+	MemoryContext		rscxt;
+	MemoryContext		oldcxt = CurrentMemoryContext;
+	RowSecurityDesc	   * volatile rsdesc = NULL;
 
-	catalog = heap_open(PolicyRelationId, AccessShareLock);
+	/*
+	 * Create a memory context to hold everything associated with this
+	 * relation's row security policy.  This makes it easy to clean up
+	 * during a relcache flush.
+	 */
+	rscxt = AllocSetContextCreate(CacheMemoryContext,
+								  "row security descriptor",
+								  ALLOCSET_SMALL_MINSIZE,
+								  ALLOCSET_SMALL_INITSIZE,
+								  ALLOCSET_SMALL_MAXSIZE);
 
-	ScanKeyInit(&skey,
-				Anum_pg_policy_polrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(relation)));
-
-	sscan = systable_beginscan(catalog, PolicyPolrelidPolnameIndexId, true,
-							   NULL, 1, &skey);
+	/*
+	 * Since rscxt lives under CacheMemoryContext, it is long-lived.  Use
+	 * a PG_TRY block to ensure it'll get freed if we fail partway through.
+	 */
 	PG_TRY();
 	{
-		/*
-		 * Set up our memory context- we will always set up some kind of
-		 * policy here.  If no explicit policies are found then an implicit
-		 * default-deny policy is created.
-		 */
-		rscxt = AllocSetContextCreate(CacheMemoryContext,
-									  "row security descriptor",
-									  ALLOCSET_SMALL_MINSIZE,
-									  ALLOCSET_SMALL_INITSIZE,
-									  ALLOCSET_SMALL_MAXSIZE);
+		Relation			catalog;
+		ScanKeyData			skey;
+		SysScanDesc			sscan;
+		HeapTuple			tuple;
+
 		rsdesc = MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc));
 		rsdesc->rscxt = rscxt;
+
+		catalog = heap_open(PolicyRelationId, AccessShareLock);
+
+		ScanKeyInit(&skey,
+					Anum_pg_policy_polrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(relation)));
+
+		sscan = systable_beginscan(catalog, PolicyPolrelidPolnameIndexId, true,
+								   NULL, 1, &skey);
 
 		/*
 		 * Loop through the row level security policies for this relation, if
@@ -236,7 +246,7 @@ RelationBuildRowSecurity(Relation relation)
 		{
 			Datum				value_datum;
 			char				cmd_value;
-			ArrayType		   *roles;
+			Datum				roles_datum;
 			char			   *qual_value;
 			Expr			   *qual_expr;
 			char			   *with_check_value;
@@ -244,29 +254,33 @@ RelationBuildRowSecurity(Relation relation)
 			char			   *policy_name_value;
 			Oid					policy_id;
 			bool				isnull;
-			RowSecurityPolicy  *policy = NULL;
+			RowSecurityPolicy  *policy;
 
-			oldcxt = MemoryContextSwitchTo(rscxt);
+			/*
+			 * Note: all the pass-by-reference data we collect here is either
+			 * still stored in the tuple, or constructed in the caller's
+			 * short-lived memory context.  We must copy it into rscxt
+			 * explicitly below.
+			 */
 
 			/* Get policy command */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polcmd,
 								 RelationGetDescr(catalog), &isnull);
-			if (isnull)
-				cmd_value = 0;
-			else
-				cmd_value = DatumGetChar(value_datum);
+			Assert(!isnull);
+			cmd_value = DatumGetChar(value_datum);
 
 			/* Get policy name */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polname,
 										RelationGetDescr(catalog), &isnull);
 			Assert(!isnull);
-			policy_name_value = DatumGetCString(value_datum);
+			policy_name_value = NameStr(*(DatumGetName(value_datum)));
 
 			/* Get policy roles */
-			value_datum = heap_getattr(tuple, Anum_pg_policy_polroles,
+			roles_datum = heap_getattr(tuple, Anum_pg_policy_polroles,
 										RelationGetDescr(catalog), &isnull);
-			Assert(!isnull);
-			roles = DatumGetArrayTypeP(value_datum);
+			/* shouldn't be null, but initdb doesn't mark it so, so check */
+			if (isnull)
+				elog(ERROR, "unexpected null value in pg_policy.polroles");
 
 			/* Get policy qual */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polqual,
@@ -282,7 +296,6 @@ RelationBuildRowSecurity(Relation relation)
 			/* Get WITH CHECK qual */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polwithcheck,
 										RelationGetDescr(catalog), &isnull);
-
 			if (!isnull)
 			{
 				with_check_value = TextDatumGetCString(value_datum);
@@ -293,26 +306,32 @@ RelationBuildRowSecurity(Relation relation)
 
 			policy_id = HeapTupleGetOid(tuple);
 
+			/* Now copy everything into the cache context */
+			MemoryContextSwitchTo(rscxt);
+
 			policy = palloc0(sizeof(RowSecurityPolicy));
-			policy->policy_name = policy_name_value;
+			policy->policy_name = pstrdup(policy_name_value);
 			policy->policy_id = policy_id;
-			policy->cmd = cmd_value;
-			policy->roles = roles;
+			policy->polcmd = cmd_value;
+			policy->roles = DatumGetArrayTypePCopy(roles_datum);
 			policy->qual = copyObject(qual_expr);
 			policy->with_check_qual = copyObject(with_check_qual);
-			policy->hassublinks = contain_subplans((Node *) qual_expr) ||
-								  contain_subplans((Node *) with_check_qual);
+			policy->hassublinks = checkExprHasSubLink((Node *) qual_expr) ||
+								  checkExprHasSubLink((Node *) with_check_qual);
 
 			rsdesc->policies = lcons(policy, rsdesc->policies);
 
 			MemoryContextSwitchTo(oldcxt);
 
+			/* clean up some (not all) of the junk ... */
 			if (qual_expr != NULL)
 				pfree(qual_expr);
-
 			if (with_check_qual != NULL)
 				pfree(with_check_qual);
 		}
+
+		systable_endscan(sscan);
+		heap_close(catalog, AccessShareLock);
 
 		/*
 		 * Check if no policies were added
@@ -324,17 +343,17 @@ RelationBuildRowSecurity(Relation relation)
 		 */
 		if (rsdesc->policies == NIL)
 		{
-			RowSecurityPolicy  *policy = NULL;
+			RowSecurityPolicy  *policy;
 			Datum				role;
 
-			oldcxt = MemoryContextSwitchTo(rscxt);
+			MemoryContextSwitchTo(rscxt);
 
 			role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
 			policy = palloc0(sizeof(RowSecurityPolicy));
 			policy->policy_name = pstrdup("default-deny policy");
 			policy->policy_id = InvalidOid;
-			policy->cmd = '\0';
+			policy->polcmd = '*';
 			policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true,
 											'i');
 			policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
@@ -350,15 +369,14 @@ RelationBuildRowSecurity(Relation relation)
 	}
 	PG_CATCH();
 	{
-		if (rscxt != NULL)
-			MemoryContextDelete(rscxt);
+		/* Delete rscxt, first making sure it isn't active */
+		MemoryContextSwitchTo(oldcxt);
+		MemoryContextDelete(rscxt);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	systable_endscan(sscan);
-	heap_close(catalog, AccessShareLock);
-
+	/* Success --- attach the policy descriptor to the relcache entry */
 	relation->rd_rsdesc = rsdesc;
 }
 
@@ -555,27 +573,20 @@ CreatePolicy(CreatePolicyStmt *stmt)
 				 stmt->policy_name, RelationGetRelationName(target_table))));
 
 	values[Anum_pg_policy_polrelid - 1] = ObjectIdGetDatum(table_id);
-	values[Anum_pg_policy_polname - 1]
-		= DirectFunctionCall1(namein, CStringGetDatum(stmt->policy_name));
-
-	if (polcmd)
-		values[Anum_pg_policy_polcmd - 1] = CharGetDatum(polcmd);
-	else
-		isnull[Anum_pg_policy_polcmd - 1] = true;
-
+	values[Anum_pg_policy_polname - 1] = DirectFunctionCall1(namein,
+															 CStringGetDatum(stmt->policy_name));
+	values[Anum_pg_policy_polcmd - 1] = CharGetDatum(polcmd);
 	values[Anum_pg_policy_polroles - 1] = PointerGetDatum(role_ids);
 
 	/* Add qual if present. */
 	if (qual)
-		values[Anum_pg_policy_polqual - 1]
-			= CStringGetTextDatum(nodeToString(qual));
+		values[Anum_pg_policy_polqual - 1] = CStringGetTextDatum(nodeToString(qual));
 	else
 		isnull[Anum_pg_policy_polqual - 1] = true;
 
 	/* Add WITH CHECK qual if present */
 	if (with_check_qual)
-		values[Anum_pg_policy_polwithcheck - 1]
-			= CStringGetTextDatum(nodeToString(with_check_qual));
+		values[Anum_pg_policy_polwithcheck - 1] = CStringGetTextDatum(nodeToString(with_check_qual));
 	else
 		isnull[Anum_pg_policy_polwithcheck - 1] = true;
 
@@ -738,10 +749,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	cmd_datum = heap_getattr(policy_tuple, Anum_pg_policy_polcmd,
 							 RelationGetDescr(pg_policy_rel),
 							 &polcmd_isnull);
-	if (polcmd_isnull)
-		polcmd = 0;
-	else
-		polcmd = DatumGetChar(cmd_datum);
+	Assert(!polcmd_isnull);
+	polcmd = DatumGetChar(cmd_datum);
 
 	/*
 	 * If the command is SELECT or DELETE then WITH CHECK should be NULL.

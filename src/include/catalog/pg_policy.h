@@ -22,10 +22,10 @@ CATALOG(pg_policy,3256)
 {
 	NameData		polname;		/* Policy name. */
 	Oid				polrelid;		/* Oid of the relation with policy. */
-	char			polcmd;			/* One of ACL_*_CHR, or \0 for all */
+	char			polcmd;			/* One of ACL_*_CHR, or '*' for all */
 
 #ifdef CATALOG_VARLEN
-	Oid				polroles[1]		/* Roles associated with policy, not-NULL */
+	Oid				polroles[1];	/* Roles associated with policy, not-NULL */
 	pg_node_tree	polqual;		/* Policy quals. */
 	pg_node_tree	polwithcheck;	/* WITH CHECK quals. */
 #endif

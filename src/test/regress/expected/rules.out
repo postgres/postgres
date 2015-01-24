@@ -1363,16 +1363,13 @@ pg_policies| SELECT n.nspname AS schemaname,
               WHERE (pg_authid.oid = ANY (pol.polroles))
               ORDER BY pg_authid.rolname)
         END AS roles,
-        CASE
-            WHEN (pol.polcmd IS NULL) THEN 'ALL'::text
-            ELSE
-            CASE pol.polcmd
-                WHEN 'r'::"char" THEN 'SELECT'::text
-                WHEN 'a'::"char" THEN 'INSERT'::text
-                WHEN 'u'::"char" THEN 'UPDATE'::text
-                WHEN 'd'::"char" THEN 'DELETE'::text
-                ELSE NULL::text
-            END
+        CASE pol.polcmd
+            WHEN 'r'::"char" THEN 'SELECT'::text
+            WHEN 'a'::"char" THEN 'INSERT'::text
+            WHEN 'w'::"char" THEN 'UPDATE'::text
+            WHEN 'd'::"char" THEN 'DELETE'::text
+            WHEN '*'::"char" THEN 'ALL'::text
+            ELSE NULL::text
         END AS cmd,
     pg_get_expr(pol.polqual, pol.polrelid) AS qual,
     pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check

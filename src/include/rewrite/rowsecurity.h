@@ -21,11 +21,11 @@ typedef struct RowSecurityPolicy
 {
 	Oid					policy_id;		/* OID of the policy */
 	char			   *policy_name;	/* Name of the policy */
-	char				cmd;			/* Type of command policy is for */
+	char				polcmd;			/* Type of command policy is for */
 	ArrayType		   *roles;			/* Array of roles policy is for */
 	Expr			   *qual;			/* Expression to filter rows */
 	Expr			   *with_check_qual; /* Expression to limit rows allowed */
-	bool				hassublinks;	/* If expression has sublinks */
+	bool				hassublinks;	/* If either expression has sublinks */
 } RowSecurityPolicy;
 
 typedef struct RowSecurityDesc

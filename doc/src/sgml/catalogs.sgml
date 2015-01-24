@@ -219,6 +219,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link></entry>
+      <entry>row-security policies</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link></entry>
       <entry>functions and procedures</entry>
      </row>
@@ -236,11 +241,6 @@
      <row>
       <entry><link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link></entry>
       <entry>replication slot information</entry>
-     </row>
-
-     <row>
-      <entry><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link></entry>
-      <entry>table policies</entry>
      </row>
 
      <row>
@@ -1940,20 +1940,20 @@
      </row>
 
      <row>
-      <entry><structfield>relrowsecurity</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       True if table has row level security enabled; see
-       <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>relhassubclass</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if table has (or once had) any inheritance children</entry>
+     </row>
+
+     <row>
+      <entry><structfield>relrowsecurity</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if table has row-level security enabled; see
+       <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
+      </entry>
      </row>
 
      <row>
@@ -4711,6 +4711,98 @@
 
  </sect1>
 
+ <sect1 id="catalog-pg-policy">
+  <title><structname>pg_policy</structname></title>
+
+  <indexterm zone="catalog-pg-policy">
+   <primary>pg_policy</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_policy</structname> stores row-level
+   security policies for tables.  A policy includes the kind of
+   command that it applies to (possibly all commands), the roles that it
+   applies to, the expression to be added as a security-barrier
+   qualification to queries that include the table, and the expression
+   to be added as a <literal>WITH CHECK</> option for queries that attempt to
+   add new records to the table.
+  </para>
+
+  <table>
+
+   <title><structname>pg_policy</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>polname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>The name of the policy</entry>
+     </row>
+
+     <row>
+      <entry><structfield>polrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The table to which the policy applies</entry>
+     </row>
+
+     <row>
+      <entry><structfield>polcmd</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>The command type to which the policy is applied:
+       <literal>r</> for <command>SELECT</>,
+       <literal>a</> for <command>INSERT</>,
+       <literal>w</> for <command>UPDATE</>,
+       <literal>d</> for <command>DELETE</>,
+       or <literal>*</> for all</entry>
+     </row>
+
+     <row>
+      <entry><structfield>polroles</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>The roles to which the policy is applied</entry>
+     </row>
+
+     <row>
+      <entry><structfield>polqual</structfield></entry>
+      <entry><type>pg_node_tree</type></entry>
+      <entry></entry>
+      <entry>The expression tree to be added to the security barrier qualifications for queries that use the table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>polwithcheck</structfield></entry>
+      <entry><type>pg_node_tree</type></entry>
+      <entry></entry>
+      <entry>The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <note>
+   <para>
+    Policies stored in <structname>pg_policy</> are applied only when
+    <structname>pg_class</>.<structfield>relrowsecurity</> is set for
+    their table.
+   </para>
+  </note>
+
+ </sect1>
 
  <sect1 id="catalog-pg-proc">
   <title><structname>pg_proc</structname></title>
@@ -5340,94 +5432,6 @@
     </tbody>
    </tgroup>
   </table>
- </sect1>
-
- <sect1 id="catalog-pg-policy">
-  <title><structname>pg_policy</structname></title>
-
-  <indexterm zone="catalog-pg-policy">
-   <primary>pg_policy</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_policy</structname> stores row-level
-   security policies for each table.  A policy includes the kind of
-   command which it applies to (or all commands), the roles which it
-   applies to, the expression to be added as a security-barrier
-   qualification to queries which include the table and the expression
-   to be added as a with-check option for queries which attempt to add
-   new records to the table.
-  </para>
-
-  <table>
-
-   <title><structname>pg_policy</structname> Columns</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>polname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>The name of the policy</entry>
-     </row>
-
-     <row>
-      <entry><structfield>polrelid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The table to which the policy belongs</entry>
-     </row>
-
-     <row>
-      <entry><structfield>polcmd</structfield></entry>
-      <entry><type>char</type></entry>
-      <entry></entry>
-      <entry>The command type to which the policy is applied.</entry>
-     </row>
-
-     <row>
-      <entry><structfield>polroles</structfield></entry>
-      <entry><type>char</type></entry>
-      <entry></entry>
-      <entry>The roles to which the policy is applied.</entry>
-     </row>
-
-     <row>
-      <entry><structfield>polqual</structfield></entry>
-      <entry><type>pg_node_tree</type></entry>
-      <entry></entry>
-      <entry>The expression tree to be added to the security barrier qualifications for queries which use the table.</entry>
-     </row>
-
-     <row>
-      <entry><structfield>polwithcheck</structfield></entry>
-      <entry><type>pg_node_tree</type></entry>
-      <entry></entry>
-      <entry>The expression tree to be added to the with check qualifications for queries which attempt to add rows to the table.</entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
-
-  <note>
-   <para>
-    <literal>pg_class.relrowsecurity</literal>
-    True if the table has row security enabled.  Policies will not be applied
-    unless row security is enabled on the table.
-   </para>
-  </note>
-
  </sect1>
 
  <sect1 id="catalog-pg-seclabel">
@@ -8166,7 +8170,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The view <structname>pg_policies</structname> provides access to
-   useful information about each policy in the database.
+   useful information about each row-level security policy in the database.
   </para>
 
   <table>
@@ -8197,34 +8201,34 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>policyname</structfield></entry>
       <entry><type>name</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry><literal><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link>.polname</literal></entry>
       <entry>Name of policy</entry>
-     </row>
-     <row>
-      <entry><structfield>cmd</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>The command type to which the policy is applied.</entry>
      </row>
      <row>
       <entry><structfield>roles</structfield></entry>
       <entry><type>name[]</type></entry>
       <entry></entry>
-      <entry>The roles to which this policy applies.</entry>
+      <entry>The roles to which this policy applies</entry>
+     </row>
+     <row>
+      <entry><structfield>cmd</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>The command type to which the policy is applied</entry>
      </row>
      <row>
       <entry><structfield>qual</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>The expression added to the security barrier qualifications for
-      queries which this policy applies to.</entry>
+      queries that this policy applies to</entry>
      </row>
      <row>
       <entry><structfield>with_check</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>The expression added to the with check qualifications for
-      queries which attempt to add rows to this table.</entry>
+      <entry>The expression added to the WITH CHECK qualifications for
+      queries that attempt to add rows to this table</entry>
      </row>
     </tbody>
    </tgroup>
