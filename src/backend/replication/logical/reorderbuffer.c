@@ -1258,7 +1258,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					TimestampTz commit_time)
 {
 	ReorderBufferTXN *txn;
-	ReorderBufferIterTXNState *iterstate = NULL;
+	ReorderBufferIterTXNState *volatile iterstate = NULL;
 	ReorderBufferChange *change;
 
 	volatile CommandId command_id = FirstCommandId;
@@ -1303,7 +1303,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 	PG_TRY();
 	{
-
 		/*
 		 * Decoding needs access to syscaches et al., which in turn use
 		 * heavyweight locks and such. Thus we need to have enough state
@@ -1472,7 +1471,9 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 			}
 		}
 
+		/* clean up the iterator */
 		ReorderBufferIterTXNFinish(rb, iterstate);
+		iterstate = NULL;
 
 		/* call commit callback */
 		rb->commit(rb, txn, commit_lsn);
@@ -1639,7 +1640,7 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 	 */
 	if (txn->base_snapshot != NULL && txn->ninvalidations > 0)
 	{
-		bool use_subtxn = IsTransactionOrTransactionBlock();
+		bool		use_subtxn = IsTransactionOrTransactionBlock();
 
 		if (use_subtxn)
 			BeginInternalSubTransaction("replay");
