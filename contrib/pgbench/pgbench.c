@@ -829,7 +829,7 @@ replaceVariable(char **sql, char *param, int len, char *value)
 
 	if (valueln != len)
 		memmove(param + valueln, param + len, strlen(param + len) + 1);
-	strncpy(param, value, valueln);
+	memcpy(param, value, valueln);
 
 	return param + valueln;
 }

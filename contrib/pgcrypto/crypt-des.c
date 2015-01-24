@@ -708,7 +708,7 @@ px_crypt_des(const char *key, const char *setting)
 			if (des_setkey((char *) keybuf))
 				return (NULL);
 		}
-		strncpy(output, setting, 9);
+		StrNCpy(output, setting, 10);
 
 		/*
 		 * Double check that we weren't given a short setting. If we were, the
@@ -716,7 +716,6 @@ px_crypt_des(const char *key, const char *setting)
 		 * salt, but we don't really care. Just make sure the output string
 		 * doesn't have an extra NUL in it.
 		 */
-		output[9] = '\0';
 		p = output + strlen(output);
 	}
 	else

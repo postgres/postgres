@@ -192,7 +192,7 @@ namecpy(Name n1, Name n2)
 {
 	if (!n1 || !n2)
 		return -1;
-	strncpy(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
+	StrNCpy(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
 	return 0;
 }
 

@@ -111,7 +111,7 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 			strcpy(errbuf, msg);
 		else
 		{						/* truncate to fit */
-			strncpy(errbuf, msg, errbuf_size - 1);
+			memcpy(errbuf, msg, errbuf_size - 1);
 			errbuf[errbuf_size - 1] = '\0';
 		}
 	}

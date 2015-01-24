@@ -244,9 +244,7 @@ CreateInitDecodingContext(char *plugin,
 
 	/* register output plugin name with slot */
 	SpinLockAcquire(&slot->mutex);
-	strncpy(NameStr(slot->data.plugin), plugin,
-			NAMEDATALEN);
-	NameStr(slot->data.plugin)[NAMEDATALEN - 1] = '\0';
+	StrNCpy(NameStr(slot->data.plugin), plugin, NAMEDATALEN);
 	SpinLockRelease(&slot->mutex);
 
 	/*

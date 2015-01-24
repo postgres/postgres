@@ -399,7 +399,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 			break;
 		default:
 			/* trouble */
-			strncpy(errStmt, qry, DB_MAX_ERR_STMT);
+			strncpy(errStmt, qry, DB_MAX_ERR_STMT);		/* strncpy required here */
 			if (errStmt[DB_MAX_ERR_STMT - 1] != '\0')
 			{
 				errStmt[DB_MAX_ERR_STMT - 4] = '.';

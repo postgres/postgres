@@ -941,7 +941,7 @@ initialize_SSL(PGconn *conn)
 
 	/* Read the client certificate file */
 	if (conn->sslcert && strlen(conn->sslcert) > 0)
-		strncpy(fnbuf, conn->sslcert, sizeof(fnbuf));
+		strlcpy(fnbuf, conn->sslcert, sizeof(fnbuf));
 	else if (have_homedir)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
 	else
@@ -1132,7 +1132,7 @@ initialize_SSL(PGconn *conn)
 #endif   /* USE_SSL_ENGINE */
 		{
 			/* PGSSLKEY is not an engine, treat it as a filename */
-			strncpy(fnbuf, conn->sslkey, sizeof(fnbuf));
+			strlcpy(fnbuf, conn->sslkey, sizeof(fnbuf));
 		}
 	}
 	else if (have_homedir)
@@ -1195,7 +1195,7 @@ initialize_SSL(PGconn *conn)
 	 * verification after the connection has been completed.
 	 */
 	if (conn->sslrootcert && strlen(conn->sslrootcert) > 0)
-		strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
+		strlcpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
 	else if (have_homedir)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
 	else
@@ -1233,7 +1233,7 @@ initialize_SSL(PGconn *conn)
 		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
 		{
 			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
-				strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
+				strlcpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
 			else if (have_homedir)
 				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
 			else

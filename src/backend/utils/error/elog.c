@@ -2240,7 +2240,7 @@ setup_formatted_log_time(void)
 
 	/* 'paste' milliseconds into place... */
 	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
-	strncpy(formatted_log_time + 19, msbuf, 4);
+	memcpy(formatted_log_time + 19, msbuf, 4);
 }
 
 /*

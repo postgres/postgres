@@ -264,8 +264,8 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
 			{
 				case PGTYPES_TYPE_STRING_MALLOCED:
 				case PGTYPES_TYPE_STRING_CONSTANT:
-					strncpy(start_pattern, replace_val.str_val,
-							strlen(replace_val.str_val));
+					memcpy(start_pattern, replace_val.str_val,
+						   strlen(replace_val.str_val));
 					if (replace_type == PGTYPES_TYPE_STRING_MALLOCED)
 						free(replace_val.str_val);
 					break;
@@ -277,7 +277,7 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
 							return -1;
 						snprintf(t, PGTYPES_DATE_NUM_MAX_DIGITS,
 								 "%u", replace_val.uint_val);
-						strncpy(start_pattern, t, strlen(t));
+						memcpy(start_pattern, t, strlen(t));
 						free(t);
 					}
 					break;
@@ -289,7 +289,7 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
 							return -1;
 						snprintf(t, PGTYPES_DATE_NUM_MAX_DIGITS,
 								 "%02u", replace_val.uint_val);
-						strncpy(start_pattern, t, strlen(t));
+						memcpy(start_pattern, t, strlen(t));
 						free(t);
 					}
 					break;
@@ -301,7 +301,7 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
 							return -1;
 						snprintf(t, PGTYPES_DATE_NUM_MAX_DIGITS,
 								 "%04u", replace_val.uint_val);
-						strncpy(start_pattern, t, strlen(t));
+						memcpy(start_pattern, t, strlen(t));
 						free(t);
 					}
 					break;

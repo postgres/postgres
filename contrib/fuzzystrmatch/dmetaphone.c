@@ -247,7 +247,7 @@ NewMetaString(char *init_str)
 	META_MALLOC(s->str, s->bufsize, char);
 	assert(s->str != NULL);
 
-	strncpy(s->str, init_str, s->length + 1);
+	memcpy(s->str, init_str, s->length + 1);
 	s->free_string_on_destroy = 1;
 
 	return s;

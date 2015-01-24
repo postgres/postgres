@@ -3095,7 +3095,7 @@ pgstat_send_archiver(const char *xlog, bool failed)
 	 */
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ARCHIVER);
 	msg.m_failed = failed;
-	strncpy(msg.m_xlog, xlog, sizeof(msg.m_xlog));
+	StrNCpy(msg.m_xlog, xlog, sizeof(msg.m_xlog));
 	msg.m_timestamp = GetCurrentTimestamp();
 	pgstat_send(&msg, sizeof(msg));
 }

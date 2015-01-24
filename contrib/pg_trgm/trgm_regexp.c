@@ -877,7 +877,7 @@ convertPgWchar(pg_wchar c, trgm_mb_char *result)
 #endif
 
 	/* Fill result with exactly MAX_MULTIBYTE_CHAR_LEN bytes */
-	strncpy(result->bytes, s, MAX_MULTIBYTE_CHAR_LEN);
+	memcpy(result->bytes, s, MAX_MULTIBYTE_CHAR_LEN);
 	return true;
 }
 

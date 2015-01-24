@@ -825,18 +825,18 @@ string2ean(const char *str, bool errorOK, ean13 *result,
 				goto eanwrongtype;
 			break;
 		case ISMN:
-			strncpy(buf, "9790", 4);	/* this isn't for sure yet, for now
+			memcpy(buf, "9790", 4);		/* this isn't for sure yet, for now
 										 * ISMN it's only 9790 */
 			valid = (valid && ((rcheck = checkdig(buf, 13)) == check || magic));
 			break;
 		case ISBN:
-			strncpy(buf, "978", 3);
+			memcpy(buf, "978", 3);
 			valid = (valid && ((rcheck = weight_checkdig(buf + 3, 10)) == check || magic));
 			break;
 		case ISSN:
-			strncpy(buf + 10, "00", 2); /* append 00 as the normal issue
+			memcpy(buf + 10, "00", 2);	/* append 00 as the normal issue
 										 * publication code */
-			strncpy(buf, "977", 3);
+			memcpy(buf, "977", 3);
 			valid = (valid && ((rcheck = weight_checkdig(buf + 3, 8)) == check || magic));
 			break;
 		case UPC:

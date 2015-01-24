@@ -882,7 +882,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 								return false;
 							}
 
-							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 							ecpg_free(str);
 						}
@@ -949,7 +949,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 								return false;
 							}
 
-							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 							ecpg_free(str);
 						}
@@ -969,7 +969,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						}
 
 						/* also copy trailing '\0' */
-						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+						memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 						ecpg_free(str);
 					}
 
@@ -1000,7 +1000,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 								return false;
 							}
 
-							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 							ecpg_free(str);
 						}
@@ -1020,7 +1020,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						}
 
 						/* also copy trailing '\0' */
-						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+						memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 						ecpg_free(str);
 					}
 
@@ -1055,7 +1055,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 								return false;
 							}
 
-							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 							ecpg_free(str);
 						}
@@ -1075,7 +1075,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						}
 
 						/* also copy trailing '\0' */
-						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+						memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 						ecpg_free(str);
 					}
 

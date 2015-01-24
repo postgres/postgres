@@ -82,7 +82,7 @@ replace_variables(char **text, int lineno)
 				return false;
 			}
 
-			strncpy(newcopy, *text, ptr);
+			memcpy(newcopy, *text, ptr);
 			strcpy(newcopy + ptr, buffer);
 			strcat(newcopy, (*text) +ptr + len);
 

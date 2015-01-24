@@ -60,8 +60,7 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 			if (plen > 1)
 			{
 				n = (char *) malloc(plen);
-				strncpy(n, p + 1, plen - 1);
-				n[plen - 1] = '\0';
+				StrNCpy(n, p + 1, plen);
 				replace_string(linebuf, n, "");
 			}
 		}

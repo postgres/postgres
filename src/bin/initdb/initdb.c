@@ -386,9 +386,9 @@ replace_token(char **lines, const char *token, const char *replacement)
 
 		pre = where - lines[i];
 
-		strncpy(newline, lines[i], pre);
+		memcpy(newline, lines[i], pre);
 
-		strcpy(newline + pre, replacement);
+		memcpy(newline + pre, replacement, replen);
 
 		strcpy(newline + pre + replen, lines[i] + pre + toklen);
 

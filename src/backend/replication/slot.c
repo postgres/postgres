@@ -266,8 +266,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->data.persistency = persistency;
 	slot->data.xmin = InvalidTransactionId;
 	slot->effective_xmin = InvalidTransactionId;
-	strncpy(NameStr(slot->data.name), name, NAMEDATALEN);
-	NameStr(slot->data.name)[NAMEDATALEN - 1] = '\0';
+	StrNCpy(NameStr(slot->data.name), name, NAMEDATALEN);
 	slot->data.database = db_specific ? MyDatabaseId : InvalidOid;
 	slot->data.restart_lsn = InvalidXLogRecPtr;
 

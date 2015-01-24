@@ -1996,6 +1996,8 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 
 		if ((ofs = strstr(identLine->pg_role, "\\1")) != NULL)
 		{
+			int			offset;
+
 			/* substitution of the first argument requested */
 			if (matches[1].rm_so < 0)
 			{
@@ -2012,8 +2014,9 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			 * plus null terminator
 			 */
 			regexp_pgrole = palloc0(strlen(identLine->pg_role) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
-			strncpy(regexp_pgrole, identLine->pg_role, (ofs - identLine->pg_role));
-			memcpy(regexp_pgrole + strlen(regexp_pgrole),
+			offset = ofs - identLine->pg_role;
+			memcpy(regexp_pgrole, identLine->pg_role, offset);
+			memcpy(regexp_pgrole + offset,
 				   ident_user + matches[1].rm_so,
 				   matches[1].rm_eo - matches[1].rm_so);
 			strcat(regexp_pgrole, ofs + 2);

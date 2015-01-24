@@ -2064,7 +2064,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	}
 
 	/* Save it, just in case we need it later */
-	strncpy(&AH->lookahead[0], sig, 5);
+	memcpy(&AH->lookahead[0], sig, 5);
 	AH->lookaheadLen = 5;
 
 	if (strncmp(sig, "PGDMP", 5) == 0)

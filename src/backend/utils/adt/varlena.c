@@ -2936,7 +2936,7 @@ SplitIdentifierString(char *rawstring, char separator,
 			len = endp - curname;
 			downname = downcase_truncate_identifier(curname, len, false);
 			Assert(strlen(downname) <= len);
-			strncpy(curname, downname, len);
+			strncpy(curname, downname, len);	/* strncpy is required here */
 			pfree(downname);
 		}
 

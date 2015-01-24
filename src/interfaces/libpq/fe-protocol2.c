@@ -1586,6 +1586,7 @@ pqBuildStartupPacket2(PGconn *conn, int *packetlen,
 
 	startpacket->protoVersion = htonl(conn->pversion);
 
+	/* strncpy is safe here: postmaster will handle full fields correctly */
 	strncpy(startpacket->user, conn->pguser, SM_USER);
 	strncpy(startpacket->database, conn->dbName, SM_DATABASE);
 	strncpy(startpacket->tty, conn->pgtty, SM_TTY);

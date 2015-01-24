@@ -929,7 +929,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 			tm->tm_wday = (int) ((day + date2j(2000, 1, 1) + 1) % 7);
 
-			strncpy(str, days[tm->tm_wday], 3);
+			memcpy(str, days[tm->tm_wday], 3);
 			strcpy(str + 3, " ");
 
 			if (EuroDates)
