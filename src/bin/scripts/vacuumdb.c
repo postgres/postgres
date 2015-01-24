@@ -884,7 +884,7 @@ select_loop(int maxFd, fd_set *workerset, bool *aborting)
 			i = -1;
 
 			if (WSAGetLastError() == WSAEINTR)
-				errno == EINTR;
+				errno = EINTR;
 		}
 #endif
 
