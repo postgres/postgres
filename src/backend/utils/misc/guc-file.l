@@ -118,11 +118,11 @@ ProcessConfigFile(GucContext context)
 	bool		error = false;
 	bool		apply = false;
 	int			elevel;
+	const char *ConfFileWithError;
 	ConfigVariable *item,
-				   *head,
-				   *tail;
+			   *head,
+			   *tail;
 	int			i;
-	char		*ErrorConfFile = ConfigFileName;
 
 	/*
 	 * Config files are processed on startup (by the postmaster only)
@@ -138,6 +138,7 @@ ProcessConfigFile(GucContext context)
 	elevel = IsUnderPostmaster ? DEBUG2 : LOG;
 
 	/* Parse the main config file into a list of option names and values */
+	ConfFileWithError = ConfigFileName;
 	head = tail = NULL;
 
 	if (!ParseConfigFile(ConfigFileName, NULL, true, 0, elevel, &head, &tail))
@@ -160,25 +161,23 @@ ProcessConfigFile(GucContext context)
 		{
 			/* Syntax error(s) detected in the file, so bail out */
 			error = true;
-			ErrorConfFile = PG_AUTOCONF_FILENAME;
+			ConfFileWithError = PG_AUTOCONF_FILENAME;
 			goto cleanup_list;
 		}
 	}
 	else
 	{
+		/*
+		 * If DataDir is not set, the PG_AUTOCONF_FILENAME file cannot be
+		 * read.  In this case, we don't want to accept any settings but
+		 * data_directory from postgresql.conf, because they might be
+		 * overwritten with settings in the PG_AUTOCONF_FILENAME file which
+		 * will be read later. OTOH, since data_directory isn't allowed in the
+		 * PG_AUTOCONF_FILENAME file, it will never be overwritten later.
+		 */
 		ConfigVariable *prev = NULL;
 
-		/*
-		 * Pick up only the data_directory if DataDir is not set, which
-		 * means that the configuration file is read for the first time and
-		 * PG_AUTOCONF_FILENAME file cannot be read yet. In this case,
-		 * we shouldn't pick any settings except the data_directory
-		 * from postgresql.conf because they might be overwritten
-		 * with the settings in PG_AUTOCONF_FILENAME file which will be
-		 * read later. OTOH, since it's ensured that data_directory doesn't
-		 * exist in PG_AUTOCONF_FILENAME file, it will never be overwritten
-		 * later.
-		 */
+		/* Prune all items except "data_directory" from the list */
 		for (item = head; item;)
 		{
 			ConfigVariable *ptr = item;
@@ -189,15 +188,9 @@ ProcessConfigFile(GucContext context)
 				if (prev == NULL)
 					head = ptr->next;
 				else
-				{
 					prev->next = ptr->next;
-					/*
-					 * On removing last item in list, we need to update tail
-					 * to ensure that list will be maintianed.
-					 */
-					if (prev->next == NULL)
-						tail = prev;
-				}
+				if (ptr->next == NULL)
+					tail = prev;
 				FreeConfigVariable(ptr);
 			}
 			else
@@ -205,10 +198,10 @@ ProcessConfigFile(GucContext context)
 		}
 
 		/*
-		 * Quick exit if data_directory is not present in list.
+		 * Quick exit if data_directory is not present in file.
 		 *
-		 * Don't remember when we last successfully loaded the config file in
-		 * this case because that time will be set soon by subsequent load of
+		 * We need not do any further processing, in particular we don't set
+		 * PgReloadTime; that will be set soon by subsequent full loading of
 		 * the config file.
 		 */
 		if (head == NULL)
@@ -263,7 +256,7 @@ ProcessConfigFile(GucContext context)
 							item->name,
 							item->filename, item->sourceline)));
 			error = true;
-			ErrorConfFile = item->filename;
+			ConfFileWithError = item->filename;
 		}
 	}
 
@@ -392,7 +385,7 @@ ProcessConfigFile(GucContext context)
 		else if (scres == 0)
 		{
 			error = true;
-			ErrorConfFile = item->filename;
+			ConfFileWithError = item->filename;
 		}
 		/* else no error but variable's active value was not changed */
 
@@ -421,23 +414,23 @@ ProcessConfigFile(GucContext context)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("configuration file \"%s\" contains errors",
-							ErrorConfFile)));
+							ConfFileWithError)));
 		else if (apply)
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("configuration file \"%s\" contains errors; unaffected changes were applied",
-							ErrorConfFile)));
+							ConfFileWithError)));
 		else
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("configuration file \"%s\" contains errors; no changes were applied",
-							ErrorConfFile)));
+							ConfFileWithError)));
 	}
 
 	/*
 	 * Calling FreeConfigVariables() any earlier than this can cause problems,
-	 * because ErrorConfFile could be pointing to a string that will be freed
-	 * here.
+	 * because ConfFileWithError could be pointing to a string that will be
+	 * freed here.
 	 */
 	FreeConfigVariables(head);
 }
@@ -477,8 +470,11 @@ AbsoluteConfigLocation(const char *location, const char *calling_file)
  * Read and parse a single configuration file.  This function recurses
  * to handle "include" directives.
  *
- * See ParseConfigFp for details.  This one merely adds opening the
- * file rather than working from a caller-supplied file descriptor,
+ * If "strict" is true, treat failure to open the config file as an error,
+ * otherwise just skip the file.
+ *
+ * See ParseConfigFp for further details.  This one merely adds opening the
+ * config file rather than working from a caller-supplied file descriptor,
  * and absolute-ifying the path name if necessary.
  */
 bool
@@ -516,12 +512,13 @@ ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
 					 errmsg("could not open configuration file \"%s\": %m",
 							abs_path)));
 			OK = false;
-			goto cleanup;
 		}
-
-		ereport(LOG,
-				(errmsg("skipping missing configuration file \"%s\"",
-						abs_path)));
+		else
+		{
+			ereport(LOG,
+					(errmsg("skipping missing configuration file \"%s\"",
+							abs_path)));
+		}
 		goto cleanup;
 	}
 
@@ -616,9 +613,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	{
 		char	   *opt_name = NULL;
 		char	   *opt_value = NULL;
-		ConfigVariable *item,
-					   *cur_item = NULL,
-					   *prev_item = NULL;
+		ConfigVariable *item;
 
 		if (token == GUC_EOL)	/* empty or comment line */
 			continue;
@@ -701,41 +696,13 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		}
 		else
 		{
-			/*
-			 * ordinary variable, append to list.  For multiple items of
-			 * same parameter, retain only which comes later.
-			 */
+			/* ordinary variable, append to list */
 			item = palloc(sizeof *item);
 			item->name = opt_name;
 			item->value = opt_value;
 			item->filename = pstrdup(config_file);
 			item->sourceline = ConfigFileLineno-1;
 			item->next = NULL;
-
-			/* Remove the existing item of same parameter from the list */
-			for (cur_item = *head_p; cur_item; prev_item = cur_item,
-					 cur_item = cur_item->next)
-			{
-				if (strcmp(item->name, cur_item->name) == 0)
-				{
-					if (prev_item == NULL)
-						*head_p = cur_item->next;
-					else
-					{
-						prev_item->next = cur_item->next;
-						/*
-						 * On removing last item in list, we need to update tail
-						 * to ensure that list will be maintianed.
-						 */
-						if (prev_item->next == NULL)
-							*tail_p = prev_item;
-					}
-
-					FreeConfigVariable(cur_item);
-					break;
-				}
-			}
-
 			if (*head_p == NULL)
 				*head_p = item;
 			else
@@ -912,21 +879,6 @@ cleanup:
 }
 
 /*
- * Free a ConfigVariable
- */
-static void
-FreeConfigVariable(ConfigVariable *item)
-{
-	if (item != NULL)
-	{
-		pfree(item->name);
-		pfree(item->value);
-		pfree(item->filename);
-		pfree(item);
-	}
-}
-
-/*
  * Free a list of ConfigVariables, including the names and the values
  */
 void
@@ -942,6 +894,18 @@ FreeConfigVariables(ConfigVariable *list)
 		FreeConfigVariable(item);
 		item = next;
 	}
+}
+
+/*
+ * Free a single ConfigVariable
+ */
+static void
+FreeConfigVariable(ConfigVariable *item)
+{
+	pfree(item->name);
+	pfree(item->value);
+	pfree(item->filename);
+	pfree(item);
 }
 
 
