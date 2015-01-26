@@ -94,8 +94,8 @@ static void materializeQueryResult(FunctionCallInfo fcinfo,
 					   const char *conname,
 					   const char *sql,
 					   bool fail);
-static PGresult *storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql);
-static void storeRow(storeInfo *sinfo, PGresult *res, bool first);
+static PGresult *storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql);
+static void storeRow(volatile storeInfo *sinfo, PGresult *res, bool first);
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
 static void createNewConnection(const char *name, remoteConn *rconn);
@@ -966,13 +966,13 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	PGresult   *volatile res = NULL;
-	storeInfo	sinfo;
+	volatile storeInfo sinfo;
 
 	/* prepTuplestoreResult must have been called previously */
 	Assert(rsinfo->returnMode == SFRM_Materialize);
 
 	/* initialize storeInfo to empty */
-	memset(&sinfo, 0, sizeof(sinfo));
+	memset((void *) &sinfo, 0, sizeof(sinfo));
 	sinfo.fcinfo = fcinfo;
 
 	PG_TRY();
@@ -1077,7 +1077,7 @@ materializeQueryResult(FunctionCallInfo fcinfo,
  * Execute query, and send any result rows to sinfo->tuplestore.
  */
 static PGresult *
-storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql)
+storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
 {
 	bool		first = true;
 	int			nestlevel = -1;
@@ -1145,7 +1145,7 @@ storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql)
  * (in this case the PGresult might contain either zero or one row).
  */
 static void
-storeRow(storeInfo *sinfo, PGresult *res, bool first)
+storeRow(volatile storeInfo *sinfo, PGresult *res, bool first)
 {
 	int			nfields = PQnfields(res);
 	HeapTuple	tuple;
