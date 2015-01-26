@@ -371,13 +371,13 @@ static void Exec_UnlistenAllCommit(void);
 static bool IsListeningOn(const char *channel);
 static void asyncQueueUnregister(void);
 static bool asyncQueueIsFull(void);
-static bool asyncQueueAdvance(QueuePosition *position, int entryLength);
+static bool asyncQueueAdvance(volatile QueuePosition *position, int entryLength);
 static void asyncQueueNotificationToEntry(Notification *n, AsyncQueueEntry *qe);
 static ListCell *asyncQueueAddEntries(ListCell *nextNotify);
 static void asyncQueueFillWarning(void);
 static bool SignalBackends(void);
 static void asyncQueueReadAllNotifications(void);
-static bool asyncQueueProcessPageEntries(QueuePosition *current,
+static bool asyncQueueProcessPageEntries(volatile QueuePosition *current,
 							 QueuePosition stop,
 							 char *page_buffer);
 static void asyncQueueAdvanceTail(void);
@@ -1204,7 +1204,7 @@ asyncQueueIsFull(void)
  * returns true, else false.
  */
 static bool
-asyncQueueAdvance(QueuePosition *position, int entryLength)
+asyncQueueAdvance(volatile QueuePosition *position, int entryLength)
 {
 	int			pageno = QUEUE_POS_PAGE(*position);
 	int			offset = QUEUE_POS_OFFSET(*position);
@@ -1794,7 +1794,7 @@ DisableNotifyInterrupt(void)
 static void
 asyncQueueReadAllNotifications(void)
 {
-	QueuePosition pos;
+	volatile QueuePosition pos;
 	QueuePosition oldpos;
 	QueuePosition head;
 	bool		advanceTail;
@@ -1954,7 +1954,7 @@ asyncQueueReadAllNotifications(void)
  * The QueuePosition *current is advanced past all processed messages.
  */
 static bool
-asyncQueueProcessPageEntries(QueuePosition *current,
+asyncQueueProcessPageEntries(volatile QueuePosition *current,
 							 QueuePosition stop,
 							 char *page_buffer)
 {
