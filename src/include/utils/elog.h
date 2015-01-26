@@ -332,6 +332,13 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * not without taking thought for what will happen during ereport(FATAL).
  * The PG_ENSURE_ERROR_CLEANUP macros provided by storage/ipc.h may be
  * helpful in such cases.
+ *
+ * Note: if a local variable of the function containing PG_TRY is modified
+ * in the PG_TRY section and used in the PG_CATCH section, that variable
+ * must be declared "volatile" for POSIX compliance.  This is not mere
+ * pedantry; we have seen bugs from compilers improperly optimizing code
+ * away when such a variable was not marked.  Beware that gcc's -Wclobbered
+ * warnings are just about entirely useless for catching such oversights.
  *----------
  */
 #define PG_TRY()  \
