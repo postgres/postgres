@@ -2235,9 +2235,9 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	int			j;
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
-	const char *volatile nulls = NULL;
-	CONST84 char *volatile arrayname = NULL;
-	CONST84 char *volatile loop_body = NULL;
+	const char *nulls = NULL;
+	CONST84 char *arrayname = NULL;
+	CONST84 char *loop_body = NULL;
 	int			count = 0;
 	int			callnargs;
 	CONST84 char **callargs = NULL;
@@ -2367,6 +2367,8 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	if (i != argc)
 	{
 		Tcl_SetResult(interp, usage, TCL_STATIC);
+		if (callargs)
+			ckfree((char *) callargs);
 		return TCL_ERROR;
 	}
 
@@ -2405,10 +2407,6 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 			}
 		}
 
-		if (callargs)
-			ckfree((char *) callargs);
-		callargs = NULL;
-
 		/************************************************************
 		 * Execute the plan
 		 ************************************************************/
@@ -2434,6 +2432,9 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		return TCL_ERROR;
 	}
 	PG_END_TRY();
+
+	if (callargs)
+		ckfree((char *) callargs);
 
 	return my_rc;
 }
