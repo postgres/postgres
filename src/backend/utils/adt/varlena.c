@@ -1817,13 +1817,7 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 	 * keys optimization may win, and if it doesn't, the "abort abbreviation"
 	 * code may rescue us.  So, for now, we don't disable this anywhere on the
 	 * basis of performance.
-	 *
-	 * On Windows, however, strxfrm() seems to be unreliable on some machines,
-	 * so we categorically disable this optimization there.
 	 */
-#ifdef WIN32
-	abbreviate = false;
-#endif
 
 	/*
 	 * If we're using abbreviated keys, or if we're using a locale-aware
