@@ -748,7 +748,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	bool		pipe = (stmt->filename == NULL);
 	Relation	rel;
 	uint64		processed;
-	RangeTblEntry *rte;
+	List	   *range_table = NIL;
 
 	/* Disallow file COPY except to superusers. */
 	if (!pipe && !superuser())
@@ -764,6 +764,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 		List	   *attnums;
 		ListCell   *cur;
+		RangeTblEntry *rte;
 
 		Assert(!stmt->query);
 
@@ -776,6 +777,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		rte->relid = RelationGetRelid(rel);
 		rte->relkind = rel->rd_rel->relkind;
 		rte->requiredPerms = required_access;
+		range_table = list_make1(rte);
 
 		tupDesc = RelationGetDescr(rel);
 		attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
@@ -789,7 +791,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 			else
 				rte->selectedCols = bms_add_member(rte->selectedCols, attno);
 		}
-		ExecCheckRTPerms(list_make1(rte), true);
+		ExecCheckRTPerms(range_table, true);
 	}
 	else
 	{
@@ -808,7 +810,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 		cstate = BeginCopyFrom(rel, stmt->filename,
 							   stmt->attlist, stmt->options);
-		cstate->range_table = list_make1(rte);
+		cstate->range_table = range_table;
 		processed = CopyFrom(cstate);	/* copy from file to database */
 		EndCopyFrom(cstate);
 	}
@@ -816,7 +818,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	{
 		cstate = BeginCopyTo(rel, stmt->query, queryString, stmt->filename,
 							 stmt->attlist, stmt->options);
-		cstate->range_table = list_make1(rte);
 		processed = DoCopyTo(cstate);	/* copy from database to file */
 		EndCopyTo(cstate);
 	}
