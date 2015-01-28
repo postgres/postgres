@@ -497,12 +497,6 @@ my_compress(PG_FUNCTION_ARGS)
        type you're converting to in order to compress your leaf nodes, of
        course.
       </para>
-
-      <para>
-        Depending on your needs, you could also need to care about
-        compressing <literal>NULL</> values in there, storing for example
-        <literal>(Datum) 0</> like <literal>gist_circle_compress</> does.
-      </para>
      </listitem>
     </varlistentry>
 

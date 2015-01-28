@@ -1039,25 +1039,16 @@ gist_poly_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		retval = palloc(sizeof(GISTENTRY));
-		if (DatumGetPointer(entry->key) != NULL)
-		{
-			POLYGON    *in = DatumGetPolygonP(entry->key);
-			BOX		   *r;
+		POLYGON    *in = DatumGetPolygonP(entry->key);
+		BOX		   *r;
 
-			r = (BOX *) palloc(sizeof(BOX));
-			memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
-			gistentryinit(*retval, PointerGetDatum(r),
-						  entry->rel, entry->page,
-						  entry->offset, FALSE);
+		r = (BOX *) palloc(sizeof(BOX));
+		memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
 
-		}
-		else
-		{
-			gistentryinit(*retval, (Datum) 0,
-						  entry->rel, entry->page,
-						  entry->offset, FALSE);
-		}
+		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		gistentryinit(*retval, PointerGetDatum(r),
+					  entry->rel, entry->page,
+					  entry->offset, FALSE);
 	}
 	else
 		retval = entry;
@@ -1113,28 +1104,19 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		retval = palloc(sizeof(GISTENTRY));
-		if (DatumGetCircleP(entry->key) != NULL)
-		{
-			CIRCLE	   *in = DatumGetCircleP(entry->key);
-			BOX		   *r;
+		CIRCLE	   *in = DatumGetCircleP(entry->key);
+		BOX		   *r;
 
-			r = (BOX *) palloc(sizeof(BOX));
-			r->high.x = in->center.x + in->radius;
-			r->low.x = in->center.x - in->radius;
-			r->high.y = in->center.y + in->radius;
-			r->low.y = in->center.y - in->radius;
-			gistentryinit(*retval, PointerGetDatum(r),
-						  entry->rel, entry->page,
-						  entry->offset, FALSE);
+		r = (BOX *) palloc(sizeof(BOX));
+		r->high.x = in->center.x + in->radius;
+		r->low.x = in->center.x - in->radius;
+		r->high.y = in->center.y + in->radius;
+		r->low.y = in->center.y - in->radius;
 
-		}
-		else
-		{
-			gistentryinit(*retval, (Datum) 0,
-						  entry->rel, entry->page,
-						  entry->offset, FALSE);
-		}
+		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		gistentryinit(*retval, PointerGetDatum(r),
+					  entry->rel, entry->page,
+					  entry->offset, FALSE);
 	}
 	else
 		retval = entry;

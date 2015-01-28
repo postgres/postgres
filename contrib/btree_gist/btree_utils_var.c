@@ -337,7 +337,6 @@ bool
 gbt_var_same(Datum d1, Datum d2, Oid collation,
 			 const gbtree_vinfo *tinfo)
 {
-	bool		result;
 	GBT_VARKEY *t1 = (GBT_VARKEY *) DatumGetPointer(d1);
 	GBT_VARKEY *t2 = (GBT_VARKEY *) DatumGetPointer(d2);
 	GBT_VARKEY_R r1,
@@ -346,13 +345,8 @@ gbt_var_same(Datum d1, Datum d2, Oid collation,
 	r1 = gbt_var_key_readable(t1);
 	r2 = gbt_var_key_readable(t2);
 
-	if (t1 && t2)
-		result = ((*tinfo->f_cmp) (r1.lower, r2.lower, collation) == 0 &&
-				  (*tinfo->f_cmp) (r1.upper, r2.upper, collation) == 0);
-	else
-		result = (t1 == NULL && t2 == NULL);
-
-	return result;
+	return ((*tinfo->f_cmp) (r1.lower, r2.lower, collation) == 0 &&
+			(*tinfo->f_cmp) (r1.upper, r2.upper, collation) == 0);
 }
 
 

@@ -147,13 +147,8 @@ gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo
 	b2.lower = &(((GBT_NUMKEY *) b)[0]);
 	b2.upper = &(((GBT_NUMKEY *) b)[tinfo->size]);
 
-	if (
-		(*tinfo->f_eq) (b1.lower, b2.lower) &&
-		(*tinfo->f_eq) (b1.upper, b2.upper)
-		)
-		return TRUE;
-	return FALSE;
-
+	return ((*tinfo->f_eq) (b1.lower, b2.lower) &&
+			(*tinfo->f_eq) (b1.upper, b2.upper));
 }
 
 
