@@ -138,9 +138,9 @@ static inline int32 GetPrivateRefCount(Buffer buffer);
 static void ForgetPrivateRefCountEntry(PrivateRefCountEntry *ref);
 
 /*
- * Ensure that the the PrivateRefCountArray has sufficient space to store one
- * more entry. This has to be called before using NewPrivateRefCountEntry() to
- * fill a new entry - but it's perfectly fine to not use a reserved entry.
+ * Ensure that the PrivateRefCountArray has sufficient space to store one more
+ * entry. This has to be called before using NewPrivateRefCountEntry() to fill
+ * a new entry - but it's perfectly fine to not use a reserved entry.
  */
 static void
 ReservePrivateRefCountEntry(void)
