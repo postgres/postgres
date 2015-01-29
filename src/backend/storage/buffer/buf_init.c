@@ -18,7 +18,7 @@
 #include "storage/buf_internals.h"
 
 
-BufferDesc *BufferDescriptors;
+BufferDescPadded *BufferDescriptors;
 char	   *BufferBlocks;
 
 
@@ -67,9 +67,11 @@ InitBufferPool(void)
 	bool		foundBufs,
 				foundDescs;
 
-	BufferDescriptors = (BufferDesc *)
+	/* Align descriptors to a cacheline boundary. */
+	BufferDescriptors = (BufferDescPadded *) CACHELINEALIGN(
 		ShmemInitStruct("Buffer Descriptors",
-						NBuffers * sizeof(BufferDesc), &foundDescs);
+						NBuffers * sizeof(BufferDescPadded) + PG_CACHE_LINE_SIZE,
+						&foundDescs));
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
@@ -83,16 +85,15 @@ InitBufferPool(void)
 	}
 	else
 	{
-		BufferDesc *buf;
 		int			i;
-
-		buf = BufferDescriptors;
 
 		/*
 		 * Initialize all the buffer headers.
 		 */
-		for (i = 0; i < NBuffers; buf++, i++)
+		for (i = 0; i < NBuffers; i++)
 		{
+			BufferDesc *buf = GetBufferDescriptor(i);
+
 			CLEAR_BUFFERTAG(buf->tag);
 			buf->flags = 0;
 			buf->usage_count = 0;
@@ -114,7 +115,7 @@ InitBufferPool(void)
 		}
 
 		/* Correct last entry of linked list */
-		BufferDescriptors[NBuffers - 1].freeNext = FREENEXT_END_OF_LIST;
+		GetBufferDescriptor(NBuffers - 1)->freeNext = FREENEXT_END_OF_LIST;
 	}
 
 	/* Init other shared buffer-management stuff */
@@ -133,7 +134,9 @@ BufferShmemSize(void)
 	Size		size = 0;
 
 	/* size of buffer descriptors */
-	size = add_size(size, mul_size(NBuffers, sizeof(BufferDesc)));
+	size = add_size(size, mul_size(NBuffers, sizeof(BufferDescPadded)));
+	/* to allow aligning buffer descriptors */
+	size = add_size(size, PG_CACHE_LINE_SIZE);
 
 	/* size of data pages */
 	size = add_size(size, mul_size(NBuffers, BLCKSZ));

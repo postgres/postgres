@@ -73,7 +73,6 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		int			i;
-		volatile BufferDesc *bufHdr;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
@@ -146,8 +145,11 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		 * Scan though all the buffers, saving the relevant fields in the
 		 * fctx->record structure.
 		 */
-		for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
+		for (i = 0; i < NBuffers; i++)
 		{
+			volatile BufferDesc *bufHdr;
+
+			bufHdr = GetBufferDescriptor(i);
 			/* Lock each buffer header before inspecting. */
 			LockBufHdr(bufHdr);
 

@@ -259,7 +259,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 				break;
 			}
 
-			buf = &BufferDescriptors[StrategyControl->firstFreeBuffer];
+			buf = GetBufferDescriptor(StrategyControl->firstFreeBuffer);
 			Assert(buf->freeNext != FREENEXT_NOT_IN_LIST);
 
 			/* Unconditionally remove buffer from freelist */
@@ -296,7 +296,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 	for (;;)
 	{
 
-		buf = &BufferDescriptors[ClockSweepTick()];
+		buf = GetBufferDescriptor(ClockSweepTick());
 
 		/*
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
@@ -614,7 +614,7 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 	 * higher usage_count indicates someone else has touched the buffer, so we
 	 * shouldn't re-use it.
 	 */
-	buf = &BufferDescriptors[bufnum - 1];
+	buf = GetBufferDescriptor(bufnum - 1);
 	LockBufHdr(buf);
 	if (buf->refcount == 0 && buf->usage_count <= 1)
 	{

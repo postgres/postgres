@@ -122,7 +122,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	if (hresult)
 	{
 		b = hresult->id;
-		bufHdr = &LocalBufferDescriptors[b];
+		bufHdr = GetLocalBufferDescriptor(b);
 		Assert(BUFFERTAGS_EQUAL(bufHdr->tag, newTag));
 #ifdef LBDEBUG
 		fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
@@ -165,7 +165,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		if (++nextFreeLocalBuf >= NLocBuffer)
 			nextFreeLocalBuf = 0;
 
-		bufHdr = &LocalBufferDescriptors[b];
+		bufHdr = GetLocalBufferDescriptor(b);
 
 		if (LocalRefCount[b] == 0)
 		{
@@ -278,7 +278,7 @@ MarkLocalBufferDirty(Buffer buffer)
 
 	Assert(LocalRefCount[bufid] > 0);
 
-	bufHdr = &LocalBufferDescriptors[bufid];
+	bufHdr = GetLocalBufferDescriptor(bufid);
 
 	if (!(bufHdr->flags & BM_DIRTY))
 		pgBufferUsage.local_blks_dirtied++;
@@ -305,7 +305,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		BufferDesc *bufHdr = &LocalBufferDescriptors[i];
+		BufferDesc *bufHdr = GetLocalBufferDescriptor(i);
 		LocalBufferLookupEnt *hresult;
 
 		if ((bufHdr->flags & BM_TAG_VALID) &&
@@ -347,7 +347,7 @@ DropRelFileNodeAllLocalBuffers(RelFileNode rnode)
 
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		BufferDesc *bufHdr = &LocalBufferDescriptors[i];
+		BufferDesc *bufHdr = GetLocalBufferDescriptor(i);
 		LocalBufferLookupEnt *hresult;
 
 		if ((bufHdr->flags & BM_TAG_VALID) &&
@@ -400,7 +400,7 @@ InitLocalBuffers(void)
 	/* initialize fields that need to start off nonzero */
 	for (i = 0; i < nbufs; i++)
 	{
-		BufferDesc *buf = &LocalBufferDescriptors[i];
+		BufferDesc *buf = GetLocalBufferDescriptor(i);
 
 		/*
 		 * negative to indicate local buffer. This is tricky: shared buffers
