@@ -2764,7 +2764,7 @@ PrintPinnedBufs(void)
 				 "[%02d] (freeNext=%d, rel=%s, "
 				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext,
-				 relpath(buf->tag.rnode, buf->tag.forkNum),
+				 relpathperm(buf->tag.rnode, buf->tag.forkNum),
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, GetPrivateRefCount(i + 1));
 		}
