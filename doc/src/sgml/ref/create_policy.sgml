@@ -158,7 +158,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       Any <acronym>SQL</acronym> conditional expression (returning
       <type>boolean</type>).  The conditional expression cannot contain
       any aggregate or window functions.  This expression will be added
-      to queries to filter out the records which are visible to the query.
+      to queries that refer to the table if row level security is enabled,
+      and will allow access to rows matching the expression.
      </para>
     </listitem>
    </varlistentry>
@@ -168,11 +169,12 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
     <listitem>
      <para>
       Any <acronym>SQL</acronym> conditional expression (returning
-      <type>boolean</type>).  The condition expression cannot contain
-      any aggregate or window functions.  This expression will be added
-      to queries which are attempting to add records to the table as
-      with-check options, and an error will be thrown if this condition
-      returns false for any records being added.
+      <type>boolean</type>).  The conditional expression cannot contain
+      any aggregate or window functions.  This expression will be used with
+      <command>INSERT</command> and <command>UPDATE</command> queries against
+      the table if row level security is enabled and an error will be thrown
+      if the expression evaluates to false for any of the records inserted
+      or any of the records which result from the update.
      </para>
     </listitem>
    </varlistentry>
