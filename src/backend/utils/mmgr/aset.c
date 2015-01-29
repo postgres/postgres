@@ -642,8 +642,8 @@ AllocSetDelete(MemoryContext context)
 
 /*
  * AllocSetAlloc
- *		Returns pointer to allocated memory of given size; memory is added
- *		to the set.
+ *		Returns pointer to allocated memory of given size or NULL if
+ *		request could not be completed; memory is added to the set.
  *
  * No request may exceed:
  *		MAXALIGN_DOWN(SIZE_MAX) - ALLOC_BLOCKHDRSZ - ALLOC_CHUNKHDRSZ
@@ -671,13 +671,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) malloc(blksize);
 		if (block == NULL)
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
-		}
+			return NULL;
 		block->aset = set;
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
@@ -865,13 +859,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		}
 
 		if (block == NULL)
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
-		}
+			return NULL;
 
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
@@ -1002,9 +990,10 @@ AllocSetFree(MemoryContext context, void *pointer)
 
 /*
  * AllocSetRealloc
- *		Returns new pointer to allocated memory of given size; this memory
- *		is added to the set.  Memory associated with given pointer is copied
- *		into the new memory, and the old memory is freed.
+ *		Returns new pointer to allocated memory of given size or NULL if
+ *		request could not be completed; this memory is added to the set.
+ *		Memory associated with given pointer is copied into the new memory,
+ *		and the old memory is freed.
  *
  * Without MEMORY_CONTEXT_CHECKING, we don't know the old request size.  This
  * makes our Valgrind client requests less-precise, hazarding false negatives.
@@ -1107,13 +1096,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) realloc(block, blksize);
 		if (block == NULL)
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
-		}
+			return NULL;
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
 		/* Update pointers since block has likely been moved */
@@ -1178,6 +1161,10 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		/* allocate new chunk */
 		newPointer = AllocSetAlloc((MemoryContext) set, size);
+
+		/* leave immediately if request was not completed */
+		if (newPointer == NULL)
+			return NULL;
 
 		/*
 		 * AllocSetAlloc() just made the region NOACCESS.  Change it to

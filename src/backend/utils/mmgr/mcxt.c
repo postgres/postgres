@@ -623,6 +623,15 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods->alloc) (context, size);
+	if (ret == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+	}
+
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	return ret;
@@ -649,6 +658,15 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods->alloc) (context, size);
+	if (ret == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+	}
+
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetAligned(ret, 0, size);
@@ -677,6 +695,15 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods->alloc) (context, size);
+	if (ret == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+	}
+
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetLoop(ret, 0, size);
@@ -699,6 +726,15 @@ palloc(Size size)
 	CurrentMemoryContext->isReset = false;
 
 	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	if (ret == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+	}
+
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
 
 	return ret;
@@ -719,6 +755,15 @@ palloc0(Size size)
 	CurrentMemoryContext->isReset = false;
 
 	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	if (ret == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+	}
+
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
 
 	MemSetAligned(ret, 0, size);
@@ -789,6 +834,12 @@ repalloc(void *pointer, Size size)
 	Assert(!context->isReset);
 
 	ret = (*context->methods->realloc) (context, pointer, size);
+	if (ret == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
 	return ret;
@@ -814,6 +865,15 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods->alloc) (context, size);
+	if (ret == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+	}
+
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	return ret;
@@ -854,6 +914,12 @@ repalloc_huge(void *pointer, Size size)
 	Assert(!context->isReset);
 
 	ret = (*context->methods->realloc) (context, pointer, size);
+	if (ret == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
+
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
 	return ret;
