@@ -509,17 +509,24 @@ startScan(IndexScanDesc scan)
 		 * supposition isn't true), that total result will not more than
 		 * minimal predictNumberResult.
 		 */
+		bool		reduce = true;
 
 		for (i = 0; i < so->totalentries; i++)
+		{
 			if (so->entries[i]->predictNumberResult <= so->totalentries * GinFuzzySearchLimit)
-				return;
-
-		for (i = 0; i < so->totalentries; i++)
-			if (so->entries[i]->predictNumberResult > so->totalentries * GinFuzzySearchLimit)
+			{
+				reduce = false;
+				break;
+			}
+		}
+		if (reduce)
+		{
+			for (i = 0; i < so->totalentries; i++)
 			{
 				so->entries[i]->predictNumberResult /= so->totalentries;
 				so->entries[i]->reduceResult = TRUE;
 			}
+		}
 	}
 
 	for (i = 0; i < so->nkeys; i++)
