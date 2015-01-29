@@ -1445,6 +1445,15 @@
      </row>
 
      <row>
+      <entry><structfield>rolbypassrls</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>
+       Role can bypass row level security policies, see
+       <xref linkend="ddl-rowsecurity"> for more information.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>rolconnlimit</structfield></entry>
       <entry><type>int4</type></entry>
       <entry>
@@ -1951,7 +1960,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if table has row-level security enabled; see
+       True if table has row level security enabled; see
        <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
       </entry>
      </row>
@@ -4719,7 +4728,7 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_policy</structname> stores row-level
+   The catalog <structname>pg_policy</structname> stores row level
    security policies for tables.  A policy includes the kind of
    command that it applies to (possibly all commands), the roles that it
    applies to, the expression to be added as a security-barrier
@@ -9031,6 +9040,16 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      </row>
 
      <row>
+      <entry><structfield>usebypassrls</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       User can bypass row level security policies, see
+       <xref linkend="ddl-rowsecurity"> for more information.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>passwd</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -9502,6 +9521,16 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry>
        User can initiate streaming replication and put the system in and
        out of backup mode.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>usebypassrls</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       User can bypass row level security policies, see
+       <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>
 

@@ -33,6 +33,7 @@ CREATE VIEW pg_shadow AS
         rolsuper AS usesuper,
         rolcatupdate AS usecatupd,
         rolreplication AS userepl,
+        rolbypassrls AS usebypassrls,
         rolpassword AS passwd,
         rolvaliduntil::abstime AS valuntil,
         setconfig AS useconfig
@@ -58,6 +59,7 @@ CREATE VIEW pg_user AS
         usesuper,
         usecatupd,
         userepl,
+        usebypassrls,
         '********'::text as passwd,
         valuntil,
         useconfig
