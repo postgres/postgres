@@ -351,37 +351,33 @@ mdc_free(void *priv)
 }
 
 static int
-mdc_finish(PGP_Context *ctx, PullFilter *src,
-		   int len, uint8 **data_p)
+mdc_finish(PGP_Context *ctx, PullFilter *src, int len)
 {
 	int			res;
 	uint8		hash[20];
-	uint8		tmpbuf[22];
+	uint8		tmpbuf[20];
+	uint8	   *data;
 
-	if (len + 1 > sizeof(tmpbuf))
+	/* should not happen */
+	if (ctx->use_mdcbuf_filter)
 		return PXE_BUG;
 
+	/* It's SHA1 */
+	if (len != 20)
+		return PXE_PGP_CORRUPT_DATA;
+
+	/* mdc_read should not call md_update */
+	ctx->in_mdc_pkt = 1;
+
 	/* read data */
-	res = pullf_read_max(src, len + 1, data_p, tmpbuf);
+	res = pullf_read_max(src, len, &data, tmpbuf);
 	if (res < 0)
 		return res;
 	if (res == 0)
 	{
-		if (ctx->mdc_checked == 0)
-		{
-			px_debug("no mdc");
-			return PXE_PGP_CORRUPT_DATA;
-		}
-		return 0;
-	}
-
-	/* safety check */
-	if (ctx->in_mdc_pkt > 1)
-	{
-		px_debug("mdc_finish: several times here?");
+		px_debug("no mdc");
 		return PXE_PGP_CORRUPT_DATA;
 	}
-	ctx->in_mdc_pkt++;
 
 	/* is the packet sane? */
 	if (res != 20)
@@ -394,7 +390,7 @@ mdc_finish(PGP_Context *ctx, PullFilter *src,
 	 * ok, we got the hash, now check
 	 */
 	px_md_finish(ctx->mdc_ctx, hash);
-	res = memcmp(hash, *data_p, 20);
+	res = memcmp(hash, data, 20);
 	px_memset(hash, 0, 20);
 	px_memset(tmpbuf, 0, sizeof(tmpbuf));
 	if (res != 0)
@@ -403,7 +399,7 @@ mdc_finish(PGP_Context *ctx, PullFilter *src,
 		return PXE_PGP_CORRUPT_DATA;
 	}
 	ctx->mdc_checked = 1;
-	return len;
+	return 0;
 }
 
 static int
@@ -414,11 +410,8 @@ mdc_read(void *priv, PullFilter *src, int len,
 	PGP_Context *ctx = priv;
 
 	/* skip this filter? */
-	if (ctx->use_mdcbuf_filter)
+	if (ctx->use_mdcbuf_filter || ctx->in_mdc_pkt)
 		return pullf_read(src, len, data_p);
-
-	if (ctx->in_mdc_pkt)
-		return mdc_finish(ctx, src, len, data_p);
 
 	res = pullf_read(src, len, data_p);
 	if (res < 0)
@@ -878,7 +871,6 @@ process_data_packets(PGP_Context *ctx, MBuf *dst, PullFilter *src,
 	int			got_data = 0;
 	int			got_mdc = 0;
 	PullFilter *pkt = NULL;
-	uint8	   *tmp;
 
 	while (1)
 	{
@@ -937,11 +929,8 @@ process_data_packets(PGP_Context *ctx, MBuf *dst, PullFilter *src,
 					break;
 				}
 
-				/* notify mdc_filter */
-				ctx->in_mdc_pkt = 1;
-
-				res = pullf_read(pkt, 8192, &tmp);
-				if (res > 0)
+				res = mdc_finish(ctx, pkt, len);
+				if (res >= 0)
 					got_mdc = 1;
 				break;
 			default:
