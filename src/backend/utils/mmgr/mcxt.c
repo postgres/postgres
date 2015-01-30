@@ -711,6 +711,46 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	return ret;
 }
 
+/*
+ * MemoryContextAllocExtended
+ *		Allocate space within the specified context using the given flags.
+ */
+void *
+MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
+{
+	void	   *ret;
+
+	AssertArg(MemoryContextIsValid(context));
+	AssertNotInCriticalSection(context);
+
+	if (((flags & MCXT_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
+		((flags & MCXT_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+		elog(ERROR, "invalid memory alloc request size %zu", size);
+
+	context->isReset = false;
+
+	ret = (*context->methods->alloc) (context, size);
+	if (ret == NULL)
+	{
+		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
+		{
+			MemoryContextStats(TopMemoryContext);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %zu.", size)));
+		}
+		return NULL;
+	}
+
+	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
+
+	if ((flags & MCXT_ALLOC_ZERO) != 0)
+		MemSetAligned(ret, 0, size);
+
+	return ret;
+}
+
 void *
 palloc(Size size)
 {
