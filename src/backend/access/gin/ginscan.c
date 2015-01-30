@@ -163,6 +163,10 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	key->curItemMatches = false;
 	key->recheckCurItem = false;
 	key->isFinished = false;
+	key->nrequired = 0;
+	key->nadditional = 0;
+	key->requiredEntries = NULL;
+	key->additionalEntries = NULL;
 
 	ginInitConsistentFunction(ginstate, key);
 
@@ -223,8 +227,8 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	}
 }
 
-static void
-freeScanKeys(GinScanOpaque so)
+void
+ginFreeScanKeys(GinScanOpaque so)
 {
 	uint32		i;
 
@@ -237,6 +241,10 @@ freeScanKeys(GinScanOpaque so)
 
 		pfree(key->scanEntry);
 		pfree(key->entryRes);
+		if (key->requiredEntries)
+			pfree(key->requiredEntries);
+		if (key->additionalEntries)
+			pfree(key->additionalEntries);
 	}
 
 	pfree(so->keys);
@@ -416,7 +424,7 @@ ginrescan(PG_FUNCTION_ARGS)
 	/* remaining arguments are ignored */
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
-	freeScanKeys(so);
+	ginFreeScanKeys(so);
 
 	if (scankey && scan->numberOfKeys > 0)
 	{
@@ -434,7 +442,7 @@ ginendscan(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
-	freeScanKeys(so);
+	ginFreeScanKeys(so);
 
 	MemoryContextDelete(so->tempCtx);
 
