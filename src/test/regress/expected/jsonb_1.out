@@ -60,16 +60,22 @@ LINE 1: SELECT '"\u000g"'::jsonb;
                ^
 DETAIL:  "\u" must be followed by four hexadecimal digits.
 CONTEXT:  JSON data, line 1: "\u000g...
-SELECT '"\u0000"'::jsonb;		-- OK, legal escape
-  jsonb   
-----------
- "\u0000"
+SELECT '"\u0045"'::jsonb;		-- OK, legal escape
+ jsonb 
+-------
+ "E"
 (1 row)
 
+SELECT '"\u0000"'::jsonb;		-- ERROR, we don't support U+0000
+ERROR:  unsupported Unicode escape sequence
+LINE 1: SELECT '"\u0000"'::jsonb;
+               ^
+DETAIL:  \u0000 cannot be converted to text.
+CONTEXT:  JSON data, line 1: ...
 -- use octet_length here so we don't get an odd unicode char in the
 -- output
 SELECT octet_length('"\uaBcD"'::jsonb::text); -- OK, uppercase and lower case both OK
-ERROR:  invalid input syntax for type json
+ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT octet_length('"\uaBcD"'::jsonb::text);
                             ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
@@ -324,20 +330,6 @@ select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
 (1 row)
 
 COMMIT;
--- unicode escape - backslash is not escaped
-select to_jsonb(text '\uabcd');
- to_jsonb 
-----------
- "\uabcd"
-(1 row)
-
--- any other backslash is escaped
-select to_jsonb(text '\abcd');
- to_jsonb 
-----------
- "\\abcd"
-(1 row)
-
 --jsonb_agg
 CREATE TEMP TABLE rows AS
 SELECT x, 'txt' || x as y
@@ -1941,7 +1933,7 @@ SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"a":[100,200
 
 -- handling of unicode surrogate pairs
 SELECT octet_length((jsonb '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a')::text) AS correct_in_utf8;
-ERROR:  invalid input syntax for type json
+ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT octet_length((jsonb '{ "a":  "\ud83d\ude04\ud83d\udc3...
                                    ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
@@ -1971,20 +1963,62 @@ LINE 1: SELECT jsonb '{ "a":  "\ude04X" }' -> 'a';
 DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 -- handling of simple unicode escapes
-SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' AS correct_in_utf8;
-ERROR:  invalid input syntax for type json
+SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
+ERROR:  unsupported Unicode escape sequence
+LINE 1: SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as corr...
+                     ^
+DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
+CONTEXT:  JSON data, line 1: { "a":...
+SELECT jsonb '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
+     correct_everywhere      
+-----------------------------
+ {"a": "dollar $ character"}
+(1 row)
+
+SELECT jsonb '{ "a":  "dollar \\u0024 character" }' as not_an_escape;
+           not_an_escape           
+-----------------------------------
+ {"a": "dollar \\u0024 character"}
+(1 row)
+
+SELECT jsonb '{ "a":  "null \u0000 escape" }' as fails;
+ERROR:  unsupported Unicode escape sequence
+LINE 1: SELECT jsonb '{ "a":  "null \u0000 escape" }' as fails;
+                     ^
+DETAIL:  \u0000 cannot be converted to text.
+CONTEXT:  JSON data, line 1: { "a":...
+SELECT jsonb '{ "a":  "null \\u0000 escape" }' as not_an_escape;
+        not_an_escape         
+------------------------------
+ {"a": "null \\u0000 escape"}
+(1 row)
+
+SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
+ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a'...
                      ^
 DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 CONTEXT:  JSON data, line 1: { "a":...
-SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' AS correct_everyWHERE;
+SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 
 --------------------
  dollar $ character
 (1 row)
 
-SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' AS not_unescaped;
-   not_unescaped    
+SELECT jsonb '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
+      not_an_escape      
+-------------------------
+ dollar \u0024 character
+(1 row)
+
+SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
+ERROR:  unsupported Unicode escape sequence
+LINE 1: SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' as fai...
+                     ^
+DETAIL:  \u0000 cannot be converted to text.
+CONTEXT:  JSON data, line 1: { "a":...
+SELECT jsonb '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
+   not_an_escape    
 --------------------
  null \u0000 escape
 (1 row)
