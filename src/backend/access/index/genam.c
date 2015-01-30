@@ -208,10 +208,15 @@ BuildIndexValueDescription(Relation indexRelation,
 		{
 			AttrNumber	attnum = idxrec->indkey.values[keyno];
 
-			aclresult = pg_attribute_aclcheck(indrelid, attnum, GetUserId(),
-											  ACL_SELECT);
-
-			if (aclresult != ACLCHECK_OK)
+			/*
+			 * Note that if attnum == InvalidAttrNumber, then this is an
+			 * index based on an expression and we return no detail rather
+			 * than try to figure out what column(s) the expression includes
+			 * and if the user has SELECT rights on them.
+			 */
+			if (attnum == InvalidAttrNumber ||
+				pg_attribute_aclcheck(indrelid, attnum, GetUserId(),
+									  ACL_SELECT) != ACLCHECK_OK)
 			{
 				/* No access, so clean up and return */
 				ReleaseSysCache(ht_idx);
