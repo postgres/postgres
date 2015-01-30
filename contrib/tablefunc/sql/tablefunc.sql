@@ -187,6 +187,22 @@ SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') A
 -- infinite recursion failure avoided by depth limit
 SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 4, '~') AS t(keyid int, parent_keyid int, level int, branch text);
 
+-- should fail as first two columns must have the same type
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid text, parent_keyid int, level int, branch text);
+
+-- should fail as key field datatype should match return datatype
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid float8, parent_keyid float8, level int, branch text);
+
+-- tests for values using custom queries
+-- query with one column - failed
+SELECT * FROM connectby('connectby_int', '1; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+-- query with two columns first value as NULL
+SELECT * FROM connectby('connectby_int', 'NULL::int, 1::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+-- query with two columns second value as NULL
+SELECT * FROM connectby('connectby_int', '1::int, NULL::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+-- query with two columns, both values as NULL
+SELECT * FROM connectby('connectby_int', 'NULL::int, NULL::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+
 -- test for falsely detected recursion
 DROP TABLE connectby_int;
 CREATE TABLE connectby_int(keyid int, parent_keyid int);
