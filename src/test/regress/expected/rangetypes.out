@@ -260,6 +260,11 @@ select * from numrange_test where nr = '[1.1, 2.2)';
  [1.1,2.2)
 (1 row)
 
+select * from numrange_test where nr < 'empty';
+ nr 
+----
+(0 rows)
+
 select * from numrange_test where nr < numrange(-1000.0, -1000.0,'[]');
   nr   
 -------
@@ -286,6 +291,33 @@ select * from numrange_test where nr < numrange(1000.0, 1001.0,'[]');
  empty
  [1.7,1.7]
 (6 rows)
+
+select * from numrange_test where nr <= 'empty';
+  nr   
+-------
+ empty
+(1 row)
+
+select * from numrange_test where nr >= 'empty';
+    nr     
+-----------
+ (,)
+ [3,)
+ (,5)
+ [1.1,2.2)
+ empty
+ [1.7,1.7]
+(6 rows)
+
+select * from numrange_test where nr > 'empty';
+    nr     
+-----------
+ (,)
+ [3,)
+ (,5)
+ [1.1,2.2)
+ [1.7,1.7]
+(5 rows)
 
 select * from numrange_test where nr > numrange(-1001.0, -1000.0,'[]');
     nr     
