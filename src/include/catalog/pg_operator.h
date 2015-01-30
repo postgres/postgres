@@ -1720,10 +1720,10 @@ DESCR("less than or equal");
 #define OID_RANGE_LESS_EQUAL_OP 3885
 DATA(insert OID = 3886 (  ">="	   PGNSP PGUID b f f 3831 3831 16 3885 3884 range_ge rangesel scalargtjoinsel ));
 DESCR("greater than or equal");
-#define OID_RANGE_GREATER_OP 3886
+#define OID_RANGE_GREATER_EQUAL_OP 3886
 DATA(insert OID = 3887 (  ">"	   PGNSP PGUID b f f 3831 3831 16 3884 3885 range_gt rangesel scalargtjoinsel ));
 DESCR("greater than");
-#define OID_RANGE_GREATER_EQUAL_OP 3887
+#define OID_RANGE_GREATER_OP 3887
 DATA(insert OID = 3888 (  "&&"	   PGNSP PGUID b f f 3831 3831 16 3888 0 range_overlaps rangesel areajoinsel ));
 DESCR("overlaps");
 #define OID_RANGE_OVERLAP_OP 3888
