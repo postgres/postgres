@@ -899,6 +899,7 @@ extern Datum ginrescan(PG_FUNCTION_ARGS);
 extern Datum ginmarkpos(PG_FUNCTION_ARGS);
 extern Datum ginrestrpos(PG_FUNCTION_ARGS);
 extern void ginNewScanKey(IndexScanDesc scan);
+extern void ginFreeScanKeys(GinScanOpaque so);
 
 /* ginget.c */
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
