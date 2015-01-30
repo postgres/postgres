@@ -56,7 +56,7 @@ static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 						bool randomAccess);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
-static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
+static void compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void get_normal_pair(float8 *x1, float8 *x2);
 static Tuplestorestate *connectby(char *relname,
 		  char *key_fld,
@@ -70,7 +70,7 @@ static Tuplestorestate *connectby(char *relname,
 		  MemoryContext per_query_ctx,
 		  bool randomAccess,
 		  AttInMetadata *attinmeta);
-static Tuplestorestate *build_tuplestore_recursively(char *key_fld,
+static void build_tuplestore_recursively(char *key_fld,
 							 char *parent_key_fld,
 							 char *relname,
 							 char *orderby_fld,
@@ -1180,28 +1180,28 @@ connectby(char *relname,
 	MemoryContextSwitchTo(oldcontext);
 
 	/* now go get the whole tree */
-	tupstore = build_tuplestore_recursively(key_fld,
-											parent_key_fld,
-											relname,
-											orderby_fld,
-											branch_delim,
-											start_with,
-											start_with, /* current_branch */
-											0,	/* initial level is 0 */
-											&serial,	/* initial serial is 1 */
-											max_depth,
-											show_branch,
-											show_serial,
-											per_query_ctx,
-											attinmeta,
-											tupstore);
+	build_tuplestore_recursively(key_fld,
+								 parent_key_fld,
+								 relname,
+								 orderby_fld,
+								 branch_delim,
+								 start_with,
+								 start_with,	/* current_branch */
+								 0,		/* initial level is 0 */
+								 &serial,		/* initial serial is 1 */
+								 max_depth,
+								 show_branch,
+								 show_serial,
+								 per_query_ctx,
+								 attinmeta,
+								 tupstore);
 
 	SPI_finish();
 
 	return tupstore;
 }
 
-static Tuplestorestate *
+static void
 build_tuplestore_recursively(char *key_fld,
 							 char *parent_key_fld,
 							 char *relname,
@@ -1232,7 +1232,7 @@ build_tuplestore_recursively(char *key_fld,
 	HeapTuple	tuple;
 
 	if (max_depth > 0 && level > max_depth)
-		return tupstore;
+		return;
 
 	initStringInfo(&sql);
 
@@ -1318,22 +1318,11 @@ build_tuplestore_recursively(char *key_fld,
 		StringInfoData chk_branchstr;
 		StringInfoData chk_current_key;
 
-		/* First time through, do a little more setup */
-		if (level == 0)
-		{
-			/*
-			 * Check that return tupdesc is compatible with the one we got
-			 * from the query, but only at level 0 -- no need to check more
-			 * than once
-			 */
-
-			if (!compatConnectbyTupleDescs(tupdesc, spi_tupdesc))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid return type"),
-						 errdetail("Return and SQL tuple descriptions are " \
-								   "incompatible.")));
-		}
+		/*
+		 * Check that return tupdesc is compatible with the one we got from
+		 * the query.
+		 */
+		compatConnectbyTupleDescs(tupdesc, spi_tupdesc);
 
 		initStringInfo(&branchstr);
 		initStringInfo(&chk_branchstr);
@@ -1348,24 +1337,31 @@ build_tuplestore_recursively(char *key_fld,
 			/* get the next sql result tuple */
 			spi_tuple = tuptable->vals[i];
 
-			/* get the current key and parent */
+			/* get the current key (might be NULL) */
 			current_key = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
-			appendStringInfo(&chk_current_key, "%s%s%s", branch_delim, current_key, branch_delim);
-			current_key_parent = pstrdup(SPI_getvalue(spi_tuple, spi_tupdesc, 2));
+
+			/* get the parent key (might be NULL) */
+			current_key_parent = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
 
 			/* get the current level */
 			sprintf(current_level, "%d", level);
 
 			/* check to see if this key is also an ancestor */
-			if (strstr(chk_branchstr.data, chk_current_key.data))
-				elog(ERROR, "infinite recursion detected");
+			if (current_key)
+			{
+				appendStringInfo(&chk_current_key, "%s%s%s",
+								 branch_delim, current_key, branch_delim);
+				if (strstr(chk_branchstr.data, chk_current_key.data))
+					elog(ERROR, "infinite recursion detected");
+			}
 
 			/* OK, extend the branch */
-			appendStringInfo(&branchstr, "%s%s", branch_delim, current_key);
+			if (current_key)
+				appendStringInfo(&branchstr, "%s%s", branch_delim, current_key);
 			current_branch = branchstr.data;
 
 			/* build a tuple */
-			values[0] = pstrdup(current_key);
+			values[0] = current_key;
 			values[1] = current_key_parent;
 			values[2] = current_level;
 			if (show_branch)
@@ -1381,30 +1377,31 @@ build_tuplestore_recursively(char *key_fld,
 
 			tuple = BuildTupleFromCStrings(attinmeta, values);
 
-			xpfree(current_key);
-			xpfree(current_key_parent);
-
 			/* store the tuple for later use */
 			tuplestore_puttuple(tupstore, tuple);
 
 			heap_freetuple(tuple);
 
-			/* recurse using current_key_parent as the new start_with */
-			tupstore = build_tuplestore_recursively(key_fld,
-													parent_key_fld,
-													relname,
-													orderby_fld,
-													branch_delim,
-													values[0],
-													current_branch,
-													level + 1,
-													serial,
-													max_depth,
-													show_branch,
-													show_serial,
-													per_query_ctx,
-													attinmeta,
-													tupstore);
+			/* recurse using current_key as the new start_with */
+			if (current_key)
+				build_tuplestore_recursively(key_fld,
+											 parent_key_fld,
+											 relname,
+											 orderby_fld,
+											 branch_delim,
+											 current_key,
+											 current_branch,
+											 level + 1,
+											 serial,
+											 max_depth,
+											 show_branch,
+											 show_serial,
+											 per_query_ctx,
+											 attinmeta,
+											 tupstore);
+
+			xpfree(current_key);
+			xpfree(current_key_parent);
 
 			/* reset branch for next pass */
 			resetStringInfo(&branchstr);
@@ -1416,8 +1413,6 @@ build_tuplestore_recursively(char *key_fld,
 		xpfree(chk_branchstr.data);
 		xpfree(chk_current_key.data);
 	}
-
-	return tupstore;
 }
 
 /*
@@ -1490,34 +1485,25 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 /*
  * Check if spi sql tupdesc and return tupdesc are compatible
  */
-static bool
+static void
 compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
-	Oid			ret_atttypid;
-	Oid			sql_atttypid;
-
-	/* check the key_fld types match */
-	ret_atttypid = ret_tupdesc->attrs[0]->atttypid;
-	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
-	if (ret_atttypid != sql_atttypid)
+	/*
+	 * Result must have at least 2 columns.
+	 */
+	if (sql_tupdesc->natts < 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
-				 errdetail("SQL key field datatype does " \
-						   "not match return key field datatype.")));
+				 errdetail("Query must return at least two columns.")));
 
-	/* check the parent_key_fld types match */
-	ret_atttypid = ret_tupdesc->attrs[1]->atttypid;
-	sql_atttypid = sql_tupdesc->attrs[1]->atttypid;
-	if (ret_atttypid != sql_atttypid)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid return type"),
-				 errdetail("SQL parent key field datatype does " \
-						   "not match return parent key field datatype.")));
+	/*
+	 * We have failed to check datatype match since 2003, so we don't do that
+	 * here.  The call will work as long as the datatypes are I/O
+	 * representation compatible.
+	 */
 
 	/* OK, the two tupdescs are compatible for our purposes */
-	return true;
 }
 
 /*
