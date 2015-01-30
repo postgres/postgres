@@ -9527,7 +9527,6 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>usebypassrls</structfield></entry>
       <entry><type>bool</type></entry>
-      <entry></entry>
       <entry>
        User can bypass row level security policies, see
        <xref linkend="ddl-rowsecurity"> for more information.
