@@ -39,14 +39,21 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   </para>
 
   <para>
-   A policy limits the ability to SELECT, INSERT, UPDATE, or DELETE rows
-   in a table to those rows which match the relevant policy expression.
-   Existing table rows are checked against the expression specified via
-   USING, while new rows that would be created via INSERT or UPDATE are
-   checked against the expression specified via WITH CHECK.  Generally,
-   the system will enforce filter conditions imposed using security
-   policies prior to qualifications that appear in the query itself, in
-   order to the prevent the inadvertent exposure of the protected data to
+   A policy grants the ability to SELECT, INSERT, UPDATE, or DELETE rows
+   which match the relevant policy expression.  Existing table rows are
+   checked against the expression specified via USING, while new rows that
+   would be created via INSERT or UPDATE are checked against the expression
+   specified via WITH CHECK.  When a USING expression returns true for a given
+   row then that row is visible to the user, while if a false or null is
+   returned then the row is not visible.  When a WITH CHECK expression
+   returns true for a row then that row is added, while if a false or null is
+   returned then an error occurs.
+  </para>
+
+  <para>
+   Generally, the system will enforce filter conditions imposed using
+   security policies prior to qualifications that appear in the query itself,
+   in order to the prevent the inadvertent exposure of the protected data to
    user-defined functions which might not be trustworthy.  However,
    functions and operators marked by the system (or the system
    administrator) as LEAKPROOF may be evaluated before policy
@@ -158,8 +165,10 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       Any <acronym>SQL</acronym> conditional expression (returning
       <type>boolean</type>).  The conditional expression cannot contain
       any aggregate or window functions.  This expression will be added
-      to queries that refer to the table if row level security is enabled,
-      and will allow access to rows matching the expression.
+      to queries that refer to the table if row level security is enabled
+      and rows for which the expression returns true will be visible.  Any
+      rows for which the expression returns false or null will not be
+      visible to the user.
      </para>
     </listitem>
    </varlistentry>
@@ -172,9 +181,10 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <type>boolean</type>).  The conditional expression cannot contain
       any aggregate or window functions.  This expression will be used with
       <command>INSERT</command> and <command>UPDATE</command> queries against
-      the table if row level security is enabled and an error will be thrown
-      if the expression evaluates to false for any of the records inserted
-      or any of the records which result from the update.
+      the table if row level security is enabled and only rows where the
+      expression evaluates to true will be allowed.  An error will be thrown
+      if the expression evaluates to false or null for any of the records
+      inserted or any of the records which result from the update.
      </para>
     </listitem>
    </varlistentry>

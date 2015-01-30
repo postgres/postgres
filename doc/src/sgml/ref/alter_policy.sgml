@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
     [ RENAME TO <replaceable class="PARAMETER">new_name</replaceable> ]
     [ TO { <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] ]
-    [ USING ( <replaceable class="parameter">expression</replaceable> ) ]
+    [ USING ( <replaceable class="parameter">using_expression</replaceable> ) ]
     [ WITH CHECK ( <replaceable class="parameter">check_expression</replaceable> ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -87,7 +87,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">expression</replaceable></term>
+    <term><replaceable class="parameter">using_expression</replaceable></term>
     <listitem>
      <para>
       The USING expression for the policy.  This expression will be added as a
