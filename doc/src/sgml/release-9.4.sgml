@@ -103,22 +103,6 @@
 
     <listitem>
      <para>
-      Unicode escapes in <link linkend="datatype-json"><type>JSON</type></link>
-      text values are no longer rendered with the backslash escaped
-      (Andrew Dunstan)
-     </para>
-
-     <para>
-      Previously, all backslashes in text values being formed into JSON
-      were escaped. Now a backslash followed by <literal>u</> and four
-      hexadecimal digits is not escaped, as this is a legal sequence in a
-      JSON string value, and escaping the backslash led to some perverse
-      results.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       When converting values of type <type>date</>, <type>timestamp</>
       or <type>timestamptz</>
       to <link linkend="datatype-json"><type>JSON</type></link>, render the

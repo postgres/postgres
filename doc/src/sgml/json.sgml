@@ -69,12 +69,14 @@
   regardless of the database encoding, and are checked only for syntactic
   correctness (that is, that four hex digits follow <literal>\u</>).
   However, the input function for <type>jsonb</> is stricter: it disallows
-  Unicode escapes for non-ASCII characters (those
-  above <literal>U+007F</>) unless the database encoding is UTF8.  It also
-  insists that any use of Unicode surrogate pairs to designate characters
-  outside the Unicode Basic Multilingual Plane be correct.  Valid Unicode
-  escapes, except for <literal>\u0000</>, are then converted to the
-  equivalent ASCII or UTF8 character for storage.
+  Unicode escapes for non-ASCII characters (those above <literal>U+007F</>)
+  unless the database encoding is UTF8.  The <type>jsonb</> type also
+  rejects <literal>\u0000</> (because that cannot be represented in
+  <productname>PostgreSQL</productname>'s <type>text</> type), and it insists
+  that any use of Unicode surrogate pairs to designate characters outside
+  the Unicode Basic Multilingual Plane be correct.  Valid Unicode escapes
+  are converted to the equivalent ASCII or UTF8 character for storage;
+  this includes folding surrogate pairs into a single character.
  </para>
 
  <note>
@@ -101,7 +103,7 @@
   constitutes valid <type>jsonb</type> data that do not apply to
   the <type>json</type> type, nor to JSON in the abstract, corresponding
   to limits on what can be represented by the underlying data type.
-  Specifically, <type>jsonb</> will reject numbers that are outside the
+  Notably, <type>jsonb</> will reject numbers that are outside the
   range of the <productname>PostgreSQL</productname> <type>numeric</> data
   type, while <type>json</> will not.  Such implementation-defined
   restrictions are permitted by <acronym>RFC</> 7159.  However, in
@@ -134,7 +136,8 @@
        <row>
         <entry><type>string</></entry>
         <entry><type>text</></entry>
-        <entry>See notes above concerning encoding restrictions</entry>
+        <entry><literal>\u0000</> is disallowed, as are non-ASCII Unicode
+         escapes if database encoding is not UTF8</entry>
        </row>
        <row>
         <entry><type>number</></entry>

@@ -807,14 +807,17 @@ json_lex_string(JsonLexContext *lex)
 					 * For UTF8, replace the escape sequence by the actual
 					 * utf8 character in lex->strval. Do this also for other
 					 * encodings if the escape designates an ASCII character,
-					 * otherwise raise an error. We don't ever unescape a
-					 * \u0000, since that would result in an impermissible nul
-					 * byte.
+					 * otherwise raise an error.
 					 */
 
 					if (ch == 0)
 					{
-						appendStringInfoString(lex->strval, "\\u0000");
+						/* We can't allow this, since our TEXT type doesn't */
+						ereport(ERROR,
+								(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+							   errmsg("unsupported Unicode escape sequence"),
+						   errdetail("\\u0000 cannot be converted to text."),
+								 report_json_context(lex)));
 					}
 					else if (GetDatabaseEncoding() == PG_UTF8)
 					{
@@ -834,8 +837,8 @@ json_lex_string(JsonLexContext *lex)
 					else
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("invalid input syntax for type json"),
+								(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+							   errmsg("unsupported Unicode escape sequence"),
 								 errdetail("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."),
 								 report_json_context(lex)));
 					}
@@ -2374,30 +2377,7 @@ escape_json(StringInfo buf, const char *str)
 				appendStringInfoString(buf, "\\\"");
 				break;
 			case '\\':
-
-				/*
-				 * Unicode escapes are passed through as is. There is no
-				 * requirement that they denote a valid character in the
-				 * server encoding - indeed that is a big part of their
-				 * usefulness.
-				 *
-				 * All we require is that they consist of \uXXXX where the Xs
-				 * are hexadecimal digits. It is the responsibility of the
-				 * caller of, say, to_json() to make sure that the unicode
-				 * escape is valid.
-				 *
-				 * In the case of a jsonb string value being escaped, the only
-				 * unicode escape that should be present is \u0000, all the
-				 * other unicode escapes will have been resolved.
-				 */
-				if (p[1] == 'u' &&
-					isxdigit((unsigned char) p[2]) &&
-					isxdigit((unsigned char) p[3]) &&
-					isxdigit((unsigned char) p[4]) &&
-					isxdigit((unsigned char) p[5]))
-					appendStringInfoCharMacro(buf, *p);
-				else
-					appendStringInfoString(buf, "\\\\");
+				appendStringInfoString(buf, "\\\\");
 				break;
 			default:
 				if ((unsigned char) *p < ' ')

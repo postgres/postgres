@@ -111,14 +111,6 @@ SET LOCAL TIME ZONE -8;
 select to_json(timestamptz '2014-05-28 12:22:35.614298-04');
 COMMIT;
 
--- unicode escape - backslash is not escaped
-
-select to_json(text '\uabcd');
-
--- any other backslash is escaped
-
-select to_json(text '\abcd');
-
 --json_agg
 
 SELECT json_agg(q)
@@ -401,9 +393,17 @@ select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 
 --handling of simple unicode escapes
 
+select json '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
+select json '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
+select json '{ "a":  "dollar \\u0024 character" }' as not_an_escape;
+select json '{ "a":  "null \u0000 escape" }' as not_unescaped;
+select json '{ "a":  "null \\u0000 escape" }' as not_an_escape;
+
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
-select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_unescaped;
+select json '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
+select json '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
+select json '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
 
 --json_typeof() function
 select value, json_typeof(value)

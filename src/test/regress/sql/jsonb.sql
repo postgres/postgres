@@ -10,7 +10,8 @@ SELECT '"\v"'::jsonb;			-- ERROR, not a valid JSON escape
 SELECT '"\u"'::jsonb;			-- ERROR, incomplete escape
 SELECT '"\u00"'::jsonb;			-- ERROR, incomplete escape
 SELECT '"\u000g"'::jsonb;		-- ERROR, g is not a hex digit
-SELECT '"\u0000"'::jsonb;		-- OK, legal escape
+SELECT '"\u0045"'::jsonb;		-- OK, legal escape
+SELECT '"\u0000"'::jsonb;		-- ERROR, we don't support U+0000
 -- use octet_length here so we don't get an odd unicode char in the
 -- output
 SELECT octet_length('"\uaBcD"'::jsonb::text); -- OK, uppercase and lower case both OK
@@ -373,9 +374,18 @@ SELECT jsonb '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
 SELECT jsonb '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 
 -- handling of simple unicode escapes
-SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' AS correct_in_utf8;
-SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' AS correct_everyWHERE;
-SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' AS not_unescaped;
+
+SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
+SELECT jsonb '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
+SELECT jsonb '{ "a":  "dollar \\u0024 character" }' as not_an_escape;
+SELECT jsonb '{ "a":  "null \u0000 escape" }' as fails;
+SELECT jsonb '{ "a":  "null \\u0000 escape" }' as not_an_escape;
+
+SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
+SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
+SELECT jsonb '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
+SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
+SELECT jsonb '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
 
 -- jsonb_to_record and jsonb_to_recordset
 
