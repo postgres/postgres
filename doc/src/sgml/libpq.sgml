@@ -1182,7 +1182,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
            <para>
             only try an <acronym>SSL</> connection, verify that the
             server certificate is issued by a
-            trusted <acronym>CA</> and that the server host name
+            trusted <acronym>CA</> and that the requested server host name
             matches that in the certificate
            </para>
           </listitem>
