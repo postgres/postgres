@@ -377,6 +377,37 @@ SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 4, '~') A
     11 |           10 |     4 | 2~5~9~10~11
 (8 rows)
 
+-- should fail as first two columns must have the same type
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid text, parent_keyid int, level int, branch text);
+ERROR:  invalid return type
+DETAIL:  First two columns must be the same type.
+-- should fail as key field datatype should match return datatype
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid float8, parent_keyid float8, level int, branch text);
+ERROR:  infinite recursion detected
+-- tests for values using custom queries
+-- query with one column - failed
+SELECT * FROM connectby('connectby_int', '1; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+ERROR:  invalid return type
+DETAIL:  Query must return at least two columns.
+-- query with two columns first value as NULL
+SELECT * FROM connectby('connectby_int', 'NULL::int, 1::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+ keyid | parent_keyid | level 
+-------+--------------+-------
+     2 |              |     0
+       |            1 |     1
+(2 rows)
+
+-- query with two columns second value as NULL
+SELECT * FROM connectby('connectby_int', '1::int, NULL::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+ERROR:  infinite recursion detected
+-- query with two columns, both values as NULL
+SELECT * FROM connectby('connectby_int', 'NULL::int, NULL::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+ keyid | parent_keyid | level 
+-------+--------------+-------
+     2 |              |     0
+       |              |     1
+(2 rows)
+
 -- test for falsely detected recursion
 DROP TABLE connectby_int;
 CREATE TABLE connectby_int(keyid int, parent_keyid int);
