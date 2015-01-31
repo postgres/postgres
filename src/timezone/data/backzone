@@ -60,6 +60,7 @@ Zone	Africa/Asmara	2:35:32 -	LMT	1870
 			2:35:32	-	AMT	1890        # Asmara Mean Time
 			2:35:20	-	ADMT	1936 May  5 # Adis Dera MT
 			3:00	-	EAT
+Link Africa/Asmara Africa/Asmera
 
 # Mali (southern)
 Zone	Africa/Bamako	-0:32:00 -	LMT	1912
@@ -348,6 +349,17 @@ Zone Antarctica/McMurdo	0	-	zzz	1956
 			12:00	NZ	NZ%sT
 Link Antarctica/McMurdo Antarctica/South_Pole
 
+# Yemen
+# Milne says 2:59:54 was the meridian of the saluting battery at Aden,
+# and that Yemen was at 1:55:56, the meridian of the Hagia Sophia.
+Zone	Asia/Aden	2:59:54	-	LMT	1950
+			3:00	-	AST
+
+# Bahrain
+Zone	Asia/Bahrain	3:22:20 -	LMT	1920     # Manamah
+			4:00	-	GST	1972 Jun
+			3:00	-	AST
+
 # India
 #
 # From Paul Eggert (2014-09-06):
@@ -402,6 +414,16 @@ Zone	Asia/Kashgar	5:03:56	-	LMT	1928     # or Kashi or Kaxgar
 			5:30	-	KAST	1940     # Kashgar Time
 			5:00	-	KAST	1980 May
 			8:00	PRC	C%sT
+
+# Kuwait
+Zone	Asia/Kuwait	3:11:56 -	LMT	1950
+			3:00	-	AST
+
+
+# Oman
+# Milne says 3:54:24 was the meridian of the Muscat Tidal Observatory.
+Zone	Asia/Muscat	3:54:24 -	LMT	1920
+			4:00	-	GST
 
 # India
 # From Paul Eggert (2014-08-11), after a heads-up from Stephen Colebourne:
@@ -494,7 +516,7 @@ Zone	Europe/Guernsey	-0:09:19 -	LMT	1913 Jun 18
 #
 # AT4 of 1883 - The Statutory Time et cetera Act 1883 -
 # LMT Location - 54.1508N -4.4814E - Tynwald Hill ( Manx parliament )
-Zone    Europe/Isle_of_Man -0:17:55 -    LMT 1883 March 30  0:00s
+Zone Europe/Isle_of_Man	-0:17:55 -	LMT	1883 Mar 30  0:00s
 			 0:00	GB-Eire	%s	1968 Oct 27
 			 1:00	-	BST	1971 Oct 31  2:00u
 			 0:00	GB-Eire	%s	1996

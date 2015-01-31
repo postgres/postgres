@@ -86,7 +86,6 @@ COT    -18000    # Columbia Time (not in zic)
 #  - CDT: Cuba Central Daylight Time (America)
 #  - CDT: Canada Central Daylight Time (America)
 CDT    -18000 D  # Central Daylight Time
-                 #     (America/Cancun)
                  #     (America/Chicago)
                  #     (America/Menominee)
                  #     (America/Merida)
@@ -96,10 +95,10 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rainy_River)
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
-CLST   -10800 D  # Chile Summer Time
+CLST   -10800 D  # Chile Summer Time (obsolete)
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
-CLT    -14400    # Chile Time
+CLT    America/Santiago  # Chile Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
 # CONFLICT! CST is not unique
@@ -108,7 +107,6 @@ CLT    -14400    # Chile Time
 #  - CST: China Standard Time (Asia)
 #  - CST: Cuba Central Standard Time (America)
 CST    -21600    # Central Standard Time (America)
-                 #     (America/Cancun)
                  #     (America/Chicago)
                  #     (America/Menominee)
                  #     (America/Merida)
@@ -145,6 +143,7 @@ EGT     -3600    # East Greenland Time (Svalbard & Jan Mayen)
 # Other timezones:
 #  - EST: Eastern Standard Time (Australia)
 EST    -18000    # Eastern Standard Time (America)
+                 #     (America/Cancun)
                  #     (America/Cayman)
                  #     (America/Coral_Harbour)
                  #     (America/Detroit)
