@@ -187,7 +187,7 @@ MainLoop(FILE *source)
 			break;
 		}
 
-		/* nothing left on line? then ignore */
+		/* no further processing of empty lines, unless within a literal */
 		if (line[0] == '\0' && !psql_scan_in_quote(scan_state))
 		{
 			free(line);
@@ -211,10 +211,12 @@ MainLoop(FILE *source)
 			continue;
 		}
 
-		/* echo back if flag is set */
+		/* echo back if flag is set, unless interactive */
 		if (pset.echo == PSQL_ECHO_ALL && !pset.cur_cmd_interactive)
+		{
 			puts(line);
-		fflush(stdout);
+			fflush(stdout);
+		}
 
 		/* insert newlines into query buffer between source lines */
 		if (query_buf->len > 0)

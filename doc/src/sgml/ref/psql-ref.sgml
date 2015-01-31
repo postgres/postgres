@@ -53,8 +53,8 @@ PostgreSQL documentation
       <term><option>--echo-all</></term>
       <listitem>
       <para>
-      Print all input lines to standard output as they are read. This is more
-      useful for script processing than interactive mode. This is
+      Print all nonempty input lines to standard output as they are read.
+      (This does not apply to lines read interactively.) This is
       equivalent to setting the variable <varname>ECHO</varname> to
       <literal>all</literal>.
       </para>
@@ -2863,14 +2863,14 @@ bar
         <term><varname>ECHO</varname></term>
         <listitem>
         <para>
-        If set to <literal>all</literal>, all lines
-        entered from the keyboard or from a script are written to the standard output
-        before they are parsed or executed. To select this behavior on program
+        If set to <literal>all</literal>, all nonempty input lines are printed
+        to standard output as they are read.  (This does not apply to lines
+        read interactively.)  To select this behavior on program
         start-up, use the switch <option>-a</option>. If set to
         <literal>queries</literal>,
-        <application>psql</application> merely prints all queries as
-        they are sent to the server. The switch for this is
-        <option>-e</option>. If set to <literal>errors</literal> then only
+        <application>psql</application> prints each query to standard output
+        as it is sent to the server. The switch for this is
+        <option>-e</option>. If set to <literal>errors</literal>, then only
         failed queries are displayed on standard error output. The switch
         for this is <option>-b</option>. If unset, or if set to
         <literal>none</literal> (or any other value than those above) then
