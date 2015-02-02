@@ -2310,7 +2310,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\setenv [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> ] ]</literal></term>
+        <term><literal>\setenv <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
 
         <listitem>
         <para>
