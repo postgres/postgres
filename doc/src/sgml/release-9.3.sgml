@@ -44,6 +44,145 @@
    <itemizedlist>
 
 <!--
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [0150ab567] 2015-02-02 10:00:44 -0500
+Branch: REL9_4_STABLE [1628a0bbf] 2015-02-02 10:00:49 -0500
+Branch: REL9_3_STABLE [b8b580147] 2015-02-02 10:00:50 -0500
+Branch: REL9_2_STABLE [5ae3bf1af] 2015-02-02 10:00:50 -0500
+Branch: REL9_1_STABLE [037529a11] 2015-02-02 10:00:51 -0500
+Branch: REL9_0_STABLE [611e110aa] 2015-02-02 10:00:52 -0500
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [9241c84cb] 2015-02-02 10:00:45 -0500
+Branch: REL9_4_STABLE [56d2bee9d] 2015-02-02 10:00:49 -0500
+Branch: REL9_3_STABLE [fe2526990] 2015-02-02 10:00:50 -0500
+Branch: REL9_2_STABLE [e09651e9d] 2015-02-02 10:00:50 -0500
+Branch: REL9_1_STABLE [2ceb63deb] 2015-02-02 10:00:51 -0500
+Branch: REL9_0_STABLE [56b970f2e] 2015-02-02 10:00:52 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix buffer overruns in <function>to_char()</>
+      (Bruce Momjian)
+     </para>
+
+     <para>
+      When <function>to_char()</> processes a numeric formatting template
+      calling for a large number of digits, <productname>PostgreSQL</>
+      would read past the end of a buffer.  When processing a crafted
+      timestamp formatting template, <productname>PostgreSQL</> would write
+      past the end of a buffer.  Either case could crash the server.
+      We have not ruled out the possibility of attacks that lead to
+      privilege escalation, though they seem unlikely.
+      (CVE-2015-0241)
+     </para>
+    </listitem>
+
+<!--
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [29725b3db] 2015-02-02 10:00:45 -0500
+Branch: REL9_4_STABLE [2ac95c83c] 2015-02-02 10:00:49 -0500
+Branch: REL9_3_STABLE [bc4d5f2e5] 2015-02-02 10:00:50 -0500
+Branch: REL9_2_STABLE [c6c6aa288] 2015-02-02 10:00:51 -0500
+Branch: REL9_1_STABLE [98f2479d8] 2015-02-02 10:00:51 -0500
+Branch: REL9_0_STABLE [9e05c5063] 2015-02-02 10:00:52 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix buffer overrun in replacement <function>*printf()</> functions
+      (Tom Lane)
+     </para>
+
+     <para>
+      <productname>PostgreSQL</> includes a replacement implementation
+      of <function>printf</> and related functions.  This code will overrun
+      a stack buffer when formatting a floating point number (conversion
+      specifiers <literal>e</>, <literal>E</>, <literal>f</>, <literal>F</>,
+      <literal>g</> or <literal>G</>) with requested precision greater than
+      about 500.  This will crash the server, and we have not ruled out the
+      possibility of attacks that lead to privilege escalation.
+      A database user can trigger such a buffer overrun through
+      the <function>to_char()</> SQL function.  While that is the only
+      affected core <productname>PostgreSQL</> functionality, extension
+      modules that use printf-family functions may be at risk as well.
+     </para>
+
+     <para>
+      This issue primarily affects <productname>PostgreSQL</> on Windows.
+      <productname>PostgreSQL</> uses the system implementation of these
+      functions where adequate, which it is on other modern platforms.
+      (CVE-2015-0242)
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [1dc755158] 2015-02-02 10:00:45 -0500
+Branch: REL9_4_STABLE [82806cf4e] 2015-02-02 10:00:49 -0500
+Branch: REL9_3_STABLE [6994f0790] 2015-02-02 10:00:50 -0500
+Branch: REL9_2_STABLE [d95ebe0ac] 2015-02-02 10:00:51 -0500
+Branch: REL9_1_STABLE [11f738a8a] 2015-02-02 10:00:51 -0500
+Branch: REL9_0_STABLE [ce6f261cd] 2015-02-02 10:00:52 -0500
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [8b59672d8] 2015-02-02 10:00:45 -0500
+Branch: REL9_4_STABLE [258e294db] 2015-02-02 10:00:49 -0500
+Branch: REL9_3_STABLE [a558ad3a7] 2015-02-02 10:00:50 -0500
+Branch: REL9_2_STABLE [d1972da8c] 2015-02-02 10:00:51 -0500
+Branch: REL9_1_STABLE [8d412e02e] 2015-02-02 10:00:52 -0500
+Branch: REL9_0_STABLE [0a3ee8a5f] 2015-02-02 10:00:52 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix buffer overruns in <filename>contrib/pgcrypto</>
+      (Marko Tiikkaja, Noah Misch)
+     </para>
+
+     <para>
+      Errors in memory size tracking within the <filename>pgcrypto</>
+      module permitted stack buffer overruns and improper dependence on the
+      contents of uninitialized memory.  The buffer overrun cases can
+      crash the server, and we have not ruled out the possibility of
+      attacks that lead to privilege escalation.
+      (CVE-2015-0243)
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [2b3a8b20c] 2015-02-02 17:09:53 +0200
+Branch: REL9_4_STABLE [57ec87c6b] 2015-02-02 17:09:46 +0200
+Branch: REL9_3_STABLE [cd19848bd] 2015-02-02 17:09:40 +0200
+Branch: REL9_2_STABLE [289592b23] 2015-02-02 17:09:35 +0200
+Branch: REL9_1_STABLE [af9c5c074] 2015-02-02 17:09:31 +0200
+Branch: REL9_0_STABLE [47ba0fbd7] 2015-02-02 17:09:25 +0200
+-->
+
+    <listitem>
+     <para>
+      Fix possible loss of frontend/backend protocol synchronization after
+      an error
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      If any error occurred while the server was in the middle of reading a
+      protocol message from the client, it could lose synchronization and
+      incorrectly try to interpret part of the message's data as a new
+      protocol message.  An attacker able to submit crafted binary data
+      within a command parameter might succeed in injecting his own SQL
+      commands this way.  Statement timeout and query cancellation are the
+      most likely sources of errors triggering this scenario.  Particularly
+      vulnerable are applications that use a timeout and also submit
+      arbitrary user-crafted data as binary query parameters.  Disabling
+      statement timeout will reduce, but not eliminate, the risk of
+      exploit.  Our thanks to Emil Lenngren for reporting this issue.
+      (CVE-2015-0244)
+     </para>
+    </listitem>
+
+<!--
 Author: Stephen Frost <sfrost@snowman.net>
 Branch: master [804b6b6db] 2015-01-28 12:31:30 -0500
 Branch: REL9_4_STABLE [3cc74a3d6] 2015-01-28 12:32:06 -0500
