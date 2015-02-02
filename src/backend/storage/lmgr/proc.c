@@ -668,11 +668,16 @@ LockErrorCleanup(void)
 	LWLockId	partitionLock;
 	DisableTimeoutParams timeouts[2];
 
+	HOLD_INTERRUPTS();
+
 	AbortStrongLockAcquire();
 
 	/* Nothing to do if we weren't waiting for a lock */
 	if (lockAwaited == NULL)
+	{
+		RESUME_INTERRUPTS();
 		return;
+	}
 
 	/*
 	 * Turn off the deadlock and lock timeout timers, if they are still
@@ -722,6 +727,8 @@ LockErrorCleanup(void)
 	 * wakeup signal isn't harmful, and it seems not worth expending cycles to
 	 * get rid of a signal that most likely isn't there.
 	 */
+
+	RESUME_INTERRUPTS();
 }
 
 
