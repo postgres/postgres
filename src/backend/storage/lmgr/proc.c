@@ -665,11 +665,16 @@ LockErrorCleanup(void)
 {
 	LWLockId	partitionLock;
 
+	HOLD_INTERRUPTS();
+
 	AbortStrongLockAcquire();
 
 	/* Nothing to do if we weren't waiting for a lock */
 	if (lockAwaited == NULL)
+	{
+		RESUME_INTERRUPTS();
 		return;
+	}
 
 	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
 	disable_sig_alarm(false);
@@ -708,6 +713,8 @@ LockErrorCleanup(void)
 	 * wakeup signal isn't harmful, and it seems not worth expending cycles to
 	 * get rid of a signal that most likely isn't there.
 	 */
+
+	RESUME_INTERRUPTS();
 }
 
 

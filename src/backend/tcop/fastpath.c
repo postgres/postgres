@@ -73,7 +73,7 @@ static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
  * The caller should already have initialized buf to empty.
  * ----------------
  */
-static int
+int
 GetOldFunctionMessage(StringInfo buf)
 {
 	int32		ibuf;
@@ -277,33 +277,6 @@ HandleFunctionRequest(StringInfo msgBuf)
 	bool		callit;
 	bool		was_logged = false;
 	char		msec_str[32];
-
-	/*
-	 * Read message contents if not already done.
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-	{
-		if (GetOldFunctionMessage(msgBuf))
-		{
-			if (IsTransactionState())
-				ereport(COMMERROR,
-						(errcode(ERRCODE_CONNECTION_FAILURE),
-						 errmsg("unexpected EOF on client connection with an open transaction")));
-			else
-			{
-				/*
-				 * Can't send DEBUG log messages to client at this point.
-				 * Since we're disconnecting right away, we don't need to
-				 * restore whereToSendOutput.
-				 */
-				whereToSendOutput = DestNone;
-				ereport(DEBUG1,
-						(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST),
-						 errmsg("unexpected EOF on client connection")));
-			}
-			return EOF;
-		}
-	}
 
 	/*
 	 * Now that we've eaten the input message, check to see if we actually

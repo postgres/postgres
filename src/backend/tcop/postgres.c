@@ -339,6 +339,8 @@ SocketBackend(StringInfo inBuf)
 	/*
 	 * Get message type code from the frontend.
 	 */
+	HOLD_CANCEL_INTERRUPTS();
+	pq_startmsgread();
 	qtype = pq_getbyte();
 
 	if (qtype == EOF)			/* frontend disconnected */
@@ -387,7 +389,7 @@ SocketBackend(StringInfo inBuf)
 					{
 						/*
 						 * Can't send DEBUG log messages to client at this
-						 * point.Since we're disconnecting right away, we
+						 * point. Since we're disconnecting right away, we
 						 * don't need to restore whereToSendOutput.
 						 */
 						whereToSendOutput = DestNone;
@@ -401,8 +403,30 @@ SocketBackend(StringInfo inBuf)
 			break;
 
 		case 'F':				/* fastpath function call */
-			/* we let fastpath.c cope with old-style input of this */
 			doing_extended_query_message = false;
+			if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+			{
+				if (GetOldFunctionMessage(inBuf))
+				{
+					if (IsTransactionState())
+						ereport(COMMERROR,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("unexpected EOF on client connection with an open transaction")));
+					else
+					{
+						/*
+						 * Can't send DEBUG log messages to client at this
+						 * point. Since we're disconnecting right away, we
+						 * don't need to restore whereToSendOutput.
+						 */
+						whereToSendOutput = DestNone;
+						ereport(DEBUG1,
+								(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST),
+							 errmsg("unexpected EOF on client connection")));
+					}
+					return EOF;
+				}
+			}
 			break;
 
 		case 'X':				/* terminate */
@@ -470,6 +494,9 @@ SocketBackend(StringInfo inBuf)
 		if (pq_getmessage(inBuf, 0))
 			return EOF;			/* suitable message already logged */
 	}
+	else
+		pq_endmsgread();
+	RESUME_CANCEL_INTERRUPTS();
 
 	return qtype;
 }
@@ -514,7 +541,7 @@ prepare_for_client_read(void)
 		EnableNotifyInterrupt();
 		EnableCatchupInterrupt();
 
-		/* Allow cancel/die interrupts to be processed while waiting */
+		/* Allow die interrupts to be processed while waiting */
 		ImmediateInterruptOK = true;
 
 		/* And don't forget to detect one that already arrived */
@@ -2591,21 +2618,11 @@ die(SIGNAL_ARGS)
 		ProcDiePending = true;
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for input or a lock,
-		 * service the interrupt immediately
+		 * If we're waiting for input or a lock so that it's safe to
+		 * interrupt, service the interrupt immediately
 		 */
-		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0)
-		{
-			/* bump holdoff count to make ProcessInterrupts() a no-op */
-			/* until we are done getting ready for it */
-			InterruptHoldoffCount++;
-			LockErrorCleanup(); /* prevent CheckDeadLock from running */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			InterruptHoldoffCount--;
+		if (ImmediateInterruptOK)
 			ProcessInterrupts();
-		}
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -2633,21 +2650,11 @@ StatementCancelHandler(SIGNAL_ARGS)
 		QueryCancelPending = true;
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for input or a lock,
-		 * service the interrupt immediately
+		 * If we're waiting for input or a lock so that it's safe to
+		 * interrupt, service the interrupt immediately
 		 */
-		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0)
-		{
-			/* bump holdoff count to make ProcessInterrupts() a no-op */
-			/* until we are done getting ready for it */
-			InterruptHoldoffCount++;
-			LockErrorCleanup(); /* prevent CheckDeadLock from running */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			InterruptHoldoffCount--;
+		if (ImmediateInterruptOK)
 			ProcessInterrupts();
-		}
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -2792,21 +2799,11 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 			RecoveryConflictRetryable = false;
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for input or a lock,
-		 * service the interrupt immediately
+		 * If we're waiting for input or a lock so that it's safe to
+		 * interrupt, service the interrupt immediately.
 		 */
-		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0)
-		{
-			/* bump holdoff count to make ProcessInterrupts() a no-op */
-			/* until we are done getting ready for it */
-			InterruptHoldoffCount++;
-			LockErrorCleanup(); /* prevent CheckDeadLock from running */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			InterruptHoldoffCount--;
+		if (ImmediateInterruptOK)
 			ProcessInterrupts();
-		}
 	}
 
 	/*
@@ -2832,15 +2829,17 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 void
 ProcessInterrupts(void)
 {
-	/* OK to accept interrupt now? */
+	/* OK to accept any interrupts now? */
 	if (InterruptHoldoffCount != 0 || CritSectionCount != 0)
 		return;
 	InterruptPending = false;
+
 	if (ProcDiePending)
 	{
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		LockErrorCleanup();
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
 		/* As in quickdie, don't risk sending to client during auth */
@@ -2877,6 +2876,7 @@ ProcessInterrupts(void)
 	{
 		QueryCancelPending = false;		/* lost connection trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		LockErrorCleanup();
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
 		/* don't send to client, we already know the connection to be dead. */
@@ -2885,12 +2885,53 @@ ProcessInterrupts(void)
 				(errcode(ERRCODE_CONNECTION_FAILURE),
 				 errmsg("connection to client lost")));
 	}
+
+	/*
+	 * If a recovery conflict happens while we are waiting for input from the
+	 * client, the client is presumably just sitting idle in a transaction,
+	 * preventing recovery from making progress.  Terminate the connection to
+	 * dislodge it.
+	 */
+	if (RecoveryConflictPending && DoingCommandRead)
+	{
+		QueryCancelPending = false;			/* this trumps QueryCancel */
+		ImmediateInterruptOK = false;		/* not idle anymore */
+		RecoveryConflictPending = false;
+		LockErrorCleanup();
+		DisableNotifyInterrupt();
+		DisableCatchupInterrupt();
+		pgstat_report_recovery_conflict(RecoveryConflictReason);
+		ereport(FATAL,
+				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+				 errmsg("terminating connection due to conflict with recovery"),
+				 errdetail_recovery_conflict(),
+				 errhint("In a moment you should be able to reconnect to the"
+						 " database and repeat your command.")));
+	}
+
 	if (QueryCancelPending)
 	{
+		/*
+		 * Don't allow query cancel interrupts while reading input from the
+		 * client, because we might lose sync in the FE/BE protocol.  (Die
+		 * interrupts are OK, because we won't read any further messages from
+		 * the client in that case.)
+		 */
+		if (QueryCancelHoldoffCount != 0)
+		{
+			/*
+			 * Re-arm InterruptPending so that we process the cancel request
+			 * as soon as we're done reading the message.
+			 */
+			InterruptPending = true;
+			return;
+		}
+
 		QueryCancelPending = false;
 		if (ClientAuthInProgress)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			/* As in quickdie, don't risk sending to client during auth */
@@ -2903,6 +2944,7 @@ ProcessInterrupts(void)
 		if (cancel_from_timeout)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
@@ -2912,6 +2954,7 @@ ProcessInterrupts(void)
 		if (IsAutoVacuumWorkerProcess())
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
@@ -2922,21 +2965,14 @@ ProcessInterrupts(void)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
 			RecoveryConflictPending = false;
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
-			if (DoingCommandRead)
-				ereport(FATAL,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("terminating connection due to conflict with recovery"),
-						 errdetail_recovery_conflict(),
-				 errhint("In a moment you should be able to reconnect to the"
-						 " database and repeat your command.")));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+			ereport(ERROR,
+					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("canceling statement due to conflict with recovery"),
-						 errdetail_recovery_conflict()));
+					 errdetail_recovery_conflict()));
 		}
 
 		/*
@@ -2947,6 +2983,7 @@ ProcessInterrupts(void)
 		if (!DoingCommandRead)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
@@ -3851,6 +3888,19 @@ PostgresMain(int argc, char *argv[],
 		/* We don't have a transaction command open anymore */
 		xact_started = false;
 
+		/*
+		 * If an error occurred while we were reading a message from the
+		 * client, we have potentially lost track of where the previous
+		 * message ends and the next one begins.  Even though we have
+		 * otherwise recovered from the error, we cannot safely read any more
+		 * messages from the client, so there isn't much we can do with the
+		 * connection anymore.
+		 */
+		if (pq_is_reading_msg())
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("terminating connection because protocol sync was lost")));
+
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
 	}
@@ -3935,7 +3985,14 @@ PostgresMain(int argc, char *argv[],
 
 		/*
 		 * (4) disable async signal conditions again.
+		 *
+		 * Query cancel is supposed to be a no-op when there is no query in
+		 * progress, so if a query cancel arrived while we were idle, just
+		 * reset QueryCancelPending. ProcessInterrupts() has that effect when
+		 * it's called when DoingCommandRead is set, so check for interrupts
+		 * before resetting DoingCommandRead.
 		 */
+		CHECK_FOR_INTERRUPTS();
 		DoingCommandRead = false;
 
 		/*
