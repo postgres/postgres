@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-06 12:39+0000\n"
-"PO-Revision-Date: 2012-08-06 18:19+0400\n"
+"POT-Creation-Date: 2015-01-14 00:18+0000\n"
+"PO-Revision-Date: 2015-01-14 21:47+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 
 #: plpy_cursorobject.c:98
 #, c-format
@@ -79,10 +79,10 @@ msgstr "неподдерживаемый режим возврата для фу
 #: plpy_exec.c:91
 #, c-format
 msgid ""
-"PL/Python set-returning functions only support returning only value per call."
+"PL/Python set-returning functions only support returning one value per call."
 msgstr ""
-"Функции PL/Python с результатом-множеством могут возвращать только по одному "
-"значению за вызов."
+"Функции PL/Python с результатом-множеством могут возвращать только одно "
+"значение за вызов."
 
 #: plpy_exec.c:103
 #, c-format
@@ -156,22 +156,22 @@ msgstr "при создании возвращаемого значения"
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "не удалось создать словарь для передачи аргументов триггера"
 
-#: plpy_exec.c:664
+#: plpy_exec.c:662
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "элемент TD[\"new\"] удалён -- изменить строку нельзя"
 
-#: plpy_exec.c:667
+#: plpy_exec.c:666
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] - не словарь"
 
-#: plpy_exec.c:691
+#: plpy_exec.c:690
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "ключ словаря TD[\"new\"] с порядковым номером %d не является строкой"
 
-#: plpy_exec.c:697
+#: plpy_exec.c:696
 #, c-format
 msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
@@ -180,22 +180,22 @@ msgstr ""
 "ключу \"%s\", найденному в TD[\"new\"], не соответствует колонка в строке, "
 "обрабатываемой триггером"
 
-#: plpy_exec.c:778
+#: plpy_exec.c:776
 #, c-format
 msgid "while modifying trigger row"
 msgstr "при изменении строки в триггере"
 
-#: plpy_exec.c:839
+#: plpy_exec.c:837
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "принудительное прерывание незавершённой подтранзакции"
 
-#: plpy_main.c:100
+#: plpy_main.c:101
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "несовпадение базовой версии Python в сеансе"
 
-#: plpy_main.c:101
+#: plpy_main.c:102
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -204,38 +204,38 @@ msgstr ""
 "В данном сеансе до этого использовался Python базовой версии %d, а сейчас "
 "планируется использовать Python версии %d."
 
-#: plpy_main.c:103
+#: plpy_main.c:104
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr ""
 "Чтобы переключиться на другую базовую версию Python, начните новый сеанс."
 
-#: plpy_main.c:118
+#: plpy_main.c:119
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "необработанная ошибка при инициализации"
 
-#: plpy_main.c:141
+#: plpy_main.c:142
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "не удалось импортировать модуль \"__main__\""
 
-#: plpy_main.c:146
+#: plpy_main.c:147
 #, c-format
 msgid "could not create globals"
 msgstr "не удалось создать глобальные данные"
 
-#: plpy_main.c:150
+#: plpy_main.c:151
 #, c-format
 msgid "could not initialize globals"
 msgstr "не удалось инициализировать глобальные данные"
 
-#: plpy_main.c:347
+#: plpy_main.c:355
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "функция PL/Python \"%s\""
 
-#: plpy_main.c:354
+#: plpy_main.c:362
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "анонимный блок кода PL/Python"
@@ -274,27 +274,27 @@ msgstr "не удалось распаковать аргументы в plpy.el
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpy_procedure.c:194
+#: plpy_procedure.c:199
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: plpy_procedure.c:199 plpy_typeio.c:406
+#: plpy_procedure.c:204 plpy_typeio.c:406
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "функции PL/Python не могут возвращать тип %s"
 
-#: plpy_procedure.c:281
+#: plpy_procedure.c:286
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "функции PL/Python не могут принимать тип %s"
 
-#: plpy_procedure.c:377
+#: plpy_procedure.c:382
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
 
-#: plpy_procedure.c:380
+#: plpy_procedure.c:385
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
@@ -338,11 +338,6 @@ msgstr "ошибка в SPI_execute_plan: %s"
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "ошибка в SPI_execute: %s"
-
-#: plpy_spi.c:439
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "нераспознанная ошибка в PLy_spi_execute_fetch_result"
 
 #: plpy_subxactobject.c:122
 #, c-format
@@ -458,6 +453,9 @@ msgstr "не удалось преобразовать объект Python Unico
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
+
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "нераспознанная ошибка в PLy_spi_execute_fetch_result"
 
 #~ msgid "could not initialize plpy"
 #~ msgstr "не удалось инициализировать plpy"

@@ -63,7 +63,7 @@ msgid ""
 "  -X, --xlog-method=fetch|stream\n"
 "                         include required WAL files with specified method\n"
 msgstr ""
-"  -x, --xlog-method=fetch|stream\n"
+"  -X, --xlog-method=fetch|stream\n"
 "               必要なWALファイルを指定した方法で含めます\n"
 
 #: pg_basebackup.c:113
@@ -500,7 +500,7 @@ msgstr ""
 #: pg_receivexlog.c:62
 #, c-format
 msgid "  -D, --directory=DIR    receive transaction log files into this directory\n"
-msgstr "  -D, --xlogdir=XLOGDIR     受信したトランザクションログの格納ディレクトリ\n"
+msgstr "  -D, --directory=DIR       受信したトランザクションログの格納ディレクトリ\n"
 
 #: pg_receivexlog.c:63
 #, c-format

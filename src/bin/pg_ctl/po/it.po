@@ -19,8 +19,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:46+0000\n"
-"PO-Revision-Date: 2012-12-03 17:32+0100\n"
+"POT-Creation-Date: 2013-01-21 05:46+0000\n"
+"PO-Revision-Date: 2014-08-25 21:23+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -470,7 +470,7 @@ msgstr "  %s init[db]               [-D DATADIR] [-s] [-o \"OPZIONI\"]\n"
 #: pg_ctl.c:1791
 #, c-format
 msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-msgstr "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+msgstr "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l NOMEFILE] [-o \"OPZIONI\"]\n"
 
 #: pg_ctl.c:1792
 #, c-format
@@ -484,7 +484,7 @@ msgid ""
 "                 [-o \"OPTIONS\"]\n"
 msgstr ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-"                 [-o \"OPTIONS\"]\n"
+"                 [-o \"OPZIONI\"]\n"
 
 #: pg_ctl.c:1795
 #, c-format
@@ -601,7 +601,7 @@ msgstr "  -c, --core-files       non disponibile su questa piattaforma\n"
 #: pg_ctl.c:1822
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log FILENAME     scrivi (o accoda) il log del server in FILENAME\n"
+msgstr "  -l, --log NOMEFILE     scrivi (o accoda) il log del server in NOMEFILE\n"
 
 #: pg_ctl.c:1823
 #, c-format
@@ -609,7 +609,7 @@ msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o OPTIONS             opzioni da riga di comando da passare a postgres\n"
+"  -o OPZIONI             opzioni da riga di comando da passare a postgres\n"
 "                         (programma eseguibile del server PostgreSQL)\n"
 
 #: pg_ctl.c:1825
@@ -624,7 +624,7 @@ msgid ""
 "Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Opzioni per lo spegnimento o il riavvio:\n"
+"Opzioni per l'arresto o il riavvio:\n"
 
 #: pg_ctl.c:1827
 #, c-format
@@ -693,7 +693,7 @@ msgstr "  -U USERNAME     nome utente dell'account con cui registrare il server 
 #: pg_ctl.c:1842
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
-msgstr "  -S START-TYPE   tipo di avvio del servizion con cui registrare il server PostgreSQL\n"
+msgstr "  -S START-TYPE   tipo di avvio del servizio con cui registrare il server PostgreSQL\n"
 
 #: pg_ctl.c:1844
 #, c-format

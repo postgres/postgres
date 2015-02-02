@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL) 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:46+0000\n"
-"PO-Revision-Date: 2012-12-03 17:45+0100\n"
+"POT-Creation-Date: 2014-07-29 09:22+0000\n"
+"PO-Revision-Date: 2014-07-30 22:33+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -363,37 +363,42 @@ msgstr "%s: creazione del file pg_control fallita: %s\n"
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: scrittura del file pg_control fallita: %s\n"
 
-#: pg_resetxlog.c:708 pg_resetxlog.c:1015
+#: pg_resetxlog.c:708 pg_resetxlog.c:1018
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: errore fsync: %s\n"
 
-#: pg_resetxlog.c:746 pg_resetxlog.c:821 pg_resetxlog.c:877
+#: pg_resetxlog.c:746 pg_resetxlog.c:822 pg_resetxlog.c:879
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: apertura della directory \"%s\" fallita: %s\n"
 
-#: pg_resetxlog.c:790 pg_resetxlog.c:854 pg_resetxlog.c:911
+#: pg_resetxlog.c:785 pg_resetxlog.c:850 pg_resetxlog.c:908
 #, c-format
-msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s: lettura dalla directory \"%s\" fallita: %s\n"
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: lettura della directory \"%s\" fallita: %s\n"
 
-#: pg_resetxlog.c:835 pg_resetxlog.c:892
+#: pg_resetxlog.c:792 pg_resetxlog.c:857 pg_resetxlog.c:915
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "%s: chiusura della directory \"%s\" fallita: %s\n"
+
+#: pg_resetxlog.c:835 pg_resetxlog.c:893
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: cancellazione del file \"%s\" fallita: %s\n"
 
-#: pg_resetxlog.c:982
+#: pg_resetxlog.c:985
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: apertura del file \"%s\" fallita: %s\n"
 
-#: pg_resetxlog.c:993 pg_resetxlog.c:1007
+#: pg_resetxlog.c:996 pg_resetxlog.c:1010
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: errore nella scrittura del file \"%s\": %s\n"
 
-#: pg_resetxlog.c:1026
+#: pg_resetxlog.c:1029
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -402,7 +407,7 @@ msgstr ""
 "%s riavvia il registro delle transazioni di PostgreSQL.\n"
 "\n"
 
-#: pg_resetxlog.c:1027
+#: pg_resetxlog.c:1030
 #, c-format
 msgid ""
 "Usage:\n"
@@ -413,66 +418,66 @@ msgstr ""
 "  %s [OPZIONI]... DATADIR\n"
 "\n"
 
-#: pg_resetxlog.c:1028
+#: pg_resetxlog.c:1031
 #, c-format
 msgid "Options:\n"
 msgstr "Opzioni:\n"
 
-#: pg_resetxlog.c:1029
+#: pg_resetxlog.c:1032
 #, c-format
 msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
 msgstr "  -e XIDEPOCH      imposta il prossimo ID epoch transazione\n"
 
-#: pg_resetxlog.c:1030
+#: pg_resetxlog.c:1033
 #, c-format
 msgid "  -f               force update to be done\n"
 msgstr "  -f               forza l'esecuzione dell'aggiornamento\n"
 
-#: pg_resetxlog.c:1031
+#: pg_resetxlog.c:1034
 #, c-format
 msgid "  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction log\n"
 msgstr ""
 "  -l TLI,FILE,SEG  forza il minimo punto d'inizio WAL per il nuovo log\n"
 "                   delle transazione\n"
 
-#: pg_resetxlog.c:1032
+#: pg_resetxlog.c:1035
 #, c-format
 msgid "  -m XID           set next multitransaction ID\n"
 msgstr "  -m XID           imposta il prossimo ID multitransazione\n"
 
-#: pg_resetxlog.c:1033
+#: pg_resetxlog.c:1036
 #, c-format
 msgid "  -n               no update, just show extracted control values (for testing)\n"
 msgstr ""
 "  -n               nessun aggiornamento, mostra solo i valori di controllo\n"
 "                   estratti (solo per prova)\n"
 
-#: pg_resetxlog.c:1034
+#: pg_resetxlog.c:1037
 #, c-format
 msgid "  -o OID           set next OID\n"
 msgstr "  -o OID           imposta il prossimo OID\n"
 
-#: pg_resetxlog.c:1035
+#: pg_resetxlog.c:1038
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
 msgstr "  -O OFFSET        imposta il prossimo offset multitransazione\n"
 
-#: pg_resetxlog.c:1036
+#: pg_resetxlog.c:1039
 #, c-format
 msgid "  -V, --version    output version information, then exit\n"
 msgstr "  -V, --version    mostra informazioni sulla versione ed esci\n"
 
-#: pg_resetxlog.c:1037
+#: pg_resetxlog.c:1040
 #, c-format
 msgid "  -x XID           set next transaction ID\n"
 msgstr "  -x XID           imposta il prossimo ID di transazione\n"
 
-#: pg_resetxlog.c:1038
+#: pg_resetxlog.c:1041
 #, c-format
 msgid "  -?, --help       show this help, then exit\n"
 msgstr "  -?, --help       mostra questo aiuto ed esci\n"
 
-#: pg_resetxlog.c:1039
+#: pg_resetxlog.c:1042
 #, c-format
 msgid ""
 "\n"
