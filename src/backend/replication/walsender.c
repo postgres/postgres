@@ -207,7 +207,15 @@ WalSndHandshake(void)
 		set_ps_display("idle", false);
 
 		/* Wait for a command to arrive */
+		pq_startmsgread();
 		firstchar = pq_getbyte();
+
+		/* Read the message contents */
+		if (firstchar != EOF)
+		{
+			if (pq_getmessage(&input_message, 0))
+				firstchar = EOF;	/* suitable message already logged */
+		}
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -224,16 +232,6 @@ WalSndHandshake(void)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
-		}
-
-		if (firstchar != EOF)
-		{
-			/*
-			 * Read the message contents. This is expected to be done without
-			 * blocking because we've been able to get message type code.
-			 */
-			if (pq_getmessage(&input_message, 0))
-				firstchar = EOF;	/* suitable message already logged */
 		}
 
 		/* Handle the very limited subset of commands expected in this phase */
@@ -481,6 +479,7 @@ ProcessRepliesIfAny(void)
 
 	for (;;)
 	{
+		pq_startmsgread();
 		r = pq_getbyte_if_available(&firstchar);
 		if (r < 0)
 		{
@@ -493,7 +492,18 @@ ProcessRepliesIfAny(void)
 		if (r == 0)
 		{
 			/* no data available without blocking */
+			pq_endmsgread();
 			break;
+		}
+
+		/* Read the message contents */
+		resetStringInfo(&reply_message);
+		if (pq_getmessage(&reply_message, 0))
+		{
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("unexpected EOF on standby connection")));
+			proc_exit(0);
 		}
 
 		/* Handle the very limited subset of commands expected in this phase */
@@ -535,19 +545,6 @@ static void
 ProcessStandbyMessage(void)
 {
 	char		msgtype;
-
-	resetStringInfo(&reply_message);
-
-	/*
-	 * Read the message contents.
-	 */
-	if (pq_getmessage(&reply_message, 0))
-	{
-		ereport(COMMERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("unexpected EOF on standby connection")));
-		proc_exit(0);
-	}
 
 	/*
 	 * Check message type from the first byte.

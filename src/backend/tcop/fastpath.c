@@ -73,7 +73,7 @@ static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
  * The caller should already have initialized buf to empty.
  * ----------------
  */
-static int
+int
 GetOldFunctionMessage(StringInfo buf)
 {
 	int32		ibuf;
@@ -277,20 +277,6 @@ HandleFunctionRequest(StringInfo msgBuf)
 	bool		callit;
 	bool		was_logged = false;
 	char		msec_str[32];
-
-	/*
-	 * Read message contents if not already done.
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-	{
-		if (GetOldFunctionMessage(msgBuf))
-		{
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("unexpected EOF on client connection")));
-			return EOF;
-		}
-	}
 
 	/*
 	 * Now that we've eaten the input message, check to see if we actually
