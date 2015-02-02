@@ -36,6 +36,91 @@
 
     <listitem>
      <para>
+      Fix buffer overruns in <function>to_char()</>
+      (Bruce Momjian)
+     </para>
+
+     <para>
+      When <function>to_char()</> processes a numeric formatting template
+      calling for a large number of digits, <productname>PostgreSQL</>
+      would read past the end of a buffer.  When processing a crafted
+      timestamp formatting template, <productname>PostgreSQL</> would write
+      past the end of a buffer.  Either case could crash the server.
+      We have not ruled out the possibility of attacks that lead to
+      privilege escalation, though they seem unlikely.
+      (CVE-2015-0241)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix buffer overrun in replacement <function>*printf()</> functions
+      (Tom Lane)
+     </para>
+
+     <para>
+      <productname>PostgreSQL</> includes a replacement implementation
+      of <function>printf</> and related functions.  This code will overrun
+      a stack buffer when formatting a floating point number (conversion
+      specifiers <literal>e</>, <literal>E</>, <literal>f</>, <literal>F</>,
+      <literal>g</> or <literal>G</>) with requested precision greater than
+      about 500.  This will crash the server, and we have not ruled out the
+      possibility of attacks that lead to privilege escalation.
+      A database user can trigger such a buffer overrun through
+      the <function>to_char()</> SQL function.  While that is the only
+      affected core <productname>PostgreSQL</> functionality, extension
+      modules that use printf-family functions may be at risk as well.
+     </para>
+
+     <para>
+      This issue primarily affects <productname>PostgreSQL</> on Windows.
+      <productname>PostgreSQL</> uses the system implementation of these
+      functions where adequate, which it is on other modern platforms.
+      (CVE-2015-0242)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix buffer overruns in <filename>contrib/pgcrypto</>
+      (Marko Tiikkaja, Noah Misch)
+     </para>
+
+     <para>
+      Errors in memory size tracking within the <filename>pgcrypto</>
+      module permitted stack buffer overruns and improper dependence on the
+      contents of uninitialized memory.  The buffer overrun cases can
+      crash the server, and we have not ruled out the possibility of
+      attacks that lead to privilege escalation.
+      (CVE-2015-0243)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible loss of frontend/backend protocol synchronization after
+      an error
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      If any error occurred while the server was in the middle of reading a
+      protocol message from the client, it could lose synchronization and
+      incorrectly try to interpret part of the message's data as a new
+      protocol message.  An attacker able to submit crafted binary data
+      within a command parameter might succeed in injecting his own SQL
+      commands this way.  Statement timeout and query cancellation are the
+      most likely sources of errors triggering this scenario.  Particularly
+      vulnerable are applications that use a timeout and also submit
+      arbitrary user-crafted data as binary query parameters.  Disabling
+      statement timeout will reduce, but not eliminate, the risk of
+      exploit.  Our thanks to Emil Lenngren for reporting this issue.
+      (CVE-2015-0244)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix information leak via constraint-violation error messages
       (Stephen Frost)
      </para>
