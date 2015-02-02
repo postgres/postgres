@@ -6553,7 +6553,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    at <filename>~/.pg_service.conf</filename> or the location
    specified by the environment variable <envar>PGSERVICEFILE</envar>,
    or it can be a system-wide file
-   at <filename>/etc/pg_service.conf</filename> or in the directory
+   at <filename>`pg_config --sysconfdir`/pg_service.conf</filename> or in the directory
    specified by the environment variable
    <envar>PGSYSCONFDIR</envar>.  If service definitions with the same
    name exist in the user and the system file, the user file takes
