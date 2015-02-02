@@ -305,6 +305,7 @@ pullf_read_max(PullFilter *pf, int len, uint8 **data_p, uint8 *tmpbuf)
 			break;
 		memcpy(tmpbuf + total, tmp, res);
 		total += res;
+		len -= res;
 	}
 	return total;
 }

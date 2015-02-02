@@ -564,6 +564,27 @@ GQ==
 =XHkF
 -----END PGP MESSAGE-----
 ');
+-- rsaenc2048 / aes128 (not from gnupg)
+insert into encdata (id, data) values (5, '
+-----BEGIN PGP MESSAGE-----
+
+wcBMA/0CBsQJt0h1AQgAzxZ8j+OTeZ8IlLxfZ/mVd28/gUsCY+xigWBk/anZlK3T
+p2tNU2idHzKdAttH2Hu/PWbZp4kwjl9spezYxMqCeBZqtfGED88Y+rqK0n/ul30A
+7jjFHaw0XUOqFNlST1v6H2i7UXndnp+kcLfHPhnO5BIYWxB2CYBehItqtrn75eqr
+C7trGzU/cr74efcWagbCDSNjiAV7GlEptlzmgVMmNikyI6w0ojEUx8lCLc/OsFz9
+pJUAX8xuwjxDVv+W7xk6c96grQiQlm+FLDYGiGNXoAzx3Wi/howu3uV40dXfY+jx
+3WBrhEew5Pkpt1SsWoFnJWOfJ8GLd0ec8vfRCqAIVdLgAeS7NyawQYtd6wuVrEAj
+5SMg4Thb4d+g45RksuGLHUUr4qO9tiXglODa4InhmJfgNuLk+RGz4LXjq8wepEmW
+vRbgFOG54+Cf4C/gC+HkreDm5JKSKjvvw4B/jC6CDxq+JoziEe2Z1uEjCuEcr+Es
+/eGzeOi36BejXPMHeKxXejj5qBBHKV0pHVhZSgffR0TtlXdB967Yl/5agV0R89hI
+7Gw52emfnH4Z0Y4V0au2H0k1dR/2IxXdJEWSTG7Be1JHT59p9ei2gSEOrdBMIOjP
+tbYYUlmmbvD49bHfThkDiC+oc9947LgQsk3kOOLbNHcjkbrjH8R5kjII4m/SEZA1
+g09T+338SzevBcVXh/cFrQ6/Et+lyyO2LJRUMs69g/HyzJOVWT2Iu8E0eS9MWevY
+Qtrkrhrpkl3Y02qEp/j6M03Yu2t6ZF7dp51aJ5VhO2mmmtHaTnCyCc8Fcf72LmD8
+blH2nKZC9d6fi4YzSYMepZpMOFR65M80MCMiDUGnZBB8sEADu2/iVtqDUeG8mAA=
+=PHJ1
+-----END PGP MESSAGE-----
+');
 -- successful decrypt
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=1 and encdata.id=1;
@@ -629,3 +650,7 @@ from keytbl, encdata where keytbl.id=5 and encdata.id=1;
  Secret msg
 (1 row)
 
+-- test for a short read from prefix_init
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
+from keytbl, encdata where keytbl.id=6 and encdata.id=5;
+ERROR:  Wrong key or corrupt data
