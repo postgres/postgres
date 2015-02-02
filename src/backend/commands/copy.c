@@ -410,6 +410,8 @@ ReceiveCopyBegin(CopyState cstate)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('G');
+		/* any error in old protocol will make us lose sync */
+		pq_startmsgread();
 		cstate->copy_dest = COPY_OLD_FE;
 	}
 	else
@@ -420,6 +422,8 @@ ReceiveCopyBegin(CopyState cstate)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('D');
+		/* any error in old protocol will make us lose sync */
+		pq_startmsgread();
 		cstate->copy_dest = COPY_OLD_FE;
 	}
 	/* We *must* flush here to ensure FE knows it can send. */
@@ -606,6 +610,8 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 					int			mtype;
 
 			readmessage:
+					HOLD_CANCEL_INTERRUPTS();
+					pq_startmsgread();
 					mtype = pq_getbyte();
 					if (mtype == EOF)
 						ereport(ERROR,
@@ -615,6 +621,7 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
 								 errmsg("unexpected EOF on client connection with an open transaction")));
+					RESUME_CANCEL_INTERRUPTS();
 					switch (mtype)
 					{
 						case 'd':		/* CopyData */
@@ -2462,6 +2469,13 @@ CopyFrom(CopyState cstate)
 	FreeBulkInsertState(bistate);
 
 	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * In the old protocol, tell pqcomm that we can process normal protocol
+	 * messages again.
+	 */
+	if (cstate->copy_dest == COPY_OLD_FE)
+		pq_endmsgread();
 
 	/* Execute AFTER STATEMENT insertion triggers */
 	ExecASInsertTriggers(estate, resultRelInfo);

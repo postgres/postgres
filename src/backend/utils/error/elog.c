@@ -469,6 +469,7 @@ errfinish(int dummy,...)
 		 * while doing error cleanup.
 		 */
 		InterruptHoldoffCount = 0;
+		QueryCancelHoldoffCount = 0;
 
 		CritSectionCount = 0;	/* should be unnecessary, but... */
 
