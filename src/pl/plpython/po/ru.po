@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-06 12:01+0000\n"
-"PO-Revision-Date: 2012-08-06 17:20+0400\n"
+"POT-Creation-Date: 2015-01-12 20:57+0000\n"
+"PO-Revision-Date: 2015-01-15 07:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 
 #: plpython.c:418
 #, c-format
@@ -59,20 +59,20 @@ msgstr ""
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Ожидалось None, \"OK\", \"SKIP\" или \"MODIFY\"."
 
-#: plpython.c:687
+#: plpython.c:685
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "элемент TD[\"new\"] удалён -- изменить строку нельзя"
 
-#: plpython.c:690
+#: plpython.c:689
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] - не словарь"
 
-#: plpython.c:714
+#: plpython.c:713
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "ключ словаря TD[\"new\"] с порядковым номером %d не является строкой"
 
-#: plpython.c:720
+#: plpython.c:719
 #, c-format
 msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
@@ -81,99 +81,99 @@ msgstr ""
 "ключу \"%s\", найденному в TD[\"new\"], не соответствует колонка в строке, "
 "обрабатываемой триггером"
 
-#: plpython.c:816
+#: plpython.c:814
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "не удалось создать словарь для передачи аргументов триггера"
 
-#: plpython.c:1022
+#: plpython.c:1020
 msgid "unsupported set function return mode"
 msgstr "неподдерживаемый режим возврата для функции с результатом-множеством"
 
-#: plpython.c:1023
+#: plpython.c:1021
 msgid ""
-"PL/Python set-returning functions only support returning only value per call."
+"PL/Python set-returning functions only support returning one value per call."
 msgstr ""
-"Функции PL/Python с результатом-множеством могут возвращать только по одному "
-"значению за вызов."
+"Функции PL/Python с результатом-множеством могут возвращать только одно "
+"значение за вызов."
 
-#: plpython.c:1035
+#: plpython.c:1033
 msgid "returned object cannot be iterated"
 msgstr "возвращаемый объект не поддерживает итерации"
 
-#: plpython.c:1036
+#: plpython.c:1034
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr ""
 "Функции PL/Python с результатом-множеством должны возвращать объекты с "
 "возможностью итерации."
 
-#: plpython.c:1063
+#: plpython.c:1061
 msgid "error fetching next item from iterator"
 msgstr "ошибка получения следующего элемента из итератора"
 
-#: plpython.c:1098
+#: plpython.c:1096
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "функция PL/Python с типом результата \"void\" вернула не None"
 
-#: plpython.c:1253
+#: plpython.c:1251
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "ошибка в PyList_SetItem() при настройке аргументов"
 
-#: plpython.c:1257
+#: plpython.c:1255
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "ошибка в PyDict_SetItemString() при настройке аргументов"
 
-#: plpython.c:1326
+#: plpython.c:1324
 msgid "PyCObject_AsVoidPtr() failed"
 msgstr "ошибка в PyCObject_AsVoidPtr()"
 
-#: plpython.c:1434
+#: plpython.c:1432
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: plpython.c:1438 plpython.c:1822
+#: plpython.c:1436 plpython.c:1820
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "функции PL/Python не могут возвращать тип %s"
 
-#: plpython.c:1516
+#: plpython.c:1514
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "функции PL/Python не могут принимать тип %s"
 
-#: plpython.c:1555
+#: plpython.c:1553
 msgid "PyCObject_FromVoidPtr() failed"
 msgstr "ошибка в PyCObject_FromVoidPtr()"
 
-#: plpython.c:1613
+#: plpython.c:1611
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
 
-#: plpython.c:1824
+#: plpython.c:1822
 msgid "PL/Python does not support conversion to arrays of row types."
 msgstr "PL/Python не поддерживает преобразование в массивы кортежей."
 
-#: plpython.c:2027
+#: plpython.c:2025
 msgid "cannot convert multidimensional array to Python list"
 msgstr "преобразовать многомерный массив в список Python нельзя"
 
-#: plpython.c:2028
+#: plpython.c:2026
 msgid "PL/Python only supports one-dimensional arrays."
 msgstr "PL/Python поддерживает только одномерные массивы."
 
-#: plpython.c:2067
+#: plpython.c:2065
 msgid "could not create new dictionary"
 msgstr "не удалось создать словарь"
 
-#: plpython.c:2139
+#: plpython.c:2137
 msgid "could not create bytes representation of Python object"
 msgstr "не удалось создать байтовое представление объекта Python"
 
-#: plpython.c:2193
+#: plpython.c:2191
 msgid "could not create string representation of Python object"
 msgstr "не удалось создать строковое представление объекта Python"
 
-#: plpython.c:2204
+#: plpython.c:2202
 msgid ""
 "could not convert Python object into cstring: Python string representation "
 "appears to contain null bytes"
@@ -181,19 +181,19 @@ msgstr ""
 "не удалось преобразовать объект Python в cstring: похоже, представление "
 "строки Python содержит нулевые байты"
 
-#: plpython.c:2238
+#: plpython.c:2236
 msgid ""
 "return value of function with array return type is not a Python sequence"
 msgstr ""
 "возвращаемое значение функции с результатом-массивом не является "
 "последовательностью"
 
-#: plpython.c:2313
+#: plpython.c:2311
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не найден в сопоставлении"
 
-#: plpython.c:2314
+#: plpython.c:2312
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
@@ -201,16 +201,16 @@ msgstr ""
 "Чтобы присвоить колонке NULL, добавьте в сопоставление значение None с "
 "ключом-именем колонки."
 
-#: plpython.c:2357
+#: plpython.c:2355
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "длина возвращённой последовательности не равна числу колонок в строке"
 
-#: plpython.c:2450
+#: plpython.c:2448
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "в объекте Python не существует атрибут \"%s\""
 
-#: plpython.c:2451
+#: plpython.c:2449
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
@@ -218,48 +218,48 @@ msgstr ""
 "Чтобы присвоить колонке NULL, присвойте возвращаемому значению атрибут с "
 "именем колонки и значением None."
 
-#: plpython.c:2685
+#: plpython.c:2683
 msgid "plan.status takes no arguments"
 msgstr "plan.status не принимает аргументы"
 
-#: plpython.c:2804 plpython.c:2947
+#: plpython.c:2802 plpython.c:2945
 msgid "transaction aborted"
 msgstr "транзакция прервана"
 
-#: plpython.c:2811
+#: plpython.c:2809
 msgid "invalid arguments for plpy.prepare"
 msgstr "неверные аргументы plpy.prepare"
 
-#: plpython.c:2818
+#: plpython.c:2816
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "вторым аргументом plpy.prepare должна быть последовательность"
 
-#: plpython.c:2868
+#: plpython.c:2866
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: имя типа с порядковым номером %d не является строкой"
 
-#: plpython.c:2895
+#: plpython.c:2893
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare не поддерживает составные типы"
 
-#: plpython.c:2924
+#: plpython.c:2922
 msgid "unrecognized error in PLy_spi_prepare"
 msgstr "нераспознанная ошибка в PLy_spi_prepare"
 
-#: plpython.c:2960
+#: plpython.c:2958
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute ожидает запрос или план"
 
-#: plpython.c:2977
+#: plpython.c:2975
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute принимает в качестве второго аргумента последовательность"
 
-#: plpython.c:2993
+#: plpython.c:2991
 msgid "could not execute plan"
 msgstr "нельзя выполнить план"
 
-#: plpython.c:2996
+#: plpython.c:2994
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -267,33 +267,33 @@ msgstr[0] "Ожидалась последовательность из %d ар�
 msgstr[1] "Ожидалась последовательность из %d аргументов, получено %d: %s"
 msgstr[2] "Ожидалась последовательность из %d аргументов, получено %d: %s"
 
-#: plpython.c:3075
+#: plpython.c:3073
 msgid "unrecognized error in PLy_spi_execute_plan"
 msgstr "нераспознанная ошибка в PLy_spi_execute_plan"
 
-#: plpython.c:3094
+#: plpython.c:3092
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "ошибка в SPI_execute_plan: %s"
 
-#: plpython.c:3121
+#: plpython.c:3119
 msgid "unrecognized error in PLy_spi_execute_query"
 msgstr "нераспознанная ошибка в PLy_spi_execute_query"
 
-#: plpython.c:3130
+#: plpython.c:3128
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "ошибка в SPI_execute: %s"
 
-#: plpython.c:3187
+#: plpython.c:3185
 msgid "unrecognized error in PLy_spi_execute_fetch_result"
 msgstr "нераспознанная ошибка в PLy_spi_execute_fetch_result"
 
-#: plpython.c:3247
+#: plpython.c:3245
 msgid "Python major version mismatch in session"
 msgstr "несовпадение базовой версии Python в сеансе"
 
-#: plpython.c:3248
+#: plpython.c:3246
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -302,49 +302,50 @@ msgstr ""
 "В данном сеансе до этого использовался Python базовой версии %d, а сейчас "
 "планируется использовать Python версии %d."
 
-#: plpython.c:3250
+#: plpython.c:3248
 msgid "Start a new session to use a different Python major version."
 msgstr ""
 "Чтобы переключиться на другую базовую версию Python, начните новый сеанс."
 
-#: plpython.c:3265
+#: plpython.c:3263
 msgid "untrapped error in initialization"
 msgstr "необработанная ошибка при инициализации"
 
-#: plpython.c:3268
+#: plpython.c:3266
 msgid "could not create procedure cache"
 msgstr "не удалось создать процедурный кэш"
 
-#: plpython.c:3280
+#: plpython.c:3278
 msgid "could not import \"__main__\" module"
 msgstr "не удалось импортировать модуль \"__main__\""
 
-#: plpython.c:3287
+#: plpython.c:3285
 msgid "could not initialize globals"
 msgstr "не удалось инициализировать глобальные данные"
 
-#: plpython.c:3405
+#: plpython.c:3403
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpython.c:3534 plpython.c:3538
+#: plpython.c:3532 plpython.c:3536
 #, c-format
 msgid "PL/Python: %s"
 msgstr "PL/Python: %s"
 
-#: plpython.c:3535
+#: plpython.c:3533
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:3648
+#: plpython.c:3646
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: plpython.c:3695
+#: plpython.c:3693
 msgid "could not convert Python Unicode object to bytes"
 msgstr "не удалось преобразовать объект Python Unicode в байты"
 
-#: plpython.c:3700
+#: plpython.c:3698
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
+

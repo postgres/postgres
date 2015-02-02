@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (Postgresql) 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:15+0000\n"
-"PO-Revision-Date: 2013-01-23 11:17+0100\n"
+"POT-Creation-Date: 2013-01-21 05:06+0000\n"
+"PO-Revision-Date: 2014-08-25 21:16+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -210,12 +210,12 @@ msgstr "  -E, --encoding=CODIFICA     scarica i dati nella CODIFICA indicata\n"
 #: pg_dump.c:813
 #, c-format
 msgid "  -n, --schema=SCHEMA         dump the named schema(s) only\n"
-msgstr "  -n, --schema=SCHEMA         scarica solo lo schema o gli schemi nominati\n"
+msgstr "  -n, --schema=SCHEMA         scarica solo lo schema o gli schemi indicati\n"
 
 #: pg_dump.c:814
 #, c-format
 msgid "  -N, --exclude-schema=SCHEMA do NOT dump the named schema(s)\n"
-msgstr "  -N, --exclude-schema=SCHEMA non scaricare lo schema o gli schemi nominati\n"
+msgstr "  -N, --exclude-schema=SCHEMA non scaricare lo schema o gli schemi indicati\n"
 
 #: pg_dump.c:815 pg_dumpall.c:548
 #, c-format
@@ -246,12 +246,12 @@ msgstr ""
 #: pg_dump.c:820
 #, c-format
 msgid "  -t, --table=TABLE           dump the named table(s) only\n"
-msgstr "  -t, --table=TABELLA         scarica solo la tabella o le tabelle nominate\n"
+msgstr "  -t, --table=TABELLA         scarica solo la tabella o le tabelle indicate\n"
 
 #: pg_dump.c:821
 #, c-format
 msgid "  -T, --exclude-table=TABLE   do NOT dump the named table(s)\n"
-msgstr "  -T, --exclude-table=TABELLA NON scaricare la tabella o le tabelle nominate\n"
+msgstr "  -T, --exclude-table=TABELLA NON scaricare la tabella o le tabelle indicate\n"
 
 #: pg_dump.c:822 pg_dumpall.c:554
 #, c-format
@@ -1739,7 +1739,7 @@ msgid ""
 "                           restore named function\n"
 msgstr ""
 "  -P, --function=NOME(argomenti)\n"
-"                           ripristina la funzione nominata\n"
+"                           ripristina la funzione indicata\n"
 
 #: pg_restore.c:435
 #, c-format
@@ -1754,12 +1754,12 @@ msgstr "  -S, --superuser=NOME     nome del superutente da usare per disabilitar
 #: pg_restore.c:437
 #, c-format
 msgid "  -t, --table=NAME         restore named table\n"
-msgstr "  -t, --table=NOME         ripristina la tabella nominata\n"
+msgstr "  -t, --table=NOME         ripristina la tabella indicata\n"
 
 #: pg_restore.c:438
 #, c-format
 msgid "  -T, --trigger=NAME       restore named trigger\n"
-msgstr "  -T, --trigger=NOME       ripristina il trigger nominato\n"
+msgstr "  -T, --trigger=NOME       ripristina il trigger indicato\n"
 
 #: pg_restore.c:439
 #, c-format

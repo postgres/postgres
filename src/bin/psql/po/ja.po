@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-06-20 12:56+0000\n"
-"PO-Revision-Date: 2011-07-20 15:29+0800\n"
+"PO-Revision-Date: 2014-08-18 21:51+0900\n"
 "Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -817,7 +817,7 @@ msgstr "  \\e [ファイル]          現在のクエリーバッファ(やフ�
 #: help.c:178
 #, c-format
 msgid "  \\ef [FUNCNAME]         edit function definition with external editor\n"
-msgstr "  \\e [関数名]            関数定義を外部エディタで編集\n"
+msgstr "  \\ef [関数名]           関数定義を外部エディタで編集\n"
 
 #: help.c:179
 #, c-format
@@ -2968,7 +2968,7 @@ msgstr "新しい所有者"
 #: sql_help.c:676
 #: sql_help.c:753
 msgid "new_schema"
-msgstr "新しいスキーマ %s"
+msgstr "新しいスキーマ"
 
 #: sql_help.c:70
 #: sql_help.c:184

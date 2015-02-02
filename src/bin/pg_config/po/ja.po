@@ -65,7 +65,7 @@ msgstr "  --docdir              文書ファイルの場所を表示します\n"
 #: pg_config.c:434
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr "  --docdir              html文書ファイルの場所を表示します\n"
+msgstr "  --htmldir             html文書ファイルの場所を表示します\n"
 
 #: pg_config.c:435
 #, c-format

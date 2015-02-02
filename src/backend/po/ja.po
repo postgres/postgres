@@ -8134,7 +8134,7 @@ msgstr "集約%uは入力データ型と遷移用の型間で互換性が必要�
 #: executor/nodeHashjoin.c:755
 #, c-format
 msgid "could not rewind hash-join temporary file: %m"
-msgstr "ハッシュ結合用一時ファイルを巻き戻しできません"
+msgstr "ハッシュ結合用一時ファイルを巻き戻しできません: %m"
 
 #: executor/nodeHashjoin.c:789
 #: executor/nodeHashjoin.c:795
@@ -11538,7 +11538,7 @@ msgstr "統計情報コレクタのソケットから試験メッセージを入
 #: postmaster/pgstat.c:476
 #, c-format
 msgid "could not receive test message on socket for statistics collector: %m"
-msgstr "統計情報コレクタのソケットから試験メッセージを受信できませんでした"
+msgstr "統計情報コレクタのソケットから試験メッセージを受信できませんでした: %m"
 
 #: postmaster/pgstat.c:486
 msgid "incorrect test message transmission on socket for statistics collector"

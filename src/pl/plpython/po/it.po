@@ -19,7 +19,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:09+0000\n"
+"POT-Creation-Date: 2013-01-21 05:00+0000\n"
 "PO-Revision-Date: 2012-11-02 15:26+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
@@ -270,7 +270,7 @@ msgstr "errore sconosciuto nella funzione PLy_spi_execute_fetch_result"
 
 #: plpython.c:3247
 msgid "Python major version mismatch in session"
-msgstr "mancata corrispondenza della versione maggiore di Python major nella sessione"
+msgstr "mancata corrispondenza della versione maggiore di Python nella sessione"
 
 #: plpython.c:3248
 #, c-format
