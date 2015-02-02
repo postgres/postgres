@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-04-02 01:48+0000\n"
-"PO-Revision-Date: 2014-04-02 09:51+0400\n"
+"POT-Creation-Date: 2015-01-14 00:17+0000\n"
+"PO-Revision-Date: 2015-01-14 20:59+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -35,7 +35,7 @@ msgstr "нехватка памяти\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: pg_basebackup.c:128
+#: pg_basebackup.c:129
 #, c-format
 msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
@@ -44,17 +44,17 @@ msgstr ""
 "%s делает базовую резервную копию работающего сервера PostgreSQL.\n"
 "\n"
 
-#: pg_basebackup.c:130 pg_receivexlog.c:60
+#: pg_basebackup.c:131 pg_receivexlog.c:60
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: pg_basebackup.c:131 pg_receivexlog.c:61
+#: pg_basebackup.c:132 pg_receivexlog.c:61
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [ПАРАМЕТР]...\n"
 
-#: pg_basebackup.c:132
+#: pg_basebackup.c:133
 #, c-format
 msgid ""
 "\n"
@@ -63,19 +63,19 @@ msgstr ""
 "\n"
 "Параметры, управляющие выводом:\n"
 
-#: pg_basebackup.c:133
+#: pg_basebackup.c:134
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
 msgstr "  -D, --pgdata=КАТАЛОГ   сохранить базовую копию в указанный каталог\n"
 
-#: pg_basebackup.c:134
+#: pg_basebackup.c:135
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
 msgstr ""
 "  -F, --format=p|t       формат вывода (p (по умолчанию) - простой, t - "
 "tar)\n"
 
-#: pg_basebackup.c:135
+#: pg_basebackup.c:136
 #, c-format
 msgid ""
 "  -R, --write-recovery-conf\n"
@@ -84,14 +84,14 @@ msgstr ""
 "  -R, --write-recovery-conf\n"
 "                         записать recovery.conf после копирования\n"
 
-#: pg_basebackup.c:137
+#: pg_basebackup.c:138
 #, c-format
 msgid ""
 "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
 msgstr ""
 "  -x, --xlog             включить в копию требуемые файлы WAL (режим fetch)\n"
 
-#: pg_basebackup.c:138
+#: pg_basebackup.c:139
 #, c-format
 msgid ""
 "  -X, --xlog-method=fetch|stream\n"
@@ -101,18 +101,18 @@ msgstr ""
 "                         включить в копию требуемые файлы WAL, используя\n"
 "                         заданный метод\n"
 
-#: pg_basebackup.c:140
+#: pg_basebackup.c:141
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
 msgstr "  -z, --gzip             сжать выходной tar\n"
 
-#: pg_basebackup.c:141
+#: pg_basebackup.c:142
 #, c-format
 msgid ""
 "  -Z, --compress=0-9     compress tar output with given compression level\n"
 msgstr "  -Z, --compress=0-9     установить уровень сжатия выходного архива\n"
 
-#: pg_basebackup.c:142
+#: pg_basebackup.c:143
 #, c-format
 msgid ""
 "\n"
@@ -121,7 +121,7 @@ msgstr ""
 "\n"
 "Общие параметры:\n"
 
-#: pg_basebackup.c:143
+#: pg_basebackup.c:144
 #, c-format
 msgid ""
 "  -c, --checkpoint=fast|spread\n"
@@ -130,32 +130,32 @@ msgstr ""
 "  -c, --checkpoint=fast|spread\n"
 "                         режим быстрых или распределённых контрольных точек\n"
 
-#: pg_basebackup.c:145
+#: pg_basebackup.c:146
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
 msgstr "  -l, --label=МЕТКА      установить метку резервной копии\n"
 
-#: pg_basebackup.c:146
+#: pg_basebackup.c:147
 #, c-format
 msgid "  -P, --progress         show progress information\n"
 msgstr "  -P, --progress         показывать прогресс операции\n"
 
-#: pg_basebackup.c:147 pg_receivexlog.c:65
+#: pg_basebackup.c:148 pg_receivexlog.c:65
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          выводить подробные сообщения\n"
 
-#: pg_basebackup.c:148 pg_receivexlog.c:66
+#: pg_basebackup.c:149 pg_receivexlog.c:66
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          показать версию и выйти\n"
 
-#: pg_basebackup.c:149 pg_receivexlog.c:67
+#: pg_basebackup.c:150 pg_receivexlog.c:67
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             показать эту справку и выйти\n"
 
-#: pg_basebackup.c:150 pg_receivexlog.c:68
+#: pg_basebackup.c:151 pg_receivexlog.c:68
 #, c-format
 msgid ""
 "\n"
@@ -164,22 +164,22 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: pg_basebackup.c:151 pg_receivexlog.c:69
+#: pg_basebackup.c:152 pg_receivexlog.c:69
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
 msgstr "  -d, --dbname=СТРОКА    строка подключения\n"
 
-#: pg_basebackup.c:152 pg_receivexlog.c:70
+#: pg_basebackup.c:153 pg_receivexlog.c:70
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
 msgstr "  -h, --host=ИМЯ         имя сервера баз данных или каталог сокетов\n"
 
-#: pg_basebackup.c:153 pg_receivexlog.c:71
+#: pg_basebackup.c:154 pg_receivexlog.c:71
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
 msgstr "  -p, --port=ПОРТ        номер порта сервера БД\n"
 
-#: pg_basebackup.c:154 pg_receivexlog.c:72
+#: pg_basebackup.c:155 pg_receivexlog.c:72
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
@@ -190,19 +190,19 @@ msgstr ""
 "                         интервал между передаваемыми серверу\n"
 "                         пакетами состояния (в секундах)\n"
 
-#: pg_basebackup.c:156 pg_receivexlog.c:74
+#: pg_basebackup.c:157 pg_receivexlog.c:74
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
 msgstr ""
 "  -U, --username=NAME    connect as specified database user\n"
 "  -U, --username=ИМЯ     имя пользователя баз данных\n"
 
-#: pg_basebackup.c:157 pg_receivexlog.c:75
+#: pg_basebackup.c:158 pg_receivexlog.c:75
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
 msgstr "  -w, --no-password      не запрашивать пароль\n"
 
-#: pg_basebackup.c:158 pg_receivexlog.c:76
+#: pg_basebackup.c:159 pg_receivexlog.c:76
 #, c-format
 msgid ""
 "  -W, --password         force password prompt (should happen "
@@ -210,7 +210,7 @@ msgid ""
 msgstr ""
 "  -W, --password         запрашивать пароль всегда (обычно не требуется)\n"
 
-#: pg_basebackup.c:159 pg_receivexlog.c:77
+#: pg_basebackup.c:160 pg_receivexlog.c:77
 #, c-format
 msgid ""
 "\n"
@@ -219,48 +219,48 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_basebackup.c:202
+#: pg_basebackup.c:203
 #, c-format
 msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: не удалось прочитать из готового канала: %s\n"
 
-#: pg_basebackup.c:210 pg_basebackup.c:302 pg_basebackup.c:1621
+#: pg_basebackup.c:211 pg_basebackup.c:304 pg_basebackup.c:1635
 #: pg_receivexlog.c:306
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
 msgstr "%s: не удалось разобрать положение в журнале транзакций \"%s\"\n"
 
-#: pg_basebackup.c:315
+#: pg_basebackup.c:317
 #, c-format
 msgid "%s: could not create pipe for background process: %s\n"
 msgstr "%s: не удалось создать канал для фонового процесса: %s\n"
 
-#: pg_basebackup.c:348
-#, c-format
-msgid "%s: could not create background process: %s\n"
-msgstr "%s: не удалось создать фоновый процесс: %s\n"
-
-#: pg_basebackup.c:360
-#, c-format
-msgid "%s: could not create background thread: %s\n"
-msgstr "%s: не удалось создать фоновый поток выполнения: %s\n"
-
-#: pg_basebackup.c:385 pg_basebackup.c:1012
+#: pg_basebackup.c:342 pg_basebackup.c:397 pg_basebackup.c:1026
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: не удалось создать каталог \"%s\": %s\n"
 
-#: pg_basebackup.c:404
+#: pg_basebackup.c:360
+#, c-format
+msgid "%s: could not create background process: %s\n"
+msgstr "%s: не удалось создать фоновый процесс: %s\n"
+
+#: pg_basebackup.c:372
+#, c-format
+msgid "%s: could not create background thread: %s\n"
+msgstr "%s: не удалось создать фоновый поток выполнения: %s\n"
+
+#: pg_basebackup.c:416
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: каталог \"%s\" существует, но он не пуст\n"
 
-#: pg_basebackup.c:412
+#: pg_basebackup.c:424
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: нет доступа к каталогу \"%s\": %s\n"
 
-#: pg_basebackup.c:460
+#: pg_basebackup.c:472
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
@@ -268,7 +268,7 @@ msgstr[0] "%*s/%s КБ (100%%), табличное пространство %d/%
 msgstr[1] "%*s/%s КБ (100%%), табличное пространство %d/%d %*s"
 msgstr[2] "%*s/%s КБ (100%%), табличное пространство %d/%d %*s"
 
-#: pg_basebackup.c:472
+#: pg_basebackup.c:484
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
@@ -276,7 +276,7 @@ msgstr[0] "%*s/%s КБ (%d%%), табличное пространство %d/%d
 msgstr[1] "%*s/%s КБ (%d%%), табличное пространство %d/%d (%s%-*.*s)"
 msgstr[2] "%*s/%s КБ (%d%%), табличное пространство %d/%d (%s%-*.*s)"
 
-#: pg_basebackup.c:488
+#: pg_basebackup.c:500
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
@@ -284,109 +284,109 @@ msgstr[0] "%*s/%s КБ (%d%%), табличное пространство %d/%d
 msgstr[1] "%*s/%s КБ (%d%%), табличное пространство %d/%d"
 msgstr[2] "%*s/%s КБ (%d%%), табличное пространство %d/%d"
 
-#: pg_basebackup.c:515
+#: pg_basebackup.c:527
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл сжатого архива \"%s\": %s\n"
 
-#: pg_basebackup.c:525 pg_basebackup.c:1094 pg_basebackup.c:1312
+#: pg_basebackup.c:537 pg_basebackup.c:1108 pg_basebackup.c:1326
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл \"%s\": %s\n"
 
-#: pg_basebackup.c:580 pg_basebackup.c:601 pg_basebackup.c:629
+#: pg_basebackup.c:592 pg_basebackup.c:613 pg_basebackup.c:641
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
 msgstr "%s: не удалось установить уровень сжатия %d: %s\n"
 
-#: pg_basebackup.c:650
+#: pg_basebackup.c:662
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: не удалось создать файл сжатого архива \"%s\": %s\n"
 
-#: pg_basebackup.c:661 pg_basebackup.c:1054 pg_basebackup.c:1305
+#: pg_basebackup.c:673 pg_basebackup.c:1068 pg_basebackup.c:1319
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: не удалось создать файл \"%s\": %s\n"
 
-#: pg_basebackup.c:673 pg_basebackup.c:916
+#: pg_basebackup.c:685 pg_basebackup.c:928
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s: не удалось получить поток данных COPY: %s"
 
-#: pg_basebackup.c:730
+#: pg_basebackup.c:742
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть сжатый файл \"%s\": %s\n"
 
-#: pg_basebackup.c:743 receivelog.c:161 receivelog.c:352 receivelog.c:724
+#: pg_basebackup.c:755 receivelog.c:194 receivelog.c:399 receivelog.c:785
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть файл \"%s\": %s\n"
 
-#: pg_basebackup.c:754 pg_basebackup.c:945 receivelog.c:937
+#: pg_basebackup.c:766 pg_basebackup.c:957 receivelog.c:1001
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: не удалось прочитать данные COPY: %s"
 
-#: pg_basebackup.c:959
+#: pg_basebackup.c:971
 #, c-format
 msgid "%s: invalid tar block header size: %d\n"
 msgstr "%s: неверный размер заголовка блока tar: %d\n"
 
-#: pg_basebackup.c:967
+#: pg_basebackup.c:979
 #, c-format
 msgid "%s: could not parse file size\n"
 msgstr "%s: не удалось разобрать размер файла\n"
 
-#: pg_basebackup.c:975
+#: pg_basebackup.c:987
 #, c-format
 msgid "%s: could not parse file mode\n"
 msgstr "%s: не удалось разобрать режим файла\n"
 
-#: pg_basebackup.c:1020
+#: pg_basebackup.c:1034
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s: не удалось установить права для каталога \"%s\": %s\n"
 
-#: pg_basebackup.c:1033
+#: pg_basebackup.c:1047
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s: не удалось создать символическую ссылку \"%s\" в \"%s\": %s\n"
 
-#: pg_basebackup.c:1041
+#: pg_basebackup.c:1055
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s: нераспознанный индикатор связи \"%c\"\n"
 
-#: pg_basebackup.c:1061
+#: pg_basebackup.c:1075
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s: не удалось установить права доступа для файла \"%s\": %s\n"
 
-#: pg_basebackup.c:1120
+#: pg_basebackup.c:1134
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: поток COPY закончился до завершения последнего файла\n"
 
-#: pg_basebackup.c:1206 pg_basebackup.c:1226 pg_basebackup.c:1233
-#: pg_basebackup.c:1280
+#: pg_basebackup.c:1220 pg_basebackup.c:1240 pg_basebackup.c:1247
+#: pg_basebackup.c:1294
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"
 
-#: pg_basebackup.c:1356
+#: pg_basebackup.c:1370
 #, c-format
 msgid "%s: incompatible server version %s\n"
 msgstr "%s: несовместимая версия сервера %s\n"
 
-#: pg_basebackup.c:1383 pg_basebackup.c:1412 pg_receivexlog.c:291
-#: receivelog.c:531 receivelog.c:576 receivelog.c:615
+#: pg_basebackup.c:1397 pg_basebackup.c:1426 pg_receivexlog.c:291
+#: receivelog.c:587 receivelog.c:632 receivelog.c:672
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: не удалось передать команду репликации \"%s\": %s"
 
-#: pg_basebackup.c:1390 pg_receivexlog.c:298 receivelog.c:539
+#: pg_basebackup.c:1404 pg_receivexlog.c:298 receivelog.c:595
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
@@ -395,12 +395,12 @@ msgstr ""
 "%s: не удалось идентифицировать систему, получено строк: %d, полей: %d "
 "(ожидалось: %d и %d)\n"
 
-#: pg_basebackup.c:1423
+#: pg_basebackup.c:1437
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: не удалось инициализировать базовое резервное копирование: %s"
 
-#: pg_basebackup.c:1430
+#: pg_basebackup.c:1444
 #, c-format
 msgid ""
 "%s: server returned unexpected response to BASE_BACKUP command; got %d rows "
@@ -409,105 +409,105 @@ msgstr ""
 "%s: сервер вернул неожиданный ответ на команду BASE_BACKUP; получено строк: "
 "%d, полей: %d, а ожидалось строк: %d, полей: %d\n"
 
-#: pg_basebackup.c:1450
+#: pg_basebackup.c:1464
 #, c-format
 msgid "transaction log start point: %s on timeline %u\n"
 msgstr "стартовая точка журнала транзакций: %s на линии времени %u\n"
 
-#: pg_basebackup.c:1459
+#: pg_basebackup.c:1473
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: не удалось получить заголовок резервной копии: %s"
 
-#: pg_basebackup.c:1465
+#: pg_basebackup.c:1479
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: сервер не вернул данные\n"
 
-#: pg_basebackup.c:1494
+#: pg_basebackup.c:1508
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
 msgstr ""
 "%s: в stdout можно вывести только одно табличное пространство, всего в СУБД "
 "их %d\n"
 
-#: pg_basebackup.c:1506
+#: pg_basebackup.c:1520
 #, c-format
 msgid "%s: starting background WAL receiver\n"
 msgstr "%s: запуск фонового процесса считывания WAL\n"
 
-#: pg_basebackup.c:1536
+#: pg_basebackup.c:1550
 #, c-format
 msgid "%s: could not get transaction log end position from server: %s"
 msgstr ""
 "%s: не удалось получить конечную позицию в журнале транзакций с сервера: %s"
 
-#: pg_basebackup.c:1543
+#: pg_basebackup.c:1557
 #, c-format
 msgid "%s: no transaction log end position returned from server\n"
 msgstr "%s: сервер не вернул конечную позицию в журнале транзакций\n"
 
-#: pg_basebackup.c:1555
+#: pg_basebackup.c:1569
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: ошибка в конце передачи: %s"
 
-#: pg_basebackup.c:1573
+#: pg_basebackup.c:1587
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
 msgstr "%s: ожидание завершения потоковой передачи фоновым процессом...\n"
 
-#: pg_basebackup.c:1579
+#: pg_basebackup.c:1593
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
 msgstr "%s: не удалось отправить команду в канал фонового процесса: %s\n"
 
-#: pg_basebackup.c:1588
+#: pg_basebackup.c:1602
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
 msgstr "%s: сбой при ожидании дочернего процесса: %s\n"
 
-#: pg_basebackup.c:1594
+#: pg_basebackup.c:1608
 #, c-format
 msgid "%s: child %d died, expected %d\n"
 msgstr "%s: завершился дочерний процесс %d вместо ожидаемого %d\n"
 
-#: pg_basebackup.c:1600
+#: pg_basebackup.c:1614
 #, c-format
 msgid "%s: child process did not exit normally\n"
 msgstr "%s: дочерний процесс завершён ненормально\n"
 
-#: pg_basebackup.c:1606
+#: pg_basebackup.c:1620
 #, c-format
 msgid "%s: child process exited with error %d\n"
 msgstr "%s: дочерний процесс завершился с ошибкой %d\n"
 
-#: pg_basebackup.c:1633
+#: pg_basebackup.c:1647
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
 msgstr "%s: сбой при ожидании дочернего потока: %s\n"
 
-#: pg_basebackup.c:1640
+#: pg_basebackup.c:1654
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
 msgstr "%s: не удалось получить состояние завершения дочернего потока: %s\n"
 
-#: pg_basebackup.c:1646
+#: pg_basebackup.c:1660
 #, c-format
 msgid "%s: child thread exited with error %u\n"
 msgstr "%s: дочерний поток завершился с ошибкой %u\n"
 
-#: pg_basebackup.c:1732
+#: pg_basebackup.c:1746
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr "%s: неверный формат вывода \"%s\", должен быть \"plain\" или \"tar\"\n"
 
-#: pg_basebackup.c:1744 pg_basebackup.c:1756
+#: pg_basebackup.c:1758 pg_basebackup.c:1770
 #, c-format
 msgid "%s: cannot specify both --xlog and --xlog-method\n"
 msgstr "%s: указать и --xlog, и --xlog-method одновременно нельзя\n"
 
-#: pg_basebackup.c:1771
+#: pg_basebackup.c:1785
 #, c-format
 msgid ""
 "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
@@ -515,12 +515,12 @@ msgstr ""
 "%s: неверный аргумент для xlog-method - \"%s\", допускается только \"fetch\" "
 "или \"stream\"\n"
 
-#: pg_basebackup.c:1790
+#: pg_basebackup.c:1804
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: неверный уровень сжатия \"%s\"\n"
 
-#: pg_basebackup.c:1802
+#: pg_basebackup.c:1816
 #, c-format
 msgid ""
 "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
@@ -528,39 +528,39 @@ msgstr ""
 "%s: неверный аргумент режима контрольных точек \"%s\", должен быть \"fast\" "
 "или \"spread\"\n"
 
-#: pg_basebackup.c:1829 pg_receivexlog.c:432
+#: pg_basebackup.c:1843 pg_receivexlog.c:433
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: неверный интервал сообщений о состоянии \"%s\"\n"
 
-#: pg_basebackup.c:1845 pg_basebackup.c:1859 pg_basebackup.c:1870
-#: pg_basebackup.c:1883 pg_basebackup.c:1893 pg_receivexlog.c:448
-#: pg_receivexlog.c:462 pg_receivexlog.c:473
+#: pg_basebackup.c:1859 pg_basebackup.c:1873 pg_basebackup.c:1884
+#: pg_basebackup.c:1897 pg_basebackup.c:1907 pg_receivexlog.c:449
+#: pg_receivexlog.c:463 pg_receivexlog.c:474
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_basebackup.c:1857 pg_receivexlog.c:460
+#: pg_basebackup.c:1871 pg_receivexlog.c:461
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_basebackup.c:1869 pg_receivexlog.c:472
+#: pg_basebackup.c:1883 pg_receivexlog.c:473
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: целевой каталог не указан\n"
 
-#: pg_basebackup.c:1881
+#: pg_basebackup.c:1895
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: сжимать можно только резервные копии в архиве tar\n"
 
-#: pg_basebackup.c:1891
+#: pg_basebackup.c:1905
 #, c-format
 msgid "%s: WAL streaming can only be used in plain mode\n"
 msgstr "%s: потоковая передача WAL поддерживается только в режиме plain\n"
 
-#: pg_basebackup.c:1902
+#: pg_basebackup.c:1916
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: эта сборка программы не поддерживает сжатие\n"
@@ -642,101 +642,106 @@ msgstr "%s: не удалось закрыть каталог \"%s\": %s\n"
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgstr "%s: начало передачи журнала с позиции %X/%X (линия времени %u)\n"
 
-#: pg_receivexlog.c:413
+#: pg_receivexlog.c:414
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
 msgstr "%s: неверный номер порта \"%s\"\n"
 
-#: pg_receivexlog.c:495
+#: pg_receivexlog.c:496
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s: отключение\n"
 
 #. translator: check source for value for %d
-#: pg_receivexlog.c:502
+#: pg_receivexlog.c:503
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s: отключение; через %d сек. последует повторное подключение\n"
 
-#: receivelog.c:69
+#: receivelog.c:56
+#, c-format
+msgid "%s: could not create archive status file \"%s\": %s\n"
+msgstr "%s: не удалось создать файл статуса архива \"%s\": %s\n"
+
+#: receivelog.c:63 receivelog.c:187 receivelog.c:392
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: не удалось синхронизировать с ФС файл \"%s\": %s\n"
+
+#: receivelog.c:102
 #, c-format
 msgid "%s: could not open transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:81
+#: receivelog.c:114
 #, c-format
 msgid "%s: could not stat transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось проверить файл журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:95
+#: receivelog.c:128
 #, c-format
 msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
 msgstr ""
 "%s: файл журнала транзакций \"%s\" имеет размер %d Б, а должен - 0 или %d\n"
 
-#: receivelog.c:108
+#: receivelog.c:141
 #, c-format
 msgid "%s: could not pad transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось дополнить файл журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:121
+#: receivelog.c:154
 #, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось перейти к началу файла журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:147
+#: receivelog.c:180
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: не удалось определить текущую позицию в файле \"%s\": %s\n"
 
-#: receivelog.c:154 receivelog.c:345
-#, c-format
-msgid "%s: could not fsync file \"%s\": %s\n"
-msgstr "%s: не удалось синхронизировать с ФС файл \"%s\": %s\n"
-
-#: receivelog.c:180
+#: receivelog.c:213
 #, c-format
 msgid "%s: could not rename file \"%s\": %s\n"
 msgstr "%s: не удалось переименовать файл \"%s\": %s\n"
 
-#: receivelog.c:187
+#: receivelog.c:220
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr ""
 "%s: файл \"%s%s\" не переименовывается, так как это не полный сегмент\n"
 
-#: receivelog.c:276
+#: receivelog.c:322
 #, c-format
 msgid "%s: could not open timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:303
+#: receivelog.c:350
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr ""
 "%s: сервер сообщил неожиданное имя файла истории для линии времени %u: %s\n"
 
-#: receivelog.c:320
+#: receivelog.c:367
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось создать файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:337
+#: receivelog.c:384
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:362
+#: receivelog.c:409
 #, c-format
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
 msgstr "%s: не удалось переименовать файл \"%s\" в \"%s\": %s\n"
 
-#: receivelog.c:435
+#: receivelog.c:490
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: не удалось отправить пакет отзыва: %s"
 
-#: receivelog.c:469
+#: receivelog.c:524
 #, c-format
 msgid ""
 "%s: incompatible server version %s; streaming is only supported with server "
@@ -745,7 +750,7 @@ msgstr ""
 "%s: несовместимая версия сервера %s; потоковая передача поддерживается "
 "только с версией %s\n"
 
-#: receivelog.c:547
+#: receivelog.c:603
 #, c-format
 msgid ""
 "%s: system identifier does not match between base backup and streaming "
@@ -754,12 +759,12 @@ msgstr ""
 "%s: системный идентификатор базовой резервной копии отличается от "
 "идентификатора потоковой передачи\n"
 
-#: receivelog.c:555
+#: receivelog.c:611
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: на сервере нет начальной линии времени %u\n"
 
-#: receivelog.c:589
+#: receivelog.c:645
 #, c-format
 msgid ""
 "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
@@ -768,14 +773,14 @@ msgstr ""
 "%s: сервер вернул неожиданный ответ на команду TIMELINE_HISTORY; получено "
 "строк: %d, полей: %d, а ожидалось строк: %d, полей: %d\n"
 
-#: receivelog.c:662
+#: receivelog.c:719
 #, c-format
 msgid ""
 "%s: server reported unexpected next timeline %u, following timeline %u\n"
 msgstr ""
 "%s: сервер неожиданно сообщил линию времени %u после линии времени %u\n"
 
-#: receivelog.c:669
+#: receivelog.c:726
 #, c-format
 msgid ""
 "%s: server stopped streaming timeline %u at %X/%X, but reported next "
@@ -784,17 +789,17 @@ msgstr ""
 "%s: сервер прекратил передачу линии времени %u в %X/%X, но сообщил, что "
 "следующая линии времени %u начнётся в %X/%X\n"
 
-#: receivelog.c:681 receivelog.c:716
+#: receivelog.c:738 receivelog.c:776
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: неожиданный конец потока репликации: %s"
 
-#: receivelog.c:707
+#: receivelog.c:767
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: поток репликации закончился до точки останова\n"
 
-#: receivelog.c:755
+#: receivelog.c:816
 #, c-format
 msgid ""
 "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
@@ -803,49 +808,49 @@ msgstr ""
 "%s: сервер вернул неожиданный набор данных после конца линии времени - "
 "получено строк: %d, полей: %d, а ожидалось строк: %d, полей: %d\n"
 
-#: receivelog.c:765
+#: receivelog.c:826
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr ""
 "%s: не удалось разобрать начальную точку следующей линии времени \"%s\"\n"
 
-#: receivelog.c:820 receivelog.c:922 receivelog.c:1087
+#: receivelog.c:881 receivelog.c:984 receivelog.c:1151
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: не удалось отправить пакет \"конец COPY\": %s"
 
-#: receivelog.c:887
+#: receivelog.c:948
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: ошибка в select(): %s\n"
 
-#: receivelog.c:895
+#: receivelog.c:956
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: не удалось получить данные из потока WAL: %s"
 
-#: receivelog.c:959 receivelog.c:994
+#: receivelog.c:1023 receivelog.c:1058
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: заголовок потока слишком мал: %d\n"
 
-#: receivelog.c:1013
+#: receivelog.c:1077
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
 msgstr ""
 "%s: получена запись журнала транзакций по смещению %u, но файл не открыт\n"
 
-#: receivelog.c:1025
+#: receivelog.c:1089
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: получено смещение данных WAL %08x, но ожидалось %08x\n"
 
-#: receivelog.c:1062
+#: receivelog.c:1126
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: не удалось записать %u байт в файл WAL \"%s\": %s\n"
 
-#: receivelog.c:1100
+#: receivelog.c:1164
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: нераспознанный заголовок потока: \"%c\"\n"

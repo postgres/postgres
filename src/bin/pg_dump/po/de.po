@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-07-16 06:48+0000\n"
-"PO-Revision-Date: 2014-07-18 21:20-0400\n"
+"PO-Revision-Date: 2014-10-13 01:04-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -2207,7 +2207,7 @@ msgstr "%s: konnte Version des Servers nicht ermitteln\n"
 #: pg_dumpall.c:1906
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
-msgstr "%s: konnte Versionszeichenkette „%s“ nicht entzifferen\n"
+msgstr "%s: konnte Versionszeichenkette „%s“ nicht entziffern\n"
 
 #: pg_dumpall.c:1984 pg_dumpall.c:2010
 #, c-format

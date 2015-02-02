@@ -640,7 +640,7 @@ msgstr "\n停止、再起動、昇進用のオプション:\n"
 #: pg_ctl.c:1801
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m SHUTDOWN-MODE   MODEは\"smart\"、\"fast\"、\"immediate\"のいずれかです\n"
+msgstr "  -m, --mode=MODE    MODEは\"smart\"、\"fast\"、\"immediate\"のいずれかです\n"
 
 #: pg_ctl.c:1803
 #, c-format

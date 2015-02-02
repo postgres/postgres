@@ -27,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-16 22:20+0000\n"
-"PO-Revision-Date: 2013-08-18 19:47+0100\n"
+"POT-Creation-Date: 2014-12-05 17:47+0000\n"
+"PO-Revision-Date: 2014-12-06 18:31+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -36,7 +36,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.5.7\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83
@@ -53,14 +53,14 @@ msgstr "impossibile duplicare il puntatore nullo (errore interno)\n"
 #: createlang.c:89 createlang.c:119 createlang.c:172 createuser.c:163
 #: createuser.c:178 dropdb.c:94 dropdb.c:103 dropdb.c:111 droplang.c:88
 #: droplang.c:118 droplang.c:172 dropuser.c:89 dropuser.c:104 dropuser.c:115
-#: pg_isready.c:92 pg_isready.c:106 reindexdb.c:120 reindexdb.c:139
+#: pg_isready.c:93 pg_isready.c:107 reindexdb.c:120 reindexdb.c:139
 #: vacuumdb.c:134 vacuumdb.c:154
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
 
 #: clusterdb.c:127 createdb.c:136 createlang.c:117 createuser.c:176
-#: dropdb.c:109 droplang.c:116 dropuser.c:102 pg_isready.c:104 reindexdb.c:137
+#: dropdb.c:109 droplang.c:116 dropuser.c:102 pg_isready.c:105 reindexdb.c:137
 #: vacuumdb.c:152
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
@@ -101,7 +101,7 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:262 createdb.c:252 createlang.c:234 createuser.c:329
-#: dropdb.c:155 droplang.c:235 dropuser.c:156 pg_isready.c:210 reindexdb.c:342
+#: dropdb.c:155 droplang.c:235 dropuser.c:156 pg_isready.c:222 reindexdb.c:342
 #: vacuumdb.c:358
 #, c-format
 msgid "Usage:\n"
@@ -113,7 +113,7 @@ msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPZIONE]... [NOMEDB]\n"
 
 #: clusterdb.c:264 createdb.c:254 createlang.c:236 createuser.c:331
-#: dropdb.c:157 droplang.c:237 dropuser.c:158 pg_isready.c:213 reindexdb.c:344
+#: dropdb.c:157 droplang.c:237 dropuser.c:158 pg_isready.c:225 reindexdb.c:344
 #: vacuumdb.c:360
 #, c-format
 msgid ""
@@ -167,7 +167,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                mostra questo aiuto ed esci\n"
 
 #: clusterdb.c:273 createdb.c:265 createlang.c:242 createuser.c:354
-#: dropdb.c:163 droplang.c:243 dropuser.c:165 pg_isready.c:219 reindexdb.c:354
+#: dropdb.c:163 droplang.c:243 dropuser.c:165 pg_isready.c:231 reindexdb.c:354
 #: vacuumdb.c:373
 #, c-format
 msgid ""
@@ -222,7 +222,7 @@ msgstr ""
 "Consulta la descrizione del comando SQL CLUSTER per maggiori informazioni.\n"
 
 #: clusterdb.c:281 createdb.c:273 createlang.c:248 createuser.c:360
-#: dropdb.c:170 droplang.c:249 dropuser.c:171 pg_isready.c:224 reindexdb.c:362
+#: dropdb.c:170 droplang.c:249 dropuser.c:171 pg_isready.c:236 reindexdb.c:362
 #: vacuumdb.c:381
 #, c-format
 msgid ""
@@ -755,17 +755,42 @@ msgstr ""
 "  -U, --username=UTENTE     nome utente con cui collegarsi\n"
 "                            (non quello da eliminare)\n"
 
-#: pg_isready.c:138
+#: pg_isready.c:142
 #, c-format
 msgid "%s: %s"
 msgstr "%s: %s"
 
-#: pg_isready.c:146
+#: pg_isready.c:150
 #, c-format
 msgid "%s: could not fetch default options\n"
 msgstr "%s: caricamento delle opzioni di default fallito\n"
 
-#: pg_isready.c:209
+#: pg_isready.c:199
+#, c-format
+msgid "accepting connections\n"
+msgstr "le connessioni sono accettate\n"
+
+#: pg_isready.c:202
+#, c-format
+msgid "rejecting connections\n"
+msgstr "le connessioni sono rifiutate\n"
+
+#: pg_isready.c:205
+#, c-format
+msgid "no response\n"
+msgstr "nessuna risposta\n"
+
+#: pg_isready.c:208
+#, c-format
+msgid "no attempt\n"
+msgstr "nessun tentativo\n"
+
+#: pg_isready.c:211
+#, c-format
+msgid "unknown\n"
+msgstr "sconosciuto\n"
+
+#: pg_isready.c:221
 #, c-format
 msgid ""
 "%s issues a connection check to a PostgreSQL database.\n"
@@ -774,47 +799,47 @@ msgstr ""
 "%s effettua una connessione di controllo ad un database PostgreSQL.\n"
 "\n"
 
-#: pg_isready.c:211
+#: pg_isready.c:223
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [OPZIONE]...\n"
 
-#: pg_isready.c:214
+#: pg_isready.c:226
 #, c-format
 msgid "  -d, --dbname=DBNAME      database name\n"
 msgstr "  -d, --dbname=NOMEDB      nome database\n"
 
-#: pg_isready.c:215
+#: pg_isready.c:227
 #, c-format
 msgid "  -q, --quiet              run quietly\n"
 msgstr "  -q, --quiet              esegui silenziosamente\n"
 
-#: pg_isready.c:216
+#: pg_isready.c:228
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
 msgstr "  -V, --version            mostra informazioni sulla versione ed esci\n"
 
-#: pg_isready.c:217
+#: pg_isready.c:229
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
 msgstr "  -?, --help               mostra questo aiuto ed esci\n"
 
-#: pg_isready.c:220
+#: pg_isready.c:232
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=NOMEHOST      host server del database o directory socket\n"
 
-#: pg_isready.c:221
+#: pg_isready.c:233
 #, c-format
 msgid "  -p, --port=PORT          database server port\n"
 msgstr "  -p, --port=PORTA         porta del server database\n"
 
-#: pg_isready.c:222
+#: pg_isready.c:234
 #, c-format
 msgid "  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"
 msgstr "  -t, --timeout=SEC        secondi di attesa tentando una connessione, 0 disabilita (predefinito: %s)\n"
 
-#: pg_isready.c:223
+#: pg_isready.c:235
 #, c-format
 msgid "  -U, --username=USERNAME  user name to connect as\n"
 msgstr "  -U, --username=UTENTE    nome utente con cui connettersi\n"

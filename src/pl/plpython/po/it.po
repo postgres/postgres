@@ -19,8 +19,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-15 22:09+0000\n"
-"PO-Revision-Date: 2012-11-02 15:26+0100\n"
+"POT-Creation-Date: 2014-07-29 09:14+0000\n"
+"PO-Revision-Date: 2014-07-30 22:35+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -57,17 +57,17 @@ msgstr[1] "Attesa sequenza di %d argomenti, ricevuti %d: %s"
 msgid "iterating a closed cursor"
 msgstr "iterazione di un cursore chiuso"
 
-#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:413
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterazione di un cursore in una sotto-transazione interrotta"
 
-#: plpy_cursorobject.c:407
+#: plpy_cursorobject.c:405
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "lettura da un cursore chiuso"
 
-#: plpy_cursorobject.c:486
+#: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "chiusura di un cursore in una sotto-transazione interrotta"
@@ -152,32 +152,32 @@ msgstr "durante la creazione del valore da restituire"
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "creazione del nuovo dizionario nella costruzione degli argomenti del trigger fallita"
 
-#: plpy_exec.c:665
+#: plpy_exec.c:663
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] cancellato, non è possibile modificare la riga"
 
-#: plpy_exec.c:668
+#: plpy_exec.c:667
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] non è un dizionario"
 
-#: plpy_exec.c:692
+#: plpy_exec.c:691
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "la chiave di dizionario TD[\"new\"] alla posizione %d non è una stringa"
 
-#: plpy_exec.c:698
+#: plpy_exec.c:697
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "la chiave \"%s\" trovata in TD[\"new\"] non esiste come colonna nella riga del trigger"
 
-#: plpy_exec.c:779
+#: plpy_exec.c:777
 #, c-format
 msgid "while modifying trigger row"
 msgstr "durante la modifica della riga trigger"
 
-#: plpy_exec.c:840
+#: plpy_exec.c:838
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "interruzione forzata di una sotto-transazione che non è terminata"
@@ -185,7 +185,7 @@ msgstr "interruzione forzata di una sotto-transazione che non è terminata"
 #: plpy_main.c:102
 #, c-format
 msgid "Python major version mismatch in session"
-msgstr "mancata corrispondenza della versione maggiore di Python major nella sessione"
+msgstr "mancata corrispondenza della versione maggiore di Python nella sessione"
 
 #: plpy_main.c:103
 #, c-format
@@ -217,12 +217,12 @@ msgstr "creazione delle variabili globali fallita"
 msgid "could not initialize globals"
 msgstr "inizializzazione delle variabili globali fallita"
 
-#: plpy_main.c:352
+#: plpy_main.c:356
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "funzione PL/Python \"%s\""
 
-#: plpy_main.c:359
+#: plpy_main.c:363
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "blocco di codice anonimo in PL/Python"
@@ -326,11 +326,6 @@ msgstr "SPI_execute_plan ha fallito: %s"
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute ha fallito: %s"
 
-#: plpy_spi.c:440
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "errore sconosciuto nella funzione PLy_spi_execute_fetch_result"
-
 #: plpy_subxactobject.c:122
 #, c-format
 msgid "this subtransaction has already been entered"
@@ -421,12 +416,12 @@ msgstr "l'attributo \"%s\" non esiste nell'oggetto Python"
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Per restituire null in una colonna, l'oggetto restituito deve avere un attributo chiamato come la colonna con valore None."
 
-#: plpy_util.c:70
+#: plpy_util.c:72
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
 msgstr "conversione dell'oggetto Unicode Python in byte fallita"
 
-#: plpy_util.c:75
+#: plpy_util.c:78
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "estrazione dei byte dalla stringa codificata fallita"

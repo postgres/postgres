@@ -1554,7 +1554,7 @@ msgstr "  --disable-triggers       データのみのリストアをする際、
 #: pg_dump.c:891
 #, c-format
 msgid "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
-msgstr "  -T, --exclude-table=TABLE        指定したテーブルのデータをダンプしません\n"
+msgstr "  --exclude-table-data=TABLE       指定したテーブルのデータをダンプしません\n"
 
 #: pg_dump.c:892 pg_dumpall.c:564
 #, c-format
@@ -2431,7 +2431,7 @@ msgstr "  --no-tablespaces         テーブル空間の割り当てをリスト
 #: pg_restore.c:463
 #, c-format
 msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
-msgstr "指定されたセクション（データ前部、データ、データ後部）をリストア\n"
+msgstr "  --section=SECTION        指定されたセクション（データ前部、データ、データ後部）をリストア\n"
 
 #: pg_restore.c:474
 #, c-format

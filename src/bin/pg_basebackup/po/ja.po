@@ -72,7 +72,7 @@ msgid ""
 "  -R, --write-recovery-conf\n"
 "                         write recovery.conf after backup\n"
 msgstr ""
-"  -R, --record-separator-zero\n"
+"  -R, --write-recovery-conf\n"
 "                           バックアップの後にrecovery.confを書き出す\n"
 
 #: pg_basebackup.c:115
@@ -86,7 +86,7 @@ msgid ""
 "  -X, --xlog-method=fetch|stream\n"
 "                         include required WAL files with specified method\n"
 msgstr ""
-"  -x, --xlog-method=fetch|stream\n"
+"  -X, --xlog-method=fetch|stream\n"
 "               必要なWALファイルを指定した方法で含めます\n"
 
 #: pg_basebackup.c:118
@@ -553,7 +553,7 @@ msgstr ""
 #: pg_receivexlog.c:56
 #, c-format
 msgid "  -D, --directory=DIR    receive transaction log files into this directory\n"
-msgstr "  -D, --xlogdir=XLOGDIR     受信したトランザクションログの格納ディレクトリ\n"
+msgstr "  -D, --directory=DIR       受信したトランザクションログの格納ディレクトリ\n"
 
 #: pg_receivexlog.c:57
 #, c-format

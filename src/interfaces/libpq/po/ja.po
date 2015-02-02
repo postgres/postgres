@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1 beta 2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-08-18 12:53+0900\n"
-"PO-Revision-Date: 2013-08-18 13:01+0900\n"
+"PO-Revision-Date: 2014-08-16 16:38+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -320,7 +320,7 @@ msgstr "無効なLDAP URL \"%s\": ポート番号が無効です\n"
 
 #: fe-connect.c:3508
 msgid "could not create LDAP structure\n"
-msgstr "LDAP構造体を作成できませんでした: %s\n"
+msgstr "LDAP構造体を作成できませんでした\n"
 
 #: fe-connect.c:3550
 #, c-format
