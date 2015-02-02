@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-10-24 18:41+0000\n"
-"PO-Revision-Date: 2014-10-25 11:58+0400\n"
+"POT-Creation-Date: 2015-01-13 05:11+0000\n"
+"PO-Revision-Date: 2015-01-13 08:38+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -74,8 +74,8 @@ msgid "pclose failed: %s"
 msgstr "ошибка pclose: %s"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83 command.c:1136 input.c:205 mainloop.c:72
-#: mainloop.c:234 tab-complete.c:3982
+#: ../../common/fe_memutils.c:83 command.c:321 input.c:205 mainloop.c:72
+#: mainloop.c:234
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -94,10 +94,10 @@ msgstr "выяснить эффективный идентификатор по�
 msgid "user does not exist"
 msgstr "пользователь не существует"
 
-#: ../../common/username.c:61
+#: ../../common/username.c:62
 #, c-format
-msgid "user name lookup failure: %s"
-msgstr "ошибка преобразования имени пользователя: %s"
+msgid "user name lookup failure: error code %lu"
+msgstr "распознать имя пользователя не удалось: код ошибки %lu"
 
 #: ../../common/wait_error.c:47
 #, c-format
@@ -159,12 +159,12 @@ msgstr "не удалось получить домашний каталог п�
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: не удалось перейти в каталог \"%s\": %s\n"
 
-#: command.c:308 common.c:446 common.c:886
+#: command.c:307 common.c:446 common.c:886
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "В данный момент вы не подключены к базе данных.\n"
 
-#: command.c:315
+#: command.c:334
 #, c-format
 msgid ""
 "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
@@ -173,7 +173,7 @@ msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в \"%s"
 "\", порт \"%s\".\n"
 
-#: command.c:318
+#: command.c:337
 #, c-format
 msgid ""
 "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
@@ -182,122 +182,122 @@ msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" (сервер \"%s\", "
 "порт \"%s\").\n"
 
-#: command.c:517 command.c:587 command.c:1387
+#: command.c:538 command.c:608 command.c:1403
 #, c-format
 msgid "no query buffer\n"
 msgstr "нет буфера запросов\n"
 
-#: command.c:550 command.c:2983
+#: command.c:571 command.c:3002
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "неверный номер строки: %s\n"
 
-#: command.c:581
+#: command.c:602
 #, c-format
 msgid "The server (version %d.%d) does not support editing function source.\n"
 msgstr ""
 "Сервер (версия %d.%d) не поддерживает редактирование исходного кода "
 "функции.\n"
 
-#: command.c:661
+#: command.c:682
 msgid "No changes"
 msgstr "Изменений нет"
 
-#: command.c:715
+#: command.c:736
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr ""
 "%s: неверное название кодировки символов или не найдена процедура "
 "перекодировки\n"
 
-#: command.c:812 command.c:862 command.c:876 command.c:893 command.c:1000
-#: command.c:1164 command.c:1367 command.c:1398
+#: command.c:833 command.c:883 command.c:897 command.c:914 command.c:1021
+#: command.c:1180 command.c:1383 command.c:1414
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "отсутствует необходимый аргумент \\%s\n"
 
-#: command.c:925
+#: command.c:946
 msgid "Query buffer is empty."
 msgstr "Буфер запроса пуст."
 
-#: command.c:935
+#: command.c:956
 msgid "Enter new password: "
 msgstr "Введите новый пароль: "
 
-#: command.c:936
+#: command.c:957
 msgid "Enter it again: "
 msgstr "Повторите его: "
 
-#: command.c:940
+#: command.c:961
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Пароли не совпадают.\n"
 
-#: command.c:958
+#: command.c:979
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "Ошибка при шифровании пароля.\n"
 
-#: command.c:1029 command.c:1145 command.c:1372
+#: command.c:1050 command.c:1161 command.c:1388
 #, c-format
 msgid "\\%s: error while setting variable\n"
 msgstr "\\%s: не удалось установить переменную\n"
 
-#: command.c:1087
+#: command.c:1108
 msgid "Query buffer reset (cleared)."
 msgstr "Буфер запроса сброшен (очищен)."
 
-#: command.c:1099
+#: command.c:1120
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "История записана в файл \"%s\".\n"
 
-#: command.c:1169
+#: command.c:1185
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\"\n"
 msgstr "\\%s: имя переменной окружения не может содержать знак \"=\"\n"
 
-#: command.c:1211
+#: command.c:1227
 #, c-format
 msgid "The server (version %d.%d) does not support showing function source.\n"
 msgstr "Сервер (версия %d.%d) не поддерживает вывод исходного кода функции.\n"
 
-#: command.c:1217
+#: command.c:1233
 #, c-format
 msgid "function name is required\n"
 msgstr "требуется имя функции\n"
 
-#: command.c:1352
+#: command.c:1368
 msgid "Timing is on."
 msgstr "Секундомер включен."
 
-#: command.c:1354
+#: command.c:1370
 msgid "Timing is off."
 msgstr "Секундомер выключен."
 
-#: command.c:1415 command.c:1435 command.c:2023 command.c:2026 command.c:2029
-#: command.c:2035 command.c:2037 command.c:2045 command.c:2055 command.c:2064
-#: command.c:2078 command.c:2095 command.c:2154 common.c:74 copy.c:333
+#: command.c:1431 command.c:1451 command.c:2039 command.c:2042 command.c:2045
+#: command.c:2051 command.c:2053 command.c:2061 command.c:2071 command.c:2080
+#: command.c:2094 command.c:2111 command.c:2170 common.c:74 copy.c:333
 #: copy.c:393 copy.c:408 psqlscan.l:1677 psqlscan.l:1688 psqlscan.l:1698
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1514
+#: command.c:1530
 #, c-format
 msgid "+ opt(%d) = |%s|\n"
 msgstr "+ opt(%d) = |%s|\n"
 
-#: command.c:1540 startup.c:184
+#: command.c:1556 startup.c:184
 msgid "Password: "
 msgstr "Пароль: "
 
-#: command.c:1545 startup.c:186
+#: command.c:1561 startup.c:186
 #, c-format
 msgid "Password for user %s: "
 msgstr "Пароль пользователя %s: "
 
-#: command.c:1590
+#: command.c:1606
 #, c-format
 msgid ""
 "All connection parameters must be supplied because no database connection "
@@ -306,24 +306,24 @@ msgstr ""
 "Без подключения к базе данных необходимо указывать все параметры "
 "подключения\n"
 
-#: command.c:1676 command.c:3017 common.c:120 common.c:413 common.c:478
+#: command.c:1692 command.c:3036 common.c:120 common.c:413 common.c:478
 #: common.c:929 common.c:954 common.c:1051 copy.c:492 copy.c:695
 #: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1680
+#: command.c:1696
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "Сохранено предыдущее подключение\n"
 
-#: command.c:1684
+#: command.c:1700
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1717
+#: command.c:1733
 #, c-format
 msgid ""
 "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
@@ -332,7 +332,7 @@ msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в \"%s"
 "\", порт \"%s\".\n"
 
-#: command.c:1720
+#: command.c:1736
 #, c-format
 msgid ""
 "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
@@ -341,17 +341,17 @@ msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" (сервер \"%s\", "
 "порт \"%s\") .\n"
 
-#: command.c:1724
+#: command.c:1740
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Вы подключены к базе данных \"%s\" как пользователь \"%s\".\n"
 
-#: command.c:1758
+#: command.c:1774
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, сервер %s)\n"
 
-#: command.c:1766
+#: command.c:1782
 #, c-format
 msgid ""
 "WARNING: %s major version %d.%d, server major version %d.%d.\n"
@@ -360,25 +360,25 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: %s имеет базовую версию %d.%d, а сервер - %d.%d.\n"
 "                Часть функций psql может не работать.\n"
 
-#: command.c:1796
+#: command.c:1812
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %d, compression: %s)\n"
 msgstr "SSL-соединение (протокол: %s, шифр: %s, бит: %d, сжатие: %s)\n"
 
-#: command.c:1798 help.c:46
+#: command.c:1814 help.c:46
 msgid "off"
 msgstr "выкл."
 
-#: command.c:1798 help.c:46
+#: command.c:1814 help.c:46
 msgid "on"
 msgstr "вкл."
 
-#: command.c:1807
+#: command.c:1823
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "SSL-соединение (шифр неизвестен)\n"
 
-#: command.c:1828
+#: command.c:1844
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -391,7 +391,7 @@ msgstr ""
 "                Подробнее об этом смотрите документацию psql, раздел\n"
 "                \"Notes for Windows users\".\n"
 
-#: command.c:1912
+#: command.c:1928
 #, c-format
 msgid ""
 "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
@@ -400,27 +400,27 @@ msgstr ""
 "в переменной окружения PSQL_EDITOR_LINENUMBER_ARG должен быть указан номер "
 "строки\n"
 
-#: command.c:1941
+#: command.c:1957
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "не удалось запустить редактор \"%s\"\n"
 
-#: command.c:1943
+#: command.c:1959
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "не удалось запустить /bin/sh\n"
 
-#: command.c:1981
+#: command.c:1997
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "не удалось найти временный каталог: %s\n"
 
-#: command.c:2008
+#: command.c:2024
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "не удалось открыть временный файл \"%s\": %s\n"
 
-#: command.c:2276
+#: command.c:2292
 #, c-format
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
@@ -429,172 +429,172 @@ msgstr ""
 "допустимые форматы \\pset: unaligned, aligned, wrapped, html, latex, troff-"
 "ms\n"
 
-#: command.c:2295
+#: command.c:2311
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "допустимые стили линий для \\pset: ascii, old-ascii, unicode\n"
 
-#: command.c:2437 command.c:2588
+#: command.c:2457 command.c:2608
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "неизвестный параметр \\pset: %s\n"
 
-#: command.c:2455
+#: command.c:2475
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Стиль границ: %d.\n"
 
-#: command.c:2461
+#: command.c:2481
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "Ширина вывода сброшена.\n"
 
-#: command.c:2463
+#: command.c:2483
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "Ширина вывода: %d.\n"
 
-#: command.c:2470
+#: command.c:2490
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Расширенный вывод включён.\n"
 
-#: command.c:2472
+#: command.c:2492
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "Расширенный вывод применяется автоматически.\n"
 
-#: command.c:2474
+#: command.c:2494
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Расширенный вывод выключен.\n"
 
-#: command.c:2481 command.c:2489
+#: command.c:2501 command.c:2509
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Разделитель полей - нулевой байт.\n"
 
-#: command.c:2483
+#: command.c:2503
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Разделитель полей: \"%s\".\n"
 
-#: command.c:2496
+#: command.c:2516
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "Строка итогов включена.\n"
 
-#: command.c:2498
+#: command.c:2518
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "Строка итогов выключена.\n"
 
-#: command.c:2504
+#: command.c:2524
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Формат вывода: %s.\n"
 
-#: command.c:2510
+#: command.c:2530
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Установлен стиль линий: %s.\n"
 
-#: command.c:2517
+#: command.c:2537
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null выводится как: \"%s\".\n"
 
-#: command.c:2525
+#: command.c:2545
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "Локализованный вывод чисел включён.\n"
 
-#: command.c:2527
+#: command.c:2547
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "Локализованный вывод чисел выключен.\n"
 
-#: command.c:2534
+#: command.c:2554
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "Постраничник используется для вывода длинного текста.\n"
 
-#: command.c:2536
+#: command.c:2556
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "Постраничник используется всегда.\n"
 
-#: command.c:2538
+#: command.c:2558
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "Постраничник выключен.\n"
 
-#: command.c:2545 command.c:2555
+#: command.c:2565 command.c:2575
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Разделитель записей - нулевой байт.\n"
 
-#: command.c:2547
+#: command.c:2567
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "Разделитель записей: <новая строка>.\n"
 
-#: command.c:2549
+#: command.c:2569
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Разделитель записей: \"%s\".\n"
 
-#: command.c:2562
+#: command.c:2582
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Атрибуты HTML-таблицы: \"%s\".\n"
 
-#: command.c:2565
+#: command.c:2585
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Атрибуты HTML-таблицы не заданы.\n"
 
-#: command.c:2572
+#: command.c:2592
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Заголовок: \"%s\".\n"
 
-#: command.c:2574
+#: command.c:2594
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Заголовок не задан.\n"
 
-#: command.c:2581
+#: command.c:2601
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "Режим вывода только кортежей включён.\n"
 
-#: command.c:2583
+#: command.c:2603
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "Режим вывода только кортежей выключен.\n"
 
-#: command.c:2734
+#: command.c:2754
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: ошибка\n"
 
-#: command.c:2754 command.c:2813
+#: command.c:2774 command.c:2832
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch нельзя использовать с пустым запросом\n"
 
-#: command.c:2776
+#: command.c:2795
 #, c-format
 msgid "Watch every %lds\t%s"
 msgstr "Повтор запрос через %ld сек.\t%s"
 
-#: command.c:2820
+#: command.c:2839
 #, c-format
 msgid "\\watch cannot be used with COPY\n"
 msgstr "\\watch нельзя использовать с COPY\n"
 
-#: command.c:2826
+#: command.c:2845
 #, c-format
 msgid "unexpected result status for \\watch\n"
 msgstr "неожиданное состояние результата для \\watch\n"
@@ -2789,23 +2789,23 @@ msgstr "экранирование строк не работает без по�
 #: sql_help.c:1886 sql_help.c:1911 sql_help.c:1947 sql_help.c:2133
 #: sql_help.c:2146 sql_help.c:2163 sql_help.c:2179 sql_help.c:2202
 #: sql_help.c:2253 sql_help.c:2257 sql_help.c:2259 sql_help.c:2265
-#: sql_help.c:2283 sql_help.c:2310 sql_help.c:2350 sql_help.c:2367
-#: sql_help.c:2376 sql_help.c:2426 sql_help.c:2454 sql_help.c:2462
-#: sql_help.c:2470 sql_help.c:2478 sql_help.c:2486 sql_help.c:2494
-#: sql_help.c:2502 sql_help.c:2510 sql_help.c:2519 sql_help.c:2530
-#: sql_help.c:2538 sql_help.c:2546 sql_help.c:2554 sql_help.c:2562
-#: sql_help.c:2572 sql_help.c:2581 sql_help.c:2590 sql_help.c:2598
-#: sql_help.c:2606 sql_help.c:2615 sql_help.c:2623 sql_help.c:2631
-#: sql_help.c:2639 sql_help.c:2647 sql_help.c:2655 sql_help.c:2663
-#: sql_help.c:2671 sql_help.c:2679 sql_help.c:2687 sql_help.c:2696
-#: sql_help.c:2704 sql_help.c:2721 sql_help.c:2736 sql_help.c:2942
-#: sql_help.c:2993 sql_help.c:3021 sql_help.c:3029 sql_help.c:3427
-#: sql_help.c:3475 sql_help.c:3595
+#: sql_help.c:2283 sql_help.c:2310 sql_help.c:2345 sql_help.c:2357
+#: sql_help.c:2366 sql_help.c:2416 sql_help.c:2444 sql_help.c:2452
+#: sql_help.c:2460 sql_help.c:2468 sql_help.c:2476 sql_help.c:2484
+#: sql_help.c:2492 sql_help.c:2500 sql_help.c:2509 sql_help.c:2520
+#: sql_help.c:2528 sql_help.c:2536 sql_help.c:2544 sql_help.c:2552
+#: sql_help.c:2562 sql_help.c:2571 sql_help.c:2580 sql_help.c:2588
+#: sql_help.c:2596 sql_help.c:2605 sql_help.c:2613 sql_help.c:2621
+#: sql_help.c:2629 sql_help.c:2637 sql_help.c:2645 sql_help.c:2653
+#: sql_help.c:2661 sql_help.c:2669 sql_help.c:2677 sql_help.c:2686
+#: sql_help.c:2694 sql_help.c:2711 sql_help.c:2726 sql_help.c:2932
+#: sql_help.c:2983 sql_help.c:3011 sql_help.c:3019 sql_help.c:3417
+#: sql_help.c:3465 sql_help.c:3585
 msgid "name"
 msgstr "имя"
 
 #: sql_help.c:33 sql_help.c:36 sql_help.c:39 sql_help.c:300 sql_help.c:1279
-#: sql_help.c:2427 sql_help.c:3244
+#: sql_help.c:2417 sql_help.c:3234
 msgid "aggregate_signature"
 msgstr "сигнатура_агр_функции"
 
@@ -2834,7 +2834,7 @@ msgstr "новый_владелец"
 msgid "new_schema"
 msgstr "новая_схема"
 
-#: sql_help.c:41 sql_help.c:1326 sql_help.c:2428 sql_help.c:3263
+#: sql_help.c:41 sql_help.c:1326 sql_help.c:2418 sql_help.c:3253
 msgid "where aggregate_signature is:"
 msgstr "где сигнатура_агр_функции:"
 
@@ -2842,9 +2842,9 @@ msgstr "где сигнатура_агр_функции:"
 #: sql_help.c:336 sql_help.c:339 sql_help.c:461 sql_help.c:466 sql_help.c:471
 #: sql_help.c:476 sql_help.c:1295 sql_help.c:1327 sql_help.c:1330
 #: sql_help.c:1333 sql_help.c:1457 sql_help.c:1473 sql_help.c:1476
-#: sql_help.c:1697 sql_help.c:2429 sql_help.c:2432 sql_help.c:2435
-#: sql_help.c:2520 sql_help.c:2880 sql_help.c:3159 sql_help.c:3250
-#: sql_help.c:3264 sql_help.c:3267 sql_help.c:3270
+#: sql_help.c:1697 sql_help.c:2419 sql_help.c:2422 sql_help.c:2425
+#: sql_help.c:2510 sql_help.c:2870 sql_help.c:3149 sql_help.c:3240
+#: sql_help.c:3254 sql_help.c:3257 sql_help.c:3260
 msgid "argmode"
 msgstr "режим_аргумента"
 
@@ -2852,18 +2852,18 @@ msgstr "режим_аргумента"
 #: sql_help.c:337 sql_help.c:340 sql_help.c:462 sql_help.c:467 sql_help.c:472
 #: sql_help.c:477 sql_help.c:1296 sql_help.c:1328 sql_help.c:1331
 #: sql_help.c:1334 sql_help.c:1458 sql_help.c:1474 sql_help.c:1477
-#: sql_help.c:1698 sql_help.c:2430 sql_help.c:2433 sql_help.c:2436
-#: sql_help.c:2521 sql_help.c:3251 sql_help.c:3265 sql_help.c:3268
-#: sql_help.c:3271
+#: sql_help.c:1698 sql_help.c:2420 sql_help.c:2423 sql_help.c:2426
+#: sql_help.c:2511 sql_help.c:3241 sql_help.c:3255 sql_help.c:3258
+#: sql_help.c:3261
 msgid "argname"
 msgstr "имя_аргумента"
 
 #: sql_help.c:44 sql_help.c:47 sql_help.c:50 sql_help.c:312 sql_help.c:335
 #: sql_help.c:338 sql_help.c:341 sql_help.c:463 sql_help.c:468 sql_help.c:473
 #: sql_help.c:478 sql_help.c:1297 sql_help.c:1329 sql_help.c:1332
-#: sql_help.c:1335 sql_help.c:1699 sql_help.c:2431 sql_help.c:2434
-#: sql_help.c:2437 sql_help.c:2522 sql_help.c:3252 sql_help.c:3266
-#: sql_help.c:3269 sql_help.c:3272
+#: sql_help.c:1335 sql_help.c:1699 sql_help.c:2421 sql_help.c:2424
+#: sql_help.c:2427 sql_help.c:2512 sql_help.c:3242 sql_help.c:3256
+#: sql_help.c:3259 sql_help.c:3262
 msgid "argtype"
 msgstr "тип_аргумента"
 
@@ -2871,7 +2871,7 @@ msgstr "тип_аргумента"
 #: sql_help.c:795 sql_help.c:1013 sql_help.c:1123 sql_help.c:1149
 #: sql_help.c:1383 sql_help.c:1389 sql_help.c:1640 sql_help.c:1664
 #: sql_help.c:1669 sql_help.c:1739 sql_help.c:1887 sql_help.c:1968
-#: sql_help.c:2148 sql_help.c:2311 sql_help.c:2333 sql_help.c:2755
+#: sql_help.c:2148 sql_help.c:2311 sql_help.c:2333 sql_help.c:2745
 msgid "option"
 msgstr "параметр"
 
@@ -2893,7 +2893,7 @@ msgstr "новое_табл_пространство"
 #: sql_help.c:114 sql_help.c:117 sql_help.c:119 sql_help.c:483 sql_help.c:485
 #: sql_help.c:486 sql_help.c:721 sql_help.c:725 sql_help.c:728 sql_help.c:811
 #: sql_help.c:814 sql_help.c:1131 sql_help.c:1134 sql_help.c:1136
-#: sql_help.c:1707 sql_help.c:3046 sql_help.c:3416
+#: sql_help.c:1707 sql_help.c:3036 sql_help.c:3406
 msgid "configuration_parameter"
 msgstr "параметр_конфигурации"
 
@@ -2904,8 +2904,8 @@ msgstr "параметр_конфигурации"
 #: sql_help.c:1641 sql_help.c:1665 sql_help.c:1670 sql_help.c:1708
 #: sql_help.c:1709 sql_help.c:1768 sql_help.c:1800 sql_help.c:1969
 #: sql_help.c:2043 sql_help.c:2051 sql_help.c:2083 sql_help.c:2105
-#: sql_help.c:2122 sql_help.c:2149 sql_help.c:2334 sql_help.c:3417
-#: sql_help.c:3418
+#: sql_help.c:2122 sql_help.c:2149 sql_help.c:2334 sql_help.c:3407
+#: sql_help.c:3408
 msgid "value"
 msgstr "значение"
 
@@ -2914,8 +2914,8 @@ msgid "target_role"
 msgstr "целевая_роль"
 
 #: sql_help.c:178 sql_help.c:1624 sql_help.c:1929 sql_help.c:1934
-#: sql_help.c:2862 sql_help.c:2869 sql_help.c:2883 sql_help.c:2889
-#: sql_help.c:3141 sql_help.c:3148 sql_help.c:3162 sql_help.c:3168
+#: sql_help.c:2852 sql_help.c:2859 sql_help.c:2873 sql_help.c:2879
+#: sql_help.c:3131 sql_help.c:3138 sql_help.c:3152 sql_help.c:3158
 msgid "schema_name"
 msgstr "имя_схемы"
 
@@ -2933,25 +2933,25 @@ msgstr "где допустимое предложение_GRANT_или_REVOKE:"
 #: sql_help.c:1746 sql_help.c:1747 sql_help.c:1892 sql_help.c:1893
 #: sql_help.c:1894 sql_help.c:1895 sql_help.c:1896 sql_help.c:2316
 #: sql_help.c:2317 sql_help.c:2318 sql_help.c:2319 sql_help.c:2320
-#: sql_help.c:2863 sql_help.c:2867 sql_help.c:2870 sql_help.c:2872
-#: sql_help.c:2874 sql_help.c:2876 sql_help.c:2878 sql_help.c:2884
-#: sql_help.c:2886 sql_help.c:2888 sql_help.c:2890 sql_help.c:2892
-#: sql_help.c:2894 sql_help.c:2895 sql_help.c:2896 sql_help.c:3142
-#: sql_help.c:3146 sql_help.c:3149 sql_help.c:3151 sql_help.c:3153
-#: sql_help.c:3155 sql_help.c:3157 sql_help.c:3163 sql_help.c:3165
-#: sql_help.c:3167 sql_help.c:3169 sql_help.c:3171 sql_help.c:3173
-#: sql_help.c:3174 sql_help.c:3175 sql_help.c:3437
+#: sql_help.c:2853 sql_help.c:2857 sql_help.c:2860 sql_help.c:2862
+#: sql_help.c:2864 sql_help.c:2866 sql_help.c:2868 sql_help.c:2874
+#: sql_help.c:2876 sql_help.c:2878 sql_help.c:2880 sql_help.c:2882
+#: sql_help.c:2884 sql_help.c:2885 sql_help.c:2886 sql_help.c:3132
+#: sql_help.c:3136 sql_help.c:3139 sql_help.c:3141 sql_help.c:3143
+#: sql_help.c:3145 sql_help.c:3147 sql_help.c:3153 sql_help.c:3155
+#: sql_help.c:3157 sql_help.c:3159 sql_help.c:3161 sql_help.c:3163
+#: sql_help.c:3164 sql_help.c:3165 sql_help.c:3427
 msgid "role_name"
 msgstr "имя_роли"
 
 #: sql_help.c:214 sql_help.c:414 sql_help.c:902 sql_help.c:904 sql_help.c:1166
 #: sql_help.c:1594 sql_help.c:1598 sql_help.c:1764 sql_help.c:2055
-#: sql_help.c:2065 sql_help.c:2087 sql_help.c:2910 sql_help.c:3313
-#: sql_help.c:3314 sql_help.c:3318 sql_help.c:3323 sql_help.c:3391
-#: sql_help.c:3392 sql_help.c:3397 sql_help.c:3402 sql_help.c:3531
-#: sql_help.c:3532 sql_help.c:3536 sql_help.c:3541 sql_help.c:3621
-#: sql_help.c:3623 sql_help.c:3654 sql_help.c:3700 sql_help.c:3701
-#: sql_help.c:3705 sql_help.c:3710
+#: sql_help.c:2065 sql_help.c:2087 sql_help.c:2900 sql_help.c:3303
+#: sql_help.c:3304 sql_help.c:3308 sql_help.c:3313 sql_help.c:3381
+#: sql_help.c:3382 sql_help.c:3387 sql_help.c:3392 sql_help.c:3521
+#: sql_help.c:3522 sql_help.c:3526 sql_help.c:3531 sql_help.c:3611
+#: sql_help.c:3613 sql_help.c:3644 sql_help.c:3690 sql_help.c:3691
+#: sql_help.c:3695 sql_help.c:3700
 msgid "expression"
 msgstr "выражение"
 
@@ -2981,17 +2981,17 @@ msgstr "элемент_объект"
 msgid "where member_object is:"
 msgstr "где элемент_объект:"
 
-#: sql_help.c:299 sql_help.c:1278 sql_help.c:3243
+#: sql_help.c:299 sql_help.c:1278 sql_help.c:3233
 msgid "aggregate_name"
 msgstr "имя_агр_функции"
 
 #: sql_help.c:301 sql_help.c:1280 sql_help.c:1516 sql_help.c:1520
-#: sql_help.c:1522 sql_help.c:2445
+#: sql_help.c:1522 sql_help.c:2435
 msgid "source_type"
 msgstr "исходный_тип"
 
 #: sql_help.c:302 sql_help.c:1281 sql_help.c:1517 sql_help.c:1521
-#: sql_help.c:1523 sql_help.c:2446
+#: sql_help.c:1523 sql_help.c:2436
 msgid "target_type"
 msgstr "целевой_тип"
 
@@ -3005,19 +3005,19 @@ msgstr "целевой_тип"
 #: sql_help.c:1308 sql_help.c:1309 sql_help.c:1312 sql_help.c:1313
 #: sql_help.c:1314 sql_help.c:1315 sql_help.c:1316 sql_help.c:1317
 #: sql_help.c:1318 sql_help.c:1319 sql_help.c:1320 sql_help.c:1323
-#: sql_help.c:1324 sql_help.c:3240 sql_help.c:3245 sql_help.c:3246
-#: sql_help.c:3247 sql_help.c:3248 sql_help.c:3254 sql_help.c:3255
-#: sql_help.c:3256 sql_help.c:3257 sql_help.c:3258 sql_help.c:3259
-#: sql_help.c:3260 sql_help.c:3261
+#: sql_help.c:1324 sql_help.c:3230 sql_help.c:3235 sql_help.c:3236
+#: sql_help.c:3237 sql_help.c:3238 sql_help.c:3244 sql_help.c:3245
+#: sql_help.c:3246 sql_help.c:3247 sql_help.c:3248 sql_help.c:3249
+#: sql_help.c:3250 sql_help.c:3251
 msgid "object_name"
 msgstr "имя_объекта"
 
 #: sql_help.c:309 sql_help.c:665 sql_help.c:1294 sql_help.c:1518
 #: sql_help.c:1553 sql_help.c:1612 sql_help.c:1817 sql_help.c:1848
-#: sql_help.c:2207 sql_help.c:2879 sql_help.c:3158 sql_help.c:3249
-#: sql_help.c:3339 sql_help.c:3343 sql_help.c:3347 sql_help.c:3350
-#: sql_help.c:3557 sql_help.c:3561 sql_help.c:3565 sql_help.c:3568
-#: sql_help.c:3726 sql_help.c:3730 sql_help.c:3734 sql_help.c:3737
+#: sql_help.c:2207 sql_help.c:2869 sql_help.c:3148 sql_help.c:3239
+#: sql_help.c:3329 sql_help.c:3333 sql_help.c:3337 sql_help.c:3340
+#: sql_help.c:3547 sql_help.c:3551 sql_help.c:3555 sql_help.c:3558
+#: sql_help.c:3716 sql_help.c:3720 sql_help.c:3724 sql_help.c:3727
 msgid "function_name"
 msgstr "имя_функции"
 
@@ -3026,19 +3026,19 @@ msgid "operator_name"
 msgstr "имя_оператора"
 
 #: sql_help.c:315 sql_help.c:613 sql_help.c:617 sql_help.c:1302
-#: sql_help.c:1818 sql_help.c:2563
+#: sql_help.c:1818 sql_help.c:2553
 msgid "left_type"
 msgstr "тип_слева"
 
 #: sql_help.c:316 sql_help.c:614 sql_help.c:618 sql_help.c:1303
-#: sql_help.c:1819 sql_help.c:2564
+#: sql_help.c:1819 sql_help.c:2554
 msgid "right_type"
 msgstr "тип_справа"
 
 #: sql_help.c:318 sql_help.c:320 sql_help.c:630 sql_help.c:633 sql_help.c:636
 #: sql_help.c:656 sql_help.c:668 sql_help.c:676 sql_help.c:679 sql_help.c:682
 #: sql_help.c:1305 sql_help.c:1307 sql_help.c:1838 sql_help.c:1859
-#: sql_help.c:2070 sql_help.c:2573 sql_help.c:2582
+#: sql_help.c:2070 sql_help.c:2563 sql_help.c:2572
 msgid "index_method"
 msgstr "метод_индекса"
 
@@ -3070,10 +3070,10 @@ msgstr "действие"
 #: sql_help.c:1662 sql_help.c:1702 sql_help.c:1763 sql_help.c:1798
 #: sql_help.c:1954 sql_help.c:2034 sql_help.c:2047 sql_help.c:2066
 #: sql_help.c:2068 sql_help.c:2075 sql_help.c:2086 sql_help.c:2103
-#: sql_help.c:2210 sql_help.c:2351 sql_help.c:2864 sql_help.c:2865
-#: sql_help.c:2909 sql_help.c:3143 sql_help.c:3144 sql_help.c:3242
-#: sql_help.c:3362 sql_help.c:3580 sql_help.c:3620 sql_help.c:3622
-#: sql_help.c:3639 sql_help.c:3642 sql_help.c:3749
+#: sql_help.c:2210 sql_help.c:2346 sql_help.c:2854 sql_help.c:2855
+#: sql_help.c:2899 sql_help.c:3133 sql_help.c:3134 sql_help.c:3232
+#: sql_help.c:3352 sql_help.c:3570 sql_help.c:3610 sql_help.c:3612
+#: sql_help.c:3629 sql_help.c:3632 sql_help.c:3739
 msgid "column_name"
 msgstr "имя_колонки"
 
@@ -3087,7 +3087,7 @@ msgstr "где допустимое действие:"
 
 #: sql_help.c:407 sql_help.c:412 sql_help.c:895 sql_help.c:900 sql_help.c:1089
 #: sql_help.c:1093 sql_help.c:1592 sql_help.c:1663 sql_help.c:1837
-#: sql_help.c:2035 sql_help.c:2255 sql_help.c:2994
+#: sql_help.c:2035 sql_help.c:2255 sql_help.c:2984
 msgid "data_type"
 msgstr "тип_данных"
 
@@ -3130,13 +3130,13 @@ msgstr "имя_группы"
 
 #: sql_help.c:498 sql_help.c:500 sql_help.c:1147 sql_help.c:1569
 #: sql_help.c:1930 sql_help.c:1932 sql_help.c:1935 sql_help.c:1936
-#: sql_help.c:2119 sql_help.c:2331 sql_help.c:2712 sql_help.c:3447
+#: sql_help.c:2119 sql_help.c:2331 sql_help.c:2702 sql_help.c:3437
 msgid "user_name"
 msgstr "имя_пользователя"
 
 #: sql_help.c:518 sql_help.c:1574 sql_help.c:1769 sql_help.c:1801
 #: sql_help.c:2044 sql_help.c:2052 sql_help.c:2084 sql_help.c:2106
-#: sql_help.c:2118 sql_help.c:2891 sql_help.c:3170
+#: sql_help.c:2118 sql_help.c:2881 sql_help.c:3160
 msgid "tablespace_name"
 msgstr "табл_пространство"
 
@@ -3146,7 +3146,7 @@ msgstr "табл_пространство"
 msgid "storage_parameter"
 msgstr "параметр_хранения"
 
-#: sql_help.c:546 sql_help.c:1299 sql_help.c:3253
+#: sql_help.c:546 sql_help.c:1299 sql_help.c:3243
 msgid "large_object_oid"
 msgstr "oid_большого_объекта"
 
@@ -3186,8 +3186,8 @@ msgstr "пароль"
 msgid "timestamp"
 msgstr "timestamp"
 
-#: sql_help.c:720 sql_help.c:724 sql_help.c:727 sql_help.c:730 sql_help.c:2871
-#: sql_help.c:3150
+#: sql_help.c:720 sql_help.c:724 sql_help.c:727 sql_help.c:730 sql_help.c:2861
+#: sql_help.c:3140
 msgid "database_name"
 msgstr "имя_БД"
 
@@ -3195,13 +3195,13 @@ msgstr "имя_БД"
 #: sql_help.c:1227 sql_help.c:1286 sql_help.c:1311 sql_help.c:1322
 #: sql_help.c:1379 sql_help.c:1384 sql_help.c:1661 sql_help.c:1761
 #: sql_help.c:1797 sql_help.c:1913 sql_help.c:1953 sql_help.c:2033
-#: sql_help.c:2045 sql_help.c:2102 sql_help.c:2204 sql_help.c:2390
-#: sql_help.c:2607 sql_help.c:2688 sql_help.c:2861 sql_help.c:2866
-#: sql_help.c:2908 sql_help.c:3140 sql_help.c:3145 sql_help.c:3241
-#: sql_help.c:3328 sql_help.c:3330 sql_help.c:3368 sql_help.c:3407
-#: sql_help.c:3546 sql_help.c:3548 sql_help.c:3586 sql_help.c:3618
-#: sql_help.c:3638 sql_help.c:3640 sql_help.c:3641 sql_help.c:3715
-#: sql_help.c:3717 sql_help.c:3755
+#: sql_help.c:2045 sql_help.c:2102 sql_help.c:2204 sql_help.c:2380
+#: sql_help.c:2597 sql_help.c:2678 sql_help.c:2851 sql_help.c:2856
+#: sql_help.c:2898 sql_help.c:3130 sql_help.c:3135 sql_help.c:3231
+#: sql_help.c:3318 sql_help.c:3320 sql_help.c:3358 sql_help.c:3397
+#: sql_help.c:3536 sql_help.c:3538 sql_help.c:3576 sql_help.c:3608
+#: sql_help.c:3628 sql_help.c:3630 sql_help.c:3631 sql_help.c:3705
+#: sql_help.c:3707 sql_help.c:3745
 msgid "table_name"
 msgstr "имя_таблицы"
 
@@ -3217,8 +3217,8 @@ msgstr "мин_значение"
 msgid "maxvalue"
 msgstr "макс_значение"
 
-#: sql_help.c:772 sql_help.c:1951 sql_help.c:3326 sql_help.c:3405
-#: sql_help.c:3544 sql_help.c:3658 sql_help.c:3713
+#: sql_help.c:772 sql_help.c:1951 sql_help.c:3316 sql_help.c:3395
+#: sql_help.c:3534 sql_help.c:3648 sql_help.c:3703
 msgid "start"
 msgstr "начальное_значение"
 
@@ -3246,7 +3246,7 @@ msgstr "имя_правила_перезаписи"
 msgid "parent_table"
 msgstr "таблица_родитель"
 
-#: sql_help.c:934 sql_help.c:2046 sql_help.c:2893 sql_help.c:3172
+#: sql_help.c:934 sql_help.c:2046 sql_help.c:2883 sql_help.c:3162
 msgid "type_name"
 msgstr "имя_типа"
 
@@ -3292,23 +3292,23 @@ msgid "existing_enum_value"
 msgstr "существующее_значение_перечисления"
 
 #: sql_help.c:1148 sql_help.c:1668 sql_help.c:1964 sql_help.c:2332
-#: sql_help.c:2713 sql_help.c:2877 sql_help.c:3156
+#: sql_help.c:2703 sql_help.c:2867 sql_help.c:3146
 msgid "server_name"
 msgstr "имя_сервера"
 
-#: sql_help.c:1176 sql_help.c:1179 sql_help.c:2352
+#: sql_help.c:1176 sql_help.c:1179 sql_help.c:2347
 msgid "view_option_name"
 msgstr "имя_параметра_представления"
 
-#: sql_help.c:1177 sql_help.c:2353
+#: sql_help.c:1177 sql_help.c:2348
 msgid "view_option_value"
 msgstr "значение_параметра_представления"
 
-#: sql_help.c:1202 sql_help.c:3463 sql_help.c:3465 sql_help.c:3489
+#: sql_help.c:1202 sql_help.c:3453 sql_help.c:3455 sql_help.c:3479
 msgid "transaction_mode"
 msgstr "режим_транзакции"
 
-#: sql_help.c:1203 sql_help.c:3466 sql_help.c:3490
+#: sql_help.c:1203 sql_help.c:3456 sql_help.c:3480
 msgid "where transaction_mode is one of:"
 msgstr "где допустимый режим_транзакции:"
 
@@ -3320,15 +3320,15 @@ msgstr "имя_отношения"
 msgid "rule_name"
 msgstr "имя_правила"
 
-#: sql_help.c:1325 sql_help.c:2357
+#: sql_help.c:1325
 msgid "text"
 msgstr "текст"
 
-#: sql_help.c:1350 sql_help.c:3003 sql_help.c:3190
+#: sql_help.c:1350 sql_help.c:2993 sql_help.c:3180
 msgid "transaction_id"
 msgstr "код_транзакции"
 
-#: sql_help.c:1381 sql_help.c:1387 sql_help.c:2929
+#: sql_help.c:1381 sql_help.c:1387 sql_help.c:2919
 msgid "filename"
 msgstr "имя_файла"
 
@@ -3337,12 +3337,12 @@ msgstr "имя_файла"
 msgid "command"
 msgstr "команда"
 
-#: sql_help.c:1386 sql_help.c:1802 sql_help.c:2107 sql_help.c:2354
-#: sql_help.c:2377 sql_help.c:2911
+#: sql_help.c:1386 sql_help.c:1802 sql_help.c:2107 sql_help.c:2349
+#: sql_help.c:2367 sql_help.c:2901
 msgid "query"
 msgstr "запрос"
 
-#: sql_help.c:1390 sql_help.c:2758
+#: sql_help.c:1390 sql_help.c:2748
 msgid "where option can be one of:"
 msgstr "где допустимый параметр:"
 
@@ -3350,9 +3350,8 @@ msgstr "где допустимый параметр:"
 msgid "format_name"
 msgstr "имя_формата"
 
-#: sql_help.c:1392 sql_help.c:1393 sql_help.c:1396 sql_help.c:2356
-#: sql_help.c:2759 sql_help.c:2760 sql_help.c:2761 sql_help.c:2762
-#: sql_help.c:2763
+#: sql_help.c:1392 sql_help.c:1393 sql_help.c:1396 sql_help.c:2749
+#: sql_help.c:2750 sql_help.c:2751 sql_help.c:2752 sql_help.c:2753
 msgid "boolean"
 msgstr "логическое_значение"
 
@@ -3508,7 +3507,7 @@ msgstr "тип_возврата"
 msgid "column_type"
 msgstr "тип_колонки"
 
-#: sql_help.c:1704 sql_help.c:2411 sql_help.c:2885 sql_help.c:3164
+#: sql_help.c:1704 sql_help.c:2401 sql_help.c:2875 sql_help.c:3154
 msgid "lang_name"
 msgstr "имя_языка"
 
@@ -3580,9 +3579,9 @@ msgstr "имя_семейства"
 msgid "storage_type"
 msgstr "тип_хранения"
 
-#: sql_help.c:1914 sql_help.c:2206 sql_help.c:2393 sql_help.c:3317
-#: sql_help.c:3319 sql_help.c:3396 sql_help.c:3398 sql_help.c:3535
-#: sql_help.c:3537 sql_help.c:3625 sql_help.c:3704 sql_help.c:3706
+#: sql_help.c:1914 sql_help.c:2206 sql_help.c:2383 sql_help.c:3307
+#: sql_help.c:3309 sql_help.c:3386 sql_help.c:3388 sql_help.c:3525
+#: sql_help.c:3527 sql_help.c:3615 sql_help.c:3694 sql_help.c:3696
 msgid "condition"
 msgstr "условие"
 
@@ -3602,7 +3601,7 @@ msgstr "тип_сервера"
 msgid "server_version"
 msgstr "версия_сервера"
 
-#: sql_help.c:1967 sql_help.c:2875 sql_help.c:3154
+#: sql_help.c:1967 sql_help.c:2865 sql_help.c:3144
 msgid "fdw_name"
 msgstr "имя_обёртки_сторонних_данных"
 
@@ -3635,8 +3634,8 @@ msgstr "и ограничение_таблицы:"
 msgid "exclude_element"
 msgstr "объект_исключения"
 
-#: sql_help.c:2072 sql_help.c:3324 sql_help.c:3403 sql_help.c:3542
-#: sql_help.c:3656 sql_help.c:3711
+#: sql_help.c:2072 sql_help.c:3314 sql_help.c:3393 sql_help.c:3532
+#: sql_help.c:3646 sql_help.c:3701
 msgid "operator"
 msgstr "оператор"
 
@@ -3700,7 +3699,7 @@ msgstr "ссылающаяся_таблица"
 msgid "arguments"
 msgstr "аргументы"
 
-#: sql_help.c:2258 sql_help.c:3262
+#: sql_help.c:2258 sql_help.c:3252
 msgid "label"
 msgstr "метка"
 
@@ -3788,225 +3787,213 @@ msgstr "разделитель"
 msgid "collatable"
 msgstr "сортируемый"
 
-#: sql_help.c:2355
-msgid "where view_option_name can be one of:"
-msgstr "где допустимое имя_параметра_представления:"
-
-#: sql_help.c:2358
-msgid "local"
-msgstr "local"
-
-#: sql_help.c:2359
-msgid "cascaded"
-msgstr "cascaded"
-
-#: sql_help.c:2389 sql_help.c:2907 sql_help.c:3312 sql_help.c:3390
-#: sql_help.c:3530 sql_help.c:3617 sql_help.c:3699
+#: sql_help.c:2379 sql_help.c:2897 sql_help.c:3302 sql_help.c:3380
+#: sql_help.c:3520 sql_help.c:3607 sql_help.c:3689
 msgid "with_query"
 msgstr "запрос_WITH"
 
-#: sql_help.c:2391 sql_help.c:3331 sql_help.c:3334 sql_help.c:3337
-#: sql_help.c:3341 sql_help.c:3345 sql_help.c:3353 sql_help.c:3549
-#: sql_help.c:3552 sql_help.c:3555 sql_help.c:3559 sql_help.c:3563
-#: sql_help.c:3571 sql_help.c:3619 sql_help.c:3718 sql_help.c:3721
-#: sql_help.c:3724 sql_help.c:3728 sql_help.c:3732 sql_help.c:3740
+#: sql_help.c:2381 sql_help.c:3321 sql_help.c:3324 sql_help.c:3327
+#: sql_help.c:3331 sql_help.c:3335 sql_help.c:3343 sql_help.c:3539
+#: sql_help.c:3542 sql_help.c:3545 sql_help.c:3549 sql_help.c:3553
+#: sql_help.c:3561 sql_help.c:3609 sql_help.c:3708 sql_help.c:3711
+#: sql_help.c:3714 sql_help.c:3718 sql_help.c:3722 sql_help.c:3730
 msgid "alias"
 msgstr "псевдоним"
 
-#: sql_help.c:2392
+#: sql_help.c:2382
 msgid "using_list"
 msgstr "список_USING"
 
-#: sql_help.c:2394 sql_help.c:2789 sql_help.c:2970 sql_help.c:3626
+#: sql_help.c:2384 sql_help.c:2779 sql_help.c:2960 sql_help.c:3616
 msgid "cursor_name"
 msgstr "имя_курсора"
 
-#: sql_help.c:2395 sql_help.c:2912 sql_help.c:3627
+#: sql_help.c:2385 sql_help.c:2902 sql_help.c:3617
 msgid "output_expression"
 msgstr "выражение_результата"
 
-#: sql_help.c:2396 sql_help.c:2913 sql_help.c:3315 sql_help.c:3393
-#: sql_help.c:3533 sql_help.c:3628 sql_help.c:3702
+#: sql_help.c:2386 sql_help.c:2903 sql_help.c:3305 sql_help.c:3383
+#: sql_help.c:3523 sql_help.c:3618 sql_help.c:3692
 msgid "output_name"
 msgstr "имя_результата"
 
-#: sql_help.c:2412
+#: sql_help.c:2402
 msgid "code"
 msgstr "внедрённый_код"
 
-#: sql_help.c:2737
+#: sql_help.c:2727
 msgid "parameter"
 msgstr "параметр"
 
-#: sql_help.c:2756 sql_help.c:2757 sql_help.c:2995
+#: sql_help.c:2746 sql_help.c:2747 sql_help.c:2985
 msgid "statement"
 msgstr "оператор"
 
-#: sql_help.c:2788 sql_help.c:2969
+#: sql_help.c:2778 sql_help.c:2959
 msgid "direction"
 msgstr "направление"
 
-#: sql_help.c:2790 sql_help.c:2971
+#: sql_help.c:2780 sql_help.c:2961
 msgid "where direction can be empty or one of:"
 msgstr "где допустимое направление пустое или:"
 
-#: sql_help.c:2791 sql_help.c:2792 sql_help.c:2793 sql_help.c:2794
-#: sql_help.c:2795 sql_help.c:2972 sql_help.c:2973 sql_help.c:2974
-#: sql_help.c:2975 sql_help.c:2976 sql_help.c:3325 sql_help.c:3327
-#: sql_help.c:3404 sql_help.c:3406 sql_help.c:3543 sql_help.c:3545
-#: sql_help.c:3657 sql_help.c:3659 sql_help.c:3712 sql_help.c:3714
+#: sql_help.c:2781 sql_help.c:2782 sql_help.c:2783 sql_help.c:2784
+#: sql_help.c:2785 sql_help.c:2962 sql_help.c:2963 sql_help.c:2964
+#: sql_help.c:2965 sql_help.c:2966 sql_help.c:3315 sql_help.c:3317
+#: sql_help.c:3394 sql_help.c:3396 sql_help.c:3533 sql_help.c:3535
+#: sql_help.c:3647 sql_help.c:3649 sql_help.c:3702 sql_help.c:3704
 msgid "count"
 msgstr "число"
 
-#: sql_help.c:2868 sql_help.c:3147
+#: sql_help.c:2858 sql_help.c:3137
 msgid "sequence_name"
 msgstr "имя_последовательности"
 
-#: sql_help.c:2873 sql_help.c:3152
+#: sql_help.c:2863 sql_help.c:3142
 msgid "domain_name"
 msgstr "имя_домена"
 
-#: sql_help.c:2881 sql_help.c:3160
+#: sql_help.c:2871 sql_help.c:3150
 msgid "arg_name"
 msgstr "имя_аргумента"
 
-#: sql_help.c:2882 sql_help.c:3161
+#: sql_help.c:2872 sql_help.c:3151
 msgid "arg_type"
 msgstr "тип_аргумента"
 
-#: sql_help.c:2887 sql_help.c:3166
+#: sql_help.c:2877 sql_help.c:3156
 msgid "loid"
 msgstr "код_БО"
 
-#: sql_help.c:2921 sql_help.c:2984 sql_help.c:3603
+#: sql_help.c:2911 sql_help.c:2974 sql_help.c:3593
 msgid "channel"
 msgstr "канал"
 
-#: sql_help.c:2943
+#: sql_help.c:2933
 msgid "lockmode"
 msgstr "режим_блокировки"
 
-#: sql_help.c:2944
+#: sql_help.c:2934
 msgid "where lockmode is one of:"
 msgstr "где допустимый режим_блокировки:"
 
-#: sql_help.c:2985
+#: sql_help.c:2975
 msgid "payload"
 msgstr "сообщение_нагрузка"
 
-#: sql_help.c:3011
+#: sql_help.c:3001
 msgid "old_role"
 msgstr "старая_роль"
 
-#: sql_help.c:3012
+#: sql_help.c:3002
 msgid "new_role"
 msgstr "новая_роль"
 
-#: sql_help.c:3037 sql_help.c:3198 sql_help.c:3206
+#: sql_help.c:3027 sql_help.c:3188 sql_help.c:3196
 msgid "savepoint_name"
 msgstr "имя_точки_сохранения"
 
-#: sql_help.c:3239
+#: sql_help.c:3229
 msgid "provider"
 msgstr "поставщик"
 
-#: sql_help.c:3316 sql_help.c:3355 sql_help.c:3357 sql_help.c:3395
-#: sql_help.c:3534 sql_help.c:3573 sql_help.c:3575 sql_help.c:3703
-#: sql_help.c:3742 sql_help.c:3744
+#: sql_help.c:3306 sql_help.c:3345 sql_help.c:3347 sql_help.c:3385
+#: sql_help.c:3524 sql_help.c:3563 sql_help.c:3565 sql_help.c:3693
+#: sql_help.c:3732 sql_help.c:3734
 msgid "from_item"
 msgstr "источник_данных"
 
-#: sql_help.c:3320 sql_help.c:3399 sql_help.c:3538 sql_help.c:3707
+#: sql_help.c:3310 sql_help.c:3389 sql_help.c:3528 sql_help.c:3697
 msgid "window_name"
 msgstr "имя_окна"
 
-#: sql_help.c:3321 sql_help.c:3400 sql_help.c:3539 sql_help.c:3708
+#: sql_help.c:3311 sql_help.c:3390 sql_help.c:3529 sql_help.c:3698
 msgid "window_definition"
 msgstr "определение_окна"
 
-#: sql_help.c:3322 sql_help.c:3333 sql_help.c:3363 sql_help.c:3401
-#: sql_help.c:3540 sql_help.c:3551 sql_help.c:3581 sql_help.c:3709
-#: sql_help.c:3720 sql_help.c:3750
+#: sql_help.c:3312 sql_help.c:3323 sql_help.c:3353 sql_help.c:3391
+#: sql_help.c:3530 sql_help.c:3541 sql_help.c:3571 sql_help.c:3699
+#: sql_help.c:3710 sql_help.c:3740
 msgid "select"
 msgstr "select"
 
-#: sql_help.c:3329 sql_help.c:3547 sql_help.c:3716
+#: sql_help.c:3319 sql_help.c:3537 sql_help.c:3706
 msgid "where from_item can be one of:"
 msgstr "где допустимый источник_данных:"
 
-#: sql_help.c:3332 sql_help.c:3335 sql_help.c:3338 sql_help.c:3342
-#: sql_help.c:3354 sql_help.c:3550 sql_help.c:3553 sql_help.c:3556
-#: sql_help.c:3560 sql_help.c:3572 sql_help.c:3719 sql_help.c:3722
-#: sql_help.c:3725 sql_help.c:3729 sql_help.c:3741
+#: sql_help.c:3322 sql_help.c:3325 sql_help.c:3328 sql_help.c:3332
+#: sql_help.c:3344 sql_help.c:3540 sql_help.c:3543 sql_help.c:3546
+#: sql_help.c:3550 sql_help.c:3562 sql_help.c:3709 sql_help.c:3712
+#: sql_help.c:3715 sql_help.c:3719 sql_help.c:3731
 msgid "column_alias"
 msgstr "псевдоним_колонки"
 
-#: sql_help.c:3336 sql_help.c:3361 sql_help.c:3554 sql_help.c:3579
-#: sql_help.c:3723 sql_help.c:3748
+#: sql_help.c:3326 sql_help.c:3351 sql_help.c:3544 sql_help.c:3569
+#: sql_help.c:3713 sql_help.c:3738
 msgid "with_query_name"
 msgstr "имя_запроса_WITH"
 
-#: sql_help.c:3340 sql_help.c:3344 sql_help.c:3348 sql_help.c:3351
-#: sql_help.c:3558 sql_help.c:3562 sql_help.c:3566 sql_help.c:3569
-#: sql_help.c:3727 sql_help.c:3731 sql_help.c:3735 sql_help.c:3738
+#: sql_help.c:3330 sql_help.c:3334 sql_help.c:3338 sql_help.c:3341
+#: sql_help.c:3548 sql_help.c:3552 sql_help.c:3556 sql_help.c:3559
+#: sql_help.c:3717 sql_help.c:3721 sql_help.c:3725 sql_help.c:3728
 msgid "argument"
 msgstr "аргумент"
 
-#: sql_help.c:3346 sql_help.c:3349 sql_help.c:3352 sql_help.c:3564
-#: sql_help.c:3567 sql_help.c:3570 sql_help.c:3733 sql_help.c:3736
-#: sql_help.c:3739
+#: sql_help.c:3336 sql_help.c:3339 sql_help.c:3342 sql_help.c:3554
+#: sql_help.c:3557 sql_help.c:3560 sql_help.c:3723 sql_help.c:3726
+#: sql_help.c:3729
 msgid "column_definition"
 msgstr "определение_колонки"
 
-#: sql_help.c:3356 sql_help.c:3574 sql_help.c:3743
+#: sql_help.c:3346 sql_help.c:3564 sql_help.c:3733
 msgid "join_type"
 msgstr "тип_соединения"
 
-#: sql_help.c:3358 sql_help.c:3576 sql_help.c:3745
+#: sql_help.c:3348 sql_help.c:3566 sql_help.c:3735
 msgid "join_condition"
 msgstr "условие_соединения"
 
-#: sql_help.c:3359 sql_help.c:3577 sql_help.c:3746
+#: sql_help.c:3349 sql_help.c:3567 sql_help.c:3736
 msgid "join_column"
 msgstr "колонка_соединения"
 
-#: sql_help.c:3360 sql_help.c:3578 sql_help.c:3747
+#: sql_help.c:3350 sql_help.c:3568 sql_help.c:3737
 msgid "and with_query is:"
 msgstr "и запрос_WITH:"
 
-#: sql_help.c:3364 sql_help.c:3582 sql_help.c:3751
+#: sql_help.c:3354 sql_help.c:3572 sql_help.c:3741
 msgid "values"
 msgstr "значения"
 
-#: sql_help.c:3365 sql_help.c:3583 sql_help.c:3752
+#: sql_help.c:3355 sql_help.c:3573 sql_help.c:3742
 msgid "insert"
 msgstr "insert"
 
-#: sql_help.c:3366 sql_help.c:3584 sql_help.c:3753
+#: sql_help.c:3356 sql_help.c:3574 sql_help.c:3743
 msgid "update"
 msgstr "update"
 
-#: sql_help.c:3367 sql_help.c:3585 sql_help.c:3754
+#: sql_help.c:3357 sql_help.c:3575 sql_help.c:3744
 msgid "delete"
 msgstr "delete"
 
-#: sql_help.c:3394
+#: sql_help.c:3384
 msgid "new_table"
 msgstr "новая_таблица"
 
-#: sql_help.c:3419
+#: sql_help.c:3409
 msgid "timezone"
 msgstr "часовой_пояс"
 
-#: sql_help.c:3464
+#: sql_help.c:3454
 msgid "snapshot_id"
 msgstr "код_снимка"
 
-#: sql_help.c:3624
+#: sql_help.c:3614
 msgid "from_list"
 msgstr "список_FROM"
 
-#: sql_help.c:3655
+#: sql_help.c:3645
 msgid "sort_expression"
 msgstr "выражение_сортировки"
 
@@ -4663,7 +4650,12 @@ msgstr "%s: предупреждение: лишний аргумент \"%s\" �
 msgid "%s: could not find own program executable\n"
 msgstr "%s: не удалось найти свой исполняемый файл\n"
 
-#: tab-complete.c:4115
+#: startup.c:729 startup.c:776 startup.c:797 startup.c:834 variables.c:121
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n"
+msgstr "нераспознанное значение \"%s\" для \"%s\"; подразумевается \"%s\"\n"
+
+#: tab-complete.c:4095
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -4674,10 +4666,14 @@ msgstr ""
 "Запрос:\n"
 "%s\n"
 
-#: variables.c:115
-#, c-format
-msgid "unrecognized Boolean value; assuming \"on\"\n"
-msgstr "нераспознанное логическое значение, подразумевается \"on\"\n"
+#~ msgid "where view_option_name can be one of:"
+#~ msgstr "где допустимое имя_параметра_представления:"
+
+#~ msgid "local"
+#~ msgstr "local"
+
+#~ msgid "cascaded"
+#~ msgstr "cascaded"
 
 #~ msgid "Border style (%s) unset.\n"
 #~ msgstr "Стиль границ (%s) сброшен.\n"

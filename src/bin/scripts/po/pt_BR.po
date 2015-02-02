@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-09-14 23:10-0300\n"
+"POT-Creation-Date: 2014-12-09 12:23-0300\n"
 "PO-Revision-Date: 2005-10-06 00:21-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -746,6 +746,31 @@ msgstr "%s: %s"
 #, c-format
 msgid "%s: could not fetch default options\n"
 msgstr "%s: não pôde obter opções padrão\n"
+
+#: pg_isready.c:199
+#, c-format
+msgid "accepting connections\n"
+msgstr "aceitando conexões\n"
+
+#: pg_isready.c:202
+#, c-format
+msgid "rejecting connections\n"
+msgstr "rejeitando conexões\n"
+
+#: pg_isready.c:205
+#, c-format
+msgid "no response\n"
+msgstr "nenhuma resposta\n"
+
+#: pg_isready.c:208
+#, c-format
+msgid "no attempt\n"
+msgstr "nenhuma tentativa\n"
+
+#: pg_isready.c:211
+#, c-format
+msgid "unknown\n"
+msgstr "desconhecido\n"
 
 #: pg_isready.c:221
 #, c-format
