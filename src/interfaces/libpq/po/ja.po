@@ -316,7 +316,7 @@ msgstr "無効なLDAP URL \"%s\": ポート番号が無効です\n"
 
 #: fe-connect.c:3475
 msgid "could not create LDAP structure\n"
-msgstr "LDAP構造体を作成できませんでした: %s\n"
+msgstr "LDAP構造体を作成できませんでした\n"
 
 #: fe-connect.c:3517
 #, c-format

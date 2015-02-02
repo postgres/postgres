@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1 beta 2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-06-14 22:01+0900\n"
-"PO-Revision-Date: 2011-08-30 21:33+0900\n"
+"PO-Revision-Date: 2014-08-18 21:48+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -1470,7 +1470,7 @@ msgstr "パスワード: "
 
 #: pg_backup_db.c:188
 msgid "failed to reconnect to database\n"
-msgstr "データベース%sへの再接続に失敗しました\n"
+msgstr "データベースへの再接続に失敗しました\n"
 
 #: pg_backup_db.c:193
 #, c-format

@@ -27,7 +27,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-04-02 02:14+0000\n"
+"POT-Creation-Date: 2014-09-15 04:15+0000\n"
 "PO-Revision-Date: 2014-04-02 09:13+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
@@ -99,7 +99,7 @@ msgstr "%s: смещение мультитранзакции (-O) не долж
 #: pg_resetxlog.c:209 pg_resetxlog.c:216 pg_resetxlog.c:223
 #, c-format
 msgid "%s: invalid argument for option -l\n"
-msgstr "%s: недопустимый аргумента параметра -l\n"
+msgstr "%s: недопустимый аргумент параметра -l\n"
 
 #: pg_resetxlog.c:237
 #, c-format
@@ -196,7 +196,7 @@ msgid ""
 "Guessed pg_control values:\n"
 "\n"
 msgstr ""
-"Предлагаемые значения pg_control:\n"
+"Предполагаемые значения pg_control:\n"
 "\n"
 
 #: pg_resetxlog.c:549

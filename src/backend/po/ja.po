@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1 beta 2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-06-15 21:32+0900\n"
-"PO-Revision-Date: 2011-06-29 23:47+0900\n"
+"PO-Revision-Date: 2014-08-18 21:49+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -2525,7 +2525,7 @@ msgstr "セキュリティー制限操作中は、一時テーブルを作成で
 #: executor/nodeHashjoin.c:814 executor/nodeHashjoin.c:844
 #, c-format
 msgid "could not rewind hash-join temporary file: %m"
-msgstr "ハッシュ結合用一時ファイルを巻き戻しできません"
+msgstr "ハッシュ結合用一時ファイルを巻き戻しできません: %m"
 
 #: executor/nodeHashjoin.c:879 executor/nodeHashjoin.c:885
 #, c-format
@@ -6862,7 +6862,7 @@ msgstr "外部サーバでは権限のタイプ %s は無効です"
 
 #: catalog/aclchk.c:517
 msgid "column privileges are only valid for relations"
-msgstr "リレーションでは権限のタイプ %s は無効です"
+msgstr "リレーションでは権限のタイプは無効です"
 
 #: catalog/aclchk.c:833 catalog/aclchk.c:841 commands/collationcmds.c:93
 #: commands/foreigncmds.c:386 commands/foreigncmds.c:395
@@ -8632,7 +8632,7 @@ msgstr "統計情報コレクタのソケットから試験メッセージを入
 #: postmaster/pgstat.c:478
 #, c-format
 msgid "could not receive test message on socket for statistics collector: %m"
-msgstr "統計情報コレクタのソケットから試験メッセージを受信できませんでした"
+msgstr "統計情報コレクタのソケットから試験メッセージを受信できませんでした: %m"
 
 #: postmaster/pgstat.c:488
 msgid "incorrect test message transmission on socket for statistics collector"

@@ -872,7 +872,7 @@ msgstr ""
 #, c-format
 msgid ""
 "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
-msgstr "  \\e [関数名 [行番号]]   関数定義を外部エディタで編集する\n"
+msgstr "  \\ef [関数名 [行番号]]  関数定義を外部エディタで編集する\n"
 
 #: help.c:175
 #, c-format
@@ -1073,7 +1073,7 @@ msgstr "  \\do[S]  [名前]         演算子の一覧を表示する\n"
 #: help.c:217
 #, c-format
 msgid "  \\dO[S+] [PATTERN]      list collations\n"
-msgstr "  \\dD[S+]  [パターン]     照合順序の一覧を表示する\n"
+msgstr "  \\dO[S+]  [パターン]     照合順序の一覧を表示する\n"
 
 #: help.c:218
 #, c-format

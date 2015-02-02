@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-11 00:45-0300\n"
+"POT-Creation-Date: 2014-12-07 22:00-0300\n"
 "PO-Revision-Date: 2010-09-25 00:45+0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -120,7 +120,7 @@ msgstr "%s: não pôde obter nome de usuário atual: %s\n"
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" não é um nome de codificação do servidor válido\n"
 
-#: initdb.c:725 initdb.c:3118
+#: initdb.c:725 initdb.c:3131
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: não pôde criar diretório \"%s\": %s\n"
@@ -195,116 +195,121 @@ msgstr "Digite-a novamente: "
 msgid "Passwords didn't match.\n"
 msgstr "Senhas não correspondem.\n"
 
-#: initdb.c:1295
+#: initdb.c:1296
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: não pôde ler senha do arquivo \"%s\": %s\n"
 
-#: initdb.c:1308
+#: initdb.c:1299
+#, c-format
+msgid "%s: password file \"%s\" is empty\n"
+msgstr "%s: arquivo de senhas \"%s\" está vazio\n"
+
+#: initdb.c:1312
 #, c-format
 msgid "setting password ... "
 msgstr "definindo senha ... "
 
-#: initdb.c:1408
+#: initdb.c:1412
 msgid "initializing dependencies ... "
 msgstr "inicializando dependências ... "
 
-#: initdb.c:1436
+#: initdb.c:1440
 msgid "creating system views ... "
 msgstr "criando visões do sistema ... "
 
-#: initdb.c:1472
+#: initdb.c:1476
 msgid "loading system objects' descriptions ... "
 msgstr "carregando descrições de objetos do sistema ... "
 
-#: initdb.c:1578
+#: initdb.c:1582
 msgid "creating collations ... "
 msgstr "criando ordenações ... "
 
-#: initdb.c:1611
+#: initdb.c:1615
 #, c-format
 msgid "%s: locale name too long, skipped: %s\n"
 msgstr "%s: nome de configuração regional muito longo, ignorado: %s\n"
 
-#: initdb.c:1636
+#: initdb.c:1640
 #, c-format
 msgid "%s: locale name has non-ASCII characters, skipped: %s\n"
 msgstr ""
 "%s: nome de configuração regional tem caracteres não-ASCII, ignorado: %s\n"
 
-#: initdb.c:1699
+#: initdb.c:1703
 #, c-format
 msgid "No usable system locales were found.\n"
 msgstr "Nenhuma configuração regional do sistema utilizável foi encontrada.\n"
 
-#: initdb.c:1700
+#: initdb.c:1704
 #, c-format
 msgid "Use the option \"--debug\" to see details.\n"
 msgstr "Utilize a opção \"--debug\" para obter detalhes.\n"
 
-#: initdb.c:1703
+#: initdb.c:1707
 #, c-format
 msgid "not supported on this platform\n"
 msgstr "não é suportado nessa plataforma\n"
 
-#: initdb.c:1718
+#: initdb.c:1722
 msgid "creating conversions ... "
 msgstr "criando conversões ... "
 
-#: initdb.c:1753
+#: initdb.c:1757
 msgid "creating dictionaries ... "
 msgstr "criando dicionários ... "
 
-#: initdb.c:1807
+#: initdb.c:1811
 msgid "setting privileges on built-in objects ... "
 msgstr "definindo privilégios dos objetos embutidos ... "
 
-#: initdb.c:1865
+#: initdb.c:1869
 msgid "creating information schema ... "
 msgstr "criando esquema informação ... "
 
-#: initdb.c:1921
+#: initdb.c:1925
 msgid "loading PL/pgSQL server-side language ... "
 msgstr "carregando linguagem PL/pgSQL ... "
 
-#: initdb.c:1946
+#: initdb.c:1950
 msgid "vacuuming database template1 ... "
 msgstr "limpando banco de dados template1 ... "
 
-#: initdb.c:2002
+#: initdb.c:2006
 msgid "copying template1 to template0 ... "
 msgstr "copiando template1 para template0 ... "
 
-#: initdb.c:2034
+#: initdb.c:2038
 msgid "copying template1 to postgres ... "
 msgstr "copiando template1 para postgres ... "
 
-#: initdb.c:2091
+#: initdb.c:2095
 #, c-format
 msgid "caught signal\n"
 msgstr "sinal foi recebido\n"
 
-#: initdb.c:2097
+#: initdb.c:2101
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "não pôde escrever em processo filho: %s\n"
 
-#: initdb.c:2105
+#: initdb.c:2109
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2225
+#: initdb.c:2229
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: nome de configuração regional \"%s\" é inválido\n"
 
-#: initdb.c:2251
+#: initdb.c:2255
 #, c-format
 msgid "%s: encoding mismatch\n"
 msgstr "%s: codificação não corresponde\n"
 
-#: initdb.c:2253
+#: initdb.c:2257
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -321,7 +326,7 @@ msgstr ""
 "Execute novamente o %s e não especifique uma codificação explicitamente\n"
 "ou escolha uma outra combinação.\n"
 
-#: initdb.c:2459
+#: initdb.c:2463
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -330,17 +335,17 @@ msgstr ""
 "%s inicializa um agrupamento de banco de dados PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2460
+#: initdb.c:2464
 #, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
-#: initdb.c:2461
+#: initdb.c:2465
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPÇÃO]... [DIRDADOS]\n"
 
-#: initdb.c:2462
+#: initdb.c:2466
 #, c-format
 msgid ""
 "\n"
@@ -349,7 +354,7 @@ msgstr ""
 "\n"
 "Opções:\n"
 
-#: initdb.c:2463
+#: initdb.c:2467
 #, c-format
 msgid ""
 "  -A, --auth=METHOD         default authentication method for local "
@@ -358,27 +363,27 @@ msgstr ""
 "  -A, --auth=MÉTODO            método de autenticação padrão para conexões "
 "locais\n"
 
-#: initdb.c:2464
+#: initdb.c:2468
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr ""
 " [-D, --pgdata=]DIRDADOS       local do agrupamento de banco de dados\n"
 
-#: initdb.c:2465
+#: initdb.c:2469
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr ""
 "  -E, --encoding=CODIFICAÇÃO   ajusta a codificação padrão para novos bancos "
 "de dados\n"
 
-#: initdb.c:2466
+#: initdb.c:2470
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr ""
 "     --locale=LOCALE           ajusta configuração regional padrão para "
 "novos bancos de dados\n"
 
-#: initdb.c:2467
+#: initdb.c:2471
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -394,12 +399,12 @@ msgstr ""
 "                               para novos bancos de dados (o ambiente é "
 "assumido como padrão)\n"
 
-#: initdb.c:2471
+#: initdb.c:2475
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale              equivalente a --locale=C\n"
 
-#: initdb.c:2472
+#: initdb.c:2476
 #, c-format
 msgid ""
 "      --pwfile=FILE         read password for the new superuser from file\n"
@@ -407,7 +412,7 @@ msgstr ""
 "      --pwfile=ARQUIVO         lê senha do novo super-usuário a partir do "
 "arquivo\n"
 
-#: initdb.c:2473
+#: initdb.c:2477
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -416,25 +421,25 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                               configuração de busca textual padrão\n"
 
-#: initdb.c:2475
+#: initdb.c:2479
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr ""
 "  -U, --username=NOME          nome do super-usuário do banco de dados\n"
 
-#: initdb.c:2476
+#: initdb.c:2480
 #, c-format
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt               pergunta senha do novo super-usuário\n"
 
-#: initdb.c:2477
+#: initdb.c:2481
 #, c-format
 msgid ""
 "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
 msgstr "  -X, --xlogdir=DIRXLOG        local do log de transação\n"
 
-#: initdb.c:2478
+#: initdb.c:2482
 #, c-format
 msgid ""
 "\n"
@@ -443,27 +448,27 @@ msgstr ""
 "\n"
 "Opções utilizadas com menos frequência:\n"
 
-#: initdb.c:2479
+#: initdb.c:2483
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug                  mostra saída da depuração\n"
 
-#: initdb.c:2480
+#: initdb.c:2484
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRETÓRIO                 onde encontrar os arquivos de entrada\n"
 
-#: initdb.c:2481
+#: initdb.c:2485
 #, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean                não remove após erros\n"
 
-#: initdb.c:2482
+#: initdb.c:2486
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                   mostra definições internas\n"
 
-#: initdb.c:2483
+#: initdb.c:2487
 #, c-format
 msgid ""
 "\n"
@@ -472,18 +477,18 @@ msgstr ""
 "\n"
 "Outras opções:\n"
 
-#: initdb.c:2484
+#: initdb.c:2488
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                   mostra essa ajuda e termina\n"
 
-#: initdb.c:2485
+#: initdb.c:2489
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr ""
 "  -V, --version                mostra informação sobre a versão e termina\n"
 
-#: initdb.c:2486
+#: initdb.c:2490
 #, c-format
 msgid ""
 "\n"
@@ -494,7 +499,7 @@ msgstr ""
 "Se o diretório de dados não for especificado, a variável de ambiente PGDATA\n"
 "é utilizada.\n"
 
-#: initdb.c:2488
+#: initdb.c:2492
 #, c-format
 msgid ""
 "\n"
@@ -503,34 +508,34 @@ msgstr ""
 "\n"
 "Relate erros a <pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2594
+#: initdb.c:2607
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Executando no modo de depuração.\n"
 
-#: initdb.c:2598
+#: initdb.c:2611
 #, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Executando no modo sem limpeza. Erros não serão removidos.\n"
 
-#: initdb.c:2641 initdb.c:2659 initdb.c:2941
+#: initdb.c:2654 initdb.c:2672 initdb.c:2954
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
 
-#: initdb.c:2657
+#: initdb.c:2670
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: muitos argumentos de linha de comando (primeiro é \"%s\")\n"
 
-#: initdb.c:2666
+#: initdb.c:2679
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
 msgstr ""
 "%s: opção para perguntar a senha e um arquivo de senhas não podem ser "
 "especificados juntos\n"
 
-#: initdb.c:2672
+#: initdb.c:2685
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -542,12 +547,12 @@ msgstr ""
 "Você pode mudá-lo editando o pg_hba.conf ou utilizando a opção -A na\n"
 "próxima vez que você executar o initdb.\n"
 
-#: initdb.c:2695
+#: initdb.c:2708
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
 msgstr "%s: método de autenticação desconhecido \"%s\"\n"
 
-#: initdb.c:2705
+#: initdb.c:2718
 #, c-format
 msgid ""
 "%s: must specify a password for the superuser to enable %s authentication\n"
@@ -555,7 +560,7 @@ msgstr ""
 "%s: você precisa especificar uma senha para o super-usuário para habilitar a "
 "autenticação %s\n"
 
-#: initdb.c:2734
+#: initdb.c:2747
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -569,7 +574,7 @@ msgstr ""
 "irá residir. Faça isso com o invocação da opção -D ou a\n"
 "variável de ambiente PGDATA.\n"
 
-#: initdb.c:2818
+#: initdb.c:2831
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -580,7 +585,7 @@ msgstr ""
 "mesmo diretório que \"%s\".\n"
 "Verifique sua instalação.\n"
 
-#: initdb.c:2825
+#: initdb.c:2838
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -591,12 +596,12 @@ msgstr ""
 "mas não tem a mesma versão que %s.\n"
 "Verifique sua instalação.\n"
 
-#: initdb.c:2844
+#: initdb.c:2857
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: local do arquivo de entrada deve ser um caminho absoluto\n"
 
-#: initdb.c:2901
+#: initdb.c:2914
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -607,14 +612,14 @@ msgstr ""
 "Esse usuário deve ser o dono do processo do servidor também.\n"
 "\n"
 
-#: initdb.c:2911
+#: initdb.c:2924
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr ""
 "O agrupamento de banco de dados será inicializado com configuração regional "
 "%s.\n"
 
-#: initdb.c:2914
+#: initdb.c:2927
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -634,18 +639,18 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2938
+#: initdb.c:2951
 #, c-format
 msgid "%s: could not find suitable encoding for locale %s\n"
 msgstr ""
 "%s: não pôde encontrar codificação ideal para configuração regional %s\n"
 
-#: initdb.c:2940
+#: initdb.c:2953
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Execute novamente %s com a opção -E.\n"
 
-#: initdb.c:2953
+#: initdb.c:2966
 #, c-format
 msgid ""
 "Encoding %s implied by locale is not allowed as a server-side encoding.\n"
@@ -655,13 +660,13 @@ msgstr ""
 "codificação do servidor.\n"
 "A codificação do banco de dados padrão será definida como %s.\n"
 
-#: initdb.c:2961
+#: initdb.c:2974
 #, c-format
 msgid "%s: locale %s requires unsupported encoding %s\n"
 msgstr ""
 "%s: configuração regional %s requer codificação %s que não é suportada\n"
 
-#: initdb.c:2964
+#: initdb.c:2977
 #, c-format
 msgid ""
 "Encoding %s is not allowed as a server-side encoding.\n"
@@ -670,19 +675,19 @@ msgstr ""
 "Codificação %s não é permitida como  uma codificação do servidor.\n"
 "Execute %s novamente com uma seleção de configuração regional diferente.\n"
 
-#: initdb.c:2973
+#: initdb.c:2986
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr "A codificação padrão do banco de dados foi definida para %s.\n"
 
-#: initdb.c:2990
+#: initdb.c:3003
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale %s\n"
 msgstr ""
 "%s: não pôde encontrar configuração de busca textual ideal para configuração "
 "regional %s\n"
 
-#: initdb.c:3001
+#: initdb.c:3014
 #, c-format
 msgid ""
 "%s: warning: suitable text search configuration for locale %s is unknown\n"
@@ -690,7 +695,7 @@ msgstr ""
 "%s: aviso: configuração de busca textual ideal para configuração regional %s "
 "é desconhecida\n"
 
-#: initdb.c:3006
+#: initdb.c:3019
 #, c-format
 msgid ""
 "%s: warning: specified text search configuration \"%s\" might not match "
@@ -699,32 +704,32 @@ msgstr ""
 "%s: aviso: configuração de busca textual especificada \"%s\" pode não "
 "corresponder a configuração regional %s\n"
 
-#: initdb.c:3011
+#: initdb.c:3024
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "A configuração de busca textual padrão será definida como \"%s\".\n"
 
-#: initdb.c:3045 initdb.c:3112
+#: initdb.c:3058 initdb.c:3125
 #, c-format
 msgid "creating directory %s ... "
 msgstr "criando diretório %s ... "
 
-#: initdb.c:3059 initdb.c:3130
+#: initdb.c:3072 initdb.c:3143
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "alterando permissões no diretório existente %s ... "
 
-#: initdb.c:3065 initdb.c:3136
+#: initdb.c:3078 initdb.c:3149
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: não pôde mudar permissões do diretório \"%s\": %s\n"
 
-#: initdb.c:3078 initdb.c:3149
+#: initdb.c:3091 initdb.c:3162
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: diretório \"%s\" existe mas não está vazio\n"
 
-#: initdb.c:3081
+#: initdb.c:3094
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -735,17 +740,17 @@ msgstr ""
 "o diretório \"%s\" ou execute %s\n"
 "com um argumento ao invés de \"%s\".\n"
 
-#: initdb.c:3089 initdb.c:3159
+#: initdb.c:3102 initdb.c:3172
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: não pôde acessar diretório \"%s\": %s\n"
 
-#: initdb.c:3103
+#: initdb.c:3116
 #, c-format
 msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr "%s: diretório do log de transação deve ter um caminho absoluto\n"
 
-#: initdb.c:3152
+#: initdb.c:3165
 #, c-format
 msgid ""
 "If you want to store the transaction log there, either\n"
@@ -754,22 +759,22 @@ msgstr ""
 "Se você quer armazenar o log de transação no mesmo, \n"
 "remova ou esvazie o diretório \"%s\".\n"
 
-#: initdb.c:3171
+#: initdb.c:3184
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: não pôde criar link simbólico \"%s\": %s\n"
 
-#: initdb.c:3176
+#: initdb.c:3189
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
 msgstr "%s: links simbólicos não são suportados nessa plataforma"
 
-#: initdb.c:3182
+#: initdb.c:3195
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "criando subdiretórios ... "
 
-#: initdb.c:3248
+#: initdb.c:3261
 #, c-format
 msgid ""
 "\n"
