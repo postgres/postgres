@@ -4416,7 +4416,9 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 					Np->num_in = TRUE;
 				}
 			}
-			++Np->number_p;
+			/* do no exceed string length */
+			if (*Np->number_p)
+				++Np->number_p;
 		}
 
 		end = Np->num_count + (Np->out_pre_spaces ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
