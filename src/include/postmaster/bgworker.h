@@ -130,6 +130,9 @@ extern PGDLLIMPORT BackgroundWorker *MyBgworkerEntry;
  */
 extern void BackgroundWorkerInitializeConnection(char *dbname, char *username);
 
+/* Just like the above, but specifying database and user by OID. */
+extern void BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid);
+
 /* Block/unblock signals in a background worker process */
 extern void BackgroundWorkerBlockSignals(void);
 extern void BackgroundWorkerUnblockSignals(void);

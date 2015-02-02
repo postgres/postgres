@@ -453,11 +453,10 @@ has_rolreplication(Oid roleid)
  * Initialize user identity during normal backend startup
  */
 void
-InitializeSessionUserId(const char *rolename)
+InitializeSessionUserId(const char *rolename, Oid roleid)
 {
 	HeapTuple	roleTup;
 	Form_pg_authid rform;
-	Oid			roleid;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -468,7 +467,10 @@ InitializeSessionUserId(const char *rolename)
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));
 
-	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(rolename));
+	if (rolename != NULL)
+		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(rolename));
+	else
+		roleTup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (!HeapTupleIsValid(roleTup))
 		ereport(FATAL,
 				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
