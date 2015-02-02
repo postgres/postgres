@@ -818,7 +818,8 @@ mp_int_mul(mp_int a, mp_int b, mp_int c)
 	 */
 	ua = MP_USED(a);
 	ub = MP_USED(b);
-	osize = ua + ub;
+	osize = MAX(ua, ub);
+	osize = 4 * ((osize + 1) / 2);
 
 	if (c == a || c == b)
 	{
@@ -907,7 +908,7 @@ mp_int_sqr(mp_int a, mp_int c)
 	CHECK(a != NULL && c != NULL);
 
 	/* Get a temporary buffer big enough to hold the result */
-	osize = (mp_size) 2 *MP_USED(a);
+	osize = (mp_size) 4 *((MP_USED(a) + 1) / 2);
 
 	if (a == c)
 	{
@@ -2605,8 +2606,8 @@ s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 		 * Now we'll get t1 = a0b0 and t2 = a1b1, and subtract them out so
 		 * that we're left with only the pieces we want:  t3 = a1b0 + a0b1
 		 */
-		ZERO(t1, bot_size + 1);
-		ZERO(t2, bot_size + 1);
+		ZERO(t1, buf_size);
+		ZERO(t2, buf_size);
 		(void) s_kmul(da, db, t1, bot_size, bot_size);	/* t1 = a0 * b0 */
 		(void) s_kmul(a_top, b_top, t2, at_size, bt_size);		/* t2 = a1 * b1 */
 
@@ -2616,11 +2617,13 @@ s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 
 		/* Assemble the output value */
 		COPY(t1, dc, buf_size);
-		(void) s_uadd(t3, dc + bot_size, dc + bot_size,
-					  buf_size + 1, buf_size + 1);
+		carry = s_uadd(t3, dc + bot_size, dc + bot_size,
+					   buf_size + 1, buf_size);
+		assert(carry == 0);
 
-		(void) s_uadd(t2, dc + 2 * bot_size, dc + 2 * bot_size,
-					  buf_size, buf_size);
+		carry = s_uadd(t2, dc + 2 * bot_size, dc + 2 * bot_size,
+					   buf_size, buf_size);
+		assert(carry == 0);
 
 		s_free(t1);				/* note t2 and t3 are just internal pointers
 								 * to t1 */
@@ -3307,7 +3310,10 @@ s_embar(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c)
 	dbt = db + MP_USED(b) - 1;
 
 	while (last < 3)
-		SETUP(mp_int_init_size(TEMP(last), 2 * umu), last);
+	{
+		SETUP(mp_int_init_size(TEMP(last), 4 * umu), last);
+		ZERO(MP_DIGITS(TEMP(last - 1)), MP_ALLOC(TEMP(last - 1)));
+	}
 
 	(void) mp_int_set_value(c, 1);
 
