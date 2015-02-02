@@ -59,7 +59,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-12-15 05:38+0000\n"
-"PO-Revision-Date: 2014-12-15 19:02-0300\n"
+"PO-Revision-Date: 2014-12-18 18:58-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -126,9 +126,9 @@ msgid "could not read directory \"%s\": %s\n"
 msgstr "no se pudo leer el directorio «%s»: %s\n"
 
 #: ../common/pgfnames.c:84
-#, fuzzy, c-format
+#, c-format
 msgid "could not close directory \"%s\": %s\n"
-msgstr "%s: no se pudo abrir el directorio «%s»: %s\n"
+msgstr "no se pudo cerrar el directorio «%s»: %s\n"
 
 #: ../common/psprintf.c:179 ../port/path.c:596 ../port/path.c:634
 #: ../port/path.c:651 access/transam/xlog.c:6123 lib/stringinfo.c:258
@@ -159,9 +159,9 @@ msgid "invalid fork name"
 msgstr "nombre de «fork» no válido"
 
 #: ../common/relpath.c:60
-#, fuzzy, c-format
+#, c-format
 msgid "Valid fork names are \"main\", \"fsm\", \"vm\", and \"init\"."
-msgstr "Los nombres válidos son «man», «fsm» y «vm»."
+msgstr "Los nombres de «fork» válidos son «main», «fsm», «vm» e «init»."
 
 #: ../common/rmtree.c:77
 #, c-format
@@ -174,19 +174,18 @@ msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "no se pudo eliminar el directorio «%s»: %s\n"
 
 #: ../common/username.c:45
-#, fuzzy, c-format
+#, c-format
 msgid "could not look up effective user ID %ld: %s"
-msgstr "no se pudo cargar el archivo de la llave privada «%s»: %s"
+msgstr "no se pudo encontrar el ID de usuario efectivo %ld: %s"
 
 #: ../common/username.c:47 libpq/auth.c:1594
-#, fuzzy
 msgid "user does not exist"
-msgstr "la etiqueta no existe"
+msgstr "usuario no existe"
 
 #: ../common/username.c:61
 #, c-format
 msgid "user name lookup failure: %s"
-msgstr ""
+msgstr "fallo en la búsqueda de usuario: %s"
 
 #: ../common/wait_error.c:47
 #, c-format
@@ -224,9 +223,9 @@ msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
 
 #: ../port/chklocale.c:259
-#, fuzzy, c-format
+#, c-format
 msgid "could not determine encoding for codeset \"%s\""
-msgstr "no se pudo determinar la codificación para la configuración regional «%s»: el codeset es «%s»"
+msgstr "no se pudo determinar la codificación para el codeset «%s»"
 
 #: ../port/chklocale.c:260 ../port/chklocale.c:389
 #, c-format
@@ -282,9 +281,9 @@ msgid "You might have antivirus, backup, or similar software interfering with th
 msgstr "Es posible que tenga antivirus, sistema de respaldos, o software similar interfiriendo con el sistema de bases de datos."
 
 #: ../port/path.c:620
-#, fuzzy, c-format
+#, c-format
 msgid "could not get current working directory: %s\n"
-msgstr "no se pudo identificar el directorio actual: %s"
+msgstr "no se pudo obtener el directorio de trabajo actual: %s\n"
 
 #: ../port/strerror.c:25
 #, c-format
@@ -312,9 +311,9 @@ msgid "number of index columns (%d) exceeds limit (%d)"
 msgstr "el número de columnas del índice (%d) excede el límite (%d)"
 
 #: access/common/indextuple.c:173 access/spgist/spgutils.c:605
-#, fuzzy, c-format
+#, c-format
 msgid "index row requires %zu bytes, maximum size is %zu"
-msgstr "fila de índice requiere %lu bytes, tamaño máximo es %lu"
+msgstr "fila de índice requiere %zu bytes, tamaño máximo es %zu"
 
 #: access/common/printtup.c:294 tcop/fastpath.c:182 tcop/fastpath.c:571
 #: tcop/postgres.c:1672
@@ -405,9 +404,9 @@ msgstr "la columna «%s» no puede ser declarada SETOF"
 #: access/gin/ginentrypage.c:108 access/gist/gist.c:1281
 #: access/nbtree/nbtinsert.c:545 access/nbtree/nbtsort.c:485
 #: access/spgist/spgdoinsert.c:1880
-#, fuzzy, c-format
+#, c-format
 msgid "index row size %zu exceeds maximum %zu for index \"%s\""
-msgstr "el tamaño de fila de índice %lu excede el máximo %lu para el índice «%s»"
+msgstr "el tamaño de fila de índice %zu excede el máximo %zu para el índice «%s»"
 
 #: access/gin/ginscan.c:402
 #, c-format
@@ -446,7 +445,7 @@ msgstr "valor no válido para la opción «buffering»"
 #: access/gist/gistbuild.c:255
 #, c-format
 msgid "Valid values are \"on\", \"off\", and \"auto\"."
-msgstr "Valores aceptables son «on», «off» y «auto»."
+msgstr "Los valores aceptables son «on», «off» y «auto»."
 
 #: access/gist/gistbuildbuffers.c:780 utils/sort/logtape.c:212
 #, c-format
@@ -476,9 +475,9 @@ msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "el índice «%s» contiene una página corrupta en el bloque %u"
 
 #: access/hash/hashinsert.c:68
-#, fuzzy, c-format
+#, c-format
 msgid "index row size %zu exceeds hash maximum %zu"
-msgstr "el tamaño de fila de índice %lu excede el máximo para hash %lu"
+msgstr "el tamaño de fila de índice %zu excede el máximo para hash %zu"
 
 #: access/hash/hashinsert.c:70 access/spgist/spgdoinsert.c:1884
 #: access/spgist/spgutils.c:666
@@ -526,14 +525,14 @@ msgid "could not obtain lock on row in relation \"%s\""
 msgstr "no se pudo bloquear un candado en la fila de la relación «%s»"
 
 #: access/heap/hio.c:240 access/heap/rewriteheap.c:666
-#, fuzzy, c-format
+#, c-format
 msgid "row is too big: size %zu, maximum size %zu"
-msgstr "fila es demasiado grande: tamaño %lu, tamaño máximo %lu"
+msgstr "fila es demasiado grande: tamaño %zu, tamaño máximo %zu"
 
 #: access/heap/rewriteheap.c:932
-#, fuzzy, c-format
+#, c-format
 msgid "could not write to file \"%s\", wrote %d of %d: %m"
-msgstr "No se pudo escribir al archivo «%s» en la posición %u: %m."
+msgstr "no se pudo escribir al archivo «%s», se escribió %d de %d: %m"
 
 #: access/heap/rewriteheap.c:973 access/heap/rewriteheap.c:1185
 #: access/heap/rewriteheap.c:1282 access/transam/timeline.c:407
@@ -557,9 +556,9 @@ msgid "could not create file \"%s\": %m"
 msgstr "no se pudo crear archivo «%s»: %m"
 
 #: access/heap/rewriteheap.c:1157
-#, fuzzy, c-format
+#, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
-msgstr "no se pudo truncar el archivo «%s» a %u bloques: %m"
+msgstr "no se pudo truncar el archivo «%s» a %u: %m"
 
 #: access/heap/rewriteheap.c:1164 replication/walsender.c:465
 #: storage/smgr/md.c:1782
@@ -659,19 +658,19 @@ msgid "version mismatch in index \"%s\": file version %d, code version %d"
 msgstr "discordancia de versión en índice «%s»: versión de archivo %d, versión de código %d"
 
 #: access/nbtree/nbtpage.c:1187
-#, fuzzy, c-format
+#, c-format
 msgid "index \"%s\" contains a half-dead internal page"
-msgstr "El índice «%s» contiene una referencia a la fila completa (whole-row)."
+msgstr "el índice «%s» contiene una página interna parcialmente muerta"
 
 #: access/nbtree/nbtpage.c:1189
 #, c-format
 msgid "This can be caused by an interrupted VACUUM in version 9.3 or older, before upgrade. Please REINDEX it."
-msgstr ""
+msgstr "Esto puede ser causado por la interrupción de un VACUUM en la versión 9.3 o anteriores, antes de actualizar. Ejecute REINDEX por favor."
 
 #: access/spgist/spgutils.c:663
-#, fuzzy, c-format
+#, c-format
 msgid "SP-GiST inner tuple size %zu exceeds maximum %zu"
-msgstr "el tamaño de tupla interna SP-GiST %lu excede el máximo %lu"
+msgstr "el tamaño de tupla interna SP-GiST %zu excede el máximo %zu"
 
 #: access/transam/multixact.c:990
 #, c-format
@@ -959,7 +958,7 @@ msgstr "no se pudo abrir el archivo de estado de COMMIT en dos fases «%s»: %m"
 #: access/transam/twophase.c:1245
 #, c-format
 msgid "could not stat two-phase state file \"%s\": %m"
-msgstr "no se pudo verificar (stat) el archivo de estado de COMMIT en dos fases «%s»: %m"
+msgstr "no se pudo hacer stat al archivo de estado de COMMIT en dos fases «%s»: %m"
 
 #: access/transam/twophase.c:1277
 #, c-format
@@ -1024,7 +1023,7 @@ msgid "database is not accepting commands to avoid wraparound data loss in datab
 msgstr "la base de datos no está aceptando órdenes para evitar pérdida de datos debido al problema del reciclaje de transacciones en la base de datos «%s»"
 
 #: access/transam/varsup.c:117 access/transam/varsup.c:124
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Stop the postmaster and vacuum that database in single-user mode.\n"
 "You might also need to commit or roll back old prepared transactions."
@@ -1053,9 +1052,9 @@ msgid "transaction ID wrap limit is %u, limited by database with OID %u"
 msgstr "el límite para el reciclaje de ID de transacciones es %u, limitado por base de datos con OID %u"
 
 #: access/transam/xact.c:814
-#, fuzzy, c-format
+#, c-format
 msgid "cannot have more than 2^32-2 commands in a transaction"
-msgstr "no se pueden tener más de 2^32-1 órdenes en una transacción"
+msgstr "no se pueden tener más de 2^32-2 órdenes en una transacción"
 
 #: access/transam/xact.c:1370
 #, c-format
@@ -1124,9 +1123,9 @@ msgid "could not seek in log file %s to offset %u: %m"
 msgstr "no se pudo posicionar (seek) en el archivo «%s» a la posición %u: %m"
 
 #: access/transam/xlog.c:2436
-#, fuzzy, c-format
+#, c-format
 msgid "could not write to log file %s at offset %u, length %zu: %m"
-msgstr "no se pudo escribir archivo de registro %s en la posición %u, largo %lu: %m"
+msgstr "no se pudo escribir archivo de registro %s en la posición %u, largo %zu: %m"
 
 #: access/transam/xlog.c:2712
 #, c-format
@@ -1361,9 +1360,9 @@ msgid "The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d, but th
 msgstr "Los archivos de la base de datos fueron inicializados con TOAST_MAX_CHUNK_SIZE %d, pero el servidor fue compilado con TOAST_MAX_CHUNK_SIZE %d."
 
 #: access/transam/xlog.c:4555
-#, fuzzy, c-format
+#, c-format
 msgid "The database cluster was initialized with LOBLKSIZE %d, but the server was compiled with LOBLKSIZE %d."
-msgstr "Los archivos de base de datos fueron inicializados con BLCKSZ %d, pero el servidor fue compilado con BLCKSZ %d."
+msgstr "Los archivos de base de datos fueron inicializados con LOBLKSIZE %d, pero el servidor fue compilado con LOBLKSIZE %d."
 
 #: access/transam/xlog.c:4564
 #, c-format
@@ -1420,7 +1419,7 @@ msgstr "no se pudo abrir el archivo de recuperación «%s»: %m"
 #: commands/extension.c:535 utils/misc/guc.c:5369
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
-msgstr "opción «%s» requiere un valor lógico (booleano)"
+msgstr "el parámetro «%s» requiere un valor lógico (booleano)"
 
 #: access/transam/xlog.c:5142
 #, c-format
@@ -1438,19 +1437,19 @@ msgid "recovery_target_name is too long (maximum %d characters)"
 msgstr "recovery_target_name es demasiado largo (máximo %d caracteres)"
 
 #: access/transam/xlog.c:5203
-#, fuzzy, c-format
+#, c-format
 msgid "invalid value for recovery parameter \"recovery_target\""
-msgstr "valor no válido para el parámetro «%s»: %d"
+msgstr "valor no válido para el parámetro de recuperación «recovery_target»"
 
 #: access/transam/xlog.c:5204
 #, c-format
 msgid "The only allowed value is \"immediate\"."
-msgstr ""
+msgstr "El único valor permitido es «immediate»"
 
 #: access/transam/xlog.c:5263
-#, fuzzy, c-format
+#, c-format
 msgid "parameter \"%s\" requires a temporal value"
-msgstr "opción «%s» requiere un valor lógico (booleano)"
+msgstr "el parámetro «%s» requiere un valor de tiempo"
 
 #: access/transam/xlog.c:5265 catalog/dependency.c:970
 #: catalog/dependency.c:971 catalog/dependency.c:977 catalog/dependency.c:978
@@ -1496,34 +1495,34 @@ msgid "archive recovery complete"
 msgstr "recuperación completa"
 
 #: access/transam/xlog.c:5477 access/transam/xlog.c:5671
-#, fuzzy, c-format
+#, c-format
 msgid "recovery stopping after reaching consistency"
-msgstr "recuperación detenida después de comprometer la transacción %u, hora %s"
+msgstr "deteniendo recuperación al alcanzar un estado consistente"
 
 #: access/transam/xlog.c:5552
 #, c-format
 msgid "recovery stopping before commit of transaction %u, time %s"
-msgstr "recuperación detenida antes de comprometer la transacción %u, hora %s"
+msgstr "deteniendo recuperación antes de comprometer la transacción %u, hora %s"
 
 #: access/transam/xlog.c:5559
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
-msgstr "recuperación detenida antes de abortar la transacción %u, hora %s"
+msgstr "deteniendo recuperación antes de abortar la transacción %u, hora %s"
 
 #: access/transam/xlog.c:5601
 #, c-format
 msgid "recovery stopping at restore point \"%s\", time %s"
-msgstr "recuperación detenida en el punto de recuperación «%s», hora %s"
+msgstr "deteniendo recuperación en el punto de recuperación «%s», hora %s"
 
 #: access/transam/xlog.c:5651
 #, c-format
 msgid "recovery stopping after commit of transaction %u, time %s"
-msgstr "recuperación detenida después de comprometer la transacción %u, hora %s"
+msgstr "deteniendo recuperación de comprometer la transacción %u, hora %s"
 
 #: access/transam/xlog.c:5659
 #, c-format
 msgid "recovery stopping after abort of transaction %u, time %s"
-msgstr "recuperación detenida después de abortar la transacción %u, hora %s"
+msgstr "deteniendo recuperación después de abortar la transacción %u, hora %s"
 
 #: access/transam/xlog.c:5698
 #, c-format
@@ -1551,9 +1550,9 @@ msgid "This happens if you temporarily set wal_level=minimal without taking a ne
 msgstr "Esto sucede si temporalmente define wal_level=minimal sin tomar un nuevo respaldo base."
 
 #: access/transam/xlog.c:5948
-#, fuzzy, c-format
+#, c-format
 msgid "hot standby is not possible because wal_level was not set to \"hot_standby\" or higher on the master server"
-msgstr "hot standby no es posible porque wal_level no estaba configurado como «hot_standby» en el servidor maestro"
+msgstr "hot standby no es posible porque wal_level no estaba configurado como «hot_standby» o superior en el servidor maestro"
 
 #: access/transam/xlog.c:5949
 #, c-format
@@ -1626,9 +1625,9 @@ msgid "starting point-in-time recovery to \"%s\""
 msgstr "comenzando el proceso de recuperación hasta «%s»"
 
 #: access/transam/xlog.c:6104
-#, fuzzy, c-format
+#, c-format
 msgid "starting point-in-time recovery to earliest consistent point"
-msgstr "comenzando el proceso de recuperación hasta %s"
+msgstr "comenzando recuperación a un punto en el tiempo hasta alcanzar un estado consistente"
 
 #: access/transam/xlog.c:6107
 #, c-format
@@ -1983,9 +1982,9 @@ msgstr "el nivel de WAL no es suficiente para hacer un respaldo en línea"
 
 #: access/transam/xlog.c:9693 access/transam/xlog.c:10029
 #: access/transam/xlogfuncs.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start."
-msgstr "wal_level debe ser definido a «archive» o «hot_standby» al inicio del servidor."
+msgstr "wal_level debe ser definido a «archive», «hot_standby» o «logical» al inicio del servidor."
 
 #: access/transam/xlog.c:9698
 #, c-format
@@ -2021,7 +2020,7 @@ msgstr "Esto significa que el respaldo que estaba siendo tomado en el standby es
 #: guc-file.l:885
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "no se pudo verificar archivo «%s»: %m"
+msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
 #: access/transam/xlog.c:9907
 #, c-format
@@ -2134,9 +2133,9 @@ msgid "trigger file found: %s"
 msgstr "se encontró el archivo disparador: %s"
 
 #: access/transam/xlog.c:11193
-#, fuzzy, c-format
+#, c-format
 msgid "could not stat trigger file \"%s\": %m"
-msgstr "no se pudo verificar archivo «%s»: %m"
+msgstr "no se pudo hacer stat al archivo disparador «%s»: %m"
 
 #: access/transam/xlogarchive.c:244
 #, c-format
@@ -2149,17 +2148,17 @@ msgid "restored log file \"%s\" from archive"
 msgstr "se ha restaurado el archivo «%s» desde el área de archivado"
 
 #: access/transam/xlogarchive.c:303
-#, fuzzy, c-format
+#, c-format
 msgid "could not restore file \"%s\" from archive: %s"
-msgstr "no se pudo recuperar el archivo «%s»: código de retorno %d"
+msgstr "no se pudo recuperar el archivo «%s»: %s"
 
 #. translator: First %s represents a recovery.conf parameter name like
 #. "recovery_end_command", the 2nd is the value of that parameter, the
 #. third an already translated error message.
 #: access/transam/xlogarchive.c:415
-#, fuzzy, c-format
+#, c-format
 msgid "%s \"%s\": %s"
-msgstr "%s %s%s%s: %s"
+msgstr "%s «%s»: %s"
 
 #: access/transam/xlogarchive.c:525 access/transam/xlogarchive.c:594
 #, c-format
@@ -3510,11 +3509,11 @@ msgid "operator family %s for access method %s"
 msgstr "familia de operadores %s para el método de acceso %s"
 
 #: catalog/pg_aggregate.c:118
-#, fuzzy, c-format
+#, c-format
 msgid "aggregates cannot have more than %d argument"
 msgid_plural "aggregates cannot have more than %d arguments"
-msgstr[0] "las funciones no pueden tener más de %d argumento"
-msgstr[1] "las funciones no pueden tener más de %d argumentos"
+msgstr[0] "las funciones de agregación no pueden tener más de %d argumento"
+msgstr[1] "las funciones de agregación no pueden tener más de %d argumentos"
 
 #: catalog/pg_aggregate.c:141 catalog/pg_aggregate.c:151
 #, c-format
@@ -3529,12 +3528,12 @@ msgstr "Una función de agregación que use un tipo de dato de transición polim
 #: catalog/pg_aggregate.c:165
 #, c-format
 msgid "a variadic ordered-set aggregate must use VARIADIC type ANY"
-msgstr ""
+msgstr "una función de agregación variádica de conjuntos ordenados debe ser de tipo VARIADIC ANY"
 
 #: catalog/pg_aggregate.c:191
 #, c-format
 msgid "a hypothetical-set aggregate must have direct arguments matching its aggregated arguments"
-msgstr ""
+msgstr "la función de agregación de conjunto hipotético debe tener argumentos directos que coincidan con los argumentos agregados"
 
 #: catalog/pg_aggregate.c:238 catalog/pg_aggregate.c:282
 #, c-format
@@ -3544,22 +3543,22 @@ msgstr "el tipo de retorno de la función de transición %s no es %s"
 #: catalog/pg_aggregate.c:258 catalog/pg_aggregate.c:301
 #, c-format
 msgid "must not omit initial value when transition function is strict and transition type is not compatible with input type"
-msgstr "no se puede omitir el valor inicial cuando la función de transición es strict y el tipo de transición no es compatible con el tipo de entrada"
+msgstr "no se puede omitir el valor inicial cuando la función de transición es «strict» y el tipo de transición no es compatible con el tipo de entrada"
 
 #: catalog/pg_aggregate.c:327
-#, fuzzy, c-format
+#, c-format
 msgid "return type of inverse transition function %s is not %s"
-msgstr "el tipo de retorno de la función de transición %s no es %s"
+msgstr "el tipo de retorno de la función inversa de transición %s no es %s"
 
 #: catalog/pg_aggregate.c:344 executor/nodeWindowAgg.c:2301
 #, c-format
 msgid "strictness of aggregate's forward and inverse transition functions must match"
-msgstr ""
+msgstr "la opción «strict» de las funciones de transición directa e inversa deben coincidir exactamente en la función de agregación"
 
 #: catalog/pg_aggregate.c:388 catalog/pg_aggregate.c:464
 #, c-format
 msgid "final function with extra arguments must not be declared STRICT"
-msgstr ""
+msgstr "la función final con argumentos extra no debe declararse STRICT"
 
 #: catalog/pg_aggregate.c:410 catalog/pg_proc.c:241 catalog/pg_proc.c:248
 #, c-format
@@ -3584,12 +3583,12 @@ msgstr "Una función que retorne «internal» debe tener al menos un argumento d
 #: catalog/pg_aggregate.c:477
 #, c-format
 msgid "moving-aggregate implementation returns type %s, but plain implementation returns type %s"
-msgstr ""
+msgstr "la implementación de la función de agregación en modo «moving» devuelve tipo de dato %s, pero la implementación normal devuelve tipo de dato %s"
 
 #: catalog/pg_aggregate.c:488
 #, c-format
 msgid "sort operator can only be specified for single-argument aggregates"
-msgstr "el operador de ordenamiento sólo pueden ser especificado para funciones de agregación de un solo argumento"
+msgstr "el operador de ordenamiento sólo puede ser especificado para funciones de agregación de un solo argumento"
 
 #: catalog/pg_aggregate.c:701 commands/typecmds.c:1657
 #: commands/typecmds.c:1708 commands/typecmds.c:1739 commands/typecmds.c:1762
@@ -3609,7 +3608,7 @@ msgstr "la función %s retorna un conjunto"
 #: catalog/pg_aggregate.c:722
 #, c-format
 msgid "function %s must accept VARIADIC ANY to be used in this aggregate"
-msgstr ""
+msgstr "la función %s debe aceptar VARIADIC ANY para usarse en esta agregación"
 
 #: catalog/pg_aggregate.c:746
 #, c-format
@@ -3967,7 +3966,7 @@ msgstr "no se puede crear tablas TOAST a relaciones compartidas después de init
 #: commands/aggregatecmds.c:148
 #, c-format
 msgid "only ordered-set aggregates can be hypothetical"
-msgstr ""
+msgstr "sólo las funciones de agregación de conjuntos ordenados pueden ser hipotéticas"
 
 #: commands/aggregatecmds.c:171
 #, c-format
@@ -3985,39 +3984,39 @@ msgid "aggregate sfunc must be specified"
 msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
 
 #: commands/aggregatecmds.c:197
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate msfunc must be specified when mstype is specified"
-msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
+msgstr "debe especificarse la función de transición msfunc cuando se especifica mstype"
 
 #: commands/aggregatecmds.c:201
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate minvfunc must be specified when mstype is specified"
-msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
+msgstr "debe especificarse la función de transición minvfunc cuando se especifica mstype"
 
 #: commands/aggregatecmds.c:208
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate msfunc must not be specified without mstype"
-msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
+msgstr "no debe especificarse msfunc sin mstype"
 
 #: commands/aggregatecmds.c:212
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate minvfunc must not be specified without mstype"
-msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
+msgstr "no debe especificarse minvfunc sin mstype"
 
 #: commands/aggregatecmds.c:216
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate mfinalfunc must not be specified without mstype"
-msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
+msgstr "no debe especificarse mfinalfunc sin mstype"
 
 #: commands/aggregatecmds.c:220
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate msspace must not be specified without mstype"
-msgstr "debe especificarse el tipo de transición (stype) de la función de agregación"
+msgstr "no debe especificarse msspace sin mstype"
 
 #: commands/aggregatecmds.c:224
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate minitcond must not be specified without mstype"
-msgstr "debe especificarse la función de transición (sfunc) de la función de agregación"
+msgstr "no debe especificarse minitcond sin mstype"
 
 #: commands/aggregatecmds.c:244
 #, c-format
@@ -4485,14 +4484,14 @@ msgid "COPY force not null only available using COPY FROM"
 msgstr "el forzado de no nulos en COPY sólo está disponible usando COPY FROM"
 
 #: commands/copy.c:1201
-#, fuzzy, c-format
+#, c-format
 msgid "COPY force null available only in CSV mode"
-msgstr "el forzado de no nulos en COPY sólo está disponible en modo CSV"
+msgstr "el forzado de nulos en COPY sólo está disponible en modo CSV"
 
 #: commands/copy.c:1206
-#, fuzzy, c-format
+#, c-format
 msgid "COPY force null only available using COPY FROM"
-msgstr "el forzado de no nulos en COPY sólo está disponible usando COPY FROM"
+msgstr "el forzado de nulos en COPY sólo está disponible usando COPY FROM"
 
 #: commands/copy.c:1212
 #, c-format
@@ -4522,17 +4521,17 @@ msgstr "COPY (SELECT INTO) no está soportado"
 #: commands/copy.c:1387
 #, c-format
 msgid "FORCE QUOTE column \"%s\" not referenced by COPY"
-msgstr "la columna con comillas forzadas «%s» no es referenciada por COPY"
+msgstr "la columna «%s» con comillas forzadas no es referenciada por COPY"
 
 #: commands/copy.c:1409
 #, c-format
 msgid "FORCE NOT NULL column \"%s\" not referenced by COPY"
-msgstr "la columna FORCE NOT NULL «%s» no fue mencionada en COPY"
+msgstr "la columna «%s» especificada como FORCE NOT NULL no fue mencionada en COPY"
 
 #: commands/copy.c:1431
-#, fuzzy, c-format
+#, c-format
 msgid "FORCE NULL column \"%s\" not referenced by COPY"
-msgstr "la columna FORCE NOT NULL «%s» no fue mencionada en COPY"
+msgstr "la columna «%s» especificada como FORCE NULL no fue mencionada en COPY"
 
 #: commands/copy.c:1495
 #, c-format
@@ -4944,16 +4943,16 @@ msgid "cannot drop the currently open database"
 msgstr "no se puede eliminar la base de datos activa"
 
 #: commands/dbcommands.c:822
-#, fuzzy, c-format
+#, c-format
 msgid "database \"%s\" is used by a logical replication slot"
-msgstr "la variable «%s» está escondida por una variable local"
+msgstr "la base de datos «%s» está siendo usada por un slot de replicación lógica"
 
 #: commands/dbcommands.c:824
-#, fuzzy, c-format
+#, c-format
 msgid "There is %d slot, %d of them active."
 msgid_plural "There are %d slots, %d of them active."
-msgstr[0] "Hay %d otra sesión usando la base de datos."
-msgstr[1] "Hay otras %d sesiones usando la base de datos."
+msgstr[0] "Hay %d slot, %d de ellos activo"
+msgstr[1] "Hay %d slots, %d de ellos activos."
 
 #: commands/dbcommands.c:838 commands/dbcommands.c:981
 #: commands/dbcommands.c:1110
@@ -5142,9 +5141,9 @@ msgid "cast from type %s to type %s does not exist, skipping"
 msgstr "no existe la conversión del tipo %s al tipo %s, ignorando"
 
 #: commands/dropcmds.c:368
-#, fuzzy, c-format
+#, c-format
 msgid "trigger \"%s\" for relation \"%s\" does not exist, skipping"
-msgstr "la regla «%s» para la relación «%s» no existe, ignorando"
+msgstr "disparador «%s» para la relación «%s» no existe, ignorando"
 
 #: commands/dropcmds.c:375
 #, c-format
@@ -5609,9 +5608,9 @@ msgid "SQL function cannot accept shell type %s"
 msgstr "las funciones SQL no pueden aceptar el tipo inconcluso %s"
 
 #: commands/functioncmds.c:242
-#, fuzzy, c-format
+#, c-format
 msgid "aggregate cannot accept shell type %s"
-msgstr "las funciones SQL no pueden aceptar el tipo inconcluso %s"
+msgstr "las funciones de agregación no pueden aceptar el tipo inconcluso %s"
 
 #: commands/functioncmds.c:247
 #, c-format
@@ -5624,9 +5623,9 @@ msgid "type %s does not exist"
 msgstr "no existe el tipo %s"
 
 #: commands/functioncmds.c:271
-#, fuzzy, c-format
+#, c-format
 msgid "aggregates cannot accept set arguments"
-msgstr "las funciones de agregación no pueden usar argumentos con nombre"
+msgstr "las funciones de agregación no pueden aceptar argumentos complejos"
 
 #: commands/functioncmds.c:275
 #, c-format
@@ -6006,32 +6005,32 @@ msgstr "la tabla «%s.%s» fue reindexada"
 #: commands/matview.c:178
 #, c-format
 msgid "CONCURRENTLY cannot be used when the materialized view is not populated"
-msgstr ""
+msgstr "no se puede usar CONCURRENTLY cuando la vista materializada no contiene datos"
 
 #: commands/matview.c:184
 #, c-format
 msgid "CONCURRENTLY and WITH NO DATA options cannot be used together"
-msgstr ""
+msgstr "las opciones CONCURRENTLY y WITH NO DATA no pueden usarse juntas"
 
 #: commands/matview.c:591
 #, c-format
 msgid "new data for \"%s\" contains duplicate rows without any null columns"
-msgstr ""
+msgstr "nuevos datos para «%s» contiene filas duplicadas sin columnas nulas"
 
 #: commands/matview.c:593
 #, c-format
 msgid "Row: %s"
-msgstr ""
+msgstr "Fila: %s"
 
 #: commands/matview.c:681
-#, fuzzy, c-format
+#, c-format
 msgid "cannot refresh materialized view \"%s\" concurrently"
-msgstr "no se puede cambiar la vista materializada «%s»"
+msgstr "no se puede refrescar la vista materializada «%s» concurrentemente"
 
 #: commands/matview.c:683
 #, c-format
 msgid "Create a unique index with no WHERE clause on one or more columns of the materialized view."
-msgstr ""
+msgstr "Cree un índice único sin cláusula WHERE en una o más columnas de la vista materializada."
 
 #: commands/opclasscmds.c:135
 #, c-format
@@ -6757,9 +6756,9 @@ msgid "cannot rewrite system relation \"%s\""
 msgstr "no se puede reescribir la relación de sistema «%s»"
 
 #: commands/tablecmds.c:3613
-#, fuzzy, c-format
+#, c-format
 msgid "cannot rewrite table \"%s\" used as a catalog table"
-msgstr "no se pudo convertir la tabla «%s» en vista porque tiene tablas hijas"
+msgstr "no se puede reescribir la tabla «%s» que es usada como tabla de catálogo"
 
 #: commands/tablecmds.c:3623
 #, c-format
@@ -7002,9 +7001,9 @@ msgid "constraint \"%s\" of relation \"%s\" does not exist"
 msgstr "no existe la restricción «%s» en la relación «%s»"
 
 #: commands/tablecmds.c:6353
-#, fuzzy, c-format
+#, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key constraint"
-msgstr "la restricción «%s» de la relación «%s» no es una llave foránea o restricción «check»"
+msgstr "la restricción «%s» de la relación «%s» no es una restriccion de llave foránea"
 
 #: commands/tablecmds.c:6477
 #, c-format
@@ -7039,7 +7038,7 @@ msgstr "no hay llave primaria para la tabla referida «%s»"
 #: commands/tablecmds.c:6760
 #, c-format
 msgid "foreign key referenced-columns list must not contain duplicates"
-msgstr ""
+msgstr "la lista de columnas referidas en una llave foránea no debe contener duplicados"
 
 #: commands/tablecmds.c:6854
 #, c-format
@@ -7164,7 +7163,7 @@ msgstr "«%s» no es una tabla, vista, tabla materializada, índice o tabla TOAS
 #: commands/tablecmds.c:8948 commands/view.c:474
 #, c-format
 msgid "WITH CHECK OPTION is supported only on automatically updatable views"
-msgstr ""
+msgstr "WITH CHECK OPTION sólo puede usarse en vistas automáticamente actualizables"
 
 #: commands/tablecmds.c:9094
 #, c-format
@@ -7177,24 +7176,24 @@ msgid "cannot move temporary tables of other sessions"
 msgstr "no se pueden mover tablas temporales de otras sesiones"
 
 #: commands/tablecmds.c:9238
-#, fuzzy, c-format
+#, c-format
 msgid "only tables, indexes, and materialized views exist in tablespaces"
-msgstr "«%s» no es una tabla, vista, tabla materializada, índice o tabla TOAST"
+msgstr "solamente tablas, índices y vistas materializadas existen en tablespaces"
 
 #: commands/tablecmds.c:9250
-#, fuzzy, c-format
+#, c-format
 msgid "cannot move relations in to or out of pg_global tablespace"
-msgstr "no se puede mover objetos hacia o desde esquemas temporales"
+msgstr "no se puede mover objetos hacia o desde el tablespace pg_global"
 
 #: commands/tablecmds.c:9341
-#, fuzzy, c-format
+#, c-format
 msgid "aborting because lock on relation \"%s\".\"%s\" is not available"
-msgstr "la relación heredada «%s» no es una tabla"
+msgstr "cancelando porque el candado en la relación «%s».«%s» no está disponible"
 
 #: commands/tablecmds.c:9357
-#, fuzzy, c-format
+#, c-format
 msgid "no matching relations in tablespace \"%s\" found"
-msgstr "No se encontraron relaciones coincidentes.\n"
+msgstr "no se encontraron relaciones coincidentes en el tablespace «%s»"
 
 #: commands/tablecmds.c:9418 storage/buffer/bufmgr.c:501
 #, c-format
@@ -7287,34 +7286,34 @@ msgid "\"%s\" is not a typed table"
 msgstr "«%s» no es una tabla tipada"
 
 #: commands/tablecmds.c:10478
-#, fuzzy, c-format
+#, c-format
 msgid "cannot use non-unique index \"%s\" as replica identity"
-msgstr "no se puede usar una subconsulta en un predicado de índice"
+msgstr "no se puede usar el índice no-único «%s» como identidad de réplica"
 
 #: commands/tablecmds.c:10484
 #, c-format
 msgid "cannot use non-immediate index \"%s\" as replica identity"
-msgstr ""
+msgstr "no puede usar el índice no-inmediato «%s» como identidad de réplica"
 
 #: commands/tablecmds.c:10490
-#, fuzzy, c-format
+#, c-format
 msgid "cannot use expression index \"%s\" as replica identity"
-msgstr "no se puede usar una subconsulta en un predicado de índice"
+msgstr "no se puede usar el índice funcional «%s» como identidad de réplica"
 
 #: commands/tablecmds.c:10496
-#, fuzzy, c-format
+#, c-format
 msgid "cannot use partial index \"%s\" as replica identity"
-msgstr "no se puede reordenar en índice parcial «%s»"
+msgstr "no se puede usar el índice parcial «%s» como identidad de réplica"
 
 #: commands/tablecmds.c:10502
-#, fuzzy, c-format
+#, c-format
 msgid "cannot use invalid index \"%s\" as replica identity"
-msgstr "no se puede reordenar en el índice no válido «%s»"
+msgstr "no se puede usar el índice no válido «%s» como identidad de réplica"
 
 #: commands/tablecmds.c:10520
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column \"%s\" is nullable"
-msgstr ""
+msgstr "el índice «%s» no puede usarse como identidad de réplica porque la column «%s» acepta valores nulos"
 
 #: commands/tablecmds.c:10643
 #, c-format
@@ -7346,7 +7345,7 @@ msgstr "no se pudo crear el directorio «%s»: %m"
 #: commands/tablespace.c:207
 #, c-format
 msgid "could not stat directory \"%s\": %m"
-msgstr "no se pudo verificar el directorio «%s»: %m"
+msgstr "no se pudo hacer stat al directorio «%s»: %m"
 
 #: commands/tablespace.c:216
 #, c-format
@@ -7503,24 +7502,24 @@ msgid "Views cannot have TRUNCATE triggers."
 msgstr "Las vistas no pueden tener disparadores TRUNCATE."
 
 #: commands/trigger.c:205 commands/trigger.c:212 commands/trigger.c:219
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\" is a foreign table"
-msgstr "«%s» no es una tabla foránea"
+msgstr "«%s» es una tabla foránea"
 
 #: commands/trigger.c:207
-#, fuzzy, c-format
+#, c-format
 msgid "Foreign tables cannot have INSTEAD OF triggers."
-msgstr "Las tablas no pueden tener disparadores INSTEAD OF."
+msgstr "Las tablas foráneas no pueden tener disparadores INSTEAD OF."
 
 #: commands/trigger.c:214
-#, fuzzy, c-format
+#, c-format
 msgid "Foreign tables cannot have TRUNCATE triggers."
-msgstr "Las vistas no pueden tener disparadores TRUNCATE."
+msgstr "Las tablas foráneas no pueden tener disparadores TRUNCATE."
 
 #: commands/trigger.c:221
-#, fuzzy, c-format
+#, c-format
 msgid "Foreign tables cannot have constraint triggers."
-msgstr "Las tablas no pueden tener disparadores INSTEAD OF."
+msgstr "Las tablas foráneas no pueden tener disparadores de restricción."
 
 #: commands/trigger.c:284
 #, c-format
@@ -7600,9 +7599,9 @@ msgid "converting trigger group into constraint \"%s\" %s"
 msgstr "convirtiendo el grupo de disparadores en la restricción «%s» %s"
 
 #: commands/trigger.c:1112 commands/trigger.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\" is not a table, view, or foreign table"
-msgstr "«%s» no es una tabla o tabla foránea"
+msgstr "«%s» no es una tabla, vista o tabla foránea"
 
 #: commands/trigger.c:1183 commands/trigger.c:1343 commands/trigger.c:1459
 #, c-format
@@ -8168,14 +8167,14 @@ msgid "Close open transactions soon to avoid wraparound problems."
 msgstr "Cierre transacciones pronto para prevenir problemas por reciclaje de transacciones."
 
 #: commands/vacuum.c:501
-#, fuzzy, c-format
+#, c-format
 msgid "oldest multixact is far in the past"
-msgstr "xmin más antiguo es demasiado antiguo"
+msgstr "multixact más antiguo es demasiado antiguo"
 
 #: commands/vacuum.c:502
-#, fuzzy, c-format
+#, c-format
 msgid "Close open transactions with multixacts soon to avoid wraparound problems."
-msgstr "Cierre transacciones pronto para prevenir problemas por reciclaje de transacciones."
+msgstr "Cierre transacciones con multixact pronto para prevenir problemas por reciclaje del contador."
 
 #: commands/vacuum.c:1064
 #, c-format
@@ -8213,7 +8212,7 @@ msgid "skipping \"%s\" --- cannot vacuum non-tables or special system tables"
 msgstr "omitiendo «%s»: no se puede aplicar VACUUM a objetos que no son tablas o a tablas especiales de sistema"
 
 #: commands/vacuumlazy.c:346
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
 "pages: %d removed, %d remain\n"
@@ -8224,7 +8223,7 @@ msgid ""
 msgstr ""
 "vacuum automático de la tabla «%s.%s.%s»: recorridos de índice: %d\n"
 "páginas: eliminadas %d, remanentes %d\n"
-"tuplas: eliminadas %.0f, remanentes %.0f\n"
+"tuplas: eliminadas %.0f, remanentes %.0f, muertas pero sin eliminar aún %.0f\n"
 "uso de búfers: %d aciertos, %d fallas, %d ensuciados\n"
 "tasas promedio: de lectura: %.3f MB/s, de escritura %.3f MB/s\n"
 "uso del sistema: %s"
@@ -8335,9 +8334,9 @@ msgid "PostgreSQL does not support leap seconds."
 msgstr "PostgreSQL no soporta segundos intercalares."
 
 #: commands/variable.c:355
-#, fuzzy, c-format
+#, c-format
 msgid "UTC timezone offset is out of range."
-msgstr "desplazamiento de huso horario fuera de rango"
+msgstr "desplazamiento de huso horario UTC fuera de rango"
 
 #: commands/variable.c:493
 #, c-format
@@ -8400,14 +8399,14 @@ msgid "permission denied to set role \"%s\""
 msgstr "se ha denegado el permiso para definir el rol «%s»"
 
 #: commands/view.c:54
-#, fuzzy, c-format
+#, c-format
 msgid "invalid value for \"check_option\" option"
-msgstr "valor no válido para la opción «buffering»"
+msgstr "valor no válido para la opción «check_option»"
 
 #: commands/view.c:55
-#, fuzzy, c-format
+#, c-format
 msgid "Valid values are \"local\" and \"cascaded\"."
-msgstr "Valores aceptables son «on», «off» y «auto»."
+msgstr "Los valores aceptables son «local» y «cascaded»."
 
 #: commands/view.c:114
 #, c-format
@@ -8627,7 +8626,7 @@ msgstr "el nuevo registro para la relación «%s» viola la restricción «check
 #: executor/execMain.c:1671
 #, c-format
 msgid "new row violates WITH CHECK OPTION for view \"%s\""
-msgstr ""
+msgstr "nueva fila viola WITH CHECK OPTION de la vista «%s»"
 
 #: executor/execQual.c:306 executor/execQual.c:334 executor/execQual.c:3157
 #: utils/adt/array_userfuncs.c:430 utils/adt/arrayfuncs.c:233
@@ -8968,9 +8967,9 @@ msgid "more than one row returned by a subquery used as an expression"
 msgstr "una subconsulta utilizada como expresión retornó más de un registro"
 
 #: executor/nodeWindowAgg.c:353
-#, fuzzy, c-format
+#, c-format
 msgid "moving-aggregate transition function must not return null"
-msgstr "la función de conversión no debe retornar un conjunto"
+msgstr "la función de transición de moving-aggregate no debe retornar valor nulo"
 
 #: executor/nodeWindowAgg.c:1609
 #, c-format
@@ -9172,14 +9171,14 @@ msgid "Client IP address resolved to \"%s\", forward lookup does not match."
 msgstr "La dirección IP del cliente fue resuelta a «%s», este resultado no es coincidente."
 
 #: libpq/auth.c:439
-#, fuzzy, c-format
+#, c-format
 msgid "Could not translate client host name \"%s\" to IP address: %s."
-msgstr "no se pudo traducir el nombre «%s» a una dirección: %s"
+msgstr "No se pudo traducir el nombre de host del cliente «%s» a una dirección IP: %s."
 
 #: libpq/auth.c:444
-#, fuzzy, c-format
+#, c-format
 msgid "Could not resolve client IP address to a host name: %s."
-msgstr "no se pudo obtener la dirección del cliente desde el socket: %s\n"
+msgstr "No se pudo obtener la dirección IP del cliente a un nombre de host: %s."
 
 #: libpq/auth.c:453
 #, c-format
@@ -9302,9 +9301,9 @@ msgid "could not get peer credentials: %m"
 msgstr "no se pudo recibir credenciales: %m"
 
 #: libpq/auth.c:1593
-#, fuzzy, c-format
+#, c-format
 msgid "could not to look up local user ID %ld: %s"
-msgstr "no se pudo cargar el archivo de la llave privada «%s»: %s"
+msgstr "no se pudo encontrar el ID del usuario local «%ld»: %s"
 
 #: libpq/auth.c:1676 libpq/auth.c:1947 libpq/auth.c:2304
 #, c-format
@@ -9607,9 +9606,9 @@ msgid "could not write server file \"%s\": %m"
 msgstr "no se pudo escribir el archivo del servidor «%s»: %m"
 
 #: libpq/be-fsstubs.c:815
-#, fuzzy, c-format
+#, c-format
 msgid "large object read request is too large"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "el tamaño de petición de lectura de objeto grande es muy grande"
 
 #: libpq/be-fsstubs.c:857 utils/adt/genfile.c:187 utils/adt/genfile.c:232
 #, c-format
@@ -9627,34 +9626,34 @@ msgid "unrecognized SSL error code: %d"
 msgstr "código de error SSL no reconocido: %d"
 
 #: libpq/be-secure.c:365
-#, fuzzy, c-format
+#, c-format
 msgid "SSL failure during renegotiation start"
-msgstr "SSL no pudo enviar una petición de renegociación"
+msgstr "fallo SSL durante el inicio de renegociación"
 
 #: libpq/be-secure.c:380
-#, fuzzy, c-format
+#, c-format
 msgid "SSL handshake failure on renegotiation, retrying"
-msgstr "SSL no pudo enviar una petición de renegociación"
+msgstr "fallo en el «handshake» durante la renegociación SSL, intentando de nuevo"
 
 #: libpq/be-secure.c:384
 #, c-format
 msgid "could not complete SSL handshake on renegotiation, too many failures"
-msgstr ""
+msgstr "no se pudo completar el «handshake» durante la renegociación SSL, demasiados fallos"
 
 #: libpq/be-secure.c:453
-#, fuzzy, c-format
+#, c-format
 msgid "SSL failed to renegotiate connection before limit expired"
-msgstr "SSL no pudo enviar una petición de renegociación"
+msgstr "SSL no pudo renegociar conexión antes de la expiración del límite"
 
 #: libpq/be-secure.c:793
-#, fuzzy, c-format
+#, c-format
 msgid "ECDH: unrecognized curve name: %s"
-msgstr "nomre de evento no reconocido «%s»"
+msgstr "ECDH: nombre de curva no reconocida: %s"
 
 #: libpq/be-secure.c:798
-#, fuzzy, c-format
+#, c-format
 msgid "ECDH: could not create key"
-msgstr "no se pudo crear el socket: %s\n"
+msgstr "ECDH: no se pudo crear la llave"
 
 #: libpq/be-secure.c:835
 #, c-format
@@ -9756,14 +9755,14 @@ msgid "SSL error code %lu"
 msgstr "código de error SSL %lu"
 
 #: libpq/crypt.c:67
-#, fuzzy, c-format
+#, c-format
 msgid "User \"%s\" has no password assigned."
-msgstr "el registro «%s» no ha sido asignado aún"
+msgstr "El usuario «%s» no tiene una contraseña asignada."
 
 #: libpq/crypt.c:160
-#, fuzzy, c-format
+#, c-format
 msgid "User \"%s\" has an expired password."
-msgstr "el registro «%s» no tiene un campo «%s»"
+msgstr "El usuario «%s» tiene contraseña expirada."
 
 #: libpq/hba.c:188
 #, c-format
@@ -9976,9 +9975,8 @@ msgid "authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldappr
 msgstr "el método de autentificación «ldap» requiere que los argumento «ldapbasedn», «ldapprefix» o «ldapsuffix» estén definidos"
 
 #: libpq/hba.c:1418
-#, fuzzy
 msgid "ident, peer, gssapi, sspi, and cert"
-msgstr "ident, peer, krb5, gssapi, sspi y cert"
+msgstr "ident, peer, gssapi, sspi y cert"
 
 #: libpq/hba.c:1431
 #, c-format
@@ -10026,9 +10024,8 @@ msgid "invalid LDAP port number: \"%s\""
 msgstr "número de puerto LDAP no válido: «%s»"
 
 #: libpq/hba.c:1579 libpq/hba.c:1586
-#, fuzzy
 msgid "gssapi and sspi"
-msgstr "krb5, gssapi y sspi"
+msgstr "gssapi y sspi"
 
 #: libpq/hba.c:1628
 #, c-format
@@ -10692,9 +10689,9 @@ msgid "each %s query must have the same number of columns"
 msgstr "cada consulta %s debe tener el mismo número de columnas"
 
 #: parser/analyze.c:2051
-#, fuzzy, c-format
+#, c-format
 msgid "RETURNING must have at least one column"
-msgstr "una vista debe tener al menos una columna"
+msgstr "RETURNING debe tener al menos una columna"
 
 #: parser/analyze.c:2088
 #, c-format
@@ -10887,7 +10884,7 @@ msgstr "no se permiten funciones de agregación en %s"
 #: parser/parse_agg.c:457
 #, c-format
 msgid "outer-level aggregate cannot contain a lower-level variable in its direct arguments"
-msgstr ""
+msgstr "una función de agregación de nivel exterior no puede contener una variable de nivel inferior en sus argumentos directos"
 
 #: parser/parse_agg.c:514
 #, c-format
@@ -10958,7 +10955,7 @@ msgstr "la columna «%s.%s» debe aparecer en la cláusula GROUP BY o ser usada 
 #: parser/parse_agg.c:1060
 #, c-format
 msgid "Direct arguments of an ordered-set aggregate must use only grouped columns."
-msgstr ""
+msgstr "Argumentos directos de una función de agregación de conjuntos ordenados debe usar sólo columnas agrupadas."
 
 #: parser/parse_agg.c:1065
 #, c-format
@@ -10966,39 +10963,39 @@ msgid "subquery uses ungrouped column \"%s.%s\" from outer query"
 msgstr "la subconsulta usa la columna «%s.%s» no agrupada de una consulta exterior"
 
 #: parser/parse_clause.c:636
-#, fuzzy, c-format
+#, c-format
 msgid "multiple column definition lists are not allowed for the same function"
-msgstr "sólo se permite una lista de definición de columnas en funciones que retornan «record»"
+msgstr "no se permiten múltiples definiciones de columnas para la misma función"
 
 #: parser/parse_clause.c:669
 #, c-format
 msgid "ROWS FROM() with multiple functions cannot have a column definition list"
-msgstr ""
+msgstr "ROWS FROM() con varias funciones no puede tener una lista de definición de columnas"
 
 #: parser/parse_clause.c:670
 #, c-format
 msgid "Put a separate column definition list for each function inside ROWS FROM()."
-msgstr ""
+msgstr "Ponga una lista de columnas separada para cada función dentro de ROWS FROM()."
 
 #: parser/parse_clause.c:676
-#, fuzzy, c-format
+#, c-format
 msgid "UNNEST() with multiple arguments cannot have a column definition list"
-msgstr "los disparadores INSTEAD OF no pueden tener listas de columnas"
+msgstr "UNNEST() con varios argumentos no puede tener una lista de definición de columnas"
 
 #: parser/parse_clause.c:677
 #, c-format
 msgid "Use separate UNNEST() calls inside ROWS FROM(), and attach a column definition list to each one."
-msgstr ""
+msgstr "Use llamadas a UNNEST() separadas dentro de ROWS FROM() y adjunte una lista de columnas a cada una."
 
 #: parser/parse_clause.c:684
 #, c-format
 msgid "WITH ORDINALITY cannot be used with a column definition list"
-msgstr ""
+msgstr "WITH ORDINALITY no puede usarse con una lista de definición de columnas"
 
 #: parser/parse_clause.c:685
 #, c-format
 msgid "Put the column definition list inside ROWS FROM()."
-msgstr ""
+msgstr "Ponga una lista de columnas dentro de ROWS FROM()."
 
 #: parser/parse_clause.c:967
 #, c-format
@@ -11070,14 +11067,14 @@ msgid "cannot override ORDER BY clause of window \"%s\""
 msgstr "no se puede pasar a llevar la cláusula ORDER BY de la ventana «%s»"
 
 #: parser/parse_clause.c:1918 parser/parse_clause.c:1924
-#, fuzzy, c-format
+#, c-format
 msgid "cannot copy window \"%s\" because it has a frame clause"
-msgstr "no se puede eliminar la extensión «%s» porque está siendo modificada"
+msgstr "no se puede copiar la ventana «%s» porque tiene una cláusula «frame»"
 
 #: parser/parse_clause.c:1926
 #, c-format
 msgid "Omit the parentheses in this OVER clause."
-msgstr ""
+msgstr "Omita el uso de paréntesis en esta cláusula OVER."
 
 #: parser/parse_clause.c:1992
 #, c-format
@@ -11090,14 +11087,14 @@ msgid "for SELECT DISTINCT, ORDER BY expressions must appear in select list"
 msgstr "para SELECT DISTINCT, las expresiones en ORDER BY deben aparecer en la lista de resultados"
 
 #: parser/parse_clause.c:2026
-#, fuzzy, c-format
+#, c-format
 msgid "an aggregate with DISTINCT must have at least one argument"
-msgstr "Las funciones de agregación con DISTINCT deben ser capaces de ordenar sus valores de entrada."
+msgstr "una función de agregación con DISTINCT debe tener al menos un argumento"
 
 #: parser/parse_clause.c:2027
-#, fuzzy, c-format
+#, c-format
 msgid "SELECT DISTINCT must have at least one column"
-msgstr "una vista debe tener al menos una columna"
+msgstr "SELECT DISTINCT debe tener al menos una columna"
 
 #: parser/parse_clause.c:2093 parser/parse_clause.c:2125
 #, c-format
@@ -11526,9 +11523,9 @@ msgid "DISTINCT specified, but %s is not an aggregate function"
 msgstr "se especificó DISTINCT, pero %s no es una función de agregación"
 
 #: parser/parse_func.c:276
-#, fuzzy, c-format
+#, c-format
 msgid "WITHIN GROUP specified, but %s is not an aggregate function"
-msgstr "se especificó DISTINCT, pero %s no es una función de agregación"
+msgstr "se especificó WITHIN GROUP, pero %s no es una función de agregación"
 
 #: parser/parse_func.c:282
 #, c-format
@@ -11536,9 +11533,9 @@ msgid "ORDER BY specified, but %s is not an aggregate function"
 msgstr "se especificó ORDER BY, pero %s no es una función de agregación"
 
 #: parser/parse_func.c:288
-#, fuzzy, c-format
+#, c-format
 msgid "FILTER specified, but %s is not an aggregate function"
-msgstr "se especificó DISTINCT, pero %s no es una función de agregación"
+msgstr "se especificó FILTER, pero %s no es una función de agregación"
 
 #: parser/parse_func.c:294
 #, c-format
@@ -11548,42 +11545,42 @@ msgstr "se especificó OVER, pero %s no es una función de ventana deslizante ni
 #: parser/parse_func.c:324
 #, c-format
 msgid "WITHIN GROUP is required for ordered-set aggregate %s"
-msgstr ""
+msgstr "WITHIN GROUP es obligatorio para la función de agregación de conjuntos ordenados %s"
 
 #: parser/parse_func.c:330
-#, fuzzy, c-format
+#, c-format
 msgid "OVER is not supported for ordered-set aggregate %s"
-msgstr "LIKE no está soportado para la creación de tablas foráneas"
+msgstr "OVER no está soportado para la función de agregación de conjuntos ordenados %s"
 
 #: parser/parse_func.c:361 parser/parse_func.c:390
 #, c-format
 msgid "There is an ordered-set aggregate %s, but it requires %d direct arguments, not %d."
-msgstr ""
+msgstr "Hay una función de agregación de conjuntos ordenados %s, pero requiere %d argumentos directos, no %d."
 
 #: parser/parse_func.c:415
 #, c-format
 msgid "To use the hypothetical-set aggregate %s, the number of hypothetical direct arguments (here %d) must match the number of ordering columns (here %d)."
-msgstr ""
+msgstr "Para usar la función de agregación de conjunto hipotética %s, el número de argumentos hipotéticos directos (acá %d) debe coincidir con el número de columnas del ordenamiento (acá %d)."
 
 #: parser/parse_func.c:429
 #, c-format
 msgid "There is an ordered-set aggregate %s, but it requires at least %d direct arguments."
-msgstr ""
+msgstr "Hay una función de agregación de conjuntos ordenados %s, pero requiere al menos %d argumentos directos"
 
 #: parser/parse_func.c:448
 #, c-format
 msgid "%s is not an ordered-set aggregate, so it cannot have WITHIN GROUP"
-msgstr ""
+msgstr "%s no es una función de agregación de conjunto ordenado, por lo que no puede tener WITHIN GROUP"
 
 #: parser/parse_func.c:461
-#, fuzzy, c-format
+#, c-format
 msgid "window function %s requires an OVER clause"
-msgstr "la invocación de una función de ventana deslizante requiere una cláusula OVER"
+msgstr "la función de ventana deslizante %s requiere una cláusula OVER"
 
 #: parser/parse_func.c:468
-#, fuzzy, c-format
+#, c-format
 msgid "window function %s cannot have WITHIN GROUP"
-msgstr "no se pueden anidar llamadas a funciones de ventana deslizante"
+msgstr "la función de ventana deslizante %s no puede tener WITHIN GROUP"
 
 #: parser/parse_func.c:489
 #, c-format
@@ -11636,9 +11633,9 @@ msgid "aggregate ORDER BY is not implemented for window functions"
 msgstr "el ORDER BY de funciones de agregación no está implementado para funciones de ventana deslizante"
 
 #: parser/parse_func.c:744
-#, fuzzy, c-format
+#, c-format
 msgid "FILTER is not implemented for non-aggregate window functions"
-msgstr "DISTINCT no está implementado para funciones de ventana deslizante"
+msgstr "FILTER no está implementado para funciones de ventana deslizante"
 
 #: parser/parse_func.c:750
 #, c-format
@@ -12227,7 +12224,7 @@ msgstr "las huge pages no están soportados en esta plataforma"
 #: port/pg_shmem.c:553 port/sysv_shmem.c:553
 #, c-format
 msgid "could not stat data directory \"%s\": %m"
-msgstr "no se pudo verificar el directorio de datos «%s»: %m"
+msgstr "no se pudo hacer stat al directorio de datos «%s»: %m"
 
 #: port/win32/crashdump.c:108
 #, c-format
@@ -13249,7 +13246,7 @@ msgstr "la ruta «%s» del enlace simbólico es demasiado larga"
 #: replication/basebackup.c:284
 #, c-format
 msgid "could not stat control file \"%s\": %m"
-msgstr "no se pudo hacer stat del archivo de control «%s»: %m"
+msgstr "no se pudo hacer stat al archivo de control «%s»: %m"
 
 #: replication/basebackup.c:396
 #, c-format
@@ -13421,7 +13418,7 @@ msgstr "iniciando la decodificación lógica para el slot «%s»"
 #: replication/logical/logical.c:424
 #, c-format
 msgid "streaming transactions committing after %X/%X, reading WAL from %X/%X"
-msgstr ""
+msgstr "enviando flujo de transacciones comprometidas después de %X/%X, leyendo WAL de %X/%X"
 
 #: replication/logical/logical.c:559
 #, c-format
@@ -13471,15 +13468,15 @@ msgstr "no se pudo escribir al archivo de datos para el XID %u: %m"
 
 #: replication/logical/reorderbuffer.c:2196
 #: replication/logical/reorderbuffer.c:2216
-#, fuzzy, c-format
+#, c-format
 msgid "could not read from reorderbuffer spill file: %m"
-msgstr "no se pudo leer desde el archivo de control: %m"
+msgstr "no se pudo leer desde el archivo de desborde de reorderbuffer: %m"
 
 #: replication/logical/reorderbuffer.c:2200
 #: replication/logical/reorderbuffer.c:2220
-#, fuzzy, c-format
+#, c-format
 msgid "could not read from reorderbuffer spill file: read %d instead of %u bytes"
-msgstr "no se pudo leer el bloque %u del archivo «%s»: se leyeron sólo %d de %d bytes"
+msgstr "no se pudo leer desde el archivo de desborde de reorderbuffer: se leyeron sólo %d en ve de %u bytes"
 
 # FIXME almost duplicated again!?
 #: replication/logical/reorderbuffer.c:2826
@@ -13925,14 +13922,14 @@ msgid "cannot convert relation containing dropped columns to view"
 msgstr "no se puede convertir en vista una relación que contiene columnas eliminadas"
 
 #: rewrite/rewriteDefine.c:672
-#, fuzzy, c-format
+#, c-format
 msgid "SELECT rule's target entry %d has different column name from column \"%s\""
 msgstr "la entrada de destino %d de la regla de SELECT tiene un nombre de columna diferente de «%s»"
 
 #: rewrite/rewriteDefine.c:674
-#, fuzzy, c-format
+#, c-format
 msgid "SELECT target entry is named \"%s\"."
-msgstr "la entrada de destino %d de la regla de SELECT tiene un nombre de columna diferente de «%s»"
+msgstr "La entrada de destino de SELECT tiene nombre «%s»."
 
 #: rewrite/rewriteDefine.c:683
 #, c-format
@@ -13945,9 +13942,9 @@ msgid "RETURNING list's entry %d has different type from column \"%s\""
 msgstr "el destino %d de la lista de RETURNING tiene un tipo diferente de la columna «%s»"
 
 #: rewrite/rewriteDefine.c:688 rewrite/rewriteDefine.c:712
-#, fuzzy, c-format
+#, c-format
 msgid "SELECT target entry has type %s, but column has type %s."
-msgstr "el destino %d de la regla de SELECT tiene un tipo diferente de la columna «%s»"
+msgstr "La entrada de destino de SELECT tiene un tipo «%s», pero la columna tiene tipo «%s»."
 
 #: rewrite/rewriteDefine.c:691 rewrite/rewriteDefine.c:716
 #, c-format
@@ -14570,7 +14567,7 @@ msgstr "Puede haber una transacción inactiva o una transacción preparada olvid
 
 #: storage/lmgr/predicate.c:1190 storage/lmgr/predicate.c:1262
 #, c-format
-msgid "nfuzzy, ot enough shared memory for elements of data structure \"%s\" (%zu bytes requested)"
+msgid "not enough shared memory for elements of data structure \"%s\" (%zu bytes requested)"
 msgstr "el espacio de memoria compartida es insuficiente para los elementos de la estructura «%s» (%zu bytes solicitados)"
 
 #: storage/lmgr/predicate.c:1550
@@ -15589,9 +15586,9 @@ msgid "Unexpected array element."
 msgstr "Elemento de array inesperado."
 
 #: utils/adt/arrayfuncs.c:562
-#, fuzzy, c-format
+#, c-format
 msgid "Unmatched \"%c\" character."
-msgstr "Carácter «%c» sin ...???"
+msgstr "Carácter «%c» sin pareja"
 
 #: utils/adt/arrayfuncs.c:570
 #, c-format
@@ -19708,7 +19705,7 @@ msgstr "Define el destino de la salida del registro del servidor."
 
 #: utils/misc/guc.c:2965
 msgid "Valid values are combinations of \"stderr\", \"syslog\", \"csvlog\", and \"eventlog\", depending on the platform."
-msgstr "Valores aceptables son combinaciones de «stderr», «syslog», «csvlog» y «eventlog», dependiendo de la plataforma."
+msgstr "Los valores aceptables son combinaciones de «stderr», «syslog», «csvlog» y «eventlog», dependiendo de la plataforma."
 
 #: utils/misc/guc.c:2976
 msgid "Sets the destination directory for log files."
@@ -19973,7 +19970,7 @@ msgstr "valor no válido para el parámetro «%s»: «%s»"
 #: utils/misc/guc.c:5437
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
-msgstr "parámetro «%s» requiere un valor numérico"
+msgstr "el parámetro «%s» requiere un valor numérico"
 
 #: utils/misc/guc.c:5446
 #, c-format

@@ -1,7 +1,7 @@
 # German message translation file for plpython
-# Copyright (C) 2009 - 2014 PostgreSQL Global Development Group
+# Copyright (C) 2009 - 2015 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2014.
+# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2015.
 #
 # Use these quotes: „%s“
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-15 01:40+0000\n"
-"PO-Revision-Date: 2014-05-14 22:15-0400\n"
+"POT-Creation-Date: 2015-01-09 16:07+0000\n"
+"PO-Revision-Date: 2015-01-09 23:06-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -73,7 +73,7 @@ msgstr "nicht unterstützter Rückgabemodus für Funktion mit Mengenergebnis"
 
 #: plpy_exec.c:92
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
+msgid "PL/Python set-returning functions only support returning one value per call."
 msgstr "PL/Python unterstützt für Funktionen mit Mengenergebnis nur das Zurückgeben von einem Wert pro Aufruf."
 
 #: plpy_exec.c:104

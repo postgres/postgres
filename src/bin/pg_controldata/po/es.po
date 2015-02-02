@@ -4,15 +4,15 @@
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Karim Mribti <karim@mribti.com>, 2002.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2013
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2014
 # Martín Marqués <martin@2ndquadrant.com>, 2013
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 9.3)\n"
+"Project-Id-Version: pg_controldata (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-12-15 05:42+0000\n"
-"PO-Revision-Date: 2013-08-30 13:04-0400\n"
+"PO-Revision-Date: 2014-12-16 12:11-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -322,9 +322,9 @@ msgid "Current wal_level setting:            %s\n"
 msgstr "Parámetro wal_level actual:                 %s\n"
 
 #: pg_controldata.c:263
-#, fuzzy, c-format
+#, c-format
 msgid "Current wal_log_hints setting:        %s\n"
-msgstr "Parámetro wal_level actual:                 %s\n"
+msgstr "Parámetro wal_log_hings actual:             %s\n"
 
 #: pg_controldata.c:265
 #, c-format
@@ -332,9 +332,9 @@ msgid "Current max_connections setting:      %d\n"
 msgstr "Parámetro max_connections actual:           %d\n"
 
 #: pg_controldata.c:267
-#, fuzzy, c-format
+#, c-format
 msgid "Current max_worker_processes setting: %d\n"
-msgstr "Parámetro max_prepared_xacts actual:        %d\n"
+msgstr "Parámetro max_worker_processes actual:      %d\n"
 
 #: pg_controldata.c:269
 #, c-format
@@ -387,9 +387,9 @@ msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Longitud máxima de un trozo TOAST:          %u\n"
 
 #: pg_controldata.c:290
-#, fuzzy, c-format
+#, c-format
 msgid "Size of a large-object chunk:         %u\n"
-msgstr "Longitud máxima de un trozo TOAST:          %u\n"
+msgstr "Longitud máx. de un trozo de objeto grande: %u\n"
 
 #: pg_controldata.c:292
 #, c-format

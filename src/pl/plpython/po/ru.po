@@ -12,9 +12,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-08-02 06:37+0000\n"
-"PO-Revision-Date: 2014-08-04 14:25+0400\n"
-"Last-Translator: Dmitriy Olshevskiy <olshevskiy87@bk.ru>\n"
+"POT-Creation-Date: 2015-01-09 16:07+0000\n"
+"PO-Revision-Date: 2015-01-11 16:49+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Poedit 1.6.7\n"
+"X-Generator: Lokalize 1.5\n"
 
 #: plpy_cursorobject.c:98
 #, c-format
@@ -80,10 +80,10 @@ msgstr "неподдерживаемый режим возврата для фу
 #: plpy_exec.c:92
 #, c-format
 msgid ""
-"PL/Python set-returning functions only support returning only value per call."
+"PL/Python set-returning functions only support returning one value per call."
 msgstr ""
-"Функции PL/Python с результатом-множеством могут возвращать только по одному "
-"значению за вызов."
+"Функции PL/Python с результатом-множеством могут возвращать только одно "
+"значение за вызов."
 
 #: plpy_exec.c:104
 #, c-format

@@ -9,10 +9,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq (PostgreSQL 9.3)\n"
+"Project-Id-Version: libpq (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-12-15 05:38+0000\n"
-"PO-Revision-Date: 2014-12-15 10:32-0300\n"
+"PO-Revision-Date: 2014-12-16 12:12-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"

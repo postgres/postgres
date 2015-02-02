@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-09 12:23-0300\n"
+"POT-Creation-Date: 2014-12-15 17:38-0300\n"
 "PO-Revision-Date: 2011-08-20 23:33-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -627,8 +627,8 @@ msgstr "%s: não pôde criar link simbólico \"%s\": %s\n"
 
 #: pg_basebackup.c:2226
 #, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: links simbólicos não são suportados nessa plataforma"
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "%s: links simbólicos não são suportados nessa plataforma\n"
 
 #: pg_receivexlog.c:58
 #, c-format

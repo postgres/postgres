@@ -10,10 +10,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetxlog (PostgreSQL 9.3)\n"
+"Project-Id-Version: pg_resetxlog (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-12-15 05:41+0000\n"
-"PO-Revision-Date: 2014-12-15 19:17-0300\n"
+"PO-Revision-Date: 2014-12-16 12:13-0300\n"
 "Last-Translator: Martín Marqués <martin@2ndquadrant.com>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"

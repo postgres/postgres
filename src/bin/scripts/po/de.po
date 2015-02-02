@@ -1,5 +1,5 @@
 # German message translation file for "scripts".
-# Peter Eisentraut <peter_e@gmx.net>, 2003 - 2014.
+# Peter Eisentraut <peter_e@gmx.net>, 2003 - 2015.
 #
 # Use these quotes: „%s“
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-04 22:42+0000\n"
-"PO-Revision-Date: 2014-12-04 21:13-0500\n"
+"POT-Creation-Date: 2015-01-12 21:42+0000\n"
+"PO-Revision-Date: 2015-01-12 23:28-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -36,10 +36,10 @@ msgstr "konnte effektive Benutzer-ID %ld nicht nachschlagen: %s"
 msgid "user does not exist"
 msgstr "Benutzer existiert nicht"
 
-#: ../../common/username.c:61
+#: ../../common/username.c:62
 #, c-format
-msgid "user name lookup failure: %s"
-msgstr "Fehler beim Nachschlagen des Benutzernamens: %s"
+msgid "user name lookup failure: error code %lu"
+msgstr "Fehler beim Nachschlagen des Benutzernamens: Fehlercode %lu"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:168
