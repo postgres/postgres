@@ -110,7 +110,7 @@
  * Maximal length of one node
  * ----------
  */
-#define DCH_MAX_ITEM_SIZ		9		/* max julian day		*/
+#define DCH_MAX_ITEM_SIZ	   12		/* max localized day name		*/
 #define NUM_MAX_ITEM_SIZ		8		/* roman number (RN has 15 chars)	*/
 
 /* ----------
@@ -518,10 +518,12 @@ do { \
  * Suffixes definition for DATE-TIME TO/FROM CHAR
  * ----------
  */
+#define TM_SUFFIX_LEN	2
+
 static const KeySuffix DCH_suff[] = {
 	{"FM", 2, DCH_S_FM, SUFFTYPE_PREFIX},
 	{"fm", 2, DCH_S_FM, SUFFTYPE_PREFIX},
-	{"TM", 2, DCH_S_TM, SUFFTYPE_PREFIX},
+	{"TM", TM_SUFFIX_LEN, DCH_S_TM, SUFFTYPE_PREFIX},
 	{"tm", 2, DCH_S_TM, SUFFTYPE_PREFIX},
 	{"TH", 2, DCH_S_TH, SUFFTYPE_POSTFIX},
 	{"th", 2, DCH_S_th, SUFFTYPE_POSTFIX},
@@ -529,6 +531,7 @@ static const KeySuffix DCH_suff[] = {
 	/* last */
 	{NULL, 0, 0, 0}
 };
+
 
 /* ----------
  * Format-pictures (KeyWord).
@@ -2537,7 +2540,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1], collid));
+				{
+					char *str = str_toupper_z(localized_full_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_toupper_z(months_full[tm->tm_mon - 1]));
@@ -2548,7 +2560,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_full_months[tm->tm_mon - 1], collid));
+				{
+					char *str = str_initcap_z(localized_full_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							months_full[tm->tm_mon - 1]);
@@ -2559,7 +2580,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_full_months[tm->tm_mon - 1], collid));
+				{
+					char *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_tolower_z(months_full[tm->tm_mon - 1]));
@@ -2570,7 +2600,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid));
+				{
+					char *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
 				s += strlen(s);
@@ -2580,7 +2619,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid));
+				{
+					char *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					strcpy(s, months[tm->tm_mon - 1]);
 				s += strlen(s);
@@ -2590,7 +2638,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid));
+				{
+					char *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
 				s += strlen(s);
@@ -2604,7 +2661,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_DAY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_full_days[tm->tm_wday], collid));
+				{
+					char *str = str_toupper_z(localized_full_days[tm->tm_wday], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_toupper_z(days[tm->tm_wday]));
@@ -2613,7 +2679,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_Day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_full_days[tm->tm_wday], collid));
+				{
+					char *str = str_initcap_z(localized_full_days[tm->tm_wday], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							days[tm->tm_wday]);
@@ -2622,7 +2697,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_full_days[tm->tm_wday], collid));
+				{
+					char *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_tolower_z(days[tm->tm_wday]));
@@ -2631,7 +2715,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_DY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_abbrev_days[tm->tm_wday], collid));
+				{
+					char *str = str_toupper_z(localized_abbrev_days[tm->tm_wday], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
 				s += strlen(s);
@@ -2639,7 +2732,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_Dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_abbrev_days[tm->tm_wday], collid));
+				{
+					char *str = str_initcap_z(localized_abbrev_days[tm->tm_wday], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					strcpy(s, days_short[tm->tm_wday]);
 				s += strlen(s);
@@ -2647,7 +2749,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_abbrev_days[tm->tm_wday], collid));
+				{
+					char *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
+
+					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+						strcpy(s, str);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("localized string format value too long")));
+				}
 				else
 					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
 				s += strlen(s);
