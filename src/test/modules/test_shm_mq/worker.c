@@ -60,13 +60,9 @@ test_shm_mq_main(Datum main_arg)
 	 *
 	 * We want CHECK_FOR_INTERRUPTS() to kill off this worker process just as
 	 * it would a normal user backend.  To make that happen, we establish a
-	 * signal handler that is a stripped-down version of die().  We don't have
-	 * any equivalent of the backend's command-read loop, where interrupts can
-	 * be processed immediately, so make sure ImmediateInterruptOK is turned
-	 * off.
+	 * signal handler that is a stripped-down version of die().
 	 */
 	pqsignal(SIGTERM, handle_sigterm);
-	ImmediateInterruptOK = false;
 	BackgroundWorkerUnblockSignals();
 
 	/*

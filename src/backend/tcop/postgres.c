@@ -2648,13 +2648,6 @@ die(SIGNAL_ARGS)
 	{
 		InterruptPending = true;
 		ProcDiePending = true;
-
-		/*
-		 * If we're waiting for input or a lock so that it's safe to
-		 * interrupt, service the interrupt immediately
-		 */
-		if (ImmediateInterruptOK)
-			ProcessInterrupts();
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -2688,13 +2681,6 @@ StatementCancelHandler(SIGNAL_ARGS)
 	{
 		InterruptPending = true;
 		QueryCancelPending = true;
-
-		/*
-		 * If we're waiting for input or a lock so that it's safe to
-		 * interrupt, service the interrupt immediately
-		 */
-		if (ImmediateInterruptOK)
-			ProcessInterrupts();
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -2835,13 +2821,6 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 		 */
 		if (reason == PROCSIG_RECOVERY_CONFLICT_DATABASE)
 			RecoveryConflictRetryable = false;
-
-		/*
-		 * If we're waiting for input or a lock so that it's safe to
-		 * interrupt, service the interrupt immediately.
-		 */
-		if (ImmediateInterruptOK)
-			ProcessInterrupts();
 	}
 
 	/*
@@ -2875,7 +2854,6 @@ ProcessInterrupts(void)
 	{
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
-		ImmediateInterruptOK = false;	/* not idle anymore */
 		LockErrorCleanup();
 		/* As in quickdie, don't risk sending to client during auth */
 		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
@@ -2914,7 +2892,6 @@ ProcessInterrupts(void)
 	if (ClientConnectionLost)
 	{
 		QueryCancelPending = false;		/* lost connection trumps QueryCancel */
-		ImmediateInterruptOK = false;	/* not idle anymore */
 		LockErrorCleanup();
 		/* don't send to client, we already know the connection to be dead. */
 		whereToSendOutput = DestNone;
@@ -2932,7 +2909,6 @@ ProcessInterrupts(void)
 	if (RecoveryConflictPending && DoingCommandRead)
 	{
 		QueryCancelPending = false;			/* this trumps QueryCancel */
-		ImmediateInterruptOK = false;		/* not idle anymore */
 		RecoveryConflictPending = false;
 		LockErrorCleanup();
 		pgstat_report_recovery_conflict(RecoveryConflictReason);
@@ -2970,7 +2946,6 @@ ProcessInterrupts(void)
 		 */
 		if (get_timeout_indicator(LOCK_TIMEOUT, true))
 		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			(void) get_timeout_indicator(STATEMENT_TIMEOUT, true);
 			LockErrorCleanup();
 			ereport(ERROR,
@@ -2979,7 +2954,6 @@ ProcessInterrupts(void)
 		}
 		if (get_timeout_indicator(STATEMENT_TIMEOUT, true))
 		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
@@ -2987,7 +2961,6 @@ ProcessInterrupts(void)
 		}
 		if (IsAutoVacuumWorkerProcess())
 		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
@@ -2995,7 +2968,6 @@ ProcessInterrupts(void)
 		}
 		if (RecoveryConflictPending)
 		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			RecoveryConflictPending = false;
 			LockErrorCleanup();
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
@@ -3012,7 +2984,6 @@ ProcessInterrupts(void)
 		 */
 		if (!DoingCommandRead)
 		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),

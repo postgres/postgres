@@ -165,8 +165,6 @@ proc_exit_prepare(int code)
 	InterruptPending = false;
 	ProcDiePending = false;
 	QueryCancelPending = false;
-	/* And let's just make *sure* we're not interrupted ... */
-	ImmediateInterruptOK = false;
 	InterruptHoldoffCount = 1;
 	CritSectionCount = 0;
 
