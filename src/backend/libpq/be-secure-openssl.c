@@ -71,6 +71,8 @@
 #endif
 
 #include "libpq/libpq.h"
+#include "miscadmin.h"
+#include "storage/latch.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 
@@ -338,6 +340,7 @@ be_tls_open_server(Port *port)
 {
 	int			r;
 	int			err;
+	int			waitfor;
 
 	Assert(!port->ssl);
 	Assert(!port->peer);
@@ -371,12 +374,15 @@ aloop:
 		{
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
-#ifdef WIN32
-				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
-											(err == SSL_ERROR_WANT_READ) ?
-						FD_READ | FD_CLOSE | FD_ACCEPT : FD_WRITE | FD_CLOSE,
-											INFINITE);
-#endif
+				/* not allowed during connection establishment */
+				Assert(!port->noblock);
+
+				if (err == SSL_ERROR_WANT_READ)
+					waitfor = WL_SOCKET_READABLE;
+				else
+					waitfor = WL_SOCKET_WRITEABLE;
+
+				WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
 				goto aloop;
 			case SSL_ERROR_SYSCALL:
 				if (r < 0)
@@ -504,6 +510,7 @@ be_tls_read(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
 	int			err;
+	int			waitfor;
 
 rloop:
 	errno = 0;
@@ -516,18 +523,20 @@ rloop:
 			break;
 		case SSL_ERROR_WANT_READ:
 		case SSL_ERROR_WANT_WRITE:
+			/* Don't retry if the socket is in nonblocking mode. */
 			if (port->noblock)
 			{
 				errno = EWOULDBLOCK;
 				n = -1;
 				break;
 			}
-#ifdef WIN32
-			pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
-										(err == SSL_ERROR_WANT_READ) ?
-									FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
-										INFINITE);
-#endif
+
+			if (err == SSL_ERROR_WANT_READ)
+				waitfor = WL_SOCKET_READABLE;
+			else
+				waitfor = WL_SOCKET_WRITEABLE;
+
+			WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
 			goto rloop;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */
@@ -567,6 +576,7 @@ be_tls_write(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
 	int			err;
+	int			waitfor;
 
 	/*
 	 * If SSL renegotiations are enabled and we're getting close to the
@@ -630,12 +640,13 @@ wloop:
 			break;
 		case SSL_ERROR_WANT_READ:
 		case SSL_ERROR_WANT_WRITE:
-#ifdef WIN32
-			pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
-										(err == SSL_ERROR_WANT_READ) ?
-									FD_READ | FD_CLOSE : FD_WRITE | FD_CLOSE,
-										INFINITE);
-#endif
+
+			if (err == SSL_ERROR_WANT_READ)
+				waitfor = WL_SOCKET_READABLE;
+			else
+				waitfor = WL_SOCKET_WRITEABLE;
+
+			WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
 			goto wloop;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */
@@ -722,7 +733,7 @@ my_sock_read(BIO *h, char *buf, int size)
 		if (res <= 0)
 		{
 			/* If we were interrupted, tell caller to retry */
-			if (errno == EINTR)
+			if (errno == EINTR || errno == EWOULDBLOCK || errno == EAGAIN)
 			{
 				BIO_set_retry_read(h);
 			}
@@ -741,7 +752,8 @@ my_sock_write(BIO *h, const char *buf, int size)
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
-		if (errno == EINTR)
+		/* If we were interrupted, tell caller to retry */
+		if (errno == EINTR || errno == EWOULDBLOCK || errno == EAGAIN)
 		{
 			BIO_set_retry_write(h);
 		}

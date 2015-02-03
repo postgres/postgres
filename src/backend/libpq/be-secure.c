@@ -32,8 +32,10 @@
 #endif
 
 #include "libpq/libpq.h"
+#include "miscadmin.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
+#include "storage/proc.h"
 
 
 char	   *ssl_cert_file;
@@ -147,7 +149,39 @@ secure_raw_read(Port *port, void *ptr, size_t len)
 
 	prepare_for_client_read();
 
+	/*
+	 * Try to read from the socket without blocking. If it succeeds we're
+	 * done, otherwise we'll wait for the socket using the latch mechanism.
+	 */
+rloop:
+#ifdef WIN32
+	pgwin32_noblock = true;
+#endif
 	n = recv(port->sock, ptr, len, 0);
+#ifdef WIN32
+	pgwin32_noblock = false;
+#endif
+
+	if (n < 0 && !port->noblock && (errno == EWOULDBLOCK || errno == EAGAIN))
+	{
+		int		w;
+		int		save_errno = errno;
+
+		w = WaitLatchOrSocket(MyLatch,
+							  WL_SOCKET_READABLE,
+							  port->sock, 0);
+
+		if (w & WL_SOCKET_READABLE)
+		{
+			goto rloop;
+		}
+
+		/*
+		 * Restore errno, clobbered by WaitLatchOrSocket, so the caller can
+		 * react properly.
+		 */
+		errno = save_errno;
+	}
 
 	client_read_ended();
 
@@ -170,7 +204,9 @@ secure_write(Port *port, void *ptr, size_t len)
 	}
 	else
 #endif
+	{
 		n = secure_raw_write(port, ptr, len);
+	}
 
 	return n;
 }
@@ -178,5 +214,44 @@ secure_write(Port *port, void *ptr, size_t len)
 ssize_t
 secure_raw_write(Port *port, const void *ptr, size_t len)
 {
-	return send(port->sock, ptr, len, 0);
+	ssize_t		n;
+
+wloop:
+
+#ifdef WIN32
+	pgwin32_noblock = true;
+#endif
+	n = send(port->sock, ptr, len, 0);
+#ifdef WIN32
+	pgwin32_noblock = false;
+#endif
+
+	if (n < 0 && !port->noblock && (errno == EWOULDBLOCK || errno == EAGAIN))
+	{
+		int		w;
+		int		save_errno = errno;
+
+		/*
+		 * We probably want to check for latches being set at some point
+		 * here. That'd allow us to handle interrupts while blocked on
+		 * writes. If set we'd not retry directly, but return. That way we
+		 * don't do anything while (possibly) inside a ssl library.
+		 */
+		w = WaitLatchOrSocket(MyLatch,
+							  WL_SOCKET_WRITEABLE,
+							  port->sock, 0);
+
+		if (w & WL_SOCKET_WRITEABLE)
+		{
+			goto wloop;
+		}
+
+		/*
+		 * Restore errno, clobbered by WaitLatchOrSocket, so the caller can
+		 * react properly.
+		 */
+		errno = save_errno;
+	}
+
+	return n;
 }

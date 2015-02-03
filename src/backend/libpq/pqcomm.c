@@ -181,6 +181,22 @@ pq_init(void)
 	PqCommReadingMsg = false;
 	DoingCopyOut = false;
 	on_proc_exit(socket_close, 0);
+
+	/*
+	 * In backends (as soon as forked) we operate the underlying socket in
+	 * nonblocking mode and use latches to implement blocking semantics if
+	 * needed. That allows us to provide safely interruptible reads.
+	 *
+	 * Use COMMERROR on failure, because ERROR would try to send the error to
+	 * the client, which might require changing the mode again, leading to
+	 * infinite recursion.
+	 */
+#ifndef WIN32
+	if (!pg_set_noblock(MyProcPort->sock))
+		ereport(COMMERROR,
+				(errmsg("could not set socket to nonblocking mode: %m")));
+#endif
+
 }
 
 /* --------------------------------
@@ -820,31 +836,6 @@ socket_set_nonblocking(bool nonblocking)
 				(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST),
 				 errmsg("there is no client connection")));
 
-	if (MyProcPort->noblock == nonblocking)
-		return;
-
-#ifdef WIN32
-	pgwin32_noblock = nonblocking ? 1 : 0;
-#else
-
-	/*
-	 * Use COMMERROR on failure, because ERROR would try to send the error to
-	 * the client, which might require changing the mode again, leading to
-	 * infinite recursion.
-	 */
-	if (nonblocking)
-	{
-		if (!pg_set_noblock(MyProcPort->sock))
-			ereport(COMMERROR,
-					(errmsg("could not set socket to nonblocking mode: %m")));
-	}
-	else
-	{
-		if (!pg_set_block(MyProcPort->sock))
-			ereport(COMMERROR,
-					(errmsg("could not set socket to blocking mode: %m")));
-	}
-#endif
 	MyProcPort->noblock = nonblocking;
 }
 
