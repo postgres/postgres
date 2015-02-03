@@ -553,7 +553,7 @@ rloop:
 			if (latchret & WL_LATCH_SET)
 			{
 				ResetLatch(MyLatch);
-				ProcessClientReadInterrupt();  /* preserves errno */
+				ProcessClientReadInterrupt(true);  /* preserves errno */
 			}
 			goto rloop;
 		case SSL_ERROR_SYSCALL:
@@ -595,6 +595,7 @@ be_tls_write(Port *port, void *ptr, size_t len)
 	ssize_t		n;
 	int			err;
 	int			waitfor;
+	int			latchret;
 
 	/*
 	 * If SSL renegotiations are enabled and we're getting close to the
@@ -659,16 +660,27 @@ wloop:
 		case SSL_ERROR_WANT_READ:
 		case SSL_ERROR_WANT_WRITE:
 
-			if (err == SSL_ERROR_WANT_READ)
-				waitfor = WL_SOCKET_READABLE;
-			else
-				waitfor = WL_SOCKET_WRITEABLE;
+			waitfor = WL_LATCH_SET;
 
-			WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
+			if (err == SSL_ERROR_WANT_READ)
+				waitfor |= WL_SOCKET_READABLE;
+			else
+				waitfor |= WL_SOCKET_WRITEABLE;
+
+			latchret = WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
+
 			/*
-			 * XXX: We'll, at some later point, likely want to add interrupt
-			 * processing here.
+			 * Check for interrupts here, in addition to secure_write(),
+			 * because an interrupted write in secure_raw_write() will return
+			 * here, and we cannot return to secure_write() until we've
+			 * written something.
 			 */
+			if (latchret & WL_LATCH_SET)
+			{
+				ResetLatch(MyLatch);
+				ProcessClientWriteInterrupt(true); /* preserves errno */
+			}
+
 			goto wloop;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */

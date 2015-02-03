@@ -140,14 +140,27 @@ retry:
 		n = secure_raw_read(port, ptr, len);
 	}
 
-	/* Process interrupts that happened while (or before) receiving. */
-	ProcessClientReadInterrupt(); /* preserves errno */
-
 	/* retry after processing interrupts */
 	if (n < 0 && errno == EINTR)
 	{
+		/*
+		 * We tried to read data, the socket was empty, and we were
+		 * interrupted while waiting for readability. We only process
+		 * interrupts if we got interrupted while reading and when in blocking
+		 * mode. In other cases it's better to allow the interrupts to be
+		 * handled at higher layers.
+		 */
+		ProcessClientReadInterrupt(!port->noblock); /* preserves errno */
 		goto retry;
 	}
+
+	/*
+	 * Process interrupts that happened while (or before) receiving. Note that
+	 * we signal that we're not blocking, which will prevent some types of
+	 * interrupts from being processed.
+	 */
+	ProcessClientReadInterrupt(false);
+
 	return n;
 }
 
@@ -224,18 +237,17 @@ retry:
 		n = secure_raw_write(port, ptr, len);
 	}
 
-	/*
-	 * XXX: We'll, at some later point, likely want to add interrupt
-	 * processing here.
-	 */
-
-	/*
-	 * Retry after processing interrupts. This can be triggered even though we
-	 * don't check for latch set's during writing yet, because SSL
-	 * renegotiations might have required reading from the socket.
-	 */
+	/* retry after processing interrupts */
 	if (n < 0 && errno == EINTR)
 	{
+		/*
+		 * We tried to send data, the socket was full, and we were interrupted
+		 * while waiting for writability. We only process interrupts if we got
+		 * interrupted while writing and when in blocking mode. In other cases
+		 * it's better to allow the interrupts to be handled at higher layers.
+		 */
+		ProcessClientWriteInterrupt(!port->noblock);
+
 		goto retry;
 	}
 
@@ -262,17 +274,21 @@ wloop:
 		int		w;
 		int		save_errno = errno;
 
-		/*
-		 * We probably want to check for latches being set at some point
-		 * here. That'd allow us to handle interrupts while blocked on
-		 * writes. If set we'd not retry directly, but return. That way we
-		 * don't do anything while (possibly) inside a ssl library.
-		 */
 		w = WaitLatchOrSocket(MyLatch,
-							  WL_SOCKET_WRITEABLE,
+							  WL_LATCH_SET | WL_SOCKET_WRITEABLE,
 							  port->sock, 0);
 
-		if (w & WL_SOCKET_WRITEABLE)
+		if (w & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			/*
+			 * Force a return, so interrupts can be processed when not
+			 * (possibly) underneath a ssl library.
+			 */
+			errno = EINTR;
+			return -1;
+		}
+		else if (w & WL_SOCKET_WRITEABLE)
 		{
 			goto wloop;
 		}
