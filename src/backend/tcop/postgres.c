@@ -571,8 +571,6 @@ ProcessClientWriteInterrupt(bool blocked)
 {
 	int			save_errno = errno;
 
-	Assert(InterruptHoldoffCount == 0 && CritSectionCount == 0);
-
 	/*
 	 * We only want to process the interrupt here if socket writes are
 	 * blocking to increase the chance to get an error message to the
