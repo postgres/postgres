@@ -68,8 +68,6 @@ typedef struct
 typedef struct
 {
 	Point		p[2];
-
-	double		m;				/* precomputed to save time, not in tuple */
 } LSEG;
 
 

@@ -2019,10 +2019,6 @@ lseg_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type lseg: \"%s\"", str)));
 
-#ifdef NOT_USED
-	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
-#endif
-
 	PG_RETURN_LSEG_P(lseg);
 }
 
@@ -2050,10 +2046,6 @@ lseg_recv(PG_FUNCTION_ARGS)
 	lseg->p[0].y = pq_getmsgfloat8(buf);
 	lseg->p[1].x = pq_getmsgfloat8(buf);
 	lseg->p[1].y = pq_getmsgfloat8(buf);
-
-#ifdef NOT_USED
-	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
-#endif
 
 	PG_RETURN_LSEG_P(lseg);
 }
@@ -2091,10 +2083,6 @@ lseg_construct(PG_FUNCTION_ARGS)
 	result->p[1].x = pt2->x;
 	result->p[1].y = pt2->y;
 
-#ifdef NOT_USED
-	result->m = point_sl(pt1, pt2);
-#endif
-
 	PG_RETURN_LSEG_P(result);
 }
 
@@ -2106,10 +2094,6 @@ statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 	lseg->p[0].y = pt1->y;
 	lseg->p[1].x = pt2->x;
 	lseg->p[1].y = pt2->y;
-
-#ifdef NOT_USED
-	lseg->m = point_sl(pt1, pt2);
-#endif
 }
 
 Datum
@@ -2160,9 +2144,6 @@ lseg_parallel(PG_FUNCTION_ARGS)
 	LSEG	   *l1 = PG_GETARG_LSEG_P(0);
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 
-#ifdef NOT_USED
-	PG_RETURN_BOOL(FPeq(l1->m, l2->m));
-#endif
 	PG_RETURN_BOOL(FPeq(point_sl(&l1->p[0], &l1->p[1]),
 						point_sl(&l2->p[0], &l2->p[1])));
 }
