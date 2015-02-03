@@ -30,9 +30,6 @@
 #include <sys/types.h>			/* for umask() */
 #include <sys/stat.h>			/* for stat() */
 #endif
-#ifdef USE_OPENSSL
-#include <openssl/ssl.h>
-#endif
 
 #include "portability/instr_time.h"
 
@@ -1815,28 +1812,24 @@ connection_warnings(bool in_startup)
 static void
 printSSLInfo(void)
 {
-#ifdef USE_OPENSSL
-	int			sslbits = -1;
-	SSL		   *ssl;
+	const char *protocol;
+	const char *cipher;
+	const char *bits;
+	const char *compression;
 
-	ssl = PQgetssl(pset.db);
-	if (!ssl)
+	if (!PQsslInUse(pset.db))
 		return;					/* no SSL */
 
-	SSL_get_cipher_bits(ssl, &sslbits);
-	printf(_("SSL connection (protocol: %s, cipher: %s, bits: %d, compression: %s)\n"),
-		   SSL_get_version(ssl), SSL_get_cipher(ssl), sslbits,
-		   SSL_get_current_compression(ssl) ? _("on") : _("off"));
-#else
+	protocol = PQsslAttribute(pset.db, "protocol");
+	cipher = PQsslAttribute(pset.db, "cipher");
+	bits = PQsslAttribute(pset.db, "key_bits");
+	compression = PQsslAttribute(pset.db, "compression");
 
-	/*
-	 * If psql is compiled without SSL but is using a libpq with SSL, we
-	 * cannot figure out the specifics about the connection. But we know it's
-	 * SSL secured.
-	 */
-	if (PQgetssl(pset.db))
-		printf(_("SSL connection (unknown cipher)\n"));
-#endif
+	printf(_("SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"),
+		   protocol ? protocol : _("unknown"),
+		   cipher ? cipher : _("unknown"),
+		   bits ? bits : _("unknown"),
+		   (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"));
 }
 
 

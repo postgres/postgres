@@ -1488,6 +1488,18 @@ SSLerrfree(char *buf)
 		free(buf);
 }
 
+/* ------------------------------------------------------------ */
+/*					SSL information functions					*/
+/* ------------------------------------------------------------ */
+
+int
+PQsslInUse(PGconn *conn)
+{
+	if (!conn)
+		return 0;
+	return conn->ssl_in_use;
+}
+
 /*
  *	Return pointer to OpenSSL object.
  */
@@ -1499,6 +1511,62 @@ PQgetssl(PGconn *conn)
 	return conn->ssl;
 }
 
+void *
+PQsslStruct(PGconn *conn, const char *struct_name)
+{
+	if (!conn)
+		return NULL;
+	if (strcmp(struct_name, "OpenSSL") == 0)
+		return conn->ssl;
+	return NULL;
+}
+
+const char **
+PQsslAttributes(PGconn *conn)
+{
+	static const char *result[] = {
+		"library",
+		"key_bits",
+		"cipher",
+		"compression",
+		"protocol",
+		NULL
+	};
+	return result;
+}
+
+const char *
+PQsslAttribute(PGconn *conn, const char *attribute_name)
+{
+	if (!conn)
+		return NULL;
+	if (conn->ssl == NULL)
+		return NULL;
+
+	if (strcmp(attribute_name, "library") == 0)
+		return "OpenSSL";
+
+	if (strcmp(attribute_name, "key_bits") == 0)
+	{
+		static char sslbits_str[10];
+		int		sslbits;
+
+		SSL_get_cipher_bits(conn->ssl, &sslbits);
+		snprintf(sslbits_str, sizeof(sslbits_str), "%d", sslbits);
+		return sslbits_str;
+	}
+
+	if (strcmp(attribute_name, "cipher") == 0)
+		return SSL_get_cipher(conn->ssl);
+
+	if (strcmp(attribute_name, "compression") == 0)
+		return SSL_get_current_compression(conn->ssl) ? "on" : "off";
+
+	if (strcmp(attribute_name, "protocol") == 0)
+		return SSL_get_version(conn->ssl);
+
+	return NULL;		/* unknown attribute */
+}
 
 /*
  * Private substitute BIO: this does the sending and receiving using send() and

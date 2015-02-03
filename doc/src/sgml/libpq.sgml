@@ -1848,6 +1848,152 @@ int PQconnectionUsedPassword(const PGconn *conn);
       </para>
      </listitem>
     </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+    The following functions return information related to SSL. This information
+    usually doesn't change after a connection is established.
+
+    <variablelist>
+    <varlistentry id="libpq-pqsslinuse">
+     <term><function>PQsslInUse</function><indexterm><primary>PQsslInUse</></></term>
+     <listitem>
+      <para>
+        Returns true (1) if the connection uses SSL, false (0) if not.
+
+<synopsis>
+int PQsslInUse(const PGconn *conn);
+</synopsis>
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-pqsslAttribute">
+     <term><function>PQsslAttribute</function><indexterm><primary>PQsslAttribute</></></term>
+     <listitem>
+      <para>
+        Returns SSL-related information about the connection.
+
+<synopsis>
+const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
+</synopsis>
+      </para>
+
+      <para>
+       The list of available attributes varies depending on the SSL library
+       being used, and the type of connection. If an attribute is not
+       available, returns NULL.
+      </para>
+
+      <para>
+       The following attributes are commonly available:
+       <variablelist>
+        <varlistentry>
+         <term><literal>library</literal></term>
+          <listitem>
+           <para>
+            Name of the SSL implementation in use. (Currently, only
+            <literal>"OpenSSL"</literal> is implemented)
+           </para>
+          </listitem>
+         </varlistentry>
+        <varlistentry>
+         <term><literal>protocol</literal></term>
+          <listitem>
+           <para>
+             SSL/TLS version in use. Common values are "SSLv2", "SSLv3", 
+             "TLSv1", "TLSv1.1" and "TLSv1.2", but an implementation may
+             return other strings if some other protocol is used.
+           </para>
+          </listitem>
+         </varlistentry>
+        <varlistentry>
+         <term><literal>key_bits</literal></term>
+          <listitem>
+           <para>
+            Number of key bits used by the encryption algorithm.
+           </para>
+          </listitem>
+         </varlistentry>
+        <varlistentry>
+         <term><literal>cipher</literal></term>
+          <listitem>
+           <para>
+            A short name of the ciphersuite used, e.g. 
+            <literal>"DHE-RSA-DES-CBC3-SHA"</literal>. The names are specific
+            to each SSL implementation.
+           </para>
+          </listitem>
+         </varlistentry>
+        <varlistentry>
+         <term><literal>compression</literal></term>
+          <listitem>
+           <para>
+            If SSL compression is in use, returns the name of the compression
+            algorithm, or "on" if compression is used but the algorithm is
+            not known. If compression is not in use, returns "off".
+           </para>
+          </listitem>
+         </varlistentry>
+       </variablelist>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-pqsslattributes">
+     <term><function>PQsslAttributes</function><indexterm><primary>PQsslAttributes</></></term>
+     <listitem>
+      <para>
+       Return an array of SSL attribute names available. The array is terminated by a NULL pointer.
+<synopsis>
+const char **PQsslAttributes(const PGconn *conn);
+</synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-pqsslstruct">
+     <term><function>PQsslStruct</function><indexterm><primary>PQsslStruct</></></term>
+     <listitem>
+      <para>
+       Return a pointer to an SSL-implementation specific object describing
+       the connection.
+<synopsis>
+void *PQsslStruct(const PGconn *conn, const char *struct_name);
+</synopsis>
+      </para>
+      <para>
+       The structs available depends on the SSL implementation in use.
+       For OpenSSL, there is one struct, under the name "OpenSSL",
+       and it returns a pointer to the OpenSSL <literal>SSL</literal> struct.
+       To use this function, code along the following lines could be used:
+<programlisting><![CDATA[
+#include <libpq-fe.h>
+#include <openssl/ssl.h>
+
+...
+
+    SSL *ssl;
+
+    dbconn = PQconnectdb(...);
+    ...
+
+    ssl = PQsslStruct(dbconn, "OpenSSL");
+    if (ssl)
+    {
+        /* use OpenSSL functions to access ssl */
+    }
+]]></programlisting>
+      </para>
+      <para>
+       This structure can be used to verify encryption levels, check server
+       certificates, and more. Refer to the <productname>OpenSSL</>
+       documentation for information about this structure.
+      </para>
+     </listitem>
+    </varlistentry>
 
     <varlistentry id="libpq-pqgetssl">
      <term><function>PQgetssl</function><indexterm><primary>PQgetssl</></></term>
@@ -1863,35 +2009,12 @@ void *PQgetssl(const PGconn *conn);
       </para>
 
       <para>
-       This structure can be used to verify encryption levels, check server
-       certificates, and more. Refer to the <productname>OpenSSL</>
-       documentation for information about this structure.
-      </para>
-
-      <para>
-       The actual return value is of type <type>SSL *</type>,
-       where <type>SSL</type> is a type defined by
-       the <productname>OpenSSL</productname> library, but it is not declared
-       this way to avoid requiring the <productname>OpenSSL</productname>
-       header files.  To use this function, code along the following lines
-       could be used:
-<programlisting><![CDATA[
-#include <libpq-fe.h>
-#include <openssl/ssl.h>
-
-...
-
-    SSL *ssl;
-
-    dbconn = PQconnectdb(...);
-    ...
-
-    ssl = PQgetssl(dbconn);
-    if (ssl)
-    {
-        /* use OpenSSL functions to access ssl */
-    }
-]]></programlisting>
+       This function is equivalent to PQsslStruct(conn, "OpenSSL"). It should
+       not be used in new applications, because the returned struct is
+       specific to OpenSSL and will not be available if another SSL
+       implementation is used. To check if a connection uses SSL, call
+       <function>PQsslInUse</> instead, and for more details about the
+       connection, use <function>PQsslAttribute</>.
       </para>
      </listitem>
     </varlistentry>
