@@ -280,11 +280,6 @@ metaphone(PG_FUNCTION_ARGS)
 				 errmsg("argument exceeds the maximum length of %d bytes",
 						MAX_METAPHONE_STRLEN)));
 
-	if (!(str_i_len > 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
-				 errmsg("argument is empty string")));
-
 	reqlen = PG_GETARG_INT32(1);
 	if (reqlen > MAX_METAPHONE_STRLEN)
 		ereport(ERROR,
