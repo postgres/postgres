@@ -79,10 +79,12 @@
  *	  either, but just process the queue directly.
  *
  * 5. Upon receipt of a PROCSIG_NOTIFY_INTERRUPT signal, the signal handler
- *	  can call inbound-notify processing immediately if this backend is idle
- *	  (ie, it is waiting for a frontend command and is not within a transaction
- *	  block).  Otherwise the handler may only set a flag, which will cause the
- *	  processing to occur just before we next go idle.
+ *	  sets the process's latch, which triggers the event to be processed
+ *	  immediately if this backend is idle (i.e., it is waiting for a frontend
+ *	  command and is not within a transaction block. C.f.
+ *	  ProcessClientReadInterrupt()).  Otherwise the handler may only set a
+ *	  flag, which will cause the processing to occur just before we next go
+ *	  idle.
  *
  *	  Inbound-notify processing consists of reading all of the notifications
  *	  that have arrived since scanning last time. We read every notification
@@ -126,6 +128,7 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
@@ -334,17 +337,13 @@ static List *pendingNotifies = NIL;		/* list of Notifications */
 static List *upperPendingNotifies = NIL;		/* list of upper-xact lists */
 
 /*
- * State for inbound notifications consists of two flags: one saying whether
- * the signal handler is currently allowed to call ProcessIncomingNotify
- * directly, and one saying whether the signal has occurred but the handler
- * was not allowed to call ProcessIncomingNotify at the time.
- *
- * NB: the "volatile" on these declarations is critical!  If your compiler
- * does not grok "volatile", you'd be best advised to compile this file
- * with all optimization turned off.
+ * Inbound notifications are initially processed by HandleNotifyInterrupt(),
+ * called from inside a signal handler. That just sets the
+ * notifyInterruptPending flag and sets the process
+ * latch. ProcessNotifyInterrupt() will then be called whenever it's safe to
+ * actually deal with the interrupt.
  */
-static volatile sig_atomic_t notifyInterruptEnabled = 0;
-static volatile sig_atomic_t notifyInterruptOccurred = 0;
+volatile sig_atomic_t notifyInterruptPending = false;
 
 /* True if we've registered an on_shmem_exit cleanup */
 static bool unlistenExitRegistered = false;
@@ -1625,164 +1624,45 @@ AtSubAbort_Notify(void)
 /*
  * HandleNotifyInterrupt
  *
- *		This is called when PROCSIG_NOTIFY_INTERRUPT is received.
- *
- *		If we are idle (notifyInterruptEnabled is set), we can safely invoke
- *		ProcessIncomingNotify directly.  Otherwise, just set a flag
- *		to do it later.
+ *		Signal handler portion of interrupt handling. Let the backend know
+ *		that there's a pending notify interrupt. If we're currently reading
+ *		from the client, this will interrupt the read and
+ *		ProcessClientReadInterrupt() will call ProcessNotifyInterrupt().
  */
 void
 HandleNotifyInterrupt(void)
 {
 	/*
 	 * Note: this is called by a SIGNAL HANDLER. You must be very wary what
-	 * you do here. Some helpful soul had this routine sprinkled with
-	 * TPRINTFs, which would likely lead to corruption of stdio buffers if
-	 * they were ever turned on.
+	 * you do here.
 	 */
 
-	/* Don't joggle the elbow of proc_exit */
-	if (proc_exit_inprogress)
-		return;
+	/* signal that work needs to be done */
+	notifyInterruptPending = true;
 
-	if (notifyInterruptEnabled)
-	{
-		bool		save_ImmediateInterruptOK = ImmediateInterruptOK;
-
-		/*
-		 * We may be called while ImmediateInterruptOK is true; turn it off
-		 * while messing with the NOTIFY state.  This prevents problems if
-		 * SIGINT or similar arrives while we're working.  Just to be real
-		 * sure, bump the interrupt holdoff counter as well.  That way, even
-		 * if something inside ProcessIncomingNotify() transiently sets
-		 * ImmediateInterruptOK (eg while waiting on a lock), we won't get
-		 * interrupted until we're done with the notify interrupt.
-		 */
-		ImmediateInterruptOK = false;
-		HOLD_INTERRUPTS();
-
-		/*
-		 * I'm not sure whether some flavors of Unix might allow another
-		 * SIGUSR1 occurrence to recursively interrupt this routine. To cope
-		 * with the possibility, we do the same sort of dance that
-		 * EnableNotifyInterrupt must do --- see that routine for comments.
-		 */
-		notifyInterruptEnabled = 0;		/* disable any recursive signal */
-		notifyInterruptOccurred = 1;	/* do at least one iteration */
-		for (;;)
-		{
-			notifyInterruptEnabled = 1;
-			if (!notifyInterruptOccurred)
-				break;
-			notifyInterruptEnabled = 0;
-			if (notifyInterruptOccurred)
-			{
-				/* Here, it is finally safe to do stuff. */
-				if (Trace_notify)
-					elog(DEBUG1, "HandleNotifyInterrupt: perform async notify");
-
-				ProcessIncomingNotify();
-
-				if (Trace_notify)
-					elog(DEBUG1, "HandleNotifyInterrupt: done");
-			}
-		}
-
-		/*
-		 * Restore the holdoff level and ImmediateInterruptOK, and check for
-		 * interrupts if needed.
-		 */
-		RESUME_INTERRUPTS();
-		ImmediateInterruptOK = save_ImmediateInterruptOK;
-		if (save_ImmediateInterruptOK)
-			CHECK_FOR_INTERRUPTS();
-	}
-	else
-	{
-		/*
-		 * In this path it is NOT SAFE to do much of anything, except this:
-		 */
-		notifyInterruptOccurred = 1;
-	}
+	/* make sure the event is processed in due course */
+	SetLatch(MyLatch);
 }
 
 /*
- * EnableNotifyInterrupt
+ * ProcessNotifyInterrupt
  *
- *		This is called by the PostgresMain main loop just before waiting
- *		for a frontend command.  If we are truly idle (ie, *not* inside
- *		a transaction block), then process any pending inbound notifies,
- *		and enable the signal handler to process future notifies directly.
- *
- *		NOTE: the signal handler starts out disabled, and stays so until
- *		PostgresMain calls this the first time.
+ *		This is called just after waiting for a frontend command.  If a
+ *		interrupt arrives (via HandleNotifyInterrupt()) while reading, the
+ *		read will be interrupted via the process's latch, and this routine
+ *		will get called.  If we are truly idle (ie, *not* inside a transaction
+ *		block), process the incoming notifies.
  */
 void
-EnableNotifyInterrupt(void)
+ProcessNotifyInterrupt(void)
 {
 	if (IsTransactionOrTransactionBlock())
 		return;					/* not really idle */
 
-	/*
-	 * This code is tricky because we are communicating with a signal handler
-	 * that could interrupt us at any point.  If we just checked
-	 * notifyInterruptOccurred and then set notifyInterruptEnabled, we could
-	 * fail to respond promptly to a signal that happens in between those two
-	 * steps.  (A very small time window, perhaps, but Murphy's Law says you
-	 * can hit it...)  Instead, we first set the enable flag, then test the
-	 * occurred flag.  If we see an unserviced interrupt has occurred, we
-	 * re-clear the enable flag before going off to do the service work. (That
-	 * prevents re-entrant invocation of ProcessIncomingNotify() if another
-	 * interrupt occurs.) If an interrupt comes in between the setting and
-	 * clearing of notifyInterruptEnabled, then it will have done the service
-	 * work and left notifyInterruptOccurred zero, so we have to check again
-	 * after clearing enable.  The whole thing has to be in a loop in case
-	 * another interrupt occurs while we're servicing the first. Once we get
-	 * out of the loop, enable is set and we know there is no unserviced
-	 * interrupt.
-	 *
-	 * NB: an overenthusiastic optimizing compiler could easily break this
-	 * code. Hopefully, they all understand what "volatile" means these days.
-	 */
-	for (;;)
-	{
-		notifyInterruptEnabled = 1;
-		if (!notifyInterruptOccurred)
-			break;
-		notifyInterruptEnabled = 0;
-		if (notifyInterruptOccurred)
-		{
-			if (Trace_notify)
-				elog(DEBUG1, "EnableNotifyInterrupt: perform async notify");
-
-			ProcessIncomingNotify();
-
-			if (Trace_notify)
-				elog(DEBUG1, "EnableNotifyInterrupt: done");
-		}
-	}
+	while (notifyInterruptPending)
+		ProcessIncomingNotify();
 }
 
-/*
- * DisableNotifyInterrupt
- *
- *		This is called by the PostgresMain main loop just after receiving
- *		a frontend command.  Signal handler execution of inbound notifies
- *		is disabled until the next EnableNotifyInterrupt call.
- *
- *		The PROCSIG_CATCHUP_INTERRUPT signal handler also needs to call this,
- *		so as to prevent conflicts if one signal interrupts the other.  So we
- *		must return the previous state of the flag.
- */
-bool
-DisableNotifyInterrupt(void)
-{
-	bool		result = (notifyInterruptEnabled != 0);
-
-	notifyInterruptEnabled = 0;
-
-	return result;
-}
 
 /*
  * Read all pending notifications from the queue, and deliver appropriate
@@ -2076,9 +1956,10 @@ asyncQueueAdvanceTail(void)
 /*
  * ProcessIncomingNotify
  *
- *		Deal with arriving NOTIFYs from other backends.
- *		This is called either directly from the PROCSIG_NOTIFY_INTERRUPT
- *		signal handler, or the next time control reaches the outer idle loop.
+ *		Deal with arriving NOTIFYs from other backends as soon as it's safe to
+ *		do so. This used to be called from the PROCSIG_NOTIFY_INTERRUPT
+ *		signal handler, but isn't anymore.
+ *
  *		Scan the queue for arriving notifications and report them to my front
  *		end.
  *
@@ -2087,17 +1968,12 @@ asyncQueueAdvanceTail(void)
 static void
 ProcessIncomingNotify(void)
 {
-	bool		catchup_enabled;
-
 	/* We *must* reset the flag */
-	notifyInterruptOccurred = 0;
+	notifyInterruptPending = false;
 
 	/* Do nothing else if we aren't actively listening */
 	if (listenChannels == NIL)
 		return;
-
-	/* Must prevent catchup interrupt while I am running */
-	catchup_enabled = DisableCatchupInterrupt();
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify");
@@ -2123,9 +1999,6 @@ ProcessIncomingNotify(void)
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify: done");
-
-	if (catchup_enabled)
-		EnableCatchupInterrupt();
 }
 
 /*

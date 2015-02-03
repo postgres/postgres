@@ -128,6 +128,7 @@ secure_read(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
 
+retry:
 #ifdef USE_SSL
 	if (port->ssl_in_use)
 	{
@@ -139,6 +140,14 @@ secure_read(Port *port, void *ptr, size_t len)
 		n = secure_raw_read(port, ptr, len);
 	}
 
+	/* Process interrupts that happened while (or before) receiving. */
+	ProcessClientReadInterrupt(); /* preserves errno */
+
+	/* retry after processing interrupts */
+	if (n < 0 && errno == EINTR)
+	{
+		goto retry;
+	}
 	return n;
 }
 
@@ -146,8 +155,6 @@ ssize_t
 secure_raw_read(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
-
-	prepare_for_client_read();
 
 	/*
 	 * Try to read from the socket without blocking. If it succeeds we're
@@ -168,10 +175,20 @@ rloop:
 		int		save_errno = errno;
 
 		w = WaitLatchOrSocket(MyLatch,
-							  WL_SOCKET_READABLE,
+							  WL_LATCH_SET | WL_SOCKET_READABLE,
 							  port->sock, 0);
 
-		if (w & WL_SOCKET_READABLE)
+		if (w & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			/*
+			 * Force a return, so interrupts can be processed when not
+			 * (possibly) underneath a ssl library.
+			 */
+			errno = EINTR;
+			return -1;
+		}
+		else if (w & WL_SOCKET_READABLE)
 		{
 			goto rloop;
 		}
@@ -182,8 +199,6 @@ rloop:
 		 */
 		errno = save_errno;
 	}
-
-	client_read_ended();
 
 	return n;
 }
@@ -197,6 +212,7 @@ secure_write(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
 
+retry:
 #ifdef USE_SSL
 	if (port->ssl_in_use)
 	{
@@ -206,6 +222,21 @@ secure_write(Port *port, void *ptr, size_t len)
 #endif
 	{
 		n = secure_raw_write(port, ptr, len);
+	}
+
+	/*
+	 * XXX: We'll, at some later point, likely want to add interrupt
+	 * processing here.
+	 */
+
+	/*
+	 * Retry after processing interrupts. This can be triggered even though we
+	 * don't check for latch set's during writing yet, because SSL
+	 * renegotiations might have required reading from the socket.
+	 */
+	if (n < 0 && errno == EINTR)
+	{
+		goto retry;
 	}
 
 	return n;

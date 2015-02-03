@@ -511,6 +511,7 @@ be_tls_read(Port *port, void *ptr, size_t len)
 	ssize_t		n;
 	int			err;
 	int			waitfor;
+	int			latchret;
 
 rloop:
 	errno = 0;
@@ -531,12 +532,29 @@ rloop:
 				break;
 			}
 
-			if (err == SSL_ERROR_WANT_READ)
-				waitfor = WL_SOCKET_READABLE;
-			else
-				waitfor = WL_SOCKET_WRITEABLE;
+			waitfor = WL_LATCH_SET;
 
-			WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
+			if (err == SSL_ERROR_WANT_READ)
+				waitfor |= WL_SOCKET_READABLE;
+			else
+				waitfor |= WL_SOCKET_WRITEABLE;
+
+			latchret = WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
+
+			/*
+			 * We'll, among other situations, get here if the low level
+			 * routine doing the actual recv() via the socket got interrupted
+			 * by a signal. That's so we can handle interrupts once outside
+			 * openssl, so we don't jump out from underneath its covers. We
+			 * can check this both, when reading and writing, because even
+			 * when writing that's just openssl's doing, not a 'proper' write
+			 * initiated by postgres.
+			 */
+			if (latchret & WL_LATCH_SET)
+			{
+				ResetLatch(MyLatch);
+				ProcessClientReadInterrupt();  /* preserves errno */
+			}
 			goto rloop;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */
@@ -647,6 +665,10 @@ wloop:
 				waitfor = WL_SOCKET_WRITEABLE;
 
 			WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
+			/*
+			 * XXX: We'll, at some later point, likely want to add interrupt
+			 * processing here.
+			 */
 			goto wloop;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */

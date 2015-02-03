@@ -582,9 +582,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 		launcher_determine_sleep(!dlist_is_empty(&AutoVacuumShmem->av_freeWorkers),
 								 false, &nap);
 
-		/* Allow sinval catchup interrupts while sleeping */
-		EnableCatchupInterrupt();
-
 		/*
 		 * Wait until naptime expires or we get some type of signal (all the
 		 * signal handlers will wake us by calling SetLatch).
@@ -595,7 +592,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		ResetLatch(MyLatch);
 
-		DisableCatchupInterrupt();
+		/* Process sinval catchup interrupts that happened while sleeping */
+		ProcessCatchupInterrupt();
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
