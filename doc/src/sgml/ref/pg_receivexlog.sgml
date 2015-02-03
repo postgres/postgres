@@ -139,9 +139,9 @@ PostgreSQL documentation
       <term><option>--synchronous</option></term>
       <listitem>
        <para>
-        Issue sync commands as soon as there is WAL data which has not been
-        flushed yet. Also status packets are sent back to the server just after
-        WAL data is flushed whatever <literal>--status-interval</> is set to.
+        Flush the WAL data to disk immediately after it has been received. Also
+        send a status packet back to the server immediately after flushing,
+        regardless of <literal>--status-interval</>.
        </para>
       </listitem>
      </varlistentry>
