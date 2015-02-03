@@ -306,13 +306,6 @@ ClientAuthentication(Port *port)
 	 */
 	hba_getauthmethod(port);
 
-	/*
-	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
-	 * don't want this during hba_getauthmethod() because it might have to do
-	 * database access, eg for role membership checks.)
-	 */
-	ImmediateInterruptOK = true;
-	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
 
 	/*
@@ -566,9 +559,6 @@ ClientAuthentication(Port *port)
 		sendAuthRequest(port, AUTH_REQ_OK);
 	else
 		auth_failed(port, status, logdetail);
-
-	/* Done with authentication, so we should turn off immediate interrupts */
-	ImmediateInterruptOK = false;
 }
 
 
@@ -579,6 +569,8 @@ static void
 sendAuthRequest(Port *port, AuthRequest areq)
 {
 	StringInfoData buf;
+
+	CHECK_FOR_INTERRUPTS();
 
 	pq_beginmessage(&buf, 'R');
 	pq_sendint(&buf, (int32) areq, sizeof(int32));
@@ -613,6 +605,8 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	 */
 	if (areq != AUTH_REQ_OK)
 		pq_flush();
+
+	CHECK_FOR_INTERRUPTS();
 }
 
 /*
@@ -851,6 +845,9 @@ pg_GSS_recvauth(Port *port)
 	do
 	{
 		pq_startmsgread();
+
+		CHECK_FOR_INTERRUPTS();
+
 		mtype = pq_getbyte();
 		if (mtype != 'p')
 		{
@@ -899,6 +896,8 @@ pg_GSS_recvauth(Port *port)
 			 "minor: %d, outlen: %u, outflags: %x",
 			 maj_stat, min_stat,
 			 (unsigned int) port->gss->outbuf.length, gflags);
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (port->gss->outbuf.length != 0)
 		{
@@ -1396,6 +1395,9 @@ interpret_ident_response(const char *ident_response,
  *	IP addresses and port numbers are in network byte order.
  *
  *	But iff we're unable to get the information from ident, return false.
+ *
+ *	XXX: Using WaitLatchOrSocket() and doing a CHECK_FOR_INTERRUPTS() if the
+ *	latch was set would improve the responsiveness to timeouts/cancellations.
  */
 static int
 ident_inet(hbaPort *port)
@@ -1510,6 +1512,8 @@ ident_inet(hbaPort *port)
 	/* loop in case send is interrupted */
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		rc = send(sock_fd, ident_query, strlen(ident_query), 0);
 	} while (rc < 0 && errno == EINTR);
 
@@ -1525,6 +1529,8 @@ ident_inet(hbaPort *port)
 
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
 	} while (rc < 0 && errno == EINTR);
 
@@ -2413,6 +2419,10 @@ CheckRADIUSAuth(Port *port)
 	 * call to select() with a timeout, since somebody can be sending invalid
 	 * packets to our port thus causing us to retry in a loop and never time
 	 * out.
+	 *
+	 * XXX: Using WaitLatchOrSocket() and doing a CHECK_FOR_INTERRUPTS() if
+	 * the latch was set would improve the responsiveness to
+	 * timeouts/cancellations.
 	 */
 	gettimeofday(&endtime, NULL);
 	endtime.tv_sec += RADIUS_TIMEOUT;

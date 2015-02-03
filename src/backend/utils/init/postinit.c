@@ -1099,18 +1099,24 @@ ShutdownPostgres(int code, Datum arg)
 static void
 StatementTimeoutHandler(void)
 {
+	int sig = SIGINT;
+
+	/*
+	 * During authentication the timeout is used to deal with
+	 * authentication_timeout - we want to quit in response to such timeouts.
+	 */
+	if (ClientAuthInProgress)
+		sig = SIGTERM;
+
 #ifdef HAVE_SETSID
 	/* try to signal whole process group */
-	kill(-MyProcPid, SIGINT);
+	kill(-MyProcPid, sig);
 #endif
-	kill(MyProcPid, SIGINT);
+	kill(MyProcPid, sig);
 }
 
 /*
  * LOCK_TIMEOUT handler: trigger a query-cancel interrupt.
- *
- * This is identical to StatementTimeoutHandler, but since it's so short,
- * we might as well keep the two functions separate for clarity.
  */
 static void
 LockTimeoutHandler(void)

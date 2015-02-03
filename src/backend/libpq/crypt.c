@@ -47,13 +47,6 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	Datum		datum;
 	bool		isnull;
 
-	/*
-	 * Disable immediate interrupts while doing database access.  (Note we
-	 * don't bother to turn this back on if we hit one of the failure
-	 * conditions, since we can expect we'll just exit right away anyway.)
-	 */
-	ImmediateInterruptOK = false;
-
 	/* Get role info from pg_authid */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 	if (!HeapTupleIsValid(roleTup))
@@ -80,9 +73,6 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	if (*shadow_pass == '\0')
 		return STATUS_ERROR;	/* empty password */
 
-	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
-	ImmediateInterruptOK = true;
-	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
 
 	/*

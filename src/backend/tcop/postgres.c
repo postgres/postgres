@@ -2880,7 +2880,11 @@ ProcessInterrupts(void)
 		/* As in quickdie, don't risk sending to client during auth */
 		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
 			whereToSendOutput = DestNone;
-		if (IsAutoVacuumWorkerProcess())
+		if (ClientAuthInProgress)
+			ereport(FATAL,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("canceling authentication due to timeout")));
+		else if (IsAutoVacuumWorkerProcess())
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("terminating autovacuum process due to administrator command")));
@@ -2959,17 +2963,6 @@ ProcessInterrupts(void)
 		}
 
 		QueryCancelPending = false;
-		if (ClientAuthInProgress)
-		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
-			LockErrorCleanup();
-			/* As in quickdie, don't risk sending to client during auth */
-			if (whereToSendOutput == DestRemote)
-				whereToSendOutput = DestNone;
-			ereport(ERROR,
-					(errcode(ERRCODE_QUERY_CANCELED),
-					 errmsg("canceling authentication due to timeout")));
-		}
 
 		/*
 		 * If LOCK_TIMEOUT and STATEMENT_TIMEOUT indicators are both set, we

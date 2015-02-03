@@ -377,6 +377,11 @@ aloop:
 				/* not allowed during connection establishment */
 				Assert(!port->noblock);
 
+				/*
+				 * No need to care about timeouts/interrupts here. At this
+				 * point authentication_timeout still employs
+				 * StartupPacketTimeoutHandler() which directly exits.
+				 */
 				if (err == SSL_ERROR_WANT_READ)
 					waitfor = WL_SOCKET_READABLE;
 				else
