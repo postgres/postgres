@@ -364,7 +364,7 @@ PGSemaphoreReset(PGSemaphore sema)
  * Lock a semaphore (decrement count), blocking if count would be < 0
  */
 void
-PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
+PGSemaphoreLock(PGSemaphore sema)
 {
 	int			errStatus;
 	struct sembuf sops;
@@ -378,48 +378,13 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 * from the operation prematurely because we were sent a signal.  So we
 	 * try and lock the semaphore again.
 	 *
-	 * Each time around the loop, we check for a cancel/die interrupt.  On
-	 * some platforms, if such an interrupt comes in while we are waiting, it
-	 * will cause the semop() call to exit with errno == EINTR, allowing us to
-	 * service the interrupt (if not in a critical section already) during the
-	 * next loop iteration.
-	 *
-	 * Once we acquire the lock, we do NOT check for an interrupt before
-	 * returning.  The caller needs to be able to record ownership of the lock
-	 * before any interrupt can be accepted.
-	 *
-	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
-	 * and entering the semop() call.  If a cancel/die interrupt occurs in
-	 * that window, we would fail to notice it until after we acquire the lock
-	 * (or get another interrupt to escape the semop()).  We can avoid this
-	 * problem by temporarily setting ImmediateInterruptOK to true before we
-	 * do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this interval will
-	 * execute directly.  However, there is a huge pitfall: there is another
-	 * window of a few instructions after the semop() before we are able to
-	 * reset ImmediateInterruptOK.  If an interrupt occurs then, we'll lose
-	 * control, which means that the lock has been acquired but our caller did
-	 * not get a chance to record the fact. Therefore, we only set
-	 * ImmediateInterruptOK if the caller tells us it's OK to do so, ie, the
-	 * caller does not need to record acquiring the lock.  (This is currently
-	 * true for lockmanager locks, since the process that granted us the lock
-	 * did all the necessary state updates. It's not true for SysV semaphores
-	 * used to implement LW locks or emulate spinlocks --- but the wait time
-	 * for such locks should not be very long, anyway.)
-	 *
-	 * On some platforms, signals marked SA_RESTART (which is most, for us)
-	 * will not interrupt the semop(); it will just keep waiting.  Therefore
-	 * it's necessary for cancel/die interrupts to be serviced directly by the
-	 * signal handler.  On these platforms the behavior is really the same
-	 * whether the signal arrives just before the semop() begins, or while it
-	 * is waiting.  The loop on EINTR is thus important only for platforms
-	 * without SA_RESTART.
+	 * We used to check interrupts here, but that required servicing
+	 * interrupts directly from signal handlers. Which is hard to do safely
+	 * and portably.
 	 */
 	do
 	{
-		ImmediateInterruptOK = interruptOK;
-		CHECK_FOR_INTERRUPTS();
 		errStatus = semop(sema->semId, &sops, 1);
-		ImmediateInterruptOK = false;
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)

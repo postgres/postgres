@@ -863,8 +863,7 @@ LWLockDequeueSelf(LWLock *lock)
 		 */
 		for (;;)
 		{
-			/* "false" means cannot accept cancel/die interrupt here. */
-			PGSemaphoreLock(&MyProc->sem, false);
+			PGSemaphoreLock(&MyProc->sem);
 			if (!MyProc->lwWaiting)
 				break;
 			extraWaits++;
@@ -1034,8 +1033,7 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 
 		for (;;)
 		{
-			/* "false" means cannot accept cancel/die interrupt here. */
-			PGSemaphoreLock(&proc->sem, false);
+			PGSemaphoreLock(&proc->sem);
 			if (!proc->lwWaiting)
 				break;
 			extraWaits++;
@@ -1195,8 +1193,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 
 			for (;;)
 			{
-				/* "false" means cannot accept cancel/die interrupt here. */
-				PGSemaphoreLock(&proc->sem, false);
+				PGSemaphoreLock(&proc->sem);
 				if (!proc->lwWaiting)
 					break;
 				extraWaits++;
@@ -1397,8 +1394,7 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 
 		for (;;)
 		{
-			/* "false" means cannot accept cancel/die interrupt here. */
-			PGSemaphoreLock(&proc->sem, false);
+			PGSemaphoreLock(&proc->sem);
 			if (!proc->lwWaiting)
 				break;
 			extraWaits++;

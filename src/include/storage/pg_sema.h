@@ -72,7 +72,7 @@ extern void PGSemaphoreCreate(PGSemaphore sema);
 extern void PGSemaphoreReset(PGSemaphore sema);
 
 /* Lock a semaphore (decrement count), blocking if count would be < 0 */
-extern void PGSemaphoreLock(PGSemaphore sema, bool interruptOK);
+extern void PGSemaphoreLock(PGSemaphore sema);
 
 /* Unlock a semaphore (increment count) */
 extern void PGSemaphoreUnlock(PGSemaphore sema);
