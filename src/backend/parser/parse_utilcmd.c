@@ -160,7 +160,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * Look up the creation namespace.  This also checks permissions on the
 	 * target namespace, locks it against concurrent drops, checks for a
 	 * preexisting relation in that namespace with the same name, and updates
-	 * stmt->relation->relpersistence if the select namespace is temporary.
+	 * stmt->relation->relpersistence if the selected namespace is temporary.
 	 */
 	namespaceid =
 		RangeVarGetAndCheckCreationNamespace(stmt->relation, NoLock,
