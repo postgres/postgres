@@ -497,7 +497,7 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 		}
 		/* i is now the last required entry. */
 
-		MemoryContextSwitchTo(oldCtx);
+		MemoryContextSwitchTo(so->keyCtx);
 
 		key->nrequired = i + 1;
 		key->nadditional = key->nentries - key->nrequired;
@@ -515,11 +515,14 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 	}
 	else
 	{
+		MemoryContextSwitchTo(so->keyCtx);
+
 		key->nrequired = 1;
 		key->nadditional = 0;
 		key->requiredEntries = palloc(1 * sizeof(GinScanEntry));
 		key->requiredEntries[0] = key->scanEntry[0];
 	}
+	MemoryContextSwitchTo(oldCtx);
 }
 
 static void
