@@ -469,7 +469,7 @@ typedef struct OutputPluginOptions
       <literal>output_type</literal> has to either be set to
       <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</literal>
       or <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</literal>. See also
-      <xref linkend="logicaldecoding-output-mode"/>.
+      <xref linkend="logicaldecoding-output-mode">.
      </para>
 
      <para>
