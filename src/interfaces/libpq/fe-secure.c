@@ -407,6 +407,14 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 {
 	return NULL;
 }
+
+const char **
+PQsslAttributes(PGconn *conn)
+{
+	static const char *result[] = { NULL };
+
+	return result;
+}
 #endif   /* USE_SSL */
 
 
