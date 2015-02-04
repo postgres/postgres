@@ -2104,7 +2104,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode, bool noWait,
 				}
 				else
 					XactLockTableWait(SnapshotDirty.xmax,
-									  relation, &tuple.t_data->t_ctid,
+									  relation, &tuple.t_self,
 									  XLTW_FetchUpdated);
 				continue;		/* loop back to repeat heap_fetch */
 			}
