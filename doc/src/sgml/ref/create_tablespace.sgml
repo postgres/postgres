@@ -54,7 +54,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
   <warning>
    <para>
     A tablespace cannot be used independently of the cluster in which it
-    is defined;  see <xref linkend="manage-ag-tablespaces"/>.
+    is defined;  see <xref linkend="manage-ag-tablespaces">.
    </para>
   </warning>
 
