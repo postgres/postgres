@@ -803,7 +803,10 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 					mallocedval = quote_postgres(newcopy, quote, lineno);
 					if (!mallocedval)
+					{
+						ecpg_free(newcopy);
 						return false;
+					}
 
 					*tobeinserted_p = mallocedval;
 				}
@@ -835,7 +838,10 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 					mallocedval = quote_postgres(newcopy, quote, lineno);
 					if (!mallocedval)
+					{
+						ecpg_free(newcopy);
 						return false;
+					}
 
 					*tobeinserted_p = mallocedval;
 				}
@@ -859,7 +865,10 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 							nval = PGTYPESnumeric_new();
 							if (!nval)
+							{
+								ecpg_free(mallocedval);
 								return false;
+							}
 
 							if (var->type == ECPGt_numeric)
 								result = PGTYPESnumeric_copy((numeric *) ((var + var->offset * element)->value), nval);
@@ -869,6 +878,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 							if (result != 0)
 							{
 								PGTYPESnumeric_free(nval);
+								ecpg_free(mallocedval);
 								return false;
 							}
 
@@ -876,11 +886,13 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 							slen = strlen(str);
 							PGTYPESnumeric_free(nval);
 
-							if (!(mallocedval = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
+							if (!(newcopy = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
 							{
+								ecpg_free(mallocedval);
 								ecpg_free(str);
 								return false;
 							}
+							mallocedval = newcopy;
 
 							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
@@ -940,14 +952,19 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						{
 							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), quote, lineno);
 							if (!str)
+							{
+								ecpg_free(mallocedval);
 								return false;
+							}
 							slen = strlen(str);
 
-							if (!(mallocedval = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
+							if (!(newcopy = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
 							{
+								ecpg_free(mallocedval);
 								ecpg_free(str);
 								return false;
 							}
+							mallocedval = newcopy;
 
 							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
@@ -991,14 +1008,19 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						{
 							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), quote, lineno);
 							if (!str)
+							{
+								ecpg_free(mallocedval);
 								return false;
+							}
 							slen = strlen(str);
 
-							if (!(mallocedval = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
+							if (!(newcopy = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
 							{
+								ecpg_free(mallocedval);
 								ecpg_free(str);
 								return false;
 							}
+							mallocedval = newcopy;
 
 							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
@@ -1049,11 +1071,13 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 							slen = strlen(str);
 
-							if (!(mallocedval = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
+							if (!(newcopy = ecpg_realloc(mallocedval, strlen(mallocedval) + slen + 2, lineno)))
 							{
+								ecpg_free(mallocedval);
 								ecpg_free(str);
 								return false;
 							}
+							mallocedval = newcopy;
 
 							memcpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
