@@ -2118,7 +2118,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 				{
 					case LockWaitBlock:
 						XactLockTableWait(SnapshotDirty.xmax,
-										  relation, &tuple.t_data->t_ctid,
+										  relation, &tuple.t_self,
 										  XLTW_FetchUpdated);
 						break;
 					case LockWaitSkip:
