@@ -398,11 +398,10 @@ ecpg_store_result(const PGresult *results, int act_field,
 		}
 
 		ecpg_log("ecpg_store_result on line %d: allocating memory for %d tuples\n", stmt->lineno, ntuples);
-		var->value = (char *) ecpg_alloc(len, stmt->lineno);
+		var->value = (char *) ecpg_auto_alloc(len, stmt->lineno);
 		if (!var->value)
 			return false;
 		*((char **) var->pointer) = var->value;
-		ecpg_add_mem(var->value, stmt->lineno);
 	}
 
 	/* allocate indicator variable if needed */
@@ -410,11 +409,10 @@ ecpg_store_result(const PGresult *results, int act_field,
 	{
 		int			len = var->ind_offset * ntuples;
 
-		var->ind_value = (char *) ecpg_alloc(len, stmt->lineno);
+		var->ind_value = (char *) ecpg_auto_alloc(len, stmt->lineno);
 		if (!var->ind_value)
 			return false;
 		*((char **) var->ind_pointer) = var->ind_value;
-		ecpg_add_mem(var->ind_value, stmt->lineno);
 	}
 
 	/* fill the variable with the tuple(s) */

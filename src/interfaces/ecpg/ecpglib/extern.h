@@ -136,8 +136,7 @@ extern struct var_list *ivlist;
 
 /* Here are some methods used by the lib. */
 
-/* Returns a pointer to a string containing a simple type name. */
-void		ecpg_add_mem(void *ptr, int lineno);
+bool		ecpg_add_mem(void *ptr, int lineno);
 
 bool ecpg_get_data(const PGresult *, int, int, int, enum ECPGttype type,
 			  enum ECPGttype, char *, char *, long, long, long,
@@ -148,6 +147,7 @@ void		ecpg_pthreads_init(void);
 #endif
 struct connection *ecpg_get_connection(const char *);
 char	   *ecpg_alloc(long, int);
+char	   *ecpg_auto_alloc(long, int);
 char	   *ecpg_realloc(void *, long, int);
 void		ecpg_free(void *);
 bool		ecpg_init(const struct connection *, const char *, const int);

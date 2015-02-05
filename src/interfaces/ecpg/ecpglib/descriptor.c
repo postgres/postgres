@@ -432,7 +432,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				/* allocate storage if needed */
 				if (arrsize == 0 && *(void **) var == NULL)
 				{
-					void	   *mem = (void *) ecpg_alloc(offset * ntuples, lineno);
+					void	   *mem = (void *) ecpg_auto_alloc(offset * ntuples, lineno);
 
 					if (!mem)
 					{
@@ -440,7 +440,6 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 						return false;
 					}
 					*(void **) var = mem;
-					ecpg_add_mem(mem, lineno);
 					var = mem;
 				}
 
@@ -510,7 +509,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		/* allocate storage if needed */
 		if (data_var.ind_arrsize == 0 && data_var.ind_value == NULL)
 		{
-			void	   *mem = (void *) ecpg_alloc(data_var.ind_offset * ntuples, lineno);
+			void	   *mem = (void *) ecpg_auto_alloc(data_var.ind_offset * ntuples, lineno);
 
 			if (!mem)
 			{
@@ -518,7 +517,6 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				return false;
 			}
 			*(void **) data_var.ind_pointer = mem;
-			ecpg_add_mem(mem, lineno);
 			data_var.ind_value = mem;
 		}
 
