@@ -289,7 +289,7 @@ IdentifySystem(void)
 			 GetSystemIdentifier());
 	snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
-	logptr = GetInsertRecPtr();
+	logptr = GetFlushRecPtr();
 
 	snprintf(xpos, sizeof(xpos), "%X/%X",
 			 logptr.xlogid, logptr.xrecoff);
