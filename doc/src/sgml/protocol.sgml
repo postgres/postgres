@@ -1369,7 +1369,7 @@ The commands accepted in walsender mode are:
       </term>
       <listitem>
       <para>
-       Current xlog write location. Useful to get a known location in the
+       Current xlog flush location. Useful to get a known location in the
        transaction log where streaming can start.
       </para>
       </listitem>

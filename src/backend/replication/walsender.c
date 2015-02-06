@@ -315,7 +315,7 @@ IdentifySystem(void)
 		logptr = GetStandbyFlushRecPtr();
 	}
 	else
-		logptr = GetInsertRecPtr();
+		logptr = GetFlushRecPtr();
 
 	snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
