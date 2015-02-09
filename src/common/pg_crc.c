@@ -1,32 +1,28 @@
 /*-------------------------------------------------------------------------
  *
- * pg_crc_tables.h
- *	  Polynomial lookup tables for CRC macros
- *
- * We make these tables available as a .h file so that programs not linked
- * with libpgport can still use the macros in pg_crc.h.  They just need
- * to #include this header as well.
+ * pg_crc.c
+ *	  PostgreSQL CRC support
  *
  * See Ross Williams' excellent introduction
  * A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS, available from
  * http://www.ross.net/crc/download/crc_v3.txt or several other net sites.
  *
- * These lookup tables are for normal, not "reflected", in Williams' terms,
- * CRC.
- *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/utils/pg_crc_tables.h
+ *
+ * IDENTIFICATION
+ *	  src/common/pg_crc.c
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PG_CRC_TABLES_H
-#define PG_CRC_TABLES_H
+
+#include "c.h"
 
 /*
  * This table is based on the so-called Castagnoli polynomial (the same
- * that is used e.g. in iSCSI).
+ * that is used e.g. in iSCSI).  It is for normal, not "reflected", in
+ * Williams' terms, CRC.
  */
 const uint32 pg_crc32c_table[256] = {
 	0x00000000, 0xF26B8303, 0xE13B70F7, 0x1350F3F4,
@@ -100,6 +96,7 @@ const uint32 pg_crc32c_table[256] = {
  * This table is based on the polynomial
  *	x^32+x^26+x^23+x^22+x^16+x^12+x^11+x^10+x^8+x^7+x^5+x^4+x^2+x+1.
  * (This is the same polynomial used in Ethernet checksums, for instance.)
+ * It is for normal, not "reflected", in Williams' terms, CRC.
  */
 const uint32 pg_crc32_table[256] = {
 	0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
@@ -167,5 +164,3 @@ const uint32 pg_crc32_table[256] = {
 	0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
 	0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 };
-
-#endif   /* PG_CRC_TABLES_H */

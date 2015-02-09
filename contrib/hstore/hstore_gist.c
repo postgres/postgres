@@ -6,7 +6,7 @@
 #include "access/gist.h"
 #include "access/skey.h"
 #include "catalog/pg_type.h"
-#include "utils/pg_crc.h"
+#include "common/pg_crc.h"
 
 #include "hstore.h"
 

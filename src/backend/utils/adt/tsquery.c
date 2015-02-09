@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "common/pg_crc.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "tsearch/ts_locale.h"

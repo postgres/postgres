@@ -16,8 +16,8 @@
 #define PG_CONTROL_H
 
 #include "access/xlogdefs.h"
+#include "common/pg_crc.h"
 #include "pgtime.h"				/* for pg_time_t */
-#include "utils/pg_crc.h"
 
 
 /* Version identifier for this pg_control format */

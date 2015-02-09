@@ -20,7 +20,7 @@
 #define TOLOWER(x)	(x)
 #endif
 
-#include "utils/pg_crc.h"
+#include "common/pg_crc.h"
 #include "crc32.h"
 
 unsigned int

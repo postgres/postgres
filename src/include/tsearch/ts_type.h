@@ -14,7 +14,6 @@
 
 #include "fmgr.h"
 #include "utils/memutils.h"
-#include "utils/pg_crc.h"
 
 
 /*

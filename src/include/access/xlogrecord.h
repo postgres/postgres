@@ -13,9 +13,9 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
+#include "common/pg_crc.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
-#include "utils/pg_crc.h"
 
 /*
  * The overall layout of an XLOG record is:
