@@ -96,10 +96,10 @@
 	 VARHDRSZ)
 
 /* Size of an EXTERNAL datum that contains a standard TOAST pointer */
-#define TOAST_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external))
+#define TOAST_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_external))
 
-/* Size of an indirect datum that contains a standard TOAST pointer */
-#define INDIRECT_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(struct varatt_indirect))
+/* Size of an EXTERNAL datum that contains an indirection pointer */
+#define INDIRECT_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_indirect))
 
 /*
  * Testing whether an externally-stored value is compressed now requires
