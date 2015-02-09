@@ -76,7 +76,8 @@ sub mkvcbuild
 	push(@pgportfiles, 'rint.c') if ($vsVersion < '12.00');
 
 	our @pgcommonallfiles = qw(
-	  exec.c pgfnames.c psprintf.c relpath.c rmtree.c string.c username.c wait_error.c);
+	  exec.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
+	  string.c username.c wait_error.c);
 
 	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c));
 

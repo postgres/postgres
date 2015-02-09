@@ -3,25 +3,12 @@
  *
  *	Definitions for the builtin LZ compressor
  *
- * src/include/utils/pg_lzcompress.h
+ * src/include/common/pg_lzcompress.h
  * ----------
  */
 
 #ifndef _PG_LZCOMPRESS_H_
 #define _PG_LZCOMPRESS_H_
-
-
-/* ----------
- * PGLZ_Header -
- *
- *		The information at the start of the compressed data.
- * ----------
- */
-typedef struct PGLZ_Header
-{
-	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int32		rawsize;
-} PGLZ_Header;
 
 
 /* ----------
@@ -31,16 +18,7 @@ typedef struct PGLZ_Header
  *		We allow 4 bytes for overrun before detecting compression failure.
  * ----------
  */
-#define PGLZ_MAX_OUTPUT(_dlen)			((_dlen) + 4 + sizeof(PGLZ_Header))
-
-/* ----------
- * PGLZ_RAW_SIZE -
- *
- *		Macro to determine the uncompressed data size contained
- *		in the entry.
- * ----------
- */
-#define PGLZ_RAW_SIZE(_lzdata)			((_lzdata)->rawsize)
+#define PGLZ_MAX_OUTPUT(_dlen)			((_dlen) + 4)
 
 
 /* ----------
@@ -105,8 +83,9 @@ extern const PGLZ_Strategy *const PGLZ_strategy_always;
  * Global function declarations
  * ----------
  */
-extern bool pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
+extern int32 pglz_compress(const char *source, int32 slen, char *dest,
 			  const PGLZ_Strategy *strategy);
-extern void pglz_decompress(const PGLZ_Header *source, char *dest);
+extern int32 pglz_decompress(const char *source, int32 slen, char *dest,
+			  int32 rawsize);
 
 #endif   /* _PG_LZCOMPRESS_H_ */

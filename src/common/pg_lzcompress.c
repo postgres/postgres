@@ -8,8 +8,8 @@
  *
  *		Entry routines:
  *
- *			bool
- *			pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
+ *			int32
+ *			pglz_compress(const char *source, int32 slen, char *dest,
  *						  const PGLZ_Strategy *strategy);
  *
  *				source is the input data to be compressed.
@@ -23,44 +23,43 @@
  *					the compression algorithm. If NULL, the compiled
  *					in default strategy is used.
  *
- *				The return value is TRUE if compression succeeded,
- *				FALSE if not; in the latter case the contents of dest
- *				are undefined.
+ *				The return value is the number of bytes written in the
+ *				buffer dest, or -1 if compression fails; in the latter
+ *				case the contents of dest are undefined.
  *
- *			void
- *			pglz_decompress(const PGLZ_Header *source, char *dest)
+ *			int32
+ *			pglz_decompress(const char *source, int32 slen, char *dest,
+ *							int32 rawsize)
  *
  *				source is the compressed input.
  *
+ *				slen is the length of the compressed input.
+ *
  *				dest is the area where the uncompressed data will be
  *					written to. It is the callers responsibility to
- *					provide enough space. The required amount can be
- *					obtained with the macro PGLZ_RAW_SIZE(source).
+ *					provide enough space.
  *
  *					The data is written to buff exactly as it was handed
  *					to pglz_compress(). No terminating zero byte is added.
  *
+ *				rawsize is the length of the uncompressed data.
+ *
+ *				The return value is the number of bytes written in the
+ *				buffer dest, or -1 if decompression fails.
+ *
  *		The decompression algorithm and internal data format:
  *
- *			PGLZ_Header is defined as
- *
- *				typedef struct PGLZ_Header {
- *					int32		vl_len_;
- *					int32		rawsize;
- *				}
- *
- *			The header is followed by the compressed data itself.
+ *			It is made with the compressed data itself.
  *
  *			The data representation is easiest explained by describing
  *			the process of decompression.
  *
- *			If VARSIZE(x) == rawsize + sizeof(PGLZ_Header), then the data
+ *			If compressed_size == rawsize, then the data
  *			is stored uncompressed as plain bytes. Thus, the decompressor
- *			simply copies rawsize bytes from the location after the
- *			header to the destination.
+ *			simply copies rawsize bytes to the destination.
  *
- *			Otherwise the first byte after the header tells what to do
- *			the next 8 times. We call this the control byte.
+ *			Otherwise the first byte tells what to do the next 8 times.
+ *			We call this the control byte.
  *
  *			An unset bit in the control byte means, that one uncompressed
  *			byte follows, which is copied from input to output.
@@ -169,14 +168,18 @@
  *
  * Copyright (c) 1999-2015, PostgreSQL Global Development Group
  *
- * src/backend/utils/adt/pg_lzcompress.c
+ * src/common/pg_lzcompress.c
  * ----------
  */
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 #include <limits.h>
 
-#include "utils/pg_lzcompress.h"
+#include "common/pg_lzcompress.h"
 
 
 /* ----------
@@ -492,14 +495,15 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 /* ----------
  * pglz_compress -
  *
- *		Compresses source into dest using strategy.
+ *		Compresses source into dest using strategy. Returns the number of
+ *		bytes written in buffer dest, or -1 if compression fails.
  * ----------
  */
-bool
-pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
+int32
+pglz_compress(const char *source, int32 slen, char *dest,
 			  const PGLZ_Strategy *strategy)
 {
-	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
+	unsigned char *bp = (unsigned char *) dest;
 	unsigned char *bstart = bp;
 	int			hist_next = 1;
 	bool		hist_recycle = false;
@@ -533,12 +537,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	if (strategy->match_size_good <= 0 ||
 		slen < strategy->min_input_size ||
 		slen > strategy->max_input_size)
-		return false;
-
-	/*
-	 * Save the original source size in the header.
-	 */
-	dest->rawsize = slen;
+		return -1;
 
 	/*
 	 * Limit the match parameters to the supported range.
@@ -611,7 +610,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 		 * allow 4 slop bytes.
 		 */
 		if (bp - bstart >= result_max)
-			return false;
+			return -1;
 
 		/*
 		 * If we've emitted more than first_success_by bytes without finding
@@ -620,7 +619,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 		 * pre-compressed data).
 		 */
 		if (!found_match && bp - bstart >= strategy->first_success_by)
-			return false;
+			return -1;
 
 		/*
 		 * Try to find a match in the history
@@ -664,35 +663,34 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	*ctrlp = ctrlb;
 	result_size = bp - bstart;
 	if (result_size >= result_max)
-		return false;
+		return -1;
 
-	/*
-	 * Success - need only fill in the actual length of the compressed datum.
-	 */
-	SET_VARSIZE_COMPRESSED(dest, result_size + sizeof(PGLZ_Header));
-
-	return true;
+	/* success */
+	return result_size;
 }
 
 
 /* ----------
  * pglz_decompress -
  *
- *		Decompresses source into dest.
+ *		Decompresses source into dest. Returns the number of bytes
+ *		decompressed in the destination buffer, or -1 if decompression
+ *		fails.
  * ----------
  */
-void
-pglz_decompress(const PGLZ_Header *source, char *dest)
+int32
+pglz_decompress(const char *source, int32 slen, char *dest,
+				int32 rawsize)
 {
 	const unsigned char *sp;
 	const unsigned char *srcend;
 	unsigned char *dp;
 	unsigned char *destend;
 
-	sp = ((const unsigned char *) source) + sizeof(PGLZ_Header);
-	srcend = ((const unsigned char *) source) + VARSIZE(source);
+	sp = (const unsigned char *) source;
+	srcend = ((const unsigned char *) source) + slen;
 	dp = (unsigned char *) dest;
-	destend = dp + source->rawsize;
+	destend = dp + rawsize;
 
 	while (sp < srcend && dp < destend)
 	{
@@ -771,9 +769,10 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 	 * Check we decompressed the right amount.
 	 */
 	if (dp != destend || sp != srcend)
-		elog(ERROR, "compressed data is corrupt");
+		return -1;
 
 	/*
 	 * That's it.
 	 */
+	return rawsize;
 }

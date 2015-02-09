@@ -1125,7 +1125,6 @@ PGEventResultCreate
 PGEventResultDestroy
 PGFInfoFunction
 PGFunction
-PGLZ_Header
 PGLZ_HistEntry
 PGLZ_Strategy
 PGMessageField
