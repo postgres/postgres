@@ -193,6 +193,23 @@ fi])# PGAC_C_TYPES_COMPATIBLE
 
 
 
+# PGAC_C_BUILTIN_BSWAP32
+# -------------------------
+# Check if the C compiler understands __builtin_bswap32(),
+# and define HAVE__BUILTIN_BSWAP32 if so.
+AC_DEFUN([PGAC_C_BUILTIN_BSWAP32],
+[AC_CACHE_CHECK(for __builtin_bswap32, pgac_cv__builtin_bswap32,
+[AC_TRY_COMPILE([static unsigned long int x = __builtin_bswap32(0xaabbccdd);],
+[],
+[pgac_cv__builtin_bswap32=yes],
+[pgac_cv__builtin_bswap32=no])])
+if test x"$pgac_cv__builtin_bswap32" = xyes ; then
+AC_DEFINE(HAVE__BUILTIN_BSWAP32, 1,
+          [Define to 1 if your compiler understands __builtin_bswap32.])
+fi])# PGAC_C_BUILTIN_BSWAP32
+
+
+
 # PGAC_C_BUILTIN_CONSTANT_P
 # -------------------------
 # Check if the C compiler understands __builtin_constant_p(),

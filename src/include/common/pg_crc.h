@@ -41,18 +41,37 @@
 
 typedef uint32 pg_crc32;
 
+#ifdef HAVE__BUILTIN_BSWAP32
+#define BSWAP32(x) __builtin_bswap32(x)
+#else
+#define BSWAP32(x) (((x << 24) & 0xff000000) | \
+					((x << 8) & 0x00ff0000) | \
+					((x >> 8) & 0x0000ff00) | \
+					((x >> 24) & 0x000000ff))
+#endif
+
 /*
  * CRC calculation using the CRC-32C (Castagnoli) polynomial.
  *
  * We use all-ones as the initial register contents and final bit inversion.
  * This is the same algorithm used e.g. in iSCSI. See RFC 3385 for more
  * details on the choice of polynomial.
+ *
+ * On big-endian systems, the intermediate value is kept in reverse byte
+ * order, to avoid byte-swapping during the calculation. FIN_CRC32C reverses
+ * the bytes to the final order.
  */
 #define INIT_CRC32C(crc) ((crc) = 0xFFFFFFFF)
+#ifdef WORDS_BIGENDIAN
+#define FIN_CRC32C(crc)	((crc) = BSWAP32(crc) ^ 0xFFFFFFFF)
+#else
 #define FIN_CRC32C(crc)	((crc) ^= 0xFFFFFFFF)
+#endif
 #define COMP_CRC32C(crc, data, len)	\
-	COMP_CRC32_NORMAL_TABLE(crc, data, len, pg_crc32c_table)
+	((crc) = pg_comp_crc32c((crc), (data), (len)))
 #define EQ_CRC32C(c1, c2) ((c1) == (c2))
+
+extern pg_crc32 pg_comp_crc32c(pg_crc32 crc, const void *data, size_t len);
 
 /*
  * CRC-32, the same used e.g. in Ethernet.
@@ -66,6 +85,19 @@ typedef uint32 pg_crc32;
 #define COMP_TRADITIONAL_CRC32(crc, data, len)	\
 	COMP_CRC32_NORMAL_TABLE(crc, data, len, pg_crc32_table)
 #define EQ_TRADITIONAL_CRC32(c1, c2) ((c1) == (c2))
+
+/* Sarwate's algorithm, for use with a "normal" lookup table */
+#define COMP_CRC32_NORMAL_TABLE(crc, data, len, table)			  \
+do {															  \
+	const unsigned char *__data = (const unsigned char *) (data); \
+	uint32		__len = (len); \
+\
+	while (__len-- > 0) \
+	{ \
+		int		__tab_index = ((int) (crc) ^ *__data++) & 0xFF; \
+		(crc) = table[__tab_index] ^ ((crc) >> 8); \
+	} \
+} while (0)
 
 /*
  * The CRC algorithm used for WAL et al in pre-9.5 versions.
@@ -88,20 +120,9 @@ typedef uint32 pg_crc32;
 #define EQ_LEGACY_CRC32(c1, c2) ((c1) == (c2))
 
 /*
- * Common code for CRC computation using a lookup table.
+ * Sarwate's algorithm, for use with a "reflected" lookup table (but in the
+ * legacy algorithm, we actually use it on a "normal" table, see above)
  */
-#define COMP_CRC32_NORMAL_TABLE(crc, data, len, table)			  \
-do {															  \
-	const unsigned char *__data = (const unsigned char *) (data); \
-	uint32		__len = (len); \
-\
-	while (__len-- > 0) \
-	{ \
-		int		__tab_index = ((int) (crc) ^ *__data++) & 0xFF; \
-		(crc) = table[__tab_index] ^ ((crc) >> 8); \
-	} \
-} while (0)
-
 #define COMP_CRC32_REFLECTED_TABLE(crc, data, len, table) \
 do {															  \
 	const unsigned char *__data = (const unsigned char *) (data); \
@@ -115,7 +136,7 @@ do {															  \
 } while (0)
 
 /* Constant tables for CRC-32C and CRC-32 polynomials */
-extern CRCDLLIMPORT const uint32 pg_crc32c_table[];
-extern CRCDLLIMPORT const uint32 pg_crc32_table[];
+extern CRCDLLIMPORT const uint32 pg_crc32c_table[8][256];
+extern CRCDLLIMPORT const uint32 pg_crc32_table[256];
 
 #endif   /* PG_CRC_H */
