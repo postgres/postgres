@@ -2,6 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <pgtypes_date.h>
+#include <pgtypes_interval.h>
+#include <pgtypes_numeric.h>
+#include <pgtypes_timestamp.h>
+
 exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
@@ -11,9 +16,13 @@ int
 main (void)
 {
 EXEC SQL BEGIN DECLARE SECTION;
-	int i = 1;
+	int i = 1, j;
 	int *did = &i;
-	int a[10] = {9,8,7,6,5,4,3,2,1,0};
+	short a[10] = {9,8,7,6,5,4,3,2,1,0};
+	timestamp ts[10];
+	date d[10];
+	interval in[10];
+	numeric n[10];
 	char text[25] = "klmnopqrst";
 	char *t = (char *)malloc(11);
 	double f;
@@ -24,22 +33,45 @@ EXEC SQL END DECLARE SECTION;
 
 	ECPGdebug(1, stderr);
 
+	for (j = 0; j < 10; j++) {
+		char str[20];
+		numeric *value;
+		interval *inter;
+
+		sprintf(str, "2000-1-1 0%d:00:00", j);
+		ts[j] = PGTYPEStimestamp_from_asc(str, NULL);
+		sprintf(str, "2000-1-1%d\n", j);
+		d[j] = PGTYPESdate_from_asc(str, NULL);
+		sprintf(str, "%d hours", j+10);
+		inter = PGTYPESinterval_from_asc(str, NULL);
+		in[j] = *inter;
+		value = PGTYPESnumeric_new();
+		PGTYPESnumeric_from_int(j, value);
+		n[j] = *value;
+	}
+
         EXEC SQL CONNECT TO REGRESSDB1;
 
 	EXEC SQL SET AUTOCOMMIT = ON;
 
 	EXEC SQL BEGIN WORK;
 
-	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10));
+	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10), ts timestamp[10], n numeric[10], d date[10], inter interval[10]);
 
-	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(404.90,3,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij');
+	EXEC SQL INSERT INTO test(f,i,a,text,ts,n,d,inter) VALUES(404.90,3,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij',:ts,:n,:d,:in);
 
-	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(140787.0,2,:a,:text);
+	EXEC SQL INSERT INTO test(f,i,a,text,ts,n,d,inter) VALUES(140787.0,2,:a,:text,:ts,:n,:d,:in);
 
-	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(14.07,:did,:a,:t);
+	EXEC SQL INSERT INTO test(f,i,a,text,ts,n,d,inter) VALUES(14.07,:did,:a,:t,:ts,:n,:d,:in);
 
 	EXEC SQL COMMIT;
 
+	for (j = 0; j < 10; j++) {
+		ts[j] = PGTYPEStimestamp_from_asc("1900-01-01 00:00:00", NULL);
+		d[j] = PGTYPESdate_from_asc("1900-01-01", NULL);
+		in[j] = *PGTYPESinterval_new();
+		n[j] = *PGTYPESnumeric_new();
+	}
 	EXEC SQL BEGIN WORK;
 
 	EXEC SQL SELECT f,text
@@ -50,13 +82,13 @@ EXEC SQL END DECLARE SECTION;
 	printf("Found f=%f text=%10.10s\n", f, text);
 
 	f=140787;
-	EXEC SQL SELECT a,text
-	 INTO :a,:t
+	EXEC SQL SELECT a,text,ts,n,d,inter
+	 INTO :a,:t,:ts,:n,:d,:in
 	 FROM test
 	 WHERE f = :f;
 
 	for (i = 0; i < 10; i++)
-		printf("Found a[%d] = %d\n", i, a[i]);
+		printf("Found a[%d] = %d ts[%d] = %s n[%d] = %s d[%d] = %s in[%d] = %s\n", i, a[i], i, PGTYPEStimestamp_to_asc(ts[i]), i, PGTYPESnumeric_to_asc(&(n[i]), -1), i, PGTYPESdate_to_asc(d[i]), i, PGTYPESinterval_to_asc(&(in[i])));
 
 	printf("Found text=%10.10s\n", t);
 

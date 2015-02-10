@@ -22,6 +22,7 @@ exec sql end declare section;
 	ECPGdebug(1, stderr);
 
 	exec sql connect to REGRESSDB1 as main;
+
 	exec sql create table test (name char(8), amount int, letter char(1));
 	exec sql commit;
 
@@ -54,10 +55,8 @@ exec sql end declare section;
 
 	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
 	{
-		exec sql begin declare section;
 		char n[8], l = letter[i][0];
 		int a = amount[i];
-		exec sql end declare section;
 
 		strncpy(n, name[i], 8);
 		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
@@ -75,10 +74,8 @@ exec sql end declare section;
 
 	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
 	{
-		exec sql begin declare section;
 		char n[8], l = letter[i][0];
 		int a = amount[i];
-		exec sql end declare section;
 
 		strncpy(n, name[i], 8);
 		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
