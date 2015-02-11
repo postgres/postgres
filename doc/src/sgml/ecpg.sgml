@@ -1377,10 +1377,13 @@ EXEC SQL END DECLARE SECTION;
     <title>Arrays</title>
 
     <para>
-     SQL-level arrays are not directly supported in ECPG.  It is not
-     possible to simply map an SQL array into a C array host variable.
-     This will result in undefined behavior.  Some workarounds exist,
-     however.
+     Multi-dimensional SQL-level arrays are not directly supported in ECPG.
+     One-dimensional SQL-level arrays can be mapped into C array host
+     variables and vice-versa.  However, when creating a statement ecpg does
+     not know the types of the columns, so that it cannot check if a C array
+     is input into a corresponding SQL-level array.  When processing the
+     output of a SQL statement, ecpg has the necessary information and thus
+     checks if both are arrays.
     </para>
 
     <para>
