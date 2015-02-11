@@ -45,6 +45,7 @@
 
 #include "access/attnum.h"
 #include "access/sysattr.h"
+#include "access/transam.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
@@ -1079,6 +1080,24 @@ selectDumpableDefaultACL(DefaultACLInfo *dinfo)
 		dinfo->dobj.dump = dinfo->dobj.namespace->dobj.dump;
 	else
 		dinfo->dobj.dump = include_everything;
+}
+
+/*
+ * selectDumpableCast: policy-setting subroutine
+ *		Mark a cast as to be dumped or not
+ *
+ * Casts do not belong to any particular namespace (since they haven't got
+ * names), nor do they have identifiable owners.  To distinguish user-defined
+ * casts from built-in ones, we must resort to checking whether the cast's
+ * OID is in the range reserved for initdb.
+ */
+static void
+selectDumpableCast(CastInfo *cast)
+{
+	if (cast->dobj.catId.oid < (Oid) FirstNormalObjectId)
+		cast->dobj.dump = false;
+	else
+		cast->dobj.dump = include_everything;
 }
 
 /*
@@ -5071,12 +5090,13 @@ getCasts(int *numCasts)
 							  sTypeInfo->dobj.name, tTypeInfo->dobj.name);
 		castinfo[i].dobj.name = namebuf.data;
 
-		if (OidIsValid(castinfo[i].castfunc))
+		if (g_fout->remoteVersion < 70300 &&
+			OidIsValid(castinfo[i].castfunc))
 		{
 			/*
 			 * We need to make a dependency to ensure the function will be
 			 * dumped first.  (In 7.3 and later the regular dependency
-			 * mechanism will handle this for us.)
+			 * mechanism handles this for us.)
 			 */
 			FuncInfo   *funcInfo;
 
@@ -5085,6 +5105,9 @@ getCasts(int *numCasts)
 				addObjectDependency(&castinfo[i].dobj,
 									funcInfo->dobj.dumpId);
 		}
+
+		/* Decide whether we want to dump it */
+		selectDumpableCast(&(castinfo[i]));
 	}
 
 	PQclear(res);
@@ -8308,12 +8331,12 @@ dumpCast(Archive *fout, CastInfo *cast)
 	PQExpBuffer delqry;
 	PQExpBuffer castsig;
 	FuncInfo   *funcInfo = NULL;
-	TypeInfo   *sourceInfo;
-	TypeInfo   *targetInfo;
 
-	if (dataOnly)
+	/* Skip if not to be dumped */
+	if (!cast->dobj.dump || dataOnly)
 		return;
 
+	/* Cannot dump if we don't have the cast function's info */
 	if (OidIsValid(cast->castfunc))
 	{
 		funcInfo = findFuncByOid(cast->castfunc);
@@ -8322,49 +8345,9 @@ dumpCast(Archive *fout, CastInfo *cast)
 	}
 
 	/*
-	 * As per discussion we dump casts if one or more of the underlying
-	 * objects (the conversion function and the two data types) are not
-	 * builtin AND if all of the non-builtin objects are included in the dump.
-	 * Builtin meaning, the namespace name does not start with "pg_".
+	 * Make sure we are in proper schema (needed for getFormattedTypeName).
+	 * Casts don't have a schema of their own, so use pg_catalog.
 	 */
-	sourceInfo = findTypeByOid(cast->castsource);
-	targetInfo = findTypeByOid(cast->casttarget);
-
-	if (sourceInfo == NULL || targetInfo == NULL)
-		return;
-
-	/*
-	 * Skip this cast if all objects are from pg_
-	 */
-	if ((funcInfo == NULL ||
-		 strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) == 0) &&
-		strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) == 0 &&
-		strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) == 0)
-		return;
-
-	/*
-	 * Skip cast if function isn't from pg_ and is not to be dumped.
-	 */
-	if (funcInfo &&
-		strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!funcInfo->dobj.dump)
-		return;
-
-	/*
-	 * Same for the source type
-	 */
-	if (strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!sourceInfo->dobj.dump)
-		return;
-
-	/*
-	 * and the target type.
-	 */
-	if (strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!targetInfo->dobj.dump)
-		return;
-
-	/* Make sure we are in proper schema (needed for getFormattedTypeName) */
 	selectSourceSchema("pg_catalog");
 
 	defqry = createPQExpBuffer();
