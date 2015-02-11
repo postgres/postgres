@@ -261,6 +261,9 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 
 	best_rel = gimme_tree(root, best_tour, pool->string_length);
 
+	if (best_rel == NULL)
+		elog(ERROR, "geqo failed to make a valid plan");
+
 	/* DBG: show the query plan */
 #ifdef NOT_USED
 	print_plan(best_plan, root);
