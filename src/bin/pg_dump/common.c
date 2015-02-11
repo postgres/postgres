@@ -199,7 +199,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
-	getCasts(fout, &numCasts);
+	getCasts(fout, dopt, &numCasts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading table inheritance information\n");
