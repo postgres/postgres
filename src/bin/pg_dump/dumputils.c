@@ -531,6 +531,7 @@ buildACLCommands(const char *name, const char *subname,
 				 const char *prefix, int remoteVersion,
 				 PQExpBuffer sql)
 {
+	bool		ok = true;
 	char	  **aclitems;
 	int			naclitems;
 	int			i;
@@ -601,8 +602,8 @@ buildACLCommands(const char *name, const char *subname,
 		if (!parseAclItem(aclitems[i], type, name, subname, remoteVersion,
 						  grantee, grantor, privs, privswgo))
 		{
-			free(aclitems);
-			return false;
+			ok = false;
+			break;
 		}
 
 		if (grantor->len == 0 && owner)
@@ -709,7 +710,7 @@ buildACLCommands(const char *name, const char *subname,
 
 	free(aclitems);
 
-	return true;
+	return ok;
 }
 
 /*
