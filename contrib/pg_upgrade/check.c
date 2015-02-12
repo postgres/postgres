@@ -432,7 +432,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 #endif
 
 	/* delete old cluster's default tablespace */
-	fprintf(script, RMDIR_CMD " %s\n", fix_path_separator(ctx, ctx->old.pgdata));
+	fprintf(script, RMDIR_CMD " \"%s\"\n", fix_path_separator(ctx, ctx->old.pgdata));
 
 	/* delete old cluster's alternate tablespaces */
 	for (tblnum = 0; tblnum < ctx->num_tablespaces; tblnum++)
@@ -456,7 +456,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 
 			for (dbnum = 0; dbnum < ctx->new.dbarr.ndbs; dbnum++)
 			{
-				fprintf(script, RMDIR_CMD " %s%s%c%d\n",
+				fprintf(script, RMDIR_CMD " \"%s%s%c%d\"\n",
 						fix_path_separator(ctx, ctx->tablespaces[tblnum]),
 						fix_path_separator(ctx, ctx->old.tablespace_suffix),
 						PATH_SEPARATOR, ctx->old.dbarr.dbs[dbnum].db_oid);
@@ -468,7 +468,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 			 * Simply delete the tablespace directory, which might be ".old"
 			 * or a version-specific subdirectory.
 			 */
-			fprintf(script, RMDIR_CMD " %s%s\n",
+			fprintf(script, RMDIR_CMD " \"%s%s\"\n",
 					fix_path_separator(ctx, ctx->tablespaces[tblnum]),
 					fix_path_separator(ctx, ctx->old.tablespace_suffix));
 	}
