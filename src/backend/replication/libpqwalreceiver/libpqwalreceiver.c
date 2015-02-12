@@ -262,6 +262,7 @@ libpqrcv_endstreaming(TimeLineID *next_tli)
 		ereport(ERROR,
 				(errmsg("error reading result of streaming command: %s",
 						PQerrorMessage(streamConn))));
+	PQclear(res);
 
 	/* Verify that there are no more results */
 	res = PQgetResult(streamConn);
