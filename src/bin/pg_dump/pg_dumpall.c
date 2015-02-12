@@ -1416,17 +1416,17 @@ dumpCreateDB(PGconn *conn)
 								  dbconnlimit);
 
 			appendPQExpBufferStr(buf, ";\n");
+		}
 
-			if (binary_upgrade)
-			{
-				appendPQExpBufferStr(buf, "-- For binary upgrade, set datfrozenxid and datminmxid.\n");
-				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database "
-								"SET datfrozenxid = '%u', datminmxid = '%u' "
-								  "WHERE datname = ",
-								  dbfrozenxid, dbminmxid);
-				appendStringLiteralConn(buf, dbname, conn);
-				appendPQExpBufferStr(buf, ";\n");
-			}
+		if (binary_upgrade)
+		{
+			appendPQExpBufferStr(buf, "-- For binary upgrade, set datfrozenxid and datminmxid.\n");
+			appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database "
+							"SET datfrozenxid = '%u', datminmxid = '%u' "
+							  "WHERE datname = ",
+							  dbfrozenxid, dbminmxid);
+			appendStringLiteralConn(buf, dbname, conn);
+			appendPQExpBufferStr(buf, ";\n");
 		}
 
 		if (!skip_acls &&
