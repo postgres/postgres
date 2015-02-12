@@ -299,7 +299,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
 
    <para>
     The command <xref linkend="app-pgrecvlogical"> can be used to control
-    logical decoding over a streaming replication connection.  (It is uses
+    logical decoding over a streaming replication connection.  (It uses
     these commands internally.)
    </para>
   </sect1>
