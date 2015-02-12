@@ -572,10 +572,14 @@ check_control_data(ControlData *oldctrl,
 	 * We might eventually allow upgrades from checksum to no-checksum
 	 * clusters.
 	 */
-	if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
-	{
-		pg_fatal("old and new pg_controldata checksum versions are invalid or do not match\n");
-	}
+	if (oldctrl->data_checksum_version == 0 &&
+		newctrl->data_checksum_version != 0)
+		pg_fatal("old cluster does not use data checksums but the new one does\n");
+	else if (oldctrl->data_checksum_version != 0 &&
+			 newctrl->data_checksum_version == 0)
+		pg_fatal("old cluster uses data checksums but the new one does not\n");
+	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
+		pg_fatal("old and new cluster pg_controldata checksum versions do not match\n");
 }
 
 
