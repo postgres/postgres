@@ -1613,8 +1613,7 @@ ident_inet(hbaPort *port)
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-	pgsocket	sock_fd;		/* File descriptor for socket on which we talk
-								 * to Ident */
+	pgsocket	sock_fd = PGINVALID_SOCKET;		/* for talking to Ident server */
 	int			rc;				/* Return code from a locally called function */
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];
@@ -1653,9 +1652,9 @@ ident_inet(hbaPort *port)
 	rc = pg_getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
 	if (rc || !ident_serv)
 	{
-		if (ident_serv)
-			pg_freeaddrinfo_all(hints.ai_family, ident_serv);
-		return STATUS_ERROR;	/* we don't expect this to happen */
+		/* we don't expect this to happen */
+		ident_return = false;
+		goto ident_inet_done;
 	}
 
 	hints.ai_flags = AI_NUMERICHOST;
@@ -1669,9 +1668,9 @@ ident_inet(hbaPort *port)
 	rc = pg_getaddrinfo_all(local_addr_s, NULL, &hints, &la);
 	if (rc || !la)
 	{
-		if (la)
-			pg_freeaddrinfo_all(hints.ai_family, la);
-		return STATUS_ERROR;	/* we don't expect this to happen */
+		/* we don't expect this to happen */
+		ident_return = false;
+		goto ident_inet_done;
 	}
 
 	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
@@ -1758,8 +1757,10 @@ ident_inet(hbaPort *port)
 ident_inet_done:
 	if (sock_fd != PGINVALID_SOCKET)
 		closesocket(sock_fd);
-	pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
-	pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
+	if (ident_serv)
+		pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
+	if (la)
+		pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
 
 	if (ident_return)
 		/* Success! Check the usermap */
