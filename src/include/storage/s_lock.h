@@ -404,7 +404,7 @@ tas(volatile slock_t *lock)
  * requires a barrier.  We fall through to the default gcc definition of
  * S_UNLOCK in this case.
  */
-#elif  __sparcv8
+#elif defined(__sparcv8)
 /* stbar is available (and required for both PSO, RMO), membar isn't */
 #define S_UNLOCK(lock)	\
 do \
