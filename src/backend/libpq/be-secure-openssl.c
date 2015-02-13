@@ -624,33 +624,10 @@ be_tls_write(Port *port, void *ptr, size_t len)
 		 */
 		SSL_clear_num_renegotiations(port->ssl);
 
-		SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
-								   sizeof(SSL_context));
 		if (SSL_renegotiate(port->ssl) <= 0)
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("SSL failure during renegotiation start")));
-		else
-		{
-			int			retries;
-
-			/*
-			 * A handshake can fail, so be prepared to retry it, but only
-			 * a few times.
-			 */
-			for (retries = 0;; retries++)
-			{
-				if (SSL_do_handshake(port->ssl) > 0)
-					break;	/* done */
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL handshake failure on renegotiation, retrying")));
-				if (retries >= 20)
-					ereport(FATAL,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("could not complete SSL handshake on renegotiation, too many failures")));
-			}
-		}
 	}
 
 wloop:
