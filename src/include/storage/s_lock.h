@@ -372,7 +372,7 @@ tas(volatile slock_t *lock)
  * requires a barrier.
  */
 #define S_UNLOCK(lock)		(*((volatile slock_t *) (lock)) = 0)
-#elif  __sparcv8
+#elif defined(__sparcv8)
 /* stbar is available (and required for both PSO, RMO), membar isn't */
 #define S_UNLOCK(lock)	\
 do \
