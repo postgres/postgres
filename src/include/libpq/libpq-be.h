@@ -209,8 +209,8 @@ typedef struct Port
 extern void be_tls_init(void);
 extern int be_tls_open_server(Port *port);
 extern void be_tls_close(Port *port);
-extern ssize_t be_tls_read(Port *port, void *ptr, size_t len);
-extern ssize_t be_tls_write(Port *port, void *ptr, size_t len);
+extern ssize_t be_tls_read(Port *port, void *ptr, size_t len, int *waitfor);
+extern ssize_t be_tls_write(Port *port, void *ptr, size_t len, int *waitfor);
 
 #endif
 

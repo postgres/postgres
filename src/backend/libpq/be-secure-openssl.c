@@ -511,14 +511,11 @@ be_tls_close(Port *port)
  *	Read data from a secure connection.
  */
 ssize_t
-be_tls_read(Port *port, void *ptr, size_t len)
+be_tls_read(Port *port, void *ptr, size_t len, int *waitfor)
 {
 	ssize_t		n;
 	int			err;
-	int			waitfor;
-	int			latchret;
 
-rloop:
 	errno = 0;
 	n = SSL_read(port->ssl, ptr, len);
 	err = SSL_get_error(port->ssl, n);
@@ -528,39 +525,15 @@ rloop:
 			port->count += n;
 			break;
 		case SSL_ERROR_WANT_READ:
+			*waitfor = WL_SOCKET_READABLE;
+			errno = EWOULDBLOCK;
+			n = -1;
+			break;
 		case SSL_ERROR_WANT_WRITE:
-			/* Don't retry if the socket is in nonblocking mode. */
-			if (port->noblock)
-			{
-				errno = EWOULDBLOCK;
-				n = -1;
-				break;
-			}
-
-			waitfor = WL_LATCH_SET;
-
-			if (err == SSL_ERROR_WANT_READ)
-				waitfor |= WL_SOCKET_READABLE;
-			else
-				waitfor |= WL_SOCKET_WRITEABLE;
-
-			latchret = WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
-
-			/*
-			 * We'll, among other situations, get here if the low level
-			 * routine doing the actual recv() via the socket got interrupted
-			 * by a signal. That's so we can handle interrupts once outside
-			 * openssl, so we don't jump out from underneath its covers. We
-			 * can check this both, when reading and writing, because even
-			 * when writing that's just openssl's doing, not a 'proper' write
-			 * initiated by postgres.
-			 */
-			if (latchret & WL_LATCH_SET)
-			{
-				ResetLatch(MyLatch);
-				ProcessClientReadInterrupt(true);  /* preserves errno */
-			}
-			goto rloop;
+			*waitfor = WL_SOCKET_WRITEABLE;
+			errno = EWOULDBLOCK;
+			n = -1;
+			break;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */
 			if (n != -1)
@@ -595,12 +568,10 @@ rloop:
  *	Write data to a secure connection.
  */
 ssize_t
-be_tls_write(Port *port, void *ptr, size_t len)
+be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 {
 	ssize_t		n;
 	int			err;
-	int			waitfor;
-	int			latchret;
 
 	/*
 	 * If SSL renegotiations are enabled and we're getting close to the
@@ -630,7 +601,6 @@ be_tls_write(Port *port, void *ptr, size_t len)
 					 errmsg("SSL failure during renegotiation start")));
 	}
 
-wloop:
 	errno = 0;
 	n = SSL_write(port->ssl, ptr, len);
 	err = SSL_get_error(port->ssl, n);
@@ -640,30 +610,15 @@ wloop:
 			port->count += n;
 			break;
 		case SSL_ERROR_WANT_READ:
+			*waitfor = WL_SOCKET_READABLE;
+			errno = EWOULDBLOCK;
+			n = -1;
+			break;
 		case SSL_ERROR_WANT_WRITE:
-
-			waitfor = WL_LATCH_SET;
-
-			if (err == SSL_ERROR_WANT_READ)
-				waitfor |= WL_SOCKET_READABLE;
-			else
-				waitfor |= WL_SOCKET_WRITEABLE;
-
-			latchret = WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
-
-			/*
-			 * Check for interrupts here, in addition to secure_write(),
-			 * because an interrupted write in secure_raw_write() will return
-			 * here, and we cannot return to secure_write() until we've
-			 * written something.
-			 */
-			if (latchret & WL_LATCH_SET)
-			{
-				ResetLatch(MyLatch);
-				ProcessClientWriteInterrupt(true); /* preserves errno */
-			}
-
-			goto wloop;
+			*waitfor = WL_SOCKET_WRITEABLE;
+			errno = EWOULDBLOCK;
+			n = -1;
+			break;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */
 			if (n != -1)

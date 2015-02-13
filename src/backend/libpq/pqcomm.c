@@ -185,7 +185,8 @@ pq_init(void)
 	/*
 	 * In backends (as soon as forked) we operate the underlying socket in
 	 * nonblocking mode and use latches to implement blocking semantics if
-	 * needed. That allows us to provide safely interruptible reads.
+	 * needed. That allows us to provide safely interruptible reads and
+	 * writes.
 	 *
 	 * Use COMMERROR on failure, because ERROR would try to send the error to
 	 * the client, which might require changing the mode again, leading to
