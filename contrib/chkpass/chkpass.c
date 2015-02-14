@@ -65,7 +65,7 @@ chkpass_in(PG_FUNCTION_ARGS)
 	/* special case to let us enter encrypted passwords */
 	if (*str == ':')
 	{
-		result = (chkpass *) palloc(sizeof(chkpass));
+		result = (chkpass *) palloc0(sizeof(chkpass));
 		strlcpy(result->password, str + 1, 13 + 1);
 		PG_RETURN_POINTER(result);
 	}
@@ -75,7 +75,7 @@ chkpass_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("password \"%s\" is weak", str)));
 
-	result = (chkpass *) palloc(sizeof(chkpass));
+	result = (chkpass *) palloc0(sizeof(chkpass));
 
 	mysalt[0] = salt_chars[random() & 0x3f];
 	mysalt[1] = salt_chars[random() & 0x3f];
@@ -107,7 +107,7 @@ chkpass_out(PG_FUNCTION_ARGS)
 
 	result = (char *) palloc(16);
 	result[0] = ':';
-	strcpy(result + 1, password->password);
+	strlcpy(result + 1, password->password, 15);
 
 	PG_RETURN_CSTRING(result);
 }
