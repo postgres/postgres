@@ -10391,7 +10391,7 @@ table2-mapping
       </row>
       <row>
        <entry><para><literal>json_object(keys text[], values text[])</literal>
-          </para><para><literal>json_object(keys text[], values text[])</literal>
+          </para><para><literal>jsonb_object(keys text[], values text[])</literal>
        </para></entry>
        <entry>
          This form of <function>json_object</> takes keys and values pairwise from two separate
@@ -10504,6 +10504,12 @@ table2-mapping
   </indexterm>
   <indexterm>
    <primary>jsonb_to_recordset</primary>
+  </indexterm>
+  <indexterm>
+   <primary>json_strip_nulls</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_strip_nulls</primary>
   </indexterm>
 
   <table id="functions-json-processing-table">
