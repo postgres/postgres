@@ -255,6 +255,41 @@ SELECT * FROM testnull;
     | 
 (4 rows)
 
+-- test case with whole-row Var in a check constraint
+create table check_con_tbl (f1 int);
+create function check_con_function(check_con_tbl) returns bool as $$
+begin
+  raise notice 'input = %', row_to_json($1);
+  return $1.f1 > 0;
+end $$ language plpgsql immutable;
+alter table check_con_tbl add check (check_con_function(check_con_tbl.*));
+\d+ check_con_tbl
+                    Table "public.check_con_tbl"
+ Column |  Type   | Modifiers | Storage | Stats target | Description 
+--------+---------+-----------+---------+--------------+-------------
+ f1     | integer |           | plain   |              | 
+Check constraints:
+    "check_con_tbl_check" CHECK (check_con_function(check_con_tbl.*))
+Has OIDs: no
+
+copy check_con_tbl from stdin;
+NOTICE:  input = {"f1":1}
+CONTEXT:  COPY check_con_tbl, line 1: "1"
+NOTICE:  input = {"f1":null}
+CONTEXT:  COPY check_con_tbl, line 2: "\N"
+copy check_con_tbl from stdin;
+NOTICE:  input = {"f1":0}
+CONTEXT:  COPY check_con_tbl, line 1: "0"
+ERROR:  new row for relation "check_con_tbl" violates check constraint "check_con_tbl_check"
+DETAIL:  Failing row contains (0).
+CONTEXT:  COPY check_con_tbl, line 1: "0"
+select * from check_con_tbl;
+ f1 
+----
+  1
+   
+(2 rows)
+
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

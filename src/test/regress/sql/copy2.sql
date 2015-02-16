@@ -178,6 +178,23 @@ COPY testnull FROM stdin WITH NULL AS E'\\0';
 
 SELECT * FROM testnull;
 
+-- test case with whole-row Var in a check constraint
+create table check_con_tbl (f1 int);
+create function check_con_function(check_con_tbl) returns bool as $$
+begin
+  raise notice 'input = %', row_to_json($1);
+  return $1.f1 > 0;
+end $$ language plpgsql immutable;
+alter table check_con_tbl add check (check_con_function(check_con_tbl.*));
+\d+ check_con_tbl
+copy check_con_tbl from stdin;
+1
+\N
+\.
+copy check_con_tbl from stdin;
+0
+\.
+select * from check_con_tbl;
 
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
