@@ -416,9 +416,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 			size_waste = size_union - size_inter;
 
 			pfree(union_d);
-
-			if (inter_d != (ArrayType *) NULL)
-				pfree(inter_d);
+			pfree(inter_d);
 
 			/*
 			 * are these a more promising split that what we've already seen?
@@ -517,10 +515,8 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r + WISH_F(v->spl_nleft, v->spl_nright, 0.01))
 		{
-			if (datum_l)
-				pfree(datum_l);
-			if (union_dr)
-				pfree(union_dr);
+			pfree(datum_l);
+			pfree(union_dr);
 			datum_l = union_dl;
 			size_l = size_alpha;
 			*left++ = i;
@@ -528,10 +524,8 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			if (datum_r)
-				pfree(datum_r);
-			if (union_dl)
-				pfree(union_dl);
+			pfree(datum_r);
+			pfree(union_dl);
 			datum_r = union_dr;
 			size_r = size_beta;
 			*right++ = i;
