@@ -900,7 +900,9 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	 * If we can't locate the RTE, assume the column names we've got are OK.
 	 * (As of this writing, the only cases where we can't locate the RTE are
 	 * in execution of trigger WHEN clauses, and then the Var will have the
-	 * trigger's relation's rowtype, so its names are fine.)
+	 * trigger's relation's rowtype, so its names are fine.)  Also, if the
+	 * creator of the RTE didn't bother to fill in an eref field, assume our
+	 * column names are OK.  (This happens in COPY, and perhaps other places.)
 	 */
 	if (econtext->ecxt_estate &&
 		variable->varno <= list_length(econtext->ecxt_estate->es_range_table))
@@ -908,7 +910,8 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 		RangeTblEntry *rte = rt_fetch(variable->varno,
 									  econtext->ecxt_estate->es_range_table);
 
-		ExecTypeSetColNames(output_tupdesc, rte->eref->colnames);
+		if (rte->eref)
+			ExecTypeSetColNames(output_tupdesc, rte->eref->colnames);
 	}
 
 	/* Bless the tupdesc if needed, and save it in the execution state */
