@@ -3036,16 +3036,17 @@ make_return_stmt(int location)
 					 errmsg("RETURN cannot have a parameter in function returning void"),
 					 parser_errposition(yylloc)));
 	}
-	else if (plpgsql_curr_compile->fn_retistuple)
+	else
 	{
 		/*
-		 * We want to special-case simple row or record references for
-		 * efficiency.  So peek ahead to see if that's what we have.
+		 * We want to special-case simple variable references for efficiency.
+		 * So peek ahead to see if that's what we have.
 		 */
 		int		tok = yylex();
 
 		if (tok == T_DATUM && plpgsql_peek() == ';' &&
-			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
+			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
 			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
 			new->retvarno = yylval.wdatum.datum->dno;
@@ -3055,18 +3056,15 @@ make_return_stmt(int location)
 		}
 		else
 		{
-			/* Not (just) a row/record name, so treat as expression */
+			/*
+			 * Not (just) a variable name, so treat as expression.
+			 *
+			 * Note that a well-formed expression is _required_ here;
+			 * anything else is a compile-time error.
+			 */
 			plpgsql_push_back_token(tok);
 			new->expr = read_sql_expression(';', ";");
 		}
-	}
-	else
-	{
-		/*
-		 * Note that a well-formed expression is _required_ here;
-		 * anything else is a compile-time error.
-		 */
-		new->expr = read_sql_expression(';', ";");
 	}
 
 	return (PLpgSQL_stmt *) new;
@@ -3099,16 +3097,17 @@ make_return_next_stmt(int location)
 					 parser_errposition(yylloc)));
 		new->retvarno = plpgsql_curr_compile->out_param_varno;
 	}
-	else if (plpgsql_curr_compile->fn_retistuple)
+	else
 	{
 		/*
-		 * We want to special-case simple row or record references for
-		 * efficiency.  So peek ahead to see if that's what we have.
+		 * We want to special-case simple variable references for efficiency.
+		 * So peek ahead to see if that's what we have.
 		 */
 		int		tok = yylex();
 
 		if (tok == T_DATUM && plpgsql_peek() == ';' &&
-			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
+			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
 			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
 			new->retvarno = yylval.wdatum.datum->dno;
@@ -3118,13 +3117,16 @@ make_return_next_stmt(int location)
 		}
 		else
 		{
-			/* Not (just) a row/record name, so treat as expression */
+			/*
+			 * Not (just) a variable name, so treat as expression.
+			 *
+			 * Note that a well-formed expression is _required_ here;
+			 * anything else is a compile-time error.
+			 */
 			plpgsql_push_back_token(tok);
 			new->expr = read_sql_expression(';', ";");
 		}
 	}
-	else
-		new->expr = read_sql_expression(';', ";");
 
 	return (PLpgSQL_stmt *) new;
 }

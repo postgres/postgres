@@ -2452,8 +2452,9 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	estate->retisnull = true;
 
 	/*
-	 * This special-case path covers record/row variables in fn_retistuple
-	 * functions, as well as functions with one or more OUT parameters.
+	 * Special case path when the RETURN expression is a simple variable
+	 * reference; in particular, this path is always taken in functions with
+	 * one or more OUT parameters.
 	 */
 	if (stmt->retvarno >= 0)
 	{
@@ -2576,8 +2577,9 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	natts = tupdesc->natts;
 
 	/*
-	 * This special-case path covers record/row variables in fn_retistuple
-	 * functions, as well as functions with one or more OUT parameters.
+	 * Special case path when the RETURN NEXT expression is a simple variable
+	 * reference; in particular, this path is always taken in functions with
+	 * one or more OUT parameters.
 	 */
 	if (stmt->retvarno >= 0)
 	{
