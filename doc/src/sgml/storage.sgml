@@ -359,7 +359,7 @@ described in more detail below.
 <para>
 The compression technique used is a fairly simple and very fast member
 of the LZ family of compression techniques.  See
-<filename>src/backend/utils/adt/pg_lzcompress.c</> for the details.
+<filename>src/common/pg_lzcompress.c</> for the details.
 </para>
 
 <para>
