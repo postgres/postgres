@@ -595,6 +595,10 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 		 */
 		SSL_clear_num_renegotiations(port->ssl);
 
+		/* without this, renegotiation fails when a client cert is used */
+		SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
+								   sizeof(SSL_context));
+
 		if (SSL_renegotiate(port->ssl) <= 0)
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
