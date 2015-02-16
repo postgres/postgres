@@ -1569,12 +1569,9 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 }
 
 /*
- * Private substitute BIO: this does the sending and receiving using send() and
- * recv() instead. This is so that we can enable and disable interrupts
- * just while calling recv(). We cannot have interrupts occurring while
- * the bulk of openssl runs, because it uses malloc() and possibly other
- * non-reentrant libc facilities. We also need to call send() and recv()
- * directly so it gets passed through the socket/signals layer on Win32.
+ * Private substitute BIO: this does the sending and receiving using
+ * pqsecure_raw_write() and pqsecure_raw_read() instead, to allow those
+ * functions to disable SIGPIPE and give better error messages on I/O errors.
  *
  * These functions are closely modelled on the standard socket BIO in OpenSSL;
  * see sock_read() and sock_write() in OpenSSL's crypto/bio/bss_sock.c.
