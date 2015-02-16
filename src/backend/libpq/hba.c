@@ -569,8 +569,8 @@ check_ip(SockAddr *raddr, struct sockaddr * addr, struct sockaddr * mask)
 		struct sockaddr_storage addrcopy,
 					maskcopy;
 
-		memcpy(&addrcopy, &addr, sizeof(addrcopy));
-		memcpy(&maskcopy, &mask, sizeof(maskcopy));
+		memcpy(&addrcopy, addr, sizeof(addrcopy));
+		memcpy(&maskcopy, mask, sizeof(maskcopy));
 		pg_promote_v4_to_v6_addr(&addrcopy);
 		pg_promote_v4_to_v6_mask(&maskcopy);
 
