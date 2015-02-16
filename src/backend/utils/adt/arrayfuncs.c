@@ -1795,15 +1795,15 @@ array_cardinality(PG_FUNCTION_ARGS)
 
 
 /*
- * array_ref :
- *	  This routine takes an array pointer and a subscript array and returns
+ * array_get_element :
+ *	  This routine takes an array datum and a subscript array and returns
  *	  the referenced item as a Datum.  Note that for a pass-by-reference
  *	  datatype, the returned Datum is a pointer into the array object.
  *
  * This handles both ordinary varlena arrays and fixed-length arrays.
  *
  * Inputs:
- *	array: the array object (mustn't be NULL)
+ *	arraydatum: the array object (mustn't be NULL)
  *	nSubscripts: number of subscripts supplied
  *	indx[]: the subscript values
  *	arraytyplen: pg_type.typlen for the array type
@@ -1816,15 +1816,16 @@ array_cardinality(PG_FUNCTION_ARGS)
  *	*isNull is set to indicate whether the element is NULL.
  */
 Datum
-array_ref(ArrayType *array,
-		  int nSubscripts,
-		  int *indx,
-		  int arraytyplen,
-		  int elmlen,
-		  bool elmbyval,
-		  char elmalign,
-		  bool *isNull)
+array_get_element(Datum arraydatum,
+				  int nSubscripts,
+				  int *indx,
+				  int arraytyplen,
+				  int elmlen,
+				  bool elmbyval,
+				  char elmalign,
+				  bool *isNull)
 {
+	ArrayType  *array;
 	int			i,
 				ndim,
 			   *dim,
@@ -1846,13 +1847,13 @@ array_ref(ArrayType *array,
 		fixedLb[0] = 0;
 		dim = fixedDim;
 		lb = fixedLb;
-		arraydataptr = (char *) array;
+		arraydataptr = (char *) DatumGetPointer(arraydatum);
 		arraynullsptr = NULL;
 	}
 	else
 	{
 		/* detoast input array if necessary */
-		array = DatumGetArrayTypeP(PointerGetDatum(array));
+		array = DatumGetArrayTypeP(arraydatum);
 
 		ndim = ARR_NDIM(array);
 		dim = ARR_DIMS(array);
@@ -1910,7 +1911,7 @@ array_ref(ArrayType *array,
  * This handles both ordinary varlena arrays and fixed-length arrays.
  *
  * Inputs:
- *	array: the array object (mustn't be NULL)
+ *	arraydatum: the array object (mustn't be NULL)
  *	nSubscripts: number of subscripts supplied (must be same for upper/lower)
  *	upperIndx[]: the upper subscript values
  *	lowerIndx[]: the lower subscript values
@@ -1925,8 +1926,8 @@ array_ref(ArrayType *array,
  * NOTE: we assume it is OK to scribble on the provided subscript arrays
  * lowerIndx[] and upperIndx[].  These are generally just temporaries.
  */
-ArrayType *
-array_get_slice(ArrayType *array,
+Datum
+array_get_slice(Datum arraydatum,
 				int nSubscripts,
 				int *upperIndx,
 				int *lowerIndx,
@@ -1935,6 +1936,7 @@ array_get_slice(ArrayType *array,
 				bool elmbyval,
 				char elmalign)
 {
+	ArrayType  *array;
 	ArrayType  *newarray;
 	int			i,
 				ndim,
@@ -1973,13 +1975,13 @@ array_get_slice(ArrayType *array,
 		dim = fixedDim;
 		lb = fixedLb;
 		elemtype = InvalidOid;	/* XXX */
-		arraydataptr = (char *) array;
+		arraydataptr = (char *) DatumGetPointer(arraydatum);
 		arraynullsptr = NULL;
 	}
 	else
 	{
 		/* detoast input array if necessary */
-		array = DatumGetArrayTypeP(PointerGetDatum(array));
+		array = DatumGetArrayTypeP(arraydatum);
 
 		ndim = ARR_NDIM(array);
 		dim = ARR_DIMS(array);
@@ -1995,7 +1997,7 @@ array_get_slice(ArrayType *array,
 	 * slice, return an empty array.
 	 */
 	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
-		return construct_empty_array(elemtype);
+		return PointerGetDatum(construct_empty_array(elemtype));
 
 	for (i = 0; i < nSubscripts; i++)
 	{
@@ -2004,7 +2006,7 @@ array_get_slice(ArrayType *array,
 		if (upperIndx[i] >= (dim[i] + lb[i]))
 			upperIndx[i] = dim[i] + lb[i] - 1;
 		if (lowerIndx[i] > upperIndx[i])
-			return construct_empty_array(elemtype);
+			return PointerGetDatum(construct_empty_array(elemtype));
 	}
 	/* fill any missing subscript positions with full array range */
 	for (; i < ndim; i++)
@@ -2012,7 +2014,7 @@ array_get_slice(ArrayType *array,
 		lowerIndx[i] = lb[i];
 		upperIndx[i] = dim[i] + lb[i] - 1;
 		if (lowerIndx[i] > upperIndx[i])
-			return construct_empty_array(elemtype);
+			return PointerGetDatum(construct_empty_array(elemtype));
 	}
 
 	mda_get_range(ndim, span, lowerIndx, upperIndx);
@@ -2058,18 +2060,18 @@ array_get_slice(ArrayType *array,
 						lowerIndx, upperIndx,
 						elmlen, elmbyval, elmalign);
 
-	return newarray;
+	return PointerGetDatum(newarray);
 }
 
 /*
- * array_set :
- *		  This routine sets the value of an array element (specified by
+ * array_set_element :
+ *		  This routine sets the value of one array element (specified by
  *		  a subscript array) to a new value specified by "dataValue".
  *
  * This handles both ordinary varlena arrays and fixed-length arrays.
  *
  * Inputs:
- *	array: the initial array object (mustn't be NULL)
+ *	arraydatum: the initial array object (mustn't be NULL)
  *	nSubscripts: number of subscripts supplied
  *	indx[]: the subscript values
  *	dataValue: the datum to be inserted at the given position
@@ -2091,17 +2093,18 @@ array_get_slice(ArrayType *array,
  * NOTE: For assignments, we throw an error for invalid subscripts etc,
  * rather than returning a NULL as the fetch operations do.
  */
-ArrayType *
-array_set(ArrayType *array,
-		  int nSubscripts,
-		  int *indx,
-		  Datum dataValue,
-		  bool isNull,
-		  int arraytyplen,
-		  int elmlen,
-		  bool elmbyval,
-		  char elmalign)
+Datum
+array_set_element(Datum arraydatum,
+				  int nSubscripts,
+				  int *indx,
+				  Datum dataValue,
+				  bool isNull,
+				  int arraytyplen,
+				  int elmlen,
+				  bool elmbyval,
+				  char elmalign)
 {
+	ArrayType  *array;
 	ArrayType  *newarray;
 	int			i,
 				ndim,
@@ -2130,6 +2133,8 @@ array_set(ArrayType *array,
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based. We
 		 * cannot extend them, either.
 		 */
+		char	   *resultarray;
+
 		if (nSubscripts != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
@@ -2145,11 +2150,11 @@ array_set(ArrayType *array,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("cannot assign null value to an element of a fixed-length array")));
 
-		newarray = (ArrayType *) palloc(arraytyplen);
-		memcpy(newarray, array, arraytyplen);
-		elt_ptr = (char *) newarray + indx[0] * elmlen;
+		resultarray = (char *) palloc(arraytyplen);
+		memcpy(resultarray, DatumGetPointer(arraydatum), arraytyplen);
+		elt_ptr = (char *) resultarray + indx[0] * elmlen;
 		ArrayCastAndSet(dataValue, elmlen, elmbyval, elmalign, elt_ptr);
-		return newarray;
+		return PointerGetDatum(resultarray);
 	}
 
 	if (nSubscripts <= 0 || nSubscripts > MAXDIM)
@@ -2162,7 +2167,7 @@ array_set(ArrayType *array,
 		dataValue = PointerGetDatum(PG_DETOAST_DATUM(dataValue));
 
 	/* detoast input array if necessary */
-	array = DatumGetArrayTypeP(PointerGetDatum(array));
+	array = DatumGetArrayTypeP(arraydatum);
 
 	ndim = ARR_NDIM(array);
 
@@ -2181,9 +2186,10 @@ array_set(ArrayType *array,
 			lb[i] = indx[i];
 		}
 
-		return construct_md_array(&dataValue, &isNull, nSubscripts,
-								  dim, lb, elmtype,
-								  elmlen, elmbyval, elmalign);
+		return PointerGetDatum(construct_md_array(&dataValue, &isNull,
+												  nSubscripts, dim, lb,
+												  elmtype,
+												elmlen, elmbyval, elmalign));
 	}
 
 	if (ndim != nSubscripts)
@@ -2345,7 +2351,7 @@ array_set(ArrayType *array,
 		}
 	}
 
-	return newarray;
+	return PointerGetDatum(newarray);
 }
 
 /*
@@ -2357,12 +2363,12 @@ array_set(ArrayType *array,
  * This handles both ordinary varlena arrays and fixed-length arrays.
  *
  * Inputs:
- *	array: the initial array object (mustn't be NULL)
+ *	arraydatum: the initial array object (mustn't be NULL)
  *	nSubscripts: number of subscripts supplied (must be same for upper/lower)
  *	upperIndx[]: the upper subscript values
  *	lowerIndx[]: the lower subscript values
- *	srcArray: the source for the inserted values
- *	isNull: indicates whether srcArray is NULL
+ *	srcArrayDatum: the source for the inserted values
+ *	isNull: indicates whether srcArrayDatum is NULL
  *	arraytyplen: pg_type.typlen for the array type
  *	elmlen: pg_type.typlen for the array's element type
  *	elmbyval: pg_type.typbyval for the array's element type
@@ -2383,18 +2389,20 @@ array_set(ArrayType *array,
  * NOTE: For assignments, we throw an error for silly subscripts etc,
  * rather than returning a NULL or empty array as the fetch operations do.
  */
-ArrayType *
-array_set_slice(ArrayType *array,
+Datum
+array_set_slice(Datum arraydatum,
 				int nSubscripts,
 				int *upperIndx,
 				int *lowerIndx,
-				ArrayType *srcArray,
+				Datum srcArrayDatum,
 				bool isNull,
 				int arraytyplen,
 				int elmlen,
 				bool elmbyval,
 				char elmalign)
 {
+	ArrayType  *array;
+	ArrayType  *srcArray;
 	ArrayType  *newarray;
 	int			i,
 				ndim,
@@ -2420,7 +2428,7 @@ array_set_slice(ArrayType *array,
 
 	/* Currently, assignment from a NULL source array is a no-op */
 	if (isNull)
-		return array;
+		return arraydatum;
 
 	if (arraytyplen > 0)
 	{
@@ -2433,8 +2441,8 @@ array_set_slice(ArrayType *array,
 	}
 
 	/* detoast arrays if necessary */
-	array = DatumGetArrayTypeP(PointerGetDatum(array));
-	srcArray = DatumGetArrayTypeP(PointerGetDatum(srcArray));
+	array = DatumGetArrayTypeP(arraydatum);
+	srcArray = DatumGetArrayTypeP(srcArrayDatum);
 
 	/* note: we assume srcArray contains no toasted elements */
 
@@ -2467,9 +2475,9 @@ array_set_slice(ArrayType *array,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("source array too small")));
 
-		return construct_md_array(dvalues, dnulls, nSubscripts,
-								  dim, lb, elmtype,
-								  elmlen, elmbyval, elmalign);
+		return PointerGetDatum(construct_md_array(dvalues, dnulls, nSubscripts,
+												  dim, lb, elmtype,
+												elmlen, elmbyval, elmalign));
 	}
 
 	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
@@ -2671,7 +2679,43 @@ array_set_slice(ArrayType *array,
 		}
 	}
 
-	return newarray;
+	return PointerGetDatum(newarray);
+}
+
+/*
+ * array_ref : backwards compatibility wrapper for array_get_element
+ *
+ * This only works for detoasted/flattened varlena arrays, since the array
+ * argument is declared as "ArrayType *".  However there's enough code like
+ * that to justify preserving this API.
+ */
+Datum
+array_ref(ArrayType *array, int nSubscripts, int *indx,
+		  int arraytyplen, int elmlen, bool elmbyval, char elmalign,
+		  bool *isNull)
+{
+	return array_get_element(PointerGetDatum(array), nSubscripts, indx,
+							 arraytyplen, elmlen, elmbyval, elmalign,
+							 isNull);
+}
+
+/*
+ * array_set : backwards compatibility wrapper for array_set_element
+ *
+ * This only works for detoasted/flattened varlena arrays, since the array
+ * argument and result are declared as "ArrayType *".  However there's enough
+ * code like that to justify preserving this API.
+ */
+ArrayType *
+array_set(ArrayType *array, int nSubscripts, int *indx,
+		  Datum dataValue, bool isNull,
+		  int arraytyplen, int elmlen, bool elmbyval, char elmalign)
+{
+	return DatumGetArrayTypeP(array_set_element(PointerGetDatum(array),
+												nSubscripts, indx,
+												dataValue, isNull,
+												arraytyplen,
+												elmlen, elmbyval, elmalign));
 }
 
 /*

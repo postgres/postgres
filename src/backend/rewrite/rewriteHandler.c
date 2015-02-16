@@ -664,7 +664,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  *			UPDATE table SET foo[2] = 42, foo[4] = 43;
  * We can merge such operations into a single assignment op.  Essentially,
  * the expression we want to produce in this case is like
- *		foo = array_set(array_set(foo, 2, 42), 4, 43)
+ *		foo = array_set_element(array_set_element(foo, 2, 42), 4, 43)
  *
  * 4. Sort the tlist into standard order: non-junk fields in order by resno,
  * then junk fields (these in no particular order).

@@ -248,19 +248,26 @@ extern Datum array_remove(PG_FUNCTION_ARGS);
 extern Datum array_replace(PG_FUNCTION_ARGS);
 extern Datum width_bucket_array(PG_FUNCTION_ARGS);
 
+extern Datum array_get_element(Datum arraydatum, int nSubscripts, int *indx,
+				  int arraytyplen, int elmlen, bool elmbyval, char elmalign,
+				  bool *isNull);
+extern Datum array_set_element(Datum arraydatum, int nSubscripts, int *indx,
+				  Datum dataValue, bool isNull,
+				  int arraytyplen, int elmlen, bool elmbyval, char elmalign);
+extern Datum array_get_slice(Datum arraydatum, int nSubscripts,
+				int *upperIndx, int *lowerIndx,
+				int arraytyplen, int elmlen, bool elmbyval, char elmalign);
+extern Datum array_set_slice(Datum arraydatum, int nSubscripts,
+				int *upperIndx, int *lowerIndx,
+				Datum srcArrayDatum, bool isNull,
+				int arraytyplen, int elmlen, bool elmbyval, char elmalign);
+
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign,
 		  bool *isNull);
 extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
 		  Datum dataValue, bool isNull,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign);
-extern ArrayType *array_get_slice(ArrayType *array, int nSubscripts,
-				int *upperIndx, int *lowerIndx,
-				int arraytyplen, int elmlen, bool elmbyval, char elmalign);
-extern ArrayType *array_set_slice(ArrayType *array, int nSubscripts,
-				int *upperIndx, int *lowerIndx,
-				ArrayType *srcArray, bool isNull,
-				int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
 extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		  ArrayMapState *amstate);

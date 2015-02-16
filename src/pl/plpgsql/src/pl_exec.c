@@ -4233,12 +4233,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				PLpgSQL_expr *subscripts[MAXDIM];
 				int			subscriptvals[MAXDIM];
 				Datum		oldarraydatum,
+							newarraydatum,
 							coerced_value;
 				bool		oldarrayisnull;
 				Oid			parenttypoid;
 				int32		parenttypmod;
-				ArrayType  *oldarrayval;
-				ArrayType  *newarrayval;
 				SPITupleTable *save_eval_tuptable;
 				MemoryContext oldcontext;
 
@@ -4378,26 +4377,24 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					(oldarrayisnull || *isNull))
 					return;
 
-				/* oldarrayval and newarrayval should be short-lived */
+				/* empty array, if any, and newarraydatum are short-lived */
 				oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
 
 				if (oldarrayisnull)
-					oldarrayval = construct_empty_array(arrayelem->elemtypoid);
-				else
-					oldarrayval = (ArrayType *) DatumGetPointer(oldarraydatum);
+					oldarraydatum = PointerGetDatum(construct_empty_array(arrayelem->elemtypoid));
 
 				/*
 				 * Build the modified array value.
 				 */
-				newarrayval = array_set(oldarrayval,
-										nsubscripts,
-										subscriptvals,
-										coerced_value,
-										*isNull,
-										arrayelem->arraytyplen,
-										arrayelem->elemtyplen,
-										arrayelem->elemtypbyval,
-										arrayelem->elemtypalign);
+				newarraydatum = array_set_element(oldarraydatum,
+												  nsubscripts,
+												  subscriptvals,
+												  coerced_value,
+												  *isNull,
+												  arrayelem->arraytyplen,
+												  arrayelem->elemtyplen,
+												  arrayelem->elemtypbyval,
+												  arrayelem->elemtypalign);
 
 				MemoryContextSwitchTo(oldcontext);
 
@@ -4409,7 +4406,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				*isNull = false;
 				exec_assign_value(estate, target,
-								  PointerGetDatum(newarrayval),
+								  newarraydatum,
 								  arrayelem->arraytypoid, isNull);
 				break;
 			}
