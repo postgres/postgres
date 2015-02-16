@@ -41,7 +41,7 @@ ssl/%.key:
 # Root CA certificate
 ssl/root_ca.crt: ssl/root_ca.key cas.config
 	touch ssl/root_ca-certindex
-	openssl req -new -out ssl/root_ca.crt -x509 -config cas.config -config root_ca.config -key ssl/root_ca.key
+	openssl req -new -out ssl/root_ca.crt -x509 -config cas.config -config root_ca.config -key ssl/root_ca.key -days 10000
 	echo "01" > ssl/root_ca.srl
 
 # Client and server CAs
