@@ -321,7 +321,7 @@ StreamLog(void)
 				progname, startpos.xlogid, startpos.xrecoff, timeline);
 
 	ReceiveXlogStream(conn, startpos, timeline, NULL, basedir,
-					  stop_streaming, standby_message_timeout, false, true);
+					  stop_streaming, standby_message_timeout, false, false);
 
 	PQfinish(conn);
 }
