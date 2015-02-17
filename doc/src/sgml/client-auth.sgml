@@ -229,14 +229,15 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>address</replaceable></term>
      <listitem>
       <para>
-       Specifies the client machine addresses that this record
+       Specifies the client machine address(es) that this record
        matches.  This field can contain either a host name, an IP
        address range, or one of the special key words mentioned below.
       </para>
 
       <para>
-       An IP address is specified in standard dotted decimal
-       notation with a <acronym>CIDR</> mask length.  The mask
+       An IP address range is specified using standard numeric notation
+       for the range's starting address, then a slash (<literal>/</literal>)
+       and a <acronym>CIDR</> mask length.  The mask
        length indicates the number of high-order bits of the client
        IP address that must match.  Bits to the right of this should
        be zero in the given IP address.
@@ -245,25 +246,27 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-       Typical examples of an IP address range specified this way are
+       Typical examples of an IPv4 address range specified this way are
        <literal>172.20.143.89/32</literal> for a single host, or
        <literal>172.20.143.0/24</literal> for a small network, or
        <literal>10.6.0.0/16</literal> for a larger one.
+       An IPv6 address range might look like <literal>::1/128</literal>
+       for a single host (in this case the IPv6 loopback address) or
+       <literal>fe80::7a31:c1ff:0000:0000/96</literal> for a small
+       network.
        <literal>0.0.0.0/0</literal> represents all
-       IPv4 addresses, and <literal>::/0</literal> represents
+       IPv4 addresses, and <literal>::0/0</literal> represents
        all IPv6 addresses.
-       To specify a single host, use a CIDR mask of 32 for IPv4 or
+       To specify a single host, use a mask length of 32 for IPv4 or
        128 for IPv6.  In a network address, do not omit trailing zeroes.
       </para>
 
       <para>
-       An IP address given in IPv4 format will match IPv6 connections that
-       have the corresponding address, for example <literal>127.0.0.1</>
-       will match the IPv6 address <literal>::ffff:127.0.0.1</>.  An entry
-       given in IPv6 format will match only IPv6 connections, even if the
-       represented address is in the IPv4-in-IPv6 range.  Note that entries
-       in IPv6 format will be rejected if the system's C library does not have
-       support for IPv6 addresses.
+       An entry given in IPv4 format will match only IPv4 connections,
+       and an entry given in IPv6 format will match only IPv6 connections,
+       even if the represented address is in the IPv4-in-IPv6 range.
+       Note that entries in IPv6 format will be rejected if the system's
+       C library does not have support for IPv6 addresses.
       </para>
 
       <para>
@@ -275,7 +278,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 
       <para>
        If a host name is specified (anything that is not an IP address
-       or a special key word is processed as a potential host name),
+       range or a special key word is treated as a host name),
        that name is compared with the result of a reverse name
        resolution of the client's IP address (e.g., reverse DNS
        lookup, if DNS is used).  Host name comparisons are case
@@ -353,8 +356,9 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>IP-mask</replaceable></term>
      <listitem>
       <para>
-       These fields can be used as an alternative to the
-       <replaceable>CIDR-address</replaceable> notation. Instead of
+       These two fields can be used as an alternative to the
+       <replaceable>IP-address</><literal>/</><replaceable>mask-length</>
+       notation.  Instead of
        specifying the mask length, the actual mask is specified in a
        separate column. For example, <literal>255.0.0.0</> represents an IPv4
        CIDR mask length of 8, and <literal>255.255.255.255</> represents a
