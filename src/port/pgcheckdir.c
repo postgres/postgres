@@ -22,7 +22,9 @@
  * Returns:
  *		0 if nonexistent
  *		1 if exists and empty
- *		2 if exists and not empty
+ *		2 if exists and contains _only_ dot files
+ *		3 if exists and contains a mount point
+ *		4 if exists and not empty
  *		-1 if trouble accessing directory (errno reflects the error)
  */
 int
@@ -32,6 +34,8 @@ pg_check_dir(const char *dir)
 	DIR		   *chkdir;
 	struct dirent *file;
 	bool		dot_found = false;
+	bool		mount_found = false;
+	int			readdir_errno;
 
 	chkdir = opendir(dir);
 	if (chkdir == NULL)
@@ -51,10 +55,10 @@ pg_check_dir(const char *dir)
 		{
 			dot_found = true;
 		}
+		/* lost+found directory */
 		else if (strcmp("lost+found", file->d_name) == 0)
 		{
-			result = 3;			/* not empty, mount point */
-			break;
+			mount_found = true;
 		}
 #endif
 		else
@@ -64,8 +68,19 @@ pg_check_dir(const char *dir)
 		}
 	}
 
-	if (errno || closedir(chkdir))
+	if (errno)
 		result = -1;			/* some kind of I/O error? */
+
+	/* Close chkdir and avoid overwriting the readdir errno on success */
+	readdir_errno = errno;
+	if (closedir(chkdir))
+		result = -1;			/* error executing closedir */
+	else
+		errno = readdir_errno;
+
+	/* We report on mount point if we find a lost+found directory */
+	if (result == 1 && mount_found)
+		result = 3;
 
 	/* We report on dot-files if we _only_ find dot files */
 	if (result == 1 && dot_found)
