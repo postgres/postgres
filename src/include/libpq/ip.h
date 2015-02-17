@@ -46,11 +46,6 @@ extern int pg_range_sockaddr(const struct sockaddr_storage * addr,
 extern int pg_sockaddr_cidr_mask(struct sockaddr_storage * mask,
 					  char *numbits, int family);
 
-#ifdef HAVE_IPV6
-extern void pg_promote_v4_to_v6_addr(struct sockaddr_storage * addr);
-extern void pg_promote_v4_to_v6_mask(struct sockaddr_storage * addr);
-#endif
-
 extern int	pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
 
 #endif   /* IP_H */
