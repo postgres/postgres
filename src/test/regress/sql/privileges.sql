@@ -255,10 +255,6 @@ INSERT INTO t1 VALUES (3, 1, 3);
 SET SESSION AUTHORIZATION regressuser2;
 INSERT INTO t1 (c1, c2) VALUES (1, 1); -- fail, but row not shown
 UPDATE t1 SET c2 = 1; -- fail, but row not shown
-INSERT INTO t1 (c1, c2) VALUES (null, null); -- fail, but see columns being inserted
-INSERT INTO t1 (c3) VALUES (null); -- fail, but see columns being inserted or have SELECT
-INSERT INTO t1 (c1) VALUES (5); -- fail, but see columns being inserted or have SELECT
-UPDATE t1 SET c3 = 10; -- fail, but see columns with SELECT rights, or being modified
 
 SET SESSION AUTHORIZATION regressuser1;
 DROP TABLE t1;
