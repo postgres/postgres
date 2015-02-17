@@ -41,9 +41,9 @@ pairingheap_GISTSearchItem_cmp(const pairingheap_node *a, const pairingheap_node
 
 	/* Heap items go before inner pages, to ensure a depth-first search */
 	if (GISTSearchItemIsHeap(*sa) && !GISTSearchItemIsHeap(*sb))
-		return -1;
-	if (!GISTSearchItemIsHeap(*sa) && GISTSearchItemIsHeap(*sb))
 		return 1;
+	if (!GISTSearchItemIsHeap(*sa) && GISTSearchItemIsHeap(*sb))
+		return -1;
 
 	return 0;
 }
