@@ -380,14 +380,6 @@ INSERT INTO t1 (c1, c2) VALUES (1, 1); -- fail, but row not shown
 ERROR:  duplicate key value violates unique constraint "t1_pkey"
 UPDATE t1 SET c2 = 1; -- fail, but row not shown
 ERROR:  duplicate key value violates unique constraint "t1_pkey"
-INSERT INTO t1 (c1, c2) VALUES (null, null); -- fail, but see columns being inserted
-ERROR:  null value in column "c1" violates not-null constraint
-INSERT INTO t1 (c3) VALUES (null); -- fail, but see columns being inserted or have SELECT
-ERROR:  null value in column "c1" violates not-null constraint
-INSERT INTO t1 (c1) VALUES (5); -- fail, but see columns being inserted or have SELECT
-ERROR:  null value in column "c2" violates not-null constraint
-UPDATE t1 SET c3 = 10; -- fail, but see columns with SELECT rights, or being modified
-ERROR:  new row for relation "t1" violates check constraint "t1_c3_check"
 SET SESSION AUTHORIZATION regressuser1;
 DROP TABLE t1;
 -- test column-level privileges when involved with DELETE
