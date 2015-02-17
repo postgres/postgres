@@ -11,6 +11,11 @@
 #ifndef PAIRINGHEAP_H
 #define PAIRINGHEAP_H
 
+#include "lib/stringinfo.h"
+
+/* Enable if you need the pairingheap_dump() debug function */
+/* #define PAIRINGHEAP_DEBUG */
+
 /*
  * This represents an element stored in the heap. Embed this in a larger
  * struct containing the actual data you're storing.
@@ -77,6 +82,12 @@ extern void pairingheap_add(pairingheap *heap, pairingheap_node *node);
 extern pairingheap_node *pairingheap_first(pairingheap *heap);
 extern pairingheap_node *pairingheap_remove_first(pairingheap *heap);
 extern void pairingheap_remove(pairingheap *heap, pairingheap_node *node);
+
+#ifdef PAIRINGHEAP_DEBUG
+extern char *pairingheap_dump(pairingheap *heap,
+							  void (*dumpfunc) (pairingheap_node *node, StringInfo buf, void *opaque),
+							  void *opaque);
+#endif
 
 /* Resets the heap to be empty. */
 #define pairingheap_reset(h)			((h)->ph_root = NULL)

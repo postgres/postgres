@@ -70,6 +70,10 @@ pairingheap_free(pairingheap *heap)
  *
  * The subheap with smaller value is put as a child of the other one (assuming
  * a max-heap).
+ *
+ * The next_sibling and prev_or_parent pointers of the input nodes are
+ * ignored. On return, the returned node's next_sibling and prev_or_parent
+ * pointers are garbage.
  */
 static pairingheap_node *
 merge(pairingheap *heap, pairingheap_node *a, pairingheap_node *b)
@@ -111,6 +115,8 @@ pairingheap_add(pairingheap *heap, pairingheap_node *node)
 
 	/* Link the new node as a new tree */
 	heap->ph_root = merge(heap, heap->ph_root, node);
+	heap->ph_root->prev_or_parent = NULL;
+	heap->ph_root->next_sibling = NULL;
 }
 
 /*
@@ -148,6 +154,11 @@ pairingheap_remove_first(pairingheap *heap)
 	children = result->first_child;
 
 	heap->ph_root = merge_children(heap, children);
+	if (heap->ph_root)
+	{
+		heap->ph_root->prev_or_parent = NULL;
+		heap->ph_root->next_sibling = NULL;
+	}
 
 	return result;
 }
@@ -272,3 +283,51 @@ merge_children(pairingheap *heap, pairingheap_node *children)
 
 	return newroot;
 }
+
+/*
+ * A debug function to dump the contents of the heap as a string.
+ *
+ * The 'dumpfunc' callback appends a string representation of a single node
+ * to the StringInfo. 'opaque' can be used to pass more information to the
+ * callback.
+ */
+#ifdef PAIRINGHEAP_DEBUG
+static void
+pairingheap_dump_recurse(StringInfo buf,
+						 pairingheap_node *node,
+						 void (*dumpfunc) (pairingheap_node *node, StringInfo buf, void *opaque),
+						 void *opaque,
+						 int depth,
+						 pairingheap_node *prev_or_parent)
+{
+	while (node)
+	{
+		Assert(node->prev_or_parent == prev_or_parent);
+
+		appendStringInfoSpaces(buf, depth * 4);
+		dumpfunc(node, buf, opaque);
+		appendStringInfoString(buf, "\n");
+		if (node->first_child)
+			pairingheap_dump_recurse(buf, node->first_child, dumpfunc, opaque, depth + 1, node);
+		prev_or_parent = node;
+		node = node->next_sibling;
+	}
+}
+
+char *
+pairingheap_dump(pairingheap *heap,
+				 void (*dumpfunc) (pairingheap_node *node, StringInfo buf, void *opaque),
+				 void *opaque)
+{
+	StringInfoData buf;
+
+	if (!heap->ph_root)
+		return pstrdup("(empty)");
+
+	initStringInfo(&buf);
+
+	pairingheap_dump_recurse(&buf, heap->ph_root, dumpfunc, opaque, 0, NULL);
+
+	return buf.data;
+}
+#endif
