@@ -31,6 +31,7 @@ pg_check_dir(const char *dir)
 	int			result = 1;
 	DIR		   *chkdir;
 	struct dirent *file;
+	int			readdir_errno;
 
 	chkdir = opendir(dir);
 
@@ -58,8 +59,15 @@ pg_check_dir(const char *dir)
 		errno = 0;
 #endif
 
-	if (errno || closedir(chkdir))
+	if (errno)
 		result = -1;			/* some kind of I/O error? */
+
+	/* Close chkdir and avoid overwriting the readdir errno on success */
+	readdir_errno = errno;
+	if (closedir(chkdir))
+		result = -1;			/* error executing closedir */
+	else
+		errno = readdir_errno;
 
 	return result;
 }
