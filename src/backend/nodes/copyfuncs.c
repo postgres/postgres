@@ -175,6 +175,7 @@ _copyModifyTable(const ModifyTable *from)
 	 */
 	COPY_SCALAR_FIELD(operation);
 	COPY_SCALAR_FIELD(canSetTag);
+	COPY_SCALAR_FIELD(nominalRelation);
 	COPY_NODE_FIELD(resultRelations);
 	COPY_SCALAR_FIELD(resultRelIndex);
 	COPY_NODE_FIELD(plans);

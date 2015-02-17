@@ -4809,6 +4809,7 @@ make_result(PlannerInfo *root,
 ModifyTable *
 make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
+				 Index nominalRelation,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
 				 List *rowMarks, int epqParam)
@@ -4857,6 +4858,7 @@ make_modifytable(PlannerInfo *root,
 
 	node->operation = operation;
 	node->canSetTag = canSetTag;
+	node->nominalRelation = nominalRelation;
 	node->resultRelations = resultRelations;
 	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->plans = subplans;

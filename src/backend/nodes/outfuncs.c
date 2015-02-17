@@ -327,6 +327,7 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 
 	WRITE_ENUM_FIELD(operation, CmdType);
 	WRITE_BOOL_FIELD(canSetTag);
+	WRITE_UINT_FIELD(nominalRelation);
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_INT_FIELD(resultRelIndex);
 	WRITE_NODE_FIELD(plans);

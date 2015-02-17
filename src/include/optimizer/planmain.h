@@ -82,6 +82,7 @@ extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
 extern ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
+				 Index nominalRelation,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
 				 List *rowMarks, int epqParam);

@@ -754,6 +754,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					splan->plan.targetlist = copyObject(linitial(newRL));
 				}
 
+				splan->nominalRelation += rtoffset;
+
 				foreach(l, splan->resultRelations)
 				{
 					lfirst_int(l) += rtoffset;
