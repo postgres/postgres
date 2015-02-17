@@ -250,13 +250,11 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-       An IP address given in IPv4 format will match IPv6 connections that
-       have the corresponding address, for example <literal>127.0.0.1</>
-       will match the IPv6 address <literal>::ffff:127.0.0.1</>.  An entry
-       given in IPv6 format will match only IPv6 connections, even if the
-       represented address is in the IPv4-in-IPv6 range.  Note that entries
-       in IPv6 format will be rejected if the system's C library does not have
-       support for IPv6 addresses.
+       An entry given in IPv4 format will match only IPv4 connections,
+       and an entry given in IPv6 format will match only IPv6 connections,
+       even if the represented address is in the IPv4-in-IPv6 range.
+       Note that entries in IPv6 format will be rejected if the system's
+       C library does not have support for IPv6 addresses.
       </para>
 
       <para>
