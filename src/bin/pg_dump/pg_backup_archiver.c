@@ -435,17 +435,6 @@ RestoreArchive(Archive *AHX)
 	}
 
 	/*
-	 * Enable row-security if necessary.
-	 */
-	if (PQserverVersion(AH->connection) >= 90500)
-	{
-		if (!ropt->enable_row_security)
-			ahprintf(AH, "SET row_security = off;\n");
-		else
-			ahprintf(AH, "SET row_security = on;\n");
-	}
-
-	/*
 	 * Establish important parameter values right away.
 	 */
 	_doSetFixedOutputState(AH);
@@ -2803,6 +2792,12 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	ahprintf(AH, "SET client_min_messages = warning;\n");
 	if (!AH->public.std_strings)
 		ahprintf(AH, "SET escape_string_warning = off;\n");
+
+	/* Adjust row-security state */
+	if (AH->ropt && AH->ropt->enable_row_security)
+		ahprintf(AH, "SET row_security = on;\n");
+	else
+		ahprintf(AH, "SET row_security = off;\n");
 
 	ahprintf(AH, "\n");
 }

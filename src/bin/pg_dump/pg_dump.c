@@ -1006,6 +1006,17 @@ setup_connection(Archive *AH, DumpOptions *dopt, const char *dumpencoding,
 		ExecuteSqlStatement(AH, "SET quote_all_identifiers = true");
 
 	/*
+	 * Adjust row-security mode, if supported.
+	 */
+	if (AH->remoteVersion >= 90500)
+	{
+		if (dopt->enable_row_security)
+			ExecuteSqlStatement(AH, "SET row_security = on");
+		else
+			ExecuteSqlStatement(AH, "SET row_security = off");
+	}
+
+	/*
 	 * Start transaction-snapshot mode transaction to dump consistent data.
 	 */
 	ExecuteSqlStatement(AH, "BEGIN");
@@ -1058,14 +1069,6 @@ setup_connection(Archive *AH, DumpOptions *dopt, const char *dumpencoding,
 			 AH->remoteVersion >= 90200 &&
 			 !dopt->no_synchronized_snapshots)
 		AH->sync_snapshot_id = get_synchronized_snapshot(AH);
-
-	if (AH->remoteVersion >= 90500)
-	{
-		if (dopt->enable_row_security)
-			ExecuteSqlStatement(AH, "SET row_security TO ON");
-		else
-			ExecuteSqlStatement(AH, "SET row_security TO OFF");
-	}
 }
 
 static void
