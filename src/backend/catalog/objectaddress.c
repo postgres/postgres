@@ -2808,6 +2808,7 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	conTup;
 				Form_pg_conversion conForm;
+				char	   *schema;
 
 				conTup = SearchSysCache1(CONVOID,
 										 ObjectIdGetDatum(object->objectId));
@@ -2815,8 +2816,11 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
 				conForm = (Form_pg_conversion) GETSTRUCT(conTup);
+				schema = get_namespace_name(conForm->connamespace);
 				appendStringInfoString(&buffer,
-								quote_identifier(NameStr(conForm->conname)));
+								quote_qualified_identifier(schema,
+														   NameStr(conForm->conname)));
+				pfree(schema);
 				ReleaseSysCache(conTup);
 				break;
 			}
