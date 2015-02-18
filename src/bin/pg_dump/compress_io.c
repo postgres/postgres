@@ -464,6 +464,16 @@ struct cfp
 static int	hasSuffix(const char *filename, const char *suffix);
 #endif
 
+/* free() without changing errno; useful in several places below */
+static void
+free_keep_errno(void *p)
+{
+	int			save_errno = errno;
+
+	free(p);
+	errno = save_errno;
+}
+
 /*
  * Open a file for reading. 'path' is the file to open, and 'mode' should
  * be either "r" or "rb".
@@ -471,6 +481,8 @@ static int	hasSuffix(const char *filename, const char *suffix);
  * If the file at 'path' does not exist, we append the ".gz" suffix (if 'path'
  * doesn't already have it) and try again. So if you pass "foo" as 'path',
  * this will open either "foo" or "foo.gz".
+ *
+ * On failure, return NULL with an error code in errno.
  */
 cfp *
 cfopen_read(const char *path, const char *mode)
@@ -492,7 +504,7 @@ cfopen_read(const char *path, const char *mode)
 
 			snprintf(fname, fnamelen, "%s%s", path, ".gz");
 			fp = cfopen(fname, mode, 1);
-			free(fname);
+			free_keep_errno(fname);
 		}
 #endif
 	}
@@ -505,8 +517,10 @@ cfopen_read(const char *path, const char *mode)
  * ("w", "wb", "a", or "ab").
  *
  * If 'compression' is non-zero, a gzip compressed stream is opened, and
- * and 'compression' indicates the compression level used. The ".gz" suffix
+ * 'compression' indicates the compression level used. The ".gz" suffix
  * is automatically added to 'path' in that case.
+ *
+ * On failure, return NULL with an error code in errno.
  */
 cfp *
 cfopen_write(const char *path, const char *mode, int compression)
@@ -522,8 +536,8 @@ cfopen_write(const char *path, const char *mode, int compression)
 		char	   *fname = pg_malloc(fnamelen);
 
 		snprintf(fname, fnamelen, "%s%s", path, ".gz");
-		fp = cfopen(fname, mode, 1);
-		free(fname);
+		fp = cfopen(fname, mode, compression);
+		free_keep_errno(fname);
 #else
 		exit_horribly(modulename, "not built with zlib support\n");
 		fp = NULL;				/* keep compiler quiet */
@@ -534,7 +548,9 @@ cfopen_write(const char *path, const char *mode, int compression)
 
 /*
  * Opens file 'path' in 'mode'. If 'compression' is non-zero, the file
- * is opened with libz gzopen(), otherwise with plain fopen()
+ * is opened with libz gzopen(), otherwise with plain fopen().
+ *
+ * On failure, return NULL with an error code in errno.
  */
 cfp *
 cfopen(const char *path, const char *mode, int compression)
@@ -544,11 +560,15 @@ cfopen(const char *path, const char *mode, int compression)
 	if (compression != 0)
 	{
 #ifdef HAVE_LIBZ
-		fp->compressedfp = gzopen(path, mode);
+		char		mode_compression[32];
+
+		snprintf(mode_compression, sizeof(mode_compression), "%s%d",
+				 mode, compression);
+		fp->compressedfp = gzopen(path, mode_compression);
 		fp->uncompressedfp = NULL;
 		if (fp->compressedfp == NULL)
 		{
-			free(fp);
+			free_keep_errno(fp);
 			fp = NULL;
 		}
 #else
@@ -563,7 +583,7 @@ cfopen(const char *path, const char *mode, int compression)
 		fp->uncompressedfp = fopen(path, mode);
 		if (fp->uncompressedfp == NULL)
 		{
-			free(fp);
+			free_keep_errno(fp);
 			fp = NULL;
 		}
 	}
@@ -638,7 +658,7 @@ cfclose(cfp *fp)
 		result = fclose(fp->uncompressedfp);
 		fp->uncompressedfp = NULL;
 	}
-	free(fp);
+	free_keep_errno(fp);
 
 	return result;
 }
