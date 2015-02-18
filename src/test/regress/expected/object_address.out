@@ -370,7 +370,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  cast                      |            |                   | (bigint AS integer)                                                  | t
  table constraint          | addr_nsp   |                   | a_chk on addr_nsp.gentable                                           | t
  domain constraint         | addr_nsp   |                   | domconstr on addr_nsp.gendomain                                      | t
- conversion                | pg_catalog | ascii_to_mic      | ascii_to_mic                                                         | t
+ conversion                | pg_catalog | ascii_to_mic      | pg_catalog.ascii_to_mic                                              | t
  language                  |            | plpgsql           | plpgsql                                                              | t
  schema                    |            | addr_nsp          | addr_nsp                                                             | t
  operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops for btree                                        | t
