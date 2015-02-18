@@ -373,11 +373,11 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  conversion                | pg_catalog | ascii_to_mic      | pg_catalog.ascii_to_mic                                              | t
  language                  |            | plpgsql           | plpgsql                                                              | t
  schema                    |            | addr_nsp          | addr_nsp                                                             | t
- operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops for btree                                        | t
+ operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops USING btree                                      | t
  operator                  | pg_catalog |                   | pg_catalog.+(integer,integer)                                        | t
  rule                      |            |                   | "_RETURN" on addr_nsp.genview                                        | t
  trigger                   |            |                   | t on addr_nsp.gentable                                               | t
- operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops for btree                                     | t
+ operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops USING btree                                   | t
  policy                    |            |                   | genpol on addr_nsp.gentable                                          | t
  collation                 | pg_catalog | "default"         | pg_catalog."default"                                                 | t
  text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict                                                | t

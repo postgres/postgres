@@ -3533,7 +3533,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 												 NameStr(opcForm->opcname)));
-				appendStringInfo(&buffer, " for %s",
+				appendStringInfo(&buffer, " USING %s",
 								 quote_identifier(NameStr(amForm->amname)));
 				if (objname)
 				{
@@ -4070,7 +4070,7 @@ getOpFamilyIdentity(StringInfo buffer, Oid opfid, List **objname, List **objargs
 	amForm = (Form_pg_am) GETSTRUCT(amTup);
 
 	schema = get_namespace_name(opfForm->opfnamespace);
-	appendStringInfo(buffer, "%s for %s",
+	appendStringInfo(buffer, "%s USING %s",
 					 quote_qualified_identifier(schema,
 												NameStr(opfForm->opfname)),
 					 NameStr(amForm->amname));
