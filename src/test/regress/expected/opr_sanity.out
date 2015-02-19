@@ -176,8 +176,7 @@ ORDER BY 1, 2;
           25 |        1043
         1114 |        1184
         1560 |        1562
-        2277 |        2283
-(5 rows)
+(4 rows)
 
 SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -194,8 +193,7 @@ ORDER BY 1, 2;
           23 |          28
         1114 |        1184
         1560 |        1562
-        2277 |        2283
-(4 rows)
+(3 rows)
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
 FROM pg_proc AS p1, pg_proc AS p2

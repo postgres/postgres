@@ -341,7 +341,8 @@ extern int32 *ArrayGetIntegerTypmods(ArrayType *arr, int *n);
 /*
  * prototypes for functions defined in array_userfuncs.c
  */
-extern Datum array_push(PG_FUNCTION_ARGS);
+extern Datum array_append(PG_FUNCTION_ARGS);
+extern Datum array_prepend(PG_FUNCTION_ARGS);
 extern Datum array_cat(PG_FUNCTION_ARGS);
 
 extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,

@@ -17,101 +17,98 @@
 #include "utils/lsyscache.h"
 
 
+/*
+ * fetch_array_arg_replace_nulls
+ *
+ * Fetch an array-valued argument; if it's null, construct an empty array
+ * value of the proper data type.  Also cache basic element type information
+ * in fn_extra.
+ */
+static ArrayType *
+fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
+{
+	ArrayType  *v;
+	ArrayMetaState *my_extra;
+
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		/* First time through, so look up the array type and element type */
+		Oid			arr_typeid = get_fn_expr_argtype(fcinfo->flinfo, argno);
+		Oid			element_type;
+
+		if (!OidIsValid(arr_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not determine input data type")));
+		element_type = get_element_type(arr_typeid);
+		if (!OidIsValid(element_type))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("input data type is not an array")));
+
+		my_extra = (ArrayMetaState *)
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(ArrayMetaState));
+		my_extra->element_type = element_type;
+
+		/* Cache info about element type */
+		get_typlenbyvalalign(element_type,
+							 &my_extra->typlen,
+							 &my_extra->typbyval,
+							 &my_extra->typalign);
+
+		fcinfo->flinfo->fn_extra = my_extra;
+	}
+
+	/* Now we can collect the array value */
+	if (PG_ARGISNULL(argno))
+		v = construct_empty_array(my_extra->element_type);
+	else
+		v = PG_GETARG_ARRAYTYPE_P(argno);
+
+	return v;
+}
+
 /*-----------------------------------------------------------------------------
- * array_push :
- *		push an element onto either end of a one-dimensional array
+ * array_append :
+ *		push an element onto the end of a one-dimensional array
  *----------------------------------------------------------------------------
  */
 Datum
-array_push(PG_FUNCTION_ARGS)
+array_append(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v;
 	Datum		newelem;
 	bool		isNull;
+	ArrayType  *result;
 	int		   *dimv,
 			   *lb;
-	ArrayType  *result;
 	int			indx;
-	Oid			element_type;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-	Oid			arg0_typeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
-	Oid			arg0_elemid;
-	Oid			arg1_elemid;
 	ArrayMetaState *my_extra;
 
-	if (arg0_typeid == InvalidOid || arg1_typeid == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not determine input data types")));
-
-	arg0_elemid = get_element_type(arg0_typeid);
-	arg1_elemid = get_element_type(arg1_typeid);
-
-	if (arg0_elemid != InvalidOid)
-	{
-		if (PG_ARGISNULL(0))
-			v = construct_empty_array(arg0_elemid);
-		else
-			v = PG_GETARG_ARRAYTYPE_P(0);
-		isNull = PG_ARGISNULL(1);
-		if (isNull)
-			newelem = (Datum) 0;
-		else
-			newelem = PG_GETARG_DATUM(1);
-	}
-	else if (arg1_elemid != InvalidOid)
-	{
-		if (PG_ARGISNULL(1))
-			v = construct_empty_array(arg1_elemid);
-		else
-			v = PG_GETARG_ARRAYTYPE_P(1);
-		isNull = PG_ARGISNULL(0);
-		if (isNull)
-			newelem = (Datum) 0;
-		else
-			newelem = PG_GETARG_DATUM(0);
-	}
+	v = fetch_array_arg_replace_nulls(fcinfo, 0);
+	isNull = PG_ARGISNULL(1);
+	if (isNull)
+		newelem = (Datum) 0;
 	else
-	{
-		/* Shouldn't get here given proper type checking in parser */
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("neither input type is an array")));
-		PG_RETURN_NULL();		/* keep compiler quiet */
-	}
-
-	element_type = ARR_ELEMTYPE(v);
+		newelem = PG_GETARG_DATUM(1);
 
 	if (ARR_NDIM(v) == 1)
 	{
+		/* append newelem */
+		int			ub;
+
 		lb = ARR_LBOUND(v);
 		dimv = ARR_DIMS(v);
+		ub = dimv[0] + lb[0] - 1;
+		indx = ub + 1;
 
-		if (arg0_elemid != InvalidOid)
-		{
-			/* append newelem */
-			int			ub = dimv[0] + lb[0] - 1;
-
-			indx = ub + 1;
-			/* overflow? */
-			if (indx < ub)
-				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("integer out of range")));
-		}
-		else
-		{
-			/* prepend newelem */
-			indx = lb[0] - 1;
-			/* overflow? */
-			if (indx > lb[0])
-				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("integer out of range")));
-		}
+		/* overflow? */
+		if (indx < ub)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("integer out of range")));
 	}
 	else if (ARR_NDIM(v) == 0)
 		indx = 1;
@@ -120,39 +117,66 @@ array_push(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("argument must be empty or one-dimensional array")));
 
-	/*
-	 * We arrange to look up info about element type only once per series of
-	 * calls, assuming the element type doesn't change underneath us.
-	 */
+	/* Perform element insertion */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL)
-	{
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													  sizeof(ArrayMetaState));
-		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-		my_extra->element_type = ~element_type;
-	}
-
-	if (my_extra->element_type != element_type)
-	{
-		/* Get info about element type */
-		get_typlenbyvalalign(element_type,
-							 &my_extra->typlen,
-							 &my_extra->typbyval,
-							 &my_extra->typalign);
-		my_extra->element_type = element_type;
-	}
-	typlen = my_extra->typlen;
-	typbyval = my_extra->typbyval;
-	typalign = my_extra->typalign;
 
 	result = array_set(v, 1, &indx, newelem, isNull,
-					   -1, typlen, typbyval, typalign);
+			   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
-	/*
-	 * Readjust result's LB to match the input's.  This does nothing in the
-	 * append case, but it's the simplest way to implement the prepend case.
-	 */
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+/*-----------------------------------------------------------------------------
+ * array_prepend :
+ *		push an element onto the front of a one-dimensional array
+ *----------------------------------------------------------------------------
+ */
+Datum
+array_prepend(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v;
+	Datum		newelem;
+	bool		isNull;
+	ArrayType  *result;
+	int		   *dimv,
+			   *lb;
+	int			indx;
+	ArrayMetaState *my_extra;
+
+	isNull = PG_ARGISNULL(0);
+	if (isNull)
+		newelem = (Datum) 0;
+	else
+		newelem = PG_GETARG_DATUM(0);
+	v = fetch_array_arg_replace_nulls(fcinfo, 1);
+
+	if (ARR_NDIM(v) == 1)
+	{
+		/* prepend newelem */
+		lb = ARR_LBOUND(v);
+		dimv = ARR_DIMS(v);
+		indx = lb[0] - 1;
+
+		/* overflow? */
+		if (indx > lb[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("integer out of range")));
+	}
+	else if (ARR_NDIM(v) == 0)
+		indx = 1;
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("argument must be empty or one-dimensional array")));
+
+	/* Perform element insertion */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+
+	result = array_set(v, 1, &indx, newelem, isNull,
+			   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
+
+	/* Readjust result's LB to match the input's, as expected for prepend */
 	if (ARR_NDIM(v) == 1)
 		ARR_LBOUND(result)[0] = ARR_LBOUND(v)[0];
 
