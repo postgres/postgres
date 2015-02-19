@@ -234,35 +234,49 @@ CREATE TYPE complex (
  </para>
 
  <para>
+  If the internal representation of the data type is variable-length, the
+  internal representation must follow the standard layout for variable-length
+  data: the first four bytes must be a <type>char[4]</type> field which is
+  never accessed directly (customarily named <structfield>vl_len_</>). You
+  must use the <function>SET_VARSIZE()</function> macro to store the total
+  size of the datum (including the length field itself) in this field
+  and <function>VARSIZE()</function> to retrieve it.  (These macros exist
+  because the length field may be encoded depending on platform.)
+ </para>
+
+ <para>
+  For further details see the description of the
+  <xref linkend="sql-createtype"> command.
+ </para>
+
+ <sect2 id="xtypes-toast">
+  <title>TOAST Considerations</title>
    <indexterm>
     <primary>TOAST</primary>
     <secondary>and user-defined types</secondary>
    </indexterm>
-  If the values of your data type vary in size (in internal form), you should
-  make the data type <acronym>TOAST</>-able (see <xref
-  linkend="storage-toast">). You should do this even if the data are always
+
+ <para>
+  If the values of your data type vary in size (in internal form), it's
+  usually desirable to make the data type <acronym>TOAST</>-able (see <xref
+  linkend="storage-toast">). You should do this even if the values are always
   too small to be compressed or stored externally, because
   <acronym>TOAST</> can save space on small data too, by reducing header
   overhead.
  </para>
 
  <para>
-  To do this, the internal representation must follow the standard layout for
-  variable-length data: the first four bytes must be a <type>char[4]</type>
-  field which is never accessed directly (customarily named
-  <structfield>vl_len_</>). You
-  must use <function>SET_VARSIZE()</function> to store the size of the datum
-  in this field and <function>VARSIZE()</function> to retrieve it. The C
-  functions operating on the data type must always be careful to unpack any
-  toasted values they are handed, by using <function>PG_DETOAST_DATUM</>.
-  (This detail is customarily hidden by defining type-specific
-  <function>GETARG_DATATYPE_P</function> macros.) Then, when running the
-  <command>CREATE TYPE</command> command, specify the internal length as
-  <literal>variable</> and select the appropriate storage option.
+  To support <acronym>TOAST</> storage, the C functions operating on the data
+  type must always be careful to unpack any toasted values they are handed
+  by using <function>PG_DETOAST_DATUM</>.  (This detail is customarily hidden
+  by defining type-specific <function>GETARG_DATATYPE_P</function> macros.)
+  Then, when running the <command>CREATE TYPE</command> command, specify the
+  internal length as <literal>variable</> and select some appropriate storage
+  option other than <literal>plain</>.
  </para>
 
  <para>
-  If the alignment is unimportant (either just for a specific function or
+  If data alignment is unimportant (either just for a specific function or
   because the data type specifies byte alignment anyway) then it's possible
   to avoid some of the overhead of <function>PG_DETOAST_DATUM</>. You can use
   <function>PG_DETOAST_DATUM_PACKED</> instead (customarily hidden by
@@ -286,8 +300,6 @@ CREATE TYPE complex (
   </para>
  </note>
 
- <para>
-  For further details see the description of the
-  <xref linkend="sql-createtype"> command.
- </para>
+ </sect2>
+
 </sect1>

@@ -329,15 +329,17 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    to <literal>VARIABLE</literal>.  (Internally, this is represented
    by setting <literal>typlen</> to -1.)  The internal representation of all
    variable-length types must start with a 4-byte integer giving the total
-   length of this value of the type.
+   length of this value of the type.  (Note that the length field is often
+   encoded, as described in <xref linkend="storage-toast">; it's unwise
+   to access it directly.)
   </para>
 
   <para>
    The optional flag <literal>PASSEDBYVALUE</literal> indicates that
    values of this data type are passed by value, rather than by
-   reference.  You cannot pass by value types whose internal
-   representation is larger than the size of the <type>Datum</> type
-   (4 bytes on most machines, 8 bytes on a few).
+   reference.  Types passed by value must be fixed-length, and their internal
+   representation cannot be larger than the size of the <type>Datum</> type
+   (4 bytes on some machines, 8 bytes on others).
   </para>
 
   <para>
@@ -365,6 +367,17 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    other way to make a row fit, but they will be kept in the main
    table preferentially over <literal>extended</literal> and
    <literal>external</literal> items.)
+  </para>
+
+  <para>
+   All <replaceable class="parameter">storage</replaceable> values other
+   than <literal>plain</literal> imply that the functions of the data type
+   can handle values that have been <firstterm>toasted</>, as described
+   in <xref linkend="storage-toast"> and <xref linkend="xtypes-toast">.
+   The specific other value given merely determines the default TOAST
+   storage strategy for columns of a toastable data type; users can pick
+   other strategies for individual columns using <literal>ALTER TABLE
+   SET STORAGE</>.
   </para>
 
   <para>
@@ -465,8 +478,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     identical things, and you want to allow these things to be accessed
     directly by subscripting, in addition to whatever operations you plan
     to provide for the type as a whole.  For example, type <type>point</>
-    is represented as just two floating-point numbers, each can be accessed using
-    <literal>point[0]</> and <literal>point[1]</>.
+    is represented as just two floating-point numbers, which can be accessed
+    using <literal>point[0]</> and <literal>point[1]</>.
     Note that
     this facility only works for fixed-length types whose internal form
     is exactly a sequence of identical fixed-length fields.  A subscriptable
