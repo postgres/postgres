@@ -511,34 +511,6 @@ typedef struct ginxlogSplit
 #define GIN_INSERT_ISLEAF	0x02	/* .. */
 #define GIN_SPLIT_ROOT		0x04	/* only for split records */
 
-typedef struct
-{
-	OffsetNumber separator;
-	OffsetNumber nitem;
-
-	/* FOLLOWS: IndexTuples */
-} ginxlogSplitEntry;
-
-typedef struct
-{
-	uint16		lsize;
-	uint16		rsize;
-	ItemPointerData lrightbound;	/* new right bound of left page */
-	ItemPointerData rrightbound;	/* new right bound of right page */
-
-	/* FOLLOWS: new compressed posting lists of left and right page */
-	char		newdata[1];
-} ginxlogSplitDataLeaf;
-
-typedef struct
-{
-	OffsetNumber separator;
-	OffsetNumber nitem;
-	ItemPointerData rightbound;
-
-	/* FOLLOWS: array of PostingItems */
-} ginxlogSplitDataInternal;
-
 /*
  * Vacuum simply WAL-logs the whole page, when anything is modified. This
  * functionally identical heap_newpage records, but is kept separate for
