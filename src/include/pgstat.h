@@ -104,6 +104,7 @@ typedef struct PgStat_TableCounts
 	PgStat_Counter t_tuples_updated;
 	PgStat_Counter t_tuples_deleted;
 	PgStat_Counter t_tuples_hot_updated;
+	bool		t_truncated;
 
 	PgStat_Counter t_delta_live_tuples;
 	PgStat_Counter t_delta_dead_tuples;
@@ -165,6 +166,10 @@ typedef struct PgStat_TableXactStatus
 	PgStat_Counter tuples_inserted;		/* tuples inserted in (sub)xact */
 	PgStat_Counter tuples_updated;		/* tuples updated in (sub)xact */
 	PgStat_Counter tuples_deleted;		/* tuples deleted in (sub)xact */
+	bool		truncated;		/* relation truncated in this (sub)xact */
+	PgStat_Counter inserted_pre_trunc;	/* tuples inserted prior to truncate */
+	PgStat_Counter updated_pre_trunc;	/* tuples updated prior to truncate */
+	PgStat_Counter deleted_pre_trunc;	/* tuples deleted prior to truncate */
 	int			nest_level;		/* subtransaction nest level */
 	/* links to other structs for same relation: */
 	struct PgStat_TableXactStatus *upper;		/* next higher subxact if any */
@@ -960,6 +965,7 @@ extern void pgstat_initstats(Relation rel);
 extern void pgstat_count_heap_insert(Relation rel, int n);
 extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
+extern void pgstat_count_truncate(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
 
 extern void pgstat_init_function_usage(FunctionCallInfoData *fcinfo,

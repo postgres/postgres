@@ -197,8 +197,12 @@ typedef struct TwoPhasePgStatRecord
 	PgStat_Counter tuples_inserted;		/* tuples inserted in xact */
 	PgStat_Counter tuples_updated;		/* tuples updated in xact */
 	PgStat_Counter tuples_deleted;		/* tuples deleted in xact */
+	PgStat_Counter inserted_pre_trunc;	/* tuples inserted prior to truncate */
+	PgStat_Counter updated_pre_trunc;	/* tuples updated prior to truncate */
+	PgStat_Counter deleted_pre_trunc;	/* tuples deleted prior to truncate */
 	Oid			t_id;			/* table's OID */
 	bool		t_shared;		/* is it a shared catalog? */
+	bool		t_truncated;	/* was the relation truncated? */
 } TwoPhasePgStatRecord;
 
 /*
@@ -1859,6 +1863,64 @@ pgstat_count_heap_delete(Relation rel)
 }
 
 /*
+ * pgstat_truncate_save_counters
+ *
+ * Whenever a table is truncated, we save its i/u/d counters so that they can
+ * be cleared, and if the (sub)xact that executed the truncate later aborts,
+ * the counters can be restored to the saved (pre-truncate) values.  Note we do
+ * this on the first truncate in any particular subxact level only.
+ */
+static void
+pgstat_truncate_save_counters(PgStat_TableXactStatus *trans)
+{
+	if (!trans->truncated)
+	{
+		trans->inserted_pre_trunc = trans->tuples_inserted;
+		trans->updated_pre_trunc = trans->tuples_updated;
+		trans->deleted_pre_trunc = trans->tuples_deleted;
+		trans->truncated = true;
+	}
+}
+
+/*
+ * pgstat_truncate_restore_counters - restore counters when a truncate aborts
+ */
+static void
+pgstat_truncate_restore_counters(PgStat_TableXactStatus *trans)
+{
+	if (trans->truncated)
+	{
+		trans->tuples_inserted = trans->inserted_pre_trunc;
+		trans->tuples_updated = trans->updated_pre_trunc;
+		trans->tuples_deleted = trans->deleted_pre_trunc;
+	}
+}
+
+/*
+ * pgstat_count_truncate - update tuple counters due to truncate
+ */
+void
+pgstat_count_truncate(Relation rel)
+{
+	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+
+	if (pgstat_info != NULL)
+	{
+		/* We have to log the effect at the proper transactional level */
+		int			nest_level = GetCurrentTransactionNestLevel();
+
+		if (pgstat_info->trans == NULL ||
+			pgstat_info->trans->nest_level != nest_level)
+			add_tabstat_xact_level(pgstat_info, nest_level);
+
+		pgstat_truncate_save_counters(pgstat_info->trans);
+		pgstat_info->trans->tuples_inserted = 0;
+		pgstat_info->trans->tuples_updated = 0;
+		pgstat_info->trans->tuples_deleted = 0;
+	}
+}
+
+/*
  * pgstat_update_heap_dead_tuples - update dead-tuples count
  *
  * The semantics of this are that we are reporting the nontransactional
@@ -1916,12 +1978,22 @@ AtEOXact_PgStat(bool isCommit)
 			Assert(trans->upper == NULL);
 			tabstat = trans->parent;
 			Assert(tabstat->trans == trans);
+			/* restore pre-truncate stats (if any) in case of aborted xact */
+			if (!isCommit)
+				pgstat_truncate_restore_counters(trans);
 			/* count attempted actions regardless of commit/abort */
 			tabstat->t_counts.t_tuples_inserted += trans->tuples_inserted;
 			tabstat->t_counts.t_tuples_updated += trans->tuples_updated;
 			tabstat->t_counts.t_tuples_deleted += trans->tuples_deleted;
 			if (isCommit)
 			{
+				tabstat->t_counts.t_truncated = trans->truncated;
+				if (trans->truncated)
+				{
+					/* forget live/dead stats seen by backend thus far */
+					tabstat->t_counts.t_delta_live_tuples = 0;
+					tabstat->t_counts.t_delta_dead_tuples = 0;
+				}
 				/* insert adds a live tuple, delete removes one */
 				tabstat->t_counts.t_delta_live_tuples +=
 					trans->tuples_inserted - trans->tuples_deleted;
@@ -1986,9 +2058,21 @@ AtEOSubXact_PgStat(bool isCommit, int nestDepth)
 			{
 				if (trans->upper && trans->upper->nest_level == nestDepth - 1)
 				{
-					trans->upper->tuples_inserted += trans->tuples_inserted;
-					trans->upper->tuples_updated += trans->tuples_updated;
-					trans->upper->tuples_deleted += trans->tuples_deleted;
+					if (trans->truncated)
+					{
+						/* propagate the truncate status one level up */
+						pgstat_truncate_save_counters(trans->upper);
+						/* replace upper xact stats with ours */
+						trans->upper->tuples_inserted = trans->tuples_inserted;
+						trans->upper->tuples_updated = trans->tuples_updated;
+						trans->upper->tuples_deleted = trans->tuples_deleted;
+					}
+					else
+					{
+						trans->upper->tuples_inserted += trans->tuples_inserted;
+						trans->upper->tuples_updated += trans->tuples_updated;
+						trans->upper->tuples_deleted += trans->tuples_deleted;
+					}
 					tabstat->trans = trans->upper;
 					pfree(trans);
 				}
@@ -2017,6 +2101,8 @@ AtEOSubXact_PgStat(bool isCommit, int nestDepth)
 				 * subtransaction
 				 */
 
+				/* first restore values obliterated by truncate */
+				pgstat_truncate_restore_counters(trans);
 				/* count attempted actions regardless of commit/abort */
 				tabstat->t_counts.t_tuples_inserted += trans->tuples_inserted;
 				tabstat->t_counts.t_tuples_updated += trans->tuples_updated;
@@ -2065,8 +2151,12 @@ AtPrepare_PgStat(void)
 			record.tuples_inserted = trans->tuples_inserted;
 			record.tuples_updated = trans->tuples_updated;
 			record.tuples_deleted = trans->tuples_deleted;
+			record.inserted_pre_trunc = trans->inserted_pre_trunc;
+			record.updated_pre_trunc = trans->updated_pre_trunc;
+			record.deleted_pre_trunc = trans->deleted_pre_trunc;
 			record.t_id = tabstat->t_id;
 			record.t_shared = tabstat->t_shared;
+			record.t_truncated = trans->truncated;
 
 			RegisterTwoPhaseRecord(TWOPHASE_RM_PGSTAT_ID, 0,
 								   &record, sizeof(TwoPhasePgStatRecord));
@@ -2132,6 +2222,8 @@ pgstat_twophase_postcommit(TransactionId xid, uint16 info,
 	pgstat_info->t_counts.t_tuples_inserted += rec->tuples_inserted;
 	pgstat_info->t_counts.t_tuples_updated += rec->tuples_updated;
 	pgstat_info->t_counts.t_tuples_deleted += rec->tuples_deleted;
+	pgstat_info->t_counts.t_truncated = rec->t_truncated;
+
 	pgstat_info->t_counts.t_delta_live_tuples +=
 		rec->tuples_inserted - rec->tuples_deleted;
 	pgstat_info->t_counts.t_delta_dead_tuples +=
@@ -2158,6 +2250,12 @@ pgstat_twophase_postabort(TransactionId xid, uint16 info,
 	pgstat_info = get_tabstat_entry(rec->t_id, rec->t_shared);
 
 	/* Same math as in AtEOXact_PgStat, abort case */
+	if (rec->t_truncated)
+	{
+		rec->tuples_inserted = rec->inserted_pre_trunc;
+		rec->tuples_updated = rec->updated_pre_trunc;
+		rec->tuples_deleted = rec->deleted_pre_trunc;
+	}
 	pgstat_info->t_counts.t_tuples_inserted += rec->tuples_inserted;
 	pgstat_info->t_counts.t_tuples_updated += rec->tuples_updated;
 	pgstat_info->t_counts.t_tuples_deleted += rec->tuples_deleted;
@@ -4658,6 +4756,12 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_updated += tabmsg->t_counts.t_tuples_updated;
 			tabentry->tuples_deleted += tabmsg->t_counts.t_tuples_deleted;
 			tabentry->tuples_hot_updated += tabmsg->t_counts.t_tuples_hot_updated;
+			/* If table was truncated, first reset the live/dead counters */
+			if (tabmsg->t_counts.t_truncated)
+			{
+				tabentry->n_live_tuples = 0;
+				tabentry->n_dead_tuples = 0;
+			}
 			tabentry->n_live_tuples += tabmsg->t_counts.t_delta_live_tuples;
 			tabentry->n_dead_tuples += tabmsg->t_counts.t_delta_dead_tuples;
 			tabentry->changes_since_analyze += tabmsg->t_counts.t_changed_tuples;

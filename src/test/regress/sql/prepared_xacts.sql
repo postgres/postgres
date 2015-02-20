@@ -152,7 +152,34 @@ SELECT * FROM pxtest3;
 -- There should be no prepared transactions
 SELECT gid FROM pg_prepared_xacts;
 
+CREATE TABLE pxtest5 (a SERIAL);
+INSERT INTO pxtest5 DEFAULT VALUES;
+
+SELECT * FROM pxtest5;
+
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+  INSERT INTO pxtest5 DEFAULT VALUES;
+  INSERT INTO pxtest5 DEFAULT VALUES;
+  TRUNCATE pxtest5;
+  INSERT INTO pxtest5 DEFAULT VALUES;
+PREPARE TRANSACTION 'trunc-and-pgstat';
+
+SELECT pg_sleep(0.5);
+SELECT n_tup_ins, n_tup_upd, n_tup_del, n_live_tup, n_dead_tup
+  FROM pg_stat_user_tables
+ WHERE relname='pxtest5';
+
+COMMIT PREPARED 'trunc-and-pgstat';
+
+SELECT pg_sleep(0.5);
+SELECT n_tup_ins, n_tup_upd, n_tup_del, n_live_tup, n_dead_tup
+  FROM pg_stat_user_tables
+ WHERE relname='pxtest5';
+
+SELECT * FROM pxtest5;
+
 -- Clean up
 DROP TABLE pxtest2;
 DROP TABLE pxtest3;  -- will still be there if prepared xacts are disabled
 DROP TABLE pxtest4;
+DROP TABLE pxtest5;

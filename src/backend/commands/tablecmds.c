@@ -71,6 +71,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
+#include "pgstat.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
@@ -1220,6 +1221,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 			 */
 			reindex_relation(heap_relid, REINDEX_REL_PROCESS_TOAST);
 		}
+
+		pgstat_count_truncate(rel);
 	}
 
 	/*
