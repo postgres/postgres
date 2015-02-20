@@ -1710,6 +1710,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><literal><function>pg_stat_get_snapshot_timestamp()</function></literal><indexterm><primary>pg_stat_get_snapshot_timestamp</primary></indexterm></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry>
+       Returns the timestamp of the current statistics snapshot
+      </entry>
+     </row>
+
+     <row>
       <entry><literal><function>pg_stat_clear_snapshot()</function></literal><indexterm><primary>pg_stat_clear_snapshot</primary></indexterm></entry>
       <entry><type>void</type></entry>
       <entry>

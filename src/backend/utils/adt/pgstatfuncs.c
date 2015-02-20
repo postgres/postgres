@@ -115,6 +115,7 @@ extern Datum pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS);
 
+extern Datum pg_stat_get_snapshot_timestamp(PG_FUNCTION_ARGS);
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset_shared(PG_FUNCTION_ARGS);
@@ -1681,6 +1682,13 @@ pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_counts.f_self_time));
 }
 
+
+/* Get the timestamp of the current statistics snapshot */
+Datum
+pg_stat_get_snapshot_timestamp(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(pgstat_fetch_global()->stats_timestamp);
+}
 
 /* Discard the active statistics snapshot */
 Datum

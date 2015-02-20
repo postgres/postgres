@@ -22,7 +22,8 @@ SELECT pg_sleep_for('2 seconds');
 CREATE TEMP TABLE prevstats AS
 SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
        (b.heap_blks_read + b.heap_blks_hit) AS heap_blks,
-       (b.idx_blks_read + b.idx_blks_hit) AS idx_blks
+       (b.idx_blks_read + b.idx_blks_hit) AS idx_blks,
+       pg_stat_get_snapshot_timestamp() as snap_ts
   FROM pg_catalog.pg_stat_user_tables AS t,
        pg_catalog.pg_statio_user_tables AS b
  WHERE t.relname='tenk2' AND b.relname='tenk2';
@@ -80,5 +81,8 @@ SELECT st.heap_blks_read + st.heap_blks_hit >= pr.heap_blks + cl.relpages,
        st.idx_blks_read + st.idx_blks_hit >= pr.idx_blks + 1
   FROM pg_statio_user_tables AS st, pg_class AS cl, prevstats AS pr
  WHERE st.relname='tenk2' AND cl.relname='tenk2';
+
+SELECT pr.snap_ts < pg_stat_get_snapshot_timestamp() as snapshot_newer
+FROM prevstats AS pr;
 
 -- End of Stats Test
