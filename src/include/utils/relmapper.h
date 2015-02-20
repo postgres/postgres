@@ -29,7 +29,7 @@ typedef struct xl_relmap_update
 	Oid			dbid;			/* database ID, or 0 for shared map */
 	Oid			tsid;			/* database's tablespace, or pg_global */
 	int32		nbytes;			/* size of relmap data */
-	char		data[1];		/* VARIABLE LENGTH ARRAY */
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } xl_relmap_update;
 
 #define MinSizeOfRelmapUpdate offsetof(xl_relmap_update, data)

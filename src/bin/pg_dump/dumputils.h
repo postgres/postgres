@@ -38,7 +38,7 @@ typedef struct SimpleOidList
 typedef struct SimpleStringListCell
 {
 	struct SimpleStringListCell *next;
-	char		val[1];			/* VARIABLE LENGTH FIELD */
+	char		val[FLEXIBLE_ARRAY_MEMBER];		/* null-terminated string here */
 } SimpleStringListCell;
 
 typedef struct SimpleStringList

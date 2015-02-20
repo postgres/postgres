@@ -41,8 +41,8 @@ typedef struct
 	int			ntuples;		/* -1 indicates lossy result */
 	bool		recheck;		/* should the tuples be rechecked? */
 	/* Note: recheck is always true if ntuples < 0 */
-	OffsetNumber offsets[1];	/* VARIABLE LENGTH ARRAY */
-} TBMIterateResult;				/* VARIABLE LENGTH STRUCT */
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
+} TBMIterateResult;
 
 /* function prototypes in nodes/tidbitmap.c */
 

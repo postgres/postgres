@@ -147,8 +147,8 @@ typedef struct catclist
 	uint32		hash_value;		/* hash value for lookup keys */
 	HeapTupleData tuple;		/* header for tuple holding keys */
 	int			n_members;		/* number of member tuples */
-	CatCTup    *members[1];		/* members --- VARIABLE LENGTH ARRAY */
-} CatCList;						/* VARIABLE LENGTH STRUCT */
+	CatCTup    *members[FLEXIBLE_ARRAY_MEMBER]; /* members */
+} CatCList;
 
 
 typedef struct catcacheheader

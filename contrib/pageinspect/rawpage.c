@@ -192,7 +192,7 @@ page_header(PG_FUNCTION_ARGS)
 	 * Check that enough data was supplied, so that we don't try to access
 	 * fields outside the supplied buffer.
 	 */
-	if (raw_page_size < sizeof(PageHeaderData))
+	if (raw_page_size < SizeOfPageHeaderData)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("input page too small (%d bytes)", raw_page_size)));

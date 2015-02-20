@@ -118,7 +118,7 @@ typedef struct xl_xact_assignment
 {
 	TransactionId xtop;			/* assigned XID's top-level XID */
 	int			nsubxacts;		/* number of subtransaction XIDs */
-	TransactionId xsub[1];		/* assigned subxids */
+	TransactionId xsub[FLEXIBLE_ARRAY_MEMBER];	/* assigned subxids */
 } xl_xact_assignment;
 
 #define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
@@ -128,7 +128,7 @@ typedef struct xl_xact_commit_compact
 	TimestampTz xact_time;		/* time of commit */
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
-	TransactionId subxacts[1];	/* VARIABLE LENGTH ARRAY */
+	TransactionId subxacts[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_commit_compact;
 
 #define MinSizeOfXactCommitCompact offsetof(xl_xact_commit_compact, subxacts)
@@ -143,7 +143,7 @@ typedef struct xl_xact_commit
 	Oid			dbId;			/* MyDatabaseId */
 	Oid			tsId;			/* MyDatabaseTableSpace */
 	/* Array of RelFileNode(s) to drop at commit */
-	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
 	/* ARRAY OF SHARED INVALIDATION MESSAGES FOLLOWS */
 } xl_xact_commit;
@@ -171,7 +171,7 @@ typedef struct xl_xact_abort
 	int			nrels;			/* number of RelFileNodes */
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* Array of RelFileNode(s) to drop at abort */
-	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
 	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_abort;
 

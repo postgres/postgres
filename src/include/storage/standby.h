@@ -60,7 +60,7 @@ extern void StandbyReleaseOldLocks(int nxids, TransactionId *xids);
 typedef struct xl_standby_locks
 {
 	int			nlocks;			/* number of entries in locks array */
-	xl_standby_lock locks[1];	/* VARIABLE LENGTH ARRAY */
+	xl_standby_lock locks[FLEXIBLE_ARRAY_MEMBER];
 } xl_standby_locks;
 
 /*
@@ -75,7 +75,7 @@ typedef struct xl_running_xacts
 	TransactionId oldestRunningXid;		/* *not* oldestXmin */
 	TransactionId latestCompletedXid;	/* so we can set xmax */
 
-	TransactionId xids[1];		/* VARIABLE LENGTH ARRAY */
+	TransactionId xids[FLEXIBLE_ARRAY_MEMBER];
 } xl_running_xacts;
 
 #define MinSizeOfXactRunningXacts offsetof(xl_running_xacts, xids)

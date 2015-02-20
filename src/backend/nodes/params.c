@@ -40,9 +40,8 @@ copyParamList(ParamListInfo from)
 	if (from == NULL || from->numParams <= 0)
 		return NULL;
 
-	/* sizeof(ParamListInfoData) includes the first array element */
-	size = sizeof(ParamListInfoData) +
-		(from->numParams - 1) * sizeof(ParamExternData);
+	size = offsetof(ParamListInfoData, params) +
+		from->numParams * sizeof(ParamExternData);
 
 	retval = (ParamListInfo) palloc(size);
 	retval->paramFetch = NULL;

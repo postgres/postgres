@@ -117,20 +117,20 @@ typedef union
 	struct						/* Normal varlena (4-byte length) */
 	{
 		uint32		va_header;
-		char		va_data[1];
+		char		va_data[FLEXIBLE_ARRAY_MEMBER];
 	}			va_4byte;
 	struct						/* Compressed-in-line format */
 	{
 		uint32		va_header;
 		uint32		va_rawsize; /* Original data size (excludes header) */
-		char		va_data[1]; /* Compressed data */
+		char		va_data[FLEXIBLE_ARRAY_MEMBER];		/* Compressed data */
 	}			va_compressed;
 } varattrib_4b;
 
 typedef struct
 {
 	uint8		va_header;
-	char		va_data[1];		/* Data begins here */
+	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Data begins here */
 } varattrib_1b;
 
 /* TOAST pointers are a subset of varattrib_1b with an identifying tag byte */
@@ -138,7 +138,7 @@ typedef struct
 {
 	uint8		va_header;		/* Always 0x80 or 0x01 */
 	uint8		va_tag;			/* Type of datum */
-	char		va_data[1];		/* Data (of the type indicated by va_tag) */
+	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Type-specific data */
 } varattrib_1b_e;
 
 /*

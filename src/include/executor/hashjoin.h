@@ -114,7 +114,7 @@ typedef struct HashMemoryChunkData
 
 	struct HashMemoryChunkData *next; /* pointer to the next chunk (linked list) */
 
-	char		data[1];	/* buffer allocated at the end */
+	char		data[FLEXIBLE_ARRAY_MEMBER];	/* buffer allocated at the end */
 } HashMemoryChunkData;
 
 typedef struct HashMemoryChunkData *HashMemoryChunk;

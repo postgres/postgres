@@ -73,7 +73,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		flag;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } GISTTYPE;
 
 #define ALLISTRUE		0x04
@@ -133,7 +133,7 @@ typedef struct QUERYTYPE
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		size;			/* number of ITEMs */
-	ITEM		items[1];		/* variable length array */
+	ITEM		items[FLEXIBLE_ARRAY_MEMBER];
 } QUERYTYPE;
 
 #define HDRSIZEQT	offsetof(QUERYTYPE, items)

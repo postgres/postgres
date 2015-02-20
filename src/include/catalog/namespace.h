@@ -34,8 +34,8 @@ typedef struct _FuncCandidateList
 	int			nvargs;			/* number of args to become variadic array */
 	int			ndargs;			/* number of defaulted args */
 	int		   *argnumbers;		/* args' positional indexes, if named call */
-	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
-}	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
+	Oid			args[FLEXIBLE_ARRAY_MEMBER];	/* arg types */
+}	*FuncCandidateList;
 
 /*
  *	Structure for xxxOverrideSearchPath functions

@@ -785,13 +785,13 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 	int			dest = LOG_DESTINATION_STDERR;
 
 	/* While we have enough for a header, process data... */
-	while (count >= (int) sizeof(PipeProtoHeader))
+	while (count >= (int) (offsetof(PipeProtoHeader, data) +1))
 	{
 		PipeProtoHeader p;
 		int			chunklen;
 
 		/* Do we have a valid header? */
-		memcpy(&p, cursor, sizeof(PipeProtoHeader));
+		memcpy(&p, cursor, offsetof(PipeProtoHeader, data));
 		if (p.nuls[0] == '\0' && p.nuls[1] == '\0' &&
 			p.len > 0 && p.len <= PIPE_MAX_PAYLOAD &&
 			p.pid != 0 &&

@@ -1590,7 +1590,7 @@ SearchCatCacheList(CatCache *cache,
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 		nmembers = list_length(ctlist);
 		cl = (CatCList *)
-			palloc(sizeof(CatCList) + nmembers * sizeof(CatCTup *));
+			palloc(offsetof(CatCList, members) +nmembers * sizeof(CatCTup *));
 		heap_copytuple_with_tuple(ntp, &cl->tuple);
 		MemoryContextSwitchTo(oldcxt);
 		heap_freetuple(ntp);

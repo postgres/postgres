@@ -1619,9 +1619,8 @@ exec_bind_message(StringInfo input_message)
 	{
 		int			paramno;
 
-		/* sizeof(ParamListInfoData) includes the first array element */
-		params = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-								  (numParams - 1) * sizeof(ParamExternData));
+		params = (ParamListInfo) palloc(offsetof(ParamListInfoData, params) +
+										numParams * sizeof(ParamExternData));
 		/* we have static list of params, so no hooks needed */
 		params->paramFetch = NULL;
 		params->paramFetchArg = NULL;

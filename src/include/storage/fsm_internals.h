@@ -39,7 +39,7 @@ typedef struct
 	 * NonLeafNodesPerPage elements are upper nodes, and the following
 	 * LeafNodesPerPage elements are leaf nodes. Unused nodes are zero.
 	 */
-	uint8		fp_nodes[1];
+	uint8		fp_nodes[FLEXIBLE_ARRAY_MEMBER];
 } FSMPageData;
 
 typedef FSMPageData *FSMPage;

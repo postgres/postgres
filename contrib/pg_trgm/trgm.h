@@ -63,7 +63,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint8		flag;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } TRGM;
 
 #define TRGMHDRSIZE		  (VARHDRSZ + sizeof(uint8))

@@ -21,7 +21,7 @@ typedef struct RegisNode
 				len:16,
 				unused:14;
 	struct RegisNode *next;
-	unsigned char data[1];
+	unsigned char data[FLEXIBLE_ARRAY_MEMBER];
 } RegisNode;
 
 #define  RNHDRSZ	(offsetof(RegisNode,data))

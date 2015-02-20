@@ -49,7 +49,7 @@ typedef struct
 typedef struct SPNode
 {
 	uint32		length;
-	SPNodeData	data[1];
+	SPNodeData	data[FLEXIBLE_ARRAY_MEMBER];
 } SPNode;
 
 #define SPNHDRSZ	(offsetof(SPNode,data))
@@ -70,7 +70,7 @@ typedef struct spell_struct
 			int			len;
 		}			d;
 	}			p;
-	char		word[1];		/* variable length, null-terminated */
+	char		word[FLEXIBLE_ARRAY_MEMBER];
 } SPELL;
 
 #define SPELLHDRSZ	(offsetof(SPELL, word))
@@ -120,7 +120,7 @@ typedef struct AffixNode
 {
 	uint32		isvoid:1,
 				length:31;
-	AffixNodeData data[1];
+	AffixNodeData data[FLEXIBLE_ARRAY_MEMBER];
 } AffixNode;
 
 #define ANHRDSZ		   (offsetof(AffixNode, data))

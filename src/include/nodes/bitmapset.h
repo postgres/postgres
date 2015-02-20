@@ -32,8 +32,8 @@ typedef int32 signedbitmapword; /* must be the matching signed type */
 typedef struct Bitmapset
 {
 	int			nwords;			/* number of words in array */
-	bitmapword	words[1];		/* really [nwords] */
-} Bitmapset;					/* VARIABLE LENGTH STRUCT */
+	bitmapword	words[FLEXIBLE_ARRAY_MEMBER];	/* really [nwords] */
+} Bitmapset;
 
 
 /* result of bms_subset_compare */

@@ -896,9 +896,9 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 
 		if (fcache->paramLI == NULL)
 		{
-			/* sizeof(ParamListInfoData) includes the first array element */
-			paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									  (nargs - 1) * sizeof(ParamExternData));
+			paramLI = (ParamListInfo)
+				palloc(offsetof(ParamListInfoData, params) +
+					   nargs * sizeof(ParamExternData));
 			/* we have static list of params, so no hooks needed */
 			paramLI->paramFetch = NULL;
 			paramLI->paramFetchArg = NULL;

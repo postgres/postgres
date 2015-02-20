@@ -426,7 +426,7 @@ typedef struct spgxlogMoveLeafs
 	 * the dead tuple from the source
 	 *----------
 	 */
-	OffsetNumber offsets[1];
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } spgxlogMoveLeafs;
 
 #define SizeOfSpgxlogMoveLeafs	offsetof(spgxlogMoveLeafs, offsets)
@@ -534,7 +534,7 @@ typedef struct spgxlogPickSplit
 	 *		list of leaf tuples, length nInsert (unaligned!)
 	 *----------
 	 */
-	OffsetNumber offsets[1];
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } spgxlogPickSplit;
 
 #define SizeOfSpgxlogPickSplit offsetof(spgxlogPickSplit, offsets)
@@ -558,7 +558,7 @@ typedef struct spgxlogVacuumLeaf
 	 *		tuple numbers to insert in nextOffset links
 	 *----------
 	 */
-	OffsetNumber offsets[1];
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } spgxlogVacuumLeaf;
 
 #define SizeOfSpgxlogVacuumLeaf offsetof(spgxlogVacuumLeaf, offsets)
@@ -571,7 +571,7 @@ typedef struct spgxlogVacuumRoot
 	spgxlogState stateSrc;
 
 	/* offsets of tuples to delete follow */
-	OffsetNumber offsets[1];
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } spgxlogVacuumRoot;
 
 #define SizeOfSpgxlogVacuumRoot offsetof(spgxlogVacuumRoot, offsets)
@@ -583,7 +583,7 @@ typedef struct spgxlogVacuumRedirect
 	TransactionId newestRedirectXid;	/* newest XID of removed redirects */
 
 	/* offsets of redirect tuples to make placeholders follow */
-	OffsetNumber offsets[1];
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } spgxlogVacuumRedirect;
 
 #define SizeOfSpgxlogVacuumRedirect offsetof(spgxlogVacuumRedirect, offsets)

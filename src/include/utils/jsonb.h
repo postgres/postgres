@@ -194,7 +194,7 @@ typedef struct JsonbContainer
 {
 	uint32		header;			/* number of elements or key/value pairs, and
 								 * flags */
-	JEntry		children[1];	/* variable length */
+	JEntry		children[FLEXIBLE_ARRAY_MEMBER];
 
 	/* the data for each child node follows. */
 } JsonbContainer;

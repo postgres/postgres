@@ -132,7 +132,7 @@ typedef struct xl_heap_multi_insert
 {
 	uint8		flags;
 	uint16		ntuples;
-	OffsetNumber offsets[1];
+	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } xl_heap_multi_insert;
 
 #define SizeOfHeapMultiInsert	offsetof(xl_heap_multi_insert, offsets)

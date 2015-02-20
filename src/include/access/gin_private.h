@@ -322,7 +322,7 @@ typedef struct GinOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	bool		useFastUpdate;	/* use fast updates? */
-	int			pendingListCleanupSize;	/* maximum size of pending list */
+	int			pendingListCleanupSize; /* maximum size of pending list */
 } GinOptions;
 
 #define GIN_DEFAULT_USE_FASTUPDATE	true
@@ -389,7 +389,7 @@ typedef struct
 {
 	ItemPointerData first;		/* first item in this posting list (unpacked) */
 	uint16		nbytes;			/* number of bytes that follow */
-	unsigned char bytes[1];		/* varbyte encoded items (variable length) */
+	unsigned char bytes[FLEXIBLE_ARRAY_MEMBER]; /* varbyte encoded items */
 } GinPostingList;
 
 #define SizeOfGinPostingList(plist) (offsetof(GinPostingList, bytes) + SHORTALIGN((plist)->nbytes) )

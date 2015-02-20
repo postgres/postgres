@@ -10,7 +10,7 @@
 typedef struct
 {
 	uint16		len;
-	char		name[1];
+	char		name[FLEXIBLE_ARRAY_MEMBER];
 } ltree_level;
 
 #define LEVEL_HDRSIZE	(offsetof(ltree_level,name))
@@ -20,7 +20,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint16		numlevel;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } ltree;
 
 #define LTREE_HDRSIZE	MAXALIGN( offsetof(ltree, data) )
@@ -34,7 +34,7 @@ typedef struct
 	int32		val;
 	uint16		len;
 	uint8		flag;
-	char		name[1];
+	char		name[FLEXIBLE_ARRAY_MEMBER];
 } lquery_variant;
 
 #define LVAR_HDRSIZE   MAXALIGN(offsetof(lquery_variant, name))
@@ -51,7 +51,7 @@ typedef struct
 	uint16		numvar;
 	uint16		low;
 	uint16		high;
-	char		variants[1];
+	char		variants[FLEXIBLE_ARRAY_MEMBER];
 } lquery_level;
 
 #define LQL_HDRSIZE MAXALIGN( offsetof(lquery_level,variants) )
@@ -72,7 +72,7 @@ typedef struct
 	uint16		numlevel;
 	uint16		firstgood;
 	uint16		flag;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } lquery;
 
 #define LQUERY_HDRSIZE	 MAXALIGN( offsetof(lquery, data) )
@@ -107,7 +107,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		size;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } ltxtquery;
 
 #define HDRSIZEQT		MAXALIGN(VARHDRSZ + sizeof(int32))
@@ -208,7 +208,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint32		flag;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } ltree_gist;
 
 #define LTG_ONENODE 0x01

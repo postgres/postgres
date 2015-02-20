@@ -71,7 +71,7 @@ typedef struct ParamListInfoData
 	ParserSetupHook parserSetup;	/* parser setup hook */
 	void	   *parserSetupArg;
 	int			numParams;		/* number of ParamExternDatas following */
-	ParamExternData params[1];	/* VARIABLE LENGTH ARRAY */
+	ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
 }	ParamListInfoData;
 
 
