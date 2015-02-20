@@ -56,8 +56,10 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MAC
 	int32		rolconnlimit;	/* max connections allowed (-1=no limit) */
 
 	/* remaining fields may be null; use heap_getattr to read them! */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		rolpassword;	/* password, if any */
 	timestamptz rolvaliduntil;	/* password expiration time, if any */
+#endif
 } FormData_pg_authid;
 
 #undef timestamptz
