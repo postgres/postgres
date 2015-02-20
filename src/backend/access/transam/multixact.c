@@ -258,7 +258,7 @@ typedef struct MultiXactStateData
 	 * stored in pg_control and used as truncation point for pg_multixact.  At
 	 * checkpoint or restartpoint, unneeded segments are removed.
 	 */
-	MultiXactId perBackendXactIds[1];	/* VARIABLE LENGTH ARRAY */
+	MultiXactId perBackendXactIds[FLEXIBLE_ARRAY_MEMBER];
 } MultiXactStateData;
 
 /*
@@ -1744,8 +1744,9 @@ MultiXactShmemSize(void)
 {
 	Size		size;
 
+	/* We need 2*MaxOldestSlot + 1 perBackendXactIds[] entries */
 #define SHARED_MULTIXACT_STATE_SIZE \
-	add_size(sizeof(MultiXactStateData), \
+	add_size(offsetof(MultiXactStateData, perBackendXactIds) + sizeof(MultiXactId), \
 			 mul_size(sizeof(MultiXactId) * 2, MaxOldestSlot))
 
 	size = SHARED_MULTIXACT_STATE_SIZE;

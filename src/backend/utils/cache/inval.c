@@ -122,8 +122,8 @@ typedef struct InvalidationChunk
 	struct InvalidationChunk *next;		/* list link */
 	int			nitems;			/* # items currently stored in chunk */
 	int			maxitems;		/* size of allocated array in this chunk */
-	SharedInvalidationMessage msgs[1];	/* VARIABLE LENGTH ARRAY */
-} InvalidationChunk;			/* VARIABLE LENGTH STRUCTURE */
+	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
+} InvalidationChunk;
 
 typedef struct InvalidationListHeader
 {
@@ -225,8 +225,8 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 #define FIRSTCHUNKSIZE 32
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
-							   sizeof(InvalidationChunk) +
-					(FIRSTCHUNKSIZE - 1) *sizeof(SharedInvalidationMessage));
+							   offsetof(InvalidationChunk, msgs) +
+					FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = FIRSTCHUNKSIZE;
 		chunk->next = *listHdr;
@@ -239,8 +239,8 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
-							   sizeof(InvalidationChunk) +
-						 (chunksize - 1) *sizeof(SharedInvalidationMessage));
+							   offsetof(InvalidationChunk, msgs) +
+						 chunksize * sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = chunksize;
 		chunk->next = *listHdr;

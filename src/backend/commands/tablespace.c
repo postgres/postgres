@@ -1088,7 +1088,7 @@ GetDefaultTablespace(char relpersistence)
 typedef struct
 {
 	int			numSpcs;
-	Oid			tblSpcs[1];		/* VARIABLE LENGTH ARRAY */
+	Oid			tblSpcs[FLEXIBLE_ARRAY_MEMBER];
 } temp_tablespaces_extra;
 
 /* check_hook: validate new temp_tablespaces */

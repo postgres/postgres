@@ -134,12 +134,9 @@ typedef struct TwoPhaseStateData
 	/* Number of valid prepXacts entries. */
 	int			numPrepXacts;
 
-	/*
-	 * There are max_prepared_xacts items in this array, but C wants a
-	 * fixed-size array.
-	 */
-	GlobalTransaction prepXacts[1];		/* VARIABLE LENGTH ARRAY */
-} TwoPhaseStateData;			/* VARIABLE LENGTH STRUCT */
+	/* There are max_prepared_xacts items in this array */
+	GlobalTransaction prepXacts[FLEXIBLE_ARRAY_MEMBER];
+} TwoPhaseStateData;
 
 static TwoPhaseStateData *TwoPhaseState;
 

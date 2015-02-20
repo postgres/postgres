@@ -90,11 +90,8 @@ typedef struct ProcArrayStruct
 	/* oldest catalog xmin of any replication slot */
 	TransactionId replication_slot_catalog_xmin;
 
-	/*
-	 * We declare pgprocnos[] as 1 entry because C wants a fixed-size array,
-	 * but actually it is maxProcs entries long.
-	 */
-	int			pgprocnos[1];	/* VARIABLE LENGTH ARRAY */
+	/* indexes into allPgXact[], has PROCARRAY_MAXPROCS entries */
+	int			pgprocnos[FLEXIBLE_ARRAY_MEMBER];
 } ProcArrayStruct;
 
 static ProcArrayStruct *procArray;
