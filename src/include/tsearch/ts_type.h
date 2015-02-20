@@ -66,6 +66,13 @@ typedef struct
 	WordEntryPos pos[FLEXIBLE_ARRAY_MEMBER];
 } WordEntryPosVector;
 
+/* WordEntryPosVector with exactly 1 entry */
+typedef struct
+{
+	uint16		npos;
+	WordEntryPos pos[1];
+} WordEntryPosVector1;
+
 
 #define WEP_GETWEIGHT(x)	( (x) >> 14 )
 #define WEP_GETPOS(x)		( (x) & 0x3fff )
