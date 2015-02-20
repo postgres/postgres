@@ -138,8 +138,7 @@ array_prepend(PG_FUNCTION_ARGS)
 	Datum		newelem;
 	bool		isNull;
 	ArrayType  *result;
-	int		   *dimv,
-			   *lb;
+	int		   *lb;
 	int			indx;
 	ArrayMetaState *my_extra;
 
@@ -154,7 +153,6 @@ array_prepend(PG_FUNCTION_ARGS)
 	{
 		/* prepend newelem */
 		lb = ARR_LBOUND(v);
-		dimv = ARR_DIMS(v);
 		indx = lb[0] - 1;
 
 		/* overflow? */
