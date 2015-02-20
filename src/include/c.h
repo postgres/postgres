@@ -391,7 +391,7 @@ typedef struct
 struct varlena
 {
 	char		vl_len_[4];		/* Do not touch this field directly! */
-	char		vl_dat[1];
+	char		vl_dat[FLEXIBLE_ARRAY_MEMBER];	/* Data content is here */
 };
 
 #define VARHDRSZ		((int32) sizeof(int32))

@@ -1365,11 +1365,13 @@ toast_save_datum(Relation rel, Datum value,
 	CommandId	mycid = GetCurrentCommandId(true);
 	struct varlena *result;
 	struct varatt_external toast_pointer;
-	struct
+	union
 	{
 		struct varlena hdr;
-		char		data[TOAST_MAX_CHUNK_SIZE]; /* make struct big enough */
-		int32		align_it;	/* ensure struct is aligned well enough */
+		/* this is to make the union big enough for a chunk: */
+		char		data[TOAST_MAX_CHUNK_SIZE + VARHDRSZ];
+		/* ensure union is aligned well enough: */
+		int32		align_it;
 	}			chunk_data;
 	int32		chunk_size;
 	int32		chunk_seq = 0;
