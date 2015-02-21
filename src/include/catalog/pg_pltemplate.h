@@ -35,10 +35,10 @@ CATALOG(pg_pltemplate,1136) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	bool		tmpldbacreate;	/* PL is installable by db owner? */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		tmplhandler;	/* name of call handler function */
+	text		tmplhandler BKI_FORCE_NOT_NULL;	/* name of call handler function */
 	text		tmplinline;		/* name of anonymous-block handler, or NULL */
 	text		tmplvalidator;	/* name of validator function, or NULL */
-	text		tmpllibrary;	/* path of shared library */
+	text		tmpllibrary BKI_FORCE_NOT_NULL;	/* path of shared library */
 	aclitem		tmplacl[1];		/* access privileges for template */
 #endif
 } FormData_pg_pltemplate;

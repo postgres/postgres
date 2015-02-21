@@ -34,7 +34,7 @@ CATALOG(pg_largeobject,2613) BKI_WITHOUT_OIDS
 	int32		pageno;			/* Page number (starting from 0) */
 
 	/* data has variable length, but we allow direct access; see inv_api.c */
-	bytea		data;			/* Data for page (may be zero-length) */
+	bytea		data BKI_FORCE_NOT_NULL; /* Data for page (may be zero-length) */
 } FormData_pg_largeobject;
 
 /* ----------------

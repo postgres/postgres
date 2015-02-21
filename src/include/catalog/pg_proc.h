@@ -66,7 +66,7 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	text		proargnames[1]; /* parameter names (NULL if no names) */
 	pg_node_tree proargdefaults;/* list of expression trees for argument
 								 * defaults (NULL if none) */
-	text		prosrc;			/* procedure source text */
+	text		prosrc BKI_FORCE_NOT_NULL; /* procedure source text */
 	text		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
 	aclitem		proacl[1];		/* access permissions */

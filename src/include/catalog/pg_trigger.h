@@ -57,7 +57,7 @@ CATALOG(pg_trigger,2620)
 	int2vector	tgattr;			/* column numbers, if trigger is on columns */
 
 #ifdef CATALOG_VARLEN
-	bytea		tgargs;			/* first\000second\000tgnargs\000 */
+	bytea		tgargs BKI_FORCE_NOT_NULL; /* first\000second\000tgnargs\000 */
 	pg_node_tree tgqual;		/* WHEN expression, or NULL if none */
 #endif
 } FormData_pg_trigger;
