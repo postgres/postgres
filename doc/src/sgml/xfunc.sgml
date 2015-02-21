@@ -1885,17 +1885,12 @@ typedef struct
 <programlisting>
 typedef struct {
     int32 length;
-    char data[1];
+    char data[FLEXIBLE_ARRAY_MEMBER];
 } text;
 </programlisting>
 
-     Obviously,  the  data  field declared here is not long enough to hold
-     all possible strings.  Since it's impossible to declare a variable-size
-     structure in <acronym>C</acronym>, we rely on the knowledge that the
-     <acronym>C</acronym> compiler won't range-check array subscripts.  We
-     just allocate the necessary amount of space and then access the array as
-     if it were declared the right length.  (This is a common trick, which
-     you can read about in many textbooks about C.)
+     The <literal>[FLEXIBLE_ARRAY_MEMBER]</> notation means that the actual
+     length of the data part is not specified by this declaration.
     </para>
 
     <para>
