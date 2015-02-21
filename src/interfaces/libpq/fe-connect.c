@@ -4966,9 +4966,8 @@ conninfo_uri_parse_params(char *params,
 					++p;
 				break;
 			}
-
-			/* Advance, NUL is checked in the 'if' above */
-			++p;
+			else
+				++p;			/* Advance over all other bytes. */
 		}
 
 		keyword = conninfo_uri_decode(keyword, errorMessage);
