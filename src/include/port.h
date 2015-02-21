@@ -328,8 +328,6 @@ extern FILE *pgwin32_popen(const char *command, const char *type);
 #ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */
 extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
-/* On windows we need to call some backend start setup for accurate timing */
-extern void init_win32_gettimeofday(void);
 #endif
 #else							/* !WIN32 */
 

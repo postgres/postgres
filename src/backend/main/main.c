@@ -261,12 +261,6 @@ startup_hacks(const char *progname)
 
 		/* In case of general protection fault, don't show GUI popup box */
 		SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
-
-#ifndef HAVE_GETTIMEOFDAY
-		/* Figure out which syscall to use to capture timestamp information */
-		init_win32_gettimeofday();
-#endif
-
 	}
 #endif   /* WIN32 */
 

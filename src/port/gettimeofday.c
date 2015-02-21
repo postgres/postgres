@@ -30,6 +30,7 @@
 
 #include <sys/time.h>
 
+static void init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime);
 
 /* FILETIME of Jan 1 1970 00:00:00, the PostgreSQL epoch */
 static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
@@ -49,14 +50,15 @@ static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
 typedef VOID (WINAPI *PgGetSystemTimeFn)(LPFILETIME);
 
 /* Storage for the function we pick at runtime */
-static PgGetSystemTimeFn pg_get_system_time = NULL;
+static PgGetSystemTimeFn pg_get_system_time = &init_gettimeofday;
 
 /*
- * During backend startup, determine if GetSystemTimePreciseAsFileTime is
- * available and use it; if not, fall back to GetSystemTimeAsFileTime.
+ * One time initializer.  Determine whether GetSystemTimePreciseAsFileTime
+ * is available and if so, plan to use it; if not, fall back to
+ * GetSystemTimeAsFileTime.
  */
-void
-init_win32_gettimeofday(void)
+static void
+init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
 {
 	/*
 	 * Because it's guaranteed that kernel32.dll will be linked into our
@@ -80,14 +82,16 @@ init_win32_gettimeofday(void)
 		 * The expected error from GetLastError() is ERROR_PROC_NOT_FOUND, if
 		 * the function isn't present. No other error should occur.
 		 *
-		 * It's too early in startup to elog(...) if we get some unexpected
-		 * error, and not serious enough to warrant a fprintf to stderr about
-		 * it or save the error and report it later. So silently fall back to
+		 * We can't report an error here because this might be running in
+		 * frontend code; and even if we're in the backend, it's too early
+		 * to elog(...) if we get some unexpected error.  Also, it's not a
+		 * serious problem, so just silently fall back to
 		 * GetSystemTimeAsFileTime irrespective of why the failure occurred.
 		 */
 		pg_get_system_time = &GetSystemTimeAsFileTime;
 	}
 
+	(*pg_get_system_time)(lpSystemTimeAsFileTime);
 }
 
 /*
