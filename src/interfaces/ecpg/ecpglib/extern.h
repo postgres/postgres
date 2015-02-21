@@ -33,7 +33,7 @@ enum ARRAY_TYPE
 struct ECPGgeneric_varchar
 {
 	int			len;
-	char		arr[1];
+	char		arr[FLEXIBLE_ARRAY_MEMBER];
 };
 
 /*

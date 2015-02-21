@@ -123,14 +123,14 @@ typedef int16 NumericDigit;
 struct NumericShort
 {
 	uint16		n_header;		/* Sign + display scale + weight */
-	NumericDigit n_data[1];		/* Digits */
+	NumericDigit n_data[FLEXIBLE_ARRAY_MEMBER]; /* Digits */
 };
 
 struct NumericLong
 {
 	uint16		n_sign_dscale;	/* Sign + display scale */
 	int16		n_weight;		/* Weight of 1st digit	*/
-	NumericDigit n_data[1];		/* Digits */
+	NumericDigit n_data[FLEXIBLE_ARRAY_MEMBER]; /* Digits */
 };
 
 union NumericChoice
@@ -1262,7 +1262,7 @@ numeric_floor(PG_FUNCTION_ARGS)
 /*
  * generate_series_numeric() -
  *
- *  Generate series of numeric.
+ *	Generate series of numeric.
  */
 Datum
 generate_series_numeric(PG_FUNCTION_ARGS)
@@ -1297,7 +1297,7 @@ generate_series_step_numeric(PG_FUNCTION_ARGS)
 		/* see if we were given an explicit step size */
 		if (PG_NARGS() == 3)
 		{
-			Numeric	step_num = PG_GETARG_NUMERIC(2);
+			Numeric		step_num = PG_GETARG_NUMERIC(2);
 
 			if (NUMERIC_IS_NAN(step_num))
 				ereport(ERROR,
@@ -1356,7 +1356,7 @@ generate_series_step_numeric(PG_FUNCTION_ARGS)
 		(fctx->step.sign == NUMERIC_NEG &&
 		 cmp_var(&fctx->current, &fctx->stop) >= 0))
 	{
-		Numeric	result = make_result(&fctx->current);
+		Numeric		result = make_result(&fctx->current);
 
 		/* switch to memory context appropriate for iteration calculation */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);

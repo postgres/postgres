@@ -184,12 +184,9 @@ typedef struct SISeg
 	SharedInvalidationMessage buffer[MAXNUMMESSAGES];
 
 	/*
-	 * Per-backend state info.
-	 *
-	 * We declare procState as 1 entry because C wants a fixed-size array, but
-	 * actually it is maxBackends entries long.
+	 * Per-backend invalidation state info (has MaxBackends entries).
 	 */
-	ProcState	procState[1];	/* reflects the invalidation state */
+	ProcState	procState[FLEXIBLE_ARRAY_MEMBER];
 } SISeg;
 
 static SISeg *shmInvalBuffer;	/* pointer to the shared inval buffer */
@@ -221,16 +218,12 @@ SInvalShmemSize(void)
 void
 CreateSharedInvalidationState(void)
 {
-	Size		size;
 	int			i;
 	bool		found;
 
 	/* Allocate space in shared memory */
-	size = offsetof(SISeg, procState);
-	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
-
 	shmInvalBuffer = (SISeg *)
-		ShmemInitStruct("shmInvalBuffer", size, &found);
+		ShmemInitStruct("shmInvalBuffer", SInvalShmemSize(), &found);
 	if (found)
 		return;
 

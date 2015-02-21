@@ -51,12 +51,7 @@ typedef struct df_files
 	ino_t		inode;			/* Inode number of file */
 #endif
 	void	   *handle;			/* a handle for pg_dl* functions */
-	char		filename[1];	/* Full pathname of file */
-
-	/*
-	 * we allocate the block big enough for actual length of pathname.
-	 * filename[] must be last item in struct!
-	 */
+	char		filename[FLEXIBLE_ARRAY_MEMBER];		/* Full pathname of file */
 } DynamicFileList;
 
 static DynamicFileList *file_list = NULL;
@@ -217,13 +212,13 @@ internal_load_library(const char *libname)
 		 * File not loaded yet.
 		 */
 		file_scanner = (DynamicFileList *)
-			malloc(sizeof(DynamicFileList) + strlen(libname));
+			malloc(offsetof(DynamicFileList, filename) +strlen(libname) + 1);
 		if (file_scanner == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 
-		MemSet(file_scanner, 0, sizeof(DynamicFileList));
+		MemSet(file_scanner, 0, offsetof(DynamicFileList, filename));
 		strcpy(file_scanner->filename, libname);
 		file_scanner->device = stat_buf.st_dev;
 #ifndef WIN32

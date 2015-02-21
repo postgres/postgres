@@ -44,7 +44,7 @@ typedef struct StatEntry
 	struct StatEntry *left;
 	struct StatEntry *right;
 	uint32		lenlexeme;
-	char		lexeme[1];
+	char		lexeme[FLEXIBLE_ARRAY_MEMBER];
 } StatEntry;
 
 #define STATENTRYHDRSZ	(offsetof(StatEntry, lexeme))

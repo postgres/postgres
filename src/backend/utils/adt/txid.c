@@ -64,7 +64,8 @@ typedef struct
 	uint32		nxip;			/* number of txids in xip array */
 	txid		xmin;
 	txid		xmax;
-	txid		xip[1];			/* in-progress txids, xmin <= xip[i] < xmax */
+	/* in-progress txids, xmin <= xip[i] < xmax: */
+	txid		xip[FLEXIBLE_ARRAY_MEMBER];
 } TxidSnapshot;
 
 #define TXID_SNAPSHOT_SIZE(nxip) \

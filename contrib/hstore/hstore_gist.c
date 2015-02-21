@@ -41,7 +41,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		flag;
-	char		data[1];
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } GISTTYPE;
 
 #define ALLISTRUE		0x04

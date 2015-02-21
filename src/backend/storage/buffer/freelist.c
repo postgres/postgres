@@ -93,7 +93,7 @@ typedef struct BufferAccessStrategyData
 	 * simplicity this is palloc'd together with the fixed fields of the
 	 * struct.
 	 */
-	Buffer		buffers[1];		/* VARIABLE SIZE ARRAY */
+	Buffer		buffers[FLEXIBLE_ARRAY_MEMBER];
 }	BufferAccessStrategyData;
 
 

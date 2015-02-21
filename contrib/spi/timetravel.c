@@ -35,10 +35,10 @@ static int	nPlans = 0;
 typedef struct _TTOffList
 {
 	struct _TTOffList *next;
-	char		name[1];
+	char		name[FLEXIBLE_ARRAY_MEMBER];
 } TTOffList;
 
-static TTOffList TTOff = {NULL, {0}};
+static TTOffList *TTOff = NULL;
 
 static int	findTTStatus(char *name);
 static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
@@ -428,10 +428,11 @@ set_timetravel(PG_FUNCTION_ARGS)
 	char	   *d;
 	char	   *s;
 	int32		ret;
-	TTOffList  *p,
+	TTOffList  *prev,
 			   *pp;
 
-	for (pp = (p = &TTOff)->next; pp; pp = (p = pp)->next)
+	prev = NULL;
+	for (pp = TTOff; pp; prev = pp, pp = pp->next)
 	{
 		if (namestrcmp(relname, pp->name) == 0)
 			break;
@@ -442,7 +443,10 @@ set_timetravel(PG_FUNCTION_ARGS)
 		if (on != 0)
 		{
 			/* turn ON */
-			p->next = pp->next;
+			if (prev)
+				prev->next = pp->next;
+			else
+				TTOff = pp->next;
 			free(pp);
 		}
 		ret = 0;
@@ -456,15 +460,18 @@ set_timetravel(PG_FUNCTION_ARGS)
 			s = rname = DatumGetCString(DirectFunctionCall1(nameout, NameGetDatum(relname)));
 			if (s)
 			{
-				pp = malloc(sizeof(TTOffList) + strlen(rname));
+				pp = malloc(offsetof(TTOffList, name) +strlen(rname) + 1);
 				if (pp)
 				{
 					pp->next = NULL;
-					p->next = pp;
 					d = pp->name;
 					while (*s)
 						*d++ = tolower((unsigned char) *s++);
 					*d = '\0';
+					if (prev)
+						prev->next = pp;
+					else
+						TTOff = pp;
 				}
 				pfree(rname);
 			}
@@ -486,7 +493,7 @@ get_timetravel(PG_FUNCTION_ARGS)
 	Name		relname = PG_GETARG_NAME(0);
 	TTOffList  *pp;
 
-	for (pp = TTOff.next; pp; pp = pp->next)
+	for (pp = TTOff; pp; pp = pp->next)
 	{
 		if (namestrcmp(relname, pp->name) == 0)
 			PG_RETURN_INT32(0);
@@ -499,7 +506,7 @@ findTTStatus(char *name)
 {
 	TTOffList  *pp;
 
-	for (pp = TTOff.next; pp; pp = pp->next)
+	for (pp = TTOff; pp; pp = pp->next)
 		if (pg_strcasecmp(name, pp->name) == 0)
 			return 0;
 	return 1;

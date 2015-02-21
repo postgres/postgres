@@ -166,12 +166,9 @@ struct LogicalTapeSet
 	int			nFreeBlocks;	/* # of currently free blocks */
 	int			freeBlocksLen;	/* current allocated length of freeBlocks[] */
 
-	/*
-	 * tapes[] is declared size 1 since C wants a fixed size, but actually it
-	 * is of length nTapes.
-	 */
+	/* The array of logical tapes. */
 	int			nTapes;			/* # of logical tapes in set */
-	LogicalTape tapes[1];		/* must be last in struct! */
+	LogicalTape tapes[FLEXIBLE_ARRAY_MEMBER];	/* has nTapes nentries */
 };
 
 static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
@@ -519,12 +516,11 @@ LogicalTapeSetCreate(int ntapes)
 	int			i;
 
 	/*
-	 * Create top-level struct including per-tape LogicalTape structs. First
-	 * LogicalTape struct is already counted in sizeof(LogicalTapeSet).
+	 * Create top-level struct including per-tape LogicalTape structs.
 	 */
 	Assert(ntapes > 0);
-	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
-									(ntapes - 1) *sizeof(LogicalTape));
+	lts = (LogicalTapeSet *) palloc(offsetof(LogicalTapeSet, tapes) +
+									ntapes * sizeof(LogicalTape));
 	lts->pfile = BufFileCreateTemp(false);
 	lts->nFileBlocks = 0L;
 	lts->forgetFreeSpace = false;

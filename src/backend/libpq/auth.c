@@ -2172,7 +2172,7 @@ typedef struct
 {
 	uint8		attribute;
 	uint8		length;
-	uint8		data[1];
+	uint8		data[FLEXIBLE_ARRAY_MEMBER];
 } radius_attribute;
 
 typedef struct
@@ -2220,7 +2220,6 @@ radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *dat
 			 "Adding attribute code %d with length %d to radius packet would create oversize packet, ignoring",
 			 type, len);
 		return;
-
 	}
 
 	attr = (radius_attribute *) ((unsigned char *) packet + packet->length);
