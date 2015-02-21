@@ -4934,36 +4934,30 @@ conninfo_uri_parse_params(char *params,
 				{
 					printfPQExpBuffer(errorMessage,
 									  libpq_gettext("extra key/value separator \"=\" in URI query parameter: \"%s\"\n"),
-									  params);
+									  keyword);
 					return false;
 				}
 				/* Cut off keyword, advance to value */
-				*p = '\0';
-				value = ++p;
+				*p++ = '\0';
+				value = p;
 			}
 			else if (*p == '&' || *p == '\0')
 			{
-				char		prevchar;
-
-				/* Cut off value, remember old value */
-				prevchar = *p;
-				*p = '\0';
-
+				/*
+				 * If not at the end, cut off value and advance; leave p
+				 * pointing to start of the next parameter, if any.
+				 */
+				if (*p != '\0')
+					*p++ = '\0';
 				/* Was there '=' at all? */
 				if (value == NULL)
 				{
 					printfPQExpBuffer(errorMessage,
 									  libpq_gettext("missing key/value separator \"=\" in URI query parameter: \"%s\"\n"),
-									  params);
+									  keyword);
 					return false;
 				}
-
-				/*
-				 * If not at the end, advance; now pointing to start of the
-				 * next parameter, if any.
-				 */
-				if (prevchar != '\0')
-					++p;
+				/* Got keyword and value, go process them. */
 				break;
 			}
 			else
@@ -5007,24 +5001,12 @@ conninfo_uri_parse_params(char *params,
 		if (!conninfo_storeval(connOptions, keyword, value,
 							   errorMessage, true, false))
 		{
-			/*
-			 * Check if there was a hard error when decoding or storing the
-			 * option.
-			 */
-			if (errorMessage->len != 0)
-			{
-				if (malloced)
-				{
-					free(keyword);
-					free(value);
-				}
-				return false;
-			}
-
-			printfPQExpBuffer(errorMessage,
-							  libpq_gettext(
-									"invalid URI query parameter: \"%s\"\n"),
-							  keyword);
+			/* Insert generic message if conninfo_storeval didn't give one. */
+			if (errorMessage->len == 0)
+				printfPQExpBuffer(errorMessage,
+								  libpq_gettext("invalid URI query parameter: \"%s\"\n"),
+								  keyword);
+			/* And fail. */
 			if (malloced)
 			{
 				free(keyword);
@@ -5032,13 +5014,14 @@ conninfo_uri_parse_params(char *params,
 			}
 			return false;
 		}
+
 		if (malloced)
 		{
 			free(keyword);
 			free(value);
 		}
 
-		/* Proceed to next key=value pair */
+		/* Proceed to next key=value pair, if any */
 		params = p;
 	}
 
