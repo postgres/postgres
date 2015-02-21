@@ -28,8 +28,12 @@ typedef struct ReorderBufferTupleBuf
 
 	/* tuple, stored sequentially */
 	HeapTupleData tuple;
-	HeapTupleHeaderData header;
-	char		data[MaxHeapTupleSize];
+	union
+	{
+		HeapTupleHeaderData header;
+		char		data[MaxHeapTupleSize];
+		double		align_it;	/* ensure t_data is MAXALIGN'd */
+	}			t_data;
 } ReorderBufferTupleBuf;
 
 /*
@@ -77,7 +81,7 @@ typedef struct ReorderBufferChange
 			RelFileNode relnode;
 
 			/* no previously reassembled toast chunks are necessary anymore */
-			bool clear_toast_afterwards;
+			bool		clear_toast_afterwards;
 
 			/* valid for DELETE || UPDATE */
 			ReorderBufferTupleBuf *oldtuple;

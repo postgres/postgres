@@ -447,7 +447,7 @@ needs_toast_table(Relation rel)
 		return false;			/* nothing to toast? */
 	if (maxlength_unknown)
 		return true;			/* any unlimited-length attrs? */
-	tuple_length = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) +
+	tuple_length = MAXALIGN(SizeofHeapTupleHeader +
 							BITMAPLEN(tupdesc->natts)) +
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);

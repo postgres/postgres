@@ -4036,11 +4036,11 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 
 	/*
 	 * If we have a whole-row reference, estimate its width as the sum of
-	 * per-column widths plus sizeof(HeapTupleHeaderData).
+	 * per-column widths plus heap tuple header overhead.
 	 */
 	if (have_wholerow_var)
 	{
-		int32		wholerow_width = sizeof(HeapTupleHeaderData);
+		int32		wholerow_width = MAXALIGN(SizeofHeapTupleHeader);
 
 		if (reloid != InvalidOid)
 		{
@@ -4078,7 +4078,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 static double
 relation_byte_size(double tuples, int width)
 {
-	return tuples * (MAXALIGN(width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
+	return tuples * (MAXALIGN(width) + MAXALIGN(SizeofHeapTupleHeader));
 }
 
 /*

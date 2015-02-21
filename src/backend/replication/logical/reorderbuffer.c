@@ -2014,14 +2014,12 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				newtup = change->data.tp.newtuple;
 
 				if (oldtup)
-					oldlen = offsetof(ReorderBufferTupleBuf, data)
-						+oldtup->tuple.t_len
-						- offsetof(HeapTupleHeaderData, t_bits);
+					oldlen = offsetof(ReorderBufferTupleBuf, t_data) +
+						oldtup->tuple.t_len;
 
 				if (newtup)
-					newlen = offsetof(ReorderBufferTupleBuf, data)
-						+newtup->tuple.t_len
-						- offsetof(HeapTupleHeaderData, t_bits);
+					newlen = offsetof(ReorderBufferTupleBuf, t_data) +
+						newtup->tuple.t_len;
 
 				sz += oldlen;
 				sz += newlen;
@@ -2262,27 +2260,25 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		case REORDER_BUFFER_CHANGE_DELETE:
 			if (change->data.tp.newtuple)
 			{
-				Size		len = offsetof(ReorderBufferTupleBuf, data)
-				+((ReorderBufferTupleBuf *) data)->tuple.t_len
-				- offsetof(HeapTupleHeaderData, t_bits);
+				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
+				((ReorderBufferTupleBuf *) data)->tuple.t_len;
 
 				change->data.tp.newtuple = ReorderBufferGetTupleBuf(rb);
 				memcpy(change->data.tp.newtuple, data, len);
 				change->data.tp.newtuple->tuple.t_data =
-					&change->data.tp.newtuple->header;
+					&change->data.tp.newtuple->t_data.header;
 				data += len;
 			}
 
 			if (change->data.tp.oldtuple)
 			{
-				Size		len = offsetof(ReorderBufferTupleBuf, data)
-				+((ReorderBufferTupleBuf *) data)->tuple.t_len
-				- offsetof(HeapTupleHeaderData, t_bits);
+				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
+				((ReorderBufferTupleBuf *) data)->tuple.t_len;
 
 				change->data.tp.oldtuple = ReorderBufferGetTupleBuf(rb);
 				memcpy(change->data.tp.oldtuple, data, len);
 				change->data.tp.oldtuple->tuple.t_data =
-					&change->data.tp.oldtuple->header;
+					&change->data.tp.oldtuple->t_data.header;
 				data += len;
 			}
 			break;
@@ -2660,7 +2656,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	 */
 	tmphtup = heap_form_tuple(desc, attrs, isnull);
 	Assert(newtup->tuple.t_len <= MaxHeapTupleSize);
-	Assert(&newtup->header == newtup->tuple.t_data);
+	Assert(&newtup->t_data.header == newtup->tuple.t_data);
 
 	memcpy(newtup->tuple.t_data, tmphtup->t_data, tmphtup->t_len);
 	newtup->tuple.t_len = tmphtup->t_len;

@@ -974,12 +974,12 @@ subplan_is_hashable(Plan *plan)
 
 	/*
 	 * The estimated size of the subquery result must fit in work_mem. (Note:
-	 * we use sizeof(HeapTupleHeaderData) here even though the tuples will
-	 * actually be stored as MinimalTuples; this provides some fudge factor
-	 * for hashtable overhead.)
+	 * we use heap tuple overhead here even though the tuples will actually be
+	 * stored as MinimalTuples; this provides some fudge factor for hashtable
+	 * overhead.)
 	 */
 	subquery_size = plan->plan_rows *
-		(MAXALIGN(plan->plan_width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
+		(MAXALIGN(plan->plan_width) + MAXALIGN(SizeofHeapTupleHeader));
 	if (subquery_size > work_mem * 1024L)
 		return false;
 

@@ -832,7 +832,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
-	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(sizeof(MinimalTupleData));
+	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(SizeofMinimalTupleHeader);
 
 	if (hashentrysize * dNumGroups > work_mem * 1024L)
 		return false;

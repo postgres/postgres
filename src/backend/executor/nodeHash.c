@@ -439,7 +439,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * don't count palloc overhead either.
 	 */
 	tupsize = HJTUPLE_OVERHEAD +
-		MAXALIGN(sizeof(MinimalTupleData)) +
+		MAXALIGN(SizeofMinimalTupleHeader) +
 		MAXALIGN(tupwidth);
 	inner_rel_bytes = ntuples * tupsize;
 

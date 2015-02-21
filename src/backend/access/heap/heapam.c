@@ -2186,8 +2186,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		XLogRegisterBufData(0, (char *) &xlhdr, SizeOfHeapHeader);
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 		XLogRegisterBufData(0,
-			(char *) heaptup->t_data + offsetof(HeapTupleHeaderData, t_bits),
-					 heaptup->t_len - offsetof(HeapTupleHeaderData, t_bits));
+							(char *) heaptup->t_data + SizeofHeapTupleHeader,
+							heaptup->t_len - SizeofHeapTupleHeader);
 
 		recptr = XLogInsert(RM_HEAP_ID, info);
 
@@ -2460,9 +2460,9 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 				tuphdr->t_hoff = heaptup->t_data->t_hoff;
 
 				/* write bitmap [+ padding] [+ oid] + data */
-				datalen = heaptup->t_len - offsetof(HeapTupleHeaderData, t_bits);
+				datalen = heaptup->t_len - SizeofHeapTupleHeader;
 				memcpy(scratchptr,
-					   (char *) heaptup->t_data + offsetof(HeapTupleHeaderData, t_bits),
+					   (char *) heaptup->t_data + SizeofHeapTupleHeader,
 					   datalen);
 				tuphdr->datalen = datalen;
 				scratchptr += datalen;
@@ -2904,9 +2904,9 @@ l1:
 
 			XLogRegisterData((char *) &xlhdr, SizeOfHeapHeader);
 			XLogRegisterData((char *) old_key_tuple->t_data
-							 + offsetof(HeapTupleHeaderData, t_bits),
+							 + SizeofHeapTupleHeader,
 							 old_key_tuple->t_len
-							 - offsetof(HeapTupleHeaderData, t_bits));
+							 - SizeofHeapTupleHeader);
 		}
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE);
@@ -6732,7 +6732,7 @@ log_heap_update(Relation reln, Buffer oldbuf,
 	xlhdr.t_infomask2 = newtup->t_data->t_infomask2;
 	xlhdr.t_infomask = newtup->t_data->t_infomask;
 	xlhdr.t_hoff = newtup->t_data->t_hoff;
-	Assert(offsetof(HeapTupleHeaderData, t_bits) + prefixlen + suffixlen <= newtup->t_len);
+	Assert(SizeofHeapTupleHeader + prefixlen + suffixlen <= newtup->t_len);
 
 	/*
 	 * PG73FORMAT: write bitmap [+ padding] [+ oid] + data
@@ -6743,8 +6743,8 @@ log_heap_update(Relation reln, Buffer oldbuf,
 	if (prefixlen == 0)
 	{
 		XLogRegisterBufData(0,
-		   ((char *) newtup->t_data) + offsetof(HeapTupleHeaderData, t_bits),
-		   newtup->t_len - offsetof(HeapTupleHeaderData, t_bits) -suffixlen);
+							((char *) newtup->t_data) + SizeofHeapTupleHeader,
+							newtup->t_len - SizeofHeapTupleHeader - suffixlen);
 	}
 	else
 	{
@@ -6753,11 +6753,11 @@ log_heap_update(Relation reln, Buffer oldbuf,
 		 * two separate rdata entries.
 		 */
 		/* bitmap [+ padding] [+ oid] */
-		if (newtup->t_data->t_hoff - offsetof(HeapTupleHeaderData, t_bits) >0)
+		if (newtup->t_data->t_hoff - SizeofHeapTupleHeader > 0)
 		{
 			XLogRegisterBufData(0,
-			((char *) newtup->t_data) + offsetof(HeapTupleHeaderData, t_bits),
-			 newtup->t_data->t_hoff - offsetof(HeapTupleHeaderData, t_bits));
+								((char *) newtup->t_data) + SizeofHeapTupleHeader,
+								newtup->t_data->t_hoff - SizeofHeapTupleHeader);
 		}
 
 		/* data after common prefix */
@@ -6777,8 +6777,8 @@ log_heap_update(Relation reln, Buffer oldbuf,
 		XLogRegisterData((char *) &xlhdr_idx, SizeOfHeapHeader);
 
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
-		XLogRegisterData((char *) old_key_tuple->t_data + offsetof(HeapTupleHeaderData, t_bits),
-			   old_key_tuple->t_len - offsetof(HeapTupleHeaderData, t_bits));
+		XLogRegisterData((char *) old_key_tuple->t_data + SizeofHeapTupleHeader,
+						 old_key_tuple->t_len - SizeofHeapTupleHeader);
 	}
 
 	recptr = XLogInsert(RM_HEAP_ID, info);
@@ -7351,7 +7351,7 @@ heap_xlog_insert(XLogReaderState *record)
 	xl_heap_insert *xlrec = (xl_heap_insert *) XLogRecGetData(record);
 	Buffer		buffer;
 	Page		page;
-	struct
+	union
 	{
 		HeapTupleHeaderData hdr;
 		char		data[MaxHeapTupleSize];
@@ -7415,12 +7415,12 @@ heap_xlog_insert(XLogReaderState *record)
 		data += SizeOfHeapHeader;
 
 		htup = &tbuf.hdr;
-		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+		MemSet((char *) htup, 0, SizeofHeapTupleHeader);
 		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-		memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
+		memcpy((char *) htup + SizeofHeapTupleHeader,
 			   data,
 			   newlen);
-		newlen += offsetof(HeapTupleHeaderData, t_bits);
+		newlen += SizeofHeapTupleHeader;
 		htup->t_infomask2 = xlhdr.t_infomask2;
 		htup->t_infomask = xlhdr.t_infomask;
 		htup->t_hoff = xlhdr.t_hoff;
@@ -7469,7 +7469,7 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	BlockNumber blkno;
 	Buffer		buffer;
 	Page		page;
-	struct
+	union
 	{
 		HeapTupleHeaderData hdr;
 		char		data[MaxHeapTupleSize];
@@ -7548,14 +7548,14 @@ heap_xlog_multi_insert(XLogReaderState *record)
 			newlen = xlhdr->datalen;
 			Assert(newlen <= MaxHeapTupleSize);
 			htup = &tbuf.hdr;
-			MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+			MemSet((char *) htup, 0, SizeofHeapTupleHeader);
 			/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-			memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
+			memcpy((char *) htup + SizeofHeapTupleHeader,
 				   (char *) tupdata,
 				   newlen);
 			tupdata += newlen;
 
-			newlen += offsetof(HeapTupleHeaderData, t_bits);
+			newlen += SizeofHeapTupleHeader;
 			htup->t_infomask2 = xlhdr->t_infomask2;
 			htup->t_infomask = xlhdr->t_infomask;
 			htup->t_hoff = xlhdr->t_hoff;
@@ -7618,7 +7618,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 	uint16		prefixlen = 0,
 				suffixlen = 0;
 	char	   *newp;
-	struct
+	union
 	{
 		HeapTupleHeaderData hdr;
 		char		data[MaxHeapTupleSize];
@@ -7780,19 +7780,19 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 		Assert(tuplen <= MaxHeapTupleSize);
 
 		htup = &tbuf.hdr;
-		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+		MemSet((char *) htup, 0, SizeofHeapTupleHeader);
 
 		/*
 		 * Reconstruct the new tuple using the prefix and/or suffix from the
 		 * old tuple, and the data stored in the WAL record.
 		 */
-		newp = (char *) htup + offsetof(HeapTupleHeaderData, t_bits);
+		newp = (char *) htup + SizeofHeapTupleHeader;
 		if (prefixlen > 0)
 		{
 			int			len;
 
 			/* copy bitmap [+ padding] [+ oid] from WAL record */
-			len = xlhdr.t_hoff - offsetof(HeapTupleHeaderData, t_bits);
+			len = xlhdr.t_hoff - SizeofHeapTupleHeader;
 			memcpy(newp, recdata, len);
 			recdata += len;
 			newp += len;
@@ -7802,7 +7802,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 			newp += prefixlen;
 
 			/* copy new tuple data from WAL record */
-			len = tuplen - (xlhdr.t_hoff - offsetof(HeapTupleHeaderData, t_bits));
+			len = tuplen - (xlhdr.t_hoff - SizeofHeapTupleHeader);
 			memcpy(newp, recdata, len);
 			recdata += len;
 			newp += len;
@@ -7823,7 +7823,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 		if (suffixlen > 0)
 			memcpy(newp, (char *) oldtup.t_data + oldtup.t_len - suffixlen, suffixlen);
 
-		newlen = offsetof(HeapTupleHeaderData, t_bits) + tuplen + prefixlen + suffixlen;
+		newlen = SizeofHeapTupleHeader + tuplen + prefixlen + suffixlen;
 		htup->t_infomask2 = xlhdr.t_infomask2;
 		htup->t_infomask = xlhdr.t_infomask;
 		htup->t_hoff = xlhdr.t_hoff;

@@ -765,21 +765,19 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			 * transactions.
 			 */
 			tuple->tuple.t_tableOid = InvalidOid;
-			tuple->tuple.t_data = &tuple->header;
-			tuple->tuple.t_len = datalen
-				+ offsetof(HeapTupleHeaderData, t_bits);
+			tuple->tuple.t_data = &tuple->t_data.header;
+			tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
 
-			memset(&tuple->header, 0, sizeof(HeapTupleHeaderData));
+			memset(&tuple->t_data.header, 0, SizeofHeapTupleHeader);
 
-			memcpy((char *) &tuple->header
-				   + offsetof(HeapTupleHeaderData, t_bits),
+			memcpy((char *) &tuple->t_data.header + SizeofHeapTupleHeader,
 				   (char *) data,
 				   datalen);
 			data += datalen;
 
-			tuple->header.t_infomask = xlhdr->t_infomask;
-			tuple->header.t_infomask2 = xlhdr->t_infomask2;
-			tuple->header.t_hoff = xlhdr->t_hoff;
+			tuple->t_data.header.t_infomask = xlhdr->t_infomask;
+			tuple->t_data.header.t_infomask2 = xlhdr->t_infomask2;
+			tuple->t_data.header.t_hoff = xlhdr->t_hoff;
 		}
 
 		/*
@@ -815,27 +813,27 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 	Assert(datalen >= 0);
 	Assert(datalen <= MaxHeapTupleSize);
 
-	tuple->tuple.t_len = datalen + offsetof(HeapTupleHeaderData, t_bits);
+	tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
 
 	/* not a disk based tuple */
 	ItemPointerSetInvalid(&tuple->tuple.t_self);
 
 	/* we can only figure this out after reassembling the transactions */
 	tuple->tuple.t_tableOid = InvalidOid;
-	tuple->tuple.t_data = &tuple->header;
+	tuple->tuple.t_data = &tuple->t_data.header;
 
 	/* data is not stored aligned, copy to aligned storage */
 	memcpy((char *) &xlhdr,
 		   data,
 		   SizeOfHeapHeader);
 
-	memset(&tuple->header, 0, sizeof(HeapTupleHeaderData));
+	memset(&tuple->t_data.header, 0, SizeofHeapTupleHeader);
 
-	memcpy((char *) &tuple->header + offsetof(HeapTupleHeaderData, t_bits),
+	memcpy((char *) &tuple->t_data.header + SizeofHeapTupleHeader,
 		   data + SizeOfHeapHeader,
 		   datalen);
 
-	tuple->header.t_infomask = xlhdr.t_infomask;
-	tuple->header.t_infomask2 = xlhdr.t_infomask2;
-	tuple->header.t_hoff = xlhdr.t_hoff;
+	tuple->t_data.header.t_infomask = xlhdr.t_infomask;
+	tuple->t_data.header.t_infomask2 = xlhdr.t_infomask2;
+	tuple->t_data.header.t_hoff = xlhdr.t_hoff;
 }

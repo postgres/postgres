@@ -1434,7 +1434,7 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 	/*
 	 * Determine total space needed
 	 */
-	len = offsetof(MinimalTupleData, t_bits);
+	len = SizeofMinimalTupleHeader;
 
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);

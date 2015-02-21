@@ -149,7 +149,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 		 * many other ways, but at least we won't crash.
 		 */
 		if (ItemIdHasStorage(id) &&
-			lp_len >= sizeof(HeapTupleHeader) &&
+			lp_len >= MinHeapTupleSize &&
 			lp_offset == MAXALIGN(lp_offset) &&
 			lp_offset + lp_len <= raw_page_size)
 		{
@@ -169,18 +169,19 @@ heap_page_items(PG_FUNCTION_ARGS)
 			values[10] = UInt8GetDatum(tuphdr->t_hoff);
 
 			/*
-			 * We already checked that the item as is completely within the
-			 * raw page passed to us, with the length given in the line
-			 * pointer.. Let's check that t_hoff doesn't point over lp_len,
-			 * before using it to access t_bits and oid.
+			 * We already checked that the item is completely within the raw
+			 * page passed to us, with the length given in the line pointer.
+			 * Let's check that t_hoff doesn't point over lp_len, before using
+			 * it to access t_bits and oid.
 			 */
-			if (tuphdr->t_hoff >= sizeof(HeapTupleHeader) &&
-				tuphdr->t_hoff <= lp_len)
+			if (tuphdr->t_hoff >= SizeofHeapTupleHeader &&
+				tuphdr->t_hoff <= lp_len &&
+				tuphdr->t_hoff == MAXALIGN(tuphdr->t_hoff))
 			{
 				if (tuphdr->t_infomask & HEAP_HASNULL)
 				{
 					bits_len = tuphdr->t_hoff -
-						(((char *) tuphdr->t_bits) -((char *) tuphdr));
+						offsetof(HeapTupleHeaderData, t_bits);
 
 					values[11] = CStringGetTextDatum(
 								 bits_to_text(tuphdr->t_bits, bits_len * 8));
