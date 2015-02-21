@@ -52,7 +52,7 @@ my @fmgr = ();
 my @attnames;
 foreach my $column (@{ $catalogs->{pg_proc}->{columns} })
 {
-	push @attnames, keys %$column;
+	push @attnames, $column->{name};
 }
 
 my $data = $catalogs->{pg_proc}->{data};

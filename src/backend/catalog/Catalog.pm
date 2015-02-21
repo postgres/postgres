@@ -161,7 +161,8 @@ sub Catalogs
 				}
 				else
 				{
-					my ($atttype, $attname) = split /\s+/, $_;
+					my %row;
+					my ($atttype, $attname, $attopt) = split /\s+/, $_;
 					die "parse error ($input_file)" unless $attname;
 					if (exists $RENAME_ATTTYPE{$atttype})
 					{
@@ -172,7 +173,26 @@ sub Catalogs
 						$attname = $1;
 						$atttype .= '[]';            # variable-length only
 					}
-					push @{ $catalog{columns} }, { $attname => $atttype };
+
+					$row{'type'} = $atttype;
+					$row{'name'} = $attname;
+
+					if (defined $attopt)
+					{
+						if ($attopt eq 'PG_FORCE_NULL')
+						{
+							$row{'forcenull'} = 1;
+						}
+						elsif ($attopt eq 'BKI_FORCE_NOT_NULL')
+						{
+							$row{'forcenotnull'} = 1;
+						}
+						else
+						{
+							die "unknown column option $attopt on column $attname"
+						}
+					}
+					push @{ $catalog{columns} }, \%row;
 				}
 			}
 		}

@@ -109,6 +109,9 @@ insert			{ return(INSERT_TUPLE); }
 "on"			{ return(ON); }
 "using"			{ return(USING); }
 "toast"			{ return(XTOAST); }
+"FORCE"			{ return(XFORCE); }
+"NOT"			{ return(XNOT); }
+"NULL"			{ return(XNULL); }
 
 {arrayid}		{
 					yylval.str = MapArrayTypeName(yytext);

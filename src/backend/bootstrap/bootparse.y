@@ -107,7 +107,7 @@ static int num_columns_read = 0;
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
 %type <str>   boot_const boot_ident
-%type <ival>  optbootstrap optsharedrelation optwithoutoids
+%type <ival>  optbootstrap optsharedrelation optwithoutoids boot_column_nullness
 %type <oidval> oidspec optoideq optrowtypeoid
 
 %token <str> CONST_P ID
@@ -115,6 +115,7 @@ static int num_columns_read = 0;
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE XTOAST
 %token COMMA EQUALS LPAREN RPAREN
 %token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS XROWTYPE_OID NULLVAL
+%token XFORCE XNOT XNULL
 
 %start TopLevel
 
@@ -427,12 +428,18 @@ boot_column_list:
 		;
 
 boot_column_def:
-		  boot_ident EQUALS boot_ident
+		  boot_ident EQUALS boot_ident boot_column_nullness
 				{
 				   if (++numattr > MAXATTR)
 						elog(FATAL, "too many columns");
-				   DefineAttr($1, $3, numattr-1);
+				   DefineAttr($1, $3, numattr-1, $4);
 				}
+		;
+
+boot_column_nullness:
+			XFORCE XNOT XNULL	{ $$ = BOOTCOL_NULL_FORCE_NOT_NULL; }
+		|	XFORCE XNULL		{  $$ = BOOTCOL_NULL_FORCE_NULL; }
+		| { $$ = BOOTCOL_NULL_AUTO; }
 		;
 
 oidspec:

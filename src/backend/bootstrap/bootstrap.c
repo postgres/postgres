@@ -642,7 +642,7 @@ closerel(char *name)
  * ----------------
  */
 void
-DefineAttr(char *name, char *type, int attnum)
+DefineAttr(char *name, char *type, int attnum, int nullness)
 {
 	Oid			typeoid;
 
@@ -697,30 +697,44 @@ DefineAttr(char *name, char *type, int attnum)
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;
 
-	/*
-	 * Mark as "not null" if type is fixed-width and prior columns are too.
-	 * This corresponds to case where column can be accessed directly via C
-	 * struct declaration.
-	 *
-	 * oidvector and int2vector are also treated as not-nullable, even though
-	 * they are no longer fixed-width.
-	 */
-#define MARKNOTNULL(att) \
-	((att)->attlen > 0 || \
-	 (att)->atttypid == OIDVECTOROID || \
-	 (att)->atttypid == INT2VECTOROID)
-
-	if (MARKNOTNULL(attrtypes[attnum]))
+	if (nullness == BOOTCOL_NULL_FORCE_NOT_NULL)
 	{
-		int			i;
+		attrtypes[attnum]->attnotnull = true;
+	}
+	else if (nullness == BOOTCOL_NULL_FORCE_NULL)
+	{
+		attrtypes[attnum]->attnotnull = false;
+	}
+	else
+	{
+		Assert(nullness == BOOTCOL_NULL_AUTO);
 
-		for (i = 0; i < attnum; i++)
+		/*
+		 * Mark as "not null" if type is fixed-width and prior columns are
+		 * too.  This corresponds to case where column can be accessed
+		 * directly via C struct declaration.
+		 *
+		 * oidvector and int2vector are also treated as not-nullable, even
+		 * though they are no longer fixed-width.
+		 */
+#define MARKNOTNULL(att) \
+		((att)->attlen > 0 || \
+		 (att)->atttypid == OIDVECTOROID || \
+		 (att)->atttypid == INT2VECTOROID)
+
+		if (MARKNOTNULL(attrtypes[attnum]))
 		{
-			if (!MARKNOTNULL(attrtypes[i]))
-				break;
+			int			i;
+
+			/* check earlier attributes */
+			for (i = 0; i < attnum; i++)
+			{
+				if (!attrtypes[i]->attnotnull)
+					break;
+			}
+			if (i == attnum)
+				attrtypes[attnum]->attnotnull = true;
 		}
-		if (i == attnum)
-			attrtypes[attnum]->attnotnull = true;
 	}
 }
 

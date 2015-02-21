@@ -28,6 +28,8 @@
 #define BKI_WITHOUT_OIDS
 #define BKI_ROWTYPE_OID(oid)
 #define BKI_SCHEMA_MACRO
+#define BKI_FORCE_NULL
+#define BKI_FORCE_NOT_NULL
 
 /*
  * This is never defined; it's here only for documentation.
