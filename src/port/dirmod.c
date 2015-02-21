@@ -143,7 +143,7 @@ typedef struct
 	WORD		SubstituteNameLength;
 	WORD		PrintNameOffset;
 	WORD		PrintNameLength;
-	WCHAR		PathBuffer[1];
+	WCHAR		PathBuffer[FLEXIBLE_ARRAY_MEMBER];
 } REPARSE_JUNCTION_DATA_BUFFER;
 
 #define REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE   \
@@ -160,7 +160,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 {
 	HANDLE		dirhandle;
 	DWORD		len;
-	char		buffer[MAX_PATH * sizeof(WCHAR) + sizeof(REPARSE_JUNCTION_DATA_BUFFER)];
+	char		buffer[MAX_PATH * sizeof(WCHAR) + offsetof(REPARSE_JUNCTION_DATA_BUFFER, PathBuffer)];
 	char		nativeTarget[MAX_PATH];
 	char	   *p = nativeTarget;
 	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER *) buffer;
@@ -174,10 +174,10 @@ pgsymlink(const char *oldpath, const char *newpath)
 		return -1;
 
 	/* make sure we have an unparsed native win32 path */
-	if (memcmp("\\??\\", oldpath, 4))
-		sprintf(nativeTarget, "\\??\\%s", oldpath);
+	if (memcmp("\\??\\", oldpath, 4) != 0)
+		snprintf(nativeTarget, sizeof(nativeTarget), "\\??\\%s", oldpath);
 	else
-		strcpy(nativeTarget, oldpath);
+		strlcpy(nativeTarget, oldpath, sizeof(nativeTarget));
 
 	while ((p = strchr(p, '/')) != NULL)
 		*p++ = '\\';
@@ -239,7 +239,7 @@ pgreadlink(const char *path, char *buf, size_t size)
 {
 	DWORD		attr;
 	HANDLE		h;
-	char		buffer[MAX_PATH * sizeof(WCHAR) + sizeof(REPARSE_JUNCTION_DATA_BUFFER)];
+	char		buffer[MAX_PATH * sizeof(WCHAR) + offsetof(REPARSE_JUNCTION_DATA_BUFFER, PathBuffer)];
 	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER *) buffer;
 	DWORD		len;
 	int			r;
