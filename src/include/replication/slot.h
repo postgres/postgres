@@ -130,6 +130,10 @@ typedef struct ReplicationSlot
  */
 typedef struct ReplicationSlotCtlData
 {
+	/*
+	 * This array should be declared [FLEXIBLE_ARRAY_MEMBER], but for some
+	 * reason you can't do that in an otherwise-empty struct.
+	 */
 	ReplicationSlot replication_slots[1];
 } ReplicationSlotCtlData;
 

@@ -41,9 +41,8 @@ typedef struct
 	int			num_vars;		/* number of plain Var tlist entries */
 	bool		has_ph_vars;	/* are there PlaceHolderVar entries? */
 	bool		has_non_vars;	/* are there other entries? */
-	/* array of num_vars entries: */
-	tlist_vinfo vars[1];		/* VARIABLE LENGTH ARRAY */
-} indexed_tlist;				/* VARIABLE LENGTH STRUCT */
+	tlist_vinfo vars[FLEXIBLE_ARRAY_MEMBER];	/* has num_vars entries */
+} indexed_tlist;
 
 typedef struct
 {

@@ -145,7 +145,7 @@ typedef struct pgMessageField
 {
 	struct pgMessageField *next;	/* list link */
 	char		code;			/* field code */
-	char		contents[1];	/* field value (VARIABLE LENGTH) */
+	char		contents[FLEXIBLE_ARRAY_MEMBER];		/* value, nul-terminated */
 } PGMessageField;
 
 /* Fields needed for notice handling */
@@ -637,7 +637,7 @@ extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
  * The SSL implementatation provides these functions (fe-secure-openssl.c)
  */
 extern void pgtls_init_library(bool do_ssl, int do_crypto);
-extern int pgtls_init(PGconn *conn);
+extern int	pgtls_init(PGconn *conn);
 extern PostgresPollingStatusType pgtls_open_client(PGconn *conn);
 extern void pgtls_close(PGconn *conn);
 extern ssize_t pgtls_read(PGconn *conn, void *ptr, size_t len);

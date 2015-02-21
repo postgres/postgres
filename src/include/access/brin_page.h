@@ -56,7 +56,12 @@ typedef struct BrinMetaPageData
 /* Definitions for revmap pages */
 typedef struct RevmapContents
 {
-	ItemPointerData rm_tids[1]; /* really REVMAP_PAGE_MAXITEMS */
+	/*
+	 * This array will fill all available space on the page.  It should be
+	 * declared [FLEXIBLE_ARRAY_MEMBER], but for some reason you can't do that
+	 * in an otherwise-empty struct.
+	 */
+	ItemPointerData rm_tids[1];
 } RevmapContents;
 
 #define REVMAP_CONTENT_SIZE \

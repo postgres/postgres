@@ -892,7 +892,8 @@ pqSaveMessageField(PGresult *res, char code, const char *value)
 
 	pfield = (PGMessageField *)
 		pqResultAlloc(res,
-					  sizeof(PGMessageField) + strlen(value),
+					  offsetof(PGMessageField, contents) +
+					  strlen(value) + 1,
 					  TRUE);
 	if (!pfield)
 		return;					/* out of memory? */
