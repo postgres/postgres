@@ -30,8 +30,6 @@
 
 #include <sys/time.h>
 
-static void init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime);
-
 /* FILETIME of Jan 1 1970 00:00:00, the PostgreSQL epoch */
 static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
 
@@ -49,6 +47,9 @@ static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
  */
 typedef VOID (WINAPI *PgGetSystemTimeFn)(LPFILETIME);
 
+/* One-time initializer function, must match that signature. */
+static void WINAPI init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime);
+
 /* Storage for the function we pick at runtime */
 static PgGetSystemTimeFn pg_get_system_time = &init_gettimeofday;
 
@@ -57,7 +58,7 @@ static PgGetSystemTimeFn pg_get_system_time = &init_gettimeofday;
  * is available and if so, plan to use it; if not, fall back to
  * GetSystemTimeAsFileTime.
  */
-static void
+static void WINAPI
 init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
 {
 	/*
