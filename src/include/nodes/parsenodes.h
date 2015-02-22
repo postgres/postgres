@@ -232,7 +232,11 @@ typedef enum A_Expr_Kind
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF,					/* IS [NOT] OF - name must be "=" or "<>" */
-	AEXPR_IN					/* [NOT] IN - name must be "=" or "<>" */
+	AEXPR_IN,					/* [NOT] IN - name must be "=" or "<>" */
+	AEXPR_BETWEEN,				/* name must be "BETWEEN" */
+	AEXPR_NOT_BETWEEN,			/* name must be "NOT BETWEEN" */
+	AEXPR_BETWEEN_SYM,			/* name must be "BETWEEN SYMMETRIC" */
+	AEXPR_NOT_BETWEEN_SYM		/* name must be "NOT BETWEEN SYMMETRIC" */
 } A_Expr_Kind;
 
 typedef struct A_Expr
