@@ -262,7 +262,7 @@ ExecScanSubPlan(SubPlanState *node,
 	/* Initialize ArrayBuildStateAny in caller's context, if needed */
 	if (subLinkType == ARRAY_SUBLINK)
 		astate = initArrayResultAny(subplan->firstColType,
-									CurrentMemoryContext);
+									CurrentMemoryContext, true);
 
 	/*
 	 * We are probably in a short-lived expression-evaluation context. Switch
@@ -964,7 +964,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	/* Initialize ArrayBuildStateAny in caller's context, if needed */
 	if (subLinkType == ARRAY_SUBLINK)
 		astate = initArrayResultAny(subplan->firstColType,
-									CurrentMemoryContext);
+									CurrentMemoryContext, true);
 
 	/*
 	 * Must switch to per-query memory context.

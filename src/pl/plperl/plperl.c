@@ -1218,7 +1218,7 @@ plperl_array_to_datum(SV *src, Oid typid, int32 typmod)
 				 errmsg("cannot convert Perl array to non-array type %s",
 						format_type_be(typid))));
 
-	astate = initArrayResult(elemtypid, CurrentMemoryContext);
+	astate = initArrayResult(elemtypid, CurrentMemoryContext, true);
 
 	_sv_to_datum_finfo(elemtypid, &finfo, &typioparam);
 

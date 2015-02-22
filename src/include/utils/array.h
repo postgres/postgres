@@ -89,6 +89,7 @@ typedef struct ArrayBuildState
 	int16		typlen;			/* needed info about datatype */
 	bool		typbyval;
 	char		typalign;
+	bool		private_cxt;	/* use private memory context */
 } ArrayBuildState;
 
 /*
@@ -109,6 +110,7 @@ typedef struct ArrayBuildStateArr
 	int			lbs[MAXDIM];
 	Oid			array_type;		/* data type of the arrays */
 	Oid			element_type;	/* data type of the array elements */
+	bool		private_cxt;	/* use private memory context */
 } ArrayBuildStateArr;
 
 /*
@@ -293,7 +295,7 @@ extern void deconstruct_array(ArrayType *array,
 extern bool array_contains_nulls(ArrayType *array);
 
 extern ArrayBuildState *initArrayResult(Oid element_type,
-				MemoryContext rcontext);
+				MemoryContext rcontext, bool subcontext);
 extern ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
 				 Datum dvalue, bool disnull,
 				 Oid element_type,
@@ -304,7 +306,7 @@ extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
 				  int *dims, int *lbs, MemoryContext rcontext, bool release);
 
 extern ArrayBuildStateArr *initArrayResultArr(Oid array_type, Oid element_type,
-				   MemoryContext rcontext);
+				   MemoryContext rcontext, bool subcontext);
 extern ArrayBuildStateArr *accumArrayResultArr(ArrayBuildStateArr *astate,
 					Datum dvalue, bool disnull,
 					Oid array_type,
@@ -313,7 +315,7 @@ extern Datum makeArrayResultArr(ArrayBuildStateArr *astate,
 				   MemoryContext rcontext, bool release);
 
 extern ArrayBuildStateAny *initArrayResultAny(Oid input_type,
-				   MemoryContext rcontext);
+				   MemoryContext rcontext, bool subcontext);
 extern ArrayBuildStateAny *accumArrayResultAny(ArrayBuildStateAny *astate,
 					Datum dvalue, bool disnull,
 					Oid input_type,

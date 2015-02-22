@@ -3948,7 +3948,7 @@ xpath(PG_FUNCTION_ARGS)
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
 	ArrayBuildState *astate;
 
-	astate = initArrayResult(XMLOID, CurrentMemoryContext);
+	astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
 	xpath_internal(xpath_expr_text, data, namespaces,
 				   NULL, astate);
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));

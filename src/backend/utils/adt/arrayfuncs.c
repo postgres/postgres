@@ -4650,6 +4650,7 @@ array_insert_slice(ArrayType *destArray,
  *
  *	element_type is the array element type (must be a valid array element type)
  *	rcontext is where to keep working state
+ *	subcontext is a flag determining whether to use a separate memory context
  *
  * Note: there are two common schemes for using accumArrayResult().
  * In the older scheme, you start with a NULL ArrayBuildState pointer, and
@@ -4659,24 +4660,39 @@ array_insert_slice(ArrayType *destArray,
  * once per element.  In this scheme you always end with a non-NULL pointer
  * that you can pass to makeArrayResult; you get an empty array if there
  * were no elements.  This is preferred if an empty array is what you want.
+ *
+ * It's possible to choose whether to create a separate memory context for the
+ * array build state, or whether to allocate it directly within rcontext.
+ *
+ * When there are many concurrent small states (e.g. array_agg() using hash
+ * aggregation of many small groups), using a separate memory context for each
+ * one may result in severe memory bloat. In such cases, use the same memory
+ * context to initialize all such array build states, and pass
+ * subcontext=false.
+ *
+ * In cases when the array build states have different lifetimes, using a
+ * single memory context is impractical. Instead, pass subcontext=true so that
+ * the array build states can be freed individually.
  */
 ArrayBuildState *
-initArrayResult(Oid element_type, MemoryContext rcontext)
+initArrayResult(Oid element_type, MemoryContext rcontext, bool subcontext)
 {
 	ArrayBuildState *astate;
-	MemoryContext arr_context;
+	MemoryContext arr_context = rcontext;
 
 	/* Make a temporary context to hold all the junk */
-	arr_context = AllocSetContextCreate(rcontext,
-										"accumArrayResult",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+	if (subcontext)
+		arr_context = AllocSetContextCreate(rcontext,
+											"accumArrayResult",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
 
 	astate = (ArrayBuildState *)
 		MemoryContextAlloc(arr_context, sizeof(ArrayBuildState));
 	astate->mcontext = arr_context;
-	astate->alen = 64;			/* arbitrary starting array size */
+	astate->private_cxt = subcontext;
+	astate->alen = (subcontext ? 64 : 8);	/* arbitrary starting array size */
 	astate->dvalues = (Datum *)
 		MemoryContextAlloc(arr_context, astate->alen * sizeof(Datum));
 	astate->dnulls = (bool *)
@@ -4710,7 +4726,7 @@ accumArrayResult(ArrayBuildState *astate,
 	if (astate == NULL)
 	{
 		/* First time through --- initialize */
-		astate = initArrayResult(element_type, rcontext);
+		astate = initArrayResult(element_type, rcontext, true);
 	}
 	else
 	{
@@ -4757,6 +4773,9 @@ accumArrayResult(ArrayBuildState *astate,
 /*
  * makeArrayResult - produce 1-D final result of accumArrayResult
  *
+ * Note: only releases astate if it was initialized within a separate memory
+ * context (i.e. using subcontext=true when calling initArrayResult).
+ *
  *	astate is working state (must not be NULL)
  *	rcontext is where to construct result
  */
@@ -4773,7 +4792,8 @@ makeArrayResult(ArrayBuildState *astate,
 	dims[0] = astate->nelems;
 	lbs[0] = 1;
 
-	return makeMdArrayResult(astate, ndims, dims, lbs, rcontext, true);
+	return makeMdArrayResult(astate, ndims, dims, lbs, rcontext,
+							 astate->private_cxt);
 }
 
 /*
@@ -4781,6 +4801,11 @@ makeArrayResult(ArrayBuildState *astate,
  *
  * beware: no check that specified dimensions match the number of values
  * accumulated.
+ *
+ * Note: if the astate was not initialized within a separate memory context
+ * (that is, initArrayResult was called with subcontext=false), then using
+ * release=true is illegal. Instead, release astate along with the rest of its
+ * context when appropriate.
  *
  *	astate is working state (must not be NULL)
  *	rcontext is where to construct result
@@ -4814,7 +4839,10 @@ makeMdArrayResult(ArrayBuildState *astate,
 
 	/* Clean up all the junk */
 	if (release)
+	{
+		Assert(astate->private_cxt);
 		MemoryContextDelete(astate->mcontext);
+	}
 
 	return PointerGetDatum(result);
 }
@@ -4831,26 +4859,42 @@ makeMdArrayResult(ArrayBuildState *astate,
  * initArrayResultArr - initialize an empty ArrayBuildStateArr
  *
  *	array_type is the array type (must be a valid varlena array type)
- *	element_type is the type of the array's elements
+ *	element_type is the type of the array's elements (lookup if InvalidOid)
  *	rcontext is where to keep working state
+ *	subcontext is a flag determining whether to use a separate memory context
  */
 ArrayBuildStateArr *
-initArrayResultArr(Oid array_type, Oid element_type, MemoryContext rcontext)
+initArrayResultArr(Oid array_type, Oid element_type, MemoryContext rcontext,
+				   bool subcontext)
 {
 	ArrayBuildStateArr *astate;
-	MemoryContext arr_context;
+	MemoryContext arr_context = rcontext;   /* by default use the parent ctx */
+
+	/* Lookup element type, unless element_type already provided */
+	if (! OidIsValid(element_type))
+	{
+		element_type = get_element_type(array_type);
+
+		if (!OidIsValid(element_type))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("data type %s is not an array type",
+							format_type_be(array_type))));
+	}
 
 	/* Make a temporary context to hold all the junk */
-	arr_context = AllocSetContextCreate(rcontext,
-										"accumArrayResultArr",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+	if (subcontext)
+		arr_context = AllocSetContextCreate(rcontext,
+											"accumArrayResultArr",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
 
 	/* Note we initialize all fields to zero */
 	astate = (ArrayBuildStateArr *)
 		MemoryContextAllocZero(arr_context, sizeof(ArrayBuildStateArr));
 	astate->mcontext = arr_context;
+	astate->private_cxt = subcontext;
 
 	/* Save relevant datatype information */
 	astate->array_type = array_type;
@@ -4897,21 +4941,9 @@ accumArrayResultArr(ArrayBuildStateArr *astate,
 	arg = DatumGetArrayTypeP(dvalue);
 
 	if (astate == NULL)
-	{
-		/* First time through --- initialize */
-		Oid			element_type = get_element_type(array_type);
-
-		if (!OidIsValid(element_type))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("data type %s is not an array type",
-							format_type_be(array_type))));
-		astate = initArrayResultArr(array_type, element_type, rcontext);
-	}
+		astate = initArrayResultArr(array_type, InvalidOid, rcontext, true);
 	else
-	{
 		Assert(astate->array_type == array_type);
-	}
 
 	oldcontext = MemoryContextSwitchTo(astate->mcontext);
 
@@ -5090,7 +5122,10 @@ makeArrayResultArr(ArrayBuildStateArr *astate,
 
 	/* Clean up all the junk */
 	if (release)
+	{
+		Assert(astate->private_cxt);
 		MemoryContextDelete(astate->mcontext);
+	}
 
 	return PointerGetDatum(result);
 }
@@ -5106,9 +5141,10 @@ makeArrayResultArr(ArrayBuildStateArr *astate,
  *
  *	input_type is the input datatype (either element or array type)
  *	rcontext is where to keep working state
+ *	subcontext is a flag determining whether to use a separate memory context
  */
 ArrayBuildStateAny *
-initArrayResultAny(Oid input_type, MemoryContext rcontext)
+initArrayResultAny(Oid input_type, MemoryContext rcontext, bool subcontext)
 {
 	ArrayBuildStateAny *astate;
 	Oid			element_type = get_element_type(input_type);
@@ -5118,7 +5154,7 @@ initArrayResultAny(Oid input_type, MemoryContext rcontext)
 		/* Array case */
 		ArrayBuildStateArr *arraystate;
 
-		arraystate = initArrayResultArr(input_type, element_type, rcontext);
+		arraystate = initArrayResultArr(input_type, InvalidOid, rcontext, subcontext);
 		astate = (ArrayBuildStateAny *)
 			MemoryContextAlloc(arraystate->mcontext,
 							   sizeof(ArrayBuildStateAny));
@@ -5133,7 +5169,7 @@ initArrayResultAny(Oid input_type, MemoryContext rcontext)
 		/* Let's just check that we have a type that can be put into arrays */
 		Assert(OidIsValid(get_array_type(input_type)));
 
-		scalarstate = initArrayResult(input_type, rcontext);
+		scalarstate = initArrayResult(input_type, rcontext, subcontext);
 		astate = (ArrayBuildStateAny *)
 			MemoryContextAlloc(scalarstate->mcontext,
 							   sizeof(ArrayBuildStateAny));
@@ -5159,7 +5195,7 @@ accumArrayResultAny(ArrayBuildStateAny *astate,
 					MemoryContext rcontext)
 {
 	if (astate == NULL)
-		astate = initArrayResultAny(input_type, rcontext);
+		astate = initArrayResultAny(input_type, rcontext, true);
 
 	if (astate->scalarstate)
 		(void) accumArrayResult(astate->scalarstate,

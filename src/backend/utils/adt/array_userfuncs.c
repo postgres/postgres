@@ -520,8 +520,13 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 		elog(ERROR, "array_agg_transfn called in non-aggregate context");
 	}
 
-	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
+	if (PG_ARGISNULL(0))
+		state = initArrayResult(arg1_typeid, aggcontext, false);
+	else
+		state = (ArrayBuildState *) PG_GETARG_POINTER(0);
+
 	elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+
 	state = accumArrayResult(state,
 							 elem,
 							 PG_ARGISNULL(1),
@@ -595,7 +600,12 @@ array_agg_array_transfn(PG_FUNCTION_ARGS)
 		elog(ERROR, "array_agg_array_transfn called in non-aggregate context");
 	}
 
-	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+
+	if (PG_ARGISNULL(0))
+		state = initArrayResultArr(arg1_typeid, InvalidOid, aggcontext, false);
+	else
+		state = (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+
 	state = accumArrayResultArr(state,
 								PG_GETARG_DATUM(1),
 								PG_ARGISNULL(1),
