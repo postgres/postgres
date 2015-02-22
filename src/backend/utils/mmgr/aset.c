@@ -438,14 +438,14 @@ AllocSetContextCreate(MemoryContext parent,
 					  Size initBlockSize,
 					  Size maxBlockSize)
 {
-	AllocSet	context;
+	AllocSet	set;
 
 	/* Do the type-independent part of context creation */
-	context = (AllocSet) MemoryContextCreate(T_AllocSetContext,
-											 sizeof(AllocSetContext),
-											 &AllocSetMethods,
-											 parent,
-											 name);
+	set = (AllocSet) MemoryContextCreate(T_AllocSetContext,
+										 sizeof(AllocSetContext),
+										 &AllocSetMethods,
+										 parent,
+										 name);
 
 	/*
 	 * Make sure alloc parameters are reasonable, and save them.
@@ -459,9 +459,9 @@ AllocSetContextCreate(MemoryContext parent,
 	if (maxBlockSize < initBlockSize)
 		maxBlockSize = initBlockSize;
 	Assert(AllocHugeSizeIsValid(maxBlockSize)); /* must be safe to double */
-	context->initBlockSize = initBlockSize;
-	context->maxBlockSize = maxBlockSize;
-	context->nextBlockSize = initBlockSize;
+	set->initBlockSize = initBlockSize;
+	set->maxBlockSize = maxBlockSize;
+	set->nextBlockSize = initBlockSize;
 
 	/*
 	 * Compute the allocation chunk size limit for this context.  It can't be
@@ -477,10 +477,10 @@ AllocSetContextCreate(MemoryContext parent,
 	 * and actually-allocated sizes of any chunk must be on the same side of
 	 * the limit, else we get confused about whether the chunk is "big".
 	 */
-	context->allocChunkLimit = ALLOC_CHUNK_LIMIT;
-	while ((Size) (context->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
+	set->allocChunkLimit = ALLOC_CHUNK_LIMIT;
+	while ((Size) (set->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
 		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
-		context->allocChunkLimit >>= 1;
+		set->allocChunkLimit >>= 1;
 
 	/*
 	 * Grab always-allocated space, if requested
@@ -500,20 +500,20 @@ AllocSetContextCreate(MemoryContext parent,
 					 errdetail("Failed while creating memory context \"%s\".",
 							   name)));
 		}
-		block->aset = context;
+		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		block->endptr = ((char *) block) + blksize;
-		block->next = context->blocks;
-		context->blocks = block;
+		block->next = set->blocks;
+		set->blocks = block;
 		/* Mark block as not to be released at reset time */
-		context->keeper = block;
+		set->keeper = block;
 
 		/* Mark unallocated space NOACCESS; leave the block header alone. */
 		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
 								   blksize - ALLOC_BLOCKHDRSZ);
 	}
 
-	return (MemoryContext) context;
+	return (MemoryContext) set;
 }
 
 /*
