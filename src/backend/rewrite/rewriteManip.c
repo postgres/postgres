@@ -1023,6 +1023,7 @@ AddInvertedQual(Query *parsetree, Node *qual)
 	invqual = makeNode(BooleanTest);
 	invqual->arg = (Expr *) qual;
 	invqual->booltesttype = IS_NOT_TRUE;
+	invqual->location = -1;
 
 	AddQual(parsetree, (Node *) invqual);
 }

@@ -3305,6 +3305,7 @@ eval_const_expressions_mutator(Node *node,
 						newntest->arg = (Expr *) relem;
 						newntest->nulltesttype = ntest->nulltesttype;
 						newntest->argisrow = type_is_rowtype(exprType(relem));
+						newntest->location = ntest->location;
 						newargs = lappend(newargs, newntest);
 					}
 					/* If all the inputs were constants, result is TRUE */
@@ -3343,6 +3344,7 @@ eval_const_expressions_mutator(Node *node,
 				newntest->arg = (Expr *) arg;
 				newntest->nulltesttype = ntest->nulltesttype;
 				newntest->argisrow = ntest->argisrow;
+				newntest->location = ntest->location;
 				return (Node *) newntest;
 			}
 		case T_BooleanTest:
@@ -3395,6 +3397,7 @@ eval_const_expressions_mutator(Node *node,
 				newbtest = makeNode(BooleanTest);
 				newbtest->arg = (Expr *) arg;
 				newbtest->booltesttype = btest->booltesttype;
+				newbtest->location = btest->location;
 				return (Node *) newbtest;
 			}
 		case T_PlaceHolderVar:

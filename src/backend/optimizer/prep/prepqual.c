@@ -212,6 +212,7 @@ negate_clause(Node *node)
 					newexpr->nulltesttype = (expr->nulltesttype == IS_NULL ?
 											 IS_NOT_NULL : IS_NULL);
 					newexpr->argisrow = expr->argisrow;
+					newexpr->location = expr->location;
 					return (Node *) newexpr;
 				}
 			}
@@ -247,6 +248,7 @@ negate_clause(Node *node)
 							 (int) expr->booltesttype);
 						break;
 				}
+				newexpr->location = expr->location;
 				return (Node *) newexpr;
 			}
 			break;

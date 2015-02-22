@@ -789,6 +789,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		NullTest   *n = makeNode(NullTest);
 
 		n->nulltesttype = IS_NULL;
+		n->location = a->location;
 
 		if (exprIsNullConstant(lexpr))
 			n->arg = (Expr *) rexpr;

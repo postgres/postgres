@@ -1050,6 +1050,7 @@ typedef struct NullTest
 	Expr	   *arg;			/* input expression */
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
 	bool		argisrow;		/* T if input is of a composite type */
+	int			location;		/* token location, or -1 if unknown */
 } NullTest;
 
 /*
@@ -1071,6 +1072,7 @@ typedef struct BooleanTest
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	BoolTestType booltesttype;	/* test type */
+	int			location;		/* token location, or -1 if unknown */
 } BooleanTest;
 
 /*
