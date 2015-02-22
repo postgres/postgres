@@ -2261,6 +2261,7 @@ typedef struct IndexStmt
 	bool		isconstraint;	/* is it for a pkey/unique constraint? */
 	bool		deferrable;		/* is the constraint DEFERRABLE? */
 	bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
+	bool		transformed;	/* true when transformIndexStmt is finished */
 	bool		concurrent;		/* should this be a concurrent index build? */
 	bool		if_not_exists;	/* just do nothing if index already exists? */
 } IndexStmt;

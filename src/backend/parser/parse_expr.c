@@ -81,28 +81,8 @@ static Expr *make_distinct_op(ParseState *pstate, List *opname,
 /*
  * transformExpr -
  *	  Analyze and transform expressions. Type checking and type casting is
- *	  done here. The optimizer and the executor cannot handle the original
- *	  (raw) expressions collected by the parse tree. Hence the transformation
- *	  here.
- *
- * NOTE: there are various cases in which this routine will get applied to
- * an already-transformed expression.  Some examples:
- *	1. At least one construct (BETWEEN/AND) puts the same nodes
- *	into two branches of the parse tree; hence, some nodes
- *	are transformed twice.
- *	2. Another way it can happen is that coercion of an operator or
- *	function argument to the required type (via coerce_type())
- *	can apply transformExpr to an already-transformed subexpression.
- *	An example here is "SELECT count(*) + 1.0 FROM table".
- *	3. CREATE TABLE t1 (LIKE t2 INCLUDING INDEXES) can pass in
- *	already-transformed index expressions.
- * While it might be possible to eliminate these cases, the path of
- * least resistance so far has been to ensure that transformExpr() does
- * no damage if applied to an already-transformed tree.  This is pretty
- * easy for cases where the transformation replaces one node type with
- * another, such as A_Const => Const; we just do nothing when handed
- * a Const.  More care is needed for node types that are used as both
- * input and output of transformExpr; see SubLink for example.
+ *	  done here.  This processing converts the raw grammar output into
+ *	  expression trees with fully determined semantics.
  */
 Node *
 transformExpr(ParseState *pstate, Node *expr, ParseExprKind exprKind)
@@ -168,48 +148,8 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			break;
 
 		case T_TypeCast:
-			{
-				TypeCast   *tc = (TypeCast *) expr;
-
-				/*
-				 * If the subject of the typecast is an ARRAY[] construct and
-				 * the target type is an array type, we invoke
-				 * transformArrayExpr() directly so that we can pass down the
-				 * type information.  This avoids some cases where
-				 * transformArrayExpr() might not infer the correct type.
-				 */
-				if (IsA(tc->arg, A_ArrayExpr))
-				{
-					Oid			targetType;
-					Oid			elementType;
-					int32		targetTypmod;
-
-					typenameTypeIdAndMod(pstate, tc->typeName,
-										 &targetType, &targetTypmod);
-
-					/*
-					 * If target is a domain over array, work with the base
-					 * array type here.  transformTypeCast below will cast the
-					 * array type to the domain.  In the usual case that the
-					 * target is not a domain, transformTypeCast is a no-op.
-					 */
-					targetType = getBaseTypeAndTypmod(targetType,
-													  &targetTypmod);
-					elementType = get_element_type(targetType);
-					if (OidIsValid(elementType))
-					{
-						tc = copyObject(tc);
-						tc->arg = transformArrayExpr(pstate,
-													 (A_ArrayExpr *) tc->arg,
-													 targetType,
-													 elementType,
-													 targetTypmod);
-					}
-				}
-
-				result = transformTypeCast(pstate, tc);
-				break;
-			}
+			result = transformTypeCast(pstate, (TypeCast *) expr);
+			break;
 
 		case T_CollateClause:
 			result = transformCollateClause(pstate, (CollateClause *) expr);
@@ -324,37 +264,19 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			result = transformCurrentOfExpr(pstate, (CurrentOfExpr *) expr);
 			break;
 
-			/*********************************************
-			 * Quietly accept node types that may be presented when we are
-			 * called on an already-transformed tree.
+			/*
+			 * CaseTestExpr and SetToDefault don't require any processing;
+			 * they are only injected into parse trees in fully-formed state.
 			 *
-			 * Do any other node types need to be accepted?  For now we are
-			 * taking a conservative approach, and only accepting node
-			 * types that are demonstrably necessary to accept.
-			 *********************************************/
-		case T_Var:
-		case T_Const:
-		case T_Param:
-		case T_Aggref:
-		case T_WindowFunc:
-		case T_ArrayRef:
-		case T_FuncExpr:
-		case T_OpExpr:
-		case T_DistinctExpr:
-		case T_NullIfExpr:
-		case T_ScalarArrayOpExpr:
-		case T_FieldSelect:
-		case T_FieldStore:
-		case T_RelabelType:
-		case T_CoerceViaIO:
-		case T_ArrayCoerceExpr:
-		case T_ConvertRowtypeExpr:
-		case T_CollateExpr:
+			 * Ordinarily we should not see a Var here, but it is convenient
+			 * for transformJoinUsingClause() to create untransformed operator
+			 * trees containing already-transformed Vars.  The best
+			 * alternative would be to deconstruct and reconstruct column
+			 * references, which seems expensively pointless.  So allow it.
+			 */
 		case T_CaseTestExpr:
-		case T_ArrayExpr:
-		case T_CoerceToDomain:
-		case T_CoerceToDomainValue:
 		case T_SetToDefault:
+		case T_Var:
 			{
 				result = (Node *) expr;
 				break;
@@ -1461,10 +1383,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	Node	   *defresult;
 	Oid			ptype;
 
-	/* If we already transformed this node, do nothing */
-	if (OidIsValid(c->casetype))
-		return (Node *) c;
-
 	newc = makeNode(CaseExpr);
 
 	/* transform the test expression, if any */
@@ -1591,10 +1509,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	Node	   *result = (Node *) sublink;
 	Query	   *qtree;
 	const char *err;
-
-	/* If we already transformed this node, do nothing */
-	if (IsA(sublink->subselect, Query))
-		return result;
 
 	/*
 	 * Check to see if the sublink is in an invalid place within the query. We
@@ -1964,10 +1878,6 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 	int			fnum;
 	ListCell   *lc;
 
-	/* If we already transformed this node, do nothing */
-	if (OidIsValid(r->row_typeid))
-		return (Node *) r;
-
 	newr = makeNode(RowExpr);
 
 	/* Transform the field expressions */
@@ -2073,10 +1983,6 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	XmlExpr    *newx;
 	ListCell   *lc;
 	int			i;
-
-	/* If we already transformed this node, do nothing */
-	if (OidIsValid(x->type))
-		return (Node *) x;
 
 	newx = makeNode(XmlExpr);
 	newx->op = x->op;
@@ -2381,14 +2287,51 @@ static Node *
 transformTypeCast(ParseState *pstate, TypeCast *tc)
 {
 	Node	   *result;
-	Node	   *expr = transformExprRecurse(pstate, tc->arg);
-	Oid			inputType = exprType(expr);
+	Node	   *expr;
+	Oid			inputType;
 	Oid			targetType;
 	int32		targetTypmod;
 	int			location;
 
 	typenameTypeIdAndMod(pstate, tc->typeName, &targetType, &targetTypmod);
 
+	/*
+	 * If the subject of the typecast is an ARRAY[] construct and the target
+	 * type is an array type, we invoke transformArrayExpr() directly so that
+	 * we can pass down the type information.  This avoids some cases where
+	 * transformArrayExpr() might not infer the correct type.  Otherwise, just
+	 * transform the argument normally.
+	 */
+	if (IsA(tc->arg, A_ArrayExpr))
+	{
+		Oid			targetBaseType;
+		int32		targetBaseTypmod;
+		Oid			elementType;
+
+		/*
+		 * If target is a domain over array, work with the base array type
+		 * here.  Below, we'll cast the array type to the domain.  In the
+		 * usual case that the target is not a domain, the remaining steps
+		 * will be a no-op.
+		 */
+		targetBaseTypmod = targetTypmod;
+		targetBaseType = getBaseTypeAndTypmod(targetType, &targetBaseTypmod);
+		elementType = get_element_type(targetBaseType);
+		if (OidIsValid(elementType))
+		{
+			expr = transformArrayExpr(pstate,
+									  (A_ArrayExpr *) tc->arg,
+									  targetBaseType,
+									  elementType,
+									  targetBaseTypmod);
+		}
+		else
+			expr = transformExprRecurse(pstate, tc->arg);
+	}
+	else
+		expr = transformExprRecurse(pstate, tc->arg);
+
+	inputType = exprType(expr);
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 

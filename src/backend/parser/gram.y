@@ -6563,6 +6563,7 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->isconstraint = false;
 					n->deferrable = false;
 					n->initdeferred = false;
+					n->transformed = false;
 					n->if_not_exists = false;
 					$$ = (Node *)n;
 				}
@@ -6588,6 +6589,7 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->isconstraint = false;
 					n->deferrable = false;
 					n->initdeferred = false;
+					n->transformed = false;
 					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}

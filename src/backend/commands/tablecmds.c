@@ -5705,14 +5705,15 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	Assert(IsA(stmt, IndexStmt));
 	Assert(!stmt->concurrent);
 
+	/* The IndexStmt has already been through transformIndexStmt */
+	Assert(stmt->transformed);
+
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
 	/* skip index build if phase 3 will do it or we're reusing an old one */
 	skip_build = tab->rewrite > 0 || OidIsValid(stmt->oldNode);
 	/* suppress notices when rebuilding existing index */
 	quiet = is_rebuild;
-
-	/* The IndexStmt has already been through transformIndexStmt */
 
 	new_index = DefineIndex(RelationGetRelid(rel),
 							stmt,
