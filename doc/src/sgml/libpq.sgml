@@ -4387,7 +4387,14 @@ int PQflush(PGconn *conn);
   <para>
    After sending any command or data on a nonblocking connection, call
    <function>PQflush</function>.  If it returns 1, wait for the socket
-   to be write-ready and call it again; repeat until it returns 0.  Once
+   to become read- or write-ready.  If it becomes write-ready, call
+   <function>PQflush</function> again.  If it becomes read-ready, call
+   <function>PQconsumeInput</function>, then call
+   <function>PQflush</function> again.  Repeat until
+   <function>PQflush</function> returns 0.  (It is necessary to check for
+   read-ready and drain the input with <function>PQconsumeInput</function>,
+   because the server can block trying to send us data, e.g. NOTICE
+   messages, and won't read our data until we read its.)  Once
    <function>PQflush</function> returns 0, wait for the socket to be
    read-ready and then read the response as described above.
   </para>
