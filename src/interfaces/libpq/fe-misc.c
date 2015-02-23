@@ -874,16 +874,6 @@ pqSendSome(PGconn *conn, int len)
 			/*
 			 * We didn't send it all, wait till we can send more.
 			 *
-			 * If the connection is in non-blocking mode we don't wait, but
-			 * return 1 to indicate that data is still pending.
-			 */
-			if (pqIsnonblocking(conn))
-			{
-				result = 1;
-				break;
-			}
-
-			/*
 			 * There are scenarios in which we can't send data because the
 			 * communications channel is full, but we cannot expect the server
 			 * to clear the channel eventually because it's blocked trying to
@@ -894,12 +884,29 @@ pqSendSome(PGconn *conn, int len)
 			 * again.  Furthermore, it is possible that such incoming data
 			 * might not arrive until after we've gone to sleep.  Therefore,
 			 * we wait for either read ready or write ready.
+			 *
+			 * In non-blocking mode, we don't wait here directly, but return
+			 * 1 to indicate that data is still pending.  The caller should
+			 * wait for both read and write ready conditions, and call
+			 * PQconsumeInput() on read ready, but just in case it doesn't, we
+			 * call pqReadData() ourselves before returning.  That's not
+			 * enough if the data has not arrived yet, but it's the best we
+			 * can do, and works pretty well in practice.  (The documentation
+			 * used to say that you only need to wait for write-ready, so
+			 * there are still plenty of applications like that out there.)
 			 */
 			if (pqReadData(conn) < 0)
 			{
 				result = -1;	/* error message already set up */
 				break;
 			}
+
+			if (pqIsnonblocking(conn))
+			{
+				result = 1;
+				break;
+			}
+
 			if (pqWait(TRUE, TRUE, conn))
 			{
 				result = -1;
