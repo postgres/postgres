@@ -79,7 +79,8 @@ extern uint32 bootstrap_data_checksum_version;
 
 
 /* User-settable parameters */
-int			CheckPointSegments = 3;
+int			max_wal_size = 8;		/* 128 MB */
+int			min_wal_size = 5;		/* 80 MB */
 int			wal_keep_segments = 0;
 int			XLOGbuffers = -1;
 int			XLogArchiveTimeout = 0;
@@ -107,18 +108,14 @@ bool		XLOG_DEBUG = false;
 #define NUM_XLOGINSERT_LOCKS  8
 
 /*
- * XLOGfileslop is the maximum number of preallocated future XLOG segments.
- * When we are done with an old XLOG segment file, we will recycle it as a
- * future XLOG segment as long as there aren't already XLOGfileslop future
- * segments; else we'll delete it.  This could be made a separate GUC
- * variable, but at present I think it's sufficient to hardwire it as
- * 2*CheckPointSegments+1.  Under normal conditions, a checkpoint will free
- * no more than 2*CheckPointSegments log segments, and we want to recycle all
- * of them; the +1 allows boundary cases to happen without wasting a
- * delete/create-segment cycle.
+ * Max distance from last checkpoint, before triggering a new xlog-based
+ * checkpoint.
  */
-#define XLOGfileslop	(2*CheckPointSegments + 1)
+int			CheckPointSegments;
 
+/* Estimated distance between checkpoints, in bytes */
+static double CheckPointDistanceEstimate = 0;
+static double PrevCheckPointDistance = 0;
 
 /*
  * GUC support
@@ -779,7 +776,7 @@ static void AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic);
 static bool XLogCheckpointNeeded(XLogSegNo new_segno);
 static void XLogWrite(XLogwrtRqst WriteRqst, bool flexible);
 static bool InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
-					   bool find_free, int *max_advance,
+					   bool find_free, XLogSegNo max_segno,
 					   bool use_lock);
 static int XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 			 int source, bool notexistOk);
@@ -792,7 +789,7 @@ static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
 static void PreallocXlogFiles(XLogRecPtr endptr);
-static void RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr);
+static void RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr);
 static void UpdateLastRemovedPtr(char *filename);
 static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
@@ -1959,6 +1956,104 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic)
 }
 
 /*
+ * Calculate CheckPointSegments based on max_wal_size and
+ * checkpoint_completion_target.
+ */
+static void
+CalculateCheckpointSegments(void)
+{
+	double		target;
+
+	/*-------
+	 * Calculate the distance at which to trigger a checkpoint, to avoid
+	 * exceeding max_wal_size. This is based on two assumptions:
+	 *
+	 * a) we keep WAL for two checkpoint cycles, back to the "prev" checkpoint.
+	 * b) during checkpoint, we consume checkpoint_completion_target *
+	 *    number of segments consumed between checkpoints.
+	 *-------
+	 */
+	target = (double ) max_wal_size / (2.0 + CheckPointCompletionTarget);
+
+	/* round down */
+	CheckPointSegments = (int) target;
+
+	if (CheckPointSegments < 1)
+		CheckPointSegments = 1;
+}
+
+void
+assign_max_wal_size(int newval, void *extra)
+{
+	max_wal_size = newval;
+	CalculateCheckpointSegments();
+}
+
+void
+assign_checkpoint_completion_target(double newval, void *extra)
+{
+	CheckPointCompletionTarget = newval;
+	CalculateCheckpointSegments();
+}
+
+/*
+ * At a checkpoint, how many WAL segments to recycle as preallocated future
+ * XLOG segments? Returns the highest segment that should be preallocated.
+ */
+static XLogSegNo
+XLOGfileslop(XLogRecPtr PriorRedoPtr)
+{
+	XLogSegNo	minSegNo;
+	XLogSegNo	maxSegNo;
+	double		distance;
+	XLogSegNo	recycleSegNo;
+
+	/*
+	 * Calculate the segment numbers that min_wal_size and max_wal_size
+	 * correspond to. Always recycle enough segments to meet the minimum, and
+	 * remove enough segments to stay below the maximum.
+	 */
+	minSegNo = PriorRedoPtr / XLOG_SEG_SIZE + min_wal_size - 1;
+	maxSegNo =  PriorRedoPtr / XLOG_SEG_SIZE + max_wal_size - 1;
+
+	/*
+	 * Between those limits, recycle enough segments to get us through to the
+	 * estimated end of next checkpoint.
+	 *
+	 * To estimate where the next checkpoint will finish, assume that the
+	 * system runs steadily consuming CheckPointDistanceEstimate
+	 * bytes between every checkpoint.
+	 *
+	 * The reason this calculation is done from the prior checkpoint, not the
+	 * one that just finished, is that this behaves better if some checkpoint
+	 * cycles are abnormally short, like if you perform a manual checkpoint
+	 * right after a timed one. The manual checkpoint will make almost a full
+	 * cycle's worth of WAL segments available for recycling, because the
+	 * segments from the prior's prior, fully-sized checkpoint cycle are no
+	 * longer needed. However, the next checkpoint will make only few segments
+	 * available for recycling, the ones generated between the timed
+	 * checkpoint and the manual one right after that. If at the manual
+	 * checkpoint we only retained enough segments to get us to the next timed
+	 * one, and removed the rest, then at the next checkpoint we would not
+	 * have enough segments around for recycling, to get us to the checkpoint
+	 * after that. Basing the calculations on the distance from the prior redo
+	 * pointer largely fixes that problem.
+	 */
+	distance = (2.0 + CheckPointCompletionTarget) * CheckPointDistanceEstimate;
+	/* add 10% for good measure. */
+	distance *= 1.10;
+
+	recycleSegNo = (XLogSegNo) ceil(((double) PriorRedoPtr + distance) / XLOG_SEG_SIZE);
+
+	if (recycleSegNo < minSegNo)
+		recycleSegNo = minSegNo;
+	if (recycleSegNo > maxSegNo)
+		recycleSegNo = maxSegNo;
+
+	return recycleSegNo;
+}
+
+/*
  * Check whether we've consumed enough xlog space that a checkpoint is needed.
  *
  * new_segno indicates a log file that has just been filled up (or read
@@ -2765,7 +2860,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	char		zbuffer_raw[XLOG_BLCKSZ + MAXIMUM_ALIGNOF];
 	char	   *zbuffer;
 	XLogSegNo	installed_segno;
-	int			max_advance;
+	XLogSegNo	max_segno;
 	int			fd;
 	int			nbytes;
 
@@ -2868,9 +2963,19 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	 * pre-create a future log segment.
 	 */
 	installed_segno = logsegno;
-	max_advance = XLOGfileslop;
+
+	/*
+	 * XXX: What should we use as max_segno? We used to use XLOGfileslop when
+	 * that was a constant, but that was always a bit dubious: normally, at a
+	 * checkpoint, XLOGfileslop was the offset from the checkpoint record,
+	 * but here, it was the offset from the insert location. We can't do the
+	 * normal XLOGfileslop calculation here because we don't have access to
+	 * the prior checkpoint's redo location. So somewhat arbitrarily, just
+	 * use CheckPointSegments.
+	 */
+	max_segno = logsegno + CheckPointSegments;
 	if (!InstallXLogFileSegment(&installed_segno, tmppath,
-								*use_existent, &max_advance,
+								*use_existent, max_segno,
 								use_lock))
 	{
 		/*
@@ -3011,7 +3116,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 	/*
 	 * Now move the segment into place with its final name.
 	 */
-	if (!InstallXLogFileSegment(&destsegno, tmppath, false, NULL, false))
+	if (!InstallXLogFileSegment(&destsegno, tmppath, false, 0, false))
 		elog(ERROR, "InstallXLogFileSegment should not have failed");
 }
 
@@ -3031,22 +3136,21 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
  * number at or after the passed numbers.  If FALSE, install the new segment
  * exactly where specified, deleting any existing segment file there.
  *
- * *max_advance: maximum number of segno slots to advance past the starting
- * point.  Fail if no free slot is found in this range.  On return, reduced
- * by the number of slots skipped over.  (Irrelevant, and may be NULL,
- * when find_free is FALSE.)
+ * max_segno: maximum segment number to install the new file as.  Fail if no
+ * free slot is found between *segno and max_segno. (Ignored when find_free
+ * is FALSE.)
  *
  * use_lock: if TRUE, acquire ControlFileLock while moving file into
  * place.  This should be TRUE except during bootstrap log creation.  The
  * caller must *not* hold the lock at call.
  *
  * Returns TRUE if the file was installed successfully.  FALSE indicates that
- * max_advance limit was exceeded, or an error occurred while renaming the
+ * max_segno limit was exceeded, or an error occurred while renaming the
  * file into place.
  */
 static bool
 InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
-					   bool find_free, int *max_advance,
+					   bool find_free, XLogSegNo max_segno,
 					   bool use_lock)
 {
 	char		path[MAXPGPATH];
@@ -3070,7 +3174,7 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 		/* Find a free slot to put it in */
 		while (stat(path, &stat_buf) == 0)
 		{
-			if (*max_advance <= 0)
+			if ((*segno) >= max_segno)
 			{
 				/* Failed to find a free slot within specified range */
 				if (use_lock)
@@ -3078,7 +3182,6 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 				return false;
 			}
 			(*segno)++;
-			(*max_advance)--;
 			XLogFilePath(path, ThisTimeLineID, *segno);
 		}
 	}
@@ -3426,14 +3529,15 @@ UpdateLastRemovedPtr(char *filename)
 /*
  * Recycle or remove all log files older or equal to passed segno
  *
- * endptr is current (or recent) end of xlog; this is used to determine
+ * endptr is current (or recent) end of xlog, and PriorRedoRecPtr is the
+ * redo pointer of the previous checkpoint. These are used to determine
  * whether we want to recycle rather than delete no-longer-wanted log files.
  */
 static void
-RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr)
+RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 {
 	XLogSegNo	endlogSegNo;
-	int			max_advance;
+	XLogSegNo	recycleSegNo;
 	DIR		   *xldir;
 	struct dirent *xlde;
 	char		lastoff[MAXFNAMELEN];
@@ -3445,11 +3549,10 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr)
 	struct stat statbuf;
 
 	/*
-	 * Initialize info about where to try to recycle to.  We allow recycling
-	 * segments up to XLOGfileslop segments beyond the current XLOG location.
+	 * Initialize info about where to try to recycle to.
 	 */
 	XLByteToPrevSeg(endptr, endlogSegNo);
-	max_advance = XLOGfileslop;
+	recycleSegNo = XLOGfileslop(PriorRedoPtr);
 
 	xldir = AllocateDir(XLOGDIR);
 	if (xldir == NULL)
@@ -3498,20 +3601,17 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr)
 				 * for example can create symbolic links pointing to a
 				 * separate archive directory.
 				 */
-				if (lstat(path, &statbuf) == 0 && S_ISREG(statbuf.st_mode) &&
+				if (endlogSegNo <= recycleSegNo &&
+					lstat(path, &statbuf) == 0 && S_ISREG(statbuf.st_mode) &&
 					InstallXLogFileSegment(&endlogSegNo, path,
-										   true, &max_advance, true))
+										   true, recycleSegNo, true))
 				{
 					ereport(DEBUG2,
 							(errmsg("recycled transaction log file \"%s\"",
 									xlde->d_name)));
 					CheckpointStats.ckpt_segs_recycled++;
 					/* Needn't recheck that slot on future iterations */
-					if (max_advance > 0)
-					{
-						endlogSegNo++;
-						max_advance--;
-					}
+					endlogSegNo++;
 				}
 				else
 				{
@@ -7594,7 +7694,8 @@ LogCheckpointEnd(bool restartpoint)
 	elog(LOG, "%s complete: wrote %d buffers (%.1f%%); "
 		 "%d transaction log file(s) added, %d removed, %d recycled; "
 		 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
-		 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s",
+		 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s; "
+		 "distance=%d kB, estimate=%d kB",
 		 restartpoint ? "restartpoint" : "checkpoint",
 		 CheckpointStats.ckpt_bufs_written,
 		 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
@@ -7606,7 +7707,48 @@ LogCheckpointEnd(bool restartpoint)
 		 total_secs, total_usecs / 1000,
 		 CheckpointStats.ckpt_sync_rels,
 		 longest_secs, longest_usecs / 1000,
-		 average_secs, average_usecs / 1000);
+		 average_secs, average_usecs / 1000,
+		 (int) (PrevCheckPointDistance / 1024.0),
+		 (int) (CheckPointDistanceEstimate / 1024.0));
+}
+
+/*
+ * Update the estimate of distance between checkpoints.
+ *
+ * The estimate is used to calculate the number of WAL segments to keep
+ * preallocated, see XLOGFileSlop().
+ */
+static void
+UpdateCheckPointDistanceEstimate(uint64 nbytes)
+{
+	/*
+	 * To estimate the number of segments consumed between checkpoints, keep
+	 * a moving average of the amount of WAL generated in previous checkpoint
+	 * cycles. However, if the load is bursty, with quiet periods and busy
+	 * periods, we want to cater for the peak load. So instead of a plain
+	 * moving average, let the average decline slowly if the previous cycle
+	 * used less WAL than estimated, but bump it up immediately if it used
+	 * more.
+	 *
+	 * When checkpoints are triggered by max_wal_size, this should converge to
+	 * CheckpointSegments * XLOG_SEG_SIZE,
+	 *
+	 * Note: This doesn't pay any attention to what caused the checkpoint.
+	 * Checkpoints triggered manually with CHECKPOINT command, or by e.g.
+	 * starting a base backup, are counted the same as those created
+	 * automatically. The slow-decline will largely mask them out, if they are
+	 * not frequent. If they are frequent, it seems reasonable to count them
+	 * in as any others; if you issue a manual checkpoint every 5 minutes and
+	 * never let a timed checkpoint happen, it makes sense to base the
+	 * preallocation on that 5 minute interval rather than whatever
+	 * checkpoint_timeout is set to.
+	 */
+	PrevCheckPointDistance = nbytes;
+	if (CheckPointDistanceEstimate < nbytes)
+		CheckPointDistanceEstimate = nbytes;
+	else
+		CheckPointDistanceEstimate =
+			(0.90 * CheckPointDistanceEstimate + 0.10 * (double) nbytes);
 }
 
 /*
@@ -7646,7 +7788,7 @@ CreateCheckPoint(int flags)
 	XLogRecPtr	recptr;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	uint32		freespace;
-	XLogSegNo	_logSegNo;
+	XLogRecPtr	PriorRedoPtr;
 	XLogRecPtr	curInsert;
 	VirtualTransactionId *vxids;
 	int			nvxids;
@@ -7961,10 +8103,10 @@ CreateCheckPoint(int flags)
 				(errmsg("concurrent transaction log activity while database system is shutting down")));
 
 	/*
-	 * Select point at which we can truncate the log, which we base on the
-	 * prior checkpoint's earliest info.
+	 * Remember the prior checkpoint's redo pointer, used later to determine
+	 * the point where the log can be truncated.
 	 */
-	XLByteToSeg(ControlFile->checkPointCopy.redo, _logSegNo);
+	PriorRedoPtr = ControlFile->checkPointCopy.redo;
 
 	/*
 	 * Update the control file.
@@ -8019,11 +8161,17 @@ CreateCheckPoint(int flags)
 	 * Delete old log files (those no longer needed even for previous
 	 * checkpoint or the standbys in XLOG streaming).
 	 */
-	if (_logSegNo)
+	if (PriorRedoPtr != InvalidXLogRecPtr)
 	{
+		XLogSegNo	_logSegNo;
+
+		/* Update the average distance between checkpoints. */
+		UpdateCheckPointDistanceEstimate(RedoRecPtr - PriorRedoPtr);
+
+		XLByteToSeg(PriorRedoPtr, _logSegNo);
 		KeepLogSeg(recptr, &_logSegNo);
 		_logSegNo--;
-		RemoveOldXlogFiles(_logSegNo, recptr);
+		RemoveOldXlogFiles(_logSegNo, PriorRedoPtr, recptr);
 	}
 
 	/*
@@ -8191,7 +8339,7 @@ CreateRestartPoint(int flags)
 {
 	XLogRecPtr	lastCheckPointRecPtr;
 	CheckPoint	lastCheckPoint;
-	XLogSegNo	_logSegNo;
+	XLogRecPtr	PriorRedoPtr;
 	TimestampTz xtime;
 
 	/*
@@ -8256,14 +8404,14 @@ CreateRestartPoint(int flags)
 	/*
 	 * Update the shared RedoRecPtr so that the startup process can calculate
 	 * the number of segments replayed since last restartpoint, and request a
-	 * restartpoint if it exceeds checkpoint_segments.
+	 * restartpoint if it exceeds CheckPointSegments.
 	 *
 	 * Like in CreateCheckPoint(), hold off insertions to update it, although
 	 * during recovery this is just pro forma, because no WAL insertions are
 	 * happening.
 	 */
 	WALInsertLockAcquireExclusive();
-	XLogCtl->Insert.RedoRecPtr = lastCheckPoint.redo;
+	RedoRecPtr = XLogCtl->Insert.RedoRecPtr = lastCheckPoint.redo;
 	WALInsertLockRelease();
 
 	/* Also update the info_lck-protected copy */
@@ -8287,10 +8435,10 @@ CreateRestartPoint(int flags)
 	CheckPointGuts(lastCheckPoint.redo, flags);
 
 	/*
-	 * Select point at which we can truncate the xlog, which we base on the
-	 * prior checkpoint's earliest info.
+	 * Remember the prior checkpoint's redo pointer, used later to determine
+	 * the point at which we can truncate the log.
 	 */
-	XLByteToSeg(ControlFile->checkPointCopy.redo, _logSegNo);
+	PriorRedoPtr = ControlFile->checkPointCopy.redo;
 
 	/*
 	 * Update pg_control, using current time.  Check that it still shows
@@ -8317,12 +8465,18 @@ CreateRestartPoint(int flags)
 	 * checkpoint/restartpoint) to prevent the disk holding the xlog from
 	 * growing full.
 	 */
-	if (_logSegNo)
+	if (PriorRedoPtr != InvalidXLogRecPtr)
 	{
 		XLogRecPtr	receivePtr;
 		XLogRecPtr	replayPtr;
 		TimeLineID	replayTLI;
 		XLogRecPtr	endptr;
+		XLogSegNo	_logSegNo;
+
+		/* Update the average distance between checkpoints/restartpoints. */
+		UpdateCheckPointDistanceEstimate(RedoRecPtr - PriorRedoPtr);
+
+		XLByteToSeg(PriorRedoPtr, _logSegNo);
 
 		/*
 		 * Get the current end of xlog replayed or received, whichever is
@@ -8351,7 +8505,7 @@ CreateRestartPoint(int flags)
 		if (RecoveryInProgress())
 			ThisTimeLineID = replayTLI;
 
-		RemoveOldXlogFiles(_logSegNo, endptr);
+		RemoveOldXlogFiles(_logSegNo, PriorRedoPtr, endptr);
 
 		/*
 		 * Make more log segments if needed.  (Do this after recycling old log

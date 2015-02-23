@@ -472,9 +472,10 @@
   <para>
    The server's checkpointer process automatically performs
    a checkpoint every so often.  A checkpoint is begun every <xref
-   linkend="guc-checkpoint-segments"> log segments, or every <xref
-   linkend="guc-checkpoint-timeout"> seconds, whichever comes first.
-   The default settings are 3 segments and 300 seconds (5 minutes), respectively.
+   linkend="guc-checkpoint-timeout"> seconds, or if
+   <xref linkend="guc-max-wal-size"> is about to be exceeded,
+   whichever comes first.
+   The default settings are 5 minutes and 128 MB, respectively.
    If no WAL has been written since the previous checkpoint, new checkpoints
    will be skipped even if <varname>checkpoint_timeout</> has passed.
    (If WAL archiving is being used and you want to put a lower limit on how
@@ -486,8 +487,8 @@
   </para>
 
   <para>
-   Reducing <varname>checkpoint_segments</varname> and/or
-   <varname>checkpoint_timeout</varname> causes checkpoints to occur
+   Reducing <varname>checkpoint_timeout</varname> and/or
+   <varname>max_wal_size</varname> causes checkpoints to occur
    more often. This allows faster after-crash recovery, since less work
    will need to be redone. However, one must balance this against the
    increased cost of flushing dirty data pages more often. If
@@ -510,11 +511,11 @@
    parameter.  If checkpoints happen closer together than
    <varname>checkpoint_warning</> seconds,
    a message will be output to the server log recommending increasing
-   <varname>checkpoint_segments</varname>.  Occasional appearance of such
+   <varname>max_wal_size</varname>.  Occasional appearance of such
    a message is not cause for alarm, but if it appears often then the
    checkpoint control parameters should be increased. Bulk operations such
    as large <command>COPY</> transfers might cause a number of such warnings
-   to appear if you have not set <varname>checkpoint_segments</> high
+   to appear if you have not set <varname>max_wal_size</> high
    enough.
   </para>
 
@@ -525,10 +526,10 @@
    <xref linkend="guc-checkpoint-completion-target">, which is
    given as a fraction of the checkpoint interval.
    The I/O rate is adjusted so that the checkpoint finishes when the
-   given fraction of <varname>checkpoint_segments</varname> WAL segments
-   have been consumed since checkpoint start, or the given fraction of
-   <varname>checkpoint_timeout</varname> seconds have elapsed,
-   whichever is sooner.  With the default value of 0.5,
+   given fraction of
+   <varname>checkpoint_timeout</varname> seconds have elapsed, or before
+   <varname>max_wal_size</varname> is exceeded, whichever is sooner.
+   With the default value of 0.5,
    <productname>PostgreSQL</> can be expected to complete each checkpoint
    in about half the time before the next checkpoint starts.  On a system
    that's very close to maximum I/O throughput during normal operation,
@@ -545,18 +546,35 @@
   </para>
 
   <para>
-   There will always be at least one WAL segment file, and will normally
-   not be more than (2 + <varname>checkpoint_completion_target</varname>) * <varname>checkpoint_segments</varname> + 1
-   or <varname>checkpoint_segments</> + <xref linkend="guc-wal-keep-segments"> + 1
-   files.  Each segment file is normally 16 MB (though this size can be
-   altered when building the server).  You can use this to estimate space
-   requirements for <acronym>WAL</acronym>.
-   Ordinarily, when old log segment files are no longer needed, they
-   are recycled (that is, renamed to become future segments in the numbered
-   sequence). If, due to a short-term peak of log output rate, there
-   are more than 3 * <varname>checkpoint_segments</varname> + 1
-   segment files, the unneeded segment files will be deleted instead
-   of recycled until the system gets back under this limit.
+   The number of WAL segment files in <filename>pg_xlog</> directory depends on
+   <varname>min_wal_size</>, <varname>max_wal_size</> and
+   the amount of WAL generated in previous checkpoint cycles. When old log
+   segment files are no longer needed, they are removed or recycled (that is,
+   renamed to become future segments in the numbered sequence). If, due to a
+   short-term peak of log output rate, <varname>max_wal_size</> is
+   exceeded, the unneeded segment files will be removed until the system
+   gets back under this limit. Below that limit, the system recycles enough
+   WAL files to cover the estimated need until the next checkpoint, and
+   removes the rest. The estimate is based on a moving average of the number
+   of WAL files used in previous checkpoint cycles. The moving average
+   is increased immediately if the actual usage exceeds the estimate, so it
+   accommodates peak usage rather average usage to some extent.
+   <varname>min_wal_size</> puts a minimum on the amount of WAL files
+   recycled for future usage; that much WAL is always recycled for future use,
+   even if the system is idle and the WAL usage estimate suggests that little
+   WAL is needed.
+  </para>
+
+  <para>
+   Independently of <varname>max_wal_size</varname>,
+   <xref linkend="guc-wal-keep-segments"> + 1 most recent WAL files are
+   kept at all times. Also, if WAL archiving is used, old segments can not be
+   removed or recycled until they are archived. If WAL archiving cannot keep up
+   with the pace that WAL is generated, or if <varname>archive_command</varname>
+   fails repeatedly, old WAL files will accumulate in <filename>pg_xlog</>
+   until the situation is resolved. A slow or failed standby server that
+   uses a replication slot will have the same effect (see
+   <xref linkend="streaming-replication-slots">).
   </para>
 
   <para>
@@ -571,9 +589,8 @@
    master because restartpoints can only be performed at checkpoint records.
    A restartpoint is triggered when a checkpoint record is reached if at
    least <varname>checkpoint_timeout</> seconds have passed since the last
-   restartpoint. In standby mode, a restartpoint is also triggered if at
-   least <varname>checkpoint_segments</> log segments have been replayed
-   since the last restartpoint.
+   restartpoint, or if WAL size is about to exceed
+   <varname>max_wal_size</>.
   </para>
 
   <para>

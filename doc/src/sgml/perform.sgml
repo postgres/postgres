@@ -1328,19 +1328,19 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </para>
   </sect2>
 
-  <sect2 id="populate-checkpoint-segments">
-   <title>Increase <varname>checkpoint_segments</varname></title>
+  <sect2 id="populate-max-wal-size">
+   <title>Increase <varname>max_wal_size</varname></title>
 
    <para>
-    Temporarily increasing the <xref
-    linkend="guc-checkpoint-segments"> configuration variable can also
+    Temporarily increasing the <xref linkend="guc-max-wal-size">
+    configuration variable can also
     make large data loads faster.  This is because loading a large
     amount of data into <productname>PostgreSQL</productname> will
     cause checkpoints to occur more often than the normal checkpoint
     frequency (specified by the <varname>checkpoint_timeout</varname>
     configuration variable). Whenever a checkpoint occurs, all dirty
     pages must be flushed to disk. By increasing
-    <varname>checkpoint_segments</varname> temporarily during bulk
+    <varname>max_wal_size</varname> temporarily during bulk
     data loads, the number of checkpoints that are required can be
     reduced.
    </para>
@@ -1445,7 +1445,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
       <para>
        Set appropriate (i.e., larger than normal) values for
        <varname>maintenance_work_mem</varname> and
-       <varname>checkpoint_segments</varname>.
+       <varname>max_wal_size</varname>.
       </para>
      </listitem>
      <listitem>
@@ -1512,7 +1512,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
     So when loading a data-only dump, it is up to you to drop and recreate
     indexes and foreign keys if you wish to use those techniques.
-    It's still useful to increase <varname>checkpoint_segments</varname>
+    It's still useful to increase <varname>max_wal_size</varname>
     while loading the data, but don't bother increasing
     <varname>maintenance_work_mem</varname>; rather, you'd do that while
     manually recreating indexes and foreign keys afterwards.
@@ -1577,7 +1577,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-       Increase <xref linkend="guc-checkpoint-segments"> and <xref
+       Increase <xref linkend="guc-max-wal-size"> and <xref
        linkend="guc-checkpoint-timeout"> ; this reduces the frequency
        of checkpoints, but increases the storage requirements of
        <filename>/pg_xlog</>.

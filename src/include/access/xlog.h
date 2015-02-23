@@ -89,7 +89,8 @@ extern XLogRecPtr XactLastRecEnd;
 extern bool reachedConsistency;
 
 /* these variables are GUC parameters related to XLOG */
-extern int	CheckPointSegments;
+extern int	min_wal_size;
+extern int	max_wal_size;
 extern int	wal_keep_segments;
 extern int	XLOGbuffers;
 extern int	XLogArchiveTimeout;
@@ -100,6 +101,8 @@ extern bool EnableHotStandby;
 extern bool fullPageWrites;
 extern bool wal_log_hints;
 extern bool log_checkpoints;
+
+extern int	CheckPointSegments;
 
 /* WAL levels */
 typedef enum WalLevel
@@ -245,6 +248,9 @@ extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
 extern void SetWalWriterSleeping(bool sleeping);
+
+extern void assign_max_wal_size(int newval, void *extra);
+extern void assign_checkpoint_completion_target(double newval, void *extra);
 
 /*
  * Starting/stopping a base backup

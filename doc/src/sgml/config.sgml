@@ -1325,7 +1325,7 @@ include_dir 'conf.d'
         40% of RAM to <varname>shared_buffers</varname> will work better than a
         smaller amount.  Larger settings for <varname>shared_buffers</varname>
         usually require a corresponding increase in
-        <varname>checkpoint_segments</varname>, in order to spread out the
+        <varname>max_wal_size</varname>, in order to spread out the
         process of writing large quantities of new or changed data over a
         longer period of time.
        </para>
@@ -2394,18 +2394,20 @@ include_dir 'conf.d'
      <title>Checkpoints</title>
 
     <variablelist>
-     <varlistentry id="guc-checkpoint-segments" xreflabel="checkpoint_segments">
-      <term><varname>checkpoint_segments</varname> (<type>integer</type>)
+     <varlistentry id="guc-max-wal-size" xreflabel="max_wal_size">
+      <term><varname>max_wal_size</varname> (<type>integer</type>)</term>
       <indexterm>
-       <primary><varname>checkpoint_segments</> configuration parameter</primary>
+       <primary><varname>max_wal_size</> configuration parameter</primary>
       </indexterm>
-      </term>
       <listitem>
        <para>
-        Maximum number of log file segments between automatic WAL
-        checkpoints (each segment is normally 16 megabytes). The default
-        is three segments.  Increasing this parameter can increase the
-        amount of time needed for crash recovery.
+        Maximum size to let the WAL grow to between automatic WAL
+        checkpoints. This is a soft limit; WAL size can exceed
+        <varname>max_wal_size</> under special circumstances, like
+        under heavy load, a failing <varname>archive_command</>, or a high
+        <varname>wal_keep_segments</> setting. The default is 128 MB.
+        Increasing this parameter can increase the amount of time needed for
+        crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -2458,10 +2460,28 @@ include_dir 'conf.d'
         Write a message to the server log if checkpoints caused by
         the filling of checkpoint segment files happen closer together
         than this many seconds (which suggests that
-        <varname>checkpoint_segments</> ought to be raised).  The default is
+        <varname>max_wal_size</> ought to be raised).  The default is
         30 seconds (<literal>30s</>).  Zero disables the warning.
         No warnings will be generated if <varname>checkpoint_timeout</varname>
         is less than <varname>checkpoint_warning</varname>.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-min-wal-size" xreflabel="min_wal_size">
+      <term><varname>min_wal_size</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>min_wal_size</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        As long as WAL disk usage stays below this setting, old WAL files are
+        always recycled for future use at a checkpoint, rather than removed.
+        This can be used to ensure that enough WAL space is reserved to
+        handle spikes in WAL usage, for example when running large batch
+        jobs. The default is 80 MB.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

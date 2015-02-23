@@ -685,6 +685,9 @@ typedef struct
 #if XLOG_BLCKSZ < 1024 || XLOG_BLCKSZ > (1024*1024)
 #error XLOG_BLCKSZ must be between 1KB and 1MB
 #endif
+#if XLOG_SEG_SIZE < (1024*1024) || XLOG_BLCKSZ > (1024*1024*1024)
+#error XLOG_SEG_SIZE must be between 1MB and 1GB
+#endif
 
 static const char *memory_units_hint =
 	gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
@@ -705,6 +708,11 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{ "GB",		GUC_UNIT_XBLOCKS,	(1024*1024) / (XLOG_BLCKSZ / 1024) },
 	{ "MB",		GUC_UNIT_XBLOCKS,	1024 / (XLOG_BLCKSZ / 1024) },
 	{ "kB",		GUC_UNIT_XBLOCKS,	-(XLOG_BLCKSZ / 1024) },
+
+	{ "TB",		GUC_UNIT_XSEGS,		(1024*1024*1024) / (XLOG_SEG_SIZE / 1024) },
+	{ "GB",		GUC_UNIT_XSEGS,		(1024*1024) / (XLOG_SEG_SIZE / 1024) },
+	{ "MB",		GUC_UNIT_XSEGS,		-(XLOG_SEG_SIZE / (1024 * 1024)) },
+	{ "kB",		GUC_UNIT_XSEGS,		-(XLOG_SEG_SIZE / 1024) },
 
 	{ "" }		/* end of table marker */
 };
@@ -2146,13 +2154,25 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"checkpoint_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
-			gettext_noop("Sets the maximum distance in log segments between automatic WAL checkpoints."),
-			NULL
+		{"min_wal_size", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Sets the minimum size to shrink the WAL to."),
+			NULL,
+			GUC_UNIT_XSEGS
 		},
-		&CheckPointSegments,
-		3, 1, INT_MAX,
+		&min_wal_size,
+		5, 2, INT_MAX,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"max_wal_size", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Sets the WAL size that triggers a checkpoint."),
+			NULL,
+			GUC_UNIT_XSEGS
+		},
+		&max_wal_size,
+		8, 2, INT_MAX,
+		NULL, assign_max_wal_size, NULL
 	},
 
 	{
