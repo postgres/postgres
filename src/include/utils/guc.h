@@ -212,6 +212,8 @@ typedef enum
 #define GUC_UNIT_MIN			0x4000	/* value is in minutes */
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
 
+#define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
+
 #define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
 #define GUC_DISALLOW_IN_AUTO_FILE	0x00010000	/* can't set in
 												 * PG_AUTOCONF_FILENAME */
