@@ -201,22 +201,21 @@ typedef enum
 #define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
 #define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
 #define GUC_IS_NAME				0x0200	/* limit string to NAMEDATALEN-1 */
+#define GUC_NOT_WHILE_SEC_REST	0x0400	/* can't set if security restricted */
+#define GUC_DISALLOW_IN_AUTO_FILE 0x0800 /* can't set in PG_AUTOCONF_FILENAME */
 
-#define GUC_UNIT_KB				0x0400	/* value is in kilobytes */
-#define GUC_UNIT_BLOCKS			0x0800	/* value is in blocks */
-#define GUC_UNIT_XBLOCKS		0x0C00	/* value is in xlog blocks */
-#define GUC_UNIT_MEMORY			0x0C00	/* mask for KB, BLOCKS, XBLOCKS */
+#define GUC_UNIT_KB				0x1000	/* value is in kilobytes */
+#define GUC_UNIT_BLOCKS			0x2000	/* value is in blocks */
+#define GUC_UNIT_XBLOCKS		0x3000	/* value is in xlog blocks */
+#define GUC_UNIT_MEMORY			0xF000	/* mask for KB, BLOCKS, XBLOCKS */
 
-#define GUC_UNIT_MS				0x1000	/* value is in milliseconds */
-#define GUC_UNIT_S				0x2000	/* value is in seconds */
-#define GUC_UNIT_MIN			0x4000	/* value is in minutes */
-#define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
+#define GUC_UNIT_MS			   0x10000	/* value is in milliseconds */
+#define GUC_UNIT_S			   0x20000	/* value is in seconds */
+#define GUC_UNIT_MIN		   0x30000	/* value is in minutes */
+#define GUC_UNIT_TIME		   0xF0000	/* mask for MS, S, MIN */
 
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 
-#define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
-#define GUC_DISALLOW_IN_AUTO_FILE	0x00010000	/* can't set in
-												 * PG_AUTOCONF_FILENAME */
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;
