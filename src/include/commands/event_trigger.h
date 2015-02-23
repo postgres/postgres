@@ -48,6 +48,7 @@ extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);
 
 extern bool EventTriggerSupportsObjectType(ObjectType obtype);
 extern bool EventTriggerSupportsObjectClass(ObjectClass objclass);
+extern bool EventTriggerSupportsGrantObjectType(GrantObjectType objtype);
 extern void EventTriggerDDLCommandStart(Node *parsetree);
 extern void EventTriggerDDLCommandEnd(Node *parsetree);
 extern void EventTriggerSQLDrop(Node *parsetree);
