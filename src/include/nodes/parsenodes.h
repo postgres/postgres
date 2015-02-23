@@ -233,6 +233,9 @@ typedef enum A_Expr_Kind
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF,					/* IS [NOT] OF - name must be "=" or "<>" */
 	AEXPR_IN,					/* [NOT] IN - name must be "=" or "<>" */
+	AEXPR_LIKE,					/* [NOT] LIKE - name must be "~~" or "!~~" */
+	AEXPR_ILIKE,				/* [NOT] ILIKE - name must be "~~*" or "!~~*" */
+	AEXPR_SIMILAR,				/* [NOT] SIMILAR - name must be "~" or "!~" */
 	AEXPR_BETWEEN,				/* name must be "BETWEEN" */
 	AEXPR_NOT_BETWEEN,			/* name must be "NOT BETWEEN" */
 	AEXPR_BETWEEN_SYM,			/* name must be "BETWEEN SYMMETRIC" */

@@ -994,7 +994,6 @@ typedef struct MinMaxExpr
  * Note: result type/typmod/collation are not stored, but can be deduced
  * from the XmlExprOp.  The type/typmod fields are just used for display
  * purposes, and are NOT necessarily the true result type of the node.
- * (We also use type == InvalidOid to mark a not-yet-parse-analyzed XmlExpr.)
  */
 typedef enum XmlExprOp
 {

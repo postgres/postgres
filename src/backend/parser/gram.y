@@ -11220,40 +11220,56 @@ a_expr:		c_expr									{ $$ = $1; }
 				{ $$ = makeNotExpr($2, @1); }
 
 			| a_expr LIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, $3, @2); }
+				{
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "~~",
+												   $1, $3, @2);
+				}
 			| a_expr LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($3, $5),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "~~",
+												   $1, (Node *) n, @2);
 				}
 			| a_expr NOT LIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, $4, @2); }
+				{
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "!~~",
+												   $1, $4, @2);
+				}
 			| a_expr NOT LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($4, $6),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "!~~",
+												   $1, (Node *) n, @2);
 				}
 			| a_expr ILIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, $3, @2); }
+				{
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "~~*",
+												   $1, $3, @2);
+				}
 			| a_expr ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($3, $5),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "~~*",
+												   $1, (Node *) n, @2);
 				}
 			| a_expr NOT ILIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, $4, @2); }
+				{
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "!~~*",
+												   $1, $4, @2);
+				}
 			| a_expr NOT ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($4, $6),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "!~~*",
+												   $1, (Node *) n, @2);
 				}
 
 			| a_expr SIMILAR TO a_expr				%prec SIMILAR
@@ -11261,28 +11277,32 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2($4, makeNullAConst(-1)),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "~",
+												   $1, (Node *) n, @2);
 				}
 			| a_expr SIMILAR TO a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2($4, $6),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "~",
+												   $1, (Node *) n, @2);
 				}
 			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2($5, makeNullAConst(-1)),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "!~",
+												   $1, (Node *) n, @2);
 				}
 			| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2($5, $7),
 											   @2);
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "!~",
+												   $1, (Node *) n, @2);
 				}
 
 			/* NullTest clause
@@ -11450,7 +11470,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						n->subLinkType = ANY_SUBLINK;
 						n->subLinkId = 0;
 						n->testexpr = $1;
-						n->operName = list_make1(makeString("="));
+						n->operName = NIL;		/* show it's IN not = ANY */
 						n->location = @2;
 						$$ = (Node *)n;
 					}
@@ -11471,9 +11491,9 @@ a_expr:		c_expr									{ $$ = $1; }
 						n->subLinkType = ANY_SUBLINK;
 						n->subLinkId = 0;
 						n->testexpr = $1;
-						n->operName = list_make1(makeString("="));
-						n->location = @3;
-						/* Stick a NOT on top */
+						n->operName = NIL;		/* show it's IN not = ANY */
+						n->location = @2;
+						/* Stick a NOT on top; must have same parse location */
 						$$ = makeNotExpr((Node *) n, @2);
 					}
 					else

@@ -182,6 +182,12 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 					case AEXPR_IN:
 						result = transformAExprIn(pstate, a);
 						break;
+					case AEXPR_LIKE:
+					case AEXPR_ILIKE:
+					case AEXPR_SIMILAR:
+						/* we can transform these just like AEXPR_OP */
+						result = transformAExprOp(pstate, a);
+						break;
 					case AEXPR_BETWEEN:
 					case AEXPR_NOT_BETWEEN:
 					case AEXPR_BETWEEN_SYM:
@@ -1647,6 +1653,12 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		List	   *left_list;
 		List	   *right_list;
 		ListCell   *l;
+
+		/*
+		 * If the source was "x IN (select)", convert to "x = ANY (select)".
+		 */
+		if (sublink->operName == NIL)
+			sublink->operName = list_make1(makeString("="));
 
 		/*
 		 * Transform lefthand expression, and convert to a list

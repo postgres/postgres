@@ -2516,6 +2516,18 @@ _outAExpr(StringInfo str, const A_Expr *node)
 			appendStringInfoString(str, " IN ");
 			WRITE_NODE_FIELD(name);
 			break;
+		case AEXPR_LIKE:
+			appendStringInfoString(str, " LIKE ");
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_ILIKE:
+			appendStringInfoString(str, " ILIKE ");
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_SIMILAR:
+			appendStringInfoString(str, " SIMILAR ");
+			WRITE_NODE_FIELD(name);
+			break;
 		case AEXPR_BETWEEN:
 			appendStringInfoString(str, " BETWEEN ");
 			WRITE_NODE_FIELD(name);
