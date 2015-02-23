@@ -2985,6 +2985,24 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-wal-retrieve-retry-interval" xreflabel="wal_retrieve_retry_interval">
+      <term><varname>wal_retrieve_retry_interval</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>wal_retrieve_retry_interval</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specify how long the standby server should wait when WAL data is not
+        available from any sources (streaming replication,
+        local <filename>pg_xlog</> or WAL archive) before retrying to
+        retrieve WAL data.  This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
+        The default value is 5 seconds. Units are milliseconds if not specified.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
    </sect1>

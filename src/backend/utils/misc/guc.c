@@ -2364,6 +2364,18 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"wal_retrieve_retry_interval", PGC_SIGHUP, REPLICATION_STANDBY,
+			gettext_noop("Sets the time to wait before retrying to retrieve WAL"
+						 "after a failed attempt."),
+			NULL,
+			GUC_UNIT_MS
+		},
+		&wal_retrieve_retry_interval,
+		5000, 1, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"wal_segment_size", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the number of pages per write ahead log segment."),
 			NULL,

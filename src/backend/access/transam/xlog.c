@@ -93,6 +93,7 @@ int			sync_method = DEFAULT_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_MINIMAL;
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
+int			wal_retrieve_retry_interval = 5000;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -10340,8 +10341,8 @@ static bool
 WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 							bool fetching_ckpt, XLogRecPtr tliRecPtr)
 {
-	static pg_time_t last_fail_time = 0;
-	pg_time_t	now;
+	static TimestampTz	last_fail_time = 0;
+	TimestampTz	now;
 
 	/*-------
 	 * Standby mode is implemented by a state machine:
@@ -10351,7 +10352,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 	 * 2. Check trigger file
 	 * 3. Read from primary server via walreceiver (XLOG_FROM_STREAM)
 	 * 4. Rescan timelines
-	 * 5. Sleep 5 seconds, and loop back to 1.
+	 * 5. Sleep wal_retrieve_retry_interval milliseconds, and loop back to 1.
 	 *
 	 * Failure to read from the current source advances the state machine to
 	 * the next state.
@@ -10490,14 +10491,25 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * machine, so we've exhausted all the options for
 					 * obtaining the requested WAL. We're going to loop back
 					 * and retry from the archive, but if it hasn't been long
-					 * since last attempt, sleep 5 seconds to avoid
-					 * busy-waiting.
+					 * since last attempt, sleep wal_retrieve_retry_interval
+					 * milliseconds to avoid busy-waiting.
 					 */
-					now = (pg_time_t) time(NULL);
-					if ((now - last_fail_time) < 5)
+					now = GetCurrentTimestamp();
+					if (!TimestampDifferenceExceeds(last_fail_time, now,
+													wal_retrieve_retry_interval))
 					{
-						pg_usleep(1000000L * (5 - (now - last_fail_time)));
-						now = (pg_time_t) time(NULL);
+						long		secs, wait_time;
+						int			usecs;
+
+						TimestampDifference(last_fail_time, now, &secs, &usecs);
+						wait_time = wal_retrieve_retry_interval -
+							(secs * 1000 + usecs / 1000);
+
+						WaitLatch(&XLogCtl->recoveryWakeupLatch,
+								  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+								  wait_time);
+						ResetLatch(&XLogCtl->recoveryWakeupLatch);
+						now = GetCurrentTimestamp();
 					}
 					last_fail_time = now;
 					currentSource = XLOG_FROM_ARCHIVE;
@@ -10653,12 +10665,11 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					}
 
 					/*
-					 * Wait for more WAL to arrive. Time out after 5 seconds,
-					 * like when polling the archive, to react to a trigger
-					 * file promptly.
+					 * Wait for more WAL to arrive. Time out after 5 seconds
+					 * to react to a trigger file promptly.
 					 */
 					WaitLatch(&XLogCtl->recoveryWakeupLatch,
-							  WL_LATCH_SET | WL_TIMEOUT,
+							  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 							  5000L);
 					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 					break;

@@ -260,6 +260,8 @@
 #wal_receiver_timeout = 60s		# time that receiver waits for
 					# communication from master
 					# in milliseconds; 0 disables
+#wal_retrieve_retry_interval = 5s	# time to wait before retrying to
+					# retrieve WAL after a failed attempt
 
 
 #------------------------------------------------------------------------------

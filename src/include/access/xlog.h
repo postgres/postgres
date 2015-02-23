@@ -93,6 +93,7 @@ extern int	CheckPointSegments;
 extern int	wal_keep_segments;
 extern int	XLOGbuffers;
 extern int	XLogArchiveTimeout;
+extern int	wal_retrieve_retry_interval;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
