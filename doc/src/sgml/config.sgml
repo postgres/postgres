@@ -2395,10 +2395,11 @@ include_dir 'conf.d'
 
     <variablelist>
      <varlistentry id="guc-max-wal-size" xreflabel="max_wal_size">
-      <term><varname>max_wal_size</varname> (<type>integer</type>)</term>
+      <term><varname>max_wal_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_wal_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Maximum size to let the WAL grow to between automatic WAL
@@ -2471,10 +2472,11 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-min-wal-size" xreflabel="min_wal_size">
-      <term><varname>min_wal_size</varname> (<type>integer</type>)</term>
+      <term><varname>min_wal_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>min_wal_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         As long as WAL disk usage stays below this setting, old WAL files are
