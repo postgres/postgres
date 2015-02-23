@@ -2673,6 +2673,20 @@ LockBufferForCleanup(Buffer buffer)
 		else
 			ProcWaitForSignal();
 
+		/*
+		 * Remove flag marking us as waiter. Normally this will not be set
+		 * anymore, but ProcWaitForSignal() can return for other signals as
+		 * well.  We take care to only reset the flag if we're the waiter, as
+		 * theoretically another backend could have started waiting. That's
+		 * impossible with the current usages due to table level locking, but
+		 * better be safe.
+		 */
+		LockBufHdr(bufHdr);
+		if ((bufHdr->flags & BM_PIN_COUNT_WAITER) != 0 &&
+			bufHdr->wait_backend_pid == MyProcPid)
+			bufHdr->flags &= ~BM_PIN_COUNT_WAITER;
+		UnlockBufHdr(bufHdr);
+
 		PinCountWaitBuf = NULL;
 		/* Loop back and try again */
 	}
