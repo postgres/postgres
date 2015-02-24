@@ -5303,7 +5303,7 @@
     <listitem>
      <para>
       Fix incorrect archive truncation point calculation for the
-      <literal>%r</> macro in <varname>recovery_command</> parameters
+      <literal>%r</> macro in <varname>restore_command</> parameters
       (Simon)
      </para>
 
