@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Cwd;
 use TestLib;
-use Test::More tests => 33;
+use Test::More tests => 35;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -48,6 +48,13 @@ ok(-d "$tempdir/xlog2/",             'xlog directory was created');
 command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup", '-Ft' ],
 	'tar format');
 ok(-f "$tempdir/tarbackup/base.tar", 'backup tar was created');
+
+my $superlongname = "superlongname_" . ("x"x100);
+
+system_or_bail 'touch', "$tempdir/pgdata/$superlongname";
+command_fails([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
+			  'pg_basebackup tar with long name fails');
+unlink "$tempdir/pgdata/$superlongname";
 
 # Create a temporary directory in the system location and symlink it
 # to our physical temp location.  That way we can use shorter names
@@ -117,3 +124,9 @@ command_fails(
 command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-Tfoo" ],
 	'-T with invalid format fails');
+
+mkdir "$tempdir/$superlongname";
+psql 'postgres', "CREATE TABLESPACE tblspc3 LOCATION '$tempdir/$superlongname';";
+command_fails([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
+			  'pg_basebackup tar with long symlink target fails');
+psql 'postgres', "DROP TABLESPACE tblspc3;";

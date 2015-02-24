@@ -11,5 +11,13 @@
  *
  *-------------------------------------------------------------------------
  */
-extern void tarCreateHeader(char *h, const char *filename, const char *linktarget, size_t size, mode_t mode, uid_t uid, gid_t gid, time_t mtime);
+
+enum tarError
+{
+	TAR_OK = 0,
+	TAR_NAME_TOO_LONG,
+	TAR_SYMLINK_TOO_LONG
+};
+
+extern enum tarError tarCreateHeader(char *h, const char *filename, const char *linktarget, size_t size, mode_t mode, uid_t uid, gid_t gid, time_t mtime);
 extern int	tarChecksum(char *header);

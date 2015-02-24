@@ -1258,10 +1258,29 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat * statbuf)
 {
 	char		h[512];
+	enum tarError rc;
 
-	tarCreateHeader(h, filename, linktarget, statbuf->st_size,
+	rc = tarCreateHeader(h, filename, linktarget, statbuf->st_size,
 					statbuf->st_mode, statbuf->st_uid, statbuf->st_gid,
 					statbuf->st_mtime);
+
+	switch (rc)
+	{
+		case TAR_OK:
+			break;
+		case TAR_NAME_TOO_LONG:
+			ereport(ERROR,
+					(errmsg("file name too long for tar format: \"%s\"",
+							filename)));
+			break;
+		case TAR_SYMLINK_TOO_LONG:
+			ereport(ERROR,
+					(errmsg("symbolic link target too long for tar format: file name \"%s\", target \"%s\"",
+							filename, linktarget)));
+			break;
+		default:
+			elog(ERROR, "unrecognized tar error: %d", rc);
+	}
 
 	pq_putmessage('d', h, 512);
 }
