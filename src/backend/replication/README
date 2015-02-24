@@ -42,7 +42,7 @@ Walreceiver IPC
 ---------------
 
 When the WAL replay in startup process has reached the end of archived WAL,
-recoverable using recovery_command, it starts up the walreceiver process
+restorable using restore_command, it starts up the walreceiver process
 to fetch more WAL (if streaming replication is configured).
 
 Walreceiver is a postmaster subprocess, so the startup process can't fork it
