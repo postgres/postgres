@@ -46,6 +46,8 @@ typedef struct base_yy_extra_type
 	int			lookahead_token;	/* one-token lookahead */
 	core_YYSTYPE lookahead_yylval;		/* yylval for lookahead token */
 	YYLTYPE		lookahead_yylloc;		/* yylloc for lookahead token */
+	char	   *lookahead_end;	/* end of current token */
+	char		lookahead_hold_char;	/* to be put back at *lookahead_end */
 
 	/*
 	 * State variables that belong to the grammar.

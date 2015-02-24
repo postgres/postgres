@@ -956,3 +956,8 @@ WITH t AS (
 )
 VALUES(FALSE);
 DROP RULE y_rule ON y;
+
+-- check that parser lookahead for WITH doesn't cause any odd behavior
+create table foo (with baz);  -- fail, WITH is a reserved word
+create table foo (with ordinality);  -- fail, WITH is a reserved word
+with ordinality as (select 1 as x) select * from ordinality;
