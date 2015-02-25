@@ -948,3 +948,19 @@ select * from only t1_2;
 select pg_get_viewdef('shoe'::regclass) as unpretty;
 select pg_get_viewdef('shoe'::regclass,true) as pretty;
 select pg_get_viewdef('shoe'::regclass,0) as prettier;
+
+--
+-- check display of VALUES in view definitions
+--
+create view rule_v1 as values(1,2);
+\d+ rule_v1
+drop view rule_v1;
+create view rule_v1(x) as values(1,2);
+\d+ rule_v1
+drop view rule_v1;
+create view rule_v1(x) as select * from (values(1,2)) v;
+\d+ rule_v1
+drop view rule_v1;
+create view rule_v1(x) as select * from (values(1,2)) v(q,w);
+\d+ rule_v1
+drop view rule_v1;

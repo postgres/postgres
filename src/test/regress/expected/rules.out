@@ -1623,3 +1623,53 @@ select pg_get_viewdef('shoe'::regclass,0) as prettier;
    WHERE sh.slunit = un.un_name;
 (1 row)
 
+--
+-- check display of VALUES in view definitions
+--
+create view rule_v1 as values(1,2);
+\d+ rule_v1
+                 View "public.rule_v1"
+ Column  |  Type   | Modifiers | Storage | Description 
+---------+---------+-----------+---------+-------------
+ column1 | integer |           | plain   | 
+ column2 | integer |           | plain   | 
+View definition:
+ VALUES (1,2);
+
+drop view rule_v1;
+create view rule_v1(x) as values(1,2);
+\d+ rule_v1
+                 View "public.rule_v1"
+ Column  |  Type   | Modifiers | Storage | Description 
+---------+---------+-----------+---------+-------------
+ x       | integer |           | plain   | 
+ column2 | integer |           | plain   | 
+View definition:
+ SELECT "*VALUES*".column1 AS x, "*VALUES*".column2
+   FROM (VALUES (1,2)) "*VALUES*";
+
+drop view rule_v1;
+create view rule_v1(x) as select * from (values(1,2)) v;
+\d+ rule_v1
+                 View "public.rule_v1"
+ Column  |  Type   | Modifiers | Storage | Description 
+---------+---------+-----------+---------+-------------
+ x       | integer |           | plain   | 
+ column2 | integer |           | plain   | 
+View definition:
+ SELECT v.column1 AS x, v.column2
+   FROM ( VALUES (1,2)) v;
+
+drop view rule_v1;
+create view rule_v1(x) as select * from (values(1,2)) v(q,w);
+\d+ rule_v1
+                View "public.rule_v1"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ x      | integer |           | plain   | 
+ w      | integer |           | plain   | 
+View definition:
+ SELECT v.q AS x, v.w
+   FROM ( VALUES (1,2)) v(q, w);
+
+drop view rule_v1;
