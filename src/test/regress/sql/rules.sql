@@ -953,6 +953,8 @@ select * from only t1;
 select * from only t1_1;
 select * from only t1_2;
 
+reset constraint_exclusion;
+
 -- test various flavors of pg_get_viewdef()
 
 select pg_get_viewdef('shoe'::regclass) as unpretty;
@@ -1007,3 +1009,19 @@ ALTER RULE "_RETURN" ON rule_v1 RENAME TO abc; -- ON SELECT rule cannot be renam
 
 DROP VIEW rule_v1;
 DROP TABLE rule_t1;
+
+--
+-- check display of VALUES in view definitions
+--
+create view rule_v1 as values(1,2);
+\d+ rule_v1
+drop view rule_v1;
+create view rule_v1(x) as values(1,2);
+\d+ rule_v1
+drop view rule_v1;
+create view rule_v1(x) as select * from (values(1,2)) v;
+\d+ rule_v1
+drop view rule_v1;
+create view rule_v1(x) as select * from (values(1,2)) v(q,w);
+\d+ rule_v1
+drop view rule_v1;
