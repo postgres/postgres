@@ -2878,11 +2878,72 @@ get_select_query_def(Query *query, deparse_context *context,
 	context->windowTList = save_windowtlist;
 }
 
+/*
+ * Detect whether query looks like SELECT ... FROM VALUES();
+ * if so, return the VALUES RTE.  Otherwise return NULL.
+ */
+static RangeTblEntry *
+get_simple_values_rte(Query *query)
+{
+	RangeTblEntry *result = NULL;
+	ListCell   *lc;
+
+	/*
+	 * We want to return TRUE even if the Query also contains OLD or NEW rule
+	 * RTEs.  So the idea is to scan the rtable and see if there is only one
+	 * inFromCl RTE that is a VALUES RTE.
+	 */
+	foreach(lc, query->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (rte->rtekind == RTE_VALUES && rte->inFromCl)
+		{
+			if (result)
+				return NULL;	/* multiple VALUES (probably not possible) */
+			result = rte;
+		}
+		else if (rte->rtekind == RTE_RELATION && !rte->inFromCl)
+			continue;			/* ignore rule entries */
+		else
+			return NULL;		/* something else -> not simple VALUES */
+	}
+
+	/*
+	 * We don't need to check the targetlist in any great detail, because
+	 * parser/analyze.c will never generate a "bare" VALUES RTE --- they only
+	 * appear inside auto-generated sub-queries with very restricted
+	 * structure.  However, DefineView might have modified the tlist by
+	 * injecting new column aliases; so compare tlist resnames against the
+	 * RTE's names to detect that.
+	 */
+	if (result)
+	{
+		ListCell   *lcn;
+
+		if (list_length(query->targetList) != list_length(result->eref->colnames))
+			return NULL;		/* this probably cannot happen */
+		forboth(lc, query->targetList, lcn, result->eref->colnames)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			char	   *cname = strVal(lfirst(lcn));
+
+			if (tle->resjunk)
+				return NULL;	/* this probably cannot happen */
+			if (tle->resname == NULL || strcmp(tle->resname, cname) != 0)
+				return NULL;	/* column name has been changed */
+		}
+	}
+
+	return result;
+}
+
 static void
 get_basic_select_query(Query *query, deparse_context *context,
 					   TupleDesc resultDesc)
 {
 	StringInfo	buf = context->buf;
+	RangeTblEntry *values_rte;
 	char	   *sep;
 	ListCell   *l;
 
@@ -2895,23 +2956,13 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/*
 	 * If the query looks like SELECT * FROM (VALUES ...), then print just the
 	 * VALUES part.  This reverses what transformValuesClause() did at parse
-	 * time.  If the jointree contains just a single VALUES RTE, we assume
-	 * this case applies (without looking at the targetlist...)
+	 * time.
 	 */
-	if (list_length(query->jointree->fromlist) == 1)
+	values_rte = get_simple_values_rte(query);
+	if (values_rte)
 	{
-		RangeTblRef *rtr = (RangeTblRef *) linitial(query->jointree->fromlist);
-
-		if (IsA(rtr, RangeTblRef))
-		{
-			RangeTblEntry *rte = rt_fetch(rtr->rtindex, query->rtable);
-
-			if (rte->rtekind == RTE_VALUES)
-			{
-				get_values_def(rte->values_lists, context);
-				return;
-			}
-		}
+		get_values_def(values_rte->values_lists, context);
+		return;
 	}
 
 	/*
@@ -6474,7 +6525,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				break;
 			case RTE_VALUES:
 				/* Values list RTE */
+				appendStringInfoChar(buf, '(');
 				get_values_def(rte->values_lists, context);
+				appendStringInfoChar(buf, ')');
 				break;
 			case RTE_CTE:
 				appendStringInfoString(buf, quote_identifier(rte->ctename));
@@ -6510,6 +6563,13 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			 * renaming of the function and/or instability of the
 			 * FigureColname rules for things that aren't simple functions.
 			 */
+			appendStringInfo(buf, " %s",
+							 quote_identifier(rte->eref->aliasname));
+			gavealias = true;
+		}
+		else if (rte->rtekind == RTE_VALUES)
+		{
+			/* Alias is syntactically required for VALUES */
 			appendStringInfo(buf, " %s",
 							 quote_identifier(rte->eref->aliasname));
 			gavealias = true;
