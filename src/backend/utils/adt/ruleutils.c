@@ -4495,10 +4495,7 @@ get_simple_values_rte(Query *query)
 	/*
 	 * We want to return TRUE even if the Query also contains OLD or NEW rule
 	 * RTEs.  So the idea is to scan the rtable and see if there is only one
-	 * inFromCl RTE that is a VALUES RTE.  We don't look at the targetlist at
-	 * all.  This is okay because parser/analyze.c will never generate a
-	 * "bare" VALUES RTE --- they only appear inside auto-generated
-	 * sub-queries with very restricted structure.
+	 * inFromCl RTE that is a VALUES RTE.
 	 */
 	foreach(lc, query->rtable)
 	{
@@ -4515,6 +4512,33 @@ get_simple_values_rte(Query *query)
 		else
 			return NULL;		/* something else -> not simple VALUES */
 	}
+
+	/*
+	 * We don't need to check the targetlist in any great detail, because
+	 * parser/analyze.c will never generate a "bare" VALUES RTE --- they only
+	 * appear inside auto-generated sub-queries with very restricted
+	 * structure.  However, DefineView might have modified the tlist by
+	 * injecting new column aliases; so compare tlist resnames against the
+	 * RTE's names to detect that.
+	 */
+	if (result)
+	{
+		ListCell   *lcn;
+
+		if (list_length(query->targetList) != list_length(result->eref->colnames))
+			return NULL;		/* this probably cannot happen */
+		forboth(lc, query->targetList, lcn, result->eref->colnames)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			char	   *cname = strVal(lfirst(lcn));
+
+			if (tle->resjunk)
+				return NULL;	/* this probably cannot happen */
+			if (tle->resname == NULL || strcmp(tle->resname, cname) != 0)
+				return NULL;	/* column name has been changed */
+		}
+	}
+
 	return result;
 }
 
@@ -8419,7 +8443,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				break;
 			case RTE_VALUES:
 				/* Values list RTE */
+				appendStringInfoChar(buf, '(');
 				get_values_def(rte->values_lists, context);
+				appendStringInfoChar(buf, ')');
 				break;
 			case RTE_CTE:
 				appendStringInfoString(buf, quote_identifier(rte->ctename));
@@ -8459,6 +8485,11 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			 * FigureColname rules for things that aren't simple functions.
 			 * Note we'd need to force it anyway for the columndef list case.
 			 */
+			printalias = true;
+		}
+		else if (rte->rtekind == RTE_VALUES)
+		{
+			/* Alias is syntactically required for VALUES */
 			printalias = true;
 		}
 		else if (rte->rtekind == RTE_CTE)
