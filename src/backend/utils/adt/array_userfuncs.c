@@ -28,14 +28,19 @@ static ArrayType *
 fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 {
 	ArrayType  *v;
+	Oid			element_type;
 	ArrayMetaState *my_extra;
 
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL)
+	/* First collect the array value */
+	if (!PG_ARGISNULL(argno))
 	{
-		/* First time through, so look up the array type and element type */
+		v = PG_GETARG_ARRAYTYPE_P(argno);
+		element_type = ARR_ELEMTYPE(v);
+	}
+	else
+	{
+		/* We have to look up the array type and element type */
 		Oid			arr_typeid = get_fn_expr_argtype(fcinfo->flinfo, argno);
-		Oid			element_type;
 
 		if (!OidIsValid(arr_typeid))
 			ereport(ERROR,
@@ -47,25 +52,28 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("input data type is not an array")));
 
+		v = construct_empty_array(element_type);
+	}
+
+	/* Now cache required info, which might change from call to call */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
 		my_extra = (ArrayMetaState *)
 			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 							   sizeof(ArrayMetaState));
-		my_extra->element_type = element_type;
+		my_extra->element_type = InvalidOid;
+		fcinfo->flinfo->fn_extra = my_extra;
+	}
 
-		/* Cache info about element type */
+	if (my_extra->element_type != element_type)
+	{
 		get_typlenbyvalalign(element_type,
 							 &my_extra->typlen,
 							 &my_extra->typbyval,
 							 &my_extra->typalign);
-
-		fcinfo->flinfo->fn_extra = my_extra;
+		my_extra->element_type = element_type;
 	}
-
-	/* Now we can collect the array value */
-	if (PG_ARGISNULL(argno))
-		v = construct_empty_array(my_extra->element_type);
-	else
-		v = PG_GETARG_ARRAYTYPE_P(argno);
 
 	return v;
 }
