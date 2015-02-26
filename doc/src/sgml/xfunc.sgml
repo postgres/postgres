@@ -2981,6 +2981,20 @@ SRF_RETURN_DONE(funcctx)
      <structfield>multi_call_memory_ctx</> while doing the first-call setup.
     </para>
 
+    <warning>
+     <para>
+      While the actual arguments to the function remain unchanged between
+      calls, if you detoast the argument values (which is normally done
+      transparently by the
+      <function>PG_GETARG_<replaceable>xxx</replaceable></function> macro)
+      in the transient context then the detoasted copies will be freed on
+      each cycle. Accordingly, if you keep references to such values in
+      your <structfield>user_fctx</>, you must either copy them into the
+      <structfield>multi_call_memory_ctx</> after detoasting, or ensure
+      that you detoast the values only in that context.
+     </para>
+    </warning>
+
     <para>
      A complete pseudo-code example looks like the following:
 <programlisting>
