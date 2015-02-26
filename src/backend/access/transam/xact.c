@@ -918,6 +918,7 @@ RecordTransactionCommit(void)
 	int			nmsgs = 0;
 	SharedInvalidationMessage *invalMessages = NULL;
 	bool		RelcacheInitFileInval = false;
+	bool		wrote_xlog = XactLastRecEnd.xrecoff != 0;
 
 	/* Get data needed for commit record */
 	nrels = smgrGetPendingDeletes(true, &rels, &haveNonTemp);
@@ -946,12 +947,11 @@ RecordTransactionCommit(void)
 
 		/*
 		 * If we didn't create XLOG entries, we're done here; otherwise we
-		 * should flush those entries the same as a commit record.  (An
-		 * example of a possible record that wouldn't cause an XID to be
-		 * assigned is a sequence advance record due to nextval() --- we want
-		 * to flush that to disk before reporting commit.)
+		 * should trigger flushing those entries the same as a commit record
+		 * would.  This will primarily happen for HOT pruning and the like; we
+		 * want these to be flushed to disk in due time.
 		 */
-		if (XactLastRecEnd.xrecoff == 0)
+		if (!wrote_xlog)
 			goto cleanup;
 	}
 	else
@@ -1039,16 +1039,31 @@ RecordTransactionCommit(void)
 	}
 
 	/*
-	 * Check if we want to commit asynchronously.  If the user has set
-	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
-	 * rels nor committing any command that wanted to force sync commit, then
-	 * we can defer flushing XLOG.  (We must not allow asynchronous commit if
-	 * there are any non-temp tables to be deleted, because we might delete
-	 * the files before the COMMIT record is flushed to disk.  We do allow
-	 * asynchronous commit if all to-be-deleted tables are temporary though,
-	 * since they are lost anyway if we crash.)
+	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
+	 * to happen asynchronously if synchronous_commit=off, or if the current
+	 * transaction has not performed any WAL-logged operation or didn't assign
+	 * a xid.  The transaction can end up not writing any WAL, even if it has
+	 * a xid, if it only wrote to temporary tables.  It can end up having
+	 * written WAL without an xid if it did HOT pruning.  In case of a crash,
+	 * the loss of such a transaction will be irrelevant; temp tables will be
+	 * lost anyway and HOT pruning will be done again later. (Given the
+	 * foregoing, you might think that it would be unnecessary to emit the
+	 * XLOG record at all in this case, but we don't currently try to do that.
+	 * It would certainly cause problems at least in Hot Standby mode, where
+	 * the KnownAssignedXids machinery requires tracking every XID assignment.
+	 * It might be OK to skip it only when wal_level < hot_standby, but for
+	 * now we don't.)
+	 *
+	 * However, if we're doing cleanup of any non-temp rels or committing any
+	 * command that wanted to force sync commit, then we must flush XLOG
+	 * immediately.  (We must not allow asynchronous commit if there are any
+	 * non-temp tables to be deleted, because we might delete the files before
+	 * the COMMIT record is flushed to disk.  We do allow asynchronous commit
+	 * if all to-be-deleted tables are temporary though, since they are lost
+	 * anyway if we crash.)
 	 */
-	if (XactSyncCommit || forceSyncCommit || haveNonTemp)
+	if ((wrote_xlog && markXidCommitted && XactSyncCommit)
+		|| forceSyncCommit || haveNonTemp)
 	{
 		/*
 		 * Synchronous commit case:
