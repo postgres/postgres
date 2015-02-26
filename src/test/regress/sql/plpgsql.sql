@@ -2118,11 +2118,19 @@ begin
 	    raise notice '% %', sqlstate, sqlerrm;
     end;
 end; $$ language plpgsql;
-
 select excpt_test3();
+
+create function excpt_test4() returns text as $$
+begin
+	begin perform 1/0;
+	exception when others then return sqlerrm; end;
+end; $$ language plpgsql;
+select excpt_test4();
+
 drop function excpt_test1();
 drop function excpt_test2();
 drop function excpt_test3();
+drop function excpt_test4();
 
 -- parameters of raise stmt can be expressions
 create function raise_exprs() returns void as $$
