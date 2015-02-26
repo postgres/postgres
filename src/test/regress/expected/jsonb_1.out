@@ -330,6 +330,30 @@ select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
 (1 row)
 
 COMMIT;
+select to_jsonb(date '2014-05-28');
+   to_jsonb   
+--------------
+ "2014-05-28"
+(1 row)
+
+select to_jsonb(date 'Infinity');
+  to_jsonb  
+------------
+ "infinity"
+(1 row)
+
+select to_jsonb(timestamp 'Infinity');
+  to_jsonb  
+------------
+ "infinity"
+(1 row)
+
+select to_jsonb(timestamptz 'Infinity');
+  to_jsonb  
+------------
+ "infinity"
+(1 row)
+
 --jsonb_agg
 CREATE TEMP TABLE rows AS
 SELECT x, 'txt' || x as y

@@ -111,6 +111,12 @@ SET LOCAL TIME ZONE -8;
 select to_json(timestamptz '2014-05-28 12:22:35.614298-04');
 COMMIT;
 
+select to_json(date '2014-05-28');
+
+select to_json(date 'Infinity');
+select to_json(timestamp 'Infinity');
+select to_json(timestamptz 'Infinity');
+
 --json_agg
 
 SELECT json_agg(q)

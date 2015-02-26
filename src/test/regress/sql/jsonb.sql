@@ -74,6 +74,12 @@ SET LOCAL TIME ZONE -8;
 select to_jsonb(timestamptz '2014-05-28 12:22:35.614298-04');
 COMMIT;
 
+select to_jsonb(date '2014-05-28');
+
+select to_jsonb(date 'Infinity');
+select to_jsonb(timestamp 'Infinity');
+select to_jsonb(timestamptz 'Infinity');
+
 --jsonb_agg
 
 CREATE TEMP TABLE rows AS
