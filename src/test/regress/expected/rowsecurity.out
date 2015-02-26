@@ -1034,22 +1034,25 @@ EXPLAIN (COSTS OFF) EXECUTE p2(2);
 --
 SET SESSION AUTHORIZATION rls_regress_user1;
 EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
-             QUERY PLAN              
--------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Update on t1 t1_3
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_4
-               Filter: ((a % 2) = 0)
+         ->  LockRows
+               ->  Seq Scan on t1 t1_4
+                     Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_1
          Filter: f_leak(t1_1.b)
-         ->  Seq Scan on t2
-               Filter: ((a % 2) = 0)
+         ->  LockRows
+               ->  Seq Scan on t2
+                     Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_2
          Filter: f_leak(t1_2.b)
-         ->  Seq Scan on t3
-               Filter: ((a % 2) = 0)
-(13 rows)
+         ->  LockRows
+               ->  Seq Scan on t3
+                     Filter: ((a % 2) = 0)
+(16 rows)
 
 UPDATE t1 SET b = b || b WHERE f_leak(b);
 NOTICE:  f_leak => bbb
@@ -1058,14 +1061,15 @@ NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
 EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
-             QUERY PLAN              
--------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Update on t1 t1_1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_2
-               Filter: ((a % 2) = 0)
-(5 rows)
+         ->  LockRows
+               ->  Seq Scan on t1 t1_2
+                     Filter: ((a % 2) = 0)
+(6 rows)
 
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 NOTICE:  f_leak => bbbbbb
@@ -1131,32 +1135,36 @@ SELECT * FROM t1;
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO ON;
 EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
-             QUERY PLAN              
--------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Delete on t1 t1_1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_2
-               Filter: ((a % 2) = 0)
-(5 rows)
+         ->  LockRows
+               ->  Seq Scan on t1 t1_2
+                     Filter: ((a % 2) = 0)
+(6 rows)
 
 EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
-             QUERY PLAN              
--------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Delete on t1 t1_3
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_4
-               Filter: ((a % 2) = 0)
+         ->  LockRows
+               ->  Seq Scan on t1 t1_4
+                     Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_1
          Filter: f_leak(t1_1.b)
-         ->  Seq Scan on t2
-               Filter: ((a % 2) = 0)
+         ->  LockRows
+               ->  Seq Scan on t2
+                     Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_2
          Filter: f_leak(t1_2.b)
-         ->  Seq Scan on t3
-               Filter: ((a % 2) = 0)
-(13 rows)
+         ->  LockRows
+               ->  Seq Scan on t3
+                     Filter: ((a % 2) = 0)
+(16 rows)
 
 DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt

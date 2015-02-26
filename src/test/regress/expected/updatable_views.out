@@ -1842,24 +1842,26 @@ EXPLAIN (costs off) SELECT * FROM rw_view1 WHERE snoop(person);
 (4 rows)
 
 EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
-                     QUERY PLAN                      
------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Update on base_tbl base_tbl_1
    ->  Subquery Scan on base_tbl
          Filter: snoop(base_tbl.person)
-         ->  Seq Scan on base_tbl base_tbl_2
-               Filter: (visibility = 'public'::text)
-(5 rows)
+         ->  LockRows
+               ->  Seq Scan on base_tbl base_tbl_2
+                     Filter: (visibility = 'public'::text)
+(6 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
-                     QUERY PLAN                      
------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Delete on base_tbl base_tbl_1
    ->  Subquery Scan on base_tbl
          Filter: (NOT snoop(base_tbl.person))
-         ->  Seq Scan on base_tbl base_tbl_2
-               Filter: (visibility = 'public'::text)
-(5 rows)
+         ->  LockRows
+               ->  Seq Scan on base_tbl base_tbl_2
+                     Filter: (visibility = 'public'::text)
+(6 rows)
 
 -- security barrier view on top of security barrier view
 CREATE VIEW rw_view2 WITH (security_barrier = true) AS
@@ -1922,28 +1924,30 @@ EXPLAIN (costs off) SELECT * FROM rw_view2 WHERE snoop(person);
 (6 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
-                        QUERY PLAN                         
------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Update on base_tbl base_tbl_1
    ->  Subquery Scan on base_tbl
          Filter: snoop(base_tbl.person)
          ->  Subquery Scan on base_tbl_2
                Filter: snoop(base_tbl_2.person)
-               ->  Seq Scan on base_tbl base_tbl_3
-                     Filter: (visibility = 'public'::text)
-(7 rows)
+               ->  LockRows
+                     ->  Seq Scan on base_tbl base_tbl_3
+                           Filter: (visibility = 'public'::text)
+(8 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
-                        QUERY PLAN                         
------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Delete on base_tbl base_tbl_1
    ->  Subquery Scan on base_tbl
          Filter: (NOT snoop(base_tbl.person))
          ->  Subquery Scan on base_tbl_2
                Filter: snoop(base_tbl_2.person)
-               ->  Seq Scan on base_tbl base_tbl_3
-                     Filter: (visibility = 'public'::text)
-(7 rows)
+               ->  LockRows
+                     ->  Seq Scan on base_tbl base_tbl_3
+                           Filter: (visibility = 'public'::text)
+(8 rows)
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
@@ -2057,70 +2061,78 @@ SELECT * FROM v1 WHERE a=8;
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
-                                        QUERY PLAN                                         
--------------------------------------------------------------------------------------------
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
  Update on public.t1 t1_4
    ->  Subquery Scan on t1
          Output: 100, t1.b, t1.c, t1.ctid
          Filter: snoop(t1.a)
-         ->  Nested Loop Semi Join
-               Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
-               ->  Seq Scan on public.t1 t1_5
-                     Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
-                     Filter: ((t1_5.a > 5) AND (t1_5.a = 3) AND leakproof(t1_5.a))
-               ->  Append
-                     ->  Seq Scan on public.t12
-                           Output: t12.a
-                           Filter: (t12.a = 3)
-                     ->  Seq Scan on public.t111
-                           Output: t111.a
-                           Filter: (t111.a = 3)
+         ->  LockRows
+               Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
+                     ->  Seq Scan on public.t1 t1_5
+                           Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
+                           Filter: ((t1_5.a > 5) AND (t1_5.a = 3) AND leakproof(t1_5.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12
+                                 Output: t12.ctid, t12.tableoid, t12.a
+                                 Filter: (t12.a = 3)
+                           ->  Seq Scan on public.t111
+                                 Output: t111.ctid, t111.tableoid, t111.a
+                                 Filter: (t111.a = 3)
    ->  Subquery Scan on t1_1
          Output: 100, t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
          Filter: snoop(t1_1.a)
-         ->  Nested Loop Semi Join
-               Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
-               ->  Seq Scan on public.t11
-                     Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
-                     Filter: ((t11.a > 5) AND (t11.a = 3) AND leakproof(t11.a))
-               ->  Append
-                     ->  Seq Scan on public.t12 t12_1
-                           Output: t12_1.a
-                           Filter: (t12_1.a = 3)
-                     ->  Seq Scan on public.t111 t111_1
-                           Output: t111_1.a
-                           Filter: (t111_1.a = 3)
+         ->  LockRows
+               Output: t11.ctid, t11.a, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t11.ctid, t11.a, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
+                     ->  Seq Scan on public.t11
+                           Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
+                           Filter: ((t11.a > 5) AND (t11.a = 3) AND leakproof(t11.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_1
+                                 Output: t12_1.ctid, t12_1.tableoid, t12_1.a
+                                 Filter: (t12_1.a = 3)
+                           ->  Seq Scan on public.t111 t111_1
+                                 Output: t111_1.ctid, t111_1.tableoid, t111_1.a
+                                 Filter: (t111_1.a = 3)
    ->  Subquery Scan on t1_2
          Output: 100, t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
          Filter: snoop(t1_2.a)
-         ->  Nested Loop Semi Join
-               Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
-               ->  Seq Scan on public.t12 t12_2
-                     Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
-                     Filter: ((t12_2.a > 5) AND (t12_2.a = 3) AND leakproof(t12_2.a))
-               ->  Append
-                     ->  Seq Scan on public.t12 t12_3
-                           Output: t12_3.a
-                           Filter: (t12_3.a = 3)
-                     ->  Seq Scan on public.t111 t111_2
-                           Output: t111_2.a
-                           Filter: (t111_2.a = 3)
+         ->  LockRows
+               Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
+                     ->  Seq Scan on public.t12 t12_2
+                           Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
+                           Filter: ((t12_2.a > 5) AND (t12_2.a = 3) AND leakproof(t12_2.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_3
+                                 Output: t12_3.ctid, t12_3.tableoid, t12_3.a
+                                 Filter: (t12_3.a = 3)
+                           ->  Seq Scan on public.t111 t111_2
+                                 Output: t111_2.ctid, t111_2.tableoid, t111_2.a
+                                 Filter: (t111_2.a = 3)
    ->  Subquery Scan on t1_3
          Output: 100, t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
          Filter: snoop(t1_3.a)
-         ->  Nested Loop Semi Join
-               Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
-               ->  Seq Scan on public.t111 t111_3
-                     Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
-                     Filter: ((t111_3.a > 5) AND (t111_3.a = 3) AND leakproof(t111_3.a))
-               ->  Append
-                     ->  Seq Scan on public.t12 t12_4
-                           Output: t12_4.a
-                           Filter: (t12_4.a = 3)
-                     ->  Seq Scan on public.t111 t111_4
-                           Output: t111_4.a
-                           Filter: (t111_4.a = 3)
-(61 rows)
+         ->  LockRows
+               Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
+                     ->  Seq Scan on public.t111 t111_3
+                           Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+                           Filter: ((t111_3.a > 5) AND (t111_3.a = 3) AND leakproof(t111_3.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_4
+                                 Output: t12_4.ctid, t12_4.tableoid, t12_4.a
+                                 Filter: (t12_4.a = 3)
+                           ->  Seq Scan on public.t111 t111_4
+                                 Output: t111_4.ctid, t111_4.tableoid, t111_4.a
+                                 Filter: (t111_4.a = 3)
+(69 rows)
 
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
@@ -2135,70 +2147,78 @@ SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
-                                        QUERY PLAN                                         
--------------------------------------------------------------------------------------------
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
  Update on public.t1 t1_4
    ->  Subquery Scan on t1
          Output: (t1.a + 1), t1.b, t1.c, t1.ctid
          Filter: snoop(t1.a)
-         ->  Nested Loop Semi Join
-               Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
-               ->  Seq Scan on public.t1 t1_5
-                     Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
-                     Filter: ((t1_5.a > 5) AND (t1_5.a = 8) AND leakproof(t1_5.a))
-               ->  Append
-                     ->  Seq Scan on public.t12
-                           Output: t12.a
-                           Filter: (t12.a = 8)
-                     ->  Seq Scan on public.t111
-                           Output: t111.a
-                           Filter: (t111.a = 8)
+         ->  LockRows
+               Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
+                     ->  Seq Scan on public.t1 t1_5
+                           Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
+                           Filter: ((t1_5.a > 5) AND (t1_5.a = 8) AND leakproof(t1_5.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12
+                                 Output: t12.ctid, t12.tableoid, t12.a
+                                 Filter: (t12.a = 8)
+                           ->  Seq Scan on public.t111
+                                 Output: t111.ctid, t111.tableoid, t111.a
+                                 Filter: (t111.a = 8)
    ->  Subquery Scan on t1_1
          Output: (t1_1.a + 1), t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
          Filter: snoop(t1_1.a)
-         ->  Nested Loop Semi Join
-               Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
-               ->  Seq Scan on public.t11
-                     Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
-                     Filter: ((t11.a > 5) AND (t11.a = 8) AND leakproof(t11.a))
-               ->  Append
-                     ->  Seq Scan on public.t12 t12_1
-                           Output: t12_1.a
-                           Filter: (t12_1.a = 8)
-                     ->  Seq Scan on public.t111 t111_1
-                           Output: t111_1.a
-                           Filter: (t111_1.a = 8)
+         ->  LockRows
+               Output: t11.a, t11.ctid, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t11.a, t11.ctid, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
+                     ->  Seq Scan on public.t11
+                           Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
+                           Filter: ((t11.a > 5) AND (t11.a = 8) AND leakproof(t11.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_1
+                                 Output: t12_1.ctid, t12_1.tableoid, t12_1.a
+                                 Filter: (t12_1.a = 8)
+                           ->  Seq Scan on public.t111 t111_1
+                                 Output: t111_1.ctid, t111_1.tableoid, t111_1.a
+                                 Filter: (t111_1.a = 8)
    ->  Subquery Scan on t1_2
          Output: (t1_2.a + 1), t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
          Filter: snoop(t1_2.a)
-         ->  Nested Loop Semi Join
-               Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
-               ->  Seq Scan on public.t12 t12_2
-                     Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
-                     Filter: ((t12_2.a > 5) AND (t12_2.a = 8) AND leakproof(t12_2.a))
-               ->  Append
-                     ->  Seq Scan on public.t12 t12_3
-                           Output: t12_3.a
-                           Filter: (t12_3.a = 8)
-                     ->  Seq Scan on public.t111 t111_2
-                           Output: t111_2.a
-                           Filter: (t111_2.a = 8)
+         ->  LockRows
+               Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
+                     ->  Seq Scan on public.t12 t12_2
+                           Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
+                           Filter: ((t12_2.a > 5) AND (t12_2.a = 8) AND leakproof(t12_2.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_3
+                                 Output: t12_3.ctid, t12_3.tableoid, t12_3.a
+                                 Filter: (t12_3.a = 8)
+                           ->  Seq Scan on public.t111 t111_2
+                                 Output: t111_2.ctid, t111_2.tableoid, t111_2.a
+                                 Filter: (t111_2.a = 8)
    ->  Subquery Scan on t1_3
          Output: (t1_3.a + 1), t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
          Filter: snoop(t1_3.a)
-         ->  Nested Loop Semi Join
-               Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
-               ->  Seq Scan on public.t111 t111_3
-                     Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
-                     Filter: ((t111_3.a > 5) AND (t111_3.a = 8) AND leakproof(t111_3.a))
-               ->  Append
-                     ->  Seq Scan on public.t12 t12_4
-                           Output: t12_4.a
-                           Filter: (t12_4.a = 8)
-                     ->  Seq Scan on public.t111 t111_4
-                           Output: t111_4.a
-                           Filter: (t111_4.a = 8)
-(61 rows)
+         ->  LockRows
+               Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
+               ->  Nested Loop Semi Join
+                     Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
+                     ->  Seq Scan on public.t111 t111_3
+                           Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+                           Filter: ((t111_3.a > 5) AND (t111_3.a = 8) AND leakproof(t111_3.a))
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_4
+                                 Output: t12_4.ctid, t12_4.tableoid, t12_4.a
+                                 Filter: (t12_4.a = 8)
+                           ->  Seq Scan on public.t111 t111_4
+                                 Output: t111_4.ctid, t111_4.tableoid, t111_4.a
+                                 Filter: (t111_4.a = 8)
+(69 rows)
 
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
 NOTICE:  snooped value: 8
