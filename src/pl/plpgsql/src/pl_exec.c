@@ -1243,8 +1243,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				{
 					/*
 					 * Initialize the magic SQLSTATE and SQLERRM variables for
-					 * the exception block. We needn't do this until we have
-					 * found a matching exception.
+					 * the exception block; this also frees values from any
+					 * prior use of the same exception. We needn't do this
+					 * until we have found a matching exception.
 					 */
 					PLpgSQL_var *state_var;
 					PLpgSQL_var *errm_var;
@@ -1267,13 +1268,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					estate->err_text = NULL;
 
 					rc = exec_stmts(estate, exception->action);
-
-					free_var(state_var);
-					state_var->value = (Datum) 0;
-					state_var->isnull = true;
-					free_var(errm_var);
-					errm_var->value = (Datum) 0;
-					errm_var->isnull = true;
 
 					break;
 				}
