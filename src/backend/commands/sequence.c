@@ -343,6 +343,10 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
+	/* check the comment above nextval_internal()'s equivalent call. */
+	if (RelationNeedsWAL(rel))
+		GetTopTransactionId();
+
 	START_CRIT_SECTION();
 
 	{
@@ -435,6 +439,10 @@ AlterSequence(AlterSeqStmt *stmt)
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
 	elm->cached = elm->last;
+
+	/* check the comment above nextval_internal()'s equivalent call. */
+	if (RelationNeedsWAL(seqrel))
+		GetTopTransactionId();
 
 	/* Now okay to update the on-disk tuple */
 	START_CRIT_SECTION();
@@ -669,6 +677,16 @@ nextval_internal(Oid relid)
 
 	last_used_seq = elm;
 
+	/*
+	 * If something needs to be WAL logged, acquire an xid, so this
+	 * transaction's commit will trigger a WAL flush and wait for
+	 * syncrep. It's sufficient to ensure the toplevel transaction has a xid,
+	 * no need to assign xids subxacts, that'll already trigger a appropriate
+	 * wait.  (Have to do that here, so we're outside the critical section)
+	 */
+	if (logit && RelationNeedsWAL(seqrel))
+		GetTopTransactionId();
+
 	/* ready to change the on-disk (or really, in-buffer) tuple */
 	START_CRIT_SECTION();
 
@@ -862,6 +880,10 @@ do_setval(Oid relid, int64 next, bool iscalled)
 
 	/* In any case, forget any future cached numbers */
 	elm->cached = elm->last;
+
+	/* check the comment above nextval_internal()'s equivalent call. */
+	if (RelationNeedsWAL(seqrel))
+		GetTopTransactionId();
 
 	/* ready to change the on-disk (or really, in-buffer) tuple */
 	START_CRIT_SECTION();
