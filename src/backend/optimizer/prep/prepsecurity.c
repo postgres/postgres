@@ -37,7 +37,7 @@ typedef struct
 } security_barrier_replace_vars_context;
 
 static void expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
-					 RangeTblEntry *rte, Node *qual);
+					 RangeTblEntry *rte, Node *qual, bool targetRelation);
 
 static void security_barrier_replace_vars(Node *node,
 							  security_barrier_replace_vars_context *context);
@@ -63,6 +63,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 	Query	   *parse = root->parse;
 	int			rt_index;
 	ListCell   *cell;
+	bool		targetRelation = false;
 
 	/*
 	 * Process each RTE in the rtable list.
@@ -97,6 +98,15 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 		if (rt_index == parse->resultRelation)
 		{
 			RangeTblEntry *newrte = copyObject(rte);
+
+			/*
+			 * We need to let expand_security_qual know if this is the target
+			 * relation, as it has additional work to do in that case.
+			 *
+			 * Capture that information here as we're about to replace
+			 * parse->resultRelation.
+			 */
+			targetRelation = true;
 
 			parse->rtable = lappend(parse->rtable, newrte);
 			parse->resultRelation = list_length(parse->rtable);
@@ -147,7 +157,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			rte->securityQuals = list_delete_first(rte->securityQuals);
 
 			ChangeVarNodes(qual, rt_index, 1, 0);
-			expand_security_qual(root, tlist, rt_index, rte, qual);
+			expand_security_qual(root, tlist, rt_index, rte, qual,
+								 targetRelation);
 		}
 	}
 }
@@ -160,7 +171,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
  */
 static void
 expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
-					 RangeTblEntry *rte, Node *qual)
+					 RangeTblEntry *rte, Node *qual, bool targetRelation)
 {
 	Query	   *parse = root->parse;
 	Oid			relid = rte->relid;
@@ -219,10 +230,11 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			 * Now deal with any PlanRowMark on this RTE by requesting a lock
 			 * of the same strength on the RTE copied down to the subquery.
 			 *
-			 * Note that we can't push the user-defined quals down since they
-			 * may included untrusted functions and that means that we will
-			 * end up locking all rows which pass the securityQuals, even if
-			 * those rows don't pass the user-defined quals.  This is
+			 * Note that we can only push down user-defined quals if they are
+			 * only using leakproof (and therefore trusted) functions and
+			 * operators.  As a result, we may end up locking more rows than
+			 * strictly necessary (and, in the worst case, we could end up
+			 * locking all rows which pass the securityQuals).  This is
 			 * currently documented behavior, but it'd be nice to come up with
 			 * a better solution some day.
 			 */
@@ -255,6 +267,15 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 				root->rowMarks = list_delete(root->rowMarks, rc);
 			}
 
+			/*
+			 * When we are replacing the target relation with a subquery, we
+			 * need to make sure to add a locking clause explicitly to the
+			 * generated subquery since there won't be any row marks against
+			 * the target relation itself.
+			 */
+			if (targetRelation)
+				applyLockingClause(subquery, 1, LCS_FORUPDATE,
+								   false, false);
 			/*
 			 * Replace any variables in the outer query that refer to the
 			 * original relation RTE with references to columns that we will
