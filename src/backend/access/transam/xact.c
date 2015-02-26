@@ -1034,10 +1034,9 @@ RecordTransactionCommit(void)
 
 		/*
 		 * If we didn't create XLOG entries, we're done here; otherwise we
-		 * should flush those entries the same as a commit record.  (An
-		 * example of a possible record that wouldn't cause an XID to be
-		 * assigned is a sequence advance record due to nextval() --- we want
-		 * to flush that to disk before reporting commit.)
+		 * should trigger flushing those entries the same as a commit record
+		 * would.  This will primarily happen for HOT pruning and the like; we
+		 * want these to be flushed to disk in due time.
 		 */
 		if (!wrote_xlog)
 			goto cleanup;
@@ -1168,11 +1167,13 @@ RecordTransactionCommit(void)
 	/*
 	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
 	 * to happen asynchronously if synchronous_commit=off, or if the current
-	 * transaction has not performed any WAL-logged operation.  The latter
-	 * case can arise if the current transaction wrote only to temporary
-	 * and/or unlogged tables.  In case of a crash, the loss of such a
-	 * transaction will be irrelevant since temp tables will be lost anyway,
-	 * and unlogged tables will be truncated.  (Given the foregoing, you might
+	 * transaction has not performed any WAL-logged operation or didn't assign
+	 * a xid.  The transaction can end up not writing any WAL, even if it has
+	 * a xid, if it only wrote to temporary and/or unlogged tables.  It can
+	 * end up having written WAL without an xid if it did HOT pruning.  In
+	 * case of a crash, the loss of such a transaction will be irrelevant;
+	 * temp tables will be lost anyway, unlogged tables will be truncated and
+	 * HOT pruning will be done again later. (Given the foregoing, you might
 	 * think that it would be unnecessary to emit the XLOG record at all in
 	 * this case, but we don't currently try to do that.  It would certainly
 	 * cause problems at least in Hot Standby mode, where the
@@ -1188,7 +1189,8 @@ RecordTransactionCommit(void)
 	 * if all to-be-deleted tables are temporary though, since they are lost
 	 * anyway if we crash.)
 	 */
-	if ((wrote_xlog && synchronous_commit > SYNCHRONOUS_COMMIT_OFF) ||
+	if ((wrote_xlog && markXidCommitted &&
+		 synchronous_commit > SYNCHRONOUS_COMMIT_OFF) ||
 		forceSyncCommit || nrels > 0)
 	{
 		XLogFlush(XactLastRecEnd);
@@ -1237,12 +1239,15 @@ RecordTransactionCommit(void)
 	latestXid = TransactionIdLatest(xid, nchildren, children);
 
 	/*
-	 * Wait for synchronous replication, if required.
+	 * Wait for synchronous replication, if required. Similar to the decision
+	 * above about using committing asynchronously we only want to wait if
+	 * this backend assigned a xid and wrote WAL.  No need to wait if a xid
+	 * was assigned due to temporary/unlogged tables or due to HOT pruning.
 	 *
 	 * Note that at this stage we have marked clog, but still show as running
 	 * in the procarray and continue to hold locks.
 	 */
-	if (wrote_xlog)
+	if (wrote_xlog && markXidCommitted)
 		SyncRepWaitForLSN(XactLastRecEnd);
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
