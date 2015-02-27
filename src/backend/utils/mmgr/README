@@ -125,9 +125,14 @@ lifetimes that only partially overlap can be handled by allocating
 from different trees of the context forest (there are some examples
 in the next section).
 
-For convenience we will also want operations like "reset/delete all
-children of a given context, but don't reset or delete that context
-itself".
+Actually, it turns out that resetting a given context should almost
+always imply deleting (not just resetting) any child contexts it has.
+So MemoryContextReset() means that, and if you really do want a tree of
+empty contexts you need to call MemoryContextResetOnly() plus
+MemoryContextResetChildren().
+
+For convenience we also provide operations like "reset/delete all children
+of a given context, but don't reset or delete that context itself".
 
 
 Globally Known Contexts

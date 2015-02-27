@@ -132,11 +132,8 @@ MemoryContextInit(void)
 
 /*
  * MemoryContextReset
- *		Release all space allocated within a context and its descendants,
- *		but don't delete the contexts themselves.
- *
- * The type-specific reset routine handles the context itself, but we
- * have to do the recursion for the children.
+ *		Release all space allocated within a context and delete all its
+ *		descendant contexts (but not the named context itself).
  */
 void
 MemoryContextReset(MemoryContext context)
@@ -145,7 +142,22 @@ MemoryContextReset(MemoryContext context)
 
 	/* save a function call in common case where there are no children */
 	if (context->firstchild != NULL)
-		MemoryContextResetChildren(context);
+		MemoryContextDeleteChildren(context);
+
+	/* save a function call if no pallocs since startup or last reset */
+	if (!context->isReset)
+		MemoryContextResetOnly(context);
+}
+
+/*
+ * MemoryContextResetOnly
+ *		Release all space allocated within a context.
+ *		Nothing is done to the context's descendant contexts.
+ */
+void
+MemoryContextResetOnly(MemoryContext context)
+{
+	AssertArg(MemoryContextIsValid(context));
 
 	/* Nothing to do if no pallocs since startup or last reset */
 	if (!context->isReset)
@@ -172,7 +184,10 @@ MemoryContextResetChildren(MemoryContext context)
 	AssertArg(MemoryContextIsValid(context));
 
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
-		MemoryContextReset(child);
+	{
+		MemoryContextResetChildren(child);
+		MemoryContextResetOnly(child);
+	}
 }
 
 /*
@@ -232,23 +247,6 @@ MemoryContextDeleteChildren(MemoryContext context)
 	 */
 	while (context->firstchild != NULL)
 		MemoryContextDelete(context->firstchild);
-}
-
-/*
- * MemoryContextResetAndDeleteChildren
- *		Release all space allocated within a context and delete all
- *		its descendants.
- *
- * This is a common combination case where we want to preserve the
- * specific context but get rid of absolutely everything under it.
- */
-void
-MemoryContextResetAndDeleteChildren(MemoryContext context)
-{
-	AssertArg(MemoryContextIsValid(context));
-
-	MemoryContextDeleteChildren(context);
-	MemoryContextReset(context);
 }
 
 /*
