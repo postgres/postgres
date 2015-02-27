@@ -424,7 +424,7 @@ JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 {
 	bool		first = true;
 	JsonbIterator *it;
-	int			type = 0;
+	JsonbIteratorToken type;
 	JsonbValue	v;
 	int			level = 0;
 	bool		redo_switch = false;
@@ -506,7 +506,7 @@ JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 				first = false;
 				break;
 			default:
-				elog(ERROR, "unknown flag of jsonb iterator");
+				elog(ERROR, "unknown jsonb iterator token type");
 		}
 	}
 
@@ -824,7 +824,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 			case JSONBTYPE_JSONB:
 				{
 					Jsonb	   *jsonb = DatumGetJsonb(val);
-					int			type;
+					JsonbIteratorToken type;
 					JsonbIterator *it;
 
 					it = JsonbIteratorInit(&jsonb->root);
@@ -1519,7 +1519,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 	JsonbIterator *it;
 	Jsonb	   *jbelem;
 	JsonbValue	v;
-	int			type;
+	JsonbIteratorToken type;
 
 	if (val_type == InvalidOid)
 		ereport(ERROR,
@@ -1591,7 +1591,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 			case WJB_VALUE:
 				if (v.type == jbvString)
 				{
-					/* copy string values in the aggreagate context */
+					/* copy string values in the aggregate context */
 					char	   *buf = palloc(v.val.string.len + 1);;
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
@@ -1607,6 +1607,8 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 				result->res = pushJsonbValue(&result->parseState,
 											 type, &v);
 				break;
+			default:
+				elog(ERROR, "unknown jsonb iterator token type");
 		}
 	}
 
@@ -1667,7 +1669,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 	Jsonb	   *jbkey,
 			   *jbval;
 	JsonbValue	v;
-	int			type;
+	JsonbIteratorToken type;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -1750,7 +1752,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 			case WJB_ELEM:
 				if (v.type == jbvString)
 				{
-					/* copy string values in the aggreagate context */
+					/* copy string values in the aggregate context */
 					char	   *buf = palloc(v.val.string.len + 1);;
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
@@ -1808,7 +1810,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 			case WJB_VALUE:
 				if (v.type == jbvString)
 				{
-					/* copy string values in the aggreagate context */
+					/* copy string values in the aggregate context */
 					char	   *buf = palloc(v.val.string.len + 1);;
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
@@ -1825,6 +1827,8 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 											 single_scalar ? WJB_VALUE : type,
 											 &v);
 				break;
+			default:
+				elog(ERROR, "unknown jsonb iterator token type");
 		}
 	}
 
