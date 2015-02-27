@@ -54,6 +54,7 @@ MemoryContext CurTransactionContext = NULL;
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
+static void MemoryContextCallResetCallbacks(MemoryContext context);
 static void MemoryContextStatsInternal(MemoryContext context, int level);
 
 /*
@@ -115,9 +116,8 @@ MemoryContextInit(void)
 	 * where retained memory in a context is *essential* --- we want to be
 	 * sure ErrorContext still has some memory even if we've run out
 	 * elsewhere! Also, allow allocations in ErrorContext within a critical
-	 * section. Otherwise a PANIC will cause an assertion failure in the
-	 * error reporting code, before printing out the real cause of the
-	 * failure.
+	 * section. Otherwise a PANIC will cause an assertion failure in the error
+	 * reporting code, before printing out the real cause of the failure.
 	 *
 	 * This should be the last step in this function, as elog.c assumes memory
 	 * management works once ErrorContext is non-null.
@@ -150,6 +150,7 @@ MemoryContextReset(MemoryContext context)
 	/* Nothing to do if no pallocs since startup or last reset */
 	if (!context->isReset)
 	{
+		MemoryContextCallResetCallbacks(context);
 		(*context->methods->reset) (context);
 		context->isReset = true;
 		VALGRIND_DESTROY_MEMPOOL(context);
@@ -196,6 +197,14 @@ MemoryContextDelete(MemoryContext context)
 	MemoryContextDeleteChildren(context);
 
 	/*
+	 * It's not entirely clear whether 'tis better to do this before or after
+	 * delinking the context; but an error in a callback will likely result in
+	 * leaking the whole context (if it's not a root context) if we do it
+	 * after, so let's do it before.
+	 */
+	MemoryContextCallResetCallbacks(context);
+
+	/*
 	 * We delink the context from its parent before deleting it, so that if
 	 * there's an error we won't have deleted/busted contexts still attached
 	 * to the context tree.  Better a leak than a crash.
@@ -240,6 +249,56 @@ MemoryContextResetAndDeleteChildren(MemoryContext context)
 
 	MemoryContextDeleteChildren(context);
 	MemoryContextReset(context);
+}
+
+/*
+ * MemoryContextRegisterResetCallback
+ *		Register a function to be called before next context reset/delete.
+ *		Such callbacks will be called in reverse order of registration.
+ *
+ * The caller is responsible for allocating a MemoryContextCallback struct
+ * to hold the info about this callback request, and for filling in the
+ * "func" and "arg" fields in the struct to show what function to call with
+ * what argument.  Typically the callback struct should be allocated within
+ * the specified context, since that means it will automatically be freed
+ * when no longer needed.
+ *
+ * There is no API for deregistering a callback once registered.  If you
+ * want it to not do anything anymore, adjust the state pointed to by its
+ * "arg" to indicate that.
+ */
+void
+MemoryContextRegisterResetCallback(MemoryContext context,
+								   MemoryContextCallback *cb)
+{
+	AssertArg(MemoryContextIsValid(context));
+
+	/* Push onto head so this will be called before older registrants. */
+	cb->next = context->reset_cbs;
+	context->reset_cbs = cb;
+	/* Mark the context as non-reset (it probably is already). */
+	context->isReset = false;
+}
+
+/*
+ * MemoryContextCallResetCallbacks
+ *		Internal function to call all registered callbacks for context.
+ */
+static void
+MemoryContextCallResetCallbacks(MemoryContext context)
+{
+	MemoryContextCallback *cb;
+
+	/*
+	 * We pop each callback from the list before calling.  That way, if an
+	 * error occurs inside the callback, we won't try to call it a second time
+	 * in the likely event that we reset or delete the context later.
+	 */
+	while ((cb = context->reset_cbs) != NULL)
+	{
+		context->reset_cbs = cb->next;
+		(*cb->func) (cb->arg);
+	}
 }
 
 /*
@@ -318,9 +377,8 @@ void
 MemoryContextAllowInCriticalSection(MemoryContext context, bool allow)
 {
 	AssertArg(MemoryContextIsValid(context));
-#ifdef USE_ASSERT_CHECKING
+
 	context->allowInCritSection = allow;
-#endif
 }
 
 /*
@@ -589,11 +647,8 @@ MemoryContextCreate(NodeTag tag, Size size,
 		node->parent = parent;
 		node->nextchild = parent->firstchild;
 		parent->firstchild = node;
-
-#ifdef USE_ASSERT_CHECKING
 		/* inherit allowInCritSection flag from parent */
 		node->allowInCritSection = parent->allowInCritSection;
-#endif
 	}
 
 	VALGRIND_CREATE_MEMPOOL(node, 0, false);

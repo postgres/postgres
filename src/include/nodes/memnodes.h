@@ -17,6 +17,22 @@
 #include "nodes/nodes.h"
 
 /*
+ * A memory context can have callback functions registered on it.  Any such
+ * function will be called once just before the context is next reset or
+ * deleted.  The MemoryContextCallback struct describing such a callback
+ * typically would be allocated within the context itself, thereby avoiding
+ * any need to manage it explicitly (the reset/delete action will free it).
+ */
+typedef void (*MemoryContextCallbackFunction) (void *arg);
+
+typedef struct MemoryContextCallback
+{
+	MemoryContextCallbackFunction func; /* function to call */
+	void	   *arg;			/* argument to pass it */
+	struct MemoryContextCallback *next; /* next in list of callbacks */
+} MemoryContextCallback;
+
+/*
  * MemoryContext
  *		A logical context in which memory allocations occur.
  *
@@ -54,15 +70,15 @@ typedef struct MemoryContextMethods
 typedef struct MemoryContextData
 {
 	NodeTag		type;			/* identifies exact kind of context */
+	/* these two fields are placed here to minimize alignment wastage: */
+	bool		isReset;		/* T = no space alloced since last reset */
+	bool		allowInCritSection;		/* allow palloc in critical section */
 	MemoryContextMethods *methods;		/* virtual function table */
 	MemoryContext parent;		/* NULL if no parent (toplevel context) */
 	MemoryContext firstchild;	/* head of linked list of children */
 	MemoryContext nextchild;	/* next child of same parent */
 	char	   *name;			/* context name (just for debugging) */
-	bool		isReset;		/* T = no space alloced since last reset */
-#ifdef USE_ASSERT_CHECKING
-	bool		allowInCritSection;	/* allow palloc in critical section */
-#endif
+	MemoryContextCallback *reset_cbs;	/* list of reset/delete callbacks */
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */
