@@ -325,7 +325,7 @@ static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cm
 static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
 							  DropBehavior behavior);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-				AlterTableCmd *cmd, LOCKMODE lockmode);
+				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid,
 				bool recurse, bool recursing, LOCKMODE lockmode);
@@ -3085,14 +3085,16 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_AddColumn:		/* ADD COLUMN */
 			ATSimplePermissions(rel,
 						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
-			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
+			ATPrepAddColumn(wqueue, rel, recurse, recursing, false, cmd,
+							lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
 										 * VIEW */
 			ATSimplePermissions(rel, ATT_VIEW);
-			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
+			ATPrepAddColumn(wqueue, rel, recurse, recursing, true, cmd,
+							lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
 			break;
@@ -4576,7 +4578,7 @@ check_of_type(HeapTuple typetuple)
  */
 static void
 ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-				AlterTableCmd *cmd, LOCKMODE lockmode)
+				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode)
 {
 	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
@@ -4586,7 +4588,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
 
-	if (recurse)
+	if (recurse && !is_view)
 		cmd->subtype = AT_AddColumnRecurse;
 }
 
@@ -5026,7 +5028,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd, LOC
 		cdef->location = -1;
 		cmd->def = (Node *) cdef;
 	}
-	ATPrepAddColumn(wqueue, rel, recurse, false, cmd, lockmode);
+	ATPrepAddColumn(wqueue, rel, recurse, false, false, cmd, lockmode);
 
 	if (recurse)
 		cmd->subtype = AT_AddOidsRecurse;
