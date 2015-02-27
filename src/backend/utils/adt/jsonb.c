@@ -424,7 +424,7 @@ JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 {
 	bool		first = true;
 	JsonbIterator *it;
-	JsonbIteratorToken type;
+	JsonbIteratorToken type = WJB_DONE;
 	JsonbValue	v;
 	int			level = 0;
 	bool		redo_switch = false;
