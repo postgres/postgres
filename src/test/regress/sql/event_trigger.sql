@@ -276,6 +276,16 @@ alter table rewriteme
 -- shouldn't trigger a table_rewrite event
 alter table rewriteme alter column foo type numeric(12,4);
 
+-- typed tables are rewritten when their type changes
+create type rewritetype as (a int);
+create table rewritemetoo1 of rewritetype;
+create table rewritemetoo2 of rewritetype;
+alter type rewritetype alter attribute a type text cascade;
+
+-- but this doesn't work
+create table rewritemetoo3 (a rewritetype);
+alter type rewritetype alter attribute a type varchar cascade;
+
 drop table rewriteme;
 drop event trigger no_rewrite_allowed;
 drop function test_evtrig_no_rewrite();

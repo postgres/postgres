@@ -68,12 +68,11 @@
 
    <para>
     The <literal>table_rewrite</> event occurs just before a table is
-    rewritten by the command <literal>ALTER TABLE</literal>. While other
+    rewritten by some actions of the commands <literal>ALTER TABLE</> and
+    <literal>ALTER TYPE</>.  While other
     control statements are available to rewrite a table,
     like <literal>CLUSTER</literal> and <literal>VACUUM</literal>,
-    the <literal>table_rewrite</> event is currently only triggered by
-    the <literal>ALTER TABLE</literal> command, and only when that command
-    attempts to rewrite the table.
+    the <literal>table_rewrite</> event is not triggered by them.
    </para>
 
    <para>
@@ -318,7 +317,7 @@
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
         <entry align="center"></entry>
        </row>
        <row>
