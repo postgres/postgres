@@ -158,7 +158,8 @@ static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
 					  PLpgSQL_expr *expr,
 					  Datum *result,
 					  bool *isNull,
-					  Oid *rettype);
+					  Oid *rettype,
+					  int32 *rettypmod);
 
 static void exec_assign_expr(PLpgSQL_execstate *estate,
 				 PLpgSQL_datum *target,
@@ -168,7 +169,8 @@ static void exec_assign_c_string(PLpgSQL_execstate *estate,
 					 const char *str);
 static void exec_assign_value(PLpgSQL_execstate *estate,
 				  PLpgSQL_datum *target,
-				  Datum value, Oid valtype, bool *isNull);
+				  Datum value, bool isNull,
+				  Oid valtype, int32 valtypmod);
 static void exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_datum *datum,
 				Oid *typeid,
@@ -184,7 +186,8 @@ static bool exec_eval_boolean(PLpgSQL_execstate *estate,
 static Datum exec_eval_expr(PLpgSQL_execstate *estate,
 			   PLpgSQL_expr *expr,
 			   bool *isNull,
-			   Oid *rettype);
+			   Oid *rettype,
+			   int32 *rettypmod);
 static int exec_run_select(PLpgSQL_execstate *estate,
 				PLpgSQL_expr *expr, long maxtuples, Portal *portalP);
 static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
@@ -208,16 +211,15 @@ static void exec_move_row_from_datum(PLpgSQL_execstate *estate,
 static char *convert_value_to_string(PLpgSQL_execstate *estate,
 						Datum value, Oid valtype);
 static Datum exec_cast_value(PLpgSQL_execstate *estate,
-				Datum value, Oid valtype,
-				Oid reqtype,
+				Datum value, bool isnull,
+				Oid valtype, int32 valtypmod,
+				Oid reqtype, int32 reqtypmod,
 				FmgrInfo *reqinput,
-				Oid reqtypioparam,
-				int32 reqtypmod,
-				bool isnull);
+				Oid reqtypioparam);
 static Datum exec_simple_cast_value(PLpgSQL_execstate *estate,
-					   Datum value, Oid valtype,
-					   Oid reqtype, int32 reqtypmod,
-					   bool isnull);
+					   Datum value, bool isnull,
+					   Oid valtype, int32 valtypmod,
+					   Oid reqtype, int32 reqtypmod);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
@@ -452,12 +454,13 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 			/* Cast value to proper type */
 			estate.retval = exec_cast_value(&estate,
 											estate.retval,
+											fcinfo->isnull,
 											estate.rettype,
-											func->fn_rettype,
-											&(func->fn_retinput),
-											func->fn_rettypioparam,
 											-1,
-											fcinfo->isnull);
+											func->fn_rettype,
+											-1,
+											&(func->fn_retinput),
+											func->fn_rettypioparam);
 
 			/*
 			 * If the function's return type isn't by value, copy the value
@@ -1077,15 +1080,13 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 						 * exec_assign_value.)
 						 */
 						if (!var->datatype->typinput.fn_strict)
-						{
-							bool		valIsNull = true;
-
 							exec_assign_value(estate,
 											  (PLpgSQL_datum *) var,
 											  (Datum) 0,
+											  true,
 											  UNKNOWNOID,
-											  &valIsNull);
-						}
+											  -1);
+
 						if (var->notnull)
 							ereport(ERROR,
 									(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1556,20 +1557,19 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 	{
 		PLpgSQL_diag_item *diag_item = (PLpgSQL_diag_item *) lfirst(lc);
 		PLpgSQL_datum *var = estate->datums[diag_item->target];
-		bool		isnull = false;
 
 		switch (diag_item->kind)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
 				exec_assign_value(estate, var,
 								  UInt32GetDatum(estate->eval_processed),
-								  INT4OID, &isnull);
+								  false, INT4OID, -1);
 				break;
 
 			case PLPGSQL_GETDIAG_RESULT_OID:
 				exec_assign_value(estate, var,
 								  ObjectIdGetDatum(estate->eval_lastoid),
-								  OIDOID, &isnull);
+								  false, OIDOID, -1);
 				break;
 
 			case PLPGSQL_GETDIAG_ERROR_CONTEXT:
@@ -1688,9 +1688,11 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 	{
 		/* simple case */
 		Datum		t_val;
-		Oid			t_oid;
+		Oid			t_typoid;
+		int32		t_typmod;
 
-		t_val = exec_eval_expr(estate, stmt->t_expr, &isnull, &t_oid);
+		t_val = exec_eval_expr(estate, stmt->t_expr,
+							   &isnull, &t_typoid, &t_typmod);
 
 		t_var = (PLpgSQL_var *) estate->datums[stmt->t_varno];
 
@@ -1699,17 +1701,19 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 		 * what we're modifying here is an execution copy of the datum, so
 		 * this doesn't affect the originally stored function parse tree.
 		 */
-		if (t_var->datatype->typoid != t_oid)
-			t_var->datatype = plpgsql_build_datatype(t_oid,
-													 -1,
+		if (t_var->datatype->typoid != t_typoid ||
+			t_var->datatype->atttypmod != t_typmod)
+			t_var->datatype = plpgsql_build_datatype(t_typoid,
+													 t_typmod,
 										   estate->func->fn_input_collation);
 
 		/* now we can assign to the variable */
 		exec_assign_value(estate,
 						  (PLpgSQL_datum *) t_var,
 						  t_val,
-						  t_oid,
-						  &isnull);
+						  isnull,
+						  t_typoid,
+						  t_typmod);
 
 		exec_eval_cleanup(estate);
 	}
@@ -1885,6 +1889,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	Datum		value;
 	bool		isnull;
 	Oid			valtype;
+	int32		valtypmod;
 	int32		loop_value;
 	int32		end_value;
 	int32		step_value;
@@ -1896,11 +1901,14 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	/*
 	 * Get the value of the lower bound
 	 */
-	value = exec_eval_expr(estate, stmt->lower, &isnull, &valtype);
-	value = exec_cast_value(estate, value, valtype, var->datatype->typoid,
+	value = exec_eval_expr(estate, stmt->lower,
+						   &isnull, &valtype, &valtypmod);
+	value = exec_cast_value(estate, value, isnull,
+							valtype, valtypmod,
+							var->datatype->typoid,
+							var->datatype->atttypmod,
 							&(var->datatype->typinput),
-							var->datatype->typioparam,
-							var->datatype->atttypmod, isnull);
+							var->datatype->typioparam);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1911,11 +1919,14 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	/*
 	 * Get the value of the upper bound
 	 */
-	value = exec_eval_expr(estate, stmt->upper, &isnull, &valtype);
-	value = exec_cast_value(estate, value, valtype, var->datatype->typoid,
+	value = exec_eval_expr(estate, stmt->upper,
+						   &isnull, &valtype, &valtypmod);
+	value = exec_cast_value(estate, value, isnull,
+							valtype, valtypmod,
+							var->datatype->typoid,
+							var->datatype->atttypmod,
 							&(var->datatype->typinput),
-							var->datatype->typioparam,
-							var->datatype->atttypmod, isnull);
+							var->datatype->typioparam);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1928,11 +1939,14 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	 */
 	if (stmt->step)
 	{
-		value = exec_eval_expr(estate, stmt->step, &isnull, &valtype);
-		value = exec_cast_value(estate, value, valtype, var->datatype->typoid,
+		value = exec_eval_expr(estate, stmt->step,
+							   &isnull, &valtype, &valtypmod);
+		value = exec_cast_value(estate, value, isnull,
+								valtype, valtypmod,
+								var->datatype->typoid,
+								var->datatype->atttypmod,
 								&(var->datatype->typinput),
-								var->datatype->typioparam,
-								var->datatype->atttypmod, isnull);
+								var->datatype->typioparam);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2227,17 +2241,19 @@ exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
 {
 	ArrayType  *arr;
 	Oid			arrtype;
+	int32		arrtypmod;
 	PLpgSQL_datum *loop_var;
 	Oid			loop_var_elem_type;
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
 	ArrayIterator array_iterator;
 	Oid			iterator_result_type;
+	int32		iterator_result_typmod;
 	Datum		value;
 	bool		isnull;
 
 	/* get the value of the array expression */
-	value = exec_eval_expr(estate, stmt->expr, &isnull, &arrtype);
+	value = exec_eval_expr(estate, stmt->expr, &isnull, &arrtype, &arrtypmod);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2305,11 +2321,13 @@ exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
 	{
 		/* When slicing, nominal type of result is same as array type */
 		iterator_result_type = arrtype;
+		iterator_result_typmod = arrtypmod;
 	}
 	else
 	{
 		/* Without slicing, results are individual array elements */
 		iterator_result_type = ARR_ELEMTYPE(arr);
+		iterator_result_typmod = arrtypmod;
 	}
 
 	/* Iterate over the array elements or slices */
@@ -2318,8 +2336,8 @@ exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
 		found = true;			/* looped at least once */
 
 		/* Assign current element/slice to the loop variable */
-		exec_assign_value(estate, loop_var, value, iterator_result_type,
-						  &isnull);
+		exec_assign_value(estate, loop_var, value, isnull,
+						  iterator_result_type, iterator_result_typmod);
 
 		/* In slice case, value is temporary; must free it to avoid leakage */
 		if (stmt->slice > 0)
@@ -2503,9 +2521,12 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 
 	if (stmt->expr != NULL)
 	{
+		int32		rettypmod;
+
 		estate->retval = exec_eval_expr(estate, stmt->expr,
 										&(estate->retisnull),
-										&(estate->rettype));
+										&(estate->rettype),
+										&rettypmod);
 
 		if (estate->retistuple && !estate->retisnull)
 		{
@@ -2595,10 +2616,11 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					/* coerce type if needed */
 					retval = exec_simple_cast_value(estate,
 													retval,
+													isNull,
 													var->datatype->typoid,
+													var->datatype->atttypmod,
 												 tupdesc->attrs[0]->atttypid,
-												tupdesc->attrs[0]->atttypmod,
-													isNull);
+											   tupdesc->attrs[0]->atttypmod);
 
 					tuplestore_putvalues(estate->tuple_store, tupdesc,
 										 &retval, &isNull);
@@ -2654,11 +2676,13 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		Datum		retval;
 		bool		isNull;
 		Oid			rettype;
+		int32		rettypmod;
 
 		retval = exec_eval_expr(estate,
 								stmt->expr,
 								&isNull,
-								&rettype);
+								&rettype,
+								&rettypmod);
 
 		if (estate->retistuple)
 		{
@@ -2718,10 +2742,11 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 			/* coerce type if needed */
 			retval = exec_simple_cast_value(estate,
 											retval,
+											isNull,
 											rettype,
+											rettypmod,
 											tupdesc->attrs[0]->atttypid,
-											tupdesc->attrs[0]->atttypmod,
-											isNull);
+											tupdesc->attrs[0]->atttypmod);
 
 			tuplestore_putvalues(estate->tuple_store, tupdesc,
 								 &retval, &isNull);
@@ -2924,6 +2949,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 			if (cp[0] == '%')
 			{
 				Oid			paramtypeid;
+				int32		paramtypmod;
 				Datum		paramvalue;
 				bool		paramisnull;
 				char	   *extval;
@@ -2942,7 +2968,8 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 				paramvalue = exec_eval_expr(estate,
 									  (PLpgSQL_expr *) lfirst(current_param),
 											&paramisnull,
-											&paramtypeid);
+											&paramtypeid,
+											&paramtypmod);
 
 				if (paramisnull)
 					extval = "<NULL>";
@@ -2972,11 +2999,13 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 		Datum		optionvalue;
 		bool		optionisnull;
 		Oid			optiontypeid;
+		int32		optiontypmod;
 		char	   *extval;
 
 		optionvalue = exec_eval_expr(estate, opt->expr,
 									 &optionisnull,
-									 &optiontypeid);
+									 &optiontypeid,
+									 &optiontypmod);
 		if (optionisnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -3478,8 +3507,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 					 PLpgSQL_stmt_dynexecute *stmt)
 {
 	Datum		query;
-	bool		isnull = false;
+	bool		isnull;
 	Oid			restype;
+	int32		restypmod;
 	char	   *querystr;
 	int			exec_res;
 	PreparedParamsData *ppd = NULL;
@@ -3488,7 +3518,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	 * First we evaluate the string expression after the EXECUTE keyword. Its
 	 * result is the querystring we have to execute.
 	 */
-	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
+	query = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -3982,11 +4012,12 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 				 PLpgSQL_expr *expr)
 {
 	Datum		value;
+	bool		isnull;
 	Oid			valtype;
-	bool		isnull = false;
+	int32		valtypmod;
 
-	value = exec_eval_expr(estate, expr, &isnull, &valtype);
-	exec_assign_value(estate, target, value, valtype, &isnull);
+	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
+	exec_assign_value(estate, target, value, isnull, valtype, valtypmod);
 	exec_eval_cleanup(estate);
 }
 
@@ -4002,14 +4033,13 @@ exec_assign_c_string(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 					 const char *str)
 {
 	text	   *value;
-	bool		isnull = false;
 
 	if (str != NULL)
 		value = cstring_to_text(str);
 	else
 		value = cstring_to_text("");
-	exec_assign_value(estate, target, PointerGetDatum(value),
-					  TEXTOID, &isnull);
+	exec_assign_value(estate, target, PointerGetDatum(value), false,
+					  TEXTOID, -1);
 	pfree(value);
 }
 
@@ -4025,7 +4055,8 @@ exec_assign_c_string(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 static void
 exec_assign_value(PLpgSQL_execstate *estate,
 				  PLpgSQL_datum *target,
-				  Datum value, Oid valtype, bool *isNull)
+				  Datum value, bool isNull,
+				  Oid valtype, int32 valtypmod)
 {
 	switch (target->dtype)
 	{
@@ -4039,14 +4070,15 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				newvalue = exec_cast_value(estate,
 										   value,
+										   isNull,
 										   valtype,
+										   valtypmod,
 										   var->datatype->typoid,
-										   &(var->datatype->typinput),
-										   var->datatype->typioparam,
 										   var->datatype->atttypmod,
-										   *isNull);
+										   &(var->datatype->typinput),
+										   var->datatype->typioparam);
 
-				if (*isNull && var->notnull)
+				if (isNull && var->notnull)
 					ereport(ERROR,
 							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							 errmsg("null value cannot be assigned to variable \"%s\" declared NOT NULL",
@@ -4057,7 +4089,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * probably in the eval_econtext) into the procedure's memory
 				 * context.
 				 */
-				if (!var->datatype->typbyval && !*isNull)
+				if (!var->datatype->typbyval && !isNull)
 					newvalue = datumCopy(newvalue,
 										 false,
 										 var->datatype->typlen);
@@ -4072,8 +4104,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				free_var(var);
 
 				var->value = newvalue;
-				var->isnull = *isNull;
-				if (!var->datatype->typbyval && !*isNull)
+				var->isnull = isNull;
+				if (!var->datatype->typbyval && !isNull)
 					var->freeval = true;
 				break;
 			}
@@ -4085,7 +4117,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				PLpgSQL_row *row = (PLpgSQL_row *) target;
 
-				if (*isNull)
+				if (isNull)
 				{
 					/* If source is null, just assign nulls to the row */
 					exec_move_row(estate, NULL, row, NULL, NULL);
@@ -4109,7 +4141,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
 
-				if (*isNull)
+				if (isNull)
 				{
 					/* If source is null, just assign nulls to the record */
 					exec_move_row(estate, rec, NULL, NULL, NULL);
@@ -4139,7 +4171,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				Datum	   *values;
 				bool	   *nulls;
 				bool	   *replaces;
-				bool		attisnull;
 				Oid			atttype;
 				int32		atttypmod;
 
@@ -4187,16 +4218,16 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * Now insert the new value, being careful to cast it to the
 				 * right type.
 				 */
-				atttype = SPI_gettypeid(rec->tupdesc, fno + 1);
+				atttype = rec->tupdesc->attrs[fno]->atttypid;
 				atttypmod = rec->tupdesc->attrs[fno]->atttypmod;
-				attisnull = *isNull;
 				values[fno] = exec_simple_cast_value(estate,
 													 value,
+													 isNull,
 													 valtype,
+													 valtypmod,
 													 atttype,
-													 atttypmod,
-													 attisnull);
-				nulls[fno] = attisnull;
+													 atttypmod);
+				nulls[fno] = isNull;
 
 				/*
 				 * Now call heap_modify_tuple() to create a new tuple that
@@ -4354,10 +4385,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				/* Coerce source value to match array element type. */
 				coerced_value = exec_simple_cast_value(estate,
 													   value,
+													   isNull,
 													   valtype,
+													   valtypmod,
 													   arrayelem->elemtypoid,
-													   arrayelem->arraytypmod,
-													   *isNull);
+													 arrayelem->arraytypmod);
 
 				/*
 				 * If the original array is null, cons up an empty array so
@@ -4370,7 +4402,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * corresponds to the current behavior of ExecEvalArrayRef().
 				 */
 				if (arrayelem->arraytyplen > 0 &&		/* fixed-length array? */
-					(oldarrayisnull || *isNull))
+					(oldarrayisnull || isNull))
 					return;
 
 				/* empty array, if any, and newarraydatum are short-lived */
@@ -4386,7 +4418,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 												  nsubscripts,
 												  subscriptvals,
 												  coerced_value,
-												  *isNull,
+												  isNull,
 												  arrayelem->arraytyplen,
 												  arrayelem->elemtyplen,
 												  arrayelem->elemtypbyval,
@@ -4400,10 +4432,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * coercing the base array type back up to the domain will
 				 * happen within exec_assign_value.
 				 */
-				*isNull = false;
 				exec_assign_value(estate, target,
 								  newarraydatum,
-								  arrayelem->arraytypoid, isNull);
+								  false,
+								  arrayelem->arraytypoid,
+								  arrayelem->arraytypmod);
 				break;
 			}
 
@@ -4724,11 +4757,12 @@ exec_eval_integer(PLpgSQL_execstate *estate,
 {
 	Datum		exprdatum;
 	Oid			exprtypeid;
+	int32		exprtypmod;
 
-	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
-	exprdatum = exec_simple_cast_value(estate, exprdatum, exprtypeid,
-									   INT4OID, -1,
-									   *isNull);
+	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid, &exprtypmod);
+	exprdatum = exec_simple_cast_value(estate, exprdatum, *isNull,
+									   exprtypeid, exprtypmod,
+									   INT4OID, -1);
 	return DatumGetInt32(exprdatum);
 }
 
@@ -4746,17 +4780,18 @@ exec_eval_boolean(PLpgSQL_execstate *estate,
 {
 	Datum		exprdatum;
 	Oid			exprtypeid;
+	int32		exprtypmod;
 
-	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
-	exprdatum = exec_simple_cast_value(estate, exprdatum, exprtypeid,
-									   BOOLOID, -1,
-									   *isNull);
+	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid, &exprtypmod);
+	exprdatum = exec_simple_cast_value(estate, exprdatum, *isNull,
+									   exprtypeid, exprtypmod,
+									   BOOLOID, -1);
 	return DatumGetBool(exprdatum);
 }
 
 /* ----------
  * exec_eval_expr			Evaluate an expression and return
- *					the result Datum.
+ *					the result Datum, along with data type/typmod.
  *
  * NOTE: caller must do exec_eval_cleanup when done with the Datum.
  * ----------
@@ -4765,7 +4800,8 @@ static Datum
 exec_eval_expr(PLpgSQL_execstate *estate,
 			   PLpgSQL_expr *expr,
 			   bool *isNull,
-			   Oid *rettype)
+			   Oid *rettype,
+			   int32 *rettypmod)
 {
 	Datum		result = 0;
 	int			rc;
@@ -4780,7 +4816,8 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	 * If this is a simple expression, bypass SPI and use the executor
 	 * directly
 	 */
-	if (exec_eval_simple_expr(estate, expr, &result, isNull, rettype))
+	if (exec_eval_simple_expr(estate, expr,
+							  &result, isNull, rettype, rettypmod))
 		return result;
 
 	/*
@@ -4807,7 +4844,8 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	/*
 	 * ... and get the column's datatype.
 	 */
-	*rettype = SPI_gettypeid(estate->eval_tuptable->tupdesc, 1);
+	*rettype = estate->eval_tuptable->tupdesc->attrs[0]->atttypid;
+	*rettypmod = estate->eval_tuptable->tupdesc->attrs[0]->atttypmod;
 
 	/*
 	 * If there are no rows selected, the result is a NULL of that type.
@@ -5060,8 +5098,8 @@ loop_exit:
  * exec_eval_simple_expr -		Evaluate a simple expression returning
  *								a Datum by directly calling ExecEvalExpr().
  *
- * If successful, store results into *result, *isNull, *rettype and return
- * TRUE.  If the expression cannot be handled by simple evaluation,
+ * If successful, store results into *result, *isNull, *rettype, *rettypmod
+ * and return TRUE.  If the expression cannot be handled by simple evaluation,
  * return FALSE.
  *
  * Because we only store one execution tree for a simple expression, we
@@ -5092,7 +5130,8 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 					  PLpgSQL_expr *expr,
 					  Datum *result,
 					  bool *isNull,
-					  Oid *rettype)
+					  Oid *rettype,
+					  int32 *rettypmod)
 {
 	ExprContext *econtext = estate->eval_econtext;
 	LocalTransactionId curlxid = MyProc->lxid;
@@ -5142,6 +5181,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 * Pass back previously-determined result type.
 	 */
 	*rettype = expr->expr_simple_type;
+	*rettypmod = expr->expr_simple_typmod;
 
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
@@ -5457,6 +5497,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 			Datum		value;
 			bool		isnull;
 			Oid			valtype;
+			int32		valtypmod;
 
 			if (row->varnos[fnum] < 0)
 				continue;		/* skip dropped column in row struct */
@@ -5475,23 +5516,20 @@ exec_move_row(PLpgSQL_execstate *estate,
 					value = (Datum) 0;
 					isnull = true;
 				}
-				valtype = SPI_gettypeid(tupdesc, anum + 1);
+				valtype = tupdesc->attrs[anum]->atttypid;
+				valtypmod = tupdesc->attrs[anum]->atttypmod;
 				anum++;
 			}
 			else
 			{
 				value = (Datum) 0;
 				isnull = true;
-
-				/*
-				 * InvalidOid is OK because exec_assign_value doesn't care
-				 * about the type of a source NULL
-				 */
-				valtype = InvalidOid;
+				valtype = UNKNOWNOID;
+				valtypmod = -1;
 			}
 
 			exec_assign_value(estate, (PLpgSQL_datum *) var,
-							  value, valtype, &isnull);
+							  value, isnull, valtype, valtypmod);
 		}
 
 		return;
@@ -5675,17 +5713,17 @@ convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
  */
 static Datum
 exec_cast_value(PLpgSQL_execstate *estate,
-				Datum value, Oid valtype,
-				Oid reqtype,
+				Datum value, bool isnull,
+				Oid valtype, int32 valtypmod,
+				Oid reqtype, int32 reqtypmod,
 				FmgrInfo *reqinput,
-				Oid reqtypioparam,
-				int32 reqtypmod,
-				bool isnull)
+				Oid reqtypioparam)
 {
 	/*
 	 * If the type of the given value isn't what's requested, convert it.
 	 */
-	if (valtype != reqtype || reqtypmod != -1)
+	if (valtype != reqtype ||
+		(valtypmod != reqtypmod && reqtypmod != -1))
 	{
 		MemoryContext oldcontext;
 
@@ -5719,11 +5757,12 @@ exec_cast_value(PLpgSQL_execstate *estate,
  */
 static Datum
 exec_simple_cast_value(PLpgSQL_execstate *estate,
-					   Datum value, Oid valtype,
-					   Oid reqtype, int32 reqtypmod,
-					   bool isnull)
+					   Datum value, bool isnull,
+					   Oid valtype, int32 valtypmod,
+					   Oid reqtype, int32 reqtypmod)
 {
-	if (valtype != reqtype || reqtypmod != -1)
+	if (valtype != reqtype ||
+		(valtypmod != reqtypmod && reqtypmod != -1))
 	{
 		Oid			typinput;
 		Oid			typioparam;
@@ -5735,12 +5774,13 @@ exec_simple_cast_value(PLpgSQL_execstate *estate,
 
 		value = exec_cast_value(estate,
 								value,
+								isnull,
 								valtype,
+								valtypmod,
 								reqtype,
-								&finfo_input,
-								typioparam,
 								reqtypmod,
-								isnull);
+								&finfo_input,
+								typioparam);
 	}
 
 	return value;
@@ -6171,6 +6211,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);
+	expr->expr_simple_typmod = exprTypmod((Node *) tle->expr);
 }
 
 /* ----------
@@ -6371,10 +6412,12 @@ exec_eval_using_params(PLpgSQL_execstate *estate, List *params)
 	{
 		PLpgSQL_expr *param = (PLpgSQL_expr *) lfirst(lc);
 		bool		isnull;
+		int32		ppdtypmod;
 
 		ppd->values[i] = exec_eval_expr(estate, param,
 										&isnull,
-										&ppd->types[i]);
+										&ppd->types[i],
+										&ppdtypmod);
 		ppd->nulls[i] = isnull ? 'n' : ' ';
 		ppd->freevals[i] = false;
 
@@ -6452,13 +6495,14 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate,
 	Datum		query;
 	bool		isnull;
 	Oid			restype;
+	int32		restypmod;
 	char	   *querystr;
 
 	/*
 	 * Evaluate the string expression after the EXECUTE keyword. Its result is
 	 * the querystring we have to execute.
 	 */
-	query = exec_eval_expr(estate, dynquery, &isnull, &restype);
+	query = exec_eval_expr(estate, dynquery, &isnull, &restype, &restypmod);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),

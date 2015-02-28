@@ -226,6 +226,7 @@ typedef struct PLpgSQL_expr
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	int			expr_simple_generation; /* plancache generation we checked */
 	Oid			expr_simple_type;		/* result type Oid, if simple */
+	int32		expr_simple_typmod;		/* result typmod, if simple */
 
 	/*
 	 * if expr is simple AND prepared in current transaction,
