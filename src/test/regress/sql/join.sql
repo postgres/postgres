@@ -764,6 +764,15 @@ select * from
 where thousand = (q1 + q2);
 
 --
+-- test ability to generate a suitable plan for a star-schema query
+--
+
+explain (costs off)
+select * from
+  tenk1, int8_tbl a, int8_tbl b
+where thousand = a.q1 and tenthous = b.q1 and a.q2 = 1 and b.q2 = 2;
+
+--
 -- test extraction of restriction OR clauses from join OR clause
 -- (we used to only do this for indexable clauses)
 --
