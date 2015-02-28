@@ -705,17 +705,37 @@ intermediate layers of joins, for example:
 			-> Index Scan using C_Z_IDX on C
 				Index Condition: C.Z = A.X
 
-If all joins are plain inner joins then this is unnecessary, because
-it's always possible to reorder the joins so that a parameter is used
+If all joins are plain inner joins then this is usually unnecessary,
+because it's possible to reorder the joins so that a parameter is used
 immediately below the nestloop node that provides it.  But in the
-presence of outer joins, join reordering may not be possible, and then
-this option can be critical.  Before version 9.2, Postgres used ad-hoc
-methods for planning and executing such queries, and those methods could
-not handle passing parameters down through multiple join levels.
+presence of outer joins, such join reordering may not be possible.
+
+Also, the bottom-level scan might require parameters from more than one
+other relation.  In principle we could join the other relations first
+so that all the parameters are supplied from a single nestloop level.
+But if those other relations have no join clause in common (which is
+common in star-schema queries for instance), the planner won't consider
+joining them directly to each other.  In such a case we need to be able
+to create a plan like
+
+    NestLoop
+        -> Seq Scan on SmallTable1 A
+        NestLoop
+            -> Seq Scan on SmallTable2 B
+            NestLoop
+                -> Index Scan using XYIndex on LargeTable C
+                      Index Condition: C.X = A.AID and C.Y = B.BID
+
+so we should be willing to pass down A.AID through a join even though
+there is no join order constraint forcing the plan to look like this.
+
+Before version 9.2, Postgres used ad-hoc methods for planning and
+executing nestloop queries of this kind, and those methods could not
+handle passing parameters down through multiple join levels.
 
 To plan such queries, we now use a notion of a "parameterized path",
 which is a path that makes use of a join clause to a relation that's not
-scanned by the path.  In the example just above, we would construct a
+scanned by the path.  In the example two above, we would construct a
 path representing the possibility of doing this:
 
 	-> Index Scan using C_Z_IDX on C
