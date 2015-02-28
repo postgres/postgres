@@ -117,13 +117,14 @@ add_paths_to_joinrel(PlannerInfo *root,
 	/*
 	 * Decide whether it's sensible to generate parameterized paths for this
 	 * joinrel, and if so, which relations such paths should require.  There
-	 * is no need to create a parameterized result path unless there is a join
-	 * order restriction that prevents joining one of our input rels directly
-	 * to the parameter source rel instead of joining to the other input rel.
-	 * This restriction reduces the number of parameterized paths we have to
-	 * deal with at higher join levels, without compromising the quality of
-	 * the resulting plan.  We express the restriction as a Relids set that
-	 * must overlap the parameterization of any proposed join path.
+	 * is usually no need to create a parameterized result path unless there
+	 * is a join order restriction that prevents joining one of our input rels
+	 * directly to the parameter source rel instead of joining to the other
+	 * input rel.  (But see exception in try_nestloop_path.)  This restriction
+	 * reduces the number of parameterized paths we have to deal with at
+	 * higher join levels, without compromising the quality of the resulting
+	 * plan.  We express the restriction as a Relids set that must overlap the
+	 * parameterization of any proposed join path.
 	 */
 	foreach(lc, root->join_info_list)
 	{
@@ -291,9 +292,29 @@ try_nestloop_path(PlannerInfo *root,
 	if (required_outer &&
 		!bms_overlap(required_outer, param_source_rels))
 	{
-		/* Waste no memory when we reject a path here */
-		bms_free(required_outer);
-		return;
+		/*
+		 * We override the param_source_rels heuristic to accept nestloop
+		 * paths in which the outer rel satisfies some but not all of the
+		 * inner path's parameterization.  This is necessary to get good plans
+		 * for star-schema scenarios, in which a parameterized path for a
+		 * large table may require parameters from multiple small tables that
+		 * will not get joined directly to each other.  We can handle that by
+		 * stacking nestloops that have the small tables on the outside; but
+		 * this breaks the rule the param_source_rels heuristic is based on,
+		 * namely that parameters should not be passed down across joins
+		 * unless there's a join-order-constraint-based reason to do so.  So
+		 * ignore the param_source_rels restriction when this case applies.
+		 */
+		Relids		outerrelids = outer_path->parent->relids;
+		Relids		innerparams = PATH_REQ_OUTER(inner_path);
+
+		if (!(bms_overlap(innerparams, outerrelids) &&
+			  bms_nonempty_difference(innerparams, outerrelids)))
+		{
+			/* Waste no memory when we reject a path here */
+			bms_free(required_outer);
+			return;
+		}
 	}
 
 	/*
