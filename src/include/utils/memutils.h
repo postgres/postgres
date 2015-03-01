@@ -97,8 +97,6 @@ extern void MemoryContextDelete(MemoryContext context);
 extern void MemoryContextResetOnly(MemoryContext context);
 extern void MemoryContextResetChildren(MemoryContext context);
 extern void MemoryContextDeleteChildren(MemoryContext context);
-extern void MemoryContextRegisterResetCallback(MemoryContext context,
-								   MemoryContextCallback *cb);
 extern void MemoryContextSetParent(MemoryContext context,
 					   MemoryContext new_parent);
 extern Size GetMemoryChunkSpace(void *pointer);
