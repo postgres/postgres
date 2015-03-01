@@ -39,8 +39,6 @@ extern Oid AlterDomainDropConstraint(List *names, const char *constrName,
 
 extern void checkDomainOwner(HeapTuple tup);
 
-extern List *GetDomainConstraints(Oid typeOid);
-
 extern Oid	RenameType(RenameStmt *stmt);
 extern Oid	AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,

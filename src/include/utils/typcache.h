@@ -20,6 +20,9 @@
 #include "fmgr.h"
 
 
+/* DomainConstraintCache is an opaque struct known only within typcache.c */
+typedef struct DomainConstraintCache DomainConstraintCache;
+
 /* TypeCacheEnumData is an opaque struct known only within typcache.c */
 struct TypeCacheEnumData;
 
@@ -84,6 +87,12 @@ typedef struct TypeCacheEntry
 	FmgrInfo	rng_canonical_finfo;	/* canonicalization function, if any */
 	FmgrInfo	rng_subdiff_finfo;		/* difference function, if any */
 
+	/*
+	 * Domain constraint data if it's a domain type.  NULL if not domain, or
+	 * if domain has no constraints, or if information hasn't been requested.
+	 */
+	DomainConstraintCache *domainData;
+
 	/* Private data, for internal use of typcache.c only */
 	int			flags;			/* flags about what we've computed */
 
@@ -92,6 +101,9 @@ typedef struct TypeCacheEntry
 	 * information hasn't been requested.
 	 */
 	struct TypeCacheEnumData *enumData;
+
+	/* We also maintain a list of all known domain-type cache entries */
+	struct TypeCacheEntry *nextDomain;
 } TypeCacheEntry;
 
 /* Bit flags to indicate which fields a given caller needs to have set */
@@ -107,8 +119,33 @@ typedef struct TypeCacheEntry
 #define TYPECACHE_BTREE_OPFAMILY	0x0200
 #define TYPECACHE_HASH_OPFAMILY		0x0400
 #define TYPECACHE_RANGE_INFO		0x0800
+#define TYPECACHE_DOMAIN_INFO		0x1000
+
+/*
+ * Callers wishing to maintain a long-lived reference to a domain's constraint
+ * set must store it in one of these.  Use InitDomainConstraintRef() and
+ * UpdateDomainConstraintRef() to manage it.  Note: DomainConstraintState is
+ * considered an executable expression type, so it's defined in execnodes.h.
+ */
+typedef struct DomainConstraintRef
+{
+	List	   *constraints;	/* list of DomainConstraintState nodes */
+
+	/* Management data --- treat these fields as private to typcache.c */
+	TypeCacheEntry *tcache;		/* owning typcache entry */
+	DomainConstraintCache *dcc; /* current constraints, or NULL if none */
+	MemoryContextCallback callback;		/* used to release refcount when done */
+} DomainConstraintRef;
+
 
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
+
+extern void InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
+						MemoryContext refctx);
+
+extern void UpdateDomainConstraintRef(DomainConstraintRef *ref);
+
+extern bool DomainHasConstraints(Oid type_id);
 
 extern TupleDesc lookup_rowtype_tupdesc(Oid type_id, int32 typmod);
 

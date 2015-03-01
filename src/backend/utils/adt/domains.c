@@ -12,10 +12,9 @@
  * The overhead required for constraint checking can be high, since examining
  * the catalogs to discover the constraints for a given domain is not cheap.
  * We have three mechanisms for minimizing this cost:
- *	1.  In a nest of domains, we flatten the checking of all the levels
- *		into just one operation.
- *	2.  We cache the list of constraint items in the FmgrInfo struct
- *		passed by the caller.
+ *	1.  We rely on the typcache to keep up-to-date copies of the constraints.
+ *	2.  In a nest of domains, we flatten the checking of all the levels
+ *		into just one operation (the typcache does this for us).
  *	3.  If there are CHECK constraints, we cache a standalone ExprContext
  *		to evaluate them in.
  *
@@ -33,12 +32,12 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
-#include "commands/typecmds.h"
 #include "executor/executor.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -52,8 +51,8 @@ typedef struct DomainIOData
 	Oid			typioparam;
 	int32		typtypmod;
 	FmgrInfo	proc;
-	/* List of constraint items to check */
-	List	   *constraint_list;
+	/* Reference to cached list of constraint items to check */
+	DomainConstraintRef constraint_ref;
 	/* Context for evaluating CHECK constraints in */
 	ExprContext *econtext;
 	/* Memory context this cache is in */
@@ -63,16 +62,19 @@ typedef struct DomainIOData
 
 /*
  * domain_state_setup - initialize the cache for a new domain type.
+ *
+ * Note: we can't re-use the same cache struct for a new domain type,
+ * since there's no provision for releasing the DomainConstraintRef.
+ * If a call site needs to deal with a new domain type, we just leak
+ * the old struct for the duration of the query.
  */
-static void
-domain_state_setup(DomainIOData *my_extra, Oid domainType, bool binary,
-				   MemoryContext mcxt)
+static DomainIOData *
+domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 {
+	DomainIOData *my_extra;
 	Oid			baseType;
-	MemoryContext oldcontext;
 
-	/* Mark cache invalid */
-	my_extra->domain_type = InvalidOid;
+	my_extra = (DomainIOData *) MemoryContextAlloc(mcxt, sizeof(DomainIOData));
 
 	/* Find out the base type */
 	my_extra->typtypmod = -1;
@@ -95,9 +97,7 @@ domain_state_setup(DomainIOData *my_extra, Oid domainType, bool binary,
 	fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc, mcxt);
 
 	/* Look up constraints for domain */
-	oldcontext = MemoryContextSwitchTo(mcxt);
-	my_extra->constraint_list = GetDomainConstraints(domainType);
-	MemoryContextSwitchTo(oldcontext);
+	InitDomainConstraintRef(domainType, &my_extra->constraint_ref, mcxt);
 
 	/* We don't make an ExprContext until needed */
 	my_extra->econtext = NULL;
@@ -105,6 +105,8 @@ domain_state_setup(DomainIOData *my_extra, Oid domainType, bool binary,
 
 	/* Mark cache valid */
 	my_extra->domain_type = domainType;
+
+	return my_extra;
 }
 
 /*
@@ -118,7 +120,10 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 	ExprContext *econtext = my_extra->econtext;
 	ListCell   *l;
 
-	foreach(l, my_extra->constraint_list)
+	/* Make sure we have up-to-date constraints */
+	UpdateDomainConstraintRef(&my_extra->constraint_ref);
+
+	foreach(l, my_extra->constraint_ref.constraints)
 	{
 		DomainConstraintState *con = (DomainConstraintState *) lfirst(l);
 
@@ -215,20 +220,16 @@ domain_in(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up the needed info just once per series of calls,
-	 * assuming the domain type doesn't change underneath us.
+	 * assuming the domain type doesn't change underneath us (which really
+	 * shouldn't happen, but cope if it does).
 	 */
 	my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL)
+	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
-		my_extra = (DomainIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													   sizeof(DomainIOData));
-		domain_state_setup(my_extra, domainType, false,
-						   fcinfo->flinfo->fn_mcxt);
+		my_extra = domain_state_setup(domainType, false,
+									  fcinfo->flinfo->fn_mcxt);
 		fcinfo->flinfo->fn_extra = (void *) my_extra;
 	}
-	else if (my_extra->domain_type != domainType)
-		domain_state_setup(my_extra, domainType, false,
-						   fcinfo->flinfo->fn_mcxt);
 
 	/*
 	 * Invoke the base type's typinput procedure to convert the data.
@@ -275,20 +276,16 @@ domain_recv(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up the needed info just once per series of calls,
-	 * assuming the domain type doesn't change underneath us.
+	 * assuming the domain type doesn't change underneath us (which really
+	 * shouldn't happen, but cope if it does).
 	 */
 	my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL)
+	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
-		my_extra = (DomainIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													   sizeof(DomainIOData));
-		domain_state_setup(my_extra, domainType, true,
-						   fcinfo->flinfo->fn_mcxt);
+		my_extra = domain_state_setup(domainType, true,
+									  fcinfo->flinfo->fn_mcxt);
 		fcinfo->flinfo->fn_extra = (void *) my_extra;
 	}
-	else if (my_extra->domain_type != domainType)
-		domain_state_setup(my_extra, domainType, true,
-						   fcinfo->flinfo->fn_mcxt);
 
 	/*
 	 * Invoke the base type's typreceive procedure to convert the data.
@@ -326,20 +323,17 @@ domain_check(Datum value, bool isnull, Oid domainType,
 
 	/*
 	 * We arrange to look up the needed info just once per series of calls,
-	 * assuming the domain type doesn't change underneath us.
+	 * assuming the domain type doesn't change underneath us (which really
+	 * shouldn't happen, but cope if it does).
 	 */
 	if (extra)
 		my_extra = (DomainIOData *) *extra;
-	if (my_extra == NULL)
+	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
-		my_extra = (DomainIOData *) MemoryContextAlloc(mcxt,
-													   sizeof(DomainIOData));
-		domain_state_setup(my_extra, domainType, true, mcxt);
+		my_extra = domain_state_setup(domainType, true, mcxt);
 		if (extra)
 			*extra = (void *) my_extra;
 	}
-	else if (my_extra->domain_type != domainType)
-		domain_state_setup(my_extra, domainType, true, mcxt);
 
 	/*
 	 * Do the necessary checks to ensure it's a valid domain value.

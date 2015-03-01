@@ -652,6 +652,36 @@ ERROR:  value for domain orderedpair violates check constraint "orderedpair_chec
 CONTEXT:  PL/pgSQL function array_elem_check(integer) line 5 at assignment
 drop function array_elem_check(int);
 --
+-- Check enforcement of changing constraints in plpgsql
+--
+create domain di as int;
+create function dom_check(int) returns di as $$
+declare d di;
+begin
+  d := $1;
+  return d;
+end
+$$ language plpgsql immutable;
+select dom_check(0);
+ dom_check 
+-----------
+         0
+(1 row)
+
+alter domain di add constraint pos check (value > 0);
+select dom_check(0); -- fail
+ERROR:  value for domain di violates check constraint "pos"
+CONTEXT:  PL/pgSQL function dom_check(integer) line 4 at assignment
+alter domain di drop constraint pos;
+select dom_check(0);
+ dom_check 
+-----------
+         0
+(1 row)
+
+drop function dom_check(int);
+drop domain di;
+--
 -- Renaming
 --
 create domain testdomain1 as int;

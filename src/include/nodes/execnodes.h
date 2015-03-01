@@ -942,8 +942,9 @@ typedef struct CoerceToDomainState
 {
 	ExprState	xprstate;
 	ExprState  *arg;			/* input expression */
-	/* Cached list of constraints that need to be checked */
-	List	   *constraints;	/* list of DomainConstraintState nodes */
+	/* Cached set of constraints that need to be checked */
+	/* use struct pointer to avoid including typcache.h here */
+	struct DomainConstraintRef *constraint_ref;
 } CoerceToDomainState;
 
 /*

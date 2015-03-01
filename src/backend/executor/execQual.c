@@ -41,7 +41,6 @@
 #include "access/tupconvert.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
-#include "commands/typecmds.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
@@ -3929,7 +3928,10 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 	if (isDone && *isDone == ExprEndResult)
 		return result;			/* nothing to check */
 
-	foreach(l, cstate->constraints)
+	/* Make sure we have up-to-date constraints */
+	UpdateDomainConstraintRef(cstate->constraint_ref);
+
+	foreach(l, cstate->constraint_ref->constraints)
 	{
 		DomainConstraintState *con = (DomainConstraintState *) lfirst(l);
 
@@ -5050,7 +5052,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCoerceToDomain;
 				cstate->arg = ExecInitExpr(ctest->arg, parent);
-				cstate->constraints = GetDomainConstraints(ctest->resulttype);
+				/* We spend an extra palloc to reduce header inclusions */
+				cstate->constraint_ref = (DomainConstraintRef *)
+					palloc(sizeof(DomainConstraintRef));
+				InitDomainConstraintRef(ctest->resulttype,
+										cstate->constraint_ref,
+										CurrentMemoryContext);
 				state = (ExprState *) cstate;
 			}
 			break;

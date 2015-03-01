@@ -31,15 +31,11 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
-#include "catalog/dependency.h"
 #include "catalog/heap.h"
-#include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
@@ -59,14 +55,12 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "optimizer/planner.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -75,7 +69,6 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 /* result structure for get_rels_with_domain() */
@@ -3079,126 +3072,6 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 * perform any additional required tests.
 	 */
 	return ccbin;
-}
-
-/*
- * GetDomainConstraints - get a list of the current constraints of domain
- *
- * Returns a possibly-empty list of DomainConstraintState nodes.
- *
- * This is called by the executor during plan startup for a CoerceToDomain
- * expression node.  The given constraints will be checked for each value
- * passed through the node.
- *
- * We allow this to be called for non-domain types, in which case the result
- * is always NIL.
- */
-List *
-GetDomainConstraints(Oid typeOid)
-{
-	List	   *result = NIL;
-	bool		notNull = false;
-	Relation	conRel;
-
-	conRel = heap_open(ConstraintRelationId, AccessShareLock);
-
-	for (;;)
-	{
-		HeapTuple	tup;
-		HeapTuple	conTup;
-		Form_pg_type typTup;
-		ScanKeyData key[1];
-		SysScanDesc scan;
-
-		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "cache lookup failed for type %u", typeOid);
-		typTup = (Form_pg_type) GETSTRUCT(tup);
-
-		if (typTup->typtype != TYPTYPE_DOMAIN)
-		{
-			/* Not a domain, so done */
-			ReleaseSysCache(tup);
-			break;
-		}
-
-		/* Test for NOT NULL Constraint */
-		if (typTup->typnotnull)
-			notNull = true;
-
-		/* Look for CHECK Constraints on this domain */
-		ScanKeyInit(&key[0],
-					Anum_pg_constraint_contypid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(typeOid));
-
-		scan = systable_beginscan(conRel, ConstraintTypidIndexId, true,
-								  NULL, 1, key);
-
-		while (HeapTupleIsValid(conTup = systable_getnext(scan)))
-		{
-			Form_pg_constraint c = (Form_pg_constraint) GETSTRUCT(conTup);
-			Datum		val;
-			bool		isNull;
-			Expr	   *check_expr;
-			DomainConstraintState *r;
-
-			/* Ignore non-CHECK constraints (presently, shouldn't be any) */
-			if (c->contype != CONSTRAINT_CHECK)
-				continue;
-
-			/*
-			 * Not expecting conbin to be NULL, but we'll test for it anyway
-			 */
-			val = fastgetattr(conTup, Anum_pg_constraint_conbin,
-							  conRel->rd_att, &isNull);
-			if (isNull)
-				elog(ERROR, "domain \"%s\" constraint \"%s\" has NULL conbin",
-					 NameStr(typTup->typname), NameStr(c->conname));
-
-			check_expr = (Expr *) stringToNode(TextDatumGetCString(val));
-
-			/* ExecInitExpr assumes we've planned the expression */
-			check_expr = expression_planner(check_expr);
-
-			r = makeNode(DomainConstraintState);
-			r->constrainttype = DOM_CONSTRAINT_CHECK;
-			r->name = pstrdup(NameStr(c->conname));
-			r->check_expr = ExecInitExpr(check_expr, NULL);
-
-			/*
-			 * use lcons() here because constraints of lower domains should be
-			 * applied earlier.
-			 */
-			result = lcons(r, result);
-		}
-
-		systable_endscan(scan);
-
-		/* loop to next domain in stack */
-		typeOid = typTup->typbasetype;
-		ReleaseSysCache(tup);
-	}
-
-	heap_close(conRel, AccessShareLock);
-
-	/*
-	 * Only need to add one NOT NULL check regardless of how many domains in
-	 * the stack request it.
-	 */
-	if (notNull)
-	{
-		DomainConstraintState *r = makeNode(DomainConstraintState);
-
-		r->constrainttype = DOM_CONSTRAINT_NOTNULL;
-		r->name = pstrdup("NOT NULL");
-		r->check_expr = NULL;
-
-		/* lcons to apply the nullness check FIRST */
-		result = lcons(r, result);
-	}
-
-	return result;
 }
 
 
