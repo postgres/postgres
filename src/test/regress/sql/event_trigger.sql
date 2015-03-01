@@ -276,7 +276,16 @@ alter table rewriteme
 -- shouldn't trigger a table_rewrite event
 alter table rewriteme alter column foo type numeric(12,4);
 
--- typed tables are rewritten when their type changes
+-- typed tables are rewritten when their type changes.  Don't emit table
+-- name, because firing order is not stable.
+CREATE OR REPLACE FUNCTION test_evtrig_no_rewrite() RETURNS event_trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE NOTICE 'Table is being rewritten (reason = %)',
+               pg_event_trigger_table_rewrite_reason();
+END;
+$$;
+
 create type rewritetype as (a int);
 create table rewritemetoo1 of rewritetype;
 create table rewritemetoo2 of rewritetype;
