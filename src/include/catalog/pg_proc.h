@@ -1155,7 +1155,9 @@ DATA(insert OID = 999 (  lseg_eq		   PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16
 
 /* OIDS 1000 - 1999 */
 
-DATA(insert OID = 1026 (  timezone		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1114 "1186 1184" _null_ _null_ _null_ _null_ timestamptz_izone _null_ _null_ _null_ ));
+DATA(insert OID = 3994 (  timestamp_izone_transform PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ timestamp_izone_transform _null_ _null_ _null_ ));
+DESCR("transform a time zone adjustment");
+DATA(insert OID = 1026 (  timezone		   PGNSP PGUID 12 1 0 0 timestamp_izone_transform f f f f t f i 2 0 1114 "1186 1184" _null_ _null_ _null_ _null_ timestamptz_izone _null_ _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
 
 DATA(insert OID = 1031 (  aclitemin		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 1033 "2275" _null_ _null_ _null_ _null_ aclitemin _null_ _null_ _null_ ));
@@ -1269,7 +1271,9 @@ DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 1 0 0 0 f f f t t f i 
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_gt _null_ _null_ _null_ ));
 DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 0 0 f f f f t f i 1 0 1184 "701" _null_ _null_ _null_ _null_ "select (''epoch''::pg_catalog.timestamptz + $1 * ''1 second''::pg_catalog.interval)" _null_ _null_ _null_ ));
 DESCR("convert UNIX epoch to timestamptz");
-DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1114 "25 1184" _null_ _null_ _null_ _null_	timestamptz_zone _null_ _null_ _null_ ));
+DATA(insert OID = 3995 (  timestamp_zone_transform PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ timestamp_zone_transform _null_ _null_ _null_ ));
+DESCR("transform a time zone adjustment");
+DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 1 0 0 timestamp_zone_transform f f f f t f i 2 0 1114 "25 1184" _null_ _null_ _null_ _null_	timestamptz_zone _null_ _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
 
 DATA(insert OID = 1160 (  interval_in	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 3 0 1186 "2275 26 23" _null_ _null_ _null_ _null_ interval_in _null_ _null_ _null_ ));
@@ -2996,9 +3000,9 @@ DESCR("date difference preserving months and years");
 DATA(insert OID = 2059 (  age				PGNSP PGUID 14 1 0 0 0 f f f f t f s 1 0 1186 "1114" _null_ _null_ _null_ _null_ "select pg_catalog.age(cast(current_date as timestamp without time zone), $1)" _null_ _null_ _null_ ));
 DESCR("date difference from today preserving months and years");
 
-DATA(insert OID = 2069 (  timezone			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1184 "25 1114" _null_ _null_ _null_ _null_ timestamp_zone _null_ _null_ _null_ ));
+DATA(insert OID = 2069 (  timezone			PGNSP PGUID 12 1 0 0 timestamp_zone_transform f f f f t f i 2 0 1184 "25 1114" _null_ _null_ _null_ _null_ timestamp_zone _null_ _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
-DATA(insert OID = 2070 (  timezone			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1184 "1186 1114" _null_ _null_ _null_ _null_	timestamp_izone _null_ _null_ _null_ ));
+DATA(insert OID = 2070 (  timezone			PGNSP PGUID 12 1 0 0 timestamp_izone_transform f f f f t f i 2 0 1184 "1186 1114" _null_ _null_ _null_ _null_	timestamp_izone _null_ _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
 DATA(insert OID = 2071 (  date_pl_interval	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1114 "1082 1186" _null_ _null_ _null_ _null_	date_pl_interval _null_ _null_ _null_ ));
 DATA(insert OID = 2072 (  date_mi_interval	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1114 "1082 1186" _null_ _null_ _null_ _null_	date_mi_interval _null_ _null_ _null_ ));

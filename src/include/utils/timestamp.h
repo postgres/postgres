@@ -161,7 +161,9 @@ extern Datum timestamp_trunc(PG_FUNCTION_ARGS);
 extern Datum interval_trunc(PG_FUNCTION_ARGS);
 extern Datum timestamp_part(PG_FUNCTION_ARGS);
 extern Datum interval_part(PG_FUNCTION_ARGS);
+extern Datum timestamp_zone_transform(PG_FUNCTION_ARGS);
 extern Datum timestamp_zone(PG_FUNCTION_ARGS);
+extern Datum timestamp_izone_transform(PG_FUNCTION_ARGS);
 extern Datum timestamp_izone(PG_FUNCTION_ARGS);
 extern Datum timestamp_timestamptz(PG_FUNCTION_ARGS);
 
