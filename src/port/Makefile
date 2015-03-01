@@ -51,6 +51,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgport.a'
 
 libpgport.a: $(OBJS)
+	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
 # thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
@@ -61,6 +62,7 @@ thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
 #
 
 libpgport_srv.a: $(OBJS_SRV)
+	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
 # Because this uses its own compilation rule, it doesn't use the

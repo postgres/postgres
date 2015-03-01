@@ -43,6 +43,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgcommon.a'
 
 libpgcommon.a: $(OBJS_FRONTEND)
+	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
 #
@@ -50,6 +51,7 @@ libpgcommon.a: $(OBJS_FRONTEND)
 #
 
 libpgcommon_srv.a: $(OBJS_SRV)
+	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
 # Because this uses its own compilation rule, it doesn't use the
