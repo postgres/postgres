@@ -63,7 +63,6 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 	Query	   *parse = root->parse;
 	int			rt_index;
 	ListCell   *cell;
-	bool		targetRelation = false;
 
 	/*
 	 * Process each RTE in the rtable list.
@@ -74,7 +73,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 	rt_index = 0;
 	foreach(cell, parse->rtable)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(cell);
+		bool			targetRelation = false;
+		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(cell);
 
 		rt_index++;
 
