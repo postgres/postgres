@@ -318,6 +318,7 @@ all-shared-lib: $(shlib)
 
 ifndef haslibarule
 $(stlib): $(OBJS) | $(SHLIB_PREREQS)
+	rm -f $@
 	$(LINK.static) $@ $^
 	$(RANLIB) $@
 endif #haslibarule
@@ -360,6 +361,7 @@ else # PORTNAME == aix
 
 # AIX case
 $(shlib) $(stlib): $(OBJS) | $(SHLIB_PREREQS)
+	rm -f $(stlib)
 	$(LINK.static) $(stlib) $^
 	$(RANLIB) $(stlib)
 	$(MKLDEXPORT) $(stlib) >$(exports_file)
@@ -380,6 +382,7 @@ $(shlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) $(LDAP_LIBS_BE)
 
 $(stlib): $(OBJS) | $(SHLIB_PREREQS)
+	rm -f $@
 	$(LINK.static) $@ $^
 	$(RANLIB) $@
 
