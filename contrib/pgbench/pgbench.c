@@ -57,6 +57,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#include "pgbench.h"
+
 /*
  * Multi-platform pthread implementations
  */
@@ -289,6 +291,7 @@ typedef struct
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
 	int			argc;			/* number of command words */
 	char	   *argv[MAX_ARGS]; /* command word list */
+	PgBenchExpr *expr;			/* parsed expression */
 } Command;
 
 typedef struct
@@ -423,7 +426,7 @@ usage(void)
  * This function is a modified version of scanint8() from
  * src/backend/utils/adt/int8.c.
  */
-static int64
+int64
 strtoint64(const char *str)
 {
 	const char *ptr = str;
@@ -877,6 +880,91 @@ getQueryParams(CState *st, const Command *command, const char **params)
 
 	for (i = 0; i < command->argc - 1; i++)
 		params[i] = getVariable(st, command->argv[i + 1]);
+}
+
+/*
+ * Recursive evaluation of an expression in a pgbench script
+ * using the current state of variables.
+ * Returns whether the evaluation was ok,
+ * the value itself is returned through the retval pointer.
+ */
+static bool
+evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
+{
+	switch (expr->etype)
+	{
+		case ENODE_INTEGER_CONSTANT:
+			{
+				*retval = expr->u.integer_constant.ival;
+				return true;
+			}
+
+		case ENODE_VARIABLE:
+			{
+				char	   *var;
+
+				if ((var = getVariable(st, expr->u.variable.varname)) == NULL)
+				{
+					fprintf(stderr, "undefined variable %s\n",
+						expr->u.variable.varname);
+					return false;
+				}
+				*retval = strtoint64(var);
+				return true;
+			}
+
+		case ENODE_OPERATOR:
+			{
+				int64	lval;
+				int64	rval;
+
+				if (!evaluateExpr(st, expr->u.operator.lexpr, &lval))
+					return false;
+				if (!evaluateExpr(st, expr->u.operator.rexpr, &rval))
+					return false;
+				switch (expr->u.operator.operator)
+				{
+					case '+':
+						*retval = lval + rval;
+						return true;
+
+					case '-':
+						*retval = lval - rval;
+						return true;
+
+					case '*':
+						*retval = lval * rval;
+						return true;
+
+					case '/':
+						if (rval == 0)
+						{
+							fprintf(stderr, "division by zero\n");
+							return false;
+						}
+						*retval = lval / rval;
+						return true;
+
+					case '%':
+						if (rval == 0)
+						{
+							fprintf(stderr, "division by zero\n");
+							return false;
+						}
+						*retval = lval % rval;
+						return true;
+				}
+
+				fprintf(stderr, "bad operator\n");
+				return false;
+			}
+
+		default:
+			break;
+	}
+
+	fprintf(stderr, "bad expression\n");
+	return false;
 }
 
 /*
@@ -1515,64 +1603,16 @@ top:
 		}
 		else if (pg_strcasecmp(argv[0], "set") == 0)
 		{
-			char	   *var;
-			int64		ope1,
-						ope2;
 			char		res[64];
+			PgBenchExpr *expr = commands[st->state]->expr;
+			int64		result;
 
-			if (*argv[2] == ':')
+			if (!evaluateExpr(st, expr, &result))
 			{
-				if ((var = getVariable(st, argv[2] + 1)) == NULL)
-				{
-					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[2]);
-					st->ecnt++;
-					return true;
-				}
-				ope1 = strtoint64(var);
+				st->ecnt++;
+				return true;
 			}
-			else
-				ope1 = strtoint64(argv[2]);
-
-			if (argc < 5)
-				snprintf(res, sizeof(res), INT64_FORMAT, ope1);
-			else
-			{
-				if (*argv[4] == ':')
-				{
-					if ((var = getVariable(st, argv[4] + 1)) == NULL)
-					{
-						fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[4]);
-						st->ecnt++;
-						return true;
-					}
-					ope2 = strtoint64(var);
-				}
-				else
-					ope2 = strtoint64(argv[4]);
-
-				if (strcmp(argv[3], "+") == 0)
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 + ope2);
-				else if (strcmp(argv[3], "-") == 0)
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 - ope2);
-				else if (strcmp(argv[3], "*") == 0)
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 * ope2);
-				else if (strcmp(argv[3], "/") == 0)
-				{
-					if (ope2 == 0)
-					{
-						fprintf(stderr, "%s: division by zero\n", argv[0]);
-						st->ecnt++;
-						return true;
-					}
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 / ope2);
-				}
-				else
-				{
-					fprintf(stderr, "%s: unsupported operator %s\n", argv[0], argv[3]);
-					st->ecnt++;
-					return true;
-				}
-			}
+			sprintf(res, INT64_FORMAT, result);
 
 			if (!putVariable(st, argv[0], argv[1], res))
 			{
@@ -2151,7 +2191,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 
 /* Parse a command; return a Command struct, or NULL if it's a comment */
 static Command *
-process_commands(char *buf)
+process_commands(char *buf, const char *source, const int lineno)
 {
 	const char	delim[] = " \f\n\r\t\v";
 
@@ -2182,16 +2222,23 @@ process_commands(char *buf)
 
 	if (*p == '\\')
 	{
+		int		max_args = -1;
 		my_commands->type = META_COMMAND;
 
 		j = 0;
 		tok = strtok(++p, delim);
 
+		if (tok != NULL && pg_strcasecmp(tok, "set") == 0)
+			max_args = 2;
+
 		while (tok != NULL)
 		{
 			my_commands->argv[j++] = pg_strdup(tok);
 			my_commands->argc++;
-			tok = strtok(NULL, delim);
+			if (max_args >= 0 && my_commands->argc >= max_args)
+				tok = strtok(NULL, "");
+			else
+				tok = strtok(NULL, delim);
 		}
 
 		if (pg_strcasecmp(my_commands->argv[0], "setrandom") == 0)
@@ -2250,9 +2297,17 @@ process_commands(char *buf)
 				exit(1);
 			}
 
-			for (j = my_commands->argc < 5 ? 3 : 5; j < my_commands->argc; j++)
-				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
-						my_commands->argv[0], my_commands->argv[j]);
+			expr_scanner_init(my_commands->argv[2]);
+
+			if (expr_yyparse() != 0)
+			{
+				fprintf(stderr, "%s: parse error\n", my_commands->argv[0]);
+				exit(1);
+			}
+
+			my_commands->expr = expr_parse_result;
+
+			expr_scanner_finish();
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "sleep") == 0)
 		{
@@ -2393,7 +2448,7 @@ process_file(char *filename)
 
 	Command   **my_commands;
 	FILE	   *fd;
-	int			lineno;
+	int			lineno, index;
 	char	   *buf;
 	int			alloc_num;
 
@@ -2416,22 +2471,24 @@ process_file(char *filename)
 	}
 
 	lineno = 0;
+	index = 0;
 
 	while ((buf = read_line_from_file(fd)) != NULL)
 	{
 		Command    *command;
+		lineno += 1;
 
-		command = process_commands(buf);
+		command = process_commands(buf, filename, lineno);
 
 		free(buf);
 
 		if (command == NULL)
 			continue;
 
-		my_commands[lineno] = command;
-		lineno++;
+		my_commands[index] = command;
+		index++;
 
-		if (lineno >= alloc_num)
+		if (index >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
 			my_commands = pg_realloc(my_commands, sizeof(Command *) * alloc_num);
@@ -2439,7 +2496,7 @@ process_file(char *filename)
 	}
 	fclose(fd);
 
-	my_commands[lineno] = NULL;
+	my_commands[index] = NULL;
 
 	sql_files[num_files++] = my_commands;
 
@@ -2447,12 +2504,12 @@ process_file(char *filename)
 }
 
 static Command **
-process_builtin(char *tb)
+process_builtin(char *tb, const char *source)
 {
 #define COMMANDS_ALLOC_NUM 128
 
 	Command   **my_commands;
-	int			lineno;
+	int			lineno, index;
 	char		buf[BUFSIZ];
 	int			alloc_num;
 
@@ -2460,6 +2517,7 @@ process_builtin(char *tb)
 	my_commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
 
 	lineno = 0;
+	index = 0;
 
 	for (;;)
 	{
@@ -2478,21 +2536,23 @@ process_builtin(char *tb)
 
 		*p = '\0';
 
-		command = process_commands(buf);
+		lineno += 1;
+
+		command = process_commands(buf, source, lineno);
 		if (command == NULL)
 			continue;
 
-		my_commands[lineno] = command;
-		lineno++;
+		my_commands[index] = command;
+		index++;
 
-		if (lineno >= alloc_num)
+		if (index >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
 			my_commands = pg_realloc(my_commands, sizeof(Command *) * alloc_num);
 		}
 	}
 
-	my_commands[lineno] = NULL;
+	my_commands[index] = NULL;
 
 	return my_commands;
 }
@@ -3222,17 +3282,20 @@ main(int argc, char **argv)
 	switch (ttype)
 	{
 		case 0:
-			sql_files[0] = process_builtin(tpc_b);
+			sql_files[0] = process_builtin(tpc_b,
+										   "<builtin: TPC-B (sort of)>");
 			num_files = 1;
 			break;
 
 		case 1:
-			sql_files[0] = process_builtin(select_only);
+			sql_files[0] = process_builtin(select_only,
+										   "<builtin: select only>");
 			num_files = 1;
 			break;
 
 		case 2:
-			sql_files[0] = process_builtin(simple_update);
+			sql_files[0] = process_builtin(simple_update,
+										   "<builtin: simple update>");
 			num_files = 1;
 			break;
 

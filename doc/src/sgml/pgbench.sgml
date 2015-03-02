@@ -751,22 +751,25 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <variablelist>
    <varlistentry>
     <term>
-     <literal>\set <replaceable>varname</> <replaceable>operand1</> [ <replaceable>operator</> <replaceable>operand2</> ]</literal>
+     <literal>\set <replaceable>varname</> <replaceable>expression</>
     </term>
 
     <listitem>
      <para>
-      Sets variable <replaceable>varname</> to a calculated integer value.
-      Each <replaceable>operand</> is either an integer constant or a
-      <literal>:</><replaceable>variablename</> reference to a variable
-      having an integer value.  The <replaceable>operator</> can be
-      <literal>+</>, <literal>-</>, <literal>*</>, or <literal>/</>.
+      Sets variable <replaceable>varname</> to an integer value calculated
+      from <replaceable>expression</>.
+      The expression may contain integer constants such as <literal>5432</>,
+      references to variables <literal>:</><replaceable>variablename</>,
+      and expressions composed of unary (<literal>-</>) or binary operators
+      (<literal>+</>, <literal>-</>, <literal>*</>, <literal>/</>, <literal>%</>)
+      with their usual associativity, and parentheses.
      </para>
 
      <para>
-      Example:
+      Examples:
 <programlisting>
 \set ntellers 10 * :scale
+\set aid (1021 * :aid) % (100000 * :scale) + 1
 </programlisting></para>
     </listitem>
    </varlistentry>

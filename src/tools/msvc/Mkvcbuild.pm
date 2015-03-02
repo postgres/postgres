@@ -49,6 +49,7 @@ my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
 	'cube' => [ 'cubescan.l', 'cubeparse.y' ],
+	'pgbench' => [ 'exprscan.l', 'exprparse.y' ],
 	'seg'  => [ 'segscan.l',  'segparse.y' ], };
 my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
 
