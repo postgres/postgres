@@ -14908,6 +14908,33 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 
 /*
  * getExtensionMembership --- obtain extension membership data
+ *
+ * There are three main parts to this process:
+ *
+ * 1. Identify objects which are members of extensions
+ *
+ *    Generally speaking, this is to mark them as *not* being dumped, as most
+ *    extension objects are created by the single CREATE EXTENSION command.
+ *    The one exception is binary upgrades with pg_upgrade will still dump the
+ *    non-table objects.
+ *
+ * 2. Identify and create dump records for extension configuration tables.
+ *
+ *    Extensions can mark tables as "configuration", which means that the user
+ *    is able and expected to modify those tables after the extension has been
+ *    loaded.  For these tables, we dump out only the data- the structure is
+ *    expected to be handled at CREATE EXTENSION time, including any indexes or
+ *    foriegn keys, which brings us to-
+ *
+ * 3. Record FK dependencies between configuration tables.
+ *
+ *    Due to the FKs being created at CREATE EXTENSION time and therefore before
+ *    the data is loaded, we have to work out what the best order for reloading
+ *    the data is, to avoid FK violations when the tables are restored.  This is
+ *    not perfect- we can't handle circular dependencies and if any exist they
+ *    will cause an invalid dump to be produced (though at least all of the data
+ *    is included for a user to manually restore).  This is currently documented
+ *    but perhaps we can provide a better solution in the future.
  */
 void
 getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
@@ -14920,7 +14947,9 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 	int			i_classid,
 				i_objid,
 				i_refclassid,
-				i_refobjid;
+				i_refobjid,
+				i_conrelid,
+				i_confrelid;
 	DumpableObject *dobj,
 			   *refdobj;
 
@@ -15101,6 +15130,53 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 			free(extconditionarray);
 	}
 
+	/*
+	 * Now that all the TableInfoData objects have been created for all
+	 * the extensions, check their FK dependencies and register them to
+	 * try and dump the data out in an order which they can be restored
+	 * in.
+	 *
+	 * Note that this is not a problem for user tables as their FKs are
+	 * recreated after the data has been loaded.
+	 */
+	printfPQExpBuffer(query,
+			"SELECT conrelid, confrelid "
+			"FROM pg_constraint "
+				"JOIN pg_depend ON (objid = confrelid) "
+			"WHERE contype = 'f' "
+			"AND refclassid = 'pg_extension'::regclass "
+			"AND classid = 'pg_class'::regclass;");
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+	ntups = PQntuples(res);
+
+	i_conrelid = PQfnumber(res, "conrelid");
+	i_confrelid = PQfnumber(res, "confrelid");
+
+	/* Now get the dependencies and register them */
+	for (i = 0; i < ntups; i++)
+	{
+		Oid			conrelid, confrelid;
+		TableInfo  *reftable, *contable;
+
+		conrelid = atooid(PQgetvalue(res, i, i_conrelid));
+		confrelid = atooid(PQgetvalue(res, i, i_confrelid));
+		contable = findTableByOid(conrelid);
+		reftable = findTableByOid(confrelid);
+
+		if (reftable == NULL ||
+			reftable->dataObj == NULL ||
+			contable == NULL ||
+			contable->dataObj == NULL)
+			continue;
+
+		/*
+		 * Make referencing TABLE_DATA object depend on the
+		 * referenced table's TABLE_DATA object.
+		 */
+		addObjectDependency(&contable->dataObj->dobj,
+							reftable->dataObj->dobj.dumpId);
+	}
 	destroyPQExpBuffer(query);
 }
 

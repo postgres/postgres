@@ -721,6 +721,17 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      a table as no longer a configuration table is to dissociate it from the
      extension with <command>ALTER EXTENSION ... DROP TABLE</>.
     </para>
+
+    <para>
+     Note that foreign key relationships between these tables will dictate the
+     order in which the tables are dumped out by pg_dump.  Specifically, pg_dump
+     will attempt to dump the referenced-by table before the referencing table.
+     As the foreign key relationships are set up at CREATE EXTENSION time (prior
+     to data being loaded into the tables) circular dependencies are not
+     supported.  When circular dependencies exist, the data will still be dumped
+     out but the dump will not be able to be restored directly and user
+     intervention will be required.
+    </para>
    </sect2>
 
    <sect2>
