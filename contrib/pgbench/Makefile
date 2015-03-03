@@ -6,8 +6,6 @@ PGAPPICON = win32
 PROGRAM = pgbench
 OBJS	= pgbench.o exprparse.o $(WIN32RES)
 
-EXTRA_CLEAN	= exprparse.c exprscan.c
-
 PG_CPPFLAGS = -I$(libpq_srcdir)
 PG_LIBS = $(libpq_pgport) $(PTHREAD_LIBS)
 
@@ -28,13 +26,8 @@ ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
-# There is no correct way to write a rule that generates two files.
-# Rules with two targets don't have that meaning, they are merely
-# shorthand for two otherwise separate rules.  To be safe for parallel
-# make, we must chain the dependencies like this.  The semicolon is
-# important; otherwise, make will choose the built-in rule.
-
-exprparse.h: exprparse.c ;
-
 # exprscan is compiled as part of exprparse
 exprparse.o: exprscan.c
+
+maintainer-clean:
+	rm -f exprparse.c exprscan.c
