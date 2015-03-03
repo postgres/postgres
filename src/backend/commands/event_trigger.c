@@ -518,12 +518,13 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 /*
  * Change event trigger's owner -- by name
  */
-Oid
+ObjectAddress
 AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 {
 	Oid			evtOid;
 	HeapTuple	tup;
 	Relation	rel;
+	ObjectAddress address;
 
 	rel = heap_open(EventTriggerRelationId, RowExclusiveLock);
 
@@ -538,11 +539,13 @@ AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 
 	AlterEventTriggerOwner_internal(rel, tup, newOwnerId);
 
+	ObjectAddressSet(address, EventTriggerRelationId, evtOid);
+
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
 
-	return evtOid;
+	return address;
 }
 
 /*

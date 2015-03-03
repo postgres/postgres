@@ -24,7 +24,7 @@ extern void DeleteSharedSecurityLabel(Oid objectId, Oid classId);
 /*
  * Statement and ESP hook support
  */
-extern Oid	ExecSecLabelStmt(SecLabelStmt *stmt);
+extern ObjectAddress ExecSecLabelStmt(SecLabelStmt *stmt);
 
 typedef void (*check_object_relabel_type) (const ObjectAddress *object,
 													   const char *seclabel);

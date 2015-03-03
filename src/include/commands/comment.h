@@ -15,6 +15,7 @@
 #ifndef COMMENT_H
 #define COMMENT_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
 /*------------------------------------------------------------------
@@ -29,7 +30,7 @@
  *------------------------------------------------------------------
  */
 
-extern Oid	CommentObject(CommentStmt *stmt);
+extern ObjectAddress CommentObject(CommentStmt *stmt);
 
 extern void DeleteComments(Oid oid, Oid classoid, int32 subid);
 

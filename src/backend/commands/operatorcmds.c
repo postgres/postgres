@@ -59,7 +59,7 @@
  *
  * 'parameters' is a list of DefElem
  */
-Oid
+ObjectAddress
 DefineOperator(List *names, List *parameters)
 {
 	char	   *oprName;

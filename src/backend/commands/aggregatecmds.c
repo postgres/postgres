@@ -51,7 +51,7 @@
  * isn't an ordered-set aggregate.
  * "parameters" is a list of DefElem representing the agg's definition clauses.
  */
-Oid
+ObjectAddress
 DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 				const char *queryString)
 {

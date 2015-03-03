@@ -64,7 +64,7 @@ static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
  * not "ArrayType *", to avoid importing array.h into pg_proc_fn.h.
  * ----------------------------------------------------------------
  */
-Oid
+ObjectAddress
 ProcedureCreate(const char *procedureName,
 				Oid procNamespace,
 				bool replace,
@@ -703,7 +703,7 @@ ProcedureCreate(const char *procedureName,
 			AtEOXact_GUC(true, save_nestlevel);
 	}
 
-	return retval;
+	return myself;
 }
 
 

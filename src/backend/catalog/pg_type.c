@@ -52,7 +52,7 @@ Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
  *		with correct ones, and "typisdefined" will be set to true.
  * ----------------------------------------------------------------
  */
-Oid
+ObjectAddress
 TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 {
 	Relation	pg_type_desc;
@@ -63,6 +63,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	bool		nulls[Natts_pg_type];
 	Oid			typoid;
 	NameData	name;
+	ObjectAddress address;
 
 	Assert(PointerIsValid(typeName));
 
@@ -171,13 +172,15 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	/* Post creation hook for new shell type */
 	InvokeObjectPostCreateHook(TypeRelationId, typoid, 0);
 
+	ObjectAddressSet(address, TypeRelationId, typoid);
+
 	/*
 	 * clean up and return the type-oid
 	 */
 	heap_freetuple(tup);
 	heap_close(pg_type_desc, RowExclusiveLock);
 
-	return typoid;
+	return address;
 }
 
 /* ----------------------------------------------------------------
@@ -185,12 +188,12 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
  *
  *		This does all the necessary work needed to define a new type.
  *
- *		Returns the OID assigned to the new type.  If newTypeOid is
- *		zero (the normal case), a new OID is created; otherwise we
- *		use exactly that OID.
+ *		Returns the ObjectAddress assigned to the new type.
+ *		If newTypeOid is zero (the normal case), a new OID is created;
+ *		otherwise we use exactly that OID.
  * ----------------------------------------------------------------
  */
-Oid
+ObjectAddress
 TypeCreate(Oid newTypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
@@ -233,6 +236,7 @@ TypeCreate(Oid newTypeOid,
 	NameData	name;
 	int			i;
 	Acl		   *typacl = NULL;
+	ObjectAddress address;
 
 	/*
 	 * We assume that the caller validated the arguments individually, but did
@@ -488,12 +492,14 @@ TypeCreate(Oid newTypeOid,
 	/* Post creation hook for new type */
 	InvokeObjectPostCreateHook(TypeRelationId, typeObjectId, 0);
 
+	ObjectAddressSet(address, TypeRelationId, typeObjectId);
+
 	/*
 	 * finish up
 	 */
 	heap_close(pg_type_desc, RowExclusiveLock);
 
-	return typeObjectId;
+	return address;
 }
 
 /*

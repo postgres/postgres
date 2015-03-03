@@ -43,7 +43,7 @@ static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
 /*
  * AggregateCreate
  */
-Oid
+ObjectAddress
 AggregateCreate(const char *aggName,
 				Oid aggNamespace,
 				char aggKind,
@@ -522,32 +522,33 @@ AggregateCreate(const char *aggName,
 	 * aggregate.  (This could fail if there's already a conflicting entry.)
 	 */
 
-	procOid = ProcedureCreate(aggName,
-							  aggNamespace,
-							  false,	/* no replacement */
-							  false,	/* doesn't return a set */
-							  finaltype,		/* returnType */
-							  GetUserId(),		/* proowner */
-							  INTERNALlanguageId,		/* languageObjectId */
-							  InvalidOid,		/* no validator */
-							  "aggregate_dummy",		/* placeholder proc */
-							  NULL,		/* probin */
-							  true,		/* isAgg */
-							  false,	/* isWindowFunc */
-							  false,	/* security invoker (currently not
+	myself = ProcedureCreate(aggName,
+							 aggNamespace,
+							 false,		/* no replacement */
+							 false,		/* doesn't return a set */
+							 finaltype, /* returnType */
+							 GetUserId(),		/* proowner */
+							 INTERNALlanguageId,		/* languageObjectId */
+							 InvalidOid,		/* no validator */
+							 "aggregate_dummy", /* placeholder proc */
+							 NULL,		/* probin */
+							 true,		/* isAgg */
+							 false,		/* isWindowFunc */
+							 false,		/* security invoker (currently not
 										 * definable for agg) */
-							  false,	/* isLeakProof */
-							  false,	/* isStrict (not needed for agg) */
-							  PROVOLATILE_IMMUTABLE,	/* volatility (not
+							 false,		/* isLeakProof */
+							 false,		/* isStrict (not needed for agg) */
+							 PROVOLATILE_IMMUTABLE,		/* volatility (not
 														 * needed for agg) */
-							  parameterTypes,	/* paramTypes */
-							  allParameterTypes,		/* allParamTypes */
-							  parameterModes,	/* parameterModes */
-							  parameterNames,	/* parameterNames */
-							  parameterDefaults,		/* parameterDefaults */
-							  PointerGetDatum(NULL),	/* proconfig */
-							  1,	/* procost */
-							  0);		/* prorows */
+							 parameterTypes,	/* paramTypes */
+							 allParameterTypes, /* allParamTypes */
+							 parameterModes,	/* parameterModes */
+							 parameterNames,	/* parameterNames */
+							 parameterDefaults, /* parameterDefaults */
+							 PointerGetDatum(NULL),		/* proconfig */
+							 1, /* procost */
+							 0);	/* prorows */
+	procOid = myself.objectId;
 
 	/*
 	 * Okay to create the pg_aggregate entry.
@@ -599,9 +600,6 @@ AggregateCreate(const char *aggName,
 	 * on aggTransType since we depend on it indirectly through transfn.
 	 * Likewise for aggmTransType if any.
 	 */
-	myself.classId = ProcedureRelationId;
-	myself.objectId = procOid;
-	myself.objectSubId = 0;
 
 	/* Depends on transition function */
 	referenced.classId = ProcedureRelationId;
@@ -654,7 +652,7 @@ AggregateCreate(const char *aggName,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-	return procOid;
+	return myself;
 }
 
 /*

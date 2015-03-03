@@ -112,6 +112,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		Oid			namespaceId;
 		AclResult	aclresult;
 		char	   *typname;
+		ObjectAddress address;
 
 		/*
 		 * Only C-coded functions can be I/O functions.  We enforce this
@@ -144,7 +145,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 						   get_namespace_name(namespaceId));
-		rettype = TypeShellMake(typname, namespaceId, GetUserId());
+		address = TypeShellMake(typname, namespaceId, GetUserId());
+		rettype = address.objectId;
 		Assert(OidIsValid(rettype));
 	}
 
@@ -810,7 +812,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
  * CreateFunction
  *	 Execute a CREATE FUNCTION utility statement.
  */
-Oid
+ObjectAddress
 CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 {
 	char	   *probin_str;
@@ -1071,7 +1073,7 @@ RemoveFunctionById(Oid funcOid)
  * RENAME and OWNER clauses, which are handled as part of the generic
  * ALTER framework).
  */
-Oid
+ObjectAddress
 AlterFunction(AlterFunctionStmt *stmt)
 {
 	HeapTuple	tup;
@@ -1086,6 +1088,7 @@ AlterFunction(AlterFunctionStmt *stmt)
 	List	   *set_items = NIL;
 	DefElem    *cost_item = NULL;
 	DefElem    *rows_item = NULL;
+	ObjectAddress address;
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -1201,10 +1204,12 @@ AlterFunction(AlterFunctionStmt *stmt)
 
 	InvokeObjectPostAlterHook(ProcedureRelationId, funcOid, 0);
 
+	ObjectAddressSet(address, ProcedureRelationId, funcOid);
+
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 
-	return funcOid;
+	return address;
 }
 
 /*
@@ -1282,7 +1287,7 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 /*
  * CREATE CAST
  */
-Oid
+ObjectAddress
 CreateCast(CreateCastStmt *stmt)
 {
 	Oid			sourcetypeid;
@@ -1596,7 +1601,7 @@ CreateCast(CreateCastStmt *stmt)
 
 	heap_close(relation, RowExclusiveLock);
 
-	return castid;
+	return myself;
 }
 
 /*

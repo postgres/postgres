@@ -531,6 +531,12 @@ ObjectTypeMap[] =
 	{ "policy", OBJECT_POLICY }
 };
 
+const ObjectAddress InvalidObjectAddress =
+{
+	InvalidOid,
+	InvalidOid,
+	0
+};
 
 static ObjectAddress get_object_address_unqualified(ObjectType objtype,
 							   List *qualname, bool missing_ok);

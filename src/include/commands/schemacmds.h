@@ -15,6 +15,7 @@
 #ifndef SCHEMACMDS_H
 #define SCHEMACMDS_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
 extern Oid CreateSchemaCommand(CreateSchemaStmt *parsetree,
@@ -22,8 +23,8 @@ extern Oid CreateSchemaCommand(CreateSchemaStmt *parsetree,
 
 extern void RemoveSchemaById(Oid schemaOid);
 
-extern Oid	RenameSchema(const char *oldname, const char *newname);
-extern Oid	AlterSchemaOwner(const char *name, Oid newOwnerId);
+extern ObjectAddress RenameSchema(const char *oldname, const char *newname);
+extern ObjectAddress AlterSchemaOwner(const char *name, Oid newOwnerId);
 extern void AlterSchemaOwner_oid(Oid schemaOid, Oid newOwnerId);
 
 #endif   /* SCHEMACMDS_H */

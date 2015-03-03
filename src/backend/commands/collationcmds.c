@@ -37,7 +37,7 @@
 /*
  * CREATE COLLATION
  */
-Oid
+ObjectAddress
 DefineCollation(List *names, List *parameters)
 {
 	char	   *collName;
@@ -51,6 +51,7 @@ DefineCollation(List *names, List *parameters)
 	char	   *collcollate = NULL;
 	char	   *collctype = NULL;
 	Oid			newoid;
+	ObjectAddress address;
 
 	collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
 
@@ -137,11 +138,13 @@ DefineCollation(List *names, List *parameters)
 							 collcollate,
 							 collctype);
 
+	ObjectAddressSet(address, CollationRelationId, newoid);
+
 	/* check that the locales can be loaded */
 	CommandCounterIncrement();
 	(void) pg_newlocale_from_collation(newoid);
 
-	return newoid;
+	return address;
 }
 
 /*

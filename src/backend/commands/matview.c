@@ -134,7 +134,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  * The matview's "populated" state is changed based on whether the contents
  * reflect the result set of the materialized view's query.
  */
-Oid
+ObjectAddress
 ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 				   ParamListInfo params, char *completionTag)
 {
@@ -153,6 +153,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	ObjectAddress address;
 
 	/* Determine strength of lock needed. */
 	concurrent = stmt->concurrent;
@@ -311,7 +312,9 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
-	return matviewOid;
+	ObjectAddressSet(address, RelationRelationId, matviewOid);
+
+	return address;
 }
 
 /*

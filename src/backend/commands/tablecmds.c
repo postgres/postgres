@@ -435,17 +435,19 @@ static void RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid,
  * The other arguments are used to extend the behavior for other cases:
  * relkind: relkind to assign to the new relation
  * ownerId: if not InvalidOid, use this as the new relation's owner.
+ * typaddress: if not null, it's set to the pg_type entry's address.
  *
  * Note that permissions checks are done against current user regardless of
  * ownerId.  A nonzero ownerId is used when someone is creating a relation
  * "on behalf of" someone else, so we still want to see that the current user
  * has permissions to do it.
  *
- * If successful, returns the OID of the new relation.
+ * If successful, returns the address of the new relation.
  * ----------------------------------------------------------------
  */
-Oid
-DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
+ObjectAddress
+DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
+			   ObjectAddress *typaddress)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
@@ -465,6 +467,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	AttrNumber	attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			ofTypeId;
+	ObjectAddress address;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -657,7 +660,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 										  reloptions,
 										  true,
 										  allowSystemTableMods,
-										  false);
+										  false,
+										  typaddress);
 
 	/* Store inheritance information for new rel. */
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -689,13 +693,15 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
 								  true, true, false);
 
+	ObjectAddressSet(address, RelationRelationId, relationId);
+
 	/*
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
 	 * visible to anyone else anyway, until commit).
 	 */
 	relation_close(rel, NoLock);
 
-	return relationId;
+	return address;
 }
 
 /*
@@ -2158,8 +2164,10 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 
 /*
  *		renameatt_internal		- workhorse for renameatt
+ *
+ * Return value is the attribute number in the 'myrelid' relation.
  */
-static void
+static AttrNumber
 renameatt_internal(Oid myrelid,
 				   const char *oldattname,
 				   const char *newattname,
@@ -2172,7 +2180,7 @@ renameatt_internal(Oid myrelid,
 	Relation	attrelation;
 	HeapTuple	atttup;
 	Form_pg_attribute attform;
-	int			attnum;
+	AttrNumber	attnum;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
@@ -2300,6 +2308,8 @@ renameatt_internal(Oid myrelid,
 	heap_close(attrelation, RowExclusiveLock);
 
 	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
+
+	return attnum;
 }
 
 /*
@@ -2322,11 +2332,15 @@ RangeVarCallbackForRenameAttribute(const RangeVar *rv, Oid relid, Oid oldrelid,
 
 /*
  *		renameatt		- changes the name of a attribute in a relation
+ *
+ * The returned ObjectAddress is that of the renamed column.
  */
-Oid
+ObjectAddress
 renameatt(RenameStmt *stmt)
 {
 	Oid			relid;
+	AttrNumber	attnum;
+	ObjectAddress address;
 
 	/* lock level taken here should match renameatt_internal */
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
@@ -2339,26 +2353,27 @@ renameatt(RenameStmt *stmt)
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->relation->relname)));
-		return InvalidOid;
+		return InvalidObjectAddress;
 	}
 
-	renameatt_internal(relid,
-					   stmt->subname,	/* old att name */
-					   stmt->newname,	/* new att name */
-					   interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
-					   false,	/* recursing? */
-					   0,		/* expected inhcount */
-					   stmt->behavior);
+	attnum =
+		renameatt_internal(relid,
+						   stmt->subname,		/* old att name */
+						   stmt->newname,		/* new att name */
+						   interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
+						   false,		/* recursing? */
+						   0,	/* expected inhcount */
+						   stmt->behavior);
 
-	/* This is an ALTER TABLE command so it's about the relid */
-	return relid;
+	ObjectAddressSubSet(address, RelationRelationId, relid, attnum);
+
+	return address;
 }
-
 
 /*
  * same logic as renameatt_internal
  */
-static Oid
+static ObjectAddress
 rename_constraint_internal(Oid myrelid,
 						   Oid mytypid,
 						   const char *oldconname,
@@ -2371,6 +2386,7 @@ rename_constraint_internal(Oid myrelid,
 	Oid			constraintOid;
 	HeapTuple	tuple;
 	Form_pg_constraint con;
+	ObjectAddress address;
 
 	AssertArg(!myrelid || !mytypid);
 
@@ -2446,15 +2462,17 @@ rename_constraint_internal(Oid myrelid,
 	else
 		RenameConstraintById(constraintOid, newconname);
 
+	ObjectAddressSet(address, ConstraintRelationId, constraintOid);
+
 	ReleaseSysCache(tuple);
 
 	if (targetrelation)
 		relation_close(targetrelation, NoLock); /* close rel but keep lock */
 
-	return constraintOid;
+	return address;
 }
 
-Oid
+ObjectAddress
 RenameConstraint(RenameStmt *stmt)
 {
 	Oid			relid = InvalidOid;
@@ -2497,10 +2515,11 @@ RenameConstraint(RenameStmt *stmt)
  * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW/MATERIALIZED VIEW/FOREIGN TABLE
  * RENAME
  */
-Oid
+ObjectAddress
 RenameRelation(RenameStmt *stmt)
 {
 	Oid			relid;
+	ObjectAddress address;
 
 	/*
 	 * Grab an exclusive lock on the target table, index, sequence, view,
@@ -2520,13 +2539,15 @@ RenameRelation(RenameStmt *stmt)
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->relation->relname)));
-		return InvalidOid;
+		return InvalidObjectAddress;
 	}
 
 	/* Do the work */
 	RenameRelationInternal(relid, stmt->newname, false);
 
-	return relid;
+	ObjectAddressSet(address, RelationRelationId, relid);
+
+	return address;
 }
 
 /*
@@ -5702,7 +5723,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	bool		check_rights;
 	bool		skip_build;
 	bool		quiet;
-	Oid			new_index;
+	ObjectAddress address;
 
 	Assert(IsA(stmt, IndexStmt));
 	Assert(!stmt->concurrent);
@@ -5717,13 +5738,13 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	/* suppress notices when rebuilding existing index */
 	quiet = is_rebuild;
 
-	new_index = DefineIndex(RelationGetRelid(rel),
-							stmt,
-							InvalidOid, /* no predefined OID */
-							true,		/* is_alter_table */
-							check_rights,
-							skip_build,
-							quiet);
+	address = DefineIndex(RelationGetRelid(rel),
+						  stmt,
+						  InvalidOid,	/* no predefined OID */
+						  true, /* is_alter_table */
+						  check_rights,
+						  skip_build,
+						  quiet);
 
 	/*
 	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
@@ -5733,7 +5754,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	 */
 	if (OidIsValid(stmt->oldNode))
 	{
-		Relation	irel = index_open(new_index, NoLock);
+		Relation	irel = index_open(address.objectId, NoLock);
 
 		RelationPreserveStorage(irel->rd_node, true);
 		index_close(irel, NoLock);
@@ -10919,8 +10940,8 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 /*
  * Execute ALTER TABLE SET SCHEMA
  */
-Oid
-AlterTableNamespace(AlterObjectSchemaStmt *stmt)
+ObjectAddress
+AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 {
 	Relation	rel;
 	Oid			relid;
@@ -10928,6 +10949,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	Oid			nspOid;
 	RangeVar   *newrv;
 	ObjectAddresses *objsMoved;
+	ObjectAddress myself;
 
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
 									 stmt->missing_ok, false,
@@ -10939,7 +10961,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->relation->relname)));
-		return InvalidOid;
+		return InvalidObjectAddress;
 	}
 
 	rel = relation_open(relid, NoLock);
@@ -10972,10 +10994,15 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	AlterTableNamespaceInternal(rel, oldNspOid, nspOid, objsMoved);
 	free_object_addresses(objsMoved);
 
+	ObjectAddressSet(myself, RelationRelationId, relid);
+
+	if (oldschema)
+		*oldschema = oldNspOid;
+
 	/* close rel, but keep lock until commit */
 	relation_close(rel, NoLock);
 
-	return relid;
+	return myself;
 }
 
 /*

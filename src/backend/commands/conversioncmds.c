@@ -34,7 +34,7 @@
 /*
  * CREATE CONVERSION
  */
-Oid
+ObjectAddress
 CreateConversionCommand(CreateConversionStmt *stmt)
 {
 	Oid			namespaceId;

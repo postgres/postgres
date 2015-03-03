@@ -195,13 +195,14 @@ RemoveSchemaById(Oid schemaOid)
 /*
  * Rename schema
  */
-Oid
+ObjectAddress
 RenameSchema(const char *oldname, const char *newname)
 {
 	Oid			nspOid;
 	HeapTuple	tup;
 	Relation	rel;
 	AclResult	aclresult;
+	ObjectAddress address;
 
 	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
@@ -243,10 +244,12 @@ RenameSchema(const char *oldname, const char *newname)
 
 	InvokeObjectPostAlterHook(NamespaceRelationId, HeapTupleGetOid(tup), 0);
 
+	ObjectAddressSet(address, NamespaceRelationId, nspOid);
+
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 
-	return nspOid;
+	return address;
 }
 
 void
@@ -272,12 +275,13 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 /*
  * Change schema owner
  */
-Oid
+ObjectAddress
 AlterSchemaOwner(const char *name, Oid newOwnerId)
 {
 	Oid			nspOid;
 	HeapTuple	tup;
 	Relation	rel;
+	ObjectAddress address;
 
 	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
@@ -291,11 +295,13 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 
 	AlterSchemaOwner_internal(tup, rel, newOwnerId);
 
+	ObjectAddressSet(address, NamespaceRelationId, nspOid);
+
 	ReleaseSysCache(tup);
 
 	heap_close(rel, RowExclusiveLock);
 
-	return nspOid;
+	return address;
 }
 
 static void

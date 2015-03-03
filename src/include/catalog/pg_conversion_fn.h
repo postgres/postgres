@@ -14,7 +14,10 @@
 #ifndef PG_CONVERSION_FN_H
 #define PG_CONVERSION_FN_H
 
-extern Oid ConversionCreate(const char *conname, Oid connamespace,
+
+#include "catalog/objectaddress.h"
+
+extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
 				 Oid conowner,
 				 int32 conforencoding, int32 contoencoding,
 				 Oid conproc, bool def);

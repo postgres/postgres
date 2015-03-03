@@ -246,7 +246,7 @@ get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
  *
  * Caller must have done permissions checks etc. already.
  */
-static Oid
+static ObjectAddress
 CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 {
 	Oid			opfamilyoid;
@@ -319,14 +319,14 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 
 	heap_close(rel, RowExclusiveLock);
 
-	return opfamilyoid;
+	return myself;
 }
 
 /*
  * DefineOpClass
  *		Define a new index operator class.
  */
-Oid
+ObjectAddress
 DefineOpClass(CreateOpClassStmt *stmt)
 {
 	char	   *opcname;		/* name of opclass we're creating */
@@ -445,11 +445,14 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		}
 		else
 		{
+			ObjectAddress tmpAddr;
+
 			/*
 			 * Create it ... again no need for more permissions ...
 			 */
-			opfamilyoid = CreateOpFamily(stmt->amname, opcname,
-										 namespaceoid, amoid);
+			tmpAddr = CreateOpFamily(stmt->amname, opcname,
+									 namespaceoid, amoid);
+			opfamilyoid = tmpAddr.objectId;
 		}
 	}
 
@@ -719,7 +722,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	heap_close(rel, RowExclusiveLock);
 
-	return opclassoid;
+	return myself;
 }
 
 
@@ -727,7 +730,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
  * DefineOpFamily
  *		Define a new index operator family.
  */
-Oid
+ObjectAddress
 DefineOpFamily(CreateOpFamilyStmt *stmt)
 {
 	char	   *opfname;		/* name of opfamily we're creating */

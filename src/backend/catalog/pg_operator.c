@@ -61,7 +61,7 @@ static Oid get_other_operator(List *otherOp,
 				   Oid leftTypeId, Oid rightTypeId,
 				   bool isCommutator);
 
-static void makeOperatorDependencies(HeapTuple tuple);
+static ObjectAddress makeOperatorDependencies(HeapTuple tuple);
 
 
 /*
@@ -325,7 +325,7 @@ OperatorShellMake(const char *operatorName,
  * Forward declaration is used only for this purpose, it is
  * not available to the user as it is for type definition.
  */
-Oid
+ObjectAddress
 OperatorCreate(const char *operatorName,
 			   Oid operatorNamespace,
 			   Oid leftTypeId,
@@ -352,6 +352,7 @@ OperatorCreate(const char *operatorName,
 	NameData	oname;
 	TupleDesc	tupDesc;
 	int			i;
+	ObjectAddress address;
 
 	/*
 	 * Sanity checks
@@ -540,7 +541,7 @@ OperatorCreate(const char *operatorName,
 	CatalogUpdateIndexes(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
-	makeOperatorDependencies(tup);
+	address = makeOperatorDependencies(tup);
 
 	/* Post creation hook for new operator */
 	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
@@ -564,7 +565,7 @@ OperatorCreate(const char *operatorName,
 	if (OidIsValid(commutatorId) || OidIsValid(negatorId))
 		OperatorUpd(operatorObjectId, commutatorId, negatorId);
 
-	return operatorObjectId;
+	return address;
 }
 
 /*
@@ -764,7 +765,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
  * NB: the OidIsValid tests in this routine are necessary, in case
  * the given operator is a shell.
  */
-static void
+static ObjectAddress
 makeOperatorDependencies(HeapTuple tuple)
 {
 	Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tuple);
@@ -860,4 +861,6 @@ makeOperatorDependencies(HeapTuple tuple)
 
 	/* Dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, true);
+
+	return myself;
 }

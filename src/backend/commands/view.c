@@ -65,7 +65,7 @@ validateWithCheckOption(char *value)
  * work harder.
  *---------------------------------------------------------------------
  */
-static Oid
+static ObjectAddress
 DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 					  List *options)
 {
@@ -143,6 +143,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		TupleDesc	descriptor;
 		List	   *atcmds = NIL;
 		AlterTableCmd *atcmd;
+		ObjectAddress address;
 
 		/* Relation is already locked, but we must build a relcache entry. */
 		rel = relation_open(viewOid, NoLock);
@@ -208,16 +209,18 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		/* OK, let's do it. */
 		AlterTableInternal(viewOid, atcmds, true);
 
+		ObjectAddressSet(address, RelationRelationId, viewOid);
+
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
 		 */
 		relation_close(rel, NoLock);	/* keep the lock! */
 
-		return viewOid;
+		return address;
 	}
 	else
 	{
-		Oid			relid;
+		ObjectAddress address;
 
 		/*
 		 * now set the parameters for keys/inheritance etc. All of these are
@@ -237,9 +240,9 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * existing view, so we don't need more code to complain if "replace"
 		 * is false).
 		 */
-		relid = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid);
-		Assert(relid != InvalidOid);
-		return relid;
+		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL);
+		Assert(address.objectId != InvalidOid);
+		return address;
 	}
 }
 
@@ -388,14 +391,14 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
  * DefineView
  *		Execute a CREATE VIEW command.
  */
-Oid
+ObjectAddress
 DefineView(ViewStmt *stmt, const char *queryString)
 {
 	Query	   *viewParse;
-	Oid			viewOid;
 	RangeVar   *view;
 	ListCell   *cell;
 	bool		check_option;
+	ObjectAddress address;
 
 	/*
 	 * Run parse analysis to convert the raw parse tree to a Query.  Note this
@@ -533,7 +536,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * NOTE: if it already exists and replace is false, the xact will be
 	 * aborted.
 	 */
-	viewOid = DefineVirtualRelation(view, viewParse->targetList,
+	address = DefineVirtualRelation(view, viewParse->targetList,
 									stmt->replace, stmt->options);
 
 	/*
@@ -543,9 +546,9 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 */
 	CommandCounterIncrement();
 
-	StoreViewQuery(viewOid, viewParse, stmt->replace);
+	StoreViewQuery(address.objectId, viewParse, stmt->replace);
 
-	return viewOid;
+	return address;
 }
 
 /*

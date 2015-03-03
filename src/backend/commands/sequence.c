@@ -104,13 +104,14 @@ static void process_owned_by(Relation seqrel, List *owned_by);
  * DefineSequence
  *				Creates a new sequence relation
  */
-Oid
+ObjectAddress
 DefineSequence(CreateSeqStmt *seq)
 {
 	FormData_pg_sequence new;
 	List	   *owned_by;
 	CreateStmt *stmt = makeNode(CreateStmt);
 	Oid			seqoid;
+	ObjectAddress address;
 	Relation	rel;
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -139,7 +140,7 @@ DefineSequence(CreateSeqStmt *seq)
 					(errcode(ERRCODE_DUPLICATE_TABLE),
 					 errmsg("relation \"%s\" already exists, skipping",
 							seq->sequence->relname)));
-			return InvalidOid;
+			return InvalidObjectAddress;
 		}
 	}
 
@@ -233,7 +234,8 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->tablespacename = NULL;
 	stmt->if_not_exists = seq->if_not_exists;
 
-	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId);
+	address = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, NULL);
+	seqoid = address.objectId;
 	Assert(seqoid != InvalidOid);
 
 	rel = heap_open(seqoid, AccessExclusiveLock);
@@ -249,7 +251,7 @@ DefineSequence(CreateSeqStmt *seq)
 
 	heap_close(rel, NoLock);
 
-	return seqoid;
+	return address;
 }
 
 /*
@@ -401,7 +403,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
  *
  * Modify the definition of a sequence relation
  */
-Oid
+ObjectAddress
 AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
@@ -412,6 +414,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
 	List	   *owned_by;
+	ObjectAddress address;
 
 	/* Open and lock sequence. */
 	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, stmt->missing_ok);
@@ -420,7 +423,7 @@ AlterSequence(AlterSeqStmt *stmt)
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->sequence->relname)));
-		return InvalidOid;
+		return InvalidObjectAddress;
 	}
 
 	init_sequence(relid, &elm, &seqrel);
@@ -484,9 +487,11 @@ AlterSequence(AlterSeqStmt *stmt)
 
 	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
 
+	ObjectAddressSet(address, RelationRelationId, relid);
+
 	relation_close(seqrel, NoLock);
 
-	return relid;
+	return address;
 }
 
 

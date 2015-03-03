@@ -20,6 +20,7 @@
 #define PG_AGGREGATE_H
 
 #include "catalog/genbki.h"
+#include "catalog/objectaddress.h"
 #include "nodes/pg_list.h"
 
 /* ----------------------------------------------------------------
@@ -308,7 +309,7 @@ DATA(insert ( 3992	h 1 ordered_set_transition_multi	dense_rank_final						-		-		
 /*
  * prototypes for functions in pg_aggregate.c
  */
-extern Oid AggregateCreate(const char *aggName,
+extern ObjectAddress AggregateCreate(const char *aggName,
 				Oid aggNamespace,
 				char aggKind,
 				int numArgs,

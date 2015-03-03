@@ -15,8 +15,9 @@
 #ifndef CONVERSIONCMDS_H
 #define CONVERSIONCMDS_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
-extern Oid	CreateConversionCommand(CreateConversionStmt *parsetree);
+extern ObjectAddress CreateConversionCommand(CreateConversionStmt *parsetree);
 
 #endif   /* CONVERSIONCMDS_H */

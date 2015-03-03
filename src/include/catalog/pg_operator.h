@@ -23,6 +23,7 @@
 #define PG_OPERATOR_H
 
 #include "catalog/genbki.h"
+#include "catalog/objectaddress.h"
 #include "nodes/pg_list.h"
 
 /* ----------------
@@ -1812,7 +1813,7 @@ DESCR("is contained by");
 /*
  * function prototypes
  */
-extern Oid OperatorCreate(const char *operatorName,
+extern ObjectAddress OperatorCreate(const char *operatorName,
 			   Oid operatorNamespace,
 			   Oid leftTypeId,
 			   Oid rightTypeId,

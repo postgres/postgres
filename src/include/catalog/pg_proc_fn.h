@@ -14,9 +14,10 @@
 #ifndef PG_PROC_FN_H
 #define PG_PROC_FN_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/pg_list.h"
 
-extern Oid ProcedureCreate(const char *procedureName,
+extern ObjectAddress ProcedureCreate(const char *procedureName,
 				Oid procNamespace,
 				bool replace,
 				bool returnsSet,

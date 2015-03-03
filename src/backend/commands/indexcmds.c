@@ -291,9 +291,9 @@ CheckIndexCompatible(Oid oldId,
  *		it will be filled later.
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
  *
- * Returns the OID of the created index.
+ * Returns the object address of the created index.
  */
-Oid
+ObjectAddress
 DefineIndex(Oid relationId,
 			IndexStmt *stmt,
 			Oid indexRelationId,
@@ -323,6 +323,7 @@ DefineIndex(Oid relationId,
 	int			numberOfAttributes;
 	TransactionId limitXmin;
 	VirtualTransactionId *old_snapshots;
+	ObjectAddress address;
 	int			n_old_snapshots;
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
@@ -613,10 +614,12 @@ DefineIndex(Oid relationId,
 					 stmt->concurrent, !check_rights,
 					 stmt->if_not_exists);
 
+	ObjectAddressSet(address, RelationRelationId, indexRelationId);
+
 	if (!OidIsValid(indexRelationId))
 	{
 		heap_close(rel, NoLock);
-		return indexRelationId;
+		return address;
 	}
 
 	/* Add any requested comment */
@@ -628,7 +631,7 @@ DefineIndex(Oid relationId,
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
 		heap_close(rel, NoLock);
-		return indexRelationId;
+		return address;
 	}
 
 	/* save lockrelid and locktag for below, then close rel */
@@ -873,7 +876,7 @@ DefineIndex(Oid relationId,
 	 */
 	UnlockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
 
-	return indexRelationId;
+	return address;
 }
 
 

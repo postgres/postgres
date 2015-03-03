@@ -37,8 +37,10 @@ static List *label_provider_list = NIL;
  * ExecSecLabelStmt --
  *
  * Apply a security label to a database object.
+ *
+ * Returns the ObjectAddress of the object to which the policy was applied.
  */
-Oid
+ObjectAddress
 ExecSecLabelStmt(SecLabelStmt *stmt)
 {
 	LabelProvider *provider = NULL;
@@ -133,7 +135,7 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	if (relation != NULL)
 		relation_close(relation, NoLock);
 
-	return address.objectId;
+	return address;
 }
 
 /*

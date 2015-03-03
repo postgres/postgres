@@ -846,7 +846,7 @@ directory_is_empty(const char *path)
 /*
  * Rename a tablespace
  */
-Oid
+ObjectAddress
 RenameTableSpace(const char *oldname, const char *newname)
 {
 	Oid			tspId;
@@ -856,6 +856,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 	HeapTuple	tup;
 	HeapTuple	newtuple;
 	Form_pg_tablespace newform;
+	ObjectAddress address;
 
 	/* Search pg_tablespace */
 	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
@@ -912,9 +913,11 @@ RenameTableSpace(const char *oldname, const char *newname)
 
 	InvokeObjectPostAlterHook(TableSpaceRelationId, tspId, 0);
 
+	ObjectAddressSet(address, TableSpaceRelationId, tspId);
+
 	heap_close(rel, NoLock);
 
-	return tspId;
+	return address;
 }
 
 /*

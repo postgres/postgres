@@ -89,7 +89,7 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					char relkind,
 					Datum relacl,
 					Datum reloptions);
-static Oid AddNewRelationType(const char *typeName,
+static ObjectAddress AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
@@ -935,7 +935,7 @@ AddNewRelationTuple(Relation pg_class_desc,
  *		define a composite type corresponding to the new relation
  * --------------------------------
  */
-static Oid
+static ObjectAddress
 AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
@@ -1006,6 +1006,9 @@ AddNewRelationType(const char *typeName,
  *	allow_system_table_mods: TRUE to allow creation in system namespaces
  *	is_internal: is this a system-generated catalog?
  *
+ * Output parameters:
+ *	typaddress: if not null, gets the object address of the new pg_type entry
+ *
  * Returns the OID of the new relation
  * --------------------------------
  */
@@ -1029,7 +1032,8 @@ heap_create_with_catalog(const char *relname,
 						 Datum reloptions,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
-						 bool is_internal)
+						 bool is_internal,
+						 ObjectAddress *typaddress)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -1037,6 +1041,7 @@ heap_create_with_catalog(const char *relname,
 	Oid			existing_relid;
 	Oid			old_type_oid;
 	Oid			new_type_oid;
+	ObjectAddress new_type_addr;
 	Oid			new_array_oid = InvalidOid;
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
@@ -1187,13 +1192,16 @@ heap_create_with_catalog(const char *relname,
 	 * creating the same type name in parallel but hadn't committed yet when
 	 * we checked for a duplicate name above.
 	 */
-	new_type_oid = AddNewRelationType(relname,
-									  relnamespace,
-									  relid,
-									  relkind,
-									  ownerid,
-									  reltypeid,
-									  new_array_oid);
+	new_type_addr = AddNewRelationType(relname,
+									   relnamespace,
+									   relid,
+									   relkind,
+									   ownerid,
+									   reltypeid,
+									   new_array_oid);
+	new_type_oid = new_type_addr.objectId;
+	if (typaddress)
+		*typaddress = new_type_addr;
 
 	/*
 	 * Now make the array type if wanted.

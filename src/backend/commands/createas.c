@@ -58,8 +58,8 @@ typedef struct
 	BulkInsertState bistate;	/* bulk insert state */
 } DR_intorel;
 
-/* the OID of the created table, for ExecCreateTableAs consumption */
-static Oid	CreateAsRelid = InvalidOid;
+/* the address of the created table, for ExecCreateTableAs consumption */
+static ObjectAddress CreateAsReladdr = {InvalidOid, InvalidOid, 0};
 
 static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
@@ -70,7 +70,7 @@ static void intorel_destroy(DestReceiver *self);
 /*
  * ExecCreateTableAs -- execute a CREATE TABLE AS command
  */
-Oid
+ObjectAddress
 ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 				  ParamListInfo params, char *completionTag)
 {
@@ -81,7 +81,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	Oid			save_userid = InvalidOid;
 	int			save_sec_context = 0;
 	int			save_nestlevel = 0;
-	Oid			relOid;
+	ObjectAddress address;
 	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
@@ -99,7 +99,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
 					 errmsg("relation \"%s\" already exists, skipping",
 							stmt->into->rel->relname)));
-			return InvalidOid;
+			return InvalidObjectAddress;
 		}
 	}
 
@@ -121,9 +121,9 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		Assert(!is_matview);	/* excluded by syntax */
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
 
-		relOid = CreateAsRelid;
-		CreateAsRelid = InvalidOid;
-		return relOid;
+		address = CreateAsReladdr;
+		CreateAsReladdr = InvalidObjectAddress;
+		return address;
 	}
 	Assert(query->commandType == CMD_SELECT);
 
@@ -216,10 +216,10 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
 
-	relOid = CreateAsRelid;
-	CreateAsRelid = InvalidOid;
+	address = CreateAsReladdr;
+	CreateAsReladdr = InvalidObjectAddress;
 
-	return relOid;
+	return address;
 }
 
 /*
@@ -288,7 +288,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	bool		is_matview;
 	char		relkind;
 	CreateStmt *create;
-	Oid			intoRelationId;
+	ObjectAddress intoRelationAddr;
 	Relation	intoRelationDesc;
 	RangeTblEntry *rte;
 	Datum		toast_options;
@@ -385,7 +385,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/*
 	 * Actually create the target table
 	 */
-	intoRelationId = DefineRelation(create, relkind, InvalidOid);
+	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -403,7 +403,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
-	NewRelationCreateToastTable(intoRelationId, toast_options);
+	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options);
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)
@@ -411,14 +411,14 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		/* StoreViewQuery scribbles on tree, so make a copy */
 		Query	   *query = (Query *) copyObject(into->viewQuery);
 
-		StoreViewQuery(intoRelationId, query, false);
+		StoreViewQuery(intoRelationAddr.objectId, query, false);
 		CommandCounterIncrement();
 	}
 
 	/*
 	 * Finally we can open the target table
 	 */
-	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
+	intoRelationDesc = heap_open(intoRelationAddr.objectId, AccessExclusiveLock);
 
 	/*
 	 * Check INSERT permission on the constructed table.
@@ -428,7 +428,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
-	rte->relid = intoRelationId;
+	rte->relid = intoRelationAddr.objectId;
 	rte->relkind = relkind;
 	rte->requiredPerms = ACL_INSERT;
 
@@ -446,7 +446,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * be enabled here.  We don't actually support that currently, so throw
 	 * our own ereport(ERROR) if that happens.
 	 */
-	if (check_enable_rls(intoRelationId, InvalidOid, false) == RLS_ENABLED)
+	if (check_enable_rls(intoRelationAddr.objectId, InvalidOid, false) == RLS_ENABLED)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 (errmsg("policies not yet implemented for this command"))));
@@ -464,8 +464,8 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	myState->rel = intoRelationDesc;
 	myState->output_cid = GetCurrentCommandId(true);
 
-	/* and remember the new relation's OID for ExecCreateTableAs */
-	CreateAsRelid = RelationGetRelid(myState->rel);
+	/* and remember the new relation's address for ExecCreateTableAs */
+	CreateAsReladdr = intoRelationAddr;
 
 	/*
 	 * We can skip WAL-logging the insertions, unless PITR or streaming

@@ -15,6 +15,7 @@
 #define TABLESPACE_H
 
 #include "access/xlogreader.h"
+#include "catalog/objectaddress.h"
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
@@ -42,7 +43,7 @@ typedef struct TableSpaceOpts
 
 extern Oid	CreateTableSpace(CreateTableSpaceStmt *stmt);
 extern void DropTableSpace(DropTableSpaceStmt *stmt);
-extern Oid	RenameTableSpace(const char *oldname, const char *newname);
+extern ObjectAddress RenameTableSpace(const char *oldname, const char *newname);
 extern Oid	AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
