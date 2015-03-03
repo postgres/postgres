@@ -1004,6 +1004,7 @@ AddNewRelationType(const char *typeName,
  *	use_user_acl: TRUE if should look for user-defined default permissions;
  *		if FALSE, relacl is always set NULL
  *	allow_system_table_mods: TRUE to allow creation in system namespaces
+ *	is_internal: is this a system-generated catalog?
  *
  * Returns the OID of the new relation
  * --------------------------------
