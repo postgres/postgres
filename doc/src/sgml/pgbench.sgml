@@ -751,7 +751,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <variablelist>
    <varlistentry>
     <term>
-     <literal>\set <replaceable>varname</> <replaceable>expression</>
+     <literal>\set <replaceable>varname</> <replaceable>expression</></literal>
     </term>
 
     <listitem>
@@ -1024,7 +1024,7 @@ END;
 
  <refsect2>
   <title>Aggregated Logging</title>
-  
+
   <para>
    With the <option>--aggregate-interval</option> option, the logs use a bit different format:
 
