@@ -1210,6 +1210,9 @@ create_indexscan_plan(PlannerInfo *root,
 	 * predicate, but only in a plain SELECT; when scanning a target relation
 	 * of UPDATE/DELETE/SELECT FOR UPDATE, we must leave such quals in the
 	 * plan so that they'll be properly rechecked by EvalPlanQual testing.
+	 *
+	 * Note: if you change this bit of code you should also look at
+	 * extract_nonindex_conditions() in costsize.c.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)

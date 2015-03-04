@@ -124,6 +124,7 @@ typedef struct
 	QualCost	total;
 } cost_qual_eval_context;
 
+static List *extract_nonindex_conditions(List *qual_clauses, List *indexquals);
 static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   RestrictInfo *rinfo,
 			   PathKey *pathkey);
@@ -242,7 +243,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	IndexOptInfo *index = path->indexinfo;
 	RelOptInfo *baserel = index->rel;
 	bool		indexonly = (path->path.pathtype == T_IndexOnlyScan);
-	List	   *allclauses;
+	List	   *qpquals;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexStartupCost;
@@ -265,19 +266,26 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	/* Mark the path with the correct row estimate */
+	/*
+	 * Mark the path with the correct row estimate, and identify which quals
+	 * will need to be enforced as qpquals.
+	 */
 	if (path->path.param_info)
 	{
 		path->path.rows = path->path.param_info->ppi_rows;
-		/* also get the set of clauses that should be enforced by the scan */
-		allclauses = list_concat(list_copy(path->path.param_info->ppi_clauses),
-								 baserel->baserestrictinfo);
+		/* qpquals come from the rel's restriction clauses and ppi_clauses */
+		qpquals = list_concat(
+					   extract_nonindex_conditions(baserel->baserestrictinfo,
+												   path->indexquals),
+			  extract_nonindex_conditions(path->path.param_info->ppi_clauses,
+										  path->indexquals));
 	}
 	else
 	{
 		path->path.rows = baserel->rows;
-		/* allclauses should just be the rel's restriction clauses */
-		allclauses = baserel->baserestrictinfo;
+		/* qpquals come from just the rel's restriction clauses */
+		qpquals = extract_nonindex_conditions(baserel->baserestrictinfo,
+											  path->indexquals);
 	}
 
 	if (!enable_indexscan)
@@ -433,19 +441,9 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * Estimate CPU costs per tuple.
 	 *
 	 * What we want here is cpu_tuple_cost plus the evaluation costs of any
-	 * qual clauses that we have to evaluate as qpquals.  We approximate that
-	 * list as allclauses minus any clauses appearing in indexquals.  (We
-	 * assume that pointer equality is enough to recognize duplicate
-	 * RestrictInfos.)	This method neglects some considerations such as
-	 * clauses that needn't be checked because they are implied by a partial
-	 * index's predicate.  It does not seem worth the cycles to try to factor
-	 * those things in at this stage, even though createplan.c will take pains
-	 * to remove such unnecessary clauses from the qpquals list if this path
-	 * is selected for use.
+	 * qual clauses that we have to evaluate as qpquals.
 	 */
-	cost_qual_eval(&qpqual_cost,
-				   list_difference_ptr(allclauses, path->indexquals),
-				   root);
+	cost_qual_eval(&qpqual_cost, qpquals, root);
 
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
@@ -454,6 +452,46 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
+}
+
+/*
+ * extract_nonindex_conditions
+ *
+ * Given a list of quals to be enforced in an indexscan, extract the ones that
+ * will have to be applied as qpquals (ie, the index machinery won't handle
+ * them).  The actual rules for this appear in create_indexscan_plan() in
+ * createplan.c, but the full rules are fairly expensive and we don't want to
+ * go to that much effort for index paths that don't get selected for the
+ * final plan.  So we approximate it as quals that don't appear directly in
+ * indexquals and also are not redundant children of the same EquivalenceClass
+ * as some indexqual.  This method neglects some infrequently-relevant
+ * considerations such as clauses that needn't be checked because they are
+ * implied by a partial index's predicate.  It does not seem worth the cycles
+ * to try to factor those things in at this stage, even though createplan.c
+ * will take pains to remove such unnecessary clauses from the qpquals list if
+ * this path is selected for use.
+ */
+static List *
+extract_nonindex_conditions(List *qual_clauses, List *indexquals)
+{
+	List	   *result = NIL;
+	ListCell   *lc;
+
+	foreach(lc, qual_clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		Assert(IsA(rinfo, RestrictInfo));
+		if (rinfo->pseudoconstant)
+			continue;			/* we may drop pseudoconstants here */
+		if (list_member_ptr(indexquals, rinfo))
+			continue;			/* simple duplicate */
+		if (is_redundant_derived_clause(rinfo, indexquals))
+			continue;			/* derived from same EquivalenceClass */
+		/* ... skip the predicate proof attempts createplan.c will try ... */
+		result = lappend(result, rinfo);
+	}
+	return result;
 }
 
 /*
