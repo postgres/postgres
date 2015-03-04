@@ -844,9 +844,10 @@ Check for an exact match with the target.
 
 <step performance="required">
 <para>
-Otherwise, try to convert the expression to the target type.  This will succeed
-if there is a registered cast between the two types.
-If the expression is an unknown-type literal, the contents of
+Otherwise, try to convert the expression to the target type.  This is possible
+if an <firstterm>assignment cast</> between the two types is registered in the
+<structname>pg_cast</> catalog (see <xref linkend="sql-createcast">).
+Alternatively, if the expression is an unknown-type literal, the contents of
 the literal string will be fed to the input conversion routine for the target
 type.
 </para>

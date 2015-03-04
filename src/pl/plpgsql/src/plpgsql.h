@@ -22,6 +22,7 @@
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "utils/hsearch.h"
 
 /**********************************************************************
  * Definitions
@@ -178,10 +179,9 @@ typedef struct
 	int			ttype;			/* PLPGSQL_TTYPE_ code */
 	int16		typlen;			/* stuff copied from its pg_type entry */
 	bool		typbyval;
+	char		typtype;
 	Oid			typrelid;
-	Oid			typioparam;
 	Oid			collation;		/* from pg_type, but can be overridden */
-	FmgrInfo	typinput;		/* lookup info for typinput function */
 	int32		atttypmod;		/* typmod (taken from someplace else) */
 } PLpgSQL_type;
 
@@ -709,8 +709,6 @@ typedef struct PLpgSQL_function
 	Oid			fn_rettype;
 	int			fn_rettyplen;
 	bool		fn_retbyval;
-	FmgrInfo	fn_retinput;
-	Oid			fn_rettypioparam;
 	bool		fn_retistuple;
 	bool		fn_retset;
 	bool		fn_readonly;
@@ -747,6 +745,9 @@ typedef struct PLpgSQL_function
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
+
+	/* table for performing casts needed in this function */
+	HTAB	   *cast_hash;
 
 	/* these fields change when the function is used */
 	struct PLpgSQL_execstate *cur_estate;

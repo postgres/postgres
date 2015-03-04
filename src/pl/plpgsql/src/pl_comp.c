@@ -559,8 +559,6 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				function->fn_retbyval = typeStruct->typbyval;
 				function->fn_rettyplen = typeStruct->typlen;
-				function->fn_rettypioparam = getTypeIOParam(typeTup);
-				fmgr_info(typeStruct->typinput, &(function->fn_retinput));
 
 				/*
 				 * install $0 reference, but only for polymorphic return
@@ -803,7 +801,6 @@ plpgsql_compile_inline(char *proc_source)
 	char	   *func_name = "inline_code_block";
 	PLpgSQL_function *function;
 	ErrorContextCallback plerrcontext;
-	Oid			typinput;
 	PLpgSQL_variable *var;
 	int			parse_rc;
 	MemoryContext func_cxt;
@@ -876,8 +873,6 @@ plpgsql_compile_inline(char *proc_source)
 	/* a bit of hardwired knowledge about type VOID here */
 	function->fn_retbyval = true;
 	function->fn_rettyplen = sizeof(int32);
-	getTypeInputInfo(VOIDOID, &typinput, &function->fn_rettypioparam);
-	fmgr_info(typinput, &(function->fn_retinput));
 
 	/*
 	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
@@ -2200,12 +2195,11 @@ build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 	}
 	typ->typlen = typeStruct->typlen;
 	typ->typbyval = typeStruct->typbyval;
+	typ->typtype = typeStruct->typtype;
 	typ->typrelid = typeStruct->typrelid;
-	typ->typioparam = getTypeIOParam(typeTup);
 	typ->collation = typeStruct->typcollation;
 	if (OidIsValid(collation) && OidIsValid(typ->collation))
 		typ->collation = collation;
-	fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->atttypmod = typmod;
 
 	return typ;

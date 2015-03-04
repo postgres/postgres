@@ -26,6 +26,8 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/planner.h"
+#include "parser/parse_coerce.h"
 #include "parser/scansup.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -49,6 +51,20 @@ typedef struct
 	char	   *nulls;			/* null markers (' '/'n' style) */
 	bool	   *freevals;		/* which arguments are pfree-able */
 } PreparedParamsData;
+
+typedef struct
+{
+	/* NB: we assume this struct contains no padding bytes */
+	Oid			srctype;		/* source type for cast */
+	Oid			dsttype;		/* destination type for cast */
+	int32		dsttypmod;		/* destination typmod for cast */
+} plpgsql_CastHashKey;
+
+typedef struct
+{
+	plpgsql_CastHashKey key;	/* hash key --- MUST BE FIRST */
+	ExprState  *cast_exprstate; /* cast expression, or NULL if no-op cast */
+} plpgsql_CastHashEntry;
 
 /*
  * All plpgsql function executions within a single transaction share the same
@@ -211,15 +227,11 @@ static void exec_move_row_from_datum(PLpgSQL_execstate *estate,
 static char *convert_value_to_string(PLpgSQL_execstate *estate,
 						Datum value, Oid valtype);
 static Datum exec_cast_value(PLpgSQL_execstate *estate,
-				Datum value, bool isnull,
+				Datum value, bool *isnull,
 				Oid valtype, int32 valtypmod,
-				Oid reqtype, int32 reqtypmod,
-				FmgrInfo *reqinput,
-				Oid reqtypioparam);
-static Datum exec_simple_cast_value(PLpgSQL_execstate *estate,
-					   Datum value, bool isnull,
-					   Oid valtype, int32 valtypmod,
-					   Oid reqtype, int32 reqtypmod);
+				Oid reqtype, int32 reqtypmod);
+static ExprState *get_cast_expression(PLpgSQL_execstate *estate,
+					Oid srctype, Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
@@ -454,13 +466,11 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 			/* Cast value to proper type */
 			estate.retval = exec_cast_value(&estate,
 											estate.retval,
-											fcinfo->isnull,
+											&fcinfo->isnull,
 											estate.rettype,
 											-1,
 											func->fn_rettype,
-											-1,
-											&(func->fn_retinput),
-											func->fn_rettypioparam);
+											-1);
 
 			/*
 			 * If the function's return type isn't by value, copy the value
@@ -1079,7 +1089,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 						 * before the notnull check to be consistent with
 						 * exec_assign_value.)
 						 */
-						if (!var->datatype->typinput.fn_strict)
+						if (var->datatype->typtype == TYPTYPE_DOMAIN)
 							exec_assign_value(estate,
 											  (PLpgSQL_datum *) var,
 											  (Datum) 0,
@@ -1903,12 +1913,10 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	 */
 	value = exec_eval_expr(estate, stmt->lower,
 						   &isnull, &valtype, &valtypmod);
-	value = exec_cast_value(estate, value, isnull,
+	value = exec_cast_value(estate, value, &isnull,
 							valtype, valtypmod,
 							var->datatype->typoid,
-							var->datatype->atttypmod,
-							&(var->datatype->typinput),
-							var->datatype->typioparam);
+							var->datatype->atttypmod);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1921,12 +1929,10 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	 */
 	value = exec_eval_expr(estate, stmt->upper,
 						   &isnull, &valtype, &valtypmod);
-	value = exec_cast_value(estate, value, isnull,
+	value = exec_cast_value(estate, value, &isnull,
 							valtype, valtypmod,
 							var->datatype->typoid,
-							var->datatype->atttypmod,
-							&(var->datatype->typinput),
-							var->datatype->typioparam);
+							var->datatype->atttypmod);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1941,12 +1947,10 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	{
 		value = exec_eval_expr(estate, stmt->step,
 							   &isnull, &valtype, &valtypmod);
-		value = exec_cast_value(estate, value, isnull,
+		value = exec_cast_value(estate, value, &isnull,
 								valtype, valtypmod,
 								var->datatype->typoid,
-								var->datatype->atttypmod,
-								&(var->datatype->typinput),
-								var->datatype->typioparam);
+								var->datatype->atttypmod);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2614,13 +2618,13 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 						errmsg("wrong result type supplied in RETURN NEXT")));
 
 					/* coerce type if needed */
-					retval = exec_simple_cast_value(estate,
-													retval,
-													isNull,
-													var->datatype->typoid,
-													var->datatype->atttypmod,
-												 tupdesc->attrs[0]->atttypid,
-											   tupdesc->attrs[0]->atttypmod);
+					retval = exec_cast_value(estate,
+											 retval,
+											 &isNull,
+											 var->datatype->typoid,
+											 var->datatype->atttypmod,
+											 tupdesc->attrs[0]->atttypid,
+											 tupdesc->attrs[0]->atttypmod);
 
 					tuplestore_putvalues(estate->tuple_store, tupdesc,
 										 &retval, &isNull);
@@ -2740,13 +2744,13 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					   errmsg("wrong result type supplied in RETURN NEXT")));
 
 			/* coerce type if needed */
-			retval = exec_simple_cast_value(estate,
-											retval,
-											isNull,
-											rettype,
-											rettypmod,
-											tupdesc->attrs[0]->atttypid,
-											tupdesc->attrs[0]->atttypmod);
+			retval = exec_cast_value(estate,
+									 retval,
+									 &isNull,
+									 rettype,
+									 rettypmod,
+									 tupdesc->attrs[0]->atttypid,
+									 tupdesc->attrs[0]->atttypmod);
 
 			tuplestore_putvalues(estate->tuple_store, tupdesc,
 								 &retval, &isNull);
@@ -4070,13 +4074,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				newvalue = exec_cast_value(estate,
 										   value,
-										   isNull,
+										   &isNull,
 										   valtype,
 										   valtypmod,
 										   var->datatype->typoid,
-										   var->datatype->atttypmod,
-										   &(var->datatype->typinput),
-										   var->datatype->typioparam);
+										   var->datatype->atttypmod);
 
 				if (isNull && var->notnull)
 					ereport(ERROR,
@@ -4220,13 +4222,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				atttype = rec->tupdesc->attrs[fno]->atttypid;
 				atttypmod = rec->tupdesc->attrs[fno]->atttypmod;
-				values[fno] = exec_simple_cast_value(estate,
-													 value,
-													 isNull,
-													 valtype,
-													 valtypmod,
-													 atttype,
-													 atttypmod);
+				values[fno] = exec_cast_value(estate,
+											  value,
+											  &isNull,
+											  valtype,
+											  valtypmod,
+											  atttype,
+											  atttypmod);
 				nulls[fno] = isNull;
 
 				/*
@@ -4383,13 +4385,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				estate->eval_tuptable = save_eval_tuptable;
 
 				/* Coerce source value to match array element type. */
-				coerced_value = exec_simple_cast_value(estate,
-													   value,
-													   isNull,
-													   valtype,
-													   valtypmod,
-													   arrayelem->elemtypoid,
-													 arrayelem->arraytypmod);
+				coerced_value = exec_cast_value(estate,
+												value,
+												&isNull,
+												valtype,
+												valtypmod,
+												arrayelem->elemtypoid,
+												arrayelem->arraytypmod);
 
 				/*
 				 * If the original array is null, cons up an empty array so
@@ -4760,9 +4762,9 @@ exec_eval_integer(PLpgSQL_execstate *estate,
 	int32		exprtypmod;
 
 	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid, &exprtypmod);
-	exprdatum = exec_simple_cast_value(estate, exprdatum, *isNull,
-									   exprtypeid, exprtypmod,
-									   INT4OID, -1);
+	exprdatum = exec_cast_value(estate, exprdatum, isNull,
+								exprtypeid, exprtypmod,
+								INT4OID, -1);
 	return DatumGetInt32(exprdatum);
 }
 
@@ -4783,9 +4785,9 @@ exec_eval_boolean(PLpgSQL_execstate *estate,
 	int32		exprtypmod;
 
 	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid, &exprtypmod);
-	exprdatum = exec_simple_cast_value(estate, exprdatum, *isNull,
-									   exprtypeid, exprtypmod,
-									   BOOLOID, -1);
+	exprdatum = exec_cast_value(estate, exprdatum, isNull,
+								exprtypeid, exprtypmod,
+								BOOLOID, -1);
 	return DatumGetBool(exprdatum);
 }
 
@@ -5684,6 +5686,8 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
  * pass-by-reference) and so an exec_eval_cleanup() call is needed anyway.
  *
  * Note: not caching the conversion function lookup is bad for performance.
+ * However, this function isn't currently used in any places where an extra
+ * catalog lookup or two seems like a big deal.
  * ----------
  */
 static char *
@@ -5705,6 +5709,10 @@ convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
 /* ----------
  * exec_cast_value			Cast a value if required
  *
+ * Note that *isnull is an input and also an output parameter.  While it's
+ * unlikely that a cast operation would produce null from non-null or vice
+ * versa, that could happen in principle.
+ *
  * Note: the estate's eval_econtext is used for temporary storage, and may
  * also contain the result Datum if we have to do a conversion to a pass-
  * by-reference data type.  Be sure to do an exec_eval_cleanup() call when
@@ -5713,11 +5721,9 @@ convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
  */
 static Datum
 exec_cast_value(PLpgSQL_execstate *estate,
-				Datum value, bool isnull,
+				Datum value, bool *isnull,
 				Oid valtype, int32 valtypmod,
-				Oid reqtype, int32 reqtypmod,
-				FmgrInfo *reqinput,
-				Oid reqtypioparam)
+				Oid reqtype, int32 reqtypmod)
 {
 	/*
 	 * If the type of the given value isn't what's requested, convert it.
@@ -5725,67 +5731,174 @@ exec_cast_value(PLpgSQL_execstate *estate,
 	if (valtype != reqtype ||
 		(valtypmod != reqtypmod && reqtypmod != -1))
 	{
-		MemoryContext oldcontext;
+		ExprState  *cast_expr;
 
-		oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
-		if (!isnull)
+		cast_expr = get_cast_expression(estate, valtype, reqtype, reqtypmod);
+		if (cast_expr)
 		{
-			char	   *extval;
+			ExprContext *econtext = estate->eval_econtext;
+			MemoryContext oldcontext;
 
-			extval = convert_value_to_string(estate, value, valtype);
-			value = InputFunctionCall(reqinput, extval,
-									  reqtypioparam, reqtypmod);
+			oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+			econtext->caseValue_datum = value;
+			econtext->caseValue_isNull = *isnull;
+
+			value = ExecEvalExpr(cast_expr, econtext, isnull, NULL);
+
+			MemoryContextSwitchTo(oldcontext);
 		}
-		else
-		{
-			value = InputFunctionCall(reqinput, NULL,
-									  reqtypioparam, reqtypmod);
-		}
-		MemoryContextSwitchTo(oldcontext);
 	}
 
 	return value;
 }
 
 /* ----------
- * exec_simple_cast_value			Cast a value if required
+ * get_cast_expression			Look up how to perform a type cast
  *
- * As above, but need not supply details about target type.  Note that this
- * is slower than exec_cast_value with cached type info, and so should be
- * avoided in heavily used code paths.
+ * Returns an expression evaluation tree based on a CaseTestExpr input,
+ * or NULL if the cast is a mere no-op relabeling.
+ *
+ * We cache the results of the lookup in a per-function hash table.
+ * It's tempting to consider using a session-wide hash table instead,
+ * but that introduces some corner-case questions that probably aren't
+ * worth dealing with; in particular that re-entrant use of an evaluation
+ * tree might occur.  That would also set in stone the assumption that
+ * collation isn't important to a cast function.
  * ----------
  */
-static Datum
-exec_simple_cast_value(PLpgSQL_execstate *estate,
-					   Datum value, bool isnull,
-					   Oid valtype, int32 valtypmod,
-					   Oid reqtype, int32 reqtypmod)
+static ExprState *
+get_cast_expression(PLpgSQL_execstate *estate,
+					Oid srctype, Oid dsttype, int32 dsttypmod)
 {
-	if (valtype != reqtype ||
-		(valtypmod != reqtypmod && reqtypmod != -1))
+	HTAB	   *cast_hash = estate->func->cast_hash;
+	plpgsql_CastHashKey cast_key;
+	plpgsql_CastHashEntry *cast_entry;
+	bool		found;
+	CaseTestExpr *placeholder;
+	Node	   *cast_expr;
+	ExprState  *cast_exprstate;
+	MemoryContext oldcontext;
+
+	/* Create the cast-info hash table if we didn't already */
+	if (cast_hash == NULL)
 	{
-		Oid			typinput;
-		Oid			typioparam;
-		FmgrInfo	finfo_input;
+		HASHCTL		ctl;
 
-		getTypeInputInfo(reqtype, &typinput, &typioparam);
-
-		fmgr_info(typinput, &finfo_input);
-
-		value = exec_cast_value(estate,
-								value,
-								isnull,
-								valtype,
-								valtypmod,
-								reqtype,
-								reqtypmod,
-								&finfo_input,
-								typioparam);
+		memset(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(plpgsql_CastHashKey);
+		ctl.entrysize = sizeof(plpgsql_CastHashEntry);
+		ctl.hcxt = estate->func->fn_cxt;
+		cast_hash = hash_create("PLpgSQL cast cache",
+								16,		/* start small and extend */
+								&ctl,
+								HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+		estate->func->cast_hash = cast_hash;
 	}
 
-	return value;
-}
+	/* Look for existing entry */
+	cast_key.srctype = srctype;
+	cast_key.dsttype = dsttype;
+	cast_key.dsttypmod = dsttypmod;
+	cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
+													   (void *) &cast_key,
+													   HASH_FIND, NULL);
+	if (cast_entry)
+		return cast_entry->cast_exprstate;
 
+	/* Construct expression tree for coercion in function's context */
+	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
+
+	/*
+	 * We use a CaseTestExpr as the base of the coercion tree, since it's very
+	 * cheap to insert the source value for that.
+	 */
+	placeholder = makeNode(CaseTestExpr);
+	placeholder->typeId = srctype;
+	placeholder->typeMod = -1;
+	placeholder->collation = get_typcollation(srctype);
+	if (OidIsValid(estate->func->fn_input_collation) &&
+		OidIsValid(placeholder->collation))
+		placeholder->collation = estate->func->fn_input_collation;
+
+	/*
+	 * Apply coercion.  We use ASSIGNMENT coercion because that's the closest
+	 * match to plpgsql's historical behavior; in particular, EXPLICIT
+	 * coercion would allow silent truncation to a destination
+	 * varchar/bpchar's length, which we do not want.
+	 *
+	 * If source type is UNKNOWN, coerce_to_target_type will fail (it only
+	 * expects to see that for Const input nodes), so don't call it; we'll
+	 * apply CoerceViaIO instead.
+	 */
+	if (srctype != UNKNOWNOID)
+		cast_expr = coerce_to_target_type(NULL,
+										  (Node *) placeholder, srctype,
+										  dsttype, dsttypmod,
+										  COERCION_ASSIGNMENT,
+										  COERCE_IMPLICIT_CAST,
+										  -1);
+	else
+		cast_expr = NULL;
+
+	/*
+	 * If there's no cast path according to the parser, fall back to using an
+	 * I/O coercion; this is semantically dubious but matches plpgsql's
+	 * historical behavior.  We would need something of the sort for UNKNOWN
+	 * literals in any case.
+	 */
+	if (cast_expr == NULL)
+	{
+		CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+
+		iocoerce->arg = (Expr *) placeholder;
+		iocoerce->resulttype = dsttype;
+		iocoerce->resultcollid = InvalidOid;
+		iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
+		iocoerce->location = -1;
+		cast_expr = (Node *) iocoerce;
+		if (dsttypmod != -1)
+			cast_expr = coerce_to_target_type(NULL,
+											  cast_expr, dsttype,
+											  dsttype, dsttypmod,
+											  COERCION_ASSIGNMENT,
+											  COERCE_IMPLICIT_CAST,
+											  -1);
+	}
+
+	/* Note: we don't bother labeling the expression tree with collation */
+
+	/* Detect whether we have a no-op (RelabelType) coercion */
+	if (IsA(cast_expr, RelabelType) &&
+		((RelabelType *) cast_expr)->arg == (Expr *) placeholder)
+		cast_expr = NULL;
+
+	if (cast_expr)
+	{
+		/* ExecInitExpr assumes we've planned the expression */
+		cast_expr = (Node *) expression_planner((Expr *) cast_expr);
+		/* Create an expression eval state tree for it */
+		cast_exprstate = ExecInitExpr((Expr *) cast_expr, NULL);
+	}
+	else
+		cast_exprstate = NULL;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Now fill in a hashtable entry.  If we fail anywhere up to/including
+	 * this step, we've only leaked some memory in the function context, which
+	 * isn't great but isn't disastrous either.
+	 */
+	cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
+													   (void *) &cast_key,
+													   HASH_ENTER, &found);
+	Assert(!found);				/* wasn't there a moment ago */
+
+	cast_entry->cast_exprstate = cast_exprstate;
+
+	return cast_exprstate;
+}
 
 /* ----------
  * exec_simple_check_node -		Recursively check if an expression
