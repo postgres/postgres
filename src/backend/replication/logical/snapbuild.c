@@ -1077,7 +1077,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		/* refcount of the snapshot builder for the new snapshot */
 		SnapBuildSnapIncRefcount(builder->snapshot);
 
-		/* add a new SnapshotNow to all currently running transactions */
+		/* add a new Snapshot to all currently running transactions */
 		SnapBuildDistributeNewCatalogSnapshot(builder, lsn);
 	}
 	else
