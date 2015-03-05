@@ -247,7 +247,7 @@ CREATE USER MAPPING FOR current_user SERVER s1;
 DROP FOREIGN DATA WRAPPER foo;                              -- ERROR
 ERROR:  cannot drop foreign-data wrapper foo because other objects depend on it
 DETAIL:  server s1 depends on foreign-data wrapper foo
-user mapping for foreign_data_user depends on server s1
+user mapping for foreign_data_user on server s1 depends on server s1
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 SET ROLE regress_test_role;
 DROP FOREIGN DATA WRAPPER foo CASCADE;                      -- ERROR
@@ -256,7 +256,7 @@ RESET ROLE;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to server s1
-drop cascades to user mapping for foreign_data_user
+drop cascades to user mapping for foreign_data_user on server s1
 \dew+
                                             List of foreign-data wrappers
     Name    |       Owner       | Handler |        Validator         | Access privileges | FDW Options | Description 
@@ -528,10 +528,10 @@ CREATE USER MAPPING FOR current_user SERVER s3;
 
 DROP SERVER s3;                                             -- ERROR
 ERROR:  cannot drop server s3 because other objects depend on it
-DETAIL:  user mapping for foreign_data_user depends on server s3
+DETAIL:  user mapping for foreign_data_user on server s3 depends on server s3
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP SERVER s3 CASCADE;
-NOTICE:  drop cascades to user mapping for foreign_data_user
+NOTICE:  drop cascades to user mapping for foreign_data_user on server s3
 \des
              List of foreign servers
  Name |       Owner       | Foreign-data wrapper 
@@ -1142,8 +1142,8 @@ GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for public
-drop cascades to user mapping for unprivileged_role
+DETAIL:  drop cascades to user mapping for public on server s9
+drop cascades to user mapping for unprivileged_role on server s9
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO unprivileged_role;
@@ -1205,14 +1205,14 @@ DROP ROLE regress_test_role;                                -- ERROR
 ERROR:  role "regress_test_role" cannot be dropped because some objects depend on it
 DETAIL:  privileges for server s4
 privileges for foreign-data wrapper foo
-owner of user mapping for regress_test_role
-owner of user mapping for regress_test_role
+owner of user mapping for regress_test_role on server s6
+owner of user mapping for regress_test_role on server s5
 owner of server s5
 owner of server t2
 DROP SERVER s5 CASCADE;
-NOTICE:  drop cascades to user mapping for regress_test_role
+NOTICE:  drop cascades to user mapping for regress_test_role on server s5
 DROP SERVER t1 CASCADE;
-NOTICE:  drop cascades to user mapping for public
+NOTICE:  drop cascades to user mapping for public on server t1
 DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 -- This test causes some order dependent cascade detail output,
@@ -1223,8 +1223,8 @@ NOTICE:  drop cascades to 5 other objects
 \set VERBOSITY default
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for foreign_data_user
-drop cascades to user mapping for public
+DETAIL:  drop cascades to user mapping for foreign_data_user on server s8
+drop cascades to user mapping for public on server s8
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE unprivileged_role;                                -- ERROR
