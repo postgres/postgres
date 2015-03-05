@@ -57,6 +57,7 @@ typedef struct
 	/* NB: we assume this struct contains no padding bytes */
 	Oid			srctype;		/* source type for cast */
 	Oid			dsttype;		/* destination type for cast */
+	int32		srctypmod;		/* source typmod for cast */
 	int32		dsttypmod;		/* destination typmod for cast */
 } plpgsql_CastHashKey;
 
@@ -231,7 +232,7 @@ static Datum exec_cast_value(PLpgSQL_execstate *estate,
 				Oid valtype, int32 valtypmod,
 				Oid reqtype, int32 reqtypmod);
 static ExprState *get_cast_expression(PLpgSQL_execstate *estate,
-					Oid srctype, Oid dsttype, int32 dsttypmod);
+				 Oid srctype, int32 srctypmod, Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
@@ -5733,7 +5734,9 @@ exec_cast_value(PLpgSQL_execstate *estate,
 	{
 		ExprState  *cast_expr;
 
-		cast_expr = get_cast_expression(estate, valtype, reqtype, reqtypmod);
+		cast_expr = get_cast_expression(estate,
+										valtype, valtypmod,
+										reqtype, reqtypmod);
 		if (cast_expr)
 		{
 			ExprContext *econtext = estate->eval_econtext;
@@ -5769,7 +5772,7 @@ exec_cast_value(PLpgSQL_execstate *estate,
  */
 static ExprState *
 get_cast_expression(PLpgSQL_execstate *estate,
-					Oid srctype, Oid dsttype, int32 dsttypmod)
+				  Oid srctype, int32 srctypmod, Oid dsttype, int32 dsttypmod)
 {
 	HTAB	   *cast_hash = estate->func->cast_hash;
 	plpgsql_CastHashKey cast_key;
@@ -5799,6 +5802,7 @@ get_cast_expression(PLpgSQL_execstate *estate,
 	/* Look for existing entry */
 	cast_key.srctype = srctype;
 	cast_key.dsttype = dsttype;
+	cast_key.srctypmod = srctypmod;
 	cast_key.dsttypmod = dsttypmod;
 	cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
 													   (void *) &cast_key,
@@ -5815,7 +5819,7 @@ get_cast_expression(PLpgSQL_execstate *estate,
 	 */
 	placeholder = makeNode(CaseTestExpr);
 	placeholder->typeId = srctype;
-	placeholder->typeMod = -1;
+	placeholder->typeMod = srctypmod;
 	placeholder->collation = get_typcollation(srctype);
 	if (OidIsValid(estate->func->fn_input_collation) &&
 		OidIsValid(placeholder->collation))
