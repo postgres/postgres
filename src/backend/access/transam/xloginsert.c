@@ -560,7 +560,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 				bimg.hole_length = 0;
 			}
 
-			/* Fill in the remaining fields in the XLogRecordBlockData struct */
+			/* Fill in the remaining fields in the XLogRecordBlockHeader struct */
 			bkpb.fork_flags |= BKPBLOCK_HAS_IMAGE;
 
 			total_len += BLCKSZ - bimg.hole_length;
