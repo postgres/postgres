@@ -5829,17 +5829,18 @@ get_cast_expression(PLpgSQL_execstate *estate,
 	 *
 	 * If source type is UNKNOWN, coerce_to_target_type will fail (it only
 	 * expects to see that for Const input nodes), so don't call it; we'll
-	 * apply CoerceViaIO instead.
+	 * apply CoerceViaIO instead.  Likewise, it doesn't currently work for
+	 * coercing RECORD to some other type, so skip for that too.
 	 */
-	if (srctype != UNKNOWNOID)
+	if (srctype == UNKNOWNOID || srctype == RECORDOID)
+		cast_expr = NULL;
+	else
 		cast_expr = coerce_to_target_type(NULL,
 										  (Node *) placeholder, srctype,
 										  dsttype, dsttypmod,
 										  COERCION_ASSIGNMENT,
 										  COERCE_IMPLICIT_CAST,
 										  -1);
-	else
-		cast_expr = NULL;
 
 	/*
 	 * If there's no cast path according to the parser, fall back to using an
