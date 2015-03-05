@@ -50,7 +50,6 @@ ConversionCreate(const char *conname, Oid connamespace,
 	bool		nulls[Natts_pg_conversion];
 	Datum		values[Natts_pg_conversion];
 	NameData	cname;
-	Oid			oid;
 	ObjectAddress myself,
 				referenced;
 
@@ -106,8 +105,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/* insert a new tuple */
-	oid = simple_heap_insert(rel, tup);
-	Assert(OidIsValid(oid));
+	simple_heap_insert(rel, tup);
 
 	/* update the index if any */
 	CatalogUpdateIndexes(rel, tup);
