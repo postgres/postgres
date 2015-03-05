@@ -2599,6 +2599,8 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	tup;
 				Oid			useid;
 				char	   *usename;
+				Form_pg_user_mapping umform;
+				ForeignServer *srv;
 
 				tup = SearchSysCache1(USERMAPPINGOID,
 									  ObjectIdGetDatum(object->objectId));
@@ -2606,7 +2608,9 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for user mapping %u",
 						 object->objectId);
 
-				useid = ((Form_pg_user_mapping) GETSTRUCT(tup))->umuser;
+				umform = (Form_pg_user_mapping) GETSTRUCT(tup);
+				useid = umform->umuser;
+				srv = GetForeignServer(umform->umserver);
 
 				ReleaseSysCache(tup);
 
@@ -2615,7 +2619,9 @@ getObjectDescription(const ObjectAddress *object)
 				else
 					usename = "public";
 
-				appendStringInfo(&buffer, _("user mapping for %s"), usename);
+				appendStringInfo(&buffer, _("user mapping for %s on server %s"), usename,
+								 srv->servername);
+
 				break;
 			}
 
