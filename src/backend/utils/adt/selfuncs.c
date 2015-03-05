@@ -6037,10 +6037,9 @@ deconstruct_indexquals(IndexPath *path)
 		}
 		else if (IsA(clause, NullTest))
 		{
-			NullTest   *nt = (NullTest *) clause;
-
 			qinfo->clause_op = InvalidOid;
-			Assert(match_index_to_operand((Node *) nt->arg, indexcol, index));
+			Assert(match_index_to_operand((Node *) ((NullTest *) clause)->arg,
+										  indexcol, index));
 			qinfo->varonleft = true;
 			qinfo->other_operand = NULL;
 		}
