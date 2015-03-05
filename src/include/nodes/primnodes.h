@@ -179,9 +179,10 @@ typedef struct Const
 	int			location;		/* token location, or -1 if unknown */
 } Const;
 
-/* ----------------
+/*
  * Param
- *		paramkind - specifies the kind of parameter. The possible values
+ *
+ *		paramkind specifies the kind of parameter. The possible values
  *		for this field are:
  *
  *		PARAM_EXTERN:  The parameter value is supplied from outside the plan.
@@ -204,12 +205,6 @@ typedef struct Const
  *				of the `paramid' field contain the SubLink's subLinkId, and
  *				the low-order 16 bits contain the column number.  (This type
  *				of Param is also converted to PARAM_EXEC during planning.)
- *
- * Note: currently, paramtypmod is always -1 for PARAM_EXTERN params, since
- * the APIs that supply values for such parameters don't carry any typmod
- * info.  It is valid in other types of Params, if they represent expressions
- * with determinable typmod.
- * ----------------
  */
 typedef enum ParamKind
 {
