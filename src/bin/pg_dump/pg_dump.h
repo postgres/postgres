@@ -184,7 +184,6 @@ typedef struct _funcInfo
 	Oid		   *argtypes;
 	Oid			prorettype;
 	char	   *proacl;
-	char	   *proiargs;
 } FuncInfo;
 
 /* AggInfo is a superset of FuncInfo */
