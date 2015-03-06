@@ -295,9 +295,9 @@ RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
 NOTICE:  drop cascades to 8 other objects
 DETAIL:  drop cascades to server file_server
-drop cascades to user mapping for file_fdw_user
-drop cascades to user mapping for file_fdw_superuser
-drop cascades to user mapping for no_priv_user
+drop cascades to user mapping for file_fdw_user on server file_server
+drop cascades to user mapping for file_fdw_superuser on server file_server
+drop cascades to user mapping for no_priv_user on server file_server
 drop cascades to foreign table agg_text
 drop cascades to foreign table agg_csv
 drop cascades to foreign table agg_bad
