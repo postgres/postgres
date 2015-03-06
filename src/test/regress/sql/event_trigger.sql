@@ -10,6 +10,14 @@ BEGIN
 END
 $$ language plpgsql;
 
+-- should fail, event triggers cannot have declared arguments
+create function test_event_trigger_arg(name text)
+returns event_trigger as $$ BEGIN RETURN 1; END $$ language plpgsql;
+
+-- should fail, SQL functions cannot be event triggers
+create function test_event_trigger_sql() returns event_trigger as $$
+SELECT 1 $$ language sql;
+
 -- should fail, no elephant_bootstrap entry point
 create event trigger regress_event_trigger on elephant_bootstrap
    execute procedure test_event_trigger();
@@ -42,10 +50,29 @@ create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('DROP EVENT TRIGGER')
    execute procedure test_event_trigger();
 
+-- should fail, can't have event triggers on global objects
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('CREATE ROLE')
+   execute procedure test_event_trigger();
+
+-- should fail, can't have event triggers on global objects
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('CREATE DATABASE')
+   execute procedure test_event_trigger();
+
+-- should fail, can't have event triggers on global objects
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('CREATE TABLESPACE')
+   execute procedure test_event_trigger();
+
 -- should fail, can't have same filter variable twice
 create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('create table') and tag in ('CREATE FUNCTION')
    execute procedure test_event_trigger();
+
+-- should fail, can't have arguments
+create event trigger regress_event_trigger2 on ddl_command_start
+   execute procedure test_event_trigger('argument not allowed');
 
 -- OK
 create event trigger regress_event_trigger2 on ddl_command_start
@@ -75,7 +102,10 @@ alter event trigger regress_event_trigger disable;
 -- regress_event_trigger
 create table event_trigger_fire1 (a int);
 
--- regress_event_trigger_end should fire here
+-- regress_event_trigger_end should fire on these commands
+grant all on table event_trigger_fire1 to public;
+comment on table event_trigger_fire1 is 'here is a comment';
+revoke all on table event_trigger_fire1 from public;
 drop table event_trigger_fire1;
 
 -- alter owner to non-superuser should fail

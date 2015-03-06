@@ -77,3 +77,26 @@ SECURITY LABEL ON SCHEMA dummy_seclabel_test IS 'unclassified';		-- OK
 
 SELECT objtype, objname, provider, label FROM pg_seclabels
 	ORDER BY objtype, objname;
+
+-- check for event trigger
+CREATE FUNCTION event_trigger_test()
+RETURNS event_trigger AS $$
+  BEGIN RAISE NOTICE 'event %: %', TG_EVENT, TG_TAG; END;
+$$ LANGUAGE plpgsql;
+
+CREATE EVENT TRIGGER always_start ON ddl_command_start
+EXECUTE PROCEDURE event_trigger_test();
+
+CREATE EVENT TRIGGER always_end ON ddl_command_end
+EXECUTE PROCEDURE event_trigger_test();
+
+CREATE EVENT TRIGGER always_drop ON sql_drop
+EXECUTE PROCEDURE event_trigger_test();
+
+CREATE EVENT TRIGGER always_rewrite ON table_rewrite
+EXECUTE PROCEDURE event_trigger_test();
+
+-- should trigger ddl_command_{start,end}
+SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'classified';
+
+DROP EVENT TRIGGER always_start, always_end, always_drop, always_rewrite;

@@ -9,6 +9,15 @@ BEGIN
     RAISE NOTICE 'test_event_trigger: % %', tg_event, tg_tag;
 END
 $$ language plpgsql;
+-- should fail, event triggers cannot have declared arguments
+create function test_event_trigger_arg(name text)
+returns event_trigger as $$ BEGIN RETURN 1; END $$ language plpgsql;
+ERROR:  event trigger functions cannot have declared arguments
+CONTEXT:  compilation of PL/pgSQL function "test_event_trigger_arg" near line 1
+-- should fail, SQL functions cannot be event triggers
+create function test_event_trigger_sql() returns event_trigger as $$
+SELECT 1 $$ language sql;
+ERROR:  SQL functions cannot return type event_trigger
 -- should fail, no elephant_bootstrap entry point
 create event trigger regress_event_trigger on elephant_bootstrap
    execute procedure test_event_trigger();
@@ -39,11 +48,32 @@ create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('DROP EVENT TRIGGER')
    execute procedure test_event_trigger();
 ERROR:  event triggers are not supported for DROP EVENT TRIGGER
+-- should fail, can't have event triggers on global objects
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('CREATE ROLE')
+   execute procedure test_event_trigger();
+ERROR:  event triggers are not supported for CREATE ROLE
+-- should fail, can't have event triggers on global objects
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('CREATE DATABASE')
+   execute procedure test_event_trigger();
+ERROR:  event triggers are not supported for CREATE DATABASE
+-- should fail, can't have event triggers on global objects
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('CREATE TABLESPACE')
+   execute procedure test_event_trigger();
+ERROR:  event triggers are not supported for CREATE TABLESPACE
 -- should fail, can't have same filter variable twice
 create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('create table') and tag in ('CREATE FUNCTION')
    execute procedure test_event_trigger();
 ERROR:  filter variable "tag" specified more than once
+-- should fail, can't have arguments
+create event trigger regress_event_trigger2 on ddl_command_start
+   execute procedure test_event_trigger('argument not allowed');
+ERROR:  syntax error at or near "'argument not allowed'"
+LINE 2:    execute procedure test_event_trigger('argument not allowe...
+                                                ^
 -- OK
 create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('create table', 'CREATE FUNCTION')
@@ -71,7 +101,13 @@ alter event trigger regress_event_trigger disable;
 create table event_trigger_fire1 (a int);
 NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
 NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
--- regress_event_trigger_end should fire here
+-- regress_event_trigger_end should fire on these commands
+grant all on table event_trigger_fire1 to public;
+NOTICE:  test_event_trigger: ddl_command_end GRANT
+comment on table event_trigger_fire1 is 'here is a comment';
+NOTICE:  test_event_trigger: ddl_command_end COMMENT
+revoke all on table event_trigger_fire1 from public;
+NOTICE:  test_event_trigger: ddl_command_end REVOKE
 drop table event_trigger_fire1;
 NOTICE:  test_event_trigger: ddl_command_end DROP TABLE
 -- alter owner to non-superuser should fail
