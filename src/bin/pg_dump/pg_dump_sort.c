@@ -287,13 +287,30 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	{
 		FuncInfo   *fobj1 = *(FuncInfo *const *) p1;
 		FuncInfo   *fobj2 = *(FuncInfo *const *) p2;
+		int			i;
 
 		cmpval = fobj1->nargs - fobj2->nargs;
 		if (cmpval != 0)
 			return cmpval;
-		cmpval = strcmp(fobj1->proiargs, fobj2->proiargs);
-		if (cmpval != 0)
-			return cmpval;
+		for (i = 0; i < fobj1->nargs; i++)
+		{
+			TypeInfo   *argtype1 = findTypeByOid(fobj1->argtypes[i]);
+			TypeInfo   *argtype2 = findTypeByOid(fobj2->argtypes[i]);
+
+			if (argtype1 && argtype2)
+			{
+				if (argtype1->dobj.namespace && argtype2->dobj.namespace)
+				{
+					cmpval = strcmp(argtype1->dobj.namespace->dobj.name,
+									argtype2->dobj.namespace->dobj.name);
+					if (cmpval != 0)
+						return cmpval;
+				}
+				cmpval = strcmp(argtype1->dobj.name, argtype2->dobj.name);
+				if (cmpval != 0)
+					return cmpval;
+			}
+		}
 	}
 	else if (obj1->objType == DO_OPERATOR)
 	{

@@ -3912,7 +3912,6 @@ getAggregates(Archive *fout, int *numAggs)
 	int			i_proargtypes;
 	int			i_rolname;
 	int			i_aggacl;
-	int			i_proiargs;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
@@ -3922,12 +3921,11 @@ getAggregates(Archive *fout, int *numAggs)
 	 * rationale behind the filtering logic.
 	 */
 
-	if (fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 80200)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, proname AS aggname, "
 						  "pronamespace AS aggnamespace, "
 						  "pronargs, proargtypes, "
-			"pg_catalog.pg_get_function_identity_arguments(oid) AS proiargs,"
 						  "(%s proowner) AS rolname, "
 						  "proacl AS aggacl "
 						  "FROM pg_proc p "
@@ -3945,28 +3943,12 @@ getAggregates(Archive *fout, int *numAggs)
 							  "deptype = 'e')");
 		appendPQExpBuffer(query, ")");
 	}
-	else if (fout->remoteVersion >= 80200)
-	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, proname AS aggname, "
-						  "pronamespace AS aggnamespace, "
-						  "pronargs, proargtypes, "
-						  "NULL::text AS proiargs,"
-						  "(%s proowner) AS rolname, "
-						  "proacl AS aggacl "
-						  "FROM pg_proc p "
-						  "WHERE proisagg AND ("
-						  "pronamespace != "
-						  "(SELECT oid FROM pg_namespace "
-						  "WHERE nspname = 'pg_catalog'))",
-						  username_subquery);
-	}
 	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, proname AS aggname, "
 						  "pronamespace AS aggnamespace, "
 						  "CASE WHEN proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype THEN 0 ELSE 1 END AS pronargs, "
 						  "proargtypes, "
-						  "NULL::text AS proiargs, "
 						  "(%s proowner) AS rolname, "
 						  "proacl AS aggacl "
 						  "FROM pg_proc "
@@ -3981,7 +3963,6 @@ getAggregates(Archive *fout, int *numAggs)
 						  "0::oid AS aggnamespace, "
 				  "CASE WHEN aggbasetype = 0 THEN 0 ELSE 1 END AS pronargs, "
 						  "aggbasetype AS proargtypes, "
-						  "NULL::text AS proiargs, "
 						  "(%s aggowner) AS rolname, "
 						  "'{=X}' AS aggacl "
 						  "FROM pg_aggregate "
@@ -3997,7 +3978,6 @@ getAggregates(Archive *fout, int *numAggs)
 						  "0::oid AS aggnamespace, "
 				  "CASE WHEN aggbasetype = 0 THEN 0 ELSE 1 END AS pronargs, "
 						  "aggbasetype AS proargtypes, "
-						  "NULL::text AS proiargs, "
 						  "(%s aggowner) AS rolname, "
 						  "'{=X}' AS aggacl "
 						  "FROM pg_aggregate "
@@ -4021,7 +4001,6 @@ getAggregates(Archive *fout, int *numAggs)
 	i_proargtypes = PQfnumber(res, "proargtypes");
 	i_rolname = PQfnumber(res, "rolname");
 	i_aggacl = PQfnumber(res, "aggacl");
-	i_proiargs = PQfnumber(res, "proiargs");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -4041,7 +4020,6 @@ getAggregates(Archive *fout, int *numAggs)
 		agginfo[i].aggfn.lang = InvalidOid;		/* not currently interesting */
 		agginfo[i].aggfn.prorettype = InvalidOid;		/* not saved */
 		agginfo[i].aggfn.proacl = pg_strdup(PQgetvalue(res, i, i_aggacl));
-		agginfo[i].aggfn.proiargs = pg_strdup(PQgetvalue(res, i, i_proiargs));
 		agginfo[i].aggfn.nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		if (agginfo[i].aggfn.nargs == 0)
 			agginfo[i].aggfn.argtypes = NULL;
@@ -4093,7 +4071,6 @@ getFuncs(Archive *fout, int *numFuncs)
 	int			i_proargtypes;
 	int			i_prorettype;
 	int			i_proacl;
-	int			i_proiargs;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
@@ -4114,13 +4091,12 @@ getFuncs(Archive *fout, int *numFuncs)
 	 * doesn't have; otherwise we might not get creation ordering correct.
 	 */
 
-	if (fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT tableoid, oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, proacl, "
 						  "pronamespace, "
-			"pg_catalog.pg_get_function_identity_arguments(oid) AS proiargs,"
 						  "(%s proowner) AS rolname "
 						  "FROM pg_proc p "
 						  "WHERE NOT proisagg AND ("
@@ -4142,21 +4118,6 @@ getFuncs(Archive *fout, int *numFuncs)
 							  "deptype = 'e')");
 		appendPQExpBuffer(query, ")");
 	}
-	else if (fout->remoteVersion >= 70300)
-	{
-		appendPQExpBuffer(query,
-						  "SELECT tableoid, oid, proname, prolang, "
-						  "pronargs, proargtypes, prorettype, proacl, "
-						  "pronamespace, "
-						  "NULL::text AS proiargs,"
-						  "(%s proowner) AS rolname "
-						  "FROM pg_proc p "
-						  "WHERE NOT proisagg AND ("
-						  "pronamespace != "
-						  "(SELECT oid FROM pg_namespace "
-						  "WHERE nspname = 'pg_catalog'))",
-						  username_subquery);
-	}
 	else if (fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query,
@@ -4164,7 +4125,6 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "pronargs, proargtypes, prorettype, "
 						  "'{=X}' AS proacl, "
 						  "0::oid AS pronamespace, "
-						  "NULL::text AS proiargs,"
 						  "(%s proowner) AS rolname "
 						  "FROM pg_proc "
 						  "WHERE pg_proc.oid > '%u'::oid",
@@ -4181,7 +4141,6 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "pronargs, proargtypes, prorettype, "
 						  "'{=X}' AS proacl, "
 						  "0::oid AS pronamespace, "
-						  "NULL::text AS proiargs,"
 						  "(%s proowner) AS rolname "
 						  "FROM pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
@@ -4207,7 +4166,6 @@ getFuncs(Archive *fout, int *numFuncs)
 	i_proargtypes = PQfnumber(res, "proargtypes");
 	i_prorettype = PQfnumber(res, "prorettype");
 	i_proacl = PQfnumber(res, "proacl");
-	i_proiargs = PQfnumber(res, "proiargs");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -4223,7 +4181,6 @@ getFuncs(Archive *fout, int *numFuncs)
 		finfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].prorettype = atooid(PQgetvalue(res, i, i_prorettype));
-		finfo[i].proiargs = pg_strdup(PQgetvalue(res, i, i_proiargs));
 		finfo[i].proacl = pg_strdup(PQgetvalue(res, i, i_proacl));
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		if (finfo[i].nargs == 0)
