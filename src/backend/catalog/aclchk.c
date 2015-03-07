@@ -3423,26 +3423,6 @@ aclcheck_error_type(AclResult aclerr, Oid typeOid)
 }
 
 
-/* Check if given user has rolcatupdate privilege according to pg_authid */
-static bool
-has_rolcatupdate(Oid roleid)
-{
-	bool		rolcatupdate;
-	HeapTuple	tuple;
-
-	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", roleid)));
-
-	rolcatupdate = ((Form_pg_authid) GETSTRUCT(tuple))->rolcatupdate;
-
-	ReleaseSysCache(tuple);
-
-	return rolcatupdate;
-}
-
 /*
  * Relay for the various pg_*_mask routines depending on object kind
  */
@@ -3620,8 +3600,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
-	 * pg_authid.rolcatupdate is set.   (This is to let superusers protect
-	 * themselves from themselves.)  Also allow it if allowSystemTableMods.
+	 * pg_authid.rolsuper is set.  Also allow it if allowSystemTableMods.
 	 *
 	 * As of 7.4 we have some updatable system views; those shouldn't be
 	 * protected in this way.  Assume the view rules can take care of
@@ -3630,7 +3609,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE)) &&
 		IsSystemClass(table_oid, classForm) &&
 		classForm->relkind != RELKIND_VIEW &&
-		!has_rolcatupdate(roleid) &&
+		!superuser_arg(roleid) &&
 		!allowSystemTableMods)
 	{
 #ifdef ACLDEBUG

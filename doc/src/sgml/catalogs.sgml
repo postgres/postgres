@@ -1416,15 +1416,6 @@
      </row>
 
      <row>
-      <entry><structfield>rolcatupdate</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>
-       Role can update system catalogs directly.  (Even a superuser cannot do
-       this unless this column is true)
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>rolcanlogin</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>
@@ -8492,16 +8483,6 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      </row>
 
      <row>
-      <entry><structfield>rolcatupdate</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       Role can update system catalogs directly.  (Even a superuser cannot do
-       this unless this column is true)
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>rolcanlogin</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -9020,16 +9001,6 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      </row>
 
      <row>
-      <entry><structfield>usecatupd</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       User can update system catalogs.  (Even a superuser cannot do
-       this unless this column is true.)
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>userepl</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -9504,15 +9475,6 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>usesuper</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>User is a superuser</entry>
-     </row>
-
-     <row>
-      <entry><structfield>usecatupd</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>
-       User can update system catalogs.  (Even a superuser cannot do
-       this unless this column is true.)
-      </entry>
      </row>
 
      <row>
