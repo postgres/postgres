@@ -753,8 +753,9 @@ standard_ProcessUtility(Node *parsetree,
 						 * intended effect!
 						 */
 						PreventTransactionChain(isTopLevel,
-												(stmt->kind == REINDEX_OBJECT_SCHEMA) ?
-												"REINDEX SCHEMA" : "REINDEX DATABASE");
+												(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
+												(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
+												"REINDEX DATABASE");
 						ReindexObject(stmt->name, stmt->kind);
 						break;
 					default:
