@@ -20,22 +20,6 @@
 #include "lib/stringinfo.h"
 #include "libpq/libpq-be.h"
 
-/* ----------------
- * PQArgBlock
- *		Information (pointer to array of this structure) required
- *		for the PQfn() call.  (This probably ought to go somewhere else...)
- * ----------------
- */
-typedef struct
-{
-	int			len;
-	int			isint;
-	union
-	{
-		int		   *ptr;		/* can't use void (dec compiler barfs)	 */
-		int			integer;
-	}			u;
-} PQArgBlock;
 
 typedef struct
 {
