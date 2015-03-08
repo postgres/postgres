@@ -1780,26 +1780,26 @@ ReindexTable(RangeVar *relation)
 }
 
 /*
- * ReindexObject
- *		Recreate indexes of object whose type is defined by objectKind.
+ * ReindexMultipleTables
+ *		Recreate indexes of tables selected by objectName/objectKind.
  *
  * To reduce the probability of deadlocks, each table is reindexed in a
  * separate transaction, so we can release the lock on it right away.
  * That means this must not be called within a user transaction block!
  */
-Oid
-ReindexObject(const char *objectName, ReindexObjectType objectKind)
+void
+ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind)
 {
 	Oid			objectOid;
 	Relation	relationRelation;
 	HeapScanDesc scan;
-	ScanKeyData	*scan_keys = NULL;
+	ScanKeyData scan_keys[1];
 	HeapTuple	tuple;
 	MemoryContext private_context;
 	MemoryContext old;
 	List	   *relids = NIL;
 	ListCell   *l;
-	int	num_keys;
+	int			num_keys;
 
 	AssertArg(objectName);
 	Assert(objectKind == REINDEX_OBJECT_SCHEMA ||
@@ -1807,10 +1807,10 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 		   objectKind == REINDEX_OBJECT_DATABASE);
 
 	/*
-	 * Get OID of object to reindex, being the database currently being
-	 * used by session for a database or for system catalogs, or the schema
-	 * defined by caller. At the same time do permission checks that need
-	 * different processing depending on the object type.
+	 * Get OID of object to reindex, being the database currently being used
+	 * by session for a database or for system catalogs, or the schema defined
+	 * by caller. At the same time do permission checks that need different
+	 * processing depending on the object type.
 	 */
 	if (objectKind == REINDEX_OBJECT_SCHEMA)
 	{
@@ -1824,11 +1824,11 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 	{
 		objectOid = MyDatabaseId;
 
-		if (strcmp(objectName, get_database_name(MyDatabaseId)) != 0)
+		if (strcmp(objectName, get_database_name(objectOid)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("can only reindex the currently open database")));
-		if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
+		if (!pg_database_ownercheck(objectOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 						   objectName);
 	}
@@ -1840,42 +1840,19 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 	 * abort cleanup logic.
 	 */
 	private_context = AllocSetContextCreate(PortalContext,
-											(objectKind == REINDEX_OBJECT_SCHEMA) ?
-											"ReindexSchema" : "ReindexDatabase",
+											"ReindexMultipleTables",
 											ALLOCSET_DEFAULT_MINSIZE,
 											ALLOCSET_DEFAULT_INITSIZE,
 											ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * We always want to reindex pg_class first when reindexing system
-	 * catalogs or a database.  This ensures that if there is any corruption
-	 * in pg_class' indexes, they will be fixed before we process any other
-	 * tables.  This is critical because reindexing itself will try to
-	 * update pg_class.
-	 */
-	if (objectKind == REINDEX_OBJECT_DATABASE ||
-		objectKind == REINDEX_OBJECT_SYSTEM ||
-		(objectKind == REINDEX_OBJECT_SCHEMA &&
-		 IsSystemNamespace(objectOid)))
-	{
-		old = MemoryContextSwitchTo(private_context);
-		relids = lappend_oid(relids, RelationRelationId);
-		MemoryContextSwitchTo(old);
-	}
-
-	/*
-	 * Define the search keys to find the objects to reindex. For a schema,
-	 * we search target relations using relnamespace and relkind, something
-	 * not necessary for a database-wide operation.
+	 * Define the search keys to find the objects to reindex. For a schema, we
+	 * select target relations using relnamespace, something not necessary for
+	 * a database-wide operation.
 	 */
 	if (objectKind == REINDEX_OBJECT_SCHEMA)
 	{
-		/*
-		 * Return all objects in schema. We filter out
-		 * inappropriate objects as we walk through results.
-		 */
 		num_keys = 1;
-		scan_keys = palloc(sizeof(ScanKeyData));
 		ScanKeyInit(&scan_keys[0],
 					Anum_pg_class_relnamespace,
 					BTEqualStrategyNumber, F_OIDEQ,
@@ -1898,8 +1875,8 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 		Oid			relid = HeapTupleGetOid(tuple);
 
 		/*
-		 * Only regular tables and matviews can have indexes,
-		 * so filter out any other kind of object.
+		 * Only regular tables and matviews can have indexes, so ignore any
+		 * other kind of relation.
 		 */
 		if (classtuple->relkind != RELKIND_RELATION &&
 			classtuple->relkind != RELKIND_MATVIEW)
@@ -1911,20 +1888,25 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 			continue;
 
 		/* Check user/system classification, and optionally skip */
-		if (!IsSystemClass(relid, classtuple) &&
-			objectKind == REINDEX_OBJECT_SYSTEM)
+		if (objectKind == REINDEX_OBJECT_SYSTEM &&
+			!IsSystemClass(relid, classtuple))
 			continue;
+
+		/* Save the list of relation OIDs in private context */
+		old = MemoryContextSwitchTo(private_context);
 
 		/*
-		 * Already have it in the case of system catalogs being all
-		 * reindexed, of a database or of a system catalog being reindexed
-		 * as a schema.
+		 * We always want to reindex pg_class first if it's selected to be
+		 * reindexed.  This ensures that if there is any corruption in
+		 * pg_class' indexes, they will be fixed before we process any other
+		 * tables.  This is critical because reindexing itself will try to
+		 * update pg_class.
 		 */
-		if (HeapTupleGetOid(tuple) == RelationRelationId)
-			continue;
+		if (relid == RelationRelationId)
+			relids = lcons_oid(relid, relids);
+		else
+			relids = lappend_oid(relids, relid);
 
-		old = MemoryContextSwitchTo(private_context);
-		relids = lappend_oid(relids, relid);
 		MemoryContextSwitchTo(old);
 	}
 	heap_endscan(scan);
@@ -1953,8 +1935,4 @@ ReindexObject(const char *objectName, ReindexObjectType objectKind)
 	StartTransactionCommand();
 
 	MemoryContextDelete(private_context);
-	if (scan_keys)
-		pfree(scan_keys);
-
-	return objectOid;
 }
