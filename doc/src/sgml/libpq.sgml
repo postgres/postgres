@@ -4299,22 +4299,29 @@ typedef struct
    parameters to be passed to the function; they must match the declared
    function argument list.  When the <parameter>isint</> field of a
    parameter structure is true, the <parameter>u.integer</> value is sent
-   to the server as an integer of the indicated length (this must be 1,
-   2, or 4 bytes); proper byte-swapping occurs.  When <parameter>isint</>
+   to the server as an integer of the indicated length (this must be
+   2 or 4 bytes); proper byte-swapping occurs.  When <parameter>isint</>
    is false, the indicated number of bytes at <parameter>*u.ptr</> are
    sent with no processing; the data must be in the format expected by
    the server for binary transmission of the function's argument data
-   type.  <parameter>result_buf</parameter> is the buffer in which to
-   place the return value.  The caller must  have  allocated sufficient
+   type.  (The declaration of <parameter>u.ptr</> as being of
+   type <type>int *</> is historical; it would be better to consider
+   it <type>void *</>.)
+   <parameter>result_buf</parameter> points to the buffer in which to place
+   the function's return value.  The caller must have allocated sufficient
    space to store the return value.  (There is no check!) The actual result
-   length will be returned in the integer pointed to  by
-   <parameter>result_len</parameter>.  If a 1, 2, or 4-byte integer result
+   length in bytes will be returned in the integer pointed to by
+   <parameter>result_len</parameter>.  If a 2- or 4-byte integer result
    is expected, set <parameter>result_is_int</parameter> to 1, otherwise
    set it to 0.  Setting <parameter>result_is_int</parameter> to 1 causes
    <application>libpq</> to byte-swap the value if necessary, so that it
-   is delivered as a proper <type>int</type> value for the client machine.
+   is delivered as a proper <type>int</type> value for the client machine;
+   note that a 4-byte integer is delivered into <parameter>*result_buf</>
+   for either allowed result size.
    When <parameter>result_is_int</> is 0, the binary-format byte string
-   sent by the server is returned unmodified.
+   sent by the server is returned unmodified. (In this case it's better
+   to consider <parameter>result_buf</parameter> as being of
+   type <type>void *</>.)
   </para>
 
   <para>
