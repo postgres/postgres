@@ -1019,14 +1019,20 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			COPY_HEADER_FIELD(&blk->data_len, sizeof(uint16));
 			/* cross-check that the HAS_DATA flag is set iff data_length > 0 */
 			if (blk->has_data && blk->data_len == 0)
+			{
 				report_invalid_record(state,
 					  "BKPBLOCK_HAS_DATA set, but no data included at %X/%X",
 									  (uint32) (state->ReadRecPtr >> 32), (uint32) state->ReadRecPtr);
+				goto err;
+			}
 			if (!blk->has_data && blk->data_len != 0)
+			{
 				report_invalid_record(state,
 				 "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X",
 									  (unsigned int) blk->data_len,
 									  (uint32) (state->ReadRecPtr >> 32), (uint32) state->ReadRecPtr);
+				goto err;
+			}
 			datatotal += blk->data_len;
 
 			if (blk->has_image)
