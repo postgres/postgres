@@ -858,9 +858,9 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 	GrantStmt  *action = stmt->action;
 	InternalDefaultACL iacls;
 	ListCell   *cell;
-	List	   *rolenames = NIL;
+	List	   *rolespecs = NIL;
 	List	   *nspnames = NIL;
-	DefElem    *drolenames = NULL;
+	DefElem    *drolespecs = NULL;
 	DefElem    *dnspnames = NULL;
 	AclMode		all_privileges;
 	const char *errormsg;
@@ -880,11 +880,11 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 		}
 		else if (strcmp(defel->defname, "roles") == 0)
 		{
-			if (drolenames)
+			if (drolespecs)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			drolenames = defel;
+			drolespecs = defel;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized", defel->defname);
@@ -892,8 +892,8 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 
 	if (dnspnames)
 		nspnames = (List *) dnspnames->arg;
-	if (drolenames)
-		rolenames = (List *) drolenames->arg;
+	if (drolespecs)
+		rolespecs = (List *) drolespecs->arg;
 
 	/* Prepare the InternalDefaultACL representation of the statement */
 	/* roleid to be filled below */
@@ -996,7 +996,7 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 		}
 	}
 
-	if (rolenames == NIL)
+	if (rolespecs == NIL)
 	{
 		/* Set permissions for myself */
 		iacls.roleid = GetUserId();
@@ -1008,11 +1008,11 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 		/* Look up the role OIDs and do permissions checks */
 		ListCell   *rolecell;
 
-		foreach(rolecell, rolenames)
+		foreach(rolecell, rolespecs)
 		{
-			char	   *rolename = strVal(lfirst(rolecell));
+			RoleSpec   *rolespec = lfirst(rolecell);
 
-			iacls.roleid = get_role_oid(rolename, false);
+			iacls.roleid = get_rolespec_oid((Node *) rolespec, false);
 
 			/*
 			 * We insist that calling user be a member of each target role. If
