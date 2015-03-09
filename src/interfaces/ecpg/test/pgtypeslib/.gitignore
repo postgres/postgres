@@ -1,10 +1,15 @@
 /dt_test
 /dt_test.c
+/dt_test.obj
 /dt_test2
 /dt_test2.c
+/dt_test2.obj
 /nan_test
 /nan_test.c
+/nan_test.obj
 /num_test
 /num_test.c
+/num_test.obj
 /num_test2
 /num_test2.c
+/num_test2.obj
