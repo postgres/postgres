@@ -88,7 +88,7 @@ typedef struct XLogRecordBlockHeader
 								 * image) */
 
 	/* If BKPBLOCK_HAS_IMAGE, an XLogRecordBlockImageHeader struct follows */
-	/* If !BKPBLOCK_SAME_REL is not set, a RelFileNode follows */
+	/* If BKPBLOCK_SAME_REL is not set, a RelFileNode follows */
 	/* BlockNumber follows */
 } XLogRecordBlockHeader;
 
