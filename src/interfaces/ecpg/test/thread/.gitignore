@@ -1,15 +1,10 @@
 /alloc
 /alloc.c
-/alloc.obj
 /descriptor
 /descriptor.c
-/descriptor.obj
 /prep
 /prep.c
-/prep.obj
 /thread
 /thread.c
-/thread.obj
 /thread_implicit
 /thread_implicit.c
-/thread_implicit.obj
