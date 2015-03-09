@@ -557,6 +557,12 @@ StartupCommitTs(void)
 	TransactionId xid = ShmemVariableCache->nextXid;
 	int			pageno = TransactionIdToCTsPage(xid);
 
+	if (track_commit_timestamp)
+	{
+		ActivateCommitTs();
+		return;
+	}
+
 	LWLockAcquire(CommitTsControlLock, LW_EXCLUSIVE);
 
 	/*
@@ -569,8 +575,25 @@ StartupCommitTs(void)
 
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
- * when commit timestamp is enabled.  Must be called after recovery has
- * finished.
+ * when commit timestamp is enabled, after recovery has finished.
+ */
+void
+CompleteCommitTsInitialization(void)
+{
+	if (!track_commit_timestamp)
+		DeactivateCommitTs(true);
+}
+
+/*
+ * Activate this module whenever necessary.
+ * 		This must happen during postmaster or standalong-backend startup,
+ * 		or during WAL replay anytime the track_commit_timestamp setting is
+ * 		changed in the master.
+ *
+ * The reason why this SLRU needs separate activation/deactivation functions is
+ * that it can be enabled/disabled during start and the activation/deactivation
+ * on master is propagated to slave via replay. Other SLRUs don't have this
+ * property and they can be just initialized during normal startup.
  *
  * This is in charge of creating the currently active segment, if it's not
  * already there.  The reason for this is that the server might have been
@@ -578,7 +601,7 @@ StartupCommitTs(void)
  * the normal creation point.
  */
 void
-CompleteCommitTsInitialization(void)
+ActivateCommitTs(void)
 {
 	TransactionId xid = ShmemVariableCache->nextXid;
 	int			pageno = TransactionIdToCTsPage(xid);
@@ -589,22 +612,6 @@ CompleteCommitTsInitialization(void)
 	LWLockAcquire(CommitTsControlLock, LW_EXCLUSIVE);
 	CommitTsCtl->shared->latest_page_number = pageno;
 	LWLockRelease(CommitTsControlLock);
-
-	/*
-	 * If this module is not currently enabled, make sure we don't hand back
-	 * possibly-invalid data; also remove segments of old data.
-	 */
-	if (!track_commit_timestamp)
-	{
-		LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-		ShmemVariableCache->oldestCommitTs = InvalidTransactionId;
-		ShmemVariableCache->newestCommitTs = InvalidTransactionId;
-		LWLockRelease(CommitTsLock);
-
-		TruncateCommitTs(ReadNewTransactionId());
-
-		return;
-	}
 
 	/*
 	 * If CommitTs is enabled, but it wasn't in the previous server run, we
@@ -638,6 +645,37 @@ CompleteCommitTsInitialization(void)
 		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
 		LWLockRelease(CommitTsControlLock);
 	}
+}
+
+/*
+ * Deactivate this module.
+ *
+ * This must be called when the track_commit_timestamp parameter is turned off.
+ * This happens during postmaster or standalone-backend startup, or during WAL
+ * replay.
+ *
+ * Resets CommitTs into invalid state to make sure we don't hand back
+ * possibly-invalid data; also removes segments of old data.
+ */
+void
+DeactivateCommitTs(bool do_wal)
+{
+	TransactionId xid = ShmemVariableCache->nextXid;
+	int			pageno = TransactionIdToCTsPage(xid);
+
+	/*
+	 * Re-Initialize our idea of the latest page number.
+	 */
+	LWLockAcquire(CommitTsControlLock, LW_EXCLUSIVE);
+	CommitTsCtl->shared->latest_page_number = pageno;
+	LWLockRelease(CommitTsControlLock);
+
+	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
+	ShmemVariableCache->oldestCommitTs = InvalidTransactionId;
+	ShmemVariableCache->newestCommitTs = InvalidTransactionId;
+	LWLockRelease(CommitTsLock);
+
+	TruncateCommitTs(ReadNewTransactionId(), do_wal);
 }
 
 /*
@@ -705,7 +743,7 @@ ExtendCommitTs(TransactionId newestXact)
  * Note that we don't need to flush XLOG here.
  */
 void
-TruncateCommitTs(TransactionId oldestXact)
+TruncateCommitTs(TransactionId oldestXact, bool do_wal)
 {
 	int			cutoffPage;
 
@@ -721,7 +759,8 @@ TruncateCommitTs(TransactionId oldestXact)
 		return;					/* nothing to remove */
 
 	/* Write XLOG record */
-	WriteTruncateXlogRec(cutoffPage);
+	if (do_wal)
+		WriteTruncateXlogRec(cutoffPage);
 
 	/* Now we can remove the old CommitTs segment(s) */
 	SimpleLruTruncate(CommitTsCtl, cutoffPage);

@@ -39,11 +39,13 @@ extern Size CommitTsShmemSize(void);
 extern void CommitTsShmemInit(void);
 extern void BootStrapCommitTs(void);
 extern void StartupCommitTs(void);
+extern void ActivateCommitTs(void);
+extern void DeactivateCommitTs(bool do_wal);
 extern void CompleteCommitTsInitialization(void);
 extern void ShutdownCommitTs(void);
 extern void CheckPointCommitTs(void);
 extern void ExtendCommitTs(TransactionId newestXact);
-extern void TruncateCommitTs(TransactionId oldestXact);
+extern void TruncateCommitTs(TransactionId oldestXact, bool do_wal);
 extern void SetCommitTsLimit(TransactionId oldestXact,
 				 TransactionId newestXact);
 extern void AdvanceOldestCommitTs(TransactionId oldestXact);
