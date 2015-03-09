@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "commands/dbcommands.h"
+#include "commands/dbcommands_xlog.h"
 #include "lib/stringinfo.h"
 
 
