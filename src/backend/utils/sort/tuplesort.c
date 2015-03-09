@@ -336,9 +336,9 @@ struct Tuplesortstate
 	bool		markpos_eof;	/* saved "eof_reached" */
 
 	/*
-	 * The sortKeys variable is used by every case other than the hash index
-	 * case; it is set by tuplesort_begin_xxx.  tupDesc is only used by the
-	 * MinimalTuple and CLUSTER routines, though.
+	 * The sortKeys variable is used by every case other than the datum and
+	 * hash index cases; it is set by tuplesort_begin_xxx.  tupDesc is only
+	 * used by the MinimalTuple and CLUSTER routines, though.
 	 */
 	TupleDesc	tupDesc;
 	SortSupport sortKeys;		/* array of length nKeys */
@@ -1246,7 +1246,7 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 							 RelationGetDescr(state->indexRel),
 							 &stup.isnull1);
 
-	if (!state->sortKeys->abbrev_converter || stup.isnull1)
+	if (!state->sortKeys || !state->sortKeys->abbrev_converter || stup.isnull1)
 	{
 		/*
 		 * Store ordinary Datum representation, or NULL value.  If there is a
@@ -2172,7 +2172,7 @@ mergeruns(Tuplesortstate *state)
 		return;
 	}
 
-	if (state->sortKeys->abbrev_converter)
+	if (state->sortKeys != NULL && state->sortKeys->abbrev_converter != NULL)
 	{
 		/*
 		 * If there are multiple runs to be merged, when we go to read back
