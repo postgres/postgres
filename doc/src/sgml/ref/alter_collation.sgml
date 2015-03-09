@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER COLLATION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
-ALTER COLLATION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER COLLATION <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>

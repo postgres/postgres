@@ -90,7 +90,7 @@ typedef struct
 {
 	const char *stmtType;		/* "CREATE SCHEMA" or "ALTER SCHEMA" */
 	char	   *schemaname;		/* name of schema */
-	char	   *authid;			/* owner of schema */
+	RoleSpec   *authrole;		/* owner of schema */
 	List	   *sequences;		/* CREATE SEQUENCE items */
 	List	   *tables;			/* CREATE TABLE items */
 	List	   *views;			/* CREATE VIEW items */
@@ -2723,7 +2723,7 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 
 	cxt.stmtType = "CREATE SCHEMA";
 	cxt.schemaname = stmt->schemaname;
-	cxt.authid = stmt->authid;
+	cxt.authrole = (RoleSpec *) stmt->authrole;
 	cxt.sequences = NIL;
 	cxt.tables = NIL;
 	cxt.views = NIL;

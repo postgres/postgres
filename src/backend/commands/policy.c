@@ -129,13 +129,7 @@ parse_policy_command(const char *cmd_name)
 
 /*
  * policy_role_list_to_array
- *   helper function to convert a list of role names in to an array of
- *   role ids.
- *
- * Note: If PUBLIC is provided as a role name, then ACL_ID_PUBLIC is
- *       used as the role id.
- *
- * roles - the list of role names to convert.
+ *   helper function to convert a list of RoleSpecs to an array of role ids.
  */
 static ArrayType *
 policy_role_list_to_array(List *roles)
@@ -162,25 +156,25 @@ policy_role_list_to_array(List *roles)
 
 	foreach(cell, roles)
 	{
-		Oid		roleid = get_role_oid_or_public(strVal(lfirst(cell)));
+		RoleSpec *spec = lfirst(cell);
 
 		/*
 		 * PUBLIC covers all roles, so it only makes sense alone.
 		 */
-		if (roleid == ACL_ID_PUBLIC)
+		if (spec->roletype == ROLESPEC_PUBLIC)
 		{
 			if (num_roles != 1)
 				ereport(WARNING,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("ignoring roles specified other than public"),
 						 errhint("All roles are members of the public role.")));
-
-			temp_array[0] = ObjectIdGetDatum(roleid);
+			temp_array[0] = ObjectIdGetDatum(ACL_ID_PUBLIC);
 			num_roles = 1;
 			break;
 		}
 		else
-			temp_array[i++] = ObjectIdGetDatum(roleid);
+			temp_array[i++] =
+				ObjectIdGetDatum(get_rolespec_oid((Node *) spec, false));
 	}
 
 	role_ids = construct_array(temp_array, num_roles, OIDOID, sizeof(Oid), true,

@@ -48,7 +48,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
     ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
 </synopsis>
  </refsynopsisdiv>

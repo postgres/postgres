@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+ALTER ROLE <replaceable class="PARAMETER">role_specification</replaceable> [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
 
@@ -39,10 +39,16 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
 
 ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
-ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
-ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
+ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
+ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
+ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
+
+<phrase>where <replaceable class="PARAMETER">role_specification</replaceable> can be:</phrase>
+
+    [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable>
+  | CURRENT_USER
+  | SESSION_USER
 </synopsis>
  </refsynopsisdiv>
 
@@ -124,6 +130,25 @@ ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATA
       <listitem>
        <para>
         The name of the role whose attributes are to be altered.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>CURRENT_USER</term>
+      <listitem>
+       <para>
+        Alter the current user instead of an explicitely identified role.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SESSION_USER</term>
+      <listitem>
+       <para>
+        Alter the current session user instead of an explicitely identified
+        role.
        </para>
       </listitem>
      </varlistentry>

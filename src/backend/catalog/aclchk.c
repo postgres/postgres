@@ -421,22 +421,25 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	istmt.behavior = stmt->behavior;
 
 	/*
-	 * Convert the PrivGrantee list into an Oid list.  Note that at this point
-	 * we insert an ACL_ID_PUBLIC into the list if an empty role name is
-	 * detected (which is what the grammar uses if PUBLIC is found), so
-	 * downstream there shouldn't be any additional work needed to support
-	 * this case.
+	 * Convert the RoleSpec list into an Oid list.  Note that at this point
+	 * we insert an ACL_ID_PUBLIC into the list if appropriate, so downstream
+	 * there shouldn't be any additional work needed to support this case.
 	 */
 	foreach(cell, stmt->grantees)
 	{
-		PrivGrantee *grantee = (PrivGrantee *) lfirst(cell);
+		RoleSpec *grantee = (RoleSpec *) lfirst(cell);
+		Oid grantee_uid;
 
-		if (grantee->rolname == NULL)
-			istmt.grantees = lappend_oid(istmt.grantees, ACL_ID_PUBLIC);
-		else
-			istmt.grantees =
-				lappend_oid(istmt.grantees,
-							get_role_oid(grantee->rolname, false));
+		switch (grantee->roletype)
+		{
+			case ROLESPEC_PUBLIC:
+				grantee_uid = ACL_ID_PUBLIC;
+				break;
+			default:
+				grantee_uid = get_rolespec_oid((Node *) grantee, false);
+				break;
+		}
+		istmt.grantees = lappend_oid(istmt.grantees, grantee_uid);
 	}
 
 	/*
@@ -904,22 +907,25 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 	iacls.behavior = action->behavior;
 
 	/*
-	 * Convert the PrivGrantee list into an Oid list.  Note that at this point
-	 * we insert an ACL_ID_PUBLIC into the list if an empty role name is
-	 * detected (which is what the grammar uses if PUBLIC is found), so
-	 * downstream there shouldn't be any additional work needed to support
-	 * this case.
+	 * Convert the RoleSpec list into an Oid list.  Note that at this point
+	 * we insert an ACL_ID_PUBLIC into the list if appropriate, so downstream
+	 * there shouldn't be any additional work needed to support this case.
 	 */
 	foreach(cell, action->grantees)
 	{
-		PrivGrantee *grantee = (PrivGrantee *) lfirst(cell);
+		RoleSpec *grantee = (RoleSpec *) lfirst(cell);
+		Oid grantee_uid;
 
-		if (grantee->rolname == NULL)
-			iacls.grantees = lappend_oid(iacls.grantees, ACL_ID_PUBLIC);
-		else
-			iacls.grantees =
-				lappend_oid(iacls.grantees,
-							get_role_oid(grantee->rolname, false));
+		switch (grantee->roletype)
+		{
+			case ROLESPEC_PUBLIC:
+				grantee_uid = ACL_ID_PUBLIC;
+				break;
+			default:
+				grantee_uid = get_rolespec_oid((Node *) grantee, false);
+				break;
+		}
+		iacls.grantees = lappend_oid(iacls.grantees, grantee_uid);
 	}
 
 	/*

@@ -73,7 +73,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OF <replaceable class="PARAMETER">type_name</replaceable>
     NOT OF
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
     REPLICA IDENTITY {DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING}
 
 <phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>

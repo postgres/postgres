@@ -22,7 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) RENAME TO <replaceable>new_name</replaceable>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) OWNER TO <replaceable>new_owner</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signature</replaceable> )
+                OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) SET SCHEMA <replaceable>new_schema</replaceable>
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>

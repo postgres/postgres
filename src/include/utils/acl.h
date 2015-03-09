@@ -24,6 +24,7 @@
 #ifndef ACL_H
 #define ACL_H
 
+#include "access/htup.h"
 #include "nodes/parsenodes.h"
 #include "utils/array.h"
 #include "utils/snapshot.h"
@@ -227,8 +228,11 @@ extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_member_of_role_nosuper(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);
 extern void check_is_member_of_role(Oid member, Oid role);
-extern Oid	get_role_oid(const char *rolname, bool missing_ok);
-extern Oid	get_role_oid_or_public(const char *rolname);
+extern Oid	get_role_oid(const char *rolename, bool missing_ok);
+extern Oid	get_role_oid_or_public(const char *rolename);
+extern Oid  get_rolespec_oid(const Node *node, bool missing_ok);
+extern HeapTuple get_rolespec_tuple(const Node *node);
+extern char *get_rolespec_name(const Node *node);
 
 extern void select_best_grantor(Oid roleId, AclMode privileges,
 					const Acl *acl, Oid ownerId,

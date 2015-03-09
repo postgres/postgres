@@ -3507,7 +3507,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
 			ATExecChangeOwner(RelationGetRelid(rel),
-							  get_role_oid(cmd->name, false),
+							  get_rolespec_oid(cmd->newowner, false),
 							  false, lockmode);
 			break;
 		case AT_ClusterOn:		/* CLUSTER ON */
@@ -9388,7 +9388,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 	HeapTuple	tuple;
 	Oid			orig_tablespaceoid;
 	Oid			new_tablespaceoid;
-	List	   *role_oids = roleNamesToIds(stmt->roles);
+	List	   *role_oids = roleSpecsToIds(stmt->roles);
 
 	/* Ensure we were not asked to move something we can't */
 	if (stmt->objtype != OBJECT_TABLE && stmt->objtype != OBJECT_INDEX &&

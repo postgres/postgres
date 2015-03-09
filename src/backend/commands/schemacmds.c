@@ -21,6 +21,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
@@ -42,8 +43,7 @@ static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerI
 Oid
 CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 {
-	const char *schemaName = stmt->schemaname;
-	const char *authId = stmt->authid;
+	const char	*schemaName = stmt->schemaname;
 	Oid			namespaceId;
 	OverrideSearchPath *overridePath;
 	List	   *parsetree_list;
@@ -58,10 +58,23 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/*
 	 * Who is supposed to own the new schema?
 	 */
-	if (authId)
-		owner_uid = get_role_oid(authId, false);
+	if (stmt->authrole)
+		owner_uid = get_rolespec_oid(stmt->authrole, false);
 	else
 		owner_uid = saved_uid;
+
+	/* fill schema name with the user name if not specified */
+	if (!schemaName)
+	{
+		HeapTuple tuple;
+
+		tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(owner_uid));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for role %u", owner_uid);
+		schemaName =
+			pstrdup(NameStr(((Form_pg_authid) GETSTRUCT(tuple))->rolname));
+		ReleaseSysCache(tuple);
+	}
 
 	/*
 	 * To create a schema, must have schema-create privilege on the current

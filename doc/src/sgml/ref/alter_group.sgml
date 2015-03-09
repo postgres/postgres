@@ -21,8 +21,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> ADD USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
-ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> DROP USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
+ALTER GROUP <replaceable class="PARAMETER">role_specification</replaceable> ADD USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
+ALTER GROUP <replaceable class="PARAMETER">role_specification</replaceable> DROP USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
+
+<phrase>where <replaceable class="PARAMETER">role_specification</replaceable> can be:</phrase>
+
+    <replaceable class="PARAMETER">role_name</replaceable>
+  | CURRENT_USER
+  | SESSION_USER
 
 ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>

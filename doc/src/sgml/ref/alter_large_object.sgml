@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> { OWNER TO <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 </synopsis>
  </refsynopsisdiv>
 

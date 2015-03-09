@@ -2504,6 +2504,18 @@ _copyXmlSerialize(const XmlSerialize *from)
 	return newnode;
 }
 
+static RoleSpec *
+_copyRoleSpec(const RoleSpec *from)
+{
+	RoleSpec *newnode = makeNode(RoleSpec);
+
+	COPY_SCALAR_FIELD(roletype);
+	COPY_STRING_FIELD(rolename);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
 static Query *
 _copyQuery(const Query *from)
 {
@@ -2650,6 +2662,7 @@ _copyAlterTableCmd(const AlterTableCmd *from)
 
 	COPY_SCALAR_FIELD(subtype);
 	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(newowner);
 	COPY_NODE_FIELD(def);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
@@ -2689,16 +2702,6 @@ _copyGrantStmt(const GrantStmt *from)
 	return newnode;
 }
 
-static PrivGrantee *
-_copyPrivGrantee(const PrivGrantee *from)
-{
-	PrivGrantee *newnode = makeNode(PrivGrantee);
-
-	COPY_STRING_FIELD(rolname);
-
-	return newnode;
-}
-
 static FuncWithArgs *
 _copyFuncWithArgs(const FuncWithArgs *from)
 {
@@ -2730,7 +2733,7 @@ _copyGrantRoleStmt(const GrantRoleStmt *from)
 	COPY_NODE_FIELD(grantee_roles);
 	COPY_SCALAR_FIELD(is_grant);
 	COPY_SCALAR_FIELD(admin_opt);
-	COPY_STRING_FIELD(grantor);
+	COPY_NODE_FIELD(grantor);
 	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
@@ -3038,7 +3041,7 @@ _copyAlterOwnerStmt(const AlterOwnerStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(object);
 	COPY_NODE_FIELD(objarg);
-	COPY_STRING_FIELD(newowner);
+	COPY_NODE_FIELD(newowner);
 
 	return newnode;
 }
@@ -3424,7 +3427,7 @@ _copyCreateTableSpaceStmt(const CreateTableSpaceStmt *from)
 	CreateTableSpaceStmt *newnode = makeNode(CreateTableSpaceStmt);
 
 	COPY_STRING_FIELD(tablespacename);
-	COPY_STRING_FIELD(owner);
+	COPY_NODE_FIELD(owner);
 	COPY_STRING_FIELD(location);
 	COPY_NODE_FIELD(options);
 
@@ -3561,7 +3564,7 @@ _copyCreateUserMappingStmt(const CreateUserMappingStmt *from)
 {
 	CreateUserMappingStmt *newnode = makeNode(CreateUserMappingStmt);
 
-	COPY_STRING_FIELD(username);
+	COPY_NODE_FIELD(user);
 	COPY_STRING_FIELD(servername);
 	COPY_NODE_FIELD(options);
 
@@ -3573,7 +3576,7 @@ _copyAlterUserMappingStmt(const AlterUserMappingStmt *from)
 {
 	AlterUserMappingStmt *newnode = makeNode(AlterUserMappingStmt);
 
-	COPY_STRING_FIELD(username);
+	COPY_NODE_FIELD(user);
 	COPY_STRING_FIELD(servername);
 	COPY_NODE_FIELD(options);
 
@@ -3585,7 +3588,7 @@ _copyDropUserMappingStmt(const DropUserMappingStmt *from)
 {
 	DropUserMappingStmt *newnode = makeNode(DropUserMappingStmt);
 
-	COPY_STRING_FIELD(username);
+	COPY_NODE_FIELD(user);
 	COPY_STRING_FIELD(servername);
 	COPY_SCALAR_FIELD(missing_ok);
 
@@ -3698,7 +3701,7 @@ _copyAlterRoleStmt(const AlterRoleStmt *from)
 {
 	AlterRoleStmt *newnode = makeNode(AlterRoleStmt);
 
-	COPY_STRING_FIELD(role);
+	COPY_NODE_FIELD(role);
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(action);
 
@@ -3710,7 +3713,7 @@ _copyAlterRoleSetStmt(const AlterRoleSetStmt *from)
 {
 	AlterRoleSetStmt *newnode = makeNode(AlterRoleSetStmt);
 
-	COPY_STRING_FIELD(role);
+	COPY_NODE_FIELD(role);
 	COPY_STRING_FIELD(database);
 	COPY_NODE_FIELD(setstmt);
 
@@ -3769,7 +3772,7 @@ _copyCreateSchemaStmt(const CreateSchemaStmt *from)
 	CreateSchemaStmt *newnode = makeNode(CreateSchemaStmt);
 
 	COPY_STRING_FIELD(schemaname);
-	COPY_STRING_FIELD(authid);
+	COPY_NODE_FIELD(authrole);
 	COPY_NODE_FIELD(schemaElts);
 	COPY_SCALAR_FIELD(if_not_exists);
 
@@ -3854,7 +3857,7 @@ _copyReassignOwnedStmt(const ReassignOwnedStmt *from)
 	ReassignOwnedStmt *newnode = makeNode(ReassignOwnedStmt);
 
 	COPY_NODE_FIELD(roles);
-	COPY_STRING_FIELD(newrole);
+	COPY_NODE_FIELD(newrole);
 
 	return newnode;
 }
@@ -4728,9 +4731,6 @@ copyObject(const void *from)
 		case T_CommonTableExpr:
 			retval = _copyCommonTableExpr(from);
 			break;
-		case T_PrivGrantee:
-			retval = _copyPrivGrantee(from);
-			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
 			break;
@@ -4739,6 +4739,9 @@ copyObject(const void *from)
 			break;
 		case T_XmlSerialize:
 			retval = _copyXmlSerialize(from);
+			break;
+		case T_RoleSpec:
+			retval = _copyRoleSpec(from);
 			break;
 
 		default:

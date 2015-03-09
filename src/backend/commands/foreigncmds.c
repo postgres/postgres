@@ -198,24 +198,6 @@ transformGenericOptions(Oid catalogId,
 
 
 /*
- * Convert the user mapping user name to OID
- */
-static Oid
-GetUserOidFromMapping(const char *username, bool missing_ok)
-{
-	if (!username)
-		/* PUBLIC user mapping */
-		return InvalidOid;
-
-	if (strcmp(username, "current_user") == 0)
-		/* map to the owner */
-		return GetUserId();
-
-	/* map to provided user */
-	return get_role_oid(username, missing_ok);
-}
-
-/*
  * Internal workhorse for changing a data wrapper's owner.
  *
  * Allow this only for superusers; also the new owner must be a
@@ -1156,10 +1138,14 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	ObjectAddress referenced;
 	ForeignServer *srv;
 	ForeignDataWrapper *fdw;
+	RoleSpec   *role = (RoleSpec *) stmt->user;
 
 	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
 
-	useId = GetUserOidFromMapping(stmt->username, false);
+	if (role->roletype == ROLESPEC_PUBLIC)
+		useId = ACL_ID_PUBLIC;
+	else
+		useId = get_rolespec_oid(stmt->user, false);
 
 	/* Check that the server exists. */
 	srv = GetForeignServerByName(stmt->servername, false);
@@ -1252,10 +1238,15 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	Oid			umId;
 	ForeignServer *srv;
 	ObjectAddress address;
+	RoleSpec   *role = (RoleSpec *) stmt->user;
 
 	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
 
-	useId = GetUserOidFromMapping(stmt->username, false);
+	if (role->roletype == ROLESPEC_PUBLIC)
+		useId = ACL_ID_PUBLIC;
+	else
+		useId = get_rolespec_oid(stmt->user, false);
+
 	srv = GetForeignServerByName(stmt->servername, false);
 
 	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
@@ -1338,19 +1329,26 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 	Oid			useId;
 	Oid			umId;
 	ForeignServer *srv;
+	RoleSpec   *role = (RoleSpec *) stmt->user;
 
-	useId = GetUserOidFromMapping(stmt->username, stmt->missing_ok);
-	srv = GetForeignServerByName(stmt->servername, true);
-
-	if (stmt->username && !OidIsValid(useId))
+	if (role->roletype == ROLESPEC_PUBLIC)
+		useId = ACL_ID_PUBLIC;
+	else
 	{
-		/*
-		 * IF EXISTS specified, role not found and not public. Notice this and
-		 * leave.
-		 */
-		elog(NOTICE, "role \"%s\" does not exist, skipping", stmt->username);
-		return InvalidOid;
+		useId = get_rolespec_oid(stmt->user, stmt->missing_ok);
+		if (!OidIsValid(useId))
+		{
+			/*
+			 * IF EXISTS specified, role not found and not public. Notice this
+			 * and leave.
+			 */
+			elog(NOTICE, "role \"%s\" does not exist, skipping",
+				 role->rolename);
+			return InvalidOid;
+		}
 	}
+
+	srv = GetForeignServerByName(stmt->servername, true);
 
 	if (!srv)
 	{

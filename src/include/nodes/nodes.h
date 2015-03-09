@@ -413,6 +413,7 @@ typedef enum NodeTag
 	T_XmlSerialize,
 	T_WithClause,
 	T_CommonTableExpr,
+	T_RoleSpec,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)

@@ -71,6 +71,7 @@ test: typed_table
 test: vacuum
 test: drop_if_exists
 test: updatable_views
+test: rolenames
 test: sanity_check
 test: errors
 test: select

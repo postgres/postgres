@@ -699,7 +699,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 ObjectAddress
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
-	Oid			newowner = get_role_oid(stmt->newowner, false);
+	Oid			newowner = get_rolespec_oid(stmt->newowner, false);
 
 	switch (stmt->objectType)
 	{

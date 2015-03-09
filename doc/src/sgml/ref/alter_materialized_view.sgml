@@ -42,7 +42,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
     SET WITHOUT CLUSTER
     SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
 </synopsis>
  </refsynopsisdiv>
