@@ -24,10 +24,10 @@
  * Note: GIN does not include a page ID word as do the other index types.
  * This is OK because the opaque data is only 8 bytes and so can be reliably
  * distinguished by size.  Revisit this if the size ever increases.
- * Further note: as of 9.2, SP-GiST also uses 8-byte special space.  This is
- * still OK, as long as GIN isn't using all of the high-order bits in its
- * flags word, because that way the flags word cannot match the page ID used
- * by SP-GiST.
+ * Further note: as of 9.2, SP-GiST also uses 8-byte special space, as does
+ * BRIN as of 9.5.  This is still OK, as long as GIN isn't using all of the
+ * high-order bits in its flags word, because that way the flags word cannot
+ * match the page IDs used by SP-GiST and BRIN.
  */
 typedef struct GinPageOpaqueData
 {

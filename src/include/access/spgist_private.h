@@ -64,6 +64,8 @@ typedef SpGistPageOpaqueData *SpGistPageOpaque;
  * which otherwise would have a hard time telling pages of different index
  * types apart.  It should be the last 2 bytes on the page.  This is more or
  * less "free" due to alignment considerations.
+ *
+ * See comments above GinPageOpaqueData.
  */
 #define SPGIST_PAGE_ID		0xFF82
 

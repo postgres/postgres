@@ -20,24 +20,44 @@
 #include "storage/block.h"
 #include "storage/itemptr.h"
 
+/*
+ * Special area of BRIN pages.
+ *
+ * We define it in this odd way so that it always occupies the last
+ * MAXALIGN-sized element of each page.
+ */
+typedef struct BrinSpecialSpace
+{
+	uint16		vector[MAXALIGN(1) / sizeof(uint16)];
+} BrinSpecialSpace;
+
+/*
+ * Make the page type be the last half-word in the page, for consumption by
+ * pg_filedump and similar utilities.  We don't really care much about the
+ * position of the "flags" half-word, but it's simpler to apply a consistent
+ * rule to both.
+ *
+ * See comments above GinPageOpaqueData.
+ */
+#define BrinPageType(page)		\
+	(((BrinSpecialSpace *)  	\
+	  PageGetSpecialPointer(page))->vector[MAXALIGN(1) / sizeof(uint16) - 1])
+
+#define BrinPageFlags(page)		\
+	(((BrinSpecialSpace *)  	\
+	  PageGetSpecialPointer(page))->vector[MAXALIGN(1) / sizeof(uint16) - 2])
+
 /* special space on all BRIN pages stores a "type" identifier */
 #define		BRIN_PAGETYPE_META			0xF091
 #define		BRIN_PAGETYPE_REVMAP		0xF092
 #define		BRIN_PAGETYPE_REGULAR		0xF093
 
-#define BRIN_PAGE_TYPE(page)	\
-	(((BrinSpecialSpace *) PageGetSpecialPointer(page))->type)
-#define BRIN_IS_REVMAP_PAGE(page) (BRIN_PAGE_TYPE(page) == BRIN_PAGETYPE_REVMAP)
-#define BRIN_IS_REGULAR_PAGE(page) (BRIN_PAGE_TYPE(page) == BRIN_PAGETYPE_REGULAR)
+#define BRIN_IS_REVMAP_PAGE(page) (BrinPageType(page) == BRIN_PAGETYPE_REVMAP)
+#define BRIN_IS_REGULAR_PAGE(page) (BrinPageType(page) == BRIN_PAGETYPE_REGULAR)
 
 /* flags for BrinSpecialSpace */
 #define		BRIN_EVACUATE_PAGE			(1 << 0)
 
-typedef struct BrinSpecialSpace
-{
-	uint16		flags;
-	uint16		type;
-} BrinSpecialSpace;
 
 /* Metapage definitions */
 typedef struct BrinMetaPageData

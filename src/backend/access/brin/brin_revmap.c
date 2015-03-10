@@ -446,7 +446,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
-						BRIN_PAGE_TYPE(page),
+						BrinPageType(page),
 						RelationGetRelationName(irel),
 						BufferGetBlockNumber(buf))));
 

@@ -58,12 +58,9 @@ brin_page_type(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Page		page = VARDATA(raw_page);
-	BrinSpecialSpace *special;
 	char *type;
 
-	special = (BrinSpecialSpace *) PageGetSpecialPointer(page);
-
-	switch (special->type)
+	switch (BrinPageType(page))
 	{
 		case BRIN_PAGETYPE_META:
 			type = "meta";
@@ -75,7 +72,7 @@ brin_page_type(PG_FUNCTION_ARGS)
 			type = "regular";
 			break;
 		default:
-			type = psprintf("unknown (%02x)", special->type);
+			type = psprintf("unknown (%02x)", BrinPageType(page));
 			break;
 	}
 
@@ -91,7 +88,6 @@ verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 {
 	Page	page;
 	int		raw_page_size;
-	BrinSpecialSpace *special;
 
 	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
@@ -104,13 +100,12 @@ verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 	page = VARDATA(raw_page);
 
 	/* verify the special space says this page is what we want */
-	special = (BrinSpecialSpace *) PageGetSpecialPointer(page);
-	if (special->type != type)
+	if (BrinPageType(page) != type)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("page is not a BRIN page of type \"%s\"", strtype),
 				 errdetail("Expected special type %08x, got %08x.",
-						   type, special->type)));
+						   type, BrinPageType(page))));
 
 	return page;
 }

@@ -53,7 +53,6 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	BrinTuple  *oldtup;
 	Size		oldsz;
 	Buffer		newbuf;
-	BrinSpecialSpace *special;
 	bool		extended = false;
 
 	newsz = MAXALIGN(newsz);
@@ -113,8 +112,6 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		return false;
 	}
 
-	special = (BrinSpecialSpace *) PageGetSpecialPointer(oldpage);
-
 	/*
 	 * Great, the old tuple is intact.  We can proceed with the update.
 	 *
@@ -124,7 +121,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	 * caller told us there isn't, if a concurrent update moved another tuple
 	 * elsewhere or replaced a tuple with a smaller one.
 	 */
-	if (((special->flags & BRIN_EVACUATE_PAGE) == 0) &&
+	if (((BrinPageFlags(oldpage) & BRIN_EVACUATE_PAGE) == 0) &&
 		brin_can_do_samepage_update(oldbuf, origsz, newsz))
 	{
 		if (BufferIsValid(newbuf))
@@ -374,12 +371,9 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 void
 brin_page_init(Page page, uint16 type)
 {
-	BrinSpecialSpace *special;
-
 	PageInit(page, BLCKSZ, sizeof(BrinSpecialSpace));
 
-	special = (BrinSpecialSpace *) PageGetSpecialPointer(page);
-	special->type = type;
+	BrinPageType(page) = type;
 }
 
 /*
@@ -420,15 +414,12 @@ brin_start_evacuating_page(Relation idxRel, Buffer buf)
 {
 	OffsetNumber off;
 	OffsetNumber maxoff;
-	BrinSpecialSpace *special;
 	Page		page;
 
 	page = BufferGetPage(buf);
 
 	if (PageIsNew(page))
 		return false;
-
-	special = (BrinSpecialSpace *) PageGetSpecialPointer(page);
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
@@ -439,7 +430,7 @@ brin_start_evacuating_page(Relation idxRel, Buffer buf)
 		if (ItemIdIsUsed(lp))
 		{
 			/* prevent other backends from adding more stuff to this page */
-			special->flags |= BRIN_EVACUATE_PAGE;
+			BrinPageFlags(page) |= BRIN_EVACUATE_PAGE;
 			MarkBufferDirtyHint(buf, true);
 
 			return true;
@@ -463,8 +454,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 
 	page = BufferGetPage(buf);
 
-	Assert(((BrinSpecialSpace *)
-			PageGetSpecialPointer(page))->flags & BRIN_EVACUATE_PAGE);
+	Assert(BrinPageFlags(page) & BRIN_EVACUATE_PAGE);
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
@@ -677,11 +667,8 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 static Size
 br_page_get_freespace(Page page)
 {
-	BrinSpecialSpace *special;
-
-	special = (BrinSpecialSpace *) PageGetSpecialPointer(page);
 	if (!BRIN_IS_REGULAR_PAGE(page) ||
-		(special->flags & BRIN_EVACUATE_PAGE) != 0)
+		(BrinPageFlags(page) & BRIN_EVACUATE_PAGE) != 0)
 		return 0;
 	else
 		return PageGetFreeSpace(page);
