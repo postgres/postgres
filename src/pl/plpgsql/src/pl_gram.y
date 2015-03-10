@@ -226,7 +226,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
  */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
 %token <ival>	ICONST PARAM
-%token			TYPECAST DOT_DOT COLON_EQUALS
+%token			TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
 
 /*
  * Other tokens recognized by plpgsql's lexer interface layer (pl_scanner.c).

@@ -358,6 +358,7 @@ identifier		{ident_start}{ident_cont}*
 typecast		"::"
 dot_dot			\.\.
 colon_equals	":="
+equals_greater	"=>"
 
 /*
  * "self" is the set of chars that should be returned as single-character
@@ -666,6 +667,10 @@ other			.
 				}
 
 {colon_equals}	{
+					ECHO;
+				}
+
+{equals_greater} {
 					ECHO;
 				}
 

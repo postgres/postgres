@@ -46,7 +46,8 @@ my %replace_string = (
 	'WITH_LA'         => 'with',
 	'TYPECAST'        => '::',
 	'DOT_DOT'         => '..',
-	'COLON_EQUALS'    => ':=',);
+	'COLON_EQUALS'    => ':=',
+	'EQUALS_GREATER'  => '=>',);
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types
