@@ -6416,7 +6416,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         This variable specifies one or more shared libraries to be preloaded at
-        server start.  with commas.  This parameter can only be set at server
+        server start.  This parameter can only be set at server
         start.  If a specified library is not found, the server will fail to
         start.
        </para>
