@@ -35,7 +35,7 @@ CREATE OPERATOR #%# (
 -- Test comments
 COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad right unary';
 
--- Show deprecated message. => is deprecated now
+-- => is disallowed now
 CREATE OPERATOR => (
    leftarg = int8,		-- right unary
    procedure = numeric_fac

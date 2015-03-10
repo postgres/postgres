@@ -6785,7 +6785,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
          Create interval from years, months, weeks, days, hours, minutes and
          seconds fields
         </entry>
-        <entry><literal>make_interval(days := 10)</literal></entry>
+        <entry><literal>make_interval(days => 10)</literal></entry>
         <entry><literal>10 days</literal></entry>
        </row>
 

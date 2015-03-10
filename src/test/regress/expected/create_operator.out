@@ -29,13 +29,14 @@ CREATE OPERATOR #%# (
 -- Test comments
 COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad right unary';
 ERROR:  operator does not exist: integer ######
--- Show deprecated message. => is deprecated now
+-- => is disallowed now
 CREATE OPERATOR => (
    leftarg = int8,		-- right unary
    procedure = numeric_fac
 );
-WARNING:  => is deprecated as an operator name
-DETAIL:  This name may be disallowed altogether in future versions of PostgreSQL.
+ERROR:  syntax error at or near "=>"
+LINE 1: CREATE OPERATOR => (
+                        ^
 -- Should fail. CREATE OPERATOR requires USAGE on SCHEMA
 BEGIN TRANSACTION;
 CREATE ROLE regress_rol_op1;

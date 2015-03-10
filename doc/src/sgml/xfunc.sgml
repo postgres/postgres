@@ -776,14 +776,14 @@ SELECT mleast(VARIADIC ARRAY[]::numeric[]);
      <literal>VARIADIC</>.  For example, this will work:
 
 <screen>
-SELECT mleast(VARIADIC arr := ARRAY[10, -1, 5, 4.4]);
+SELECT mleast(VARIADIC arr => ARRAY[10, -1, 5, 4.4]);
 </screen>
 
      but not these:
 
 <screen>
-SELECT mleast(arr := 10);
-SELECT mleast(arr := ARRAY[10, -1, 5, 4.4]);
+SELECT mleast(arr => 10);
+SELECT mleast(arr => ARRAY[10, -1, 5, 4.4]);
 </screen>
     </para>
    </sect2>

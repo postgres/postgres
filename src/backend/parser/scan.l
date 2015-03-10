@@ -334,6 +334,7 @@ identifier		{ident_start}{ident_cont}*
 typecast		"::"
 dot_dot			\.\.
 colon_equals	":="
+equals_greater	"=>"
 
 /*
  * "self" is the set of chars that should be returned as single-character
@@ -806,6 +807,11 @@ other			.
 {colon_equals}	{
 					SET_YYLLOC();
 					return COLON_EQUALS;
+				}
+
+{equals_greater}	{
+					SET_YYLLOC();
+					return EQUALS_GREATER;
 				}
 
 {self}			{

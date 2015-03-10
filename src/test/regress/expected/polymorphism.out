@@ -1356,6 +1356,73 @@ select dfunc('a'::text, 'b', flag := true); -- mixed notation
  a
 (1 row)
 
+-- ansi/sql syntax
+select dfunc(a => 1, b => 2);
+ dfunc 
+-------
+     1
+(1 row)
+
+select dfunc(a => 'a'::text, b => 'b');
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc(a => 'a'::text, b => 'b', flag => false); -- named notation
+ dfunc 
+-------
+ b
+(1 row)
+
+select dfunc(b => 'b'::text, a => 'a'); -- named notation with default
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc(a => 'a'::text, flag => true); -- named notation with default
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc(a => 'a'::text, flag => false); -- named notation with default
+ dfunc 
+-------
+ 
+(1 row)
+
+select dfunc(b => 'b'::text, a => 'a', flag => true); -- named notation
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text, 'b', false); -- full positional notation
+ dfunc 
+-------
+ b
+(1 row)
+
+select dfunc('a'::text, 'b', flag => false); -- mixed notation
+ dfunc 
+-------
+ b
+(1 row)
+
+select dfunc('a'::text, 'b', true); -- full positional notation
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text, 'b', flag => true); -- mixed notation
+ dfunc 
+-------
+ a
+(1 row)
+
 -- check reverse-listing of named-arg calls
 CREATE VIEW dfview AS
    SELECT q1, q2,
