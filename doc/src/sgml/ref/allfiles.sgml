@@ -193,6 +193,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pgResetxlog        SYSTEM "pg_resetxlog.sgml">
 <!ENTITY pgRestore          SYSTEM "pg_restore.sgml">
 <!ENTITY pgRewind           SYSTEM "pg_rewind.sgml">
+<!ENTITY pgtestfsync        SYSTEM "pgtestfsync.sgml">
 <!ENTITY pgupgrade          SYSTEM "pgupgrade.sgml">
 <!ENTITY postgres           SYSTEM "postgres-ref.sgml">
 <!ENTITY postmaster         SYSTEM "postmaster.sgml">

@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/pgtestfsync.sgml -->
+<!-- doc/src/sgml/ref/pgtestfsync.sgml -->
 
 <refentry id="pgtestfsync">
  <indexterm zone="pgtestfsync">
@@ -101,14 +101,6 @@
     </variablelist>
    </para>
 
- </refsect1>
-
- <refsect1>
-  <title>Author</title>
-
-  <para>
-   Bruce Momjian <email>bruce@momjian.us</email>
-  </para>
  </refsect1>
 
  <refsect1>
