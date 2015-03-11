@@ -61,7 +61,6 @@ user='someotheruser' dbname='db' host='host' port='12345' (inet)
 trying postgresql://host/db?u%7aer=someotheruser&port=12345
 uri-regress: invalid URI query parameter: "uzer"
 
-
 trying postgresql://host:12345?user=uri-user
 user='uri-user' host='host' port='12345' (inet)
 
@@ -104,54 +103,41 @@ host='/path/to/socket/dir' (local)
 trying postgresql://host?uzer=
 uri-regress: invalid URI query parameter: "uzer"
 
-
 trying postgre://
 uri-regress: missing "=" after "postgre://" in connection info string
-
 
 trying postgres://[::1
 uri-regress: end of string reached when looking for matching "]" in IPv6 host address in URI: "postgres://[::1"
 
-
 trying postgres://[]
 uri-regress: IPv6 host address may not be empty in URI: "postgres://[]"
-
 
 trying postgres://[::1]z
 uri-regress: unexpected character "z" at position 17 in URI (expected ":" or "/"): "postgres://[::1]z"
 
-
 trying postgresql://host?zzz
 uri-regress: missing key/value separator "=" in URI query parameter: "zzz"
-
 
 trying postgresql://host?value1&value2
 uri-regress: missing key/value separator "=" in URI query parameter: "value1"
 
-
 trying postgresql://host?key=key=value
 uri-regress: extra key/value separator "=" in URI query parameter: "key"
-
 
 trying postgres://host?dbname=%XXfoo
 uri-regress: invalid percent-encoded token: "%XXfoo"
 
-
 trying postgresql://a%00b
 uri-regress: forbidden value %00 in percent-encoded value: "a%00b"
-
 
 trying postgresql://%zz
 uri-regress: invalid percent-encoded token: "%zz"
 
-
 trying postgresql://%1
 uri-regress: invalid percent-encoded token: "%1"
 
-
 trying postgresql://%
 uri-regress: invalid percent-encoded token: "%"
-
 
 trying postgres://@host
 host='host' (inet)
