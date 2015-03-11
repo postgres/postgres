@@ -33,7 +33,7 @@
 extern int	pgarch_start(void);
 
 #ifdef EXEC_BACKEND
-extern void PgArchiverMain(int argc, char *argv[]) __attribute__((noreturn));
+extern void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn;
 #endif
 
 #endif   /* _PGARCH_H */

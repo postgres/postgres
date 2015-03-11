@@ -69,7 +69,7 @@ typedef struct XLogDumpStats
 
 static void
 fatal_error(const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+pg_attribute_printf(1, 2);
 
 /*
  * Big red button to push when things go horribly wrong.

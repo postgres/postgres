@@ -36,7 +36,7 @@ static void
 report_invalid_record(XLogReaderState *state, const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+pg_attribute_printf(2, 3);
 
 static void ResetDecoder(XLogReaderState *state);
 

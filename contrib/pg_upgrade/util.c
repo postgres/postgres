@@ -82,7 +82,7 @@ prep_status(const char *fmt,...)
 
 
 static
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)))
+pg_attribute_printf(2, 0)
 void
 pg_log_v(eLogType type, const char *fmt, va_list ap)
 {

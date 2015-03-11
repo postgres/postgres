@@ -98,7 +98,7 @@ typedef struct pg_atomic_uint32
 
 typedef struct pg_atomic_uint64
 {
-	volatile uint64 value __attribute__((aligned(8)));
+	volatile uint64 value pg_attribute_aligned(8);
 } pg_atomic_uint64;
 
 #endif /* defined(HAVE_GCC__ATOMIC_INT64_CAS) || defined(HAVE_GCC__SYNC_INT64_CAS) */

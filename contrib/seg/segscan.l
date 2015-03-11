@@ -59,7 +59,7 @@ float        ({integer}|{real})([eE]{integer})?
 
 %%
 
-void __attribute__((noreturn))
+void pg_attribute_noreturn
 yyerror(SEG *result, const char *message)
 {
 	if (*yytext == YY_END_OF_BUFFER_CHAR)

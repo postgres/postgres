@@ -875,7 +875,7 @@ extern void pgstat_reset_all(void);
 extern void allow_immediate_pgstat_restart(void);
 
 #ifdef EXEC_BACKEND
-extern void PgstatCollectorMain(int argc, char *argv[]) __attribute__((noreturn));
+extern void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn;
 #endif
 
 

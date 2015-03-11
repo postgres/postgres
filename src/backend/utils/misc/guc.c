@@ -132,7 +132,7 @@ char	   *GUC_check_errhint_string;
 static void
 do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+pg_attribute_printf(3, 4);
 
 static void set_config_sourcefile(const char *name, char *sourcefile,
 					  int sourceline);

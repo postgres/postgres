@@ -286,8 +286,8 @@ int			AutovacuumLauncherPid = 0;
 static pid_t avlauncher_forkexec(void);
 static pid_t avworker_forkexec(void);
 #endif
-NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) __attribute__((noreturn));
-NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) __attribute__((noreturn));
+NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_noreturn;
+NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_noreturn;
 
 static Oid	do_start_worker(void);
 static void launcher_determine_sleep(bool canlaunch, bool recursing,

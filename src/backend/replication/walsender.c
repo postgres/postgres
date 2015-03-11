@@ -193,7 +193,7 @@ typedef void (*WalSndSendDataCallback) (void);
 static void WalSndLoop(WalSndSendDataCallback send_data);
 static void InitWalSenderSlot(void);
 static void WalSndKill(int code, Datum arg);
-static void WalSndShutdown(void) __attribute__((noreturn));
+static void WalSndShutdown(void) pg_attribute_noreturn;
 static void XLogSendPhysical(void);
 static void XLogSendLogical(void);
 static void WalSndDone(WalSndSendDataCallback send_data);

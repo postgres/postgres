@@ -26,9 +26,9 @@ extern void pfree(void *pointer);
 /* sprintf into a palloc'd buffer --- these are in psprintf.c */
 extern char *
 psprintf(const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+pg_attribute_printf(1, 2);
 extern size_t
 pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
+pg_attribute_printf(3, 0);
 
 #endif   /* FE_MEMUTILS_H */

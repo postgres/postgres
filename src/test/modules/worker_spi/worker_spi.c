@@ -46,7 +46,7 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(worker_spi_launch);
 
 void		_PG_init(void);
-void		worker_spi_main(Datum) __attribute__((noreturn));
+void		worker_spi_main(Datum) pg_attribute_noreturn;
 
 /* flags set by signal handlers */
 static volatile sig_atomic_t got_sighup = false;

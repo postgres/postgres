@@ -46,7 +46,7 @@ extern int	postmaster_alive_fds[2];
 
 extern const char *progname;
 
-extern void PostmasterMain(int argc, char *argv[]) __attribute__((noreturn));
+extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn;
 extern void ClosePostmasterPorts(bool am_syslogger);
 
 extern int	MaxLivePostmasterChildren(void);
@@ -56,7 +56,7 @@ extern bool PostmasterMarkPIDForWorkerNotify(int);
 
 #ifdef EXEC_BACKEND
 extern pid_t postmaster_forkexec(int argc, char *argv[]);
-extern void SubPostmasterMain(int argc, char *argv[]) __attribute__((noreturn));
+extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn;
 
 extern Size ShmemBackendArraySize(void);
 extern void ShmemBackendArrayAllocation(void);

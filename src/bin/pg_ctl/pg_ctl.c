@@ -120,7 +120,7 @@ static void
 write_stderr(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+pg_attribute_printf(1, 2);
 static void do_advice(void);
 static void do_help(void);
 static void set_mode(char *modeopt);

@@ -15,7 +15,7 @@
 #ifdef ENABLE_NLS
 extern char *
 ecpg_gettext(const char *msgid)
-__attribute__((format_arg(1)));
+pg_attribute_format_arg(1);
 #else
 #define ecpg_gettext(x) (x)
 #endif

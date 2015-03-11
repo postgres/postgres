@@ -514,9 +514,9 @@ extern void check_encoding_conversion_args(int src_encoding,
 							   int expected_src_encoding,
 							   int expected_dest_encoding);
 
-extern void report_invalid_encoding(int encoding, const char *mbstr, int len) __attribute__((noreturn));
+extern void report_invalid_encoding(int encoding, const char *mbstr, int len) pg_attribute_noreturn;
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
-					   const char *mbstr, int len) __attribute__((noreturn));
+					   const char *mbstr, int len) pg_attribute_noreturn;
 
 extern void pg_ascii2mic(const unsigned char *l, unsigned char *p, int len);
 extern void pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len);

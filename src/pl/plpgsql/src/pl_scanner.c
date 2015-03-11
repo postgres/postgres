@@ -608,7 +608,7 @@ plpgsql_scanner_errposition(int location)
  * be misleading!
  */
 void
-__attribute__((noreturn))
+pg_attribute_noreturn
 plpgsql_yyerror(const char *message)
 {
 	char	   *yytext = core_yy.scanbuf + plpgsql_yylloc;

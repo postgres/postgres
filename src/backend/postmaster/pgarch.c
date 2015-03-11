@@ -86,7 +86,7 @@ static volatile sig_atomic_t ready_to_stop = false;
 static pid_t pgarch_forkexec(void);
 #endif
 
-NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]) __attribute__((noreturn));
+NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn;
 static void pgarch_exit(SIGNAL_ARGS);
 static void ArchSigHupHandler(SIGNAL_ARGS);
 static void ArchSigTermHandler(SIGNAL_ARGS);

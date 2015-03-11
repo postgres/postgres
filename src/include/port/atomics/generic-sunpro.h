@@ -61,7 +61,7 @@ typedef struct pg_atomic_uint64
 	 * it proves to be a problem, we'll have to add more version checks for 64
 	 * bit support.
 	 */
-	volatile uint64 value __attribute__((__aligned__(8)));
+	volatile uint64 value pg_attribute_aligned(8);
 } pg_atomic_uint64;
 
 #endif /* HAVE_ATOMIC_H */

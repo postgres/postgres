@@ -280,7 +280,7 @@ extern void archputs(const char *s, Archive *AH);
 extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+pg_attribute_printf(2, 3);
 
 #define appendStringLiteralAH(buf,str,AH) \
 	appendStringLiteral(buf, str, (AH)->encoding, (AH)->std_strings)

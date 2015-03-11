@@ -359,7 +359,7 @@ void		optionally_create_toast_tables(void);
 bool
 exec_prog(const char *log_file, const char *opt_log_file,
 		  bool throw_error, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 4, 5)));
+pg_attribute_printf(4, 5);
 void		verify_directories(void);
 bool		pid_lock_file_exists(const char *datadir);
 
@@ -445,7 +445,7 @@ void		init_tablespaces(void);
 PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
 PGresult *
 executeQueryOrDie(PGconn *conn, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+pg_attribute_printf(2, 3);
 
 char	   *cluster_conn_opts(ClusterInfo *cluster);
 
@@ -462,17 +462,17 @@ int			get_user_info(char **user_name_p);
 void		check_ok(void);
 void
 report_status(eLogType type, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+pg_attribute_printf(2, 3);
 void
 pg_log(eLogType type, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+pg_attribute_printf(2, 3);
 void
 pg_fatal(const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2), noreturn));
+pg_attribute_printf(1, 2) pg_attribute_noreturn;
 void		end_progress_output(void);
 void
 prep_status(const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+pg_attribute_printf(1, 2);
 void		check_ok(void);
 const char *getErrorText(int errNum);
 unsigned int str2uint(const char *str);
@@ -489,7 +489,7 @@ void old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 void
 parallel_exec_prog(const char *log_file, const char *opt_log_file,
 				   const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+pg_attribute_printf(3, 4);
 void parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 							  char *old_pgdata, char *new_pgdata,
 							  char *old_tablespace);

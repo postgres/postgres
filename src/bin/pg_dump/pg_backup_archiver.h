@@ -378,7 +378,7 @@ struct _tocEntry
 extern int	parallel_restore(struct ParallelArgs *args);
 extern void on_exit_close_archive(Archive *AHX);
 
-extern void warn_or_exit_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+extern void warn_or_exit_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) pg_attribute_printf(3, 4);
 
 extern void WriteTOC(ArchiveHandle *AH);
 extern void ReadTOC(ArchiveHandle *AH);
@@ -429,8 +429,8 @@ extern int	ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *
 extern void DropBlobIfExists(ArchiveHandle *AH, Oid oid);
 
 void		ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
-int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+int			ahprintf(ArchiveHandle *AH, const char *fmt,...) pg_attribute_printf(2, 3);
 
-void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) pg_attribute_printf(3, 4);
 
 #endif

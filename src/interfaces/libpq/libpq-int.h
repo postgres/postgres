@@ -548,7 +548,7 @@ extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void
 pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+pg_attribute_printf(2, 3);
 extern void pqSaveMessageField(PGresult *res, char code,
 				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
@@ -653,10 +653,10 @@ extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
 #ifdef ENABLE_NLS
 extern char *
 libpq_gettext(const char *msgid)
-__attribute__((format_arg(1)));
+pg_attribute_format_arg(1);
 extern char *
 libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
-__attribute__((format_arg(1))) __attribute__((format_arg(2)));
+pg_attribute_format_arg(1) pg_attribute_format_arg(2);
 #else
 #define libpq_gettext(x) (x)
 #define libpq_ngettext(s, p, n) ((n) == 1 ? (s) : (p))
