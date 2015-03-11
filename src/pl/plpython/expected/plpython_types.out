@@ -354,6 +354,14 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
                             
 (1 row)
 
+SELECT * FROM test_type_conversion_float8(100100100.654321);
+INFO:  (100100100.654321, <type 'float'>)
+CONTEXT:  PL/Python function "test_type_conversion_float8"
+ test_type_conversion_float8 
+-----------------------------
+            100100100.654321
+(1 row)
+
 CREATE FUNCTION test_type_conversion_oid(x oid) RETURNS oid AS $$
 plpy.info(x, type(x))
 return x

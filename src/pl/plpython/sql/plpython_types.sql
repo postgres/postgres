@@ -122,6 +122,7 @@ SELECT * FROM test_type_conversion_float8(100);
 SELECT * FROM test_type_conversion_float8(-100);
 SELECT * FROM test_type_conversion_float8(5000000000.5);
 SELECT * FROM test_type_conversion_float8(null);
+SELECT * FROM test_type_conversion_float8(100100100.654321);
 
 
 CREATE FUNCTION test_type_conversion_oid(x oid) RETURNS oid AS $$
