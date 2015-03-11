@@ -187,7 +187,6 @@ pages.
   </para>
 
  &oid2name;
- &pgbench;
  &vacuumlo;
  </sect1>
 

@@ -230,6 +230,7 @@
    &dropuser;
    &ecpgRef;
    &pgBasebackup;
+   &pgbench;
    &pgConfig;
    &pgDump;
    &pgDumpall;

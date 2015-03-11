@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * contrib/pgbench/pgbench.c
+ * src/bin/pgbench/pgbench.c
  * Copyright (c) 2000-2015, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *

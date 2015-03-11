@@ -31,42 +31,45 @@ my $libpq;
 # Set of variables for contrib modules
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq =
-  ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 'postgres_fdw', 'vacuumlo');
+  ('dblink', 'oid2name', 'pg_upgrade', 'postgres_fdw', 'vacuumlo');
 my @contrib_uselibpgport = (
-	'oid2name',      'pgbench',
+	'oid2name',
 	'pg_standby',
 	'pg_test_fsync', 'pg_test_timing',
 	'pg_upgrade',    'pg_xlogdump',
 	'vacuumlo');
 my @contrib_uselibpgcommon = (
-	'oid2name',      'pgbench',
+	'oid2name',
 	'pg_standby',
 	'pg_test_fsync', 'pg_test_timing',
 	'pg_upgrade',    'pg_xlogdump',
 	'vacuumlo');
-my $contrib_extralibs = { 'pgbench' => ['ws2_32.lib'] };
+my $contrib_extralibs = undef;
 my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
 	'cube' => [ 'contrib\cube\cubescan.l', 'contrib\cube\cubeparse.y' ],
-	'pgbench' =>
-	  [ 'contrib\pgbench\exprscan.l', 'contrib\pgbench\exprparse.y' ],
 	'seg' => [ 'contrib\seg\segscan.l', 'contrib\seg\segparse.y' ], };
 my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
-my @frontend_uselibpq = ('pg_ctl', 'psql');
-my @frontend_uselibpgport = ( 'pg_archivecleanup' );
-my @frontend_uselibpgcommon = ( 'pg_archivecleanup' );
+my @frontend_uselibpq = ('pg_ctl', 'pgbench', 'psql');
+my @frontend_uselibpgport = ( 'pg_archivecleanup', 'pgbench' );
+my @frontend_uselibpgcommon = ( 'pg_archivecleanup', 'pgbench' );
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
+	'pgbench'    => ['ws2_32.lib'],
 	'psql'       => ['ws2_32.lib'] };
 my $frontend_extraincludes = {
 	'initdb' => ['src\timezone'],
 	'psql'   => [ 'src\bin\pg_dump', 'src\backend' ] };
-my $frontend_extrasource = { 'psql' => ['src\bin\psql\psqlscan.l'] };
+my $frontend_extrasource = {
+	'psql' => ['src\bin\psql\psqlscan.l'],
+	'pgbench' =>
+		[ 'contrib\pgbench\exprscan.l', 'contrib\pgbench\exprparse.y' ],
+};
 my @frontend_excludes =
   ('pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump', 'scripts');
 
