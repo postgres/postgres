@@ -121,7 +121,7 @@ optionally_create_toast_tables(void)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			/* enable auto-oid-numbered TOAST creation if needed */
-			PQclear(executeQueryOrDie(conn, "SELECT binary_upgrade.set_next_toast_pg_class_oid('%d'::pg_catalog.oid);",
+			PQclear(executeQueryOrDie(conn, "SELECT pg_catalog.binary_upgrade_set_next_toast_pg_class_oid('%d'::pg_catalog.oid);",
 					OPTIONALLY_CREATE_TOAST_OID));
 
 			/* dummy command that also triggers check for required TOAST table */

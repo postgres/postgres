@@ -405,8 +405,6 @@ FILE	   *fopen_priv(const char *path, const char *mode);
 
 /* function.c */
 
-void		install_support_functions_in_new_db(const char *db_name);
-void		uninstall_support_functions_from_new_cluster(void);
 void		get_loadable_libraries(void);
 void		check_loadable_libraries(void);
 

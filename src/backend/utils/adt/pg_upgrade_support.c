@@ -6,7 +6,7 @@
  *	hacks needed for pg_upgrade.
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade_support/pg_upgrade_support.c
+ *	src/backend/utils/adt/pg_upgrade_support.c
  */
 
 #include "postgres.h"
@@ -19,24 +19,17 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 
-/* THIS IS USED ONLY FOR PG >= 9.0 */
 
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
+Datum binary_upgrade_set_next_pg_type_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_toast_pg_type_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_pg_enum_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS);
+Datum binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(set_next_pg_type_oid);
-PG_FUNCTION_INFO_V1(set_next_array_pg_type_oid);
-PG_FUNCTION_INFO_V1(set_next_toast_pg_type_oid);
-
-PG_FUNCTION_INFO_V1(set_next_heap_pg_class_oid);
-PG_FUNCTION_INFO_V1(set_next_index_pg_class_oid);
-PG_FUNCTION_INFO_V1(set_next_toast_pg_class_oid);
-
-PG_FUNCTION_INFO_V1(set_next_pg_enum_oid);
-PG_FUNCTION_INFO_V1(set_next_pg_authid_oid);
-
-PG_FUNCTION_INFO_V1(create_empty_extension);
 
 #define CHECK_IS_BINARY_UPGRADE 								\
 do { 															\
@@ -47,7 +40,7 @@ do { 															\
 } while (0)
 
 Datum
-set_next_pg_type_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_pg_type_oid(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
 
@@ -58,7 +51,7 @@ set_next_pg_type_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_array_pg_type_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_array_pg_type_oid(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
 
@@ -69,7 +62,7 @@ set_next_array_pg_type_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_toast_pg_type_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_toast_pg_type_oid(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
 
@@ -80,7 +73,7 @@ set_next_toast_pg_type_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 
@@ -91,7 +84,7 @@ set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_index_pg_class_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 
@@ -102,7 +95,7 @@ set_next_index_pg_class_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 
@@ -113,7 +106,7 @@ set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_pg_enum_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_pg_enum_oid(PG_FUNCTION_ARGS)
 {
 	Oid			enumoid = PG_GETARG_OID(0);
 
@@ -124,7 +117,7 @@ set_next_pg_enum_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_pg_authid_oid(PG_FUNCTION_ARGS)
+binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS)
 {
 	Oid			authoid = PG_GETARG_OID(0);
 
@@ -134,7 +127,7 @@ set_next_pg_authid_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-create_empty_extension(PG_FUNCTION_ARGS)
+binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 {
 	text	   *extName = PG_GETARG_TEXT_PP(0);
 	text	   *schemaName = PG_GETARG_TEXT_PP(1);

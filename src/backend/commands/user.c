@@ -38,7 +38,7 @@
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
 
-/* Potentially set by contrib/pg_upgrade_support functions */
+/* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
 
 

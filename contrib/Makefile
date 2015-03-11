@@ -37,7 +37,6 @@ SUBDIRS = \
 		pg_test_timing	\
 		pg_trgm		\
 		pg_upgrade	\
-		pg_upgrade_support \
 		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\

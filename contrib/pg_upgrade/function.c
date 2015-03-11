@@ -13,112 +13,6 @@
 
 #include "access/transam.h"
 
-#define PG_UPGRADE_SUPPORT	"$libdir/pg_upgrade_support"
-
-/*
- * install_support_functions_in_new_db()
- *
- * pg_upgrade requires some support functions that enable it to modify
- * backend behavior.
- */
-void
-install_support_functions_in_new_db(const char *db_name)
-{
-	PGconn	   *conn = connectToServer(&new_cluster, db_name);
-
-	/* suppress NOTICE of dropped objects */
-	PQclear(executeQueryOrDie(conn,
-							  "SET client_min_messages = warning;"));
-	PQclear(executeQueryOrDie(conn,
-						   "DROP SCHEMA IF EXISTS binary_upgrade CASCADE;"));
-	PQclear(executeQueryOrDie(conn,
-							  "RESET client_min_messages;"));
-
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE SCHEMA binary_upgrade;"));
-
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_pg_type_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							"binary_upgrade.set_next_array_pg_type_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							"binary_upgrade.set_next_toast_pg_type_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							"binary_upgrade.set_next_heap_pg_class_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-						   "binary_upgrade.set_next_index_pg_class_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-						   "binary_upgrade.set_next_toast_pg_class_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_pg_enum_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_pg_authid_oid(OID) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.create_empty_extension(text, text, bool, text, oid[], text[], text[]) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C;"));
-	PQfinish(conn);
-}
-
-
-void
-uninstall_support_functions_from_new_cluster(void)
-{
-	int			dbnum;
-
-	prep_status("Removing support functions from new cluster");
-
-	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
-	{
-		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(&new_cluster, new_db->db_name);
-
-		/* suppress NOTICE of dropped objects */
-		PQclear(executeQueryOrDie(conn,
-								  "SET client_min_messages = warning;"));
-		PQclear(executeQueryOrDie(conn,
-								  "DROP SCHEMA binary_upgrade CASCADE;"));
-		PQclear(executeQueryOrDie(conn,
-								  "RESET client_min_messages;"));
-		PQfinish(conn);
-	}
-	check_ok();
-}
-
 
 /*
  * get_loadable_libraries()
@@ -218,8 +112,6 @@ get_loadable_libraries(void)
 	if (found_public_plpython_handler)
 		pg_fatal("Remove the problem functions from the old cluster to continue.\n");
 
-	totaltups++;				/* reserve for pg_upgrade_support */
-
 	/* Allocate what's certainly enough space */
 	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
 
@@ -228,7 +120,6 @@ get_loadable_libraries(void)
 	 * there probably aren't enough entries to matter.
 	 */
 	totaltups = 0;
-	os_info.libraries[totaltups++] = pg_strdup(PG_UPGRADE_SUPPORT);
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
@@ -320,10 +211,6 @@ check_loadable_libraries(void)
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			found = true;
-
-			/* exit and report missing support library with special message */
-			if (strcmp(lib, PG_UPGRADE_SUPPORT) == 0)
-				pg_fatal("The pg_upgrade_support module must be created and installed in the new cluster.\n");
 
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("Could not open file \"%s\": %s\n",

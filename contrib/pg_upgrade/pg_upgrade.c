@@ -279,14 +279,6 @@ prepare_new_databases(void)
 	prep_status("Restoring global objects in the new cluster");
 
 	/*
-	 * Install support functions in the global-object restore database to
-	 * preserve pg_authid.oid.  pg_dumpall uses 'template0' as its template
-	 * database so objects we add into 'template1' are not propogated.  They
-	 * are removed on pg_upgrade exit.
-	 */
-	install_support_functions_in_new_db("template1");
-
-	/*
 	 * We have to create the databases first so we can install support
 	 * functions in all the other databases.  Ideally we could create the
 	 * support functions in template1 but pg_dumpall creates database using
@@ -307,23 +299,6 @@ static void
 create_new_objects(void)
 {
 	int			dbnum;
-
-	prep_status("Adding support functions to new cluster");
-
-	/*
-	 * Technically, we only need to install these support functions in new
-	 * databases that also exist in the old cluster, but for completeness we
-	 * process all new databases.
-	 */
-	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
-	{
-		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
-
-		/* skip db we already installed */
-		if (strcmp(new_db->db_name, "template1") != 0)
-			install_support_functions_in_new_db(new_db->db_name);
-	}
-	check_ok();
 
 	prep_status("Restoring database schemas in the new cluster\n");
 
@@ -368,8 +343,6 @@ create_new_objects(void)
 
 	/* regenerate now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
-
-	uninstall_support_functions_from_new_cluster();
 }
 
 /*

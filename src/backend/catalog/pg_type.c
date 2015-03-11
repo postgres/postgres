@@ -36,7 +36,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-/* Potentially set by contrib/pg_upgrade_support functions */
+/* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
 
 /* ----------------------------------------------------------------

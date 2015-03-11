@@ -253,11 +253,10 @@ make prefix=/usr/local/pgsql.new install
    </step>
 
    <step>
-    <title>Install pg_upgrade and pg_upgrade_support</title>
+    <title>Install pg_upgrade</title>
 
     <para>
-     Install the <application>pg_upgrade</> binary and
-     <application>pg_upgrade_support</> library in the new PostgreSQL
+     Install the <application>pg_upgrade</> binary in the new PostgreSQL
      installation.
     </para>
    </step>
