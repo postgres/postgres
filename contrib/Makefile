@@ -36,7 +36,6 @@ SUBDIRS = \
 		pg_test_fsync	\
 		pg_test_timing	\
 		pg_trgm		\
-		pg_upgrade	\
 		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\

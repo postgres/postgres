@@ -4,7 +4,7 @@
  *	main source file
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/pg_upgrade.c
+ *	src/bin/pg_upgrade/pg_upgrade.c
  */
 
 /*

@@ -4,7 +4,7 @@
  *	utility functions
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/util.c
+ *	src/bin/pg_upgrade/util.c
  */
 
 #include "postgres_fe.h"

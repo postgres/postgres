@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/pgupgrade.sgml -->
+<!-- doc/src/sgml/ref/pgupgrade.sgml -->
 
 <refentry id="pgupgrade">
  <indexterm zone="pgupgrade">
@@ -240,7 +240,8 @@ mv /usr/local/pgsql /usr/local/pgsql.old
     <title>Install the new PostgreSQL binaries</title>
 
     <para>
-     Install the new server's binaries and support files.
+     Install the new server's binaries and support
+     files.  <application>pg_upgrade</> is included in a default installation.
     </para>
 
     <para>
@@ -250,15 +251,6 @@ mv /usr/local/pgsql /usr/local/pgsql.old
 <programlisting>
 make prefix=/usr/local/pgsql.new install
 </programlisting></para>
-   </step>
-
-   <step>
-    <title>Install pg_upgrade</title>
-
-    <para>
-     Install the <application>pg_upgrade</> binary in the new PostgreSQL
-     installation.
-    </para>
    </step>
 
    <step>

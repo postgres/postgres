@@ -4,7 +4,7 @@
  *	file system operations
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/file.c
+ *	src/bin/pg_upgrade/file.c
  */
 
 #include "postgres_fe.h"

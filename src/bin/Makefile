@@ -23,6 +23,7 @@ SUBDIRS = \
 	pg_dump \
 	pg_resetxlog \
 	pg_rewind \
+	pg_upgrade \
 	pgbench \
 	psql \
 	scripts

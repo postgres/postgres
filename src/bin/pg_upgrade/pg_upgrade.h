@@ -2,7 +2,7 @@
  *	pg_upgrade.h
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/pg_upgrade.h
+ *	src/bin/pg_upgrade/pg_upgrade.h
  */
 
 #include <unistd.h>

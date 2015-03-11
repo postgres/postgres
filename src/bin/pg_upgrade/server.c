@@ -4,7 +4,7 @@
  *	database server functions
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/server.c
+ *	src/bin/pg_upgrade/server.c
  */
 
 #include "postgres_fe.h"

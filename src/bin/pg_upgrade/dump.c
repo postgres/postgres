@@ -4,7 +4,7 @@
  *	dump functions
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/dump.c
+ *	src/bin/pg_upgrade/dump.c
  */
 
 #include "postgres_fe.h"

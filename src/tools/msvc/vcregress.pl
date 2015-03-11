@@ -269,7 +269,7 @@ sub upgradecheck
 
 	$ENV{PGHOST} = 'localhost';
 	$ENV{PGPORT} ||= 50432;
-	my $tmp_root = "$topdir/contrib/pg_upgrade/tmp_check";
+	my $tmp_root = "$topdir/src/bin/pg_upgrade/tmp_check";
 	(mkdir $tmp_root || die $!) unless -d $tmp_root;
 	my $tmp_install = "$tmp_root/install";
 	print "Setting up temp install\n\n";
@@ -282,7 +282,7 @@ sub upgradecheck
 	$ENV{PATH} = "$bindir;$ENV{PATH}";
 	my $data = "$tmp_root/data";
 	$ENV{PGDATA} = "$data.old";
-	my $logdir = "$topdir/contrib/pg_upgrade/log";
+	my $logdir = "$topdir/src/bin/pg_upgrade/log";
 	(mkdir $logdir || die $!) unless -d $logdir;
 	print "\nRunning initdb on old cluster\n\n";
 	standard_initdb() or exit 1;
@@ -292,7 +292,7 @@ sub upgradecheck
 	installcheck();
 
 	# now we can chdir into the source dir
-	chdir "$topdir/contrib/pg_upgrade";
+	chdir "$topdir/src/bin/pg_upgrade";
 	print "\nDumping old cluster\n\n";
 	system("pg_dumpall -f $tmp_root/dump1.sql") == 0 or exit 1;
 	print "\nStopping old cluster\n\n";

@@ -136,7 +136,6 @@
 <!ENTITY pgtestfsync     SYSTEM "pgtestfsync.sgml">
 <!ENTITY pgtesttiming    SYSTEM "pgtesttiming.sgml">
 <!ENTITY pgtrgm          SYSTEM "pgtrgm.sgml">
-<!ENTITY pgupgrade       SYSTEM "pgupgrade.sgml">
 <!ENTITY pgxlogdump      SYSTEM "pg_xlogdump.sgml">
 <!ENTITY postgres-fdw    SYSTEM "postgres-fdw.sgml">
 <!ENTITY seg             SYSTEM "seg.sgml">

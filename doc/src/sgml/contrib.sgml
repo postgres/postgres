@@ -204,7 +204,6 @@ pages.
  &pgstandby;
  &pgtestfsync;
  &pgtesttiming;
- &pgupgrade;
  &pgxlogdump;
  </sect1>
 </appendix>

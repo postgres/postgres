@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# contrib/pg_upgrade/test.sh
+# src/bin/pg_upgrade/test.sh
 #
 # Test driver for pg_upgrade.  Initializes a new database cluster,
 # runs the regression tests (to put in some data), runs pg_dumpall,
@@ -21,7 +21,7 @@ unset MAKELEVEL
 # authentication configuration.
 standard_initdb() {
 	"$1" -N
-	../../src/test/regress/pg_regress --config-auth "$PGDATA"
+	../../test/regress/pg_regress --config-auth "$PGDATA"
 }
 
 # Establish how the server will listen for connections
@@ -92,9 +92,9 @@ fi
 
 : ${oldbindir=$bindir}
 
-: ${oldsrc=../..}
+: ${oldsrc=../../..}
 oldsrc=`cd "$oldsrc" && pwd`
-newsrc=`cd ../.. && pwd`
+newsrc=`cd ../../.. && pwd`
 
 PATH=$bindir:$PATH
 export PATH

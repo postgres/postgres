@@ -4,7 +4,7 @@
  *	controldata functions
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/controldata.c
+ *	src/bin/pg_upgrade/controldata.c
  */
 
 #include "postgres_fe.h"

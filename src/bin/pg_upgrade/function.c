@@ -4,7 +4,7 @@
  *	server-side function support
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/function.c
+ *	src/bin/pg_upgrade/function.c
  */
 
 #include "postgres_fe.h"

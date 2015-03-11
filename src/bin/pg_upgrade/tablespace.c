@@ -4,7 +4,7 @@
  *	tablespace functions
  *
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
- *	contrib/pg_upgrade/tablespace.c
+ *	src/bin/pg_upgrade/tablespace.c
  */
 
 #include "postgres_fe.h"
