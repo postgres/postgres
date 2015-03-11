@@ -532,7 +532,10 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 			break;
 
 		default:
-			elog(ERROR, "unsupported object type: %u", object->classId);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("sepgsql provider does not support labels on %s",
+							getObjectTypeDescription(object))));
 			break;
 	}
 }
