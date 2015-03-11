@@ -34,13 +34,13 @@ my @contrib_uselibpq =
   ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 'postgres_fdw', 'vacuumlo');
 my @contrib_uselibpgport = (
 	'oid2name',      'pgbench',
-	'pg_standby',    'pg_archivecleanup',
+	'pg_standby',
 	'pg_test_fsync', 'pg_test_timing',
 	'pg_upgrade',    'pg_xlogdump',
 	'vacuumlo');
 my @contrib_uselibpgcommon = (
 	'oid2name',      'pgbench',
-	'pg_standby',    'pg_archivecleanup',
+	'pg_standby',
 	'pg_test_fsync', 'pg_test_timing',
 	'pg_upgrade',    'pg_xlogdump',
 	'vacuumlo');
@@ -57,6 +57,8 @@ my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
 my @frontend_uselibpq = ('pg_ctl', 'psql');
+my @frontend_uselibpgport = ( 'pg_archivecleanup' );
+my @frontend_uselibpgcommon = ( 'pg_archivecleanup' );
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
@@ -769,8 +771,9 @@ sub AdjustContribProj
 sub AdjustFrontendProj
 {
 	my $proj = shift;
-	AdjustModule($proj, $frontend_defines, \@frontend_uselibpq, undef,
-		undef, $frontend_extralibs,
+	AdjustModule($proj, $frontend_defines, \@frontend_uselibpq,
+		\@frontend_uselibpgport, \@frontend_uselibpgcommon,
+		$frontend_extralibs,
 		$frontend_extrasource, $frontend_extraincludes);
 }
 

@@ -257,6 +257,7 @@
   </partintro>
 
    &initdb;
+   &pgarchivecleanup;
    &pgControldata;
    &pgCtl;
    &pgResetxlog;

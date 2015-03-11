@@ -202,7 +202,6 @@ pages.
    part of the core <productname>PostgreSQL</productname> distribution.
   </para>
 
- &pgarchivecleanup;
  &pgstandby;
  &pgtestfsync;
  &pgtesttiming;

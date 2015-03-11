@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/pgarchivecleanup.sgml -->
+<!-- doc/src/sgml/ref/pgarchivecleanup.sgml -->
 
 <refentry id="pgarchivecleanup">
  <indexterm zone="pgarchivecleanup">
@@ -191,14 +191,6 @@ archive_cleanup_command = 'pg_archivecleanup -d /mnt/standby/archive %r 2>>clean
     </para>
    </listitem>
   </itemizedlist>
- </refsect1>
-
- <refsect1>
-  <title>Author</title>
-
-  <para>
-   Simon Riggs <email>simon@2ndquadrant.com</email>
-  </para>
  </refsect1>
 
  <refsect1>

@@ -1,5 +1,5 @@
 /*
- * contrib/pg_archivecleanup/pg_archivecleanup.c
+ * src/bin/pg_archivecleanup/pg_archivecleanup.c
  *
  * pg_archivecleanup.c
  *
