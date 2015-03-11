@@ -32,6 +32,8 @@ CREATE DOMAIN addr_nsp.gendomain AS int4 CONSTRAINT domconstr CHECK (value > 0);
 CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
+CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
+CREATE USER MAPPING FOR regtest_addr_user SERVER "integer";
 
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
@@ -45,8 +47,7 @@ DECLARE
 BEGIN
 	FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
 		('toast table column'), ('view column'), ('materialized view column'),
-		('operator of access method'), ('function of access method'),
-		('user mapping')
+		('operator of access method'), ('function of access method')
 	LOOP
 		BEGIN
 			PERFORM pg_get_object_address(objtype, '{one}', '{}');
@@ -72,7 +73,7 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy')
+		('policy'), ('user mapping')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -154,7 +155,7 @@ WITH objects (type, name, args) AS (VALUES
 				-- tablespace
 				('foreign-data wrapper', '{addr_fdw}', '{}'),
 				('server', '{addr_fserv}', '{}'),
-				-- user mapping
+				('user mapping', '{regtest_addr_user}', '{integer}'),
 				-- extension
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}')

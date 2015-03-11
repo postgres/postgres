@@ -1092,6 +1092,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
 		case OBJECT_TYPE:
+		case OBJECT_USER_MAPPING:
 		case OBJECT_VIEW:
 			return true;
 	}

@@ -28,6 +28,8 @@ CREATE DOMAIN addr_nsp.gendomain AS int4 CONSTRAINT domconstr CHECK (value > 0);
 CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END; $$;
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
+CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
+CREATE USER MAPPING FOR regtest_addr_user SERVER "integer";
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
@@ -42,8 +44,7 @@ DECLARE
 BEGIN
 	FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
 		('toast table column'), ('view column'), ('materialized view column'),
-		('operator of access method'), ('function of access method'),
-		('user mapping')
+		('operator of access method'), ('function of access method')
 	LOOP
 		BEGIN
 			PERFORM pg_get_object_address(objtype, '{one}', '{}');
@@ -61,7 +62,6 @@ WARNING:  error for view column: unsupported object type "view column"
 WARNING:  error for materialized view column: unsupported object type "materialized view column"
 WARNING:  error for operator of access method: unsupported object type "operator of access method"
 WARNING:  error for function of access method: unsupported object type "function of access method"
-WARNING:  error for user mapping: unsupported object type "user mapping"
 DO $$
 DECLARE
 	objtype text;
@@ -77,7 +77,7 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy')
+		('policy'), ('user mapping')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -249,6 +249,12 @@ WARNING:  error for policy,{addr_nsp,zwei},{}: relation "addr_nsp" does not exis
 WARNING:  error for policy,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
 WARNING:  error for policy,{eins,zwei,drei},{}: schema "eins" does not exist
 WARNING:  error for policy,{eins,zwei,drei},{integer}: schema "eins" does not exist
+WARNING:  error for user mapping,{eins},{}: argument list length must be exactly 1
+WARNING:  error for user mapping,{eins},{integer}: user mapping for user "eins" in server "integer" does not exist
+WARNING:  error for user mapping,{addr_nsp,zwei},{}: argument list length must be exactly 1
+WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for user "addr_nsp" in server "integer" does not exist
+WARNING:  error for user mapping,{eins,zwei,drei},{}: argument list length must be exactly 1
+WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" in server "integer" does not exist
 -- these object types cannot be qualified names
 SELECT pg_get_object_address('language', '{one}', '{}');
 ERROR:  language "one" does not exist
@@ -334,7 +340,7 @@ WITH objects (type, name, args) AS (VALUES
 				-- tablespace
 				('foreign-data wrapper', '{addr_fdw}', '{}'),
 				('server', '{addr_fserv}', '{}'),
-				-- user mapping
+				('user mapping', '{regtest_addr_user}', '{integer}'),
 				-- extension
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}')
@@ -365,6 +371,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  foreign table             | addr_nsp   | genftable         | addr_nsp.genftable                                                   | t
  role                      |            | regtest_addr_user | regtest_addr_user                                                    | t
  server                    |            | addr_fserv        | addr_fserv                                                           | t
+ user mapping              |            |                   | regtest_addr_user on server integer                                  | t
  foreign-data wrapper      |            | addr_fdw          | addr_fdw                                                             | t
  default value             |            |                   | for addr_nsp.gentable.b                                              | t
  cast                      |            |                   | (bigint AS integer)                                                  | t
@@ -384,7 +391,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(35 rows)
+(36 rows)
 
 ---
 --- Cleanup resources
