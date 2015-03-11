@@ -35,13 +35,11 @@ my @contrib_uselibpq =
 my @contrib_uselibpgport = (
 	'oid2name',
 	'pg_standby',
-	'pg_test_timing',
 	'pg_xlogdump',
 	'vacuumlo');
 my @contrib_uselibpgcommon = (
 	'oid2name',
 	'pg_standby',
-	'pg_test_timing',
 	'pg_xlogdump',
 	'vacuumlo');
 my $contrib_extralibs = undef;
@@ -55,8 +53,8 @@ my @contrib_excludes = ('pgcrypto', 'commit_ts', 'intagg', 'sepgsql');
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
 my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql');
-my @frontend_uselibpgport = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_upgrade', 'pgbench' );
-my @frontend_uselibpgcommon = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_upgrade', 'pgbench' );
+my @frontend_uselibpgport = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pgbench' );
+my @frontend_uselibpgcommon = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pgbench' );
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],

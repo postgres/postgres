@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/pgtesttiming.sgml -->
+<!-- doc/src/sgml/ref/pgtesttiming.sgml -->
 
 <refentry id="pgtesttiming">
  <indexterm zone="pgtesttiming">
@@ -288,14 +288,6 @@ Histogram of timing durations:
    millisecond resolution.
   </para>
   </refsect2>
- </refsect1>
-
- <refsect1>
-  <title>Author</title>
-
-  <para>
-   Ants Aasma <email>ants.aasma@eesti.ee</email>
-  </para>
  </refsect1>
 
  <refsect1>

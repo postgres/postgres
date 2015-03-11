@@ -202,7 +202,6 @@ pages.
   </para>
 
  &pgstandby;
- &pgtesttiming;
  &pgxlogdump;
  </sect1>
 </appendix>

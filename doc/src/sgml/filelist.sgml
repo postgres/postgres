@@ -133,7 +133,6 @@
 <!ENTITY pgstandby       SYSTEM "pgstandby.sgml">
 <!ENTITY pgstatstatements SYSTEM "pgstatstatements.sgml">
 <!ENTITY pgstattuple     SYSTEM "pgstattuple.sgml">
-<!ENTITY pgtesttiming    SYSTEM "pgtesttiming.sgml">
 <!ENTITY pgtrgm          SYSTEM "pgtrgm.sgml">
 <!ENTITY pgxlogdump      SYSTEM "pg_xlogdump.sgml">
 <!ENTITY postgres-fdw    SYSTEM "postgres-fdw.sgml">

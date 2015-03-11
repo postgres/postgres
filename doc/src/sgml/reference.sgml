@@ -264,6 +264,7 @@
    &pgResetxlog;
    &pgRewind;
    &pgtestfsync;
+   &pgtesttiming;
    &pgupgrade;
    &postgres;
    &postmaster;
