@@ -1065,6 +1065,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_COLUMN:
 		case OBJECT_COLLATION:
 		case OBJECT_CONVERSION:
+		case OBJECT_DEFACL:
 		case OBJECT_DEFAULT:
 		case OBJECT_DOMAIN:
 		case OBJECT_DOMCONSTRAINT:

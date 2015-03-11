@@ -522,7 +522,7 @@ ObjectTypeMap[] =
 	/* OCLASS_USER_MAPPING */
 	{ "user mapping", OBJECT_USER_MAPPING },
 	/* OCLASS_DEFACL */
-	{ "default acl", -1 },		/* unmapped */
+	{ "default acl", OBJECT_DEFACL },
 	/* OCLASS_EXTENSION */
 	{ "extension", OBJECT_EXTENSION },
 	/* OCLASS_EVENT_TRIGGER */
@@ -557,6 +557,8 @@ static ObjectAddress get_object_address_opcf(ObjectType objtype, List *objname,
 						List *objargs, bool missing_ok);
 static ObjectAddress get_object_address_usermapping(List *objname,
 							   List *objargs, bool missing_ok);
+static ObjectAddress get_object_address_defacl(List *objname, List *objargs,
+						  bool missing_ok);
 static const ObjectPropertyType *get_object_property_data(Oid class_id);
 
 static void getRelationDescription(StringInfo buffer, Oid relid);
@@ -774,6 +776,10 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_USER_MAPPING:
 				address = get_object_address_usermapping(objname, objargs,
 														 missing_ok);
+				break;
+			case OBJECT_DEFACL:
+				address = get_object_address_defacl(objname, objargs,
+													missing_ok);
 				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
@@ -1448,6 +1454,113 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 }
 
 /*
+ * Find the ObjectAddress for a default ACL.
+ */
+static ObjectAddress
+get_object_address_defacl(List *objname, List *objargs, bool missing_ok)
+{
+	HeapTuple	tp;
+	Oid			userid;
+	Oid			schemaid;
+	char	   *username;
+	char	   *schema;
+	char		objtype;
+	char	   *objtype_str;
+	ObjectAddress address;
+
+	ObjectAddressSet(address, DefaultAclRelationId, InvalidOid);
+
+	/*
+	 * First figure out the textual attributes so that they can be used for
+	 * error reporting.
+	 */
+	username = strVal(linitial(objname));
+	if (list_length(objname) >= 2)
+		schema = (char *) strVal(lsecond(objname));
+	else
+		schema = NULL;
+
+	/*
+	 * Decode defaclobjtype.  Only first char is considered; the rest of the
+	 * string, if any, is blissfully ignored.
+	 */
+	objtype = ((char *) strVal(linitial(objargs)))[0];
+	switch (objtype)
+	{
+		case DEFACLOBJ_RELATION:
+			objtype_str = "tables";
+			break;
+		case DEFACLOBJ_SEQUENCE:
+			objtype_str = "sequences";
+			break;
+		case DEFACLOBJ_FUNCTION:
+			objtype_str = "functions";
+			break;
+		case DEFACLOBJ_TYPE:
+			objtype_str = "types";
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized default ACL object type %c", objtype),
+					 errhint("Valid object types are 'r', 'S', 'f', and 'T'.")));
+	}
+
+	/*
+	 * Look up user ID.  Behave as "default ACL not found" if the user doesn't
+	 * exist.
+	 */
+	tp = SearchSysCache1(AUTHNAME,
+						 CStringGetDatum(username));
+	if (!HeapTupleIsValid(tp))
+		goto not_found;
+	userid = HeapTupleGetOid(tp);
+	ReleaseSysCache(tp);
+
+	/*
+	 * If a schema name was given, look up its OID.  If it doesn't exist,
+	 * behave as "default ACL not found".
+	 */
+	if (schema)
+	{
+		schemaid = get_namespace_oid(schema, true);
+		if (schemaid == InvalidOid)
+			goto not_found;
+	}
+	else
+		schemaid = InvalidOid;
+
+	/* Finally, look up the pg_default_acl object */
+	tp = SearchSysCache3(DEFACLROLENSPOBJ,
+						 ObjectIdGetDatum(userid),
+						 ObjectIdGetDatum(schemaid),
+						 CharGetDatum(objtype));
+	if (!HeapTupleIsValid(tp))
+		goto not_found;
+
+	address.objectId = HeapTupleGetOid(tp);
+	ReleaseSysCache(tp);
+
+	return address;
+
+not_found:
+	if (!missing_ok)
+	{
+		if (schema)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("default ACL for user \"%s\" in schema \"%s\" on %s does not exist",
+							username, schema, objtype_str)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("default ACL for user \"%s\" on %s does not exist",
+							username, objtype_str)));
+	}
+	return address;
+}
+
+/*
  * Convert an array of TEXT into a List of string Values, as emitted by the
  * parser, which is what get_object_address uses as input.
  */
@@ -1599,6 +1712,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_OPFAMILY:
 		case OBJECT_CAST:
 		case OBJECT_USER_MAPPING:
+		case OBJECT_DEFACL:
 			if (list_length(args) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4024,10 +4138,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 				SysScanDesc rcscan;
 				HeapTuple	tup;
 				Form_pg_default_acl defacl;
-
-				/* no objname support */
-				if (objname)
-					*objname = NIL;
+				char	   *schema;
+				char	   *username;
 
 				defaclrel = heap_open(DefaultAclRelationId, AccessShareLock);
 
@@ -4047,19 +4159,20 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				defacl = (Form_pg_default_acl) GETSTRUCT(tup);
 
+				username = GetUserNameFromId(defacl->defaclrole);
 				appendStringInfo(&buffer,
 								 "for role %s",
-					quote_identifier(GetUserNameFromId(defacl->defaclrole)));
+								 quote_identifier(username));
 
 				if (OidIsValid(defacl->defaclnamespace))
 				{
-					char	   *schema;
-
 					schema = get_namespace_name(defacl->defaclnamespace);
 					appendStringInfo(&buffer,
 									 " in schema %s",
 									 quote_identifier(schema));
 				}
+				else
+					schema = NULL;
 
 				switch (defacl->defaclobjtype)
 				{
@@ -4079,6 +4192,14 @@ getObjectIdentityParts(const ObjectAddress *object,
 						appendStringInfoString(&buffer,
 											   " on types");
 						break;
+				}
+
+				if (objname)
+				{
+					*objname = list_make1(username);
+					if (schema)
+						*objname = lappend(*objname, schema);
+					*objargs = list_make1(psprintf("%c", defacl->defaclobjtype));
 				}
 
 				systable_endscan(rcscan);

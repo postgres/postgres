@@ -30,6 +30,8 @@ CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDU
 CREATE POLICY genpol ON addr_nsp.gentable;
 CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
 CREATE USER MAPPING FOR regtest_addr_user SERVER "integer";
+ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regtest_addr_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user REVOKE DELETE ON TABLES FROM regtest_addr_user;
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
@@ -77,7 +79,7 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy'), ('user mapping')
+		('policy'), ('user mapping'), ('default acl')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -255,6 +257,12 @@ WARNING:  error for user mapping,{addr_nsp,zwei},{}: argument list length must b
 WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for user "addr_nsp" in server "integer" does not exist
 WARNING:  error for user mapping,{eins,zwei,drei},{}: argument list length must be exactly 1
 WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" in server "integer" does not exist
+WARNING:  error for default acl,{eins},{}: argument list length must be exactly 1
+WARNING:  error for default acl,{eins},{integer}: unrecognized default ACL object type i
+WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be exactly 1
+WARNING:  error for default acl,{addr_nsp,zwei},{integer}: unrecognized default ACL object type i
+WARNING:  error for default acl,{eins,zwei,drei},{}: argument list length must be exactly 1
+WARNING:  error for default acl,{eins,zwei,drei},{integer}: unrecognized default ACL object type i
 -- these object types cannot be qualified names
 SELECT pg_get_object_address('language', '{one}', '{}');
 ERROR:  language "one" does not exist
@@ -341,6 +349,8 @@ WITH objects (type, name, args) AS (VALUES
 				('foreign-data wrapper', '{addr_fdw}', '{}'),
 				('server', '{addr_fserv}', '{}'),
 				('user mapping', '{regtest_addr_user}', '{integer}'),
+				('default acl', '{regtest_addr_user,public}', '{r}'),
+				('default acl', '{regtest_addr_user}', '{r}'),
 				-- extension
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}')
@@ -355,6 +365,8 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	ORDER BY addr1.classid, addr1.objid;
            type            |   schema   |       name        |                               identity                               | ?column? 
 ---------------------------+------------+-------------------+----------------------------------------------------------------------+----------
+ default acl               |            |                   | for role regtest_addr_user in schema public on tables                | t
+ default acl               |            |                   | for role regtest_addr_user on tables                                 | t
  type                      | pg_catalog | _int4             | integer[]                                                            | t
  type                      | addr_nsp   | gencomptype       | addr_nsp.gencomptype                                                 | t
  type                      | addr_nsp   | genenum           | addr_nsp.genenum                                                     | t
@@ -391,11 +403,12 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(36 rows)
+(38 rows)
 
 ---
 --- Cleanup resources
 ---
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 DROP SCHEMA addr_nsp CASCADE;
+DROP OWNED BY regtest_addr_user;
 DROP USER regtest_addr_user;

@@ -116,6 +116,9 @@ create server useless_server foreign data wrapper useless;
 NOTICE:  test_event_trigger: ddl_command_end CREATE SERVER
 create user mapping for regression_bob server useless_server;
 NOTICE:  test_event_trigger: ddl_command_end CREATE USER MAPPING
+alter default privileges for role regression_bob
+ revoke delete on tables from regression_bob;
+NOTICE:  test_event_trigger: ddl_command_end ALTER DEFAULT PRIVILEGES
 -- alter owner to non-superuser should fail
 alter event trigger regress_event_trigger owner to regression_bob;
 ERROR:  permission denied to change owner of event trigger "regress_event_trigger"
@@ -135,6 +138,7 @@ ERROR:  event trigger "regress_event_trigger" does not exist
 drop role regression_bob;
 ERROR:  role "regression_bob" cannot be dropped because some objects depend on it
 DETAIL:  owner of event trigger regress_event_trigger3
+owner of default privileges on new relations belonging to role regression_bob
 owner of user mapping for regression_bob on server useless_server
 -- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE

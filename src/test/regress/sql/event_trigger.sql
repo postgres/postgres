@@ -110,6 +110,8 @@ drop table event_trigger_fire1;
 create foreign data wrapper useless;
 create server useless_server foreign data wrapper useless;
 create user mapping for regression_bob server useless_server;
+alter default privileges for role regression_bob
+ revoke delete on tables from regression_bob;
 
 -- alter owner to non-superuser should fail
 alter event trigger regress_event_trigger owner to regression_bob;
