@@ -55,6 +55,8 @@ typedef struct
 	char	   *bkp_image;
 	uint16		hole_offset;
 	uint16		hole_length;
+	uint16		bimg_len;
+	uint8		bimg_info;
 
 	/* Buffer holding the rmgr-specific data associated with this block */
 	bool		has_data;

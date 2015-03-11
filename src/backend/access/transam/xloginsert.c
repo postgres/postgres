@@ -24,11 +24,15 @@
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
 #include "catalog/pg_control.h"
+#include "common/pg_lzcompress.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
 #include "pg_trace.h"
+
+/* Buffer size required to store a compressed version of backup block image */
+#define PGLZ_MAX_BLCKSZ	PGLZ_MAX_OUTPUT(BLCKSZ)
 
 /*
  * For each block reference registered with XLogRegisterBuffer, we fill in
@@ -50,6 +54,9 @@ typedef struct
 
 	XLogRecData bkp_rdatas[2];	/* temporary rdatas used to hold references to
 								 * backup block data in XLogRecordAssemble() */
+
+	/* buffer to store a compressed version of backup block image */
+	char		compressed_page[PGLZ_MAX_BLCKSZ];
 }	registered_buffer;
 
 static registered_buffer *registered_buffers;
@@ -96,6 +103,8 @@ static MemoryContext xloginsert_cxt;
 static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,
 				   XLogRecPtr *fpw_lsn);
+static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
+									uint16 hole_length, char *dest, uint16 *dlen);
 
 /*
  * Begin constructing a WAL record. This must be called before the
@@ -482,7 +491,11 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		bool		needs_data;
 		XLogRecordBlockHeader bkpb;
 		XLogRecordBlockImageHeader bimg;
+		XLogRecordBlockCompressHeader cbimg;
 		bool		samerel;
+		bool		is_compressed = false;
+		uint16	hole_length;
+		uint16	hole_offset;
 
 		if (!regbuf->in_use)
 			continue;
@@ -529,9 +542,11 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		if (needs_backup)
 		{
 			Page		page = regbuf->page;
+			uint16		compressed_len;
 
 			/*
-			 * The page needs to be backed up, so set up *bimg
+			 * The page needs to be backed up, so calculate its hole length
+			 * and offset.
 			 */
 			if (regbuf->flags & REGBUF_STANDARD)
 			{
@@ -543,50 +558,81 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 					upper > lower &&
 					upper <= BLCKSZ)
 				{
-					bimg.hole_offset = lower;
-					bimg.hole_length = upper - lower;
+					hole_offset = lower;
+					hole_length = upper - lower;
 				}
 				else
 				{
 					/* No "hole" to compress out */
-					bimg.hole_offset = 0;
-					bimg.hole_length = 0;
+					hole_offset = 0;
+					hole_length = 0;
 				}
 			}
 			else
 			{
 				/* Not a standard page header, don't try to eliminate "hole" */
-				bimg.hole_offset = 0;
-				bimg.hole_length = 0;
+				hole_offset = 0;
+				hole_length = 0;
+			}
+
+			/*
+			 * Try to compress a block image if wal_compression is enabled
+			 */
+			if (wal_compression)
+			{
+				is_compressed =
+					XLogCompressBackupBlock(page, hole_offset, hole_length,
+											regbuf->compressed_page,
+											&compressed_len);
 			}
 
 			/* Fill in the remaining fields in the XLogRecordBlockHeader struct */
 			bkpb.fork_flags |= BKPBLOCK_HAS_IMAGE;
-
-			total_len += BLCKSZ - bimg.hole_length;
 
 			/*
 			 * Construct XLogRecData entries for the page content.
 			 */
 			rdt_datas_last->next = &regbuf->bkp_rdatas[0];
 			rdt_datas_last = rdt_datas_last->next;
-			if (bimg.hole_length == 0)
+
+			bimg.bimg_info = (hole_length == 0) ? 0 : BKPIMAGE_HAS_HOLE;
+
+			if (is_compressed)
 			{
-				rdt_datas_last->data = page;
-				rdt_datas_last->len = BLCKSZ;
+				bimg.length = compressed_len;
+				bimg.hole_offset = hole_offset;
+				bimg.bimg_info |= BKPIMAGE_IS_COMPRESSED;
+				if (hole_length != 0)
+					cbimg.hole_length = hole_length;
+
+				rdt_datas_last->data = regbuf->compressed_page;
+				rdt_datas_last->len = compressed_len;
 			}
 			else
 			{
-				/* must skip the hole */
-				rdt_datas_last->data = page;
-				rdt_datas_last->len = bimg.hole_offset;
+				bimg.length = BLCKSZ - hole_length;
+				bimg.hole_offset = hole_offset;
 
-				rdt_datas_last->next = &regbuf->bkp_rdatas[1];
-				rdt_datas_last = rdt_datas_last->next;
+				if (hole_length == 0)
+				{
+					rdt_datas_last->data = page;
+					rdt_datas_last->len = BLCKSZ;
+				}
+				else
+				{
+					/* must skip the hole */
+					rdt_datas_last->data = page;
+					rdt_datas_last->len = hole_offset;
 
-				rdt_datas_last->data = page + (bimg.hole_offset + bimg.hole_length);
-				rdt_datas_last->len = BLCKSZ - (bimg.hole_offset + bimg.hole_length);
+					rdt_datas_last->next = &regbuf->bkp_rdatas[1];
+					rdt_datas_last = rdt_datas_last->next;
+
+					rdt_datas_last->data = page + (hole_offset + hole_length);
+					rdt_datas_last->len = BLCKSZ - (hole_offset + hole_length);
+				}
 			}
+
+			total_len += bimg.length;
 		}
 
 		if (needs_data)
@@ -619,6 +665,12 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		{
 			memcpy(scratch, &bimg, SizeOfXLogRecordBlockImageHeader);
 			scratch += SizeOfXLogRecordBlockImageHeader;
+			if (hole_length != 0 && is_compressed)
+			{
+				memcpy(scratch, &cbimg,
+					   SizeOfXLogRecordBlockCompressHeader);
+				scratch += SizeOfXLogRecordBlockCompressHeader;
+			}
 		}
 		if (!samerel)
 		{
@@ -678,6 +730,57 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	rechdr->xl_crc = rdata_crc;
 
 	return &hdr_rdt;
+}
+
+/*
+ * Create a compressed version of a backup block image.
+ *
+ * Returns FALSE if compression fails (i.e., compressed result is actually
+ * bigger than original). Otherwise, returns TRUE and sets 'dlen' to
+ * the length of compressed block image.
+ */
+static bool
+XLogCompressBackupBlock(char * page, uint16 hole_offset, uint16 hole_length,
+						char *dest, uint16 *dlen)
+{
+	int32		orig_len = BLCKSZ - hole_length;
+	int32		len;
+	int32		extra_bytes = 0;
+	char	   *source;
+	char		tmp[BLCKSZ];
+
+	if (hole_length != 0)
+	{
+		/* must skip the hole */
+		source = tmp;
+		memcpy(source, page, hole_offset);
+		memcpy(source + hole_offset,
+			   page + (hole_offset + hole_length),
+			   BLCKSZ - (hole_length + hole_offset));
+
+		/*
+		 * Extra data needs to be stored in WAL record for the compressed
+		 * version of block image if the hole exists.
+		 */
+		extra_bytes = SizeOfXLogRecordBlockCompressHeader;
+	}
+	else
+		source = page;
+
+	/*
+	 * We recheck the actual size even if pglz_compress() reports success
+	 * and see if the number of bytes saved by compression is larger than
+	 * the length of extra data needed for the compressed version of block
+	 * image.
+	 */
+	len = pglz_compress(source, orig_len, dest, PGLZ_strategy_default);
+	if (len >= 0 &&
+		len + extra_bytes < orig_len)
+	{
+		*dlen = (uint16) len;		/* successful compression */
+		return true;
+	}
+	return false;
 }
 
 /*

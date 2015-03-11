@@ -359,18 +359,17 @@ XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats,
 	rec_len = XLogRecGetDataLen(record) + SizeOfXLogRecord;
 
 	/*
-	 * Calculate the amount of FPI data in the record. Each backup block
-	 * takes up BLCKSZ bytes, minus the "hole" length.
+	 * Calculate the amount of FPI data in the record.
 	 *
 	 * XXX: We peek into xlogreader's private decoded backup blocks for the
-	 * hole_length. It doesn't seem worth it to add an accessor macro for
-	 * this.
+	 * bimg_len indicating the length of FPI data. It doesn't seem worth it to
+	 * add an accessor macro for this.
 	 */
 	fpi_len = 0;
 	for (block_id = 0; block_id <= record->max_block_id; block_id++)
 	{
 		if (XLogRecHasBlockImage(record, block_id))
-			fpi_len += BLCKSZ - record->blocks[block_id].hole_length;
+			fpi_len += record->blocks[block_id].bimg_len;
 	}
 
 	/* Update per-rmgr statistics */
@@ -465,9 +464,22 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				   blk);
 			if (XLogRecHasBlockImage(record, block_id))
 			{
-				printf(" (FPW); hole: offset: %u, length: %u\n",
-					   record->blocks[block_id].hole_offset,
-					   record->blocks[block_id].hole_length);
+				if (record->blocks[block_id].bimg_info &
+					BKPIMAGE_IS_COMPRESSED)
+				{
+					printf(" (FPW); hole: offset: %u, length: %u, compression saved: %u\n",
+						   record->blocks[block_id].hole_offset,
+						   record->blocks[block_id].hole_length,
+						   BLCKSZ -
+						   record->blocks[block_id].hole_length -
+						   record->blocks[block_id].bimg_len);
+				}
+				else
+				{
+					printf(" (FPW); hole: offset: %u, length: %u\n",
+						   record->blocks[block_id].hole_offset,
+						   record->blocks[block_id].hole_length);
+				}
 			}
 			putchar('\n');
 		}

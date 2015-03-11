@@ -100,6 +100,7 @@ extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
 extern bool fullPageWrites;
 extern bool wal_log_hints;
+extern bool wal_compression;
 extern bool log_checkpoints;
 
 extern int	CheckPointSegments;

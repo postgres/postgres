@@ -997,6 +997,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"wal_compression", PGC_USERSET, WAL_SETTINGS,
+			 gettext_noop("Compresses full-page writes written in WAL file."),
+			 NULL
+		},
+		&wal_compression,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"log_checkpoints", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Logs each checkpoint."),
 			NULL

@@ -100,18 +100,55 @@ typedef struct XLogRecordBlockHeader
  *
  * As a trivial form of data compression, the XLOG code is aware that
  * PG data pages usually contain an unused "hole" in the middle, which
- * contains only zero bytes.  If hole_length > 0 then we have removed
+ * contains only zero bytes.  If the length of "hole" > 0 then we have removed
  * such a "hole" from the stored data (and it's not counted in the
  * XLOG record's CRC, either).  Hence, the amount of block data actually
- * present is BLCKSZ - hole_length bytes.
+ * present is BLCKSZ - the length of "hole" bytes.
+ *
+ * When wal_compression is enabled, a full page image which "hole" was
+ * removed is additionally compressed using PGLZ compression algorithm.
+ * This can reduce the WAL volume, but at some extra cost of CPU spent
+ * on the compression during WAL logging. In this case, since the "hole"
+ * length cannot be calculated by subtracting the number of page image bytes
+ * from BLCKSZ, basically it needs to be stored as an extra information.
+ * But when no "hole" exists, we can assume that the "hole" length is zero
+ * and no such an extra information needs to be stored. Note that
+ * the original version of page image is stored in WAL instead of the
+ * compressed one if the number of bytes saved by compression is less than
+ * the length of extra information. Hence, when a page image is successfully
+ * compressed, the amount of block data actually present is less than
+ * BLCKSZ - the length of "hole" bytes - the length of extra information.
  */
 typedef struct XLogRecordBlockImageHeader
 {
-	uint16		hole_offset;	/* number of bytes before "hole" */
-	uint16		hole_length;	/* number of bytes in "hole" */
+	uint16	length;	/* number of page image bytes */
+	uint16	hole_offset;	/* number of bytes before "hole" */
+	uint8		bimg_info;	/* flag bits, see below */
+
+	/*
+	 * If BKPIMAGE_HAS_HOLE and BKPIMAGE_IS_COMPRESSED,
+	 * an XLogRecordBlockCompressHeader struct follows.
+	 */
 } XLogRecordBlockImageHeader;
 
-#define SizeOfXLogRecordBlockImageHeader sizeof(XLogRecordBlockImageHeader)
+#define SizeOfXLogRecordBlockImageHeader	\
+	(offsetof(XLogRecordBlockImageHeader, bimg_info) + sizeof(uint8))
+
+/* Information stored in bimg_info */
+#define BKPIMAGE_HAS_HOLE		0x01	/* page image has "hole" */
+#define BKPIMAGE_IS_COMPRESSED		0x02	/* page image is compressed */
+
+/*
+ * Extra header information used when page image has "hole" and
+ * is compressed.
+ */
+typedef struct XLogRecordBlockCompressHeader
+{
+	uint16	hole_length;	/* number of bytes in "hole" */
+} XLogRecordBlockCompressHeader;
+
+#define SizeOfXLogRecordBlockCompressHeader \
+	sizeof(XLogRecordBlockCompressHeader)
 
 /*
  * Maximum size of the header for a block reference. This is used to size a
@@ -120,6 +157,7 @@ typedef struct XLogRecordBlockImageHeader
 #define MaxSizeOfXLogRecordBlockHeader \
 	(SizeOfXLogRecordBlockHeader + \
 	 SizeOfXLogRecordBlockImageHeader + \
+	 SizeOfXLogRecordBlockCompressHeader + \
 	 sizeof(RelFileNode) + \
 	 sizeof(BlockNumber))
 
