@@ -1233,6 +1233,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	RangeTblRef *rtr;
 	List	   *subquery_vars;
 	Node	   *quals;
+	ParseState *pstate;
 
 	Assert(sublink->subLinkType == ANY_SUBLINK);
 
@@ -1264,6 +1265,9 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	if (contain_volatile_functions(sublink->testexpr))
 		return NULL;
 
+	/* Create a dummy ParseState for addRangeTableEntryForSubquery */
+	pstate = make_parsestate(NULL);
+
 	/*
 	 * Okay, pull up the sub-select into upper range table.
 	 *
@@ -1272,7 +1276,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * below). Therefore this is a lot easier than what pull_up_subqueries has
 	 * to go through.
 	 */
-	rte = addRangeTableEntryForSubquery(NULL,
+	rte = addRangeTableEntryForSubquery(pstate,
 										subselect,
 										makeAlias("ANY_subquery", NIL),
 										false,

@@ -345,6 +345,7 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	List	   *new_rt;
 	RangeTblEntry *rt_entry1,
 			   *rt_entry2;
+	ParseState *pstate;
 
 	/*
 	 * Make a copy of the given parsetree.  It's not so much that we don't
@@ -356,6 +357,9 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 */
 	viewParse = (Query *) copyObject(viewParse);
 
+	/* Create a dummy ParseState for addRangeTableEntryForRelation */
+	pstate = make_parsestate(NULL);
+
 	/* need to open the rel for addRangeTableEntryForRelation */
 	viewRel = relation_open(viewOid, AccessShareLock);
 
@@ -363,10 +367,10 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 * Create the 2 new range table entries and form the new range table...
 	 * OLD first, then NEW....
 	 */
-	rt_entry1 = addRangeTableEntryForRelation(NULL, viewRel,
+	rt_entry1 = addRangeTableEntryForRelation(pstate, viewRel,
 											  makeAlias("old", NIL),
 											  false, false);
-	rt_entry2 = addRangeTableEntryForRelation(NULL, viewRel,
+	rt_entry2 = addRangeTableEntryForRelation(pstate, viewRel,
 											  makeAlias("new", NIL),
 											  false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
