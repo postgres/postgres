@@ -984,10 +984,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     associativity of the operators in <productname>PostgreSQL</>.
     Most operators have the same precedence and are left-associative.
     The precedence and associativity of the operators is hard-wired
-    into the parser.  This can lead to non-intuitive behavior; for
-    example the Boolean operators <literal>&lt;</> and
-    <literal>&gt;</> have a different precedence than the Boolean
-    operators <literal>&lt;=</> and <literal>&gt;=</>.  Also, you will
+    into the parser.
+   </para>
+
+   <para>
+    You will
     sometimes need to add parentheses when using combinations of
     binary and unary operators.  For instance:
 <programlisting>
@@ -1008,7 +1009,7 @@ SELECT (5 !) - 6;
    </para>
 
    <table id="sql-precedence-table">
-    <title>Operator Precedence (decreasing)</title>
+    <title>Operator Precedence (highest to lowest)</title>
 
     <tgroup cols="3">
      <thead>
@@ -1063,39 +1064,9 @@ SELECT (5 !) - 6;
       </row>
 
       <row>
-       <entry><token>IS</token></entry>
-       <entry></entry>
-       <entry><literal>IS TRUE</>, <literal>IS FALSE</>, <literal>IS NULL</>, etc</entry>
-      </row>
-
-      <row>
-       <entry><token>ISNULL</token></entry>
-       <entry></entry>
-       <entry>test for null</entry>
-      </row>
-
-      <row>
-       <entry><token>NOTNULL</token></entry>
-       <entry></entry>
-       <entry>test for not null</entry>
-      </row>
-
-      <row>
-       <entry>(any other)</entry>
+       <entry>(any other operator)</entry>
        <entry>left</entry>
        <entry>all other native and user-defined operators</entry>
-      </row>
-
-      <row>
-       <entry><token>IN</token></entry>
-       <entry></entry>
-       <entry>set membership</entry>
-      </row>
-
-      <row>
-       <entry><token>BETWEEN</token></entry>
-       <entry></entry>
-       <entry>range containment</entry>
       </row>
 
       <row>
@@ -1105,21 +1076,23 @@ SELECT (5 !) - 6;
       </row>
 
       <row>
-       <entry><token>LIKE</token> <token>ILIKE</token> <token>SIMILAR</token></entry>
+       <entry><token>BETWEEN</token> <token>IN</token> <token>LIKE</token> <token>ILIKE</token> <token>SIMILAR</token></entry>
        <entry></entry>
-       <entry>string pattern matching</entry>
+       <entry>range containment, set membership, string matching</entry>
       </row>
 
       <row>
-       <entry><token>&lt;</token> <token>&gt;</token></entry>
+       <entry><token>&lt;</token> <token>&gt;</token> <token>=</token> <token>&lt;=</token> <token>&gt;=</token> <token>&lt;&gt;</token>
+</entry>
        <entry></entry>
-       <entry>less than, greater than</entry>
+       <entry>comparison operators</entry>
       </row>
 
       <row>
-       <entry><token>=</token></entry>
-       <entry>right</entry>
-       <entry>equality, assignment</entry>
+       <entry><token>IS</token> <token>ISNULL</token> <token>NOTNULL</token></entry>
+       <entry></entry>
+       <entry><literal>IS TRUE</>, <literal>IS FALSE</>, <literal>IS
+       NULL</>, <literal>IS DISTINCT FROM</>, etc</entry>
       </row>
 
       <row>
@@ -1159,9 +1132,32 @@ SELECT (5 !) - 6;
 SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
     the <literal>OPERATOR</> construct is taken to have the default precedence
-    shown in <xref linkend="sql-precedence-table"> for <quote>any other</> operator.  This is true no matter
+    shown in <xref linkend="sql-precedence-table"> for
+    <quote>any other operator</>.  This is true no matter
     which specific operator appears inside <literal>OPERATOR()</>.
    </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</> versions before 9.5 used slightly different
+     operator precedence rules.  In particular, <token>&lt;=</token>
+     <token>&gt;=</token> and <token>&lt;&gt;</token> used to be treated as
+     generic operators; <literal>IS</> tests used to have higher priority;
+     and <literal>NOT BETWEEN</> and related constructs acted inconsistently,
+     being taken in some cases as having the precedence of <literal>NOT</>
+     rather than <literal>BETWEEN</>.  These rules were changed for better
+     compliance with the SQL standard and to reduce confusion from
+     inconsistent treatment of logically equivalent constructs.  In most
+     cases, these changes will result in no behavioral change, or perhaps
+     in <quote>no such operator</> failures which can be resolved by adding
+     parentheses.  However there are corner cases in which a query might
+     change behavior without any parsing error being reported.  If you are
+     concerned about whether these changes have silently broken something,
+     you can test your application with the configuration
+     parameter <xref linkend="guc-operator-precedence-warning"> turned on
+     to see if any warnings are logged.
+    </para>
+   </note>
   </sect2>
  </sect1>
 

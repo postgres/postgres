@@ -355,10 +355,15 @@ ident_cont		[A-Za-z\200-\377_0-9\$]
 
 identifier		{ident_start}{ident_cont}*
 
+/* Assorted special-case operators and operator-like tokens */
 typecast		"::"
 dot_dot			\.\.
 colon_equals	":="
 equals_greater	"=>"
+less_equals		"<="
+greater_equals	">="
+less_greater	"<>"
+not_equals		"!="
 
 /*
  * "self" is the set of chars that should be returned as single-character
@@ -671,6 +676,22 @@ other			.
 				}
 
 {equals_greater} {
+					ECHO;
+				}
+
+{less_equals}	{
+					ECHO;
+				}
+
+{greater_equals} {
+					ECHO;
+				}
+
+{less_greater}	{
+					ECHO;
+				}
+
+{not_equals}	{
 					ECHO;
 				}
 

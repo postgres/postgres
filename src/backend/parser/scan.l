@@ -331,10 +331,15 @@ ident_cont		[A-Za-z\200-\377_0-9\$]
 
 identifier		{ident_start}{ident_cont}*
 
+/* Assorted special-case operators and operator-like tokens */
 typecast		"::"
 dot_dot			\.\.
 colon_equals	":="
 equals_greater	"=>"
+less_equals		"<="
+greater_equals	">="
+less_greater	"<>"
+not_equals		"!="
 
 /*
  * "self" is the set of chars that should be returned as single-character
@@ -814,6 +819,28 @@ other			.
 					return EQUALS_GREATER;
 				}
 
+{less_equals}	{
+					SET_YYLLOC();
+					return LESS_EQUALS;
+				}
+
+{greater_equals} {
+					SET_YYLLOC();
+					return GREATER_EQUALS;
+				}
+
+{less_greater}	{
+					/* We accept both "<>" and "!=" as meaning NOT_EQUALS */
+					SET_YYLLOC();
+					return NOT_EQUALS;
+				}
+
+{not_equals}	{
+					/* We accept both "<>" and "!=" as meaning NOT_EQUALS */
+					SET_YYLLOC();
+					return NOT_EQUALS;
+				}
+
 {self}			{
 					SET_YYLLOC();
 					return yytext[0];
@@ -891,11 +918,7 @@ other			.
 					if (nchars >= NAMEDATALEN)
 						yyerror("operator too long");
 
-					/* Convert "!=" operator to "<>" for compatibility */
-					if (strcmp(yytext, "!=") == 0)
-						yylval->str = pstrdup("<>");
-					else
-						yylval->str = pstrdup(yytext);
+					yylval->str = pstrdup(yytext);
 					return Op;
 				}
 

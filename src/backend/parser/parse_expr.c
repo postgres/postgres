@@ -37,7 +37,54 @@
 #include "utils/xml.h"
 
 
+/* GUC parameters */
+bool		operator_precedence_warning = false;
 bool		Transform_null_equals = false;
+
+/*
+ * Node-type groups for operator precedence warnings
+ * We use zero for everything not otherwise classified
+ */
+#define PREC_GROUP_POSTFIX_IS	1		/* postfix IS tests (NullTest, etc) */
+#define PREC_GROUP_INFIX_IS		2		/* infix IS (IS DISTINCT FROM, etc) */
+#define PREC_GROUP_LESS			3		/* < > */
+#define PREC_GROUP_EQUAL		4		/* = */
+#define PREC_GROUP_LESS_EQUAL	5		/* <= >= <> */
+#define PREC_GROUP_LIKE			6		/* LIKE ILIKE SIMILAR */
+#define PREC_GROUP_BETWEEN		7		/* BETWEEN */
+#define PREC_GROUP_IN			8		/* IN */
+#define PREC_GROUP_NOT_LIKE		9		/* NOT LIKE/ILIKE/SIMILAR */
+#define PREC_GROUP_NOT_BETWEEN	10		/* NOT BETWEEN */
+#define PREC_GROUP_NOT_IN		11		/* NOT IN */
+#define PREC_GROUP_POSTFIX_OP	12		/* generic postfix operators */
+#define PREC_GROUP_INFIX_OP		13		/* generic infix operators */
+#define PREC_GROUP_PREFIX_OP	14		/* generic prefix operators */
+
+/*
+ * Map precedence groupings to old precedence ordering
+ *
+ * Old precedence order:
+ * 1. NOT
+ * 2. =
+ * 3. < >
+ * 4. LIKE ILIKE SIMILAR
+ * 5. BETWEEN
+ * 6. IN
+ * 7. generic postfix Op
+ * 8. generic Op, including <= => <>
+ * 9. generic prefix Op
+ * 10. IS tests (NullTest, BooleanTest, etc)
+ *
+ * NOT BETWEEN etc map to BETWEEN etc when considered as being on the left,
+ * but to NOT when considered as being on the right, because of the buggy
+ * precedence handling of those productions in the old grammar.
+ */
+static const int oldprecedence_l[] = {
+	0, 10, 10, 3, 2, 8, 4, 5, 6, 4, 5, 6, 7, 8, 9
+};
+static const int oldprecedence_r[] = {
+	0, 10, 10, 3, 2, 8, 4, 5, 6, 1, 1, 1, 7, 8, 9
+};
 
 static Node *transformExprRecurse(ParseState *pstate, Node *expr);
 static Node *transformParamRef(ParseState *pstate, ParamRef *pref);
@@ -76,6 +123,11 @@ static Node *make_row_distinct_op(ParseState *pstate, List *opname,
 					 RowExpr *lrow, RowExpr *rrow, int location);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
 				 Node *ltree, Node *rtree, int location);
+static int	operator_precedence_group(Node *node, const char **nodename);
+static void emit_precedence_warnings(ParseState *pstate,
+						 int opgroup, const char *opname,
+						 Node *lchild, Node *rchild,
+						 int location);
 
 
 /*
@@ -194,6 +246,9 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 					case AEXPR_NOT_BETWEEN_SYM:
 						result = transformAExprBetween(pstate, a);
 						break;
+					case AEXPR_PAREN:
+						result = transformExprRecurse(pstate, a->lexpr);
+						break;
 					default:
 						elog(ERROR, "unrecognized A_Expr kind: %d", a->kind);
 						result = NULL;	/* keep compiler quiet */
@@ -254,6 +309,11 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		case T_NullTest:
 			{
 				NullTest   *n = (NullTest *) expr;
+
+				if (operator_precedence_warning)
+					emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_IS, "IS",
+											 (Node *) n->arg, NULL,
+											 n->location);
 
 				n->arg = (Expr *) transformExprRecurse(pstate, (Node *) n->arg);
 				/* the argument can be any type, so don't coerce it */
@@ -782,6 +842,18 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	Node	   *rexpr = a->rexpr;
 	Node	   *result;
 
+	if (operator_precedence_warning)
+	{
+		int			opgroup;
+		const char *opname;
+
+		opgroup = operator_precedence_group((Node *) a, &opname);
+		if (opgroup > 0)
+			emit_precedence_warnings(pstate, opgroup, opname,
+									 lexpr, rexpr,
+									 a->location);
+	}
+
 	/*
 	 * Special-case "foo = NULL" and "NULL = foo" for compatibility with
 	 * standards-broken products (like Microsoft's).  Turn these into IS NULL
@@ -858,8 +930,17 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 static Node *
 transformAExprOpAny(ParseState *pstate, A_Expr *a)
 {
-	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
-	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
+	Node	   *lexpr = a->lexpr;
+	Node	   *rexpr = a->rexpr;
+
+	if (operator_precedence_warning)
+		emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_OP,
+								 strVal(llast(a->name)),
+								 lexpr, NULL,
+								 a->location);
+
+	lexpr = transformExprRecurse(pstate, lexpr);
+	rexpr = transformExprRecurse(pstate, rexpr);
 
 	return (Node *) make_scalar_array_op(pstate,
 										 a->name,
@@ -872,8 +953,17 @@ transformAExprOpAny(ParseState *pstate, A_Expr *a)
 static Node *
 transformAExprOpAll(ParseState *pstate, A_Expr *a)
 {
-	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
-	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
+	Node	   *lexpr = a->lexpr;
+	Node	   *rexpr = a->rexpr;
+
+	if (operator_precedence_warning)
+		emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_OP,
+								 strVal(llast(a->name)),
+								 lexpr, NULL,
+								 a->location);
+
+	lexpr = transformExprRecurse(pstate, lexpr);
+	rexpr = transformExprRecurse(pstate, rexpr);
 
 	return (Node *) make_scalar_array_op(pstate,
 										 a->name,
@@ -886,8 +976,16 @@ transformAExprOpAll(ParseState *pstate, A_Expr *a)
 static Node *
 transformAExprDistinct(ParseState *pstate, A_Expr *a)
 {
-	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
-	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
+	Node	   *lexpr = a->lexpr;
+	Node	   *rexpr = a->rexpr;
+
+	if (operator_precedence_warning)
+		emit_precedence_warnings(pstate, PREC_GROUP_INFIX_IS, "IS",
+								 lexpr, rexpr,
+								 a->location);
+
+	lexpr = transformExprRecurse(pstate, lexpr);
+	rexpr = transformExprRecurse(pstate, rexpr);
 
 	if (lexpr && IsA(lexpr, RowExpr) &&
 		rexpr && IsA(rexpr, RowExpr))
@@ -944,19 +1042,26 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 	return (Node *) result;
 }
 
+/*
+ * Checking an expression for match to a list of type names. Will result
+ * in a boolean constant node.
+ */
 static Node *
 transformAExprOf(ParseState *pstate, A_Expr *a)
 {
-	/*
-	 * Checking an expression for match to a list of type names. Will result
-	 * in a boolean constant node.
-	 */
-	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
+	Node	   *lexpr = a->lexpr;
 	Const	   *result;
 	ListCell   *telem;
 	Oid			ltype,
 				rtype;
 	bool		matched = false;
+
+	if (operator_precedence_warning)
+		emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_IS, "IS",
+								 lexpr, NULL,
+								 a->location);
+
+	lexpr = transformExprRecurse(pstate, lexpr);
 
 	ltype = exprType(lexpr);
 	foreach(telem, (List *) a->rexpr)
@@ -1000,6 +1105,13 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		useOr = false;
 	else
 		useOr = true;
+
+	if (operator_precedence_warning)
+		emit_precedence_warnings(pstate,
+								 useOr ? PREC_GROUP_IN : PREC_GROUP_NOT_IN,
+								 "IN",
+								 a->lexpr, NULL,
+								 a->location);
 
 	/*
 	 * We try to generate a ScalarArrayOpExpr from IN/NOT IN, but this is only
@@ -1152,6 +1264,22 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 	Assert(list_length(args) == 2);
 	bexpr = (Node *) linitial(args);
 	cexpr = (Node *) lsecond(args);
+
+	if (operator_precedence_warning)
+	{
+		int			opgroup;
+		const char *opname;
+
+		opgroup = operator_precedence_group((Node *) a, &opname);
+		emit_precedence_warnings(pstate, opgroup, opname,
+								 aexpr, cexpr,
+								 a->location);
+		/* We can ignore bexpr thanks to syntactic restrictions */
+		/* Wrap subexpressions to prevent extra warnings */
+		aexpr = (Node *) makeA_Expr(AEXPR_PAREN, NIL, aexpr, NULL, -1);
+		bexpr = (Node *) makeA_Expr(AEXPR_PAREN, NIL, bexpr, NULL, -1);
+		cexpr = (Node *) makeA_Expr(AEXPR_PAREN, NIL, cexpr, NULL, -1);
+	}
 
 	/*
 	 * Build the equivalent comparison expression.  Make copies of
@@ -1657,6 +1785,19 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		List	   *right_list;
 		ListCell   *l;
 
+		if (operator_precedence_warning)
+		{
+			if (sublink->operName == NIL)
+				emit_precedence_warnings(pstate, PREC_GROUP_IN, "IN",
+										 sublink->testexpr, NULL,
+										 sublink->location);
+			else
+				emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_OP,
+										 strVal(llast(sublink->operName)),
+										 sublink->testexpr, NULL,
+										 sublink->location);
+		}
+
 		/*
 		 * If the source was "x IN (select)", convert to "x = ANY (select)".
 		 */
@@ -2000,6 +2141,11 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	ListCell   *lc;
 	int			i;
 
+	if (operator_precedence_warning && x->op == IS_DOCUMENT)
+		emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_IS, "IS",
+								 (Node *) linitial(x->args), NULL,
+								 x->location);
+
 	newx = makeNode(XmlExpr);
 	newx->op = x->op;
 	if (x->name)
@@ -2171,6 +2317,11 @@ static Node *
 transformBooleanTest(ParseState *pstate, BooleanTest *b)
 {
 	const char *clausename;
+
+	if (operator_precedence_warning)
+		emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_IS, "IS",
+								 (Node *) b->arg, NULL,
+								 b->location);
 
 	switch (b->booltesttype)
 	{
@@ -2686,6 +2837,309 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	NodeSetTag(result, T_DistinctExpr);
 
 	return result;
+}
+
+/*
+ * Identify node's group for operator precedence warnings
+ *
+ * For items in nonzero groups, also return a suitable node name into *nodename
+ *
+ * Note: group zero is used for nodes that are higher or lower precedence
+ * than everything that changed precedence; we need never issue warnings
+ * related to such nodes.
+ */
+static int
+operator_precedence_group(Node *node, const char **nodename)
+{
+	int			group = 0;
+
+	*nodename = NULL;
+	if (node == NULL)
+		return 0;
+
+	if (IsA(node, A_Expr))
+	{
+		A_Expr	   *aexpr = (A_Expr *) node;
+
+		if (aexpr->kind == AEXPR_OP &&
+			aexpr->lexpr != NULL &&
+			aexpr->rexpr != NULL)
+		{
+			/* binary operator */
+			if (list_length(aexpr->name) == 1)
+			{
+				*nodename = strVal(linitial(aexpr->name));
+				/* Ignore if op was always higher priority than IS-tests */
+				if (strcmp(*nodename, "+") == 0 ||
+					strcmp(*nodename, "-") == 0 ||
+					strcmp(*nodename, "*") == 0 ||
+					strcmp(*nodename, "/") == 0 ||
+					strcmp(*nodename, "%") == 0 ||
+					strcmp(*nodename, "^") == 0)
+					group = 0;
+				else if (strcmp(*nodename, "<") == 0 ||
+						 strcmp(*nodename, ">") == 0)
+					group = PREC_GROUP_LESS;
+				else if (strcmp(*nodename, "=") == 0)
+					group = PREC_GROUP_EQUAL;
+				else if (strcmp(*nodename, "<=") == 0 ||
+						 strcmp(*nodename, ">=") == 0 ||
+						 strcmp(*nodename, "<>") == 0)
+					group = PREC_GROUP_LESS_EQUAL;
+				else
+					group = PREC_GROUP_INFIX_OP;
+			}
+			else
+			{
+				/* schema-qualified operator syntax */
+				*nodename = "OPERATOR()";
+				group = PREC_GROUP_INFIX_OP;
+			}
+		}
+		else if (aexpr->kind == AEXPR_OP &&
+				 aexpr->lexpr == NULL &&
+				 aexpr->rexpr != NULL)
+		{
+			/* prefix operator */
+			if (list_length(aexpr->name) == 1)
+			{
+				*nodename = strVal(linitial(aexpr->name));
+				/* Ignore if op was always higher priority than IS-tests */
+				if (strcmp(*nodename, "+") == 0 ||
+					strcmp(*nodename, "-"))
+					group = 0;
+				else
+					group = PREC_GROUP_PREFIX_OP;
+			}
+			else
+			{
+				/* schema-qualified operator syntax */
+				*nodename = "OPERATOR()";
+				group = PREC_GROUP_PREFIX_OP;
+			}
+		}
+		else if (aexpr->kind == AEXPR_OP &&
+				 aexpr->lexpr != NULL &&
+				 aexpr->rexpr == NULL)
+		{
+			/* postfix operator */
+			if (list_length(aexpr->name) == 1)
+			{
+				*nodename = strVal(linitial(aexpr->name));
+				group = PREC_GROUP_POSTFIX_OP;
+			}
+			else
+			{
+				/* schema-qualified operator syntax */
+				*nodename = "OPERATOR()";
+				group = PREC_GROUP_POSTFIX_OP;
+			}
+		}
+		else if (aexpr->kind == AEXPR_OP_ANY ||
+				 aexpr->kind == AEXPR_OP_ALL)
+		{
+			*nodename = strVal(llast(aexpr->name));
+			group = PREC_GROUP_POSTFIX_OP;
+		}
+		else if (aexpr->kind == AEXPR_DISTINCT)
+		{
+			*nodename = "IS";
+			group = PREC_GROUP_INFIX_IS;
+		}
+		else if (aexpr->kind == AEXPR_OF)
+		{
+			*nodename = "IS";
+			group = PREC_GROUP_POSTFIX_IS;
+		}
+		else if (aexpr->kind == AEXPR_IN)
+		{
+			*nodename = "IN";
+			if (strcmp(strVal(linitial(aexpr->name)), "=") == 0)
+				group = PREC_GROUP_IN;
+			else
+				group = PREC_GROUP_NOT_IN;
+		}
+		else if (aexpr->kind == AEXPR_LIKE)
+		{
+			*nodename = "LIKE";
+			if (strcmp(strVal(linitial(aexpr->name)), "~~") == 0)
+				group = PREC_GROUP_LIKE;
+			else
+				group = PREC_GROUP_NOT_LIKE;
+		}
+		else if (aexpr->kind == AEXPR_ILIKE)
+		{
+			*nodename = "ILIKE";
+			if (strcmp(strVal(linitial(aexpr->name)), "~~*") == 0)
+				group = PREC_GROUP_LIKE;
+			else
+				group = PREC_GROUP_NOT_LIKE;
+		}
+		else if (aexpr->kind == AEXPR_SIMILAR)
+		{
+			*nodename = "SIMILAR";
+			if (strcmp(strVal(linitial(aexpr->name)), "~") == 0)
+				group = PREC_GROUP_LIKE;
+			else
+				group = PREC_GROUP_NOT_LIKE;
+		}
+		else if (aexpr->kind == AEXPR_BETWEEN ||
+				 aexpr->kind == AEXPR_BETWEEN_SYM)
+		{
+			Assert(list_length(aexpr->name) == 1);
+			*nodename = strVal(linitial(aexpr->name));
+			group = PREC_GROUP_BETWEEN;
+		}
+		else if (aexpr->kind == AEXPR_NOT_BETWEEN ||
+				 aexpr->kind == AEXPR_NOT_BETWEEN_SYM)
+		{
+			Assert(list_length(aexpr->name) == 1);
+			*nodename = strVal(linitial(aexpr->name));
+			group = PREC_GROUP_NOT_BETWEEN;
+		}
+	}
+	else if (IsA(node, NullTest) ||
+			 IsA(node, BooleanTest))
+	{
+		*nodename = "IS";
+		group = PREC_GROUP_POSTFIX_IS;
+	}
+	else if (IsA(node, XmlExpr))
+	{
+		XmlExpr    *x = (XmlExpr *) node;
+
+		if (x->op == IS_DOCUMENT)
+		{
+			*nodename = "IS";
+			group = PREC_GROUP_POSTFIX_IS;
+		}
+	}
+	else if (IsA(node, SubLink))
+	{
+		SubLink    *s = (SubLink *) node;
+
+		if (s->subLinkType == ANY_SUBLINK ||
+			s->subLinkType == ALL_SUBLINK)
+		{
+			if (s->operName == NIL)
+			{
+				*nodename = "IN";
+				group = PREC_GROUP_IN;
+			}
+			else
+			{
+				*nodename = strVal(llast(s->operName));
+				group = PREC_GROUP_POSTFIX_OP;
+			}
+		}
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		/*
+		 * Must dig into NOTs to see if it's IS NOT DOCUMENT or NOT IN.  This
+		 * opens us to possibly misrecognizing, eg, NOT (x IS DOCUMENT) as a
+		 * problematic construct.  We can tell the difference by checking
+		 * whether the parse locations of the two nodes are identical.
+		 *
+		 * Note that when we are comparing the child node to its own children,
+		 * we will not know that it was a NOT.  Fortunately, that doesn't
+		 * matter for these cases.
+		 */
+		BoolExpr   *b = (BoolExpr *) node;
+
+		if (b->boolop == NOT_EXPR)
+		{
+			Node	   *child = (Node *) linitial(b->args);
+
+			if (IsA(child, XmlExpr))
+			{
+				XmlExpr    *x = (XmlExpr *) child;
+
+				if (x->op == IS_DOCUMENT &&
+					x->location == b->location)
+				{
+					*nodename = "IS";
+					group = PREC_GROUP_POSTFIX_IS;
+				}
+			}
+			else if (IsA(child, SubLink))
+			{
+				SubLink    *s = (SubLink *) child;
+
+				if (s->subLinkType == ANY_SUBLINK && s->operName == NIL &&
+					s->location == b->location)
+				{
+					*nodename = "IN";
+					group = PREC_GROUP_NOT_IN;
+				}
+			}
+		}
+	}
+	return group;
+}
+
+/*
+ * helper routine for delivering 9.4-to-9.5 operator precedence warnings
+ *
+ * opgroup/opname/location represent some parent node
+ * lchild, rchild are its left and right children (either could be NULL)
+ *
+ * This should be called before transforming the child nodes, since if a
+ * precedence-driven parsing change has occurred in a query that used to work,
+ * it's quite possible that we'll get a semantic failure while analyzing the
+ * child expression.  We want to produce the warning before that happens.
+ * In any case, operator_precedence_group() expects untransformed input.
+ */
+static void
+emit_precedence_warnings(ParseState *pstate,
+						 int opgroup, const char *opname,
+						 Node *lchild, Node *rchild,
+						 int location)
+{
+	int			cgroup;
+	const char *copname;
+
+	Assert(opgroup > 0);
+
+	/*
+	 * Complain if left child, which should be same or higher precedence
+	 * according to current rules, used to be lower precedence.
+	 *
+	 * Exception to precedence rules: if left child is IN or NOT IN or a
+	 * postfix operator, the grouping is syntactically forced regardless of
+	 * precedence.
+	 */
+	cgroup = operator_precedence_group(lchild, &copname);
+	if (cgroup > 0)
+	{
+		if (oldprecedence_l[cgroup] < oldprecedence_r[opgroup] &&
+			cgroup != PREC_GROUP_IN &&
+			cgroup != PREC_GROUP_NOT_IN &&
+			cgroup != PREC_GROUP_POSTFIX_OP &&
+			cgroup != PREC_GROUP_POSTFIX_IS)
+			ereport(WARNING,
+					(errmsg("operator precedence change: %s is now lower precedence than %s",
+							opname, copname),
+					 parser_errposition(pstate, location)));
+	}
+
+	/*
+	 * Complain if right child, which should be higher precedence according to
+	 * current rules, used to be same or lower precedence.
+	 *
+	 * Exception to precedence rules: if right child is a prefix operator, the
+	 * grouping is syntactically forced regardless of precedence.
+	 */
+	cgroup = operator_precedence_group(rchild, &copname);
+	if (cgroup > 0)
+	{
+		if (oldprecedence_r[cgroup] <= oldprecedence_l[opgroup] &&
+			cgroup != PREC_GROUP_PREFIX_OP)
+			ereport(WARNING,
+					(errmsg("operator precedence change: %s is now lower precedence than %s",
+							opname, copname),
+					 parser_errposition(pstate, location)));
+	}
 }
 
 /*

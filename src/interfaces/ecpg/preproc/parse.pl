@@ -42,12 +42,17 @@ my %replace_token = (
 
 # or in the block
 my %replace_string = (
+	'NOT_LA'          => 'not',
 	'NULLS_LA'        => 'nulls',
 	'WITH_LA'         => 'with',
 	'TYPECAST'        => '::',
 	'DOT_DOT'         => '..',
 	'COLON_EQUALS'    => ':=',
-	'EQUALS_GREATER'  => '=>',);
+	'EQUALS_GREATER'  => '=>',
+	'LESS_EQUALS'     => '<=',
+	'GREATER_EQUALS'  => '>=',
+	'NOT_EQUALS'      => '<>',
+);
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types

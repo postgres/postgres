@@ -1600,6 +1600,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"operator_precedence_warning", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Emit a warning for constructs that changed meaning since PostgreSQL 9.4."),
+			NULL,
+		},
+		&operator_precedence_warning,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"quote_all_identifiers", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("When generating SQL fragments, quote all identifiers."),
 			NULL,

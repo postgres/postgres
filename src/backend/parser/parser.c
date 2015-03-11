@@ -107,6 +107,9 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	 */
 	switch (cur_token)
 	{
+		case NOT:
+			cur_token_length = 3;
+			break;
 		case NULLS_P:
 			cur_token_length = 5;
 			break;
@@ -151,6 +154,20 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	/* Replace cur_token if needed, based on lookahead */
 	switch (cur_token)
 	{
+		case NOT:
+			/* Replace NOT by NOT_LA if it's followed by BETWEEN, IN, etc */
+			switch (next_token)
+			{
+				case BETWEEN:
+				case IN_P:
+				case LIKE:
+				case ILIKE:
+				case SIMILAR:
+					cur_token = NOT_LA;
+					break;
+			}
+			break;
+
 		case NULLS_P:
 			/* Replace NULLS_P by NULLS_LA if it's followed by FIRST or LAST */
 			switch (next_token)
