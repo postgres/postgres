@@ -556,7 +556,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				colname = strVal(field2);
 
 				/* Try to identify as a column of the RTE */
-				node = scanRTEForColumn(pstate, rte, colname, cref->location);
+				node = scanRTEForColumn(pstate, rte, colname, cref->location,
+										0, NULL);
 				if (node == NULL)
 				{
 					/* Try it as a function call on the whole row */
@@ -601,7 +602,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				colname = strVal(field3);
 
 				/* Try to identify as a column of the RTE */
-				node = scanRTEForColumn(pstate, rte, colname, cref->location);
+				node = scanRTEForColumn(pstate, rte, colname, cref->location,
+										0, NULL);
 				if (node == NULL)
 				{
 					/* Try it as a function call on the whole row */
@@ -659,7 +661,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				colname = strVal(field4);
 
 				/* Try to identify as a column of the RTE */
-				node = scanRTEForColumn(pstate, rte, colname, cref->location);
+				node = scanRTEForColumn(pstate, rte, colname, cref->location,
+										0, NULL);
 				if (node == NULL)
 				{
 					/* Try it as a function call on the whole row */

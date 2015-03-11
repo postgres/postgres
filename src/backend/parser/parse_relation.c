@@ -33,6 +33,8 @@
 #include "utils/syscache.h"
 
 
+#define MAX_FUZZY_DISTANCE				3
+
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
 						const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
@@ -520,6 +522,101 @@ GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte, int rtelevelsup)
 }
 
 /*
+ * updateFuzzyAttrMatchState
+ *	  Using Levenshtein distance, consider if column is best fuzzy match.
+ */
+static void
+updateFuzzyAttrMatchState(int fuzzy_rte_penalty,
+						  FuzzyAttrMatchState *fuzzystate, RangeTblEntry *rte,
+						  const char *actual, const char *match, int attnum)
+{
+	int		columndistance;
+	int		matchlen;
+
+	/* Bail before computing the Levenshtein distance if there's no hope. */
+	if (fuzzy_rte_penalty > fuzzystate->distance)
+		return;
+
+	/*
+	 * Outright reject dropped columns, which can appear here with apparent
+	 * empty actual names, per remarks within scanRTEForColumn().
+	 */
+	if (actual[0] == '\0')
+		return;
+
+	/* Use Levenshtein to compute match distance. */
+	matchlen = strlen(match);
+	columndistance =
+		varstr_levenshtein_less_equal(actual, strlen(actual), match, matchlen,
+									  1, 1, 1,
+									  fuzzystate->distance + 1
+										- fuzzy_rte_penalty);
+
+	/*
+	 * If more than half the characters are different, don't treat it as a
+	 * match, to avoid making ridiculous suggestions.
+	 */
+	if (columndistance > matchlen / 2)
+		return;
+
+	/*
+	 * From this point on, we can ignore the distinction between the
+	 * RTE-name distance and the column-name distance.
+	 */
+	columndistance += fuzzy_rte_penalty;
+
+	/*
+	 * If the new distance is less than or equal to that of the best match
+	 * found so far, update fuzzystate.
+	 */
+	if (columndistance < fuzzystate->distance)
+	{
+		/* Store new lowest observed distance for RTE */
+		fuzzystate->distance = columndistance;
+		fuzzystate->rfirst = rte;
+		fuzzystate->first = attnum;
+		fuzzystate->rsecond = NULL;
+		fuzzystate->second = InvalidAttrNumber;
+	}
+	else if (columndistance == fuzzystate->distance)
+	{
+		/*
+		 * This match distance may equal a prior match within this same
+		 * range table.  When that happens, the prior match may also be
+		 * given, but only if there is no more than two equally distant
+		 * matches from the RTE (in turn, our caller will only accept
+		 * two equally distant matches overall).
+		 */
+		if (AttributeNumberIsValid(fuzzystate->second))
+		{
+			/* Too many RTE-level matches */
+			fuzzystate->rfirst = NULL;
+			fuzzystate->first = InvalidAttrNumber;
+			fuzzystate->rsecond = NULL;
+			fuzzystate->second = InvalidAttrNumber;
+			/* Clearly, distance is too low a bar (for *any* RTE) */
+			fuzzystate->distance = columndistance - 1;
+		}
+		else if (AttributeNumberIsValid(fuzzystate->first))
+		{
+			/* Record as provisional second match for RTE */
+			fuzzystate->rsecond = rte;
+			fuzzystate->second = attnum;
+		}
+		else if (fuzzystate->distance <= MAX_FUZZY_DISTANCE)
+		{
+			/*
+			 * Record as provisional first match (this can occasionally
+			 * occur because previous lowest distance was "too low a
+			 * bar", rather than being associated with a real match)
+			 */
+			fuzzystate->rfirst = rte;
+			fuzzystate->first = attnum;
+		}
+	}
+}
+
+/*
  * scanRTEForColumn
  *	  Search the column names of a single RTE for the given name.
  *	  If found, return an appropriate Var node, else return NULL.
@@ -527,10 +624,14 @@ GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte, int rtelevelsup)
  *
  * Side effect: if we find a match, mark the RTE as requiring read access
  * for the column.
+ *
+ * Additional side effect: if fuzzystate is non-NULL, check non-system columns
+ * for an approximate match and update fuzzystate accordingly.
  */
 Node *
 scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
-				 int location)
+				 int location, int fuzzy_rte_penalty,
+				 FuzzyAttrMatchState *fuzzystate)
 {
 	Node	   *result = NULL;
 	int			attnum = 0;
@@ -548,12 +649,16 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 	 * Should this somehow go wrong and we try to access a dropped column,
 	 * we'll still catch it by virtue of the checks in
 	 * get_rte_attribute_type(), which is called by make_var().  That routine
-	 * has to do a cache lookup anyway, so the check there is cheap.
+	 * has to do a cache lookup anyway, so the check there is cheap.  Callers
+	 * interested in finding match with shortest distance need to defend
+	 * against this directly, though.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
+		const char *attcolname = strVal(lfirst(c));
+
 		attnum++;
-		if (strcmp(strVal(lfirst(c)), colname) == 0)
+		if (strcmp(attcolname, colname) == 0)
 		{
 			if (result)
 				ereport(ERROR,
@@ -566,6 +671,11 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 			markVarForSelectPriv(pstate, var, rte);
 			result = (Node *) var;
 		}
+
+		/* Updating fuzzy match state, if provided. */
+		if (fuzzystate != NULL)
+			updateFuzzyAttrMatchState(fuzzy_rte_penalty, fuzzystate,
+									  rte, attcolname, colname, attnum);
 	}
 
 	/*
@@ -642,7 +752,8 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 				continue;
 
 			/* use orig_pstate here to get the right sublevels_up */
-			newresult = scanRTEForColumn(orig_pstate, rte, colname, location);
+			newresult = scanRTEForColumn(orig_pstate, rte, colname, location,
+										 0, NULL);
 
 			if (newresult)
 			{
@@ -668,8 +779,8 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 
 /*
  * searchRangeTableForCol
- *	  See if any RangeTblEntry could possibly provide the given column name.
- *	  If so, return a pointer to the RangeTblEntry; else return NULL.
+ *	  See if any RangeTblEntry could possibly provide the given column name (or
+ *	  find the best match available).  Returns state with relevant details.
  *
  * This is different from colNameToVar in that it considers every entry in
  * the ParseState's rangetable(s), not only those that are currently visible
@@ -677,11 +788,31 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
  * and it may give ambiguous results (there might be multiple equally valid
  * matches, but only one will be returned).  This must be used ONLY as a
  * heuristic in giving suitable error messages.  See errorMissingColumn.
+ *
+ * This function is also different in that it will consider approximate
+ * matches -- if the user entered an alias/column pair that is only slightly
+ * different from a valid pair, we may be able to infer what they meant to
+ * type and provide a reasonable hint.
+ *
+ * The FuzzyAttrMatchState will have 'rfirst' pointing to the best RTE
+ * containing the most promising match for the alias and column name.  If
+ * the alias and column names match exactly, 'first' will be InvalidAttrNumber;
+ * otherwise, it will be the attribute number for the match.  In the latter
+ * case, 'rsecond' may point to a second, equally close approximate match,
+ * and 'second' will contain the attribute number for the second match.
  */
-static RangeTblEntry *
-searchRangeTableForCol(ParseState *pstate, char *colname, int location)
+static FuzzyAttrMatchState *
+searchRangeTableForCol(ParseState *pstate, const char *alias, char *colname,
+					   int location)
 {
 	ParseState *orig_pstate = pstate;
+	FuzzyAttrMatchState *fuzzystate = palloc(sizeof(FuzzyAttrMatchState));
+
+	fuzzystate->distance = MAX_FUZZY_DISTANCE + 1;
+	fuzzystate->rfirst = NULL;
+	fuzzystate->rsecond = NULL;
+	fuzzystate->first = InvalidAttrNumber;
+	fuzzystate->second = InvalidAttrNumber;
 
 	while (pstate != NULL)
 	{
@@ -689,15 +820,51 @@ searchRangeTableForCol(ParseState *pstate, char *colname, int location)
 
 		foreach(l, pstate->p_rtable)
 		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+			RangeTblEntry	   *rte = (RangeTblEntry *) lfirst(l);
+			int					fuzzy_rte_penalty = 0;
 
-			if (scanRTEForColumn(orig_pstate, rte, colname, location))
-				return rte;
+			/*
+			 * Typically, it is not useful to look for matches within join
+			 * RTEs; they effectively duplicate other RTEs for our purposes,
+			 * and if a match is chosen from a join RTE, an unhelpful alias is
+			 * displayed in the final diagnostic message.
+			 */
+			if (rte->rtekind == RTE_JOIN)
+				continue;
+
+			/*
+			 * If the user didn't specify an alias, then matches against one
+			 * RTE are as good as another.  But if the user did specify an
+			 * alias, then we want at least a fuzzy - and preferably an exact
+			 * - match for the range table entry.
+			 */
+			if (alias != NULL)
+				fuzzy_rte_penalty =
+					varstr_levenshtein(alias, strlen(alias),
+									   rte->eref->aliasname,
+									   strlen(rte->eref->aliasname),
+									   1, 1, 1);
+
+			/*
+			 * Scan for a matching column; if we find an exact match, we're
+			 * done.  Otherwise, update fuzzystate.
+			 */
+			if (scanRTEForColumn(orig_pstate, rte, colname, location,
+								 fuzzy_rte_penalty, fuzzystate)
+					&& fuzzy_rte_penalty == 0)
+			{
+				fuzzystate->rfirst = rte;
+				fuzzystate->first = InvalidAttrNumber;
+				fuzzystate->rsecond = NULL;
+				fuzzystate->second = InvalidAttrNumber;
+				return fuzzystate;
+			}
 		}
 
 		pstate = pstate->parentParseState;
 	}
-	return NULL;
+
+	return fuzzystate;
 }
 
 /*
@@ -2860,34 +3027,67 @@ void
 errorMissingColumn(ParseState *pstate,
 				   char *relname, char *colname, int location)
 {
-	RangeTblEntry *rte;
+	FuzzyAttrMatchState	   *state;
+	char				   *closestfirst = NULL;
 
 	/*
-	 * If relname was given, just play dumb and report it.  (In practice, a
-	 * bad qualification name should end up at errorMissingRTE, not here, so
-	 * no need to work hard on this case.)
-	 */
-	if (relname)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column %s.%s does not exist", relname, colname),
-				 parser_errposition(pstate, location)));
-
-	/*
-	 * Otherwise, search the entire rtable looking for possible matches.  If
-	 * we find one, emit a hint about it.
+	 * Search the entire rtable looking for possible matches.  If we find one,
+	 * emit a hint about it.
 	 *
 	 * TODO: improve this code (and also errorMissingRTE) to mention using
 	 * LATERAL if appropriate.
 	 */
-	rte = searchRangeTableForCol(pstate, colname, location);
+	state = searchRangeTableForCol(pstate, relname, colname, location);
 
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("column \"%s\" does not exist", colname),
-			 rte ? errhint("There is a column named \"%s\" in table \"%s\", but it cannot be referenced from this part of the query.",
-						   colname, rte->eref->aliasname) : 0,
-			 parser_errposition(pstate, location)));
+	/*
+	 * Extract closest col string for best match, if any.
+	 *
+	 * Infer an exact match referenced despite not being visible from the fact
+	 * that an attribute number was not present in state passed back -- this is
+	 * what is reported when !closestfirst.  There might also be an exact match
+	 * that was qualified with an incorrect alias, in which case closestfirst
+	 * will be set (so hint is the same as generic fuzzy case).
+	 */
+	if (state->rfirst && AttributeNumberIsValid(state->first))
+		closestfirst = strVal(list_nth(state->rfirst->eref->colnames,
+									   state->first - 1));
+
+	if (!state->rsecond)
+	{
+		/*
+		 * Handle case where there is zero or one column suggestions to hint,
+		 * including exact matches referenced but not visible.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 relname ?
+				 errmsg("column %s.%s does not exist", relname, colname):
+				 errmsg("column \"%s\" does not exist", colname),
+				 state->rfirst ? closestfirst ?
+				 errhint("Perhaps you meant to reference the column \"%s\".\"%s\".",
+						 state->rfirst->eref->aliasname, closestfirst):
+				 errhint("There is a column named \"%s\" in table \"%s\", but it cannot be referenced from this part of the query.",
+						 colname, state->rfirst->eref->aliasname): 0,
+				 parser_errposition(pstate, location)));
+	}
+	else
+	{
+		/* Handle case where there are two equally useful column hints */
+		char				   *closestsecond;
+
+		closestsecond = strVal(list_nth(state->rsecond->eref->colnames,
+										state->second - 1));
+
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 relname ?
+				 errmsg("column %s.%s does not exist", relname, colname):
+				 errmsg("column \"%s\" does not exist", colname),
+				 errhint("Perhaps you meant to reference the column \"%s\".\"%s\" or the column \"%s\".\"%s\".",
+						 state->rfirst->eref->aliasname, closestfirst,
+						 state->rsecond->eref->aliasname, closestsecond),
+				 parser_errposition(pstate, location)));
+	}
 }
 
 

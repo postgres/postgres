@@ -1779,7 +1779,7 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 									 ((Var *) first_arg)->varno,
 									 ((Var *) first_arg)->varlevelsup);
 		/* Return a Var if funcname matches a column, else NULL */
-		return scanRTEForColumn(pstate, rte, funcname, location);
+		return scanRTEForColumn(pstate, rte, funcname, location, 0, NULL);
 	}
 
 	/*

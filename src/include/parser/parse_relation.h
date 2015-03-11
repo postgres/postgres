@@ -16,6 +16,24 @@
 
 #include "parser/parse_node.h"
 
+
+/*
+ * Support for fuzzily matching column.
+ *
+ * This is for building diagnostic messages, where non-exact matching
+ * attributes are suggested to the user.  The struct's fields may be facets of
+ * a particular RTE, or of an entire range table, depending on context.
+ */
+typedef struct
+{
+	int				distance;	/* Weighted distance (lowest so far) */
+	RangeTblEntry  *rfirst;		/* RTE of first */
+	AttrNumber		first;		/* Closest attribute so far */
+	RangeTblEntry  *rsecond;	/* RTE of second */
+	AttrNumber		second;		/* Second closest attribute so far */
+} FuzzyAttrMatchState;
+
+
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,
 					 const char *refname,
@@ -35,7 +53,8 @@ extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 extern CommonTableExpr *GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte,
 			 int rtelevelsup);
 extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
-				 char *colname, int location);
+				 char *colname, int location,
+				 int fuzzy_rte_penalty, FuzzyAttrMatchState *fuzzystate);
 extern Node *colNameToVar(ParseState *pstate, char *colname, bool localonly,
 			 int location);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,

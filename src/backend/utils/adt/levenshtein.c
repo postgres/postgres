@@ -95,6 +95,15 @@ varstr_levenshtein(const char *source, int slen, const char *target, int tlen,
 #define STOP_COLUMN m
 #endif
 
+	/*
+	 * A common use for Levenshtein distance is to match attributes when building
+	 * diagnostic, user-visible messages.  Restrict the size of
+	 * MAX_LEVENSHTEIN_STRLEN at compile time so that this is guaranteed to
+	 * work.
+	 */
+	StaticAssertStmt(NAMEDATALEN <= MAX_LEVENSHTEIN_STRLEN,
+					 "Levenshtein hinting mechanism restricts NAMEDATALEN");
+
 	m = pg_mbstrlen_with_len(source, slen);
 	n = pg_mbstrlen_with_len(target, tlen);
 

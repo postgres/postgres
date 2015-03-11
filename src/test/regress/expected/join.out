@@ -2222,6 +2222,12 @@ select * from t1 left join t2 on (t1.a = t2.a);
  200 | 1000 | 200 | 2001
 (5 rows)
 
+-- Test matching of column name with wrong alias
+select t1.x from t1 join t3 on (t1.a = t3.x);
+ERROR:  column t1.x does not exist
+LINE 1: select t1.x from t1 join t3 on (t1.a = t3.x);
+               ^
+HINT:  Perhaps you meant to reference the column "t3"."x".
 --
 -- regression test for 8.1 merge right join bug
 --
@@ -3433,6 +3439,38 @@ select * from
 ----+----+----+----
 (0 rows)
 
+--
+-- Test hints given on incorrect column references are useful
+--
+select t1.uunique1 from
+  tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, prefer "t1" suggestipn
+ERROR:  column t1.uunique1 does not exist
+LINE 1: select t1.uunique1 from
+               ^
+HINT:  Perhaps you meant to reference the column "t1"."unique1".
+select t2.uunique1 from
+  tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, prefer "t2" suggestion
+ERROR:  column t2.uunique1 does not exist
+LINE 1: select t2.uunique1 from
+               ^
+HINT:  Perhaps you meant to reference the column "t2"."unique1".
+select uunique1 from
+  tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, suggest both at once
+ERROR:  column "uunique1" does not exist
+LINE 1: select uunique1 from
+               ^
+HINT:  Perhaps you meant to reference the column "t1"."unique1" or the column "t2"."unique1".
+--
+-- Take care to reference the correct RTE
+--
+select atts.relid::regclass, s.* from pg_stats s join
+    pg_attribute a on s.attname = a.attname and s.tablename =
+    a.attrelid::regclass::text join (select unnest(indkey) attnum,
+    indexrelid from pg_index i) atts on atts.attnum = a.attnum where
+    schemaname != 'pg_catalog';
+ERROR:  column atts.relid does not exist
+LINE 1: select atts.relid::regclass, s.* from pg_stats s join
+               ^
 --
 -- Test LATERAL
 --
