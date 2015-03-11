@@ -29,6 +29,7 @@ my $libpgcommon;
 my $postgres;
 my $libpq;
 
+# Set of variables for contrib modules
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq =
   ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 'postgres_fdw', 'vacuumlo');
@@ -48,10 +49,24 @@ my $contrib_extralibs = { 'pgbench' => ['ws2_32.lib'] };
 my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
-	'cube' => [ 'cubescan.l', 'cubeparse.y' ],
-	'pgbench' => [ 'exprscan.l', 'exprparse.y' ],
-	'seg'  => [ 'segscan.l',  'segparse.y' ], };
+	'cube' => [ 'contrib\cube\cubescan.l', 'contrib\cube\cubeparse.y' ],
+	'pgbench' =>
+	  [ 'contrib\pgbench\exprscan.l', 'contrib\pgbench\exprparse.y' ],
+	'seg' => [ 'contrib\seg\segscan.l', 'contrib\seg\segparse.y' ], };
 my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
+
+# Set of variables for frontend modules
+my $frontend_defines = { 'initdb' => 'FRONTEND' };
+my @frontend_uselibpq = ('pg_ctl', 'psql');
+my $frontend_extralibs = {
+	'initdb'     => ['ws2_32.lib'],
+	'pg_restore' => ['ws2_32.lib'],
+	'psql'       => ['ws2_32.lib'] };
+my $frontend_extraincludes = {
+	'initdb' => ['src\timezone'],
+	'psql'   => [ 'src\bin\pg_dump', 'src\backend' ] };
+my $frontend_extrasource = { 'psql' => ['src\bin\psql\psqlscan.l'] };
+my @frontend_excludes = ('pgevent', 'pg_basebackup', 'pg_dump', 'scripts');
 
 sub mkvcbuild
 {
@@ -108,6 +123,7 @@ sub mkvcbuild
 	$postgres->AddFiles('src\port',   @pgportfiles);
 	$postgres->AddFiles('src\common', @pgcommonbkndfiles);
 	$postgres->AddDir('src\timezone');
+
 	# We need source files from src\timezone, but that directory's resource
 	# file pertains to "zic", not to the backend.
 	$postgres->RemoveFile('src\timezone\win32ver.rc');
@@ -122,8 +138,9 @@ sub mkvcbuild
 	$postgres->AddLibrary('ws2_32.lib');
 	$postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
 	$postgres->FullExportDLL('postgres.lib');
-	# The OBJS scraper doesn't know about ifdefs, so remove be-secure-openssl.c
-	# if building without OpenSSL
+
+   # The OBJS scraper doesn't know about ifdefs, so remove be-secure-openssl.c
+   # if building without OpenSSL
 	if (!$solution->{options}->{openssl})
 	{
 		$postgres->RemoveFile('src\backend\libpq\be-secure-openssl.c');
@@ -131,6 +148,7 @@ sub mkvcbuild
 
 	my $snowball = $solution->AddProject('dict_snowball', 'dll', '',
 		'src\backend\snowball');
+
 	# This Makefile uses VPATH to find most source files in a subdirectory.
 	$snowball->RelocateFiles(
 		'src\backend\snowball\libstemmer',
@@ -288,8 +306,9 @@ sub mkvcbuild
 	$libpq->ReplaceFile('src\interfaces\libpq\libpqrc.c',
 		'src\interfaces\libpq\libpq.rc');
 	$libpq->AddReference($libpgport);
-	# The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
-	# if building without OpenSSL
+
+   # The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
+   # if building without OpenSSL
 	if (!$solution->{options}->{openssl})
 	{
 		$libpq->RemoveFile('src\interfaces\libpq\fe-secure-openssl.c');
@@ -380,11 +399,15 @@ sub mkvcbuild
 	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
 
 	# src/bin
-	my $initdb = AddSimpleFrontend('initdb');
-	$initdb->AddIncludeDir('src\interfaces\libpq');
-	$initdb->AddIncludeDir('src\timezone');
-	$initdb->AddDefine('FRONTEND');
-	$initdb->AddLibrary('ws2_32.lib');
+	my $D;
+	opendir($D, 'src/bin') || croak "Could not opendir on src/bin!\n";
+	while (my $d = readdir($D))
+	{
+		next if ($d =~ /^\./);
+		next unless (-f "src/bin/$d/Makefile");
+		next if (grep { /^$d$/ } @frontend_excludes);
+		AddSimpleFrontend($d);
+	}
 
 	my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
 	$pgbasebackup->AddFile('src\bin\pg_basebackup\pg_basebackup.c');
@@ -400,14 +423,6 @@ sub mkvcbuild
 	$pgrecvlogical->AddFile('src\bin\pg_basebackup\pg_recvlogical.c');
 	$pgrecvlogical->AddLibrary('ws2_32.lib');
 
-	my $pgconfig = AddSimpleFrontend('pg_config');
-
-	my $pgcontrol = AddSimpleFrontend('pg_controldata');
-
-	my $pgctl = AddSimpleFrontend('pg_ctl', 1);
-
-	my $pgreset = AddSimpleFrontend('pg_resetxlog');
-
 	my $pgevent = $solution->AddProject('pgevent', 'dll', 'bin');
 	$pgevent->AddFiles('src\bin\pgevent', 'pgevent.c', 'pgmsgevent.rc');
 	$pgevent->AddResourceFile('src\bin\pgevent', 'Eventlog message formatter',
@@ -415,12 +430,6 @@ sub mkvcbuild
 	$pgevent->RemoveFile('src\bin\pgevent\win32ver.rc');
 	$pgevent->UseDef('src\bin\pgevent\pgevent.def');
 	$pgevent->DisableLinkerWarnings('4104');
-
-	my $psql = AddSimpleFrontend('psql', 1);
-	$psql->AddIncludeDir('src\bin\pg_dump');
-	$psql->AddIncludeDir('src\backend');
-	$psql->AddFile('src\bin\psql\psqlscan.l');
-	$psql->AddLibrary('ws2_32.lib');
 
 	my $pgdump = AddSimpleFrontend('pg_dump', 1);
 	$pgdump->AddIncludeDir('src\backend');
@@ -532,7 +541,6 @@ sub mkvcbuild
 	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
 	GenerateContribSqlFiles('pgcrypto', $mf);
 
-	my $D;
 	opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";
 	while (my $d = readdir($D))
 	{
@@ -652,6 +660,10 @@ sub AddSimpleFrontend
 		$p->AddIncludeDir('src\interfaces\libpq');
 		$p->AddReference($libpq);
 	}
+
+	# Adjust module definition using frontent variables
+	AdjustFrontendProj($p);
+
 	return $p;
 }
 
@@ -729,7 +741,7 @@ sub GenerateContribSqlFiles
 				print "Building $out from $in (contrib/$n)...\n";
 				my $cont = Project::read_file("contrib/$n/$in");
 				my $dn   = $out;
-				$dn   =~ s/\.sql$//;
+				$dn =~ s/\.sql$//;
 				$cont =~ s/MODULE_PATHNAME/\$libdir\/$dn/g;
 				my $o;
 				open($o, ">contrib/$n/$out")
@@ -744,45 +756,74 @@ sub GenerateContribSqlFiles
 sub AdjustContribProj
 {
 	my $proj = shift;
-	my $n    = $proj->{name};
+	AdjustModule(
+		$proj,                    $contrib_defines,
+		\@contrib_uselibpq,       \@contrib_uselibpgport,
+		\@contrib_uselibpgcommon, $contrib_extralibs,
+		$contrib_extrasource,     $contrib_extraincludes);
+}
 
-	if ($contrib_defines->{$n})
+sub AdjustFrontendProj
+{
+	my $proj = shift;
+	AdjustModule($proj, $frontend_defines, \@frontend_uselibpq, undef,
+		undef, $frontend_extralibs,
+		$frontend_extrasource, $frontend_extraincludes);
+}
+
+sub AdjustModule
+{
+	my $proj                  = shift;
+	my $module_defines        = shift;
+	my $module_uselibpq       = shift;
+	my $module_uselibpgport   = shift;
+	my $module_uselibpgcommon = shift;
+	my $module_extralibs      = shift;
+	my $module_extrasource    = shift;
+	my $module_extraincludes  = shift;
+	my $n                     = $proj->{name};
+
+	if ($module_defines->{$n})
 	{
-		foreach my $d ($contrib_defines->{$n})
+		foreach my $d ($module_defines->{$n})
 		{
 			$proj->AddDefine($d);
 		}
 	}
-	if (grep { /^$n$/ } @contrib_uselibpq)
+	if (grep { /^$n$/ } @{$module_uselibpq})
 	{
 		$proj->AddIncludeDir('src\interfaces\libpq');
 		$proj->AddReference($libpq);
 	}
-	if (grep { /^$n$/ } @contrib_uselibpgport)
+	if (grep { /^$n$/ } @{$module_uselibpgport})
 	{
 		$proj->AddReference($libpgport);
 	}
-	if (grep { /^$n$/ } @contrib_uselibpgcommon)
+	if (grep { /^$n$/ } @{$module_uselibpgcommon})
 	{
 		$proj->AddReference($libpgcommon);
 	}
-	if ($contrib_extralibs->{$n})
+	if ($module_extralibs->{$n})
 	{
-		foreach my $l (@{ $contrib_extralibs->{$n} })
+		foreach my $l (@{ $module_extralibs->{$n} })
 		{
 			$proj->AddLibrary($l);
 		}
 	}
-	if ($contrib_extraincludes->{$n})
+	if ($module_extraincludes->{$n})
 	{
-		foreach my $i (@{ $contrib_extraincludes->{$n} })
+		foreach my $i (@{ $module_extraincludes->{$n} })
 		{
 			$proj->AddIncludeDir($i);
 		}
 	}
-	if ($contrib_extrasource->{$n})
+	if ($module_extrasource->{$n})
 	{
-		$proj->AddFiles('contrib\\' . $n, @{ $contrib_extrasource->{$n} });
+		foreach my $i (@{ $module_extrasource->{$n} })
+		{
+			print "Files $i\n";
+			$proj->AddFile($i);
+		}
 	}
 }
 
