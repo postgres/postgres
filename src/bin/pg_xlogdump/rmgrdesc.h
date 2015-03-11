@@ -3,7 +3,7 @@
  *
  * pg_xlogdump resource managers declaration
  *
- * contrib/pg_xlogdump/rmgrdesc.h
+ * src/bin/pg_xlogdump/rmgrdesc.h
  */
 #ifndef RMGRDESC_H
 #define RMGRDESC_H

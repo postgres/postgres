@@ -35,12 +35,10 @@ my @contrib_uselibpq =
 my @contrib_uselibpgport = (
 	'oid2name',
 	'pg_standby',
-	'pg_xlogdump',
 	'vacuumlo');
 my @contrib_uselibpgcommon = (
 	'oid2name',
 	'pg_standby',
-	'pg_xlogdump',
 	'vacuumlo');
 my $contrib_extralibs = undef;
 my $contrib_extraincludes =
@@ -53,8 +51,8 @@ my @contrib_excludes = ('pgcrypto', 'commit_ts', 'intagg', 'sepgsql');
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
 my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql');
-my @frontend_uselibpgport = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pgbench' );
-my @frontend_uselibpgcommon = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pgbench' );
+my @frontend_uselibpgport = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pg_xlogdump', 'pgbench' );
+my @frontend_uselibpgcommon = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pg_xlogdump', 'pgbench' );
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
@@ -69,7 +67,7 @@ my $frontend_extrasource = {
 		[ 'src\bin\pgbench\exprscan.l', 'src\bin\pgbench\exprparse.y' ],
 };
 my @frontend_excludes =
-  ('pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump', 'scripts');
+  ('pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump', 'pg_xlogdump', 'scripts');
 
 sub mkvcbuild
 {
@@ -648,9 +646,7 @@ sub mkvcbuild
 
 	# fix up pg_xlogdump once it's been set up
 	# files symlinked on Unix are copied on windows
-	my $pg_xlogdump =
-	  (grep { $_->{name} eq 'pg_xlogdump' }
-		  @{ $solution->{projects}->{contrib} })[0];
+	my $pg_xlogdump = AddSimpleFrontend('pg_xlogdump');
 	$pg_xlogdump->AddDefine('FRONTEND');
 	foreach my $xf (glob('src\\backend\\access\\rmgrdesc\\*desc.c'))
 	{

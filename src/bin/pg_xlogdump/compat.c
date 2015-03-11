@@ -6,7 +6,7 @@
  * Portions Copyright (c) 2013-2015, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		contrib/pg_xlogdump/compat.c
+ *		src/bin/pg_xlogdump/compat.c
  *
  * This file contains client-side implementations for various backend
  * functions that the rm_desc functions in *desc.c files rely on.

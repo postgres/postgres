@@ -3,7 +3,7 @@
  *
  * pg_xlogdump resource managers definition
  *
- * contrib/pg_xlogdump/rmgrdesc.c
+ * src/bin/pg_xlogdump/rmgrdesc.c
  */
 #define FRONTEND 1
 #include "postgres.h"

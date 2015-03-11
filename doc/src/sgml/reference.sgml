@@ -266,6 +266,7 @@
    &pgtestfsync;
    &pgtesttiming;
    &pgupgrade;
+   &pgxlogdump;
    &postgres;
    &postmaster;
 
