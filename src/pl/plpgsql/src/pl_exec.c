@@ -2197,10 +2197,6 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 		elog(ERROR, "could not open cursor: %s",
 			 SPI_result_code_string(SPI_result));
 
-	/* don't need paramlist any more */
-	if (paramLI)
-		pfree(paramLI);
-
 	/*
 	 * If cursor variable was NULL, store the generated portal name in it
 	 */
@@ -3169,6 +3165,16 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->datums = palloc(sizeof(PLpgSQL_datum *) * estate->ndatums);
 	/* caller is expected to fill the datums array */
 
+	/* initialize ParamListInfo with one entry per datum, all invalid */
+	estate->paramLI = (ParamListInfo)
+		palloc0(offsetof(ParamListInfoData, params) +
+				estate->ndatums * sizeof(ParamExternData));
+	estate->paramLI->paramFetch = plpgsql_param_fetch;
+	estate->paramLI->paramFetchArg = (void *) estate;
+	estate->paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
+	estate->paramLI->parserSetupArg = NULL;		/* filled during use */
+	estate->paramLI->numParams = estate->ndatums;
+
 	/* set up for use of appropriate simple-expression EState */
 	if (simple_eval_estate)
 		estate->simple_eval_estate = simple_eval_estate;
@@ -3179,7 +3185,6 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->eval_processed = 0;
 	estate->eval_lastoid = InvalidOid;
 	estate->eval_econtext = NULL;
-	estate->cur_expr = NULL;
 
 	estate->err_stmt = NULL;
 	estate->err_text = NULL;
@@ -3494,9 +3499,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 					 errmsg("query has no destination for result data"),
 					 (rc == SPI_OK_SELECT) ? errhint("If you want to discard the results of a SELECT, use PERFORM instead.") : 0));
 	}
-
-	if (paramLI)
-		pfree(paramLI);
 
 	return PLPGSQL_RC_OK;
 }
@@ -3864,8 +3866,6 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 
 	if (curname)
 		pfree(curname);
-	if (paramLI)
-		pfree(paramLI);
 
 	return PLPGSQL_RC_OK;
 }
@@ -4050,7 +4050,7 @@ exec_assign_c_string(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 
 
 /* ----------
- * exec_assign_value			Put a value into a target field
+ * exec_assign_value			Put a value into a target datum
  *
  * Note: in some code paths, this will leak memory in the eval_econtext;
  * we assume that will be cleaned up later by exec_eval_cleanup.  We cannot
@@ -4909,8 +4909,6 @@ exec_run_select(PLpgSQL_execstate *estate,
 		if (*portalP == NULL)
 			elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				 expr->query, SPI_result_code_string(SPI_result));
-		if (paramLI)
-			pfree(paramLI);
 		return SPI_OK_CURSOR;
 	}
 
@@ -4929,9 +4927,6 @@ exec_run_select(PLpgSQL_execstate *estate,
 	estate->eval_tuptable = SPI_tuptable;
 	estate->eval_processed = SPI_processed;
 	estate->eval_lastoid = SPI_lastoid;
-
-	if (paramLI)
-		pfree(paramLI);
 
 	return rc;
 }
@@ -5140,7 +5135,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	LocalTransactionId curlxid = MyProc->lxid;
 	CachedPlan *cplan;
 	ParamListInfo paramLI;
-	PLpgSQL_expr *save_cur_expr;
+	void	   *save_setup_arg;
 	MemoryContext oldcontext;
 
 	/*
@@ -5216,14 +5211,10 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * Create the param list in econtext's temporary memory context. We won't
-	 * need to free it explicitly, since it will go away at the next reset of
-	 * that context.
-	 *
-	 * Just for paranoia's sake, save and restore the prior value of
-	 * estate->cur_expr, which setup_param_list() sets.
+	 * Set up param list.  For safety, save and restore
+	 * estate->paramLI->parserSetupArg around our use of the param list.
 	 */
-	save_cur_expr = estate->cur_expr;
+	save_setup_arg = estate->paramLI->parserSetupArg;
 
 	paramLI = setup_param_list(estate, expr);
 	econtext->ecxt_param_list_info = paramLI;
@@ -5244,7 +5235,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	/* Assorted cleanup */
 	expr->expr_simple_in_use = false;
 
-	estate->cur_expr = save_cur_expr;
+	estate->paramLI->parserSetupArg = save_setup_arg;
 
 	if (!estate->readonly_func)
 		PopActiveSnapshot();
@@ -5268,6 +5259,15 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 /*
  * Create a ParamListInfo to pass to SPI
  *
+ * We share a single ParamListInfo array across all SPI calls made from this
+ * estate.  This is generally OK since any given slot in the array would
+ * need to contain the same current datum value no matter which query or
+ * expression we're evaluating.  However, paramLI->parserSetupArg points to
+ * the specific PLpgSQL_expr being evaluated.  This is not an issue for
+ * statement-level callers, but lower-level callers should save and restore
+ * estate->paramLI->parserSetupArg just in case there's an active evaluation
+ * at an outer call level.
+ *
  * We fill in the values for any expression parameters that are plain
  * PLpgSQL_var datums; these are cheap and safe to evaluate, and by setting
  * them with PARAM_FLAG_CONST flags, we allow the planner to use those values
@@ -5277,9 +5277,6 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
  * the expression that might never be evaluated at runtime.  To handle those
  * parameters, we set up a paramFetch hook for the executor to call when it
  * wants a not-presupplied value.
- *
- * The result is a locally palloc'd array that should be pfree'd after use;
- * but note it can be NULL.
  */
 static ParamListInfo
 setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
@@ -5293,22 +5290,28 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	Assert(expr->plan != NULL);
 
 	/*
-	 * Could we re-use these arrays instead of palloc'ing a new one each time?
-	 * However, we'd have to re-fill the array each time anyway, since new
-	 * values might have been assigned to the variables.
+	 * We only need a ParamListInfo if the expression has parameters.  In
+	 * principle we should test with bms_is_empty(), but we use a not-null
+	 * test because it's faster.  In current usage bits are never removed from
+	 * expr->paramnos, only added, so this test is correct anyway.
 	 */
-	if (!bms_is_empty(expr->paramnos))
+	if (expr->paramnos)
 	{
 		int			dno;
 
-		paramLI = (ParamListInfo)
-			palloc0(offsetof(ParamListInfoData, params) +
-					estate->ndatums * sizeof(ParamExternData));
-		paramLI->paramFetch = plpgsql_param_fetch;
-		paramLI->paramFetchArg = (void *) estate;
-		paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
-		paramLI->parserSetupArg = (void *) expr;
-		paramLI->numParams = estate->ndatums;
+		/* Use the common ParamListInfo for all evals in this estate */
+		paramLI = estate->paramLI;
+
+		/*
+		 * Reset all entries to "invalid".  It's pretty annoying to have to do
+		 * this, but we don't currently track enough information to know which
+		 * old entries might be obsolete.  (There are a couple of nontrivial
+		 * issues that would have to be dealt with in order to do better here.
+		 * First, ROW and RECFIELD datums depend on other datums, and second,
+		 * exec_eval_datum() will return short-lived palloc'd values for ROW
+		 * and REC datums.)
+		 */
+		MemSet(paramLI->params, 0, estate->ndatums * sizeof(ParamExternData));
 
 		/* Instantiate values for "safe" parameters of the expression */
 		dno = -1;
@@ -5330,10 +5333,10 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 
 		/*
 		 * Set up link to active expr where the hook functions can find it.
-		 * Callers must save and restore cur_expr if there is any chance that
-		 * they are interrupting an active use of parameters.
+		 * Callers must save and restore parserSetupArg if there is any chance
+		 * that they are interrupting an active use of parameters.
 		 */
-		estate->cur_expr = expr;
+		paramLI->parserSetupArg = (void *) expr;
 
 		/*
 		 * Also make sure this is set before parser hooks need it.  There is
@@ -5373,7 +5376,7 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 
 	/* fetch back the hook data */
 	estate = (PLpgSQL_execstate *) params->paramFetchArg;
-	expr = estate->cur_expr;
+	expr = (PLpgSQL_expr *) params->parserSetupArg;
 	Assert(params->numParams == estate->ndatums);
 
 	/*

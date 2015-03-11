@@ -784,6 +784,9 @@ typedef struct PLpgSQL_execstate
 	int			ndatums;
 	PLpgSQL_datum **datums;
 
+	/* we pass datums[i] to the executor, when needed, in paramLI->params[i] */
+	ParamListInfo paramLI;
+
 	/* EState to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;
 
@@ -792,7 +795,6 @@ typedef struct PLpgSQL_execstate
 	uint32		eval_processed;
 	Oid			eval_lastoid;
 	ExprContext *eval_econtext; /* for executing simple expressions */
-	PLpgSQL_expr *cur_expr;		/* current query/expr being evaluated */
 
 	/* status information for error context reporting */
 	PLpgSQL_stmt *err_stmt;		/* current stmt */
