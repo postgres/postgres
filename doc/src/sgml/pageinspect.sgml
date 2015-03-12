@@ -192,6 +192,21 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
           7 | (0,7)   |      12 | f     | f    | 29 27 00 00
           8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
 </screen>
+      In a B-tree leaf page, <structfield>ctid</> points to a heap tuple.
+      In an internal page, the block number part of <structfield>ctid</>
+      points to another page in the index itself, while the offset part
+      (the second number) is ignored and is usually 1.
+     </para>
+     <para>
+      Note that the first item on any non-rightmost page (any page with
+      a non-zero value in the <structfield>btpo_next</> field) is the
+      page's <quote>high key</quote>, meaning its <structfield>data</>
+      serves as an upper bound on all items appearing on the page, while
+      its <structfield>ctid</> field is meaningless.  Also, on non-leaf
+      pages, the first real data item (the first item that is not a high
+      key) is a <quote>minus infinity</quote> item, with no actual value
+      in its <structfield>data</> field.  Such an item does have a valid
+      downlink in its <structfield>ctid</> field, however.
      </para>
     </listitem>
    </varlistentry>
@@ -369,8 +384,7 @@ test=# SELECT * FROM gin_page_opaque_info(get_raw_page('gin_index', 2));
 <screen>
  test=# SELECT first_tid, nbytes, tids[0:5] as some_tids
         FROM gin_leafpage_items(get_raw_page('gin_test_idx', 2));
- first_tid | nbytes |                        some_tids                       
-  
+ first_tid | nbytes |                        some_tids
 -----------+--------+----------------------------------------------------------
  (8,41)    |    244 | {"(8,41)","(8,43)","(8,44)","(8,45)","(8,46)"}
  (10,45)   |    248 | {"(10,45)","(10,46)","(10,47)","(10,48)","(10,49)"}
