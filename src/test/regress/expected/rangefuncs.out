@@ -2034,7 +2034,7 @@ select x from int8_tbl, extractq2(int8_tbl) f(x);
 (5 rows)
 
 create function extractq2_2(t int8_tbl) returns table(ret1 int8) as $$
-  select extractq2(t)
+  select extractq2(t) offset 0
 $$ language sql immutable;
 explain (verbose, costs off)
 select x from int8_tbl, extractq2_2(int8_tbl) f(x);
@@ -2049,6 +2049,28 @@ select x from int8_tbl, extractq2_2(int8_tbl) f(x);
 (6 rows)
 
 select x from int8_tbl, extractq2_2(int8_tbl) f(x);
+         x         
+-------------------
+               456
+  4567890123456789
+               123
+  4567890123456789
+ -4567890123456789
+(5 rows)
+
+-- without the "offset 0", this function gets optimized quite differently
+create function extractq2_2_opt(t int8_tbl) returns table(ret1 int8) as $$
+  select extractq2(t)
+$$ language sql immutable;
+explain (verbose, costs off)
+select x from int8_tbl, extractq2_2_opt(int8_tbl) f(x);
+         QUERY PLAN          
+-----------------------------
+ Seq Scan on public.int8_tbl
+   Output: int8_tbl.q2
+(2 rows)
+
+select x from int8_tbl, extractq2_2_opt(int8_tbl) f(x);
          x         
 -------------------
                456

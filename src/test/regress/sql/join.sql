@@ -1137,6 +1137,13 @@ explain (costs off)
 select count(*) from tenk1 a,
   tenk1 b join lateral (values(a.unique1)) ss(x) on b.unique2 = ss.x;
 
+-- lateral with VALUES, no flattening possible
+explain (costs off)
+  select count(*) from tenk1 a,
+    tenk1 b join lateral (values(a.unique1),(-1)) ss(x) on b.unique2 = ss.x;
+select count(*) from tenk1 a,
+  tenk1 b join lateral (values(a.unique1),(-1)) ss(x) on b.unique2 = ss.x;
+
 -- lateral injecting a strange outer join condition
 explain (costs off)
   select * from int8_tbl a,
@@ -1247,7 +1254,7 @@ select * from
     cross join
     lateral (select q1, coalesce(ss1.x,q2) as y from int8_tbl d) ss2
   ) on c.q2 = ss2.q1,
-  lateral (select ss2.y) ss3;
+  lateral (select ss2.y offset 0) ss3;
 
 -- case that breaks the old ph_may_need optimization
 explain (verbose, costs off)
@@ -1265,9 +1272,9 @@ select c.*,a.*,ss1.q1,ss2.q1,ss3.* from
 -- check processing of postponed quals (bug #9041)
 explain (verbose, costs off)
 select * from
-  (select 1 as x) x cross join (select 2 as y) y
+  (select 1 as x offset 0) x cross join (select 2 as y offset 0) y
   left join lateral (
-    select * from (select 3 as z) z where z.z = x.x
+    select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
 
 -- test some error cases where LATERAL should have been used but wasn't

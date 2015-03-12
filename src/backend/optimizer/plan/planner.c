@@ -352,8 +352,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * Check to see if any subqueries in the jointree can be merged into this
 	 * query.
 	 */
-	parse->jointree = (FromExpr *)
-		pull_up_subqueries(root, (Node *) parse->jointree);
+	pull_up_subqueries(root);
 
 	/*
 	 * If this is a simple UNION ALL query, flatten it into an appendrel. We
