@@ -2335,7 +2335,9 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			/* build a temporary HeapTuple control structure */
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
 			ItemPointerSetInvalid(&(tuple.t_self));
-			tuple.t_tableOid = InvalidOid;
+			/* relation might be a foreign table, if so provide tableoid */
+			tuple.t_tableOid = getrelid(erm->rti,
+										epqstate->estate->es_range_table);
 			tuple.t_data = td;
 
 			/* copy and store tuple */
