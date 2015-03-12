@@ -432,27 +432,32 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 		else if (GinGetNPosting(itup) > 0)
 		{
 			int			nitems;
-			ItemPointer uncompressed;
+			ItemPointer items_orig;
+			bool		free_items_orig;
+			ItemPointer items;
 
-			/*
-			 * Vacuum posting list with proper function for compressed and
-			 * uncompressed format.
-			 */
+			/* Get list of item pointers from the tuple. */
 			if (GinItupIsCompressed(itup))
-				uncompressed = ginPostingListDecode((GinPostingList *) GinGetPosting(itup), &nitems);
+			{
+				items_orig = ginPostingListDecode((GinPostingList *) GinGetPosting(itup), &nitems);
+				free_items_orig = true;
+			}
 			else
 			{
-				uncompressed = (ItemPointer) GinGetPosting(itup);
+				items_orig = (ItemPointer) GinGetPosting(itup);
 				nitems = GinGetNPosting(itup);
+				free_items_orig = false;
 			}
 
-			uncompressed = ginVacuumItemPointers(gvs, uncompressed, nitems,
-												 &nitems);
-			if (uncompressed)
+			/* Remove any items from the list that need to be vacuumed. */
+			items = ginVacuumItemPointers(gvs, items_orig, nitems, &nitems);
+
+			if (free_items_orig)
+				pfree(items_orig);
+
+			/* If any item pointers were removed, recreate the tuple. */
+			if (items)
 			{
-				/*
-				 * Some ItemPointers were deleted, recreate tuple.
-				 */
 				OffsetNumber attnum;
 				Datum		key;
 				GinNullCategory category;
@@ -461,7 +466,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 
 				if (nitems > 0)
 				{
-					plist = ginCompressPostingList(uncompressed, nitems, GinMaxItemSize, NULL);
+					plist = ginCompressPostingList(items, nitems, GinMaxItemSize, NULL);
 					plistsize = SizeOfGinPostingList(plist);
 				}
 				else
@@ -500,6 +505,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 						 RelationGetRelationName(gvs->index));
 
 				pfree(itup);
+				pfree(items);
 			}
 		}
 	}
