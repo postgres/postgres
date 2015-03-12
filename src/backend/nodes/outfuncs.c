@@ -1945,7 +1945,10 @@ _outSpecialJoinInfo(StringInfo str, const SpecialJoinInfo *node)
 	WRITE_ENUM_FIELD(jointype, JoinType);
 	WRITE_BOOL_FIELD(lhs_strict);
 	WRITE_BOOL_FIELD(delay_upper_joins);
-	WRITE_NODE_FIELD(join_quals);
+	WRITE_BOOL_FIELD(semi_can_btree);
+	WRITE_BOOL_FIELD(semi_can_hash);
+	WRITE_NODE_FIELD(semi_operators);
+	WRITE_NODE_FIELD(semi_rhs_exprs);
 }
 
 static void

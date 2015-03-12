@@ -1942,7 +1942,10 @@ _copySpecialJoinInfo(const SpecialJoinInfo *from)
 	COPY_SCALAR_FIELD(jointype);
 	COPY_SCALAR_FIELD(lhs_strict);
 	COPY_SCALAR_FIELD(delay_upper_joins);
-	COPY_NODE_FIELD(join_quals);
+	COPY_SCALAR_FIELD(semi_can_btree);
+	COPY_SCALAR_FIELD(semi_can_hash);
+	COPY_NODE_FIELD(semi_operators);
+	COPY_NODE_FIELD(semi_rhs_exprs);
 
 	return newnode;
 }

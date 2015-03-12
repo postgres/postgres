@@ -101,8 +101,7 @@ typedef struct PlannerGlobal
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
-	bool		hasRowSecurity;	/* row security applied? */
-
+	bool		hasRowSecurity; /* row security applied? */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -1374,11 +1373,13 @@ typedef struct PlaceHolderVar
  * commute with this join, because that would leave noplace to check the
  * pushed-down clause.  (We don't track this for FULL JOINs, either.)
  *
- * join_quals is an implicit-AND list of the quals syntactically associated
- * with the join (they may or may not end up being applied at the join level).
- * This is just a side list and does not drive actual application of quals.
- * For JOIN_SEMI joins, this is cleared to NIL in create_unique_path() if
- * the join is found not to be suitable for a uniqueify-the-RHS plan.
+ * For a semijoin, we also extract the join operators and their RHS arguments
+ * and set semi_operators, semi_rhs_exprs, semi_can_btree, and semi_can_hash.
+ * This is done in support of possibly unique-ifying the RHS, so we don't
+ * bother unless at least one of semi_can_btree and semi_can_hash can be set
+ * true.  (You might expect that this information would be computed during
+ * join planning; but it's helpful to have it available during planning of
+ * parameterized table scans, so we store it in the SpecialJoinInfo structs.)
  *
  * jointype is never JOIN_RIGHT; a RIGHT JOIN is handled by switching
  * the inputs to make it a LEFT JOIN.  So the allowed values of jointype
@@ -1391,7 +1392,7 @@ typedef struct PlaceHolderVar
  * SpecialJoinInfos with jointype == JOIN_INNER for outer joins, since for
  * cost estimation purposes it is sometimes useful to know the join size under
  * plain innerjoin semantics.  Note that lhs_strict, delay_upper_joins, and
- * join_quals are not set meaningfully within such structs.
+ * of course the semi_xxx fields are not set meaningfully within such structs.
  */
 
 typedef struct SpecialJoinInfo
@@ -1404,7 +1405,11 @@ typedef struct SpecialJoinInfo
 	JoinType	jointype;		/* always INNER, LEFT, FULL, SEMI, or ANTI */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
 	bool		delay_upper_joins;		/* can't commute with upper RHS */
-	List	   *join_quals;		/* join quals, in implicit-AND list format */
+	/* Remaining fields are set only for JOIN_SEMI jointype: */
+	bool		semi_can_btree; /* true if semi_operators are all btree */
+	bool		semi_can_hash;	/* true if semi_operators are all hash */
+	List	   *semi_operators; /* OIDs of equality join operators */
+	List	   *semi_rhs_exprs; /* righthand-side expressions of these ops */
 } SpecialJoinInfo;
 
 /*

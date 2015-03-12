@@ -798,7 +798,10 @@ _equalSpecialJoinInfo(const SpecialJoinInfo *a, const SpecialJoinInfo *b)
 	COMPARE_SCALAR_FIELD(jointype);
 	COMPARE_SCALAR_FIELD(lhs_strict);
 	COMPARE_SCALAR_FIELD(delay_upper_joins);
-	COMPARE_NODE_FIELD(join_quals);
+	COMPARE_SCALAR_FIELD(semi_can_btree);
+	COMPARE_SCALAR_FIELD(semi_can_hash);
+	COMPARE_NODE_FIELD(semi_operators);
+	COMPARE_NODE_FIELD(semi_rhs_exprs);
 
 	return true;
 }

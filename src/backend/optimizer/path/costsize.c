@@ -3294,7 +3294,10 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	/* we don't bother trying to make the remaining fields valid */
 	norm_sjinfo.lhs_strict = false;
 	norm_sjinfo.delay_upper_joins = false;
-	norm_sjinfo.join_quals = NIL;
+	norm_sjinfo.semi_can_btree = false;
+	norm_sjinfo.semi_can_hash = false;
+	norm_sjinfo.semi_operators = NIL;
+	norm_sjinfo.semi_rhs_exprs = NIL;
 
 	nselec = clauselist_selectivity(root,
 									joinquals,
@@ -3456,7 +3459,10 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 	/* we don't bother trying to make the remaining fields valid */
 	sjinfo.lhs_strict = false;
 	sjinfo.delay_upper_joins = false;
-	sjinfo.join_quals = NIL;
+	sjinfo.semi_can_btree = false;
+	sjinfo.semi_can_hash = false;
+	sjinfo.semi_operators = NIL;
+	sjinfo.semi_rhs_exprs = NIL;
 
 	/* Get the approximate selectivity */
 	foreach(l, quals)

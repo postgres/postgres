@@ -130,7 +130,12 @@ static Relids get_bitmap_tree_required_outer(Path *bitmapqual);
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool check_index_only(RelOptInfo *rel, IndexOptInfo *index);
-static double get_loop_count(PlannerInfo *root, Relids outer_relids);
+static double get_loop_count(PlannerInfo *root, Index cur_relid, Relids outer_relids);
+static double adjust_rowcount_for_semijoins(PlannerInfo *root,
+							  Index cur_relid,
+							  Index outer_relid,
+							  double rowcount);
+static double approximate_joinrel_size(PlannerInfo *root, Relids relids);
 static void match_restriction_clauses_to_index(RelOptInfo *rel,
 								   IndexOptInfo *index,
 								   IndexClauseSet *clauseset);
@@ -402,7 +407,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 
 			/* And push that path into the mix */
 			required_outer = get_bitmap_tree_required_outer(bitmapqual);
-			loop_count = get_loop_count(root, required_outer);
+			loop_count = get_loop_count(root, rel->relid, required_outer);
 			bpath = create_bitmap_heap_path(root, rel, bitmapqual,
 											required_outer, loop_count);
 			add_path(rel, (Path *) bpath);
@@ -969,7 +974,7 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		outer_relids = NULL;
 
 	/* Compute loop_count for cost estimation purposes */
-	loop_count = get_loop_count(root, outer_relids);
+	loop_count = get_loop_count(root, rel->relid, outer_relids);
 
 	/*
 	 * 2. Compute pathkeys describing index's ordering, if any, then see how
@@ -1553,7 +1558,7 @@ bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel, Path *ipath)
 	cost_bitmap_heap_scan(&bpath.path, root, rel,
 						  bpath.path.param_info,
 						  ipath,
-						  get_loop_count(root, required_outer));
+						  get_loop_count(root, rel->relid, required_outer));
 
 	return bpath.path.total_cost;
 }
@@ -1594,7 +1599,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	cost_bitmap_heap_scan(&bpath.path, root, rel,
 						  bpath.path.param_info,
 						  (Path *) &apath,
-						  get_loop_count(root, required_outer));
+						  get_loop_count(root, rel->relid, required_outer));
 
 	return bpath.path.total_cost;
 }
@@ -1861,46 +1866,140 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
  * answer for single-other-relation cases, and it seems like a reasonable
  * zero-order approximation for multiway-join cases.
  *
+ * In addition, we check to see if the other side of each join clause is on
+ * the inside of some semijoin that the current relation is on the outside of.
+ * If so, the only way that a parameterized path could be used is if the
+ * semijoin RHS has been unique-ified, so we should use the number of unique
+ * RHS rows rather than using the relation's raw rowcount.
+ *
  * Note: for this to work, allpaths.c must establish all baserel size
  * estimates before it begins to compute paths, or at least before it
  * calls create_index_paths().
  */
 static double
-get_loop_count(PlannerInfo *root, Relids outer_relids)
+get_loop_count(PlannerInfo *root, Index cur_relid, Relids outer_relids)
 {
-	double		result = 1.0;
+	double		result;
+	int			outer_relid;
 
 	/* For a non-parameterized path, just return 1.0 quickly */
-	if (outer_relids != NULL)
+	if (outer_relids == NULL)
+		return 1.0;
+
+	result = 1.0;
+	outer_relid = -1;
+	while ((outer_relid = bms_next_member(outer_relids, outer_relid)) >= 0)
 	{
-		int			relid;
+		RelOptInfo *outer_rel;
+		double		rowcount;
 
-		relid = -1;
-		while ((relid = bms_next_member(outer_relids, relid)) >= 0)
-		{
-			RelOptInfo *outer_rel;
+		/* Paranoia: ignore bogus relid indexes */
+		if (outer_relid >= root->simple_rel_array_size)
+			continue;
+		outer_rel = root->simple_rel_array[outer_relid];
+		if (outer_rel == NULL)
+			continue;
+		Assert(outer_rel->relid == outer_relid);		/* sanity check on array */
 
-			/* Paranoia: ignore bogus relid indexes */
-			if (relid >= root->simple_rel_array_size)
-				continue;
-			outer_rel = root->simple_rel_array[relid];
-			if (outer_rel == NULL)
-				continue;
-			Assert(outer_rel->relid == relid);	/* sanity check on array */
+		/* Other relation could be proven empty, if so ignore */
+		if (IS_DUMMY_REL(outer_rel))
+			continue;
 
-			/* Other relation could be proven empty, if so ignore */
-			if (IS_DUMMY_REL(outer_rel))
-				continue;
+		/* Otherwise, rel's rows estimate should be valid by now */
+		Assert(outer_rel->rows > 0);
 
-			/* Otherwise, rel's rows estimate should be valid by now */
-			Assert(outer_rel->rows > 0);
+		/* Check to see if rel is on the inside of any semijoins */
+		rowcount = adjust_rowcount_for_semijoins(root,
+												 cur_relid,
+												 outer_relid,
+												 outer_rel->rows);
 
-			/* Remember smallest row count estimate among the outer rels */
-			if (result == 1.0 || result > outer_rel->rows)
-				result = outer_rel->rows;
-		}
+		/* Remember smallest row count estimate among the outer rels */
+		if (result == 1.0 || result > rowcount)
+			result = rowcount;
 	}
 	return result;
+}
+
+/*
+ * Check to see if outer_relid is on the inside of any semijoin that cur_relid
+ * is on the outside of.  If so, replace rowcount with the estimated number of
+ * unique rows from the semijoin RHS (assuming that's smaller, which it might
+ * not be).  The estimate is crude but it's the best we can do at this stage
+ * of the proceedings.
+ */
+static double
+adjust_rowcount_for_semijoins(PlannerInfo *root,
+							  Index cur_relid,
+							  Index outer_relid,
+							  double rowcount)
+{
+	ListCell   *lc;
+
+	foreach(lc, root->join_info_list)
+	{
+		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
+
+		if (sjinfo->jointype == JOIN_SEMI &&
+			bms_is_member(cur_relid, sjinfo->syn_lefthand) &&
+			bms_is_member(outer_relid, sjinfo->syn_righthand))
+		{
+			/* Estimate number of unique-ified rows */
+			double		nraw;
+			double		nunique;
+
+			nraw = approximate_joinrel_size(root, sjinfo->syn_righthand);
+			nunique = estimate_num_groups(root,
+										  sjinfo->semi_rhs_exprs,
+										  nraw);
+			if (rowcount > nunique)
+				rowcount = nunique;
+		}
+	}
+	return rowcount;
+}
+
+/*
+ * Make an approximate estimate of the size of a joinrel.
+ *
+ * We don't have enough info at this point to get a good estimate, so we
+ * just multiply the base relation sizes together.  Fortunately, this is
+ * the right answer anyway for the most common case with a single relation
+ * on the RHS of a semijoin.  Also, estimate_num_groups() has only a weak
+ * dependency on its input_rows argument (it basically uses it as a clamp).
+ * So we might be able to get a fairly decent end result even with a severe
+ * overestimate of the RHS's raw size.
+ */
+static double
+approximate_joinrel_size(PlannerInfo *root, Relids relids)
+{
+	double		rowcount = 1.0;
+	int			relid;
+
+	relid = -1;
+	while ((relid = bms_next_member(relids, relid)) >= 0)
+	{
+		RelOptInfo *rel;
+
+		/* Paranoia: ignore bogus relid indexes */
+		if (relid >= root->simple_rel_array_size)
+			continue;
+		rel = root->simple_rel_array[relid];
+		if (rel == NULL)
+			continue;
+		Assert(rel->relid == relid);	/* sanity check on array */
+
+		/* Relation could be proven empty, if so ignore */
+		if (IS_DUMMY_REL(rel))
+			continue;
+
+		/* Otherwise, rel's rows estimate should be valid by now */
+		Assert(rel->rows > 0);
+
+		/* Accumulate product */
+		rowcount *= rel->rows;
+	}
+	return rowcount;
 }
 
 
