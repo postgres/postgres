@@ -1886,7 +1886,7 @@ get_loop_count(PlannerInfo *root, Index cur_relid, Relids outer_relids)
 	if (outer_relids == NULL)
 		return 1.0;
 
-	result = 1.0;
+	result = 0.0;
 	outer_relid = -1;
 	while ((outer_relid = bms_next_member(outer_relids, outer_relid)) >= 0)
 	{
@@ -1915,10 +1915,11 @@ get_loop_count(PlannerInfo *root, Index cur_relid, Relids outer_relids)
 												 outer_rel->rows);
 
 		/* Remember smallest row count estimate among the outer rels */
-		if (result == 1.0 || result > rowcount)
+		if (result == 0.0 || result > rowcount)
 			result = rowcount;
 	}
-	return result;
+	/* Return 1.0 if we found no valid relations (shouldn't happen) */
+	return (result > 0.0) ? result : 1.0;
 }
 
 /*
