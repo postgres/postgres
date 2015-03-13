@@ -93,6 +93,7 @@
 <!ENTITY nls        SYSTEM "nls.sgml">
 <!ENTITY plhandler  SYSTEM "plhandler.sgml">
 <!ENTITY fdwhandler SYSTEM "fdwhandler.sgml">
+<!ENTITY custom-scan SYSTEM "custom-scan.sgml">
 <!ENTITY logicaldecoding SYSTEM "logicaldecoding.sgml">
 <!ENTITY protocol   SYSTEM "protocol.sgml">
 <!ENTITY sources    SYSTEM "sources.sgml">
