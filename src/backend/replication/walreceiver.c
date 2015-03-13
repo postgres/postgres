@@ -793,15 +793,26 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 	{
 		char	   *sendtime;
 		char	   *receipttime;
+		int			applyDelay;
 
 		/* Copy because timestamptz_to_str returns a static buffer */
 		sendtime = pstrdup(timestamptz_to_str(sendTime));
 		receipttime = pstrdup(timestamptz_to_str(lastMsgReceiptTime));
-		elog(DEBUG2, "sendtime %s receipttime %s replication apply delay %d ms transfer latency %d ms",
-			 sendtime,
-			 receipttime,
-			 GetReplicationApplyDelay(),
-			 GetReplicationTransferLatency());
+		applyDelay = GetReplicationApplyDelay();
+
+		/* apply delay is not available */
+		if (applyDelay == -1)
+			elog(DEBUG2, "sendtime %s receipttime %s replication apply delay (N/A) transfer latency %d ms",
+				 sendtime,
+				 receipttime,
+				 GetReplicationTransferLatency());
+		else
+			elog(DEBUG2, "sendtime %s receipttime %s replication apply delay %d ms transfer latency %d ms",
+				 sendtime,
+				 receipttime,
+				 applyDelay,
+				 GetReplicationTransferLatency());
+
 		pfree(sendtime);
 		pfree(receipttime);
 	}
