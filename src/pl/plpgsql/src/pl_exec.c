@@ -3219,7 +3219,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
  * unless it is a pass-by-value datatype.
  *
  * NB: if you change this code, see also the hacks in exec_assign_value's
- * PLPGSQL_DTYPE_ARRAYELEM case.
+ * PLPGSQL_DTYPE_ARRAYELEM case for partial cleanup after subscript evals.
  * ----------
  */
 static void
@@ -4749,8 +4749,7 @@ exec_get_datum_type_info(PLpgSQL_execstate *estate,
  * Note we do not do exec_eval_cleanup here; the caller must do it at
  * some later point.  (We do this because the caller may be holding the
  * results of other, pass-by-reference, expression evaluations, such as
- * an array value to be subscripted.  Also see notes in exec_eval_simple_expr
- * about allocation of the parameter array.)
+ * an array value to be subscripted.)
  * ----------
  */
 static int
