@@ -1439,6 +1439,7 @@ fi
 # Win32 support
 if test "$PORTNAME" = "win32"; then
   AC_REPLACE_FUNCS(gettimeofday)
+  AC_LIBOBJ(dirmod)
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
   AC_LIBOBJ(system)

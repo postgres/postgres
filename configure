@@ -12084,6 +12084,12 @@ fi
 
 
   case " $LIBOBJS " in
+  *" dirmod.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS dirmod.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
   *" kill.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS kill.$ac_objext"
  ;;
