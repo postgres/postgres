@@ -382,6 +382,7 @@ static bool
 saveHistory(char *fname, int max_lines)
 {
 #ifdef USE_READLINE
+	int			errnum;
 
 	/*
 	 * Suppressing the write attempt when HISTFILE is set to /dev/null may
@@ -405,10 +406,6 @@ saveHistory(char *fname, int max_lines)
 		 * history from other concurrent sessions (although there are still
 		 * race conditions when two sessions exit at about the same time). If
 		 * we don't have those functions, fall back to write_history().
-		 *
-		 * Note: return value of write_history is not standardized across GNU
-		 * readline and libedit.  Therefore, check for errno becoming set to
-		 * see if the write failed.  Similarly for append_history.
 		 */
 #if defined(HAVE_HISTORY_TRUNCATE_FILE) && defined(HAVE_APPEND_HISTORY)
 		{
@@ -430,9 +427,8 @@ saveHistory(char *fname, int max_lines)
 				nlines = Min(max_lines, history_lines_added);
 			else
 				nlines = history_lines_added;
-			errno = 0;
-			(void) append_history(nlines, fname);
-			if (errno == 0)
+			errnum = append_history(nlines, fname);
+			if (errnum == 0)
 				return true;
 		}
 #else							/* don't have append support */
@@ -441,15 +437,14 @@ saveHistory(char *fname, int max_lines)
 			if (max_lines >= 0)
 				stifle_history(max_lines);
 			/* ... and overwrite file.  Tough luck for concurrent sessions. */
-			errno = 0;
-			(void) write_history(fname);
-			if (errno == 0)
+			errnum = write_history(fname);
+			if (errnum == 0)
 				return true;
 		}
 #endif
 
 		psql_error("could not save history to file \"%s\": %s\n",
-				   fname, strerror(errno));
+				   fname, strerror(errnum));
 	}
 #endif
 
