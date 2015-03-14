@@ -2526,11 +2526,6 @@ Total time (ns)                        2312105013
    discussing information found using dynamic tracing, be sure to enclose
    the script used to allow that too to be checked and discussed.
   </para>
-
-  <para>
-   More example scripts can be found in the PgFoundry
-   <ulink url="http://pgfoundry.org/projects/dtrace/">dtrace project</ulink>.
-  </para>
   </sect2>
 
   <sect2 id="defining-trace-points">
