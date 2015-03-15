@@ -2191,7 +2191,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_XSEGS
 		},
 		&max_wal_size,
-		8, 2, INT_MAX,
+		64, 2, INT_MAX,
 		NULL, assign_max_wal_size, NULL
 	},
 

@@ -475,7 +475,7 @@
    linkend="guc-checkpoint-timeout"> seconds, or if
    <xref linkend="guc-max-wal-size"> is about to be exceeded,
    whichever comes first.
-   The default settings are 5 minutes and 128 MB, respectively.
+   The default settings are 5 minutes and 1 GB, respectively.
    If no WAL has been written since the previous checkpoint, new checkpoints
    will be skipped even if <varname>checkpoint_timeout</> has passed.
    (If WAL archiving is being used and you want to put a lower limit on how

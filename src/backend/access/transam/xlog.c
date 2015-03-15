@@ -79,7 +79,7 @@ extern uint32 bootstrap_data_checksum_version;
 
 
 /* User-settable parameters */
-int			max_wal_size = 8;		/* 128 MB */
+int			max_wal_size = 64;		/* 1 GB */
 int			min_wal_size = 5;		/* 80 MB */
 int			wal_keep_segments = 0;
 int			XLOGbuffers = -1;
