@@ -491,11 +491,9 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		bool		needs_data;
 		XLogRecordBlockHeader bkpb;
 		XLogRecordBlockImageHeader bimg;
-		XLogRecordBlockCompressHeader cbimg;
+		XLogRecordBlockCompressHeader cbimg = {0};
 		bool		samerel;
 		bool		is_compressed = false;
-		uint16	hole_length;
-		uint16	hole_offset;
 
 		if (!regbuf->in_use)
 			continue;
@@ -558,21 +556,21 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 					upper > lower &&
 					upper <= BLCKSZ)
 				{
-					hole_offset = lower;
-					hole_length = upper - lower;
+					bimg.hole_offset = lower;
+					cbimg.hole_length = upper - lower;
 				}
 				else
 				{
 					/* No "hole" to compress out */
-					hole_offset = 0;
-					hole_length = 0;
+					bimg.hole_offset = 0;
+					cbimg.hole_length = 0;
 				}
 			}
 			else
 			{
 				/* Not a standard page header, don't try to eliminate "hole" */
-				hole_offset = 0;
-				hole_length = 0;
+				bimg.hole_offset = 0;
+				cbimg.hole_length = 0;
 			}
 
 			/*
@@ -581,7 +579,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			if (wal_compression)
 			{
 				is_compressed =
-					XLogCompressBackupBlock(page, hole_offset, hole_length,
+					XLogCompressBackupBlock(page, bimg.hole_offset,
+											cbimg.hole_length,
 											regbuf->compressed_page,
 											&compressed_len);
 			}
@@ -595,25 +594,21 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			rdt_datas_last->next = &regbuf->bkp_rdatas[0];
 			rdt_datas_last = rdt_datas_last->next;
 
-			bimg.bimg_info = (hole_length == 0) ? 0 : BKPIMAGE_HAS_HOLE;
+			bimg.bimg_info = (cbimg.hole_length == 0) ? 0 : BKPIMAGE_HAS_HOLE;
 
 			if (is_compressed)
 			{
 				bimg.length = compressed_len;
-				bimg.hole_offset = hole_offset;
 				bimg.bimg_info |= BKPIMAGE_IS_COMPRESSED;
-				if (hole_length != 0)
-					cbimg.hole_length = hole_length;
 
 				rdt_datas_last->data = regbuf->compressed_page;
 				rdt_datas_last->len = compressed_len;
 			}
 			else
 			{
-				bimg.length = BLCKSZ - hole_length;
-				bimg.hole_offset = hole_offset;
+				bimg.length = BLCKSZ - cbimg.hole_length;
 
-				if (hole_length == 0)
+				if (cbimg.hole_length == 0)
 				{
 					rdt_datas_last->data = page;
 					rdt_datas_last->len = BLCKSZ;
@@ -622,13 +617,15 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 				{
 					/* must skip the hole */
 					rdt_datas_last->data = page;
-					rdt_datas_last->len = hole_offset;
+					rdt_datas_last->len = bimg.hole_offset;
 
 					rdt_datas_last->next = &regbuf->bkp_rdatas[1];
 					rdt_datas_last = rdt_datas_last->next;
 
-					rdt_datas_last->data = page + (hole_offset + hole_length);
-					rdt_datas_last->len = BLCKSZ - (hole_offset + hole_length);
+					rdt_datas_last->data =
+						page + (bimg.hole_offset + cbimg.hole_length);
+					rdt_datas_last->len =
+						BLCKSZ - (bimg.hole_offset + cbimg.hole_length);
 				}
 			}
 
@@ -665,7 +662,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		{
 			memcpy(scratch, &bimg, SizeOfXLogRecordBlockImageHeader);
 			scratch += SizeOfXLogRecordBlockImageHeader;
-			if (hole_length != 0 && is_compressed)
+			if (cbimg.hole_length != 0 && is_compressed)
 			{
 				memcpy(scratch, &cbimg,
 					   SizeOfXLogRecordBlockCompressHeader);
