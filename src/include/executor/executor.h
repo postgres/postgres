@@ -16,7 +16,6 @@
 
 #include "executor/execdesc.h"
 #include "nodes/parsenodes.h"
-#include "utils/lockwaitpolicy.h"
 
 
 /*

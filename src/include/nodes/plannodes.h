@@ -17,8 +17,8 @@
 #include "access/sdir.h"
 #include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
+#include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
-#include "utils/lockwaitpolicy.h"
 
 
 /* ----------------------------------------------------------------

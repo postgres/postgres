@@ -21,9 +21,9 @@
 #define PARSENODES_H
 
 #include "nodes/bitmapset.h"
+#include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "nodes/value.h"
-#include "utils/lockwaitpolicy.h"
 
 /* Possible sources of a Query */
 typedef enum QuerySource
@@ -645,15 +645,6 @@ typedef struct DefElem
  * a location field --- currently, parse analysis insists on unqualified
  * names in LockingClause.)
  */
-typedef enum LockClauseStrength
-{
-	/* order is important -- see applyLockingClause */
-	LCS_FORKEYSHARE,
-	LCS_FORSHARE,
-	LCS_FORNOKEYUPDATE,
-	LCS_FORUPDATE
-} LockClauseStrength;
-
 typedef struct LockingClause
 {
 	NodeTag		type;
