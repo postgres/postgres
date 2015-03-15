@@ -4773,7 +4773,6 @@ readRecoveryCommandFile(void)
 	ConfigVariable *item,
 			   *head = NULL,
 			   *tail = NULL;
-	bool		recoveryPauseAtTargetSet = false;
 	bool		recoveryTargetActionSet = false;
 
 
@@ -4818,25 +4817,6 @@ readRecoveryCommandFile(void)
 			ereport(DEBUG2,
 					(errmsg_internal("archive_cleanup_command = '%s'",
 									 archiveCleanupCommand)));
-		}
-		else if (strcmp(item->name, "pause_at_recovery_target") == 0)
-		{
-			bool recoveryPauseAtTarget;
-
-			if (!parse_bool(item->value, &recoveryPauseAtTarget))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter \"%s\" requires a Boolean value", "pause_at_recovery_target")));
-
-			ereport(DEBUG2,
-					(errmsg_internal("pause_at_recovery_target = '%s'",
-									 item->value)));
-
-			recoveryTargetAction = recoveryPauseAtTarget ?
-									 RECOVERY_TARGET_ACTION_PAUSE :
-									 RECOVERY_TARGET_ACTION_PROMOTE;
-
-			recoveryPauseAtTargetSet = true;
 		}
 		else if (strcmp(item->name, "recovery_target_action") == 0)
 		{
@@ -5021,18 +5001,6 @@ readRecoveryCommandFile(void)
 					(errmsg("recovery command file \"%s\" must specify restore_command when standby mode is not enabled",
 							RECOVERY_COMMAND_FILE)));
 	}
-
-	/*
-	 * Check for mutually exclusive parameters
-	 */
-	if (recoveryPauseAtTargetSet && recoveryTargetActionSet)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot set both \"%s\" and \"%s\" recovery parameters",
-						"pause_at_recovery_target",
-						"recovery_target_action"),
-				 errhint("The \"pause_at_recovery_target\" is deprecated.")));
-
 
 	/*
 	 * Override any inconsistent requests. Not that this is a change

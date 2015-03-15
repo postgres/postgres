@@ -7111,8 +7111,8 @@
 
       <listitem>
        <para>
-        Add <filename>recovery.conf</> setting <link
-        linkend="pause-at-recovery-target"><varname>pause_at_recovery_target</></link>
+        Add <filename>recovery.conf</> setting
+        <varname>pause_at_recovery_target</>
         to pause recovery at target (Simon Riggs)
        </para>
 
