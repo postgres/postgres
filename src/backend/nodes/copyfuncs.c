@@ -991,6 +991,8 @@ _copyPlanRowMark(const PlanRowMark *from)
 	COPY_SCALAR_FIELD(prti);
 	COPY_SCALAR_FIELD(rowmarkId);
 	COPY_SCALAR_FIELD(markType);
+	COPY_SCALAR_FIELD(allMarkTypes);
+	COPY_SCALAR_FIELD(strength);
 	COPY_SCALAR_FIELD(waitPolicy);
 	COPY_SCALAR_FIELD(isParent);
 
@@ -2510,7 +2512,7 @@ _copyXmlSerialize(const XmlSerialize *from)
 static RoleSpec *
 _copyRoleSpec(const RoleSpec *from)
 {
-	RoleSpec *newnode = makeNode(RoleSpec);
+	RoleSpec   *newnode = makeNode(RoleSpec);
 
 	COPY_SCALAR_FIELD(roletype);
 	COPY_STRING_FIELD(rolename);

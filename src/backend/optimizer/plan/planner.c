@@ -2219,35 +2219,42 @@ preprocess_rowmarks(PlannerInfo *root)
 		if (rte->rtekind != RTE_RELATION)
 			continue;
 
-		/*
-		 * Similarly, ignore RowMarkClauses for foreign tables; foreign tables
-		 * will instead get ROW_MARK_COPY items in the next loop.  (FDWs might
-		 * choose to do something special while fetching their rows, but that
-		 * is of no concern here.)
-		 */
-		if (rte->relkind == RELKIND_FOREIGN_TABLE)
-			continue;
-
 		rels = bms_del_member(rels, rc->rti);
 
 		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = rc->rti;
 		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
-		switch (rc->strength)
+		if (rte->relkind == RELKIND_FOREIGN_TABLE)
 		{
-			case LCS_FORUPDATE:
-				newrc->markType = ROW_MARK_EXCLUSIVE;
-				break;
-			case LCS_FORNOKEYUPDATE:
-				newrc->markType = ROW_MARK_NOKEYEXCLUSIVE;
-				break;
-			case LCS_FORSHARE:
-				newrc->markType = ROW_MARK_SHARE;
-				break;
-			case LCS_FORKEYSHARE:
-				newrc->markType = ROW_MARK_KEYSHARE;
-				break;
+			/* For now, we force all foreign tables to use ROW_MARK_COPY */
+			newrc->markType = ROW_MARK_COPY;
 		}
+		else
+		{
+			/* regular table, apply the appropriate lock type */
+			switch (rc->strength)
+			{
+				case LCS_NONE:
+					/* we intentionally throw an error for LCS_NONE */
+					elog(ERROR, "unrecognized LockClauseStrength %d",
+						 (int) rc->strength);
+					break;
+				case LCS_FORKEYSHARE:
+					newrc->markType = ROW_MARK_KEYSHARE;
+					break;
+				case LCS_FORSHARE:
+					newrc->markType = ROW_MARK_SHARE;
+					break;
+				case LCS_FORNOKEYUPDATE:
+					newrc->markType = ROW_MARK_NOKEYEXCLUSIVE;
+					break;
+				case LCS_FORUPDATE:
+					newrc->markType = ROW_MARK_EXCLUSIVE;
+					break;
+			}
+		}
+		newrc->allMarkTypes = (1 << newrc->markType);
+		newrc->strength = rc->strength;
 		newrc->waitPolicy = rc->waitPolicy;
 		newrc->isParent = false;
 
@@ -2276,6 +2283,8 @@ preprocess_rowmarks(PlannerInfo *root)
 			newrc->markType = ROW_MARK_REFERENCE;
 		else
 			newrc->markType = ROW_MARK_COPY;
+		newrc->allMarkTypes = (1 << newrc->markType);
+		newrc->strength = LCS_NONE;
 		newrc->waitPolicy = LockWaitBlock;		/* doesn't matter */
 		newrc->isParent = false;
 

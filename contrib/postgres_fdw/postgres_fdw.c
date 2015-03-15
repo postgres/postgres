@@ -822,13 +822,14 @@ postgresGetForeignPlan(PlannerInfo *root,
 	}
 	else
 	{
-		RowMarkClause *rc = get_parse_rowmark(root->parse, baserel->relid);
+		PlanRowMark *rc = get_plan_rowmark(root->rowMarks, baserel->relid);
 
 		if (rc)
 		{
 			/*
 			 * Relation is specified as a FOR UPDATE/SHARE target, so handle
-			 * that.
+			 * that.  (But we could also see LCS_NONE, meaning this isn't a
+			 * target relation after all.)
 			 *
 			 * For now, just ignore any [NO] KEY specification, since (a) it's
 			 * not clear what that means for a remote table that we don't have
@@ -837,6 +838,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 			 */
 			switch (rc->strength)
 			{
+				case LCS_NONE:
+					/* No locking needed */
+					break;
 				case LCS_FORKEYSHARE:
 				case LCS_FORSHARE:
 					appendStringInfoString(&sql, " FOR SHARE");

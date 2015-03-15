@@ -820,7 +820,7 @@ typedef enum RowMarkType
 	ROW_MARK_NOKEYEXCLUSIVE,	/* obtain no-key exclusive tuple lock */
 	ROW_MARK_SHARE,				/* obtain shared tuple lock */
 	ROW_MARK_KEYSHARE,			/* obtain keyshare tuple lock */
-	ROW_MARK_REFERENCE,			/* just fetch the TID */
+	ROW_MARK_REFERENCE,			/* just fetch the TID, don't lock it */
 	ROW_MARK_COPY				/* physically copy the row value */
 } RowMarkType;
 
@@ -841,7 +841,9 @@ typedef enum RowMarkType
  * list for each child relation (including the target rel itself in its role
  * as a child).  The child entries have rti == child rel's RT index and
  * prti == parent's RT index, and can therefore be recognized as children by
- * the fact that prti != rti.
+ * the fact that prti != rti.  The parent's allMarkTypes field gets the OR
+ * of (1<<markType) across all its children (this definition allows children
+ * to use different markTypes).
  *
  * The planner also adds resjunk output columns to the plan that carry
  * information sufficient to identify the locked or fetched rows.  For
@@ -851,6 +853,8 @@ typedef enum RowMarkType
  * The tableoid column is only present for an inheritance hierarchy.
  * When markType == ROW_MARK_COPY, there is instead a single column named
  *		wholerow%u			whole-row value of relation
+ * (An inheritance hierarchy could have all three resjunk output columns,
+ * if some children use a different markType than others.)
  * In all three cases, %u represents the rowmark ID number (rowmarkId).
  * This number is unique within a plan tree, except that child relation
  * entries copy their parent's rowmarkId.  (Assigning unique numbers
@@ -867,6 +871,8 @@ typedef struct PlanRowMark
 	Index		prti;			/* range table index of parent relation */
 	Index		rowmarkId;		/* unique identifier for resjunk columns */
 	RowMarkType markType;		/* see enum above */
+	int			allMarkTypes;	/* OR of (1<<markType) for all children */
+	LockClauseStrength strength;	/* LockingClause's strength, or LCS_NONE */
 	LockWaitPolicy waitPolicy;	/* NOWAIT and SKIP LOCKED options */
 	bool		isParent;		/* true if this is a "dummy" parent entry */
 } PlanRowMark;

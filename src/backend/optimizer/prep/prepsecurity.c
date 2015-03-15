@@ -73,8 +73,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 	rt_index = 0;
 	foreach(cell, parse->rtable)
 	{
-		bool			targetRelation = false;
-		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(cell);
+		bool		targetRelation = false;
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(cell);
 
 		rt_index++;
 
@@ -241,30 +241,10 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			rc = get_plan_rowmark(root->rowMarks, rt_index);
 			if (rc != NULL)
 			{
-				switch (rc->markType)
-				{
-					case ROW_MARK_EXCLUSIVE:
-						applyLockingClause(subquery, 1, LCS_FORUPDATE,
-										   rc->waitPolicy, false);
-						break;
-					case ROW_MARK_NOKEYEXCLUSIVE:
-						applyLockingClause(subquery, 1, LCS_FORNOKEYUPDATE,
-										   rc->waitPolicy, false);
-						break;
-					case ROW_MARK_SHARE:
-						applyLockingClause(subquery, 1, LCS_FORSHARE,
-										   rc->waitPolicy, false);
-						break;
-					case ROW_MARK_KEYSHARE:
-						applyLockingClause(subquery, 1, LCS_FORKEYSHARE,
-										   rc->waitPolicy, false);
-						break;
-					case ROW_MARK_REFERENCE:
-					case ROW_MARK_COPY:
-						/* No locking needed */
-						break;
-				}
-				root->rowMarks = list_delete(root->rowMarks, rc);
+				if (rc->strength != LCS_NONE)
+					applyLockingClause(subquery, 1, rc->strength,
+									   rc->waitPolicy, false);
+				root->rowMarks = list_delete_ptr(root->rowMarks, rc);
 			}
 
 			/*
@@ -276,6 +256,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			if (targetRelation)
 				applyLockingClause(subquery, 1, LCS_FORUPDATE,
 								   LockWaitBlock, false);
+
 			/*
 			 * Replace any variables in the outer query that refer to the
 			 * original relation RTE with references to columns that we will

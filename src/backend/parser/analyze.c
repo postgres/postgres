@@ -2254,11 +2254,18 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 }
 
 
-char *
+/*
+ * Produce a string representation of a LockClauseStrength value.
+ * This should only be applied to valid values (not LCS_NONE).
+ */
+const char *
 LCS_asString(LockClauseStrength strength)
 {
 	switch (strength)
 	{
+		case LCS_NONE:
+			Assert(false);
+			break;
 		case LCS_FORKEYSHARE:
 			return "FOR KEY SHARE";
 		case LCS_FORSHARE:
@@ -2279,6 +2286,8 @@ LCS_asString(LockClauseStrength strength)
 void
 CheckSelectLocking(Query *qry, LockClauseStrength strength)
 {
+	Assert(strength != LCS_NONE);		/* else caller error */
+
 	if (qry->setOperations)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2498,6 +2507,8 @@ applyLockingClause(Query *qry, Index rtindex,
 {
 	RowMarkClause *rc;
 
+	Assert(strength != LCS_NONE);		/* else caller error */
+
 	/* If it's an explicit clause, make sure hasForUpdate gets set */
 	if (!pushedDown)
 		qry->hasForUpdate = true;
@@ -2506,20 +2517,21 @@ applyLockingClause(Query *qry, Index rtindex,
 	if ((rc = get_parse_rowmark(qry, rtindex)) != NULL)
 	{
 		/*
-		 * If the same RTE is specified for more than one locking strength,
-		 * treat is as the strongest.  (Reasonable, since you can't take both
-		 * a shared and exclusive lock at the same time; it'll end up being
-		 * exclusive anyway.)
+		 * If the same RTE is specified with more than one locking strength,
+		 * use the strongest.  (Reasonable, since you can't take both a shared
+		 * and exclusive lock at the same time; it'll end up being exclusive
+		 * anyway.)
 		 *
-		 * Similarly, if the same RTE is specified with more than one lock wait
-		 * policy, consider that NOWAIT wins over SKIP LOCKED, which in turn
-		 * wins over waiting for the lock (the default).  This is a bit more
-		 * debatable but raising an error doesn't seem helpful.  (Consider for
-		 * instance SELECT FOR UPDATE NOWAIT from a view that internally
+		 * Similarly, if the same RTE is specified with more than one lock
+		 * wait policy, consider that NOWAIT wins over SKIP LOCKED, which in
+		 * turn wins over waiting for the lock (the default).  This is a bit
+		 * more debatable but raising an error doesn't seem helpful. (Consider
+		 * for instance SELECT FOR UPDATE NOWAIT from a view that internally
 		 * contains a plain FOR UPDATE spec.)  Having NOWAIT win over SKIP
 		 * LOCKED is reasonable since the former throws an error in case of
-		 * coming across a locked tuple, which may be undesirable in some cases
-		 * but it seems better than silently returning inconsistent results.
+		 * coming across a locked tuple, which may be undesirable in some
+		 * cases but it seems better than silently returning inconsistent
+		 * results.
 		 *
 		 * And of course pushedDown becomes false if any clause is explicit.
 		 */

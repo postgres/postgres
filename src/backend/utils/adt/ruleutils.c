@@ -4453,6 +4453,11 @@ get_select_query_def(Query *query, deparse_context *context,
 
 			switch (rc->strength)
 			{
+				case LCS_NONE:
+					/* we intentionally throw an error for LCS_NONE */
+					elog(ERROR, "unrecognized LockClauseStrength %d",
+						 (int) rc->strength);
+					break;
 				case LCS_FORKEYSHARE:
 					appendContextKeyword(context, " FOR KEY SHARE",
 									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);

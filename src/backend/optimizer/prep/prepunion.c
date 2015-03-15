@@ -1389,8 +1389,13 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrc->prti = rti;
 			newrc->rowmarkId = oldrc->rowmarkId;
 			newrc->markType = oldrc->markType;
+			newrc->allMarkTypes = (1 << newrc->markType);
+			newrc->strength = oldrc->strength;
 			newrc->waitPolicy = oldrc->waitPolicy;
 			newrc->isParent = false;
+
+			/* Include child's rowmark type in parent's allMarkTypes */
+			oldrc->allMarkTypes |= newrc->allMarkTypes;
 
 			root->rowMarks = lappend(root->rowMarks, newrc);
 		}
