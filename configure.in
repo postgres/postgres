@@ -1436,7 +1436,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(getopt_long)
 fi
 
-# Win32 support
+# Win32 (really MinGW) support
 if test "$PORTNAME" = "win32"; then
   AC_REPLACE_FUNCS(gettimeofday)
   AC_LIBOBJ(dirmod)
@@ -1458,6 +1458,11 @@ if test x"$pgac_minidump_type" = x"yes" ; then
   AC_SUBST(have_win32_dbghelp,yes)
 else
   AC_SUBST(have_win32_dbghelp,no)
+fi
+
+# Cygwin needs only a bit of that
+if test "$PORTNAME" = "cygwin"; then
+  AC_LIBOBJ(dirmod)
 fi
 
 dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro

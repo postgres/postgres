@@ -12067,7 +12067,7 @@ esac
 
 fi
 
-# Win32 support
+# Win32 (really MinGW) support
 if test "$PORTNAME" = "win32"; then
   ac_fn_c_check_func "$LINENO" "gettimeofday" "ac_cv_func_gettimeofday"
 if test "x$ac_cv_func_gettimeofday" = xyes; then :
@@ -12151,6 +12151,16 @@ if test x"$pgac_minidump_type" = x"yes" ; then
 
 else
   have_win32_dbghelp=no
+
+fi
+
+# Cygwin needs only a bit of that
+if test "$PORTNAME" = "cygwin"; then
+  case " $LIBOBJS " in
+  *" dirmod.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS dirmod.$ac_objext"
+ ;;
+esac
 
 fi
 
