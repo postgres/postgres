@@ -8833,6 +8833,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <variablelist>
    <varlistentry>
+    <!-- PGC_INTERNAL -->
     <term><literal>internal</literal></term>
     <listitem>
      <para>
@@ -8844,6 +8845,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     </listitem>
    </varlistentry>
    <varlistentry>
+    <!-- PGC_POSTMASTER -->
     <term><literal>postmaster</literal></term>
     <listitem>
      <para>
@@ -8857,6 +8859,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     </listitem>
    </varlistentry>
    <varlistentry>
+    <!-- PGC_SIGHUP -->
     <term><literal>sighup</literal></term>
     <listitem>
      <para>
@@ -8871,16 +8874,17 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><literal>backend</literal></term>
+    <!-- PGC_SU_BACKEND -->
+    <term><literal>superuser-backend</literal></term>
     <listitem>
      <para>
       Changes to these settings can be made in
-      <filename>postgresql.conf</filename> without restarting the server;
-      they can also be set for a particular session in the connection request
+      <filename>postgresql.conf</filename> without restarting the server.
+      They can also be set for a particular session in the connection request
       packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
-      environment variable).  However, these settings never change in a
-      session after it is started.  If you change them in
-      <filename>postgresql.conf</filename>, send a
+      environment variable), but only if the connecting user is a superuser.
+      However, these settings never change in a session after it is started.
+      If you change them in <filename>postgresql.conf</filename>, send a
       <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
       re-read <filename>postgresql.conf</filename>.  The new values will only
       affect subsequently-launched sessions.
@@ -8888,6 +8892,25 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     </listitem>
    </varlistentry>
    <varlistentry>
+    <!-- PGC_BACKEND -->
+    <term><literal>backend</literal></term>
+    <listitem>
+     <para>
+      Changes to these settings can be made in
+      <filename>postgresql.conf</filename> without restarting the server.
+      They can also be set for a particular session in the connection request
+      packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
+      environment variable); any user can make such a change for his session.
+      However, these settings never change in a session after it is started.
+      If you change them in <filename>postgresql.conf</filename>, send a
+      <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
+      re-read <filename>postgresql.conf</filename>.  The new values will only
+      affect subsequently-launched sessions.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <!-- PGC_SUSET -->
     <term><literal>superuser</literal></term>
     <listitem>
      <para>
@@ -8900,6 +8923,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     </listitem>
    </varlistentry>
    <varlistentry>
+    <!-- PGC_USERSET -->
     <term><literal>user</literal></term>
     <listitem>
      <para>
