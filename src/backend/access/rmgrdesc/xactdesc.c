@@ -14,53 +14,188 @@
  */
 #include "postgres.h"
 
+#include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "storage/sinval.h"
 #include "utils/timestamp.h"
 
+/*
+ * Parse the WAL format of a xact commit and abort records into a easier to
+ * understand format.
+ *
+ * This routines are in xactdesc.c because they're accessed in backend (when
+ * replaying WAL) and frontend (pg_xlogdump) code. This file is the only xact
+ * specific one shared between both. They're complicated enough that
+ * duplication would be bothersome.
+ */
+
+void
+ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *parsed)
+{
+	char	   *data = ((char *) xlrec) + MinSizeOfXactCommit;
+
+	memset(parsed, 0, sizeof(*parsed));
+
+	parsed->xinfo = 0; /* default, if no XLOG_XACT_HAS_INFO is present */
+
+	parsed->xact_time = xlrec->xact_time;
+
+	if (info & XLOG_XACT_HAS_INFO)
+	{
+		xl_xact_xinfo *xl_xinfo = (xl_xact_xinfo *) data;
+
+		parsed->xinfo = xl_xinfo->xinfo;
+
+		data += sizeof(xl_xact_xinfo);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_DBINFO)
+	{
+		xl_xact_dbinfo *xl_dbinfo = (xl_xact_dbinfo *) data;
+
+		parsed->dbId = xl_dbinfo->dbId;
+		parsed->tsId = xl_dbinfo->tsId;
+
+		data += sizeof(xl_xact_dbinfo);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_SUBXACTS)
+	{
+		xl_xact_subxacts   *xl_subxacts = (xl_xact_subxacts *) data;
+
+		parsed->nsubxacts = xl_subxacts->nsubxacts;
+		parsed->subxacts = xl_subxacts->subxacts;
+
+		data += MinSizeOfXactSubxacts;
+		data += parsed->nsubxacts * sizeof(TransactionId);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_RELFILENODES)
+	{
+		xl_xact_relfilenodes *xl_relfilenodes = (xl_xact_relfilenodes *) data;
+
+		parsed->nrels = xl_relfilenodes->nrels;
+		parsed->xnodes = xl_relfilenodes->xnodes;
+
+		data += MinSizeOfXactRelfilenodes;
+		data += xl_relfilenodes->nrels * sizeof(RelFileNode);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_INVALS)
+	{
+		xl_xact_invals *xl_invals = (xl_xact_invals *) data;
+
+		parsed->nmsgs = xl_invals->nmsgs;
+		parsed->msgs = xl_invals->msgs;
+
+		data += MinSizeOfXactInvals;
+		data += xl_invals->nmsgs * sizeof(SharedInvalidationMessage);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_TWOPHASE)
+	{
+		xl_xact_twophase *xl_twophase = (xl_xact_twophase *) data;
+
+		parsed->twophase_xid = xl_twophase->xid;
+
+		data += sizeof(xl_xact_twophase);
+	}
+}
+
+void
+ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
+{
+	char	   *data = ((char *) xlrec) + MinSizeOfXactAbort;
+
+	memset(parsed, 0, sizeof(*parsed));
+
+	parsed->xinfo = 0; /* default, if no XLOG_XACT_HAS_INFO is present */
+
+	parsed->xact_time = xlrec->xact_time;
+
+	if (info & XLOG_XACT_HAS_INFO)
+	{
+		xl_xact_xinfo *xl_xinfo = (xl_xact_xinfo *) data;
+
+		parsed->xinfo = xl_xinfo->xinfo;
+
+		data += sizeof(xl_xact_xinfo);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_SUBXACTS)
+	{
+		xl_xact_subxacts   *xl_subxacts = (xl_xact_subxacts *) data;
+
+		parsed->nsubxacts = xl_subxacts->nsubxacts;
+		parsed->subxacts = xl_subxacts->subxacts;
+
+		data += MinSizeOfXactSubxacts;
+		data += parsed->nsubxacts * sizeof(TransactionId);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_RELFILENODES)
+	{
+		xl_xact_relfilenodes *xl_relfilenodes = (xl_xact_relfilenodes *) data;
+
+		parsed->nrels = xl_relfilenodes->nrels;
+		parsed->xnodes = xl_relfilenodes->xnodes;
+
+		data += MinSizeOfXactRelfilenodes;
+		data += xl_relfilenodes->nrels * sizeof(RelFileNode);
+	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_TWOPHASE)
+	{
+		xl_xact_twophase *xl_twophase = (xl_xact_twophase *) data;
+
+		parsed->twophase_xid = xl_twophase->xid;
+
+		data += sizeof(xl_xact_twophase);
+	}
+}
 
 static void
-xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
+xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec)
 {
+	xl_xact_parsed_commit parsed;
 	int			i;
-	TransactionId *subxacts;
 
-	subxacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
+	ParseCommitRecord(info, xlrec, &parsed);
+
+	/* If this is a prepared xact, show the xid of the original xact */
+	if (TransactionIdIsValid(parsed.twophase_xid))
+		appendStringInfo(buf, "%u: ", parsed.twophase_xid);
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 
-	if (xlrec->nrels > 0)
+	if (parsed.nrels > 0)
 	{
 		appendStringInfoString(buf, "; rels:");
-		for (i = 0; i < xlrec->nrels; i++)
+		for (i = 0; i < parsed.nrels; i++)
 		{
-			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(parsed.xnodes[i], MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
 		}
 	}
-	if (xlrec->nsubxacts > 0)
+	if (parsed.nsubxacts > 0)
 	{
 		appendStringInfoString(buf, "; subxacts:");
-		for (i = 0; i < xlrec->nsubxacts; i++)
-			appendStringInfo(buf, " %u", subxacts[i]);
+		for (i = 0; i < parsed.nsubxacts; i++)
+			appendStringInfo(buf, " %u", parsed.subxacts[i]);
 	}
-	if (xlrec->nmsgs > 0)
+	if (parsed.nmsgs > 0)
 	{
-		SharedInvalidationMessage *msgs;
-
-		msgs = (SharedInvalidationMessage *) &subxacts[xlrec->nsubxacts];
-
-		if (XactCompletionRelcacheInitFileInval(xlrec->xinfo))
+		if (XactCompletionRelcacheInitFileInval(parsed.xinfo))
 			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
-							 xlrec->dbId, xlrec->tsId);
+							 parsed.dbId, parsed.tsId);
 
 		appendStringInfoString(buf, "; inval msgs:");
-		for (i = 0; i < xlrec->nmsgs; i++)
+		for (i = 0; i < parsed.nmsgs; i++)
 		{
-			SharedInvalidationMessage *msg = &msgs[i];
+			SharedInvalidationMessage *msg = &parsed.msgs[i];
 
 			if (msg->id >= 0)
 				appendStringInfo(buf, " catcache %d", msg->id);
@@ -80,48 +215,41 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " unknown id %d", msg->id);
 		}
 	}
+
+	if (XactCompletionForceSyncCommit(parsed.xinfo))
+		appendStringInfo(buf, "; sync");
 }
 
 static void
-xact_desc_commit_compact(StringInfo buf, xl_xact_commit_compact *xlrec)
+xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
 {
+	xl_xact_parsed_abort parsed;
 	int			i;
 
-	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
+	ParseAbortRecord(info, xlrec, &parsed);
 
-	if (xlrec->nsubxacts > 0)
-	{
-		appendStringInfoString(buf, "; subxacts:");
-		for (i = 0; i < xlrec->nsubxacts; i++)
-			appendStringInfo(buf, " %u", xlrec->subxacts[i]);
-	}
-}
-
-static void
-xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
-{
-	int			i;
+	/* If this is a prepared xact, show the xid of the original xact */
+	if (TransactionIdIsValid(parsed.twophase_xid))
+		appendStringInfo(buf, "%u: ", parsed.twophase_xid);
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
-	if (xlrec->nrels > 0)
+	if (parsed.nrels > 0)
 	{
 		appendStringInfoString(buf, "; rels:");
-		for (i = 0; i < xlrec->nrels; i++)
+		for (i = 0; i < parsed.nrels; i++)
 		{
-			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(parsed.xnodes[i], MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
 		}
 	}
-	if (xlrec->nsubxacts > 0)
-	{
-		TransactionId *xacts = (TransactionId *)
-		&xlrec->xnodes[xlrec->nrels];
 
+	if (parsed.nsubxacts > 0)
+	{
 		appendStringInfoString(buf, "; subxacts:");
-		for (i = 0; i < xlrec->nsubxacts; i++)
-			appendStringInfo(buf, " %u", xacts[i]);
+		for (i = 0; i < parsed.nsubxacts; i++)
+			appendStringInfo(buf, " %u", parsed.subxacts[i]);
 	}
 }
 
@@ -140,39 +268,19 @@ void
 xact_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
-	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & XLOG_XACT_OPMASK;
 
-	if (info == XLOG_XACT_COMMIT_COMPACT)
-	{
-		xl_xact_commit_compact *xlrec = (xl_xact_commit_compact *) rec;
-
-		xact_desc_commit_compact(buf, xlrec);
-	}
-	else if (info == XLOG_XACT_COMMIT)
+	if (info == XLOG_XACT_COMMIT || info == XLOG_XACT_COMMIT_PREPARED)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
 
-		xact_desc_commit(buf, xlrec);
+		xact_desc_commit(buf, XLogRecGetInfo(record), xlrec);
 	}
-	else if (info == XLOG_XACT_ABORT)
+	else if (info == XLOG_XACT_ABORT || info == XLOG_XACT_ABORT_PREPARED)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
 
-		xact_desc_abort(buf, xlrec);
-	}
-	else if (info == XLOG_XACT_COMMIT_PREPARED)
-	{
-		xl_xact_commit_prepared *xlrec = (xl_xact_commit_prepared *) rec;
-
-		appendStringInfo(buf, "%u: ", xlrec->xid);
-		xact_desc_commit(buf, &xlrec->crec);
-	}
-	else if (info == XLOG_XACT_ABORT_PREPARED)
-	{
-		xl_xact_abort_prepared *xlrec = (xl_xact_abort_prepared *) rec;
-
-		appendStringInfo(buf, "%u: ", xlrec->xid);
-		xact_desc_abort(buf, &xlrec->arec);
+		xact_desc_abort(buf, XLogRecGetInfo(record), xlrec);
 	}
 	else if (info == XLOG_XACT_ASSIGNMENT)
 	{
@@ -193,7 +301,7 @@ xact_identify(uint8 info)
 {
 	const char *id = NULL;
 
-	switch (info & ~XLR_INFO_MASK)
+	switch (info & XLOG_XACT_OPMASK)
 	{
 		case XLOG_XACT_COMMIT:
 			id = "COMMIT";
@@ -212,9 +320,6 @@ xact_identify(uint8 info)
 			break;
 		case XLOG_XACT_ASSIGNMENT:
 			id = "ASSIGNMENT";
-			break;
-		case XLOG_XACT_COMMIT_COMPACT:
-			id = "COMMIT_COMPACT";
 			break;
 	}
 

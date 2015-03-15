@@ -2079,7 +2079,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								SharedInvalidationMessage *invalmsgs,
 								bool initfileinval)
 {
-	xl_xact_commit_prepared xlrec;
 	XLogRecPtr	recptr;
 
 	START_CRIT_SECTION();
@@ -2088,36 +2087,11 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	MyPgXact->delayChkpt = true;
 
 	/* Emit the XLOG commit record */
-	xlrec.xid = xid;
-
-	xlrec.crec.xinfo = initfileinval ? XACT_COMPLETION_UPDATE_RELCACHE_FILE : 0;
-
-	xlrec.crec.dbId = MyDatabaseId;
-	xlrec.crec.tsId = MyDatabaseTableSpace;
-
-	xlrec.crec.xact_time = GetCurrentTimestamp();
-	xlrec.crec.nrels = nrels;
-	xlrec.crec.nsubxacts = nchildren;
-	xlrec.crec.nmsgs = ninvalmsgs;
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) (&xlrec), MinSizeOfXactCommitPrepared);
-
-	/* dump rels to delete */
-	if (nrels > 0)
-		XLogRegisterData((char *) rels, nrels * sizeof(RelFileNode));
-
-	/* dump committed child Xids */
-	if (nchildren > 0)
-		XLogRegisterData((char *) children,
-						 nchildren * sizeof(TransactionId));
-
-	/* dump cache invalidation messages */
-	if (ninvalmsgs > 0)
-		XLogRegisterData((char *) invalmsgs,
-						 ninvalmsgs * sizeof(SharedInvalidationMessage));
-
-	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_PREPARED);
+	recptr = XactLogCommitRecord(GetCurrentTimestamp(),
+								 nchildren, children, nrels, rels,
+								 ninvalmsgs, invalmsgs,
+								 initfileinval, false,
+								 xid);
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there any
@@ -2160,7 +2134,6 @@ RecordTransactionAbortPrepared(TransactionId xid,
 							   int nrels,
 							   RelFileNode *rels)
 {
-	xl_xact_abort_prepared xlrec;
 	XLogRecPtr	recptr;
 
 	/*
@@ -2174,24 +2147,10 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/* Emit the XLOG abort record */
-	xlrec.xid = xid;
-	xlrec.arec.xact_time = GetCurrentTimestamp();
-	xlrec.arec.nrels = nrels;
-	xlrec.arec.nsubxacts = nchildren;
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) (&xlrec), MinSizeOfXactAbortPrepared);
-
-	/* dump rels to delete */
-	if (nrels > 0)
-		XLogRegisterData((char *) rels, nrels * sizeof(RelFileNode));
-
-	/* dump committed child Xids */
-	if (nchildren > 0)
-		XLogRegisterData((char *) children,
-						 nchildren * sizeof(TransactionId));
-
-	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT_PREPARED);
+	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
+								nchildren, children,
+								nrels, rels,
+								xid);
 
 	/* Always flush, since we're about to remove the 2PC state file */
 	XLogFlush(recptr);

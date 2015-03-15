@@ -18,6 +18,7 @@
 #include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
 #include "storage/relfilenode.h"
+#include "storage/sinval.h"
 #include "utils/datetime.h"
 
 
@@ -103,8 +104,8 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
  */
 
 /*
- * XLOG allows to store some information in high 4 bits of log
- * record xl_info field
+ * XLOG allows to store some information in high 4 bits of log record xl_info
+ * field. We use 3 for the opcode, and one about an optional flag variable.
  */
 #define XLOG_XACT_COMMIT			0x00
 #define XLOG_XACT_PREPARE			0x10
@@ -112,7 +113,41 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
 #define XLOG_XACT_ASSIGNMENT		0x50
-#define XLOG_XACT_COMMIT_COMPACT	0x60
+/* free opcode 0x60 */
+/* free opcode 0x70 */
+
+/* mask for filtering opcodes out of xl_info */
+#define XLOG_XACT_OPMASK			0x70
+
+/* does this record have a 'xinfo' field or not */
+#define XLOG_XACT_HAS_INFO			0x80
+
+/*
+ * The following flags, stored in xinfo, determine which information is
+ * contained in commit/abort records.
+ */
+#define XACT_XINFO_HAS_DBINFO			(1U << 0)
+#define XACT_XINFO_HAS_SUBXACTS			(1U << 1)
+#define XACT_XINFO_HAS_RELFILENODES		(1U << 2)
+#define XACT_XINFO_HAS_INVALS			(1U << 3)
+#define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
+
+/*
+ * Also stored in xinfo, these indicating a variety of additional actions that
+ * need to occur when emulating transaction effects during recovery.
+ *
+ * They are named XactCompletion... to differentiate them from
+ * EOXact... routines which run at the end of the original transaction
+ * completion.
+ */
+#define XACT_COMPLETION_UPDATE_RELCACHE_FILE	(1U << 30)
+#define XACT_COMPLETION_FORCE_SYNC_COMMIT		(1U << 31)
+
+/* Access macros for above flags */
+#define XactCompletionRelcacheInitFileInval(xinfo) \
+	(!!(xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE))
+#define XactCompletionForceSyncCommit(xinfo) \
+	(!!(xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT))
 
 typedef struct xl_xact_assignment
 {
@@ -123,85 +158,130 @@ typedef struct xl_xact_assignment
 
 #define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
 
-typedef struct xl_xact_commit_compact
-{
-	TimestampTz xact_time;		/* time of commit */
-	int			nsubxacts;		/* number of subtransaction XIDs */
-	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
-	TransactionId subxacts[FLEXIBLE_ARRAY_MEMBER];
-} xl_xact_commit_compact;
+/*
+ * Commit and abort records can contain a lot of information. But a large
+ * portion of the records won't need all possible pieces of information. So we
+ * only include what's needed.
+ *
+ * A minimal commit/abort record only consists out of a xl_xact_commit/abort
+ * struct. The presence of additional information is indicated by bits set in
+ * 'xl_xact_xinfo->xinfo'. The presence of the xinfo field itself is signalled
+ * by a set XLOG_XACT_HAS_INFO bit in the xl_info field.
+ *
+ * NB: All the individual data chunks should be be sized to multiples of
+ * sizeof(int) and only require int32 alignment.
+ */
 
-#define MinSizeOfXactCommitCompact offsetof(xl_xact_commit_compact, subxacts)
+/* sub-records for commit/abort */
+
+typedef struct xl_xact_xinfo
+{
+	/*
+	 * Even though we right now only require 1 byte of space in xinfo we use
+	 * four so following records don't have to care about alignment. Commit
+	 * records can be large, so copying large portions isn't attractive.
+	 */
+	uint32		xinfo;
+} xl_xact_xinfo;
+
+typedef struct xl_xact_dbinfo
+{
+	Oid			dbId;			/* MyDatabaseId */
+	Oid			tsId;			/* MyDatabaseTableSpace */
+} xl_xact_dbinfo;
+
+typedef struct xl_xact_subxacts
+{
+	int			nsubxacts;		/* number of subtransaction XIDs */
+	TransactionId subxacts[FLEXIBLE_ARRAY_MEMBER];
+} xl_xact_subxacts;
+#define MinSizeOfXactSubxacts offsetof(xl_xact_subxacts, subxacts)
+
+typedef struct xl_xact_relfilenodes
+{
+	int			nrels;		/* number of subtransaction XIDs */
+	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
+} xl_xact_relfilenodes;
+#define MinSizeOfXactRelfilenodes offsetof(xl_xact_relfilenodes, xnodes)
+
+typedef struct xl_xact_invals
+{
+	int			nmsgs;			/* number of shared inval msgs */
+	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
+} xl_xact_invals;
+#define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
+
+typedef struct xl_xact_twophase
+{
+	TransactionId xid;
+} xl_xact_twophase;
+#define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
 
 typedef struct xl_xact_commit
 {
 	TimestampTz xact_time;		/* time of commit */
-	uint32		xinfo;			/* info flags */
-	int			nrels;			/* number of RelFileNodes */
-	int			nsubxacts;		/* number of subtransaction XIDs */
-	int			nmsgs;			/* number of shared inval msgs */
-	Oid			dbId;			/* MyDatabaseId */
-	Oid			tsId;			/* MyDatabaseTableSpace */
-	/* Array of RelFileNode(s) to drop at commit */
-	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
-	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
-	/* ARRAY OF SHARED INVALIDATION MESSAGES FOLLOWS */
+
+	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
+	/* xl_xact_dbinfo follows if XINFO_HAS_DBINFO */
+	/* xl_xact_subxacts follows if XINFO_HAS_SUBXACT */
+	/* xl_xact_relfilenodes follows if XINFO_HAS_RELFILENODES */
+	/* xl_xact_invals follows if XINFO_HAS_INVALS */
+	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
 } xl_xact_commit;
-
-#define MinSizeOfXactCommit offsetof(xl_xact_commit, xnodes)
-
-/*
- * These flags are set in the xinfo fields of WAL commit records,
- * indicating a variety of additional actions that need to occur
- * when emulating transaction effects during recovery.
- * They are named XactCompletion... to differentiate them from
- * EOXact... routines which run at the end of the original
- * transaction completion.
- */
-#define XACT_COMPLETION_UPDATE_RELCACHE_FILE	0x01
-#define XACT_COMPLETION_FORCE_SYNC_COMMIT		0x02
-
-/* Access macros for above flags */
-#define XactCompletionRelcacheInitFileInval(xinfo)	(xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE)
-#define XactCompletionForceSyncCommit(xinfo)		(xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT)
+#define MinSizeOfXactCommit (offsetof(xl_xact_commit, xact_time) + sizeof(TimestampTz))
 
 typedef struct xl_xact_abort
 {
 	TimestampTz xact_time;		/* time of abort */
-	int			nrels;			/* number of RelFileNodes */
-	int			nsubxacts;		/* number of subtransaction XIDs */
-	/* Array of RelFileNode(s) to drop at abort */
-	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
-	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
+
+	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
+	/* No db_info required */
+	/* xl_xact_subxacts follows if HAS_SUBXACT */
+	/* xl_xact_relfilenodes follows if HAS_RELFILENODES */
+	/* No invalidation messages needed. */
+	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
 } xl_xact_abort;
-
-/* Note the intentional lack of an invalidation message array c.f. commit */
-
-#define MinSizeOfXactAbort offsetof(xl_xact_abort, xnodes)
+#define MinSizeOfXactAbort sizeof(xl_xact_abort)
 
 /*
- * COMMIT_PREPARED and ABORT_PREPARED are identical to COMMIT/ABORT records
- * except that we have to store the XID of the prepared transaction explicitly
- * --- the XID in the record header will be invalid.
+ * Commit/Abort records in the above form are a bit verbose to parse, so
+ * there's a deconstructed versions generated by ParseCommit/AbortRecord() for
+ * easier consumption.
  */
-
-typedef struct xl_xact_commit_prepared
+typedef struct xl_xact_parsed_commit
 {
-	TransactionId xid;			/* XID of prepared xact */
-	xl_xact_commit crec;		/* COMMIT record */
-	/* MORE DATA FOLLOWS AT END OF STRUCT */
-} xl_xact_commit_prepared;
+	TimestampTz		xact_time;
 
-#define MinSizeOfXactCommitPrepared offsetof(xl_xact_commit_prepared, crec.xnodes)
+	uint32			xinfo;
 
-typedef struct xl_xact_abort_prepared
+	Oid				dbId;		/* MyDatabaseId */
+	Oid				tsId;		/* MyDatabaseTableSpace */
+
+	int				nsubxacts;
+	TransactionId  *subxacts;
+
+	int				nrels;
+	RelFileNode	   *xnodes;
+
+	int				nmsgs;
+	SharedInvalidationMessage *msgs;
+
+	TransactionId	twophase_xid;	/* only for 2PC */
+} xl_xact_parsed_commit;
+
+typedef struct xl_xact_parsed_abort
 {
-	TransactionId xid;			/* XID of prepared xact */
-	xl_xact_abort arec;			/* ABORT record */
-	/* MORE DATA FOLLOWS AT END OF STRUCT */
-} xl_xact_abort_prepared;
+	TimestampTz		xact_time;
+	uint32			xinfo;
 
-#define MinSizeOfXactAbortPrepared offsetof(xl_xact_abort_prepared, arec.xnodes)
+	int				nsubxacts;
+	TransactionId  *subxacts;
+
+	int				nrels;
+	RelFileNode	   *xnodes;
+
+	TransactionId	twophase_xid;	/* only for 2PC */
+} xl_xact_parsed_abort;
 
 
 /* ----------------
@@ -256,8 +336,25 @@ extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
+extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
+									  int nsubxacts, TransactionId *subxacts,
+									  int nrels, RelFileNode *rels,
+									  int nmsgs, SharedInvalidationMessage *msgs,
+									  bool relcacheInval, bool forceSync,
+									  TransactionId twophase_xid);
+
+extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
+									 int nsubxacts, TransactionId *subxacts,
+									 int nrels, RelFileNode *rels,
+									 TransactionId twophase_xid);
 extern void xact_redo(XLogReaderState *record);
+
+/* xactdesc.c */
 extern void xact_desc(StringInfo buf, XLogReaderState *record);
 extern const char *xact_identify(uint8 info);
+
+/* also in xactdesc.c, so they can be shared between front/backend code */
+extern void ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *parsed);
+extern void ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed);
 
 #endif   /* XACT_H */
