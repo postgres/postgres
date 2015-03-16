@@ -184,40 +184,34 @@ rt__int_size(ArrayType *a, float *size)
 	*size = (float) ARRNELEMS(a);
 }
 
+/* qsort_arg comparison function for isort() */
+static int
+isort_cmp(const void *a, const void *b, void *arg)
+{
+	int4		aval = *((const int4 *) a);
+	int4		bval = *((const int4 *) b);
+
+	if (aval < bval)
+		return -1;
+	if (aval > bval)
+		return 1;
+
+	/*
+	 * Report if we have any duplicates.  If there are equal keys, qsort must
+	 * compare them at some point, else it wouldn't know whether one should go
+	 * before or after the other.
+	 */
+	*((bool *) arg) = true;
+	return 0;
+}
+
 /* Sort the given data (len >= 2).  Return true if any duplicates found */
 bool
 isort(int4 *a, int len)
 {
-	int4		cur,
-				prev;
-	int4	   *pcur,
-			   *pprev,
-			   *end;
-	bool		r = FALSE;
+	bool		r = false;
 
-	/*
-	 * We use a simple insertion sort.  While this is O(N^2) in the worst
-	 * case, it's quite fast if the input is already sorted or nearly so.
-	 * Also, for not-too-large inputs it's faster than more complex methods
-	 * anyhow.
-	 */
-	end = a + len;
-	for (pcur = a + 1; pcur < end; pcur++)
-	{
-		cur = *pcur;
-		for (pprev = pcur - 1; pprev >= a; pprev--)
-		{
-			prev = *pprev;
-			if (prev <= cur)
-			{
-				if (prev == cur)
-					r = TRUE;
-				break;
-			}
-			pprev[1] = prev;
-		}
-		pprev[1] = cur;
-	}
+	qsort_arg(a, len, sizeof(int4), isort_cmp, (void *) &r);
 	return r;
 }
 
