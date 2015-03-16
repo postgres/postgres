@@ -195,39 +195,38 @@ rt__int_size(ArrayType *a, float *size)
 	return;
 }
 
+/* qsort_arg comparison function for isort() */
+static int
+isort_cmp(const void *a, const void *b, void *arg)
+{
+	int4		aval = *((const int4 *) a);
+	int4		bval = *((const int4 *) b);
 
-/* len >= 2 */
+	if (aval < bval)
+		return -1;
+	if (aval > bval)
+		return 1;
+
+	/*
+	 * Report if we have any duplicates.  If there are equal keys, qsort must
+	 * compare them at some point, else it wouldn't know whether one should go
+	 * before or after the other.
+	 */
+	*((bool *) arg) = true;
+	return 0;
+}
+
+/* Sort the given data (len >= 2).  Return true if any duplicates found */
 bool
 isort(int4 *a, int len)
 {
-	int4		tmp,
-				index;
-	int4	   *cur,
-			   *end;
-	bool		r = FALSE;
+	bool		r = false;
 
-	end = a + len;
-	do
-	{
-		index = 0;
-		cur = a + 1;
-		while (cur < end)
-		{
-			if (*(cur - 1) > *cur)
-			{
-				tmp = *(cur - 1);
-				*(cur - 1) = *cur;
-				*cur = tmp;
-				index = 1;
-			}
-			else if (!r && *(cur - 1) == *cur)
-				r = TRUE;
-			cur++;
-		}
-	} while (index);
+	qsort_arg(a, len, sizeof(int4), isort_cmp, (void *) &r);
 	return r;
 }
 
+/* Create a new int array with room for "num" elements */
 ArrayType *
 new_intArrayType(int num)
 {
