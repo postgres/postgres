@@ -1060,6 +1060,8 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 			/* no support for event triggers on event triggers */
 			return false;
 		case OBJECT_AGGREGATE:
+		case OBJECT_AMOP:
+		case OBJECT_AMPROC:
 		case OBJECT_ATTRIBUTE:
 		case OBJECT_CAST:
 		case OBJECT_COLUMN:

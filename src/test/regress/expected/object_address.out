@@ -45,8 +45,7 @@ DECLARE
 	objtype text;
 BEGIN
 	FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
-		('toast table column'), ('view column'), ('materialized view column'),
-		('operator of access method'), ('function of access method')
+		('toast table column'), ('view column'), ('materialized view column')
 	LOOP
 		BEGIN
 			PERFORM pg_get_object_address(objtype, '{one}', '{}');
@@ -62,8 +61,6 @@ WARNING:  error for sequence column: unsupported object type "sequence column"
 WARNING:  error for toast table column: unsupported object type "toast table column"
 WARNING:  error for view column: unsupported object type "view column"
 WARNING:  error for materialized view column: unsupported object type "materialized view column"
-WARNING:  error for operator of access method: unsupported object type "operator of access method"
-WARNING:  error for function of access method: unsupported object type "function of access method"
 DO $$
 DECLARE
 	objtype text;
@@ -79,7 +76,8 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy'), ('user mapping'), ('default acl')
+		('policy'), ('user mapping'), ('default acl'),
+		('operator of access method'), ('function of access method')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -197,18 +195,18 @@ WARNING:  error for operator,{addr_nsp,zwei},{}: argument list length must be ex
 WARNING:  error for operator,{addr_nsp,zwei},{integer}: argument list length must be exactly 2
 WARNING:  error for operator,{eins,zwei,drei},{}: argument list length must be exactly 2
 WARNING:  error for operator,{eins,zwei,drei},{integer}: argument list length must be exactly 2
-WARNING:  error for operator class,{eins},{}: argument list length must be exactly 1
-WARNING:  error for operator class,{eins},{integer}: access method "integer" does not exist
-WARNING:  error for operator class,{addr_nsp,zwei},{}: argument list length must be exactly 1
-WARNING:  error for operator class,{addr_nsp,zwei},{integer}: access method "integer" does not exist
-WARNING:  error for operator class,{eins,zwei,drei},{}: argument list length must be exactly 1
-WARNING:  error for operator class,{eins,zwei,drei},{integer}: access method "integer" does not exist
-WARNING:  error for operator family,{eins},{}: argument list length must be exactly 1
-WARNING:  error for operator family,{eins},{integer}: access method "integer" does not exist
-WARNING:  error for operator family,{addr_nsp,zwei},{}: argument list length must be exactly 1
-WARNING:  error for operator family,{addr_nsp,zwei},{integer}: access method "integer" does not exist
-WARNING:  error for operator family,{eins,zwei,drei},{}: argument list length must be exactly 1
-WARNING:  error for operator family,{eins,zwei,drei},{integer}: access method "integer" does not exist
+WARNING:  error for operator class,{eins},{}: name list length must be at least 2
+WARNING:  error for operator class,{eins},{integer}: name list length must be at least 2
+WARNING:  error for operator class,{addr_nsp,zwei},{}: access method "addr_nsp" does not exist
+WARNING:  error for operator class,{addr_nsp,zwei},{integer}: access method "addr_nsp" does not exist
+WARNING:  error for operator class,{eins,zwei,drei},{}: access method "eins" does not exist
+WARNING:  error for operator class,{eins,zwei,drei},{integer}: access method "eins" does not exist
+WARNING:  error for operator family,{eins},{}: name list length must be at least 2
+WARNING:  error for operator family,{eins},{integer}: name list length must be at least 2
+WARNING:  error for operator family,{addr_nsp,zwei},{}: access method "addr_nsp" does not exist
+WARNING:  error for operator family,{addr_nsp,zwei},{integer}: access method "addr_nsp" does not exist
+WARNING:  error for operator family,{eins,zwei,drei},{}: access method "eins" does not exist
+WARNING:  error for operator family,{eins,zwei,drei},{integer}: access method "eins" does not exist
 WARNING:  error for rule,{eins},{}: rule "eins" does not exist
 WARNING:  error for rule,{eins},{integer}: rule "eins" does not exist
 WARNING:  error for rule,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
@@ -263,6 +261,18 @@ WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be
 WARNING:  error for default acl,{addr_nsp,zwei},{integer}: unrecognized default ACL object type i
 WARNING:  error for default acl,{eins,zwei,drei},{}: argument list length must be exactly 1
 WARNING:  error for default acl,{eins,zwei,drei},{integer}: unrecognized default ACL object type i
+WARNING:  error for operator of access method,{eins},{}: name list length must be at least 3
+WARNING:  error for operator of access method,{eins},{integer}: name list length must be at least 3
+WARNING:  error for operator of access method,{addr_nsp,zwei},{}: name list length must be at least 3
+WARNING:  error for operator of access method,{addr_nsp,zwei},{integer}: name list length must be at least 3
+WARNING:  error for operator of access method,{eins,zwei,drei},{}: argument list length must be exactly 2
+WARNING:  error for operator of access method,{eins,zwei,drei},{integer}: argument list length must be exactly 2
+WARNING:  error for function of access method,{eins},{}: name list length must be at least 3
+WARNING:  error for function of access method,{eins},{integer}: name list length must be at least 3
+WARNING:  error for function of access method,{addr_nsp,zwei},{}: name list length must be at least 3
+WARNING:  error for function of access method,{addr_nsp,zwei},{integer}: name list length must be at least 3
+WARNING:  error for function of access method,{eins,zwei,drei},{}: argument list length must be exactly 2
+WARNING:  error for function of access method,{eins,zwei,drei},{integer}: argument list length must be exactly 2
 -- these object types cannot be qualified names
 SELECT pg_get_object_address('language', '{one}', '{}');
 ERROR:  language "one" does not exist
@@ -332,10 +342,10 @@ WITH objects (type, name, args) AS (VALUES
 				('language', '{plpgsql}', '{}'),
 				-- large object
 				('operator', '{+}', '{int4, int4}'),
-				('operator class', '{int4_ops}', '{btree}'),
-				('operator family', '{integer_ops}', '{btree}'),
-				-- operator of access method
-				-- function of access method
+				('operator class', '{btree, int4_ops}', '{}'),
+				('operator family', '{btree, integer_ops}', '{}'),
+				('operator of access method', '{btree,integer_ops,1}', '{integer,integer}'),
+				('function of access method', '{btree,integer_ops,2}', '{integer,integer}'),
 				('rule', '{addr_nsp, genview, _RETURN}', '{}'),
 				('trigger', '{addr_nsp, gentable, t}', '{}'),
 				('schema', '{addr_nsp}', '{}'),
@@ -362,7 +372,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	  FROM objects, pg_get_object_address(type, name, args) addr1,
 			pg_identify_object_as_address(classid, objid, subobjid) ioa(typ,nms,args),
 			pg_get_object_address(typ, nms, ioa.args) as addr2
-	ORDER BY addr1.classid, addr1.objid;
+	ORDER BY addr1.classid, addr1.objid, addr1.subobjid;
            type            |   schema   |       name        |                               identity                               | ?column? 
 ---------------------------+------------+-------------------+----------------------------------------------------------------------+----------
  default acl               |            |                   | for role regtest_addr_user in schema public on tables                | t
@@ -379,12 +389,14 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  index                     | addr_nsp   | gentable_pkey     | addr_nsp.gentable_pkey                                               | t
  view                      | addr_nsp   | genview           | addr_nsp.genview                                                     | t
  materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview                                                  | t
- foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a                                                 | t
  foreign table             | addr_nsp   | genftable         | addr_nsp.genftable                                                   | t
+ foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a                                                 | t
  role                      |            | regtest_addr_user | regtest_addr_user                                                    | t
  server                    |            | addr_fserv        | addr_fserv                                                           | t
  user mapping              |            |                   | regtest_addr_user on server integer                                  | t
  foreign-data wrapper      |            | addr_fdw          | addr_fdw                                                             | t
+ operator of access method |            |                   | operator 1 (integer, integer) of pg_catalog.integer_ops USING btree  | t
+ function of access method |            |                   | function 2 (integer, integer) of pg_catalog.integer_ops USING btree  | t
  default value             |            |                   | for addr_nsp.gentable.b                                              | t
  cast                      |            |                   | (bigint AS integer)                                                  | t
  table constraint          | addr_nsp   |                   | a_chk on addr_nsp.gentable                                           | t
@@ -403,7 +415,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(38 rows)
+(40 rows)
 
 ---
 --- Cleanup resources

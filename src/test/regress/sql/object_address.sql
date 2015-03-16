@@ -48,8 +48,7 @@ DECLARE
 	objtype text;
 BEGIN
 	FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
-		('toast table column'), ('view column'), ('materialized view column'),
-		('operator of access method'), ('function of access method')
+		('toast table column'), ('view column'), ('materialized view column')
 	LOOP
 		BEGIN
 			PERFORM pg_get_object_address(objtype, '{one}', '{}');
@@ -75,7 +74,8 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy'), ('user mapping'), ('default acl')
+		('policy'), ('user mapping'), ('default acl'),
+		('operator of access method'), ('function of access method')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -141,10 +141,10 @@ WITH objects (type, name, args) AS (VALUES
 				('language', '{plpgsql}', '{}'),
 				-- large object
 				('operator', '{+}', '{int4, int4}'),
-				('operator class', '{int4_ops}', '{btree}'),
-				('operator family', '{integer_ops}', '{btree}'),
-				-- operator of access method
-				-- function of access method
+				('operator class', '{btree, int4_ops}', '{}'),
+				('operator family', '{btree, integer_ops}', '{}'),
+				('operator of access method', '{btree,integer_ops,1}', '{integer,integer}'),
+				('function of access method', '{btree,integer_ops,2}', '{integer,integer}'),
 				('rule', '{addr_nsp, genview, _RETURN}', '{}'),
 				('trigger', '{addr_nsp, gentable, t}', '{}'),
 				('schema', '{addr_nsp}', '{}'),
@@ -171,7 +171,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	  FROM objects, pg_get_object_address(type, name, args) addr1,
 			pg_identify_object_as_address(classid, objid, subobjid) ioa(typ,nms,args),
 			pg_get_object_address(typ, nms, ioa.args) as addr2
-	ORDER BY addr1.classid, addr1.objid;
+	ORDER BY addr1.classid, addr1.objid, addr1.subobjid;
 
 ---
 --- Cleanup resources
