@@ -331,29 +331,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="pause-at-recovery-target"
-                   xreflabel="pause_at_recovery_target">
-      <term><varname>pause_at_recovery_target</varname> (<type>boolean</type>)
-      <indexterm>
-        <primary><varname>pause_at_recovery_target</> recovery parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        This is an obsolete version of <varname>recovery_target_action</>.
-        Setting it to <literal>true</> is the same as
-        <varname>recovery_target_action</> = <literal>pause</>,
-        while <literal>false</> is the same as
-        <varname>recovery_target_action</> = <literal>promote</>.
-       </para>
-       <para>
-        This setting has no effect if <xref linkend="guc-hot-standby"> is not
-        enabled, or if no recovery target is set.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     </variablelist>
+    </variablelist>
    </sect1>
 
   <sect1 id="standby-settings">
