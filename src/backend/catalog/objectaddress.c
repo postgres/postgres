@@ -1428,7 +1428,7 @@ get_object_address_opf_member(ObjectType objtype,
 		typenames[i] = strVal(lfirst(cell));
 		typaddr = get_object_address_type(OBJECT_TYPE, cell, missing_ok);
 		typeoids[i] = typaddr.objectId;
-		if (i++ >= 2)
+		if (++i >= 2)
 			break;
 	}
 
