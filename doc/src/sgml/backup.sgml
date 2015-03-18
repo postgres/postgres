@@ -438,8 +438,10 @@ tar -cf backup.tar /usr/local/pgsql/data
    Another option is to use <application>rsync</> to perform a file
    system backup.  This is done by first running <application>rsync</>
    while the database server is running, then shutting down the database
-   server just long enough to do a second <application>rsync</>.  The
-   second <application>rsync</> will be much quicker than the first,
+   server long enough to do an <command>rsync --checksum</>.
+   (<option>--checksum</> is necessary because <command>rsync</> only
+   has file modification-time granularity of one second.)  The
+   second <application>rsync</> will be quicker than the first,
    because it has relatively little data to transfer, and the end result
    will be consistent because the server was down.  This method
    allows a file system backup to be performed with minimal downtime.

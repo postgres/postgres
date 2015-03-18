@@ -315,6 +315,11 @@ NET STOP postgresql-8.4
 NET STOP postgresql-9.0
 </programlisting>
     </para>
+
+    <para>
+     Streaming replication and log-shipping standby servers can remain running until
+     a later step.
+    </para>
    </step>
 
    <step>
@@ -399,12 +404,151 @@ pg_upgrade.exe
    </step>
 
    <step>
+    <title>Upgrade Streaming Replication and Log-Shipping standby
+    servers</title>
+
+    <para>
+     If you have Streaming Replication (<xref
+     linkend="streaming-replication">) or Log-Shipping (<xref
+     linkend="warm-standby">) standby servers, follow these steps to
+     upgrade them (before starting any servers):
+    </para>
+
+    <procedure>
+
+     <step>
+      <title>Install the new PostgreSQL binaries on standby servers</title>
+
+      <para>
+       Make sure the new binaries and support files are installed on all
+       standby servers.
+      </para>
+     </step>
+
+     <step>
+      <title>Make sure the new standby data directories do <emphasis>not</>
+      exist</title>
+
+      <para>
+       Make sure the new standby data directories do <emphasis>not</>
+       exist or are empty.  If <application>initdb</> was run, delete
+       the standby server data directories.
+      </para>
+     </step>
+
+     <step>
+      <title>Install custom shared object files</title>
+
+      <para>
+       Install the same custom shared object files on the new standbys
+       that you installed in the new master cluster.
+      </para>
+     </step>
+
+     <step>
+      <title>Stop standby servers</title>
+
+      <para>
+       If the standby servers are still running, stop them now using the
+       above instructions.
+      </para>
+     </step>
+
+     <step>
+      <title>Verify standby servers</title>
+
+      <para>
+       To prevent old standby servers from being modified, run
+       <application>pg_controldata</> against the primary and standby
+       clusters and verify that the <quote>Latest checkpoint location</>
+       values match in all clusters.  (This requires the standbys to be
+       shut down after the primary.)
+      </para>
+     </step>
+
+     <step>
+      <title>Save configuration files</title>
+
+      <para>
+       Save any configuration files from the standbys you need to keep,
+       e.g.  <filename>postgresql.conf</>, <literal>recovery.conf</>,
+       as these will be overwritten or removed in the next step.
+      </para>
+     </step>
+
+     <step>
+      <title>Start and stop the new master cluster</title>
+
+      <para>
+       In the new master cluster, change <varname>wal_level</> to
+       <literal>hot_standby</> in the <filename>postgresql.conf</> file
+       and then start and stop the cluster.
+      </para>
+     </step>
+
+     <step>
+      <title>Run <application>rsync</></title>
+
+      <para>
+       From a directory that is above the old and new database cluster
+       directories, run this for each slave:
+
+<programlisting>
+       rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
+</programlisting>
+
+       where <option>old_pgdata</> and <option>new_pgdata</> are relative
+       to the current directory, and <option>remote_dir</> is
+       <emphasis>above</> the old and new cluster directories on
+       the standby server.  The old and new relative cluster paths
+       must match on the master and standby server.  Consult the
+       <application>rsync</> manual page for details on specifying the
+       remote directory, e.g. <literal>standbyhost:/opt/PostgreSQL/</>.
+       <application>rsync</> will be fast when <application>pg_upgrade</>'s
+       <option>--link</> mode is used because it will create hard links
+       on the remote server rather than transferring user data.
+      </para>
+
+      <para>
+       If you have tablespaces, you will need to run a similar
+       <application>rsync</> command for each tablespace directory.  If you
+       have relocated <filename>pg_xlog</> outside the data directories,
+       <application>rsync</> must be run on those directories too.
+      </para>
+     </step>
+
+     <step>
+      <title>Configure streaming replication and log-shipping standby
+      servers</title>
+
+      <para>
+       Configure the servers for log shipping.  (You do not need to run
+       <function>pg_start_backup()</> and <function>pg_stop_backup()</>
+       or take a file system backup as the slaves are still synchronized
+       with the master.)
+      </para>
+     </step>
+
+    </procedure>
+
+   </step>
+
+   <step>
     <title>Restore <filename>pg_hba.conf</></title>
 
     <para>
      If you modified <filename>pg_hba.conf</>, restore its original settings.
      It might also be necessary to adjust other configuration files in the new
      cluster to match the old cluster, e.g. <filename>postgresql.conf</>.
+    </para>
+   </step>
+
+   <step>
+    <title>Start the new server</title>
+
+    <para>
+     The new server can now be safely started, and then any
+     <application>rsync</>'ed standby servers.
     </para>
    </step>
 
@@ -548,22 +692,15 @@ psql --username postgres --file script.sql postgres
   </para>
 
   <para>
-   A Log-Shipping Standby Server (<xref linkend="warm-standby">) cannot
-   be upgraded because the server must allow writes.  The simplest way
-   is to upgrade the primary and use <command>rsync</> to rebuild the
-   standbys.  You can run <command>rsync</> while the primary is down,
-   or as part of a base backup (<xref linkend="backup-base-backup">)
-   which overwrites the old standby cluster.
-  </para>
-
-  <para>
    If you want to use link mode and you do not want your old cluster
    to be modified when the new cluster is started, make a copy of the
    old cluster and upgrade that in link mode. To make a valid copy
    of the old cluster, use <command>rsync</> to create a dirty
    copy of the old cluster while the server is running, then shut down
-   the old server and run <command>rsync</> again to update the copy with any
-   changes to make it consistent.  You might want to exclude some
+   the old server and run <command>rsync --checksum</> again to update the
+   copy with any changes to make it consistent.  (<option>--checksum</>
+   is necessary because <command>rsync</> only has file modification-time
+   granularity of one second.)  You might want to exclude some
    files, e.g. <filename>postmaster.pid</>, as documented in <xref
    linkend="backup-lowlevel-base-backup">.  If your file system supports
    file system snapshots or copy-on-write file copies, you can use that
