@@ -156,6 +156,9 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 		{
 			/* Look in specific schema only */
 			Oid			namespaceId;
+			ParseCallbackState pcbstate;
+
+			setup_parser_errposition_callback(&pcbstate, pstate, typeName->location);
 
 			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
 			if (OidIsValid(namespaceId))
@@ -164,6 +167,8 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 										 ObjectIdGetDatum(namespaceId));
 			else
 				typoid = InvalidOid;
+
+			cancel_parser_errposition_callback(&pcbstate);
 		}
 		else
 		{

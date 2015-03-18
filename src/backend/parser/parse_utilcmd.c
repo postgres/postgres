@@ -149,6 +149,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	ListCell   *elements;
 	Oid			namespaceid;
 	Oid			existing_relid;
+	ParseCallbackState pcbstate;
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -156,15 +157,22 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	stmt = (CreateStmt *) copyObject(stmt);
 
+	/* Set up pstate */
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = queryString;
+
 	/*
 	 * Look up the creation namespace.  This also checks permissions on the
 	 * target namespace, locks it against concurrent drops, checks for a
 	 * preexisting relation in that namespace with the same name, and updates
 	 * stmt->relation->relpersistence if the selected namespace is temporary.
 	 */
+	setup_parser_errposition_callback(&pcbstate, pstate,
+									  stmt->relation->location);
 	namespaceid =
 		RangeVarGetAndCheckCreationNamespace(stmt->relation, NoLock,
 											 &existing_relid);
+	cancel_parser_errposition_callback(&pcbstate);
 
 	/*
 	 * If the relation already exists and the user specified "IF NOT EXISTS",
@@ -190,10 +198,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		&& stmt->relation->relpersistence != RELPERSISTENCE_TEMP)
 		stmt->relation->schemaname = get_namespace_name(namespaceid);
 
-	/* Set up pstate and CreateStmtContext */
-	pstate = make_parsestate(NULL);
-	pstate->p_sourcetext = queryString;
-
+	/* Set up CreateStmtContext */
 	cxt.pstate = pstate;
 	if (IsA(stmt, CreateForeignTableStmt))
 	{

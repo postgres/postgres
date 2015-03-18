@@ -212,11 +212,15 @@ INSERT INTO unlogged1 VALUES (42);
 CREATE UNLOGGED TABLE public.unlogged2 (a int primary key);		-- also OK
 CREATE UNLOGGED TABLE pg_temp.unlogged3 (a int primary key);	-- not OK
 ERROR:  only temporary relations may be created in temporary schemas
+LINE 1: CREATE UNLOGGED TABLE pg_temp.unlogged3 (a int primary key);
+                              ^
 CREATE TABLE pg_temp.implicitly_temp (a int primary key);		-- OK
 CREATE TEMP TABLE explicitly_temp (a int primary key);			-- also OK
 CREATE TEMP TABLE pg_temp.doubly_temp (a int primary key);		-- also OK
 CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
 ERROR:  cannot create temporary relation in non-temporary schema
+LINE 1: CREATE TEMP TABLE public.temp_to_perm (a int primary key);
+                          ^
 DROP TABLE unlogged1, public.unlogged2;
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';

@@ -93,6 +93,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Oid			vatype;
 	FuncDetailCode fdresult;
 	char		aggkind = 0;
+	ParseCallbackState pcbstate;
 
 	/*
 	 * If there's an aggregate filter, transform it using transformWhereClause
@@ -235,12 +236,18 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * type.  We'll fix up the variadic case below.  We may also have to deal
 	 * with default arguments.
 	 */
+
+	setup_parser_errposition_callback(&pcbstate, pstate, location);
+
 	fdresult = func_get_detail(funcname, fargs, argnames, nargs,
 							   actual_arg_types,
 							   !func_variadic, true,
 							   &funcid, &rettype, &retset,
 							   &nvargs, &vatype,
 							   &declared_arg_types, &argdefaults);
+
+	cancel_parser_errposition_callback(&pcbstate);
+
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
 		/*

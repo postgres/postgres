@@ -75,8 +75,9 @@ static const char *op_signature_string(List *op, char oprkind,
 static void op_error(ParseState *pstate, List *op, char oprkind,
 		 Oid arg1, Oid arg2,
 		 FuncDetailCode fdresult, int location);
-static bool make_oper_cache_key(OprCacheKey *key, List *opname,
-					Oid ltypeId, Oid rtypeId);
+static bool make_oper_cache_key(ParseState *pstate, OprCacheKey *key,
+					List *opname, Oid ltypeId, Oid rtypeId,
+					int location);
 static Oid	find_oper_cache_entry(OprCacheKey *key);
 static void make_oper_cache_entry(OprCacheKey *key, Oid opr_oid);
 static void InvalidateOprCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);
@@ -383,7 +384,8 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	key_ok = make_oper_cache_key(&key, opname, ltypeId, rtypeId);
+	key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
+
 	if (key_ok)
 	{
 		operOid = find_oper_cache_entry(&key);
@@ -529,7 +531,8 @@ right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	key_ok = make_oper_cache_key(&key, op, arg, InvalidOid);
+	key_ok = make_oper_cache_key(pstate, &key, op, arg, InvalidOid, location);
+
 	if (key_ok)
 	{
 		operOid = find_oper_cache_entry(&key);
@@ -607,7 +610,8 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	key_ok = make_oper_cache_key(&key, op, InvalidOid, arg);
+	key_ok = make_oper_cache_key(pstate, &key, op, InvalidOid, arg, location);
+
 	if (key_ok)
 	{
 		operOid = find_oper_cache_entry(&key);
@@ -1006,9 +1010,13 @@ static HTAB *OprCacheHash = NULL;
  *
  * Returns TRUE if successful, FALSE if the search_path overflowed
  * (hence no caching is possible).
+ *
+ * pstate/location are used only to report the error position; pass NULL/-1
+ * if not available.
  */
 static bool
-make_oper_cache_key(OprCacheKey *key, List *opname, Oid ltypeId, Oid rtypeId)
+make_oper_cache_key(ParseState *pstate, OprCacheKey *key, List *opname,
+					Oid ltypeId, Oid rtypeId, int location)
 {
 	char	   *schemaname;
 	char	   *opername;
@@ -1026,8 +1034,12 @@ make_oper_cache_key(OprCacheKey *key, List *opname, Oid ltypeId, Oid rtypeId)
 
 	if (schemaname)
 	{
+		ParseCallbackState pcbstate;
+
 		/* search only in exact schema given */
+		setup_parser_errposition_callback(&pcbstate, pstate, location);
 		key->search_path[0] = LookupExplicitNamespace(schemaname, false);
+		cancel_parser_errposition_callback(&pcbstate);
 	}
 	else
 	{
