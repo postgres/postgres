@@ -323,7 +323,7 @@ extern ArrayBuildStateAny *accumArrayResultAny(ArrayBuildStateAny *astate,
 extern Datum makeArrayResultAny(ArrayBuildStateAny *astate,
 				   MemoryContext rcontext, bool release);
 
-extern ArrayIterator array_create_iterator(ArrayType *arr, int slice_ndim);
+extern ArrayIterator array_create_iterator(ArrayType *arr, int slice_ndim, ArrayMetaState *mstate);
 extern bool array_iterate(ArrayIterator iterator, Datum *value, bool *isnull);
 extern void array_free_iterator(ArrayIterator iterator);
 
@@ -357,6 +357,10 @@ extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_array_transfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_array_finalfn(PG_FUNCTION_ARGS);
+
+extern Datum array_offset(PG_FUNCTION_ARGS);
+extern Datum array_offset_start(PG_FUNCTION_ARGS);
+extern Datum array_offsets(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions defined in array_typanalyze.c

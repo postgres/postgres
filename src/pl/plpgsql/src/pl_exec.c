@@ -2315,7 +2315,7 @@ exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
 			  errmsg("FOREACH loop variable must not be of an array type")));
 
 	/* Create an iterator to step through the array */
-	array_iterator = array_create_iterator(arr, stmt->slice);
+	array_iterator = array_create_iterator(arr, stmt->slice, NULL);
 
 	/* Identify iterator result type */
 	if (stmt->slice > 0)

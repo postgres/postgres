@@ -3989,7 +3989,7 @@ arraycontained(PG_FUNCTION_ARGS)
  * The passed-in array must remain valid for the lifetime of the iterator.
  */
 ArrayIterator
-array_create_iterator(ArrayType *arr, int slice_ndim)
+array_create_iterator(ArrayType *arr, int slice_ndim, ArrayMetaState *mstate)
 {
 	ArrayIterator iterator = palloc0(sizeof(ArrayIteratorData));
 
@@ -4006,10 +4006,20 @@ array_create_iterator(ArrayType *arr, int slice_ndim)
 	iterator->arr = arr;
 	iterator->nullbitmap = ARR_NULLBITMAP(arr);
 	iterator->nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-	get_typlenbyvalalign(ARR_ELEMTYPE(arr),
-						 &iterator->typlen,
-						 &iterator->typbyval,
-						 &iterator->typalign);
+
+	if (mstate != NULL)
+	{
+		Assert(mstate->element_type == ARR_ELEMTYPE(arr));
+
+		iterator->typlen = mstate->typlen;
+		iterator->typbyval = mstate->typbyval;
+		iterator->typalign = mstate->typalign;
+	}
+	else
+		get_typlenbyvalalign(ARR_ELEMTYPE(arr),
+							 &iterator->typlen,
+							 &iterator->typbyval,
+							 &iterator->typalign);
 
 	/*
 	 * Remember the slicing parameters.
