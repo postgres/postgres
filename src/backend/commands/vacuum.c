@@ -71,35 +71,79 @@ static void vac_truncate_clog(TransactionId frozenXID,
 				  MultiXactId minMulti,
 				  TransactionId lastSaneFrozenXid,
 				  MultiXactId lastSaneMinMulti);
-static bool vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
-		   bool for_wraparound);
+static bool vacuum_rel(Oid relid, RangeVar *relation, int options,
+		   VacuumParams *params);
 
+/*
+ * Primary entry point for manual VACUUM and ANALYZE commands
+ *
+ * This is mainly a preparation wrapper for the real operations that will
+ * happen in vacuum().
+ */
+void
+ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
+{
+	VacuumParams	params;
+
+	/* sanity checks on options */
+	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
+	Assert((vacstmt->options & VACOPT_VACUUM) ||
+		   !(vacstmt->options & (VACOPT_FULL | VACOPT_FREEZE)));
+	Assert((vacstmt->options & VACOPT_ANALYZE) || vacstmt->va_cols == NIL);
+	Assert(!(vacstmt->options & VACOPT_SKIPTOAST));
+
+	/*
+	 * All freeze ages are zero if the FREEZE option is given; otherwise pass
+	 * them as -1 which means to use the default values.
+	 */
+	if (vacstmt->options & VACOPT_FREEZE)
+	{
+		params.freeze_min_age = 0;
+		params.freeze_table_age = 0;
+		params.multixact_freeze_min_age = 0;
+		params.multixact_freeze_table_age = 0;
+	}
+	else
+	{
+		params.freeze_min_age = -1;
+		params.freeze_table_age = -1;
+		params.multixact_freeze_min_age = -1;
+		params.multixact_freeze_table_age = -1;
+	}
+
+	/* user-invoked vacuum is never "for wraparound" */
+	params.is_wraparound = false;
+
+	/* Now go through the common routine */
+	vacuum(vacstmt->options, vacstmt->relation, InvalidOid, &params,
+		   vacstmt->va_cols, NULL, isTopLevel);
+}
 
 /*
  * Primary entry point for VACUUM and ANALYZE commands.
  *
- * relid is normally InvalidOid; if it is not, then it provides the relation
- * OID to be processed, and vacstmt->relation is ignored.  (The non-invalid
- * case is currently only used by autovacuum.)
+ * options is a bitmask of VacuumOption flags, indicating what to do.
  *
- * do_toast is passed as FALSE by autovacuum, because it processes TOAST
- * tables separately.
+ * relid, if not InvalidOid, indicate the relation to process; otherwise,
+ * the RangeVar is used.  (The latter must always be passed, because it's
+ * used for error messages.)
  *
- * for_wraparound is used by autovacuum to let us know when it's forcing
- * a vacuum for wraparound, which should not be auto-canceled.
+ * params contains a set of parameters that can be used to customize the
+ * behavior.
+ *
+ * va_cols is a list of columns to analyze, or NIL to process them all.
  *
  * bstrategy is normally given as NULL, but in autovacuum it can be passed
  * in to use the same buffer strategy object across multiple vacuum() calls.
  *
  * isTopLevel should be passed down from ProcessUtility.
  *
- * It is the caller's responsibility that vacstmt and bstrategy
- * (if given) be allocated in a memory context that won't disappear
- * at transaction commit.
+ * It is the caller's responsibility that all parameters are allocated in a
+ * memory context that will not disappear at transaction commit.
  */
 void
-vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
-	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
+vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
+	   List *va_cols, BufferAccessStrategy bstrategy, bool isTopLevel)
 {
 	const char *stmttype;
 	volatile bool in_outer_xact,
@@ -107,13 +151,9 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	List	   *relations;
 	static bool in_vacuum = false;
 
-	/* sanity checks on options */
-	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
-	Assert((vacstmt->options & VACOPT_VACUUM) ||
-		   !(vacstmt->options & (VACOPT_FULL | VACOPT_FREEZE)));
-	Assert((vacstmt->options & VACOPT_ANALYZE) || vacstmt->va_cols == NIL);
+	Assert(params != NULL);
 
-	stmttype = (vacstmt->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
+	stmttype = (options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were inside
@@ -123,7 +163,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
 	 */
-	if (vacstmt->options & VACOPT_VACUUM)
+	if (options & VACOPT_VACUUM)
 	{
 		PreventTransactionChain(isTopLevel, stmttype);
 		in_outer_xact = false;
@@ -143,7 +183,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * Send info about dead objects to the statistics collector, unless we are
 	 * in autovacuum --- autovacuum.c does this for itself.
 	 */
-	if ((vacstmt->options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
+	if ((options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
 		pgstat_vacuum_stat();
 
 	/*
@@ -175,7 +215,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * Build list of relations to process, unless caller gave us one. (If we
 	 * build one, we put it in vac_context for safekeeping.)
 	 */
-	relations = get_rel_oids(relid, vacstmt->relation);
+	relations = get_rel_oids(relid, relation);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -191,11 +231,11 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * transaction block, and also in an autovacuum worker, use own
 	 * transactions so we can release locks sooner.
 	 */
-	if (vacstmt->options & VACOPT_VACUUM)
+	if (options & VACOPT_VACUUM)
 		use_own_xacts = true;
 	else
 	{
-		Assert(vacstmt->options & VACOPT_ANALYZE);
+		Assert(options & VACOPT_ANALYZE);
 		if (IsAutoVacuumWorkerProcess())
 			use_own_xacts = true;
 		else if (in_outer_xact)
@@ -245,13 +285,13 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		{
 			Oid			relid = lfirst_oid(cur);
 
-			if (vacstmt->options & VACOPT_VACUUM)
+			if (options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(relid, vacstmt, do_toast, for_wraparound))
+				if (!vacuum_rel(relid, relation, options, params))
 					continue;
 			}
 
-			if (vacstmt->options & VACOPT_ANALYZE)
+			if (options & VACOPT_ANALYZE)
 			{
 				/*
 				 * If using separate xacts, start one for analyze. Otherwise,
@@ -264,7 +304,8 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 					PushActiveSnapshot(GetTransactionSnapshot());
 				}
 
-				analyze_rel(relid, vacstmt, in_outer_xact, vac_strategy);
+				analyze_rel(relid, relation, options,
+							va_cols, in_outer_xact, vac_strategy);
 
 				if (use_own_xacts)
 				{
@@ -299,7 +340,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		StartTransactionCommand();
 	}
 
-	if ((vacstmt->options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
+	if ((options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
 	{
 		/*
 		 * Update pg_database.datfrozenxid, and truncate pg_clog if possible.
@@ -1113,7 +1154,7 @@ vac_truncate_clog(TransactionId frozenXID,
  *		At entry and exit, we are not inside a transaction.
  */
 static bool
-vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
+vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
@@ -1122,6 +1163,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+
+	Assert(params != NULL);
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -1132,7 +1175,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 */
 	PushActiveSnapshot(GetTransactionSnapshot());
 
-	if (!(vacstmt->options & VACOPT_FULL))
+	if (!(options & VACOPT_FULL))
 	{
 		/*
 		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
@@ -1156,7 +1199,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyPgXact->vacuumFlags |= PROC_IN_VACUUM;
-		if (for_wraparound)
+		if (params->is_wraparound)
 			MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 		LWLockRelease(ProcArrayLock);
 	}
@@ -1172,7 +1215,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
 	 * way, we can be sure that no other backend is vacuuming the same table.
 	 */
-	lmode = (vacstmt->options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
+	lmode = (options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
 	/*
 	 * Open the relation and get the appropriate lock on it.
@@ -1183,7 +1226,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 * If we've been asked not to wait for the relation lock, acquire it first
 	 * in non-blocking mode, before calling try_relation_open().
 	 */
-	if (!(vacstmt->options & VACOPT_NOWAIT))
+	if (!(options & VACOPT_NOWAIT))
 		onerel = try_relation_open(relid, lmode);
 	else if (ConditionalLockRelationOid(relid, lmode))
 		onerel = try_relation_open(relid, NoLock);
@@ -1194,7 +1237,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 				   errmsg("skipping vacuum of \"%s\" --- lock not available",
-						  vacstmt->relation->relname)));
+						  relation->relname)));
 	}
 
 	if (!onerel)
@@ -1286,7 +1329,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 * us to process it.  In VACUUM FULL, though, the toast table is
 	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it.
 	 */
-	if (do_toast && !(vacstmt->options & VACOPT_FULL))
+	if (!(options & VACOPT_SKIPTOAST) && !(options & VACOPT_FULL))
 		toast_relid = onerel->rd_rel->reltoastrelid;
 	else
 		toast_relid = InvalidOid;
@@ -1305,7 +1348,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
-	if (vacstmt->options & VACOPT_FULL)
+	if (options & VACOPT_FULL)
 	{
 		/* close relation before vacuuming, but hold lock until commit */
 		relation_close(onerel, NoLock);
@@ -1313,10 +1356,10 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
 		cluster_rel(relid, InvalidOid, false,
-					(vacstmt->options & VACOPT_VERBOSE) != 0);
+					(options & VACOPT_VERBOSE) != 0);
 	}
 	else
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
+		lazy_vacuum_rel(onerel, options, params, vac_strategy);
 
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
@@ -1342,7 +1385,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 * totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt, false, for_wraparound);
+		vacuum_rel(toast_relid, relation, options, params);
 
 	/*
 	 * Now release the session-level lock on the master table.

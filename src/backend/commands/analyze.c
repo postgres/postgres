@@ -85,7 +85,7 @@ static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+static void do_analyze_rel(Relation onerel, int options, List *va_cols,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
@@ -115,7 +115,7 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
  *	analyze_rel() -- analyze one relation
  */
 void
-analyze_rel(Oid relid, VacuumStmt *vacstmt,
+analyze_rel(Oid relid, RangeVar *relation, int options, List *va_cols,
 			bool in_outer_xact, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
@@ -124,7 +124,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	BlockNumber relpages = 0;
 
 	/* Select logging level */
-	if (vacstmt->options & VACOPT_VERBOSE)
+	if (options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -144,7 +144,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
 	 * has been dropped since we last saw it, we don't need to process it.
 	 */
-	if (!(vacstmt->options & VACOPT_NOWAIT))
+	if (!(options & VACOPT_NOWAIT))
 		onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
 	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
 		onerel = try_relation_open(relid, NoLock);
@@ -155,7 +155,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 				  errmsg("skipping analyze of \"%s\" --- lock not available",
-						 vacstmt->relation->relname)));
+						 relation->relname)));
 	}
 	if (!onerel)
 		return;
@@ -167,7 +167,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(vacstmt->options & VACOPT_VACUUM))
+		if (!(options & VACOPT_VACUUM))
 		{
 			if (onerel->rd_rel->relisshared)
 				ereport(WARNING,
@@ -248,7 +248,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	else
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(vacstmt->options & VACOPT_VACUUM))
+		if (!(options & VACOPT_VACUUM))
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
 							RelationGetRelationName(onerel))));
@@ -266,14 +266,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+	do_analyze_rel(onerel, options, va_cols, acquirefunc, relpages,
 				   false, in_outer_xact, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+		do_analyze_rel(onerel, options, va_cols, acquirefunc, relpages,
 					   true, in_outer_xact, elevel);
 
 	/*
@@ -302,7 +302,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
  * acquirefunc for each child table.
  */
 static void
-do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+do_analyze_rel(Relation onerel, int options, List *va_cols,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel)
 {
@@ -372,14 +372,14 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 *
 	 * Note that system attributes are never analyzed.
 	 */
-	if (vacstmt->va_cols != NIL)
+	if (va_cols != NIL)
 	{
 		ListCell   *le;
 
-		vacattrstats = (VacAttrStats **) palloc(list_length(vacstmt->va_cols) *
+		vacattrstats = (VacAttrStats **) palloc(list_length(va_cols) *
 												sizeof(VacAttrStats *));
 		tcnt = 0;
-		foreach(le, vacstmt->va_cols)
+		foreach(le, va_cols)
 		{
 			char	   *col = strVal(lfirst(le));
 
@@ -436,7 +436,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 			thisdata->indexInfo = indexInfo = BuildIndexInfo(Irel[ind]);
 			thisdata->tupleFract = 1.0; /* fix later if partial */
-			if (indexInfo->ii_Expressions != NIL && vacstmt->va_cols == NIL)
+			if (indexInfo->ii_Expressions != NIL && va_cols == NIL)
 			{
 				ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
 
@@ -595,7 +595,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by
 	 * VACUUM.
 	 */
-	if (!inh && !(vacstmt->options & VACOPT_VACUUM))
+	if (!inh && !(options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -623,7 +623,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
-	if (!(vacstmt->options & VACOPT_VACUUM))
+	if (!(options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{

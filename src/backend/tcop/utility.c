@@ -627,7 +627,7 @@ standard_ProcessUtility(Node *parsetree,
 				/* we choose to allow this during "read only" transactions */
 				PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
 											 "VACUUM" : "ANALYZE");
-				vacuum(stmt, InvalidOid, true, NULL, false, isTopLevel);
+				ExecVacuum(stmt, isTopLevel);
 			}
 			break;
 
