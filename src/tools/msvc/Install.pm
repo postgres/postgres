@@ -91,7 +91,6 @@ sub Install
 	}
 
 	CopySolutionOutput($conf, $target);
-	lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
 	my $sample_files = [];
 	my @top_dir      = ("src");
 	@top_dir = ("src\\bin", "src\\interfaces") if ($insttype eq "client");
@@ -106,14 +105,8 @@ sub Install
 	CopyFiles(
 		'Import libraries',
 		$target . '/lib/',
-		"$conf\\",
-		"postgres\\postgres.lib",
-		"libpq\\libpq.lib",
-		"libecpg\\libecpg.lib",
-		"libpgcommon\\libpgcommon.lib",
-		"libpgport\\libpgport.lib",
-		"libpgtypes\\libpgtypes.lib",
-		"libecpg_compat\\libecpg_compat.lib");
+		"$conf\\", "postgres\\postgres.lib", "libpgcommon\\libpgcommon.lib",
+		"libpgport\\libpgport.lib");
 	CopyContribFiles($config, $target);
 	CopyIncludeFiles($target);
 
@@ -236,8 +229,14 @@ sub CopySolutionOutput
 	while ($sln =~ $rem)
 	{
 		my $pf = $1;
-		my $dir;
-		my $ext;
+
+		# Hash-of-arrays listing where to install things.  For each
+		# subdirectory there's a hash key, and the value is an array
+		# of file extensions to install in that subdirectory.  Example:
+		# { 'bin' => [ 'dll', 'lib' ],
+		#   'lib' => [ 'lib' ] }
+		my %install_list;
+		my $is_sharedlib = 0;
 
 		$sln =~ s/$rem//;
 
@@ -247,22 +246,45 @@ sub CopySolutionOutput
 
 		my $proj = read_file("$pf.$vcproj")
 		  || croak "Could not open $pf.$vcproj\n";
+
+		# Check if this project uses a shared library by looking if
+		# SO_MAJOR_VERSION is defined in its Makefile, whose path
+		# can be found using the resource file of this project.
+		if ((      $vcproj eq 'vcxproj'
+				&& $proj =~ qr{ResourceCompile\s*Include="([^"]+)"})
+			|| (   $vcproj eq 'vcproj'
+				&& $proj =~ qr{File\s*RelativePath="([^\"]+)\.rc"}))
+		{
+			my $projpath = dirname($1);
+			my $mfname =
+			  -e "$projpath/GNUmakefile"
+			  ? "$projpath/GNUmakefile"
+			  : "$projpath/Makefile";
+			my $mf = read_file($mfname) || croak "Could not open $mfname\n";
+
+			$is_sharedlib = 1 if ($mf =~ /^SO_MAJOR_VERSION\s*=\s*(.*)$/mg);
+		}
+
 		if ($vcproj eq 'vcproj' && $proj =~ qr{ConfigurationType="([^"]+)"})
 		{
 			if ($1 == 1)
 			{
-				$dir = "bin";
-				$ext = "exe";
+				push(@{ $install_list{'bin'} }, "exe");
 			}
 			elsif ($1 == 2)
 			{
-				$dir = "lib";
-				$ext = "dll";
+				push(@{ $install_list{'lib'} }, "dll");
+				if ($is_sharedlib)
+				{
+					push(@{ $install_list{'bin'} }, "dll");
+					push(@{ $install_list{'lib'} }, "lib");
+				}
 			}
 			else
 			{
 
-# Static lib, such as libpgport, only used internally during build, don't install
+				# Static libraries, such as libpgport, only used internally
+				# during build, don't install.
 				next;
 			}
 		}
@@ -271,18 +293,21 @@ sub CopySolutionOutput
 		{
 			if ($1 eq 'Application')
 			{
-				$dir = "bin";
-				$ext = "exe";
+				push(@{ $install_list{'bin'} }, "exe");
 			}
 			elsif ($1 eq 'DynamicLibrary')
 			{
-				$dir = "lib";
-				$ext = "dll";
+				push(@{ $install_list{'lib'} }, "dll");
+				if ($is_sharedlib)
+				{
+					push(@{ $install_list{'bin'} }, "dll");
+					push(@{ $install_list{'lib'} }, "lib");
+				}
 			}
 			else    # 'StaticLibrary'
 			{
-
-# Static lib, such as libpgport, only used internally during build, don't install
+				# Static lib, such as libpgport, only used internally
+				# during build, don't install.
 				next;
 			}
 		}
@@ -290,8 +315,16 @@ sub CopySolutionOutput
 		{
 			croak "Could not parse $pf.$vcproj\n";
 		}
-		lcopy("$conf\\$pf\\$pf.$ext", "$target\\$dir\\$pf.$ext")
-		  || croak "Could not copy $pf.$ext\n";
+
+		# Install each element
+		foreach my $dir (keys %install_list)
+		{
+			foreach my $ext (@{ $install_list{$dir} })
+			{
+				lcopy("$conf\\$pf\\$pf.$ext", "$target\\$dir\\$pf.$ext")
+				  || croak "Could not copy $pf.$ext\n";
+			}
+		}
 		lcopy("$conf\\$pf\\$pf.pdb", "$target\\symbols\\$pf.pdb")
 		  || croak "Could not copy $pf.pdb\n";
 		print ".";
