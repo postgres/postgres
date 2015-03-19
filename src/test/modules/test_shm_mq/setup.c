@@ -125,7 +125,7 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	segsize = shm_toc_estimate(&e);
 
 	/* Create the shared memory segment and establish a table of contents. */
-	seg = dsm_create(shm_toc_estimate(&e));
+	seg = dsm_create(shm_toc_estimate(&e), 0);
 	toc = shm_toc_create(PG_TEST_SHM_MQ_MAGIC, dsm_segment_address(seg),
 						 segsize);
 

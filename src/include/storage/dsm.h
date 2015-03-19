@@ -17,6 +17,8 @@
 
 typedef struct dsm_segment dsm_segment;
 
+#define DSM_CREATE_NULL_IF_MAXSEGMENTS			0x0001
+
 /* Startup and shutdown functions. */
 struct PGShmemHeader;			/* avoid including pg_shmem.h */
 extern void dsm_cleanup_using_control_segment(dsm_handle old_control_handle);
@@ -29,7 +31,7 @@ extern void dsm_set_control_handle(dsm_handle h);
 #endif
 
 /* Functions that create, update, or remove mappings. */
-extern dsm_segment *dsm_create(Size size);
+extern dsm_segment *dsm_create(Size size, int flags);
 extern dsm_segment *dsm_attach(dsm_handle h);
 extern void *dsm_resize(dsm_segment *seg, Size size);
 extern void *dsm_remap(dsm_segment *seg);
