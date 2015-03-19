@@ -37,6 +37,7 @@
 #include "utils/lsyscache.h"
 #include "utils/ruleutils.h"
 #include "tcop/tcopprot.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
 
@@ -81,7 +82,9 @@ current_query(PG_FUNCTION_ARGS)
  * role as the backend being signaled. For "dangerous" signals, an explicit
  * check for superuser needs to be done prior to calling this function.
  *
- * Returns 0 on success, 1 on general failure, and 2 on permission error.
+ * Returns 0 on success, 1 on general failure, 2 on normal permission error
+ * and 3 if the caller needs to be a superuser.
+ *
  * In the event of a general failure (return code 1), a warning message will
  * be emitted. For permission errors, doing that is the responsibility of
  * the caller.
@@ -89,6 +92,7 @@ current_query(PG_FUNCTION_ARGS)
 #define SIGNAL_BACKEND_SUCCESS 0
 #define SIGNAL_BACKEND_ERROR 1
 #define SIGNAL_BACKEND_NOPERMISSION 2
+#define SIGNAL_BACKEND_NOSUPERUSER 3
 static int
 pg_signal_backend(int pid, int sig)
 {
@@ -113,7 +117,12 @@ pg_signal_backend(int pid, int sig)
 		return SIGNAL_BACKEND_ERROR;
 	}
 
-	if (!(superuser() || proc->roleId == GetUserId()))
+	/* Only allow superusers to signal superuser-owned backends. */
+	if (superuser_arg(proc->roleId) && !superuser())
+		return SIGNAL_BACKEND_NOSUPERUSER;
+
+	/* Users can signal backends they have role membership in. */
+	if (!has_privs_of_role(GetUserId(), proc->roleId))
 		return SIGNAL_BACKEND_NOPERMISSION;
 
 	/*
@@ -141,35 +150,49 @@ pg_signal_backend(int pid, int sig)
 }
 
 /*
- * Signal to cancel a backend process.  This is allowed if you are superuser or
- * have the same role as the process being canceled.
+ * Signal to cancel a backend process.  This is allowed if you are a member of
+ * the role whose process is being canceled.
+ *
+ * Note that only superusers can signal superuser-owned processes.
  */
 Datum
 pg_cancel_backend(PG_FUNCTION_ARGS)
 {
 	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGINT);
 
+	if (r == SIGNAL_BACKEND_NOSUPERUSER)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be a superuser to cancel superuser query"))));
+
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser or have the same role to cancel queries running in other server processes"))));
+				 (errmsg("must be a member of the role whose query is being cancelled"))));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
 
 /*
- * Signal to terminate a backend process.  This is allowed if you are superuser
- * or have the same role as the process being terminated.
+ * Signal to terminate a backend process.  This is allowed if you are a member
+ * of the role whose process is being terminated.
+ *
+ * Note that only superusers can signal superuser-owned processes.
  */
 Datum
 pg_terminate_backend(PG_FUNCTION_ARGS)
 {
 	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGTERM);
 
+	if (r == SIGNAL_BACKEND_NOSUPERUSER)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be a superuser to terminate superuser process"))));
+
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser or have the same role to terminate other server processes"))));
+				 (errmsg("must be a member of the role whose process is being terminated"))));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }

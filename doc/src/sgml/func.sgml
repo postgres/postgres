@@ -16328,9 +16328,9 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_cancel_backend(<parameter>pid</parameter> <type>int</>)</function></literal>
         </entry>
        <entry><type>boolean</type></entry>
-       <entry>Cancel a backend's current query.  You can execute this against
-        another backend that has exactly the same role as the user calling the
-        function.  In all other cases, you must be a superuser.
+       <entry>Cancel a backend's current query.  This is also allowed if the
+        calling role is a member of the role whose backend is being cancelled,
+        however only superusers can cancel superuser backends.
         </entry>
       </row>
       <row>
@@ -16352,10 +16352,9 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_terminate_backend(<parameter>pid</parameter> <type>int</>)</function></literal>
         </entry>
        <entry><type>boolean</type></entry>
-       <entry>Terminate a backend.  You can execute this against
-        another backend that has exactly the same role as the user
-        calling the function.  In all other cases, you must be a
-        superuser.
+       <entry>Terminate a backend.  This is also allowed if the calling role
+        is a member of the role whose backend is being terminated, however only
+        superusers can terminate superuser backends.
        </entry>
       </row>
      </tbody>

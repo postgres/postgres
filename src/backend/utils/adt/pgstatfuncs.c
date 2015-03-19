@@ -20,6 +20,7 @@
 #include "libpq/ip.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
 #include "utils/timestamp.h"
@@ -675,8 +676,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		else
 			nulls[15] = true;
 
-		/* Values only available to same user or superuser */
-		if (superuser() || beentry->st_userid == GetUserId())
+		/* Values only available to role member */
+		if (has_privs_of_role(GetUserId(), beentry->st_userid))
 		{
 			SockAddr	zero_clientaddr;
 
@@ -878,7 +879,7 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		activity = "<backend information not available>";
-	else if (!superuser() && beentry->st_userid != GetUserId())
+	else if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		activity = "<insufficient privilege>";
 	else if (*(beentry->st_activity) == '\0')
 		activity = "<command string not enabled>";
@@ -899,7 +900,7 @@ pg_stat_get_backend_waiting(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_waiting;
@@ -918,7 +919,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_activity_start_timestamp;
@@ -944,7 +945,7 @@ pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_xact_start_timestamp;
@@ -966,7 +967,7 @@ pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_proc_start_timestamp;
@@ -990,7 +991,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	/* A zeroed client addr means we don't know */
@@ -1037,7 +1038,7 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	/* A zeroed client addr means we don't know */
