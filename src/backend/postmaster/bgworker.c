@@ -245,14 +245,37 @@ BackgroundWorkerStateChange(void)
 				rw->rw_terminate = true;
 				if (rw->rw_pid != 0)
 					kill(rw->rw_pid, SIGTERM);
+				else
+				{
+					/* Report never-started, now-terminated worker as dead. */
+					ReportBackgroundWorkerPID(rw);
+				}
 			}
 			continue;
 		}
 
-		/* If it's already flagged as do not restart, just release the slot. */
+		/*
+		 * If the worker is marked for termination, we don't need to add it
+		 * to the registered workers list; we can just free the slot.
+		 * However, if bgw_notify_pid is set, the process that registered the
+		 * worker may need to know that we've processed the terminate request,
+		 * so be sure to signal it.
+		 */
 		if (slot->terminate)
 		{
+			int	notify_pid;
+
+			/*
+			 * We need a memory barrier here to make sure that the load of
+			 * bgw_notify_pid completes before the store to in_use.
+			 */
+			notify_pid = slot->worker.bgw_notify_pid;
+			pg_memory_barrier();
+			slot->pid = 0;
 			slot->in_use = false;
+			if (notify_pid != 0)
+				kill(notify_pid, SIGUSR1);
+
 			continue;
 		}
 
