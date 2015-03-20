@@ -13742,7 +13742,7 @@ dumpTableSchema(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo)
 		 * here, also updating their attlen/attalign values so that the
 		 * dropped column can be skipped properly.  (We do not bother with
 		 * restoring the original attbyval setting.)  Also, inheritance
-		 * relationships are set up by doing ALTER INHERIT rather than using
+		 * relationships are set up by doing ALTER TABLE INHERIT rather than using
 		 * an INHERITS clause --- the latter would possibly mess up the column
 		 * order.  That also means we have to take care about setting
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
