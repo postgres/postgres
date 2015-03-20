@@ -13803,6 +13803,58 @@ _ACEOF
 fi
 
 
+# Check for extensions offering the integer scalar type __int128.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __int128" >&5
+$as_echo_n "checking for __int128... " >&6; }
+if ${pgac_cv__128bit_int+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/*
+ * These are globals to discourage the compiler from folding all the
+ * arithmetic tests down to compile-time constants.  We do not have
+ * convenient support for 64bit literals at this point...
+ */
+__int128 a = 48828125;
+__int128 b = 97656255;
+
+int
+main ()
+{
+
+__int128 c,d;
+a = (a << 12) + 1; /* 200000000001 */
+b = (b << 12) + 5; /* 400000000005 */
+/* use the most relevant arithmetic ops */
+c = a * b;
+d = (c + b) / b;
+/* return different values, to prevent optimizations */
+if (d != a+1)
+  return 0;
+return 1;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv__128bit_int=yes
+else
+  pgac_cv__128bit_int=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__128bit_int" >&5
+$as_echo "$pgac_cv__128bit_int" >&6; }
+if test x"$pgac_cv__128bit_int" = xyes ; then
+
+$as_echo "#define PG_INT128_TYPE __int128" >>confdefs.h
+
+fi
+
 # Check for various atomic operations now that we have checked how to declare
 # 64bit integers.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for builtin __sync char locking functions" >&5

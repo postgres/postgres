@@ -1771,6 +1771,9 @@ AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 # C, but is missing on some old platforms.
 AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
 
+# Check for extensions offering the integer scalar type __int128.
+PGAC_TYPE_128BIT_INT
+
 # Check for various atomic operations now that we have checked how to declare
 # 64bit integers.
 PGAC_HAVE_GCC__SYNC_CHAR_TAS

@@ -293,6 +293,17 @@ typedef unsigned long long int uint64;
 #define HAVE_INT64_TIMESTAMP
 #endif
 
+/*
+ * 128-bit signed and unsigned integers
+ *		There currently is only a limited support for the type. E.g. 128bit
+ *		literals and snprintf are not supported; but math is.
+ */
+#if defined(PG_INT128_TYPE)
+#define HAVE_INT128
+typedef PG_INT128_TYPE int128;
+typedef unsigned PG_INT128_TYPE uint128;
+#endif
+
 /* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
 #ifndef HAVE_SIG_ATOMIC_T
 typedef int sig_atomic_t;
