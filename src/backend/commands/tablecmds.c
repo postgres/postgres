@@ -1756,9 +1756,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		pfree(newattno);
 
 		/*
-		 * Close the parent rel, but keep our AccessShareLock on it until xact
-		 * commit.  That will prevent someone else from deleting or ALTERing
-		 * the parent before the child is committed.
+		 * Close the parent rel, but keep our ShareUpdateExclusiveLock on it
+		 * until xact commit.  That will prevent someone else from deleting or
+		 * ALTERing the parent before the child is committed.
 		 */
 		heap_close(relation, NoLock);
 	}
