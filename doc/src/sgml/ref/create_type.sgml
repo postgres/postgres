@@ -268,7 +268,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    placeholder type that has no properties except a name and an owner.  This
    is done by issuing the command <literal>CREATE TYPE
    <replaceable>name</></literal>, with no additional parameters.  Then the
-   I/O functions can be defined referencing the shell type.  Finally,
+   C I/O functions can be defined referencing the shell type.  Finally,
    <command>CREATE TYPE</> with a full definition replaces the shell entry
    with a complete, valid type definition, after which the new type can be
    used normally.
