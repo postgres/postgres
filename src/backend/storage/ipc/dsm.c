@@ -466,7 +466,7 @@ dsm_create(Size size, int flags)
 	if (!dsm_init_done)
 		dsm_backend_startup();
 
-	/* 
+	/*
 	 * If we've been instructed to return NULL when it's not possible to
 	 * register another segment, check whether we seem to be at the limit.
 	 * This allows us to avoid the overhead of creating a new segment only to
