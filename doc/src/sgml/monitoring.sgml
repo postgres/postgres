@@ -1382,8 +1382,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   Indexes can be used via either simple index scans or <quote>bitmap</>
-   index scans.  In a bitmap scan
+   Indexes can be used by simple index scans, <quote>bitmap</> index scans,
+   and the optimizer.  In a bitmap scan
    the output of several indexes can be combined via AND or OR rules,
    so it is difficult to associate individual heap row fetches
    with specific indexes when a bitmap scan is used.  Therefore, a bitmap
@@ -1393,6 +1393,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    <structname>pg_stat_all_tables</>.<structfield>idx_tup_fetch</>
    count for the table, but it does not affect
    <structname>pg_stat_all_indexes</>.<structfield>idx_tup_fetch</>.
+   The optimizer also accesses indexes to check for supplied constants
+   whose values are outside the recorded range of the optimizer statistics
+   because the optimizer statistics might be stale.
   </para>
 
   <note>
