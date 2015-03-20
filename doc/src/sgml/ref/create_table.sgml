@@ -423,7 +423,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       Boolean result which new or updated rows must satisfy for an
       insert or update operation to succeed.  Expressions evaluating
       to TRUE or UNKNOWN succeed.  Should any row of an insert or
-      update operation produce a FALSE result an error exception is
+      update operation produce a FALSE result, an error exception is
       raised and the insert or update does not alter the database.  A
       check constraint specified as a column constraint should
       reference that column's value only, while an expression
