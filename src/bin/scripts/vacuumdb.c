@@ -925,10 +925,10 @@ help(const char *progname)
 	printf(_("  -v, --verbose                   write a lot of output\n"));
 	printf(_("  -V, --version                   output version information, then exit\n"));
 	printf(_("  -z, --analyze                   update optimizer statistics\n"));
-	printf(_("  -Z, --analyze-only              only update optimizer statistics\n"));
+	printf(_("  -Z, --analyze-only              only update optimizer statistics;  no vacuum\n"));
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --analyze-in-stages         only update optimizer statistics, in multiple\n"
-		   "                                  stages for faster results\n"));
+		   "                                  stages for faster results;  no vacuum\n"));
 	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
