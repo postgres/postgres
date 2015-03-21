@@ -13,7 +13,6 @@ use Project;
 use Solution;
 use Cwd;
 use File::Copy;
-use File::Basename;
 use Config;
 use VSObjectFactory;
 use List::Util qw(first);
@@ -628,15 +627,11 @@ sub mkvcbuild
 	  (grep { $_->{name} eq 'pg_xlogdump' }
 		  @{ $solution->{projects}->{contrib} })[0];
 	$pg_xlogdump->AddDefine('FRONTEND');
-	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c'))
+	foreach my $xf (glob('src\\backend\\access\\rmgrdesc\\*desc.c'))
 	{
-		my $bf = basename $xf;
-		copy($xf, "contrib/pg_xlogdump/$bf");
-		$pg_xlogdump->AddFile("contrib\\pg_xlogdump\\$bf");
+		$pg_xlogdump->AddFile($xf)
 	}
-	copy(
-		'src/backend/access/transam/xlogreader.c',
-		'contrib/pg_xlogdump/xlogreader.c');
+	$pg_xlogdump->AddFile('src\backend\access\transam\xlogreader.c');
 
 	$solution->Save();
 	return $solution->{vcver};

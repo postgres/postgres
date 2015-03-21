@@ -92,11 +92,6 @@ REM Clean up datafiles built with contrib
 REM cd contrib
 REM for /r %%f in (*.sql) do if exist %%f.in del %%f
 
-REM clean up files copied into contrib\pg_xlogdump
-if exist contrib\pg_xlogdump\xlogreader.c del /q contrib\pg_xlogdump\xlogreader.c
-for %%f in (contrib\pg_xlogdump\*desc.c) do if not %%f==contrib\pg_xlogdump\rmgrdesc.c del /q %%f
-
-
 cd %D%
 
 REM Clean up ecpg regression test files
