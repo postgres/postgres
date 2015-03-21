@@ -62,7 +62,7 @@ static void disconnect_and_exit(int code);
 static void
 usage(void)
 {
-	printf(_("%s receives PostgreSQL logical change streams.\n\n"),
+	printf(_("%s controls PostgreSQL logical decoding streams.\n\n"),
 		   progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
