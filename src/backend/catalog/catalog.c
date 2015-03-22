@@ -246,7 +246,9 @@ IsSharedRelation(Oid relationId)
 	if (relationId == PgShdescriptionToastTable ||
 		relationId == PgShdescriptionToastIndex ||
 		relationId == PgDbRoleSettingToastTable ||
-		relationId == PgDbRoleSettingToastIndex)
+		relationId == PgDbRoleSettingToastIndex ||
+		relationId == PgShseclabelToastTable ||
+		relationId == PgShseclabelToastIndex)
 		return true;
 	return false;
 }

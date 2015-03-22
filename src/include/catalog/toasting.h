@@ -62,5 +62,8 @@ DECLARE_TOAST(pg_shdescription, 2846, 2847);
 DECLARE_TOAST(pg_db_role_setting, 2966, 2967);
 #define PgDbRoleSettingToastTable 2966
 #define PgDbRoleSettingToastIndex 2967
+DECLARE_TOAST(pg_shseclabel, 4060, 4061);
+#define PgShseclabelToastTable 4060
+#define PgShseclabelToastIndex 4061
 
 #endif   /* TOASTING_H */
