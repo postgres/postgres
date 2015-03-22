@@ -133,7 +133,7 @@ SELECT tableoid::regclass, b FROM agg_csv;
 INSERT INTO agg_csv VALUES(1,2.0);
 UPDATE agg_csv SET a = 1;
 DELETE FROM agg_csv WHERE a = 100;
--- but this should be ignored
+-- but this should be allowed
 SELECT * FROM agg_csv FOR UPDATE;
 
 -- constraint exclusion tests
@@ -147,6 +147,20 @@ EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;
 \t off
 SELECT * FROM agg_csv WHERE a < 0;
 RESET constraint_exclusion;
+
+-- table inheritance tests
+CREATE TABLE agg (a int2, b float4);
+ALTER FOREIGN TABLE agg_csv INHERIT agg;
+SELECT tableoid::regclass, * FROM agg;
+SELECT tableoid::regclass, * FROM agg_csv;
+SELECT tableoid::regclass, * FROM ONLY agg;
+-- updates aren't supported
+UPDATE agg SET a = 1;
+DELETE FROM agg WHERE a = 100;
+-- but this should be allowed
+SELECT tableoid::regclass, * FROM agg FOR UPDATE;
+ALTER FOREIGN TABLE agg_csv NO INHERIT agg;
+DROP TABLE agg;
 
 -- privilege tests
 SET ROLE file_fdw_superuser;

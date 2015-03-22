@@ -179,6 +179,12 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ 
    This is similar to the usual behavior of <function>currval()</> after
    a failed transaction.
   </para>
+
+  <para>
+   <command>TRUNCATE</> is not currently supported for foreign tables.
+   This implies that if a specified table has any descendant tables that are
+   foreign, the command will fail.
+  </para>
  </refsect1>
 
  <refsect1>

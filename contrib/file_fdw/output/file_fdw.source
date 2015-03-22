@@ -212,7 +212,7 @@ UPDATE agg_csv SET a = 1;
 ERROR:  cannot update foreign table "agg_csv"
 DELETE FROM agg_csv WHERE a = 100;
 ERROR:  cannot delete from foreign table "agg_csv"
--- but this should be ignored
+-- but this should be allowed
 SELECT * FROM agg_csv FOR UPDATE;
   a  |    b    
 -----+---------
@@ -249,6 +249,46 @@ SELECT * FROM agg_csv WHERE a < 0;
 (0 rows)
 
 RESET constraint_exclusion;
+-- table inheritance tests
+CREATE TABLE agg (a int2, b float4);
+ALTER FOREIGN TABLE agg_csv INHERIT agg;
+SELECT tableoid::regclass, * FROM agg;
+ tableoid |  a  |    b    
+----------+-----+---------
+ agg_csv  | 100 |  99.097
+ agg_csv  |   0 | 0.09561
+ agg_csv  |  42 |  324.78
+(3 rows)
+
+SELECT tableoid::regclass, * FROM agg_csv;
+ tableoid |  a  |    b    
+----------+-----+---------
+ agg_csv  | 100 |  99.097
+ agg_csv  |   0 | 0.09561
+ agg_csv  |  42 |  324.78
+(3 rows)
+
+SELECT tableoid::regclass, * FROM ONLY agg;
+ tableoid | a | b 
+----------+---+---
+(0 rows)
+
+-- updates aren't supported
+UPDATE agg SET a = 1;
+ERROR:  cannot update foreign table "agg_csv"
+DELETE FROM agg WHERE a = 100;
+ERROR:  cannot delete from foreign table "agg_csv"
+-- but this should be allowed
+SELECT tableoid::regclass, * FROM agg FOR UPDATE;
+ tableoid |  a  |    b    
+----------+-----+---------
+ agg_csv  | 100 |  99.097
+ agg_csv  |   0 | 0.09561
+ agg_csv  |  42 |  324.78
+(3 rows)
+
+ALTER FOREIGN TABLE agg_csv NO INHERIT agg;
+DROP TABLE agg;
 -- privilege tests
 SET ROLE file_fdw_superuser;
 SELECT * FROM agg_text ORDER BY a;

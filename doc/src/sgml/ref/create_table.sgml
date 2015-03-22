@@ -267,7 +267,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      <para>
       The optional <literal>INHERITS</> clause specifies a list of
       tables from which the new table automatically inherits all
-      columns.
+      columns.  Parent tables can be plain tables or foreign tables.
      </para>
 
      <para>
@@ -294,7 +294,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       error will be reported.
      </para>
 
-     <para><literal>CHECK</> constraints are merged in essentially the same way as
+     <para>
+      <literal>CHECK</> constraints are merged in essentially the same way as
       columns: if multiple parent tables and/or the new table definition
       contain identically-named <literal>CHECK</> constraints, these
       constraints must all have the same check expression, or an error will be

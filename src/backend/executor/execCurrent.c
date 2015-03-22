@@ -106,7 +106,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 			if (!RowMarkRequiresRowShareLock(thiserm->markType))
 				continue;		/* ignore non-FOR UPDATE/SHARE items */
 
-			if (RelationGetRelid(thiserm->relation) == table_oid)
+			if (thiserm->relid == table_oid)
 			{
 				if (erm)
 					ereport(ERROR,

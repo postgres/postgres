@@ -2253,13 +2253,6 @@ AddRelationNewConstraints(Relation rel,
 			expr = stringToNode(cdef->cooked_expr);
 		}
 
-		/* Don't allow NOT VALID for foreign tables */
-		if (cdef->skip_validation &&
-			rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("CHECK constraints on foreign tables cannot be marked NOT VALID")));
-
 		/*
 		 * Check name uniqueness, or generate a name if none was given.
 		 */

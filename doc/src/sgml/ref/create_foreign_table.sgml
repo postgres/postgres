@@ -23,6 +23,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
 ] )
+[ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
   SERVER <replaceable class="parameter">server_name</replaceable>
 [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 
@@ -121,6 +122,44 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> )
    </varlistentry>
 
    <varlistentry>
+    <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
+    <listitem>
+     <para>
+      The <literal>COLLATE</> clause assigns a collation to
+      the column (which must be of a collatable data type).
+      If not specified, the column data type's default collation is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INHERITS ( <replaceable>parent_table</replaceable> [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      The optional <literal>INHERITS</> clause specifies a list of
+      tables from which the new foreign table automatically inherits
+      all columns.  Parent tables can be plain tables or foreign tables.
+      See the similar form of
+      <xref linkend="sql-createtable"> for more details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      An optional name for a column or table constraint.  If the
+      constraint is violated, the constraint name is present in error messages,
+      so constraint names like <literal>col must be positive</> can be used
+      to communicate helpful constraint information to client applications.
+      (Double-quotes are needed to specify constraint names that contain spaces.)
+      If a constraint name is not specified, the system generates a name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>NOT NULL</></term>
     <listitem>
      <para>
@@ -145,7 +184,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> )
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> )</literal></term>
+    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] </literal></term>
     <listitem>
      <para>
       The <literal>CHECK</> clause specifies an expression producing a
@@ -162,6 +201,11 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> )
       subqueries nor refer to variables other than columns of the
       current row.  The system column <literal>tableoid</literal>
       may be referenced, but not any other system column.
+     </para>
+
+     <para>
+      A constraint marked with <literal>NO INHERIT</> will not propagate to
+      child tables.
      </para>
     </listitem>
    </varlistentry>
@@ -280,8 +324,9 @@ SERVER film_server;
    <acronym>SQL</acronym> standard; however, much as with
    <link linkend="sql-createtable"><command>CREATE TABLE</></link>,
    <literal>NULL</> constraints and zero-column foreign tables are permitted.
-   The ability to specify a default value is also a <productname>PostgreSQL</>
-   extension.
+   The ability to specify column default values is also
+   a <productname>PostgreSQL</> extension.  Table inheritance, in the form
+   defined by <productname>PostgreSQL</productname>, is nonstandard.
   </para>
 
  </refsect1>

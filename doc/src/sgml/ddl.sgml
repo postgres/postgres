@@ -546,7 +546,7 @@ CREATE TABLE products (
 
    <para>
     Adding a unique constraint will automatically create a unique btree
-    index on the column or group of columns used in the constraint. 
+    index on the column or group of columns used in the constraint.
     A uniqueness constraint on only some rows can be enforced by creating
     a <link linkend="indexes-partial">partial index</link>.
    </para>
@@ -2409,6 +2409,17 @@ WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
   </para>
 
   <para>
+   Another way to get the same effect is to use the <type>regclass</>
+   pseudo-type, which will print the table OID symbolically:
+
+<programlisting>
+SELECT c.tableoid::regclass, c.name, c.altitude
+FROM cities c
+WHERE c.altitude &gt; 500;
+</programlisting>
+  </para>
+
+  <para>
    Inheritance does not automatically propagate data from
    <command>INSERT</command> or <command>COPY</command> commands to
    other tables in the inheritance hierarchy. In our example, the
@@ -2501,6 +2512,14 @@ VALUES ('Albany', NULL, NULL, 'NY');
    data is (also) in the parent table.  Accessing the child tables
    directly is, however, not automatically allowed and would require
    further privileges to be granted.
+  </para>
+
+  <para>
+   Foreign tables (see <xref linkend="ddl-foreign-data">) can also
+   be part of inheritance hierarchies, either as parent or child
+   tables, just as regular tables can be.  If a foreign table is part
+   of an inheritance hierarchy then any operations not supported by
+   the foreign table are not supported on the whole hierarchy either.
   </para>
 
  <sect2 id="ddl-inherit-caveats">
@@ -2714,7 +2733,8 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
        <para>
         We will refer to the child tables as partitions, though they
-        are in every way normal <productname>PostgreSQL</> tables.
+        are in every way normal <productname>PostgreSQL</> tables
+        (or, possibly, foreign tables).
        </para>
       </listitem>
 

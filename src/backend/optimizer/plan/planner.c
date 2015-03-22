@@ -2224,35 +2224,7 @@ preprocess_rowmarks(PlannerInfo *root)
 		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = rc->rti;
 		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
-		if (rte->relkind == RELKIND_FOREIGN_TABLE)
-		{
-			/* For now, we force all foreign tables to use ROW_MARK_COPY */
-			newrc->markType = ROW_MARK_COPY;
-		}
-		else
-		{
-			/* regular table, apply the appropriate lock type */
-			switch (rc->strength)
-			{
-				case LCS_NONE:
-					/* we intentionally throw an error for LCS_NONE */
-					elog(ERROR, "unrecognized LockClauseStrength %d",
-						 (int) rc->strength);
-					break;
-				case LCS_FORKEYSHARE:
-					newrc->markType = ROW_MARK_KEYSHARE;
-					break;
-				case LCS_FORSHARE:
-					newrc->markType = ROW_MARK_SHARE;
-					break;
-				case LCS_FORNOKEYUPDATE:
-					newrc->markType = ROW_MARK_NOKEYEXCLUSIVE;
-					break;
-				case LCS_FORUPDATE:
-					newrc->markType = ROW_MARK_EXCLUSIVE;
-					break;
-			}
-		}
+		newrc->markType = select_rowmark_type(rte, rc->strength);
 		newrc->allMarkTypes = (1 << newrc->markType);
 		newrc->strength = rc->strength;
 		newrc->waitPolicy = rc->waitPolicy;
@@ -2277,12 +2249,7 @@ preprocess_rowmarks(PlannerInfo *root)
 		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = i;
 		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
-		/* real tables support REFERENCE, anything else needs COPY */
-		if (rte->rtekind == RTE_RELATION &&
-			rte->relkind != RELKIND_FOREIGN_TABLE)
-			newrc->markType = ROW_MARK_REFERENCE;
-		else
-			newrc->markType = ROW_MARK_COPY;
+		newrc->markType = select_rowmark_type(rte, LCS_NONE);
 		newrc->allMarkTypes = (1 << newrc->markType);
 		newrc->strength = LCS_NONE;
 		newrc->waitPolicy = LockWaitBlock;		/* doesn't matter */
@@ -2292,6 +2259,49 @@ preprocess_rowmarks(PlannerInfo *root)
 	}
 
 	root->rowMarks = prowmarks;
+}
+
+/*
+ * Select RowMarkType to use for a given table
+ */
+RowMarkType
+select_rowmark_type(RangeTblEntry *rte, LockClauseStrength strength)
+{
+	if (rte->rtekind != RTE_RELATION)
+	{
+		/* If it's not a table at all, use ROW_MARK_COPY */
+		return ROW_MARK_COPY;
+	}
+	else if (rte->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/* For now, we force all foreign tables to use ROW_MARK_COPY */
+		return ROW_MARK_COPY;
+	}
+	else
+	{
+		/* Regular table, apply the appropriate lock type */
+		switch (strength)
+		{
+			case LCS_NONE:
+				/* don't need tuple lock, only ability to re-fetch the row */
+				return ROW_MARK_REFERENCE;
+				break;
+			case LCS_FORKEYSHARE:
+				return ROW_MARK_KEYSHARE;
+				break;
+			case LCS_FORSHARE:
+				return ROW_MARK_SHARE;
+				break;
+			case LCS_FORNOKEYUPDATE:
+				return ROW_MARK_NOKEYEXCLUSIVE;
+				break;
+			case LCS_FORUPDATE:
+				return ROW_MARK_EXCLUSIVE;
+				break;
+		}
+		elog(ERROR, "unrecognized LockClauseStrength %d", (int) strength);
+		return ROW_MARK_EXCLUSIVE;		/* keep compiler quiet */
+	}
 }
 
 /*

@@ -814,21 +814,22 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		if (rc->isParent)
 			continue;
 
+		/* get relation's OID (will produce InvalidOid if subquery) */
+		relid = getrelid(rc->rti, rangeTable);
+
 		switch (rc->markType)
 		{
 			case ROW_MARK_EXCLUSIVE:
 			case ROW_MARK_NOKEYEXCLUSIVE:
 			case ROW_MARK_SHARE:
 			case ROW_MARK_KEYSHARE:
-				relid = getrelid(rc->rti, rangeTable);
 				relation = heap_open(relid, RowShareLock);
 				break;
 			case ROW_MARK_REFERENCE:
-				relid = getrelid(rc->rti, rangeTable);
 				relation = heap_open(relid, AccessShareLock);
 				break;
 			case ROW_MARK_COPY:
-				/* there's no real table here ... */
+				/* no physical table access is required */
 				relation = NULL;
 				break;
 			default:
@@ -843,6 +844,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
 		erm->relation = relation;
+		erm->relid = relid;
 		erm->rti = rc->rti;
 		erm->prti = rc->prti;
 		erm->rowmarkId = rc->rowmarkId;
@@ -1911,21 +1913,9 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
 	aerm->rowmark = erm;
 
 	/* Look up the resjunk columns associated with this rowmark */
-	if (erm->relation)
+	if (erm->markType != ROW_MARK_COPY)
 	{
-		Assert(erm->markType != ROW_MARK_COPY);
-
-		/* if child rel, need tableoid */
-		if (erm->rti != erm->prti)
-		{
-			snprintf(resname, sizeof(resname), "tableoid%u", erm->rowmarkId);
-			aerm->toidAttNo = ExecFindJunkAttributeInTlist(targetlist,
-														   resname);
-			if (!AttributeNumberIsValid(aerm->toidAttNo))
-				elog(ERROR, "could not find junk %s column", resname);
-		}
-
-		/* always need ctid for real relations */
+		/* need ctid for all methods other than COPY */
 		snprintf(resname, sizeof(resname), "ctid%u", erm->rowmarkId);
 		aerm->ctidAttNo = ExecFindJunkAttributeInTlist(targetlist,
 													   resname);
@@ -1934,12 +1924,21 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
 	}
 	else
 	{
-		Assert(erm->markType == ROW_MARK_COPY);
-
+		/* need wholerow if COPY */
 		snprintf(resname, sizeof(resname), "wholerow%u", erm->rowmarkId);
 		aerm->wholeAttNo = ExecFindJunkAttributeInTlist(targetlist,
 														resname);
 		if (!AttributeNumberIsValid(aerm->wholeAttNo))
+			elog(ERROR, "could not find junk %s column", resname);
+	}
+
+	/* if child rel, need tableoid */
+	if (erm->rti != erm->prti)
+	{
+		snprintf(resname, sizeof(resname), "tableoid%u", erm->rowmarkId);
+		aerm->toidAttNo = ExecFindJunkAttributeInTlist(targetlist,
+													   resname);
+		if (!AttributeNumberIsValid(aerm->toidAttNo))
 			elog(ERROR, "could not find junk %s column", resname);
 	}
 
@@ -2375,31 +2374,32 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 		/* clear any leftover test tuple for this rel */
 		EvalPlanQualSetTuple(epqstate, erm->rti, NULL);
 
-		if (erm->relation)
+		/* if child rel, must check whether it produced this row */
+		if (erm->rti != erm->prti)
+		{
+			Oid			tableoid;
+
+			datum = ExecGetJunkAttribute(epqstate->origslot,
+										 aerm->toidAttNo,
+										 &isNull);
+			/* non-locked rels could be on the inside of outer joins */
+			if (isNull)
+				continue;
+			tableoid = DatumGetObjectId(datum);
+
+			Assert(OidIsValid(erm->relid));
+			if (tableoid != erm->relid)
+			{
+				/* this child is inactive right now */
+				continue;
+			}
+		}
+
+		if (erm->markType == ROW_MARK_REFERENCE)
 		{
 			Buffer		buffer;
 
-			Assert(erm->markType == ROW_MARK_REFERENCE);
-
-			/* if child rel, must check whether it produced this row */
-			if (erm->rti != erm->prti)
-			{
-				Oid			tableoid;
-
-				datum = ExecGetJunkAttribute(epqstate->origslot,
-											 aerm->toidAttNo,
-											 &isNull);
-				/* non-locked rels could be on the inside of outer joins */
-				if (isNull)
-					continue;
-				tableoid = DatumGetObjectId(datum);
-
-				if (tableoid != RelationGetRelid(erm->relation))
-				{
-					/* this child is inactive right now */
-					continue;
-				}
-			}
+			Assert(erm->relation != NULL);
 
 			/* fetch the tuple's ctid */
 			datum = ExecGetJunkAttribute(epqstate->origslot,
@@ -2439,8 +2439,7 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
 			ItemPointerSetInvalid(&(tuple.t_self));
 			/* relation might be a foreign table, if so provide tableoid */
-			tuple.t_tableOid = getrelid(erm->rti,
-										epqstate->estate->es_range_table);
+			tuple.t_tableOid = erm->relid;
 			tuple.t_data = td;
 
 			/* copy and store tuple */

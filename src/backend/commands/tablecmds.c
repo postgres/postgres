@@ -1504,10 +1504,11 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		 */
 		relation = heap_openrv(parent, ShareUpdateExclusiveLock);
 
-		if (relation->rd_rel->relkind != RELKIND_RELATION)
+		if (relation->rd_rel->relkind != RELKIND_RELATION &&
+			relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("inherited relation \"%s\" is not a table",
+					 errmsg("inherited relation \"%s\" is not a table or foreign table",
 							parent->relname)));
 		/* Permanent rels cannot inherit from temporary ones */
 		if (relpersistence != RELPERSISTENCE_TEMP &&
@@ -3157,7 +3158,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
-			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -3245,14 +3246,14 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AddOids:		/* SET WITH OIDS */
-			ATSimplePermissions(rel, ATT_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			if (!rel->rd_rel->relhasoids || recursing)
 				ATPrepAddOids(wqueue, rel, recurse, cmd, lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
-			ATSimplePermissions(rel, ATT_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* Performs own recursion */
 			if (rel->rd_rel->relhasoids)
 			{
@@ -3280,9 +3281,15 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AddInherit:		/* INHERIT */
-			ATSimplePermissions(rel, ATT_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* This command never recurses */
 			ATPrepAddInherit(rel);
+			pass = AT_PASS_MISC;
+			break;
+		case AT_DropInherit:	/* NO INHERIT */
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			/* This command never recurses */
+			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AlterConstraint:		/* ALTER CONSTRAINT */
@@ -3290,7 +3297,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_ValidateConstraint:		/* VALIDATE CONSTRAINT */
-			ATSimplePermissions(rel, ATT_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* Recursion occurs during execution phase */
 			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
@@ -3318,7 +3325,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_EnableAlwaysRule:
 		case AT_EnableReplicaRule:
 		case AT_DisableRule:
-		case AT_DropInherit:	/* NO INHERIT */
 		case AT_AddOf:			/* OF */
 		case AT_DropOf: /* NOT OF */
 		case AT_EnableRowSecurity:
@@ -4637,7 +4643,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, ATT_TABLE);
+		ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	attrdesc = heap_open(AttributeRelationId, RowExclusiveLock);
 
@@ -5533,7 +5539,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, ATT_TABLE);
+		ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	/*
 	 * get the number of the attribute
@@ -5926,7 +5932,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, ATT_TABLE);
+		ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	/*
 	 * Call AddRelationNewConstraints to do the work, making sure it works on
@@ -7084,6 +7090,10 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 	bool		isnull;
 	Snapshot	snapshot;
 
+	/* VALIDATE CONSTRAINT is a no-op for foreign tables */
+	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		return;
+
 	constrForm = (Form_pg_constraint) GETSTRUCT(constrtup);
 
 	estate = CreateExecutorState();
@@ -7426,7 +7436,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, ATT_TABLE);
+		ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
 
@@ -9681,7 +9691,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 	 * Must be owner of both parent and child -- child was checked by
 	 * ATSimplePermissions call in ATPrepCmd
 	 */
-	ATSimplePermissions(parent_rel, ATT_TABLE);
+	ATSimplePermissions(parent_rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 	/* Permanent rels cannot inherit from temporary ones */
 	if (parent_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&

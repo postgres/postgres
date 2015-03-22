@@ -1037,6 +1037,9 @@ EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
                 QUERY PLAN                 
 -------------------------------------------
  Update on t1 t1_3
+   Update on t1 t1_3
+   Update on t2 t1
+   Update on t3 t1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
          ->  LockRows
@@ -1052,7 +1055,7 @@ EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
          ->  LockRows
                ->  Seq Scan on t3
                      Filter: ((a % 2) = 0)
-(16 rows)
+(19 rows)
 
 UPDATE t1 SET b = b || b WHERE f_leak(b);
 NOTICE:  f_leak => bbb
@@ -1149,6 +1152,9 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
                 QUERY PLAN                 
 -------------------------------------------
  Delete on t1 t1_3
+   Delete on t1 t1_3
+   Delete on t2 t1
+   Delete on t3 t1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
          ->  LockRows
@@ -1164,7 +1170,7 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
          ->  LockRows
                ->  Seq Scan on t3
                      Filter: ((a % 2) = 0)
-(16 rows)
+(19 rows)
 
 DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt

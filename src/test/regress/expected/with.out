@@ -2086,6 +2086,10 @@ DELETE FROM a USING wcte WHERE aa = q2;
                    QUERY PLAN                   
 ------------------------------------------------
  Delete on public.a
+   Delete on public.a
+   Delete on public.b
+   Delete on public.c
+   Delete on public.d
    CTE wcte
      ->  Insert on public.int8_tbl
            Output: int8_tbl.q2
@@ -2119,7 +2123,7 @@ DELETE FROM a USING wcte WHERE aa = q2;
                Output: d.ctid, d.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
-(34 rows)
+(38 rows)
 
 -- error cases
 -- data-modifying WITH tries to use its own output

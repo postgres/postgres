@@ -40,6 +40,9 @@ extern void add_tlist_costs_to_plan(PlannerInfo *root, Plan *plan,
 
 extern bool is_dummy_plan(Plan *plan);
 
+extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
+					LockClauseStrength strength);
+
 extern Expr *expression_planner(Expr *expr);
 
 extern Expr *preprocess_phv_expression(PlannerInfo *root, Expr *expr);

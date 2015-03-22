@@ -755,6 +755,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 OPTIONS (SET p2 'V2', DROP p1);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 SET STATISTICS 10000;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 SET (n_distinct = 100);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STORAGE PLAIN;
 \d+ ft1
                                       Foreign table "public.ft1"
  Column |  Type   | Modifiers |          FDW Options           | Storage  | Stats target | Description 
@@ -766,7 +767,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
  c5     | integer |           |                                | plain    |              | 
  c6     | integer | not null  |                                | plain    |              | 
  c7     | integer |           | (p1 'v1', p2 'v2')             | plain    |              | 
- c8     | text    |           | (p2 'V2')                      | extended |              | 
+ c8     | text    |           | (p2 'V2')                      | plain    |              | 
  c9     | integer |           |                                | plain    |              | 
  c10    | integer |           | (p1 'v1')                      | plain    |              | 
 Check constraints:
@@ -784,9 +785,7 @@ ALTER FOREIGN TABLE ft1 ADD PRIMARY KEY (c7);                   -- ERROR
 ERROR:  primary key constraints are not supported on foreign tables
 LINE 1: ALTER FOREIGN TABLE ft1 ADD PRIMARY KEY (c7);
                                     ^
-ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0) NOT VALID;  -- ERROR
-ERROR:  CHECK constraints on foreign tables cannot be marked NOT VALID
-ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0);
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0) NOT VALID;
 ALTER FOREIGN TABLE ft1 ALTER CONSTRAINT ft1_c9_check DEFERRABLE; -- ERROR
 ERROR:  "ft1" is not a table
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c9_check;
@@ -794,8 +793,7 @@ ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
 ERROR:  constraint "no_const" of relation "ft1" does not exist
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
 NOTICE:  constraint "no_const" of relation "ft1" does not exist, skipping
-ALTER FOREIGN TABLE ft1 SET WITH OIDS;                          -- ERROR
-ERROR:  "ft1" is not a table
+ALTER FOREIGN TABLE ft1 SET WITH OIDS;
 ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
 ALTER FOREIGN TABLE ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');
 ALTER FOREIGN TABLE ft1 DROP COLUMN no_column;                  -- ERROR
@@ -1234,6 +1232,501 @@ DROP TRIGGER trigtest_before_row ON foreign_schema.foreign_table_1;
 DROP TRIGGER trigtest_after_stmt ON foreign_schema.foreign_table_1;
 DROP TRIGGER trigtest_after_row ON foreign_schema.foreign_table_1;
 DROP FUNCTION dummy_trigger();
+-- Table inheritance
+CREATE TABLE pt1 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+);
+CREATE FOREIGN TABLE ft2 () INHERITS (pt1)
+  SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    |              | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+DROP FOREIGN TABLE ft2;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    |              | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+
+CREATE FOREIGN TABLE ft2 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+
+ALTER FOREIGN TABLE ft2 INHERIT pt1;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    |              | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+CREATE TABLE ct3() INHERITS(ft2);
+CREATE FOREIGN TABLE ft3 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) INHERITS(ft2)
+  SERVER s0;
+NOTICE:  merging column "c1" with inherited definition
+NOTICE:  merging column "c2" with inherited definition
+NOTICE:  merging column "c3" with inherited definition
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+Child tables: ct3,
+              ft3
+
+\d+ ct3
+                          Table "public.ct3"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    |              | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Inherits: ft2
+
+\d+ ft3
+                             Foreign table "public.ft3"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Server: s0
+Inherits: ft2
+
+-- add attributes recursively
+ALTER TABLE pt1 ADD COLUMN c4 integer;
+ALTER TABLE pt1 ADD COLUMN c5 integer DEFAULT 0;
+ALTER TABLE pt1 ADD COLUMN c6 integer;
+ALTER TABLE pt1 ADD COLUMN c7 integer NOT NULL;
+ALTER TABLE pt1 ADD COLUMN c8 integer;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    |              | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+ c4     | integer |           | plain    |              | 
+ c5     | integer | default 0 | plain    |              | 
+ c6     | integer |           | plain    |              | 
+ c7     | integer | not null  | plain    |              | 
+ c8     | integer |           | plain    |              | 
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+ c4     | integer |           |             | plain    |              | 
+ c5     | integer | default 0 |             | plain    |              | 
+ c6     | integer |           |             | plain    |              | 
+ c7     | integer | not null  |             | plain    |              | 
+ c8     | integer |           |             | plain    |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+Child tables: ct3,
+              ft3
+
+\d+ ct3
+                          Table "public.ct3"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    |              | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+ c4     | integer |           | plain    |              | 
+ c5     | integer | default 0 | plain    |              | 
+ c6     | integer |           | plain    |              | 
+ c7     | integer | not null  | plain    |              | 
+ c8     | integer |           | plain    |              | 
+Inherits: ft2
+
+\d+ ft3
+                             Foreign table "public.ft3"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+ c4     | integer |           |             | plain    |              | 
+ c5     | integer | default 0 |             | plain    |              | 
+ c6     | integer |           |             | plain    |              | 
+ c7     | integer | not null  |             | plain    |              | 
+ c8     | integer |           |             | plain    |              | 
+Server: s0
+Inherits: ft2
+
+-- alter attributes recursively
+ALTER TABLE pt1 ALTER COLUMN c4 SET DEFAULT 0;
+ALTER TABLE pt1 ALTER COLUMN c5 DROP DEFAULT;
+ALTER TABLE pt1 ALTER COLUMN c6 SET NOT NULL;
+ALTER TABLE pt1 ALTER COLUMN c7 DROP NOT NULL;
+ALTER TABLE pt1 ALTER COLUMN c8 TYPE char(10) USING '0';        -- ERROR
+ERROR:  "ft2" is not a table
+ALTER TABLE pt1 ALTER COLUMN c8 TYPE char(10);
+ALTER TABLE pt1 ALTER COLUMN c8 SET DATA TYPE text;
+ALTER TABLE pt1 ALTER COLUMN c1 SET STATISTICS 10000;
+ALTER TABLE pt1 ALTER COLUMN c1 SET (n_distinct = 100);
+ALTER TABLE pt1 ALTER COLUMN c8 SET STATISTICS -1;
+ALTER TABLE pt1 ALTER COLUMN c8 SET STORAGE EXTERNAL;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+ c4     | integer | default 0 | plain    |              | 
+ c5     | integer |           | plain    |              | 
+ c6     | integer | not null  | plain    |              | 
+ c7     | integer |           | plain    |              | 
+ c8     | text    |           | external |              | 
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    | 10000        | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+ c4     | integer | default 0 |             | plain    |              | 
+ c5     | integer |           |             | plain    |              | 
+ c6     | integer | not null  |             | plain    |              | 
+ c7     | integer |           |             | plain    |              | 
+ c8     | text    |           |             | external |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+Child tables: ct3,
+              ft3
+
+-- drop attributes recursively
+ALTER TABLE pt1 DROP COLUMN c4;
+ALTER TABLE pt1 DROP COLUMN c5;
+ALTER TABLE pt1 DROP COLUMN c6;
+ALTER TABLE pt1 DROP COLUMN c7;
+ALTER TABLE pt1 DROP COLUMN c8;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    | 10000        | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+Child tables: ct3,
+              ft3
+
+-- add constraints recursively
+ALTER TABLE pt1 ADD CONSTRAINT pt1chk1 CHECK (c1 > 0) NO INHERIT;
+ALTER TABLE pt1 ADD CONSTRAINT pt1chk2 CHECK (c2 <> '');
+-- connoinherit should be true for NO INHERIT constraint
+SELECT relname, conname, contype, conislocal, coninhcount, connoinherit
+  FROM pg_class AS pc JOIN pg_constraint AS pgc ON (conrelid = pc.oid)
+  WHERE pc.relname = 'pt1'
+  ORDER BY 1,2;
+ relname | conname | contype | conislocal | coninhcount | connoinherit 
+---------+---------+---------+------------+-------------+--------------
+ pt1     | pt1chk1 | c       | t          |           0 | t
+ pt1     | pt1chk2 | c       | t          |           0 | f
+(2 rows)
+
+-- child does not inherit NO INHERIT constraints
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Check constraints:
+    "pt1chk1" CHECK (c1 > 0) NO INHERIT
+    "pt1chk2" CHECK (c2 <> ''::text)
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    | 10000        | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Check constraints:
+    "pt1chk2" CHECK (c2 <> ''::text)
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+Child tables: ct3,
+              ft3
+
+DROP FOREIGN TABLE ft2; -- ERROR
+ERROR:  cannot drop foreign table ft2 because other objects depend on it
+DETAIL:  table ct3 depends on foreign table ft2
+foreign table ft3 depends on foreign table ft2
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP FOREIGN TABLE ft2 CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table ct3
+drop cascades to foreign table ft3
+CREATE FOREIGN TABLE ft2 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+-- child must have parent's INHERIT constraints
+ALTER FOREIGN TABLE ft2 INHERIT pt1;                            -- ERROR
+ERROR:  child table is missing constraint "pt1chk2"
+ALTER FOREIGN TABLE ft2 ADD CONSTRAINT pt1chk2 CHECK (c2 <> '');
+ALTER FOREIGN TABLE ft2 INHERIT pt1;
+-- child does not inherit NO INHERIT constraints
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Check constraints:
+    "pt1chk1" CHECK (c1 > 0) NO INHERIT
+    "pt1chk2" CHECK (c2 <> ''::text)
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Check constraints:
+    "pt1chk2" CHECK (c2 <> ''::text)
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+-- drop constraints recursively
+ALTER TABLE pt1 DROP CONSTRAINT pt1chk1 CASCADE;
+ALTER TABLE pt1 DROP CONSTRAINT pt1chk2 CASCADE;
+-- NOT VALID case
+INSERT INTO pt1 VALUES (1, 'pt1'::text, '1994-01-01'::date);
+ALTER TABLE pt1 ADD CONSTRAINT pt1chk3 CHECK (c2 <> '') NOT VALID;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Check constraints:
+    "pt1chk3" CHECK (c2 <> ''::text) NOT VALID
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Check constraints:
+    "pt1chk2" CHECK (c2 <> ''::text)
+    "pt1chk3" CHECK (c2 <> ''::text) NOT VALID
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+-- VALIDATE CONSTRAINT need do nothing on foreign tables
+ALTER TABLE pt1 VALIDATE CONSTRAINT pt1chk3;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Check constraints:
+    "pt1chk3" CHECK (c2 <> ''::text)
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Check constraints:
+    "pt1chk2" CHECK (c2 <> ''::text)
+    "pt1chk3" CHECK (c2 <> ''::text)
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+-- OID system column
+ALTER TABLE pt1 SET WITH OIDS;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Check constraints:
+    "pt1chk3" CHECK (c2 <> ''::text)
+Child tables: ft2
+Has OIDs: yes
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Check constraints:
+    "pt1chk2" CHECK (c2 <> ''::text)
+    "pt1chk3" CHECK (c2 <> ''::text)
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+Has OIDs: yes
+
+ALTER TABLE ft2 SET WITHOUT OIDS;  -- ERROR
+ERROR:  cannot drop inherited column "oid"
+ALTER TABLE pt1 SET WITHOUT OIDS;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ c1     | integer | not null  | plain    | 10000        | 
+ c2     | text    |           | extended |              | 
+ c3     | date    |           | plain    |              | 
+Check constraints:
+    "pt1chk3" CHECK (c2 <> ''::text)
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ c1     | integer | not null  |             | plain    |              | 
+ c2     | text    |           |             | extended |              | 
+ c3     | date    |           |             | plain    |              | 
+Check constraints:
+    "pt1chk2" CHECK (c2 <> ''::text)
+    "pt1chk3" CHECK (c2 <> ''::text)
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+-- changes name of an attribute recursively
+ALTER TABLE pt1 RENAME COLUMN c1 TO f1;
+ALTER TABLE pt1 RENAME COLUMN c2 TO f2;
+ALTER TABLE pt1 RENAME COLUMN c3 TO f3;
+-- changes name of a constraint recursively
+ALTER TABLE pt1 RENAME CONSTRAINT pt1chk3 TO f2_check;
+\d+ pt1
+                          Table "public.pt1"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ f1     | integer | not null  | plain    | 10000        | 
+ f2     | text    |           | extended |              | 
+ f3     | date    |           | plain    |              | 
+Check constraints:
+    "f2_check" CHECK (f2 <> ''::text)
+Child tables: ft2
+
+\d+ ft2
+                             Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
+--------+---------+-----------+-------------+----------+--------------+-------------
+ f1     | integer | not null  |             | plain    |              | 
+ f2     | text    |           |             | extended |              | 
+ f3     | date    |           |             | plain    |              | 
+Check constraints:
+    "f2_check" CHECK (f2 <> ''::text)
+    "pt1chk2" CHECK (f2 <> ''::text)
+Server: s0
+FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
+Inherits: pt1
+
+-- TRUNCATE doesn't work on foreign tables, either directly or recursively
+TRUNCATE ft2;  -- ERROR
+ERROR:  "ft2" is not a table
+TRUNCATE pt1;  -- ERROR
+ERROR:  "ft2" is not a table
+DROP TABLE pt1 CASCADE;
+NOTICE:  drop cascades to foreign table ft2
 -- IMPORT FOREIGN SCHEMA
 IMPORT FOREIGN SCHEMA s1 FROM SERVER s9 INTO public; -- ERROR
 ERROR:  foreign-data wrapper "foo" has no handler

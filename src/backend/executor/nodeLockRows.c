@@ -93,7 +93,8 @@ lnext:
 				elog(ERROR, "tableoid is NULL");
 			tableoid = DatumGetObjectId(datum);
 
-			if (tableoid != RelationGetRelid(erm->relation))
+			Assert(OidIsValid(erm->relid));
+			if (tableoid != erm->relid)
 			{
 				/* this child is inactive right now */
 				ItemPointerSetInvalid(&(erm->curCtid));
@@ -174,8 +175,9 @@ lnext:
 				}
 
 				/* updated, so fetch and lock the updated version */
-				copyTuple = EvalPlanQualFetch(estate, erm->relation, lockmode,
-											  erm->waitPolicy, &hufd.ctid, hufd.xmax);
+				copyTuple = EvalPlanQualFetch(estate, erm->relation,
+											  lockmode, erm->waitPolicy,
+											  &hufd.ctid, hufd.xmax);
 
 				if (copyTuple == NULL)
 				{

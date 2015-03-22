@@ -414,17 +414,20 @@ typedef struct EState
  * ExecRowMark -
  *	   runtime representation of FOR [KEY] UPDATE/SHARE clauses
  *
- * When doing UPDATE, DELETE, or SELECT FOR [KEY] UPDATE/SHARE, we should have an
+ * When doing UPDATE, DELETE, or SELECT FOR [KEY] UPDATE/SHARE, we will have an
  * ExecRowMark for each non-target relation in the query (except inheritance
- * parent RTEs, which can be ignored at runtime).  See PlanRowMark for details
- * about most of the fields.  In addition to fields directly derived from
- * PlanRowMark, we store curCtid, which is used by the WHERE CURRENT OF code.
+ * parent RTEs, which can be ignored at runtime).  Virtual relations such as
+ * subqueries-in-FROM will have an ExecRowMark with relation == NULL.  See
+ * PlanRowMark for details about most of the fields.  In addition to fields
+ * directly derived from PlanRowMark, we store curCtid, which is used by the
+ * WHERE CURRENT OF code.
  *
  * EState->es_rowMarks is a list of these structs.
  */
 typedef struct ExecRowMark
 {
 	Relation	relation;		/* opened and suitably locked relation */
+	Oid			relid;			/* its OID (or InvalidOid, if subquery) */
 	Index		rti;			/* its range table index */
 	Index		prti;			/* parent range table index, if child */
 	Index		rowmarkId;		/* unique identifier for resjunk columns */

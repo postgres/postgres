@@ -200,6 +200,12 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
   </para>
 
   <para>
+    If any of the child tables are foreign tables whose foreign data wrappers
+    do not support <command>ANALYZE</>, those child tables are ignored while
+    gathering inheritance statistics.
+  </para>
+
+  <para>
     If the table being analyzed is completely empty, <command>ANALYZE</command>
     will not record new statistics for that table.  Any existing statistics
     will be retained.

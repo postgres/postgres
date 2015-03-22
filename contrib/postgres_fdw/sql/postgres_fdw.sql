@@ -666,6 +666,116 @@ UPDATE rem1 SET f2 = 'testo';
 INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid;
 
 -- ===================================================================
+-- test inheritance features
+-- ===================================================================
+
+CREATE TABLE a (aa TEXT);
+CREATE TABLE loct (aa TEXT, bb TEXT);
+CREATE FOREIGN TABLE b (bb TEXT) INHERITS (a)
+  SERVER loopback OPTIONS (table_name 'loct');
+
+INSERT INTO a(aa) VALUES('aaa');
+INSERT INTO a(aa) VALUES('aaaa');
+INSERT INTO a(aa) VALUES('aaaaa');
+
+INSERT INTO b(aa) VALUES('bbb');
+INSERT INTO b(aa) VALUES('bbbb');
+INSERT INTO b(aa) VALUES('bbbbb');
+
+SELECT tableoid::regclass, * FROM a;
+SELECT tableoid::regclass, * FROM b;
+SELECT tableoid::regclass, * FROM ONLY a;
+
+UPDATE a SET aa = 'zzzzzz' WHERE aa LIKE 'aaaa%';
+
+SELECT tableoid::regclass, * FROM a;
+SELECT tableoid::regclass, * FROM b;
+SELECT tableoid::regclass, * FROM ONLY a;
+
+UPDATE b SET aa = 'new';
+
+SELECT tableoid::regclass, * FROM a;
+SELECT tableoid::regclass, * FROM b;
+SELECT tableoid::regclass, * FROM ONLY a;
+
+UPDATE a SET aa = 'newtoo';
+
+SELECT tableoid::regclass, * FROM a;
+SELECT tableoid::regclass, * FROM b;
+SELECT tableoid::regclass, * FROM ONLY a;
+
+DELETE FROM a;
+
+SELECT tableoid::regclass, * FROM a;
+SELECT tableoid::regclass, * FROM b;
+SELECT tableoid::regclass, * FROM ONLY a;
+
+DROP TABLE a CASCADE;
+DROP TABLE loct;
+
+-- Check SELECT FOR UPDATE/SHARE with an inherited source table
+create table loct1 (f1 int, f2 int, f3 int);
+create table loct2 (f1 int, f2 int, f3 int);
+
+create table foo (f1 int, f2 int);
+create foreign table foo2 (f3 int) inherits (foo)
+  server loopback options (table_name 'loct1');
+create table bar (f1 int, f2 int);
+create foreign table bar2 (f3 int) inherits (bar)
+  server loopback options (table_name 'loct2');
+
+insert into foo values(1,1);
+insert into foo values(3,3);
+insert into foo2 values(2,2,2);
+insert into foo2 values(4,4,4);
+insert into bar values(1,11);
+insert into bar values(2,22);
+insert into bar values(6,66);
+insert into bar2 values(3,33,33);
+insert into bar2 values(4,44,44);
+insert into bar2 values(7,77,77);
+
+explain (verbose, costs off)
+select * from bar where f1 in (select f1 from foo) for update;
+select * from bar where f1 in (select f1 from foo) for update;
+
+explain (verbose, costs off)
+select * from bar where f1 in (select f1 from foo) for share;
+select * from bar where f1 in (select f1 from foo) for share;
+
+-- Check UPDATE with inherited target and an inherited source table
+explain (verbose, costs off)
+update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
+update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
+
+select tableoid::regclass, * from bar order by 1,2;
+
+-- Check UPDATE with inherited target and an appendrel subquery
+explain (verbose, costs off)
+update bar set f2 = f2 + 100
+from
+  ( select f1 from foo union all select f1+3 from foo ) ss
+where bar.f1 = ss.f1;
+update bar set f2 = f2 + 100
+from
+  ( select f1 from foo union all select f1+3 from foo ) ss
+where bar.f1 = ss.f1;
+
+select tableoid::regclass, * from bar order by 1,2;
+
+-- Test that WHERE CURRENT OF is not supported
+begin;
+declare c cursor for select * from bar where f1 = 7;
+fetch from c;
+update bar set f2 = null where current of c;
+rollback;
+
+drop table foo cascade;
+drop table bar cascade;
+drop table loct1;
+drop table loct2;
+
+-- ===================================================================
 -- test IMPORT FOREIGN SCHEMA
 -- ===================================================================
 

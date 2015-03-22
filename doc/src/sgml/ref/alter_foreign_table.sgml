@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+ALTER FOREIGN TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+ALTER FOREIGN TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
 ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
@@ -34,20 +34,26 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
 
     ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
-    ADD <replaceable class="PARAMETER">table_constraint</replaceable>
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
+    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
     ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    SET WITH OIDS
+    SET WITHOUT OIDS
+    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
 </synopsis>
@@ -94,6 +100,9 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     <listitem>
      <para>
       This form changes the type of a column of a foreign table.
+      Again, this has no effect on any underlying storage: this action simply
+      changes the type that <productname>PostgreSQL</> believes the column to
+      have.
      </para>
     </listitem>
    </varlistentry>
@@ -145,7 +154,22 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal></term>
+    <term>
+     <literal>SET STORAGE</literal>
+    </term>
+    <listitem>
+     <para>
+      This form sets the storage mode for a column.
+      See the similar form of <xref linkend="sql-altertable">
+      for more details.
+      Note that the storage mode has no effect unless the table's
+      foreign-data wrapper chooses to pay attention to it.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal> [ NOT VALID ]</term>
     <listitem>
      <para>
       This form adds a new constraint to a foreign table, using the same
@@ -156,10 +180,22 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      <para>
       Unlike the case when adding a constraint to a regular table, nothing is
       done to verify the constraint is correct; rather, this action simply
-      declares that some new condition holds for all rows in the foreign
-      table.  (See the discussion in <xref linkend="SQL-CREATEFOREIGNTABLE">.)
-      Note that constraints on foreign tables cannot be marked
-      <literal>NOT VALID</> since such constraints are simply declarative.
+      declares that some new condition should be assumed to hold for all rows
+      in the foreign table.  (See the discussion
+      in <xref linkend="SQL-CREATEFOREIGNTABLE">.)
+      If the constraint is marked <literal>NOT VALID</>, then it isn't
+      assumed to hold, but is only recorded for possible future use.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VALIDATE CONSTRAINT</literal></term>
+    <listitem>
+     <para>
+      This form marks as valid a constraint that was previously marked
+      as <literal>NOT VALID</literal>.  No action is taken to verify the
+      constraint, but future queries will assume that it holds.
      </para>
     </listitem>
    </varlistentry>
@@ -183,6 +219,60 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
       These forms configure the firing of trigger(s) belonging to the foreign
       table.  See the similar form of <xref linkend="sql-altertable"> for more
       details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET WITH OIDS</literal></term>
+    <listitem>
+     <para>
+      This form adds an <literal>oid</literal> system column to the
+      table (see <xref linkend="ddl-system-columns">).
+      It does nothing if the table already has OIDs.
+      Unless the table's foreign-data wrapper supports OIDs, this column
+      will simply read as zeroes.
+     </para>
+
+     <para>
+      Note that this is not equivalent to <literal>ADD COLUMN oid oid</>;
+      that would add a normal column that happened to be named
+      <literal>oid</>, not a system column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET WITHOUT OIDS</literal></term>
+    <listitem>
+     <para>
+      This form removes the <literal>oid</literal> system column from the
+      table.  This is exactly equivalent to
+      <literal>DROP COLUMN oid RESTRICT</literal>,
+      except that it will not complain if there is already no
+      <literal>oid</literal> column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form adds the target foreign table as a new child of the specified
+      parent table.
+      See the similar form of <xref linkend="sql-altertable">
+      for more details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form removes the target foreign table from the list of children of
+      the specified parent table.
      </para>
     </listitem>
    </varlistentry>
@@ -272,7 +362,11 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
       <listitem>
        <para>
         The name (possibly schema-qualified) of an existing foreign table to
-        alter.
+        alter. If <literal>ONLY</> is specified before the table name, only
+        that table is altered. If <literal>ONLY</> is not specified, the table
+        and all its descendant tables (if any) are altered.  Optionally,
+        <literal>*</> can be specified after the table name to explicitly
+        indicate that descendant tables are included.
        </para>
       </listitem>
      </varlistentry>
@@ -379,6 +473,15 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
        <para>
         Disable or enable all triggers belonging to the foreign table except
         for internally generated triggers.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">parent_table</replaceable></term>
+      <listitem>
+       <para>
+        A parent table to associate or de-associate with this foreign table.
        </para>
       </listitem>
      </varlistentry>

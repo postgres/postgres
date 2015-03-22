@@ -2187,6 +2187,10 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 
 /*
  * Show the target of a ModifyTable node
+ *
+ * Here we show the nominal target (ie, the relation that was named in the
+ * original query).  If the actual target(s) is/are different, we'll show them
+ * in show_modifytable_info().
  */
 static void
 ExplainModifyTarget(ModifyTable *plan, ExplainState *es)
@@ -2303,30 +2307,106 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 /*
  * Show extra information for a ModifyTable node
+ *
+ * We have two objectives here.  First, if there's more than one target table
+ * or it's different from the nominal target, identify the actual target(s).
+ * Second, give FDWs a chance to display extra info about foreign targets.
  */
 static void
 show_modifytable_info(ModifyTableState *mtstate, ExplainState *es)
 {
-	FdwRoutine *fdwroutine = mtstate->resultRelInfo->ri_FdwRoutine;
+	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+	const char *operation;
+	const char *foperation;
+	bool		labeltargets;
+	int			j;
 
-	/*
-	 * If the first target relation is a foreign table, call its FDW to
-	 * display whatever additional fields it wants to.  For now, we ignore the
-	 * possibility of other targets being foreign tables, although the API for
-	 * ExplainForeignModify is designed to allow them to be processed.
-	 */
-	if (fdwroutine != NULL &&
-		fdwroutine->ExplainForeignModify != NULL)
+	switch (node->operation)
 	{
-		ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
-		List	   *fdw_private = (List *) linitial(node->fdwPrivLists);
-
-		fdwroutine->ExplainForeignModify(mtstate,
-										 mtstate->resultRelInfo,
-										 fdw_private,
-										 0,
-										 es);
+		case CMD_INSERT:
+			operation = "Insert";
+			foperation = "Foreign Insert";
+			break;
+		case CMD_UPDATE:
+			operation = "Update";
+			foperation = "Foreign Update";
+			break;
+		case CMD_DELETE:
+			operation = "Delete";
+			foperation = "Foreign Delete";
+			break;
+		default:
+			operation = "???";
+			foperation = "Foreign ???";
+			break;
 	}
+
+	/* Should we explicitly label target relations? */
+	labeltargets = (mtstate->mt_nplans > 1 ||
+					(mtstate->mt_nplans == 1 &&
+	   mtstate->resultRelInfo->ri_RangeTableIndex != node->nominalRelation));
+
+	if (labeltargets)
+		ExplainOpenGroup("Target Tables", "Target Tables", false, es);
+
+	for (j = 0; j < mtstate->mt_nplans; j++)
+	{
+		ResultRelInfo *resultRelInfo = mtstate->resultRelInfo + j;
+		FdwRoutine *fdwroutine = resultRelInfo->ri_FdwRoutine;
+
+		if (labeltargets)
+		{
+			/* Open a group for this target */
+			ExplainOpenGroup("Target Table", NULL, true, es);
+
+			/*
+			 * In text mode, decorate each target with operation type, so that
+			 * ExplainTargetRel's output of " on foo" will read nicely.
+			 */
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				appendStringInfoSpaces(es->str, es->indent * 2);
+				appendStringInfoString(es->str,
+									   fdwroutine ? foperation : operation);
+			}
+
+			/* Identify target */
+			ExplainTargetRel((Plan *) node,
+							 resultRelInfo->ri_RangeTableIndex,
+							 es);
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				appendStringInfoChar(es->str, '\n');
+				es->indent++;
+			}
+		}
+
+		/* Give FDW a chance */
+		if (fdwroutine && fdwroutine->ExplainForeignModify != NULL)
+		{
+			List	   *fdw_private = (List *) list_nth(node->fdwPrivLists, j);
+
+			fdwroutine->ExplainForeignModify(mtstate,
+											 resultRelInfo,
+											 fdw_private,
+											 j,
+											 es);
+		}
+
+		if (labeltargets)
+		{
+			/* Undo the indentation we added in text format */
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+				es->indent--;
+
+			/* Close the group */
+			ExplainCloseGroup("Target Table", NULL, true, es);
+		}
+	}
+
+	if (labeltargets)
+		ExplainCloseGroup("Target Tables", "Target Tables", false, es);
 }
 
 /*

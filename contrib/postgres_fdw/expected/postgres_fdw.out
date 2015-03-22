@@ -3027,6 +3027,386 @@ NOTICE:  NEW: (13,"test triggered !")
 (1 row)
 
 -- ===================================================================
+-- test inheritance features
+-- ===================================================================
+CREATE TABLE a (aa TEXT);
+CREATE TABLE loct (aa TEXT, bb TEXT);
+CREATE FOREIGN TABLE b (bb TEXT) INHERITS (a)
+  SERVER loopback OPTIONS (table_name 'loct');
+INSERT INTO a(aa) VALUES('aaa');
+INSERT INTO a(aa) VALUES('aaaa');
+INSERT INTO a(aa) VALUES('aaaaa');
+INSERT INTO b(aa) VALUES('bbb');
+INSERT INTO b(aa) VALUES('bbbb');
+INSERT INTO b(aa) VALUES('bbbbb');
+SELECT tableoid::regclass, * FROM a;
+ tableoid |  aa   
+----------+-------
+ a        | aaa
+ a        | aaaa
+ a        | aaaaa
+ b        | bbb
+ b        | bbbb
+ b        | bbbbb
+(6 rows)
+
+SELECT tableoid::regclass, * FROM b;
+ tableoid |  aa   | bb 
+----------+-------+----
+ b        | bbb   | 
+ b        | bbbb  | 
+ b        | bbbbb | 
+(3 rows)
+
+SELECT tableoid::regclass, * FROM ONLY a;
+ tableoid |  aa   
+----------+-------
+ a        | aaa
+ a        | aaaa
+ a        | aaaaa
+(3 rows)
+
+UPDATE a SET aa = 'zzzzzz' WHERE aa LIKE 'aaaa%';
+SELECT tableoid::regclass, * FROM a;
+ tableoid |   aa   
+----------+--------
+ a        | aaa
+ a        | zzzzzz
+ a        | zzzzzz
+ b        | bbb
+ b        | bbbb
+ b        | bbbbb
+(6 rows)
+
+SELECT tableoid::regclass, * FROM b;
+ tableoid |  aa   | bb 
+----------+-------+----
+ b        | bbb   | 
+ b        | bbbb  | 
+ b        | bbbbb | 
+(3 rows)
+
+SELECT tableoid::regclass, * FROM ONLY a;
+ tableoid |   aa   
+----------+--------
+ a        | aaa
+ a        | zzzzzz
+ a        | zzzzzz
+(3 rows)
+
+UPDATE b SET aa = 'new';
+SELECT tableoid::regclass, * FROM a;
+ tableoid |   aa   
+----------+--------
+ a        | aaa
+ a        | zzzzzz
+ a        | zzzzzz
+ b        | new
+ b        | new
+ b        | new
+(6 rows)
+
+SELECT tableoid::regclass, * FROM b;
+ tableoid | aa  | bb 
+----------+-----+----
+ b        | new | 
+ b        | new | 
+ b        | new | 
+(3 rows)
+
+SELECT tableoid::regclass, * FROM ONLY a;
+ tableoid |   aa   
+----------+--------
+ a        | aaa
+ a        | zzzzzz
+ a        | zzzzzz
+(3 rows)
+
+UPDATE a SET aa = 'newtoo';
+SELECT tableoid::regclass, * FROM a;
+ tableoid |   aa   
+----------+--------
+ a        | newtoo
+ a        | newtoo
+ a        | newtoo
+ b        | newtoo
+ b        | newtoo
+ b        | newtoo
+(6 rows)
+
+SELECT tableoid::regclass, * FROM b;
+ tableoid |   aa   | bb 
+----------+--------+----
+ b        | newtoo | 
+ b        | newtoo | 
+ b        | newtoo | 
+(3 rows)
+
+SELECT tableoid::regclass, * FROM ONLY a;
+ tableoid |   aa   
+----------+--------
+ a        | newtoo
+ a        | newtoo
+ a        | newtoo
+(3 rows)
+
+DELETE FROM a;
+SELECT tableoid::regclass, * FROM a;
+ tableoid | aa 
+----------+----
+(0 rows)
+
+SELECT tableoid::regclass, * FROM b;
+ tableoid | aa | bb 
+----------+----+----
+(0 rows)
+
+SELECT tableoid::regclass, * FROM ONLY a;
+ tableoid | aa 
+----------+----
+(0 rows)
+
+DROP TABLE a CASCADE;
+NOTICE:  drop cascades to foreign table b
+DROP TABLE loct;
+-- Check SELECT FOR UPDATE/SHARE with an inherited source table
+create table loct1 (f1 int, f2 int, f3 int);
+create table loct2 (f1 int, f2 int, f3 int);
+create table foo (f1 int, f2 int);
+create foreign table foo2 (f3 int) inherits (foo)
+  server loopback options (table_name 'loct1');
+create table bar (f1 int, f2 int);
+create foreign table bar2 (f3 int) inherits (bar)
+  server loopback options (table_name 'loct2');
+insert into foo values(1,1);
+insert into foo values(3,3);
+insert into foo2 values(2,2,2);
+insert into foo2 values(4,4,4);
+insert into bar values(1,11);
+insert into bar values(2,22);
+insert into bar values(6,66);
+insert into bar2 values(3,33,33);
+insert into bar2 values(4,44,44);
+insert into bar2 values(7,77,77);
+explain (verbose, costs off)
+select * from bar where f1 in (select f1 from foo) for update;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ LockRows
+   Output: bar.f1, bar.f2, bar.ctid, bar.tableoid, bar.*, foo.ctid, foo.tableoid, foo.*
+   ->  Hash Join
+         Output: bar.f1, bar.f2, bar.ctid, bar.tableoid, bar.*, foo.ctid, foo.tableoid, foo.*
+         Hash Cond: (bar.f1 = foo.f1)
+         ->  Append
+               ->  Seq Scan on public.bar
+                     Output: bar.f1, bar.f2, bar.ctid, bar.tableoid, bar.*
+               ->  Foreign Scan on public.bar2
+                     Output: bar2.f1, bar2.f2, bar2.ctid, bar2.tableoid, bar2.*
+                     Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
+         ->  Hash
+               Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+               ->  HashAggregate
+                     Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                     Group Key: foo.f1
+                     ->  Append
+                           ->  Seq Scan on public.foo
+                                 Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                           ->  Foreign Scan on public.foo2
+                                 Output: foo2.ctid, foo2.tableoid, foo2.*, foo2.f1
+                                 Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
+(22 rows)
+
+select * from bar where f1 in (select f1 from foo) for update;
+ f1 | f2 
+----+----
+  1 | 11
+  2 | 22
+  3 | 33
+  4 | 44
+(4 rows)
+
+explain (verbose, costs off)
+select * from bar where f1 in (select f1 from foo) for share;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ LockRows
+   Output: bar.f1, bar.f2, bar.ctid, bar.tableoid, bar.*, foo.ctid, foo.tableoid, foo.*
+   ->  Hash Join
+         Output: bar.f1, bar.f2, bar.ctid, bar.tableoid, bar.*, foo.ctid, foo.tableoid, foo.*
+         Hash Cond: (bar.f1 = foo.f1)
+         ->  Append
+               ->  Seq Scan on public.bar
+                     Output: bar.f1, bar.f2, bar.ctid, bar.tableoid, bar.*
+               ->  Foreign Scan on public.bar2
+                     Output: bar2.f1, bar2.f2, bar2.ctid, bar2.tableoid, bar2.*
+                     Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR SHARE
+         ->  Hash
+               Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+               ->  HashAggregate
+                     Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                     Group Key: foo.f1
+                     ->  Append
+                           ->  Seq Scan on public.foo
+                                 Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                           ->  Foreign Scan on public.foo2
+                                 Output: foo2.ctid, foo2.tableoid, foo2.*, foo2.f1
+                                 Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
+(22 rows)
+
+select * from bar where f1 in (select f1 from foo) for share;
+ f1 | f2 
+----+----
+  1 | 11
+  2 | 22
+  3 | 33
+  4 | 44
+(4 rows)
+
+-- Check UPDATE with inherited target and an inherited source table
+explain (verbose, costs off)
+update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Update on public.bar
+   Update on public.bar
+   Foreign Update on public.bar2
+     Remote SQL: UPDATE public.loct2 SET f2 = $2 WHERE ctid = $1
+   ->  Hash Join
+         Output: bar.f1, (bar.f2 + 100), bar.ctid, foo.ctid, foo.tableoid, foo.*
+         Hash Cond: (bar.f1 = foo.f1)
+         ->  Seq Scan on public.bar
+               Output: bar.f1, bar.f2, bar.ctid
+         ->  Hash
+               Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+               ->  HashAggregate
+                     Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                     Group Key: foo.f1
+                     ->  Append
+                           ->  Seq Scan on public.foo
+                                 Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                           ->  Foreign Scan on public.foo2
+                                 Output: foo2.ctid, foo2.tableoid, foo2.*, foo2.f1
+                                 Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
+   ->  Hash Join
+         Output: bar2.f1, (bar2.f2 + 100), bar2.f3, bar2.ctid, foo.ctid, foo.tableoid, foo.*
+         Hash Cond: (bar2.f1 = foo.f1)
+         ->  Foreign Scan on public.bar2
+               Output: bar2.f1, bar2.f2, bar2.f3, bar2.ctid
+               Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
+         ->  Hash
+               Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+               ->  HashAggregate
+                     Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                     Group Key: foo.f1
+                     ->  Append
+                           ->  Seq Scan on public.foo
+                                 Output: foo.ctid, foo.tableoid, foo.*, foo.f1
+                           ->  Foreign Scan on public.foo2
+                                 Output: foo2.ctid, foo2.tableoid, foo2.*, foo2.f1
+                                 Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
+(37 rows)
+
+update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
+select tableoid::regclass, * from bar order by 1,2;
+ tableoid | f1 | f2  
+----------+----+-----
+ bar      |  1 | 111
+ bar      |  2 | 122
+ bar      |  6 |  66
+ bar2     |  3 | 133
+ bar2     |  4 | 144
+ bar2     |  7 |  77
+(6 rows)
+
+-- Check UPDATE with inherited target and an appendrel subquery
+explain (verbose, costs off)
+update bar set f2 = f2 + 100
+from
+  ( select f1 from foo union all select f1+3 from foo ) ss
+where bar.f1 = ss.f1;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Update on public.bar
+   Update on public.bar
+   Foreign Update on public.bar2
+     Remote SQL: UPDATE public.loct2 SET f2 = $2 WHERE ctid = $1
+   ->  Hash Join
+         Output: bar.f1, (bar.f2 + 100), bar.ctid, (ROW(foo.f1))
+         Hash Cond: (foo.f1 = bar.f1)
+         ->  Append
+               ->  Seq Scan on public.foo
+                     Output: ROW(foo.f1), foo.f1
+               ->  Foreign Scan on public.foo2
+                     Output: ROW(foo2.f1), foo2.f1
+                     Remote SQL: SELECT f1 FROM public.loct1
+               ->  Seq Scan on public.foo foo_1
+                     Output: ROW((foo_1.f1 + 3)), (foo_1.f1 + 3)
+               ->  Foreign Scan on public.foo2 foo2_1
+                     Output: ROW((foo2_1.f1 + 3)), (foo2_1.f1 + 3)
+                     Remote SQL: SELECT f1 FROM public.loct1
+         ->  Hash
+               Output: bar.f1, bar.f2, bar.ctid
+               ->  Seq Scan on public.bar
+                     Output: bar.f1, bar.f2, bar.ctid
+   ->  Merge Join
+         Output: bar2.f1, (bar2.f2 + 100), bar2.f3, bar2.ctid, (ROW(foo.f1))
+         Merge Cond: (bar2.f1 = foo.f1)
+         ->  Sort
+               Output: bar2.f1, bar2.f2, bar2.f3, bar2.ctid
+               Sort Key: bar2.f1
+               ->  Foreign Scan on public.bar2
+                     Output: bar2.f1, bar2.f2, bar2.f3, bar2.ctid
+                     Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
+         ->  Sort
+               Output: (ROW(foo.f1)), foo.f1
+               Sort Key: foo.f1
+               ->  Append
+                     ->  Seq Scan on public.foo
+                           Output: ROW(foo.f1), foo.f1
+                     ->  Foreign Scan on public.foo2
+                           Output: ROW(foo2.f1), foo2.f1
+                           Remote SQL: SELECT f1 FROM public.loct1
+                     ->  Seq Scan on public.foo foo_1
+                           Output: ROW((foo_1.f1 + 3)), (foo_1.f1 + 3)
+                     ->  Foreign Scan on public.foo2 foo2_1
+                           Output: ROW((foo2_1.f1 + 3)), (foo2_1.f1 + 3)
+                           Remote SQL: SELECT f1 FROM public.loct1
+(45 rows)
+
+update bar set f2 = f2 + 100
+from
+  ( select f1 from foo union all select f1+3 from foo ) ss
+where bar.f1 = ss.f1;
+select tableoid::regclass, * from bar order by 1,2;
+ tableoid | f1 | f2  
+----------+----+-----
+ bar      |  1 | 211
+ bar      |  2 | 222
+ bar      |  6 | 166
+ bar2     |  3 | 233
+ bar2     |  4 | 244
+ bar2     |  7 | 177
+(6 rows)
+
+-- Test that WHERE CURRENT OF is not supported
+begin;
+declare c cursor for select * from bar where f1 = 7;
+fetch from c;
+ f1 | f2  
+----+-----
+  7 | 177
+(1 row)
+
+update bar set f2 = null where current of c;
+ERROR:  WHERE CURRENT OF is not supported for this table type
+rollback;
+drop table foo cascade;
+NOTICE:  drop cascades to foreign table foo2
+drop table bar cascade;
+NOTICE:  drop cascades to foreign table bar2
+drop table loct1;
+drop table loct2;
+-- ===================================================================
 -- test IMPORT FOREIGN SCHEMA
 -- ===================================================================
 CREATE SCHEMA import_source;

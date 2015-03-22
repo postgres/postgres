@@ -13748,8 +13748,9 @@ dumpTableSchema(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo)
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 * Analogously, we set up typed tables using ALTER TABLE / OF here.
 		 */
-		if (dopt->binary_upgrade && (tbinfo->relkind == RELKIND_RELATION ||
-								   tbinfo->relkind == RELKIND_FOREIGN_TABLE))
+		if (dopt->binary_upgrade &&
+			(tbinfo->relkind == RELKIND_RELATION ||
+			 tbinfo->relkind == RELKIND_FOREIGN_TABLE))
 		{
 			for (j = 0; j < tbinfo->numatts; j++)
 			{
@@ -13771,15 +13772,13 @@ dumpTableSchema(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo)
 						appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 										  fmtId(tbinfo->dobj.name));
 					else
-						appendPQExpBuffer(q, "ALTER FOREIGN TABLE %s ",
+						appendPQExpBuffer(q, "ALTER FOREIGN TABLE ONLY %s ",
 										  fmtId(tbinfo->dobj.name));
-
 					appendPQExpBuffer(q, "DROP COLUMN %s;\n",
 									  fmtId(tbinfo->attnames[j]));
 				}
 				else if (!tbinfo->attislocal[j])
 				{
-					Assert(tbinfo->relkind != RELKIND_FOREIGN_TABLE);
 					appendPQExpBufferStr(q, "\n-- For binary upgrade, recreate inherited column.\n");
 					appendPQExpBufferStr(q, "UPDATE pg_catalog.pg_attribute\n"
 										 "SET attislocal = false\n"
@@ -13985,7 +13984,8 @@ dumpTableSchema(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo)
 	/*
 	 * dump properties we only have ALTER TABLE syntax for
 	 */
-	if ((tbinfo->relkind == RELKIND_RELATION || tbinfo->relkind == RELKIND_MATVIEW) &&
+	if ((tbinfo->relkind == RELKIND_RELATION ||
+		 tbinfo->relkind == RELKIND_MATVIEW) &&
 		tbinfo->relreplident != REPLICA_IDENTITY_DEFAULT)
 	{
 		if (tbinfo->relreplident == REPLICA_IDENTITY_INDEX)
@@ -14003,6 +14003,10 @@ dumpTableSchema(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo)
 							  fmtId(tbinfo->dobj.name));
 		}
 	}
+
+	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE && tbinfo->hasoids)
+		appendPQExpBuffer(q, "\nALTER TABLE ONLY %s SET WITH OIDS;\n",
+						  fmtId(tbinfo->dobj.name));
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_extension_member(q, &tbinfo->dobj, labelq->data);

@@ -2064,6 +2064,10 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
                                                              QUERY PLAN                                                             
 ------------------------------------------------------------------------------------------------------------------------------------
  Update on public.t1 t1_4
+   Update on public.t1 t1_4
+   Update on public.t11 t1
+   Update on public.t12 t1
+   Update on public.t111 t1
    ->  Subquery Scan on t1
          Output: 100, t1.b, t1.c, t1.ctid
          Filter: snoop(t1.a)
@@ -2132,7 +2136,7 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
                            ->  Seq Scan on public.t111 t111_4
                                  Output: t111_4.ctid, t111_4.tableoid, t111_4.a
                                  Filter: (t111_4.a = 3)
-(69 rows)
+(73 rows)
 
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
@@ -2150,6 +2154,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                                                              QUERY PLAN                                                             
 ------------------------------------------------------------------------------------------------------------------------------------
  Update on public.t1 t1_4
+   Update on public.t1 t1_4
+   Update on public.t11 t1
+   Update on public.t12 t1
+   Update on public.t111 t1
    ->  Subquery Scan on t1
          Output: (t1.a + 1), t1.b, t1.c, t1.ctid
          Filter: snoop(t1.a)
@@ -2218,7 +2226,7 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                            ->  Seq Scan on public.t111 t111_4
                                  Output: t111_4.ctid, t111_4.tableoid, t111_4.a
                                  Filter: (t111_4.a = 8)
-(69 rows)
+(73 rows)
 
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
 NOTICE:  snooped value: 8

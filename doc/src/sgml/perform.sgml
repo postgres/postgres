@@ -762,6 +762,38 @@ ROLLBACK;
    </para>
 
    <para>
+    When an <command>UPDATE</> or <command>DELETE</> command affects an
+    inheritance hierarchy, the output might look like this:
+
+<screen>
+EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
+                                    QUERY PLAN
+-----------------------------------------------------------------------------------
+ Update on parent  (cost=0.00..24.53 rows=4 width=14)
+   Update on parent
+   Update on child1
+   Update on child2
+   Update on child3
+   -&gt;  Seq Scan on parent  (cost=0.00..0.00 rows=1 width=14)
+         Filter: (f1 = 101)
+   -&gt;  Index Scan using child1_f1_key on child1  (cost=0.15..8.17 rows=1 width=14)
+         Index Cond: (f1 = 101)
+   -&gt;  Index Scan using child2_f1_key on child2  (cost=0.15..8.17 rows=1 width=14)
+         Index Cond: (f1 = 101)
+   -&gt;  Index Scan using child3_f1_key on child3  (cost=0.15..8.17 rows=1 width=14)
+         Index Cond: (f1 = 101)
+</screen>
+
+    In this example the Update node needs to consider three child tables as
+    well as the originally-mentioned parent table.  So there are four input
+    scanning subplans, one per table.  For clarity, the Update node is
+    annotated to show the specific target tables that will be updated, in the
+    same order as the corresponding subplans.  (These annotations are new as
+    of <productname>PostgreSQL</> 9.5; in prior versions the reader had to
+    intuit the target tables by inspecting the subplans.)
+   </para>
+
+   <para>
     The <literal>Planning time</literal> shown by <command>EXPLAIN
     ANALYZE</command> is the time it took to generate the query plan from the
     parsed query and optimize it. It does not include parsing or rewriting.

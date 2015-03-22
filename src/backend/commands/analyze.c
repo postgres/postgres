@@ -297,9 +297,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options, List *va_cols,
  *	do_analyze_rel() -- analyze one relation, recursively or not
  *
  * Note that "acquirefunc" is only relevant for the non-inherited case.
- * If we supported foreign tables in inheritance trees,
- * acquire_inherited_sample_rows would need to determine the appropriate
- * acquirefunc for each child table.
+ * For the inherited case, acquire_inherited_sample_rows() determines the
+ * appropriate acquirefunc for each child table.
  */
 static void
 do_analyze_rel(Relation onerel, int options, List *va_cols,
@@ -1448,7 +1447,8 @@ compare_rows(const void *a, const void *b)
  *
  * This has the same API as acquire_sample_rows, except that rows are
  * collected from all inheritance children as well as the specified table.
- * We fail and return zero if there are no inheritance children.
+ * We fail and return zero if there are no inheritance children, or if all
+ * children are foreign tables that don't support ANALYZE.
  */
 static int
 acquire_inherited_sample_rows(Relation onerel, int elevel,
@@ -1457,6 +1457,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 {
 	List	   *tableOIDs;
 	Relation   *rels;
+	AcquireSampleRowsFunc *acquirefuncs;
 	double	   *relblocks;
 	double		totalblocks;
 	int			numrows,
@@ -1491,10 +1492,12 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	}
 
 	/*
-	 * Count the blocks in all the relations.  The result could overflow
-	 * BlockNumber, so we use double arithmetic.
+	 * Identify acquirefuncs to use, and count blocks in all the relations.
+	 * The result could overflow BlockNumber, so we use double arithmetic.
 	 */
 	rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
+	acquirefuncs = (AcquireSampleRowsFunc *)
+		palloc(list_length(tableOIDs) * sizeof(AcquireSampleRowsFunc));
 	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
 	totalblocks = 0;
 	nrels = 0;
@@ -1502,6 +1505,8 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	{
 		Oid			childOID = lfirst_oid(lc);
 		Relation	childrel;
+		AcquireSampleRowsFunc acquirefunc = NULL;
+		BlockNumber relpages = 0;
 
 		/* We already got the needed lock */
 		childrel = heap_open(childOID, NoLock);
@@ -1515,10 +1520,64 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 			continue;
 		}
 
+		/* Check table type (MATVIEW can't happen, but might as well allow) */
+		if (childrel->rd_rel->relkind == RELKIND_RELATION ||
+			childrel->rd_rel->relkind == RELKIND_MATVIEW)
+		{
+			/* Regular table, so use the regular row acquisition function */
+			acquirefunc = acquire_sample_rows;
+			relpages = RelationGetNumberOfBlocks(childrel);
+		}
+		else if (childrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		{
+			/*
+			 * For a foreign table, call the FDW's hook function to see
+			 * whether it supports analysis.
+			 */
+			FdwRoutine *fdwroutine;
+			bool		ok = false;
+
+			fdwroutine = GetFdwRoutineForRelation(childrel, false);
+
+			if (fdwroutine->AnalyzeForeignTable != NULL)
+				ok = fdwroutine->AnalyzeForeignTable(childrel,
+													 &acquirefunc,
+													 &relpages);
+
+			if (!ok)
+			{
+				/* ignore, but release the lock on it */
+				Assert(childrel != onerel);
+				heap_close(childrel, AccessShareLock);
+				continue;
+			}
+		}
+		else
+		{
+			/* ignore, but release the lock on it */
+			Assert(childrel != onerel);
+			heap_close(childrel, AccessShareLock);
+			continue;
+		}
+
+		/* OK, we'll process this child */
 		rels[nrels] = childrel;
-		relblocks[nrels] = (double) RelationGetNumberOfBlocks(childrel);
-		totalblocks += relblocks[nrels];
+		acquirefuncs[nrels] = acquirefunc;
+		relblocks[nrels] = (double) relpages;
+		totalblocks += (double) relpages;
 		nrels++;
+	}
+
+	/*
+	 * If we don't have at least two tables to consider, fail.
+	 */
+	if (nrels < 2)
+	{
+		ereport(elevel,
+				(errmsg("skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no analyzable child tables",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+		return 0;
 	}
 
 	/*
@@ -1533,6 +1592,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	for (i = 0; i < nrels; i++)
 	{
 		Relation	childrel = rels[i];
+		AcquireSampleRowsFunc acquirefunc = acquirefuncs[i];
 		double		childblocks = relblocks[i];
 
 		if (childblocks > 0)
@@ -1549,12 +1609,9 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 							tdrows;
 
 				/* Fetch a random sample of the child's rows */
-				childrows = acquire_sample_rows(childrel,
-												elevel,
-												rows + numrows,
-												childtargrows,
-												&trows,
-												&tdrows);
+				childrows = (*acquirefunc) (childrel, elevel,
+											rows + numrows, childtargrows,
+											&trows, &tdrows);
 
 				/* We may need to convert from child's rowtype to parent's */
 				if (childrows > 0 &&
