@@ -870,7 +870,7 @@ SELECT to_char(float8 '1e20','999999999999999999999D9');
 SELECT to_char(1e20, '999999999999999999999D9');
 SELECT to_char(float8 '1.123456789123456789', '9.' || repeat('9', 55));
 SELECT to_char(float8 '1999999999999999999999999999999999999999999999.123456789123456789',
-        repeat('9', 50) || '.' || repeat('9', 50));
+       repeat('9', 50) || '.' || repeat('9', 50));
 SELECT to_char(float8 '0.1', '9D' || repeat('9', 1000));
 SELECT to_char(int4 '1', '9D' || repeat('9', 1000) || 'EEEE');
 SELECT to_char(float4 '1', '9D' || repeat('9', 1000) || 'EEEE');
