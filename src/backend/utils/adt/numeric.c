@@ -3019,7 +3019,7 @@ int2_accum(PG_FUNCTION_ARGS)
 	if (!PG_ARGISNULL(1))
 	{
 #ifdef HAVE_INT128
-		do_int128_accum(state, (int128) PG_GETARG_INT32(1));
+		do_int128_accum(state, (int128) PG_GETARG_INT16(1));
 #else
 		Numeric		newval;
 
