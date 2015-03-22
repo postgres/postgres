@@ -368,7 +368,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 
 	/* Map it. */
 	address = mmap(NULL, request_size, PROT_READ | PROT_WRITE,
-				   MAP_SHARED | MAP_HASSEMAPHORE, fd, 0);
+				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
 	if (address == MAP_FAILED)
 	{
 		int			save_errno;
@@ -960,7 +960,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 	/* Map it. */
 	address = mmap(NULL, request_size, PROT_READ | PROT_WRITE,
-				   MAP_SHARED | MAP_HASSEMAPHORE, fd, 0);
+				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
 	if (address == MAP_FAILED)
 	{
 		int			save_errno;
