@@ -858,3 +858,20 @@ select (i / (10::numeric ^ 131071))::numeric(1,0)
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(i,3) j;
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,i) j;
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,5,i) j;
+
+--
+-- Test code path for high-precision output
+--
+
+SELECT to_char(float8 '99999999999', '9999999999999999D99999999');
+SELECT to_char(float8 '99999999999', '9999999999999999D' || repeat('9', 1000));
+SELECT to_char(float8 '1e9','999999999999999999999D9');
+SELECT to_char(float8 '1e20','999999999999999999999D9');
+SELECT to_char(1e20, '999999999999999999999D9');
+SELECT to_char(float8 '1.123456789123456789', '9.' || repeat('9', 55));
+SELECT to_char(float8 '1999999999999999999999999999999999999999999999.123456789123456789',
+        repeat('9', 50) || '.' || repeat('9', 50));
+SELECT to_char(float8 '0.1', '9D' || repeat('9', 1000));
+SELECT to_char(int4 '1', '9D' || repeat('9', 1000) || 'EEEE');
+SELECT to_char(float4 '1', '9D' || repeat('9', 1000) || 'EEEE');
+SELECT to_char(float8 '1', '9D' || repeat('9', 1000) || 'EEEE');

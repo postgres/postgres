@@ -1806,7 +1806,7 @@ SELECT to_char(SUM(n::float8) OVER (ORDER BY i ROWS BETWEEN CURRENT ROW AND 1 FO
   FROM (VALUES(1,1e20),(2,1)) n(i,n);
          to_char          
 --------------------------
-  100000000000000000000
+  100000000000000000000.0
                       1.0
 (2 rows)
 

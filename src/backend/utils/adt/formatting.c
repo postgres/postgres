@@ -113,13 +113,6 @@
 #define DCH_MAX_ITEM_SIZ	   12		/* max localized day name		*/
 #define NUM_MAX_ITEM_SIZ		8		/* roman number (RN has 15 chars)	*/
 
-/* ----------
- * More is in float.c
- * ----------
- */
-#define MAXFLOATWIDTH	60
-#define MAXDOUBLEWIDTH	500
-
 
 /* ----------
  * Format parser structs
@@ -5214,8 +5207,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 		/* we can do it easily because float8 won't lose any precision */
 		float8		val = (float8) value;
 
-		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, val);
+		orgnum = psprintf("%+.*e", Num.post, val);
 
 		/*
 		 * Swap a leading positive sign for a space.
@@ -5414,7 +5406,6 @@ float4_to_char(PG_FUNCTION_ARGS)
 		numstr = orgnum = int_to_roman((int) rint(value));
 	else if (IS_EEEE(&Num))
 	{
-		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		if (isnan(value) || is_infinite(value))
 		{
 			/*
@@ -5428,15 +5419,29 @@ float4_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
+			numstr = psprintf("%+.*e", Num.post, value);
+
+			/* prevent the display of imprecise/junk digits */
+			if (Num.pre + Num.post > FLT_DIG)
+			{
+				int		digits = 0;
+				char   *numstr_p;
+
+				for (numstr_p = numstr; *numstr_p && *numstr_p != 'e'; numstr_p++)
+				{
+					if (isdigit(*numstr_p))
+					{
+						if (++digits > FLT_DIG)
+							*numstr_p = '0';
+					}
+				}
+			}
 
 			/*
 			 * Swap a leading positive sign for a space.
 			 */
-			if (*orgnum == '+')
-				*orgnum = ' ';
-
-			numstr = orgnum;
+			if (*numstr == '+')
+				*numstr = ' ';
 		}
 	}
 	else
@@ -5452,16 +5457,24 @@ float4_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 
-		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
-		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.0f", fabs(val));
-		numstr_pre_len = strlen(orgnum);
+		/* let psprintf() do the rounding */
+		orgnum = psprintf("%.*f", Num.post, val);
 
-		/* adjust post digits to fit max float digits */
-		if (numstr_pre_len >= FLT_DIG)
-			Num.post = 0;
-		else if (numstr_pre_len + Num.post > FLT_DIG)
-			Num.post = FLT_DIG - numstr_pre_len;
-		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.*f", Num.post, val);
+		/* prevent the display of imprecise/junk digits */
+		if (Num.pre + Num.post > FLT_DIG)
+		{
+			int 	digits = 0;
+			char   *orgnum_p;
+
+			for (orgnum_p = orgnum; *orgnum_p; orgnum_p++)
+			{
+				if (isdigit(*orgnum_p))
+				{
+					if (++digits > FLT_DIG)
+						*orgnum_p = '0';
+				}
+			}
+		}
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -5520,7 +5533,6 @@ float8_to_char(PG_FUNCTION_ARGS)
 		numstr = orgnum = int_to_roman((int) rint(value));
 	else if (IS_EEEE(&Num))
 	{
-		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		if (isnan(value) || is_infinite(value))
 		{
 			/*
@@ -5534,15 +5546,29 @@ float8_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
+			numstr = psprintf("%+.*e", Num.post, value);
+
+			/* prevent the display of imprecise/junk digits */
+			if (Num.pre + Num.post > DBL_DIG)
+			{
+				int		digits = 0;
+				char   *numstr_p;
+
+				for (numstr_p = numstr; *numstr_p && *numstr_p != 'e'; numstr_p++)
+				{
+					if (isdigit(*numstr_p))
+					{
+						if (++digits > DBL_DIG)
+							*numstr_p = '0';
+					}
+				}
+			}
 
 			/*
 			 * Swap a leading positive sign for a space.
 			 */
-			if (*orgnum == '+')
-				*orgnum = ' ';
-
-			numstr = orgnum;
+			if (*numstr == '+')
+				*numstr = ' ';
 		}
 	}
 	else
@@ -5557,15 +5583,25 @@ float8_to_char(PG_FUNCTION_ARGS)
 			val = value * multi;
 			Num.pre += Num.multi;
 		}
-		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		numstr_pre_len = snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.0f", fabs(val));
 
-		/* adjust post digits to fit max double digits */
-		if (numstr_pre_len >= DBL_DIG)
-			Num.post = 0;
-		else if (numstr_pre_len + Num.post > DBL_DIG)
-			Num.post = DBL_DIG - numstr_pre_len;
-		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.*f", Num.post, val);
+		/* let psprintf() do the rounding */
+		orgnum = psprintf("%.*f", Num.post, val);
+
+		/* prevent the display of imprecise/junk digits */
+		if (Num.pre + Num.post > DBL_DIG)
+		{
+			int 	digits = 0;
+			char   *orgnum_p;
+
+			for (orgnum_p = orgnum; *orgnum_p; orgnum_p++)
+			{
+				if (isdigit(*orgnum_p))
+				{
+					if (++digits > DBL_DIG)
+						*orgnum_p = '0';
+				}
+			}
+		}
 
 		if (*orgnum == '-')
 		{						/* < 0 */
