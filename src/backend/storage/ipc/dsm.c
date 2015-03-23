@@ -466,18 +466,6 @@ dsm_create(Size size, int flags)
 	if (!dsm_init_done)
 		dsm_backend_startup();
 
-	/*
-	 * If we've been instructed to return NULL when it's not possible to
-	 * register another segment, check whether we seem to be at the limit.
-	 * This allows us to avoid the overhead of creating a new segment only to
-	 * immediately destroy it again.  Since we don't take the lock here, the
-	 * value we read might be slightly stale, but the remote possibility of
-	 * an unnecessary failure here shouldn't trouble anyone too much.
-	 */
-	if ((flags & DSM_CREATE_NULL_IF_MAXSEGMENTS) != 0
-		&& dsm_control->nitems >= dsm_control->maxitems)
-		return NULL;
-
 	/* Create a new segment descriptor. */
 	seg = dsm_create_descriptor();
 
