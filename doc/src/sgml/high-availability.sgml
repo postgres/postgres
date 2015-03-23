@@ -1272,7 +1272,9 @@ primary_slot_name = 'node_a_slot'
     and might stay down.  To return to normal operation, a standby server
     must be recreated,
     either on the former primary system when it comes up, or on a third,
-    possibly new, system. Once complete, the primary and standby can be
+    possibly new, system. The <xref linkend="app-pgrewind"> utility can be
+    used to speed up this process on large clusters.
+    Once complete, the primary and standby can be
     considered to have switched roles. Some people choose to use a third
     server to provide backup for the new primary until the new standby
     server is recreated,

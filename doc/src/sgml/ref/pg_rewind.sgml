@@ -1,0 +1,237 @@
+<!--
+doc/src/sgml/ref/pg_rewind.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgrewind">
+ <indexterm zone="app-pgrewind">
+  <primary>pg_rewind</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle><application>pg_rewind</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_rewind</refname>
+  <refpurpose>synchronize a <productname>PostgreSQL</productname> data directory with another data directory that was forked from the first one</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_rewind</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <group choice="plain">
+    <group choice="req">
+     <arg choice="plain"><option>-D </option></arg>
+     <arg choice="plain"><option>--target-pgdata</option></arg>
+    </group>
+    <replaceable> directory</replaceable>
+    <group choice="req">
+     <arg choice="plain"><option>--source-pgdata=<replaceable>directory</replaceable></option></arg>
+     <arg choice="plain"><option>--source-server=<replaceable>connstr</replaceable></option></arg>
+    </group>
+   </group>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <application>pg_rewind</> is a tool for synchronizing a PostgreSQL cluster
+   with another copy of the same cluster, after the clusters' timelines have
+   diverged. A typical scenario is to bring an old master server back online
+   after failover, as a standby that follows the new master.
+  </para>
+
+  <para>
+   The result is equivalent to replacing the target data directory with the
+   source one. All files are copied, including configuration files. The
+   advantage of <application>pg_rewind</> over taking a new base backup, or
+   tools like <application>rsync</>, is that <application>pg_rewind</> does
+   not require reading through all unchanged files in the cluster. That makes
+   it a lot faster when the database is large and only a small portion of it
+   differs between the clusters.
+  </para>
+
+  <para>
+   <application>pg_rewind</> examines the timeline histories of the source
+   and target clusters to determine the point where they diverged, and
+   expects to find WAL in the target cluster's <filename>pg_xlog</> directory
+   reaching all the way back to the point of divergence. In the typical
+   failover scenario where the target cluster was shut down soon after the
+   divergence, that is not a problem, but if the target cluster had run for a
+   long time after the divergence, the old WAL files might not be present
+   anymore. In that case, they can be manually copied from the WAL archive to
+   the <filename>pg_xlog</> directory. Fetching missing files from a WAL
+   archive automatically is currently not supported.
+  </para>
+
+  <para>
+   When the target server is started up for the first time after running
+   <application>pg_rewind</>, it will go into recovery mode and replay all
+   WAL generated in the source server after the point of divergence.
+   If some of the WAL was no longer available in the source server when
+   <application>pg_rewind</> was run, and therefore could not be copied by
+   <application>pg_rewind</> session, it needs to be made available when the
+   target server is started up. That can be done by creating a
+   <filename>recovery.conf</> file in the target data directory with a
+   suitable <varname>restore_command</>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    <application>pg_rewind</application> accepts the following command-line
+    arguments:
+
+    <variablelist>
+     <varlistentry>
+      <term><option>-D</option></term>
+      <term><option>--target-pgdata</option></term>
+      <listitem>
+       <para>
+        This option specifies the target data directory that is synchronized
+        with the source. The target server must shut down cleanly before
+        running <application>pg_rewind</application>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--source-pgdata</option></term>
+      <listitem>
+       <para>
+        Specifies path to the data directory of the source server, to
+        synchronize the target with. When <option>--source-pgdata</> is
+        used, the source server must be cleanly shut down.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--source-server</option></term>
+      <listitem>
+       <para>
+        Specifies a libpq connection string to connect to the source
+        <productname>PostgreSQL</> server to synchronize the target with.
+        The server must be up and running, and must not be in recovery mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-n</option></term>
+      <term><option>--dry-run</option></term>
+      <listitem>
+       <para>
+        Do everything except actually modifying the target directory.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-P</option></term>
+      <term><option>--progress</option></term>
+      <listitem>
+       <para>
+        Enables progress reporting. Turning this on will deliver an approximate
+        progress report while copying data over from the source cluster.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--debug</option></term>
+      <listitem>
+       <para>
+        Print verbose debugging output that is mostly useful for developers
+        debugging <application>pg_rewind</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
+      <listitem><para>Display version information, then exit</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
+      <listitem><para>Show help, then exit</para></listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <para>
+   When <option>--source-server</> option is used,
+   <application>pg_rewind</application> also uses the environment variables
+   supported by <application>libpq</> (see <xref linkend="libpq-envars">).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>pg_rewind</> requires that the <varname>wal_log_hints</>
+   option is enabled in <filename>postgresql.conf</>, or that data checksums
+   were enabled when the cluster was initialized with <application>initdb</>.
+   <varname>full_page_writes</> must also be enabled.
+  </para>
+
+  <refsect2>
+   <title>How it works</title>
+
+   <para>
+    The basic idea is to copy everything from the new cluster to the old
+    cluster, except for the blocks that we know to be the same.
+   </para>
+
+   <procedure>
+    <step>
+     <para>
+      Scan the WAL log of the old cluster, starting from the last checkpoint
+      before the point where the new cluster's timeline history forked off
+      from the old cluster. For each WAL record, make a note of the data
+      blocks that were touched. This yields a list of all the data blocks
+      that were changed in the old cluster, after the new cluster forked off.
+     </para>
+    </step>
+    <step>
+     <para>
+      Copy all those changed blocks from the new cluster to the old cluster.
+     </para>
+    </step>
+    <step>
+     <para>
+      Copy all other files like clog, conf files etc. from the new cluster
+      to old cluster. Everything except the relation files.
+     </para>
+    </step>
+    <step>
+     <para>
+      Apply the WAL from the new cluster, starting from the checkpoint
+      created at failover. (Strictly speaking, <application>pg_rewind</>
+      doesn't apply the WAL, it just creates a backup label file indicating
+      that when <productname>PostgreSQL</> is started, it will start replay
+      from that checkpoint and apply all the required WAL.)
+     </para>
+    </step>
+   </procedure>
+  </refsect2>
+ </refsect1>
+
+</refentry>

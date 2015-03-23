@@ -21,6 +21,7 @@ SUBDIRS = \
 	pg_ctl \
 	pg_dump \
 	pg_resetxlog \
+	pg_rewind \
 	psql \
 	scripts
 

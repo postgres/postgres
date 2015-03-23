@@ -260,6 +260,7 @@
    &pgControldata;
    &pgCtl;
    &pgResetxlog;
+   &pgRewind;
    &postgres;
    &postmaster;
 

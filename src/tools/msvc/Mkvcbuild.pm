@@ -65,7 +65,8 @@ my $frontend_extraincludes = {
 	'initdb' => ['src\timezone'],
 	'psql'   => [ 'src\bin\pg_dump', 'src\backend' ] };
 my $frontend_extrasource = { 'psql' => ['src\bin\psql\psqlscan.l'] };
-my @frontend_excludes = ('pgevent', 'pg_basebackup', 'pg_dump', 'scripts');
+my @frontend_excludes =
+  ('pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump', 'scripts');
 
 sub mkvcbuild
 {
@@ -421,6 +422,11 @@ sub mkvcbuild
 	$pgrecvlogical->{name} = 'pg_recvlogical';
 	$pgrecvlogical->AddFile('src\bin\pg_basebackup\pg_recvlogical.c');
 	$pgrecvlogical->AddLibrary('ws2_32.lib');
+
+	my $pgrewind = AddSimpleFrontend('pg_rewind', 1);
+	$pgrewind->{name} = 'pg_rewind';
+	$pgrewind->AddFile('src\backend\access\transam\xlogreader.c');
+	$pgrewind->AddLibrary('ws2_32.lib');
 
 	my $pgevent = $solution->AddProject('pgevent', 'dll', 'bin');
 	$pgevent->AddFiles('src\bin\pgevent', 'pgevent.c', 'pgmsgevent.rc');
