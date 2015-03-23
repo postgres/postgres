@@ -427,6 +427,7 @@ sub mkvcbuild
 	$pgrewind->{name} = 'pg_rewind';
 	$pgrewind->AddFile('src\backend\access\transam\xlogreader.c');
 	$pgrewind->AddLibrary('ws2_32.lib');
+	$pgrewind->AddDefine('FRONTEND');
 
 	my $pgevent = $solution->AddProject('pgevent', 'dll', 'bin');
 	$pgevent->AddFiles('src\bin\pgevent', 'pgevent.c', 'pgmsgevent.rc');
