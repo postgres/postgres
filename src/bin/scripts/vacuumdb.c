@@ -484,6 +484,11 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		else
 			free_slot = slots;
 
+		/*
+		 * Execute the vacuum.  If not in parallel mode, this terminates the
+		 * program in case of an error.  (The parallel case handles query
+		 * errors in GetQueryResult through GetIdleSlot.)
+		 */
 		run_vacuum_command(free_slot->connection, sql.data,
 						   echo, dbname, tabname, progname, parallel);
 
@@ -661,21 +666,27 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
 /*
  * Execute a vacuum/analyze command to the server.
  *
- * Result status is checked only if 'async' is false.
+ * Any errors during command execution are reported to stderr.  If async is
+ * false, this function exits the program after reporting the error.
  */
 static void
 run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 				   const char *dbname, const char *table,
 				   const char *progname, bool async)
 {
+	bool	status;
+
 	if (async)
 	{
 		if (echo)
 			printf("%s\n", sql);
 
-		PQsendQuery(conn, sql);
+		status = PQsendQuery(conn, sql) == 1;
 	}
-	else if (!executeMaintenanceCommand(conn, sql, echo))
+	else
+		status = executeMaintenanceCommand(conn, sql, echo);
+
+	if (!status)
 	{
 		if (table)
 			fprintf(stderr,
@@ -684,8 +695,12 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 		else
 			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
 					progname, dbname, PQerrorMessage(conn));
-		PQfinish(conn);
-		exit(1);
+
+		if (!async)
+		{
+			PQfinish(conn);
+			exit(1);
+		}
 	}
 }
 
