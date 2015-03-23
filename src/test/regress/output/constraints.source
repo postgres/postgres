@@ -116,10 +116,10 @@ CREATE SEQUENCE INSERT_SEQ;
 CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 	y TEXT DEFAULT '-NULL-',
 	z INT DEFAULT -1 * currval('insert_seq'),
-	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
+	CONSTRAINT INSERT_TBL_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
 	CHECK (x + z = 0));
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (2, -NULL-, -2).
 SELECT '' AS zero, * FROM INSERT_TBL;
  zero | x | y | z 
@@ -133,7 +133,7 @@ SELECT 'one' AS one, nextval('insert_seq');
 (1 row)
 
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (2, Y, -2).
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
 INSERT INTO INSERT_TBL(x,z) VALUES (1, -2);
@@ -141,7 +141,7 @@ ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_
 DETAIL:  Failing row contains (1, -NULL-, -2).
 INSERT INTO INSERT_TBL(z,x) VALUES (-7,  7);
 INSERT INTO INSERT_TBL VALUES (5, 'check failed', -5);
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (5, check failed, -5).
 INSERT INTO INSERT_TBL VALUES (7, '!check failed', -7);
 INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
@@ -158,7 +158,7 @@ INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
 DETAIL:  Failing row contains (5, check failed, 4).
 INSERT INTO INSERT_TBL(x,y) VALUES (5, 'check failed');
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (5, check failed, -5).
 INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');
 INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
@@ -180,7 +180,7 @@ SELECT 'seven' AS one, nextval('insert_seq');
 (1 row)
 
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (8, Y, -8).
 SELECT 'eight' AS one, currval('insert_seq');
   one  | currval 
@@ -242,7 +242,7 @@ INSERT INTO INSERT_CHILD(x,z,cy) VALUES (6,-7,7);
 ERROR:  new row for relation "insert_child" violates check constraint "insert_tbl_check"
 DETAIL:  Failing row contains (6, -NULL-, -7, 42, 7).
 INSERT INTO INSERT_CHILD(x,y,z,cy) VALUES (6,'check failed',-6,7);
-ERROR:  new row for relation "insert_child" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_child" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (6, check failed, -6, 42, 7).
 SELECT * FROM INSERT_CHILD;
  x |   y    | z  | cx | cy 
@@ -305,7 +305,7 @@ SELECT '' AS three, * FROM INSERT_TBL;
 INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (8, try again, -8).
 SELECT '' AS four, * FROM INSERT_TBL;
  four | x |       y       | z  
@@ -325,7 +325,7 @@ UPDATE INSERT_TBL SET x = NULL WHERE x = 5;
 UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
 UPDATE INSERT_TBL SET x = -z, z = -x;
 UPDATE INSERT_TBL SET x = z, z = x;
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (-4, Y, 4).
 SELECT * FROM INSERT_TBL;
  x |       y       | z  

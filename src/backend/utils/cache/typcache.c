@@ -149,6 +149,7 @@ static int32 NextRecordTypmod = 0;		/* number of entries used */
 static void load_typcache_tupdesc(TypeCacheEntry *typentry);
 static void load_rangetype_info(TypeCacheEntry *typentry);
 static void load_domaintype_info(TypeCacheEntry *typentry);
+static int	dcs_cmp(const void *a, const void *b);
 static void decr_dcc_refcount(DomainConstraintCache *dcc);
 static void dccref_deletion_callback(void *arg);
 static bool array_element_has_equality(TypeCacheEntry *typentry);
@@ -650,6 +651,8 @@ load_domaintype_info(TypeCacheEntry *typentry)
 	Oid			typeOid = typentry->type_id;
 	DomainConstraintCache *dcc;
 	bool		notNull = false;
+	DomainConstraintState **ccons;
+	int			cconslen;
 	Relation	conRel;
 	MemoryContext oldcxt;
 
@@ -666,9 +669,12 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 	/*
 	 * We try to optimize the common case of no domain constraints, so don't
-	 * create the dcc object and context until we find a constraint.
+	 * create the dcc object and context until we find a constraint.  Likewise
+	 * for the temp sorting array.
 	 */
 	dcc = NULL;
+	ccons = NULL;
+	cconslen = 0;
 
 	/*
 	 * Scan pg_constraint for relevant constraints.  We want to find
@@ -682,6 +688,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 		HeapTuple	tup;
 		HeapTuple	conTup;
 		Form_pg_type typTup;
+		int			nccons = 0;
 		ScanKeyData key[1];
 		SysScanDesc scan;
 
@@ -763,16 +770,44 @@ load_domaintype_info(TypeCacheEntry *typentry)
 			r->name = pstrdup(NameStr(c->conname));
 			r->check_expr = ExecInitExpr(check_expr, NULL);
 
-			/*
-			 * Use lcons() here because constraints of parent domains should
-			 * be applied earlier.
-			 */
-			dcc->constraints = lcons(r, dcc->constraints);
-
 			MemoryContextSwitchTo(oldcxt);
+
+			/* Accumulate constraints in an array, for sorting below */
+			if (ccons == NULL)
+			{
+				cconslen = 8;
+				ccons = (DomainConstraintState **)
+					palloc(cconslen * sizeof(DomainConstraintState *));
+			}
+			else if (nccons >= cconslen)
+			{
+				cconslen *= 2;
+				ccons = (DomainConstraintState **)
+					repalloc(ccons, cconslen * sizeof(DomainConstraintState *));
+			}
+			ccons[nccons++] = r;
 		}
 
 		systable_endscan(scan);
+
+		if (nccons > 0)
+		{
+			/*
+			 * Sort the items for this domain, so that CHECKs are applied in a
+			 * deterministic order.
+			 */
+			if (nccons > 1)
+				qsort(ccons, nccons, sizeof(DomainConstraintState *), dcs_cmp);
+
+			/*
+			 * Now attach them to the overall list.  Use lcons() here because
+			 * constraints of parent domains should be applied earlier.
+			 */
+			oldcxt = MemoryContextSwitchTo(dcc->dccContext);
+			while (nccons > 0)
+				dcc->constraints = lcons(ccons[--nccons], dcc->constraints);
+			MemoryContextSwitchTo(oldcxt);
+		}
 
 		/* loop to next domain in stack */
 		typeOid = typTup->typbasetype;
@@ -834,6 +869,18 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 	/* Either way, the typcache entry's domain data is now valid. */
 	typentry->flags |= TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS;
+}
+
+/*
+ * qsort comparator to sort DomainConstraintState pointers by name
+ */
+static int
+dcs_cmp(const void *a, const void *b)
+{
+	const DomainConstraintState *const * ca = (const DomainConstraintState *const *) a;
+	const DomainConstraintState *const * cb = (const DomainConstraintState *const *) b;
+
+	return strcmp((*ca)->name, (*cb)->name);
 }
 
 /*

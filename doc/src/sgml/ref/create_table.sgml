@@ -442,6 +442,14 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       A constraint marked with <literal>NO INHERIT</> will not propagate to
       child tables.
      </para>
+
+     <para>
+      When a table has multiple <literal>CHECK</literal> constraints,
+      they will be tested for each row in alphabetical order by name,
+      after checking <literal>NOT NULL</> constraints.
+      (<productname>PostgreSQL</> versions before 9.5 did not honor any
+      particular firing order for <literal>CHECK</literal> constraints.)
+     </para>
     </listitem>
    </varlistentry>
 
