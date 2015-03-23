@@ -5534,7 +5534,7 @@ recoveryApplyDelay(XLogReaderState *record)
 	if (XLogRecGetRmid(record) != RM_XACT_ID)
 		return false;
 
-	xact_info = XLogRecGetInfo(record) & XLOG_XACT_COMMIT;
+	xact_info = XLogRecGetInfo(record) & XLOG_XACT_OPMASK;
 
 	if (xact_info != XLOG_XACT_COMMIT &&
 		xact_info != XLOG_XACT_COMMIT_PREPARED)
