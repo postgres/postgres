@@ -498,11 +498,13 @@
 
     <para>
      The type <type>numeric</type> can store numbers with a
-     very large number of digits and perform calculations exactly. It is
-     especially recommended for storing monetary amounts and other
-     quantities where exactness is required. However, arithmetic on
-     <type>numeric</type> values is very slow compared to the integer
-     types, or to the floating-point types described in the next section.
+     very large number of digits. It is especially recommended for
+     storing monetary amounts and other quantities where exactness is
+     required.  Calculations with <type>numeric</type> values yield exact
+     results where possible, e.g.  addition, subtraction, multiplication.
+     However, calculations on <type>numeric</type> values are very slow
+     compared to the integer types, or to the floating-point types
+     described in the next section.
     </para>
 
     <para>
