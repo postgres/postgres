@@ -817,6 +817,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		/* get relation's OID (will produce InvalidOid if subquery) */
 		relid = getrelid(rc->rti, rangeTable);
 
+		/*
+		 * If you change the conditions under which rel locks are acquired
+		 * here, be sure to adjust ExecOpenScanRelation to match.
+		 */
 		switch (rc->markType)
 		{
 			case ROW_MARK_EXCLUSIVE:
