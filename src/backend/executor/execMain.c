@@ -704,6 +704,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		if (rc->isParent)
 			continue;
 
+		/*
+		 * If you change the conditions under which rel locks are acquired
+		 * here, be sure to adjust ExecOpenScanRelation to match.
+		 */
 		switch (rc->markType)
 		{
 			case ROW_MARK_EXCLUSIVE:

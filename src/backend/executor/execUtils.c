@@ -816,7 +816,9 @@ ExecOpenScanRelation(EState *estate, Index scanrelid)
 		{
 			ExecRowMark *erm = lfirst(l);
 
-			if (erm->rti == scanrelid)
+			/* Keep this check in sync with InitPlan! */
+			if (erm->rti == scanrelid &&
+				erm->relation != NULL)
 			{
 				lockmode = NoLock;
 				break;
