@@ -289,6 +289,8 @@ Inherits: constraint_rename_test
 
 DROP TABLE constraint_rename_test2;
 DROP TABLE constraint_rename_test;
+ALTER TABLE IF EXISTS constraint_not_exist RENAME CONSTRAINT con3 TO con3foo; -- ok
+NOTICE:  relation "constraint_not_exist" does not exist, skipping
 ALTER TABLE IF EXISTS constraint_rename_test ADD CONSTRAINT con4 UNIQUE (a);
 NOTICE:  relation "constraint_rename_test" does not exist, skipping
 -- FOREIGN KEY CONSTRAINT adding TEST

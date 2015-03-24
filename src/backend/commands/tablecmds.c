@@ -2497,9 +2497,16 @@ RenameConstraint(RenameStmt *stmt)
 	{
 		/* lock level taken here should match rename_constraint_internal */
 		relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-										 false, false,
+										 stmt->missing_ok, false,
 										 RangeVarCallbackForRenameAttribute,
 										 NULL);
+		if (!OidIsValid(relid))
+		{
+			ereport(NOTICE,
+					(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->relation->relname)));
+			return InvalidObjectAddress;
+		}
 	}
 
 	return

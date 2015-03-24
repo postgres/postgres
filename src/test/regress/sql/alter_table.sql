@@ -228,6 +228,7 @@ ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
 \d constraint_rename_test2
 DROP TABLE constraint_rename_test2;
 DROP TABLE constraint_rename_test;
+ALTER TABLE IF EXISTS constraint_not_exist RENAME CONSTRAINT con3 TO con3foo; -- ok
 ALTER TABLE IF EXISTS constraint_rename_test ADD CONSTRAINT con4 UNIQUE (a);
 
 -- FOREIGN KEY CONSTRAINT adding TEST
