@@ -2562,8 +2562,9 @@ END;
      those shown in <xref linkend="errcodes-appendix">.  A category
      name matches any error within its category.  The special
      condition name <literal>OTHERS</> matches every error type except
-     <literal>QUERY_CANCELED</>.  (It is possible, but often unwise,
-     to trap <literal>QUERY_CANCELED</> by name.)  Condition names are
+     <literal>QUERY_CANCELED</> and <literal>ASSERT_FAILURE</>.
+     (It is possible, but often unwise, to trap those two error types
+     by name.)  Condition names are
      not case-sensitive.  Also, an error condition can be specified
      by <literal>SQLSTATE</> code; for example these are equivalent:
 <programlisting>
@@ -3387,8 +3388,12 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
   <sect1 id="plpgsql-errors-and-messages">
    <title>Errors and Messages</title>
 
+  <sect2 id="plpgsql-statements-raise">
+   <title>Reporting Errors and Messages</title>
+
    <indexterm>
     <primary>RAISE</primary>
+    <secondary>in PL/pgSQL</secondary>
    </indexterm>
 
    <indexterm>
@@ -3579,6 +3584,67 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
      the whole category.
     </para>
    </note>
+
+  </sect2>
+
+  <sect2 id="plpgsql-statements-assert">
+   <title>Checking Assertions</title>
+
+   <indexterm>
+    <primary>ASSERT</primary>
+    <secondary>in PL/pgSQL</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>assertions</primary>
+    <secondary>in PL/pgSQL</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary><varname>plpgsql.check_asserts</> configuration parameter</primary>
+   </indexterm>
+
+   <para>
+    The <command>ASSERT</command> statement is a convenient shorthand for
+    inserting debugging checks into <application>PL/pgSQL</application>
+    functions.
+
+<synopsis>
+ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <replaceable class="parameter">message</replaceable> </optional>;
+</synopsis>
+
+    The <replaceable class="parameter">condition</replaceable> is a boolean
+    expression that is expected to always evaluate to TRUE; if it does,
+    the <command>ASSERT</command> statement does nothing further.  If the
+    result is FALSE or NULL, then an <literal>ASSERT_FAILURE</> exception
+    is raised.  (If an error occurs while evaluating
+    the <replaceable class="parameter">condition</replaceable>, it is
+    reported as a normal error.)
+   </para>
+
+   <para>
+    If the optional <replaceable class="parameter">message</replaceable> is
+    provided, it is an expression whose result (if not null) replaces the
+    default error message text <quote>assertion failed</>, should
+    the <replaceable class="parameter">condition</replaceable> fail.
+    The <replaceable class="parameter">message</replaceable> expression is
+    not evaluated in the normal case where the assertion succeeds.
+   </para>
+
+   <para>
+    Testing of assertions can be enabled or disabled via the configuration
+    parameter <literal>plpgsql.check_asserts</>, which takes a boolean
+    value; the default is <literal>on</>.  If this parameter
+    is <literal>off</> then <command>ASSERT</> statements do nothing.
+   </para>
+
+   <para>
+    Note that <command>ASSERT</command> is meant for detecting program
+    bugs, not for reporting ordinary error conditions.  Use
+    the <command>RAISE</> statement, described above, for that.
+   </para>
+
+  </sect2>
 
  </sect1>
 
@@ -5075,8 +5141,7 @@ $func$ LANGUAGE plpgsql;
     <productname>PostgreSQL</> does not have a built-in
     <function>instr</function> function, but you can create one
     using a combination of other
-    functions.<indexterm><primary>instr</></indexterm> In <xref
-    linkend="plpgsql-porting-appendix"> there is a
+    functions. In <xref linkend="plpgsql-porting-appendix"> there is a
     <application>PL/pgSQL</application> implementation of
     <function>instr</function> that you can use to make your porting
     easier.
@@ -5408,6 +5473,10 @@ $$ LANGUAGE plpgsql STRICT IMMUTABLE;
     <function>instr</function> functions that you can use to simplify
     your porting efforts.
    </para>
+
+   <indexterm>
+    <primary><function>instr</> function</primary>
+   </indexterm>
 
 <programlisting>
 --

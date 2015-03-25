@@ -192,7 +192,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %type <loop_body>	loop_body
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
-%type <stmt>	stmt_return stmt_raise stmt_execsql
+%type <stmt>	stmt_return stmt_raise stmt_assert stmt_execsql
 %type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
 %type <stmt>	stmt_case stmt_foreach_a
@@ -247,6 +247,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_ALIAS
 %token <keyword>	K_ALL
 %token <keyword>	K_ARRAY
+%token <keyword>	K_ASSERT
 %token <keyword>	K_BACKWARD
 %token <keyword>	K_BEGIN
 %token <keyword>	K_BY
@@ -870,6 +871,8 @@ proc_stmt		: pl_block ';'
 				| stmt_return
 						{ $$ = $1; }
 				| stmt_raise
+						{ $$ = $1; }
+				| stmt_assert
 						{ $$ = $1; }
 				| stmt_execsql
 						{ $$ = $1; }
@@ -1847,6 +1850,29 @@ stmt_raise		: K_RAISE
 					}
 				;
 
+stmt_assert		: K_ASSERT
+					{
+						PLpgSQL_stmt_assert		*new;
+						int	tok;
+
+						new = palloc(sizeof(PLpgSQL_stmt_assert));
+
+						new->cmd_type	= PLPGSQL_STMT_ASSERT;
+						new->lineno		= plpgsql_location_to_lineno(@1);
+
+						new->cond = read_sql_expression2(',', ';',
+														 ", or ;",
+														 &tok);
+
+						if (tok == ',')
+							new->message = read_sql_expression(';', ";");
+						else
+							new->message = NULL;
+
+						$$ = (PLpgSQL_stmt *) new;
+					}
+				;
+
 loop_body		: proc_sect K_END K_LOOP opt_label ';'
 					{
 						$$.stmts = $1;
@@ -2315,6 +2341,7 @@ unreserved_keyword	:
 				K_ABSOLUTE
 				| K_ALIAS
 				| K_ARRAY
+				| K_ASSERT
 				| K_BACKWARD
 				| K_CLOSE
 				| K_COLLATE

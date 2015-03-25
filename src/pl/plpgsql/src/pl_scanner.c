@@ -98,6 +98,7 @@ static const ScanKeyword unreserved_keywords[] = {
 	PG_KEYWORD("absolute", K_ABSOLUTE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("alias", K_ALIAS, UNRESERVED_KEYWORD)
 	PG_KEYWORD("array", K_ARRAY, UNRESERVED_KEYWORD)
+	PG_KEYWORD("assert", K_ASSERT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("backward", K_BACKWARD, UNRESERVED_KEYWORD)
 	PG_KEYWORD("close", K_CLOSE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("collate", K_COLLATE, UNRESERVED_KEYWORD)
@@ -607,8 +608,7 @@ plpgsql_scanner_errposition(int location)
  * Beware of using yyerror for other purposes, as the cursor position might
  * be misleading!
  */
-void
-pg_attribute_noreturn
+void pg_attribute_noreturn
 plpgsql_yyerror(const char *message)
 {
 	char	   *yytext = core_yy.scanbuf + plpgsql_yylloc;

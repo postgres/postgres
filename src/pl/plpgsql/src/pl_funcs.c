@@ -244,6 +244,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 			return "RETURN QUERY";
 		case PLPGSQL_STMT_RAISE:
 			return "RAISE";
+		case PLPGSQL_STMT_ASSERT:
+			return "ASSERT";
 		case PLPGSQL_STMT_EXECSQL:
 			return _("SQL statement");
 		case PLPGSQL_STMT_DYNEXECUTE:
@@ -330,6 +332,7 @@ static void free_return(PLpgSQL_stmt_return *stmt);
 static void free_return_next(PLpgSQL_stmt_return_next *stmt);
 static void free_return_query(PLpgSQL_stmt_return_query *stmt);
 static void free_raise(PLpgSQL_stmt_raise *stmt);
+static void free_assert(PLpgSQL_stmt_assert *stmt);
 static void free_execsql(PLpgSQL_stmt_execsql *stmt);
 static void free_dynexecute(PLpgSQL_stmt_dynexecute *stmt);
 static void free_dynfors(PLpgSQL_stmt_dynfors *stmt);
@@ -390,6 +393,9 @@ free_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_RAISE:
 			free_raise((PLpgSQL_stmt_raise *) stmt);
+			break;
+		case PLPGSQL_STMT_ASSERT:
+			free_assert((PLpgSQL_stmt_assert *) stmt);
 			break;
 		case PLPGSQL_STMT_EXECSQL:
 			free_execsql((PLpgSQL_stmt_execsql *) stmt);
@@ -611,6 +617,13 @@ free_raise(PLpgSQL_stmt_raise *stmt)
 }
 
 static void
+free_assert(PLpgSQL_stmt_assert *stmt)
+{
+	free_expr(stmt->cond);
+	free_expr(stmt->message);
+}
+
+static void
 free_execsql(PLpgSQL_stmt_execsql *stmt)
 {
 	free_expr(stmt->sqlstmt);
@@ -732,6 +745,7 @@ static void dump_return(PLpgSQL_stmt_return *stmt);
 static void dump_return_next(PLpgSQL_stmt_return_next *stmt);
 static void dump_return_query(PLpgSQL_stmt_return_query *stmt);
 static void dump_raise(PLpgSQL_stmt_raise *stmt);
+static void dump_assert(PLpgSQL_stmt_assert *stmt);
 static void dump_execsql(PLpgSQL_stmt_execsql *stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt);
 static void dump_dynfors(PLpgSQL_stmt_dynfors *stmt);
@@ -803,6 +817,9 @@ dump_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_RAISE:
 			dump_raise((PLpgSQL_stmt_raise *) stmt);
+			break;
+		case PLPGSQL_STMT_ASSERT:
+			dump_assert((PLpgSQL_stmt_assert *) stmt);
 			break;
 		case PLPGSQL_STMT_EXECSQL:
 			dump_execsql((PLpgSQL_stmt_execsql *) stmt);
@@ -1349,6 +1366,25 @@ dump_raise(PLpgSQL_stmt_raise *stmt)
 			printf("\n");
 		}
 		dump_indent -= 2;
+	}
+	dump_indent -= 2;
+}
+
+static void
+dump_assert(PLpgSQL_stmt_assert *stmt)
+{
+	dump_ind();
+	printf("ASSERT ");
+	dump_expr(stmt->cond);
+	printf("\n");
+
+	dump_indent += 2;
+	if (stmt->message != NULL)
+	{
+		dump_ind();
+		printf("    MESSAGE = ");
+		dump_expr(stmt->message);
+		printf("\n");
 	}
 	dump_indent -= 2;
 }

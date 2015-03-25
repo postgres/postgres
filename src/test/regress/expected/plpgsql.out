@@ -5377,3 +5377,52 @@ NOTICE:  outer_func() done
 drop function outer_outer_func(int);
 drop function outer_func(int);
 drop function inner_func(int);
+--
+-- Test ASSERT
+--
+do $$
+begin
+  assert 1=1;  -- should succeed
+end;
+$$;
+do $$
+begin
+  assert 1=0;  -- should fail
+end;
+$$;
+ERROR:  assertion failed
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at ASSERT
+do $$
+begin
+  assert NULL;  -- should fail
+end;
+$$;
+ERROR:  assertion failed
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at ASSERT
+-- check controlling GUC
+set plpgsql.check_asserts = off;
+do $$
+begin
+  assert 1=0;  -- won't be tested
+end;
+$$;
+reset plpgsql.check_asserts;
+-- test custom message
+do $$
+declare var text := 'some value';
+begin
+  assert 1=0, format('assertion failed, var = "%s"', var);
+end;
+$$;
+ERROR:  assertion failed, var = "some value"
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at ASSERT
+-- ensure assertions are not trapped by 'others'
+do $$
+begin
+  assert 1=0, 'unhandled assertion';
+exception when others then
+  null; -- do nothing
+end;
+$$;
+ERROR:  unhandled assertion
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at ASSERT

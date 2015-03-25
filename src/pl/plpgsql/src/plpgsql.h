@@ -94,6 +94,7 @@ enum PLpgSQL_stmt_types
 	PLPGSQL_STMT_RETURN_NEXT,
 	PLPGSQL_STMT_RETURN_QUERY,
 	PLPGSQL_STMT_RAISE,
+	PLPGSQL_STMT_ASSERT,
 	PLPGSQL_STMT_EXECSQL,
 	PLPGSQL_STMT_DYNEXECUTE,
 	PLPGSQL_STMT_DYNFORS,
@@ -630,6 +631,13 @@ typedef struct
 	PLpgSQL_expr *expr;
 } PLpgSQL_raise_option;
 
+typedef struct
+{								/* ASSERT statement */
+	int			cmd_type;
+	int			lineno;
+	PLpgSQL_expr *cond;
+	PLpgSQL_expr *message;
+} PLpgSQL_stmt_assert;
 
 typedef struct
 {								/* Generic SQL statement to execute */
@@ -888,6 +896,8 @@ extern IdentifierLookup plpgsql_IdentifierLookup;
 extern int	plpgsql_variable_conflict;
 
 extern bool plpgsql_print_strict_params;
+
+extern bool plpgsql_check_asserts;
 
 /* extra compile-time checks */
 #define PLPGSQL_XCHECK_NONE			0

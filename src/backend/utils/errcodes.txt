@@ -454,6 +454,7 @@ P0000    E    ERRCODE_PLPGSQL_ERROR                                          plp
 P0001    E    ERRCODE_RAISE_EXCEPTION                                        raise_exception
 P0002    E    ERRCODE_NO_DATA_FOUND                                          no_data_found
 P0003    E    ERRCODE_TOO_MANY_ROWS                                          too_many_rows
+P0004    E    ERRCODE_ASSERT_FAILURE                                         assert_failure
 
 Section: Class XX - Internal Error
 

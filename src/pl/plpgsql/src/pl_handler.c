@@ -44,6 +44,8 @@ int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
 
 bool		plpgsql_print_strict_params = false;
 
+bool		plpgsql_check_asserts = true;
+
 char	   *plpgsql_extra_warnings_string = NULL;
 char	   *plpgsql_extra_errors_string = NULL;
 int			plpgsql_extra_warnings;
@@ -157,6 +159,14 @@ _PG_init(void)
 							 NULL,
 							 &plpgsql_print_strict_params,
 							 false,
+							 PGC_USERSET, 0,
+							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("plpgsql.check_asserts",
+				  gettext_noop("Perform checks given in ASSERT statements."),
+							 NULL,
+							 &plpgsql_check_asserts,
+							 true,
 							 PGC_USERSET, 0,
 							 NULL, NULL, NULL);
 
