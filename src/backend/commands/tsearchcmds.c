@@ -964,7 +964,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
  * CREATE TEXT SEARCH CONFIGURATION
  */
 ObjectAddress
-DefineTSConfiguration(List *names, List *parameters)
+DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 {
 	Relation	cfgRel;
 	Relation	mapRel = NULL;
@@ -1012,6 +1012,14 @@ DefineTSConfiguration(List *names, List *parameters)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify both PARSER and COPY options")));
+
+	/* make copied tsconfig available to callers */
+	if (copied && OidIsValid(sourceOid))
+	{
+		ObjectAddressSet(*copied,
+						 TSConfigRelationId,
+						 sourceOid);
+	}
 
 	/*
 	 * Look up source config if given.

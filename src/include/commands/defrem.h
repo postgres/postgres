@@ -101,7 +101,8 @@ extern ObjectAddress AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern ObjectAddress DefineTSTemplate(List *names, List *parameters);
 extern void RemoveTSTemplateById(Oid tmplId);
 
-extern ObjectAddress DefineTSConfiguration(List *names, List *parameters);
+extern ObjectAddress DefineTSConfiguration(List *names, List *parameters,
+					  ObjectAddress *copied);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern ObjectAddress AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 

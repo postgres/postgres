@@ -1129,7 +1129,8 @@ ProcessUtilitySlow(Node *parsetree,
 						case OBJECT_TSCONFIGURATION:
 							Assert(stmt->args == NIL);
 							DefineTSConfiguration(stmt->defnames,
-												  stmt->definition);
+												  stmt->definition,
+												  NULL);
 							break;
 						case OBJECT_COLLATION:
 							Assert(stmt->args == NIL);
