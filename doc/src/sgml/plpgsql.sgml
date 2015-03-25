@@ -1217,8 +1217,17 @@ EXECUTE 'SELECT count(*) FROM mytable WHERE inserted_by = $1 AND inserted &lt;= 
      dynamically selected table, you could do this:
 <programlisting>
 EXECUTE 'SELECT count(*) FROM '
-    || tabname::regclass
+    || quote_ident(tabname)
     || ' WHERE inserted_by = $1 AND inserted &lt;= $2'
+   INTO c
+   USING checked_user, checked_date;
+</programlisting>
+     A cleaner approach is to use <function>format()</>'s <literal>%I</>
+     specification for table or column names (strings separated by a
+     newline are concatenated):
+<programlisting>
+EXECUTE format('SELECT count(*) FROM %I '
+   'WHERE inserted_by = $1 AND inserted &lt;= $2', tabname)
    INTO c
    USING checked_user, checked_date;
 </programlisting>
@@ -1297,11 +1306,15 @@ EXECUTE 'SELECT count(*) FROM '
     </para>
 
     <para>
-     Dynamic values that are to be inserted into the constructed
-     query require careful handling since they might themselves contain
+     Dynamic values require careful handling since they might contain
      quote characters.
-     An example (this assumes that you are using dollar quoting for the
-     function as a whole, so the quote marks need not be doubled):
+     An example using <function>format()</> (this assumes that you are
+     dollar quoting the function body so quote marks need not be doubled):
+<programlisting>
+EXECUTE format('UPDATE tbl SET %I = $1 '
+   'WHERE key = $2', colname) USING newvalue, keyvalue;
+</programlisting>
+     It is also possible to call the quoting functions directly:
 <programlisting>
 EXECUTE 'UPDATE tbl SET '
         || quote_ident(colname)
@@ -1391,17 +1404,20 @@ EXECUTE 'UPDATE tbl SET '
      <function>format</function> function (see <xref
      linkend="functions-string">). For example:
 <programlisting>
-EXECUTE format('UPDATE tbl SET %I = %L WHERE key = %L', colname, newvalue, keyvalue);
+EXECUTE format('UPDATE tbl SET %I = %L '
+   'WHERE key = %L', colname, newvalue, keyvalue);
 </programlisting>
+     <literal>%I</> is equivalent to <function>quote_ident</>, and
+     <literal>%L</> is equivalent to <function>quote_nullable</function>.
      The <function>format</function> function can be used in conjunction with
      the <literal>USING</literal> clause:
 <programlisting>
 EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
    USING newvalue, keyvalue;
 </programlisting>
-     This form is more efficient, because the parameters
-     <literal>newvalue</literal> and <literal>keyvalue</literal> are not
-     converted to text.
+     This form is better because the variables are handled in their native
+     data type format, rather than unconditionally converting them to
+     text and quoting them via <literal>%L</>.  It is also more efficient.
     </para>
    </example>
 
@@ -2352,10 +2368,8 @@ BEGIN
         -- Now "mviews" has one record from cs_materialized_views
 
         RAISE NOTICE 'Refreshing materialized view %s ...', quote_ident(mviews.mv_name);
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(mviews.mv_name);
-        EXECUTE 'INSERT INTO '
-                   || quote_ident(mviews.mv_name) || ' '
-                   || mviews.mv_query;
+        EXECUTE format('TRUNCATE TABLE %I', mviews.mv_name);
+        EXECUTE format('INSERT INTO %I %s', mviews.mv_name, mviews.mv_query);
     END LOOP;
 
     RAISE NOTICE 'Done refreshing materialized views.';
@@ -2968,7 +2982,8 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
           from one run to the next (see <xref linkend="plpgsql-plan-caching">),
           and it also means that variable substitution is not done on the
           command string. As with <command>EXECUTE</command>, parameter values
-          can be inserted into the dynamic command via <literal>USING</>.
+          can be inserted into the dynamic command via
+          <literal>format()</> and <literal>USING</>.
           The <literal>SCROLL</> and
           <literal>NO SCROLL</> options have the same meanings as for a bound
           cursor.
@@ -2977,13 +2992,12 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
        <para>
         An example:
 <programlisting>
-OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname)
-                                        || ' WHERE col1 = $1' USING keyvalue;
+OPEN curs1 FOR EXECUTE format('SELECT * FROM %I WHERE col1 = $1',tabname) USING keyvalue;
 </programlisting>
-        In this example, the table name is inserted into the query textually,
-        so use of <function>quote_ident()</> is recommended to guard against
-        SQL injection.  The comparison value for <literal>col1</> is inserted
-        via a <literal>USING</> parameter, so it needs no quoting.
+        In this example, the table name is inserted into the query via
+        <function>format()</>.  The comparison value for <literal>col1</>
+        is inserted via a <literal>USING</> parameter, so it needs
+        no quoting.
        </para>
      </sect3>
 

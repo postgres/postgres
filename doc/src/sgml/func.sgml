@@ -2998,14 +2998,15 @@
            <para>
             <literal>I</literal> treats the argument value as an SQL
             identifier, double-quoting it if necessary.
-            It is an error for the value to be null.
+            It is an error for the value to be null (equivalent to
+            <function>quote_ident</>).
            </para>
           </listitem>
           <listitem>
            <para>
             <literal>L</literal> quotes the argument value as an SQL literal.
             A null value is displayed as the string <literal>NULL</>, without
-            quotes.
+            quotes (equivalent to <function>quote_nullable</function>).
            </para>
           </listitem>
          </itemizedlist>
