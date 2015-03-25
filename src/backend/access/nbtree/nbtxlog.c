@@ -395,7 +395,8 @@ btree_xlog_vacuum(XLogReaderState *record)
 	 * unpinned between the lastBlockVacuumed and the current block, if there
 	 * are any.  This prevents replay of the VACUUM from reaching the stage of
 	 * removing heap tuples while there could still be indexscans "in flight"
-	 * to those particular tuples (see nbtree/README).
+	 * to those particular tuples for those scans which could be confused by
+	 * finding new tuples at the old TID locations (see nbtree/README).
 	 *
 	 * It might be worth checking if there are actually any backends running;
 	 * if not, we could just skip this.

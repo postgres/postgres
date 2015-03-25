@@ -404,7 +404,8 @@ btbeginscan(PG_FUNCTION_ARGS)
 
 	/* allocate private workspace */
 	so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
-	so->currPos.buf = so->markPos.buf = InvalidBuffer;
+	BTScanPosInvalidate(so->currPos);
+	BTScanPosInvalidate(so->markPos);
 	if (scan->numberOfKeys > 0)
 		so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
 	else
@@ -424,8 +425,6 @@ btbeginscan(PG_FUNCTION_ARGS)
 	 * scan->xs_itupdesc whether we'll need it or not, since that's so cheap.
 	 */
 	so->currTuples = so->markTuples = NULL;
-	so->currPos.nextTupleOffset = 0;
-	so->markPos.nextTupleOffset = 0;
 
 	scan->xs_itupdesc = RelationGetDescr(rel);
 
@@ -451,17 +450,14 @@ btrescan(PG_FUNCTION_ARGS)
 	{
 		/* Before leaving current page, deal with any killed items */
 		if (so->numKilled > 0)
-			_bt_killitems(scan, false);
-		ReleaseBuffer(so->currPos.buf);
-		so->currPos.buf = InvalidBuffer;
+			_bt_killitems(scan);
+		BTScanPosUnpinIfPinned(so->currPos);
+		BTScanPosInvalidate(so->currPos);
 	}
 
-	if (BTScanPosIsValid(so->markPos))
-	{
-		ReleaseBuffer(so->markPos.buf);
-		so->markPos.buf = InvalidBuffer;
-	}
 	so->markItemIndex = -1;
+	BTScanPosUnpinIfPinned(so->markPos);
+	BTScanPosInvalidate(so->markPos);
 
 	/*
 	 * Allocate tuple workspace arrays, if needed for an index-only scan and
@@ -515,17 +511,14 @@ btendscan(PG_FUNCTION_ARGS)
 	{
 		/* Before leaving current page, deal with any killed items */
 		if (so->numKilled > 0)
-			_bt_killitems(scan, false);
-		ReleaseBuffer(so->currPos.buf);
-		so->currPos.buf = InvalidBuffer;
+			_bt_killitems(scan);
+		BTScanPosUnpinIfPinned(so->currPos);
 	}
 
-	if (BTScanPosIsValid(so->markPos))
-	{
-		ReleaseBuffer(so->markPos.buf);
-		so->markPos.buf = InvalidBuffer;
-	}
 	so->markItemIndex = -1;
+	BTScanPosUnpinIfPinned(so->markPos);
+
+	/* No need to invalidate positions, the RAM is about to be freed. */
 
 	/* Release storage */
 	if (so->keyData != NULL)
@@ -552,12 +545,8 @@ btmarkpos(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
-	/* we aren't holding any read locks, but gotta drop the pin */
-	if (BTScanPosIsValid(so->markPos))
-	{
-		ReleaseBuffer(so->markPos.buf);
-		so->markPos.buf = InvalidBuffer;
-	}
+	/* There may be an old mark with a pin (but no lock). */
+	BTScanPosUnpinIfPinned(so->markPos);
 
 	/*
 	 * Just record the current itemIndex.  If we later step to next page
@@ -568,7 +557,10 @@ btmarkpos(PG_FUNCTION_ARGS)
 	if (BTScanPosIsValid(so->currPos))
 		so->markItemIndex = so->currPos.itemIndex;
 	else
+	{
+		BTScanPosInvalidate(so->markPos);
 		so->markItemIndex = -1;
+	}
 
 	/* Also record the current positions of any array keys */
 	if (so->numArrayKeys)
@@ -593,28 +585,54 @@ btrestrpos(PG_FUNCTION_ARGS)
 	if (so->markItemIndex >= 0)
 	{
 		/*
-		 * The mark position is on the same page we are currently on. Just
+		 * The scan has never moved to a new page since the last mark.  Just
 		 * restore the itemIndex.
+		 *
+		 * NB: In this case we can't count on anything in so->markPos to be
+		 * accurate.
 		 */
 		so->currPos.itemIndex = so->markItemIndex;
 	}
+	else if (so->currPos.currPage == so->markPos.currPage)
+	{
+		/*
+		 * so->markItemIndex < 0 but mark and current positions are on the
+		 * same page.  This would be an unusual case, where the scan moved to
+		 * a new index page after the mark, restored, and later restored again
+		 * without moving off the marked page.  It is not clear that this code
+		 * can currently be reached, but it seems better to make this function
+		 * robust for this case than to Assert() or elog() that it can't
+		 * happen.
+		 *
+		 * We neither want to set so->markItemIndex >= 0 (because that could
+		 * cause a later move to a new page to redo the memcpy() executions)
+		 * nor re-execute the memcpy() functions for a restore within the same
+		 * page.  The previous restore to this page already set everything
+		 * except markPos as it should be.
+		 */
+		so->currPos.itemIndex = so->markPos.itemIndex;
+	}
 	else
 	{
-		/* we aren't holding any read locks, but gotta drop the pin */
+		/*
+		 * The scan moved to a new page after last mark or restore, and we are
+		 * now restoring to the marked page.  We aren't holding any read
+		 * locks, but if we're still holding the pin for the current position,
+		 * we must drop it.
+		 */
 		if (BTScanPosIsValid(so->currPos))
 		{
 			/* Before leaving current page, deal with any killed items */
-			if (so->numKilled > 0 &&
-				so->currPos.buf != so->markPos.buf)
-				_bt_killitems(scan, false);
-			ReleaseBuffer(so->currPos.buf);
-			so->currPos.buf = InvalidBuffer;
+			if (so->numKilled > 0)
+				_bt_killitems(scan);
+			BTScanPosUnpinIfPinned(so->currPos);
 		}
 
 		if (BTScanPosIsValid(so->markPos))
 		{
 			/* bump pin on mark buffer for assignment to current buffer */
-			IncrBufferRefCount(so->markPos.buf);
+			if (BTScanPosIsPinned(so->markPos))
+				IncrBufferRefCount(so->markPos.buf);
 			memcpy(&so->currPos, &so->markPos,
 				   offsetof(BTScanPosData, items[1]) +
 				   so->markPos.lastItem * sizeof(BTScanPosItem));
@@ -622,6 +640,8 @@ btrestrpos(PG_FUNCTION_ARGS)
 				memcpy(so->currTuples, so->markTuples,
 					   so->markPos.nextTupleOffset);
 		}
+		else
+			BTScanPosInvalidate(so->currPos);
 	}
 
 	PG_RETURN_VOID();

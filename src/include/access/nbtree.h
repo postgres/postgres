@@ -518,6 +518,8 @@ typedef struct BTScanPosData
 {
 	Buffer		buf;			/* if valid, the buffer is pinned */
 
+	XLogRecPtr	lsn;			/* pos in the WAL stream when page was read */
+	BlockNumber currPage;		/* page we've referencd by items array */
 	BlockNumber nextPage;		/* page's right link when we scanned it */
 
 	/*
@@ -551,7 +553,37 @@ typedef struct BTScanPosData
 
 typedef BTScanPosData *BTScanPos;
 
-#define BTScanPosIsValid(scanpos) BufferIsValid((scanpos).buf)
+#define BTScanPosIsPinned(scanpos) \
+( \
+	AssertMacro(BlockNumberIsValid((scanpos).currPage) || \
+				!BufferIsValid((scanpos).buf)), \
+	BufferIsValid((scanpos).buf) \
+)
+#define BTScanPosUnpin(scanpos) \
+	do { \
+		ReleaseBuffer((scanpos).buf); \
+		(scanpos).buf = InvalidBuffer; \
+	} while (0)
+#define BTScanPosUnpinIfPinned(scanpos) \
+	do { \
+		if (BTScanPosIsPinned(scanpos)) \
+			BTScanPosUnpin(scanpos); \
+	} while (0)
+
+#define BTScanPosIsValid(scanpos) \
+( \
+	AssertMacro(BlockNumberIsValid((scanpos).currPage) || \
+				!BufferIsValid((scanpos).buf)), \
+	BlockNumberIsValid((scanpos).currPage) \
+)
+#define BTScanPosInvalidate(scanpos) \
+	do { \
+		(scanpos).currPage = InvalidBlockNumber; \
+		(scanpos).nextPage = InvalidBlockNumber; \
+		(scanpos).buf = InvalidBuffer; \
+		(scanpos).lsn = InvalidXLogRecPtr; \
+		(scanpos).nextTupleOffset = 0; \
+	} while (0);
 
 /* We need one of these for each equality-type SK_SEARCHARRAY scan key */
 typedef struct BTArrayKeyInfo
@@ -697,7 +729,7 @@ extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern IndexTuple _bt_checkkeys(IndexScanDesc scan,
 			  Page page, OffsetNumber offnum,
 			  ScanDirection dir, bool *continuescan);
-extern void _bt_killitems(IndexScanDesc scan, bool haveLock);
+extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);
 extern void _bt_end_vacuum(Relation rel);

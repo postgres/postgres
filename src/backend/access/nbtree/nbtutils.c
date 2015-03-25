@@ -1721,27 +1721,35 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
  * _bt_killitems - set LP_DEAD state for items an indexscan caller has
  * told us were killed
  *
- * scan->so contains information about the current page and killed tuples
- * thereon (generally, this should only be called if so->numKilled > 0).
+ * scan->opaque, referenced locally through so, contains information about the
+ * current page and killed tuples thereon (generally, this should only be
+ * called if so->numKilled > 0).
  *
- * The caller must have pin on so->currPos.buf, but may or may not have
- * read-lock, as indicated by haveLock.  Note that we assume read-lock
- * is sufficient for setting LP_DEAD status (which is only a hint).
+ * The caller does not have a lock on the page and may or may not have the
+ * page pinned in a buffer.  Note that read-lock is sufficient for setting
+ * LP_DEAD status (which is only a hint).
  *
  * We match items by heap TID before assuming they are the right ones to
  * delete.  We cope with cases where items have moved right due to insertions.
  * If an item has moved off the current page due to a split, we'll fail to
  * find it and do nothing (this is not an error case --- we assume the item
- * will eventually get marked in a future indexscan).  Note that because we
- * hold pin on the target page continuously from initially reading the items
- * until applying this function, VACUUM cannot have deleted any items from
- * the page, and so there is no need to search left from the recorded offset.
- * (This observation also guarantees that the item is still the right one
- * to delete, which might otherwise be questionable since heap TIDs can get
- * recycled.)
+ * will eventually get marked in a future indexscan).
+ *
+ * Note that if we hold a pin on the target page continuously from initially
+ * reading the items until applying this function, VACUUM cannot have deleted
+ * any items from the page, and so there is no need to search left from the
+ * recorded offset.  (This observation also guarantees that the item is still
+ * the right one to delete, which might otherwise be questionable since heap
+ * TIDs can get recycled.)  This holds true even if the page has been modified
+ * by inserts and page splits, so there is no need to consult the LSN.
+ *
+ * If the pin was released after reading the page, then we re-read it.  If it
+ * has been modified since we read it (as determined by the LSN), we dare not
+ * flag any entries because it is possible that the old entry was vacuumed
+ * away and the TID was re-used by a completely different heap tuple.
  */
 void
-_bt_killitems(IndexScanDesc scan, bool haveLock)
+_bt_killitems(IndexScanDesc scan)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Page		page;
@@ -1749,19 +1757,56 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 	OffsetNumber minoff;
 	OffsetNumber maxoff;
 	int			i;
+	int			numKilled = so->numKilled;
 	bool		killedsomething = false;
 
-	Assert(BufferIsValid(so->currPos.buf));
+	Assert(BTScanPosIsValid(so->currPos));
 
-	if (!haveLock)
+	/*
+	 * Always reset the scan state, so we don't look for same items on other
+	 * pages.
+	 */
+	so->numKilled = 0;
+
+	if (BTScanPosIsPinned(so->currPos))
+	{
+		/*
+		 * We have held the pin on this page since we read the index tuples,
+		 * so all we need to do is lock it.  The pin will have prevented
+		 * re-use of any TID on the page, so there is no need to check the
+		 * LSN.
+		 */
 		LockBuffer(so->currPos.buf, BT_READ);
 
-	page = BufferGetPage(so->currPos.buf);
+		page = BufferGetPage(so->currPos.buf);
+	}
+	else
+	{
+		Buffer		buf;
+
+		/* Attempt to re-read the buffer, getting pin and lock. */
+		buf = _bt_getbuf(scan->indexRelation, so->currPos.currPage, BT_READ);
+
+		/* It might not exist anymore; in which case we can't hint it. */
+		if (!BufferIsValid(buf))
+			return;
+
+		page = BufferGetPage(buf);
+		if (PageGetLSN(page) == so->currPos.lsn)
+			so->currPos.buf = buf;
+		else
+		{
+			/* Modified while not pinned means hinting is not safe. */
+			_bt_relbuf(scan->indexRelation, buf);
+			return;
+		}
+	}
+
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
 
-	for (i = 0; i < so->numKilled; i++)
+	for (i = 0; i < numKilled; i++)
 	{
 		int			itemIndex = so->killedItems[i];
 		BTScanPosItem *kitem = &so->currPos.items[itemIndex];
@@ -1799,14 +1844,7 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 		MarkBufferDirtyHint(so->currPos.buf, true);
 	}
 
-	if (!haveLock)
-		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
-
-	/*
-	 * Always reset the scan state, so we don't look for same items on other
-	 * pages.
-	 */
-	so->numKilled = 0;
+	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
 }
 
 

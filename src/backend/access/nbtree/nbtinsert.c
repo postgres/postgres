@@ -498,9 +498,9 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *		If there's not enough room in the space, we try to make room by
  *		removing any LP_DEAD tuples.
  *
- *		On entry, *buf and *offsetptr point to the first legal position
+ *		On entry, *bufptr and *offsetptr point to the first legal position
  *		where the new tuple could be inserted.  The caller should hold an
- *		exclusive lock on *buf.  *offsetptr can also be set to
+ *		exclusive lock on *bufptr.  *offsetptr can also be set to
  *		InvalidOffsetNumber, in which case the function will search for the
  *		right location within the page if needed.  On exit, they point to the
  *		chosen insert location.  If _bt_findinsertloc decides to move right,

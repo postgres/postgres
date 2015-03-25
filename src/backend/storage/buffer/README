@@ -18,8 +18,8 @@ backend to pin a page more than once concurrently; the buffer manager
 handles this efficiently.  It is considered OK to hold a pin for long
 intervals --- for example, sequential scans hold a pin on the current page
 until done processing all the tuples on the page, which could be quite a
-while if the scan is the outer scan of a join.  Similarly, btree index
-scans hold a pin on the current index page.  This is OK because normal
+while if the scan is the outer scan of a join.  Similarly, a btree index
+scan may hold a pin on the current index page.  This is OK because normal
 operations never wait for a page's pin count to drop to zero.  (Anything
 that might need to do such a wait is instead handled by waiting to obtain
 the relation-level lock, which is why you'd better hold one first.)  Pins
