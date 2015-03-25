@@ -363,3 +363,23 @@ SELECT (-2147483648)::int4 % (-1)::int2;
         0
 (1 row)
 
+-- check rounding when casting from float
+SELECT x, x::int4 AS int4_value
+FROM (VALUES (-2.5::float8),
+             (-1.5::float8),
+             (-0.5::float8),
+             (0.0::float8),
+             (0.5::float8),
+             (1.5::float8),
+             (2.5::float8)) t(x);
+  x   | int4_value 
+------+------------
+ -2.5 |         -2
+ -1.5 |         -2
+ -0.5 |          0
+    0 |          0
+  0.5 |          0
+  1.5 |          2
+  2.5 |          2
+(7 rows)
+
