@@ -3,6 +3,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/gist.h"
 #include "access/skey.h"
 
@@ -191,7 +193,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		cand = 1;
 		while (len > MAXNUMRANGE * 2)
 		{
-			min = 0x7fffffff;
+			min = INT_MAX;
 			for (i = 2; i < len; i += 2)
 				if (min > (dr[i] - dr[i - 1]))
 				{

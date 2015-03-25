@@ -35,11 +35,9 @@ typedef struct
 
 /*
  * Infinity and minus infinity must be the max and min values of DateADT.
- * We could use INT_MIN and INT_MAX here, but seems better to not assume that
- * int32 == int.
  */
-#define DATEVAL_NOBEGIN		((DateADT) (-0x7fffffff - 1))
-#define DATEVAL_NOEND		((DateADT) 0x7fffffff)
+#define DATEVAL_NOBEGIN		((DateADT) INT32_MIN)
+#define DATEVAL_NOEND		((DateADT) INT32_MAX)
 
 #define DATE_NOBEGIN(j)		((j) = DATEVAL_NOBEGIN)
 #define DATE_IS_NOBEGIN(j)	((j) == DATEVAL_NOBEGIN)

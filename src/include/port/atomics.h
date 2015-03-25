@@ -489,7 +489,7 @@ STATIC_IF_INLINE uint64
 pg_atomic_fetch_sub_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 {
 	AssertPointerAlignment(ptr, 8);
-	Assert(sub_ != -INT64CONST(0x7FFFFFFFFFFFFFFF) - 1);
+	Assert(sub_ != INT64_MIN);
 	return pg_atomic_fetch_sub_u64_impl(ptr, sub_);
 }
 
@@ -518,7 +518,7 @@ STATIC_IF_INLINE uint64
 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 {
 	AssertPointerAlignment(ptr, 8);
-	Assert(sub_ != -INT64CONST(0x7FFFFFFFFFFFFFFF) - 1);
+	Assert(sub_ != INT64_MIN);
 	return pg_atomic_sub_fetch_u64_impl(ptr, sub_);
 }
 

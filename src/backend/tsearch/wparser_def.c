@@ -14,6 +14,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "catalog/pg_collation.h"
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
@@ -2047,7 +2049,7 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 	int			pos = *p;
 
 	*q = -1;
-	*p = 0x7fffffff;
+	*p = INT_MAX;
 
 	for (j = 0; j < query->size; j++)
 	{
@@ -2258,7 +2260,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 	for (f = 0; f < max_fragments; f++)
 	{
 		maxitems = 0;
-		minwords = 0x7fffffff;
+		minwords = INT32_MAX;
 		minI = -1;
 
 		/*

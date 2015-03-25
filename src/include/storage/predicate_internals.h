@@ -33,7 +33,7 @@ typedef uint64 SerCommitSeqNo;
  *	  at that point.  It's earlier than all normal sequence numbers,
  *	  and is only used by recovered prepared transactions
  */
-#define InvalidSerCommitSeqNo		((SerCommitSeqNo) UINT64CONST(0xFFFFFFFFFFFFFFFF))
+#define InvalidSerCommitSeqNo		((SerCommitSeqNo) UINT64_MAX)
 #define RecoverySerCommitSeqNo		((SerCommitSeqNo) 1)
 #define FirstNormalSerCommitSeqNo	((SerCommitSeqNo) 2)
 

@@ -49,10 +49,6 @@
 #include <sys/resource.h>		/* for getrlimit */
 #endif
 
-#ifndef INT64_MAX
-#define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#endif
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -453,7 +449,7 @@ strtoint64(const char *str)
 		 */
 		if (strncmp(ptr, "9223372036854775808", 19) == 0)
 		{
-			result = -INT64CONST(0x7fffffffffffffff) - 1;
+			result = INT64_MIN;
 			ptr += 19;
 			goto gotdigits;
 		}

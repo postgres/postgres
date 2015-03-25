@@ -190,7 +190,7 @@ pg_lltoa(int64 value, char *a)
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == (-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1))
+	if (value == INT64_MIN)
 	{
 		memcpy(a, "-9223372036854775808", 21);
 		return;

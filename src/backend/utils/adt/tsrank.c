@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
 #include <math.h>
 
 #include "tsearch/ts_utils.h"
@@ -555,7 +556,7 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 
 	memset(qr->operandexist, 0, sizeof(bool) * qr->query->size);
 
-	ext->p = 0x7fffffff;
+	ext->p = INT_MAX;
 	ext->q = 0;
 	ptr = doc + ext->pos;
 

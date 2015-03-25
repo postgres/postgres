@@ -44,14 +44,6 @@
 
 #define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
 
-#ifndef INT64_MAX
-#define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#endif
-
-#ifndef INT64_MIN
-#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#endif
-
 /* Set at postmaster start */
 TimestampTz PgStartTime;
 

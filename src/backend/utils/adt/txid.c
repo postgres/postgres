@@ -34,7 +34,7 @@
 
 
 /* txid will be signed int8 in database, so must limit to 63 bits */
-#define MAX_TXID   UINT64CONST(0x7FFFFFFFFFFFFFFF)
+#define MAX_TXID   ((uint64) INT64_MAX)
 
 /* Use unsigned variant internally */
 typedef uint64 txid;
