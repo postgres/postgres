@@ -422,8 +422,9 @@ COMMIT;
    <para>
     This level is different from Read Committed in that a query in a
     repeatable read transaction sees a snapshot as of the start of the
+    first non-transaction-control statement in the
     <emphasis>transaction</>, not as of the start
-    of the current query within the transaction.  Thus, successive
+    of the current statement within the transaction.  Thus, successive
     <command>SELECT</command> commands within a <emphasis>single</>
     transaction see the same data, i.e., they do not see changes made by
     other transactions that committed after their own transaction started.
