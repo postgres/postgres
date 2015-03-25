@@ -97,7 +97,7 @@ static ObjectAddress AddNewRelationType(const char *typeName,
 				   Oid new_row_type,
 				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
-static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
+static Oid StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
 			  bool is_no_inherit, bool is_internal);
 static void StoreConstraints(Relation rel, List *cooked_constraints,
@@ -1852,8 +1852,10 @@ heap_drop_with_catalog(Oid relid)
 
 /*
  * Store a default expression for column attnum of relation rel.
+ *
+ * Returns the OID of the new pg_attrdef tuple.
  */
-void
+Oid
 StoreAttrDefault(Relation rel, AttrNumber attnum,
 				 Node *expr, bool is_internal)
 {
@@ -1958,6 +1960,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	 */
 	InvokeObjectPostCreateHookArg(AttrDefaultRelationId,
 								  RelationGetRelid(rel), attnum, is_internal);
+
+	return attrdefOid;
 }
 
 /*
@@ -1965,8 +1969,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
  *
  * Caller is responsible for updating the count of constraints
  * in the pg_class entry for the relation.
+ *
+ * The OID of the new constraint is returned.
  */
-static void
+static Oid
 StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
 			  bool is_no_inherit, bool is_internal)
@@ -1976,6 +1982,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 	List	   *varList;
 	int			keycount;
 	int16	   *attNos;
+	Oid			constrOid;
 
 	/*
 	 * Flatten expression to string form for storage.
@@ -2027,41 +2034,46 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 	/*
 	 * Create the Check Constraint
 	 */
-	CreateConstraintEntry(ccname,		/* Constraint Name */
-						  RelationGetNamespace(rel),	/* namespace */
-						  CONSTRAINT_CHECK,		/* Constraint Type */
-						  false,	/* Is Deferrable */
-						  false,	/* Is Deferred */
-						  is_validated,
-						  RelationGetRelid(rel),		/* relation */
-						  attNos,		/* attrs in the constraint */
-						  keycount,		/* # attrs in the constraint */
-						  InvalidOid,	/* not a domain constraint */
-						  InvalidOid,	/* no associated index */
-						  InvalidOid,	/* Foreign key fields */
-						  NULL,
-						  NULL,
-						  NULL,
-						  NULL,
-						  0,
-						  ' ',
-						  ' ',
-						  ' ',
-						  NULL, /* not an exclusion constraint */
-						  expr, /* Tree form of check constraint */
-						  ccbin,	/* Binary form of check constraint */
-						  ccsrc,	/* Source form of check constraint */
-						  is_local,		/* conislocal */
-						  inhcount,		/* coninhcount */
-						  is_no_inherit,		/* connoinherit */
-						  is_internal); /* internally constructed? */
+	constrOid =
+		CreateConstraintEntry(ccname,	/* Constraint Name */
+							  RelationGetNamespace(rel),		/* namespace */
+							  CONSTRAINT_CHECK, /* Constraint Type */
+							  false,	/* Is Deferrable */
+							  false,	/* Is Deferred */
+							  is_validated,
+							  RelationGetRelid(rel),	/* relation */
+							  attNos,	/* attrs in the constraint */
+							  keycount, /* # attrs in the constraint */
+							  InvalidOid,		/* not a domain constraint */
+							  InvalidOid,		/* no associated index */
+							  InvalidOid,		/* Foreign key fields */
+							  NULL,
+							  NULL,
+							  NULL,
+							  NULL,
+							  0,
+							  ' ',
+							  ' ',
+							  ' ',
+							  NULL,		/* not an exclusion constraint */
+							  expr,		/* Tree form of check constraint */
+							  ccbin,	/* Binary form of check constraint */
+							  ccsrc,	/* Source form of check constraint */
+							  is_local, /* conislocal */
+							  inhcount, /* coninhcount */
+							  is_no_inherit,	/* connoinherit */
+							  is_internal);		/* internally constructed? */
 
 	pfree(ccbin);
 	pfree(ccsrc);
+
+	return constrOid;
 }
 
 /*
  * Store defaults and constraints (passed as a list of CookedConstraint).
+ *
+ * Each CookedConstraint struct is modified to store the new catalog tuple OID.
  *
  * NOTE: only pre-cooked expressions will be passed this way, which is to
  * say expressions inherited from an existing relation.  Newly parsed
@@ -2074,7 +2086,7 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
 	int			numchecks = 0;
 	ListCell   *lc;
 
-	if (!cooked_constraints)
+	if (cooked_constraints == NIL)
 		return;					/* nothing to do */
 
 	/*
@@ -2091,12 +2103,15 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
 		switch (con->contype)
 		{
 			case CONSTR_DEFAULT:
-				StoreAttrDefault(rel, con->attnum, con->expr, is_internal);
+				con->conoid = StoreAttrDefault(rel, con->attnum, con->expr,
+											   is_internal);
 				break;
 			case CONSTR_CHECK:
-				StoreRelCheck(rel, con->name, con->expr, !con->skip_validation,
-							  con->is_local, con->inhcount,
-							  con->is_no_inherit, is_internal);
+				con->conoid =
+					StoreRelCheck(rel, con->name, con->expr,
+								  !con->skip_validation, con->is_local,
+								  con->inhcount, con->is_no_inherit,
+								  is_internal);
 				numchecks++;
 				break;
 			default:
@@ -2184,6 +2199,7 @@ AddRelationNewConstraints(Relation rel,
 	{
 		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(cell);
 		Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
+		Oid			defOid;
 
 		expr = cookDefault(pstate, colDef->raw_default,
 						   atp->atttypid, atp->atttypmod,
@@ -2204,10 +2220,11 @@ AddRelationNewConstraints(Relation rel,
 			(IsA(expr, Const) &&((Const *) expr)->constisnull))
 			continue;
 
-		StoreAttrDefault(rel, colDef->attnum, expr, is_internal);
+		defOid = StoreAttrDefault(rel, colDef->attnum, expr, is_internal);
 
 		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 		cooked->contype = CONSTR_DEFAULT;
+		cooked->conoid = defOid;
 		cooked->name = NULL;
 		cooked->attnum = colDef->attnum;
 		cooked->expr = expr;
@@ -2227,6 +2244,7 @@ AddRelationNewConstraints(Relation rel,
 	{
 		Constraint *cdef = (Constraint *) lfirst(cell);
 		char	   *ccname;
+		Oid			constrOid;
 
 		if (cdef->contype != CONSTR_CHECK)
 			continue;
@@ -2329,13 +2347,15 @@ AddRelationNewConstraints(Relation rel,
 		/*
 		 * OK, store it.
 		 */
-		StoreRelCheck(rel, ccname, expr, !cdef->skip_validation, is_local,
-					  is_local ? 0 : 1, cdef->is_no_inherit, is_internal);
+		constrOid =
+			StoreRelCheck(rel, ccname, expr, !cdef->skip_validation, is_local,
+						  is_local ? 0 : 1, cdef->is_no_inherit, is_internal);
 
 		numchecks++;
 
 		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 		cooked->contype = CONSTR_CHECK;
+		cooked->conoid = constrOid;
 		cooked->name = ccname;
 		cooked->attnum = 0;
 		cooked->expr = expr;

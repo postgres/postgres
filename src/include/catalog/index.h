@@ -14,6 +14,7 @@
 #ifndef INDEX_H
 #define INDEX_H
 
+#include "catalog/objectaddress.h"
 #include "nodes/execnodes.h"
 
 
@@ -63,7 +64,7 @@ extern Oid index_create(Relation heapRelation,
 			 bool is_internal,
 			 bool if_not_exists);
 
-extern void index_constraint_create(Relation heapRelation,
+extern ObjectAddress index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
 						IndexInfo *indexInfo,
 						const char *constraintName,

@@ -40,6 +40,8 @@
  * Subsidiary records (such as triggers or indexes to implement the
  * constraint) are *not* created here.  But we do make dependency links
  * from the constraint to the things it depends on.
+ *
+ * The new constraint's OID is returned.
  */
 Oid
 CreateConstraintEntry(const char *constraintName,
