@@ -4254,7 +4254,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				ReleaseSysCache(tup);
 
 				if (OidIsValid(useid))
-					usename = quote_identifier(GetUserNameFromId(useid));
+					usename = GetUserNameFromId(useid);
 				else
 					usename = "public";
 
@@ -4264,7 +4264,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 					*objargs = list_make1(pstrdup(srv->servername));
 				}
 
-				appendStringInfo(&buffer, "%s on server %s", usename,
+				appendStringInfo(&buffer, "%s on server %s",
+								 quote_identifier(usename),
 								 srv->servername);
 				break;
 			}
