@@ -692,7 +692,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	if (opt_border == 0)
 		width_total = col_count;
 	else if (opt_border == 1)
-		width_total = col_count * 3 - 1;
+		width_total = col_count * 3 - ((col_count > 0) ? 1 : 0);
 	else
 		width_total = col_count * 3 + 1;
 	total_header_width = width_total;
@@ -928,7 +928,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						fputs(!header_done[i] ? format->header_nl_right : " ",
 							  fout);
 
-					if (opt_border != 0 && i < col_count - 1)
+					if (opt_border != 0 && col_count > 0 && i < col_count - 1)
 						fputs(dformat->midvrule, fout);
 				}
 				curr_nl_line++;
@@ -983,7 +983,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				struct lineptr *this_line = &col_lineptrs[j][curr_nl_line[j]];
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
-				bool		finalspaces = (opt_border == 2 || j < col_count - 1);
+				bool		finalspaces = (opt_border == 2 ||
+								(col_count > 0 && j < col_count - 1));
 
 				/* Print left-hand wrap or newline mark */
 				if (opt_border != 0)
@@ -1077,11 +1078,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					fputs(format->wrap_right, fout);
 				else if (wrap[j] == PRINT_LINE_WRAP_NEWLINE)
 					fputs(format->nl_right, fout);
-				else if (opt_border == 2 || j < col_count - 1)
+				else if (opt_border == 2 || (col_count > 0 && j < col_count - 1))
 					fputc(' ', fout);
 
 				/* Print column divider, if not the last column */
-				if (opt_border != 0 && j < col_count - 1)
+				if (opt_border != 0 && (col_count > 0 && j < col_count - 1))
 				{
 					if (wrap[j + 1] == PRINT_LINE_WRAP_WRAP)
 						fputs(format->midvrule_wrap, fout);
@@ -1236,8 +1237,18 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	if (cont->cells[0] == NULL && cont->opt->start_table &&
 		cont->opt->stop_table)
 	{
-		if (!opt_tuples_only && cont->opt->default_footer)
-			fprintf(fout, _("(No rows)\n"));
+		printTableFooter *footers = footers_with_default(cont);
+		
+		if (!opt_tuples_only && !cancel_pressed && footers)
+		{
+			printTableFooter *f;
+
+			for (f = footers; f; f = f->next)
+				fprintf(fout, "%s\n", f->data);
+		}
+
+		fputc('\n', fout);
+
 		return;
 	}
 
