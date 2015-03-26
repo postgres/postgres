@@ -558,53 +558,33 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 		gistentryinit(*e, (Datum) 0, r, pg, o, l);
 }
 
-
-/*
- * initialize a GiST entry with a compressed version of key
- */
-void
-gistcentryinit(GISTSTATE *giststate, int nkey,
-			   GISTENTRY *e, Datum k, Relation r,
-			   Page pg, OffsetNumber o, bool l, bool isNull)
-{
-	if (!isNull)
-	{
-		GISTENTRY  *cep;
-
-		gistentryinit(*e, k, r, pg, o, l);
-		cep = (GISTENTRY *)
-			DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[nkey],
-										   giststate->supportCollation[nkey],
-											  PointerGetDatum(e)));
-		/* compressFn may just return the given pointer */
-		if (cep != e)
-			gistentryinit(*e, cep->key, cep->rel, cep->page, cep->offset,
-						  cep->leafkey);
-	}
-	else
-		gistentryinit(*e, (Datum) 0, r, pg, o, l);
-}
-
 IndexTuple
 gistFormTuple(GISTSTATE *giststate, Relation r,
-			  Datum attdata[], bool isnull[], bool newValues)
+			  Datum attdata[], bool isnull[], bool isleaf)
 {
-	GISTENTRY	centry[INDEX_MAX_KEYS];
 	Datum		compatt[INDEX_MAX_KEYS];
 	int			i;
 	IndexTuple	res;
 
+	/*
+	 * Call the compress method on each attribute.
+	 */
 	for (i = 0; i < r->rd_att->natts; i++)
 	{
 		if (isnull[i])
 			compatt[i] = (Datum) 0;
 		else
 		{
-			gistcentryinit(giststate, i, &centry[i], attdata[i],
-						   r, NULL, (OffsetNumber) 0,
-						   newValues,
-						   FALSE);
-			compatt[i] = centry[i].key;
+			GISTENTRY	centry;
+			GISTENTRY  *cep;
+
+			gistentryinit(centry, attdata[i], r, NULL, (OffsetNumber) 0,
+						  isleaf);
+			cep = (GISTENTRY *)
+				DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
+										   giststate->supportCollation[i],
+												  PointerGetDatum(&centry)));
+			compatt[i] = cep->key;
 		}
 	}
 
@@ -612,7 +592,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 
 	/*
 	 * The offset number on tuples on internal pages is unused. For historical
-	 * reasons, it is set 0xffff.
+	 * reasons, it is set to 0xffff.
 	 */
 	ItemPointerSetOffsetNumber(&(res->t_tid), 0xffff);
 	return res;

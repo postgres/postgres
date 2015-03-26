@@ -485,15 +485,11 @@ extern IndexTuple gistgetadjusted(Relation r,
 				IndexTuple addtup,
 				GISTSTATE *giststate);
 extern IndexTuple gistFormTuple(GISTSTATE *giststate,
-			  Relation r, Datum *attdata, bool *isnull, bool newValues);
+			  Relation r, Datum *attdata, bool *isnull, bool isleaf);
 
 extern OffsetNumber gistchoose(Relation r, Page p,
 		   IndexTuple it,
 		   GISTSTATE *giststate);
-extern void gistcentryinit(GISTSTATE *giststate, int nkey,
-			   GISTENTRY *e, Datum k,
-			   Relation r, Page pg,
-			   OffsetNumber o, bool l, bool isNull);
 
 extern void GISTInitBuffer(Buffer b, uint32 f);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
