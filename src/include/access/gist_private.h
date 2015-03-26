@@ -78,6 +78,8 @@ typedef struct GISTSTATE
 	MemoryContext tempCxt;		/* short-term context for calling functions */
 
 	TupleDesc	tupdesc;		/* index's tuple descriptor */
+	TupleDesc	fetchTupdesc;	/* tuple descriptor for tuples returned in an
+								 * index-only scan */
 
 	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
 	FmgrInfo	unionFn[INDEX_MAX_KEYS];

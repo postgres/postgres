@@ -89,11 +89,9 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	scan->opaque = so;
 
 	/*
-	 * All fields required for index-only scans are null until gistrescan.
-	 * However, we set up scan->xs_itupdesc whether we'll need it or not,
-	 * since that's cheap.
+	 * All fields required for index-only scans are initialized in gistrescan,
+	 * as we don't know yet if we're doing an index-only scan or not.
 	 */
-	scan->xs_itupdesc = RelationGetDescr(r);
 
 	MemoryContextSwitchTo(oldCxt);
 
@@ -149,15 +147,37 @@ gistrescan(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If we're doing an index-only scan, also create a memory context to hold
-	 * the returned tuples.
+	 * If we're doing an index-only scan, on the first call, also initialize
+	 * a tuple descriptor to represent the returned index tuples and create a
+	 * memory context to hold them during the scan.
 	 */
-	if (scan->xs_want_itup && so->pageDataCxt == NULL)
+	if (scan->xs_want_itup && !scan->xs_itupdesc)
+	{
+		int			natts;
+		int			attno;
+
+		/*
+		 * The storage type of the index can be different from the original
+		 * datatype being indexed, so we cannot just grab the index's tuple
+		 * descriptor. Instead, construct a descriptor with the original data
+		 * types.
+		 */
+		natts =  RelationGetNumberOfAttributes(scan->indexRelation);
+		so->giststate->fetchTupdesc = CreateTemplateTupleDesc(natts, false);
+		for (attno = 1; attno <= natts; attno++)
+		{
+			TupleDescInitEntry(so->giststate->fetchTupdesc, attno, NULL,
+							   scan->indexRelation->rd_opcintype[attno - 1],
+							   -1, 0);
+		}
+		scan->xs_itupdesc = so->giststate->fetchTupdesc;
+
 		so->pageDataCxt = AllocSetContextCreate(so->giststate->scanCxt,
 												"GiST page data context",
 												ALLOCSET_DEFAULT_MINSIZE,
 												ALLOCSET_DEFAULT_INITSIZE,
 												ALLOCSET_DEFAULT_MAXSIZE);
+	}
 
 	/* create new, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);

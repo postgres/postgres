@@ -657,7 +657,7 @@ gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 	}
 	MemoryContextSwitchTo(oldcxt);
 
-	return index_form_tuple(giststate->tupdesc, fetchatt, isnull);
+	return index_form_tuple(giststate->fetchTupdesc, fetchatt, isnull);
 }
 
 float
