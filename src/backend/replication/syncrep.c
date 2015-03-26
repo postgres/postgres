@@ -68,6 +68,7 @@ static int	SyncRepWaitMode = SYNC_REP_NO_WAIT;
 
 static void SyncRepQueueInsert(int mode);
 static void SyncRepCancelWait(void);
+static int	SyncRepWakeQueue(bool all, int mode);
 
 static int	SyncRepGetStandbyPriority(void);
 
@@ -523,7 +524,7 @@ SyncRepGetStandbyPriority(void)
  *
  * Must hold SyncRepLock.
  */
-int
+static int
 SyncRepWakeQueue(bool all, int mode)
 {
 	volatile WalSndCtlData *walsndctl = WalSndCtl;
