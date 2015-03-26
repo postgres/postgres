@@ -47,9 +47,6 @@ extern void SyncRepReleaseWaiters(void);
 /* called by checkpointer */
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
-/* called by various procs */
-extern int	SyncRepWakeQueue(bool all, int mode);
-
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 extern void assign_synchronous_commit(int newval, void *extra);
 
