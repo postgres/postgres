@@ -17,3 +17,149 @@ delete from gist_point_tbl where id % 2 = 1;
 -- would exercise it)
 delete from gist_point_tbl where id < 10000;
 vacuum gist_point_tbl;
+--
+-- Test Index-only plans on GiST indexes
+--
+create table gist_tbl (b box, p point, c circle);
+insert into gist_tbl
+select box(point(0.05*i, 0.05*i), point(0.05*i, 0.05*i)),
+       point(0.05*i, 0.05*i),
+       circle(point(0.05*i, 0.05*i), 1.0)
+from generate_series(0,10000) as i;
+vacuum analyze;
+set enable_seqscan=off;
+set enable_bitmapscan=off;
+set enable_indexonlyscan=on;
+-- Test index-only scan with point opclass
+create index gist_tbl_point_index on gist_tbl using gist (p);
+-- check that the planner chooses an index-only scan
+explain (costs off)
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5));
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Index Only Scan using gist_tbl_point_index on gist_tbl
+   Index Cond: (p <@ '(0.5,0.5),(0,0)'::box)
+(2 rows)
+
+-- execute the same
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5));
+      p      
+-------------
+ (0,0)
+ (0.05,0.05)
+ (0.1,0.1)
+ (0.15,0.15)
+ (0.2,0.2)
+ (0.25,0.25)
+ (0.3,0.3)
+ (0.35,0.35)
+ (0.4,0.4)
+ (0.45,0.45)
+ (0.5,0.5)
+(11 rows)
+
+-- Also test an index-only knn-search
+explain (costs off)
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
+order by p <-> point(0.2, 0.2);
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Index Only Scan using gist_tbl_point_index on gist_tbl
+   Index Cond: (p <@ '(0.5,0.5),(0,0)'::box)
+   Order By: (p <-> '(0.2,0.2)'::point)
+(3 rows)
+
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
+order by p <-> point(0.2, 0.2);
+      p      
+-------------
+ (0.2,0.2)
+ (0.25,0.25)
+ (0.15,0.15)
+ (0.3,0.3)
+ (0.1,0.1)
+ (0.35,0.35)
+ (0.05,0.05)
+ (0,0)
+ (0.4,0.4)
+ (0.45,0.45)
+ (0.5,0.5)
+(11 rows)
+
+drop index gist_tbl_point_index;
+-- Test index-only scan with box opclass
+create index gist_tbl_box_index on gist_tbl using gist (b);
+-- check that the planner chooses an index-only scan
+explain (costs off)
+select b from gist_tbl where b <@ box(point(5,5), point(6,6));
+                      QUERY PLAN                      
+------------------------------------------------------
+ Index Only Scan using gist_tbl_box_index on gist_tbl
+   Index Cond: (b <@ '(6,6),(5,5)'::box)
+(2 rows)
+
+-- execute the same
+select b from gist_tbl where b <@ box(point(5,5), point(6,6));
+            b            
+-------------------------
+ (5,5),(5,5)
+ (5.05,5.05),(5.05,5.05)
+ (5.1,5.1),(5.1,5.1)
+ (5.15,5.15),(5.15,5.15)
+ (5.2,5.2),(5.2,5.2)
+ (5.25,5.25),(5.25,5.25)
+ (5.3,5.3),(5.3,5.3)
+ (5.35,5.35),(5.35,5.35)
+ (5.4,5.4),(5.4,5.4)
+ (5.45,5.45),(5.45,5.45)
+ (5.5,5.5),(5.5,5.5)
+ (5.55,5.55),(5.55,5.55)
+ (5.6,5.6),(5.6,5.6)
+ (5.65,5.65),(5.65,5.65)
+ (5.7,5.7),(5.7,5.7)
+ (5.75,5.75),(5.75,5.75)
+ (5.8,5.8),(5.8,5.8)
+ (5.85,5.85),(5.85,5.85)
+ (5.9,5.9),(5.9,5.9)
+ (5.95,5.95),(5.95,5.95)
+ (6,6),(6,6)
+(21 rows)
+
+drop index gist_tbl_box_index;
+-- Test that an index-only scan is not chosen, when the query involves the
+-- circle column (the circle opclass does not support index-only scans).
+create index gist_tbl_multi_index on gist_tbl using gist (p, c);
+explain (costs off)
+select p, c from gist_tbl
+where p <@ box(point(5,5), point(6, 6));
+                    QUERY PLAN                     
+---------------------------------------------------
+ Index Scan using gist_tbl_multi_index on gist_tbl
+   Index Cond: (p <@ '(6,6),(5,5)'::box)
+(2 rows)
+
+-- execute the same
+select b, p from gist_tbl
+where b <@ box(point(4.5, 4.5), point(5.5, 5.5))
+and p <@ box(point(5,5), point(6, 6));
+            b            |      p      
+-------------------------+-------------
+ (5,5),(5,5)             | (5,5)
+ (5.05,5.05),(5.05,5.05) | (5.05,5.05)
+ (5.1,5.1),(5.1,5.1)     | (5.1,5.1)
+ (5.15,5.15),(5.15,5.15) | (5.15,5.15)
+ (5.2,5.2),(5.2,5.2)     | (5.2,5.2)
+ (5.25,5.25),(5.25,5.25) | (5.25,5.25)
+ (5.3,5.3),(5.3,5.3)     | (5.3,5.3)
+ (5.35,5.35),(5.35,5.35) | (5.35,5.35)
+ (5.4,5.4),(5.4,5.4)     | (5.4,5.4)
+ (5.45,5.45),(5.45,5.45) | (5.45,5.45)
+ (5.5,5.5),(5.5,5.5)     | (5.5,5.5)
+(11 rows)
+
+drop index gist_tbl_multi_index;
+-- Clean up
+reset enable_seqscan;
+reset enable_bitmapscan;
+reset enable_indexonlyscan;
+drop table gist_tbl;

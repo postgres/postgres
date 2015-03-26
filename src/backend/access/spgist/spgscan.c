@@ -658,6 +658,7 @@ Datum
 spgcanreturn(PG_FUNCTION_ARGS)
 {
 	Relation	index = (Relation) PG_GETARG_POINTER(0);
+	/* int			i = PG_GETARG_INT32(1); */
 	SpGistCache *cache;
 
 	/* We can do it if the opclass config function says so */

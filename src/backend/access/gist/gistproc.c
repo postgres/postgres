@@ -152,6 +152,16 @@ gist_box_decompress(PG_FUNCTION_ARGS)
 }
 
 /*
+ * GiST Fetch method for boxes
+ * do not do anything --- we just return the stored box as is.
+ */
+Datum
+gist_box_fetch(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
+}
+
+/*
  * The GiST Penalty method for boxes (also used for points)
  *
  * As in the R-tree paper, we use change in area as our penalty metric
@@ -1185,6 +1195,33 @@ gist_point_compress(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(entry);
 }
+
+/*
+ * GiST Fetch method for point
+ *
+ * Get point coordinates from its bounding box coordinates and form new
+ * gistentry.
+ */
+Datum
+gist_point_fetch(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	BOX		   *in = DatumGetBoxP(entry->key);
+	Point	   *r;
+	GISTENTRY  *retval;
+
+	retval = palloc(sizeof(GISTENTRY));
+
+	r = (Point *) palloc(sizeof(Point));
+	r->x = in->high.x;
+	r->y = in->high.y;
+	gistentryinit(*retval, PointerGetDatum(r),
+				  entry->rel, entry->page,
+				  entry->offset, FALSE);
+
+	PG_RETURN_POINTER(retval);
+}
+
 
 #define point_point_distance(p1,p2) \
 	DatumGetFloat8(DirectFunctionCall2(point_distance, \

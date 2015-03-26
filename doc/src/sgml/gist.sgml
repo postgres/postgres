@@ -266,7 +266,7 @@ CREATE INDEX ON my_table USING gist (my_inet_column inet_ops);
 
  <para>
    There are seven methods that an index operator class for
-   <acronym>GiST</acronym> must provide, and an eighth that is optional.
+   <acronym>GiST</acronym> must provide, and two that are optional.
    Correctness of the index is ensured
    by proper implementation of the <function>same</>, <function>consistent</>
    and <function>union</> methods, while efficiency (size and speed) of the
@@ -282,7 +282,8 @@ CREATE INDEX ON my_table USING gist (my_inet_column inet_ops);
    of the <command>CREATE OPERATOR CLASS</> command can be used.
    The optional eighth method is <function>distance</>, which is needed
    if the operator class wishes to support ordered scans (nearest-neighbor
-   searches).
+   searches). The optional ninth method <function>fetch</> is needed if the
+   operator class wishes to support index-only scans.
  </para>
 
  <variablelist>
@@ -506,7 +507,7 @@ my_compress(PG_FUNCTION_ARGS)
       <para>
        The reverse of the <function>compress</function> method.  Converts the
        index representation of the data item into a format that can be
-       manipulated by the database.
+       manipulated by the other GiST methods in the operator class.
       </para>
 
       <para>
@@ -807,6 +808,72 @@ my_distance(PG_FUNCTION_ARGS)
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><function>fetch</></term>
+     <listitem>
+      <para>
+       Converts the compressed index representation of the data item into the
+       original data type, for index-only scans. The returned data must be an
+       exact, non-lossy copy of the originally indexed value.
+      </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_fetch(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        The argument is a pointer to a <structname>GISTENTRY</> struct. On
+        entry, its 'key' field contains a non-NULL leaf datum in its
+        compressed form. The return value is another <structname>GISTENTRY</>
+        struct, whose 'key' field contains the same datum in the original,
+        uncompressed form. If the opclass' compress function does nothing for
+        leaf entries, the fetch method can return the argument as is.
+       </para> 
+
+       <para>
+        The matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_fetch(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_fetch);
+
+Datum
+my_fetch(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    input_data_type *in = DatumGetP(entry->key);
+    fetched_data_type *fetched_data;
+    GISTENTRY  *retval;
+
+    retval = palloc(sizeof(GISTENTRY));
+    fetched_data = palloc(sizeof(fetched_data_type));
+
+    /*
+     * Convert 'fetched_data' into the a Datum of the original datatype.
+     */
+
+    /* fill *retval from fetch_data. */
+    gistentryinit(*retval, PointerGetDatum(converted_datum),
+                  entry->rel, entry->page, entry->offset, FALSE);
+
+    PG_RETURN_POINTER(retval);
+}
+</programlisting>
+      </para>
+
+      <para>
+       If the compress method is lossy for leaf entries, the operator class
+       cannot support index-only scans, and must not define a 'fetch'
+       function.
+      </para>
+
+     </listitem>
+    </varlistentry>
   </variablelist>
 
   <para>

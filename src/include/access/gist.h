@@ -33,7 +33,8 @@
 #define GIST_PICKSPLIT_PROC				6
 #define GIST_EQUAL_PROC					7
 #define GIST_DISTANCE_PROC				8
-#define GISTNProcs						8
+#define GIST_FETCH_PROC					9
+#define GISTNProcs					9
 
 /*
  * strategy numbers for GiST opclasses that want to implement the old

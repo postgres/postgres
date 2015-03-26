@@ -1404,6 +1404,14 @@ initGISTstate(Relation index)
 		else
 			giststate->distanceFn[i].fn_oid = InvalidOid;
 
+		/* opclasses are not required to provide a Fetch method */
+		if (OidIsValid(index_getprocid(index, i + 1, GIST_FETCH_PROC)))
+			fmgr_info_copy(&(giststate->fetchFn[i]),
+						 index_getprocinfo(index, i + 1, GIST_FETCH_PROC),
+						   scanCxt);
+		else
+			giststate->fetchFn[i].fn_oid = InvalidOid;
+
 		/*
 		 * If the index column has a specified collation, we should honor that
 		 * while doing comparisons.  However, we may have a collatable storage

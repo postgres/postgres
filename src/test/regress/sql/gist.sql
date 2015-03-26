@@ -23,3 +23,76 @@ delete from gist_point_tbl where id % 2 = 1;
 delete from gist_point_tbl where id < 10000;
 
 vacuum gist_point_tbl;
+
+
+--
+-- Test Index-only plans on GiST indexes
+--
+
+create table gist_tbl (b box, p point, c circle);
+
+insert into gist_tbl
+select box(point(0.05*i, 0.05*i), point(0.05*i, 0.05*i)),
+       point(0.05*i, 0.05*i),
+       circle(point(0.05*i, 0.05*i), 1.0)
+from generate_series(0,10000) as i;
+
+vacuum analyze;
+
+set enable_seqscan=off;
+set enable_bitmapscan=off;
+set enable_indexonlyscan=on;
+
+-- Test index-only scan with point opclass
+create index gist_tbl_point_index on gist_tbl using gist (p);
+
+-- check that the planner chooses an index-only scan
+explain (costs off)
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5));
+
+-- execute the same
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5));
+
+-- Also test an index-only knn-search
+explain (costs off)
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
+order by p <-> point(0.2, 0.2);
+
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
+order by p <-> point(0.2, 0.2);
+
+drop index gist_tbl_point_index;
+
+-- Test index-only scan with box opclass
+create index gist_tbl_box_index on gist_tbl using gist (b);
+
+-- check that the planner chooses an index-only scan
+explain (costs off)
+select b from gist_tbl where b <@ box(point(5,5), point(6,6));
+
+-- execute the same
+select b from gist_tbl where b <@ box(point(5,5), point(6,6));
+
+drop index gist_tbl_box_index;
+
+-- Test that an index-only scan is not chosen, when the query involves the
+-- circle column (the circle opclass does not support index-only scans).
+create index gist_tbl_multi_index on gist_tbl using gist (p, c);
+
+explain (costs off)
+select p, c from gist_tbl
+where p <@ box(point(5,5), point(6, 6));
+
+-- execute the same
+select b, p from gist_tbl
+where b <@ box(point(4.5, 4.5), point(5.5, 5.5))
+and p <@ box(point(5,5), point(6, 6));
+
+drop index gist_tbl_multi_index;
+
+-- Clean up
+reset enable_seqscan;
+reset enable_bitmapscan;
+reset enable_indexonlyscan;
+
+drop table gist_tbl;

@@ -1786,14 +1786,12 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 {
 	bool		result;
 	Bitmapset  *attrs_used = NULL;
-	Bitmapset  *index_attrs = NULL;
+	Bitmapset  *index_canreturn_attrs = NULL;
 	ListCell   *lc;
 	int			i;
 
-	/* Index-only scans must be enabled, and index must be capable of them */
+	/* Index-only scans must be enabled */
 	if (!enable_indexonlyscan)
-		return false;
-	if (!index->canreturn)
 		return false;
 
 	/*
@@ -1824,7 +1822,10 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 		pull_varattnos((Node *) rinfo->clause, rel->relid, &attrs_used);
 	}
 
-	/* Construct a bitmapset of columns stored in the index. */
+	/*
+	 * Construct a bitmapset of columns that the index can return back in an
+	 * index-only scan.
+	 */
 	for (i = 0; i < index->ncolumns; i++)
 	{
 		int			attno = index->indexkeys[i];
@@ -1836,16 +1837,17 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 		if (attno == 0)
 			continue;
 
-		index_attrs =
-			bms_add_member(index_attrs,
-						   attno - FirstLowInvalidHeapAttributeNumber);
+		if (index->canreturn[i])
+			index_canreturn_attrs =
+				bms_add_member(index_canreturn_attrs,
+							   attno - FirstLowInvalidHeapAttributeNumber);
 	}
 
 	/* Do we have all the necessary attributes? */
-	result = bms_is_subset(attrs_used, index_attrs);
+	result = bms_is_subset(attrs_used, index_canreturn_attrs);
 
 	bms_free(attrs_used);
-	bms_free(index_attrs);
+	bms_free(index_canreturn_attrs);
 
 	return result;
 }

@@ -228,7 +228,9 @@ gistindex_keytest(IndexScanDesc scan,
  * tuples should be reported directly into the bitmap.  If they are NULL,
  * we're doing a plain or ordered indexscan.  For a plain indexscan, heap
  * tuple TIDs are returned into so->pageData[].  For an ordered indexscan,
- * heap tuple TIDs are pushed into individual search queue items.
+ * heap tuple TIDs are pushed into individual search queue items.  In an
+ * index-only scan, reconstructed index tuples are returned along with the
+ * TIDs.
  *
  * If we detect that the index page has split since we saw its downlink
  * in the parent, we push its new right sibling onto the queue so the
@@ -239,6 +241,8 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			 TIDBitmap *tbm, int64 *ntids)
 {
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
+	GISTSTATE  *giststate = so->giststate;
+	Relation	r = scan->indexRelation;
 	Buffer		buffer;
 	Page		page;
 	GISTPageOpaque opaque;
@@ -288,6 +292,8 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 	}
 
 	so->nPageData = so->curPageData = 0;
+	if (so->pageDataCxt)
+		MemoryContextReset(so->pageDataCxt);
 
 	/*
 	 * check all tuples on page
@@ -326,10 +332,21 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		else if (scan->numberOfOrderBys == 0 && GistPageIsLeaf(page))
 		{
 			/*
-			 * Non-ordered scan, so report heap tuples in so->pageData[]
+			 * Non-ordered scan, so report tuples in so->pageData[]
 			 */
 			so->pageData[so->nPageData].heapPtr = it->t_tid;
 			so->pageData[so->nPageData].recheck = recheck;
+
+			/*
+			 * In an index-only scan, also fetch the data from the tuple.
+			 */
+			if (scan->xs_want_itup)
+			{
+				oldcxt = MemoryContextSwitchTo(so->pageDataCxt);
+				so->pageData[so->nPageData].ftup =
+					gistFetchTuple(giststate, r, it);
+				MemoryContextSwitchTo(oldcxt);
+			}
 			so->nPageData++;
 		}
 		else
@@ -352,6 +369,12 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 				item->blkno = InvalidBlockNumber;
 				item->data.heap.heapPtr = it->t_tid;
 				item->data.heap.recheck = recheck;
+
+				/*
+				 * In an index-only scan, also fetch the data from the tuple.
+				 */
+				if (scan->xs_want_itup)
+					item->data.heap.ftup = gistFetchTuple(giststate, r, it);
 			}
 			else
 			{
@@ -412,6 +435,13 @@ getNextNearest(IndexScanDesc scan)
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	bool		res = false;
 
+	if (scan->xs_itup)
+	{
+		/* free previously returned tuple */
+		pfree(scan->xs_itup);
+		scan->xs_itup = NULL;
+	}
+
 	do
 	{
 		GISTSearchItem *item = getNextGISTSearchItem(so);
@@ -424,6 +454,10 @@ getNextNearest(IndexScanDesc scan)
 			/* found a heap item at currently minimal distance */
 			scan->xs_ctup.t_self = item->data.heap.heapPtr;
 			scan->xs_recheck = item->data.heap.recheck;
+
+			/* in an index-only scan, also return the reconstructed tuple. */
+			if (scan->xs_want_itup)
+				scan->xs_itup = item->data.heap.ftup;
 			res = true;
 		}
 		else
@@ -465,6 +499,8 @@ gistgettuple(PG_FUNCTION_ARGS)
 
 		so->firstCall = false;
 		so->curPageData = so->nPageData = 0;
+		if (so->pageDataCxt)
+			MemoryContextReset(so->pageDataCxt);
 
 		fakeItem.blkno = GIST_ROOT_BLKNO;
 		memset(&fakeItem.data.parentlsn, 0, sizeof(GistNSN));
@@ -483,10 +519,17 @@ gistgettuple(PG_FUNCTION_ARGS)
 		{
 			if (so->curPageData < so->nPageData)
 			{
+
 				/* continuing to return tuples from a leaf page */
 				scan->xs_ctup.t_self = so->pageData[so->curPageData].heapPtr;
 				scan->xs_recheck = so->pageData[so->curPageData].recheck;
+
+				/* in an index-only scan, also return the reconstructed tuple */
+				if (scan->xs_want_itup)
+					scan->xs_itup = so->pageData[so->curPageData].ftup;
+
 				so->curPageData++;
+
 				PG_RETURN_BOOL(true);
 			}
 
@@ -533,6 +576,8 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 
 	/* Begin the scan by processing the root page */
 	so->curPageData = so->nPageData = 0;
+	if (so->pageDataCxt)
+		MemoryContextReset(so->pageDataCxt);
 
 	fakeItem.blkno = GIST_ROOT_BLKNO;
 	memset(&fakeItem.data.parentlsn, 0, sizeof(GistNSN));
@@ -557,4 +602,21 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_INT64(ntids);
+}
+
+/*
+ * Can we do index-only scans on the given index column?
+ *
+ * Opclasses that implement a fetch function support index-only scans.
+ */
+Datum
+gistcanreturn(PG_FUNCTION_ARGS)
+{
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+	int			attno = PG_GETARG_INT32(1);
+
+	if (OidIsValid(index_getprocid(index, attno, GIST_FETCH_PROC)))
+		PG_RETURN_BOOL(true);
+	else
+		PG_RETURN_BOOL(false);
 }

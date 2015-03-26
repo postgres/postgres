@@ -156,7 +156,7 @@ extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,
 				  void *callback_state);
 extern IndexBulkDeleteResult *index_vacuum_cleanup(IndexVacuumInfo *info,
 					 IndexBulkDeleteResult *stats);
-extern bool index_can_return(Relation indexRelation);
+extern bool index_can_return(Relation indexRelation, int attno);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
 extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,

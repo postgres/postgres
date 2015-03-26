@@ -88,6 +88,13 @@ gistbeginscan(PG_FUNCTION_ARGS)
 
 	scan->opaque = so;
 
+	/*
+	 * All fields required for index-only scans are null until gistrescan.
+	 * However, we set up scan->xs_itupdesc whether we'll need it or not,
+	 * since that's cheap.
+	 */
+	scan->xs_itupdesc = RelationGetDescr(r);
+
 	MemoryContextSwitchTo(oldCxt);
 
 	PG_RETURN_POINTER(scan);
@@ -140,6 +147,17 @@ gistrescan(PG_FUNCTION_ARGS)
 		MemoryContextReset(so->queueCxt);
 		first_time = false;
 	}
+
+	/*
+	 * If we're doing an index-only scan, also create a memory context to hold
+	 * the returned tuples.
+	 */
+	if (scan->xs_want_itup && so->pageDataCxt == NULL)
+		so->pageDataCxt = AllocSetContextCreate(so->giststate->scanCxt,
+												"GiST page data context",
+												ALLOCSET_DEFAULT_MINSIZE,
+												ALLOCSET_DEFAULT_INITSIZE,
+												ALLOCSET_DEFAULT_MAXSIZE);
 
 	/* create new, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
