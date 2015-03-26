@@ -99,7 +99,7 @@ gbt_bit_l2n(GBT_VARKEY *leaf)
 
 	o = gbt_bit_xfrm(r.lower);
 	r.upper = r.lower = o;
-	out = gbt_var_key_copy(&r, TRUE);
+	out = gbt_var_key_copy(&r);
 	pfree(o);
 
 	return out;

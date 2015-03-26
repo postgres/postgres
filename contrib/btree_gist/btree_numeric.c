@@ -170,7 +170,7 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 				uk;
 
 	rk = gbt_var_key_readable(org);
-	uni = PointerGetDatum(gbt_var_key_copy(&rk, TRUE));
+	uni = PointerGetDatum(gbt_var_key_copy(&rk));
 	gbt_var_bin_union(&uni, newe, PG_GET_COLLATION(), &tinfo);
 	ok = gbt_var_key_readable(org);
 	uk = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(uni));

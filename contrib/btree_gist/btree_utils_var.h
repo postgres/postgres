@@ -47,7 +47,7 @@ typedef struct
 
 extern GBT_VARKEY_R gbt_var_key_readable(const GBT_VARKEY *k);
 
-extern GBT_VARKEY *gbt_var_key_copy(const GBT_VARKEY_R *u, bool force_node);
+extern GBT_VARKEY *gbt_var_key_copy(const GBT_VARKEY_R *u);
 
 extern GISTENTRY *gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo);
 

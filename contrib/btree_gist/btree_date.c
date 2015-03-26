@@ -130,9 +130,8 @@ Datum
 gbt_date_compress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval = NULL;
 
-	PG_RETURN_POINTER(gbt_num_compress(retval, entry, &tinfo));
+	PG_RETURN_POINTER(gbt_num_compress(entry, &tinfo));
 }
 
 

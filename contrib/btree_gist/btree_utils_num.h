@@ -128,8 +128,7 @@ extern float8 gbt_num_distance(const GBT_NUMKEY_R *key, const void *query,
 extern GIST_SPLITVEC *gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 				  const gbtree_ninfo *tinfo);
 
-extern GISTENTRY *gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry,
-				 const gbtree_ninfo *tinfo);
+extern GISTENTRY *gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo);
 
 
 extern void *gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec,

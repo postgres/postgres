@@ -66,26 +66,37 @@ gbt_var_key_readable(const GBT_VARKEY *k)
 }
 
 
-GBT_VARKEY *
-gbt_var_key_copy(const GBT_VARKEY_R *u, bool force_node)
+/*
+ * Create a leaf-entry to store in the index, from a single Datum.
+ */
+static GBT_VARKEY *
+gbt_var_key_from_datum(const struct varlena *u)
 {
-	GBT_VARKEY *r = NULL;
+	int32		lowersize = VARSIZE(u);
+	GBT_VARKEY *r;
+
+	r = (GBT_VARKEY *) palloc(lowersize + VARHDRSZ);
+	memcpy(VARDATA(r), u, lowersize);
+	SET_VARSIZE(r, lowersize + VARHDRSZ);
+
+	return r;
+}
+
+/*
+ * Create an entry to store in the index, from lower and upper bound.
+ */
+GBT_VARKEY *
+gbt_var_key_copy(const GBT_VARKEY_R *u)
+{
 	int32		lowersize = VARSIZE(u->lower);
 	int32		uppersize = VARSIZE(u->upper);
+	GBT_VARKEY *r;
 
-	if (u->lower == u->upper && !force_node)
-	{							/* leaf key mode */
-		r = (GBT_VARKEY *) palloc(lowersize + VARHDRSZ);
-		memcpy(VARDATA(r), u->lower, lowersize);
-		SET_VARSIZE(r, lowersize + VARHDRSZ);
-	}
-	else
-	{							/* node key mode  */
-		r = (GBT_VARKEY *) palloc0(INTALIGN(lowersize) + uppersize + VARHDRSZ);
-		memcpy(VARDATA(r), u->lower, lowersize);
-		memcpy(VARDATA(r) + INTALIGN(lowersize), u->upper, uppersize);
-		SET_VARSIZE(r, INTALIGN(lowersize) + uppersize + VARHDRSZ);
-	}
+	r = (GBT_VARKEY *) palloc0(INTALIGN(lowersize) + uppersize + VARHDRSZ);
+	memcpy(VARDATA(r), u->lower, lowersize);
+	memcpy(VARDATA(r) + INTALIGN(lowersize), u->upper, uppersize);
+	SET_VARSIZE(r, INTALIGN(lowersize) + uppersize + VARHDRSZ);
+
 	return r;
 }
 
@@ -255,16 +266,15 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 		}
 
 		if (update)
-			*u = PointerGetDatum(gbt_var_key_copy(&nr, TRUE));
+			*u = PointerGetDatum(gbt_var_key_copy(&nr));
 	}
 	else
 	{
 		nr.lower = eo.lower;
 		nr.upper = eo.upper;
-		*u = PointerGetDatum(gbt_var_key_copy(&nr, TRUE));
+		*u = PointerGetDatum(gbt_var_key_copy(&nr));
 	}
 }
-
 
 
 GISTENTRY *
@@ -274,12 +284,10 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 
 	if (entry->leafkey)
 	{
-		GBT_VARKEY *r = NULL;
-		bytea	   *leaf = (bytea *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
-		GBT_VARKEY_R u;
+		struct varlena *leaf = PG_DETOAST_DATUM(entry->key);
+		GBT_VARKEY *r;
 
-		u.lower = u.upper = leaf;
-		r = gbt_var_key_copy(&u, FALSE);
+		r = gbt_var_key_from_datum(leaf);
 
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
@@ -291,7 +299,6 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 
 	return (retval);
 }
-
 
 
 GBT_VARKEY *
@@ -308,7 +315,7 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, Oid collation,
 
 	cur = (GBT_VARKEY *) DatumGetPointer(entryvec->vector[0].key);
 	rk = gbt_var_key_readable(cur);
-	out = PointerGetDatum(gbt_var_key_copy(&rk, TRUE));
+	out = PointerGetDatum(gbt_var_key_copy(&rk));
 
 	for (i = 1; i < numranges; i++)
 	{

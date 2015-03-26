@@ -11,8 +11,10 @@
 
 
 GISTENTRY *
-gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo *tinfo)
+gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 {
+	GISTENTRY *retval;
+
 	if (entry->leafkey)
 	{
 		union
