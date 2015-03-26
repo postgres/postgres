@@ -47,9 +47,6 @@ extern void SyncRepReleaseWaiters(void);
 /* called by checkpointer */
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
-/* called by various procs */
-extern int	SyncRepWakeQueue(bool all, int mode);
-
 /* forward declaration to avoid pulling in walsender_private.h */
 struct WalSnd;
 extern struct WalSnd *SyncRepGetSynchronousStandby(void);
