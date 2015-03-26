@@ -30,7 +30,7 @@
  * Supply a value of PERL_UNUSED_DECL that will satisfy gcc - the one
  * perl itself supplies doesn't seem to.
  */
-#define PERL_UNUSED_DECL pg_attribute_unused
+#define PERL_UNUSED_DECL pg_attribute_unused()
 
 /*
  * Sometimes perl carefully scribbles on our *printf macros.

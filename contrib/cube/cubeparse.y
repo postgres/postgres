@@ -22,13 +22,8 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-extern int cube_yylex(void);
-
 static char *scanbuf;
 static int	scanbuflen;
-
-extern int	cube_yyparse(NDBOX **result);
-extern void cube_yyerror(NDBOX **result, const char *message);
 
 static int delim_count(char *s, char delim);
 static NDBOX * write_box(unsigned int dim, char *str1, char *str2);

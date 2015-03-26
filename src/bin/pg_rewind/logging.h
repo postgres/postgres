@@ -27,10 +27,8 @@ typedef enum
 	PG_FATAL
 } eLogType;
 
-extern void pg_log(eLogType type, const char *fmt,...)
-pg_attribute_printf(2, 3);
-extern void pg_fatal(const char *fmt,...)
-pg_attribute_printf(1, 2) pg_attribute_noreturn;
+extern void pg_log(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
+extern void pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute_noreturn();
 
 extern void progress_report(bool force);
 

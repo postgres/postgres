@@ -206,9 +206,7 @@ void		px_set_debug_handler(void (*handler) (const char *));
 void		px_memset(void *ptr, int c, size_t len);
 
 #ifdef PX_DEBUG
-void
-px_debug(const char *fmt,...)
-pg_attribute_printf(1, 2);
+void		px_debug(const char *fmt,...) pg_attribute_printf(1, 2);
 #else
 #define px_debug(...)
 #endif

@@ -146,10 +146,7 @@ extern int	enlargePQExpBuffer(PQExpBuffer str, size_t needed);
  * This is a convenience routine that does the same thing as
  * resetPQExpBuffer() followed by appendPQExpBuffer().
  */
-extern void
-printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
-/* This extension allows gcc to check the format string */
-pg_attribute_printf(2, 3);
+extern void printfPQExpBuffer(PQExpBuffer str, const char *fmt,...) pg_attribute_printf(2, 3);
 
 /*------------------------
  * appendPQExpBuffer
@@ -158,10 +155,7 @@ pg_attribute_printf(2, 3);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void
-appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
-/* This extension allows gcc to check the format string */
-pg_attribute_printf(2, 3);
+extern void appendPQExpBuffer(PQExpBuffer str, const char *fmt,...) pg_attribute_printf(2, 3);
 
 /*------------------------
  * appendPQExpBufferStr

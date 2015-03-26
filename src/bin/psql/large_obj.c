@@ -12,9 +12,7 @@
 #include "settings.h"
 #include "common.h"
 
-static void
-print_lo_result(const char *fmt,...)
-pg_attribute_printf(1, 2);
+static void print_lo_result(const char *fmt,...) pg_attribute_printf(1, 2);
 
 static void
 print_lo_result(const char *fmt,...)

@@ -205,7 +205,7 @@ addlitchar(unsigned char ychar)
 	appendStringInfoChar(&litbuf, ychar);
 }
 
-void pg_attribute_noreturn
+void
 yyerror(const char *message)
 {
 	ereport(ERROR,

@@ -34,9 +34,7 @@
 
 /* Declared here to avoid pulling in all includes, which causes name collissions */
 #ifdef ENABLE_NLS
-extern char *
-libpq_gettext(const char *msgid)
-pg_attribute_format_arg(1);
+extern char *libpq_gettext(const char *msgid) pg_attribute_format_arg(1);
 #else
 #define libpq_gettext(x) (x)
 #endif

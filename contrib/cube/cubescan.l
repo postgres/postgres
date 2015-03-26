@@ -4,8 +4,6 @@
  * contrib/cube/cubescan.l
  */
 
-#include "postgres.h"
-
 /* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
 
@@ -24,12 +22,6 @@ static YY_BUFFER_STATE scanbufhandle;
 /* this is now declared in cubeparse.y: */
 /* static char *scanbuf; */
 /* static int	scanbuflen; */
-
-/* flex 2.5.4 doesn't bother with a decl for this */
-int cube_yylex(void);
-
-void cube_scanner_init(const char *str);
-void cube_scanner_finish(void);
 %}
 
 %option 8bit
@@ -60,7 +52,7 @@ float        ({integer}|{real})([eE]{integer})?
 
 %%
 
-void pg_attribute_noreturn
+void
 yyerror(NDBOX **result, const char *message)
 {
 	if (*yytext == YY_END_OF_BUFFER_CHAR)

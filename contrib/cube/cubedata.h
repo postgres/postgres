@@ -46,3 +46,12 @@ typedef struct NDBOX
 #define DatumGetNDBOX(x)	((NDBOX *) PG_DETOAST_DATUM(x))
 #define PG_GETARG_NDBOX(x)	DatumGetNDBOX(PG_GETARG_DATUM(x))
 #define PG_RETURN_NDBOX(x)	PG_RETURN_POINTER(x)
+
+/* in cubescan.l */
+extern int	cube_yylex(void);
+extern void cube_yyerror(NDBOX **result, const char *message) pg_attribute_noreturn();
+extern void cube_scanner_init(const char *str);
+extern void cube_scanner_finish(void);
+
+/* in cubeparse.y */
+extern int	cube_yyparse(NDBOX **result);

@@ -143,65 +143,25 @@ extern int	errcode(int sqlerrcode);
 extern int	errcode_for_file_access(void);
 extern int	errcode_for_socket_access(void);
 
-extern int
-errmsg(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern int	errmsg(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
-extern int
-errmsg_internal(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern int errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
-extern int
-errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 4)
-pg_attribute_printf(2, 4);
+extern int	errdetail(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errdetail_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
-extern int
-errdetail(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern int	errdetail_log(const char *fmt,...) pg_attribute_printf(1, 2);
 
-extern int
-errdetail_internal(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern int errdetail_log_plural(const char *fmt_singular,
+					 const char *fmt_plural,
+	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
-extern int
-errdetail_log(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern int errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
-extern int
-errdetail_log_plural(const char *fmt_singular, const char *fmt_plural,
-					 unsigned long n,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 4)
-pg_attribute_printf(2, 4);
-
-extern int
-errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 4)
-pg_attribute_printf(2, 4);
-
-extern int
-errhint(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
 
 /*
  * errcontext() is typically called in error context callback functions, not
@@ -214,11 +174,8 @@ pg_attribute_printf(1, 2);
 #define errcontext	set_errcontext_domain(TEXTDOMAIN),	errcontext_msg
 
 extern int	set_errcontext_domain(const char *domain);
-extern int
-errcontext_msg(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+
+extern int	errcontext_msg(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int	errhidestmt(bool hide_stmt);
 extern int	errhidecontext(bool hide_ctx);
@@ -274,21 +231,13 @@ extern int	getinternalerrposition(void);
 #endif   /* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
-extern void
-elog_finish(int elevel, const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(2, 3);
+extern void elog_finish(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
 
 
 /* Support for constructing error strings separately from ereport() calls */
 
 extern void pre_format_elog_string(int errnumber, const char *domain);
-extern char *
-format_elog_string(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern char *format_elog_string(const char *fmt,...) pg_attribute_printf(1, 2);
 
 
 /* Support for attaching context information to error reports */
@@ -364,10 +313,10 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
 	} while (0)
 
 /*
- * gcc understands pg_attribute_noreturn; for other compilers, insert
- * pg_unreachable() so that the compiler gets the point.
+ * Some compilers understand pg_attribute_noreturn(); for other compilers,
+ * insert pg_unreachable() so that the compiler gets the point.
  */
-#ifdef __GNUC__
+#ifdef HAVE_PG_ATTRIBUTE_NORETURN
 #define PG_RE_THROW()  \
 	pg_re_throw()
 #else
@@ -423,9 +372,9 @@ extern void EmitErrorReport(void);
 extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
-extern void ReThrowError(ErrorData *edata) pg_attribute_noreturn;
+extern void ReThrowError(ErrorData *edata) pg_attribute_noreturn();
 extern void ThrowErrorData(ErrorData *edata);
-extern void pg_re_throw(void) pg_attribute_noreturn;
+extern void pg_re_throw(void) pg_attribute_noreturn();
 
 extern char *GetErrorContextStack(void);
 
@@ -468,10 +417,6 @@ extern void set_syslog_parameters(const char *ident, int facility);
  * not available). Used before ereport/elog can be used
  * safely (memory context, GUC load etc)
  */
-extern void
-write_stderr(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+extern void write_stderr(const char *fmt,...) pg_attribute_printf(1, 2);
 
 #endif   /* ELOG_H */

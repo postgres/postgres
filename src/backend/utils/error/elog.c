@@ -82,11 +82,7 @@
 #undef _
 #define _(x) err_gettext(x)
 
-static const char *
-err_gettext(const char *str)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_format_arg(1);
+static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 
 /* Global variables */

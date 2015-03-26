@@ -621,9 +621,9 @@ typedef NameData *Name;
 
 /* only GCC supports the unused attribute */
 #ifdef __GNUC__
-#define pg_attribute_unused __attribute__((unused))
+#define pg_attribute_unused() __attribute__((unused))
 #else
-#define pg_attribute_unused
+#define pg_attribute_unused()
 #endif
 
 /* GCC and XLC support format attributes */
@@ -638,15 +638,16 @@ typedef NameData *Name;
 /* GCC, Sunpro and XLC support aligned, packed and noreturn */
 #if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
-#define pg_attribute_noreturn __attribute__((noreturn))
-#define pg_attribute_packed __attribute__((packed))
+#define pg_attribute_noreturn() __attribute__((noreturn))
+#define pg_attribute_packed() __attribute__((packed))
+#define HAVE_PG_ATTRIBUTE_NORETURN 1
 #else
 /*
- * NB: aligned and packed are not defined as empty as they affect code
- * functionality; they must be implemented by the compiler if they are to be
- * used.
+ * NB: aligned and packed are not given default definitions because they
+ * affect code functionality; they *must* be implemented by the compiler
+ * if they are to be used.
  */
-#define pg_attribute_noreturn
+#define pg_attribute_noreturn()
 #endif
 
 /* ----------------------------------------------------------------
@@ -995,7 +996,7 @@ typedef NameData *Name;
 #ifdef USE_ASSERT_CHECKING
 #define PG_USED_FOR_ASSERTS_ONLY
 #else
-#define PG_USED_FOR_ASSERTS_ONLY pg_attribute_unused
+#define PG_USED_FOR_ASSERTS_ONLY pg_attribute_unused()
 #endif
 
 
@@ -1059,10 +1060,7 @@ typedef NameData *Name;
  */
 
 #if !HAVE_DECL_SNPRINTF
-extern int
-snprintf(char *str, size_t count, const char *fmt,...)
-/* This extension allows gcc to check the format string */
-pg_attribute_printf(3, 4);
+extern int	snprintf(char *str, size_t count, const char *fmt,...) pg_attribute_printf(3, 4);
 #endif
 
 #if !HAVE_DECL_VSNPRINTF

@@ -687,6 +687,6 @@ extern Datum Float8GetDatum(float8 X);
  */
 extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
-			 const char *fileName, int lineNumber) pg_attribute_noreturn;
+			   const char *fileName, int lineNumber) pg_attribute_noreturn();
 
 #endif   /* POSTGRES_H */

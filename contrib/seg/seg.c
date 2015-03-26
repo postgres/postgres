@@ -23,15 +23,6 @@
 
 PG_MODULE_MAGIC;
 
-extern int	seg_yyparse(SEG *result);
-extern void seg_yyerror(SEG *result, const char *message);
-extern void seg_scanner_init(const char *str);
-extern void seg_scanner_finish(void);
-
-/*
-extern int	 seg_yydebug;
-*/
-
 /*
  * Auxiliary data structure for picksplit method.
  */
@@ -103,7 +94,6 @@ bool		seg_different(SEG *a, SEG *b);
 ** Auxiliary funxtions
 */
 static int	restore(char *s, float val, int n);
-int			significant_digits(char *s);
 
 
 /*****************************************************************************

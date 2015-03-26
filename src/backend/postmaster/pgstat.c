@@ -251,7 +251,7 @@ static instr_time total_func_time;
 static pid_t pgstat_forkexec(void);
 #endif
 
-NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn;
+NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 static void pgstat_sighup_handler(SIGNAL_ARGS);

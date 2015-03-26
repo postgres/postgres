@@ -78,7 +78,7 @@ extern void base_yyerror(const char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
 extern void mmerror(int errorcode, enum errortype type, const char *error,...) pg_attribute_printf(3, 4);
-extern void mmfatal(int errorcode, const char *error,...) pg_attribute_printf(2, 3) pg_attribute_noreturn;
+extern void mmfatal(int errorcode, const char *error,...) pg_attribute_printf(2, 3) pg_attribute_noreturn();
 extern void output_get_descr_header(char *);
 extern void output_get_descr(char *, char *);
 extern void output_set_descr_header(char *);

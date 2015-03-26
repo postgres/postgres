@@ -37,9 +37,7 @@
 /* All "broken" PQExpBuffers point to this string. */
 static const char oom_buffer[1] = "";
 
-static bool
-appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
-pg_attribute_printf(2, 0);
+static bool appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
 
 
 /*

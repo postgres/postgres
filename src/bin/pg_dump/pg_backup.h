@@ -277,10 +277,7 @@ extern void SortTocFromFile(Archive *AHX, RestoreOptions *ropt);
 
 /* Convenience functions used only when writing DATA */
 extern void archputs(const char *s, Archive *AH);
-extern int
-archprintf(Archive *AH, const char *fmt,...)
-/* This extension allows gcc to check the format string */
-pg_attribute_printf(2, 3);
+extern int	archprintf(Archive *AH, const char *fmt,...) pg_attribute_printf(2, 3);
 
 #define appendStringLiteralAH(buf,str,AH) \
 	appendStringLiteral(buf, str, (AH)->encoding, (AH)->std_strings)

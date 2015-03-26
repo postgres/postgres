@@ -116,11 +116,7 @@ static pid_t postmasterPID = -1;
 #endif
 
 
-static void
-write_stderr(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
+static void write_stderr(const char *fmt,...) pg_attribute_printf(1, 2);
 static void do_advice(void);
 static void do_help(void);
 static void set_mode(char *modeopt);

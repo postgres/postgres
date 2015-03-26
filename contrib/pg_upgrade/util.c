@@ -17,6 +17,9 @@
 
 LogOpts		log_opts;
 
+static void pg_log_v(eLogType type, const char *fmt, va_list ap) pg_attribute_printf(2, 0);
+
+
 /*
  * report_status()
  *
@@ -81,9 +84,7 @@ prep_status(const char *fmt,...)
 }
 
 
-static
-pg_attribute_printf(2, 0)
-void
+static void
 pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
 	char		message[QUERY_ALLOC];

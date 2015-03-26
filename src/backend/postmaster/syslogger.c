@@ -130,7 +130,7 @@ static volatile sig_atomic_t rotation_requested = false;
 static pid_t syslogger_forkexec(void);
 static void syslogger_parseArgs(int argc, char *argv[]);
 #endif
-NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn;
+NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void open_csvlogfile(void);

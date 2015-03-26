@@ -32,11 +32,7 @@ static bool ValidXLogRecord(XLogReaderState *state, XLogRecord *record,
 				XLogRecPtr recptr);
 static int ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr,
 				 int reqLen);
-static void
-report_invalid_record(XLogReaderState *state, const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(2, 3);
+static void report_invalid_record(XLogReaderState *state, const char *fmt,...) pg_attribute_printf(2, 3);
 
 static void ResetDecoder(XLogReaderState *state);
 

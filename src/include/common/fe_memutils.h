@@ -24,11 +24,7 @@ extern void *repalloc(void *pointer, Size size);
 extern void pfree(void *pointer);
 
 /* sprintf into a palloc'd buffer --- these are in psprintf.c */
-extern char *
-psprintf(const char *fmt,...)
-pg_attribute_printf(1, 2);
-extern size_t
-pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
-pg_attribute_printf(3, 0);
+extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
+extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
 
 #endif   /* FE_MEMUTILS_H */

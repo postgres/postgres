@@ -131,21 +131,9 @@ static int	fail_ignore_count = 0;
 static bool directory_exists(const char *dir);
 static void make_directory(const char *dir);
 
-static void
-header(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
-static void
-status(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(1, 2);
-static void
-psql_command(const char *database, const char *query,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_printf(2, 3);
+static void header(const char *fmt,...) pg_attribute_printf(1, 2);
+static void status(const char *fmt,...) pg_attribute_printf(1, 2);
+static void psql_command(const char *database, const char *query,...) pg_attribute_printf(2, 3);
 
 #ifdef WIN32
 typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);

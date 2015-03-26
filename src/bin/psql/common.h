@@ -18,10 +18,7 @@
 
 extern bool setQFout(const char *fname);
 
-extern void
-psql_error(const char *fmt,...)
-/* This lets gcc check the format string for consistency. */
-pg_attribute_printf(1, 2);
+extern void psql_error(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern void NoticeProcessor(void *arg, const char *message);
 

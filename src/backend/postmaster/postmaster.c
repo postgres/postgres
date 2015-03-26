@@ -380,8 +380,8 @@ static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
-static void BackendRun(Port *port) pg_attribute_noreturn;
-static void ExitPostmaster(int status) pg_attribute_noreturn;
+static void BackendRun(Port *port) pg_attribute_noreturn();
+static void ExitPostmaster(int status) pg_attribute_noreturn();
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);

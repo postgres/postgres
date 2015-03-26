@@ -78,10 +78,8 @@ static ShutdownInformation shutdown_info;
 static const char *modulename = gettext_noop("parallel archiver");
 
 static ParallelSlot *GetMyPSlot(ParallelState *pstate);
-static void
-parallel_msg_master(ParallelSlot *slot, const char *modulename,
-					const char *fmt, va_list ap)
-pg_attribute_printf(3, 0);
+static void parallel_msg_master(ParallelSlot *slot, const char *modulename,
+					const char *fmt, va_list ap) pg_attribute_printf(3, 0);
 static void archive_close_connection(int code, void *arg);
 static void ShutdownWorkersHard(ParallelState *pstate);
 static void WaitForTerminatingWorkers(ParallelState *pstate);

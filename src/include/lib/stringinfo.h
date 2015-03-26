@@ -92,10 +92,7 @@ extern void resetStringInfo(StringInfo str);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void
-appendStringInfo(StringInfo str, const char *fmt,...)
-/* This extension allows gcc to check the format string */
-pg_attribute_printf(2, 3);
+extern void appendStringInfo(StringInfo str, const char *fmt,...) pg_attribute_printf(2, 3);
 
 /*------------------------
  * appendStringInfoVA
@@ -106,9 +103,7 @@ pg_attribute_printf(2, 3);
  * pass the return value to enlargeStringInfo() before trying again; see
  * appendStringInfo for standard usage pattern.
  */
-extern int
-appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
-pg_attribute_printf(2, 0);
+extern int	appendStringInfoVA(StringInfo str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
 
 /*------------------------
  * appendStringInfoString

@@ -67,9 +67,7 @@ typedef struct XLogDumpStats
 	Stats		record_stats[RM_NEXT_ID][MAX_XLINFO_TYPES];
 } XLogDumpStats;
 
-static void
-fatal_error(const char *fmt,...)
-pg_attribute_printf(1, 2);
+static void fatal_error(const char *fmt,...) pg_attribute_printf(1, 2);
 
 /*
  * Big red button to push when things go horribly wrong.

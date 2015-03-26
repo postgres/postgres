@@ -129,10 +129,7 @@ char	   *GUC_check_errmsg_string;
 char	   *GUC_check_errdetail_string;
 char	   *GUC_check_errhint_string;
 
-static void
-do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
-/* This lets gcc check the format string for consistency. */
-pg_attribute_printf(3, 4);
+static void do_serialize(char **destptr, Size *maxbytes, const char *fmt,...) pg_attribute_printf(3, 4);
 
 static void set_config_sourcefile(const char *name, char *sourcefile,
 					  int sourceline);

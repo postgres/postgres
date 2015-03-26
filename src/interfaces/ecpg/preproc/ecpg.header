@@ -61,10 +61,12 @@ struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 static struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, NULL, {NULL}, 0};
 
+static void vmmerror(int error_code, enum errortype type, const char *error, va_list ap) pg_attribute_printf(3, 0);
+
 /*
  * Handle parsing errors and warnings
  */
-static void pg_attribute_printf(3, 0)
+static void
 vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 {
 	/* localize the error message string */
