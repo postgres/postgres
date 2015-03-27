@@ -1577,12 +1577,15 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			 * sample variance, as we have data for the whole population,
 			 * so Bessel's correction is not used, and we don't divide by
 			 * tmp.calls - 1.
+			 *
+			 * We're calculating the stddev on the fly, so it's not in the tmp
+			 * structure, so we can't use the Float8GetDatumFast macro here.
 			 */
 			if (tmp.calls > 1)
 				values[i++] =
-					Float8GetDatumFast(sqrtd(tmp.sum_var_time / tmp.calls));
+					Float8GetDatum(sqrtd(tmp.sum_var_time / tmp.calls));
 			else
-				values[i++] = Float8GetDatumFast(0.0);
+				values[i++] = Float8GetDatum(0.0);
 		}
 		values[i++] = Int64GetDatumFast(tmp.rows);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_hit);
