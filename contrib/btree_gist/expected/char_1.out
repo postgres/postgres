@@ -64,3 +64,19 @@ SELECT count(*) FROM chartmp WHERE a >   '31b0'::char(32);
    214
 (1 row)
 
+-- Test index-only scans
+SET enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM chartmp WHERE a BETWEEN '31a' AND '31c';
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Index Only Scan using charidx on chartmp
+   Index Cond: ((a >= '31a'::bpchar) AND (a <= '31c'::bpchar))
+(2 rows)
+
+SELECT * FROM chartmp WHERE a BETWEEN '31a' AND '31c';
+  a   
+------
+ 31b0
+(1 row)
+

@@ -249,6 +249,11 @@ RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION gbt_oid_fetch(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
 CREATE FUNCTION gbt_oid_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
@@ -260,6 +265,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_var_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_var_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -305,11 +315,12 @@ AS
 -- Add operators that are new in 9.1.  We do it like this, leaving them
 -- "loose" in the operator family rather than bound into the opclass, because
 -- that's the only state that can be reproduced during an upgrade from 9.0.
-
 ALTER OPERATOR FAMILY gist_oid_ops USING gist ADD
 	OPERATOR	6	<> (oid, oid) ,
 	OPERATOR	15	<-> (oid, oid) FOR ORDER BY pg_catalog.oid_ops ,
-	FUNCTION	8 (oid, oid) gbt_oid_distance (internal, oid, int2, oid) ;
+	FUNCTION	8 (oid, oid) gbt_oid_distance (internal, oid, int2, oid) ,
+	-- Also add support function for index-only-scans, added in 9.5.
+	FUNCTION	9 (oid, oid) gbt_oid_fetch (internal) ;
 
 
 --
@@ -331,6 +342,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_int2_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_int2_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -376,8 +392,8 @@ AS
 ALTER OPERATOR FAMILY gist_int2_ops USING gist ADD
 	OPERATOR	6	<> (int2, int2) ,
 	OPERATOR	15	<-> (int2, int2) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (int2, int2) gbt_int2_distance (internal, int2, int2, oid) ;
-
+	FUNCTION	8 (int2, int2) gbt_int2_distance (internal, int2, int2, oid) ,
+	FUNCTION	9 (int2, int2) gbt_int2_fetch (internal) ;
 
 --
 --
@@ -398,6 +414,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_int4_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_int4_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -443,7 +464,8 @@ AS
 ALTER OPERATOR FAMILY gist_int4_ops USING gist ADD
 	OPERATOR	6	<> (int4, int4) ,
 	OPERATOR	15	<-> (int4, int4) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (int4, int4) gbt_int4_distance (internal, int4, int2, oid) ;
+	FUNCTION	8 (int4, int4) gbt_int4_distance (internal, int4, int2, oid) ,
+	FUNCTION	9 (int4, int4) gbt_int4_fetch (internal) ;
 
 
 --
@@ -465,6 +487,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_int8_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_int8_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -510,8 +537,8 @@ AS
 ALTER OPERATOR FAMILY gist_int8_ops USING gist ADD
 	OPERATOR	6	<> (int8, int8) ,
 	OPERATOR	15	<-> (int8, int8) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (int8, int8) gbt_int8_distance (internal, int8, int2, oid) ;
-
+	FUNCTION	8 (int8, int8) gbt_int8_distance (internal, int8, int2, oid) ,
+	FUNCTION	9 (int8, int8) gbt_int8_fetch (internal) ;
 
 --
 --
@@ -532,6 +559,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_float4_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_float4_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -577,8 +609,8 @@ AS
 ALTER OPERATOR FAMILY gist_float4_ops USING gist ADD
 	OPERATOR	6	<> (float4, float4) ,
 	OPERATOR	15	<-> (float4, float4) FOR ORDER BY pg_catalog.float_ops ,
-	FUNCTION	8 (float4, float4) gbt_float4_distance (internal, float4, int2, oid) ;
-
+	FUNCTION	8 (float4, float4) gbt_float4_distance (internal, float4, int2, oid) ,
+	FUNCTION	9 (float4, float4) gbt_float4_fetch (internal) ;
 
 --
 --
@@ -599,6 +631,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_float8_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_float8_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -644,8 +681,8 @@ AS
 ALTER OPERATOR FAMILY gist_float8_ops USING gist ADD
 	OPERATOR	6	<> (float8, float8) ,
 	OPERATOR	15	<-> (float8, float8) FOR ORDER BY pg_catalog.float_ops ,
-	FUNCTION	8 (float8, float8) gbt_float8_distance (internal, float8, int2, oid) ;
-
+	FUNCTION	8 (float8, float8) gbt_float8_distance (internal, float8, int2, oid) ,
+	FUNCTION	9 (float8, float8) gbt_float8_fetch (internal) ;
 
 --
 --
@@ -681,6 +718,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_tstz_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_ts_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -726,8 +768,8 @@ AS
 ALTER OPERATOR FAMILY gist_timestamp_ops USING gist ADD
 	OPERATOR	6	<> (timestamp, timestamp) ,
 	OPERATOR	15	<-> (timestamp, timestamp) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (timestamp, timestamp) gbt_ts_distance (internal, timestamp, int2, oid) ;
-
+	FUNCTION	8 (timestamp, timestamp) gbt_ts_distance (internal, timestamp, int2, oid) ,
+	FUNCTION	9 (timestamp, timestamp) gbt_ts_fetch (internal) ;
 
 -- Create the operator class
 CREATE OPERATOR CLASS gist_timestamptz_ops
@@ -750,8 +792,8 @@ AS
 ALTER OPERATOR FAMILY gist_timestamptz_ops USING gist ADD
 	OPERATOR	6	<> (timestamptz, timestamptz) ,
 	OPERATOR	15	<-> (timestamptz, timestamptz) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (timestamptz, timestamptz) gbt_tstz_distance (internal, timestamptz, int2, oid) ;
-
+	FUNCTION	8 (timestamptz, timestamptz) gbt_tstz_distance (internal, timestamptz, int2, oid) ,
+	FUNCTION	9 (timestamptz, timestamptz) gbt_ts_fetch (internal) ;
 
 --
 --
@@ -782,6 +824,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_timetz_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_time_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -827,7 +874,8 @@ AS
 ALTER OPERATOR FAMILY gist_time_ops USING gist ADD
 	OPERATOR	6	<> (time, time) ,
 	OPERATOR	15	<-> (time, time) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (time, time) gbt_time_distance (internal, time, int2, oid) ;
+	FUNCTION	8 (time, time) gbt_time_distance (internal, time, int2, oid) ,
+	FUNCTION	9 (time, time) gbt_time_fetch (internal) ;
 
 
 CREATE OPERATOR CLASS gist_timetz_ops
@@ -849,6 +897,7 @@ AS
 
 ALTER OPERATOR FAMILY gist_timetz_ops USING gist ADD
 	OPERATOR	6	<> (timetz, timetz) ;
+	-- no 'fetch' function, as the compress function is lossy.
 
 
 --
@@ -870,6 +919,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_date_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_date_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -915,7 +969,8 @@ AS
 ALTER OPERATOR FAMILY gist_date_ops USING gist ADD
 	OPERATOR	6	<> (date, date) ,
 	OPERATOR	15	<-> (date, date) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (date, date) gbt_date_distance (internal, date, int2, oid) ;
+	FUNCTION	8 (date, date) gbt_date_distance (internal, date, int2, oid) ,
+	FUNCTION	9 (date, date) gbt_date_fetch (internal) ;
 
 
 --
@@ -942,6 +997,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_intv_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_intv_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -987,7 +1047,8 @@ AS
 ALTER OPERATOR FAMILY gist_interval_ops USING gist ADD
 	OPERATOR	6	<> (interval, interval) ,
 	OPERATOR	15	<-> (interval, interval) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (interval, interval) gbt_intv_distance (internal, interval, int2, oid) ;
+	FUNCTION	8 (interval, interval) gbt_intv_distance (internal, interval, int2, oid) ,
+	FUNCTION	9 (interval, interval) gbt_intv_fetch (internal) ;
 
 
 --
@@ -1009,6 +1070,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_cash_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_cash_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1054,7 +1120,8 @@ AS
 ALTER OPERATOR FAMILY gist_cash_ops USING gist ADD
 	OPERATOR	6	<> (money, money) ,
 	OPERATOR	15	<-> (money, money) FOR ORDER BY pg_catalog.money_ops ,
-	FUNCTION	8 (money, money) gbt_cash_distance (internal, money, int2, oid) ;
+	FUNCTION	8 (money, money) gbt_cash_distance (internal, money, int2, oid) ,
+	FUNCTION	9 (money, money) gbt_cash_fetch (internal) ;
 
 
 --
@@ -1071,6 +1138,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_macad_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_macad_fetch(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1114,7 +1186,8 @@ AS
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_macaddr_ops USING gist ADD
-	OPERATOR	6	<> (macaddr, macaddr) ;
+	OPERATOR	6	<> (macaddr, macaddr) ,
+	FUNCTION	9 (macaddr, macaddr) gbt_macad_fetch (internal);
 
 
 --
@@ -1184,7 +1257,8 @@ AS
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_text_ops USING gist ADD
-	OPERATOR	6	<> (text, text) ;
+	OPERATOR	6	<> (text, text) ,
+	FUNCTION	9 (text, text) gbt_var_fetch (internal) ;
 
 
 ---- Create the operator class
@@ -1206,8 +1280,8 @@ AS
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_bpchar_ops USING gist ADD
-	OPERATOR	6	<> (bpchar, bpchar) ;
-
+	OPERATOR	6	<> (bpchar, bpchar) ,
+	FUNCTION	9 (bpchar, bpchar) gbt_var_fetch (internal) ;
 
 --
 --
@@ -1265,7 +1339,8 @@ AS
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_bytea_ops USING gist ADD
-	OPERATOR	6	<> (bytea, bytea) ;
+	OPERATOR	6	<> (bytea, bytea) ,
+	FUNCTION	9 (bytea, bytea) gbt_var_fetch (internal) ;
 
 
 --
@@ -1325,7 +1400,8 @@ AS
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_numeric_ops USING gist ADD
-	OPERATOR	6	<> (numeric, numeric) ;
+	OPERATOR	6	<> (numeric, numeric) ,
+	FUNCTION	9 (numeric, numeric) gbt_var_fetch (internal) ;
 
 
 --
@@ -1384,7 +1460,8 @@ AS
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_bit_ops USING gist ADD
-	OPERATOR	6	<> (bit, bit) ;
+	OPERATOR	6	<> (bit, bit) ,
+	FUNCTION	9 (bit, bit) gbt_var_fetch (internal) ;
 
 
 -- Create the operator class
@@ -1406,7 +1483,8 @@ AS
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_vbit_ops USING gist ADD
-	OPERATOR	6	<> (varbit, varbit) ;
+	OPERATOR	6	<> (varbit, varbit) ,
+	FUNCTION	9 (varbit, varbit) gbt_var_fetch (internal) ;
 
 
 --
@@ -1467,7 +1545,7 @@ AS
 
 ALTER OPERATOR FAMILY gist_inet_ops USING gist ADD
 	OPERATOR	6	<>  (inet, inet) ;
-
+	-- no fetch support, the compress function is lossy
 
 -- Create the operator class
 CREATE OPERATOR CLASS gist_cidr_ops
@@ -1489,3 +1567,4 @@ AS
 
 ALTER OPERATOR FAMILY gist_cidr_ops USING gist ADD
 	OPERATOR	6	<> (inet, inet) ;
+	-- no fetch support, the compress function is lossy

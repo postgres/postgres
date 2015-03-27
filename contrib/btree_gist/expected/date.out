@@ -74,10 +74,10 @@ SELECT count(*) FROM datetmp WHERE a >  '2001-02-13'::date;
 
 EXPLAIN (COSTS OFF)
 SELECT a, a <-> '2001-02-13' FROM datetmp ORDER BY a <-> '2001-02-13' LIMIT 3;
-                  QUERY PLAN                  
-----------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Limit
-   ->  Index Scan using dateidx on datetmp
+   ->  Index Only Scan using dateidx on datetmp
          Order By: (a <-> '02-13-2001'::date)
 (3 rows)
 

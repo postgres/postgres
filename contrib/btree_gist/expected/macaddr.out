@@ -64,3 +64,26 @@ SELECT count(*) FROM macaddrtmp WHERE a >  '22:00:5c:e5:9b:0d'::macaddr;
    540
 (1 row)
 
+-- Test index-only scans
+SET enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM macaddrtmp WHERE a < '02:03:04:05:06:07'::macaddr;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Index Only Scan using macaddridx on macaddrtmp
+   Index Cond: (a < '02:03:04:05:06:07'::macaddr)
+(2 rows)
+
+SELECT * FROM macaddrtmp WHERE a < '02:03:04:05:06:07'::macaddr;
+         a         
+-------------------
+ 01:02:37:05:4f:36
+ 01:02:37:05:4f:36
+ 01:02:37:05:4f:36
+ 01:02:37:05:4f:36
+ 01:43:b5:79:eb:0f
+ 01:43:b5:79:eb:0f
+ 01:43:b5:79:eb:0f
+ 01:43:b5:79:eb:0f
+(8 rows)
+

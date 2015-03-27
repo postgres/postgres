@@ -77,7 +77,7 @@ SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
                      QUERY PLAN                      
 -----------------------------------------------------
  Limit
-   ->  Index Scan using float8idx on float8tmp
+   ->  Index Only Scan using float8idx on float8tmp
          Order By: (a <-> (-1890)::double precision)
 (3 rows)
 

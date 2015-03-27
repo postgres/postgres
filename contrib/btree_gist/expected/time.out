@@ -77,7 +77,7 @@ SELECT a, a <-> '10:57:11' FROM timetmp ORDER BY a <-> '10:57:11' LIMIT 3;
                           QUERY PLAN                          
 --------------------------------------------------------------
  Limit
-   ->  Index Scan using timeidx on timetmp
+   ->  Index Only Scan using timeidx on timetmp
          Order By: (a <-> '10:57:11'::time without time zone)
 (3 rows)
 

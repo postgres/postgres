@@ -18,6 +18,7 @@ typedef struct
 ** Interval ops
 */
 PG_FUNCTION_INFO_V1(gbt_intv_compress);
+PG_FUNCTION_INFO_V1(gbt_intv_fetch);
 PG_FUNCTION_INFO_V1(gbt_intv_decompress);
 PG_FUNCTION_INFO_V1(gbt_intv_union);
 PG_FUNCTION_INFO_V1(gbt_intv_picksplit);
@@ -172,6 +173,14 @@ gbt_intv_compress(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(retval);
 
+}
+
+Datum
+gbt_intv_fetch(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_POINTER(gbt_num_fetch(entry, &tinfo));
 }
 
 Datum

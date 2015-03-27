@@ -29,3 +29,8 @@ SELECT count(*) FROM varbittmp WHERE a  =  '1110100111010'::varbit;
 SELECT count(*) FROM varbittmp WHERE a >=  '1110100111010'::varbit;
 
 SELECT count(*) FROM varbittmp WHERE a >   '1110100111010'::varbit;
+
+-- Test index-only scans
+SET enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT a FROM bittmp WHERE a BETWEEN '1000000' and '1000001';

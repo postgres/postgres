@@ -77,7 +77,7 @@ SELECT a, a <-> '464571291354841' FROM int8tmp ORDER BY a <-> '464571291354841' 
                     QUERY PLAN                     
 ---------------------------------------------------
  Limit
-   ->  Index Scan using int8idx on int8tmp
+   ->  Index Only Scan using int8idx on int8tmp
          Order By: (a <-> 464571291354841::bigint)
 (3 rows)
 

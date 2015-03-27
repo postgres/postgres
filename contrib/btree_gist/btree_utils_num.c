@@ -93,6 +93,64 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 	return retval;
 }
 
+/*
+ * Convert a compressed leaf item back to the original type, for index-only
+ * scans.
+ */
+GISTENTRY *
+gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
+{
+	GISTENTRY  *retval;
+	Datum		datum;
+
+	Assert(tinfo->indexsize >= 2 * tinfo->size);
+
+	/*
+	 * Get the original Datum from the stored datum. On leaf entries, the
+	 * lower and upper bound are the same. We just grab the lower bound and
+	 * return it.
+	 */
+	switch (tinfo->t)
+	{
+		case gbt_t_int2:
+			datum = Int16GetDatum(*(int16 *) entry->key);
+			break;
+		case gbt_t_int4:
+			datum = Int32GetDatum(*(int32 *) entry->key);
+			break;
+		case gbt_t_int8:
+			datum = Int64GetDatum(*(int64 *) entry->key);
+			break;
+		case gbt_t_oid:
+			datum = ObjectIdGetDatum(*(Oid *) entry->key);
+			break;
+		case gbt_t_float4:
+			datum = Float4GetDatum(*(float4 *) entry->key);
+			break;
+		case gbt_t_float8:
+			datum = Float8GetDatum(*(float8 *) entry->key);
+			break;
+		case gbt_t_date:
+			datum = DateADTGetDatum(*(DateADT *) entry->key);
+			break;
+		case gbt_t_time:
+			datum = TimeADTGetDatum(*(TimeADT *) entry->key);
+			break;
+		case gbt_t_ts:
+			datum = TimestampGetDatum(*(Timestamp *) entry->key);
+			break;
+		case gbt_t_cash:
+			datum = CashGetDatum(*(Cash *) entry->key);
+			break;
+		default:
+			datum = PointerGetDatum(entry->key);
+	}
+
+	retval = palloc(sizeof(GISTENTRY));
+	gistentryinit(*retval, datum, entry->rel, entry->page, entry->offset,
+				  FALSE);
+	return retval;
+}
 
 
 

@@ -29,6 +29,7 @@ typedef struct
 
 
 PG_FUNCTION_INFO_V1(gbt_var_decompress);
+PG_FUNCTION_INFO_V1(gbt_var_fetch);
 
 
 Datum
@@ -298,6 +299,23 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 		retval = entry;
 
 	return (retval);
+}
+
+
+Datum
+gbt_var_fetch(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY_R r = gbt_var_key_readable(key);
+	GISTENTRY  *retval;
+
+	retval = palloc(sizeof(GISTENTRY));
+	gistentryinit(*retval, PointerGetDatum(r.lower),
+				  entry->rel, entry->page,
+				  entry->offset, TRUE);
+
+	PG_RETURN_POINTER(retval);
 }
 
 

@@ -74,10 +74,10 @@ SELECT count(*) FROM moneytmp WHERE a >  '22649.64'::money;
 
 EXPLAIN (COSTS OFF)
 SELECT a, a <-> '21472.79' FROM moneytmp ORDER BY a <-> '21472.79' LIMIT 3;
-                  QUERY PLAN                   
------------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Limit
-   ->  Index Scan using moneyidx on moneytmp
+   ->  Index Only Scan using moneyidx on moneytmp
          Order By: (a <-> '$21,472.79'::money)
 (3 rows)
 

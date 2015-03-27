@@ -77,7 +77,7 @@ SELECT a, a <-> '2004-10-26 08:55:08' FROM timestamptmp ORDER BY a <-> '2004-10-
                                     QUERY PLAN                                     
 -----------------------------------------------------------------------------------
  Limit
-   ->  Index Scan using timestampidx on timestamptmp
+   ->  Index Only Scan using timestampidx on timestamptmp
          Order By: (a <-> 'Tue Oct 26 08:55:08 2004'::timestamp without time zone)
 (3 rows)
 

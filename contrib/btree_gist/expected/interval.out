@@ -77,7 +77,7 @@ SELECT a, a <-> '199 days 21:21:23' FROM intervaltmp ORDER BY a <-> '199 days 21
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
  Limit
-   ->  Index Scan using intervalidx on intervaltmp
+   ->  Index Only Scan using intervalidx on intervaltmp
          Order By: (a <-> '@ 199 days 21 hours 21 mins 23 secs'::interval)
 (3 rows)
 

@@ -75,3 +75,9 @@ SELECT count(*) FROM numerictmp WHERE a  = 0 ;
 SELECT count(*) FROM numerictmp WHERE a >= 0 ;
 
 SELECT count(*) FROM numerictmp WHERE a >  0 ;
+
+-- Test index-only scans
+SET enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM numerictmp WHERE a BETWEEN 1 AND 300 ORDER BY a;
+SELECT * FROM numerictmp WHERE a BETWEEN 1 AND 300 ORDER BY a;

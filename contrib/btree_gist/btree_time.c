@@ -19,6 +19,7 @@ typedef struct
 */
 PG_FUNCTION_INFO_V1(gbt_time_compress);
 PG_FUNCTION_INFO_V1(gbt_timetz_compress);
+PG_FUNCTION_INFO_V1(gbt_time_fetch);
 PG_FUNCTION_INFO_V1(gbt_time_union);
 PG_FUNCTION_INFO_V1(gbt_time_picksplit);
 PG_FUNCTION_INFO_V1(gbt_time_consistent);
@@ -192,6 +193,13 @@ gbt_timetz_compress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(retval);
 }
 
+Datum
+gbt_time_fetch(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_POINTER(gbt_num_fetch(entry, &tinfo));
+}
 
 Datum
 gbt_time_consistent(PG_FUNCTION_ARGS)

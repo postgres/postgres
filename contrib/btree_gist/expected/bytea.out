@@ -71,3 +71,20 @@ SELECT count(*) FROM byteatmp WHERE a  =  '2eb2c961c1cbf6 cf8d7b68cb9a2f36 7bbed
      1
 (1 row)
 
+-- Test index-only scans
+SET enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT a FROM byteatmp where a > 'ffa'::bytea;
+                 QUERY PLAN                 
+--------------------------------------------
+ Index Only Scan using byteaidx on byteatmp
+   Index Cond: (a > '\x666661'::bytea)
+(2 rows)
+
+SELECT a FROM byteatmp where a > 'ffa'::bytea;
+               a                
+--------------------------------
+ \x666662656532373363376262
+ \x6666626663313331336339633835
+(2 rows)
+

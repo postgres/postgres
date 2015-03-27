@@ -197,7 +197,7 @@ SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '
                                      QUERY PLAN                                     
 ------------------------------------------------------------------------------------
  Limit
-   ->  Index Scan using timestamptzidx on timestamptztmp
+   ->  Index Only Scan using timestamptzidx on timestamptztmp
          Order By: (a <-> 'Tue Dec 18 04:59:54 2018 PST'::timestamp with time zone)
 (3 rows)
 

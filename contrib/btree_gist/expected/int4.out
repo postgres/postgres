@@ -74,10 +74,10 @@ SELECT count(*) FROM int4tmp WHERE a >  237::int4;
 
 EXPLAIN (COSTS OFF)
 SELECT a, a <-> '237' FROM int4tmp ORDER BY a <-> '237' LIMIT 3;
-                QUERY PLAN                 
--------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Limit
-   ->  Index Scan using int4idx on int4tmp
+   ->  Index Only Scan using int4idx on int4tmp
          Order By: (a <-> 237)
 (3 rows)
 

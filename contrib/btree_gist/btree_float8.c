@@ -16,6 +16,7 @@ typedef struct float8key
 ** float8 ops
 */
 PG_FUNCTION_INFO_V1(gbt_float8_compress);
+PG_FUNCTION_INFO_V1(gbt_float8_fetch);
 PG_FUNCTION_INFO_V1(gbt_float8_union);
 PG_FUNCTION_INFO_V1(gbt_float8_picksplit);
 PG_FUNCTION_INFO_V1(gbt_float8_consistent);
@@ -123,6 +124,13 @@ gbt_float8_compress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_num_compress(entry, &tinfo));
 }
 
+Datum
+gbt_float8_fetch(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_POINTER(gbt_num_fetch(entry, &tinfo));
+}
 
 Datum
 gbt_float8_consistent(PG_FUNCTION_ARGS)

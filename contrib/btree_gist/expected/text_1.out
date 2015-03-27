@@ -71,3 +71,19 @@ SELECT count(*) FROM texttmp WHERE a  =  '2eb2c961c1cbf6 cf8d7b68cb9a2f36 7bbedb
      1
 (1 row)
 
+-- Test index-only scans
+SET enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM texttmp WHERE a BETWEEN '31a' AND '31c';
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Index Only Scan using textidx on texttmp
+   Index Cond: ((a >= '31a'::text) AND (a <= '31c'::text))
+(2 rows)
+
+SELECT * FROM texttmp WHERE a BETWEEN '31a' AND '31c';
+  a   
+------
+ 31b0
+(1 row)
+
