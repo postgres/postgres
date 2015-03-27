@@ -1238,7 +1238,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		cont->opt->stop_table)
 	{
 		printTableFooter *footers = footers_with_default(cont);
-		
+
 		if (!opt_tuples_only && !cancel_pressed && footers)
 		{
 			printTableFooter *f;
