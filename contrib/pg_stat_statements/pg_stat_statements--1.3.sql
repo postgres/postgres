@@ -1,4 +1,4 @@
-/* contrib/pg_stat_statements/pg_stat_statements--1.2.sql */
+/* contrib/pg_stat_statements/pg_stat_statements--1.3.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_stat_statements" to load this file. \quit
@@ -16,6 +16,10 @@ CREATE FUNCTION pg_stat_statements(IN showtext boolean,
     OUT query text,
     OUT calls int8,
     OUT total_time float8,
+    OUT min_time float8,
+    OUT max_time float8,
+    OUT mean_time float8,
+    OUT stddev_time float8,
     OUT rows int8,
     OUT shared_blks_hit int8,
     OUT shared_blks_read int8,
@@ -31,7 +35,7 @@ CREATE FUNCTION pg_stat_statements(IN showtext boolean,
     OUT blk_write_time float8
 )
 RETURNS SETOF record
-AS 'MODULE_PATHNAME', 'pg_stat_statements_1_2'
+AS 'MODULE_PATHNAME', 'pg_stat_statements_1_3'
 LANGUAGE C STRICT VOLATILE;
 
 -- Register a view on the function for ease of use.

@@ -115,7 +115,8 @@ typedef enum pgssVersion
 {
 	PGSS_V1_0 = 0,
 	PGSS_V1_1,
-	PGSS_V1_2
+	PGSS_V1_2,
+	PGSS_V1_3
 } pgssVersion;
 
 /*
@@ -136,6 +137,10 @@ typedef struct Counters
 {
 	int64		calls;			/* # of times executed */
 	double		total_time;		/* total execution time, in msec */
+	double      min_time;       /* minimim execution time in msec */
+	double      max_time;       /* maximum execution time in msec */
+	double      mean_time;      /* mean execution time in msec */
+	double      sum_var_time;   /* sum of variances in execution time in msec */
 	int64		rows;			/* total # of retrieved or affected rows */
 	int64		shared_blks_hit;	/* # of shared buffer hits */
 	int64		shared_blks_read;		/* # of shared disk blocks read */
@@ -274,6 +279,7 @@ void		_PG_fini(void);
 
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_2);
+PG_FUNCTION_INFO_V1(pg_stat_statements_1_3);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
 
 static void pgss_shmem_startup(void);
@@ -320,6 +326,7 @@ static char *generate_normalized_query(pgssJumbleState *jstate, const char *quer
 						  int *query_len_p, int encoding);
 static void fill_in_constant_lengths(pgssJumbleState *jstate, const char *query);
 static int	comp_location(const void *a, const void *b);
+static inline double sqrtd(const double x);
 
 
 /*
@@ -1215,6 +1222,32 @@ pgss_store(const char *query, uint32 queryId,
 
 		e->counters.calls += 1;
 		e->counters.total_time += total_time;
+		if (e->counters.calls == 1)
+		{
+			e->counters.min_time = total_time;
+			e->counters.max_time = total_time;
+			e->counters.mean_time = total_time;
+		}
+		else
+		{
+			/*
+			 * Welford's method for accurately computing variance.
+			 * See <http://www.johndcook.com/blog/standard_deviation/>
+			 */
+			double old_mean = e->counters.mean_time;
+
+			e->counters.mean_time +=
+				(total_time - old_mean) / e->counters.calls;
+			e->counters.sum_var_time +=
+				(total_time - old_mean) * (total_time - e->counters.mean_time);
+
+			/* calculate min and max time */
+			if (e->counters.min_time > total_time)
+				e->counters.min_time = total_time;
+			if (e->counters.max_time < total_time)
+				e->counters.max_time = total_time;
+
+		}
 		e->counters.rows += rows;
 		e->counters.shared_blks_hit += bufusage->shared_blks_hit;
 		e->counters.shared_blks_read += bufusage->shared_blks_read;
@@ -1259,7 +1292,8 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 #define PG_STAT_STATEMENTS_COLS_V1_0	14
 #define PG_STAT_STATEMENTS_COLS_V1_1	18
 #define PG_STAT_STATEMENTS_COLS_V1_2	19
-#define PG_STAT_STATEMENTS_COLS			19		/* maximum of above */
+#define PG_STAT_STATEMENTS_COLS_V1_3	23
+#define PG_STAT_STATEMENTS_COLS			23		/* maximum of above */
 
 /*
  * Retrieve statement statistics.
@@ -1271,6 +1305,16 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
  * expected API version is identified by embedding it in the C name of the
  * function.  Unfortunately we weren't bright enough to do that for 1.1.
  */
+Datum
+pg_stat_statements_1_3(PG_FUNCTION_ARGS)
+{
+	bool		showtext = PG_GETARG_BOOL(0);
+
+	pg_stat_statements_internal(fcinfo, PGSS_V1_3, showtext);
+
+	return (Datum) 0;
+}
+
 Datum
 pg_stat_statements_1_2(PG_FUNCTION_ARGS)
 {
@@ -1358,6 +1402,10 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			break;
 		case PG_STAT_STATEMENTS_COLS_V1_2:
 			if (api_version != PGSS_V1_2)
+				elog(ERROR, "incorrect number of output arguments");
+			break;
+		case PG_STAT_STATEMENTS_COLS_V1_3:
+			if (api_version != PGSS_V1_3)
 				elog(ERROR, "incorrect number of output arguments");
 			break;
 		default:
@@ -1519,6 +1567,23 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 
 		values[i++] = Int64GetDatumFast(tmp.calls);
 		values[i++] = Float8GetDatumFast(tmp.total_time);
+		if (api_version >= PGSS_V1_3)
+		{
+			values[i++] = Float8GetDatumFast(tmp.min_time);
+			values[i++] = Float8GetDatumFast(tmp.max_time);
+			values[i++] = Float8GetDatumFast(tmp.mean_time);
+			/*
+			 * Note we are calculating the population variance here, not the
+			 * sample variance, as we have data for the whole population,
+			 * so Bessel's correction is not used, and we don't divide by
+			 * tmp.calls - 1.
+			 */
+			if (tmp.calls > 1)
+				values[i++] =
+					Float8GetDatumFast(sqrtd(tmp.sum_var_time / tmp.calls));
+			else
+				values[i++] = Float8GetDatumFast(0.0);
+		}
 		values[i++] = Int64GetDatumFast(tmp.rows);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_read);
@@ -1541,6 +1606,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		Assert(i == (api_version == PGSS_V1_0 ? PG_STAT_STATEMENTS_COLS_V1_0 :
 					 api_version == PGSS_V1_1 ? PG_STAT_STATEMENTS_COLS_V1_1 :
 					 api_version == PGSS_V1_2 ? PG_STAT_STATEMENTS_COLS_V1_2 :
+					 api_version == PGSS_V1_3 ? PG_STAT_STATEMENTS_COLS_V1_3 :
 					 -1 /* fail if you forget to update this assert */ ));
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
@@ -2898,4 +2964,21 @@ comp_location(const void *a, const void *b)
 		return +1;
 	else
 		return 0;
+}
+
+/*
+ * fast sqrt algorithm: reference from Fast inverse square root algorithms.
+ */
+static inline double
+sqrtd(const double x)
+{
+	double      x_half = 0.5 * x;
+	long long int   tmp = 0x5FE6EB50C7B537AAl - ( *(long long int*)&x >> 1);
+	double      x_result = * (double*)&tmp;
+
+	x_result *= (1.5 - (x_half * x_result * x_result));
+	/* If retry this calculation, it becomes higher precision at sqrt */
+	x_result *= (1.5 - (x_half * x_result * x_result));
+
+	return x_result * x;
 }

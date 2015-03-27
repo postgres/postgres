@@ -87,6 +87,34 @@
      </row>
 
      <row>
+      <entry><structfield>min_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Minimum time spent in the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>max_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Maximum time spent in the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>mean_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Mean time spent in the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stddev_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Population standard deviation of time spent in the statement, in milliseconds</entry>
+     </row>
+
+     <row>
       <entry><structfield>rows</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
