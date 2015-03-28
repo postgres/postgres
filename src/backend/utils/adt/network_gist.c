@@ -588,6 +588,33 @@ inet_gist_decompress(PG_FUNCTION_ARGS)
 }
 
 /*
+ * The GiST fetch function
+ *
+ * Reconstruct the original inet datum from a GistInetKey.
+ */
+Datum
+inet_gist_fetch(PG_FUNCTION_ARGS)
+{
+	GISTENTRY	*entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GistInetKey	*key = DatumGetInetKeyP(entry->key);
+	GISTENTRY	*retval;
+	inet		*dst;
+
+	dst = (inet *) palloc0(sizeof(inet));
+
+	ip_family(dst) = gk_ip_family(key);
+	ip_bits(dst) = gk_ip_minbits(key);
+	memcpy(ip_addr(dst), gk_ip_addr(key), ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
+
+	retval = palloc(sizeof(GISTENTRY));
+	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
+				  entry->offset, FALSE);
+
+	PG_RETURN_POINTER(retval);
+}
+
+/*
  * The GiST page split penalty function
  *
  * Charge a large penalty if address family doesn't match, or a somewhat
