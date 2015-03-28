@@ -1246,7 +1246,6 @@ pgss_store(const char *query, uint32 queryId,
 				e->counters.min_time = total_time;
 			if (e->counters.max_time < total_time)
 				e->counters.max_time = total_time;
-
 		}
 		e->counters.rows += rows;
 		e->counters.shared_blks_hit += bufusage->shared_blks_hit;
@@ -1491,6 +1490,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		bool		nulls[PG_STAT_STATEMENTS_COLS];
 		int			i = 0;
 		Counters	tmp;
+		double		stddev;
 		int64		queryid = entry->key.queryid;
 
 		memset(values, 0, sizeof(values));
@@ -1577,15 +1577,12 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			 * sample variance, as we have data for the whole population,
 			 * so Bessel's correction is not used, and we don't divide by
 			 * tmp.calls - 1.
-			 *
-			 * We're calculating the stddev on the fly, so it's not in the tmp
-			 * structure, so we can't use the Float8GetDatumFast macro here.
 			 */
 			if (tmp.calls > 1)
-				values[i++] =
-					Float8GetDatum(sqrt(tmp.sum_var_time / tmp.calls));
+				stddev = sqrt(tmp.sum_var_time / tmp.calls);
 			else
-				values[i++] = Float8GetDatum(0.0);
+				stddev = 0.0;
+			values[i++] = Float8GetDatumFast(stddev);
 		}
 		values[i++] = Int64GetDatumFast(tmp.rows);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_hit);
