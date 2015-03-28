@@ -2236,6 +2236,18 @@ lo_import 152801
           </varlistentry>
 
           <varlistentry>
+          <term><literal>pager_min_lines</literal></term>
+          <listitem>
+          <para>
+          If <literal>pager_min_lines</> is set to a number greater than the
+          page height, the pager program will not be called unless there are
+          at least this many lines of output to show. The default setting
+          is 0.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
           <term><literal>recordsep</literal></term>
           <listitem>
           <para>

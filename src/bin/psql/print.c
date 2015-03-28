@@ -811,7 +811,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	if (!is_pager && fout == stdout && output_columns > 0 &&
 		(output_columns < total_header_width || output_columns < width_total))
 	{
-		fout = PageOutput(INT_MAX, cont->opt->pager);	/* force pager */
+		fout = PageOutput(INT_MAX, cont->opt);	/* force pager */
 		is_pager = true;
 	}
 
@@ -2497,15 +2497,19 @@ print_troff_ms_vertical(const printTableContent *cont, FILE *fout)
  * PageOutput
  *
  * Tests if pager is needed and returns appropriate FILE pointer.
+ *
+ * If the topt argument is NULL no pager is used.
  */
 FILE *
-PageOutput(int lines, unsigned short int pager)
+PageOutput(int lines, const printTableOpt *topt)
 {
 	/* check whether we need / can / are supposed to use pager */
-	if (pager && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	if (topt && topt->pager && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	{
 		const char *pagerprog;
 		FILE	   *pagerpipe;
+		unsigned short int  pager =  topt->pager;
+		int         min_lines = topt->pager_min_lines;
 
 #ifdef TIOCGWINSZ
 		int			result;
@@ -2514,7 +2518,9 @@ PageOutput(int lines, unsigned short int pager)
 		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
 
 		/* >= accounts for a one-line prompt */
-		if (result == -1 || lines >= screen_size.ws_row || pager > 1)
+		if (result == -1
+			|| (lines >= screen_size.ws_row && lines >= min_lines)
+			|| pager > 1)
 		{
 #endif
 			pagerprog = getenv("PAGER");
@@ -2814,7 +2820,7 @@ IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expande
 				lines++;
 		}
 
-		*fout = PageOutput(lines + extra_lines, cont->opt->pager);
+		*fout = PageOutput(lines + extra_lines, cont->opt);
 		*is_pager = (*fout != stdout);
 	}
 	else

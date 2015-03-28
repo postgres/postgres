@@ -65,7 +65,7 @@ usage(unsigned short int pager)
 		}
 	}
 
-	output = PageOutput(59, pager);
+	output = PageOutput(59, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
 	fprintf(output, _("Usage:\n"));
@@ -158,7 +158,7 @@ slashUsage(unsigned short int pager)
 
 	currdb = PQdb(pset.db);
 
-	output = PageOutput(103, pager);
+	output = PageOutput(103, pager ? &(pset.popt.topt) : NULL);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -305,7 +305,7 @@ helpVariables(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(85, pager);
+	output = PageOutput(85, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables.\n"));
 
@@ -435,7 +435,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		ncolumns = Max(ncolumns, 1);
 		nrows = (QL_HELP_COUNT + (ncolumns - 1)) / ncolumns;
 
-		output = PageOutput(nrows + 1, pager);
+		output = PageOutput(nrows + 1, pager ? &(pset.popt.topt) : NULL);
 
 		fputs(_("Available help:\n"), output);
 
@@ -488,7 +488,7 @@ helpSQL(const char *topic, unsigned short int pager)
 				if (wordlen >= len)		/* Don't try again if the same word */
 				{
 					if (!output)
-						output = PageOutput(nl_count, pager);
+						output = PageOutput(nl_count, pager ? &(pset.popt.topt) : NULL);
 					break;
 				}
 				len = wordlen;
@@ -509,7 +509,7 @@ helpSQL(const char *topic, unsigned short int pager)
 			}
 
 			if (!output)
-				output = PageOutput(nl_count, pager);
+				output = PageOutput(nl_count, pager ? &(pset.popt.topt) : NULL);
 
 			for (i = 0; QL_HELP[i].cmd; i++)
 			{

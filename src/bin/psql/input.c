@@ -474,7 +474,7 @@ printHistory(const char *fname, unsigned short int pager)
 	if (fname == NULL)
 	{
 		/* use pager, if enabled, when printing to console */
-		output = PageOutput(INT_MAX, pager);
+		output = PageOutput(INT_MAX, pager ? &(pset.popt.topt) : NULL);
 		is_pager = true;
 	}
 	else

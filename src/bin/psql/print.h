@@ -89,6 +89,8 @@ typedef struct printTableOpt
 								 * 1=dividing lines, 2=full */
 	unsigned short int pager;	/* use pager for output (if to stdout and
 								 * stdout is a tty) 0=off 1=on 2=always */
+	int         pager_min_lines;/* don't use pager unless there are at least
+								 * this many lines */
 	bool		tuples_only;	/* don't output headers, row counts, etc. */
 	bool		start_table;	/* print start decoration, eg <table> */
 	bool		stop_table;		/* print stop decoration, eg </table> */
@@ -164,7 +166,7 @@ extern const printTextFormat pg_asciiformat_old;
 extern const printTextFormat pg_utf8format;
 
 
-extern FILE *PageOutput(int lines, unsigned short int pager);
+extern FILE *PageOutput(int lines, const printTableOpt *topt);
 extern void ClosePager(FILE *pagerpipe);
 
 extern void html_escaped_print(const char *in, FILE *fout);

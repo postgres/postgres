@@ -129,6 +129,7 @@ main(int argc, char *argv[])
 	pset.popt.topt.format = PRINT_ALIGNED;
 	pset.popt.topt.border = 1;
 	pset.popt.topt.pager = 1;
+	pset.popt.topt.pager_min_lines = 0;
 	pset.popt.topt.start_table = true;
 	pset.popt.topt.stop_table = true;
 	pset.popt.topt.default_footer = true;

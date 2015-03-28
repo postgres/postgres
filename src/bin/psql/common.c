@@ -1337,7 +1337,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			 * If query requires multiple result sets, hack to ensure that
 			 * only one pager instance is used for the whole mess
 			 */
-			pset.queryFout = PageOutput(100000, my_popt.topt.pager);
+			pset.queryFout = PageOutput(100000, &(my_popt.topt));
 			did_pager = true;
 		}
 

@@ -65,6 +65,7 @@ linestyle                ascii
 null                     ''
 numericlocale            off
 pager                    1
+pager_min_lines          0
 recordsep                '\n'
 recordsep_zero           off
 tableattr                
