@@ -57,6 +57,7 @@
  */
 #include "postgres.h"
 
+#include <math.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -326,7 +327,6 @@ static char *generate_normalized_query(pgssJumbleState *jstate, const char *quer
 						  int *query_len_p, int encoding);
 static void fill_in_constant_lengths(pgssJumbleState *jstate, const char *query);
 static int	comp_location(const void *a, const void *b);
-static inline double sqrtd(const double x);
 
 
 /*
@@ -1583,7 +1583,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			 */
 			if (tmp.calls > 1)
 				values[i++] =
-					Float8GetDatum(sqrtd(tmp.sum_var_time / tmp.calls));
+					Float8GetDatum(sqrt(tmp.sum_var_time / tmp.calls));
 			else
 				values[i++] = Float8GetDatum(0.0);
 		}
@@ -2967,21 +2967,4 @@ comp_location(const void *a, const void *b)
 		return +1;
 	else
 		return 0;
-}
-
-/*
- * fast sqrt algorithm: reference from Fast inverse square root algorithms.
- */
-static inline double
-sqrtd(const double x)
-{
-	double      x_half = 0.5 * x;
-	long long int   tmp = 0x5FE6EB50C7B537AAl - ( *(long long int*)&x >> 1);
-	double      x_result = * (double*)&tmp;
-
-	x_result *= (1.5 - (x_half * x_result * x_result));
-	/* If retry this calculation, it becomes higher precision at sqrt */
-	x_result *= (1.5 - (x_half * x_result * x_result));
-
-	return x_result * x;
 }
