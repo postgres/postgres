@@ -4,7 +4,7 @@
  * exprparse.y
  *	  bison grammar for a simple expression syntax
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -36,9 +36,11 @@ static PgBenchExpr *make_op(char operator, PgBenchExpr *lexpr,
 %type <expr> expr
 %type <ival> INTEGER
 %type <str> VARIABLE
+
 %token INTEGER VARIABLE
 %token CHAR_ERROR /* never used, will raise a syntax error */
 
+/* Precedence: lowest to highest */
 %left	'+' '-'
 %left	'*' '/' '%'
 %right	UMINUS

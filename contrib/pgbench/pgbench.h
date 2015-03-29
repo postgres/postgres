@@ -2,7 +2,7 @@
  *
  * pgbench.h
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -18,7 +18,6 @@ typedef enum PgBenchExprType
 	ENODE_OPERATOR
 } PgBenchExprType;
 
-struct PgBenchExpr;
 typedef struct PgBenchExpr PgBenchExpr;
 
 struct PgBenchExpr
@@ -53,4 +52,4 @@ extern void expr_scanner_finish(void);
 
 extern int64 strtoint64(const char *str);
 
-#endif
+#endif	/* PGBENCH_H */
