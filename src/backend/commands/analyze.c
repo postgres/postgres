@@ -679,6 +679,8 @@ compute_index_stats(Relation onerel, double totalrows,
 		{
 			HeapTuple	heapTuple = rows[rowno];
 
+			vacuum_delay_point();
+
 			/*
 			 * Reset the per-tuple context each time, to reclaim any cruft
 			 * left behind by evaluating the predicate or index expressions.
