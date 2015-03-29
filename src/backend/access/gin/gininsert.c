@@ -370,8 +370,8 @@ ginbuild(PG_FUNCTION_ARGS)
 	buildstate.buildStats.nEntryPages++;
 
 	/*
-	 * create a temporary memory context that is reset once for each tuple
-	 * inserted into the index
+	 * create a temporary memory context that is used to hold data not yet
+	 * dumped out to the index
 	 */
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
 											  "Gin build temporary context",
@@ -379,7 +379,11 @@ ginbuild(PG_FUNCTION_ARGS)
 											  ALLOCSET_DEFAULT_INITSIZE,
 											  ALLOCSET_DEFAULT_MAXSIZE);
 
-	buildstate.funcCtx = AllocSetContextCreate(buildstate.tmpCtx,
+	/*
+	 * create a temporary memory context that is used for calling
+	 * ginExtractEntries(), and can be reset after each tuple
+	 */
+	buildstate.funcCtx = AllocSetContextCreate(CurrentMemoryContext,
 					 "Gin build temporary context for user-defined function",
 											   ALLOCSET_DEFAULT_MINSIZE,
 											   ALLOCSET_DEFAULT_INITSIZE,
@@ -408,6 +412,7 @@ ginbuild(PG_FUNCTION_ARGS)
 	}
 	MemoryContextSwitchTo(oldCtx);
 
+	MemoryContextDelete(buildstate.funcCtx);
 	MemoryContextDelete(buildstate.tmpCtx);
 
 	/*
