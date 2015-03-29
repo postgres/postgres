@@ -114,8 +114,6 @@ static int	backtick_start_offset;
 #define LEXRES_OK			3	/* OK completion of backslash argument */
 
 
-int	yylex(void);
-
 static void evaluate_backtick(void);
 static void push_new_buffer(const char *newstr, const char *varname);
 static void pop_buffer_stack(PsqlScanState state);
