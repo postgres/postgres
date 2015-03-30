@@ -53,6 +53,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "common/fe_memutils.h"
+#include "common/restricted_token.h"
 #include "storage/large_object.h"
 #include "pg_getopt.h"
 
@@ -309,6 +310,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 #endif
+
+	get_restricted_token(progname);
 
 	if (chdir(DataDir) < 0)
 	{

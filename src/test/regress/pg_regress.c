@@ -29,6 +29,7 @@
 #include <sys/resource.h>
 #endif
 
+#include "common/restricted_token.h"
 #include "common/username.h"
 #include "getopt_long.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
@@ -134,15 +135,6 @@ static void make_directory(const char *dir);
 static void header(const char *fmt,...) pg_attribute_printf(1, 2);
 static void status(const char *fmt,...) pg_attribute_printf(1, 2);
 static void psql_command(const char *database, const char *query,...) pg_attribute_printf(2, 3);
-
-#ifdef WIN32
-typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-
-/* Windows API define missing from some versions of MingW headers */
-#ifndef  DISABLE_MAX_PRIVILEGE
-#define DISABLE_MAX_PRIVILEGE	0x1
-#endif
-#endif
 
 /*
  * allow core files if possible.
@@ -1226,100 +1218,17 @@ spawn_process(const char *cmdline)
 	/* in parent */
 	return pid;
 #else
-	char	   *cmdline2;
-	BOOL		b;
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	HANDLE		origToken;
-	HANDLE		restrictedToken;
-	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
-	SID_AND_ATTRIBUTES dropSids[2];
-	__CreateRestrictedToken _CreateRestrictedToken = NULL;
-	HANDLE		Advapi32Handle;
+	PROCESS_INFORMATION	pi;
+	char	*cmdline2;
+	HANDLE	restrictedToken;
 
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-
-	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-	if (Advapi32Handle != NULL)
-	{
-		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-	}
-
-	if (_CreateRestrictedToken == NULL)
-	{
-		if (Advapi32Handle != NULL)
-			FreeLibrary(Advapi32Handle);
-		fprintf(stderr, _("%s: cannot create restricted tokens on this platform\n"),
-				progname);
-		exit(2);
-	}
-
-	/* Open the current token to use as base for the restricted one */
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
-	{
-		fprintf(stderr, _("could not open process token: error code %lu\n"),
-				GetLastError());
-		exit(2);
-	}
-
-	/* Allocate list of SIDs to remove */
-	ZeroMemory(&dropSids, sizeof(dropSids));
-	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &dropSids[0].Sid) ||
-		!AllocateAndInitializeSid(&NtAuthority, 2,
-								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
-	{
-		fprintf(stderr, _("could not allocate SIDs: error code %lu\n"), GetLastError());
-		exit(2);
-	}
-
-	b = _CreateRestrictedToken(origToken,
-							   DISABLE_MAX_PRIVILEGE,
-							   sizeof(dropSids) / sizeof(dropSids[0]),
-							   dropSids,
-							   0, NULL,
-							   0, NULL,
-							   &restrictedToken);
-
-	FreeSid(dropSids[1].Sid);
-	FreeSid(dropSids[0].Sid);
-	CloseHandle(origToken);
-	FreeLibrary(Advapi32Handle);
-
-	if (!b)
-	{
-		fprintf(stderr, _("could not create restricted token: error code %lu\n"),
-				GetLastError());
-		exit(2);
-	}
-
+	memset(&pi, 0, sizeof(pi));
 	cmdline2 = psprintf("cmd /c \"%s\"", cmdline);
 
-#ifndef __CYGWIN__
-	AddUserToTokenDacl(restrictedToken);
-#endif
-
-	if (!CreateProcessAsUser(restrictedToken,
-							 NULL,
-							 cmdline2,
-							 NULL,
-							 NULL,
-							 TRUE,
-							 CREATE_SUSPENDED,
-							 NULL,
-							 NULL,
-							 &si,
-							 &pi))
-	{
-		fprintf(stderr, _("could not start process for \"%s\": error code %lu\n"),
-				cmdline2, GetLastError());
+	if((restrictedToken =
+		CreateRestrictedProcess(cmdline2, &pi, progname)) == 0)
 		exit(2);
-	}
 
-	free(cmdline2);
-
-	ResumeThread(pi.hThread);
 	CloseHandle(pi.hThread);
 	return pi.hProcess;
 #endif

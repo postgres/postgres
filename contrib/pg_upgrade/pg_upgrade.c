@@ -37,6 +37,7 @@
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
+#include "common/restricted_token.h"
 
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
@@ -74,6 +75,8 @@ main(int argc, char **argv)
 	bool		live_check = false;
 
 	parseCommandLine(argc, argv);
+
+	get_restricted_token(os_info.progname);
 
 	adjust_data_dir(&old_cluster);
 	adjust_data_dir(&new_cluster);

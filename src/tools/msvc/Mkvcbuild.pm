@@ -95,7 +95,8 @@ sub mkvcbuild
 	  exec.c pg_crc.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
 	  string.c username.c wait_error.c);
 
-	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c));
+	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c
+	  restricted_token.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
