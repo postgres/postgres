@@ -190,12 +190,12 @@ SELECT count(*) FROM numerictmp WHERE a >  0 ;
 SET enable_bitmapscan=off;
 EXPLAIN (COSTS OFF)
 SELECT * FROM numerictmp WHERE a BETWEEN 1 AND 300 ORDER BY a;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: a
    ->  Index Only Scan using numericidx on numerictmp
-         Index Cond: ((a >= 1::numeric) AND (a <= 300::numeric))
+         Index Cond: ((a >= '1'::numeric) AND (a <= '300'::numeric))
 (4 rows)
 
 SELECT * FROM numerictmp WHERE a BETWEEN 1 AND 300 ORDER BY a;

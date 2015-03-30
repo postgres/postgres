@@ -284,10 +284,10 @@ ERROR:  cannot compare dissimilar column types bigint and integer at record colu
 explain (costs off)
 select * from int8_tbl i8
 where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
-                                                 QUERY PLAN                                                  
--------------------------------------------------------------------------------------------------------------
+                                                   QUERY PLAN                                                    
+-----------------------------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8
-   Filter: (i8.* = ANY (ARRAY[ROW(123::bigint, 456::bigint)::int8_tbl, '(4567890123456789,123)'::int8_tbl]))
+   Filter: (i8.* = ANY (ARRAY[ROW('123'::bigint, '456'::bigint)::int8_tbl, '(4567890123456789,123)'::int8_tbl]))
 (2 rows)
 
 select * from int8_tbl i8

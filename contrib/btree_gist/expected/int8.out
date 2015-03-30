@@ -74,11 +74,11 @@ SELECT count(*) FROM int8tmp WHERE a >  464571291354841::int8;
 
 EXPLAIN (COSTS OFF)
 SELECT a, a <-> '464571291354841' FROM int8tmp ORDER BY a <-> '464571291354841' LIMIT 3;
-                    QUERY PLAN                     
----------------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Limit
    ->  Index Only Scan using int8idx on int8tmp
-         Order By: (a <-> 464571291354841::bigint)
+         Order By: (a <-> '464571291354841'::bigint)
 (3 rows)
 
 SELECT a, a <-> '464571291354841' FROM int8tmp ORDER BY a <-> '464571291354841' LIMIT 3;

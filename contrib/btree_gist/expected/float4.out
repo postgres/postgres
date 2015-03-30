@@ -78,7 +78,7 @@ SELECT a, a <-> '-179.0' FROM float4tmp ORDER BY a <-> '-179.0' LIMIT 3;
 ----------------------------------------------------
  Limit
    ->  Index Only Scan using float4idx on float4tmp
-         Order By: (a <-> (-179)::real)
+         Order By: (a <-> '-179'::real)
 (3 rows)
 
 SELECT a, a <-> '-179.0' FROM float4tmp ORDER BY a <-> '-179.0' LIMIT 3;

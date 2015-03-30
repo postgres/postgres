@@ -78,7 +78,7 @@ SELECT a, a <-> '237' FROM int2tmp ORDER BY a <-> '237' LIMIT 3;
 ------------------------------------------------
  Limit
    ->  Index Only Scan using int2idx on int2tmp
-         Order By: (a <-> 237::smallint)
+         Order By: (a <-> '237'::smallint)
 (3 rows)
 
 SELECT a, a <-> '237' FROM int2tmp ORDER BY a <-> '237' LIMIT 3;

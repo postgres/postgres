@@ -2083,8 +2083,8 @@ SELECT * FROM parent;
 EXPLAIN (VERBOSE, COSTS OFF)
 WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
 DELETE FROM a USING wcte WHERE aa = q2;
-                   QUERY PLAN                   
-------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Delete on public.a
    Delete on public.a
    Delete on public.b
@@ -2094,7 +2094,7 @@ DELETE FROM a USING wcte WHERE aa = q2;
      ->  Insert on public.int8_tbl
            Output: int8_tbl.q2
            ->  Result
-                 Output: 42::bigint, 47::bigint
+                 Output: '42'::bigint, '47'::bigint
    ->  Nested Loop
          Output: a.ctid, wcte.*
          Join Filter: (a.aa = wcte.q2)

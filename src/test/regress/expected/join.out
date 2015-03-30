@@ -2544,16 +2544,16 @@ SELECT qq, unique1
   ( SELECT COALESCE(q2, -1) AS qq FROM int8_tbl b ) AS ss2
   USING (qq)
   INNER JOIN tenk1 c ON qq = unique2;
-                                              QUERY PLAN                                               
--------------------------------------------------------------------------------------------------------
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
  Nested Loop
    ->  Hash Full Join
-         Hash Cond: (COALESCE(a.q1, 0::bigint) = COALESCE(b.q2, (-1)::bigint))
+         Hash Cond: (COALESCE(a.q1, '0'::bigint) = COALESCE(b.q2, '-1'::bigint))
          ->  Seq Scan on int8_tbl a
          ->  Hash
                ->  Seq Scan on int8_tbl b
    ->  Index Scan using tenk1_unique2 on tenk1 c
-         Index Cond: (unique2 = COALESCE((COALESCE(a.q1, 0::bigint)), (COALESCE(b.q2, (-1)::bigint))))
+         Index Cond: (unique2 = COALESCE((COALESCE(a.q1, '0'::bigint)), (COALESCE(b.q2, '-1'::bigint))))
 (8 rows)
 
 SELECT qq, unique1
@@ -3003,10 +3003,10 @@ select * from
 ) ss
 where fault = 122
 order by fault;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop Left Join
-   Filter: ((COALESCE(tenk1.unique1, (-1)) + int8_tbl.q1) = 122)
+   Filter: ((COALESCE(tenk1.unique1, '-1'::integer) + int8_tbl.q1) = 122)
    ->  Seq Scan on int8_tbl
    ->  Index Scan using tenk1_unique2 on tenk1
          Index Cond: (int8_tbl.q2 = unique2)
@@ -4012,14 +4012,14 @@ explain (verbose, costs off)
 select * from
   int8_tbl a left join
   lateral (select *, coalesce(a.q2, 42) as x from int8_tbl b) ss on a.q2 = ss.q1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Nested Loop Left Join
-   Output: a.q1, a.q2, b.q1, b.q2, (COALESCE(a.q2, 42::bigint))
+   Output: a.q1, a.q2, b.q1, b.q2, (COALESCE(a.q2, '42'::bigint))
    ->  Seq Scan on public.int8_tbl a
          Output: a.q1, a.q2
    ->  Seq Scan on public.int8_tbl b
-         Output: b.q1, b.q2, COALESCE(a.q2, 42::bigint)
+         Output: b.q1, b.q2, COALESCE(a.q2, '42'::bigint)
          Filter: (a.q2 = b.q1)
 (7 rows)
 
@@ -4235,32 +4235,32 @@ select * from
     lateral (select q1, coalesce(ss1.x,q2) as y from int8_tbl d) ss2
   ) on c.q2 = ss2.q1,
   lateral (select ss2.y offset 0) ss3;
-                                                                                  QUERY PLAN                                                                                  
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Nested Loop
-   Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint)), d.q1, (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)), ((COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)))
+   Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, '42'::bigint)), d.q1, (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2)), ((COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2)))
    ->  Hash Right Join
-         Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
+         Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, '42'::bigint)), (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
          Hash Cond: (d.q1 = c.q2)
          ->  Nested Loop
-               Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
+               Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, '42'::bigint)), (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
                ->  Hash Left Join
-                     Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint))
+                     Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, '42'::bigint))
                      Hash Cond: (a.q2 = b.q1)
                      ->  Seq Scan on public.int8_tbl a
                            Output: a.q1, a.q2
                      ->  Hash
-                           Output: b.q1, (COALESCE(b.q2, 42::bigint))
+                           Output: b.q1, (COALESCE(b.q2, '42'::bigint))
                            ->  Seq Scan on public.int8_tbl b
-                                 Output: b.q1, COALESCE(b.q2, 42::bigint)
+                                 Output: b.q1, COALESCE(b.q2, '42'::bigint)
                ->  Seq Scan on public.int8_tbl d
-                     Output: d.q1, COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)
+                     Output: d.q1, COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2)
          ->  Hash
                Output: c.q1, c.q2
                ->  Seq Scan on public.int8_tbl c
                      Output: c.q1, c.q2
    ->  Result
-         Output: (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
+         Output: (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
 (24 rows)
 
 -- case that breaks the old ph_may_need optimization
