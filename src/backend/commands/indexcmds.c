@@ -1685,14 +1685,28 @@ ReindexIndex(RangeVar *indexRelation)
 {
 	Oid			indOid;
 	Oid			heapOid = InvalidOid;
+	Relation	irel;
+	char		persistence;
 
-	/* lock level used here should match index lock reindex_index() */
+	/*
+	 * Find and lock index, and check permissions on table; use callback to
+	 * obtain lock on table first, to avoid deadlock hazard.  The lock level
+	 * used here must match the index lock obtained in reindex_index().
+	 */
 	indOid = RangeVarGetRelidExtended(indexRelation, AccessExclusiveLock,
 									  false, false,
 									  RangeVarCallbackForReindexIndex,
 									  (void *) &heapOid);
 
-	reindex_index(indOid, false, indexRelation->relpersistence);
+	/*
+	 * Obtain the current persistence of the existing index.  We already hold
+	 * lock on the index.
+	 */
+	irel = index_open(indOid, NoLock);
+	persistence = irel->rd_rel->relpersistence;
+	index_close(irel, NoLock);
+
+	reindex_index(indOid, false, persistence);
 
 	return indOid;
 }
