@@ -601,20 +601,20 @@ SELECT * FROM sal_emp WHERE pay_by_quarter && ARRAY[10000];
  </para>
 
  <para>
-  You can also search for specific values in an array using the <function>array_offset</>
-  and <function>array_offsets</> functions. The former returns the position of
+  You can also search for specific values in an array using the <function>array_position</>
+  and <function>array_positions</> functions. The former returns the subscript of
   the first occurrence of a value in an array; the latter returns an array with the
-  positions of all occurrences of the value in the array.  For example:
+  subscripts of all occurrences of the value in the array.  For example:
 
 <programlisting>
-SELECT array_offset(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon');
- array_offset
---------------
+SELECT array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon');
+ array_positions
+-----------------
  2
 
-SELECT array_offsets(ARRAY[1, 4, 3, 1, 3, 4, 2, 1], 1);
- array_offsets 
----------------
+SELECT array_positions(ARRAY[1, 4, 3, 1, 3, 4, 2, 1], 1);
+ array_positions
+-----------------
  {1,4,8}
 </programlisting>
  </para>

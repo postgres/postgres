@@ -11481,10 +11481,10 @@ SELECT NULLIF(value, '(none)') ...
     <primary>array_lower</primary>
   </indexterm>
   <indexterm>
-    <primary>array_offset</primary>
+    <primary>array_position</primary>
   </indexterm>
   <indexterm>
-    <primary>array_offsets</primary>
+    <primary>array_positions</primary>
   </indexterm>
   <indexterm>
     <primary>array_prepend</primary>
@@ -11606,27 +11606,27 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
-          <function>array_offset</function>(<type>anyarray</type>, <type>anyelement</type> <optional>, <type>int</type></optional>)
+          <function>array_position</function>(<type>anyarray</type>, <type>anyelement</type> <optional>, <type>int</type></optional>)
          </literal>
         </entry>
         <entry><type>int</type></entry>
-        <entry>returns the offset of the first occurrence of the second
+        <entry>returns the subscript of the first occurrence of the second
         argument in the array, starting at the element indicated by the third
         argument or at the first element (array must be one-dimensional)</entry>
-        <entry><literal>array_offset(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon')</literal></entry>
+        <entry><literal>array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon')</literal></entry>
         <entry><literal>2</literal></entry>
        </row>
        <row>
         <entry>
          <literal>
-          <function>array_offsets</function>(<type>anyarray</type>, <type>anyelement</type>)
+          <function>array_positions</function>(<type>anyarray</type>, <type>anyelement</type>)
          </literal>
         </entry>
         <entry><type>int[]</type></entry>
-        <entry>returns an array of offsets of all occurrences of the second
+        <entry>returns an array of subscripts of all occurrences of the second
         argument in the array given as first argument (array must be
         one-dimensional)</entry>
-        <entry><literal>array_offsets(ARRAY['A','A','B','A'], 'A')</literal></entry>
+        <entry><literal>array_positions(ARRAY['A','A','B','A'], 'A')</literal></entry>
         <entry><literal>{1,2,4}</literal></entry>
        </row>
        <row>
@@ -11741,18 +11741,18 @@ NULL baz</literallayout>(3 rows)</entry>
     </table>
 
    <para>
-    In <function>array_offset</function> and <function>array_offsets</>,
+    In <function>array_position</function> and <function>array_positions</>,
     each array element is compared to the searched value using
     <literal>IS NOT DISTINCT FROM</literal> semantics.
    </para>
 
    <para>
-    In <function>array_offset</function>, <literal>NULL</literal> is returned
+    In <function>array_position</function>, <literal>NULL</literal> is returned
     if the value is not found.
    </para>
 
    <para>
-    In <function>array_offsets</function>, <literal>NULL</literal> is returned
+    In <function>array_positions</function>, <literal>NULL</literal> is returned
     only if the array is <literal>NULL</literal>; if the value is not found in
     the array, an empty array is returned instead.
    </para>

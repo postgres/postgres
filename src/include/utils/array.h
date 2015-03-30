@@ -358,9 +358,9 @@ extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_array_transfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_array_finalfn(PG_FUNCTION_ARGS);
 
-extern Datum array_offset(PG_FUNCTION_ARGS);
-extern Datum array_offset_start(PG_FUNCTION_ARGS);
-extern Datum array_offsets(PG_FUNCTION_ARGS);
+extern Datum array_position(PG_FUNCTION_ARGS);
+extern Datum array_position_start(PG_FUNCTION_ARGS);
+extern Datum array_positions(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions defined in array_typanalyze.c

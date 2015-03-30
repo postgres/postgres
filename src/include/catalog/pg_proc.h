@@ -895,11 +895,11 @@ DATA(insert OID = 515 (  array_larger	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 
 DESCR("larger of two");
 DATA(insert OID = 516 (  array_smaller	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2277 "2277 2277" _null_ _null_ _null_ _null_ array_smaller _null_ _null_ _null_ ));
 DESCR("smaller of two");
-DATA(insert OID = 3277 (  array_offset		   PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 23 "2277 2283" _null_ _null_ _null_ _null_ array_offset _null_ _null_ _null_ ));
+DATA(insert OID = 3277 (  array_position		   PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 23 "2277 2283" _null_ _null_ _null_ _null_ array_position _null_ _null_ _null_ ));
 DESCR("returns a offset of value in array");
-DATA(insert OID = 3278 (  array_offset		   PGNSP PGUID 12 1 0 0 0 f f f f f f i 3 0 23 "2277 2283 23" _null_ _null_ _null_ _null_ array_offset_start _null_ _null_ _null_ ));
+DATA(insert OID = 3278 (  array_position		   PGNSP PGUID 12 1 0 0 0 f f f f f f i 3 0 23 "2277 2283 23" _null_ _null_ _null_ _null_ array_position_start _null_ _null_ _null_ ));
 DESCR("returns a offset of value in array with start index");
-DATA(insert OID = 3279 (  array_offsets		   PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 1007 "2277 2283" _null_ _null_ _null_ _null_ array_offsets _null_ _null_ _null_ ));
+DATA(insert OID = 3279 (  array_positions		   PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 1007 "2277 2283" _null_ _null_ _null_ _null_ array_positions _null_ _null_ _null_ ));
 DESCR("returns a array of offsets of some value in array");
 DATA(insert OID = 1191 (  generate_subscripts PGNSP PGUID 12 1 1000 0 0 f f f f t t i 3 0 23 "2277 23 16" _null_ _null_ _null_ _null_ generate_subscripts _null_ _null_ _null_ ));
 DESCR("array subscripts generator");

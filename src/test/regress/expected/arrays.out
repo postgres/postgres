@@ -366,83 +366,83 @@ SELECT array_cat(ARRAY[[3,4],[5,6]], ARRAY[1,2]) AS "{{3,4},{5,6},{1,2}}";
  {{3,4},{5,6},{1,2}}
 (1 row)
 
-SELECT array_offset(ARRAY[1,2,3,4,5], 4);
- array_offset 
---------------
-            4
+SELECT array_position(ARRAY[1,2,3,4,5], 4);
+ array_position 
+----------------
+              4
 (1 row)
 
-SELECT array_offset(ARRAY[5,3,4,2,1], 4);
- array_offset 
---------------
-            3
+SELECT array_position(ARRAY[5,3,4,2,1], 4);
+ array_position 
+----------------
+              3
 (1 row)
 
-SELECT array_offset(ARRAY[[1,2],[3,4]], 3);
+SELECT array_position(ARRAY[[1,2],[3,4]], 3);
 ERROR:  searching for elements in multidimensional arrays is not supported
-SELECT array_offset(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon');
- array_offset 
---------------
-            2
+SELECT array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon');
+ array_position 
+----------------
+              2
 (1 row)
 
-SELECT array_offset(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'sat');
- array_offset 
---------------
-            7
+SELECT array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'sat');
+ array_position 
+----------------
+              7
 (1 row)
 
-SELECT array_offset(ARRAY['sun','mon','tue','wed','thu','fri','sat'], NULL);
- array_offset 
---------------
-             
+SELECT array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], NULL);
+ array_position 
+----------------
+               
 (1 row)
 
-SELECT array_offset(ARRAY['sun','mon','tue','wed','thu',NULL,'fri','sat'], NULL);
- array_offset 
---------------
-            6
+SELECT array_position(ARRAY['sun','mon','tue','wed','thu',NULL,'fri','sat'], NULL);
+ array_position 
+----------------
+              6
 (1 row)
 
-SELECT array_offset(ARRAY['sun','mon','tue','wed','thu',NULL,'fri','sat'], 'sat');
- array_offset 
---------------
-            8
+SELECT array_position(ARRAY['sun','mon','tue','wed','thu',NULL,'fri','sat'], 'sat');
+ array_position 
+----------------
+              8
 (1 row)
 
-SELECT array_offsets(NULL, 10);
- array_offsets 
----------------
+SELECT array_positions(NULL, 10);
+ array_positions 
+-----------------
  
 (1 row)
 
-SELECT array_offsets(NULL, NULL::int);
- array_offsets 
----------------
+SELECT array_positions(NULL, NULL::int);
+ array_positions 
+-----------------
  
 (1 row)
 
-SELECT array_offsets(ARRAY[1,2,3,4,5,6,1,2,3,4,5,6], 4);
- array_offsets 
----------------
+SELECT array_positions(ARRAY[1,2,3,4,5,6,1,2,3,4,5,6], 4);
+ array_positions 
+-----------------
  {4,10}
 (1 row)
 
-SELECT array_offsets(ARRAY[[1,2],[3,4]], 4);
+SELECT array_positions(ARRAY[[1,2],[3,4]], 4);
 ERROR:  searching for elements in multidimensional arrays is not supported
-SELECT array_offsets(ARRAY[1,2,3,4,5,6,1,2,3,4,5,6], NULL);
- array_offsets 
----------------
+SELECT array_positions(ARRAY[1,2,3,4,5,6,1,2,3,4,5,6], NULL);
+ array_positions 
+-----------------
  {}
 (1 row)
 
-SELECT array_offsets(ARRAY[1,2,3,NULL,5,6,1,2,3,NULL,5,6], NULL);
- array_offsets 
----------------
+SELECT array_positions(ARRAY[1,2,3,NULL,5,6,1,2,3,NULL,5,6], NULL);
+ array_positions 
+-----------------
  {4,10}
 (1 row)
 
-SELECT array_length(array_offsets(ARRAY(SELECT 'AAAAAAAAAAAAAAAAAAAAAAAAA'::text || i % 10
+SELECT array_length(array_positions(ARRAY(SELECT 'AAAAAAAAAAAAAAAAAAAAAAAAA'::text || i % 10
                                           FROM generate_series(1,100) g(i)),
                                   'AAAAAAAAAAAAAAAAAAAAAAAAA5'), 1);
  array_length 
@@ -455,17 +455,29 @@ DECLARE
   o int;
   a int[] := ARRAY[1,2,3,2,3,1,2];
 BEGIN
-  o := array_offset(a, 2);
+  o := array_position(a, 2);
   WHILE o IS NOT NULL
   LOOP
     RAISE NOTICE '%', o;
-    o := array_offset(a, 2, o + 1);
+    o := array_position(a, 2, o + 1);
   END LOOP;
 END
 $$ LANGUAGE plpgsql;
 NOTICE:  2
 NOTICE:  4
 NOTICE:  7
+SELECT array_position('[2:4]={1,2,3}'::int[], 1);
+ array_position 
+----------------
+              2
+(1 row)
+
+SELECT array_positions('[2:4]={1,2,3}'::int[], 1);
+ array_positions 
+-----------------
+ {2}
+(1 row)
+
 -- operators
 SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];
        a       
