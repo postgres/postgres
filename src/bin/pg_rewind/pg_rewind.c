@@ -248,7 +248,7 @@ main(int argc, char **argv)
 	/*
 	 * Build the filemap, by comparing the remote and local data directories.
 	 */
-	(void) filemap_create();
+	filemap_create();
 	pg_log(PG_PROGRESS, "reading source file list\n");
 	fetchRemoteFileList();
 	pg_log(PG_PROGRESS, "reading target file list\n");

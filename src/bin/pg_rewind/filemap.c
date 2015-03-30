@@ -30,12 +30,12 @@ static char *datasegpath(RelFileNode rnode, ForkNumber forknum,
 			BlockNumber segno);
 static int	path_cmp(const void *a, const void *b);
 static int	final_filemap_cmp(const void *a, const void *b);
-static void filemap_list_to_array(void);
+static void filemap_list_to_array(filemap_t *map);
 
 /*
- * Create a new file map.
+ * Create a new file map (stored in the global pointer "filemap").
  */
-filemap_t *
+void
 filemap_create(void)
 {
 	filemap_t  *map;
@@ -48,8 +48,6 @@ filemap_create(void)
 
 	Assert(filemap == NULL);
 	filemap = map;
-
-	return map;
 }
 
 /*
@@ -271,7 +269,10 @@ process_local_file(const char *path, file_type_t type, size_t oldsize,
 			pg_fatal("remote file list is empty\n");
 		}
 
-		filemap_list_to_array();
+		filemap_list_to_array(map);
+
+		Assert(map->array != NULL);
+
 		qsort(map->array, map->narray, sizeof(file_entry_t *), path_cmp);
 	}
 
@@ -284,8 +285,8 @@ process_local_file(const char *path, file_type_t type, size_t oldsize,
 
 	key.path = (char *) path;
 	key_ptr = &key;
-	exists = bsearch(&key_ptr, map->array, map->narray, sizeof(file_entry_t *),
-					 path_cmp) != NULL;
+	exists = (bsearch(&key_ptr, map->array, map->narray, sizeof(file_entry_t *),
+					  path_cmp) != NULL);
 
 	/* Remove any file or folder that doesn't exist in the remote system. */
 	if (!exists)
@@ -335,7 +336,7 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 	filemap_t  *map = filemap;
 	file_entry_t **e;
 
-	Assert(filemap->array);
+	Assert(map->array);
 
 	segno = blkno / RELSEG_SIZE;
 	blkno_inseg = blkno % RELSEG_SIZE;
@@ -395,38 +396,40 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 }
 
 /*
- * Convert the linked list of entries in filemap->first/last to the array,
- * filemap->array.
+ * Convert the linked list of entries in map->first/last to the array,
+ * map->array.
  */
 static void
-filemap_list_to_array(void)
+filemap_list_to_array(filemap_t *map)
 {
 	int			narray;
 	file_entry_t *entry,
 			   *next;
 
-	filemap->array =
-		pg_realloc(filemap->array,
-				   (filemap->nlist + filemap->narray) * sizeof(file_entry_t));
+	map->array = (file_entry_t **)
+		pg_realloc(map->array,
+				   (map->nlist + map->narray) * sizeof(file_entry_t *));
 
-	narray = filemap->narray;
-	for (entry = filemap->first; entry != NULL; entry = next)
+	narray = map->narray;
+	for (entry = map->first; entry != NULL; entry = next)
 	{
-		filemap->array[narray++] = entry;
+		map->array[narray++] = entry;
 		next = entry->next;
 		entry->next = NULL;
 	}
-	Assert(narray == filemap->nlist + filemap->narray);
-	filemap->narray = narray;
-	filemap->nlist = 0;
-	filemap->first = filemap->last = NULL;
+	Assert(narray == map->nlist + map->narray);
+	map->narray = narray;
+	map->nlist = 0;
+	map->first = map->last = NULL;
 }
 
 void
 filemap_finalize(void)
 {
-	filemap_list_to_array();
-	qsort(filemap->array, filemap->narray, sizeof(file_entry_t *),
+	filemap_t  *map = filemap;
+
+	filemap_list_to_array(map);
+	qsort(map->array, map->narray, sizeof(file_entry_t *),
 		  final_filemap_cmp);
 }
 
@@ -466,9 +469,9 @@ calculate_totals(void)
 	map->total_size = 0;
 	map->fetch_size = 0;
 
-	for (i = 0; i < filemap->narray; i++)
+	for (i = 0; i < map->narray; i++)
 	{
-		entry = filemap->array[i];
+		entry = map->array[i];
 
 		if (entry->type != FILE_TYPE_REGULAR)
 			continue;
@@ -501,12 +504,13 @@ calculate_totals(void)
 void
 print_filemap(void)
 {
+	filemap_t  *map = filemap;
 	file_entry_t *entry;
 	int			i;
 
-	for (i = 0; i < filemap->narray; i++)
+	for (i = 0; i < map->narray; i++)
 	{
-		entry = filemap->array[i];
+		entry = map->array[i];
 		if (entry->action != FILE_ACTION_NONE ||
 			entry->pagemap.bitmapsize > 0)
 		{

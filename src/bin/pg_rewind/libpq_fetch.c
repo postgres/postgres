@@ -285,6 +285,10 @@ receiveFileChunks(const char *sql)
 		open_target_file(filename, false);
 
 		write_target_range(chunk, chunkoff, chunksize);
+
+		pg_free(filename);
+
+		PQclear(res);
 	}
 }
 

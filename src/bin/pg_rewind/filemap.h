@@ -29,8 +29,7 @@ typedef enum
 	FILE_ACTION_NONE,		/* no action (we might still copy modified blocks
 							 * based on the parsed WAL) */
 	FILE_ACTION_TRUNCATE,	/* truncate local file to 'newsize' bytes */
-	FILE_ACTION_REMOVE,		/* remove local file / directory / symlink */
-
+	FILE_ACTION_REMOVE		/* remove local file / directory / symlink */
 } file_action_t;
 
 typedef enum
@@ -40,7 +39,7 @@ typedef enum
 	FILE_TYPE_SYMLINK
 } file_type_t;
 
-struct file_entry_t
+typedef struct file_entry_t
 {
 	char	   *path;
 	file_type_t type;
@@ -58,11 +57,9 @@ struct file_entry_t
 	char		*link_target;
 
 	struct file_entry_t *next;
-};
+} file_entry_t;
 
-typedef struct file_entry_t file_entry_t;
-
-struct filemap_t
+typedef struct filemap_t
 {
 	/*
 	 * New entries are accumulated to a linked list, in process_remote_file
@@ -70,7 +67,7 @@ struct filemap_t
 	 */
 	file_entry_t *first;
 	file_entry_t *last;
-	int			nlist;
+	int			nlist;			/* number of entries currently in list */
 
 	/*
 	 * After processing all the remote files, the entries in the linked list
@@ -80,7 +77,7 @@ struct filemap_t
 	 * the array, and the linked list is empty.
 	 */
 	file_entry_t **array;
-	int			narray;
+	int			narray;			/* current length of array */
 
 	/*
 	 * Summary information. total_size is the total size of the source cluster,
@@ -88,14 +85,11 @@ struct filemap_t
 	 */
 	uint64		total_size;
 	uint64		fetch_size;
-};
+} filemap_t;
 
-typedef struct filemap_t filemap_t;
+extern filemap_t *filemap;
 
-extern filemap_t * filemap;
-
-extern filemap_t *filemap_create(void);
-
+extern void filemap_create(void);
 extern void calculate_totals(void);
 extern void print_filemap(void);
 
