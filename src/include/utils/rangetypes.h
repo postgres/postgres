@@ -209,6 +209,7 @@ extern RangeType *make_empty_range(TypeCacheEntry *typcache);
 extern Datum range_gist_consistent(PG_FUNCTION_ARGS);
 extern Datum range_gist_compress(PG_FUNCTION_ARGS);
 extern Datum range_gist_decompress(PG_FUNCTION_ARGS);
+extern Datum range_gist_fetch(PG_FUNCTION_ARGS);
 extern Datum range_gist_union(PG_FUNCTION_ARGS);
 extern Datum range_gist_penalty(PG_FUNCTION_ARGS);
 extern Datum range_gist_picksplit(PG_FUNCTION_ARGS);

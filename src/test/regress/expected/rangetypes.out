@@ -1072,6 +1072,25 @@ select count(*) from test_range_spgist where ir -|- int4range(100,500);
      5
 (1 row)
 
+-- test index-only scans
+explain (costs off)
+select ir from test_range_spgist where ir -|- int4range(10,20) order by ir;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Sort
+   Sort Key: ir
+   ->  Index Only Scan using test_range_spgist_idx on test_range_spgist
+         Index Cond: (ir -|- '[10,20)'::int4range)
+(4 rows)
+
+select ir from test_range_spgist where ir -|- int4range(10,20) order by ir;
+     ir     
+------------
+ [20,30)
+ [20,30)
+ [20,10020)
+(3 rows)
+
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;

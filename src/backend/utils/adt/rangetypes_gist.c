@@ -216,7 +216,7 @@ range_gist_union(PG_FUNCTION_ARGS)
 	PG_RETURN_RANGE(result_range);
 }
 
-/* compress, decompress are no-ops */
+/* compress, decompress, fetch are no-ops */
 Datum
 range_gist_compress(PG_FUNCTION_ARGS)
 {
@@ -227,6 +227,14 @@ range_gist_compress(PG_FUNCTION_ARGS)
 
 Datum
 range_gist_decompress(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+
+	PG_RETURN_POINTER(entry);
+}
+
+Datum
+range_gist_fetch(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 
