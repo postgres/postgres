@@ -403,9 +403,7 @@ BackendIdGetProc(int backendID)
 void
 BackendIdGetTransactionIds(int backendID, TransactionId *xid, TransactionId *xmin)
 {
-	ProcState  *stateP;
 	SISeg	   *segP = shmInvalBuffer;
-	PGXACT	   *xact;
 
 	*xid = InvalidTransactionId;
 	*xmin = InvalidTransactionId;
@@ -415,11 +413,16 @@ BackendIdGetTransactionIds(int backendID, TransactionId *xid, TransactionId *xmi
 
 	if (backendID > 0 && backendID <= segP->lastBackend)
 	{
-		stateP = &segP->procState[backendID - 1];
-		xact = &ProcGlobal->allPgXact[stateP->proc->pgprocno];
+		ProcState  *stateP = &segP->procState[backendID - 1];
+		PGPROC	   *proc = stateP->proc;
 
-		*xid = xact->xid;
-		*xmin = xact->xmin;
+		if (proc != NULL)
+		{
+			PGXACT	   *xact = &ProcGlobal->allPgXact[proc->pgprocno];
+
+			*xid = xact->xid;
+			*xmin = xact->xmin;
+		}
 	}
 
 	LWLockRelease(SInvalWriteLock);
