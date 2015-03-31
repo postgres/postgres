@@ -13234,7 +13234,7 @@ makeRangeVarFromAnyName(List *names, int position, core_yyscan_t yyscanner)
 			r->relname = strVal(lsecond(names));
 			break;
 		case 3:
-			r->catalogname = strVal(linitial(names));;
+			r->catalogname = strVal(linitial(names));
 			r->schemaname = strVal(lsecond(names));
 			r->relname = strVal(lthird(names));
 			break;
