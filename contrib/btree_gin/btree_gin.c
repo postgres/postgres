@@ -318,10 +318,7 @@ GIN_SUPPORT(macaddr, false, leftmostvalue_macaddr, macaddr_cmp)
 static Datum
 leftmostvalue_inet(void)
 {
-	return DirectFunctionCall3(inet_in,
-							   CStringGetDatum("0.0.0.0/0"),
-							   ObjectIdGetDatum(0),
-							   Int32GetDatum(-1));
+	return DirectFunctionCall1(inet_in, CStringGetDatum("0.0.0.0/0"));
 }
 GIN_SUPPORT(inet, true, leftmostvalue_inet, network_cmp)
 
