@@ -2325,7 +2325,8 @@ vacuum_db(void)
 
 	PG_CMD_OPEN;
 
-	PG_CMD_PUTS("ANALYZE;\nVACUUM FULL;\nVACUUM FREEZE;\n");
+	/* Run analyze before VACUUM so the statistics are frozen. */
+	PG_CMD_PUTS("ANALYZE;\nVACUUM FREEZE;\n");
 
 	PG_CMD_CLOSE;
 
