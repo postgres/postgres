@@ -952,7 +952,7 @@ chr			(PG_FUNCTION_ARGS)
 		if (bytes == 2)
 		{
 			wch[0] = 0xC0 | ((cvalue >> 6) & 0x1F);
-			wch[1] = 0x80 | (cvalue & 0x3F);;
+			wch[1] = 0x80 | (cvalue & 0x3F);
 		}
 		else if (bytes == 3)
 		{
