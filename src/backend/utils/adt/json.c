@@ -154,7 +154,7 @@ static inline void
 lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 {
 	if (!lex_accept(lex, token, NULL))
-		report_parse_error(ctx, lex);;
+		report_parse_error(ctx, lex);
 }
 
 /* chars to consider as part of an alphanumeric token */

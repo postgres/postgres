@@ -316,7 +316,7 @@ foreign_expr_walker(Node *node,
 			break;
 		case T_ArrayRef:
 			{
-				ArrayRef   *ar = (ArrayRef *) node;;
+				ArrayRef   *ar = (ArrayRef *) node;
 
 				/* Assignment should not be in restrictions. */
 				if (ar->refassgnexpr != NULL)
