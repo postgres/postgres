@@ -2249,6 +2249,9 @@ _align2string(enum printFormat in)
 		case PRINT_HTML:
 			return "html";
 			break;
+		case PRINT_ASCIIDOC:
+			return "asciidoc";
+			break;
 		case PRINT_LATEX:
 			return "latex";
 			break;
@@ -2325,6 +2328,8 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.format = PRINT_WRAPPED;
 		else if (pg_strncasecmp("html", value, vallen) == 0)
 			popt->topt.format = PRINT_HTML;
+		else if (pg_strncasecmp("asciidoc", value, vallen) == 0)
+			popt->topt.format = PRINT_ASCIIDOC;
 		else if (pg_strncasecmp("latex", value, vallen) == 0)
 			popt->topt.format = PRINT_LATEX;
 		else if (pg_strncasecmp("latex-longtable", value, vallen) == 0)
@@ -2333,7 +2338,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.format = PRINT_TROFF_MS;
 		else
 		{
-			psql_error("\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n");
+			psql_error("\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, troff-ms\n");
 			return false;
 		}
 

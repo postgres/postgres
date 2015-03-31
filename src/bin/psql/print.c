@@ -1879,6 +1879,227 @@ print_html_vertical(const printTableContent *cont, FILE *fout)
 
 
 /*************************/
+/* ASCIIDOC		 */
+/*************************/
+
+static void
+asciidoc_escaped_print(const char *in, FILE *fout)
+{
+	const char *p;
+	for (p = in; *p; p++)
+	{
+		switch(*p)
+		{
+			case '|':
+				fputs("\\|", fout);
+				break;
+			default:
+				fputc(*p, fout);
+		}
+	}
+}
+
+static void
+print_asciidoc_text(const printTableContent *cont, FILE *fout)
+{
+	bool		opt_tuples_only = cont->opt->tuples_only;
+	unsigned short opt_border = cont->opt->border;
+	unsigned int i;
+	const char *const * ptr;
+
+	if (cancel_pressed)
+		return;
+
+	if (cont->opt->start_table)
+	{
+		/* print table in new paragraph - enforce preliminary new line */
+		fputs("\n", fout);
+
+		/* print title */
+		if (!opt_tuples_only && cont->title)
+		{
+			fputs(".", fout);
+			fputs(cont->title, fout);
+			fputs("\n", fout);
+		}
+
+		/* print table [] header definition */
+		fprintf(fout, "[%scols=\"", !opt_tuples_only ? "options=\"header\"," : "");
+		for(i = 0; i < cont->ncolumns; i++)
+		{
+			if (i != 0)
+				fputs(",", fout);
+			fprintf(fout, "%s", cont->aligns[(i) % cont->ncolumns] == 'r' ? ">l" : "<l");
+		}
+		fputs("\"", fout);
+		switch (opt_border)
+		{
+			case 0:
+				fputs(",frame=\"none\",grid=\"none\"", fout);
+				break;
+			case 1:
+				fputs(",frame=\"none\"", fout);
+				break;
+			case 2:
+				fputs(",frame=\"all\",grid=\"all\"", fout);
+				break;
+		}
+		fputs("]\n", fout);
+		fputs("|====\n", fout);
+
+		/* print headers */
+		if (!opt_tuples_only)
+		{
+			for (ptr = cont->headers; *ptr; ptr++)
+			{
+				if (ptr != cont->headers)
+					fputs(" ", fout);
+				fputs("^l|", fout);
+				asciidoc_escaped_print(*ptr, fout);
+			}
+			fputs("\n", fout);
+		}
+	}
+
+	/* print cells */
+	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
+	{
+		if (i % cont->ncolumns == 0)
+		{
+			if (cancel_pressed)
+				break;
+		}
+
+		if (i % cont->ncolumns != 0)
+			fputs(" ", fout);
+		fputs("|", fout);
+
+		/* protect against needless spaces */
+		if ((*ptr)[strspn(*ptr, " \t")] == '\0')
+		{
+			if ((i + 1) % cont->ncolumns != 0)
+				fputs(" ", fout);
+		}
+		else
+			asciidoc_escaped_print(*ptr, fout);
+
+		if ((i + 1) % cont->ncolumns == 0)
+			fputs("\n", fout);
+	}
+
+	fputs("|====\n", fout);
+
+	if (cont->opt->stop_table)
+	{
+		printTableFooter *footers = footers_with_default(cont);
+
+		/* print footers */
+		if (!opt_tuples_only && footers != NULL && !cancel_pressed)
+		{
+			printTableFooter *f;
+
+			fputs("\n....\n", fout);
+			for (f = footers; f; f = f->next)
+			{
+				fputs(f->data, fout);
+				fputs("\n", fout);
+			}
+			fputs("....\n", fout);
+		}
+	}
+}
+
+static void
+print_asciidoc_vertical(const printTableContent *cont, FILE *fout)
+{
+	bool		opt_tuples_only = cont->opt->tuples_only;
+	unsigned short opt_border = cont->opt->border;
+	unsigned long record = cont->opt->prior_records + 1;
+	unsigned int i;
+	const char *const * ptr;
+
+	if (cancel_pressed)
+		return;
+
+	if (cont->opt->start_table)
+	{
+		/* print table in new paragraph - enforce preliminary new line */
+		fputs("\n", fout);
+
+		/* print title */
+		if (!opt_tuples_only && cont->title)
+		{
+			fputs(".", fout);
+			fputs(cont->title, fout);
+			fputs("\n", fout);
+		}
+
+		/* print table [] header definition */
+		fputs("[cols=\"h,l\"", fout);
+		switch (opt_border)
+		{
+			case 0:
+				fputs(",frame=\"none\",grid=\"none\"", fout);
+				break;
+			case 1:
+				fputs(",frame=\"none\"", fout);
+				break;
+			case 2:
+				fputs(",frame=\"all\",grid=\"all\"", fout);
+			break;
+		}
+		fputs("]\n", fout);
+		fputs("|====\n", fout);
+	}
+
+	/* print records */
+	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
+	{
+		if (i % cont->ncolumns == 0)
+		{
+			if (cancel_pressed)
+				break;
+			if (!opt_tuples_only)
+				fprintf(fout,
+						"2+^|Record %lu\n",
+						record++);
+			else
+				fputs("2+|\n", fout);
+		}
+
+		fputs("<l|", fout);
+		asciidoc_escaped_print(cont->headers[i % cont->ncolumns], fout);
+
+		fprintf(fout, " %s|", cont->aligns[i % cont->ncolumns] == 'r' ? ">l" : "<l");
+		/* is string only whitespace? */
+		if ((*ptr)[strspn(*ptr, " \t")] == '\0')
+			fputs(" ", fout);
+		else
+			asciidoc_escaped_print(*ptr, fout);
+		fputs("\n", fout);
+	}
+
+	fputs("|====\n", fout);
+
+	if (cont->opt->stop_table)
+	{
+		/* print footers */
+		if (!opt_tuples_only && cont->footers != NULL && !cancel_pressed)
+		{
+			printTableFooter *f;
+
+			fputs("\n....\n", fout);
+			for (f = cont->footers; f; f = f->next)
+			{
+				fputs(f->data, fout);
+				fputs("\n", fout);
+			}
+			fputs("....\n", fout);
+		}
+	}
+}
+
+/*************************/
 /* LaTeX				 */
 /*************************/
 
@@ -2871,6 +3092,12 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 				print_html_vertical(cont, fout);
 			else
 				print_html_text(cont, fout);
+			break;
+		case PRINT_ASCIIDOC:
+			if (cont->opt->expanded == 1)
+				print_asciidoc_vertical(cont, fout);
+			else
+				print_asciidoc_text(cont, fout);
 			break;
 		case PRINT_LATEX:
 			if (cont->opt->expanded == 1)

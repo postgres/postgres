@@ -3790,8 +3790,8 @@ psql_completion(const char *text, int start, int end)
 		if (strcmp(prev_wd, "format") == 0)
 		{
 			static const char *const my_list[] =
-			{"unaligned", "aligned", "wrapped", "html", "latex",
-			"troff-ms", NULL};
+			{"unaligned", "aligned", "wrapped", "html", "asciidoc",
+			"latex", "latex-longtable", "troff-ms", NULL};
 
 			COMPLETE_WITH_LIST_CS(my_list);
 		}

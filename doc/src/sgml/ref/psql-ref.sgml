@@ -2090,7 +2090,7 @@ lo_import 152801
           <para>
           Sets the output format to one of <literal>unaligned</literal>,
           <literal>aligned</literal>, <literal>wrapped</literal>,
-          <literal>html</literal>,
+          <literal>html</literal>, <literal>asciidoc</literal>,
           <literal>latex</literal> (uses <literal>tabular</literal>),
           <literal>latex-longtable</literal>, or
           <literal>troff-ms</literal>.
@@ -2119,7 +2119,7 @@ lo_import 152801
           </para>
 
           <para>
-          The <literal>html</>, <literal>latex</>,
+          The <literal>html</>, <literal>asciidoc</>, <literal>latex</>,
           <literal>latex-longtable</literal>, and <literal>troff-ms</>
           formats put out tables that are intended to
           be included in documents using the respective mark-up

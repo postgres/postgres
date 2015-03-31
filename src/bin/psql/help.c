@@ -351,7 +351,7 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  expanded (or x)    toggle expanded output\n"));
 	fprintf(output, _("  fieldsep           field separator for unaligned output (default '|')\n"));
 	fprintf(output, _("  fieldsep_zero      set field separator in unaligned mode to zero\n"));
-	fprintf(output, _("  format             set output format [unaligned, aligned, wrapped, html, latex, ..]\n"));
+	fprintf(output, _("  format             set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"));
 	fprintf(output, _("  footer             enable or disable display of the table footer [on, off]\n"));
 	fprintf(output, _("  linestyle          set the border line drawing style [ascii, old-ascii, unicode]\n"));
 	fprintf(output, _("  null               set the string to be printed in place of a null value\n"));

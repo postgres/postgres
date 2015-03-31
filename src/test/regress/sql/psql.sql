@@ -276,3 +276,28 @@ execute q;
 execute q;
 
 deallocate q;
+
+prepare q as select ' | = | lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&' as " | -- | 012345678 9abc def!*@#&!@(*&*~~_+-=\ \", '11' as "0123456789", 11 as int from generate_series(1,10) as n;
+
+\pset format asciidoc
+\pset expanded off
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+\pset expanded on
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+deallocate q;
