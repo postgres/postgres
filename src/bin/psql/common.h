@@ -63,4 +63,6 @@ extern const char *session_username(void);
 
 extern char *expand_tilde(char **filename);
 
+extern bool recognized_connection_string(const char *connstr);
+
 #endif   /* COMMON_H */

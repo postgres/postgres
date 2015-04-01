@@ -249,8 +249,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Connection\n"));
-	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-	"                         connect to new database (currently \"%s\")\n"),
+	fprintf(output, _("  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+					  "                         connect to new database (currently \"%s\")\n"),
 			currdb);
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
