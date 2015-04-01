@@ -745,23 +745,31 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\c</literal> or <literal>\connect</literal> <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">host</replaceable> ] [ <replaceable class="parameter">port</replaceable> ] ]</literal></term>
+        <term><literal>\c</literal> or <literal>\connect</literal> <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">host</replaceable> ] [ <replaceable class="parameter">port</replaceable> ] ] | <replaceable class="parameter">conninfo</replaceable> </literal></term>
         <listitem>
         <para>
         Establishes a new connection to a <productname>PostgreSQL</>
-        server. If the new connection is successfully made, the
-        previous connection is closed. If any of <replaceable
-        class="parameter">dbname</replaceable>, <replaceable
-        class="parameter">username</replaceable>, <replaceable
-        class="parameter">host</replaceable> or <replaceable
-        class="parameter">port</replaceable> are omitted or specified
-        as <literal>-</literal>, the value of that parameter from the
-        previous connection is used. If there is no previous
-        connection, the <application>libpq</application> default for
-        the parameter's value is used.
+        server.  The connection parameters to use can be specified either
+        using a positional syntax, or using <literal>conninfo</> connection
+        strings as detailed in <xref linkend="libpq-connect">.
         </para>
 
         <para>
+        When using positional parameters, if any of
+        <replaceable class="parameter">dbname</replaceable>,
+        <replaceable class="parameter">username</replaceable>,
+        <replaceable class="parameter">host</replaceable> or
+        <replaceable class="parameter">port</replaceable> are omitted or
+        specified as <literal>-</literal>, the value of that parameter from
+        the previous connection is used; if there is no previous connection,
+        the <application>libpq</application> default for the parameter's value
+        is used.  When using <literal>conninfo</> strings, no values from the
+        previous connection are used for the new connection.
+        </para>
+
+        <para>
+        If the new connection is successfully made, the previous
+        connection is closed.
         If the connection attempt failed (wrong user name, access
         denied, etc.), the previous connection will only be kept if
         <application>psql</application> is in interactive mode. When
@@ -771,6 +779,15 @@ testdb=&gt;
         mechanism that scripts are not accidentally acting on the
         wrong database on the other hand.
         </para>
+
+        <para>
+        Examples:
+        </para>
+<programlisting>
+=&gt; \c mydb myuser host.dom 6432
+=&gt; \c service=foo
+=&gt; \c "host=localhost port=5432 dbname=mydb connect_timeout=10 sslmode=disable"
+</programlisting>
         </listitem>
       </varlistentry>
 

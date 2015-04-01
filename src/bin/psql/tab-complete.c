@@ -2776,8 +2776,10 @@ psql_completion(char *text, int start, int end)
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
-
+	{
+		if (!recognized_connection_string(text))
+			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+	}
 	else if (strncmp(prev_wd, "\\da", strlen("\\da")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);
 	else if (strncmp(prev_wd, "\\db", strlen("\\db")) == 0)

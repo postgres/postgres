@@ -1574,3 +1574,15 @@ expand_tilde(char **filename)
 
 	return *filename;
 }
+
+/*
+ * Recognized connection string contains a "=" in it.
+ *
+ * Must be consistent with conninfo_parse: anything for which this
+ * returns true should at least look like it's parseable by that routine.
+ */
+bool
+recognized_connection_string(const char *connstr)
+{
+	return strchr(connstr, '=') != NULL;
+}
