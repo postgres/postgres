@@ -1695,8 +1695,8 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
     and the optional <replaceable class="parameter">frame_clause</replaceable>
     can be one of
 <synopsis>
-[ RANGE | ROWS ] <replaceable>frame_start</>
-[ RANGE | ROWS ] BETWEEN <replaceable>frame_start</> AND <replaceable>frame_end</>
+{ RANGE | ROWS } <replaceable>frame_start</>
+{ RANGE | ROWS } BETWEEN <replaceable>frame_start</> AND <replaceable>frame_end</>
 </synopsis>
     where <replaceable>frame_start</> and <replaceable>frame_end</> can be
     one of
