@@ -52,7 +52,6 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 #include "common.h"
-#include "common/connstrings.h"
 #include "settings.h"
 #include "stringutils.h"
 
@@ -3707,18 +3706,10 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
-
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
-	{
-		if (!libpq_connstring_is_recognized(text))
-			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
-		/* TODO: URI/service completion.  Nothing for now */
-	}
+		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	else if (strcmp(prev2_wd, "\\connect") == 0 || strcmp(prev2_wd, "\\c") == 0)
-	{
-		if (!libpq_connstring_is_recognized(prev_wd))
-			COMPLETE_WITH_QUERY(Query_for_list_of_roles);
-	}
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 
 	else if (strncmp(prev_wd, "\\da", strlen("\\da")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);

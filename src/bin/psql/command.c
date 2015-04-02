@@ -31,7 +31,6 @@
 #include <sys/stat.h>			/* for stat() */
 #endif
 
-#include "common/connstrings.h"
 #include "portability/instr_time.h"
 
 #include "libpq-fe.h"
@@ -1609,8 +1608,6 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	PGconn	   *o_conn = pset.db,
 			   *n_conn;
 	char	   *password = NULL;
-	bool		keep_password;
-	bool		has_connection_string;
 
 	if (!o_conn && (!dbname || !user || !host || !port))
 	{
@@ -1624,34 +1621,14 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		return false;
 	}
 
-	/* grab values from the old connection, unless supplied by caller */
+	if (!dbname)
+		dbname = PQdb(o_conn);
 	if (!user)
 		user = PQuser(o_conn);
 	if (!host)
 		host = PQhost(o_conn);
 	if (!port)
 		port = PQport(o_conn);
-
-	has_connection_string =
-		dbname ? libpq_connstring_is_recognized(dbname) : false;
-
-	/*
-	 * Any change in the parameters read above makes us discard the password.
-	 * We also discard it if we're to use a conninfo rather than the positional
-	 * syntax.
-	 */
-	keep_password =
-		((strcmp(user, PQuser(o_conn)) == 0) &&
-		 (!host || strcmp(host, PQhost(o_conn)) == 0) &&
-		 (strcmp(port, PQport(o_conn)) == 0) &&
-		 !has_connection_string);
-
-	/*
-	 * Grab dbname from old connection unless supplied by caller.  No password
-	 * discard if this changes: passwords aren't (usually) database-specific.
-	 */
-	if (!dbname)
-		dbname = PQdb(o_conn);
 
 	/*
 	 * If the user asked to be prompted for a password, ask for one now. If
@@ -1667,13 +1644,9 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	{
 		password = prompt_for_password(user);
 	}
-	else if (o_conn && keep_password)
+	else if (o_conn && user && strcmp(PQuser(o_conn), user) == 0)
 	{
-		password = PQpass(o_conn);
-		if (password && *password)
-			password = pg_strdup(password);
-		else
-			password = NULL;
+		password = pg_strdup(PQpass(o_conn));
 	}
 
 	while (true)
@@ -1681,39 +1654,32 @@ do_connect(char *dbname, char *user, char *host, char *port)
 #define PARAMS_ARRAY_SIZE	8
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-		int			paramnum = 0;
 
-		keywords[0] = "dbname";
-		values[0] = dbname;
-
-		if (!has_connection_string)
-		{
-			keywords[++paramnum] = "host";
-			values[paramnum] = host;
-			keywords[++paramnum] = "port";
-			values[paramnum] = port;
-			keywords[++paramnum] = "user";
-			values[paramnum] = user;
-		}
-		keywords[++paramnum] = "password";
-		values[paramnum] = password;
-		keywords[++paramnum] = "fallback_application_name";
-		values[paramnum] = pset.progname;
-		keywords[++paramnum] = "client_encoding";
-		values[paramnum] = (pset.notty || getenv("PGCLIENTENCODING")) ? NULL : "auto";
-
-		/* add array terminator */
-		keywords[++paramnum] = NULL;
-		values[paramnum] = NULL;
+		keywords[0] = "host";
+		values[0] = host;
+		keywords[1] = "port";
+		values[1] = port;
+		keywords[2] = "user";
+		values[2] = user;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = dbname;
+		keywords[5] = "fallback_application_name";
+		values[5] = pset.progname;
+		keywords[6] = "client_encoding";
+		values[6] = (pset.notty || getenv("PGCLIENTENCODING")) ? NULL : "auto";
+		keywords[7] = NULL;
+		values[7] = NULL;
 
 		n_conn = PQconnectdbParams(keywords, values, true);
 
-		pg_free(keywords);
-		pg_free(values);
+		free(keywords);
+		free(values);
 
 		/* We can immediately discard the password -- no longer needed */
 		if (password)
-			pg_free(password);
+			free(password);
 
 		if (PQstatus(n_conn) == CONNECTION_OK)
 			break;

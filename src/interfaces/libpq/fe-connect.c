@@ -22,7 +22,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "common/connstrings.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
@@ -340,6 +339,8 @@ static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_init(PQExpBuffer errorMessage);
 static PQconninfoOption *parse_connection_string(const char *conninfo,
 						PQExpBuffer errorMessage, bool use_defaults);
+static int	uri_prefix_length(const char *connstr);
+static bool recognized_connection_string(const char *connstr);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
 static PQconninfoOption *conninfo_array_parse(const char *const * keywords,
@@ -970,7 +971,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	 * If the dbName parameter contains what looks like a connection string,
 	 * parse it into conn struct using connectOptions1.
 	 */
-	if (dbName && libpq_connstring_is_recognized(dbName))
+	if (dbName && recognized_connection_string(dbName))
 	{
 		if (!connectOptions1(conn, dbName))
 			return conn;
@@ -4184,11 +4185,44 @@ parse_connection_string(const char *connstr, PQExpBuffer errorMessage,
 						bool use_defaults)
 {
 	/* Parse as URI if connection string matches URI prefix */
-	if (libpq_connstring_uri_prefix_length(connstr) != 0)
+	if (uri_prefix_length(connstr) != 0)
 		return conninfo_uri_parse(connstr, errorMessage, use_defaults);
 
 	/* Parse as default otherwise */
 	return conninfo_parse(connstr, errorMessage, use_defaults);
+}
+
+/*
+ * Checks if connection string starts with either of the valid URI prefix
+ * designators.
+ *
+ * Returns the URI prefix length, 0 if the string doesn't contain a URI prefix.
+ */
+static int
+uri_prefix_length(const char *connstr)
+{
+	if (strncmp(connstr, uri_designator,
+				sizeof(uri_designator) - 1) == 0)
+		return sizeof(uri_designator) - 1;
+
+	if (strncmp(connstr, short_uri_designator,
+				sizeof(short_uri_designator) - 1) == 0)
+		return sizeof(short_uri_designator) - 1;
+
+	return 0;
+}
+
+/*
+ * Recognized connection string either starts with a valid URI prefix or
+ * contains a "=" in it.
+ *
+ * Must be consistent with parse_connection_string: anything for which this
+ * returns true should at least look like it's parseable by that routine.
+ */
+static bool
+recognized_connection_string(const char *connstr)
+{
+	return uri_prefix_length(connstr) != 0 || strchr(connstr, '=') != NULL;
 }
 
 /*
@@ -4366,7 +4400,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  *
  * If expand_dbname is non-zero, and the value passed for the first occurrence
  * of "dbname" keyword is a connection string (as indicated by
- * libpq_connstring_is_recognized) then parse and process it, overriding any
+ * recognized_connection_string) then parse and process it, overriding any
  * previously processed conflicting keywords. Subsequent keywords will take
  * precedence, however.
  */
@@ -4397,7 +4431,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 			 * defaults here -- those get picked up later. We only want to
 			 * override for those parameters actually passed.
 			 */
-			if (libpq_connstring_is_recognized(pvalue))
+			if (recognized_connection_string(pvalue))
 			{
 				dbname_options = parse_connection_string(pvalue, errorMessage, false);
 				if (dbname_options == NULL)
@@ -4688,7 +4722,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 	start = buf;
 
 	/* Skip the URI prefix */
-	prefix_len = libpq_connstring_uri_prefix_length(uri);
+	prefix_len = uri_prefix_length(uri);
 	if (prefix_len == 0)
 	{
 		/* Should never happen */
