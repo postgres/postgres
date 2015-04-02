@@ -297,7 +297,7 @@ typedef struct
 } NumericSortSupport;
 
 #define NUMERIC_ABBREV_BITS (SIZEOF_DATUM * BITS_PER_BYTE)
-#ifdef SIZEOF_DATUM == 8
+#if SIZEOF_DATUM == 8
 #define DatumGetNumericAbbrev(d) ((int64) d)
 #define NUMERIC_ABBREV_NAN Int64GetDatum(PG_INT64_MIN)
 #else
