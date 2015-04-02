@@ -112,9 +112,6 @@ extern char *temp_tablespaces;
 extern bool ignore_checksum_failure;
 extern bool synchronize_seqscans;
 
-#ifdef TRACE_SORT
-extern bool trace_sort;
-#endif
 #ifdef TRACE_SYNCSCAN
 extern bool trace_syncscan;
 #endif

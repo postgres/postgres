@@ -2370,6 +2370,8 @@ DATA(insert OID = 1767 ( numeric_larger			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2
 DESCR("larger of two");
 DATA(insert OID = 1769 ( numeric_cmp			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "1700 1700" _null_ _null_ _null_ _null_ numeric_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3283 ( numeric_sortsupport	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ numeric_sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 1771 ( numeric_uminus			PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_uminus _null_ _null_ _null_ ));
 DATA(insert OID = 1779 ( int8					PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 20 "1700" _null_ _null_ _null_ _null_ numeric_int8 _null_ _null_ _null_ ));
 DESCR("convert numeric to int8");

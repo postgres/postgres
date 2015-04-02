@@ -258,6 +258,10 @@ extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
 extern int	tcp_keepalives_count;
 
+#ifdef TRACE_SORT
+extern bool trace_sort;
+#endif
+
 /*
  * Functions exported by guc.c
  */

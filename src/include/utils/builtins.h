@@ -978,6 +978,7 @@ extern Datum numeric_round(PG_FUNCTION_ARGS);
 extern Datum numeric_trunc(PG_FUNCTION_ARGS);
 extern Datum numeric_ceil(PG_FUNCTION_ARGS);
 extern Datum numeric_floor(PG_FUNCTION_ARGS);
+extern Datum numeric_sortsupport(PG_FUNCTION_ARGS);
 extern Datum numeric_cmp(PG_FUNCTION_ARGS);
 extern Datum numeric_eq(PG_FUNCTION_ARGS);
 extern Datum numeric_ne(PG_FUNCTION_ARGS);
