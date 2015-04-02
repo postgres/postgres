@@ -543,7 +543,7 @@ ReplicationSlotMarkDirty(void)
 }
 
 /*
- * Convert a slot that's marked as RS_DROP_ON_ERROR to a RS_PERSISTENT slot,
+ * Convert a slot that's marked as RS_EPHEMERAL to a RS_PERSISTENT slot,
  * guaranteeing it will be there after a eventual crash.
  */
 void
