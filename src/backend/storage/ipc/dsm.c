@@ -502,6 +502,7 @@ dsm_create(Size size, int flags)
 	{
 		if ((flags & DSM_CREATE_NULL_IF_MAXSEGMENTS) != 0)
 		{
+			LWLockRelease(DynamicSharedMemoryControlLock);
 			dsm_impl_op(DSM_OP_DESTROY, seg->handle, 0, &seg->impl_private,
 						&seg->mapped_address, &seg->mapped_size, WARNING);
 			if (seg->resowner != NULL)
