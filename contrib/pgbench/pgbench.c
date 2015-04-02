@@ -287,6 +287,7 @@ typedef struct
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
 	int			argc;			/* number of command words */
 	char	   *argv[MAX_ARGS]; /* command word list */
+	int			cols[MAX_ARGS]; /* corresponding column starting from 1 */
 	PgBenchExpr *expr;			/* parsed expression */
 } Command;
 
@@ -2185,6 +2186,32 @@ parseQuery(Command *cmd, const char *raw_sql)
 	return true;
 }
 
+void
+syntax_error(const char *source, const int lineno,
+			 const char *line, const char *command,
+			 const char *msg, const char *more, const int column)
+{
+	fprintf(stderr, "%s:%d: %s", source, lineno, msg);
+	if (more != NULL)
+		fprintf(stderr, " (%s)", more);
+	if (column != -1)
+		fprintf(stderr, " at column %d", column);
+	fprintf(stderr, " in command \"%s\"\n", command);
+	if (line != NULL)
+	{
+		fprintf(stderr, "%s\n", line);
+		if (column != -1)
+		{
+			int i;
+
+			for (i = 0; i < column - 1; i++)
+				fprintf(stderr, " ");
+			fprintf(stderr, "^ error found here\n");
+		}
+	}
+	exit(1);
+}
+
 /* Parse a command; return a Command struct, or NULL if it's a comment */
 static Command *
 process_commands(char *buf, const char *source, const int lineno)
@@ -2229,6 +2256,7 @@ process_commands(char *buf, const char *source, const int lineno)
 
 		while (tok != NULL)
 		{
+			my_commands->cols[j] = tok - buf + 1;
 			my_commands->argv[j++] = pg_strdup(tok);
 			my_commands->argc++;
 			if (max_args >= 0 && my_commands->argc >= max_args)
@@ -2246,9 +2274,10 @@ process_commands(char *buf, const char *source, const int lineno)
 
 			if (my_commands->argc < 4)
 			{
-				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				exit(1);
+				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+							 "missing arguments", NULL, -1);
 			}
+
 			/* argc >= 4 */
 
 			if (my_commands->argc == 4 || /* uniform without/with "uniform" keyword */
@@ -2263,41 +2292,38 @@ process_commands(char *buf, const char *source, const int lineno)
 			{
 				if (my_commands->argc < 6)
 				{
-					fprintf(stderr, "%s(%s): missing threshold argument\n", my_commands->argv[0], my_commands->argv[4]);
-					exit(1);
+					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+								 "missing threshold argument", my_commands->argv[4], -1);
 				}
 				else if (my_commands->argc > 6)
 				{
-					fprintf(stderr, "%s(%s): too many arguments (extra:",
-							my_commands->argv[0], my_commands->argv[4]);
-					for (j = 6; j < my_commands->argc; j++)
-						fprintf(stderr, " %s", my_commands->argv[j]);
-					fprintf(stderr, ")\n");
-					exit(1);
+					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+								 "too many arguments", my_commands->argv[4],
+								 my_commands->cols[6]);
 				}
 			}
 			else /* cannot parse, unexpected arguments */
 			{
-				fprintf(stderr, "%s: unexpected arguments (bad:", my_commands->argv[0]);
-				for (j = 4; j < my_commands->argc; j++)
-					fprintf(stderr, " %s", my_commands->argv[j]);
-				fprintf(stderr, ")\n");
-				exit(1);
+				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+							 "unexpected argument", my_commands->argv[4],
+							 my_commands->cols[4]);
 			}
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "set") == 0)
 		{
 			if (my_commands->argc < 3)
 			{
-				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				exit(1);
+				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+							 "missing argument", NULL, -1);
 			}
 
-			expr_scanner_init(my_commands->argv[2]);
+			expr_scanner_init(my_commands->argv[2], source, lineno,
+							  my_commands->line, my_commands->argv[0],
+							  my_commands->cols[2] - 1);
 
 			if (expr_yyparse() != 0)
 			{
-				fprintf(stderr, "%s: parse error\n", my_commands->argv[0]);
+				/* dead code: exit done from syntax_error called by yyerror */
 				exit(1);
 			}
 
@@ -2309,8 +2335,8 @@ process_commands(char *buf, const char *source, const int lineno)
 		{
 			if (my_commands->argc < 2)
 			{
-				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				exit(1);
+				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+							 "missing argument", NULL, -1);
 			}
 
 			/*
@@ -2339,12 +2365,13 @@ process_commands(char *buf, const char *source, const int lineno)
 					pg_strcasecmp(my_commands->argv[2], "ms") != 0 &&
 					pg_strcasecmp(my_commands->argv[2], "s") != 0)
 				{
-					fprintf(stderr, "%s: unknown time unit '%s' - must be us, ms or s\n",
-							my_commands->argv[0], my_commands->argv[2]);
-					exit(1);
+					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+								 "unknown time unit, must be us, ms or s",
+								 my_commands->argv[2], my_commands->cols[2]);
 				}
 			}
 
+			/* this should be an error?! */
 			for (j = 3; j < my_commands->argc; j++)
 				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
 						my_commands->argv[0], my_commands->argv[j]);
@@ -2353,22 +2380,22 @@ process_commands(char *buf, const char *source, const int lineno)
 		{
 			if (my_commands->argc < 3)
 			{
-				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				exit(1);
+				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+							 "missing argument", NULL, -1);
 			}
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "shell") == 0)
 		{
 			if (my_commands->argc < 1)
 			{
-				fprintf(stderr, "%s: missing command\n", my_commands->argv[0]);
-				exit(1);
+				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+							 "missing command", NULL, -1);
 			}
 		}
 		else
 		{
-			fprintf(stderr, "Invalid command %s\n", my_commands->argv[0]);
-			exit(1);
+			syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
+						 "invalid command", NULL, -1);
 		}
 	}
 	else

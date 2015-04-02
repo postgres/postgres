@@ -47,7 +47,12 @@ extern PgBenchExpr *expr_parse_result;
 extern int      expr_yyparse(void);
 extern int      expr_yylex(void);
 extern void expr_yyerror(const char *str);
-extern void expr_scanner_init(const char *str);
+extern void expr_scanner_init(const char *str, const char *source,
+							  const int lineno, const char *line,
+							  const char *cmd, const int ecol);
+extern void syntax_error(const char* source, const int lineno, const char* line,
+						 const char* cmd, const char* msg, const char* more,
+						 const int col);
 extern void expr_scanner_finish(void);
 
 extern int64 strtoint64(const char *str);
