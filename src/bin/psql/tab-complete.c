@@ -3707,10 +3707,15 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+	{
+		if (!recognized_connection_string(text))
+			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+	}
 	else if (strcmp(prev2_wd, "\\connect") == 0 || strcmp(prev2_wd, "\\c") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
-
+	{
+		if (!recognized_connection_string(prev_wd))
+			COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+	}
 	else if (strncmp(prev_wd, "\\da", strlen("\\da")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);
 	else if (strncmp(prev_wd, "\\db", strlen("\\db")) == 0)
