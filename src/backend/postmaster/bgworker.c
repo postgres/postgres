@@ -420,9 +420,9 @@ BackgroundWorkerStopNotifications(pid_t pid)
 /*
  * Reset background worker crash state.
  *
- * We assume that, after a crash-and-restart cycle, background workers should
- * be restarted immediately, instead of waiting for bgw_restart_time to
- * elapse.
+ * We assume that, after a crash-and-restart cycle, background workers without
+ * the never-restart flag should be restarted immediately, instead of waiting
+ * for bgw_restart_time to elapse.
  */
 void
 ResetBackgroundWorkerCrashTimes(void)
@@ -434,7 +434,14 @@ ResetBackgroundWorkerCrashTimes(void)
 		RegisteredBgWorker *rw;
 
 		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
-		rw->rw_crashed_at = 0;
+
+		/*
+		 * For workers that should not be restarted, we don't want to lose
+		 * the information that they have crashed; otherwise, they would be
+		 * restarted, which is wrong.
+		 */
+		if (rw->rw_worker.bgw_restart_time != BGW_NEVER_RESTART)
+			rw->rw_crashed_at = 0;
 	}
 }
 
