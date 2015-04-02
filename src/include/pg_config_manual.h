@@ -48,7 +48,7 @@
 /*
  * Set the upper and lower bounds of sequence values.
  */
-#define SEQ_MAXVALUE	INT64_MAX
+#define SEQ_MAXVALUE	PG_INT64_MAX
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
@@ -185,7 +185,7 @@
  * the older rand() function, which is often different from --- and
  * considerably inferior to --- random().
  */
-#define MAX_RANDOM_VALUE  INT32_MAX
+#define MAX_RANDOM_VALUE  PG_INT32_MAX
 
 /*
  * On PPC machines, decide whether to use the mutex hint bit in LWARX

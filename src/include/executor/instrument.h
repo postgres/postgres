@@ -38,7 +38,7 @@ typedef enum InstrumentOption
 	INSTRUMENT_TIMER = 1 << 0,	/* needs timer (and row counts) */
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage */
 	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
-	INSTRUMENT_ALL = INT32_MAX
+	INSTRUMENT_ALL = PG_INT32_MAX
 } InstrumentOption;
 
 typedef struct Instrumentation

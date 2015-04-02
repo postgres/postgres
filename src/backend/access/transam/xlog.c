@@ -1408,7 +1408,7 @@ WALInsertLockAcquireExclusive(void)
 	{
 		LWLockAcquireWithVar(&WALInsertLocks[i].l.lock,
 							 &WALInsertLocks[i].l.insertingAt,
-							 UINT64_MAX);
+							 PG_UINT64_MAX);
 	}
 	LWLockAcquireWithVar(&WALInsertLocks[i].l.lock,
 						 &WALInsertLocks[i].l.insertingAt,

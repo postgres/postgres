@@ -449,7 +449,7 @@ strtoint64(const char *str)
 		 */
 		if (strncmp(ptr, "9223372036854775808", 19) == 0)
 		{
-			result = INT64_MIN;
+			result = PG_INT64_MIN;
 			ptr += 19;
 			goto gotdigits;
 		}
@@ -3521,7 +3521,7 @@ threadRun(void *arg)
 		FD_ZERO(&input_mask);
 
 		maxsock = -1;
-		min_usec = INT64_MAX;
+		min_usec = PG_INT64_MAX;
 		for (i = 0; i < nstate; i++)
 		{
 			CState	   *st = &state[i];
@@ -3548,7 +3548,7 @@ threadRun(void *arg)
 				{
 					int			this_usec;
 
-					if (min_usec == INT64_MAX)
+					if (min_usec == PG_INT64_MAX)
 					{
 						instr_time	now;
 
@@ -3584,7 +3584,7 @@ threadRun(void *arg)
 		{
 			int			nsocks; /* return from select(2) */
 
-			if (min_usec != INT64_MAX)
+			if (min_usec != PG_INT64_MAX)
 			{
 				struct timeval timeout;
 

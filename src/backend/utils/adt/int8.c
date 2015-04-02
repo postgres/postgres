@@ -78,7 +78,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		 */
 		if (strncmp(ptr, "9223372036854775808", 19) == 0)
 		{
-			tmp = INT64_MIN;
+			tmp = PG_INT64_MIN;
 			ptr += 19;
 			goto gotdigits;
 		}

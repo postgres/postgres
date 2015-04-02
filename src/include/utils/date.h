@@ -36,8 +36,8 @@ typedef struct
 /*
  * Infinity and minus infinity must be the max and min values of DateADT.
  */
-#define DATEVAL_NOBEGIN		((DateADT) INT32_MIN)
-#define DATEVAL_NOEND		((DateADT) INT32_MAX)
+#define DATEVAL_NOBEGIN		((DateADT) PG_INT32_MIN)
+#define DATEVAL_NOEND		((DateADT) PG_INT32_MAX)
 
 #define DATE_NOBEGIN(j)		((j) = DATEVAL_NOBEGIN)
 #define DATE_IS_NOBEGIN(j)	((j) == DATEVAL_NOBEGIN)

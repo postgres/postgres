@@ -154,7 +154,7 @@ ts_dist(PG_FUNCTION_ARGS)
 		p->day = INT_MAX;
 		p->month = INT_MAX;
 #ifdef HAVE_INT64_TIMESTAMP
-		p->time = INT64_MAX;
+		p->time = PG_INT64_MAX;
 #else
 		p->time = DBL_MAX;
 #endif
@@ -182,7 +182,7 @@ tstz_dist(PG_FUNCTION_ARGS)
 		p->day = INT_MAX;
 		p->month = INT_MAX;
 #ifdef HAVE_INT64_TIMESTAMP
-		p->time = INT64_MAX;
+		p->time = PG_INT64_MAX;
 #else
 		p->time = DBL_MAX;
 #endif

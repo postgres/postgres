@@ -2260,7 +2260,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 	for (f = 0; f < max_fragments; f++)
 	{
 		maxitems = 0;
-		minwords = INT32_MAX;
+		minwords = PG_INT32_MAX;
 		minI = -1;
 
 		/*

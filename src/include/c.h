@@ -249,36 +249,6 @@ typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
 
-/* should be defined in stdint.h, but we guarantee them here */
-#ifndef INT8_MIN
-#define INT8_MIN	(-0x7F-1)
-#endif
-#ifndef INT8_MAX
-#define INT8_MAX	(0x7F)
-#endif
-#ifndef INT16_MIN
-#define INT16_MIN	(-0x7FFF-1)
-#endif
-#ifndef INT16_MAX
-#define INT16_MAX	(0x7FFF)
-#endif
-#ifndef INT32_MIN
-#define INT32_MIN	(-0x7FFFFFFF-1)
-#endif
-#ifndef INT32_MAX
-#define INT32_MAX	(0x7FFFFFFF)
-#endif
-
-#ifndef UINT8_MAX
-#define UINT8_MAX	(0xFF)
-#endif
-#ifndef UINT16_MAX
-#define UINT16_MAX	(0xFFFF)
-#endif
-#ifndef UINT32_MAX
-#define UINT32_MAX	(0xFFFFFFFF)
-#endif
-
 /*
  * 64-bit integers
  */
@@ -314,25 +284,9 @@ typedef unsigned long long int uint64;
 #define UINT64CONST(x) ((uint64) x)
 #endif
 
-/* should be defined in stdint.h, but we guarantee them here */
-#ifndef INT64_MIN
-#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#endif
-#ifndef INT64_MAX
-#define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#endif
-#ifndef UINT64_MAX
-#define UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
-#endif
-
 /* snprintf format strings to use for 64-bit integers */
 #define INT64_FORMAT "%" INT64_MODIFIER "d"
 #define UINT64_FORMAT "%" INT64_MODIFIER "u"
-
-/* Select timestamp representation (float8 or int64) */
-#ifdef USE_INTEGER_DATETIMES
-#define HAVE_INT64_TIMESTAMP
-#endif
 
 /*
  * 128-bit signed and unsigned integers
@@ -343,6 +297,28 @@ typedef unsigned long long int uint64;
 #define HAVE_INT128
 typedef PG_INT128_TYPE int128;
 typedef unsigned PG_INT128_TYPE uint128;
+#endif
+
+/*
+ * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
+ * have compatible types with our fixed width types. So just define our own.
+ */
+#define PG_INT8_MIN		(-0x7F-1)
+#define PG_INT8_MAX		(0x7F)
+#define PG_UINT8_MAX	(0xFF)
+#define PG_INT16_MIN	(-0x7FFF-1)
+#define PG_INT16_MAX	(0x7FFF)
+#define PG_UINT16_MAX	(0xFFFF)
+#define PG_INT32_MIN	(-0x7FFFFFFF-1)
+#define PG_INT32_MAX	(0x7FFFFFFF)
+#define PG_UINT32_MAX	(0xFFFFFFFF)
+#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
+#define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
+
+/* Select timestamp representation (float8 or int64) */
+#ifdef USE_INTEGER_DATETIMES
+#define HAVE_INT64_TIMESTAMP
 #endif
 
 /* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
