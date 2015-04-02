@@ -2084,8 +2084,8 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	 * in order to compensate for cases where differences are past
 	 * PG_CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
 	 */
-	hash = hash_any((unsigned char *) authoritative_data,
-					Min(len, PG_CACHE_LINE_SIZE));
+	hash = DatumGetUInt32(hash_any((unsigned char *) authoritative_data,
+								   Min(len, PG_CACHE_LINE_SIZE)));
 
 	if (len > PG_CACHE_LINE_SIZE)
 		hash ^= DatumGetUInt32(hash_uint32((uint32) len));
@@ -2100,10 +2100,10 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 
 		lohalf = (uint32) res;
 		hihalf = (uint32) (res >> 32);
-		hash = hash_uint32(lohalf ^ hihalf);
+		hash = DatumGetUInt32(hash_uint32(lohalf ^ hihalf));
 	}
 #else							/* SIZEOF_DATUM != 8 */
-	hash = hash_uint32((uint32) res);
+	hash = DatumGetUInt32(hash_uint32((uint32) res));
 #endif
 
 	addHyperLogLog(&tss->abbr_card, hash);
