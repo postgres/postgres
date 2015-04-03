@@ -92,8 +92,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-D</option></term>
-      <term><option>--target-pgdata</option></term>
+      <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--target-pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         This option specifies the target data directory that is synchronized
@@ -104,7 +104,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--source-pgdata</option></term>
+      <term><option>--source-pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         Specifies path to the data directory of the source server, to
@@ -115,7 +115,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--source-server</option></term>
+      <term><option>--source-server=<replaceable class="parameter">connstr</replaceable></option></term>
       <listitem>
        <para>
         Specifies a libpq connection string to connect to the source
