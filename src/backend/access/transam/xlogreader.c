@@ -58,15 +58,18 @@ report_invalid_record(XLogReaderState *state, const char *fmt,...)
 /*
  * Allocate and initialize a new XLogReader.
  *
- * The returned XLogReader is palloc'd. (In FRONTEND code, that means that
- * running out-of-memory causes an immediate exit(1).
+ * Returns NULL if the xlogreader couldn't be allocated.
  */
 XLogReaderState *
 XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
 {
 	XLogReaderState *state;
 
-	state = (XLogReaderState *) palloc0(sizeof(XLogReaderState));
+	state = (XLogReaderState *)
+		palloc_extended(sizeof(XLogReaderState),
+						MCXT_ALLOC_NO_OOM | MCXT_ALLOC_ZERO);
+	if (!state)
+		return NULL;
 
 	state->max_block_id = -1;
 
@@ -74,17 +77,30 @@ XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
 	 * Permanently allocate readBuf.  We do it this way, rather than just
 	 * making a static array, for two reasons: (1) no need to waste the
 	 * storage in most instantiations of the backend; (2) a static char array
-	 * isn't guaranteed to have any particular alignment, whereas palloc()
-	 * will provide MAXALIGN'd storage.
+	 * isn't guaranteed to have any particular alignment, whereas
+	 * palloc_extended() will provide MAXALIGN'd storage.
 	 */
-	state->readBuf = (char *) palloc(XLOG_BLCKSZ);
+	state->readBuf = (char *) palloc_extended(XLOG_BLCKSZ,
+											  MCXT_ALLOC_NO_OOM);
+	if (!state->readBuf)
+	{
+		pfree(state);
+		return NULL;
+	}
 
 	state->read_page = pagereadfunc;
 	/* system_identifier initialized to zeroes above */
 	state->private_data = private_data;
 	/* ReadRecPtr and EndRecPtr initialized to zeroes above */
 	/* readSegNo, readOff, readLen, readPageTLI initialized to zeroes above */
-	state->errormsg_buf = palloc(MAX_ERRORMSG_LEN + 1);
+	state->errormsg_buf = palloc_extended(MAX_ERRORMSG_LEN + 1,
+										  MCXT_ALLOC_NO_OOM);
+	if (!state->errormsg_buf)
+	{
+		pfree(state->readBuf);
+		pfree(state);
+		return NULL;
+	}
 	state->errormsg_buf[0] = '\0';
 
 	/*
