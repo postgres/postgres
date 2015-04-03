@@ -146,7 +146,13 @@ allocate_recordbuf(XLogReaderState *state, uint32 reclength)
 
 	if (state->readRecordBuf)
 		pfree(state->readRecordBuf);
-	state->readRecordBuf = (char *) palloc(newSize);
+	state->readRecordBuf =
+		(char *) palloc_extended(newSize, MCXT_ALLOC_NO_OOM);
+	if (state->readRecordBuf == NULL)
+	{
+		state->readRecordBufSize = 0;
+		return false;
+	}
 	state->readRecordBufSize = newSize;
 	return true;
 }
