@@ -196,7 +196,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	Assert(params != NULL);
 
 	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{
 		pg_rusage_init(&ru0);
 		starttime = GetCurrentTimestamp();
@@ -328,13 +328,13 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 						 vacrelstats->new_dead_tuples);
 
 	/* and log the action if appropriate */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{
 		TimestampTz endtime = GetCurrentTimestamp();
 
-		if (Log_autovacuum_min_duration == 0 ||
+		if (params->log_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, endtime,
-									   Log_autovacuum_min_duration))
+									   params->log_min_duration))
 		{
 			StringInfoData	buf;
 			TimestampDifference(starttime, endtime, &secs, &usecs);

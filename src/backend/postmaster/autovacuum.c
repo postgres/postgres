@@ -2493,6 +2493,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		int			multixact_freeze_table_age;
 		int			vac_cost_limit;
 		int			vac_cost_delay;
+		int			log_min_duration;
 
 		/*
 		 * Calculate the vacuum cost parameters and the freeze ages.  If there
@@ -2514,6 +2515,11 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 			: (autovacuum_vac_cost_limit > 0)
 			? autovacuum_vac_cost_limit
 			: VacuumCostLimit;
+
+		/* -1 in autovac setting means use log_autovacuum_min_duration */
+		log_min_duration = (avopts && avopts->log_min_duration >= 0)
+			? avopts->log_min_duration
+			: Log_autovacuum_min_duration;
 
 		/* these do not have autovacuum-specific settings */
 		freeze_min_age = (avopts && avopts->freeze_min_age >= 0)
@@ -2545,6 +2551,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_params.multixact_freeze_min_age = multixact_freeze_min_age;
 		tab->at_params.multixact_freeze_table_age = multixact_freeze_table_age;
 		tab->at_params.is_wraparound = wraparound;
+		tab->at_params.log_min_duration = log_min_duration;
 		tab->at_vacuum_cost_limit = vac_cost_limit;
 		tab->at_vacuum_cost_delay = vac_cost_delay;
 		tab->at_relname = NULL;

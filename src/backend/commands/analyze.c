@@ -85,7 +85,8 @@ static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, int options, List *va_cols,
+static void do_analyze_rel(Relation onerel, int options,
+			   VacuumParams *params, List *va_cols,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
@@ -115,8 +116,9 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
  *	analyze_rel() -- analyze one relation
  */
 void
-analyze_rel(Oid relid, RangeVar *relation, int options, List *va_cols,
-			bool in_outer_xact, BufferAccessStrategy bstrategy)
+analyze_rel(Oid relid, RangeVar *relation, int options,
+			VacuumParams *params, List *va_cols, bool in_outer_xact,
+			BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 	int			elevel;
@@ -151,7 +153,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options, List *va_cols,
 	else
 	{
 		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 				  errmsg("skipping analyze of \"%s\" --- lock not available",
@@ -266,14 +268,14 @@ analyze_rel(Oid relid, RangeVar *relation, int options, List *va_cols,
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, options, va_cols, acquirefunc, relpages,
+	do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
 				   false, in_outer_xact, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, options, va_cols, acquirefunc, relpages,
+		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
 					   true, in_outer_xact, elevel);
 
 	/*
@@ -301,9 +303,10 @@ analyze_rel(Oid relid, RangeVar *relation, int options, List *va_cols,
  * appropriate acquirefunc for each child table.
  */
 static void
-do_analyze_rel(Relation onerel, int options, List *va_cols,
-			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
-			   bool inh, bool in_outer_xact, int elevel)
+do_analyze_rel(Relation onerel, int options, VacuumParams *params,
+			   List *va_cols, AcquireSampleRowsFunc acquirefunc,
+			   BlockNumber relpages, bool inh, bool in_outer_xact,
+			   int elevel)
 {
 	int			attr_cnt,
 				tcnt,
@@ -359,10 +362,10 @@ do_analyze_rel(Relation onerel, int options, List *va_cols,
 	save_nestlevel = NewGUCNestLevel();
 
 	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{
 		pg_rusage_init(&ru0);
-		if (Log_autovacuum_min_duration > 0)
+		if (params->log_min_duration > 0)
 			starttime = GetCurrentTimestamp();
 	}
 
@@ -647,11 +650,11 @@ do_analyze_rel(Relation onerel, int options, List *va_cols,
 	vac_close_indexes(nindexes, Irel, NoLock);
 
 	/* Log the action if appropriate */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{
-		if (Log_autovacuum_min_duration == 0 ||
+		if (params->log_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, GetCurrentTimestamp(),
-									   Log_autovacuum_min_duration))
+									   params->log_min_duration))
 			ereport(LOG,
 					(errmsg("automatic analyze of table \"%s.%s.%s\" system usage: %s",
 							get_database_name(MyDatabaseId),

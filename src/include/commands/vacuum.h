@@ -142,6 +142,9 @@ typedef struct VacuumParams
 	int		multixact_freeze_table_age;	/* multixact age at which to
 										 * scan whole table */
 	bool	is_wraparound;		/* force a for-wraparound vacuum */
+	int		log_min_duration;	/* minimum execution threshold in ms at
+								 * which  verbose logs are activated,
+								 * -1 to use default */
 } VacuumParams;
 
 /* GUC parameters */
@@ -191,7 +194,7 @@ extern void lazy_vacuum_rel(Relation onerel, int options,
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, RangeVar *relation, int options,
-			List *va_cols, bool in_outer_xact,
+			VacuumParams *params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy);
 extern bool std_typanalyze(VacAttrStats *stats);
 extern double anl_random_fract(void);

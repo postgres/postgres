@@ -1788,6 +1788,7 @@ psql_completion(const char *text, int start, int end)
 			"autovacuum_vacuum_scale_factor",
 			"autovacuum_vacuum_threshold",
 			"fillfactor",
+			"log_autovacuum_min_duration",
 			"toast.autovacuum_enabled",
 			"toast.autovacuum_freeze_max_age",
 			"toast.autovacuum_freeze_min_age",
@@ -1799,6 +1800,7 @@ psql_completion(const char *text, int start, int end)
 			"toast.autovacuum_vacuum_cost_limit",
 			"toast.autovacuum_vacuum_scale_factor",
 			"toast.autovacuum_vacuum_threshold",
+			"toast.log_autovacuum_min_duration",
 			"user_catalog_table",
 			NULL
 		};

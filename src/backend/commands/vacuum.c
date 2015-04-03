@@ -114,6 +114,9 @@ ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
 	/* user-invoked vacuum is never "for wraparound" */
 	params.is_wraparound = false;
 
+	/* user-invoked vacuum never uses this parameter */
+	params.log_min_duration = -1;
+
 	/* Now go through the common routine */
 	vacuum(vacstmt->options, vacstmt->relation, InvalidOid, &params,
 		   vacstmt->va_cols, NULL, isTopLevel);
@@ -304,7 +307,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 					PushActiveSnapshot(GetTransactionSnapshot());
 				}
 
-				analyze_rel(relid, relation, options,
+				analyze_rel(relid, relation, options, params,
 							va_cols, in_outer_xact, vac_strategy);
 
 				if (use_own_xacts)
@@ -1233,7 +1236,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	else
 	{
 		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 				   errmsg("skipping vacuum of \"%s\" --- lock not available",

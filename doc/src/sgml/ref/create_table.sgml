@@ -881,9 +881,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <literal>toast.</literal>, which can be used to control the behavior of the
     table's secondary <acronym>TOAST</> table, if any
     (see <xref linkend="storage-toast"> for more information about TOAST).
-    Note that the TOAST table inherits the
-    <literal>autovacuum_*</literal> values from its parent table, if there are
-    no <literal>toast.autovacuum_*</literal> settings set.
+    Note that the TOAST table uses the parameter values defined for
+    the main table, for each parameter applicable to TOAST tables and
+    for which no value is set in the TOAST table itself.
    </para>
 
    <variablelist>
@@ -1061,12 +1061,22 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
+    <term><literal>log_autovacuum_min_duration</literal>, <literal>toast.log_autovacuum_min_duration</literal> (<type>integer</type>)</term>
+    <listitem>
+     <para>
+      Custom <xref linkend="guc-log-autovacuum-min-duration"> parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>user_catalog_table</literal> (<type>boolean</type>)</term>
     <listitem>
      <para>
       Declare a table as an additional catalog table, e.g. for the purpose of
       logical replication. See
       <xref linkend="logicaldecoding-capabilities"> for details.
+      This parameter cannot be set for TOAST tables.
      </para>
     </listitem>
    </varlistentry>
