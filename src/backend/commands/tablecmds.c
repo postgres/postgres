@@ -7776,7 +7776,7 @@ ATPrepAlterColumnType(List **wqueue,
 	char	   *colName = cmd->name;
 	ColumnDef  *def = (ColumnDef *) cmd->def;
 	TypeName   *typeName = def->typeName;
-	Node	   *transform = def->raw_default;
+	Node	   *transform = def->cooked_default;
 	HeapTuple	tuple;
 	Form_pg_attribute attTup;
 	AttrNumber	attnum;
@@ -7835,34 +7835,13 @@ ATPrepAlterColumnType(List **wqueue,
 	{
 		/*
 		 * Set up an expression to transform the old data value to the new
-		 * type. If a USING option was given, transform and use that
-		 * expression, else just take the old value and try to coerce it.  We
-		 * do this first so that type incompatibility can be detected before
-		 * we waste effort, and because we need the expression to be parsed
-		 * against the original table row type.
+		 * type. If a USING option was given, use the expression as transformed
+		 * by transformAlterTableStmt, else just take the old value and try to
+		 * coerce it.  We do this first so that type incompatibility can be
+		 * detected before we waste effort, and because we need the expression
+		 * to be parsed against the original table row type.
 		 */
-		if (transform)
-		{
-			RangeTblEntry *rte;
-
-			/* Expression must be able to access vars of old table */
-			rte = addRangeTableEntryForRelation(pstate,
-												rel,
-												NULL,
-												false,
-												true);
-			addRTEtoQuery(pstate, rte, false, true, true);
-
-			transform = transformExpr(pstate, transform,
-									  EXPR_KIND_ALTER_COL_TRANSFORM);
-
-			/* It can't return a set */
-			if (expression_returns_set(transform))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-					  errmsg("transform expression must not return a set")));
-		}
-		else
+		if (!transform)
 		{
 			transform = (Node *) makeVar(1, attnum,
 										 attTup->atttypid, attTup->atttypmod,
