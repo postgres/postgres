@@ -37,10 +37,9 @@
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
 					uint32 nblocks);
 static void _hash_splitbucket(Relation rel, Buffer metabuf,
-				  Buffer nbuf,
 				  Bucket obucket, Bucket nbucket,
 				  BlockNumber start_oblkno,
-				  BlockNumber start_nblkno,
+				  Buffer nbuf,
 				  uint32 maxbucket,
 				  uint32 highmask, uint32 lowmask);
 
@@ -679,9 +678,9 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	_hash_droplock(rel, 0, HASH_EXCLUSIVE);
 
 	/* Relocate records to the new bucket */
-	_hash_splitbucket(rel, metabuf, buf_nblkno,
+	_hash_splitbucket(rel, metabuf,
 					  old_bucket, new_bucket,
-					  start_oblkno, start_nblkno,
+					  start_oblkno, buf_nblkno,
 					  maxbucket, highmask, lowmask);
 
 	/* Release bucket locks, allowing others to access them */
@@ -765,24 +764,22 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
  * touched if it becomes necessary to add or remove overflow pages.)
  *
  * In addition, the caller must have created the new bucket's base page,
- * which is passed in buffer nbuf, pinned and write-locked.  The lock
- * and pin are released here.  (The API is set up this way because we must
- * do _hash_getnewbuf() before releasing the metapage write lock.)
+ * which is passed in buffer nbuf, pinned and write-locked.  That lock and
+ * pin are released here.  (The API is set up this way because we must do
+ * _hash_getnewbuf() before releasing the metapage write lock.  So instead of
+ * passing the new bucket's start block number, we pass an actual buffer.)
  */
 static void
 _hash_splitbucket(Relation rel,
 				  Buffer metabuf,
-				  Buffer nbuf,
 				  Bucket obucket,
 				  Bucket nbucket,
 				  BlockNumber start_oblkno,
-				  BlockNumber start_nblkno,
+				  Buffer nbuf,
 				  uint32 maxbucket,
 				  uint32 highmask,
 				  uint32 lowmask)
 {
-	BlockNumber oblkno;
-	BlockNumber nblkno;
 	Buffer		obuf;
 	Page		opage;
 	Page		npage;
@@ -794,13 +791,10 @@ _hash_splitbucket(Relation rel,
 	 * since no one else can be trying to acquire buffer lock on pages of
 	 * either bucket.
 	 */
-	oblkno = start_oblkno;
-	obuf = _hash_getbuf(rel, oblkno, HASH_WRITE, LH_BUCKET_PAGE);
+	obuf = _hash_getbuf(rel, start_oblkno, HASH_WRITE, LH_BUCKET_PAGE);
 	opage = BufferGetPage(obuf);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 
-	nblkno = start_nblkno;
-	Assert(nblkno == BufferGetBlockNumber(nbuf));
 	npage = BufferGetPage(nbuf);
 
 	/* initialize the new bucket's primary page */
@@ -819,6 +813,7 @@ _hash_splitbucket(Relation rel,
 	 */
 	for (;;)
 	{
+		BlockNumber oblkno;
 		OffsetNumber ooffnum;
 		OffsetNumber omaxoffnum;
 		OffsetNumber deletable[MaxOffsetNumber];
@@ -865,7 +860,7 @@ _hash_splitbucket(Relation rel,
 					/* chain to a new overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf);
 					npage = BufferGetPage(nbuf);
-					/* we don't need nblkno or nopaque within the loop */
+					/* we don't need nopaque within the loop */
 				}
 
 				/*
