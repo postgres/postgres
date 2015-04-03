@@ -311,7 +311,7 @@ static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
 						  PgStat_StatDBEntry *dbentry);
 static void autovac_report_activity(autovac_table *tab);
-static void avl_sighup_handler(SIGNAL_ARGS);
+static void av_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr2_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);
 static void autovac_refresh_stats(void);
@@ -419,7 +419,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
-	pqsignal(SIGHUP, avl_sighup_handler);
+	pqsignal(SIGHUP, av_sighup_handler);
 	pqsignal(SIGINT, StatementCancelHandler);
 	pqsignal(SIGTERM, avl_sigterm_handler);
 
@@ -1329,7 +1329,7 @@ AutoVacWorkerFailed(void)
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
-avl_sighup_handler(SIGNAL_ARGS)
+av_sighup_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
@@ -1460,11 +1460,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 * Set up signal handlers.  We operate on databases much like a regular
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
-	 *
-	 * Currently, we don't pay attention to postgresql.conf changes that
-	 * happen during a single daemon iteration, so we can ignore SIGHUP.
 	 */
-	pqsignal(SIGHUP, SIG_IGN);
+	pqsignal(SIGHUP, av_sighup_handler);
 
 	/*
 	 * SIGINT is used to signal canceling the current table's vacuum; SIGTERM
@@ -2162,6 +2159,22 @@ do_autovacuum(void)
 		dlist_iter	iter;
 
 		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Check for config changes before processing each collected table.
+		 */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+
+			/*
+			 * You might be tempted to bail out if we see autovacuum is now
+			 * disabled.  Must resist that temptation -- this might be a
+			 * for-wraparound emergency worker, in which case that would be
+			 * entirely inappropriate.
+			 */
+		}
 
 		/*
 		 * hold schedule lock from here until we're sure that this table still
