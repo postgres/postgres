@@ -824,6 +824,14 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	MyProc->databaseId = MyDatabaseId;
 
 	/*
+	 * We established a catalog snapshot while reading pg_authid and/or
+	 * pg_database; but until we have set up MyDatabaseId, we won't react to
+	 * incoming sinval messages for unshared catalogs, so we won't realize it
+	 * if the snapshot has been invalidated.  Assume it's no good anymore.
+	 */
+	InvalidateCatalogSnapshot();
+
+	/*
 	 * Now, take a writer's lock on the database we are trying to connect to.
 	 * If there is a concurrently running DROP DATABASE on that database, this
 	 * will block us until it finishes (and has committed its update of
