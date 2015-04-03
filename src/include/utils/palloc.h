@@ -76,6 +76,7 @@ extern void *MemoryContextAllocExtended(MemoryContext context,
 
 extern void *palloc(Size size);
 extern void *palloc0(Size size);
+extern void *palloc_extended(Size size, int flags);
 extern void *repalloc(void *pointer, Size size);
 extern void pfree(void *pointer);
 

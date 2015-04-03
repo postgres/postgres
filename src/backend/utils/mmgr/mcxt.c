@@ -864,6 +864,43 @@ palloc0(Size size)
 	return ret;
 }
 
+void *
+palloc_extended(Size size, int flags)
+{
+	/* duplicates MemoryContextAllocExtended to avoid increased overhead */
+	void	   *ret;
+
+	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
+	AssertNotInCriticalSection(CurrentMemoryContext);
+
+	if (((flags & MCXT_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
+		((flags & MCXT_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+		elog(ERROR, "invalid memory alloc request size %zu", size);
+
+	CurrentMemoryContext->isReset = false;
+
+	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	if (ret == NULL)
+	{
+		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
+		{
+			MemoryContextStats(TopMemoryContext);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %zu.", size)));
+		}
+		return NULL;
+	}
+
+	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
+
+	if ((flags & MCXT_ALLOC_ZERO) != 0)
+		MemSetAligned(ret, 0, size);
+
+	return ret;
+}
+
 /*
  * pfree
  *		Release an allocated chunk.
