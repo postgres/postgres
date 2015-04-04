@@ -21,6 +21,6 @@ command_fails([ 'clusterdb', '-t', 'nonexistent', 'postgres' ],
 psql 'postgres',
 'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a); CLUSTER test1 USING test1x';
 issues_sql_like(
-	[ 'clusterdb', 'postgres', '-t', 'test1' ],
+	[ 'clusterdb', '-t', 'test1', 'postgres' ],
 	qr/statement: CLUSTER test1;/,
 	'cluster specific table');

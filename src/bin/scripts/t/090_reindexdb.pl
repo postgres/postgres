@@ -20,18 +20,18 @@ issues_sql_like(
 psql 'postgres',
   'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a);';
 issues_sql_like(
-	[ 'reindexdb', 'postgres', '-t', 'test1' ],
+	[ 'reindexdb', '-t', 'test1', 'postgres' ],
 	qr/statement: REINDEX TABLE test1;/,
 	'reindex specific table');
 issues_sql_like(
-	[ 'reindexdb', 'postgres', '-i', 'test1x' ],
+	[ 'reindexdb', '-i', 'test1x', 'postgres' ],
 	qr/statement: REINDEX INDEX test1x;/,
 	'reindex specific index');
 issues_sql_like(
-	[ 'reindexdb', 'postgres', '-S', 'pg_catalog' ],
+	[ 'reindexdb', '-S', 'pg_catalog', 'postgres' ],
 	qr/statement: REINDEX SCHEMA pg_catalog;/,
 	'reindex specific schema');
 issues_sql_like(
-	[ 'reindexdb', 'postgres', '-s' ],
+	[ 'reindexdb', '-s', 'postgres' ],
 	qr/statement: REINDEX SYSTEM postgres;/,
 	'reindex system tables');
