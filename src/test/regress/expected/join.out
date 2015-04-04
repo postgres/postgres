@@ -3097,6 +3097,54 @@ explain (costs off)
 (6 rows)
 
 --
+-- test that quals attached to an outer join have correct semantics,
+-- specifically that they don't re-use expressions computed below the join;
+-- we force a mergejoin so that coalesce(b.q1, 1) appears as a join input
+--
+set enable_hashjoin to off;
+set enable_nestloop to off;
+explain (verbose, costs off)
+  select a.q2, b.q1
+    from int8_tbl a left join int8_tbl b on a.q2 = coalesce(b.q1, 1)
+    where coalesce(b.q1, 1) > 0;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Merge Left Join
+   Output: a.q2, b.q1
+   Merge Cond: (a.q2 = (COALESCE(b.q1, 1::bigint)))
+   Filter: (COALESCE(b.q1, 1::bigint) > 0)
+   ->  Sort
+         Output: a.q2
+         Sort Key: a.q2
+         ->  Seq Scan on public.int8_tbl a
+               Output: a.q2
+   ->  Sort
+         Output: b.q1, (COALESCE(b.q1, 1::bigint))
+         Sort Key: (COALESCE(b.q1, 1::bigint))
+         ->  Seq Scan on public.int8_tbl b
+               Output: b.q1, COALESCE(b.q1, 1::bigint)
+(14 rows)
+
+select a.q2, b.q1
+  from int8_tbl a left join int8_tbl b on a.q2 = coalesce(b.q1, 1)
+  where coalesce(b.q1, 1) > 0;
+        q2         |        q1        
+-------------------+------------------
+ -4567890123456789 |                 
+               123 |              123
+               123 |              123
+               456 |                 
+  4567890123456789 | 4567890123456789
+  4567890123456789 | 4567890123456789
+  4567890123456789 | 4567890123456789
+  4567890123456789 | 4567890123456789
+  4567890123456789 | 4567890123456789
+  4567890123456789 | 4567890123456789
+(10 rows)
+
+reset enable_hashjoin;
+reset enable_nestloop;
+--
 -- test join removal
 --
 begin;
