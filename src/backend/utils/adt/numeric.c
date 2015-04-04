@@ -296,13 +296,21 @@ typedef struct
 	hyperLogLogState abbr_card; /* cardinality estimator */
 } NumericSortSupport;
 
+/*
+ * We define our own macros for packing and unpacking abbreviated-key
+ * representations for numeric values in order to avoid depending on
+ * USE_FLOAT8_BYVAL.  The type of abbreviation we use is based only on
+ * the size of a datum, not the argument-passing convention for float8.
+ */
 #define NUMERIC_ABBREV_BITS (SIZEOF_DATUM * BITS_PER_BYTE)
 #if SIZEOF_DATUM == 8
-#define DatumGetNumericAbbrev(d) ((int64) d)
-#define NUMERIC_ABBREV_NAN Int64GetDatum(PG_INT64_MIN)
+#define NumericAbbrevGetDatum(X) ((Datum) SET_8_BYTES(X))
+#define DatumGetNumericAbbrev(X) ((int64) GET_8_BYTES(X))
+#define NUMERIC_ABBREV_NAN		 NumericAbbrevGetDatum(PG_INT64_MIN)
 #else
-#define DatumGetNumericAbbrev(d) ((int32) d)
-#define NUMERIC_ABBREV_NAN Int32GetDatum(PG_INT32_MIN)
+#define NumericAbbrevGetDatum(X) ((Datum) SET_4_BYTES(X))
+#define DatumGetNumericAbbrev(X) ((int32) GET_4_BYTES(X))
+#define NUMERIC_ABBREV_NAN		 NumericAbbrevGetDatum(PG_INT32_MIN)
 #endif
 
 
@@ -1883,7 +1891,7 @@ numeric_abbrev_convert_var(NumericVar *var, NumericSortSupport *nss)
 		addHyperLogLog(&nss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
 	}
 
-	return Int64GetDatum(result);
+	return NumericAbbrevGetDatum(result);
 }
 
 #endif   /* NUMERIC_ABBREV_BITS == 64 */
@@ -1960,7 +1968,7 @@ numeric_abbrev_convert_var(NumericVar *var, NumericSortSupport *nss)
 		addHyperLogLog(&nss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
 	}
 
-	return Int32GetDatum(result);
+	return NumericAbbrevGetDatum(result);
 }
 
 #endif   /* NUMERIC_ABBREV_BITS == 32 */
