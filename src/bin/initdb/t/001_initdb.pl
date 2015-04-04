@@ -20,7 +20,7 @@ command_ok([ 'initdb', "$tempdir/data4" ], 'existing empty data directory');
 
 system_or_bail "rm -rf '$tempdir'/*";
 
-command_ok([ 'initdb', "$tempdir/data", '-X', "$tempdir/pgxlog" ],
+command_ok([ 'initdb', '-X', "$tempdir/pgxlog", "$tempdir/data" ],
 	'separate xlog directory');
 
 system_or_bail "rm -rf '$tempdir'/*";
@@ -30,15 +30,15 @@ command_fails(
 
 system_or_bail "rm -rf '$tempdir'/*";
 mkdir "$tempdir/pgxlog";
-command_ok([ 'initdb', "$tempdir/data", '-X', "$tempdir/pgxlog" ],
+command_ok([ 'initdb', '-X', "$tempdir/pgxlog", "$tempdir/data" ],
 	'existing empty xlog directory');
 
 system_or_bail "rm -rf '$tempdir'/*";
 mkdir "$tempdir/pgxlog";
 mkdir "$tempdir/pgxlog/lost+found";
-command_fails([ 'initdb', "$tempdir/data", '-X', "$tempdir/pgxlog" ],
+command_fails([ 'initdb', '-X', "$tempdir/pgxlog", "$tempdir/data" ],
 	'existing nonempty xlog directory');
 
 system_or_bail "rm -rf '$tempdir'/*";
-command_ok([ 'initdb', "$tempdir/data", '-T', 'german' ],
+command_ok([ 'initdb', '-T', 'german', "$tempdir/data" ],
 	'select default dictionary');

@@ -15,7 +15,7 @@ issues_sql_like(
 	qr/statement: CREATE DATABASE foobar1/,
 	'SQL CREATE DATABASE run');
 issues_sql_like(
-	[ 'createdb', 'foobar2', '-l', 'C', '-E', 'LATIN1', '-T', 'template0' ],
+	[ 'createdb', '-l', 'C', '-E', 'LATIN1', '-T', 'template0', 'foobar2' ],
 	qr/statement: CREATE DATABASE foobar2 ENCODING 'LATIN1'/,
 	'create database with encoding');
 
