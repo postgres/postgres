@@ -1091,19 +1091,13 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 	outer_itlist = build_tlist_index(outer_plan->targetlist);
 	inner_itlist = build_tlist_index(inner_plan->targetlist);
 
-	/* All join plans have tlist, qual, and joinqual */
-	join->plan.targetlist = fix_join_expr(root,
-										  join->plan.targetlist,
-										  outer_itlist,
-										  inner_itlist,
-										  (Index) 0,
-										  rtoffset);
-	join->plan.qual = fix_join_expr(root,
-									join->plan.qual,
-									outer_itlist,
-									inner_itlist,
-									(Index) 0,
-									rtoffset);
+	/*
+	 * First process the joinquals (including merge or hash clauses).  These
+	 * are logically below the join so they can always use all values
+	 * available from the input tlists.  It's okay to also handle
+	 * NestLoopParams now, because those couldn't refer to nullable
+	 * subexpressions.
+	 */
 	join->joinqual = fix_join_expr(root,
 								   join->joinqual,
 								   outer_itlist,
@@ -1154,6 +1148,49 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 										(Index) 0,
 										rtoffset);
 	}
+
+	/*
+	 * Now we need to fix up the targetlist and qpqual, which are logically
+	 * above the join.  This means they should not re-use any input expression
+	 * that was computed in the nullable side of an outer join.  Vars and
+	 * PlaceHolderVars are fine, so we can implement this restriction just by
+	 * clearing has_non_vars in the indexed_tlist structs.
+	 *
+	 * XXX This is a grotty workaround for the fact that we don't clearly
+	 * distinguish between a Var appearing below an outer join and the "same"
+	 * Var appearing above it.  If we did, we'd not need to hack the matching
+	 * rules this way.
+	 */
+	switch (join->jointype)
+	{
+		case JOIN_LEFT:
+		case JOIN_SEMI:
+		case JOIN_ANTI:
+			inner_itlist->has_non_vars = false;
+			break;
+		case JOIN_RIGHT:
+			outer_itlist->has_non_vars = false;
+			break;
+		case JOIN_FULL:
+			outer_itlist->has_non_vars = false;
+			inner_itlist->has_non_vars = false;
+			break;
+		default:
+			break;
+	}
+
+	join->plan.targetlist = fix_join_expr(root,
+										  join->plan.targetlist,
+										  outer_itlist,
+										  inner_itlist,
+										  (Index) 0,
+										  rtoffset);
+	join->plan.qual = fix_join_expr(root,
+									join->plan.qual,
+									outer_itlist,
+									inner_itlist,
+									(Index) 0,
+									rtoffset);
 
 	pfree(outer_itlist);
 	pfree(inner_itlist);
@@ -1433,7 +1470,9 @@ search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
  * If no match, return NULL.
  *
  * NOTE: it is a waste of time to call this unless itlist->has_ph_vars or
- * itlist->has_non_vars
+ * itlist->has_non_vars.  Furthermore, set_join_references() relies on being
+ * able to prevent matching of non-Vars by clearing itlist->has_non_vars,
+ * so there's a correctness reason not to call it unless that's set.
  */
 static Var *
 search_indexed_tlist_for_non_var(Node *node,
