@@ -6,7 +6,10 @@ our $config = {
 	asserts => 0,    # --enable-cassert
 	  # integer_datetimes=>1,   # --enable-integer-datetimes - on is now default
 	  # float4byval=>1,         # --disable-float4-byval, on by default
-	  # float8byval=>0,         # --disable-float8-byval, off by default
+
+	  # float8byval=> $platformbits == 64, # --disable-float8-byval,
+	  # off by default on 32 bit platforms, on by default on 64 bit platforms
+
 	  # blocksize => 8,         # --with-blocksize, 8kB by default
 	  # wal_blocksize => 8,     # --with-wal-blocksize, 8kB by default
 	  # wal_segsize => 16,      # --with-wal-segsize, 16MB by default

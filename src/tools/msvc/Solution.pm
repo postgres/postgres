@@ -25,11 +25,18 @@ sub _new
 		platform                   => undef, };
 	bless($self, $classname);
 
+	$self->DeterminePlatform();
+	my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
+
 	# integer_datetimes is now the default
 	$options->{integer_datetimes} = 1
 	  unless exists $options->{integer_datetimes};
 	$options->{float4byval} = 1
 	  unless exists $options->{float4byval};
+	$options->{float8byval} = ($bits == 64)
+	  unless exists $options->{float8byval};
+	die "float8byval not permitted on 32 bit platforms"
+	  if  $options->{float8byval} && $bits == 32;
 	if ($options->{xml})
 	{
 		if (!($options->{xslt} && $options->{iconv}))
@@ -55,8 +62,6 @@ sub _new
 	  unless $options->{wal_segsize};      # undef or 0 means default
 	die "Bad wal_segsize $options->{wal_segsize}"
 	  unless grep { $_ == $options->{wal_segsize} } (1, 2, 4, 8, 16, 32, 64);
-
-	$self->DeterminePlatform();
 
 	return $self;
 }
