@@ -1,0 +1,1389 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1a s1b s1c s2a s2b s2c s2d s2e s2f
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s1b s2a s1c s2b s2c s2d s2e s2f
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2a: BEGIN;
+step s1c: COMMIT;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s1b s2a s2b s1c s2c s2d s2e s2f
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1c: COMMIT;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s1b s2a s2b s2c s1c s2d s2e s2f
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s1b s2a s2b s2c s2d s1c s2e s2f
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s1b s2a s2b s2c s2d s2e s1c s2f
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s1b s2a s2b s2c s2d s2e s2f s1c
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s1b s1c s2b s2c s2d s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s1b s2b s1c s2c s2d s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1c: COMMIT;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s1b s2b s2c s1c s2d s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s1b s2b s2c s2d s1c s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s1b s2b s2c s2d s2e s1c s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s1b s2b s2c s2d s2e s2f s1c
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s1b s1c s2c s2d s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s2b s1b s2c s1c s2d s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s2b s1b s2c s2d s1c s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s2b s1b s2c s2d s2e s1c s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s1b s2c s2d s2e s2f s1c
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s2c s1b s1c s2d s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s2b s2c s1b s2d s1c s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s1a s2a s2b s2c s1b s2d s2e s1c s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s2c s1b s2d s2e s2f s1c
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s2c s2d s1b s1c s2e s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s2c s2d s1b s2e s1c s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s2c s2d s1b s2e s2f s1c
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s1a s2a s2b s2c s2d s2e s1b s1c s2f
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s1a s2a s2b s2c s2d s2e s1b s2f s1c
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s1a s2a s2b s2c s2d s2e s2f s1b s1c
+step s1a: BEGIN;
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+
+starting permutation: s2a s1a s1b s1c s2b s2c s2d s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s1b s2b s1c s2c s2d s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1c: COMMIT;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s1b s2b s2c s1c s2d s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s1b s2b s2c s2d s1c s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s1b s2b s2c s2d s2e s1c s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s1b s2b s2c s2d s2e s2f s1c
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s1b s1c s2c s2d s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s2b s1b s2c s1c s2d s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s2b s1b s2c s2d s1c s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s2b s1b s2c s2d s2e s1c s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s1b s2c s2d s2e s2f s1c
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s2c s1b s1c s2d s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s2b s2c s1b s2d s1c s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s1a s2b s2c s1b s2d s2e s1c s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s2c s1b s2d s2e s2f s1c
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s2c s2d s1b s1c s2e s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s2c s2d s1b s2e s1c s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s2c s2d s1b s2e s2f s1c
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s1a s2b s2c s2d s2e s1b s1c s2f
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s1a s2b s2c s2d s2e s1b s2f s1c
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s1a s2b s2c s2d s2e s2f s1b s1c
+step s2a: BEGIN;
+step s1a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s1a s1b s1c s2c s2d s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s1a s1b s2c s1c s2d s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s1a s1b s2c s2d s1c s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s1a s1b s2c s2d s2e s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s1b s2c s2d s2e s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s2c s1b s1c s2d s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s1a s2c s1b s2d s1c s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s1a s2c s1b s2d s2e s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s2c s1b s2d s2e s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s2c s2d s1b s1c s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s2c s2d s1b s2e s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s2c s2d s1b s2e s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s1a s2c s2d s2e s1b s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s1a s2c s2d s2e s1b s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s1a s2c s2d s2e s2f s1b s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s1a: BEGIN;
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s1a s1b s1c s2d s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s2c s1a s1b s2d s1c s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+
+starting permutation: s2a s2b s2c s1a s1b s2d s2e s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s1a s1b s2d s2e s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s2d: INSERT INTO b VALUES (0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s1a s2d s1b s1c s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s1a s2d s1b s2e s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s1a s2d s1b s2e s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s2d: INSERT INTO b VALUES (0);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s1a s2d s2e s1b s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s1a s2d s2e s1b s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s1a s2d s2e s2f s1b s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s1a: BEGIN;
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s2d s1a s1b s1c s2e s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s2d s1a s1b s2e s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s2d s1a s1b s2e s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s2d s1a s2e s1b s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1a: BEGIN;
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s2d s1a s2e s1b s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1a: BEGIN;
+step s2e: INSERT INTO a VALUES (4);
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s2d s1a s2e s2f s1b s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s1a: BEGIN;
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s2d s2e s1a s1b s1c s2f
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2a s2b s2c s2d s2e s1a s1b s2f s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID; <waiting ...>
+step s2f: COMMIT;
+step s1b: <... completed>
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s2d s2e s1a s2f s1b s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s1a: BEGIN;
+step s2f: COMMIT;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
+
+starting permutation: s2a s2b s2c s2d s2e s2f s1a s1b s1c
+step s2a: BEGIN;
+step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
+i              
+
+1              
+step s2c: SELECT * FROM b WHERE a_id = 3 LIMIT 1 FOR UPDATE;
+a_id           
+
+3              
+step s2d: INSERT INTO b VALUES (0);
+step s2e: INSERT INTO a VALUES (4);
+step s2f: COMMIT;
+step s1a: BEGIN;
+step s1b: ALTER TABLE b ADD CONSTRAINT bfk FOREIGN KEY (a_id) REFERENCES a (i) NOT VALID;
+step s1c: COMMIT;
