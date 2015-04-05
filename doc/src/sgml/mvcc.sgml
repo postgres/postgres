@@ -909,9 +909,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         This lock mode is not automatically acquired by any
-         <productname>PostgreSQL</productname> command.
-        </para>
+         Acquired by <command>CREATE TRIGGER</command> and many forms of
+         <command>ALTER TABLE</command> (see <xref linkend="SQL-ALTERTABLE">).
+        </para>>
        </listitem>
       </varlistentry>
 
@@ -958,9 +958,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          <command>TRUNCATE</command>, <command>REINDEX</command>,
          <command>CLUSTER</command>, and <command>VACUUM FULL</command>
          commands. Many forms of <command>ALTER TABLE</> also acquire
-         a lock at this level (see <xref linkend="SQL-ALTERTABLE">).
-         This is also the default lock mode for <command>LOCK TABLE</command>
-         statements that do not specify a mode explicitly.
+         a lock at this level. This is also the default lock mode for
+         <command>LOCK TABLE</command> statements that do not specify
+         a mode explicitly.
         </para>
        </listitem>
       </varlistentry>

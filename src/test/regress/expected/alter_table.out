@@ -1957,9 +1957,9 @@ create trigger ttdummy
 	execute procedure
 	ttdummy (1, 1);
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
+  relname  |     max_lockmode      
+-----------+-----------------------
+ alterlock | ShareRowExclusiveLock
 (1 row)
 
 rollback;
@@ -1971,10 +1971,10 @@ select * from my_locks order by 1;
 
 alter table alterlock2 add foreign key (f1) references alterlock (f1);
 select * from my_locks order by 1;
-     relname     |    max_lockmode     
------------------+---------------------
- alterlock       | AccessExclusiveLock
- alterlock2      | AccessExclusiveLock
+     relname     |     max_lockmode      
+-----------------+-----------------------
+ alterlock       | ShareRowExclusiveLock
+ alterlock2      | ShareRowExclusiveLock
  alterlock2_pkey | AccessShareLock
  alterlock_pkey  | AccessShareLock
 (4 rows)
@@ -1984,10 +1984,10 @@ begin;
 alter table alterlock2
 add constraint alterlock2nv foreign key (f1) references alterlock (f1) NOT VALID;
 select * from my_locks order by 1;
-  relname   |    max_lockmode     
-------------+---------------------
- alterlock  | AccessExclusiveLock
- alterlock2 | AccessExclusiveLock
+  relname   |     max_lockmode      
+------------+-----------------------
+ alterlock  | ShareRowExclusiveLock
+ alterlock2 | ShareRowExclusiveLock
 (2 rows)
 
 commit;

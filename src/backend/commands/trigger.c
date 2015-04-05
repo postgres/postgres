@@ -165,9 +165,9 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				referenced;
 
 	if (OidIsValid(relOid))
-		rel = heap_open(relOid, AccessExclusiveLock);
+		rel = heap_open(relOid, ShareRowExclusiveLock);
 	else
-		rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+		rel = heap_openrv(stmt->relation, ShareRowExclusiveLock);
 
 	/*
 	 * Triggers must be on tables or views, and there are additional

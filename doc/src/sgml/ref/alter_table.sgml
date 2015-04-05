@@ -406,6 +406,9 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       mode, and triggers configured as <literal>ENABLE ALWAYS</literal> will
       fire regardless of the current replication mode.
      </para>
+     <para>
+      This command acquires a <literal>SHARE ROW EXCLUSIVE</literal> lock.
+     </para>
     </listitem>
    </varlistentry>
 

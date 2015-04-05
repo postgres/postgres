@@ -2892,13 +2892,8 @@ AlterTableGetLockLevel(List *cmds)
 				break;
 
 				/*
-				 * These subcommands affect write operations only. XXX
-				 * Theoretically, these could be ShareRowExclusiveLock.
+				 * These subcommands affect write operations only.
 				 */
-			case AT_ColumnDefault:
-			case AT_ProcessedConstraint:		/* becomes AT_AddConstraint */
-			case AT_AddConstraintRecurse:		/* becomes AT_AddConstraint */
-			case AT_ReAddConstraint:	/* becomes AT_AddConstraint */
 			case AT_EnableTrig:
 			case AT_EnableAlwaysTrig:
 			case AT_EnableReplicaTrig:
@@ -2907,6 +2902,14 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_DisableTrig:
 			case AT_DisableTrigAll:
 			case AT_DisableTrigUser:
+				cmd_lockmode = ShareRowExclusiveLock;
+				break;
+
+				/*
+				 * These subcommands affect write operations only. XXX
+				 * Theoretically, these could be ShareRowExclusiveLock.
+				 */
+			case AT_ColumnDefault:
 			case AT_AlterConstraint:
 			case AT_AddIndex:	/* from ADD CONSTRAINT */
 			case AT_AddIndexConstraint:
@@ -2918,6 +2921,9 @@ AlterTableGetLockLevel(List *cmds)
 				break;
 
 			case AT_AddConstraint:
+			case AT_ProcessedConstraint:		/* becomes AT_AddConstraint */
+			case AT_AddConstraintRecurse:		/* becomes AT_AddConstraint */
+			case AT_ReAddConstraint:	/* becomes AT_AddConstraint */
 				if (IsA(cmd->def, Constraint))
 				{
 					Constraint *con = (Constraint *) cmd->def;
@@ -2943,11 +2949,9 @@ AlterTableGetLockLevel(List *cmds)
 							/*
 							 * We add triggers to both tables when we add a
 							 * Foreign Key, so the lock level must be at least
-							 * as strong as CREATE TRIGGER. XXX Might be set
-							 * down to ShareRowExclusiveLock though trigger
-							 * info is accessed by pg_get_triggerdef
+							 * as strong as CREATE TRIGGER.
 							 */
-							cmd_lockmode = AccessExclusiveLock;
+							cmd_lockmode = ShareRowExclusiveLock;
 							break;
 
 						default:
@@ -6193,16 +6197,13 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	ListCell   *old_pfeqop_item = list_head(fkconstraint->old_conpfeqop);
 
 	/*
-	 * Grab an exclusive lock on the pk table, so that someone doesn't delete
-	 * rows out from under us. (Although a lesser lock would do for that
-	 * purpose, we'll need exclusive lock anyway to add triggers to the pk
-	 * table; trying to start with a lesser lock will just create a risk of
-	 * deadlock.)
+	 * Grab ShareRowExclusiveLock on the pk table, so that someone doesn't
+	 * delete rows out from under us.
 	 */
 	if (OidIsValid(fkconstraint->old_pktable_oid))
-		pkrel = heap_open(fkconstraint->old_pktable_oid, AccessExclusiveLock);
+		pkrel = heap_open(fkconstraint->old_pktable_oid, ShareRowExclusiveLock);
 	else
-		pkrel = heap_openrv(fkconstraint->pktable, AccessExclusiveLock);
+		pkrel = heap_openrv(fkconstraint->pktable, ShareRowExclusiveLock);
 
 	/*
 	 * Validity checks (permission checks wait till we have the column
