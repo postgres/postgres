@@ -427,6 +427,13 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # Optimization flags for specific files that benefit from vectorization
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-funroll-loops])
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-ftree-vectorize])
+  # We want to suppress clang's unhelpful unused-command-line-argument warnings
+  # but gcc won't complain about unrecognized -Wno-foo switches, so we have to
+  # test for the positive form and if that works, add the negative form
+  PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wunused-command-line-argument])
+  if test -n "$NOT_THE_CFLAGS"; then
+    CFLAGS="$CFLAGS -Wno-unused-command-line-argument"
+  fi
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
