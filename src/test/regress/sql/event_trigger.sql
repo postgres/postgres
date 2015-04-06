@@ -143,6 +143,7 @@ drop event trigger regress_event_trigger_end;
 CREATE SCHEMA schema_one authorization regression_bob;
 CREATE SCHEMA schema_two authorization regression_bob;
 CREATE SCHEMA audit_tbls authorization regression_bob;
+CREATE TEMP TABLE a_temp_tbl ();
 SET SESSION AUTHORIZATION regression_bob;
 
 CREATE TABLE schema_one.table_one(a int);
@@ -253,9 +254,9 @@ BEGIN
     IF NOT r.normal AND NOT r.original THEN
         CONTINUE;
     END IF;
-    RAISE NOTICE 'NORMAL: orig=% normal=% type=% identity=% name=% args=%',
-        r.original, r.normal, r.object_type, r.object_identity,
-		r.address_names, r.address_args;
+    RAISE NOTICE 'NORMAL: orig=% normal=% istemp=% type=% identity=% name=% args=%',
+        r.original, r.normal, r.is_temporary, r.object_type,
+        r.object_identity, r.address_names, r.address_args;
     END LOOP;
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
@@ -270,6 +271,7 @@ ALTER TABLE evttrig.one ALTER COLUMN col_b DROP DEFAULT;
 ALTER TABLE evttrig.one DROP CONSTRAINT one_pkey;
 DROP INDEX evttrig.one_idx;
 DROP SCHEMA evttrig CASCADE;
+DROP TABLE a_temp_tbl;
 
 DROP EVENT TRIGGER regress_event_trigger_report_dropped;
 

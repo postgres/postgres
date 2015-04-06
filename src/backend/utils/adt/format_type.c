@@ -305,7 +305,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 		if (!force_qualify && TypeIsVisible(type_oid))
 			nspname = NULL;
 		else
-			nspname = get_namespace_name(typeform->typnamespace);
+			nspname = get_namespace_name_or_temp(typeform->typnamespace);
 
 		typname = NameStr(typeform->typname);
 

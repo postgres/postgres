@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "bootstrap/bootstrap.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_collation.h"
@@ -2882,6 +2883,20 @@ get_namespace_name(Oid nspid)
 	}
 	else
 		return NULL;
+}
+
+/*
+ * get_namespace_name_or_temp
+ *		As above, but if it is this backend's temporary namespace, return
+ *		"pg_temp" instead.
+ */
+char *
+get_namespace_name_or_temp(Oid nspid)
+{
+	if (isTempNamespace(nspid))
+		return "pg_temp";
+	else
+		return get_namespace_name(nspid);
 }
 
 /*				---------- PG_RANGE CACHE ----------				 */

@@ -17878,6 +17878,13 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
         </entry>
        </row>
        <row>
+        <entry><literal>is_temporary</literal></entry>
+        <entry><type>bool</type></entry>
+        <entry>
+         Flag indicating that the object was a temporary object.
+        </entry>
+       </row>
+       <row>
         <entry><literal>object_type</literal></entry>
         <entry><type>text</type></entry>
         <entry>Type of the object</entry>

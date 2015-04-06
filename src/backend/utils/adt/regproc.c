@@ -460,7 +460,7 @@ format_procedure_parts(Oid procedure_oid, List **objnames, List **objargs)
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 	nargs = procform->pronargs;
 
-	*objnames = list_make2(get_namespace_name(procform->pronamespace),
+	*objnames = list_make2(get_namespace_name_or_temp(procform->pronamespace),
 						   pstrdup(NameStr(procform->proname)));
 	*objargs = NIL;
 	for (i = 0; i < nargs; i++)
@@ -922,7 +922,7 @@ format_operator_parts(Oid operator_oid, List **objnames, List **objargs)
 			 operator_oid);
 
 	oprForm = (Form_pg_operator) GETSTRUCT(opertup);
-	*objnames = list_make2(get_namespace_name(oprForm->oprnamespace),
+	*objnames = list_make2(get_namespace_name_or_temp(oprForm->oprnamespace),
 						   pstrdup(NameStr(oprForm->oprname)));
 	*objargs = NIL;
 	if (oprForm->oprleft)

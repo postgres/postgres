@@ -3687,7 +3687,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for collation %u",
 						 object->objectId);
 				coll = (Form_pg_collation) GETSTRUCT(collTup);
-				schema = get_namespace_name(coll->collnamespace);
+				schema = get_namespace_name_or_temp(coll->collnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 												   NameStr(coll->collname)));
@@ -3751,7 +3751,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
 				conForm = (Form_pg_conversion) GETSTRUCT(conTup);
-				schema = get_namespace_name(conForm->connamespace);
+				schema = get_namespace_name_or_temp(conForm->connamespace);
 				appendStringInfoString(&buffer,
 								quote_qualified_identifier(schema,
 														   NameStr(conForm->conname)));
@@ -3849,7 +3849,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for opclass %u",
 						 object->objectId);
 				opcForm = (Form_pg_opclass) GETSTRUCT(opcTup);
-				schema = get_namespace_name(opcForm->opcnamespace);
+				schema = get_namespace_name_or_temp(opcForm->opcnamespace);
 
 				amTup = SearchSysCache1(AMOID,
 										ObjectIdGetDatum(opcForm->opcmethod));
@@ -4066,7 +4066,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 			{
 				char	   *nspname;
 
-				nspname = get_namespace_name(object->objectId);
+				nspname = get_namespace_name_or_temp(object->objectId);
 				if (!nspname)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
@@ -4089,7 +4089,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for text search parser %u",
 						 object->objectId);
 				formParser = (Form_pg_ts_parser) GETSTRUCT(tup);
-				schema = get_namespace_name(formParser->prsnamespace);
+				schema = get_namespace_name_or_temp(formParser->prsnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 											  NameStr(formParser->prsname)));
@@ -4112,7 +4112,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for text search dictionary %u",
 						 object->objectId);
 				formDict = (Form_pg_ts_dict) GETSTRUCT(tup);
-				schema = get_namespace_name(formDict->dictnamespace);
+				schema = get_namespace_name_or_temp(formDict->dictnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 											   NameStr(formDict->dictname)));
@@ -4135,7 +4135,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for text search template %u",
 						 object->objectId);
 				formTmpl = (Form_pg_ts_template) GETSTRUCT(tup);
-				schema = get_namespace_name(formTmpl->tmplnamespace);
+				schema = get_namespace_name_or_temp(formTmpl->tmplnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 											   NameStr(formTmpl->tmplname)));
@@ -4158,7 +4158,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for text search configuration %u",
 						 object->objectId);
 				formCfg = (Form_pg_ts_config) GETSTRUCT(tup);
-				schema = get_namespace_name(formCfg->cfgnamespace);
+				schema = get_namespace_name_or_temp(formCfg->cfgnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
 												 NameStr(formCfg->cfgname)));
@@ -4305,7 +4305,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				if (OidIsValid(defacl->defaclnamespace))
 				{
-					schema = get_namespace_name(defacl->defaclnamespace);
+					schema = get_namespace_name_or_temp(defacl->defaclnamespace);
 					appendStringInfo(&buffer,
 									 " in schema %s",
 									 quote_identifier(schema));
@@ -4421,7 +4421,7 @@ getOpFamilyIdentity(StringInfo buffer, Oid opfid, List **objname)
 			 opfForm->opfmethod);
 	amForm = (Form_pg_am) GETSTRUCT(amTup);
 
-	schema = get_namespace_name(opfForm->opfnamespace);
+	schema = get_namespace_name_or_temp(opfForm->opfnamespace);
 	appendStringInfo(buffer, "%s USING %s",
 					 quote_qualified_identifier(schema,
 												NameStr(opfForm->opfname)),
@@ -4453,7 +4453,7 @@ getRelationIdentity(StringInfo buffer, Oid relid, List **objname)
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	relForm = (Form_pg_class) GETSTRUCT(relTup);
 
-	schema = get_namespace_name(relForm->relnamespace);
+	schema = get_namespace_name_or_temp(relForm->relnamespace);
 	appendStringInfoString(buffer,
 						   quote_qualified_identifier(schema,
 												 NameStr(relForm->relname)));
