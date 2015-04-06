@@ -5556,7 +5556,7 @@ int PQfireResultCreateEvents(PGconn *conn, PGresult *res);
 
      <para>
       The main reason that this function is separate from
-      <function>PQmakeEmptyPGResult</function> is that it is often appropriate
+      <function>PQmakeEmptyPGresult</function> is that it is often appropriate
       to create a <structname>PGresult</structname> and fill it with data
       before invoking the event procedures.
      </para>
