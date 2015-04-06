@@ -3756,8 +3756,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 								quote_qualified_identifier(schema,
 														   NameStr(conForm->conname)));
 				if (objname)
-					*objname = list_make1(pstrdup(NameStr(conForm->conname)));
-				pfree(schema);
+					*objname = list_make2(schema,
+										  pstrdup(NameStr(conForm->conname)));
 				ReleaseSysCache(conTup);
 				break;
 			}
