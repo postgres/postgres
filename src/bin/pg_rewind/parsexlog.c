@@ -229,7 +229,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, TimeLineID tli,
 }
 
 /* XLogreader callback function, to read a WAL page */
-int
+static int
 SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 				   int reqLen, XLogRecPtr targetRecPtr, char *readBuf,
 				   TimeLineID *pageTLI)
