@@ -157,21 +157,21 @@ main(int argc, char **argv)
 	/* No source given? Show usage */
 	if (datadir_source == NULL && connstr_source == NULL)
 	{
-		pg_fatal("no source specified (--source-pgdata or --source-server)\n");
-		pg_fatal("Try \"%s --help\" for more information.\n", progname);
+		fprintf(stderr, _("no source specified (--source-pgdata or --source-server)\n"));
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
 	if (datadir_target == NULL)
 	{
-		pg_fatal("no target data directory specified (--target-pgdata)\n");
+		fprintf(stderr, _("no target data directory specified (--target-pgdata)\n"));
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
 	if (argc != optind)
 	{
-		pg_fatal("%s: invalid arguments\n", progname);
+		fprintf(stderr, _("invalid arguments\n"));
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
