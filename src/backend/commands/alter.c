@@ -446,7 +446,6 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 				Relation	relation;
 				Oid			classId;
 				Oid			nspOid;
-				ObjectAddress address;
 
 				address = get_object_address(stmt->objectType,
 											 stmt->object,
