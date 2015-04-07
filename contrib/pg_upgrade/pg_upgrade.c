@@ -289,7 +289,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, const char 
 }
 #endif
 
-void
+static void
 get_restricted_token(const char *progname)
 {
 #ifdef WIN32
