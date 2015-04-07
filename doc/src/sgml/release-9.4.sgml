@@ -491,7 +491,7 @@ Branch: REL9_4_STABLE [b337d9657] 2015-01-15 20:52:18 +0200
     <listitem>
      <para>
       Fix incorrect replay of WAL parameter change records that report
-      changes in the <varname>wal_log_hints</> setting (Petr Jalinek)
+      changes in the <varname>wal_log_hints</> setting (Petr Jelinek)
      </para>
     </listitem>
 
