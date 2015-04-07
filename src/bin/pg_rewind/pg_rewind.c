@@ -24,6 +24,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+#include "common/restricted_token.h"
 #include "getopt_long.h"
 #include "storage/bufpage.h"
 
@@ -102,6 +103,7 @@ main(int argc, char **argv)
 	TimeLineID	endtli;
 	ControlFileData ControlFile_new;
 
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_rewind"));
 	progname = get_progname(argv[0]);
 
 	/* Process command-line arguments */
@@ -173,6 +175,21 @@ main(int argc, char **argv)
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
+
+	/*
+	 * Don't allow pg_rewind to be run as root, to avoid overwriting the
+	 * ownership of files in the data directory. We need only check for root
+	 * -- any other user won't have sufficient permissions to modify files in
+	 * the data directory.
+	 */
+#ifndef WIN32
+	if (geteuid() == 0)
+		pg_fatal("cannot be executed by \"root\"\n"
+				 "You must run %s as the PostgreSQL superuser.\n",
+				 progname);
+#endif
+
+	get_restricted_token(progname);
 
 	/* Connect to remote server */
 	if (connstr_source)
