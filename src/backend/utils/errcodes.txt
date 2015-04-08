@@ -278,6 +278,7 @@ Section: Class 39 - External Routine Invocation Exception
 39004    E    ERRCODE_E_R_I_E_NULL_VALUE_NOT_ALLOWED                         null_value_not_allowed
 39P01    E    ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED                      trigger_protocol_violated
 39P02    E    ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED                          srf_protocol_violated
+39P03    E    ERRCODE_E_R_I_E_EVENT_TRIGGER_PROTOCOL_VIOLATED                event_trigger_protocol_violated
 
 Section: Class 3B - Savepoint Exception
 
