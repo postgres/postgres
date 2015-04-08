@@ -3316,7 +3316,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence)
  * REINDEX_REL_FORCE_INDEXES_UNLOGGED: if true, set the persistence of the
  * rebuilt indexes to unlogged.
  *
- * REINDEX_REL_FORCE_INDEXES_LOGGED: if true, set the persistence of the
+ * REINDEX_REL_FORCE_INDEXES_PERMANENT: if true, set the persistence of the
  * rebuilt indexes to permanent.
  *
  * Returns true if any indexes were rebuilt (including toast table's index
