@@ -34,9 +34,6 @@
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
 
-#ifdef DEBUG_ABBREV_KEYS
-#define DEBUG_elog_output	DEBUG1
-#endif
 
 /* GUC variable */
 int			bytea_output = BYTEA_OUTPUT_HEX;
@@ -2149,11 +2146,13 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 	 * time there are differences within full key strings not captured in
 	 * abbreviations.
 	 */
-#ifdef DEBUG_ABBREV_KEYS
+#ifdef TRACE_SORT
+	if (trace_sort)
 	{
 		double norm_abbrev_card = abbrev_distinct / (double) memtupcount;
 
-		elog(DEBUG_elog_output, "abbrev_distinct after %d: %f (key_distinct: %f, norm_abbrev_card: %f, prop_card: %f)",
+		elog(LOG, "bttext_abbrev: abbrev_distinct after %d: %f "
+			 "(key_distinct: %f, norm_abbrev_card: %f, prop_card: %f)",
 			 memtupcount, abbrev_distinct, key_distinct, norm_abbrev_card,
 			 tss->prop_card);
 	}
@@ -2219,11 +2218,11 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 	 * of moderately high to high abbreviated cardinality.  There is little to
 	 * lose but much to gain, which our strategy reflects.
 	 */
-#ifdef DEBUG_ABBREV_KEYS
-	elog(DEBUG_elog_output, "would have aborted abbreviation due to worst-case at %d. abbrev_distinct: %f, key_distinct: %f, prop_card: %f",
-		 memtupcount, abbrev_distinct, key_distinct, tss->prop_card);
-	/* Actually abort only when debugging is disabled */
-	return false;
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(LOG, "bttext_abbrev: aborted abbreviation at %d "
+			 "(abbrev_distinct: %f, key_distinct: %f, prop_card: %f)",
+			 memtupcount, abbrev_distinct, key_distinct, tss->prop_card);
 #endif
 
 	return true;
