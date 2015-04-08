@@ -534,6 +534,10 @@ AutoVacLauncherMain(int argc, char *argv[])
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
 
+		/* if in shutdown mode, no need for anything further; just go away */
+		if (got_SIGTERM)
+			goto shutdown;
+
 		/*
 		 * Sleep at least 1 second after any error.  We don't want to be
 		 * filling the error logs as fast as we can.
@@ -569,10 +573,14 @@ AutoVacLauncherMain(int argc, char *argv[])
 	SetConfigOption("default_transaction_isolation", "read committed",
 					PGC_SUSET, PGC_S_OVERRIDE);
 
-	/* in emergency mode, just start a worker and go away */
+	/*
+	 * In emergency mode, just start a worker (unless shutdown was requested)
+	 * and go away.
+	 */
 	if (!AutoVacuumingActive())
 	{
-		do_start_worker();
+		if (!got_SIGTERM)
+			do_start_worker();
 		proc_exit(0);			/* done */
 	}
 
@@ -587,7 +595,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 */
 	rebuild_database_list(InvalidOid);
 
-	for (;;)
+	/* loop until shutdown request */
+	while (!got_SIGTERM)
 	{
 		struct timeval nap;
 		TimestampTz current_time = 0;
@@ -787,6 +796,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	}
 
 	/* Normal exit from the autovac launcher is here */
+shutdown:
 	ereport(LOG,
 			(errmsg("autovacuum launcher shutting down")));
 	AutoVacuumShmem->av_launcherpid = 0;
