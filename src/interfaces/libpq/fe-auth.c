@@ -236,10 +236,10 @@ pg_SSPI_error(PGconn *conn, const char *mprefix, SECURITY_STATUS r)
 
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0,
 					  sysmsg, sizeof(sysmsg), NULL) == 0)
-		printfPQExpBuffer(&conn->errorMessage, "%s: SSPI error %x",
+		printfPQExpBuffer(&conn->errorMessage, "%s: SSPI error %x\n",
 						  mprefix, (unsigned int) r);
 	else
-		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)",
+		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)\n",
 						  mprefix, sysmsg, (unsigned int) r);
 }
 
