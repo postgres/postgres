@@ -528,6 +528,12 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 						  "  ) AS \"%s\",\n",
 						  gettext_noop("Elements"));
 	}
+	if (verbose)
+	{
+		appendPQExpBuffer(&buf,
+						  "  pg_catalog.pg_get_userbyid(t.typowner) AS \"%s\",\n",
+						  gettext_noop("Owner"));
+	}
 	if (verbose && pset.sversion >= 90200)
 	{
 		printACLColumn(&buf, "t.typacl");
