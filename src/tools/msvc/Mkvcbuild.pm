@@ -664,7 +664,7 @@ sub AddSimpleFrontend
 		$p->AddReference($libpq);
 	}
 
-	# Adjust module definition using frontent variables
+	# Adjust module definition using frontend variables
 	AdjustFrontendProj($p);
 
 	return $p;
