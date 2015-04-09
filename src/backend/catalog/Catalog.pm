@@ -179,7 +179,7 @@ sub Catalogs
 
 					if (defined $attopt)
 					{
-						if ($attopt eq 'PG_FORCE_NULL')
+						if ($attopt eq 'BKI_FORCE_NULL')
 						{
 							$row{'forcenull'} = 1;
 						}
