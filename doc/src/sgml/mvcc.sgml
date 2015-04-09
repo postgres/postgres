@@ -1378,7 +1378,7 @@ SELECT pg_advisory_lock(q.id) FROM
       This level of integrity protection using Serializable transactions
       does not yet extend to hot standby mode (<xref linkend="hot-standby">).
       Because of that, those using hot standby may want to use Repeatable
-      Read and explicit locking.on the master.
+      Read and explicit locking on the master.
      </para>
     </warning>
    </sect2>
