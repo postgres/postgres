@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REINDEX { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replaceable class="PARAMETER">name</replaceable> [ FORCE ]
+REINDEX { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replaceable class="PARAMETER">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -147,15 +147,6 @@ REINDEX { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replaceable class="PARAM
       Presently, <command>REINDEX DATABASE</> and <command>REINDEX SYSTEM</>
       can only reindex the current database, so their parameter must match
       the current database's name.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>FORCE</literal></term>
-    <listitem>
-     <para>
-      This is an obsolete option; it is ignored if specified.
      </para>
     </listitem>
    </varlistentry>

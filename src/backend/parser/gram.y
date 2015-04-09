@@ -283,7 +283,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <ival>	opt_lock lock_type cast_context
 %type <ival>	vacuum_option_list vacuum_option_elem
-%type <boolean>	opt_force opt_or_replace
+%type <boolean>	opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait opt_if_exists opt_with_data
 %type <ival>	opt_nowait_or_skip
@@ -7301,13 +7301,11 @@ opt_if_exists: IF_P EXISTS						{ $$ = TRUE; }
  *
  *		QUERY:
  *
- *		REINDEX type <name> [FORCE]
- *
- * FORCE no longer does anything, but we accept it for backwards compatibility
+ *		REINDEX type <name>
  *****************************************************************************/
 
 ReindexStmt:
-			REINDEX INDEX qualified_name opt_force
+			REINDEX INDEX qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = REINDEX_OBJECT_INDEX;
@@ -7315,7 +7313,7 @@ ReindexStmt:
 					n->name = NULL;
 					$$ = (Node *)n;
 				}
-			| REINDEX TABLE qualified_name opt_force
+			| REINDEX TABLE qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = REINDEX_OBJECT_TABLE;
@@ -7323,7 +7321,7 @@ ReindexStmt:
 					n->name = NULL;
 					$$ = (Node *)n;
 				}
-			| REINDEX SCHEMA name opt_force
+			| REINDEX SCHEMA name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = REINDEX_OBJECT_SCHEMA;
@@ -7331,7 +7329,7 @@ ReindexStmt:
 					n->relation = NULL;
 					$$ = (Node *)n;
 				}
-			| REINDEX SYSTEM_P name opt_force
+			| REINDEX SYSTEM_P name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = REINDEX_OBJECT_SYSTEM;
@@ -7339,7 +7337,7 @@ ReindexStmt:
 					n->relation = NULL;
 					$$ = (Node *)n;
 				}
-			| REINDEX DATABASE name opt_force
+			| REINDEX DATABASE name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = REINDEX_OBJECT_DATABASE;
@@ -7347,10 +7345,6 @@ ReindexStmt:
 					n->relation = NULL;
 					$$ = (Node *)n;
 				}
-		;
-
-opt_force:	FORCE									{  $$ = TRUE; }
-			| /* EMPTY */							{  $$ = FALSE; }
 		;
 
 
