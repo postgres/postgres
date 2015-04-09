@@ -19,12 +19,28 @@ package ServerSetup;
 use strict;
 use warnings;
 use TestLib;
+use File::Basename;
+use File::Copy;
 use Test::More;
 
 use Exporter 'import';
 our @EXPORT = qw(
   configure_test_server_for_ssl switch_server_cert
 );
+
+# Copy a set of files, taking into account wildcards
+sub copy_files
+{
+	my $orig = shift;
+	my $dest = shift;
+
+	my @orig_files = glob $orig;
+	foreach my $orig_file (@orig_files)
+	{
+		my $base_file = basename($orig_file);
+		copy($orig_file, "$dest/$base_file") or die "Could not copy $orig_file to $dest";
+	}
+}
 
 sub configure_test_server_for_ssl
 {
@@ -48,13 +64,12 @@ sub configure_test_server_for_ssl
 
   close CONF;
 
-
   # Copy all server certificates and keys, and client root cert, to the data dir
-  system_or_bail "cp ssl/server-*.crt '$tempdir'/pgdata";
-  system_or_bail "cp ssl/server-*.key '$tempdir'/pgdata";
+  copy_files("ssl/server-*.crt", "$tempdir/pgdata");
+  copy_files("ssl/server-*.key", "$tempdir/pgdata");
   system_or_bail "chmod 0600 '$tempdir'/pgdata/server-*.key";
-  system_or_bail "cp ssl/root+client_ca.crt '$tempdir'/pgdata";
-  system_or_bail "cp ssl/root+client.crl '$tempdir'/pgdata";
+  copy_files("ssl/root+client_ca.crt", "$tempdir/pgdata");
+  copy_files("ssl/root+client.crl", "$tempdir/pgdata");
 
   # Only accept SSL connections from localhost. Our tests don't depend on this
   # but seems best to keep it as narrow as possible for security reasons.
