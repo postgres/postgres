@@ -806,9 +806,12 @@ pgtls_init(PGconn *conn)
 
 		if (ssl_open_connections++ == 0)
 		{
-			/* These are only required for threaded libcrypto applications */
-			CRYPTO_set_id_callback(pq_threadidcallback);
-			CRYPTO_set_locking_callback(pq_lockingcallback);
+			/* These are only required for threaded libcrypto applications, but
+			 * make sure we don't stomp on them if they're already set. */
+			if (CRYPTO_get_id_callback() == NULL)
+				CRYPTO_set_id_callback(pq_threadidcallback);
+			if (CRYPTO_get_locking_callback() == NULL)
+				CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
 #endif   /* ENABLE_THREAD_SAFETY */
@@ -885,9 +888,12 @@ destroy_ssl_system(void)
 
 	if (pq_init_crypto_lib && ssl_open_connections == 0)
 	{
-		/* No connections left, unregister libcrypto callbacks */
-		CRYPTO_set_locking_callback(NULL);
-		CRYPTO_set_id_callback(NULL);
+		/* No connections left, unregister libcrypto callbacks, if no one
+		 * registered different ones in the meantime. */
+		if (CRYPTO_get_locking_callback() == pq_lockingcallback)
+			CRYPTO_set_locking_callback(NULL);
+		if (CRYPTO_get_id_callback() == pq_threadidcallback)
+			CRYPTO_set_id_callback(NULL);
 
 		/*
 		 * We don't free the lock array or the SSL_context. If we get another
