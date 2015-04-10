@@ -533,7 +533,7 @@ MultiXactIdIsRunning(MultiXactId multi, bool isLockOnly)
 	 */
 	nmembers = GetMultiXactIdMembers(multi, &members, false, isLockOnly);
 
-	if (nmembers < 0)
+	if (nmembers <= 0)
 	{
 		debug_elog2(DEBUG2, "IsRunning: no members");
 		return false;
@@ -1335,39 +1335,6 @@ retry:
 	debug_elog3(DEBUG2, "GetMembers: no cache for %s",
 				mxid_to_string(multi, truelength, ptr));
 	return truelength;
-}
-
-/*
- * MultiXactHasRunningRemoteMembers
- *		Does the given multixact have still-live members from
- *		transactions other than our own?
- */
-bool
-MultiXactHasRunningRemoteMembers(MultiXactId multi)
-{
-	MultiXactMember *members;
-	int			nmembers;
-	int			i;
-
-	nmembers = GetMultiXactIdMembers(multi, &members, true, false);
-	if (nmembers <= 0)
-		return false;
-
-	for (i = 0; i < nmembers; i++)
-	{
-		/* not interested in our own members */
-		if (TransactionIdIsCurrentTransactionId(members[i].xid))
-			continue;
-
-		if (TransactionIdIsInProgress(members[i].xid))
-		{
-			pfree(members);
-			return true;
-		}
-	}
-
-	pfree(members);
-	return false;
 }
 
 /*

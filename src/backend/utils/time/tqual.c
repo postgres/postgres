@@ -514,20 +514,20 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 
 				if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
 				{
-					if (MultiXactHasRunningRemoteMembers(xmax))
+					if (MultiXactIdIsRunning(xmax, true))
 						return HeapTupleBeingUpdated;
 					else
 						return HeapTupleMayBeUpdated;
 				}
 
-				/* if locker is gone, all's well */
+				/*
+				 * If the locker is gone, then there is nothing of interest
+				 * left in this Xmax; otherwise, report the tuple as
+				 * locked/updated.
+				 */
 				if (!TransactionIdIsInProgress(xmax))
 					return HeapTupleMayBeUpdated;
-
-				if (!TransactionIdIsCurrentTransactionId(xmax))
-					return HeapTupleBeingUpdated;
-				else
-					return HeapTupleMayBeUpdated;
+				return HeapTupleBeingUpdated;
 			}
 
 			if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
@@ -539,10 +539,11 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 				/* not LOCKED_ONLY, so it has to have an xmax */
 				Assert(TransactionIdIsValid(xmax));
 
-				/* updating subtransaction must have aborted */
+				/* deleting subtransaction must have aborted */
 				if (!TransactionIdIsCurrentTransactionId(xmax))
 				{
-					if (MultiXactHasRunningRemoteMembers(HeapTupleHeaderGetRawXmax(tuple)))
+					if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
+																	   false))
 						return HeapTupleBeingUpdated;
 					return HeapTupleMayBeUpdated;
 				}
@@ -664,7 +665,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 	if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)))
 	{
 		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
-			return HeapTupleMayBeUpdated;
+			return HeapTupleBeingUpdated;
 		if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 			return HeapTupleSelfUpdated;		/* updated after scan started */
 		else

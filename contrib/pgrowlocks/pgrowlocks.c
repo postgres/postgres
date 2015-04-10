@@ -136,14 +136,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		infomask = tuple->t_data->t_infomask;
 
 		/*
-		 * a tuple is locked if HTSU returns BeingUpdated, and if it returns
-		 * MayBeUpdated but the Xmax is valid and pointing at us.
+		 * A tuple is locked if HTSU returns BeingUpdated.
 		 */
-		if (htsu == HeapTupleBeingUpdated ||
-			(htsu == HeapTupleMayBeUpdated &&
-			 !(infomask & HEAP_XMAX_INVALID) &&
-			 !(infomask & HEAP_XMAX_IS_MULTI) &&
-			 (xmax == GetCurrentTransactionIdIfAny())))
+		if (htsu == HeapTupleBeingUpdated)
 		{
 			char	  **values;
 
