@@ -1439,9 +1439,9 @@ XLogSend(bool *caughtup)
 	if (sendTimeLineIsHistoric)
 	{
 		/*
-		 * Streaming an old timeline timeline that's in this server's history,
-		 * but is not the one we're currently inserting or replaying. It can
-		 * be streamed up to the point where we switched off that timeline.
+		 * Streaming an old timeline that's in this server's history, but is
+		 * not the one we're currently inserting or replaying. It can be
+		 * streamed up to the point where we switched off that timeline.
 		 */
 		SendRqstPtr = sendTimeLineValidUpto;
 	}
