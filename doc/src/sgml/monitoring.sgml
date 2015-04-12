@@ -300,6 +300,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_ssl</><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
+      <entry>One row per connection (regular and replication), showing information about
+       SSL used on this connection.
+       See <xref linkend="pg-stat-ssl-view"> for details.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -823,6 +831,75 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    per WAL sender process, showing statistics about replication to that
    sender's connected standby server.  Only directly connected standbys are
    listed; no information is available about downstream standby servers.
+  </para>
+
+  <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">
+   <title><structname>pg_stat_ssl</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of a backend or WAL sender process</entry>
+    </row>
+    <row>
+     <entry><structfield>ssl</></entry>
+     <entry><type>boolean</></entry>
+     <entry>True if SSL is used on this connection</entry>
+    </row>
+    <row>
+     <entry><structfield>version</></entry>
+     <entry><type>text</></entry>
+     <entry>Version of SSL in use, or NULL if SSL is not in use
+      on this connection</entry>
+    </row>
+    <row>
+     <entry><structfield>cipher</></entry>
+     <entry><type>text</></entry>
+     <entry>Name of SSL cipher in use, or NULL if SSL is not in use
+      on this connection</entry>
+    </row>
+    <row>
+     <entry><structfield>bits</></entry>
+     <entry><type>integer</></entry>
+     <entry>Number of bits in the encryption algorithm used, or NULL
+     if SSL is not used on this connection</entry>
+    </row>
+    <row>
+     <entry><structfield>compression</></entry>
+     <entry><type>boolean</></entry>
+     <entry>True if SSL compression is in use, false if not,
+      or NULL if SSL is not in use on this connection</entry>
+    </row>
+    <row>
+     <entry><structfield>clientdn</></entry>
+     <entry><type>text</></entry>
+     <entry>Distinguished Name (DN) field from the client certificate
+      used, or NULL if no client certificate was supplied or if SSL
+      is not in use on this connection. This field is truncated if the
+      DN field is longer than <symbol>NAMEDATALEN</symbol> (64 characters
+      in a standard build)
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_ssl</structname> view will contain one row per
+   backend or WAL sender process, showing statistics about SSL usage on
+   this connection. It can be joined to <structname>pg_stat_activity</structname>
+   or <structname>pg_stat_replication</structname> on the
+   <structfield>pid</structfield> column to get more details about the
+   connection.
   </para>
 
 

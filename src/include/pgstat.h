@@ -701,6 +701,23 @@ typedef enum BackendState
  */
 
 
+/*
+ * PgBackendSSLStatus
+ *
+ * For each backend, we keep the SSL status in a separate struct, that
+ * is only filled in if SSL is enabled.
+ */
+typedef struct PgBackendSSLStatus
+{
+	/* Information about SSL connection */
+	int		ssl_bits;
+	bool	ssl_compression;
+	char	ssl_version[NAMEDATALEN];  /* MUST be null-terminated */
+	char	ssl_cipher[NAMEDATALEN];   /* MUST be null-terminated */
+	char	ssl_clientdn[NAMEDATALEN]; /* MUST be null-terminated */
+} PgBackendSSLStatus;
+
+
 /* ----------
  * PgBackendStatus
  *
@@ -743,6 +760,10 @@ typedef struct PgBackendStatus
 	Oid			st_userid;
 	SockAddr	st_clientaddr;
 	char	   *st_clienthostname;		/* MUST be null-terminated */
+
+	/* Information about SSL connection */
+	bool		st_ssl;
+	PgBackendSSLStatus *st_sslstatus;
 
 	/* Is backend currently waiting on an lmgr lock? */
 	bool		st_waiting;

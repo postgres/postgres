@@ -90,6 +90,8 @@ static void info_cb(const SSL *ssl, int type, int args);
 static void initialize_ecdh(void);
 static const char *SSLerrmessage(void);
 
+static char *X509_NAME_to_cstring(X509_NAME *name);
+
 /* are we in the middle of a renegotiation? */
 static bool in_ssl_renegotiation = false;
 
@@ -1039,4 +1041,106 @@ SSLerrmessage(void)
 		return errreason;
 	snprintf(errbuf, sizeof(errbuf), _("SSL error code %lu"), errcode);
 	return errbuf;
+}
+
+/*
+ * Return information about the SSL connection
+ */
+int
+be_tls_get_cipher_bits(Port *port)
+{
+	int bits;
+
+	if (port->ssl)
+	{
+		SSL_get_cipher_bits(port->ssl, &bits);
+		return bits;
+	}
+	else
+		return 0;
+}
+
+bool
+be_tls_get_compression(Port *port)
+{
+	if (port->ssl)
+		return (SSL_get_current_compression(port->ssl) != NULL);
+	else
+		return false;
+}
+
+void
+be_tls_get_version(Port *port, char *ptr, size_t len)
+{
+	if (port->ssl)
+		strlcpy(ptr, SSL_get_version(port->ssl), len);
+	else
+		ptr[0] = '\0';
+}
+
+void
+be_tls_get_cipher(Port *port, char *ptr, size_t len)
+{
+	if (port->ssl)
+		strlcpy(ptr, SSL_get_cipher(port->ssl), len);
+	else
+		ptr[0] = '\0';
+}
+
+void
+be_tls_get_peerdn_name(Port *port, char *ptr, size_t len)
+{
+	if (port->peer)
+		strlcpy(ptr, X509_NAME_to_cstring(X509_get_subject_name(port->peer)), len);
+	else
+		ptr[0] = '\0';
+}
+
+/*
+ * Convert an X509 subject name to a cstring.
+ *
+ */
+static char *
+X509_NAME_to_cstring(X509_NAME *name)
+{
+	BIO		   *membuf = BIO_new(BIO_s_mem());
+	int			i,
+				nid,
+				count = X509_NAME_entry_count(name);
+	X509_NAME_ENTRY *e;
+	ASN1_STRING *v;
+	const char *field_name;
+	size_t		size;
+	char		nullterm;
+	char	   *sp;
+	char	   *dp;
+	char	   *result;
+
+	(void) BIO_set_close(membuf, BIO_CLOSE);
+	for (i = 0; i < count; i++)
+	{
+		e = X509_NAME_get_entry(name, i);
+		nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(e));
+		v = X509_NAME_ENTRY_get_data(e);
+		field_name = OBJ_nid2sn(nid);
+		if (!field_name)
+			field_name = OBJ_nid2ln(nid);
+		BIO_printf(membuf, "/%s=", field_name);
+		ASN1_STRING_print_ex(membuf, v,
+							 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
+							  | ASN1_STRFLGS_UTF8_CONVERT));
+	}
+
+	/* ensure null termination of the BIO's content */
+	nullterm = '\0';
+	BIO_write(membuf, &nullterm, 1);
+	size = BIO_get_mem_data(membuf, &sp);
+	dp = pg_any_to_server(sp, size - 1, PG_UTF8);
+
+	result = pstrdup(dp);
+	if (dp != sp)
+		pfree(dp);
+	BIO_free(membuf);
+
+	return result;
 }

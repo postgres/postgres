@@ -538,7 +538,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(16, false);
+		tupdesc = CreateTemplateTupleDesc(22, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "pid",
@@ -571,6 +571,18 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 						   XIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "backend_xmin",
 						   XIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "ssl",
+						   BOOLOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 18, "sslversion",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 19, "sslcipher",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 20, "sslbits",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 21, "sslcompression",
+						   BOOLOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 22, "sslclientdn",
+						   TEXTOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -622,8 +634,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-		Datum		values[16];
-		bool		nulls[16];
+		Datum		values[22];
+		bool		nulls[22];
 		HeapTuple	tuple;
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
@@ -675,6 +687,21 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			values[15] = TransactionIdGetDatum(local_beentry->backend_xmin);
 		else
 			nulls[15] = true;
+
+		if (beentry->st_ssl)
+		{
+			values[16] = BoolGetDatum(true); /* ssl */
+			values[17] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
+			values[18] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
+			values[19] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
+			values[20] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
+			values[21] = CStringGetTextDatum(beentry->st_sslstatus->ssl_clientdn);
+		}
+		else
+		{
+			values[16] = BoolGetDatum(false); /* ssl */
+			nulls[17] = nulls[18] = nulls[19] = nulls[20] = nulls[21] = true;
+		}
 
 		/* Values only available to role member */
 		if (has_privs_of_role(GetUserId(), beentry->st_userid))
