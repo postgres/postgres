@@ -719,7 +719,7 @@ array_position_common(FunctionCallInfo fcinfo)
 
 	if (PG_ARGISNULL(1))
 	{
-		/* fast return when the array doesn't have have nulls */
+		/* fast return when the array doesn't have nulls */
 		if (!array_contains_nulls(array))
 			PG_RETURN_NULL();
 		searched_element = (Datum) 0;
@@ -871,7 +871,7 @@ array_positions(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(1))
 	{
-		/* fast return when the array doesn't have have nulls */
+		/* fast return when the array doesn't have nulls */
 		if (!array_contains_nulls(array))
 			PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 		searched_element = (Datum) 0;

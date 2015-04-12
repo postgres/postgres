@@ -8470,7 +8470,7 @@ read_nondefault_variables(void)
  * particular postmaster.  Most PGC_INTERNAL variables are compile-time
  * constants; a few, like server_encoding and lc_ctype, are handled specially
  * outside the serialize/restore procedure.  Therefore, SerializeGUCState()
- * never sends these, and and RestoreGUCState() never changes them.
+ * never sends these, and RestoreGUCState() never changes them.
  */
 static bool
 can_skip_gucvar(struct config_generic * gconf)
