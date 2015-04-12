@@ -231,6 +231,7 @@ receiveFileChunks(const char *sql)
 				break;
 
 			case PGRES_TUPLES_OK:
+				PQclear(res);
 				continue;		/* final zero-row result */
 
 			default:
