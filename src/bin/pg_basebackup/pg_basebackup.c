@@ -318,7 +318,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	snprintf(param->xlogdir, sizeof(param->xlogdir), "%s/pg_xlog", basedir);
 
 	/*
-	 * Create pg_xlog/archive_status (and thus pg_xlog) so we can can write to
+	 * Create pg_xlog/archive_status (and thus pg_xlog) so we can write to
 	 * basedir/pg_xlog as the directory entry in the tar file may arrive
 	 * later.
 	 */
