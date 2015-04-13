@@ -178,7 +178,7 @@ rather somewhere to the right of that page.  To ensure that VACUUM can't
 prematurely remove such heap tuples, we require btbulkdelete to obtain a
 super-exclusive lock on every leaf page in the index, even pages that
 don't contain any deletable tuples.  Any scan which could yield incorrect
-results if the tuple at a TID matching the the scan's range and filter
+results if the tuple at a TID matching the scan's range and filter
 conditions were replaced by a different tuple while the scan is in
 progress must hold the pin on each index page until all index entries read
 from the page have been processed.  This guarantees that the btbulkdelete
