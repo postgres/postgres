@@ -68,7 +68,7 @@ my $frontend_extraincludes = {
 my $frontend_extrasource = {
 	'psql' => ['src\bin\psql\psqlscan.l'],
 	'pgbench' =>
-		[ 'contrib\pgbench\exprscan.l', 'contrib\pgbench\exprparse.y' ],
+		[ 'src\bin\pgbench\exprscan.l', 'src\bin\pgbench\exprparse.y' ],
 };
 my @frontend_excludes =
   ('pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump', 'scripts');
