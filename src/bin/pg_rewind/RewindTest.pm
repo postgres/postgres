@@ -224,7 +224,7 @@ sub run_pg_rewind
 		# Stop the master and be ready to perform the rewind
 		system_or_bail("pg_ctl -w -D $test_standby_datadir stop -m fast >>$log_path 2>&1");
 		my $result =
-			run(['./pg_rewind',
+			run(['pg_rewind',
 				 "--debug",
 				 "--source-pgdata=$test_standby_datadir",
 				 "--target-pgdata=$test_master_datadir"],
@@ -235,7 +235,7 @@ sub run_pg_rewind
 	{
 		# Do rewind using a remote connection as source
 		my $result =
-			run(['./pg_rewind',
+			run(['pg_rewind',
 				 "--source-server", "port=$port_standby dbname=postgres",
 				 "--target-pgdata=$test_master_datadir"],
 				'>>', $log_path, '2>&1');
