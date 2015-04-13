@@ -13,6 +13,7 @@
                (perl-brace-offset . 0)
                (perl-brace-imaginary-offset . 0)
                (perl-label-offset . -2)
+               (indent-tabs-mode . t)
                (tab-width . 4)))
  (sgml-mode . ((fill-column . 78)
                (indent-tabs-mode . nil))))

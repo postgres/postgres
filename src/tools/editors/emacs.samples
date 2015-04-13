@@ -51,6 +51,7 @@
   (setq perl-continued-statement-offset 4)
   (setq perl-indent-level 4)
   (setq perl-label-offset -2)
+  (setq indent-tabs-mode t)
   (setq tab-width 4))
 
 (add-hook 'perl-mode-hook
