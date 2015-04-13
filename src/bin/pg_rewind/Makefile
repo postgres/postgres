@@ -47,6 +47,5 @@ clean distclean maintainer-clean:
 	rm -f pg_rewind$(X) $(OBJS) xlogreader.c
 	rm -rf tmp_check regress_log
 
-check: all
-	$(prove_check) :: local
-	$(prove_check) :: remote
+check:
+	$(prove_check)

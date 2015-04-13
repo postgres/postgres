@@ -29,6 +29,9 @@ package RewindTest;
 # master and standby servers. The data directories are also available
 # in paths $test_master_datadir and $test_standby_datadir
 
+use strict;
+use warnings;
+
 use TestLib;
 use Test::More;
 
@@ -58,8 +61,8 @@ our @EXPORT = qw(
 
 # Adjust these paths for your environment
 my $testroot = "./tmp_check";
-$test_master_datadir="$testroot/data_master";
-$test_standby_datadir="$testroot/data_standby";
+our $test_master_datadir="$testroot/data_master";
+our $test_standby_datadir="$testroot/data_standby";
 
 mkdir $testroot;
 
@@ -73,8 +76,8 @@ my $port_standby=$port_master + 1;
 my $log_path;
 my $tempdir_short;
 
-$connstr_master="port=$port_master";
-$connstr_standby="port=$port_standby";
+my $connstr_master="port=$port_master";
+my $connstr_standby="port=$port_standby";
 
 $ENV{PGDATABASE} = "postgres";
 
@@ -127,7 +130,8 @@ sub append_to_file
 
 sub init_rewind_test
 {
-	($testname, $test_mode) = @_;
+	my $testname = shift;
+	my $test_mode = shift;
 
 	$log_path="regress_log/pg_rewind_log_${testname}_${test_mode}";
 
@@ -195,11 +199,13 @@ sub promote_standby
 	# Now promote slave and insert some new data on master, this will put
 	# the master out-of-sync with the standby.
 	system_or_bail("pg_ctl -w -D $test_standby_datadir promote >>$log_path 2>&1");
-	sleep 1;
+	sleep 2;
 }
 
 sub run_pg_rewind
 {
+	my $test_mode = shift;
+
 	# Stop the master and be ready to perform the rewind
 	system_or_bail("pg_ctl -w -D $test_master_datadir stop -m fast >>$log_path 2>&1");
 
@@ -212,7 +218,7 @@ sub run_pg_rewind
 	# overwritten during the rewind.
 	copy("$test_master_datadir/postgresql.conf", "$testroot/master-postgresql.conf.tmp");
 	# Now run pg_rewind
-	if ($test_mode == "local")
+	if ($test_mode eq "local")
 	{
 		# Do rewind using a local pgdata as source
 		# Stop the master and be ready to perform the rewind
@@ -225,12 +231,12 @@ sub run_pg_rewind
 				'>>', $log_path, '2>&1');
 		ok ($result, 'pg_rewind local');
 	}
-	elsif ($test_mode == "remote")
+	elsif ($test_mode eq "remote")
 	{
 		# Do rewind using a remote connection as source
 		my $result =
 			run(['./pg_rewind',
-				 "--source-server=\"port=$port_standby dbname=postgres\"",
+				 "--source-server", "port=$port_standby dbname=postgres",
 				 "--target-pgdata=$test_master_datadir"],
 				'>>', $log_path, '2>&1');
 		ok ($result, 'pg_rewind remote');
