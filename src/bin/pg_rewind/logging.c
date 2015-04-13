@@ -134,7 +134,8 @@ progress_report(bool force)
 	snprintf(fetch_size_str, sizeof(fetch_size_str), INT64_FORMAT,
 			 fetch_size / 1024);
 
-	pg_log(PG_PROGRESS, "%*s/%s kB (%d%%) copied\r",
+	pg_log(PG_PROGRESS, "%*s/%s kB (%d%%) copied",
 		   (int) strlen(fetch_size_str), fetch_done_str, fetch_size_str,
 		   percent);
+	printf("\r");
 }
