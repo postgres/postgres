@@ -694,6 +694,25 @@ XLogArchiveIsBusy(const char *xlog)
 }
 
 /*
+ * XLogArchiveIsReady
+ *
+ * Check to see if an XLOG segment file has an archive notification (.ready)
+ * file.
+ */
+bool
+XLogArchiveIsReady(const char *xlog)
+{
+	char		archiveStatusPath[MAXPGPATH];
+	struct stat stat_buf;
+
+	StatusFilePath(archiveStatusPath, xlog, ".ready");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return true;
+
+	return false;
+}
+
+/*
  * XLogArchiveCleanup
  *
  * Cleanup archive notification file(s) for a particular xlog segment
