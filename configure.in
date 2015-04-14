@@ -1790,6 +1790,84 @@ PGAC_HAVE_GCC__SYNC_INT64_CAS
 PGAC_HAVE_GCC__ATOMIC_INT32_CAS
 PGAC_HAVE_GCC__ATOMIC_INT64_CAS
 
+
+# Check for x86 cpuid instruction
+AC_CACHE_CHECK([for __get_cpuid], [pgac_cv__get_cpuid],
+[AC_TRY_LINK([#include <cpuid.h>],
+  [unsigned int exx[4] = {0, 0, 0, 0};
+  __get_cpuid(1, &exx[0], &exx[1], &exx[2], &exx[3]);
+  ],
+  [pgac_cv__get_cpuid="yes"],
+  [pgac_cv__get_cpuid="no"])])
+if test x"$pgac_cv__get_cpuid" = x"yes"; then
+  AC_DEFINE(HAVE__GET_CPUID, 1, [Define to 1 if you have __get_cpuid.])
+fi
+
+AC_CACHE_CHECK([for __cpuid], [pgac_cv__cpuid],
+[AC_TRY_LINK([#include <intrin.h>],
+  [unsigned int exx[4] = {0, 0, 0, 0};
+  __get_cpuid(exx[0], 1);
+  ],
+  [pgac_cv__cpuid="yes"],
+  [pgac_cv__cpuid="no"])])
+if test x"$pgac_cv__cpuid" = x"yes"; then
+  AC_DEFINE(HAVE__CPUID, 1, [Define to 1 if you have __cpuid.])
+fi
+
+# Check for Intel SSE 4.2 intrinsics to do CRC calculations.
+#
+# First check if the _mm_crc32_u8 and _mmcrc32_u64 intrinsics can be used
+# with the default compiler flags. If not, check if adding the -msse4.2
+# flag helps. CFLAGS_SSE42 is set to -msse4.2 if that's required.
+PGAC_SSE42_CRC32_INTRINSICS([])
+if test x"$pgac_sse42_crc32_intrinsics" != x"yes"; then
+  PGAC_SSE42_CRC32_INTRINSICS([-msse4.2])
+fi
+AC_SUBST(CFLAGS_SSE42)
+
+# Select CRC-32C implementation.
+#
+# If the SSE 4.2 intrinsics are available without extra CFLAGS, then use them
+# always. If they require extra CFLAGS, compile both implementations and
+# select which one to use at runtime, depending on whether SSE 4.2 is
+# supported by the processor we're running on.
+#
+# You can override this logic by setting the appropriate USE_*_CRC32 flag to 1
+# in the template or configure command line.
+if test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_SLICING_BY_8_CRC32C" = x""; then
+  if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && test x"$CFLAGS_SSE42" = x"" ; then
+    USE_SSE42_CRC32C=1
+  else
+    # the CPUID instruction is needed for the runtime check.
+    if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && (test x"$pgac_cv__get_cpuid" = x"yes" || test x"$pgac_cv__cpuid" = x"yes"); then
+      USE_SSE42_CRC32C_WITH_RUNTIME_CHECK=1
+    else
+      USE_SLICING_BY_8_CRC32C=1
+    fi
+  fi
+fi
+
+# Set PG_CRC32C_OBJS appropriately depending on the selected implementation.
+AC_MSG_CHECKING([which CRC-32C implementation to use])
+if test x"$USE_SSE42_CRC32C" = x"1"; then
+  AC_DEFINE(USE_SSE42_CRC32C, 1, [Define to 1 use Intel SSE 4.2 CRC instructions.])
+  PG_CRC32C_OBJS="pg_crc32c_sse42.o"
+  AC_MSG_RESULT(SSE 4.2)
+else
+  if test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"1"; then
+    AC_DEFINE(USE_SSE42_CRC32C_WITH_RUNTIME_CHECK, 1, [Define to 1 to use Intel SSSE 4.2 CRC instructions with a runtime check.])
+    PG_CRC32C_OBJS="pg_crc32c_sse42.o pg_crc32c_sb8.o pg_crc32c_choose.o"
+    AC_MSG_RESULT(SSE 4.2 with runtime check)
+  else
+    AC_DEFINE(USE_SLICING_BY_8_CRC32C, 1, [Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check.])
+    PG_CRC32C_OBJS="pg_crc32c_sb8.o"
+    AC_MSG_RESULT(slicing-by-8)
+  fi
+fi
+AC_SUBST(PG_CRC32C_OBJS)
+
+
+# Check that POSIX signals are available if thread safety is enabled.
 if test "$PORTNAME" != "win32"
 then
 PGAC_FUNC_POSIX_SIGNALS

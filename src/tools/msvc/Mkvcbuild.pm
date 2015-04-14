@@ -92,9 +92,20 @@ sub mkvcbuild
 	  pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c pqsignal.c
 	  mkdtemp.c qsort.c qsort_arg.c quotes.c system.c
 	  sprompt.c tar.c thread.c getopt.c getopt_long.c dirent.c
-	  win32env.c win32error.c win32setlocale.c pg_crc32c_sb8.c);
+	  win32env.c win32error.c win32setlocale.c);
 
 	push(@pgportfiles, 'rint.c') if ($vsVersion < '12.00');
+
+	if ($vsVersion >= '9.00')
+	{
+		push(@pgportfiles, 'pg_crc32c_choose.c');
+		push(@pgportfiles, 'pg_crc32c_sse42.c');
+		push(@pgportfiles, 'pg_crc32c_sb8.c');
+	}
+	else
+	{
+		push(@pgportfiles, 'pg_crc32c_sb8.c')
+	}
 
 	our @pgcommonallfiles = qw(
 	  exec.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c

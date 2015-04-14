@@ -675,6 +675,12 @@
 /* Define to 1 if your compiler understands __builtin_unreachable. */
 #undef HAVE__BUILTIN_UNREACHABLE
 
+/* Define to 1 if you have __cpuid. */
+#undef HAVE__CPUID
+
+/* Define to 1 if you have __get_cpuid. */
+#undef HAVE__GET_CPUID
+
 /* Define to 1 if your compiler understands _Static_assert. */
 #undef HAVE__STATIC_ASSERT
 
@@ -817,6 +823,15 @@
 
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
+
+/* Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check. */
+#undef USE_SLICING_BY_8_CRC32C
+
+/* Define to 1 use Intel SSE 4.2 CRC instructions. */
+#undef USE_SSE42_CRC32C
+
+/* Define to 1 to use Intel SSSE 4.2 CRC instructions with a runtime check. */
+#undef USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
 
 /* Define to select SysV-style semaphores. */
 #undef USE_SYSV_SEMAPHORES

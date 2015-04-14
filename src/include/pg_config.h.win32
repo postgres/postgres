@@ -6,8 +6,8 @@
  *
  * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_GETOPT, HAVE_GETOPT_H, HAVE_INTTYPES_H,
  * HAVE_GETOPT_LONG, HAVE_LOCALE_T, HAVE_RINT, HAVE_STRINGS_H, HAVE_STRTOLL,
- * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY,
- * PG_USE_INLINE, inline
+ * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY, PG_USE_INLINE,
+ * inline, USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
  */
 
 /* Define to the type of arg 1 of 'accept' */
@@ -529,6 +529,12 @@
 /* Define to 1 if your compiler understands __builtin_unreachable. */
 /* #undef HAVE__BUILTIN_UNREACHABLE */
 
+/* Define to 1 if you have __cpuid. */
+#define HAVE__CPUID 1
+
+/* Define to 1 if you have __get_cpuid. */
+#undef HAVE__GET_CPUID
+
 /* Define to 1 if your compiler understands _Static_assert. */
 /* #undef HAVE__STATIC_ASSERT */
 
@@ -638,6 +644,19 @@
 
 /* Use replacement snprintf() functions. */
 #define USE_REPL_SNPRINTF 1
+
+/* Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check. */
+#if (_MSC_VER < 1500)
+#define USE_SLICING_BY_8_CRC32C 1
+#end
+
+/* Define to 1 use Intel SSE 4.2 CRC instructions. */
+/* #undef USE_SSE42_CRC32C */
+
+/* Define to 1 to use Intel SSSE 4.2 CRC instructions with a runtime check. */
+#if (_MSC_VER >= 1500)
+#define USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
+#endif
 
 /* Define to select SysV-style semaphores. */
 /* #undef USE_SYSV_SEMAPHORES */

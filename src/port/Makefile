@@ -30,10 +30,10 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS = $(LIBOBJS) chklocale.o erand48.o inet_net_ntop.o \
+OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o erand48.o inet_net_ntop.o \
 	noblock.o path.o pgcheckdir.o pgmkdirp.o pgsleep.o \
 	pgstrcasecmp.o pqsignal.o \
-	qsort.o qsort_arg.o quotes.o sprompt.o tar.o thread.o pg_crc32c_sb8.o
+	qsort.o qsort_arg.o quotes.o sprompt.o tar.o thread.o
 
 # foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
 OBJS_SRV = $(OBJS:%.o=%_srv.o)
@@ -56,6 +56,10 @@ libpgport.a: $(OBJS)
 
 # thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
 thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
+
+# pg_crc32c_sse42.o and its _srv.o version need CFLAGS_SSE42
+pg_crc32c_sse42.o: CFLAGS+=$(CFLAGS_SSE42)
+pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_SSE42)
 
 #
 # Server versions of object files

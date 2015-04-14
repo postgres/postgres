@@ -473,3 +473,30 @@ AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
 if test x"$pgac_cv_gcc_atomic_int64_cas" = x"yes"; then
   AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).])
 fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
+
+# PGAC_SSE42_CRC32_INTRINSICS
+# -----------------------
+# Check if the compiler supports _mm_crc32_u8 and _mm_crc32_u64 intrinsics.
+# An optional compiler flag can be passed as argument (e.g. -msse4.2). If the
+# intrinsics are supported, sets pgac_sse42_crc32_intrinsics, and CFLAGS_SSE42.
+AC_DEFUN([PGAC_SSE42_CRC32_INTRINSICS],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_sse42_crc32_intrinsics_$1])])dnl
+AC_CACHE_CHECK([for _mm_crc32_u8 and _mm_crc32_u64 with CFLAGS=$1], [Ac_cachevar],
+[pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS $1"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+AC_TRY_LINK([#include <nmmintrin.h>],
+  [unsigned int crc = 0;
+   crc = _mm_crc32_u8(crc, 0);
+   crc = (unsigned int) _mm_crc32_u64(crc, 0);],
+  [Ac_cachevar=yes],
+  [Ac_cachevar=no])
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"])
+if test x"$Ac_cachevar" = x"yes"; then
+  CFLAGS_SSE42="$1"
+  pgac_sse42_crc32_intrinsics=yes
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_SSE42_CRC32_INTRINSICS

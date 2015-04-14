@@ -225,6 +225,7 @@ GCC = @GCC@
 SUN_STUDIO_CC = @SUN_STUDIO_CC@
 CFLAGS = @CFLAGS@
 CFLAGS_VECTOR = @CFLAGS_VECTOR@
+CFLAGS_SSE42 = @CFLAGS_SSE42@
 
 # Kind-of compilers
 
@@ -547,6 +548,9 @@ endif
 # note we already included -L.../src/port in LDFLAGS above
 
 LIBOBJS = @LIBOBJS@
+
+# files needed for the chosen CRC-32C implementation
+PG_CRC32C_OBJS = @PG_CRC32C_OBJS@
 
 LIBS := -lpgcommon -lpgport $(LIBS)
 
