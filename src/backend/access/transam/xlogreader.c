@@ -665,7 +665,7 @@ ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 static bool
 ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 {
-	pg_crc32	crc;
+	pg_crc32c	crc;
 
 	/* Calculate the CRC */
 	INIT_CRC32C(crc);

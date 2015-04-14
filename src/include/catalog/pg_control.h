@@ -16,8 +16,8 @@
 #define PG_CONTROL_H
 
 #include "access/xlogdefs.h"
-#include "common/pg_crc.h"
 #include "pgtime.h"				/* for pg_time_t */
+#include "port/pg_crc32c.h"
 
 
 /* Version identifier for this pg_control format */
@@ -224,7 +224,7 @@ typedef struct ControlFileData
 	uint32		data_checksum_version;
 
 	/* CRC of all above ... MUST BE LAST! */
-	pg_crc32	crc;
+	pg_crc32c	crc;
 } ControlFileData;
 
 /*

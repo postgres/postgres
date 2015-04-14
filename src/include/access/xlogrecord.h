@@ -13,7 +13,7 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
-#include "common/pg_crc.h"
+#include "port/pg_crc32c.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 
@@ -46,13 +46,13 @@ typedef struct XLogRecord
 	uint8		xl_info;		/* flag bits, see below */
 	RmgrId		xl_rmid;		/* resource manager for this record */
 	/* 2 bytes of padding here, initialize to zero */
-	pg_crc32	xl_crc;			/* CRC for this record */
+	pg_crc32c	xl_crc;			/* CRC for this record */
 
 	/* XLogRecordBlockHeaders and XLogRecordDataHeader follow, no padding */
 
 } XLogRecord;
 
-#define SizeOfXLogRecord	(offsetof(XLogRecord, xl_crc) + sizeof(pg_crc32))
+#define SizeOfXLogRecord	(offsetof(XLogRecord, xl_crc) + sizeof(pg_crc32c))
 
 /*
  * The high 4 bits in xl_info may be used freely by rmgr. The

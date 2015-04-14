@@ -10,6 +10,7 @@
 #include "catalog/pg_type.h"
 #include "tsearch/ts_locale.h"
 #include "utils/memutils.h"
+#include "utils/pg_crc.h"
 
 PG_MODULE_MAGIC;
 

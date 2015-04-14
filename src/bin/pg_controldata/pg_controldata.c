@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	int			fd;
 	char		ControlFilePath[MAXPGPATH];
 	char	   *DataDir = NULL;
-	pg_crc32	crc;
+	pg_crc32c	crc;
 	time_t		time_tmp;
 	char		pgctime_str[128];
 	char		ckpttime_str[128];

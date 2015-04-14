@@ -86,7 +86,7 @@ typedef struct RelMapFile
 	int32		magic;			/* always RELMAPPER_FILEMAGIC */
 	int32		num_mappings;	/* number of valid RelMapping entries */
 	RelMapping	mappings[MAX_MAPPINGS];
-	pg_crc32	crc;			/* CRC of all above */
+	pg_crc32c	crc;			/* CRC of all above */
 	int32		pad;			/* to make the struct size be 512 exactly */
 } RelMapFile;
 
@@ -626,7 +626,7 @@ load_relmap_file(bool shared)
 {
 	RelMapFile *map;
 	char		mapfilename[MAXPGPATH];
-	pg_crc32	crc;
+	pg_crc32c	crc;
 	int			fd;
 
 	if (shared)

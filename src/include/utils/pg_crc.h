@@ -24,54 +24,17 @@
  * EQ_<variant>(c1, c2)
  *		Check for equality of two CRCs.
  *
+ * The CRC-32C variant is in port/pg_crc32c.h.
+ *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/common/pg_crc.h
+ * src/include/utils/pg_crc.h
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
 
-/* ugly hack to let this be used in frontend and backend code on Cygwin */
-#ifdef FRONTEND
-#define CRCDLLIMPORT
-#else
-#define CRCDLLIMPORT PGDLLIMPORT
-#endif
-
 typedef uint32 pg_crc32;
-
-#ifdef HAVE__BUILTIN_BSWAP32
-#define BSWAP32(x) __builtin_bswap32(x)
-#else
-#define BSWAP32(x) (((x << 24) & 0xff000000) | \
-					((x << 8) & 0x00ff0000) | \
-					((x >> 8) & 0x0000ff00) | \
-					((x >> 24) & 0x000000ff))
-#endif
-
-/*
- * CRC calculation using the CRC-32C (Castagnoli) polynomial.
- *
- * We use all-ones as the initial register contents and final bit inversion.
- * This is the same algorithm used e.g. in iSCSI. See RFC 3385 for more
- * details on the choice of polynomial.
- *
- * On big-endian systems, the intermediate value is kept in reverse byte
- * order, to avoid byte-swapping during the calculation. FIN_CRC32C reverses
- * the bytes to the final order.
- */
-#define INIT_CRC32C(crc) ((crc) = 0xFFFFFFFF)
-#ifdef WORDS_BIGENDIAN
-#define FIN_CRC32C(crc)	((crc) = BSWAP32(crc) ^ 0xFFFFFFFF)
-#else
-#define FIN_CRC32C(crc)	((crc) ^= 0xFFFFFFFF)
-#endif
-#define COMP_CRC32C(crc, data, len)	\
-	((crc) = pg_comp_crc32c((crc), (data), (len)))
-#define EQ_CRC32C(c1, c2) ((c1) == (c2))
-
-extern pg_crc32 pg_comp_crc32c(pg_crc32 crc, const void *data, size_t len);
 
 /*
  * CRC-32, the same used e.g. in Ethernet.
@@ -135,8 +98,10 @@ do {															  \
 	} \
 } while (0)
 
-/* Constant tables for CRC-32C and CRC-32 polynomials */
-extern CRCDLLIMPORT const uint32 pg_crc32c_table[8][256];
-extern CRCDLLIMPORT const uint32 pg_crc32_table[256];
+/*
+ * Constant table for the CRC-32 polynomials. The same table is used by both
+ * the normal and traditional variants.
+ */
+extern PGDLLIMPORT const uint32 pg_crc32_table[256];
 
 #endif   /* PG_CRC_H */

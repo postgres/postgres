@@ -17,6 +17,7 @@
 #include "access/gist.h"
 #include "access/tuptoaster.h"
 #include "tsearch/ts_utils.h"
+#include "utils/pg_crc.h"
 
 
 #define SIGLENINT  31			/* >121 => key will toast, so it will not work

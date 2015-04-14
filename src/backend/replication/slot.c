@@ -56,7 +56,7 @@ typedef struct ReplicationSlotOnDisk
 
 	/* data not covered by checksum */
 	uint32		magic;
-	pg_crc32	checksum;
+	pg_crc32c	checksum;
 
 	/* data covered by checksum */
 	uint32		version;
@@ -1075,7 +1075,7 @@ RestoreSlotFromDisk(const char *name)
 	int			fd;
 	bool		restored = false;
 	int			readBytes;
-	pg_crc32	checksum;
+	pg_crc32c	checksum;
 
 	/* no need to lock here, no concurrent access allowed yet */
 

@@ -1391,7 +1391,7 @@ typedef struct SnapBuildOnDisk
 
 	/* data not covered by checksum */
 	uint32		magic;
-	pg_crc32	checksum;
+	pg_crc32c	checksum;
 
 	/* data covered by checksum */
 
@@ -1634,7 +1634,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	char		path[MAXPGPATH];
 	Size		sz;
 	int			readBytes;
-	pg_crc32	checksum;
+	pg_crc32c	checksum;
 
 	/* no point in loading a snapshot if we're already there */
 	if (builder->state == SNAPBUILD_CONSISTENT)

@@ -862,7 +862,7 @@ XLogRecPtr
 XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
-	pg_crc32	rdata_crc;
+	pg_crc32c	rdata_crc;
 	bool		inserted;
 	XLogRecord *rechdr = (XLogRecord *) rdata->data;
 	bool		isLogSwitch = (rechdr->xl_rmid == RM_XLOG_ID &&
@@ -4179,7 +4179,7 @@ WriteControlFile(void)
 static void
 ReadControlFile(void)
 {
-	pg_crc32	crc;
+	pg_crc32c	crc;
 	int			fd;
 
 	/*
@@ -4681,7 +4681,7 @@ BootStrapXLOG(void)
 	bool		use_existent;
 	uint64		sysidentifier;
 	struct timeval tv;
-	pg_crc32	crc;
+	pg_crc32c	crc;
 
 	/*
 	 * Select a hopefully-unique system identifier code for this installation.

@@ -508,7 +508,7 @@ createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli, XLogRecPtr checkpo
 static void
 checkControlFile(ControlFileData *ControlFile)
 {
-	pg_crc32	crc;
+	pg_crc32c	crc;
 
 	/* Calculate CRC */
 	INIT_CRC32C(crc);

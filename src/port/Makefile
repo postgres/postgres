@@ -33,7 +33,7 @@ LIBS += $(PTHREAD_LIBS)
 OBJS = $(LIBOBJS) chklocale.o erand48.o inet_net_ntop.o \
 	noblock.o path.o pgcheckdir.o pgmkdirp.o pgsleep.o \
 	pgstrcasecmp.o pqsignal.o \
-	qsort.o qsort_arg.o quotes.o sprompt.o tar.o thread.o
+	qsort.o qsort_arg.o quotes.o sprompt.o tar.o thread.o pg_crc32c_sb8.o
 
 # foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
 OBJS_SRV = $(OBJS:%.o=%_srv.o)
