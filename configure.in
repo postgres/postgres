@@ -1816,7 +1816,7 @@ fi
 
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #
-# First check if the _mm_crc32_u8 and _mmcrc32_u64 intrinsics can be used
+# First check if the _mm_crc32_u8 and _mm_crc32_u64 intrinsics can be used
 # with the default compiler flags. If not, check if adding the -msse4.2
 # flag helps. CFLAGS_SSE42 is set to -msse4.2 if that's required.
 PGAC_SSE42_CRC32_INTRINSICS([])
@@ -1825,23 +1825,35 @@ if test x"$pgac_sse42_crc32_intrinsics" != x"yes"; then
 fi
 AC_SUBST(CFLAGS_SSE42)
 
+# Are we targeting a processor that supports SSE 4.2? gcc, clang and icc all
+# define __SSE4_2__ in that case.
+AC_TRY_COMPILE([], [
+#ifndef __SSE4_2__
+#error __SSE4_2__ not defined
+#endif
+], [SSE4_2_TARGETED=1])
+
 # Select CRC-32C implementation.
 #
-# If the SSE 4.2 intrinsics are available without extra CFLAGS, then use them
-# always. If they require extra CFLAGS, compile both implementations and
-# select which one to use at runtime, depending on whether SSE 4.2 is
-# supported by the processor we're running on.
+# If we are targeting a processor that has SSE 4.2 instructions, we can use the
+# special CRC instructions for calculating CRC-32C. If we're not targeting such
+# a processor, but we can nevertheless produce code that uses the SSE
+# intrinsics, perhaps with some extra CFLAGS, compile both implementations and
+# select which one to use at runtime, depending on whether SSE 4.2 is supported
+# by the processor we're running on.
 #
 # You can override this logic by setting the appropriate USE_*_CRC32 flag to 1
 # in the template or configure command line.
 if test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_SLICING_BY_8_CRC32C" = x""; then
-  if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && test x"$CFLAGS_SSE42" = x"" ; then
+  if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && test x"$SSE4_2_TARGETED" = x"1" ; then
     USE_SSE42_CRC32C=1
   else
     # the CPUID instruction is needed for the runtime check.
     if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && (test x"$pgac_cv__get_cpuid" = x"yes" || test x"$pgac_cv__cpuid" = x"yes"); then
       USE_SSE42_CRC32C_WITH_RUNTIME_CHECK=1
     else
+      # fall back to slicing-by-8 algorithm which doesn't require any special
+      # CPU support.
       USE_SLICING_BY_8_CRC32C=1
     fi
   fi
