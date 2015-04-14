@@ -14172,8 +14172,8 @@ fi
 # First check if the _mm_crc32_u8 and _mm_crc32_u64 intrinsics can be used
 # with the default compiler flags. If not, check if adding the -msse4.2
 # flag helps. CFLAGS_SSE42 is set to -msse4.2 if that's required.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm_crc32_u8 and _mm_crc32_u64 with CFLAGS=" >&5
-$as_echo_n "checking for _mm_crc32_u8 and _mm_crc32_u64 with CFLAGS=... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=" >&5
+$as_echo_n "checking for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=... " >&6; }
 if ${pgac_cv_sse42_crc32_intrinsics_+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -14189,7 +14189,7 @@ main ()
 {
 unsigned int crc = 0;
    crc = _mm_crc32_u8(crc, 0);
-   crc = (unsigned int) _mm_crc32_u64(crc, 0);
+   crc = _mm_crc32_u32(crc, 0);
   ;
   return 0;
 }
@@ -14212,8 +14212,8 @@ if test x"$pgac_cv_sse42_crc32_intrinsics_" = x"yes"; then
 fi
 
 if test x"$pgac_sse42_crc32_intrinsics" != x"yes"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm_crc32_u8 and _mm_crc32_u64 with CFLAGS=-msse4.2" >&5
-$as_echo_n "checking for _mm_crc32_u8 and _mm_crc32_u64 with CFLAGS=-msse4.2... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=-msse4.2" >&5
+$as_echo_n "checking for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=-msse4.2... " >&6; }
 if ${pgac_cv_sse42_crc32_intrinsics__msse4_2+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -14229,7 +14229,7 @@ main ()
 {
 unsigned int crc = 0;
    crc = _mm_crc32_u8(crc, 0);
-   crc = (unsigned int) _mm_crc32_u64(crc, 0);
+   crc = _mm_crc32_u32(crc, 0);
   ;
   return 0;
 }

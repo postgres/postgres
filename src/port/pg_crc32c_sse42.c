@@ -22,30 +22,45 @@ pg_crc32c
 pg_comp_crc32c_sse42(pg_crc32c crc, const void *data, size_t len)
 {
 	const unsigned char *p = data;
-	const uint64 *p8;
+	const unsigned char *pend = p + len;
 
 	/*
 	 * Process eight bytes of data at a time.
 	 *
-	 * NB: We do unaligned 8-byte accesses here. The Intel architecture
-	 * allows that, and performance testing didn't show any performance
-	 * gain from aligning the beginning address.
+	 * NB: We do unaligned accesses here. The Intel architecture allows that,
+	 * and performance testing didn't show any performance gain from aligning
+	 * the begin address.
 	 */
-	p8 = (const uint64 *) p;
-	while (len >= 8)
+#ifdef __x86_64__
+	while (p + 8 <= pend)
 	{
-		crc = (uint32) _mm_crc32_u64(crc, *p8++);
-		len -= 8;
+		crc = (uint32) _mm_crc32_u64(crc, *((const uint64 *) p));
+		p += 8;
 	}
 
-	/*
-	 * Handle any remaining bytes one at a time.
-	 */
-	p = (const unsigned char *) p8;
-	while (len > 0)
+	/* Process remaining full four bytes if any */
+	if (p + 4 <= pend)
 	{
-		crc = _mm_crc32_u8(crc, *p++);
-		len--;
+		crc = _mm_crc32_u32(crc, *((const unsigned int *) p));
+		p += 4;
+	}
+#else
+	/*
+	 * Process four bytes at a time. (The eight byte instruction is not
+	 * available on the 32-bit x86 architecture).
+	 */
+	while (p + 4 <= pend)
+	{
+		crc = _mm_crc32_u32(crc, *((const unsigned int *) p));
+		p += 4;
+	}
+#endif /* __x86_64__ */
+
+	/* Process any remaining bytes one at a time. */
+	while (p < pend)
+	{
+		crc = _mm_crc32_u8(crc, *p);
+		p++;
 	}
 
 	return crc;
