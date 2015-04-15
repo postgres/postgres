@@ -75,17 +75,20 @@ recurse_dir(const char *datadir, const char *parentpath,
 
 		if (lstat(fullpath, &fst) < 0)
 		{
-			pg_log(PG_WARNING, "could not stat file \"%s\": %s",
-				   fullpath, strerror(errno));
-
-			/*
-			 * This is ok, if the new master is running and the file was just
-			 * removed. If it was a data file, there should be a WAL record of
-			 * the removal. If it was something else, it couldn't have been
-			 * critical anyway.
-			 *
-			 * TODO: But complain if we're processing the target dir!
-			 */
+			if (errno == ENOENT)
+			{
+				/*
+				 * File doesn't exist anymore. This is ok, if the new master
+				 * is running and the file was just removed. If it was a data
+				 * file, there should be a WAL record of the removal. If it
+				 * was something else, it couldn't have been anyway.
+				 *
+				 * TODO: But complain if we're processing the target dir!
+				 */
+			}
+			else
+				pg_fatal("could not stat file \"%s\": %s",
+						 fullpath, strerror(errno));
 		}
 
 		if (parentpath)
