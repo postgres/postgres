@@ -62,8 +62,8 @@ typedef struct file_entry_t
 typedef struct filemap_t
 {
 	/*
-	 * New entries are accumulated to a linked list, in process_remote_file
-	 * and process_local_file.
+	 * New entries are accumulated to a linked list, in process_source_file
+	 * and process_target_file.
 	 */
 	file_entry_t *first;
 	file_entry_t *last;
@@ -94,9 +94,12 @@ extern void calculate_totals(void);
 extern void print_filemap(void);
 
 /* Functions for populating the filemap */
-extern void process_remote_file(const char *path, file_type_t type, size_t newsize, const char *link_target);
-extern void process_local_file(const char *path, file_type_t type, size_t newsize, const char *link_target);
-extern void process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno);
+extern void process_source_file(const char *path, file_type_t type,
+					size_t newsize, const char *link_target);
+extern void process_target_file(const char *path, file_type_t type,
+					size_t newsize, const char *link_target);
+extern void process_block_change(ForkNumber forknum, RelFileNode rnode,
+					 BlockNumber blkno);
 extern void filemap_finalize(void);
 
 #endif   /* FILEMAP_H */

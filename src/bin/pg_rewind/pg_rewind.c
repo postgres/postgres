@@ -263,13 +263,13 @@ main(int argc, char **argv)
 		   chkpttli);
 
 	/*
-	 * Build the filemap, by comparing the remote and local data directories.
+	 * Build the filemap, by comparing the source and target data directories.
 	 */
 	filemap_create();
 	pg_log(PG_PROGRESS, "reading source file list\n");
-	fetchRemoteFileList();
+	fetchSourceFileList();
 	pg_log(PG_PROGRESS, "reading target file list\n");
-	traverse_datadir(datadir_target, &process_local_file);
+	traverse_datadir(datadir_target, &process_target_file);
 
 	/*
 	 * Read the target WAL from last checkpoint before the point of fork, to

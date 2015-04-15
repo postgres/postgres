@@ -25,7 +25,7 @@
  * Common interface. Calls the copy or libpq method depending on global
  * config options.
  */
-extern void fetchRemoteFileList(void);
+extern void fetchSourceFileList(void);
 extern char *fetchFile(char *filename, size_t *filesize);
 extern void executeFileMap(void);
 

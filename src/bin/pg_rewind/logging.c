@@ -76,6 +76,9 @@ pg_log(eLogType type, const char *fmt,...)
 }
 
 
+/*
+ * Print an error message, and exit.
+ */
 void
 pg_fatal(const char *fmt,...)
 {

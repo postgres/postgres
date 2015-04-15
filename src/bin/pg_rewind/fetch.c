@@ -26,10 +26,10 @@
 #include "filemap.h"
 
 void
-fetchRemoteFileList(void)
+fetchSourceFileList(void)
 {
 	if (datadir_source)
-		traverse_datadir(datadir_source, &process_remote_file);
+		traverse_datadir(datadir_source, &process_source_file);
 	else
 		libpqProcessFileList();
 }

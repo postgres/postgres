@@ -314,39 +314,37 @@ extractPageInfo(XLogReaderState *record)
 	{
 		/*
 		 * New databases can be safely ignored. It won't be present in the
-		 * remote system, so it will be copied in toto. There's one
-		 * corner-case, though: if a new, different, database is also created
-		 * in the remote system, we'll see that the files already exist and
-		 * not copy them. That's OK, though; WAL replay of creating the new
-		 * database, from the remote WAL, will re-copy the new database,
-		 * overwriting the database created in the local system.
+		 * source system, so it will be deleted. There's one corner-case,
+		 * though: if a new, different, database is also created in the
+		 * source system, we'll see that the files already exist and not copy
+		 * them. That's OK, though; WAL replay of creating the new database,
+		 * from the source systems's WAL, will re-copy the new database,
+		 * overwriting the database created in the target system.
 		 */
 	}
 	else if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_DROP)
 	{
 		/*
 		 * An existing database was dropped. We'll see that the files don't
-		 * exist in local system, and copy them in toto from the remote
+		 * exist in the target data dir, and copy them in toto from the source
 		 * system. No need to do anything special here.
 		 */
 	}
 	else if (rmid == RM_SMGR_ID && rminfo == XLOG_SMGR_CREATE)
 	{
 		/*
-		 * We can safely ignore these. The local file will be removed, if it
-		 * doesn't exist in remote system. If a file with same name is created
-		 * in remote system, too, there will be WAL records for all the blocks
-		 * in it.
+		 * We can safely ignore these. The file will be removed from the
+		 * target, if it doesn't exist in source system. If a file with same
+		 * name is created in source system, too, there will be WAL records
+		 * for all the blocks in it.
 		 */
 	}
 	else if (rmid == RM_SMGR_ID && rminfo == XLOG_SMGR_TRUNCATE)
 	{
 		/*
-		 * We can safely ignore these. If a file is truncated locally, we'll
-		 * notice that when we compare the sizes, and will copy the missing
-		 * tail from remote system.
-		 *
-		 * TODO: But it would be nice to do some sanity cross-checking here..
+		 * We can safely ignore these. When we compare the sizes later on,
+		 * we'll notice that they differ, and copy the missing tail from
+		 * source system.
 		 */
 	}
 	else if (info & XLR_SPECIAL_REL_UPDATE)

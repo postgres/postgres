@@ -190,7 +190,7 @@ libpqProcessFileList(void)
 		else
 			type = FILE_TYPE_REGULAR;
 
-		process_remote_file(path, type, filesize, link_target);
+		process_source_file(path, type, filesize, link_target);
 	}
 }
 
