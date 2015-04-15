@@ -7903,6 +7903,7 @@ CreateCheckPoint(int flags)
 	uint32		freespace;
 	XLogRecPtr	PriorRedoPtr;
 	XLogRecPtr	curInsert;
+	XLogRecPtr	prevPtr;
 	VirtualTransactionId *vxids;
 	int			nvxids;
 
@@ -7988,6 +7989,7 @@ CreateCheckPoint(int flags)
 	 */
 	WALInsertLockAcquireExclusive();
 	curInsert = XLogBytePosToRecPtr(Insert->CurrBytePos);
+	prevPtr = XLogBytePosToRecPtr(Insert->PrevBytePos);
 
 	/*
 	 * If this isn't a shutdown or forced checkpoint, and we have not inserted
@@ -7999,17 +8001,17 @@ CreateCheckPoint(int flags)
 	 * (Perhaps it'd make even more sense to checkpoint only when the previous
 	 * checkpoint record is in a different xlog page?)
 	 *
-	 * We have to make two tests to determine that nothing has happened since
-	 * the start of the last checkpoint: current insertion point must match
-	 * the end of the last checkpoint record, and its redo pointer must point
-	 * to itself.
+	 * If the previous checkpoint crossed a WAL segment, however, we create
+	 * the checkpoint anyway, to have the latest checkpoint fully contained in
+	 * the new segment. This is for a little bit of extra robustness: it's
+	 * better if you don't need to keep two WAL segments around to recover the
+	 * checkpoint.
 	 */
 	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY |
 				  CHECKPOINT_FORCE)) == 0)
 	{
-		if (curInsert == ControlFile->checkPoint +
-			MAXALIGN(SizeOfXLogRecord + sizeof(CheckPoint)) &&
-			ControlFile->checkPoint == ControlFile->checkPointCopy.redo)
+		if (prevPtr == ControlFile->checkPointCopy.redo &&
+			prevPtr / XLOG_SEG_SIZE == curInsert / XLOG_SEG_SIZE)
 		{
 			WALInsertLockRelease();
 			LWLockRelease(CheckpointLock);
