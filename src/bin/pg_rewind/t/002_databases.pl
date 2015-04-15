@@ -40,6 +40,7 @@ standby_afterpromotion
 ),
 			   'database names');
 
+	RewindTest::clean_rewind_test();
 }
 
 # Run the test in both modes.

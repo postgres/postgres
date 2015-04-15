@@ -22,6 +22,9 @@ package RewindTest;
 # 5. run_pg_rewind - stops the old master (if it's still running) and runs
 # pg_rewind to synchronize it with the now-promoted standby server.
 #
+# 6. clean_rewind_test - stops both servers used in the test, if they're
+# still running.
+#
 # The test script can use the helper functions master_psql and standby_psql
 # to run psql against the master and standby servers, respectively. The
 # test script can also use the $connstr_master and $connstr_standby global
@@ -56,6 +59,7 @@ our @EXPORT = qw(
   create_standby
   promote_standby
   run_pg_rewind
+  clean_rewind_test
 );
 
 
@@ -262,9 +266,8 @@ recovery_target_timeline='latest'
 }
 
 # Clean up after the test. Stop both servers, if they're still running.
-END
+sub clean_rewind_test
 {
-	my $save_rc = $?;
 	if ($test_master_datadir)
 	{
 		system "pg_ctl -D $test_master_datadir -s -m immediate stop 2> /dev/null";
@@ -273,5 +276,12 @@ END
 	{
 		system "pg_ctl -D $test_standby_datadir -s -m immediate stop 2> /dev/null";
 	}
+}
+
+# Stop the test servers, just in case they're still running.
+END
+{
+	my $save_rc = $?;
+	clean_rewind_test();
 	$? = $save_rc;
 }

@@ -62,6 +62,8 @@ sub run_test
 			   "$test_master_datadir/tst_standby_dir/standby_subdir",
 			   "$test_master_datadir/tst_standby_dir/standby_subdir/standby_file3"],
 			  "file lists match");
+
+	RewindTest::clean_rewind_test();
 }
 
 # Run the test in both modes.
