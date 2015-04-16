@@ -28,7 +28,7 @@ my $libpgcommon;
 my $postgres;
 my $libpq;
 
-# Set of variables for contrib modules
+# Set of variables for modules in contrib/ and src/test/modules/
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq =
   ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo');
@@ -50,7 +50,7 @@ my $contrib_extraincludes =
 my $contrib_extrasource = {
 	'cube' => [ 'contrib\cube\cubescan.l', 'contrib\cube\cubeparse.y' ],
 	'seg' => [ 'contrib\seg\segscan.l', 'contrib\seg\segparse.y' ], };
-my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
+my @contrib_excludes = ('pgcrypto', 'commit_ts', 'intagg', 'sepgsql');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
@@ -564,15 +564,18 @@ sub mkvcbuild
 	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
 	GenerateContribSqlFiles('pgcrypto', $mf);
 
-	opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";
-	while (my $d = readdir($D))
+	foreach my $subdir ('contrib', 'src/test/modules')
 	{
-		next if ($d =~ /^\./);
-		next unless (-f "contrib/$d/Makefile");
-		next if (grep { /^$d$/ } @contrib_excludes);
-		AddContrib($d);
+		opendir($D, $subdir) || croak "Could not opendir on $subdir!\n";
+		while (my $d = readdir($D))
+		{
+			next if ($d =~ /^\./);
+			next unless (-f "$subdir/$d/Makefile");
+			next if (grep { /^$d$/ } @contrib_excludes);
+			AddContrib($subdir, $d);
+		}
+		closedir($D);
 	}
-	closedir($D);
 
 	$mf =
 	  Project::read_file('src\backend\utils\mb\conversion_procs\Makefile');
@@ -689,14 +692,15 @@ sub AddSimpleFrontend
 # Add a simple contrib project
 sub AddContrib
 {
+	my $subdir = shift;
 	my $n  = shift;
-	my $mf = Project::read_file('contrib\\' . $n . '\Makefile');
+	my $mf = Project::read_file("$subdir/$n/Makefile");
 
 	if ($mf =~ /^MODULE_big\s*=\s*(.*)$/mg)
 	{
 		my $dn = $1;
 		my $proj =
-		  $solution->AddProject($dn, 'dll', 'contrib', 'contrib\\' . $n);
+		  $solution->AddProject($dn, 'dll', 'contrib', "$subdir/$n");
 		$proj->AddReference($postgres);
 		AdjustContribProj($proj);
 	}
@@ -705,8 +709,9 @@ sub AddContrib
 		foreach my $mod (split /\s+/, $1)
 		{
 			my $proj =
-			  $solution->AddProject($mod, 'dll', 'contrib', 'contrib\\' . $n);
-			$proj->AddFile('contrib\\' . $n . '\\' . $mod . '.c');
+			  $solution->AddProject($mod, 'dll', 'contrib', "$subdir/$n");
+			my $filename = $mod . '.c';
+			$proj->AddFile($subdir . '\\' . $n . '\\' .  $mod . '.c');
 			$proj->AddReference($postgres);
 			AdjustContribProj($proj);
 		}
@@ -714,7 +719,7 @@ sub AddContrib
 	elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg)
 	{
 		my $proj =
-		  $solution->AddProject($1, 'exe', 'contrib', 'contrib\\' . $n);
+		  $solution->AddProject($1, 'exe', 'contrib', "$subdir/$n");
 		AdjustContribProj($proj);
 	}
 	else
