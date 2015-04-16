@@ -87,7 +87,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 				 */
 			}
 			else
-				pg_fatal("could not stat file \"%s\": %s",
+				pg_fatal("could not stat file \"%s\": %s\n",
 						 fullpath, strerror(errno));
 		}
 

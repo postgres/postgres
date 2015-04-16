@@ -71,7 +71,7 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, TimeLineID tli,
 	private.tli = tli;
 	xlogreader = XLogReaderAllocate(&SimpleXLogPageRead, &private);
 	if (xlogreader == NULL)
-		pg_fatal("out of memory");
+		pg_fatal("out of memory\n");
 
 	do
 	{
@@ -124,7 +124,7 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, TimeLineID tli)
 	private.tli = tli;
 	xlogreader = XLogReaderAllocate(&SimpleXLogPageRead, &private);
 	if (xlogreader == NULL)
-		pg_fatal("out of memory");
+		pg_fatal("out of memory\n");
 
 	record = XLogReadRecord(xlogreader, ptr, &errormsg);
 	if (record == NULL)
@@ -176,7 +176,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, TimeLineID tli,
 	private.tli = tli;
 	xlogreader = XLogReaderAllocate(&SimpleXLogPageRead, &private);
 	if (xlogreader == NULL)
-		pg_fatal("out of memory");
+		pg_fatal("out of memory\n");
 
 	searchptr = forkptr;
 	for (;;)
