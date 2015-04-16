@@ -348,7 +348,7 @@ SnapBuildFreeSnapshot(Snapshot snap)
 	Assert(snap->curcid == FirstCommandId);
 	Assert(!snap->suboverflowed);
 	Assert(!snap->takenDuringRecovery);
-	Assert(snap->regd_count == 1);
+	Assert(snap->regd_count == 0);
 
 	/* slightly more likely, so it's checked even without c-asserts */
 	if (snap->copied)
@@ -407,16 +407,16 @@ SnapBuildSnapDecRefcount(Snapshot snap)
 	Assert(!snap->suboverflowed);
 	Assert(!snap->takenDuringRecovery);
 
-	Assert(snap->regd_count == 1);
+	Assert(snap->regd_count == 0);
 
-	Assert(snap->active_count);
+	Assert(snap->active_count > 0);
 
 	/* slightly more likely, so it's checked even without casserts */
 	if (snap->copied)
 		elog(ERROR, "cannot free a copied snapshot");
 
 	snap->active_count--;
-	if (!snap->active_count)
+	if (snap->active_count == 0)
 		SnapBuildFreeSnapshot(snap);
 }
 
@@ -495,7 +495,7 @@ SnapBuildBuildSnapshot(SnapBuild *builder, TransactionId xid)
 	snapshot->copied = false;
 	snapshot->curcid = FirstCommandId;
 	snapshot->active_count = 0;
-	snapshot->regd_count = 1;	/* mark as registered so nobody frees it */
+	snapshot->regd_count = 0;
 
 	return snapshot;
 }
