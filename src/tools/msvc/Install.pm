@@ -432,98 +432,110 @@ sub CopyContribFiles
 	my $target = shift;
 
 	print "Copying contrib data files...";
-	my $D;
-	opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";
-	while (my $d = readdir($D))
+	foreach my $subdir ('contrib', 'src/test/modules')
 	{
-		next if ($d =~ /^\./);
-		next unless (-f "contrib/$d/Makefile");
-		next
-		  if ($insttype eq "client" && !grep { $_ eq $d } @client_contribs);
-
-		# these configuration-based exclusions must match vcregress.pl
-		next if ($d eq "uuid-ossp" && !defined($config->{uuid}));
-		next if ($d eq "sslinfo"   && !defined($config->{openssl}));
-		next if ($d eq "xml2"      && !defined($config->{xml}));
-		next if ($d eq "sepgsql");
-
-		my $mf = read_file("contrib/$d/Makefile");
-		$mf =~ s{\\\r?\n}{}g;
-
-		# Note: we currently don't support setting MODULEDIR in the makefile
-		my $moduledir = 'contrib';
-
-		my $flist = '';
-		if ($mf =~ /^EXTENSION\s*=\s*(.*)$/m) { $flist .= $1 }
-		if ($flist ne '')
+		my $D;
+		opendir($D, $subdir) || croak "Could not opendir on $subdir!\n";
+		while (my $d = readdir($D))
 		{
-			$moduledir = 'extension';
-			$flist = ParseAndCleanRule($flist, $mf);
+			# These configuration-based exclusions must match vcregress.pl
+			next if ($d eq "uuid-ossp" && !defined($config->{uuid}));
+			next if ($d eq "sslinfo"   && !defined($config->{openssl}));
+			next if ($d eq "xml2"      && !defined($config->{xml}));
+			next if ($d eq "sepgsql");
 
-			foreach my $f (split /\s+/, $flist)
-			{
-				lcopy(
-					'contrib/' . $d . '/' . $f . '.control',
-					$target . '/share/extension/' . $f . '.control'
-				) || croak("Could not copy file $f.control in contrib $d");
-				print '.';
-			}
-		}
-
-		$flist = '';
-		if ($mf =~ /^DATA_built\s*=\s*(.*)$/m) { $flist .= $1 }
-		if ($mf =~ /^DATA\s*=\s*(.*)$/m)       { $flist .= " $1" }
-		$flist =~ s/^\s*//;  # Remove leading spaces if we had only DATA_built
-
-		if ($flist ne '')
-		{
-			$flist = ParseAndCleanRule($flist, $mf);
-
-			foreach my $f (split /\s+/, $flist)
-			{
-				lcopy('contrib/' . $d . '/' . $f,
-					$target . '/share/' . $moduledir . '/' . basename($f))
-				  || croak("Could not copy file $f in contrib $d");
-				print '.';
-			}
-		}
-
-		$flist = '';
-		if ($mf =~ /^DATA_TSEARCH\s*=\s*(.*)$/m) { $flist .= $1 }
-		if ($flist ne '')
-		{
-			$flist = ParseAndCleanRule($flist, $mf);
-
-			foreach my $f (split /\s+/, $flist)
-			{
-				lcopy('contrib/' . $d . '/' . $f,
-					$target . '/share/tsearch_data/' . basename($f))
-				  || croak("Could not copy file $f in contrib $d");
-				print '.';
-			}
-		}
-
-		$flist = '';
-		if ($mf =~ /^DOCS\s*=\s*(.*)$/mg) { $flist .= $1 }
-		if ($flist ne '')
-		{
-			$flist = ParseAndCleanRule($flist, $mf);
-
-			# Special case for contrib/spi
-			$flist =
-"autoinc.example insert_username.example moddatetime.example refint.example timetravel.example"
-			  if ($d eq 'spi');
-			foreach my $f (split /\s+/, $flist)
-			{
-				lcopy('contrib/' . $d . '/' . $f,
-					$target . '/doc/' . $moduledir . '/' . $f)
-				  || croak("Could not copy file $f in contrib $d");
-				print '.';
-			}
+			CopySubdirFiles($subdir, $d, $config, $target);
 		}
 	}
-	closedir($D);
 	print "\n";
+}
+
+sub CopySubdirFiles
+{
+	my $subdir = shift;
+	my $module = shift;
+	my $config = shift;
+	my $target = shift;
+
+	return if ($module =~ /^\./);
+	return unless (-f "$subdir/$module/Makefile");
+	return
+		  if ($insttype eq "client" && !grep { $_ eq $module } @client_contribs);
+
+	my $mf = read_file("$subdir/$module/Makefile");
+	$mf =~ s{\\\r?\n}{}g;
+
+	# Note: we currently don't support setting MODULEDIR in the makefile
+	my $moduledir = 'contrib';
+
+	my $flist = '';
+	if ($mf =~ /^EXTENSION\s*=\s*(.*)$/m) { $flist .= $1 }
+	if ($flist ne '')
+	{
+		$moduledir = 'extension';
+		$flist = ParseAndCleanRule($flist, $mf);
+
+		foreach my $f (split /\s+/, $flist)
+		{
+			lcopy(
+					"$subdir/$module/$f.control",
+					"$target/share/extension/$f.control"
+				) || croak("Could not copy file $f.control in contrib $module");
+				print '.';
+		}
+	}
+
+	$flist = '';
+	if ($mf =~ /^DATA_built\s*=\s*(.*)$/m) { $flist .= $1 }
+	if ($mf =~ /^DATA\s*=\s*(.*)$/m)       { $flist .= " $1" }
+	$flist =~ s/^\s*//;  # Remove leading spaces if we had only DATA_built
+
+	if ($flist ne '')
+	{
+		$flist = ParseAndCleanRule($flist, $mf);
+
+		foreach my $f (split /\s+/, $flist)
+		{
+			lcopy("$subdir/$module/$f",
+				  "$target/share/$moduledir/" . basename($f))
+				  || croak("Could not copy file $f in contrib $module");
+				print '.';
+		}
+	}
+
+	$flist = '';
+	if ($mf =~ /^DATA_TSEARCH\s*=\s*(.*)$/m) { $flist .= $1 }
+	if ($flist ne '')
+	{
+		$flist = ParseAndCleanRule($flist, $mf);
+
+		foreach my $f (split /\s+/, $flist)
+		{
+			lcopy("$subdir/$module/$f",
+				"$target/share/tsearch_data/" . basename($f))
+			  || croak("Could not copy file $f in $subdir $module");
+			print '.';
+		}
+	}
+
+	$flist = '';
+	if ($mf =~ /^DOCS\s*=\s*(.*)$/mg) { $flist .= $1 }
+	if ($flist ne '')
+	{
+		$flist = ParseAndCleanRule($flist, $mf);
+
+		# Special case for contrib/spi
+		$flist =
+"autoinc.example insert_username.example moddatetime.example refint.example timetravel.example"
+		  if ($module eq 'spi');
+		foreach my $f (split /\s+/, $flist)
+		{
+			lcopy("$subdir/$module/$f",
+				  "$target/doc/$moduledir/$f")
+			  || croak("Could not copy file $f in contrib $module");
+			print '.';
+		}
+	}
 }
 
 sub ParseAndCleanRule
