@@ -887,7 +887,7 @@ equalPolicy(RowSecurityPolicy *policy1, RowSecurityPolicy *policy2)
 				return false;
 		}
 
-		if (!equal(policy1->qual, policy1->qual))
+		if (!equal(policy1->qual, policy2->qual))
 			return false;
 		if (!equal(policy1->with_check_qual, policy2->with_check_qual))
 			return false;
