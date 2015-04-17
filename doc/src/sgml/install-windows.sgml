@@ -436,6 +436,7 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress installcheck</userinput>
 <userinput>vcregress plcheck</userinput>
 <userinput>vcregress contribcheck</userinput>
+<userinput>vcregress modulescheck</userinput>
 <userinput>vcregress ecpgcheck</userinput>
 <userinput>vcregress isolationcheck</userinput>
 <userinput>vcregress upgradecheck</userinput>
