@@ -281,6 +281,8 @@ make prefix=/usr/local/pgsql.new install
      whether they are from <filename>contrib</filename>
      or some other source. Do not install the schema definitions, e.g.
      <filename>pgcrypto.sql</>, because these will be upgraded from the old cluster.
+     Also, any custom full text search files (dictionary, synonym,
+     thesaurus, stop words) must also be copied to the new cluster.
     </para>
    </step>
 
