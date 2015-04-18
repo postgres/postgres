@@ -5198,7 +5198,7 @@ DATA(insert OID = 3589 ( binary_upgrade_set_next_pg_enum_oid PGNSP PGUID  12 1 0
 DESCR("for use by pg_upgrade");
 DATA(insert OID = 3590 ( binary_upgrade_set_next_pg_authid_oid PGNSP PGUID  12 1 0 0 0 f f f f t f v 1 0 2278 "26" _null_ _null_ _null_ _null_ binary_upgrade_set_next_pg_authid_oid _null_ _null_ _null_ ));
 DESCR("for use by pg_upgrade");
-DATA(insert OID = 3591 ( binary_upgrade_create_empty_extension PGNSP PGUID  12 1 0 0 0 f f f f t f v 7 0 2278 "25 25 16 25 1028 1009 1009" _null_ _null_ _null_ _null_ binary_upgrade_create_empty_extension _null_ _null_ _null_ ));
+DATA(insert OID = 3591 ( binary_upgrade_create_empty_extension PGNSP PGUID  12 1 0 0 0 f f f f f f v 7 0 2278 "25 25 16 25 1028 1009 1009" _null_ _null_ _null_ _null_ binary_upgrade_create_empty_extension _null_ _null_ _null_ ));
 DESCR("for use by pg_upgrade");
 
 
