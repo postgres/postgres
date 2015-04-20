@@ -56,6 +56,7 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -222,7 +223,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
-	cxt.hasoids = interpretOidsOption(stmt->options, true);
+	cxt.hasoids = default_with_oids;
 
 	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
 
@@ -281,6 +282,17 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * Output results.
 	 */
 	stmt->tableElts = cxt.columns;
+	/*
+	 * Add WITH/WITHOUT OIDS, if necessary.  A literal statement-specified
+	 * WITH/WITHOUT OIDS will still take precedence because the first
+	 * matching "oids" in "options" is used.
+	 */
+	if (cxt.hasoids && !interpretOidsOption(stmt->options, true))
+		stmt->options = lappend(stmt->options, makeDefElem("oids",
+								(Node *)makeInteger(TRUE)));
+	else if (!cxt.hasoids && interpretOidsOption(stmt->options, true))
+		stmt->options = lappend(stmt->options, makeDefElem("oids",
+								(Node *)makeInteger(FALSE)));
 	stmt->constraints = cxt.ckconstraints;
 
 	result = lappend(cxt.blist, stmt);
@@ -848,6 +860,8 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			cxt->alist = lappend(cxt->alist, stmt);
 		}
 	}
+
+	cxt->hasoids = relation->rd_rel->relhasoids;
 
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
