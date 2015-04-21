@@ -242,13 +242,13 @@ IterateForeignScan (ForeignScanState *node);
 
     <para>
      Note that <productname>PostgreSQL</productname>'s executor doesn't care
-     whether the rows returned violate any <literal>NOT NULL</literal>
-     constraints that were defined on the foreign table columns &mdash; but
-     the planner does care, and may optimize queries incorrectly if
-     <literal>NULL</> values are present in a column declared not to contain
-     them.  If a <literal>NULL</> value is encountered when the user has
-     declared that none should be present, it may be appropriate to raise an
-     error (just as you would need to do in the case of a data type mismatch).
+     whether the rows returned violate any constraints that were defined on
+     the foreign table &mdash; but the planner does care, and may optimize
+     queries incorrectly if there are rows visible in the foreign table that
+     do not satisfy a declared constraint.  If a constraint is violated when
+     the user has declared that the constraint should hold true, it may be
+     appropriate to raise an error (just as you would need to do in the case
+     of a data type mismatch).
     </para>
 
     <para>
