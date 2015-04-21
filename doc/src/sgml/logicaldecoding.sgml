@@ -62,10 +62,10 @@ postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', '
  regression_slot | 0/16B1970
 (1 row)
 
-postgres=# SELECT * FROM pg_replication_slots;
-    slot_name    |    plugin     | slot_type | datoid | database | active |  xmin  | catalog_xmin | restart_lsn
------------------+---------------+-----------+--------+----------+--------+--------+--------------+-------------
- regression_slot | test_decoding | logical   |  12052 | postgres | f      |        |          684 | 0/16A4408
+postgres=# SELECT slot_name, plugin, slot_type, database, active, restart_lsn FROM pg_replication_slots;
+    slot_name    |    plugin     | slot_type | database | active | restart_lsn
+-----------------+---------------+-----------+----------+--------+-------------
+ regression_slot | test_decoding | logical   | postgres | f      | 0/16A4408
 (1 row)
 
 postgres=# -- There are no changes to see yet

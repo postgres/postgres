@@ -84,8 +84,8 @@ typedef struct ReplicationSlot
 	/* is this slot defined */
 	bool		in_use;
 
-	/* is somebody streaming out changes for this slot */
-	bool		active;
+	/* Who is streaming out changes for this slot? 0 in unused slots. */
+	pid_t		active_pid;
 
 	/* any outstanding modifications? */
 	bool		just_dirtied;

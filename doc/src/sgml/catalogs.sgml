@@ -5401,6 +5401,16 @@
      </row>
 
      <row>
+      <entry><structfield>active_in</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>The process ID of the session using this slot if the slot
+       is currently actively being used. <literal>NULL</literal> if
+       inactive.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>xmin</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>

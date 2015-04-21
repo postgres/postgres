@@ -158,7 +158,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_GET_REPLICATION_SLOTS_COLS 8
+#define PG_GET_REPLICATION_SLOTS_COLS 9
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
@@ -206,7 +206,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		TransactionId xmin;
 		TransactionId catalog_xmin;
 		XLogRecPtr	restart_lsn;
-		bool		active;
+		pid_t		active_pid;
 		Oid			database;
 		NameData	slot_name;
 		NameData	plugin;
@@ -227,7 +227,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			namecpy(&slot_name, &slot->data.name);
 			namecpy(&plugin, &slot->data.plugin);
 
-			active = slot->active;
+			active_pid = slot->active_pid;
 		}
 		SpinLockRelease(&slot->mutex);
 
@@ -251,7 +251,12 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			values[i++] = database;
 
-		values[i++] = BoolGetDatum(active);
+		values[i++] = BoolGetDatum(active_pid != 0);
+
+		if (active_pid != 0)
+			values[i++] = Int32GetDatum(active_pid);
+		else
+			nulls[i++] = true;
 
 		if (xmin != InvalidTransactionId)
 			values[i++] = TransactionIdGetDatum(xmin);
