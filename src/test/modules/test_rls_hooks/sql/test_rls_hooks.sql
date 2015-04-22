@@ -1,3 +1,5 @@
+LOAD 'test_rls_hooks';
+
 CREATE TABLE rls_test_permissive (
     username        name,
     supervisor      name,
@@ -155,3 +157,12 @@ INSERT INTO rls_test_both VALUES ('r1','s1',7);
 
 -- failure
 INSERT INTO rls_test_both VALUES ('r4','s4',7);
+
+RESET ROLE;
+
+DROP TABLE rls_test_restrictive;
+DROP TABLE rls_test_permissive;
+DROP TABLE rls_test_both;
+
+DROP ROLE r1;
+DROP ROLE s1;

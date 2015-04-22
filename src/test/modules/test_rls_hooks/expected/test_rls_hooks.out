@@ -1,3 +1,4 @@
+LOAD 'test_rls_hooks';
 CREATE TABLE rls_test_permissive (
     username        name,
     supervisor      name,
@@ -191,3 +192,9 @@ ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
 -- failure
 INSERT INTO rls_test_both VALUES ('r4','s4',7);
 ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+RESET ROLE;
+DROP TABLE rls_test_restrictive;
+DROP TABLE rls_test_permissive;
+DROP TABLE rls_test_both;
+DROP ROLE r1;
+DROP ROLE s1;
