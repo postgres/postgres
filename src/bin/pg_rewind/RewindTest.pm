@@ -62,9 +62,11 @@ our @EXPORT = qw(
   clean_rewind_test
 );
 
+# A temporary directory created with 'tempdir' is deleted automatically at
+# the end of the tests. You can change it to a constant if you need to keep it
+# for debugging purposes,
+my $testroot = tempdir;
 
-# Adjust these paths for your environment
-my $testroot = "./tmp_check";
 our $test_master_datadir="$testroot/data_master";
 our $test_standby_datadir="$testroot/data_standby";
 
