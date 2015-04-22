@@ -1714,51 +1714,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 				activeRIRs = list_delete_first(activeRIRs);
 			}
 		}
-		/*
-		 * If the RTE has row security quals, apply them and recurse into the
-		 * securityQuals.
-		 */
-		if (prepend_row_security_policies(parsetree, rte, rt_index))
-		{
-			/*
-			 * We applied security quals, check for infinite recursion and
-			 * then expand any nested queries.
-			 */
-			if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("infinite recursion detected in policy for relation \"%s\"",
-									RelationGetRelationName(rel))));
-
-			/*
-			 * Make sure we check for recursion in either securityQuals or
-			 * WITH CHECK quals.
-			 */
-			if (rte->securityQuals != NIL)
-			{
-				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
-
-				expression_tree_walker( (Node*) rte->securityQuals,
-										fireRIRonSubLink, (void*)activeRIRs );
-
-				activeRIRs = list_delete_first(activeRIRs);
-			}
-
-			if (parsetree->withCheckOptions != NIL)
-			{
-				WithCheckOption    *wco;
-				List			   *quals = NIL;
-
-				wco = (WithCheckOption *) makeNode(WithCheckOption);
-				quals = lcons(wco->qual, quals);
-
-				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
-
-				expression_tree_walker( (Node*) quals, fireRIRonSubLink,
-									   (void*)activeRIRs);
-			}
-
-		}
 
 		heap_close(rel, NoLock);
 	}
@@ -1779,6 +1734,88 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, fireRIRonSubLink, (void *) activeRIRs,
 						  QTW_IGNORE_RC_SUBQUERIES);
+
+	/*
+	 * Apply any row level security policies.  We do this last because it
+	 * requires special recursion detection if the new quals have sublink
+	 * subqueries, and if we did it in the loop above query_tree_walker
+	 * would then recurse into those quals a second time.
+	 */
+	rt_index = 0;
+	foreach(lc, parsetree->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		Relation	rel;
+		List	   *securityQuals;
+		List	   *withCheckOptions;
+		bool		hasRowSecurity;
+		bool		hasSubLinks;
+
+		++rt_index;
+
+		/* Only normal relations can have RLS policies */
+		if (rte->rtekind != RTE_RELATION ||
+			rte->relkind != RELKIND_RELATION)
+			continue;
+
+		rel = heap_open(rte->relid, NoLock);
+
+		/*
+		 * Fetch any new security quals that must be applied to this RTE.
+		 */
+		get_row_security_policies(parsetree, rte, rt_index,
+								  &securityQuals, &withCheckOptions,
+								  &hasRowSecurity, &hasSubLinks);
+
+		if (securityQuals != NIL || withCheckOptions != NIL)
+		{
+			if (hasSubLinks)
+			{
+				/*
+				 * Recursively process the new quals, checking for infinite
+				 * recursion.
+				 */
+				if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("infinite recursion detected in policy for relation \"%s\"",
+									RelationGetRelationName(rel))));
+
+				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
+
+				expression_tree_walker( (Node*) securityQuals,
+										fireRIRonSubLink, (void*)activeRIRs );
+
+				expression_tree_walker( (Node*) withCheckOptions,
+										fireRIRonSubLink, (void*)activeRIRs );
+
+				activeRIRs = list_delete_first(activeRIRs);
+			}
+
+			/*
+			 * Add the new security quals to the start of the RTE's list so
+			 * that they get applied before any existing security quals (which
+			 * might have come from a user-written security barrier view, and
+			 * might contain malicious code).
+			 */
+			rte->securityQuals = list_concat(securityQuals,
+											 rte->securityQuals);
+
+			parsetree->withCheckOptions = list_concat(withCheckOptions,
+													  parsetree->withCheckOptions);
+		}
+
+		/*
+		 * Make sure the query is marked correctly if row level security
+		 * applies, or if the new quals had sublinks.
+		 */
+		if (hasRowSecurity)
+			parsetree->hasRowSecurity = true;
+		if (hasSubLinks)
+			parsetree->hasSubLinks = true;
+
+		heap_close(rel, NoLock);
+	}
 
 	return parsetree;
 }

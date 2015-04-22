@@ -1,0 +1,16 @@
+test_rls_hooks is an example of how to use the hooks provided for RLS to
+define additional policies to be used.
+
+Functions
+=========
+test_rls_hook_permissive(CmdType cmdtype, Relation relation)
+    RETURNS List*
+
+Returns a list of policies which should be added to any existing
+policies on the relation, combined with OR.
+
+test_rls_hook_restrictive(CmdType cmdtype, Relation relation)
+    RETURNS List*
+
+Returns a list of policies which should be added to any existing
+policies on the relation, combined with AND.

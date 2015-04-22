@@ -37,9 +37,12 @@ typedef struct RowSecurityDesc
 typedef List *(*row_security_policy_hook_type)(CmdType cmdtype,
 											   Relation relation);
 
-extern PGDLLIMPORT row_security_policy_hook_type row_security_policy_hook;
+extern PGDLLIMPORT row_security_policy_hook_type row_security_policy_hook_permissive;
 
-extern bool prepend_row_security_policies(Query* root, RangeTblEntry* rte,
-									   int rt_index);
+extern PGDLLIMPORT row_security_policy_hook_type row_security_policy_hook_restrictive;
+
+extern void get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
+						  List **securityQuals, List **withCheckOptions,
+						  bool *hasRowSecurity, bool *hasSubLinks);
 
 #endif	/* ROWSECURITY_H */

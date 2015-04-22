@@ -8,6 +8,7 @@ SUBDIRS = \
 		  commit_ts \
 		  worker_spi \
 		  dummy_seclabel \
+		  test_rls_hooks \
 		  test_shm_mq \
 		  test_parser
 

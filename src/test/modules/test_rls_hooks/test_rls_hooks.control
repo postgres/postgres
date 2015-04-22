@@ -1,0 +1,4 @@
+comment = 'Test code for RLS hooks'
+default_version = '1.0'
+module_pathname = '$libdir/test_rls_hooks'
+relocatable = true

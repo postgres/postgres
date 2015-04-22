@@ -207,6 +207,8 @@ COPY t1 FROM stdin WITH (oids);
 \.
 
 CREATE TABLE t2 (c float) INHERITS (t1);
+GRANT ALL ON t2 TO public;
+
 COPY t2 FROM stdin WITH (oids);
 201	1	abc	1.1
 202	2	bcd	2.2
@@ -216,6 +218,8 @@ COPY t2 FROM stdin WITH (oids);
 
 CREATE TABLE t3 (c text, b text, a int) WITH OIDS;
 ALTER TABLE t3 INHERIT t1;
+GRANT ALL ON t3 TO public;
+
 COPY t3(a,b,c) FROM stdin WITH (oids);
 301	1	xxx	X
 302	2	yyy	Y
@@ -423,9 +427,45 @@ UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
 
+-- updates with from clause
+EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t3
+WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
+
+UPDATE t2 SET b=t2.b FROM t3
+WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
+
+EXPLAIN (COSTS OFF) UPDATE t1 SET b=t1.b FROM t2
+WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
+
+UPDATE t1 SET b=t1.b FROM t2
+WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
+
+EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t1
+WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
+
+UPDATE t2 SET b=t2.b FROM t1
+WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
+
+-- updates with from clause self join
+EXPLAIN (COSTS OFF) UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
+WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
+AND f_leak(t2_1.b) AND f_leak(t2_2.b) RETURNING *, t2_1, t2_2;
+
+UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
+WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
+AND f_leak(t2_1.b) AND f_leak(t2_2.b) RETURNING *, t2_1, t2_2;
+
+EXPLAIN (COSTS OFF) UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
+WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
+AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
+
+UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
+WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
+AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
+
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
-SELECT * FROM t1;
+SELECT * FROM t1 ORDER BY a,b;
 
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO ON;
@@ -434,6 +474,39 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
 
 DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
 DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
+
+--
+-- S.b. view on top of Row-level security
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE b1 (a int, b text);
+INSERT INTO b1 (SELECT x, md5(x::text) FROM generate_series(-10,10) x);
+
+CREATE POLICY p1 ON b1 USING (a % 2 = 0);
+ALTER TABLE b1 ENABLE ROW LEVEL SECURITY;
+GRANT ALL ON b1 TO rls_regress_user1;
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+CREATE VIEW bv1 WITH (security_barrier) AS SELECT * FROM b1 WHERE a > 0 WITH CHECK OPTION;
+GRANT ALL ON bv1 TO rls_regress_user2;
+
+SET SESSION AUTHORIZATION rls_regress_user2;
+
+EXPLAIN (COSTS OFF) SELECT * FROM bv1 WHERE f_leak(b);
+SELECT * FROM bv1 WHERE f_leak(b);
+
+INSERT INTO bv1 VALUES (-1, 'xxx'); -- should fail view WCO
+INSERT INTO bv1 VALUES (11, 'xxx'); -- should fail RLS check
+INSERT INTO bv1 VALUES (12, 'xxx'); -- ok
+
+EXPLAIN (COSTS OFF) UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
+UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
+
+EXPLAIN (COSTS OFF) DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
+DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+SELECT * FROM b1;
 
 --
 -- ROLE/GROUP
