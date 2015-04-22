@@ -107,6 +107,12 @@ ERROR:  type "text_w_default" already exists
 DROP TYPE default_test_row CASCADE;
 NOTICE:  drop cascades to function get_default_test()
 DROP TABLE default_test;
+-- Check type create with input/output incompatibility
+CREATE TYPE not_existing_type (INPUT = array_in,
+    OUTPUT = array_out,
+    ELEMENT = int,
+    INTERNALLENGTH = 32);
+ERROR:  function array_out(not_existing_type) does not exist
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail

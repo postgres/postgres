@@ -215,6 +215,7 @@ DefineType(List *names, List *parameters)
 	if (!OidIsValid(typoid))
 	{
 		address = TypeShellMake(typeName, typeNamespace, GetUserId());
+		typoid = address.objectId;
 		/* Make new shell type visible for modification below */
 		CommandCounterIncrement();
 
@@ -628,6 +629,7 @@ DefineType(List *names, List *parameters)
 				   0,			/* Array Dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
 				   collation);	/* type's collation */
+	Assert(typoid == address.objectId);
 
 	/*
 	 * Create the array type that goes with it.
@@ -1505,7 +1507,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
 				   InvalidOid); /* type's collation (ranges never have one) */
-	typoid = address.objectId;
+	Assert(typoid == address.objectId);
 
 	/* Create the entry in pg_range */
 	RangeCreate(typoid, rangeSubtype, rangeCollation, rangeSubOpclass,

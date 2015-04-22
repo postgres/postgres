@@ -106,6 +106,12 @@ DROP TYPE default_test_row CASCADE;
 
 DROP TABLE default_test;
 
+-- Check type create with input/output incompatibility
+CREATE TYPE not_existing_type (INPUT = array_in,
+    OUTPUT = array_out,
+    ELEMENT = int,
+    INTERNALLENGTH = 32);
+
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 
