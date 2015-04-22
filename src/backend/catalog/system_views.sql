@@ -665,7 +665,7 @@ CREATE VIEW pg_replication_slots AS
             L.datoid,
             D.datname AS database,
             L.active,
-            L.active_in,
+            L.active_pid,
             L.xmin,
             L.catalog_xmin,
             L.restart_lsn

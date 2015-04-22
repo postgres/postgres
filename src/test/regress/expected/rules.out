@@ -1396,11 +1396,11 @@ pg_replication_slots| SELECT l.slot_name,
     l.datoid,
     d.datname AS database,
     l.active,
-    l.active_in,
+    l.active_pid,
     l.xmin,
     l.catalog_xmin,
     l.restart_lsn
-   FROM (pg_get_replication_slots() l(slot_name, plugin, slot_type, datoid, active, active_in, xmin, catalog_xmin, restart_lsn)
+   FROM (pg_get_replication_slots() l(slot_name, plugin, slot_type, datoid, active, active_pid, xmin, catalog_xmin, restart_lsn)
      LEFT JOIN pg_database d ON ((l.datoid = d.oid)));
 pg_roles| SELECT pg_authid.rolname,
     pg_authid.rolsuper,

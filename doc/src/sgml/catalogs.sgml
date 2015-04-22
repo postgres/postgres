@@ -5401,7 +5401,7 @@
      </row>
 
      <row>
-      <entry><structfield>active_in</structfield></entry>
+      <entry><structfield>active_pid</structfield></entry>
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>The process ID of the session using this slot if the slot
