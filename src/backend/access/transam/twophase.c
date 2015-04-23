@@ -2045,6 +2045,12 @@ RecoverPreparedTransactions(void)
 			if (InHotStandby)
 				StandbyReleaseLockTree(xid, hdr->nsubxacts, subxids);
 
+			/*
+			 * We're done with recovering this transaction. Clear MyLockedGxact,
+			 * like we do in PrepareTransaction() during normal operation.
+			 */
+			PostPrepare_Twophase();
+
 			pfree(buf);
 		}
 	}
