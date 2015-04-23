@@ -69,8 +69,6 @@ ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
 	REGRESS += plperl_plperlu
 endif
 endif
-# where to find psql for running the tests
-PSQLDIR = $(bindir)
 
 # where to find xsubpp for building XS.
 XSUBPPDIR = $(shell $(PERL) -e 'use List::Util qw(first); print first { -r "$$_/ExtUtils/xsubpp" } @INC')

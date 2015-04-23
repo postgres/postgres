@@ -36,3 +36,4 @@ lib*.pc
 /pgsql.sln.cache
 /Debug/
 /Release/
+/tmp_install/

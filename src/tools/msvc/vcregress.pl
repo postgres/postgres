@@ -16,6 +16,7 @@ my $startdir = getcwd();
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
 my $topdir = getcwd();
+my $tmp_installdir = "$topdir/tmp_install";
 
 require 'src/tools/msvc/config_default.pl';
 require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
@@ -95,7 +96,7 @@ sub installcheck
 	my @args = (
 		"../../../$Config/pg_regress/pg_regress",
 		"--dlpath=.",
-		"--psqldir=../../../$Config/psql",
+		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
 		"--encoding=SQL_ASCII",
 		"--no-locale");
@@ -107,15 +108,19 @@ sub installcheck
 
 sub check
 {
+	chdir $startdir;
+
+	InstallTemp();
+	chdir "${topdir}/src/test/regress";
+
 	my @args = (
-		"../../../$Config/pg_regress/pg_regress",
+		"${tmp_installdir}/bin/pg_regress",
 		"--dlpath=.",
-		"--psqldir=../../../$Config/psql",
+		"--bindir=${tmp_installdir}/bin",
 		"--schedule=${schedule}_schedule",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
-		"--temp-install=./tmp_check",
-		"--top-builddir=\"$topdir\"");
+		"--temp-instance=./tmp_check");
 	push(@args, $maxconn)     if $maxconn;
 	push(@args, $temp_config) if $temp_config;
 	system(@args);
@@ -129,18 +134,20 @@ sub ecpgcheck
 	system("msbuild ecpg_regression.proj /p:config=$Config");
 	my $status = $? >> 8;
 	exit $status if $status;
+	InstallTemp();
 	chdir "$topdir/src/interfaces/ecpg/test";
+
+	$ENV{PATH} = "${tmp_installdir}/bin;${tmp_installdir}/lib;$ENV{PATH}";
 	$schedule = "ecpg";
 	my @args = (
-		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
-		"--psqldir=../../../$Config/psql",
+		"${tmp_installdir}/bin/pg_regress_ecpg",
+		"--bindir=",
 		"--dbname=regress1,connectdb",
 		"--create-role=connectuser,connectdb",
 		"--schedule=${schedule}_schedule",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
-		"--temp-install=./tmp_chk",
-		"--top-builddir=\"$topdir\"");
+		"--temp-instance=./tmp_chk");
 	push(@args, $maxconn) if $maxconn;
 	system(@args);
 	$status = $? >> 8;
@@ -149,12 +156,14 @@ sub ecpgcheck
 
 sub isolationcheck
 {
-	chdir "../isolation";
-	copy("../../../$Config/isolationtester/isolationtester.exe",
-		"../../../$Config/pg_isolation_regress");
+	chdir $startdir;
+
+	InstallTemp();
+	chdir "${topdir}/src/test/isolation";
+
 	my @args = (
-		"../../../$Config/pg_isolation_regress/pg_isolation_regress",
-		"--psqldir=../../../$Config/psql",
+		"${tmp_installdir}/bin/pg_isolation_regress",
+		"--bindir=${tmp_installdir}/bin",
 		"--inputdir=.",
 		"--schedule=./isolation_schedule");
 	push(@args, $maxconn) if $maxconn;
@@ -165,7 +174,10 @@ sub isolationcheck
 
 sub plcheck
 {
-	chdir "../../pl";
+	chdir $startdir;
+
+	InstallTemp();
+	chdir "${topdir}/src/pl";
 
 	foreach my $pl (glob("*"))
 	{
@@ -202,8 +214,8 @@ sub plcheck
 		  "============================================================\n";
 		print "Checking $lang\n";
 		my @args = (
-			"../../../$Config/pg_regress/pg_regress",
-			"--psqldir=../../../$Config/psql",
+			"${tmp_installdir}/bin/pg_regress",
+			"--bindir=${tmp_installdir}/bin",
 			"--dbname=pl_regression", @lang_args, @tests);
 		system(@args);
 		my $status = $? >> 8;
@@ -233,8 +245,8 @@ sub subdircheck
 	my @tests = fetchTests();
 	my @opts  = fetchRegressOpts();
 	my @args  = (
-		"$topdir/$Config/pg_regress/pg_regress",
-		"--psqldir=$topdir/$Config/psql",
+		"${tmp_installdir}/bin/pg_regress",
+		"--bindir=${tmp_installdir}/bin",
 		"--dbname=contrib_regression", @opts, @tests);
 	system(@args);
 	my $status = $? >> 8;
@@ -273,8 +285,8 @@ sub modulescheck
 sub standard_initdb
 {
 	return (
-		system('initdb', '-N') == 0 and system(
-			"$topdir/$Config/pg_regress/pg_regress", '--config-auth',
+		system("${tmp_installdir}/bin/initdb", '-N') == 0 and system(
+			"${tmp_installdir}/bin/pg_regress", '--config-auth',
 			$ENV{PGDATA}) == 0);
 }
 
@@ -293,14 +305,13 @@ sub upgradecheck
 	$ENV{PGPORT} ||= 50432;
 	my $tmp_root = "$topdir/src/bin/pg_upgrade/tmp_check";
 	(mkdir $tmp_root || die $!) unless -d $tmp_root;
-	my $tmp_install = "$tmp_root/install";
-	print "Setting up temp install\n\n";
-	Install($tmp_install, "all", $config);
+
+	InstallTemp();
 
 	# Install does a chdir, so change back after that
 	chdir $cwd;
 	my ($bindir, $libdir, $oldsrc, $newsrc) =
-	  ("$tmp_install/bin", "$tmp_install/lib", $topdir, $topdir);
+	  ("$tmp_installdir/bin", "$tmp_installdir/lib", $topdir, $topdir);
 	$ENV{PATH} = "$bindir;$ENV{PATH}";
 	my $data = "$tmp_root/data";
 	$ENV{PGDATA} = "$data.old";
@@ -433,6 +444,12 @@ sub GetTests
 		return $1;
 	}
 	return "";
+}
+
+sub InstallTemp
+{
+	print "Setting up temp install\n\n";
+	Install("$tmp_installdir", "all", $config);
 }
 
 sub usage

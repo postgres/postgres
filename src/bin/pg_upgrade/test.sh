@@ -86,7 +86,7 @@ if [ "$1" = '--install' ]; then
 	# use psql from the proper installation directory, which might
 	# be outdated or missing. But don't override anything else that's
 	# already in EXTRA_REGRESS_OPTS.
-	EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --psqldir='$bindir'"
+	EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --bindir='$bindir'"
 	export EXTRA_REGRESS_OPTS
 fi
 

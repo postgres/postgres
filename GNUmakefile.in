@@ -47,6 +47,7 @@ $(call recurse,distprep,doc src config contrib)
 # it's not built by default
 $(call recurse,clean,doc contrib src config)
 clean:
+	rm -rf tmp_install/
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 

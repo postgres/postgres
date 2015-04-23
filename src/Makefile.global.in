@@ -43,6 +43,7 @@ MAJORVERSION = @PG_MAJORVERSION@
 # (PGXS VPATH support is handled separately in pgxs.mk)
 ifndef PGXS
 vpath_build = @vpath_build@
+abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
 ifneq ($(vpath_build),yes)
@@ -301,6 +302,17 @@ BZIP2	= bzip2
 
 # Testing
 
+check: temp-install
+
+.PHONY: temp-install
+temp-install:
+ifeq ($(MAKELEVEL),0)
+	rm -rf '$(abs_top_builddir)'/tmp_install
+	$(MKDIR_P) '$(abs_top_builddir)'/tmp_install/log
+	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
+endif
+	for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install >>'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1 || exit; done
+
 PROVE = @PROVE@
 PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
 PROVE_FLAGS = --verbose
@@ -315,6 +327,10 @@ define ld_library_path_var
 $(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,LD_LIBRARY_PATH))
 endef
 
+define with_temp_install
+PATH="$(abs_top_builddir)/tmp_install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(abs_top_builddir)/tmp_install$(libdir))
+endef
+
 ifeq ($(enable_tap_tests),yes)
 
 define prove_installcheck
@@ -322,9 +338,7 @@ cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPOR
 endef
 
 define prove_check
-$(MKDIR_P) tmp_check/log
-$(MAKE) -C $(top_builddir) DESTDIR='$(CURDIR)'/tmp_check/install install >'$(CURDIR)'/tmp_check/log/install.log 2>&1
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(CURDIR)/tmp_check/install$(libdir)) top_builddir='$(CURDIR)/$(top_builddir)' PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
+cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
 
 else
@@ -495,13 +509,13 @@ endif
 
 pg_regress_locale_flags = $(if $(ENCODING),--encoding=$(ENCODING)) $(NOLOCALE)
 
-pg_regress_check = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
-pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir='$(PSQLDIR)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_check = $(with_temp_install) $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --bindir='$(bindir)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
 
-pg_isolation_regress_check = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
-pg_isolation_regress_installcheck = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_isolation_regress_check = $(with_temp_install) $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_isolation_regress_installcheck = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 ##########################################################################
 #
@@ -683,7 +697,7 @@ endif
 define _create_recursive_target
 .PHONY: $(1)-$(2)-recurse
 $(1): $(1)-$(2)-recurse
-$(1)-$(2)-recurse:
+$(1)-$(2)-recurse: $(if $(filter check, $(3)), temp-install)
 	$$(MAKE) -C $(2) $(3)
 endef
 # Note that the use of $$ on the last line above is important; we want

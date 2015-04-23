@@ -23,9 +23,6 @@ ifdef TEMP_CONFIG
 TEMP_CONF += --temp-config=$(TEMP_CONFIG)
 endif
 
-# where to find psql for testing an existing installation
-PSQLDIR = $(bindir)
-
 # maximum simultaneous connections for parallel tests
 MAXCONNOPT =
 ifdef MAX_CONNECTIONS
@@ -34,7 +31,6 @@ endif
 
 # stuff to pass into build of pg_regress
 EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
-	'-DMAKEPROG="$(MAKE)"' \
 	'-DSHELLPROG="$(SHELL)"' \
 	'-DDLSUFFIX="$(DLSUFFIX)"'
 

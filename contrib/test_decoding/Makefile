@@ -39,35 +39,33 @@ submake-test_decoding:
 
 REGRESSCHECKS=ddl rewrite toast permissions decoding_in_xact decoding_into_rel binary prepared
 
-regresscheck: all | submake-regress submake-test_decoding
+regresscheck: all | submake-regress submake-test_decoding temp-install
 	$(MKDIR_P) regression_output
 	$(pg_regress_check) \
 	    --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf \
-	    --temp-install=./tmp_check \
-	    --extra-install=contrib/test_decoding \
+	    --temp-instance=./tmp_check \
 	    --outputdir=./regression_output \
 	    $(REGRESSCHECKS)
 
-regresscheck-install-force: | submake-regress submake-test_decoding
+regresscheck-install-force: | submake-regress submake-test_decoding temp-install
 	$(pg_regress_installcheck) \
-	    --extra-install=contrib/test_decoding \
 	    $(REGRESSCHECKS)
 
 ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml
 
-isolationcheck: all | submake-isolation submake-test_decoding
+isolationcheck: all | submake-isolation submake-test_decoding temp-install
 	$(MKDIR_P) isolation_output
 	$(pg_isolation_regress_check) \
 	    --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf \
-	    --extra-install=contrib/test_decoding \
 	    --outputdir=./isolation_output \
 	    $(ISOLATIONCHECKS)
 
-isolationcheck-install-force: all | submake-isolation submake-test_decoding
+isolationcheck-install-force: all | submake-isolation submake-test_decoding temp-install
 	$(pg_isolation_regress_installcheck) \
-	    --extra-install=contrib/test_decoding \
 	    $(ISOLATIONCHECKS)
 
 PHONY: submake-test_decoding submake-regress check \
 	regresscheck regresscheck-install-force \
 	isolationcheck isolationcheck-install-force
+
+temp-install: EXTRA_INSTALL=contrib/test_decoding

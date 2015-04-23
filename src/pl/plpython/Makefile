@@ -115,9 +115,6 @@ REGRESS = \
 
 REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
-# where to find psql for running the tests
-PSQLDIR = $(bindir)
-
 include $(top_srcdir)/src/Makefile.shlib
 
 all: all-lib

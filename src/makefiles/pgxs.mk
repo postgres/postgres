@@ -258,9 +258,6 @@ else
   REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB)
 endif
 
-# where to find psql for running the tests
-PSQLDIR = $(bindir)
-
 # When doing a VPATH build, must copy over the data files so that the
 # driver script can find them.  We have to use an absolute path for
 # the targets, because otherwise make will try to locate the missing
@@ -295,7 +292,9 @@ check:
 	@echo 'Do "$(MAKE) install", then "$(MAKE) installcheck" instead.'
 else
 check: all submake $(REGRESS_PREP)
-	$(pg_regress_check) --extra-install=$(subdir) $(REGRESS_OPTS) $(REGRESS)
+	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+
+temp-install: EXTRA_INSTALL=$(subdir)
 endif
 endif # REGRESS
 

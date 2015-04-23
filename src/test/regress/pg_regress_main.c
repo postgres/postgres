@@ -65,8 +65,8 @@ psql_start_test(const char *testname,
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 			 "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
-			 psqldir ? psqldir : "",
-			 psqldir ? "/" : "",
+			 bindir ? bindir : "",
+			 bindir ? "/" : "",
 			 dblist->str,
 			 infile,
 			 outfile);
