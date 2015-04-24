@@ -1,7 +1,55 @@
 /*-------------------------------------------------------------------------
  *
  * execIndexing.c
- *	  executor support for maintaining indexes
+ *	  routines for inserting index tuples and enforcing unique and
+ *	  exclusive constraints.
+ *
+ * ExecInsertIndexTuples() is the main entry point.  It's called after
+ * inserting a tuple to the heap, and it inserts corresponding index tuples
+ * into all indexes.  At the same time, it enforces any unique and
+ * exclusion constraints:
+ *
+ * Unique Indexes
+ * --------------
+ *
+ * Enforcing a unique constraint is straightforward.  When the index AM
+ * inserts the tuple to the index, it also checks that there are no
+ * conflicting tuples in the index already.  It does so atomically, so that
+ * even if two backends try to insert the same key concurrently, only one
+ * of them will succeed.  All the logic to ensure atomicity, and to wait
+ * for in-progress transactions to finish, is handled by the index AM.
+ *
+ * If a unique constraint is deferred, we request the index AM to not
+ * throw an error if a conflict is found.  Instead, we make note that there
+ * was a conflict and return the list of indexes with conflicts to the
+ * caller.  The caller must re-check them later, by calling index_insert()
+ * with the UNIQUE_CHECK_EXISTING option.
+ *
+ * Exclusion Constraints
+ * ---------------------
+ *
+ * Exclusion constraints are different from unique indexes in that when the
+ * tuple is inserted to the index, the index AM does not check for
+ * duplicate keys at the same time.  After the insertion, we perform a
+ * separate scan on the index to check for conflicting tuples, and if one
+ * is found, we throw an error and the transaction is aborted.  If the
+ * conflicting tuple's inserter or deleter is in-progress, we wait for it
+ * to finish first.
+ *
+ * There is a chance of deadlock, if two backends insert a tuple at the
+ * same time, and then perform the scan to check for conflicts.  They will
+ * find each other's tuple, and both try to wait for each other.  The
+ * deadlock detector will detect that, and abort one of the transactions.
+ * That's fairly harmless, as one of them was bound to abort with a
+ * "duplicate key error" anyway, although you get a different error
+ * message.
+ *
+ * If an exclusion constraint is deferred, we still perform the conflict
+ * checking scan immediately after inserting the index tuple.  But instead
+ * of throwing an error if a conflict is found, we return that information
+ * to the caller.  The caller must re-check them later by calling
+ * check_exclusion_constraint().
+ *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -134,13 +182,10 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		This routine takes care of inserting index tuples
  *		into all the relations indexing the result relation
  *		when a heap tuple is inserted into the result relation.
- *		Much of this code should be moved into the genam
- *		stuff as it only exists here because the genam stuff
- *		doesn't provide the functionality needed by the
- *		executor.. -cim 9/27/89
  *
- *		This returns a list of index OIDs for any unique or exclusion
- *		constraints that are deferred and that had
+ *		Unique and exclusion constraints are enforced at the same
+ *		time.  This returns a list of index OIDs for any unique or
+ *		exclusion constraints that are deferred and that had
  *		potential (unconfirmed) conflicts.
  *
  *		CAUTION: this must not be called for a HOT update.
