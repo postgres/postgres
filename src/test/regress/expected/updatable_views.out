@@ -2017,7 +2017,7 @@ SELECT * FROM base_tbl;
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
--- security barrier view based on inheiritance set
+-- security barrier view based on inheritance set
 CREATE TABLE t1 (a int, b float, c text);
 CREATE INDEX t1_a_idx ON t1(a);
 INSERT INTO t1

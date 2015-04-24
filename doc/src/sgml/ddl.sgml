@@ -1553,7 +1553,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    both.  The commands available are <literal>ALL</literal>,
    <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>, and
    <literal>DELETE</>.  Multiple roles can be assigned to a given policy
-   and normal role membership and inheiritance rules apply.
+   and normal role membership and inheritance rules apply.
   </para>
 
   <para>
