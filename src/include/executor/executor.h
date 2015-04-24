@@ -351,6 +351,16 @@ extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
 extern void ExecCloseScanRelation(Relation scanrel);
 
+extern void RegisterExprContextCallback(ExprContext *econtext,
+							ExprContextCallbackFunction function,
+							Datum arg);
+extern void UnregisterExprContextCallback(ExprContext *econtext,
+							  ExprContextCallbackFunction function,
+							  Datum arg);
+
+/*
+ * prototypes from functions in execIndexing.c
+ */
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
@@ -362,11 +372,5 @@ extern bool check_exclusion_constraint(Relation heap, Relation index,
 						   EState *estate,
 						   bool newIndex, bool errorOK);
 
-extern void RegisterExprContextCallback(ExprContext *econtext,
-							ExprContextCallbackFunction function,
-							Datum arg);
-extern void UnregisterExprContextCallback(ExprContext *econtext,
-							  ExprContextCallbackFunction function,
-							  Datum arg);
 
 #endif   /* EXECUTOR_H  */
