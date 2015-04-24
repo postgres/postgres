@@ -306,6 +306,7 @@ sub mkvcbuild
 	my $libecpgcompat = $solution->AddProject(
 		'libecpg_compat', 'dll',
 		'interfaces',     'src\interfaces\ecpg\compatlib');
+	$libecpgcompat->AddDefine('FRONTEND');
 	$libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
 	$libecpgcompat->AddIncludeDir('src\interfaces\libpq');
 	$libecpgcompat->UseDef('src\interfaces\ecpg\compatlib\compatlib.def');
