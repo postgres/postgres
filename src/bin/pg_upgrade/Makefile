@@ -11,7 +11,7 @@ OBJS = check.o controldata.o dump.o exec.o file.o function.o info.o \
        option.o page.o parallel.o pg_upgrade.o relfilenode.o server.o \
        tablespace.o util.o version.o $(WIN32RES)
 
-override CPPFLAGS := -DFRONTEND -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 
 
 all: pg_upgrade

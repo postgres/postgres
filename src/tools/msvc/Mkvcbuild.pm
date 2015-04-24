@@ -379,7 +379,6 @@ sub mkvcbuild
 	$pgregress_ecpg->AddIncludeDir('src\port');
 	$pgregress_ecpg->AddIncludeDir('src\test\regress');
 	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$pgregress_ecpg->AddDefine('FRONTEND');
 	$pgregress_ecpg->AddLibrary('ws2_32.lib');
 	$pgregress_ecpg->AddDirResourceFile('src\interfaces\ecpg\test');
 	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
@@ -395,7 +394,6 @@ sub mkvcbuild
 	$isolation_tester->AddIncludeDir('src\test\regress');
 	$isolation_tester->AddIncludeDir('src\interfaces\libpq');
 	$isolation_tester->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$isolation_tester->AddDefine('FRONTEND');
 	$isolation_tester->AddLibrary('ws2_32.lib');
 	$isolation_tester->AddDirResourceFile('src\test\isolation');
 	$isolation_tester->AddReference($libpq, $libpgcommon, $libpgport);
@@ -407,7 +405,6 @@ sub mkvcbuild
 	$pgregress_isolation->AddIncludeDir('src\port');
 	$pgregress_isolation->AddIncludeDir('src\test\regress');
 	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$pgregress_isolation->AddDefine('FRONTEND');
 	$pgregress_isolation->AddLibrary('ws2_32.lib');
 	$pgregress_isolation->AddDirResourceFile('src\test\isolation');
 	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
@@ -640,7 +637,6 @@ sub mkvcbuild
 	$pgregress->AddFile('src\test\regress\pg_regress_main.c');
 	$pgregress->AddIncludeDir('src\port');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$pgregress->AddDefine('FRONTEND');
 	$pgregress->AddLibrary('ws2_32.lib');
 	$pgregress->AddDirResourceFile('src\test\regress');
 	$pgregress->AddReference($libpgcommon, $libpgport);
