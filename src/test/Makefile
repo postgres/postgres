@@ -14,9 +14,10 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = regress isolation modules
 
-# The SSL suite is not secure to run on a multi-user system, so don't run
-# it as part of global "check" target.
-ALWAYS_SUBDIRS = ssl
+# We don't build or execute examples/, locale/, or thread/ by default,
+# but we do want "make clean" etc to recurse into them.  Likewise for ssl/,
+# because the SSL test suite is not secure to run on a multi-user system.
+ALWAYS_SUBDIRS = examples locale thread ssl
 
 # We want to recurse to all subdirs for all standard targets, except that
 # installcheck and install should not recurse into the subdirectory "modules".
