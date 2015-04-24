@@ -18,7 +18,7 @@ SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 2
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-	-I$(top_srcdir)/src/include/utils -I$(libpq_srcdir) $(CPPFLAGS)
+	-I$(top_srcdir)/src/include/utils -I$(libpq_srcdir) -DFRONTEND $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 # Need to recompile any libpgport object files
