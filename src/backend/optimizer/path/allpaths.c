@@ -234,7 +234,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * We proved we don't need to scan the rel via constraint exclusion,
 		 * so set up a single dummy path for it.  Here we only check this for
 		 * regular baserels; if it's an otherrel, CE was already checked in
-		 * set_append_rel_pathlist().
+		 * set_append_rel_size().
 		 *
 		 * In this case, we go ahead and set up the relation's path right away
 		 * instead of leaving it for set_rel_pathlist to do.  This is because
