@@ -1165,9 +1165,9 @@ make_outerjoininfo(PlannerInfo *root,
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs; otherwise we must add
-		 * lower OJ's full syntactic relset to min_righthand.  Here, we must
-		 * preserve ordering anyway if either the current join is a semijoin,
-		 * or the lower OJ is either a semijoin or an antijoin.
+		 * the lower OJ's full syntactic relset to min_righthand.  Also, we
+		 * must preserve ordering anyway if either the current join or the
+		 * lower OJ is either a semijoin or an antijoin.
 		 *
 		 * Here, we have to consider that "our join condition" includes any
 		 * clauses that syntactically appeared above the lower OJ and below
@@ -1184,6 +1184,7 @@ make_outerjoininfo(PlannerInfo *root,
 		{
 			if (bms_overlap(clause_relids, otherinfo->syn_righthand) ||
 				jointype == JOIN_SEMI ||
+				jointype == JOIN_ANTI ||
 				otherinfo->jointype == JOIN_SEMI ||
 				otherinfo->jointype == JOIN_ANTI ||
 				!otherinfo->lhs_strict || otherinfo->delay_upper_joins)
