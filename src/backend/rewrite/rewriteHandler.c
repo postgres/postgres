@@ -2947,7 +2947,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 			WithCheckOption *wco;
 
 			wco = makeNode(WithCheckOption);
-			wco->viewname = pstrdup(RelationGetRelationName(view));
+			wco->kind = WCO_VIEW_CHECK;
+			wco->relname = pstrdup(RelationGetRelationName(view));
 			wco->qual = NULL;
 			wco->cascaded = cascaded;
 

@@ -2363,7 +2363,8 @@ _equalRangeTblFunction(const RangeTblFunction *a, const RangeTblFunction *b)
 static bool
 _equalWithCheckOption(const WithCheckOption *a, const WithCheckOption *b)
 {
-	COMPARE_STRING_FIELD(viewname);
+	COMPARE_SCALAR_FIELD(kind);
+	COMPARE_STRING_FIELD(relname);
 	COMPARE_NODE_FIELD(qual);
 	COMPARE_SCALAR_FIELD(cascaded);
 

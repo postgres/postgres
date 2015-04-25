@@ -57,7 +57,7 @@ SELECT * FROM rls_test_permissive;
 INSERT INTO rls_test_permissive VALUES ('r1','s1',10);
 -- failure
 INSERT INTO rls_test_permissive VALUES ('r4','s4',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_permissive"
+ERROR:  new row violates row level security policy for "rls_test_permissive"
 SET ROLE s1;
 -- With only the hook's policies, restrictive
 -- hook's policy is current_user = supervisor
@@ -78,7 +78,7 @@ SELECT * FROM rls_test_restrictive;
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',10);
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r4','s4',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_restrictive"
+ERROR:  new row violates row level security policy for "rls_test_restrictive"
 SET ROLE s1;
 -- With only the hook's policies, both
 -- permissive hook's policy is current_user = username
@@ -100,13 +100,13 @@ SELECT * FROM rls_test_both;
 
 -- failure
 INSERT INTO rls_test_both VALUES ('r1','s1',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+ERROR:  new row violates row level security policy for "rls_test_both"
 -- failure
 INSERT INTO rls_test_both VALUES ('r4','s1',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+ERROR:  new row violates row level security policy for "rls_test_both"
 -- failure
 INSERT INTO rls_test_both VALUES ('r4','s4',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+ERROR:  new row violates row level security policy for "rls_test_both"
 RESET ROLE;
 -- Create "internal" policies, to check that the policies from
 -- the hooks are combined correctly.
@@ -136,7 +136,7 @@ INSERT INTO rls_test_permissive VALUES ('r1','s1',7);
 INSERT INTO rls_test_permissive VALUES ('r3','s3',10);
 -- failure
 INSERT INTO rls_test_permissive VALUES ('r4','s4',7);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_permissive"
+ERROR:  new row violates row level security policy for "rls_test_permissive"
 SET ROLE s1;
 -- With both internal and hook policies, restrictive
 EXPLAIN (costs off) SELECT * FROM rls_test_restrictive;
@@ -158,13 +158,13 @@ SELECT * FROM rls_test_restrictive;
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',8);
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r3','s3',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_restrictive"
+ERROR:  new row violates row level security policy for "rls_test_restrictive"
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',7);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_restrictive"
+ERROR:  new row violates row level security policy for "rls_test_restrictive"
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r4','s4',7);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_restrictive"
+ERROR:  new row violates row level security policy for "rls_test_restrictive"
 -- With both internal and hook policies, both permissive
 -- and restrictive hook policies
 EXPLAIN (costs off) SELECT * FROM rls_test_both;
@@ -185,13 +185,13 @@ SELECT * FROM rls_test_both;
 INSERT INTO rls_test_both VALUES ('r1','s1',8);
 -- failure
 INSERT INTO rls_test_both VALUES ('r3','s3',10);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+ERROR:  new row violates row level security policy for "rls_test_both"
 -- failure
 INSERT INTO rls_test_both VALUES ('r1','s1',7);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+ERROR:  new row violates row level security policy for "rls_test_both"
 -- failure
 INSERT INTO rls_test_both VALUES ('r4','s4',7);
-ERROR:  new row violates WITH CHECK OPTION for "rls_test_both"
+ERROR:  new row violates row level security policy for "rls_test_both"
 RESET ROLE;
 DROP TABLE rls_test_restrictive;
 DROP TABLE rls_test_permissive;

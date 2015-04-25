@@ -2332,7 +2332,8 @@ _outWithCheckOption(StringInfo str, const WithCheckOption *node)
 {
 	WRITE_NODE_TYPE("WITHCHECKOPTION");
 
-	WRITE_STRING_FIELD(viewname);
+	WRITE_ENUM_FIELD(kind, WCOKind);
+	WRITE_STRING_FIELD(relname);
 	WRITE_NODE_FIELD(qual);
 	WRITE_BOOL_FIELD(cascaded);
 }

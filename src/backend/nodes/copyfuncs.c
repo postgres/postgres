@@ -2064,7 +2064,8 @@ _copyWithCheckOption(const WithCheckOption *from)
 {
 	WithCheckOption *newnode = makeNode(WithCheckOption);
 
-	COPY_STRING_FIELD(viewname);
+	COPY_SCALAR_FIELD(kind);
+	COPY_STRING_FIELD(relname);
 	COPY_NODE_FIELD(qual);
 	COPY_SCALAR_FIELD(cascaded);
 

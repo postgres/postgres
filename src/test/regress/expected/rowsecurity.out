@@ -300,6 +300,11 @@ SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 -----+-----+--------+---------+--------
 (0 rows)
 
+-- RLS policies are checked before constraints
+INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user2', 'my third manga'); -- Should fail with RLS check violation, not duplicate key violation
+ERROR:  new row violates row level security policy for "document"
+UPDATE document SET did = 8, dauthor = 'rls_regress_user2' WHERE did = 5; -- Should fail with RLS check violation, not duplicate key violation
+ERROR:  new row violates row level security policy for "document"
 -- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;
@@ -1426,9 +1431,9 @@ NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
 (5 rows)
 
 INSERT INTO bv1 VALUES (-1, 'xxx'); -- should fail view WCO
-ERROR:  new row violates WITH CHECK OPTION for "b1"
+ERROR:  new row violates row level security policy for "b1"
 INSERT INTO bv1 VALUES (11, 'xxx'); -- should fail RLS check
-ERROR:  new row violates WITH CHECK OPTION for "b1"
+ERROR:  new row violates row level security policy for "b1"
 INSERT INTO bv1 VALUES (12, 'xxx'); -- ok
 EXPLAIN (COSTS OFF) UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
                                 QUERY PLAN                                 
@@ -1988,7 +1993,7 @@ EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FRO
 (6 rows)
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
-ERROR:  new row violates WITH CHECK OPTION for "t1"
+ERROR:  new row violates row level security policy for "t1"
 WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok
  a  |                b                 
 ----+----------------------------------
@@ -2006,7 +2011,7 @@ WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok
 (11 rows)
 
 WITH cte1 AS (INSERT INTO t1 VALUES (21, 'Fail') RETURNING *) SELECT * FROM cte1; --fail
-ERROR:  new row violates WITH CHECK OPTION for "t1"
+ERROR:  new row violates row level security policy for "t1"
 WITH cte1 AS (INSERT INTO t1 VALUES (20, 'Success') RETURNING *) SELECT * FROM cte1; --ok
  a  |    b    
 ----+---------

@@ -1673,9 +1673,15 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 
 /*
  * ExecWithCheckOptions -- check that tuple satisfies any WITH CHECK OPTIONs
+ * of the specified kind.
+ *
+ * Note that this needs to be called multiple times to ensure that all kinds of
+ * WITH CHECK OPTIONs are handled (both those from views which have the WITH
+ * CHECK OPTION set and from row level security policies).  See ExecInsert()
+ * and ExecUpdate().
  */
 void
-ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
+ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					 TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
@@ -1701,6 +1707,13 @@ ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
 		ExprState  *wcoExpr = (ExprState *) lfirst(l2);
 
 		/*
+		 * Skip any WCOs which are not the kind we are looking for at this
+		 * time.
+		 */
+		if (wco->kind != kind)
+			continue;
+
+		/*
 		 * WITH CHECK OPTION checks are intended to ensure that the new tuple
 		 * is visible (in the case of a view) or that it passes the
 		 * 'with-check' policy (in the case of row security).
@@ -1714,19 +1727,42 @@ ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
 			char	   *val_desc;
 			Bitmapset  *modifiedCols;
 
-			modifiedCols = GetModifiedColumns(resultRelInfo, estate);
-			val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-													 slot,
-													 tupdesc,
-													 modifiedCols,
-													 64);
+			switch (wco->kind)
+			{
+				/*
+				 * For WITH CHECK OPTIONs coming from views, we might be able to
+				 * provide the details on the row, depending on the permissions
+				 * on the relation (that is, if the user could view it directly
+				 * anyway).  For RLS violations, we don't include the data since
+				 * we don't know if the user should be able to view the tuple as
+				 * as that depends on the USING policy.
+				 */
+				case WCO_VIEW_CHECK:
+					modifiedCols = GetModifiedColumns(resultRelInfo, estate);
+					val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
+															 slot,
+															 tupdesc,
+															 modifiedCols,
+															 64);
 
-			ereport(ERROR,
-					(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
-				 errmsg("new row violates WITH CHECK OPTION for \"%s\"",
-						wco->viewname),
-					val_desc ? errdetail("Failing row contains %s.", val_desc) :
-							   0));
+					ereport(ERROR,
+							(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
+						errmsg("new row violates WITH CHECK OPTION for \"%s\"",
+							   wco->relname),
+							 val_desc ? errdetail("Failing row contains %s.",
+												  val_desc) : 0));
+					break;
+				case WCO_RLS_INSERT_CHECK:
+				case WCO_RLS_UPDATE_CHECK:
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("new row violates row level security policy for \"%s\"",
+								wco->relname)));
+					break;
+				default:
+					elog(ERROR, "unrecognized WCO kind: %u", wco->kind);
+					break;
+			}
 		}
 	}
 }

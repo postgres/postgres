@@ -146,6 +146,10 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user1', 'my third manga'); -- Must fail with unique violation, revealing presence of did we can't see
 SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 
+-- RLS policies are checked before constraints
+INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user2', 'my third manga'); -- Should fail with RLS check violation, not duplicate key violation
+UPDATE document SET did = 8, dauthor = 'rls_regress_user2' WHERE did = 5; -- Should fail with RLS check violation, not duplicate key violation
+
 -- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;

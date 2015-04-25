@@ -253,6 +253,16 @@ ExecInsert(TupleTableSlot *slot,
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 
 		/*
+		 * Check any RLS INSERT WITH CHECK policies
+		 *
+		 * ExecWithCheckOptions() will skip any WCOs which are not of
+		 * the kind we are looking for at this point.
+		 */
+		if (resultRelInfo->ri_WithCheckOptions != NIL)
+			ExecWithCheckOptions(WCO_RLS_INSERT_CHECK,
+								 resultRelInfo, slot, estate);
+
+		/*
 		 * Check the constraints of the tuple
 		 */
 		if (resultRelationDesc->rd_att->constr)
@@ -287,9 +297,21 @@ ExecInsert(TupleTableSlot *slot,
 
 	list_free(recheckIndexes);
 
-	/* Check any WITH CHECK OPTION constraints */
+	/*
+	 * Check any WITH CHECK OPTION constraints from parent views.  We
+	 * are required to do this after testing all constraints and
+	 * uniqueness violations per the SQL spec, so we do it after actually
+	 * inserting the record into the heap and all indexes.
+	 *
+	 * ExecWithCheckOptions will elog(ERROR) if a violation is found, so
+	 * the tuple will never be seen, if it violates the the WITH CHECK
+	 * OPTION.
+	 *
+	 * ExecWithCheckOptions() will skip any WCOs which are not of
+	 * the kind we are looking for at this point.
+	 */
 	if (resultRelInfo->ri_WithCheckOptions != NIL)
-		ExecWithCheckOptions(resultRelInfo, slot, estate);
+		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
@@ -653,15 +675,25 @@ ExecUpdate(ItemPointer tupleid,
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 
 		/*
-		 * Check the constraints of the tuple
+		 * Check any RLS UPDATE WITH CHECK policies
 		 *
 		 * If we generate a new candidate tuple after EvalPlanQual testing, we
-		 * must loop back here and recheck constraints.  (We don't need to
-		 * redo triggers, however.  If there are any BEFORE triggers then
-		 * trigger.c will have done heap_lock_tuple to lock the correct tuple,
-		 * so there's no need to do them again.)
+		 * must loop back here and recheck any RLS policies and constraints.
+		 * (We don't need to redo triggers, however.  If there are any BEFORE
+		 * triggers then trigger.c will have done heap_lock_tuple to lock the
+		 * correct tuple, so there's no need to do them again.)
+		 *
+		 * ExecWithCheckOptions() will skip any WCOs which are not of
+		 * the kind we are looking for at this point.
 		 */
 lreplace:;
+		if (resultRelInfo->ri_WithCheckOptions != NIL)
+			ExecWithCheckOptions(WCO_RLS_UPDATE_CHECK,
+								 resultRelInfo, slot, estate);
+
+		/*
+		 * Check the constraints of the tuple
+		 */
 		if (resultRelationDesc->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
@@ -780,9 +812,17 @@ lreplace:;
 
 	list_free(recheckIndexes);
 
-	/* Check any WITH CHECK OPTION constraints */
+	/*
+	 * Check any WITH CHECK OPTION constraints from parent views.  We
+	 * are required to do this after testing all constraints and
+	 * uniqueness violations per the SQL spec, so we do it after actually
+	 * updating the record in the heap and all indexes.
+	 *
+	 * ExecWithCheckOptions() will skip any WCOs which are not of
+	 * the kind we are looking for at this point.
+	 */
 	if (resultRelInfo->ri_WithCheckOptions != NIL)
-		ExecWithCheckOptions(resultRelInfo, slot, estate);
+		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)

@@ -872,14 +872,23 @@ typedef struct RangeTblFunction
 /*
  * WithCheckOption -
  *		representation of WITH CHECK OPTION checks to be applied to new tuples
- *		when inserting/updating an auto-updatable view.
+ *		when inserting/updating an auto-updatable view, or RLS WITH CHECK
+ *		policies to be applied when inserting/updating a relation with RLS.
  */
+typedef enum WCOKind
+{
+	WCO_VIEW_CHECK,				/* WCO on an auto-updatable view */
+	WCO_RLS_INSERT_CHECK,		/* RLS INSERT WITH CHECK policy */
+	WCO_RLS_UPDATE_CHECK		/* RLS UPDATE WITH CHECK policy */
+} WCOKind;
+
 typedef struct WithCheckOption
 {
 	NodeTag		type;
-	char	   *viewname;		/* name of view that specified the WCO */
+	WCOKind		kind;			/* kind of WCO */
+	char	   *relname;		/* name of relation that specified the WCO */
 	Node	   *qual;			/* constraint qual to check */
-	bool		cascaded;		/* true = WITH CASCADED CHECK OPTION */
+	bool		cascaded;		/* true for a cascaded WCO on a view */
 } WithCheckOption;
 
 /*

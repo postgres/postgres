@@ -61,6 +61,14 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   </para>
 
   <para>
+    For INSERT and UPDATE queries, WITH CHECK expressions are enforced after
+    BEFORE triggers are fired, and before any data modifications are made.
+    Thus a BEFORE ROW trigger may modify the data to be inserted, affecting
+    the result of the security policy check.  WITH CHECK expressions are
+    enforced before any other constraints.
+  </para>
+
+  <para>
    Policy names are per-table, therefore one policy name can be used for many
    different tables and have a definition for each table which is appropriate to
    that table.
