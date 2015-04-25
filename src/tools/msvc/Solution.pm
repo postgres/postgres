@@ -87,15 +87,15 @@ sub DeterminePlatform
 sub IsNewer
 {
 	my ($newfile, $oldfile) = @_;
-	if (   $oldfile ne 'src\tools\msvc\config.pl'
-		&& $oldfile ne 'src\tools\msvc\config_default.pl')
+	if (   $oldfile ne 'src/tools/msvc/config.pl'
+		&& $oldfile ne 'src/tools/msvc/config_default.pl')
 	{
 		return 1
-		  if (-f 'src\tools\msvc\config.pl')
-		  && IsNewer($newfile, 'src\tools\msvc\config.pl');
+		  if (-f 'src/tools/msvc/config.pl')
+		  && IsNewer($newfile, 'src/tools/msvc/config.pl');
 		return 1
-		  if (-f 'src\tools\msvc\config_default.pl')
-		  && IsNewer($newfile, 'src\tools\msvc\config_default.pl');
+		  if (-f 'src/tools/msvc/config_default.pl')
+		  && IsNewer($newfile, 'src/tools/msvc/config_default.pl');
 	}
 	return 1 if (!(-e $newfile));
 	my @nstat = stat($newfile);
@@ -144,20 +144,20 @@ sub GenerateFiles
 	  if ($self->{strver} eq '' || $self->{numver} eq '');
 
 	if (IsNewer(
-			"src\\include\\pg_config_os.h", "src\\include\\port\\win32.h"))
+			"src/include/pg_config_os.h", "src/include/port/win32.h"))
 	{
 		print "Copying pg_config_os.h...\n";
-		copyFile("src\\include\\port\\win32.h",
-			"src\\include\\pg_config_os.h");
+		copyFile("src/include/port/win32.h",
+			"src/include/pg_config_os.h");
 	}
 
 	if (IsNewer(
-			"src\\include\\pg_config.h", "src\\include\\pg_config.h.win32"))
+			"src/include/pg_config.h", "src/include/pg_config.h.win32"))
 	{
 		print "Generating pg_config.h...\n";
-		open(I, "src\\include\\pg_config.h.win32")
+		open(I, "src/include/pg_config.h.win32")
 		  || confess "Could not open pg_config.h.win32\n";
-		open(O, ">src\\include\\pg_config.h")
+		open(O, ">src/include/pg_config.h")
 		  || confess "Could not write to pg_config.h\n";
 		my $extraver = $self->{options}->{extraver};
 		$extraver = '' unless defined $extraver;
@@ -245,111 +245,111 @@ sub GenerateFiles
 	}
 
 	if (IsNewer(
-			"src\\include\\pg_config_ext.h",
-			"src\\include\\pg_config_ext.h.win32"))
+			"src/include/pg_config_ext.h",
+			"src/include/pg_config_ext.h.win32"))
 	{
 		print "Copying pg_config_ext.h...\n";
 		copyFile(
-			"src\\include\\pg_config_ext.h.win32",
-			"src\\include\\pg_config_ext.h");
+			"src/include/pg_config_ext.h.win32",
+			"src/include/pg_config_ext.h");
 	}
 
 	$self->GenerateDefFile(
-		"src\\interfaces\\libpq\\libpqdll.def",
-		"src\\interfaces\\libpq\\exports.txt",
+		"src/interfaces/libpq/libpqdll.def",
+		"src/interfaces/libpq/exports.txt",
 		"LIBPQ");
 	$self->GenerateDefFile(
-		"src\\interfaces\\ecpg\\ecpglib\\ecpglib.def",
-		"src\\interfaces\\ecpg\\ecpglib\\exports.txt",
+		"src/interfaces/ecpg/ecpglib/ecpglib.def",
+		"src/interfaces/ecpg/ecpglib/exports.txt",
 		"LIBECPG");
 	$self->GenerateDefFile(
-		"src\\interfaces\\ecpg\\compatlib\\compatlib.def",
-		"src\\interfaces\\ecpg\\compatlib\\exports.txt",
+		"src/interfaces/ecpg/compatlib/compatlib.def",
+		"src/interfaces/ecpg/compatlib/exports.txt",
 		"LIBECPG_COMPAT");
 	$self->GenerateDefFile(
-		"src\\interfaces\\ecpg\\pgtypeslib\\pgtypeslib.def",
-		"src\\interfaces\\ecpg\\pgtypeslib\\exports.txt",
+		"src/interfaces/ecpg/pgtypeslib/pgtypeslib.def",
+		"src/interfaces/ecpg/pgtypeslib/exports.txt",
 		"LIBPGTYPES");
 
 	if (IsNewer(
-			'src\backend\utils\fmgrtab.c', 'src\include\catalog\pg_proc.h'))
+			'src/backend/utils/fmgrtab.c', 'src/include/catalog/pg_proc.h'))
 	{
 		print "Generating fmgrtab.c and fmgroids.h...\n";
-		chdir('src\backend\utils');
+		chdir('src/backend/utils');
 		system(
 "perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
-		chdir('..\..\..');
+		chdir('../../..');
 	}
 	if (IsNewer(
-			'src\include\utils\fmgroids.h',
-			'src\backend\utils\fmgroids.h'))
+			'src/include/utils/fmgroids.h',
+			'src/backend/utils/fmgroids.h'))
 	{
-		copyFile('src\backend\utils\fmgroids.h',
-			'src\include\utils\fmgroids.h');
+		copyFile('src/backend/utils/fmgroids.h',
+			'src/include/utils/fmgroids.h');
 	}
 
-	if (IsNewer('src\include\utils\probes.h', 'src\backend\utils\probes.d'))
+	if (IsNewer('src/include/utils/probes.h', 'src/backend/utils/probes.d'))
 	{
 		print "Generating probes.h...\n";
 		system(
-'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'
+'psed -f src/backend/utils/Gen_dummy_probes.sed src/backend/utils/probes.d > src/include/utils/probes.h'
 		);
 	}
 
 	if ($self->{options}->{python}
 		&& IsNewer(
-			'src\pl\plpython\spiexceptions.h',
-			'src\include\backend\errcodes.txt'))
+			'src/pl/plpython/spiexceptions.h',
+			'src/include/backend/errcodes.txt'))
 	{
 		print "Generating spiexceptions.h...\n";
 		system(
-'perl src\pl\plpython\generate-spiexceptions.pl src\backend\utils\errcodes.txt > src\pl\plpython\spiexceptions.h'
+'perl src/pl/plpython/generate-spiexceptions.pl src/backend/utils/errcodes.txt > src/pl/plpython/spiexceptions.h'
 		);
 	}
 
 	if (IsNewer(
-			'src\include\utils\errcodes.h',
-			'src\backend\utils\errcodes.txt'))
+			'src/include/utils/errcodes.h',
+			'src/backend/utils/errcodes.txt'))
 	{
 		print "Generating errcodes.h...\n";
 		system(
-'perl src\backend\utils\generate-errcodes.pl src\backend\utils\errcodes.txt > src\backend\utils\errcodes.h'
+'perl src/backend/utils/generate-errcodes.pl src/backend/utils/errcodes.txt > src/backend/utils/errcodes.h'
 		);
-		copyFile('src\backend\utils\errcodes.h',
-			'src\include\utils\errcodes.h');
+		copyFile('src/backend/utils/errcodes.h',
+			'src/include/utils/errcodes.h');
 	}
 
 	if (IsNewer(
-			'src\pl\plpgsql\src\plerrcodes.h',
-			'src\backend\utils\errcodes.txt'))
+			'src/pl/plpgsql/src/plerrcodes.h',
+			'src/backend/utils/errcodes.txt'))
 	{
 		print "Generating plerrcodes.h...\n";
 		system(
-'perl src\pl\plpgsql\src\generate-plerrcodes.pl src\backend\utils\errcodes.txt > src\pl\plpgsql\src\plerrcodes.h'
+'perl src/pl/plpgsql/src/generate-plerrcodes.pl src/backend/utils/errcodes.txt > src/pl/plpgsql/src/plerrcodes.h'
 		);
 	}
 
 	if (IsNewer(
-			'src\backend\utils\sort\qsort_tuple.c',
-			'src\backend\utils\sort\gen_qsort_tuple.pl'))
+			'src/backend/utils/sort/qsort_tuple.c',
+			'src/backend/utils/sort/gen_qsort_tuple.pl'))
 	{
 		print "Generating qsort_tuple.c...\n";
 		system(
-'perl src\backend\utils\sort\gen_qsort_tuple.pl > src\backend\utils\sort\qsort_tuple.c'
+'perl src/backend/utils/sort/gen_qsort_tuple.pl > src/backend/utils/sort/qsort_tuple.c'
 		);
 	}
 
 	if (IsNewer(
-			'src\interfaces\libpq\libpq.rc',
-			'src\interfaces\libpq\libpq.rc.in'))
+			'src/interfaces/libpq/libpq.rc',
+			'src/interfaces/libpq/libpq.rc.in'))
 	{
 		print "Generating libpq.rc...\n";
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 		  localtime(time);
 		my $d = ($year - 100) . "$yday";
-		open(I, '<', 'src\interfaces\libpq\libpq.rc.in')
+		open(I, '<', 'src/interfaces/libpq/libpq.rc.in')
 		  || confess "Could not open libpq.rc.in";
-		open(O, '>', 'src\interfaces\libpq\libpq.rc')
+		open(O, '>', 'src/interfaces/libpq/libpq.rc')
 		  || confess "Could not open libpq.rc";
 		while (<I>)
 		{
@@ -360,30 +360,30 @@ sub GenerateFiles
 		close(O);
 	}
 
-	if (IsNewer('src\bin\psql\sql_help.h', 'src\bin\psql\create_help.pl'))
+	if (IsNewer('src/bin/psql/sql_help.h', 'src/bin/psql/create_help.pl'))
 	{
 		print "Generating sql_help.h...\n";
-		chdir('src\bin\psql');
+		chdir('src/bin/psql');
 		system("perl create_help.pl ../../../doc/src/sgml/ref sql_help");
-		chdir('..\..\..');
+		chdir('../../..');
 	}
 
 	if (IsNewer(
-			'src\interfaces\ecpg\preproc\preproc.y',
-			'src\backend\parser\gram.y'))
+			'src/interfaces/ecpg/preproc/preproc.y',
+			'src/backend/parser/gram.y'))
 	{
 		print "Generating preproc.y...\n";
-		chdir('src\interfaces\ecpg\preproc');
-		system('perl parse.pl < ..\..\..\backend\parser\gram.y > preproc.y');
-		chdir('..\..\..\..');
+		chdir('src/interfaces/ecpg/preproc');
+		system('perl parse.pl < ../../../backend/parser/gram.y > preproc.y');
+		chdir('../../../..');
 	}
 
 	if (IsNewer(
-			'src\interfaces\ecpg\include\ecpg_config.h',
-			'src\interfaces\ecpg\include\ecpg_config.h.in'))
+			'src/interfaces/ecpg/include/ecpg_config.h',
+			'src/interfaces/ecpg/include/ecpg_config.h.in'))
 	{
 		print "Generating ecpg_config.h...\n";
-		open(O, '>', 'src\interfaces\ecpg\include\ecpg_config.h')
+		open(O, '>', 'src/interfaces/ecpg/include/ecpg_config.h')
 		  || confess "Could not open ecpg_config.h";
 		print O <<EOF;
 #if (_MSC_VER > 1200)
@@ -396,10 +396,10 @@ EOF
 		close(O);
 	}
 
-	unless (-f "src\\port\\pg_config_paths.h")
+	unless (-f "src/port/pg_config_paths.h")
 	{
 		print "Generating pg_config_paths.h...\n";
-		open(O, '>', 'src\port\pg_config_paths.h')
+		open(O, '>', 'src/port/pg_config_paths.h')
 		  || confess "Could not open pg_config_paths.h";
 		print O <<EOF;
 #define PGBINDIR "/bin"
@@ -418,7 +418,7 @@ EOF
 		close(O);
 	}
 
-	my $mf = Project::read_file('src\backend\catalog\Makefile');
+	my $mf = Project::read_file('src/backend/catalog/Makefile');
 	$mf =~ s{\\\r?\n}{}g;
 	$mf =~ /^POSTGRES_BKI_SRCS\s*:?=[^,]+,(.*)\)$/gm
 	  || croak "Could not find POSTGRES_BKI_SRCS in Makefile\n";
@@ -431,15 +431,15 @@ EOF
 				"src/include/catalog/$bki"))
 		{
 			print "Generating postgres.bki and schemapg.h...\n";
-			chdir('src\backend\catalog');
+			chdir('src/backend/catalog');
 			my $bki_srcs = join(' ../../../src/include/catalog/', @allbki);
 			system(
 "perl genbki.pl -I../../../src/include/catalog --set-version=$self->{majorver} $bki_srcs"
 			);
-			chdir('..\..\..');
+			chdir('../../..');
 			copyFile(
-				'src\backend\catalog\schemapg.h',
-				'src\include\catalog\schemapg.h');
+				'src/backend/catalog/schemapg.h',
+				'src/include/catalog/schemapg.h');
 			last;
 		}
 	}
