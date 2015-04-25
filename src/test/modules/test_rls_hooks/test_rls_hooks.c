@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
  *
- * test.c
- *		Test harness code for shared memory message queues.
+ * test_rls_hooks.c
+ *		Code for testing RLS hooks.
  *
  * Copyright (C) 2015, PostgreSQL Global Development Group
  *
