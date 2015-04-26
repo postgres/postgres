@@ -1,0 +1,180 @@
+CREATE EXTENSION hstore;
+CREATE EXTENSION plperlu;
+CREATE EXTENSION hstore_plperlu;
+SELECT transforms.udt_schema, transforms.udt_name,
+       routine_schema, routine_name,
+       group_name, transform_type
+FROM information_schema.transforms JOIN information_schema.routines
+     USING (specific_catalog, specific_schema, specific_name)
+ORDER BY 1, 2, 5, 6;
+ udt_schema | udt_name | routine_schema |   routine_name    | group_name | transform_type 
+------------+----------+----------------+-------------------+------------+----------------
+ public     | hstore   | public         | hstore_to_plperlu | plperlu    | FROM SQL
+ public     | hstore   | public         | plperlu_to_hstore | plperlu    | TO SQL
+(2 rows)
+
+-- test hstore -> perl
+CREATE FUNCTION test1(val hstore) RETURNS int
+LANGUAGE plperlu
+TRANSFORM FOR TYPE hstore
+AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+elog(INFO, Dumper($_[0]));
+return scalar(keys %{$_[0]});
+$$;
+SELECT test1('aa=>bb, cc=>NULL'::hstore);
+INFO:  $VAR1 = {
+          'aa' => 'bb',
+          'cc' => undef
+        };
+
+CONTEXT:  PL/Perl function "test1"
+ test1 
+-------
+     2
+(1 row)
+
+CREATE FUNCTION test1none(val hstore) RETURNS int
+LANGUAGE plperlu
+AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+elog(INFO, Dumper($_[0]));
+return scalar(keys %{$_[0]});
+$$;
+SELECT test1none('aa=>bb, cc=>NULL'::hstore);
+INFO:  $VAR1 = '"aa"=>"bb", "cc"=>NULL';
+
+CONTEXT:  PL/Perl function "test1none"
+ test1none 
+-----------
+         0
+(1 row)
+
+CREATE FUNCTION test1list(val hstore) RETURNS int
+LANGUAGE plperlu
+TRANSFORM FOR TYPE hstore
+AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+elog(INFO, Dumper($_[0]));
+return scalar(keys %{$_[0]});
+$$;
+SELECT test1list('aa=>bb, cc=>NULL'::hstore);
+INFO:  $VAR1 = {
+          'aa' => 'bb',
+          'cc' => undef
+        };
+
+CONTEXT:  PL/Perl function "test1list"
+ test1list 
+-----------
+         2
+(1 row)
+
+-- test hstore[] -> perl
+CREATE FUNCTION test1arr(val hstore[]) RETURNS int
+LANGUAGE plperlu
+TRANSFORM FOR TYPE hstore
+AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+elog(INFO, Dumper($_[0]->[0], $_[0]->[1]));
+return scalar(keys %{$_[0]});
+$$;
+SELECT test1arr(array['aa=>bb, cc=>NULL'::hstore, 'dd=>ee']);
+INFO:  $VAR1 = {
+          'aa' => 'bb',
+          'cc' => undef
+        };
+$VAR2 = {
+          'dd' => 'ee'
+        };
+
+CONTEXT:  PL/Perl function "test1arr"
+ test1arr 
+----------
+        2
+(1 row)
+
+-- test as part of prepare/execute
+CREATE FUNCTION test3() RETURNS void
+LANGUAGE plperlu
+TRANSFORM FOR TYPE hstore
+AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+
+$rv = spi_exec_query(q{SELECT 'aa=>bb, cc=>NULL'::hstore AS col1});
+elog(INFO, Dumper($rv->{rows}[0]->{col1}));
+
+$val = {a => 1, b => 'boo', c => undef};
+$plan = spi_prepare(q{SELECT $1::text AS col1}, "hstore");
+$rv = spi_exec_prepared($plan, {}, $val);
+elog(INFO, Dumper($rv->{rows}[0]->{col1}));
+$$;
+SELECT test3();
+INFO:  $VAR1 = {
+          'aa' => 'bb',
+          'cc' => undef
+        };
+
+CONTEXT:  PL/Perl function "test3"
+INFO:  $VAR1 = '"a"=>"1", "b"=>"boo", "c"=>NULL';
+
+CONTEXT:  PL/Perl function "test3"
+ test3 
+-------
+ 
+(1 row)
+
+-- test trigger
+CREATE TABLE test1 (a int, b hstore);
+INSERT INTO test1 VALUES (1, 'aa=>bb, cc=>NULL');
+SELECT * FROM test1;
+ a |           b            
+---+------------------------
+ 1 | "aa"=>"bb", "cc"=>NULL
+(1 row)
+
+CREATE FUNCTION test4() RETURNS trigger
+LANGUAGE plperlu
+TRANSFORM FOR TYPE hstore
+AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+elog(INFO, Dumper($_TD->{new}));
+if ($_TD->{new}{a} == 1) {
+    $_TD->{new}{b} = {a => 1, b => 'boo', c => undef};
+}
+
+return "MODIFY";
+$$;
+CREATE TRIGGER test4 BEFORE UPDATE ON test1 FOR EACH ROW EXECUTE PROCEDURE test4();
+UPDATE test1 SET a = a;
+INFO:  $VAR1 = {
+          'a' => '1',
+          'b' => {
+                 'aa' => 'bb',
+                 'cc' => undef
+               }
+        };
+
+CONTEXT:  PL/Perl function "test4"
+SELECT * FROM test1;
+ a |                b                
+---+---------------------------------
+ 1 | "a"=>"1", "b"=>"boo", "c"=>NULL
+(1 row)
+
+DROP TABLE test1;
+DROP FUNCTION test1(hstore);
+DROP FUNCTION test1none(hstore);
+DROP FUNCTION test1list(hstore);
+DROP FUNCTION test1arr(hstore[]);
+DROP FUNCTION test3();
+DROP FUNCTION test4();
+DROP EXTENSION hstore_plperlu;
+DROP EXTENSION hstore;
+DROP EXTENSION plperlu;
