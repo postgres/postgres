@@ -579,6 +579,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 */
 	descriptor = BuildDescForRelation(schema);
 
+	/*
+	 * Notice that we allow OIDs here only for plain tables, even though some
+	 * other relkinds can support them.  This is necessary because the
+	 * default_with_oids GUC must apply only to plain tables and not any other
+	 * relkind; doing otherwise would break existing pg_dump files.  We could
+	 * allow explicit "WITH OIDS" while not allowing default_with_oids to
+	 * affect other relkinds, but it would complicate interpretOidsOption().
+	 */
 	localHasOids = interpretOidsOption(stmt->options,
 									   (relkind == RELKIND_RELATION));
 	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);

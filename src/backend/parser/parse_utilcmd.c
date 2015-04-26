@@ -222,7 +222,18 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
-	cxt.hasoids = interpretOidsOption(stmt->options, true);
+
+	/*
+	 * Notice that we allow OIDs here only for plain tables, even though
+	 * foreign tables also support them.  This is necessary because the
+	 * default_with_oids GUC must apply only to plain tables and not any other
+	 * relkind; doing otherwise would break existing pg_dump files.  We could
+	 * allow explicit "WITH OIDS" while not allowing default_with_oids to
+	 * affect other relkinds, but it would complicate interpretOidsOption(),
+	 * and right now there's no WITH OIDS option in CREATE FOREIGN TABLE
+	 * anyway.
+	 */
+	cxt.hasoids = interpretOidsOption(stmt->options, !cxt.isforeign);
 
 	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
 
