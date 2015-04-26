@@ -489,18 +489,36 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
  */
 static void
 XLogDumpStatsRow(const char *name,
-				 uint64 n, double n_pct,
-				 uint64 rec_len, double rec_len_pct,
-				 uint64 fpi_len, double fpi_len_pct,
-				 uint64 total_len, double total_len_pct)
+				 uint64 n, uint64 total_count,
+				 uint64 rec_len, uint64 total_rec_len,
+				 uint64 fpi_len, uint64 total_fpi_len,
+				 uint64 tot_len, uint64 total_len)
 {
+	double		n_pct, rec_len_pct, fpi_len_pct, tot_len_pct;
+
+	n_pct = 0;
+	if (total_count != 0)
+		n_pct = 100 * (double) n / total_count;
+
+	rec_len_pct = 0;
+	if (total_rec_len != 0)
+		rec_len_pct = 100 * (double) rec_len / total_rec_len;
+
+	fpi_len_pct = 0;
+	if (total_fpi_len != 0)
+		fpi_len_pct = 100 * (double) fpi_len / total_fpi_len;
+
+	tot_len_pct = 0;
+	if (total_len != 0)
+		tot_len_pct = 100 * (double) tot_len / total_len;
+
 	printf("%-27s "
 		   "%20" INT64_MODIFIER "u (%6.02f) "
 		   "%20" INT64_MODIFIER "u (%6.02f) "
 		   "%20" INT64_MODIFIER "u (%6.02f) "
 		   "%20" INT64_MODIFIER "u (%6.02f)\n",
 		   name, n, n_pct, rec_len, rec_len_pct, fpi_len, fpi_len_pct,
-		   total_len, total_len_pct);
+		   tot_len, tot_len_pct);
 }
 
 
@@ -515,6 +533,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 	uint64		total_rec_len = 0;
 	uint64		total_fpi_len = 0;
 	uint64		total_len = 0;
+	double		rec_len_pct, fpi_len_pct;
 
 	/* ---
 	 * Make a first pass to calculate column totals:
@@ -557,10 +576,8 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 			tot_len = rec_len + fpi_len;
 
 			XLogDumpStatsRow(desc->rm_name,
-							 count, 100 * (double) count / total_count,
-							 rec_len, 100 * (double) rec_len / total_rec_len,
-							 fpi_len, 100 * (double) fpi_len / total_fpi_len,
-							 tot_len, 100 * (double) tot_len / total_len);
+							 count, total_count, rec_len, total_rec_len,
+							 fpi_len, total_fpi_len, tot_len, total_len);
 		}
 		else
 		{
@@ -583,10 +600,8 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 					id = psprintf("UNKNOWN (%x)", rj << 4);
 
 				XLogDumpStatsRow(psprintf("%s/%s", desc->rm_name, id),
-								 count, 100 * (double) count / total_count,
-								 rec_len, 100 * (double) rec_len / total_rec_len,
-								 fpi_len, 100 * (double) fpi_len / total_fpi_len,
-								 tot_len, 100 * (double) tot_len / total_len);
+								 count, total_count, rec_len, total_rec_len,
+								 fpi_len, total_fpi_len, tot_len, total_len);
 			}
 		}
 	}
@@ -601,14 +616,22 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 	 * them from the earlier ones, and are thus up to 9 characters long.
 	 */
 
+	rec_len_pct = 0;
+	if (total_len != 0)
+		rec_len_pct = 100 * (double) total_rec_len / total_len;
+
+	fpi_len_pct = 0;
+	if (total_len != 0)
+		fpi_len_pct = 100 * (double) total_fpi_len / total_len;
+
 	printf("%-27s "
 		   "%20" INT64_MODIFIER "u %-9s"
 		   "%20" INT64_MODIFIER "u %-9s"
 		   "%20" INT64_MODIFIER "u %-9s"
 		   "%20" INT64_MODIFIER "u %-6s\n",
 		   "Total", stats->count, "",
-		   total_rec_len, psprintf("[%.02f%%]", 100 * (double)total_rec_len / total_len),
-		   total_fpi_len, psprintf("[%.02f%%]", 100 * (double)total_fpi_len / total_len),
+		   total_rec_len, psprintf("[%.02f%%]", rec_len_pct),
+		   total_fpi_len, psprintf("[%.02f%%]", fpi_len_pct),
 		   total_len, "[100%]");
 }
 
