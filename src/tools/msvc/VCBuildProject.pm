@@ -71,7 +71,7 @@ EOF
 	foreach my $fileNameWithPath (sort keys %{ $self->{files} })
 	{
 		confess "Bad format filename '$fileNameWithPath'\n"
-		  unless ($fileNameWithPath =~ /^(.*)\\([^\\]+)\.(c|cpp|y|l|rc)$/);
+		  unless ($fileNameWithPath =~ m!^(.*)/([^/]+)\.(c|cpp|y|l|rc)$!);
 		my $dir  = $1;
 		my $file = $2;
 
