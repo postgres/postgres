@@ -81,7 +81,7 @@ test -x $DAEMON ||
 
 # If we want to tell child processes to adjust their OOM scores, set up the
 # necessary environment variables.  Can't just export them through the "su".
-if [ -e "$PG_OOM_ADJUST_FILE" -a -n "PG_CHILD_OOM_SCORE_ADJ" ]
+if [ -e "$PG_OOM_ADJUST_FILE" -a -n "$PG_CHILD_OOM_SCORE_ADJ" ]
 then
 	DAEMON_ENV="PG_OOM_ADJUST_FILE=$PG_OOM_ADJUST_FILE PG_OOM_ADJUST_VALUE=$PG_CHILD_OOM_SCORE_ADJ"
 fi
