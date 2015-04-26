@@ -665,6 +665,21 @@ ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.
  </sect2>
 
  <sect2>
+  <title>Transforms</title>
+
+  <para>
+   Additional extensions are available that implement transforms for
+   the <type>ltree</type> type for PL/Python.  The extensions are
+   called <literal>ltree_plpythonu</literal>, <literal>ltree_plpython2u</literal>,
+   and <literal>ltree_plpython3u</literal>
+   (see <xref linkend="plpython-python23"> for the PL/Python naming
+   convention).  If you install these transforms and specify them when
+   creating a function, <type>ltree</type> values are mapped to Python lists.
+   (The reverse is currently not supported, however.)
+  </para>
+ </sect2>
+
+ <sect2>
   <title>Authors</title>
 
   <para>

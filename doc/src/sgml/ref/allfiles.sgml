@@ -79,6 +79,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY createTable        SYSTEM "create_table.sgml">
 <!ENTITY createTableAs      SYSTEM "create_table_as.sgml">
 <!ENTITY createTableSpace   SYSTEM "create_tablespace.sgml">
+<!ENTITY createTransform    SYSTEM "create_transform.sgml">
 <!ENTITY createTrigger      SYSTEM "create_trigger.sgml">
 <!ENTITY createTSConfig     SYSTEM "create_tsconfig.sgml">
 <!ENTITY createTSDictionary SYSTEM "create_tsdictionary.sgml">
@@ -120,6 +121,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY dropServer         SYSTEM "drop_server.sgml">
 <!ENTITY dropTable          SYSTEM "drop_table.sgml">
 <!ENTITY dropTableSpace     SYSTEM "drop_tablespace.sgml">
+<!ENTITY dropTransform      SYSTEM "drop_transform.sgml">
 <!ENTITY dropTrigger        SYSTEM "drop_trigger.sgml">
 <!ENTITY dropTSConfig       SYSTEM "drop_tsconfig.sgml">
 <!ENTITY dropTSDictionary   SYSTEM "drop_tsdictionary.sgml">

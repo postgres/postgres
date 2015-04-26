@@ -241,12 +241,13 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		CreateOpFamilyStmt AlterOpFamilyStmt CreatePLangStmt
 		CreateSchemaStmt CreateSeqStmt CreateStmt CreateTableSpaceStmt
 		CreateFdwStmt CreateForeignServerStmt CreateForeignTableStmt
-		CreateAssertStmt CreateTrigStmt CreateEventTrigStmt
+		CreateAssertStmt CreateTransformStmt CreateTrigStmt CreateEventTrigStmt
 		CreateUserStmt CreateUserMappingStmt CreateRoleStmt CreatePolicyStmt
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
 		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
 		DropPolicyStmt DropUserStmt DropdbStmt DropTableSpaceStmt DropFdwStmt
+		DropTransformStmt
 		DropForeignServerStmt DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt ImportForeignSchemaStmt IndexStmt InsertStmt
 		ListenStmt LoadStmt LockStmt NotifyStmt ExplainableStmt PreparableStmt
@@ -366,6 +367,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				opt_enum_val_list enum_val_list table_func_column_list
 				create_generic_options alter_generic_options
 				relation_expr_list dostmt_opt_list
+				transform_element_list transform_type_list
 
 %type <list>	opt_fdw_options fdw_options
 %type <defelt>	fdw_option
@@ -611,12 +613,12 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETOF SHARE
-	SHOW SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME STABLE STANDALONE_P START
+	SHOW SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P START
 	STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING
 	SYMMETRIC SYSID SYSTEM_P
 
 	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
-	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
+	TO TRAILING TRANSACTION TRANSFORM TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
 
 	UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNLOGGED
@@ -790,6 +792,7 @@ stmt :
 			| CreateSeqStmt
 			| CreateStmt
 			| CreateTableSpaceStmt
+			| CreateTransformStmt
 			| CreateTrigStmt
 			| CreateEventTrigStmt
 			| CreateRoleStmt
@@ -815,6 +818,7 @@ stmt :
 			| DropRuleStmt
 			| DropStmt
 			| DropTableSpaceStmt
+			| DropTransformStmt
 			| DropTrigStmt
 			| DropRoleStmt
 			| DropUserStmt
@@ -4083,6 +4087,16 @@ AlterExtensionContentsStmt:
 					n->objname = list_make1(makeString($6));
 					$$ = (Node *)n;
 				}
+			| ALTER EXTENSION name add_drop TRANSFORM FOR Typename LANGUAGE name
+				{
+					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
+					n->extname = $3;
+					n->action = $4;
+					n->objtype = OBJECT_TRANSFORM;
+					n->objname = list_make1($7);
+					n->objargs = list_make1($9);
+					$$ = (Node *)n;
+				}
 			| ALTER EXTENSION name add_drop TYPE_P Typename
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
@@ -5736,6 +5750,15 @@ CommentStmt:
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
+			| COMMENT ON TRANSFORM FOR Typename LANGUAGE name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_TRANSFORM;
+					n->objname = list_make1($5);
+					n->objargs = list_make1($7);
+					n->comment = $9;
+					$$ = (Node *) n;
+				}
 			| COMMENT ON TRIGGER name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
@@ -7015,6 +7038,10 @@ createfunc_opt_item:
 				{
 					$$ = makeDefElem("language", (Node *)makeString($2));
 				}
+			| TRANSFORM transform_type_list
+				{
+					$$ = makeDefElem("transform", (Node *)$2);
+				}
 			| WINDOW
 				{
 					$$ = makeDefElem("window", (Node *)makeInteger(TRUE));
@@ -7030,6 +7057,11 @@ func_as:	Sconst						{ $$ = list_make1(makeString($1)); }
 				{
 					$$ = list_make2(makeString($1), makeString($3));
 				}
+		;
+
+transform_type_list:
+			FOR TYPE_P Typename { $$ = list_make1($3); }
+			| transform_type_list ',' FOR TYPE_P Typename { $$ = lappend($1, $5); }
 		;
 
 opt_definition:
@@ -7294,6 +7326,56 @@ DropCastStmt: DROP CAST opt_if_exists '(' Typename AS Typename ')' opt_drop_beha
 
 opt_if_exists: IF_P EXISTS						{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+
+/*****************************************************************************
+ *
+ *		CREATE TRANSFORM / DROP TRANSFORM
+ *
+ *****************************************************************************/
+
+CreateTransformStmt: CREATE opt_or_replace TRANSFORM FOR Typename LANGUAGE name '(' transform_element_list ')'
+				{
+					CreateTransformStmt *n = makeNode(CreateTransformStmt);
+					n->replace = $2;
+					n->type_name = $5;
+					n->lang = $7;
+					n->fromsql = linitial($9);
+					n->tosql = lsecond($9);
+					$$ = (Node *)n;
+				}
+		;
+
+transform_element_list: FROM SQL_P WITH FUNCTION function_with_argtypes ',' TO SQL_P WITH FUNCTION function_with_argtypes
+				{
+					$$ = list_make2($5, $11);
+				}
+				| TO SQL_P WITH FUNCTION function_with_argtypes ',' FROM SQL_P WITH FUNCTION function_with_argtypes
+				{
+					$$ = list_make2($11, $5);
+				}
+				| FROM SQL_P WITH FUNCTION function_with_argtypes
+				{
+					$$ = list_make2($5, NULL);
+				}
+				| TO SQL_P WITH FUNCTION function_with_argtypes
+				{
+					$$ = list_make2(NULL, $5);
+				}
+		;
+
+
+DropTransformStmt: DROP TRANSFORM opt_if_exists FOR Typename LANGUAGE name opt_drop_behavior
+				{
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = OBJECT_TRANSFORM;
+					n->objects = list_make1(list_make1($5));
+					n->arguments = list_make1(list_make1($7));
+					n->behavior = $8;
+					n->missing_ok = $3;
+					$$ = (Node *)n;
+				}
 		;
 
 
@@ -13460,6 +13542,7 @@ unreserved_keyword:
 			| SIMPLE
 			| SKIP
 			| SNAPSHOT
+			| SQL_P
 			| STABLE
 			| STANDALONE_P
 			| START
@@ -13479,6 +13562,7 @@ unreserved_keyword:
 			| TEMPORARY
 			| TEXT_P
 			| TRANSACTION
+			| TRANSFORM
 			| TRIGGER
 			| TRUNCATE
 			| TRUSTED

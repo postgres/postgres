@@ -52,6 +52,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
   TEXT SEARCH DICTIONARY <replaceable class="PARAMETER">object_name</replaceable> |
   TEXT SEARCH PARSER <replaceable class="PARAMETER">object_name</replaceable> |
   TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
+  TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable> |
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
 
@@ -256,6 +257,26 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
      <listitem>
       <para>
        This is a noise word.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>type_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the data type of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>lang_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the language of the transform.
       </para>
      </listitem>
     </varlistentry>

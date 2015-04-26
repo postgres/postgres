@@ -98,6 +98,7 @@ static event_trigger_support_data event_trigger_support[] = {
 	{"SERVER", true},
 	{"TABLE", true},
 	{"TABLESPACE", false},
+	{"TRANSFORM", true},
 	{"TRIGGER", true},
 	{"TEXT SEARCH CONFIGURATION", true},
 	{"TEXT SEARCH DICTIONARY", true},
@@ -1090,6 +1091,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABCONSTRAINT:
 		case OBJECT_TABLE:
+		case OBJECT_TRANSFORM:
 		case OBJECT_TRIGGER:
 		case OBJECT_TSCONFIGURATION:
 		case OBJECT_TSDICTIONARY:
@@ -1137,6 +1139,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_REWRITE:
 		case OCLASS_TRIGGER:
 		case OCLASS_SCHEMA:
+		case OCLASS_TRANSFORM:
 		case OCLASS_TSPARSER:
 		case OCLASS_TSDICT:
 		case OCLASS_TSTEMPLATE:

@@ -141,6 +141,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 									  PointerGetDatum(NULL),
 									  NIL,
 									  PointerGetDatum(NULL),
+									  PointerGetDatum(NULL),
 									  1,
 									  0);
 			handlerOid = tmpAddr.objectId;
@@ -178,6 +179,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
 										  NIL,
+										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
 										  1,
 										  0);
@@ -219,6 +221,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
 										  NIL,
+										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
 										  1,
 										  0);

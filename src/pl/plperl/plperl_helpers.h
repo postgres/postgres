@@ -1,6 +1,8 @@
 #ifndef PL_PERL_HELPERS_H
 #define PL_PERL_HELPERS_H
 
+#include "mb/pg_wchar.h"
+
 /*
  * convert from utf8 to database encoding
  *

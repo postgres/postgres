@@ -38,10 +38,13 @@ extern ObjectAddress ProcedureCreate(const char *procedureName,
 				Datum parameterModes,
 				Datum parameterNames,
 				List *parameterDefaults,
+				Datum trftypes,
 				Datum proconfig,
 				float4 procost,
 				float4 prorows);
 
 extern bool function_parse_error_transpose(const char *prosrc);
+
+extern List *oid_array_to_list(Datum datum);
 
 #endif   /* PG_PROC_FN_H */

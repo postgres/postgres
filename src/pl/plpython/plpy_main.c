@@ -278,6 +278,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 
 	MemSet(&proc, 0, sizeof(PLyProcedure));
 	proc.pyname = PLy_strdup("__plpython_inline_block");
+	proc.langid = codeblock->langOid;
 	proc.result.out.d.typoid = VOIDOID;
 
 	/*

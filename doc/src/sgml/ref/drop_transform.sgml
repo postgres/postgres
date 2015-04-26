@@ -1,0 +1,123 @@
+<!-- doc/src/sgml/ref/drop_transform.sgml -->
+
+<refentry id="SQL-DROPTRANSFORM">
+ <indexterm zone="sql-droptransform">
+  <primary>DROP TRANSFORM</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP TRANSFORM</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP TRANSFORM</refname>
+  <refpurpose>remove a transform</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP TRANSFORM [ IF EXISTS ] FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="sql-droptransform-description">
+  <title>Description</title>
+
+  <para>
+   <command>DROP TRANSFORM</command> removes a previously defined transform.
+  </para>
+
+  <para>
+   To be able to drop a transform, you must own the type and the language.
+   These are the same privileges that are required to create a transform.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the transform does not exist. A notice is issued
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>type_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the data type of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>lang_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the language of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>CASCADE</literal></term>
+     <listitem>
+      <para>
+       Automatically drop objects that depend on the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>RESTRICT</literal></term>
+     <listitem>
+      <para>
+       Refuse to drop the transform if any objects depend on it.  This is the
+       default.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-droptransform-examples">
+  <title>Examples</title>
+
+  <para>
+   To drop the transform for type <type>hstore</type> and language
+   <literal>plpythonu</literal>:
+<programlisting>
+DROP TRANSFORM FOR hstore LANGUAGE plpythonu;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1 id="sql-droptransform-compat">
+  <title>Compatibility</title>
+
+  <para>
+   This form of <command>DROP TRANSFORM</command> is a
+   <productname>PostgreSQL</productname> extension.  See <xref
+   linkend="sql-createtransform"> for details.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtransform"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

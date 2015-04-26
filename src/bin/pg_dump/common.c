@@ -92,6 +92,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	int			numRules;
 	int			numProcLangs;
 	int			numCasts;
+	int			numTransforms;
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
@@ -200,6 +201,10 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
 	getCasts(fout, dopt, &numCasts);
+
+	if (g_verbose)
+		write_msg(NULL, "reading transforms\n");
+	getTransforms(fout, &numTransforms);
 
 	if (g_verbose)
 		write_msg(NULL, "reading table inheritance information\n");

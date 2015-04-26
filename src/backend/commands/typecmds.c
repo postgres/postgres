@@ -1616,6 +1616,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 PointerGetDatum(NULL), /* parameterModes */
 								 PointerGetDatum(NULL), /* parameterNames */
 								 NIL,	/* parameterDefaults */
+								 PointerGetDatum(NULL),		/* trftypes */
 								 PointerGetDatum(NULL), /* proconfig */
 								 1.0,	/* procost */
 								 0.0);	/* prorows */

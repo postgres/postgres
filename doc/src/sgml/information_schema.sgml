@@ -5519,6 +5519,91 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-transforms">
+  <title><literal>transforms</literal></title>
+
+  <para>
+   The view <literal>transforms</literal> contains information about the
+   transforms defined in the current database.  More precisely, it contains a
+   row for each function contained in a transform (the <quote>from SQL</quote>
+   or <quote>to SQL</quote> function).
+  </para>
+
+  <table>
+   <title><literal>transforms</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the type the transform is for (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the type the transform is for</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the type the transform is for</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  See <xref
+       linkend="infoschema-routines"> for more information.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>group_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>
+       The SQL standard allows defining transforms in <quote>groups</quote>,
+       and selecting a group at run time.  PostgreSQL does not support this.
+       Instead, transforms are specific to a language.  As a compromise, this
+       field contains the language the transform is for.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>transform_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>FROM SQL</literal> or <literal>TO SQL</literal>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-triggered-update-columns">
   <title><literal>triggered_update_columns</literal></title>
 

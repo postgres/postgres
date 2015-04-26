@@ -274,6 +274,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-transform"><structname>pg_transform</structname></link></entry>
+      <entry>transforms (data type to procedural language conversions)</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-trigger"><structname>pg_trigger</structname></link></entry>
       <entry>triggers</entry>
      </row>
@@ -5072,6 +5077,15 @@
      </row>
 
      <row>
+      <entry><structfield>protrftypes</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry></entry>
+      <entry>
+       Data type OIDs for which to apply transforms.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>prosrc</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -6063,6 +6077,74 @@
       <entry></entry>
       <entry>
        Tablespace-level options, as <quote>keyword=value</> strings
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-transform">
+  <title><structname>pg_transform</structname></title>
+
+  <indexterm zone="catalog-pg-transform">
+   <primary>pg_transform</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_transform</structname> stores information about
+   transforms, which are a mechanism to adapt data types to procedural
+   languages.  See <xref linkend="sql-createtransform"> for more information.
+  </para>
+
+  <table>
+   <title><structname>pg_transform</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>trftype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>OID of the data type this transform is for</entry>
+     </row>
+
+     <row>
+      <entry><structfield>trflang</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-language"><structname>pg_language</structname></link>.oid</literal></entry>
+      <entry>OID of the language this transform is for</entry>
+     </row>
+
+     <row>
+      <entry><structfield>trffromsql</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the function to use when converting the data type for input
+       to the procedural language (e.g., function parameters).  Zero is stored
+       if this operation is not supported.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>trftosql</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the function to use when converting output from the
+       procedural language (e.g., return values) to the data type.  Zero is
+       stored if this operation is not supported.
       </entry>
      </row>
     </tbody>

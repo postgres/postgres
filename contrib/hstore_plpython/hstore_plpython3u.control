@@ -1,0 +1,6 @@
+# hstore_plpython3u extension
+comment = 'transform between hstore and plpython3u'
+default_version = '1.0'
+module_pathname = '$libdir/hstore_plpython3'
+relocatable = true
+requires = 'hstore,plpython3u'

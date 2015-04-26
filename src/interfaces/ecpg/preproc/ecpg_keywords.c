@@ -63,8 +63,6 @@ static const ScanKeyword ECPGScanKeywords[] = {
 	{"section", SQL_SECTION, 0},
 	{"short", SQL_SHORT, 0},
 	{"signed", SQL_SIGNED, 0},
-	{"sql", SQL_SQL, 0},		/* strange thing, used for into sql descriptor
-								 * MYDESC; */
 	{"sqlerror", SQL_SQLERROR, 0},
 	{"sqlprint", SQL_SQLPRINT, 0},
 	{"sqlwarning", SQL_SQLWARNING, 0},

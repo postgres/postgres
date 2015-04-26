@@ -28,7 +28,7 @@ static const char *modulename = gettext_noop("sorter");
  * by OID.  (This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)  Note: collations,
  * extensions, text search, foreign-data, materialized view, event trigger,
- * policies, and default ACL objects can't really happen here, so the rather
+ * policies, transforms, and default ACL objects can't really happen here, so the rather
  * bogus priorities for them don't matter.
  *
  * NOTE: object-type priorities must match the section assignments made in
@@ -67,6 +67,7 @@ static const int oldObjectTypePriority[] =
 	4,							/* DO_FDW */
 	4,							/* DO_FOREIGN_SERVER */
 	19,							/* DO_DEFAULT_ACL */
+	4,							/* DO_TRANSFORM */
 	9,							/* DO_BLOB */
 	12,							/* DO_BLOB_DATA */
 	10,							/* DO_PRE_DATA_BOUNDARY */
@@ -116,6 +117,7 @@ static const int newObjectTypePriority[] =
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
 	31,							/* DO_DEFAULT_ACL */
+	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
 	24,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
@@ -1398,6 +1400,13 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "CAST %u to %u  (ID %d OID %u)",
 					 ((CastInfo *) obj)->castsource,
 					 ((CastInfo *) obj)->casttarget,
+					 obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TRANSFORM:
+			snprintf(buf, bufsize,
+					 "TRANSFORM %u lang %u  (ID %d OID %u)",
+					 ((TransformInfo *) obj)->trftype,
+					 ((TransformInfo *) obj)->trflang,
 					 obj->dumpId, obj->catId.oid);
 			return;
 		case DO_TABLE_DATA:

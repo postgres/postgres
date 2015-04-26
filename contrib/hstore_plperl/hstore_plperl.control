@@ -1,0 +1,6 @@
+# hstore_plperl extension
+comment = 'transform between hstore and plperl'
+default_version = '1.0'
+module_pathname = '$libdir/hstore_plperl'
+relocatable = true
+requires = 'hstore,plperl'

@@ -55,6 +55,7 @@ COMMENT ON
   TEXT SEARCH DICTIONARY <replaceable class="PARAMETER">object_name</replaceable> |
   TEXT SEARCH PARSER <replaceable class="PARAMETER">object_name</replaceable> |
   TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
+  TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable> |
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
@@ -225,6 +226,26 @@ COMMENT ON
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><replaceable>type_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the data type of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>lang_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the language of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
    <varlistentry>
     <term><replaceable class="parameter">text</replaceable></term>
     <listitem>
@@ -305,6 +326,7 @@ COMMENT ON TEXT SEARCH CONFIGURATION my_config IS 'Special word filtering';
 COMMENT ON TEXT SEARCH DICTIONARY swedish IS 'Snowball stemmer for Swedish language';
 COMMENT ON TEXT SEARCH PARSER my_parser IS 'Splits text into words';
 COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'Snowball stemmer';
+COMMENT ON TRANSFORM FOR hstore LANGUAGE plpythonu IS 'Transform between hstore and Python dict';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
 COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';

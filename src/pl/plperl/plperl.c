@@ -20,6 +20,7 @@
 #include "access/xact.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_proc_fn.h"
 #include "catalog/pg_type.h"
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
@@ -110,6 +111,8 @@ typedef struct plperl_proc_desc
 	SV		   *reference;		/* CODE reference for Perl sub */
 	plperl_interp_desc *interp; /* interpreter it's created in */
 	bool		fn_readonly;	/* is function readonly (not volatile)? */
+	Oid			lang_oid;
+	List	   *trftypes;
 	bool		lanpltrusted;	/* is it plperl, rather than plperlu? */
 	bool		fn_retistuple;	/* true, if function returns tuple */
 	bool		fn_retisset;	/* true, if function returns set */
@@ -210,6 +213,7 @@ typedef struct plperl_array_info
 	bool	   *nulls;
 	int		   *nelems;
 	FmgrInfo	proc;
+	FmgrInfo	transform_proc;
 } plperl_array_info;
 
 /**********************************************************************
@@ -1272,6 +1276,7 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 				   bool *isnull)
 {
 	FmgrInfo	tmp;
+	Oid			funcid;
 
 	/* we might recurse */
 	check_stack_depth();
@@ -1295,6 +1300,8 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 		/* must call typinput in case it wants to reject NULL */
 		return InputFunctionCall(finfo, NULL, typioparam, typmod);
 	}
+	else if ((funcid = get_transform_tosql(typid, current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
+		return OidFunctionCall1(funcid, PointerGetDatum(sv));
 	else if (SvROK(sv))
 	{
 		/* handle references */
@@ -1407,6 +1414,7 @@ plperl_ref_from_pg_array(Datum arg, Oid typid)
 				typdelim;
 	Oid			typioparam;
 	Oid			typoutputfunc;
+	Oid			transform_funcid;
 	int			i,
 				nitems,
 			   *dims;
@@ -1414,14 +1422,17 @@ plperl_ref_from_pg_array(Datum arg, Oid typid)
 	SV		   *av;
 	HV		   *hv;
 
-	info = palloc(sizeof(plperl_array_info));
+	info = palloc0(sizeof(plperl_array_info));
 
 	/* get element type information, including output conversion function */
 	get_type_io_data(elementtype, IOFunc_output,
 					 &typlen, &typbyval, &typalign,
 					 &typdelim, &typioparam, &typoutputfunc);
 
-	perm_fmgr_info(typoutputfunc, &info->proc);
+	if ((transform_funcid = get_transform_fromsql(elementtype, current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
+		perm_fmgr_info(transform_funcid, &info->transform_proc);
+	else
+		perm_fmgr_info(typoutputfunc, &info->proc);
 
 	info->elem_is_rowtype = type_is_rowtype(elementtype);
 
@@ -1502,8 +1513,10 @@ make_array_ref(plperl_array_info *info, int first, int last)
 		{
 			Datum		itemvalue = info->elements[i];
 
-			/* Handle composite type elements */
-			if (info->elem_is_rowtype)
+			if (info->transform_proc.fn_oid)
+				av_push(result, (SV *) DatumGetPointer(FunctionCall1(&info->transform_proc, itemvalue)));
+			else if (info->elem_is_rowtype)
+				/* Handle composite type elements */
 				av_push(result, plperl_hash_from_datum(itemvalue));
 			else
 			{
@@ -1812,6 +1825,8 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	desc.proname = "inline_code_block";
 	desc.fn_readonly = false;
 
+	desc.lang_oid = codeblock->langOid;
+	desc.trftypes = NIL;
 	desc.lanpltrusted = codeblock->langIsTrusted;
 
 	desc.fn_retistuple = false;
@@ -2076,12 +2091,17 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 	SV		   *retval;
 	int			i;
 	int			count;
+	Oid		   *argtypes = NULL;
+	int			nargs = 0;
 
 	ENTER;
 	SAVETMPS;
 
 	PUSHMARK(SP);
 	EXTEND(sp, desc->nargs);
+
+	if (fcinfo->flinfo->fn_oid)
+		get_func_signature(fcinfo->flinfo->fn_oid, &argtypes, &nargs);
 
 	for (i = 0; i < desc->nargs; i++)
 	{
@@ -2096,9 +2116,12 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		else
 		{
 			SV		   *sv;
+			Oid			funcid;
 
 			if (OidIsValid(desc->arg_arraytype[i]))
 				sv = plperl_ref_from_pg_array(fcinfo->arg[i], desc->arg_arraytype[i]);
+			else if ((funcid = get_transform_fromsql(argtypes[i], current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
+				sv = (SV *) DatumGetPointer(OidFunctionCall1(funcid, fcinfo->arg[i]));
 			else
 			{
 				char	   *tmp;
@@ -2569,6 +2592,7 @@ free_plperl_function(plperl_proc_desc *prodesc)
 	/* (FmgrInfo subsidiary info will get leaked ...) */
 	if (prodesc->proname)
 		free(prodesc->proname);
+	list_free(prodesc->trftypes);
 	free(prodesc);
 }
 
@@ -2631,6 +2655,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		HeapTuple	typeTup;
 		Form_pg_language langStruct;
 		Form_pg_type typeStruct;
+		Datum		protrftypes_datum;
 		Datum		prosrcdatum;
 		bool		isnull;
 		char	   *proc_source;
@@ -2661,6 +2686,16 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		prodesc->fn_readonly =
 			(procStruct->provolatile != PROVOLATILE_VOLATILE);
 
+		{
+			MemoryContext oldcxt;
+
+			protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
+												Anum_pg_proc_protrftypes, &isnull);
+			oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+			prodesc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
+			MemoryContextSwitchTo(oldcxt);
+		}
+
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
 		 ************************************************************/
@@ -2673,6 +2708,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 				 procStruct->prolang);
 		}
 		langStruct = (Form_pg_language) GETSTRUCT(langTup);
+		prodesc->lang_oid = HeapTupleGetOid(langTup);
 		prodesc->lanpltrusted = langStruct->lanpltrusted;
 		ReleaseSysCache(langTup);
 
@@ -2906,9 +2942,12 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		else
 		{
 			SV		   *sv;
+			Oid			funcid;
 
 			if (OidIsValid(get_base_element_type(tupdesc->attrs[i]->atttypid)))
 				sv = plperl_ref_from_pg_array(attr, tupdesc->attrs[i]->atttypid);
+			else if ((funcid = get_transform_fromsql(tupdesc->attrs[i]->atttypid, current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
+				sv = (SV *) DatumGetPointer(OidFunctionCall1(funcid, attr));
 			else
 			{
 				char	   *outputstr;

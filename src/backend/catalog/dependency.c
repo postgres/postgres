@@ -47,6 +47,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_transform.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
@@ -1265,6 +1266,10 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemovePolicyById(object->objectId);
 			break;
 
+		case OCLASS_TRANSFORM:
+			DropTransformById(object->objectId);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
@@ -2373,6 +2378,9 @@ getObjectClass(const ObjectAddress *object)
 
 		case PolicyRelationId:
 			return OCLASS_POLICY;
+
+		case TransformRelationId:
+			return OCLASS_TRANSFORM;
 	}
 
 	/* shouldn't get here */

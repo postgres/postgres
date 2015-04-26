@@ -1,0 +1,74 @@
+-- general regression test for transforms
+DROP EXTENSION IF EXISTS hstore CASCADE;
+NOTICE:  extension "hstore" does not exist, skipping
+DROP EXTENSION IF EXISTS plperl CASCADE;
+NOTICE:  extension "plperl" does not exist, skipping
+DROP EXTENSION IF EXISTS hstore_plperl CASCADE;
+NOTICE:  extension "hstore_plperl" does not exist, skipping
+CREATE EXTENSION hstore;
+CREATE EXTENSION plperl;
+CREATE FUNCTION hstore_to_plperl(val internal) RETURNS internal
+LANGUAGE C STRICT IMMUTABLE
+AS '$libdir/hstore_plperl';
+CREATE FUNCTION plperl_to_hstore(val internal) RETURNS hstore
+LANGUAGE C STRICT IMMUTABLE
+AS '$libdir/hstore_plperl';
+CREATE TRANSFORM FOR foo LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
+ERROR:  type "foo" does not exist
+CREATE TRANSFORM FOR hstore LANGUAGE foo (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
+ERROR:  language "foo" does not exist
+CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_out(hstore), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
+ERROR:  return data type of FROM SQL function must be "internal"
+CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION internal_in(cstring), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
+ERROR:  first argument of transform function must be type "internal"
+CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
+CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
+ERROR:  transform for type hstore language plperl already exists
+CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
+CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal));  -- ok
+CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plperl (TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
+DROP TRANSFORM IF EXISTS FOR fake_type LANGUAGE plperl;
+NOTICE:  type "fake_type" does not exist, skipping
+DROP TRANSFORM IF EXISTS FOR hstore LANGUAGE fake_lang;
+NOTICE:  transform for type hstore language fake_lang does not exist, skipping
+DROP TRANSFORM FOR foo LANGUAGE plperl;
+ERROR:  type "foo" does not exist
+DROP TRANSFORM FOR hstore LANGUAGE foo;
+ERROR:  language "foo" does not exist
+DROP TRANSFORM FOR hstore LANGUAGE plperl;
+DROP TRANSFORM IF EXISTS FOR hstore LANGUAGE plperl;
+NOTICE:  transform for type hstore language plperl does not exist, skipping
+DROP FUNCTION hstore_to_plperl(val internal);
+DROP FUNCTION plperl_to_hstore(val internal);
+CREATE EXTENSION hstore_plperl;
+\dx+ hstore_plperl
+ Objects in extension "hstore_plperl"
+          Object Description          
+--------------------------------------
+ function hstore_to_plperl(internal)
+ function plperl_to_hstore(internal)
+ transform for hstore language plperl
+(3 rows)
+
+ALTER EXTENSION hstore_plperl DROP TRANSFORM FOR hstore LANGUAGE plperl;
+\dx+ hstore_plperl
+Objects in extension "hstore_plperl"
+         Object Description          
+-------------------------------------
+ function hstore_to_plperl(internal)
+ function plperl_to_hstore(internal)
+(2 rows)
+
+ALTER EXTENSION hstore_plperl ADD TRANSFORM FOR hstore LANGUAGE plperl;
+\dx+ hstore_plperl
+ Objects in extension "hstore_plperl"
+          Object Description          
+--------------------------------------
+ function hstore_to_plperl(internal)
+ function plperl_to_hstore(internal)
+ transform for hstore language plperl
+(3 rows)
+
+DROP EXTENSION hstore CASCADE;
+NOTICE:  drop cascades to extension hstore_plperl
+DROP EXTENSION plperl CASCADE;

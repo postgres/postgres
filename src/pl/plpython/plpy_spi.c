@@ -76,6 +76,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	PG_TRY();
 	{
 		int			i;
+		PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
 		/*
 		 * the other loop might throw an exception, if PLyTypeInfo member
@@ -128,7 +129,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			optr = NULL;
 
 			plan->types[i] = typeId;
-			PLy_output_datum_func(&plan->args[i], typeTup);
+			PLy_output_datum_func(&plan->args[i], typeTup, exec_ctx->curr_proc->langid, exec_ctx->curr_proc->trftypes);
 			ReleaseSysCache(typeTup);
 		}
 

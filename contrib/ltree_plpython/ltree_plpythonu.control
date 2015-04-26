@@ -1,0 +1,6 @@
+# ltree_plpythonu extension
+comment = 'transform between ltree and plpythonu'
+default_version = '1.0'
+module_pathname = '$libdir/ltree_plpython2'
+relocatable = true
+requires = 'ltree,plpythonu'

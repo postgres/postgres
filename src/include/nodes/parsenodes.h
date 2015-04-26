@@ -1265,6 +1265,7 @@ typedef enum ObjectType
 	OBJECT_TABCONSTRAINT,
 	OBJECT_TABLE,
 	OBJECT_TABLESPACE,
+	OBJECT_TRANSFORM,
 	OBJECT_TRIGGER,
 	OBJECT_TSCONFIGURATION,
 	OBJECT_TSDICTIONARY,
@@ -2788,6 +2789,20 @@ typedef struct CreateCastStmt
 	CoercionContext context;
 	bool		inout;
 } CreateCastStmt;
+
+/* ----------------------
+ *	CREATE TRANSFORM Statement
+ * ----------------------
+ */
+typedef struct CreateTransformStmt
+{
+	NodeTag		type;
+	bool		replace;
+	TypeName   *type_name;
+	char	   *lang;
+	FuncWithArgs *fromsql;
+	FuncWithArgs *tosql;
+} CreateTransformStmt;
 
 /* ----------------------
  *		PREPARE Statement

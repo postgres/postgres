@@ -1928,7 +1928,39 @@ GRANT SELECT ON tables TO PUBLIC;
  * TRANSFORMS view
  */
 
--- feature not supported
+CREATE VIEW transforms AS
+    SELECT CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(nt.nspname AS sql_identifier) AS udt_schema,
+           CAST(t.typname AS sql_identifier) AS udt_name,
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(np.nspname AS sql_identifier) AS specific_schema,
+           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(l.lanname AS sql_identifier) AS group_name,
+           CAST('FROM SQL' AS character_data) AS transform_type
+    FROM pg_type t JOIN pg_transform x ON t.oid = x.trftype
+         JOIN pg_language l ON x.trflang = l.oid
+         JOIN pg_proc p ON x.trffromsql = p.oid
+         JOIN pg_namespace nt ON t.typnamespace = nt.oid
+         JOIN pg_namespace np ON p.pronamespace = np.oid
+
+  UNION
+
+    SELECT CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(nt.nspname AS sql_identifier) AS udt_schema,
+           CAST(t.typname AS sql_identifier) AS udt_name,
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(np.nspname AS sql_identifier) AS specific_schema,
+           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(l.lanname AS sql_identifier) AS group_name,
+           CAST('TO SQL' AS character_data) AS transform_type
+    FROM pg_type t JOIN pg_transform x ON t.oid = x.trftype
+         JOIN pg_language l ON x.trflang = l.oid
+         JOIN pg_proc p ON x.trftosql = p.oid
+         JOIN pg_namespace nt ON t.typnamespace = nt.oid
+         JOIN pg_namespace np ON p.pronamespace = np.oid
+
+  ORDER BY udt_catalog, udt_schema, udt_name, group_name, transform_type  -- some sensible grouping for interactive use
+;
 
 
 /*

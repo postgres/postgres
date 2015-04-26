@@ -91,6 +91,7 @@ typedef int Py_ssize_t;
 #define PyString_Check(x) 0
 #define PyString_AsString(x) PLyUnicode_AsString(x)
 #define PyString_FromString(x) PLyUnicode_FromString(x)
+#define PyString_FromStringAndSize(x, size) PLyUnicode_FromStringAndSize(x, size)
 #endif
 
 /*

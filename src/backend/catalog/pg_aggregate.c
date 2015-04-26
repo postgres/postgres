@@ -545,6 +545,7 @@ AggregateCreate(const char *aggName,
 							 parameterModes,	/* parameterModes */
 							 parameterNames,	/* parameterNames */
 							 parameterDefaults, /* parameterDefaults */
+							 PointerGetDatum(NULL),	/* trftypes */
 							 PointerGetDatum(NULL),		/* proconfig */
 							 1, /* procost */
 							 0);	/* prorows */

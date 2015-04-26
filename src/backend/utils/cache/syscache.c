@@ -56,6 +56,7 @@
 #include "catalog/pg_shseclabel.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_transform.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_config_map.h"
 #include "catalog/pg_ts_dict.h"
@@ -652,6 +653,28 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 		},
 		4
+	},
+	{TransformRelationId,		/* TRFOID */
+	 TransformOidIndexId,
+	 1,
+	 {
+		 ObjectIdAttributeNumber,
+		 0,
+		 0,
+		 0,
+	 },
+	 16
+	},
+	{TransformRelationId,		/* TRFTYPELANG */
+	 TransformTypeLangIndexId,
+	 2,
+	 {
+		 Anum_pg_transform_trftype,
+		 Anum_pg_transform_trflang,
+		 0,
+		 0,
+	 },
+	 16
 	},
 	{TSConfigMapRelationId,		/* TSCONFIGMAP */
 		TSConfigMapIndexId,

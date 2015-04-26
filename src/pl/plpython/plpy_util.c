@@ -142,19 +142,30 @@ PLyUnicode_AsString(PyObject *unicode)
  * unicode object.  Reference ownership is passed to the caller.
  */
 PyObject *
-PLyUnicode_FromString(const char *s)
+PLyUnicode_FromStringAndSize(const char *s, Py_ssize_t size)
 {
 	char	   *utf8string;
 	PyObject   *o;
 
-	utf8string = pg_server_to_any(s, strlen(s), PG_UTF8);
+	utf8string = pg_server_to_any(s, size, PG_UTF8);
 
-	o = PyUnicode_FromString(utf8string);
-
-	if (utf8string != s)
+	if (utf8string == s)
+	{
+		o = PyUnicode_FromStringAndSize(s, size);
+	}
+	else
+	{
+		o = PyUnicode_FromString(utf8string);
 		pfree(utf8string);
+	}
 
 	return o;
+}
+
+PyObject *
+PLyUnicode_FromString(const char *s)
+{
+	return PLyUnicode_FromStringAndSize(s, strlen(s));
 }
 
 #endif   /* PY_MAJOR_VERSION >= 3 */

@@ -45,6 +45,7 @@
 #include "catalog/pg_policy.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_transform.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
@@ -333,6 +334,12 @@ static const ObjectPropertyType ObjectProperty[] =
 		Anum_pg_tablespace_spcacl,
 		ACL_KIND_TABLESPACE,
 		true
+	},
+	{
+		TransformRelationId,
+		TransformOidIndexId,
+		TRFOID,
+		InvalidAttrNumber
 	},
 	{
 		TriggerRelationId,
@@ -757,6 +764,19 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 					address.classId = CastRelationId;
 					address.objectId =
 						get_cast_oid(sourcetypeid, targettypeid, missing_ok);
+					address.objectSubId = 0;
+				}
+				break;
+			case OBJECT_TRANSFORM:
+				{
+					TypeName   *typename = (TypeName *) linitial(objname);
+					char	   *langname = (char *) linitial(objargs);
+					Oid			type_id = LookupTypeNameOid(NULL, typename, missing_ok);
+					Oid			lang_id = get_language_oid(langname, missing_ok);
+
+					address.classId = TransformRelationId;
+					address.objectId =
+						get_transform_oid(type_id, lang_id, missing_ok);
 					address.objectSubId = 0;
 				}
 				break;
@@ -2006,6 +2026,15 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 									format_type_be(targettypeid))));
 			}
 			break;
+		case OBJECT_TRANSFORM:
+			{
+				TypeName   *typename = (TypeName *) linitial(objname);
+				Oid			typeid = typenameTypeId(NULL, typename);
+
+				if (!pg_type_ownercheck(typeid, roleid))
+					aclcheck_error_type(ACLCHECK_NOT_OWNER, typeid);
+			}
+			break;
 		case OBJECT_TABLESPACE:
 			if (!pg_tablespace_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
@@ -2467,19 +2496,10 @@ getObjectDescription(const ObjectAddress *object)
 			}
 
 		case OCLASS_LANGUAGE:
-			{
-				HeapTuple	langTup;
+			appendStringInfo(&buffer, _("language %s"),
+							 get_language_name(object->objectId, false));
+			break;
 
-				langTup = SearchSysCache1(LANGOID,
-										  ObjectIdGetDatum(object->objectId));
-				if (!HeapTupleIsValid(langTup))
-					elog(ERROR, "cache lookup failed for language %u",
-						 object->objectId);
-				appendStringInfo(&buffer, _("language %s"),
-				  NameStr(((Form_pg_language) GETSTRUCT(langTup))->lanname));
-				ReleaseSysCache(langTup);
-				break;
-			}
 		case OCLASS_LARGEOBJECT:
 			appendStringInfo(&buffer, _("large object %u"),
 							 object->objectId);
@@ -2664,6 +2684,27 @@ getObjectDescription(const ObjectAddress *object)
 
 				systable_endscan(rcscan);
 				heap_close(ruleDesc, AccessShareLock);
+				break;
+			}
+
+		case OCLASS_TRANSFORM:
+			{
+				HeapTuple	trfTup;
+				Form_pg_transform trfForm;
+
+				trfTup = SearchSysCache1(TRFOID,
+										  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(trfTup))
+					elog(ERROR, "could not find tuple for transform %u",
+						 object->objectId);
+
+				trfForm = (Form_pg_transform) GETSTRUCT(trfTup);
+
+				appendStringInfo(&buffer, _("transform for %s language %s"),
+								 format_type_be(trfForm->trftype),
+								 get_language_name(trfForm->trflang, false));
+
+				ReleaseSysCache(trfTup);
 				break;
 			}
 

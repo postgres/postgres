@@ -23,7 +23,9 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_fn.h"
+#include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "executor/functions.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -59,7 +61,7 @@ static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
 /* ----------------------------------------------------------------
  *		ProcedureCreate
  *
- * Note: allParameterTypes, parameterModes, parameterNames, and proconfig
+ * Note: allParameterTypes, parameterModes, parameterNames, trftypes, and proconfig
  * are either arrays of the proper types or NULL.  We declare them Datum,
  * not "ArrayType *", to avoid importing array.h into pg_proc_fn.h.
  * ----------------------------------------------------------------
@@ -86,6 +88,7 @@ ProcedureCreate(const char *procedureName,
 				Datum parameterModes,
 				Datum parameterNames,
 				List *parameterDefaults,
+				Datum trftypes,
 				Datum proconfig,
 				float4 procost,
 				float4 prorows)
@@ -116,6 +119,7 @@ ProcedureCreate(const char *procedureName,
 	ObjectAddress myself,
 				referenced;
 	int			i;
+	Oid			trfid;
 
 	/*
 	 * sanity checks
@@ -360,6 +364,10 @@ ProcedureCreate(const char *procedureName,
 		values[Anum_pg_proc_proargdefaults - 1] = CStringGetTextDatum(nodeToString(parameterDefaults));
 	else
 		nulls[Anum_pg_proc_proargdefaults - 1] = true;
+	if (trftypes != PointerGetDatum(NULL))
+		values[Anum_pg_proc_protrftypes - 1] = trftypes;
+	else
+		nulls[Anum_pg_proc_protrftypes - 1] = true;
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
@@ -624,6 +632,15 @@ ProcedureCreate(const char *procedureName,
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
+	/* dependency on transform used by return type, if any */
+	if ((trfid = get_transform_oid(returnType, languageObjectId, true)))
+	{
+		referenced.classId = TransformRelationId;
+		referenced.objectId = trfid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
 	/* dependency on parameter types */
 	for (i = 0; i < allParamCount; i++)
 	{
@@ -631,6 +648,15 @@ ProcedureCreate(const char *procedureName,
 		referenced.objectId = allParams[i];
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+		/* dependency on transform used by parameter type, if any */
+		if ((trfid = get_transform_oid(allParams[i], languageObjectId, true)))
+		{
+			referenced.classId = TransformRelationId;
+			referenced.objectId = trfid;
+			referenced.objectSubId = 0;
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
 	}
 
 	/* dependency on parameter default expressions */
@@ -1127,4 +1153,22 @@ fail:
 	/* Must set *newcursorpos to suppress compiler warning */
 	*newcursorpos = newcp;
 	return false;
+}
+
+List *
+oid_array_to_list(Datum datum)
+{
+	ArrayType *array = DatumGetArrayTypeP(datum);
+	Datum *values;
+	int nelems;
+	int i;
+	List *result = NIL;
+
+	deconstruct_array(array,
+					  OIDOID,
+					  sizeof(Oid), true, 'i',
+					  &values, NULL, &nelems);
+	for (i = 0; i < nelems; i++)
+		result = lappend_oid(result, values[i]);
+	return result;
 }

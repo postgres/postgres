@@ -597,6 +597,25 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
  </sect2>
 
  <sect2>
+  <title>Transforms</title>
+
+  <para>
+   Additional extensions are available that implement transforms for
+   the <type>hstore</type> type for the languages PL/Perl and PL/Python.  The
+   extensions for PL/Perl are called <literal>hstore_plperl</literal>
+   and <literal>hstore_plperlu</literal>, for trusted and untrusted PL/Perl.
+   If you install these transforms and specify them when creating a
+   function, <type>hstore</type> values are mapped to Perl hashes.  The
+   extensions for PL/Python are
+   called <literal>hstore_plpythonu</literal>, <literal>hstore_plpython2u</literal>,
+   and <literal>hstore_plpython3u</literal>
+   (see <xref linkend="plpython-python23"> for the PL/Python naming
+   convention).  If you use them, <type>hstore</type> values are mapped to
+   Python dictionaries.
+  </para>
+ </sect2>
+
+ <sect2>
   <title>Authors</title>
 
   <para>

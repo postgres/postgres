@@ -24,12 +24,14 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -977,6 +979,30 @@ get_constraint_name(Oid conoid)
 		return NULL;
 }
 
+/*				---------- LANGUAGE CACHE ----------					 */
+
+char *
+get_language_name(Oid langoid, bool missing_ok)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(LANGOID, ObjectIdGetDatum(langoid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_language lantup = (Form_pg_language) GETSTRUCT(tp);
+		char	   *result;
+
+		result = pstrdup(NameStr(lantup->lanname));
+		ReleaseSysCache(tp);
+		return result;
+	}
+
+	if (!missing_ok)
+		elog(ERROR, "cache lookup failed for language %u",
+			 langoid);
+	return NULL;
+}
+
 /*				---------- OPCLASS CACHE ----------						 */
 
 /*
@@ -1737,6 +1763,51 @@ get_rel_tablespace(Oid relid)
 		result = reltup->reltablespace;
 		ReleaseSysCache(tp);
 		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+
+/*				---------- TRANSFORM CACHE ----------						 */
+
+Oid
+get_transform_fromsql(Oid typid, Oid langid, List *trftypes)
+{
+	HeapTuple	tup;
+
+	if (!list_member_oid(trftypes, typid))
+		return InvalidOid;
+
+	tup = SearchSysCache2(TRFTYPELANG, typid, langid);
+	if (HeapTupleIsValid(tup))
+	{
+		Oid			funcid;
+
+		funcid = ((Form_pg_transform) GETSTRUCT(tup))->trffromsql;
+		ReleaseSysCache(tup);
+		return funcid;
+	}
+	else
+		return InvalidOid;
+}
+
+Oid
+get_transform_tosql(Oid typid, Oid langid, List *trftypes)
+{
+	HeapTuple	tup;
+
+	if (!list_member_oid(trftypes, typid))
+		return InvalidOid;
+
+	tup = SearchSysCache2(TRFTYPELANG, typid, langid);
+	if (HeapTupleIsValid(tup))
+	{
+		Oid			funcid;
+
+		funcid = ((Form_pg_transform) GETSTRUCT(tup))->trftosql;
+		ReleaseSysCache(tup);
+		return funcid;
 	}
 	else
 		return InvalidOid;

@@ -70,6 +70,7 @@ extern void get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
 					  Oid *typid, int32 *typmod, Oid *collid);
 extern char *get_collation_name(Oid colloid);
 extern char *get_constraint_name(Oid conoid);
+extern char *get_language_name(Oid langoid, bool missing_ok);
 extern Oid	get_opclass_family(Oid opclass);
 extern Oid	get_opclass_input_type(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);
@@ -101,6 +102,8 @@ extern Oid	get_rel_namespace(Oid relid);
 extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
 extern Oid	get_rel_tablespace(Oid relid);
+extern Oid get_transform_fromsql(Oid typid, Oid langid, List *trftypes);
+extern Oid get_transform_tosql(Oid typid, Oid langid, List *trftypes);
 extern bool get_typisdefined(Oid typid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);

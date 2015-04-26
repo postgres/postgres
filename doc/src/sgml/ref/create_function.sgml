@@ -25,6 +25,7 @@ CREATE [ OR REPLACE ] FUNCTION
     [ RETURNS <replaceable class="parameter">rettype</replaceable>
       | RETURNS TABLE ( <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">column_type</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">lang_name</replaceable>
+    | TRANSFORM { FOR TYPE <replaceable class="parameter">type_name</replaceable> } [, ... ]
     | WINDOW
     | IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
@@ -256,6 +257,23 @@ CREATE [ OR REPLACE ] FUNCTION
        <literal>internal</literal>, or the name of a user-defined
        procedural language, e.g. <literal>plpgsql</literal>.  Enclosing the
        name in single quotes is deprecated and requires matching case.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TRANSFORM { FOR TYPE <replaceable class="parameter">type_name</replaceable> } [, ... ] }</literal></term>
+
+     <listitem>
+      <para>
+       Lists which transforms a call to the function should apply.  Transforms
+       convert between SQL types and language-specific data types;
+       see <xref linkend="sql-createtransform">.  Procedural language
+       implementations usually have hardcoded knowledge of the built-in types,
+       so those don't need to be listed here.  If a procedural language
+       implementation does not know how to handle a type and no transform is
+       supplied, it will fall back to a default behavior for converting data
+       types, but this depends on the implementation.
       </para>
      </listitem>
     </varlistentry>

@@ -127,7 +127,7 @@ ifeq ($(PORTNAME), darwin)
   else
     # loadable module
     DLSUFFIX		= .so
-    LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress
+    LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress -Wl,-undefined,dynamic_lookup
   endif
   BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
   exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)

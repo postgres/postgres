@@ -1,0 +1,207 @@
+<!-- doc/src/sgml/ref/create_transform.sgml -->
+
+<refentry id="SQL-CREATETRANSFORM">
+ <indexterm zone="sql-createtransform">
+  <primary>CREATE TRANSFORM</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE TRANSFORM</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE TRANSFORM</refname>
+  <refpurpose>define a new transform</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE [ OR REPLACE ] TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable> (
+    FROM SQL WITH FUNCTION <replaceable>from_sql_function_name</replaceable> (<replaceable>argument_type</replaceable> [, ...]),
+    TO SQL WITH FUNCTION <replaceable>to_sql_function_name</replaceable> (<replaceable>argument_type</replaceable> [, ...])
+);
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="sql-createtransform-description">
+  <title>Description</title>
+
+  <para>
+   <command>CREATE TRANSFORM</command> defines a new transform.
+   <command>CREATE OR REPLACE TRANSFORM</command> will either create a new
+   transform, or replace an existing definition.
+  </para>
+
+  <para>
+   A transform specifies how to adapt a data type to a procedural language.
+   For example, when writing a function in PL/Python using
+   the <type>hstore</type> type, PL/Python has no prior knowledge how to
+   present <type>hstore</type> values in the Python environment.  Language
+   implementations usually default to using the text representation, but that
+   is inconvenient when, for example, an associative array or a list would be
+   more appropriate.
+  </para>
+
+  <para>
+   A transform specifies two functions:
+   <itemizedlist>
+    <listitem>
+     <para>
+      A <quote>from SQL</quote> function that converts the type from the SQL
+      environment to the language.  This function will be invoked on the
+      arguments of a function written in the language.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A <quote>to SQL</quote> function that converts the type from the
+      language to the SQL environment.  This function will be invoked on the
+      return value of a function written in the language.
+     </para>
+    </listitem>
+   </itemizedlist>
+   It is not necessary to provide both of these functions.  If one is not
+   specified, the language-specific default behavior will be used if
+   necessary.  (To prevent a transformation in a certain direction from
+   happening at all, you could also write a transform function that always
+   errors out.)
+  </para>
+
+  <para>
+   To be able to create a transform, you must own and
+   have <literal>USAGE</literal> privilege on the type, have
+   <literal>USAGE</literal> privilege on the language, and own and
+   have <literal>EXECUTE</literal> privilege on the from-SQL and to-SQL
+   functions, if specified.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><replaceable>type_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the data type of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>lang_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the language of the transform.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>from_sql_function_name</replaceable>(<replaceable>argument_type</replaceable> [, ...])</term>
+
+     <listitem>
+      <para>
+       The name of the function for converting the type from the SQL
+       environment to the language.  It must take one argument of
+       type <type>internal</type> and return type <type>internal</type>.  The
+       actual argument will be of the type for the transform, and the function
+       should be coded as if it were.  (But it is not allowed to declare an
+       SQL-level function function returning <type>internal</type> without at
+       least one argument of type <type>internal</type>.)  The actual return
+       value will be something specific to the language implementation.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>to_sql_function_name</replaceable>(<replaceable>argument_type</replaceable> [, ...])</term>
+
+     <listitem>
+      <para>
+       The name of the function for converting the type from the language to
+       the SQL environment.  It must take one argument of type
+       <type>internal</type> and return the type that is the type for the
+       transform.  The actual argument value will be something specific to the
+       language implementation.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-createtransform-notes">
+  <title>Notes</title>
+
+  <para>
+   Use <xref linkend="sql-droptransform"> to remove transforms.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createtransform-examples">
+  <title>Examples</title>
+
+  <para>
+   To create a transform for type <type>hstore</type> and language
+   <literal>plpythonu</literal>, first set up the type and the language:
+<programlisting>
+CREATE TYPE hstore ...;
+
+CREATE LANGUAGE plpythonu ...;
+</programlisting>
+   Then create the necessary functions:
+<programlisting>
+CREATE FUNCTION hstore_to_plpython(val internal) RETURNS internal
+LANGUAGE C STRICT IMMUTABLE
+AS ...;
+
+CREATE FUNCTION plpython_to_hstore(val internal) RETURNS hstore
+LANGUAGE C STRICT IMMUTABLE
+AS ...;
+</programlisting>
+   And finally create the transform to connect them all together:
+<programlisting>
+CREATE TRANSFORM FOR hstore LANGUAGE plpythonu (
+    FROM SQL WITH FUNCTION hstore_to_plpython(internal),
+    TO SQL WITH FUNCTION plpython_to_hstore(internal)
+);
+</programlisting>
+   In practice, these commands would be wrapped up in extensions.
+  </para>
+
+  <para>
+   The <filename>contrib</filename> section contains a number of extensions
+   that provide transforms, which can serve as real-world examples.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createtransform-compat">
+  <title>Compatibility</title>
+
+  <para>
+   This form of <command>CREATE TRANSFORM</command> is a
+   <productname>PostgreSQL</productname> extension.  There is a <command>CREATE
+   TRANSFORM</command> command in the <acronym>SQL</acronym> standard, but it
+   is for adapting data types to client languages.  That usage is not supported
+   by <productname>PostgreSQL</productname>.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createtransform-seealso">
+  <title>See Also</title>
+
+  <para>
+   <xref linkend="sql-createfunction">,
+   <xref linkend="sql-createlanguage">,
+   <xref linkend="sql-createtype">,
+   <xref linkend="sql-droptransform">
+  </para>
+ </refsect1>
+
+</refentry>

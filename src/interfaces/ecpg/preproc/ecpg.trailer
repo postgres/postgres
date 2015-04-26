@@ -1005,7 +1005,7 @@ ecpg_using:	USING using_list	{ $$ = EMPTY; }
 		| using_descriptor		{ $$ = $1; }
 		;
 
-using_descriptor: USING SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
+using_descriptor: USING SQL_P SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			add_variable_to_head(&argsinsert, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
@@ -1017,7 +1017,7 @@ using_descriptor: USING SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
 		}
 		;
 
-into_descriptor: INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
+into_descriptor: INTO SQL_P SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			add_variable_to_head(&argsresult, descriptor_variable($4,1), &no_indicator);
 			$$ = EMPTY;
@@ -1494,7 +1494,6 @@ ECPGKeywords_vanames:  SQL_BREAK		{ $$ = mm_strdup("break"); }
 		| SQL_RETURNED_OCTET_LENGTH	{ $$ = mm_strdup("returned_octet_length"); }
 		| SQL_SCALE					{ $$ = mm_strdup("scale"); }
 		| SQL_SECTION				{ $$ = mm_strdup("section"); }
-		| SQL_SQL				{ $$ = mm_strdup("sql"); }
 		| SQL_SQLERROR				{ $$ = mm_strdup("sqlerror"); }
 		| SQL_SQLPRINT				{ $$ = mm_strdup("sqlprint"); }
 		| SQL_SQLWARNING			{ $$ = mm_strdup("sqlwarning"); }

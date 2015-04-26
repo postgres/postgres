@@ -71,6 +71,18 @@ else
 ALWAYS_SUBDIRS += sepgsql
 endif
 
+ifeq ($(with_perl),yes)
+SUBDIRS += hstore_plperl
+else
+ALWAYS_SUBDIRS += hstore_plperl
+endif
+
+ifeq ($(with_python),yes)
+SUBDIRS += hstore_plpython ltree_plpython
+else
+ALWAYS_SUBDIRS += hstore_plpython ltree_plpython
+endif
+
 # Missing:
 #		start-scripts	\ (does not have a makefile)
 

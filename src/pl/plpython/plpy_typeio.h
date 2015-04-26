@@ -17,6 +17,7 @@ typedef struct PLyDatumToOb
 {
 	PLyDatumToObFunc func;
 	FmgrInfo	typfunc;		/* The type's output function */
+	FmgrInfo	typtransform;	/* from-SQL transform */
 	Oid			typoid;			/* The OID of the type */
 	int32		typmod;			/* The typmod of the type */
 	Oid			typioparam;
@@ -48,6 +49,7 @@ typedef struct PLyObToDatum
 {
 	PLyObToDatumFunc func;
 	FmgrInfo	typfunc;		/* The type's input function */
+	FmgrInfo	typtransform;	/* to-SQL transform */
 	Oid			typoid;			/* The OID of the type */
 	int32		typmod;			/* The typmod of the type */
 	Oid			typioparam;
@@ -91,8 +93,8 @@ typedef struct PLyTypeInfo
 extern void PLy_typeinfo_init(PLyTypeInfo *arg);
 extern void PLy_typeinfo_dealloc(PLyTypeInfo *arg);
 
-extern void PLy_input_datum_func(PLyTypeInfo *arg, Oid typeOid, HeapTuple typeTup);
-extern void PLy_output_datum_func(PLyTypeInfo *arg, HeapTuple typeTup);
+extern void PLy_input_datum_func(PLyTypeInfo *arg, Oid typeOid, HeapTuple typeTup, Oid langid, List *trftypes);
+extern void PLy_output_datum_func(PLyTypeInfo *arg, HeapTuple typeTup, Oid langid, List *trftypes);
 
 extern void PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
 extern void PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
@@ -104,5 +106,8 @@ extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObj
 
 /* conversion from heap tuples to Python dictionaries */
 extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);
+
+/* conversion from Python objects to C strings */
+extern char *PLyObject_AsString(PyObject *plrv);
 
 #endif   /* PLPY_TYPEIO_H */

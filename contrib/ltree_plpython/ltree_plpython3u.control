@@ -1,0 +1,6 @@
+# ltree_plpython3u extension
+comment = 'transform between ltree and plpython3u'
+default_version = '1.0'
+module_pathname = '$libdir/ltree_plpython3'
+relocatable = true
+requires = 'ltree,plpython3u'
