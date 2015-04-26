@@ -88,7 +88,7 @@ typedef unsigned int pg_wchar;
  * interoperable anyway).
  *
  * Note that XEmacs's implementation is different from what emacs does.
- * We follow emacs's implementaion, rathter than XEmacs's.
+ * We follow emacs's implementation, rather than XEmacs's.
  *----------------------------------------------------
  */
 

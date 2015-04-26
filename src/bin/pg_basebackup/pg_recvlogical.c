@@ -603,7 +603,7 @@ main(int argc, char **argv)
 		{"verbose", no_argument, NULL, 'v'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, '?'},
-/* connnection options */
+/* connection options */
 		{"dbname", required_argument, NULL, 'd'},
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
@@ -670,7 +670,7 @@ main(int argc, char **argv)
 			case 'v':
 				verbose++;
 				break;
-/* connnection options */
+/* connection options */
 			case 'd':
 				dbname = pg_strdup(optarg);
 				break;

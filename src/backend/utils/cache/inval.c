@@ -516,7 +516,7 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 /*
  * RegisterSnapshotInvalidation
  *
- * Register a invalidation event for MVCC scans against a given catalog.
+ * Register an invalidation event for MVCC scans against a given catalog.
  * Only needed for catalogs that don't have catcaches.
  */
 static void

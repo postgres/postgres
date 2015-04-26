@@ -1597,7 +1597,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	/*
 	 * We may overwrite the work from some other backend, but that's ok, our
-	 * snapshot is valid as well, we'll just have done some superflous work.
+	 * snapshot is valid as well, we'll just have done some superfluous work.
 	 */
 	if (rename(tmppath, path) != 0)
 	{

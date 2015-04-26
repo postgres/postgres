@@ -304,7 +304,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * inserting the record into the heap and all indexes.
 	 *
 	 * ExecWithCheckOptions will elog(ERROR) if a violation is found, so
-	 * the tuple will never be seen, if it violates the the WITH CHECK
+	 * the tuple will never be seen, if it violates the WITH CHECK
 	 * OPTION.
 	 *
 	 * ExecWithCheckOptions() will skip any WCOs which are not of

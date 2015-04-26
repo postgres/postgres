@@ -848,7 +848,7 @@ LWLockDequeueSelf(LWLock *lock)
 
 		/*
 		 * Somebody else dequeued us and has or will wake us up. Deal with the
-		 * superflous absorption of a wakeup.
+		 * superfluous absorption of a wakeup.
 		 */
 
 		/*
@@ -1183,7 +1183,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 		{
 			/*
 			 * Wait until awakened.  Like in LWLockAcquire, be prepared for bogus
-			 * wakups, because we share the semaphore with ProcWaitForSignal.
+			 * wakeups, because we share the semaphore with ProcWaitForSignal.
 			 */
 			LOG_LWDEBUG("LWLockAcquireOrWait", lock, "waiting");
 

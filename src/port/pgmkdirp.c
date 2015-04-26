@@ -93,7 +93,7 @@ pg_mkdir_p(char *path, int omode)
 	/*
 	 * POSIX 1003.2: For each dir operand that does not name an existing
 	 * directory, effects equivalent to those caused by the following command
-	 * shall occcur:
+	 * shall occur:
 	 *
 	 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode] dir
 	 *

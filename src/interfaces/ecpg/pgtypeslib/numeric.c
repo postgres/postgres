@@ -1376,7 +1376,7 @@ PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_NEG)
 	{
 		/*
-		 * instead of inverting the result, we invert the paramter ordering
+		 * instead of inverting the result, we invert the parameter ordering
 		 */
 		return cmp_abs(var2, var1);
 	}

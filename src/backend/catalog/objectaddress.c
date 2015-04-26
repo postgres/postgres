@@ -100,7 +100,7 @@ typedef struct
 	AclObjectKind acl_kind;		/* ACL_KIND_* of this object type */
 	bool		is_nsp_name_unique;		/* can the nsp/name combination (or
 										 * name alone, if there's no
-										 * namespace) be considered an unique
+										 * namespace) be considered a unique
 										 * identifier for an object of this
 										 * class? */
 } ObjectPropertyType;
@@ -3241,7 +3241,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 
 			/*
 			 * We only return the object name if it can be used (together with
-			 * the schema name, if any) as an unique identifier.
+			 * the schema name, if any) as a unique identifier.
 			 */
 			if (get_object_namensp_unique(address.classId))
 			{

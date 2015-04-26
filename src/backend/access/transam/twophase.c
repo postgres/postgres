@@ -291,7 +291,7 @@ AtAbort_Twophase(void)
 }
 
 /*
- * This is called after we have finished transfering state to the prepared
+ * This is called after we have finished transferring state to the prepared
  * PGXACT entry.
  */
 void

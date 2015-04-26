@@ -304,7 +304,7 @@ brin_free_tuple(BrinTuple *tuple)
 }
 
 /*
- * Create an palloc'd copy of a BrinTuple.
+ * Create a palloc'd copy of a BrinTuple.
  */
 BrinTuple *
 brin_copy_tuple(BrinTuple *tuple, Size len)

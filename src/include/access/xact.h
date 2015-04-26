@@ -168,7 +168,7 @@ typedef struct xl_xact_assignment
  * 'xl_xact_xinfo->xinfo'. The presence of the xinfo field itself is signalled
  * by a set XLOG_XACT_HAS_INFO bit in the xl_info field.
  *
- * NB: All the individual data chunks should be be sized to multiples of
+ * NB: All the individual data chunks should be sized to multiples of
  * sizeof(int) and only require int32 alignment.
  */
 

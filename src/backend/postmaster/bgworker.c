@@ -130,7 +130,7 @@ BackgroundWorkerShmemInit(void)
 		/*
 		 * Copy contents of worker list into shared memory.  Record the shared
 		 * memory slot assigned to each worker.  This ensures a 1-to-1
-		 * correspondence betwen the postmaster's private list and the array
+		 * correspondence between the postmaster's private list and the array
 		 * in shared memory.
 		 */
 		slist_foreach(siter, &BackgroundWorkerList)

@@ -175,7 +175,7 @@ win32_exec_prog(exec_thread_arg *args)
  *	parallel_transfer_all_new_dbs
  *
  *	This has the same API as transfer_all_new_dbs, except it does parallel execution
- *	by transfering multiple tablespaces in parallel
+ *	by transferring multiple tablespaces in parallel
  */
 void
 parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,

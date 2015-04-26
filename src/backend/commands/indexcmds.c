@@ -1051,7 +1051,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				 */
 
 				/*
-				 * A expression using mutable functions is probably wrong,
+				 * An expression using mutable functions is probably wrong,
 				 * since if you aren't going to get the same result for the
 				 * same data every time, it's not clear what the index entries
 				 * mean at all.
