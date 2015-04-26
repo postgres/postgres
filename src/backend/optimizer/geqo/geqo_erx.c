@@ -138,7 +138,7 @@ gimme_edge_table(PlannerInfo *root, Gene *tour1, Gene *tour2,
  *	  registers edge from city1 to city2 in input edge table
  *
  *	  no assumptions about directionality are made;
- *	  therefor it is up to the calling routine to
+ *	  therefore it is up to the calling routine to
  *	  call gimme_edge twice to make a bi-directional edge
  *	  between city1 and city2;
  *	  uni-directional edges are possible as well (just call gimme_edge

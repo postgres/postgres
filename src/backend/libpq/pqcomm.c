@@ -1561,7 +1561,7 @@ socket_endcopyout(bool errorAbort)
 /*
  * On Windows, we need to set both idle and interval at the same time.
  * We also cannot reset them to the default (setting to zero will
- * actually set them to zero, not default), therefor we fallback to
+ * actually set them to zero, not default), therefore we fallback to
  * the out-of-the-box default instead.
  */
 #if defined(WIN32) && defined(SIO_KEEPALIVE_VALS)
