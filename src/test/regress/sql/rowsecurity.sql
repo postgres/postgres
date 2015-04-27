@@ -680,6 +680,26 @@ SELECT * FROM y2 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
 
 --
+-- Qual push-down of leaky functions, when not referring to table
+--
+SELECT * FROM y2 WHERE f_leak('abc');
+EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak('abc');
+
+CREATE TABLE test_qual_pushdown (
+	abc		text
+);
+
+INSERT INTO test_qual_pushdown VALUES ('abc'),('def');
+
+SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(abc);
+EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(abc);
+
+SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
+EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
+
+DROP TABLE test_qual_pushdown;
+
+--
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;

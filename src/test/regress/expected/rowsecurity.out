@@ -1914,6 +1914,112 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
 (4 rows)
 
 --
+-- Qual push-down of leaky functions, when not referring to table
+--
+SELECT * FROM y2 WHERE f_leak('abc');
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => abc
+ a  |                b                 
+----+----------------------------------
+  0 | cfcd208495d565ef66e7dff9f98764da
+  2 | c81e728d9d4c2f636f067f89cc14862c
+  3 | eccbc87e4b5ce2fe28308fd9f2a7baf3
+  4 | a87ff679a2f3e71d9181a67b7542122c
+  6 | 1679091c5a880faf6fb5e6087eb1b2dc
+  8 | c9f0f895fb98ab9159f51fd0297e236d
+  9 | 45c48cce2e2d7fbdea1afc51c7c6ad26
+ 10 | d3d9446802a44259755d38e6d163e820
+ 12 | c20ad4d76fe97759aa27a0c99bff6710
+ 14 | aab3238922bcc25a6f606eb525ffdc56
+ 15 | 9bf31c7ff062936a96d3c8bd1f8f2ff3
+ 16 | c74d97b01eae257e44aa9d5bade97baf
+ 18 | 6f4922f45568161a8cdf4ad2299f6d23
+ 20 | 98f13708210194c475687be6106a3b84
+(14 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak('abc');
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Seq Scan on y2
+   Filter: (f_leak('abc'::text) AND (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)))
+(2 rows)
+
+CREATE TABLE test_qual_pushdown (
+	abc		text
+);
+INSERT INTO test_qual_pushdown VALUES ('abc'),('def');
+SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(abc);
+NOTICE:  f_leak => abc
+NOTICE:  f_leak => def
+ a | b | abc 
+---+---+-----
+(0 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(abc);
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (test_qual_pushdown.abc = y2.b)
+   ->  Seq Scan on test_qual_pushdown
+         Filter: f_leak(abc)
+   ->  Hash
+         ->  Seq Scan on y2
+               Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
+(7 rows)
+
+SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
+NOTICE:  f_leak => cfcd208495d565ef66e7dff9f98764da
+NOTICE:  f_leak => c81e728d9d4c2f636f067f89cc14862c
+NOTICE:  f_leak => eccbc87e4b5ce2fe28308fd9f2a7baf3
+NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
+NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
+NOTICE:  f_leak => c9f0f895fb98ab9159f51fd0297e236d
+NOTICE:  f_leak => 45c48cce2e2d7fbdea1afc51c7c6ad26
+NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
+NOTICE:  f_leak => c20ad4d76fe97759aa27a0c99bff6710
+NOTICE:  f_leak => aab3238922bcc25a6f606eb525ffdc56
+NOTICE:  f_leak => 9bf31c7ff062936a96d3c8bd1f8f2ff3
+NOTICE:  f_leak => c74d97b01eae257e44aa9d5bade97baf
+NOTICE:  f_leak => 6f4922f45568161a8cdf4ad2299f6d23
+NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
+ a | b | abc 
+---+---+-----
+(0 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (test_qual_pushdown.abc = y2.b)
+   ->  Seq Scan on test_qual_pushdown
+   ->  Hash
+         ->  Subquery Scan on y2
+               Filter: f_leak(y2.b)
+               ->  Seq Scan on y2 y2_1
+                     Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
+(8 rows)
+
+DROP TABLE test_qual_pushdown;
+--
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;

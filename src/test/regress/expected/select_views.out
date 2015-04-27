@@ -1349,6 +1349,52 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure WHERE f_leak(passwd);
 (4 rows)
 
 --
+-- scenario: qualifiers can be pushed down if they contain leaky functions,
+--           provided they aren't passed data from inside the view.
+--
+SELECT * FROM my_property_normal v
+		WHERE f_leak('passwd') AND f_leak(passwd);
+NOTICE:  f_leak => passwd
+NOTICE:  f_leak => passwd123
+NOTICE:  f_leak => passwd
+NOTICE:  f_leak => beafsteak
+NOTICE:  f_leak => passwd
+NOTICE:  f_leak => hamburger
+ cid |     name      |       tel        |  passwd   
+-----+---------------+------------------+-----------
+ 101 | regress_alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_property_normal v
+		WHERE f_leak('passwd') AND f_leak(passwd);
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Seq Scan on customer
+   Filter: (f_leak('passwd'::text) AND f_leak(passwd) AND (name = ("current_user"())::text))
+(2 rows)
+
+SELECT * FROM my_property_secure v
+		WHERE f_leak('passwd') AND f_leak(passwd);
+NOTICE:  f_leak => passwd
+NOTICE:  f_leak => passwd123
+NOTICE:  f_leak => passwd
+NOTICE:  f_leak => passwd
+ cid |     name      |       tel        |  passwd   
+-----+---------------+------------------+-----------
+ 101 | regress_alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure v
+		WHERE f_leak('passwd') AND f_leak(passwd);
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Subquery Scan on v
+   Filter: f_leak(v.passwd)
+   ->  Seq Scan on customer
+         Filter: (f_leak('passwd'::text) AND (name = ("current_user"())::text))
+(4 rows)
+
+--
 -- scenario: if a qualifier references only one-side of a particular join-
 --           tree, it shall be distributed to the most deep scan plan as
 --           possible as we can.

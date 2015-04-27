@@ -97,7 +97,7 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
-static bool contain_leaky_functions_walker(Node *node, void *context);
+static bool contain_leaked_vars_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
 static List *find_nonnullable_vars_walker(Node *node, bool top_level);
 static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
@@ -1318,26 +1318,30 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 }
 
 /*****************************************************************************
- *		  Check clauses for non-leakproof functions
+ *		  Check clauses for Vars passed to non-leakproof functions
  *****************************************************************************/
 
 /*
- * contain_leaky_functions
- *		Recursively search for leaky functions within a clause.
+ * contain_leaked_vars
+ *		Recursively scan a clause to discover whether it contains any Var
+ *		nodes (of the current query level) that are passed as arguments to
+ *		leaky functions.
  *
- * Returns true if any function call with side-effect may be present in the
- * clause.  Qualifiers from outside the a security_barrier view should not
- * be pushed down into the view, lest the contents of tuples intended to be
- * filtered out be revealed via side effects.
+ * Returns true if the clause contains any non-leakproof functions that are
+ * passed Var nodes of the current query level, and which might therefore leak
+ * data.  Qualifiers from outside a security_barrier view that might leak data
+ * in this way should not be pushed down into the view in case the contents of
+ * tuples intended to be filtered out by the view are revealed by the leaky
+ * functions.
  */
 bool
-contain_leaky_functions(Node *clause)
+contain_leaked_vars(Node *clause)
 {
-	return contain_leaky_functions_walker(clause, NULL);
+	return contain_leaked_vars_walker(clause, NULL);
 }
 
 static bool
-contain_leaky_functions_walker(Node *node, void *context)
+contain_leaked_vars_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
@@ -1369,7 +1373,8 @@ contain_leaky_functions_walker(Node *node, void *context)
 			{
 				FuncExpr   *expr = (FuncExpr *) node;
 
-				if (!get_func_leakproof(expr->funcid))
+				if (!get_func_leakproof(expr->funcid) &&
+					contain_var_clause((Node *) expr->args))
 					return true;
 			}
 			break;
@@ -1381,7 +1386,8 @@ contain_leaky_functions_walker(Node *node, void *context)
 				OpExpr	   *expr = (OpExpr *) node;
 
 				set_opfuncid(expr);
-				if (!get_func_leakproof(expr->opfuncid))
+				if (!get_func_leakproof(expr->opfuncid) &&
+					contain_var_clause((Node *) expr->args))
 					return true;
 			}
 			break;
@@ -1391,7 +1397,8 @@ contain_leaky_functions_walker(Node *node, void *context)
 				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
 				set_sa_opfuncid(expr);
-				if (!get_func_leakproof(expr->opfuncid))
+				if (!get_func_leakproof(expr->opfuncid) &&
+					contain_var_clause((Node *) expr->args))
 					return true;
 			}
 			break;
@@ -1401,15 +1408,29 @@ contain_leaky_functions_walker(Node *node, void *context)
 				CoerceViaIO *expr = (CoerceViaIO *) node;
 				Oid			funcid;
 				Oid			ioparam;
+				bool		leakproof;
 				bool		varlena;
 
+				/*
+				 * Data may be leaked if either the input or the output
+				 * function is leaky.
+				 */
 				getTypeInputInfo(exprType((Node *) expr->arg),
 								 &funcid, &ioparam);
-				if (!get_func_leakproof(funcid))
-					return true;
+				leakproof = get_func_leakproof(funcid);
 
-				getTypeOutputInfo(expr->resulttype, &funcid, &varlena);
-				if (!get_func_leakproof(funcid))
+				/*
+				 * If the input function is leakproof, then check the output
+				 * function.
+				 */
+				if (leakproof)
+				{
+					getTypeOutputInfo(expr->resulttype, &funcid, &varlena);
+					leakproof = get_func_leakproof(funcid);
+				}
+
+				if (!leakproof &&
+					contain_var_clause((Node *) expr->arg))
 					return true;
 			}
 			break;
@@ -1419,14 +1440,29 @@ contain_leaky_functions_walker(Node *node, void *context)
 				ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 				Oid			funcid;
 				Oid			ioparam;
+				bool		leakproof;
 				bool		varlena;
 
+				/*
+				 * Data may be leaked if either the input or the output
+				 * function is leaky.
+				 */
 				getTypeInputInfo(exprType((Node *) expr->arg),
 								 &funcid, &ioparam);
-				if (!get_func_leakproof(funcid))
-					return true;
-				getTypeOutputInfo(expr->resulttype, &funcid, &varlena);
-				if (!get_func_leakproof(funcid))
+				leakproof = get_func_leakproof(funcid);
+
+				/*
+				 * If the input function is leakproof, then check the output
+				 * function.
+				 */
+				if (leakproof)
+				{
+					getTypeOutputInfo(expr->resulttype, &funcid, &varlena);
+					leakproof = get_func_leakproof(funcid);
+				}
+
+				if (!leakproof &&
+					contain_var_clause((Node *) expr->arg))
 					return true;
 			}
 			break;
@@ -1435,12 +1471,22 @@ contain_leaky_functions_walker(Node *node, void *context)
 			{
 				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 				ListCell   *opid;
+				ListCell   *larg;
+				ListCell   *rarg;
 
-				foreach(opid, rcexpr->opnos)
+				/*
+				 * Check the comparison function and arguments passed to it for
+				 * each pair of row elements.
+				 */
+				forthree(opid, rcexpr->opnos,
+						 larg, rcexpr->largs,
+						 rarg, rcexpr->rargs)
 				{
 					Oid			funcid = get_opcode(lfirst_oid(opid));
 
-					if (!get_func_leakproof(funcid))
+					if (!get_func_leakproof(funcid) &&
+						(contain_var_clause((Node *) lfirst(larg)) ||
+						 contain_var_clause((Node *) lfirst(rarg))))
 						return true;
 				}
 			}
@@ -1455,7 +1501,7 @@ contain_leaky_functions_walker(Node *node, void *context)
 			 */
 			return true;
 	}
-	return expression_tree_walker(node, contain_leaky_functions_walker,
+	return expression_tree_walker(node, contain_leaked_vars_walker,
 								  context);
 }
 

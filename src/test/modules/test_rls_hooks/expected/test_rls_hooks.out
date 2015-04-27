@@ -85,13 +85,11 @@ SET ROLE s1;
 -- restrictive hook's policy is current_user = superuser
 -- combined with AND, results in nothing being allowed
 EXPLAIN (costs off) SELECT * FROM rls_test_both;
-                      QUERY PLAN                       
--------------------------------------------------------
- Subquery Scan on rls_test_both
-   Filter: ("current_user"() = rls_test_both.username)
-   ->  Seq Scan on rls_test_both rls_test_both_1
-         Filter: ("current_user"() = supervisor)
-(4 rows)
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Seq Scan on rls_test_both
+   Filter: ((supervisor = "current_user"()) AND (username = "current_user"()))
+(2 rows)
 
 SELECT * FROM rls_test_both;
  username | supervisor | data 

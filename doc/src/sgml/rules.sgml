@@ -2136,7 +2136,7 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
     When it is necessary for a view to provide row level security, the
     <literal>security_barrier</literal> attribute should be applied to
     the view.  This prevents maliciously-chosen functions and operators from
-    being invoked on rows until after the view has done its work.  For
+    being passed values from rows until after the view has done its work.  For
     example, if the view shown above had been created like this, it would
     be secure:
 <programlisting>
@@ -2157,9 +2157,12 @@ CREATE VIEW phone_number WITH (security_barrier) AS
     operators.  The query planner can safely allow such functions to be evaluated
     at any point in the query execution process, since invoking them on rows
     invisible to the user will not leak any information about the unseen rows.
-    In contrast, a function that might throw an error depending on the values
-    received as arguments (such as one that throws an error in the event of
-    overflow or division by zero) are not leak-proof, and could provide
+    Further, functions which do not take arguments or which are not passed any
+    arguments from the security barrier view do not have to be marked as
+    <literal>LEAKPROOF</literal> to be pushed down, as they never receive data
+    from the view.  In contrast, a function that might throw an error depending
+    on the values received as arguments (such as one that throws an error in the
+    event of overflow or division by zero) are not leak-proof, and could provide
     significant information about the unseen rows if applied before the security
     view's row filters.
 </para>
