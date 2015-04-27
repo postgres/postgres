@@ -75,43 +75,48 @@ EOF
 		my $dir  = $1;
 		my $file = $2;
 
-  # Walk backwards down the directory stack and close any dirs we're done with
+		# Walk backwards down the directory stack and close any dirs
+		# we're done with.
 		while ($#dirstack >= 0)
 		{
-			if (join('\\', @dirstack) eq
-				substr($dir, 0, length(join('\\', @dirstack))))
+			if (join('/', @dirstack) eq
+				substr($dir, 0, length(join('/', @dirstack))))
 			{
-				last if (length($dir) == length(join('\\', @dirstack)));
+				last if (length($dir) == length(join('/', @dirstack)));
 				last
-				  if (substr($dir, length(join('\\', @dirstack)), 1) eq '\\');
+				  if (substr($dir, length(join('/', @dirstack)), 1) eq '/');
 			}
 			print $f ' ' x $#dirstack . "  </Filter>\n";
 			pop @dirstack;
 		}
 
 		# Now walk forwards and create whatever directories are needed
-		while (join('\\', @dirstack) ne $dir)
+		while (join('/', @dirstack) ne $dir)
 		{
-			my $left = substr($dir, length(join('\\', @dirstack)));
-			$left =~ s/^\\//;
-			my @pieces = split /\\/, $left;
+			my $left = substr($dir, length(join('/', @dirstack)));
+			$left =~ s/^\///;
+			my @pieces = split /\//, $left;
 			push @dirstack, $pieces[0];
 			print $f ' ' x $#dirstack
 			  . "  <Filter Name=\"$pieces[0]\" Filter=\"\">\n";
 		}
 
+		# VC builds do not like file paths with forward slashes.
+		my $fileNameWithPathFormatted = $fileNameWithPath;
+		$fileNameWithPathFormatted =~ s/\//\\/g;
+
 		print $f ' ' x $#dirstack
-		  . "   <File RelativePath=\"$fileNameWithPath\"";
+		  . "   <File RelativePath=\"$fileNameWithPathFormatted\"";
 		if ($fileNameWithPath =~ /\.y$/)
 		{
 			my $of = $fileNameWithPath;
 			$of =~ s/\.y$/.c/;
 			$of =~
-s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
+s{^src/pl/plpgsql/src/gram.c$}{src/pl/plpgsql/src/pl_gram.c};
 			print $f '>'
 			  . $self->GenerateCustomTool(
 				'Running bison on ' . $fileNameWithPath,
-				"perl src\\tools\\msvc\\pgbison.pl $fileNameWithPath", $of)
+				"perl src/tools/msvc/pgbison.pl $fileNameWithPath", $of)
 			  . '</File>' . "\n";
 		}
 		elsif ($fileNameWithPath =~ /\.l$/)
@@ -121,7 +126,7 @@ s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
 			print $f '>'
 			  . $self->GenerateCustomTool(
 				'Running flex on ' . $fileNameWithPath,
-				"perl src\\tools\\msvc\\pgflex.pl $fileNameWithPath", $of)
+				"perl src/tools/msvc/pgflex.pl $fileNameWithPath", $of)
 			  . '</File>' . "\n";
 		}
 		elsif (defined($uniquefiles{$file}))
@@ -129,7 +134,7 @@ s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
 
 			# File already exists, so fake a new name
 			my $obj = $dir;
-			$obj =~ s/\\/_/g;
+			$obj =~ s!/!_!g;
 			print $f
 "><FileConfiguration Name=\"Debug|$self->{platform}\"><Tool Name=\"VCCLCompilerTool\" ObjectFile=\".\\debug\\$self->{name}\\$obj"
 			  . "_$file.obj\" /></FileConfiguration><FileConfiguration Name=\"Release|$self->{platform}\"><Tool Name=\"VCCLCompilerTool\" ObjectFile=\".\\release\\$self->{name}\\$obj"

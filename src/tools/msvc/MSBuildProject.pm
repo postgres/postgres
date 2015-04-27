@@ -143,7 +143,7 @@ EOF
 
 			# File already exists, so fake a new name
 			my $obj = $dir;
-			$obj =~ s/\\/_/g;
+			$obj =~ s!/!_!g;
 
 			print $f <<EOF;
     <ClCompile Include="$fileNameWithPath">

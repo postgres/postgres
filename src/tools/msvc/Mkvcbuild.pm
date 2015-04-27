@@ -33,12 +33,10 @@ my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq =
   ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo');
 my @contrib_uselibpgport = (
-	'chkpass',
 	'oid2name',
 	'pg_standby',
 	'vacuumlo');
 my @contrib_uselibpgcommon = (
-	'chkpass',
 	'oid2name',
 	'pg_standby',
 	'vacuumlo');
