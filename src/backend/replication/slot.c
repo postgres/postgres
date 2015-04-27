@@ -1091,7 +1091,7 @@ RestoreSlotFromDisk(const char *name)
 
 	elog(DEBUG1, "restoring replication slot from \"%s\"", path);
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY, 0);
 
 	/*
 	 * We do not need to handle this as we are rename()ing the directory into
