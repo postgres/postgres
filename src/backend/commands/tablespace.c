@@ -288,6 +288,12 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 				 errmsg("tablespace location \"%s\" is too long",
 						location)));
 
+	/* Warn if the tablespace is in the data directory. */
+	if (path_is_prefix_of_path(DataDir, location))
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("tablespace location should not be inside the data directory")));
+
 	/*
 	 * Disallow creation of tablespaces named "pg_xxx"; we reserve this
 	 * namespace for system purposes.

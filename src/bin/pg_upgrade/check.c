@@ -508,6 +508,10 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 		canonicalize_path(old_tablespace_dir);
 		if (path_is_prefix_of_path(old_cluster_pgdata, old_tablespace_dir))
 		{
+			/* reproduce warning from CREATE TABLESPACE that is in the log */
+			pg_log(PG_WARNING,
+				"\nWARNING:  user-defined tablespace locations should not be inside the data directory, e.g. %s\n", old_tablespace_dir);
+
 			/* Unlink file in case it is left over from a previous run. */
 			unlink(*deletion_script_file_name);
 			pg_free(*deletion_script_file_name);
