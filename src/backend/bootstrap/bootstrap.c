@@ -411,6 +411,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case BootstrapProcess:
+			/*
+			 * There was a brief instant during which mode was Normal; this is
+			 * okay.  We need to be in bootstrap mode during BootStrapXLOG for
+			 * the sake of multixact initialization.
+			 */
+			SetProcessingMode(BootstrapProcessing);
 			bootstrap_signals();
 			BootStrapXLOG();
 			BootstrapModeMain();
@@ -473,8 +479,7 @@ BootstrapModeMain(void)
 	int			i;
 
 	Assert(!IsUnderPostmaster);
-
-	SetProcessingMode(BootstrapProcessing);
+	Assert(IsBootstrapProcessingMode());
 
 	/*
 	 * Do backend-like initialization for bootstrap mode
