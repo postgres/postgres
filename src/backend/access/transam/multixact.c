@@ -345,7 +345,7 @@ static void ExtendMultiXactMember(MultiXactOffset offset, int nmembers);
 static void DetermineSafeOldestOffset(MultiXactId oldestMXact);
 static bool MultiXactOffsetWouldWrap(MultiXactOffset boundary,
 						 MultiXactOffset start, uint32 distance);
-static MultiXactOffset read_offset_for_multi(MultiXactId multi);
+static MultiXactOffset find_multixact_start(MultiXactId multi);
 static void WriteMZeroPageXlogRec(int pageno, uint8 info);
 
 
@@ -1079,12 +1079,12 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("multixact \"members\" limit exceeded"),
-				 errdetail_plural("This command would create a multixact with %u members, which exceeds remaining space (%u member.)",
-								  "This command would create a multixact with %u members, which exceeds remaining space (%u members.)",
+				 errdetail_plural("This command would create a multixact with %u members, but the remaining space is only enough for %u member.",
+								  "This command would create a multixact with %u members, but the remaining space is only enough for %u members.",
 							MultiXactState->offsetStopLimit - nextOffset - 1,
 								  nmembers,
 						   MultiXactState->offsetStopLimit - nextOffset - 1),
-				 errhint("Execute a database-wide VACUUM in database with OID %u, with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.",
+				 errhint("Execute a database-wide VACUUM in database with OID %u with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.",
 						 MultiXactState->oldestMultiXactDB)));
 	else if (MultiXactOffsetWouldWrap(MultiXactState->offsetStopLimit,
 									  nextOffset,
@@ -1094,7 +1094,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 				 errmsg("database with OID %u must be vacuumed before %d more multixact members are used",
 						MultiXactState->oldestMultiXactDB,
 					MultiXactState->offsetStopLimit - nextOffset + nmembers),
-				 errhint("Execute a database-wide VACUUM in that database, with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.")));
+				 errhint("Execute a database-wide VACUUM in that database with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.")));
 
 	ExtendMultiXactMember(nextOffset, nmembers);
 
@@ -2506,7 +2506,7 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 	 * one-segment hole at a minimum.  We start spewing warnings a few
 	 * complete segments before that.
 	 */
-	oldestOffset = read_offset_for_multi(oldestMXact);
+	oldestOffset = find_multixact_start(oldestMXact);
 	/* move back to start of the corresponding segment */
 	oldestOffset -= oldestOffset / MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT;
 
@@ -2562,20 +2562,16 @@ MultiXactOffsetWouldWrap(MultiXactOffset boundary, MultiXactOffset start,
 	 *-----------------------------------------------------------------------
 	 */
 	if (start < boundary)
-	{
 		return finish >= boundary || finish < start;
-	}
 	else
-	{
 		return finish >= boundary && finish < start;
-	}
 }
 
 /*
- * Read the offset of the first member of the given multixact.
+ * Find the starting offset of the given MultiXactId.
  */
 static MultiXactOffset
-read_offset_for_multi(MultiXactId multi)
+find_multixact_start(MultiXactId multi)
 {
 	MultiXactOffset offset;
 	int			pageno;
@@ -2728,7 +2724,7 @@ TruncateMultiXact(void)
 	 * First, compute the safe truncation point for MultiXactMember. This is
 	 * the starting offset of the oldest multixact.
 	 */
-	oldestOffset = read_offset_for_multi(oldestMXact);
+	oldestOffset = find_multixact_start(oldestMXact);
 
 	/*
 	 * To truncate MultiXactMembers, we need to figure out the active page
