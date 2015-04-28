@@ -1799,10 +1799,12 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 				Assert(IsA(inh, RangeVar));
 				rel = heap_openrv(inh, AccessShareLock);
-				if (rel->rd_rel->relkind != RELKIND_RELATION)
+				/* check user requested inheritance from valid relkind */
+				if (rel->rd_rel->relkind != RELKIND_RELATION &&
+					rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						   errmsg("inherited relation \"%s\" is not a table",
+						   errmsg("inherited relation \"%s\" is not a table or foreign table",
 								  inh->relname)));
 				for (count = 0; count < rel->rd_att->natts; count++)
 				{
