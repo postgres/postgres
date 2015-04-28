@@ -46,7 +46,11 @@ my $contrib_extraincludes =
 my $contrib_extrasource = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
 	'seg' => [ 'contrib/seg/segscan.l', 'contrib/seg/segparse.y' ], };
-my @contrib_excludes = ('pgcrypto', 'commit_ts', 'intagg', 'sepgsql');
+my @contrib_excludes = (
+	'commit_ts', 'hstore_plperl',
+	'hstore_plpython', 'intagg',
+	'ltree_plpython', 'pgcrypto',
+	'sepgsql');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
@@ -175,119 +179,6 @@ sub mkvcbuild
 	  $solution->AddProject('plpgsql', 'dll', 'PLs', 'src/pl/plpgsql/src');
 	$plpgsql->AddFiles('src/pl/plpgsql/src', 'pl_gram.y');
 	$plpgsql->AddReference($postgres);
-
-	if ($solution->{options}->{perl})
-	{
-		my $plperlsrc = "src/pl/plperl/";
-		my $plperl =
-		  $solution->AddProject('plperl', 'dll', 'PLs', 'src/pl/plperl');
-		$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
-		$plperl->AddDefine('PLPERL_HAVE_UID_GID');
-		foreach my $xs ('SPI.xs', 'Util.xs')
-		{
-			(my $xsc = $xs) =~ s/\.xs/.c/;
-			if (Solution::IsNewer("$plperlsrc$xsc", "$plperlsrc$xs"))
-			{
-				my $xsubppdir = first { -e "$_/ExtUtils/xsubpp" } @INC;
-				print "Building $plperlsrc$xsc...\n";
-				system( $solution->{options}->{perl}
-					  . '/bin/perl '
-					  . "$xsubppdir/ExtUtils/xsubpp -typemap "
-					  . $solution->{options}->{perl}
-					  . '/lib/ExtUtils/typemap '
-					  . "$plperlsrc$xs "
-					  . ">$plperlsrc$xsc");
-				if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
-				{
-					unlink("$plperlsrc$xsc");    # if zero size
-					die "Failed to create $xsc.\n";
-				}
-			}
-		}
-		if (Solution::IsNewer(
-				'src/pl/plperl/perlchunks.h',
-				'src/pl/plperl/plc_perlboot.pl')
-			|| Solution::IsNewer(
-				'src/pl/plperl/perlchunks.h',
-				'src/pl/plperl/plc_trusted.pl'))
-		{
-			print 'Building src/pl/plperl/perlchunks.h ...' . "\n";
-			my $basedir = getcwd;
-			chdir 'src/pl/plperl';
-			system( $solution->{options}->{perl}
-				  . '/bin/perl '
-				  . 'text2macro.pl '
-				  . '--strip="^(\#.*|\s*)$$" '
-				  . 'plc_perlboot.pl plc_trusted.pl '
-				  . '>perlchunks.h');
-			chdir $basedir;
-			if ((!(-f 'src/pl/plperl/perlchunks.h'))
-				|| -z 'src/pl/plperl/perlchunks.h')
-			{
-				unlink('src/pl/plperl/perlchunks.h');    # if zero size
-				die 'Failed to create perlchunks.h' . "\n";
-			}
-		}
-		if (Solution::IsNewer(
-				'src/pl/plperl/plperl_opmask.h',
-				'src/pl/plperl/plperl_opmask.pl'))
-		{
-			print 'Building src/pl/plperl/plperl_opmask.h ...' . "\n";
-			my $basedir = getcwd;
-			chdir 'src/pl/plperl';
-			system( $solution->{options}->{perl}
-				  . '/bin/perl '
-				  . 'plperl_opmask.pl '
-				  . 'plperl_opmask.h');
-			chdir $basedir;
-			if ((!(-f 'src/pl/plperl/plperl_opmask.h'))
-				|| -z 'src/pl/plperl/plperl_opmask.h')
-			{
-				unlink('src/pl/plperl/plperl_opmask.h');    # if zero size
-				die 'Failed to create plperl_opmask.h' . "\n";
-			}
-		}
-		$plperl->AddReference($postgres);
-		my @perl_libs =
-		  grep { /perl\d+.lib$/ }
-		  glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
-		if (@perl_libs == 1)
-		{
-			$plperl->AddLibrary($perl_libs[0]);
-		}
-		else
-		{
-			die "could not identify perl library version";
-		}
-	}
-
-	if ($solution->{options}->{python})
-	{
-
-		# Attempt to get python version and location.
-		# Assume python.exe in specified dir.
-		open(P,
-			$solution->{options}->{python}
-			  . "\\python -c \"import sys;print(sys.prefix);print(str(sys.version_info[0])+str(sys.version_info[1]))\" |"
-		) || die "Could not query for python version!\n";
-		my $pyprefix = <P>;
-		chomp($pyprefix);
-		my $pyver = <P>;
-		chomp($pyver);
-		close(P);
-
-		# Sometimes (always?) if python is not present, the execution
-		# appears to work, but gives no data...
-		die "Failed to query python for version information\n"
-		  if (!(defined($pyprefix) && defined($pyver)));
-
-		my $pymajorver = substr($pyver, 0, 1);
-		my $plpython = $solution->AddProject('plpython' . $pymajorver,
-			'dll', 'PLs', 'src/pl/plpython');
-		$plpython->AddIncludeDir($pyprefix . '/include');
-		$plpython->AddLibrary($pyprefix . "/Libs/python$pyver.lib");
-		$plpython->AddReference($postgres);
-	}
 
 	if ($solution->{options}->{tcl})
 	{
@@ -571,6 +462,138 @@ sub mkvcbuild
 		closedir($D);
 	}
 
+	# Build Perl and Python modules after contrib/ modules to satisfy some
+	# dependencies with transform contrib modules, like hstore_plpython
+	# ltree_plpython and hstore_plperl.
+	if ($solution->{options}->{python})
+	{
+		# Attempt to get python version and location.
+		# Assume python.exe in specified dir.
+		my $pythonprog = "import sys;print(sys.prefix);" .
+		  "print(str(sys.version_info[0])+str(sys.version_info[1]))";
+		my $prefixcmd = $solution->{options}->{python}
+			  . "\\python -c \"$pythonprog\"";
+		my $pyout = `$prefixcmd`;
+		die "Could not query for python version!\n" if $?;
+		my ($pyprefix,$pyver) = split(/\r?\n/,$pyout);
+
+		# Sometimes (always?) if python is not present, the execution
+		# appears to work, but gives no data...
+		die "Failed to query python for version information\n"
+		  if (!(defined($pyprefix) && defined($pyver)));
+
+		my $pymajorver = substr($pyver, 0, 1);
+		my $plpython = $solution->AddProject('plpython' . $pymajorver,
+			'dll', 'PLs', 'src/pl/plpython');
+		$plpython->AddIncludeDir($pyprefix . '/include');
+		$plpython->AddLibrary($pyprefix . "/Libs/python$pyver.lib");
+		$plpython->AddReference($postgres);
+
+		# Add transform modules dependent on plpython
+		AddTransformModule('hstore_plpython' . $pymajorver,
+						   'contrib/hstore_plpython',
+						   'plpython' . $pymajorver,
+						   'src/pl/plpython', 'hstore',
+						   'contrib/hstore');
+		AddTransformModule('ltree_plpython' . $pymajorver,
+						   'contrib/ltree_plpython',
+						   'plpython' . $pymajorver,
+						   'src/pl/plpython', 'ltree',
+						   'contrib/ltree');
+	}
+
+	if ($solution->{options}->{perl})
+	{
+		my $plperlsrc = "src/pl/plperl/";
+		my $plperl =
+		  $solution->AddProject('plperl', 'dll', 'PLs', 'src/pl/plperl');
+		$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
+		$plperl->AddDefine('PLPERL_HAVE_UID_GID');
+		foreach my $xs ('SPI.xs', 'Util.xs')
+		{
+			(my $xsc = $xs) =~ s/\.xs/.c/;
+			if (Solution::IsNewer("$plperlsrc$xsc", "$plperlsrc$xs"))
+			{
+				my $xsubppdir = first { -e "$_/ExtUtils/xsubpp" } @INC;
+				print "Building $plperlsrc$xsc...\n";
+				system( $solution->{options}->{perl}
+					  . '/bin/perl '
+					  . "$xsubppdir/ExtUtils/xsubpp -typemap "
+					  . $solution->{options}->{perl}
+					  . '/lib/ExtUtils/typemap '
+					  . "$plperlsrc$xs "
+					  . ">$plperlsrc$xsc");
+				if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
+				{
+					unlink("$plperlsrc$xsc");    # if zero size
+					die "Failed to create $xsc.\n";
+				}
+			}
+		}
+		if (Solution::IsNewer(
+				'src/pl/plperl/perlchunks.h',
+				'src/pl/plperl/plc_perlboot.pl')
+			|| Solution::IsNewer(
+				'src/pl/plperl/perlchunks.h',
+				'src/pl/plperl/plc_trusted.pl'))
+		{
+			print 'Building src/pl/plperl/perlchunks.h ...' . "\n";
+			my $basedir = getcwd;
+			chdir 'src/pl/plperl';
+			system( $solution->{options}->{perl}
+				  . '/bin/perl '
+				  . 'text2macro.pl '
+				  . '--strip="^(\#.*|\s*)$$" '
+				  . 'plc_perlboot.pl plc_trusted.pl '
+				  . '>perlchunks.h');
+			chdir $basedir;
+			if ((!(-f 'src/pl/plperl/perlchunks.h'))
+				|| -z 'src/pl/plperl/perlchunks.h')
+			{
+				unlink('src/pl/plperl/perlchunks.h');    # if zero size
+				die 'Failed to create perlchunks.h' . "\n";
+			}
+		}
+		if (Solution::IsNewer(
+				'src/pl/plperl/plperl_opmask.h',
+				'src/pl/plperl/plperl_opmask.pl'))
+		{
+			print 'Building src/pl/plperl/plperl_opmask.h ...' . "\n";
+			my $basedir = getcwd;
+			chdir 'src/pl/plperl';
+			system( $solution->{options}->{perl}
+				  . '/bin/perl '
+				  . 'plperl_opmask.pl '
+				  . 'plperl_opmask.h');
+			chdir $basedir;
+			if ((!(-f 'src/pl/plperl/plperl_opmask.h'))
+				|| -z 'src/pl/plperl/plperl_opmask.h')
+			{
+				unlink('src/pl/plperl/plperl_opmask.h');    # if zero size
+				die 'Failed to create plperl_opmask.h' . "\n";
+			}
+		}
+		$plperl->AddReference($postgres);
+		my @perl_libs =
+		  grep { /perl\d+.lib$/ }
+		  glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
+		if (@perl_libs == 1)
+		{
+			$plperl->AddLibrary($perl_libs[0]);
+		}
+		else
+		{
+			die "could not identify perl library version";
+		}
+
+		# Add transform module dependent on plperl
+		my $hstore_plperl =
+		  AddTransformModule('hstore_plperl', 'contrib/hstore_plperl',
+							 'plperl', 'src/pl/plperl',
+							 'hstore', 'contrib/hstore');
+		$hstore_plperl->AddDefine('PLPERL_HAVE_UID_GID');
+	}
+
 	$mf =
 	  Project::read_file('src/backend/utils/mb/conversion_procs/Makefile');
 	$mf =~ s{\\\r?\n}{}g;
@@ -676,6 +699,68 @@ sub AddSimpleFrontend
 
 	# Adjust module definition using frontend variables
 	AdjustFrontendProj($p);
+
+	return $p;
+}
+
+# Add a simple transform module
+sub AddTransformModule
+{
+	my $n = shift;
+	my $n_src = shift;
+	my $pl_proj_name = shift;
+	my $pl_src = shift;
+	my $transform_name = shift;
+	my $transform_src = shift;
+
+	my $transform_proj = undef;
+	foreach my $proj (@{ $solution->{projects}->{'contrib'} })
+	{
+		if ($proj->{name} eq $transform_name)
+		{
+			$transform_proj = $proj;
+			last;
+		}
+	}
+	die "could not find base module $transform_name for transform module $n"
+		if (!defined($transform_proj));
+
+	my $pl_proj = undef;
+	foreach my $proj (@{ $solution->{projects}->{'PLs'} })
+	{
+		if ($proj->{name} eq $pl_proj_name)
+		{
+			$pl_proj = $proj;
+			last;
+		}
+	}
+	die "could not find PL $pl_proj_name for transform module $n"
+		if (!defined($pl_proj));
+
+	my $p = $solution->AddProject($n, 'dll', 'contrib', $n_src);
+	for my $file (glob("$n_src/*.c"))
+	{
+		$p->AddFile($file);
+	}
+	$p->AddReference($postgres);
+
+	# Add PL dependencies
+	$p->AddIncludeDir($pl_src);
+	$p->AddReference($pl_proj);
+	$p->AddIncludeDir($pl_proj->{includes});
+	foreach my $pl_lib (@{$pl_proj->{libraries}})
+	{
+		$p->AddLibrary($pl_lib);
+	}
+
+	# Add base module dependencies
+	$p->AddIncludeDir($transform_src);
+	$p->AddIncludeDir($transform_proj->{includes});
+	foreach my $trans_lib (@{$transform_proj->{libraries}})
+	{
+		$p->AddLibrary($trans_lib);
+	}
+	$p->AddReference($transform_proj);
 
 	return $p;
 }

@@ -262,9 +262,12 @@ sub contribcheck
 	foreach my $module (glob("*"))
 	{
 		# these configuration-based exclusions must match Install.pm
-		next if ($module eq "uuid-ossp" && !defined($config->{uuid}));
-		next if ($module eq "sslinfo"   && !defined($config->{openssl}));
-		next if ($module eq "xml2"      && !defined($config->{xml}));
+		next if ($module eq "uuid-ossp"       && !defined($config->{uuid}));
+		next if ($module eq "sslinfo"         && !defined($config->{openssl}));
+		next if ($module eq "xml2"            && !defined($config->{xml}));
+		next if ($module eq "hstore_plperl"   && !defined($config->{perl}));
+		next if ($module eq "hstore_plpython");
+		next if ($module eq "ltree_plpython");
 		next if ($module eq "sepgsql");
 
 		subdircheck("$topdir/contrib", $module);
@@ -375,7 +378,6 @@ sub fetchRegressOpts
 	$m =~ s{\\\r?\n}{}g;
 	if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
 	{
-
 		# Substitute known Makefile variables, then ignore options that retain
 		# an unhandled variable reference.  Ignore anything that isn't an
 		# option starting with "--".
