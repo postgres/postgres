@@ -4367,10 +4367,12 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode)
 {
 	/*
-	 * Propagate to children if desired.  Non-table relations never have
-	 * children, so no need to search in that case.
+	 * Propagate to children if desired.  Only plain tables and foreign tables
+	 * have children, so no need to search for other relkinds.
 	 */
-	if (recurse && rel->rd_rel->relkind == RELKIND_RELATION)
+	if (recurse &&
+		(rel->rd_rel->relkind == RELKIND_RELATION ||
+		 rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE))
 	{
 		Oid			relid = RelationGetRelid(rel);
 		ListCell   *child;
