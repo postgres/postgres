@@ -1,5 +1,5 @@
 /pg_xlogdump
-# Source files copied from src/backend/access/
+# Source files copied from src/backend/access/rmgrdesc/
 /brindesc.c
 /clogdesc.c
 /committsdesc.c
@@ -11,6 +11,7 @@
 /mxactdesc.c
 /nbtdesc.c
 /relmapdesc.c
+/replorigindesc.c
 /seqdesc.c
 /smgrdesc.c
 /spgdesc.c
