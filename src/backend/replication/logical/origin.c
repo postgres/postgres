@@ -266,7 +266,7 @@ replorigin_create(char *roname)
 
 	rel = heap_open(ReplicationOriginRelationId, ExclusiveLock);
 
-	for (roident = InvalidOid + 1; roident < UINT16_MAX; roident++)
+	for (roident = InvalidOid + 1; roident < PG_UINT16_MAX; roident++)
 	{
 		bool		nulls[Natts_pg_replication_origin];
 		Datum		values[Natts_pg_replication_origin];

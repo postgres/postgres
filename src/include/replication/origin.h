@@ -30,7 +30,7 @@ typedef struct xl_replorigin_drop
 #define XLOG_REPLORIGIN_DROP		0x10
 
 #define InvalidRepOriginId 0
-#define DoNotReplicateId UINT16_MAX
+#define DoNotReplicateId PG_UINT16_MAX
 
 extern PGDLLIMPORT RepOriginId replorigin_sesssion_origin;
 extern PGDLLIMPORT XLogRecPtr replorigin_sesssion_origin_lsn;
