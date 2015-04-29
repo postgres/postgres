@@ -14617,7 +14617,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry><literal><function>version()</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry><productname>PostgreSQL</> version information</entry>
+       <entry><productname>PostgreSQL</> version information. See also <xref linkend="guc-server-version-num"> for a machine-readable version.</entry>
       </row>
      </tbody>
     </tgroup>
@@ -14804,7 +14804,12 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 
    <para>
     <function>version</function> returns a string describing the
-    <productname>PostgreSQL</productname> server's version.
+    <productname>PostgreSQL</productname> server's version. You can also
+    get this information from <xref linkend="guc-server-version"> or
+    for a machine-readable version, <xref linkend="guc-server-version-num">.
+    Software developers should use <literal>server_version_num</literal>
+    (available since 8.2) or <xref linkend="libpq-pqserverversion"> instead
+    of parsing the text version.
    </para>
 
   <indexterm>
