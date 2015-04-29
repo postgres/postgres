@@ -199,6 +199,9 @@ tablespace_list_append(const char *arg)
 		exit(1);
 	}
 
+	canonicalize_path(cell->old_dir);
+	canonicalize_path(cell->new_dir);
+
 	if (tablespace_dirs.tail)
 		tablespace_dirs.tail->next = cell;
 	else
