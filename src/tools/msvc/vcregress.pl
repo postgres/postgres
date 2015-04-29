@@ -238,12 +238,46 @@ sub subdircheck
 	{
 		return;
 	}
+
 	chdir $module;
+	my @tests = fetchTests();
+	my @opts  = fetchRegressOpts();
+
+	# Add some options for transform modules, see their respective
+	# Makefile for more details regarding Python-version specific
+	# dependencies.
+	if ($module eq "hstore_plpython" ||
+		$module eq "ltree_plpython")
+	{
+		die "Python not enabled in configuration"
+			if !defined($config->{python});
+
+		# Attempt to get python version and location.
+		# Assume python.exe in specified dir.
+		my $pythonprog = "import sys;" .
+		  "print(str(sys.version_info[0]))";
+		my $prefixcmd = $config->{python}
+			  . "\\python -c \"$pythonprog\"";
+		my $pyver = `$prefixcmd`;
+		die "Could not query for python version!\n" if $?;
+		chomp($pyver);
+		if ($pyver eq "2")
+		{
+			push @opts, "--load-extension=plpythonu";
+			push @opts, '--load-extension=' . $module . 'u';
+		}
+		else
+		{
+			# disable tests on python3 for now.
+			chdir "..";
+			return;
+		}
+	}
+
+
 	print
 	  "============================================================\n";
 	print "Checking $module\n";
-	my @tests = fetchTests();
-	my @opts  = fetchRegressOpts();
 	my @args  = (
 		"${tmp_installdir}/bin/pg_regress",
 		"--bindir=${tmp_installdir}/bin",
@@ -266,8 +300,8 @@ sub contribcheck
 		next if ($module eq "sslinfo"         && !defined($config->{openssl}));
 		next if ($module eq "xml2"            && !defined($config->{xml}));
 		next if ($module eq "hstore_plperl"   && !defined($config->{perl}));
-		next if ($module eq "hstore_plpython");
-		next if ($module eq "ltree_plpython");
+		next if ($module eq "hstore_plpython" && !defined($config->{python}));
+		next if ($module eq "ltree_plpython"  && !defined($config->{python}));
 		next if ($module eq "sepgsql");
 
 		subdircheck("$topdir/contrib", $module);
