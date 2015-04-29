@@ -312,8 +312,8 @@ enum_endpoint(Oid enumtypoid, ScanDirection direction)
 
 	/*
 	 * Find the first/last enum member using pg_enum_typid_sortorder_index.
-	 * Note we must not use the syscache, and must use an MVCC snapshot here.
-	 * See comments for RenumberEnumType in catalog/pg_enum.c for more info.
+	 * Note we must not use the syscache.  See comments for RenumberEnumType
+	 * in catalog/pg_enum.c for more info.
 	 */
 	ScanKeyInit(&skey,
 				Anum_pg_enum_enumtypid,
@@ -322,8 +322,7 @@ enum_endpoint(Oid enumtypoid, ScanDirection direction)
 
 	enum_rel = heap_open(EnumRelationId, AccessShareLock);
 	enum_idx = index_open(EnumTypIdSortOrderIndexId, AccessShareLock);
-	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx,
-										   GetTransactionSnapshot(),
+	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL,
 										   1, &skey);
 
 	enum_tuple = systable_getnext_ordered(enum_scan, direction);
@@ -465,8 +464,8 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 
 	/*
 	 * Scan the enum members in order using pg_enum_typid_sortorder_index.
-	 * Note we must not use the syscache, and must use an MVCC snapshot here.
-	 * See comments for RenumberEnumType in catalog/pg_enum.c for more info.
+	 * Note we must not use the syscache.  See comments for RenumberEnumType
+	 * in catalog/pg_enum.c for more info.
 	 */
 	ScanKeyInit(&skey,
 				Anum_pg_enum_enumtypid,
@@ -475,9 +474,7 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 
 	enum_rel = heap_open(EnumRelationId, AccessShareLock);
 	enum_idx = index_open(EnumTypIdSortOrderIndexId, AccessShareLock);
-	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx,
-										   GetTransactionSnapshot(),
-										   1, &skey);
+	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL, 1, &skey);
 
 	max = 64;
 	elems = (Datum *) palloc(max * sizeof(Datum));
