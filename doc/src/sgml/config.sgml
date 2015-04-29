@@ -6752,7 +6752,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         determines whether OIDs will be included in tables created by
         <command>SELECT INTO</command>. The parameter is <literal>off</>
         by default; in <productname>PostgreSQL</> 8.0 and earlier, it
-        was on by default.
+        was <literal>on</> by default.
        </para>
 
        <para>
