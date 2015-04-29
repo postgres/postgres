@@ -310,6 +310,12 @@ DECLARE_UNIQUE_INDEX(pg_policy_oid_index, 3257, on pg_policy using btree(oid oid
 DECLARE_UNIQUE_INDEX(pg_policy_polrelid_polname_index, 3258, on pg_policy using btree(polrelid oid_ops, polname name_ops));
 #define PolicyPolrelidPolnameIndexId				3258
 
+DECLARE_UNIQUE_INDEX(pg_replication_origin_roiident_index, 6001, on pg_replication_origin using btree(roident oid_ops));
+#define ReplicationOriginIdentIndex 6001
+
+DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, on pg_replication_origin using btree(roname varchar_pattern_ops));
+#define ReplicationOriginNameIndex 6002
+
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES
 

@@ -39,6 +39,7 @@
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/reorderbuffer.h"
+#include "replication/origin.h"
 #include "replication/snapbuild.h"
 
 #include "storage/proc.h"
@@ -718,6 +719,34 @@ change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
+}
+
+bool
+filter_by_origin_cb_wrapper(LogicalDecodingContext *ctx, RepOriginId origin_id)
+{
+	LogicalErrorCallbackState state;
+	ErrorContextCallback errcallback;
+	bool ret;
+
+	/* Push callback + info on the error context stack */
+	state.ctx = ctx;
+	state.callback_name = "shutdown";
+	state.report_location = InvalidXLogRecPtr;
+	errcallback.callback = output_plugin_error_callback;
+	errcallback.arg = (void *) &state;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
+
+	/* set output state */
+	ctx->accept_writes = false;
+
+	/* do the actual work: call callback */
+	ret = ctx->callbacks.filter_by_origin_cb(ctx, origin_id);
+
+	/* Pop the error context stack */
+	error_context_stack = errcallback.previous;
+
+	return ret;
 }
 
 /*

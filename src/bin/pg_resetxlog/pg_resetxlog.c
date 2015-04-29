@@ -56,6 +56,8 @@
 #include "common/restricted_token.h"
 #include "storage/large_object.h"
 #include "pg_getopt.h"
+#include "replication/logical.h"
+#include "replication/origin.h"
 
 
 static ControlFileData ControlFile;		/* pg_control values */
@@ -1091,6 +1093,7 @@ WriteEmptyXLOG(void)
 	record->xl_tot_len = SizeOfXLogRecord + SizeOfXLogRecordDataHeaderShort + sizeof(CheckPoint);
 	record->xl_info = XLOG_CHECKPOINT_SHUTDOWN;
 	record->xl_rmid = RM_XLOG_ID;
+
 	recptr += SizeOfXLogRecord;
 	*(recptr++) = XLR_BLOCK_ID_DATA_SHORT;
 	*(recptr++) = sizeof(CheckPoint);

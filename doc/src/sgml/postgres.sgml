@@ -220,6 +220,7 @@
   &spi;
   &bgworker;
   &logicaldecoding;
+  &replication-origins;
 
  </part>
 

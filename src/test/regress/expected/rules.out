@@ -1390,6 +1390,11 @@ pg_prepared_xacts| SELECT p.transaction,
    FROM ((pg_prepared_xact() p(transaction, gid, prepared, ownerid, dbid)
      LEFT JOIN pg_authid u ON ((p.ownerid = u.oid)))
      LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
+pg_replication_origin_status| SELECT pg_show_replication_origin_status.local_id,
+    pg_show_replication_origin_status.external_id,
+    pg_show_replication_origin_status.remote_lsn,
+    pg_show_replication_origin_status.local_lsn
+   FROM pg_show_replication_origin_status() pg_show_replication_origin_status(local_id, external_id, remote_lsn, local_lsn);
 pg_replication_slots| SELECT l.slot_name,
     l.plugin,
     l.slot_type,

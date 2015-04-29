@@ -95,6 +95,7 @@
 <!ENTITY fdwhandler SYSTEM "fdwhandler.sgml">
 <!ENTITY custom-scan SYSTEM "custom-scan.sgml">
 <!ENTITY logicaldecoding SYSTEM "logicaldecoding.sgml">
+<!ENTITY replication-origins SYSTEM "replication-origins.sgml">
 <!ENTITY protocol   SYSTEM "protocol.sgml">
 <!ENTITY sources    SYSTEM "sources.sgml">
 <!ENTITY storage    SYSTEM "storage.sgml">

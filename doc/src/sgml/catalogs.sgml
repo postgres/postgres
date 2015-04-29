@@ -239,6 +239,16 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-replication-origin"><structname>pg_replication_origin</structname></link></entry>
+      <entry>registered replication origins</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-replication-origin-status"><structname>pg_replication_origin_status</structname></link></entry>
+      <entry>information about replication origins, including replication progress</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link></entry>
       <entry>replication slot information</entry>
      </row>
@@ -5335,6 +5345,119 @@
    </para>
   </note>
 
+ </sect1>
+
+ <sect1 id="catalog-pg-replication-origin">
+  <title><structname>pg_replication_origin</structname></title>
+
+  <indexterm zone="catalog-pg-replication-origin">
+   <primary>pg_replication_origin</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_replication_origin</structname> catalog contains
+   all replication origins created.  For more on replication origins
+   see <xref linkend="replication-origins">.
+  </para>
+
+  <table>
+
+   <title><structname>pg_replication_origin</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>roident</structfield></entry>
+      <entry><type>Oid</type></entry>
+      <entry></entry>
+      <entry>A unique, cluster-wide identifier for the replication
+      origin. Should never leave the system.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>roname</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>The external, user defined, name of a replication
+      origin.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+  <sect1 id="catalog-pg-replication-origin-status">
+  <title><structname>pg_replication_origin_status</structname></title>
+
+  <indexterm zone="catalog-pg-replication-origin-status">
+   <primary>pg_replication_origin_status</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_replication_origin_status</structname> view
+   contains information about how far replay for a certain origin has
+   progressed.  For more on replication origins
+   see <xref linkend="replication-origins">.
+  </para>
+
+  <table>
+
+   <title><structname>pg_replication_origin_status</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>local_id</structfield></entry>
+      <entry><type>Oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-replication-origin"><structname>pg_replication_origin</structname></link>.roident</literal></entry>
+      <entry>internal node identifier</entry>
+     </row>
+
+     <row>
+      <entry><structfield>external_id</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry><literal><link linkend="catalog-pg-replication-origin"><structname>pg_replication_origin</structname></link>.roname</literal></entry>
+      <entry>external node identifier</entry>
+     </row>
+
+     <row>
+      <entry><structfield>remote_lsn</structfield></entry>
+      <entry><type>pg_lsn</type></entry>
+      <entry></entry>
+      <entry>The origin node's LSN up to which data has been replicated.</entry>
+     </row>
+
+
+     <row>
+      <entry><structfield>local_lsn</structfield></entry>
+      <entry><type>pg_lsn</type></entry>
+      <entry></entry>
+      <entry>This node's LSN that at
+      which <literal>remote_lsn</literal> has been replicated. Used to
+      flush commit records before persisting data to disk when using
+      asynchronous commits.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
  <sect1 id="catalog-pg-replication-slots">

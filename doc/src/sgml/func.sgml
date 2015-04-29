@@ -16879,11 +16879,13 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <title>Replication Functions</title>
 
    <para>
-    The functions shown in <xref linkend="functions-replication-table"> are
-    for controlling and interacting with replication features.
-    See <xref linkend="streaming-replication">
-    and <xref linkend="streaming-replication-slots"> for information about the
-    underlying features.  Use of these functions is restricted to superusers.
+    The functions shown
+    in <xref linkend="functions-replication-table"> are for
+    controlling and interacting with replication features.
+    See <xref linkend="streaming-replication">,
+    <xref linkend="streaming-replication-slots">, <xref linkend="replication-origins">
+    for information about the underlying features.  Use of these
+    functions is restricted to superusers.
    </para>
 
    <para>
@@ -17040,6 +17042,195 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         on future calls.
        </entry>
       </row>
+
+      <row id="pg-replication-origin-create">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_create</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_create(<parameter>node_name</parameter> <type>text</type>)</function></literal>
+       </entry>
+       <entry>
+        <parameter>internal_id</parameter> <type>oid</type>
+       </entry>
+       <entry>
+        Create a replication origin with the the passed in external
+        name, and create an internal id for it.
+       </entry>
+      </row>
+
+      <row id="pg-replication-origin-drop">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_drop</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_drop(<parameter>node_name</parameter> <type>text</type>)</function></literal>
+       </entry>
+       <entry>
+        void
+       </entry>
+       <entry>
+        Delete a previously created replication origin, including the
+        associated replay progress.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_oid</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_oid(<parameter>node_name</parameter> <type>text</type>)</function></literal>
+       </entry>
+       <entry>
+        <parameter>internal_id</parameter> <type>oid</type>
+       </entry>
+       <entry>
+        Lookup replication origin by name and return the internal
+        oid. If no corresponding replication origin is found a error
+        is thrown.
+       </entry>
+      </row>
+
+      <row id="pg-replication-origin-session-setup">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_session_setup</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_setup_session(<parameter>node_name</parameter> <type>text</type>)</function></literal>
+       </entry>
+       <entry>
+        void
+       </entry>
+       <entry>
+        Configure the current session to be replaying from the passed in
+        origin, allowing replay progress to be tracked.  Use
+        <function>pg_replication_origin_session_reset</function> to revert.
+        Can only be used if no previous origin is configured.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_session_reset</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_session_reset()</function></literal>
+       </entry>
+       <entry>
+        void
+       </entry>
+       <entry>
+        Cancel the effects
+        of <function>pg_replication_origin_session_setup()</function>.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_replication_session_is_setup</primary>
+        </indexterm>
+        <literal><function>pg_replication_session_is_setup()</function></literal>
+       </entry>
+       <entry>
+        bool
+       </entry>
+       <entry>
+        Has a replication origin been configured in the current session?
+       </entry>
+      </row>
+
+      <row id="pg-replication-origin-session-progress">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_session_progress</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_progress(<parameter>flush</parameter> <type>bool</type>)</function></literal>
+       </entry>
+       <entry>
+        pg_lsn
+       </entry>
+       <entry>
+        Return the replay position for the replication origin configured in
+        the current session. The parameter <parameter>flush</parameter>
+        determines whether the corresponding local transaction will be
+        guaranteed to have been flushed to disk or not.
+       </entry>
+      </row>
+
+      <row id="pg-replication-origin-xact-setup">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_xact_setup</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_xact_setup(<parameter>origin_lsn</parameter> <type>pg_lsn</type>, <parameter>origin_timestamp</parameter> <type>timestamptz</type>)</function></literal>
+       </entry>
+       <entry>
+        void
+       </entry>
+       <entry>
+        Mark the current transaction to be replaying a transaction that has
+        committed at the passed in <acronym>LSN</acronym> and timestamp. Can
+        only be called when a replication origin has previously been
+        configured using
+        <function>pg_replication_origin_session_setup()</function>.
+       </entry>
+      </row>
+
+      <row id="pg-replication-origin-xact-reset">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_xact_reset</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_xact_reset()</function></literal>
+       </entry>
+       <entry>
+        void
+       </entry>
+       <entry>
+        Cancel the effects of
+        <function>pg_replication_origin_xact_setup()</function>.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_advance</primary>
+        </indexterm>
+        <literal>pg_replication_origin_advance<function>(<parameter>node_name</parameter> <type>text</type>, <parameter>pos</parameter> <type>pg_lsn</type>)</function></literal>
+       </entry>
+       <entry>
+        void
+       </entry>
+       <entry>
+        Set replication progress for the passed in node to the passed in
+        position. This primarily is useful for setting up the initial position
+        or a new position after configuration changes and similar. Be aware
+        that careless use of this function can lead to inconsistently
+        replicated data.
+       </entry>
+      </row>
+
+      <row id="pg-replication-origin-progress">
+       <entry>
+        <indexterm>
+         <primary>pg_replication_origin_progress</primary>
+        </indexterm>
+        <literal><function>pg_replication_origin_progress(<parameter>node_name</parameter> <type>text</type>, <parameter>flush</parameter> <type>bool</type>)</function></literal>
+       </entry>
+       <entry>
+        pg_lsn
+       </entry>
+       <entry>
+        Return the replay position for the passed in replication origin. The
+        parameter <parameter>flush</parameter> determines whether the
+        corresponding local transaction will be guaranteed to have been
+        flushed to disk or not.
+       </entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>

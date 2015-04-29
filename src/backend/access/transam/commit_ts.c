@@ -49,18 +49,18 @@
  */
 
 /*
- * We need 8+4 bytes per xact.  Note that enlarging this struct might mean
+ * We need 8+2 bytes per xact.  Note that enlarging this struct might mean
  * the largest possible file name is more than 5 chars long; see
  * SlruScanDirectory.
  */
 typedef struct CommitTimestampEntry
 {
 	TimestampTz		time;
-	CommitTsNodeId	nodeid;
+	RepOriginId		nodeid;
 } CommitTimestampEntry;
 
 #define SizeOfCommitTimestampEntry (offsetof(CommitTimestampEntry, nodeid) + \
-									sizeof(CommitTsNodeId))
+									sizeof(RepOriginId))
 
 #define COMMIT_TS_XACTS_PER_PAGE \
 	(BLCKSZ / SizeOfCommitTimestampEntry)
@@ -93,43 +93,18 @@ CommitTimestampShared	*commitTsShared;
 /* GUC variable */
 bool	track_commit_timestamp;
 
-static CommitTsNodeId default_node_id = InvalidCommitTsNodeId;
-
 static void SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 					 TransactionId *subxids, TimestampTz ts,
-					 CommitTsNodeId nodeid, int pageno);
+					 RepOriginId nodeid, int pageno);
 static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
-						  CommitTsNodeId nodeid, int slotno);
+						  RepOriginId nodeid, int slotno);
 static int	ZeroCommitTsPage(int pageno, bool writeXlog);
 static bool CommitTsPagePrecedes(int page1, int page2);
 static void WriteZeroPageXlogRec(int pageno);
 static void WriteTruncateXlogRec(int pageno);
 static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
 						 TransactionId *subxids, TimestampTz timestamp,
-						 CommitTsNodeId nodeid);
-
-
-/*
- * CommitTsSetDefaultNodeId
- *
- * Set default nodeid for current backend.
- */
-void
-CommitTsSetDefaultNodeId(CommitTsNodeId nodeid)
-{
-	default_node_id = nodeid;
-}
-
-/*
- * CommitTsGetDefaultNodeId
- *
- * Set default nodeid for current backend.
- */
-CommitTsNodeId
-CommitTsGetDefaultNodeId(void)
-{
-	return default_node_id;
-}
+						 RepOriginId nodeid);
 
 /*
  * TransactionTreeSetCommitTsData
@@ -156,7 +131,7 @@ CommitTsGetDefaultNodeId(void)
 void
 TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 							   TransactionId *subxids, TimestampTz timestamp,
-							   CommitTsNodeId nodeid, bool do_xlog)
+							   RepOriginId nodeid, bool do_xlog)
 {
 	int			i;
 	TransactionId headxid;
@@ -234,7 +209,7 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 static void
 SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 					 TransactionId *subxids, TimestampTz ts,
-					 CommitTsNodeId nodeid, int pageno)
+					 RepOriginId nodeid, int pageno)
 {
 	int			slotno;
 	int			i;
@@ -259,7 +234,7 @@ SetXidCommitTsInPage(TransactionId xid, int nsubxids,
  */
 static void
 TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
-						 CommitTsNodeId nodeid, int slotno)
+						 RepOriginId nodeid, int slotno)
 {
 	int			entryno = TransactionIdToCTsEntry(xid);
 	CommitTimestampEntry entry;
@@ -282,7 +257,7 @@ TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
  */
 bool
 TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
-							 CommitTsNodeId *nodeid)
+							 RepOriginId *nodeid)
 {
 	int			pageno = TransactionIdToCTsPage(xid);
 	int			entryno = TransactionIdToCTsEntry(xid);
@@ -322,7 +297,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		if (ts)
 			*ts = 0;
 		if (nodeid)
-			*nodeid = InvalidCommitTsNodeId;
+			*nodeid = InvalidRepOriginId;
 		return false;
 	}
 
@@ -373,7 +348,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
  * as NULL if not wanted.
  */
 TransactionId
-GetLatestCommitTsData(TimestampTz *ts, CommitTsNodeId *nodeid)
+GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 {
 	TransactionId	xid;
 
@@ -503,7 +478,7 @@ CommitTsShmemInit(void)
 
 		commitTsShared->xidLastCommit = InvalidTransactionId;
 		TIMESTAMP_NOBEGIN(commitTsShared->dataLastCommit.time);
-		commitTsShared->dataLastCommit.nodeid = InvalidCommitTsNodeId;
+		commitTsShared->dataLastCommit.nodeid = InvalidRepOriginId;
 	}
 	else
 		Assert(found);
@@ -857,7 +832,7 @@ WriteTruncateXlogRec(int pageno)
 static void
 WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
 						 TransactionId *subxids, TimestampTz timestamp,
-						 CommitTsNodeId nodeid)
+						 RepOriginId nodeid)
 {
 	xl_commit_ts_set	record;
 

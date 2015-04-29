@@ -1255,7 +1255,8 @@ ReorderBufferFreeSnap(ReorderBuffer *rb, Snapshot snap)
 void
 ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
-					TimestampTz commit_time)
+					TimestampTz commit_time,
+					RepOriginId origin_id, XLogRecPtr origin_lsn)
 {
 	ReorderBufferTXN *txn;
 	volatile Snapshot snapshot_now;
@@ -1273,6 +1274,8 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
 	txn->commit_time = commit_time;
+	txn->origin_id = origin_id;
+	txn->origin_lsn = origin_lsn;
 
 	/* serialize the last bunch of changes if we need start earlier anyway */
 	if (txn->nentries_mem != txn->nentries)

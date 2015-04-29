@@ -131,6 +131,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XACT_XINFO_HAS_RELFILENODES		(1U << 2)
 #define XACT_XINFO_HAS_INVALS			(1U << 3)
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
+#define XACT_XINFO_HAS_ORIGIN			(1U << 5)
 
 /*
  * Also stored in xinfo, these indicating a variety of additional actions that
@@ -217,6 +218,12 @@ typedef struct xl_xact_twophase
 } xl_xact_twophase;
 #define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
 
+typedef struct xl_xact_origin
+{
+	XLogRecPtr	origin_lsn;
+	TimestampTz origin_timestamp;
+} xl_xact_origin;
+
 typedef struct xl_xact_commit
 {
 	TimestampTz xact_time;		/* time of commit */
@@ -227,6 +234,7 @@ typedef struct xl_xact_commit
 	/* xl_xact_relfilenodes follows if XINFO_HAS_RELFILENODES */
 	/* xl_xact_invals follows if XINFO_HAS_INVALS */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
+	/* xl_xact_origin follows if XINFO_HAS_ORIGIN */
 } xl_xact_commit;
 #define MinSizeOfXactCommit (offsetof(xl_xact_commit, xact_time) + sizeof(TimestampTz))
 
@@ -267,6 +275,9 @@ typedef struct xl_xact_parsed_commit
 	SharedInvalidationMessage *msgs;
 
 	TransactionId	twophase_xid;	/* only for 2PC */
+
+	XLogRecPtr	origin_lsn;
+	TimestampTz origin_timestamp;
 } xl_xact_parsed_commit;
 
 typedef struct xl_xact_parsed_abort

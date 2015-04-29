@@ -363,6 +363,7 @@ typedef struct OutputPluginCallbacks
     LogicalDecodeBeginCB begin_cb;
     LogicalDecodeChangeCB change_cb;
     LogicalDecodeCommitCB commit_cb;
+    LogicalDecodeFilterByOriginCB filter_by_origin_cb;
     LogicalDecodeShutdownCB shutdown_cb;
 } OutputPluginCallbacks;
 
@@ -370,7 +371,8 @@ typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
 </programlisting>
      The <function>begin_cb</function>, <function>change_cb</function>
      and <function>commit_cb</function> callbacks are required,
-     while <function>startup_cb</function>
+     while <function>startup_cb</function>,
+     <function>filter_by_origin_cb</function>
      and <function>shutdown_cb</function> are optional.
     </para>
    </sect2>
@@ -569,6 +571,37 @@ typedef void (*LogicalDecodeChangeCB) (
       </para>
      </note>
     </sect3>
+
+     <sect3 id="logicaldecoding-output-plugin-filter-by-origin">
+     <title>Origin Filter Callback</title>
+
+     <para>
+       The optional <function>filter_by_origin_cb</function> callback
+       is called to determine wheter data that has been replayed
+       from <parameter>origin_id</parameter> is of interest to the
+       output plugin.
+<programlisting>
+typedef bool (*LogicalDecodeChangeCB) (
+    struct LogicalDecodingContext *ctx,
+    RepNodeId origin_id
+);
+</programlisting>
+      The <parameter>ctx</parameter> parameter has the same contents
+      as for the other callbacks. No information but the origin is
+      available. To signal that changes originating on the passed in
+      node are irrelevant, return true, causing them to be filtered
+      away; false otherwise. The other callbacks will not be called
+      for transactions and changes that have been filtered away.
+     </para>
+     <para>
+       This is useful when implementing cascading or multi directional
+       replication solutions. Filtering by the origin allows to
+       prevent replicating the same changes back and forth in such
+       setups.  While transactions and changes also carry information
+       about the origin, filtering via this callback is noticeably
+       more efficient.
+     </para>
+     </sect3>
    </sect2>
 
    <sect2 id="logicaldecoding-output-plugin-output">

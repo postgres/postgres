@@ -2189,6 +2189,9 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 							(char *) heaptup->t_data + SizeofHeapTupleHeader,
 							heaptup->t_len - SizeofHeapTupleHeader);
 
+		/* filtering by origin on a row level is much more efficient */
+		XLogIncludeOrigin();
+
 		recptr = XLogInsert(RM_HEAP_ID, info);
 
 		PageSetLSN(page, recptr);
@@ -2499,6 +2502,10 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD | bufflags);
 
 			XLogRegisterBufData(0, tupledata, totaldatalen);
+
+			/* filtering by origin on a row level is much more efficient */
+			XLogIncludeOrigin();
+
 			recptr = XLogInsert(RM_HEAP2_ID, info);
 
 			PageSetLSN(page, recptr);
@@ -2919,6 +2926,9 @@ l1:
 							 old_key_tuple->t_len
 							 - SizeofHeapTupleHeader);
 		}
+
+		/* filtering by origin on a row level is much more efficient */
+		XLogIncludeOrigin();
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE);
 
@@ -4650,6 +4660,8 @@ failed:
 											  tuple->t_data->t_infomask2);
 		XLogRegisterData((char *) &xlrec, SizeOfHeapLock);
 
+		/* we don't decode row locks atm, so no need to log the origin */
+
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK);
 
 		PageSetLSN(page, recptr);
@@ -5428,6 +5440,8 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 
 		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 		XLogRegisterBufData(0, (char *) htup + htup->t_hoff, newlen);
+
+		/* inplace updates aren't decoded atm, don't log the origin */
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INPLACE);
 
@@ -6787,6 +6801,9 @@ log_heap_update(Relation reln, Buffer oldbuf,
 						 old_key_tuple->t_len - SizeofHeapTupleHeader);
 	}
 
+	/* filtering by origin on a row level is much more efficient */
+	XLogIncludeOrigin();
+
 	recptr = XLogInsert(RM_HEAP_ID, info);
 
 	return recptr;
@@ -6859,6 +6876,8 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 	 */
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, SizeOfHeapNewCid);
+
+	/* will be looked at irrespective of origin */
 
 	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_NEW_CID);
 

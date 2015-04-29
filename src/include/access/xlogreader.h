@@ -127,6 +127,8 @@ struct XLogReaderState
 	uint32		main_data_len;	/* main data portion's length */
 	uint32		main_data_bufsz;	/* allocated size of the buffer */
 
+	RepOriginId	record_origin;
+
 	/* information about blocks referenced by the record. */
 	DecodedBkpBlock blocks[XLR_MAX_BLOCK_ID + 1];
 
@@ -186,6 +188,7 @@ extern bool DecodeXLogRecord(XLogReaderState *state, XLogRecord *record,
 #define XLogRecGetInfo(decoder) ((decoder)->decoded_record->xl_info)
 #define XLogRecGetRmid(decoder) ((decoder)->decoded_record->xl_rmid)
 #define XLogRecGetXid(decoder) ((decoder)->decoded_record->xl_xid)
+#define XLogRecGetOrigin(decoder) ((decoder)->record_origin)
 #define XLogRecGetData(decoder) ((decoder)->main_data)
 #define XLogRecGetDataLen(decoder) ((decoder)->main_data_len)
 #define XLogRecHasAnyBlockRefs(decoder) ((decoder)->max_block_id >= 0)

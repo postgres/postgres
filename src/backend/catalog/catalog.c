@@ -32,6 +32,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
 #include "catalog/pg_db_role_setting.h"
+#include "catalog/pg_replication_origin.h"
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_shdescription.h"
 #include "catalog/pg_shseclabel.h"
@@ -224,7 +225,8 @@ IsSharedRelation(Oid relationId)
 		relationId == SharedDependRelationId ||
 		relationId == SharedSecLabelRelationId ||
 		relationId == TableSpaceRelationId ||
-		relationId == DbRoleSettingRelationId)
+		relationId == DbRoleSettingRelationId ||
+		relationId == ReplicationOriginRelationId)
 		return true;
 	/* These are their indexes (see indexing.h) */
 	if (relationId == AuthIdRolnameIndexId ||
@@ -240,7 +242,9 @@ IsSharedRelation(Oid relationId)
 		relationId == SharedSecLabelObjectIndexId ||
 		relationId == TablespaceOidIndexId ||
 		relationId == TablespaceNameIndexId ||
-		relationId == DbRoleSettingDatidRolidIndexId)
+		relationId == DbRoleSettingDatidRolidIndexId ||
+		relationId == ReplicationOriginIdentIndex ||
+		relationId == ReplicationOriginNameIndex)
 		return true;
 	/* These are their toast tables and toast indexes (see toasting.h) */
 	if (relationId == PgShdescriptionToastTable ||

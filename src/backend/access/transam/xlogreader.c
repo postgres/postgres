@@ -21,6 +21,7 @@
 #include "access/xlogreader.h"
 #include "catalog/pg_control.h"
 #include "common/pg_lzcompress.h"
+#include "replication/origin.h"
 
 static bool allocate_recordbuf(XLogReaderState *state, uint32 reclength);
 
@@ -975,6 +976,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 	ResetDecoder(state);
 
 	state->decoded_record = record;
+	state->record_origin = InvalidRepOriginId;
 
 	ptr = (char *) record;
 	ptr += SizeOfXLogRecord;
@@ -1008,6 +1010,10 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			datatotal += main_data_len;
 			break;				/* by convention, the main data fragment is
 								 * always last */
+		}
+		else if (block_id == XLR_BLOCK_ID_ORIGIN)
+		{
+			COPY_HEADER_FIELD(&state->record_origin, sizeof(RepOriginId));
 		}
 		else if (block_id <= XLR_MAX_BLOCK_ID)
 		{

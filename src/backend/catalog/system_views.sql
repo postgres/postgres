@@ -778,6 +778,13 @@ CREATE VIEW pg_user_mappings AS
 
 REVOKE ALL on pg_user_mapping FROM public;
 
+
+CREATE VIEW pg_replication_origin_status AS
+    SELECT *
+    FROM pg_show_replication_origin_status();
+
+REVOKE ALL ON pg_replication_origin_status FROM public;
+
 --
 -- We have a few function definitions in here, too.
 -- At some point there might be enough to justify breaking them out into

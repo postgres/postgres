@@ -26,6 +26,7 @@
 #include "catalog/pg_control.h"
 #include "common/pg_lzcompress.h"
 #include "miscadmin.h"
+#include "replication/origin.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
@@ -72,6 +73,9 @@ static XLogRecData *mainrdata_head;
 static XLogRecData *mainrdata_last = (XLogRecData *) &mainrdata_head;
 static uint32 mainrdata_len;	/* total # of bytes in chain */
 
+/* Should te in-progress insertion log the origin */
+static bool include_origin = false;
+
 /*
  * These are used to hold the record header while constructing a record.
  * 'hdr_scratch' is not a plain variable, but is palloc'd at initialization,
@@ -83,10 +87,12 @@ static uint32 mainrdata_len;	/* total # of bytes in chain */
 static XLogRecData hdr_rdt;
 static char *hdr_scratch = NULL;
 
+#define SizeOfXlogOrigin	(sizeof(RepOriginId) + sizeof(char))
+
 #define HEADER_SCRATCH_SIZE \
 	(SizeOfXLogRecord + \
 	 MaxSizeOfXLogRecordBlockHeader * (XLR_MAX_BLOCK_ID + 1) + \
-	 SizeOfXLogRecordDataHeaderLong)
+	 SizeOfXLogRecordDataHeaderLong + SizeOfXlogOrigin)
 
 /*
  * An array of XLogRecData structs, to hold registered data.
@@ -193,6 +199,7 @@ XLogResetInsertion(void)
 	max_registered_block_id = 0;
 	mainrdata_len = 0;
 	mainrdata_last = (XLogRecData *) &mainrdata_head;
+	include_origin = false;
 	begininsert_called = false;
 }
 
@@ -372,6 +379,16 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
 	regbuf->rdata_tail->next = rdata;
 	regbuf->rdata_tail = rdata;
 	regbuf->rdata_len += len;
+}
+
+/*
+ * Should this record include the replication origin if one is set up?
+ */
+void
+XLogIncludeOrigin(void)
+{
+	Assert(begininsert_called);
+	include_origin = true;
 }
 
 /*
@@ -676,6 +693,14 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		}
 		memcpy(scratch, &regbuf->block, sizeof(BlockNumber));
 		scratch += sizeof(BlockNumber);
+	}
+
+	/* followed by the record's origin, if any */
+	if (include_origin && replorigin_sesssion_origin != InvalidRepOriginId)
+	{
+		*(scratch++) = XLR_BLOCK_ID_ORIGIN;
+		memcpy(scratch, &replorigin_sesssion_origin, sizeof(replorigin_sesssion_origin));
+		scratch += sizeof(replorigin_sesssion_origin);
 	}
 
 	/* followed by main data, if any */

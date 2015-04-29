@@ -23,6 +23,7 @@
 #include "commands/dbcommands_xlog.h"
 #include "commands/sequence.h"
 #include "commands/tablespace.h"
+#include "replication/origin.h"
 #include "storage/standby.h"
 #include "utils/relmapper.h"
 

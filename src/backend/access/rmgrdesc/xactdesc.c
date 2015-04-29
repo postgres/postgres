@@ -101,6 +101,16 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 
 		data += sizeof(xl_xact_twophase);
 	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
+	{
+		xl_xact_origin *xl_origin = (xl_xact_origin *) data;
+
+		parsed->origin_lsn = xl_origin->origin_lsn;
+		parsed->origin_timestamp = xl_origin->origin_timestamp;
+
+		data += sizeof(xl_xact_origin);
+	}
 }
 
 void
@@ -156,7 +166,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 }
 
 static void
-xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec)
+xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId origin_id)
 {
 	xl_xact_parsed_commit parsed;
 	int			i;
@@ -218,6 +228,15 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec)
 
 	if (XactCompletionForceSyncCommit(parsed.xinfo))
 		appendStringInfo(buf, "; sync");
+
+	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
+	{
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+						 origin_id,
+						 (uint32)(parsed.origin_lsn >> 32),
+						 (uint32)parsed.origin_lsn,
+						 timestamptz_to_str(parsed.origin_timestamp));
+	}
 }
 
 static void
@@ -274,7 +293,8 @@ xact_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
 
-		xact_desc_commit(buf, XLogRecGetInfo(record), xlrec);
+		xact_desc_commit(buf, XLogRecGetInfo(record), xlrec,
+						 XLogRecGetOrigin(record));
 	}
 	else if (info == XLOG_XACT_ABORT || info == XLOG_XACT_ABORT_PREPARED)
 	{

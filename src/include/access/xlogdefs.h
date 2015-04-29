@@ -45,6 +45,12 @@ typedef uint64 XLogSegNo;
 typedef uint32 TimeLineID;
 
 /*
+ * Replication origin id - this is located in this file to avoid having to
+ * include origin.h in a bunch of xlog related places.
+ */
+typedef uint16 RepOriginId;
+
+/*
  *	Because O_DIRECT bypasses the kernel buffers, and because we never
  *	read those buffers except during crash recovery or if wal_level != minimal,
  *	it is a win to use it in all cases where we sync on each write().  We could

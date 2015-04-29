@@ -13,6 +13,7 @@
 
 #include "access/xlog.h"
 #include "datatype/timestamp.h"
+#include "replication/origin.h"
 #include "utils/guc.h"
 
 
@@ -21,18 +22,13 @@ extern PGDLLIMPORT bool	track_commit_timestamp;
 extern bool check_track_commit_timestamp(bool *newval, void **extra,
 							 GucSource source);
 
-typedef uint32 CommitTsNodeId;
-#define InvalidCommitTsNodeId 0
-
-extern void CommitTsSetDefaultNodeId(CommitTsNodeId nodeid);
-extern CommitTsNodeId CommitTsGetDefaultNodeId(void);
 extern void TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 							   TransactionId *subxids, TimestampTz timestamp,
-							   CommitTsNodeId nodeid, bool do_xlog);
+							   RepOriginId nodeid, bool do_xlog);
 extern bool TransactionIdGetCommitTsData(TransactionId xid,
-							 TimestampTz *ts, CommitTsNodeId *nodeid);
+							 TimestampTz *ts, RepOriginId *nodeid);
 extern TransactionId GetLatestCommitTsData(TimestampTz *ts,
-					  CommitTsNodeId *nodeid);
+					  RepOriginId *nodeid);
 
 extern Size CommitTsShmemBuffers(void);
 extern Size CommitTsShmemSize(void);
@@ -58,7 +54,7 @@ extern void AdvanceOldestCommitTs(TransactionId oldestXact);
 typedef struct xl_commit_ts_set
 {
 	TimestampTz		timestamp;
-	CommitTsNodeId	nodeid;
+	RepOriginId		nodeid;
 	TransactionId	mainxid;
 	/* subxact Xids follow */
 } xl_commit_ts_set;

@@ -39,6 +39,7 @@
 
 /* prototypes for public functions in xloginsert.c: */
 extern void XLogBeginInsert(void);
+extern void XLogIncludeOrigin(void);
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info);
 extern void XLogEnsureRecordSpace(int nbuffers, int ndatas);
 extern void XLogRegisterData(char *data, int len);

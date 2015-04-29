@@ -121,6 +121,7 @@ pg_pltemplate|t
 pg_policy|t
 pg_proc|t
 pg_range|t
+pg_replication_origin|t
 pg_rewrite|t
 pg_seclabel|t
 pg_shdepend|t
