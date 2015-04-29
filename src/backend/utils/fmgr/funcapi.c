@@ -887,7 +887,6 @@ get_func_trftypes(HeapTuple procTup,
 				  Oid **p_trftypes)
 {
 
-	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	Datum		protrftypes;
 	ArrayType  *arr;
 	int			nelems;
@@ -911,7 +910,7 @@ get_func_trftypes(HeapTuple procTup,
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != OIDOID)
 			elog(ERROR, "protrftypes is not a 1-D Oid array");
-		Assert(nelems >= procStruct->pronargs);
+		Assert(nelems >= ((Form_pg_proc) GETSTRUCT(procTup))->pronargs);
 		*p_trftypes = (Oid *) palloc(nelems * sizeof(Oid));
 		memcpy(*p_trftypes, ARR_DATA_PTR(arr),
 			   nelems * sizeof(Oid));
