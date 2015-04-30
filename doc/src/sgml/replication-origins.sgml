@@ -60,7 +60,7 @@
   function. Additionally the <acronym>LSN</acronym> and commit
   timestamp of every source transaction can be configured on a per
   transaction basis using
-  <link linkend="pg-replication-origin-xact-setup"><function>pg_replication_origin_xact-setup()</function></link>.
+  <link linkend="pg-replication-origin-xact-setup"><function>pg_replication_origin_xact_setup()</function></link>.
   If that's done replication progress will be persist in a crash safe
   manner. Replay progress for all replication origins can be seen in the
   <link linkend="catalog-pg-replication-origin-status">
