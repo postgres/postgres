@@ -1683,6 +1683,50 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 }
 
 /*
+ * ProcArrayInstallRestoredXmin -- install restored xmin into MyPgXact->xmin
+ *
+ * This is like ProcArrayInstallImportedXmin, but we have a pointer to the
+ * PGPROC of the transaction from which we imported the snapshot, rather than
+ * an XID.
+ *
+ * Returns TRUE if successful, FALSE if source xact is no longer running.
+ */
+bool
+ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
+{
+	bool		result = false;
+	TransactionId xid;
+	volatile PGXACT *pgxact;
+
+	Assert(TransactionIdIsNormal(xmin));
+	Assert(proc != NULL);
+
+	/* Get lock so source xact can't end while we're doing this */
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	pgxact = &allPgXact[proc->pgprocno];
+
+	/*
+	 * Be certain that the referenced PGPROC has an advertised xmin which
+	 * is no later than the one we're installing, so that the system-wide
+	 * xmin can't go backwards.  Also, make sure it's running in the same
+	 * database, so that the per-database xmin cannot go backwards.
+	 */
+	xid = pgxact->xmin;		/* fetch just once */
+	if (proc->databaseId == MyDatabaseId &&
+		TransactionIdIsNormal(xid) &&
+		TransactionIdPrecedesOrEquals(xid, xmin))
+	{
+		MyPgXact->xmin = TransactionXmin = xmin;
+		result = true;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
+}
+
+/*
  * GetRunningTransactionData -- returns information about running transactions.
  *
  * Similar to GetSnapshotData but returns more information. We include

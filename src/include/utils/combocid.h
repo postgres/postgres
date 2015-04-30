@@ -21,5 +21,8 @@
  */
 
 extern void AtEOXact_ComboCid(void);
+extern void RestoreComboCIDState(char *comboCIDstate);
+extern void SerializeComboCIDState(Size maxsize, char *start_address);
+extern Size EstimateComboCIDStateSpace(void);
 
 #endif   /* COMBOCID_H */

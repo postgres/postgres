@@ -50,6 +50,13 @@ GetNewTransactionId(bool isSubXact)
 	TransactionId xid;
 
 	/*
+	 * Workers synchronize transaction state at the beginning of each parallel
+	 * operation, so we can't account for new XIDs after that point.
+	 */
+	if (IsInParallelMode())
+		elog(ERROR, "cannot assign TransactionIds during a parallel operation");
+
+	/*
 	 * During bootstrap initialization, we return the special bootstrap
 	 * transaction id.
 	 */

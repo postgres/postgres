@@ -23,6 +23,7 @@
 #endif
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "storage/shmem.h"
 #include "utils/dynamic_loader.h"
 #include "utils/hsearch.h"
 
@@ -691,4 +692,57 @@ find_rendezvous_variable(const char *varName)
 		hentry->varValue = NULL;
 
 	return &hentry->varValue;
+}
+
+/*
+ * Estimate the amount of space needed to serialize the list of libraries
+ * we have loaded.
+ */
+Size
+EstimateLibraryStateSpace(void)
+{
+	DynamicFileList *file_scanner;
+	Size	size = 1;
+
+	for (file_scanner = file_list;
+		 file_scanner != NULL;
+		 file_scanner = file_scanner->next)
+		size = add_size(size, strlen(file_scanner->filename) + 1);
+
+	return size;
+}
+
+/*
+ * Serialize the list of libraries we have loaded to a chunk of memory.
+ */
+void
+SerializeLibraryState(Size maxsize, char *start_address)
+{
+	DynamicFileList *file_scanner;
+
+	for (file_scanner = file_list;
+		 file_scanner != NULL;
+		 file_scanner = file_scanner->next)
+	{
+		Size len;
+
+		len = strlcpy(start_address, file_scanner->filename, maxsize) + 1;
+		Assert(len < maxsize);
+		maxsize -= len;
+		start_address += len;
+	}
+	start_address[0] = '\0';
+}
+
+/*
+ * Load every library the serializing backend had loaded.
+ */
+void
+RestoreLibraryState(char *start_address)
+{
+	while (*start_address != '\0')
+	{
+		internal_load_library(start_address);
+		start_address += strlen(start_address) + 1;
+	}
 }

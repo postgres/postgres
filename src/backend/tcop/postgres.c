@@ -36,6 +36,7 @@
 #include "rusagestub.h"
 #endif
 
+#include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
@@ -2988,7 +2989,8 @@ ProcessInterrupts(void)
 		}
 	}
 
-	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
+	if (ParallelMessagePending)
+		HandleParallelMessages();
 }
 
 
