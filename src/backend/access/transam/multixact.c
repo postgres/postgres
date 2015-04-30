@@ -1989,14 +1989,6 @@ TrimMultiXact(void)
 	int			entryno;
 	int			flagsoff;
 
-	/*
-	 * During a binary upgrade, make sure that the offsets SLRU is large
-	 * enough to contain the next value that would be created. It's fine to do
-	 * this here and not in StartupMultiXact() since binary upgrades should
-	 * never need crash recovery.
-	 */
-	if (IsBinaryUpgrade)
-		MaybeExtendOffsetSlru();
 
 	/* Clean up offsets state */
 	LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
@@ -2137,6 +2129,20 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
 	MultiXactState->nextMXact = nextMulti;
 	MultiXactState->nextOffset = nextMultiOffset;
 	LWLockRelease(MultiXactGenLock);
+
+	/*
+	 * During a binary upgrade, make sure that the offsets SLRU is large
+	 * enough to contain the next value that would be created.
+	 *
+	 * We need to do this pretty early during the first startup in binary
+	 * upgrade mode: before StartupMultiXact() in fact, because this routine is
+	 * called even before that by StartupXLOG().  And we can't do it earlier
+	 * than at this point, because during that first call of this routine we
+	 * determine the MultiXactState->nextMXact value that MaybeExtendOffsetSlru
+	 * needs.
+	 */
+	if (IsBinaryUpgrade)
+		MaybeExtendOffsetSlru();
 }
 
 /*
@@ -2531,8 +2537,6 @@ MultiXactOffsetWouldWrap(MultiXactOffset boundary, MultiXactOffset start,
 						 uint32 distance)
 {
 	MultiXactOffset finish;
-
-	Assert(distance >= 0);
 
 	/*
 	 * Note that offset number 0 is not used (see GetMultiXactIdMembers), so
