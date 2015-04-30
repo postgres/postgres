@@ -40,7 +40,7 @@ submake-test_decoding:
 REGRESSCHECKS=ddl rewrite toast permissions decoding_in_xact decoding_into_rel \
 	binary prepared replorigin
 
-regresscheck: all | submake-regress submake-test_decoding temp-install
+regresscheck: | submake-regress submake-test_decoding temp-install
 	$(MKDIR_P) regression_output
 	$(pg_regress_check) \
 	    --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf \
@@ -54,7 +54,7 @@ regresscheck-install-force: | submake-regress submake-test_decoding temp-install
 
 ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml
 
-isolationcheck: all | submake-isolation submake-test_decoding temp-install
+isolationcheck: | submake-isolation submake-test_decoding temp-install
 	$(MKDIR_P) isolation_output
 	$(pg_isolation_regress_check) \
 	    --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf \

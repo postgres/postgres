@@ -69,7 +69,7 @@ clean distclean maintainer-clean:
 	rm -f dumputils.c print.c mbprint.c kwlookup.c keywords.c
 	rm -rf tmp_check
 
-check: all
+check:
 	$(prove_check)
 
 installcheck:

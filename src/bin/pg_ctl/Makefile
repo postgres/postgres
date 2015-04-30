@@ -38,7 +38,7 @@ clean distclean maintainer-clean:
 	rm -f pg_ctl$(X) $(OBJS)
 	rm -rf tmp_check
 
-check: all
+check:
 	$(prove_check)
 
 installcheck:

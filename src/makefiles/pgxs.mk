@@ -291,7 +291,7 @@ check:
 	@echo '"$(MAKE) check" is not supported.'
 	@echo 'Do "$(MAKE) install", then "$(MAKE) installcheck" instead.'
 else
-check: all submake $(REGRESS_PREP)
+check: submake $(REGRESS_PREP)
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
 temp-install: EXTRA_INSTALL+=$(subdir)

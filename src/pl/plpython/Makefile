@@ -141,7 +141,7 @@ uninstall-data:
 include $(srcdir)/regress-python3-mangle.mk
 
 
-check: all submake
+check: submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
