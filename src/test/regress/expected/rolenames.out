@@ -43,7 +43,7 @@ CREATE ROLE "current_user";
 CREATE ROLE "session_user";
 CREATE ROLE "user";
 CREATE ROLE current_user; -- error
-ERROR:  CURRENT_USER cannot be used as a role name
+ERROR:  CURRENT_USER cannot be used as a role name here
 LINE 1: CREATE ROLE current_user;
                     ^
 CREATE ROLE current_role; -- error
@@ -51,7 +51,7 @@ ERROR:  syntax error at or near "current_role"
 LINE 1: CREATE ROLE current_role;
                     ^
 CREATE ROLE session_user; -- error
-ERROR:  SESSION_USER cannot be used as a role name
+ERROR:  SESSION_USER cannot be used as a role name here
 LINE 1: CREATE ROLE session_user;
                     ^
 CREATE ROLE user; -- error

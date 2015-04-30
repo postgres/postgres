@@ -21,7 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] TO <replaceable class="PARAMETER">new_role</replaceable>
+REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURRENT_USER | SESSION_USER } [, ...]
+               TO { <replaceable class="PARAMETER">new_role</replaceable> | CURRENT_USER | SESSION_USER }
 </synopsis>
  </refsynopsisdiv>
 

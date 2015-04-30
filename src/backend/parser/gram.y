@@ -13216,13 +13216,13 @@ RoleId:		RoleSpec
 						case ROLESPEC_SESSION_USER:
 							ereport(ERROR,
 									(errcode(ERRCODE_RESERVED_NAME),
-									 errmsg("%s cannot be used as a role name",
+									 errmsg("%s cannot be used as a role name here",
 											"SESSION_USER"),
 									 parser_errposition(@1)));
 						case ROLESPEC_CURRENT_USER:
 							ereport(ERROR,
 									(errcode(ERRCODE_RESERVED_NAME),
-									 errmsg("%s cannot be used as a role name",
+									 errmsg("%s cannot be used as a role name here",
 											"CURRENT_USER"),
 									 parser_errposition(@1)));
 					}

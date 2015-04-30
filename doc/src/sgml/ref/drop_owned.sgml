@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP OWNED BY { <replaceable class="PARAMETER">name</replaceable> | CURRENT_USER | SESSION_USER } [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
