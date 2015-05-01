@@ -304,11 +304,11 @@ GetFdwRoutine(Oid fdwhandler)
 
 
 /*
- * GetFdwRoutineByRelId - look up the handler of the foreign-data wrapper
- * for the given foreign table, and retrieve its FdwRoutine struct.
+ * GetFdwHandlerByRelId - look up the handler of the foreign-data wrapper
+ * for the given foreign table
  */
-FdwRoutine *
-GetFdwRoutineByRelId(Oid relid)
+Oid
+GetFdwHandlerByRelId(Oid relid)
 {
 	HeapTuple	tp;
 	Form_pg_foreign_data_wrapper fdwform;
@@ -350,7 +350,18 @@ GetFdwRoutineByRelId(Oid relid)
 
 	ReleaseSysCache(tp);
 
-	/* And finally, call the handler function. */
+	return fdwhandler;
+}
+
+/*
+ * GetFdwRoutineByRelId - look up the handler of the foreign-data wrapper
+ * for the given foreign table, and retrieve its FdwRoutine struct.
+ */
+FdwRoutine *
+GetFdwRoutineByRelId(Oid relid)
+{
+	Oid			fdwhandler = GetFdwHandlerByRelId(relid);
+
 	return GetFdwRoutine(fdwhandler);
 }
 

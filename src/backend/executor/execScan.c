@@ -251,6 +251,12 @@ ExecAssignScanProjectionInfo(ScanState *node)
 	/* Vars in an index-only scan's tlist should be INDEX_VAR */
 	if (IsA(scan, IndexOnlyScan))
 		varno = INDEX_VAR;
+	/* Also foreign or custom scan on pseudo relation should be INDEX_VAR */
+	else if (scan->scanrelid == 0)
+	{
+		Assert(IsA(scan, ForeignScan) || IsA(scan, CustomScan));
+		varno = INDEX_VAR;
+	}
 	else
 		varno = scan->scanrelid;
 

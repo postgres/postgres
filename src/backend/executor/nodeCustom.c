@@ -23,7 +23,7 @@ CustomScanState *
 ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 {
 	CustomScanState    *css;
-	Relation			scan_rel;
+	Index				scan_relid = cscan->scan.scanrelid;
 
 	/* populate a CustomScanState according to the CustomScan */
 	css = (CustomScanState *) cscan->methods->CreateCustomScanState(cscan);
@@ -48,12 +48,26 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &css->ss);
 	ExecInitResultTupleSlot(estate, &css->ss.ps);
 
-	/* initialize scan relation */
-	scan_rel = ExecOpenScanRelation(estate, cscan->scan.scanrelid, eflags);
-	css->ss.ss_currentRelation = scan_rel;
-	css->ss.ss_currentScanDesc = NULL;	/* set by provider */
-	ExecAssignScanType(&css->ss, RelationGetDescr(scan_rel));
+	/*
+	 * open the base relation and acquire an appropriate lock on it;
+	 * also, get and assign the scan type
+	 */
+	if (scan_relid > 0)
+	{
+		Relation		scan_rel;
 
+		scan_rel = ExecOpenScanRelation(estate, scan_relid, eflags);
+		css->ss.ss_currentRelation = scan_rel;
+		css->ss.ss_currentScanDesc = NULL;	/* set by provider */
+		ExecAssignScanType(&css->ss, RelationGetDescr(scan_rel));
+	}
+	else
+	{
+		TupleDesc	ps_tupdesc;
+
+		ps_tupdesc = ExecCleanTypeFromTL(cscan->custom_ps_tlist, false);
+		ExecAssignScanType(&css->ss, ps_tupdesc);
+	}
 	css->ss.ps.ps_TupFromTlist = false;
 
 	/*
@@ -89,11 +103,11 @@ ExecEndCustomScan(CustomScanState *node)
 
 	/* Clean out the tuple table */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	if (node->ss.ss_ScanTupleSlot)
-		ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/* Close the heap relation */
-	ExecCloseScanRelation(node->ss.ss_currentRelation);
+	if (node->ss.ss_currentRelation)
+		ExecCloseScanRelation(node->ss.ss_currentRelation);
 }
 
 void

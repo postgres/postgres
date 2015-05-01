@@ -102,7 +102,7 @@ ForeignScanState *
 ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 {
 	ForeignScanState *scanstate;
-	Relation	currentRelation;
+	Index		scanrelid = node->scan.scanrelid;
 	FdwRoutine *fdwroutine;
 
 	/* check for unsupported flags */
@@ -141,16 +141,24 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
 
 	/*
-	 * open the base relation and acquire appropriate lock on it.
+	 * open the base relation and acquire an appropriate lock on it;
+	 * also, get and assign the scan type
 	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
-	scanstate->ss.ss_currentRelation = currentRelation;
+	if (scanrelid > 0)
+	{
+		Relation	currentRelation;
 
-	/*
-	 * get the scan type from the relation descriptor.  (XXX at some point we
-	 * might want to let the FDW editorialize on the scan tupdesc.)
-	 */
-	ExecAssignScanType(&scanstate->ss, RelationGetDescr(currentRelation));
+		currentRelation = ExecOpenScanRelation(estate, scanrelid, eflags);
+		scanstate->ss.ss_currentRelation = currentRelation;
+		ExecAssignScanType(&scanstate->ss, RelationGetDescr(currentRelation));
+	}
+	else
+	{
+		TupleDesc	ps_tupdesc;
+
+		ps_tupdesc = ExecCleanTypeFromTL(node->fdw_ps_tlist, false);
+		ExecAssignScanType(&scanstate->ss, ps_tupdesc);
+	}
 
 	/*
 	 * Initialize result tuple type and projection info.
@@ -161,7 +169,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	/*
 	 * Acquire function pointers from the FDW's handler, and init fdw_state.
 	 */
-	fdwroutine = GetFdwRoutineForRelation(currentRelation, true);
+	fdwroutine = GetFdwRoutine(node->fdw_handler);
 	scanstate->fdwroutine = fdwroutine;
 	scanstate->fdw_state = NULL;
 
@@ -193,7 +201,8 @@ ExecEndForeignScan(ForeignScanState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/* close the relation. */
-	ExecCloseScanRelation(node->ss.ss_currentRelation);
+	if (node->ss.ss_currentRelation)
+		ExecCloseScanRelation(node->ss.ss_currentRelation);
 }
 
 /* ----------------------------------------------------------------

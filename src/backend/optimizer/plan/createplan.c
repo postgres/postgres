@@ -44,7 +44,6 @@
 #include "utils/lsyscache.h"
 
 
-static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
 static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
 static List *build_path_tlist(PlannerInfo *root, Path *path);
 static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
@@ -220,7 +219,7 @@ create_plan(PlannerInfo *root, Path *best_path)
  * create_plan_recurse
  *	  Recursive guts of create_plan().
  */
-static Plan *
+Plan *
 create_plan_recurse(PlannerInfo *root, Path *best_path)
 {
 	Plan	   *plan;
@@ -1961,16 +1960,25 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	ForeignScan *scan_plan;
 	RelOptInfo *rel = best_path->path.parent;
 	Index		scan_relid = rel->relid;
-	RangeTblEntry *rte;
+	Oid			rel_oid = InvalidOid;
 	Bitmapset  *attrs_used = NULL;
 	ListCell   *lc;
 	int			i;
 
-	/* it should be a base rel... */
-	Assert(scan_relid > 0);
-	Assert(rel->rtekind == RTE_RELATION);
-	rte = planner_rt_fetch(scan_relid, root);
-	Assert(rte->rtekind == RTE_RELATION);
+	/*
+	 * If we're scanning a base relation, look up the OID.
+	 * (We can skip this if scanning a join relation.)
+	 */
+	if (scan_relid > 0)
+	{
+		RangeTblEntry *rte;
+
+		Assert(rel->rtekind == RTE_RELATION);
+		rte = planner_rt_fetch(scan_relid, root);
+		Assert(rte->rtekind == RTE_RELATION);
+		rel_oid = rte->relid;
+	}
+	Assert(rel->fdwroutine != NULL);
 
 	/*
 	 * Sort clauses into best execution order.  We do this first since the FDW
@@ -1985,12 +1993,38 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	 * has selected some join clauses for remote use but also wants them
 	 * rechecked locally).
 	 */
-	scan_plan = rel->fdwroutine->GetForeignPlan(root, rel, rte->relid,
+	scan_plan = rel->fdwroutine->GetForeignPlan(root, rel, rel_oid,
 												best_path,
 												tlist, scan_clauses);
+	/*
+	 * Sanity check.  There may be resjunk entries in fdw_ps_tlist that
+	 * are included only to help EXPLAIN deparse plans properly. We require
+	 * that these are at the end, so that when the executor builds the scan
+	 * descriptor based on the non-junk entries, it gets the attribute
+	 * numbers correct.
+	 */
+	if (scan_plan->scan.scanrelid == 0)
+	{
+		bool	found_resjunk = false;
+
+		foreach (lc, scan_plan->fdw_ps_tlist)
+		{
+			TargetEntry	   *tle = lfirst(lc);
+
+			if (tle->resjunk)
+				found_resjunk = true;
+			else if (found_resjunk)
+				elog(ERROR, "junk TLE should not apper prior to valid one");
+		}
+	}
+	/* Set the relids that are represented by this foreign scan for Explain */
+	scan_plan->fdw_relids = best_path->path.parent->relids;
 
 	/* Copy cost data from Path to Plan; no need to make FDW do this */
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+
+	/* Track FDW server-id; no need to make FDW do this */
+	scan_plan->fdw_handler = rel->fdw_handler;
 
 	/*
 	 * Replace any outer-relation variables with nestloop params in the qual
@@ -2053,12 +2087,7 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 {
 	CustomScan *cplan;
 	RelOptInfo *rel = best_path->path.parent;
-
-	/*
-	 * Right now, all we can support is CustomScan node which is associated
-	 * with a particular base relation to be scanned.
-	 */
-	Assert(rel && rel->reloptkind == RELOPT_BASEREL);
+	ListCell   *lc;
 
 	/*
 	 * Sort clauses into the best execution order, although custom-scan
@@ -2076,6 +2105,30 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 															  tlist,
 															  scan_clauses);
 	Assert(IsA(cplan, CustomScan));
+
+	/*
+	 * Sanity check.  There may be resjunk entries in custom_ps_tlist that
+	 * are included only to help EXPLAIN deparse plans properly. We require
+	 * that these are at the end, so that when the executor builds the scan
+	 * descriptor based on the non-junk entries, it gets the attribute
+	 * numbers correct.
+	 */
+	if (cplan->scan.scanrelid == 0)
+	{
+		bool	found_resjunk = false;
+
+		foreach (lc, cplan->custom_ps_tlist)
+		{
+			TargetEntry	   *tle = lfirst(lc);
+
+			if (tle->resjunk)
+				found_resjunk = true;
+			else if (found_resjunk)
+				elog(ERROR, "junk TLE should not apper prior to valid one");
+		}
+	}
+	/* Set the relids that are represented by this custom scan for Explain */
+	cplan->custom_relids = best_path->path.parent->relids;
 
 	/*
 	 * Copy cost data from Path to Plan; no need to make custom-plan providers

@@ -366,6 +366,7 @@ typedef struct PlannerInfo
  *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
  *		subplan_params - list of PlannerParamItems to be passed to subquery
  *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
+ *		fdw_handler - OID of FDW handler, if foreign table (else InvalidOid)
  *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
  *		Note: for a subquery, tuples, subplan, subroot are not set immediately
@@ -461,6 +462,7 @@ typedef struct RelOptInfo
 	List	   *subplan_params; /* if subquery */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;		/* if foreign table */
+	Oid			fdw_handler;	/* if foreign table */
 	void	   *fdw_private;	/* if foreign table */
 
 	/* used by various scans and joins: */

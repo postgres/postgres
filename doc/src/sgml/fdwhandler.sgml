@@ -598,6 +598,42 @@ IsForeignRelUpdatable (Relation rel);
 
    </sect2>
 
+   <sect2>
+    <title>FDW Routines For Remote Joins</title>
+    <para>
+<programlisting>
+void
+GetForeignJoinPaths(PlannerInfo *root,
+                    RelOptInfo *joinrel,
+                    RelOptInfo *outerrel,
+                    RelOptInfo *innerrel,
+                    List *restrictlist,
+                    JoinType jointype,
+                    SpecialJoinInfo *sjinfo,
+                    SemiAntiJoinFactors *semifactors,
+                    Relids param_source_rels,
+                    Relids extra_lateral_rels);
+</programlisting>
+     Create possible access paths for a join of two foreign tables managed
+     by the same foreign data wrapper.
+     This optional function is called during query planning.
+    </para>
+    <para>
+     This function the FDW to add <structname>ForeignScan</> paths for the
+     supplied <literal>joinrel</>.  Typically, the FDW will send the whole
+     join to the remote server as a single query, as performing the join
+     remotely rather than locally is typically much more efficient.
+    </para>
+    <para>
+     Since we cannot construct the slot descriptor for a remote join from
+     the catalogs, the FDW should set the <structfield>scanrelid</> of the
+     <structname>ForeignScan</> to zero and <structfield>fdw_ps_tlist</>
+     to an appropriate list of <structfield>TargetEntry</> nodes.
+     Junk entries will be ignored, but can be present for the benefit of
+     deparsing performed by <command>EXPLAIN</>.
+    </para>
+   </sect2>
+
    <sect2 id="fdw-callbacks-explain">
     <title>FDW Routines for <command>EXPLAIN</></title>
 

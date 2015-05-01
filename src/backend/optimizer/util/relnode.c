@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "foreign/fdwapi.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -122,6 +123,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->subroot = NULL;
 	rel->subplan_params = NIL;
 	rel->fdwroutine = NULL;
+	rel->fdw_handler = InvalidOid;
 	rel->fdw_private = NULL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
@@ -425,6 +427,18 @@ build_join_rel(PlannerInfo *root,
 	 */
 	set_joinrel_size_estimates(root, joinrel, outer_rel, inner_rel,
 							   sjinfo, restrictlist);
+
+	/*
+	 * Set FDW handler and routine if both outer and inner relation
+	 * are managed by same FDW driver.
+	 */
+	if (OidIsValid(outer_rel->fdw_handler) &&
+		OidIsValid(inner_rel->fdw_handler) &&
+		outer_rel->fdw_handler == inner_rel->fdw_handler)
+	{
+		joinrel->fdw_handler = outer_rel->fdw_handler;
+		joinrel->fdwroutine = GetFdwRoutine(joinrel->fdw_handler);
+	}
 
 	/*
 	 * Add the joinrel to the query's joinrel list, and store it into the

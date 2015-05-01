@@ -17,10 +17,13 @@
 #include <math.h>
 
 #include "executor/executor.h"
+#include "foreign/fdwapi.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 
+/* Hook for plugins to get control in add_paths_to_joinrel() */
+set_join_pathlist_hook_type set_join_pathlist_hook = NULL;
 
 #define PATH_PARAM_BY_REL(path, rel)  \
 	((path)->param_info && bms_overlap(PATH_REQ_OUTER(path), (rel)->relids))
@@ -260,6 +263,27 @@ add_paths_to_joinrel(PlannerInfo *root,
 							 restrictlist, jointype,
 							 sjinfo, &semifactors,
 							 param_source_rels, extra_lateral_rels);
+
+	/*
+	 * 5. If both inner and outer relations are managed by the same FDW,
+	 * give it a chance to push down joins.
+	 */
+	if (joinrel->fdwroutine &&
+		joinrel->fdwroutine->GetForeignJoinPaths)
+		joinrel->fdwroutine->GetForeignJoinPaths(root, joinrel,
+												 outerrel, innerrel,
+												 restrictlist, jointype, sjinfo,
+												 &semifactors,
+												 param_source_rels,
+												 extra_lateral_rels);
+	/*
+	 * 6. Finally, give extensions a chance to manipulate the path list.
+	 */
+	if (set_join_pathlist_hook)
+		set_join_pathlist_hook(root, joinrel, outerrel, innerrel,
+							   restrictlist, jointype,
+							   sjinfo, &semifactors,
+							   param_source_rels, extra_lateral_rels);
 }
 
 /*

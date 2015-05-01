@@ -81,6 +81,28 @@ typedef struct CustomPath
     detailed below.
   </para>
 
+  <para>
+   A custom scan provider can also add join paths; in this case, the scan
+   must produce the same output as would normally be produced by the join
+   it replaces.  To do this, the join provider should set the following hook.
+   This hook may be invoked repeatedly for the same pair of relations, with
+   different combinations of inner and outer relations; it is the
+   responsibility of the hook to minimize duplicated work.
+<programlisting>
+typedef void (*set_join_pathlist_hook_type) (PlannerInfo *root,
+                                             RelOptInfo *joinrel,
+                                             RelOptInfo *outerrel,
+                                             RelOptInfo *innerrel,
+                                             List *restrictlist,
+                                             JoinType jointype,
+                                             SpecialJoinInfo *sjinfo,
+                                             SemiAntiJoinFactors *semifactors,
+                                             Relids param_source_rels,
+                                             Relids extra_lateral_rels);
+extern PGDLLIMPORT set_join_pathlist_hook_type set_join_pathlist_hook;
+</programlisting>
+  </para>
+
   <sect2 id="custom-scan-path-callbacks">
   <title>Custom Path Callbacks</title>
 
@@ -124,7 +146,9 @@ typedef struct CustomScan
     Scan      scan;
     uint32    flags;
     List     *custom_exprs;
+    List     *custom_ps_tlist;
     List     *custom_private;
+    List     *custom_relids;
     const CustomScanMethods *methods;
 } CustomScan;
 </programlisting>
@@ -141,9 +165,25 @@ typedef struct CustomScan
     is only used by the custom scan provider itself.  Plan trees must be able
     to be duplicated using <function>copyObject</>, so all the data stored
     within these two fields must consist of nodes that function can handle.
+    <literal>custom_relids</> is set by the core code to the set of relations
+    which this scan node must handle; except when this scan is replacing a
+    join, it will have only one member.
     <structfield>methods</> must point to a (usually statically allocated)
     object implementing the required custom scan methods, which are further
     detailed below.
+  </para>
+
+  <para>
+   When a <structname>CustomScan</> scans a single relation,
+   <structfield>scan.scanrelid</> should be the range table index of the table
+   to be scanned, and <structfield>custom_ps_tlist</> should be
+   <literal>NULL</>.  When it replaces a join, <structfield>scan.scanrelid</>
+   should be zero, and <structfield>custom_ps_tlist</> should be a list of
+   <structname>TargetEntry</> nodes.  This is necessary because, when a join
+   is replaced, the target list cannot be constructed from the table
+   definition.  At execution time, this list will be used to initialize the
+   tuple descriptor of the <structname>TupleTableSlot</>.  It will also be
+   used by <command>EXPLAIN</>, when deparsing.
   </para>
 
   <sect2 id="custom-scan-plan-callbacks">

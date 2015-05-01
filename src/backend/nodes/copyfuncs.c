@@ -592,8 +592,11 @@ _copyForeignScan(const ForeignScan *from)
 	/*
 	 * copy remainder of node
 	 */
+	COPY_SCALAR_FIELD(fdw_handler);
 	COPY_NODE_FIELD(fdw_exprs);
+	COPY_NODE_FIELD(fdw_ps_tlist);
 	COPY_NODE_FIELD(fdw_private);
+	COPY_BITMAPSET_FIELD(fdw_relids);
 	COPY_SCALAR_FIELD(fsSystemCol);
 
 	return newnode;
@@ -617,7 +620,9 @@ _copyCustomScan(const CustomScan *from)
 	 */
 	COPY_SCALAR_FIELD(flags);
 	COPY_NODE_FIELD(custom_exprs);
+	COPY_NODE_FIELD(custom_ps_tlist);
 	COPY_NODE_FIELD(custom_private);
+	COPY_BITMAPSET_FIELD(custom_relids);
 
 	/*
 	 * NOTE: The method field of CustomScan is required to be a pointer to a

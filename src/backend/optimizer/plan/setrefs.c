@@ -86,6 +86,12 @@ static void flatten_unplanned_rtes(PlannerGlobal *glob, RangeTblEntry *rte);
 static bool flatten_rtes_walker(Node *node, PlannerGlobal *glob);
 static void add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte);
 static Plan *set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset);
+static void set_foreignscan_references(PlannerInfo *root,
+									   ForeignScan *fscan,
+									   int rtoffset);
+static void set_customscan_references(PlannerInfo *root,
+									  CustomScan *cscan,
+									  int rtoffset);
 static Plan *set_indexonlyscan_references(PlannerInfo *root,
 							 IndexOnlyScan *plan,
 							 int rtoffset);
@@ -565,31 +571,11 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_ForeignScan:
-			{
-				ForeignScan *splan = (ForeignScan *) plan;
-
-				splan->scan.scanrelid += rtoffset;
-				splan->scan.plan.targetlist =
-					fix_scan_list(root, splan->scan.plan.targetlist, rtoffset);
-				splan->scan.plan.qual =
-					fix_scan_list(root, splan->scan.plan.qual, rtoffset);
-				splan->fdw_exprs =
-					fix_scan_list(root, splan->fdw_exprs, rtoffset);
-			}
+			set_foreignscan_references(root, (ForeignScan *) plan, rtoffset);
 			break;
 
 		case T_CustomScan:
-			{
-				CustomScan *splan = (CustomScan *) plan;
-
-				splan->scan.scanrelid += rtoffset;
-				splan->scan.plan.targetlist =
-					fix_scan_list(root, splan->scan.plan.targetlist, rtoffset);
-				splan->scan.plan.qual =
-					fix_scan_list(root, splan->scan.plan.qual, rtoffset);
-				splan->custom_exprs =
-					fix_scan_list(root, splan->custom_exprs, rtoffset);
-			}
+			set_customscan_references(root, (CustomScan *) plan, rtoffset);
 			break;
 
 		case T_NestLoop:
@@ -874,6 +860,121 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 	plan->righttree = set_plan_refs(root, plan->righttree, rtoffset);
 
 	return plan;
+}
+
+/*
+ * set_foreignscan_references
+ *     Do set_plan_references processing on an ForeignScan
+ */
+static void
+set_foreignscan_references(PlannerInfo *root,
+						   ForeignScan *fscan,
+						   int rtoffset)
+{
+	if (rtoffset > 0)
+	{
+		Bitmapset  *tempset = NULL;
+		int			x = -1;
+
+		while ((x = bms_next_member(fscan->fdw_relids, x)) >= 0)
+			tempset = bms_add_member(tempset, x + rtoffset);
+		fscan->fdw_relids = tempset;
+	}
+
+	if (fscan->scan.scanrelid == 0)
+	{
+		indexed_tlist *pscan_itlist = build_tlist_index(fscan->fdw_ps_tlist);
+
+		fscan->scan.plan.targetlist = (List *)
+			fix_upper_expr(root,
+						   (Node *) fscan->scan.plan.targetlist,
+						   pscan_itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		fscan->scan.plan.qual = (List *)
+			fix_upper_expr(root,
+						   (Node *) fscan->scan.plan.qual,
+						   pscan_itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		fscan->fdw_exprs = (List *)
+			fix_upper_expr(root,
+						   (Node *) fscan->fdw_exprs,
+						   pscan_itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		fscan->fdw_ps_tlist =
+			fix_scan_list(root, fscan->fdw_ps_tlist, rtoffset);
+		pfree(pscan_itlist);
+	}
+	else
+	{
+		fscan->scan.scanrelid += rtoffset;
+		fscan->scan.plan.targetlist =
+			fix_scan_list(root, fscan->scan.plan.targetlist, rtoffset);
+		fscan->scan.plan.qual =
+			fix_scan_list(root, fscan->scan.plan.qual, rtoffset);
+		fscan->fdw_exprs =
+			fix_scan_list(root, fscan->fdw_exprs, rtoffset);
+	}
+}
+
+/*
+ * set_customscan_references
+ *     Do set_plan_references processing on an CustomScan
+ */
+static void
+set_customscan_references(PlannerInfo *root,
+						  CustomScan *cscan,
+						  int rtoffset)
+{
+	if (rtoffset > 0)
+	{
+		Bitmapset  *tempset = NULL;
+		int			x = -1;
+
+		while ((x = bms_next_member(cscan->custom_relids, x)) >= 0)
+			tempset = bms_add_member(tempset, x + rtoffset);
+		cscan->custom_relids = tempset;
+	}
+
+	if (cscan->scan.scanrelid == 0)
+	{
+		indexed_tlist *pscan_itlist =
+			build_tlist_index(cscan->custom_ps_tlist);
+
+		cscan->scan.plan.targetlist = (List *)
+			fix_upper_expr(root,
+						   (Node *) cscan->scan.plan.targetlist,
+						   pscan_itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		cscan->scan.plan.qual = (List *)
+			fix_upper_expr(root,
+						   (Node *) cscan->scan.plan.qual,
+						   pscan_itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		cscan->custom_exprs = (List *)
+			fix_upper_expr(root,
+						   (Node *) cscan->custom_exprs,
+						   pscan_itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		cscan->custom_ps_tlist =
+			fix_scan_list(root, cscan->custom_ps_tlist, rtoffset);
+		pfree(pscan_itlist);
+	}
+	else
+	{
+		cscan->scan.scanrelid += rtoffset;
+		cscan->scan.plan.targetlist =
+			fix_scan_list(root, cscan->scan.plan.targetlist, rtoffset);
+		cscan->scan.plan.qual =
+			fix_scan_list(root, cscan->scan.plan.qual, rtoffset);
+		cscan->custom_exprs =
+			fix_scan_list(root, cscan->custom_exprs, rtoffset);
+	}
 }
 
 /*

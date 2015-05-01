@@ -730,10 +730,16 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
-		case T_ForeignScan:
-		case T_CustomScan:
 			*rels_used = bms_add_member(*rels_used,
 										((Scan *) plan)->scanrelid);
+			break;
+		case T_ForeignScan:
+			*rels_used = bms_add_members(*rels_used,
+										 ((ForeignScan *) plan)->fdw_relids);
+			break;
+		case T_CustomScan:
+			*rels_used = bms_add_members(*rels_used,
+										 ((CustomScan *) plan)->custom_relids);
 			break;
 		case T_ModifyTable:
 			*rels_used = bms_add_member(*rels_used,
@@ -1072,9 +1078,12 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
+			ExplainScanTarget((Scan *) plan, es);
+			break;
 		case T_ForeignScan:
 		case T_CustomScan:
-			ExplainScanTarget((Scan *) plan, es);
+			if (((Scan *) plan)->scanrelid > 0)
+				ExplainScanTarget((Scan *) plan, es);
 			break;
 		case T_IndexScan:
 			{
