@@ -104,10 +104,13 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
 	{
-		xl_xact_origin *xl_origin = (xl_xact_origin *) data;
+		xl_xact_origin xl_origin;
 
-		parsed->origin_lsn = xl_origin->origin_lsn;
-		parsed->origin_timestamp = xl_origin->origin_timestamp;
+		/* we're only guaranteed 4 byte alignment, so copy onto stack */
+		memcpy(&xl_origin, data, sizeof(xl_origin));
+
+		parsed->origin_lsn = xl_origin.origin_lsn;
+		parsed->origin_timestamp = xl_origin.origin_timestamp;
 
 		data += sizeof(xl_xact_origin);
 	}

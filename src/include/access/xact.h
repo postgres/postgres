@@ -173,7 +173,8 @@ typedef struct xl_xact_assignment
  * by a set XLOG_XACT_HAS_INFO bit in the xl_info field.
  *
  * NB: All the individual data chunks should be sized to multiples of
- * sizeof(int) and only require int32 alignment.
+ * sizeof(int) and only require int32 alignment. If they require bigger
+ * alignment, they need to be copied upon reading.
  */
 
 /* sub-records for commit/abort */
@@ -237,7 +238,7 @@ typedef struct xl_xact_commit
 	/* xl_xact_relfilenodes follows if XINFO_HAS_RELFILENODES */
 	/* xl_xact_invals follows if XINFO_HAS_INVALS */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
-	/* xl_xact_origin follows if XINFO_HAS_ORIGIN */
+	/* xl_xact_origin follows if XINFO_HAS_ORIGIN, stored unaligned! */
 } xl_xact_commit;
 #define MinSizeOfXactCommit (offsetof(xl_xact_commit, xact_time) + sizeof(TimestampTz))
 
