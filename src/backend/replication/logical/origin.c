@@ -12,7 +12,7 @@
  *
  * This file provides the following:
  * * An infrastructure to name nodes in a replication setup
- * * A facility to efficiently store and persist replication progress in a
+ * * A facility to efficiently store and persist replication progress in an
  *   efficient and durable manner.
  *
  * Replication origin consist out of a descriptive, user defined, external
@@ -44,14 +44,14 @@
  *
  * There are several levels of locking at work:
  *
- * * To create and drop replication origins a exclusive lock on
+ * * To create and drop replication origins an exclusive lock on
  *   pg_replication_slot is required for the duration. That allows us to
  *   safely and conflict free assign new origins using a dirty snapshot.
  *
- * * When creating a in-memory replication progress slot the ReplicationOirgin
+ * * When creating an in-memory replication progress slot the ReplicationOirgin
  *   LWLock has to be held exclusively; when iterating over the replication
  *   progress a shared lock has to be held, the same when advancing the
- *   replication progress of a individual backend that has not setup as the
+ *   replication progress of an individual backend that has not setup as the
  *   session's replication origin.
  *
  * * When manipulating or looking at the remote_lsn and local_lsn fields of a
@@ -251,7 +251,7 @@ replorigin_create(char *roname)
 	 * We need the numeric replication origin to be 16bit wide, so we cannot
 	 * rely on the normal oid allocation. Instead we simply scan
 	 * pg_replication_origin for the first unused id. That's not particularly
-	 * efficient, but this should be an fairly infrequent operation - we can
+	 * efficient, but this should be a fairly infrequent operation - we can
 	 * easily spend a bit more code on this when it turns out it needs to be
 	 * faster.
 	 *
@@ -1078,7 +1078,7 @@ replorigin_session_setup(RepOriginId node)
 /*
  * Reset replay state previously setup in this session.
  *
- * This function may only be called if a origin was setup with
+ * This function may only be called if an origin was setup with
  * replorigin_session_setup().
  */
 void
@@ -1121,7 +1121,7 @@ replorigin_session_advance(XLogRecPtr remote_commit, XLogRecPtr local_commit)
 
 /*
  * Ask the machinery about the point up to which we successfully replayed
- * changes from a already setup replication origin.
+ * changes from an already setup replication origin.
  */
 XLogRecPtr
 replorigin_session_get_progress(bool flush)

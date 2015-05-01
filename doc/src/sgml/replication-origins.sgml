@@ -22,14 +22,14 @@
  </para>
 
  <para>
-  Replication origins consist out of a name and a oid. The name, which
-  is what should be used to refer to the origin across systems, is
-  free-form text. It should be used in a way that makes conflicts
-  between replication origins created by different replication
-  solutions unlikely; e.g. by prefixing the replication solution's
-  name to it.  The oid is used only to avoid having to store the long
-  version in situations where space efficiency is important. It should
-  never be shared between systems.
+  Replication origins consist out of a name and an <type>oid</type>. The name,
+  which is what should be used to refer to the origin across systems, is
+  free-form <type>text</type>. It should be used in a way that makes conflicts
+  between replication origins created by different replication solutions
+  unlikely; e.g. by prefixing the replication solution's name to it.
+  The <type>oid</type> is used only to avoid having to store the long version
+  in situations where space efficiency is important. It should never be shared
+  between systems.
  </para>
 
  <para>
@@ -61,11 +61,11 @@
   timestamp of every source transaction can be configured on a per
   transaction basis using
   <link linkend="pg-replication-origin-xact-setup"><function>pg_replication_origin_xact_setup()</function></link>.
-  If that's done replication progress will be persist in a crash safe
+  If that's done replication progress will persist in a crash safe
   manner. Replay progress for all replication origins can be seen in the
   <link linkend="catalog-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname>
-  </link> view. A individual origin's progress, e.g. when resuming
+  </link> view. An individual origin's progress, e.g. when resuming
   replication, can be acquired using
   <link linkend="pg-replication-origin-progress"><function>pg_replication_origin_progress()</function></link>
   for any origin or
@@ -75,9 +75,9 @@
 
  <para>
   In more complex replication topologies than replication from exactly one
-  system to one other, another problem can be that, that it is hard to avoid
+  system to one other, another problem can be that it is hard to avoid
   replicating replayed rows again. That can lead both to cycles in the
-  replication and inefficiencies. Replication origins provide a optional
+  replication and inefficiencies. Replication origins provide an optional
   mechanism to recognize and prevent that. When configured using the functions
   referenced in the previous paragraph, every change and transaction passed to
   output plugin callbacks (see <xref linkend="logicaldecoding-output-plugin">)

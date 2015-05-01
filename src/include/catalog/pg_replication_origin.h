@@ -34,7 +34,7 @@ CATALOG(pg_replication_origin,6000) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	 *
 	 * This should never leave the system.
 	 *
-	 * Needs to fit into a uint16, so we don't waste too much space in WAL
+	 * Needs to fit into an uint16, so we don't waste too much space in WAL
 	 * records. For this reason we don't use a normal Oid column here, since
 	 * we need to handle allocation of new values manually.
 	 */

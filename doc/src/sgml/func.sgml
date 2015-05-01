@@ -17086,9 +17086,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <parameter>internal_id</parameter> <type>oid</type>
        </entry>
        <entry>
-        Lookup replication origin by name and return the internal
-        oid. If no corresponding replication origin is found a error
-        is thrown.
+        Lookup replication origin by name and return the internal id. If no
+        corresponding replication origin is found an error is thrown.
        </entry>
       </row>
 
