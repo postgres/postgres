@@ -1124,17 +1124,17 @@ ERROR:  positional argument cannot follow named argument
 LINE 1: select * from dfunc(10, b := 20, 30);
                                          ^
 select * from dfunc(x := 10, b := 20, c := 30);  -- fail, unknown param
-ERROR:  function dfunc(x := integer, b := integer, c := integer) does not exist
+ERROR:  function dfunc(x => integer, b => integer, c => integer) does not exist
 LINE 1: select * from dfunc(x := 10, b := 20, c := 30);
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 select * from dfunc(10, 10, a := 20);  -- fail, a overlaps positional parameter
-ERROR:  function dfunc(integer, integer, a := integer) does not exist
+ERROR:  function dfunc(integer, integer, a => integer) does not exist
 LINE 1: select * from dfunc(10, 10, a := 20);
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 select * from dfunc(1,c := 2,d := 3); -- fail, no value for b
-ERROR:  function dfunc(integer, c := integer, d := integer) does not exist
+ERROR:  function dfunc(integer, c => integer, d => integer) does not exist
 LINE 1: select * from dfunc(1,c := 2,d := 3);
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
@@ -1175,7 +1175,7 @@ select * from dfunc('Hello World', c := '2009-07-25'::date, b := 20);
 (1 row)
 
 select * from dfunc('Hello World', c := 20, b := '2009-07-25'::date);  -- fail
-ERROR:  function dfunc(unknown, c := integer, b := date) does not exist
+ERROR:  function dfunc(unknown, c => integer, b => date) does not exist
 LINE 1: select * from dfunc('Hello World', c := 20, b := '2009-07-25...
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
@@ -1450,8 +1450,8 @@ select * from dfview;
 View definition:
  SELECT int8_tbl.q1,
     int8_tbl.q2,
-    dfunc(int8_tbl.q1, int8_tbl.q2, flag := int8_tbl.q1 > int8_tbl.q2) AS c3,
-    dfunc(int8_tbl.q1, flag := int8_tbl.q1 < int8_tbl.q2, b := int8_tbl.q2) AS c4
+    dfunc(int8_tbl.q1, int8_tbl.q2, flag => int8_tbl.q1 > int8_tbl.q2) AS c3,
+    dfunc(int8_tbl.q1, flag => int8_tbl.q1 < int8_tbl.q2, b => int8_tbl.q2) AS c4
    FROM int8_tbl;
 
 drop view dfview;

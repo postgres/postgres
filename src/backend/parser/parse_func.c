@@ -1860,7 +1860,7 @@ funcname_signature_string(const char *funcname, int nargs,
 			appendStringInfoString(&argbuf, ", ");
 		if (i >= numposargs)
 		{
-			appendStringInfo(&argbuf, "%s := ", (char *) lfirst(lc));
+			appendStringInfo(&argbuf, "%s => ", (char *) lfirst(lc));
 			lc = lnext(lc);
 		}
 		appendStringInfoString(&argbuf, format_type_be(argtypes[i]));
