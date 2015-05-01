@@ -3,7 +3,7 @@
 MODULE_big = hstore_plperl
 OBJS = hstore_plperl.o
 
-PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plperl -I$(perl_archlibexp)/CORE -I$(top_srcdir)/contrib/hstore
+PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plperl -I$(top_srcdir)/contrib/hstore
 
 EXTENSION = hstore_plperl hstore_plperlu
 DATA = hstore_plperl--1.0.sql hstore_plperlu--1.0.sql
@@ -21,3 +21,6 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+override CPPFLAGS := $(CPPFLAGS) -I$(perl_archlibexp)/CORE -DPLPERL_HAVE_UID_GID
+override CFLAGS += -Wno-comment
