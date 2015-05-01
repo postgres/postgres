@@ -596,6 +596,7 @@ DefineQueryRewrite(char *rulename,
 		classForm->relhaspkey = false;
 		classForm->relfrozenxid = InvalidTransactionId;
 		classForm->relminmxid = InvalidMultiXactId;
+		classForm->relreplident = REPLICA_IDENTITY_NOTHING;
 
 		simple_heap_update(relationRelation, &classTup->t_self, classTup);
 		CatalogUpdateIndexes(relationRelation, classTup);
