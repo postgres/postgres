@@ -242,6 +242,14 @@ sub promote_standby
 	system_or_bail("pg_ctl -w -D $test_standby_datadir promote >>$log_path 2>&1");
 	poll_query_until("SELECT NOT pg_is_in_recovery()", $connstr_standby)
 		or die "Timed out while waiting for promotion of standby";
+
+	# Force a checkpoint after the promotion. pg_rewind looks at the control
+	# file todetermine what timeline the server is on, and that isn't updated
+	# immediately at promotion, but only at the next checkpoint. When running
+	# pg_rewind in remote mode, it's possible that we complete the test steps
+	# after promotion so quickly that when pg_rewind runs, the standby has not
+	# performed a checkpoint after promotion yet.
+	standby_psql("checkpoint");
 }
 
 sub run_pg_rewind
