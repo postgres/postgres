@@ -889,12 +889,44 @@ if test "$with_perl" = yes; then
     AC_MSG_ERROR([Perl not found])
   fi
   PGAC_CHECK_PERL_CONFIGS([archlibexp,privlibexp,useshrplib])
+  if test "$perl_useshrplib" != yes && test "$perl_useshrplib" != true; then
+    AC_MSG_ERROR([cannot build PL/Perl because libperl is not a shared library
+You might have to rebuild your Perl installation.  Refer to the
+documentation for details.  Use --without-perl to disable building
+PL/Perl.])
+  fi
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
 
 if test "$with_python" = yes; then
   PGAC_PATH_PYTHON
   PGAC_CHECK_PYTHON_EMBED_SETUP
+
+  # We need libpython as a shared library.  With Python >=2.5, we check
+  # the Py_ENABLE_SHARED setting.  OS X does supply a .dylib even
+  # though Py_ENABLE_SHARED does not get set.  On Debian, the setting
+  # is not correct before the jessie release
+  # (http://bugs.debian.org/695979).  We also want to support older
+  # Python versions.  So as a fallback we see if there is a file that
+  # is named like a shared library.
+
+  if test "$python_enable_shared" != 1; then
+    # We don't know the platform shared library extension here yet, so
+    # we try some candidates.
+    for dlsuffix in .so .dll .dylib .sl; do
+      if ls "$python_libdir"/libpython*${dlsuffix}* >/dev/null 2>&1; then
+        python_enable_shared=1
+        break
+      fi
+    done
+  fi
+
+  if test "$python_enable_shared" != 1; then
+    AC_MSG_ERROR([cannot build PL/Python because libpython is not a shared library
+You might have to rebuild your Python installation.  Refer to the
+documentation for details.  Use --without-python to disable building
+PL/Python.])
+  fi
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
@@ -1942,8 +1974,12 @@ fi
 if test "$with_tcl" = yes; then
     PGAC_PATH_TCLCONFIGSH([$with_tclconfig])
     PGAC_EVAL_TCLCONFIGSH([$TCL_CONFIG_SH],
-                          [TCL_INCLUDE_SPEC,TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
+                          [TCL_INCLUDE_SPEC,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
     AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
+    if test "$TCL_SHARED_BUILD" != 1; then
+      AC_MSG_ERROR([cannot build PL/Tcl because Tcl is not a shared library
+Use --without-tcl to disable building PL/Tcl.])
+    fi
     # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
     ac_save_CPPFLAGS=$CPPFLAGS
     CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"

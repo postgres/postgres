@@ -181,7 +181,6 @@ enable_coverage	= @enable_coverage@
 enable_tap_tests	= @enable_tap_tests@
 enable_thread_safety	= @enable_thread_safety@
 
-python_enable_shared	= @python_enable_shared@
 python_includespec	= @python_includespec@
 python_libdir		= @python_libdir@
 python_libspec		= @python_libspec@
@@ -192,7 +191,6 @@ python_version		= @python_version@
 krb_srvtab = @krb_srvtab@
 
 TCLSH			= @TCLSH@
-TCL_LIB_FILE		= @TCL_LIB_FILE@
 TCL_LIBS		= @TCL_LIBS@
 TCL_LIB_SPEC		= @TCL_LIB_SPEC@
 TCL_INCLUDE_SPEC	= @TCL_INCLUDE_SPEC@
@@ -283,7 +281,6 @@ else
 endif
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
-perl_useshrplib		= @perl_useshrplib@
 perl_embed_ldflags	= @perl_embed_ldflags@
 
 # Miscellaneous

@@ -641,7 +641,6 @@ TCL_SHLIB_LD_LIBS
 TCL_SHARED_BUILD
 TCL_LIB_SPEC
 TCL_LIBS
-TCL_LIB_FILE
 TCL_INCLUDE_SPEC
 TCL_CONFIG_SH
 TCLSH
@@ -662,7 +661,6 @@ HAVE_IPV6
 LIBOBJS
 UUID_LIBS
 ZIC
-python_enable_shared
 python_additional_libs
 python_libspec
 python_libdir
@@ -7384,6 +7382,12 @@ perl_useshrplib=`$PERL -MConfig -e 'print $Config{useshrplib}'`
 test "$PORTNAME" = "win32" && perl_useshrplib=`echo $perl_useshrplib | sed 's,\\\\,/,g'`
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $perl_useshrplib" >&5
 $as_echo "$perl_useshrplib" >&6; }
+  if test "$perl_useshrplib" != yes && test "$perl_useshrplib" != true; then
+    as_fn_error $? "cannot build PL/Perl because libperl is not a shared library
+You might have to rebuild your Perl installation.  Refer to the
+documentation for details.  Use --without-perl to disable building
+PL/Perl." "$LINENO" 5
+  fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for flags to link embedded Perl" >&5
 $as_echo_n "checking for flags to link embedded Perl... " >&6; }
@@ -7537,6 +7541,32 @@ $as_echo "no" >&6; }
 fi
 
 
+
+  # We need libpython as a shared library.  With Python >=2.5, we check
+  # the Py_ENABLE_SHARED setting.  OS X does supply a .dylib even
+  # though Py_ENABLE_SHARED does not get set.  On Debian, the setting
+  # is not correct before the jessie release
+  # (http://bugs.debian.org/695979).  We also want to support older
+  # Python versions.  So as a fallback we see if there is a file that
+  # is named like a shared library.
+
+  if test "$python_enable_shared" != 1; then
+    # We don't know the platform shared library extension here yet, so
+    # we try some candidates.
+    for dlsuffix in .so .dll .dylib .sl; do
+      if ls "$python_libdir"/libpython*${dlsuffix}* >/dev/null 2>&1; then
+        python_enable_shared=1
+        break
+      fi
+    done
+  fi
+
+  if test "$python_enable_shared" != 1; then
+    as_fn_error $? "cannot build PL/Python because libpython is not a shared library
+You might have to rebuild your Python installation.  Refer to the
+documentation for details.  Use --without-python to disable building
+PL/Python." "$LINENO" 5
+  fi
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
@@ -14736,12 +14766,15 @@ fi
 
     . "$TCL_CONFIG_SH"
 eval TCL_INCLUDE_SPEC=\"$TCL_INCLUDE_SPEC\"
-eval TCL_LIB_FILE=\"$TCL_LIB_FILE\"
 eval TCL_LIBS=\"$TCL_LIBS\"
 eval TCL_LIB_SPEC=\"$TCL_LIB_SPEC\"
 eval TCL_SHARED_BUILD=\"$TCL_SHARED_BUILD\"
 
-        # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
+        if test "$TCL_SHARED_BUILD" != 1; then
+      as_fn_error $? "cannot build PL/Tcl because Tcl is not a shared library
+Use --without-tcl to disable building PL/Tcl." "$LINENO" 5
+    fi
+    # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
     ac_save_CPPFLAGS=$CPPFLAGS
     CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
     ac_fn_c_check_header_mongrel "$LINENO" "tcl.h" "ac_cv_header_tcl_h" "$ac_includes_default"
