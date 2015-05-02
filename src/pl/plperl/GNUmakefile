@@ -9,7 +9,7 @@ ifeq ($(PORTNAME), win32)
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID
 # Perl on win32 contains /* within comment all over the header file,
 # so disable this warning.
-override CFLAGS += -Wno-comment
+override CPPFLAGS += -Wno-comment
 endif
 
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
