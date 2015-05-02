@@ -7542,23 +7542,28 @@ fi
 
 
 
-  # We need libpython as a shared library.  With Python >=2.5, we check
-  # the Py_ENABLE_SHARED setting.  OS X does supply a .dylib even
-  # though Py_ENABLE_SHARED does not get set.  On Debian, the setting
-  # is not correct before the jessie release
-  # (http://bugs.debian.org/695979).  We also want to support older
-  # Python versions.  So as a fallback we see if there is a file that
-  # is named like a shared library.
+  # We need libpython as a shared library.  With Python >=2.5, we
+  # check the Py_ENABLE_SHARED setting.  On Debian, the setting is not
+  # correct before the jessie release (http://bugs.debian.org/695979).
+  # We also want to support older Python versions.  So as a fallback
+  # we see if there is a file that is named like a shared library.
 
   if test "$python_enable_shared" != 1; then
-    # We don't know the platform shared library extension here yet, so
-    # we try some candidates.
-    for dlsuffix in .so .dll .dylib .sl; do
-      if ls "$python_libdir"/libpython*${dlsuffix}* >/dev/null 2>&1; then
-        python_enable_shared=1
-        break
-      fi
-    done
+    # OS X does supply a .dylib even though Py_ENABLE_SHARED does not
+    # get set.  The file detection logic below doesn't succeed on
+    # older OS X versions, so make it explicit.
+    if test "$PORTNAME" = darwin; then
+      python_enable_shared=1
+    else
+      # We don't know the platform shared library extension here yet,
+      # so we try some candidates.
+      for dlsuffix in .so .dll .sl; do
+        if ls "$python_libdir"/libpython*${dlsuffix}* >/dev/null 2>&1; then
+          python_enable_shared=1
+          break
+        fi
+      done
+    fi
   fi
 
   if test "$python_enable_shared" != 1; then
