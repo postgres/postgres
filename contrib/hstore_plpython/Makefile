@@ -1,7 +1,8 @@
 # contrib/hstore_plpython/Makefile
 
 MODULE_big = hstore_plpython$(python_majorversion)
-OBJS = hstore_plpython.o
+OBJS = hstore_plpython.o $(WIN32RES)
+PGFILEDESC = "hstore_plpython - hstore transform for plpython"
 
 PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plpython $(python_includespec) -I$(top_srcdir)/contrib/hstore
 
@@ -20,6 +21,11 @@ subdir = contrib/hstore_plpython
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
+endif
+
+ifeq ($(PORTNAME), win32)
+# This means we need an in-tree build on Windows, not a pgxs build
+SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
 endif
 
 REGRESS_OPTS = --load-extension=hstore

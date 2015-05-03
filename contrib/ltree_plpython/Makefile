@@ -1,7 +1,8 @@
 # contrib/ltree_plpython/Makefile
 
 MODULE_big = ltree_plpython$(python_majorversion)
-OBJS = ltree_plpython.o
+OBJS = ltree_plpython.o $(WIN32RES)
+PGFILEDESC = "ltree_plpython - ltree transform for plpython"
 
 PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plpython $(python_includespec) -I$(top_srcdir)/contrib/ltree
 
@@ -20,6 +21,11 @@ subdir = contrib/ltree_plpython
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
+endif
+
+ifeq ($(PORTNAME), win32)
+# This means we need an in-tree build on Windows, not a pgxs build
+SHLIB_LINK += $(wildcard ../../src/pl/plpython/libpython*.a)
 endif
 
 REGRESS_OPTS = --load-extension=ltree
