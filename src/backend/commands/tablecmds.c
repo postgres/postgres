@@ -6603,12 +6603,12 @@ static ObjectAddress
 ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 					  bool recurse, bool recursing, LOCKMODE lockmode)
 {
+	Constraint *cmdcon;
 	Relation	conrel;
 	SysScanDesc scan;
 	ScanKeyData key;
 	HeapTuple	contuple;
 	Form_pg_constraint currcon = NULL;
-	Constraint *cmdcon = NULL;
 	bool		found = false;
 	ObjectAddress address;
 
@@ -6655,10 +6655,11 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 		HeapTuple	copyTuple;
 		HeapTuple	tgtuple;
 		Form_pg_constraint copy_con;
-		Form_pg_trigger copy_tg;
+		List	   *otherrelids = NIL;
 		ScanKeyData tgkey;
 		SysScanDesc tgscan;
 		Relation	tgrel;
+		ListCell   *lc;
 
 		/*
 		 * Now update the catalog, while we have the door open.
@@ -6691,8 +6692,16 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 
 		while (HeapTupleIsValid(tgtuple = systable_getnext(tgscan)))
 		{
+			Form_pg_trigger copy_tg;
+
 			copyTuple = heap_copytuple(tgtuple);
 			copy_tg = (Form_pg_trigger) GETSTRUCT(copyTuple);
+
+			/* Remember OIDs of other relation(s) involved in FK constraint */
+			if (copy_tg->tgrelid != RelationGetRelid(rel))
+				otherrelids = list_append_unique_oid(otherrelids,
+													 copy_tg->tgrelid);
+
 			copy_tg->tgdeferrable = cmdcon->deferrable;
 			copy_tg->tginitdeferred = cmdcon->initdeferred;
 			simple_heap_update(tgrel, &copyTuple->t_self, copyTuple);
@@ -6709,9 +6718,16 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 		heap_close(tgrel, RowExclusiveLock);
 
 		/*
-		 * Invalidate relcache so that others see the new attributes.
+		 * Invalidate relcache so that others see the new attributes.  We must
+		 * inval both the named rel and any others having relevant triggers.
+		 * (At present there should always be exactly one other rel, but
+		 * there's no need to hard-wire such an assumption here.)
 		 */
 		CacheInvalidateRelcache(rel);
+		foreach(lc, otherrelids)
+		{
+			CacheInvalidateRelcacheByRelid(lfirst_oid(lc));
+		}
 
 		ObjectAddressSet(address, ConstraintRelationId,
 						 HeapTupleGetOid(contuple));
