@@ -44,6 +44,9 @@ if a == b:
     print(a)
 else:
     print(a + ' ' + b)"`
+if test "$PORTNAME" = win32 ; then
+    python_includespec=`echo $python_includespec | sed 's,[\],/,g'`
+fi
 AC_MSG_RESULT([$python_includespec])
 
 AC_SUBST(python_majorversion)[]dnl

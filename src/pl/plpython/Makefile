@@ -5,13 +5,11 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-# Windows needs to convert backslashed paths to normal slashes,
-# and we have to remove -lpython from the link since we are building our own
+# On Windows we have to remove -lpython from the link since we are
+# building our own
 ifeq ($(PORTNAME), win32)
-python_includespec := $(subst \,/,$(python_includespec))
 override python_libspec =
 endif
-
 
 override CPPFLAGS := -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 

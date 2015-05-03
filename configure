@@ -7487,6 +7487,9 @@ if a == b:
     print(a)
 else:
     print(a + ' ' + b)"`
+if test "$PORTNAME" = win32 ; then
+    python_includespec=`echo $python_includespec | sed 's,\,/,g'`
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $python_includespec" >&5
 $as_echo "$python_includespec" >&6; }
 
