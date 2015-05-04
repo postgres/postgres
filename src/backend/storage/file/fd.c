@@ -2004,3 +2004,118 @@ fsync_fname(char *fname, bool isdir)
 
 	close(fd);
 }
+
+/*
+ * Hint to the OS that it should get ready to fsync() this file.
+ *
+ * Adapted from pre_sync_fname in initdb.c
+ */
+void
+pre_sync_fname(char *fname, bool isdir)
+{
+	int			fd;
+
+	fd = open(fname, O_RDONLY | PG_BINARY);
+
+	/*
+	 * Some OSs don't allow us to open directories at all (Windows returns
+	 * EACCES)
+	 */
+	if (fd < 0 && isdir && (errno == EISDIR || errno == EACCES))
+		return;
+
+	if (fd < 0)
+		ereport(FATAL,
+				(errmsg("could not open file \"%s\" before fsync",
+						fname)));
+
+	pg_flush_data(fd, 0, 0);
+
+	close(fd);
+}
+
+/*
+ * walkdir: recursively walk a directory, applying the action to each
+ * regular file and directory (including the named directory itself)
+ * and following symbolic links.
+ *
+ * NB: There is another version of walkdir in initdb.c, but that version
+ * behaves differently with respect to symbolic links.  Caveat emptor!
+ */
+void
+walkdir(char *path, void (*action) (char *fname, bool isdir))
+{
+	DIR		   *dir;
+	struct dirent *de;
+
+	dir = AllocateDir(path);
+	while ((de = ReadDir(dir, path)) != NULL)
+	{
+		char		subpath[MAXPGPATH];
+		struct stat fst;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (strcmp(de->d_name, ".") == 0 ||
+			strcmp(de->d_name, "..") == 0)
+			continue;
+
+		snprintf(subpath, MAXPGPATH, "%s/%s", path, de->d_name);
+
+		if (lstat(subpath, &fst) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat file \"%s\": %m", subpath)));
+
+		if (S_ISREG(fst.st_mode))
+			(*action) (subpath, false);
+		else if (S_ISDIR(fst.st_mode))
+			walkdir(subpath, action);
+#ifndef WIN32
+		else if (S_ISLNK(fst.st_mode))
+#else
+		else if (pg_win32_is_junction(subpath))
+#endif
+		{
+#if defined(HAVE_READLINK) || defined(WIN32)
+			char		linkpath[MAXPGPATH];
+			int			len;
+			struct stat lst;
+
+			len = readlink(subpath, linkpath, sizeof(linkpath)-1);
+			if (len < 0)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not read symbolic link \"%s\": %m",
+								subpath)));
+
+			if (len >= sizeof(linkpath)-1)
+				ereport(ERROR,
+						(errmsg("symbolic link \"%s\" target is too long",
+								subpath)));
+
+			linkpath[len] = '\0';
+
+			if (lstat(linkpath, &lst) == 0)
+			{
+				if (S_ISREG(lst.st_mode))
+					(*action) (linkpath, false);
+				else if (S_ISDIR(lst.st_mode))
+					walkdir(subpath, action);
+			}
+			else if (errno != ENOENT)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m", linkpath)));
+#else
+			ereport(WARNING,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("this platform does not support symbolic links; ignoring \"%s\"",
+							subpath)));
+#endif
+		}
+	}
+	FreeDir(dir);
+
+	(*action) (path, true);
+}

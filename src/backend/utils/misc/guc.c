@@ -377,6 +377,7 @@ int			trace_recovery_messages = LOG;
 
 int			num_temp_buffers = 1000;
 
+char	   *data_directory;
 char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
@@ -414,7 +415,6 @@ static char *timezone_string;
 static char *log_timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
-static char *data_directory;
 static char *custom_variable_classes;
 static int	max_function_args;
 static int	max_index_keys;

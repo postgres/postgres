@@ -176,6 +176,7 @@ extern int	log_temp_files;
 
 extern int	num_temp_buffers;
 
+extern char *data_directory;
 extern char *ConfigFileName;
 extern char *HbaFileName;
 extern char *IdentFileName;
