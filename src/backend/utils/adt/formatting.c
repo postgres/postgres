@@ -2503,11 +2503,11 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 			case DCH_OF:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%+0*ld", S_FM(n->suffix) ? 0 : 3, tm->tm_gmtoff / SECS_PER_HOUR);
+				sprintf(s, "%+0*d", S_FM(n->suffix) ? 0 : 3, (int) tm->tm_gmtoff / SECS_PER_HOUR);
 				s += strlen(s);
-				if (tm->tm_gmtoff % SECS_PER_HOUR != 0)
+				if ((int) tm->tm_gmtoff % SECS_PER_HOUR != 0)
 				{
-					sprintf(s, ":%02d", abs(tm->tm_gmtoff % SECS_PER_HOUR) / SECS_PER_MINUTE);
+					sprintf(s, ":%02d", abs((int) tm->tm_gmtoff % SECS_PER_HOUR) / SECS_PER_MINUTE);
 					s += strlen(s);
 				}
 				break;
