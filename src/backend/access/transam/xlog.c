@@ -845,6 +845,8 @@ static void WALInsertLockAcquireExclusive(void);
 static void WALInsertLockRelease(void);
 static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
 
+static void fsync_pgdata(char *datadir);
+
 /*
  * Insert an XLOG record represented by an already-constructed chain of data
  * chunks.  This is a low-level routine; to construct the WAL record header
@@ -5909,6 +5911,18 @@ StartupXLOG(void)
 		ereport(LOG,
 			  (errmsg("database system was interrupted; last known up at %s",
 					  str_time(ControlFile->time))));
+
+	/*
+	 * If we previously crashed, there might be data which we had written,
+	 * intending to fsync it, but which we had not actually fsync'd yet.
+	 * Therefore, a power failure in the near future might cause earlier
+	 * unflushed writes to be lost, even though more recent data written to
+	 * disk from here on would be persisted.  To avoid that, fsync the entire
+	 * data directory.
+	 */
+	if (ControlFile->state != DB_SHUTDOWNED &&
+		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
+		fsync_pgdata(data_directory);
 
 	/* This is just to allow attaching to startup process with a debugger */
 #ifdef XLOG_REPLAY_DELAY
@@ -11122,4 +11136,32 @@ SetWalWriterSleeping(bool sleeping)
 	SpinLockAcquire(&XLogCtl->info_lck);
 	XLogCtl->WalWriterSleeping = sleeping;
 	SpinLockRelease(&XLogCtl->info_lck);
+}
+
+/*
+ * Issue fsync recursively on PGDATA and all its contents.
+ */
+static void
+fsync_pgdata(char *datadir)
+{
+	if (!enableFsync)
+		return;
+
+	/*
+	 * If possible, hint to the kernel that we're soon going to fsync
+	 * the data directory and its contents.
+	 */
+#if defined(HAVE_SYNC_FILE_RANGE) || \
+	(defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED))
+	walkdir(datadir, pre_sync_fname);
+#endif
+
+	/*
+	 * Now we do the fsync()s in the same order.
+	 *
+	 * It's important to fsync the destination directory itself as individual
+	 * file fsyncs don't guarantee that the directory entry for the file is
+	 * synced.
+	 */
+	walkdir(datadir, fsync_fname);
 }
