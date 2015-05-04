@@ -105,6 +105,8 @@ extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
 extern int	pg_flush_data(int fd, off_t offset, off_t amount);
 extern void fsync_fname(char *fname, bool isdir);
+extern void pre_sync_fname(char *fname, bool isdir);
+extern void walkdir(char *path, void (*action) (char *fname, bool isdir));
 
 /* Filename components for OpenTemporaryFile */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
