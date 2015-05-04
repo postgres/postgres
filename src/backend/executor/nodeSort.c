@@ -290,6 +290,8 @@ ExecSortRestrPos(SortState *node)
 void
 ExecReScanSort(SortState *node)
 {
+	PlanState	*outerPlan = outerPlanState(node);
+
 	/*
 	 * If we haven't sorted yet, just return. If outerplan's chgParam is not
 	 * NULL then it will be re-scanned by ExecProcNode, else no reason to
@@ -308,7 +310,7 @@ ExecReScanSort(SortState *node)
 	 *
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
-	if (node->ss.ps.lefttree->chgParam != NULL ||
+	if (outerPlan->chgParam != NULL ||
 		node->bounded != node->bounded_Done ||
 		node->bound != node->bound_Done ||
 		!node->randomAccess)
@@ -321,8 +323,8 @@ ExecReScanSort(SortState *node)
 		 * if chgParam of subnode is not null then plan will be re-scanned by
 		 * first ExecProcNode.
 		 */
-		if (node->ss.ps.lefttree->chgParam == NULL)
-			ExecReScan(node->ss.ps.lefttree);
+		if (outerPlan->chgParam == NULL)
+			ExecReScan(outerPlan);
 	}
 	else
 		tuplesort_rescan((Tuplesortstate *) node->tuplesortstate);

@@ -449,6 +449,8 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 void
 ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 {
+	PlanState	*outerPlan = outerPlanState(node);
+
 	/* rescan to release any page pin */
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);
 
@@ -469,8 +471,8 @@ ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (node->ss.ps.lefttree->chgParam == NULL)
-		ExecReScan(node->ss.ps.lefttree);
+	if (outerPlan->chgParam == NULL)
+		ExecReScan(outerPlan);
 }
 
 /* ----------------------------------------------------------------

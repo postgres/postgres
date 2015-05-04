@@ -2053,6 +2053,7 @@ void
 ExecReScanAgg(AggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+	PlanState	*outerPlan = outerPlanState(node);
 	int			aggno;
 
 	node->agg_done = false;
@@ -2075,7 +2076,7 @@ ExecReScanAgg(AggState *node)
 		 * parameter changes, then we can just rescan the existing hash table;
 		 * no need to build it again.
 		 */
-		if (node->ss.ps.lefttree->chgParam == NULL)
+		if (outerPlan->chgParam == NULL)
 		{
 			ResetTupleHashIterator(node->hashtable, &node->hashiter);
 			return;
@@ -2133,8 +2134,8 @@ ExecReScanAgg(AggState *node)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (node->ss.ps.lefttree->chgParam == NULL)
-		ExecReScan(node->ss.ps.lefttree);
+	if (outerPlan->chgParam == NULL)
+		ExecReScan(outerPlan);
 }
 
 
