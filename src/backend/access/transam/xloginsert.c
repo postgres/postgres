@@ -667,10 +667,10 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		{
 			samerel = true;
 			bkpb.fork_flags |= BKPBLOCK_SAME_REL;
-			prev_regbuf = regbuf;
 		}
 		else
 			samerel = false;
+		prev_regbuf = regbuf;
 
 		/* Ok, copy the header to the scratch buffer */
 		memcpy(scratch, &bkpb, SizeOfXLogRecordBlockHeader);
