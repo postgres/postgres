@@ -4494,8 +4494,8 @@ DATA(insert OID = 3625 (  tsvector_concat		PGNSP PGUID 12 1 0 0 0 f f f f t f i 
 
 DATA(insert OID = 3634 (  ts_match_vq			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3614 3615" _null_ _null_ _null_ _null_ _null_ ts_match_vq _null_ _null_ _null_ ));
 DATA(insert OID = 3635 (  ts_match_qv			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3615 3614" _null_ _null_ _null_ _null_ _null_ ts_match_qv _null_ _null_ _null_ ));
-DATA(insert OID = 3760 (  ts_match_tt			PGNSP PGUID 12 3 0 0 0 f f f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ _null_ ts_match_tt _null_ _null_ _null_ ));
-DATA(insert OID = 3761 (  ts_match_tq			PGNSP PGUID 12 2 0 0 0 f f f f t f s 2 0 16 "25 3615" _null_ _null_ _null_ _null_ _null_ ts_match_tq _null_ _null_ _null_ ));
+DATA(insert OID = 3760 (  ts_match_tt			PGNSP PGUID 12 100 0 0 0 f f f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ _null_ ts_match_tt _null_ _null_ _null_ ));
+DATA(insert OID = 3761 (  ts_match_tq			PGNSP PGUID 12 100 0 0 0 f f f f t f s 2 0 16 "25 3615" _null_ _null_ _null_ _null_ _null_ ts_match_tq _null_ _null_ _null_ ));
 
 DATA(insert OID = 3648 (  gtsvector_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gtsvector_compress _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
@@ -4554,7 +4554,7 @@ DESCR("show real useful query for GiST index");
 
 DATA(insert OID = 3684 (  ts_rewrite		PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 3615 "3615 3615 3615" _null_ _null_ _null_ _null_ _null_ tsquery_rewrite _null_ _null_ _null_ ));
 DESCR("rewrite tsquery");
-DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 3615 "3615 25" _null_ _null_ _null_ _null_ _null_ tsquery_rewrite_query _null_ _null_ _null_ ));
+DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 100 0 0 0 f f f f t f v 2 0 3615 "3615 25" _null_ _null_ _null_ _null_ _null_ tsquery_rewrite_query _null_ _null_ _null_ ));
 DESCR("rewrite tsquery");
 
 DATA(insert OID = 3695 (  gtsquery_compress				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gtsquery_compress _null_ _null_ _null_ ));
@@ -4644,26 +4644,26 @@ DESCR("(internal)");
 DATA(insert OID = 3741 (  thesaurus_lexize	PGNSP PGUID 12 1 0 0 0 f f f f t f i 4 0 2281 "2281 2281 2281 2281" _null_ _null_ _null_ _null_ _null_ thesaurus_lexize _null_ _null_ _null_ ));
 DESCR("(internal)");
 
-DATA(insert OID = 3743 (  ts_headline	PGNSP PGUID 12 1 0 0 0 f f f f t f i 4 0 25 "3734 25 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_byid_opt _null_ _null_ _null_ ));
+DATA(insert OID = 3743 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f i 4 0 25 "3734 25 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_byid_opt _null_ _null_ _null_ ));
 DESCR("generate headline");
-DATA(insert OID = 3744 (  ts_headline	PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 25 "3734 25 3615" _null_ _null_ _null_ _null_ _null_ ts_headline_byid _null_ _null_ _null_ ));
+DATA(insert OID = 3744 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f i 3 0 25 "3734 25 3615" _null_ _null_ _null_ _null_ _null_ ts_headline_byid _null_ _null_ _null_ ));
 DESCR("generate headline");
-DATA(insert OID = 3754 (  ts_headline	PGNSP PGUID 12 1 0 0 0 f f f f t f s 3 0 25 "25 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_opt _null_ _null_ _null_ ));
+DATA(insert OID = 3754 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s 3 0 25 "25 3615 25" _null_ _null_ _null_ _null_ _null_ ts_headline_opt _null_ _null_ _null_ ));
 DESCR("generate headline");
-DATA(insert OID = 3755 (  ts_headline	PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 25 "25 3615" _null_ _null_ _null_ _null_ _null_ ts_headline _null_ _null_ _null_ ));
+DATA(insert OID = 3755 (  ts_headline	PGNSP PGUID 12 100 0 0 0 f f f f t f s 2 0 25 "25 3615" _null_ _null_ _null_ _null_ _null_ ts_headline _null_ _null_ _null_ ));
 DESCR("generate headline");
 
-DATA(insert OID = 3745 (  to_tsvector		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3614 "3734 25" _null_ _null_ _null_ _null_ _null_ to_tsvector_byid _null_ _null_ _null_ ));
+DATA(insert OID = 3745 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f i 2 0 3614 "3734 25" _null_ _null_ _null_ _null_ _null_ to_tsvector_byid _null_ _null_ _null_ ));
 DESCR("transform to tsvector");
-DATA(insert OID = 3746 (  to_tsquery		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ to_tsquery_byid _null_ _null_ _null_ ));
+DATA(insert OID = 3746 (  to_tsquery		PGNSP PGUID 12 100 0 0 0 f f f f t f i 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ to_tsquery_byid _null_ _null_ _null_ ));
 DESCR("make tsquery");
-DATA(insert OID = 3747 (  plainto_tsquery	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ plainto_tsquery_byid _null_ _null_ _null_ ));
+DATA(insert OID = 3747 (  plainto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f f t f i 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ plainto_tsquery_byid _null_ _null_ _null_ ));
 DESCR("transform to tsquery");
-DATA(insert OID = 3749 (  to_tsvector		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 3614 "25" _null_ _null_ _null_ _null_ _null_ to_tsvector _null_ _null_ _null_ ));
+DATA(insert OID = 3749 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f f t f s 1 0 3614 "25" _null_ _null_ _null_ _null_ _null_ to_tsvector _null_ _null_ _null_ ));
 DESCR("transform to tsvector");
-DATA(insert OID = 3750 (  to_tsquery		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ to_tsquery _null_ _null_ _null_ ));
+DATA(insert OID = 3750 (  to_tsquery		PGNSP PGUID 12 100 0 0 0 f f f f t f s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ to_tsquery _null_ _null_ _null_ ));
 DESCR("make tsquery");
-DATA(insert OID = 3751 (  plainto_tsquery	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ plainto_tsquery _null_ _null_ _null_ ));
+DATA(insert OID = 3751 (  plainto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f f t f s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ plainto_tsquery _null_ _null_ _null_ ));
 DESCR("transform to tsquery");
 
 DATA(insert OID = 3752 (  tsvector_update_trigger			PGNSP PGUID 12 1 0 0 0 f f f f f f v 0 0 2279 "" _null_ _null_ _null_ _null_ _null_ tsvector_update_trigger_byid _null_ _null_ _null_ ));
