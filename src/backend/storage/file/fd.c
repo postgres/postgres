@@ -2449,7 +2449,7 @@ pre_sync_fname(char *fname, bool isdir)
 {
 	int			fd;
 
-	fd = open(fname, O_RDONLY | PG_BINARY);
+	fd = BasicOpenFile(fname, O_RDONLY | PG_BINARY, 0);
 
 	/*
 	 * Some OSs don't allow us to open directories at all (Windows returns
@@ -2508,7 +2508,7 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 #ifndef WIN32
 		else if (S_ISLNK(fst.st_mode))
 #else
-		else if (pg_win32_is_junction(subpath))
+		else if (pgwin32_is_junction(subpath))
 #endif
 		{
 #if defined(HAVE_READLINK) || defined(WIN32)
