@@ -6,7 +6,9 @@ LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 assert isinstance(val, dict)
-plpy.info(sorted(val.items()))
+i = val.items()
+i.sort()
+plpy.info(i)
 return len(val)
 $$;
 SELECT test1('aa=>bb, cc=>NULL'::hstore);
@@ -23,7 +25,9 @@ LANGUAGE plpython2u
 TRANSFORM FOR TYPE hstore
 AS $$
 assert isinstance(val, dict)
-plpy.info(sorted(val.items()))
+i = val.items()
+i.sort()
+plpy.info(i)
 return len(val)
 $$;
 SELECT test1n('aa=>bb, cc=>NULL'::hstore);
