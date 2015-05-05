@@ -17054,7 +17054,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <parameter>internal_id</parameter> <type>oid</type>
        </entry>
        <entry>
-        Create a replication origin with the the passed in external
+        Create a replication origin with the passed in external
         name, and create an internal id for it.
        </entry>
       </row>
