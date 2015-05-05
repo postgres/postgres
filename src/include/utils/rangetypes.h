@@ -211,6 +211,7 @@ extern Datum range_gist_compress(PG_FUNCTION_ARGS);
 extern Datum range_gist_decompress(PG_FUNCTION_ARGS);
 extern Datum range_gist_fetch(PG_FUNCTION_ARGS);
 extern Datum range_gist_union(PG_FUNCTION_ARGS);
+extern Datum range_merge(PG_FUNCTION_ARGS);
 extern Datum range_gist_penalty(PG_FUNCTION_ARGS);
 extern Datum range_gist_picksplit(PG_FUNCTION_ARGS);
 extern Datum range_gist_same(PG_FUNCTION_ARGS);

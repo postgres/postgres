@@ -1140,6 +1140,8 @@ DATA(insert OID = 978 (  box_distance	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 
 DATA(insert OID = 979 (  area			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 701 "602" _null_ _null_ _null_ _null_ _null_	path_area _null_ _null_ _null_ ));
 DESCR("area of a closed path");
 DATA(insert OID = 980 (  box_intersect	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 603 "603 603" _null_ _null_ _null_ _null_ _null_	box_intersect _null_ _null_ _null_ ));
+DATA(insert OID = 4067 ( bound_box		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 603 "603 603" _null_ _null_ _null_ _null_ _null_	boxes_bound_box _null_ _null_ _null_ ));
+DESCR("bounding box of two boxes");
 DATA(insert OID = 981 (  diagonal		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 601 "603" _null_ _null_ _null_ _null_ _null_	box_diagonal _null_ _null_ _null_ ));
 DESCR("box diagonal");
 DATA(insert OID = 982 (  path_n_lt		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_ _null_ path_n_lt _null_ _null_ _null_ ));
@@ -1744,6 +1746,8 @@ DESCR("convert vertex count and circle to polygon");
 DATA(insert OID = 1476 (  dist_pc			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 701 "600 718" _null_ _null_ _null_ _null_ _null_ dist_pc _null_ _null_ _null_ ));
 DATA(insert OID = 1477 (  circle_contain_pt PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "718 600" _null_ _null_ _null_ _null_  _null_ circle_contain_pt _null_ _null_ _null_ ));
 DATA(insert OID = 1478 (  pt_contained_circle	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "600 718" _null_ _null_ _null_ _null_  _null_ pt_contained_circle _null_ _null_ _null_ ));
+DATA(insert OID = 4091 (  box				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 603 "600" _null_ _null_ _null_ _null_ _null_ point_box _null_ _null_ _null_ ));
+DESCR("convert point to empty box");
 DATA(insert OID = 1479 (  circle			PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 718 "603" _null_ _null_ _null_ _null_ _null_ box_circle _null_ _null_ _null_ ));
 DESCR("convert box to circle");
 DATA(insert OID = 1480 (  box				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 603 "718" _null_ _null_ _null_ _null_ _null_ circle_box _null_ _null_ _null_ ));
@@ -2232,6 +2236,10 @@ DATA(insert OID = 2630 (  inetpl			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 
 DATA(insert OID = 2631 (  int8pl_inet		PGNSP PGUID 14 1 0 0 0 f f f f t f i 2 0 869 "20 869" _null_ _null_ _null_ _null_ _null_ "select $2 + $1" _null_ _null_ _null_ ));
 DATA(insert OID = 2632 (  inetmi_int8		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 "869 20" _null_ _null_ _null_ _null_ _null_	inetmi_int8 _null_ _null_ _null_ ));
 DATA(insert OID = 2633 (  inetmi			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 20 "869 869" _null_ _null_ _null_ _null_ _null_	inetmi _null_ _null_ _null_ ));
+DATA(insert OID = 4071 (  inet_same_family	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_ _null_ inet_same_family _null_ _null_ _null_ ));
+DESCR("are the addresses from the same family?");
+DATA(insert OID = 4063 (  inet_merge		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 650 "869 869" _null_ _null_ _null_ _null_ _null_ inet_merge _null_ _null_ _null_ ));
+DESCR("the smallest network which includes both of the given networks");
 
 /* GiST support for inet and cidr */
 DATA(insert OID = 3553 (  inet_gist_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 5 0 16 "2281 869 23 26 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_consistent _null_ _null_ _null_ ));
@@ -4937,6 +4945,8 @@ DATA(insert OID = 3866 (  range_overright	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2
 DESCR("implementation of &> operator");
 DATA(insert OID = 3867 (  range_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_union _null_ _null_ _null_ ));
 DESCR("implementation of + operator");
+DATA(insert OID = 4057 (  range_merge		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_merge _null_ _null_ _null_ ));
+DESCR("the smallest range which includes both of the given ranges");
 DATA(insert OID = 3868 (  range_intersect	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_intersect _null_ _null_ _null_ ));
 DESCR("implementation of * operator");
 DATA(insert OID = 3869 (  range_minus		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_minus _null_ _null_ _null_ ));

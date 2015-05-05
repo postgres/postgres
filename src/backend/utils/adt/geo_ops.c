@@ -4227,6 +4227,45 @@ box_div(PG_FUNCTION_ARGS)
 	PG_RETURN_BOX_P(result);
 }
 
+/*
+ * Convert point to empty box
+ */
+Datum
+point_box(PG_FUNCTION_ARGS)
+{
+	Point	   *pt = PG_GETARG_POINT_P(0);
+	BOX		   *box;
+
+	box = (BOX *) palloc(sizeof(BOX));
+
+	box->high.x = pt->x;
+	box->low.x = pt->x;
+	box->high.y = pt->y;
+	box->low.y = pt->y;
+
+	PG_RETURN_BOX_P(box);
+}
+
+/*
+ * Smallest bounding box that includes both of the given boxes
+ */
+Datum
+boxes_bound_box(PG_FUNCTION_ARGS)
+{
+	BOX		   *box1 = PG_GETARG_BOX_P(0),
+			   *box2 = PG_GETARG_BOX_P(1),
+			   *container;
+
+	container = (BOX *) palloc(sizeof(BOX));
+
+	container->high.x = Max(box1->high.x, box2->high.x);
+	container->low.x = Min(box1->low.x, box2->low.x);
+	container->high.y = Max(box1->high.y, box2->high.y);
+	container->low.y = Min(box1->low.y, box2->low.y);
+
+	PG_RETURN_BOX_P(container);
+}
+
 
 /***********************************************************************
  **

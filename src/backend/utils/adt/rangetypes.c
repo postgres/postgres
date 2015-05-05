@@ -1006,13 +1006,14 @@ range_minus(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-/* set union */
-Datum
-range_union(PG_FUNCTION_ARGS)
+/*
+ * Set union.  If strict is true, it is an error that the two input ranges
+ * are not adjacent or overlapping.
+ */
+static RangeType *
+range_union_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2,
+					 bool strict)
 {
-	RangeType  *r1 = PG_GETARG_RANGE(0);
-	RangeType  *r2 = PG_GETARG_RANGE(1);
-	TypeCacheEntry *typcache;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -1026,19 +1027,18 @@ range_union(PG_FUNCTION_ARGS)
 	if (RangeTypeGetOid(r1) != RangeTypeGetOid(r2))
 		elog(ERROR, "range types do not match");
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
-
 	range_deserialize(typcache, r1, &lower1, &upper1, &empty1);
 	range_deserialize(typcache, r2, &lower2, &upper2, &empty2);
 
 	/* if either is empty, the other is the correct answer */
 	if (empty1)
-		PG_RETURN_RANGE(r2);
+		return r2;
 	if (empty2)
-		PG_RETURN_RANGE(r1);
+		return r1;
 
-	if (!DatumGetBool(range_overlaps(fcinfo)) &&
-		!DatumGetBool(range_adjacent(fcinfo)))
+	if (strict &&
+		!DatumGetBool(range_overlaps_internal(typcache, r1, r2)) &&
+		!DatumGetBool(range_adjacent_internal(typcache, r1, r2)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("result of range union would not be contiguous")));
@@ -1053,7 +1053,35 @@ range_union(PG_FUNCTION_ARGS)
 	else
 		result_upper = &upper2;
 
-	PG_RETURN_RANGE(make_range(typcache, result_lower, result_upper, false));
+	return make_range(typcache, result_lower, result_upper, false);
+}
+
+Datum
+range_union(PG_FUNCTION_ARGS)
+{
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
+	TypeCacheEntry *typcache;
+
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+
+	PG_RETURN_RANGE(range_union_internal(typcache, r1, r2, true));
+}
+
+/*
+ * range merge: like set union, except also allow and account for non-adjacent
+ * input ranges.
+ */
+Datum
+range_merge(PG_FUNCTION_ARGS)
+{
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
+	TypeCacheEntry *typcache;
+
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+
+	PG_RETURN_RANGE(range_union_internal(typcache, r1, r2, false));
 }
 
 /* set intersection */

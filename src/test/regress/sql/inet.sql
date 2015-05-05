@@ -116,3 +116,10 @@ SELECT '127::1'::inet - '126::2'::inet;
 -- but not these
 SELECT '127::1'::inet + 10000000000;
 SELECT '127::1'::inet - '127::2'::inet;
+
+-- insert one more row with addressed from different families
+INSERT INTO INET_TBL (c, i) VALUES ('10', '10::/8');
+-- now, this one should fail
+SELECT inet_merge(c, i) FROM INET_TBL;
+-- fix it by inet_same_family() condition
+SELECT inet_merge(c, i) FROM INET_TBL WHERE inet_same_family(c, i);

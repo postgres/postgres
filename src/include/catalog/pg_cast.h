@@ -273,6 +273,7 @@ DATA(insert (  703	 23    0 e b ));
 /*
  * Geometric category
  */
+DATA(insert (  600	603 4091 a f ));
 DATA(insert (  601	600 1532 e f ));
 DATA(insert (  602	600 1533 e f ));
 DATA(insert (  602	604 1449 a f ));

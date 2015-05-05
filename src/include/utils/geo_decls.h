@@ -302,6 +302,8 @@ extern Datum box_add(PG_FUNCTION_ARGS);
 extern Datum box_sub(PG_FUNCTION_ARGS);
 extern Datum box_mul(PG_FUNCTION_ARGS);
 extern Datum box_div(PG_FUNCTION_ARGS);
+extern Datum point_box(PG_FUNCTION_ARGS);
+extern Datum boxes_bound_box(PG_FUNCTION_ARGS);
 
 /* public path routines */
 extern Datum path_area(PG_FUNCTION_ARGS);

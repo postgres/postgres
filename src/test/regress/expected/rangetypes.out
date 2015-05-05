@@ -480,8 +480,26 @@ select numrange(1.0, 2.0) + numrange(1.5, 3.0);
  [1.0,3.0)
 (1 row)
 
-select numrange(1.0, 2.0) + numrange(2.5, 3.0);
+select numrange(1.0, 2.0) + numrange(2.5, 3.0); -- should fail
 ERROR:  result of range union would not be contiguous
+select range_merge(numrange(1.0, 2.0), numrange(2.0, 3.0));
+ range_merge 
+-------------
+ [1.0,3.0)
+(1 row)
+
+select range_merge(numrange(1.0, 2.0), numrange(1.5, 3.0));
+ range_merge 
+-------------
+ [1.0,3.0)
+(1 row)
+
+select range_merge(numrange(1.0, 2.0), numrange(2.5, 3.0)); -- shouldn't fail
+ range_merge 
+-------------
+ [1.0,3.0)
+(1 row)
+
 select numrange(1.0, 2.0) * numrange(2.0, 3.0);
  ?column? 
 ----------

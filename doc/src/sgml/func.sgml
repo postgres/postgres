@@ -8296,6 +8296,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal>box(circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
+        <entry><literal><function>box(<type>point</type>)</function></literal></entry>
+        <entry><type>box</type></entry>
+        <entry>point to empty box</entry>
+        <entry><literal>box(point '(0,0)')</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>box(<type>point</type>, <type>point</type>)</function></literal></entry>
         <entry><type>box</type></entry>
         <entry>points to box</entry>
@@ -8306,6 +8312,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><type>box</type></entry>
         <entry>polygon to box</entry>
         <entry><literal>box(polygon '((0,0),(1,1),(2,0))')</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>bound_box(<type>box</type>, <type>box</type>)</function></literal></entry>
+        <entry><type>box</type></entry>
+        <entry>boxes to bounding box</entry>
+        <entry><literal>bound_box(box '((0,0),(1,1))', box '((3,3),(4,4))')</literal></entry>
        </row>
        <row>
         <entry>
@@ -8733,6 +8745,30 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>extract IP address and netmask length as text</entry>
         <entry><literal>text(inet '192.168.1.5')</literal></entry>
         <entry><literal>192.168.1.5/32</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>inet_same_family</primary>
+         </indexterm>
+         <literal><function>inet_same_family(<type>inet</type>, <type>inet</type>)</function></literal>
+        </entry>
+        <entry><type>boolean</type></entry>
+        <entry>are the addresses from the same family?</entry>
+        <entry><literal>inet_same_family('192.168.1.5/24', '::1')</literal></entry>
+        <entry><literal>false</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>inet_merge</primary>
+         </indexterm>
+         <literal><function>inet_merge(<type>inet</type>, <type>inet</type>)</function></literal>
+        </entry>
+        <entry><type>cidr</type></entry>
+        <entry>the smallest network which includes both of the given networks</entry>
+        <entry><literal>inet_merge('192.168.1.5/24', '192.168.2.5/24')</literal></entry>
+        <entry><literal>192.168.0.0/22</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -12089,6 +12125,17 @@ NULL baz</literallayout>(3 rows)</entry>
         <entry>is the upper bound infinite?</entry>
         <entry><literal>upper_inf('(,)'::daterange)</literal></entry>
         <entry><literal>true</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>range_merge</function>(<type>anyrange</type>, <type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>the smallest range which includes both of the given ranges</entry>
+        <entry><literal>range_merge('[1,2)'::int4range, '[3,4)'::int4range)</literal></entry>
+        <entry><literal>[1,4)</literal></entry>
        </row>
       </tbody>
      </tgroup>
