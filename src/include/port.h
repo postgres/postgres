@@ -291,8 +291,11 @@ extern int	pgunlink(const char *path);
  */
 #if defined(WIN32) && !defined(__CYGWIN__)
 extern int	pgsymlink(const char *oldpath, const char *newpath);
+extern int	pgreadlink(const char *path, char *buf, size_t size);
+extern bool pgwin32_is_junction(char *path);
 
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
+#define readlink(path, buf, size)	pgreadlink(path, buf, size)
 #endif
 
 extern void copydir(char *fromdir, char *todir, bool recurse);

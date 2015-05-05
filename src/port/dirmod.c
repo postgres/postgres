@@ -297,6 +297,124 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 	return 0;
 }
+
+/*
+ *	pgreadlink - uses Win32 junction points
+ */
+int
+pgreadlink(const char *path, char *buf, size_t size)
+{
+	DWORD		attr;
+	HANDLE		h;
+	char		buffer[MAX_PATH * sizeof(WCHAR) + sizeof(REPARSE_JUNCTION_DATA_BUFFER)];
+	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER *) buffer;
+	DWORD		len;
+	int			r;
+
+	attr = GetFileAttributes(path);
+	if (attr == INVALID_FILE_ATTRIBUTES)
+	{
+		_dosmaperr(GetLastError());
+		return -1;
+	}
+	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	h = CreateFile(path,
+				   GENERIC_READ,
+				   FILE_SHARE_READ | FILE_SHARE_WRITE,
+				   NULL,
+				   OPEN_EXISTING,
+				   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+				   0);
+	if (h == INVALID_HANDLE_VALUE)
+	{
+		_dosmaperr(GetLastError());
+		return -1;
+	}
+
+	if (!DeviceIoControl(h,
+						 FSCTL_GET_REPARSE_POINT,
+						 NULL,
+						 0,
+						 (LPVOID) reparseBuf,
+						 sizeof(buffer),
+						 &len,
+						 NULL))
+	{
+		LPSTR		msg;
+
+		errno = 0;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+					  NULL, GetLastError(),
+					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+					  (LPSTR) &msg, 0, NULL);
+#ifndef FRONTEND
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not get junction for \"%s\": %s",
+						path, msg)));
+#else
+		fprintf(stderr, _("could not get junction for \"%s\": %s\n"),
+				path, msg);
+#endif
+		LocalFree(msg);
+		CloseHandle(h);
+		errno = EINVAL;
+		return -1;
+	}
+	CloseHandle(h);
+
+	/* Got it, let's get some results from this */
+	if (reparseBuf->ReparseTag != IO_REPARSE_TAG_MOUNT_POINT)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	r = WideCharToMultiByte(CP_ACP, 0,
+							reparseBuf->PathBuffer, -1,
+							buf,
+							size,
+							NULL, NULL);
+
+	if (r <= 0)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	/*
+	 * If the path starts with "\??\", which it will do in most (all?) cases,
+	 * strip those out.
+	 */
+	if (r > 4 && strncmp(buf, "\\??\\", 4) == 0)
+	{
+		memmove(buf, buf + 4, strlen(buf + 4) + 1);
+		r -= 4;
+	}
+	return r;
+}
+
+/*
+ * Assumes the file exists, so will return false if it doesn't
+ * (since a nonexistant file is not a junction)
+ */
+bool
+pgwin32_is_junction(char *path)
+{
+	DWORD		attr = GetFileAttributes(path);
+
+	if (attr == INVALID_FILE_ATTRIBUTES)
+	{
+		_dosmaperr(GetLastError());
+		return false;
+	}
+	return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT);
+}
 #endif   /* defined(WIN32) && !defined(__CYGWIN__) */
 
 
