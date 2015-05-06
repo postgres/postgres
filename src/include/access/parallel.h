@@ -41,7 +41,7 @@ typedef struct ParallelContext
 	ErrorContextCallback *error_context_stack;
 	shm_toc_estimator estimator;
 	dsm_segment *seg;
-	void *private;
+	void *private_memory;
 	shm_toc *toc;
 	ParallelWorkerInfo *worker;
 } ParallelContext;

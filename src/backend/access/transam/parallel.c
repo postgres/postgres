@@ -266,8 +266,9 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	else
 	{
 		pcxt->nworkers = 0;
-		pcxt->private = MemoryContextAlloc(TopMemoryContext, segsize);
-		pcxt->toc = shm_toc_create(PARALLEL_MAGIC, pcxt->private, segsize);
+		pcxt->private_memory = MemoryContextAlloc(TopMemoryContext, segsize);
+		pcxt->toc = shm_toc_create(PARALLEL_MAGIC, pcxt->private_memory,
+								   segsize);
 	}
 
 	/* Initialize fixed-size state in shared memory. */
@@ -538,10 +539,10 @@ DestroyParallelContext(ParallelContext *pcxt)
 	 * If this parallel context is actually in backend-private memory rather
 	 * than shared memory, free that memory instead.
 	 */
-	if (pcxt->private != NULL)
+	if (pcxt->private_memory != NULL)
 	{
-		pfree(pcxt->private);
-		pcxt->private = NULL;
+		pfree(pcxt->private_memory);
+		pcxt->private_memory = NULL;
 	}
 
 	/* Wait until the workers actually die. */
