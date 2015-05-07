@@ -6596,7 +6596,7 @@ getTransforms(Archive *fout, int *numTransforms)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	TransformInfo   *transforminfo;
 	int			i_tableoid;
 	int			i_oid;
@@ -6611,6 +6611,8 @@ getTransforms(Archive *fout, int *numTransforms)
 		*numTransforms = 0;
 		return NULL;
 	}
+
+	query = createPQExpBuffer();
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
