@@ -733,7 +733,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 							  false);
 		qry->targetList = lappend(qry->targetList, tle);
 
-		rte->modifiedCols = bms_add_member(rte->modifiedCols,
+		rte->insertedCols = bms_add_member(rte->insertedCols,
 							  attr_num - FirstLowInvalidHeapAttributeNumber);
 
 		icols = lnext(icols);
@@ -2002,7 +2002,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 							  origTarget->location);
 
 		/* Mark the target column as requiring update permissions */
-		target_rte->modifiedCols = bms_add_member(target_rte->modifiedCols,
+		target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
 								attrno - FirstLowInvalidHeapAttributeNumber);
 
 		origTargetList = lnext(origTargetList);

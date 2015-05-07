@@ -125,7 +125,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			rte->requiredPerms = 0;
 			rte->checkAsUser = InvalidOid;
 			rte->selectedCols = NULL;
-			rte->modifiedCols = NULL;
+			rte->insertedCols = NULL;
+			rte->updatedCols = NULL;
 
 			/*
 			 * For the most part, Vars referencing the original relation
@@ -224,7 +225,8 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			rte->requiredPerms = 0;
 			rte->checkAsUser = InvalidOid;
 			rte->selectedCols = NULL;
-			rte->modifiedCols = NULL;
+			rte->insertedCols = NULL;
+			rte->updatedCols = NULL;
 
 			/*
 			 * Now deal with any PlanRowMark on this RTE by requesting a lock

@@ -1218,7 +1218,8 @@ addRangeTableEntry(ParseState *pstate,
 	rte->requiredPerms = ACL_SELECT;
 	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1272,7 +1273,8 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->requiredPerms = ACL_SELECT;
 	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1351,7 +1353,8 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->requiredPerms = 0;
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1606,7 +1609,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->requiredPerms = 0;
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1679,7 +1683,8 @@ addRangeTableEntryForValues(ParseState *pstate,
 	rte->requiredPerms = 0;
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1748,7 +1753,8 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->requiredPerms = 0;
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1849,7 +1855,8 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	rte->requiredPerms = 0;
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list

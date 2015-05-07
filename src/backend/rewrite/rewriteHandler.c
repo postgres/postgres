@@ -1403,7 +1403,8 @@ ApplyRetrieveRule(Query *parsetree,
 			rte->requiredPerms = 0;
 			rte->checkAsUser = InvalidOid;
 			rte->selectedCols = NULL;
-			rte->modifiedCols = NULL;
+			rte->insertedCols = NULL;
+			rte->updatedCols = NULL;
 
 			/*
 			 * For the most part, Vars referencing the view should remain as
@@ -1466,12 +1467,14 @@ ApplyRetrieveRule(Query *parsetree,
 	subrte->requiredPerms = rte->requiredPerms;
 	subrte->checkAsUser = rte->checkAsUser;
 	subrte->selectedCols = rte->selectedCols;
-	subrte->modifiedCols = rte->modifiedCols;
+	subrte->insertedCols = rte->insertedCols;
+	subrte->updatedCols = rte->updatedCols;
 
 	rte->requiredPerms = 0;		/* no permission check on subquery itself */
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
-	rte->modifiedCols = NULL;
+	rte->insertedCols = NULL;
+	rte->updatedCols = NULL;
 
 	/*
 	 * If FOR [KEY] UPDATE/SHARE of view, mark all the contained tables as
@@ -2621,9 +2624,9 @@ rewriteTargetView(Query *parsetree, Relation view)
 	/*
 	 * For INSERT/UPDATE the modified columns must all be updatable. Note that
 	 * we get the modified columns from the query's targetlist, not from the
-	 * result RTE's modifiedCols set, since rewriteTargetListIU may have added
-	 * additional targetlist entries for view defaults, and these must also be
-	 * updatable.
+	 * result RTE's insertedCols and/or updatedCols set, since
+	 * rewriteTargetListIU may have added additional targetlist entries for
+	 * view defaults, and these must also be updatable.
 	 */
 	if (parsetree->commandType != CMD_DELETE)
 	{
@@ -2760,27 +2763,32 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 *
 	 * Initially, new_rte contains selectedCols permission check bits for all
 	 * base-rel columns referenced by the view, but since the view is a SELECT
-	 * query its modifiedCols is empty.  We set modifiedCols to include all
-	 * the columns the outer query is trying to modify, adjusting the column
-	 * numbers as needed.  But we leave selectedCols as-is, so the view owner
-	 * must have read permission for all columns used in the view definition,
-	 * even if some of them are not read by the outer query.  We could try to
-	 * limit selectedCols to only columns used in the transformed query, but
-	 * that does not correspond to what happens in ordinary SELECT usage of a
-	 * view: all referenced columns must have read permission, even if
-	 * optimization finds that some of them can be discarded during query
-	 * transformation.  The flattening we're doing here is an optional
-	 * optimization, too.  (If you are unpersuaded and want to change this,
-	 * note that applying adjust_view_column_set to view_rte->selectedCols is
-	 * clearly *not* the right answer, since that neglects base-rel columns
-	 * used in the view's WHERE quals.)
+	 * query its insertedCols/updatedCols is empty.  We set insertedCols and
+	 * updatedCols to include all the columns the outer query is trying to
+	 * modify, adjusting the column numbers as needed.  But we leave
+	 * selectedCols as-is, so the view owner must have read permission for all
+	 * columns used in the view definition, even if some of them are not read
+	 * by the outer query.  We could try to limit selectedCols to only columns
+	 * used in the transformed query, but that does not correspond to what
+	 * happens in ordinary SELECT usage of a view: all referenced columns must
+	 * have read permission, even if optimization finds that some of them can
+	 * be discarded during query transformation.  The flattening we're doing
+	 * here is an optional optimization, too.  (If you are unpersuaded and want
+	 * to change this, note that applying adjust_view_column_set to
+	 * view_rte->selectedCols is clearly *not* the right answer, since that
+	 * neglects base-rel columns used in the view's WHERE quals.)
 	 *
 	 * This step needs the modified view targetlist, so we have to do things
 	 * in this order.
 	 */
-	Assert(bms_is_empty(new_rte->modifiedCols));
-	new_rte->modifiedCols = adjust_view_column_set(view_rte->modifiedCols,
+	Assert(bms_is_empty(new_rte->insertedCols) &&
+		   bms_is_empty(new_rte->updatedCols));
+
+	new_rte->insertedCols = adjust_view_column_set(view_rte->insertedCols,
 												   view_targetlist);
+
+	new_rte->updatedCols = adjust_view_column_set(view_rte->updatedCols,
+												  view_targetlist);
 
 	/*
 	 * Move any security barrier quals from the view RTE onto the new target

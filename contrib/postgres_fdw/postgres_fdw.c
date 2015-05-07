@@ -1205,7 +1205,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 		int			col;
 
 		col = -1;
-		while ((col = bms_next_member(rte->modifiedCols, col)) >= 0)
+		while ((col = bms_next_member(rte->updatedCols, col)) >= 0)
 		{
 			/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
 			AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
