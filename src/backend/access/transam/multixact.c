@@ -2514,7 +2514,8 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 	 */
 	oldestOffset = find_multixact_start(oldestMXact);
 	/* move back to start of the corresponding segment */
-	oldestOffset -= oldestOffset / MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT;
+	oldestOffset -= oldestOffset %
+		(MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT);
 
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	/* always leave one segment before the wraparound point */
