@@ -428,8 +428,8 @@ typedef struct BrinOpcInfo
     /* Opaque pointer for the opclass' private use */
     void       *oi_opaque;
 
-    /* Type IDs of the stored columns */
-    Oid         oi_typids[FLEXIBLE_ARRAY_MEMBER];
+    /* Type cache entries of the stored columns */
+    TypeCacheEntry *oi_typcache[FLEXIBLE_ARRAY_MEMBER];
 } BrinOpcInfo;
 </programlisting>
       <structname>BrinOpcInfo</>.<structfield>oi_opaque</> can be used by the

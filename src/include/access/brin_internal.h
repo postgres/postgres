@@ -16,6 +16,7 @@
 #include "storage/bufpage.h"
 #include "storage/off.h"
 #include "utils/relcache.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -32,13 +33,13 @@ typedef struct BrinOpcInfo
 	/* Opaque pointer for the opclass' private use */
 	void	   *oi_opaque;
 
-	/* Type IDs of the stored columns */
-	Oid			oi_typids[FLEXIBLE_ARRAY_MEMBER];
+	/* Type cache entries of the stored columns */
+	TypeCacheEntry *oi_typcache[FLEXIBLE_ARRAY_MEMBER];
 } BrinOpcInfo;
 
 /* the size of a BrinOpcInfo for the given number of columns */
 #define SizeofBrinOpcInfo(ncols) \
-	(offsetof(BrinOpcInfo, oi_typids) + sizeof(Oid) * ncols)
+	(offsetof(BrinOpcInfo, oi_typcache) + sizeof(TypeCacheEntry *) * ncols)
 
 typedef struct BrinDesc
 {
