@@ -1590,15 +1590,27 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	switch (ret)
 	{
 		case WAIT_OBJECT_0:		/* shutdown event */
-			kill(postmasterPID, SIGINT);
+			{
+				/*
+				 * status.dwCheckPoint can be incremented by
+				 * test_postmaster_connection(true), so it might not
+				 * start from 0.
+				 */
+				int maxShutdownCheckPoint = status.dwCheckPoint + 12;;
 
-			/*
-			 * Increment the checkpoint and try again Abort after 12
-			 * checkpoints as the postmaster has probably hung
-			 */
-			while (WaitForSingleObject(postmasterProcess, 5000) == WAIT_TIMEOUT && status.dwCheckPoint < 12)
-				status.dwCheckPoint++;
-			break;
+				kill(postmasterPID, SIGINT);
+
+				/*
+				 * Increment the checkpoint and try again. Abort after 12
+				 * checkpoints as the postmaster has probably hung.
+				 */
+				while (WaitForSingleObject(postmasterProcess, 5000) == WAIT_TIMEOUT && status.dwCheckPoint < maxShutdownCheckPoint)
+				{
+					status.dwCheckPoint++;
+					SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
+				}
+				break;
+			}
 
 		case (WAIT_OBJECT_0 + 1):		/* postmaster went down */
 			break;
