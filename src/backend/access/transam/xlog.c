@@ -3577,8 +3577,7 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
 	{
 		/* Ignore files that are not XLOG segments */
-		if (strlen(xlde->d_name) != 24 ||
-			strspn(xlde->d_name, "0123456789ABCDEF") != 24)
+		if (!IsXLogFileName(xlde->d_name))
 			continue;
 
 		/*
@@ -3650,8 +3649,7 @@ RemoveNonParentXlogFiles(XLogRecPtr switchpoint, TimeLineID newTLI)
 	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
 	{
 		/* Ignore files that are not XLOG segments */
-		if (strlen(xlde->d_name) != 24 ||
-			strspn(xlde->d_name, "0123456789ABCDEF") != 24)
+		if (!IsXLogFileName(xlde->d_name))
 			continue;
 
 		/*
@@ -3839,10 +3837,7 @@ CleanupBackupHistory(void)
 
 	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
 	{
-		if (strlen(xlde->d_name) > 24 &&
-			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
-			strcmp(xlde->d_name + strlen(xlde->d_name) - strlen(".backup"),
-				   ".backup") == 0)
+		if (IsBackupHistoryFileName(xlde->d_name))
 		{
 			if (XLogArchiveCheckDone(xlde->d_name))
 			{

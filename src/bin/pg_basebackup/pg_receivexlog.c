@@ -188,23 +188,11 @@ FindStreamingStart(uint32 *tli)
 
 		/*
 		 * Check if the filename looks like an xlog file, or a .partial file.
-		 * Xlog files are always 24 characters, and .partial files are 32
-		 * characters.
 		 */
-		if (strlen(dirent->d_name) == 24)
-		{
-			if (strspn(dirent->d_name, "0123456789ABCDEF") != 24)
-				continue;
+		if (IsXLogFileName(dirent->d_name))
 			ispartial = false;
-		}
-		else if (strlen(dirent->d_name) == 32)
-		{
-			if (strspn(dirent->d_name, "0123456789ABCDEF") != 24)
-				continue;
-			if (strcmp(&dirent->d_name[24], ".partial") != 0)
-				continue;
+		else if (IsPartialXLogFileName(dirent->d_name))
 			ispartial = true;
-		}
 		else
 			continue;
 

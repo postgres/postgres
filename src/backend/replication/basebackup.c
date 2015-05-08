@@ -350,17 +350,14 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		while ((de = ReadDir(dir, "pg_xlog")) != NULL)
 		{
 			/* Does it look like a WAL segment, and is it in the range? */
-			if (strlen(de->d_name) == 24 &&
-				strspn(de->d_name, "0123456789ABCDEF") == 24 &&
+			if (IsXLogFileName(de->d_name) &&
 				strcmp(de->d_name + 8, firstoff + 8) >= 0 &&
 				strcmp(de->d_name + 8, lastoff + 8) <= 0)
 			{
 				walFileList = lappend(walFileList, pstrdup(de->d_name));
 			}
 			/* Does it look like a timeline history file? */
-			else if (strlen(de->d_name) == 8 + strlen(".history") &&
-					 strspn(de->d_name, "0123456789ABCDEF") == 8 &&
-					 strcmp(de->d_name + 8, ".history") == 0)
+			else if (IsTLHistoryFileName(de->d_name))
 			{
 				historyFileList = lappend(historyFileList, pstrdup(de->d_name));
 			}
