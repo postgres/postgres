@@ -628,6 +628,9 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
      Like transaction IDs, multixact IDs are implemented as a
      32-bit counter and corresponding storage, all of which requires
      careful aging management, storage cleanup, and wraparound handling.
+     There is a separate storage area which holds the list of members in
+     each multixact, which also uses a 32-bit counter and which must also
+     be managed.
     </para>
 
     <para>
@@ -651,7 +654,10 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
      As a safety device, a whole-table vacuum scan will occur for any table
      whose multixact-age is greater than
      <xref linkend="guc-autovacuum-multixact-freeze-max-age">.
-     This will occur even if autovacuum is nominally disabled.
+     This will occur even if autovacuum is nominally disabled.  Whole-table
+     vacuum scans will also occur progressively for all tables, starting with
+     those that have the oldest multixact-age, if the amount of used member
+     storage space exceeds the amount 25% of the addressible storage space.
     </para>
    </sect3>
   </sect2>
