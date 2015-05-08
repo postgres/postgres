@@ -56,9 +56,9 @@ two lock methods: DEFAULT and USER.
 Lock modes describe the type of the lock (read/write or shared/exclusive).
 In principle, each lock method can have its own set of lock modes with
 different conflict rules, but currently DEFAULT and USER methods use
-identical lock mode sets.  See src/tools/backend/index.html and
-src/include/storage/lock.h for more details.  (Lock modes are also called
-lock types in some places in the code and documentation.)
+identical lock mode sets. See src/include/storage/lock.h for more details.
+(Lock modes are also called lock types in some places in the code and
+documentation.)
 
 There are two main methods for recording locks in shared memory.  The primary
 mechanism uses two main structures: the per-lockable-object LOCK struct, and
