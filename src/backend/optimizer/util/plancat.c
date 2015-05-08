@@ -547,13 +547,11 @@ infer_arbiter_indexes(PlannerInfo *root)
 			goto next;
 
 		/*
-		 * If the index is valid, but cannot yet be used, ignore it. See
-		 * src/backend/access/heap/README.HOT for discussion.
+		 * Note that we do not perform a check against indcheckxmin (like
+		 * e.g. get_relation_info()) here to eliminate candidates, because
+		 * uniqueness checking only cares about the most recently committed
+		 * tuple versions.
 		 */
-		if (idxForm->indcheckxmin &&
-			!TransactionIdPrecedes(HeapTupleHeaderGetXmin(idxRel->rd_indextuple->t_data),
-								   TransactionXmin))
-			goto next;
 
 		/*
 		 * Look for match on "ON constraint_name" variant, which may not be
@@ -566,10 +564,10 @@ infer_arbiter_indexes(PlannerInfo *root)
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
 
+			candidates = lappend_oid(candidates, idxForm->indexrelid);
 			list_free(indexList);
 			index_close(idxRel, NoLock);
 			heap_close(relation, NoLock);
-			candidates = lappend_oid(candidates, idxForm->indexrelid);
 			return candidates;
 		}
 		else if (indexOidFromConstraint != InvalidOid)
