@@ -195,6 +195,7 @@ extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern void ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					 TupleTableSlot *slot, EState *estate);
+extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
 extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti);
 extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
@@ -361,16 +362,18 @@ extern void UnregisterExprContextCallback(ExprContext *econtext,
 /*
  * prototypes from functions in execIndexing.c
  */
-extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
+extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
-					  EState *estate);
-extern bool check_exclusion_constraint(Relation heap, Relation index,
+					  EState *estate, bool noDupErr, bool *specConflict,
+					  List *arbiterIndexes);
+extern bool ExecCheckIndexConstraints(TupleTableSlot *slot, EState *estate,
+					  ItemPointer conflictTid, List *arbiterIndexes);
+extern void check_exclusion_constraint(Relation heap, Relation index,
 						   IndexInfo *indexInfo,
 						   ItemPointer tupleid,
 						   Datum *values, bool *isnull,
-						   EState *estate,
-						   bool newIndex, bool errorOK);
+						   EState *estate, bool newIndex);
 
 
 #endif   /* EXECUTOR_H  */

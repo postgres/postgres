@@ -217,6 +217,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	RangeVar			*range;
 	IntoClause			*into;
 	WithClause			*with;
+	InferClause			*infer;
+	OnConflictClause	*onconflict;
 	A_Indices			*aind;
 	ResTarget			*target;
 	struct PrivTarget	*privtarget;
@@ -318,7 +320,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				opt_class opt_inline_handler opt_validator validator_clause
 				opt_collate
 
-%type <range>	qualified_name OptConstrFromTable
+%type <range>	qualified_name insert_target OptConstrFromTable
 
 %type <str>		all_Op MathOp
 
@@ -344,7 +346,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				OptTableElementList TableElementList OptInherit definition
 				OptTypedTableElementList TypedTableElementList
 				reloptions opt_reloptions
-				OptWith opt_distinct opt_definition func_args func_args_list
+				OptWith distinct_clause opt_all_clause opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
 				aggr_args aggr_args_list
 				func_as createfunc_opt_list alterfunc_opt_list
@@ -389,7 +391,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	for_locking_item
 %type <list>	for_locking_clause opt_for_locking_clause for_locking_items
 %type <list>	locked_rels_list
-%type <boolean>	opt_all
+%type <boolean>	all_or_distinct
 
 %type <node>	join_outer join_qual
 %type <jtype>	join_type
@@ -418,6 +420,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <defelt>	SeqOptElem
 
 %type <istmt>	insert_rest
+%type <infer>	opt_conf_expr
+%type <onconflict> opt_on_conflict
 
 %type <vsetstmt> generic_set set_rest set_rest_more generic_reset reset_rest
 				 SetResetClause FunctionSetResetClause
@@ -557,8 +561,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	CACHE CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLLATION COLUMN COMMENT COMMENTS COMMIT
-	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE
+	COMMITTED CONCURRENTLY CONFIGURATION CONFLICT CONNECTION CONSTRAINT
+	CONSTRAINTS CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE
 	CROSS CSV CURRENT_P
 	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
@@ -9436,12 +9440,32 @@ DeallocateStmt: DEALLOCATE name
  *****************************************************************************/
 
 InsertStmt:
-			opt_with_clause INSERT INTO qualified_name insert_rest returning_clause
+			opt_with_clause INSERT INTO insert_target insert_rest
+			opt_on_conflict returning_clause
 				{
 					$5->relation = $4;
-					$5->returningList = $6;
+					$5->onConflictClause = $6;
+					$5->returningList = $7;
 					$5->withClause = $1;
 					$$ = (Node *) $5;
+				}
+		;
+
+/*
+ * Can't easily make AS optional here, because VALUES in insert_rest would
+ * have a shift/reduce conflict with a values as a optional alias. We could
+ * easily allow unreserved_keywords as optional aliases, but that'd be a odd
+ * divergance from other places.  So just require AS for now.
+ */
+insert_target:
+			qualified_name
+				{
+					$$ = $1;
+				}
+			| qualified_name AS ColId
+				{
+					$1->alias = makeAlias($3, NIL);
+					$$ = $1;
 				}
 		;
 
@@ -9481,6 +9505,56 @@ insert_column_item:
 					$$->indirection = check_indirection($2, yyscanner);
 					$$->val = NULL;
 					$$->location = @1;
+				}
+		;
+
+opt_on_conflict:
+			ON CONFLICT opt_conf_expr DO UPDATE SET set_clause_list	where_clause
+				{
+					$$ = makeNode(OnConflictClause);
+					$$->action = ONCONFLICT_UPDATE;
+					$$->infer = $3;
+					$$->targetList = $7;
+					$$->whereClause = $8;
+					$$->location = @1;
+				}
+			|
+			ON CONFLICT opt_conf_expr DO NOTHING
+				{
+					$$ = makeNode(OnConflictClause);
+					$$->action = ONCONFLICT_NOTHING;
+					$$->infer = $3;
+					$$->targetList = NIL;
+					$$->whereClause = NULL;
+					$$->location = @1;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NULL;
+				}
+		;
+
+opt_conf_expr:
+			'(' index_params ')' where_clause
+				{
+					$$ = makeNode(InferClause);
+					$$->indexElems = $2;
+					$$->whereClause = $4;
+					$$->conname = NULL;
+					$$->location = @1;
+				}
+			|
+			ON CONSTRAINT name
+				{
+					$$ = makeNode(InferClause);
+					$$->indexElems = NIL;
+					$$->whereClause = NULL;
+					$$->conname = $3;
+					$$->location = @1;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NULL;
 				}
 		;
 
@@ -9870,7 +9944,21 @@ select_clause:
  * However, this is not checked by the grammar; parse analysis must check it.
  */
 simple_select:
-			SELECT opt_distinct opt_target_list
+			SELECT opt_all_clause opt_target_list
+			into_clause from_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->targetList = $3;
+					n->intoClause = $4;
+					n->fromClause = $5;
+					n->whereClause = $6;
+					n->groupClause = $7;
+					n->havingClause = $8;
+					n->windowClause = $9;
+					$$ = (Node *)n;
+				}
+			| SELECT distinct_clause target_list
 			into_clause from_clause where_clause
 			group_clause having_clause window_clause
 				{
@@ -9905,15 +9993,15 @@ simple_select:
 					n->fromClause = list_make1($2);
 					$$ = (Node *)n;
 				}
-			| select_clause UNION opt_all select_clause
+			| select_clause UNION all_or_distinct select_clause
 				{
 					$$ = makeSetOp(SETOP_UNION, $3, $1, $4);
 				}
-			| select_clause INTERSECT opt_all select_clause
+			| select_clause INTERSECT all_or_distinct select_clause
 				{
 					$$ = makeSetOp(SETOP_INTERSECT, $3, $1, $4);
 				}
-			| select_clause EXCEPT opt_all select_clause
+			| select_clause EXCEPT all_or_distinct select_clause
 				{
 					$$ = makeSetOp(SETOP_EXCEPT, $3, $1, $4);
 				}
@@ -10052,7 +10140,8 @@ opt_table:	TABLE									{}
 			| /*EMPTY*/								{}
 		;
 
-opt_all:	ALL										{ $$ = TRUE; }
+all_or_distinct:
+			ALL										{ $$ = TRUE; }
 			| DISTINCT								{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
 		;
@@ -10060,10 +10149,13 @@ opt_all:	ALL										{ $$ = TRUE; }
 /* We use (NIL) as a placeholder to indicate that all target expressions
  * should be placed in the DISTINCT list during parsetree analysis.
  */
-opt_distinct:
+distinct_clause:
 			DISTINCT								{ $$ = list_make1(NIL); }
 			| DISTINCT ON '(' expr_list ')'			{ $$ = $4; }
-			| ALL									{ $$ = NIL; }
+		;
+
+opt_all_clause:
+			ALL										{ $$ = NIL;}
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -13367,6 +13459,7 @@ unreserved_keyword:
 			| COMMIT
 			| COMMITTED
 			| CONFIGURATION
+			| CONFLICT
 			| CONNECTION
 			| CONSTRAINTS
 			| CONTENT_P

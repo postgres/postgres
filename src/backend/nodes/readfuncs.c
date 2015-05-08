@@ -214,6 +214,7 @@ _readQuery(void)
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
 	READ_NODE_FIELD(withCheckOptions);
+	READ_NODE_FIELD(onConflict);
 	READ_NODE_FIELD(returningList);
 	READ_NODE_FIELD(groupClause);
 	READ_NODE_FIELD(havingQual);
@@ -1131,6 +1132,22 @@ _readCurrentOfExpr(void)
 }
 
 /*
+ * _readInferenceElem
+ */
+static InferenceElem *
+_readInferenceElem(void)
+{
+	READ_LOCALS(InferenceElem);
+
+	READ_NODE_FIELD(expr);
+	READ_OID_FIELD(infercollid);
+	READ_OID_FIELD(inferopfamily);
+	READ_OID_FIELD(inferopcinputtype);
+
+	READ_DONE();
+}
+
+/*
  * _readTargetEntry
  */
 static TargetEntry *
@@ -1196,6 +1213,25 @@ _readFromExpr(void)
 	READ_DONE();
 }
 
+/*
+ * _readOnConflictExpr
+ */
+static OnConflictExpr *
+_readOnConflictExpr(void)
+{
+	READ_LOCALS(OnConflictExpr);
+
+	READ_ENUM_FIELD(action, OnConflictAction);
+	READ_NODE_FIELD(arbiterElems);
+	READ_NODE_FIELD(arbiterWhere);
+	READ_NODE_FIELD(onConflictSet);
+	READ_NODE_FIELD(onConflictWhere);
+	READ_OID_FIELD(constraint);
+	READ_INT_FIELD(exclRelIndex);
+	READ_NODE_FIELD(exclRelTlist);
+
+	READ_DONE();
+}
 
 /*
  *	Stuff from parsenodes.h.
@@ -1395,6 +1431,8 @@ parseNodeString(void)
 		return_value = _readSetToDefault();
 	else if (MATCH("CURRENTOFEXPR", 13))
 		return_value = _readCurrentOfExpr();
+	else if (MATCH("INFERENCEELEM", 13))
+		return_value = _readInferenceElem();
 	else if (MATCH("TARGETENTRY", 11))
 		return_value = _readTargetEntry();
 	else if (MATCH("RANGETBLREF", 11))
@@ -1403,6 +1441,8 @@ parseNodeString(void)
 		return_value = _readJoinExpr();
 	else if (MATCH("FROMEXPR", 8))
 		return_value = _readFromExpr();
+	else if (MATCH("ONCONFLICTEXPR", 14))
+		return_value = _readOnConflictExpr();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))

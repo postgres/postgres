@@ -45,6 +45,8 @@ typedef struct PlannedStmt
 
 	bool		hasModifyingCTE;	/* has insert|update|delete in WITH? */
 
+	bool		isUpsert;		/* is it insert ... ON CONFLICT UPDATE? */
+
 	bool		canSetTag;		/* do I set the command result tag? */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
@@ -183,6 +185,12 @@ typedef struct ModifyTable
 	List	   *fdwPrivLists;	/* per-target-table FDW private data lists */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
+	OnConflictAction onConflictAction; /* ON CONFLICT action */
+	List	   *arbiterIndexes;	/* List of ON CONFLICT arbiter index OIDs  */
+	List	   *onConflictSet;	/* SET for INSERT ON CONFLICT DO UPDATE */
+	Node	   *onConflictWhere;/* WHERE for ON CONFLICT UPDATE */
+	Index		exclRelRTI;		/* RTI of the EXCLUDED pseudo relation */
+	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
 } ModifyTable;
 
 /* ----------------

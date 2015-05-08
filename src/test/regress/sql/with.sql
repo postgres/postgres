@@ -795,6 +795,63 @@ SELECT * FROM t LIMIT 10;
 
 SELECT * FROM y;
 
+-- data-modifying WITH containing INSERT...ON CONFLICT DO UPDATE
+CREATE TABLE z AS SELECT i AS k, (i || ' v')::text v FROM generate_series(1, 16, 3) i;
+ALTER TABLE z ADD UNIQUE (k);
+
+WITH t AS (
+    INSERT INTO z SELECT i, 'insert'
+    FROM generate_series(0, 16) i
+    ON CONFLICT (k) DO UPDATE SET v = z.v || ', now update'
+    RETURNING *
+)
+SELECT * FROM t JOIN y ON t.k = y.a ORDER BY a, k;
+
+-- Test EXCLUDED.* reference within CTE
+WITH aa AS (
+    INSERT INTO z VALUES(1, 5) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
+    WHERE z.k != EXCLUDED.k
+    RETURNING *
+)
+SELECT * FROM aa;
+
+-- New query/snapshot demonstrates side-effects of previous query.
+SELECT * FROM z ORDER BY k;
+
+--
+-- Ensure subqueries within the update clause work, even if they
+-- reference outside values
+--
+WITH aa AS (SELECT 1 a, 2 b)
+INSERT INTO z VALUES(1, 'insert')
+ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
+WITH aa AS (SELECT 1 a, 2 b)
+INSERT INTO z VALUES(1, 'insert')
+ON CONFLICT (k) DO UPDATE SET v = ' update' WHERE z.k = (SELECT a FROM aa);
+WITH aa AS (SELECT 1 a, 2 b)
+INSERT INTO z VALUES(1, 'insert')
+ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
+WITH aa AS (SELECT 'a' a, 'b' b UNION ALL SELECT 'a' a, 'b' b)
+INSERT INTO z VALUES(1, 'insert')
+ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 'a' LIMIT 1);
+WITH aa AS (SELECT 1 a, 2 b)
+INSERT INTO z VALUES(1, (SELECT b || ' insert' FROM aa WHERE a = 1 ))
+ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
+
+-- This shows an attempt to update an invisible row, which should really be
+-- reported as a cardinality violation, but it doesn't seem worth fixing:
+WITH simpletup AS (
+  SELECT 2 k, 'Green' v),
+upsert_cte AS (
+  INSERT INTO z VALUES(2, 'Blue') ON CONFLICT (k) DO
+    UPDATE SET (k, v) = (SELECT k, v FROM simpletup WHERE simpletup.k = z.k)
+    RETURNING k, v)
+INSERT INTO z VALUES(2, 'Red') ON CONFLICT (k) DO
+UPDATE SET (k, v) = (SELECT k, v FROM upsert_cte WHERE upsert_cte.k = z.k)
+RETURNING k, v;
+
+DROP TABLE z;
+
 -- check that run to completion happens in proper ordering
 
 TRUNCATE TABLE y;

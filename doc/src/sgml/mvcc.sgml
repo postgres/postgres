@@ -326,8 +326,27 @@
    </para>
 
    <para>
-    Because of the above rule, it is possible for an updating command to see an
-    inconsistent snapshot: it can see the effects of concurrent updating
+    <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</> clause
+    behaves similarly. In Read Committed mode, each row proposed for insertion
+    will either insert or update. Unless there are unrelated errors, one of
+    those two outcomes is guaranteed.  If a conflict originates in another
+    transaction whose effects are not yet visible to the <command>INSERT
+    </command>, the <command>UPDATE</command> clause will affect that row,
+    even though possibly <emphasis>no</> version of that row is
+    conventionally visible to the command.
+   </para>
+
+   <para>
+    <command>INSERT</command> with an <literal>ON CONFLICT DO
+    NOTHING</> clause may have insertion not proceed for a row due to
+    the outcome of another transaction whose effects are not visible
+    to the <command>INSERT</command> snapshot.  Again, this is only
+    the case in Read Committed mode.
+   </para>
+
+   <para>
+    Because of the above rules, it is possible for an updating command to see
+    an inconsistent snapshot: it can see the effects of concurrent updating
     commands on the same rows it is trying to update, but it
     does not see effects of those commands on other rows in the database.
     This behavior makes Read Committed mode unsuitable for commands that

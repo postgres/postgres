@@ -511,6 +511,118 @@ DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
 
 SET SESSION AUTHORIZATION rls_regress_user0;
 SELECT * FROM b1;
+--
+-- INSERT ... ON CONFLICT DO UPDATE and Row-level security
+--
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+DROP POLICY p1 ON document;
+
+CREATE POLICY p1 ON document FOR SELECT USING (true);
+CREATE POLICY p2 ON document FOR INSERT WITH CHECK (dauthor = current_user);
+CREATE POLICY p3 ON document FOR UPDATE
+  USING (cid = (SELECT cid from category WHERE cname = 'novel'))
+  WITH CHECK (dauthor = current_user);
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+
+-- Exists...
+SELECT * FROM document WHERE did = 2;
+
+-- ...so violates actual WITH CHECK OPTION within UPDATE (not INSERT, since
+-- alternative UPDATE path happens to be taken):
+INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user2', 'my first novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, dauthor = EXCLUDED.dauthor;
+
+-- Violates USING qual for UPDATE policy p3.
+--
+-- UPDATE path is taken, but UPDATE fails purely because *existing* row to be
+-- updated is not a "novel"/cid 11 (row is not leaked, even though we have
+-- SELECT privileges sufficient to see the row in this instance):
+INSERT INTO document VALUES (33, 22, 1, 'rls_regress_user1', 'okay science fiction'); -- preparation for next statement
+INSERT INTO document VALUES (33, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'Some novel, replaces sci-fi') -- takes UPDATE path
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle;
+-- Fine (we UPDATE, since INSERT WCOs and UPDATE security barrier quals + WCOs
+-- not violated):
+INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'my first novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
+-- Fine (we INSERT, so "cid = 33" ("technology") isn't evaluated):
+INSERT INTO document VALUES (78, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'some technology novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, cid = 33 RETURNING *;
+-- Fine (same query, but we UPDATE, so "cid = 33", ("technology") is not the
+-- case in respect of *existing* tuple):
+INSERT INTO document VALUES (78, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'some technology novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, cid = 33 RETURNING *;
+-- Same query a third time, but now fails due to existing tuple finally not
+-- passing quals:
+INSERT INTO document VALUES (78, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'some technology novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, cid = 33 RETURNING *;
+-- Don't fail just because INSERT doesn't satisfy WITH CHECK option that
+-- originated as a barrier/USING() qual from the UPDATE.  Note that the UPDATE
+-- path *isn't* taken, and so UPDATE-related policy does not apply:
+INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'technology book, can only insert')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
+-- But this time, the same statement fails, because the UPDATE path is taken,
+-- and updating the row just inserted falls afoul of security barrier qual
+-- (enforced as WCO) -- what we might have updated target tuple to is
+-- irrelevant, in fact.
+INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'technology book, can only insert')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
+
+-- Test default USING qual enforced as WCO
+SET SESSION AUTHORIZATION rls_regress_user0;
+DROP POLICY p1 ON document;
+DROP POLICY p2 ON document;
+DROP POLICY p3 ON document;
+
+CREATE POLICY p3_with_default ON document FOR UPDATE
+  USING (cid = (SELECT cid from category WHERE cname = 'novel'));
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+-- Just because WCO-style enforcement of USING quals occurs with
+-- existing/target tuple does not mean that the implementation can be allowed
+-- to fail to also enforce this qual against the final tuple appended to
+-- relation (since in the absence of an explicit WCO, this is also interpreted
+-- as an UPDATE/ALL WCO in general).
+--
+-- UPDATE path is taken here (fails due to existing tuple).  Note that this is
+-- not reported as a "USING expression", because it's an RLS UPDATE check that originated as
+-- a USING qual for the purposes of RLS in general, as opposed to an explicit
+-- USING qual that is ordinarily a security barrier.  We leave it up to the
+-- UPDATE to make this fail:
+INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'technology book, can only insert')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
+
+-- UPDATE path is taken here.  Existing tuple passes, since it's cid
+-- corresponds to "novel", but default USING qual is enforced against
+-- post-UPDATE tuple too (as always when updating with a policy that lacks an
+-- explicit WCO), and so this fails:
+INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'my first novel')
+    ON CONFLICT (did) DO UPDATE SET cid = EXCLUDED.cid, dtitle = EXCLUDED.dtitle RETURNING *;
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+DROP POLICY p3_with_default ON document;
+
+--
+-- Test ALL policies with ON CONFLICT DO UPDATE (much the same as existing UPDATE
+-- tests)
+--
+CREATE POLICY p3_with_all ON document FOR ALL
+  USING (cid = (SELECT cid from category WHERE cname = 'novel'))
+  WITH CHECK (dauthor = current_user);
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+
+-- Fails, since ALL WCO is enforced in insert path:
+INSERT INTO document VALUES (80, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user2', 'my first novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, cid = 33;
+-- Fails, since ALL policy USING qual is enforced (existing, target tuple is in
+-- violation, since it has the "manga" cid):
+INSERT INTO document VALUES (4, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'my first novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle;
+-- Fails, since ALL WCO are enforced:
+INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'my first novel')
+    ON CONFLICT (did) DO UPDATE SET dauthor = 'rls_regress_user2';
 
 --
 -- ROLE/GROUP

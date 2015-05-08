@@ -152,10 +152,11 @@ lnext:
 				 * case, so as to avoid the "Halloween problem" of repeated
 				 * update attempts.  In the latter case it might be sensible
 				 * to fetch the updated tuple instead, but doing so would
-				 * require changing heap_lock_tuple as well as heap_update and
-				 * heap_delete to not complain about updating "invisible"
-				 * tuples, which seems pretty scary.  So for now, treat the
-				 * tuple as deleted and do not process.
+				 * require changing heap_update and heap_delete to not complain
+				 * about updating "invisible" tuples, which seems pretty scary
+				 * (heap_lock_tuple will not complain, but few callers expect
+				 * HeapTupleInvisible, and we're not one of them).  So for now,
+				 * treat the tuple as deleted and do not process.
 				 */
 				goto lnext;
 
@@ -227,6 +228,9 @@ lnext:
 
 				/* Continue loop until we have all target tuples */
 				break;
+
+			case HeapTupleInvisible:
+				elog(ERROR, "attempted to lock invisible tuple");
 
 			default:
 				elog(ERROR, "unrecognized heap_lock_tuple status: %u",

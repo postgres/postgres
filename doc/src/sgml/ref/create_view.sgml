@@ -333,7 +333,8 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     If the view is automatically updatable the system will convert any
     <command>INSERT</>, <command>UPDATE</> or <command>DELETE</> statement
     on the view into the corresponding statement on the underlying base
-    relation.
+    relation.  <command>INSERT</> statements that have an <literal>ON
+    CONFLICT UPDATE</> clause are fully supported.
    </para>
 
    <para>
@@ -345,8 +346,10 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     condition, and thus is no longer visible through the view.  Similarly,
     an <command>INSERT</> command can potentially insert base-relation rows
     that do not satisfy the <literal>WHERE</> condition and thus are not
-    visible through the view.  The <literal>CHECK OPTION</> may be used to
-    prevent <command>INSERT</> and <command>UPDATE</> commands from creating
+    visible through the view (<literal>ON CONFLICT UPDATE</> may
+    similarly affect an existing row not visible through the view).
+    The <literal>CHECK OPTION</> may be used to prevent
+    <command>INSERT</> and <command>UPDATE</> commands from creating
     such rows that are not visible through the view.
    </para>
 

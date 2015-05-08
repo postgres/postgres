@@ -41,6 +41,9 @@
  *		ExclusionOps		Per-column exclusion operators, or NULL if none
  *		ExclusionProcs		Underlying function OIDs for ExclusionOps
  *		ExclusionStrats		Opclass strategy numbers for ExclusionOps
+ *		UniqueOps			Theses are like Exclusion*, but for unique indexes
+ *		UniqueProcs
+ *		UniqueStrats
  *		Unique				is it a unique index?
  *		ReadyForInserts		is it valid for inserts?
  *		Concurrent			are we doing a concurrent index build?
@@ -62,6 +65,9 @@ typedef struct IndexInfo
 	Oid		   *ii_ExclusionOps;	/* array with one entry per column */
 	Oid		   *ii_ExclusionProcs;		/* array with one entry per column */
 	uint16	   *ii_ExclusionStrats;		/* array with one entry per column */
+	Oid		   *ii_UniqueOps;	/* array with one entry per column */
+	Oid		   *ii_UniqueProcs;		/* array with one entry per column */
+	uint16	   *ii_UniqueStrats;		/* array with one entry per column */
 	bool		ii_Unique;
 	bool		ii_ReadyForInserts;
 	bool		ii_Concurrent;
@@ -308,6 +314,8 @@ typedef struct JunkFilter
  *		ConstraintExprs			array of constraint-checking expr states
  *		junkFilter				for removing junk attributes from tuples
  *		projectReturning		for computing a RETURNING list
+ *		onConflictSetProj		for computing ON CONFLICT DO UPDATE SET
+ *		onConflictSetWhere		list of ON CONFLICT DO UPDATE exprs (qual)
  * ----------------
  */
 typedef struct ResultRelInfo
@@ -329,6 +337,8 @@ typedef struct ResultRelInfo
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
 	ProjectionInfo *ri_projectReturning;
+	ProjectionInfo *ri_onConflictSetProj;
+	List	   *ri_onConflictSetWhere;
 } ResultRelInfo;
 
 /* ----------------
@@ -1094,6 +1104,11 @@ typedef struct ModifyTableState
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
+	OnConflictAction mt_onconflict; /* ON CONFLICT type */
+	List	   *mt_arbiterindexes;	/* unique index OIDs to arbitrate taking alt path */
+	TupleTableSlot *mt_existing; /* slot to store existing target tuple in */
+	List	   *mt_excludedtlist; /* the excluded pseudo relation's tlist  */
+	TupleTableSlot *mt_conflproj; /*  FIXME*/
 } ModifyTableState;
 
 /* ----------------

@@ -45,6 +45,9 @@ extern void expand_security_quals(PlannerInfo *root, List *tlist);
  */
 extern List *preprocess_targetlist(PlannerInfo *root, List *tlist);
 
+extern List *preprocess_onconflict_targetlist(List *tlist,
+						  int result_relation, List *range_table);
+
 extern PlanRowMark *get_plan_rowmark(List *rowmarks, Index rtindex);
 
 /*

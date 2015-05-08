@@ -4868,7 +4868,7 @@ make_modifytable(PlannerInfo *root,
 				 Index nominalRelation,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-				 List *rowMarks, int epqParam)
+				 List *rowMarks, OnConflictExpr *onconflict, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
 	Plan	   *plan = &node->plan;
@@ -4918,6 +4918,30 @@ make_modifytable(PlannerInfo *root,
 	node->resultRelations = resultRelations;
 	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->plans = subplans;
+	if (!onconflict)
+	{
+		node->onConflictAction = ONCONFLICT_NONE;
+		node->onConflictSet = NIL;
+		node->onConflictWhere = NULL;
+		node->arbiterIndexes = NIL;
+	}
+	else
+	{
+		node->onConflictAction = onconflict->action;
+		node->onConflictSet = onconflict->onConflictSet;
+		node->onConflictWhere = onconflict->onConflictWhere;
+
+		/*
+		 * If a set of unique index inference elements was provided (an
+		 * INSERT...ON CONFLICT "inference specification"), then infer
+		 * appropriate unique indexes (or throw an error if none are
+		 * available).
+		 */
+		node->arbiterIndexes = infer_arbiter_indexes(root);
+
+		node->exclRelRTI = onconflict->exclRelIndex;
+		node->exclRelTlist = onconflict->exclRelTlist;
+	}
 	node->withCheckOptionLists = withCheckOptionLists;
 	node->returningLists = returningLists;
 	node->rowMarks = rowMarks;

@@ -75,6 +75,12 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 						 xlrec->new_offnum,
 						 xlrec->new_xmax);
 	}
+	else if (info == XLOG_HEAP_CONFIRM)
+	{
+		xl_heap_confirm *xlrec = (xl_heap_confirm *) rec;
+
+		appendStringInfo(buf, "off %u", xlrec->offnum);
+	}
 	else if (info == XLOG_HEAP_LOCK)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
@@ -176,6 +182,9 @@ heap_identify(uint8 info)
 			break;
 		case XLOG_HEAP_HOT_UPDATE | XLOG_HEAP_INIT_PAGE:
 			id = "HOT_UPDATE+INIT";
+			break;
+		case XLOG_HEAP_CONFIRM:
+			id = "HEAP_CONFIRM";
 			break;
 		case XLOG_HEAP_LOCK:
 			id = "LOCK";

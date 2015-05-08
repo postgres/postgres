@@ -43,6 +43,11 @@ typedef struct ReorderBufferTupleBuf
  * and ComboCids in the same list with the user visible INSERT/UPDATE/DELETE
  * changes. Users of the decoding facilities will never see changes with
  * *_INTERNAL_* actions.
+ *
+ * The INTERNAL_SPEC_INSERT and INTERNAL_SPEC_CONFIRM changes concern
+ * "speculative insertions", and their confirmation respectively.  They're
+ * used by INSERT .. ON CONFLICT .. UPDATE.  Users of logical decoding don't
+ * have to care about these.
  */
 enum ReorderBufferChangeType
 {
@@ -51,7 +56,9 @@ enum ReorderBufferChangeType
 	REORDER_BUFFER_CHANGE_DELETE,
 	REORDER_BUFFER_CHANGE_INTERNAL_SNAPSHOT,
 	REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID,
-	REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID
+	REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID,
+	REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT,
+	REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM
 };
 
 /*

@@ -22,9 +22,24 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
+INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replaceable class="parameter">alias</replaceable> ] [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
     { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="PARAMETER">query</replaceable> }
+    [ ON CONFLICT [ <replaceable class="parameter">conflict_target</replaceable> ] <replaceable class="parameter">conflict_action</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
+
+<phrase>where <replaceable class="parameter">conflict_target</replaceable> can be one of:</phrase>
+
+    ( { <replaceable class="parameter">column_name_index</replaceable> | ( <replaceable class="parameter">expression_index</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) [ WHERE <replaceable class="PARAMETER">index_predicate</replaceable> ]
+    ON CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
+
+<phrase>and <replaceable class="parameter">conflict_action</replaceable> is one of:</phrase>
+
+    DO NOTHING
+    DO UPDATE SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
+                    ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
+                    ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( <replaceable class="PARAMETER">sub-SELECT</replaceable> )
+                  } [, ...]
+              [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -59,19 +74,46 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replace
   </para>
 
   <para>
+   <literal>ON CONFLICT</> can be used to specify an alternative
+   action to raising a unique constraint or exclusion constraint
+   violation error . (See <xref linkend="sql-on-conflict"
+   endterm="sql-on-conflict-title"> below.)
+  </para>
+
+  <para>
    The optional <literal>RETURNING</> clause causes <command>INSERT</>
-   to compute and return value(s) based on each row actually inserted.
-   This is primarily useful for obtaining values that were supplied by
-   defaults, such as a serial sequence number.  However, any expression
-   using the table's columns is allowed.  The syntax of the
-   <literal>RETURNING</> list is identical to that of the output list
-   of <command>SELECT</>.
+   to compute and return value(s) based on each row actually inserted
+   (or updated, if an <literal>ON CONFLICT DO UPDATE</> clause was
+   used).  This is primarily useful for obtaining values that were
+   supplied by defaults, such as a serial sequence number.  However,
+   any expression using the table's columns is allowed.  The syntax of
+   the <literal>RETURNING</> list is identical to that of the output
+   list of <command>SELECT</>.  Only rows that were successfully
+   inserted or updated will be returned.  For example, if a row was
+   locked but not updated because an <literal>ON CONFLICT DO UPDATE
+   ... WHERE</literal> clause <replaceable
+   class="PARAMETER">condition</replaceable> was not satisfied, the
+   row will not be returned.
   </para>
 
   <para>
    You must have <literal>INSERT</literal> privilege on a table in
-   order to insert into it.  If a column list is specified, you only
-   need <literal>INSERT</literal> privilege on the listed columns.
+   order to insert into it.  If <literal>ON CONFLICT DO UPDATE</> is
+   present the <literal>UPDATE</literal> privilege is also required.
+  </para>
+
+  <para>
+   If a column list is specified, you only need
+   <literal>INSERT</literal> privilege on the listed columns.
+   Similarly, when <literal>ON CONFLICT DO UPDATE</> is specified, you
+   only need <literal>UPDATE</> privilege on the column(s) that are
+   listed to be updated.  However, <literal>ON CONFLICT DO UPDATE</>
+   also requires <literal>SELECT</> privilege on any column whose
+   values are read in the <literal>ON CONFLICT DO UPDATE</>
+   expressions or <replaceable>condition</>.
+  </para>
+
+  <para>
    Use of the <literal>RETURNING</> clause requires <literal>SELECT</>
    privilege on all columns mentioned in <literal>RETURNING</>.
    If you use the <replaceable
@@ -115,13 +157,32 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replace
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">alias</replaceable></term>
+    <listitem>
+     <para>
+      A substitute name for the target table. When an alias is provided, it
+      completely hides the actual name of the table.  This is particularly
+      useful when using <literal>ON CONFLICT DO UPDATE</literal> into a table
+      named <literal>excluded</literal> as that's also the name of the
+      pseudo-relation containing the proposed row.
+     </para>
+    </listitem>
+   </varlistentry>
+
+
+   <varlistentry>
     <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a column in the table named by <replaceable class="PARAMETER">table_name</replaceable>.
       The column name can be qualified with a subfield name or array
       subscript, if needed.  (Inserting into only some fields of a
-      composite column leaves the other fields null.)
+      composite column leaves the other fields null.)  When
+      referencing a column with <literal>ON CONFLICT DO UPDATE</>, do
+      not include the table's name in the specification of a target
+      column.  For example, <literal>INSERT ... ON CONFLICT DO UPDATE
+      tab SET table_name.col = 1</> is invalid (this follows the general
+      behavior for <command>UPDATE</>).
      </para>
     </listitem>
    </varlistentry>
@@ -171,9 +232,30 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replace
     <listitem>
      <para>
       An expression to be computed and returned by the <command>INSERT</>
-      command after each row is inserted.  The expression can use any
-      column names of the table named by <replaceable class="PARAMETER">table_name</replaceable>.
+      command after each row is inserted (not updated). The
+      expression can use any column names of the table named by
+      <replaceable class="PARAMETER">table_name</replaceable>.
       Write <literal>*</> to return all columns of the inserted row(s).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>conflict_target</literal></term>
+    <listitem>
+     <para>
+      Specify which conflicts <literal>ON CONFLICT</literal> refers to.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>conflict_action</literal></term>
+    <listitem>
+     <para>
+      <literal>DO NOTHING</literal> or <literal>DO UPDATE
+      SET</literal> clause specifying the action to be performed in
+      case of a conflict.
      </para>
     </listitem>
    </varlistentry>
@@ -186,7 +268,224 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replace
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column_name_index</replaceable></term>
+    <listitem>
+     <para>
+      The name of a <replaceable
+      class="PARAMETER">table_name</replaceable> column.  Part of a
+      unique index inference clause.  Follows <command>CREATE
+      INDEX</command> format.  <literal>SELECT</> privilege on
+      <replaceable class="PARAMETER">column_name_index</replaceable>
+      is required.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">expression_index</replaceable></term>
+    <listitem>
+     <para>
+      Similar to <replaceable
+      class="PARAMETER">column_name_index</replaceable>, but used to
+      infer expressions on <replaceable
+      class="PARAMETER">table_name</replaceable> columns appearing
+      within index definitions (not simple columns).  Part of unique
+      index inference clause.  Follows <command>CREATE INDEX</command>
+      format.  <literal>SELECT</> privilege on any column appearing
+      within <replaceable
+      class="PARAMETER">expression_index</replaceable> is required.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">collation</replaceable></term>
+    <listitem>
+     <para>
+      When specified, mandates that corresponding <replaceable
+      class="PARAMETER">column_name_index</replaceable> or
+      <replaceable class="PARAMETER">expression_index</replaceable> use a
+      particular collation in order to be matched in the inference clause.
+      Typically this is omitted, as collations usually do not affect wether or
+      not a constraint violation occurs.  Follows <command>CREATE
+      INDEX</command> format.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">opclass</replaceable></term>
+    <listitem>
+     <para>
+      When specified, mandates that corresponding <replaceable
+      class="PARAMETER">column_name_index</replaceable> or
+      <replaceable class="PARAMETER">expression_index</replaceable> use
+      particular operator class in order to be matched by the inference
+      clause.  Sometimes this is omitted because the
+      <emphasis>equality</emphasis> semantics are often equivalent across a
+      type's operator classes anyway, or because it's sufficient to trust that
+      the defined unique indexes have the pertinent definition of equality.
+      Follows <command>CREATE INDEX</command> format.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">index_predicate</replaceable></term>
+    <listitem>
+     <para>
+      Used to allow inference of partial unique indexes.  Any indexes
+      that satisfy the predicate (which need not actually be partial
+      indexes) can be matched by the rest of the inference clause.
+      Follows <command>CREATE INDEX</command> format.
+      <literal>SELECT</> privilege on any column appearing within
+      <replaceable class="PARAMETER">index_predicate</replaceable> is
+      required.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
+    <listitem>
+     <para>
+      Explicitly specifies an arbiter <emphasis>constraint</emphasis>
+      by name, rather than inferring a constraint or index.  This is
+      mostly useful for exclusion constraints, that cannot be chosen
+      in the conventional way (with an inference clause).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">condition</replaceable></term>
+    <listitem>
+     <para>
+      An expression that returns a value of type <type>boolean</type>.  Only
+      rows for which this expression returns <literal>true</literal> will be
+      updated, although all rows will be locked when the
+      <literal>ON CONFLICT DO UPDATE</> action is taken.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-on-conflict">
+  <title id="sql-on-conflict-title"><literal>ON CONFLICT</literal> Clause</title>
+  <indexterm zone="SQL-INSERT">
+   <primary>UPSERT</primary>
+  </indexterm>
+  <indexterm zone="SQL-INSERT">
+   <primary>ON CONFLICT</primary>
+  </indexterm>
+  <para>
+   The optional <literal>ON CONFLICT</literal> clause specifies an
+   alternative action to raising a unique violation or exclusion
+   constraint violation error.  For each individual row proposed for
+   insertion, either the insertion proceeds, or, if a constraint
+   specified by the <parameter>conflict_target</parameter> is
+   violated, the alternative <parameter>conflict_action</parameter> is
+   taken.
+  </para>
+
+  <para>
+   <parameter>conflict_target</parameter> describes which conflicts
+   are handled by the <literal>ON CONFLICT</literal> clause.  Either a
+   <emphasis>unique index inference</emphasis> clause or an explicitly
+   named constraint can be used.  For <literal>ON CONFLICT DO
+   NOTHING</literal>, it is optional to specify a
+   <parameter>conflict_target</parameter>; when ommitted, conflicts
+   with all usable constraints (and unique indexes) are handled.  For
+   <literal>ON CONFLICT DO UPDATE</literal>, a conflict target
+   <emphasis>must</emphasis> be specified.
+
+   Every time an insertion without <literal>ON CONFLICT</literal>
+   would ordinarily raise an error due to violating one of the
+   inferred (or explicitly named) constraints, a conflict (as in
+   <literal>ON CONFLICT</literal>) occurs, and the alternative action,
+   as specified by <parameter>conflict_action</parameter> is taken.
+   This happens on a row-by-row basis.
+  </para>
+
+  <para>
+   A <emphasis>unique index inference</emphasis> clause consists of
+   one or more <replaceable
+   class="PARAMETER">column_name_index</replaceable> columns and/or
+   <replaceable class="PARAMETER">expression_index</replaceable>
+   expressions, and a optional <replaceable class="PARAMETER">
+   index_predicate</replaceable>.
+  </para>
+
+  <para>
+   All the <replaceable class="PARAMETER">table_name</replaceable>
+   unique indexes that, without regard to order, contain exactly the
+   specified columns/expressions and, if specified, whose predicate
+   implies the <replaceable class="PARAMETER">
+   index_predicate</replaceable> are chosen as arbiter indexes.  Note
+   that this means an index without a predicate will be used if a
+   non-partial index matching every other criteria happens to be
+   available.
+  </para>
+
+  <para>
+   If no index matches the inference clause (nor is there a constraint
+   explicitly named), an error is raised.  Deferred constraints are
+   not supported as arbiters.
+  </para>
+
+  <para>
+   <parameter>conflict_action</parameter> defines the action to be
+   taken in case of conflict.  <literal>ON CONFLICT DO
+   NOTHING</literal> simply avoids inserting a row as its alternative
+   action.  <literal>ON CONFLICT DO UPDATE</literal> updates the
+   existing row that conflicts with the row proposed for insertion as
+   its alternative action.
+
+   <literal>ON CONFLICT DO UPDATE</literal> guarantees an atomic
+   <command>INSERT</command> or <command>UPDATE</command> outcome - provided
+   there is no independent error, one of those two outcomes is guaranteed,
+   even under high concurrency.  This feature is also known as
+   <firstterm>UPSERT</firstterm>.
+
+   Note that exclusion constraints are not supported with
+   <literal>ON CONFLICT DO UPDATE</literal>.
+  </para>
+
+  <para>
+   <literal>ON CONFLICT DO UPDATE</literal> optionally accepts
+   a <literal>WHERE</literal> clause <replaceable>condition</replaceable>.
+   When provided, the statement only proceeds with updating if
+   the <replaceable>condition</replaceable> is satisfied.  Otherwise, unlike a
+   conventional <command>UPDATE</command>, the row is still locked for update.
+   Note that the <replaceable>condition</replaceable> is evaluated last, after
+   a conflict has been identified as a candidate to update.
+  </para>
+
+  <para>
+   The <literal>SET</literal> and <literal>WHERE</literal> clauses in
+   <literal>ON CONFLICT UPDATE</literal> have access to the existing
+   row, using the table's name, and to the row
+   proposed for insertion, using the <varname>excluded</varname>
+   alias.  The <varname>excluded</varname> alias requires
+   <literal>SELECT</> privilege on any column whose values are read.
+
+   Note that the effects of all per-row <literal>BEFORE INSERT</literal>
+   triggers are reflected in <varname>excluded</varname> values, since those
+   effects may have contributed to the row being excluded from insertion.
+  </para>
+
+  <para>
+   <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</>
+   clause is a <quote>deterministic</quote> statement.  This means
+   that the command will not be allowed to affect any single existing
+   row more than once; a cardinality violation error will be raised
+   when this situation arises.  Rows proposed for insertion should not
+   duplicate each other in terms of attributes constrained by the
+   conflict-arbitrating unique index.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -198,20 +497,29 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replace
 <screen>
 INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
 </screen>
+   However, in the event of an <literal>ON CONFLICT DO UPDATE</> clause
+   (but <emphasis>not</emphasis> in the event of an <literal>ON
+   CONFLICT DO NOTHING</> clause), the command tag reports the number of
+   rows inserted or updated together, of the form
+<screen>
+UPSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
+</screen>
    The <replaceable class="parameter">count</replaceable> is the number
    of rows inserted.  If <replaceable class="parameter">count</replaceable>
    is exactly one, and the target table has OIDs, then
    <replaceable class="parameter">oid</replaceable> is the
-   <acronym>OID</acronym> assigned to the inserted row.  Otherwise
-   <replaceable class="parameter">oid</replaceable> is zero.
+   <acronym>OID</acronym>
+   assigned to the inserted row (but not if there is only a single
+   updated row).  Otherwise <replaceable
+   class="parameter">oid</replaceable> is zero.
   </para>
 
   <para>
    If the <command>INSERT</> command contains a <literal>RETURNING</>
    clause, the result will be similar to that of a <command>SELECT</>
    statement containing the columns and values defined in the
-   <literal>RETURNING</> list, computed over the row(s) inserted by the
-   command.
+   <literal>RETURNING</> list, computed over the row(s) inserted or
+   updated by the command.
   </para>
  </refsect1>
 
@@ -311,7 +619,65 @@ WITH upd AS (
     RETURNING *
 )
 INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
-</programlisting></para>
+</programlisting>
+  </para>
+  <para>
+   Insert or update new distributors as appropriate.  Assumes a unique
+   index has been defined that constrains values appearing in the
+   <literal>did</literal> column.  Note that an <varname>EXCLUDED</>
+   expression is used to reference values originally proposed for
+   insertion:
+<programlisting>
+  INSERT INTO distributors (did, dname)
+  VALUES (5, 'Gizmo transglobal'), (6, 'Associated Computing, inc')
+  ON CONFLICT (did) DO UPDATE SET dname = EXCLUDED.dname;
+</programlisting>
+  </para>
+  <para>
+   Insert a distributor, or do nothing for rows proposed for insertion
+   when an existing, excluded row (a row with a matching constrained
+   column or columns after before row insert triggers fire) exists.
+   Example assumes a unique index has been defined that constrains
+   values appearing in the <literal>did</literal> column:
+<programlisting>
+  INSERT INTO distributors (did, dname) VALUES (7, 'Redline GmbH')
+  ON CONFLICT (did) DO NOTHING;
+</programlisting>
+  </para>
+  <para>
+   Insert or update new distributors as appropriate.  Example assumes
+   a unique index has been defined that constrains values appearing in
+   the <literal>did</literal> column.  <literal>WHERE</> clause is
+   used to limit the rows actually updated (any existing row not
+   updated will still be locked, though):
+<programlisting>
+  -- Don't update existing distributors based in a certain ZIP code
+  INSERT INTO distributors AS d (did, dname) VALUES (8, 'Anvil Distribution')
+  ON CONFLICT (did) DO UPDATE
+  SET dname = EXCLUDED.dname || ' (formerly ' || d.dname || ')'
+  WHERE d.zipcode != '21201';
+
+  -- Name a constraint directly in the statement (uses associated
+  -- index to arbitrate taking the DO NOTHING action)
+  INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
+  ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING;
+</programlisting>
+  </para>
+  <para>
+   Insert new distributor if possible;  otherwise
+   <literal>DO NOTHING</literal>.  Example assumes a unique index has been
+   defined that constrains values appearing in the
+   <literal>did</literal> column on a subset of rows where the
+   <literal>is_active</literal> boolean column evaluates to
+   <literal>true</literal>:
+<programlisting>
+  -- This statement could infer a partial unique index on "did"
+  -- with a predicate of "WHERE is_active", but it could also
+  -- just use a regular unique constraint on "did"
+  INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
+  ON CONFLICT (did) WHERE is_active DO NOTHING;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
@@ -321,7 +687,8 @@ INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
    <command>INSERT</command> conforms to the SQL standard, except that
    the <literal>RETURNING</> clause is a
    <productname>PostgreSQL</productname> extension, as is the ability
-   to use <literal>WITH</> with <command>INSERT</>.
+   to use <literal>WITH</> with <command>INSERT</>, and the ability to
+   specify an alternative action with <literal>ON CONFLICT</>.
    Also, the case in
    which a column name list is omitted, but not all the columns are
    filled from the <literal>VALUES</> clause or <replaceable>query</>,

@@ -26,6 +26,24 @@
 
 
 /*
+ * Per-backend counter for generating speculative insertion tokens.
+ *
+ * This may wrap around, but that's OK as it's only used for the short
+ * duration between inserting a tuple and checking that there are no (unique)
+ * constraint violations.  It's theoretically possible that a backend sees a
+ * tuple that was speculatively inserted by another backend, but before it has
+ * started waiting on the token, the other backend completes its insertion,
+ * and then then performs 2^32 unrelated insertions.  And after all that, the
+ * first backend finally calls SpeculativeInsertionLockAcquire(), with the
+ * intention of waiting for the first insertion to complete, but ends up
+ * waiting for the latest unrelated insertion instead.  Even then, nothing
+ * particularly bad happens: in the worst case they deadlock, causing one of
+ * the transactions to abort.
+ */
+static uint32 speculativeInsertionToken = 0;
+
+
+/*
  * Struct to hold context info for transaction lock waits.
  *
  * 'oper' is the operation that needs to wait for the other transaction; 'rel'
@@ -576,6 +594,73 @@ ConditionalXactLockTableWait(TransactionId xid)
 }
 
 /*
+ *		SpeculativeInsertionLockAcquire
+ *
+ * Insert a lock showing that the given transaction ID is inserting a tuple,
+ * but hasn't yet decided whether it's going to keep it.  The lock can then be
+ * used to wait for the decision to go ahead with the insertion, or aborting
+ * it.
+ *
+ * The token is used to distinguish multiple insertions by the same
+ * transaction.  It is returned to caller.
+ */
+uint32
+SpeculativeInsertionLockAcquire(TransactionId xid)
+{
+	LOCKTAG		tag;
+
+	speculativeInsertionToken++;
+
+	/*
+	 * Check for wrap-around. Zero means no token is held, so don't use that.
+	 */
+	if (speculativeInsertionToken == 0)
+		speculativeInsertionToken = 1;
+
+	SET_LOCKTAG_SPECULATIVE_INSERTION(tag, xid, speculativeInsertionToken);
+
+	(void) LockAcquire(&tag, ExclusiveLock, false, false);
+
+	return speculativeInsertionToken;
+}
+
+/*
+ *		SpeculativeInsertionLockRelease
+ *
+ * Delete the lock showing that the given transaction is speculatively
+ * inserting a tuple.
+ */
+void
+SpeculativeInsertionLockRelease(TransactionId xid)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_SPECULATIVE_INSERTION(tag, xid, speculativeInsertionToken);
+
+	LockRelease(&tag, ExclusiveLock, false);
+}
+
+/*
+ *		SpeculativeInsertionWait
+ *
+ * Wait for the specified transaction to finish or abort the insertion of a
+ * tuple.
+ */
+void
+SpeculativeInsertionWait(TransactionId xid, uint32 token)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_SPECULATIVE_INSERTION(tag, xid, token);
+
+	Assert(TransactionIdIsValid(xid));
+	Assert(token != 0);
+
+	(void) LockAcquire(&tag, ShareLock, false, false);
+	LockRelease(&tag, ShareLock, false);
+}
+
+/*
  * XactLockTableWaitErrorContextCb
  *		Error context callback for transaction lock waits.
  */
@@ -872,6 +957,12 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 							 _("virtual transaction %d/%u"),
 							 tag->locktag_field1,
 							 tag->locktag_field2);
+			break;
+		case LOCKTAG_SPECULATIVE_TOKEN:
+			appendStringInfo(buf,
+							 _("speculative token %u of transaction %u"),
+							 tag->locktag_field2,
+							 tag->locktag_field1);
 			break;
 		case LOCKTAG_OBJECT:
 			appendStringInfo(buf,

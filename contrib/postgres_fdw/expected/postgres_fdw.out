@@ -2327,6 +2327,11 @@ INSERT INTO ft1(c1, c2) VALUES(11, 12);  -- duplicate key
 ERROR:  duplicate key value violates unique constraint "t1_pkey"
 DETAIL:  Key ("C 1")=(11) already exists.
 CONTEXT:  Remote SQL command: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO ft1(c1, c2) VALUES(11, 12) ON CONFLICT DO NOTHING; -- works
+INSERT INTO ft1(c1, c2) VALUES(11, 12) ON CONFLICT (c1, c2) DO NOTHING; -- unsupported
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+INSERT INTO ft1(c1, c2) VALUES(11, 12) ON CONFLICT (c1, c2) DO UPDATE SET c3 = 'ffg'; -- unsupported
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 INSERT INTO ft1(c1, c2) VALUES(1111, -2);  -- c2positive
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
 DETAIL:  Failing row contains (1111, -2, null, null, null, null, ft1       , null).

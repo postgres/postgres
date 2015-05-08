@@ -36,6 +36,7 @@ test: geometry horology regex oidjoins type_sanity opr_sanity
 # These four each depend on the previous one
 # ----------
 test: insert
+test: insert_conflict
 test: create_function_1
 test: create_type
 test: create_table

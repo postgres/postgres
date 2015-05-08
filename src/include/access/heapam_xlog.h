@@ -34,7 +34,7 @@
 #define XLOG_HEAP_UPDATE		0x20
 /* 0x030 is free, was XLOG_HEAP_MOVE */
 #define XLOG_HEAP_HOT_UPDATE	0x40
-/* 0x050 is free, was XLOG_HEAP_NEWPAGE */
+#define XLOG_HEAP_CONFIRM		0x50
 #define XLOG_HEAP_LOCK			0x60
 #define XLOG_HEAP_INPLACE		0x70
 
@@ -60,23 +60,43 @@
 #define XLOG_HEAP2_NEW_CID		0x70
 
 /*
- * xl_heap_* ->flag values, 8 bits are available.
+ * xl_heap_insert/xl_heap_multi_insert flag values, 8 bits are available.
  */
 /* PD_ALL_VISIBLE was cleared */
-#define XLOG_HEAP_ALL_VISIBLE_CLEARED		(1<<0)
+#define XLH_INSERT_ALL_VISIBLE_CLEARED			(1<<0)
+#define XLH_INSERT_LAST_IN_MULTI				(1<<1)
+#define XLH_INSERT_IS_SPECULATIVE				(1<<2)
+#define XLH_INSERT_CONTAINS_NEW_TUPLE			(1<<3)
+
+/*
+ * xl_heap_update flag values, 8 bits are available.
+ */
+/* PD_ALL_VISIBLE was cleared */
+#define XLH_UPDATE_OLD_ALL_VISIBLE_CLEARED		(1<<0)
 /* PD_ALL_VISIBLE was cleared in the 2nd page */
-#define XLOG_HEAP_NEW_ALL_VISIBLE_CLEARED	(1<<1)
-#define XLOG_HEAP_CONTAINS_OLD_TUPLE		(1<<2)
-#define XLOG_HEAP_CONTAINS_OLD_KEY			(1<<3)
-#define XLOG_HEAP_CONTAINS_NEW_TUPLE		(1<<4)
-#define XLOG_HEAP_PREFIX_FROM_OLD			(1<<5)
-#define XLOG_HEAP_SUFFIX_FROM_OLD			(1<<6)
-/* last xl_heap_multi_insert record for one heap_multi_insert() call */
-#define XLOG_HEAP_LAST_MULTI_INSERT			(1<<7)
+#define XLH_UPDATE_NEW_ALL_VISIBLE_CLEARED		(1<<1)
+#define XLH_UPDATE_CONTAINS_OLD_TUPLE			(1<<2)
+#define XLH_UPDATE_CONTAINS_OLD_KEY				(1<<3)
+#define XLH_UPDATE_CONTAINS_NEW_TUPLE			(1<<4)
+#define XLH_UPDATE_PREFIX_FROM_OLD				(1<<5)
+#define XLH_UPDATE_SUFFIX_FROM_OLD				(1<<6)
 
 /* convenience macro for checking whether any form of old tuple was logged */
-#define XLOG_HEAP_CONTAINS_OLD						\
-	(XLOG_HEAP_CONTAINS_OLD_TUPLE | XLOG_HEAP_CONTAINS_OLD_KEY)
+#define XLH_UPDATE_CONTAINS_OLD						\
+	(XLH_UPDATE_CONTAINS_OLD_TUPLE | XLH_UPDATE_CONTAINS_OLD_KEY)
+
+/*
+ * xl_heap_delete flag values, 8 bits are available.
+ */
+/* PD_ALL_VISIBLE was cleared */
+#define XLH_DELETE_ALL_VISIBLE_CLEARED			(1<<0)
+#define XLH_DELETE_CONTAINS_OLD_TUPLE			(1<<1)
+#define XLH_DELETE_CONTAINS_OLD_KEY				(1<<2)
+#define XLH_DELETE_IS_SUPER						(1<<3)
+
+/* convenience macro for checking whether any form of old tuple was logged */
+#define XLH_DELETE_CONTAINS_OLD						\
+	(XLH_DELETE_CONTAINS_OLD_TUPLE | XLH_DELETE_CONTAINS_OLD_KEY)
 
 /* This is what we need to know about delete */
 typedef struct xl_heap_delete
@@ -242,6 +262,14 @@ typedef struct xl_heap_lock_updated
 } xl_heap_lock_updated;
 
 #define SizeOfHeapLockUpdated	(offsetof(xl_heap_lock_updated, infobits_set) + sizeof(uint8))
+
+/* This is what we need to know about confirmation of speculative insertion */
+typedef struct xl_heap_confirm
+{
+	OffsetNumber offnum;		/* confirmed tuple's offset on page */
+} xl_heap_confirm;
+
+#define SizeOfHeapConfirm	(offsetof(xl_heap_confirm, offnum) + sizeof(OffsetNumber))
 
 /* This is what we need to know about in-place update */
 typedef struct xl_heap_inplace

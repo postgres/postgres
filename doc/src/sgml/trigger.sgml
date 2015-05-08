@@ -40,14 +40,17 @@
     On tables and foreign tables, triggers can be defined to execute either
     before or after any <command>INSERT</command>, <command>UPDATE</command>,
     or <command>DELETE</command> operation, either once per modified row,
-    or once per <acronym>SQL</acronym> statement.
-    <command>UPDATE</command> triggers can moreover be set to fire only if
-    certain columns are mentioned in the <literal>SET</literal> clause of the
-    <command>UPDATE</command> statement.
-    Triggers can also fire for <command>TRUNCATE</command> statements.
-    If a trigger event occurs, the trigger's function is called at the
-    appropriate time to handle the event.  Foreign tables do not support the
-    TRUNCATE statement at all.
+    or once per <acronym>SQL</acronym> statement.  If an
+    <command>INSERT</command> contains an <literal>ON CONFLICT DO UPDATE</>
+    clause, it is possible that the effects of a BEFORE insert trigger and
+    a BEFORE update trigger can both be applied together, if a reference to
+    an <varname>EXCLUDED</> column appears.  <command>UPDATE</command>
+    triggers can moreover be set to fire only if certain columns are
+    mentioned in the <literal>SET</literal> clause of the
+    <command>UPDATE</command> statement.  Triggers can also fire for
+    <command>TRUNCATE</command> statements.  If a trigger event occurs,
+    the trigger's function is called at the appropriate time to handle the
+    event.  Foreign tables do not support the TRUNCATE statement at all.
    </para>
 
    <para>
@@ -116,6 +119,35 @@
     Row-level <literal>INSTEAD OF</> triggers may only be defined on views,
     and fire immediately as each row in the view is identified as needing to
     be operated on.
+   </para>
+
+   <para>
+    If an <command>INSERT</command> contains an <literal>ON CONFLICT
+    DO UPDATE</> clause, it is possible that the effects of all
+    row-level <literal>BEFORE</> <command>INSERT</command> triggers
+    and all row-level BEFORE <command>UPDATE</command> triggers can
+    both be applied in a way that is apparent from the final state of
+    the updated row, if an <varname>EXCLUDED</> column is referenced.
+    There need not be an <varname>EXCLUDED</> column reference for
+    both sets of BEFORE row-level triggers to execute, though.  The
+    possibility of surprising outcomes should be considered when there
+    are both <literal>BEFORE</> <command>INSERT</command> and
+    <literal>BEFORE</> <command>UPDATE</command> row-level triggers
+    that both affect a row being inserted/updated (this can still be
+    problematic if the modifications are more or less equivalent if
+    they're not also idempotent).  Note that statement-level
+    <command>UPDATE</command> triggers are executed when <literal>ON
+    CONFLICT DO UPDATE</> is specified, regardless of whether or not
+    any rows were affected by the <command>UPDATE</command> (and
+    regardless of whether the alternative <command>UPDATE</command>
+    path was ever taken).  An <command>INSERT</command> with an
+    <literal>ON CONFLICT DO UPDATE</> clause will execute
+    statement-level <literal>BEFORE</> <command>INSERT</command>
+    triggers first, then statement-level <literal>BEFORE</>
+    <command>UPDATE</command> triggers, followed by statement-level
+    <literal>AFTER</> <command>UPDATE</command> triggers and finally
+    statement-level <literal>AFTER</> <command>INSERT</command>
+    triggers.
    </para>
 
    <para>

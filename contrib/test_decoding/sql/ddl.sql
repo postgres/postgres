@@ -84,6 +84,18 @@ COMMIT;
 -- show changes
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
+-- ON CONFLICT DO UPDATE support
+BEGIN;
+INSERT INTO replication_example(id, somedata, somenum) SELECT i, i, i FROM generate_series(-15, 15) i
+  ON CONFLICT (id) DO UPDATE SET somenum = excluded.somenum + 1;
+COMMIT;
+
+/* display results, but hide most of the output */
+SELECT count(*), min(data), max(data)
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+GROUP BY substring(data, 1, 40)
+ORDER BY 1,2;
+
 -- hide changes bc of oid visible in full table rewrites
 CREATE TABLE tr_unique(id2 serial unique NOT NULL, data int);
 INSERT INTO tr_unique(data) VALUES(10);
@@ -113,6 +125,16 @@ SELECT count(*), min(data), max(data)
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
 GROUP BY substring(data, 1, 24)
 ORDER BY 1,2;
+
+-- check that a large, spooled, upsert works
+INSERT INTO tr_etoomuch (id, data)
+SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
+ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data;
+
+SELECT substring(data, 1, 29), count(*)
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+GROUP BY 1
+ORDER BY min(location - '0/0');
 
 /*
  * check whether we decode subtransactions correctly in relation with each

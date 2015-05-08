@@ -235,6 +235,13 @@ exprType(const Node *expr)
 		case T_CurrentOfExpr:
 			type = BOOLOID;
 			break;
+		case T_InferenceElem:
+			{
+				const InferenceElem *n = (const InferenceElem *) expr;
+
+				type = exprType((Node *) n->expr);
+			}
+			break;
 		case T_PlaceHolderVar:
 			type = exprType((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 			break;
@@ -894,6 +901,9 @@ exprCollation(const Node *expr)
 		case T_CurrentOfExpr:
 			coll = InvalidOid;	/* result is always boolean */
 			break;
+		case T_InferenceElem:
+			coll = exprCollation((Node *) ((const InferenceElem *) expr)->expr);
+			break;
 		case T_PlaceHolderVar:
 			coll = exprCollation((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 			break;
@@ -1484,12 +1494,22 @@ exprLocation(const Node *expr)
 		case T_WithClause:
 			loc = ((const WithClause *) expr)->location;
 			break;
+		case T_InferClause:
+			loc = ((const InferClause *) expr)->location;
+			break;
+		case T_OnConflictClause:
+			loc = ((const OnConflictClause *) expr)->location;
+			break;
 		case T_CommonTableExpr:
 			loc = ((const CommonTableExpr *) expr)->location;
 			break;
 		case T_PlaceHolderVar:
 			/* just use argument's location */
 			loc = exprLocation((Node *) ((const PlaceHolderVar *) expr)->phexpr);
+			break;
+		case T_InferenceElem:
+			/* just use nested expr's location */
+			loc = exprLocation((Node *) ((const InferenceElem *) expr)->expr);
 			break;
 		default:
 			/* for any other node type it's just unknown... */
@@ -1890,6 +1910,20 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_OnConflictExpr:
+			{
+				OnConflictExpr   *onconflict = (OnConflictExpr *) node;
+
+				if (walker((Node *) onconflict->arbiterElems, context))
+					return true;
+				if (walker(onconflict->arbiterWhere, context))
+					return true;
+				if (walker(onconflict->onConflictSet, context))
+					return true;
+				if (walker(onconflict->onConflictWhere, context))
+					return true;
+			}
+			break;
 		case T_JoinExpr:
 			{
 				JoinExpr   *join = (JoinExpr *) node;
@@ -1920,6 +1954,8 @@ expression_tree_walker(Node *node,
 			break;
 		case T_PlaceHolderVar:
 			return walker(((PlaceHolderVar *) node)->phexpr, context);
+		case T_InferenceElem:
+			return walker(((InferenceElem *) node)->expr, context);
 		case T_AppendRelInfo:
 			{
 				AppendRelInfo *appinfo = (AppendRelInfo *) node;
@@ -1967,6 +2003,8 @@ query_tree_walker(Query *query,
 	if (walker((Node *) query->targetList, context))
 		return true;
 	if (walker((Node *) query->withCheckOptions, context))
+		return true;
+	if (walker((Node *) query->onConflict, context))
 		return true;
 	if (walker((Node *) query->returningList, context))
 		return true;
@@ -2594,6 +2632,20 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_OnConflictExpr:
+			{
+				OnConflictExpr   *oc = (OnConflictExpr *) node;
+				OnConflictExpr   *newnode;
+
+				FLATCOPY(newnode, oc, OnConflictExpr);
+				MUTATE(newnode->arbiterElems, oc->arbiterElems, List *);
+				MUTATE(newnode->arbiterWhere, oc->arbiterWhere, Node *);
+				MUTATE(newnode->onConflictSet, oc->onConflictSet, List *);
+				MUTATE(newnode->onConflictWhere, oc->onConflictWhere, Node *);
+
+				return (Node *) newnode;
+			}
+			break;
 		case T_JoinExpr:
 			{
 				JoinExpr   *join = (JoinExpr *) node;
@@ -2627,6 +2679,16 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, phv, PlaceHolderVar);
 				MUTATE(newnode->phexpr, phv->phexpr, Expr *);
 				/* Assume we need not copy the relids bitmapset */
+				return (Node *) newnode;
+			}
+			break;
+		case T_InferenceElem:
+			{
+				InferenceElem *inferenceelemdexpr = (InferenceElem *) node;
+				InferenceElem *newnode;
+
+				FLATCOPY(newnode, inferenceelemdexpr, InferenceElem);
+				MUTATE(newnode->expr, newnode->expr, Node *);
 				return (Node *) newnode;
 			}
 			break;
@@ -2709,6 +2771,7 @@ query_tree_mutator(Query *query,
 
 	MUTATE(query->targetList, query->targetList, List *);
 	MUTATE(query->withCheckOptions, query->withCheckOptions, List *);
+	MUTATE(query->onConflict, query->onConflict, OnConflictExpr *);
 	MUTATE(query->returningList, query->returningList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);
@@ -2978,6 +3041,8 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(stmt->selectStmt, context))
 					return true;
+				if (walker(stmt->onConflictClause, context))
+					return true;
 				if (walker(stmt->returningList, context))
 					return true;
 				if (walker(stmt->withClause, context))
@@ -3217,6 +3282,28 @@ raw_expression_tree_walker(Node *node,
 			break;
 		case T_WithClause:
 			return walker(((WithClause *) node)->ctes, context);
+		case T_InferClause:
+			{
+				InferClause *stmt = (InferClause *) node;
+
+				if (walker(stmt->indexElems, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+			}
+			break;
+		case T_OnConflictClause:
+			{
+				OnConflictClause *stmt = (OnConflictClause *) node;
+
+				if (walker(stmt->infer, context))
+					return true;
+				if (walker(stmt->targetList, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+			}
+			break;
 		case T_CommonTableExpr:
 			return walker(((CommonTableExpr *) node)->ctequery, context);
 		default:

@@ -52,6 +52,8 @@ static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static List *transformInsertRow(ParseState *pstate, List *exprlist,
 				   List *stmtcols, List *icolumns, List *attrnos);
+static OnConflictExpr *transformOnConflictClause(ParseState *pstate,
+												 OnConflictClause *onConflictClause);
 static int	count_rowexpr_columns(ParseState *pstate, Node *expr);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
@@ -62,6 +64,8 @@ static void determineRecursiveColTypes(ParseState *pstate,
 						   Node *larg, List *nrtargetlist);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
+static List *transformUpdateTargetList(ParseState *pstate,
+								  List *targetList);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
 						   DeclareCursorStmt *stmt);
 static Query *transformExplainStmt(ParseState *pstate,
@@ -419,6 +423,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	ListCell   *icols;
 	ListCell   *attnos;
 	ListCell   *lc;
+	bool		isOnConflictUpdate;
+	AclMode		targetPerms;
 
 	/* There can't be any outer WITH to worry about */
 	Assert(pstate->p_ctenamespace == NIL);
@@ -433,6 +439,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		qry->cteList = transformWithClause(pstate, stmt->withClause);
 		qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
 	}
+
+	isOnConflictUpdate = (stmt->onConflictClause &&
+						  stmt->onConflictClause->action == ONCONFLICT_UPDATE);
 
 	/*
 	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
@@ -478,8 +487,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * mentioned in the SELECT part.  Note that the target table is not added
 	 * to the joinlist or namespace.
 	 */
+	targetPerms = ACL_INSERT;
+	if (isOnConflictUpdate)
+		targetPerms |= ACL_UPDATE;
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
-										 false, false, ACL_INSERT);
+										 false, false, targetPerms);
 
 	/* Validate stmt->cols list, or build default list if no list given */
 	icolumns = checkInsertTargets(pstate, stmt->cols, &attrnos);
@@ -740,6 +752,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		attnos = lnext(attnos);
 	}
 
+	/* Process ON CONFLICT, if any. */
+	if (stmt->onConflictClause)
+		qry->onConflict = transformOnConflictClause(pstate,
+													stmt->onConflictClause);
+
 	/*
 	 * If we have a RETURNING clause, we need to add the target relation to
 	 * the query namespace before processing it, so that Var references in
@@ -848,6 +865,85 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 
 	return result;
 }
+
+/*
+ * transformSelectStmt -
+ *	  transforms an OnConflictClause in an INSERT
+ */
+static OnConflictExpr *
+transformOnConflictClause(ParseState *pstate,
+						  OnConflictClause *onConflictClause)
+{
+	List	   *arbiterElems;
+	Node	   *arbiterWhere;
+	Oid			arbiterConstraint;
+	List	   *onConflictSet = NIL;
+	Node	   *onConflictWhere = NULL;
+	RangeTblEntry *exclRte = NULL;
+	int			exclRelIndex = 0;
+	List	   *exclRelTlist = NIL;
+	OnConflictExpr   *result;
+
+	/* Process the arbiter clause, ON CONFLICT ON (...) */
+	transformOnConflictArbiter(pstate, onConflictClause, &arbiterElems,
+							   &arbiterWhere, &arbiterConstraint);
+
+	/* Process DO UPDATE */
+	if (onConflictClause->action == ONCONFLICT_UPDATE)
+	{
+		exclRte = addRangeTableEntryForRelation(pstate,
+												pstate->p_target_relation,
+												makeAlias("excluded", NIL),
+												false, false);
+		exclRelIndex = list_length(pstate->p_rtable);
+
+		/*
+		 * Build a targetlist for the EXCLUDED pseudo relation. Out of
+		 * simplicity we do that here, because expandRelAttrs() happens to
+		 * nearly do the right thing; specifically it also works with views.
+		 * It'd be more proper to instead scan some pseudo scan node, but it
+		 * doesn't seem worth the amount of code required.
+		 *
+		 * The only caveat of this hack is that the permissions expandRelAttrs
+		 * adds have to be reset. markVarForSelectPriv() will add the exact
+		 * required permissions back.
+		 */
+		exclRelTlist = expandRelAttrs(pstate, exclRte,
+									  exclRelIndex, 0, -1);
+		exclRte->requiredPerms = 0;
+		exclRte->selectedCols = NULL;
+
+		/*
+		 * Add EXCLUDED and the target RTE to the namespace, so that they can
+		 * be used in the UPDATE statement.
+		 */
+		addRTEtoQuery(pstate, exclRte, false, true, true);
+		addRTEtoQuery(pstate, pstate->p_target_rangetblentry,
+					  false, true, true);
+
+		onConflictSet =
+			transformUpdateTargetList(pstate, onConflictClause->targetList);
+
+		onConflictWhere = transformWhereClause(pstate,
+											   onConflictClause->whereClause,
+											   EXPR_KIND_WHERE, "WHERE");
+	}
+
+	/* Finally, build ON CONFLICT DO [NOTHING | UPDATE] expression */
+	result = makeNode(OnConflictExpr);
+
+	result->action = onConflictClause->action;
+	result->arbiterElems = arbiterElems;
+	result->arbiterWhere = arbiterWhere;
+	result->constraint = arbiterConstraint;
+	result->onConflictSet = onConflictSet;
+	result->onConflictWhere = onConflictWhere;
+	result->exclRelIndex = exclRelIndex;
+	result->exclRelTlist = exclRelTlist;
+
+	return result;
+}
+
 
 /*
  * count_rowexpr_columns -
@@ -1899,10 +1995,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	ParseNamespaceItem *nsitem;
-	RangeTblEntry *target_rte;
 	Node	   *qual;
-	ListCell   *origTargetList;
-	ListCell   *tl;
 
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
@@ -1937,23 +2030,41 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	nsitem->p_lateral_only = false;
 	nsitem->p_lateral_ok = true;
 
-	qry->targetList = transformTargetList(pstate, stmt->targetList,
-										  EXPR_KIND_UPDATE_SOURCE);
-
 	qual = transformWhereClause(pstate, stmt->whereClause,
 								EXPR_KIND_WHERE, "WHERE");
 
 	qry->returningList = transformReturningList(pstate, stmt->returningList);
+
+	/*
+	 * Now we are done with SELECT-like processing, and can get on with
+	 * transforming the target list to match the UPDATE target columns.
+	 */
+	qry->targetList = transformUpdateTargetList(pstate, stmt->targetList);
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
-	/*
-	 * Now we are done with SELECT-like processing, and can get on with
-	 * transforming the target list to match the UPDATE target columns.
-	 */
+	assign_query_collations(pstate, qry);
+
+	return qry;
+}
+
+/*
+ * transformUpdateTargetList -
+ *	handle SET clause in UPDATE/INSERT ... ON CONFLICT UPDATE
+ */
+static List *
+transformUpdateTargetList(ParseState *pstate, List *origTlist)
+{
+	List		   *tlist = NIL;
+	RangeTblEntry  *target_rte;
+	ListCell	   *orig_tl;
+	ListCell	   *tl;
+
+	tlist = transformTargetList(pstate, origTlist,
+								EXPR_KIND_UPDATE_SOURCE);
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
 	if (pstate->p_next_resno <= pstate->p_target_relation->rd_rel->relnatts)
@@ -1961,9 +2072,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	/* Prepare non-junk columns for assignment to target table */
 	target_rte = pstate->p_target_rangetblentry;
-	origTargetList = list_head(stmt->targetList);
+	orig_tl = list_head(origTlist);
 
-	foreach(tl, qry->targetList)
+	foreach(tl, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		ResTarget  *origTarget;
@@ -1981,9 +2092,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 			tle->resname = NULL;
 			continue;
 		}
-		if (origTargetList == NULL)
+		if (orig_tl == NULL)
 			elog(ERROR, "UPDATE target count mismatch --- internal error");
-		origTarget = (ResTarget *) lfirst(origTargetList);
+		origTarget = (ResTarget *) lfirst(orig_tl);
 		Assert(IsA(origTarget, ResTarget));
 
 		attrno = attnameAttNum(pstate->p_target_relation,
@@ -2005,14 +2116,12 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
 								attrno - FirstLowInvalidHeapAttributeNumber);
 
-		origTargetList = lnext(origTargetList);
+		orig_tl = lnext(orig_tl);
 	}
-	if (origTargetList != NULL)
+	if (orig_tl != NULL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");
 
-	assign_query_collations(pstate, qry);
-
-	return qry;
+	return tlist;
 }
 
 /*

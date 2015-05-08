@@ -680,6 +680,9 @@ SELECT * FROM shoelace_log ORDER BY sl_name;
 
 insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
 insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+-- Unsupported (even though a similar updatable view construct is)
+insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0)
+  on conflict do nothing;
 
 SELECT * FROM shoelace_obsolete ORDER BY sl_len_cm;
 SELECT * FROM shoelace_candelete;
@@ -844,6 +847,17 @@ insert into rule_and_refint_t3 values (1, 12, 11, 'row3');
 insert into rule_and_refint_t3 values (1, 12, 12, 'row4');
 insert into rule_and_refint_t3 values (1, 11, 13, 'row5');
 insert into rule_and_refint_t3 values (1, 13, 11, 'row6');
+-- Ordinary table
+insert into rule_and_refint_t3 values (1, 13, 11, 'row6')
+  on conflict do nothing;
+-- rule not fired, so fk violation
+insert into rule_and_refint_t3 values (1, 13, 11, 'row6')
+  on conflict (id3a, id3b, id3c) do update
+  set id3b = excluded.id3b;
+-- rule fired, so unsupported
+insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0)
+  on conflict (sl_name) do update
+  set sl_avail = excluded.sl_avail;
 
 create rule rule_and_refint_t3_ins as on insert to rule_and_refint_t3
 	where (exists (select 1 from rule_and_refint_t3
@@ -1025,3 +1039,48 @@ drop view rule_v1;
 create view rule_v1(x) as select * from (values(1,2)) v(q,w);
 \d+ rule_v1
 drop view rule_v1;
+
+--
+-- Check DO INSTEAD rules with ON CONFLICT
+--
+CREATE TABLE hats (
+	hat_name    char(10) primary key,
+	hat_color   char(10)      -- hat color
+);
+
+CREATE TABLE hat_data (
+	hat_name    char(10) primary key,
+	hat_color   char(10)      -- hat color
+);
+
+-- okay
+CREATE RULE hat_nosert AS ON INSERT TO hats
+    DO INSTEAD
+    INSERT INTO hat_data VALUES (
+           NEW.hat_name,
+           NEW.hat_color)
+        ON CONFLICT (hat_name) DO NOTHING RETURNING *;
+
+-- Works (projects row)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+-- Works (does nothing)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+SELECT tablename, rulename, definition FROM pg_rules
+	WHERE tablename = 'hats';
+DROP RULE hat_nosert ON hats;
+
+CREATE RULE hat_upsert AS ON INSERT TO hats
+    DO INSTEAD
+    INSERT INTO hat_data VALUES (
+           NEW.hat_name,
+           NEW.hat_color)
+        ON CONFLICT (hat_name) DO UPDATE SET hat_color = 'Orange' RETURNING *;
+
+-- Works (does upsert)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+SELECT tablename, rulename, definition FROM pg_rules
+	WHERE tablename = 'hats';
+DROP RULE hat_upsert ON hats;
+
+drop table hats;
+drop table hat_data;

@@ -2340,6 +2340,10 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 											 locally_added_param);
 				finalize_primnode((Node *) mtplan->returningLists,
 								  &context);
+				finalize_primnode((Node *) mtplan->onConflictSet,
+								  &context);
+				finalize_primnode((Node *) mtplan->onConflictWhere,
+								  &context);
 				foreach(l, mtplan->plans)
 				{
 					context.paramids =

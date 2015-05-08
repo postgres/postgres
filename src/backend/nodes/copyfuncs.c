@@ -81,6 +81,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_SCALAR_FIELD(queryId);
 	COPY_SCALAR_FIELD(hasReturning);
 	COPY_SCALAR_FIELD(hasModifyingCTE);
+	COPY_SCALAR_FIELD(isUpsert);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
 	COPY_NODE_FIELD(planTree);
@@ -185,6 +186,12 @@ _copyModifyTable(const ModifyTable *from)
 	COPY_NODE_FIELD(fdwPrivLists);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_SCALAR_FIELD(epqParam);
+	COPY_SCALAR_FIELD(onConflictAction);
+	COPY_NODE_FIELD(arbiterIndexes);
+	COPY_NODE_FIELD(onConflictSet);
+	COPY_NODE_FIELD(onConflictWhere);
+	COPY_SCALAR_FIELD(exclRelRTI);
+	COPY_NODE_FIELD(exclRelTlist);
 
 	return newnode;
 }
@@ -1787,6 +1794,22 @@ _copyCurrentOfExpr(const CurrentOfExpr *from)
 }
 
 /*
+ * _copyInferenceElem
+ */
+static InferenceElem *
+_copyInferenceElem(const InferenceElem *from)
+{
+	InferenceElem *newnode = makeNode(InferenceElem);
+
+	COPY_NODE_FIELD(expr);
+	COPY_SCALAR_FIELD(infercollid);
+	COPY_SCALAR_FIELD(inferopfamily);
+	COPY_SCALAR_FIELD(inferopcinputtype);
+
+	return newnode;
+}
+
+/*
  * _copyTargetEntry
  */
 static TargetEntry *
@@ -1848,6 +1871,26 @@ _copyFromExpr(const FromExpr *from)
 
 	COPY_NODE_FIELD(fromlist);
 	COPY_NODE_FIELD(quals);
+
+	return newnode;
+}
+
+/*
+ * _copyOnConflictExpr
+ */
+static OnConflictExpr *
+_copyOnConflictExpr(const OnConflictExpr *from)
+{
+	OnConflictExpr   *newnode = makeNode(OnConflictExpr);
+
+	COPY_SCALAR_FIELD(action);
+	COPY_NODE_FIELD(arbiterElems);
+	COPY_NODE_FIELD(arbiterWhere);
+	COPY_NODE_FIELD(onConflictSet);
+	COPY_NODE_FIELD(onConflictWhere);
+	COPY_SCALAR_FIELD(constraint);
+	COPY_SCALAR_FIELD(exclRelIndex);
+	COPY_NODE_FIELD(exclRelTlist);
 
 	return newnode;
 }
@@ -2130,6 +2173,33 @@ _copyWithClause(const WithClause *from)
 
 	COPY_NODE_FIELD(ctes);
 	COPY_SCALAR_FIELD(recursive);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static InferClause *
+_copyInferClause(const InferClause *from)
+{
+	InferClause *newnode = makeNode(InferClause);
+
+	COPY_NODE_FIELD(indexElems);
+	COPY_NODE_FIELD(whereClause);
+	COPY_STRING_FIELD(conname);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static OnConflictClause *
+_copyOnConflictClause(const OnConflictClause *from)
+{
+	OnConflictClause *newnode = makeNode(OnConflictClause);
+
+	COPY_SCALAR_FIELD(action);
+	COPY_NODE_FIELD(infer);
+	COPY_NODE_FIELD(targetList);
+	COPY_NODE_FIELD(whereClause);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2552,6 +2622,7 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(withCheckOptions);
+	COPY_NODE_FIELD(onConflict);
 	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
@@ -2575,6 +2646,7 @@ _copyInsertStmt(const InsertStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(cols);
 	COPY_NODE_FIELD(selectStmt);
+	COPY_NODE_FIELD(onConflictClause);
 	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(withClause);
 
@@ -4283,6 +4355,9 @@ copyObject(const void *from)
 		case T_CurrentOfExpr:
 			retval = _copyCurrentOfExpr(from);
 			break;
+		case T_InferenceElem:
+			retval = _copyInferenceElem(from);
+			break;
 		case T_TargetEntry:
 			retval = _copyTargetEntry(from);
 			break;
@@ -4294,6 +4369,9 @@ copyObject(const void *from)
 			break;
 		case T_FromExpr:
 			retval = _copyFromExpr(from);
+			break;
+		case T_OnConflictExpr:
+			retval = _copyOnConflictExpr(from);
 			break;
 
 			/*
@@ -4752,6 +4830,12 @@ copyObject(const void *from)
 			break;
 		case T_WithClause:
 			retval = _copyWithClause(from);
+			break;
+		case T_InferClause:
+			retval = _copyInferClause(from);
+			break;
+		case T_OnConflictClause:
+			retval = _copyOnConflictClause(from);
 			break;
 		case T_CommonTableExpr:
 			retval = _copyCommonTableExpr(from);

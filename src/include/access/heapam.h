@@ -28,6 +28,7 @@
 #define HEAP_INSERT_SKIP_WAL	0x0001
 #define HEAP_INSERT_SKIP_FSM	0x0002
 #define HEAP_INSERT_FROZEN		0x0004
+#define HEAP_INSERT_SPECULATIVE 0x0008
 
 typedef struct BulkInsertStateData *BulkInsertState;
 
@@ -142,6 +143,8 @@ extern void heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
 			CommandId cid, Snapshot crosscheck, bool wait,
 			HeapUpdateFailureData *hufd);
+extern void heap_finish_speculative(Relation relation, HeapTuple tuple);
+extern void heap_abort_speculative(Relation relation, HeapTuple tuple);
 extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
 			HeapTuple newtup,
 			CommandId cid, Snapshot crosscheck, bool wait,

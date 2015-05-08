@@ -148,6 +148,24 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  COMMIT
 (9 rows)
 
+-- ON CONFLICT DO UPDATE support
+BEGIN;
+INSERT INTO replication_example(id, somedata, somenum) SELECT i, i, i FROM generate_series(-15, 15) i
+  ON CONFLICT (id) DO UPDATE SET somenum = excluded.somenum + 1;
+COMMIT;
+/* display results, but hide most of the output */
+SELECT count(*), min(data), max(data)
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+GROUP BY substring(data, 1, 40)
+ORDER BY 1,2;
+ count |                                                                     min                                                                      |                                                                      max                                                                      
+-------+----------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------
+     1 | BEGIN                                                                                                                                        | BEGIN
+     1 | COMMIT                                                                                                                                       | COMMIT
+    15 | table public.replication_example: UPDATE: id[integer]:10 somedata[integer]:4 somenum[integer]:11 zaphod1[integer]:null zaphod2[integer]:null | table public.replication_example: UPDATE: id[integer]:9 somedata[integer]:3 somenum[integer]:10 zaphod1[integer]:null zaphod2[integer]:null
+    16 | table public.replication_example: INSERT: id[integer]:0 somedata[integer]:0 somenum[integer]:0 zaphod1[integer]:null zaphod2[integer]:null   | table public.replication_example: INSERT: id[integer]:-9 somedata[integer]:-9 somenum[integer]:-9 zaphod1[integer]:null zaphod2[integer]:null
+(4 rows)
+
 -- hide changes bc of oid visible in full table rewrites
 CREATE TABLE tr_unique(id2 serial unique NOT NULL, data int);
 INSERT INTO tr_unique(data) VALUES(10);
@@ -195,6 +213,22 @@ ORDER BY 1,2;
      1 | COMMIT                                          | COMMIT
  20467 | table public.tr_etoomuch: DELETE: id[integer]:1 | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
 (3 rows)
+
+-- check that a large, spooled, upsert works
+INSERT INTO tr_etoomuch (id, data)
+SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
+ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data;
+SELECT substring(data, 1, 29), count(*)
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+GROUP BY 1
+ORDER BY min(location - '0/0');
+           substring           | count 
+-------------------------------+-------
+ BEGIN                         |     1
+ table public.tr_etoomuch: UPD |  2235
+ table public.tr_etoomuch: INS |  1766
+ COMMIT                        |     1
+(4 rows)
 
 /*
  * check whether we decode subtransactions correctly in relation with each

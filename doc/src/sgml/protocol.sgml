@@ -2998,9 +2998,16 @@ CommandComplete (B)
         <literal>INSERT <replaceable>oid</replaceable>
         <replaceable>rows</replaceable></literal>, where
         <replaceable>rows</replaceable> is the number of rows
-        inserted. <replaceable>oid</replaceable> is the object ID
-        of the inserted row if <replaceable>rows</replaceable> is 1
-        and the target table has OIDs;
+        inserted. However, if and only if <literal>ON CONFLICT
+        UPDATE</> is specified, then the tag is <literal>UPSERT
+        <replaceable>oid</replaceable>
+        <replaceable>rows</replaceable></literal>, where
+        <replaceable>rows</replaceable> is the number of rows inserted
+        <emphasis>or updated</emphasis>.
+        <replaceable>oid</replaceable> is the object ID of the
+        inserted row if <replaceable>rows</replaceable> is 1 and the
+        target table has OIDs, and (for the <literal>UPSERT</literal>
+        tag), the row was actually inserted rather than updated;
         otherwise <replaceable>oid</replaceable> is 0.
        </para>
 

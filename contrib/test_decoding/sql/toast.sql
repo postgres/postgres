@@ -25,6 +25,11 @@ UPDATE xpto SET toasted_col1 = (SELECT string_agg(g.i::text, '') FROM generate_s
 
 UPDATE xpto SET rand1 = 123.456 WHERE id = 1;
 
+-- updating external via INSERT ... ON CONFLICT DO UPDATE
+INSERT INTO xpto(id, toasted_col2) VALUES (2, 'toasted2-upsert')
+ON CONFLICT (id)
+DO UPDATE SET toasted_col2 = EXCLUDED.toasted_col2 || xpto.toasted_col2;
+
 DELETE FROM xpto WHERE id = 1;
 
 DROP TABLE IF EXISTS toasted_key;

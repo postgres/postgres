@@ -23,6 +23,10 @@ INSERT INTO xpto (toasted_col2) SELECT repeat(string_agg(to_char(g.i, 'FM0000'),
 -- update of existing column
 UPDATE xpto SET toasted_col1 = (SELECT string_agg(g.i::text, '') FROM generate_series(1, 2000) g(i)) WHERE id = 1;
 UPDATE xpto SET rand1 = 123.456 WHERE id = 1;
+-- updating external via INSERT ... ON CONFLICT DO UPDATE
+INSERT INTO xpto(id, toasted_col2) VALUES (2, 'toasted2-upsert')
+ON CONFLICT (id)
+DO UPDATE SET toasted_col2 = EXCLUDED.toasted_col2 || xpto.toasted_col2;
 DELETE FROM xpto WHERE id = 1;
 DROP TABLE IF EXISTS toasted_key;
 NOTICE:  table "toasted_key" does not exist, skipping
@@ -62,6 +66,9 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  COMMIT
  BEGIN
  table public.xpto: UPDATE: id[integer]:1 toasted_col1[text]:unchanged-toast-datum rand1[double precision]:123.456 toasted_col2[text]:unchanged-toast-datum rand2[double precision]:1578
+ COMMIT
+ BEGIN
+ table public.xpto: UPDATE: id[integer]:2 toasted_col1[text]:null rand1[double precision]:3077 toasted_col2[text]:'toasted2-upsert00010002000300040005000600070008000900100011001200130014001500160017001
  COMMIT
  BEGIN
  table public.xpto: DELETE: id[integer]:1
@@ -283,7 +290,7 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  table public.toasted_copy: INSERT: id[integer]:202 data[text]:'untoasted199'
  table public.toasted_copy: INSERT: id[integer]:203 data[text]:'untoasted200'
  COMMIT
-(232 rows)
+(235 rows)
 
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 

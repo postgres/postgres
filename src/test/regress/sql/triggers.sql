@@ -208,7 +208,7 @@ drop sequence ttdummy_seq;
 
 CREATE TABLE log_table (tstamp timestamp default timeofday()::timestamp);
 
-CREATE TABLE main_table (a int, b int);
+CREATE TABLE main_table (a int unique, b int);
 
 COPY main_table (a,b) FROM stdin;
 5	10
@@ -237,6 +237,12 @@ FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('after_ins_stmt');
 CREATE TRIGGER after_upd_stmt_trig AFTER UPDATE ON main_table
 EXECUTE PROCEDURE trigger_func('after_upd_stmt');
 
+-- Both insert and update statement level triggers (before and after) should
+-- fire.  Doesn't fire UPDATE before trigger, but only because one isn't
+-- defined.
+INSERT INTO main_table (a, b) VALUES (5, 10) ON CONFLICT (a)
+  DO UPDATE SET b = EXCLUDED.b;
+
 CREATE TRIGGER after_upd_row_trig AFTER UPDATE ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_row');
 
@@ -245,6 +251,9 @@ INSERT INTO main_table DEFAULT VALUES;
 UPDATE main_table SET a = a + 1 WHERE b < 30;
 -- UPDATE that effects zero rows should still call per-statement trigger
 UPDATE main_table SET a = a + 2 WHERE b > 100;
+
+-- constraint now unneeded
+ALTER TABLE main_table DROP CONSTRAINT main_table_a_key;
 
 -- COPY should fire per-row and per-statement INSERT triggers
 COPY main_table (a, b) FROM stdin;
@@ -1173,3 +1182,61 @@ select * from self_ref_trigger;
 drop table self_ref_trigger;
 drop function self_ref_trigger_ins_func();
 drop function self_ref_trigger_del_func();
+
+--
+-- Verify behavior of before and after triggers with INSERT...ON CONFLICT
+-- DO UPDATE
+--
+create table upsert (key int4 primary key, color text);
+
+create function upsert_before_func()
+  returns trigger language plpgsql as
+$$
+begin
+  if (TG_OP = 'UPDATE') then
+    raise warning 'before update (old): %', old.*::text;
+    raise warning 'before update (new): %', new.*::text;
+  elsif (TG_OP = 'INSERT') then
+    raise warning 'before insert (new): %', new.*::text;
+    if new.key % 2 = 0 then
+      new.key := new.key + 1;
+      new.color := new.color || ' trig modified';
+      raise warning 'before insert (new, modified): %', new.*::text;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+create trigger upsert_before_trig before insert or update on upsert
+  for each row execute procedure upsert_before_func();
+
+create function upsert_after_func()
+  returns trigger language plpgsql as
+$$
+begin
+  if (TG_OP = 'UPDATE') then
+    raise warning 'after update (old): %', new.*::text;
+    raise warning 'after update (new): %', new.*::text;
+  elsif (TG_OP = 'INSERT') then
+    raise warning 'after insert (new): %', new.*::text;
+  end if;
+  return null;
+end;
+$$;
+create trigger upsert_after_trig after insert or update on upsert
+  for each row execute procedure upsert_after_func();
+
+insert into upsert values(1, 'black') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(2, 'red') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(3, 'orange') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(4, 'green') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(5, 'purple') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(6, 'white') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(7, 'pink') on conflict (key) do update set color = 'updated ' || upsert.color;
+insert into upsert values(8, 'yellow') on conflict (key) do update set color = 'updated ' || upsert.color;
+
+select * from upsert;
+
+drop table upsert;
+drop function upsert_before_func();
+drop function upsert_after_func();

@@ -60,7 +60,7 @@ extern void appendWhereClause(StringInfo buf,
 				  List **params);
 extern void deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *targetAttrs, List *returningList,
+				 List *targetAttrs, bool doNothing, List *returningList,
 				 List **retrieved_attrs);
 extern void deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,

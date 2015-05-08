@@ -537,11 +537,12 @@ transformAssignedExpr(ParseState *pstate,
 
 /*
  * updateTargetListEntry()
- *	This is used in UPDATE statements only. It prepares an UPDATE
- *	TargetEntry for assignment to a column of the target table.
- *	This includes coercing the given value to the target column's type
- *	(if necessary), and dealing with any subfield names or subscripts
- *	attached to the target column itself.
+ *	This is used in UPDATE statements (and ON CONFLICT DO UPDATE)
+ *	only.  It prepares an UPDATE TargetEntry for assignment to a
+ *	column of the target table.  This includes coercing the given
+ *	value to the target column's type (if necessary), and dealing with
+ *	any subfield names or subscripts attached to the target column
+ *	itself.
  *
  * pstate		parse state
  * tle			target list entry to be modified

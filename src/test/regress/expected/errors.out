@@ -32,7 +32,9 @@ LINE 1: select nonesuch from pg_database;
                ^
 -- empty distinct list isn't OK
 select distinct from pg_database;
-ERROR:  SELECT DISTINCT must have at least one column
+ERROR:  syntax error at or near "from"
+LINE 1: select distinct from pg_database;
+                        ^
 -- bad attribute name on lhs of operator
 select * from pg_database where nonesuch = pg_database.datname;
 ERROR:  column "nonesuch" does not exist

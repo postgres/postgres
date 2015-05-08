@@ -96,6 +96,15 @@
  * unrelated tuple stored into a slot recently freed by VACUUM.  If either
  * check fails, one may assume that there is no live descendant version.
  *
+ * t_ctid is sometimes used to store a speculative insertion token, instead
+ * of a real TID.  A speculative token is set on a tuple that's being
+ * inserted, until the inserter is sure that it wants to go ahead with the
+ * insertion.  Hence a token should only be seen on a tuple with an XMAX
+ * that's still in-progress, or invalid/aborted.  The token is replaced with
+ * the tuple's real TID when the insertion is confirmed.  One should never
+ * see a speculative insertion token while following a chain of t_ctid links,
+ * because they are not used on updates, only insertions.
+ *
  * Following the fixed header fields, the nulls bitmap is stored (beginning
  * at t_bits).  The bitmap is *not* stored if t_infomask shows that there
  * are no nulls in the tuple.  If an OID field is present (as indicated by
@@ -138,7 +147,8 @@ struct HeapTupleHeaderData
 		DatumTupleFields t_datum;
 	}			t_choice;
 
-	ItemPointerData t_ctid;		/* current TID of this or newer tuple */
+	ItemPointerData t_ctid;		/* current TID of this or newer tuple (or a
+								 * speculative insertion token) */
 
 	/* Fields below here must match MinimalTupleData! */
 
@@ -240,6 +250,14 @@ struct HeapTupleHeaderData
  * instead of using up a dedicated bit.
  */
 #define HEAP_TUPLE_HAS_MATCH	HEAP_ONLY_TUPLE /* tuple has a join match */
+
+/*
+ * Special value used in t_ctid.ip_posid, to indicate that it holds a
+ * speculative insertion token rather than a real TID.  This must be higher
+ * than MaxOffsetNumber, so that it can be distinguished from a valid
+ * offset number in a regular item pointer.
+ */
+#define SpecTokenOffsetNumber		0xfffe
 
 /*
  * HeapTupleHeader accessor macros
@@ -376,6 +394,22 @@ do { \
 	Assert((tup)->t_infomask & HEAP_MOVED); \
 	(tup)->t_choice.t_heap.t_field3.t_xvac = (xid); \
 } while (0)
+
+#define HeapTupleHeaderIsSpeculative(tup) \
+( \
+	(tup)->t_ctid.ip_posid == SpecTokenOffsetNumber \
+)
+
+#define HeapTupleHeaderGetSpeculativeToken(tup) \
+( \
+	AssertMacro(HeapTupleHeaderIsSpeculative(tup)),	\
+	ItemPointerGetBlockNumber(&(tup)->t_ctid) \
+)
+
+#define HeapTupleHeaderSetSpeculativeToken(tup, token)	\
+( \
+	ItemPointerSet(&(tup)->t_ctid, token, SpecTokenOffsetNumber) \
+)
 
 #define HeapTupleHeaderGetDatumLength(tup) \
 	VARSIZE(tup)

@@ -421,16 +421,23 @@ INSERT INTO UNIQUE_TBL VALUES (4, 'four');
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
+INSERT INTO UNIQUE_TBL VALUES (5, 'five-upsert-insert') ON CONFLICT (i) DO UPDATE SET t = 'five-upsert-update';
+INSERT INTO UNIQUE_TBL VALUES (6, 'six-upsert-insert') ON CONFLICT (i) DO UPDATE SET t = 'six-upsert-update';
+-- should fail
+INSERT INTO UNIQUE_TBL VALUES (1, 'a'), (2, 'b'), (2, 'b') ON CONFLICT (i) DO UPDATE SET t = 'fails';
+ERROR:  ON CONFLICT DO UPDATE command cannot affect row a second time
+HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
 SELECT '' AS five, * FROM UNIQUE_TBL;
- five | i |   t   
-------+---+-------
+ five | i |         t          
+------+---+--------------------
       | 1 | one
       | 2 | two
       | 4 | four
-      | 5 | one
       |   | six
       |   | seven
-(6 rows)
+      | 5 | five-upsert-update
+      | 6 | six-upsert-insert
+(7 rows)
 
 DROP TABLE UNIQUE_TBL;
 CREATE TABLE UNIQUE_TBL (i int, t text,
@@ -605,6 +612,13 @@ INSERT INTO circles VALUES('<(10,10), 10>', '<(0,0), 5>');
 INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>');
 ERROR:  conflicting key value violates exclusion constraint "circles_c1_c2_excl"
 DETAIL:  Key (c1, (c2::circle))=(<(20,20),10>, <(0,0),4>) conflicts with existing key (c1, (c2::circle))=(<(10,10),10>, <(0,0),5>).
+-- succeed, because violation is ignored
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
+  ON CONFLICT ON CONSTRAINT circles_c1_c2_excl DO NOTHING;
+-- fail, because DO UPDATE variant requires unique index
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
+  ON CONFLICT ON CONSTRAINT circles_c1_c2_excl DO UPDATE SET c2 = EXCLUDED.c2;
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
 -- succeed because c1 doesn't overlap
 INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
 -- succeed because c2 doesn't overlap
@@ -627,6 +641,8 @@ INSERT INTO deferred_excl VALUES(2);
 INSERT INTO deferred_excl VALUES(1); -- fail
 ERROR:  conflicting key value violates exclusion constraint "deferred_excl_con"
 DETAIL:  Key (f1)=(1) conflicts with existing key (f1)=(1).
+INSERT INTO deferred_excl VALUES(1) ON CONFLICT ON CONSTRAINT deferred_excl_con DO NOTHING; -- fail
+ERROR:  ON CONFLICT does not support deferred unique constraints/exclusion constraints as arbiters
 BEGIN;
 INSERT INTO deferred_excl VALUES(2); -- no fail here
 COMMIT; -- should fail here

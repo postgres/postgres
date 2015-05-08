@@ -176,6 +176,8 @@ typedef enum LockTagType
 	/* ID info for a transaction is its TransactionId */
 	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
 	/* ID info for a virtual transaction is its VirtualTransactionId */
+	LOCKTAG_SPECULATIVE_TOKEN,		/* speculative insertion Xid and token */
+	/* ID info for a transaction is its TransactionId */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
 
@@ -259,6 +261,14 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
+
+#define SET_LOCKTAG_SPECULATIVE_INSERTION(locktag,xid,token) \
+	((locktag).locktag_field1 = (xid), \
+	 (locktag).locktag_field2 = (token),		\
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_SPECULATIVE_TOKEN, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \

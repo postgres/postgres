@@ -78,11 +78,13 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    Policies can be applied for specific commands or for specific roles.  The
    default for newly created policies is that they apply for all commands and
    roles, unless otherwise specified.  If multiple policies apply to a given
-   query, they will be combined using OR.  Further, for commands which can have
-   both USING and WITH CHECK policies (ALL and UPDATE), if no WITH CHECK policy
-   is defined then the USING policy will be used for both what rows are visible
-   (normal USING case) and which rows will be allowed to be added (WITH CHECK
-   case).
+   query, they will be combined using OR (although <literal>ON CONFLICT DO
+   UPDATE</> and <literal>INSERT</> policies are not combined in this way, but
+   rather enforced as noted at each stage of <literal>ON CONFLICT</> execution).
+   Further, for commands which can have both USING and WITH CHECK policies (ALL
+   and UPDATE), if no WITH CHECK policy is defined then the USING policy will be
+   used for both what rows are visible (normal USING case) and which rows will
+   be allowed to be added (WITH CHECK case).
   </para>
 
   <para>
@@ -263,6 +265,12 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          as it only ever applies in cases where records are being added to the
          relation.
        </para>
+       <para>
+         Note that <literal>INSERT</literal> with <literal>ON CONFLICT DO
+         UPDATE</literal> requires that any <literal>INSERT</literal> policy
+         WITH CHECK expression passes for any rows appended to the relation by
+         the INSERT path only.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -271,21 +279,38 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>UPDATE</literal> for a policy means that it will apply
-         to <literal>UPDATE</literal> commands.  As <literal>UPDATE</literal>
-         involves pulling an existing record and then making changes to some
-         portion (but possibly not all) of the record, the
-         <literal>UPDATE</literal> policy accepts both a USING expression and
-         a WITH CHECK expression.  The USING expression will be used to
-         determine which records the <literal>UPDATE</literal> command will
-         see to operate against, while the <literal>WITH CHECK</literal>
-         expression defines what rows are allowed to be added back into the
-         relation (similar to the <literal>INSERT</literal> policy).
-         Any rows whose resulting values do not pass the
-         <literal>WITH CHECK</literal> expression will cause an ERROR and the
-         entire command will be aborted.  Note that if only a
-         <literal>USING</literal> clause is specified then that clause will be
-         used for both <literal>USING</literal> and
+         to <literal>UPDATE</literal> commands (or auxiliary <literal>ON
+         CONFLICT DO UPDATE</literal> clauses of <literal>INSERT</literal>
+         commands).  As <literal>UPDATE</literal> involves pulling an existing
+         record and then making changes to some portion (but possibly not all)
+         of the record, the <literal>UPDATE</literal> policy accepts both a
+         <literal>USING</literal> expression and a <literal>WITH CHECK</literal>
+         expression.  The <literal>USING</literal> expression will be used to
+         determine which records the <literal>UPDATE</literal> command will see
+         to operate against, while the <literal>WITH CHECK</literal> expression
+         defines what rows are allowed to be added back into the relation
+         (similar to the <literal>INSERT</literal> policy).  Any rows whose
+         resulting values do not pass the <literal>WITH CHECK</literal>
+         expression will cause an ERROR and the entire command will be aborted.
+         Note that if only a <literal>USING</literal> clause is specified then
+         that clause will be used for both <literal>USING</literal> and
          <literal>WITH CHECK</literal> cases.
+       </para>
+       <para>
+         Note, however, that <literal>INSERT</literal> with <literal>ON CONFLICT
+         DO UPDATE</literal> requires that an <literal>UPDATE</literal> policy
+         <literal>USING</literal> expression always be enforced as a
+         <literal>WITH CHECK</literal> expression.  This
+         <literal>UPDATE</literal> policy must always pass when the
+         <literal>UPDATE</literal> path is taken.  Any existing row that
+         necessitates that the <literal>UPDATE</literal> path be taken must pass
+         the (UPDATE or ALL) <literal>USING</literal> qualifications (combined
+         using <literal>OR</literal>), which are always enforced as WTIH CHECK
+         options in this context (the <literal>UPDATE</literal> path will
+         <emphasis>never</> be silently avoided; an error will be thrown
+         instead).  Finally, the final row appended to the relation must pass
+         any <literal>WITH CHECK</literal> options that a conventional
+         <literal>UPDATE</literal> is required to pass.
        </para>
       </listitem>
      </varlistentry>

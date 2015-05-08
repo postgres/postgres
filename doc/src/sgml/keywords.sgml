@@ -854,6 +854,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>CONFLICT</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>CONNECT</token></entry>
     <entry></entry>
     <entry>reserved</entry>

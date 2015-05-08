@@ -36,7 +36,7 @@ typedef struct BulkInsertStateData
 
 
 extern void RelationPutHeapTuple(Relation relation, Buffer buffer,
-					 HeapTuple tuple);
+					 HeapTuple tuple, bool token);
 extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
 						  BulkInsertState bistate,

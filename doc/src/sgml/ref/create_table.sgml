@@ -717,7 +717,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       <literal>EXCLUDE</>, and
       <literal>REFERENCES</> (foreign key) constraints accept this
       clause.  <literal>NOT NULL</> and <literal>CHECK</> constraints are not
-      deferrable.
+      deferrable.  Note that deferrable constraints cannot be used as
+      conflict arbitrators in an <command>INSERT</command> statement that
+      includes an <literal>ON CONFLICT DO UPDATE</> clause.
      </para>
     </listitem>
    </varlistentry>

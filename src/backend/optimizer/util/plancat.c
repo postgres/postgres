@@ -25,6 +25,7 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
@@ -50,6 +51,8 @@ int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
+static bool infer_collation_opclass_match(InferenceElem *elem, Relation	idxRel,
+						Bitmapset *inferAttrs, List *idxExprs);
 static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
@@ -397,6 +400,355 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 */
 	if (get_relation_info_hook)
 		(*get_relation_info_hook) (root, relationObjectId, inhparent, rel);
+}
+
+/*
+ * infer_arbiter_indexes -
+ *	  Determine the unique indexes used to arbitrate speculative insertion.
+ *
+ * Uses user-supplied inference clause expressions and predicate to match a
+ * unique index from those defined and ready on the heap relation (target).
+ * An exact match is required on columns/expressions (although they can appear
+ * in any order).  However, the predicate given by the user need only restrict
+ * insertion to a subset of some part of the table covered by some particular
+ * unique index (in particular, a partial unique index) in order to be
+ * inferred.
+ *
+ * The implementation does not consider which B-Tree operator class any
+ * particular available unique index attribute uses, unless one was specified
+ * in the inference specification. The same is true of collations.  In
+ * particular, there is no system dependency on the default operator class for
+ * the purposes of inference.  If no opclass (or collation) is specified, then
+ * all matching indexes (that may or may not match the default in terms of
+ * each attribute opclass/collation) are used for inference.
+ */
+List *
+infer_arbiter_indexes(PlannerInfo *root)
+{
+	OnConflictExpr *onconflict = root->parse->onConflict;
+	/* Iteration state */
+	Relation	relation;
+	Oid			relationObjectId;
+	Oid			indexOidFromConstraint = InvalidOid;
+	List	   *indexList;
+	ListCell   *l;
+
+	/* Normalized inference attributes and inference expressions: */
+	Bitmapset  *inferAttrs = NULL;
+	List	   *inferElems = NIL;
+
+	/* Result */
+	List	   *candidates = NIL;
+
+	/*
+	 * Quickly return NIL for ON CONFLICT DO NOTHING without an inference
+	 * specification or named constraint.  ON CONFLICT DO UPDATE statements
+	 * must always provide one or the other (but parser ought to have caught
+	 * that already).
+	 */
+	if (onconflict->arbiterElems == NIL &&
+		onconflict->constraint == InvalidOid)
+		return NIL;
+
+	/*
+	 * We need not lock the relation since it was already locked, either by
+	 * the rewriter or when expand_inherited_rtentry() added it to the query's
+	 * rangetable.
+	 */
+	relationObjectId = rt_fetch(root->parse->resultRelation,
+								root->parse->rtable)->relid;
+
+	relation = heap_open(relationObjectId, NoLock);
+
+	/*
+	 * Build normalized/BMS representation of plain indexed attributes, as
+	 * well as direct list of inference elements.  This is required for
+	 * matching the cataloged definition of indexes.
+	 */
+	foreach(l, onconflict->arbiterElems)
+	{
+		InferenceElem  *elem;
+		Var			   *var;
+		int				attno;
+
+		elem = (InferenceElem *) lfirst(l);
+
+		/*
+		 * Parse analysis of inference elements performs full parse analysis
+		 * of Vars, even for non-expression indexes (in contrast with utility
+		 * command related use of IndexElem).  However, indexes are cataloged
+		 * with simple attribute numbers for non-expression indexes.  Those
+		 * are handled later.
+		 */
+		if (!IsA(elem->expr, Var))
+		{
+			inferElems = lappend(inferElems, elem->expr);
+			continue;
+		}
+
+		var = (Var *) elem->expr;
+		attno = var->varattno;
+
+		if (attno < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("system columns cannot be used in an ON CONFLICT clause")));
+		else if (attno == 0)
+			elog(ERROR, "whole row unique index inference specifications are not valid");
+
+		inferAttrs = bms_add_member(inferAttrs, attno);
+	}
+
+	/*
+	 * Lookup named constraint's index.  This is not immediately returned
+	 * because some additional sanity checks are required.
+	 */
+	if (onconflict->constraint != InvalidOid)
+	{
+		indexOidFromConstraint = get_constraint_index(onconflict->constraint);
+
+		if (indexOidFromConstraint == InvalidOid)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("constraint in ON CONFLICT clause has no associated index")));
+	}
+
+	indexList = RelationGetIndexList(relation);
+
+	/*
+	 * Using that representation, iterate through the list of indexes on the
+	 * target relation to try and find a match
+	 */
+	foreach(l, indexList)
+	{
+		Oid			indexoid = lfirst_oid(l);
+		Relation	idxRel;
+		Form_pg_index idxForm;
+		Bitmapset  *indexedAttrs = NULL;
+		List	   *idxExprs;
+		List	   *predExprs;
+		List	   *whereExplicit;
+		AttrNumber	natt;
+		ListCell   *el;
+
+		/*
+		 * Extract info from the relation descriptor for the index.  We know
+		 * that this is a target, so get lock type it is known will ultimately
+		 * be required by the executor.
+		 *
+		 * Let executor complain about !indimmediate case directly, because
+		 * enforcement needs to occur there anyway when an inference clause is
+		 * omitted.
+		 */
+		idxRel = index_open(indexoid, RowExclusiveLock);
+		idxForm = idxRel->rd_index;
+
+		if (!IndexIsValid(idxForm))
+			goto next;
+
+		/*
+		 * If the index is valid, but cannot yet be used, ignore it. See
+		 * src/backend/access/heap/README.HOT for discussion.
+		 */
+		if (idxForm->indcheckxmin &&
+			!TransactionIdPrecedes(HeapTupleHeaderGetXmin(idxRel->rd_indextuple->t_data),
+								   TransactionXmin))
+			goto next;
+
+		/*
+		 * Look for match on "ON constraint_name" variant, which may not be
+		 * unique constraint.  This can only be a constraint name.
+		 */
+		if (indexOidFromConstraint == idxForm->indexrelid)
+		{
+			if (!idxForm->indisunique && onconflict->action == ONCONFLICT_UPDATE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
+
+			list_free(indexList);
+			index_close(idxRel, NoLock);
+			heap_close(relation, NoLock);
+			candidates = lappend_oid(candidates, idxForm->indexrelid);
+			return candidates;
+		}
+		else if (indexOidFromConstraint != InvalidOid)
+		{
+			/* No point in further work for index in named constraint case */
+			goto next;
+		}
+
+		/*
+		 * Only considering conventional inference at this point (not named
+		 * constraints), so index under consideration can be immediately
+		 * skipped if it's not unique
+		 */
+		if (!idxForm->indisunique)
+			goto next;
+
+		/* Build BMS representation of cataloged index attributes */
+		for (natt = 0; natt < idxForm->indnatts; natt++)
+		{
+			int			attno = idxRel->rd_index->indkey.values[natt];
+
+			if (attno < 0)
+				elog(ERROR, "system column in index");
+
+			if (attno != 0)
+				indexedAttrs = bms_add_member(indexedAttrs, attno);
+		}
+
+		/* Non-expression attributes (if any) must match */
+		if (!bms_equal(indexedAttrs, inferAttrs))
+			goto next;
+
+		/* Expression attributes (if any) must match */
+		idxExprs = RelationGetIndexExpressions(idxRel);
+		foreach(el, onconflict->arbiterElems)
+		{
+			InferenceElem   *elem = (InferenceElem *) lfirst(el);
+
+			/*
+			 * Ensure that collation/opclass aspects of inference expression
+			 * element match.  Even though this loop is primarily concerned
+			 * with matching expressions, it is a convenient point to check
+			 * this for both expressions and ordinary (non-expression)
+			 * attributes appearing as inference elements.
+			 */
+			if (!infer_collation_opclass_match(elem, idxRel, inferAttrs,
+											   idxExprs))
+				goto next;
+
+			/*
+			 * Plain Vars don't factor into count of expression elements, and
+			 * the question of whether or not they satisfy the index
+			 * definition has already been considered (they must).
+			 */
+			if (IsA(elem->expr, Var))
+				continue;
+
+			/*
+			 * Might as well avoid redundant check in the rare cases where
+			 * infer_collation_opclass_match() is required to do real work.
+			 * Otherwise, check that element expression appears in cataloged
+			 * index definition.
+			 */
+			if (elem->infercollid != InvalidOid ||
+				elem->inferopfamily != InvalidOid ||
+				list_member(idxExprs, elem->expr))
+				continue;
+
+			goto next;
+		}
+
+		/*
+		 * Now that all inference elements were matched, ensure that the
+		 * expression elements from inference clause are not missing any
+		 * cataloged expressions.  This does the right thing when unique
+		 * indexes redundantly repeat the same attribute, or if attributes
+		 * redundantly appear multiple times within an inference clause.
+		 */
+		if (list_difference(idxExprs, inferElems) != NIL)
+			goto next;
+
+		/*
+		 * Any user-supplied ON CONFLICT unique index inference WHERE clause
+		 * need only be implied by the cataloged index definitions predicate.
+		 */
+		predExprs = RelationGetIndexPredicate(idxRel);
+		whereExplicit = make_ands_implicit((Expr *) onconflict->arbiterWhere);
+
+		if (!predicate_implied_by(predExprs, whereExplicit))
+			goto next;
+
+		candidates = lappend_oid(candidates, idxForm->indexrelid);
+next:
+		index_close(idxRel, NoLock);
+	}
+
+	list_free(indexList);
+	heap_close(relation, NoLock);
+
+	if (candidates == NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("there is no unique or exclusion constraint matching the ON CONFLICT specification")));
+
+	return candidates;
+}
+
+/*
+ * infer_collation_opclass_match - ensure infer element opclass/collation match
+ *
+ * Given unique index inference element from inference specification, if
+ * collation was specified, or if opclass (represented here as opfamily +
+ * opcintype) was specified, verify that there is at least one matching
+ * indexed attribute (occasionally, there may be more).  Skip this in the
+ * common case where inference specification does not include collation or
+ * opclass (instead matching everything, regardless of cataloged
+ * collation/opclass of indexed attribute).
+ *
+ * At least historically, Postgres has not offered collations or opclasses
+ * with alternative-to-default notions of equality, so these additional
+ * criteria should only be required infrequently.
+ *
+ * Don't give up immediately when an inference element matches some attribute
+ * cataloged as indexed but not matching additional opclass/collation
+ * criteria.  This is done so that the implementation is as forgiving as
+ * possible of redundancy within cataloged index attributes (or, less
+ * usefully, within inference specification elements).  If collations actually
+ * differ between apparently redundantly indexed attributes (redundant within
+ * or across indexes), then there really is no redundancy as such.
+ *
+ * Note that if an inference element specifies an opclass and a collation at
+ * once, both must match in at least one particular attribute within index
+ * catalog definition in order for that inference element to be considered
+ * inferred/satisfied.
+ */
+static bool
+infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
+							  Bitmapset *inferAttrs, List *idxExprs)
+{
+	AttrNumber	natt;
+
+	/*
+	 * If inference specification element lacks collation/opclass, then no
+	 * need to check for exact match.
+	 */
+	if (elem->infercollid == InvalidOid && elem->inferopfamily == InvalidOid)
+		return true;
+
+	for (natt = 1; natt <= idxRel->rd_att->natts; natt++)
+	{
+		Oid		opfamily = idxRel->rd_opfamily[natt - 1];
+		Oid		opcinputtype = idxRel->rd_opcintype[natt - 1];
+		Oid		collation = idxRel->rd_indcollation[natt - 1];
+
+		if (elem->inferopfamily != InvalidOid &&
+			(elem->inferopfamily != opfamily ||
+			 elem->inferopcinputtype != opcinputtype))
+		{
+			/* Attribute needed to match opclass, but didn't */
+			continue;
+		}
+
+		if (elem->infercollid != InvalidOid &&
+			elem->infercollid != collation)
+		{
+			/* Attribute needed to match collation, but didn't */
+			continue;
+		}
+
+		if ((IsA(elem->expr, Var) &&
+			 bms_is_member(((Var *) elem->expr)->varattno, inferAttrs)) ||
+			list_member(idxExprs, elem->expr))
+		{
+			/* Found one match - good enough */
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /*

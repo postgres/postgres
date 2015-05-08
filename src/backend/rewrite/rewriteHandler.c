@@ -52,7 +52,10 @@ static Query *rewriteRuleAction(Query *parsetree,
 				  CmdType event,
 				  bool *returning_flag);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
-static void rewriteTargetListIU(Query *parsetree, Relation target_relation,
+static List *rewriteTargetListIU(List *targetList,
+					CmdType commandType,
+					Relation target_relation,
+					int result_rti,
 					List **attrno_list);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
@@ -66,7 +69,7 @@ static void markQueryForLocking(Query *qry, Node *jtnode,
 					LockClauseStrength strength, LockWaitPolicy waitPolicy,
 					bool pushedDown);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
-		   int varno, Query *parsetree);
+		   int varno, Query *parsetree, bool *hasUpdate);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs,
 			 bool forUpdatePushedDown);
 static bool view_has_instead_trigger(Relation view, CmdType event);
@@ -679,11 +682,13 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * order of the original tlist's non-junk entries.  This is needed for
  * processing VALUES RTEs.
  */
-static void
-rewriteTargetListIU(Query *parsetree, Relation target_relation,
+static List*
+rewriteTargetListIU(List *targetList,
+					CmdType commandType,
+					Relation target_relation,
+					int result_rti,
 					List **attrno_list)
 {
-	CmdType		commandType = parsetree->commandType;
 	TargetEntry **new_tles;
 	List	   *new_tlist = NIL;
 	List	   *junk_tlist = NIL;
@@ -709,7 +714,7 @@ rewriteTargetListIU(Query *parsetree, Relation target_relation,
 	new_tles = (TargetEntry **) palloc0(numattrs * sizeof(TargetEntry *));
 	next_junk_attrno = numattrs + 1;
 
-	foreach(temp, parsetree->targetList)
+	foreach(temp, targetList)
 	{
 		TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
 
@@ -827,7 +832,7 @@ rewriteTargetListIU(Query *parsetree, Relation target_relation,
 		{
 			Node	   *new_expr;
 
-			new_expr = (Node *) makeVar(parsetree->resultRelation,
+			new_expr = (Node *) makeVar(result_rti,
 										attrno,
 										att_tup->atttypid,
 										att_tup->atttypmod,
@@ -846,7 +851,7 @@ rewriteTargetListIU(Query *parsetree, Relation target_relation,
 
 	pfree(new_tles);
 
-	parsetree->targetList = list_concat(new_tlist, junk_tlist);
+	return list_concat(new_tlist, junk_tlist);
 }
 
 
@@ -1288,7 +1293,8 @@ static List *
 matchLocks(CmdType event,
 		   RuleLock *rulelocks,
 		   int varno,
-		   Query *parsetree)
+		   Query *parsetree,
+		   bool *hasUpdate)
 {
 	List	   *matching_locks = NIL;
 	int			nlocks;
@@ -1308,6 +1314,9 @@ matchLocks(CmdType event,
 	for (i = 0; i < nlocks; i++)
 	{
 		RewriteRule *oneLock = rulelocks->rules[i];
+
+		if (oneLock->event == CMD_UPDATE)
+			*hasUpdate = true;
 
 		/*
 		 * Suppress ON INSERT/UPDATE/DELETE rules that are disabled or
@@ -1766,8 +1775,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		/*
 		 * Fetch any new security quals that must be applied to this RTE.
 		 */
-		get_row_security_policies(parsetree, rte, rt_index,
-								  &securityQuals, &withCheckOptions,
+		get_row_security_policies(parsetree, parsetree->commandType, rte,
+								  rt_index, &securityQuals, &withCheckOptions,
 								  &hasRowSecurity, &hasSubLinks);
 
 		if (securityQuals != NIL || withCheckOptions != NIL)
@@ -2642,6 +2651,18 @@ rewriteTargetView(Query *parsetree, Relation view)
 							tle->resno - FirstLowInvalidHeapAttributeNumber);
 		}
 
+		if (parsetree->onConflict)
+		{
+			foreach(lc, parsetree->onConflict->onConflictSet)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+				if (!tle->resjunk)
+					modified_cols = bms_add_member(modified_cols,
+								tle->resno - FirstLowInvalidHeapAttributeNumber);
+			}
+		}
+
 		auto_update_detail = view_cols_are_auto_updatable(viewquery,
 														  modified_cols,
 														  NULL,
@@ -2999,6 +3020,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	CmdType		event = parsetree->commandType;
 	bool		instead = false;
 	bool		returning = false;
+	bool		updatableview = false;
 	Query	   *qual_product = NULL;
 	List	   *rewritten = NIL;
 	ListCell   *lc1;
@@ -3081,6 +3103,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		Relation	rt_entry_relation;
 		List	   *locks;
 		List	   *product_queries;
+		bool		hasUpdate = false;
 
 		result_relation = parsetree->resultRelation;
 		Assert(result_relation != 0);
@@ -3123,19 +3146,41 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				List	   *attrnos;
 
 				/* Process the main targetlist ... */
-				rewriteTargetListIU(parsetree, rt_entry_relation, &attrnos);
+				parsetree->targetList = rewriteTargetListIU(parsetree->targetList,
+															parsetree->commandType,
+															rt_entry_relation,
+															parsetree->resultRelation,
+															&attrnos);
 				/* ... and the VALUES expression lists */
 				rewriteValuesRTE(values_rte, rt_entry_relation, attrnos);
 			}
 			else
 			{
 				/* Process just the main targetlist */
-				rewriteTargetListIU(parsetree, rt_entry_relation, NULL);
+				parsetree->targetList =
+					rewriteTargetListIU(parsetree->targetList,
+										parsetree->commandType,
+										rt_entry_relation,
+										parsetree->resultRelation, NULL);
+			}
+
+			if (parsetree->onConflict &&
+				parsetree->onConflict->action == ONCONFLICT_UPDATE)
+			{
+				parsetree->onConflict->onConflictSet =
+					rewriteTargetListIU(parsetree->onConflict->onConflictSet,
+										CMD_UPDATE,
+										rt_entry_relation,
+										parsetree->resultRelation,
+										NULL);
 			}
 		}
 		else if (event == CMD_UPDATE)
 		{
-			rewriteTargetListIU(parsetree, rt_entry_relation, NULL);
+			parsetree->targetList =
+				rewriteTargetListIU(parsetree->targetList,
+									parsetree->commandType, rt_entry_relation,
+									parsetree->resultRelation, NULL);
 			rewriteTargetListUD(parsetree, rt_entry, rt_entry_relation);
 		}
 		else if (event == CMD_DELETE)
@@ -3149,7 +3194,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		 * Collect and apply the appropriate rules.
 		 */
 		locks = matchLocks(event, rt_entry_relation->rd_rules,
-						   result_relation, parsetree);
+						   result_relation, parsetree, &hasUpdate);
 
 		product_queries = fireRules(parsetree,
 									result_relation,
@@ -3198,6 +3243,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			 */
 			instead = true;
 			returning = true;
+			updatableview = true;
 		}
 
 		/*
@@ -3277,6 +3323,17 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 					break;
 			}
 		}
+
+		/*
+		 * Updatable views are supported by ON CONFLICT, so don't prevent that
+		 * case from proceeding
+		 */
+		if (parsetree->onConflict &&
+			(product_queries != NIL || hasUpdate) &&
+			!updatableview)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules")));
 
 		heap_close(rt_entry_relation, NoLock);
 	}

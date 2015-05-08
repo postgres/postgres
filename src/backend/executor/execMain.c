@@ -1813,6 +1813,12 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 						 errmsg("new row violates row level security policy for \"%s\"",
 								wco->relname)));
 					break;
+				case WCO_RLS_CONFLICT_CHECK:
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("new row violates row level security policy (USING expression) for \"%s\"",
+								wco->relname)));
+					break;
 				default:
 					elog(ERROR, "unrecognized WCO kind: %u", wco->kind);
 					break;
@@ -1971,6 +1977,31 @@ ExecBuildSlotValueDescription(Oid reloid,
 	return buf.data;
 }
 
+
+/*
+ * ExecUpdateLockMode -- find the appropriate UPDATE tuple lock mode for a
+ * given ResultRelInfo
+ */
+LockTupleMode
+ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo)
+{
+	Bitmapset  *keyCols;
+	Bitmapset  *updatedCols;
+
+	/*
+	 * Compute lock mode to use.  If columns that are part of the key have not
+	 * been modified, then we can use a weaker lock, allowing for better
+	 * concurrency.
+	 */
+	updatedCols = GetUpdatedColumns(relinfo, estate);
+	keyCols = RelationGetIndexAttrBitmap(relinfo->ri_RelationDesc,
+										 INDEX_ATTR_BITMAP_KEY);
+
+	if (bms_overlap(keyCols, updatedCols))
+		return LockTupleExclusive;
+
+	return LockTupleNoKeyExclusive;
+}
 
 /*
  * ExecFindRowMark -- find the ExecRowMark struct for given rangetable index
@@ -2186,8 +2217,9 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 * recycled and reused for an unrelated tuple.  This implies that
 			 * the latest version of the row was deleted, so we need do
 			 * nothing.  (Should be safe to examine xmin without getting
-			 * buffer's content lock, since xmin never changes in an existing
-			 * tuple.)
+			 * buffer's content lock.  We assume reading a TransactionId to be
+			 * atomic, and Xmin never changes in an existing tuple, except to
+			 * invalid or frozen, and neither of those can match priorXmax.)
 			 */
 			if (!TransactionIdEquals(HeapTupleHeaderGetXmin(tuple.t_data),
 									 priorXmax))
@@ -2268,11 +2300,12 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 					 * case, so as to avoid the "Halloween problem" of
 					 * repeated update attempts.  In the latter case it might
 					 * be sensible to fetch the updated tuple instead, but
-					 * doing so would require changing heap_lock_tuple as well
-					 * as heap_update and heap_delete to not complain about
-					 * updating "invisible" tuples, which seems pretty scary.
-					 * So for now, treat the tuple as deleted and do not
-					 * process.
+					 * doing so would require changing heap_update and
+					 * heap_delete to not complain about updating "invisible"
+					 * tuples, which seems pretty scary (heap_lock_tuple will
+					 * not complain, but few callers expect HeapTupleInvisible,
+					 * and we're not one of them).  So for now, treat the tuple
+					 * as deleted and do not process.
 					 */
 					ReleaseBuffer(buffer);
 					return NULL;
@@ -2287,6 +2320,9 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to concurrent update")));
+
+					/* Should not encounter speculative tuple on recheck */
+					Assert(!HeapTupleHeaderIsSpeculative(tuple.t_data));
 					if (!ItemPointerEquals(&hufd.ctid, &tuple.t_self))
 					{
 						/* it was updated, so look at the updated version */
@@ -2301,6 +2337,9 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 				case HeapTupleWouldBlock:
 					ReleaseBuffer(buffer);
 					return NULL;
+
+				case HeapTupleInvisible:
+					elog(ERROR, "attempted to lock invisible tuple");
 
 				default:
 					ReleaseBuffer(buffer);

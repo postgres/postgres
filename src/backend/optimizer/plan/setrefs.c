@@ -739,7 +739,35 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					splan->plan.targetlist = copyObject(linitial(newRL));
 				}
 
+				/*
+				 * We treat ModifyTable with ON CONFLICT as a form of 'pseudo
+				 * join', where the inner side is the EXLUDED tuple. Therefore
+				 * use fix_join_expr to setup the relevant variables to
+				 * INNER_VAR. We explicitly don't create any OUTER_VARs as
+				 * those are already used by RETURNING and it seems better to
+				 * be non-conflicting.
+				 */
+				if (splan->onConflictSet)
+				{
+					indexed_tlist *itlist;
+
+					itlist = build_tlist_index(splan->exclRelTlist);
+
+					splan->onConflictSet =
+						fix_join_expr(root, splan->onConflictSet,
+									  NULL, itlist,
+									  linitial_int(splan->resultRelations),
+									  rtoffset);
+
+					splan->onConflictWhere = (Node *)
+						fix_join_expr(root, (List *) splan->onConflictWhere,
+									  NULL, itlist,
+									  linitial_int(splan->resultRelations),
+									  rtoffset);
+				}
+
 				splan->nominalRelation += rtoffset;
+				splan->exclRelRTI += rtoffset;
 
 				foreach(l, splan->resultRelations)
 				{
@@ -1846,7 +1874,8 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  * inner_itlist = NULL and acceptable_rel = the ID of the target relation.
  *
  * 'clauses' is the targetlist or list of join clauses
- * 'outer_itlist' is the indexed target list of the outer join relation
+ * 'outer_itlist' is the indexed target list of the outer join relation,
+ *		or NULL
  * 'inner_itlist' is the indexed target list of the inner join relation,
  *		or NULL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
@@ -1886,12 +1915,17 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		Var		   *var = (Var *) node;
 
 		/* First look for the var in the input tlists */
-		newvar = search_indexed_tlist_for_var(var,
-											  context->outer_itlist,
-											  OUTER_VAR,
-											  context->rtoffset);
-		if (newvar)
-			return (Node *) newvar;
+		if (context->outer_itlist)
+		{
+			newvar = search_indexed_tlist_for_var(var,
+												  context->outer_itlist,
+												  OUTER_VAR,
+												  context->rtoffset);
+			if (newvar)
+				return (Node *) newvar;
+		}
+
+		/* Then in the outer */
 		if (context->inner_itlist)
 		{
 			newvar = search_indexed_tlist_for_var(var,
@@ -1920,7 +1954,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
 		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
-		if (context->outer_itlist->has_ph_vars)
+		if (context->outer_itlist && context->outer_itlist->has_ph_vars)
 		{
 			newvar = search_indexed_tlist_for_non_var((Node *) phv,
 													  context->outer_itlist,
@@ -1943,7 +1977,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	if (IsA(node, Param))
 		return fix_param_node(context->root, (Param *) node);
 	/* Try matching more complex expressions too, if tlists have any */
-	if (context->outer_itlist->has_non_vars)
+	if (context->outer_itlist && context->outer_itlist->has_non_vars)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->outer_itlist,

@@ -76,7 +76,10 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
    executes once for any given operation, regardless of how many rows
    it modifies (in particular, an operation that modifies zero rows
    will still result in the execution of any applicable <literal>FOR
-   EACH STATEMENT</literal> triggers).
+   EACH STATEMENT</literal> triggers).  Note that with an
+   <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</>
+   clause, both <command>INSERT</command> and
+   <command>UPDATE</command> statement level trigger will be fired.
   </para>
 
   <para>

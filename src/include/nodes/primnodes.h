@@ -1143,6 +1143,22 @@ typedef struct CurrentOfExpr
 	int			cursor_param;	/* refcursor parameter number, or 0 */
 } CurrentOfExpr;
 
+/*
+ * InferenceElem - an element of a unique index inference specification
+ *
+ * This mostly matches the structure of IndexElems, but having a dedicated
+ * primnode allows for a clean separation between the use of index parameters
+ * by utility commands, and this node.
+ */
+typedef struct InferenceElem
+{
+	Expr		xpr;
+	Node	   *expr;				/* expression to infer from, or NULL */
+	Oid			infercollid;		/* OID of collation, or InvalidOid */
+	Oid			inferopfamily;		/* OID of att opfamily, or InvalidOid */
+	Oid			inferopcinputtype;	/* OID of att input type, or InvalidOid */
+} InferenceElem;
+
 /*--------------------
  * TargetEntry -
  *	   a target entry (used in query target lists)
@@ -1306,5 +1322,31 @@ typedef struct FromExpr
 	List	   *fromlist;		/* List of join subtrees */
 	Node	   *quals;			/* qualifiers on join, if any */
 } FromExpr;
+
+/*----------
+ * OnConflictExpr - represents an ON CONFLICT DO ... expression
+ *
+ * The optimizer requires a list of inference elements, and optionally a WHERE
+ * clause to infer a unique index.  The unique index (or, occasionally,
+ * indexes) inferred are used to arbitrate whether or not the alternative ON
+ * CONFLICT path is taken.
+ *----------
+ */
+typedef struct OnConflictExpr
+{
+	NodeTag		type;
+	OnConflictAction action;	/* DO NOTHING or UPDATE? */
+
+	/* Arbiter */
+	List	   *arbiterElems;	/* unique index arbiter list (of InferenceElem's) */
+	Node	   *arbiterWhere;	/* unique index arbiter WHERE clause */
+	Oid			constraint;		/* pg_constraint OID for arbiter */
+
+	/* ON CONFLICT UPDATE */
+	List	   *onConflictSet;	/* List of ON CONFLICT SET TargetEntrys */
+	Node	   *onConflictWhere;/* qualifiers to restrict UPDATE to */
+	int			exclRelIndex;	/* RT index of 'excluded' relation */
+	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
+} OnConflictExpr;
 
 #endif   /* PRIMNODES_H */

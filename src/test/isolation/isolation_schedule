@@ -16,6 +16,10 @@ test: fk-deadlock2
 test: eval-plan-qual
 test: lock-update-delete
 test: lock-update-traversal
+test: insert-conflict-do-nothing
+test: insert-conflict-do-update
+test: insert-conflict-do-update-2
+test: insert-conflict-do-update-3
 test: delete-abort-savept
 test: delete-abort-savept-2
 test: aborted-keyrevoke

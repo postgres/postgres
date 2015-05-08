@@ -372,6 +372,9 @@ UPDATE ft2 SET c2 = c2 + 600 WHERE c1 % 10 = 8 AND c1 < 1200 RETURNING *;
 ALTER TABLE "S 1"."T 1" ADD CONSTRAINT c2positive CHECK (c2 >= 0);
 
 INSERT INTO ft1(c1, c2) VALUES(11, 12);  -- duplicate key
+INSERT INTO ft1(c1, c2) VALUES(11, 12) ON CONFLICT DO NOTHING; -- works
+INSERT INTO ft1(c1, c2) VALUES(11, 12) ON CONFLICT (c1, c2) DO NOTHING; -- unsupported
+INSERT INTO ft1(c1, c2) VALUES(11, 12) ON CONFLICT (c1, c2) DO UPDATE SET c3 = 'ffg'; -- unsupported
 INSERT INTO ft1(c1, c2) VALUES(1111, -2);  -- c2positive
 UPDATE ft1 SET c2 = -c2 WHERE c1 = 1;  -- c2positive
 

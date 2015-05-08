@@ -89,9 +89,10 @@ row_security_policy_hook_type	row_security_policy_hook_restrictive = NULL;
  * set to true if any of the quals returned contain sublinks.
  */
 void
-get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
-						  List **securityQuals, List **withCheckOptions,
-						  bool *hasRowSecurity, bool *hasSubLinks)
+get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
+						  int rt_index, List **securityQuals,
+						  List **withCheckOptions, bool *hasRowSecurity,
+						  bool *hasSubLinks)
 {
 	Expr			   *rowsec_expr = NULL;
 	Expr			   *rowsec_with_check_expr = NULL;
@@ -159,7 +160,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 	/* Grab the built-in policies which should be applied to this relation. */
 	rel = heap_open(rte->relid, NoLock);
 
-	rowsec_policies = pull_row_security_policies(root->commandType, rel,
+	rowsec_policies = pull_row_security_policies(commandType, rel,
 												 user_id);
 
 	/*
@@ -201,7 +202,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 	 */
 	if (row_security_policy_hook_restrictive)
 	{
-		hook_policies_restrictive = (*row_security_policy_hook_restrictive)(root->commandType, rel);
+		hook_policies_restrictive = (*row_security_policy_hook_restrictive)(commandType, rel);
 
 		/* Build the expression from any policies returned. */
 		if (hook_policies_restrictive != NIL)
@@ -214,7 +215,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 
 	if (row_security_policy_hook_permissive)
 	{
-		hook_policies_permissive = (*row_security_policy_hook_permissive)(root->commandType, rel);
+		hook_policies_permissive = (*row_security_policy_hook_permissive)(commandType, rel);
 
 		/* Build the expression from any policies returned. */
 		if (hook_policies_permissive != NIL)
@@ -242,7 +243,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 	 * WITH CHECK policy (this will be a copy of the USING policy, if no
 	 * explicit WITH CHECK policy exists).
 	 */
-	if (root->commandType == CMD_INSERT || root->commandType == CMD_UPDATE)
+	if (commandType == CMD_INSERT || commandType == CMD_UPDATE)
 	{
 		/*
 		 * WITH CHECK OPTIONS wants a WCO node which wraps each Expr, so
@@ -259,7 +260,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 			WithCheckOption	   *wco;
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = root->commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
+			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
 														  WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) hook_with_check_expr_restrictive;
@@ -276,7 +277,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 			WithCheckOption	   *wco;
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = root->commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
+			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
 														  WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) rowsec_with_check_expr;
@@ -289,7 +290,7 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 			WithCheckOption	   *wco;
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = root->commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
+			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
 														  WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) hook_with_check_expr_permissive;
@@ -312,19 +313,72 @@ get_row_security_policies(Query* root, RangeTblEntry* rte, int rt_index,
 			combined_qual_eval = makeBoolExpr(OR_EXPR, combined_quals, -1);
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = root->commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
+			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
 														  WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) combined_qual_eval;
 			wco->cascaded = false;
 			*withCheckOptions = lappend(*withCheckOptions, wco);
 		}
+
+		/*
+		 * ON CONFLICT DO UPDATE has an RTE that is subject to both INSERT and
+		 * UPDATE RLS enforcement.  Those are enforced (as a special, distinct
+		 * kind of WCO) on the target tuple.
+		 *
+		 * Make a second, recursive pass over the RTE for this, gathering
+		 * UPDATE-applicable RLS checks/WCOs, and gathering and converting
+		 * UPDATE-applicable security quals into WCO_RLS_CONFLICT_CHECK RLS
+		 * checks/WCOs.  Finally, these distinct kinds of RLS checks/WCOs are
+		 * concatenated with our own INSERT-applicable list.
+		 */
+		if (root->onConflict && root->onConflict->action == ONCONFLICT_UPDATE &&
+			commandType == CMD_INSERT)
+		{
+			List	   *conflictSecurityQuals = NIL;
+			List	   *conflictWCOs = NIL;
+			ListCell   *item;
+			bool		conflictHasRowSecurity = false;
+			bool		conflictHasSublinks = false;
+
+			/* Assume that RTE is target resultRelation */
+			get_row_security_policies(root, CMD_UPDATE, rte, rt_index,
+									  &conflictSecurityQuals, &conflictWCOs,
+									  &conflictHasRowSecurity,
+									  &conflictHasSublinks);
+
+			if (conflictHasRowSecurity)
+				*hasRowSecurity = true;
+			if (conflictHasSublinks)
+				*hasSubLinks = true;
+
+			/*
+			 * Append WITH CHECK OPTIONs/RLS checks, which should not conflict
+			 * between this INSERT and the auxiliary UPDATE
+			 */
+			*withCheckOptions = list_concat(*withCheckOptions,
+											conflictWCOs);
+
+			foreach(item, conflictSecurityQuals)
+			{
+				Expr			   *conflict_rowsec_expr = (Expr *) lfirst(item);
+				WithCheckOption	   *wco;
+
+				wco = (WithCheckOption *) makeNode(WithCheckOption);
+
+				wco->kind = WCO_RLS_CONFLICT_CHECK;
+				wco->relname = pstrdup(RelationGetRelationName(rel));
+				wco->qual = (Node *) copyObject(conflict_rowsec_expr);
+				wco->cascaded = false;
+				*withCheckOptions = lappend(*withCheckOptions, wco);
+			}
+		}
 	}
 
 	/* For SELECT, UPDATE, and DELETE, set the security quals */
-	if (root->commandType == CMD_SELECT
-		|| root->commandType == CMD_UPDATE
-		|| root->commandType == CMD_DELETE)
+	if (commandType == CMD_SELECT
+		|| commandType == CMD_UPDATE
+		|| commandType == CMD_DELETE)
 	{
 		/* restrictive policies can simply be added to the list first */
 		if (hook_expr_restrictive)

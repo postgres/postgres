@@ -243,6 +243,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->queryId = parse->queryId;
 	result->hasReturning = (parse->returningList != NIL);
 	result->hasModifyingCTE = parse->hasModifyingCTE;
+	result->isUpsert =
+		(parse->onConflict && parse->onConflict->action == ONCONFLICT_UPDATE);
 	result->canSetTag = parse->canSetTag;
 	result->transientPlan = glob->transientPlan;
 	result->planTree = top_plan;
@@ -462,6 +464,17 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	parse->limitCount = preprocess_expression(root, parse->limitCount,
 											  EXPRKIND_LIMIT);
 
+	if (parse->onConflict)
+	{
+		parse->onConflict->onConflictSet = (List *)
+			preprocess_expression(root, (Node *) parse->onConflict->onConflictSet,
+								  EXPRKIND_TARGET);
+
+		parse->onConflict->onConflictWhere =
+			preprocess_expression(root, (Node *) parse->onConflict->onConflictWhere,
+								  EXPRKIND_QUAL);
+	}
+
 	root->append_rel_list = (List *)
 		preprocess_expression(root, (Node *) root->append_rel_list,
 							  EXPRKIND_APPINFO);
@@ -612,6 +625,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 											 withCheckOptionLists,
 											 returningLists,
 											 rowMarks,
+											 parse->onConflict,
 											 SS_assign_special_param(root));
 		}
 	}
@@ -801,6 +815,8 @@ inheritance_planner(PlannerInfo *root)
 	List	   *returningLists = NIL;
 	List	   *rowMarks;
 	ListCell   *lc;
+
+	Assert(parse->commandType != CMD_INSERT);
 
 	/*
 	 * We generate a modified instance of the original Query for each target
@@ -1046,6 +1062,8 @@ inheritance_planner(PlannerInfo *root)
 		if (parse->returningList)
 			returningLists = lappend(returningLists,
 									 subroot.parse->returningList);
+
+		Assert(!parse->onConflict);
 	}
 
 	/* Mark result as unordered (probably unnecessary) */
@@ -1095,6 +1113,7 @@ inheritance_planner(PlannerInfo *root)
 									 withCheckOptionLists,
 									 returningLists,
 									 rowMarks,
+									 NULL,
 									 SS_assign_special_param(root));
 }
 
@@ -1228,6 +1247,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		bool		use_hashed_grouping = false;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
+		OnConflictExpr *onconfl;
 
 		MemSet(&agg_costs, 0, sizeof(AggClauseCosts));
 
@@ -1241,6 +1261,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/* Preprocess targetlist */
 		tlist = preprocess_targetlist(root, tlist);
+
+		onconfl = parse->onConflict;
+		if (onconfl)
+			onconfl->onConflictSet =
+				preprocess_onconflict_targetlist(onconfl->onConflictSet,
+												 parse->resultRelation,
+												 parse->rtable);
 
 		/*
 		 * Expand any rangetable entries that have security barrier quals.

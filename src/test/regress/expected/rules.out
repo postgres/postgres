@@ -1123,6 +1123,10 @@ SELECT * FROM shoelace_log ORDER BY sl_name;
 	SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
 insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
 insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+-- Unsupported (even though a similar updatable view construct is)
+insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0)
+  on conflict do nothing;
+ERROR:  INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules
 SELECT * FROM shoelace_obsolete ORDER BY sl_len_cm;
   sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
 ------------+----------+------------+--------+----------+-----------
@@ -2362,6 +2366,22 @@ DETAIL:  Key (id3a, id3c)=(1, 13) is not present in table "rule_and_refint_t2".
 insert into rule_and_refint_t3 values (1, 13, 11, 'row6');
 ERROR:  insert or update on table "rule_and_refint_t3" violates foreign key constraint "rule_and_refint_t3_id3a_fkey"
 DETAIL:  Key (id3a, id3b)=(1, 13) is not present in table "rule_and_refint_t1".
+-- Ordinary table
+insert into rule_and_refint_t3 values (1, 13, 11, 'row6')
+  on conflict do nothing;
+ERROR:  insert or update on table "rule_and_refint_t3" violates foreign key constraint "rule_and_refint_t3_id3a_fkey"
+DETAIL:  Key (id3a, id3b)=(1, 13) is not present in table "rule_and_refint_t1".
+-- rule not fired, so fk violation
+insert into rule_and_refint_t3 values (1, 13, 11, 'row6')
+  on conflict (id3a, id3b, id3c) do update
+  set id3b = excluded.id3b;
+ERROR:  insert or update on table "rule_and_refint_t3" violates foreign key constraint "rule_and_refint_t3_id3a_fkey"
+DETAIL:  Key (id3a, id3b)=(1, 13) is not present in table "rule_and_refint_t1".
+-- rule fired, so unsupported
+insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0)
+  on conflict (sl_name) do update
+  set sl_avail = excluded.sl_avail;
+ERROR:  INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules
 create rule rule_and_refint_t3_ins as on insert to rule_and_refint_t3
 	where (exists (select 1 from rule_and_refint_t3
 			where (((rule_and_refint_t3.id3a = new.id3a)
@@ -2743,3 +2763,73 @@ View definition:
    FROM ( VALUES (1,2)) v(q, w);
 
 drop view rule_v1;
+--
+-- Check DO INSTEAD rules with ON CONFLICT
+--
+CREATE TABLE hats (
+	hat_name    char(10) primary key,
+	hat_color   char(10)      -- hat color
+);
+CREATE TABLE hat_data (
+	hat_name    char(10) primary key,
+	hat_color   char(10)      -- hat color
+);
+-- okay
+CREATE RULE hat_nosert AS ON INSERT TO hats
+    DO INSTEAD
+    INSERT INTO hat_data VALUES (
+           NEW.hat_name,
+           NEW.hat_color)
+        ON CONFLICT (hat_name) DO NOTHING RETURNING *;
+-- Works (projects row)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+  hat_name  | hat_color  
+------------+------------
+ h7         | black     
+(1 row)
+
+-- Works (does nothing)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+ hat_name | hat_color 
+----------+-----------
+(0 rows)
+
+SELECT tablename, rulename, definition FROM pg_rules
+	WHERE tablename = 'hats';
+ tablename |  rulename  |                                  definition                                  
+-----------+------------+------------------------------------------------------------------------------
+ hats      | hat_nosert | CREATE RULE hat_nosert AS                                                   +
+           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)+
+           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO NOTHING               +
+           |            |   RETURNING hat_data.hat_name,                                              +
+           |            |     hat_data.hat_color;
+(1 row)
+
+DROP RULE hat_nosert ON hats;
+CREATE RULE hat_upsert AS ON INSERT TO hats
+    DO INSTEAD
+    INSERT INTO hat_data VALUES (
+           NEW.hat_name,
+           NEW.hat_color)
+        ON CONFLICT (hat_name) DO UPDATE SET hat_color = 'Orange' RETURNING *;
+-- Works (does upsert)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+  hat_name  | hat_color  
+------------+------------
+ h7         | Orange    
+(1 row)
+
+SELECT tablename, rulename, definition FROM pg_rules
+	WHERE tablename = 'hats';
+ tablename |  rulename  |                                          definition                                           
+-----------+------------+-----------------------------------------------------------------------------------------------
+ hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                    +
+           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                 +
+           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO UPDATE SET hat_color = 'Orange'::bpchar+
+           |            |   RETURNING hat_data.hat_name,                                                               +
+           |            |     hat_data.hat_color;
+(1 row)
+
+DROP RULE hat_upsert ON hats;
+drop table hats;
+drop table hat_data;

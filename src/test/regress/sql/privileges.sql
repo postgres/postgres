@@ -194,7 +194,7 @@ SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying a
 -- Test column level permissions
 
 SET SESSION AUTHORIZATION regressuser1;
-CREATE TABLE atest5 (one int, two int, three int);
+CREATE TABLE atest5 (one int, two int unique, three int, four int unique);
 CREATE TABLE atest6 (one int, two int, blue int);
 GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regressuser4;
 GRANT ALL (one) ON atest5 TO regressuser3;
@@ -245,6 +245,23 @@ INSERT INTO atest5 VALUES (5,5,5); -- fail
 UPDATE atest5 SET three = 10; -- ok
 UPDATE atest5 SET one = 8; -- fail
 UPDATE atest5 SET three = 5, one = 2; -- fail
+-- Check that column level privs are enforced in RETURNING
+-- Ok.
+INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = 10;
+-- Error. No SELECT on column three.
+INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = 10 RETURNING atest5.three;
+-- Ok.  May SELECT on column "one":
+INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = 10 RETURNING atest5.one;
+-- Check that column level privileges are enforced for EXCLUDED
+-- Ok. we may select one
+INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLUDED.one;
+-- Error. No select rights on three
+INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLUDED.three;
+INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set one = 8; -- fails (due to UPDATE)
+INSERT INTO atest5(three) VALUES (4) ON CONFLICT (two) DO UPDATE set three = 10; -- fails (due to INSERT)
+-- Check that the the columns in the inference require select privileges
+-- Error. No privs on four
+INSERT INTO atest5(three) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 10;
 
 SET SESSION AUTHORIZATION regressuser1;
 REVOKE ALL (one) ON atest5 FROM regressuser4;

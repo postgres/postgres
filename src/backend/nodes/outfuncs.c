@@ -243,6 +243,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_UINT_FIELD(queryId);
 	WRITE_BOOL_FIELD(hasReturning);
 	WRITE_BOOL_FIELD(hasModifyingCTE);
+	WRITE_BOOL_FIELD(isUpsert);
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_NODE_FIELD(planTree);
@@ -337,6 +338,12 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_NODE_FIELD(fdwPrivLists);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_INT_FIELD(epqParam);
+	WRITE_ENUM_FIELD(onConflictAction, OnConflictAction);
+	WRITE_NODE_FIELD(arbiterIndexes);
+	WRITE_NODE_FIELD(onConflictSet);
+	WRITE_NODE_FIELD(onConflictWhere);
+	WRITE_INT_FIELD(exclRelRTI);
+	WRITE_NODE_FIELD(exclRelTlist);
 }
 
 static void
@@ -1437,6 +1444,17 @@ _outCurrentOfExpr(StringInfo str, const CurrentOfExpr *node)
 }
 
 static void
+_outInferenceElem(StringInfo str, const InferenceElem *node)
+{
+	WRITE_NODE_TYPE("INFERENCEELEM");
+
+	WRITE_NODE_FIELD(expr);
+	WRITE_OID_FIELD(infercollid);
+	WRITE_OID_FIELD(inferopfamily);
+	WRITE_OID_FIELD(inferopcinputtype);
+}
+
+static void
 _outTargetEntry(StringInfo str, const TargetEntry *node)
 {
 	WRITE_NODE_TYPE("TARGETENTRY");
@@ -1480,6 +1498,21 @@ _outFromExpr(StringInfo str, const FromExpr *node)
 
 	WRITE_NODE_FIELD(fromlist);
 	WRITE_NODE_FIELD(quals);
+}
+
+static void
+_outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
+{
+	WRITE_NODE_TYPE("ONCONFLICTEXPR");
+
+	WRITE_ENUM_FIELD(action, OnConflictAction);
+	WRITE_NODE_FIELD(arbiterElems);
+	WRITE_NODE_FIELD(arbiterWhere);
+	WRITE_NODE_FIELD(onConflictSet);
+	WRITE_NODE_FIELD(onConflictWhere);
+	WRITE_OID_FIELD(constraint);
+	WRITE_INT_FIELD(exclRelIndex);
+	WRITE_NODE_FIELD(exclRelTlist);
 }
 
 /*****************************************************************************
@@ -2319,6 +2352,7 @@ _outQuery(StringInfo str, const Query *node)
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);
 	WRITE_NODE_FIELD(withCheckOptions);
+	WRITE_NODE_FIELD(onConflict);
 	WRITE_NODE_FIELD(returningList);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingQual);
@@ -3112,6 +3146,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_CurrentOfExpr:
 				_outCurrentOfExpr(str, obj);
 				break;
+			case T_InferenceElem:
+				_outInferenceElem(str, obj);
+				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);
 				break;
@@ -3124,7 +3161,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_FromExpr:
 				_outFromExpr(str, obj);
 				break;
-
+			case T_OnConflictExpr:
+				_outOnConflictExpr(str, obj);
+				break;
 			case T_Path:
 				_outPath(str, obj);
 				break;

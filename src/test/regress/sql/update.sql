@@ -8,6 +8,11 @@ CREATE TABLE update_test (
     c   TEXT
 );
 
+CREATE TABLE upsert_test (
+    a   INT PRIMARY KEY,
+    b   TEXT
+);
+
 INSERT INTO update_test VALUES (5, 10, 'foo');
 INSERT INTO update_test(b, a) VALUES (15, 10);
 
@@ -74,4 +79,20 @@ UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
 UPDATE update_test SET c = repeat('x', 10000) WHERE c = 'car';
 SELECT a, b, char_length(c) FROM update_test;
 
+-- Test ON CONFLICT DO UPDATE
+INSERT INTO upsert_test VALUES(1, 'Boo');
+-- uncorrelated  sub-select:
+WITH aaa AS (SELECT 1 AS a, 'Foo' AS b) INSERT INTO upsert_test
+  VALUES (1, 'Bar') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT b, a FROM aaa) RETURNING *;
+-- correlated sub-select:
+INSERT INTO upsert_test VALUES (1, 'Baz') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT b || ', Correlated', a from upsert_test i WHERE i.a = upsert_test.a)
+  RETURNING *;
+-- correlated sub-select (EXCLUDED.* alias):
+INSERT INTO upsert_test VALUES (1, 'Bat') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT b || ', Excluded', a from upsert_test i WHERE i.a = excluded.a)
+  RETURNING *;
+
 DROP TABLE update_test;
+DROP TABLE upsert_test;

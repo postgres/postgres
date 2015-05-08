@@ -69,6 +69,15 @@ DELETE FROM rw_view14 WHERE a=3; -- should be OK
 -- Partially updatable view
 INSERT INTO rw_view15 VALUES (3, 'ROW 3'); -- should fail
 INSERT INTO rw_view15 (a) VALUES (3); -- should be OK
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT DO NOTHING; -- succeeds
+SELECT * FROM rw_view15;
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO NOTHING; -- succeeds
+SELECT * FROM rw_view15;
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO UPDATE set a = excluded.a; -- succeeds
+SELECT * FROM rw_view15;
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO UPDATE set upper = 'blarg'; -- fails
+SELECT * FROM rw_view15;
+SELECT * FROM rw_view15;
 ALTER VIEW rw_view15 ALTER COLUMN upper SET DEFAULT 'NOT SET';
 INSERT INTO rw_view15 (a) VALUES (4); -- should fail
 UPDATE rw_view15 SET upper='ROW 3' WHERE a=3; -- should fail

@@ -69,6 +69,14 @@
  </para>
 
  <para>
+  Note that <filename>postgres_fdw</> currently lacks support for
+  <command>INSERT</command> statements with an <literal>ON CONFLICT DO
+  UPDATE</> clause.  However, the <literal>ON CONFLICT DO NOTHING</>
+  clause is supported, provided a unique index inference specification
+  is omitted.
+ </para>
+
+ <para>
   It is generally recommended that the columns of a foreign table be declared
   with exactly the same data types, and collations if applicable, as the
   referenced columns of the remote table.  Although <filename>postgres_fdw</>

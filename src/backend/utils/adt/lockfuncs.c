@@ -29,6 +29,7 @@ static const char *const LockTagTypeNames[] = {
 	"tuple",
 	"transactionid",
 	"virtualxid",
+	"speculative token",
 	"object",
 	"userlock",
 	"advisory"

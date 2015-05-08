@@ -894,9 +894,12 @@ PrintQueryResults(PGresult *results)
 				success = StoreQueryTuple(results);
 			else
 				success = PrintQueryTuples(results);
-			/* if it's INSERT/UPDATE/DELETE RETURNING, also print status */
+			/*
+			 * if it's INSERT/UPSERT/UPDATE/DELETE RETURNING, also print status
+			 */
 			cmdstatus = PQcmdStatus(results);
 			if (strncmp(cmdstatus, "INSERT", 6) == 0 ||
+				strncmp(cmdstatus, "UPSERT", 6) == 0 ||
 				strncmp(cmdstatus, "UPDATE", 6) == 0 ||
 				strncmp(cmdstatus, "DELETE", 6) == 0)
 				PrintQueryStatus(results);

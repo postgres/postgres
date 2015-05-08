@@ -215,6 +215,67 @@ INSERT INTO rw_view15 VALUES (3, 'ROW 3'); -- should fail
 ERROR:  cannot insert into column "upper" of view "rw_view15"
 DETAIL:  View columns that are not columns of their base relation are not updatable.
 INSERT INTO rw_view15 (a) VALUES (3); -- should be OK
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT DO NOTHING; -- succeeds
+SELECT * FROM rw_view15;
+ a  |    upper    
+----+-------------
+ -2 | ROW -2
+ -1 | ROW -1
+  0 | ROW 0
+  1 | ROW 1
+  2 | ROW 2
+  3 | UNSPECIFIED
+(6 rows)
+
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO NOTHING; -- succeeds
+SELECT * FROM rw_view15;
+ a  |    upper    
+----+-------------
+ -2 | ROW -2
+ -1 | ROW -1
+  0 | ROW 0
+  1 | ROW 1
+  2 | ROW 2
+  3 | UNSPECIFIED
+(6 rows)
+
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO UPDATE set a = excluded.a; -- succeeds
+SELECT * FROM rw_view15;
+ a  |    upper    
+----+-------------
+ -2 | ROW -2
+ -1 | ROW -1
+  0 | ROW 0
+  1 | ROW 1
+  2 | ROW 2
+  3 | UNSPECIFIED
+(6 rows)
+
+INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO UPDATE set upper = 'blarg'; -- fails
+ERROR:  cannot insert into column "upper" of view "rw_view15"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+SELECT * FROM rw_view15;
+ a  |    upper    
+----+-------------
+ -2 | ROW -2
+ -1 | ROW -1
+  0 | ROW 0
+  1 | ROW 1
+  2 | ROW 2
+  3 | UNSPECIFIED
+(6 rows)
+
+SELECT * FROM rw_view15;
+ a  |    upper    
+----+-------------
+ -2 | ROW -2
+ -1 | ROW -1
+  0 | ROW 0
+  1 | ROW 1
+  2 | ROW 2
+  3 | UNSPECIFIED
+(6 rows)
+
 ALTER VIEW rw_view15 ALTER COLUMN upper SET DEFAULT 'NOT SET';
 INSERT INTO rw_view15 (a) VALUES (4); -- should fail
 ERROR:  cannot insert into column "upper" of view "rw_view15"

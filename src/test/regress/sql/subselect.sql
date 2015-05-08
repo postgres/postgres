@@ -374,6 +374,20 @@ from
   int4_tbl i4 on dummy = i4.f1;
 
 --
+-- Test case for subselect within UPDATE of INSERT...ON CONFLICT DO UPDATE
+--
+create temp table upsert(key int4 primary key, val text);
+insert into upsert values(1, 'val') on conflict (key) do update set val = 'not seen';
+insert into upsert values(1, 'val') on conflict (key) do update set val = 'seen with subselect ' || (select f1 from int4_tbl where f1 != 0 limit 1)::text;
+
+select * from upsert;
+
+with aa as (select 'int4_tbl' u from int4_tbl limit 1)
+insert into upsert values (1, 'x'), (999, 'y')
+on conflict (key) do update set val = (select u from aa)
+returning *;
+
+--
 -- Test case for cross-type partial matching in hashed subplan (bug #7597)
 --
 

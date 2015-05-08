@@ -86,7 +86,7 @@ extern ModifyTable *make_modifytable(PlannerInfo *root,
 				 Index nominalRelation,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-				 List *rowMarks, int epqParam);
+				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
 
 /*

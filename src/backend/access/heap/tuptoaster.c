@@ -523,6 +523,14 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	bool		toast_delold[MaxHeapAttributeNumber];
 
 	/*
+	 * Ignore the INSERT_SPECULATIVE option. Speculative insertions/super
+	 * deletions just normally insert/delete the toast values. It seems
+	 * easiest to deal with that here, instead on, potentially, multiple
+	 * callers.
+	 */
+	options &= ~HEAP_INSERT_SPECULATIVE;
+
+	/*
 	 * We should only ever be called for tuples of plain relations or
 	 * materialized views --- recursing on a toast rel is bad news.
 	 */

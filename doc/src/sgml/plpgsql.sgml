@@ -2623,7 +2623,11 @@ END;
     <para>
 
     This example uses exception handling to perform either
-    <command>UPDATE</> or <command>INSERT</>, as appropriate:
+    <command>UPDATE</> or <command>INSERT</>, as appropriate.  It is
+    recommended that applications use <command>INSERT</> with
+    <literal>ON CONFLICT DO UPDATE</> rather than actually using
+    this pattern.  This example serves primarily to illustrate use of
+    <application>PL/pgSQL</application> control flow structures:
 
 <programlisting>
 CREATE TABLE db (a INT PRIMARY KEY, b TEXT);
@@ -3852,9 +3856,11 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
     <command>INSERT</> and <command>UPDATE</> operations, the return value
     should be <varname>NEW</>, which the trigger function may modify to
     support <command>INSERT RETURNING</> and <command>UPDATE RETURNING</>
-    (this will also affect the row value passed to any subsequent triggers).
-    For <command>DELETE</> operations, the return value should be
-    <varname>OLD</>.
+    (this will also affect the row value passed to any subsequent triggers,
+    or passed to a special <varname>EXCLUDED</> alias reference within
+    an <command>INSERT</> statement with an <literal>ON CONFLICT DO
+    UPDATE</> clause).  For <command>DELETE</> operations, the return
+    value should be <varname>OLD</>.
    </para>
 
    <para>

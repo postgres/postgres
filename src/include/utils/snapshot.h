@@ -69,31 +69,41 @@ typedef struct SnapshotData
 	 * progress, unless the snapshot was taken during recovery in which case
 	 * it's empty. For historic MVCC snapshots, the meaning is inverted, i.e.
 	 * it contains *committed* transactions between xmin and xmax.
+	 *
+	 * note: all ids in xip[] satisfy xmin <= xip[i] < xmax
 	 */
 	TransactionId *xip;
 	uint32		xcnt;			/* # of xact ids in xip[] */
-	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
-	int32		subxcnt;		/* # of xact ids in subxip[] */
 
 	/*
 	 * For non-historic MVCC snapshots, this contains subxact IDs that are in
 	 * progress (and other transactions that are in progress if taken during
 	 * recovery). For historic snapshot it contains *all* xids assigned to the
 	 * replayed transaction, including the toplevel xid.
-	 */
-	TransactionId *subxip;
-	bool		suboverflowed;	/* has the subxip array overflowed? */
-	bool		takenDuringRecovery;	/* recovery-shaped snapshot? */
-	bool		copied;			/* false if it's a static snapshot */
-
-	/*
+	 *
 	 * note: all ids in subxip[] are >= xmin, but we don't bother filtering
 	 * out any that are >= xmax
 	 */
+	TransactionId *subxip;
+	int32		subxcnt;		/* # of xact ids in subxip[] */
+	bool		suboverflowed;	/* has the subxip array overflowed? */
+
+	bool		takenDuringRecovery;	/* recovery-shaped snapshot? */
+	bool		copied;			/* false if it's a static snapshot */
+
 	CommandId	curcid;			/* in my xact, CID < curcid are visible */
+
+	/*
+	 * An extra return value for HeapTupleSatisfiesDirty, not used in MVCC
+	 * snapshots.
+	 */
+	uint32		speculativeToken;
+
+	/*
+	 * Book-keeping information, used by the snapshot manager
+	 */
 	uint32		active_count;	/* refcount on ActiveSnapshot stack */
 	uint32		regd_count;		/* refcount on RegisteredSnapshots */
-
 	pairingheap_node ph_node;	/* link in the RegisteredSnapshots heap */
 } SnapshotData;
 

@@ -2421,21 +2421,10 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	TupleTableSlot *newSlot;
 	int			i;
 	Bitmapset  *updatedCols;
-	Bitmapset  *keyCols;
 	LockTupleMode lockmode;
 
-	/*
-	 * Compute lock mode to use.  If columns that are part of the key have not
-	 * been modified, then we can use a weaker lock, allowing for better
-	 * concurrency.
-	 */
-	updatedCols = GetUpdatedColumns(relinfo, estate);
-	keyCols = RelationGetIndexAttrBitmap(relinfo->ri_RelationDesc,
-										 INDEX_ATTR_BITMAP_KEY);
-	if (bms_overlap(keyCols, updatedCols))
-		lockmode = LockTupleExclusive;
-	else
-		lockmode = LockTupleNoKeyExclusive;
+	/* Determine lock mode to use */
+	lockmode = ExecUpdateLockMode(estate, relinfo);
 
 	Assert(HeapTupleIsValid(fdw_trigtuple) ^ ItemPointerIsValid(tupleid));
 	if (fdw_trigtuple == NULL)
@@ -2476,6 +2465,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		TRIGGER_EVENT_ROW |
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
+	updatedCols = GetUpdatedColumns(relinfo, estate);
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[i];
@@ -2782,6 +2772,9 @@ ltrmark:;
 				 * we must not process this tuple!
 				 */
 				return NULL;
+
+			case HeapTupleInvisible:
+				elog(ERROR, "attempted to lock invisible tuple");
 
 			default:
 				ReleaseBuffer(buffer);

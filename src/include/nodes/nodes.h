@@ -168,10 +168,12 @@ typedef enum NodeTag
 	T_CoerceToDomainValue,
 	T_SetToDefault,
 	T_CurrentOfExpr,
+	T_InferenceElem,
 	T_TargetEntry,
 	T_RangeTblRef,
 	T_JoinExpr,
 	T_FromExpr,
+	T_OnConflictExpr,
 	T_IntoClause,
 
 	/*
@@ -413,6 +415,8 @@ typedef enum NodeTag
 	T_RowMarkClause,
 	T_XmlSerialize,
 	T_WithClause,
+	T_InferClause,
+	T_OnConflictClause,
 	T_CommonTableExpr,
 	T_RoleSpec,
 
@@ -625,5 +629,18 @@ typedef enum JoinType
 	   (1 << JOIN_FULL) | \
 	   (1 << JOIN_RIGHT) | \
 	   (1 << JOIN_ANTI))) != 0)
+
+/*
+ * OnConflictAction -
+ *	  "ON CONFLICT" clause type of query
+ *
+ * This is needed in both parsenodes.h and plannodes.h, so put it here...
+ */
+typedef enum OnConflictAction
+{
+	ONCONFLICT_NONE,		/* No "ON CONFLICT" clause */
+	ONCONFLICT_NOTHING,		/* ON CONFLICT ... DO NOTHING */
+	ONCONFLICT_UPDATE		/* ON CONFLICT ... DO UPDATE */
+} OnConflictAction;
 
 #endif   /* NODES_H */

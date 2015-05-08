@@ -292,6 +292,11 @@ INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
 
+INSERT INTO UNIQUE_TBL VALUES (5, 'five-upsert-insert') ON CONFLICT (i) DO UPDATE SET t = 'five-upsert-update';
+INSERT INTO UNIQUE_TBL VALUES (6, 'six-upsert-insert') ON CONFLICT (i) DO UPDATE SET t = 'six-upsert-update';
+-- should fail
+INSERT INTO UNIQUE_TBL VALUES (1, 'a'), (2, 'b'), (2, 'b') ON CONFLICT (i) DO UPDATE SET t = 'fails';
+
 SELECT '' AS five, * FROM UNIQUE_TBL;
 
 DROP TABLE UNIQUE_TBL;
@@ -438,6 +443,12 @@ INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 4>');
 INSERT INTO circles VALUES('<(10,10), 10>', '<(0,0), 5>');
 -- fail, overlaps
 INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>');
+-- succeed, because violation is ignored
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
+  ON CONFLICT ON CONSTRAINT circles_c1_c2_excl DO NOTHING;
+-- fail, because DO UPDATE variant requires unique index
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>')
+  ON CONFLICT ON CONSTRAINT circles_c1_c2_excl DO UPDATE SET c2 = EXCLUDED.c2;
 -- succeed because c1 doesn't overlap
 INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
 -- succeed because c2 doesn't overlap
@@ -462,6 +473,7 @@ CREATE TABLE deferred_excl (
 INSERT INTO deferred_excl VALUES(1);
 INSERT INTO deferred_excl VALUES(2);
 INSERT INTO deferred_excl VALUES(1); -- fail
+INSERT INTO deferred_excl VALUES(1) ON CONFLICT ON CONSTRAINT deferred_excl_con DO NOTHING; -- fail
 BEGIN;
 INSERT INTO deferred_excl VALUES(2); -- no fail here
 COMMIT; -- should fail here

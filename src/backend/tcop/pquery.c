@@ -202,8 +202,14 @@ ProcessQuery(PlannedStmt *plan,
 					lastOid = queryDesc->estate->es_lastoid;
 				else
 					lastOid = InvalidOid;
-				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-				   "INSERT %u %u", lastOid, queryDesc->estate->es_processed);
+				if (plan->isUpsert)
+					snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+							 "UPSERT %u %u",
+							 lastOid, queryDesc->estate->es_processed);
+				else
+					snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+							 "INSERT %u %u",
+							 lastOid, queryDesc->estate->es_processed);
 				break;
 			case CMD_UPDATE:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
@@ -1356,7 +1362,10 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 	 * 0" here because technically there is no query of the matching tag type,
 	 * and printing a non-zero count for a different query type seems wrong,
 	 * e.g.  an INSERT that does an UPDATE instead should not print "0 1" if
-	 * one row was updated.  See QueryRewrite(), step 3, for details.
+	 * one row was updated (unless the ON CONFLICT DO UPDATE, or "UPSERT"
+	 * variant of INSERT was used to update the row, where it's logically a
+	 * direct effect of the top level command).  See QueryRewrite(), step 3,
+	 * for details.
 	 */
 	if (completionTag && completionTag[0] == '\0')
 	{
@@ -1366,6 +1375,8 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			sprintf(completionTag, "SELECT 0 0");
 		else if (strcmp(completionTag, "INSERT") == 0)
 			strcpy(completionTag, "INSERT 0 0");
+		else if (strcmp(completionTag, "UPSERT") == 0)
+			strcpy(completionTag, "UPSERT 0 0");
 		else if (strcmp(completionTag, "UPDATE") == 0)
 			strcpy(completionTag, "UPDATE 0");
 		else if (strcmp(completionTag, "DELETE") == 0)

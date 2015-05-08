@@ -1,0 +1,23 @@
+Parsed test spec with 2 sessions
+
+starting permutation: donothing1 donothing2 c1 select2 c2
+step donothing1: INSERT INTO ints(key, val) VALUES(1, 'donothing1') ON CONFLICT DO NOTHING;
+step donothing2: INSERT INTO ints(key, val) VALUES(1, 'donothing2') ON CONFLICT DO NOTHING; <waiting ...>
+step c1: COMMIT;
+step donothing2: <... completed>
+step select2: SELECT * FROM ints;
+key            val            
+
+1              donothing1     
+step c2: COMMIT;
+
+starting permutation: donothing1 donothing2 a1 select2 c2
+step donothing1: INSERT INTO ints(key, val) VALUES(1, 'donothing1') ON CONFLICT DO NOTHING;
+step donothing2: INSERT INTO ints(key, val) VALUES(1, 'donothing2') ON CONFLICT DO NOTHING; <waiting ...>
+step a1: ABORT;
+step donothing2: <... completed>
+step select2: SELECT * FROM ints;
+key            val            
+
+1              donothing2     
+step c2: COMMIT;

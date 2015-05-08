@@ -1665,12 +1665,63 @@ BuildIndexInfo(Relation index)
 	/* other info */
 	ii->ii_Unique = indexStruct->indisunique;
 	ii->ii_ReadyForInserts = IndexIsReady(indexStruct);
+	/* assume not doing speculative insertion for now */
+	ii->ii_UniqueOps = NULL;
+	ii->ii_UniqueProcs = NULL;
+	ii->ii_UniqueStrats = NULL;
 
 	/* initialize index-build state to default */
 	ii->ii_Concurrent = false;
 	ii->ii_BrokenHotChain = false;
 
 	return ii;
+}
+
+/* ----------------
+ *		BuildSpeculativeIndexInfo
+ *			Add extra state to IndexInfo record
+ *
+ * For unique indexes, we usually don't want to add info to the IndexInfo for
+ * checking uniqueness, since the B-Tree AM handles that directly.  However,
+ * in the case of speculative insertion, additional support is required.
+ *
+ * Do this processing here rather than in BuildIndexInfo() to not incur the
+ * overhead in the common non-speculative cases.
+ * ----------------
+ */
+void
+BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
+{
+	int			ncols = index->rd_rel->relnatts;
+	int			i;
+
+	/*
+	 * fetch info for checking unique indexes
+	 */
+	Assert(ii->ii_Unique);
+
+	if (index->rd_rel->relam != BTREE_AM_OID)
+		elog(ERROR, "unexpected non-btree speculative unique index");
+
+	ii->ii_UniqueOps = (Oid *) palloc(sizeof(Oid) * ncols);
+	ii->ii_UniqueProcs = (Oid *) palloc(sizeof(Oid) * ncols);
+	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * ncols);
+
+	/*
+	 * We have to look up the operator's strategy number.  This
+	 * provides a cross-check that the operator does match the index.
+	 */
+	/* We need the func OIDs and strategy numbers too */
+	for (i = 0; i < ncols; i++)
+	{
+		ii->ii_UniqueStrats[i] = BTEqualStrategyNumber;
+		ii->ii_UniqueOps[i] =
+			get_opfamily_member(index->rd_opfamily[i],
+								index->rd_opcintype[i],
+								index->rd_opcintype[i],
+								ii->ii_UniqueStrats[i]);
+		ii->ii_UniqueProcs[i] = get_opcode(ii->ii_UniqueOps[i]);
+	}
 }
 
 /* ----------------
@@ -2612,7 +2663,7 @@ IndexCheckExclusion(Relation heapRelation,
 		check_exclusion_constraint(heapRelation,
 								   indexRelation, indexInfo,
 								   &(heapTuple->t_self), values, isnull,
-								   estate, true, false);
+								   estate, true);
 	}
 
 	heap_endscan(scan);

@@ -136,7 +136,11 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
      <para>
       The event is one of <literal>SELECT</literal>,
       <literal>INSERT</literal>, <literal>UPDATE</literal>, or
-      <literal>DELETE</literal>.
+      <literal>DELETE</literal>.  Note that an
+      <command>INSERT</command> containing an <literal>ON
+      CONFLICT</literal> clause cannot be used on tables that have
+      either <literal>INSERT</literal> or <literal>UPDATE</literal>
+      rules.  Consider using an updatable view instead.
      </para>
     </listitem>
    </varlistentry>

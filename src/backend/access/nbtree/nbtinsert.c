@@ -51,7 +51,8 @@ static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static TransactionId _bt_check_unique(Relation rel, IndexTuple itup,
 				 Relation heapRel, Buffer buf, OffsetNumber offset,
 				 ScanKey itup_scankey,
-				 IndexUniqueCheck checkUnique, bool *is_unique);
+				 IndexUniqueCheck checkUnique, bool *is_unique,
+				 uint32 *speculativeToken);
 static void _bt_findinsertloc(Relation rel,
 				  Buffer *bufptr,
 				  OffsetNumber *offsetptr,
@@ -159,17 +160,27 @@ top:
 	 */
 	if (checkUnique != UNIQUE_CHECK_NO)
 	{
-		TransactionId xwait;
+		TransactionId	xwait;
+		uint32			speculativeToken;
 
 		offset = _bt_binsrch(rel, buf, natts, itup_scankey, false);
 		xwait = _bt_check_unique(rel, itup, heapRel, buf, offset, itup_scankey,
-								 checkUnique, &is_unique);
+								 checkUnique, &is_unique, &speculativeToken);
 
 		if (TransactionIdIsValid(xwait))
 		{
 			/* Have to wait for the other guy ... */
 			_bt_relbuf(rel, buf);
-			XactLockTableWait(xwait, rel, &itup->t_tid, XLTW_InsertIndex);
+			/*
+			 * If it's a speculative insertion, wait for it to finish (ie.
+			 * to go ahead with the insertion, or kill the tuple).  Otherwise
+			 * wait for the transaction to finish as usual.
+			 */
+			if (speculativeToken)
+				SpeculativeInsertionWait(xwait, speculativeToken);
+			else
+				XactLockTableWait(xwait, rel, &itup->t_tid, XLTW_InsertIndex);
+
 			/* start over... */
 			_bt_freestack(stack);
 			goto top;
@@ -213,7 +224,10 @@ top:
  *
  * Returns InvalidTransactionId if there is no conflict, else an xact ID
  * we must wait for to see if it commits a conflicting tuple.   If an actual
- * conflict is detected, no return --- just ereport().
+ * conflict is detected, no return --- just ereport().  If an xact ID is
+ * returned, and the conflicting tuple still has a speculative insertion in
+ * progress, *speculativeToken is set to non-zero, and the caller can wait for
+ * the verdict on the insertion using SpeculativeInsertionWait().
  *
  * However, if checkUnique == UNIQUE_CHECK_PARTIAL, we always return
  * InvalidTransactionId because we don't want to wait.  In this case we
@@ -223,7 +237,8 @@ top:
 static TransactionId
 _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				 Buffer buf, OffsetNumber offset, ScanKey itup_scankey,
-				 IndexUniqueCheck checkUnique, bool *is_unique)
+				 IndexUniqueCheck checkUnique, bool *is_unique,
+				 uint32 *speculativeToken)
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	int			natts = rel->rd_rel->relnatts;
@@ -340,6 +355,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 						if (nbuf != InvalidBuffer)
 							_bt_relbuf(rel, nbuf);
 						/* Tell _bt_doinsert to wait... */
+						*speculativeToken = SnapshotDirty.speculativeToken;
 						return xwait;
 					}
 
