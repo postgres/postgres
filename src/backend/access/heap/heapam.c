@@ -2068,10 +2068,10 @@ FreeBulkInsertState(BulkInsertState bistate)
  * Speculatively inserted tuples behave as "value locks" of short duration,
  * used to implement INSERT .. ON CONFLICT.
  *
- * Note that these options will be applied when inserting into the heap's
- * TOAST table, too, if the tuple requires any out-of-line data.
- * FIXME: Do we mark TOAST tuples as speculative too? What about confirming
- * or aborting them?
+ * Note that most of these options will be applied when inserting into the
+ * heap's TOAST table, too, if the tuple requires any out-of-line data.  Only
+ * HEAP_INSERT_IS_SPECULATIVE is explicitly ignored, as the toast data does
+ * not partake in speculative insertion.
  *
  * The BulkInsertState object (if any; bistate can be NULL for default
  * behavior) is also just passed through to RelationGetBufferForTuple.

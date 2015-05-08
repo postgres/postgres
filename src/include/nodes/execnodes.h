@@ -1108,7 +1108,7 @@ typedef struct ModifyTableState
 	List	   *mt_arbiterindexes;	/* unique index OIDs to arbitrate taking alt path */
 	TupleTableSlot *mt_existing; /* slot to store existing target tuple in */
 	List	   *mt_excludedtlist; /* the excluded pseudo relation's tlist  */
-	TupleTableSlot *mt_conflproj; /*  FIXME*/
+	TupleTableSlot *mt_conflproj; /* CONFLICT ... SET ... projection target */
 } ModifyTableState;
 
 /* ----------------

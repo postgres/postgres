@@ -76,7 +76,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
   <para>
    <literal>ON CONFLICT</> can be used to specify an alternative
    action to raising a unique constraint or exclusion constraint
-   violation error . (See <xref linkend="sql-on-conflict"
+   violation error. (See <xref linkend="sql-on-conflict"
    endterm="sql-on-conflict-title"> below.)
   </para>
 
@@ -397,7 +397,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
    <emphasis>unique index inference</emphasis> clause or an explicitly
    named constraint can be used.  For <literal>ON CONFLICT DO
    NOTHING</literal>, it is optional to specify a
-   <parameter>conflict_target</parameter>; when ommitted, conflicts
+   <parameter>conflict_target</parameter>; when omitted, conflicts
    with all usable constraints (and unique indexes) are handled.  For
    <literal>ON CONFLICT DO UPDATE</literal>, a conflict target
    <emphasis>must</emphasis> be specified.
