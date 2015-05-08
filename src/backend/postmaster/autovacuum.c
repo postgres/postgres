@@ -297,10 +297,12 @@ static void do_autovacuum(void);
 static void FreeWorkerInfo(int code, Datum arg);
 
 static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
-					  TupleDesc pg_class_desc);
+											TupleDesc pg_class_desc,
+									int effective_multixact_freeze_max_age);
 static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry,
+						  int effective_multixact_freeze_max_age,
 						  bool *dovacuum, bool *doanalyze, bool *wraparound);
 
 static void autovacuum_do_vac_analyze(autovac_table *tab,
@@ -1118,7 +1120,7 @@ do_start_worker(void)
 
 	/* Also determine the oldest datminmxid we will consider. */
 	recentMulti = ReadNextMultiXactId();
-	multiForceLimit = recentMulti - autovacuum_multixact_freeze_max_age;
+	multiForceLimit = recentMulti - MultiXactMemberFreezeThreshold();
 	if (multiForceLimit < FirstMultiXactId)
 		multiForceLimit -= FirstMultiXactId;
 
@@ -1881,6 +1883,7 @@ do_autovacuum(void)
 	BufferAccessStrategy bstrategy;
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
+	int			effective_multixact_freeze_max_age;
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -1909,6 +1912,13 @@ do_autovacuum(void)
 	 * nothing worth vacuuming in the database.
 	 */
 	pgstat_vacuum_stat();
+
+	/*
+	 * Compute the multixact age for which freezing is urgent.  This is
+	 * normally autovacuum_multixact_freeze_max_age, but may be less if we
+	 * are short of multixact member space.
+	 */
+	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
 
 	/*
 	 * Find the pg_database entry and select the default freeze ages. We use
@@ -2001,6 +2011,7 @@ do_autovacuum(void)
 
 		/* Check if it needs vacuum or analyze */
 		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
+								  effective_multixact_freeze_max_age,
 								  &dovacuum, &doanalyze, &wraparound);
 
 		/*
@@ -2129,6 +2140,7 @@ do_autovacuum(void)
 											 shared, dbentry);
 
 		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
+								  effective_multixact_freeze_max_age,
 								  &dovacuum, &doanalyze, &wraparound);
 
 		/* ignore analyze for toast tables */
@@ -2235,7 +2247,8 @@ do_autovacuum(void)
 		 * the race condition is not closed but it is very small.
 		 */
 		MemoryContextSwitchTo(AutovacMemCxt);
-		tab = table_recheck_autovac(relid, table_toast_map, pg_class_desc);
+		tab = table_recheck_autovac(relid, table_toast_map, pg_class_desc,
+									effective_multixact_freeze_max_age);
 		if (tab == NULL)
 		{
 			/* someone else vacuumed the table, or it went away */
@@ -2442,7 +2455,8 @@ get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
  */
 static autovac_table *
 table_recheck_autovac(Oid relid, HTAB *table_toast_map,
-					  TupleDesc pg_class_desc)
+					  TupleDesc pg_class_desc,
+					  int effective_multixact_freeze_max_age)
 {
 	Form_pg_class classForm;
 	HeapTuple	classTup;
@@ -2488,6 +2502,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 										 shared, dbentry);
 
 	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
+							  effective_multixact_freeze_max_age,
 							  &dovacuum, &doanalyze, &wraparound);
 
 	/* ignore ANALYZE for toast tables */
@@ -2624,6 +2639,7 @@ relation_needs_vacanalyze(Oid relid,
 						  AutoVacOpts *relopts,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry,
+						  int effective_multixact_freeze_max_age,
  /* output params below */
 						  bool *dovacuum,
 						  bool *doanalyze,
@@ -2684,8 +2700,8 @@ relation_needs_vacanalyze(Oid relid,
 		: autovacuum_freeze_max_age;
 
 	multixact_freeze_max_age = (relopts && relopts->multixact_freeze_max_age >= 0)
-		? Min(relopts->multixact_freeze_max_age, autovacuum_multixact_freeze_max_age)
-		: autovacuum_multixact_freeze_max_age;
+		? Min(relopts->multixact_freeze_max_age, effective_multixact_freeze_max_age)
+		: effective_multixact_freeze_max_age;
 
 	av_enabled = (relopts ? relopts->enabled : true);
 
