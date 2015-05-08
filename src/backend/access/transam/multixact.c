@@ -2623,7 +2623,7 @@ ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
  * to a value just less than the number of multixacts in use.  We hope that
  * this will quickly trigger autovacuuming on the table or tables with the
  * oldest relminmxid, thus allowing datminmxid values to advance and removing
- * some members.  
+ * some members.
  *
  * As the fraction of the member space currently in use grows, we become
  * more aggressive in clamping this value.  That not only causes autovacuum
