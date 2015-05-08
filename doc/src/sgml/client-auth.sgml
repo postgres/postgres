@@ -834,7 +834,12 @@ omicron         bryanh                  guest1
         If set to <literal>1</>, the realm name from the authenticated user
         principal is included in the system user name that's passed through
         user name mapping (<xref linkend="auth-username-maps">). This is
-        useful for handling users from multiple realms.
+        the recommended configuration as, otherwise, it is impossible to
+        differentiate users with the same username who are from different
+        realms.  The default for this parameter is 0 (meaning to not include
+        the realm in the system user name) but may change to 1 in a future
+        version of <productname>PostgreSQL</productname>.  Users can set it
+        explicitly to avoid any issues when upgrading.
        </para>
       </listitem>
      </varlistentry>
@@ -844,12 +849,16 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details. For a Kerberos
-        principal <literal>username/hostbased@EXAMPLE.COM</literal>, the
-        user name used for mapping is <literal>username/hostbased</literal>
-        if <literal>include_realm</literal> is disabled, and
-        <literal>username/hostbased@EXAMPLE.COM</literal> if
-        <literal>include_realm</literal> is enabled.
+        <xref linkend="auth-username-maps"> for details.  For a GSSAPI/Kerberos
+        principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
+        commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
+        default user name used for mapping is
+        <literal>username</literal> (or <literal>username/hostbased</literal>,
+        respectfully), unless <literal>include_realm</literal> has been set to
+        1 (as recommended, see above), in which case
+        <literal>username@EXAMPLE.COM</literal> (or
+        <literal>username/hostbased@EXAMPLE.COM</literal>)
+        is what is seen as the system username when mapping.
        </para>
       </listitem>
      </varlistentry>
@@ -905,7 +914,12 @@ omicron         bryanh                  guest1
         If set to <literal>1</>, the realm name from the authenticated user
         principal is included in the system user name that's passed through
         user name mapping (<xref linkend="auth-username-maps">). This is
-        useful for handling users from multiple realms.
+        the recommended configuration as, otherwise, it is impossible to
+        differentiate users with the same username who are from different
+        realms.  The default for this parameter is 0 (meaning to not include
+        the realm in the system user name) but may change to 1 in a future
+        version of <productname>PostgreSQL</productname>.  Users can set it
+        explicitly to avoid any issues when upgrading.
        </para>
       </listitem>
      </varlistentry>
@@ -915,7 +929,16 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.
+        <xref linkend="auth-username-maps"> for details.  For a SSPI/Kerberos
+        principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
+        commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
+        default user name used for mapping is
+        <literal>username</literal> (or <literal>username/hostbased</literal>,
+        respectfully), unless <literal>include_realm</literal> has been set to
+        1 (as recommended, see above), in which case
+        <literal>username@EXAMPLE.COM</literal> (or
+        <literal>username/hostbased@EXAMPLE.COM</literal>)
+        is what is seen as the system username when mapping.
        </para>
       </listitem>
      </varlistentry>
