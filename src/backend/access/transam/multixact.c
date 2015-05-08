@@ -166,6 +166,11 @@
 	(MXOffsetToFlagsOffset(xid) + MULTIXACT_FLAGBYTES_PER_GROUP + \
 	 ((xid) % MULTIXACT_MEMBERS_PER_MEMBERGROUP) * sizeof(TransactionId))
 
+/* Multixact members wraparound thresholds. */
+#define MULTIXACT_MEMBER_SAFE_THRESHOLD		(MaxMultiXactOffset / 4)
+#define MULTIXACT_MEMBER_DANGER_THRESHOLD	\
+	(MaxMultiXactOffset - MaxMultiXactOffset / 4)
+
 
 /*
  * Links to shared-memory data structures for MultiXact control
@@ -2595,6 +2600,89 @@ find_multixact_start(MultiXactId multi)
 	LWLockRelease(MultiXactOffsetControlLock);
 
 	return offset;
+}
+
+/*
+ * Determine how many multixacts, and how many multixact members, currently
+ * exist.
+ */
+static void
+ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
+{
+	MultiXactOffset nextOffset;
+	MultiXactOffset oldestOffset;
+	MultiXactId oldestMultiXactId;
+	MultiXactId nextMultiXactId;
+
+	LWLockAcquire(MultiXactGenLock, LW_SHARED);
+	nextOffset = MultiXactState->nextOffset;
+	oldestMultiXactId = MultiXactState->oldestMultiXactId;
+	nextMultiXactId = MultiXactState->nextMXact;
+	LWLockRelease(MultiXactGenLock);
+
+	oldestOffset = find_multixact_start(oldestMultiXactId);
+	*members = nextOffset - oldestOffset;
+	*multixacts = nextMultiXactId - oldestMultiXactId;
+}
+
+/*
+ * Multixact members can be removed once the multixacts that refer to them
+ * are older than every datminxmid.  autovacuum_multixact_freeze_max_age and
+ * vacuum_multixact_freeze_table_age work together to make sure we never have
+ * too many multixacts; we hope that, at least under normal circumstances,
+ * this will also be sufficient to keep us from using too many offsets.
+ * However, if the average multixact has many members, we might exhaust the
+ * members space while still using few enough members that these limits fail
+ * to trigger full table scans for relminmxid advancement.  At that point,
+ * we'd have no choice but to start failing multixact-creating operations
+ * with an error.
+ *
+ * To prevent that, if more than a threshold portion of the members space is
+ * used, we effectively reduce autovacuum_multixact_freeze_max_age and
+ * to a value just less than the number of multixacts in use.  We hope that
+ * this will quickly trigger autovacuuming on the table or tables with the
+ * oldest relminmxid, thus allowing datminmxid values to advance and removing
+ * some members.  
+ *
+ * As the fraction of the member space currently in use grows, we become
+ * more aggressive in clamping this value.  That not only causes autovacuum
+ * to ramp up, but also makes any manual vacuums the user issues more
+ * aggressive.  This happens because vacuum_set_xid_limits() clamps the
+ * freeze table and and the minimum freeze age based on the effective
+ * autovacuum_multixact_freeze_max_age this function returns.  In the worst
+ * case, we'll claim the freeze_max_age to zero, and every vacuum of any
+ * table will try to freeze every multixact.
+ *
+ * It's possible that these thresholds should be user-tunable, but for now
+ * we keep it simple.
+ */
+int
+MultiXactMemberFreezeThreshold(void)
+{
+	MultiXactOffset members;
+	uint32 multixacts;
+	uint32 victim_multixacts;
+	double fraction;
+
+	ReadMultiXactCounts(&multixacts, &members);
+
+	/* If member space utilization is low, no special action is required. */
+	if (members <= MULTIXACT_MEMBER_SAFE_THRESHOLD)
+		return autovacuum_multixact_freeze_max_age;
+
+	/*
+	 * Compute a target for relminmxid advancement.  The number of multixacts
+	 * we try to eliminate from the system is based on how far we are past
+	 * MULTIXACT_MEMBER_SAFE_THRESHOLD.
+	 */
+	fraction = (double) (members - MULTIXACT_MEMBER_SAFE_THRESHOLD) /
+		(MULTIXACT_MEMBER_DANGER_THRESHOLD - MULTIXACT_MEMBER_SAFE_THRESHOLD);
+	victim_multixacts = multixacts * fraction;
+
+	/* fraction could be > 1.0, but lowest possible freeze age is zero */
+	if (victim_multixacts > multixacts)
+		return 0;
+	return multixacts - victim_multixacts;
 }
 
 /*
