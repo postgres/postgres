@@ -1376,6 +1376,19 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	hbaline->ldapscope = LDAP_SCOPE_SUBTREE;
 #endif
 
+	/*
+	 * For GSS and SSPI, set the default value of include_realm to true.
+	 * Having include_realm set to false is dangerous in multi-realm
+	 * situations and is generally considered bad practice.  We keep the
+	 * capability around for backwards compatibility, but we might want to
+	 * remove it at some point in the future.  Users who still need to strip
+	 * the realm off would be better served by using an appropriate regex in
+	 * a pg_ident.conf mapping.
+	 */
+	if (hbaline->auth_method == uaGSS ||
+		hbaline->auth_method == uaSSPI)
+		hbaline->include_realm = true;
+
 	if (strcmp(name, "map") == 0)
 	{
 		if (hbaline->auth_method != uaIdent &&

@@ -947,15 +947,24 @@ omicron         bryanh                  guest1
    </para>
 
    <para>
-    Client principals must have their <productname>PostgreSQL</> database user
-    name as their first component, for example
-    <literal>pgusername@realm</>.  Alternatively, you can use a user name
-    mapping to map from the first component of the principal name to the
-    database user name.  By default, the realm of the client is
-    not checked by <productname>PostgreSQL</>. If you have cross-realm
-    authentication enabled and need to verify the realm, use the
-    <literal>krb_realm</> parameter, or enable <literal>include_realm</>
-    and use user name mapping to check the realm.
+    Client principals can be mapped to different <productname>PostgreSQL</>
+    database user names with <filename>pg_ident.conf</>.  For example,
+    <literal>pgusername@realm</> could be mapped to just <literal>pgusername</>.
+    Alternatively, you can use the full <literal>username@realm</> principal as
+    the role name in <productname>PostgreSQL</> without any mapping.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> also supports a parameter to strip the realm from
+    the principal.  This method is supported for backwards compatibility and is
+    strongly discouraged as it is then impossible to distinguish different users
+    with the same username but coming from different realms.  To enable this,
+    set <literal>include_realm</> to 0.  For simple single-realm
+    installations, <literal>include_realm</> combined with the
+    <literal>krb_realm</> parameter (which checks that the realm provided
+    matches exactly what is in the krb_realm parameter) would be a secure but
+    less capable option compared to specifying an explicit mapping in
+    <filename>pg_ident.conf</>.
    </para>
 
    <para>
@@ -997,10 +1006,13 @@ omicron         bryanh                  guest1
       <term><literal>include_realm</literal></term>
       <listitem>
        <para>
-        If set to 1, the realm name from the authenticated user
-        principal is included in the system user name that's passed through
-        user name mapping (<xref linkend="auth-username-maps">). This is
-        useful for handling users from multiple realms.
+        If set to 0, the realm name from the authenticated user principal is
+        stripped off before being passed through the user name mapping
+        (<xref linkend="auth-username-maps">). This is discouraged and is
+        primairly available for backwards compatibility as it is not secure
+        in multi-realm environments unless krb_realm is also used.  Users
+        are recommended to leave include_realm set to the default (1) and to
+        provide an explicit mapping in <filename>pg_ident.conf</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1010,12 +1022,15 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details. For a Kerberos
-        principal <literal>username/hostbased@EXAMPLE.COM</literal>, the
-        user name used for mapping is <literal>username/hostbased</literal>
-        if <literal>include_realm</literal> is disabled, and
-        <literal>username/hostbased@EXAMPLE.COM</literal> if
-        <literal>include_realm</literal> is enabled.
+        <xref linkend="auth-username-maps"> for details.  For a GSSAPI/Kerberos
+        principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
+        commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
+        user name used for mapping is
+        <literal>username@EXAMPLE.COM</literal> (or
+        <literal>username/hostbased@EXAMPLE.COM</literal>, respectfully),
+        unless <literal>include_realm</literal> has been set to 0, in which case
+        <literal>username</literal> (or <literal>username/hostbased</literal>)
+        is what is seen as the system username when mapping.
        </para>
       </listitem>
      </varlistentry>
@@ -1070,10 +1085,13 @@ omicron         bryanh                  guest1
       <term><literal>include_realm</literal></term>
       <listitem>
        <para>
-        If set to 1, the realm name from the authenticated user
-        principal is included in the system user name that's passed through
-        user name mapping (<xref linkend="auth-username-maps">). This is
-        useful for handling users from multiple realms.
+        If set to 0, the realm name from the authenticated user principal is
+        stripped off before being passed through the user name mapping
+        (<xref linkend="auth-username-maps">). This is discouraged and is
+        primairly available for backwards compatibility as it is not secure
+        in multi-realm environments unless krb_realm is also used.  Users
+        are recommended to leave include_realm set to the default (1) and to
+        provide an explicit mapping in <filename>pg_ident.conf</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1083,7 +1101,15 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.
+        <xref linkend="auth-username-maps"> for details.  For a SSPI/Kerberos
+        principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
+        commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
+        user name used for mapping is
+        <literal>username@EXAMPLE.COM</literal> (or
+        <literal>username/hostbased@EXAMPLE.COM</literal>, respectfully),
+        unless <literal>include_realm</literal> has been set to 0, in which case
+        <literal>username</literal> (or <literal>username/hostbased</literal>)
+        is what is seen as the system username when mapping.
        </para>
       </listitem>
      </varlistentry>
