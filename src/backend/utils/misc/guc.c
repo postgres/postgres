@@ -3678,6 +3678,22 @@ static struct config_generic **guc_variables;
 /* Current number of variables contained in the vector */
 static int	num_guc_variables;
 
+/*
+ * Lookup of variables for pg_file_settings view.
+ * guc_file_variables is an array of length num_guc_file_variables.
+ */
+typedef struct ConfigFileVariable
+{
+	char	*name;
+	char	*value;
+	char	*filename;
+	int		sourceline;
+} ConfigFileVariable;
+static struct ConfigFileVariable *guc_file_variables;
+
+/* Number of file variables */
+static int	num_guc_file_variables;
+
 /* Vector capacity */
 static int	size_guc_variables;
 
@@ -8146,6 +8162,110 @@ show_all_settings(PG_FUNCTION_ARGS)
 		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
 	}
+}
+
+/*
+ * show_all_file_settings
+ *
+ * returns a table of all parameter settings in all configuration files
+ * which includes the config file path/name, filename, a sequence number
+ * indicating when we loaded it, the parameter name, and the value it is
+ * set to.
+ *
+ * Note: no filtering is done here, instead we depend on the GRANT system
+ * to prevent unprivileged users from accessing this function or the view
+ * built on top of it.
+ */
+Datum
+show_all_file_settings(PG_FUNCTION_ARGS)
+{
+#define NUM_PG_FILE_SETTINGS_ATTS 5
+	FuncCallContext *funcctx;
+	TupleDesc	tupdesc;
+	int			call_cntr;
+	int			max_calls;
+	AttInMetadata *attinmeta;
+	MemoryContext oldcontext;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/*
+		 * need a tuple descriptor representing NUM_PG_SETTINGS_ATTS columns
+		 * of the appropriate types
+		 */
+
+		tupdesc = CreateTemplateTupleDesc(NUM_PG_FILE_SETTINGS_ATTS, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "sourcefile",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "sourceline",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "seqno",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "setting",
+						   TEXTOID, -1, 0);
+
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+		funcctx->max_calls = num_guc_file_variables;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	attinmeta = funcctx->attinmeta;
+
+	if (call_cntr < max_calls)
+	{
+		char	   *values[NUM_PG_FILE_SETTINGS_ATTS];
+		HeapTuple	tuple;
+		Datum		result;
+		ConfigFileVariable conf;
+		char		buffer[12]; /* must be at least 12, per pg_ltoa */
+
+		/* Check to avoid going past end of array */
+		if (call_cntr > num_guc_file_variables)
+			SRF_RETURN_DONE(funcctx);
+
+		conf = guc_file_variables[call_cntr];
+
+		/* sourcefile */
+		values[0] = conf.filename;
+
+		/* sourceline */
+		pg_ltoa(conf.sourceline, buffer);
+		values[1] = pstrdup(buffer);
+
+		/* seqno */
+		pg_ltoa(call_cntr + 1, buffer);
+		values[2] = pstrdup(buffer);
+
+		/* name */
+		values[3] = conf.name;
+
+		/* setting */
+		values[4] = conf.value;
+
+		/* build a tuple */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* make the tuple into a datum */
+		result = HeapTupleGetDatum(tuple);
+
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+	else
+	{
+		SRF_RETURN_DONE(funcctx);
+	}
+
 }
 
 static char *

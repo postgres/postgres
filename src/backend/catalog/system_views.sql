@@ -411,6 +411,12 @@ CREATE RULE pg_settings_n AS
 
 GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
 
+CREATE VIEW pg_file_settings AS
+   SELECT * FROM pg_show_all_file_settings() AS A;
+
+REVOKE ALL on pg_file_settings FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION pg_show_all_file_settings() FROM PUBLIC;
+
 CREATE VIEW pg_timezone_abbrevs AS
     SELECT * FROM pg_timezone_abbrevs();
 

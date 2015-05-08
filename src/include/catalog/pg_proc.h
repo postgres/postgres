@@ -3060,6 +3060,8 @@ DATA(insert OID = 2078 (  set_config		PGNSP PGUID 12 1 0 0 0 f f f f f f v 3 0 2
 DESCR("SET X as a function");
 DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 1 1000 0 0 f f f f t t s 0 0 2249 "" "{25,25,25,25,25,25,25,25,25,25,25,1009,25,25,25,23}" "{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}" "{name,setting,unit,category,short_desc,extra_desc,context,vartype,source,min_val,max_val,enumvals,boot_val,reset_val,sourcefile,sourceline}" _null_ _null_ show_all_settings _null_ _null_ _null_ ));
 DESCR("SHOW ALL as a function");
+DATA(insert OID = 3329 (  pg_show_all_file_settings	PGNSP PGUID 12 1 1000 0 0 f f f f t t s 0 0 2249 "" "{25,23,23,25,25}" "{o,o,o,o,o}" "{sourcefile,sourceline,seqno,name,setting}" _null_ _null_ show_all_file_settings _null_ _null_ _null_ ));
+DESCR("show config file settings");
 DATA(insert OID = 1371 (  pg_lock_status   PGNSP PGUID 12 1 1000 0 0 f f f f t t v 0 0 2249 "" "{25,26,26,23,21,25,28,26,26,21,25,23,25,16,16}" "{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}" "{locktype,database,relation,page,tuple,virtualxid,transactionid,classid,objid,objsubid,virtualtransaction,pid,mode,granted,fastpath}" _null_ _null_ pg_lock_status _null_ _null_ _null_ ));
 DESCR("view system lock information");
 DATA(insert OID = 1065 (  pg_prepared_xact PGNSP PGUID 12 1 1000 0 0 f f f f t t v 0 0 2249 "" "{28,25,1184,26,26}" "{o,o,o,o,o}" "{transaction,gid,prepared,ownerid,dbid}" _null_ _null_ pg_prepared_xact _null_ _null_ _null_ ));

@@ -1312,6 +1312,12 @@ pg_cursors| SELECT c.name,
     c.is_scrollable,
     c.creation_time
    FROM pg_cursor() c(name, statement, is_holdable, is_binary, is_scrollable, creation_time);
+pg_file_settings| SELECT a.sourcefile,
+    a.sourceline,
+    a.seqno,
+    a.name,
+    a.setting
+   FROM pg_show_all_file_settings() a(sourcefile, sourceline, seqno, name, setting);
 pg_group| SELECT pg_authid.rolname AS groname,
     pg_authid.oid AS grosysid,
     ARRAY( SELECT pg_auth_members.member

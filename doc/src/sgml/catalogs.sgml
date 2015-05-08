@@ -7560,6 +7560,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link></entry>
+      <entry>file location of parameter settings</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-shadow"><structname>pg_shadow</structname></link></entry>
       <entry>database users</entry>
      </row>
@@ -9172,6 +9177,79 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
  </sect1>
+
+ <sect1 id="view-pg-file-settings">
+  <title><structname>pg_file_settings</structname></title>
+
+  <indexterm zone="view-pg-file-settings">
+   <primary>pg_file_settings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_file_settings</structname> provides the file
+   name, line number and value of all parameters which are set through
+   configuration files.
+   In contrast to <structname>pg_settings</structname>, a row is provided for
+   each occurrence of the parameter across all configuration files. This is helpful
+   for discovering why one value may have been used in preference to another
+   when the parameters were loaded.
+  </para>
+
+  <table>
+   <title><structname>pg_file_settings</> Columns</title>
+
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Name</entry>
+     <entry>Type</entry>
+     <entry>Description</entry>
+    </row>
+   </thead>
+   <tbody>
+    <row>
+     <entry><structfield>sourcefile</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>Path to and name of the configration file</entry>
+    </row>
+    <row>
+     <entry><structfield>sourceline</structfield></entry>
+     <entry><structfield>integer</structfield></entry>
+     <entry>
+      Line number within the configuration file where the value was set
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>seqno</structfield></entry>
+     <entry><structfield>integer</structfield></entry>
+     <entry>Order in which the setting was loaded</entry>
+    </row>
+    <row>
+     <entry><structfield>name</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>Run-time configuration parameter name</entry>
+    </row>
+    <row>
+     <entry><structfield>setting</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>value of the parameter</entry>
+    </row>
+   </tbody>
+  </tgroup>
+ </table>
+
+  <para>
+   See <xref linkend="config-setting"> for more information about the various
+   ways to change these parameters.
+  </para>
+
+  <para>
+   The <structname>pg_file_settings</structname> view cannot be modified
+   directly as it represents information, as read in at server start or
+   reload time, about all parameter settings across all configuration files.
+  </para>
+
+</sect1>
 
  <sect1 id="view-pg-shadow">
   <title><structname>pg_shadow</structname></title>
