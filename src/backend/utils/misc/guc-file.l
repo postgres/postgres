@@ -604,12 +604,12 @@ GUC_flex_fatal(const char *msg)
  *	config_file: absolute or relative path name of the configuration file
  *	depth: recursion depth (should be 0 in the outermost call)
  *	elevel: error logging level to use
- * Output parameters:
+ * Input/Output parameters:
  *	head_p, tail_p: head and tail of linked list of name/value pairs
  *
- * *head_p and *tail_p must be initialized to NULL before calling the outer
- * recursion level.  On exit, they contain a list of name-value pairs read
- * from the input file(s).
+ * *head_p and *tail_p must either be initialized to NULL or valid pointers
+ * to a ConfigVariable list before calling the outer recursion level.  Any
+ * name-value pairs read from the input file(s) will be added to the list.
  *
  * Returns TRUE if successful, FALSE if an error occurred.  The error has
  * already been ereport'd, it is only necessary for the caller to clean up
