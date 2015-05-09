@@ -2818,7 +2818,7 @@ getObjectDescription(const ObjectAddress *object)
 		case OCLASS_ROLE:
 			{
 				appendStringInfo(&buffer, _("role %s"),
-								 GetUserNameFromId(object->objectId));
+								 GetUserNameFromId(object->objectId, false));
 				break;
 			}
 
@@ -2884,7 +2884,7 @@ getObjectDescription(const ObjectAddress *object)
 				ReleaseSysCache(tup);
 
 				if (OidIsValid(useid))
-					usename = GetUserNameFromId(useid);
+					usename = GetUserNameFromId(useid, false);
 				else
 					usename = "public";
 
@@ -2924,28 +2924,28 @@ getObjectDescription(const ObjectAddress *object)
 					case DEFACLOBJ_RELATION:
 						appendStringInfo(&buffer,
 										 _("default privileges on new relations belonging to role %s"),
-									  GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_SEQUENCE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new sequences belonging to role %s"),
-									  GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_FUNCTION:
 						appendStringInfo(&buffer,
 										 _("default privileges on new functions belonging to role %s"),
-									  GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_TYPE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new types belonging to role %s"),
-									  GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					default:
 						/* shouldn't get here */
 						appendStringInfo(&buffer,
 								_("default privileges belonging to role %s"),
-									  GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 				}
 
@@ -4214,7 +4214,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 			{
 				char	   *username;
 
-				username = GetUserNameFromId(object->objectId);
+				username = GetUserNameFromId(object->objectId, false);
 				if (objname)
 					*objname = list_make1(username);
 				appendStringInfoString(&buffer,
@@ -4295,7 +4295,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				ReleaseSysCache(tup);
 
 				if (OidIsValid(useid))
-					usename = GetUserNameFromId(useid);
+					usename = GetUserNameFromId(useid, false);
 				else
 					usename = "public";
 
@@ -4339,7 +4339,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				defacl = (Form_pg_default_acl) GETSTRUCT(tup);
 
-				username = GetUserNameFromId(defacl->defaclrole);
+				username = GetUserNameFromId(defacl->defaclrole, false);
 				appendStringInfo(&buffer,
 								 "for role %s",
 								 quote_identifier(username));

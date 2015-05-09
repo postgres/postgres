@@ -40,6 +40,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "utils/acl.h"
 
 static char *format_operator_internal(Oid operator_oid, bool force_qualify);
 static char *format_procedure_internal(Oid procedure_oid, bool force_qualify);
@@ -1552,6 +1553,109 @@ regdictionarysend(PG_FUNCTION_ARGS)
 	/* Exactly the same as oidsend, so share code */
 	return oidsend(fcinfo);
 }
+
+/*
+ * regrolein	- converts "rolename" to role OID
+ *
+ * We also accept a numeric OID, for symmetry with the output routine.
+ *
+ * '-' signifies unknown (OID 0).  In all other cases, the input must
+ * match an existing pg_authid entry.
+ *
+ * This function is not needed in bootstrap mode, so we don't worry about
+ * making it work then.
+ */
+Datum
+regrolein(PG_FUNCTION_ARGS)
+{
+	char	   *role_name_or_oid = PG_GETARG_CSTRING(0);
+	Oid			result;
+
+	/* '-' ? */
+	if (strcmp(role_name_or_oid, "-") == 0)
+		PG_RETURN_OID(InvalidOid);
+
+	/* Numeric OID? */
+	if (role_name_or_oid[0] >= '0' &&
+		role_name_or_oid[0] <= '9' &&
+		strspn(role_name_or_oid, "0123456789") == strlen(role_name_or_oid))
+	{
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
+										 CStringGetDatum(role_name_or_oid)));
+		PG_RETURN_OID(result);
+	}
+
+	/* Normal case: see if the name matches any pg_authid entry. */
+	result = get_role_oid(role_name_or_oid, false);
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * to_regrole		- converts "rolename" to role OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regrole(PG_FUNCTION_ARGS)
+{
+	char	   *role_name = PG_GETARG_CSTRING(0);
+	Oid			result;
+
+	result = get_role_oid(role_name, true);
+
+	if (OidIsValid(result))
+		PG_RETURN_OID(result);
+	else
+		PG_RETURN_NULL();
+}
+
+/*
+ * regroleout		- converts role OID to "role_name"
+ */
+Datum
+regroleout(PG_FUNCTION_ARGS)
+{
+	Oid			roleoid = PG_GETARG_OID(0);
+	char	   *result;
+
+
+	if (roleoid == InvalidOid)
+	{
+		result = pstrdup("-");
+		PG_RETURN_CSTRING(result);
+	}
+
+	result = GetUserNameFromId(roleoid, true);
+	if (!result)
+	{
+		/* If OID doesn't match any role, return it numerically */
+		result = (char *) palloc(NAMEDATALEN);
+		snprintf(result, NAMEDATALEN, "%u", roleoid);
+	}
+	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regrolerecv	- converts external binary format to regrole
+ */
+Datum
+regrolerecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regrolesend	- converts regrole to binary format
+ */
+Datum
+regrolesend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
 
 
 /*

@@ -3481,6 +3481,13 @@ DESCR("convert type name to regtype");
 DATA(insert OID = 1079 (  regclass			PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2205 "25" _null_ _null_ _null_ _null_ _null_	text_regclass _null_ _null_ _null_ ));
 DESCR("convert text to regclass");
 
+DATA(insert OID = 4098 (  regrolein			PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 4096 "2275" _null_ _null_ _null_ _null_ _null_ regrolein _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 4092 (  regroleout		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "4096" _null_ _null_ _null_ _null_ _null_ regroleout _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 4093 (  to_regrole		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 4096 "2275" _null_ _null_ _null_ _null_ _null_ to_regrole _null_ _null_ _null_ ));
+DESCR("convert role name to regrole");
+
 DATA(insert OID = 2246 ( fmgr_internal_validator PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2278 "26" _null_ _null_ _null_ _null_ _null_ fmgr_internal_validator _null_ _null_ _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 2247 ( fmgr_c_validator	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2278 "26" _null_ _null_ _null_ _null_ _null_ fmgr_c_validator _null_ _null_ _null_ ));
@@ -3875,6 +3882,11 @@ DESCR("I/O");
 DATA(insert OID = 2454 (  regtyperecv		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2206 "2281" _null_ _null_ _null_ _null_ _null_ regtyperecv _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2455 (  regtypesend		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 17 "2206" _null_ _null_ _null_ _null_ _null_	regtypesend _null_ _null_ _null_ ));
+DESCR("I/O");
+
+DATA(insert OID = 4094 (  regrolerecv	  	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 4096 "2281" _null_ _null_ _null_ _null_ _null_	regrolerecv _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 4095 (  regrolesend	       PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 17 "4096" _null_ _null_ _null_ _null_ _null_	regrolesend _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2456 (  bit_recv			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 1560 "2281 26 23" _null_ _null_ _null_ _null_  _null_ bit_recv _null_ _null_ _null_ ));
 DESCR("I/O");

@@ -263,13 +263,13 @@ namestrcmp(Name name, const char *str)
 Datum
 current_user(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserNameFromId(GetUserId()))));
+	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserNameFromId(GetUserId(), false))));
 }
 
 Datum
 session_user(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserNameFromId(GetSessionUserId()))));
+	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserNameFromId(GetSessionUserId(), false))));
 }
 
 

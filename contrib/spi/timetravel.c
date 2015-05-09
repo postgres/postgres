@@ -174,7 +174,7 @@ timetravel(PG_FUNCTION_ARGS)
 	}
 
 	/* create fields containing name */
-	newuser = CStringGetTextDatum(GetUserNameFromId(GetUserId()));
+	newuser = CStringGetTextDatum(GetUserNameFromId(GetUserId(), false));
 
 	nulltext = (Datum) NULL;
 

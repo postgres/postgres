@@ -2,6 +2,7 @@
 -- regproc
 --
 /* If objects exist, return oids */
+CREATE ROLE regtestrole;
 -- without schemaname
 SELECT regoper('||/');
  regoper 
@@ -39,6 +40,12 @@ SELECT regtype('int4');
  integer
 (1 row)
 
+SELECT regrole('regtestrole');
+   regrole   
+-------------
+ regtestrole
+(1 row)
+
 SELECT to_regoper('||/');
  to_regoper 
 ------------
@@ -73,6 +80,12 @@ SELECT to_regtype('int4');
  to_regtype 
 ------------
  integer
+(1 row)
+
+SELECT to_regrole('regtestrole');
+ to_regrole  
+-------------
+ regtestrole
 (1 row)
 
 -- with schemaname
@@ -143,10 +156,11 @@ SELECT to_regtype('pg_catalog.int4');
 (1 row)
 
 /* If objects don't exist, raise errors. */
+DROP ROLE regtestrole;
 -- without schemaname
 SELECT regoper('||//');
 ERROR:  operator does not exist: ||//
-LINE 3: SELECT regoper('||//');
+LINE 1: SELECT regoper('||//');
                        ^
 SELECT regoperator('++(int4,int4)');
 ERROR:  operator does not exist: ++(int4,int4)
@@ -167,6 +181,10 @@ LINE 1: SELECT regclass('pg_classes');
 SELECT regtype('int3');
 ERROR:  type "int3" does not exist
 LINE 1: SELECT regtype('int3');
+                       ^
+SELECT regrole('regtestrole');
+ERROR:  role "regtestrole" does not exist
+LINE 1: SELECT regrole('regtestrole');
                        ^
 -- with schemaname
 SELECT regoper('ng_catalog.||/');
@@ -227,6 +245,12 @@ SELECT to_regclass('pg_classes');
 
 SELECT to_regtype('int3');
  to_regtype 
+------------
+ 
+(1 row)
+
+SELECT to_regrole('regtestrole');
+ to_regrole 
 ------------
  
 (1 row)

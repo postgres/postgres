@@ -296,7 +296,7 @@ extern void InitStandaloneProcess(const char *argv0);
 
 extern void SetDatabasePath(const char *path);
 
-extern char *GetUserNameFromId(Oid roleid);
+extern char *GetUserNameFromId(Oid roleid, bool noerr);
 extern Oid	GetUserId(void);
 extern Oid	GetOuterUserId(void);
 extern Oid	GetSessionUserId(void);

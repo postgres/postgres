@@ -4321,8 +4321,9 @@ SET xmloption TO { DOCUMENT | CONTENT };
     an object identifier.  There are also several alias types for
     <type>oid</>: <type>regproc</>, <type>regprocedure</>,
     <type>regoper</>, <type>regoperator</>, <type>regclass</>,
-    <type>regtype</>, <type>regconfig</>, and <type>regdictionary</>.
-    <xref linkend="datatype-oid-table"> shows an overview.
+    <type>regtype</>, <type>regrole</>, <type>regconfig</>, and
+    <type>regdictionary</>.  <xref linkend="datatype-oid-table"> shows
+    an overview.
    </para>
 
    <para>
@@ -4431,6 +4432,13 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>regrole</></entry>
+        <entry><structname>pg_authid</></entry>
+        <entry>role name</entry>
+        <entry><literal>smithee</></entry>
+       </row>
+
+       <row>
         <entry><type>regconfig</></entry>
         <entry><structname>pg_ts_config</></entry>
         <entry>text search configuration</entry>
@@ -4448,7 +4456,8 @@ SELECT * FROM pg_attribute
     </table>
 
    <para>
-    All of the OID alias types accept schema-qualified names, and will
+    All of the OID alias types for objects grouped by namespace accept
+    schema-qualified names, and will
     display schema-qualified names on output if the object would not
     be found in the current search path without being qualified.
     The <type>regproc</> and <type>regoper</> alias types will only
@@ -4460,7 +4469,7 @@ SELECT * FROM pg_attribute
    </para>
 
    <para>
-    An additional property of the OID alias types is the creation of
+    An additional property of most of the OID alias types is the creation of
     dependencies.  If a
     constant of one of these types appears in a stored expression
     (such as a column default expression or view), it creates a dependency
@@ -4470,7 +4479,17 @@ SELECT * FROM pg_attribute
     understands that the default expression depends on the sequence
     <literal>my_seq</>; the system will not let the sequence be dropped
     without first removing the default expression.
+    <type>regrole</> is the only exception for the property. Constants of this
+    type are not allowed in such expressions.
    </para>
+
+   <note>
+   <para>
+    The OID alias types do not completely follow transaction isolation
+    rules. The planner also treats them as simple constants, which may
+    result in sub-optimal planning.
+   </para>
+   </note>
 
    <para>
     Another identifier type used by the system is <type>xid</>, or transaction

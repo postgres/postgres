@@ -113,6 +113,8 @@ static const struct typinfo TypInfo[] = {
 	F_REGPROCIN, F_REGPROCOUT},
 	{"regtype", REGTYPEOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_REGTYPEIN, F_REGTYPEOUT},
+	{"regrole", REGROLEOID, 0, 4, true, 'i', 'p', InvalidOid,
+	F_REGROLEIN, F_REGROLEOUT},
 	{"text", TEXTOID, 0, -1, false, 'i', 'x', DEFAULT_COLLATION_OID,
 	F_TEXTIN, F_TEXTOUT},
 	{"oid", OIDOID, 0, 4, true, 'i', 'p', InvalidOid,

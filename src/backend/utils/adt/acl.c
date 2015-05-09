@@ -4878,7 +4878,7 @@ check_is_member_of_role(Oid member, Oid role)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be member of role \"%s\"",
-						GetUserNameFromId(role))));
+						GetUserNameFromId(role, false))));
 }
 
 /*
