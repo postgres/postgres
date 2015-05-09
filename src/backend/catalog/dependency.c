@@ -1603,6 +1603,14 @@ find_expr_references_walker(Node *node,
 										   context->addrs);
 					break;
 
+				case REGNAMESPACEOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists1(NAMESPACEOID,
+											  ObjectIdGetDatum(objoid)))
+						add_object_address(OCLASS_SCHEMA, objoid, 0,
+										   context->addrs);
+					break;
+
 				/*
 				 * Dependencies for regrole should be shared among all
 				 * databases, so explicitly inhibit to have dependencies.

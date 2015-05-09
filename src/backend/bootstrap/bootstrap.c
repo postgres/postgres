@@ -115,6 +115,8 @@ static const struct typinfo TypInfo[] = {
 	F_REGTYPEIN, F_REGTYPEOUT},
 	{"regrole", REGROLEOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_REGROLEIN, F_REGROLEOUT},
+	{"regnamespace", REGNAMESPACEOID, 0, 4, true, 'i', 'p', InvalidOid,
+	F_REGNAMESPACEIN, F_REGNAMESPACEOUT},
 	{"text", TEXTOID, 0, -1, false, 'i', 'x', DEFAULT_COLLATION_OID,
 	F_TEXTIN, F_TEXTOUT},
 	{"oid", OIDOID, 0, 4, true, 'i', 'p', InvalidOid,

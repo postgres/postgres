@@ -1656,7 +1656,103 @@ regrolesend(PG_FUNCTION_ARGS)
 	return oidsend(fcinfo);
 }
 
+/*
+ * regnamespacein		- converts "nspname" to namespace OID
+ *
+ * We also accept a numeric OID, for symmetry with the output routine.
+ *
+ * '-' signifies unknown (OID 0).  In all other cases, the input must
+ * match an existing pg_namespace entry.
+ */
+Datum
+regnamespacein(PG_FUNCTION_ARGS)
+{
+	char	   *nsp_name_or_oid = PG_GETARG_CSTRING(0);
+	Oid			result = InvalidOid;
 
+	/* '-' ? */
+	if (strcmp(nsp_name_or_oid, "-") == 0)
+		PG_RETURN_OID(InvalidOid);
+
+	/* Numeric OID? */
+	if (nsp_name_or_oid[0] >= '0' &&
+		nsp_name_or_oid[0] <= '9' &&
+		strspn(nsp_name_or_oid, "0123456789") == strlen(nsp_name_or_oid))
+	{
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
+										CStringGetDatum(nsp_name_or_oid)));
+		PG_RETURN_OID(result);
+	}
+
+	/* Normal case: see if the name matches any pg_namespace entry. */
+	result = get_namespace_oid(nsp_name_or_oid, false);
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * to_regnamespace		- converts "nspname" to namespace OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regnamespace(PG_FUNCTION_ARGS)
+{
+	char	   *nsp_name = PG_GETARG_CSTRING(0);
+	Oid			result;
+
+	result = get_namespace_oid(nsp_name, true);
+
+	if (OidIsValid(result))
+		PG_RETURN_OID(result);
+	else
+		PG_RETURN_NULL();
+}
+
+/*
+ * regnamespaceout		- converts namespace OID to "nsp_name"
+ */
+Datum
+regnamespaceout(PG_FUNCTION_ARGS)
+{
+	Oid			nspid = PG_GETARG_OID(0);
+	char	   *result;
+
+	if (nspid == InvalidOid)
+	{
+		result = pstrdup("-");
+		PG_RETURN_CSTRING(result);
+	}
+
+	result = get_namespace_name(nspid);
+	if (!result)
+	{
+		/* If OID doesn't match any namespace, return it numerically */
+		result = (char *) palloc(NAMEDATALEN);
+		snprintf(result, NAMEDATALEN, "%u", nspid);
+	}
+	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regnamespacerecv	- converts external binary format to regnamespace
+ */
+Datum
+regnamespacerecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regnamespacesend		- converts regnamespace to binary format
+ */
+Datum
+regnamespacesend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
 
 /*
  * text_regclass: convert text to regclass

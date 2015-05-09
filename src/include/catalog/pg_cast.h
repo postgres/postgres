@@ -217,6 +217,13 @@ DATA(insert (	21 4096  313 i f ));
 DATA(insert (	23 4096    0 i b ));
 DATA(insert ( 4096	 20 1288 a f ));
 DATA(insert ( 4096	 23    0 a b ));
+DATA(insert (	26 4089    0 i b ));
+DATA(insert ( 4089	 26    0 i b ));
+DATA(insert (	20 4089 1287 i f ));
+DATA(insert (	21 4089  313 i f ));
+DATA(insert (	23 4089    0 i b ));
+DATA(insert ( 4089	 20 1288 a f ));
+DATA(insert ( 4089	 23    0 a b ));
 
 /*
  * String category

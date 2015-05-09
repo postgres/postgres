@@ -4321,9 +4321,9 @@ SET xmloption TO { DOCUMENT | CONTENT };
     an object identifier.  There are also several alias types for
     <type>oid</>: <type>regproc</>, <type>regprocedure</>,
     <type>regoper</>, <type>regoperator</>, <type>regclass</>,
-    <type>regtype</>, <type>regrole</>, <type>regconfig</>, and
-    <type>regdictionary</>.  <xref linkend="datatype-oid-table"> shows
-    an overview.
+    <type>regtype</>, <type>regrole</>, <type>regnamespace</>, 
+    <type>regconfig</>, and <type>regdictionary</>.
+    <xref linkend="datatype-oid-table"> shows an overview.
    </para>
 
    <para>
@@ -4436,6 +4436,13 @@ SELECT * FROM pg_attribute
         <entry><structname>pg_authid</></entry>
         <entry>role name</entry>
         <entry><literal>smithee</></entry>
+       </row>
+
+       <row>
+        <entry><type>regnamespace</></entry>
+        <entry><structname>pg_namespace</></entry>
+        <entry>namespace name</entry>
+        <entry><literal>pg_catalog</></entry>
        </row>
 
        <row>

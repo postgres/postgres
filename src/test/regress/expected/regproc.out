@@ -46,6 +46,12 @@ SELECT regrole('regtestrole');
  regtestrole
 (1 row)
 
+SELECT regnamespace('pg_catalog');
+ regnamespace 
+--------------
+ pg_catalog
+(1 row)
+
 SELECT to_regoper('||/');
  to_regoper 
 ------------
@@ -86,6 +92,12 @@ SELECT to_regrole('regtestrole');
  to_regrole  
 -------------
  regtestrole
+(1 row)
+
+SELECT to_regnamespace('pg_catalog');
+ to_regnamespace 
+-----------------
+ pg_catalog
 (1 row)
 
 -- with schemaname
@@ -186,6 +198,10 @@ SELECT regrole('regtestrole');
 ERROR:  role "regtestrole" does not exist
 LINE 1: SELECT regrole('regtestrole');
                        ^
+SELECT regnamespace('nonexistent');
+ERROR:  schema "nonexistent" does not exist
+LINE 1: SELECT regnamespace('nonexistent');
+                            ^
 -- with schemaname
 SELECT regoper('ng_catalog.||/');
 ERROR:  schema "ng_catalog" does not exist
@@ -252,6 +268,12 @@ SELECT to_regtype('int3');
 SELECT to_regrole('regtestrole');
  to_regrole 
 ------------
+ 
+(1 row)
+
+SELECT to_regnamespace('nonexistent');
+ to_regnamespace 
+-----------------
  
 (1 row)
 
