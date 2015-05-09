@@ -30,7 +30,7 @@ PostgreSQL documentation
       <arg choice="plain"><option>--schema</option></arg>
       <arg choice="plain"><option>-S</option></arg>
      </group>
-     <replaceable>table</replaceable>
+     <replaceable>schema</replaceable>
     </arg>
    </arg>
 
