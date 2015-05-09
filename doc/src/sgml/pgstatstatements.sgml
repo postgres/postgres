@@ -19,12 +19,22 @@
   This means that a server restart is needed to add or remove the module.
  </para>
 
+ <para>
+   When <filename>pg_stat_statements</filename> is loaded, it tracks
+   statistics across all databases of the server.  To access and manipulate
+   these statistics, the module provides a view, <structname>pg_stat_statements</>,
+   and the utility functions <function>pg_stat_statements_reset</> and
+   <function>pg_stat_statements</>.  These are not available globally but
+   can be enabled for a specific database with
+   <command>CREATE EXTENSION pg_stat_statements</>.
+ </para>
+
  <sect2>
   <title>The <structname>pg_stat_statements</structname> View</title>
 
   <para>
    The statistics gathered by the module are made available via a
-   system view named <structname>pg_stat_statements</>.  This view
+   view named <structname>pg_stat_statements</>.  This view
    contains one row for each distinct database ID, user ID and query
    ID (up to the maximum number of distinct statements that the module
    can track).  The columns of the view are shown in
@@ -216,19 +226,9 @@
   </table>
 
   <para>
-   This view, and the functions <function>pg_stat_statements_reset</>
-   and <function>pg_stat_statements</>, are available only in
-   databases they have been specifically installed into by installing
-   the <literal>pg_stat_statements</> extension.
-   However, statistics are tracked across all databases of the server
-   whenever the <filename>pg_stat_statements</filename> module is loaded
-   into the server, regardless of presence of the view.
-  </para>
-
-  <para>
    For security reasons, non-superusers are not allowed to see the SQL
-   text or <structfield>queryid</structfield> of queries executed by other users.  They can see
-   the statistics, however, if the view has been installed in their
+   text or <structfield>queryid</structfield> of queries executed by other users.
+   They can see the statistics, however, if the view has been installed in their
    database.
   </para>
 
