@@ -127,9 +127,13 @@ typedef struct Expr
  * upper-level plan nodes are reassigned to point to the outputs of their
  * subplans; for example, in a join node varno becomes INNER_VAR or OUTER_VAR
  * and varattno becomes the index of the proper element of that subplan's
- * target list.  But varnoold/varoattno continue to hold the original values.
- * The code doesn't really need varnoold/varoattno, but they are very useful
- * for debugging and interpreting completed plans, so we keep them around.
+ * target list.  Similarly, INDEX_VAR is used to identify Vars that reference
+ * an index column rather than a heap column.  (In ForeignScan and CustomScan
+ * plan nodes, INDEX_VAR is abused to signify references to columns of a
+ * custom scan tuple type.)  In all these cases, varnoold/varoattno hold the
+ * original values.  The code doesn't really need varnoold/varoattno, but they
+ * are very useful for debugging and interpreting completed plans, so we keep
+ * them around.
  */
 #define    INNER_VAR		65000		/* reference to inner subplan */
 #define    OUTER_VAR		65001		/* reference to outer subplan */

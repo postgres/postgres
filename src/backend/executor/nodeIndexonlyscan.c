@@ -442,10 +442,12 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	ExecAssignScanType(&indexstate->ss, tupDesc);
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result tuple type and projection info.  The node's
+	 * targetlist will contain Vars with varno = INDEX_VAR, referencing the
+	 * scan tuple.
 	 */
 	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
-	ExecAssignScanProjectionInfo(&indexstate->ss);
+	ExecAssignScanProjectionInfoWithVarno(&indexstate->ss, INDEX_VAR);
 
 	/*
 	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop

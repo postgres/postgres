@@ -175,8 +175,11 @@ GetForeignPlan (PlannerInfo *root,
      access path.  This is called at the end of query planning.
      The parameters are as for <function>GetForeignRelSize</>, plus
      the selected <structname>ForeignPath</> (previously produced by
-     <function>GetForeignPaths</>), the target list to be emitted by the
-     plan node, and the restriction clauses to be enforced by the plan node.
+     <function>GetForeignPaths</> or <function>GetForeignJoinPaths</>),
+     the target list to be emitted by the plan node,
+     and the restriction clauses to be enforced by the plan node.
+     (If the path is for a join rather than a base
+     relation, <literal>foreigntableid</> is <literal>InvalidOid</>.)
     </para>
 
     <para>
@@ -235,9 +238,12 @@ IterateForeignScan (ForeignScanState *node);
     </para>
 
     <para>
-     The rows returned must match the column signature of the foreign table
-     being scanned.  If you choose to optimize away fetching columns that
-     are not needed, you should insert nulls in those column positions.
+     The rows returned must match the <structfield>fdw_scan_tlist</> target
+     list if one was supplied, otherwise they must match the rowtype of the
+     foreign table being scanned.  If you choose to optimize away fetching
+     columns that are not needed, you should insert nulls in those column
+     positions, or else generate a <structfield>fdw_scan_tlist</> list with
+     those columns omitted.
     </para>
 
     <para>
@@ -271,6 +277,67 @@ EndForeignScan (ForeignScanState *node);
      End the scan and release resources.  It is normally not important
      to release palloc'd memory, but for example open files and connections
      to remote servers should be cleaned up.
+    </para>
+
+   </sect2>
+
+   <sect2 id="fdw-callbacks-join-scan">
+    <title>FDW Routines For Scanning Foreign Joins</title>
+
+    <para>
+     If an FDW supports performing foreign joins remotely (rather than
+     by fetching both tables' data and doing the join locally), it should
+     provide this callback function:
+    </para>
+
+    <para>
+<programlisting>
+void
+GetForeignJoinPaths (PlannerInfo *root,
+                     RelOptInfo *joinrel,
+                     RelOptInfo *outerrel,
+                     RelOptInfo *innerrel,
+                     JoinType jointype,
+                     JoinPathExtraData *extra);
+</programlisting>
+     Create possible access paths for a join of two (or more) foreign tables
+     that all belong to the same foreign server.  This optional
+     function is called during query planning.  As
+     with <function>GetForeignPaths</>, this function should
+     generate <structname>ForeignPath</> path(s) for the
+     supplied <literal>joinrel</>, and call <function>add_path</> to add these
+     paths to the set of paths considered for the join.  But unlike
+     <function>GetForeignPaths</>, it is not necessary that this function
+     succeed in creating at least one path, since paths involving local
+     joining are always possible.
+    </para>
+
+    <para>
+     Note that this function will be invoked repeatedly for the same join
+     relation, with different combinations of inner and outer relations; it is
+     the responsibility of the FDW to minimize duplicated work.
+    </para>
+
+    <para>
+     If a <structname>ForeignPath</> path is chosen for the join, it will
+     represent the entire join process; paths generated for the component
+     tables and subsidiary joins will not be used.  Subsequent processing of
+     the join path proceeds much as it does for a path scanning a single
+     foreign table.  One difference is that the <structfield>scanrelid</> of
+     the resulting <structname>ForeignScan</> plan node should be set to zero,
+     since there is no single relation that it represents; instead,
+     the <structfield>fs_relids</> field of the <structname>ForeignScan</>
+     node represents the set of relations that were joined.  (The latter field
+     is set up automatically by the core planner code, and need not be filled
+     by the FDW.)  Another difference is that, because the column list for a
+     remote join cannot be found from the system catalogs, the FDW must
+     fill <structfield>fdw_scan_tlist</> with an appropriate list
+     of <structfield>TargetEntry</> nodes, representing the set of columns
+     it will supply at runtime in the tuples it returns.
+    </para>
+
+    <para>
+     See <xref linkend="fdw-planning"> for additional information.
     </para>
 
    </sect2>
@@ -598,42 +665,6 @@ IsForeignRelUpdatable (Relation rel);
 
    </sect2>
 
-   <sect2>
-    <title>FDW Routines For Remote Joins</title>
-    <para>
-<programlisting>
-void
-GetForeignJoinPaths(PlannerInfo *root,
-                    RelOptInfo *joinrel,
-                    RelOptInfo *outerrel,
-                    RelOptInfo *innerrel,
-                    List *restrictlist,
-                    JoinType jointype,
-                    SpecialJoinInfo *sjinfo,
-                    SemiAntiJoinFactors *semifactors,
-                    Relids param_source_rels,
-                    Relids extra_lateral_rels);
-</programlisting>
-     Create possible access paths for a join of two foreign tables managed
-     by the same foreign data wrapper.
-     This optional function is called during query planning.
-    </para>
-    <para>
-     This function the FDW to add <structname>ForeignScan</> paths for the
-     supplied <literal>joinrel</>.  Typically, the FDW will send the whole
-     join to the remote server as a single query, as performing the join
-     remotely rather than locally is typically much more efficient.
-    </para>
-    <para>
-     Since we cannot construct the slot descriptor for a remote join from
-     the catalogs, the FDW should set the <structfield>scanrelid</> of the
-     <structname>ForeignScan</> to zero and <structfield>fdw_ps_tlist</>
-     to an appropriate list of <structfield>TargetEntry</> nodes.
-     Junk entries will be ignored, but can be present for the benefit of
-     deparsing performed by <command>EXPLAIN</>.
-    </para>
-   </sect2>
-
    <sect2 id="fdw-callbacks-explain">
     <title>FDW Routines for <command>EXPLAIN</></title>
 
@@ -904,10 +935,10 @@ GetForeignServerByName(const char *name, bool missing_ok);
 
     <para>
      The FDW callback functions <function>GetForeignRelSize</>,
-     <function>GetForeignPaths</>, <function>GetForeignPlan</>, and
-     <function>PlanForeignModify</> must fit into the workings of the
-     <productname>PostgreSQL</> planner.  Here are some notes about what
-     they must do.
+     <function>GetForeignPaths</>, <function>GetForeignPlan</>,
+     <function>PlanForeignModify</>, and <function>GetForeignJoinPaths</>
+     must fit into the workings of the <productname>PostgreSQL</> planner.
+     Here are some notes about what they must do.
     </para>
 
     <para>
@@ -934,7 +965,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      <literal>baserel-&gt;fdw_private</> is a <type>void</> pointer that is
      available for FDW planning functions to store information relevant to
      the particular foreign table.  The core planner does not touch it except
-     to initialize it to NULL when the <literal>baserel</> node is created.
+     to initialize it to NULL when the <literal>RelOptInfo</> node is created.
      It is useful for passing information forward from
      <function>GetForeignRelSize</> to <function>GetForeignPaths</> and/or
      <function>GetForeignPaths</> to <function>GetForeignPlan</>, thereby
@@ -1003,6 +1034,23 @@ GetForeignServerByName(const char *name, bool missing_ok);
     </para>
 
     <para>
+     Another <structname>ForeignScan</> field that can be filled by FDWs
+     is <structfield>fdw_scan_tlist</>, which describes the tuples returned by
+     the FDW for this plan node.  For simple foreign table scans this can be
+     set to <literal>NIL</>, implying that the returned tuples have the
+     rowtype declared for the foreign table.  A non-NIL value must be a
+     targetlist (list of <structname>TargetEntry</>s) containing Vars and/or
+     expressions representing the returned columns.  This might be used, for
+     example, to show that the FDW has omitted some columns that it noticed
+     won't be needed for the query.  Also, if the FDW can compute expressions
+     used by the query more cheaply than can be done locally, it could add
+     those expressions to <structfield>fdw_scan_tlist</>.  Note that join
+     plans (created from paths made by <function>GetForeignJoinPaths</>) must
+     always supply <structfield>fdw_scan_tlist</> to describe the set of
+     columns they will return.
+    </para>
+
+    <para>
      The FDW should always construct at least one path that depends only on
      the table's restriction clauses.  In join queries, it might also choose
      to construct path(s) that depend on join clauses, for example
@@ -1017,6 +1065,18 @@ GetForeignServerByName(const char *name, bool missing_ok);
      <replaceable>local_variable</> portion of the join clause would be added
      to <structfield>fdw_exprs</>, and then at run time the case works the
      same as for an ordinary restriction clause.
+    </para>
+
+    <para>
+     If an FDW supports remote joins, <function>GetForeignJoinPaths</> should
+     produce <structname>ForeignPath</>s for potential remote joins in much
+     the same way as <function>GetForeignPaths</> works for base tables.
+     Information about the intended join can be passed forward
+     to <function>GetForeignPlan</> in the same ways described above.
+     However, <structfield>baserestrictinfo</> is not relevant for join
+     relations; instead, the relevant join clauses for a particular join are
+     passed to <function>GetForeignJoinPaths</> as a separate parameter
+     (<literal>extra-&gt;restrictlist</>).
     </para>
 
     <para>

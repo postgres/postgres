@@ -41,11 +41,11 @@ extern Plan *optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
-extern Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
-				 Index scanrelid, List *fdw_exprs, List *fdw_private);
+				 Index scanrelid, List *fdw_exprs, List *fdw_private,
+				 List *fdw_scan_tlist);
 extern Append *make_append(List *appendplans, List *tlist);
 extern RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree, Plan *righttree, int wtParam,

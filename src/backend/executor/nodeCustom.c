@@ -22,12 +22,23 @@
 CustomScanState *
 ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 {
-	CustomScanState    *css;
-	Index				scan_relid = cscan->scan.scanrelid;
+	CustomScanState *css;
+	Relation	scan_rel = NULL;
+	Index		scanrelid = cscan->scan.scanrelid;
+	Index		tlistvarno;
 
-	/* populate a CustomScanState according to the CustomScan */
+	/*
+	 * Allocate the CustomScanState object.  We let the custom scan provider
+	 * do the palloc, in case it wants to make a larger object that embeds
+	 * CustomScanState as the first field.  It must set the node tag and the
+	 * methods field correctly at this time.  Other standard fields should be
+	 * set to zero.
+	 */
 	css = (CustomScanState *) cscan->methods->CreateCustomScanState(cscan);
 	Assert(IsA(css, CustomScanState));
+
+	/* ensure flags is filled correctly */
+	css->flags = cscan->flags;
 
 	/* fill up fields of ScanState */
 	css->ss.ps.plan = &cscan->scan.plan;
@@ -35,6 +46,8 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
+
+	css->ss.ps.ps_TupFromTlist = false;
 
 	/* initialize child expressions */
 	css->ss.ps.targetlist = (List *)
@@ -49,32 +62,40 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	ExecInitResultTupleSlot(estate, &css->ss.ps);
 
 	/*
-	 * open the base relation and acquire an appropriate lock on it;
-	 * also, get and assign the scan type
+	 * open the base relation, if any, and acquire an appropriate lock on it
 	 */
-	if (scan_relid > 0)
+	if (scanrelid > 0)
 	{
-		Relation		scan_rel;
-
-		scan_rel = ExecOpenScanRelation(estate, scan_relid, eflags);
+		scan_rel = ExecOpenScanRelation(estate, scanrelid, eflags);
 		css->ss.ss_currentRelation = scan_rel;
-		css->ss.ss_currentScanDesc = NULL;	/* set by provider */
-		ExecAssignScanType(&css->ss, RelationGetDescr(scan_rel));
+	}
+
+	/*
+	 * Determine the scan tuple type.  If the custom scan provider provided a
+	 * targetlist describing the scan tuples, use that; else use base
+	 * relation's rowtype.
+	 */
+	if (cscan->custom_scan_tlist != NIL || scan_rel == NULL)
+	{
+		TupleDesc	scan_tupdesc;
+
+		scan_tupdesc = ExecTypeFromTL(cscan->custom_scan_tlist, false);
+		ExecAssignScanType(&css->ss, scan_tupdesc);
+		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
+		tlistvarno = INDEX_VAR;
 	}
 	else
 	{
-		TupleDesc	ps_tupdesc;
-
-		ps_tupdesc = ExecCleanTypeFromTL(cscan->custom_ps_tlist, false);
-		ExecAssignScanType(&css->ss, ps_tupdesc);
+		ExecAssignScanType(&css->ss, RelationGetDescr(scan_rel));
+		/* Node's targetlist will contain Vars with varno = scanrelid */
+		tlistvarno = scanrelid;
 	}
-	css->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&css->ss.ps);
-	ExecAssignScanProjectionInfo(&css->ss);
+	ExecAssignScanProjectionInfoWithVarno(&css->ss, tlistvarno);
 
 	/*
 	 * The callback of custom-scan provider applies the final initialization

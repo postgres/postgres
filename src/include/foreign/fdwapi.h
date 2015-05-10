@@ -47,6 +47,13 @@ typedef void (*ReScanForeignScan_function) (ForeignScanState *node);
 
 typedef void (*EndForeignScan_function) (ForeignScanState *node);
 
+typedef void (*GetForeignJoinPaths_function) (PlannerInfo *root,
+														  RelOptInfo *joinrel,
+														RelOptInfo *outerrel,
+														RelOptInfo *innerrel,
+														  JoinType jointype,
+												   JoinPathExtraData *extra);
+
 typedef void (*AddForeignUpdateTargets_function) (Query *parsetree,
 												   RangeTblEntry *target_rte,
 												   Relation target_relation);
@@ -81,17 +88,6 @@ typedef void (*EndForeignModify_function) (EState *estate,
 													   ResultRelInfo *rinfo);
 
 typedef int (*IsForeignRelUpdatable_function) (Relation rel);
-
-typedef void (*GetForeignJoinPaths_function) (PlannerInfo *root,
-											  RelOptInfo *joinrel,
-											  RelOptInfo *outerrel,
-											  RelOptInfo *innerrel,
-											  List *restrictlist,
-											  JoinType jointype,
-											  SpecialJoinInfo *sjinfo,
-											  SemiAntiJoinFactors *semifactors,
-											  Relids param_source_rels,
-											  Relids extra_lateral_rels);
 
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
 													struct ExplainState *es);
@@ -142,6 +138,9 @@ typedef struct FdwRoutine
 	 * are not provided.
 	 */
 
+	/* Functions for remote-join planning */
+	GetForeignJoinPaths_function GetForeignJoinPaths;
+
 	/* Functions for updating foreign tables */
 	AddForeignUpdateTargets_function AddForeignUpdateTargets;
 	PlanForeignModify_function PlanForeignModify;
@@ -161,15 +160,13 @@ typedef struct FdwRoutine
 
 	/* Support functions for IMPORT FOREIGN SCHEMA */
 	ImportForeignSchema_function ImportForeignSchema;
-
-	/* Support functions for join push-down */
-	GetForeignJoinPaths_function GetForeignJoinPaths;
 } FdwRoutine;
 
 
 /* Functions in foreign/foreign.c */
-extern Oid GetFdwHandlerByRelId(Oid relid);
 extern FdwRoutine *GetFdwRoutine(Oid fdwhandler);
+extern Oid	GetForeignServerIdByRelId(Oid relid);
+extern FdwRoutine *GetFdwRoutineByServerId(Oid serverid);
 extern FdwRoutine *GetFdwRoutineByRelId(Oid relid);
 extern FdwRoutine *GetFdwRoutineForRelation(Relation relation, bool makecopy);
 extern bool IsImportableForeignTable(const char *tablename,

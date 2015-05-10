@@ -304,27 +304,39 @@ GetFdwRoutine(Oid fdwhandler)
 
 
 /*
- * GetFdwHandlerByRelId - look up the handler of the foreign-data wrapper
- * for the given foreign table
+ * GetForeignServerIdByRelId - look up the foreign server
+ * for the given foreign table, and return its OID.
  */
 Oid
-GetFdwHandlerByRelId(Oid relid)
+GetForeignServerIdByRelId(Oid relid)
 {
 	HeapTuple	tp;
-	Form_pg_foreign_data_wrapper fdwform;
-	Form_pg_foreign_server serverform;
 	Form_pg_foreign_table tableform;
 	Oid			serverid;
-	Oid			fdwid;
-	Oid			fdwhandler;
 
-	/* Get server OID for the foreign table. */
 	tp = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign table %u", relid);
 	tableform = (Form_pg_foreign_table) GETSTRUCT(tp);
 	serverid = tableform->ftserver;
 	ReleaseSysCache(tp);
+
+	return serverid;
+}
+
+
+/*
+ * GetFdwRoutineByServerId - look up the handler of the foreign-data wrapper
+ * for the given foreign server, and retrieve its FdwRoutine struct.
+ */
+FdwRoutine *
+GetFdwRoutineByServerId(Oid serverid)
+{
+	HeapTuple	tp;
+	Form_pg_foreign_data_wrapper fdwform;
+	Form_pg_foreign_server serverform;
+	Oid			fdwid;
+	Oid			fdwhandler;
 
 	/* Get foreign-data wrapper OID for the server. */
 	tp = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid));
@@ -350,8 +362,10 @@ GetFdwHandlerByRelId(Oid relid)
 
 	ReleaseSysCache(tp);
 
-	return fdwhandler;
+	/* And finally, call the handler function. */
+	return GetFdwRoutine(fdwhandler);
 }
+
 
 /*
  * GetFdwRoutineByRelId - look up the handler of the foreign-data wrapper
@@ -360,9 +374,13 @@ GetFdwHandlerByRelId(Oid relid)
 FdwRoutine *
 GetFdwRoutineByRelId(Oid relid)
 {
-	Oid			fdwhandler = GetFdwHandlerByRelId(relid);
+	Oid			serverid;
 
-	return GetFdwRoutine(fdwhandler);
+	/* Get server OID for the foreign table. */
+	serverid = GetForeignServerIdByRelId(relid);
+
+	/* Now retrieve server's FdwRoutine struct. */
+	return GetFdwRoutineByServerId(serverid);
 }
 
 /*
@@ -656,7 +674,7 @@ get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok)
 
 
 /*
- * get_foreign_server_oid - given a FDW name, look up the OID
+ * get_foreign_server_oid - given a server name, look up the OID
  *
  * If missing_ok is false, throw an error if name not found.  If true, just
  * return InvalidOid.

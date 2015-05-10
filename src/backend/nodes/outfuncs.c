@@ -565,11 +565,11 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 
 	_outScanInfo(str, (const Scan *) node);
 
-	WRITE_OID_FIELD(fdw_handler);
+	WRITE_OID_FIELD(fs_server);
 	WRITE_NODE_FIELD(fdw_exprs);
-	WRITE_NODE_FIELD(fdw_ps_tlist);
 	WRITE_NODE_FIELD(fdw_private);
-	WRITE_BITMAPSET_FIELD(fdw_relids);
+	WRITE_NODE_FIELD(fdw_scan_tlist);
+	WRITE_BITMAPSET_FIELD(fs_relids);
 	WRITE_BOOL_FIELD(fsSystemCol);
 }
 
@@ -582,8 +582,8 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 
 	WRITE_UINT_FIELD(flags);
 	WRITE_NODE_FIELD(custom_exprs);
-	WRITE_NODE_FIELD(custom_ps_tlist);
 	WRITE_NODE_FIELD(custom_private);
+	WRITE_NODE_FIELD(custom_scan_tlist);
 	WRITE_BITMAPSET_FIELD(custom_relids);
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);
@@ -1844,6 +1844,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(subroot);
 	WRITE_NODE_FIELD(subplan_params);
+	WRITE_OID_FIELD(serverid);
 	/* we don't try to print fdwroutine or fdw_private */
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);

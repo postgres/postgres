@@ -32,12 +32,13 @@
  </para>
 
  <sect1 id="custom-scan-path">
-  <title>Implementing Custom Paths</title>
+  <title>Creating Custom Scan Paths</title>
 
   <para>
-    A custom scan provider will typically add paths by setting the following
-    hook, which is called after the core code has generated what it believes
-    to be the complete and correct set of access paths for the relation.
+    A custom scan provider will typically add paths for a base relation by
+    setting the following hook, which is called after the core code has
+    generated what it believes to be the complete and correct set of access
+    paths for the relation.
 <programlisting>
 typedef void (*set_rel_pathlist_hook_type) (PlannerInfo *root,
                                             RelOptInfo *rel,
@@ -74,7 +75,7 @@ typedef struct CustomPath
     can support mark and restore.  Both capabilities are optional.
     <structfield>custom_private</> can be used to store the custom path's
     private data.  Private data should be stored in a form that can be handled
-    by <literal>nodeToString</>, so that debugging routines which attempt to
+    by <literal>nodeToString</>, so that debugging routines that attempt to
     print the custom path will work as designed.  <structfield>methods</> must
     point to a (usually statically allocated) object implementing the required
     custom path methods, of which there are currently only two, as further
@@ -82,29 +83,28 @@ typedef struct CustomPath
   </para>
 
   <para>
-   A custom scan provider can also add join paths; in this case, the scan
-   must produce the same output as would normally be produced by the join
-   it replaces.  To do this, the join provider should set the following hook.
-   This hook may be invoked repeatedly for the same pair of relations, with
-   different combinations of inner and outer relations; it is the
-   responsibility of the hook to minimize duplicated work.
+   A custom scan provider can also provide join paths.  Just as for base
+   relations, such a path must produce the same output as would normally be
+   produced by the join it replaces.  To do this, the join provider should
+   set the following hook, and then within the hook function,
+   create <structname>CustomPath</> path(s) for the join relation.
 <programlisting>
 typedef void (*set_join_pathlist_hook_type) (PlannerInfo *root,
                                              RelOptInfo *joinrel,
                                              RelOptInfo *outerrel,
                                              RelOptInfo *innerrel,
-                                             List *restrictlist,
                                              JoinType jointype,
-                                             SpecialJoinInfo *sjinfo,
-                                             SemiAntiJoinFactors *semifactors,
-                                             Relids param_source_rels,
-                                             Relids extra_lateral_rels);
+                                             JoinPathExtraData *extra);
 extern PGDLLIMPORT set_join_pathlist_hook_type set_join_pathlist_hook;
 </programlisting>
+
+   This hook will be invoked repeatedly for the same join relation, with
+   different combinations of inner and outer relations; it is the
+   responsibility of the hook to minimize duplicated work.
   </para>
 
   <sect2 id="custom-scan-path-callbacks">
-  <title>Custom Path Callbacks</title>
+  <title>Custom Scan Path Callbacks</title>
 
   <para>
 <programlisting>
@@ -125,7 +125,7 @@ void (*TextOutCustomPath) (StringInfo str,
                            const CustomPath *node);
 </programlisting>
     Generate additional output when <function>nodeToString</> is invoked on
-    this custom path.  This callback is optional. Since
+    this custom path.  This callback is optional.  Since
     <function>nodeToString</> will automatically dump all fields in the
     structure that it can see, including <structfield>custom_private</>, this
     is only useful if the <structname>CustomPath</> is actually embedded in a
@@ -135,7 +135,7 @@ void (*TextOutCustomPath) (StringInfo str,
  </sect1>
 
  <sect1 id="custom-scan-plan">
-  <title>Implementing Custom Plans</title>
+  <title>Creating Custom Scan Plans</title>
 
   <para>
     A custom scan is represented in a finished plan tree using the following
@@ -146,9 +146,9 @@ typedef struct CustomScan
     Scan      scan;
     uint32    flags;
     List     *custom_exprs;
-    List     *custom_ps_tlist;
     List     *custom_private;
-    List     *custom_relids;
+    List     *custom_scan_tlist;
+    Bitmapset *custom_relids;
     const CustomScanMethods *methods;
 } CustomScan;
 </programlisting>
@@ -158,16 +158,21 @@ typedef struct CustomScan
     <structfield>scan</> must be initialized as for any other scan, including
     estimated costs, target lists, qualifications, and so on.
     <structfield>flags</> is a bitmask with the same meaning as in
-    <structname>CustomPath</>.  <structfield>custom_exprs</> should be used to
+    <structname>CustomPath</>.
+    <structfield>custom_exprs</> should be used to
     store expression trees that will need to be fixed up by
     <filename>setrefs.c</> and <filename>subselect.c</>, while
-    <literal>custom_private</> should be used to store other private data that
-    is only used by the custom scan provider itself.  Plan trees must be able
-    to be duplicated using <function>copyObject</>, so all the data stored
-    within these two fields must consist of nodes that function can handle.
-    <literal>custom_relids</> is set by the core code to the set of relations
-    which this scan node must handle; except when this scan is replacing a
-    join, it will have only one member.
+    <structfield>custom_private</> should be used to store other private data
+    that is only used by the custom scan provider itself.
+    <structfield>custom_scan_tlist</> can be NIL when scanning a base
+    relation, indicating that the custom scan returns scan tuples that match
+    the base relation's rowtype.  Otherwise it is a targetlist describing
+    the actual scan tuples.  <structfield>custom_scan_tlist</> must be
+    provided for joins, and could be provided for scans if the custom scan
+    provider can compute some non-Var expressions.
+    <structfield>custom_relids</> is set by the core code to the set of
+    relations (rangetable indexes) that this scan node handles; except when
+    this scan is replacing a join, it will have only one member.
     <structfield>methods</> must point to a (usually statically allocated)
     object implementing the required custom scan methods, which are further
     detailed below.
@@ -175,19 +180,22 @@ typedef struct CustomScan
 
   <para>
    When a <structname>CustomScan</> scans a single relation,
-   <structfield>scan.scanrelid</> should be the range table index of the table
-   to be scanned, and <structfield>custom_ps_tlist</> should be
-   <literal>NULL</>.  When it replaces a join, <structfield>scan.scanrelid</>
-   should be zero, and <structfield>custom_ps_tlist</> should be a list of
-   <structname>TargetEntry</> nodes.  This is necessary because, when a join
-   is replaced, the target list cannot be constructed from the table
-   definition.  At execution time, this list will be used to initialize the
-   tuple descriptor of the <structname>TupleTableSlot</>.  It will also be
-   used by <command>EXPLAIN</>, when deparsing.
+   <structfield>scan.scanrelid</> must be the range table index of the table
+   to be scanned.  When it replaces a join, <structfield>scan.scanrelid</>
+   should be zero.
+  </para>
+
+  <para>
+   Plan trees must be able to be duplicated using <function>copyObject</>,
+   so all the data stored within the <quote>custom</> fields must consist of
+   nodes that that function can handle.  Furthermore, custom scan providers
+   cannot substitute a larger structure that embeds
+   a <structname>CustomScan</> for the structure itself, as would be possible
+   for a <structname>CustomPath</> or <structname>CustomScanState</>.
   </para>
 
   <sect2 id="custom-scan-plan-callbacks">
-   <title>Custom Scan Callbacks</title>
+   <title>Custom Scan Plan Callbacks</title>
    <para>
 <programlisting>
 Node *(*CreateCustomScanState) (CustomScan *cscan);
@@ -195,12 +203,12 @@ Node *(*CreateCustomScanState) (CustomScan *cscan);
     Allocate a <structname>CustomScanState</> for this
     <structname>CustomScan</>.  The actual allocation will often be larger than
     required for an ordinary <structname>CustomScanState</>, because many
-    scan types will wish to embed that as the first field of a large structure.
+    providers will wish to embed that as the first field of a larger structure.
     The value returned must have the node tag and <structfield>methods</>
-    set appropriately, but the other fields need not be initialized at this
+    set appropriately, but other fields should be left as zeroes at this
     stage; after <function>ExecInitCustomScan</> performs basic initialization,
     the <function>BeginCustomScan</> callback will be invoked to give the
-    custom scan state a chance to do whatever else is needed.
+    custom scan provider a chance to do whatever else is needed.
    </para>
 
    <para>
@@ -209,23 +217,21 @@ void (*TextOutCustomScan) (StringInfo str,
                            const CustomScan *node);
 </programlisting>
     Generate additional output when <function>nodeToString</> is invoked on
-    this custom plan.  This callback is optional.  Since a
-    <structname>CustomScan</> must be copyable by <function>copyObject</>,
-    custom scan providers cannot substitute a larger structure that embeds a
-    <structname>CustomScan</> for the structure itself, as would be possible
-    for a <structname>CustomPath</> or <structname>CustomScanState</>.
-    Therefore, providing this callback is unlikely to be useful.
+    this custom plan node.  This callback is optional.  Since
+    <function>nodeToString</> will automatically dump all fields in the
+    structure, including the substructure of the <quote>custom</> fields,
+    there is usually not much need for this callback.
    </para>
   </sect2>
  </sect1>
 
- <sect1 id="custom-scan-scan">
-  <title>Implementing Custom Scans</title>
+ <sect1 id="custom-scan-execution">
+  <title>Executing Custom Scans</title>
 
   <para>
    When a <structfield>CustomScan</> is executed, its execution state is
    represented by a <structfield>CustomScanState</>, which is declared as
-   follows.
+   follows:
 <programlisting>
 typedef struct CustomScanState
 {
@@ -237,7 +243,9 @@ typedef struct CustomScanState
   </para>
 
   <para>
-   <structfield>ss</> must be initialized as for any other scanstate;
+   <structfield>ss</> is initialized as for any other scanstate,
+   except that if the scan is for a join rather than a base relation,
+   <literal>ss.ss_currentRelation</> is left NULL.
    <structfield>flags</> is a bitmask with the same meaning as in
    <structname>CustomPath</> and <structname>CustomScan</>.
    <structfield>methods</> must point to a (usually statically allocated)
@@ -247,8 +255,8 @@ typedef struct CustomScanState
    structure embedding the above as its first member.
   </para>
 
-  <sect2 id="custom-scan-scan-callbacks">
-   <title>Custom Execution-Time Callbacks</title>
+  <sect2 id="custom-scan-execution-callbacks">
+   <title>Custom Scan Execution Callbacks</title>
 
    <para>
 <programlisting>
@@ -257,8 +265,8 @@ void (*BeginCustomScan) (CustomScanState *node,
                          int eflags);
 </programlisting>
     Complete initialization of the supplied <structname>CustomScanState</>.
-    Some initialization is performed by <function>ExecInitCustomScan</>, but
-    any private fields should be initialized here.
+    Standard fields have been initialized by <function>ExecInitCustomScan</>,
+    but any private fields should be initialized here.
    </para>
 
    <para>
@@ -276,8 +284,8 @@ TupleTableSlot *(*ExecCustomScan) (CustomScanState *node);
 void (*EndCustomScan) (CustomScanState *node);
 </programlisting>
     Clean up any private data associated with the <literal>CustomScanState</>.
-    This method is required, but may not need to do anything if the associated
-    data does not exist or will be cleaned up automatically.
+    This method is required, but it does not need to do anything if there is
+    no associated data or it will be cleaned up automatically.
    </para>
 
    <para>
@@ -293,8 +301,8 @@ void (*ReScanCustomScan) (CustomScanState *node);
 void (*MarkPosCustomScan) (CustomScanState *node);
 </programlisting>
     Save the current scan position so that it can subsequently be restored
-    by the <function>RestrPosCustomScan</> callback.  This calback is optional,
-    and need only be supplied if 
+    by the <function>RestrPosCustomScan</> callback.  This callback is
+    optional, and need only be supplied if the
     <literal>CUSTOMPATH_SUPPORT_MARK_RESTORE</> flag is set.
    </para>
 
@@ -304,7 +312,7 @@ void (*RestrPosCustomScan) (CustomScanState *node);
 </programlisting>
     Restore the previous scan position as saved by the
     <function>MarkPosCustomScan</> callback.  This callback is optional,
-    and need only be supplied if 
+    and need only be supplied if the
     <literal>CUSTOMPATH_SUPPORT_MARK_RESTORE</> flag is set.
    </para>
 
@@ -314,8 +322,8 @@ void (*ExplainCustomScan) (CustomScanState *node,
                            List *ancestors,
                            ExplainState *es);
 </programlisting>
-    Output additional information on <command>EXPLAIN</> that involves
-    custom-scan node.  This callback is optional.  Common data stored in the
+    Output additional information for <command>EXPLAIN</> of a custom-scan
+    plan node.  This callback is optional.  Common data stored in the
     <structname>ScanState</>, such as the target list and scan relation, will
     be shown even without this callback, but the callback allows the display
     of additional, private state.

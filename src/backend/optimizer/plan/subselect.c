@@ -2318,12 +2318,14 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		case T_ForeignScan:
 			finalize_primnode((Node *) ((ForeignScan *) plan)->fdw_exprs,
 							  &context);
+			/* We assume fdw_scan_tlist cannot contain Params */
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_CustomScan:
 			finalize_primnode((Node *) ((CustomScan *) plan)->custom_exprs,
 							  &context);
+			/* We assume custom_scan_tlist cannot contain Params */
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 

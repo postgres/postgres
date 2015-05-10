@@ -102,7 +102,9 @@ ForeignScanState *
 ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 {
 	ForeignScanState *scanstate;
+	Relation	currentRelation = NULL;
 	Index		scanrelid = node->scan.scanrelid;
+	Index		tlistvarno;
 	FdwRoutine *fdwroutine;
 
 	/* check for unsupported flags */
@@ -141,40 +143,55 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
 
 	/*
-	 * open the base relation and acquire an appropriate lock on it;
-	 * also, get and assign the scan type
+	 * open the base relation, if any, and acquire an appropriate lock on it;
+	 * also acquire function pointers from the FDW's handler
 	 */
 	if (scanrelid > 0)
 	{
-		Relation	currentRelation;
-
 		currentRelation = ExecOpenScanRelation(estate, scanrelid, eflags);
 		scanstate->ss.ss_currentRelation = currentRelation;
-		ExecAssignScanType(&scanstate->ss, RelationGetDescr(currentRelation));
+		fdwroutine = GetFdwRoutineForRelation(currentRelation, true);
 	}
 	else
 	{
-		TupleDesc	ps_tupdesc;
+		/* We can't use the relcache, so get fdwroutine the hard way */
+		fdwroutine = GetFdwRoutineByServerId(node->fs_server);
+	}
 
-		ps_tupdesc = ExecCleanTypeFromTL(node->fdw_ps_tlist, false);
-		ExecAssignScanType(&scanstate->ss, ps_tupdesc);
+	/*
+	 * Determine the scan tuple type.  If the FDW provided a targetlist
+	 * describing the scan tuples, use that; else use base relation's rowtype.
+	 */
+	if (node->fdw_scan_tlist != NIL || currentRelation == NULL)
+	{
+		TupleDesc	scan_tupdesc;
+
+		scan_tupdesc = ExecTypeFromTL(node->fdw_scan_tlist, false);
+		ExecAssignScanType(&scanstate->ss, scan_tupdesc);
+		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
+		tlistvarno = INDEX_VAR;
+	}
+	else
+	{
+		ExecAssignScanType(&scanstate->ss, RelationGetDescr(currentRelation));
+		/* Node's targetlist will contain Vars with varno = scanrelid */
+		tlistvarno = scanrelid;
 	}
 
 	/*
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
+	ExecAssignScanProjectionInfoWithVarno(&scanstate->ss, tlistvarno);
 
 	/*
-	 * Acquire function pointers from the FDW's handler, and init fdw_state.
+	 * Initialize FDW-related state.
 	 */
-	fdwroutine = GetFdwRoutine(node->fdw_handler);
 	scanstate->fdwroutine = fdwroutine;
 	scanstate->fdw_state = NULL;
 
 	/*
-	 * Tell the FDW to initiate the scan.
+	 * Tell the FDW to initialize the scan.
 	 */
 	fdwroutine->BeginForeignScan(scanstate, eflags);
 

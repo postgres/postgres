@@ -365,17 +365,20 @@ typedef struct PlannerInfo
  *		subplan - plan for subquery (NULL if it's not a subquery)
  *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
  *		subplan_params - list of PlannerParamItems to be passed to subquery
- *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
- *		fdw_handler - OID of FDW handler, if foreign table (else InvalidOid)
- *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
  *		Note: for a subquery, tuples, subplan, subroot are not set immediately
  *		upon creation of the RelOptInfo object; they are filled in when
- *		set_subquery_pathlist processes the object.  Likewise, fdwroutine
- *		and fdw_private are filled during initial path creation.
+ *		set_subquery_pathlist processes the object.
  *
  *		For otherrels that are appendrel members, these fields are filled
  *		in just as for a baserel.
+ *
+ * If the relation is either a foreign table or a join of foreign tables that
+ * all belong to the same foreign server, these fields will be set:
+ *
+ *		serverid - OID of foreign server, if foreign table (else InvalidOid)
+ *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
+ *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
  * The presence of the remaining fields depends on the restrictions
  * and joins that the relation participates in:
@@ -460,10 +463,12 @@ typedef struct RelOptInfo
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
 	List	   *subplan_params; /* if subquery */
+
+	/* Information about foreign tables and foreign joins */
+	Oid			serverid;		/* identifies server for the table or join */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
-	struct FdwRoutine *fdwroutine;		/* if foreign table */
-	Oid			fdw_handler;	/* if foreign table */
-	void	   *fdw_private;	/* if foreign table */
+	struct FdwRoutine *fdwroutine;
+	void	   *fdw_private;
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
@@ -523,7 +528,7 @@ typedef struct IndexOptInfo
 	bool	   *reverse_sort;	/* is sort order descending? */
 	bool	   *nulls_first;	/* do NULLs come first in the sort order? */
 	bool	   *canreturn;		/* which index cols can be returned in an
-								   index-only scan? */
+								 * index-only scan? */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
 	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
@@ -1666,6 +1671,28 @@ typedef struct SemiAntiJoinFactors
 	Selectivity outer_match_frac;
 	Selectivity match_count;
 } SemiAntiJoinFactors;
+
+/*
+ * Struct for extra information passed to subroutines of add_paths_to_joinrel
+ *
+ * restrictlist contains all of the RestrictInfo nodes for restriction
+ *		clauses that apply to this join
+ * mergeclause_list is a list of RestrictInfo nodes for available
+ *		mergejoin clauses in this join
+ * sjinfo is extra info about special joins for selectivity estimation
+ * semifactors is as shown above (only valid for SEMI or ANTI joins)
+ * param_source_rels are OK targets for parameterization of result paths
+ * extra_lateral_rels are additional parameterization for result paths
+ */
+typedef struct JoinPathExtraData
+{
+	List	   *restrictlist;
+	List	   *mergeclause_list;
+	SpecialJoinInfo *sjinfo;
+	SemiAntiJoinFactors semifactors;
+	Relids		param_source_rels;
+	Relids		extra_lateral_rels;
+} JoinPathExtraData;
 
 /*
  * For speed reasons, cost estimation for join paths is performed in two

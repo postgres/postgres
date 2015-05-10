@@ -872,7 +872,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 							local_exprs,
 							scan_relid,
 							params_list,
-							fdw_private);
+							fdw_private,
+							NIL /* no custom tlist */ );
 }
 
 /*

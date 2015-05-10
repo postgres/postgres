@@ -561,7 +561,8 @@ fileGetForeignPlan(PlannerInfo *root,
 							scan_clauses,
 							scan_relid,
 							NIL,	/* no expressions to evaluate */
-							best_path->fdw_private);
+							best_path->fdw_private,
+							NIL /* no custom tlist */ );
 }
 
 /*

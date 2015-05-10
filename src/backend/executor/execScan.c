@@ -246,19 +246,18 @@ void
 ExecAssignScanProjectionInfo(ScanState *node)
 {
 	Scan	   *scan = (Scan *) node->ps.plan;
-	Index		varno;
 
-	/* Vars in an index-only scan's tlist should be INDEX_VAR */
-	if (IsA(scan, IndexOnlyScan))
-		varno = INDEX_VAR;
-	/* Also foreign or custom scan on pseudo relation should be INDEX_VAR */
-	else if (scan->scanrelid == 0)
-	{
-		Assert(IsA(scan, ForeignScan) || IsA(scan, CustomScan));
-		varno = INDEX_VAR;
-	}
-	else
-		varno = scan->scanrelid;
+	ExecAssignScanProjectionInfoWithVarno(node, scan->scanrelid);
+}
+
+/*
+ * ExecAssignScanProjectionInfoWithVarno
+ *		As above, but caller can specify varno expected in Vars in the tlist.
+ */
+void
+ExecAssignScanProjectionInfoWithVarno(ScanState *node, Index varno)
+{
+	Scan	   *scan = (Scan *) node->ps.plan;
 
 	if (tlist_matches_tupdesc(&node->ps,
 							  scan->plan.targetlist,

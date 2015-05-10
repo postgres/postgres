@@ -128,8 +128,8 @@ typedef struct
  * varlevelsup > 0).  We store the PlanState node that is the immediate
  * parent of the expression to be deparsed, as well as a list of that
  * PlanState's ancestors.  In addition, we store its outer and inner subplan
- * state nodes, as well as their plan nodes' targetlists, and the indextlist
- * if the current PlanState is an IndexOnlyScanState.  (These fields could
+ * state nodes, as well as their plan nodes' targetlists, and the index tlist
+ * if the current plan node might contain INDEX_VAR Vars.  (These fields could
  * be derived on-the-fly from the current PlanState, but it seems notationally
  * clearer to set them up as separate fields.)
  */
@@ -2586,10 +2586,11 @@ deparse_context_for_plan_rtable(List *rtable, List *rtable_names)
  * provide the parent PlanState node.  Then OUTER_VAR and INNER_VAR references
  * can be resolved by drilling down into the left and right child plans.
  * Similarly, INDEX_VAR references can be resolved by reference to the
- * indextlist given in the parent IndexOnlyScan node.  (Note that we don't
- * currently support deparsing of indexquals in regular IndexScan or
- * BitmapIndexScan nodes; for those, we can only deparse the indexqualorig
- * fields, which won't contain INDEX_VAR Vars.)
+ * indextlist given in a parent IndexOnlyScan node, or to the scan tlist in
+ * ForeignScan and CustomScan nodes.  (Note that we don't currently support
+ * deparsing of indexquals in regular IndexScan or BitmapIndexScan nodes;
+ * for those, we can only deparse the indexqualorig fields, which won't
+ * contain INDEX_VAR Vars.)
  *
  * Note: planstate really ought to be declared as "PlanState *", but we use
  * "Node *" to avoid having to include execnodes.h in ruleutils.h.
@@ -3870,13 +3871,13 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 	else
 		dpns->inner_tlist = NIL;
 
-	/* index_tlist is set only if it's an IndexOnlyScan */
+	/* Set up referent for INDEX_VAR Vars, if needed */
 	if (IsA(ps->plan, IndexOnlyScan))
 		dpns->index_tlist = ((IndexOnlyScan *) ps->plan)->indextlist;
 	else if (IsA(ps->plan, ForeignScan))
-		dpns->index_tlist = ((ForeignScan *) ps->plan)->fdw_ps_tlist;
+		dpns->index_tlist = ((ForeignScan *) ps->plan)->fdw_scan_tlist;
 	else if (IsA(ps->plan, CustomScan))
-		dpns->index_tlist = ((CustomScan *) ps->plan)->custom_ps_tlist;
+		dpns->index_tlist = ((CustomScan *) ps->plan)->custom_scan_tlist;
 	else
 		dpns->index_tlist = NIL;
 }
