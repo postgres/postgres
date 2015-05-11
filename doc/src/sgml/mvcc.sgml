@@ -143,6 +143,20 @@
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>
+       serialization anomaly
+       <indexterm><primary>serialization anomaly</primary></indexterm>
+      </term>
+     <listitem>
+      <para>
+        The result of successfully committing a group of transactions
+        is inconsistent with all possible orderings of running those
+        transactions one at a time.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
@@ -150,13 +164,13 @@
     <indexterm>
      <primary>transaction isolation level</primary>
     </indexterm>
-    The four transaction isolation levels and the corresponding
-    behaviors are described in <xref linkend="mvcc-isolevel-table">.
+    The SQL standard and PostgreSQL-implemented transaction isolation levels
+    are described in <xref linkend="mvcc-isolevel-table">.
    </para>
 
     <table tocentry="1" id="mvcc-isolevel-table">
-     <title>Standard <acronym>SQL</acronym> Transaction Isolation Levels</title>
-     <tgroup cols="4">
+     <title>Transaction Isolation Levels</title>
+     <tgroup cols="5">
       <thead>
        <row>
         <entry>
@@ -171,12 +185,18 @@
         <entry>
          Phantom Read
         </entry>
+        <entry>
+         Serialization Anomaly
+        </entry>
        </row>
       </thead>
       <tbody>
        <row>
         <entry>
          Read uncommitted
+        </entry>
+        <entry>
+         Allowed, but not in PG
         </entry>
         <entry>
          Possible
@@ -202,6 +222,9 @@
         <entry>
          Possible
         </entry>
+        <entry>
+         Possible
+        </entry>
        </row>
 
        <row>
@@ -213,6 +236,9 @@
         </entry>
         <entry>
          Not possible
+        </entry>
+        <entry>
+         Allowed, but not in PG
         </entry>
         <entry>
          Possible
@@ -232,27 +258,30 @@
         <entry>
          Not possible
         </entry>
+        <entry>
+         Not possible
+        </entry>
        </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
-    In <productname>PostgreSQL</productname>, you can request any of the
-    four standard transaction isolation levels.  But internally, there are
-    only three distinct isolation levels, which correspond to the levels Read
-    Committed, Repeatable Read, and Serializable.  When you select the level Read
-    Uncommitted you really get Read Committed, and phantom reads are not possible
-    in the <productname>PostgreSQL</productname> implementation of Repeatable
-    Read, so the actual
-    isolation level might be stricter than what you select.  This is
-    permitted by the SQL standard: the four isolation levels only
-    define which phenomena must not happen, they do not define which
-    phenomena must happen.  The reason that <productname>PostgreSQL</>
-    only provides three isolation levels is that this is the only
-    sensible way to map the standard isolation levels to the multiversion
-    concurrency control architecture.  The behavior of the available
-    isolation levels is detailed in the following subsections.
+    In <productname>PostgreSQL</productname>, you can request any of
+    the four standard transaction isolation levels, but internally only
+    three distinct isolation levels are implemented, i.e. PostgreSQL's
+    Read Uncommitted mode behaves like Read Committed.  This is because
+    it is the only sensible way to map the standard isolation levels to
+    PostgreSQL's multiversion concurrency control architecture.
+   </para>
+
+   <para>
+    The table also shows that PostgreSQL's Repeatable Read implementation
+    does not allow phantom reads.  Stricter behavior is permitted by the
+    SQL standard: the four isolation levels only define which phenomena
+    must not happen, not which phenomena <emphasis>must</> happen.
+    The behavior of the available isolation levels is detailed in the
+    following subsections.
    </para>
 
    <para>
