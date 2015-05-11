@@ -3246,7 +3246,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		free(sanitized_schema);
 		free(sanitized_owner);
 
-		if (te->tablespace && !ropt->noTablespace)
+		if (te->tablespace && strlen(te->tablespace) > 0 && !ropt->noTablespace)
 		{
 			char	   *sanitized_tablespace;
 
