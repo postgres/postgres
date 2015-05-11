@@ -202,6 +202,7 @@ typedef struct MultiXactStateData
 	 */
 	MultiXactId oldestMultiXactId;
 	Oid			oldestMultiXactDB;
+	MultiXactOffset oldestOffset;
 
 	/*
 	 * This is what the previous checkpoint stored as the truncate position.
@@ -959,14 +960,17 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 	 * against catastrophic data loss due to multixact wraparound.  The basic
 	 * rules are:
 	 *
-	 * If we're past multiVacLimit, start trying to force autovacuum cycles.
+	 * If we're past multiVacLimit or the safe threshold for member storage space,
+	 * start trying to force autovacuum cycles.
 	 * If we're past multiWarnLimit, start issuing warnings.
 	 * If we're past multiStopLimit, refuse to create new MultiXactIds.
 	 *
 	 * Note these are pretty much the same protections in GetNewTransactionId.
 	 *----------
 	 */
-	if (!MultiXactIdPrecedes(result, MultiXactState->multiVacLimit))
+	if (!MultiXactIdPrecedes(result, MultiXactState->multiVacLimit) ||
+		(MultiXactState->nextOffset - MultiXactState->oldestOffset
+			> MULTIXACT_MEMBER_SAFE_THRESHOLD))
 	{
 		/*
 		 * For safety's sake, we release MultiXactGenLock while sending
@@ -2161,6 +2165,8 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	MultiXactId multiStopLimit;
 	MultiXactId multiWrapLimit;
 	MultiXactId curMulti;
+	MultiXactOffset oldestOffset;
+	MultiXactOffset nextOffset;
 
 	Assert(MultiXactIdIsValid(oldest_datminmxid));
 
@@ -2213,6 +2219,35 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	if (multiVacLimit < FirstMultiXactId)
 		multiVacLimit += FirstMultiXactId;
 
+	/*
+	 * Determine the offset of the oldest multixact that might still be
+	 * referenced.  Normally, we can read the offset from the multixact itself,
+	 * but there's an important special case: if there are no multixacts in
+	 * existence at all, oldest_datminmxid obviously can't point to one.  It
+	 * will instead point to the multixact ID that will be assigned the next
+	 * time one is needed.
+	 *
+	 * NB: oldest_dataminmxid is the oldest multixact that might still be
+	 * referenced from a table, unlike in DetermineSafeOldestOffset, where we
+	 * do this same computation based on the oldest value that might still
+	 * exist in the SLRU.  This is because here we're trying to compute a
+	 * threshold for activating autovacuum, which can only remove references
+	 * to multixacts, whereas there we are computing a threshold for creating
+	 * new multixacts, which requires the old ones to have first been
+	 * truncated away by a checkpoint.
+	 */
+	LWLockAcquire(MultiXactGenLock, LW_SHARED);
+	if (MultiXactState->nextMXact == oldest_datminmxid)
+	{
+		oldestOffset = MultiXactState->nextOffset;
+		LWLockRelease(MultiXactGenLock);
+	}
+	else
+	{
+		LWLockRelease(MultiXactGenLock);
+		oldestOffset = find_multixact_start(oldest_datminmxid);
+	}
+
 	/* Grab lock for just long enough to set the new limit values */
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	MultiXactState->oldestMultiXactId = oldest_datminmxid;
@@ -2221,7 +2256,9 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	MultiXactState->multiWarnLimit = multiWarnLimit;
 	MultiXactState->multiStopLimit = multiStopLimit;
 	MultiXactState->multiWrapLimit = multiWrapLimit;
+	MultiXactState->oldestOffset = oldestOffset;
 	curMulti = MultiXactState->nextMXact;
+	nextOffset = MultiXactState->nextOffset;
 	LWLockRelease(MultiXactGenLock);
 
 	/* Log the info */
@@ -2236,7 +2273,8 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	 * database, it'll call here, and we'll signal the postmaster to start
 	 * another iteration immediately if there are still any old databases.
 	 */
-	if (MultiXactIdPrecedes(multiVacLimit, curMulti) &&
+	if ((MultiXactIdPrecedes(multiVacLimit, curMulti) ||
+		 (nextOffset - oldestOffset > MULTIXACT_MEMBER_SAFE_THRESHOLD)) &&
 		IsUnderPostmaster && !InRecovery)
 		SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
 
@@ -2495,11 +2533,16 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 	MultiXactOffset oldestOffset;
 
 	/*
-	 * We determine the safe upper bound for offsets of new xacts by reading
-	 * the offset of the oldest multixact, and going back one segment.  This
-	 * way, the sequence of multixact member segments will always have a
-	 * one-segment hole at a minimum.  We start spewing warnings a few
-	 * complete segments before that.
+	 * Determine the offset of the oldest multixact.  Normally, we can read
+	 * the offset from the multixact itself, but there's an important special
+	 * case: if there are no multixacts in existence at all, oldestMXact
+	 * obviously can't point to one.  It will instead point to the multixact
+	 * ID that will be assigned the next time one is needed.
+	 *
+	 * NB: oldestMXact should be the oldest multixact that still exists in
+	 * the SLRU, unlike in SetMultiXactIdLimit, where we do this same
+	 * computation based on the oldest value that might be referenced in a
+	 * table.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 	if (MultiXactState->nextMXact == oldestMXact)
@@ -2613,9 +2656,9 @@ ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
 	nextOffset = MultiXactState->nextOffset;
 	oldestMultiXactId = MultiXactState->oldestMultiXactId;
 	nextMultiXactId = MultiXactState->nextMXact;
+	oldestOffset = MultiXactState->oldestOffset;
 	LWLockRelease(MultiXactGenLock);
 
-	oldestOffset = find_multixact_start(oldestMultiXactId);
 	*members = nextOffset - oldestOffset;
 	*multixacts = nextMultiXactId - oldestMultiXactId;
 }
