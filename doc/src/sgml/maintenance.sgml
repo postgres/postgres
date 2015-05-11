@@ -658,11 +658,12 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     <para>
      As a safety device, a whole-table vacuum scan will occur for any table
      whose multixact-age is greater than
-     <xref linkend="guc-autovacuum-multixact-freeze-max-age">.
-     This will occur even if autovacuum is nominally disabled.  Whole-table
+     <xref linkend="guc-autovacuum-multixact-freeze-max-age">.  Whole-table
      vacuum scans will also occur progressively for all tables, starting with
      those that have the oldest multixact-age, if the amount of used member
-     storage space exceeds the amount 25% of the addressible storage space.
+     storage space exceeds the amount 50% of the addressible storage space.
+     Both of these kinds of whole-table scans will occur even if autovacuum is
+     nominally disabled.
     </para>
    </sect3>
   </sect2>

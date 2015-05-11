@@ -169,7 +169,7 @@
 	 ((xid) % MULTIXACT_MEMBERS_PER_MEMBERGROUP) * sizeof(TransactionId))
 
 /* Multixact members wraparound thresholds. */
-#define MULTIXACT_MEMBER_SAFE_THRESHOLD		(MaxMultiXactOffset / 4)
+#define MULTIXACT_MEMBER_SAFE_THRESHOLD		(MaxMultiXactOffset / 2)
 #define MULTIXACT_MEMBER_DANGER_THRESHOLD	\
 	(MaxMultiXactOffset - MaxMultiXactOffset / 4)
 
