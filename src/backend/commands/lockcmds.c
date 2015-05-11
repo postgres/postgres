@@ -169,13 +169,17 @@ static AclResult
 LockTableAclCheck(Oid reloid, LOCKMODE lockmode)
 {
 	AclResult	aclresult;
+	AclMode		aclmask;
 
 	/* Verify adequate privilege */
 	if (lockmode == AccessShareLock)
-		aclresult = pg_class_aclcheck(reloid, GetUserId(),
-									  ACL_SELECT);
+		aclmask = ACL_SELECT;
+	else if (lockmode == RowExclusiveLock)
+		aclmask = ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
 	else
-		aclresult = pg_class_aclcheck(reloid, GetUserId(),
-									  ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE);
+		aclmask = ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
+
+	aclresult = pg_class_aclcheck(reloid, GetUserId(), aclmask);
+
 	return aclresult;
 }

@@ -161,9 +161,11 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] 
 
    <para>
     <literal>LOCK TABLE ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
-    privileges on the target table.  All other forms of <command>LOCK</>
-    require table-level <literal>UPDATE</>, <literal>DELETE</>, or
-    <literal>TRUNCATE</> privileges.
+    privileges on the target table.  <literal>LOCK TABLE ... IN ROW EXCLUSIVE
+    MODE</> requires <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
+    or <literal>TRUNCATE</> privileges on the target table. All other forms of
+    <command>LOCK</> require table-level <literal>UPDATE</>, <literal>DELETE</>,
+    or <literal>TRUNCATE</> privileges.
    </para>
 
    <para>
