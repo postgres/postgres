@@ -89,9 +89,10 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * because this trigger gets queued only in response to index insertions;
 	 * which means it does not get queued for HOT updates.  The row we are
 	 * called for might now be dead, but have a live HOT child, in which case
-	 * we still need to make the check.  Therefore we have to use
-	 * heap_hot_search, not just HeapTupleSatisfiesVisibility as is done in
-	 * the comparable test in RI_FKey_check.
+	 * we still need to make the check --- effectively, we're applying the
+	 * check against the live child row, although we can use the values from
+	 * this row since by definition all columns of interest to us are the
+	 * same.
 	 *
 	 * This might look like just an optimization, because the index AM will
 	 * make this identical test before throwing an error.  But it's actually
@@ -159,7 +160,9 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Note: this is not a real insert; it is a check that the index entry
-		 * that has already been inserted is unique.
+		 * that has already been inserted is unique.  Passing t_self is
+		 * correct even if t_self is now dead, because that is the TID the
+		 * index will know about.
 		 */
 		index_insert(indexRel, values, isnull, &(new_row->t_self),
 					 trigdata->tg_relation, UNIQUE_CHECK_EXISTING);
@@ -168,10 +171,12 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For exclusion constraints we just do the normal check, but now it's
-		 * okay to throw error.
+		 * okay to throw error.  In the HOT-update case, we must use the live
+		 * HOT child's TID here, else check_exclusion_constraint will think
+		 * the child is a conflict.
 		 */
 		check_exclusion_constraint(trigdata->tg_relation, indexRel, indexInfo,
-								   &(new_row->t_self), values, isnull,
+								   &tmptid, values, isnull,
 								   estate, false);
 	}
 
