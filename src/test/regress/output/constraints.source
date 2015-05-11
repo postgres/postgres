@@ -604,6 +604,7 @@ DROP TABLE circles;
 -- Check deferred exclusion constraint
 CREATE TABLE deferred_excl (
   f1 int,
+  f2 int,
   CONSTRAINT deferred_excl_con EXCLUDE (f1 WITH =) INITIALLY DEFERRED
 );
 NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "deferred_excl_con" for table "deferred_excl"
@@ -623,6 +624,19 @@ INSERT INTO deferred_excl VALUES(3); -- no fail here
 COMMIT; -- should fail here
 ERROR:  conflicting key value violates exclusion constraint "deferred_excl_con"
 DETAIL:  Key (f1)=(3) conflicts with existing key (f1)=(3).
+-- bug #13148: deferred constraint versus HOT update
+BEGIN;
+INSERT INTO deferred_excl VALUES(2, 1); -- no fail here
+DELETE FROM deferred_excl WHERE f1 = 2 AND f2 IS NULL; -- remove old row
+UPDATE deferred_excl SET f2 = 2 WHERE f1 = 2;
+COMMIT; -- should not fail
+SELECT * FROM deferred_excl;
+ f1 | f2 
+----+----
+  1 |   
+  2 |  2
+(2 rows)
+
 ALTER TABLE deferred_excl DROP CONSTRAINT deferred_excl_con;
 -- This should fail, but worth testing because of HOT updates
 UPDATE deferred_excl SET f1 = 3;
