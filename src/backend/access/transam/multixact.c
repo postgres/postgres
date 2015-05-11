@@ -2492,13 +2492,24 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 		return;
 
 	/*
-	 * We determine the safe upper bound for offsets of new xacts by reading
-	 * the offset of the oldest multixact, and going back one segment.  This
-	 * way, the sequence of multixact member segments will always have a
-	 * one-segment hole at a minimum.  We start spewing warnings a few
-	 * complete segments before that.
+	 * Determine the offset of the oldest multixact.  Normally, we can read
+	 * the offset from the multixact itself, but there's an important special
+	 * case: if there are no multixacts in existence at all, oldestMXact
+	 * obviously can't point to one.  It will instead point to the multixact
+	 * ID that will be assigned the next time one is needed.
 	 */
-	oldestOffset = find_multixact_start(oldestMXact);
+	LWLockAcquire(MultiXactGenLock, LW_SHARED);
+	if (MultiXactState->nextMXact == oldestMXact)
+	{
+		oldestOffset = MultiXactState->nextOffset;
+		LWLockRelease(MultiXactGenLock);
+	}
+	else
+	{
+		LWLockRelease(MultiXactGenLock);
+		oldestOffset = find_multixact_start(oldestMXact);
+	}
+
 	/* move back to start of the corresponding segment */
 	oldestOffset -= oldestOffset %
 		(MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT);
