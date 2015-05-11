@@ -532,7 +532,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 #endif
 
 	/* delete old cluster's default tablespace */
-	fprintf(script, RMDIR_CMD " \"%s\"\n", fix_path_separator(old_cluster.pgdata));
+	fprintf(script, RMDIR_CMD " %c%s%c\n", PATH_QUOTE,
+			fix_path_separator(old_cluster.pgdata), PATH_QUOTE);
 
 	/* delete old cluster's alternate tablespaces */
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
@@ -554,9 +555,10 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-				fprintf(script, RMDIR_CMD " \"%s%c%d\"\n",
+				fprintf(script, RMDIR_CMD " %c%s%c%d%c\n", PATH_QUOTE,
 						fix_path_separator(os_info.old_tablespaces[tblnum]),
-						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid);
+						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid,
+						PATH_QUOTE);
 		}
 		else
 		{
@@ -566,9 +568,9 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			 * Simply delete the tablespace directory, which might be ".old"
 			 * or a version-specific subdirectory.
 			 */
-			fprintf(script, RMDIR_CMD " \"%s%s\"\n",
+			fprintf(script, RMDIR_CMD " %c%s%s%c\n", PATH_QUOTE,
 					fix_path_separator(os_info.old_tablespaces[tblnum]),
-					fix_path_separator(suffix_path));
+					fix_path_separator(suffix_path), PATH_QUOTE);
 			pfree(suffix_path);
 		}
 	}

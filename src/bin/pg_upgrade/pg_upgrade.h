@@ -74,6 +74,7 @@ extern char *output_files[];
 #define pg_mv_file			rename
 #define pg_link_file		link
 #define PATH_SEPARATOR		'/'
+#define PATH_QUOTE	'\''
 #define RM_CMD				"rm -f"
 #define RMDIR_CMD			"rm -rf"
 #define SCRIPT_PREFIX		"./"
@@ -85,6 +86,7 @@ extern char *output_files[];
 #define pg_mv_file			pgrename
 #define pg_link_file		win32_pghardlink
 #define PATH_SEPARATOR		'\\'
+#define PATH_QUOTE	'"'
 #define RM_CMD				"DEL /q"
 #define RMDIR_CMD			"RMDIR /s/q"
 #define SCRIPT_PREFIX		""
