@@ -2062,8 +2062,6 @@ TrimMultiXact(void)
 	}
 
 	LWLockRelease(MultiXactMemberControlLock);
-
-	DetermineSafeOldestOffset(MultiXactState->oldestMultiXactId);
 }
 
 /*
@@ -2167,13 +2165,11 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	Assert(MultiXactIdIsValid(oldest_datminmxid));
 
 	/*
-	 * Since multixacts wrap differently from transaction IDs, this logic is
-	 * not entirely correct: in some scenarios we could go for longer than 2
-	 * billion multixacts without seeing any data loss, and in some others we
-	 * could get in trouble before that if the new pg_multixact/members data
-	 * stomps on the previous cycle's data.  For lack of a better mechanism we
-	 * use the same logic as for transaction IDs, that is, start taking action
-	 * halfway around the oldest potentially-existing multixact.
+	 * We pretend that a wrap will happen halfway through the multixact ID
+	 * space, but that's not really true, because multixacts wrap differently
+	 * from transaction IDs.  Note that, separately from any concern about
+	 * multixact IDs wrapping, we must ensure that multixact members do not
+	 * wrap.  Limits for that are set in DetermineSafeOldestOffset, not here.
 	 */
 	multiWrapLimit = oldest_datminmxid + (MaxMultiXactId >> 1);
 	if (multiWrapLimit < FirstMultiXactId)
@@ -2227,8 +2223,6 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	MultiXactState->multiWrapLimit = multiWrapLimit;
 	curMulti = MultiXactState->nextMXact;
 	LWLockRelease(MultiXactGenLock);
-
-	DetermineSafeOldestOffset(oldest_datminmxid);
 
 	/* Log the info */
 	ereport(DEBUG1,
@@ -2324,8 +2318,6 @@ MultiXactAdvanceOldest(MultiXactId oldestMulti, Oid oldestMultiDB)
 {
 	if (MultiXactIdPrecedes(MultiXactState->oldestMultiXactId, oldestMulti))
 		SetMultiXactIdLimit(oldestMulti, oldestMultiDB);
-	else
-		DetermineSafeOldestOffset(oldestMulti);
 }
 
 /*
@@ -2503,19 +2495,11 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 	MultiXactOffset oldestOffset;
 
 	/*
-	 * Can't do this while initdb'ing or in the startup process while
-	 * replaying WAL: the segment file to read might have not yet been
-	 * created, or already been removed.
-	 */
-	if (IsBootstrapProcessingMode() || InRecovery)
-		return;
-
-	/*
-	 * Determine the offset of the oldest multixact.  Normally, we can read
-	 * the offset from the multixact itself, but there's an important special
-	 * case: if there are no multixacts in existence at all, oldestMXact
-	 * obviously can't point to one.  It will instead point to the multixact
-	 * ID that will be assigned the next time one is needed.
+	 * We determine the safe upper bound for offsets of new xacts by reading
+	 * the offset of the oldest multixact, and going back one segment.  This
+	 * way, the sequence of multixact member segments will always have a
+	 * one-segment hole at a minimum.  We start spewing warnings a few
+	 * complete segments before that.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 	if (MultiXactState->nextMXact == oldestMXact)
@@ -2852,6 +2836,13 @@ TruncateMultiXact(void)
 	SimpleLruTruncate(MultiXactOffsetCtl,
 					  MultiXactIdToOffsetPage(oldestMXact));
 
+	
+	/*
+	 * Now, and only now, we can advance the stop point for multixact members.
+	 * If we did it any sooner, the segments we deleted above might already
+	 * have been overwritten with new members.  That would be bad.
+	 */
+	DetermineSafeOldestOffset(oldestMXact);
 }
 
 /*
