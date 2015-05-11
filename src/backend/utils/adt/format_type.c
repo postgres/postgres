@@ -96,6 +96,9 @@ format_type_be(Oid type_oid)
 	return format_type_internal(type_oid, -1, false, false, false);
 }
 
+/*
+ * This version returns a name which is always qualified.
+ */
 char *
 format_type_be_qualified(Oid type_oid)
 {

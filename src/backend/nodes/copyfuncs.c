@@ -3972,6 +3972,7 @@ _copyAlterTSConfigurationStmt(const AlterTSConfigurationStmt *from)
 {
 	AlterTSConfigurationStmt *newnode = makeNode(AlterTSConfigurationStmt);
 
+	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(cfgname);
 	COPY_NODE_FIELD(tokentype);
 	COPY_NODE_FIELD(dicts);

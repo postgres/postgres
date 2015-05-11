@@ -2032,6 +2032,7 @@ static bool
 _equalAlterTSConfigurationStmt(const AlterTSConfigurationStmt *a,
 							   const AlterTSConfigurationStmt *b)
 {
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(cfgname);
 	COMPARE_NODE_FIELD(tokentype);
 	COMPARE_NODE_FIELD(dicts);

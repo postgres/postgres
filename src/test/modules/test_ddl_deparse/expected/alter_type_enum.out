@@ -1,0 +1,7 @@
+---
+--- ALTER_TYPE_ENUM
+---
+ALTER TYPE enum_test ADD VALUE 'zzz' AFTER 'baz';
+NOTICE:  DDL test: type simple, tag ALTER TYPE
+ALTER TYPE enum_test ADD VALUE 'aaa' BEFORE 'foo';
+NOTICE:  DDL test: type simple, tag ALTER TYPE

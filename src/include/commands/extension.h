@@ -24,7 +24,7 @@
  * on the current pg_extension object for each SQL object created by its
  * installation script.
  */
-extern bool creating_extension;
+extern PGDLLIMPORT bool creating_extension;
 extern Oid	CurrentExtensionObject;
 
 

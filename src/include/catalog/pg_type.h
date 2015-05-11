@@ -364,6 +364,10 @@ DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node
 DESCR("string representing an internal node tree");
 #define PGNODETREEOID	194
 
+DATA(insert OID = 32 ( pg_ddl_command   PGNSP PGUID SIZEOF_POINTER t p P f t \054 0 0 0 pg_ddl_command_in pg_ddl_command_out pg_ddl_command_recv pg_ddl_command_send - - - ALIGNOF_POINTER p f 0 -1 0 0 _null_ _null_ _null_ ));
+DESCR("internal type for passing CollectedCommand");
+#define PGDDLCOMMANDOID 32
+
 /* OIDS 200 - 299 */
 
 DATA(insert OID = 210 (  smgr	   PGNSP PGUID 2 t b U f t \054 0 0 0 smgrin smgrout - - - - - s p f 0 -1 0 0 _null_ _null_ _null_ ));

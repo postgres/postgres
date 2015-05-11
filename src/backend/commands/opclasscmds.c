@@ -25,6 +25,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
+#include "catalog/opfam_internal.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_namespace.h"
@@ -35,6 +36,7 @@
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/defrem.h"
+#include "commands/event_trigger.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -47,24 +49,12 @@
 #include "utils/tqual.h"
 
 
-/*
- * We use lists of this struct type to keep track of both operators and
- * procedures while building or adding to an opfamily.
- */
-typedef struct
-{
-	Oid			object;			/* operator or support proc's OID */
-	int			number;			/* strategy or support proc number */
-	Oid			lefttype;		/* lefttype */
-	Oid			righttype;		/* righttype */
-	Oid			sortfamily;		/* ordering operator's sort opfamily, or 0 */
-} OpFamilyMember;
-
-
-static void AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
+static void AlterOpFamilyAdd(AlterOpFamilyStmt *stmt,
+				 Oid amoid, Oid opfamilyoid,
 				 int maxOpNumber, int maxProcNumber,
 				 List *items);
-static void AlterOpFamilyDrop(List *opfamilyname, Oid amoid, Oid opfamilyoid,
+static void AlterOpFamilyDrop(AlterOpFamilyStmt *stmt,
+				  Oid amoid, Oid opfamilyoid,
 				  int maxOpNumber, int maxProcNumber,
 				  List *items);
 static void processTypesSpec(List *args, Oid *lefttype, Oid *righttype);
@@ -675,6 +665,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	storeProcedures(stmt->opfamilyname, amoid, opfamilyoid,
 					opclassoid, procedures, false);
 
+	/* let event triggers know what happened */
+	EventTriggerCollectCreateOpClass(stmt, opclassoid, operators, procedures);
+
 	/*
 	 * Create dependencies for the opclass proper.  Note: we do not create a
 	 * dependency link to the AM, because we don't currently support DROP
@@ -822,13 +815,11 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 	 * ADD and DROP cases need separate code from here on down.
 	 */
 	if (stmt->isDrop)
-		AlterOpFamilyDrop(stmt->opfamilyname, amoid, opfamilyoid,
-						  maxOpNumber, maxProcNumber,
-						  stmt->items);
+		AlterOpFamilyDrop(stmt, amoid, opfamilyoid,
+						  maxOpNumber, maxProcNumber, stmt->items);
 	else
-		AlterOpFamilyAdd(stmt->opfamilyname, amoid, opfamilyoid,
-						 maxOpNumber, maxProcNumber,
-						 stmt->items);
+		AlterOpFamilyAdd(stmt, amoid, opfamilyoid,
+						 maxOpNumber, maxProcNumber, stmt->items);
 
 	return opfamilyoid;
 }
@@ -837,9 +828,8 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
  * ADD part of ALTER OP FAMILY
  */
 static void
-AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-				 int maxOpNumber, int maxProcNumber,
-				 List *items)
+AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
+				 int maxOpNumber, int maxProcNumber, List *items)
 {
 	List	   *operators;		/* OpFamilyMember list for operators */
 	List	   *procedures;		/* OpFamilyMember list for support procs */
@@ -958,19 +948,22 @@ AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 	 * Add tuples to pg_amop and pg_amproc tying in the operators and
 	 * functions.  Dependencies on them are inserted, too.
 	 */
-	storeOperators(opfamilyname, amoid, opfamilyoid,
+	storeOperators(stmt->opfamilyname, amoid, opfamilyoid,
 				   InvalidOid, operators, true);
-	storeProcedures(opfamilyname, amoid, opfamilyoid,
+	storeProcedures(stmt->opfamilyname, amoid, opfamilyoid,
 					InvalidOid, procedures, true);
+
+	/* make information available to event triggers */
+	EventTriggerCollectAlterOpFam(stmt, opfamilyoid,
+								  operators, procedures);
 }
 
 /*
  * DROP part of ALTER OP FAMILY
  */
 static void
-AlterOpFamilyDrop(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-				  int maxOpNumber, int maxProcNumber,
-				  List *items)
+AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
+				  int maxOpNumber, int maxProcNumber, List *items)
 {
 	List	   *operators;		/* OpFamilyMember list for operators */
 	List	   *procedures;		/* OpFamilyMember list for support procs */
@@ -1033,8 +1026,12 @@ AlterOpFamilyDrop(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 	/*
 	 * Remove tuples from pg_amop and pg_amproc.
 	 */
-	dropOperators(opfamilyname, amoid, opfamilyoid, operators);
-	dropProcedures(opfamilyname, amoid, opfamilyoid, procedures);
+	dropOperators(stmt->opfamilyname, amoid, opfamilyoid, operators);
+	dropProcedures(stmt->opfamilyname, amoid, opfamilyoid, procedures);
+
+	/* make information available to event triggers */
+	EventTriggerCollectAlterOpFam(stmt, opfamilyoid,
+								  operators, procedures);
 }
 
 
@@ -1673,7 +1670,7 @@ RemoveAmProcEntryById(Oid entryOid)
 	heap_close(rel, RowExclusiveLock);
 }
 
-static char *
+char *
 get_am_name(Oid amOid)
 {
 	HeapTuple	tup;

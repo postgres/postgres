@@ -1,0 +1,8 @@
+--
+-- Materialized views
+--
+CREATE MATERIALIZED VIEW pg_class_mv AS
+  SELECT * FROM pg_class LIMIT 1 WITH NO DATA;
+NOTICE:  DDL test: type simple, tag CREATE MATERIALIZED VIEW
+REFRESH MATERIALIZED VIEW pg_class_mv;
+NOTICE:  DDL test: type simple, tag REFRESH MATERIALIZED VIEW

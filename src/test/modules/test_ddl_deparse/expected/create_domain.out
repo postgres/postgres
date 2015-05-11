@@ -1,0 +1,11 @@
+---
+--- CREATE_DOMAIN
+---
+CREATE DOMAIN domainvarchar VARCHAR(5);
+NOTICE:  DDL test: type simple, tag CREATE DOMAIN
+CREATE DOMAIN japanese_postal_code AS TEXT
+CHECK(
+   VALUE ~ '^\d{3}$'
+OR VALUE ~ '^\d{3}-\d{4}$'
+);
+NOTICE:  DDL test: type simple, tag CREATE DOMAIN

@@ -18066,8 +18066,99 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
     see <xref linkend="event-triggers">.
    </para>
 
+  <sect2 id="pg-event-trigger-ddl-command-end-functions">
+   <title>Capturing Changes at Command End</title>
+
+   <indexterm>
+    <primary>pg_event_trigger_ddl_commands</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_event_trigger_ddl_commands</> returns a list of
+    <acronym>DDL</acronym> commands executed by each user action,
+    when invoked in a function attached to a
+    <literal>ddl_command_end</> event trigger.  If called in any other
+    context, an error is raised.
+    <function>pg_event_trigger_ddl_commands</> returns one row for each
+    base command executed; some commands that are a single SQL sentence
+    may return more than one row.  This function returns the following
+    columns:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>classid</literal></entry>
+        <entry><type>Oid</type></entry>
+        <entry>OID of catalog the object belongs in</entry>
+       </row>
+       <row>
+        <entry><literal>objid</literal></entry>
+        <entry><type>Oid</type></entry>
+        <entry>OID of the object in the catalog</entry>
+       </row>
+       <row>
+        <entry><literal>objsubid</literal></entry>
+        <entry><type>integer</type></entry>
+        <entry>Object sub-id (e.g. attribute number for columns)</entry>
+       </row>
+       <row>
+        <entry><literal>command_tag</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>command tag</entry>
+       </row>
+       <row>
+        <entry><literal>object_type</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>Type of the object</entry>
+       </row>
+       <row>
+        <entry><literal>schema_name</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the schema the object belongs in, if any; otherwise <literal>NULL</>.
+         No quoting is applied.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_identity</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Text rendering of the object identity, schema-qualified. Each and every
+         identifier present in the identity is quoted if necessary.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>in_extension</literal></entry>
+        <entry><type>bool</type></entry>
+        <entry>whether the command is part of an extension script</entry>
+       </row>
+       <row>
+        <entry><literal>command</literal></entry>
+        <entry><type>pg_ddl_command</type></entry>
+        <entry>
+         A complete representation of the command, in internal format.
+         This cannot be output directly, but it can be passed to other
+         functions to obtain different pieces of information about the
+         command.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </sect2>
+
   <sect2 id="pg-event-trigger-sql-drop-functions">
-   <title>Processing objects dropped by a DDL command.</title>
+   <title>Processing Objects Dropped by a DDL Command</title>
 
    <indexterm>
      <primary>pg_event_trigger_dropped_objects</primary>

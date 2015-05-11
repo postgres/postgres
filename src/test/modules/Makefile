@@ -6,11 +6,12 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = \
 		  commit_ts \
-		  worker_spi \
 		  dummy_seclabel \
+		  test_ddl_deparse \
+		  test_parser \
 		  test_rls_hooks \
 		  test_shm_mq \
-		  test_parser
+		  worker_spi
 
 all: submake-errcodes
 

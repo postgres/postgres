@@ -48,6 +48,7 @@
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "commands/dbcommands.h"
+#include "commands/event_trigger.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "foreign/foreign.h"
@@ -56,6 +57,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
+#include "utils/aclchk_internal.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -63,32 +65,6 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-
-/*
- * The information about one Grant/Revoke statement, in internal format: object
- * and grantees names have been turned into Oids, the privilege list is an
- * AclMode bitmask.  If 'privileges' is ACL_NO_RIGHTS (the 0 value) and
- * all_privs is true, 'privileges' will be internally set to the right kind of
- * ACL_ALL_RIGHTS_*, depending on the object type (NB - this will modify the
- * InternalGrant struct!)
- *
- * Note: 'all_privs' and 'privileges' represent object-level privileges only.
- * There might also be column-level privilege specifications, which are
- * represented in col_privs (this is a list of untransformed AccessPriv nodes).
- * Column privileges are only valid for objtype ACL_OBJECT_RELATION.
- */
-typedef struct
-{
-	bool		is_grant;
-	GrantObjectType objtype;
-	List	   *objects;
-	bool		all_privs;
-	AclMode		privileges;
-	List	   *col_privs;
-	List	   *grantees;
-	bool		grant_option;
-	DropBehavior behavior;
-} InternalGrant;
 
 /*
  * Internal format used by ALTER DEFAULT PRIVILEGES.
@@ -605,6 +581,15 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) istmt->objtype);
 	}
+
+	/*
+	 * Pass the info to event triggers about the just-executed GRANT.  Note
+	 * that we prefer to do it after actually executing it, because that gives
+	 * the functions a chance to adjust the istmt with privileges actually
+	 * granted.
+	 */
+	if (EventTriggerSupportsGrantObjectType(istmt->objtype))
+		EventTriggerCollectGrant(istmt);
 }
 
 /*

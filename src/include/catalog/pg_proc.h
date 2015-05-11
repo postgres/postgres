@@ -233,6 +233,15 @@ DATA(insert OID =  84 (  boolne			   PGNSP PGUID 12 1 0 0 0 f f f t t f i 2 0 16
 DATA(insert OID =  89 (  version		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 25 "" _null_ _null_ _null_ _null_ _null_ pgsql_version _null_ _null_ _null_ ));
 DESCR("PostgreSQL version string");
 
+DATA(insert OID = 86  (  pg_ddl_command_in		PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 32 "2275" _null_ _null_ _null_ _null_ _null_ pg_ddl_command_in _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 87  (  pg_ddl_command_out		PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "32" _null_ _null_ _null_ _null_ _null_ pg_ddl_command_out _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 88  (  pg_ddl_command_recv	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 32 "2281" _null_ _null_ _null_ _null_ _null_ pg_ddl_command_recv _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 90  (  pg_ddl_command_send	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 17 "32" _null_ _null_ _null_ _null_ _null_ pg_ddl_command_send _null_ _null_ _null_ ));
+DESCR("I/O");
+
 /* OIDS 100 - 199 */
 
 DATA(insert OID = 101 (  eqsel			   PGNSP PGUID 12 1 0 0 0 f f f f t f s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ _null_	eqsel _null_ _null_ _null_ ));
@@ -5163,6 +5172,8 @@ DATA(insert OID = 4566 (  pg_event_trigger_table_rewrite_oid	PGNSP PGUID 12 1 0 
 DESCR("return Oid of the table getting rewritten");
 DATA(insert OID = 4567 (  pg_event_trigger_table_rewrite_reason PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 23 "" _null_ _null_ _null_ _null_ _null_ pg_event_trigger_table_rewrite_reason _null_ _null_ _null_ ));
 DESCR("return reason code for table getting rewritten");
+DATA(insert OID = 4568 (  pg_event_trigger_ddl_commands			PGNSP PGUID 12 10 100 0 0 f f f f t t s 0 0 2249 "" "{26,26,23,25,25,25,25,16,32}" "{o,o,o,o,o,o,o,o,o}" "{classid, objid, objsubid, command_tag, object_type, schema_name, object_identity, in_extension, command}" _null_ _null_ pg_event_trigger_ddl_commands _null_ _null_ _null_ ));
+DESCR("list DDL actions being executed by the current command");
 
 /* generic transition functions for ordered-set aggregates */
 DATA(insert OID = 3970 ( ordered_set_transition			PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 2281 "2281 2276" _null_ _null_ _null_ _null_ _null_ ordered_set_transition _null_ _null_ _null_ ));

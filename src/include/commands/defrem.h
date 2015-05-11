@@ -90,6 +90,7 @@ extern void IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
 extern void IsThereOpFamilyInNamespace(const char *opfname, Oid opfmethod,
 						   Oid opfnamespace);
 extern Oid	get_am_oid(const char *amname, bool missing_ok);
+extern char *get_am_name(Oid amOid);
 extern Oid	get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
 extern Oid	get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
 

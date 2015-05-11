@@ -1,0 +1,15 @@
+--
+-- ALTER_FUNCTION
+--
+ALTER FUNCTION plpgsql_function_trigger_1 ()
+   SET SCHEMA foo;
+NOTICE:  DDL test: type simple, tag ALTER FUNCTION
+ALTER FUNCTION foo.plpgsql_function_trigger_1()
+  COST 10;
+NOTICE:  DDL test: type simple, tag ALTER FUNCTION
+CREATE ROLE tmprole;
+ALTER FUNCTION plpgsql_function_trigger_2()
+  OWNER TO tmprole;
+ERROR:  function plpgsql_function_trigger_2() does not exist
+DROP OWNED BY tmprole;
+DROP ROLE tmprole;

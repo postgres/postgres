@@ -2911,9 +2911,19 @@ typedef struct AlterTSDictionaryStmt
 /*
  * TS Configuration stmts: DefineStmt, RenameStmt and DropStmt are default
  */
+typedef enum AlterTSConfigType
+{
+	ALTER_TSCONFIG_ADD_MAPPING,
+	ALTER_TSCONFIG_ALTER_MAPPING_FOR_TOKEN,
+	ALTER_TSCONFIG_REPLACE_DICT,
+	ALTER_TSCONFIG_REPLACE_DICT_FOR_TOKEN,
+	ALTER_TSCONFIG_DROP_MAPPING
+} AlterTSConfigType;
+
 typedef struct AlterTSConfigurationStmt
 {
 	NodeTag		type;
+	AlterTSConfigType	kind;	/* ALTER_TSCONFIG_ADD_MAPPING, etc */
 	List	   *cfgname;		/* qualified name (list of Value strings) */
 
 	/*

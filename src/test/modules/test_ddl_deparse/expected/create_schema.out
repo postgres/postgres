@@ -1,0 +1,19 @@
+--
+-- CREATE_SCHEMA
+--
+CREATE SCHEMA foo;
+NOTICE:  DDL test: type simple, tag CREATE SCHEMA
+CREATE SCHEMA IF NOT EXISTS bar;
+NOTICE:  DDL test: type simple, tag CREATE SCHEMA
+CREATE SCHEMA baz;
+NOTICE:  DDL test: type simple, tag CREATE SCHEMA
+-- Will not be created, and will not be handled by the
+-- event trigger
+CREATE SCHEMA IF NOT EXISTS baz;
+NOTICE:  schema "baz" already exists, skipping
+CREATE SCHEMA element_test
+  CREATE TABLE foo (id int)
+  CREATE VIEW bar AS SELECT * FROM foo;
+NOTICE:  DDL test: type simple, tag CREATE SCHEMA
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+NOTICE:  DDL test: type simple, tag CREATE VIEW

@@ -29,7 +29,8 @@
      occurs in the database in which it is defined. Currently, the only
      supported events are
      <literal>ddl_command_start</>,
-     <literal>ddl_command_end</>
+     <literal>ddl_command_end</>,
+     <literal>table_rewrite</>
      and <literal>sql_drop</>.
      Support for additional events may be added in future releases.
    </para>
@@ -52,7 +53,13 @@
 
    <para>
     The <literal>ddl_command_end</> event occurs just after the execution of
-    this same set of commands.
+    this same set of commands.  To obtain more details on the <acronym>DDL</>
+    operations that took place, use the set-returning function
+    <literal>pg_event_trigger_ddl_commands()</> from the
+    <literal>ddl_command_end</> event trigger code (see
+    <xref linkend="functions-event-triggers">).  Note that the trigger fires
+    after the actions have taken place (but before the transaction commits),
+    and thus the system catalogs can be read as already changed.
    </para>
 
    <para>

@@ -1,0 +1,25 @@
+--
+-- COMMENT_ON
+--
+COMMENT ON SCHEMA foo IS 'This is schema foo';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON TYPE enum_test IS 'ENUM test';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON TYPE int2range  IS 'RANGE test';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON DOMAIN japanese_postal_code IS 'DOMAIN test';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON SEQUENCE fkey_table_seq IS 'SEQUENCE test';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON TABLE datatype_table IS 'This table should contain all native datatypes';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON VIEW datatype_view IS 'This is a view';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON FUNCTION c_function_test() IS 'FUNCTION test';
+ERROR:  function c_function_test() does not exist
+COMMENT ON TRIGGER trigger_1 ON datatype_table IS 'TRIGGER test';
+NOTICE:  DDL test: type simple, tag COMMENT
+COMMENT ON RULE rule_1 IS 'RULE test';
+NOTICE:  DDL test: type simple, tag COMMENT
+-- should not fire
+COMMENT ON DATABASE contrib_regression IS 'contrib regression';

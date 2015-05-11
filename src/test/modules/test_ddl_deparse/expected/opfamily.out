@@ -1,0 +1,67 @@
+-- copied from equivclass.sql
+create type int8alias1;
+NOTICE:  DDL test: type simple, tag CREATE TYPE
+create function int8alias1in(cstring) returns int8alias1
+  strict immutable language internal as 'int8in';
+NOTICE:  return type int8alias1 is only a shell
+NOTICE:  DDL test: type simple, tag CREATE FUNCTION
+create function int8alias1out(int8alias1) returns cstring
+  strict immutable language internal as 'int8out';
+NOTICE:  argument type int8alias1 is only a shell
+NOTICE:  DDL test: type simple, tag CREATE FUNCTION
+create type int8alias1 (
+    input = int8alias1in,
+    output = int8alias1out,
+    like = int8
+);
+NOTICE:  DDL test: type simple, tag CREATE TYPE
+create type int8alias2;
+NOTICE:  DDL test: type simple, tag CREATE TYPE
+create function int8alias2in(cstring) returns int8alias2
+  strict immutable language internal as 'int8in';
+NOTICE:  return type int8alias2 is only a shell
+NOTICE:  DDL test: type simple, tag CREATE FUNCTION
+create function int8alias2out(int8alias2) returns cstring
+  strict immutable language internal as 'int8out';
+NOTICE:  argument type int8alias2 is only a shell
+NOTICE:  DDL test: type simple, tag CREATE FUNCTION
+create type int8alias2 (
+    input = int8alias2in,
+    output = int8alias2out,
+    like = int8
+);
+NOTICE:  DDL test: type simple, tag CREATE TYPE
+create cast (int8 as int8alias1) without function;
+NOTICE:  DDL test: type simple, tag CREATE CAST
+create cast (int8 as int8alias2) without function;
+NOTICE:  DDL test: type simple, tag CREATE CAST
+create cast (int8alias1 as int8) without function;
+NOTICE:  DDL test: type simple, tag CREATE CAST
+create cast (int8alias2 as int8) without function;
+NOTICE:  DDL test: type simple, tag CREATE CAST
+create function int8alias1eq(int8alias1, int8alias1) returns bool
+  strict immutable language internal as 'int8eq';
+NOTICE:  DDL test: type simple, tag CREATE FUNCTION
+create operator = (
+    procedure = int8alias1eq,
+    leftarg = int8alias1, rightarg = int8alias1,
+    commutator = =,
+    restrict = eqsel, join = eqjoinsel,
+    merges
+);
+NOTICE:  DDL test: type simple, tag CREATE OPERATOR
+alter operator family integer_ops using btree add
+  operator 3 = (int8alias1, int8alias1);
+NOTICE:  DDL test: type alter operator family, tag ALTER OPERATOR FAMILY
+-- copied from alter_table.sql
+create type ctype as (f1 int, f2 text);
+NOTICE:  DDL test: type simple, tag CREATE TYPE
+create function same(ctype, ctype) returns boolean language sql
+as 'select $1.f1 is not distinct from $2.f1 and $1.f2 is not distinct from $2.f2';
+NOTICE:  DDL test: type simple, tag CREATE FUNCTION
+create operator =(procedure = same, leftarg  = ctype, rightarg = ctype);
+NOTICE:  DDL test: type simple, tag CREATE OPERATOR
+create operator class ctype_hash_ops
+  default for type ctype using hash as
+  operator 1 =(ctype, ctype);
+NOTICE:  DDL test: type create operator class, tag CREATE OPERATOR CLASS
