@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
+#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #ifdef OPTIMIZER_DEBUG
@@ -2324,7 +2325,12 @@ select_rowmark_type(RangeTblEntry *rte, LockClauseStrength strength)
 	}
 	else if (rte->relkind == RELKIND_FOREIGN_TABLE)
 	{
-		/* For now, we force all foreign tables to use ROW_MARK_COPY */
+		/* Let the FDW select the rowmark type, if it wants to */
+		FdwRoutine *fdwroutine = GetFdwRoutineByRelId(rte->relid);
+
+		if (fdwroutine->GetForeignRowMarkType != NULL)
+			return fdwroutine->GetForeignRowMarkType(rte, strength);
+		/* Otherwise, use ROW_MARK_COPY by default */
 		return ROW_MARK_COPY;
 	}
 	else

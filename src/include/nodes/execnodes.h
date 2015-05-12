@@ -429,8 +429,11 @@ typedef struct EState
  * parent RTEs, which can be ignored at runtime).  Virtual relations such as
  * subqueries-in-FROM will have an ExecRowMark with relation == NULL.  See
  * PlanRowMark for details about most of the fields.  In addition to fields
- * directly derived from PlanRowMark, we store curCtid, which is used by the
- * WHERE CURRENT OF code.
+ * directly derived from PlanRowMark, we store an activity flag (to denote
+ * inactive children of inheritance trees), curCtid, which is used by the
+ * WHERE CURRENT OF code, and ermExtra, which is available for use by the plan
+ * node that sources the relation (e.g., for a foreign table the FDW can use
+ * ermExtra to hold information).
  *
  * EState->es_rowMarks is a list of these structs.
  */
@@ -442,8 +445,11 @@ typedef struct ExecRowMark
 	Index		prti;			/* parent range table index, if child */
 	Index		rowmarkId;		/* unique identifier for resjunk columns */
 	RowMarkType markType;		/* see enum in nodes/plannodes.h */
+	LockClauseStrength strength;	/* LockingClause's strength, or LCS_NONE */
 	LockWaitPolicy waitPolicy;	/* NOWAIT and SKIP LOCKED */
+	bool		ermActive;		/* is this mark relevant for current tuple? */
 	ItemPointerData curCtid;	/* ctid of currently locked tuple, if any */
+	void	   *ermExtra;		/* available for use by relation source node */
 } ExecRowMark;
 
 /*
@@ -1921,6 +1927,8 @@ typedef struct LockRowsState
 	PlanState	ps;				/* its first field is NodeTag */
 	List	   *lr_arowMarks;	/* List of ExecAuxRowMarks */
 	EPQState	lr_epqstate;	/* for evaluating EvalPlanQual rechecks */
+	HeapTuple  *lr_curtuples;	/* locked tuples (one entry per RT entry) */
+	int			lr_ntables;		/* length of lr_curtuples[] array */
 } LockRowsState;
 
 /* ----------------

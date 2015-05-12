@@ -1720,7 +1720,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			continue;
 
 		/* find ExecRowMark (same for all subplans) */
-		erm = ExecFindRowMark(estate, rc->rti);
+		erm = ExecFindRowMark(estate, rc->rti, false);
 
 		/* build ExecAuxRowMark for each subplan */
 		for (i = 0; i < nplans; i++)

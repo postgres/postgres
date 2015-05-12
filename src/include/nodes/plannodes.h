@@ -822,16 +822,16 @@ typedef struct Limit
  *
  * The first four of these values represent different lock strengths that
  * we can take on tuples according to SELECT FOR [KEY] UPDATE/SHARE requests.
- * We only support these on regular tables.  For foreign tables, any locking
- * that might be done for these requests must happen during the initial row
- * fetch; there is no mechanism for going back to lock a row later (and thus
- * no need for EvalPlanQual machinery during updates of foreign tables).
+ * We support these on regular tables, as well as on foreign tables whose FDWs
+ * report support for late locking.  For other foreign tables, any locking
+ * that might be done for such requests must happen during the initial row
+ * fetch; their FDWs provide no mechanism for going back to lock a row later.
  * This means that the semantics will be a bit different than for a local
  * table; in particular we are likely to lock more rows than would be locked
  * locally, since remote rows will be locked even if they then fail
- * locally-checked restriction or join quals.  However, the alternative of
- * doing a separate remote query to lock each selected row is extremely
- * unappealing, so let's do it like this for now.
+ * locally-checked restriction or join quals.  However, the prospect of
+ * doing a separate remote query to lock each selected row is usually pretty
+ * unappealing, so early locking remains a credible design choice for FDWs.
  *
  * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we have to uniquely
  * identify all the source rows, not only those from the target relations, so
@@ -840,12 +840,11 @@ typedef struct Limit
  * represented by ROW_MARK_REFERENCE.  Otherwise (for example for VALUES or
  * FUNCTION scans) we have to copy the whole row value.  ROW_MARK_COPY is
  * pretty inefficient, since most of the time we'll never need the data; but
- * fortunately the case is not performance-critical in practice.  Note that
- * we use ROW_MARK_COPY for non-target foreign tables, even if the FDW has a
- * concept of rowid and so could theoretically support some form of
- * ROW_MARK_REFERENCE.  Although copying the whole row value is inefficient,
- * it's probably still faster than doing a second remote fetch, so it doesn't
- * seem worth the extra complexity to permit ROW_MARK_REFERENCE.
+ * fortunately the overhead is usually not performance-critical in practice.
+ * By default we use ROW_MARK_COPY for foreign tables, but if the FDW has
+ * a concept of rowid it can request to use ROW_MARK_REFERENCE instead.
+ * (Again, this probably doesn't make sense if a physical remote fetch is
+ * needed, but for FDWs that map to local storage it might be credible.)
  */
 typedef enum RowMarkType
 {
@@ -866,7 +865,7 @@ typedef enum RowMarkType
  * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
  * PlanRowMark node for each non-target relation in the query.  Relations that
  * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
- * regular tables) or ROW_MARK_COPY (if not).
+ * regular tables or supported foreign tables) or ROW_MARK_COPY (if not).
  *
  * Initially all PlanRowMarks have rti == prti and isParent == false.
  * When the planner discovers that a relation is the root of an inheritance
@@ -879,8 +878,8 @@ typedef enum RowMarkType
  * to use different markTypes).
  *
  * The planner also adds resjunk output columns to the plan that carry
- * information sufficient to identify the locked or fetched rows.  For
- * regular tables (markType != ROW_MARK_COPY), these columns are named
+ * information sufficient to identify the locked or fetched rows.  When
+ * markType != ROW_MARK_COPY, these columns are named
  *		tableoid%u			OID of table
  *		ctid%u				TID of row
  * The tableoid column is only present for an inheritance hierarchy.

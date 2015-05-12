@@ -805,20 +805,11 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 		lockmode = NoLock;
 	else
 	{
-		ListCell   *l;
+		/* Keep this check in sync with InitPlan! */
+		ExecRowMark *erm = ExecFindRowMark(estate, scanrelid, true);
 
-		foreach(l, estate->es_rowMarks)
-		{
-			ExecRowMark *erm = lfirst(l);
-
-			/* Keep this check in sync with InitPlan! */
-			if (erm->rti == scanrelid &&
-				erm->relation != NULL)
-			{
-				lockmode = NoLock;
-				break;
-			}
-		}
+		if (erm != NULL && erm->relation != NULL)
+			lockmode = NoLock;
 	}
 
 	/* Open the relation and acquire lock as needed */

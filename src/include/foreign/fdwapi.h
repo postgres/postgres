@@ -89,6 +89,14 @@ typedef void (*EndForeignModify_function) (EState *estate,
 
 typedef int (*IsForeignRelUpdatable_function) (Relation rel);
 
+typedef RowMarkType (*GetForeignRowMarkType_function) (RangeTblEntry *rte,
+												LockClauseStrength strength);
+
+typedef HeapTuple (*RefetchForeignRow_function) (EState *estate,
+															 ExecRowMark *erm,
+															 Datum rowid,
+															 bool *updated);
+
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
 													struct ExplainState *es);
 
@@ -150,6 +158,10 @@ typedef struct FdwRoutine
 	ExecForeignDelete_function ExecForeignDelete;
 	EndForeignModify_function EndForeignModify;
 	IsForeignRelUpdatable_function IsForeignRelUpdatable;
+
+	/* Functions for SELECT FOR UPDATE/SHARE row locking */
+	GetForeignRowMarkType_function GetForeignRowMarkType;
+	RefetchForeignRow_function RefetchForeignRow;
 
 	/* Support functions for EXPLAIN */
 	ExplainForeignScan_function ExplainForeignScan;

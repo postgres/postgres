@@ -898,8 +898,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		erm->prti = rc->prti;
 		erm->rowmarkId = rc->rowmarkId;
 		erm->markType = rc->markType;
+		erm->strength = rc->strength;
 		erm->waitPolicy = rc->waitPolicy;
+		erm->ermActive = false;
 		ItemPointerSetInvalid(&(erm->curCtid));
+		erm->ermExtra = NULL;
 		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 	}
 
@@ -1143,6 +1146,8 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 static void
 CheckValidRowMarkRel(Relation rel, RowMarkType markType)
 {
+	FdwRoutine *fdwroutine;
+
 	switch (rel->rd_rel->relkind)
 	{
 		case RELKIND_RELATION:
@@ -1178,11 +1183,13 @@ CheckValidRowMarkRel(Relation rel, RowMarkType markType)
 							  RelationGetRelationName(rel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
-			/* Should not get here; planner should have used ROW_MARK_COPY */
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot lock rows in foreign table \"%s\"",
-							RelationGetRelationName(rel))));
+			/* Okay only if the FDW supports it */
+			fdwroutine = GetFdwRoutineForRelation(rel, false);
+			if (fdwroutine->RefetchForeignRow == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot lock rows in foreign table \"%s\"",
+								RelationGetRelationName(rel))));
 			break;
 		default:
 			ereport(ERROR,
@@ -2005,9 +2012,11 @@ ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo)
 
 /*
  * ExecFindRowMark -- find the ExecRowMark struct for given rangetable index
+ *
+ * If no such struct, either return NULL or throw error depending on missing_ok
  */
 ExecRowMark *
-ExecFindRowMark(EState *estate, Index rti)
+ExecFindRowMark(EState *estate, Index rti, bool missing_ok)
 {
 	ListCell   *lc;
 
@@ -2018,8 +2027,9 @@ ExecFindRowMark(EState *estate, Index rti)
 		if (erm->rti == rti)
 			return erm;
 	}
-	elog(ERROR, "failed to find ExecRowMark for rangetable index %u", rti);
-	return NULL;				/* keep compiler quiet */
+	if (!missing_ok)
+		elog(ERROR, "failed to find ExecRowMark for rangetable index %u", rti);
+	return NULL;
 }
 
 /*
@@ -2530,7 +2540,7 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 
 		if (erm->markType == ROW_MARK_REFERENCE)
 		{
-			Buffer		buffer;
+			HeapTuple	copyTuple;
 
 			Assert(erm->relation != NULL);
 
@@ -2541,17 +2551,50 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			/* non-locked rels could be on the inside of outer joins */
 			if (isNull)
 				continue;
-			tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 
-			/* okay, fetch the tuple */
-			if (!heap_fetch(erm->relation, SnapshotAny, &tuple, &buffer,
-							false, NULL))
-				elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
+			/* fetch requests on foreign tables must be passed to their FDW */
+			if (erm->relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+			{
+				FdwRoutine *fdwroutine;
+				bool		updated = false;
 
-			/* successful, copy and store tuple */
-			EvalPlanQualSetTuple(epqstate, erm->rti,
-								 heap_copytuple(&tuple));
-			ReleaseBuffer(buffer);
+				fdwroutine = GetFdwRoutineForRelation(erm->relation, false);
+				/* this should have been checked already, but let's be safe */
+				if (fdwroutine->RefetchForeignRow == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot lock rows in foreign table \"%s\"",
+									RelationGetRelationName(erm->relation))));
+				copyTuple = fdwroutine->RefetchForeignRow(epqstate->estate,
+														  erm,
+														  datum,
+														  &updated);
+				if (copyTuple == NULL)
+					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
+
+				/*
+				 * Ideally we'd insist on updated == false here, but that
+				 * assumes that FDWs can track that exactly, which they might
+				 * not be able to.  So just ignore the flag.
+				 */
+			}
+			else
+			{
+				/* ordinary table, fetch the tuple */
+				Buffer		buffer;
+
+				tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
+				if (!heap_fetch(erm->relation, SnapshotAny, &tuple, &buffer,
+								false, NULL))
+					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
+
+				/* successful, copy tuple */
+				copyTuple = heap_copytuple(&tuple);
+				ReleaseBuffer(buffer);
+			}
+
+			/* store tuple */
+			EvalPlanQualSetTuple(epqstate, erm->rti, copyTuple);
 		}
 		else
 		{
