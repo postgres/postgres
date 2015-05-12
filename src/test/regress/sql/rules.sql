@@ -1074,12 +1074,43 @@ CREATE RULE hat_upsert AS ON INSERT TO hats
     INSERT INTO hat_data VALUES (
            NEW.hat_name,
            NEW.hat_color)
-        ON CONFLICT (hat_name) DO UPDATE SET hat_color = 'Orange' RETURNING *;
+        ON CONFLICT (hat_name)
+        DO UPDATE
+           SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color
+           WHERE excluded.hat_color <>  'forbidden'
+        RETURNING *;
 
 -- Works (does upsert)
-INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+INSERT INTO hats VALUES ('h8', 'black') RETURNING *;
+SELECT * FROM hat_data WHERE hat_name = 'h8';
+INSERT INTO hats VALUES ('h8', 'white') RETURNING *;
+SELECT * FROM hat_data WHERE hat_name = 'h8';
+INSERT INTO hats VALUES ('h8', 'forbidden') RETURNING *;
+SELECT * FROM hat_data WHERE hat_name = 'h8';
 SELECT tablename, rulename, definition FROM pg_rules
 	WHERE tablename = 'hats';
+-- ensure explain works for on insert conflict rules
+explain (costs off) INSERT INTO hats VALUES ('h8', 'forbidden') RETURNING *;
+
+-- ensure upserting into a rule, with a CTE (different offsets!) works
+WITH data(hat_name, hat_color) AS (
+    VALUES ('h8', 'green'),
+        ('h9', 'blue'),
+        ('h7', 'forbidden')
+)
+INSERT INTO hats
+    SELECT * FROM data
+RETURNING *;
+EXPLAIN (costs off) WITH data(hat_name, hat_color) AS (
+    VALUES ('h8', 'green'),
+        ('h9', 'blue'),
+        ('h7', 'forbidden')
+)
+INSERT INTO hats
+    SELECT * FROM data
+RETURNING *;
+SELECT * FROM hat_data WHERE hat_name IN ('h8', 'h9', 'h7') ORDER BY hat_name;
+
 DROP RULE hat_upsert ON hats;
 
 drop table hats;

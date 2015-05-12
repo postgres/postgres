@@ -2817,24 +2817,111 @@ CREATE RULE hat_upsert AS ON INSERT TO hats
     INSERT INTO hat_data VALUES (
            NEW.hat_name,
            NEW.hat_color)
-        ON CONFLICT (hat_name) DO UPDATE SET hat_color = 'Orange' RETURNING *;
+        ON CONFLICT (hat_name)
+        DO UPDATE
+           SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color
+           WHERE excluded.hat_color <>  'forbidden'
+        RETURNING *;
 -- Works (does upsert)
-INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+INSERT INTO hats VALUES ('h8', 'black') RETURNING *;
   hat_name  | hat_color  
 ------------+------------
- h7         | Orange    
+ h8         | black     
+(1 row)
+
+SELECT * FROM hat_data WHERE hat_name = 'h8';
+  hat_name  | hat_color  
+------------+------------
+ h8         | black     
+(1 row)
+
+INSERT INTO hats VALUES ('h8', 'white') RETURNING *;
+  hat_name  | hat_color  
+------------+------------
+ h8         | white     
+(1 row)
+
+SELECT * FROM hat_data WHERE hat_name = 'h8';
+  hat_name  | hat_color  
+------------+------------
+ h8         | white     
+(1 row)
+
+INSERT INTO hats VALUES ('h8', 'forbidden') RETURNING *;
+ hat_name | hat_color 
+----------+-----------
+(0 rows)
+
+SELECT * FROM hat_data WHERE hat_name = 'h8';
+  hat_name  | hat_color  
+------------+------------
+ h8         | white     
 (1 row)
 
 SELECT tablename, rulename, definition FROM pg_rules
 	WHERE tablename = 'hats';
- tablename |  rulename  |                                          definition                                           
------------+------------+-----------------------------------------------------------------------------------------------
- hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                    +
-           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                 +
-           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO UPDATE SET hat_color = 'Orange'::bpchar+
-           |            |   RETURNING hat_data.hat_name,                                                               +
+ tablename |  rulename  |                                                          definition                                                           
+-----------+------------+-------------------------------------------------------------------------------------------------------------------------------
+ hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                                                    +
+           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                 +
+           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
+           |            |   WHERE (excluded.hat_color <> 'forbidden'::bpchar)                                                                          +
+           |            |   RETURNING hat_data.hat_name,                                                                                               +
            |            |     hat_data.hat_color;
 (1 row)
+
+-- ensure explain works for on insert conflict rules
+explain (costs off) INSERT INTO hats VALUES ('h8', 'forbidden') RETURNING *;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Insert on hat_data
+   Conflict Resolution: UPDATE
+   Conflict Arbiter Indexes: hat_data_pkey
+   Conflict Filter: (excluded.hat_color <> 'forbidden'::bpchar)
+   ->  Result
+(5 rows)
+
+-- ensure upserting into a rule, with a CTE (different offsets!) works
+WITH data(hat_name, hat_color) AS (
+    VALUES ('h8', 'green'),
+        ('h9', 'blue'),
+        ('h7', 'forbidden')
+)
+INSERT INTO hats
+    SELECT * FROM data
+RETURNING *;
+  hat_name  | hat_color  
+------------+------------
+ h8         | green     
+ h9         | blue      
+(2 rows)
+
+EXPLAIN (costs off) WITH data(hat_name, hat_color) AS (
+    VALUES ('h8', 'green'),
+        ('h9', 'blue'),
+        ('h7', 'forbidden')
+)
+INSERT INTO hats
+    SELECT * FROM data
+RETURNING *;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Insert on hat_data
+   Conflict Resolution: UPDATE
+   Conflict Arbiter Indexes: hat_data_pkey
+   Conflict Filter: (excluded.hat_color <> 'forbidden'::bpchar)
+   CTE data
+     ->  Values Scan on "*VALUES*"
+   ->  CTE Scan on data
+(7 rows)
+
+SELECT * FROM hat_data WHERE hat_name IN ('h8', 'h9', 'h7') ORDER BY hat_name;
+  hat_name  | hat_color  
+------------+------------
+ h7         | black     
+ h8         | green     
+ h9         | blue      
+(3 rows)
 
 DROP RULE hat_upsert ON hats;
 drop table hats;

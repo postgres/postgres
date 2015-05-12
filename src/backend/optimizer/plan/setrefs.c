@@ -740,9 +740,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 				/*
 				 * We treat ModifyTable with ON CONFLICT as a form of 'pseudo
-				 * join', where the inner side is the EXLUDED tuple. Therefore
-				 * use fix_join_expr to setup the relevant variables to
-				 * INNER_VAR. We explicitly don't create any OUTER_VARs as
+				 * join', where the inner side is the EXCLUDED tuple.
+				 * Therefore use fix_join_expr to setup the relevant variables
+				 * to INNER_VAR. We explicitly don't create any OUTER_VARs as
 				 * those are already used by RETURNING and it seems better to
 				 * be non-conflicting.
 				 */
@@ -763,6 +763,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 									  NULL, itlist,
 									  linitial_int(splan->resultRelations),
 									  rtoffset);
+
+					splan->exclRelTlist =
+						fix_scan_list(root, splan->exclRelTlist, rtoffset);
 				}
 
 				splan->nominalRelation += rtoffset;

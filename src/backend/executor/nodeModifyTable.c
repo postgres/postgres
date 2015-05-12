@@ -1675,6 +1675,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		ExecSetSlotDescriptor(mtstate->mt_existing,
 							  resultRelInfo->ri_RelationDesc->rd_att);
 
+		/* carried forward solely for the benefit of explain */
 		mtstate->mt_excludedtlist = node->exclRelTlist;
 
 		/* create target slot for UPDATE SET projection */

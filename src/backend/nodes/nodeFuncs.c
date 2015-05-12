@@ -1922,6 +1922,8 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker(onconflict->onConflictWhere, context))
 					return true;
+				if (walker(onconflict->exclRelTlist, context))
+					return true;
 			}
 			break;
 		case T_JoinExpr:
@@ -2642,6 +2644,7 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->arbiterWhere, oc->arbiterWhere, Node *);
 				MUTATE(newnode->onConflictSet, oc->onConflictSet, List *);
 				MUTATE(newnode->onConflictWhere, oc->onConflictWhere, Node *);
+				MUTATE(newnode->exclRelTlist, oc->exclRelTlist, List *);
 
 				return (Node *) newnode;
 			}
