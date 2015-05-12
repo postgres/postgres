@@ -124,6 +124,21 @@ static JsonbValue *findJsonbValueFromContainerLen(JsonbContainer *container,
 							   char *key,
 							   uint32 keylen);
 
+/* functions supporting jsonb_delete, jsonb_replace and jsonb_concat */
+static JsonbValue *IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
+								  JsonbParseState **state);
+static JsonbValue *walkJsonb(JsonbIterator **it, JsonbParseState **state, bool stop_at_level_zero);
+static JsonbValue *replacePath(JsonbIterator **it, Datum *path_elems,
+							   bool *path_nulls, int path_len,
+							   JsonbParseState **st, int level, Jsonb *newval);
+static void replacePathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
+							  int path_len, JsonbParseState **st, int level,
+							  Jsonb *newval, uint32	nelems);
+static void replacePathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
+							 int path_len, JsonbParseState **st, int level,
+							 Jsonb *newval, uint32 npairs);
+static void addJsonbToParseState(JsonbParseState **jbps, Jsonb * jb);
+
 /* state for json_object_keys */
 typedef struct OkeysState
 {
@@ -3198,4 +3213,706 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
 	Assert(res != NULL);
 
 	PG_RETURN_POINTER(JsonbValueToJsonb(res));
+}
+
+/*
+ * Add values from the jsonb to the parse state.
+ *
+ * If the parse state container is an object, the jsonb is pushed as
+ * a value, not a key.
+ *
+ * This needs to be done using an iterator because pushJsonbValue doesn't
+ * like getting jbvBinary values, so we can't just push jb as a whole.
+ */
+static void
+addJsonbToParseState(JsonbParseState **jbps, Jsonb * jb)
+{
+
+	JsonbIterator *it;
+	JsonbValue    *o = &(*jbps)->contVal;
+	int            type;
+	JsonbValue     v;
+
+	it = JsonbIteratorInit(&jb->root);
+
+	Assert(o->type == jbvArray || o->type == jbvObject);
+
+	if (JB_ROOT_IS_SCALAR(jb))
+	{
+		(void) JsonbIteratorNext(&it, &v, false); /* skip array header */
+		(void) JsonbIteratorNext(&it, &v, false); /* fetch scalar value */
+
+		switch (o->type)
+		{
+			case jbvArray:
+				(void) pushJsonbValue(jbps, WJB_ELEM, &v);
+				break;
+			case jbvObject:
+				(void) pushJsonbValue(jbps, WJB_VALUE, &v);
+				break;
+			default:
+				elog(ERROR, "unexpected parent of nested structure");
+		}
+	}
+	else
+	{
+		while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
+		{
+			if (type == WJB_KEY || type == WJB_VALUE || type == WJB_ELEM)
+				(void) pushJsonbValue(jbps, type, &v);
+			else
+				(void) pushJsonbValue(jbps, type, NULL);
+		}
+	}
+
+}
+
+/*
+ * SQL function jsonb_pretty (jsonb)
+ *
+ * Pretty-printed text for the jsonb
+ */
+Datum
+jsonb_pretty(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	StringInfo	str = makeStringInfo();
+
+	JsonbToCStringIndent(str, &jb->root, VARSIZE(jb));
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(str->data, str->len));
+}
+
+
+/*
+ * SQL function jsonb_concat (jsonb, jsonb)
+ *
+ * function for || operator
+ */
+Datum
+jsonb_concat(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *jb1 = PG_GETARG_JSONB(0);
+	Jsonb	   *jb2 = PG_GETARG_JSONB(1);
+	Jsonb	   *out = palloc(VARSIZE(jb1) + VARSIZE(jb2));
+	JsonbParseState *state = NULL;
+	JsonbValue *res;
+	JsonbIterator  *it1,
+				   *it2;
+
+	/*
+	 * If one of the jsonb is empty, just return other.
+	 */
+	if (JB_ROOT_COUNT(jb1) == 0)
+	{
+		memcpy(out, jb2, VARSIZE(jb2));
+		PG_RETURN_POINTER(out);
+	}
+	else if (JB_ROOT_COUNT(jb2) == 0)
+	{
+		memcpy(out, jb1, VARSIZE(jb1));
+		PG_RETURN_POINTER(out);
+	}
+
+	it1 = JsonbIteratorInit(&jb1->root);
+	it2 = JsonbIteratorInit(&jb2->root);
+
+	res = IteratorConcat(&it1, &it2, &state);
+
+	if (res == NULL || (res->type == jbvArray && res->val.array.nElems == 0) ||
+		(res->type == jbvObject && res->val.object.nPairs == 0))
+	{
+		SET_VARSIZE(out, VARHDRSZ);
+	}
+	else
+	{
+		if (res->type == jbvArray && res->val.array.nElems > 1)
+			res->val.array.rawScalar = false;
+
+		out = JsonbValueToJsonb(res);
+	}
+
+	PG_RETURN_POINTER(out);
+}
+
+
+/*
+ * SQL function jsonb_delete (jsonb, text)
+ *
+ * return a copy of the jsonb with the indicated item
+ * removed.
+ */
+Datum
+jsonb_delete(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *in = PG_GETARG_JSONB(0);
+	text	   *key = PG_GETARG_TEXT_PP(1);
+	char	   *keyptr = VARDATA_ANY(key);
+	int			keylen = VARSIZE_ANY_EXHDR(key);
+	Jsonb	   *out = palloc(VARSIZE(in));
+	JsonbParseState *state = NULL;
+	JsonbIterator *it;
+	uint32		r;
+	JsonbValue	v,
+			   *res = NULL;
+	bool		skipNested = false;
+
+	SET_VARSIZE(out, VARSIZE(in));
+
+	if (JB_ROOT_COUNT(in) == 0)
+		PG_RETURN_POINTER(out);
+
+	it = JsonbIteratorInit(&in->root);
+
+	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != 0)
+	{
+		skipNested = true;
+
+		if ((r == WJB_ELEM || r == WJB_KEY) &&
+			(v.type == jbvString && keylen == v.val.string.len &&
+			 memcmp(keyptr, v.val.string.val, keylen) == 0))
+		{
+			/* skip corresponding value as well */
+			if (r == WJB_KEY)
+				JsonbIteratorNext(&it, &v, true);
+
+			continue;
+		}
+
+		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+	}
+
+	if (res == NULL || (res->type == jbvArray && res->val.array.nElems == 0) ||
+		(res->type == jbvObject && res->val.object.nPairs == 0))
+		SET_VARSIZE(out, VARHDRSZ);
+	else
+		out = JsonbValueToJsonb(res);
+
+	PG_RETURN_POINTER(out);
+}
+
+/*
+ * SQL function jsonb_delete (jsonb, int)
+ *
+ * return a copy of the jsonb with the indicated item
+ * removed. Negative int means count back from the
+ * end of the items.
+ */
+Datum
+jsonb_delete_idx(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *in = PG_GETARG_JSONB(0);
+	int			idx = PG_GETARG_INT32(1);
+	Jsonb	   *out = palloc(VARSIZE(in));
+	JsonbParseState *state = NULL;
+	JsonbIterator *it;
+	uint32		r,
+				i = 0,
+				n;
+	JsonbValue	v,
+			   *res = NULL;
+
+	if (JB_ROOT_COUNT(in) == 0)
+	{
+		memcpy(out, in, VARSIZE(in));
+		PG_RETURN_POINTER(out);
+	}
+
+	it = JsonbIteratorInit(&in->root);
+
+	r = JsonbIteratorNext(&it, &v, false);
+	if (r == WJB_BEGIN_ARRAY)
+		n = v.val.array.nElems;
+	else
+		n = v.val.object.nPairs;
+
+	if (idx < 0)
+	{
+		if (-idx > n)
+			idx = n;
+		else
+			idx = n + idx;
+	}
+
+	if (idx >= n)
+	{
+		memcpy(out, in, VARSIZE(in));
+		PG_RETURN_POINTER(out);
+	}
+
+	pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+
+	while ((r = JsonbIteratorNext(&it, &v, true)) != 0)
+	{
+		if (r == WJB_ELEM || r == WJB_KEY)
+		{
+			if (i++ == idx)
+			{
+				if (r == WJB_KEY)
+					JsonbIteratorNext(&it, &v, true);	/* skip value */
+				continue;
+			}
+		}
+
+		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+	}
+
+	if (res == NULL || (res->type == jbvArray && res->val.array.nElems == 0) ||
+		(res->type == jbvObject && res->val.object.nPairs == 0))
+		SET_VARSIZE(out, VARHDRSZ);
+	else
+		out = JsonbValueToJsonb(res);
+
+	PG_RETURN_POINTER(out);
+}
+
+/*
+ * SQL function jsonb_replace(jsonb, text[], jsonb)
+ */
+Datum
+jsonb_replace(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *in = PG_GETARG_JSONB(0);
+	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
+	Jsonb	   *newval = PG_GETARG_JSONB(2);
+	Jsonb	   *out = palloc(VARSIZE(in) + VARSIZE(newval));
+	JsonbValue *res = NULL;
+	Datum	   *path_elems;
+	bool	   *path_nulls;
+	int			path_len;
+	JsonbIterator *it;
+	JsonbParseState *st = NULL;
+
+	if (ARR_NDIM(path) > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("wrong number of array subscripts")));
+
+	if (JB_ROOT_COUNT(in) == 0)
+	{
+		memcpy(out, in, VARSIZE(in));
+		PG_RETURN_POINTER(out);
+	}
+
+	deconstruct_array(path, TEXTOID, -1, false, 'i',
+					  &path_elems, &path_nulls, &path_len);
+
+	if (path_len == 0)
+	{
+		memcpy(out, in, VARSIZE(in));
+		PG_RETURN_POINTER(out);
+	}
+
+	it = JsonbIteratorInit(&in->root);
+
+	res = replacePath(&it, path_elems, path_nulls, path_len, &st, 0, newval);
+
+	if (res == NULL)
+		SET_VARSIZE(out, VARHDRSZ);
+	else
+		out = JsonbValueToJsonb(res);
+
+	PG_RETURN_POINTER(out);
+}
+
+
+/*
+ * SQL function jsonb_delete(jsonb, text[])
+ */
+Datum
+jsonb_delete_path(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *in = PG_GETARG_JSONB(0);
+	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
+	Jsonb	   *out = palloc(VARSIZE(in));
+	JsonbValue *res = NULL;
+	Datum	   *path_elems;
+	bool	   *path_nulls;
+	int			path_len;
+	JsonbIterator *it;
+	JsonbParseState *st = NULL;
+
+	if (ARR_NDIM(path) > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("wrong number of array subscripts")));
+
+	if (JB_ROOT_COUNT(in) == 0)
+	{
+		memcpy(out, in, VARSIZE(in));
+		PG_RETURN_POINTER(out);
+	}
+
+	deconstruct_array(path, TEXTOID, -1, false, 'i',
+					  &path_elems, &path_nulls, &path_len);
+
+	if (path_len == 0)
+	{
+		memcpy(out, in, VARSIZE(in));
+		PG_RETURN_POINTER(out);
+	}
+
+	it = JsonbIteratorInit(&in->root);
+
+	res = replacePath(&it, path_elems, path_nulls, path_len, &st, 0, NULL);
+
+	if (res == NULL)
+		SET_VARSIZE(out, VARHDRSZ);
+	else
+		out = JsonbValueToJsonb(res);
+
+	PG_RETURN_POINTER(out);
+}
+
+
+/*
+ * Iterate over all jsonb objects and merge them into one.
+ * The logic of this function copied from the same hstore function,
+ * except the case, when it1 & it2 represents jbvObject.
+ * In that case we just append the content of it2 to it1 without any
+ * verifications.
+ */
+static JsonbValue *
+IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
+			   JsonbParseState **state)
+{
+	uint32		r1,
+				r2,
+				rk1,
+				rk2;
+	JsonbValue	v1,
+				v2,
+			   *res = NULL;
+
+	r1 = rk1 = JsonbIteratorNext(it1, &v1, false);
+	r2 = rk2 = JsonbIteratorNext(it2, &v2, false);
+
+	/*
+	 * Both elements are objects.
+	 */
+	if (rk1 == WJB_BEGIN_OBJECT && rk2 == WJB_BEGIN_OBJECT)
+	{
+		int			level = 1;
+
+		/*
+		 * Append the all tokens from v1 to res, exept last WJB_END_OBJECT
+		 * (because res will not be finished yet).
+		 */
+		(void) pushJsonbValue(state, r1, NULL);
+		while ((r1 = JsonbIteratorNext(it1, &v1, false)) != 0)
+		{
+			if (r1 == WJB_BEGIN_OBJECT)
+				++level;
+			else if (r1 == WJB_END_OBJECT)
+				--level;
+
+			if (level != 0)
+				res = pushJsonbValue(state, r1, r1 < WJB_BEGIN_ARRAY ? &v1 : NULL);
+		}
+
+		/*
+		 * Append the all tokens from v2 to res, include last WJB_END_OBJECT
+		 * (the concatenation will be completed).
+		 */
+		while ((r2 = JsonbIteratorNext(it2, &v2, false)) != 0)
+			res = pushJsonbValue(state, r2, r2 < WJB_BEGIN_ARRAY ? &v2 : NULL);
+	}
+
+	/*
+	 * Both elements are arrays (either can be scalar).
+	 */
+	else if (rk1 == WJB_BEGIN_ARRAY && rk2 == WJB_BEGIN_ARRAY)
+	{
+		res = pushJsonbValue(state, r1, NULL);
+		for (;;)
+		{
+			r1 = JsonbIteratorNext(it1, &v1, true);
+			if (r1 == WJB_END_OBJECT || r1 == WJB_END_ARRAY)
+				break;
+
+			Assert(r1 == WJB_KEY || r1 == WJB_VALUE || r1 == WJB_ELEM);
+			pushJsonbValue(state, r1, &v1);
+		}
+
+		while ((r2 = JsonbIteratorNext(it2, &v2, true)) != 0)
+		{
+			if (!(r2 == WJB_END_OBJECT || r2 == WJB_END_ARRAY))
+			{
+				if (rk1 == WJB_BEGIN_OBJECT)
+				{
+					pushJsonbValue(state, WJB_KEY, NULL);
+					r2 = JsonbIteratorNext(it2, &v2, true);
+					Assert(r2 == WJB_ELEM);
+					pushJsonbValue(state, WJB_VALUE, &v2);
+				}
+				else
+					pushJsonbValue(state, WJB_ELEM, &v2);
+			}
+		}
+
+		res = pushJsonbValue(state,
+				  (rk1 == WJB_BEGIN_OBJECT) ? WJB_END_OBJECT : WJB_END_ARRAY,
+							 NULL /* signal to sort */ );
+	}
+	/* have we got array || object or object || array? */
+	else if (((rk1 == WJB_BEGIN_ARRAY && !(*it1)->isScalar) && rk2 == WJB_BEGIN_OBJECT) ||
+			 (rk1 == WJB_BEGIN_OBJECT && (rk2 == WJB_BEGIN_ARRAY && !(*it2)->isScalar)))
+	{
+
+		JsonbIterator **it_array = rk1 == WJB_BEGIN_ARRAY ? it1 : it2;
+		JsonbIterator **it_object = rk1 == WJB_BEGIN_OBJECT ? it1 : it2;
+
+		bool		prepend = (rk1 == WJB_BEGIN_OBJECT) ? true : false;
+
+		pushJsonbValue(state, WJB_BEGIN_ARRAY, NULL);
+		if (prepend)
+		{
+			pushJsonbValue(state, WJB_BEGIN_OBJECT, NULL);
+			walkJsonb(it_object, state, false);
+
+			res = walkJsonb(it_array, state, false);
+		}
+		else
+		{
+			walkJsonb(it_array, state, true);
+
+			pushJsonbValue(state, WJB_BEGIN_OBJECT, NULL);
+			walkJsonb(it_object, state, false);
+
+			res = pushJsonbValue(state, WJB_END_ARRAY, NULL);
+		}
+	}
+	else
+	{
+		/*
+		 * This must be scalar || object or object || scalar, as that's all
+		 * that's left. Both of these make no sense, so error out.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid concatenation of jsonb objects")));
+	}
+
+	return res;
+}
+
+/*
+ * copy elements from the iterator to the parse state
+ * stopping at level zero if required.
+ */
+static JsonbValue *
+walkJsonb(JsonbIterator **it, JsonbParseState **state, bool stop_at_level_zero)
+{
+	uint32		r,
+				level = 1;
+	JsonbValue  v;
+	JsonbValue *res = NULL;
+
+	while ((r = JsonbIteratorNext(it, &v, false)) != WJB_DONE)
+	{
+		if (r == WJB_BEGIN_OBJECT || r == WJB_BEGIN_ARRAY)
+			++level;
+		else if (r == WJB_END_OBJECT || r == WJB_END_ARRAY)
+			--level;
+
+		if (stop_at_level_zero && level == 0)
+			break;
+
+		res = pushJsonbValue(state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+	}
+
+	return res;
+}
+
+
+/*
+ * do most of the heavy work for jsonb_replace
+ */
+static JsonbValue *
+replacePath(JsonbIterator **it, Datum *path_elems,
+			bool *path_nulls, int path_len,
+			JsonbParseState **st, int level, Jsonb *newval)
+{
+	JsonbValue	v;
+	JsonbValue *res = NULL;
+	int			r;
+
+	r = JsonbIteratorNext(it, &v, false);
+
+	switch (r)
+	{
+		case WJB_BEGIN_ARRAY:
+			(void) pushJsonbValue(st, r, NULL);
+			replacePathArray(it, path_elems, path_nulls, path_len, st, level,
+							 newval, v.val.array.nElems);
+			r = JsonbIteratorNext(it, &v, false);
+			Assert(r == WJB_END_ARRAY);
+			res = pushJsonbValue(st, r, NULL);
+
+			break;
+		case WJB_BEGIN_OBJECT:
+			(void) pushJsonbValue(st, r, NULL);
+			replacePathObject(it, path_elems, path_nulls, path_len, st, level,
+							  newval, v.val.object.nPairs);
+			r = JsonbIteratorNext(it, &v, true);
+			Assert(r == WJB_END_OBJECT);
+			res = pushJsonbValue(st, r, NULL);
+
+			break;
+		case WJB_ELEM:
+		case WJB_VALUE:
+			res = pushJsonbValue(st, r, &v);
+			break;
+		default:
+			elog(ERROR, "impossible state");
+	}
+
+	return res;
+}
+
+/*
+ * Object walker for replacePath
+ */
+static void
+replacePathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
+				  int path_len, JsonbParseState **st, int level,
+				  Jsonb *newval, uint32	nelems)
+{
+	JsonbValue	v;
+	int			i;
+	JsonbValue	k;
+	bool		done = false;
+
+	if (level >= path_len || path_nulls[level])
+		done = true;
+
+	for (i = 0; i < nelems; i++)
+	{
+		int		r = JsonbIteratorNext(it, &k, true);
+		Assert(r == WJB_KEY);
+
+		if (!done &&
+			k.val.string.len == VARSIZE_ANY_EXHDR(path_elems[level]) &&
+			memcmp(k.val.string.val, VARDATA_ANY(path_elems[level]),
+				   k.val.string.len) == 0)
+		{
+			if (level == path_len - 1)
+			{
+				r = JsonbIteratorNext(it, &v, true);		/* skip */
+				if (newval != NULL)
+				{
+					(void) pushJsonbValue(st, WJB_KEY, &k);
+					addJsonbToParseState(st, newval);
+				}
+			}
+			else
+			{
+				(void) pushJsonbValue(st, r, &k);
+				replacePath(it, path_elems, path_nulls, path_len,
+							st, level + 1, newval);
+			}
+		}
+		else
+		{
+			(void) pushJsonbValue(st, r, &k);
+			r = JsonbIteratorNext(it, &v, false);
+			(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+			if (r == WJB_BEGIN_ARRAY || r == WJB_BEGIN_OBJECT)
+			{
+				int		walking_level = 1;
+
+				while (walking_level != 0)
+				{
+					r = JsonbIteratorNext(it, &v, false);
+
+					if (r == WJB_BEGIN_ARRAY || r == WJB_BEGIN_OBJECT)
+						++walking_level;
+					if (r == WJB_END_ARRAY || r == WJB_END_OBJECT)
+						--walking_level;
+
+					(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Array walker for replacePath
+ */
+static void
+replacePathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
+				 int path_len, JsonbParseState **st, int level,
+				 Jsonb *newval, uint32 npairs)
+{
+	JsonbValue	v;
+	int			idx,
+				i;
+	char	   *badp;
+
+	/* pick correct index */
+	if (level < path_len && !path_nulls[level])
+	{
+		char	   *c = VARDATA_ANY(path_elems[level]);
+
+		errno = 0;
+		idx = (int) strtol(c, &badp, 10);
+		if (errno != 0 || badp == c)
+			idx = npairs;
+	}
+	else
+		idx = npairs;
+
+	if (idx < 0)
+	{
+		if (-idx > npairs)
+			idx = npairs;
+		else
+			idx = npairs + idx;
+	}
+
+	if (idx > npairs)
+		idx = npairs;
+
+	/* iterate over the array elements */
+	for (i = 0; i < npairs; i++)
+	{
+		int		r;
+
+		if (i == idx && level < path_len)
+		{
+			if (level == path_len - 1)
+			{
+				r = JsonbIteratorNext(it, &v, true);		/* skip */
+				if (newval != NULL)
+					addJsonbToParseState(st, newval);
+			}
+			else
+				(void) replacePath(it, path_elems, path_nulls, path_len,
+								   st, level + 1, newval);
+		}
+		else
+		{
+			r = JsonbIteratorNext(it, &v, false);
+
+			(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+
+			if (r == WJB_BEGIN_ARRAY || r == WJB_BEGIN_OBJECT)
+			{
+				int		walking_level = 1;
+
+				while (walking_level != 0)
+				{
+					r = JsonbIteratorNext(it, &v, false);
+
+					if (r == WJB_BEGIN_ARRAY || r == WJB_BEGIN_OBJECT)
+						++walking_level;
+					if (r == WJB_END_ARRAY || r == WJB_END_OBJECT)
+						--walking_level;
+
+					(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+				}
+			}
+		}
+	}
 }

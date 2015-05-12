@@ -1809,6 +1809,14 @@ DATA(insert OID = 3249 (  "?&"	   PGNSP PGUID b f f 3802 1009 16 0 0 jsonb_exist
 DESCR("exists all");
 DATA(insert OID = 3250 (  "<@"	   PGNSP PGUID b f f 3802 3802 16 3246 0 jsonb_contained contsel contjoinsel ));
 DESCR("is contained by");
+DATA(insert OID = 3284 (  "||"	   PGNSP PGUID b f f 3802 3802 3802 0 0 jsonb_concat - - ));
+DESCR("concatenate");
+DATA(insert OID = 3285 (  "-"	   PGNSP PGUID b f f 3802 25 3802 0 0 3302 - - ));
+DESCR("delete");
+DATA(insert OID = 3286 (  "-"	   PGNSP PGUID b f f 3802 23 3802 0 0 3303 - - ));
+DESCR("delete");
+DATA(insert OID = 3287 (  "-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 3304 - - ));
+DESCR("delete");
 
 /*
  * function prototypes

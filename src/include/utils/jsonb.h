@@ -394,6 +394,20 @@ extern Datum gin_extract_jsonb_query_path(PG_FUNCTION_ARGS);
 extern Datum gin_consistent_jsonb_path(PG_FUNCTION_ARGS);
 extern Datum gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS);
 
+/* pretty printer, returns text */
+extern Datum jsonb_pretty(PG_FUNCTION_ARGS);
+
+/* concatenation */
+extern Datum jsonb_concat(PG_FUNCTION_ARGS);
+
+/* deletion */
+Datum jsonb_delete(PG_FUNCTION_ARGS);
+Datum jsonb_delete_idx(PG_FUNCTION_ARGS);
+Datum jsonb_delete_path(PG_FUNCTION_ARGS);
+
+/* replacement */
+extern Datum jsonb_replace(PG_FUNCTION_ARGS);
+
 /* Support functions */
 extern uint32 getJsonbOffset(const JsonbContainer *jc, int index);
 extern uint32 getJsonbLength(const JsonbContainer *jc, int index);
@@ -413,8 +427,11 @@ extern bool JsonbDeepContains(JsonbIterator **val,
 				  JsonbIterator **mContained);
 extern void JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash);
 
-/* jsonb.c support function */
+/* jsonb.c support functions */
 extern char *JsonbToCString(StringInfo out, JsonbContainer *in,
 			   int estimated_len);
+extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
+			   int estimated_len);
+
 
 #endif   /* __JSONB_H__ */

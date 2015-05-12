@@ -85,6 +85,8 @@ static void datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 static void add_jsonb(Datum val, bool is_null, JsonbInState *result,
 		  Oid val_type, bool key_scalar);
 static JsonbParseState * clone_parse_state(JsonbParseState * state);
+static char *JsonbToCStringWorker(StringInfo out, JsonbContainer *in, int estimated_len, bool indent);
+static void add_indent(StringInfo out, bool indent, int level);
 
 /*
  * jsonb type input function
@@ -422,12 +424,39 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 char *
 JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 {
+	return JsonbToCStringWorker(out, in, estimated_len, false);
+}
+
+/*
+ * same thing but with indentation turned on
+ */
+char *
+JsonbToCStringIndent(StringInfo out, JsonbContainer *in, int estimated_len)
+{
+	return JsonbToCStringWorker(out, in, estimated_len, true);
+}
+
+/*
+ * common worker for above two functions
+ */
+static char *
+JsonbToCStringWorker(StringInfo out, JsonbContainer *in, int estimated_len, bool indent)
+{
 	bool		first = true;
 	JsonbIterator *it;
 	JsonbIteratorToken type = WJB_DONE;
 	JsonbValue	v;
 	int			level = 0;
 	bool		redo_switch = false;
+	/* If we are indenting, don't add a space after a comma */
+	int			ispaces = indent ? 1 : 2;
+	/*
+	 * Don't indent the very first item. This gets set to the indent flag
+	 * at the bottom of the loop.
+	 */
+	bool        use_indent = false;
+	bool        raw_scalar = false;
+	bool        last_was_key = false;
 
 	if (out == NULL)
 		out = makeStringInfo();
@@ -444,25 +473,35 @@ JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 		{
 			case WJB_BEGIN_ARRAY:
 				if (!first)
-					appendBinaryStringInfo(out, ", ", 2);
-				first = true;
+					appendBinaryStringInfo(out, ", ", ispaces);
 
 				if (!v.val.array.rawScalar)
-					appendStringInfoChar(out, '[');
+				{
+					add_indent(out, use_indent && !last_was_key, level);
+					appendStringInfoCharMacro(out, '[');
+				}
+				else
+					raw_scalar = true;
+
+				first = true;
 				level++;
 				break;
 			case WJB_BEGIN_OBJECT:
 				if (!first)
-					appendBinaryStringInfo(out, ", ", 2);
-				first = true;
+					appendBinaryStringInfo(out, ", ", ispaces);
+
+				add_indent(out, use_indent && !last_was_key, level);
 				appendStringInfoCharMacro(out, '{');
 
+				first = true;
 				level++;
 				break;
 			case WJB_KEY:
 				if (!first)
-					appendBinaryStringInfo(out, ", ", 2);
+					appendBinaryStringInfo(out, ", ", ispaces);
 				first = true;
+
+				add_indent(out, use_indent, level);
 
 				/* json rules guarantee this is a string */
 				jsonb_put_escaped_value(out, &v);
@@ -488,31 +527,51 @@ JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 				break;
 			case WJB_ELEM:
 				if (!first)
-					appendBinaryStringInfo(out, ", ", 2);
-				else
-					first = false;
+					appendBinaryStringInfo(out, ", ", ispaces);
+				first = false;
 
+				if (! raw_scalar)
+					add_indent(out, use_indent, level);
 				jsonb_put_escaped_value(out, &v);
 				break;
 			case WJB_END_ARRAY:
 				level--;
-				if (!v.val.array.rawScalar)
-					appendStringInfoChar(out, ']');
+				if (! raw_scalar)
+				{
+					add_indent(out, use_indent, level);
+					appendStringInfoCharMacro(out, ']');
+				}
 				first = false;
 				break;
 			case WJB_END_OBJECT:
 				level--;
+				add_indent(out, use_indent, level);
 				appendStringInfoCharMacro(out, '}');
 				first = false;
 				break;
 			default:
 				elog(ERROR, "unknown jsonb iterator token type");
 		}
+		use_indent = indent;
+		last_was_key = redo_switch;
 	}
 
 	Assert(level == 0);
 
 	return out->data;
+}
+
+static void
+add_indent(StringInfo out, bool indent, int level)
+{
+	if (indent)
+	{
+		int			i;
+
+		appendStringInfoCharMacro(out, '\n');
+		for (i = 0; i < level; i++)
+			appendBinaryStringInfo(out, "    ", 4);
+	}
 }
 
 

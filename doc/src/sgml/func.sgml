@@ -10293,6 +10293,32 @@ table2-mapping
         <entry>Do all of these key/element <emphasis>strings</emphasis> exist?</entry>
         <entry><literal>'["a", "b"]'::jsonb ?&amp; array['a', 'b']</literal></entry>
        </row>
+       <row>
+        <entry><literal>||</literal></entry>
+        <entry><type>jsonb</type></entry>
+        <entry>Concatentate two jsonb values into a new jsonb value</entry>
+        <entry><literal>'["a", "b"]'::jsonb || '["c", "d"]'::jsonb</literal></entry>
+       </row>
+       <row>
+        <entry><literal>-</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>Delete the field with a specified key, or element with this
+        value</entry>
+        <entry><literal>'{"a": "b"}'::jsonb - 'a' </literal></entry>
+       </row>
+       <row>
+        <entry><literal>-</literal></entry>
+        <entry><type>integer</type></entry>
+        <entry>Delete the field or element with specified index (Negative
+        integers count from the end)</entry>
+        <entry><literal>'["a", "b"]'::jsonb - 1 </literal></entry>
+       </row>
+       <row>
+        <entry><literal>-</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>Delete the field or element with specified path</entry>
+        <entry><literal>'["a", {"b":1}]'::jsonb - '{1,b}'::text[] </literal></entry>
+       </row>
       </tbody>
      </tgroup>
    </table>
@@ -10802,6 +10828,42 @@ table2-mapping
        </entry>
        <entry><literal>json_strip_nulls('[{"f1":1,"f2":null},2,null,3]')</literal></entry>
        <entry><literal>[{"f1":1},2,null,3]</literal></entry>
+       </row>
+      <row>
+       <entry><para><literal>jsonb_replace(target jsonb, path text[], replacement jsonb)</literal>
+         </para></entry>
+       <entry><para><type>jsonb</type></para></entry>
+       <entry>
+         Returns <replaceable>target</replaceable>
+         with the section designated by  <replaceable>path</replaceable>
+         replaced by <replaceable>replacement</replaceable>.
+       </entry>
+       <entry><literal>jsonb_replace('[{"f1":1,"f2":null},2,null,3]', '{0,f1}','[2,3,4]')</literal></entry>
+       <entry><literal>[{"f1":[2,3,4],"f2":null},2,null,3]</literal>
+        </entry>
+       </row>
+      <row>
+       <entry><para><literal>jsonb_pretty(from_json jsonb)</literal>
+         </para></entry>
+       <entry><para><type>text</type></para></entry>
+       <entry>
+         Returns <replaceable>from_json</replaceable>
+         as indented json text.
+       </entry>
+       <entry><literal>jsonb_pretty('[{"f1":1,"f2":null},2,null,3]')</literal></entry>
+       <entry>
+<programlisting>                    
+ [
+     {
+         "f1": 1,
+         "f2": null
+     },
+     2,
+     null,
+     3
+ ]
+</programlisting>
+        </entry>
        </row>
      </tbody>
     </tgroup>
