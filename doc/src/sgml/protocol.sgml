@@ -1882,7 +1882,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>]
+    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>] [<literal>TABLESPACE_MAP</literal>]
      <indexterm><primary>BASE_BACKUP</primary></indexterm>
     </term>
     <listitem>
@@ -1965,6 +1965,19 @@ The commands accepted in walsender mode are:
           or it must fall within the range from 32 kB through 1 GB (inclusive).
           If zero is passed or the option is not specified, no restriction is
           imposed on the transfer.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>TABLESPACE_MAP</literal></term>
+        <listitem>
+         <para>
+          Include information about symbolic links present in the directory
+          <filename>pg_tblspc</filename> in a file named
+          <filename>tablespace_map</filename>. The tablespace map file includes
+          each symbolic link name as it exists in the directory
+          <filename>pg_tblspc/</> and the full path of that symbolic link.
          </para>
         </listitem>
        </varlistentry>

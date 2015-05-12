@@ -51,6 +51,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	bool		fast = PG_GETARG_BOOL(1);
 	char	   *backupidstr;
 	XLogRecPtr	startpoint;
+	DIR		   *dir;
 
 	backupidstr = text_to_cstring(backupid);
 
@@ -59,7 +60,16 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		   errmsg("must be superuser or replication role to run a backup")));
 
-	startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL);
+	/* Make sure we can open the directory with tablespaces in it */
+	dir = AllocateDir("pg_tblspc");
+	if (!dir)
+		ereport(ERROR,
+				(errmsg("could not open directory \"%s\": %m", "pg_tblspc")));
+
+	startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL,
+									dir, NULL, NULL, false, true);
+
+	FreeDir(dir);
 
 	PG_RETURN_LSN(startpoint);
 }

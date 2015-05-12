@@ -42,6 +42,7 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
+#include "replication/basebackup.h"
 #include "replication/logical.h"
 #include "replication/slot.h"
 #include "replication/origin.h"
@@ -824,6 +825,8 @@ static void xlog_outdesc(StringInfo buf, XLogReaderState *record);
 static void pg_start_backup_callback(int code, Datum arg);
 static bool read_backup_label(XLogRecPtr *checkPointLoc,
 				  bool *backupEndRequired, bool *backupFromStandby);
+static bool read_tablespace_map(List **tablespaces);
+
 static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
@@ -5917,6 +5920,7 @@ StartupXLOG(void)
 	bool		wasShutdown;
 	bool		reachedStopPoint = false;
 	bool		haveBackupLabel = false;
+	bool		haveTblspcMap = false;
 	XLogRecPtr	RecPtr,
 				checkPointLoc,
 				EndOfLog;
@@ -6002,16 +6006,6 @@ StartupXLOG(void)
 	ValidateXLOGDirectoryStructure();
 
 	/*
-	 * Clear out any old relcache cache files.  This is *necessary* if we do
-	 * any WAL replay, since that would probably result in the cache files
-	 * being out of sync with database reality.  In theory we could leave them
-	 * in place if the database had been cleanly shut down, but it seems
-	 * safest to just remove them always and let them be rebuilt during the
-	 * first backend startup.
-	 */
-	RelationCacheInitFileRemove();
-
-	/*
 	 * Initialize on the assumption we want to recover to the latest timeline
 	 * that's active according to pg_control.
 	 */
@@ -6080,6 +6074,8 @@ StartupXLOG(void)
 	if (read_backup_label(&checkPointLoc, &backupEndRequired,
 						  &backupFromStandby))
 	{
+		List	*tablespaces = NIL;
+
 		/*
 		 * Archive recovery was requested, and thanks to the backup label
 		 * file, we know how far we need to replay to reach consistency. Enter
@@ -6124,6 +6120,59 @@ StartupXLOG(void)
 					 errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
 			wasShutdown = false;	/* keep compiler quiet */
 		}
+
+		/* read the tablespace_map file if present and create symlinks. */
+		if (read_tablespace_map(&tablespaces))
+		{
+			ListCell   *lc;
+			struct stat st;
+
+			foreach(lc, tablespaces)
+			{
+				tablespaceinfo *ti = lfirst(lc);
+				char	*linkloc;
+
+				linkloc = psprintf("pg_tblspc/%s", ti->oid);
+
+				/*
+				 * Remove the existing symlink if any and Create the symlink
+				 * under PGDATA.  We need to use rmtree instead of rmdir as
+				 * the link location might contain directories or files
+				 * corresponding to the actual path. Some tar utilities do
+				 * things that way while extracting symlinks.
+				 */
+				if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
+				{
+					if (!rmtree(linkloc,true))
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not remove directory \"%s\": %m",
+										linkloc)));
+				}
+				else
+				{
+					if (unlink(linkloc) < 0 && errno != ENOENT)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not remove symbolic link \"%s\": %m",
+										linkloc)));
+				}
+
+				if (symlink(ti->path, linkloc) < 0)
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not create symbolic link \"%s\": %m",
+									linkloc)));
+
+				pfree(ti->oid);
+				pfree(ti->path);
+				pfree(ti);
+			}
+
+			/* set flag to delete it later */
+			haveTblspcMap = true;
+		}
+
 		/* set flag to delete it later */
 		haveBackupLabel = true;
 	}
@@ -6196,6 +6245,20 @@ StartupXLOG(void)
 		memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
 		wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 	}
+
+	/*
+	 * Clear out any old relcache cache files.  This is *necessary* if we do
+	 * any WAL replay, since that would probably result in the cache files
+	 * being out of sync with database reality.  In theory we could leave them
+	 * in place if the database had been cleanly shut down, but it seems
+	 * safest to just remove them always and let them be rebuilt during the
+	 * first backend startup.  These files needs to be removed from all
+	 * directories including pg_tblspc, however the symlinks are created
+	 * only after reading tablesapce_map file in case of archive recovery
+	 * from backup, so needs to clear old relcache files here after creating
+	 * symlinks.
+	 */
+	RelationCacheInitFileRemove();
 
 	/*
 	 * If the location of the checkpoint record is not on the expected
@@ -6464,6 +6527,23 @@ StartupXLOG(void)
 						(errcode_for_file_access(),
 						 errmsg("could not rename file \"%s\" to \"%s\": %m",
 								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+		}
+
+		/*
+		 * If there was a tablespace_map file, it's done its job and the
+		 * symlinks have been created.  We must get rid of the map file
+		 * so that if we crash during recovery, we don't create symlinks
+		 * again.  It seems prudent though to just rename the file out of
+		 * the way rather than delete it completely.
+		 */
+		if (haveTblspcMap)
+		{
+			unlink(TABLESPACE_MAP_OLD);
+			if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) != 0)
+				ereport(FATAL,
+						(errcode_for_file_access(),
+						 errmsg("could not rename file \"%s\" to \"%s\": %m",
+								TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 		}
 
 		/* Check that the GUCs used to generate the WAL allow recovery */
@@ -9610,16 +9690,27 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  *
  * There are two kind of backups: exclusive and non-exclusive. An exclusive
  * backup is started with pg_start_backup(), and there can be only one active
- * at a time. The backup label file of an exclusive backup is written to
- * $PGDATA/backup_label, and it is removed by pg_stop_backup().
+ * at a time. The backup and tablespace map files of an exclusive backup are
+ * written to $PGDATA/backup_label and $PGDATA/tablespace_map, and they are
+ * removed by pg_stop_backup().
  *
  * A non-exclusive backup is used for the streaming base backups (see
  * src/backend/replication/basebackup.c). The difference to exclusive backups
- * is that the backup label file is not written to disk. Instead, its would-be
- * contents are returned in *labelfile, and the caller is responsible for
- * including it in the backup archive as 'backup_label'. There can be many
- * non-exclusive backups active at the same time, and they don't conflict
- * with an exclusive backup either.
+ * is that the backup label and tablespace map files are not written to disk.
+ * Instead, there would-be contents are returned in *labelfile and *tblspcmapfile,
+ * and the caller is responsible for including them in the backup archive as
+ * 'backup_label' and 'tablespace_map'. There can be many non-exclusive backups
+ * active at the same time, and they don't conflict with an exclusive backup
+ * either.
+ *
+ * tblspcmapfile is required mainly for tar format in windows as native windows
+ * utilities are not able to create symlinks while extracting files from tar.
+ * However for consistency, the same is used for all platforms.
+ *
+ * needtblspcmapfile is true for the cases (exclusive backup and for
+ * non-exclusive backup only when tar format is used for taking backup)
+ * when backup needs to generate tablespace_map file, it is used to
+ * embed escape character before newline character in tablespace path.
  *
  * Returns the minimum WAL position that must be present to restore from this
  * backup, and the corresponding timeline ID in *starttli_p.
@@ -9632,7 +9723,9 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  */
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
-				   char **labelfile)
+				   char **labelfile, DIR *tblspcdir, List **tablespaces,
+				   char **tblspcmapfile, bool infotbssize,
+				   bool needtblspcmapfile)
 {
 	bool		exclusive = (labelfile == NULL);
 	bool		backup_started_in_recovery = false;
@@ -9646,6 +9739,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	struct stat stat_buf;
 	FILE	   *fp;
 	StringInfoData labelfbuf;
+	StringInfoData tblspc_mapfbuf;
 
 	backup_started_in_recovery = RecoveryInProgress();
 
@@ -9717,6 +9811,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
 	{
 		bool		gotUniqueStartpoint = false;
+		struct dirent *de;
+		tablespaceinfo *ti;
+		int			datadirpathlen;
 
 		/*
 		 * Force an XLOG file switch before the checkpoint, to ensure that the
@@ -9837,6 +9934,98 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		XLogFileName(xlogfilename, ThisTimeLineID, _logSegNo);
 
 		/*
+		 * Construct tablespace_map file
+		 */
+		initStringInfo(&tblspc_mapfbuf);
+
+		datadirpathlen = strlen(DataDir);
+
+		/* Collect information about all tablespaces */
+		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
+		{
+			char		fullpath[MAXPGPATH];
+			char		linkpath[MAXPGPATH];
+			char	   *relpath = NULL;
+			int			rllen;
+			StringInfoData buflinkpath;
+			char    *s = linkpath;
+
+			/* Skip special stuff */
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+				continue;
+
+			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
+
+#if defined(HAVE_READLINK) || defined(WIN32)
+			rllen = readlink(fullpath, linkpath, sizeof(linkpath));
+			if (rllen < 0)
+			{
+				ereport(WARNING,
+						(errmsg("could not read symbolic link \"%s\": %m",
+								fullpath)));
+				continue;
+			}
+			else if (rllen >= sizeof(linkpath))
+			{
+				ereport(WARNING,
+						(errmsg("symbolic link \"%s\" target is too long",
+								fullpath)));
+				continue;
+			}
+			linkpath[rllen] = '\0';
+
+			/*
+			 * Add the escape character '\\' before newline in a string
+			 * to ensure that we can distinguish between the newline in
+			 * the tablespace path and end of line while reading
+			 * tablespace_map file during archive recovery.
+			 */
+			initStringInfo(&buflinkpath);
+
+			while (*s)
+			{
+				if ((*s == '\n' || *s == '\r') && needtblspcmapfile)
+					appendStringInfoChar(&buflinkpath, '\\');
+				appendStringInfoChar(&buflinkpath, *s++);
+			}
+
+
+			/*
+			 * Relpath holds the relative path of the tablespace directory
+			 * when it's located within PGDATA, or NULL if it's located
+			 * elsewhere.
+			 */
+			if (rllen > datadirpathlen &&
+				strncmp(linkpath, DataDir, datadirpathlen) == 0 &&
+				IS_DIR_SEP(linkpath[datadirpathlen]))
+				relpath = linkpath + datadirpathlen + 1;
+
+			ti = palloc(sizeof(tablespaceinfo));
+			ti->oid = pstrdup(de->d_name);
+			ti->path = pstrdup(buflinkpath.data);
+			ti->rpath = relpath ? pstrdup(relpath) : NULL;
+			ti->size = infotbssize ? sendTablespace(fullpath, true) : -1;
+
+			if(tablespaces)
+			   *tablespaces = lappend(*tablespaces, ti);
+
+			appendStringInfo(&tblspc_mapfbuf, "%s %s\n", ti->oid, ti->path);
+
+			pfree(buflinkpath.data);
+#else
+
+			/*
+			 * If the platform does not have symbolic links, it should not be
+			 * possible to have tablespaces - clearly somebody else created
+			 * them. Warn about it and ignore.
+			 */
+			ereport(WARNING,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				  errmsg("tablespaces are not supported on this platform")));
+#endif
+		}
+
+		/*
 		 * Construct backup label file
 		 */
 		initStringInfo(&labelfbuf);
@@ -9899,9 +10088,51 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 						 errmsg("could not write file \"%s\": %m",
 								BACKUP_LABEL_FILE)));
 			pfree(labelfbuf.data);
+
+			/* Write backup tablespace_map file. */
+			if (tblspc_mapfbuf.len > 0)
+			{
+				if (stat(TABLESPACE_MAP, &stat_buf) != 0)
+				{
+					if (errno != ENOENT)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not stat file \"%s\": %m",
+										TABLESPACE_MAP)));
+				}
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("a backup is already in progress"),
+							 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
+									 TABLESPACE_MAP)));
+
+				fp = AllocateFile(TABLESPACE_MAP, "w");
+
+				if (!fp)
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not create file \"%s\": %m",
+									TABLESPACE_MAP)));
+				if (fwrite(tblspc_mapfbuf.data, tblspc_mapfbuf.len, 1, fp) != 1 ||
+					fflush(fp) != 0 ||
+					pg_fsync(fileno(fp)) != 0 ||
+					ferror(fp) ||
+					FreeFile(fp))
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not write file \"%s\": %m",
+									TABLESPACE_MAP)));
+			}
+
+			pfree(tblspc_mapfbuf.data);
 		}
 		else
+		{
 			*labelfile = labelfbuf.data;
+			if (tblspc_mapfbuf.len > 0)
+				*tblspcmapfile = tblspc_mapfbuf.data;
+		}
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
 
@@ -10072,6 +10303,12 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m",
 							BACKUP_LABEL_FILE)));
+
+		/*
+		 * Remove tablespace_map file if present, it is created
+		 * only if there are tablespaces.
+		 */
+		unlink(TABLESPACE_MAP);
 	}
 
 	/*
@@ -10472,6 +10709,86 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 }
 
 /*
+ * read_tablespace_map: check to see if a tablespace_map file is present
+ *
+ * If we see a tablespace_map file during recovery, we assume that we are
+ * recovering from a backup dump file, and we therefore need to create symlinks
+ * as per the information present in tablespace_map file.
+ *
+ * Returns TRUE if a tablespace_map file was found (and fills the link
+ * information for all the tablespace links present in file); returns FALSE
+ * if not.
+ */
+static bool
+read_tablespace_map(List **tablespaces)
+{
+	tablespaceinfo *ti;
+	FILE	   *lfp;
+	char		tbsoid[MAXPGPATH];
+	char		*tbslinkpath;
+	char		str[MAXPGPATH];
+	int			ch, prev_ch = -1,
+				i = 0, n;
+
+	/*
+	 * See if tablespace_map file is present
+	 */
+	lfp = AllocateFile(TABLESPACE_MAP, "r");
+	if (!lfp)
+	{
+		if (errno != ENOENT)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							TABLESPACE_MAP)));
+		return false;			/* it's not there, all is fine */
+	}
+
+	/*
+	 * Read and parse the link name and path lines from tablespace_map file
+	 * (this code is pretty crude, but we are not expecting any variability
+	 * in the file format).  While taking backup we embed escape character
+	 * '\\' before newline in tablespace path, so that during reading of
+	 * tablespace_map file, we could distinguish newline in tablespace path
+	 * and end of line.  Now while reading tablespace_map file, remove the
+	 * escape character that has been added in tablespace path during backup.
+	 */
+	while ((ch = fgetc(lfp)) != EOF)
+	{
+		if ((ch == '\n' || ch == '\r') && prev_ch != '\\')
+		{
+			str[i] = '\0';
+			if (sscanf(str, "%s %n", tbsoid, &n) != 1)
+				ereport(FATAL,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						errmsg("invalid data in file \"%s\"", TABLESPACE_MAP)));
+			tbslinkpath = str + n;
+			i = 0;
+
+			ti = palloc(sizeof(tablespaceinfo));
+			ti->oid = pstrdup(tbsoid);
+			ti->path = pstrdup(tbslinkpath);
+
+			*tablespaces = lappend(*tablespaces, ti);
+			continue;
+		}
+		else if ((ch == '\n' || ch == '\r') && prev_ch == '\\')
+			str[i-1] = ch;
+		else
+			str[i++] = ch;
+		prev_ch = ch;
+	}
+
+	if (ferror(lfp) || FreeFile(lfp))
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not read file \"%s\": %m",
+						TABLESPACE_MAP)));
+
+	return true;
+}
+
+/*
  * Error context callback for errors occurring during rm_redo().
  */
 static void
@@ -10502,11 +10819,16 @@ BackupInProgress(void)
 }
 
 /*
- * CancelBackup: rename the "backup_label" file to cancel backup mode
+ * CancelBackup: rename the "backup_label" and "tablespace_map"
+ *               files to cancel backup mode
  *
  * If the "backup_label" file exists, it will be renamed to "backup_label.old".
- * Note that this will render an online backup in progress useless.
- * To correctly finish an online backup, pg_stop_backup must be called.
+ * Similarly, if the "tablespace_map" file exists, it will be renamed to
+ * "tablespace_map.old".
+ *
+ * Note that this will render an online backup in progress
+ * useless. To correctly finish an online backup, pg_stop_backup must be
+ * called.
  */
 void
 CancelBackup(void)
@@ -10534,6 +10856,29 @@ CancelBackup(void)
 				 errmsg("online backup mode was not canceled"),
 				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
 						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+
+	/* if the tablespace_map file is not there, return */
+	if (stat(TABLESPACE_MAP, &stat_buf) < 0)
+		return;
+
+	/* remove leftover file from previously canceled backup if it exists */
+	unlink(TABLESPACE_MAP_OLD);
+
+	if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) == 0)
+	{
+		ereport(LOG,
+				(errmsg("online backup mode canceled"),
+				 errdetail("\"%s\" was renamed to \"%s\".",
+						   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+	}
+	else
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("online backup mode was not canceled"),
+				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
+						   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 	}
 }
 

@@ -836,8 +836,11 @@ SELECT pg_start_backup('label');
      <function>pg_start_backup</> creates a <firstterm>backup label</> file,
      called <filename>backup_label</>, in the cluster directory with
      information about your backup, including the start time and label
-     string.  The file is critical to the integrity of the backup, should
-     you need to restore from it.
+     string.  The function also creates a <firstterm>tablespace map</> file,
+     called <filename>tablespace_map</>, in the cluster directory with
+     information about tablespace symbolic links in <filename>pg_tblspc/</>
+     if one or more such link is present.  Both files are critical to the
+     integrity of the backup, should you need to restore from it.
     </para>
 
     <para>
@@ -965,17 +968,20 @@ SELECT pg_stop_backup();
 
    <para>
     It's also worth noting that the <function>pg_start_backup</> function
-    makes a file named <filename>backup_label</> in the database cluster
-    directory, which is removed by <function>pg_stop_backup</>.
-    This file will of course be archived as a part of your backup dump file.
-    The backup label file includes the label string you gave to
-    <function>pg_start_backup</>, as well as the time at which
-    <function>pg_start_backup</> was run, and the name of the starting WAL
-    file.  In case of confusion it is therefore possible to look inside a
-    backup dump file and determine exactly which backup session the dump file
-    came from.  However, this file is not merely for your information; its
-    presence and contents are critical to the proper operation of the system's
-    recovery process.
+    makes files named <filename>backup_label</> and
+    <filename>tablesapce_map</> in the database cluster directory,
+    which are removed by <function>pg_stop_backup</>.  These files will of
+    course be archived as a part of your backup dump file.  The backup label
+    file includes the label string you gave to <function>pg_start_backup</>,
+    as well as the time at which <function>pg_start_backup</> was run, and
+    the name of the starting WAL file.  In case of confusion it is therefore
+    possible to look inside a backup dump file and determine exactly which
+    backup session the dump file came from.  The tablespace map file includes
+    the symbolic link names as they exist in the directory
+    <filename>pg_tblspc/</> and the full path of each symbolic link.
+    These files are not merely for your information; their presence and
+    contents are critical to the proper operation of the system's recovery
+    process.
    </para>
 
    <para>

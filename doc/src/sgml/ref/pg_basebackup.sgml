@@ -588,10 +588,22 @@ PostgreSQL documentation
   </para>
 
   <para>
+   When tar format mode is used, it is the user's responsibility to unpack each
+   tar file before starting postgres. If there are additional tablespaces, the
+   tar files for them need to be unpacked in the correct locations. In this
+   case the symbolic links for those tablespaces will be created by Postgres
+   according to the contents of the <filename>tablespace_map</> file that is
+   included in the <filename>base.tar</> file.
+  </para>
+
+  <para>
    <application>pg_basebackup</application> works with servers of the same
    or an older major version, down to 9.1. However, WAL streaming mode (-X
-   stream) only works with server version 9.3 and later.
+   stream) only works with server version 9.3 and later, and tar format mode
+   (--format=tar) of the current version only works with server version 9.5
+   or later.
   </para>
+
  </refsect1>
 
  <refsect1>

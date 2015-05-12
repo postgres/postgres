@@ -1652,13 +1652,14 @@ BaseBackup(void)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
 
 	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s",
+		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
 				 escaped_label,
 				 showprogress ? "PROGRESS" : "",
 				 includewal && !streamwal ? "WAL" : "",
 				 fastcheckpoint ? "FAST" : "",
 				 includewal ? "NOWAIT" : "",
-				 maxrate_clause ? maxrate_clause : "");
+				 maxrate_clause ? maxrate_clause : "",
+				 format == 't'  ? "TABLESPACE_MAP": "");
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{

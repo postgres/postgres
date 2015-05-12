@@ -16591,11 +16591,12 @@ SELECT set_config('log_statement_stats', 'off', false);
     <function>pg_start_backup</> accepts an
     arbitrary user-defined label for the backup.  (Typically this would be
     the name under which the backup dump file will be stored.)  The function
-    writes a backup label file (<filename>backup_label</>) into the
-    database cluster's data directory, performs a checkpoint,
-    and then returns the backup's starting transaction log location as text.
-    The user can ignore this result value, but it is
-    provided in case it is useful.
+    writes a backup label file (<filename>backup_label</>) and, if there
+    are any links in the <filename>pg_tblspc/</> directory, a tablespace map
+    file (<filename>tablespace_map</>) into the database cluster's data
+    directory, performs a checkpoint, and then returns the backup's starting
+    transaction log location as text.  The user can ignore this result value,
+    but it is provided in case it is useful.
 <programlisting>
 postgres=# select pg_start_backup('label_goes_here');
  pg_start_backup
@@ -16610,7 +16611,8 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    <function>pg_stop_backup</> removes the label file created by
+    <function>pg_stop_backup</> removes the label file and, if it exists,
+    the <filename>tablespace_map</> file created by
     <function>pg_start_backup</>, and creates a backup history file in
     the transaction log archive area.  The history file includes the label given to
     <function>pg_start_backup</>, the starting and ending transaction log locations for

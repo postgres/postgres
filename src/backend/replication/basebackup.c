@@ -46,11 +46,12 @@ typedef struct
 	bool		nowait;
 	bool		includewal;
 	uint32		maxrate;
+	bool		sendtblspcmapfile;
 } basebackup_options;
 
 
-static int64 sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces);
-static int64 sendTablespace(char *path, bool sizeonly);
+static int64 sendDir(char *path, int basepathlen, bool sizeonly,
+					 List *tablespaces, bool sendtblspclinks);
 static bool sendFile(char *readfilename, char *tarfilename,
 		 struct stat * statbuf, bool missing_ok);
 static void sendFileWithContent(const char *filename, const char *content);
@@ -93,15 +94,6 @@ static int64 elapsed_min_unit;
 /* The last check of the transfer rate. */
 static int64 throttled_last;
 
-typedef struct
-{
-	char	   *oid;
-	char	   *path;
-	char	   *rpath;			/* relative path within PGDATA, or NULL */
-	int64		size;
-} tablespaceinfo;
-
-
 /*
  * Called when ERROR or FATAL happens in perform_base_backup() after
  * we have started the backup - make sure we end it!
@@ -126,14 +118,18 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	XLogRecPtr	endptr;
 	TimeLineID	endtli;
 	char	   *labelfile;
+	char	   *tblspc_map_file = NULL;
 	int			datadirpathlen;
+	List	   *tablespaces = NIL;
 
 	datadirpathlen = strlen(DataDir);
 
 	backup_started_in_recovery = RecoveryInProgress();
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
-								  &labelfile);
+								  &labelfile, tblspcdir, &tablespaces,
+								  &tblspc_map_file,
+								  opt->progress, opt->sendtblspcmapfile);
 	/*
 	 * Once do_pg_start_backup has been called, ensure that any failure causes
 	 * us to abort the backup so we don't "leak" a backup counter. For this reason,
@@ -143,9 +139,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
-		List	   *tablespaces = NIL;
 		ListCell   *lc;
-		struct dirent *de;
 		tablespaceinfo *ti;
 
 		SendXlogRecPtrResult(startptr, starttli);
@@ -162,70 +156,9 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		else
 			statrelpath = pgstat_stat_directory;
 
-		/* Collect information about all tablespaces */
-		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
-		{
-			char		fullpath[MAXPGPATH];
-			char		linkpath[MAXPGPATH];
-			char	   *relpath = NULL;
-			int			rllen;
-
-			/* Skip special stuff */
-			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-				continue;
-
-			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
-
-#if defined(HAVE_READLINK) || defined(WIN32)
-			rllen = readlink(fullpath, linkpath, sizeof(linkpath));
-			if (rllen < 0)
-			{
-				ereport(WARNING,
-						(errmsg("could not read symbolic link \"%s\": %m",
-								fullpath)));
-				continue;
-			}
-			else if (rllen >= sizeof(linkpath))
-			{
-				ereport(WARNING,
-						(errmsg("symbolic link \"%s\" target is too long",
-								fullpath)));
-				continue;
-			}
-			linkpath[rllen] = '\0';
-
-			/*
-			 * Relpath holds the relative path of the tablespace directory
-			 * when it's located within PGDATA, or NULL if it's located
-			 * elsewhere.
-			 */
-			if (rllen > datadirpathlen &&
-				strncmp(linkpath, DataDir, datadirpathlen) == 0 &&
-				IS_DIR_SEP(linkpath[datadirpathlen]))
-				relpath = linkpath + datadirpathlen + 1;
-
-			ti = palloc(sizeof(tablespaceinfo));
-			ti->oid = pstrdup(de->d_name);
-			ti->path = pstrdup(linkpath);
-			ti->rpath = relpath ? pstrdup(relpath) : NULL;
-			ti->size = opt->progress ? sendTablespace(fullpath, true) : -1;
-			tablespaces = lappend(tablespaces, ti);
-#else
-
-			/*
-			 * If the platform does not have symbolic links, it should not be
-			 * possible to have tablespaces - clearly somebody else created
-			 * them. Warn about it and ignore.
-			 */
-			ereport(WARNING,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("tablespaces are not supported on this platform")));
-#endif
-		}
-
 		/* Add a node for the base directory at the end */
 		ti = palloc0(sizeof(tablespaceinfo));
-		ti->size = opt->progress ? sendDir(".", 1, true, tablespaces) : -1;
+		ti->size = opt->progress ? sendDir(".", 1, true, tablespaces, true) : -1;
 		tablespaces = lappend(tablespaces, ti);
 
 		/* Send tablespace header */
@@ -274,8 +207,17 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				/* In the main tar, include the backup_label first... */
 				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
 
-				/* ... then the bulk of the files ... */
-				sendDir(".", 1, false, tablespaces);
+				/*
+				 * Send tablespace_map file if required and then the bulk of
+				 * the files.
+				 */
+				if (tblspc_map_file && opt->sendtblspcmapfile)
+				{
+					sendFileWithContent(TABLESPACE_MAP, tblspc_map_file);
+					sendDir(".", 1, false, tablespaces, false);
+				}
+				else
+					sendDir(".", 1, false, tablespaces, true);
 
 				/* ... and pg_control after everything else. */
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
@@ -567,6 +509,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_nowait = false;
 	bool		o_wal = false;
 	bool		o_maxrate = false;
+	bool		o_tablespace_map = false;
 
 	MemSet(opt, 0, sizeof(*opt));
 	foreach(lopt, options)
@@ -636,6 +579,15 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 
 			opt->maxrate = (uint32) maxrate;
 			o_maxrate = true;
+		}
+		else if (strcmp(defel->defname, "tablespace_map") == 0)
+		{
+			if (o_tablespace_map)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("duplicate option \"%s\"", defel->defname)));
+			opt->sendtblspcmapfile = true;
+			o_tablespace_map = true;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -865,7 +817,7 @@ sendFileWithContent(const char *filename, const char *content)
  *
  * Only used to send auxiliary tablespaces, not PGDATA.
  */
-static int64
+int64
 sendTablespace(char *path, bool sizeonly)
 {
 	int64		size;
@@ -899,7 +851,7 @@ sendTablespace(char *path, bool sizeonly)
 	size = 512;					/* Size of the header just added */
 
 	/* Send all the files in the tablespace version directory */
-	size += sendDir(pathbuf, strlen(path), sizeonly, NIL);
+	size += sendDir(pathbuf, strlen(path), sizeonly, NIL, true);
 
 	return size;
 }
@@ -911,9 +863,14 @@ sendTablespace(char *path, bool sizeonly)
  *
  * Omit any directory in the tablespaces list, to avoid backing up
  * tablespaces twice when they were created inside PGDATA.
+ *
+ * If sendtblspclinks is true, we need to include symlink
+ * information in the tar file. If not, we can skip that
+ * as it will be sent separately in the tablespace_map file.
  */
 static int64
-sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
+sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
+		bool sendtblspclinks)
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -941,11 +898,15 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 			continue;
 
 		/*
-		 * If there's a backup_label file, it belongs to a backup started by
-		 * the user with pg_start_backup(). It is *not* correct for this
-		 * backup, our backup_label is injected into the tar separately.
+		 * If there's a backup_label or tablespace_map file, it belongs to a
+		 * backup started by the user with pg_start_backup(). It is *not*
+		 * correct for this backup, our backup_label/tablespace_map is injected
+		 * into the tar separately.
 		 */
 		if (strcmp(de->d_name, BACKUP_LABEL_FILE) == 0)
+			continue;
+
+		if (strcmp(de->d_name, TABLESPACE_MAP) == 0)
 			continue;
 
 		/*
@@ -1120,8 +1081,15 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 					break;
 				}
 			}
+
+			/*
+			 * skip sending directories inside pg_tblspc, if not required.
+			 */
+			if (strcmp(pathbuf, "./pg_tblspc") == 0 && !sendtblspclinks)
+				skip_this_dir = true;
+
 			if (!skip_this_dir)
-				size += sendDir(pathbuf, basepathlen, sizeonly, tablespaces);
+				size += sendDir(pathbuf, basepathlen, sizeonly, tablespaces, sendtblspclinks);
 		}
 		else if (S_ISREG(statbuf.st_mode))
 		{

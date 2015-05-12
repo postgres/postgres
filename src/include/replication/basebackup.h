@@ -21,6 +21,16 @@
 #define MAX_RATE_UPPER	1048576
 
 
+typedef struct
+{
+	char	   *oid;
+	char	   *path;
+	char	   *rpath;			/* relative path within PGDATA, or NULL */
+	int64		size;
+} tablespaceinfo;
+
 extern void SendBaseBackup(BaseBackupCmd *cmd);
+
+extern int64 sendTablespace(char *path, bool sizeonly);
 
 #endif   /* _BASEBACKUP_H */
