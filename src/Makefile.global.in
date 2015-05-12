@@ -303,11 +303,13 @@ check: temp-install
 
 .PHONY: temp-install
 temp-install:
+ifdef GENERATED_SGML # not needed for SGML 'make check'
 ifeq ($(MAKELEVEL),0)
 	rm -rf '$(abs_top_builddir)'/tmp_install
 	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install
 endif
 	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install || exit; done)
+endif
 
 PROVE = @PROVE@
 PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
