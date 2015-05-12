@@ -17,6 +17,8 @@
 # to want to use.
 html:
 
+NO_TEMP_INSTALL=yes
+
 subdir = doc/src/sgml
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global

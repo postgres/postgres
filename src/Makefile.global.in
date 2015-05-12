@@ -303,7 +303,7 @@ check: temp-install
 
 .PHONY: temp-install
 temp-install:
-ifdef GENERATED_SGML # not needed for SGML 'make check'
+ifndef NO_TEMP_INSTALL
 ifeq ($(MAKELEVEL),0)
 	rm -rf '$(abs_top_builddir)'/tmp_install
 	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install
