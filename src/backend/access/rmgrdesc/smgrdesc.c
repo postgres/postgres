@@ -29,7 +29,7 @@ smgr_desc(StringInfo buf, XLogReaderState *record)
 		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
 		char	   *path = relpathperm(xlrec->rnode, xlrec->forkNum);
 
-		appendStringInfo(buf, "%s", path);
+		appendStringInfoString(buf, path);
 		pfree(path);
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)

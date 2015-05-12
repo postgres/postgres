@@ -419,7 +419,7 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 													  get_namespace_name(
 							  get_rel_namespace(RelationGetRelid(relation))),
 											  NameStr(class_form->relname)));
-	appendStringInfoString(ctx->out, ":");
+	appendStringInfoChar(ctx->out, ':');
 
 	switch (change->action)
 	{

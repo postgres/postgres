@@ -75,7 +75,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_restore_point *xlrec = (xl_restore_point *) rec;
 
-		appendStringInfo(buf, "%s", xlrec->rp_name);
+		appendStringInfoString(buf, xlrec->rp_name);
 	}
 	else if (info == XLOG_FPI || info == XLOG_FPI_FOR_HINT)
 	{
@@ -125,7 +125,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		bool		fpw;
 
 		memcpy(&fpw, rec, sizeof(bool));
-		appendStringInfo(buf, "%s", fpw ? "true" : "false");
+		appendStringInfoString(buf, fpw ? "true" : "false");
 	}
 	else if (info == XLOG_END_OF_RECOVERY)
 	{

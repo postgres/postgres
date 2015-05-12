@@ -2937,7 +2937,7 @@ NameListToString(List *names)
 		if (IsA(name, String))
 			appendStringInfoString(&string, strVal(name));
 		else if (IsA(name, A_Star))
-			appendStringInfoString(&string, "*");
+			appendStringInfoChar(&string, '*');
 		else
 			elog(ERROR, "unexpected node type in name list: %d",
 				 (int) nodeTag(name));

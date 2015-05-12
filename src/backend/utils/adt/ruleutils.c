@@ -2174,7 +2174,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 		appendStringInfoString(&rbuf, "TABLE(");
 		ntabargs = print_function_arguments(&rbuf, proctup, true, false);
 		if (ntabargs > 0)
-			appendStringInfoString(&rbuf, ")");
+			appendStringInfoChar(&rbuf, ')');
 		else
 			resetStringInfo(&rbuf);
 	}
