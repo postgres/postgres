@@ -1,10 +1,32 @@
+# src/test/modules/test_ddl_deparse/Makefile
+
 MODULES = test_ddl_deparse
 PGFILEDESC = "test_ddl_deparse - regression testing for DDL deparsing"
 
 EXTENSION = test_ddl_deparse
 DATA = test_ddl_deparse--1.0.sql
 
-REGRESS = --schedule=$(srcdir)/regress_schedule
+# test_ddl_deparse must be first
+REGRESS = test_ddl_deparse \
+	create_extension \
+	create_schema \
+	create_type \
+	create_conversion \
+	create_domain \
+	create_sequence_1 \
+	create_table \
+	alter_table \
+	create_view \
+	create_trigger \
+	create_rule \
+	comment_on \
+	alter_function \
+	alter_sequence \
+	alter_type_enum \
+	opfamily \
+	defprivs \
+	matviews
+
 EXTRA_INSTALL = contrib/pg_stat_statements
 
 ifdef USE_PGXS
