@@ -605,6 +605,21 @@ executeStatement(PGconn *con, const char *sql)
 	PQclear(res);
 }
 
+/* call PQexec() and complain, but without exiting, on failure */
+static void
+tryExecuteStatement(PGconn *con, const char *sql)
+{
+	PGresult   *res;
+
+	res = PQexec(con, sql);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "%s", PQerrorMessage(con));
+		fprintf(stderr, "(ignoring this error and continuing anyway)\n");
+	}
+	PQclear(res);
+}
+
 /* set up a connection to the backend */
 static PGconn *
 doConnect(void)
@@ -3283,15 +3298,15 @@ main(int argc, char **argv)
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
-		executeStatement(con, "vacuum pgbench_branches");
-		executeStatement(con, "vacuum pgbench_tellers");
-		executeStatement(con, "truncate pgbench_history");
+		tryExecuteStatement(con, "vacuum pgbench_branches");
+		tryExecuteStatement(con, "vacuum pgbench_tellers");
+		tryExecuteStatement(con, "truncate pgbench_history");
 		fprintf(stderr, "end.\n");
 
 		if (do_vacuum_accounts)
 		{
 			fprintf(stderr, "starting vacuum pgbench_accounts...");
-			executeStatement(con, "vacuum analyze pgbench_accounts");
+			tryExecuteStatement(con, "vacuum analyze pgbench_accounts");
 			fprintf(stderr, "end.\n");
 		}
 	}
