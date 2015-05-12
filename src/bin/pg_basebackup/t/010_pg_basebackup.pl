@@ -127,6 +127,6 @@ command_fails(
 
 mkdir "$tempdir/$superlongname";
 psql 'postgres', "CREATE TABLESPACE tblspc3 LOCATION '$tempdir/$superlongname';";
-command_fails([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
-			  'pg_basebackup tar with long symlink target fails');
+command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
+			  'pg_basebackup tar with long symlink target');
 psql 'postgres', "DROP TABLESPACE tblspc3;";
