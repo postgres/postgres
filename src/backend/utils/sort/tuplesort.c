@@ -341,9 +341,9 @@ struct Tuplesortstate
 	bool		markpos_eof;	/* saved "eof_reached" */
 
 	/*
-	 * The sortKeys variable is used by every case other than the datum and
-	 * hash index cases; it is set by tuplesort_begin_xxx.  tupDesc is only
-	 * used by the MinimalTuple and CLUSTER routines, though.
+	 * The sortKeys variable is used by every case other than the hash index
+	 * case; it is set by tuplesort_begin_xxx.  tupDesc is only used by the
+	 * MinimalTuple and CLUSTER routines, though.
 	 */
 	TupleDesc	tupDesc;
 	SortSupport sortKeys;		/* array of length nKeys */
