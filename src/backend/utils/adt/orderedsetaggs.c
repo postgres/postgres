@@ -268,10 +268,6 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 
 	/*
 	 * Initialize tuplesort object.
-	 *
-	 * In the future, we should consider forcing the tuplesort_begin_heap()
-	 * case when the abbreviated key optimization can thereby be used, even
-	 * when !use_tuples.
 	 */
 	if (use_tuples)
 		osastate->sortstate = tuplesort_begin_heap(qstate->tupdesc,
