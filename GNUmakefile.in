@@ -58,9 +58,10 @@ distclean maintainer-clean:
 	$(MAKE) -C contrib $@
 	$(MAKE) -C config $@
 	$(MAKE) -C src $@
-	rm -f config.cache config.log config.status GNUmakefile
+	rm -rf tmp_install/
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
+	rm -f config.cache config.log config.status GNUmakefile
 
 check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
