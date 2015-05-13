@@ -767,3 +767,19 @@ select jsonb_delete('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb - '{n}'::text[];
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb - '{b,-1}'::text[];
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb - '{d,1,0}'::text[];
+
+
+-- empty structure and error conditions for delete and replace
+
+select '"a"'::jsonb - 'a'; -- error
+select '{}'::jsonb - 'a';
+select '[]'::jsonb - 'a';
+select '"a"'::jsonb - 1; -- error
+select '{}'::jsonb -  1 ;
+select '[]'::jsonb - 1;
+select '"a"'::jsonb - '{a}'::text[]; -- error
+select '{}'::jsonb - '{a}'::text[];
+select '[]'::jsonb - '{a}'::text[];
+select jsonb_replace('"a"','{a}','"b"'); --error
+select jsonb_replace('{}','{a}','"b"');
+select jsonb_replace('[]','{1}','"b"');

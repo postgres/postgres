@@ -3332,7 +3332,7 @@ jsonb_concat(PG_FUNCTION_ARGS)
 		out = JsonbValueToJsonb(res);
 	}
 
-	PG_RETURN_POINTER(out);
+	PG_RETURN_JSONB(out);
 }
 
 
@@ -3349,7 +3349,6 @@ jsonb_delete(PG_FUNCTION_ARGS)
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	char	   *keyptr = VARDATA_ANY(key);
 	int			keylen = VARSIZE_ANY_EXHDR(key);
-	Jsonb	   *out = palloc(VARSIZE(in));
 	JsonbParseState *state = NULL;
 	JsonbIterator *it;
 	uint32		r;
@@ -3357,10 +3356,13 @@ jsonb_delete(PG_FUNCTION_ARGS)
 			   *res = NULL;
 	bool		skipNested = false;
 
-	SET_VARSIZE(out, VARSIZE(in));
+	if (JB_ROOT_IS_SCALAR(in))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot delete from scalar")));
 
 	if (JB_ROOT_COUNT(in) == 0)
-		PG_RETURN_POINTER(out);
+		PG_RETURN_JSONB(in);
 
 	it = JsonbIteratorInit(&in->root);
 
@@ -3382,13 +3384,9 @@ jsonb_delete(PG_FUNCTION_ARGS)
 		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
 	}
 
-	if (res == NULL || (res->type == jbvArray && res->val.array.nElems == 0) ||
-		(res->type == jbvObject && res->val.object.nPairs == 0))
-		SET_VARSIZE(out, VARHDRSZ);
-	else
-		out = JsonbValueToJsonb(res);
+	Assert(res != NULL);
 
-	PG_RETURN_POINTER(out);
+	PG_RETURN_JSONB(JsonbValueToJsonb(res));
 }
 
 /*
@@ -3403,7 +3401,6 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB(0);
 	int			idx = PG_GETARG_INT32(1);
-	Jsonb	   *out = palloc(VARSIZE(in));
 	JsonbParseState *state = NULL;
 	JsonbIterator *it;
 	uint32		r,
@@ -3412,11 +3409,13 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	JsonbValue	v,
 			   *res = NULL;
 
+	if (JB_ROOT_IS_SCALAR(in))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot delete from scalar")));
+
 	if (JB_ROOT_COUNT(in) == 0)
-	{
-		memcpy(out, in, VARSIZE(in));
-		PG_RETURN_POINTER(out);
-	}
+		PG_RETURN_JSONB(in);
 
 	it = JsonbIteratorInit(&in->root);
 
@@ -3435,10 +3434,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	}
 
 	if (idx >= n)
-	{
-		memcpy(out, in, VARSIZE(in));
-		PG_RETURN_POINTER(out);
-	}
+		PG_RETURN_JSONB(in);
 
 	pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
 
@@ -3457,13 +3453,9 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
 	}
 
-	if (res == NULL || (res->type == jbvArray && res->val.array.nElems == 0) ||
-		(res->type == jbvObject && res->val.object.nPairs == 0))
-		SET_VARSIZE(out, VARHDRSZ);
-	else
-		out = JsonbValueToJsonb(res);
+	Assert (res != NULL);
 
-	PG_RETURN_POINTER(out);
+	PG_RETURN_JSONB(JsonbValueToJsonb(res));
 }
 
 /*
@@ -3475,7 +3467,6 @@ jsonb_replace(PG_FUNCTION_ARGS)
 	Jsonb	   *in = PG_GETARG_JSONB(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
 	Jsonb	   *newval = PG_GETARG_JSONB(2);
-	Jsonb	   *out = palloc(VARSIZE(in) + VARSIZE(newval));
 	JsonbValue *res = NULL;
 	Datum	   *path_elems;
 	bool	   *path_nulls;
@@ -3488,31 +3479,27 @@ jsonb_replace(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("wrong number of array subscripts")));
 
+	if (JB_ROOT_IS_SCALAR(in))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot replace path in scalar")));
+
 	if (JB_ROOT_COUNT(in) == 0)
-	{
-		memcpy(out, in, VARSIZE(in));
-		PG_RETURN_POINTER(out);
-	}
+		PG_RETURN_JSONB(in);
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &path_elems, &path_nulls, &path_len);
 
 	if (path_len == 0)
-	{
-		memcpy(out, in, VARSIZE(in));
-		PG_RETURN_POINTER(out);
-	}
+		PG_RETURN_JSONB(in);
 
 	it = JsonbIteratorInit(&in->root);
 
 	res = replacePath(&it, path_elems, path_nulls, path_len, &st, 0, newval);
 
-	if (res == NULL)
-		SET_VARSIZE(out, VARHDRSZ);
-	else
-		out = JsonbValueToJsonb(res);
+	Assert (res != NULL);
 
-	PG_RETURN_POINTER(out);
+	PG_RETURN_JSONB(JsonbValueToJsonb(res));
 }
 
 
@@ -3524,7 +3511,6 @@ jsonb_delete_path(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
-	Jsonb	   *out = palloc(VARSIZE(in));
 	JsonbValue *res = NULL;
 	Datum	   *path_elems;
 	bool	   *path_nulls;
@@ -3537,31 +3523,27 @@ jsonb_delete_path(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("wrong number of array subscripts")));
 
+	if (JB_ROOT_IS_SCALAR(in))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot delete path in scalar")));
+
 	if (JB_ROOT_COUNT(in) == 0)
-	{
-		memcpy(out, in, VARSIZE(in));
-		PG_RETURN_POINTER(out);
-	}
+		PG_RETURN_JSONB(in);
 
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &path_elems, &path_nulls, &path_len);
 
 	if (path_len == 0)
-	{
-		memcpy(out, in, VARSIZE(in));
-		PG_RETURN_POINTER(out);
-	}
+		PG_RETURN_JSONB(in);
 
 	it = JsonbIteratorInit(&in->root);
 
 	res = replacePath(&it, path_elems, path_nulls, path_len, &st, 0, NULL);
 
-	if (res == NULL)
-		SET_VARSIZE(out, VARHDRSZ);
-	else
-		out = JsonbValueToJsonb(res);
+	Assert (res != NULL);
 
-	PG_RETURN_POINTER(out);
+	PG_RETURN_JSONB(JsonbValueToJsonb(res));
 }
 
 
