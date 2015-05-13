@@ -727,6 +727,8 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	HeapTupleHeaderSetDatumLength(td, len);
 	HeapTupleHeaderSetTypeId(td, tupleDescriptor->tdtypeid);
 	HeapTupleHeaderSetTypMod(td, tupleDescriptor->tdtypmod);
+	/* We also make sure that t_ctid is invalid unless explicitly set */
+	ItemPointerSetInvalid(&(td->t_ctid));
 
 	HeapTupleHeaderSetNatts(td, numberOfAttributes);
 	td->t_hoff = hoff;

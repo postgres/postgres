@@ -2964,8 +2964,14 @@ make_tuple_from_result_row(PGresult *res,
 
 	tuple = heap_form_tuple(tupdesc, values, nulls);
 
+	/*
+	 * If we have a CTID to return, install it in both t_self and t_ctid.
+	 * t_self is the normal place, but if the tuple is converted to a
+	 * composite Datum, t_self will be lost; setting t_ctid allows CTID to be
+	 * preserved during EvalPlanQual re-evaluations (see ROW_MARK_COPY code).
+	 */
 	if (ctid)
-		tuple->t_self = *ctid;
+		tuple->t_self = tuple->t_data->t_ctid = *ctid;
 
 	/* Clean up */
 	MemoryContextReset(temp_context);

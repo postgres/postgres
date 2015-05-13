@@ -2613,10 +2613,11 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 
 			/* build a temporary HeapTuple control structure */
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
-			ItemPointerSetInvalid(&(tuple.t_self));
+			tuple.t_data = td;
 			/* relation might be a foreign table, if so provide tableoid */
 			tuple.t_tableOid = erm->relid;
-			tuple.t_data = td;
+			/* also copy t_ctid in case there's valid data there */
+			tuple.t_self = td->t_ctid;
 
 			/* copy and store tuple */
 			EvalPlanQualSetTuple(epqstate, erm->rti,
