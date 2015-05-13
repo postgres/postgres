@@ -358,6 +358,140 @@ pending_tuples | 0
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>
+     <indexterm>
+      <primary>pgstattuple_approx</primary>
+     </indexterm>
+     <function>pgstattuple_approx(regclass) returns record</>
+    </term>
+
+    <listitem>
+     <para>
+      <function>pgstattuple_approx</function> is a faster alternative to
+      <function>pgstattuple</function> that returns approximate results.
+      The argument is the target relation's OID.
+      For example:
+<programlisting>
+test=> SELECT * FROM pgstattuple_approx('pg_catalog.pg_proc'::regclass);
+-[ RECORD 1 ]--------+-------
+table_len            | 573440
+scanned_percent      | 2
+approx_tuple_count   | 2740
+approx_tuple_len     | 561210
+approx_tuple_percent | 97.87
+dead_tuple_count     | 0
+dead_tuple_len       | 0
+dead_tuple_percent   | 0
+approx_free_space    | 11996
+approx_free_percent  | 2.09
+</programlisting>
+      The output columns are described in <xref linkend="pgstatapprox-columns">.
+     </para>
+
+     <para>
+      Whereas <function>pgstattuple</function> always performs a
+      full-table scan and returns an exact count of live and dead tuples
+      (and their sizes) and free space, <function>pgstattuple_approx</function>
+      tries to avoid the full-table scan and returns exact dead tuple
+      statistics along with an approximation of the number and
+      size of live tuples and free space.
+     </para>
+
+     <para>
+      It does this by skipping pages that have only visible tuples
+      according to the visibility map (if a page has the corresponding VM
+      bit set, then it is assumed to contain no dead tuples). For such
+      pages, it derives the free space value from the free space map, and
+      assumes that the rest of the space on the page is taken up by live
+      tuples.
+     </para>
+
+     <para>
+      For pages that cannot be skipped, it scans each tuple, recording its
+      presence and size in the appropriate counters, and adding up the
+      free space on the page. At the end, it estimates the total number of
+      live tuples based on the number of pages and tuples scanned (in the
+      same way that VACUUM estimates pg_class.reltuples).
+     </para>
+
+     <table id="pgstatapprox-columns">
+      <title><function>pgstattuple_approx</function> Output Columns</title>
+      <tgroup cols="3">
+       <thead>
+        <row>
+         <entry>Column</entry>
+         <entry>Type</entry>
+         <entry>Description</entry>
+        </row>
+       </thead>
+
+       <tbody>
+        <row>
+         <entry><structfield>table_len</structfield></entry>
+         <entry><type>bigint</type></entry>
+         <entry>Physical relation length in bytes (exact)</entry>
+        </row>
+        <row>
+         <entry><structfield>scanned_percent</structfield></entry>
+         <entry><type>float8</type></entry>
+         <entry>Percentage of table scanned</entry>
+        </row>
+        <row>
+         <entry><structfield>tuple_count</structfield></entry>
+         <entry><type>bigint</type></entry>
+         <entry>Number of live tuples (estimated)</entry>
+        </row>
+        <row>
+         <entry><structfield>tuple_len</structfield></entry>
+         <entry><type>bigint</type></entry>
+         <entry>Total length of live tuples in bytes (estimated)</entry>
+        </row>
+        <row>
+         <entry><structfield>tuple_percent</structfield></entry>
+         <entry><type>float8</type></entry>
+         <entry>Percentage of live tuples</entry>
+        </row>
+        <row>
+         <entry><structfield>dead_tuple_count</structfield></entry>
+         <entry><type>bigint</type></entry>
+         <entry>Number of dead tuples (exact)</entry>
+        </row>
+        <row>
+         <entry><structfield>dead_tuple_len</structfield></entry>
+         <entry><type>bigint</type></entry>
+         <entry>Total length of dead tuples in bytes (exact)</entry>
+        </row>
+        <row>
+         <entry><structfield>dead_tuple_percent</structfield></entry>
+         <entry><type>float8</type></entry>
+         <entry>Percentage of dead tuples</entry>
+        </row>
+        <row>
+         <entry><structfield>approx_free_space</structfield></entry>
+         <entry><type>bigint</type></entry>
+         <entry>Total free space in bytes (estimated)</entry>
+        </row>
+        <row>
+         <entry><structfield>approx_free_percent</structfield></entry>
+         <entry><type>float8</type></entry>
+         <entry>Percentage of free space</entry>
+        </row>
+
+       </tbody>
+      </tgroup>
+     </table>
+
+     <para>
+      In the above output, the free space figures may not match the
+      <function>pgstattuple</function> output exactly, because the free
+      space map gives us an exact figure, but is not guaranteed to be
+      accurate to the byte.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </sect2>
 
@@ -365,7 +499,7 @@ pending_tuples | 0
   <title>Authors</title>
 
   <para>
-   Tatsuo Ishii and Satoshi Nagayasu
+   Tatsuo Ishii, Satoshi Nagayasu and Abhijit Menon-Sen
   </para>
  </sect2>
 
