@@ -29,7 +29,6 @@
 static HTAB *PLy_procedure_cache = NULL;
 
 static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger);
-static void invalidate_procedure_caches(Datum arg, int cacheid, uint32 hashvalue);
 static bool PLy_procedure_argument_valid(PLyTypeInfo *arg);
 static bool PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup);
 static char *PLy_procedure_munge_source(const char *name, const char *src);
@@ -45,29 +44,6 @@ init_procedure_caches(void)
 	hash_ctl.entrysize = sizeof(PLyProcedureEntry);
 	PLy_procedure_cache = hash_create("PL/Python procedures", 32, &hash_ctl,
 									  HASH_ELEM | HASH_BLOBS);
-	CacheRegisterSyscacheCallback(TRFTYPELANG,
-								  invalidate_procedure_caches,
-								  (Datum) 0);
-}
-
-static void
-invalidate_procedure_caches(Datum arg, int cacheid, uint32 hashvalue)
-{
-	HASH_SEQ_STATUS status;
-	PLyProcedureEntry *hentry;
-
-	Assert(PLy_procedure_cache != NULL);
-
-	/* flush all entries */
-	hash_seq_init(&status, PLy_procedure_cache);
-
-	while ((hentry = (PLyProcedureEntry *) hash_seq_search(&status)))
-	{
-		if (hash_search(PLy_procedure_cache,
-						(void *) &hentry->key,
-						HASH_REMOVE, NULL) == NULL)
-			elog(ERROR, "hash table corrupted");
-	}
 }
 
 /*
