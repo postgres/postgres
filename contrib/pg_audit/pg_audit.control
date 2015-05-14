@@ -1,0 +1,5 @@
+# pg_audit extension
+comment = 'provides auditing functionality'
+default_version = '1.0.0'
+module_pathname = '$libdir/pg_audit'
+relocatable = true

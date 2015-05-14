@@ -1,0 +1,678 @@
+<!-- doc/src/sgml/pgaudit.sgml -->
+
+<sect1 id="pgaudit" xreflabel="pgaudit">
+  <title>pg_audit</title>
+
+  <indexterm zone="pgaudit">
+    <primary>pg_audit</primary>
+  </indexterm>
+
+  <para>
+    The <filename>pg_audit</filename> extension provides detailed session
+    and/or object audit logging via the standard logging facility.  The goal
+    is to provide the tools needed to produce audit logs required to pass any
+    government, financial, or ISO certification audit.
+  </para>
+
+  <para>
+    An audit is an official inspection of an individual's or organization's
+    accounts, typically by an independent body.  The information gathered by
+    <filename>pg_audit</filename> is properly called an audit trail or audit
+    log.  The term audit log is used in this documentation.
+  </para>
+
+  <sect2>
+    <title>Why <literal>pg_audit</>?</title>
+
+    <para>
+      Basic statement logging can be provided by the standard logging facility
+      using <literal>log_statement = all</>.  This is acceptable for monitoring
+      and other usages but does not provide the level of detail generally
+      required for an audit.  It is not enough to have a list of all the
+      operations performed against the database. It must also be possible to
+      find particular statements that are of interest to an auditor.  The
+      standard logging facility shows what the user requested, while
+      <literal>pg_audit</> focuses on the details of what happened while
+      the database was satisfying the request.
+    </para>
+
+    <para>
+      For example, an auditor may want to verify that a particular table was
+      created inside a documented maintenance window.  This might seem like a
+      simple job for grep, but what if you are presented with something like
+      this (intentionally obfuscated) example:
+    </para>
+
+    <programlisting>
+DO $$
+BEGIN
+    EXECUTE 'CREATE TABLE import' || 'ant_table (id INT)';
+END $$;
+    </programlisting>
+
+    <para>
+      Standard logging will give you this:
+    </para>
+
+    <programlisting>
+LOG:  statement: DO $$
+BEGIN
+    EXECUTE 'CREATE TABLE import' || 'ant_table (id INT)';
+END $$;
+    </programlisting>
+
+    <para>
+      It appears that finding the table of interest may require some knowledge
+      of the code in cases where tables are created dynamically.  This is not
+      ideal since it would be preferrable to just search on the table name.
+      This is where <literal>pg_audit</> comes in.  For the same input,
+      it will produce this output in the log:
+    </para>
+
+    <programlisting>
+AUDIT: SESSION,33,1,FUNCTION,DO,,,"DO $$
+BEGIN
+    EXECUTE 'CREATE TABLE import' || 'ant_table (id INT)';
+END $$;"
+AUDIT: SESSION,33,2,DDL,CREATE TABLE,TABLE,public.important_table,CREATE TABLE important_table (id INT)
+    </programlisting>
+
+    <para>
+      Not only is the <literal>DO</> block logged, but substatement 2 contains
+      the full text of the <literal>CREATE TABLE</> with the statement type,
+      object type, and full-qualified name to make searches easy.
+    </para>
+
+    <para>
+      When logging <literal>SELECT</> and <literal>DML</> statements,
+      <literal>pg_audit</> can be configured to log a separate entry for each
+      relation referenced in a statement.  No parsing is required to find all
+      statements that touch a particular table.  In fact, the goal is that the
+      statement text is provided primarily for deep forensics and should not be
+      the required for an audit.
+    </para>
+  </sect2>
+
+  <sect2>
+    <title>Usage Considerations</title>
+
+    <para>
+      Depending on settings, it is possible for <literal>pg_audit</literal> to
+      generate an enormous volume of logging.  Be careful to determine
+      exactly what needs to be audit logged in your environment to avoid
+      logging too much.
+    </para>
+
+    <para>
+      For example, when working in an OLAP environment it would probably not be
+      wise to audit log inserts into a large fact table.  The size of the log
+      file will likely be many times the actual data size of the inserts because
+      the log file is expressed as text.  Since logs are generally stored with
+      the OS this may lead to disk space being exhausted very
+      quickly.  In cases where it is not possible to limit audit logging to
+      certain tables, be sure to assess the performance impact while testing
+      and allocate plenty of space on the log volume.  This may also be true for
+      OLTP environments.  Even if the insert volume is not as high, the
+      performance impact of audit logging may still noticeably affect latency.
+    </para>
+
+    <para>
+      To limit the number of relations audit logged for <literal>SELECT</>
+      and <literal>DML</> statments, consider using object audit logging
+      (see <xref linkend="pgaudit-object-audit-logging">).  Object audit logging
+      allows selection of the relations to be logged allowing for reduction
+      of the overall log volume.  However, when new relations are added they
+      must be explicitly added to object audit logging.  A programmatic
+      solution where specified tables are excluded from logging and all others
+      are included may be a good option in this case.
+    </para>
+  </sect2>
+
+  <sect2>
+    <title>Settings</title>
+
+    <para>
+      Settings may be modified only by a superuser. Allowing normal users to
+      change their settings would defeat the point of an audit log.
+    </para>
+
+    <para>
+      Settings can be specified globally (in
+      <filename>postgresql.conf</filename> or using
+      <literal>ALTER SYSTEM ... SET</>), at the database level (using
+      <literal>ALTER DATABASE ... SET</literal>), or at the role level (using
+      <literal>ALTER ROLE ... SET</literal>).  Note that settings are not
+      inherited through normal role inheritance and <literal>SET ROLE</> will
+      not alter a user's <literal>pg_audit</> settings.  This is a limitation
+      of the roles system and not inherent to <literal>pg_audit</>.
+    </para>
+
+    <para>
+      The <literal>pg_audit</> extension must be loaded in
+      <xref linkend="guc-shared-preload-libraries">.  Otherwise, an error
+      will be raised at load time and no audit logging will occur.
+    </para>
+
+    <variablelist>
+      <varlistentry id="guc-pgaudit-log" xreflabel="pg_audit.log">
+        <term><varname>pg_audit.log</varname> (<type>string</type>)
+          <indexterm>
+            <primary><varname>pg_audit.log</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies which classes of statements will be logged by session
+            audit logging.  Possible values are:
+          </para>
+
+          <itemizedlist>
+            <listitem>
+              <para>
+                <literal>READ</literal> - <literal>SELECT</literal> and
+                <literal>COPY</literal> when the source is a relation or a
+                query.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>WRITE</literal> - <literal>INSERT</literal>,
+                <literal>UPDATE</literal>, <literal>DELETE</literal>,
+                <literal>TRUNCATE</literal>, and <literal>COPY</literal> when the
+                destination is a relation.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>FUNCTION</literal> - Function calls and
+                <literal>DO</literal> blocks.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>ROLE</literal> - Statements related to roles and
+                privileges: <literal>GRANT</literal>,
+                <literal>REVOKE</literal>,
+                <literal>CREATE/ALTER/DROP ROLE</literal>.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>DDL</literal> - All <literal>DDL</> that is not included
+                in the <literal>ROLE</> class plus <literal>REINDEX</>.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>MISC</literal> - Miscellaneous commands, e.g.
+                <literal>DISCARD</literal>, <literal>FETCH</literal>,
+                <literal>CHECKPOINT</literal>, <literal>VACUUM</literal>.
+              </para>
+            </listitem>
+          </itemizedlist>
+
+          <para>
+            Multiple classes can be provided using a comma-separated list and
+            classes can be subtracted by prefacing the class with a
+            <literal>-</> sign (see <xref linkend="pgaudit-session-audit-logging">).
+            The default is <literal>none</>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-pgaudit-log-catalog" xreflabel="pg_audit.log_catalog">
+        <term><varname>pg_audit.log_catalog</varname> (<type>boolean</type>)
+          <indexterm>
+            <primary><varname>pg_audit.log_catalog</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies that session logging should be enabled in the case where all
+            relations in a statement are in pg_catalog.  Disabling this setting
+            will reduce noise in the log from tools like psql and PgAdmin that query
+            the catalog heavily. The default is <literal>on</>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-pgaudit-log-level" xreflabel="pg_audit.log_level">
+        <term><varname>pg_audit.log_level</varname> (<type>boolean</type>)
+          <indexterm>
+            <primary><varname>pg_audit.log_level</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies the log level that will be used for log entries (see
+            <xref linkend="RUNTIME-CONFIG-SEVERITY-LEVELS"> for valid levels).
+            This setting is used for regression testing and may also be useful
+            to end users for testing or other purposes.  It is not intended to
+            be used in a production environment as it may leak which statements
+            are being logged to the user. The default is <literal>log</>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-pgaudit-log-parameter" xreflabel="pg_audit.log_parameter">
+        <term><varname>pg_audit.log_parameter</varname> (<type>boolean</type>)
+          <indexterm>
+            <primary><varname>pg_audit.log_parameter</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies that audit logging should include the parameters that
+            were passed with the statement.  When parameters are present they will
+            be included in CSV format after the statement text. The default is
+            <literal>off</>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-pgaudit-log-relation" xreflabel="pg_audit.log_relation">
+        <term><varname>pg_audit.log_relation</varname> (<type>boolean</type>)
+          <indexterm>
+            <primary><varname>pg_audit.log_relation</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies whether session audit logging should create a separate
+            log entry for each relation (<literal>TABLE</>, <literal>VIEW</>,
+            etc.) referenced in a <literal>SELECT</> or <literal>DML</>
+            statement.  This is a useful shortcut for exhaustive logging
+            without using object audit logging.  The default is
+            <literal>off</>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-pgaudit-log-statement-once" xreflabel="pg_audit.log_statement-once">
+        <term><varname>pg_audit.log_statement_once</varname> (<type>boolean</type>)
+          <indexterm>
+            <primary><varname>pg_audit.log_statement_once</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies whether logging will include the statement text and
+            parameters with the first log entry for a statement/substatement
+            combination or with every entry.  Disabling this setting will
+            result in less verbose logging but may make it more difficult to
+            determine the statement that generated a log entry, though the
+            statement/substatement pair along with the process id should suffice
+            to identify the statement text logged with a previous entry.  The
+            default is <literal>off</>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-pgaudit-role" xreflabel="pg_audit.role">
+        <term><varname>pg_audit.role</varname> (<type>string</type>)
+          <indexterm>
+            <primary><varname>pg_audit.role</> configuration parameter</primary>
+          </indexterm>
+        </term>
+        <listitem>
+          <para>
+            Specifies the master role to use for object audit logging.  Muliple
+            audit roles can be defined by granting them to the master role.
+            This allows multiple groups to be in charge of different aspects
+            of audit logging.  There is no default.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
+
+  <sect2 id="pgaudit-session-audit-logging">
+    <title>Session Audit Logging</title>
+
+    <para>
+      Session audit logging provides detailed logs of all statements executed
+      by a user in the backend.
+    </para>
+
+    <sect3>
+      <title>Configuration</title>
+
+      <para>
+        Session logging is enabled with the <xref linkend="guc-pgaudit-log">
+        setting.
+
+        Enable session logging for all <literal>DML</> and <literal>DDL</> and
+        log all relations in <literal>DML</> statements:
+          <programlisting>
+set pg_audit.log = 'write, ddl';
+set pg_audit.log_relation = on;
+          </programlisting>
+      </para>
+
+      <para>
+        Enable session logging for all commands except <literal>MISC</> and
+        raise audit log messages as <literal>NOTICE</>:
+          <programlisting>
+set pg_audit.log = 'all, -misc';
+set pg_audit.log_notice = on;
+          </programlisting>
+      </para>
+    </sect3>
+
+    <sect3>
+      <title>Example</title>
+
+      <para>
+        In this example session audit logging is used for logging
+        <literal>DDL</> and <literal>SELECT</> statements.  Note that the
+        insert statement is not logged since the <literal>WRITE</> class
+        is not enabled
+      </para>
+
+      <para>
+        SQL:
+      </para>
+      <programlisting>
+set pg_audit.log = 'read, ddl';
+
+create table account
+(
+    id int,
+    name text,
+    password text,
+    description text
+);
+
+insert into account (id, name, password, description)
+             values (1, 'user1', 'HASH1', 'blah, blah');
+
+select *
+    from account;
+      </programlisting>
+
+      <para>
+        Log Output:
+      </para>
+
+      <programlisting>
+AUDIT: SESSION,1,1,DDL,CREATE TABLE,TABLE,public.account,create table account
+(
+    id int,
+    name text,
+    password text,
+    description text
+);
+AUDIT: SESSION,2,1,READ,SELECT,,,select *
+    from account
+      </programlisting>
+    </sect3>
+  </sect2>
+
+  <sect2 id="pgaudit-object-audit-logging">
+    <title>Object Auditing</title>
+
+    <para>
+      Object audit logging logs statements that affect a particular relation.
+      Only <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</> and
+      <literal>DELETE</> commands are supported.  <literal>TRUNCATE</> is not
+      included because there is no specific privilege for it.
+    </para>
+
+    <para>
+      Object audit logging is intended to be a finer-grained replacement for
+      <literal>pg_audit.log = 'read, write'</literal>.  As such, it may not
+      make sense to use them in conjunction but one possible scenario would
+      be to use session logging to capture each statement and then supplement
+      that with object logging to get more detail about specific relations.
+    </para>
+
+    <sect3>
+      <title>Configuration</title>
+
+      <para>
+        Object-level audit logging is implemented via the roles system.  The
+        <xref linkend="guc-pgaudit-role"> setting defines the role that
+        will be used for audit logging.  A relation (<literal>TABLE</>,
+        <literal>VIEW</>, etc.) will be audit logged when the audit role has
+        permissions for the command executed or inherits the permissions from
+        another role.  This allows you to effectively have multiple audit roles
+        even though there is a single master role in any context.
+      </para>
+
+      <para>
+      Set <xref linkend="guc-pgaudit-role"> to <literal>auditor</> and
+      grant <literal>SELECT</> and <literal>DELETE</> privileges on the
+      <literal>account</> table.  Any <literal>SELECT</> or
+      <literal>DELETE</> statements on <literal>account</> will now be
+      logged:
+      </para>
+
+      <programlisting>
+set pg_audit.role = 'auditor';
+
+grant select, delete
+   on public.account
+   to auditor;
+      </programlisting>
+    </sect3>
+
+    <sect3>
+      <title>Example</title>
+
+      <para>
+        In this example object audit logging is used to illustrate how a
+        granular approach may be taken towards logging of <literal>SELECT</>
+        and <literal>DML</> statements.  Note that logging on the
+        <literal>account</> table is controlled by column-level permissions,
+        while logging on <literal>account_role_map</> is table-level.
+      </para>
+
+      <para>
+        SQL:
+      </para>
+
+        <programlisting>
+set pg_audit.role = 'auditor';
+
+create table account
+(
+    id int,
+    name text,
+    password text,
+    description text
+);
+
+grant select (password)
+   on public.account
+   to auditor;
+
+select id, name
+  from account;
+
+select password
+  from account;
+
+grant update (name, password)
+   on public.account
+   to auditor;
+
+update account
+   set description = 'yada, yada';
+
+update account
+   set password = 'HASH2';
+
+create table account_role_map
+(
+    account_id int,
+    role_id int
+);
+
+grant select
+   on public.account_role_map
+   to auditor;
+
+select account.password,
+       account_role_map.role_id
+  from account
+       inner join account_role_map
+            on account.id = account_role_map.account_id
+        </programlisting>
+
+      <para>
+        Log Output:
+      </para>
+
+      <programlisting>
+AUDIT: OBJECT,1,1,READ,SELECT,TABLE,public.account,select password
+  from account
+AUDIT: OBJECT,2,1,WRITE,UPDATE,TABLE,public.account,update account
+   set password = 'HASH2'
+AUDIT: OBJECT,3,1,READ,SELECT,TABLE,public.account,select account.password,
+       account_role_map.role_id
+  from account
+       inner join account_role_map
+            on account.id = account_role_map.account_id
+AUDIT: OBJECT,3,1,READ,SELECT,TABLE,public.account_role_map,select account.password,
+       account_role_map.role_id
+  from account
+       inner join account_role_map
+            on account.id = account_role_map.account_id
+      </programlisting>
+    </sect3>
+  </sect2>
+
+  <sect2>
+    <title>Format</title>
+
+    <para>
+      Audit entries are written to the standard logging facility and contain
+      the following columns in comma-separated format:
+
+      <note>
+        <para>
+          Output is compliant CSV format only if the log line prefix portion
+          of each log entry is removed.
+        </para>
+      </note>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <literal>AUDIT_TYPE</> - <literal>SESSION</> or
+            <literal>OBJECT</>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>STATEMENT_ID</> - Unique statement ID for this session.
+            Each statement ID represents a backend call.  Statement IDs are
+            sequential even if some statements are not logged.  There may be
+            multiple entries for a statement ID when more than one relation
+            is logged.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>SUBSTATEMENT_ID</> - Sequential ID for each
+            substatement within the main statement.  For example, calling
+            a function from a query.  Substatement IDs are continuous
+            even if some substatements are not logged.  There may be multiple
+            entries for a substatement ID when more than one relation is logged.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>CLASS</> - e.g. (<literal>READ</>,
+            <literal>ROLE</>) (see <xref linkend="guc-pgaudit-log">).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>COMMAND</> - e.g. <literal>ALTER TABLE</>,
+            <literal>SELECT</>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>OBJECT_TYPE</> - <literal>TABLE</>,
+            <literal>INDEX</>, <literal>VIEW</>, etc.
+            Available for <literal>SELECT</>, <literal>DML</> and most
+            <literal>DDL</> statements.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>OBJECT_NAME</> - The fully-qualified object name
+            (e.g. public.account).  Available for <literal>SELECT</>,
+            <literal>DML</> and most <literal>DDL</> statements.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>STATEMENT</> - Statement executed on the backend.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+      Use <xref linkend="guc-log-line-prefix"> to add any other fields that
+      are needed to satisfy your audit log requirements.  A typical log line
+      prefix might be <literal>'%m %u %d: '</> which would provide the date/time,
+      user name, and database name for each audit log.
+    </para>
+  </sect2>
+
+  <sect2>
+    <title>Caveats</title>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Object renames are logged under the name they were renamed to.
+          For example, renaming a table will produce the following result:
+        </para>
+
+        <programlisting>
+ALTER TABLE test RENAME TO test2;
+
+AUDIT: SESSION,36,1,DDL,ALTER TABLE,TABLE,public.test2,ALTER TABLE test RENAME TO test2
+        </programlisting>
+      </listitem>
+
+      <listitem>
+        <para>
+          It is possible to have a command logged more than once.  For example,
+          when a table is created with a primary key specified at creation time
+          the index for the primary key will be logged independently and another
+          audit log will be made for the index under the create entry.  The
+          multiple entries will however be contained within one statement ID.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Autovacuum and Autoanalyze are not logged, nor are they intended to be.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Statements that are executed after a transaction enters an aborted state
+          will not be audit logged.  However, the statement that caused the error
+          and any subsequent statements executed in the aborted transaction will
+          be logged as ERRORs by the standard logging facility.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Authors</title>
+
+    <para>
+      Abhijit Menon-Sen <email>ams@2ndQuadrant.com</email>, Ian Barwick <email>ian@2ndQuadrant.com</email>, and David Steele <email>david@pgmasters.net</email>.
+    </para>
+  </sect2>
+</sect1>

@@ -1,0 +1,964 @@
+-- Load pg_audit module
+create extension pg_audit;
+--
+-- Audit log fields are:
+--     AUDIT_TYPE - SESSION or OBJECT
+--     STATEMENT_ID - ID of the statement in the current backend
+--     SUBSTATEMENT_ID - ID of the substatement in the current backend
+--     CLASS - Class of statement being logged (e.g. ROLE, READ, WRITE)
+--     COMMAND - e.g. SELECT, CREATE ROLE, UPDATE
+--     OBJECT_TYPE - When available, type of object acted on (e.g. TABLE, VIEW)
+--     OBJECT_NAME - When available, fully-qualified table of object
+--     STATEMENT - The statement being logged
+--     PARAMETER - If parameter logging is requested, they will follow the
+--                 statement
+--
+-- Create a superuser role that we know the name of for testing
+CREATE USER super SUPERUSER;
+ALTER ROLE super SET pg_audit.log = 'Role';
+ALTER ROLE super SET pg_audit.log_level = 'notice';
+\connect contrib_regression super;
+--
+-- Create auditor role
+CREATE ROLE auditor;
+NOTICE:  AUDIT: SESSION,1,1,ROLE,CREATE ROLE,,,CREATE ROLE auditor;,<not logged>
+--
+-- Create first test user
+CREATE USER user1;
+NOTICE:  AUDIT: SESSION,2,1,ROLE,CREATE ROLE,,,CREATE USER user1;,<not logged>
+ALTER ROLE user1 SET pg_audit.log = 'ddl, ROLE';
+NOTICE:  AUDIT: SESSION,3,1,ROLE,ALTER ROLE,,,"ALTER ROLE user1 SET pg_audit.log = 'ddl, ROLE';",<not logged>
+ALTER ROLE user1 SET pg_audit.log_level = 'notice';
+NOTICE:  AUDIT: SESSION,4,1,ROLE,ALTER ROLE,,,ALTER ROLE user1 SET pg_audit.log_level = 'notice';,<not logged>
+--
+-- Create, select, drop (select will not be audited)
+\connect contrib_regression user1
+CREATE TABLE public.test (id INT);
+NOTICE:  AUDIT: SESSION,1,1,DDL,CREATE TABLE,TABLE,public.test,CREATE TABLE public.test (id INT);,<not logged>
+SELECT * FROM test;
+ id 
+----
+(0 rows)
+
+DROP TABLE test;
+NOTICE:  AUDIT: SESSION,2,1,DDL,DROP TABLE,TABLE,public.test,DROP TABLE test;,<not logged>
+--
+-- Create second test user
+\connect contrib_regression super
+CREATE USER user2;
+NOTICE:  AUDIT: SESSION,1,1,ROLE,CREATE ROLE,,,CREATE USER user2;,<not logged>
+ALTER ROLE user2 SET pg_audit.log = 'Read, writE';
+NOTICE:  AUDIT: SESSION,2,1,ROLE,ALTER ROLE,,,"ALTER ROLE user2 SET pg_audit.log = 'Read, writE';",<not logged>
+ALTER ROLE user2 SET pg_audit.log_catalog = OFF;
+NOTICE:  AUDIT: SESSION,3,1,ROLE,ALTER ROLE,,,ALTER ROLE user2 SET pg_audit.log_catalog = OFF;,<not logged>
+ALTER ROLE user2 SET pg_audit.log_level = 'warning';
+NOTICE:  AUDIT: SESSION,4,1,ROLE,ALTER ROLE,,,ALTER ROLE user2 SET pg_audit.log_level = 'warning';,<not logged>
+ALTER ROLE user2 SET pg_audit.role = auditor;
+NOTICE:  AUDIT: SESSION,5,1,ROLE,ALTER ROLE,,,ALTER ROLE user2 SET pg_audit.role = auditor;,<not logged>
+ALTER ROLE user2 SET pg_audit.log_statement_once = ON;
+NOTICE:  AUDIT: SESSION,6,1,ROLE,ALTER ROLE,,,ALTER ROLE user2 SET pg_audit.log_statement_once = ON;,<not logged>
+\connect contrib_regression user2
+CREATE TABLE test2 (id INT);
+GRANT SELECT ON TABLE public.test2 TO auditor;
+--
+-- Role-based tests
+CREATE TABLE test3
+(
+	id INT
+);
+SELECT count(*)
+  FROM
+(
+	SELECT relname
+	  FROM pg_class
+	  LIMIT 1
+) SUBQUERY;
+ count 
+-------
+     1
+(1 row)
+
+SELECT *
+  FROM test3, test2;
+WARNING:  AUDIT: SESSION,1,1,READ,SELECT,,,"SELECT *
+  FROM test3, test2;",<not logged>
+WARNING:  AUDIT: OBJECT,1,1,READ,SELECT,TABLE,public.test2,<previously logged>,<previously logged>
+ id | id 
+----+----
+(0 rows)
+
+GRANT INSERT
+   ON TABLE public.test3
+   TO auditor;
+--
+-- Create a view to test logging
+CREATE VIEW vw_test3 AS
+SELECT *
+  FROM test3;
+GRANT SELECT
+   ON vw_test3
+   TO auditor;
+--
+-- Object logged because of:
+-- select on vw_test3
+-- select on test2
+SELECT *
+  FROM vw_test3, test2;
+WARNING:  AUDIT: SESSION,2,1,READ,SELECT,,,"SELECT *
+  FROM vw_test3, test2;",<not logged>
+WARNING:  AUDIT: OBJECT,2,1,READ,SELECT,TABLE,public.test2,<previously logged>,<previously logged>
+WARNING:  AUDIT: OBJECT,2,1,READ,SELECT,VIEW,public.vw_test3,<previously logged>,<previously logged>
+ id | id 
+----+----
+(0 rows)
+
+--
+-- Object logged because of:
+-- insert on test3
+-- select on test2
+WITH CTE AS
+(
+	SELECT id
+	  FROM test2
+)
+INSERT INTO test3
+SELECT id
+  FROM cte;
+WARNING:  AUDIT: SESSION,3,1,WRITE,INSERT,,,"WITH CTE AS
+(
+	SELECT id
+	  FROM test2
+)
+INSERT INTO test3
+SELECT id
+  FROM cte;",<not logged>
+WARNING:  AUDIT: OBJECT,3,1,WRITE,INSERT,TABLE,public.test3,<previously logged>,<previously logged>
+WARNING:  AUDIT: OBJECT,3,1,READ,SELECT,TABLE,public.test2,<previously logged>,<previously logged>
+--
+-- Object logged because of:
+-- insert on test3
+WITH CTE AS
+(
+	INSERT INTO test3 VALUES (1)
+				   RETURNING id
+)
+INSERT INTO test2
+SELECT id
+  FROM cte;
+WARNING:  AUDIT: SESSION,4,1,WRITE,INSERT,,,"WITH CTE AS
+(
+	INSERT INTO test3 VALUES (1)
+				   RETURNING id
+)
+INSERT INTO test2
+SELECT id
+  FROM cte;",<not logged>
+WARNING:  AUDIT: OBJECT,4,1,WRITE,INSERT,TABLE,public.test3,<previously logged>,<previously logged>
+GRANT UPDATE ON TABLE public.test2 TO auditor;
+--
+-- Object logged because of:
+-- insert on test3
+-- update on test2
+WITH CTE AS
+(
+	UPDATE test2
+	   SET id = 1
+	RETURNING id
+)
+INSERT INTO test3
+SELECT id
+  FROM cte;
+WARNING:  AUDIT: SESSION,5,1,WRITE,INSERT,,,"WITH CTE AS
+(
+	UPDATE test2
+	   SET id = 1
+	RETURNING id
+)
+INSERT INTO test3
+SELECT id
+  FROM cte;",<not logged>
+WARNING:  AUDIT: OBJECT,5,1,WRITE,INSERT,TABLE,public.test3,<previously logged>,<previously logged>
+WARNING:  AUDIT: OBJECT,5,1,WRITE,UPDATE,TABLE,public.test2,<previously logged>,<previously logged>
+--
+-- Object logged because of:
+-- insert on test2
+WITH CTE AS
+(
+	INSERT INTO test2 VALUES (1)
+				   RETURNING id
+)
+UPDATE test3
+   SET id = cte.id
+  FROM cte
+ WHERE test3.id <> cte.id;
+WARNING:  AUDIT: SESSION,6,1,WRITE,UPDATE,,,"WITH CTE AS
+(
+	INSERT INTO test2 VALUES (1)
+				   RETURNING id
+)
+UPDATE test3
+   SET id = cte.id
+  FROM cte
+ WHERE test3.id <> cte.id;",<not logged>
+WARNING:  AUDIT: OBJECT,6,1,WRITE,INSERT,TABLE,public.test2,<previously logged>,<previously logged>
+--
+-- Change permissions of user 2 so that only object logging will be done
+\connect contrib_regression super
+alter role user2 set pg_audit.log = 'NONE';
+NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,alter role user2 set pg_audit.log = 'NONE';,<not logged>
+\connect contrib_regression user2
+--
+-- Create test4 and add permissions
+CREATE TABLE test4
+(
+	id int,
+	name text
+);
+GRANT SELECT (name)
+   ON TABLE public.test4
+   TO auditor;
+GRANT UPDATE (id)
+   ON TABLE public.test4
+   TO auditor;
+GRANT insert (name)
+   ON TABLE public.test4
+   TO auditor;
+--
+-- Not object logged
+SELECT id
+  FROM public.test4;
+ id 
+----
+(0 rows)
+
+--
+-- Object logged because of:
+-- select (name) on test4
+SELECT name
+  FROM public.test4;
+WARNING:  AUDIT: OBJECT,1,1,READ,SELECT,TABLE,public.test4,"SELECT name
+  FROM public.test4;",<not logged>
+ name 
+------
+(0 rows)
+
+--
+-- Not object logged
+INSERT INTO public.test4 (id)
+				  VALUES (1);
+--
+-- Object logged because of:
+-- insert (name) on test4
+INSERT INTO public.test4 (name)
+				  VALUES ('test');
+WARNING:  AUDIT: OBJECT,2,1,WRITE,INSERT,TABLE,public.test4,"INSERT INTO public.test4 (name)
+				  VALUES ('test');",<not logged>
+--
+-- Not object logged
+UPDATE public.test4
+   SET name = 'foo';
+--
+-- Object logged because of:
+-- update (id) on test4
+UPDATE public.test4
+   SET id = 1;
+WARNING:  AUDIT: OBJECT,3,1,WRITE,UPDATE,TABLE,public.test4,"UPDATE public.test4
+   SET id = 1;",<not logged>
+--
+-- Object logged because of:
+-- update (name) on test4
+-- update (name) takes precedence over select (name) due to ordering
+update public.test4 set name = 'foo' where name = 'bar';
+WARNING:  AUDIT: OBJECT,4,1,WRITE,UPDATE,TABLE,public.test4,update public.test4 set name = 'foo' where name = 'bar';,<not logged>
+--
+-- Drop test tables
+DROP TABLE test2;
+DROP VIEW vw_test3;
+DROP TABLE test3;
+DROP TABLE test4;
+--
+-- Change permissions of user 1 so that session logging will be done
+\connect contrib_regression super
+alter role user1 set pg_audit.log = 'DDL, READ';
+NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,"alter role user1 set pg_audit.log = 'DDL, READ';",<not logged>
+\connect contrib_regression user1
+--
+-- Create table is session logged
+CREATE TABLE public.account
+(
+	id INT,
+	name TEXT,
+	password TEXT,
+	description TEXT
+);
+NOTICE:  AUDIT: SESSION,1,1,DDL,CREATE TABLE,TABLE,public.account,"CREATE TABLE public.account
+(
+	id INT,
+	name TEXT,
+	password TEXT,
+	description TEXT
+);",<not logged>
+--
+-- Select is session logged
+SELECT *
+  FROM account;
+NOTICE:  AUDIT: SESSION,2,1,READ,SELECT,,,"SELECT *
+  FROM account;",<not logged>
+ id | name | password | description 
+----+------+----------+-------------
+(0 rows)
+
+--
+-- Insert is not logged
+INSERT INTO account (id, name, password, description)
+			 VALUES (1, 'user1', 'HASH1', 'blah, blah');
+--
+-- Change permissions of user 1 so that only object logging will be done
+\connect contrib_regression super
+alter role user1 set pg_audit.log = 'none';
+NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,alter role user1 set pg_audit.log = 'none';,<not logged>
+alter role user1 set pg_audit.role = 'auditor';
+NOTICE:  AUDIT: SESSION,2,1,ROLE,ALTER ROLE,,,alter role user1 set pg_audit.role = 'auditor';,<not logged>
+\connect contrib_regression user1
+--
+-- ROLE class not set, so auditor grants not logged
+GRANT SELECT (password),
+	  UPDATE (name, password)
+   ON TABLE public.account
+   TO auditor;
+--
+-- Not object logged
+SELECT id,
+	   name
+  FROM account;
+ id | name  
+----+-------
+  1 | user1
+(1 row)
+
+--
+-- Object logged because of:
+-- select (password) on account
+SELECT password
+  FROM account;
+NOTICE:  AUDIT: OBJECT,1,1,READ,SELECT,TABLE,public.account,"SELECT password
+  FROM account;",<not logged>
+ password 
+----------
+ HASH1
+(1 row)
+
+--
+-- Not object logged
+UPDATE account
+   SET description = 'yada, yada';
+--
+-- Object logged because of:
+-- update (password) on account
+UPDATE account
+   SET password = 'HASH2';
+NOTICE:  AUDIT: OBJECT,2,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
+   SET password = 'HASH2';",<not logged>
+--
+-- Change permissions of user 1 so that session relation logging will be done
+\connect contrib_regression super
+alter role user1 set pg_audit.log_relation = on;
+NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,alter role user1 set pg_audit.log_relation = on;,<not logged>
+alter role user1 set pg_audit.log = 'read, WRITE';
+NOTICE:  AUDIT: SESSION,2,1,ROLE,ALTER ROLE,,,"alter role user1 set pg_audit.log = 'read, WRITE';",<not logged>
+\connect contrib_regression user1
+--
+-- Not logged
+create table ACCOUNT_ROLE_MAP
+(
+	account_id INT,
+	role_id INT
+);
+--
+-- ROLE class not set, so auditor grants not logged
+GRANT SELECT
+   ON TABLE public.account_role_map
+   TO auditor;
+--
+-- Object logged because of:
+-- select (password) on account
+-- select on account_role_map
+-- Session logged on all tables because log = read and log_relation = on
+SELECT account.password,
+	   account_role_map.role_id
+  FROM account
+	   INNER JOIN account_role_map
+			on account.id = account_role_map.account_id;
+NOTICE:  AUDIT: OBJECT,1,1,READ,SELECT,TABLE,public.account,"SELECT account.password,
+	   account_role_map.role_id
+  FROM account
+	   INNER JOIN account_role_map
+			on account.id = account_role_map.account_id;",<not logged>
+NOTICE:  AUDIT: SESSION,1,1,READ,SELECT,TABLE,public.account,"SELECT account.password,
+	   account_role_map.role_id
+  FROM account
+	   INNER JOIN account_role_map
+			on account.id = account_role_map.account_id;",<not logged>
+NOTICE:  AUDIT: OBJECT,1,1,READ,SELECT,TABLE,public.account_role_map,"SELECT account.password,
+	   account_role_map.role_id
+  FROM account
+	   INNER JOIN account_role_map
+			on account.id = account_role_map.account_id;",<not logged>
+NOTICE:  AUDIT: SESSION,1,1,READ,SELECT,TABLE,public.account_role_map,"SELECT account.password,
+	   account_role_map.role_id
+  FROM account
+	   INNER JOIN account_role_map
+			on account.id = account_role_map.account_id;",<not logged>
+ password | role_id 
+----------+---------
+(0 rows)
+
+--
+-- Object logged because of:
+-- select (password) on account
+-- Session logged on all tables because log = read and log_relation = on
+SELECT password
+  FROM account;
+NOTICE:  AUDIT: OBJECT,2,1,READ,SELECT,TABLE,public.account,"SELECT password
+  FROM account;",<not logged>
+NOTICE:  AUDIT: SESSION,2,1,READ,SELECT,TABLE,public.account,"SELECT password
+  FROM account;",<not logged>
+ password 
+----------
+ HASH2
+(1 row)
+
+--
+-- Not object logged
+-- Session logged on all tables because log = read and log_relation = on
+UPDATE account
+   SET description = 'yada, yada';
+NOTICE:  AUDIT: SESSION,3,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
+   SET description = 'yada, yada';",<not logged>
+--
+-- Object logged because of:
+-- select (password) on account (in the where clause)
+-- Session logged on all tables because log = read and log_relation = on
+UPDATE account
+   SET description = 'yada, yada'
+ where password = 'HASH2';
+NOTICE:  AUDIT: OBJECT,4,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
+   SET description = 'yada, yada'
+ where password = 'HASH2';",<not logged>
+NOTICE:  AUDIT: SESSION,4,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
+   SET description = 'yada, yada'
+ where password = 'HASH2';",<not logged>
+--
+-- Object logged because of:
+-- update (password) on account
+-- Session logged on all tables because log = read and log_relation = on
+UPDATE account
+   SET password = 'HASH2';
+NOTICE:  AUDIT: OBJECT,5,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
+   SET password = 'HASH2';",<not logged>
+NOTICE:  AUDIT: SESSION,5,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
+   SET password = 'HASH2';",<not logged>
+--
+-- Change back to superuser to do exhaustive tests
+\connect contrib_regression super
+SET pg_audit.log = 'ALL';
+NOTICE:  AUDIT: SESSION,1,1,MISC,SET,,,SET pg_audit.log = 'ALL';,<not logged>
+SET pg_audit.log_level = 'notice';
+NOTICE:  AUDIT: SESSION,2,1,MISC,SET,,,SET pg_audit.log_level = 'notice';,<not logged>
+SET pg_audit.log_relation = ON;
+NOTICE:  AUDIT: SESSION,3,1,MISC,SET,,,SET pg_audit.log_relation = ON;,<not logged>
+SET pg_audit.log_parameter = ON;
+NOTICE:  AUDIT: SESSION,4,1,MISC,SET,,,SET pg_audit.log_parameter = ON;,<none>
+--
+-- Simple DO block
+DO $$
+BEGIN
+	raise notice 'test';
+END $$;
+NOTICE:  AUDIT: SESSION,5,1,FUNCTION,DO,,,"DO $$
+BEGIN
+	raise notice 'test';
+END $$;",<none>
+NOTICE:  test
+--
+-- Create test schema
+CREATE SCHEMA test;
+NOTICE:  AUDIT: SESSION,6,1,DDL,CREATE SCHEMA,SCHEMA,test,CREATE SCHEMA test;,<none>
+--
+-- Copy account to stdout
+COPY account TO stdout;
+NOTICE:  AUDIT: SESSION,7,1,READ,SELECT,TABLE,public.account,COPY account TO stdout;,<none>
+1	user1	HASH2	yada, yada
+--
+-- Create a table from a query
+CREATE TABLE test.account_copy AS
+SELECT *
+  FROM account;
+NOTICE:  AUDIT: SESSION,8,1,READ,SELECT,TABLE,public.account,"CREATE TABLE test.account_copy AS
+SELECT *
+  FROM account;",<none>
+NOTICE:  AUDIT: SESSION,8,1,WRITE,INSERT,TABLE,test.account_copy,"CREATE TABLE test.account_copy AS
+SELECT *
+  FROM account;",<none>
+NOTICE:  AUDIT: SESSION,8,2,DDL,CREATE TABLE AS,TABLE,test.account_copy,"CREATE TABLE test.account_copy AS
+SELECT *
+  FROM account;",<none>
+--
+-- Copy from stdin to account copy
+COPY test.account_copy from stdin;
+NOTICE:  AUDIT: SESSION,9,1,WRITE,INSERT,TABLE,test.account_copy,COPY test.account_copy from stdin;,<none>
+--
+-- Test prepared statement
+PREPARE pgclassstmt (oid) AS
+SELECT *
+  FROM account
+ WHERE id = $1;
+NOTICE:  AUDIT: SESSION,10,1,READ,PREPARE,,,"PREPARE pgclassstmt (oid) AS
+SELECT *
+  FROM account
+ WHERE id = $1;",<none>
+EXECUTE pgclassstmt (1);
+NOTICE:  AUDIT: SESSION,11,1,READ,SELECT,TABLE,public.account,"PREPARE pgclassstmt (oid) AS
+SELECT *
+  FROM account
+ WHERE id = $1;",1
+NOTICE:  AUDIT: SESSION,11,2,MISC,EXECUTE,,,EXECUTE pgclassstmt (1);,<none>
+ id | name  | password | description 
+----+-------+----------+-------------
+  1 | user1 | HASH2    | yada, yada
+(1 row)
+
+DEALLOCATE pgclassstmt;
+NOTICE:  AUDIT: SESSION,12,1,MISC,DEALLOCATE,,,DEALLOCATE pgclassstmt;,<none>
+--
+-- Test cursor
+BEGIN;
+NOTICE:  AUDIT: SESSION,13,1,MISC,BEGIN,,,BEGIN;,<none>
+DECLARE ctest SCROLL CURSOR FOR
+SELECT count(*)
+  FROM
+(
+	SELECT relname
+	  FROM pg_class
+	 LIMIT 1
+ ) subquery;
+NOTICE:  AUDIT: SESSION,14,1,READ,SELECT,TABLE,pg_catalog.pg_class,"DECLARE ctest SCROLL CURSOR FOR
+SELECT count(*)
+  FROM
+(
+	SELECT relname
+	  FROM pg_class
+	 LIMIT 1
+ ) subquery;",<none>
+NOTICE:  AUDIT: SESSION,14,2,READ,DECLARE CURSOR,,,"DECLARE ctest SCROLL CURSOR FOR
+SELECT count(*)
+  FROM
+(
+	SELECT relname
+	  FROM pg_class
+	 LIMIT 1
+ ) subquery;",<none>
+FETCH NEXT FROM ctest;
+NOTICE:  AUDIT: SESSION,15,1,MISC,FETCH,,,FETCH NEXT FROM ctest;,<none>
+ count 
+-------
+     1
+(1 row)
+
+CLOSE ctest;
+NOTICE:  AUDIT: SESSION,16,1,MISC,CLOSE CURSOR,,,CLOSE ctest;,<none>
+COMMIT;
+NOTICE:  AUDIT: SESSION,17,1,MISC,COMMIT,,,COMMIT;,<none>
+--
+-- Turn off log_catalog and pg_class will not be logged
+SET pg_audit.log_catalog = OFF;
+NOTICE:  AUDIT: SESSION,18,1,MISC,SET,,,SET pg_audit.log_catalog = OFF;,<none>
+SELECT count(*)
+  FROM
+(
+	SELECT relname
+	  FROM pg_class
+	 LIMIT 1
+ ) subquery;
+ count 
+-------
+     1
+(1 row)
+
+--
+-- Test prepared insert
+CREATE TABLE test.test_insert
+(
+	id INT
+);
+NOTICE:  AUDIT: SESSION,19,1,DDL,CREATE TABLE,TABLE,test.test_insert,"CREATE TABLE test.test_insert
+(
+	id INT
+);",<none>
+PREPARE pgclassstmt (oid) AS
+INSERT INTO test.test_insert (id)
+					  VALUES ($1);
+NOTICE:  AUDIT: SESSION,20,1,WRITE,PREPARE,,,"PREPARE pgclassstmt (oid) AS
+INSERT INTO test.test_insert (id)
+					  VALUES ($1);",<none>
+EXECUTE pgclassstmt (1);
+NOTICE:  AUDIT: SESSION,21,1,WRITE,INSERT,TABLE,test.test_insert,"PREPARE pgclassstmt (oid) AS
+INSERT INTO test.test_insert (id)
+					  VALUES ($1);",1
+NOTICE:  AUDIT: SESSION,21,2,MISC,EXECUTE,,,EXECUTE pgclassstmt (1);,<none>
+--
+-- Check that primary key creation is logged
+CREATE TABLE public.test
+(
+	id INT,
+	name TEXT,
+	description TEXT,
+	CONSTRAINT test_pkey PRIMARY KEY (id)
+);
+NOTICE:  AUDIT: SESSION,22,1,DDL,CREATE TABLE,TABLE,public.test,"CREATE TABLE public.test
+(
+	id INT,
+	name TEXT,
+	description TEXT,
+	CONSTRAINT test_pkey PRIMARY KEY (id)
+);",<none>
+NOTICE:  AUDIT: SESSION,22,1,DDL,CREATE TABLE,INDEX,public.test_pkey,"CREATE TABLE public.test
+(
+	id INT,
+	name TEXT,
+	description TEXT,
+	CONSTRAINT test_pkey PRIMARY KEY (id)
+);",<none>
+--
+-- Check that analyze is logged
+ANALYZE test;
+NOTICE:  AUDIT: SESSION,23,1,MISC,ANALYZE,,,ANALYZE test;,<none>
+--
+-- Grants to public should not cause object logging (session logging will
+-- still happen)
+GRANT SELECT
+  ON TABLE public.test
+  TO PUBLIC;
+NOTICE:  AUDIT: SESSION,24,1,ROLE,GRANT,TABLE,,"GRANT SELECT
+  ON TABLE public.test
+  TO PUBLIC;",<none>
+SELECT *
+  FROM test;
+NOTICE:  AUDIT: SESSION,25,1,READ,SELECT,TABLE,public.test,"SELECT *
+  FROM test;",<none>
+ id | name | description 
+----+------+-------------
+(0 rows)
+
+-- Check that statements without columns log
+SELECT
+  FROM test;
+NOTICE:  AUDIT: SESSION,26,1,READ,SELECT,TABLE,public.test,"SELECT
+  FROM test;",<none>
+--
+(0 rows)
+
+SELECT 1,
+	   current_user;
+NOTICE:  AUDIT: SESSION,27,1,READ,SELECT,,,"SELECT 1,
+	   current_user;",<none>
+ ?column? | current_user 
+----------+--------------
+        1 | super
+(1 row)
+
+DO $$
+DECLARE
+	test INT;
+BEGIN
+	SELECT 1
+	  INTO test;
+END $$;
+NOTICE:  AUDIT: SESSION,28,1,FUNCTION,DO,,,"DO $$
+DECLARE
+	test INT;
+BEGIN
+	SELECT 1
+	  INTO test;
+END $$;",<none>
+NOTICE:  AUDIT: SESSION,28,2,READ,SELECT,,,SELECT 1,<none>
+CONTEXT:  SQL statement "SELECT 1"
+PL/pgSQL function inline_code_block line 5 at SQL statement
+explain select 1;
+NOTICE:  AUDIT: SESSION,29,1,READ,SELECT,,,explain select 1;,<none>
+NOTICE:  AUDIT: SESSION,29,2,MISC,EXPLAIN,,,explain select 1;,<none>
+                QUERY PLAN                
+------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=0)
+(1 row)
+
+--
+-- Test that looks inside of do blocks log
+INSERT INTO TEST (id)
+		  VALUES (1);
+NOTICE:  AUDIT: SESSION,30,1,WRITE,INSERT,TABLE,public.test,"INSERT INTO TEST (id)
+		  VALUES (1);",<none>
+INSERT INTO TEST (id)
+		  VALUES (2);
+NOTICE:  AUDIT: SESSION,31,1,WRITE,INSERT,TABLE,public.test,"INSERT INTO TEST (id)
+		  VALUES (2);",<none>
+INSERT INTO TEST (id)
+		  VALUES (3);
+NOTICE:  AUDIT: SESSION,32,1,WRITE,INSERT,TABLE,public.test,"INSERT INTO TEST (id)
+		  VALUES (3);",<none>
+DO $$
+DECLARE
+	result RECORD;
+BEGIN
+	FOR result IN
+		SELECT id
+		  FROM test
+	LOOP
+		INSERT INTO test (id)
+			 VALUES (result.id + 100);
+	END LOOP;
+END $$;
+NOTICE:  AUDIT: SESSION,33,1,FUNCTION,DO,,,"DO $$
+DECLARE
+	result RECORD;
+BEGIN
+	FOR result IN
+		SELECT id
+		  FROM test
+	LOOP
+		INSERT INTO test (id)
+			 VALUES (result.id + 100);
+	END LOOP;
+END $$;",<none>
+NOTICE:  AUDIT: SESSION,33,2,READ,SELECT,TABLE,public.test,"SELECT id
+		  FROM test",<none>
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at FOR over SELECT rows
+NOTICE:  AUDIT: SESSION,33,3,WRITE,INSERT,TABLE,public.test,"INSERT INTO test (id)
+			 VALUES (result.id + 100)",",,"
+CONTEXT:  SQL statement "INSERT INTO test (id)
+			 VALUES (result.id + 100)"
+PL/pgSQL function inline_code_block line 9 at SQL statement
+NOTICE:  AUDIT: SESSION,33,4,WRITE,INSERT,TABLE,public.test,"INSERT INTO test (id)
+			 VALUES (result.id + 100)",",,"
+CONTEXT:  SQL statement "INSERT INTO test (id)
+			 VALUES (result.id + 100)"
+PL/pgSQL function inline_code_block line 9 at SQL statement
+NOTICE:  AUDIT: SESSION,33,5,WRITE,INSERT,TABLE,public.test,"INSERT INTO test (id)
+			 VALUES (result.id + 100)",",,"
+CONTEXT:  SQL statement "INSERT INTO test (id)
+			 VALUES (result.id + 100)"
+PL/pgSQL function inline_code_block line 9 at SQL statement
+--
+-- Test obfuscated dynamic sql for clean logging
+DO $$
+DECLARE
+	table_name TEXT = 'do_table';
+BEGIN
+	EXECUTE 'CREATE TABLE ' || table_name || ' ("weird name" INT)';
+	EXECUTE 'DROP table ' || table_name;
+END $$;
+NOTICE:  AUDIT: SESSION,34,1,FUNCTION,DO,,,"DO $$
+DECLARE
+	table_name TEXT = 'do_table';
+BEGIN
+	EXECUTE 'CREATE TABLE ' || table_name || ' (""weird name"" INT)';
+	EXECUTE 'DROP table ' || table_name;
+END $$;",<none>
+NOTICE:  AUDIT: SESSION,34,2,DDL,CREATE TABLE,TABLE,public.do_table,"CREATE TABLE do_table (""weird name"" INT)",<none>
+CONTEXT:  SQL statement "CREATE TABLE do_table ("weird name" INT)"
+PL/pgSQL function inline_code_block line 5 at EXECUTE statement
+NOTICE:  AUDIT: SESSION,34,3,DDL,DROP TABLE,TABLE,public.do_table,DROP table do_table,<none>
+CONTEXT:  SQL statement "DROP table do_table"
+PL/pgSQL function inline_code_block line 6 at EXECUTE statement
+--
+-- Generate an error and make sure the stack gets cleared
+DO $$
+BEGIN
+	CREATE TABLE bogus.test_block
+	(
+		id INT
+	);
+END $$;
+NOTICE:  AUDIT: SESSION,35,1,FUNCTION,DO,,,"DO $$
+BEGIN
+	CREATE TABLE bogus.test_block
+	(
+		id INT
+	);
+END $$;",<none>
+ERROR:  schema "bogus" does not exist
+LINE 1: CREATE TABLE bogus.test_block
+                     ^
+QUERY:  CREATE TABLE bogus.test_block
+	(
+		id INT
+	)
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at SQL statement
+--
+-- Test alter table statements
+ALTER TABLE public.test
+	DROP COLUMN description ;
+NOTICE:  AUDIT: SESSION,36,1,DDL,ALTER TABLE,TABLE COLUMN,public.test.description,"ALTER TABLE public.test
+	DROP COLUMN description ;",<none>
+NOTICE:  AUDIT: SESSION,36,1,DDL,ALTER TABLE,TABLE,public.test,"ALTER TABLE public.test
+	DROP COLUMN description ;",<none>
+ALTER TABLE public.test
+	RENAME TO test2;
+NOTICE:  AUDIT: SESSION,37,1,DDL,ALTER TABLE,TABLE,public.test2,"ALTER TABLE public.test
+	RENAME TO test2;",<none>
+ALTER TABLE public.test2
+	SET SCHEMA test;
+NOTICE:  AUDIT: SESSION,38,1,DDL,ALTER TABLE,TABLE,test.test2,"ALTER TABLE public.test2
+	SET SCHEMA test;",<none>
+ALTER TABLE test.test2
+	ADD COLUMN description TEXT;
+NOTICE:  AUDIT: SESSION,39,1,DDL,ALTER TABLE,TABLE,test.test2,"ALTER TABLE test.test2
+	ADD COLUMN description TEXT;",<none>
+ALTER TABLE test.test2
+	DROP COLUMN description;
+NOTICE:  AUDIT: SESSION,40,1,DDL,ALTER TABLE,TABLE COLUMN,test.test2.description,"ALTER TABLE test.test2
+	DROP COLUMN description;",<none>
+NOTICE:  AUDIT: SESSION,40,1,DDL,ALTER TABLE,TABLE,test.test2,"ALTER TABLE test.test2
+	DROP COLUMN description;",<none>
+DROP TABLE test.test2;
+NOTICE:  AUDIT: SESSION,41,1,DDL,DROP TABLE,TABLE,test.test2,DROP TABLE test.test2;,<none>
+NOTICE:  AUDIT: SESSION,41,1,DDL,DROP TABLE,TABLE CONSTRAINT,test_pkey on test.test2,DROP TABLE test.test2;,<none>
+NOTICE:  AUDIT: SESSION,41,1,DDL,DROP TABLE,INDEX,test.test_pkey,DROP TABLE test.test2;,<none>
+--
+-- Test multiple statements with one semi-colon
+CREATE SCHEMA foo
+	CREATE TABLE foo.bar (id int)
+	CREATE TABLE foo.baz (id int);
+NOTICE:  AUDIT: SESSION,42,1,DDL,CREATE SCHEMA,SCHEMA,foo,"CREATE SCHEMA foo
+	CREATE TABLE foo.bar (id int)
+	CREATE TABLE foo.baz (id int);",<none>
+NOTICE:  AUDIT: SESSION,42,1,DDL,CREATE SCHEMA,TABLE,foo.bar,"CREATE SCHEMA foo
+	CREATE TABLE foo.bar (id int)
+	CREATE TABLE foo.baz (id int);",<none>
+NOTICE:  AUDIT: SESSION,42,1,DDL,CREATE SCHEMA,TABLE,foo.baz,"CREATE SCHEMA foo
+	CREATE TABLE foo.bar (id int)
+	CREATE TABLE foo.baz (id int);",<none>
+--
+-- Test aggregate
+CREATE FUNCTION public.int_add
+(
+	a INT,
+	b INT
+)
+	RETURNS INT LANGUAGE plpgsql AS $$
+BEGIN
+	return a + b;
+END $$;
+NOTICE:  AUDIT: SESSION,43,1,DDL,CREATE FUNCTION,FUNCTION,"public.int_add(integer,integer)","CREATE FUNCTION public.int_add
+(
+	a INT,
+	b INT
+)
+	RETURNS INT LANGUAGE plpgsql AS $$
+BEGIN
+	return a + b;
+END $$;",<none>
+SELECT int_add(1, 1);
+NOTICE:  AUDIT: SESSION,44,1,READ,SELECT,,,"SELECT int_add(1, 1);",<none>
+NOTICE:  AUDIT: SESSION,44,2,FUNCTION,EXECUTE,FUNCTION,public.int_add,"SELECT int_add(1, 1);",<none>
+ int_add 
+---------
+       2
+(1 row)
+
+CREATE AGGREGATE public.sum_test(INT) (SFUNC=public.int_add, STYPE=INT, INITCOND='0');
+NOTICE:  AUDIT: SESSION,45,1,DDL,CREATE AGGREGATE,AGGREGATE,public.sum_test(integer),"CREATE AGGREGATE public.sum_test(INT) (SFUNC=public.int_add, STYPE=INT, INITCOND='0');",<none>
+ALTER AGGREGATE public.sum_test(integer) RENAME TO sum_test2;
+NOTICE:  AUDIT: SESSION,46,1,DDL,ALTER AGGREGATE,AGGREGATE,public.sum_test2(integer),ALTER AGGREGATE public.sum_test(integer) RENAME TO sum_test2;,<none>
+--
+-- Test conversion
+CREATE CONVERSION public.conversion_test FOR 'SQL_ASCII' TO 'MULE_INTERNAL' FROM pg_catalog.ascii_to_mic;
+NOTICE:  AUDIT: SESSION,47,1,DDL,CREATE CONVERSION,CONVERSION,public.conversion_test,CREATE CONVERSION public.conversion_test FOR 'SQL_ASCII' TO 'MULE_INTERNAL' FROM pg_catalog.ascii_to_mic;,<none>
+ALTER CONVERSION public.conversion_test RENAME TO conversion_test2;
+NOTICE:  AUDIT: SESSION,48,1,DDL,ALTER CONVERSION,CONVERSION,public.conversion_test2,ALTER CONVERSION public.conversion_test RENAME TO conversion_test2;,<none>
+--
+-- Test create/alter/drop database
+CREATE DATABASE contrib_regression_pgaudit;
+NOTICE:  AUDIT: SESSION,49,1,DDL,CREATE DATABASE,,,CREATE DATABASE contrib_regression_pgaudit;,<none>
+ALTER DATABASE contrib_regression_pgaudit RENAME TO contrib_regression_pgaudit2;
+NOTICE:  AUDIT: SESSION,50,1,DDL,ALTER DATABASE,,,ALTER DATABASE contrib_regression_pgaudit RENAME TO contrib_regression_pgaudit2;,<none>
+DROP DATABASE contrib_regression_pgaudit2;
+NOTICE:  AUDIT: SESSION,51,1,DDL,DROP DATABASE,,,DROP DATABASE contrib_regression_pgaudit2;,<none>
+--
+-- Test that frees a memory context earlier than expected
+CREATE TABLE hoge
+(
+	id int
+);
+NOTICE:  AUDIT: SESSION,52,1,DDL,CREATE TABLE,TABLE,public.hoge,"CREATE TABLE hoge
+(
+	id int
+);",<none>
+CREATE FUNCTION test()
+	RETURNS INT AS $$
+DECLARE
+	cur1 cursor for select * from hoge;
+	tmp int;
+BEGIN
+	OPEN cur1;
+	FETCH cur1 into tmp;
+	RETURN tmp;
+END $$
+LANGUAGE plpgsql ;
+NOTICE:  AUDIT: SESSION,53,1,DDL,CREATE FUNCTION,FUNCTION,public.test(),"CREATE FUNCTION test()
+	RETURNS INT AS $$
+DECLARE
+	cur1 cursor for select * from hoge;
+	tmp int;
+BEGIN
+	OPEN cur1;
+	FETCH cur1 into tmp;
+	RETURN tmp;
+END $$
+LANGUAGE plpgsql ;",<none>
+SELECT test();
+NOTICE:  AUDIT: SESSION,54,1,READ,SELECT,,,SELECT test();,<none>
+NOTICE:  AUDIT: SESSION,54,2,FUNCTION,EXECUTE,FUNCTION,public.test,SELECT test();,<none>
+NOTICE:  AUDIT: SESSION,54,3,READ,SELECT,TABLE,public.hoge,select * from hoge,<none>
+CONTEXT:  PL/pgSQL function test() line 6 at OPEN
+ test 
+------
+     
+(1 row)
+
+--
+-- Delete all rows then delete 1 row
+SET pg_audit.log = 'write';
+SET pg_audit.role = 'auditor';
+create table bar
+(
+	col int
+);
+grant delete
+   on bar
+   to auditor;
+insert into bar (col)
+		 values (1);
+NOTICE:  AUDIT: SESSION,55,1,WRITE,INSERT,TABLE,public.bar,"insert into bar (col)
+		 values (1);",<none>
+delete from bar;
+NOTICE:  AUDIT: OBJECT,56,1,WRITE,DELETE,TABLE,public.bar,delete from bar;,<none>
+NOTICE:  AUDIT: SESSION,56,1,WRITE,DELETE,TABLE,public.bar,delete from bar;,<none>
+insert into bar (col)
+		 values (1);
+NOTICE:  AUDIT: SESSION,57,1,WRITE,INSERT,TABLE,public.bar,"insert into bar (col)
+		 values (1);",<none>
+delete from bar
+ where col = 1;
+NOTICE:  AUDIT: OBJECT,58,1,WRITE,DELETE,TABLE,public.bar,"delete from bar
+ where col = 1;",<none>
+NOTICE:  AUDIT: SESSION,58,1,WRITE,DELETE,TABLE,public.bar,"delete from bar
+ where col = 1;",<none>
+drop table bar;
+--
+-- Grant roles to each other
+SET pg_audit.log = 'role';
+GRANT user1 TO user2;
+NOTICE:  AUDIT: SESSION,59,1,ROLE,GRANT ROLE,,,GRANT user1 TO user2;,<none>
+REVOKE user1 FROM user2;
+NOTICE:  AUDIT: SESSION,60,1,ROLE,REVOKE ROLE,,,REVOKE user1 FROM user2;,<none>
