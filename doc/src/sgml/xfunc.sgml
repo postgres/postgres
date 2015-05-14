@@ -1955,6 +1955,11 @@ memcpy(destination->data, buffer, 40);
          <entry><filename>utils/nabstime.h</filename></entry>
         </row>
         <row>
+         <entry><type>bigint</type> (<type>int8</type>)</entry>
+         <entry><type>int64</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
          <entry><type>boolean</type></entry>
          <entry><type>bool</type></entry>
          <entry><filename>postgres.h</filename> (maybe compiler built-in)</entry>
