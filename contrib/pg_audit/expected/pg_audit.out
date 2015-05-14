@@ -17,7 +17,7 @@ create extension pg_audit;
 CREATE USER super SUPERUSER;
 ALTER ROLE super SET pg_audit.log = 'Role';
 ALTER ROLE super SET pg_audit.log_level = 'notice';
-\connect contrib_regression super;
+\connect - super;
 --
 -- Create auditor role
 CREATE ROLE auditor;
@@ -32,7 +32,7 @@ ALTER ROLE user1 SET pg_audit.log_level = 'notice';
 NOTICE:  AUDIT: SESSION,4,1,ROLE,ALTER ROLE,,,ALTER ROLE user1 SET pg_audit.log_level = 'notice';,<not logged>
 --
 -- Create, select, drop (select will not be audited)
-\connect contrib_regression user1
+\connect - user1
 CREATE TABLE public.test (id INT);
 NOTICE:  AUDIT: SESSION,1,1,DDL,CREATE TABLE,TABLE,public.test,CREATE TABLE public.test (id INT);,<not logged>
 SELECT * FROM test;
@@ -44,7 +44,7 @@ DROP TABLE test;
 NOTICE:  AUDIT: SESSION,2,1,DDL,DROP TABLE,TABLE,public.test,DROP TABLE test;,<not logged>
 --
 -- Create second test user
-\connect contrib_regression super
+\connect - super
 CREATE USER user2;
 NOTICE:  AUDIT: SESSION,1,1,ROLE,CREATE ROLE,,,CREATE USER user2;,<not logged>
 ALTER ROLE user2 SET pg_audit.log = 'Read, writE';
@@ -57,7 +57,7 @@ ALTER ROLE user2 SET pg_audit.role = auditor;
 NOTICE:  AUDIT: SESSION,5,1,ROLE,ALTER ROLE,,,ALTER ROLE user2 SET pg_audit.role = auditor;,<not logged>
 ALTER ROLE user2 SET pg_audit.log_statement_once = ON;
 NOTICE:  AUDIT: SESSION,6,1,ROLE,ALTER ROLE,,,ALTER ROLE user2 SET pg_audit.log_statement_once = ON;,<not logged>
-\connect contrib_regression user2
+\connect - user2
 CREATE TABLE test2 (id INT);
 GRANT SELECT ON TABLE public.test2 TO auditor;
 --
@@ -203,10 +203,10 @@ UPDATE test3
 WARNING:  AUDIT: OBJECT,6,1,WRITE,INSERT,TABLE,public.test2,<previously logged>,<previously logged>
 --
 -- Change permissions of user 2 so that only object logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user2 set pg_audit.log = 'NONE';
 NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,alter role user2 set pg_audit.log = 'NONE';,<not logged>
-\connect contrib_regression user2
+\connect - user2
 --
 -- Create test4 and add permissions
 CREATE TABLE test4
@@ -278,10 +278,10 @@ DROP TABLE test3;
 DROP TABLE test4;
 --
 -- Change permissions of user 1 so that session logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user1 set pg_audit.log = 'DDL, READ';
 NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,"alter role user1 set pg_audit.log = 'DDL, READ';",<not logged>
-\connect contrib_regression user1
+\connect - user1
 --
 -- Create table is session logged
 CREATE TABLE public.account
@@ -314,12 +314,12 @@ INSERT INTO account (id, name, password, description)
 			 VALUES (1, 'user1', 'HASH1', 'blah, blah');
 --
 -- Change permissions of user 1 so that only object logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user1 set pg_audit.log = 'none';
 NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,alter role user1 set pg_audit.log = 'none';,<not logged>
 alter role user1 set pg_audit.role = 'auditor';
 NOTICE:  AUDIT: SESSION,2,1,ROLE,ALTER ROLE,,,alter role user1 set pg_audit.role = 'auditor';,<not logged>
-\connect contrib_regression user1
+\connect - user1
 --
 -- ROLE class not set, so auditor grants not logged
 GRANT SELECT (password),
@@ -361,12 +361,12 @@ NOTICE:  AUDIT: OBJECT,2,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
    SET password = 'HASH2';",<not logged>
 --
 -- Change permissions of user 1 so that session relation logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user1 set pg_audit.log_relation = on;
 NOTICE:  AUDIT: SESSION,1,1,ROLE,ALTER ROLE,,,alter role user1 set pg_audit.log_relation = on;,<not logged>
 alter role user1 set pg_audit.log = 'read, WRITE';
 NOTICE:  AUDIT: SESSION,2,1,ROLE,ALTER ROLE,,,"alter role user1 set pg_audit.log = 'read, WRITE';",<not logged>
-\connect contrib_regression user1
+\connect - user1
 --
 -- Not logged
 create table ACCOUNT_ROLE_MAP
@@ -460,7 +460,7 @@ NOTICE:  AUDIT: SESSION,5,1,WRITE,UPDATE,TABLE,public.account,"UPDATE account
    SET password = 'HASH2';",<not logged>
 --
 -- Change back to superuser to do exhaustive tests
-\connect contrib_regression super
+\connect - super
 SET pg_audit.log = 'ALL';
 NOTICE:  AUDIT: SESSION,1,1,MISC,SET,,,SET pg_audit.log = 'ALL';,<not logged>
 SET pg_audit.log_level = 'notice';

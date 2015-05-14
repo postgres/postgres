@@ -19,7 +19,7 @@ create extension pg_audit;
 CREATE USER super SUPERUSER;
 ALTER ROLE super SET pg_audit.log = 'Role';
 ALTER ROLE super SET pg_audit.log_level = 'notice';
-\connect contrib_regression super;
+\connect - super;
 
 --
 -- Create auditor role
@@ -33,14 +33,14 @@ ALTER ROLE user1 SET pg_audit.log_level = 'notice';
 
 --
 -- Create, select, drop (select will not be audited)
-\connect contrib_regression user1
+\connect - user1
 CREATE TABLE public.test (id INT);
 SELECT * FROM test;
 DROP TABLE test;
 
 --
 -- Create second test user
-\connect contrib_regression super
+\connect - super
 
 CREATE USER user2;
 ALTER ROLE user2 SET pg_audit.log = 'Read, writE';
@@ -49,7 +49,7 @@ ALTER ROLE user2 SET pg_audit.log_level = 'warning';
 ALTER ROLE user2 SET pg_audit.role = auditor;
 ALTER ROLE user2 SET pg_audit.log_statement_once = ON;
 
-\connect contrib_regression user2
+\connect - user2
 CREATE TABLE test2 (id INT);
 GRANT SELECT ON TABLE public.test2 TO auditor;
 
@@ -148,10 +148,10 @@ UPDATE test3
 
 --
 -- Change permissions of user 2 so that only object logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user2 set pg_audit.log = 'NONE';
 
-\connect contrib_regression user2
+\connect - user2
 
 --
 -- Create test4 and add permissions
@@ -221,9 +221,9 @@ DROP TABLE test4;
 
 --
 -- Change permissions of user 1 so that session logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user1 set pg_audit.log = 'DDL, READ';
-\connect contrib_regression user1
+\connect - user1
 
 --
 -- Create table is session logged
@@ -247,10 +247,10 @@ INSERT INTO account (id, name, password, description)
 
 --
 -- Change permissions of user 1 so that only object logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user1 set pg_audit.log = 'none';
 alter role user1 set pg_audit.role = 'auditor';
-\connect contrib_regression user1
+\connect - user1
 
 --
 -- ROLE class not set, so auditor grants not logged
@@ -284,10 +284,10 @@ UPDATE account
 
 --
 -- Change permissions of user 1 so that session relation logging will be done
-\connect contrib_regression super
+\connect - super
 alter role user1 set pg_audit.log_relation = on;
 alter role user1 set pg_audit.log = 'read, WRITE';
-\connect contrib_regression user1
+\connect - user1
 
 --
 -- Not logged
@@ -344,7 +344,7 @@ UPDATE account
 
 --
 -- Change back to superuser to do exhaustive tests
-\connect contrib_regression super
+\connect - super
 SET pg_audit.log = 'ALL';
 SET pg_audit.log_level = 'notice';
 SET pg_audit.log_relation = ON;
