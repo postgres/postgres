@@ -14,11 +14,12 @@ create extension pg_audit;
 --     PARAMETER - If parameter logging is requested, they will follow the
 --                 statement
 
+select current_user \gset
+
 --
--- Create a superuser role that we know the name of for testing
-CREATE USER super SUPERUSER;
-ALTER ROLE super SET pg_audit.log = 'Role';
-ALTER ROLE super SET pg_audit.log_level = 'notice';
+-- Set pg_audit parameters for the current (super)user.
+ALTER ROLE :current_user SET pg_audit.log = 'Role';
+ALTER ROLE :current_user SET pg_audit.log_level = 'notice';
 
 CREATE FUNCTION load_pg_audit( )
  RETURNS VOID
@@ -35,7 +36,7 @@ $function$;
 -- being loaded from shared_preload_libraries.  Otherwise, the hooks
 -- won't be set up and called correctly, leading to lots of ugly
 -- errors.
-\connect - super;
+\connect - :current_user;
 select load_pg_audit();
 
 --
@@ -58,7 +59,7 @@ DROP TABLE test;
 
 --
 -- Create second test user
-\connect - super
+\connect - :current_user
 select load_pg_audit();
 
 CREATE USER user2;
@@ -168,7 +169,7 @@ UPDATE test3
 
 --
 -- Change permissions of user 2 so that only object logging will be done
-\connect - super
+\connect - :current_user
 select load_pg_audit();
 alter role user2 set pg_audit.log = 'NONE';
 
@@ -243,7 +244,7 @@ DROP TABLE test4;
 
 --
 -- Change permissions of user 1 so that session logging will be done
-\connect - super
+\connect - :current_user
 select load_pg_audit();
 alter role user1 set pg_audit.log = 'DDL, READ';
 \connect - user1
@@ -271,7 +272,7 @@ INSERT INTO account (id, name, password, description)
 
 --
 -- Change permissions of user 1 so that only object logging will be done
-\connect - super
+\connect - :current_user
 select load_pg_audit();
 alter role user1 set pg_audit.log = 'none';
 alter role user1 set pg_audit.role = 'auditor';
@@ -310,7 +311,7 @@ UPDATE account
 
 --
 -- Change permissions of user 1 so that session relation logging will be done
-\connect - super
+\connect - :current_user
 select load_pg_audit();
 alter role user1 set pg_audit.log_relation = on;
 alter role user1 set pg_audit.log = 'read, WRITE';
@@ -372,7 +373,7 @@ UPDATE account
 
 --
 -- Change back to superuser to do exhaustive tests
-\connect - super
+\connect - :current_user
 select load_pg_audit();
 SET pg_audit.log = 'ALL';
 SET pg_audit.log_level = 'notice';
@@ -486,7 +487,7 @@ SELECT
   FROM test;
 
 SELECT 1,
-	   current_user;
+	   substring('Thomas' from 2 for 3);
 
 DO $$
 DECLARE
@@ -644,3 +645,16 @@ drop table bar;
 SET pg_audit.log = 'role';
 GRANT user1 TO user2;
 REVOKE user1 FROM user2;
+
+DROP TABLE test.account_copy;
+DROP TABLE test.test_insert;
+DROP SCHEMA test;
+DROP TABLE foo.bar;
+DROP TABLE foo.baz;
+DROP SCHEMA foo;
+DROP TABLE hoge;
+DROP TABLE account;
+DROP TABLE account_role_map;
+DROP USER user2;
+DROP USER user1;
+DROP ROLE auditor;
