@@ -384,8 +384,8 @@ stack_pop(int64 stackId)
 	if (auditEventStack != NULL && auditEventStack->stackId == stackId)
 		MemoryContextDelete(auditEventStack->contextAudit);
 	else
-		elog(ERROR, "pg_audit stack item %ld not found on top - cannot pop",
-					stackId);
+		elog(ERROR, "pg_audit stack item " INT64_FORMAT " not found on top - cannot pop",
+			 stackId);
 }
 
 /*
@@ -403,10 +403,9 @@ stack_valid(int64 stackId)
 
 	/* If we didn't find it, something went wrong. */
 	if (nextItem == NULL)
-		elog(ERROR, "pg_audit stack item %ld not found - top of stack is %ld",
-			 stackId, auditEventStack == NULL ? -1 : auditEventStack->stackId);
-
-	return;
+		elog(ERROR, "pg_audit stack item " INT64_FORMAT " not found - top of stack is " INT64_FORMAT "",
+			 stackId,
+			 auditEventStack == NULL ? (int64) -1 : auditEventStack->stackId);
 }
 
 /*
@@ -672,15 +671,21 @@ log_audit_event(AuditEventStackItem *stackItem)
 		appendStringInfoString(&auditStr,
 				"<previously logged>,<previously logged>");
 
-	/* Log the audit entry */
-	elog(auditLogLevel, "AUDIT: %s,%ld,%ld,%s,%s",
-			stackItem->auditEvent.granted ?
-				AUDIT_TYPE_OBJECT : AUDIT_TYPE_SESSION,
-			stackItem->auditEvent.statementId,
-			stackItem->auditEvent.substatementId,
-			className, auditStr.data);
+	/*
+	 * Log the audit entry.  Note: use of INT64_FORMAT here is bad for
+	 * translatability, but we currently haven't got translation support in
+	 * pg_audit anyway.
+	 */
+	ereport(auditLogLevel,
+			(errmsg("AUDIT: %s," INT64_FORMAT "," INT64_FORMAT ",%s,%s",
+					stackItem->auditEvent.granted ?
+					AUDIT_TYPE_OBJECT : AUDIT_TYPE_SESSION,
+					stackItem->auditEvent.statementId,
+					stackItem->auditEvent.substatementId,
+					className,
+					auditStr.data)));
 
-			stackItem->auditEvent.logged = true;
+	stackItem->auditEvent.logged = true;
 
 	MemoryContextSwitchTo(contextOld);
 }
