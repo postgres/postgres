@@ -694,7 +694,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
          <entry>National Standard</entry>
          <entry>Chinese</entry>
          <entry>No</entry>
-         <entry>1-2</entry>
+         <entry>1-4</entry>
          <entry></entry>
         </row>
         <row>
