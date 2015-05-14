@@ -2625,6 +2625,7 @@ read_sql_construct(int until,
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
+	expr->rwparam		= -1;
 	expr->ns			= plpgsql_ns_top();
 	pfree(ds.data);
 
@@ -2849,6 +2850,7 @@ make_execsql_stmt(int firsttoken, int location)
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
+	expr->rwparam		= -1;
 	expr->ns			= plpgsql_ns_top();
 	pfree(ds.data);
 
@@ -3732,6 +3734,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
+	expr->rwparam		= -1;
 	expr->ns            = plpgsql_ns_top();
 	pfree(ds.data);
 

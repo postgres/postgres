@@ -300,6 +300,77 @@ CREATE TYPE complex (
   </para>
  </note>
 
+ <para>
+  Another feature that's enabled by <acronym>TOAST</> support is the
+  possibility of having an <firstterm>expanded</> in-memory data
+  representation that is more convenient to work with than the format that
+  is stored on disk.  The regular or <quote>flat</> varlena storage format
+  is ultimately just a blob of bytes; it cannot for example contain
+  pointers, since it may get copied to other locations in memory.
+  For complex data types, the flat format may be quite expensive to work
+  with, so <productname>PostgreSQL</> provides a way to <quote>expand</>
+  the flat format into a representation that is more suited to computation,
+  and then pass that format in-memory between functions of the data type.
+ </para>
+
+ <para>
+  To use expanded storage, a data type must define an expanded format that
+  follows the rules given in <filename>src/include/utils/expandeddatum.h</>,
+  and provide functions to <quote>expand</> a flat varlena value into
+  expanded format and <quote>flatten</> the expanded format back to the
+  regular varlena representation.  Then ensure that all C functions for
+  the data type can accept either representation, possibly by converting
+  one into the other immediately upon receipt.  This does not require fixing
+  all existing functions for the data type at once, because the standard
+  <function>PG_DETOAST_DATUM</> macro is defined to convert expanded inputs
+  into regular flat format.  Therefore, existing functions that work with
+  the flat varlena format will continue to work, though slightly
+  inefficiently, with expanded inputs; they need not be converted until and
+  unless better performance is important.
+ </para>
+
+ <para>
+  C functions that know how to work with an expanded representation
+  typically fall into two categories: those that can only handle expanded
+  format, and those that can handle either expanded or flat varlena inputs.
+  The former are easier to write but may be less efficient overall, because
+  converting a flat input to expanded form for use by a single function may
+  cost more than is saved by operating on the expanded format.
+  When only expanded format need be handled, conversion of flat inputs to
+  expanded form can be hidden inside an argument-fetching macro, so that
+  the function appears no more complex than one working with traditional
+  varlena input.
+  To handle both types of input, write an argument-fetching function that
+  will detoast external, short-header, and compressed varlena inputs, but
+  not expanded inputs.  Such a function can be defined as returning a
+  pointer to a union of the flat varlena format and the expanded format.
+  Callers can use the <function>VARATT_IS_EXPANDED_HEADER()</> macro to
+  determine which format they received.
+ </para>
+
+ <para>
+  The <acronym>TOAST</> infrastructure not only allows regular varlena
+  values to be distinguished from expanded values, but also
+  distinguishes <quote>read-write</> and <quote>read-only</> pointers to
+  expanded values.  C functions that only need to examine an expanded
+  value, or will only change it in safe and non-semantically-visible ways,
+  need not care which type of pointer they receive.  C functions that
+  produce a modified version of an input value are allowed to modify an
+  expanded input value in-place if they receive a read-write pointer, but
+  must not modify the input if they receive a read-only pointer; in that
+  case they have to copy the value first, producing a new value to modify.
+  A C function that has constructed a new expanded value should always
+  return a read-write pointer to it.  Also, a C function that is modifying
+  a read-write expanded value in-place should take care to leave the value
+  in a sane state if it fails partway through.
+ </para>
+
+ <para>
+  For examples of working with expanded values, see the standard array
+  infrastructure, particularly
+  <filename>src/backend/utils/adt/array_expanded.c</>.
+ </para>
+
  </sect2>
 
 </sect1>

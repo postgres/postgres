@@ -60,6 +60,7 @@
 #include "access/sysattr.h"
 #include "access/tuptoaster.h"
 #include "executor/tuptable.h"
+#include "utils/expandeddatum.h"
 
 
 /* Does att's datatype allow packing into the 1-byte-header varlena format? */
@@ -93,13 +94,15 @@ heap_compute_data_size(TupleDesc tupleDesc,
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		Datum		val;
+		Form_pg_attribute atti;
 
 		if (isnull[i])
 			continue;
 
 		val = values[i];
+		atti = att[i];
 
-		if (ATT_IS_PACKABLE(att[i]) &&
+		if (ATT_IS_PACKABLE(atti) &&
 			VARATT_CAN_MAKE_SHORT(DatumGetPointer(val)))
 		{
 			/*
@@ -108,11 +111,21 @@ heap_compute_data_size(TupleDesc tupleDesc,
 			 */
 			data_length += VARATT_CONVERTED_SHORT_SIZE(DatumGetPointer(val));
 		}
+		else if (atti->attlen == -1 &&
+				 VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(val)))
+		{
+			/*
+			 * we want to flatten the expanded value so that the constructed
+			 * tuple doesn't depend on it
+			 */
+			data_length = att_align_nominal(data_length, atti->attalign);
+			data_length += EOH_get_flat_size(DatumGetEOHP(val));
+		}
 		else
 		{
-			data_length = att_align_datum(data_length, att[i]->attalign,
-										  att[i]->attlen, val);
-			data_length = att_addlength_datum(data_length, att[i]->attlen,
+			data_length = att_align_datum(data_length, atti->attalign,
+										  atti->attlen, val);
+			data_length = att_addlength_datum(data_length, atti->attlen,
 											  val);
 		}
 	}
@@ -203,10 +216,26 @@ heap_fill_tuple(TupleDesc tupleDesc,
 			*infomask |= HEAP_HASVARWIDTH;
 			if (VARATT_IS_EXTERNAL(val))
 			{
-				*infomask |= HEAP_HASEXTERNAL;
-				/* no alignment, since it's short by definition */
-				data_length = VARSIZE_EXTERNAL(val);
-				memcpy(data, val, data_length);
+				if (VARATT_IS_EXTERNAL_EXPANDED(val))
+				{
+					/*
+					 * we want to flatten the expanded value so that the
+					 * constructed tuple doesn't depend on it
+					 */
+					ExpandedObjectHeader *eoh = DatumGetEOHP(values[i]);
+
+					data = (char *) att_align_nominal(data,
+													  att[i]->attalign);
+					data_length = EOH_get_flat_size(eoh);
+					EOH_flatten_into(eoh, data, data_length);
+				}
+				else
+				{
+					*infomask |= HEAP_HASEXTERNAL;
+					/* no alignment, since it's short by definition */
+					data_length = VARSIZE_EXTERNAL(val);
+					memcpy(data, val, data_length);
+				}
 			}
 			else if (VARATT_IS_SHORT(val))
 			{

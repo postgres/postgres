@@ -4248,7 +4248,6 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 {
 	ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) astate->xprstate.expr;
 	Datum		result;
-	ArrayType  *array;
 	FunctionCallInfoData locfcinfo;
 
 	result = ExecEvalExpr(astate->arg, econtext, isNull, isDone);
@@ -4265,13 +4264,11 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 	if (!OidIsValid(acoerce->elemfuncid))
 	{
 		/* Detoast input array if necessary, and copy in any case */
-		array = DatumGetArrayTypePCopy(result);
+		ArrayType  *array = DatumGetArrayTypePCopy(result);
+
 		ARR_ELEMTYPE(array) = astate->resultelemtype;
 		PG_RETURN_ARRAYTYPE_P(array);
 	}
-
-	/* Detoast input array if necessary, but don't make a useless copy */
-	array = DatumGetArrayTypeP(result);
 
 	/* Initialize function cache if first time through */
 	if (astate->elemfunc.fn_oid == InvalidOid)
@@ -4302,15 +4299,14 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 	 */
 	InitFunctionCallInfoData(locfcinfo, &(astate->elemfunc), 3,
 							 InvalidOid, NULL, NULL);
-	locfcinfo.arg[0] = PointerGetDatum(array);
+	locfcinfo.arg[0] = result;
 	locfcinfo.arg[1] = Int32GetDatum(acoerce->resulttypmod);
 	locfcinfo.arg[2] = BoolGetDatum(acoerce->isExplicit);
 	locfcinfo.argnull[0] = false;
 	locfcinfo.argnull[1] = false;
 	locfcinfo.argnull[2] = false;
 
-	return array_map(&locfcinfo, ARR_ELEMTYPE(array), astate->resultelemtype,
-					 astate->amstate);
+	return array_map(&locfcinfo, astate->resultelemtype, astate->amstate);
 }
 
 /* ----------------------------------------------------------------

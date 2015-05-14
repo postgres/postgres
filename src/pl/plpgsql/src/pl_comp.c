@@ -2200,6 +2200,22 @@ build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 	typ->collation = typeStruct->typcollation;
 	if (OidIsValid(collation) && OidIsValid(typ->collation))
 		typ->collation = collation;
+	/* Detect if type is true array, or domain thereof */
+	/* NB: this is only used to decide whether to apply expand_array */
+	if (typeStruct->typtype == TYPTYPE_BASE)
+	{
+		/* this test should match what get_element_type() checks */
+		typ->typisarray = (typeStruct->typlen == -1 &&
+						   OidIsValid(typeStruct->typelem));
+	}
+	else if (typeStruct->typtype == TYPTYPE_DOMAIN)
+	{
+		/* we can short-circuit looking up base types if it's not varlena */
+		typ->typisarray = (typeStruct->typlen == -1 &&
+				 OidIsValid(get_base_element_type(typeStruct->typbasetype)));
+	}
+	else
+		typ->typisarray = false;
 	typ->atttypmod = typmod;
 
 	return typ;

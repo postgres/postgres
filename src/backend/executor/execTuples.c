@@ -88,6 +88,7 @@
 #include "nodes/nodeFuncs.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
+#include "utils/expandeddatum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -810,6 +811,52 @@ ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	MemoryContextSwitchTo(oldContext);
 
 	return ExecStoreTuple(newTuple, dstslot, InvalidBuffer, true);
+}
+
+/* --------------------------------
+ *		ExecMakeSlotContentsReadOnly
+ *			Mark any R/W expanded datums in the slot as read-only.
+ *
+ * This is needed when a slot that might contain R/W datum references is to be
+ * used as input for general expression evaluation.  Since the expression(s)
+ * might contain more than one Var referencing the same R/W datum, we could
+ * get wrong answers if functions acting on those Vars thought they could
+ * modify the expanded value in-place.
+ *
+ * For notational reasons, we return the same slot passed in.
+ * --------------------------------
+ */
+TupleTableSlot *
+ExecMakeSlotContentsReadOnly(TupleTableSlot *slot)
+{
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(slot->tts_tupleDescriptor != NULL);
+	Assert(!slot->tts_isempty);
+
+	/*
+	 * If the slot contains a physical tuple, it can't contain any expanded
+	 * datums, because we flatten those when making a physical tuple.  This
+	 * might change later; but for now, we need do nothing unless the slot is
+	 * virtual.
+	 */
+	if (slot->tts_tuple == NULL)
+	{
+		Form_pg_attribute *att = slot->tts_tupleDescriptor->attrs;
+		int			attnum;
+
+		for (attnum = 0; attnum < slot->tts_nvalid; attnum++)
+		{
+			slot->tts_values[attnum] =
+				MakeExpandedObjectReadOnly(slot->tts_values[attnum],
+										   slot->tts_isnull[attnum],
+										   att[attnum]->attlen);
+		}
+	}
+
+	return slot;
 }
 
 

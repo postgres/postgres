@@ -503,8 +503,9 @@ comparison table, in which all the HTML pages were cut down to 7 kB to fit.
 <acronym>TOAST</> pointers can point to data that is not on disk, but is
 elsewhere in the memory of the current server process.  Such pointers
 obviously cannot be long-lived, but they are nonetheless useful.  There
-is currently just one sub-case:
-pointers to <firstterm>indirect</> data.
+are currently two sub-cases:
+pointers to <firstterm>indirect</> data and
+pointers to <firstterm>expanded</> data.
 </para>
 
 <para>
@@ -516,6 +517,43 @@ all out-of-line field values into the tuple might do).  The case is of
 limited use since the creator of the pointer datum is entirely responsible
 that the referenced data survives for as long as the pointer could exist,
 and there is no infrastructure to help with this.
+</para>
+
+<para>
+Expanded <acronym>TOAST</> pointers are useful for complex data types
+whose on-disk representation is not especially suited for computational
+purposes.  As an example, the standard varlena representation of a
+<productname>PostgreSQL</> array includes dimensionality information, a
+nulls bitmap if there are any null elements, then the values of all the
+elements in order.  When the element type itself is variable-length, the
+only way to find the <replaceable>N</>'th element is to scan through all the
+preceding elements.  This representation is appropriate for on-disk storage
+because of its compactness, but for computations with the array it's much
+nicer to have an <quote>expanded</> or <quote>deconstructed</>
+representation in which all the element starting locations have been
+identified.  The <acronym>TOAST</> pointer mechanism supports this need by
+allowing a pass-by-reference Datum to point to either a standard varlena
+value (the on-disk representation) or a <acronym>TOAST</> pointer that
+points to an expanded representation somewhere in memory.  The details of
+this expanded representation are up to the data type, though it must have
+a standard header and meet the other API requirements given
+in <filename>src/include/utils/expandeddatum.h</>.  C-level functions
+working with the data type can choose to handle either representation.
+Functions that do not know about the expanded representation, but simply
+apply <function>PG_DETOAST_DATUM</> to their inputs, will automatically
+receive the traditional varlena representation; so support for an expanded
+representation can be introduced incrementally, one function at a time.
+</para>
+
+<para>
+<acronym>TOAST</> pointers to expanded values are further broken down
+into <firstterm>read-write</> and <firstterm>read-only</> pointers.
+The pointed-to representation is the same either way, but a function that
+receives a read-write pointer is allowed to modify the referenced value
+in-place, whereas one that receives a read-only pointer must not; it must
+first create a copy if it wants to make a modified version of the value.
+This distinction and some associated conventions make it possible to avoid
+unnecessary copying of expanded values during query execution.
 </para>
 
 <para>

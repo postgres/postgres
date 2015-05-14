@@ -45,6 +45,11 @@
  * We support subscripting on these types, but array_in() and array_out()
  * only work with varlena arrays.
  *
+ * In addition, arrays are a major user of the "expanded object" TOAST
+ * infrastructure.  This allows a varlena array to be converted to a
+ * separate representation that may include "deconstructed" Datum/isnull
+ * arrays holding the elements.
+ *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -57,6 +62,8 @@
 #define ARRAY_H
 
 #include "fmgr.h"
+#include "utils/expandeddatum.h"
+
 
 /*
  * Arrays are varlena objects, so must meet the varlena convention that
@@ -73,6 +80,86 @@ typedef struct
 	int32		dataoffset;		/* offset to data, or 0 if no bitmap */
 	Oid			elemtype;		/* element type OID */
 } ArrayType;
+
+/*
+ * An expanded array is contained within a private memory context (as
+ * all expanded objects must be) and has a control structure as below.
+ *
+ * The expanded array might contain a regular "flat" array if that was the
+ * original input and we've not modified it significantly.  Otherwise, the
+ * contents are represented by Datum/isnull arrays plus dimensionality and
+ * type information.  We could also have both forms, if we've deconstructed
+ * the original array for access purposes but not yet changed it.  For pass-
+ * by-reference element types, the Datums would point into the flat array in
+ * this situation.  Once we start modifying array elements, new pass-by-ref
+ * elements are separately palloc'd within the memory context.
+ */
+#define EA_MAGIC 689375833		/* ID for debugging crosschecks */
+
+typedef struct ExpandedArrayHeader
+{
+	/* Standard header for expanded objects */
+	ExpandedObjectHeader hdr;
+
+	/* Magic value identifying an expanded array (for debugging only) */
+	int			ea_magic;
+
+	/* Dimensionality info (always valid) */
+	int			ndims;			/* # of dimensions */
+	int		   *dims;			/* array dimensions */
+	int		   *lbound;			/* index lower bounds for each dimension */
+
+	/* Element type info (always valid) */
+	Oid			element_type;	/* element type OID */
+	int16		typlen;			/* needed info about element datatype */
+	bool		typbyval;
+	char		typalign;
+
+	/*
+	 * If we have a Datum-array representation of the array, it's kept here;
+	 * else dvalues/dnulls are NULL.  The dvalues and dnulls arrays are always
+	 * palloc'd within the object private context, but may change size from
+	 * time to time.  For pass-by-ref element types, dvalues entries might
+	 * point either into the fstartptr..fendptr area, or to separately
+	 * palloc'd chunks.  Elements should always be fully detoasted, as they
+	 * are in the standard flat representation.
+	 *
+	 * Even when dvalues is valid, dnulls can be NULL if there are no null
+	 * elements.
+	 */
+	Datum	   *dvalues;		/* array of Datums */
+	bool	   *dnulls;			/* array of is-null flags for Datums */
+	int			dvalueslen;		/* allocated length of above arrays */
+	int			nelems;			/* number of valid entries in above arrays */
+
+	/*
+	 * flat_size is the current space requirement for the flat equivalent of
+	 * the expanded array, if known; otherwise it's 0.  We store this to make
+	 * consecutive calls of get_flat_size cheap.
+	 */
+	Size		flat_size;
+
+	/*
+	 * fvalue points to the flat representation if it is valid, else it is
+	 * NULL.  If we have or ever had a flat representation then
+	 * fstartptr/fendptr point to the start and end+1 of its data area; this
+	 * is so that we can tell which Datum pointers point into the flat
+	 * representation rather than being pointers to separately palloc'd data.
+	 */
+	ArrayType  *fvalue;			/* must be a fully detoasted array */
+	char	   *fstartptr;		/* start of its data area */
+	char	   *fendptr;		/* end+1 of its data area */
+} ExpandedArrayHeader;
+
+/*
+ * Functions that can handle either a "flat" varlena array or an expanded
+ * array use this union to work with their input.
+ */
+typedef union AnyArrayType
+{
+	ArrayType	flt;
+	ExpandedArrayHeader xpn;
+} AnyArrayType;
 
 /*
  * working state for accumArrayResult() and friends
@@ -151,17 +238,24 @@ typedef struct ArrayMapState
 /* ArrayIteratorData is private in arrayfuncs.c */
 typedef struct ArrayIteratorData *ArrayIterator;
 
-/*
- * fmgr macros for array objects
- */
+/* fmgr macros for regular varlena array objects */
 #define DatumGetArrayTypeP(X)		  ((ArrayType *) PG_DETOAST_DATUM(X))
 #define DatumGetArrayTypePCopy(X)	  ((ArrayType *) PG_DETOAST_DATUM_COPY(X))
 #define PG_GETARG_ARRAYTYPE_P(n)	  DatumGetArrayTypeP(PG_GETARG_DATUM(n))
 #define PG_GETARG_ARRAYTYPE_P_COPY(n) DatumGetArrayTypePCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_ARRAYTYPE_P(x)	  PG_RETURN_POINTER(x)
 
+/* fmgr macros for expanded array objects */
+#define PG_GETARG_EXPANDED_ARRAY(n)  DatumGetExpandedArray(PG_GETARG_DATUM(n))
+#define PG_GETARG_EXPANDED_ARRAYX(n, metacache) \
+	DatumGetExpandedArrayX(PG_GETARG_DATUM(n), metacache)
+#define PG_RETURN_EXPANDED_ARRAY(x)  PG_RETURN_DATUM(EOHPGetRWDatum(&(x)->hdr))
+
+/* fmgr macros for AnyArrayType (ie, get either varlena or expanded form) */
+#define PG_GETARG_ANY_ARRAY(n)	DatumGetAnyArray(PG_GETARG_DATUM(n))
+
 /*
- * Access macros for array header fields.
+ * Access macros for varlena array header fields.
  *
  * ARR_DIMS returns a pointer to an array of array dimensions (number of
  * elements along the various array axes).
@@ -209,6 +303,22 @@ typedef struct ArrayIteratorData *ArrayIterator;
 #define ARR_DATA_PTR(a) \
 		(((char *) (a)) + ARR_DATA_OFFSET(a))
 
+/*
+ * Macros for working with AnyArrayType inputs.  Beware multiple references!
+ */
+#define AARR_NDIM(a) \
+	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.ndims : ARR_NDIM(&(a)->flt))
+#define AARR_HASNULL(a) \
+	(VARATT_IS_EXPANDED_HEADER(a) ? \
+	 ((a)->xpn.dvalues != NULL ? (a)->xpn.dnulls != NULL : ARR_HASNULL((a)->xpn.fvalue)) : \
+	 ARR_HASNULL(&(a)->flt))
+#define AARR_ELEMTYPE(a) \
+	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.element_type : ARR_ELEMTYPE(&(a)->flt))
+#define AARR_DIMS(a) \
+	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.dims : ARR_DIMS(&(a)->flt))
+#define AARR_LBOUND(a) \
+	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.lbound : ARR_LBOUND(&(a)->flt))
+
 
 /*
  * GUC parameter
@@ -250,6 +360,15 @@ extern Datum array_remove(PG_FUNCTION_ARGS);
 extern Datum array_replace(PG_FUNCTION_ARGS);
 extern Datum width_bucket_array(PG_FUNCTION_ARGS);
 
+extern void CopyArrayEls(ArrayType *array,
+			 Datum *values,
+			 bool *nulls,
+			 int nitems,
+			 int typlen,
+			 bool typbyval,
+			 char typalign,
+			 bool freedata);
+
 extern Datum array_get_element(Datum arraydatum, int nSubscripts, int *indx,
 				  int arraytyplen, int elmlen, bool elmbyval, char elmalign,
 				  bool *isNull);
@@ -271,7 +390,7 @@ extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
 		  Datum dataValue, bool isNull,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
-extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
+extern Datum array_map(FunctionCallInfo fcinfo, Oid retType,
 		  ArrayMapState *amstate);
 
 extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
@@ -288,6 +407,9 @@ extern ArrayType *construct_md_array(Datum *elems,
 				   int *lbs,
 				   Oid elmtype, int elmlen, bool elmbyval, char elmalign);
 extern ArrayType *construct_empty_array(Oid elmtype);
+extern ExpandedArrayHeader *construct_empty_expanded_array(Oid element_type,
+							   MemoryContext parentcontext,
+							   ArrayMetaState *metacache);
 extern void deconstruct_array(ArrayType *array,
 				  Oid elmtype,
 				  int elmlen, bool elmbyval, char elmalign,
@@ -339,6 +461,17 @@ extern void mda_get_prod(int n, const int *range, int *prod);
 extern void mda_get_offset_values(int n, int *dist, const int *prod, const int *span);
 extern int	mda_next_tuple(int n, int *curr, const int *span);
 extern int32 *ArrayGetIntegerTypmods(ArrayType *arr, int *n);
+
+/*
+ * prototypes for functions defined in array_expanded.c
+ */
+extern Datum expand_array(Datum arraydatum, MemoryContext parentcontext,
+			 ArrayMetaState *metacache);
+extern ExpandedArrayHeader *DatumGetExpandedArray(Datum d);
+extern ExpandedArrayHeader *DatumGetExpandedArrayX(Datum d,
+					   ArrayMetaState *metacache);
+extern AnyArrayType *DatumGetAnyArray(Datum d);
+extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 
 /*
  * prototypes for functions defined in array_userfuncs.c

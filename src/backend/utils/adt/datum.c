@@ -12,8 +12,9 @@
  *
  *-------------------------------------------------------------------------
  */
+
 /*
- * In the implementation of the next routines we assume the following:
+ * In the implementation of these routines we assume the following:
  *
  * A) if a type is "byVal" then all the information is stored in the
  * Datum itself (i.e. no pointers involved!). In this case the
@@ -34,11 +35,15 @@
  *
  * Note that we do not treat "toasted" datums specially; therefore what
  * will be copied or compared is the compressed data or toast reference.
+ * An exception is made for datumCopy() of an expanded object, however,
+ * because most callers expect to get a simple contiguous (and pfree'able)
+ * result from datumCopy().  See also datumTransfer().
  */
 
 #include "postgres.h"
 
 #include "utils/datum.h"
+#include "utils/expandeddatum.h"
 
 
 /*-------------------------------------------------------------------------
@@ -46,6 +51,7 @@
  *
  * Find the "real" size of a datum, given the datum value,
  * whether it is a "by value", and the declared type length.
+ * (For TOAST pointer datums, this is the size of the pointer datum.)
  *
  * This is essentially an out-of-line version of the att_addlength_datum()
  * macro in access/tupmacs.h.  We do a tad more error checking though.
@@ -106,9 +112,16 @@ datumGetSize(Datum value, bool typByVal, int typLen)
 /*-------------------------------------------------------------------------
  * datumCopy
  *
- * make a copy of a datum
+ * Make a copy of a non-NULL datum.
  *
  * If the datatype is pass-by-reference, memory is obtained with palloc().
+ *
+ * If the value is a reference to an expanded object, we flatten into memory
+ * obtained with palloc().  We need to copy because one of the main uses of
+ * this function is to copy a datum out of a transient memory context that's
+ * about to be destroyed, and the expanded object is probably in a child
+ * context that will also go away.  Moreover, many callers assume that the
+ * result is a single pfree-able chunk.
  *-------------------------------------------------------------------------
  */
 Datum
@@ -118,44 +131,71 @@ datumCopy(Datum value, bool typByVal, int typLen)
 
 	if (typByVal)
 		res = value;
+	else if (typLen == -1)
+	{
+		/* It is a varlena datatype */
+		struct varlena *vl = (struct varlena *) DatumGetPointer(value);
+
+		if (VARATT_IS_EXTERNAL_EXPANDED(vl))
+		{
+			/* Flatten into the caller's memory context */
+			ExpandedObjectHeader *eoh = DatumGetEOHP(value);
+			Size		resultsize;
+			char	   *resultptr;
+
+			resultsize = EOH_get_flat_size(eoh);
+			resultptr = (char *) palloc(resultsize);
+			EOH_flatten_into(eoh, (void *) resultptr, resultsize);
+			res = PointerGetDatum(resultptr);
+		}
+		else
+		{
+			/* Otherwise, just copy the varlena datum verbatim */
+			Size		realSize;
+			char	   *resultptr;
+
+			realSize = (Size) VARSIZE_ANY(vl);
+			resultptr = (char *) palloc(realSize);
+			memcpy(resultptr, vl, realSize);
+			res = PointerGetDatum(resultptr);
+		}
+	}
 	else
 	{
+		/* Pass by reference, but not varlena, so not toasted */
 		Size		realSize;
-		char	   *s;
-
-		if (DatumGetPointer(value) == NULL)
-			return PointerGetDatum(NULL);
+		char	   *resultptr;
 
 		realSize = datumGetSize(value, typByVal, typLen);
 
-		s = (char *) palloc(realSize);
-		memcpy(s, DatumGetPointer(value), realSize);
-		res = PointerGetDatum(s);
+		resultptr = (char *) palloc(realSize);
+		memcpy(resultptr, DatumGetPointer(value), realSize);
+		res = PointerGetDatum(resultptr);
 	}
 	return res;
 }
 
 /*-------------------------------------------------------------------------
- * datumFree
+ * datumTransfer
  *
- * Free the space occupied by a datum CREATED BY "datumCopy"
+ * Transfer a non-NULL datum into the current memory context.
  *
- * NOTE: DO NOT USE THIS ROUTINE with datums returned by heap_getattr() etc.
- * ONLY datums created by "datumCopy" can be freed!
+ * This is equivalent to datumCopy() except when the datum is a read-write
+ * pointer to an expanded object.  In that case we merely reparent the object
+ * into the current context, and return its standard R/W pointer (in case the
+ * given one is a transient pointer of shorter lifespan).
  *-------------------------------------------------------------------------
  */
-#ifdef NOT_USED
-void
-datumFree(Datum value, bool typByVal, int typLen)
+Datum
+datumTransfer(Datum value, bool typByVal, int typLen)
 {
-	if (!typByVal)
-	{
-		Pointer		s = DatumGetPointer(value);
-
-		pfree(s);
-	}
+	if (!typByVal && typLen == -1 &&
+		VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(value)))
+		value = TransferExpandedObject(value, CurrentMemoryContext);
+	else
+		value = datumCopy(value, typByVal, typLen);
+	return value;
 }
-#endif
 
 /*-------------------------------------------------------------------------
  * datumIsEqual

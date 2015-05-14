@@ -25,22 +25,36 @@ static Datum array_position_common(FunctionCallInfo fcinfo);
 /*
  * fetch_array_arg_replace_nulls
  *
- * Fetch an array-valued argument; if it's null, construct an empty array
- * value of the proper data type.  Also cache basic element type information
- * in fn_extra.
+ * Fetch an array-valued argument in expanded form; if it's null, construct an
+ * empty array value of the proper data type.  Also cache basic element type
+ * information in fn_extra.
+ *
+ * Caution: if the input is a read/write pointer, this returns the input
+ * argument; so callers must be sure that their changes are "safe", that is
+ * they cannot leave the array in a corrupt state.
  */
-static ArrayType *
+static ExpandedArrayHeader *
 fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 {
-	ArrayType  *v;
+	ExpandedArrayHeader *eah;
 	Oid			element_type;
 	ArrayMetaState *my_extra;
 
-	/* First collect the array value */
+	/* If first time through, create datatype cache struct */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		my_extra = (ArrayMetaState *)
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(ArrayMetaState));
+		my_extra->element_type = InvalidOid;
+		fcinfo->flinfo->fn_extra = my_extra;
+	}
+
+	/* Now collect the array value */
 	if (!PG_ARGISNULL(argno))
 	{
-		v = PG_GETARG_ARRAYTYPE_P(argno);
-		element_type = ARR_ELEMTYPE(v);
+		eah = PG_GETARG_EXPANDED_ARRAYX(argno, my_extra);
 	}
 	else
 	{
@@ -57,30 +71,12 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("input data type is not an array")));
 
-		v = construct_empty_array(element_type);
+		eah = construct_empty_expanded_array(element_type,
+											 CurrentMemoryContext,
+											 my_extra);
 	}
 
-	/* Now cache required info, which might change from call to call */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL)
-	{
-		my_extra = (ArrayMetaState *)
-			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-							   sizeof(ArrayMetaState));
-		my_extra->element_type = InvalidOid;
-		fcinfo->flinfo->fn_extra = my_extra;
-	}
-
-	if (my_extra->element_type != element_type)
-	{
-		get_typlenbyvalalign(element_type,
-							 &my_extra->typlen,
-							 &my_extra->typbyval,
-							 &my_extra->typalign);
-		my_extra->element_type = element_type;
-	}
-
-	return v;
+	return eah;
 }
 
 /*-----------------------------------------------------------------------------
@@ -91,29 +87,29 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 Datum
 array_append(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v;
+	ExpandedArrayHeader *eah;
 	Datum		newelem;
 	bool		isNull;
-	ArrayType  *result;
+	Datum		result;
 	int		   *dimv,
 			   *lb;
 	int			indx;
 	ArrayMetaState *my_extra;
 
-	v = fetch_array_arg_replace_nulls(fcinfo, 0);
+	eah = fetch_array_arg_replace_nulls(fcinfo, 0);
 	isNull = PG_ARGISNULL(1);
 	if (isNull)
 		newelem = (Datum) 0;
 	else
 		newelem = PG_GETARG_DATUM(1);
 
-	if (ARR_NDIM(v) == 1)
+	if (eah->ndims == 1)
 	{
 		/* append newelem */
 		int			ub;
 
-		lb = ARR_LBOUND(v);
-		dimv = ARR_DIMS(v);
+		lb = eah->lbound;
+		dimv = eah->dims;
 		ub = dimv[0] + lb[0] - 1;
 		indx = ub + 1;
 
@@ -123,7 +119,7 @@ array_append(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("integer out of range")));
 	}
-	else if (ARR_NDIM(v) == 0)
+	else if (eah->ndims == 0)
 		indx = 1;
 	else
 		ereport(ERROR,
@@ -133,10 +129,11 @@ array_append(PG_FUNCTION_ARGS)
 	/* Perform element insertion */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 
-	result = array_set(v, 1, &indx, newelem, isNull,
+	result = array_set_element(EOHPGetRWDatum(&eah->hdr),
+							   1, &indx, newelem, isNull,
 			   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
-	PG_RETURN_ARRAYTYPE_P(result);
+	PG_RETURN_DATUM(result);
 }
 
 /*-----------------------------------------------------------------------------
@@ -147,12 +144,13 @@ array_append(PG_FUNCTION_ARGS)
 Datum
 array_prepend(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v;
+	ExpandedArrayHeader *eah;
 	Datum		newelem;
 	bool		isNull;
-	ArrayType  *result;
+	Datum		result;
 	int		   *lb;
 	int			indx;
+	int			lb0;
 	ArrayMetaState *my_extra;
 
 	isNull = PG_ARGISNULL(0);
@@ -160,13 +158,14 @@ array_prepend(PG_FUNCTION_ARGS)
 		newelem = (Datum) 0;
 	else
 		newelem = PG_GETARG_DATUM(0);
-	v = fetch_array_arg_replace_nulls(fcinfo, 1);
+	eah = fetch_array_arg_replace_nulls(fcinfo, 1);
 
-	if (ARR_NDIM(v) == 1)
+	if (eah->ndims == 1)
 	{
 		/* prepend newelem */
-		lb = ARR_LBOUND(v);
+		lb = eah->lbound;
 		indx = lb[0] - 1;
+		lb0 = lb[0];
 
 		/* overflow? */
 		if (indx > lb[0])
@@ -174,8 +173,11 @@ array_prepend(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("integer out of range")));
 	}
-	else if (ARR_NDIM(v) == 0)
+	else if (eah->ndims == 0)
+	{
 		indx = 1;
+		lb0 = 1;
+	}
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
@@ -184,14 +186,19 @@ array_prepend(PG_FUNCTION_ARGS)
 	/* Perform element insertion */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 
-	result = array_set(v, 1, &indx, newelem, isNull,
+	result = array_set_element(EOHPGetRWDatum(&eah->hdr),
+							   1, &indx, newelem, isNull,
 			   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
 	/* Readjust result's LB to match the input's, as expected for prepend */
-	if (ARR_NDIM(v) == 1)
-		ARR_LBOUND(result)[0] = ARR_LBOUND(v)[0];
+	Assert(result == EOHPGetRWDatum(&eah->hdr));
+	if (eah->ndims == 1)
+	{
+		/* This is ok whether we've deconstructed or not */
+		eah->lbound[0] = lb0;
+	}
 
-	PG_RETURN_ARRAYTYPE_P(result);
+	PG_RETURN_DATUM(result);
 }
 
 /*-----------------------------------------------------------------------------

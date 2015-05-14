@@ -24,18 +24,18 @@
 extern Size datumGetSize(Datum value, bool typByVal, int typLen);
 
 /*
- * datumCopy - make a copy of a datum.
+ * datumCopy - make a copy of a non-NULL datum.
  *
  * If the datatype is pass-by-reference, memory is obtained with palloc().
  */
 extern Datum datumCopy(Datum value, bool typByVal, int typLen);
 
 /*
- * datumFree - free a datum previously allocated by datumCopy, if any.
+ * datumTransfer - transfer a non-NULL datum into the current memory context.
  *
- * Does nothing if datatype is pass-by-value.
+ * Differs from datumCopy() in its handling of read-write expanded objects.
  */
-extern void datumFree(Datum value, bool typByVal, int typLen);
+extern Datum datumTransfer(Datum value, bool typByVal, int typLen);
 
 /*
  * datumIsEqual

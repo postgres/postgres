@@ -183,6 +183,7 @@ typedef struct
 	char		typtype;
 	Oid			typrelid;
 	Oid			collation;		/* from pg_type, but can be overridden */
+	bool		typisarray;		/* is "true" array, or domain over one */
 	int32		atttypmod;		/* typmod (taken from someplace else) */
 } PLpgSQL_type;
 
@@ -216,6 +217,7 @@ typedef struct PLpgSQL_expr
 	char	   *query;
 	SPIPlanPtr	plan;
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
+	int			rwparam;		/* dno of read/write param, or -1 if none */
 
 	/* function containing this expr (not set until we first parse query) */
 	struct PLpgSQL_function *func;

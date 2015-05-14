@@ -323,6 +323,10 @@ MemoryContextSetParent(MemoryContext context, MemoryContext new_parent)
 	AssertArg(MemoryContextIsValid(context));
 	AssertArg(context != new_parent);
 
+	/* Fast path if it's got correct parent already */
+	if (new_parent == context->parent)
+		return;
+
 	/* Delink from existing parent, if any */
 	if (context->parent)
 	{

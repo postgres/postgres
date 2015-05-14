@@ -309,6 +309,10 @@ typedef struct WindowFunc
  * Note: the result datatype is the element type when fetching a single
  * element; but it is the array type when doing subarray fetch or either
  * type of store.
+ *
+ * Note: for the cases where an array is returned, if refexpr yields a R/W
+ * expanded array, then the implementation is allowed to modify that object
+ * in-place and return the same object.)
  * ----------------
  */
 typedef struct ArrayRef

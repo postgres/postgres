@@ -37,6 +37,7 @@
 #include "catalog/catalog.h"
 #include "common/pg_lzcompress.h"
 #include "miscadmin.h"
+#include "utils/expandeddatum.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
@@ -130,6 +131,19 @@ heap_tuple_fetch_attr(struct varlena * attr)
 		result = (struct varlena *) palloc(VARSIZE_ANY(attr));
 		memcpy(result, attr, VARSIZE_ANY(attr));
 	}
+	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
+	{
+		/*
+		 * This is an expanded-object pointer --- get flat format
+		 */
+		ExpandedObjectHeader *eoh;
+		Size		resultsize;
+
+		eoh = DatumGetEOHP(PointerGetDatum(attr));
+		resultsize = EOH_get_flat_size(eoh);
+		result = (struct varlena *) palloc(resultsize);
+		EOH_flatten_into(eoh, (void *) result, resultsize);
+	}
 	else
 	{
 		/*
@@ -195,6 +209,15 @@ heap_tuple_untoast_attr(struct varlena * attr)
 			memcpy(result, attr, VARSIZE_ANY(attr));
 			attr = result;
 		}
+	}
+	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
+	{
+		/*
+		 * This is an expanded-object pointer --- get flat format
+		 */
+		attr = heap_tuple_fetch_attr(attr);
+		/* flatteners are not allowed to produce compressed/short output */
+		Assert(!VARATT_IS_EXTENDED(attr));
 	}
 	else if (VARATT_IS_COMPRESSED(attr))
 	{
@@ -262,6 +285,11 @@ heap_tuple_untoast_attr_slice(struct varlena * attr,
 
 		return heap_tuple_untoast_attr_slice(redirect.pointer,
 											 sliceoffset, slicelength);
+	}
+	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
+	{
+		/* pass it off to heap_tuple_fetch_attr to flatten */
+		preslice = heap_tuple_fetch_attr(attr);
 	}
 	else
 		preslice = attr;
@@ -344,6 +372,10 @@ toast_raw_datum_size(Datum value)
 
 		return toast_raw_datum_size(PointerGetDatum(toast_pointer.pointer));
 	}
+	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
+	{
+		result = EOH_get_flat_size(DatumGetEOHP(value));
+	}
 	else if (VARATT_IS_COMPRESSED(attr))
 	{
 		/* here, va_rawsize is just the payload size */
@@ -399,6 +431,10 @@ toast_datum_size(Datum value)
 		Assert(!VARATT_IS_EXTERNAL_INDIRECT(attr));
 
 		return toast_datum_size(PointerGetDatum(toast_pointer.pointer));
+	}
+	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
+	{
+		result = EOH_get_flat_size(DatumGetEOHP(value));
 	}
 	else if (VARATT_IS_SHORT(attr))
 	{

@@ -1015,6 +1015,27 @@ SPI_pfree(void *pointer)
 	pfree(pointer);
 }
 
+Datum
+SPI_datumTransfer(Datum value, bool typByVal, int typLen)
+{
+	MemoryContext oldcxt = NULL;
+	Datum		result;
+
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(ERROR, "SPI stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+
+	result = datumTransfer(value, typByVal, typLen);
+
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+
+	return result;
+}
+
 void
 SPI_freetuple(HeapTuple tuple)
 {
