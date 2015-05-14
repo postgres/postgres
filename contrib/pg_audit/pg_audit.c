@@ -1284,7 +1284,7 @@ pg_audit_ProcessUtility_hook(Node *parsetree,
 							 char *completionTag)
 {
 	AuditEventStackItem *stackItem = NULL;
-	int64 stackId;
+	int64 stackId = 0;
 
 	/*
 	 * Don't audit substatements.  All the substatements we care about should
