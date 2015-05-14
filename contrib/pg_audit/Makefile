@@ -6,7 +6,7 @@ OBJS = pg_audit.o
 
 EXTENSION = pg_audit
 REGRESS = pg_audit
-REGRESS_OPTS = --temp-config=$(top_srcdir)/contrib/pg_audit/pg_audit.conf
+REGRESS_OPTS =
 DATA = pg_audit--1.0.0.sql
 
 ifdef USE_PGXS

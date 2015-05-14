@@ -19,7 +19,24 @@ create extension pg_audit;
 CREATE USER super SUPERUSER;
 ALTER ROLE super SET pg_audit.log = 'Role';
 ALTER ROLE super SET pg_audit.log_level = 'notice';
+
+CREATE FUNCTION load_pg_audit( )
+ RETURNS VOID
+ LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+declare
+begin
+LOAD 'pg_audit';
+end;
+$function$;
+
+-- After each connect, we need to load pg_audit, as if it was
+-- being loaded from shared_preload_libraries.  Otherwise, the hooks
+-- won't be set up and called correctly, leading to lots of ugly
+-- errors.
 \connect - super;
+select load_pg_audit();
 
 --
 -- Create auditor role
@@ -34,6 +51,7 @@ ALTER ROLE user1 SET pg_audit.log_level = 'notice';
 --
 -- Create, select, drop (select will not be audited)
 \connect - user1
+select load_pg_audit();
 CREATE TABLE public.test (id INT);
 SELECT * FROM test;
 DROP TABLE test;
@@ -41,6 +59,7 @@ DROP TABLE test;
 --
 -- Create second test user
 \connect - super
+select load_pg_audit();
 
 CREATE USER user2;
 ALTER ROLE user2 SET pg_audit.log = 'Read, writE';
@@ -50,6 +69,7 @@ ALTER ROLE user2 SET pg_audit.role = auditor;
 ALTER ROLE user2 SET pg_audit.log_statement_once = ON;
 
 \connect - user2
+select load_pg_audit();
 CREATE TABLE test2 (id INT);
 GRANT SELECT ON TABLE public.test2 TO auditor;
 
@@ -149,9 +169,11 @@ UPDATE test3
 --
 -- Change permissions of user 2 so that only object logging will be done
 \connect - super
+select load_pg_audit();
 alter role user2 set pg_audit.log = 'NONE';
 
 \connect - user2
+select load_pg_audit();
 
 --
 -- Create test4 and add permissions
@@ -222,8 +244,10 @@ DROP TABLE test4;
 --
 -- Change permissions of user 1 so that session logging will be done
 \connect - super
+select load_pg_audit();
 alter role user1 set pg_audit.log = 'DDL, READ';
 \connect - user1
+select load_pg_audit();
 
 --
 -- Create table is session logged
@@ -248,9 +272,11 @@ INSERT INTO account (id, name, password, description)
 --
 -- Change permissions of user 1 so that only object logging will be done
 \connect - super
+select load_pg_audit();
 alter role user1 set pg_audit.log = 'none';
 alter role user1 set pg_audit.role = 'auditor';
 \connect - user1
+select load_pg_audit();
 
 --
 -- ROLE class not set, so auditor grants not logged
@@ -285,9 +311,11 @@ UPDATE account
 --
 -- Change permissions of user 1 so that session relation logging will be done
 \connect - super
+select load_pg_audit();
 alter role user1 set pg_audit.log_relation = on;
 alter role user1 set pg_audit.log = 'read, WRITE';
 \connect - user1
+select load_pg_audit();
 
 --
 -- Not logged
@@ -345,6 +373,7 @@ UPDATE account
 --
 -- Change back to superuser to do exhaustive tests
 \connect - super
+select load_pg_audit();
 SET pg_audit.log = 'ALL';
 SET pg_audit.log_level = 'notice';
 SET pg_audit.log_relation = ON;
