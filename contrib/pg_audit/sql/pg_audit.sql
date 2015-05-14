@@ -646,6 +646,13 @@ SET pg_audit.log = 'role';
 GRANT user1 TO user2;
 REVOKE user1 FROM user2;
 
+-- Cleanup
+-- Set client_min_messages up to warning to avoid noise
+SET client_min_messages = 'warning';
+
+ALTER ROLE :current_user RESET pg_audit.log;
+ALTER ROLE :current_user RESET pg_audit.log_level;
+
 DROP TABLE test.account_copy;
 DROP TABLE test.test_insert;
 DROP SCHEMA test;
@@ -658,3 +665,5 @@ DROP TABLE account_role_map;
 DROP USER user2;
 DROP USER user1;
 DROP ROLE auditor;
+
+RESET client_min_messages;

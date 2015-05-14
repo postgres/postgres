@@ -1054,6 +1054,11 @@ GRANT user1 TO user2;
 NOTICE:  AUDIT: SESSION,59,1,ROLE,GRANT ROLE,,,GRANT user1 TO user2;,<none>
 REVOKE user1 FROM user2;
 NOTICE:  AUDIT: SESSION,60,1,ROLE,REVOKE ROLE,,,REVOKE user1 FROM user2;,<none>
+-- Cleanup
+-- Set client_min_messages up to warning to avoid noise
+SET client_min_messages = 'warning';
+ALTER ROLE :current_user RESET pg_audit.log;
+ALTER ROLE :current_user RESET pg_audit.log_level;
 DROP TABLE test.account_copy;
 DROP TABLE test.test_insert;
 DROP SCHEMA test;
@@ -1064,8 +1069,6 @@ DROP TABLE hoge;
 DROP TABLE account;
 DROP TABLE account_role_map;
 DROP USER user2;
-NOTICE:  AUDIT: SESSION,61,1,ROLE,DROP ROLE,,,DROP USER user2;,<none>
 DROP USER user1;
-NOTICE:  AUDIT: SESSION,62,1,ROLE,DROP ROLE,,,DROP USER user1;,<none>
 DROP ROLE auditor;
-NOTICE:  AUDIT: SESSION,63,1,ROLE,DROP ROLE,,,DROP ROLE auditor;,<none>
+RESET client_min_messages;
