@@ -1728,11 +1728,6 @@ assign_pg_audit_log_level(const char *newVal, void *extra)
 void
 _PG_init(void)
 {
-	if (IsUnderPostmaster)
-		ereport(ERROR,
-			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			errmsg("pg_audit must be loaded via shared_preload_libraries")));
-
 	/* Define pg_audit.log */
 	DefineCustomStringVariable(
 		"pg_audit.log",
