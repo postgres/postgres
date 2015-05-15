@@ -99,6 +99,7 @@ typedef struct IndexScanDescData
 	 */
 	Datum	   *xs_orderbyvals;
 	bool	   *xs_orderbynulls;
+	bool		xs_recheckorderby;	/* T means ORDER BY exprs must be rechecked */
 
 	/* state data for traversing HOT chains in index_getnext */
 	bool		xs_continue_hot;	/* T if must keep walking HOT chain */

@@ -236,7 +236,12 @@ next_indextuple:
 				InstrCountFiltered2(node, 1);
 				goto next_indextuple;
 			}
+		}
 
+		if (scandesc->xs_recheckorderby)
+		{
+			econtext->ecxt_scantuple = slot;
+			ResetExprContext(econtext);
 			EvalOrderByExpressions(node, econtext);
 
 			/*

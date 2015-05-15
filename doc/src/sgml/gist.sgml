@@ -818,10 +818,15 @@ my_distance(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-       The result value can be any finite <type>float8</> value.  (Infinity and
-       minus infinity are used internally to handle cases such as nulls, so it
-       is not recommended that <function>distance</> functions return these
-       values.)
+       If the distance function returns *recheck=true for a leaf node, the
+       original ordering operator's return type must be float8 or float4, and
+       the distance function's return value must be comparable with the actual
+       distance operator. Otherwise, the distance function's return type can
+       be any finit <type>float8</> value, as long as the relative order of
+       the returned values matches the order returned by the ordering operator.
+       (Infinity and minus infinity are used internally to handle cases such as
+       nulls, so it is not recommended that <function>distance</> functions
+       return these values.)
       </para>
 
      </listitem>
