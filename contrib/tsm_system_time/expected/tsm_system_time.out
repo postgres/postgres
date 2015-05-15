@@ -1,0 +1,54 @@
+CREATE EXTENSION tsm_system_time;
+CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10); -- force smaller pages so we don't have to load too much data to get multiple pages
+INSERT INTO test_tablesample SELECT i, repeat(i::text, 1000) FROM generate_series(0, 30) s(i) ORDER BY i;
+ANALYZE test_tablesample;
+SELECT count(*) FROM test_tablesample TABLESAMPLE system_time (1000);
+ count 
+-------
+    31
+(1 row)
+
+SELECT id FROM test_tablesample TABLESAMPLE system_time (1000) REPEATABLE (5432);
+ id 
+----
+  7
+ 14
+ 21
+ 28
+  4
+ 11
+ 18
+ 25
+  1
+  8
+ 15
+ 22
+ 29
+  5
+ 12
+ 19
+ 26
+  2
+  9
+ 16
+ 23
+ 30
+  6
+ 13
+ 20
+ 27
+  3
+ 10
+ 17
+ 24
+  0
+(31 rows)
+
+EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE system_time (100) REPEATABLE (10);
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Sample Scan (system_time) on test_tablesample  (cost=0.00..100.25 rows=25 width=4)
+(1 row)
+
+-- done
+DROP TABLE test_tablesample CASCADE;
