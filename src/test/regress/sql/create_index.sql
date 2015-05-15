@@ -446,8 +446,8 @@ SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
-SELECT * FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
+SELECT circle_center(f1), round(radius(f1)) as radius FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
+SELECT circle_center(f1), round(radius(f1)) as radius FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
 
 -- Now check the results from bitmap indexscan
 SET enable_seqscan = OFF;
