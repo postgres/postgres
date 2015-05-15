@@ -572,7 +572,7 @@ typedef void (*LogicalDecodeChangeCB) (
      </note>
     </sect3>
 
-     <sect3 id="logicaldecoding-output-plugin-filter-by-origin">
+     <sect3 id="logicaldecoding-output-plugin-filter-origin">
      <title>Origin Filter Callback</title>
 
      <para>
