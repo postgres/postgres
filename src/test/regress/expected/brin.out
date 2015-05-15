@@ -23,7 +23,9 @@ CREATE TABLE brintest (byteacol bytea,
 	varbitcol bit varying(16),
 	numericcol numeric,
 	uuidcol uuid,
-	lsncol pg_lsn
+	int4rangecol int4range,
+	lsncol pg_lsn,
+	boxcol box
 ) WITH (fillfactor=10, autovacuum_enabled=off);
 INSERT INTO brintest SELECT
 	repeat(stringu1, 8)::bytea,
@@ -50,12 +52,15 @@ INSERT INTO brintest SELECT
 	tenthous::bit(16)::varbit,
 	tenthous::numeric(36,30) * fivethous * even / (hundred + 1),
 	format('%s%s-%s-%s-%s-%s%s%s', to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'))::uuid,
-	format('%s/%s%s', odd, even, tenthous)::pg_lsn
-FROM tenk1 LIMIT 25;
+	int4range(thousand, twothousand),
+	format('%s/%s%s', odd, even, tenthous)::pg_lsn,
+	box(point(odd, even), point(thousand, twothousand))
+FROM tenk1 LIMIT 100;
 -- throw in some NULL's and different values
-INSERT INTO brintest (inetcol, cidrcol) SELECT
+INSERT INTO brintest (inetcol, cidrcol, int4rangecol) SELECT
 	inet 'fe80::6e40:8ff:fea9:8c46' + tenthous,
-	cidr 'fe80::6e40:8ff:fea9:8c46' + tenthous
+	cidr 'fe80::6e40:8ff:fea9:8c46' + tenthous,
+	'empty'::int4range
 FROM tenk1 LIMIT 25;
 CREATE INDEX brinidx ON brintest USING brin (
 	byteacol,
@@ -70,6 +75,7 @@ CREATE INDEX brinidx ON brintest USING brin (
 	float4col,
 	float8col,
 	macaddrcol,
+	inetcol inet_inclusion_ops,
 	inetcol inet_minmax_ops,
 	bpcharcol,
 	datecol,
@@ -82,7 +88,9 @@ CREATE INDEX brinidx ON brintest USING brin (
 	varbitcol,
 	numericcol,
 	uuidcol,
-	lsncol
+	int4rangecol,
+	lsncol,
+	boxcol
 ) with (pages_per_range = 1);
 CREATE TABLE brinopers (colname name, typ text, op text[], value text[],
 	check (cardinality(op) = cardinality(value)));
@@ -128,7 +136,12 @@ INSERT INTO brinopers VALUES
 	('varbitcol', 'varbit(16)', '{>, >=, =, <=, <}', '{0000000000000100, 0000000000000100, 0001010001100110, 1111111111111000, 1111111111111000}'),
 	('numericcol', 'numeric', '{>, >=, =, <=, <}', '{0.00, 0.01, 2268164.347826086956521739130434782609, 99470151.9, 99470151.9}'),
 	('uuidcol', 'uuid', '{>, >=, =, <=, <}', '{00040004-0004-0004-0004-000400040004, 00040004-0004-0004-0004-000400040004, 52225222-5222-5222-5222-522252225222, 99989998-9998-9998-9998-999899989998, 99989998-9998-9998-9998-999899989998}'),
-	('lsncol', 'pg_lsn', '{>, >=, =, <=, <, IS, IS NOT}', '{0/1200, 0/1200, 44/455222, 198/1999799, 198/1999799, NULL, NULL}');
+	('int4rangecol', 'int4range', '{<<, &<, &&, &>, >>, @>, <@, =, <, <=, >, >=}', '{"[10000,)","[10000,)","(,]","[3,4)","[36,44)","(1500,1501]","[3,4)","[222,1222)","[36,44)","[43,1043)","[367,4466)","[519,)"}'),
+	('int4rangecol', 'int4range', '{@>, <@, =, <=, >, >=}', '{empty, empty, empty, empty, empty, empty}'),
+	('int4rangecol', 'int4', '{@>}', '{1500}'),
+	('lsncol', 'pg_lsn', '{>, >=, =, <=, <, IS, IS NOT}', '{0/1200, 0/1200, 44/455222, 198/1999799, 198/1999799, NULL, NULL}'),
+	('boxcol', 'point', '{@>}', '{"(500,43)"}'),
+	('boxcol', 'box', '{<<, &<, &&, &>, >>, <<|, &<|, |&>, |>>, @>, <@, ~=}', '{"((1000,2000),(3000,4000))","((1,2),(3000,4000))","((1,2),(3000,4000))","((1,2),(3000,4000))","((1,2),(3,4))","((1000,2000),(3000,4000))","((1,2000),(3,4000))","((1000,2),(3000,4))","((1,2),(3,4))","((1,2),(300,400))","((1,2),(3000,4000))","((222,1222),(44,45))"}');
 DO $x$
 DECLARE
 	r record;
@@ -222,7 +235,9 @@ INSERT INTO brintest SELECT
 	tenthous::bit(16)::varbit,
 	tenthous::numeric(36,30) * fivethous * even / (hundred + 1),
 	format('%s%s-%s-%s-%s-%s%s%s', to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'), to_char(tenthous, 'FM0000'))::uuid,
-	format('%s/%s%s', odd, even, tenthous)::pg_lsn
+	int4range(thousand, twothousand),
+	format('%s/%s%s', odd, even, tenthous)::pg_lsn,
+	box(point(odd, even), point(thousand, twothousand))
 FROM tenk1 LIMIT 5 OFFSET 5;
 SELECT brin_summarize_new_values('brinidx'::regclass);
  brin_summarize_new_values 

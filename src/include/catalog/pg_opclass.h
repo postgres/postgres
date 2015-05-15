@@ -253,6 +253,7 @@ DATA(insert (	3580	abstime_minmax_ops		PGNSP PGUID 4072   702 t 702 ));
 DATA(insert (	3580	reltime_minmax_ops		PGNSP PGUID 4073   703 t 703 ));
 DATA(insert (	3580	macaddr_minmax_ops		PGNSP PGUID 4074   829 t 829 ));
 DATA(insert (	3580	inet_minmax_ops			PGNSP PGUID 4075   869 f 869 ));
+DATA(insert (	3580	inet_inclusion_ops		PGNSP PGUID 4102   869 t 869 ));
 DATA(insert (	3580	bpchar_minmax_ops		PGNSP PGUID 4076  1042 t 1042 ));
 DATA(insert (	3580	time_minmax_ops			PGNSP PGUID 4077  1083 t 1083 ));
 DATA(insert (	3580	date_minmax_ops			PGNSP PGUID 4059  1082 t 1082 ));
@@ -265,7 +266,10 @@ DATA(insert (	3580	varbit_minmax_ops		PGNSP PGUID 4080  1562 t 1562 ));
 DATA(insert (	3580	numeric_minmax_ops		PGNSP PGUID 4055  1700 t 1700 ));
 /* no brin opclass for record, anyarray */
 DATA(insert (	3580	uuid_minmax_ops			PGNSP PGUID 4081  2950 t 2950 ));
+DATA(insert (	3580	range_inclusion_ops		PGNSP PGUID 4103  3831 t 3831 ));
 DATA(insert (	3580	pg_lsn_minmax_ops		PGNSP PGUID 4082  3220 t 3220 ));
-/* no brin opclass for enum, tsvector, tsquery, jsonb, range */
+/* no brin opclass for enum, tsvector, tsquery, jsonb */
+DATA(insert (	3580	box_inclusion_ops		PGNSP PGUID 4104   603 t 603 ));
+/* no brin opclass for the geometric types except box */
 
 #endif   /* PG_OPCLASS_H */

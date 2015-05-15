@@ -172,12 +172,15 @@ DATA(insert OID = 4072 (	3580	abstime_minmax_ops		PGNSP PGUID ));
 DATA(insert OID = 4073 (	3580	reltime_minmax_ops		PGNSP PGUID ));
 DATA(insert OID = 4074 (	3580	macaddr_minmax_ops		PGNSP PGUID ));
 DATA(insert OID = 4075 (	3580	network_minmax_ops		PGNSP PGUID ));
+DATA(insert OID = 4102 (	3580	network_inclusion_ops	PGNSP PGUID ));
 DATA(insert OID = 4076 (	3580	bpchar_minmax_ops		PGNSP PGUID ));
 DATA(insert OID = 4077 (	3580	time_minmax_ops			PGNSP PGUID ));
 DATA(insert OID = 4078 (	3580	interval_minmax_ops		PGNSP PGUID ));
 DATA(insert OID = 4079 (	3580	bit_minmax_ops			PGNSP PGUID ));
 DATA(insert OID = 4080 (	3580	varbit_minmax_ops		PGNSP PGUID ));
 DATA(insert OID = 4081 (	3580	uuid_minmax_ops			PGNSP PGUID ));
+DATA(insert OID = 4103 (	3580	range_inclusion_ops		PGNSP PGUID ));
 DATA(insert OID = 4082 (	3580	pg_lsn_minmax_ops		PGNSP PGUID ));
+DATA(insert OID = 4104 (	3580	box_inclusion_ops		PGNSP PGUID ));
 
 #endif   /* PG_OPFAMILY_H */

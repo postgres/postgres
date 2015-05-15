@@ -105,11 +105,6 @@ brininsert(PG_FUNCTION_ARGS)
 		BrinMemTuple *dtup;
 		BlockNumber heapBlk;
 		int			keyno;
-#ifdef USE_ASSERT_CHECKING
-		BrinTuple  *tmptup;
-		BrinMemTuple *tmpdtup;
-		Size 		tmpsiz;
-#endif
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -137,45 +132,6 @@ brininsert(PG_FUNCTION_ARGS)
 
 		dtup = brin_deform_tuple(bdesc, brtup);
 
-#ifdef USE_ASSERT_CHECKING
-		{
-			/*
-			 * When assertions are enabled, we use this as an opportunity to
-			 * test the "union" method, which would otherwise be used very
-			 * rarely: first create a placeholder tuple, and addValue the
-			 * value we just got into it.  Then union the existing index tuple
-			 * with the updated placeholder tuple.  The tuple resulting from
-			 * that union should be identical to the one resulting from the
-			 * regular operation (straight addValue) below.
-			 *
-			 * Here we create the tuple to compare with; the actual comparison
-			 * is below.
-			 */
-			tmptup = brin_form_placeholder_tuple(bdesc, heapBlk, &tmpsiz);
-			tmpdtup = brin_deform_tuple(bdesc, tmptup);
-			for (keyno = 0; keyno < bdesc->bd_tupdesc->natts; keyno++)
-			{
-				BrinValues *bval;
-				FmgrInfo   *addValue;
-
-				bval = &tmpdtup->bt_columns[keyno];
-				addValue = index_getprocinfo(idxRel, keyno + 1,
-											 BRIN_PROCNUM_ADDVALUE);
-				FunctionCall4Coll(addValue,
-								  idxRel->rd_indcollation[keyno],
-								  PointerGetDatum(bdesc),
-								  PointerGetDatum(bval),
-								  values[keyno],
-								  nulls[keyno]);
-			}
-
-			union_tuples(bdesc, tmpdtup, brtup);
-
-			tmpdtup->bt_placeholder = dtup->bt_placeholder;
-			tmptup = brin_form_tuple(bdesc, heapBlk, tmpdtup, &tmpsiz);
-		}
-#endif
-
 		/*
 		 * Compare the key values of the new tuple to the stored index values;
 		 * our deformed tuple will get updated if the new tuple doesn't fit
@@ -201,20 +157,6 @@ brininsert(PG_FUNCTION_ARGS)
 			/* if that returned true, we need to insert the updated tuple */
 			need_insert |= DatumGetBool(result);
 		}
-
-#ifdef USE_ASSERT_CHECKING
-		{
-			/*
-			 * Now we can compare the tuple produced by the union function
-			 * with the one from plain addValue.
-			 */
-			BrinTuple  *cmptup;
-			Size		cmpsz;
-
-			cmptup = brin_form_tuple(bdesc, heapBlk, dtup, &cmpsz);
-			Assert(brin_tuples_equal(tmptup, tmpsiz, cmptup, cmpsz));
-		}
-#endif
 
 		if (!need_insert)
 		{
@@ -323,8 +265,6 @@ brinbeginscan(PG_FUNCTION_ARGS)
  * If a TID from the revmap is read as InvalidTID, we know that range is
  * unsummarized.  Pages in those ranges need to be returned regardless of scan
  * keys.
- *
- * XXX see _bt_first on what to do about sk_subtype.
  */
 Datum
 bringetbitmap(PG_FUNCTION_ARGS)
@@ -340,7 +280,6 @@ bringetbitmap(PG_FUNCTION_ARGS)
 	BlockNumber nblocks;
 	BlockNumber heapBlk;
 	int			totalpages = 0;
-	int			keyno;
 	FmgrInfo   *consistentFn;
 	MemoryContext oldcxt;
 	MemoryContext perRangeCxt;
@@ -359,18 +298,11 @@ bringetbitmap(PG_FUNCTION_ARGS)
 	heap_close(heapRel, AccessShareLock);
 
 	/*
-	 * Obtain consistent functions for all indexed column.  Maybe it'd be
-	 * possible to do this lazily only the first time we see a scan key that
-	 * involves each particular attribute.
+	 * Make room for the consistent support procedures of indexed columns.  We
+	 * don't look them up here; we do that lazily the first time we see a scan
+	 * key reference each of them.  We rely on zeroing fn_oid to InvalidOid.
 	 */
-	consistentFn = palloc(sizeof(FmgrInfo) * bdesc->bd_tupdesc->natts);
-	for (keyno = 0; keyno < bdesc->bd_tupdesc->natts; keyno++)
-	{
-		FmgrInfo   *tmp;
-
-		tmp = index_getprocinfo(idxRel, keyno + 1, BRIN_PROCNUM_CONSISTENT);
-		fmgr_info_copy(&consistentFn[keyno], tmp, CurrentMemoryContext);
-	}
+	consistentFn = palloc0(sizeof(FmgrInfo) * bdesc->bd_tupdesc->natts);
 
 	/*
 	 * Setup and use a per-range memory context, which is reset every time we
@@ -418,7 +350,6 @@ bringetbitmap(PG_FUNCTION_ARGS)
 		else
 		{
 			BrinMemTuple *dtup;
-			int			keyno;
 
 			dtup = brin_deform_tuple(bdesc, tup);
 			if (dtup->bt_placeholder)
@@ -431,6 +362,8 @@ bringetbitmap(PG_FUNCTION_ARGS)
 			}
 			else
 			{
+				int			keyno;
+
 				/*
 				 * Compare scan keys with summary values stored for the range.
 				 * If scan keys are matched, the page range must be added to
@@ -455,6 +388,17 @@ bringetbitmap(PG_FUNCTION_ARGS)
 					Assert((key->sk_flags & SK_ISNULL) ||
 						   (key->sk_collation ==
 					   bdesc->bd_tupdesc->attrs[keyattno - 1]->attcollation));
+
+					/* First time this column? look up consistent function */
+					if (consistentFn[keyattno - 1].fn_oid == InvalidOid)
+					{
+						FmgrInfo   *tmp;
+
+						tmp = index_getprocinfo(idxRel, keyattno,
+												BRIN_PROCNUM_CONSISTENT);
+						fmgr_info_copy(&consistentFn[keyattno - 1], tmp,
+									   CurrentMemoryContext);
+					}
 
 					/*
 					 * Check whether the scan key is consistent with the page

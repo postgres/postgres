@@ -977,6 +977,13 @@ DATA(insert (   4075    869  869 2 s      1204    3580 0 ));
 DATA(insert (   4075    869  869 3 s      1201    3580 0 ));
 DATA(insert (   4075    869  869 4 s      1206    3580 0 ));
 DATA(insert (   4075    869  869 5 s      1205    3580 0 ));
+/* inclusion inet */
+DATA(insert (   4102    869  869 3 s      3552    3580 0 ));
+DATA(insert (   4102    869  869 7 s       934    3580 0 ));
+DATA(insert (   4102    869  869 8 s       932    3580 0 ));
+DATA(insert (   4102    869  869 18 s     1201    3580 0 ));
+DATA(insert (   4102    869  869 24 s      933    3580 0 ));
+DATA(insert (   4102    869  869 26 s      931    3580 0 ));
 /* minmax character */
 DATA(insert (   4076   1042 1042 1 s      1058    3580 0 ));
 DATA(insert (   4076   1042 1042 2 s      1059    3580 0 ));
@@ -1072,11 +1079,41 @@ DATA(insert (   4081   2950 2950 2 s      2976    3580 0 ));
 DATA(insert (   4081   2950 2950 3 s      2972    3580 0 ));
 DATA(insert (   4081   2950 2950 4 s      2977    3580 0 ));
 DATA(insert (   4081   2950 2950 5 s      2975    3580 0 ));
+/* inclusion range types */
+DATA(insert (   4103   3831 3831  1 s     3893    3580 0 ));
+DATA(insert (   4103   3831 3831  2 s     3895    3580 0 ));
+DATA(insert (   4103   3831 3831  3 s     3888    3580 0 ));
+DATA(insert (   4103   3831 3831  4 s     3896    3580 0 ));
+DATA(insert (   4103   3831 3831  5 s     3894    3580 0 ));
+DATA(insert (   4103   3831 3831  7 s     3890    3580 0 ));
+DATA(insert (   4103   3831 3831  8 s     3892    3580 0 ));
+DATA(insert (   4103   3831 2283 16 s     3889    3580 0 ));
+DATA(insert (   4103   3831 3831 17 s     3897    3580 0 ));
+DATA(insert (   4103   3831 3831 18 s     3882    3580 0 ));
+DATA(insert (   4103   3831 3831 20 s     3884    3580 0 ));
+DATA(insert (   4103   3831 3831 21 s     3885    3580 0 ));
+DATA(insert (   4103   3831 3831 22 s     3887    3580 0 ));
+DATA(insert (   4103   3831 3831 23 s     3886    3580 0 ));
 /* minmax pg_lsn */
 DATA(insert (   4082   3220 3220 1 s      3224    3580 0 ));
 DATA(insert (   4082   3220 3220 2 s      3226    3580 0 ));
 DATA(insert (   4082   3220 3220 3 s      3222    3580 0 ));
 DATA(insert (   4082   3220 3220 4 s      3227    3580 0 ));
 DATA(insert (   4082   3220 3220 5 s      3225    3580 0 ));
+/* inclusion box */
+DATA(insert (	4104    603	 603  1 s	   493	  3580 0 ));
+DATA(insert (	4104    603  603  2 s	   494	  3580 0 ));
+DATA(insert (	4104    603  603  3 s	   500	  3580 0 ));
+DATA(insert (	4104    603  603  4 s	   495	  3580 0 ));
+DATA(insert (	4104    603  603  5 s	   496	  3580 0 ));
+DATA(insert (	4104    603  603  6 s	   499	  3580 0 ));
+DATA(insert (	4104    603  603  7 s	   498	  3580 0 ));
+DATA(insert (	4104    603  603  8 s	   497	  3580 0 ));
+DATA(insert (	4104    603  603  9 s	  2571	  3580 0 ));
+DATA(insert (	4104    603  603 10 s 	  2570	  3580 0 ));
+DATA(insert (	4104    603  603 11 s 	  2573	  3580 0 ));
+DATA(insert (	4104    603  603 12 s 	  2572	  3580 0 ));
+/* we could, but choose not to, supply entries for strategies 13 and 14 */
+DATA(insert (	4104    603  600  7 s	   433	  3580 0 ));
 
 #endif   /* PG_AMOP_H */

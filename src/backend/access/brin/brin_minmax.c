@@ -28,6 +28,10 @@ typedef struct MinmaxOpaque
 	FmgrInfo	strategy_procinfos[BTMaxStrategyNumber];
 } MinmaxOpaque;
 
+Datum		brin_minmax_opcinfo(PG_FUNCTION_ARGS);
+Datum		brin_minmax_add_value(PG_FUNCTION_ARGS);
+Datum		brin_minmax_consistent(PG_FUNCTION_ARGS);
+Datum		brin_minmax_union(PG_FUNCTION_ARGS);
 static FmgrInfo *minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
 					Oid subtype, uint16 strategynum);
 
@@ -302,6 +306,9 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 
 /*
  * Cache and return the procedure for the given strategy.
+ *
+ * Note: this function mirrors inclusion_get_strategy_procinfo; see notes
+ * there.  If changes are made here, see that function too.
  */
 static FmgrInfo *
 minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,

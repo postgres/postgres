@@ -551,6 +551,14 @@ DATA(insert (   4075   869   869  1  3383 ));
 DATA(insert (   4075   869   869  2  3384 ));
 DATA(insert (   4075   869   869  3  3385 ));
 DATA(insert (   4075   869   869  4  3386 ));
+/* inclusion inet */
+DATA(insert (   4102   869   869  1  4105 ));
+DATA(insert (   4102   869   869  2  4106 ));
+DATA(insert (   4102   869   869  3  4107 ));
+DATA(insert (   4102   869   869  4  4108 ));
+DATA(insert (   4102   869   869 11  4063 ));
+DATA(insert (   4102   869   869 12  4071 ));
+DATA(insert (   4102   869   869 13   930 ));
 /* minmax character */
 DATA(insert (   4076  1042  1042  1  3383 ));
 DATA(insert (   4076  1042  1042  2  3384 ));
@@ -631,10 +639,25 @@ DATA(insert (   4081  2950  2950  1  3383 ));
 DATA(insert (   4081  2950  2950  2  3384 ));
 DATA(insert (   4081  2950  2950  3  3385 ));
 DATA(insert (   4081  2950  2950  4  3386 ));
+/* inclusion range types */
+DATA(insert (   4103  3831  3831  1  4105 ));
+DATA(insert (   4103  3831  3831  2  4106 ));
+DATA(insert (   4103  3831  3831  3  4107 ));
+DATA(insert (   4103  3831  3831  4  4108 ));
+DATA(insert (   4103  3831  3831  11 4057 ));
+DATA(insert (   4103  3831  3831  13 3859 ));
+DATA(insert (   4103  3831  3831  14 3850 ));
 /* minmax pg_lsn */
 DATA(insert (   4082  3220  3220  1  3383 ));
 DATA(insert (   4082  3220  3220  2  3384 ));
 DATA(insert (   4082  3220  3220  3  3385 ));
 DATA(insert (   4082  3220  3220  4  3386 ));
+/* inclusion box */
+DATA(insert (   4104   603   603  1  4105 ));
+DATA(insert (   4104   603   603  2  4106 ));
+DATA(insert (   4104   603   603  3  4107 ));
+DATA(insert (   4104   603   603  4  4108 ));
+DATA(insert (   4104   603   603  11 4067 ));
+DATA(insert (   4104   603   603  13  187 ));
 
 #endif   /* PG_AMPROC_H */

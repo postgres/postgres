@@ -72,7 +72,9 @@
  <para>
   The <firstterm>minmax</>
   operator classes store the minimum and the maximum values appearing
-  in the indexed column within the range.
+  in the indexed column within the range.  The <firstterm>inclusion</>
+  operator classes store a value which includes the values in the indexed
+  column within the range.
  </para>
 
  <table id="brin-builtin-opclasses-table">
@@ -252,6 +254,18 @@
      </entry>
     </row>
     <row>
+     <entry><literal>inet_inclusion_ops</literal></entry>
+     <entry><type>inet</type></entry>
+     <entry>
+      <literal>&amp;&amp;</>
+      <literal>&gt;&gt;</>
+      <literal>&gt;&gt;=</>
+      <literal>&lt;&lt;</literal>
+      <literal>&lt;&lt;=</literal>
+      <literal>=</literal>
+     </entry>
+    </row>
+    <row>
      <entry><literal>bpchar_minmax_ops</literal></entry>
      <entry><type>character</type></entry>
      <entry>
@@ -373,6 +387,25 @@
      </entry>
     </row>
     <row>
+     <entry><literal>range_inclusion_ops</></entry>
+     <entry><type>any range type</type></entry>
+     <entry>
+      <literal>&amp;&amp;</>
+      <literal>&amp;&gt;</>
+      <literal>&amp;&lt;</>
+      <literal>&gt;&gt;</>
+      <literal>&lt;&lt;</>
+      <literal>&lt;@</>
+      <literal>=</>
+      <literal>@&gt;</>
+      <literal>&lt;</literal>
+      <literal>&lt;=</literal>
+      <literal>=</literal>
+      <literal>&gt;=</literal>
+      <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
      <entry><literal>pg_lsn_minmax_ops</literal></entry>
      <entry><type>pg_lsn</type></entry>
      <entry>
@@ -381,6 +414,24 @@
       <literal>=</literal>
       <literal>&gt;=</literal>
       <literal>&gt;</literal>
+     </entry>
+    </row>
+    <row>
+     <entry><literal>box_inclusion_ops</></entry>
+     <entry><type>box</type></entry>
+     <entry>
+      <literal>&amp;&amp;</>
+      <literal>&amp;&gt;</>
+      <literal>&amp;&lt;</>
+      <literal>&gt;&gt;</>
+      <literal>&lt;&lt;</>
+      <literal>&lt;@</>
+      <literal>~=</>
+      <literal>@&gt;</>
+      <literal>&amp;&gt;|</>
+      <literal>|&amp;&lt;</>
+      <literal>&gt;&gt;|</>
+      <literal>|&lt;&lt;</literal>
      </entry>
     </row>
    </tbody>

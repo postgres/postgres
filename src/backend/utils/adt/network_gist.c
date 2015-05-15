@@ -62,9 +62,9 @@
 #define INETSTRAT_GT			RTGreaterStrategyNumber
 #define INETSTRAT_GE			RTGreaterEqualStrategyNumber
 #define INETSTRAT_SUB			RTSubStrategyNumber
-#define INETSTRAT_SUBEQ			RTSubOrEqualStrategyNumber
+#define INETSTRAT_SUBEQ			RTSubEqualStrategyNumber
 #define INETSTRAT_SUP			RTSuperStrategyNumber
-#define INETSTRAT_SUPEQ			RTSuperOrEqualStrategyNumber
+#define INETSTRAT_SUPEQ			RTSuperEqualStrategyNumber
 
 
 /*
