@@ -23,7 +23,8 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
@@ -60,6 +61,8 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+
    <group choice="plain">
     <arg choice="plain"><option>--all</option></arg>
     <arg choice="plain"><option>-a</option></arg>
@@ -69,6 +72,8 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+
    <group choice="plain">
     <arg choice="plain"><option>--system</option></arg>
     <arg choice="plain"><option>-s</option></arg>
@@ -194,6 +199,16 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+    <varlistentry>
+     <term><option>-v</></term>
+     <term><option>--verbose</></term>
+     <listitem>
+      <para>
+       Print detailed information during processing.
+      </para>
+     </listitem>
+    </varlistentry>
 
     <varlistentry>
       <term><option>-V</></term>
