@@ -44,8 +44,11 @@ johab_to_utf8(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_JOHAB, PG_UTF8);
 
-	LocalToUtf(src, dest, LUmapJOHAB, NULL,
-			 sizeof(LUmapJOHAB) / sizeof(pg_local_to_utf), 0, PG_JOHAB, len);
+	LocalToUtf(src, len, dest,
+			   LUmapJOHAB, lengthof(LUmapJOHAB),
+			   NULL, 0,
+			   NULL,
+			   PG_JOHAB);
 
 	PG_RETURN_VOID();
 }
@@ -59,8 +62,11 @@ utf8_to_johab(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_JOHAB);
 
-	UtfToLocal(src, dest, ULmapJOHAB, NULL,
-			 sizeof(ULmapJOHAB) / sizeof(pg_utf_to_local), 0, PG_JOHAB, len);
+	UtfToLocal(src, len, dest,
+			   ULmapJOHAB, lengthof(ULmapJOHAB),
+			   NULL, 0,
+			   NULL,
+			   PG_JOHAB);
 
 	PG_RETURN_VOID();
 }

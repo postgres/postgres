@@ -44,8 +44,11 @@ big5_to_utf8(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_UTF8);
 
-	LocalToUtf(src, dest, LUmapBIG5, NULL,
-			   sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), 0, PG_BIG5, len);
+	LocalToUtf(src, len, dest,
+			   LUmapBIG5, lengthof(LUmapBIG5),
+			   NULL, 0,
+			   NULL,
+			   PG_BIG5);
 
 	PG_RETURN_VOID();
 }
@@ -59,8 +62,11 @@ utf8_to_big5(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_BIG5);
 
-	UtfToLocal(src, dest, ULmapBIG5, NULL,
-			   sizeof(ULmapBIG5) / sizeof(pg_utf_to_local), 0, PG_BIG5, len);
+	UtfToLocal(src, len, dest,
+			   ULmapBIG5, lengthof(ULmapBIG5),
+			   NULL, 0,
+			   NULL,
+			   PG_BIG5);
 
 	PG_RETURN_VOID();
 }

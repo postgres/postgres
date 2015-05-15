@@ -97,7 +97,7 @@ close(FILE);
 
 $file = lc("utf8_to_big5.map");
 open(FILE, "> $file") || die("cannot open $file");
-print FILE "static pg_utf_to_local ULmapBIG5[ $count ] = {\n";
+print FILE "static const pg_utf_to_local ULmapBIG5[ $count ] = {\n";
 
 for $index (sort { $a <=> $b } keys(%array))
 {
@@ -185,7 +185,7 @@ close(FILE);
 
 $file = lc("big5_to_utf8.map");
 open(FILE, "> $file") || die("cannot open $file");
-print FILE "static pg_local_to_utf LUmapBIG5[ $count ] = {\n";
+print FILE "static const pg_local_to_utf LUmapBIG5[ $count ] = {\n";
 for $index (sort { $a <=> $b } keys(%array))
 {
 	$utf = $array{$index};

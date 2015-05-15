@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapKOI8R[ 128 ] = {
+static const pg_utf_to_local ULmapKOI8R[ 128 ] = {
   {0xc2a0, 0x009a},
   {0xc2a9, 0x00bf},
   {0xc2b0, 0x009c},

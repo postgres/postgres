@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapGBK[ 21792 ] = {
+static const pg_utf_to_local ULmapGBK[ 21792 ] = {
   {0xc2a4, 0xa1e8},
   {0xc2a7, 0xa1ec},
   {0xc2a8, 0xa1a7},

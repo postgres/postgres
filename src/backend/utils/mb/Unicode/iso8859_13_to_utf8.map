@@ -1,6 +1,6 @@
 /* src/backend/utils/mb/Unicode/iso8859_13_to_utf8.map */
 
-static pg_local_to_utf LUmapISO8859_13[ 128 ] = {
+static const pg_local_to_utf LUmapISO8859_13[ 128 ] = {
   {0x0080, 0xc280},
   {0x0081, 0xc281},
   {0x0082, 0xc282},

@@ -366,9 +366,16 @@ typedef struct
 extern const pg_wchar_tbl pg_wchar_table[];
 
 /*
+ * Data structures for conversions between UTF-8 and other encodings
+ * (UtfToLocal() and LocalToUtf()).  In these data structures, characters of
+ * either encoding are represented by uint32 words; hence we can only support
+ * characters up to 4 bytes long.  For example, the byte sequence 0xC2 0x89
+ * would be represented by 0x0000C289, and 0xE8 0xA2 0xB4 by 0x00E8A2B4.
+ *
+ * Maps are arrays of these structs, which must be in order by the lookup key
+ * (so that bsearch() can be used).
+ *
  * UTF-8 to local code conversion map
- * Note that we limit the max length of UTF-8 to 4 bytes,
- * which is UCS-4 00010000-001FFFFF range.
  */
 typedef struct
 {
@@ -386,7 +393,7 @@ typedef struct
 } pg_local_to_utf;
 
 /*
- * UTF-8 to local code conversion map(combined characters)
+ * UTF-8 to local code conversion map (for combined characters)
  */
 typedef struct
 {
@@ -396,7 +403,7 @@ typedef struct
 } pg_utf_to_local_combined;
 
 /*
- * local code to UTF-8 conversion map(combined characters)
+ * local code to UTF-8 conversion map (for combined characters)
  */
 typedef struct
 {
@@ -404,6 +411,13 @@ typedef struct
 	uint32		utf1;			/* UTF-8 code 1 */
 	uint32		utf2;			/* UTF-8 code 2 */
 } pg_local_to_utf_combined;
+
+/*
+ * callback function for algorithmic encoding conversions (in either direction)
+ *
+ * if function returns zero, it does not know how to convert the code
+ */
+typedef uint32 (*utf_local_conversion_func) (uint32 code);
 
 /*
  * Support macro for encoding conversion functions to validate their
@@ -494,13 +508,18 @@ extern char *pg_server_to_any(const char *s, int len, int encoding);
 extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
-extern void LocalToUtf(const unsigned char *iso, unsigned char *utf,
-		   const pg_local_to_utf *map, const pg_local_to_utf_combined *cmap,
-		   int size1, int size2, int encoding, int len);
-
-extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
-		   const pg_utf_to_local *map, const pg_utf_to_local_combined *cmap,
-		   int size1, int size2, int encoding, int len);
+extern void UtfToLocal(const unsigned char *utf, int len,
+		   unsigned char *iso,
+		   const pg_utf_to_local *map, int mapsize,
+		   const pg_utf_to_local_combined *cmap, int cmapsize,
+		   utf_local_conversion_func conv_func,
+		   int encoding);
+extern void LocalToUtf(const unsigned char *iso, int len,
+		   unsigned char *utf,
+		   const pg_local_to_utf *map, int mapsize,
+		   const pg_local_to_utf_combined *cmap, int cmapsize,
+		   utf_local_conversion_func conv_func,
+		   int encoding);
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,

@@ -22,7 +22,7 @@ typedef struct
 } codes_t;
 
 /* map Big5 Level 1 to CNS 11643-1992 Plane 1 */
-static codes_t big5Level1ToCnsPlane1[25] = {	/* range */
+static const codes_t big5Level1ToCnsPlane1[25] = {	/* range */
 	{0xA140, 0x2121},
 	{0xA1F6, 0x2258},
 	{0xA1F7, 0x2257},
@@ -51,7 +51,7 @@ static codes_t big5Level1ToCnsPlane1[25] = {	/* range */
 };
 
 /* map CNS 11643-1992 Plane 1 to Big5 Level 1 */
-static codes_t cnsPlane1ToBig5Level1[26] = {	/* range */
+static const codes_t cnsPlane1ToBig5Level1[26] = {	/* range */
 	{0x2121, 0xA140},
 	{0x2257, 0xA1F7},
 	{0x2258, 0xA1F6},
@@ -81,7 +81,7 @@ static codes_t cnsPlane1ToBig5Level1[26] = {	/* range */
 };
 
 /* map Big5 Level 2 to CNS 11643-1992 Plane 2 */
-static codes_t big5Level2ToCnsPlane2[48] = {	/* range */
+static const codes_t big5Level2ToCnsPlane2[48] = {	/* range */
 	{0xC940, 0x2121},
 	{0xc94a, 0x0000},
 	{0xC94B, 0x212B},
@@ -133,7 +133,7 @@ static codes_t big5Level2ToCnsPlane2[48] = {	/* range */
 };
 
 /* map CNS 11643-1992 Plane 2 to Big5 Level 2 */
-static codes_t cnsPlane2ToBig5Level2[49] = {	/* range */
+static const codes_t cnsPlane2ToBig5Level2[49] = {	/* range */
 	{0x2121, 0xC940},
 	{0x212B, 0xC94B},
 	{0x214C, 0xC9BE},
@@ -186,7 +186,7 @@ static codes_t cnsPlane2ToBig5Level2[49] = {	/* range */
 };
 
 /* Big Five Level 1 Correspondence to CNS 11643-1992 Plane 4 */
-static unsigned short b1c4[][2] = {
+static const unsigned short b1c4[][2] = {
 	{0xC879, 0x2123},
 	{0xC87B, 0x2124},
 	{0xC87D, 0x212A},
@@ -194,7 +194,7 @@ static unsigned short b1c4[][2] = {
 };
 
 /* Big Five Level 2 Correspondence to CNS 11643-1992 Plane 3 */
-static unsigned short b2c3[][2] = {
+static const unsigned short b2c3[][2] = {
 	{0xF9D6, 0x4337},
 	{0xF9D7, 0x4F50},
 	{0xF9D8, 0x444E},
@@ -205,7 +205,7 @@ static unsigned short b2c3[][2] = {
 };
 
 static unsigned short BinarySearchRange
-			(codes_t *array, int high, unsigned short code)
+			(const codes_t *array, int high, unsigned short code)
 {
 	int			low,
 				mid,

@@ -1,6 +1,6 @@
 /* src/backend/utils/mb/Unicode/euc_tw_to_utf8.map */
 
-static pg_local_to_utf LUmapEUC_TW[ 23575 ] = {
+static const pg_local_to_utf LUmapEUC_TW[ 23575 ] = {
   {0xa1a1, 0xe38080},
   {0xa1a2, 0xefbc8c},
   {0xa1a3, 0xe38081},

@@ -44,8 +44,11 @@ gb18030_to_utf8(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_GB18030, PG_UTF8);
 
-	LocalToUtf(src, dest, LUmapGB18030, NULL,
-		 sizeof(LUmapGB18030) / sizeof(pg_local_to_utf), 0, PG_GB18030, len);
+	LocalToUtf(src, len, dest,
+			   LUmapGB18030, lengthof(LUmapGB18030),
+			   NULL, 0,
+			   NULL,
+			   PG_GB18030);
 
 	PG_RETURN_VOID();
 }
@@ -59,8 +62,11 @@ utf8_to_gb18030(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_GB18030);
 
-	UtfToLocal(src, dest, ULmapGB18030, NULL,
-		 sizeof(ULmapGB18030) / sizeof(pg_utf_to_local), 0, PG_GB18030, len);
+	UtfToLocal(src, len, dest,
+			   ULmapGB18030, lengthof(ULmapGB18030),
+			   NULL, 0,
+			   NULL,
+			   PG_GB18030);
 
 	PG_RETURN_VOID();
 }

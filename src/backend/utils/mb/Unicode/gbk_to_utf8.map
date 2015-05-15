@@ -1,6 +1,6 @@
 /* src/backend/utils/mb/Unicode/gbk_to_utf8.map */
 
-static pg_local_to_utf LUmapGBK[ 21792 ] = {
+static const pg_local_to_utf LUmapGBK[ 21792 ] = {
   {0x0080, 0xe282ac},
   {0x8140, 0xe4b882},
   {0x8141, 0xe4b884},

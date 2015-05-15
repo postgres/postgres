@@ -44,8 +44,11 @@ uhc_to_utf8(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UHC, PG_UTF8);
 
-	LocalToUtf(src, dest, LUmapUHC, NULL,
-			   sizeof(LUmapUHC) / sizeof(pg_local_to_utf), 0, PG_UHC, len);
+	LocalToUtf(src, len, dest,
+			   LUmapUHC, lengthof(LUmapUHC),
+			   NULL, 0,
+			   NULL,
+			   PG_UHC);
 
 	PG_RETURN_VOID();
 }
@@ -59,8 +62,11 @@ utf8_to_uhc(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_UHC);
 
-	UtfToLocal(src, dest, ULmapUHC, NULL,
-			   sizeof(ULmapUHC) / sizeof(pg_utf_to_local), 0, PG_UHC, len);
+	UtfToLocal(src, len, dest,
+			   ULmapUHC, lengthof(ULmapUHC),
+			   NULL, 0,
+			   NULL,
+			   PG_UHC);
 
 	PG_RETURN_VOID();
 }

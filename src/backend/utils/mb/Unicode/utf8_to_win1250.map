@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapWIN1250[ 123 ] = {
+static const pg_utf_to_local ULmapWIN1250[ 123 ] = {
   {0xc2a0, 0x00a0},
   {0xc2a4, 0x00a4},
   {0xc2a6, 0x00a6},

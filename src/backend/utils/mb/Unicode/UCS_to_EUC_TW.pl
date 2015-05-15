@@ -71,7 +71,7 @@ close(FILE);
 
 $file = "utf8_to_euc_tw.map";
 open(FILE, "> $file") || die("cannot open $file");
-print FILE "static pg_utf_to_local ULmapEUC_TW[ $count ] = {\n";
+print FILE "static const pg_utf_to_local ULmapEUC_TW[ $count ] = {\n";
 
 for $index (sort { $a <=> $b } keys(%array))
 {
@@ -138,7 +138,7 @@ close(FILE);
 
 $file = "euc_tw_to_utf8.map";
 open(FILE, "> $file") || die("cannot open $file");
-print FILE "static pg_local_to_utf LUmapEUC_TW[ $count ] = {\n";
+print FILE "static const pg_local_to_utf LUmapEUC_TW[ $count ] = {\n";
 for $index (sort { $a <=> $b } keys(%array))
 {
 	$utf = $array{$index};

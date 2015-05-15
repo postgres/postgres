@@ -1,4 +1,4 @@
-static pg_local_to_utf LUmapJOHAB[ 17049 ] = {
+static const pg_local_to_utf LUmapJOHAB[ 17049 ] = {
   {0x8444, 0xe384b3},
   {0x8446, 0xe384b5},
   {0x8447, 0xe384b6},

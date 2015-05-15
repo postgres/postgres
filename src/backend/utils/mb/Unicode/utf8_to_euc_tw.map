@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapEUC_TW[ 17711 ] = {
+static const pg_utf_to_local ULmapEUC_TW[ 17711 ] = {
   {0xc2a7, 0xa1f0},
   {0xc2b0, 0xa2f8},
   {0xc2b1, 0xa2b4},

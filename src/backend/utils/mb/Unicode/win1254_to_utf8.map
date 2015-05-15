@@ -1,4 +1,4 @@
-static pg_local_to_utf LUmapWIN1254[ 121 ] = {
+static const pg_local_to_utf LUmapWIN1254[ 121 ] = {
   {0x0080, 0xe282ac},
   {0x0082, 0xe2809a},
   {0x0083, 0xc692},

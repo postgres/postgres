@@ -44,8 +44,11 @@ euc_tw_to_utf8(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_UTF8);
 
-	LocalToUtf(src, dest, LUmapEUC_TW, NULL,
-		   sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), 0, PG_EUC_TW, len);
+	LocalToUtf(src, len, dest,
+			   LUmapEUC_TW, lengthof(LUmapEUC_TW),
+			   NULL, 0,
+			   NULL,
+			   PG_EUC_TW);
 
 	PG_RETURN_VOID();
 }
@@ -59,8 +62,11 @@ utf8_to_euc_tw(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_TW);
 
-	UtfToLocal(src, dest, ULmapEUC_TW, NULL,
-		   sizeof(ULmapEUC_TW) / sizeof(pg_utf_to_local), 0, PG_EUC_TW, len);
+	UtfToLocal(src, len, dest,
+			   ULmapEUC_TW, lengthof(ULmapEUC_TW),
+			   NULL, 0,
+			   NULL,
+			   PG_EUC_TW);
 
 	PG_RETURN_VOID();
 }

@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapEUC_KR[ 8227 ] = {
+static const pg_utf_to_local ULmapEUC_KR[ 8227 ] = {
   {0xc2a1, 0xa2ae},
   {0xc2a4, 0xa2b4},
   {0xc2a7, 0xa1d7},
