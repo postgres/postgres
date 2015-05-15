@@ -39,6 +39,7 @@
 #include "executor/nodeNestloop.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
+#include "executor/nodeSamplescan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSetOp.h"
 #include "executor/nodeSort.h"
@@ -153,6 +154,10 @@ ExecReScan(PlanState *node)
 
 		case T_SeqScanState:
 			ExecReScanSeqScan((SeqScanState *) node);
+			break;
+
+		case T_SampleScanState:
+			ExecReScanSampleScan((SampleScanState *) node);
 			break;
 
 		case T_IndexScanState:
@@ -478,6 +483,9 @@ ExecSupportsBackwardScan(Plan *node)
 					TargetListSupportsBackwardScan(node->targetlist))
 					return true;
 			}
+			return false;
+
+		case T_SampleScan:
 			return false;
 
 		case T_Material:

@@ -220,6 +220,73 @@ cost_seqscan(Path *path, PlannerInfo *root,
 }
 
 /*
+ * cost_samplescan
+ *	  Determines and returns the cost of scanning a relation using sampling.
+ *
+ * From planner/optimizer perspective, we don't care all that much about cost
+ * itself since there is always only one scan path to consider when sampling
+ * scan is present, but number of rows estimation is still important.
+ *
+ * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
+ */
+void
+cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+	double		spc_seq_page_cost,
+				spc_random_page_cost,
+				spc_page_cost;
+	QualCost	qpqual_cost;
+	Cost		cpu_per_tuple;
+	BlockNumber pages;
+	double		tuples;
+	RangeTblEntry		   *rte = planner_rt_fetch(baserel->relid, root);
+	TableSampleClause	   *tablesample = rte->tablesample;
+
+	/* Should only be applied to base relations */
+	Assert(baserel->relid > 0);
+	Assert(baserel->rtekind == RTE_RELATION);
+
+	/* Mark the path with the correct row estimate */
+	if (path->param_info)
+		path->rows = path->param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
+
+	/* Call the sampling method's costing function. */
+	OidFunctionCall6(tablesample->tsmcost, PointerGetDatum(root),
+					 PointerGetDatum(path), PointerGetDatum(baserel),
+					 PointerGetDatum(tablesample->args),
+					 PointerGetDatum(&pages), PointerGetDatum(&tuples));
+
+	/* fetch estimated page cost for tablespace containing table */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  &spc_random_page_cost,
+							  &spc_seq_page_cost);
+
+
+	spc_page_cost = tablesample->tsmseqscan ? spc_seq_page_cost :
+					spc_random_page_cost;
+
+	/*
+	 * disk costs
+	 */
+	run_cost += spc_page_cost * pages;
+
+	/* CPU costs */
+	get_restriction_qual_cost(root, baserel, path->param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
+	run_cost += cpu_per_tuple * tuples;
+
+	path->startup_cost = startup_cost;
+	path->total_cost = startup_cost + run_cost;
+}
+
+/*
  * cost_index
  *	  Determines and returns the cost of scanning a relation using an index.
  *

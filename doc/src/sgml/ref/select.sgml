@@ -49,7 +49,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
 <phrase>where <replaceable class="parameter">from_item</replaceable> can be one of:</phrase>
 
-    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
+    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ] [ TABLESAMPLE <replaceable class="parameter">sampling_method</replaceable> ( <replaceable class="parameter">argument</replaceable> [, ...] ) [ REPEATABLE ( <replaceable class="parameter">seed</replaceable> ) ] ]
     [ LATERAL ] ( <replaceable class="parameter">select</replaceable> ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ]
     <replaceable class="parameter">with_query_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] )
@@ -312,6 +312,50 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         and all its descendant tables (if any) are scanned.  Optionally,
         <literal>*</> can be specified after the table name to explicitly
         indicate that descendant tables are included.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>TABLESAMPLE <replaceable class="parameter">sampling_method</replaceable> ( <replaceable class="parameter">argument</replaceable> [, ...] ) [ REPEATABLE ( <replaceable class="parameter">seed</replaceable> ) ]</term>
+      <listitem>
+       <para>
+        Table sample clause after
+        <replaceable class="parameter">table_name</replaceable> indicates that
+        a <replaceable class="parameter">sampling_method</replaceable> should
+        be used to retrieve subset of rows in the table.
+        The <replaceable class="parameter">sampling_method</replaceable> can be
+        any sampling method installed in the database. There are currently two
+        sampling methods available in the standard
+        <productname>PostgreSQL</productname> distribution:
+        <itemizedlist>
+         <listitem>
+          <para><literal>SYSTEM</literal></para>
+         </listitem>
+         <listitem>
+          <para><literal>BERNOULLI</literal></para>
+         </listitem>
+        </itemizedlist>
+        Both of these sampling methods currently accept only single argument
+        which is the percent (floating point from 0 to 100) of the rows to
+        be returned.
+        The <literal>SYSTEM</literal> sampling method does block level
+        sampling with each block having the same chance of being selected and
+        returns all rows from each selected block.
+        The <literal>BERNOULLI</literal> scans whole table and returns
+        individual rows with equal probability. Additional sampling methods
+        may be installed in the database via extensions.
+       </para>
+       <para>
+        The optional parameter <literal>REPEATABLE</literal> uses the seed
+        parameter, which can be a number or expression producing a number, as
+        a random seed for sampling. Note that subsequent commands may return
+        different results even if same <literal>REPEATABLE</literal> clause was
+        specified. This happens because <acronym>DML</acronym> statements and
+        maintenance operations such as <command>VACUUM</> may affect physical
+        distribution of data. The <function>setseed()</> function will not
+        affect the sampling result when the <literal>REPEATABLE</literal>
+        parameter is used.
        </para>
       </listitem>
      </varlistentry>
@@ -1927,5 +1971,20 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     <literal>ROWS FROM( ... )</> is an extension of the SQL standard.
    </para>
   </refsect2>
+
+  <refsect2>
+   <title><literal>TABLESAMPLE</literal> clause</title>
+
+   <para>
+    The <literal>TABLESAMPLE</> clause is currently accepted only on physical
+    relations and materialized views.
+   </para>
+
+   <para>
+    Additional modules allow you to install custom sampling methods and use
+    them instead of the SQL standard methods.
+   </para>
+  </refsect2>
+
  </refsect1>
 </refentry>

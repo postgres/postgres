@@ -2058,6 +2058,14 @@ range_table_walker(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
+				if (rte->tablesample)
+				{
+					if (walker(rte->tablesample->args, context))
+						return true;
+					if (walker(rte->tablesample->repeatable, context))
+						return true;
+				}
+				break;
 			case RTE_CTE:
 				/* nothing to do */
 				break;
@@ -2813,6 +2821,14 @@ range_table_mutator(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
+				if (rte->tablesample)
+				{
+					MUTATE(rte->tablesample->args, rte->tablesample->args,
+						   List *);
+					MUTATE(rte->tablesample->repeatable,
+						   rte->tablesample->repeatable, Node *);
+				}
+				break;
 			case RTE_CTE:
 				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;
@@ -3309,6 +3325,18 @@ raw_expression_tree_walker(Node *node,
 			break;
 		case T_CommonTableExpr:
 			return walker(((CommonTableExpr *) node)->ctequery, context);
+		case T_RangeTableSample:
+			{
+				RangeTableSample *rts = (RangeTableSample *) node;
+
+				if (walker(rts->relation, context))
+					return true;
+				if (walker(rts->repeatable, context))
+					return true;
+				if (walker(rts->args, context))
+					return true;
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));

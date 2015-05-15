@@ -71,6 +71,10 @@ static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				   RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
+static void set_tablesample_rel_size(PlannerInfo *root, RelOptInfo *rel,
+				   RangeTblEntry *rte);
+static void set_tablesample_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+										 RangeTblEntry *rte);
 static void set_foreign_size(PlannerInfo *root, RelOptInfo *rel,
 				 RangeTblEntry *rte);
 static void set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -265,6 +269,11 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 					/* Foreign table */
 					set_foreign_size(root, rel, rte);
 				}
+				else if (rte->tablesample != NULL)
+				{
+					/* Sampled relation */
+					set_tablesample_rel_size(root, rel, rte);
+				}
 				else
 				{
 					/* Plain relation */
@@ -331,6 +340,11 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				{
 					/* Foreign table */
 					set_foreign_pathlist(root, rel, rte);
+				}
+				else if (rte->tablesample != NULL)
+				{
+					/* Build sample scan on relation */
+					set_tablesample_rel_pathlist(root, rel, rte);
 				}
 				else
 				{
@@ -415,6 +429,41 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Consider TID scans */
 	create_tidscan_paths(root, rel);
+}
+
+/*
+ * set_tablesample_rel_size
+ *	  Set size estimates for a sampled relation.
+ */
+static void
+set_tablesample_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
+	/* Mark rel with estimated output rows, width, etc */
+	set_baserel_size_estimates(root, rel);
+}
+
+/*
+ * set_tablesample_rel_pathlist
+ *	  Build access paths for a sampled relation
+ *
+ * There is only one possible path - sampling scan
+ */
+static void
+set_tablesample_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
+	Relids	required_outer;
+	Path   *path;
+
+	/*
+	 * We don't support pushing join clauses into the quals of a seqscan, but
+	 * it could still have required parameterization due to LATERAL refs in
+	 * its tlist.
+	 */
+	required_outer = rel->lateral_relids;
+
+	/* We only do sample scan if it was requested */
+	path = create_samplescan_path(root, rel, required_outer);
+	rel->pathlist = list_make1(path);
 }
 
 /*

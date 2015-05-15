@@ -63,7 +63,6 @@ typedef struct RelationAmInfo
 	FmgrInfo	amcanreturn;
 } RelationAmInfo;
 
-
 /*
  * Here are the contents of a relation cache entry.
  */

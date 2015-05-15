@@ -17,6 +17,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "access/htup_details.h"
 #include "catalog/heap.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
@@ -31,6 +32,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -39,6 +41,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 
 /* Convenience macro for the most common makeNamespaceItem() case */
@@ -417,6 +420,39 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *namespace)
 	pstate->p_namespace = save_namespace;
 
 	return result;
+}
+
+static RangeTblEntry *
+transformTableSampleEntry(ParseState *pstate, RangeTableSample *rv)
+{
+	RangeTblEntry   *rte = NULL;
+	CommonTableExpr *cte = NULL;
+	TableSampleClause *tablesample = NULL;
+
+	/* if relation has an unqualified name, it might be a CTE reference */
+	if (!rv->relation->schemaname)
+	{
+		Index	levelsup;
+		cte = scanNameSpaceForCTE(pstate, rv->relation->relname, &levelsup);
+	}
+
+	/* We first need to build a range table entry */
+	if (!cte)
+		rte = transformTableEntry(pstate, rv->relation);
+
+	if (!rte ||
+		(rte->relkind != RELKIND_RELATION &&
+		rte->relkind != RELKIND_MATVIEW))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("TABLESAMPLE clause can only be used on tables and materialized views"),
+				 parser_errposition(pstate, rv->relation->location)));
+
+	tablesample = ParseTableSample(pstate, rv->method, rv->repeatable,
+								   rv->args, rv->relation->location);
+	rte->tablesample = tablesample;
+
+	return rte;
 }
 
 /*
@@ -1126,6 +1162,26 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 											   true));
 
 		return (Node *) j;
+	}
+	else if (IsA(n, RangeTableSample))
+	{
+		/* Tablesample reference */
+		RangeTableSample   *rv = (RangeTableSample *) n;
+		RangeTblRef *rtr;
+		RangeTblEntry *rte = NULL;
+		int			rtindex;
+
+		rte = transformTableSampleEntry(pstate, rv);
+
+		/* assume new rte is at end */
+		rtindex = list_length(pstate->p_rtable);
+		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
+		*top_rte = rte;
+		*top_rti = rtindex;
+		*namespace = list_make1(makeDefaultNSItem(rte));
+		rtr = makeNode(RangeTblRef);
+		rtr->rtindex = rtindex;
+		return (Node *) rtr;
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));

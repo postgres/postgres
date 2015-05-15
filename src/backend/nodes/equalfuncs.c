@@ -2359,6 +2359,7 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_SCALAR_FIELD(rtekind);
 	COMPARE_SCALAR_FIELD(relid);
 	COMPARE_SCALAR_FIELD(relkind);
+	COMPARE_NODE_FIELD(tablesample);
 	COMPARE_NODE_FIELD(subquery);
 	COMPARE_SCALAR_FIELD(security_barrier);
 	COMPARE_SCALAR_FIELD(jointype);
@@ -2498,6 +2499,36 @@ _equalCommonTableExpr(const CommonTableExpr *a, const CommonTableExpr *b)
 	COMPARE_NODE_FIELD(ctecoltypes);
 	COMPARE_NODE_FIELD(ctecoltypmods);
 	COMPARE_NODE_FIELD(ctecolcollations);
+
+	return true;
+}
+
+static bool
+_equalRangeTableSample(const RangeTableSample *a, const RangeTableSample *b)
+{
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(method);
+	COMPARE_NODE_FIELD(repeatable);
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
+_equalTableSampleClause(const TableSampleClause *a, const TableSampleClause *b)
+{
+	COMPARE_SCALAR_FIELD(tsmid);
+	COMPARE_SCALAR_FIELD(tsmseqscan);
+	COMPARE_SCALAR_FIELD(tsmpagemode);
+	COMPARE_SCALAR_FIELD(tsminit);
+	COMPARE_SCALAR_FIELD(tsmnextblock);
+	COMPARE_SCALAR_FIELD(tsmnexttuple);
+	COMPARE_SCALAR_FIELD(tsmexaminetuple);
+	COMPARE_SCALAR_FIELD(tsmend);
+	COMPARE_SCALAR_FIELD(tsmreset);
+	COMPARE_SCALAR_FIELD(tsmcost);
+	COMPARE_NODE_FIELD(repeatable);
+	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -3235,6 +3266,12 @@ equal(const void *a, const void *b)
 			break;
 		case T_CommonTableExpr:
 			retval = _equalCommonTableExpr(a, b);
+			break;
+		case T_RangeTableSample:
+			retval = _equalRangeTableSample(a, b);
+			break;
+		case T_TableSampleClause:
+			retval = _equalTableSampleClause(a, b);
 			break;
 		case T_FuncWithArgs:
 			retval = _equalFuncWithArgs(a, b);

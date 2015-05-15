@@ -287,6 +287,12 @@ typedef struct Scan
 typedef Scan SeqScan;
 
 /* ----------------
+ *		table sample scan node
+ * ----------------
+ */
+typedef Scan SampleScan;
+
+/* ----------------
  *		index scan node
  *
  * indexqualorig is an implicitly-ANDed list of index qual expressions, each

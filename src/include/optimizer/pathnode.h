@@ -32,6 +32,8 @@ extern bool add_path_precheck(RelOptInfo *parent_rel,
 
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
 					Relids required_outer);
+extern Path *create_samplescan_path(PlannerInfo *root, RelOptInfo *rel,
+									Relids required_outer);
 extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *indexclauses,

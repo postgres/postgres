@@ -15,7 +15,12 @@
 
 #include "storage/bufmgr.h"
 
-extern double sampler_random_fract(void);
+/* Random generator for sampling code */
+typedef unsigned short SamplerRandomState[3];
+
+extern void sampler_random_init_state(long seed,
+									  SamplerRandomState randstate);
+extern double sampler_random_fract(SamplerRandomState randstate);
 
 /* Block sampling methods */
 /* Data structure for Algorithm S from Knuth 3.4.2 */
@@ -25,6 +30,7 @@ typedef struct
 	int			n;				/* desired sample size */
 	BlockNumber t;				/* current block number */
 	int			m;				/* blocks selected so far */
+	SamplerRandomState randstate; /* random generator state */
 } BlockSamplerData;
 
 typedef BlockSamplerData *BlockSampler;
@@ -35,7 +41,12 @@ extern bool BlockSampler_HasMore(BlockSampler bs);
 extern BlockNumber BlockSampler_Next(BlockSampler bs);
 
 /* Reservoid sampling methods */
-typedef double ReservoirStateData;
+typedef struct
+{
+	double	W;
+	SamplerRandomState randstate; /* random generator state */
+} ReservoirStateData;
+
 typedef ReservoirStateData *ReservoirState;
 
 extern void reservoir_init_selection_state(ReservoirState rs, int n);

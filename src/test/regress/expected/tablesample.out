@@ -1,0 +1,231 @@
+CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10); -- force smaller pages so we don't have to load too much data to get multiple pages
+INSERT INTO test_tablesample SELECT i, repeat(i::text, 200) FROM generate_series(0, 9) s(i) ORDER BY i;
+SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (10);
+ id 
+----
+  0
+  1
+  2
+  3
+  4
+  5
+  9
+(7 rows)
+
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (9999);
+ id 
+----
+  6
+  7
+  8
+(3 rows)
+
+SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100);
+ count 
+-------
+    10
+(1 row)
+
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
+ id 
+----
+  0
+  1
+  2
+  6
+  7
+  8
+  9
+(7 rows)
+
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (50) REPEATABLE (100);
+ id 
+----
+  0
+  1
+  3
+  4
+  5
+(5 rows)
+
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
+ id 
+----
+  0
+  5
+(2 rows)
+
+CREATE VIEW test_tablesample_v1 AS SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (10*2) REPEATABLE (2);
+CREATE VIEW test_tablesample_v2 AS SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
+SELECT pg_get_viewdef('test_tablesample_v1'::regclass);
+                                 pg_get_viewdef                                 
+--------------------------------------------------------------------------------
+  SELECT test_tablesample.id                                                   +
+    FROM test_tablesample TABLESAMPLE system (((10 * 2))::real) REPEATABLE (2);
+(1 row)
+
+SELECT pg_get_viewdef('test_tablesample_v2'::regclass);
+                      pg_get_viewdef                       
+-----------------------------------------------------------
+  SELECT test_tablesample.id                              +
+    FROM test_tablesample TABLESAMPLE system ((99)::real);
+(1 row)
+
+BEGIN;
+DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
+FETCH FIRST FROM tablesample_cur;
+ id 
+----
+  0
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  1
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  2
+(1 row)
+
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
+ id 
+----
+  0
+  1
+  2
+  3
+  4
+  5
+  9
+(7 rows)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  6
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  7
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  8
+(1 row)
+
+FETCH FIRST FROM tablesample_cur;
+ id 
+----
+  0
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  1
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  2
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  6
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  7
+(1 row)
+
+FETCH NEXT FROM tablesample_cur;
+ id 
+----
+  8
+(1 row)
+
+CLOSE tablesample_cur;
+END;
+EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Sample Scan (system) on test_tablesample  (cost=0.00..26.35 rows=635 width=4)
+(1 row)
+
+EXPLAIN SELECT * FROM test_tablesample_v1;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Sample Scan (system) on test_tablesample  (cost=0.00..10.54 rows=254 width=4)
+(1 row)
+
+-- errors
+SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
+ERROR:  tablesample method "foobar" does not exist
+LINE 1: SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
+                       ^
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (NULL);
+ERROR:  REPEATABLE clause must be NOT NULL numeric value
+LINE 1: ... test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (NULL);
+                                                                 ^
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (-1);
+ERROR:  invalid sample size
+HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (200);
+ERROR:  invalid sample size
+HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (-1);
+ERROR:  invalid sample size
+HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (200);
+ERROR:  invalid sample size
+HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+SELECT id FROM test_tablesample_v1 TABLESAMPLE BERNOULLI (1);
+ERROR:  TABLESAMPLE clause can only be used on tables and materialized views
+LINE 1: SELECT id FROM test_tablesample_v1 TABLESAMPLE BERNOULLI (1)...
+                       ^
+INSERT INTO test_tablesample_v1 VALUES(1);
+ERROR:  cannot insert into view "test_tablesample_v1"
+DETAIL:  Views containing TABLESAMPLE are not automatically updatable.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
+WITH query_select AS (SELECT * FROM test_tablesample)
+SELECT * FROM query_select TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
+ERROR:  TABLESAMPLE clause can only be used on tables and materialized views
+LINE 2: SELECT * FROM query_select TABLESAMPLE BERNOULLI (5.5) REPEA...
+                      ^
+SELECT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPLE BERNOULLI (5);
+ERROR:  syntax error at or near "TABLESAMPLE"
+LINE 1: ...CT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPL...
+                                                             ^
+-- catalog sanity
+SELECT *
+FROM pg_tablesample_method
+WHERE tsminit IS NULL
+   OR tsmseqscan IS NULL
+   OR tsmpagemode IS NULL
+   OR tsmnextblock IS NULL
+   OR tsmnexttuple IS NULL
+   OR tsmend IS NULL
+   OR tsmreset IS NULL
+   OR tsmcost IS NULL;
+ tsmname | tsmseqscan | tsmpagemode | tsminit | tsmnextblock | tsmnexttuple | tsmexaminetuple | tsmend | tsmreset | tsmcost 
+---------+------------+-------------+---------+--------------+--------------+-----------------+--------+----------+---------
+(0 rows)
+
+-- done
+DROP TABLE test_tablesample CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to view test_tablesample_v1
+drop cascades to view test_tablesample_v2

@@ -454,6 +454,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
 %type <target>	target_el single_set_clause set_target insert_column_item
+%type <node>	relation_expr_tablesample tablesample_clause opt_repeatable_clause
 
 %type <str>		generic_option_name
 %type <node>	generic_option_arg
@@ -625,8 +626,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING
 	SYMMETRIC SYSID SYSTEM_P
 
-	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
-	TO TRAILING TRANSACTION TRANSFORM TREAT TRIGGER TRIM TRUE_P
+	TABLE TABLES TABLESAMPLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN
+	TIME TIMESTAMP TO TRAILING TRANSACTION TRANSFORM TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
 
 	UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNLOGGED
@@ -10386,6 +10387,10 @@ table_ref:	relation_expr opt_alias_clause
 					$1->alias = $2;
 					$$ = (Node *) $1;
 				}
+			| relation_expr_tablesample
+				{
+					$$ = (Node *) $1;
+				}
 			| func_table func_alias_clause
 				{
 					RangeFunction *n = (RangeFunction *) $1;
@@ -10709,6 +10714,32 @@ relation_expr_opt_alias: relation_expr					%prec UMINUS
 					$1->alias = alias;
 					$$ = $1;
 				}
+		;
+
+
+relation_expr_tablesample: relation_expr opt_alias_clause tablesample_clause
+				{
+					RangeTableSample *n = (RangeTableSample *) $3;
+					n->relation = $1;
+					n->relation->alias = $2;
+					$$ = (Node *) n;
+				}
+		;
+
+tablesample_clause:
+			TABLESAMPLE ColId '(' expr_list ')' opt_repeatable_clause
+				{
+					RangeTableSample *n = makeNode(RangeTableSample);
+					n->method = $2;
+					n->args = $4;
+					n->repeatable = $6;
+					$$ = (Node *) n;
+				}
+		;
+
+opt_repeatable_clause:
+			REPEATABLE '(' a_expr ')'	{ $$ = (Node *) $3; }
+			| /*EMPTY*/					{ $$ = NULL; }
 		;
 
 /*
@@ -13804,6 +13835,7 @@ type_func_name_keyword:
 			| OVERLAPS
 			| RIGHT
 			| SIMILAR
+			| TABLESAMPLE
 			| VERBOSE
 		;
 

@@ -46,6 +46,8 @@ BlockSampler_Init(BlockSampler bs, BlockNumber nblocks, int samplesize,
 	bs->n = samplesize;
 	bs->t = 0;					/* blocks scanned so far */
 	bs->m = 0;					/* blocks selected so far */
+
+	sampler_random_init_state(randseed, bs->randstate);
 }
 
 bool
@@ -92,7 +94,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * less than k, which means that we cannot fail to select enough blocks.
 	 *----------
 	 */
-	V = sampler_random_fract();
+	V = sampler_random_fract(bs->randstate);
 	p = 1.0 - (double) k / (double) K;
 	while (V < p)
 	{
@@ -126,8 +128,14 @@ BlockSampler_Next(BlockSampler bs)
 void
 reservoir_init_selection_state(ReservoirState rs, int n)
 {
+	/*
+	 * Reservoir sampling is not used anywhere where it would need to return
+	 * repeatable results so we can initialize it randomly.
+	 */
+	sampler_random_init_state(random(), rs->randstate);
+
 	/* Initial value of W (for use when Algorithm Z is first applied) */
-	*rs = exp(-log(sampler_random_fract()) / n);
+	rs->W = exp(-log(sampler_random_fract(rs->randstate)) / n);
 }
 
 double
@@ -142,7 +150,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 		double		V,
 					quot;
 
-		V = sampler_random_fract(); /* Generate V */
+		V = sampler_random_fract(rs->randstate); /* Generate V */
 		S = 0;
 		t += 1;
 		/* Note: "num" in Vitter's code is always equal to t - n */
@@ -158,7 +166,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 	else
 	{
 		/* Now apply Algorithm Z */
-		double		W = *rs;
+		double		W = rs->W;
 		double		term = t - (double) n + 1;
 
 		for (;;)
@@ -174,7 +182,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 						tmp;
 
 			/* Generate U and X */
-			U = sampler_random_fract();
+			U = sampler_random_fract(rs->randstate);
 			X = t * (W - 1.0);
 			S = floor(X);		/* S is tentatively set to floor(X) */
 			/* Test if U <= h(S)/cg(X) in the manner of (6.3) */
@@ -203,11 +211,11 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 				y *= numer / denom;
 				denom -= 1;
 			}
-			W = exp(-log(sampler_random_fract()) / n);		/* Generate W in advance */
+			W = exp(-log(sampler_random_fract(rs->randstate)) / n);		/* Generate W in advance */
 			if (exp(log(y) / n) <= (t + X) / t)
 				break;
 		}
-		*rs = W;
+		rs->W = W;
 	}
 	return S;
 }
@@ -217,10 +225,17 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
  * Random number generator used by sampling
  *----------
  */
+void
+sampler_random_init_state(long seed, SamplerRandomState randstate)
+{
+	randstate[0] = RAND48_SEED_0;
+	randstate[1] = (unsigned short) seed;
+	randstate[2] = (unsigned short) (seed >> 16);
+}
 
 /* Select a random value R uniformly distributed in (0 - 1) */
 double
-sampler_random_fract()
+sampler_random_fract(SamplerRandomState randstate)
 {
-	return ((double) random() + 1) / ((double) MAX_RANDOM_VALUE + 2);
+	return pg_erand48(randstate);
 }

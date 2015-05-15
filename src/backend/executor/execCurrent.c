@@ -261,6 +261,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 			 * Relation scan nodes can all be treated alike
 			 */
 		case T_SeqScanState:
+		case T_SampleScanState:
 		case T_IndexScanState:
 		case T_IndexOnlyScanState:
 		case T_BitmapHeapScanState:

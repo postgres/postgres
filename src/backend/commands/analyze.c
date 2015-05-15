@@ -1150,7 +1150,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 						 * Found a suitable tuple, so save it, replacing one
 						 * old tuple at random
 						 */
-						int			k = (int) (targrows * sampler_random_fract());
+						int			k = (int) (targrows * sampler_random_fract(rstate.randstate));
 
 						Assert(k >= 0 && k < targrows);
 						heap_freetuple(rows[k]);

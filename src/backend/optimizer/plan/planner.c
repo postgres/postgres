@@ -60,6 +60,7 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_LIMIT			6
 #define EXPRKIND_APPINFO		7
 #define EXPRKIND_PHV			8
+#define EXPRKIND_TABLESAMPLE    9
 
 /* Passthrough data for standard_qp_callback */
 typedef struct
@@ -486,7 +487,19 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		int			kind;
 
-		if (rte->rtekind == RTE_SUBQUERY)
+		if (rte->rtekind == RTE_RELATION)
+		{
+			if (rte->tablesample)
+			{
+				rte->tablesample->args = (List *)
+					preprocess_expression(root, (Node *) rte->tablesample->args,
+										  EXPRKIND_TABLESAMPLE);
+				rte->tablesample->repeatable = (Node *)
+					preprocess_expression(root, rte->tablesample->repeatable,
+										  EXPRKIND_TABLESAMPLE);
+			}
+		}
+		else if (rte->rtekind == RTE_SUBQUERY)
 		{
 			/*
 			 * We don't want to do all preprocessing yet on the subquery's

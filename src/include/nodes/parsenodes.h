@@ -336,6 +336,26 @@ typedef struct FuncCall
 } FuncCall;
 
 /*
+ * TableSampleClause - a sampling method information
+ */
+typedef struct TableSampleClause
+{
+	NodeTag		type;
+	Oid			tsmid;
+	bool		tsmseqscan;
+	bool		tsmpagemode;
+	Oid			tsminit;
+	Oid			tsmnextblock;
+	Oid			tsmnexttuple;
+	Oid			tsmexaminetuple;
+	Oid			tsmend;
+	Oid			tsmreset;
+	Oid			tsmcost;
+	Node	   *repeatable;
+	List	   *args;
+} TableSampleClause;
+
+/*
  * A_Star - '*' representing all columns of a table or compound field
  *
  * This can appear within ColumnRef.fields, A_Indirection.indirection, and
@@ -534,6 +554,22 @@ typedef struct RangeFunction
 	List	   *coldeflist;		/* list of ColumnDef nodes to describe result
 								 * of function returning RECORD */
 } RangeFunction;
+
+/*
+ * RangeTableSample - represents <table> TABLESAMPLE <method> (<params>) REPEATABLE (<num>)
+ *
+ * SQL Standard specifies only one parameter which is percentage. But we allow
+ * custom tablesample methods which may need different input arguments so we
+ * accept list of arguments.
+ */
+typedef struct RangeTableSample
+{
+	NodeTag		type;
+	RangeVar   *relation;
+	char	   *method;		/* sampling method */
+	Node	   *repeatable;
+	List	   *args;		/* arguments for sampling method */
+} RangeTableSample;
 
 /*
  * ColumnDef - column definition (used in various creates)
@@ -772,6 +808,7 @@ typedef struct RangeTblEntry
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
+	TableSampleClause	*tablesample;	/* sampling method and parameters */
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):

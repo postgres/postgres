@@ -2557,7 +2557,7 @@ analyze_row_processor(PGresult *res, int row, PgFdwAnalyzeState *astate)
 		if (astate->rowstoskip <= 0)
 		{
 			/* Choose a random reservoir element to replace. */
-			pos = (int) (targrows * sampler_random_fract());
+			pos = (int) (targrows * sampler_random_fract(astate->rstate.randstate));
 			Assert(pos >= 0 && pos < targrows);
 			heap_freetuple(astate->rows[pos]);
 		}

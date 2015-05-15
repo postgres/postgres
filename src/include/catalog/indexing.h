@@ -316,6 +316,11 @@ DECLARE_UNIQUE_INDEX(pg_replication_origin_roiident_index, 6001, on pg_replicati
 DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, on pg_replication_origin using btree(roname varchar_pattern_ops));
 #define ReplicationOriginNameIndex 6002
 
+DECLARE_UNIQUE_INDEX(pg_tablesample_method_name_index, 3331, on pg_tablesample_method using btree(tsmname name_ops));
+#define TableSampleMethodNameIndexId  3331
+DECLARE_UNIQUE_INDEX(pg_tablesample_method_oid_index, 3332, on pg_tablesample_method using btree(oid oid_ops));
+#define TableSampleMethodOidIndexId  3332
+
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES
 

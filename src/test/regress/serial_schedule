@@ -154,3 +154,4 @@ test: with
 test: xml
 test: event_trigger
 test: stats
+test: tablesample

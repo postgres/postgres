@@ -29,6 +29,7 @@ typedef struct HeapScanDescData
 	int			rs_nkeys;		/* number of scan keys */
 	ScanKey		rs_key;			/* array of scan key descriptors */
 	bool		rs_bitmapscan;	/* true if this is really a bitmap scan */
+	bool		rs_samplescan;	/* true if this is really a sample scan */
 	bool		rs_pageatatime; /* verify visibility page-at-a-time? */
 	bool		rs_allow_strat; /* allow or disallow use of access strategy */
 	bool		rs_allow_sync;	/* allow or disallow use of syncscan */

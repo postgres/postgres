@@ -5297,6 +5297,33 @@ DESCR("get an individual replication origin's replication progress");
 DATA(insert OID = 6014 ( pg_show_replication_origin_status PGNSP PGUID 12 1 100 0 0 f f f f f t v 0 0 2249 "" "{26,25,3220,3220}" "{o,o,o,o}" "{local_id, external_id, remote_lsn, local_lsn}" _null_ _null_ pg_show_replication_origin_status _null_ _null_ _null_ ));
 DESCR("get progress for all replication origins");
 
+/* tablesample */
+DATA(insert OID = 3335 (  tsm_system_init		PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 2278 "2281 23 700" _null_ _null_ _null_ _null_	_null_ tsm_system_init _null_ _null_ _null_ ));
+DESCR("tsm_system_init(internal)");
+DATA(insert OID = 3336 (  tsm_system_nextblock	PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23 "2281 16" _null_ _null_ _null_ _null_ _null_ tsm_system_nextblock _null_ _null_ _null_ ));
+DESCR("tsm_system_nextblock(internal)");
+DATA(insert OID = 3337 (  tsm_system_nexttuple	PGNSP PGUID 12 1 0 0 0 f f f f t f v 4 0 21 "2281 23 21 16" _null_ _null_ _null_ _null_	_null_ tsm_system_nexttuple _null_ _null_ _null_ ));
+DESCR("tsm_system_nexttuple(internal)");
+DATA(insert OID = 3338 (  tsm_system_end		PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ tsm_system_end _null_ _null_ _null_ ));
+DESCR("tsm_system_end(internal)");
+DATA(insert OID = 3339 (  tsm_system_reset		PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ tsm_system_reset _null_ _null_ _null_ ));
+DESCR("tsm_system_reset(internal)");
+DATA(insert OID = 3340 (  tsm_system_cost		PGNSP PGUID 12 1 0 0 0 f f f f t f v 7 0 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ _null_ tsm_system_cost _null_ _null_ _null_ ));
+DESCR("tsm_system_cost(internal)");
+
+DATA(insert OID = 3341 (  tsm_bernoulli_init		PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 2278 "2281 23 700" _null_ _null_ _null_ _null_	_null_ tsm_bernoulli_init _null_ _null_ _null_ ));
+DESCR("tsm_bernoulli_init(internal)");
+DATA(insert OID = 3342 (  tsm_bernoulli_nextblock	PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23 "2281 16" _null_ _null_ _null_ _null_ _null_ tsm_bernoulli_nextblock _null_ _null_ _null_ ));
+DESCR("tsm_bernoulli_nextblock(internal)");
+DATA(insert OID = 3343 (  tsm_bernoulli_nexttuple	PGNSP PGUID 12 1 0 0 0 f f f f t f v 4 0 21 "2281 23 21 16" _null_ _null_ _null_ _null_	_null_ tsm_bernoulli_nexttuple _null_ _null_ _null_ ));
+DESCR("tsm_bernoulli_nexttuple(internal)");
+DATA(insert OID = 3344 (  tsm_bernoulli_end			PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ tsm_bernoulli_end _null_ _null_ _null_ ));
+DESCR("tsm_bernoulli_end(internal)");
+DATA(insert OID = 3345 (  tsm_bernoulli_reset		PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ tsm_bernoulli_reset _null_ _null_ _null_ ));
+DESCR("tsm_bernoulli_reset(internal)");
+DATA(insert OID = 3346 (  tsm_bernoulli_cost		PGNSP PGUID 12 1 0 0 0 f f f f t f v 7 0 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ _null_ tsm_bernoulli_cost _null_ _null_ _null_ ));
+DESCR("tsm_bernoulli_cost(internal)");
+
 /*
  * Symbolic values for provolatile column: these indicate whether the result
  * of a function is dependent *only* on the values of its explicit arguments,

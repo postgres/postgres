@@ -451,6 +451,17 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, splan->plan.qual, rtoffset);
 			}
 			break;
+		case T_SampleScan:
+			{
+				SampleScan	   *splan = (SampleScan *) plan;
+
+				splan->scanrelid += rtoffset;
+				splan->plan.targetlist =
+					fix_scan_list(root, splan->plan.targetlist, rtoffset);
+				splan->plan.qual =
+					fix_scan_list(root, splan->plan.qual, rtoffset);
+			}
+			break;
 		case T_IndexScan:
 			{
 				IndexScan  *splan = (IndexScan *) plan;

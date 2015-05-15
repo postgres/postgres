@@ -80,8 +80,9 @@ bool		synchronize_seqscans = true;
 static HeapScanDesc heap_beginscan_internal(Relation relation,
 						Snapshot snapshot,
 						int nkeys, ScanKey key,
-						bool allow_strat, bool allow_sync,
-						bool is_bitmapscan, bool temp_snap);
+						bool allow_strat, bool allow_sync, bool allow_pagemode,
+						bool is_bitmapscan, bool is_samplescan,
+						bool temp_snap);
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
 					TransactionId xid, CommandId cid, int options);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
@@ -294,9 +295,10 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 
 	/*
 	 * Currently, we don't have a stats counter for bitmap heap scans (but the
-	 * underlying bitmap index scans will be counted).
+	 * underlying bitmap index scans will be counted) or sample scans (we only
+	 * update stats for tuple fetches there)
 	 */
-	if (!scan->rs_bitmapscan)
+	if (!scan->rs_bitmapscan && !scan->rs_samplescan)
 		pgstat_count_heap_scan(scan->rs_rd);
 }
 
@@ -315,7 +317,7 @@ heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk, BlockNumber numBlks)
  * In page-at-a-time mode it performs additional work, namely determining
  * which tuples on the page are visible.
  */
-static void
+void
 heapgetpage(HeapScanDesc scan, BlockNumber page)
 {
 	Buffer		buffer;
@@ -1310,6 +1312,9 @@ heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
  * HeapScanDesc for a bitmap heap scan.  Although that scan technology is
  * really quite unlike a standard seqscan, there is just enough commonality
  * to make it worth using the same data structure.
+ *
+ * heap_beginscan_samplingscan is alternate entry point for setting up a
+ * HeapScanDesc for a TABLESAMPLE scan.
  * ----------------
  */
 HeapScanDesc
@@ -1317,7 +1322,7 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   true, true, false, false);
+								   true, true, true, false, false, false);
 }
 
 HeapScanDesc
@@ -1327,7 +1332,7 @@ heap_beginscan_catalog(Relation relation, int nkeys, ScanKey key)
 	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
 
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   true, true, false, true);
+								   true, true, true, false, false, true);
 }
 
 HeapScanDesc
@@ -1336,7 +1341,8 @@ heap_beginscan_strat(Relation relation, Snapshot snapshot,
 					 bool allow_strat, bool allow_sync)
 {
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   allow_strat, allow_sync, false, false);
+								   allow_strat, allow_sync, true,
+								   false, false, false);
 }
 
 HeapScanDesc
@@ -1344,14 +1350,24 @@ heap_beginscan_bm(Relation relation, Snapshot snapshot,
 				  int nkeys, ScanKey key)
 {
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   false, false, true, false);
+								   false, false, true, true, false, false);
+}
+
+HeapScanDesc
+heap_beginscan_sampling(Relation relation, Snapshot snapshot,
+						int nkeys, ScanKey key,
+						bool allow_strat, bool allow_pagemode)
+{
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
+								   allow_strat, false, allow_pagemode,
+								   false, true, false);
 }
 
 static HeapScanDesc
 heap_beginscan_internal(Relation relation, Snapshot snapshot,
 						int nkeys, ScanKey key,
-						bool allow_strat, bool allow_sync,
-						bool is_bitmapscan, bool temp_snap)
+						bool allow_strat, bool allow_sync, bool allow_pagemode,
+						bool is_bitmapscan, bool is_samplescan, bool temp_snap)
 {
 	HeapScanDesc scan;
 
@@ -1373,6 +1389,7 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = nkeys;
 	scan->rs_bitmapscan = is_bitmapscan;
+	scan->rs_samplescan = is_samplescan;
 	scan->rs_strategy = NULL;	/* set in initscan */
 	scan->rs_allow_strat = allow_strat;
 	scan->rs_allow_sync = allow_sync;
@@ -1381,7 +1398,7 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	/*
 	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot
 	 */
-	scan->rs_pageatatime = IsMVCCSnapshot(snapshot);
+	scan->rs_pageatatime = allow_pagemode && IsMVCCSnapshot(snapshot);
 
 	/*
 	 * For a seqscan in a serializable transaction, acquire a predicate lock

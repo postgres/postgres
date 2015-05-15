@@ -357,6 +357,10 @@ extern off_t ftello(FILE *stream);
 #endif
 #endif
 
+#define RAND48_SEED_0	(0x330e)
+#define RAND48_SEED_1	(0xabcd)
+#define RAND48_SEED_2	(0x1234)
+
 extern double pg_erand48(unsigned short xseed[3]);
 extern long pg_lrand48(void);
 extern void pg_srand48(long seed);

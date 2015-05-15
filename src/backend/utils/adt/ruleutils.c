@@ -32,6 +32,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_tablesample_method.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -345,6 +346,8 @@ static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags, int wrapColumn);
+static void get_tablesample_def(TableSampleClause *tablesample,
+								deparse_context *context);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 			  TupleDesc resultDesc,
 			  int prettyFlags, int wrapColumn, int startIndent);
@@ -4220,6 +4223,50 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	heap_close(ev_relation, AccessShareLock);
 }
 
+/* ----------
+ * get_tablesample_def			- Convert TableSampleClause back to SQL
+ * ----------
+ */
+static void
+get_tablesample_def(TableSampleClause *tablesample, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	HeapTuple	tuple;
+	Form_pg_tablesample_method tsm;
+	char	   *tsmname;
+	int			nargs;
+	ListCell   *l;
+
+	/* Load the tablesample method */
+	tuple = SearchSysCache1(TABLESAMPLEMETHODOID, ObjectIdGetDatum(tablesample->tsmid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("cache lookup failed for tablesample method %u",
+						tablesample->tsmid)));
+
+	tsm = (Form_pg_tablesample_method) GETSTRUCT(tuple);
+	tsmname = NameStr(tsm->tsmname);
+	appendStringInfo(buf, " TABLESAMPLE %s (", quote_identifier(tsmname));
+
+	ReleaseSysCache(tuple);
+
+	nargs = 0;
+	foreach(l, tablesample->args)
+	{
+		if (nargs++ > 0)
+			appendStringInfoString(buf, ", ");
+		get_rule_expr((Node *) lfirst(l), context, true);
+	}
+	appendStringInfoChar(buf, ')');
+
+	if (tablesample->repeatable != NULL)
+	{
+		appendStringInfoString(buf, " REPEATABLE (");
+		get_rule_expr(tablesample->repeatable, context, true);
+		appendStringInfoChar(buf, ')');
+	}
+}
 
 /* ----------
  * get_query_def			- Parse back one query parsetree
@@ -8529,6 +8576,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 								 only_marker(rte),
 								 generate_relation_name(rte->relid,
 														context->namespaces));
+
+				if (rte->tablesample)
+					get_tablesample_def(rte->tablesample, context);
 				break;
 			case RTE_SUBQUERY:
 				/* Subquery RTE */

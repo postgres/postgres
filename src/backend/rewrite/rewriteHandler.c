@@ -2209,6 +2209,9 @@ view_query_is_auto_updatable(Query *viewquery, bool check_cols)
 		 base_rte->relkind != RELKIND_VIEW))
 		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
 
+	if (base_rte->tablesample)
+		return gettext_noop("Views containing TABLESAMPLE are not automatically updatable.");
+
 	/*
 	 * Check that the view has at least one updatable column. This is required
 	 * for INSERT/UPDATE but not for DELETE.
