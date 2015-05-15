@@ -154,23 +154,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* remove ':' char */
 			cluster->controldata.cat_ver = str2uint(p);
 		}
-		else if ((p = strstr(bufin, "First log segment after reset:")) != NULL)
-		{
-			/* Skip the colon and any whitespace after it */
-			p = strchr(p, ':');
-			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-			p = strpbrk(p, "01234567890ABCDEF");
-			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			/* Make sure it looks like a valid WAL file name */
-			if (strspn(p, "0123456789ABCDEF") != 24)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			strlcpy(cluster->controldata.nextxlogfile, p, 25);
-			got_nextxlogfile = true;
-		}
 		else if ((p = strstr(bufin, "First log file ID after reset:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -201,7 +184,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* remove ':' char */
-			cluster->controldata.chkpnt_tli = str2uint(p);
+			tli = str2uint(p);
 			got_tli = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
@@ -265,6 +248,23 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtmxoff = str2uint(p);
 			got_mxoff = true;
+		}
+		else if ((p = strstr(bufin, "First log segment after reset:")) != NULL)
+		{
+			/* Skip the colon and any whitespace after it */
+			p = strchr(p, ':');
+			if (p == NULL || strlen(p) <= 1)
+				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+			p = strpbrk(p, "01234567890ABCDEF");
+			if (p == NULL || strlen(p) <= 1)
+				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+
+			/* Make sure it looks like a valid WAL file name */
+			if (strspn(p, "0123456789ABCDEF") != 24)
+				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+
+			strlcpy(cluster->controldata.nextxlogfile, p, 25);
+			got_nextxlogfile = true;
 		}
 		else if ((p = strstr(bufin, "Maximum data alignment:")) != NULL)
 		{
@@ -436,7 +436,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
 	{
-		if (got_log_id && got_log_seg)
+		if (got_tli && got_log_id && got_log_seg)
 		{
 			snprintf(cluster->controldata.nextxlogfile, 25, "%08X%08X%08X",
 					 tli, logid, segno);
@@ -446,11 +446,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
-		!got_multi || !got_mxoff ||
+		!got_multi ||
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||
-		(!live_check && !got_nextxlogfile) ||
-		!got_tli ||
+		!got_mxoff || (!live_check && !got_nextxlogfile) ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
 		!got_walseg || !got_ident || !got_index || !got_toast ||
 		(!got_large_object &&
@@ -470,18 +469,15 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_multi)
 			pg_log(PG_REPORT, "  latest checkpoint next MultiXactId\n");
 
-		if (!got_mxoff)
-			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset\n");
-
 		if (!got_oldestmulti &&
 			cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
 			pg_log(PG_REPORT, "  latest checkpoint oldest MultiXactId\n");
 
+		if (!got_mxoff)
+			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset\n");
+
 		if (!live_check && !got_nextxlogfile)
 			pg_log(PG_REPORT, "  first WAL segment after reset\n");
-
-		if (!got_tli)
-			pg_log(PG_REPORT, "  latest checkpoint timeline ID\n");
 
 		if (!got_align)
 			pg_log(PG_REPORT, "  maximum alignment\n");
@@ -567,6 +563,9 @@ check_control_data(ControlData *oldctrl,
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
 		pg_fatal("old and new pg_controldata date/time storage types do not match\n");
+
+	if (oldctrl->float8_pass_by_value != newctrl->float8_pass_by_value)
+		pg_fatal("old and new pg_controldata float8 argument passing methods do not match\n");
 
 	/*
 	 * We might eventually allow upgrades from checksum to no-checksum
