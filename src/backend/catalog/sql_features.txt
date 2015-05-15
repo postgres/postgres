@@ -492,7 +492,7 @@ T591	UNIQUE constraints of possibly null columns			YES
 T601	Local cursor references			NO	
 T611	Elementary OLAP operations			NO	most forms supported
 T612	Advanced OLAP operations			NO	some forms supported
-T613	Sampling			NO	
+T613	Sampling			YES	
 T614	NTILE function			YES	
 T615	LEAD and LAG functions			YES	
 T616	Null treatment option for LEAD and LAG functions			NO	
