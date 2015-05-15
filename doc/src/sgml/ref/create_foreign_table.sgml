@@ -32,13 +32,13 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { NOT NULL |
   NULL |
-  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> }
 
 <phrase>and <replaceable class="PARAMETER">table_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-CHECK ( <replaceable class="PARAMETER">expression</replaceable> )
+CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
 </synopsis>
  </refsynopsisdiv>
 
