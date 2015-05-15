@@ -197,8 +197,5 @@ extern void analyze_rel(Oid relid, RangeVar *relation, int options,
 			VacuumParams *params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy);
 extern bool std_typanalyze(VacAttrStats *stats);
-extern double anl_random_fract(void);
-extern double anl_init_selection_state(int n);
-extern double anl_get_next_S(double t, int n, double *stateptr);
 
 #endif   /* VACUUM_H */
