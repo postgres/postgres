@@ -1,0 +1,139 @@
+<!-- doc/src/sgml/tablesample-method.sgml -->
+
+<chapter id="tablesample-method">
+ <title>Writing A TABLESAMPLE Sampling Method</title>
+
+ <indexterm zone="tablesample-method">
+  <primary>tablesample method</primary>
+ </indexterm>
+
+ <para>
+  The <command>TABLESAMPLE</command> clause implementation in
+  <productname>PostgreSQL</> supports creating a custom sampling methods.
+  These methods control what sample of the table will be returned when the
+  <command>TABLESAMPLE</command> clause is used.
+ </para>
+
+ <sect1 id="tablesample-method-functions">
+  <title>Tablesample Method Functions</title>
+
+  <para>
+   The tablesample method must provide following set of functions:
+  </para>
+
+  <para>
+<programlisting>
+void
+tsm_init (TableSampleDesc *desc,
+         uint32 seed, ...);
+</programlisting>
+   Initialize the tablesample scan. The function is called at the beginning
+   of each relation scan.
+  </para>
+  <para>
+   Note that the first two parameters are required but you can specify
+   additional parameters which then will be used by the <command>TABLESAMPLE</>
+   clause to determine the required user input in the query itself.
+   This means that if your function will specify additional float4 parameter
+   named percent, the user will have to call the tablesample method with
+   expression which evaluates (or can be coerced) to float4.
+   For example this definition:
+<programlisting>
+tsm_init (TableSampleDesc *desc,
+          uint32 seed, float4 pct);
+</programlisting>
+Will lead to SQL call like this:
+<programlisting>
+... TABLESAMPLE yourmethod(0.5) ...
+</programlisting>
+  </para>
+
+  <para>
+<programlisting>
+BlockNumber
+tsm_nextblock (TableSampleDesc *desc);
+</programlisting>
+   Returns the block number of next page to be scanned. InvalidBlockNumber
+   should be returned if the sampling has reached end of the relation.
+  </para>
+
+  <para>
+<programlisting>
+OffsetNumber
+tsm_nexttuple (TableSampleDesc *desc, BlockNumber blockno,
+               OffsetNumber maxoffset);
+</programlisting>
+   Return next tuple offset for the current page. InvalidOffsetNumber should
+   be returned if the sampling has reached end of the page.
+  </para>
+
+  <para>
+<programlisting>
+void
+tsm_end (TableSampleDesc *desc);
+</programlisting>
+   The scan has finished, cleanup any left over state.
+  </para>
+
+  <para>
+<programlisting>
+void
+tsm_reset (TableSampleDesc *desc);
+</programlisting>
+   The scan needs to rescan the relation again, reset any tablesample method
+   state.
+  </para>
+
+  <para>
+<programlisting>
+void
+tsm_cost (PlannerInfo *root, Path *path, RelOptInfo *baserel,
+          List *args, BlockNumber *pages, double *tuples);
+</programlisting>
+   This function is used by optimizer to decide best plan and is also used
+   for output of <command>EXPLAIN</>.
+  </para>
+
+  <para>
+   There is one more function which tablesampling method can implement in order
+   to gain more fine grained control over sampling. This function is optional:
+  </para>
+
+  <para>
+<programlisting>
+bool
+tsm_examinetuple (TableSampleDesc *desc, BlockNumber blockno,
+                  HeapTuple tuple, bool visible);
+</programlisting>
+   Function that enables the sampling method to examine contents of the tuple
+   (for example to collect some internal statistics). The return value of this
+   function is used to determine if the tuple should be returned to client.
+   Note that this function will receive even invisible tuples but it is not
+   allowed to return true for such tuple (if it does,
+   <productname>PostgreSQL</> will raise an error).
+  </para>
+
+  <para>
+  As you can see most of the tablesample method interfaces get the
+  <structname>TableSampleDesc</> as a first parameter. This structure holds
+  state of the current scan and also provides storage for the tablesample
+  method's state. It is defined as following:
+<programlisting>
+typedef struct TableSampleDesc {
+    HeapScanDesc    heapScan;
+    TupleDesc       tupDesc;
+
+    void           *tsmdata;
+} TableSampleDesc;
+</programlisting>
+  Where <structfield>heapScan</> is the descriptor of the physical table scan.
+  It's possible to get table size info from it. The <structfield>tupDesc</>
+  represents the tuple descriptor of the tuples returned by the scan and passed
+  to the <function>tsm_examinetuple()</> interface. The <structfield>tsmdata</>
+  can be used by tablesample method itself to store any state info it might
+  need during the scan. If used by the method, it should be <function>pfree</>d
+  in <function>tsm_end()</> function.
+  </para>
+ </sect1>
+
+</chapter>

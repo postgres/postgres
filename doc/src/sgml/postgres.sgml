@@ -250,6 +250,7 @@
   &spgist;
   &gin;
   &brin;
+  &tablesample-method;
   &storage;
   &bki;
   &planstats;
