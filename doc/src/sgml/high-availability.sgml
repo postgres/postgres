@@ -1246,7 +1246,7 @@ primary_slot_name = 'node_a_slot'
      to archive the same file at the same time.
    </para>
 
-   </para>
+   <para>
      If <varname>archive_mode</varname> is set to <literal>on</>, the
      archiver is not enabled during recovery or standby mode. If the standby
      server is promoted, it will start archiving after the promotion, but
