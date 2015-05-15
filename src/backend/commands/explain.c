@@ -981,6 +981,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				rte = rt_fetch(((SampleScan *) plan)->scanrelid, es->rtable);
 				custom_name = get_tablesample_method_name(rte->tablesample->tsmid);
 				pname = psprintf("Sample Scan (%s)", custom_name);
+				sname = "Sample Scan";
 			}
 			break;
 		case T_Material:
