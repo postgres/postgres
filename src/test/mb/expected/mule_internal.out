@@ -3,6 +3,7 @@ ERROR:  table "’·×’»»’µ¡’ÍÑ’¸ì" does not exist
 create table ’·×’»»’µ¡’ÍÑ’¸ì (’ÍÑ’¸ì text, ’Ê¬’Îà’¥³’¡¼’¥É varchar, ’È÷’¹Í1A’¤À’¤è char(16));
 create index ’·×’»»’µ¡’ÍÑ’¸ìindex1 on ’·×’»»’µ¡’ÍÑ’¸ì using btree (’ÍÑ’¸ì);
 create index ’·×’»»’µ¡’ÍÑ’¸ìindex2 on ’·×’»»’µ¡’ÍÑ’¸ì using hash (’Ê¬’Îà’¥³’¡¼’¥É);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
 insert into ’·×’»»’µ¡’ÍÑ’¸ì values('’¥³’¥ó’¥Ô’¥å’¡¼’¥¿’¥Ç’¥£’¥¹’¥×’¥ì’¥¤','’µ¡A01’¾å');
 insert into ’·×’»»’µ¡’ÍÑ’¸ì values('’¥³’¥ó’¥Ô’¥å’¡¼’¥¿’¥°’¥é’¥Õ’¥£’¥Ã’¥¯’¥¹','’Ê¬B10’Ãæ');
 insert into ’·×’»»’µ¡’ÍÑ’¸ì values('’¥³’¥ó’¥Ô’¥å’¡¼’¥¿’¥×’¥í’¥°’¥é’¥Þ’¡¼','’¿ÍZ01’²¼');
@@ -177,6 +178,7 @@ ERROR:  table "“Íª“ß©“Ñ¦“¿ë“¾î" does not exist
 create table “Íª“ß©“Ñ¦“¿ë“¾î (“¿ë“¾î text, “ÝÂ“×¾“ÄÚ“µå varchar, “ºñ“°í1A“¶ó“±¸ char(16));
 create index “Íª“ß©“Ñ¦“¿ë“¾îindex1 on “Íª“ß©“Ñ¦“¿ë“¾î using btree (“¿ë“¾î);
 create index “Íª“ß©“Ñ¦“¿ë“¾îindex2 on “Íª“ß©“Ñ¦“¿ë“¾î using hash (“ÝÂ“×¾“ÄÚ“µå);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
 insert into “Íª“ß©“Ñ¦“¿ë“¾î values('“ÄÄ“Ç»“ÅÍ“µð“½º“ÇÃ“·¹“ÀÌ', '“Ñ¦A01“ß¾');
 insert into “Íª“ß©“Ñ¦“¿ë“¾î values('“ÄÄ“Ç»“ÅÍ“±×“·¡“ÇÈ“½º', '“ÝÂB10“ñé');
 insert into “Íª“ß©“Ñ¦“¿ë“¾î values('“ÄÄ“Ç»“ÅÍ“ÇÁ“·Î“±×“·¡“¸Ó', '“ìÑZ01“ù»');

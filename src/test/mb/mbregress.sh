@@ -18,7 +18,11 @@ dropdb --if-exists utf8
 createdb -T template0 -l C -E UTF8 utf8 || exit 1
 
 PSQL="psql -n -e -q"
-tests="euc_jp sjis euc_kr euc_cn euc_tw big5 utf8 mule_internal"
+
+# in the test list, client-only encodings must follow the server encoding
+# they're to be tested with; see hard-coded cases below
+tests="euc_jp sjis euc_kr euc_cn euc_tw big5 utf8 gb18030 mule_internal"
+
 EXITCODE=0
 
 unset PGCLIENTENCODING
@@ -35,6 +39,11 @@ do
 		PGCLIENTENCODING=BIG5
 		export PGCLIENTENCODING
 		$PSQL euc_tw < sql/big5.sql > results/big5.out 2>&1
+		unset PGCLIENTENCODING
+        elif [ $i = gb18030 ];then
+		PGCLIENTENCODING=GB18030
+		export PGCLIENTENCODING
+		$PSQL utf8 < sql/gb18030.sql > results/gb18030.out 2>&1
 		unset PGCLIENTENCODING
 	else
 		dropdb $i >/dev/null 2>&1
