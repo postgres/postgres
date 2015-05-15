@@ -255,6 +255,11 @@ Zone	Africa/Timbuktu	-0:12:04 -	LMT	1912
 Zone America/Anguilla	-4:12:16 -	LMT	1912 Mar  2
 			-4:00	-	AST
 
+# Antigua and Barbuda
+Zone	America/Antigua	-4:07:12 -	LMT	1912 Mar 2
+			-5:00	-	EST	1951
+			-4:00	-	AST
+
 # Chubut, Argentina
 # The name "Comodoro Rivadavia" exceeds the 14-byte POSIX limit.
 Zone America/Argentina/ComodRivadavia -4:30:00 - LMT	1894 Oct 31
@@ -273,6 +278,11 @@ Zone America/Argentina/ComodRivadavia -4:30:00 - LMT	1894 Oct 31
 Zone	America/Aruba	-4:40:24 -	LMT	1912 Feb 12 # Oranjestad
 			-4:30	-	ANT	1965 # Netherlands Antilles Time
 			-4:00	-	AST
+
+# Cayman Is
+Zone	America/Cayman	-5:25:32 -	LMT	1890     # Georgetown
+			-5:07:11 -	KMT	1912 Feb # Kingston Mean Time
+			-5:00	-	EST
 
 # Canada
 Zone America/Coral_Harbour -5:32:40 -	LMT	1884
@@ -300,6 +310,46 @@ Zone	America/Grenada	-4:07:00 -	LMT	1911 Jul # St George's
 # Guadeloupe
 Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun  8 # Pointe-à-Pitre
 			-4:00	 -	AST
+
+# Canada
+#
+# From Paul Eggert (2015-03-24):
+# Since 1970 most of Quebec has been like Toronto; see
+# America/Toronto.  However, earlier versions of the tz database
+# mistakenly relied on data from Shanks & Pottenger saying that Quebec
+# differed from Ontario after 1970, and the following rules and zone
+# were created for most of Quebec from the incorrect Shanks &
+# Pottenger data.  The post-1970 entries have been corrected, but the
+# pre-1970 entries are unchecked and probably have errors.
+#
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Mont	1917	only	-	Mar	25	2:00	1:00	D
+Rule	Mont	1917	only	-	Apr	24	0:00	0	S
+Rule	Mont	1919	only	-	Mar	31	2:30	1:00	D
+Rule	Mont	1919	only	-	Oct	25	2:30	0	S
+Rule	Mont	1920	only	-	May	 2	2:30	1:00	D
+Rule	Mont	1920	1922	-	Oct	Sun>=1	2:30	0	S
+Rule	Mont	1921	only	-	May	 1	2:00	1:00	D
+Rule	Mont	1922	only	-	Apr	30	2:00	1:00	D
+Rule	Mont	1924	only	-	May	17	2:00	1:00	D
+Rule	Mont	1924	1926	-	Sep	lastSun	2:30	0	S
+Rule	Mont	1925	1926	-	May	Sun>=1	2:00	1:00	D
+Rule	Mont	1927	1937	-	Apr	lastSat	24:00	1:00	D
+Rule	Mont	1927	1937	-	Sep	lastSat	24:00	0	S
+Rule	Mont	1938	1940	-	Apr	lastSun	0:00	1:00	D
+Rule	Mont	1938	1939	-	Sep	lastSun	0:00	0	S
+Rule	Mont	1946	1973	-	Apr	lastSun	2:00	1:00	D
+Rule	Mont	1945	1948	-	Sep	lastSun	2:00	0	S
+Rule	Mont	1949	1950	-	Oct	lastSun	2:00	0	S
+Rule	Mont	1951	1956	-	Sep	lastSun	2:00	0	S
+Rule	Mont	1957	1973	-	Oct	lastSun	2:00	0	S
+Zone America/Montreal	-4:54:16 -	LMT	1884
+			-5:00	Mont	E%sT	1918
+			-5:00	Canada	E%sT	1919
+			-5:00	Mont	E%sT	1942 Feb  9  2:00s
+			-5:00	Canada	E%sT	1946
+			-5:00	Mont	E%sT	1974
+			-5:00	Canada	E%sT
 
 # Montserrat
 # From Paul Eggert (2006-03-22):
@@ -599,3 +649,29 @@ Zone	Indian/Mayotte	3:00:56 -	LMT	1911 Jul # Mamoutzou
 
 # US minor outlying islands
 Zone Pacific/Johnston	-10:00	-	HST
+
+# US minor outlying islands
+#
+# From Mark Brader (2005-01-23):
+# [Fallacies and Fantasies of Air Transport History, by R.E.G. Davies,
+# published 1994 by Paladwr Press, McLean, VA, USA; ISBN 0-9626483-5-3]
+# reproduced a Pan American Airways timetable from 1936, for their weekly
+# "Orient Express" flights between San Francisco and Manila, and connecting
+# flights to Chicago and the US East Coast.  As it uses some time zone
+# designations that I've never seen before:....
+# Fri. 6:30A Lv. HONOLOLU (Pearl Harbor), H.I.   H.L.T. Ar. 5:30P Sun.
+#  "   3:00P Ar. MIDWAY ISLAND . . . . . . . . . M.L.T. Lv. 6:00A  "
+#
+Zone Pacific/Midway	-11:49:28 -	LMT	1901
+			-11:00	-	NST	1956 Jun  3
+			-11:00	1:00	NDT	1956 Sep  2
+			-11:00	-	NST	1967 Apr    # N=Nome
+			-11:00	-	BST	1983 Nov 30 # B=Bering
+			-11:00	-	SST	            # S=Samoa
+
+# N Mariana Is
+Zone Pacific/Saipan	-14:17:00 -	LMT	1844 Dec 31
+			 9:43:00 -	LMT	1901
+			 9:00	-	MPT	1969 Oct    # N Mariana Is Time
+			10:00	-	MPT	2000 Dec 23
+			10:00	-	ChST	# Chamorro Standard Time
