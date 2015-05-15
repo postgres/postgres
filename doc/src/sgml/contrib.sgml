@@ -142,6 +142,7 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &tcn;
  &test-decoding;
  &tsearch2;
+ &tsm-system-rows;
  &unaccent;
  &uuid-ossp;
  &xml2;
