@@ -2521,7 +2521,7 @@ include_dir 'conf.d'
 
     <variablelist>
      <varlistentry id="guc-archive-mode" xreflabel="archive_mode">
-      <term><varname>archive_mode</varname> (<type>boolean</type>)
+      <term><varname>archive_mode</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>archive_mode</> configuration parameter</primary>
       </indexterm>
@@ -2530,7 +2530,16 @@ include_dir 'conf.d'
        <para>
         When <varname>archive_mode</> is enabled, completed WAL segments
         are sent to archive storage by setting
-        <xref linkend="guc-archive-command">.
+        <xref linkend="guc-archive-command">. In addition to <literal>off</>,
+        to disable, there are two modes: <literal>on</>, and
+        <literal>always</>. During normal operation, there is no
+        difference between the two modes, but when set to <literal>always</>
+        the WAL archiver is enabled also during archive recovery or standby
+        mode. In <literal>always</> mode, all files restored from the archive
+        or streamed with streaming replication will be archived (again). See
+        <xref linkend="continuous-archiving-in-standby"> for details.
+       </para>  
+       <para>
         <varname>archive_mode</> and <varname>archive_command</> are
         separate variables so that <varname>archive_command</> can be
         changed without leaving archiving mode.

@@ -828,9 +828,9 @@ PostmasterMain(int argc, char *argv[])
 		write_stderr("%s: max_wal_senders must be less than max_connections\n", progname);
 		ExitPostmaster(1);
 	}
-	if (XLogArchiveMode && wal_level == WAL_LEVEL_MINIMAL)
+	if (XLogArchiveMode > ARCHIVE_MODE_OFF && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL archival (archive_mode=on) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
+				(errmsg("WAL archival cannot be enabled when wal_level is \"minimal\"")));
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
 				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
@@ -1645,13 +1645,21 @@ ServerLoop(void)
 				start_autovac_launcher = false; /* signal processed */
 		}
 
-		/* If we have lost the archiver, try to start a new one */
-		if (XLogArchivingActive() && PgArchPID == 0 && pmState == PM_RUN)
-			PgArchPID = pgarch_start();
-
-		/* If we have lost the stats collector, try to start a new one */
-		if (PgStatPID == 0 && pmState == PM_RUN)
-			PgStatPID = pgstat_start();
+		/*
+		 * If we have lost the archiver, try to start a new one.
+		 *
+		 * If WAL archiving is enabled always, we try to start a new archiver
+		 * even during recovery.
+		 */
+		if (PgArchPID == 0 && wal_level >= WAL_LEVEL_ARCHIVE)
+		{
+			if ((pmState == PM_RUN && XLogArchiveMode > ARCHIVE_MODE_OFF) ||
+				((pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY) &&
+				 XLogArchiveMode == ARCHIVE_MODE_ALWAYS))
+			{
+				PgArchPID = pgarch_start();
+			}
+		}
 
 		/* If we need to signal the autovacuum launcher, do so now */
 		if (avlauncher_needs_signal)
@@ -4806,6 +4814,17 @@ sigusr1_handler(SIGNAL_ARGS)
 		CheckpointerPID = StartCheckpointer();
 		Assert(BgWriterPID == 0);
 		BgWriterPID = StartBackgroundWriter();
+
+		/*
+		 * Start the archiver if we're responsible for (re-)archiving received
+		 * files.
+		 */
+		Assert(PgArchPID == 0);
+		if (wal_level >= WAL_LEVEL_ARCHIVE &&
+			XLogArchiveMode == ARCHIVE_MODE_ALWAYS)
+		{
+			PgArchPID = pgarch_start();
+		}
 
 		pmState = PM_RECOVERY;
 	}

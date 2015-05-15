@@ -86,7 +86,7 @@ int			min_wal_size = 5;		/* 80 MB */
 int			wal_keep_segments = 0;
 int			XLOGbuffers = -1;
 int			XLogArchiveTimeout = 0;
-bool		XLogArchiveMode = false;
+int			XLogArchiveMode = ARCHIVE_MODE_OFF;
 char	   *XLogArchiveCommand = NULL;
 bool		EnableHotStandby = false;
 bool		fullPageWrites = true;
@@ -137,6 +137,24 @@ const struct config_enum_entry sync_method_options[] = {
 #ifdef OPEN_DATASYNC_FLAG
 	{"open_datasync", SYNC_METHOD_OPEN_DSYNC, false},
 #endif
+	{NULL, 0, false}
+};
+
+
+/*
+ * Although only "on", "off", and "always" are documented,
+ * we accept all the likely variants of "on" and "off".
+ */
+const struct config_enum_entry archive_mode_options[] = {
+	{"always", ARCHIVE_MODE_ALWAYS, false},
+	{"on", ARCHIVE_MODE_ON, false},
+	{"off", ARCHIVE_MODE_OFF, false},
+	{"true", ARCHIVE_MODE_ON, true},
+	{"false", ARCHIVE_MODE_OFF, true},
+	{"yes", ARCHIVE_MODE_ON, true},
+	{"no", ARCHIVE_MODE_OFF, true},
+	{"1", ARCHIVE_MODE_ON, true},
+	{"0", ARCHIVE_MODE_OFF, true},
 	{NULL, 0, false}
 };
 
@@ -767,7 +785,7 @@ static MemoryContext walDebugCxt = NULL;
 #endif
 
 static void readRecoveryCommandFile(void);
-static void exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo);
+static void exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog);
 static bool recoveryStopsBefore(XLogReaderState *record);
 static bool recoveryStopsAfter(XLogReaderState *record);
 static void recoveryPausesHere(void);

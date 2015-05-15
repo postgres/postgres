@@ -206,7 +206,7 @@
 
 # - Archiving -
 
-#archive_mode = off		# allows archiving to be done
+#archive_mode = off		# enables archiving; off, on, or always
 				# (change requires restart)
 #archive_command = ''		# command to use to archive a logfile segment
 				# placeholders: %p = path of file to archive

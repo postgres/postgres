@@ -540,7 +540,10 @@ WalReceiverMain(void)
 			 * being archived later.
 			 */
 			XLogFileName(xlogfname, recvFileTLI, recvSegNo);
-			XLogArchiveForceDone(xlogfname);
+			if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
+				XLogArchiveForceDone(xlogfname);
+			else
+				XLogArchiveNotify(xlogfname);
 		}
 		recvFile = -1;
 
@@ -897,7 +900,10 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				 * from being archived later.
 				 */
 				XLogFileName(xlogfname, recvFileTLI, recvSegNo);
-				XLogArchiveForceDone(xlogfname);
+				if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
+					XLogArchiveForceDone(xlogfname);
+				else
+					XLogArchiveNotify(xlogfname);
 			}
 			recvFile = -1;
 
