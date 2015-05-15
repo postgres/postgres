@@ -55,7 +55,8 @@ BORT    28800    # Borneo Time (Indonesia) (not in zic)
 BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
 CCT     28800    # China Coastal Time (not in zic)
-CHOST   36000 D  # Choibalsan Summer Time (obsolete)
+CHOST   Asia/Choibalsan  # Choibalsan Summer Time
+                 #     (Asia/Choibalsan)
 CHOT    Asia/Choibalsan  # Choibalsan Time
                  #     (Asia/Choibalsan)
 CIT     28800    # Central Indonesia Time (obsolete, WITA is now preferred)
@@ -126,7 +127,8 @@ GST     14400    # Gulf Standard Time
                  #     (Asia/Dubai)
                  #     (Asia/Muscat)
 HKT     28800    # Hong Kong Time (not in zic)
-HOVST   28800 D  # Hovd Summer Time (obsolete)
+HOVST   28800 D  # Hovd Summer Time
+                 #     (Asia/Hovd)
 HOVT    Asia/Hovd  # Hovd Time
                  #     (Asia/Hovd)
 ICT     25200    # Indochina Time
@@ -211,7 +213,8 @@ TLT     32400    # East Timor Time
                  #     (Asia/Dili)
 TMT     Asia/Ashgabat  # Turkmenistan Time
                  #     (Asia/Ashgabat)
-ULAST   32400 D  # Ulan Bator Summer Time (obsolete)
+ULAST   32400 D  # Ulan Bator Summer Time
+                 #     (Asia/Ulaanbaatar)
 ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
                  #     (Asia/Ulaanbaatar)
 UZST    21600 D  # Uzbekistan Summer Time
