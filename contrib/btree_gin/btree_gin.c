@@ -5,7 +5,7 @@
 
 #include <limits.h>
 
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/cash.h"

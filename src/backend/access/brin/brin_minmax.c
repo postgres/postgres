@@ -13,7 +13,7 @@
 #include "access/genam.h"
 #include "access/brin_internal.h"
 #include "access/brin_tuple.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_amop.h"
 #include "utils/datum.h"

@@ -14,7 +14,7 @@
 #include "postgres.h"
 
 #include "access/gin.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "miscadmin.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"

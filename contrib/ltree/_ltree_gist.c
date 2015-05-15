@@ -8,7 +8,7 @@
 #include "postgres.h"
 
 #include "access/gist.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "crc32.h"
 #include "ltree.h"
 

@@ -5,7 +5,8 @@
 
 #include "trgm.h"
 
-#include "access/skey.h"
+#include "access/stratnum.h"
+#include "fmgr.h"
 
 
 typedef struct

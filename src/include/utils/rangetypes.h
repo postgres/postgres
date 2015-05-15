@@ -77,16 +77,16 @@ typedef struct
 
 /* Operator strategy numbers used in the GiST and SP-GiST range opclasses */
 /* Numbers are chosen to match up operator names with existing usages */
-#define RANGESTRAT_BEFORE				1
-#define RANGESTRAT_OVERLEFT				2
-#define RANGESTRAT_OVERLAPS				3
-#define RANGESTRAT_OVERRIGHT			4
-#define RANGESTRAT_AFTER				5
-#define RANGESTRAT_ADJACENT				6
-#define RANGESTRAT_CONTAINS				7
-#define RANGESTRAT_CONTAINED_BY			8
-#define RANGESTRAT_CONTAINS_ELEM		16
-#define RANGESTRAT_EQ					18
+#define RANGESTRAT_BEFORE				RTLeftStrategyNumber
+#define RANGESTRAT_OVERLEFT				RTOverLeftStrategyNumber
+#define RANGESTRAT_OVERLAPS				RTOverlapStrategyNumber
+#define RANGESTRAT_OVERRIGHT			RTOverRightStrategyNumber
+#define RANGESTRAT_AFTER				RTRightStrategyNumber
+#define RANGESTRAT_ADJACENT				RTSameStrategyNumber
+#define RANGESTRAT_CONTAINS				RTContainsStrategyNumber
+#define RANGESTRAT_CONTAINED_BY			RTContainedByStrategyNumber
+#define RANGESTRAT_CONTAINS_ELEM		RTContainsElemStrategyNumber
+#define RANGESTRAT_EQ					RTEqualStrategyNumber
 
 /*
  * prototypes for functions defined in rangetypes.c

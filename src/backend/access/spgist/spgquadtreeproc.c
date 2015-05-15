@@ -15,8 +15,8 @@
 
 #include "postgres.h"
 
-#include "access/gist.h"		/* for RTree strategy numbers */
 #include "access/spgist.h"
+#include "access/stratnum.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"

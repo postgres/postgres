@@ -37,7 +37,7 @@
 #include "postgres.h"
 
 #include "access/spgist.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"

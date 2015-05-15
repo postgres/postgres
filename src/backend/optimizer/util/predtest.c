@@ -1248,7 +1248,7 @@ list_member_strip(List *list, Expr *datum)
  * Define "operator implication tables" for btree operators ("strategies"),
  * and similar tables for refutation.
  *
- * The strategy numbers defined by btree indexes (see access/skey.h) are:
+ * The strategy numbers defined by btree indexes (see access/stratnum.h) are:
  *		1 <		2 <=	3 =		4 >=	5 >
  * and in addition we use 6 to represent <>.  <> is not a btree-indexable
  * operator, but we assume here that if an equality operator of a btree

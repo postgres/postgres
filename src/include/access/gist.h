@@ -37,26 +37,6 @@
 #define GISTNProcs					9
 
 /*
- * strategy numbers for GiST opclasses that want to implement the old
- * RTREE behavior.
- */
-#define RTLeftStrategyNumber			1
-#define RTOverLeftStrategyNumber		2
-#define RTOverlapStrategyNumber			3
-#define RTOverRightStrategyNumber		4
-#define RTRightStrategyNumber			5
-#define RTSameStrategyNumber			6
-#define RTContainsStrategyNumber		7		/* for @> */
-#define RTContainedByStrategyNumber		8		/* for <@ */
-#define RTOverBelowStrategyNumber		9
-#define RTBelowStrategyNumber			10
-#define RTAboveStrategyNumber			11
-#define RTOverAboveStrategyNumber		12
-#define RTOldContainsStrategyNumber		13		/* for old spelling of @> */
-#define RTOldContainedByStrategyNumber	14		/* for old spelling of <@ */
-#define RTKNNSearchStrategyNumber		15
-
-/*
  * Page opaque data in a GiST index page.
  */
 #define F_LEAF				(1 << 0)	/* leaf page */

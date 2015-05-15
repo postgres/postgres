@@ -14,7 +14,7 @@
 #include "postgres.h"
 
 #include "access/gin.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

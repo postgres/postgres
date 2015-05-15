@@ -430,7 +430,7 @@ typedef struct xl_btree_newroot
 
 
 /*
- *	Operator strategy numbers for B-tree have been moved to access/skey.h,
+ *	Operator strategy numbers for B-tree have been moved to access/stratnum.h,
  *	because many places need to use them in ScanKeyInit() calls.
  *
  *	The strategy numbers are chosen so that we can commute them by

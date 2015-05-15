@@ -12,7 +12,7 @@
 #include <math.h>
 
 #include "access/gist.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 

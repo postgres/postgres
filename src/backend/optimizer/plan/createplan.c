@@ -19,7 +19,7 @@
 #include <limits.h>
 #include <math.h>
 
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_operator.h"

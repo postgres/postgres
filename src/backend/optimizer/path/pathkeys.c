@@ -17,7 +17,7 @@
  */
 #include "postgres.h"
 
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"

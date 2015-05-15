@@ -14,7 +14,7 @@
 
 #include "postgres.h"
 
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "access/gist.h"
 #include "tsearch/ts_utils.h"
 

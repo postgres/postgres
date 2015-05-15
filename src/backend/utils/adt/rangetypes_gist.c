@@ -15,7 +15,7 @@
 #include "postgres.h"
 
 #include "access/gist.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/rangetypes.h"

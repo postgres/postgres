@@ -4,7 +4,7 @@
 #include "postgres.h"
 
 #include "access/gin.h"
-#include "access/skey.h"
+#include "access/stratnum.h"
 #include "catalog/pg_type.h"
 
 #include "hstore.h"
