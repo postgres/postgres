@@ -147,7 +147,10 @@ extern void index_restrpos(IndexScanDesc scan);
 extern ItemPointer index_getnext_tid(IndexScanDesc scan,
 				  ScanDirection direction);
 extern HeapTuple index_fetch_heap(IndexScanDesc scan);
+extern bool index_get_heap_values(IndexScanDesc scan, ItemPointer heapPtr,
+					Datum values[INDEX_MAX_KEYS], bool isnull[INDEX_MAX_KEYS]);
 extern HeapTuple index_getnext(IndexScanDesc scan, ScanDirection direction);
+
 extern int64 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap);
 
 extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,

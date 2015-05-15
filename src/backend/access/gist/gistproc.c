@@ -1478,3 +1478,40 @@ gist_point_distance(PG_FUNCTION_ARGS)
 
 	PG_RETURN_FLOAT8(distance);
 }
+
+/*
+ * The inexact GiST distance method for geometric types that store bounding
+ * boxes.
+ *
+ * Compute lossy distance from point to index entries.  The result is inexact
+ * because index entries are bounding boxes, not the exact shapes of the
+ * indexed geometric types.  We use distance from point to MBR of index entry.
+ * This is a lower bound estimate of distance from point to indexed geometric
+ * type.
+ */
+Datum
+gist_bbox_distance(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
+	double		distance;
+	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
+
+	/* Bounding box distance is always inexact. */
+	*recheck = true;
+
+	switch (strategyGroup)
+	{
+		case PointStrategyNumberGroup:
+			distance = computeDistance(false,
+									   DatumGetBoxP(entry->key),
+									   PG_GETARG_POINT_P(1));
+			break;
+		default:
+			elog(ERROR, "unknown strategy number: %d", strategy);
+			distance = 0.0;		/* keep compiler quiet */
+	}
+
+	PG_RETURN_FLOAT8(distance);
+}

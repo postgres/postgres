@@ -2657,6 +2657,18 @@ dist_ppoly(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
+Datum
+dist_polyp(PG_FUNCTION_ARGS)
+{
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
+	Point	   *point = PG_GETARG_POINT_P(1);
+	float8		result;
+
+	result = dist_ppoly_internal(point, poly);
+
+	PG_RETURN_FLOAT8(result);
+}
+
 static double
 dist_ppoly_internal(Point *pt, POLYGON *poly)
 {
@@ -5112,6 +5124,21 @@ dist_pc(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
+/*
+ * Distance from a circle to a point
+ */
+Datum
+dist_cpoint(PG_FUNCTION_ARGS)
+{
+	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
+	Point	   *point = PG_GETARG_POINT_P(1);
+	float8		result;
+
+	result = point_dt(point, &circle->center) - circle->radius;
+	if (result < 0)
+		result = 0;
+	PG_RETURN_FLOAT8(result);
+}
 
 /*		circle_center	-		returns the center point of the circle.
  */

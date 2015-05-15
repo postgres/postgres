@@ -105,6 +105,7 @@
        <literal>~=</>
       </entry>
       <entry>
+       <literal>&lt;-&gt;</>
       </entry>
      </row>
      <row>
@@ -163,6 +164,7 @@
        <literal>~=</>
       </entry>
       <entry>
+       <literal>&lt;-&gt;</>
       </entry>
      </row>
      <row>
@@ -205,6 +207,12 @@
     </tbody>
    </tgroup>
   </table>
+
+ <para>
+  Currently, ordering by the distance operator <literal>&lt;-&gt;</>
+  is supported only with <literal>point</> by the operator classes
+  of the geometric types.
+ </para>
 
  <para>
   For historical reasons, the <literal>inet_ops</> operator class is
@@ -780,6 +788,7 @@ my_distance(PG_FUNCTION_ARGS)
     data_type  *query = PG_GETARG_DATA_TYPE_P(1);
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
     /* Oid subtype = PG_GETARG_OID(3); */
+    /* bool *recheck = (bool *) PG_GETARG_POINTER(4); */
     data_type  *key = DatumGetDataType(entry-&gt;key);
     double      retval;
 
@@ -792,14 +801,24 @@ my_distance(PG_FUNCTION_ARGS)
 </programlisting>
 
        The arguments to the <function>distance</> function are identical to
-       the arguments of the <function>consistent</> function, except that no
-       recheck flag is used.  The distance to a leaf index entry must always
-       be determined exactly, since there is no way to re-order the tuples
-       once they are returned.  Some approximation is allowed when determining
-       the distance to an internal tree node, so long as the result is never
-       greater than any child's actual distance.  Thus, for example, distance
-       to a bounding box is usually sufficient in geometric applications.  The
-       result value can be any finite <type>float8</> value.  (Infinity and
+       the arguments of the <function>consistent</> function.
+      </para>
+
+      <para>
+       Some approximation is allowed when determining the distance, as long as
+       the result is never greater than the entry's actual distance. Thus, for
+       example, distance to a bounding box is usually sufficient in geometric
+       applications.  For an internal tree node, the distance returned must not
+       be greater than the distance to any of the child nodes. If the returned
+       distance is not accurate, the function must set *recheck to false. (This
+       is not necessary for internal tree nodes; for them, the calculation is
+       always assumed to be inaccurate). The executor will calculate the
+       accurate distance after fetching the tuple from the heap, and reorder
+       the tuples if necessary.
+      </para>
+
+      <para>
+       The result value can be any finite <type>float8</> value.  (Infinity and
        minus infinity are used internally to handle cases such as nulls, so it
        is not recommended that <function>distance</> functions return these
        values.)

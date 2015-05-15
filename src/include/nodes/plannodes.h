@@ -311,8 +311,13 @@ typedef Scan SeqScan;
  * index column order.  Only the expressions are provided, not the auxiliary
  * sort-order information from the ORDER BY SortGroupClauses; it's assumed
  * that the sort ordering is fully determinable from the top-level operators.
- * indexorderbyorig is unused at run time, but is needed for EXPLAIN.
- * (Note these fields are used for amcanorderbyop cases, not amcanorder cases.)
+ * indexorderbyorig is used at runtime to recheck the ordering, if the index
+ * cannot calculate an accurate ordering.  It is also needed for EXPLAIN.
+ *
+ * indexorderbyops is an array of operators used to sort the ORDER BY
+ * expressions, used together with indexorderbyorig to recheck ordering at run
+ * time.  (Note these fields are used for amcanorderbyop cases, not amcanorder
+ * cases.)
  *
  * indexorderdir specifies the scan ordering, for indexscans on amcanorder
  * indexes (for other indexes it should be "don't care").
@@ -326,6 +331,7 @@ typedef struct IndexScan
 	List	   *indexqualorig;	/* the same in original form */
 	List	   *indexorderby;	/* list of index ORDER BY exprs */
 	List	   *indexorderbyorig;		/* the same in original form */
+	Oid		   *indexorderbyops;	/* operators to sort ORDER BY exprs */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
 } IndexScan;
 

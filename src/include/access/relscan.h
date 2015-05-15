@@ -91,6 +91,15 @@ typedef struct IndexScanDescData
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
 	bool		xs_recheck;		/* T means scan keys must be rechecked */
 
+	/*
+	 * When fetching with an ordering operator, the values of the ORDER BY
+	 * expressions of the last returned tuple, according to the index.  If
+	 * xs_recheck is true, these need to be rechecked just like the scan keys,
+	 * and the values returned here are a lower-bound on the actual values.
+	 */
+	Datum	   *xs_orderbyvals;
+	bool	   *xs_orderbynulls;
+
 	/* state data for traversing HOT chains in index_getnext */
 	bool		xs_continue_hot;	/* T if must keep walking HOT chain */
 }	IndexScanDescData;

@@ -650,6 +650,7 @@ DATA(insert (	2594   604 604 11 s 2577 783 0 ));
 DATA(insert (	2594   604 604 12 s 2576 783 0 ));
 DATA(insert (	2594   604 604 13 s 2861 783 0 ));
 DATA(insert (	2594   604 604 14 s 2860 783 0 ));
+DATA(insert (	2594   604 600 15 o 3289 783 1970 ));
 
 /*
  *	gist circle_ops
@@ -669,6 +670,7 @@ DATA(insert (	2595   718 718 11 s 1514 783 0 ));
 DATA(insert (	2595   718 718 12 s 2590 783 0 ));
 DATA(insert (	2595   718 718 13 s 2865 783 0 ));
 DATA(insert (	2595   718 718 14 s 2864 783 0 ));
+DATA(insert (	2595   718 600 15 o 3291 783 1970 ));
 
 /*
  * gin array_ops (these anyarray operators are used with all the opclasses

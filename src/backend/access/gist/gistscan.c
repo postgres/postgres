@@ -85,6 +85,11 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	/* workspaces with size dependent on numberOfOrderBys: */
 	so->distances = palloc(sizeof(double) * scan->numberOfOrderBys);
 	so->qual_ok = true;			/* in case there are zero keys */
+	if (scan->numberOfOrderBys > 0)
+	{
+		scan->xs_orderbyvals = palloc(sizeof(Datum) * scan->numberOfOrderBys);
+		scan->xs_orderbynulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+	}
 
 	scan->opaque = so;
 

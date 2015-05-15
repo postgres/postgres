@@ -22,6 +22,7 @@
 #include "access/skey.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_operator.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -102,7 +103,7 @@ static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
-			   List *indexorderby, List *indexorderbyorig,
+			   List *indexorderby, List *indexorderbyorig, Oid *indexorderbyops,
 			   ScanDirection indexscandir);
 static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
 				   Index scanrelid, Oid indexid,
@@ -167,8 +168,8 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
 						   bool **p_nullsFirst);
-static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
-					   TargetEntry *tle,
+static EquivalenceMember *find_ec_member_for_expr(EquivalenceClass *ec,
+					   Expr *tlexpr,
 					   Relids relids);
 static Material *make_material(Plan *lefttree);
 
@@ -1158,6 +1159,7 @@ create_indexscan_plan(PlannerInfo *root,
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
 	List	   *fixed_indexorderbys;
+	Oid		   *indexorderbyops = NULL;
 	ListCell   *l;
 
 	/* it should be a base rel... */
@@ -1269,6 +1271,46 @@ create_indexscan_plan(PlannerInfo *root,
 			replace_nestloop_params(root, (Node *) indexorderbys);
 	}
 
+	/*
+	 * If there are ORDER BY expressions, look up the sort operators for
+	 * their datatypes.
+	 */
+	if (best_path->path.pathkeys && indexorderbys)
+	{
+		int			numOrderBys = list_length(indexorderbys);
+		int			i;
+		ListCell   *pathkeyCell,
+				   *exprCell;
+		PathKey	   *pathkey;
+		Expr	   *expr;
+		EquivalenceMember *em;
+
+		indexorderbyops = (Oid *) palloc(numOrderBys * sizeof(Oid));
+
+		/*
+		 * PathKey contains pointer to the equivalence class, but that's not
+		 * enough because we need the expression's datatype to look up the
+		 * sort operator in the operator family.  We have to dig the
+		 * equivalence member for the datatype.
+		 */
+		i = 0;
+		forboth (pathkeyCell, best_path->path.pathkeys, exprCell, indexorderbys)
+		{
+			pathkey = (PathKey *) lfirst(pathkeyCell);
+			expr = (Expr *) lfirst(exprCell);
+
+			/* Find equivalence member for the order by expression */
+			em = find_ec_member_for_expr(pathkey->pk_eclass, expr, NULL);
+
+			/* Get sort operator from opfamily */
+			indexorderbyops[i] = get_opfamily_member(pathkey->pk_opfamily,
+													 em->em_datatype,
+													 em->em_datatype,
+													 pathkey->pk_strategy);
+			i++;
+		}
+	}
+
 	/* Finally ready to build the plan node */
 	if (indexonly)
 		scan_plan = (Scan *) make_indexonlyscan(tlist,
@@ -1288,6 +1330,7 @@ create_indexscan_plan(PlannerInfo *root,
 											stripped_indexquals,
 											fixed_indexorderbys,
 											indexorderbys,
+											indexorderbyops,
 											best_path->indexscandir);
 
 	copy_path_costsize(&scan_plan->plan, &best_path->path);
@@ -3344,6 +3387,7 @@ make_indexscan(List *qptlist,
 			   List *indexqualorig,
 			   List *indexorderby,
 			   List *indexorderbyorig,
+			   Oid *indexorderbyops,
 			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
@@ -3360,6 +3404,7 @@ make_indexscan(List *qptlist,
 	node->indexqualorig = indexqualorig;
 	node->indexorderby = indexorderby;
 	node->indexorderbyorig = indexorderbyorig;
+	node->indexorderbyops = indexorderbyops;
 	node->indexorderdir = indexscandir;
 
 	return node;
@@ -3990,7 +4035,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			tle = get_tle_by_resno(tlist, reqColIdx[numsortkeys]);
 			if (tle)
 			{
-				em = find_ec_member_for_tle(ec, tle, relids);
+				em = find_ec_member_for_expr(ec, tle->expr, relids);
 				if (em)
 				{
 					/* found expr at right place in tlist */
@@ -4021,7 +4066,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			foreach(j, tlist)
 			{
 				tle = (TargetEntry *) lfirst(j);
-				em = find_ec_member_for_tle(ec, tle, relids);
+				em = find_ec_member_for_expr(ec, tle->expr, relids);
 				if (em)
 				{
 					/* found expr already in tlist */
@@ -4142,23 +4187,21 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 }
 
 /*
- * find_ec_member_for_tle
- *		Locate an EquivalenceClass member matching the given TLE, if any
+ * find_ec_member_for_expr
+ *		Locate an EquivalenceClass member matching the given expression, if any
  *
  * Child EC members are ignored unless they match 'relids'.
  */
 static EquivalenceMember *
-find_ec_member_for_tle(EquivalenceClass *ec,
-					   TargetEntry *tle,
-					   Relids relids)
+find_ec_member_for_expr(EquivalenceClass *ec,
+						Expr *expr,
+						Relids relids)
 {
-	Expr	   *tlexpr;
 	ListCell   *lc;
 
 	/* We ignore binary-compatible relabeling on both ends */
-	tlexpr = tle->expr;
-	while (tlexpr && IsA(tlexpr, RelabelType))
-		tlexpr = ((RelabelType *) tlexpr)->arg;
+	while (expr && IsA(expr, RelabelType))
+		expr = ((RelabelType *) expr)->arg;
 
 	foreach(lc, ec->ec_members)
 	{
@@ -4184,7 +4227,7 @@ find_ec_member_for_tle(EquivalenceClass *ec,
 		while (emexpr && IsA(emexpr, RelabelType))
 			emexpr = ((RelabelType *) emexpr)->arg;
 
-		if (equal(emexpr, tlexpr))
+		if (equal(emexpr, expr))
 			return em;
 	}
 

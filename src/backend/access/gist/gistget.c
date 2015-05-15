@@ -30,10 +30,10 @@
  * The index tuple might represent either a heap tuple or a lower index page,
  * depending on whether the containing page is a leaf page or not.
  *
- * On success return for a heap tuple, *recheck_p is set to indicate
- * whether recheck is needed.  We recheck if any of the consistent() functions
- * request it.  recheck is not interesting when examining a non-leaf entry,
- * since we must visit the lower index page if there's any doubt.
+ * On success return for a heap tuple, *recheck_p is set to indicate whether
+ * recheck is needed.  We recheck if any of the consistent() or distance()
+ * functions request it.  recheck is not interesting when examining a non-leaf
+ * entry, since we must visit the lower index page if there's any doubt.
  *
  * If we are doing an ordered scan, so->distances[] is filled with distance
  * data from the distance() functions before returning success.
@@ -176,6 +176,7 @@ gistindex_keytest(IndexScanDesc scan,
 		else
 		{
 			Datum		dist;
+			bool		recheck;
 			GISTENTRY	de;
 
 			gistdentryinit(giststate, key->sk_attno - 1, &de,
@@ -192,16 +193,21 @@ gistindex_keytest(IndexScanDesc scan,
 			 * always be zero, but might as well pass it for possible future
 			 * use.)
 			 *
-			 * Note that Distance functions don't get a recheck argument. We
-			 * can't tolerate lossy distance calculations on leaf tuples;
-			 * there is no opportunity to re-sort the tuples afterwards.
+			 * Distance functions get a recheck argument as well.  In this
+			 * case the returned distance is the lower bound of distance
+			 * and needs to be rechecked.  We return single recheck flag
+			 * which means that both quals and distances are to be
+			 * rechecked.
 			 */
-			dist = FunctionCall4Coll(&key->sk_func,
+			dist = FunctionCall5Coll(&key->sk_func,
 									 key->sk_collation,
 									 PointerGetDatum(&de),
 									 key->sk_argument,
 									 Int32GetDatum(key->sk_strategy),
-									 ObjectIdGetDatum(key->sk_subtype));
+									 ObjectIdGetDatum(key->sk_subtype),
+									 PointerGetDatum(&recheck));
+
+			*recheck_p |= recheck;
 
 			*distance_p = DatumGetFloat8(dist);
 		}
@@ -434,6 +440,7 @@ getNextNearest(IndexScanDesc scan)
 {
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	bool		res = false;
+	int			i;
 
 	if (scan->xs_itup)
 	{
@@ -454,6 +461,11 @@ getNextNearest(IndexScanDesc scan)
 			/* found a heap item at currently minimal distance */
 			scan->xs_ctup.t_self = item->data.heap.heapPtr;
 			scan->xs_recheck = item->data.heap.recheck;
+			for (i = 0; i < scan->numberOfOrderBys; i++)
+			{
+				scan->xs_orderbyvals[i] = Float8GetDatum(item->distances[i]);
+				scan->xs_orderbynulls[i] = false;
+			}
 
 			/* in an index-only scan, also return the reconstructed tuple. */
 			if (scan->xs_want_itup)

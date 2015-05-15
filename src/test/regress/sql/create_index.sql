@@ -224,6 +224,10 @@ SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
 
+SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
+
+SELECT * FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
+
 -- Now check the results from plain indexscan
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
@@ -436,6 +440,14 @@ SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
 SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
+SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
+SELECT * FROM gcircle_tbl ORDER BY f1 <-> '(200,300)'::point LIMIT 10;
 
 -- Now check the results from bitmap indexscan
 SET enable_seqscan = OFF;

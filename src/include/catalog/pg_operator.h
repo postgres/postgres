@@ -1015,9 +1015,13 @@ DATA(insert OID = 1520 (  "<->"   PGNSP PGUID b f f  718	718  701   1520    0 ci
 DESCR("distance between");
 DATA(insert OID = 1521 (  "#"	  PGNSP PGUID l f f  0		604   23	  0    0 poly_npoints - - ));
 DESCR("number of points");
-DATA(insert OID = 1522 (  "<->"   PGNSP PGUID b f f  600	718  701	  0    0 dist_pc - - ));
+DATA(insert OID = 1522 (  "<->"   PGNSP PGUID b f f  600	718  701   3291    0 dist_pc - - ));
 DESCR("distance between");
-DATA(insert OID = 3276 (  "<->"	  PGNSP PGUID b f f	 600	604	 701	  0	   0 dist_ppoly - - ));
+DATA(insert OID = 3291 (  "<->"   PGNSP PGUID b f f  718	600  701   1522    0 dist_cpoint - - ));
+DESCR("distance between");
+DATA(insert OID = 3276 (  "<->"	  PGNSP PGUID b f f	 600	604	 701   3289	   0 dist_ppoly - - ));
+DESCR("distance between");
+DATA(insert OID = 3289 (  "<->"	  PGNSP PGUID b f f  604 	600  701   3276	   0 dist_polyp - - ));
 DESCR("distance between");
 DATA(insert OID = 1523 (  "<->"   PGNSP PGUID b f f  718	604  701	  0    0 dist_cpoly - - ));
 DESCR("distance between");
