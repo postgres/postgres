@@ -9042,6 +9042,14 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       or when examined by a non-superuser)
       </entry>
      </row>
+     <row>
+      <entry><structfield>pending_restart</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry><literal>true</literal> if the value has been changed in the
+      configuration file but needs a restart; or <literal>false</literal>
+      otherwise.
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

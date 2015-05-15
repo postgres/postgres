@@ -3067,7 +3067,7 @@ DATA(insert OID = 2077 (  current_setting	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1
 DESCR("SHOW X as a function");
 DATA(insert OID = 2078 (  set_config		PGNSP PGUID 12 1 0 0 0 f f f f f f v 3 0 25 "25 25 16" _null_ _null_ _null_ _null_ _null_ set_config_by_name _null_ _null_ _null_ ));
 DESCR("SET X as a function");
-DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 1 1000 0 0 f f f f t t s 0 0 2249 "" "{25,25,25,25,25,25,25,25,25,25,25,1009,25,25,25,23}" "{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}" "{name,setting,unit,category,short_desc,extra_desc,context,vartype,source,min_val,max_val,enumvals,boot_val,reset_val,sourcefile,sourceline}" _null_ _null_ show_all_settings _null_ _null_ _null_ ));
+DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 1 1000 0 0 f f f f t t s 0 0 2249 "" "{25,25,25,25,25,25,25,25,25,25,25,1009,25,25,25,23,16}" "{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}" "{name,setting,unit,category,short_desc,extra_desc,context,vartype,source,min_val,max_val,enumvals,boot_val,reset_val,sourcefile,sourceline,pending_restart}" _null_ _null_ show_all_settings _null_ _null_ _null_ ));
 DESCR("SHOW ALL as a function");
 DATA(insert OID = 3329 (  pg_show_all_file_settings	PGNSP PGUID 12 1 1000 0 0 f f f f t t s 0 0 2249 "" "{25,23,23,25,25}" "{o,o,o,o,o}" "{sourcefile,sourceline,seqno,name,setting}" _null_ _null_ show_all_file_settings _null_ _null_ _null_ ));
 DESCR("show config file settings");

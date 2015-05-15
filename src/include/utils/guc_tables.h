@@ -167,6 +167,7 @@ struct config_generic
  * Caution: the GUC_IS_IN_FILE bit is transient state for ProcessConfigFile.
  * Do not assume that its value represents useful information elsewhere.
  */
+#define GUC_PENDING_RESTART	0x0002
 
 
 /* GUC records for specific variable types */

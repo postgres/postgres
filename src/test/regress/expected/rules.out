@@ -1616,8 +1616,9 @@ pg_settings| SELECT a.name,
     a.boot_val,
     a.reset_val,
     a.sourcefile,
-    a.sourceline
-   FROM pg_show_all_settings() a(name, setting, unit, category, short_desc, extra_desc, context, vartype, source, min_val, max_val, enumvals, boot_val, reset_val, sourcefile, sourceline);
+    a.sourceline,
+    a.pending_restart
+   FROM pg_show_all_settings() a(name, setting, unit, category, short_desc, extra_desc, context, vartype, source, min_val, max_val, enumvals, boot_val, reset_val, sourcefile, sourceline, pending_restart);
 pg_shadow| SELECT pg_authid.rolname AS usename,
     pg_authid.oid AS usesysid,
     pg_authid.rolcreatedb AS usecreatedb,
