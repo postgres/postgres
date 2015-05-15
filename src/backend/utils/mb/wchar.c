@@ -1070,9 +1070,9 @@ pg_uhc_dsplen(const unsigned char *s)
 }
 
 /*
- *	* GB18030
- *	 * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
- *	  */
+ * GB18030
+ *	Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
+ */
 static int
 pg_gb18030_mblen(const unsigned char *s)
 {
@@ -1080,15 +1080,10 @@ pg_gb18030_mblen(const unsigned char *s)
 
 	if (!IS_HIGHBIT_SET(*s))
 		len = 1;				/* ASCII */
+	else if (*(s + 1) >= 0x30 && *(s + 1) <= 0x39)
+		len = 4;
 	else
-	{
-		if ((*(s + 1) >= 0x40 && *(s + 1) <= 0x7e) || (*(s + 1) >= 0x80 && *(s + 1) <= 0xfe))
-			len = 2;
-		else if (*(s + 1) >= 0x30 && *(s + 1) <= 0x39)
-			len = 4;
-		else
-			len = 2;
-	}
+		len = 2;
 	return len;
 }
 
@@ -1403,21 +1398,32 @@ pg_uhc_verifier(const unsigned char *s, int len)
 static int
 pg_gb18030_verifier(const unsigned char *s, int len)
 {
-	int			l,
-				mbl;
+	int			l;
 
-	l = mbl = pg_gb18030_mblen(s);
-
-	if (len < l)
-		return -1;
-
-	while (--l > 0)
+	if (!IS_HIGHBIT_SET(*s))
+		l = 1;					/* ASCII */
+	else if (len >= 4 && *(s + 1) >= 0x30 && *(s + 1) <= 0x39)
 	{
-		if (*++s == '\0')
-			return -1;
+		/* Should be 4-byte, validate remaining bytes */
+		if (*s >= 0x81 && *s <= 0xfe &&
+			*(s + 2) >= 0x81 && *(s + 2) <= 0xfe &&
+			*(s + 3) >= 0x30 && *(s + 3) <= 0x39)
+			l = 4;
+		else
+			l = -1;
 	}
-
-	return mbl;
+	else if (len >= 2 && *s >= 0x81 && *s <= 0xfe)
+	{
+		/* Should be 2-byte, validate */
+		if ((*(s + 1) >= 0x40 && *(s + 1) <= 0x7e) ||
+			(*(s + 1) >= 0x80 && *(s + 1) <= 0xfe))
+			l = 2;
+		else
+			l = -1;
+	}
+	else
+		l = -1;
+	return l;
 }
 
 static int
