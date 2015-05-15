@@ -3856,6 +3856,7 @@ _copyReindexStmt(const ReindexStmt *from)
 	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(relation);
 	COPY_STRING_FIELD(name);
+	COPY_SCALAR_FIELD(options);
 
 	return newnode;
 }

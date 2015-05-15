@@ -63,6 +63,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/pg_rusage.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 #include "utils/snapmgr.h"
@@ -3184,13 +3185,17 @@ IndexGetRelation(Oid indexId, bool missing_ok)
  * reindex_index - This routine is used to recreate a single index
  */
 void
-reindex_index(Oid indexId, bool skip_constraint_checks, char persistence)
+reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
+				int options)
 {
 	Relation	iRel,
 				heapRelation;
 	Oid			heapId;
 	IndexInfo  *indexInfo;
 	volatile bool skipped_constraint = false;
+	PGRUsage	ru0;
+
+	pg_rusage_init(&ru0);
 
 	/*
 	 * Open and lock the parent heap relation.  ShareLock is sufficient since
@@ -3334,6 +3339,14 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence)
 		heap_close(pg_index, RowExclusiveLock);
 	}
 
+	/* Log what we did */
+	if (options & REINDEXOPT_VERBOSE)
+		ereport(INFO,
+				(errmsg("index \"%s\" was reindexed",
+						get_rel_name(indexId)),
+				 errdetail("%s.",
+						   pg_rusage_show(&ru0))));
+
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
 	heap_close(heapRelation, NoLock);
@@ -3375,7 +3388,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence)
  * index rebuild.
  */
 bool
-reindex_relation(Oid relid, int flags)
+reindex_relation(Oid relid, int flags, int options)
 {
 	Relation	rel;
 	Oid			toast_relid;
@@ -3466,7 +3479,7 @@ reindex_relation(Oid relid, int flags)
 				RelationSetIndexList(rel, doneIndexes, InvalidOid);
 
 			reindex_index(indexOid, !(flags & REINDEX_REL_CHECK_CONSTRAINTS),
-						  persistence);
+						  persistence, options);
 
 			CommandCounterIncrement();
 
@@ -3501,7 +3514,7 @@ reindex_relation(Oid relid, int flags)
 	 * still hold the lock on the master table.
 	 */
 	if ((flags & REINDEX_REL_PROCESS_TOAST) && OidIsValid(toast_relid))
-		result |= reindex_relation(toast_relid, flags);
+		result |= reindex_relation(toast_relid, flags, options);
 
 	return result;
 }

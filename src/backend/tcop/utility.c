@@ -762,10 +762,10 @@ standard_ProcessUtility(Node *parsetree,
 				switch (stmt->kind)
 				{
 					case REINDEX_OBJECT_INDEX:
-						ReindexIndex(stmt->relation);
+						ReindexIndex(stmt->relation, stmt->options);
 						break;
 					case REINDEX_OBJECT_TABLE:
-						ReindexTable(stmt->relation);
+						ReindexTable(stmt->relation, stmt->options);
 						break;
 					case REINDEX_OBJECT_SCHEMA:
 					case REINDEX_OBJECT_SYSTEM:
@@ -781,7 +781,7 @@ standard_ProcessUtility(Node *parsetree,
 												(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
 												(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
 												"REINDEX DATABASE");
-						ReindexMultipleTables(stmt->name, stmt->kind);
+						ReindexMultipleTables(stmt->name, stmt->kind, stmt->options);
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",

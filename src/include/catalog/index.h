@@ -115,7 +115,7 @@ extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
 
 extern void reindex_index(Oid indexId, bool skip_constraint_checks,
-			  char relpersistence);
+						  char relpersistence, int options);
 
 /* Flag bits for reindex_relation(): */
 #define REINDEX_REL_PROCESS_TOAST			0x01
@@ -124,7 +124,7 @@ extern void reindex_index(Oid indexId, bool skip_constraint_checks,
 #define REINDEX_REL_FORCE_INDEXES_UNLOGGED	0x08
 #define REINDEX_REL_FORCE_INDEXES_PERMANENT	0x10
 
-extern bool reindex_relation(Oid relid, int flags);
+extern bool reindex_relation(Oid relid, int flags, int options);
 
 extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);

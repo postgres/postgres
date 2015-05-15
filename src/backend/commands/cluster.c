@@ -1532,7 +1532,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	else if (newrelpersistence == RELPERSISTENCE_PERMANENT)
 		reindex_flags |= REINDEX_REL_FORCE_INDEXES_PERMANENT;
 
-	reindex_relation(OIDOldHeap, reindex_flags);
+	reindex_relation(OIDOldHeap, reindex_flags, 0);
 
 	/*
 	 * If the relation being rebuild is pg_class, swap_relation_files()

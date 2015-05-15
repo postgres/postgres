@@ -966,6 +966,14 @@ explain (costs off)
   select * from tenk1 where (thousand, tenthous) in ((1,1001), (null,null));
 
 --
+-- REINDEX (VERBOSE)
+--
+CREATE TABLE reindex_verbose(id integer primary key);
+\set VERBOSITY terse
+REINDEX (VERBOSE) TABLE reindex_verbose;
+DROP TABLE reindex_verbose;
+
+--
 -- REINDEX SCHEMA
 --
 REINDEX SCHEMA schema_to_reindex; -- failure, schema does not exist

@@ -2832,6 +2832,14 @@ explain (costs off)
 (2 rows)
 
 --
+-- REINDEX (VERBOSE)
+--
+CREATE TABLE reindex_verbose(id integer primary key);
+\set VERBOSITY terse
+REINDEX (VERBOSE) TABLE reindex_verbose;
+INFO:  index "reindex_verbose_pkey" was reindexed
+DROP TABLE reindex_verbose;
+--
 -- REINDEX SCHEMA
 --
 REINDEX SCHEMA schema_to_reindex; -- failure, schema does not exist

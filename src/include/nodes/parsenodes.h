@@ -2782,6 +2782,10 @@ typedef struct ConstraintsSetStmt
  *		REINDEX Statement
  * ----------------------
  */
+
+/* Reindex options */
+#define REINDEXOPT_VERBOSE 1 << 0	/* print progress info */
+
 typedef enum ReindexObjectType
 {
 	REINDEX_OBJECT_INDEX,	/* index */
@@ -2797,6 +2801,7 @@ typedef struct ReindexStmt
 	ReindexObjectType	kind;	/* REINDEX_OBJECT_INDEX, REINDEX_OBJECT_TABLE, etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
+	int			options;		/* Reindex options flags */
 } ReindexStmt;
 
 /* ----------------------

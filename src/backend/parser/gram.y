@@ -463,6 +463,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	explain_option_arg
 %type <defelt>	explain_option_elem
 %type <list>	explain_option_list
+
+%type <ival>	reindex_target_type reindex_target_multitable
+%type <ival>	reindex_option_list reindex_option_elem
+
 %type <node>	copy_generic_opt_arg copy_generic_opt_arg_list_item
 %type <defelt>	copy_generic_opt_elem
 %type <list>	copy_generic_opt_list copy_generic_opt_arg_list
@@ -7387,52 +7391,63 @@ DropTransformStmt: DROP TRANSFORM opt_if_exists FOR Typename LANGUAGE name opt_d
  *
  *		QUERY:
  *
- *		REINDEX type <name>
+ *		REINDEX [ (options) ] type <name>
  *****************************************************************************/
 
 ReindexStmt:
-			REINDEX INDEX qualified_name
+			REINDEX reindex_target_type qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_INDEX;
+					n->kind = $2;
 					n->relation = $3;
 					n->name = NULL;
+					n->options = 0;
 					$$ = (Node *)n;
 				}
-			| REINDEX TABLE qualified_name
+			| REINDEX reindex_target_multitable name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_TABLE;
-					n->relation = $3;
+					n->kind = $2;
+					n->name = $3;
+					n->relation = NULL;
+					n->options = 0;
+					$$ = (Node *)n;
+				}
+			| REINDEX '(' reindex_option_list ')' reindex_target_type qualified_name
+				{
+					ReindexStmt *n = makeNode(ReindexStmt);
+					n->kind = $5;
+					n->relation = $6;
 					n->name = NULL;
+					n->options = $3;
 					$$ = (Node *)n;
 				}
-			| REINDEX SCHEMA name
+			| REINDEX '(' reindex_option_list ')' reindex_target_multitable name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_SCHEMA;
-					n->name = $3;
+					n->kind = $5;
+					n->name = $6;
 					n->relation = NULL;
-					$$ = (Node *)n;
-				}
-			| REINDEX SYSTEM_P name
-				{
-					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_SYSTEM;
-					n->name = $3;
-					n->relation = NULL;
-					$$ = (Node *)n;
-				}
-			| REINDEX DATABASE name
-				{
-					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_DATABASE;
-					n->name = $3;
-					n->relation = NULL;
+					n->options = $3;
 					$$ = (Node *)n;
 				}
 		;
-
+reindex_target_type:
+			INDEX					{ $$ = REINDEX_OBJECT_INDEX; }
+			| TABLE					{ $$ = REINDEX_OBJECT_TABLE; }
+		;
+reindex_target_multitable:
+			SCHEMA					{ $$ = REINDEX_OBJECT_SCHEMA; }
+			| SYSTEM_P				{ $$ = REINDEX_OBJECT_SYSTEM; }
+			| DATABASE				{ $$ = REINDEX_OBJECT_DATABASE; }
+		;
+reindex_option_list:
+			reindex_option_elem								{ $$ = $1; }
+			| reindex_option_list ',' reindex_option_elem	{ $$ = $1 | $3; }
+		;
+reindex_option_elem:
+			VERBOSE	{ $$ = REINDEXOPT_VERBOSE; }
+		;
 
 /*****************************************************************************
  *
