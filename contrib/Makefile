@@ -44,6 +44,8 @@ SUBDIRS = \
 		tablefunc	\
 		tcn		\
 		test_decoding	\
+		tsm_system_rows \
+		tsm_system_time \
 		tsearch2	\
 		unaccent	\
 		vacuumlo
