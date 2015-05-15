@@ -375,13 +375,13 @@ SELECT '"foo"'::jsonb ? 'foo';
     implement, see <xref linkend="functions-jsonb-op-table">.)
     An example of creating an index with this operator class is:
 <programlisting>
-CREATE INDEX idxgin ON api USING gin (jdoc);
+CREATE INDEX idxgin ON api USING GIN (jdoc);
 </programlisting>
     The non-default GIN operator class <literal>jsonb_path_ops</>
     supports indexing the <literal>@&gt;</> operator only.
     An example of creating an index with this operator class is:
 <programlisting>
-CREATE INDEX idxginp ON api USING gin (jdoc jsonb_path_ops);
+CREATE INDEX idxginp ON api USING GIN (jdoc jsonb_path_ops);
 </programlisting>
   </para>
 
@@ -426,7 +426,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc -&gt; 'tags' ? 'qui'
     the <literal>"tags"</> key is common, defining an index like this
     may be worthwhile:
 <programlisting>
-CREATE INDEX idxgintags ON api USING gin ((jdoc -&gt; 'tags'));
+CREATE INDEX idxgintags ON api USING GIN ((jdoc -&gt; 'tags'));
 </programlisting>
     Now, the <literal>WHERE</> clause <literal>jdoc -&gt; 'tags' ? 'qui'</>
     will be recognized as an application of the indexable

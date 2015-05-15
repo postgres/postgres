@@ -220,7 +220,7 @@
   To use it, mention the class name in <command>CREATE INDEX</>,
   for example
 <programlisting>
-CREATE INDEX ON my_table USING gist (my_inet_column inet_ops);
+CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
 </programlisting>
  </para>
 

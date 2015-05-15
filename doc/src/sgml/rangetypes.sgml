@@ -406,7 +406,7 @@ SELECT '[1.234, 5.678]'::floatrange;
    GiST and SP-GiST indexes can be created for table columns of range types.
    For instance, to create a GiST index:
 <programlisting>
-CREATE INDEX reservation_idx ON reservation USING gist (during);
+CREATE INDEX reservation_idx ON reservation USING GIST (during);
 </programlisting>
    A GiST or SP-GiST index can accelerate queries involving these range operators:
    <literal>=</>,
@@ -453,7 +453,7 @@ CREATE INDEX reservation_idx ON reservation USING gist (during);
 <programlisting>
 CREATE TABLE reservation (
     during tsrange,
-    EXCLUDE USING gist (during WITH &amp;&amp;)
+    EXCLUDE USING GIST (during WITH &amp;&amp;)
 );
 </programlisting>
 
@@ -486,7 +486,7 @@ CREATE EXTENSION btree_gist;
 CREATE TABLE room_reservation (
     room text,
     during tsrange,
-    EXCLUDE USING gist (room WITH =, during WITH &amp;&amp;)
+    EXCLUDE USING GIST (room WITH =, during WITH &amp;&amp;)
 );
 
 INSERT INTO room_reservation VALUES

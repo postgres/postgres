@@ -61,7 +61,7 @@
 <programlisting>
 CREATE TABLE test (a int4);
 -- create index
-CREATE INDEX testidx ON test USING gist (a);
+CREATE INDEX testidx ON test USING GIST (a);
 -- query
 SELECT * FROM test WHERE a &lt; 10;
 -- nearest-neighbor search: find the ten entries closest to "42"
@@ -78,7 +78,7 @@ SELECT *, a &lt;-&gt; 42 AS dist FROM test ORDER BY a &lt;-&gt; 42 LIMIT 10;
 =&gt; CREATE TABLE zoo (
   cage   INTEGER,
   animal TEXT,
-  EXCLUDE USING gist (cage WITH =, animal WITH &lt;&gt;)
+  EXCLUDE USING GIST (cage WITH =, animal WITH &lt;&gt;)
 );
 
 =&gt; INSERT INTO zoo VALUES(123, 'zebra');

@@ -637,7 +637,7 @@ CREATE UNIQUE INDEX title_idx ON films (title) WITH (fillfactor = 70);
   <para>
    To create a <acronym>GIN</> index with fast updates disabled:
 <programlisting>
-CREATE INDEX gin_idx ON documents_table USING gin (locations) WITH (fastupdate = off);
+CREATE INDEX gin_idx ON documents_table USING GIN (locations) WITH (fastupdate = off);
 </programlisting>
   </para>
 

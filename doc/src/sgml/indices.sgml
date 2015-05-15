@@ -189,7 +189,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    <literal>=</literal> operator.
    The following command is used to create a hash index:
 <synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING HASH (<replaceable>column</replaceable>);
 </synopsis>
   </para>
 

@@ -481,7 +481,7 @@ LIMIT 10;
     linkend="textsearch-indexes">) to speed up text searches:
 
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', body));
+CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector('english', body));
 </programlisting>
 
     Notice that the 2-argument version of <function>to_tsvector</function> is
@@ -511,7 +511,7 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', body));
     configuration name is specified by another column, e.g.:
 
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(config_name, body));
+CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector(config_name, body));
 </programlisting>
 
     where <literal>config_name</> is a column in the <literal>pgweb</>
@@ -527,7 +527,7 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(config_name, body));
     Indexes can even concatenate columns:
 
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || ' ' || body));
+CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector('english', title || ' ' || body));
 </programlisting>
    </para>
 
@@ -547,7 +547,7 @@ UPDATE pgweb SET textsearchable_index_col =
     Then we create a <acronym>GIN</acronym> index to speed up the search:
 
 <programlisting>
-CREATE INDEX textsearch_idx ON pgweb USING gin(textsearchable_index_col);
+CREATE INDEX textsearch_idx ON pgweb USING GIN (textsearchable_index_col);
 </programlisting>
 
     Now we are ready to perform a fast full text search:
@@ -3217,7 +3217,7 @@ SELECT plainto_tsquery('supernovae stars');
       <tertiary>text search</tertiary>
      </indexterm>
 
-      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);</literal>
+      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING GIST (<replaceable>column</replaceable>);</literal>
      </term>
 
      <listitem>
@@ -3238,7 +3238,7 @@ SELECT plainto_tsquery('supernovae stars');
       <tertiary>text search</tertiary>
      </indexterm>
 
-      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);</literal>
+      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING GIN (<replaceable>column</replaceable>);</literal>
      </term>
 
      <listitem>
