@@ -231,9 +231,11 @@ GMT         0    # Greenwich Mean Time
                  #     (Europe/London)
 GYT    America/Guyana  # Guyana Time
                  #     (America/Guyana)
-HADT   -32400 D  # Hawaii-Aleutian Daylight Time
+HADT   -32400 D  # Hawaii-Aleutian Daylight Time (obsolete abbreviation)
                  #     (America/Adak)
-HAST   -36000    # Hawaii-Aleutian Standard Time
+HAST   -36000    # Hawaii-Aleutian Standard Time (obsolete abbreviation)
+                 #     (America/Adak)
+HDT    -32400 D  # Hawaiian-Aleutian Daylight Time
                  #     (America/Adak)
 MDT    -21600 D  # Mexico Mountain Daylight Time
                  # Mountain Daylight Time
