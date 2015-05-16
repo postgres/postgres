@@ -470,8 +470,8 @@ copy_clog_xlog_xid(migratorContext *ctx)
 
 	/* now reset the wal archives in the new cluster */
 	prep_status(ctx, "Resetting WAL archives");
-	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->old.controldata.chkpnt_tli,
+	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l 1,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  ctx->new.bindir,
 			  ctx->old.controldata.logid, ctx->old.controldata.nxtlogseg,
 			  ctx->new.pgdata,
 #ifndef WIN32
