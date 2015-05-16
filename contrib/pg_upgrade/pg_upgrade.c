@@ -520,8 +520,7 @@ copy_clog_xlog_xid(void)
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\"", new_cluster.bindir,
-			  old_cluster.controldata.chkpnt_tli,
+			  "\"%s/pg_resetxlog\" -l 1,%u,%u \"%s\"", new_cluster.bindir,
 			  old_cluster.controldata.logid,
 			  old_cluster.controldata.nxtlogseg,
 			  new_cluster.pgdata);
