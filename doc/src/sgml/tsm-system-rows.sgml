@@ -1,0 +1,50 @@
+<!-- doc/src/sgml/tsm-system-rows.sgml -->
+
+<sect1 id="tsm-system-rows" xreflabel="tsm_system_rows">
+ <title>tsm_system_rows</title>
+
+ <indexterm zone="tsm-system-rows">
+  <primary>tsm_system_rows</primary>
+ </indexterm>
+
+ <para>
+  The <filename>tsm_system_rows</> module provides the tablesample method
+  <literal>SYSTEM_ROWS</literal>, which can be used inside the
+  <command>TABLESAMPLE</command> clause of a <command>SELECT</command>.
+ </para>
+
+ <para>
+  This tablesample method uses a linear probing algorithm to read sample
+  of a table and uses actual number of rows as limit (unlike the
+  <literal>SYSTEM</literal> tablesample method which limits by percentage
+  of a table).
+ </para>
+
+ <sect2>
+  <title>Examples</title>
+
+  <para>
+   Here is an example of selecting sample of a table with
+   <literal>SYSTEM_ROWS</>. First install the extension:
+  </para>
+
+<programlisting>
+CREATE EXTENSION tsm_system_rows;
+</programlisting>
+
+  <para>
+   Then you can use it in <command>SELECT</command> command same way as other
+   tablesample methods:
+
+<programlisting>
+SELECT * FROM my_table TABLESAMPLE SYSTEM_ROWS(100);
+</programlisting>
+  </para>
+
+  <para>
+   The above command will return a sample of 100 rows from the table my_table
+   (less if the table does not have 100 visible rows).
+  </para>
+ </sect2>
+
+</sect1>
