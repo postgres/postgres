@@ -19,6 +19,7 @@ static void check_databases_are_compatible(void);
 static void check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb);
 static bool equivalent_locale(int category, const char *loca, const char *locb);
 static void check_is_install_user(ClusterInfo *cluster);
+static void check_proper_datallowconn(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
@@ -93,6 +94,7 @@ check_and_dump_old_cluster(bool live_check)
 	 * Check for various failure cases
 	 */
 	check_is_install_user(&old_cluster);
+	check_proper_datallowconn(&old_cluster);
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
@@ -637,6 +639,58 @@ check_is_install_user(ClusterInfo *cluster)
 	PQclear(res);
 
 	PQfinish(conn);
+
+	check_ok();
+}
+
+
+static void
+check_proper_datallowconn(ClusterInfo *cluster)
+{
+	int			dbnum;
+	PGconn	   *conn_template1;
+	PGresult   *dbres;
+	int			ntups;
+	int			i_datname;
+	int			i_datallowconn;
+
+	prep_status("Checking database connection settings");
+
+	conn_template1 = connectToServer(cluster, "template1");
+
+	/* get database names */
+	dbres = executeQueryOrDie(conn_template1,
+							  "SELECT	datname, datallowconn "
+							  "FROM	pg_catalog.pg_database");
+
+	i_datname = PQfnumber(dbres, "datname");
+	i_datallowconn = PQfnumber(dbres, "datallowconn");
+
+	ntups = PQntuples(dbres);
+	for (dbnum = 0; dbnum < ntups; dbnum++)
+	{
+		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
+		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
+
+		if (strcmp(datname, "template0") == 0)
+		{
+			/* avoid restore failure when pg_dumpall tries to create template0 */
+			if (strcmp(datallowconn, "t") == 0)
+				pg_fatal("template0 must not allow connections, "
+						 "i.e. its pg_database.datallowconn must be false\n");
+		}
+		else
+		{
+			/* avoid datallowconn == false databases from being skipped on restore */
+			if (strcmp(datallowconn, "f") == 0)
+				pg_fatal("All non-template0 databases must allow connections, "
+						 "i.e. their pg_database.datallowconn must be true\n");
+		}
+	}
+
+	PQclear(dbres);
+
+	PQfinish(conn_template1);
 
 	check_ok();
 }
