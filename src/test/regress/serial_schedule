@@ -86,6 +86,7 @@ test: union
 test: case
 test: join
 test: aggregates
+test: groupingsets
 test: transactions
 ignore: random
 test: random

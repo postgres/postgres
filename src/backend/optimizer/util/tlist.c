@@ -395,6 +395,28 @@ get_sortgrouplist_exprs(List *sgClauses, List *targetList)
  *****************************************************************************/
 
 /*
+ * get_sortgroupref_clause
+ *		Find the SortGroupClause matching the given SortGroupRef index,
+ *		and return it.
+ */
+SortGroupClause *
+get_sortgroupref_clause(Index sortref, List *clauses)
+{
+	ListCell   *l;
+
+	foreach(l, clauses)
+	{
+		SortGroupClause *cl = (SortGroupClause *) lfirst(l);
+
+		if (cl->tleSortGroupRef == sortref)
+			return cl;
+	}
+
+	elog(ERROR, "ORDER/GROUP BY expression not found in list");
+	return NULL;				/* keep compiler quiet */
+}
+
+/*
  * extract_grouping_ops - make an array of the equality operator OIDs
  *		for a SortGroupClause list
  */

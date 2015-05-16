@@ -4353,6 +4353,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 		querytree->jointree->fromlist ||
 		querytree->jointree->quals ||
 		querytree->groupClause ||
+		querytree->groupingSets ||
 		querytree->havingQual ||
 		querytree->windowClause ||
 		querytree->distinctClause ||

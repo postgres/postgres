@@ -1042,6 +1042,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 								 numGroupCols,
 								 groupColIdx,
 								 groupOperators,
+								 NIL,
 								 numGroups,
 								 subplan);
 	}
@@ -4492,6 +4493,7 @@ Agg *
 make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 List *groupingSets,
 		 long numGroups,
 		 Plan *lefttree)
 {
@@ -4521,9 +4523,11 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	 * group otherwise.
 	 */
 	if (aggstrategy == AGG_PLAIN)
-		plan->plan_rows = 1;
+		plan->plan_rows = groupingSets ? list_length(groupingSets) : 1;
 	else
 		plan->plan_rows = numGroups;
+
+	node->groupingSets = groupingSets;
 
 	/*
 	 * We also need to account for the cost of evaluation of the qual (ie, the
@@ -4545,6 +4549,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
+
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 

@@ -2267,6 +2267,7 @@ JumbleQuery(pgssJumbleState *jstate, Query *query)
 	JumbleExpr(jstate, (Node *) query->onConflict);
 	JumbleExpr(jstate, (Node *) query->returningList);
 	JumbleExpr(jstate, (Node *) query->groupClause);
+	JumbleExpr(jstate, (Node *) query->groupingSets);
 	JumbleExpr(jstate, query->havingQual);
 	JumbleExpr(jstate, (Node *) query->windowClause);
 	JumbleExpr(jstate, (Node *) query->distinctClause);
@@ -2395,6 +2396,13 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) expr->aggorder);
 				JumbleExpr(jstate, (Node *) expr->aggdistinct);
 				JumbleExpr(jstate, (Node *) expr->aggfilter);
+			}
+			break;
+		case T_GroupingFunc:
+			{
+				GroupingFunc *grpnode = (GroupingFunc *) node;
+
+				JumbleExpr(jstate, (Node *) grpnode->refs);
 			}
 			break;
 		case T_WindowFunc:
@@ -2698,6 +2706,12 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) lfirst(temp));
 			}
 			break;
+		case T_IntList:
+			foreach(temp, (List *) node)
+			{
+				APP_JUMB(lfirst_int(temp));
+			}
+			break;
 		case T_SortGroupClause:
 			{
 				SortGroupClause *sgc = (SortGroupClause *) node;
@@ -2706,6 +2720,13 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				APP_JUMB(sgc->eqop);
 				APP_JUMB(sgc->sortop);
 				APP_JUMB(sgc->nulls_first);
+			}
+			break;
+		case T_GroupingSet:
+			{
+				GroupingSet *gsnode = (GroupingSet *) node;
+
+				JumbleExpr(jstate, (Node *) gsnode->content);
 			}
 			break;
 		case T_WindowClause:

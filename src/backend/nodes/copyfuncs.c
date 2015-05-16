@@ -839,6 +839,8 @@ _copyAgg(const Agg *from)
 		COPY_POINTER_FIELD(grpOperators, from->numCols * sizeof(Oid));
 	}
 	COPY_SCALAR_FIELD(numGroups);
+	COPY_NODE_FIELD(groupingSets);
+	COPY_NODE_FIELD(chain);
 
 	return newnode;
 }
@@ -1202,6 +1204,23 @@ _copyAggref(const Aggref *from)
 	COPY_SCALAR_FIELD(aggstar);
 	COPY_SCALAR_FIELD(aggvariadic);
 	COPY_SCALAR_FIELD(aggkind);
+	COPY_SCALAR_FIELD(agglevelsup);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyGroupingFunc
+ */
+static GroupingFunc *
+_copyGroupingFunc(const GroupingFunc *from)
+{
+	GroupingFunc	   *newnode = makeNode(GroupingFunc);
+
+	COPY_NODE_FIELD(args);
+	COPY_NODE_FIELD(refs);
+	COPY_NODE_FIELD(cols);
 	COPY_SCALAR_FIELD(agglevelsup);
 	COPY_LOCATION_FIELD(location);
 
@@ -2152,6 +2171,18 @@ _copySortGroupClause(const SortGroupClause *from)
 	return newnode;
 }
 
+static GroupingSet *
+_copyGroupingSet(const GroupingSet *from)
+{
+	GroupingSet		   *newnode = makeNode(GroupingSet);
+
+	COPY_SCALAR_FIELD(kind);
+	COPY_NODE_FIELD(content);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
 static WindowClause *
 _copyWindowClause(const WindowClause *from)
 {
@@ -2676,6 +2707,7 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(onConflict);
 	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(groupClause);
+	COPY_NODE_FIELD(groupingSets);
 	COPY_NODE_FIELD(havingQual);
 	COPY_NODE_FIELD(windowClause);
 	COPY_NODE_FIELD(distinctClause);
@@ -4309,6 +4341,9 @@ copyObject(const void *from)
 		case T_Aggref:
 			retval = _copyAggref(from);
 			break;
+		case T_GroupingFunc:
+			retval = _copyGroupingFunc(from);
+			break;
 		case T_WindowFunc:
 			retval = _copyWindowFunc(from);
 			break;
@@ -4877,6 +4912,9 @@ copyObject(const void *from)
 			break;
 		case T_SortGroupClause:
 			retval = _copySortGroupClause(from);
+			break;
+		case T_GroupingSet:
+			retval = _copyGroupingSet(from);
 			break;
 		case T_WindowClause:
 			retval = _copyWindowClause(from);

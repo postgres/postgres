@@ -1954,7 +1954,8 @@ adjust_rowcount_for_semijoins(PlannerInfo *root,
 			nraw = approximate_joinrel_size(root, sjinfo->syn_righthand);
 			nunique = estimate_num_groups(root,
 										  sjinfo->semi_rhs_exprs,
-										  nraw);
+										  nraw,
+										  NULL);
 			if (rowcount > nunique)
 				rowcount = nunique;
 		}

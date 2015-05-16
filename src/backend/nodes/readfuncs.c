@@ -217,6 +217,7 @@ _readQuery(void)
 	READ_NODE_FIELD(onConflict);
 	READ_NODE_FIELD(returningList);
 	READ_NODE_FIELD(groupClause);
+	READ_NODE_FIELD(groupingSets);
 	READ_NODE_FIELD(havingQual);
 	READ_NODE_FIELD(windowClause);
 	READ_NODE_FIELD(distinctClause);
@@ -288,6 +289,21 @@ _readSortGroupClause(void)
 	READ_OID_FIELD(sortop);
 	READ_BOOL_FIELD(nulls_first);
 	READ_BOOL_FIELD(hashable);
+
+	READ_DONE();
+}
+
+/*
+ * _readGroupingSet
+ */
+static GroupingSet *
+_readGroupingSet(void)
+{
+	READ_LOCALS(GroupingSet);
+
+	READ_ENUM_FIELD(kind, GroupingSetKind);
+	READ_NODE_FIELD(content);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -546,6 +562,23 @@ _readAggref(void)
 	READ_BOOL_FIELD(aggvariadic);
 	READ_CHAR_FIELD(aggkind);
 	READ_UINT_FIELD(agglevelsup);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readGroupingFunc
+ */
+static GroupingFunc *
+_readGroupingFunc(void)
+{
+	READ_LOCALS(GroupingFunc);
+
+	READ_NODE_FIELD(args);
+	READ_NODE_FIELD(refs);
+	READ_NODE_FIELD(cols);
+	READ_INT_FIELD(agglevelsup);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1386,6 +1419,8 @@ parseNodeString(void)
 		return_value = _readWithCheckOption();
 	else if (MATCH("SORTGROUPCLAUSE", 15))
 		return_value = _readSortGroupClause();
+	else if (MATCH("GROUPINGSET", 11))
+		return_value = _readGroupingSet();
 	else if (MATCH("WINDOWCLAUSE", 12))
 		return_value = _readWindowClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
@@ -1412,6 +1447,8 @@ parseNodeString(void)
 		return_value = _readParam();
 	else if (MATCH("AGGREF", 6))
 		return_value = _readAggref();
+	else if (MATCH("GROUPINGFUNC", 12))
+		return_value = _readGroupingFunc();
 	else if (MATCH("WINDOWFUNC", 10))
 		return_value = _readWindowFunc();
 	else if (MATCH("ARRAYREF", 8))

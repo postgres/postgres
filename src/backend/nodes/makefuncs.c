@@ -554,3 +554,18 @@ makeFuncCall(List *name, List *args, int location)
 	n->location = location;
 	return n;
 }
+
+/*
+ * makeGroupingSet
+ *
+ */
+GroupingSet *
+makeGroupingSet(GroupingSetKind kind, List *content, int location)
+{
+	GroupingSet	   *n = makeNode(GroupingSet);
+
+	n->kind = kind;
+	n->content = content;
+	n->location = location;
+	return n;
+}

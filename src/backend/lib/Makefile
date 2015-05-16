@@ -12,6 +12,7 @@ subdir = src/backend/lib
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = ilist.o binaryheap.o hyperloglog.o pairingheap.o rbtree.o stringinfo.o
+OBJS = binaryheap.o bipartite_match.o hyperloglog.o ilist.o pairingheap.o \
+       rbtree.o stringinfo.o
 
 include $(top_srcdir)/src/backend/common.mk

@@ -12228,7 +12228,9 @@ NULL baz</literallayout>(3 rows)</entry>
    <xref linkend="functions-aggregate-statistics-table">.
    The built-in ordered-set aggregate functions
    are listed in <xref linkend="functions-orderedset-table"> and
-   <xref linkend="functions-hypothetical-table">.
+   <xref linkend="functions-hypothetical-table">.  Grouping operations,
+   which are closely related to aggregate functions, are listed in
+   <xref linkend="functions-grouping-table">.
    The special syntax considerations for aggregate
    functions are explained in <xref linkend="syntax-aggregates">.
    Consult <xref linkend="tutorial-agg"> for additional introductory
@@ -13325,6 +13327,72 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    they do not drop input rows containing nulls.  Null values sort according
    to the rule specified in the <literal>ORDER BY</> clause.
   </para>
+
+  <table id="functions-grouping-table">
+   <title>Grouping Operations</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>GROUPING</primary>
+       </indexterm>
+       <function>GROUPING(<replaceable class="parameter">args...</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>integer</type>
+      </entry>
+      <entry>
+       Integer bitmask indicating which arguments are not being included in the current
+       grouping set
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+   <para>
+    Grouping operations are used in conjunction with grouping sets (see
+    <xref linkend="queries-grouping-sets">) to distinguish result rows.  The
+    arguments to the <literal>GROUPING</> operation are not actually evaluated,
+    but they must match exactly expressions given in the <literal>GROUP BY</>
+    clause of the associated query level.  Bits are assigned with the rightmost
+    argument being the least-significant bit; each bit is 0 if the corresponding
+    expression is included in the grouping criteria of the grouping set generating
+    the result row, and 1 if it is not.  For example:
+<screen>
+<prompt>=&gt;</> <userinput>SELECT * FROM items_sold;</>
+ make  | model | sales
+-------+-------+-------
+ Foo   | GT    |  10
+ Foo   | Tour  |  20
+ Bar   | City  |  15
+ Bar   | Sport |  5
+(4 rows)
+
+<prompt>=&gt;</> <userinput>SELECT make, model, GROUPING(make,model), sum(sales) FROM items_sold GROUP BY ROLLUP(make,model);</>
+ make  | model | grouping | sum
+-------+-------+----------+-----
+ Foo   | GT    |        0 | 10
+ Foo   | Tour  |        0 | 20
+ Bar   | City  |        0 | 15
+ Bar   | Sport |        0 | 5
+ Foo   |       |        1 | 30
+ Bar   |       |        1 | 20
+       |       |        3 | 50
+(7 rows)
+</screen>
+   </para>
 
  </sect1>
 

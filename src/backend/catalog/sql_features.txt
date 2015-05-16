@@ -467,9 +467,9 @@ T331	Basic roles			YES
 T332	Extended roles			NO	mostly supported
 T341	Overloading of SQL-invoked functions and procedures			YES	
 T351	Bracketed SQL comments (/*...*/ comments)			YES	
-T431	Extended grouping capabilities			NO	
-T432	Nested and concatenated GROUPING SETS			NO	
-T433	Multiargument GROUPING function			NO	
+T431	Extended grouping capabilities			YES	
+T432	Nested and concatenated GROUPING SETS			YES	
+T433	Multiargument GROUPING function			YES	
 T434	GROUP BY DISTINCT			NO	
 T441	ABS and MOD functions			YES	
 T461	Symmetric BETWEEN predicate			YES	

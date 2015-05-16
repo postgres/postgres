@@ -140,7 +140,6 @@ static bool fix_opfuncids_walker(Node *node, void *context);
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerInfo *context);
 
-
 /*****************************************************************************
  *
  *		SUBPLAN REFERENCES
@@ -656,6 +655,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
+			set_upper_references(root, plan, rtoffset);
+			break;
 		case T_Group:
 			set_upper_references(root, plan, rtoffset);
 			break;
@@ -1229,6 +1230,7 @@ copyVar(Var *var)
  * We must look up operator opcode info for OpExpr and related nodes,
  * add OIDs from regclass Const nodes into root->glob->relationOids, and
  * add catalog TIDs for user-defined functions into root->glob->invalItems.
+ * We also fill in column index lists for GROUPING() expressions.
  *
  * We assume it's okay to update opcode info in-place.  So this could possibly
  * scribble on the planner's input data structures, but it's OK.
@@ -1291,6 +1293,31 @@ fix_expr_common(PlannerInfo *root, Node *node)
 			root->glob->relationOids =
 				lappend_oid(root->glob->relationOids,
 							DatumGetObjectId(con->constvalue));
+	}
+	else if (IsA(node, GroupingFunc))
+	{
+		GroupingFunc *g = (GroupingFunc *) node;
+		AttrNumber *grouping_map = root->grouping_map;
+
+		/* If there are no grouping sets, we don't need this. */
+
+		Assert(grouping_map || g->cols == NIL);
+
+		if (grouping_map)
+		{
+			ListCell   *lc;
+			List	   *cols = NIL;
+
+			foreach(lc, g->refs)
+			{
+				cols = lappend_int(cols, grouping_map[lfirst_int(lc)]);
+			}
+
+			Assert(!g->cols || equal(cols, g->cols));
+
+			if (!g->cols)
+				g->cols = cols;
+		}
 	}
 }
 
@@ -2185,6 +2212,7 @@ set_returning_clause_references(PlannerInfo *root,
 
 	return rlist;
 }
+
 
 /*****************************************************************************
  *					OPERATOR REGPROC LOOKUP

@@ -1214,7 +1214,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	/* Estimate number of output rows */
 	pathnode->path.rows = estimate_num_groups(root,
 											  sjinfo->semi_rhs_exprs,
-											  rel->rows);
+											  rel->rows,
+											  NULL);
 	numCols = list_length(sjinfo->semi_rhs_exprs);
 
 	if (sjinfo->semi_can_btree)

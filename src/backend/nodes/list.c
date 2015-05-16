@@ -823,6 +823,32 @@ list_intersection(const List *list1, const List *list2)
 }
 
 /*
+ * As list_intersection but operates on lists of integers.
+ */
+List *
+list_intersection_int(const List *list1, const List *list2)
+{
+	List	   *result;
+	const ListCell *cell;
+
+	if (list1 == NIL || list2 == NIL)
+		return NIL;
+
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
+
+	result = NIL;
+	foreach(cell, list1)
+	{
+		if (list_member_int(list2, lfirst_int(cell)))
+			result = lappend_int(result, lfirst_int(cell));
+	}
+
+	check_list_invariants(result);
+	return result;
+}
+
+/*
  * Return a list that contains all the cells in list1 that are not in
  * list2. The returned list is freshly allocated via palloc(), but the
  * cells themselves point to the same objects as the cells of the

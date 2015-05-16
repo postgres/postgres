@@ -37,7 +37,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ * | <replaceable class="parameter">expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
     [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> ]
-    [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
+    [ GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...] ]
     [ HAVING <replaceable class="parameter">condition</replaceable> [, ...] ]
     [ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceable class="parameter">window_definition</replaceable> ) [, ...] ]
     [ { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] <replaceable class="parameter">select</replaceable> ]
@@ -59,6 +59,15 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ LATERAL ] ROWS FROM( <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] ) ] [, ...] )
                 [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
+
+<phrase>and <replaceable class="parameter">grouping_element</replaceable> can be one of:</phrase>
+
+    ( )
+    <replaceable class="parameter">expression</replaceable>
+    ( <replaceable class="parameter">expression</replaceable> [, ...] )
+    ROLLUP ( { <replaceable class="parameter">expression</replaceable> | ( <replaceable class="parameter">expression</replaceable> [, ...] ) } [, ...] )
+    CUBE ( { <replaceable class="parameter">expression</replaceable> | ( <replaceable class="parameter">expression</replaceable> [, ...] ) } [, ...] )
+    GROUPING SETS ( <replaceable class="parameter">grouping_element</replaceable> [, ...] )
 
 <phrase>and <replaceable class="parameter">with_query</replaceable> is:</phrase>
 
@@ -665,20 +674,32 @@ WHERE <replaceable class="parameter">condition</replaceable>
    <para>
     The optional <literal>GROUP BY</literal> clause has the general form
 <synopsis>
-GROUP BY <replaceable class="parameter">expression</replaceable> [, ...]
+GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...]
 </synopsis>
    </para>
 
    <para>
     <literal>GROUP BY</literal> will condense into a single row all
     selected rows that share the same values for the grouped
-    expressions.  <replaceable
-    class="parameter">expression</replaceable> can be an input column
-    name, or the name or ordinal number of an output column
-    (<command>SELECT</command> list item), or an arbitrary
+    expressions.  An <replaceable
+    class="parameter">expression</replaceable> used inside a
+    <replaceable class="parameter">grouping_element</replaceable>
+    can be an input column name, or the name or ordinal number of an
+    output column (<command>SELECT</command> list item), or an arbitrary
     expression formed from input-column values.  In case of ambiguity,
     a <literal>GROUP BY</literal> name will be interpreted as an
     input-column name rather than an output column name.
+   </para>
+
+   <para>
+    If any of <literal>GROUPING SETS</>, <literal>ROLLUP</> or
+    <literal>CUBE</> are present as grouping elements, then the
+    <literal>GROUP BY</> clause as a whole defines some number of
+    independent <replaceable>grouping sets</>.  The effect of this is
+    equivalent to constructing a <literal>UNION ALL</> between
+    subqueries with the individual grouping sets as their
+    <literal>GROUP BY</> clauses.  For further details on the handling
+    of grouping sets see <xref linkend="queries-grouping-sets">.
    </para>
 
    <para>

@@ -581,6 +581,7 @@ query_supports_distinctness(Query *query)
 {
 	if (query->distinctClause != NIL ||
 		query->groupClause != NIL ||
+		query->groupingSets != NIL ||
 		query->hasAggs ||
 		query->havingQual ||
 		query->setOperations)
@@ -649,10 +650,10 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	}
 
 	/*
-	 * Similarly, GROUP BY guarantees uniqueness if all the grouped columns
-	 * appear in colnos and operator semantics match.
+	 * Similarly, GROUP BY without GROUPING SETS guarantees uniqueness if all
+	 * the grouped columns appear in colnos and operator semantics match.
 	 */
-	if (query->groupClause)
+	if (query->groupClause && !query->groupingSets)
 	{
 		foreach(l, query->groupClause)
 		{
@@ -667,6 +668,27 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 		}
 		if (l == NULL)			/* had matches for all? */
 			return true;
+	}
+	else if (query->groupingSets)
+	{
+		/*
+		 * If we have grouping sets with expressions, we probably
+		 * don't have uniqueness and analysis would be hard. Punt.
+		 */
+		if (query->groupClause)
+			return false;
+
+		/*
+		 * If we have no groupClause (therefore no grouping expressions),
+		 * we might have one or many empty grouping sets. If there's just
+		 * one, then we're returning only one row and are certainly unique.
+		 * But otherwise, we know we're certainly not unique.
+		 */
+		if (list_length(query->groupingSets) == 1 &&
+			((GroupingSet *)linitial(query->groupingSets))->kind == GROUPING_SET_EMPTY)
+			return true;
+		else
+			return false;
 	}
 	else
 	{

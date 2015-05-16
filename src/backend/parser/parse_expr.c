@@ -32,6 +32,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "parser/parse_agg.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/xml.h"
@@ -267,6 +268,10 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 
 		case T_MultiAssignRef:
 			result = transformMultiAssignRef(pstate, (MultiAssignRef *) expr);
+			break;
+
+		case T_GroupingFunc:
+			result = transformGroupingFunc(pstate, (GroupingFunc *) expr);
 			break;
 
 		case T_NamedArgExpr:

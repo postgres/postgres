@@ -81,4 +81,6 @@ extern DefElem *makeDefElem(char *name, Node *arg);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 					DefElemAction defaction);
 
+extern GroupingSet *makeGroupingSet(GroupingSetKind kind, List *content, int location);
+
 #endif   /* MAKEFUNC_H */

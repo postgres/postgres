@@ -564,6 +564,30 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 				break;
 		}
 	}
+	else if (IsA(node, GroupingFunc))
+	{
+		if (((GroupingFunc *) node)->agglevelsup != 0)
+			elog(ERROR, "Upper-level GROUPING found where not expected");
+		switch (context->aggbehavior)
+		{
+			case PVC_REJECT_AGGREGATES:
+				elog(ERROR, "GROUPING found where not expected");
+				break;
+			case PVC_INCLUDE_AGGREGATES:
+				context->varlist = lappend(context->varlist, node);
+				/* we do NOT descend into the contained expression */
+				return false;
+			case PVC_RECURSE_AGGREGATES:
+				/*
+				 * we do NOT descend into the contained expression,
+				 * even if the caller asked for it, because we never
+				 * actually evaluate it - the result is driven entirely
+				 * off the associated GROUP BY clause, so we never need
+				 * to extract the actual Vars here.
+				 */
+				return false;
+		}
+	}
 	else if (IsA(node, PlaceHolderVar))
 	{
 		if (((PlaceHolderVar *) node)->phlevelsup != 0)

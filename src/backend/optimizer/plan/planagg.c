@@ -96,7 +96,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 	 * performs assorted processing related to these features between calling
 	 * preprocess_minmax_aggregates and optimize_minmax_aggregates.)
 	 */
-	if (parse->groupClause || parse->hasWindowFuncs)
+	if (parse->groupClause || list_length(parse->groupingSets) > 1 || parse->hasWindowFuncs)
 		return;
 
 	/*

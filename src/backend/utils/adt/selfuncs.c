@@ -3158,6 +3158,8 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  *	groupExprs - list of expressions being grouped by
  *	input_rows - number of rows estimated to arrive at the group/unique
  *		filter step
+ *	pgset - NULL, or a List** pointing to a grouping set to filter the
+ *		groupExprs against
  *
  * Given the lack of any cross-correlation statistics in the system, it's
  * impossible to do anything really trustworthy with GROUP BY conditions
@@ -3205,11 +3207,13 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  * but we don't have the info to do better).
  */
 double
-estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
+estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
+					List **pgset)
 {
 	List	   *varinfos = NIL;
 	double		numdistinct;
 	ListCell   *l;
+	int			i;
 
 	/*
 	 * We don't ever want to return an estimate of zero groups, as that tends
@@ -3224,7 +3228,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 	 * for normal cases with GROUP BY or DISTINCT, but it is possible for
 	 * corner cases with set operations.)
 	 */
-	if (groupExprs == NIL)
+	if (groupExprs == NIL || (pgset && list_length(*pgset) < 1))
 		return 1.0;
 
 	/*
@@ -3236,12 +3240,17 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 	 */
 	numdistinct = 1.0;
 
+	i = 0;
 	foreach(l, groupExprs)
 	{
 		Node	   *groupexpr = (Node *) lfirst(l);
 		VariableStatData vardata;
 		List	   *varshere;
 		ListCell   *l2;
+
+		/* is expression in this grouping set? */
+		if (pgset && !list_member_int(*pgset, i++))
+			continue;
 
 		/* Short-circuit for expressions returning boolean */
 		if (exprType(groupexpr) == BOOLOID)
