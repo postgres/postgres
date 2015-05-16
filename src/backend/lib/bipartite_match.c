@@ -21,7 +21,8 @@
 
 #include "lib/bipartite_match.h"
 #include "miscadmin.h"
-#include "utils/palloc.h"
+#include "utils/builtins.h"
+
 
 static bool hk_breadth_search(BipartiteMatchState *state);
 static bool hk_depth_search(BipartiteMatchState *state, int u, int depth);
@@ -87,7 +88,7 @@ hk_breadth_search(BipartiteMatchState *state)
 	int			qtail = 0;		/* so don't have to worry about wrapping */
 	int			u;
 
-	distance[0] = INFINITY;
+	distance[0] = get_float4_infinity();
 
 	for (u = 1; u <= usize; ++u)
 	{
@@ -97,7 +98,7 @@ hk_breadth_search(BipartiteMatchState *state)
 			queue[qhead++] = u;
 		}
 		else
-			distance[u] = INFINITY;
+			distance[u] = get_float4_infinity();
 	}
 
 	while (qtail < qhead)
@@ -156,6 +157,6 @@ hk_depth_search(BipartiteMatchState *state, int u, int depth)
 		}
 	}
 
-	distance[u] = INFINITY;
+	distance[u] = get_float4_infinity();
 	return false;
 }
