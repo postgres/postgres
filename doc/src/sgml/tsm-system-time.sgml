@@ -1,0 +1,51 @@
+<!-- doc/src/sgml/tsm-system-time.sgml -->
+
+<sect1 id="tsm-system-time" xreflabel="tsm_system_time">
+ <title>tsm_system_time</title>
+
+ <indexterm zone="tsm-system-time">
+  <primary>tsm_system_time</primary>
+ </indexterm>
+
+ <para>
+  The <filename>tsm_system_time</> module provides the tablesample method
+  <literal>SYSTEM_TIME</literal>, which can be used inside the
+  <command>TABLESAMPLE</command> clause of a <command>SELECT</command>.
+ </para>
+
+ <para>
+  This tablesample method uses a linear probing algorithm to read sample
+  of a table and uses time in milliseconds as limit (unlike the
+  <literal>SYSTEM</literal> tablesample method which limits by percentage
+  of a table). This gives you some control over the length of execution
+  of your query.
+ </para>
+
+ <sect2>
+  <title>Examples</title>
+
+  <para>
+   Here is an example of selecting sample of a table with
+   <literal>SYSTEM_TIME</>. First install the extension:
+  </para>
+
+<programlisting>
+CREATE EXTENSION tsm_system_time;
+</programlisting>
+
+  <para>
+   Then you can use it in a <command>SELECT</command> command the same way as
+   other tablesample methods:
+
+<programlisting>
+SELECT * FROM my_table TABLESAMPLE SYSTEM_TIME(1000);
+</programlisting>
+  </para>
+
+  <para>
+   The above command will return as large a sample of my_table as it can read in
+   1 second (or less if it reads whole table faster).
+  </para>
+ </sect2>
+
+</sect1>
