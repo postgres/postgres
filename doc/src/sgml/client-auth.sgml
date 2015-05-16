@@ -1027,7 +1027,7 @@ omicron         bryanh                  guest1
         commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
         user name used for mapping is
         <literal>username@EXAMPLE.COM</literal> (or
-        <literal>username/hostbased@EXAMPLE.COM</literal>, respectfully),
+        <literal>username/hostbased@EXAMPLE.COM</literal>, respectively),
         unless <literal>include_realm</literal> has been set to 0, in which case
         <literal>username</literal> (or <literal>username/hostbased</literal>)
         is what is seen as the system username when mapping.
@@ -1106,7 +1106,7 @@ omicron         bryanh                  guest1
         commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
         user name used for mapping is
         <literal>username@EXAMPLE.COM</literal> (or
-        <literal>username/hostbased@EXAMPLE.COM</literal>, respectfully),
+        <literal>username/hostbased@EXAMPLE.COM</literal>, respectively),
         unless <literal>include_realm</literal> has been set to 0, in which case
         <literal>username</literal> (or <literal>username/hostbased</literal>)
         is what is seen as the system username when mapping.
