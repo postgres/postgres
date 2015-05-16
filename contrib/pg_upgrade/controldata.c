@@ -229,7 +229,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.chkpnt_tli = str2uint(p);
+			tli = str2uint(p);
 			got_tli = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
@@ -479,11 +479,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first log
 	 * file after reset as separate lines. Starting with 9.3, it reports the
 	 * WAL file name. If the old cluster is older than 9.3, we construct the
-	 * WAL file name from the xlogid and segno.
+	 * WAL file name from the tli, xlogid, and segno.
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
 	{
-		if (got_log_id && got_log_seg)
+		if (got_tli && got_log_id && got_log_seg)
 		{
 			snprintf(cluster->controldata.nextxlogfile, 25, "%08X%08X%08X",
 					 tli, logid, segno);
@@ -497,7 +497,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||
 		(!live_check && !got_nextxlogfile) ||
-		!got_tli ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
 		!got_walseg || !got_ident || !got_index || !got_toast ||
 		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
@@ -524,9 +523,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 		if (!live_check && !got_nextxlogfile)
 			pg_log(PG_REPORT, "  first WAL segment after reset\n");
-
-		if (!got_tli)
-			pg_log(PG_REPORT, "  latest checkpoint timeline ID\n");
 
 		if (!got_align)
 			pg_log(PG_REPORT, "  maximum alignment\n");
