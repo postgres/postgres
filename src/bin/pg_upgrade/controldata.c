@@ -564,8 +564,7 @@ check_control_data(ControlData *oldctrl,
 	if (oldctrl->date_is_int != newctrl->date_is_int)
 		pg_fatal("old and new pg_controldata date/time storage types do not match\n");
 
-	if (oldctrl->float8_pass_by_value != newctrl->float8_pass_by_value)
-		pg_fatal("old and new pg_controldata float8 argument passing methods do not match\n");
+	/* float8_pass_by_value does not need to match */
 
 	/*
 	 * We might eventually allow upgrades from checksum to no-checksum
