@@ -2680,7 +2680,7 @@ ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
  * to a value just less than the number of multixacts in use.  We hope that
  * this will quickly trigger autovacuuming on the table or tables with the
  * oldest relminmxid, thus allowing datminmxid values to advance and removing
- * some members.  
+ * some members.
  *
  * As the fraction of the member space currently in use grows, we become
  * more aggressive in clamping this value.  That not only causes autovacuum
@@ -2879,7 +2879,7 @@ TruncateMultiXact(void)
 	SimpleLruTruncate(MultiXactOffsetCtl,
 					  MultiXactIdToOffsetPage(oldestMXact));
 
-	
+
 	/*
 	 * Now, and only now, we can advance the stop point for multixact members.
 	 * If we did it any sooner, the segments we deleted above might already
