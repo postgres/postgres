@@ -454,8 +454,8 @@ PostgreSQL documentation
       <term><option>--database=<replaceable>dbname</replaceable></option></term>
       <listitem>
        <para>
-         Specifies the name of the database to connect to dump global
-         objects and discover what other databases should be dumped. If
+         Specifies the name of the database to connect to for dumping global
+         objects and discovering what other databases should be dumped. If
          not specified, the <literal>postgres</literal> database will be used,
          and if that does not exist, <literal>template1</literal> will be used.
        </para>
