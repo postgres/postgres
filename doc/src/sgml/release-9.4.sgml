@@ -127,7 +127,7 @@ Branch: REL9_1_STABLE [801e250a8] 2015-05-05 15:50:53 -0400
       default).  To adopt the fix in pre-9.5 branches, execute
       <literal>ALTER EXTENSION citext UPDATE TO '1.1'</> in each database in
       which <literal>citext</> is installed.  (You can also <quote>update</>
-      back to 1.0 if you need to undo that.)  Beware that either update
+      back to 1.0 if you need to undo that.)  Be aware that either update
       direction will require dropping and recreating any views or rules that
       use <filename>citext</>'s <function>regexp_matches()</> functions.
      </para>
@@ -539,11 +539,6 @@ Branch: REL9_0_STABLE [bd1cfde70] 2015-05-13 10:06:38 +0300
       Fix crash when manipulating hash indexes on temporary tables
       (Heikki Linnakangas)
      </para>
-
-     <para>
-      This fault was introduced in the previous set of minor releases
-      as a byproduct of a race-condition fix.
-     </para>
     </listitem>
 
 <!--
@@ -627,12 +622,8 @@ Branch: REL9_0_STABLE [71b8e8e6c] 2015-03-05 18:03:16 -0300
 
     <listitem>
      <para>
-      Improve object description strings for foreign-server user mappings
-      (&Aacute;lvaro Herrera)
-     </para>
-
-     <para>
-      Add the name of the target server, since otherwise it's ambiguous.
+      Add the name of the target server to object description strings for
+      foreign-server user mappings (&Aacute;lvaro Herrera)
      </para>
     </listitem>
 
@@ -787,7 +778,7 @@ Branch: REL9_0_STABLE [8878eaaa8] 2015-02-23 13:32:53 +0200
 
     <listitem>
      <para>
-      Guard against network deadlock when using <application>libpq</>'s
+      Reduce risk of network deadlock when using <application>libpq</>'s
       non-blocking mode (Heikki Linnakangas)
      </para>
 
@@ -1011,9 +1002,8 @@ Branch: REL9_3_STABLE [4e9935979] 2015-05-16 15:16:28 -0400
      </para>
 
      <para>
-      This avoids a scenario in which a server previously promoted from
-      standby status couldn't be upgraded because of a missing WAL history
-      file.
+      This change prevents upgrade failures caused by bogus complaints about
+      missing WAL history files.
      </para>
     </listitem>
 
@@ -1109,22 +1099,6 @@ Branch: REL9_1_STABLE [d7d294f59] 2015-02-17 11:08:40 -0500
       Improve handling of <function>readdir()</> failures when scanning
       directories in <application>initdb</> and <application>pg_basebackup</>
       (Marco Nenciarini)
-     </para>
-    </listitem>
-
-<!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
--->
-
-    <listitem>
-     <para>
-      Fix failure in <application>pg_receivexlog</> (Andres Freund)
-     </para>
-
-     <para>
-      A patch merge mistake in 9.2.10 led to <quote>could not create archive
-      status file</> errors.
      </para>
     </listitem>
 

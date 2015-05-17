@@ -1,6 +1,468 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-1-16">
+  <title>Release 9.1.16</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-05-21</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.1.15.
+   For information about new features in the 9.1 major release, see
+   <xref linkend="release-9-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.1.16</title>
+
+   <para>
+    A dump/restore is not required for those running 9.1.X.
+   </para>
+
+   <para>
+    However, if you use <filename>contrib/citext</>'s
+    <function>regexp_matches()</> functions, see the changelog entry below
+    about that.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.1.14,
+    see <xref linkend="release-9-1-14">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix incorrect declaration of <filename>contrib/citext</>'s
+      <function>regexp_matches()</> functions (Tom Lane)
+     </para>
+
+     <para>
+      These functions should return <type>setof text[]</>, like the core
+      functions they are wrappers for; but they were incorrectly declared as
+      returning just <type>text[]</>.  This mistake had two results: first,
+      if there was no match you got a scalar null result, whereas what you
+      should get is an empty set (zero rows).  Second, the <literal>g</> flag
+      was effectively ignored, since you would get only one result array even
+      if there were multiple matches.
+     </para>
+
+     <para>
+      While the latter behavior is clearly a bug, there might be applications
+      depending on the former behavior; therefore the function declarations
+      will not be changed by default until <productname>PostgreSQL</> 9.5.
+      In pre-9.5 branches, the old behavior exists in version 1.0 of
+      the <literal>citext</> extension, while we have provided corrected
+      declarations in version 1.1 (which is <emphasis>not</> installed by
+      default).  To adopt the fix in pre-9.5 branches, execute
+      <literal>ALTER EXTENSION citext UPDATE TO '1.1'</> in each database in
+      which <literal>citext</> is installed.  (You can also <quote>update</>
+      back to 1.0 if you need to undo that.)  Be aware that either update
+      direction will require dropping and recreating any views or rules that
+      use <filename>citext</>'s <function>regexp_matches()</> functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect checking of deferred exclusion constraints after a HOT
+      update (Tom Lane)
+     </para>
+
+     <para>
+      If a new row that potentially violates a deferred exclusion constraint
+      is HOT-updated (that is, no indexed columns change and the row can be
+      stored back onto the same table page) later in the same transaction,
+      the exclusion constraint would be reported as violated when the check
+      finally occurred, even if the row(s) the new row originally conflicted
+      with had been deleted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent improper reordering of antijoins (NOT EXISTS joins) versus
+      other outer joins (Tom Lane)
+     </para>
+
+     <para>
+      This oversight in the planner has been observed to cause <quote>could
+      not find RelOptInfo for given relids</> errors, but it seems possible
+      that sometimes an incorrect query plan might get past that consistency
+      check and result in silently-wrong query output.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect matching of subexpressions in outer-join plan nodes
+      (Tom Lane)
+     </para>
+
+     <para>
+      Previously, if textually identical non-strict subexpressions were used
+      both above and below an outer join, the planner might try to re-use
+      the value computed below the join, which would be incorrect because the
+      executor would force the value to NULL in case of an unmatched outer row.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix GEQO planner to cope with failure of its join order heuristic
+      (Tom Lane)
+     </para>
+
+     <para>
+      This oversight has been seen to lead to <quote>failed to join all
+      relations together</> errors in queries involving <literal>LATERAL</>,
+      and that might happen in other cases as well.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible deadlock at startup
+      when <literal>max_prepared_transactions</> is too small
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't archive useless preallocated WAL files after a timeline switch
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Recursively <function>fsync()</> the data directory after a crash
+      (Abhijit Menon-Sen, Robert Haas)
+     </para>
+
+     <para>
+      This ensures consistency if another crash occurs shortly later.  (The
+      second crash would have to be a system-level crash, not just a database
+      crash, for there to be a problem.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix autovacuum launcher's possible failure to shut down, if an error
+      occurs after it receives SIGTERM (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Cope with unexpected signals in <function>LockBufferForCleanup()</>
+      (Andres Freund)
+     </para>
+
+     <para>
+      This oversight could result in spurious errors about <quote>multiple
+      backends attempting to wait for pincount 1</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid waiting for WAL flush or synchronous replication during commit of
+      a transaction that was read-only so far as the user is concerned
+      (Andres Freund)
+     </para>
+
+     <para>
+      Previously, a delay could occur at commit in transactions that had
+      written WAL due to HOT page pruning, leading to undesirable effects
+      such as sessions getting stuck at startup if all synchronous replicas
+      are down.  Sessions have also been observed to get stuck in catchup
+      interrupt processing when using synchronous replication; this will fix
+      that problem as well.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash when manipulating hash indexes on temporary tables
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure during hash index bucket split, if other processes
+      are modifying the index concurrently (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Check for interrupts while analyzing index expressions (Jeff Janes)
+     </para>
+
+     <para>
+      <command>ANALYZE</> executes index expressions many times; if there are
+      slow functions in such an expression, it's desirable to be able to
+      cancel the <command>ANALYZE</> before that loop finishes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <structfield>tableoid</> of a foreign table is reported
+      correctly when a <literal>READ COMMITTED</> recheck occurs after
+      locking rows in <command>SELECT FOR UPDATE</>, <command>UPDATE</>,
+      or <command>DELETE</> (Etsuro Fujita)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add the name of the target server to object description strings for
+      foreign-server user mappings (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Recommend setting <literal>include_realm</> to 1 when using
+      Kerberos/GSSAPI/SSPI authentication (Stephen Frost)
+     </para>
+
+     <para>
+      Without this, identically-named users from different realms cannot be
+      distinguished.  For the moment this is only a documentation change, but
+      it will become the default setting in <productname>PostgreSQL</> 9.5.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove code for matching IPv4 <filename>pg_hba.conf</> entries to
+      IPv4-in-IPv6 addresses (Tom Lane)
+     </para>
+
+     <para>
+      This hack was added in 2003 in response to a report that some Linux
+      kernels of the time would report IPv4 connections as having
+      IPv4-in-IPv6 addresses.  However, the logic was accidentally broken in
+      9.0.  The lack of any field complaints since then shows that it's not
+      needed anymore.  Now we have reports that the broken code causes
+      crashes on some systems, so let's just remove it rather than fix it.
+      (Had we chosen to fix it, that would make for a subtle and potentially
+      security-sensitive change in the effective meaning of
+      IPv4 <filename>pg_hba.conf</> entries, which does not seem like a good
+      thing to do in minor releases.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Report WAL flush, not insert, position in <literal>IDENTIFY_SYSTEM</>
+      replication command (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This avoids a possible startup failure
+      in <application>pg_receivexlog</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      While shutting down service on Windows, periodically send status
+      updates to the Service Control Manager to prevent it from killing the
+      service too soon; and ensure that <application>pg_ctl</> will wait for
+      shutdown (Krystian Bigaj)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce risk of network deadlock when using <application>libpq</>'s
+      non-blocking mode (Heikki Linnakangas)
+     </para>
+
+     <para>
+      When sending large volumes of data, it's important to drain the input
+      buffer every so often, in case the server has sent enough response data
+      to cause it to block on output.  (A typical scenario is that the server
+      is sending a stream of NOTICE messages during <literal>COPY FROM
+      STDIN</>.)  This worked properly in the normal blocking mode, but not
+      so much in non-blocking mode.  We've modified <application>libpq</>
+      to opportunistically drain input when it can, but a full defense
+      against this problem requires application cooperation: the application
+      should watch for socket read-ready as well as write-ready conditions,
+      and be sure to call <function>PQconsumeInput()</> upon read-ready.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix array handling in <application>ecpg</> (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</> to sanely handle URIs and conninfo strings as
+      the first parameter to <command>\connect</>
+      (David Fetter, Andrew Dunstan, &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This syntax has been accepted (but undocumented) for a long time, but
+      previously some parameters might be taken from the old connection
+      instead of the given string, which was agreed to be undesirable.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Suppress incorrect complaints from <application>psql</> on some
+      platforms that it failed to write <filename>~/.psql_history</> at exit
+      (Tom Lane)
+     </para>
+
+     <para>
+      This misbehavior was caused by a workaround for a bug in very old
+      (pre-2006) versions of <application>libedit</>.  We fixed it by
+      removing the workaround, which will cause a similar failure to appear
+      for anyone still using such versions of <application>libedit</>.
+      Recommendation: upgrade that library, or use <application>libreadline</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</>'s rule for deciding which casts are
+      system-provided casts that should not be dumped (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_dump</>, fix failure to honor <literal>-Z</>
+      compression level option together with <literal>-Fd</>
+      (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_dump</> consider foreign key relationships
+      between extension configuration tables while choosing dump order
+      (Gilles Darold, Michael Paquier, Stephen Frost)
+     </para>
+
+     <para>
+      This oversight could result in producing dumps that fail to reload
+      because foreign key constraints are transiently violated.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dumping of views that are just <literal>VALUES(...)</> but have
+      column aliases (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_upgrade</>, force timeline 1 in the new cluster
+      (Bruce Momjian)
+     </para>
+
+     <para>
+      This change prevents upgrade failures caused by bogus complaints about
+      missing WAL history files.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_upgrade</>, check for improperly non-connectable
+      databases before proceeding
+      (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_upgrade</>, quote directory paths
+      properly in the generated <literal>delete_old_cluster</> script
+      (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_upgrade</>, preserve database-level freezing info
+      properly
+      (Bruce Momjian)
+     </para>
+
+     <para>
+      This oversight could cause missing-clog-file errors for tables within
+      the <literal>postgres</> and <literal>template1</> databases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Run <application>pg_upgrade</> and <application>pg_resetxlog</> with
+      restricted privileges on Windows, so that they don't fail when run by
+      an administrator (Muhammad Asif Naeem)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of <function>readdir()</> failures when scanning
+      directories in <application>initdb</> and <application>pg_basebackup</>
+      (Marco Nenciarini)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix slow sorting algorithm in <filename>contrib/intarray</> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix compile failure on Sparc V8 machines (Rob Rowan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2015d
+      for DST law changes in Egypt, Mongolia, and Palestine, plus historical
+      changes in Canada and Chile.  Also adopt revised zone abbreviations for
+      the America/Adak zone (HST/HDT not HAST/HADT).
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-1-15">
   <title>Release 9.1.15</title>
 
