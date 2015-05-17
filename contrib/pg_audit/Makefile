@@ -1,13 +1,13 @@
-# pg_audit/Makefile
+# contrib/pg_audit/Makefile
 
-MODULE = pg_audit
 MODULE_big = pg_audit
-OBJS = pg_audit.o
+OBJS = pg_audit.o $(WIN32RES)
 
 EXTENSION = pg_audit
+DATA = pg_audit--1.0.sql
+PGFILEDESC = "pg_audit - An audit logging extension for PostgreSQL"
+
 REGRESS = pg_audit
-REGRESS_OPTS =
-DATA = pg_audit--1.0.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

@@ -540,12 +540,6 @@ log_audit_event(AuditEventStackItem *stackItem)
 					class = LOG_READ;
 					break;
 
-				/* Reindex is DDL (because cluster is DDL) */
-				case T_ReindexStmt:
-					className = CLASS_DDL;
-					class = LOG_DDL;
-					break;
-
 				/* FUNCTION statements */
 				case T_DoStmt:
 					className = CLASS_FUNCTION;
