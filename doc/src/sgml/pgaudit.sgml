@@ -89,7 +89,7 @@ AUDIT: SESSION,33,2,DDL,CREATE TABLE,TABLE,public.important_table,CREATE TABLE i
       relation referenced in a statement.  No parsing is required to find all
       statements that touch a particular table.  In fact, the goal is that the
       statement text is provided primarily for deep forensics and should not be
-      the required for an audit.
+      required for an audit.
     </para>
   </sect2>
 
@@ -653,7 +653,7 @@ AUDIT: SESSION,36,1,DDL,ALTER TABLE,TABLE,public.test2,ALTER TABLE test RENAME T
 
       <listitem>
         <para>
-          Autovacuum and Autoanalyze are not logged, nor are they intended to be.
+          Autovacuum and Autoanalyze are not logged.
         </para>
       </listitem>
 
