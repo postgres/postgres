@@ -470,7 +470,7 @@ not be seen under normal circumstances; only if insertion to the parent
 has failed for some reason.
 
 We flag the left page, even though it's the right page that's missing the
-downlink, beacuse it's more convenient to know already when following the
+downlink, because it's more convenient to know already when following the
 right-link from the left page to the right page that it will need to have
 its downlink inserted to the parent.
 

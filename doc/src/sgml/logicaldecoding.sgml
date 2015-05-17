@@ -649,7 +649,7 @@ OutputPluginWrite(ctx, true);
    <title>Synchronous Replication Support for Logical Decoding</title>
 
    <para>
-    Logical decoding can be used to to build
+    Logical decoding can be used to build
     <link linkend="synchronous-replication">synchronous
     replication</link> solutions with the same user interface as synchronous
     replication for <link linkend="streaming-replication">streaming

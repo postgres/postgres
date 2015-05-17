@@ -2005,7 +2005,7 @@ CommitTransaction(void)
 	if (!is_parallel_worker)
 	{
 		/*
-		 * We need to mark our XIDs as commited in pg_clog.  This is where we
+		 * We need to mark our XIDs as committed in pg_clog.  This is where we
 		 * durably commit.
 		 */
 		latestXid = RecordTransactionCommit();
@@ -2764,7 +2764,7 @@ CommitTransactionCommand(void)
 			/*
 			 * Here we are in the middle of a transaction block but one of the
 			 * commands caused an abort so we do nothing but remain in the
-			 * abort state.  Eventually we will get a ROLLBACK comand.
+			 * abort state.  Eventually we will get a ROLLBACK command.
 			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:

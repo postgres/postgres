@@ -7289,7 +7289,7 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 		{
 			/*
 			 * The OID column can appear in an index definition, but that's
-			 * OK, becuse we always copy the OID if present (see below). Other
+			 * OK, because we always copy the OID if present (see below). Other
 			 * system columns may not.
 			 */
 			if (attno == ObjectIdAttributeNumber)

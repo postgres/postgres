@@ -832,7 +832,7 @@ SnapBuildAddCommittedTxn(SnapBuild *builder, TransactionId xid)
 
 /*
  * Remove knowledge about transactions we treat as committed that are smaller
- * than ->xmin. Those won't ever get checked via the ->commited array but via
+ * than ->xmin. Those won't ever get checked via the ->committed array but via
  * the clog machinery, so we don't need to waste memory on them.
  */
 static void

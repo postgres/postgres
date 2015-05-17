@@ -23,7 +23,7 @@
 /*
  * For encoding purposes, item pointers are represented as 64-bit unsigned
  * integers. The lowest 11 bits represent the offset number, and the next
- * lowest 32 bits are the block number. That leaves 17 bits unused, ie.
+ * lowest 32 bits are the block number. That leaves 17 bits unused, i.e.
  * only 43 low bits are used.
  *
  * These 43-bit integers are encoded using varbyte encoding. In each byte,
@@ -51,16 +51,16 @@
  * Removing number is actually replacement of two numbers with their sum. We
  * have to prove that varbyte encoding of a sum can't be longer than varbyte
  * encoding of its summands. Sum of two numbers is at most one bit wider than
- * than the larger of the summands. Widening a number by one bit enlarges its
- * length in varbyte encoding by at most one byte. Therefore, varbyte encoding
- * of sum is at most one byte longer than varbyte encoding of larger summand.
- * Lesser summand is at least one byte, so the sum cannot take more space than
- * the summands, Q.E.D.
+ * the larger of the summands. Widening a number by one bit enlarges its length
+ * in varbyte encoding by at most one byte. Therefore, varbyte encoding of sum
+ * is at most one byte longer than varbyte encoding of larger summand. Lesser
+ * summand is at least one byte, so the sum cannot take more space than the
+ * summands, Q.E.D.
  *
  * This property greatly simplifies VACUUM, which can assume that posting
  * lists always fit on the same page after vacuuming. Note that even though
  * that holds for removing items from a posting list, you must also be
- * careful to not cause expansion e.g when merging uncompressed items on the
+ * careful to not cause expansion e.g. when merging uncompressed items on the
  * page into the compressed lists, when vacuuming.
  */
 

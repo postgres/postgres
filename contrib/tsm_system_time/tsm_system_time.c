@@ -267,7 +267,7 @@ tsm_system_time_cost(PG_FUNCTION_ARGS)
 							  NULL);
 
 	/*
-	 * Assumption here is that we'll never read less then 1% of table pages,
+	 * Assumption here is that we'll never read less than 1% of table pages,
 	 * this is here mainly because it is much less bad to overestimate than
 	 * underestimate and using just spc_random_page_cost will probably lead
 	 * to underestimations in general.

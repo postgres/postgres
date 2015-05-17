@@ -3577,7 +3577,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 		int			level = 1;
 
 		/*
-		 * Append the all tokens from v1 to res, exept last WJB_END_OBJECT
+		 * Append the all tokens from v1 to res, except last WJB_END_OBJECT
 		 * (because res will not be finished yet).
 		 */
 		(void) pushJsonbValue(state, r1, NULL);

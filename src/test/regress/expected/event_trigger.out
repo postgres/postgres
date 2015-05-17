@@ -38,7 +38,7 @@ create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('sandwhich')
    execute procedure test_event_trigger();
 ERROR:  filter value "sandwhich" not recognized for filter variable "tag"
--- should fail, create skunkcabbage is not a valid comand tag
+-- should fail, create skunkcabbage is not a valid command tag
 create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('create table', 'create skunkcabbage')
    execute procedure test_event_trigger();
