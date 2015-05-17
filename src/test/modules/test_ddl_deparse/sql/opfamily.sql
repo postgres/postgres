@@ -50,4 +50,3 @@ create operator =(procedure = same, leftarg  = ctype, rightarg = ctype);
 create operator class ctype_hash_ops
   default for type ctype using hash as
   operator 1 =(ctype, ctype);
-

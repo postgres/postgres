@@ -37,4 +37,3 @@ INSERT INTO pg_tablesample_method VALUES('system_time', false, true,
 	'tsm_system_time_init', 'tsm_system_time_nextblock',
 	'tsm_system_time_nexttuple', '-', 'tsm_system_time_end',
 	'tsm_system_time_reset', 'tsm_system_time_cost');
-

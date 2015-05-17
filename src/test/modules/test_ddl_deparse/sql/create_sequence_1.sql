@@ -9,4 +9,3 @@ CREATE SEQUENCE fkey_table_seq
   START 10
   CACHE 10
   CYCLE;
-

@@ -42,4 +42,3 @@ INSERT INTO pg_tablesample_method VALUES('system_rows', false, true,
 	'tsm_system_rows_init', 'tsm_system_rows_nextblock',
 	'tsm_system_rows_nexttuple', 'tsm_system_rows_examinetuple',
 	'tsm_system_rows_end', 'tsm_system_rows_reset', 'tsm_system_rows_cost');
-

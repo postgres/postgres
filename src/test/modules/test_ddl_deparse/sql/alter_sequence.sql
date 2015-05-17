@@ -13,5 +13,3 @@ ALTER SEQUENCE fkey_table_seq
 
 ALTER SEQUENCE fkey_table_seq_renamed
   SET SCHEMA foo;
-
-

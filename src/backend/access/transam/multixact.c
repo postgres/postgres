@@ -2860,7 +2860,7 @@ TruncateMultiXact(void)
 	SimpleLruTruncate(MultiXactOffsetCtl,
 					  MultiXactIdToOffsetPage(oldestMXact));
 
-	
+
 	/*
 	 * Now, and only now, we can advance the stop point for multixact members.
 	 * If we did it any sooner, the segments we deleted above might already
