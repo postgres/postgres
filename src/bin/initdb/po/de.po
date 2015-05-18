@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-01-31 23:59+0000\n"
-"PO-Revision-Date: 2015-02-01 00:04-0500\n"
+"POT-Creation-Date: 2015-05-18 03:57+0000\n"
+"PO-Revision-Date: 2015-05-18 00:38-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -89,7 +89,8 @@ msgstr "%s: Datenverzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt\n"
 #: initdb.c:633
 #, c-format
 msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-msgstr "%s: Transaktionslogverzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt\n"
+msgstr ""
+"%s: Transaktionslogverzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt\n"
 
 #: initdb.c:655
 #, c-format
@@ -133,7 +134,8 @@ msgid ""
 "This might mean you have a corrupted installation or identified\n"
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
-"Das könnte bedeuten, dass Ihre Installation fehlerhaft ist oder dass Sie das\n"
+"Das könnte bedeuten, dass Ihre Installation fehlerhaft ist oder dass Sie "
+"das\n"
 "falsche Verzeichnis mit der Kommandozeilenoption -L angegeben haben.\n"
 
 #: initdb.c:909
@@ -321,35 +323,44 @@ msgstr ""
 
 #: initdb.c:2381
 #, c-format
-msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
-msgstr "  -A, --auth=METHODE        vorgegebene Authentifizierungsmethode für lokale Verbindungen\n"
+msgid ""
+"  -A, --auth=METHOD         default authentication method for local "
+"connections\n"
+msgstr ""
+"  -A, --auth=METHODE        vorgegebene Authentifizierungsmethode für lokale "
+"Verbindungen\n"
 
 #: initdb.c:2382
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr " [-D, --pgdata=]DATENVERZ   Datenverzeichnis für diesen Datenbankcluster\n"
+msgstr ""
+" [-D, --pgdata=]DATENVERZ   Datenverzeichnis für diesen Datenbankcluster\n"
 
 #: initdb.c:2383
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
-msgstr "  -E, --encoding=KODIERUNG  setze Standardkodierung für neue Datenbanken\n"
+msgstr ""
+"  -E, --encoding=KODIERUNG  setze Standardkodierung für neue Datenbanken\n"
 
 #: initdb.c:2384
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
-msgstr "      --locale=LOCALE       setze Standardlocale für neue Datenbanken\n"
+msgstr ""
+"      --locale=LOCALE       setze Standardlocale für neue Datenbanken\n"
 
 #: initdb.c:2385
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
-"                            set default locale in the respective category for\n"
+"                            set default locale in the respective category "
+"for\n"
 "                            new databases (default taken from environment)\n"
 msgstr ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
-"                            setze Standardlocale in der jeweiligen Kategorie\n"
+"                            setze Standardlocale in der jeweiligen "
+"Kategorie\n"
 "                            für neue Datenbanken (Voreinstellung aus der\n"
 "                            Umgebung entnommen)\n"
 
@@ -360,8 +371,10 @@ msgstr "      --no-locale           entspricht --locale=C\n"
 
 #: initdb.c:2390
 #, c-format
-msgid "      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr "      --pwfile=DATEI        lese Passwort des neuen Superusers aus Datei\n"
+msgid ""
+"      --pwfile=FILE         read password for the new superuser from file\n"
+msgstr ""
+"      --pwfile=DATEI        lese Passwort des neuen Superusers aus Datei\n"
 
 #: initdb.c:2391
 #, c-format
@@ -379,12 +392,14 @@ msgstr "  -U, --username=NAME       Datenbank-Superusername\n"
 
 #: initdb.c:2394
 #, c-format
-msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgid ""
+"  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            frage nach Passwort für neuen Superuser\n"
 
 #: initdb.c:2395
 #, c-format
-msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
+msgid ""
+"  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
 msgstr "  -X, --xlogdir=XLOGVERZ    Verzeichnis für das Transaktionslog\n"
 
 #: initdb.c:2396
@@ -433,7 +448,8 @@ msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 #: initdb.c:2403
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
+msgstr ""
+"  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
 
 #: initdb.c:2404
 #, c-format
@@ -478,7 +494,8 @@ msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 #: initdb.c:2592
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
-msgstr "%s: Passwortprompt und Passwortdatei können nicht zusammen angegeben werden\n"
+msgstr ""
+"%s: Passwortprompt und Passwortdatei können nicht zusammen angegeben werden\n"
 
 #: initdb.c:2598
 msgid ""
@@ -499,8 +516,11 @@ msgstr "%s: unbekannte Authentifizierungsmethode »%s«\n"
 
 #: initdb.c:2631
 #, c-format
-msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s: Superuser-Passwort muss angegeben werden um %s-Authentifizierung einzuschalten\n"
+msgid ""
+"%s: must specify a password for the superuser to enable %s authentication\n"
+msgstr ""
+"%s: Superuser-Passwort muss angegeben werden um %s-Authentifizierung "
+"einzuschalten\n"
 
 #: initdb.c:2646
 #, c-format
@@ -609,17 +629,24 @@ msgstr "Die Standarddatenbankkodierung wurde entsprechend auf %s gesetzt.\n"
 #: initdb.c:2889
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale %s\n"
-msgstr "%s: konnte keine passende Textsuchekonfiguration für Locale »%s« finden\n"
+msgstr ""
+"%s: konnte keine passende Textsuchekonfiguration für Locale »%s« finden\n"
 
 #: initdb.c:2900
 #, c-format
-msgid "%s: warning: suitable text search configuration for locale %s is unknown\n"
-msgstr "%s: Warnung: passende Textsuchekonfiguration für Locale »%s« ist unbekannt\n"
+msgid ""
+"%s: warning: suitable text search configuration for locale %s is unknown\n"
+msgstr ""
+"%s: Warnung: passende Textsuchekonfiguration für Locale »%s« ist unbekannt\n"
 
 #: initdb.c:2905
 #, c-format
-msgid "%s: warning: specified text search configuration \"%s\" might not match locale %s\n"
-msgstr "%s: Warnung: angegebene Textsuchekonfiguration »%s« passt möglicherweise nicht zur Locale »%s«\n"
+msgid ""
+"%s: warning: specified text search configuration \"%s\" might not match "
+"locale %s\n"
+msgstr ""
+"%s: Warnung: angegebene Textsuchekonfiguration »%s« passt möglicherweise "
+"nicht zur Locale »%s«\n"
 
 #: initdb.c:2910
 #, c-format
@@ -684,7 +711,8 @@ msgstr "%s: konnte symbolische Verknüpfung »%s« nicht erzeugen: %s\n"
 #: initdb.c:3073
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: symbolische Verknüpfungen werden auf dieser Plattform nicht unterstützt"
+msgstr ""
+"%s: symbolische Verknüpfungen werden auf dieser Plattform nicht unterstützt"
 
 #: initdb.c:3079
 #, c-format
@@ -722,27 +750,32 @@ msgstr "Speicher aufgebraucht\n"
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "konnte Junction für »%s« nicht erzeugen: %s\n"
 
-#: ../../port/dirmod.c:325
+#: ../../port/dirmod.c:361
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "konnte Junction für »%s« nicht ermitteln: %s\n"
+
+#: ../../port/dirmod.c:443
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %s\n"
 
-#: ../../port/dirmod.c:358
+#: ../../port/dirmod.c:476
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "konnte Verzeichnis »%s« nicht lesen: %s\n"
 
-#: ../../port/dirmod.c:370
+#: ../../port/dirmod.c:488
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
 msgstr "konnte Verzeichnis »%s« nicht schließen: %s\n"
 
-#: ../../port/dirmod.c:449
+#: ../../port/dirmod.c:567
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
 msgstr "konnte »stat« für Datei oder Verzeichnis »%s« nicht ausführen: %s\n"
 
-#: ../../port/dirmod.c:476 ../../port/dirmod.c:493
+#: ../../port/dirmod.c:594 ../../port/dirmod.c:611
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "konnte Datei oder Verzeichnis »%s« nicht entfernen: %s\n"

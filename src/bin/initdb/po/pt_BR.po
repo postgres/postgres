@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for initdb
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2014.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-07 21:53-0300\n"
+"POT-Creation-Date: 2015-05-17 14:54-0300\n"
 "PO-Revision-Date: 2010-09-25 00:45+0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -763,27 +763,32 @@ msgstr "sem memória\n"
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "não pôde definir junção para \"%s\": %s\n"
 
-#: ../../port/dirmod.c:325
+#: ../../port/dirmod.c:361
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "não pôde obter junção para \"%s\": %s\n"
+
+#: ../../port/dirmod.c:443
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
 msgstr "não pôde abrir diretório \"%s\": %s\n"
 
-#: ../../port/dirmod.c:358
+#: ../../port/dirmod.c:476
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "não pôde ler diretório \"%s\": %s\n"
 
-#: ../../port/dirmod.c:370
+#: ../../port/dirmod.c:488
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
 msgstr "não pôde fechar diretório \"%s\": %s\n"
 
-#: ../../port/dirmod.c:449
+#: ../../port/dirmod.c:567
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
 msgstr "não pôde executar stat no arquivo ou  diretório \"%s\": %s\n"
 
-#: ../../port/dirmod.c:476 ../../port/dirmod.c:493
+#: ../../port/dirmod.c:594 ../../port/dirmod.c:611
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "não pôde remover arquivo ou  diretório \"%s\": %s\n"
