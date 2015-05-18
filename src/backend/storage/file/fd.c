@@ -2461,7 +2461,7 @@ pre_sync_fname(char *fname, bool isdir)
 
 	if (fd < 0)
 		ereport(FATAL,
-				(errmsg("could not open file \"%s\" before fsync",
+				(errmsg("could not open file \"%s\": %m",
 						fname)));
 
 	pg_flush_data(fd, 0, 0);
