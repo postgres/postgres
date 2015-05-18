@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-02-14 18:18+0000\n"
-"PO-Revision-Date: 2014-02-14 21:47+0100\n"
+"POT-Creation-Date: 2015-05-13 07:47+0000\n"
+"PO-Revision-Date: 2015-05-13 23:10+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -18,11 +18,10 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.7.5\n"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83 command.c:1130 input.c:204 mainloop.c:72
-#: mainloop.c:234 tab-complete.c:3827
+#: ../../common/fe_memutils.c:83 input.c:205 mainloop.c:72 mainloop.c:234
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
@@ -127,35 +126,27 @@ msgstr "n'a pas pu obtenir le répertoire de l'utilisateur : %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s : n'a pas pu accéder au répertoire « %s » : %s\n"
 
-#: command.c:307 common.c:446 common.c:851
+#: command.c:307 common.c:446 common.c:866
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "Vous n'êtes pas connecté à une base de données.\n"
 
 #: command.c:314
 #, c-format
-msgid ""
-"You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
-"port \"%s\".\n"
-msgstr ""
-"Vous êtes connecté à la base de données « %s » en tant qu'utilisateur « %s » "
-"via le socket dans « %s » via le port « %s ».\n"
+msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
+msgstr "Vous êtes connecté à la base de données « %s » en tant qu'utilisateur « %s » via le socket dans « %s » via le port « %s ».\n"
 
 #: command.c:317
 #, c-format
-msgid ""
-"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
-"\"%s\".\n"
-msgstr ""
-"Vous êtes connecté à la base de données « %s » en tant qu'utilisateur « %s » "
-"sur l'hôte « %s » via le port « %s ».\n"
+msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
+msgstr "Vous êtes connecté à la base de données « %s » en tant qu'utilisateur « %s » sur l'hôte « %s » via le port « %s ».\n"
 
-#: command.c:516 command.c:586 command.c:1382
+#: command.c:516 command.c:586 command.c:1365
 #, c-format
 msgid "no query buffer\n"
 msgstr "aucun tampon de requête\n"
 
-#: command.c:549 command.c:2826
+#: command.c:549 command.c:2845
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "numéro de ligne invalide : %s\n"
@@ -163,9 +154,7 @@ msgstr "numéro de ligne invalide : %s\n"
 #: command.c:580
 #, c-format
 msgid "The server (version %d.%d) does not support editing function source.\n"
-msgstr ""
-"Le serveur (version %d.%d) ne supporte pas l'édition du code de la "
-"fonction.\n"
+msgstr "Le serveur (version %d.%d) ne supporte pas l'édition du code de la fonction.\n"
 
 #: command.c:660
 msgid "No changes"
@@ -177,7 +166,7 @@ msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s : nom d'encodage invalide ou procédure de conversion introuvable\n"
 
 #: command.c:810 command.c:860 command.c:874 command.c:891 command.c:998
-#: command.c:1048 command.c:1158 command.c:1362 command.c:1393
+#: command.c:1048 command.c:1141 command.c:1345 command.c:1376
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s : argument requis manquant\n"
@@ -204,7 +193,7 @@ msgstr "Les mots de passe ne sont pas identiques.\n"
 msgid "Password encryption failed.\n"
 msgstr "Échec du chiffrement du mot de passe.\n"
 
-#: command.c:1027 command.c:1139 command.c:1367
+#: command.c:1027 command.c:1122 command.c:1350
 #, c-format
 msgid "\\%s: error while setting variable\n"
 msgstr "\\%s : erreur lors de l'initialisation de la variable\n"
@@ -213,117 +202,101 @@ msgstr "\\%s : erreur lors de l'initialisation de la variable\n"
 msgid "Query buffer reset (cleared)."
 msgstr "Le tampon de requête a été effacé."
 
-#: command.c:1092
+#: command.c:1080
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Historique sauvegardé dans le fichier « %s/%s ».\n"
 
-#: command.c:1163
+#: command.c:1146
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\"\n"
-msgstr ""
-"\\%s : le nom de la variable d'environnement ne doit pas contenir « = »\n"
+msgstr "\\%s : le nom de la variable d'environnement ne doit pas contenir « = »\n"
 
-#: command.c:1206
+#: command.c:1189
 #, c-format
 msgid "The server (version %d.%d) does not support showing function source.\n"
-msgstr ""
-"Le serveur (version %d.%d) ne supporte pas l'affichage du code de la "
-"fonction.\n"
+msgstr "Le serveur (version %d.%d) ne supporte pas l'affichage du code de la fonction.\n"
 
-#: command.c:1212
+#: command.c:1195
 #, c-format
 msgid "function name is required\n"
 msgstr "le nom de la fonction est requis\n"
 
-#: command.c:1347
+#: command.c:1330
 msgid "Timing is on."
 msgstr "Chronométrage activé."
 
-#: command.c:1349
+#: command.c:1332
 msgid "Timing is off."
 msgstr "Chronométrage désactivé."
 
-#: command.c:1410 command.c:1430 command.c:2027 command.c:2034 command.c:2043
-#: command.c:2053 command.c:2062 command.c:2076 command.c:2093 command.c:2152
-#: common.c:74 copy.c:342 copy.c:395 copy.c:410 psqlscan.l:1677
-#: psqlscan.l:1688 psqlscan.l:1698
+#: command.c:1393 command.c:1413 command.c:2043 command.c:2050 command.c:2059
+#: command.c:2069 command.c:2078 command.c:2092 command.c:2109 command.c:2168
+#: common.c:74 copy.c:335 copy.c:389 copy.c:404 psqlscan.l:1676
+#: psqlscan.l:1687 psqlscan.l:1697
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s : %s\n"
 
-#: command.c:1509
+#: command.c:1492
 #, c-format
 msgid "+ opt(%d) = |%s|\n"
 msgstr "+ opt(%d) = |%s|\n"
 
-#: command.c:1535 startup.c:185
+#: command.c:1518 startup.c:186
 msgid "Password: "
 msgstr "Mot de passe : "
 
-#: command.c:1542 startup.c:188 startup.c:190
+#: command.c:1525 startup.c:189 startup.c:191
 #, c-format
 msgid "Password for user %s: "
 msgstr "Mot de passe pour l'utilisateur %s : "
 
-#: command.c:1587
+#: command.c:1572
 #, c-format
-msgid ""
-"All connection parameters must be supplied because no database connection "
-"exists\n"
+msgid "All connection parameters must be supplied because no database connection exists\n"
 msgstr ""
-"Tous les paramètres de connexions doivent être fournis car il n'y a pas de "
-"connexion\n"
+"Tous les paramètres de connexions doivent être fournis car il n'y a pas de connexion\n"
 "à une base de données existante.\n"
 
-#: command.c:1673 command.c:2860 common.c:120 common.c:413 common.c:478
-#: common.c:894 common.c:919 common.c:1016 copy.c:493 copy.c:690
-#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
+#: command.c:1689 command.c:2879 common.c:120 common.c:413 common.c:478
+#: common.c:909 common.c:934 common.c:1031 copy.c:487 copy.c:684
+#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1948
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1677
+#: command.c:1693
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "Connexion précédente conservée\n"
 
-#: command.c:1681
+#: command.c:1697
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect : %s"
 
-#: command.c:1714
+#: command.c:1730
 #, c-format
-msgid ""
-"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
-"at port \"%s\".\n"
-msgstr ""
-"Vous êtes maintenant connecté à la base de données « %s » en tant "
-"qu'utilisateur « %s » via le socket dans « %s » via le port « %s ».\n"
+msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
+msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s » via le socket dans « %s » via le port « %s ».\n"
 
-#: command.c:1717
+#: command.c:1733
 #, c-format
-msgid ""
-"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
-"port \"%s\".\n"
-msgstr ""
-"Vous êtes maintenant connecté à la base de données « %s » en tant "
-"qu'utilisateur « %s » sur l'hôte « %s » via le port « %s ».\n"
+msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
+msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s » sur l'hôte « %s » via le port « %s ».\n"
 
-#: command.c:1721
+#: command.c:1737
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
-msgstr ""
-"Vous êtes maintenant connecté à la base de données « %s » en tant "
-"qu'utilisateur « %s ».\n"
+msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s ».\n"
 
-#: command.c:1755
+#: command.c:1771
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, serveur %s)\n"
 
-#: command.c:1763
+#: command.c:1779
 #, c-format
 msgid ""
 "WARNING: %s major version %d.%d, server major version %d.%d.\n"
@@ -332,17 +305,17 @@ msgstr ""
 "ATTENTION : %s version majeure %d.%d, version majeure du serveur %d.%d.\n"
 "         Certaines fonctionnalités de psql pourraient ne pas fonctionner.\n"
 
-#: command.c:1793
+#: command.c:1809
 #, c-format
 msgid "SSL connection (cipher: %s, bits: %d)\n"
 msgstr "Connexion SSL (chiffrement : %s, bits : %d)\n"
 
-#: command.c:1803
+#: command.c:1819
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "Connexion SSL (chiffrement inconnu)\n"
 
-#: command.c:1824
+#: command.c:1840
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -351,202 +324,195 @@ msgid ""
 msgstr ""
 "Attention : l'encodage console (%u) diffère de l'encodage Windows (%u).\n"
 "            Les caractères 8 bits peuvent ne pas fonctionner correctement.\n"
-"            Voir la section « Notes aux utilisateurs de Windows » de la "
-"page\n"
+"            Voir la section « Notes aux utilisateurs de Windows » de la page\n"
 "            référence de psql pour les détails.\n"
 
-#: command.c:1908
+#: command.c:1924
 #, c-format
-msgid ""
-"environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
-"line number\n"
+msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
 msgstr ""
 "la variable d'environnement EDITOR_LINENUMBER_SWITCH doit être configurée\n"
 "pour spécifier un numéro de ligne\n"
 
-#: command.c:1945
+#: command.c:1961
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "n'a pas pu exécuter l'éditeur « %s »\n"
 
-#: command.c:1947
+#: command.c:1963
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "n'a pas pu exécuter /bin/sh\n"
 
-#: command.c:1985
+#: command.c:2001
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "n'a pas pu localiser le répertoire temporaire : %s\n"
 
-#: command.c:2012
+#: command.c:2028
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier temporaire « %s » : %s\n"
 
-#: command.c:2274
+#: command.c:2290
 #, c-format
-msgid ""
-"\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
-"ms\n"
+msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
 msgstr ""
-"\\pset : les formats autorisés sont unaligned, aligned, wrapped, html, "
-"latex,\n"
+"\\pset : les formats autorisés sont unaligned, aligned, wrapped, html, latex,\n"
 "troff-ms\n"
 
-#: command.c:2279
+#: command.c:2295
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Le format de sortie est %s.\n"
 
-#: command.c:2295
+#: command.c:2311
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
-msgstr ""
-"\\pset: les styles de lignes autorisés sont ascii, old-ascii, unicode\n"
+msgstr "\\pset: les styles de lignes autorisés sont ascii, old-ascii, unicode\n"
 
-#: command.c:2300
+#: command.c:2316
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Le style de ligne est %s.\n"
 
-#: command.c:2311
+#: command.c:2327
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Le style de bordure est %d.\n"
 
-#: command.c:2326
+#: command.c:2344
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Affichage étendu activé.\n"
 
-#: command.c:2328
+#: command.c:2346
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "L'affichage étendu est utilisé automatiquement.\n"
 
-#: command.c:2330
+#: command.c:2348
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Affichage étendu désactivé.\n"
 
-#: command.c:2344
+#: command.c:2362
 msgid "Showing locale-adjusted numeric output."
 msgstr "Affichage de la sortie numérique adaptée à la locale."
 
-#: command.c:2346
+#: command.c:2364
 msgid "Locale-adjusted numeric output is off."
 msgstr "L'affichage de la sortie numérique adaptée à la locale est désactivé."
 
-#: command.c:2359
+#: command.c:2377
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "L'affichage de null est « %s ».\n"
 
-#: command.c:2374 command.c:2386
+#: command.c:2392 command.c:2404
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Le séparateur de champs est l'octet zéro.\n"
 
-#: command.c:2376
+#: command.c:2394
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Le séparateur de champs est « %s ».\n"
 
-#: command.c:2401 command.c:2415
+#: command.c:2419 command.c:2433
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Le séparateur d'enregistrements est l'octet zéro.\n"
 
-#: command.c:2403
+#: command.c:2421
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Le séparateur d'enregistrements est <saut de ligne>."
 
-#: command.c:2405
+#: command.c:2423
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Le séparateur d'enregistrements est « %s ».\n"
 
-#: command.c:2428
+#: command.c:2446
 msgid "Showing only tuples."
 msgstr "Affichage des tuples seuls."
 
-#: command.c:2430
+#: command.c:2448
 msgid "Tuples only is off."
 msgstr "L'affichage des tuples seuls est désactivé."
 
-#: command.c:2446
+#: command.c:2464
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Le titre est « %s ».\n"
 
-#: command.c:2448
+#: command.c:2466
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Le titre n'est pas défini.\n"
 
-#: command.c:2464
+#: command.c:2482
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "L'attribut de la table est « %s ».\n"
 
-#: command.c:2466
+#: command.c:2484
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Les attributs de la table ne sont pas définis.\n"
 
-#: command.c:2487
+#: command.c:2507
 msgid "Pager is used for long output."
 msgstr "Le pagineur est utilisé pour les affichages importants."
 
-#: command.c:2489
+#: command.c:2509
 msgid "Pager is always used."
 msgstr "Le pagineur est toujours utilisé."
 
-#: command.c:2491
+#: command.c:2511
 msgid "Pager usage is off."
 msgstr "Le pagineur n'est pas utilisé."
 
-#: command.c:2505
+#: command.c:2525
 msgid "Default footer is on."
 msgstr "Le bas de page pas défaut est activé."
 
-#: command.c:2507
+#: command.c:2527
 msgid "Default footer is off."
 msgstr "Le bas de page par défaut est désactivé."
 
-#: command.c:2518
+#: command.c:2538
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "La largeur cible est %d.\n"
 
-#: command.c:2523
+#: command.c:2543
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset : option inconnue : %s\n"
 
-#: command.c:2577
+#: command.c:2597
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\! : échec\n"
 
-#: command.c:2597 command.c:2656
+#: command.c:2617 command.c:2675
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch ne peut pas être utilisé avec une requête vide\n"
 
-#: command.c:2619
+#: command.c:2638
 #, c-format
 msgid "Watch every %lds\t%s"
 msgstr "Vérifier chaque %lds\t%s"
 
-#: command.c:2663
+#: command.c:2682
 #, c-format
 msgid "\\watch cannot be used with COPY\n"
 msgstr "\\watch ne peut pas être utilisé avec COPY\n"
 
-#: command.c:2669
+#: command.c:2688
 #, c-format
 msgid "unexpected result status for \\watch\n"
 msgstr "statut résultat inattendu pour \\watch\n"
@@ -571,12 +537,12 @@ msgstr "Échec.\n"
 msgid "Succeeded.\n"
 msgstr "Succès.\n"
 
-#: common.c:403 common.c:683 common.c:816
+#: common.c:403 common.c:683 common.c:831
 #, c-format
 msgid "unexpected PQresultStatus: %d\n"
 msgstr "PQresultStatus inattendu : %d\n"
 
-#: common.c:452 common.c:459 common.c:877
+#: common.c:452 common.c:459 common.c:892
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -591,18 +557,14 @@ msgstr ""
 
 #: common.c:513
 #, c-format
-msgid ""
-"Asynchronous notification \"%s\" with payload \"%s\" received from server "
-"process with PID %d.\n"
+msgid "Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"
 msgstr ""
-"Notification asynchrone « %s » reçue avec le contenu « %s » en provenance "
-"du\n"
+"Notification asynchrone « %s » reçue avec le contenu « %s » en provenance du\n"
 "processus serveur de PID %d.\n"
 
 #: common.c:516
 #, c-format
-msgid ""
-"Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Notification asynchrone « %s » reçue en provenance du processus serveur de\n"
 "PID %d.\n"
@@ -622,36 +584,30 @@ msgstr "plus d'une ligne retournée pour \\gset\n"
 msgid "could not set variable \"%s\"\n"
 msgstr "n'a pas pu initialiser la variable « %s »\n"
 
-#: common.c:859
+#: common.c:874
 #, c-format
 msgid ""
-"***(Single step mode: verify "
-"command)*******************************************\n"
+"***(Single step mode: verify command)*******************************************\n"
 "%s\n"
-"***(press return to proceed or enter x and return to "
-"cancel)********************\n"
+"***(press return to proceed or enter x and return to cancel)********************\n"
 msgstr ""
-"***(Mode étape par étape: vérifiez la "
-"commande)*********************************\n"
+"***(Mode étape par étape: vérifiez la commande)*********************************\n"
 "%s\n"
-"***(appuyez sur entrée pour l'exécuter ou tapez x puis entrée pour "
-"annuler)***\n"
+"***(appuyez sur entrée pour l'exécuter ou tapez x puis entrée pour annuler)***\n"
 
-#: common.c:910
+#: common.c:925
 #, c-format
-msgid ""
-"The server (version %d.%d) does not support savepoints for "
-"ON_ERROR_ROLLBACK.\n"
+msgid "The server (version %d.%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"
 msgstr ""
 "Le serveur (version %d.%d) ne supporte pas les points de sauvegarde pour\n"
 "ON_ERROR_ROLLBACK.\n"
 
-#: common.c:1004
+#: common.c:1019
 #, c-format
 msgid "unexpected transaction status (%d)\n"
 msgstr "état de la transaction inattendu (%d)\n"
 
-#: common.c:1032
+#: common.c:1047
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Temps : %.3f ms\n"
@@ -671,36 +627,36 @@ msgstr "\\copy : erreur d'analyse sur « %s »\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy : erreur d'analyse à la fin de la ligne\n"
 
-#: copy.c:339
+#: copy.c:332
 #, c-format
 msgid "could not execute command \"%s\": %s\n"
 msgstr "n'a pas pu exécuter la commande « %s » : %s\n"
 
-#: copy.c:355
+#: copy.c:350
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s : ne peut pas copier à partir de/vers un répertoire\n"
 
-#: copy.c:389
+#: copy.c:383
 #, c-format
 msgid "could not close pipe to external command: %s\n"
 msgstr "n'a pas pu fermer le fichier pipe vers la commande externe : %s\n"
 
-#: copy.c:456 copy.c:467
+#: copy.c:450 copy.c:461
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "n'a pas pu écrire les données du COPY : %s\n"
 
-#: copy.c:474
+#: copy.c:468
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "Échec du transfert de données COPY : %s"
 
-#: copy.c:535
+#: copy.c:529
 msgid "canceled by user"
 msgstr "annulé par l'utilisateur"
 
-#: copy.c:545
+#: copy.c:539
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -708,11 +664,11 @@ msgstr ""
 "Saisissez les données à copier suivies d'un saut de ligne.\n"
 "Terminez avec un antislash et un point seuls sur une ligne."
 
-#: copy.c:662
+#: copy.c:656
 msgid "aborted because of read failure"
 msgstr "annulé du fait d'une erreur de lecture"
 
-#: copy.c:686
+#: copy.c:680
 msgid "trying to exit copy mode"
 msgstr "tente de sortir du mode copy"
 
@@ -929,11 +885,8 @@ msgstr "Droits d'accès"
 
 #: describe.c:809
 #, c-format
-msgid ""
-"The server (version %d.%d) does not support altering default privileges.\n"
-msgstr ""
-"Le serveur (version %d.%d) ne supporte pas la modification des droits par "
-"défaut.\n"
+msgid "The server (version %d.%d) does not support altering default privileges.\n"
+msgstr "Le serveur (version %d.%d) ne supporte pas la modification des droits par défaut.\n"
 
 #: describe.c:828
 msgid "function"
@@ -1215,6 +1168,9 @@ msgstr "Options"
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace : « %s »"
 
+#. translator: before this string there's an index
+#. description like '"foo_pkey" PRIMARY KEY, btree (a)'
+#.
 #: describe.c:2379
 #, c-format
 msgid ", tablespace \"%s\""
@@ -1290,9 +1246,7 @@ msgstr "Réglages"
 #: describe.c:2584
 #, c-format
 msgid "No per-database role settings support in this server version.\n"
-msgstr ""
-"Pas de supprot des paramètres rôle par base de données pour la version de ce "
-"serveur.\n"
+msgstr "Pas de supprot des paramètres rôle par base de données pour la version de ce serveur.\n"
 
 #: describe.c:2595
 #, c-format
@@ -1391,12 +1345,10 @@ msgid "Event"
 msgstr "Événement"
 
 #: describe.c:3042
-#| msgid "Enabled"
 msgid "enabled"
 msgstr "activé"
 
 #: describe.c:3043
-#| msgid "Replication"
 msgid "replica"
 msgstr "réplicat"
 
@@ -1405,7 +1357,6 @@ msgid "always"
 msgstr "toujours"
 
 #: describe.c:3045
-#| msgid "stable"
 msgid "disabled"
 msgstr "désactivé"
 
@@ -1474,8 +1425,7 @@ msgstr "Liste des analyseurs de la recherche de texte"
 #: describe.c:3398
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
-msgstr ""
-"Aucun analyseur de la recherche de texte nommé « %s » n'a été trouvé.\n"
+msgstr "Aucun analyseur de la recherche de texte nommé « %s » n'a été trouvé.\n"
 
 #: describe.c:3473
 msgid "Start parse"
@@ -1556,9 +1506,7 @@ msgstr "Liste des configurations de la recherche de texte"
 #: describe.c:3768
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
-msgstr ""
-"Aucune configuration de la recherche de texte nommée « %s » n'a été "
-"trouvée.\n"
+msgstr "Aucune configuration de la recherche de texte nommée « %s » n'a été trouvée.\n"
 
 #: describe.c:3834
 msgid "Token"
@@ -1599,9 +1547,7 @@ msgstr ""
 #: describe.c:3888
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
-msgstr ""
-"Le serveur (version %d.%d) ne supporte pas les wrappers de données "
-"distantes.\n"
+msgstr "Le serveur (version %d.%d) ne supporte pas les wrappers de données distantes.\n"
 
 #: describe.c:3902
 msgid "Handler"
@@ -1631,9 +1577,7 @@ msgstr "Liste des serveurs distants"
 #: describe.c:4047
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
-msgstr ""
-"Le serveur (version %d.%d) ne supporte pas les correspondances "
-"d'utilisateurs.\n"
+msgstr "Le serveur (version %d.%d) ne supporte pas les correspondances d'utilisateurs.\n"
 
 #: describe.c:4056 describe.c:4117
 msgid "Server"
@@ -1727,17 +1671,14 @@ msgstr "Options générales :\n"
 
 #: help.c:91
 #, c-format
-msgid ""
-"  -c, --command=COMMAND    run only single command (SQL or internal) and "
-"exit\n"
+msgid "  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"
 msgstr ""
 "  -c, --command=COMMANDE\n"
 "                  exécute une commande unique (SQL ou interne), puis quitte\n"
 
 #: help.c:92
 #, c-format
-msgid ""
-"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgid "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
 msgstr ""
 "  -d, --dbname=NOM_BASE\n"
 "                  indique le nom de la base de données à laquelle se\n"
@@ -1753,8 +1694,7 @@ msgstr ""
 #: help.c:94
 #, c-format
 msgid "  -l, --list               list available databases, then exit\n"
-msgstr ""
-"  -l, --list      affiche les bases de données disponibles, puis quitte\n"
+msgstr "  -l, --list      affiche les bases de données disponibles, puis quitte\n"
 
 #: help.c:95
 #, c-format
@@ -1779,8 +1719,7 @@ msgstr "  -X, --no-psqlrc ne lit pas le fichier de démarrage (~/.psqlrc)\n"
 #, c-format
 msgid ""
 "  -1 (\"one\"), --single-transaction\n"
-"                           execute as a single transaction (if non-"
-"interactive)\n"
+"                           execute as a single transaction (if non-interactive)\n"
 msgstr ""
 "  -1 (« un »), --single-transaction\n"
 "                  exécute dans une transaction unique (si non intéractif)\n"
@@ -1813,12 +1752,10 @@ msgstr ""
 
 #: help.c:106
 #, c-format
-msgid ""
-"  -E, --echo-hidden        display queries that internal commands generate\n"
+msgid "  -E, --echo-hidden        display queries that internal commands generate\n"
 msgstr ""
 "  -E, --echo-hidden\n"
-"                  affiche les requêtes engendrées par les commandes "
-"internes\n"
+"                  affiche les requêtes engendrées par les commandes internes\n"
 
 #: help.c:107
 #, c-format
@@ -1829,8 +1766,7 @@ msgstr ""
 
 #: help.c:108
 #, c-format
-msgid ""
-"  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgid "  -n, --no-readline        disable enhanced command line editing (readline)\n"
 msgstr ""
 "  -n, --no-readline\n"
 "                  désactive l'édition avancée de la ligne de commande\n"
@@ -1846,8 +1782,7 @@ msgstr ""
 
 #: help.c:110
 #, c-format
-msgid ""
-"  -q, --quiet              run quietly (no messages, only query output)\n"
+msgid "  -q, --quiet              run quietly (no messages, only query output)\n"
 msgstr ""
 "  -q, --quiet     s'exécute silencieusement (pas de messages, uniquement le\n"
 "                  résultat des requêtes)\n"
@@ -1862,9 +1797,7 @@ msgstr ""
 
 #: help.c:112
 #, c-format
-msgid ""
-"  -S, --single-line        single-line mode (end of line terminates SQL "
-"command)\n"
+msgid "  -S, --single-line        single-line mode (end of line terminates SQL command)\n"
 msgstr ""
 "  -S, --single-line\n"
 "                  active le mode ligne par ligne (EOL termine la commande\n"
@@ -1899,15 +1832,11 @@ msgstr ""
 #: help.c:119
 #, c-format
 msgid "  -H, --html               HTML table output mode\n"
-msgstr ""
-"  -H, --html      active le mode d'affichage HTML des tables (-"
-"P                  format=html)\n"
+msgstr "  -H, --html      active le mode d'affichage HTML des tables (-P                  format=html)\n"
 
 #: help.c:120
 #, c-format
-msgid ""
-"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
-"command)\n"
+msgid "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"
 msgstr ""
 "  -P, --pset=VAR[=ARG]\n"
 "                  initialise l'option d'impression VAR à ARG (voir la\n"
@@ -1932,9 +1861,7 @@ msgstr ""
 
 #: help.c:124
 #, c-format
-msgid ""
-"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
-"border)\n"
+msgid "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"
 msgstr ""
 "  -T, --table-attr=TEXTE\n"
 "                  initialise les attributs des balises HTML de tableau\n"
@@ -1974,9 +1901,7 @@ msgstr ""
 
 #: help.c:134
 #, c-format
-msgid ""
-"  -h, --host=HOSTNAME      database server host or socket directory "
-"(default: \"%s\")\n"
+msgid "  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"
 msgstr ""
 "  -h, --host=HOTE nom d'hôte du serveur de la base de données ou répertoire\n"
 "                  de la socket (par défaut : %s)\n"
@@ -2009,9 +1934,7 @@ msgstr ""
 
 #: help.c:146
 #, c-format
-msgid ""
-"  -W, --password           force password prompt (should happen "
-"automatically)\n"
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr ""
 "  -W, --password  force la demande du mot de passe (devrait survenir\n"
 "                  automatiquement)\n"
@@ -2020,15 +1943,13 @@ msgstr ""
 #, c-format
 msgid ""
 "\n"
-"For more information, type \"\\?\" (for internal commands) or \"\\help"
-"\" (for SQL\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 "documentation.\n"
 "\n"
 msgstr ""
 "\n"
-"Pour en savoir davantage, saisissez « \\? » (pour les commandes internes) "
-"ou\n"
+"Pour en savoir davantage, saisissez « \\? » (pour les commandes internes) ou\n"
 "« \\help » (pour les commandes SQL) dans psql, ou consultez la section psql\n"
 "de la documentation de PostgreSQL.\n"
 "\n"
@@ -2045,33 +1966,26 @@ msgstr "Général\n"
 
 #: help.c:173
 #, c-format
-msgid ""
-"  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgid "  \\copyright             show PostgreSQL usage and distribution terms\n"
 msgstr ""
 "  \\copyright           affiche les conditions d'utilisation et de\n"
 "                       distribution de PostgreSQL\n"
 
 #: help.c:174
 #, c-format
-msgid ""
-"  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgid "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
 msgstr ""
 "  \\g [FICHIER] ou ;    envoie le tampon de requêtes au serveur (et les\n"
 "                       résultats au fichier ou |tube)\n"
 
 #: help.c:175
 #, c-format
-msgid ""
-"  \\gset [PREFIX]         execute query and store results in psql variables\n"
-msgstr ""
-"  \\gset [PRÉFIXE]    exécute la requête et stocke les résultats dans des "
-"variables psql\n"
+msgid "  \\gset [PREFIX]         execute query and store results in psql variables\n"
+msgstr "  \\gset [PRÉFIXE]    exécute la requête et stocke les résultats dans des variables psql\n"
 
 #: help.c:176
 #, c-format
-msgid ""
-"  \\h [NAME]              help on syntax of SQL commands, * for all "
-"commands\n"
+msgid "  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"
 msgstr ""
 "  \\h [NOM]             aide-mémoire pour les commandes SQL, * pour toutes\n"
 "                       les commandes\n"
@@ -2093,17 +2007,14 @@ msgstr "Tampon de requête\n"
 
 #: help.c:182
 #, c-format
-msgid ""
-"  \\e [FILE] [LINE]       edit the query buffer (or file) with external "
-"editor\n"
+msgid "  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"
 msgstr ""
 "  \\e [FICHIER] [LIGNE] édite le tampon de requête ou le fichier avec un\n"
 "                        éditeur externe\n"
 
 #: help.c:183
 #, c-format
-msgid ""
-"  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
 msgstr ""
 "  \\ef [FONCTION [LIGNE]] édite la définition de fonction avec un éditeur\n"
 "                        externe\n"
@@ -2139,12 +2050,9 @@ msgstr "Entrée/Sortie\n"
 
 #: help.c:193
 #, c-format
-msgid ""
-"  \\copy ...              perform SQL COPY with data stream to the client "
-"host\n"
+msgid "  \\copy ...              perform SQL COPY with data stream to the client host\n"
 msgstr ""
-"  \\copy ...            exécute SQL COPY avec le flux de données dirigé "
-"vers\n"
+"  \\copy ...            exécute SQL COPY avec le flux de données dirigé vers\n"
 "                       l'hôte client\n"
 
 #: help.c:194
@@ -2159,12 +2067,9 @@ msgstr "  \\i FICHIER           exécute les commandes du fichier\n"
 
 #: help.c:196
 #, c-format
-msgid ""
-"  \\ir FILE               as \\i, but relative to location of current "
-"script\n"
+msgid "  \\ir FILE               as \\i, but relative to location of current script\n"
 msgstr ""
-"  \\ir FICHIER         identique à \\i, mais relatif à l'emplacement du "
-"script\n"
+"  \\ir FICHIER         identique à \\i, mais relatif à l'emplacement du script\n"
 "                       ou un |tube\n"
 
 #: help.c:197
@@ -2176,8 +2081,7 @@ msgstr ""
 
 #: help.c:198
 #, c-format
-msgid ""
-"  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgid "  \\qecho [STRING]        write string to query output stream (see \\o)\n"
 msgstr ""
 "  \\qecho [TEXTE]       écrit un texte sur la sortie des résultats des\n"
 "                       requêtes (voir \\o)\n"
@@ -2190,15 +2094,12 @@ msgstr "Informations\n"
 #: help.c:202
 #, c-format
 msgid "  (options: S = show system objects, + = additional detail)\n"
-msgstr ""
-"  (options : S = affiche les objets systèmes, + = informations "
-"supplémentaires)\n"
+msgstr "  (options : S = affiche les objets systèmes, + = informations supplémentaires)\n"
 
 #: help.c:203
 #, c-format
 msgid "  \\d[S+]                 list tables, views, and sequences\n"
-msgstr ""
-"  \\d[S+]               affiche la liste des tables, vues et séquences\n"
+msgstr "  \\d[S+]               affiche la liste des tables, vues et séquences\n"
 
 #: help.c:204
 #, c-format
@@ -2229,11 +2130,9 @@ msgstr "  \\dC[+] [MODÈLE]      affiche la liste des transtypages\n"
 
 #: help.c:209
 #, c-format
-msgid ""
-"  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgid "  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
 msgstr ""
-"  \\dd[S] [MODÈLE]      affiche les commentaires des objets dont le "
-"commentaire\n"
+"  \\dd[S] [MODÈLE]      affiche les commentaires des objets dont le commentaire\n"
 "                        n'est affiché nul part ailleurs\n"
 
 #: help.c:210
@@ -2259,19 +2158,16 @@ msgstr "  \\des[+] [MODÈLE]     affiche la liste des serveurs distants\n"
 #: help.c:214
 #, c-format
 msgid "  \\deu[+] [PATTERN]      list user mappings\n"
-msgstr ""
-"  \\deu[+] [MODÈLE]     affiche la liste des correspondances utilisateurs\n"
+msgstr "  \\deu[+] [MODÈLE]     affiche la liste des correspondances utilisateurs\n"
 
 #: help.c:215
 #, c-format
 msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
-msgstr ""
-"  \\dew[+] [MODÈLE]     affiche la liste des wrappers de données distantes\n"
+msgstr "  \\dew[+] [MODÈLE]     affiche la liste des wrappers de données distantes\n"
 
 #: help.c:216
 #, c-format
-msgid ""
-"  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
+msgid "  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
 msgstr ""
 "  \\df[antw][S+] [PATRN] affiche la liste des fonctions\n"
 "                        [seulement agg/normal/trigger/window]\n"
@@ -2287,16 +2183,14 @@ msgstr ""
 #, c-format
 msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
 msgstr ""
-"  \\dFd[+] [MODÈLE]     affiche la liste des dictionnaires de la recherche "
-"de\n"
+"  \\dFd[+] [MODÈLE]     affiche la liste des dictionnaires de la recherche de\n"
 "                        texte\n"
 
 #: help.c:219
 #, c-format
 msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
 msgstr ""
-"  \\dFp[+] [MODÈLE]        affiche la liste des analyseurs de la recherche "
-"de\n"
+"  \\dFp[+] [MODÈLE]        affiche la liste des analyseurs de la recherche de\n"
 "                       texte\n"
 
 #: help.c:220
@@ -2350,8 +2244,7 @@ msgstr "  \\dO[S+] [MODÈLE]     affiche la liste des collationnements\n"
 
 #: help.c:229
 #, c-format
-msgid ""
-"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgid "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
 msgstr ""
 "  \\dp     [MODÈLE]     affiche la liste des droits d'accès aux tables,\n"
 "                        vues, séquences\n"
@@ -2359,9 +2252,7 @@ msgstr ""
 #: help.c:230
 #, c-format
 msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
-msgstr ""
-"  \\drds [MODEL1 [MODEL2]] liste la configuration utilisateur par base "
-"de                           données\n"
+msgstr "  \\drds [MODEL1 [MODEL2]] liste la configuration utilisateur par base de                           données\n"
 
 #: help.c:231
 #, c-format
@@ -2425,8 +2316,7 @@ msgstr "Formatage\n"
 
 #: help.c:245
 #, c-format
-msgid ""
-"  \\a                     toggle between unaligned and aligned output mode\n"
+msgid "  \\a                     toggle between unaligned and aligned output mode\n"
 msgstr ""
 "  \\a                   bascule entre les modes de sortie alignée et non\n"
 "                        alignée\n"
@@ -2440,9 +2330,7 @@ msgstr ""
 
 #: help.c:247
 #, c-format
-msgid ""
-"  \\f [STRING]            show or set field separator for unaligned query "
-"output\n"
+msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
 msgstr ""
 "  \\f [CHAÎNE]          affiche ou initialise le séparateur de champ pour\n"
 "                        une sortie non alignée des requêtes\n"
@@ -2450,35 +2338,28 @@ msgstr ""
 #: help.c:248
 #, c-format
 msgid "  \\H                     toggle HTML output mode (currently %s)\n"
-msgstr ""
-"  \\H                   bascule le mode de sortie HTML (actuellement %s)\n"
+msgstr "  \\H                   bascule le mode de sortie HTML (actuellement %s)\n"
 
 #: help.c:250
 #, c-format
 msgid ""
 "  \\pset NAME [VALUE]     set table output option\n"
-"                         (NAME := {format|border|expanded|fieldsep|"
-"fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
-"title|tableattr|pager})\n"
+"                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
+"                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
 msgstr ""
 "  \\pset NOM [VALEUR]   régler l'affichage de la table\n"
-"                        (NOM := {format|border|expanded|fieldsep|"
-"fieldsep_zero|footer|\n"
-"                                 null|numericlocale|recordsep|recordsep_zero|"
-"tuples_only|\n"
+"                        (NOM := {format|border|expanded|fieldsep|fieldsep_zero|footer|\n"
+"                                 null|numericlocale|recordsep|recordsep_zero|tuples_only|\n"
 "                                 title|tableattr|pager})\n"
 
 #: help.c:253
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
-msgstr ""
-"  \\t                   affiche uniquement les lignes (actuellement %s)\n"
+msgstr "  \\t                   affiche uniquement les lignes (actuellement %s)\n"
 
 #: help.c:255
 #, c-format
-msgid ""
-"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
 msgstr ""
 "  \\T [CHAÎNE]          initialise les attributs HTML de la balise <table>,\n"
 "                        ou l'annule en l'absence d'argument\n"
@@ -2496,20 +2377,20 @@ msgstr "Connexions\n"
 #: help.c:262
 #, c-format
 msgid ""
-"  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 "                         connect to new database (currently \"%s\")\n"
 msgstr ""
-"  \\c[onnect] [NOM_BASE|- UTILISATEUR|- HOTE|- PORT|-]\n"
+"  \\c[onnect] {[NOM_BASE|- UTILISATEUR|- HOTE|- PORT|-] conninfo}\n"
 "                        se connecte à une autre base de données\n"
 "                        (actuellement « %s »)\n"
 
 #: help.c:266
 #, c-format
 msgid ""
-"  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 "                         connect to new database (currently no connection)\n"
 msgstr ""
-"  \\c[onnect] [NOM_BASE|- UTILISATEUR|- HOTE|- PORT|-]\n"
+"  \\c[onnect] {[NOM_BASE|- UTILISATEUR|- HOTE|- PORT|-] | conninfo}\n"
 "                        se connecte à une nouvelle base de données\n"
 "                        (aucune connexion actuellement)\n"
 
@@ -2528,10 +2409,8 @@ msgstr ""
 
 #: help.c:270
 #, c-format
-msgid ""
-"  \\conninfo              display information about current connection\n"
-msgstr ""
-"  \\conninfo            affiche des informations sur la connexion en cours\n"
+msgid "  \\conninfo              display information about current connection\n"
+msgstr "  \\conninfo            affiche des informations sur la connexion en cours\n"
 
 #: help.c:273
 #, c-format
@@ -2557,9 +2436,7 @@ msgstr ""
 
 #: help.c:278
 #, c-format
-msgid ""
-"  \\! [COMMAND]           execute command in shell or start interactive "
-"shell\n"
+msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
 msgstr ""
 "  \\! [COMMANDE]        exécute la commande dans un shell ou exécute un\n"
 "                        shell interactif\n"
@@ -2578,9 +2455,7 @@ msgstr ""
 
 #: help.c:283
 #, c-format
-msgid ""
-"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
-"parameters\n"
+msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
 msgstr ""
 "  \\set [NOM [VALEUR]]  initialise une variable interne ou les affiche\n"
 "                        toutes en l'absence de paramètre\n"
@@ -2637,17 +2512,17 @@ msgstr ""
 "Aucun aide-mémoire disponible pour « %s ».\n"
 "Essayez \\h sans arguments pour afficher les aide-mémoires disponibles.\n"
 
-#: input.c:193
+#: input.c:194
 #, c-format
 msgid "could not read from input file: %s\n"
 msgstr "n'a pas pu lire à partir du fichier en entrée : %s\n"
 
-#: input.c:407
+#: input.c:450 input.c:489
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "n'a pas pu sauvegarder l'historique dans le fichier « %s » : %s\n"
 
-#: input.c:412
+#: input.c:509
 #, c-format
 msgid "history is not supported by this installation\n"
 msgstr "l'historique n'est pas supportée par cette installation\n"
@@ -2707,33 +2582,31 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu ligne)"
 msgstr[1] "(%lu lignes)"
 
-#: print.c:1175
+#: print.c:1174
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Aucune ligne)\n"
 
-#: print.c:2239
+#: print.c:2238
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrompu\n"
 
-#: print.c:2305
+#: print.c:2304
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
-"Ne peut pas ajouter l'en-tête au contenu de la table : le nombre de "
-"colonnes\n"
+"Ne peut pas ajouter l'en-tête au contenu de la table : le nombre de colonnes\n"
 "%d est dépassé.\n"
 
-#: print.c:2345
+#: print.c:2344
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
-"Ne peut pas ajouter une cellule au contenu de la table : le nombre total "
-"des\n"
+"Ne peut pas ajouter une cellule au contenu de la table : le nombre total des\n"
 "cellules %d est dépassé.\n"
 
-#: print.c:2571
+#: print.c:2570
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "format de sortie invalide (erreur interne) : %d"
@@ -2743,17 +2616,17 @@ msgstr "format de sortie invalide (erreur interne) : %d"
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "ignore l'expansion récursive de la variable « %s »\n"
 
-#: psqlscan.l:1604
+#: psqlscan.l:1603
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "chaîne entre guillemets non terminée\n"
 
-#: psqlscan.l:1704
+#: psqlscan.l:1703
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : mémoire épuisée\n"
 
-#: psqlscan.l:1933
+#: psqlscan.l:1932
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "ne peut mettre entre guillemets sans connexion active\n"
@@ -3591,9 +3464,7 @@ msgstr "et option_like est :"
 
 #: sql_help.c:1928
 msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
-msgstr ""
-"dans les contraintes UNIQUE, PRIMARY KEY et EXCLUDE, les paramètres_index "
-"sont :"
+msgstr "dans les contraintes UNIQUE, PRIMARY KEY et EXCLUDE, les paramètres_index sont :"
 
 #: sql_help.c:1932
 msgid "exclude_element in an EXCLUDE constraint is:"
@@ -4249,8 +4120,7 @@ msgstr "définir un nouveau type de données"
 
 #: sql_help.h:580
 msgid "define a new mapping of a user to a foreign server"
-msgstr ""
-"définit une nouvelle correspondance d'un utilisateur vers un serveur distant"
+msgstr "définit une nouvelle correspondance d'un utilisateur vers un serveur distant"
 
 #: sql_help.h:585
 msgid "define a new view"
@@ -4462,7 +4332,7 @@ msgstr "changer le propriétaire des objets d'un rôle"
 
 #: sql_help.h:860
 msgid "replace the contents of a materialized view"
-msgstr "remplacer le contenue d'une vue matérialisée"
+msgstr "remplacer le contenu d'une vue matérialisée"
 
 #: sql_help.h:865
 msgid "rebuild indexes"
@@ -4508,21 +4378,16 @@ msgstr "modifier un paramètre d'exécution"
 
 #: sql_help.h:925
 msgid "set constraint check timing for the current transaction"
-msgstr ""
-"définir le moment de la vérification des contraintes pour la transaction en "
-"cours"
+msgstr "définir le moment de la vérification des contraintes pour la transaction en cours"
 
 #: sql_help.h:930
 msgid "set the current user identifier of the current session"
 msgstr "définir l'identifiant actuel de l'utilisateur de la session courante"
 
 #: sql_help.h:935
-msgid ""
-"set the session user identifier and the current user identifier of the "
-"current session"
+msgid "set the session user identifier and the current user identifier of the current session"
 msgstr ""
-"définir l'identifiant de l'utilisateur de session et l'identifiant actuel "
-"de\n"
+"définir l'identifiant de l'utilisateur de session et l'identifiant actuel de\n"
 "l'utilisateur de la session courante"
 
 #: sql_help.h:940
@@ -4553,17 +4418,17 @@ msgstr "compacter et optionnellement analyser une base de données"
 msgid "compute a set of rows"
 msgstr "calculer un ensemble de lignes"
 
-#: startup.c:167
+#: startup.c:168
 #, c-format
 msgid "%s: -1 can only be used in non-interactive mode\n"
 msgstr "%s p: -1 peut seulement être utilisé dans un mode non intéractif\n"
 
-#: startup.c:269
+#: startup.c:270
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s » : %s\n"
 
-#: startup.c:331
+#: startup.c:332
 #, c-format
 msgid ""
 "Type \"help\" for help.\n"
@@ -4572,32 +4437,37 @@ msgstr ""
 "Saisissez « help » pour l'aide.\n"
 "\n"
 
-#: startup.c:476
+#: startup.c:477
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s : n'a pas pu configurer le paramètre d'impression « %s »\n"
 
-#: startup.c:516
+#: startup.c:517
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s : n'a pas pu effacer la variable « %s »\n"
 
-#: startup.c:526
+#: startup.c:527
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s : n'a pas pu initialiser la variable « %s »\n"
 
-#: startup.c:569 startup.c:575
+#: startup.c:570 startup.c:576
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: startup.c:592
+#: startup.c:593
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s : attention : option supplémentaire « %s » ignorée\n"
 
-#: tab-complete.c:3962
+#: startup.c:732 startup.c:779 startup.c:800 startup.c:837 variables.c:121
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n"
+msgstr "valeur « %s » non reconnue pour « %s » ; suppose « %s »\n"
+
+#: tab-complete.c:3944
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -4608,17 +4478,11 @@ msgstr ""
 "La requête était :\n"
 "%s\n"
 
-#: variables.c:115
-#, c-format
-msgid "unrecognized Boolean value; assuming \"on\"\n"
-msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
-
 #~ msgid "could not change directory to \"%s\""
 #~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #~ msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
-#~ msgstr ""
-#~ "%s : pg_strdup : ne peut pas dupliquer le pointeur null (erreur interne)\n"
+#~ msgstr "%s : pg_strdup : ne peut pas dupliquer le pointeur null (erreur interne)\n"
 
 #~ msgid "  \\l[+]                  list all databases\n"
 #~ msgstr "  \\l[+]                affiche la liste des bases de données\n"
@@ -4715,8 +4579,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "ALTER DATABASE name SET TABLESPACE new_tablespace\n"
 #~ "\n"
-#~ "ALTER DATABASE name SET configuration_parameter { TO | = } { value | "
-#~ "DEFAULT }\n"
+#~ "ALTER DATABASE name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
 #~ "ALTER DATABASE name SET configuration_parameter FROM CURRENT\n"
 #~ "ALTER DATABASE name RESET configuration_parameter\n"
 #~ "ALTER DATABASE name RESET ALL"
@@ -4733,8 +4596,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "ALTER DATABASE nom SET TABLESPACE nouveau_tablespace\n"
 #~ "\n"
-#~ "ALTER DATABASE nom SET paramètre_configuration { TO | = } { valeur | "
-#~ "DEFAULT }\n"
+#~ "ALTER DATABASE nom SET paramètre_configuration { TO | = } { valeur | DEFAULT }\n"
 #~ "ALTER DATABASE nom SET paramètre_configuration FROM CURRENT\n"
 #~ "ALTER DATABASE nom RESET paramètre_configuration\n"
 #~ "ALTER DATABASE nom RESET ALL"
@@ -4849,9 +4711,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "ALTER [ PROCEDURAL ] LANGUAGE nom RENAME TO nouveau_nom\n"
 #~ "ALTER [ PROCEDURAL ] LANGUAGE nom OWNER TO nouveau_propriétaire"
 
-#~ msgid ""
-#~ "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER "
-#~ "TO newowner"
+#~ msgid "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO newowner"
 #~ msgstr ""
 #~ "ALTER OPERATOR nom ( { lefttype | NONE } , { righttype | NONE } )\n"
 #~ "  OWNER TO nouveau_propriétaire"
@@ -4868,8 +4728,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid ""
 #~ "ALTER OPERATOR FAMILY name USING index_method ADD\n"
 #~ "  {  OPERATOR strategy_number operator_name ( op_type, op_type )\n"
-#~ "   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
-#~ "( argument_type [, ...] )\n"
+#~ "   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname ( argument_type [, ...] )\n"
 #~ "  } [, ... ]\n"
 #~ "ALTER OPERATOR FAMILY name USING index_method DROP\n"
 #~ "  {  OPERATOR strategy_number ( op_type [ , op_type ] )\n"
@@ -4909,8 +4768,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "ALTER ROLE name RENAME TO newname\n"
 #~ "\n"
-#~ "ALTER ROLE name SET configuration_parameter { TO | = } { value | "
-#~ "DEFAULT }\n"
+#~ "ALTER ROLE name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
 #~ "ALTER ROLE name SET configuration_parameter FROM CURRENT\n"
 #~ "ALTER ROLE name RESET configuration_parameter\n"
 #~ "ALTER ROLE name RESET ALL"
@@ -4945,8 +4803,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
-#~ "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO "
-#~ "MAXVALUE ]\n"
+#~ "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
 #~ "    [ START [ WITH ] start ]\n"
 #~ "    [ RESTART [ [ WITH ] restart ] ]\n"
 #~ "    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
@@ -4956,8 +4813,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "ALTER SEQUENCE name SET SCHEMA new_schema"
 #~ msgstr ""
 #~ "ALTER SEQUENCE nom [ INCREMENT [ BY ] incrément ]\n"
-#~ "    [ MINVALUE valeur_min | NO MINVALUE ] [ MAXVALUE valeur_max | NO "
-#~ "MAXVALUE ]\n"
+#~ "    [ MINVALUE valeur_min | NO MINVALUE ] [ MAXVALUE valeur_max | NO MAXVALUE ]\n"
 #~ "    [ START [ WITH ] valeur_début ]\n"
 #~ "    [ RESTART [ [ WITH ] valeur_redémarrage ] ]\n"
 #~ "    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
@@ -4994,8 +4850,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    ALTER [ COLUMN ] column DROP DEFAULT\n"
 #~ "    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
 #~ "    ALTER [ COLUMN ] column SET STATISTICS integer\n"
-#~ "    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
-#~ "MAIN }\n"
+#~ "    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
 #~ "    ADD table_constraint\n"
 #~ "    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
 #~ "    DISABLE TRIGGER [ trigger_name | ALL | USER ]\n"
@@ -5073,8 +4928,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "ALTER TEXT SEARCH CONFIGURATION name\n"
 #~ "    ALTER MAPPING REPLACE old_dictionary WITH new_dictionary\n"
 #~ "ALTER TEXT SEARCH CONFIGURATION name\n"
-#~ "    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH "
-#~ "new_dictionary\n"
+#~ "    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH new_dictionary\n"
 #~ "ALTER TEXT SEARCH CONFIGURATION name\n"
 #~ "    DROP MAPPING [ IF EXISTS ] FOR token_type [, ... ]\n"
 #~ "ALTER TEXT SEARCH CONFIGURATION name RENAME TO newname\n"
@@ -5142,8 +4996,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "ALTER USER name RENAME TO newname\n"
 #~ "\n"
-#~ "ALTER USER name SET configuration_parameter { TO | = } { value | "
-#~ "DEFAULT }\n"
+#~ "ALTER USER name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
 #~ "ALTER USER name SET configuration_parameter FROM CURRENT\n"
 #~ "ALTER USER name RESET configuration_parameter\n"
 #~ "ALTER USER name RESET ALL"
@@ -5174,8 +5027,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    SERVER servername\n"
 #~ "    OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] )"
 #~ msgstr ""
-#~ "ALTER USER MAPPING FOR { nom_utilisateur | USER | CURRENT_USER | "
-#~ "PUBLIC }\n"
+#~ "ALTER USER MAPPING FOR { nom_utilisateur | USER | CURRENT_USER | PUBLIC }\n"
 #~ "    SERVER nom_serveur\n"
 #~ "    OPTIONS ( [ ADD | SET | DROP ] option ['valeur'] [, ... ] )"
 
@@ -5200,8 +5052,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "where transaction_mode is one of:\n"
 #~ "\n"
-#~ "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | "
-#~ "READ UNCOMMITTED }\n"
+#~ "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
 #~ "    READ WRITE | READ ONLY"
 #~ msgstr ""
 #~ "BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
@@ -5267,8 +5118,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "  CONVERSION nom_objet |\n"
 #~ "  DATABASE nom_objet |\n"
 #~ "  DOMAIN nom_objet |\n"
-#~ "  FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) "
-#~ "|\n"
+#~ "  FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) |\n"
 #~ "  INDEX nom_objet |\n"
 #~ "  LARGE OBJECT oid_LO |\n"
 #~ "  OPERATOR op (type_operande_gauche, type_operande_droit) |\n"
@@ -5413,8 +5263,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    AFTER event [ OR ... ]\n"
 #~ "    ON table_name\n"
 #~ "    [ FROM referenced_table_name ]\n"
-#~ "    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
-#~ "DEFERRED } }\n"
+#~ "    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
 #~ "    FOR EACH ROW\n"
 #~ "    EXECUTE PROCEDURE funcname ( arguments )"
 #~ msgstr ""
@@ -5422,8 +5271,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    AFTER événement [ OR ... ]\n"
 #~ "    ON table\n"
 #~ "    [ FROM table_référencée ]\n"
-#~ "    { NOT DEFERRABLE | [ DEFERRABLE ]        { INITIALLY IMMEDIATE | "
-#~ "INITIALLY DEFERRED } }\n"
+#~ "    { NOT DEFERRABLE | [ DEFERRABLE ]        { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
 #~ "    FOR EACH ROW\n"
 #~ "    EXECUTE PROCEDURE nom_fonction ( arguments )"
 
@@ -5483,8 +5331,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "CREATE [ OR REPLACE ] FUNCTION\n"
-#~ "    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] "
-#~ "[, ...] ] )\n"
+#~ "    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] [, ...] ] )\n"
 #~ "    [ RETURNS rettype\n"
 #~ "      | RETURNS TABLE ( colname coltype [, ...] ) ]\n"
 #~ "  { LANGUAGE langname\n"
@@ -5501,8 +5348,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ WITH ( attribute [, ...] ) ]"
 #~ msgstr ""
 #~ "CREATE [ OR REPLACE ] FUNCTION\n"
-#~ "    nom ( [ [ mode_arg ] [ nom_arg ] type_arg [ { DEFAULT | = } "
-#~ "expr_par_défaut ] [, ...] ] )\n"
+#~ "    nom ( [ [ mode_arg ] [ nom_arg ] type_arg [ { DEFAULT | = } expr_par_défaut ] [, ...] ] )\n"
 #~ "    [ RETURNS type_ret\n"
 #~ "      | RETURNS TABLE ( nom_colonne type_colonne [, ...] ) ]\n"
 #~ "  { LANGUAGE nom_lang\n"
@@ -5512,8 +5358,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
 #~ "    | COST coût_exécution\n"
 #~ "    | ROWS lignes_résultats\n"
-#~ "    | SET paramètre_configuration { TO valeur | = valeur | FROM "
-#~ "CURRENT }\n"
+#~ "    | SET paramètre_configuration { TO valeur | = valeur | FROM CURRENT }\n"
 #~ "    | AS 'définition'\n"
 #~ "    | AS 'fichier_obj', 'symbôle_lien'\n"
 #~ "  } ...\n"
@@ -5560,8 +5405,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] name ON table [ USING method ]\n"
-#~ "    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS "
-#~ "{ FIRST | LAST } ] [, ...] )\n"
+#~ "    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )\n"
 #~ "    [ WITH ( storage_parameter = value [, ... ] ) ]\n"
 #~ "    [ TABLESPACE tablespace ]\n"
 #~ "    [ WHERE predicate ]"
@@ -5604,8 +5448,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type\n"
 #~ "  USING index_method [ FAMILY family_name ] AS\n"
 #~ "  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ]\n"
-#~ "   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
-#~ "( argument_type [, ...] )\n"
+#~ "   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname ( argument_type [, ...] )\n"
 #~ "   | STORAGE storage_type\n"
 #~ "  } [, ... ]"
 #~ msgstr ""
@@ -5664,17 +5507,14 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid ""
 #~ "CREATE [ OR REPLACE ] RULE name AS ON event\n"
 #~ "    TO table [ WHERE condition ]\n"
-#~ "    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; "
-#~ "command ... ) }"
+#~ "    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
 #~ msgstr ""
 #~ "CREATE [ OR REPLACE ] RULE nom AS ON événement\n"
 #~ "    TO table [ WHERE condition ]\n"
-#~ "    DO [ ALSO | INSTEAD ] { NOTHING | commande | ( commande ; "
-#~ "commande ... ) }"
+#~ "    DO [ ALSO | INSTEAD ] { NOTHING | commande | ( commande ; commande ... ) }"
 
 #~ msgid ""
-#~ "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
-#~ "[ ... ] ]\n"
+#~ "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element [ ... ] ]\n"
 #~ "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 #~ msgstr ""
 #~ "CREATE SCHEMA nom_schema [ AUTHORIZATION nom_utilisateur ]\n"
@@ -5683,13 +5523,11 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
-#~ "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO "
-#~ "MAXVALUE ]\n"
+#~ "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
 #~ "    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
 #~ "    [ OWNED BY { table.column | NONE } ]"
 #~ msgstr ""
-#~ "CREATE [ TEMPORARY | TEMP ] SEQUENCE nom [ INCREMENT [ BY ] "
-#~ "incrémentation ]\n"
+#~ "CREATE [ TEMPORARY | TEMP ] SEQUENCE nom [ INCREMENT [ BY ] incrémentation ]\n"
 #~ "    [ MINVALUE valeur_mini | NO MINVALUE ]\n"
 #~ "    [ MAXVALUE valeur_maxi | NO MAXVALUE ]\n"
 #~ "    [ START [ WITH ] valeur_départ ]\n"
@@ -5698,8 +5536,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ OWNED BY { table.colonne | NONE } ]"
 
 #~ msgid ""
-#~ "CREATE SERVER servername [ TYPE 'servertype' ] [ VERSION "
-#~ "'serverversion' ]\n"
+#~ "CREATE SERVER servername [ TYPE 'servertype' ] [ VERSION 'serverversion' ]\n"
 #~ "    FOREIGN DATA WRAPPER fdwname\n"
 #~ "    [ OPTIONS ( option 'value' [, ... ] ) ]"
 #~ msgstr ""
@@ -5709,16 +5546,13 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name ( [\n"
-#~ "  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
-#~ "[ ... ] ]\n"
+#~ "  { column_name data_type [ DEFAULT default_expr ] [ column_constraint [ ... ] ]\n"
 #~ "    | table_constraint\n"
-#~ "    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | "
-#~ "CONSTRAINTS | INDEXES } ] ... }\n"
+#~ "    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ] ... }\n"
 #~ "    [, ... ]\n"
 #~ "] )\n"
 #~ "[ INHERITS ( parent_table [, ... ] ) ]\n"
-#~ "[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
-#~ "OIDS ]\n"
+#~ "[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
 #~ "[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 #~ "[ TABLESPACE tablespace ]\n"
 #~ "\n"
@@ -5730,11 +5564,9 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "  UNIQUE index_parameters |\n"
 #~ "  PRIMARY KEY index_parameters |\n"
 #~ "  CHECK ( expression ) |\n"
-#~ "  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | "
-#~ "MATCH SIMPLE ]\n"
+#~ "  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
 #~ "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-#~ "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
-#~ "IMMEDIATE ]\n"
+#~ "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
 #~ "\n"
 #~ "and table_constraint is:\n"
 #~ "\n"
@@ -5742,12 +5574,9 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "{ UNIQUE ( column_name [, ... ] ) index_parameters |\n"
 #~ "  PRIMARY KEY ( column_name [, ... ] ) index_parameters |\n"
 #~ "  CHECK ( expression ) |\n"
-#~ "  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
-#~ "[, ... ] ) ]\n"
-#~ "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] "
-#~ "[ ON UPDATE action ] }\n"
-#~ "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
-#~ "IMMEDIATE ]\n"
+#~ "  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn [, ... ] ) ]\n"
+#~ "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
+#~ "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
 #~ "\n"
 #~ "index_parameters in UNIQUE and PRIMARY KEY constraints are:\n"
 #~ "\n"
@@ -5763,8 +5592,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [, ... ]\n"
 #~ "] )\n"
 #~ "[ INHERITS ( table_parent [, ... ] ) ]\n"
-#~ "[ WITH ( paramètre_stockage [= valeur] [, ... ] )  | WITH OIDS | WITHOUT "
-#~ "OIDS ]\n"
+#~ "[ WITH ( paramètre_stockage [= valeur] [, ... ] )  | WITH OIDS | WITHOUT OIDS ]\n"
 #~ "[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 #~ "[ TABLESPACE tablespace ]\n"
 #~ "\n"
@@ -5803,8 +5631,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid ""
 #~ "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name\n"
 #~ "    [ (column_name [, ...] ) ]\n"
-#~ "    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
-#~ "OIDS ]\n"
+#~ "    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
 #~ "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 #~ "    [ TABLESPACE tablespace ]\n"
 #~ "    AS query\n"
@@ -5812,14 +5639,12 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgstr ""
 #~ "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nom_table\n"
 #~ "    [ (nom_colonne [, ...] ) ]\n"
-#~ "    [ WITH ( paramètre_stockage [= valeur] [, ... ] ) | WITH OIDS | "
-#~ "WITHOUT OIDS ]\n"
+#~ "    [ WITH ( paramètre_stockage [= valeur] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
 #~ "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 #~ "    [ TABLESPACE tablespace ]\n"
 #~ "    AS requête    [ WITH [ NO ] DATA ]"
 
-#~ msgid ""
-#~ "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
+#~ msgid "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
 #~ msgstr ""
 #~ "CREATE TABLESPACE nom_tablespace [ OWNER nom_utilisateur ]\n"
 #~ "    LOCATION 'répertoire'"
@@ -5986,14 +5811,12 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    SERVER servername\n"
 #~ "    [ OPTIONS ( option 'value' [ , ... ] ) ]"
 #~ msgstr ""
-#~ "CREATE USER MAPPING FOR { nomutilisateur | USER | CURRENT_USER | "
-#~ "PUBLIC }\n"
+#~ "CREATE USER MAPPING FOR { nomutilisateur | USER | CURRENT_USER | PUBLIC }\n"
 #~ "    SERVER nomserveur\n"
 #~ "    [ OPTIONS ( option 'valeur' [ , ... ] ) ]"
 
 #~ msgid ""
-#~ "CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name "
-#~ "[, ...] ) ]\n"
+#~ "CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name [, ...] ) ]\n"
 #~ "    AS query"
 #~ msgstr ""
 #~ "CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW nom\n"
@@ -6024,16 +5847,11 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
 #~ msgstr "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
 
-#~ msgid ""
-#~ "DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | "
-#~ "RESTRICT ]"
-#~ msgstr ""
-#~ "DROP AGGREGATE [ IF EXISTS ] nom ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
+#~ msgid "DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
+#~ msgstr "DROP AGGREGATE [ IF EXISTS ] nom ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
 
-#~ msgid ""
-#~ "DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
-#~ msgstr ""
-#~ "DROP CAST [ IF EXISTS ] (type_source AS type_cible) [ CASCADE | RESTRICT ]"
+#~ msgid "DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+#~ msgstr "DROP CAST [ IF EXISTS ] (type_source AS type_cible) [ CASCADE | RESTRICT ]"
 
 #~ msgid "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
 #~ msgstr "DROP CONVERSION [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
@@ -6048,8 +5866,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgstr "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
 
 #~ msgid ""
-#~ "DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype "
-#~ "[, ...] ] )\n"
+#~ "DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
 #~ "    [ CASCADE | RESTRICT ]"
 #~ msgstr ""
 #~ "DROP FUNCTION [IF EXISTS ] nom\n"
@@ -6062,29 +5879,21 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 #~ msgstr "DROP INDEX [IF EXISTS ] nom [, ...] [ CASCADE | RESTRICT ]"
 
-#~ msgid ""
-#~ "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-#~ msgstr ""
-#~ "DROP [ PROCEDURAL ] LANGUAGE [IF EXISTS ] nom [ CASCADE | RESTRICT ]"
+#~ msgid "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+#~ msgstr "DROP [ PROCEDURAL ] LANGUAGE [IF EXISTS ] nom [ CASCADE | RESTRICT ]"
 
-#~ msgid ""
-#~ "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | "
-#~ "NONE } ) [ CASCADE | RESTRICT ]"
+#~ msgid "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE | RESTRICT ]"
 #~ msgstr ""
 #~ "DROP OPERATOR [IF EXISTS ] nom\n"
 #~ "  ( { type_gauche | NONE } , { type_droit | NONE } )\n"
 #~ "  [ CASCADE | RESTRICT ]"
 
-#~ msgid ""
-#~ "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
-#~ "RESTRICT ]"
+#~ msgid "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
 #~ msgstr ""
 #~ "DROP OPERATOR CLASS [IF EXISTS ] nom\n"
 #~ "    USING méthode_indexage [ CASCADE | RESTRICT ]"
 
-#~ msgid ""
-#~ "DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | "
-#~ "RESTRICT ]"
+#~ msgid "DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
 #~ msgstr ""
 #~ "DROP OPERATOR FAMILY [IF EXISTS ] nom\n"
 #~ "  USING méthode_indexage [ CASCADE | RESTRICT ]"
@@ -6113,15 +5922,11 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid "DROP TABLESPACE [ IF EXISTS ] tablespacename"
 #~ msgstr "DROP TABLESPACE [IF EXISTS ] nom_tablespace"
 
-#~ msgid ""
-#~ "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-#~ msgstr ""
-#~ "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
+#~ msgid "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+#~ msgstr "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
 
-#~ msgid ""
-#~ "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-#~ msgstr ""
-#~ "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
+#~ msgid "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+#~ msgstr "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
 
 #~ msgid "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
 #~ msgstr "DROP TEXT SEARCH PARSER [ IF EXISTS ] nom [ CASCADE | RESTRICT ]"
@@ -6138,12 +5943,8 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid "DROP USER [ IF EXISTS ] name [, ...]"
 #~ msgstr "DROP USER [IF EXISTS ] nom [, ...]"
 
-#~ msgid ""
-#~ "DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | "
-#~ "PUBLIC } SERVER servername"
-#~ msgstr ""
-#~ "DROP USER MAPPING [ IF EXISTS ] FOR { nomutilisateur | USER | "
-#~ "CURRENT_USER | PUBLIC } SERVER nomserveur"
+#~ msgid "DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | PUBLIC } SERVER servername"
+#~ msgstr "DROP USER MAPPING [ IF EXISTS ] FOR { nomutilisateur | USER | CURRENT_USER | PUBLIC } SERVER nomserveur"
 
 #~ msgid "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 #~ msgstr "DROP VIEW [IF EXISTS ] nom [, ...] [ CASCADE | RESTRICT ]"
@@ -6179,8 +5980,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgstr ""
 #~ "FETCH [ direction { FROM | IN } ] nom_curseur\n"
 #~ "\n"
-#~ "sans préciser de direction ou en choissant une des directions "
-#~ "suivantes :\n"
+#~ "sans préciser de direction ou en choissant une des directions suivantes :\n"
 #~ "\n"
 #~ "    NEXT\n"
 #~ "    PRIOR\n"
@@ -6198,8 +5998,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    BACKWARD ALL"
 
 #~ msgid ""
-#~ "GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
-#~ "TRIGGER }\n"
+#~ "GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
 #~ "    [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON [ TABLE ] tablename [, ...]\n"
 #~ "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
@@ -6214,8 +6013,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    ON SEQUENCE sequencename [, ...]\n"
 #~ "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
-#~ "GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
-#~ "[ PRIVILEGES ] }\n"
+#~ "GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON DATABASE dbname [, ...]\n"
 #~ "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
@@ -6228,8 +6026,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
 #~ "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-#~ "    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
-#~ "[, ...]\n"
+#~ "    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) [, ...]\n"
 #~ "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
 #~ "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
@@ -6246,8 +6043,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "GRANT role [, ...] TO rolename [, ...] [ WITH ADMIN OPTION ]"
 #~ msgstr ""
-#~ "GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
-#~ "TRIGGER }\n"
+#~ "GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
 #~ "    [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON [ TABLE ] nom_table [, ...]\n"
 #~ "    TO { [ GROUP ] nom_rôle | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
@@ -6262,8 +6058,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    ON SEQUENCE nom_séquence [, ...]\n"
 #~ "    TO { [ GROUP ] nom_rôle | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
-#~ "GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
-#~ "[ PRIVILEGES ] }\n"
+#~ "GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON DATABASE nom_base [, ...]\n"
 #~ "    TO { [ GROUP ] nom_rôle | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
@@ -6276,8 +6071,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    TO { [ GROUP ] nom_rôle | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
 #~ "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-#~ "    ON FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg "
-#~ "[, ...] ] ) [, ...]\n"
+#~ "    ON FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) [, ...]\n"
 #~ "    TO { [ GROUP ] nom_rôle | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 #~ "\n"
 #~ "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
@@ -6296,13 +6090,11 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "INSERT INTO table [ ( column [, ...] ) ]\n"
-#~ "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) "
-#~ "[, ...] | query }\n"
+#~ "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
 #~ "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 #~ msgstr ""
 #~ "INSERT INTO table [ ( colonne [, ...] ) ]\n"
-#~ "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) "
-#~ "[, ...] | requête }\n"
+#~ "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | requête }\n"
 #~ "    [ RETURNING * | expression_sortie [ [ AS ] nom_sortie ] [, ...] ]"
 
 #~ msgid "LISTEN name"
@@ -6319,8 +6111,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 #~ "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 #~ msgstr ""
-#~ "LOCK [ TABLE ] [ ONLY ] nom [, ...] [ IN mode_verrouillage MODE ] "
-#~ "[ NOWAIT ]\n"
+#~ "LOCK [ TABLE ] [ ONLY ] nom [, ...] [ IN mode_verrouillage MODE ] [ NOWAIT ]\n"
 #~ "\n"
 #~ "avec mode_verrouillage parmi :\n"
 #~ "\n"
@@ -6350,8 +6141,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid ""
 #~ "REVOKE [ GRANT OPTION FOR ]\n"
-#~ "    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
-#~ "TRIGGER }\n"
+#~ "    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
 #~ "    [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON [ TABLE ] tablename [, ...]\n"
 #~ "    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
@@ -6372,8 +6162,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ CASCADE | RESTRICT ]\n"
 #~ "\n"
 #~ "REVOKE [ GRANT OPTION FOR ]\n"
-#~ "    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
-#~ "[ PRIVILEGES ] }\n"
+#~ "    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON DATABASE dbname [, ...]\n"
 #~ "    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
 #~ "    [ CASCADE | RESTRICT ]\n"
@@ -6392,8 +6181,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "REVOKE [ GRANT OPTION FOR ]\n"
 #~ "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-#~ "    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
-#~ "[, ...]\n"
+#~ "    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) [, ...]\n"
 #~ "    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
 #~ "    [ CASCADE | RESTRICT ]\n"
 #~ "\n"
@@ -6420,8 +6208,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ CASCADE | RESTRICT ]"
 #~ msgstr ""
 #~ "REVOKE [ GRANT OPTION FOR ]\n"
-#~ "    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
-#~ "TRIGGER }\n"
+#~ "    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
 #~ "    [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON [ TABLE ] nom_table [, ...]\n"
 #~ "    FROM { [ GROUP ] nom_rôle | PUBLIC } [, ...]\n"
@@ -6442,8 +6229,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ CASCADE | RESTRICT ]\n"
 #~ "\n"
 #~ "REVOKE [ GRANT OPTION FOR ]\n"
-#~ "    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
-#~ "[ PRIVILEGES ] }\n"
+#~ "    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 #~ "    ON DATABASE nom_base [, ...]\n"
 #~ "    FROM { [ GROUP ] nom_rôle | PUBLIC } [, ...]\n"
 #~ "    [ CASCADE | RESTRICT ]\n"
@@ -6462,8 +6248,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "REVOKE [ GRANT OPTION FOR ]\n"
 #~ "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-#~ "    ON FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg "
-#~ "[, ...] ] ) [, ...]\n"
+#~ "    ON FUNCTION nom_fonction ( [ [ mode_arg ] [ nom_arg ] type_arg [, ...] ] ) [, ...]\n"
 #~ "    FROM { [ GROUP ] nom_rôle | PUBLIC } [, ...]\n"
 #~ "    [ CASCADE | RESTRICT ]\n"
 #~ "\n"
@@ -6508,26 +6293,20 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ HAVING condition [, ...] ]\n"
 #~ "    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
 #~ "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-#~ "    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST "
-#~ "| LAST } ] [, ...] ]\n"
+#~ "    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
 #~ "    [ LIMIT { count | ALL } ]\n"
 #~ "    [ OFFSET start [ ROW | ROWS ] ]\n"
 #~ "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
-#~ "    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] "
-#~ "[...] ]\n"
+#~ "    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
 #~ "\n"
 #~ "where from_item can be one of:\n"
 #~ "\n"
-#~ "    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias "
-#~ "[, ...] ) ] ]\n"
+#~ "    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
 #~ "    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
 #~ "    with_query_name [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
-#~ "    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
-#~ "[, ...] | column_definition [, ...] ) ]\n"
-#~ "    function_name ( [ argument [, ...] ] ) AS ( column_definition "
-#~ "[, ...] )\n"
-#~ "    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
-#~ "( join_column [, ...] ) ]\n"
+#~ "    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias [, ...] | column_definition [, ...] ) ]\n"
+#~ "    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+#~ "    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]\n"
 #~ "\n"
 #~ "and with_query is:\n"
 #~ "\n"
@@ -6544,8 +6323,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ HAVING condition [, ...] ]\n"
 #~ "    [ WINDOW nom_window AS ( définition_window ) [, ...] ]\n"
 #~ "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-#~ "    [ ORDER BY expression [ ASC | DESC | USING opérateur ] [ NULLS "
-#~ "{ FIRST | LAST } ] [, ...] ]\n"
+#~ "    [ ORDER BY expression [ ASC | DESC | USING opérateur ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
 #~ "    [ LIMIT { total | ALL } ]\n"
 #~ "    [ OFFSET début [ ROW | ROWS ] ]\n"
 #~ "    [ FETCH { FIRST | NEXT } [ total ] { ROW | ROWS } ONLY ]\n"
@@ -6553,16 +6331,12 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "avec élément_from faisant parti de :\n"
 #~ "\n"
-#~ "    [ ONLY ] nom_table [ * ] [ [ AS ] alias [ ( alias_colonne "
-#~ "[, ...] ) ] ]\n"
+#~ "    [ ONLY ] nom_table [ * ] [ [ AS ] alias [ ( alias_colonne [, ...] ) ] ]\n"
 #~ "    ( select ) [ AS ] alias [ ( alias_colonne [, ...] ) ]\n"
 #~ "    nom_requête_with [ [ AS ] alias [ ( alias_colonne [, ...] ) ] ]\n"
-#~ "    nom_fonction ( [ argument [, ...] ] ) [ AS ] alias [ ( alias_colonne "
-#~ "[, ...] | définition_colonne [, ...] ) ]\n"
-#~ "    nom_fonction ( [ argument [, ...] ] ) AS ( définition_colonne "
-#~ "[, ...] )\n"
-#~ "    élément_from [ NATURAL ] type_jointure élément_from [ ON "
-#~ "condition_jointure | USING ( colonne_jointure [, ...] ) ]\n"
+#~ "    nom_fonction ( [ argument [, ...] ] ) [ AS ] alias [ ( alias_colonne [, ...] | définition_colonne [, ...] ) ]\n"
+#~ "    nom_fonction ( [ argument [, ...] ] ) AS ( définition_colonne [, ...] )\n"
+#~ "    élément_from [ NATURAL ] type_jointure élément_from [ ON condition_jointure | USING ( colonne_jointure [, ...] ) ]\n"
 #~ "\n"
 #~ "et requête_with est:\n"
 #~ "\n"
@@ -6581,8 +6355,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ HAVING condition [, ...] ]\n"
 #~ "    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
 #~ "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-#~ "    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST "
-#~ "| LAST } ] [, ...] ]\n"
+#~ "    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
 #~ "    [ LIMIT { count | ALL } ]\n"
 #~ "    [ OFFSET start [ ROW | ROWS ] ]\n"
 #~ "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
@@ -6598,20 +6371,17 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "    [ HAVING condition [, ...] ]\n"
 #~ "    [ WINDOW nom_window AS ( définition_window ) [, ...] ]\n"
 #~ "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-#~ "    [ ORDER BY expression [ ASC | DESC | USING opérateur ] [ NULLS "
-#~ "{ FIRST | LAST } ] [, ...] ]\n"
+#~ "    [ ORDER BY expression [ ASC | DESC | USING opérateur ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
 #~ "    [ LIMIT { total | ALL } ]\n"
 #~ "    [ OFFSET début [ ROW | ROWS ] ]\n"
 #~ "    [ FETCH { FIRST | NEXT } [ total ] { ROW | ROWS } ONLY ]\n"
 #~ "    [ FOR { UPDATE | SHARE } [ OF nom_table [, ...] ] [ NOWAIT ] [...] ]"
 
 #~ msgid ""
-#~ "SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | "
-#~ "'value' | DEFAULT }\n"
+#~ "SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' | DEFAULT }\n"
 #~ "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
 #~ msgstr ""
-#~ "SET [ SESSION | LOCAL ] paramètre { TO | = } { valeur | 'valeur' | "
-#~ "DEFAULT }\n"
+#~ "SET [ SESSION | LOCAL ] paramètre { TO | = } { valeur | 'valeur' | DEFAULT }\n"
 #~ "SET [ SESSION | LOCAL ] TIME ZONE { zone_horaire | LOCAL | DEFAULT }"
 
 #~ msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
@@ -6641,8 +6411,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "where transaction_mode is one of:\n"
 #~ "\n"
-#~ "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | "
-#~ "READ UNCOMMITTED }\n"
+#~ "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
 #~ "    READ WRITE | READ ONLY"
 #~ msgstr ""
 #~ "SET TRANSACTION mode_transaction [, ...]\n"
@@ -6666,8 +6435,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "\n"
 #~ "where transaction_mode is one of:\n"
 #~ "\n"
-#~ "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | "
-#~ "READ UNCOMMITTED }\n"
+#~ "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
 #~ "    READ WRITE | READ ONLY"
 #~ msgstr ""
 #~ "START TRANSACTION [ mode_transaction [, ...] ]\n"
@@ -6691,28 +6459,24 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ msgid ""
 #~ "UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
 #~ "    SET { column = { expression | DEFAULT } |\n"
-#~ "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
-#~ "[, ...]\n"
+#~ "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
 #~ "    [ FROM fromlist ]\n"
 #~ "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 #~ "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 #~ msgstr ""
 #~ "UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
 #~ "    SET { colonne = { expression | DEFAULT } |\n"
-#~ "          ( colonne [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
-#~ "[, ...]\n"
+#~ "          ( colonne [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
 #~ "    [ FROM liste_from ]\n"
 #~ "    [ WHERE condition | WHERE CURRENT OF nom_curseur ]\n"
 #~ "    [ RETURNING * | expression_sortie [ [ AS ] nom_sortie ] [, ...] ]"
 
 #~ msgid ""
 #~ "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
-#~ "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
-#~ "[, ...] ) ] ]"
+#~ "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 #~ msgstr ""
 #~ "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
-#~ "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (colonne "
-#~ "[, ...] ) ] ]"
+#~ "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (colonne [, ...] ) ] ]"
 
 #~ msgid ""
 #~ "VALUES ( expression [, ...] ) [, ...]\n"
@@ -6745,29 +6509,22 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\db [MODÈLE]         affiche la liste des tablespaces (ajouter « + » "
-#~ "pour\n"
+#~ "  \\db [MODÈLE]         affiche la liste des tablespaces (ajouter « + » pour\n"
 #~ "                       plus de détails)\n"
 
 #~ msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\df [MODÈLE]         affiche la liste des fonctions (ajouter « + » "
-#~ "pour\n"
+#~ "  \\df [MODÈLE]         affiche la liste des fonctions (ajouter « + » pour\n"
 #~ "                       plus de détails)\n"
 
-#~ msgid ""
-#~ "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more "
-#~ "detail)\n"
+#~ msgid "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\dFd [MODÈLE]        affiche la liste des dictionnaires de la "
-#~ "recherche\n"
+#~ "  \\dFd [MODÈLE]        affiche la liste des dictionnaires de la recherche\n"
 #~ "                       de texte (ajouter « + » pour plus de détails)\n"
 
-#~ msgid ""
-#~ "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
+#~ msgid "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\dFp [MODÈLE]        affiche la liste des analyseurs de la recherche "
-#~ "de\n"
+#~ "  \\dFp [MODÈLE]        affiche la liste des analyseurs de la recherche de\n"
 #~ "                       texte (ajouter « + » pour plus de détails)\n"
 
 #~ msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
@@ -6777,22 +6534,17 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 
 #~ msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\dT [MODÈLE]         affiche la liste des types de données (ajouter « "
-#~ "+ »\n"
+#~ "  \\dT [MODÈLE]         affiche la liste des types de données (ajouter « + »\n"
 #~ "                       pour plus de détails)\n"
 
 #~ msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\l                   affiche la liste des bases de données (ajouter « "
-#~ "+ »\n"
+#~ "  \\l                   affiche la liste des bases de données (ajouter « + »\n"
 #~ "                       pour plus de détails)\n"
 
-#~ msgid ""
-#~ "  \\z [PATTERN]   list table, view, and sequence access privileges (same "
-#~ "as \\dp)\n"
+#~ msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
 #~ msgstr ""
-#~ "  \\z [MODÈLE]          affiche la liste des privilèges d'accès aux "
-#~ "tables,\n"
+#~ "  \\z [MODÈLE]          affiche la liste des privilèges d'accès aux tables,\n"
 #~ "                       vues et séquences (identique à \\dp)\n"
 
 #~ msgid "Copy, Large Object\n"
@@ -6802,8 +6554,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n"
 #~ "\n"
 #~ msgstr ""
-#~ "Bienvenue dans %s %s (serveur %s), l'interface interactive de "
-#~ "PostgreSQL.\n"
+#~ "Bienvenue dans %s %s (serveur %s), l'interface interactive de PostgreSQL.\n"
 #~ "\n"
 
 #~ msgid ""
@@ -6819,8 +6570,7 @@ msgstr "valeur booléenne non reconnue ; supposé à « on »\n"
 #~ "such as \\d, might not work properly.\n"
 #~ "\n"
 #~ msgstr ""
-#~ "ATTENTION : vous êtes connecté sur un serveur dont la version majeure "
-#~ "est\n"
+#~ "ATTENTION : vous êtes connecté sur un serveur dont la version majeure est\n"
 #~ "%d.%d alors que votre client %s est en version majeure %d.%d. Certaines\n"
 #~ "commandes avec antislashs, comme \\d, peuvent ne pas fonctionner\n"
 #~ "correctement.\n"

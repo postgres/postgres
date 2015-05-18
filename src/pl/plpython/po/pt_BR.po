@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2013.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-18 17:47-0300\n"
+"POT-Creation-Date: 2015-05-17 16:50-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -44,17 +44,17 @@ msgstr[1] "Sequência esperada de %d argumentos, recebeu %d: %s"
 msgid "iterating a closed cursor"
 msgstr "iterando um cursor fechado"
 
-#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:413
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterando um cursor em uma subtransação abortada"
 
-#: plpy_cursorobject.c:407
+#: plpy_cursorobject.c:405
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "busca em um cursor fechado"
 
-#: plpy_cursorobject.c:486
+#: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "fechando um cursor em uma subtransação abortada"
@@ -71,7 +71,7 @@ msgstr "modo de retorno da função que retorna conjunto não é suportado"
 
 #: plpy_exec.c:92
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
+msgid "PL/Python set-returning functions only support returning one value per call."
 msgstr "funções PL/Python que retornam conjunto só suportam retornar um valor por chamada."
 
 #: plpy_exec.c:104
@@ -139,32 +139,32 @@ msgstr "ao criar valor de retorno"
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "não pode criar novo dicionário ao construir argumentos do gatilho"
 
-#: plpy_exec.c:665
+#: plpy_exec.c:663
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] removido, não pode modificar registro"
 
-#: plpy_exec.c:668
+#: plpy_exec.c:667
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] não é um dicionário"
 
-#: plpy_exec.c:692
+#: plpy_exec.c:691
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "chave do dicionário TD[\"new\"] na posição %d não é uma cadeia de caracteres"
 
-#: plpy_exec.c:698
+#: plpy_exec.c:697
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "chave \"%s\" encontrada em TD[\"new\"] não existe como uma coluna no registro do gatilho"
 
-#: plpy_exec.c:779
+#: plpy_exec.c:777
 #, c-format
 msgid "while modifying trigger row"
 msgstr "ao modificar registro de gatilho"
 
-#: plpy_exec.c:840
+#: plpy_exec.c:838
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "forçado a abortar subtransação que não foi concluída"
@@ -204,12 +204,12 @@ msgstr "não pôde criar globais"
 msgid "could not initialize globals"
 msgstr "não pôde inicializar globais"
 
-#: plpy_main.c:352
+#: plpy_main.c:356
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "função PL/Python \"%s\""
 
-#: plpy_main.c:359
+#: plpy_main.c:363
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloco de código PL/Python anônimo"
@@ -313,11 +313,6 @@ msgstr "SPI_execute_plan falhou: %s"
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute falhou: %s"
 
-#: plpy_spi.c:440
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "erro desconhecido em PLy_spi_execute_fetch_result"
-
 #: plpy_subxactobject.c:122
 #, c-format
 msgid "this subtransaction has already been entered"
@@ -408,12 +403,12 @@ msgstr "atributo \"%s\" não existe no objeto Python"
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Para retornar nulo na coluna, deixe o objeto retornado ter um atributo cuja chave é o nome do coluna e o valor é None."
 
-#: plpy_util.c:70
+#: plpy_util.c:72
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
 msgstr "não pôde converter objeto Unicode Python para bytes"
 
-#: plpy_util.c:75
+#: plpy_util.c:78
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "não pôde extrair bytes de cadeia de caracteres codificada"
