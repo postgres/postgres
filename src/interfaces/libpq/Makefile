@@ -33,7 +33,7 @@ LIBS := $(LIBS:-lpgport=)
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
 	libpq-events.o \
-	md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o thread.o \
+	md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o syswrap.o thread.o \
 	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o strlcpy.o win32error.o, $(LIBOBJS))
 
 ifeq ($(PORTNAME), cygwin)
@@ -80,7 +80,7 @@ backend_src = $(top_srcdir)/src/backend
 # For port modules, this only happens if configure decides the module
 # is needed (see filter hack in OBJS, above).
 
-crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c pgsleep.c: % : $(top_srcdir)/src/port/%
+crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c syswrap.c thread.c win32error.c pgsleep.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 md5.c ip.c: % : $(backend_src)/libpq/%
@@ -133,7 +133,7 @@ ifneq (,$(findstring $(PORTNAME), win32 cygwin))
 endif
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc
+	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c syswrap.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 

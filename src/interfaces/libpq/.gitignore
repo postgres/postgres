@@ -8,6 +8,7 @@
 /snprintf.c
 /strerror.c
 /strlcpy.c
+/syswrap.c
 /thread.c
 /win32error.c
 /pgsleep.c

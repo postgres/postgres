@@ -148,12 +148,11 @@ extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);
 extern unsigned char pg_toupper(unsigned char ch);
 extern unsigned char pg_tolower(unsigned char ch);
 
-#ifdef USE_REPL_SNPRINTF
-
 /*
- * Versions of libintl >= 0.13 try to replace printf() and friends with
- * macros to their own versions that understand the %$ format.  We do the
- * same, so disable their macros, if they exist.
+ * Capture macro-compatible calls to printf() and friends, and redirect them
+ * to wrappers that throw errors in lieu of reporting failure in a return
+ * value.  Versions of libintl >= 0.13 similarly redirect to versions that
+ * understand the %$ format, so disable libintl macros first.
  */
 #ifdef vsnprintf
 #undef vsnprintf
@@ -177,6 +176,55 @@ extern unsigned char pg_tolower(unsigned char ch);
 #undef printf
 #endif
 
+extern int
+vsnprintf_throw_on_fail(char *str, size_t count, const char *fmt, va_list args)
+__attribute__((format(printf, 3, 0)));
+extern int
+snprintf_throw_on_fail(char *str, size_t count, const char *fmt,...)
+__attribute__((format(printf, 3, 4)));
+extern int
+vsprintf_throw_on_fail(char *str, const char *fmt, va_list args)
+__attribute__((format(printf, 2, 0)));
+extern int
+sprintf_throw_on_fail(char *str, const char *fmt,...)
+__attribute__((format(printf, 2, 3)));
+extern int
+vfprintf_throw_on_fail(FILE *stream, const char *fmt, va_list args)
+__attribute__((format(printf, 2, 0)));
+extern int
+fprintf_throw_on_fail(FILE *stream, const char *fmt,...)
+__attribute__((format(printf, 2, 3)));
+extern int
+printf_throw_on_fail(const char *fmt,...)
+__attribute__((format(printf, 1, 2)));
+
+/*
+ *	The GCC-specific code below prevents the __attribute__(... 'printf')
+ *	above from being replaced, and this is required because gcc doesn't
+ *	know anything about printf_throw_on_fail.
+ */
+#ifdef __GNUC__
+#define vsnprintf(...)	vsnprintf_throw_on_fail(__VA_ARGS__)
+#define snprintf(...)	snprintf_throw_on_fail(__VA_ARGS__)
+#define vsprintf(...)	vsprintf_throw_on_fail(__VA_ARGS__)
+#define sprintf(...)	sprintf_throw_on_fail(__VA_ARGS__)
+#define vfprintf(...)	vfprintf_throw_on_fail(__VA_ARGS__)
+#define fprintf(...)	fprintf_throw_on_fail(__VA_ARGS__)
+#define printf(...)		printf_throw_on_fail(__VA_ARGS__)
+#else
+#define vsnprintf		vsnprintf_throw_on_fail
+#define snprintf		snprintf_throw_on_fail
+#define vsprintf		vsprintf_throw_on_fail
+#define sprintf			sprintf_throw_on_fail
+#define vfprintf		vfprintf_throw_on_fail
+#define fprintf			fprintf_throw_on_fail
+#define printf			printf_throw_on_fail
+#endif
+
+#ifdef USE_REPL_SNPRINTF
+
+/* Code outside syswrap.c should not call these. */
+
 extern int	pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 extern int
 pg_snprintf(char *str, size_t count, const char *fmt,...)
@@ -197,28 +245,6 @@ pg_printf(const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 1, 2)));
 
-/*
- *	The GCC-specific code below prevents the __attribute__(... 'printf')
- *	above from being replaced, and this is required because gcc doesn't
- *	know anything about pg_printf.
- */
-#ifdef __GNUC__
-#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
-#define snprintf(...)	pg_snprintf(__VA_ARGS__)
-#define vsprintf(...)	pg_vsprintf(__VA_ARGS__)
-#define sprintf(...)	pg_sprintf(__VA_ARGS__)
-#define vfprintf(...)	pg_vfprintf(__VA_ARGS__)
-#define fprintf(...)	pg_fprintf(__VA_ARGS__)
-#define printf(...)		pg_printf(__VA_ARGS__)
-#else
-#define vsnprintf		pg_vsnprintf
-#define snprintf		pg_snprintf
-#define vsprintf		pg_vsprintf
-#define sprintf			pg_sprintf
-#define vfprintf		pg_vfprintf
-#define fprintf			pg_fprintf
-#define printf			pg_printf
-#endif
 #endif   /* USE_REPL_SNPRINTF */
 
 /*
