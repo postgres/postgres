@@ -410,7 +410,7 @@ sub fetchRegressOpts
 	my @opts;
 
 	$m =~ s{\\\r?\n}{}g;
-	if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
+	if ($m =~ /^\s*REGRESS_OPTS\s*\+?=(.*)/m)
 	{
 		# Substitute known Makefile variables, then ignore options that retain
 		# an unhandled variable reference.  Ignore anything that isn't an
