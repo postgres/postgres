@@ -793,7 +793,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	IndexScanState *indexstate;
 	Relation	currentRelation;
 	bool		relistarget;
-	int			i;
 
 	/*
 	 * create state structure
@@ -917,35 +916,40 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	if (indexstate->iss_NumOrderByKeys > 0)
 	{
 		int			numOrderByKeys = indexstate->iss_NumOrderByKeys;
+		int			i;
+		ListCell   *lc;
 
 		/*
 		 * Prepare sort support, and look up the distance type for each ORDER
 		 * BY expression.
 		 */
+		Assert(numOrderByKeys == list_length(node->indexorderbyops));
 		indexstate->iss_SortSupport =
 			palloc0(numOrderByKeys * sizeof(SortSupportData));
 		indexstate->iss_OrderByTypByVals =
 			palloc(numOrderByKeys * sizeof(bool));
 		indexstate->iss_OrderByTypLens =
 			palloc(numOrderByKeys * sizeof(int16));
-		for (i = 0; i < indexstate->iss_NumOrderByKeys; i++)
+		i = 0;
+		foreach(lc, node->indexorderbyops)
 		{
+			Oid orderbyop = lfirst_oid(lc);
 			Oid			orderbyType;
 			Oid			opfamily;
 			int16		strategy;
 
-			PrepareSortSupportFromOrderingOp(node->indexorderbyops[i],
+			PrepareSortSupportFromOrderingOp(orderbyop,
 											 &indexstate->iss_SortSupport[i]);
 
-			if (!get_ordering_op_properties(node->indexorderbyops[i],
+			if (!get_ordering_op_properties(orderbyop,
 										 &opfamily, &orderbyType, &strategy))
-			{
-				elog(LOG, "operator %u is not a valid ordering operator",
-					 node->indexorderbyops[i]);
-			}
+				elog(ERROR, "operator %u is not a valid ordering operator",
+					 orderbyop);
+
 			get_typlenbyval(orderbyType,
 							&indexstate->iss_OrderByTypLens[i],
 							&indexstate->iss_OrderByTypByVals[i]);
+			i++;
 		}
 
 		/* allocate arrays to hold the re-calculated distances */

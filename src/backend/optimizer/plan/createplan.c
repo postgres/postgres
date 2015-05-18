@@ -106,7 +106,8 @@ static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static SampleScan *make_samplescan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
-			   List *indexorderby, List *indexorderbyorig, Oid *indexorderbyops,
+			   List *indexorderby, List *indexorderbyorig,
+			   List *indexorderbyops,
 			   ScanDirection indexscandir);
 static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
 				   Index scanrelid, Oid indexid,
@@ -1211,7 +1212,7 @@ create_indexscan_plan(PlannerInfo *root,
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
 	List	   *fixed_indexorderbys;
-	Oid		   *indexorderbyops = NULL;
+	List	   *indexorderbyops = NIL;
 	ListCell   *l;
 
 	/* it should be a base rel... */
@@ -1329,37 +1330,31 @@ create_indexscan_plan(PlannerInfo *root,
 	 */
 	if (best_path->path.pathkeys && indexorderbys)
 	{
-		int			numOrderBys = list_length(indexorderbys);
-		int			i;
 		ListCell   *pathkeyCell,
 				   *exprCell;
-		PathKey	   *pathkey;
-		Expr	   *expr;
-		EquivalenceMember *em;
-
-		indexorderbyops = (Oid *) palloc(numOrderBys * sizeof(Oid));
 
 		/*
 		 * PathKey contains pointer to the equivalence class, but that's not
 		 * enough because we need the expression's datatype to look up the
-		 * sort operator in the operator family.  We have to dig the
+		 * sort operator in the operator family.  We have to dig out the
 		 * equivalence member for the datatype.
 		 */
-		i = 0;
-		forboth (pathkeyCell, best_path->path.pathkeys, exprCell, indexorderbys)
+		forboth(pathkeyCell, best_path->path.pathkeys, exprCell, indexorderbys)
 		{
-			pathkey = (PathKey *) lfirst(pathkeyCell);
-			expr = (Expr *) lfirst(exprCell);
+			PathKey	   *pathkey = (PathKey *) lfirst(pathkeyCell);
+			Expr	   *expr = (Expr *) lfirst(exprCell);
+			EquivalenceMember *em;
 
 			/* Find equivalence member for the order by expression */
 			em = find_ec_member_for_expr(pathkey->pk_eclass, expr, NULL);
 
 			/* Get sort operator from opfamily */
-			indexorderbyops[i] = get_opfamily_member(pathkey->pk_opfamily,
-													 em->em_datatype,
-													 em->em_datatype,
-													 pathkey->pk_strategy);
-			i++;
+			indexorderbyops =
+				lappend_oid(indexorderbyops,
+							get_opfamily_member(pathkey->pk_opfamily,
+												em->em_datatype,
+												em->em_datatype,
+												pathkey->pk_strategy));
 		}
 	}
 
@@ -3457,7 +3452,7 @@ make_indexscan(List *qptlist,
 			   List *indexqualorig,
 			   List *indexorderby,
 			   List *indexorderbyorig,
-			   Oid *indexorderbyops,
+			   List *indexorderbyops,
 			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
@@ -5008,6 +5003,8 @@ make_modifytable(PlannerInfo *root,
 		node->onConflictSet = NIL;
 		node->onConflictWhere = NULL;
 		node->arbiterIndexes = NIL;
+		node->exclRelRTI = 0;
+		node->exclRelTlist = NIL;
 	}
 	else
 	{
