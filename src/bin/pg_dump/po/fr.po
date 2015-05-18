@@ -7,7 +7,7 @@
 # Stéphane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-12-02 13:27+0000\n"
 "PO-Revision-Date: 2012-12-02 15:42+0100\n"
