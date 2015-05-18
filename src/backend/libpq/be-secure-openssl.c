@@ -353,7 +353,6 @@ be_tls_open_server(Port *port)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not initialize SSL connection: %s",
 						SSLerrmessage())));
-		be_tls_close(port);
 		return -1;
 	}
 	if (!my_SSL_set_fd(port, port->sock))
@@ -362,7 +361,6 @@ be_tls_open_server(Port *port)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not set SSL socket: %s",
 						SSLerrmessage())));
-		be_tls_close(port);
 		return -1;
 	}
 	port->ssl_in_use = true;
@@ -419,7 +417,6 @@ aloop:
 								err)));
 				break;
 		}
-		be_tls_close(port);
 		return -1;
 	}
 
@@ -449,7 +446,6 @@ aloop:
 			{
 				/* shouldn't happen */
 				pfree(peer_cn);
-				be_tls_close(port);
 				return -1;
 			}
 
@@ -463,7 +459,6 @@ aloop:
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("SSL certificate's common name contains embedded null")));
 				pfree(peer_cn);
-				be_tls_close(port);
 				return -1;
 			}
 
