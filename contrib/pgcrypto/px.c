@@ -87,9 +87,6 @@ static const struct error_desc px_err_list[] = {
 	{PXE_PGP_UNSUPPORTED_PUBALGO, "Unsupported public key algorithm"},
 	{PXE_PGP_MULTIPLE_SUBKEYS, "Several subkeys not supported"},
 
-	/* fake this as PXE_PGP_CORRUPT_DATA */
-	{PXE_MBUF_SHORT_READ, "Corrupt data"},
-
 	{0, NULL},
 };
 
