@@ -28,10 +28,10 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += $(wildcard ../../src/pl/plpython/libpython*.a)
 endif
 
-REGRESS_OPTS = --load-extension=ltree
+REGRESS_OPTS += --load-extension=ltree
 ifeq ($(python_majorversion),2)
 REGRESS_OPTS += --load-extension=plpythonu --load-extension=ltree_plpythonu
 endif
-EXTRA_INSTALL = contrib/ltree
+EXTRA_INSTALL += contrib/ltree
 
 include $(top_srcdir)/src/pl/plpython/regress-python3-mangle.mk

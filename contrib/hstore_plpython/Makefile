@@ -28,10 +28,10 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
 endif
 
-REGRESS_OPTS = --load-extension=hstore
+REGRESS_OPTS += --load-extension=hstore
 ifeq ($(python_majorversion),2)
 REGRESS_OPTS += --load-extension=plpythonu --load-extension=hstore_plpythonu
 endif
-EXTRA_INSTALL = contrib/hstore
+EXTRA_INSTALL += contrib/hstore
 
 include $(top_srcdir)/src/pl/plpython/regress-python3-mangle.mk
