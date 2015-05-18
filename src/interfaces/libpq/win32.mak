@@ -113,6 +113,7 @@ CLEAN :
 	-@erase "$(INTDIR)\dirmod.obj"
 	-@erase "$(INTDIR)\pgsleep.obj"
 	-@erase "$(INTDIR)\open.obj"
+	-@erase "$(INTDIR)\syswrap.obj"
 	-@erase "$(INTDIR)\win32error.obj"
 	-@erase "$(INTDIR)\win32setlocale.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
@@ -159,6 +160,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\dirmod.obj" \
 	"$(INTDIR)\pgsleep.obj" \
 	"$(INTDIR)\open.obj" \
+	"$(INTDIR)\syswrap.obj" \
 	"$(INTDIR)\win32error.obj" \
 	"$(INTDIR)\win32setlocale.obj" \
 	"$(INTDIR)\pthread-win32.obj"
@@ -333,6 +335,11 @@ LINK32_OBJS= \
 "$(INTDIR)\open.obj" : ..\..\port\open.c
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\port\open.c
+<<
+
+"$(INTDIR)\syswrap.obj" : ..\..\port\syswrap.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\syswrap.c
 <<
 
 "$(INTDIR)\win32error.obj" : ..\..\port\win32error.c
