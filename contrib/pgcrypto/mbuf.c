@@ -325,7 +325,7 @@ pullf_read_fixed(PullFilter *src, int len, uint8 *dst)
 	if (res != len)
 	{
 		px_debug("pullf_read_fixed: need=%d got=%d", len, res);
-		return PXE_MBUF_SHORT_READ;
+		return PXE_PGP_CORRUPT_DATA;
 	}
 	if (p != dst)
 		memcpy(dst, p, len);
