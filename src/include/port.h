@@ -139,6 +139,9 @@ extern unsigned char pg_ascii_tolower(unsigned char ch);
 #ifdef snprintf
 #undef snprintf
 #endif
+#ifdef vsprintf
+#undef vsprintf
+#endif
 #ifdef sprintf
 #undef sprintf
 #endif
@@ -157,6 +160,7 @@ extern int
 pg_snprintf(char *str, size_t count, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+extern int	pg_vsprintf(char *str, const char *fmt, va_list args);
 extern int
 pg_sprintf(char *str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
@@ -179,6 +183,7 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 #ifdef __GNUC__
 #define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
 #define snprintf(...)	pg_snprintf(__VA_ARGS__)
+#define vsprintf(...)	pg_vsprintf(__VA_ARGS__)
 #define sprintf(...)	pg_sprintf(__VA_ARGS__)
 #define vfprintf(...)	pg_vfprintf(__VA_ARGS__)
 #define fprintf(...)	pg_fprintf(__VA_ARGS__)
@@ -186,6 +191,7 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 #else
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
+#define vsprintf		pg_vsprintf
 #define sprintf			pg_sprintf
 #define vfprintf		pg_vfprintf
 #define fprintf			pg_fprintf
