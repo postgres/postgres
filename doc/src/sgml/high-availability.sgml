@@ -1237,9 +1237,10 @@ primary_slot_name = 'node_a_slot'
      to <literal>always</literal>, and the standby will call the archive
      command for every WAL segment it receives, whether it's by restoring
      from the archive or by streaming replication. The shared archive can
-     be handled similarly, but the archive_command must test if the file
-     being archived exists already, and if the existing file has identical
-     contents. This requires more care in the archive_command, as it must
+     be handled similarly, but the <varname>archive_command</varname> must
+     test if the file being archived exists already, and if the existing file
+     has identical contents. This requires more care in the
+     <varname>archive_command</varname>, as it must
      be careful to not overwrite an existing file with different contents,
      but return success if the exactly same file is archived twice. And
      all that must be done free of race conditions, if two servers attempt

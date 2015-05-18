@@ -1645,6 +1645,10 @@ ServerLoop(void)
 				start_autovac_launcher = false; /* signal processed */
 		}
 
+		/* If we have lost the stats collector, try to start a new one */
+		if (PgStatPID == 0 && pmState == PM_RUN)
+			PgStatPID = pgstat_start();
+
 		/*
 		 * If we have lost the archiver, try to start a new one.
 		 *
