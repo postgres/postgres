@@ -199,7 +199,7 @@ AUDIT: SESSION,33,2,DDL,CREATE TABLE,TABLE,public.important_table,CREATE TABLE i
             <listitem>
               <para>
                 <literal>DDL</literal> - All <literal>DDL</> that is not included
-                in the <literal>ROLE</> class plus <literal>REINDEX</>.
+                in the <literal>ROLE</> class.
               </para>
             </listitem>
             <listitem>
