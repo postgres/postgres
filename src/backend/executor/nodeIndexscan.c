@@ -142,8 +142,8 @@ IndexNext(IndexScanState *node)
 /* ----------------------------------------------------------------
  *		IndexNextWithReorder
  *
- *		Like IndexNext, but his version can also re-check any
- *		ORDER BY expressions, and reorder the tuples as necessary.
+ *		Like IndexNext, but this version can also re-check ORDER BY
+ *		expressions, and reorder the tuples as necessary.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
