@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for pgscripts
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2014.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-09 12:23-0300\n"
+"POT-Creation-Date: 2015-05-16 08:47-0300\n"
 "PO-Revision-Date: 2005-10-06 00:21-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -36,10 +36,10 @@ msgstr "não pôde encontrar ID de usuário efetivo %ld: %s"
 msgid "user does not exist"
 msgstr "usuário não existe"
 
-#: ../../common/username.c:61
+#: ../../common/username.c:62
 #, c-format
-msgid "user name lookup failure: %s"
-msgstr "falhou ao pesquisar nome de usuário: %s"
+msgid "user name lookup failure: error code %lu"
+msgstr "falhou ao pesquisar nome de usuário: código de erro %lu"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:168
