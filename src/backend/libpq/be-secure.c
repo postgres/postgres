@@ -906,7 +906,6 @@ open_server_SSL(Port *port)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not initialize SSL connection: %s",
 						SSLerrmessage())));
-		close_SSL(port);
 		return -1;
 	}
 	if (!my_SSL_set_fd(port->ssl, port->sock))
@@ -915,7 +914,6 @@ open_server_SSL(Port *port)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not set SSL socket: %s",
 						SSLerrmessage())));
-		close_SSL(port);
 		return -1;
 	}
 
@@ -963,7 +961,6 @@ aloop:
 								err)));
 				break;
 		}
-		close_SSL(port);
 		return -1;
 	}
 
@@ -992,7 +989,6 @@ aloop:
 			{
 				/* shouldn't happen */
 				pfree(peer_cn);
-				close_SSL(port);
 				return -1;
 			}
 
@@ -1006,7 +1002,6 @@ aloop:
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("SSL certificate's common name contains embedded null")));
 				pfree(peer_cn);
-				close_SSL(port);
 				return -1;
 			}
 
