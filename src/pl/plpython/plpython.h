@@ -35,10 +35,8 @@
  * So we undefine them here and redefine them after it's done its dirty deed.
  */
 
-#ifdef USE_REPL_SNPRINTF
 #undef snprintf
 #undef vsnprintf
-#endif
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 /* Python uses #pragma to bring in a non-default libpython on VC++ if
@@ -125,7 +123,6 @@ typedef int Py_ssize_t;
 #include <eval.h>
 
 /* put back our snprintf and vsnprintf */
-#ifdef USE_REPL_SNPRINTF
 #ifdef snprintf
 #undef snprintf
 #endif
@@ -133,13 +130,12 @@ typedef int Py_ssize_t;
 #undef vsnprintf
 #endif
 #ifdef __GNUC__
-#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
-#define snprintf(...)	pg_snprintf(__VA_ARGS__)
+#define vsnprintf(...)	vsnprintf_throw_on_fail(__VA_ARGS__)
+#define snprintf(...)	snprintf_throw_on_fail(__VA_ARGS__)
 #else
-#define vsnprintf				pg_vsnprintf
-#define snprintf				pg_snprintf
+#define vsnprintf		vsnprintf_throw_on_fail
+#define snprintf		snprintf_throw_on_fail
 #endif   /* __GNUC__ */
-#endif   /* USE_REPL_SNPRINTF */
 
 /*
  * Used throughout, and also by the Python 2/3 porting layer, so it's easier to

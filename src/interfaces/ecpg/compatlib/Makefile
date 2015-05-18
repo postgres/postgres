@@ -48,6 +48,7 @@ submake-pgtypeslib:
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 
+# XXX This library uses no symbols from snprintf.c.
 snprintf.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
