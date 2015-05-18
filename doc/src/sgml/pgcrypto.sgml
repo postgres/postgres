@@ -1224,6 +1224,14 @@ gen_random_bytes(count integer) returns bytea
    <para>
     If you cannot, then better do crypto inside client application.
    </para>
+
+   <para>
+    The implementation does not resist
+    <ulink url="http://en.wikipedia.org/wiki/Side-channel_attack">side-channel
+    attacks</ulink>.  For example, the time required for
+    a <filename>pgcrypto</> decryption function to complete varies among
+    ciphertexts of a given size.
+   </para>
   </sect3>
 
   <sect3>
