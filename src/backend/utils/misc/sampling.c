@@ -3,7 +3,7 @@
  * sampling.c
  *	  Relation block sampling routines.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -238,4 +238,48 @@ double
 sampler_random_fract(SamplerRandomState randstate)
 {
 	return pg_erand48(randstate);
+}
+
+
+/*
+ * Backwards-compatible API for block sampling
+ *
+ * This code is now deprecated, but since it's still in use by many FDWs,
+ * we should keep it for awhile at least.  The functionality is the same as
+ * sampler_random_fract/reservoir_init_selection_state/reservoir_get_next_S,
+ * except that a common random state is used across all callers.
+ */
+static ReservoirStateData oldrs;
+
+double
+anl_random_fract(void)
+{
+	/* initialize if first time through */
+	if (oldrs.randstate[0] == 0)
+		sampler_random_init_state(random(), oldrs.randstate);
+
+	/* and compute a random fraction */
+	return sampler_random_fract(oldrs.randstate);
+}
+
+double
+anl_init_selection_state(int n)
+{
+	/* initialize if first time through */
+	if (oldrs.randstate[0] == 0)
+		sampler_random_init_state(random(), oldrs.randstate);
+
+	/* Initial value of W (for use when Algorithm Z is first applied) */
+	return exp(-log(sampler_random_fract(oldrs.randstate)) / n);
+}
+
+double
+anl_get_next_S(double t, int n, double *stateptr)
+{
+	double result;
+
+	oldrs.W = *stateptr;
+	result = reservoir_get_next_S(&oldrs, t, n);
+	*stateptr = oldrs.W;
+	return result;
 }

@@ -3,7 +3,7 @@
  * sampling.h
  *	  definitions for sampling functions
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/sampling.h
@@ -13,7 +13,8 @@
 #ifndef SAMPLING_H
 #define SAMPLING_H
 
-#include "storage/bufmgr.h"
+#include "storage/block.h"		/* for typedef BlockNumber */
+
 
 /* Random generator for sampling code */
 typedef unsigned short SamplerRandomState[3];
@@ -23,6 +24,7 @@ extern void sampler_random_init_state(long seed,
 extern double sampler_random_fract(SamplerRandomState randstate);
 
 /* Block sampling methods */
+
 /* Data structure for Algorithm S from Knuth 3.4.2 */
 typedef struct
 {
@@ -40,7 +42,8 @@ extern void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 extern bool BlockSampler_HasMore(BlockSampler bs);
 extern BlockNumber BlockSampler_Next(BlockSampler bs);
 
-/* Reservoid sampling methods */
+/* Reservoir sampling methods */
+
 typedef struct
 {
 	double	W;
@@ -51,5 +54,12 @@ typedef ReservoirStateData *ReservoirState;
 
 extern void reservoir_init_selection_state(ReservoirState rs, int n);
 extern double reservoir_get_next_S(ReservoirState rs, double t, int n);
+
+/* Old API, still in use by assorted FDWs */
+/* For backwards compatibility, these declarations are duplicated in vacuum.h */
+
+extern double anl_random_fract(void);
+extern double anl_init_selection_state(int n);
+extern double anl_get_next_S(double t, int n, double *stateptr);
 
 #endif /* SAMPLING_H */
