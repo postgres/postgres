@@ -268,3 +268,48 @@ a3nsOzKTXUfS9VyaXo8IrncM6n7fdaXpwba/3tNsAhJG4lDv1k4g9v8Ix2dfv6Rs
 -- check BUG #11905, problem with messages 6 less than a power of 2.
 select pgp_sym_decrypt(pgp_sym_encrypt(repeat('x',65530),'1'),'1') = repeat('x',65530);
 -- expected: true
+
+
+-- Negative tests
+
+-- Decryption with a certain incorrect key yields an apparent Literal Data
+-- packet reporting its content to be binary data.  Ciphertext source:
+-- iterative pgp_sym_encrypt('secret', 'key') until the random prefix gave
+-- rise to that property.
+select pgp_sym_decrypt(dearmor('
+-----BEGIN PGP MESSAGE-----
+
+ww0EBwMCxf8PTrQBmJdl0jcB6y2joE7GSLKRv7trbNsF5Z8ou5NISLUg31llVH/S0B2wl4bvzZjV
+VsxxqLSPzNLAeIspJk5G
+=mSd/
+-----END PGP MESSAGE-----
+'), 'wrong-key', 'debug=1');
+
+-- Routine text/binary mismatch.
+select pgp_sym_decrypt(pgp_sym_encrypt_bytea('P', 'key'), 'key', 'debug=1');
+
+-- Decryption with a certain incorrect key yields an apparent BZip2-compressed
+-- plaintext.  Ciphertext source: iterative pgp_sym_encrypt('secret', 'key')
+-- until the random prefix gave rise to that property.
+select pgp_sym_decrypt(dearmor('
+-----BEGIN PGP MESSAGE-----
+
+ww0EBwMC9rK/dMkF5Zlt0jcBlzAQ1mQY2qYbKYbw8h3EZ5Jk0K2IiY92R82TRhWzBIF/8cmXDPtP
+GXsd65oYJZp3Khz0qfyn
+=Nmpq
+-----END PGP MESSAGE-----
+'), 'wrong-key', 'debug=1');
+
+-- Routine use of BZip2 compression.  Ciphertext source:
+-- echo x | gpg --homedir /nonexistent --personal-compress-preferences bzip2 \
+--      --personal-cipher-preferences aes --no-emit-version --batch \
+--      --symmetric --passphrase key --armor
+select pgp_sym_decrypt(dearmor('
+-----BEGIN PGP MESSAGE-----
+
+jA0EBwMCRhFrAKNcLVJg0mMBLJG1cCASNk/x/3dt1zJ+2eo7jHfjgg3N6wpB3XIe
+QCwkWJwlBG5pzbO5gu7xuPQN+TbPJ7aQ2sLx3bAHhtYb0i3vV9RO10Gw++yUyd4R
+UCAAw2JRIISttRHMfDpDuZJpvYo=
+=AZ9M
+-----END PGP MESSAGE-----
+'), 'key', 'debug=1');
