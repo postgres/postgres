@@ -40,6 +40,101 @@
    <itemizedlist>
 
 <!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [b0ce38503] 2015-05-18 10:02:31 -0400
+Branch: REL9_4_STABLE [7a0d48ac7] 2015-05-18 10:02:35 -0400
+Branch: REL9_3_STABLE [f4c12b415] 2015-05-18 10:02:36 -0400
+Branch: REL9_2_STABLE [439ff9b6b] 2015-05-18 10:02:37 -0400
+Branch: REL9_1_STABLE [6675ab595] 2015-05-18 10:02:38 -0400
+Branch: REL9_0_STABLE [648e41a6e] 2015-05-18 10:02:38 -0400
+-->
+
+    <listitem>
+     <para>
+      Avoid possible crash when client disconnects just before the
+      authentication timeout expires (Benkocs Norbert Attila)
+     </para>
+
+     <para>
+      If the timeout interrupt fired partway through the session shutdown
+      sequence, SSL-related state would be freed twice, typically causing a
+      crash and hence denial of service to other sessions.  Experimentation
+      shows that an unauthenticated remote attacker could trigger the bug
+      somewhat consistently, hence treat as security issue.
+      (CVE-2015-3165)
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [cac18a76b] 2015-05-18 10:02:31 -0400
+Branch: REL9_4_STABLE [f7c4fe7d9] 2015-05-18 10:02:35 -0400
+Branch: REL9_3_STABLE [d5abbd114] 2015-05-18 10:02:36 -0400
+Branch: REL9_2_STABLE [1e6652aea] 2015-05-18 10:02:37 -0400
+Branch: REL9_1_STABLE [b544dcdad] 2015-05-18 10:02:38 -0400
+Branch: REL9_0_STABLE [19f7adc01] 2015-05-18 10:02:38 -0400
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [16304a013] 2015-05-18 10:02:31 -0400
+Branch: REL9_4_STABLE [2e3bd0665] 2015-05-18 10:02:35 -0400
+Branch: REL9_3_STABLE [34d21e770] 2015-05-18 10:02:36 -0400
+Branch: REL9_2_STABLE [82b7393eb] 2015-05-18 10:02:37 -0400
+Branch: REL9_1_STABLE [e58f042d9] 2015-05-18 10:02:38 -0400
+Branch: REL9_0_STABLE [b08c7aff7] 2015-05-18 10:02:38 -0400
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [fd97bd411] 2015-05-18 10:02:31 -0400
+Branch: REL9_4_STABLE [ca325941d] 2015-05-18 10:02:35 -0400
+Branch: REL9_3_STABLE [c669915fd] 2015-05-18 10:02:37 -0400
+Branch: REL9_2_STABLE [01272d95a] 2015-05-18 10:02:37 -0400
+Branch: REL9_1_STABLE [2cb9f2cab] 2015-05-18 10:02:38 -0400
+Branch: REL9_0_STABLE [9b5e831e3] 2015-05-18 10:02:38 -0400
+-->
+
+    <listitem>
+     <para>
+      Consistently check for failure of the <function>*printf()</> family of
+      functions (Noah Misch)
+     </para>
+
+     <para>
+      Most calls of these functions did not consider the possibility that
+      the functions could fail with, eg, out-of-memory conditions.  The usual
+      result would just be missing output, but crashes or exposure of
+      unintended information are also possible.  To protect against such
+      risks uniformly, create wrappers around these functions that throw an
+      error on failure.  Also add missing error checks to a few
+      security-relevant calls of other system functions.
+      (CVE-2015-3166)
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [85270ac7a] 2015-05-18 10:02:31 -0400
+Branch: REL9_4_STABLE [fba1fb4ef] 2015-05-18 10:02:35 -0400
+Branch: REL9_3_STABLE [7b758b7d6] 2015-05-18 10:02:37 -0400
+Branch: REL9_2_STABLE [0ba200431] 2015-05-18 10:02:37 -0400
+Branch: REL9_1_STABLE [e5981aebd] 2015-05-18 10:02:38 -0400
+Branch: REL9_0_STABLE [b84e5c017] 2015-05-18 10:02:39 -0400
+-->
+
+    <listitem>
+     <para>
+      In <filename>contrib/pgcrypto</>, uniformly report decryption failures
+      as <quote>Wrong key or corrupt data</> (Noah Misch)
+     </para>
+
+     <para>
+      Previously, some cases of decryption with an incorrect key could report
+      other error message texts.  It has been shown that such variance in
+      error reports can aid attackers in recovering keys from other systems.
+      While it's unknown whether <filename>pgcrypto</>'s specific behaviors
+      are likewise exploitable, it seems better to avoid the risk by using a
+      one-size-fits-all message.
+      (CVE-2015-3167)
+     </para>
+    </listitem>
+
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [b69bf30b9] 2015-04-28 11:32:53 -0300
 Branch: REL9_4_STABLE [942542cbb] 2015-04-28 11:32:53 -0300
