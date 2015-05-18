@@ -559,24 +559,34 @@ PGLC_localeconv(void)
  * pg_strftime(), which isn't locale-aware and does not need to be replaced.
  */
 static size_t
-strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm * tm)
+strftime_win32(char *dst, size_t dstlen,
+			   const char *format, const struct tm * tm)
 {
 	size_t		len;
+	wchar_t		wformat[8];		/* formats used below need 3 bytes */
 	wchar_t		wbuf[MAX_L10N_DATA];
 	int			encoding;
 
 	encoding = GetDatabaseEncoding();
 
-	len = wcsftime(wbuf, MAX_L10N_DATA, format, tm);
+	/* get a wchar_t version of the format string */
+	len = MultiByteToWideChar(CP_UTF8, 0, format, -1,
+							  wformat, lengthof(wformat));
+	if (len == 0)
+		elog(ERROR, "could not convert format string from UTF-8: error code %lu",
+			 GetLastError());
+
+	len = wcsftime(wbuf, MAX_L10N_DATA, wformat, tm);
 	if (len == 0)
 
 		/*
-		 * strftime call failed - return 0 with the contents of dst
-		 * unspecified
+		 * strftime failed, possibly because the result would not fit in
+		 * MAX_L10N_DATA.  Return 0 with the contents of dst unspecified.
 		 */
 		return 0;
 
-	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen, NULL, NULL);
+	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen - 1,
+							  NULL, NULL);
 	if (len == 0)
 		elog(ERROR,
 		"could not convert string to UTF-8: error code %lu", GetLastError());
@@ -599,9 +609,33 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 }
 
 /* redefine strftime() */
-#define strftime(a,b,c,d) strftime_win32(a,b,L##c,d)
+#define strftime(a,b,c,d) strftime_win32(a,b,c,d)
 #endif   /* WIN32 */
 
+/* Subroutine for cache_locale_time(). */
+static void
+cache_single_time(char **dst, const char *format, const struct tm * tm)
+{
+	char		buf[MAX_L10N_DATA];
+	char	   *ptr;
+
+	/*
+	 * MAX_L10N_DATA is sufficient buffer space for every known locale, and
+	 * POSIX defines no strftime() errors.  (Buffer space exhaustion is not an
+	 * error.)  An implementation might report errors (e.g. ENOMEM) by
+	 * returning 0 (or, less plausibly, a negative value) and setting errno.
+	 * Report errno just in case the implementation did that, but clear it in
+	 * advance of the call so we don't emit a stale, unrelated errno.
+	 */
+	errno = 0;
+	if (strftime(buf, MAX_L10N_DATA, format, tm) <= 0)
+		elog(ERROR, "strftime(%s) failed: %m", format);
+
+	ptr = MemoryContextStrdup(TopMemoryContext, buf);
+	if (*dst)
+		pfree(*dst);
+	*dst = ptr;
+}
 
 /*
  * Update the lc_time localization cache variables if needed.
@@ -612,8 +646,6 @@ cache_locale_time(void)
 	char	   *save_lc_time;
 	time_t		timenow;
 	struct tm  *timeinfo;
-	char		buf[MAX_L10N_DATA];
-	char	   *ptr;
 	int			i;
 
 #ifdef WIN32
@@ -660,17 +692,8 @@ cache_locale_time(void)
 	for (i = 0; i < 7; i++)
 	{
 		timeinfo->tm_wday = i;
-		strftime(buf, MAX_L10N_DATA, "%a", timeinfo);
-		ptr = MemoryContextStrdup(TopMemoryContext, buf);
-		if (localized_abbrev_days[i])
-			pfree(localized_abbrev_days[i]);
-		localized_abbrev_days[i] = ptr;
-
-		strftime(buf, MAX_L10N_DATA, "%A", timeinfo);
-		ptr = MemoryContextStrdup(TopMemoryContext, buf);
-		if (localized_full_days[i])
-			pfree(localized_full_days[i]);
-		localized_full_days[i] = ptr;
+		cache_single_time(&localized_abbrev_days[i], "%a", timeinfo);
+		cache_single_time(&localized_full_days[i], "%A", timeinfo);
 	}
 
 	/* localized months */
@@ -678,17 +701,8 @@ cache_locale_time(void)
 	{
 		timeinfo->tm_mon = i;
 		timeinfo->tm_mday = 1;	/* make sure we don't have invalid date */
-		strftime(buf, MAX_L10N_DATA, "%b", timeinfo);
-		ptr = MemoryContextStrdup(TopMemoryContext, buf);
-		if (localized_abbrev_months[i])
-			pfree(localized_abbrev_months[i]);
-		localized_abbrev_months[i] = ptr;
-
-		strftime(buf, MAX_L10N_DATA, "%B", timeinfo);
-		ptr = MemoryContextStrdup(TopMemoryContext, buf);
-		if (localized_full_months[i])
-			pfree(localized_full_months[i]);
-		localized_full_months[i] = ptr;
+		cache_single_time(&localized_abbrev_months[i], "%b", timeinfo);
+		cache_single_time(&localized_full_months[i], "%B", timeinfo);
 	}
 
 	/* try to restore internal settings */
