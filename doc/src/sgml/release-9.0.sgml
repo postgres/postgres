@@ -42,6 +42,57 @@
 
     <listitem>
      <para>
+      Avoid possible crash when client disconnects just before the
+      authentication timeout expires (Benkocs Norbert Attila)
+     </para>
+
+     <para>
+      If the timeout interrupt fired partway through the session shutdown
+      sequence, SSL-related state would be freed twice, typically causing a
+      crash and hence denial of service to other sessions.  Experimentation
+      shows that an unauthenticated remote attacker could trigger the bug
+      somewhat consistently, hence treat as security issue.
+      (CVE-2015-3165)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Consistently check for failure of the <function>*printf()</> family of
+      functions (Noah Misch)
+     </para>
+
+     <para>
+      Most calls of these functions did not consider the possibility that
+      the functions could fail with, eg, out-of-memory conditions.  The usual
+      result would just be missing output, but crashes or exposure of
+      unintended information are also possible.  To protect against such
+      risks uniformly, create wrappers around these functions that throw an
+      error on failure.  Also add missing error checks to a few
+      security-relevant calls of other system functions.
+      (CVE-2015-3166)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>contrib/pgcrypto</>, uniformly report decryption failures
+      as <quote>Wrong key or corrupt data</> (Noah Misch)
+     </para>
+
+     <para>
+      Previously, some cases of decryption with an incorrect key could report
+      other error message texts.  It has been shown that such variance in
+      error reports can aid attackers in recovering keys from other systems.
+      While it's unknown whether <filename>pgcrypto</>'s specific behaviors
+      are likewise exploitable, it seems better to avoid the risk by using a
+      one-size-fits-all message.
+      (CVE-2015-3167)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix incorrect checking of deferred exclusion constraints after a HOT
       update (Tom Lane)
      </para>
