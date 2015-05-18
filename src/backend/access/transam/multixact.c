@@ -383,6 +383,21 @@ MultiXactIdIsRunning(MultiXactId multi)
 
 	debug_elog3(DEBUG2, "IsRunning %u?", multi);
 
+	/*
+	 * During recovery, all multixacts can be considered not running: in
+	 * effect, tuple locks are not held in standby servers, which is fine
+	 * because the standby cannot acquire further tuple locks nor update/delete
+	 * tuples.
+	 *
+	 * We need to do this first, because GetMultiXactIdMembers complains if
+	 * called on recovery.
+	 */
+	if (RecoveryInProgress())
+	{
+		debug_elog2(DEBUG2, "IsRunning: in recovery");
+		return false;
+	}
+
 	nmembers = GetMultiXactIdMembers(multi, &members);
 
 	if (nmembers < 0)
