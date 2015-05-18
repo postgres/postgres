@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2012.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-18 17:47-0300\n"
+"POT-Creation-Date: 2015-05-17 16:23-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -71,7 +71,7 @@ msgstr "modo de retorno da função que retorna conjunto não é suportado"
 
 #: plpy_exec.c:91
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
+msgid "PL/Python set-returning functions only support returning one value per call."
 msgstr "funções PL/Python que retornam conjunto só suportam retornar um valor por chamada."
 
 #: plpy_exec.c:103
@@ -139,77 +139,77 @@ msgstr "ao criar valor de retorno"
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "não pode criar novo dicionário ao construir argumentos do gatilho"
 
-#: plpy_exec.c:664
+#: plpy_exec.c:662
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] removido, não pode modificar registro"
 
-#: plpy_exec.c:667
+#: plpy_exec.c:666
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] não é um dicionário"
 
-#: plpy_exec.c:691
+#: plpy_exec.c:690
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "chave do dicionário TD[\"new\"] na posição %d não é uma cadeia de caracteres"
 
-#: plpy_exec.c:697
+#: plpy_exec.c:696
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "chave \"%s\" encontrada em TD[\"new\"] não existe como uma coluna no registro do gatilho"
 
-#: plpy_exec.c:778
+#: plpy_exec.c:776
 #, c-format
 msgid "while modifying trigger row"
 msgstr "ao modificar registro de gatilho"
 
-#: plpy_exec.c:839
+#: plpy_exec.c:837
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "forçado a abortar subtransação que não foi concluída"
 
-#: plpy_main.c:100
+#: plpy_main.c:101
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "versão do Python não corresponde na sessão"
 
-#: plpy_main.c:101
+#: plpy_main.c:102
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Esta sessão utilizou Python versão %d, e agora está tentando utilizar Python versão %d."
 
-#: plpy_main.c:103
+#: plpy_main.c:104
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Inicie uma nova sessão para utilizar uma versão diferente do Python."
 
-#: plpy_main.c:118
+#: plpy_main.c:119
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "erro não interceptado na inicialização"
 
-#: plpy_main.c:141
+#: plpy_main.c:142
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "não pôde importar módulo \"__main__\""
 
-#: plpy_main.c:146
+#: plpy_main.c:147
 #, c-format
 msgid "could not create globals"
 msgstr "não pôde criar globais"
 
-#: plpy_main.c:150
+#: plpy_main.c:151
 #, c-format
 msgid "could not initialize globals"
 msgstr "não pôde inicializar globais"
 
-#: plpy_main.c:347
+#: plpy_main.c:355
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "função PL/Python \"%s\""
 
-#: plpy_main.c:354
+#: plpy_main.c:362
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloco de código PL/Python anônimo"
@@ -248,27 +248,27 @@ msgstr "não pode desempacotar argumentos em plpy.elog"
 msgid "could not parse error message in plpy.elog"
 msgstr "não pode analisar mensagem de erro em plpy.elog"
 
-#: plpy_procedure.c:194
+#: plpy_procedure.c:199
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: plpy_procedure.c:199 plpy_typeio.c:406
+#: plpy_procedure.c:204 plpy_typeio.c:406
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funções PL/Python não podem retornar tipo %s"
 
-#: plpy_procedure.c:281
+#: plpy_procedure.c:286
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "funções PL/Python não podem aceitar tipo %s"
 
-#: plpy_procedure.c:377
+#: plpy_procedure.c:382
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "não pôde compilar função PL/Python \"%s\""
 
-#: plpy_procedure.c:380
+#: plpy_procedure.c:385
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "não pôde compilar bloco de código PL/Python anônimo"
@@ -312,11 +312,6 @@ msgstr "SPI_execute_plan falhou: %s"
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute falhou: %s"
-
-#: plpy_spi.c:439
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "erro desconhecido em PLy_spi_execute_fetch_result"
 
 #: plpy_subxactobject.c:122
 #, c-format
