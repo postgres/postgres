@@ -20,6 +20,8 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (key, fruit) do nothing;
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (fruit, key, fruit, key) do nothing;
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (lower(fruit), key, lower(fruit), key) do nothing;
+explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (key, fruit) do update set fruit = excluded.fruit
+  where exists (select 1 from insertconflicttest ii where ii.key = excluded.key);
 -- Neither collation nor operator class specifications are required --
 -- supplying them merely *limits* matches to indexes with matching opclasses
 -- used for relevant indexes

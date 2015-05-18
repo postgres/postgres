@@ -1697,7 +1697,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			ExprState  *qualexpr;
 
 			qualexpr = ExecInitExpr((Expr *) node->onConflictWhere,
-									mtstate->mt_plans[0]);
+									&mtstate->ps);
 
 			resultRelInfo->ri_onConflictSetWhere = (List *) qualexpr;
 		}
