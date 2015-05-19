@@ -723,7 +723,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	int			nextitm;
 	OffsetNumber offnum;
 
-	Assert(nitems < MaxIndexTuplesPerPage);
+	Assert(nitems <= MaxIndexTuplesPerPage);
 
 	/*
 	 * If there aren't very many items to delete, then retail
