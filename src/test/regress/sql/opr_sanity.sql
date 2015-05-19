@@ -2,7 +2,7 @@
 -- OPR_SANITY
 -- Sanity checks for common errors in making operator/procedure system tables:
 -- pg_operator, pg_proc, pg_cast, pg_aggregate, pg_am,
--- pg_amop, pg_amproc, pg_opclass, pg_opfamily.
+-- pg_amop, pg_amproc, pg_opclass, pg_opfamily, pg_index.
 --
 -- Every test failure in this file should be closely inspected.
 -- The description of the failing test should be read carefully before
@@ -30,7 +30,9 @@ SELECT ($1 = $2) OR
  ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
-         oid = $1 and typelem != 0 and typlen = -1))
+         oid = $1 and typelem != 0 and typlen = -1)) OR
+ ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
+  (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
 $$ language sql strict stable;
 
 -- This one ignores castcontext, so it considers only physical equivalence
@@ -43,7 +45,9 @@ SELECT ($1 = $2) OR
  ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
-         oid = $1 and typelem != 0 and typlen = -1))
+         oid = $1 and typelem != 0 and typlen = -1)) OR
+ ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
+  (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
 $$ language sql strict stable;
 
 -- **************** pg_proc ****************
@@ -1316,3 +1320,66 @@ FROM pg_amproc AS p1, pg_proc AS p2
 WHERE p1.amproc = p2.oid AND
     p1.amproclefttype != p1.amprocrighttype AND
     p2.provolatile = 'v';
+
+-- **************** pg_index ****************
+
+-- Look for illegal values in pg_index fields.
+
+SELECT p1.indexrelid, p1.indrelid
+FROM pg_index as p1
+WHERE p1.indexrelid = 0 OR p1.indrelid = 0 OR
+      p1.indnatts <= 0 OR p1.indnatts > 32;
+
+-- oidvector and int2vector fields should be of length indnatts.
+
+SELECT p1.indexrelid, p1.indrelid
+FROM pg_index as p1
+WHERE array_lower(indkey, 1) != 0 OR array_upper(indkey, 1) != indnatts-1 OR
+    array_lower(indclass, 1) != 0 OR array_upper(indclass, 1) != indnatts-1 OR
+    array_lower(indcollation, 1) != 0 OR array_upper(indcollation, 1) != indnatts-1 OR
+    array_lower(indoption, 1) != 0 OR array_upper(indoption, 1) != indnatts-1;
+
+-- Check that opclasses and collations match the underlying columns.
+-- (As written, this test ignores expression indexes.)
+
+SELECT indexrelid::regclass, indrelid::regclass, attname, atttypid::regtype, opcname
+FROM (SELECT indexrelid, indrelid, unnest(indkey) as ikey,
+             unnest(indclass) as iclass, unnest(indcollation) as icoll
+      FROM pg_index) ss,
+      pg_attribute a,
+      pg_opclass opc
+WHERE a.attrelid = indrelid AND a.attnum = ikey AND opc.oid = iclass AND
+      (NOT binary_coercible(atttypid, opcintype) OR icoll != attcollation);
+
+-- For system catalogs, be even tighter: nearly all indexes should be
+-- exact type matches not binary-coercible matches.  At this writing
+-- the only exception is an OID index on a regproc column.
+
+SELECT indexrelid::regclass, indrelid::regclass, attname, atttypid::regtype, opcname
+FROM (SELECT indexrelid, indrelid, unnest(indkey) as ikey,
+             unnest(indclass) as iclass, unnest(indcollation) as icoll
+      FROM pg_index
+      WHERE indrelid < 16384) ss,
+      pg_attribute a,
+      pg_opclass opc
+WHERE a.attrelid = indrelid AND a.attnum = ikey AND opc.oid = iclass AND
+      (opcintype != atttypid OR icoll != attcollation)
+ORDER BY 1;
+
+-- Check for system catalogs with collation-sensitive ordering.  This is not
+-- a representational error in pg_index, but simply wrong catalog design.
+-- It's bad because we expect to be able to clone template0 and assign the
+-- copy a different database collation.  It would especially not work for
+-- shared catalogs.  Note that although text columns will show a collation
+-- in indcollation, they're still okay to index with text_pattern_ops,
+-- so allow that case.
+
+SELECT indexrelid::regclass, indrelid::regclass, iclass, icoll
+FROM (SELECT indexrelid, indrelid,
+             unnest(indclass) as iclass, unnest(indcollation) as icoll
+      FROM pg_index
+      WHERE indrelid < 16384) ss
+WHERE icoll != 0 AND iclass !=
+    (SELECT oid FROM pg_opclass
+     WHERE opcname = 'text_pattern_ops' AND opcmethod =
+           (SELECT oid FROM pg_am WHERE amname = 'btree'));
