@@ -6,7 +6,7 @@
 
   <note>
   <title>Release Date</title>
-  <simpara>2015-05-21</simpara>
+  <simpara>2015-05-22</simpara>
   </note>
 
   <para>
@@ -58,18 +58,24 @@
 
     <listitem>
      <para>
-      Consistently check for failure of the <function>*printf()</> family of
-      functions (Noah Misch)
+      Improve detection of system-call failures (Noah Misch)
      </para>
 
      <para>
-      Most calls of these functions did not consider the possibility that
-      the functions could fail with, eg, out-of-memory conditions.  The usual
-      result would just be missing output, but crashes or exposure of
-      unintended information are also possible.  To protect against such
-      risks uniformly, create wrappers around these functions that throw an
-      error on failure.  Also add missing error checks to a few
-      security-relevant calls of other system functions.
+      Our replacement implementation of <function>snprintf()</> failed to
+      check for errors reported by the underlying system library calls;
+      the main case that might be missed is out-of-memory situations.
+      In the worst case this might lead to information exposure, due to our
+      code assuming that a buffer had been overwritten when it hadn't been.
+      Also, there were a few places in which security-relevant calls of other
+      system library functions did not check for failure.
+     </para>
+
+     <para>
+      It remains possible that some calls of the <function>*printf()</>
+      family of functions are vulnerable to information disclosure if an
+      out-of-memory error occurs at just the wrong time.  We judge the risk
+      to not be large, but will continue analysis in this area.
       (CVE-2015-3166)
      </para>
     </listitem>
