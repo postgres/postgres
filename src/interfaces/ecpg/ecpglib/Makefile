@@ -25,7 +25,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o pgstrcasecmp.o syswrap.o \
+	connect.o misc.o path.o pgstrcasecmp.o \
 	$(filter snprintf.o strlcpy.o isinf.o, $(LIBOBJS))
 
 # thread.c is needed only for non-WIN32 implementation of path.c
@@ -58,7 +58,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-path.c pgstrcasecmp.c snprintf.c strlcpy.c syswrap.c thread.c isinf.c: % : $(top_srcdir)/src/port/%
+path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c isinf.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 misc.o: misc.c $(top_builddir)/src/port/pg_config_paths.h
@@ -75,6 +75,6 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS)
-	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c syswrap.c thread.c
+	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c
 
 maintainer-clean: distclean maintainer-clean-lib
