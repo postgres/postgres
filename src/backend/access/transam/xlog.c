@@ -2651,7 +2651,7 @@ XLogFlush(XLogRecPtr record)
 
 			/*
 			 * Re-check how far we can now flush the WAL. It's generally not
-			 * safe to call WaitXLogInsetionsToFinish while holding
+			 * safe to call WaitXLogInsertionsToFinish while holding
 			 * WALWriteLock, because an in-progress insertion might need to
 			 * also grab WALWriteLock to make progress. But we know that all
 			 * the insertions up to insertpos have already finished, because
