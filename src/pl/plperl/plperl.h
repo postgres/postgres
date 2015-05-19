@@ -37,8 +37,10 @@
  * So we undefine them here and redefine them after it's done its dirty deed.
  */
 
+#ifdef USE_REPL_SNPRINTF
 #undef snprintf
 #undef vsnprintf
+#endif
 
 
 /* required for perl API */
@@ -47,6 +49,7 @@
 #include "XSUB.h"
 
 /* put back our snprintf and vsnprintf */
+#ifdef USE_REPL_SNPRINTF
 #ifdef snprintf
 #undef snprintf
 #endif
@@ -54,12 +57,13 @@
 #undef vsnprintf
 #endif
 #ifdef __GNUC__
-#define vsnprintf(...)	vsnprintf_throw_on_fail(__VA_ARGS__)
-#define snprintf(...)	snprintf_throw_on_fail(__VA_ARGS__)
+#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
+#define snprintf(...)	pg_snprintf(__VA_ARGS__)
 #else
-#define vsnprintf		vsnprintf_throw_on_fail
-#define snprintf		snprintf_throw_on_fail
+#define vsnprintf		pg_vsnprintf
+#define snprintf		pg_snprintf
 #endif   /* __GNUC__ */
+#endif   /* USE_REPL_SNPRINTF */
 
 /* perl version and platform portability */
 #define NEED_eval_pv
