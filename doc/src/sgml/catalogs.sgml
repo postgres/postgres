@@ -5648,7 +5648,7 @@
 
      <row>
       <entry><structfield>provider</structfield></entry>
-      <entry><type>name</type></entry>
+      <entry><type>text</type></entry>
       <entry></entry>
       <entry>The label provider associated with this label.</entry>
      </row>
@@ -5937,7 +5937,7 @@
      </row>
      <row>
       <entry><structfield>provider</structfield></entry>
-      <entry><type>name</type></entry>
+      <entry><type>text</type></entry>
       <entry></entry>
       <entry>The label provider associated with this label.</entry>
      </row>
@@ -9025,7 +9025,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      </row>
      <row>
       <entry><structfield>provider</structfield></entry>
-      <entry><type>name</type></entry>
+      <entry><type>text</type></entry>
       <entry><literal><link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link>.provider</literal></entry>
       <entry>The label provider associated with this label.</entry>
      </row>

@@ -24,9 +24,9 @@ CATALOG(pg_shseclabel,3592) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	Oid			objoid;			/* OID of the shared object itself */
 	Oid			classoid;		/* OID of table containing the shared object */
-	NameData	provider;		/* name of label provider */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	text		provider BKI_FORCE_NOT_NULL; /* name of label provider */
 	text		label BKI_FORCE_NOT_NULL; /* security label of the object */
 #endif
 } FormData_pg_shseclabel;

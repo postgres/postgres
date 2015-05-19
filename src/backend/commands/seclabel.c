@@ -163,8 +163,8 @@ GetSharedSecurityLabel(const ObjectAddress *object, const char *provider)
 				ObjectIdGetDatum(object->classId));
 	ScanKeyInit(&keys[2],
 				Anum_pg_shseclabel_provider,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(provider));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(provider));
 
 	pg_shseclabel = heap_open(SharedSecLabelRelationId, AccessShareLock);
 
@@ -220,8 +220,8 @@ GetSecurityLabel(const ObjectAddress *object, const char *provider)
 				Int32GetDatum(object->objectSubId));
 	ScanKeyInit(&keys[3],
 				Anum_pg_seclabel_provider,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(provider));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(provider));
 
 	pg_seclabel = heap_open(SecLabelRelationId, AccessShareLock);
 
@@ -256,7 +256,6 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 	SysScanDesc scan;
 	HeapTuple	oldtup;
 	HeapTuple	newtup = NULL;
-	NameData	providername;
 	Datum		values[Natts_pg_shseclabel];
 	bool		nulls[Natts_pg_shseclabel];
 	bool		replaces[Natts_pg_shseclabel];
@@ -266,8 +265,7 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 	memset(replaces, false, sizeof(replaces));
 	values[Anum_pg_shseclabel_objoid - 1] = ObjectIdGetDatum(object->objectId);
 	values[Anum_pg_shseclabel_classoid - 1] = ObjectIdGetDatum(object->classId);
-	namestrcpy(&providername, provider);
-	values[Anum_pg_shseclabel_provider - 1] = NameGetDatum(&providername);
+	values[Anum_pg_shseclabel_provider - 1] = CStringGetTextDatum(provider);
 	if (label != NULL)
 		values[Anum_pg_shseclabel_label - 1] = CStringGetTextDatum(label);
 
@@ -282,8 +280,8 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 				ObjectIdGetDatum(object->classId));
 	ScanKeyInit(&keys[2],
 				Anum_pg_shseclabel_provider,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(provider));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(provider));
 
 	pg_shseclabel = heap_open(SharedSecLabelRelationId, RowExclusiveLock);
 
@@ -337,7 +335,6 @@ SetSecurityLabel(const ObjectAddress *object,
 	SysScanDesc scan;
 	HeapTuple	oldtup;
 	HeapTuple	newtup = NULL;
-	NameData	providername;
 	Datum		values[Natts_pg_seclabel];
 	bool		nulls[Natts_pg_seclabel];
 	bool		replaces[Natts_pg_seclabel];
@@ -355,8 +352,7 @@ SetSecurityLabel(const ObjectAddress *object,
 	values[Anum_pg_seclabel_objoid - 1] = ObjectIdGetDatum(object->objectId);
 	values[Anum_pg_seclabel_classoid - 1] = ObjectIdGetDatum(object->classId);
 	values[Anum_pg_seclabel_objsubid - 1] = Int32GetDatum(object->objectSubId);
-	namestrcpy(&providername, provider);
-	values[Anum_pg_seclabel_provider - 1] = NameGetDatum(&providername);
+	values[Anum_pg_seclabel_provider - 1] = CStringGetTextDatum(provider);
 	if (label != NULL)
 		values[Anum_pg_seclabel_label - 1] = CStringGetTextDatum(label);
 
@@ -375,8 +371,8 @@ SetSecurityLabel(const ObjectAddress *object,
 				Int32GetDatum(object->objectSubId));
 	ScanKeyInit(&keys[3],
 				Anum_pg_seclabel_provider,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(provider));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(provider));
 
 	pg_seclabel = heap_open(SecLabelRelationId, RowExclusiveLock);
 
