@@ -694,7 +694,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not get server's hostname from server certificate\n"));
+							  libpq_gettext("could not get server's host name from server certificate\n"));
 		}
 	}
 

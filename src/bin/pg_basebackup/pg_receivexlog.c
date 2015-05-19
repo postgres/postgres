@@ -479,17 +479,19 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (replication_slot == NULL && (do_drop_slot || do_create_slot))
+	if (do_drop_slot && do_create_slot)
 	{
-		fprintf(stderr, _("%s: --create-slot and --drop-slot need a slot to be specified using --slot\n"), progname);
+		fprintf(stderr, _("%s: cannot use --create-slot together with --drop-slot\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
 	}
 
-	if (do_drop_slot && do_create_slot)
+	if (replication_slot == NULL && (do_drop_slot || do_create_slot))
 	{
-		fprintf(stderr, _("%s: cannot use --create-slot together with --drop-slot\n"), progname);
+		/* translator: second %s is an option name */
+		fprintf(stderr, _("%s: %s needs a slot to be specified using --slot\n"), progname,
+				do_drop_slot ? "--drop-slot" : "--create-slot");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);

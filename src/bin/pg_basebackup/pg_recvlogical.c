@@ -852,7 +852,7 @@ main(int argc, char **argv)
 	if (db_name == NULL)
 	{
 		fprintf(stderr,
-				_("%s: failed to establish database specific replication connection\n"),
+				_("%s: could not establish database-specific replication connection\n"),
 				progname);
 		disconnect_and_exit(1);
 	}
