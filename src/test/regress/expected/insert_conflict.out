@@ -208,7 +208,7 @@ insert into insertconflicttest values (1, 'Apple') on conflict do update set fru
 ERROR:  ON CONFLICT DO UPDATE requires inference specification or constraint name
 LINE 1: ...nsert into insertconflicttest values (1, 'Apple') on conflic...
                                                              ^
-HINT:  For example, ON CONFLICT ON CONFLICT (<column>).
+HINT:  For example, ON CONFLICT (<column>).
 -- inference succeeds:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruit;
 insert into insertconflicttest values (2, 'Orange') on conflict (key, key, key) do update set fruit = excluded.fruit;

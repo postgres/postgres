@@ -5392,6 +5392,10 @@ get_insert_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "INSERT INTO %s ",
 					 generate_relation_name(rte->relid, NIL));
+	/* INSERT requires AS keyword for target alias */
+	if (rte->alias != NULL)
+		appendStringInfo(buf, "AS %s ",
+						 quote_identifier(rte->alias->aliasname));
 
 	/*
 	 * Add the insert-column-names list.  To handle indirection properly, we
@@ -5479,13 +5483,38 @@ get_insert_query_def(Query *query, deparse_context *context)
 	{
 		OnConflictExpr *confl = query->onConflict;
 
-		if (confl->action == ONCONFLICT_NOTHING)
+		appendStringInfo(buf, " ON CONFLICT");
+
+		if (confl->arbiterElems)
 		{
-			appendStringInfoString(buf, " ON CONFLICT DO NOTHING");
+			/* Add the single-VALUES expression list */
+			appendStringInfoChar(buf, '(');
+			get_rule_expr((Node *) confl->arbiterElems, context, false);
+			appendStringInfoChar(buf, ')');
+
+			/* Add a WHERE clause (for partial indexes) if given */
+			if (confl->arbiterWhere != NULL)
+			{
+				appendContextKeyword(context, " WHERE ",
+									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+				get_rule_expr(confl->arbiterWhere, context, false);
+			}
 		}
 		else
 		{
-			appendStringInfoString(buf, " ON CONFLICT DO UPDATE SET ");
+			char   *constraint = get_constraint_name(confl->constraint);
+
+			appendStringInfo(buf, " ON CONSTRAINT %s",
+							 quote_qualified_identifier(NULL, constraint));
+		}
+
+		if (confl->action == ONCONFLICT_NOTHING)
+		{
+			appendStringInfoString(buf, " DO NOTHING");
+		}
+		else
+		{
+			appendStringInfoString(buf, " DO UPDATE SET ");
 			/* Deparse targetlist */
 			get_update_query_targetlist_def(query, confl->onConflictSet,
 											context, rte);
@@ -7883,6 +7912,52 @@ get_rule_expr(Node *node, deparse_context *context,
 				else
 					appendStringInfo(buf, "CURRENT OF $%d",
 									 cexpr->cursor_param);
+			}
+			break;
+
+		case T_InferenceElem:
+			{
+				InferenceElem  *iexpr = (InferenceElem *) node;
+				bool			varprefix = context->varprefix;
+				bool			need_parens;
+
+				/*
+				 * InferenceElem can only refer to target relation, so a
+				 * prefix is never useful.
+				 */
+				context->varprefix = false;
+
+				/*
+				 * Parenthesize the element unless it's a simple Var or a bare
+				 * function call.  Follows pg_get_indexdef_worker().
+				 */
+				need_parens = !IsA(iexpr->expr, Var);
+				if (IsA(iexpr->expr, FuncExpr) &&
+					((FuncExpr *) iexpr->expr)->funcformat ==
+					COERCE_EXPLICIT_CALL)
+					need_parens = false;
+
+				if (need_parens)
+					appendStringInfoChar(buf, '(');
+				get_rule_expr((Node *) iexpr->expr,
+							  context, false);
+				if (need_parens)
+					appendStringInfoChar(buf, ')');
+
+				context->varprefix = varprefix;
+
+				if (iexpr->infercollid)
+					appendStringInfo(buf, " COLLATE %s",
+									 generate_collation_name(iexpr->infercollid));
+
+				/* Add the operator class name, if not default */
+				if (iexpr->inferopclass)
+				{
+					Oid		inferopclass = iexpr->inferopclass;
+					Oid		inferopcinputtype = get_opclass_input_type(iexpr->inferopclass);
+
+					get_opclass_name(inferopclass, inferopcinputtype, buf);
+				}
 			}
 			break;
 

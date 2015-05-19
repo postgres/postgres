@@ -2677,6 +2677,34 @@ Rules:
  NOTIFY rules_src_deletion
 
 --
+-- Ensure a aliased target relation for insert is correctly deparsed.
+--
+create rule r4 as on insert to rules_src do instead insert into rules_log AS trgt SELECT NEW.* RETURNING trgt.f1, trgt.f2;
+create rule r5 as on update to rules_src do instead UPDATE rules_log AS trgt SET tag = 'updated' WHERE trgt.f1 = new.f1;
+\d+ rules_src
+                      Table "public.rules_src"
+ Column |  Type   | Modifiers | Storage | Stats target | Description 
+--------+---------+-----------+---------+--------------+-------------
+ f1     | integer |           | plain   |              | 
+ f2     | integer |           | plain   |              | 
+Rules:
+    r1 AS
+    ON UPDATE TO rules_src DO  INSERT INTO rules_log (f1, f2, tag) VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
+    r2 AS
+    ON UPDATE TO rules_src DO  VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
+    r3 AS
+    ON DELETE TO rules_src DO
+ NOTIFY rules_src_deletion
+    r4 AS
+    ON INSERT TO rules_src DO INSTEAD  INSERT INTO rules_log AS trgt (f1, f2)  SELECT new.f1,
+            new.f2
+  RETURNING trgt.f1,
+    trgt.f2
+    r5 AS
+    ON UPDATE TO rules_src DO INSTEAD  UPDATE rules_log trgt SET tag = 'updated'::text
+  WHERE trgt.f1 = new.f1
+
+--
 -- check alter rename rule
 --
 CREATE TABLE rule_t1 (a INT);
@@ -2778,16 +2806,19 @@ CREATE TABLE hats (
 	hat_color   char(10)      -- hat color
 );
 CREATE TABLE hat_data (
-	hat_name    char(10) primary key,
+	hat_name    char(10),
 	hat_color   char(10)      -- hat color
 );
+create unique index hat_data_unique_idx
+  on hat_data (hat_name COLLATE "C" bpchar_pattern_ops);
 -- okay
 CREATE RULE hat_nosert AS ON INSERT TO hats
     DO INSTEAD
     INSERT INTO hat_data VALUES (
            NEW.hat_name,
            NEW.hat_color)
-        ON CONFLICT (hat_name) DO NOTHING RETURNING *;
+        ON CONFLICT (hat_name COLLATE "C" bpchar_pattern_ops) WHERE hat_color = 'green'
+        DO NOTHING RETURNING *;
 -- Works (projects row)
 INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
   hat_name  | hat_color  
@@ -2803,12 +2834,13 @@ INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
 
 SELECT tablename, rulename, definition FROM pg_rules
 	WHERE tablename = 'hats';
- tablename |  rulename  |                                  definition                                  
------------+------------+------------------------------------------------------------------------------
- hats      | hat_nosert | CREATE RULE hat_nosert AS                                                   +
-           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)+
-           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO NOTHING               +
-           |            |   RETURNING hat_data.hat_name,                                              +
+ tablename |  rulename  |                                         definition                                          
+-----------+------------+---------------------------------------------------------------------------------------------
+ hats      | hat_nosert | CREATE RULE hat_nosert AS                                                                  +
+           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)               +
+           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name COLLATE "C" bpchar_pattern_ops)+
+           |            |   WHERE (hat_data.hat_color = 'green'::bpchar) DO NOTHING                                  +
+           |            |   RETURNING hat_data.hat_name,                                                             +
            |            |     hat_data.hat_color;
 (1 row)
 
@@ -2861,13 +2893,13 @@ SELECT * FROM hat_data WHERE hat_name = 'h8';
 
 SELECT tablename, rulename, definition FROM pg_rules
 	WHERE tablename = 'hats';
- tablename |  rulename  |                                                          definition                                                           
------------+------------+-------------------------------------------------------------------------------------------------------------------------------
- hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                                                    +
-           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                 +
-           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
-           |            |   WHERE (excluded.hat_color <> 'forbidden'::bpchar)                                                                          +
-           |            |   RETURNING hat_data.hat_name,                                                                                               +
+ tablename |  rulename  |                                                               definition                                                                
+-----------+------------+-----------------------------------------------------------------------------------------------------------------------------------------
+ hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                                                              +
+           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                           +
+           |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
+           |            |   WHERE (excluded.hat_color <> 'forbidden'::bpchar)                                                                                    +
+           |            |   RETURNING hat_data.hat_name,                                                                                                         +
            |            |     hat_data.hat_color;
 (1 row)
 
@@ -2877,7 +2909,7 @@ explain (costs off) INSERT INTO hats VALUES ('h8', 'forbidden') RETURNING *;
 ----------------------------------------------------------------
  Insert on hat_data
    Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: hat_data_pkey
+   Conflict Arbiter Indexes: hat_data_unique_idx
    Conflict Filter: (excluded.hat_color <> 'forbidden'::bpchar)
    ->  Result
 (5 rows)
@@ -2909,7 +2941,7 @@ RETURNING *;
 ----------------------------------------------------------------
  Insert on hat_data
    Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: hat_data_pkey
+   Conflict Arbiter Indexes: hat_data_unique_idx
    Conflict Filter: (excluded.hat_color <> 'forbidden'::bpchar)
    CTE data
      ->  Values Scan on "*VALUES*"
