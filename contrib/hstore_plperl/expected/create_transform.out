@@ -23,21 +23,22 @@ CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION internal_in(
 ERROR:  first argument of transform function must be type "internal"
 CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
 CREATE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- fail
-ERROR:  transform for type hstore language plperl already exists
+ERROR:  transform for type hstore language "plperl" already exists
 CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal), TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
 CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plperl (FROM SQL WITH FUNCTION hstore_to_plperl(internal));  -- ok
 CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plperl (TO SQL WITH FUNCTION plperl_to_hstore(internal));  -- ok
+COMMENT ON TRANSFORM FOR hstore LANGUAGE plperl IS 'test';
 DROP TRANSFORM IF EXISTS FOR fake_type LANGUAGE plperl;
 NOTICE:  type "fake_type" does not exist, skipping
 DROP TRANSFORM IF EXISTS FOR hstore LANGUAGE fake_lang;
-NOTICE:  transform for type hstore language fake_lang does not exist, skipping
+NOTICE:  transform for type hstore language "fake_lang" does not exist, skipping
 DROP TRANSFORM FOR foo LANGUAGE plperl;
 ERROR:  type "foo" does not exist
 DROP TRANSFORM FOR hstore LANGUAGE foo;
 ERROR:  language "foo" does not exist
 DROP TRANSFORM FOR hstore LANGUAGE plperl;
 DROP TRANSFORM IF EXISTS FOR hstore LANGUAGE plperl;
-NOTICE:  transform for type hstore language plperl does not exist, skipping
+NOTICE:  transform for type hstore language "plperl" does not exist, skipping
 DROP FUNCTION hstore_to_plperl(val internal);
 DROP FUNCTION plperl_to_hstore(val internal);
 CREATE EXTENSION hstore_plperl;

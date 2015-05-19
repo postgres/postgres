@@ -1867,7 +1867,7 @@ CreateTransform(CreateTransformStmt *stmt)
 		if (!stmt->replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("transform for type %s language %s already exists",
+					 errmsg("transform for type %s language \"%s\" already exists",
 							format_type_be(typeid),
 							stmt->lang)));
 

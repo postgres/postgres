@@ -4112,7 +4112,7 @@ AlterExtensionContentsStmt:
 					n->action = $4;
 					n->objtype = OBJECT_TRANSFORM;
 					n->objname = list_make1($7);
-					n->objargs = list_make1($9);
+					n->objargs = list_make1(makeString($9));
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop TYPE_P Typename
@@ -5773,7 +5773,7 @@ CommentStmt:
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TRANSFORM;
 					n->objname = list_make1($5);
-					n->objargs = list_make1($7);
+					n->objargs = list_make1(makeString($7));
 					n->comment = $9;
 					$$ = (Node *) n;
 				}
@@ -7389,7 +7389,7 @@ DropTransformStmt: DROP TRANSFORM opt_if_exists FOR Typename LANGUAGE name opt_d
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_TRANSFORM;
 					n->objects = list_make1(list_make1($5));
-					n->arguments = list_make1(list_make1($7));
+					n->arguments = list_make1(list_make1(makeString($7)));
 					n->behavior = $8;
 					n->missing_ok = $3;
 					$$ = (Node *)n;

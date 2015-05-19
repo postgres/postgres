@@ -770,7 +770,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_TRANSFORM:
 				{
 					TypeName   *typename = (TypeName *) linitial(objname);
-					char	   *langname = (char *) linitial(objargs);
+					char	   *langname = strVal(linitial(objargs));
 					Oid			type_id = LookupTypeNameOid(NULL, typename, missing_ok);
 					Oid			lang_id = get_language_oid(langname, missing_ok);
 
