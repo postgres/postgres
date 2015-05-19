@@ -5,5 +5,4 @@
 /path.c
 /pgstrcasecmp.c
 /strlcpy.c
-/syswrap.c
 /thread.c
