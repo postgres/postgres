@@ -438,8 +438,8 @@ infer_arbiter_indexes(PlannerInfo *root)
 	Bitmapset  *inferAttrs = NULL;
 	List	   *inferElems = NIL;
 
-	/* Result */
-	List	   *candidates = NIL;
+	/* Results */
+	List	   *results = NIL;
 
 	/*
 	 * Quickly return NIL for ON CONFLICT DO NOTHING without an inference
@@ -565,11 +565,11 @@ infer_arbiter_indexes(PlannerInfo *root)
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
 
-			candidates = lappend_oid(candidates, idxForm->indexrelid);
+			results = lappend_oid(results, idxForm->indexrelid);
 			list_free(indexList);
 			index_close(idxRel, NoLock);
 			heap_close(relation, NoLock);
-			return candidates;
+			return results;
 		}
 		else if (indexOidFromConstraint != InvalidOid)
 		{
@@ -633,7 +633,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 			 * index definition.
 			 */
 			if (elem->infercollid != InvalidOid ||
-				elem->inferopfamily != InvalidOid ||
+				elem->inferopclass != InvalidOid ||
 				list_member(idxExprs, elem->expr))
 				continue;
 
@@ -660,7 +660,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		if (!predicate_implied_by(predExprs, whereExplicit))
 			goto next;
 
-		candidates = lappend_oid(candidates, idxForm->indexrelid);
+		results = lappend_oid(results, idxForm->indexrelid);
 next:
 		index_close(idxRel, NoLock);
 	}
@@ -668,12 +668,12 @@ next:
 	list_free(indexList);
 	heap_close(relation, NoLock);
 
-	if (candidates == NIL)
+	if (results == NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("there is no unique or exclusion constraint matching the ON CONFLICT specification")));
 
-	return candidates;
+	return results;
 }
 
 /*
@@ -709,13 +709,24 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 							  Bitmapset *inferAttrs, List *idxExprs)
 {
 	AttrNumber	natt;
+	Oid			inferopfamily = InvalidOid;		/* OID of att opfamily */
+	Oid			inferopcinputtype = InvalidOid;		/* OID of att opfamily */
 
 	/*
 	 * If inference specification element lacks collation/opclass, then no
 	 * need to check for exact match.
 	 */
-	if (elem->infercollid == InvalidOid && elem->inferopfamily == InvalidOid)
+	if (elem->infercollid == InvalidOid && elem->inferopclass == InvalidOid)
 		return true;
+
+	/*
+	 * Lookup opfamily and input type, for matching indexes
+	 */
+	if (elem->inferopclass)
+	{
+		inferopfamily = get_opclass_family(elem->inferopclass);
+		inferopcinputtype = get_opclass_input_type(elem->inferopclass);
+	}
 
 	for (natt = 1; natt <= idxRel->rd_att->natts; natt++)
 	{
@@ -723,9 +734,8 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 		Oid		opcinputtype = idxRel->rd_opcintype[natt - 1];
 		Oid		collation = idxRel->rd_indcollation[natt - 1];
 
-		if (elem->inferopfamily != InvalidOid &&
-			(elem->inferopfamily != opfamily ||
-			 elem->inferopcinputtype != opcinputtype))
+		if (elem->inferopclass != InvalidOid &&
+			(inferopfamily != opfamily || inferopcinputtype != opcinputtype))
 		{
 			/* Attribute needed to match opclass, but didn't */
 			continue;

@@ -1214,8 +1214,7 @@ _readInferenceElem(void)
 
 	READ_NODE_FIELD(expr);
 	READ_OID_FIELD(infercollid);
-	READ_OID_FIELD(inferopfamily);
-	READ_OID_FIELD(inferopcinputtype);
+	READ_OID_FIELD(inferopclass);
 
 	READ_DONE();
 }

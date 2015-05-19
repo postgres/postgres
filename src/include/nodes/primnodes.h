@@ -1198,8 +1198,7 @@ typedef struct InferenceElem
 	Expr		xpr;
 	Node	   *expr;				/* expression to infer from, or NULL */
 	Oid			infercollid;		/* OID of collation, or InvalidOid */
-	Oid			inferopfamily;		/* OID of att opfamily, or InvalidOid */
-	Oid			inferopcinputtype;	/* OID of att input type, or InvalidOid */
+	Oid			inferopclass;		/* OID of att opclass, or InvalidOid */
 } InferenceElem;
 
 /*--------------------

@@ -2645,8 +2645,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				InferenceElem *ie = (InferenceElem *) node;
 
 				APP_JUMB(ie->infercollid);
-				APP_JUMB(ie->inferopfamily);
-				APP_JUMB(ie->inferopcinputtype);
+				APP_JUMB(ie->inferopclass);
 				JumbleExpr(jstate, ie->expr);
 			}
 			break;

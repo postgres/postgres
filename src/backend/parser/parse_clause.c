@@ -2730,18 +2730,10 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 												  exprLocation(pInfer->expr));
 
 		if (!ielem->opclass)
-		{
-			pInfer->inferopfamily = InvalidOid;
-			pInfer->inferopcinputtype = InvalidOid;
-		}
+			pInfer->inferopclass = InvalidOid;
 		else
-		{
-			Oid		opclass = get_opclass_oid(BTREE_AM_OID, ielem->opclass,
-											  false);
-
-			pInfer->inferopfamily = get_opclass_family(opclass);
-			pInfer->inferopcinputtype = get_opclass_input_type(opclass);
-		}
+			pInfer->inferopclass = get_opclass_oid(BTREE_AM_OID,
+												   ielem->opclass, false);
 
 		result = lappend(result, pInfer);
 	}

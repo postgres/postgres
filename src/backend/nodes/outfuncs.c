@@ -1474,8 +1474,7 @@ _outInferenceElem(StringInfo str, const InferenceElem *node)
 
 	WRITE_NODE_FIELD(expr);
 	WRITE_OID_FIELD(infercollid);
-	WRITE_OID_FIELD(inferopfamily);
-	WRITE_OID_FIELD(inferopcinputtype);
+	WRITE_OID_FIELD(inferopclass);
 }
 
 static void

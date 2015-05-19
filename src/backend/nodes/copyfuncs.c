@@ -1839,8 +1839,7 @@ _copyInferenceElem(const InferenceElem *from)
 
 	COPY_NODE_FIELD(expr);
 	COPY_SCALAR_FIELD(infercollid);
-	COPY_SCALAR_FIELD(inferopfamily);
-	COPY_SCALAR_FIELD(inferopcinputtype);
+	COPY_SCALAR_FIELD(inferopclass);
 
 	return newnode;
 }

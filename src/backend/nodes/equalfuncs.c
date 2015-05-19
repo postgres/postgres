@@ -702,8 +702,7 @@ _equalInferenceElem(const InferenceElem *a, const InferenceElem *b)
 {
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_SCALAR_FIELD(infercollid);
-	COMPARE_SCALAR_FIELD(inferopfamily);
-	COMPARE_SCALAR_FIELD(inferopcinputtype);
+	COMPARE_SCALAR_FIELD(inferopclass);
 
 	return true;
 }
