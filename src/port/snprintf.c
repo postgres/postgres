@@ -99,7 +99,6 @@
 /* Prevent recursion */
 #undef	vsnprintf
 #undef	snprintf
-#undef	vsprintf
 #undef	sprintf
 #undef	vfprintf
 #undef	fprintf
@@ -176,7 +175,7 @@ pg_snprintf(char *str, size_t count, const char *fmt,...)
 	return len;
 }
 
-int
+static int
 pg_vsprintf(char *str, const char *fmt, va_list args)
 {
 	PrintfTarget target;

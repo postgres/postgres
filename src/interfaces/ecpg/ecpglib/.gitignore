@@ -5,7 +5,6 @@
 /pgstrcasecmp.c
 /snprintf.c
 /strlcpy.c
-/syswrap.c
 /thread.c
 /win32setlocale.c
 /isinf.c

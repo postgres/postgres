@@ -13,7 +13,6 @@
 /strerror.c
 /strlcpy.c
 /system.c
-/syswrap.c
 /thread.c
 /win32error.c
 /win32setlocale.c
