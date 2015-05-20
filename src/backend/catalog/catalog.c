@@ -117,7 +117,7 @@ IsCatalogClass(Oid relid, Form_pg_class reltuple)
 	 * We could instead check whether the relation is pinned in pg_depend, but
 	 * this is noticeably cheaper and doesn't require catalog access.
 	 *
-	 * This test is safe since even a oid wraparound will preserve this
+	 * This test is safe since even an oid wraparound will preserve this
 	 * property (c.f. GetNewObjectId()) and it has the advantage that it works
 	 * correctly even if a user decides to create a relation in the pg_catalog
 	 * namespace.

@@ -62,7 +62,7 @@
  *		an existing SIREAD lock for the same transaction, the SIREAD lock
  *		can be deleted.
  *
- * (7)	A write from a serializable transaction must ensure that a xact
+ * (7)	A write from a serializable transaction must ensure that an xact
  *		record exists for the transaction, with the same lifespan (until
  *		all concurrent transaction complete or the transaction is rolled
  *		back) so that rw-dependencies to that transaction can be
@@ -4745,7 +4745,7 @@ AtPrepare_PredicateLocks(void)
 	if (MySerializableXact == InvalidSerializableXact)
 		return;
 
-	/* Generate a xact record for our SERIALIZABLEXACT */
+	/* Generate an xact record for our SERIALIZABLEXACT */
 	record.type = TWOPHASEPREDICATERECORD_XACT;
 	xactRecord->xmin = MySerializableXact->xmin;
 	xactRecord->flags = MySerializableXact->flags;

@@ -119,7 +119,7 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 }
 
 /*
- * Perform XLogInsert of a XLOG_SMGR_CREATE record to WAL.
+ * Perform XLogInsert of an XLOG_SMGR_CREATE record to WAL.
  */
 void
 log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum)

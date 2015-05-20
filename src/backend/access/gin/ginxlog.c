@@ -409,7 +409,7 @@ ginRedoSplit(XLogReaderState *record)
 
 /*
  * VACUUM_PAGE record contains simply a full image of the page, similar to
- * a XLOG_FPI record.
+ * an XLOG_FPI record.
  */
 static void
 ginRedoVacuumPage(XLogReaderState *record)

@@ -118,7 +118,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		 * In write-mode, allow _bt_moveright to finish any incomplete splits
 		 * along the way.  Strictly speaking, we'd only need to finish an
 		 * incomplete split on the leaf page we're about to insert to, not on
-		 * any of the upper levels (they is taken care of in _bt_getstackbuf,
+		 * any of the upper levels (they are taken care of in _bt_getstackbuf,
 		 * if the leaf page is split and we insert to the parent page).  But
 		 * this is a good opportunity to finish splits of internal pages too.
 		 */

@@ -5107,7 +5107,7 @@ l5:
 /*
  * Subroutine for heap_lock_updated_tuple_rec.
  *
- * Given an hypothetical multixact status held by the transaction identified
+ * Given a hypothetical multixact status held by the transaction identified
  * with the given xid, does the current transaction need to wait, fail, or can
  * it continue if it wanted to acquire a lock of the given mode?  "needwait"
  * is set to true if waiting is necessary; if it can continue, then
@@ -7139,7 +7139,7 @@ log_heap_update(Relation reln, Buffer oldbuf,
 }
 
 /*
- * Perform XLogInsert of a XLOG_HEAP2_NEW_CID record
+ * Perform XLogInsert of an XLOG_HEAP2_NEW_CID record
  *
  * This is only used in wal_level >= WAL_LEVEL_LOGICAL, and only for catalog
  * tuples.
@@ -7179,7 +7179,7 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 		 *
 		 * We need to check for LOCK ONLY because multixacts might be
 		 * transferred to the new tuple in case of FOR KEY SHARE updates in
-		 * which case there will be a xmax, although the tuple just got
+		 * which case there will be an xmax, although the tuple just got
 		 * inserted.
 		 */
 		if (hdr->t_infomask & HEAP_XMAX_INVALID ||
@@ -7217,7 +7217,7 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
  * Build a heap tuple representing the configured REPLICA IDENTITY to represent
  * the old tuple in a UPDATE or DELETE.
  *
- * Returns NULL if there's no need to log a identity or if there's no suitable
+ * Returns NULL if there's no need to log an identity or if there's no suitable
  * key in the Relation relation.
  */
 static HeapTuple

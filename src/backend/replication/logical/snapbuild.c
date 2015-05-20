@@ -79,7 +79,7 @@
  *	  +--->|SNAPBUILD_CONSISTENT	 |<------------+
  *		   +-------------------------+
  *
- * Initially the machinery is in the START stage. When a xl_running_xacts
+ * Initially the machinery is in the START stage. When an xl_running_xacts
  * record is read that is sufficiently new (above the safe xmin horizon),
  * there's a state transition. If there were no running xacts when the
  * runnign_xacts record was generated, we'll directly go into CONSISTENT
@@ -161,7 +161,7 @@ struct SnapBuild
 
 	/*
 	 * Don't start decoding WAL until the "xl_running_xacts" information
-	 * indicates there are no running xids with a xid smaller than this.
+	 * indicates there are no running xids with an xid smaller than this.
 	 */
 	TransactionId initial_xmin_horizon;
 
@@ -683,8 +683,9 @@ SnapBuildProcessChange(SnapBuild *builder, TransactionId xid, XLogRecPtr lsn)
 }
 
 /*
- * Do CommandId/ComboCid handling after reading a xl_heap_new_cid record. This
- * implies that a transaction has done some form of write to system catalogs.
+ * Do CommandId/ComboCid handling after reading an xl_heap_new_cid record.
+ * This implies that a transaction has done some form of write to system
+ * catalogs.
  */
 void
 SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,

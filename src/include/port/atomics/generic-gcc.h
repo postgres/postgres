@@ -117,7 +117,7 @@ typedef struct pg_atomic_uint64
 static inline bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	/* NB: only a acquire barrier, not a full one */
+	/* NB: only an acquire barrier, not a full one */
 	/* some platform only support a 1 here */
 	return __sync_lock_test_and_set(&ptr->value, 1) == 0;
 }

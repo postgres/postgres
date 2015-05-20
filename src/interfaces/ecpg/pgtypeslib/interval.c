@@ -980,7 +980,7 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 
 
 /* interval2tm()
- * Convert a interval data type to a tm structure.
+ * Convert an interval data type to a tm structure.
  */
 static int
 interval2tm(interval span, struct tm * tm, fsec_t *fsec)

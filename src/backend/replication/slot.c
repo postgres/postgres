@@ -437,7 +437,7 @@ ReplicationSlotDropAcquired(void)
 	/*
 	 * Rename the slot directory on disk, so that we'll no longer recognize
 	 * this as a valid slot.  Note that if this fails, we've got to mark the
-	 * slot inactive before bailing out.  If we're dropping a ephemeral slot,
+	 * slot inactive before bailing out.  If we're dropping an ephemeral slot,
 	 * we better never fail hard as the caller won't expect the slot to
 	 * survive and this might get called during error handling.
 	 */
@@ -546,7 +546,7 @@ ReplicationSlotMarkDirty(void)
 
 /*
  * Convert a slot that's marked as RS_EPHEMERAL to a RS_PERSISTENT slot,
- * guaranteeing it will be there after a eventual crash.
+ * guaranteeing it will be there after an eventual crash.
  */
 void
 ReplicationSlotPersist(void)

@@ -53,7 +53,7 @@
  * Speculative insertion
  * ---------------------
  *
- * Speculative insertion is a is a two-phase mechanism, used to implement
+ * Speculative insertion is a two-phase mechanism used to implement
  * INSERT ... ON CONFLICT DO UPDATE/NOTHING.  The tuple is first inserted
  * to the heap and update the indexes as usual, but if a constraint is
  * violated, we can still back out the insertion without aborting the whole

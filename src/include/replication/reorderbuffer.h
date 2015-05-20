@@ -245,7 +245,7 @@ typedef struct ReorderBufferTXN
 	/* ---
 	 * Position in one of three lists:
 	 * * list of subtransactions if we are *known* to be subxact
-	 * * list of toplevel xacts (can be a as-yet unknown subxact)
+	 * * list of toplevel xacts (can be am as-yet unknown subxact)
 	 * * list of preallocated ReorderBufferTXNs
 	 * ---
 	 */

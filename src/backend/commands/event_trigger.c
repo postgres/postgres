@@ -1771,7 +1771,7 @@ EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
  * EventTriggerAlterTableEnd
  *		Finish up saving an ALTER TABLE command, and add it to command list.
  *
- * FIXME this API isn't considering the possibility that a xact/subxact is
+ * FIXME this API isn't considering the possibility that an xact/subxact is
  * aborted partway through.  Probably it's best to add an
  * AtEOSubXact_EventTriggers() to fix this.
  */

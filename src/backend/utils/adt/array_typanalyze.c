@@ -157,7 +157,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 }
 
 /*
- * compute_array_stats() -- compute statistics for a array column
+ * compute_array_stats() -- compute statistics for an array column
  *
  * This function computes statistics useful for determining selectivity of
  * the array operators <@, &&, and @>.  It is invoked by ANALYZE via the

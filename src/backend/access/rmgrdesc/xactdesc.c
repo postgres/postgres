@@ -21,7 +21,7 @@
 #include "utils/timestamp.h"
 
 /*
- * Parse the WAL format of a xact commit and abort records into a easier to
+ * Parse the WAL format of an xact commit and abort records into an easier to
  * understand format.
  *
  * This routines are in xactdesc.c because they're accessed in backend (when

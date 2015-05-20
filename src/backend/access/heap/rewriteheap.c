@@ -195,7 +195,7 @@ typedef struct
 typedef OldToNewMappingData *OldToNewMapping;
 
 /*
- * In-Memory data for a xid that might need logical remapping entries
+ * In-Memory data for an xid that might need logical remapping entries
  * to be logged.
  */
 typedef struct RewriteMappingFile

@@ -1335,7 +1335,7 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 	else
 	{
 		/*
-		 * if prefix is a all non-chaged part's length then all word contains
+		 * if prefix is an all non-changed part's length then all word contains
 		 * only prefix and suffix, so out
 		 */
 		if (baselen && *baselen + strlen(Affix->find) <= Affix->replen)

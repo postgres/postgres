@@ -3346,7 +3346,7 @@ CopyReadLineText(CopyState cstate)
 			 * just use the char as a toggle. If they are different, we need
 			 * to ensure that we only take account of an escape inside a
 			 * quoted field and immediately preceding a quote char, and not
-			 * the second in a escape-escape sequence.
+			 * the second in an escape-escape sequence.
 			 */
 			if (in_quote && c == escapec)
 				last_was_esc = !last_was_esc;

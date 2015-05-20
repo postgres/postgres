@@ -1963,7 +1963,7 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 
 
 /* interval2tm()
- * Convert a interval data type to a tm structure.
+ * Convert an interval data type to a tm structure.
  */
 int
 interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
@@ -2907,7 +2907,7 @@ interval_justify_days(PG_FUNCTION_ARGS)
 }
 
 /* timestamp_pl_interval()
- * Add a interval to a timestamp data type.
+ * Add an interval to a timestamp data type.
  * Note that interval has provisions for qualitative year/month and day
  *	units, so try to do the right thing with them.
  * To add a month, increment the month, and use the same day of month.
@@ -3007,7 +3007,7 @@ timestamp_mi_interval(PG_FUNCTION_ARGS)
 
 
 /* timestamptz_pl_interval()
- * Add a interval to a timestamp with time zone data type.
+ * Add an interval to a timestamp with time zone data type.
  * Note that interval has provisions for qualitative year/month
  *	units, so try to do the right thing with them.
  * To add a month, increment the month, and use the same day of month.

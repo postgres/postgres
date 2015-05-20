@@ -33,7 +33,7 @@ uint64		SharedInvalidMessageCounter;
  * through a cache reset exercise.  This is done by sending
  * PROCSIG_CATCHUP_INTERRUPT to any backend that gets too far behind.
  *
- * The signal handler will set a interrupt pending flag and will set the
+ * The signal handler will set an interrupt pending flag and will set the
  * processes latch. Whenever starting to read from the client, or when
  * interrupted while doing so, ProcessClientReadInterrupt() will call
  * ProcessCatchupEvent().

@@ -492,7 +492,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 /*
  * Return a pinned and exclusively locked buffer which can be used to insert an
  * index item of size itemsz.  If oldbuf is a valid buffer, it is also locked
- * (in a order determined to avoid deadlocks.)
+ * (in an order determined to avoid deadlocks.)
  *
  * If there's no existing page with enough free space to accomodate the new
  * item, the relation is extended.  If this happens, *extended is set to true.

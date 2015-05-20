@@ -429,7 +429,7 @@ typedef struct
 	 * whose split this insertion finishes. As BlockIdData[2] (beware of
 	 * adding fields before this that would make them not 16-bit aligned)
 	 *
-	 * 2. an ginxlogInsertEntry or ginxlogRecompressDataLeaf struct, depending
+	 * 2. a ginxlogInsertEntry or ginxlogRecompressDataLeaf struct, depending
 	 * on tree type.
 	 *
 	 * NB: the below structs are only 16-bit aligned when appended to a

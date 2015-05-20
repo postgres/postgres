@@ -7,7 +7,7 @@ SELECT txid_current() = 0;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 ROLLBACK;
 
--- fail because we're creating a slot while in an subxact whose topxact has a xid
+-- fail because we're creating a slot while in a subxact whose topxact has an xid
 BEGIN;
 SELECT txid_current() = 0;
 SAVEPOINT barf;

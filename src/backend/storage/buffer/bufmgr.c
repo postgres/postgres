@@ -101,13 +101,13 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
  * Each buffer also has a private refcount that keeps track of the number of
  * times the buffer is pinned in the current process.  This is so that the
  * shared refcount needs to be modified only once if a buffer is pinned more
- * than once by a individual backend.  It's also used to check that no buffers
+ * than once by an individual backend.  It's also used to check that no buffers
  * are still pinned at the end of transactions and when exiting.
  *
  *
  * To avoid - as we used to - requiring an array with NBuffers entries to keep
  * track of local buffers, we use a small sequentially searched array
- * (PrivateRefCountArray) and a overflow hash table (PrivateRefCountHash) to
+ * (PrivateRefCountArray) and an overflow hash table (PrivateRefCountHash) to
  * keep track of backend local pins.
  *
  * Until no more than REFCOUNT_ARRAY_ENTRIES buffers are pinned at once, all

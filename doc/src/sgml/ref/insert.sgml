@@ -415,7 +415,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
    one or more <replaceable
    class="PARAMETER">column_name_index</replaceable> columns and/or
    <replaceable class="PARAMETER">expression_index</replaceable>
-   expressions, and a optional <replaceable class="PARAMETER">
+   expressions, and an optional <replaceable class="PARAMETER">
    index_predicate</replaceable>.
   </para>
 

@@ -149,7 +149,7 @@ ClockSweepTick(void)
 				 * allows other readers to read nextVictimBuffer and
 				 * completePasses in a consistent manner which is required for
 				 * StrategySyncStart().  In theory delaying the increment
-				 * could lead to a overflow of nextVictimBuffers, but that's
+				 * could lead to an overflow of nextVictimBuffers, but that's
 				 * highly unlikely and wouldn't be particularly harmful.
 				 */
 				SpinLockAcquire(&StrategyControl->buffer_strategy_lock);

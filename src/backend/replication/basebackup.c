@@ -443,7 +443,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			/*
 			 * Mark file as archived, otherwise files can get archived again
 			 * after promotion of a new node. This is in line with
-			 * walreceiver.c always doing a XLogArchiveForceDone() after a
+			 * walreceiver.c always doing an XLogArchiveForceDone() after a
 			 * complete segment.
 			 */
 			StatusFilePath(pathbuf, walFiles[i], ".done");

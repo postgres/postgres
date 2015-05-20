@@ -9484,8 +9484,8 @@ InsertStmt:
 
 /*
  * Can't easily make AS optional here, because VALUES in insert_rest would
- * have a shift/reduce conflict with a values as a optional alias. We could
- * easily allow unreserved_keywords as optional aliases, but that'd be a odd
+ * have a shift/reduce conflict with a values as an optional alias. We could
+ * easily allow unreserved_keywords as optional aliases, but that'd be an odd
  * divergance from other places.  So just require AS for now.
  */
 insert_target:

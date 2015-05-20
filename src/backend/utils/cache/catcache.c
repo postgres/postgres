@@ -1123,7 +1123,7 @@ SearchCatCache(CatCache *cache,
 	SysScanDesc scandesc;
 	HeapTuple	ntp;
 
-	/* Make sure we're in a xact, even if this ends up being a cache hit */
+	/* Make sure we're in an xact, even if this ends up being a cache hit */
 	Assert(IsTransactionState());
 
 	/*

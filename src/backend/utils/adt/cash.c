@@ -893,7 +893,7 @@ cashsmaller(PG_FUNCTION_ARGS)
 }
 
 /* cash_words()
- * This converts a int4 as well but to a representation using words
+ * This converts an int4 as well but to a representation using words
  * Obviously way North American centric - sorry
  */
 Datum

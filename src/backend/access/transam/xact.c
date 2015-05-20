@@ -221,7 +221,7 @@ static TransactionStateData TopTransactionStateData = {
 
 /*
  * unreportedXids holds XIDs of all subtransactions that have not yet been
- * reported in a XLOG_XACT_ASSIGNMENT record.
+ * reported in an XLOG_XACT_ASSIGNMENT record.
  */
 static int	nUnreportedXids;
 static TransactionId unreportedXids[PGPROC_MAX_CACHED_SUBXIDS];
@@ -532,7 +532,7 @@ AssignTransactionId(TransactionState s)
 	/*
 	 * When wal_level=logical, guarantee that a subtransaction's xid can only
 	 * be seen in the WAL stream if its toplevel xid has been logged before.
-	 * If necessary we log a xact_assignment record with fewer than
+	 * If necessary we log an xact_assignment record with fewer than
 	 * PGPROC_MAX_CACHED_SUBXIDS. Note that it is fine if didLogXid isn't set
 	 * for a transaction even though it appears in a WAL record, we just might
 	 * superfluously log something. That can happen when an xid is included
@@ -1232,8 +1232,8 @@ RecordTransactionCommit(void)
 	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
 	 * to happen asynchronously if synchronous_commit=off, or if the current
 	 * transaction has not performed any WAL-logged operation or didn't assign
-	 * a xid.  The transaction can end up not writing any WAL, even if it has
-	 * a xid, if it only wrote to temporary and/or unlogged tables.  It can
+	 * an xid.  The transaction can end up not writing any WAL, even if it has
+	 * an xid, if it only wrote to temporary and/or unlogged tables.  It can
 	 * end up having written WAL without an xid if it did HOT pruning.  In
 	 * case of a crash, the loss of such a transaction will be irrelevant;
 	 * temp tables will be lost anyway, unlogged tables will be truncated and
@@ -1305,7 +1305,7 @@ RecordTransactionCommit(void)
 	/*
 	 * Wait for synchronous replication, if required. Similar to the decision
 	 * above about using committing asynchronously we only want to wait if
-	 * this backend assigned a xid and wrote WAL.  No need to wait if a xid
+	 * this backend assigned an xid and wrote WAL.  No need to wait if an xid
 	 * was assigned due to temporary/unlogged tables or due to HOT pruning.
 	 *
 	 * Note that at this stage we have marked clog, but still show as running

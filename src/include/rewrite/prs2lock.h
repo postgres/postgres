@@ -18,7 +18,7 @@
 
 /*
  * RewriteRule -
- *	  holds a info for a rewrite rule
+ *	  holds an info for a rewrite rule
  *
  */
 typedef struct RewriteRule

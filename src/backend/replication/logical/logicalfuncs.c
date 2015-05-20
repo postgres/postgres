@@ -53,7 +53,7 @@ typedef struct DecodingOutputState
 } DecodingOutputState;
 
 /*
- * Prepare for a output plugin write.
+ * Prepare for an output plugin write.
  */
 static void
 LogicalOutputPrepareWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,

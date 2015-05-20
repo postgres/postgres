@@ -36,7 +36,7 @@ step "s3txid" { BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT txid_current() IS 
 step "s3c" { COMMIT; }
 
 # Force usage of ondisk snapshot by starting and not finishing a
-# transaction with a assigned xid after consistency has been
+# transaction with an assigned xid after consistency has been
 # reached. In combination with a checkpoint forcing a snapshot to be
 # written and a new restart point computed that'll lead to the usage
 # of the snapshot.

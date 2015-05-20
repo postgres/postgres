@@ -313,7 +313,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack)
  * the parent needs to be updated. (a root split returns true as it doesn't
  * need any further action by the caller to complete)
  *
- * When inserting a downlink to a internal page, 'childbuf' contains the
+ * When inserting a downlink to an internal page, 'childbuf' contains the
  * child page that was split. Its GIN_INCOMPLETE_SPLIT flag will be cleared
  * atomically with the insert. Also, the existing item at the given location
  * is updated to point to 'updateblkno'.

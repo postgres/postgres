@@ -596,8 +596,8 @@ calc_hist_selectivity_scalar(TypeCacheEntry *typcache, RangeBound *constbound,
  * range bounds in array are greater or equal(greater) than given range bound,
  * return -1. When "equal" flag is set conditions in brackets are used.
  *
- * This function is used in scalar operators selectivity estimation. Another
- * goal of this function is to found an histogram bin where to stop
+ * This function is used in scalar operator selectivity estimation. Another
+ * goal of this function is to find a histogram bin where to stop
  * interpolation of portion of bounds which are less or equal to given bound.
  */
 static int

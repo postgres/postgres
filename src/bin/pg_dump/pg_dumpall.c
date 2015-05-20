@@ -1734,7 +1734,7 @@ runPgDump(const char *dbname)
 /*
  * buildShSecLabels
  *
- * Build SECURITY LABEL command(s) for an shared object
+ * Build SECURITY LABEL command(s) for a shared object
  *
  * The caller has to provide object type and identifier to select security
  * labels from pg_seclabels system view.

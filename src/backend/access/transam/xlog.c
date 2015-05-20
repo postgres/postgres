@@ -8832,7 +8832,7 @@ CreateRestartPoint(int flags)
 	}
 
 	/*
-	 * Due to an historical accident multixact truncations are not WAL-logged,
+	 * Due to a historical accident multixact truncations are not WAL-logged,
 	 * but just performed everytime the mxact horizon is increased. So, unless
 	 * we explicitly execute truncations on a standby it will never clean out
 	 * /pg_multixact which obviously is bad, both because it uses space and

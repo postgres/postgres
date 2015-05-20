@@ -656,7 +656,7 @@ EquivalenceClasses and PathKeys after query_planner has completed.
 In these cases, the extra ECs/PKs are needed to represent sort orders
 that were not considered during query_planner.  Such situations should be
 minimized since it is impossible for query_planner to return a plan
-producing such a sort order, meaning a explicit sort will always be needed.
+producing such a sort order, meaning an explicit sort will always be needed.
 Currently this happens only for queries involving multiple window functions
 with different orderings, for which extra sorts are needed anyway.
 

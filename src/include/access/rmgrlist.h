@@ -21,7 +21,7 @@
  * entries should be added at the end, to avoid changing IDs of existing
  * entries.
  *
- * Changes to this list possibly need a XLOG_PAGE_MAGIC bump.
+ * Changes to this list possibly need an XLOG_PAGE_MAGIC bump.
  */
 
 /* symbol name, textual name, redo, desc, identify, startup, cleanup */

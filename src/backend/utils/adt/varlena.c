@@ -4126,7 +4126,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 
 #define HEXBASE 16
 /*
- * Convert a int32 to a string containing a base 16 (hex) representation of
+ * Convert an int32 to a string containing a base 16 (hex) representation of
  * the number.
  */
 Datum
@@ -4150,7 +4150,7 @@ to_hex32(PG_FUNCTION_ARGS)
 }
 
 /*
- * Convert a int64 to a string containing a base 16 (hex) representation of
+ * Convert an int64 to a string containing a base 16 (hex) representation of
  * the number.
  */
 Datum

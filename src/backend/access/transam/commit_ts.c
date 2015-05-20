@@ -122,7 +122,7 @@ static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
  * subtrans implementation changes in the future, we might want to revisit the
  * decision of storing timestamp info for each subxid.
  *
- * The do_xlog parameter tells us whether to include a XLog record of this
+ * The do_xlog parameter tells us whether to include an XLog record of this
  * or not.  Normal path through RecordTransactionCommit() will be related
  * to a transaction commit XLog record, and so should pass "false" here.
  * Other callers probably want to pass true, so that the given values persist

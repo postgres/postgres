@@ -300,7 +300,7 @@ arraycontsel(PG_FUNCTION_ARGS)
 
 	/*
 	 * OK, there's a Var and a Const we're dealing with here.  We need the
-	 * Const to be a array with same element type as column, else we can't do
+	 * Const to be an array with same element type as column, else we can't do
 	 * anything useful.  (Such cases will likely fail at runtime, but here
 	 * we'd rather just return a default estimate.)
 	 */
@@ -358,7 +358,7 @@ calc_arraycontsel(VariableStatData *vardata, Datum constval,
 	cmpfunc = &typentry->cmp_proc_finfo;
 
 	/*
-	 * The caller made sure the const is a array with same element type, so
+	 * The caller made sure the const is an array with same element type, so
 	 * get it now
 	 */
 	array = DatumGetArrayTypeP(constval);

@@ -445,7 +445,8 @@ PLy_procedure_argument_valid(PLyTypeInfo *arg)
 
 	/*
 	 * Zero typ_relid means that we got called on an output argument of a
-	 * function returning a unnamed record type; the info for it can't change.
+	 * function returning an unnamed record type; the info for it can't
+	 * change.
 	 */
 	if (!OidIsValid(arg->typ_relid))
 		return true;

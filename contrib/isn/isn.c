@@ -511,7 +511,7 @@ str2ean(const char *num)
 }
 
 /*
- * ean2string --- Try to convert an ean13 number to an hyphenated string.
+ * ean2string --- Try to convert an ean13 number to a hyphenated string.
  *				  Assumes there's enough space in result to hold
  *				  the string (maximum MAXEAN13LEN+1 bytes)
  *				  This doesn't verify for a valid check digit.

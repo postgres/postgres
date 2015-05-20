@@ -167,7 +167,7 @@ typedef struct xl_xact_assignment
  * portion of the records won't need all possible pieces of information. So we
  * only include what's needed.
  *
- * A minimal commit/abort record only consists out of a xl_xact_commit/abort
+ * A minimal commit/abort record only consists of a xl_xact_commit/abort
  * struct. The presence of additional information is indicated by bits set in
  * 'xl_xact_xinfo->xinfo'. The presence of the xinfo field itself is signalled
  * by a set XLOG_XACT_HAS_INFO bit in the xl_info field.

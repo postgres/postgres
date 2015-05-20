@@ -78,7 +78,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * Knuth says to skip the current block with probability 1 - k/K.
 	 * If we are to skip, we should advance t (hence decrease K), and
 	 * repeat the same probabilistic test for the next block.  The naive
-	 * implementation thus requires an sampler_random_fract() call for each
+	 * implementation thus requires a sampler_random_fract() call for each
 	 * block number.  But we can reduce this to one sampler_random_fract()
 	 * call per selected block, by noting that each time the while-test
 	 * succeeds, we can reinterpret V as a uniform random number in the range

@@ -440,7 +440,7 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 }
 
 /*
- * Output a objname/objargs representation for the procedure with the
+ * Output an objname/objargs representation for the procedure with the
  * given OID.  If it doesn't exist, an error is thrown.
  *
  * This can be used to feed get_object_address.

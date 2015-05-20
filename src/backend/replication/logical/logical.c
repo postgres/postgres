@@ -149,7 +149,7 @@ StartupDecodingContext(List *output_plugin_options,
 	 * replication slots.
 	 *
 	 * We can only do so if we're outside of a transaction (i.e. the case when
-	 * streaming changes via walsender), otherwise a already setup
+	 * streaming changes via walsender), otherwise an already setup
 	 * snapshot/xid would end up being ignored. That's not a particularly
 	 * bothersome restriction since the SQL interface can't be used for
 	 * streaming anyway.
@@ -225,7 +225,7 @@ CreateInitDecodingContext(char *plugin,
 
 	/* first some sanity checks that are unlikely to be violated */
 	if (slot == NULL)
-		elog(ERROR, "cannot perform logical decoding without a acquired slot");
+		elog(ERROR, "cannot perform logical decoding without an acquired slot");
 
 	if (plugin == NULL)
 		elog(ERROR, "cannot initialize logical decoding without a specified plugin");
@@ -377,7 +377,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 
 	/* first some sanity checks that are unlikely to be violated */
 	if (slot == NULL)
-		elog(ERROR, "cannot perform logical decoding without a acquired slot");
+		elog(ERROR, "cannot perform logical decoding without an acquired slot");
 
 	/* make sure the passed slot is suitable, these are user facing errors */
 	if (slot->data.database == InvalidOid)
@@ -436,7 +436,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 }
 
 /*
- * Returns true if an consistent initial decoding snapshot has been built.
+ * Returns true if a consistent initial decoding snapshot has been built.
  */
 bool
 DecodingContextReady(LogicalDecodingContext *ctx)

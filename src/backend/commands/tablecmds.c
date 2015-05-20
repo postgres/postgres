@@ -2342,7 +2342,7 @@ RangeVarCallbackForRenameAttribute(const RangeVar *rv, Oid relid, Oid oldrelid,
 }
 
 /*
- *		renameatt		- changes the name of a attribute in a relation
+ *		renameatt		- changes the name of an attribute in a relation
  *
  * The returned ObjectAddress is that of the renamed column.
  */

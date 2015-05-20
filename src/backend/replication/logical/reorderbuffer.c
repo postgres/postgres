@@ -286,7 +286,7 @@ ReorderBufferFree(ReorderBuffer *rb)
 }
 
 /*
- * Get a unused, possibly preallocated, ReorderBufferTXN.
+ * Get an unused, possibly preallocated, ReorderBufferTXN.
  */
 static ReorderBufferTXN *
 ReorderBufferGetTXN(ReorderBuffer *rb)
@@ -361,7 +361,7 @@ ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 }
 
 /*
- * Get a unused, possibly preallocated, ReorderBufferChange.
+ * Get an unused, possibly preallocated, ReorderBufferChange.
  */
 ReorderBufferChange *
 ReorderBufferGetChange(ReorderBuffer *rb)
@@ -444,7 +444,7 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
 
 
 /*
- * Get a unused, possibly preallocated, ReorderBufferTupleBuf
+ * Get an unused, possibly preallocated, ReorderBufferTupleBuf
  */
 ReorderBufferTupleBuf *
 ReorderBufferGetTupleBuf(ReorderBuffer *rb)
@@ -1531,7 +1531,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 		}
 
 		/*
-		 * There's a a speculative insertion remaining, just clean in up, it
+		 * There's a speculative insertion remaining, just clean in up, it
 		 * can't have been successful, otherwise we'd gotten a confirmation
 		 * record.
 		 */

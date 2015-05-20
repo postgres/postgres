@@ -41,7 +41,7 @@ typedef struct LogicalRewriteMappingData
 } LogicalRewriteMappingData;
 
 /* ---
- * The filename consists out of the following, dash separated,
+ * The filename consists of the following, dash separated,
  * components:
  * 1) database oid or InvalidOid for shared relations
  * 2) the oid of the relation

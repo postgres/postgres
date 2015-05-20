@@ -38,8 +38,8 @@ typedef struct
 
 typedef struct StatEntry
 {
-	uint32		ndoc;			/* zero indicates that we already was here
-								 * while walking throug the tree */
+	uint32		ndoc;			/* zero indicates that we were already here
+								 * while walking through the tree */
 	uint32		nentry;
 	struct StatEntry *left;
 	struct StatEntry *right;

@@ -52,7 +52,7 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 #ifndef HAVE_SPINLOCKS
 	/*
 	 * NB: If we're using semaphore based TAS emulation, be careful to use a
-	 * separate set of semaphores. Otherwise we'd get in trouble if a atomic
+	 * separate set of semaphores. Otherwise we'd get in trouble if an atomic
 	 * var would be manipulated while spinlock is held.
 	 */
 	s_init_lock_sema((slock_t *) &ptr->sema, true);

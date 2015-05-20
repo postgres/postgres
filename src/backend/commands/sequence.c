@@ -703,8 +703,8 @@ nextval_internal(Oid relid)
 	/*
 	 * If something needs to be WAL logged, acquire an xid, so this
 	 * transaction's commit will trigger a WAL flush and wait for
-	 * syncrep. It's sufficient to ensure the toplevel transaction has a xid,
-	 * no need to assign xids subxacts, that'll already trigger a appropriate
+	 * syncrep. It's sufficient to ensure the toplevel transaction has an xid,
+	 * no need to assign xids subxacts, that'll already trigger an appropriate
 	 * wait.  (Have to do that here, so we're outside the critical section)
 	 */
 	if (logit && RelationNeedsWAL(seqrel))
