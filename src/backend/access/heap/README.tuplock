@@ -9,7 +9,7 @@ is implemented by storing locking information in the tuple header: a tuple is
 marked as locked by setting the current transaction's XID as its XMAX, and
 setting additional infomask bits to distinguish this case from the more normal
 case of having deleted the tuple.  When multiple transactions concurrently
-lock a tuple, a MultiXact is used; see below.  This mechanism can accomodate
+lock a tuple, a MultiXact is used; see below.  This mechanism can accommodate
 arbitrarily large numbers of tuples being locked simultaneously.
 
 When it is necessary to wait for a tuple-level lock to be released, the basic

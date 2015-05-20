@@ -494,7 +494,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
  * index item of size itemsz.  If oldbuf is a valid buffer, it is also locked
  * (in an order determined to avoid deadlocks.)
  *
- * If there's no existing page with enough free space to accomodate the new
+ * If there's no existing page with enough free space to accommodate the new
  * item, the relation is extended.  If this happens, *extended is set to true.
  *
  * If we find that the old page is no longer a regular index page (because

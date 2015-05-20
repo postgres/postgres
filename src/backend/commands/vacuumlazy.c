@@ -952,7 +952,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				heap_execute_freeze_tuple(htup, &frozen[i]);
 			}
 
-			/* Now WAL-log freezing if neccessary */
+			/* Now WAL-log freezing if necessary */
 			if (RelationNeedsWAL(onerel))
 			{
 				XLogRecPtr	recptr;

@@ -749,7 +749,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	{
 		/*
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
-		 * ratio.  Slighly bias against wider columns. (Increases chance a
+		 * ratio.  Slightly bias against wider columns. (Increases chance a
 		 * narrow column will fit in its cell.)  If available columns is
 		 * positive...  and greater than the width of the unshrinkable column
 		 * headers

@@ -269,7 +269,7 @@ AtAbort_Twophase(void)
 	 * can be finished later, so just unlock it.
 	 *
 	 * If we abort during prepare, after having written the WAL record, we
-	 * might not have transfered all locks and other state to the prepared
+	 * might not have transferred all locks and other state to the prepared
 	 * transaction yet.  Likewise, if we abort during commit or rollback,
 	 * after having written the WAL record, we might not have released
 	 * all the resources held by the transaction yet.  In those cases, the

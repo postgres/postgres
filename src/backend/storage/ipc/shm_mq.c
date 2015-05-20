@@ -1047,7 +1047,7 @@ shm_mq_inc_bytes_read(volatile shm_mq *mq, Size n)
 
 /*
  * Get the number of bytes written.  The sender need not use this to access
- * the count of bytes written, but the reciever must.
+ * the count of bytes written, but the receiver must.
  */
 static uint64
 shm_mq_get_bytes_written(volatile shm_mq *mq, bool *detached)

@@ -79,7 +79,7 @@ typedef struct ReplicationSlotOnDisk
 /* size of the part covered by the checksum */
 #define SnapBuildOnDiskChecksummedSize \
 	sizeof(ReplicationSlotOnDisk) - SnapBuildOnDiskNotChecksummedSize
-/* size of the slot data that is version dependant */
+/* size of the slot data that is version dependent */
 #define ReplicationSlotOnDiskV2Size \
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 

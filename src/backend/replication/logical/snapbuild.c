@@ -770,7 +770,7 @@ SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn)
 	/*
 	 * Iterate through all toplevel transactions. This can include
 	 * subtransactions which we just don't yet know to be that, but that's
-	 * fine, they will just get an unneccesary snapshot queued.
+	 * fine, they will just get an unnecessary snapshot queued.
 	 */
 	dlist_foreach(txn_i, &builder->reorder->toplevel_by_lsn)
 	{
@@ -1212,7 +1212,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 *	  to CONSISTENT.
 	 *	  NB: We need to search running.xip when seeing a transaction's end to
 	 *	  make sure it's a toplevel transaction and it's been one of the
-	 *	  intially running ones.
+	 *	  initially running ones.
 	 *	  Interestingly, in contrast to HS, this allows us not to care about
 	 *	  subtransactions - and by extension suboverflowed xl_running_xacts -
 	 *	  at all.
@@ -1657,7 +1657,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	 * Make sure the snapshot had been stored safely to disk, that's normally
 	 * cheap.
 	 * Note that we do not need PANIC here, nobody will be able to use the
-	 * slot without fsyncing, and saving it won't suceed without an fsync()
+	 * slot without fsyncing, and saving it won't succeed without an fsync()
 	 * either...
 	 * ----
 	 */
@@ -1749,7 +1749,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	/*
 	 * We are only interested in consistent snapshots for now, comparing
-	 * whether one imcomplete snapshot is more "advanced" seems to be
+	 * whether one incomplete snapshot is more "advanced" seems to be
 	 * unnecessarily complex.
 	 */
 	if (ondisk.builder.state < SNAPBUILD_CONSISTENT)

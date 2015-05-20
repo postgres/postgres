@@ -89,7 +89,7 @@ typedef struct RelationData
 	 * survived into, or zero if not changed in the current transaction (or we
 	 * have forgotten changing it). rd_newRelfilenodeSubid can be forgotten
 	 * when a relation has multiple new relfilenodes within a single
-	 * transaction, with one of them occuring in a subsequently aborted
+	 * transaction, with one of them occurring in a subsequently aborted
 	 * subtransaction, e.g. BEGIN; TRUNCATE t; SAVEPOINT save; TRUNCATE t;
 	 * ROLLBACK TO save; -- rd_newRelfilenode is now forgotten
 	 */

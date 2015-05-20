@@ -2317,7 +2317,7 @@ PrepareTransaction(void)
 	/*
 	 * In normal commit-processing, this is all non-critical post-transaction
 	 * cleanup.  When the transaction is prepared, however, it's important that
-	 * the locks and other per-backend resources are transfered to the
+	 * the locks and other per-backend resources are transferred to the
 	 * prepared transaction's PGPROC entry.  Note that if an error is raised
 	 * here, it's too late to abort the transaction. XXX: This probably should
 	 * be in a critical section, to force a PANIC if any of this fails, but

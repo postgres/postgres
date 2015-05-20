@@ -883,7 +883,7 @@ EventTriggerSQLDrop(Node *parsetree)
 	/*
 	 * Nothing to do if run list is empty.  Note this shouldn't happen,
 	 * because if there are no sql_drop events, then objects-to-drop wouldn't
-	 * have been collected in the first place and we would have quitted above.
+	 * have been collected in the first place and we would have quit above.
 	 */
 	if (runlist == NIL)
 		return;

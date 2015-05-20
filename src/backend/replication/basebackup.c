@@ -85,7 +85,7 @@ static char *statrelpath = NULL;
 /* The actual number of bytes, transfer of which may cause sleep. */
 static uint64 throttling_sample;
 
-/* Amount of data already transfered but not yet throttled.  */
+/* Amount of data already transferred but not yet throttled.  */
 static int64 throttling_counter;
 
 /* The minimum time required to transfer throttling_sample bytes. */
@@ -172,7 +172,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 			/*
 			 * The minimum amount of time for throttling_sample bytes to be
-			 * transfered.
+			 * transferred.
 			 */
 			elapsed_min_unit = USECS_PER_SEC / THROTTLING_FREQUENCY;
 

@@ -2165,7 +2165,7 @@ CheckForBufferLeaks(void)
 		}
 	}
 
-	/* if neccessary search the hash */
+	/* if necessary search the hash */
 	if (PrivateRefCountOverflowed)
 	{
 		HASH_SEQ_STATUS hstat;

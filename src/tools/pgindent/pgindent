@@ -19,7 +19,7 @@ my $devnull        = File::Spec->devnull;
 my $indent_opts =
   "-bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 -lp -nip -npro -bbb";
 
-# indent-dependant settings
+# indent-dependent settings
 my $extra_opts = "";
 
 my ($typedefs_file, $typedef_str, $code_base, $excludes, $indent, $build);

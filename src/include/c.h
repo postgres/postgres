@@ -982,7 +982,7 @@ typedef NameData *Name;
  * To better support parallel installations of major PostgeSQL
  * versions as well as parallel installations of major library soname
  * versions, we mangle the gettext domain name by appending those
- * version numbers.  The coding rule ought to be that whereever the
+ * version numbers.  The coding rule ought to be that wherever the
  * domain name is mentioned as a literal, it must be wrapped into
  * PG_TEXTDOMAIN().  The macros below do not work on non-literals; but
  * that is somewhat intentional because it avoids having to worry

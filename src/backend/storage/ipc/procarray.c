@@ -2001,7 +2001,7 @@ GetOldestSafeDecodingTransactionId(void)
 	/*
 	 * If there's already a slot pegging the xmin horizon, we can start with
 	 * that value, it's guaranteed to be safe since it's computed by this
-	 * routine initally and has been enforced since.
+	 * routine initially and has been enforced since.
 	 */
 	if (TransactionIdIsValid(procArray->replication_slot_catalog_xmin) &&
 		TransactionIdPrecedes(procArray->replication_slot_catalog_xmin,

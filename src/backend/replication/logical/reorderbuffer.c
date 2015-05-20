@@ -143,7 +143,7 @@ typedef struct ReorderBufferDiskChange
  * without hitting disk in OLTP workloads, while starting to spool to disk in
  * other workloads reasonably fast.
  *
- * At some point in the future it probaly makes sense to have a more elaborate
+ * At some point in the future it probably makes sense to have a more elaborate
  * resource management here, but it's not entirely clear what that would look
  * like.
  */
@@ -1704,7 +1704,7 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 	txn->final_lsn = lsn;
 
 	/*
-	 * Proccess cache invalidation messages if there are any. Even if we're
+	 * Process cache invalidation messages if there are any. Even if we're
 	 * not interested in the transaction's contents, it could have manipulated
 	 * the catalog and we need to update the caches according to that.
 	 */

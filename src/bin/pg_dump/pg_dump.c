@@ -15484,7 +15484,7 @@ dumpRule(Archive *fout, DumpOptions *dopt, RuleInfo *rinfo)
  *    is able and expected to modify those tables after the extension has been
  *    loaded.  For these tables, we dump out only the data- the structure is
  *    expected to be handled at CREATE EXTENSION time, including any indexes or
- *    foriegn keys, which brings us to-
+ *    foreign keys, which brings us to-
  *
  * 3. Record FK dependencies between configuration tables.
  *

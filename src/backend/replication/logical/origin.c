@@ -1342,7 +1342,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
 	/*
 	 * Can't sensibly pass a local commit to be flushed at checkpoint - this
 	 * xact hasn't committed yet. This is why this function should be used to
-	 * set up the intial replication state, but not for replay.
+	 * set up the initial replication state, but not for replay.
 	 */
 	replorigin_advance(node, remote_commit, InvalidXLogRecPtr,
 					   true /* go backward */, true /* wal log */);

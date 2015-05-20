@@ -297,7 +297,7 @@ BackgroundWriterMain(void)
 		 * overall timeout handling but just assume we're going to get called
 		 * often enough even if hibernation mode is active. It's not that
 		 * important that log_snap_interval_ms is met strictly. To make sure
-		 * we're not waking the disk up unneccesarily on an idle system we
+		 * we're not waking the disk up unnecessarily on an idle system we
 		 * check whether there has been any WAL inserted since the last time
 		 * we've logged a running xacts.
 		 *
