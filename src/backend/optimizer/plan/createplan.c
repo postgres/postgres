@@ -22,7 +22,6 @@
 #include "access/stratnum.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
-#include "catalog/pg_operator.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -172,8 +171,8 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
 						   bool **p_nullsFirst);
-static EquivalenceMember *find_ec_member_for_expr(EquivalenceClass *ec,
-					   Expr *tlexpr,
+static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
+					   TargetEntry *tle,
 					   Relids relids);
 static Material *make_material(Plan *lefttree);
 
@@ -1325,36 +1324,35 @@ create_indexscan_plan(PlannerInfo *root,
 	}
 
 	/*
-	 * If there are ORDER BY expressions, look up the sort operators for
-	 * their datatypes.
+	 * If there are ORDER BY expressions, look up the sort operators for their
+	 * result datatypes.
 	 */
-	if (best_path->path.pathkeys && indexorderbys)
+	if (indexorderbys)
 	{
 		ListCell   *pathkeyCell,
 				   *exprCell;
 
 		/*
-		 * PathKey contains pointer to the equivalence class, but that's not
-		 * enough because we need the expression's datatype to look up the
-		 * sort operator in the operator family.  We have to dig out the
-		 * equivalence member for the datatype.
+		 * PathKey contains OID of the btree opfamily we're sorting by, but
+		 * that's not quite enough because we need the expression's datatype
+		 * to look up the sort operator in the operator family.
 		 */
+		Assert(list_length(best_path->path.pathkeys) == list_length(indexorderbys));
 		forboth(pathkeyCell, best_path->path.pathkeys, exprCell, indexorderbys)
 		{
 			PathKey	   *pathkey = (PathKey *) lfirst(pathkeyCell);
-			Expr	   *expr = (Expr *) lfirst(exprCell);
-			EquivalenceMember *em;
-
-			/* Find equivalence member for the order by expression */
-			em = find_ec_member_for_expr(pathkey->pk_eclass, expr, NULL);
+			Node	   *expr = (Node *) lfirst(exprCell);
+			Oid			exprtype = exprType(expr);
+			Oid			sortop;
 
 			/* Get sort operator from opfamily */
-			indexorderbyops =
-				lappend_oid(indexorderbyops,
-							get_opfamily_member(pathkey->pk_opfamily,
-												em->em_datatype,
-												em->em_datatype,
-												pathkey->pk_strategy));
+			sortop = get_opfamily_member(pathkey->pk_opfamily,
+										 exprtype,
+										 exprtype,
+										 pathkey->pk_strategy);
+			if (!OidIsValid(sortop))
+				elog(ERROR, "failed to find sort operator for ORDER BY expression");
+			indexorderbyops = lappend_oid(indexorderbyops, sortop);
 		}
 	}
 
@@ -4100,7 +4098,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			tle = get_tle_by_resno(tlist, reqColIdx[numsortkeys]);
 			if (tle)
 			{
-				em = find_ec_member_for_expr(ec, tle->expr, relids);
+				em = find_ec_member_for_tle(ec, tle, relids);
 				if (em)
 				{
 					/* found expr at right place in tlist */
@@ -4131,7 +4129,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			foreach(j, tlist)
 			{
 				tle = (TargetEntry *) lfirst(j);
-				em = find_ec_member_for_expr(ec, tle->expr, relids);
+				em = find_ec_member_for_tle(ec, tle, relids);
 				if (em)
 				{
 					/* found expr already in tlist */
@@ -4252,21 +4250,23 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 }
 
 /*
- * find_ec_member_for_expr
- *		Locate an EquivalenceClass member matching the given expression, if any
+ * find_ec_member_for_tle
+ *		Locate an EquivalenceClass member matching the given TLE, if any
  *
  * Child EC members are ignored unless they match 'relids'.
  */
 static EquivalenceMember *
-find_ec_member_for_expr(EquivalenceClass *ec,
-						Expr *expr,
-						Relids relids)
+find_ec_member_for_tle(EquivalenceClass *ec,
+					   TargetEntry *tle,
+					   Relids relids)
 {
+	Expr	   *tlexpr;
 	ListCell   *lc;
 
 	/* We ignore binary-compatible relabeling on both ends */
-	while (expr && IsA(expr, RelabelType))
-		expr = ((RelabelType *) expr)->arg;
+	tlexpr = tle->expr;
+	while (tlexpr && IsA(tlexpr, RelabelType))
+		tlexpr = ((RelabelType *) tlexpr)->arg;
 
 	foreach(lc, ec->ec_members)
 	{
@@ -4292,7 +4292,7 @@ find_ec_member_for_expr(EquivalenceClass *ec,
 		while (emexpr && IsA(emexpr, RelabelType))
 			emexpr = ((RelabelType *) emexpr)->arg;
 
-		if (equal(emexpr, expr))
+		if (equal(emexpr, tlexpr))
 			return em;
 	}
 

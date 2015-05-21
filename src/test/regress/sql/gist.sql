@@ -61,6 +61,14 @@ order by p <-> point(0.2, 0.2);
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
 order by p <-> point(0.2, 0.2);
 
+-- Check commuted case as well
+explain (costs off)
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
+order by point(0.1, 0.1) <-> p;
+
+select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
+order by point(0.1, 0.1) <-> p;
+
 drop index gist_tbl_point_index;
 
 -- Test index-only scan with box opclass

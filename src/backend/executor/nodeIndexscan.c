@@ -30,6 +30,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "lib/pairingheap.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "utils/array.h"
 #include "utils/datum.h"
@@ -159,9 +160,18 @@ IndexNextWithReorder(IndexScanState *node)
 	bool	   *lastfetched_nulls;
 	int			cmp;
 
-	/* only forward scan is supported with reordering. */
+	/*
+	 * Only forward scan is supported with reordering.  Note: we can get away
+	 * with just Asserting here because the system will not try to run the
+	 * plan backwards if ExecSupportsBackwardScan() says it won't work.
+	 * Currently, that is guaranteed because no index AMs support both
+	 * amcanorderbyop and amcanbackward; if any ever do,
+	 * ExecSupportsBackwardScan() will need to consider indexorderbys
+	 * explicitly.
+	 */
 	Assert(!ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indexorderdir));
 	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
+
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
@@ -370,7 +380,11 @@ cmp_orderbyvals(const Datum *adist, const bool *anulls,
 	{
 		SortSupport ssup = &node->iss_SortSupport[i];
 
-		/* Handle nulls.  We only support NULLS LAST. */
+		/*
+		 * Handle nulls.  We only need to support NULLS LAST ordering, because
+		 * match_pathkeys_to_index() doesn't consider indexorderby
+		 * implementation otherwise.
+		 */
 		if (anulls[i] && !bnulls[i])
 			return 1;
 		else if (!anulls[i] && bnulls[i])
@@ -388,7 +402,7 @@ cmp_orderbyvals(const Datum *adist, const bool *anulls,
 
 /*
  * Pairing heap provides getting topmost (greatest) element while KNN provides
- * ascending sort.  That's why we inverse the sort order.
+ * ascending sort.  That's why we invert the sort order.
  */
 static int
 reorderqueue_cmp(const pairingheap_node *a, const pairingheap_node *b,
@@ -917,35 +931,30 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	{
 		int			numOrderByKeys = indexstate->iss_NumOrderByKeys;
 		int			i;
-		ListCell   *lc;
+		ListCell   *lco;
+		ListCell   *lcx;
 
 		/*
-		 * Prepare sort support, and look up the distance type for each ORDER
-		 * BY expression.
+		 * Prepare sort support, and look up the data type for each ORDER BY
+		 * expression.
 		 */
 		Assert(numOrderByKeys == list_length(node->indexorderbyops));
-		indexstate->iss_SortSupport =
+		Assert(numOrderByKeys == list_length(node->indexorderbyorig));
+		indexstate->iss_SortSupport = (SortSupportData *)
 			palloc0(numOrderByKeys * sizeof(SortSupportData));
-		indexstate->iss_OrderByTypByVals =
+		indexstate->iss_OrderByTypByVals = (bool *)
 			palloc(numOrderByKeys * sizeof(bool));
-		indexstate->iss_OrderByTypLens =
+		indexstate->iss_OrderByTypLens = (int16 *)
 			palloc(numOrderByKeys * sizeof(int16));
 		i = 0;
-		foreach(lc, node->indexorderbyops)
+		forboth(lco, node->indexorderbyops, lcx, node->indexorderbyorig)
 		{
-			Oid orderbyop = lfirst_oid(lc);
-			Oid			orderbyType;
-			Oid			opfamily;
-			int16		strategy;
+			Oid			orderbyop = lfirst_oid(lco);
+			Node	   *orderbyexpr = (Node *) lfirst(lcx);
+			Oid			orderbyType = exprType(orderbyexpr);
 
 			PrepareSortSupportFromOrderingOp(orderbyop,
 											 &indexstate->iss_SortSupport[i]);
-
-			if (!get_ordering_op_properties(orderbyop,
-										 &opfamily, &orderbyType, &strategy))
-				elog(ERROR, "operator %u is not a valid ordering operator",
-					 orderbyop);
-
 			get_typlenbyval(orderbyType,
 							&indexstate->iss_OrderByTypLens[i],
 							&indexstate->iss_OrderByTypByVals[i]);
@@ -953,10 +962,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 		}
 
 		/* allocate arrays to hold the re-calculated distances */
-		indexstate->iss_OrderByValues =
-			palloc(indexstate->iss_NumOrderByKeys * sizeof(Datum));
-		indexstate->iss_OrderByNulls =
-			palloc(indexstate->iss_NumOrderByKeys * sizeof(bool));
+		indexstate->iss_OrderByValues = (Datum *)
+			palloc(numOrderByKeys * sizeof(Datum));
+		indexstate->iss_OrderByNulls = (bool *)
+			palloc(numOrderByKeys * sizeof(bool));
 
 		/* and initialize the reorder queue */
 		indexstate->iss_ReorderQueue = pairingheap_allocate(reorderqueue_cmp,
