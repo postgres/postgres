@@ -28,6 +28,13 @@
 bool
 ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2)
 {
+	/*
+	 * We really want ItemPointerData to be exactly 6 bytes.  This is rather a
+	 * random place to check, but there is no better place.
+	 */
+	StaticAssertStmt(sizeof(ItemPointerData) == 3 * sizeof(uint16),
+					 "ItemPointerData struct is improperly padded");
+
 	if (ItemPointerGetBlockNumber(pointer1) ==
 		ItemPointerGetBlockNumber(pointer2) &&
 		ItemPointerGetOffsetNumber(pointer1) ==

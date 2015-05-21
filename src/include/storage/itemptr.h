@@ -39,9 +39,10 @@ typedef struct ItemPointerData
 	BlockIdData ip_blkid;
 	OffsetNumber ip_posid;
 }
-
-#ifdef __arm__
-pg_attribute_packed()			/* Appropriate whack upside the head for ARM */
+/* If compiler understands packed and aligned pragmas, use those */
+#if defined(pg_attribute_packed) && defined(pg_attribute_aligned)
+pg_attribute_packed()
+pg_attribute_aligned(2)
 #endif
 ItemPointerData;
 
