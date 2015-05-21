@@ -305,6 +305,7 @@ extern void XLogArchiveForceDone(const char *xlog);
 extern bool XLogArchiveCheckDone(const char *xlog);
 extern bool XLogArchiveIsBusy(const char *xlog);
 extern bool XLogArchiveIsReady(const char *xlog);
+extern bool XLogArchiveIsReadyOrDone(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);
 
 #endif   /* XLOG_INTERNAL_H */

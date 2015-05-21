@@ -5224,31 +5224,6 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 	 * happens in the middle of a segment, copy data from the last WAL segment
 	 * of the old timeline up to the switch point, to the starting WAL segment
 	 * on the new timeline.
-	 *
-	 * What to do with the partial segment on the old timeline? If we don't
-	 * archive it, and the server that created the WAL never archives it
-	 * either (e.g. because it was hit by a meteor), it will never make it to
-	 * the archive. That's OK from our point of view, because the new segment
-	 * that we created with the new TLI contains all the WAL from the old
-	 * timeline up to the switch point. But if you later try to do PITR to the
-	 * "missing" WAL on the old timeline, recovery won't find it in the
-	 * archive. It's physically present in the new file with new TLI, but
-	 * recovery won't look there when it's recovering to the older timeline.
-	 * On the other hand, if we archive the partial segment, and the original
-	 * server on that timeline is still running and archives the completed
-	 * version of the same segment later, it will fail. (We used to do that in
-	 * 9.4 and below, and it caused such problems).
-	 *
-	 * As a compromise, we archive the last segment with the .partial suffix.
-	 * Archive recovery will never try to read .partial segments, so they will
-	 * normally go unused. But in the odd PITR case, the administrator can
-	 * copy them manually to the pg_xlog directory (removing the suffix). They
-	 * can be useful in debugging, too.
-	 *
-	 * If a .done file already exists for the old timeline, however, there is
-	 * already a complete copy of the file in the archive, and there is no
-	 * need to archive the partial one. (In particular, if it was restored
-	 * from the archive to begin with, it's expected to have .done file).
 	 */
 	if (endLogSegNo == startLogSegNo)
 	{
@@ -5266,31 +5241,6 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 		tmpfname = XLogFileCopy(NULL, xlogfname, endOfLog % XLOG_SEG_SIZE);
 		if (!InstallXLogFileSegment(&endLogSegNo, tmpfname, false, 0, false))
 			elog(ERROR, "InstallXLogFileSegment should not have failed");
-
-		/*
-		 * Make a .partial copy for the archive (unless the original file was
-		 * already archived)
-		 */
-		if (XLogArchivingActive() && XLogArchiveIsBusy(xlogfname))
-		{
-			char		partialfname[MAXFNAMELEN];
-
-			snprintf(partialfname, MAXFNAMELEN, "%s.partial", xlogfname);
-
-			/* Make sure there's no .done or .ready file for it. */
-			XLogArchiveCleanup(partialfname);
-
-			/*
-			 * We copy the whole segment, not just upto the switch point.
-			 * The portion after the switch point might be garbage, but it
-			 * might also be valid WAL, if we stopped recovery at user's
-			 * request before reaching the end. Better to preserve the
-			 * file as it is, garbage and all, than lose the evidence if
-			 * something goes wrong.
-			 */
-			(void) XLogFileCopy(partialfname, xlogfname, XLOG_SEG_SIZE);
-			XLogArchiveNotify(partialfname);
-		}
 	}
 	else
 	{
@@ -5942,6 +5892,7 @@ StartupXLOG(void)
 	XLogRecPtr	RecPtr,
 				checkPointLoc,
 				EndOfLog;
+	TimeLineID	EndOfLogTLI;
 	TimeLineID	PrevTimeLineID;
 	XLogRecord *record;
 	TransactionId oldestActiveXID;
@@ -7033,6 +6984,15 @@ StartupXLOG(void)
 	EndOfLog = EndRecPtr;
 
 	/*
+	 * EndOfLogTLI is the TLI in the filename of the XLOG segment containing
+	 * the end-of-log. It could be different from the timeline that EndOfLog
+	 * nominally belongs to, if there was a timeline switch in that segment,
+	 * and we were reading the old wAL from a segment belonging to a higher
+	 * timeline.
+	 */
+	EndOfLogTLI = xlogreader->readPageTLI;
+
+	/*
 	 * Complain if we did not roll forward far enough to render the backup
 	 * dump consistent.  Note: it is indeed okay to look at the local variable
 	 * minRecoveryPoint here, even though ControlFile->minRecoveryPoint might
@@ -7131,7 +7091,7 @@ StartupXLOG(void)
 	 * we will use that below.)
 	 */
 	if (ArchiveRecoveryRequested)
-		exitArchiveRecovery(xlogreader->readPageTLI, EndOfLog);
+		exitArchiveRecovery(EndOfLogTLI, EndOfLog);
 
 	/*
 	 * Prepare to write WAL starting at EndOfLog position, and init xlog
@@ -7262,11 +7222,81 @@ StartupXLOG(void)
 								   true);
 	}
 
-	/*
-	 * Clean up any (possibly bogus) future WAL segments on the old timeline.
-	 */
 	if (ArchiveRecoveryRequested)
+	{
+		/*
+		 * We switched to a new timeline. Clean up segments on the old
+		 * timeline.
+		 *
+		 * If there are any higher-numbered segments on the old timeline,
+		 * remove them. They might contain valid WAL, but they might also be
+		 * pre-allocated files containing garbage. In any case, they are not
+		 * part of the new timeline's history so we don't need them.
+		 */
 		RemoveNonParentXlogFiles(EndOfLog, ThisTimeLineID);
+
+		/*
+		 * If the switch happened in the middle of a segment, what to do with
+		 * the last, partial segment on the old timeline? If we don't archive
+		 * it, and the server that created the WAL never archives it either
+		 * (e.g. because it was hit by a meteor), it will never make it to the
+		 * archive. That's OK from our point of view, because the new segment
+		 * that we created with the new TLI contains all the WAL from the old
+		 * timeline up to the switch point. But if you later try to do PITR to
+		 * the "missing" WAL on the old timeline, recovery won't find it in
+		 * the archive. It's physically present in the new file with new TLI,
+		 * but recovery won't look there when it's recovering to the older
+		 * timeline. On the other hand, if we archive the partial segment, and
+		 * the original server on that timeline is still running and archives
+		 * the completed version of the same segment later, it will fail. (We
+		 * used to do that in 9.4 and below, and it caused such problems).
+		 *
+		 * As a compromise, we rename the last segment with the .partial
+		 * suffix, and archive it. Archive recovery will never try to read
+		 * .partial segments, so they will normally go unused. But in the odd
+		 * PITR case, the administrator can copy them manually to the pg_xlog
+		 * directory (removing the suffix). They can be useful in debugging,
+		 * too.
+		 *
+		 * If a .done or .ready file already exists for the old timeline,
+		 * however, we had already determined that the segment is complete,
+		 * so we can let it be archived normally. (In particular, if it was
+		 * restored from the archive to begin with, it's expected to have a
+		 * .done file).
+		 */
+		if (EndOfLog % XLOG_SEG_SIZE != 0 && XLogArchivingActive())
+		{
+			char		origfname[MAXFNAMELEN];
+			XLogSegNo	endLogSegNo;
+
+			XLByteToPrevSeg(EndOfLog, endLogSegNo);
+			XLogFileName(origfname, EndOfLogTLI, endLogSegNo);
+
+			if (!XLogArchiveIsReadyOrDone(origfname))
+			{
+				char		origpath[MAXPGPATH];
+				char		partialfname[MAXFNAMELEN];
+				char		partialpath[MAXPGPATH];
+
+				XLogFilePath(origpath, EndOfLogTLI, endLogSegNo);
+				snprintf(partialfname, MAXPGPATH, "%s.partial", origfname);
+				snprintf(partialpath, MAXPGPATH, "%s.partial", origpath);
+
+				/*
+				 * Make sure there's no .done or .ready file for the .partial
+				 * file.
+				 */
+				XLogArchiveCleanup(partialfname);
+
+				if (rename(origpath, partialpath) != 0)
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not rename file \"%s\" to \"%s\": %m",
+									origpath, partialpath)));
+				XLogArchiveNotify(partialfname);
+			}
+		}
+	}
 
 	/*
 	 * Preallocate additional log files, if wanted.
