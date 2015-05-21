@@ -5141,8 +5141,8 @@ readRecoveryCommandFile(void)
 	 */
 	if (recoveryTargetAction == RECOVERY_TARGET_ACTION_PAUSE &&
 		recoveryTargetActionSet &&
-		standbyState == STANDBY_DISABLED)
-			recoveryTargetAction = RECOVERY_TARGET_ACTION_SHUTDOWN;
+		!EnableHotStandby)
+		recoveryTargetAction = RECOVERY_TARGET_ACTION_SHUTDOWN;
 
 	/* Enable fetching from archive recovery area */
 	ArchiveRecoveryRequested = true;
