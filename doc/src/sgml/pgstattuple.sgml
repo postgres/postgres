@@ -438,17 +438,17 @@ approx_free_percent  | 2.09
          <entry>Percentage of table scanned</entry>
         </row>
         <row>
-         <entry><structfield>tuple_count</structfield></entry>
+         <entry><structfield>approx_tuple_count</structfield></entry>
          <entry><type>bigint</type></entry>
          <entry>Number of live tuples (estimated)</entry>
         </row>
         <row>
-         <entry><structfield>tuple_len</structfield></entry>
+         <entry><structfield>approx_tuple_len</structfield></entry>
          <entry><type>bigint</type></entry>
          <entry>Total length of live tuples in bytes (estimated)</entry>
         </row>
         <row>
-         <entry><structfield>tuple_percent</structfield></entry>
+         <entry><structfield>approx_tuple_percent</structfield></entry>
          <entry><type>float8</type></entry>
          <entry>Percentage of live tuples</entry>
         </row>
