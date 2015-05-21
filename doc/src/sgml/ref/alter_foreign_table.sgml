@@ -169,7 +169,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal> [ NOT VALID ]</term>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a foreign table, using the same
@@ -541,7 +541,7 @@ ALTER FOREIGN TABLE distributors ALTER COLUMN street SET NOT NULL;
   <para>
    To change options of a foreign table:
 <programlisting>
-ALTER FOREIGN TABLE myschema.distributors OPTIONS (ADD opt1 'value', SET opt2, 'value2', DROP opt3 'value3');
+ALTER FOREIGN TABLE myschema.distributors OPTIONS (ADD opt1 'value', SET opt2 'value2', DROP opt3 'value3');
 </programlisting></para>
 
  </refsect1>
