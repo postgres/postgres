@@ -81,7 +81,6 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_SCALAR_FIELD(queryId);
 	COPY_SCALAR_FIELD(hasReturning);
 	COPY_SCALAR_FIELD(hasModifyingCTE);
-	COPY_SCALAR_FIELD(isUpsert);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
 	COPY_NODE_FIELD(planTree);

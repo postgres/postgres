@@ -497,20 +497,13 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
 <screen>
 INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
 </screen>
-   However, in the event of an <literal>ON CONFLICT DO UPDATE</> clause
-   (but <emphasis>not</emphasis> in the event of an <literal>ON
-   CONFLICT DO NOTHING</> clause), the command tag reports the number of
-   rows inserted or updated together, of the form
-<screen>
-UPSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
-</screen>
-   The <replaceable class="parameter">count</replaceable> is the number
-   of rows inserted.  If <replaceable class="parameter">count</replaceable>
-   is exactly one, and the target table has OIDs, then
-   <replaceable class="parameter">oid</replaceable> is the
-   <acronym>OID</acronym>
-   assigned to the inserted row (but not if there is only a single
-   updated row).  Otherwise <replaceable
+   The <replaceable class="parameter">count</replaceable> is the
+   number of rows inserted or updated.  If <replaceable
+   class="parameter">count</replaceable> is exactly one, and the
+   target table has OIDs, then <replaceable
+   class="parameter">oid</replaceable> is the <acronym>OID</acronym>
+   assigned to the inserted row.  The single row must have been
+   inserted rather than updated.  Otherwise <replaceable
    class="parameter">oid</replaceable> is zero.
   </para>
 

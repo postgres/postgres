@@ -45,8 +45,6 @@ typedef struct PlannedStmt
 
 	bool		hasModifyingCTE;	/* has insert|update|delete in WITH? */
 
-	bool		isUpsert;		/* is it insert ... ON CONFLICT UPDATE? */
-
 	bool		canSetTag;		/* do I set the command result tag? */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */

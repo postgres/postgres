@@ -243,7 +243,6 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_UINT_FIELD(queryId);
 	WRITE_BOOL_FIELD(hasReturning);
 	WRITE_BOOL_FIELD(hasModifyingCTE);
-	WRITE_BOOL_FIELD(isUpsert);
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_NODE_FIELD(planTree);

@@ -261,8 +261,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->queryId = parse->queryId;
 	result->hasReturning = (parse->returningList != NIL);
 	result->hasModifyingCTE = parse->hasModifyingCTE;
-	result->isUpsert =
-		(parse->onConflict && parse->onConflict->action == ONCONFLICT_UPDATE);
 	result->canSetTag = parse->canSetTag;
 	result->transientPlan = glob->transientPlan;
 	result->planTree = top_plan;
