@@ -66,7 +66,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     SET WITH OIDS
     SET WITHOUT OIDS
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
-    SET {LOGGED | UNLOGGED}
+    SET { LOGGED | UNLOGGED }
     SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
     INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
@@ -74,7 +74,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     OF <replaceable class="PARAMETER">type_name</replaceable>
     NOT OF
     OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-    REPLICA IDENTITY {DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING}
+    REPLICA IDENTITY { DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING }
 
 <phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
 
@@ -516,7 +516,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET {LOGGED | UNLOGGED}</literal></term>
+    <term><literal>SET { LOGGED | UNLOGGED }</literal></term>
     <listitem>
      <para>
       This form changes the table from unlogged to logged or vice-versa
