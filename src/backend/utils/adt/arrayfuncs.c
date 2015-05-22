@@ -4110,7 +4110,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 		for (j = 0; j < nelems2; j++)
 		{
 			Datum		elt2 = values2[j];
-			bool		isnull2 = nulls2[j];
+			bool		isnull2 = nulls2 ? nulls2[j] : false;
 			bool		oprresult;
 
 			if (isnull2)
