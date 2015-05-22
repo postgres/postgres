@@ -735,6 +735,13 @@ initialize_SSL(void)
 #endif
 		SSL_library_init();
 		SSL_load_error_strings();
+
+		/*
+		 * We use SSLv23_method() because it can negotiate use of the highest
+		 * mutually supported protocol version, while alternatives like
+		 * TLSv1_2_method() permit only one specific version.  Note that we
+		 * don't actually allow SSL v2, only v3 and TLS protocols (see below).
+		 */
 		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)
 			ereport(FATAL,
