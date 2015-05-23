@@ -2811,14 +2811,26 @@ CREATE TABLE hat_data (
 );
 create unique index hat_data_unique_idx
   on hat_data (hat_name COLLATE "C" bpchar_pattern_ops);
--- okay
+-- DO NOTHING with ON CONFLICT
 CREATE RULE hat_nosert AS ON INSERT TO hats
     DO INSTEAD
     INSERT INTO hat_data VALUES (
            NEW.hat_name,
            NEW.hat_color)
         ON CONFLICT (hat_name COLLATE "C" bpchar_pattern_ops) WHERE hat_color = 'green'
-        DO NOTHING RETURNING *;
+        DO NOTHING
+        RETURNING *;
+SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
+                                         definition                                          
+---------------------------------------------------------------------------------------------
+ CREATE RULE hat_nosert AS                                                                  +
+     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)               +
+   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name COLLATE "C" bpchar_pattern_ops)+
+   WHERE (hat_data.hat_color = 'green'::bpchar) DO NOTHING                                  +
+   RETURNING hat_data.hat_name,                                                             +
+     hat_data.hat_color;
+(1 row)
+
 -- Works (projects row)
 INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
   hat_name  | hat_color  
@@ -2845,6 +2857,34 @@ SELECT tablename, rulename, definition FROM pg_rules
 (1 row)
 
 DROP RULE hat_nosert ON hats;
+-- DO NOTHING without ON CONFLICT
+CREATE RULE hat_nosert_all AS ON INSERT TO hats
+    DO INSTEAD
+    INSERT INTO hat_data VALUES (
+           NEW.hat_name,
+           NEW.hat_color)
+        ON CONFLICT
+        DO NOTHING
+        RETURNING *;
+SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
+                                  definition                                  
+------------------------------------------------------------------------------
+ CREATE RULE hat_nosert_all AS                                               +
+     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)+
+   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO NOTHING               +
+   RETURNING hat_data.hat_name,                                              +
+     hat_data.hat_color;
+(1 row)
+
+DROP RULE hat_nosert_all ON hats;
+-- Works (does nothing)
+INSERT INTO hats VALUES ('h7', 'black') RETURNING *;
+  hat_name  | hat_color  
+------------+------------
+ h7         | black     
+(1 row)
+
+-- DO UPDATE with a WHERE clause
 CREATE RULE hat_upsert AS ON INSERT TO hats
     DO INSTEAD
     INSERT INTO hat_data VALUES (
@@ -2855,6 +2895,17 @@ CREATE RULE hat_upsert AS ON INSERT TO hats
            SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color
            WHERE excluded.hat_color <>  'forbidden'
         RETURNING *;
+SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
+                                                               definition                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ CREATE RULE hat_upsert AS                                                                                                              +
+     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                           +
+   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
+   WHERE (excluded.hat_color <> 'forbidden'::bpchar)                                                                                    +
+   RETURNING hat_data.hat_name,                                                                                                         +
+     hat_data.hat_color;
+(1 row)
+
 -- Works (does upsert)
 INSERT INTO hats VALUES ('h8', 'black') RETURNING *;
   hat_name  | hat_color  

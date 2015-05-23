@@ -5500,7 +5500,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 				get_rule_expr(confl->arbiterWhere, context, false);
 			}
 		}
-		else
+		else if (confl->constraint != InvalidOid)
 		{
 			char   *constraint = get_constraint_name(confl->constraint);
 
