@@ -7279,7 +7279,7 @@ StartupXLOG(void)
 				char		partialpath[MAXPGPATH];
 
 				XLogFilePath(origpath, EndOfLogTLI, endLogSegNo);
-				snprintf(partialfname, MAXPGPATH, "%s.partial", origfname);
+				snprintf(partialfname, MAXFNAMELEN, "%s.partial", origfname);
 				snprintf(partialpath, MAXPGPATH, "%s.partial", origpath);
 
 				/*
