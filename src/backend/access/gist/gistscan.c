@@ -88,8 +88,9 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	so->qual_ok = true;			/* in case there are zero keys */
 	if (scan->numberOfOrderBys > 0)
 	{
-		scan->xs_orderbyvals = palloc(sizeof(Datum) * scan->numberOfOrderBys);
+		scan->xs_orderbyvals = palloc0(sizeof(Datum) * scan->numberOfOrderBys);
 		scan->xs_orderbynulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+		memset(scan->xs_orderbynulls, true, sizeof(bool) * scan->numberOfOrderBys);
 	}
 
 	scan->opaque = so;
@@ -284,6 +285,8 @@ gistrescan(PG_FUNCTION_ARGS)
 					 GIST_DISTANCE_PROC, skey->sk_attno,
 					 RelationGetRelationName(scan->indexRelation));
 
+			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
+
 			/*
 			 * Look up the datatype returned by the original ordering operator.
 			 * GiST always uses a float8 for the distance function, but the
@@ -297,7 +300,6 @@ gistrescan(PG_FUNCTION_ARGS)
 			 * first time.
 			 */
 			so->orderByTypes[i] = get_func_rettype(skey->sk_func.fn_oid);
-			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
 
 			/* Restore prior fn_extra pointers, if not first time */
 			if (!first_time)

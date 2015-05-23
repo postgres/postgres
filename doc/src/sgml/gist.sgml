@@ -209,12 +209,6 @@
   </table>
 
  <para>
-  Currently, ordering by the distance operator <literal>&lt;-&gt;</>
-  is supported only with <literal>point</> by the operator classes
-  of the geometric types.
- </para>
-
- <para>
   For historical reasons, the <literal>inet_ops</> operator class is
   not the default class for types <type>inet</> and <type>cidr</>.
   To use it, mention the class name in <command>CREATE INDEX</>,
@@ -805,28 +799,30 @@ my_distance(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-       Some approximation is allowed when determining the distance, as long as
-       the result is never greater than the entry's actual distance. Thus, for
-       example, distance to a bounding box is usually sufficient in geometric
-       applications.  For an internal tree node, the distance returned must not
-       be greater than the distance to any of the child nodes. If the returned
-       distance is not accurate, the function must set *recheck to false. (This
-       is not necessary for internal tree nodes; for them, the calculation is
-       always assumed to be inaccurate). The executor will calculate the
-       accurate distance after fetching the tuple from the heap, and reorder
-       the tuples if necessary.
+       Some approximation is allowed when determining the distance, so long
+       as the result is never greater than the entry's actual distance. Thus,
+       for example, distance to a bounding box is usually sufficient in
+       geometric applications.  For an internal tree node, the distance
+       returned must not be greater than the distance to any of the child
+       nodes. If the returned distance is not exact, the function must set
+       <literal>*recheck</> to true. (This is not necessary for internal tree
+       nodes; for them, the calculation is always assumed to be inexact.) In
+       this case the executor will calculate the accurate distance after
+       fetching the tuple from the heap, and reorder the tuples if necessary.
       </para>
 
       <para>
-       If the distance function returns *recheck=true for a leaf node, the
-       original ordering operator's return type must be float8 or float4, and
-       the distance function's return value must be comparable with the actual
-       distance operator. Otherwise, the distance function's return type can
-       be any finit <type>float8</> value, as long as the relative order of
-       the returned values matches the order returned by the ordering operator.
-       (Infinity and minus infinity are used internally to handle cases such as
-       nulls, so it is not recommended that <function>distance</> functions
-       return these values.)
+       If the distance function returns <literal>*recheck = true</> for any
+       leaf node, the original ordering operator's return type must
+       be <type>float8</> or <type>float4</>, and the distance function's
+       result values must be comparable to those of the original ordering
+       operator, since the executor will sort using both distance function
+       results and recalculated ordering-operator results.  Otherwise, the
+       distance function's result values can be any finite <type>float8</>
+       values, so long as the relative order of the result values matches the
+       order returned by the ordering operator.  (Infinity and minus infinity
+       are used internally to handle cases such as nulls, so it is not
+       recommended that <function>distance</> functions return these values.)
       </para>
 
      </listitem>
@@ -857,7 +853,7 @@ LANGUAGE C STRICT;
         struct, whose 'key' field contains the same datum in the original,
         uncompressed form. If the opclass' compress function does nothing for
         leaf entries, the fetch method can return the argument as is.
-       </para> 
+       </para>
 
        <para>
         The matching code in the C module could then follow this skeleton:

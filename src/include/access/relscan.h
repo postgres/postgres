@@ -95,12 +95,13 @@ typedef struct IndexScanDescData
 	/*
 	 * When fetching with an ordering operator, the values of the ORDER BY
 	 * expressions of the last returned tuple, according to the index.  If
-	 * xs_recheck is true, these need to be rechecked just like the scan keys,
-	 * and the values returned here are a lower-bound on the actual values.
+	 * xs_recheckorderby is true, these need to be rechecked just like the
+	 * scan keys, and the values returned here are a lower-bound on the actual
+	 * values.
 	 */
 	Datum	   *xs_orderbyvals;
 	bool	   *xs_orderbynulls;
-	bool		xs_recheckorderby;	/* T means ORDER BY exprs must be rechecked */
+	bool		xs_recheckorderby;
 
 	/* state data for traversing HOT chains in index_getnext */
 	bool		xs_continue_hot;	/* T if must keep walking HOT chain */

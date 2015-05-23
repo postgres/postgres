@@ -459,10 +459,16 @@ reorderqueue_pop(IndexScanState *node)
 {
 	HeapTuple	result;
 	ReorderTuple *topmost;
+	int			i;
 
 	topmost = (ReorderTuple *) pairingheap_remove_first(node->iss_ReorderQueue);
 
 	result = topmost->htup;
+	for (i = 0; i < node->iss_NumOrderByKeys; i++)
+	{
+		if (!node->iss_OrderByTypByVals[i] && !topmost->orderbynulls[i])
+			pfree(DatumGetPointer(topmost->orderbyvals[i]));
+	}
 	pfree(topmost->orderbyvals);
 	pfree(topmost->orderbynulls);
 	pfree(topmost);

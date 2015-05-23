@@ -191,20 +191,18 @@ gistindex_keytest(IndexScanDesc scan,
 			/*
 			 * Call the Distance function to evaluate the distance.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, and the ordering operator's strategy number and subtype
-			 * from pg_amop.
+			 * datum, the ordering operator's strategy number and subtype from
+			 * pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
 			 * always be zero, but might as well pass it for possible future
 			 * use.)
 			 *
-			 * Distance functions get a recheck argument as well.  In this
-			 * case the returned distance is the lower bound of distance and
-			 * needs to be rechecked.  We return single recheck flag which
-			 * means that both quals and distances are to be rechecked.  We
-			 * initialize the flag to 'false'.  The flag was added in version
-			 * 9.5 and the distance operators written before that won't know
-			 * about the flag, and are never lossy.
+			 * If the function sets the recheck flag, the returned distance is
+			 * a lower bound on the true distance and needs to be rechecked.
+			 * We initialize the flag to 'false'.  This flag was added in
+			 * version 9.5; distance functions written before that won't know
+			 * about the flag, but are expected to never be lossy.
 			 */
 			recheck = false;
 			dist = FunctionCall5Coll(&key->sk_func,
@@ -475,11 +473,22 @@ getNextNearest(IndexScanDesc scan)
 			{
 				if (so->orderByTypes[i] == FLOAT8OID)
 				{
+#ifndef USE_FLOAT8_BYVAL
+					/* must free any old value to avoid memory leakage */
+					if (!scan->xs_orderbynulls[i])
+						pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
+#endif
 					scan->xs_orderbyvals[i] = Float8GetDatum(item->distances[i]);
 					scan->xs_orderbynulls[i] = false;
 				}
 				else if (so->orderByTypes[i] == FLOAT4OID)
 				{
+					/* convert distance function's result to ORDER BY type */
+#ifndef USE_FLOAT4_BYVAL
+					/* must free any old value to avoid memory leakage */
+					if (!scan->xs_orderbynulls[i])
+						pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
+#endif
 					scan->xs_orderbyvals[i] = Float4GetDatum((float4) item->distances[i]);
 					scan->xs_orderbynulls[i] = false;
 				}
@@ -491,7 +500,7 @@ getNextNearest(IndexScanDesc scan)
 					 * calculated by the distance function to that.  The
 					 * executor won't actually need the order by values we
 					 * return here, if there are no lossy results, so only
-					 * insist on the datatype if the *recheck is set.
+					 * insist on converting if the *recheck flag is set.
 					 */
 					if (scan->xs_recheckorderby)
 						elog(ERROR, "GiST operator family's FOR ORDER BY operator must return float8 or float4 if the distance function is lossy");
