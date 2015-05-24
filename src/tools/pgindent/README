@@ -54,7 +54,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	pg_ctl start
 	make installcheck-world
 
-10) Remove Perl backup files after testing
+10) Remove Perl backup files after testing (*.bak)
 
 ---------------------------------------------------------------------------
 
