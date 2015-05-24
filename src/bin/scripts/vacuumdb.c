@@ -674,7 +674,7 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 				   const char *dbname, const char *table,
 				   const char *progname, bool async)
 {
-	bool	status;
+	bool		status;
 
 	if (async)
 	{
@@ -943,7 +943,7 @@ help(const char *progname)
 	printf(_("  -Z, --analyze-only              only update optimizer statistics;  no vacuum\n"));
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --analyze-in-stages         only update optimizer statistics, in multiple\n"
-		   "                                  stages for faster results;  no vacuum\n"));
+			 "                                  stages for faster results;  no vacuum\n"));
 	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));

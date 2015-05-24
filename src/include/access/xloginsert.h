@@ -29,13 +29,14 @@
 /* flags for XLogRegisterBuffer */
 #define REGBUF_FORCE_IMAGE	0x01	/* force a full-page image */
 #define REGBUF_NO_IMAGE		0x02	/* don't take a full-page image */
-#define REGBUF_WILL_INIT	(0x04 | 0x02)	/* page will be re-initialized at
-									 * replay (implies NO_IMAGE) */
-#define REGBUF_STANDARD		0x08	/* page follows "standard" page layout,
-									 * (data between pd_lower and pd_upper
-									 * will be skipped) */
-#define REGBUF_KEEP_DATA	0x10	/* include data even if a full-page image
-									 * is taken */
+#define REGBUF_WILL_INIT	(0x04 | 0x02)		/* page will be re-initialized
+												 * at replay (implies
+												 * NO_IMAGE) */
+#define REGBUF_STANDARD		0x08/* page follows "standard" page layout, (data
+								 * between pd_lower and pd_upper will be
+								 * skipped) */
+#define REGBUF_KEEP_DATA	0x10/* include data even if a full-page image is
+								 * taken */
 
 /* prototypes for public functions in xloginsert.c: */
 extern void XLogBeginInsert(void);

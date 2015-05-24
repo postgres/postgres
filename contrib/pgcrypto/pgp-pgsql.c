@@ -259,6 +259,7 @@ set_arg(PGP_Context *ctx, char *key, char *val,
 		res = pgp_set_convert_crlf(ctx, atoi(val));
 	else if (strcmp(key, "unicode-mode") == 0)
 		res = pgp_set_unicode_mode(ctx, atoi(val));
+
 	/*
 	 * The remaining options are for debugging/testing and are therefore not
 	 * documented in the user-facing docs.
@@ -834,22 +835,22 @@ static int
 parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 					   char ***p_keys, char ***p_values)
 {
-	int		nkdims = ARR_NDIM(key_array);
-	int		nvdims = ARR_NDIM(val_array);
-	char   **keys,
-		   **values;
-	Datum  *key_datums,
-		   *val_datums;
-	bool   *key_nulls,
-		   *val_nulls;
-	int		key_count,
-			val_count;
-	int		i;
+	int			nkdims = ARR_NDIM(key_array);
+	int			nvdims = ARR_NDIM(val_array);
+	char	  **keys,
+			  **values;
+	Datum	   *key_datums,
+			   *val_datums;
+	bool	   *key_nulls,
+			   *val_nulls;
+	int			key_count,
+				val_count;
+	int			i;
 
 	if (nkdims > 1 || nkdims != nvdims)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				errmsg("wrong number of array subscripts")));
+				 errmsg("wrong number of array subscripts")));
 	if (nkdims == 0)
 		return 0;
 
@@ -871,7 +872,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 
 	for (i = 0; i < key_count; i++)
 	{
-		char *v;
+		char	   *v;
 
 		/* Check that the key doesn't contain anything funny */
 		if (key_nulls[i])
@@ -884,7 +885,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 		if (!string_is_ascii(v))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("header key must not contain non-ASCII characters")));
+				errmsg("header key must not contain non-ASCII characters")));
 		if (strstr(v, ": "))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -906,7 +907,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 		if (!string_is_ascii(v))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("header value must not contain non-ASCII characters")));
+			  errmsg("header value must not contain non-ASCII characters")));
 		if (strchr(v, '\n'))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1045,7 +1046,7 @@ pgp_armor_headers(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 	else
 	{
-		char	  *values[2];
+		char	   *values[2];
 
 		/* we assume that the keys (and values) are in UTF-8. */
 		utf8key = state->keys[funcctx->call_cntr];

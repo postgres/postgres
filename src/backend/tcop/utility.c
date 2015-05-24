@@ -135,8 +135,8 @@ check_xact_readonly(Node *parsetree)
 	/*
 	 * Note: Commands that need to do more complicated checking are handled
 	 * elsewhere, in particular COPY and plannable statements do their own
-	 * checking.  However they should all call PreventCommandIfReadOnly
-	 * or PreventCommandIfParallelMode to actually throw the error.
+	 * checking.  However they should all call PreventCommandIfReadOnly or
+	 * PreventCommandIfParallelMode to actually throw the error.
 	 */
 
 	switch (nodeTag(parsetree))
@@ -933,6 +933,7 @@ ProcessUtilitySlow(Node *parsetree,
 			case T_CreateSchemaStmt:
 				CreateSchemaCommand((CreateSchemaStmt *) parsetree,
 									queryString);
+
 				/*
 				 * EventTriggerCollectSimpleCommand called by
 				 * CreateSchemaCommand
@@ -1072,12 +1073,12 @@ ProcessUtilitySlow(Node *parsetree,
 							else
 							{
 								/*
-								 * Recurse for anything else.  If we need to do
-								 * so, "close" the current complex-command set,
-								 * and start a new one at the bottom; this is
-								 * needed to ensure the ordering of queued
-								 * commands is consistent with the way they are
-								 * executed here.
+								 * Recurse for anything else.  If we need to
+								 * do so, "close" the current complex-command
+								 * set, and start a new one at the bottom;
+								 * this is needed to ensure the ordering of
+								 * queued commands is consistent with the way
+								 * they are executed here.
 								 */
 								EventTriggerAlterTableEnd();
 								ProcessUtility(stmt,
@@ -1177,43 +1178,43 @@ ProcessUtilitySlow(Node *parsetree,
 							address =
 								DefineAggregate(stmt->defnames, stmt->args,
 												stmt->oldstyle,
-												stmt->definition, queryString);
+											  stmt->definition, queryString);
 							break;
 						case OBJECT_OPERATOR:
 							Assert(stmt->args == NIL);
 							address = DefineOperator(stmt->defnames,
-													  stmt->definition);
+													 stmt->definition);
 							break;
 						case OBJECT_TYPE:
 							Assert(stmt->args == NIL);
 							address = DefineType(stmt->defnames,
-												  stmt->definition);
+												 stmt->definition);
 							break;
 						case OBJECT_TSPARSER:
 							Assert(stmt->args == NIL);
 							address = DefineTSParser(stmt->defnames,
-													  stmt->definition);
+													 stmt->definition);
 							break;
 						case OBJECT_TSDICTIONARY:
 							Assert(stmt->args == NIL);
 							address = DefineTSDictionary(stmt->defnames,
-														  stmt->definition);
+														 stmt->definition);
 							break;
 						case OBJECT_TSTEMPLATE:
 							Assert(stmt->args == NIL);
 							address = DefineTSTemplate(stmt->defnames,
-														stmt->definition);
+													   stmt->definition);
 							break;
 						case OBJECT_TSCONFIGURATION:
 							Assert(stmt->args == NIL);
 							address = DefineTSConfiguration(stmt->defnames,
-															 stmt->definition,
-															 &secondaryObject);
+															stmt->definition,
+															&secondaryObject);
 							break;
 						case OBJECT_COLLATION:
 							Assert(stmt->args == NIL);
 							address = DefineCollation(stmt->defnames,
-													   stmt->definition);
+													  stmt->definition);
 							break;
 						default:
 							elog(ERROR, "unrecognized define stmt type: %d",
@@ -1256,17 +1257,18 @@ ProcessUtilitySlow(Node *parsetree,
 					/* ... and do it */
 					EventTriggerAlterTableStart(parsetree);
 					address =
-						DefineIndex(relid,	/* OID of heap relation */
+						DefineIndex(relid,		/* OID of heap relation */
 									stmt,
-									InvalidOid,		/* no predefined OID */
-									false,	/* is_alter_table */
-									true,	/* check_rights */
-									false,	/* skip_build */
-									false); /* quiet */
+									InvalidOid, /* no predefined OID */
+									false,		/* is_alter_table */
+									true,		/* check_rights */
+									false,		/* skip_build */
+									false);		/* quiet */
+
 					/*
-					 * Add the CREATE INDEX node itself to stash right away; if
-					 * there were any commands stashed in the ALTER TABLE code,
-					 * we need them to appear after this one.
+					 * Add the CREATE INDEX node itself to stash right away;
+					 * if there were any commands stashed in the ALTER TABLE
+					 * code, we need them to appear after this one.
 					 */
 					EventTriggerCollectSimpleCommand(address, secondaryObject,
 													 parsetree);
@@ -1285,7 +1287,7 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_AlterExtensionContentsStmt:
 				address = ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree,
-														  &secondaryObject);
+														 &secondaryObject);
 				break;
 
 			case T_CreateFdwStmt:
@@ -1377,10 +1379,11 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_CreateTableAsStmt:
 				address = ExecCreateTableAs((CreateTableAsStmt *) parsetree,
-								  queryString, params, completionTag);
+										 queryString, params, completionTag);
 				break;
 
 			case T_RefreshMatViewStmt:
+
 				/*
 				 * REFRSH CONCURRENTLY executes some DDL commands internally.
 				 * Inhibit DDL command collection here to avoid those commands
@@ -1391,7 +1394,7 @@ ProcessUtilitySlow(Node *parsetree,
 				PG_TRY();
 				{
 					address = ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
-												 queryString, params, completionTag);
+										 queryString, params, completionTag);
 				}
 				PG_CATCH();
 				{
@@ -1404,8 +1407,8 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_CreateTrigStmt:
 				address = CreateTrigger((CreateTrigStmt *) parsetree,
-										 queryString, InvalidOid, InvalidOid,
-										 InvalidOid, InvalidOid, false);
+										queryString, InvalidOid, InvalidOid,
+										InvalidOid, InvalidOid, false);
 				break;
 
 			case T_CreatePLangStmt:

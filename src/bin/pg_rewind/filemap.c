@@ -185,13 +185,13 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 				 *
 				 * If it's smaller in the target, it means that it has been
 				 * truncated in the target, or enlarged in the source, or
-				 * both. If it was truncated in the target, we need to copy the
-				 * missing tail from the source system. If it was enlarged in
-				 * the source system, there will be WAL records in the source
-				 * system for the new blocks, so we wouldn't need to copy them
-				 * here. But we don't know which scenario we're dealing with,
-				 * and there's no harm in copying the missing blocks now, so
-				 * do it now.
+				 * both. If it was truncated in the target, we need to copy
+				 * the missing tail from the source system. If it was enlarged
+				 * in the source system, there will be WAL records in the
+				 * source system for the new blocks, so we wouldn't need to
+				 * copy them here. But we don't know which scenario we're
+				 * dealing with, and there's no harm in copying the missing
+				 * blocks now, so do it now.
 				 *
 				 * If it's the same size, do nothing here. Any blocks modified
 				 * in the target will be copied based on parsing the target
@@ -370,6 +370,7 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 				break;
 
 			case FILE_ACTION_COPY_TAIL:
+
 				/*
 				 * skip the modified block if it is part of the "tail" that
 				 * we're copying anyway.
@@ -391,8 +392,8 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 		/*
 		 * If we don't have any record of this file in the file map, it means
 		 * that it's a relation that doesn't exist in the source system, and
-		 * it was subsequently removed in the target system, too. We can safely
-		 * ignore it.
+		 * it was subsequently removed in the target system, too. We can
+		 * safely ignore it.
 		 */
 	}
 }

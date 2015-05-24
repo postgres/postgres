@@ -112,7 +112,7 @@ EOF
 			my $of = $fileNameWithPath;
 			$of =~ s/\.y$/.c/;
 			$of =~
-s{^src/pl/plpgsql/src/gram.c$}{src/pl/plpgsql/src/pl_gram.c};
+			  s{^src/pl/plpgsql/src/gram.c$}{src/pl/plpgsql/src/pl_gram.c};
 			print $f '>'
 			  . $self->GenerateCustomTool(
 				'Running bison on ' . $fileNameWithPath,

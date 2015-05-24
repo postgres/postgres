@@ -744,10 +744,10 @@ retry3:
 	 * the file selected for reading already.
 	 *
 	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then
-	 * data could arrive before we make the pqReadReady() test, but the
-	 * second SSL_read() could still say WANT_READ because the data received
-	 * was not a complete SSL record.  So we must play dumb and assume there
-	 * is more data, relying on the SSL layer to detect true EOF.
+	 * data could arrive before we make the pqReadReady() test, but the second
+	 * SSL_read() could still say WANT_READ because the data received was not
+	 * a complete SSL record.  So we must play dumb and assume there is more
+	 * data, relying on the SSL layer to detect true EOF.
 	 */
 
 #ifdef USE_SSL
@@ -916,9 +916,9 @@ pqSendSome(PGconn *conn, int len)
 			 * might not arrive until after we've gone to sleep.  Therefore,
 			 * we wait for either read ready or write ready.
 			 *
-			 * In non-blocking mode, we don't wait here directly, but return
-			 * 1 to indicate that data is still pending.  The caller should
-			 * wait for both read and write ready conditions, and call
+			 * In non-blocking mode, we don't wait here directly, but return 1
+			 * to indicate that data is still pending.  The caller should wait
+			 * for both read and write ready conditions, and call
 			 * PQconsumeInput() on read ready, but just in case it doesn't, we
 			 * call pqReadData() ourselves before returning.  That's not
 			 * enough if the data has not arrived yet, but it's the best we

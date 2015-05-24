@@ -1804,8 +1804,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						   errmsg("inherited relation \"%s\" is not a table or foreign table",
-								  inh->relname)));
+							 errmsg("inherited relation \"%s\" is not a table or foreign table",
+									inh->relname)));
 				for (count = 0; count < rel->rd_att->natts; count++)
 				{
 					Form_pg_attribute inhattr = rel->rd_att->attrs[count];
@@ -2496,7 +2496,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 			case AT_AlterColumnType:
 				{
-					ColumnDef *def = (ColumnDef *) cmd->def;
+					ColumnDef  *def = (ColumnDef *) cmd->def;
 
 					/*
 					 * For ALTER COLUMN TYPE, transform the USING clause if

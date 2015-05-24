@@ -33,7 +33,7 @@
 #include "pg_trace.h"
 
 /* Buffer size required to store a compressed version of backup block image */
-#define PGLZ_MAX_BLCKSZ	PGLZ_MAX_OUTPUT(BLCKSZ)
+#define PGLZ_MAX_BLCKSZ PGLZ_MAX_OUTPUT(BLCKSZ)
 
 /*
  * For each block reference registered with XLogRegisterBuffer, we fill in
@@ -58,7 +58,7 @@ typedef struct
 
 	/* buffer to store a compressed version of backup block image */
 	char		compressed_page[PGLZ_MAX_BLCKSZ];
-}	registered_buffer;
+} registered_buffer;
 
 static registered_buffer *registered_buffers;
 static int	max_registered_buffers;		/* allocated size */
@@ -110,7 +110,7 @@ static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,
 				   XLogRecPtr *fpw_lsn);
 static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
-									uint16 hole_length, char *dest, uint16 *dlen);
+						uint16 hole_length, char *dest, uint16 *dlen);
 
 /*
  * Begin constructing a WAL record. This must be called before the
@@ -602,7 +602,10 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 											&compressed_len);
 			}
 
-			/* Fill in the remaining fields in the XLogRecordBlockHeader struct */
+			/*
+			 * Fill in the remaining fields in the XLogRecordBlockHeader
+			 * struct
+			 */
 			bkpb.fork_flags |= BKPBLOCK_HAS_IMAGE;
 
 			/*
@@ -762,7 +765,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
  * the length of compressed block image.
  */
 static bool
-XLogCompressBackupBlock(char * page, uint16 hole_offset, uint16 hole_length,
+XLogCompressBackupBlock(char *page, uint16 hole_offset, uint16 hole_length,
 						char *dest, uint16 *dlen)
 {
 	int32		orig_len = BLCKSZ - hole_length;
@@ -790,16 +793,15 @@ XLogCompressBackupBlock(char * page, uint16 hole_offset, uint16 hole_length,
 		source = page;
 
 	/*
-	 * We recheck the actual size even if pglz_compress() reports success
-	 * and see if the number of bytes saved by compression is larger than
-	 * the length of extra data needed for the compressed version of block
-	 * image.
+	 * We recheck the actual size even if pglz_compress() reports success and
+	 * see if the number of bytes saved by compression is larger than the
+	 * length of extra data needed for the compressed version of block image.
 	 */
 	len = pglz_compress(source, orig_len, dest, PGLZ_strategy_default);
 	if (len >= 0 &&
 		len + extra_bytes < orig_len)
 	{
-		*dlen = (uint16) len;		/* successful compression */
+		*dlen = (uint16) len;	/* successful compression */
 		return true;
 	}
 	return false;

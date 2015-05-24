@@ -402,7 +402,7 @@ do { \
 
 #define HeapTupleHeaderGetSpeculativeToken(tup) \
 ( \
-	AssertMacro(HeapTupleHeaderIsSpeculative(tup)),	\
+	AssertMacro(HeapTupleHeaderIsSpeculative(tup)), \
 	ItemPointerGetBlockNumber(&(tup)->t_ctid) \
 )
 

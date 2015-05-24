@@ -710,11 +710,11 @@ typedef enum BackendState
 typedef struct PgBackendSSLStatus
 {
 	/* Information about SSL connection */
-	int		ssl_bits;
-	bool	ssl_compression;
-	char	ssl_version[NAMEDATALEN];  /* MUST be null-terminated */
-	char	ssl_cipher[NAMEDATALEN];   /* MUST be null-terminated */
-	char	ssl_clientdn[NAMEDATALEN]; /* MUST be null-terminated */
+	int			ssl_bits;
+	bool		ssl_compression;
+	char		ssl_version[NAMEDATALEN];		/* MUST be null-terminated */
+	char		ssl_cipher[NAMEDATALEN];		/* MUST be null-terminated */
+	char		ssl_clientdn[NAMEDATALEN];		/* MUST be null-terminated */
 } PgBackendSSLStatus;
 
 
@@ -738,11 +738,11 @@ typedef struct PgBackendStatus
 	 * the copy is valid; otherwise start over.  This makes updates cheap
 	 * while reads are potentially expensive, but that's the tradeoff we want.
 	 *
-	 * The above protocol needs the memory barriers to ensure that
-	 * the apparent order of execution is as it desires. Otherwise,
-	 * for example, the CPU might rearrange the code so that st_changecount
-	 * is incremented twice before the modification on a machine with
-	 * weak memory ordering. This surprising result can lead to bugs.
+	 * The above protocol needs the memory barriers to ensure that the
+	 * apparent order of execution is as it desires. Otherwise, for example,
+	 * the CPU might rearrange the code so that st_changecount is incremented
+	 * twice before the modification on a machine with weak memory ordering.
+	 * This surprising result can lead to bugs.
 	 */
 	int			st_changecount;
 
@@ -793,26 +793,26 @@ typedef struct PgBackendStatus
 #define pgstat_increment_changecount_before(beentry)	\
 	do {	\
 		beentry->st_changecount++;	\
-		pg_write_barrier();	\
+		pg_write_barrier(); \
 	} while (0)
 
-#define pgstat_increment_changecount_after(beentry)	\
+#define pgstat_increment_changecount_after(beentry) \
 	do {	\
-		pg_write_barrier();	\
+		pg_write_barrier(); \
 		beentry->st_changecount++;	\
-		Assert((beentry->st_changecount & 1) == 0);	\
+		Assert((beentry->st_changecount & 1) == 0); \
 	} while (0)
 
 #define pgstat_save_changecount_before(beentry, save_changecount)	\
 	do {	\
-		save_changecount = beentry->st_changecount;	\
+		save_changecount = beentry->st_changecount; \
 		pg_read_barrier();	\
 	} while (0)
 
 #define pgstat_save_changecount_after(beentry, save_changecount)	\
 	do {	\
 		pg_read_barrier();	\
-		save_changecount = beentry->st_changecount;	\
+		save_changecount = beentry->st_changecount; \
 	} while (0)
 
 /* ----------

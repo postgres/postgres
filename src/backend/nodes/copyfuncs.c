@@ -1216,7 +1216,7 @@ _copyAggref(const Aggref *from)
 static GroupingFunc *
 _copyGroupingFunc(const GroupingFunc *from)
 {
-	GroupingFunc	   *newnode = makeNode(GroupingFunc);
+	GroupingFunc *newnode = makeNode(GroupingFunc);
 
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(refs);
@@ -1915,7 +1915,7 @@ _copyFromExpr(const FromExpr *from)
 static OnConflictExpr *
 _copyOnConflictExpr(const OnConflictExpr *from)
 {
-	OnConflictExpr   *newnode = makeNode(OnConflictExpr);
+	OnConflictExpr *newnode = makeNode(OnConflictExpr);
 
 	COPY_SCALAR_FIELD(action);
 	COPY_NODE_FIELD(arbiterElems);
@@ -2173,7 +2173,7 @@ _copySortGroupClause(const SortGroupClause *from)
 static GroupingSet *
 _copyGroupingSet(const GroupingSet *from)
 {
-	GroupingSet		   *newnode = makeNode(GroupingSet);
+	GroupingSet *newnode = makeNode(GroupingSet);
 
 	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(content);

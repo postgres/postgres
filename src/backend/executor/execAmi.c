@@ -405,10 +405,10 @@ ExecSupportsMarkRestore(Path *pathnode)
 			 * that does, we presently come here only for ResultPath nodes,
 			 * which represent Result plans without a child plan.  So there is
 			 * nothing to recurse to and we can just say "false".  (This means
-			 * that Result's support for mark/restore is in fact dead code.
-			 * We keep it since it's not much code, and someday the planner
-			 * might be smart enough to use it.  That would require making
-			 * this function smarter too, of course.)
+			 * that Result's support for mark/restore is in fact dead code. We
+			 * keep it since it's not much code, and someday the planner might
+			 * be smart enough to use it.  That would require making this
+			 * function smarter too, of course.)
 			 */
 			Assert(IsA(pathnode, ResultPath));
 			return false;

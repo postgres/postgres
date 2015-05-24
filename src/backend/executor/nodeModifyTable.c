@@ -180,7 +180,7 @@ ExecCheckHeapTupleVisible(EState *estate,
 	if (!HeapTupleSatisfiesVisibility(tuple, estate->es_snapshot, buffer))
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-				 errmsg("could not serialize access due to concurrent update")));
+			 errmsg("could not serialize access due to concurrent update")));
 }
 
 /*
@@ -321,8 +321,8 @@ ExecInsert(ModifyTableState *mtstate,
 		/*
 		 * Check any RLS INSERT WITH CHECK policies
 		 *
-		 * ExecWithCheckOptions() will skip any WCOs which are not of
-		 * the kind we are looking for at this point.
+		 * ExecWithCheckOptions() will skip any WCOs which are not of the kind
+		 * we are looking for at this point.
 		 */
 		if (resultRelInfo->ri_WithCheckOptions != NIL)
 			ExecWithCheckOptions(WCO_RLS_INSERT_CHECK,
@@ -383,9 +383,9 @@ ExecInsert(ModifyTableState *mtstate,
 				else
 				{
 					/*
-					 * In case of ON CONFLICT DO NOTHING, do nothing.
-					 * However, verify that the tuple is visible to the
-					 * executor's MVCC snapshot at higher isolation levels.
+					 * In case of ON CONFLICT DO NOTHING, do nothing. However,
+					 * verify that the tuple is visible to the executor's MVCC
+					 * snapshot at higher isolation levels.
 					 */
 					Assert(onconflict == ONCONFLICT_NOTHING);
 					ExecCheckTIDVisible(estate, resultRelInfo, &conflictTid);
@@ -411,7 +411,7 @@ ExecInsert(ModifyTableState *mtstate,
 
 			/* insert index entries for tuple */
 			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-												   estate, true, &specConflict,
+												 estate, true, &specConflict,
 												   arbiterIndexes);
 
 			/* adjust the tuple's state accordingly */
@@ -475,17 +475,16 @@ ExecInsert(ModifyTableState *mtstate,
 	list_free(recheckIndexes);
 
 	/*
-	 * Check any WITH CHECK OPTION constraints from parent views.  We
-	 * are required to do this after testing all constraints and
-	 * uniqueness violations per the SQL spec, so we do it after actually
-	 * inserting the record into the heap and all indexes.
+	 * Check any WITH CHECK OPTION constraints from parent views.  We are
+	 * required to do this after testing all constraints and uniqueness
+	 * violations per the SQL spec, so we do it after actually inserting the
+	 * record into the heap and all indexes.
 	 *
-	 * ExecWithCheckOptions will elog(ERROR) if a violation is found, so
-	 * the tuple will never be seen, if it violates the WITH CHECK
-	 * OPTION.
+	 * ExecWithCheckOptions will elog(ERROR) if a violation is found, so the
+	 * tuple will never be seen, if it violates the WITH CHECK OPTION.
 	 *
-	 * ExecWithCheckOptions() will skip any WCOs which are not of
-	 * the kind we are looking for at this point.
+	 * ExecWithCheckOptions() will skip any WCOs which are not of the kind we
+	 * are looking for at this point.
 	 */
 	if (resultRelInfo->ri_WithCheckOptions != NIL)
 		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
@@ -860,8 +859,8 @@ ExecUpdate(ItemPointer tupleid,
 		 * triggers then trigger.c will have done heap_lock_tuple to lock the
 		 * correct tuple, so there's no need to do them again.)
 		 *
-		 * ExecWithCheckOptions() will skip any WCOs which are not of
-		 * the kind we are looking for at this point.
+		 * ExecWithCheckOptions() will skip any WCOs which are not of the kind
+		 * we are looking for at this point.
 		 */
 lreplace:;
 		if (resultRelInfo->ri_WithCheckOptions != NIL)
@@ -990,13 +989,13 @@ lreplace:;
 	list_free(recheckIndexes);
 
 	/*
-	 * Check any WITH CHECK OPTION constraints from parent views.  We
-	 * are required to do this after testing all constraints and
-	 * uniqueness violations per the SQL spec, so we do it after actually
-	 * updating the record in the heap and all indexes.
+	 * Check any WITH CHECK OPTION constraints from parent views.  We are
+	 * required to do this after testing all constraints and uniqueness
+	 * violations per the SQL spec, so we do it after actually updating the
+	 * record in the heap and all indexes.
 	 *
-	 * ExecWithCheckOptions() will skip any WCOs which are not of
-	 * the kind we are looking for at this point.
+	 * ExecWithCheckOptions() will skip any WCOs which are not of the kind we
+	 * are looking for at this point.
 	 */
 	if (resultRelInfo->ri_WithCheckOptions != NIL)
 		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
@@ -1143,9 +1142,9 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	/*
 	 * Make tuple and any needed join variables available to ExecQual and
 	 * ExecProject.  The EXCLUDED tuple is installed in ecxt_innertuple, while
-	 * the target's existing tuple is installed in the scantuple.  EXCLUDED has
-	 * been made to reference INNER_VAR in setrefs.c, but there is no other
-	 * redirection.
+	 * the target's existing tuple is installed in the scantuple.  EXCLUDED
+	 * has been made to reference INNER_VAR in setrefs.c, but there is no
+	 * other redirection.
 	 */
 	econtext->ecxt_scantuple = mtstate->mt_existing;
 	econtext->ecxt_innertuple = excludedSlot;
@@ -1430,7 +1429,7 @@ ExecModifyTable(ModifyTableState *node)
 		{
 			case CMD_INSERT:
 				slot = ExecInsert(node, slot, planSlot,
-								  node->mt_arbiterindexes, node->mt_onconflict,
+								node->mt_arbiterindexes, node->mt_onconflict,
 								  estate, node->canSetTag);
 				break;
 			case CMD_UPDATE:

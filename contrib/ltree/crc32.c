@@ -26,13 +26,14 @@
 unsigned int
 ltree_crc32_sz(char *buf, int size)
 {
-	pg_crc32 crc;
+	pg_crc32	crc;
 	char	   *p = buf;
 
 	INIT_TRADITIONAL_CRC32(crc);
 	while (size > 0)
 	{
-		char c = (char) TOLOWER(*p);
+		char		c = (char) TOLOWER(*p);
+
 		COMP_TRADITIONAL_CRC32(crc, &c, 1);
 		size--;
 		p++;

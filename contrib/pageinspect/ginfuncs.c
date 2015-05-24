@@ -167,7 +167,7 @@ typedef struct gin_leafpage_items_state
 	TupleDesc	tupd;
 	GinPostingList *seg;
 	GinPostingList *lastseg;
-}	gin_leafpage_items_state;
+} gin_leafpage_items_state;
 
 Datum
 gin_leafpage_items(PG_FUNCTION_ARGS)

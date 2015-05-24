@@ -1731,7 +1731,7 @@ numeric_abbrev_abort(int memtupcount, SortSupport ssup)
 		if (trace_sort)
 			elog(LOG,
 				 "numeric_abbrev: aborting abbreviation at cardinality %f"
-				 " below threshold %f after " INT64_FORMAT " values (%d rows)",
+			   " below threshold %f after " INT64_FORMAT " values (%d rows)",
 				 abbr_card, nss->input_count / 10000.0 + 0.5,
 				 nss->input_count, memtupcount);
 #endif
@@ -3408,10 +3408,10 @@ numeric_accum_inv(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 typedef struct Int128AggState
 {
-	bool	calcSumX2;	/* if true, calculate sumX2 */
-	int64	N;			/* count of processed numbers */
-	int128	sumX;		/* sum of processed numbers */
-	int128	sumX2;		/* sum of squares of processed numbers */
+	bool		calcSumX2;		/* if true, calculate sumX2 */
+	int64		N;				/* count of processed numbers */
+	int128		sumX;			/* sum of processed numbers */
+	int128		sumX2;			/* sum of squares of processed numbers */
 } Int128AggState;
 
 /*
@@ -3703,9 +3703,9 @@ Datum
 numeric_poly_sum(PG_FUNCTION_ARGS)
 {
 #ifdef HAVE_INT128
-	PolyNumAggState	*state;
-	Numeric			res;
-	NumericVar		result;
+	PolyNumAggState *state;
+	Numeric		res;
+	NumericVar	result;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
@@ -3731,9 +3731,10 @@ Datum
 numeric_poly_avg(PG_FUNCTION_ARGS)
 {
 #ifdef HAVE_INT128
-	PolyNumAggState	   *state;
-	NumericVar			result;
-	Datum				countd, sumd;
+	PolyNumAggState *state;
+	NumericVar	result;
+	Datum		countd,
+				sumd;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
@@ -3962,8 +3963,8 @@ numeric_stddev_pop(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 static Numeric
 numeric_poly_stddev_internal(Int128AggState *state,
-						bool variance, bool sample,
-						bool *is_null)
+							 bool variance, bool sample,
+							 bool *is_null)
 {
 	NumericAggState numstate;
 	Numeric		res;
@@ -3997,9 +3998,9 @@ Datum
 numeric_poly_var_samp(PG_FUNCTION_ARGS)
 {
 #ifdef HAVE_INT128
-	PolyNumAggState	   *state;
-	Numeric				res;
-	bool				is_null;
+	PolyNumAggState *state;
+	Numeric		res;
+	bool		is_null;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
@@ -4018,9 +4019,9 @@ Datum
 numeric_poly_stddev_samp(PG_FUNCTION_ARGS)
 {
 #ifdef HAVE_INT128
-	PolyNumAggState	   *state;
-	Numeric				res;
-	bool				is_null;
+	PolyNumAggState *state;
+	Numeric		res;
+	bool		is_null;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
@@ -4039,9 +4040,9 @@ Datum
 numeric_poly_var_pop(PG_FUNCTION_ARGS)
 {
 #ifdef HAVE_INT128
-	PolyNumAggState	   *state;
-	Numeric				res;
-	bool				is_null;
+	PolyNumAggState *state;
+	Numeric		res;
+	bool		is_null;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
@@ -4060,9 +4061,9 @@ Datum
 numeric_poly_stddev_pop(PG_FUNCTION_ARGS)
 {
 #ifdef HAVE_INT128
-	PolyNumAggState	   *state;
-	Numeric				res;
-	bool				is_null;
+	PolyNumAggState *state;
+	Numeric		res;
+	bool		is_null;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
@@ -5306,10 +5307,10 @@ int64_to_numericvar(int64 val, NumericVar *var)
 static void
 int128_to_numericvar(int128 val, NumericVar *var)
 {
-	uint128			uval,
-					newuval;
-	NumericDigit   *ptr;
-	int				ndigits;
+	uint128		uval,
+				newuval;
+	NumericDigit *ptr;
+	int			ndigits;
 
 	/* int128 can require at most 39 decimal digits; add one for safety */
 	alloc_var(var, 40 / DEC_DIGITS);

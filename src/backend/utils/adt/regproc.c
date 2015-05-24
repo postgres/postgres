@@ -466,7 +466,7 @@ format_procedure_parts(Oid procedure_oid, List **objnames, List **objargs)
 	*objargs = NIL;
 	for (i = 0; i < nargs; i++)
 	{
-		Oid		thisargtype = procform->proargtypes.values[i];
+		Oid			thisargtype = procform->proargtypes.values[i];
 
 		*objargs = lappend(*objargs, format_type_be_qualified(thisargtype));
 	}
@@ -1637,7 +1637,7 @@ regroleout(PG_FUNCTION_ARGS)
 }
 
 /*
- *		regrolerecv	- converts external binary format to regrole
+ *		regrolerecv - converts external binary format to regrole
  */
 Datum
 regrolerecv(PG_FUNCTION_ARGS)
@@ -1647,7 +1647,7 @@ regrolerecv(PG_FUNCTION_ARGS)
 }
 
 /*
- *		regrolesend	- converts regrole to binary format
+ *		regrolesend - converts regrole to binary format
  */
 Datum
 regrolesend(PG_FUNCTION_ARGS)
@@ -1680,7 +1680,7 @@ regnamespacein(PG_FUNCTION_ARGS)
 		strspn(nsp_name_or_oid, "0123456789") == strlen(nsp_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-										CStringGetDatum(nsp_name_or_oid)));
+										  CStringGetDatum(nsp_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 

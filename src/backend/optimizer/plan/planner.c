@@ -64,7 +64,7 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_LIMIT			6
 #define EXPRKIND_APPINFO		7
 #define EXPRKIND_PHV			8
-#define EXPRKIND_TABLESAMPLE    9
+#define EXPRKIND_TABLESAMPLE	9
 
 /* Passthrough data for standard_qp_callback */
 typedef struct
@@ -123,15 +123,15 @@ static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
 						   AttrNumber **ordColIdx,
 						   Oid **ordOperators);
 static Plan *build_grouping_chain(PlannerInfo *root,
-						  Query	   *parse,
-						  List	   *tlist,
-						  bool		need_sort_for_grouping,
-						  List	   *rollup_groupclauses,
-						  List	   *rollup_lists,
-						  AttrNumber *groupColIdx,
-						  AggClauseCosts *agg_costs,
-						  long		numGroups,
-						  Plan	   *result_plan);
+					 Query *parse,
+					 List *tlist,
+					 bool need_sort_for_grouping,
+					 List *rollup_groupclauses,
+					 List *rollup_lists,
+					 AttrNumber *groupColIdx,
+					 AggClauseCosts *agg_costs,
+					 long numGroups,
+					 Plan *result_plan);
 
 /*****************************************************************************
  *
@@ -865,13 +865,14 @@ inheritance_planner(PlannerInfo *root)
 	 *
 	 * Note that any RTEs with security barrier quals will be turned into
 	 * subqueries during planning, and so we must create copies of them too,
-	 * except where they are target relations, which will each only be used
-	 * in a single plan.
+	 * except where they are target relations, which will each only be used in
+	 * a single plan.
 	 */
 	resultRTindexes = bms_add_member(resultRTindexes, parentRTindex);
 	foreach(lc, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
+
 		if (appinfo->parent_relid == parentRTindex)
 			resultRTindexes = bms_add_member(resultRTindexes,
 											 appinfo->child_relid);
@@ -1299,6 +1300,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			foreach(lc, parse->groupClause)
 			{
 				SortGroupClause *gc = lfirst(lc);
+
 				if (gc->tleSortGroupRef > maxref)
 					maxref = gc->tleSortGroupRef;
 			}
@@ -1315,12 +1317,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			foreach(lc_set, sets)
 			{
-				List   *current_sets = reorder_grouping_sets(lfirst(lc_set),
-													(list_length(sets) == 1
-													 ? parse->sortClause
-													 : NIL));
-				List   *groupclause = preprocess_groupclause(root, linitial(current_sets));
-				int		ref = 0;
+				List	   *current_sets = reorder_grouping_sets(lfirst(lc_set),
+													  (list_length(sets) == 1
+													   ? parse->sortClause
+													   : NIL));
+				List	   *groupclause = preprocess_groupclause(root, linitial(current_sets));
+				int			ref = 0;
 
 				/*
 				 * Now that we've pinned down an order for the groupClause for
@@ -1333,6 +1335,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				foreach(lc, groupclause)
 				{
 					SortGroupClause *gc = lfirst(lc);
+
 					tleref_to_colnum_map[gc->tleSortGroupRef] = ref++;
 				}
 
@@ -1496,7 +1499,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 					foreach(lc3, lfirst(lc2))
 					{
-						List   *gset = lfirst(lc3);
+						List	   *gset = lfirst(lc3);
 
 						dNumGroups += estimate_num_groups(root,
 														  groupExprs,
@@ -1736,7 +1739,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/* Detect if we'll need an explicit sort for grouping */
 			if (parse->groupClause && !use_hashed_grouping &&
-				!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
+			  !pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 			{
 				need_sort_for_grouping = true;
 
@@ -1810,6 +1813,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				foreach(lc, parse->groupClause)
 				{
 					SortGroupClause *gc = lfirst(lc);
+
 					grouping_map[gc->tleSortGroupRef] = groupColIdx[i++];
 				}
 
@@ -1832,7 +1836,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												&agg_costs,
 												numGroupCols,
 												groupColIdx,
-												extract_grouping_ops(parse->groupClause),
+									extract_grouping_ops(parse->groupClause),
 												NIL,
 												numGroups,
 												result_plan);
@@ -1842,9 +1846,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			else if (parse->hasAggs || (parse->groupingSets && parse->groupClause))
 			{
 				/*
-				 * Output is in sorted order by group_pathkeys if, and only if,
-				 * there is a single rollup operation on a non-empty list of
-				 * grouping expressions.
+				 * Output is in sorted order by group_pathkeys if, and only
+				 * if, there is a single rollup operation on a non-empty list
+				 * of grouping expressions.
 				 */
 				if (list_length(rollup_groupclauses) == 1
 					&& list_length(linitial(rollup_groupclauses)) > 0)
@@ -1864,8 +1868,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												   result_plan);
 
 				/*
-				 * these are destroyed by build_grouping_chain, so make sure we
-				 * don't try and touch them again
+				 * these are destroyed by build_grouping_chain, so make sure
+				 * we don't try and touch them again
 				 */
 				rollup_groupclauses = NIL;
 				rollup_lists = NIL;
@@ -1901,23 +1905,23 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 			else if (root->hasHavingQual || parse->groupingSets)
 			{
-				int		nrows = list_length(parse->groupingSets);
+				int			nrows = list_length(parse->groupingSets);
 
 				/*
-				 * No aggregates, and no GROUP BY, but we have a HAVING qual or
-				 * grouping sets (which by elimination of cases above must
+				 * No aggregates, and no GROUP BY, but we have a HAVING qual
+				 * or grouping sets (which by elimination of cases above must
 				 * consist solely of empty grouping sets, since otherwise
 				 * groupClause will be non-empty).
 				 *
 				 * This is a degenerate case in which we are supposed to emit
-				 * either 0 or 1 row for each grouping set depending on whether
-				 * HAVING succeeds.  Furthermore, there cannot be any variables
-				 * in either HAVING or the targetlist, so we actually do not
-				 * need the FROM table at all!  We can just throw away the
-				 * plan-so-far and generate a Result node.  This is a
-				 * sufficiently unusual corner case that it's not worth
-				 * contorting the structure of this routine to avoid having to
-				 * generate the plan in the first place.
+				 * either 0 or 1 row for each grouping set depending on
+				 * whether HAVING succeeds.  Furthermore, there cannot be any
+				 * variables in either HAVING or the targetlist, so we
+				 * actually do not need the FROM table at all!	We can just
+				 * throw away the plan-so-far and generate a Result node.
+				 * This is a sufficiently unusual corner case that it's not
+				 * worth contorting the structure of this routine to avoid
+				 * having to generate the plan in the first place.
 				 */
 				result_plan = (Plan *) make_result(root,
 												   tlist,
@@ -1931,7 +1935,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 */
 				if (nrows > 1)
 				{
-					List   *plans = list_make1(result_plan);
+					List	   *plans = list_make1(result_plan);
 
 					while (--nrows > 0)
 						plans = lappend(plans, copyObject(result_plan));
@@ -2279,6 +2283,7 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
 	foreach(lc, groupClause)
 	{
 		SortGroupClause *clause = lfirst(lc);
+
 		new_grpColIdx[i++] = grouping_map[clause->tleSortGroupRef];
 	}
 
@@ -2304,15 +2309,15 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
  */
 static Plan *
 build_grouping_chain(PlannerInfo *root,
-					 Query	   *parse,
-					 List	   *tlist,
-					 bool		need_sort_for_grouping,
-					 List	   *rollup_groupclauses,
-					 List	   *rollup_lists,
+					 Query *parse,
+					 List *tlist,
+					 bool need_sort_for_grouping,
+					 List *rollup_groupclauses,
+					 List *rollup_lists,
 					 AttrNumber *groupColIdx,
 					 AggClauseCosts *agg_costs,
-					 long		numGroups,
-					 Plan	   *result_plan)
+					 long numGroups,
+					 Plan *result_plan)
 {
 	AttrNumber *top_grpColIdx = groupColIdx;
 	List	   *chain = NIL;
@@ -2366,8 +2371,8 @@ build_grouping_chain(PlannerInfo *root,
 
 		/*
 		 * sort_plan includes the cost of result_plan over again, which is not
-		 * what we want (since it's not actually running that plan). So correct
-		 * the cost figures.
+		 * what we want (since it's not actually running that plan). So
+		 * correct the cost figures.
 		 */
 
 		sort_plan->startup_cost -= result_plan->total_cost;
@@ -2412,7 +2417,7 @@ build_grouping_chain(PlannerInfo *root,
 		result_plan = (Plan *) make_agg(root,
 										tlist,
 										(List *) parse->havingQual,
-										(numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
+								 (numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
 										agg_costs,
 										numGroupCols,
 										top_grpColIdx,
@@ -2429,7 +2434,7 @@ build_grouping_chain(PlannerInfo *root,
 		 */
 		foreach(lc, chain)
 		{
-			Plan   *subplan = lfirst(lc);
+			Plan	   *subplan = lfirst(lc);
 
 			result_plan->total_cost += subplan->total_cost;
 
@@ -2716,6 +2721,7 @@ select_rowmark_type(RangeTblEntry *rte, LockClauseStrength strength)
 		switch (strength)
 		{
 			case LCS_NONE:
+
 				/*
 				 * We don't need a tuple lock, only the ability to re-fetch
 				 * the row.  Regular tables support ROW_MARK_REFERENCE, but if
@@ -3026,7 +3032,7 @@ preprocess_groupclause(PlannerInfo *root, List *force)
 	{
 		foreach(sl, force)
 		{
-			Index ref = lfirst_int(sl);
+			Index		ref = lfirst_int(sl);
 			SortGroupClause *cl = get_sortgroupref_clause(ref, parse->groupClause);
 
 			new_groupclause = lappend(new_groupclause, cl);
@@ -3120,7 +3126,7 @@ extract_rollup_sets(List *groupingSets)
 {
 	int			num_sets_raw = list_length(groupingSets);
 	int			num_empty = 0;
-	int			num_sets = 0;		/* distinct sets */
+	int			num_sets = 0;	/* distinct sets */
 	int			num_chains = 0;
 	List	   *result = NIL;
 	List	  **results;
@@ -3152,23 +3158,23 @@ extract_rollup_sets(List *groupingSets)
 		return list_make1(groupingSets);
 
 	/*
-	 * We don't strictly need to remove duplicate sets here, but if we
-	 * don't, they tend to become scattered through the result, which is
-	 * a bit confusing (and irritating if we ever decide to optimize them
-	 * out). So we remove them here and add them back after.
+	 * We don't strictly need to remove duplicate sets here, but if we don't,
+	 * they tend to become scattered through the result, which is a bit
+	 * confusing (and irritating if we ever decide to optimize them out). So
+	 * we remove them here and add them back after.
 	 *
 	 * For each non-duplicate set, we fill in the following:
 	 *
-	 * orig_sets[i] = list of the original set lists
-	 * set_masks[i] = bitmapset for testing inclusion
-	 * adjacency[i] = array [n, v1, v2, ... vn] of adjacency indices
+	 * orig_sets[i] = list of the original set lists set_masks[i] = bitmapset
+	 * for testing inclusion adjacency[i] = array [n, v1, v2, ... vn] of
+	 * adjacency indices
 	 *
 	 * chains[i] will be the result group this set is assigned to.
 	 *
-	 * We index all of these from 1 rather than 0 because it is convenient
-	 * to leave 0 free for the NIL node in the graph algorithm.
+	 * We index all of these from 1 rather than 0 because it is convenient to
+	 * leave 0 free for the NIL node in the graph algorithm.
 	 */
-	orig_sets = palloc0((num_sets_raw + 1) * sizeof(List*));
+	orig_sets = palloc0((num_sets_raw + 1) * sizeof(List *));
 	set_masks = palloc0((num_sets_raw + 1) * sizeof(Bitmapset *));
 	adjacency = palloc0((num_sets_raw + 1) * sizeof(short *));
 	adjacency_buf = palloc((num_sets_raw + 1) * sizeof(short));
@@ -3192,7 +3198,8 @@ extract_rollup_sets(List *groupingSets)
 		/* we can only be a dup if we're the same length as a previous set */
 		if (j_size == list_length(candidate))
 		{
-			int		k;
+			int			k;
+
 			for (k = j; k < i; ++k)
 			{
 				if (bms_equal(set_masks[k], candidate_set))
@@ -3215,8 +3222,8 @@ extract_rollup_sets(List *groupingSets)
 		}
 		else
 		{
-			int		k;
-			int		n_adj = 0;
+			int			k;
+			int			n_adj = 0;
 
 			orig_sets[i] = list_make1(candidate);
 			set_masks[i] = candidate_set;
@@ -3259,8 +3266,8 @@ extract_rollup_sets(List *groupingSets)
 
 	for (i = 1; i <= num_sets; ++i)
 	{
-		int u = state->pair_vu[i];
-		int v = state->pair_uv[i];
+		int			u = state->pair_vu[i];
+		int			v = state->pair_uv[i];
 
 		if (u > 0 && u < i)
 			chains[i] = chains[u];
@@ -3271,11 +3278,11 @@ extract_rollup_sets(List *groupingSets)
 	}
 
 	/* build result lists. */
-	results = palloc0((num_chains + 1) * sizeof(List*));
+	results = palloc0((num_chains + 1) * sizeof(List *));
 
 	for (i = 1; i <= num_sets; ++i)
 	{
-		int c = chains[i];
+		int			c = chains[i];
 
 		Assert(c > 0);
 
@@ -3334,15 +3341,16 @@ reorder_grouping_sets(List *groupingsets, List *sortclause)
 
 	foreach(lc, groupingsets)
 	{
-		List   *candidate = lfirst(lc);
-		List   *new_elems = list_difference_int(candidate, previous);
+		List	   *candidate = lfirst(lc);
+		List	   *new_elems = list_difference_int(candidate, previous);
 
 		if (list_length(new_elems) > 0)
 		{
 			while (list_length(sortclause) > list_length(previous))
 			{
 				SortGroupClause *sc = list_nth(sortclause, list_length(previous));
-				int ref = sc->tleSortGroupRef;
+				int			ref = sc->tleSortGroupRef;
+
 				if (list_member_int(new_elems, ref))
 				{
 					previous = lappend_int(previous, ref);

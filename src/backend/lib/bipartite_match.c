@@ -51,14 +51,14 @@ BipartiteMatch(int u_size, int v_size, short **adjacency)
 
 	while (hk_breadth_search(state))
 	{
-		int		u;
+		int			u;
 
 		for (u = 1; u <= u_size; ++u)
 			if (state->pair_uv[u] == 0)
 				if (hk_depth_search(state, u, 1))
 					state->matching++;
 
-		CHECK_FOR_INTERRUPTS();		/* just in case */
+		CHECK_FOR_INTERRUPTS(); /* just in case */
 	}
 
 	return state;
@@ -108,18 +108,18 @@ hk_breadth_search(BipartiteMatchState *state)
 
 		if (distance[u] < distance[0])
 		{
-			short  *u_adj = state->adjacency[u];
-			int		i = u_adj ? u_adj[0] : 0;
+			short	   *u_adj = state->adjacency[u];
+			int			i = u_adj ? u_adj[0] : 0;
 
 			for (; i > 0; --i)
 			{
-				int	u_next = state->pair_vu[u_adj[i]];
+				int			u_next = state->pair_vu[u_adj[i]];
 
 				if (isinf(distance[u_next]))
 				{
 					distance[u_next] = 1 + distance[u];
 					queue[qhead++] = u_next;
-					Assert(qhead <= usize+2);
+					Assert(qhead <= usize + 2);
 				}
 			}
 		}
@@ -145,11 +145,11 @@ hk_depth_search(BipartiteMatchState *state, int u, int depth)
 
 	for (; i > 0; --i)
 	{
-		int		v = u_adj[i];
+		int			v = u_adj[i];
 
 		if (distance[pair_vu[v]] == distance[u] + 1)
 		{
-			if (hk_depth_search(state, pair_vu[v], depth+1))
+			if (hk_depth_search(state, pair_vu[v], depth + 1))
 			{
 				pair_vu[v] = u;
 				pair_uv[u] = v;

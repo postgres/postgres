@@ -452,7 +452,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			break;
 		case T_SampleScan:
 			{
-				SampleScan	   *splan = (SampleScan *) plan;
+				SampleScan *splan = (SampleScan *) plan;
 
 				splan->scanrelid += rtoffset;
 				splan->plan.targetlist =

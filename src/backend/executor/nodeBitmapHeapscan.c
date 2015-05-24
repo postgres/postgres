@@ -449,7 +449,7 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 void
 ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 {
-	PlanState	*outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 
 	/* rescan to release any page pin */
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);

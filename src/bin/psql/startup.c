@@ -592,7 +592,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				}
 				break;
 			default:
-			unknown_option:
+		unknown_option:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 						pset.progname);
 				exit(EXIT_FAILURE);

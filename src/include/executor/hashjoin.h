@@ -108,14 +108,15 @@ typedef struct HashSkewBucket
  */
 typedef struct HashMemoryChunkData
 {
-	int			ntuples;	/* number of tuples stored in this chunk */
-	size_t		maxlen;		/* size of the buffer holding the tuples */
-	size_t		used;		/* number of buffer bytes already used */
+	int			ntuples;		/* number of tuples stored in this chunk */
+	size_t		maxlen;			/* size of the buffer holding the tuples */
+	size_t		used;			/* number of buffer bytes already used */
 
-	struct HashMemoryChunkData *next; /* pointer to the next chunk (linked list) */
+	struct HashMemoryChunkData *next;	/* pointer to the next chunk (linked
+										 * list) */
 
 	char		data[FLEXIBLE_ARRAY_MEMBER];	/* buffer allocated at the end */
-} HashMemoryChunkData;
+}	HashMemoryChunkData;
 
 typedef struct HashMemoryChunkData *HashMemoryChunk;
 
@@ -127,8 +128,9 @@ typedef struct HashJoinTableData
 	int			nbuckets;		/* # buckets in the in-memory hash table */
 	int			log2_nbuckets;	/* its log2 (nbuckets must be a power of 2) */
 
-	int			nbuckets_original;	/* # buckets when starting the first hash */
-	int			nbuckets_optimal;	/* optimal # buckets (per batch) */
+	int			nbuckets_original;		/* # buckets when starting the first
+										 * hash */
+	int			nbuckets_optimal;		/* optimal # buckets (per batch) */
 	int			log2_nbuckets_optimal;	/* same as log2_nbuckets optimal */
 
 	/* buckets[i] is head of list of tuples in i'th in-memory bucket */
@@ -183,7 +185,7 @@ typedef struct HashJoinTableData
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
 
 	/* used for dense allocation of tuples (into linked chunks) */
-	HashMemoryChunk chunks;		/*  one list for the whole batch */
+	HashMemoryChunk chunks;		/* one list for the whole batch */
 }	HashJoinTableData;
 
 #endif   /* HASHJOIN_H */

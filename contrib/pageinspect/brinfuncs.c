@@ -58,7 +58,7 @@ brin_page_type(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Page		page = VARDATA(raw_page);
-	char *type;
+	char	   *type;
 
 	switch (BrinPageType(page))
 	{
@@ -86,8 +86,8 @@ brin_page_type(PG_FUNCTION_ARGS)
 static Page
 verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 {
-	Page	page;
-	int		raw_page_size;
+	Page		page;
+	int			raw_page_size;
 
 	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
@@ -95,7 +95,7 @@ verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("input page too small"),
-				 errdetail("Expected size %d, got %d", raw_page_size, BLCKSZ)));
+			  errdetail("Expected size %d, got %d", raw_page_size, BLCKSZ)));
 
 	page = VARDATA(raw_page);
 
@@ -153,7 +153,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 		indexRel = index_open(indexRelid, AccessShareLock);
 
 		state = palloc(offsetof(brin_page_state, columns) +
-					   sizeof(brin_column_state) * RelationGetDescr(indexRel)->natts);
+			  sizeof(brin_column_state) * RelationGetDescr(indexRel)->natts);
 
 		state->bdesc = brin_build_desc(indexRel);
 		state->page = page;
@@ -168,10 +168,10 @@ brin_page_items(PG_FUNCTION_ARGS)
 		 */
 		for (attno = 1; attno <= state->bdesc->bd_tupdesc->natts; attno++)
 		{
-			Oid		output;
-			bool	isVarlena;
+			Oid			output;
+			bool		isVarlena;
 			BrinOpcInfo *opcinfo;
-			int		i;
+			int			i;
 			brin_column_state *column;
 
 			opcinfo = state->bdesc->bd_info[attno - 1];
@@ -213,7 +213,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 		 */
 		if (state->dtup == NULL)
 		{
-			BrinTuple	   *tup;
+			BrinTuple  *tup;
 			MemoryContext mctx;
 			ItemId		itemId;
 
@@ -225,8 +225,8 @@ brin_page_items(PG_FUNCTION_ARGS)
 			if (ItemIdIsUsed(itemId))
 			{
 				tup = (BrinTuple *) PageGetItem(state->page,
-											  PageGetItemId(state->page,
-															state->offset));
+												PageGetItemId(state->page,
+															  state->offset));
 				state->dtup = brin_deform_tuple(state->bdesc, tup);
 				state->attno = 1;
 				state->unusedItem = false;
@@ -253,7 +253,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			int		att = state->attno - 1;
+			int			att = state->attno - 1;
 
 			values[0] = UInt16GetDatum(state->offset);
 			values[1] = UInt32GetDatum(state->dtup->bt_blkno);
@@ -263,8 +263,8 @@ brin_page_items(PG_FUNCTION_ARGS)
 			values[5] = BoolGetDatum(state->dtup->bt_placeholder);
 			if (!state->dtup->bt_columns[att].bv_allnulls)
 			{
-				BrinValues   *bvalues = &state->dtup->bt_columns[att];
-				StringInfoData	s;
+				BrinValues *bvalues = &state->dtup->bt_columns[att];
+				StringInfoData s;
 				bool		first;
 				int			i;
 
@@ -274,7 +274,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 				first = true;
 				for (i = 0; i < state->columns[att]->nstored; i++)
 				{
-					char   *val;
+					char	   *val;
 
 					if (!first)
 						appendStringInfoString(&s, " .. ");
@@ -312,8 +312,8 @@ brin_page_items(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * If we're beyond the end of the page, set flag to end the function in
-		 * the following iteration.
+		 * If we're beyond the end of the page, set flag to end the function
+		 * in the following iteration.
 		 */
 		if (state->offset > PageGetMaxOffsetNumber(state->page))
 			state->done = true;
@@ -366,8 +366,8 @@ brin_revmap_data(PG_FUNCTION_ARGS)
 	struct
 	{
 		ItemPointerData *tids;
-		int		idx;
-	} *state;
+		int			idx;
+	}		   *state;
 	FuncCallContext *fctx;
 
 	if (!superuser())

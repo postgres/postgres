@@ -30,33 +30,30 @@ my $libpq;
 
 # Set of variables for modules in contrib/ and src/test/modules/
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
-my @contrib_uselibpq =
-  ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo');
-my @contrib_uselibpgport = (
-	'oid2name',
-	'pg_standby',
-	'vacuumlo');
-my @contrib_uselibpgcommon = (
-	'oid2name',
-	'pg_standby',
-	'vacuumlo');
-my $contrib_extralibs = undef;
+my @contrib_uselibpq = ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo');
+my @contrib_uselibpgport   = ('oid2name', 'pg_standby', 'vacuumlo');
+my @contrib_uselibpgcommon = ('oid2name', 'pg_standby', 'vacuumlo');
+my $contrib_extralibs      = undef;
 my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
-	'seg' => [ 'contrib/seg/segscan.l', 'contrib/seg/segparse.y' ], };
+	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ], };
 my @contrib_excludes = (
-	'commit_ts', 'hstore_plperl',
-	'hstore_plpython', 'intagg',
-	'ltree_plpython', 'pgcrypto',
-	'sepgsql');
+	'commit_ts',      'hstore_plperl', 'hstore_plpython', 'intagg',
+	'ltree_plpython', 'pgcrypto',      'sepgsql');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
 my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql');
-my @frontend_uselibpgport = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pg_xlogdump', 'pgbench' );
-my @frontend_uselibpgcommon = ( 'pg_archivecleanup', 'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'pg_xlogdump', 'pgbench' );
+my @frontend_uselibpgport = (
+	'pg_archivecleanup', 'pg_test_fsync',
+	'pg_test_timing',    'pg_upgrade',
+	'pg_xlogdump',       'pgbench');
+my @frontend_uselibpgcommon = (
+	'pg_archivecleanup', 'pg_test_fsync',
+	'pg_test_timing',    'pg_upgrade',
+	'pg_xlogdump',       'pgbench');
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
@@ -68,10 +65,10 @@ my $frontend_extraincludes = {
 my $frontend_extrasource = {
 	'psql' => ['src/bin/psql/psqlscan.l'],
 	'pgbench' =>
-		[ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ],
-};
-my @frontend_excludes =
-  ('pgevent', 'pg_basebackup', 'pg_rewind', 'pg_dump', 'pg_xlogdump', 'scripts');
+	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ], };
+my @frontend_excludes = (
+	'pgevent',     'pg_basebackup', 'pg_rewind', 'pg_dump',
+	'pg_xlogdump', 'scripts');
 
 sub mkvcbuild
 {
@@ -104,15 +101,16 @@ sub mkvcbuild
 	}
 	else
 	{
-		push(@pgportfiles, 'pg_crc32c_sb8.c')
+		push(@pgportfiles, 'pg_crc32c_sb8.c');
 	}
 
 	our @pgcommonallfiles = qw(
 	  exec.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
 	  string.c username.c wait_error.c);
 
-	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c
-	  restricted_token.c));
+	our @pgcommonfrontendfiles = (
+		@pgcommonallfiles, qw(fe_memutils.c
+		  restricted_token.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
@@ -467,15 +465,16 @@ sub mkvcbuild
 	# ltree_plpython and hstore_plperl.
 	if ($solution->{options}->{python})
 	{
+
 		# Attempt to get python version and location.
 		# Assume python.exe in specified dir.
-		my $pythonprog = "import sys;print(sys.prefix);" .
-		  "print(str(sys.version_info[0])+str(sys.version_info[1]))";
-		my $prefixcmd = $solution->{options}->{python}
-			  . "\\python -c \"$pythonprog\"";
+		my $pythonprog = "import sys;print(sys.prefix);"
+		  . "print(str(sys.version_info[0])+str(sys.version_info[1]))";
+		my $prefixcmd =
+		  $solution->{options}->{python} . "\\python -c \"$pythonprog\"";
 		my $pyout = `$prefixcmd`;
 		die "Could not query for python version!\n" if $?;
-		my ($pyprefix,$pyver) = split(/\r?\n/,$pyout);
+		my ($pyprefix, $pyver) = split(/\r?\n/, $pyout);
 
 		# Sometimes (always?) if python is not present, the execution
 		# appears to work, but gives no data...
@@ -490,16 +489,14 @@ sub mkvcbuild
 		$plpython->AddReference($postgres);
 
 		# Add transform modules dependent on plpython
-		AddTransformModule('hstore_plpython' . $pymajorver,
-						   'contrib/hstore_plpython',
-						   'plpython' . $pymajorver,
-						   'src/pl/plpython', 'hstore',
-						   'contrib/hstore');
-		AddTransformModule('ltree_plpython' . $pymajorver,
-						   'contrib/ltree_plpython',
-						   'plpython' . $pymajorver,
-						   'src/pl/plpython', 'ltree',
-						   'contrib/ltree');
+		AddTransformModule(
+			'hstore_plpython' . $pymajorver, 'contrib/hstore_plpython',
+			'plpython' . $pymajorver,        'src/pl/plpython',
+			'hstore',                        'contrib/hstore');
+		AddTransformModule(
+			'ltree_plpython' . $pymajorver, 'contrib/ltree_plpython',
+			'plpython' . $pymajorver,       'src/pl/plpython',
+			'ltree',                        'contrib/ltree');
 	}
 
 	if ($solution->{options}->{perl})
@@ -587,10 +584,10 @@ sub mkvcbuild
 		}
 
 		# Add transform module dependent on plperl
-		my $hstore_plperl =
-		  AddTransformModule('hstore_plperl', 'contrib/hstore_plperl',
-							 'plperl', 'src/pl/plperl',
-							 'hstore', 'contrib/hstore');
+		my $hstore_plperl = AddTransformModule(
+			'hstore_plperl', 'contrib/hstore_plperl',
+			'plperl',        'src/pl/plperl',
+			'hstore',        'contrib/hstore');
 		$hstore_plperl->AddDefine('PLPERL_HAVE_UID_GID');
 	}
 
@@ -670,7 +667,7 @@ sub mkvcbuild
 	$pg_xlogdump->AddDefine('FRONTEND');
 	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c'))
 	{
-		$pg_xlogdump->AddFile($xf)
+		$pg_xlogdump->AddFile($xf);
 	}
 	$pg_xlogdump->AddFile('src/backend/access/transam/xlogreader.c');
 
@@ -706,12 +703,12 @@ sub AddSimpleFrontend
 # Add a simple transform module
 sub AddTransformModule
 {
-	my $n = shift;
-	my $n_src = shift;
-	my $pl_proj_name = shift;
-	my $pl_src = shift;
+	my $n              = shift;
+	my $n_src          = shift;
+	my $pl_proj_name   = shift;
+	my $pl_src         = shift;
 	my $transform_name = shift;
-	my $transform_src = shift;
+	my $transform_src  = shift;
 
 	my $transform_proj = undef;
 	foreach my $proj (@{ $solution->{projects}->{'contrib'} })
@@ -723,7 +720,7 @@ sub AddTransformModule
 		}
 	}
 	die "could not find base module $transform_name for transform module $n"
-		if (!defined($transform_proj));
+	  if (!defined($transform_proj));
 
 	my $pl_proj = undef;
 	foreach my $proj (@{ $solution->{projects}->{'PLs'} })
@@ -735,7 +732,7 @@ sub AddTransformModule
 		}
 	}
 	die "could not find PL $pl_proj_name for transform module $n"
-		if (!defined($pl_proj));
+	  if (!defined($pl_proj));
 
 	my $p = $solution->AddProject($n, 'dll', 'contrib', $n_src);
 	for my $file (glob("$n_src/*.c"))
@@ -748,7 +745,7 @@ sub AddTransformModule
 	$p->AddIncludeDir($pl_src);
 	$p->AddReference($pl_proj);
 	$p->AddIncludeDir($pl_proj->{includes});
-	foreach my $pl_lib (@{$pl_proj->{libraries}})
+	foreach my $pl_lib (@{ $pl_proj->{libraries} })
 	{
 		$p->AddLibrary($pl_lib);
 	}
@@ -756,7 +753,7 @@ sub AddTransformModule
 	# Add base module dependencies
 	$p->AddIncludeDir($transform_src);
 	$p->AddIncludeDir($transform_proj->{includes});
-	foreach my $trans_lib (@{$transform_proj->{libraries}})
+	foreach my $trans_lib (@{ $transform_proj->{libraries} })
 	{
 		$p->AddLibrary($trans_lib);
 	}
@@ -769,14 +766,13 @@ sub AddTransformModule
 sub AddContrib
 {
 	my $subdir = shift;
-	my $n  = shift;
-	my $mf = Project::read_file("$subdir/$n/Makefile");
+	my $n      = shift;
+	my $mf     = Project::read_file("$subdir/$n/Makefile");
 
 	if ($mf =~ /^MODULE_big\s*=\s*(.*)$/mg)
 	{
 		my $dn = $1;
-		my $proj =
-		  $solution->AddProject($dn, 'dll', 'contrib', "$subdir/$n");
+		my $proj = $solution->AddProject($dn, 'dll', 'contrib', "$subdir/$n");
 		$proj->AddReference($postgres);
 		AdjustContribProj($proj);
 	}
@@ -794,8 +790,7 @@ sub AddContrib
 	}
 	elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg)
 	{
-		my $proj =
-		  $solution->AddProject($1, 'exe', 'contrib', "$subdir/$n");
+		my $proj = $solution->AddProject($1, 'exe', 'contrib', "$subdir/$n");
 		AdjustContribProj($proj);
 	}
 	else
@@ -841,7 +836,7 @@ sub GenerateContribSqlFiles
 				print "Building $out from $in (contrib/$n)...\n";
 				my $cont = Project::read_file("contrib/$n/$in");
 				my $dn   = $out;
-				$dn =~ s/\.sql$//;
+				$dn   =~ s/\.sql$//;
 				$cont =~ s/MODULE_PATHNAME/\$libdir\/$dn/g;
 				my $o;
 				open($o, ">contrib/$n/$out")
@@ -866,10 +861,11 @@ sub AdjustContribProj
 sub AdjustFrontendProj
 {
 	my $proj = shift;
-	AdjustModule($proj, $frontend_defines, \@frontend_uselibpq,
-		\@frontend_uselibpgport, \@frontend_uselibpgcommon,
-		$frontend_extralibs,
-		$frontend_extrasource, $frontend_extraincludes);
+	AdjustModule(
+		$proj,                     $frontend_defines,
+		\@frontend_uselibpq,       \@frontend_uselibpgport,
+		\@frontend_uselibpgcommon, $frontend_extralibs,
+		$frontend_extrasource,     $frontend_extraincludes);
 }
 
 sub AdjustModule

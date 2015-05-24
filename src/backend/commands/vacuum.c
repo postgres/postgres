@@ -83,7 +83,7 @@ static bool vacuum_rel(Oid relid, RangeVar *relation, int options,
 void
 ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
 {
-	VacuumParams	params;
+	VacuumParams params;
 
 	/* sanity checks on options */
 	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
@@ -530,8 +530,8 @@ vacuum_set_xid_limits(Relation rel,
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is
-	 * normally autovacuum_multixact_freeze_max_age, but may be less if we
-	 * are short of multixact member space.
+	 * normally autovacuum_multixact_freeze_max_age, but may be less if we are
+	 * short of multixact member space.
 	 */
 	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
 
@@ -1134,9 +1134,8 @@ vac_truncate_clog(TransactionId frozenXID,
 		return;
 
 	/*
-	 * Truncate CLOG and CommitTs to the oldest computed value.
-	 * Note we don't truncate multixacts; that will be done by the next
-	 * checkpoint.
+	 * Truncate CLOG and CommitTs to the oldest computed value. Note we don't
+	 * truncate multixacts; that will be done by the next checkpoint.
 	 */
 	TruncateCLOG(frozenXID);
 	TruncateCommitTs(frozenXID, true);

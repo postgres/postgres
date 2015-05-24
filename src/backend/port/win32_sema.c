@@ -153,6 +153,7 @@ PGSemaphoreLock(PGSemaphore sema)
 				done = true;
 				break;
 			case WAIT_IO_COMPLETION:
+
 				/*
 				 * The system interrupted the wait to execute an I/O
 				 * completion routine or asynchronous procedure call in this

@@ -702,7 +702,7 @@ Size
 EstimateLibraryStateSpace(void)
 {
 	DynamicFileList *file_scanner;
-	Size	size = 1;
+	Size		size = 1;
 
 	for (file_scanner = file_list;
 		 file_scanner != NULL;
@@ -724,7 +724,7 @@ SerializeLibraryState(Size maxsize, char *start_address)
 		 file_scanner != NULL;
 		 file_scanner = file_scanner->next)
 	{
-		Size len;
+		Size		len;
 
 		len = strlcpy(start_address, file_scanner->filename, maxsize) + 1;
 		Assert(len < maxsize);

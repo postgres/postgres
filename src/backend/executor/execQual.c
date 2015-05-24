@@ -182,8 +182,8 @@ static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 static Datum ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 					  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
-						ExprContext *econtext,
-						bool *isNull, ExprDoneCond *isDone);
+						 ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
 
 
 /* ----------------------------------------------------------------
@@ -3034,10 +3034,10 @@ ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
 						 bool *isNull,
 						 ExprDoneCond *isDone)
 {
-	int result = 0;
-	int attnum = 0;
-	Bitmapset *grouped_cols = gstate->aggstate->grouped_cols;
-	ListCell *lc;
+	int			result = 0;
+	int			attnum = 0;
+	Bitmapset  *grouped_cols = gstate->aggstate->grouped_cols;
+	ListCell   *lc;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -4529,7 +4529,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				GroupingFuncExprState *grp_state = makeNode(GroupingFuncExprState);
 				Agg		   *agg = NULL;
 
-				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
+				if (!parent || !IsA(parent, AggState) ||!IsA(parent->plan, Agg))
 					elog(ERROR, "parent of GROUPING is not Agg node");
 
 				grp_state->aggstate = (AggState *) parent;

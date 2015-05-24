@@ -38,7 +38,7 @@ CATALOG(pg_replication_origin,6000) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	 * records. For this reason we don't use a normal Oid column here, since
 	 * we need to handle allocation of new values manually.
 	 */
-	Oid		roident;
+	Oid			roident;
 
 	/*
 	 * Variable-length fields start here, but we allow direct access to
@@ -46,9 +46,9 @@ CATALOG(pg_replication_origin,6000) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	 */
 
 	/* external, free-format, name */
-	text	roname BKI_FORCE_NOT_NULL;
+	text roname BKI_FORCE_NOT_NULL;
 
-#ifdef CATALOG_VARLEN		/* further variable-length fields */
+#ifdef CATALOG_VARLEN			/* further variable-length fields */
 #endif
 } FormData_pg_replication_origin;
 

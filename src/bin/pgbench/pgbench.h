@@ -22,39 +22,39 @@ typedef struct PgBenchExpr PgBenchExpr;
 
 struct PgBenchExpr
 {
-	PgBenchExprType	etype;
+	PgBenchExprType etype;
 	union
 	{
 		struct
 		{
-			int64 ival;
-		} integer_constant;
+			int64		ival;
+		}			integer_constant;
 		struct
 		{
-			char *varname;
-		} variable;
+			char	   *varname;
+		}			variable;
 		struct
 		{
-			char operator;
-			PgBenchExpr	*lexpr;
+			char		operator;
+			PgBenchExpr *lexpr;
 			PgBenchExpr *rexpr;
-		} operator;
-	} u;
+		}			operator;
+	}			u;
 };
 
 extern PgBenchExpr *expr_parse_result;
 
-extern int      expr_yyparse(void);
-extern int      expr_yylex(void);
+extern int	expr_yyparse(void);
+extern int	expr_yylex(void);
 extern void expr_yyerror(const char *str);
 extern void expr_scanner_init(const char *str, const char *source,
-							  const int lineno, const char *line,
-							  const char *cmd, const int ecol);
-extern void syntax_error(const char* source, const int lineno, const char* line,
-						 const char* cmd, const char* msg, const char* more,
-						 const int col);
+				  const int lineno, const char *line,
+				  const char *cmd, const int ecol);
+extern void syntax_error(const char *source, const int lineno, const char *line,
+			 const char *cmd, const char *msg, const char *more,
+			 const int col);
 extern void expr_scanner_finish(void);
 
 extern int64 strtoint64(const char *str);
 
-#endif	/* PGBENCH_H */
+#endif   /* PGBENCH_H */

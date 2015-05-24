@@ -121,7 +121,7 @@ typedef struct Query
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
 	bool		hasModifyingCTE;	/* has INSERT/UPDATE/DELETE in WITH */
 	bool		hasForUpdate;	/* FOR [KEY] UPDATE/SHARE was specified */
-	bool		hasRowSecurity;	/* row security applied? */
+	bool		hasRowSecurity; /* row security applied? */
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
@@ -132,7 +132,7 @@ typedef struct Query
 
 	List	   *withCheckOptions;		/* a list of WithCheckOption's */
 
-	OnConflictExpr *onConflict;	/* ON CONFLICT DO [NOTHING | UPDATE] */
+	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
 	List	   *returningList;	/* return-values list (of TargetEntry) */
 
@@ -294,18 +294,18 @@ typedef struct CollateClause
  */
 typedef enum RoleSpecType
 {
-	ROLESPEC_CSTRING,		/* role name is stored as a C string */
-	ROLESPEC_CURRENT_USER,	/* role spec is CURRENT_USER */
-	ROLESPEC_SESSION_USER,	/* role spec is SESSION_USER */
-	ROLESPEC_PUBLIC			/* role name is "public" */
+	ROLESPEC_CSTRING,			/* role name is stored as a C string */
+	ROLESPEC_CURRENT_USER,		/* role spec is CURRENT_USER */
+	ROLESPEC_SESSION_USER,		/* role spec is SESSION_USER */
+	ROLESPEC_PUBLIC				/* role name is "public" */
 } RoleSpecType;
 
 typedef struct RoleSpec
 {
 	NodeTag		type;
-	RoleSpecType roletype;	/* Type of this rolespec */
-	char	   *rolename;	/* filled only for ROLESPEC_CSTRING */
-	int			location;	/* token location, or -1 if unknown */
+	RoleSpecType roletype;		/* Type of this rolespec */
+	char	   *rolename;		/* filled only for ROLESPEC_CSTRING */
+	int			location;		/* token location, or -1 if unknown */
 } RoleSpec;
 
 /*
@@ -568,9 +568,9 @@ typedef struct RangeTableSample
 {
 	NodeTag		type;
 	RangeVar   *relation;
-	char	   *method;		/* sampling method */
+	char	   *method;			/* sampling method */
 	Node	   *repeatable;
-	List	   *args;		/* arguments for sampling method */
+	List	   *args;			/* arguments for sampling method */
 } RangeTableSample;
 
 /*
@@ -690,7 +690,7 @@ typedef struct LockingClause
 	NodeTag		type;
 	List	   *lockedRels;		/* FOR [KEY] UPDATE/SHARE relations */
 	LockClauseStrength strength;
-	LockWaitPolicy	waitPolicy;	/* NOWAIT and SKIP LOCKED */
+	LockWaitPolicy waitPolicy;	/* NOWAIT and SKIP LOCKED */
 } LockingClause;
 
 /*
@@ -810,7 +810,7 @@ typedef struct RangeTblEntry
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
-	TableSampleClause	*tablesample;	/* sampling method and parameters */
+	TableSampleClause *tablesample;		/* sampling method and parameters */
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
@@ -1157,12 +1157,12 @@ typedef struct InferClause
  */
 typedef struct OnConflictClause
 {
-	NodeTag			type;
-	OnConflictAction action;		/* DO NOTHING or UPDATE? */
-	InferClause	   *infer;			/* Optional index inference clause */
-	List		   *targetList;		/* the target list (of ResTarget) */
-	Node		   *whereClause;	/* qualifications */
-	int				location;		/* token location, or -1 if unknown */
+	NodeTag		type;
+	OnConflictAction action;	/* DO NOTHING or UPDATE? */
+	InferClause *infer;			/* Optional index inference clause */
+	List	   *targetList;		/* the target list (of ResTarget) */
+	Node	   *whereClause;	/* qualifications */
+	int			location;		/* token location, or -1 if unknown */
 } OnConflictClause;
 
 /*
@@ -1215,7 +1215,7 @@ typedef struct InsertStmt
 	RangeVar   *relation;		/* relation to insert into */
 	List	   *cols;			/* optional: names of the target columns */
 	Node	   *selectStmt;		/* the source SELECT/VALUES, or NULL */
-	OnConflictClause *onConflictClause;	/* ON CONFLICT clause */
+	OnConflictClause *onConflictClause; /* ON CONFLICT clause */
 	List	   *returningList;	/* list of expressions to return */
 	WithClause *withClause;		/* WITH clause */
 } InsertStmt;
@@ -2890,21 +2890,22 @@ typedef struct ConstraintsSetStmt
  */
 
 /* Reindex options */
-#define REINDEXOPT_VERBOSE 1 << 0	/* print progress info */
+#define REINDEXOPT_VERBOSE 1 << 0		/* print progress info */
 
 typedef enum ReindexObjectType
 {
-	REINDEX_OBJECT_INDEX,	/* index */
-	REINDEX_OBJECT_TABLE,	/* table or materialized view */
-	REINDEX_OBJECT_SCHEMA,	/* schema */
-	REINDEX_OBJECT_SYSTEM,	/* system catalogs */
-	REINDEX_OBJECT_DATABASE	/* database */
+	REINDEX_OBJECT_INDEX,		/* index */
+	REINDEX_OBJECT_TABLE,		/* table or materialized view */
+	REINDEX_OBJECT_SCHEMA,		/* schema */
+	REINDEX_OBJECT_SYSTEM,		/* system catalogs */
+	REINDEX_OBJECT_DATABASE		/* database */
 } ReindexObjectType;
 
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	ReindexObjectType	kind;	/* REINDEX_OBJECT_INDEX, REINDEX_OBJECT_TABLE, etc. */
+	ReindexObjectType kind;		/* REINDEX_OBJECT_INDEX, REINDEX_OBJECT_TABLE,
+								 * etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	int			options;		/* Reindex options flags */
@@ -3034,7 +3035,7 @@ typedef enum AlterTSConfigType
 typedef struct AlterTSConfigurationStmt
 {
 	NodeTag		type;
-	AlterTSConfigType	kind;	/* ALTER_TSCONFIG_ADD_MAPPING, etc */
+	AlterTSConfigType kind;		/* ALTER_TSCONFIG_ADD_MAPPING, etc */
 	List	   *cfgname;		/* qualified name (list of Value strings) */
 
 	/*

@@ -22,7 +22,7 @@
  *		typedef struct FormData_pg_transform
  * ----------------
  */
-#define TransformRelationId	3576
+#define TransformRelationId 3576
 
 CATALOG(pg_transform,3576)
 {

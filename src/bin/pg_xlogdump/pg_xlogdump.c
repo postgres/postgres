@@ -494,7 +494,10 @@ XLogDumpStatsRow(const char *name,
 				 uint64 fpi_len, uint64 total_fpi_len,
 				 uint64 tot_len, uint64 total_len)
 {
-	double		n_pct, rec_len_pct, fpi_len_pct, tot_len_pct;
+	double		n_pct,
+				rec_len_pct,
+				fpi_len_pct,
+				tot_len_pct;
 
 	n_pct = 0;
 	if (total_count != 0)
@@ -528,12 +531,14 @@ XLogDumpStatsRow(const char *name,
 static void
 XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 {
-	int			ri, rj;
+	int			ri,
+				rj;
 	uint64		total_count = 0;
 	uint64		total_rec_len = 0;
 	uint64		total_fpi_len = 0;
 	uint64		total_len = 0;
-	double		rec_len_pct, fpi_len_pct;
+	double		rec_len_pct,
+				fpi_len_pct;
 
 	/* ---
 	 * Make a first pass to calculate column totals:
@@ -551,11 +556,11 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 		total_rec_len += stats->rmgr_stats[ri].rec_len;
 		total_fpi_len += stats->rmgr_stats[ri].fpi_len;
 	}
-	total_len = total_rec_len+total_fpi_len;
+	total_len = total_rec_len + total_fpi_len;
 
 	/*
-	 * 27 is strlen("Transaction/COMMIT_PREPARED"),
-	 * 20 is strlen(2^64), 8 is strlen("(100.00%)")
+	 * 27 is strlen("Transaction/COMMIT_PREPARED"), 20 is strlen(2^64), 8 is
+	 * strlen("(100.00%)")
 	 */
 
 	printf("%-27s %20s %8s %20s %8s %20s %8s %20s %8s\n"
@@ -565,7 +570,10 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 
 	for (ri = 0; ri < RM_NEXT_ID; ri++)
 	{
-		uint64		count, rec_len, fpi_len, tot_len;
+		uint64		count,
+					rec_len,
+					fpi_len,
+					tot_len;
 		const RmgrDescData *desc = &RmgrDescTable[ri];
 
 		if (!config->stats_per_record)
@@ -610,10 +618,10 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 		   "", "--------", "", "--------", "", "--------", "", "--------");
 
 	/*
-	 * The percentages in earlier rows were calculated against the
-	 * column total, but the ones that follow are against the row total.
-	 * Note that these are displayed with a % symbol to differentiate
-	 * them from the earlier ones, and are thus up to 9 characters long.
+	 * The percentages in earlier rows were calculated against the column
+	 * total, but the ones that follow are against the row total. Note that
+	 * these are displayed with a % symbol to differentiate them from the
+	 * earlier ones, and are thus up to 9 characters long.
 	 */
 
 	rec_len_pct = 0;

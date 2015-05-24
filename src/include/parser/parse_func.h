@@ -34,9 +34,9 @@ extern Node *ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				  FuncCall *fn, int location);
 
 extern TableSampleClause *ParseTableSample(ParseState *pstate,
-										   char *samplemethod,
-										   Node *repeatable, List *args,
-										   int location);
+				 char *samplemethod,
+				 Node *repeatable, List *args,
+				 int location);
 
 extern FuncDetailCode func_get_detail(List *funcname,
 				List *fargs, List *fargnames,

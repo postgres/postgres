@@ -40,11 +40,11 @@
 
 PG_MODULE_MAGIC;
 
-void _PG_init(void);
+void		_PG_init(void);
 
 /* Prototypes for functions used with event triggers */
-Datum pg_audit_ddl_command_end(PG_FUNCTION_ARGS);
-Datum pg_audit_sql_drop(PG_FUNCTION_ARGS);
+Datum		pg_audit_ddl_command_end(PG_FUNCTION_ARGS);
+Datum		pg_audit_sql_drop(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pg_audit_ddl_command_end);
 PG_FUNCTION_INFO_V1(pg_audit_sql_drop);
@@ -67,14 +67,14 @@ PG_FUNCTION_INFO_V1(pg_audit_sql_drop);
 #define LOG_ROLE		(1 << 4)	/* GRANT/REVOKE, CREATE/ALTER/DROP ROLE */
 #define LOG_WRITE		(1 << 5)	/* INSERT, UPDATE, DELETE, TRUNCATE */
 
-#define LOG_NONE		0			/* nothing */
+#define LOG_NONE		0		/* nothing */
 #define LOG_ALL			(0xFFFFFFFF)	/* All */
 
 /* GUC variable for pg_audit.log, which defines the classes to log. */
-char *auditLog = NULL;
+char	   *auditLog = NULL;
 
 /* Bitmap of classes selected */
-static int auditLogBitmap = LOG_NONE;
+static int	auditLogBitmap = LOG_NONE;
 
 /*
  * String constants for log classes - used when processing tokens in the
@@ -97,7 +97,7 @@ static int auditLogBitmap = LOG_NONE;
  * the query are in pg_catalog.  Interactive sessions (eg: psql) can cause
  * a lot of noise in the logs which might be uninteresting.
  */
-bool auditLogCatalog = true;
+bool		auditLogCatalog = true;
 
 /*
  * GUC variable for pg_audit.log_level
@@ -106,8 +106,8 @@ bool auditLogCatalog = true;
  * at.  The default level is LOG, which goes into the server log but does
  * not go to the client.  Set to NOTICE in the regression tests.
  */
-char *auditLogLevelString = NULL;
-int auditLogLevel = LOG;
+char	   *auditLogLevelString = NULL;
+int			auditLogLevel = LOG;
 
 /*
  * GUC variable for pg_audit.log_parameter
@@ -115,7 +115,7 @@ int auditLogLevel = LOG;
  * Administrators can choose if parameters passed into a statement are
  * included in the audit log.
  */
-bool auditLogParameter = false;
+bool		auditLogParameter = false;
 
 /*
  * GUC variable for pg_audit.log_relation
@@ -124,7 +124,7 @@ bool auditLogParameter = false;
  * in READ/WRITE class queries.  By default, SESSION logs include the query but
  * do not have a log entry for each relation.
  */
-bool auditLogRelation = false;
+bool		auditLogRelation = false;
 
 /*
  * GUC variable for pg_audit.log_statement_once
@@ -134,7 +134,7 @@ bool auditLogRelation = false;
  * the audit log to facilitate searching, but this can cause the log to be
  * unnecessairly bloated in some environments.
  */
-bool auditLogStatementOnce = false;
+bool		auditLogStatementOnce = false;
 
 /*
  * GUC variable for pg_audit.role
@@ -143,7 +143,7 @@ bool auditLogStatementOnce = false;
  * Object-level auditing uses the privileges which are granted to this role to
  * determine if a statement should be logged.
  */
-char *auditRole = NULL;
+char	   *auditRole = NULL;
 
 /*
  * String constants for the audit log fields.
@@ -213,23 +213,23 @@ char *auditRole = NULL;
  */
 typedef struct
 {
-	int64 statementId;			/* Simple counter */
-	int64 substatementId;		/* Simple counter */
+	int64		statementId;	/* Simple counter */
+	int64		substatementId; /* Simple counter */
 
 	LogStmtLevel logStmtLevel;	/* From GetCommandLogLevel when possible, */
-								/* generated when not. */
-	NodeTag commandTag;			/* same here */
+	/* generated when not. */
+	NodeTag		commandTag;		/* same here */
 	const char *command;		/* same here */
 	const char *objectType;		/* From event trigger when possible */
-								/* generated when not. */
-	char *objectName;			/* Fully qualified object identification */
+	/* generated when not. */
+	char	   *objectName;		/* Fully qualified object identification */
 	const char *commandText;	/* sourceText / queryString */
 	ParamListInfo paramList;	/* QueryDesc/ProcessUtility parameters */
 
-	bool granted;				/* Audit role has object permissions? */
-	bool logged;				/* Track if we have logged this event, used */
-								/* post-ProcessUtility to make sure we log */
-	bool statementLogged;		/* Track if we have logged the statement */
+	bool		granted;		/* Audit role has object permissions? */
+	bool		logged;			/* Track if we have logged this event, used */
+	/* post-ProcessUtility to make sure we log */
+	bool		statementLogged;	/* Track if we have logged the statement */
 } AuditEvent;
 
 /*
@@ -239,9 +239,9 @@ typedef struct AuditEventStackItem
 {
 	struct AuditEventStackItem *next;
 
-	AuditEvent auditEvent;
+	AuditEvent	auditEvent;
 
-	int64 stackId;
+	int64		stackId;
 
 	MemoryContext contextAudit;
 	MemoryContextCallback contextCallback;
@@ -288,7 +288,7 @@ stack_free(void *stackFree)
 	while (nextItem != NULL)
 	{
 		/* Check if this item matches the item to be freed */
-		if (nextItem == (AuditEventStackItem *)stackFree)
+		if (nextItem == (AuditEventStackItem *) stackFree)
 		{
 			/* Move top of stack to the item after the freed item */
 			auditEventStack = nextItem->next;
@@ -309,7 +309,8 @@ stack_free(void *stackFree)
 				substatementTotal = 0;
 
 				/*
-				 * Reset statement logged so that next statement will be logged.
+				 * Reset statement logged so that next statement will be
+				 * logged.
 				 */
 				statementLogged = false;
 			}
@@ -356,7 +357,7 @@ stack_push()
 	 * the stack at this item.
 	 */
 	stackItem->contextCallback.func = stack_free;
-	stackItem->contextCallback.arg = (void *)stackItem;
+	stackItem->contextCallback.arg = (void *) stackItem;
 	MemoryContextRegisterResetCallback(contextAudit,
 									   &stackItem->contextCallback);
 
@@ -431,7 +432,7 @@ append_valid_csv(StringInfoData *buffer, const char *appendStr)
 
 		for (pChar = appendStr; *pChar; pChar++)
 		{
-			if (*pChar == '"') /* double single quotes */
+			if (*pChar == '"')	/* double single quotes */
 				appendStringInfoCharMacro(buffer, *pChar);
 
 			appendStringInfoCharMacro(buffer, *pChar);
@@ -461,23 +462,23 @@ static void
 log_audit_event(AuditEventStackItem *stackItem)
 {
 	/* By default, put everything in the MISC class. */
-	int				class = LOG_MISC;
-	const char	   *className = CLASS_MISC;
-	MemoryContext	contextOld;
-	StringInfoData	auditStr;
+	int			class = LOG_MISC;
+	const char *className = CLASS_MISC;
+	MemoryContext contextOld;
+	StringInfoData auditStr;
 
 
 	/* Classify the statement using log stmt level and the command tag */
 	switch (stackItem->auditEvent.logStmtLevel)
 	{
-		/* All mods go in WRITE class, execpt EXECUTE */
+			/* All mods go in WRITE class, execpt EXECUTE */
 		case LOGSTMT_MOD:
 			className = CLASS_WRITE;
 			class = LOG_WRITE;
 
 			switch (stackItem->auditEvent.commandTag)
 			{
-				/* Currently, only EXECUTE is different */
+					/* Currently, only EXECUTE is different */
 				case T_ExecuteStmt:
 					className = CLASS_MISC;
 					class = LOG_MISC;
@@ -487,7 +488,7 @@ log_audit_event(AuditEventStackItem *stackItem)
 			}
 			break;
 
-		/* These are DDL, unless they are ROLE */
+			/* These are DDL, unless they are ROLE */
 		case LOGSTMT_DDL:
 			className = CLASS_DDL;
 			class = LOG_DDL;
@@ -495,7 +496,7 @@ log_audit_event(AuditEventStackItem *stackItem)
 			/* Identify role statements */
 			switch (stackItem->auditEvent.commandTag)
 			{
-				/* We know these are all role statements */
+					/* We know these are all role statements */
 				case T_GrantStmt:
 				case T_GrantRoleStmt:
 				case T_CreateRoleStmt:
@@ -505,11 +506,12 @@ log_audit_event(AuditEventStackItem *stackItem)
 					className = CLASS_ROLE;
 					class = LOG_ROLE;
 					break;
-				/*
-				 * Rename and Drop are general and therefore we have to do an
-				 * additional check against the command string to see if they
-				 * are role or regular DDL.
-				 */
+
+					/*
+					 * Rename and Drop are general and therefore we have to do
+					 * an additional check against the command string to see
+					 * if they are role or regular DDL.
+					 */
 				case T_RenameStmt:
 				case T_DropStmt:
 					if (pg_strcasecmp(stackItem->auditEvent.command,
@@ -527,11 +529,11 @@ log_audit_event(AuditEventStackItem *stackItem)
 			}
 			break;
 
-		/* Classify the rest */
+			/* Classify the rest */
 		case LOGSTMT_ALL:
 			switch (stackItem->auditEvent.commandTag)
 			{
-				/* READ statements */
+					/* READ statements */
 				case T_CopyStmt:
 				case T_SelectStmt:
 				case T_PrepareStmt:
@@ -540,7 +542,7 @@ log_audit_event(AuditEventStackItem *stackItem)
 					class = LOG_READ;
 					break;
 
-				/* FUNCTION statements */
+					/* FUNCTION statements */
 				case T_DoStmt:
 					className = CLASS_FUNCTION;
 					class = LOG_FUNCTION;
@@ -558,8 +560,8 @@ log_audit_event(AuditEventStackItem *stackItem)
 	/*
 	 * Only log the statement if:
 	 *
-	 * 1. If object was selected for audit logging (granted)
-	 * 2. The statement belongs to a class that is being logged
+	 * 1. If object was selected for audit logging (granted) 2. The statement
+	 * belongs to a class that is being logged
 	 *
 	 * If neither of these is true, return.
 	 */
@@ -615,10 +617,10 @@ log_audit_event(AuditEventStackItem *stackItem)
 		/* Handle parameter logging, if enabled. */
 		if (auditLogParameter)
 		{
-			int				paramIdx;
-			int				numParams;
-			StringInfoData	paramStrResult;
-			ParamListInfo	paramList = stackItem->auditEvent.paramList;
+			int			paramIdx;
+			int			numParams;
+			StringInfoData paramStrResult;
+			ParamListInfo paramList = stackItem->auditEvent.paramList;
 
 			numParams = paramList == NULL ? 0 : paramList->numParams;
 
@@ -630,9 +632,9 @@ log_audit_event(AuditEventStackItem *stackItem)
 				 paramIdx++)
 			{
 				ParamExternData *prm = &paramList->params[paramIdx];
-				Oid 			 typeOutput;
-				bool 			 typeIsVarLena;
-				char 			*paramStr;
+				Oid			typeOutput;
+				bool		typeIsVarLena;
+				char	   *paramStr;
 
 				/* Add a comma for each param */
 				if (paramIdx != 0)
@@ -663,7 +665,7 @@ log_audit_event(AuditEventStackItem *stackItem)
 	else
 		/* we were asked to not log it */
 		appendStringInfoString(&auditStr,
-				"<previously logged>,<previously logged>");
+							   "<previously logged>,<previously logged>");
 
 	/*
 	 * Log the audit entry.  Note: use of INT64_FORMAT here is bad for
@@ -696,7 +698,7 @@ audit_on_acl(Datum aclDatum,
 {
 	bool		result = false;
 	Acl		   *acl;
-	AclItem	   *aclItemData;
+	AclItem    *aclItemData;
 	int			aclIndex;
 	int			aclTotal;
 
@@ -710,7 +712,7 @@ audit_on_acl(Datum aclDatum,
 	/* Check privileges granted directly to auditOid */
 	for (aclIndex = 0; aclIndex < aclTotal; aclIndex++)
 	{
-		AclItem *aclItem = &aclItemData[aclIndex];
+		AclItem    *aclItem = &aclItemData[aclIndex];
 
 		if (aclItem->ai_grantee == auditOid &&
 			aclItem->ai_privs & mask)
@@ -731,7 +733,7 @@ audit_on_acl(Datum aclDatum,
 	{
 		for (aclIndex = 0; aclIndex < aclTotal; aclIndex++)
 		{
-			AclItem *aclItem = &aclItemData[aclIndex];
+			AclItem    *aclItem = &aclItemData[aclIndex];
 
 			/* Don't test public or auditOid (it has been tested already) */
 			if (aclItem->ai_grantee == ACL_ID_PUBLIC ||
@@ -838,9 +840,9 @@ audit_on_any_attribute(Oid relOid,
 					   Bitmapset *attributeSet,
 					   AclMode mode)
 {
-	bool result = false;
-	AttrNumber col;
-	Bitmapset *tmpSet;
+	bool		result = false;
+	AttrNumber	col;
+	Bitmapset  *tmpSet;
 
 	/* If bms is empty then check for any column match */
 	if (bms_is_empty(attributeSet))
@@ -891,9 +893,9 @@ audit_on_any_attribute(Oid relOid,
 static void
 log_select_dml(Oid auditOid, List *rangeTabls)
 {
-	ListCell *lr;
-	bool first = true;
-	bool found = false;
+	ListCell   *lr;
+	bool		first = true;
+	bool		found = false;
 
 	/* Do not log if this is an internal statement */
 	if (internalStatement)
@@ -901,8 +903,8 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 
 	foreach(lr, rangeTabls)
 	{
-		Oid relOid;
-		Relation rel;
+		Oid			relOid;
+		Relation	rel;
 		RangeTblEntry *rte = lfirst(lr);
 
 		/* We only care about tables, and can ignore subqueries etc. */
@@ -912,8 +914,8 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 		found = true;
 
 		/*
-		 * If we are not logging all-catalog queries (auditLogCatalog is false)
-		 * then filter out any system relations here.
+		 * If we are not logging all-catalog queries (auditLogCatalog is
+		 * false) then filter out any system relations here.
 		 */
 		relOid = rte->relid;
 		rel = relation_open(relOid, NoLock);
@@ -982,63 +984,72 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 		{
 			case RELKIND_RELATION:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_TABLE;
+				OBJECT_TYPE_TABLE;
+
 				break;
 
 			case RELKIND_INDEX:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_INDEX;
+				OBJECT_TYPE_INDEX;
+
 				break;
 
 			case RELKIND_SEQUENCE:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_SEQUENCE;
+				OBJECT_TYPE_SEQUENCE;
+
 				break;
 
 			case RELKIND_TOASTVALUE:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_TOASTVALUE;
+				OBJECT_TYPE_TOASTVALUE;
+
 				break;
 
 			case RELKIND_VIEW:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_VIEW;
+				OBJECT_TYPE_VIEW;
+
 				break;
 
 			case RELKIND_COMPOSITE_TYPE:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_COMPOSITE_TYPE;
+				OBJECT_TYPE_COMPOSITE_TYPE;
+
 				break;
 
 			case RELKIND_FOREIGN_TABLE:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_FOREIGN_TABLE;
+				OBJECT_TYPE_FOREIGN_TABLE;
+
 				break;
 
 			case RELKIND_MATVIEW:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_MATVIEW;
+				OBJECT_TYPE_MATVIEW;
+
 				break;
 
 			default:
 				auditEventStack->auditEvent.objectType =
-					OBJECT_TYPE_UNKNOWN;
+				OBJECT_TYPE_UNKNOWN;
+
 				break;
 		}
 
 		/* Get a copy of the relation name and assign it to object name */
 		auditEventStack->auditEvent.objectName =
 			quote_qualified_identifier(get_namespace_name(
-									   RelationGetNamespace(rel)),
+												  RelationGetNamespace(rel)),
 									   RelationGetRelationName(rel));
 		relation_close(rel, NoLock);
 
 		/* Perform object auditing only if the audit role is valid */
 		if (auditOid != InvalidOid)
 		{
-			AclMode auditPerms =
-				(ACL_SELECT | ACL_UPDATE | ACL_INSERT | ACL_DELETE) &
-				rte->requiredPerms;
+			AclMode		auditPerms =
+			(ACL_SELECT | ACL_UPDATE | ACL_INSERT | ACL_DELETE) &
+			rte->requiredPerms;
 
 			/*
 			 * If any of the required permissions for the relation are granted
@@ -1104,8 +1115,8 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 
 	/*
 	 * If no tables were found that means that RangeTbls was empty or all
-	 * relations were in the system schema.  In that case still log a
-	 * session record.
+	 * relations were in the system schema.  In that case still log a session
+	 * record.
 	 */
 	if (!found)
 	{
@@ -1123,7 +1134,7 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 static void
 log_function_execute(Oid objectId)
 {
-	HeapTuple proctup;
+	HeapTuple	proctup;
 	Form_pg_proc proc;
 	AuditEventStackItem *stackItem;
 
@@ -1159,6 +1170,7 @@ log_function_execute(Oid objectId)
 	stackItem->auditEvent.commandTag = T_DoStmt;
 	stackItem->auditEvent.command = COMMAND_EXECUTE;
 	stackItem->auditEvent.objectType = OBJECT_TYPE_FUNCTION;
+
 	stackItem->auditEvent.commandText = stackItem->next->auditEvent.commandText;
 
 	log_audit_event(stackItem);
@@ -1236,9 +1248,9 @@ pg_audit_ExecutorStart_hook(QueryDesc *queryDesc, int eflags)
 		standard_ExecutorStart(queryDesc, eflags);
 
 	/*
-	 * Move the stack memory context to the query memory context.  This needs to
-	 * be done here because the query context does not exist before the call
-	 * to standard_ExecutorStart() but the stack item is required by
+	 * Move the stack memory context to the query memory context.  This needs
+	 * to be done here because the query context does not exist before the
+	 * call to standard_ExecutorStart() but the stack item is required by
 	 * pg_audit_ExecutorCheckPerms_hook() which is called during
 	 * standard_ExecutorStart().
 	 */
@@ -1253,7 +1265,7 @@ pg_audit_ExecutorStart_hook(QueryDesc *queryDesc, int eflags)
 static bool
 pg_audit_ExecutorCheckPerms_hook(List *rangeTabls, bool abort)
 {
-	Oid auditOid;
+	Oid			auditOid;
 
 	/* Get the audit oid if the role exists */
 	auditOid = get_role_oid(auditRole, true);
@@ -1283,7 +1295,7 @@ pg_audit_ProcessUtility_hook(Node *parsetree,
 							 char *completionTag)
 {
 	AuditEventStackItem *stackItem = NULL;
-	int64 stackId = 0;
+	int64		stackId = 0;
 
 	/*
 	 * Don't audit substatements.  All the substatements we care about should
@@ -1328,19 +1340,22 @@ pg_audit_ProcessUtility_hook(Node *parsetree,
 								params, dest, completionTag);
 
 	/*
-	 * Process the audit event if there is one.  Also check that this event was
-	 * not popped off the stack by a memory context being free'd elsewhere.
+	 * Process the audit event if there is one.  Also check that this event
+	 * was not popped off the stack by a memory context being free'd
+	 * elsewhere.
 	 */
 	if (stackItem && !IsAbortedTransactionBlockState())
 	{
 		/*
-		 * Make sure the item we want to log is still on the stack - if not then
-		 * something has gone wrong and an error will be raised.
+		 * Make sure the item we want to log is still on the stack - if not
+		 * then something has gone wrong and an error will be raised.
 		 */
 		stack_valid(stackId);
 
-		/* Log the utility command if logging is on, the command has not already
-		 * been logged by another hook, and the transaction is not aborted.
+		/*
+		 * Log the utility command if logging is on, the command has not
+		 * already been logged by another hook, and the transaction is not
+		 * aborted.
 		 */
 		if (auditLogBitmap != 0 && !stackItem->auditEvent.logged)
 			log_audit_event(stackItem);
@@ -1380,11 +1395,12 @@ Datum
 pg_audit_ddl_command_end(PG_FUNCTION_ARGS)
 {
 	EventTriggerData *eventData;
-	int				  result, row;
-	TupleDesc		  spiTupDesc;
-	const char		 *query;
-	MemoryContext 	  contextQuery;
-	MemoryContext 	  contextOld;
+	int			result,
+				row;
+	TupleDesc	spiTupDesc;
+	const char *query;
+	MemoryContext contextQuery;
+	MemoryContext contextOld;
 
 	/* Continue only if session DDL logging is enabled */
 	if (~auditLogBitmap & LOG_DDL)
@@ -1393,7 +1409,7 @@ pg_audit_ddl_command_end(PG_FUNCTION_ARGS)
 	/* Be sure the module was loaded */
 	if (!auditEventStack)
 		elog(ERROR, "pg_audit not loaded before call to "
-					"pg_audit_ddl_command_end()");
+			 "pg_audit_ddl_command_end()");
 
 	/* This is an internal statement - do not log it */
 	internalStatement = true;
@@ -1404,11 +1420,11 @@ pg_audit_ddl_command_end(PG_FUNCTION_ARGS)
 
 	/* Switch memory context for query */
 	contextQuery = AllocSetContextCreate(
-					CurrentMemoryContext,
-					"pg_audit_func_ddl_command_end temporary context",
-					ALLOCSET_DEFAULT_MINSIZE,
-					ALLOCSET_DEFAULT_INITSIZE,
-					ALLOCSET_DEFAULT_MAXSIZE);
+										 CurrentMemoryContext,
+						   "pg_audit_func_ddl_command_end temporary context",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
 	contextOld = MemoryContextSwitchTo(contextQuery);
 
 	/* Get information about triggered events */
@@ -1423,31 +1439,32 @@ pg_audit_ddl_command_end(PG_FUNCTION_ARGS)
 
 	/* Return objects affected by the (non drop) DDL statement */
 	query = "SELECT UPPER(object_type), object_identity\n"
-			"  FROM pg_event_trigger_ddl_commands()";
+		"  FROM pg_event_trigger_ddl_commands()";
 
 	/* Attempt to connect */
 	result = SPI_connect();
 	if (result < 0)
 		elog(ERROR, "pg_audit_ddl_command_end: SPI_connect returned %d",
-					result);
+			 result);
 
 	/* Execute the query */
 	result = SPI_execute(query, true, 0);
 	if (result != SPI_OK_SELECT)
 		elog(ERROR, "pg_audit_ddl_command_end: SPI_execute returned %d",
-					result);
+			 result);
 
 	/* Iterate returned rows */
 	spiTupDesc = SPI_tuptable->tupdesc;
 	for (row = 0; row < SPI_processed; row++)
 	{
-		HeapTuple  spiTuple;
+		HeapTuple	spiTuple;
 
 		spiTuple = SPI_tuptable->vals[row];
 
 		/* Supply object name and type for audit event */
 		auditEventStack->auditEvent.objectType =
-			SPI_getvalue(spiTuple, spiTupDesc, 1);
+		SPI_getvalue(spiTuple, spiTupDesc, 1);
+
 		auditEventStack->auditEvent.objectName =
 			SPI_getvalue(spiTuple, spiTupDesc, 2);
 
@@ -1473,11 +1490,12 @@ pg_audit_ddl_command_end(PG_FUNCTION_ARGS)
 Datum
 pg_audit_sql_drop(PG_FUNCTION_ARGS)
 {
-	int				  result, row;
-	TupleDesc		  spiTupDesc;
-	const char		 *query;
-	MemoryContext 	  contextQuery;
-	MemoryContext 	  contextOld;
+	int			result,
+				row;
+	TupleDesc	spiTupDesc;
+	const char *query;
+	MemoryContext contextQuery;
+	MemoryContext contextOld;
 
 	if (~auditLogBitmap & LOG_DDL)
 		PG_RETURN_NULL();
@@ -1485,7 +1503,7 @@ pg_audit_sql_drop(PG_FUNCTION_ARGS)
 	/* Be sure the module was loaded */
 	if (!auditEventStack)
 		elog(ERROR, "pg_audit not loaded before call to "
-					"pg_audit_sql_drop()");
+			 "pg_audit_sql_drop()");
 
 	/* This is an internal statement - do not log it */
 	internalStatement = true;
@@ -1496,44 +1514,45 @@ pg_audit_sql_drop(PG_FUNCTION_ARGS)
 
 	/* Switch memory context for the query */
 	contextQuery = AllocSetContextCreate(
-					CurrentMemoryContext,
-					"pg_audit_func_ddl_command_end temporary context",
-					ALLOCSET_DEFAULT_MINSIZE,
-					ALLOCSET_DEFAULT_INITSIZE,
-					ALLOCSET_DEFAULT_MAXSIZE);
+										 CurrentMemoryContext,
+						   "pg_audit_func_ddl_command_end temporary context",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
 	contextOld = MemoryContextSwitchTo(contextQuery);
 
 	/* Return objects affected by the drop statement */
 	query = "SELECT UPPER(object_type),\n"
-			"       object_identity\n"
-			"  FROM pg_event_trigger_dropped_objects()\n"
-			" WHERE lower(object_type) <> 'type'\n"
-			"   AND schema_name <> 'pg_toast'";
+		"       object_identity\n"
+		"  FROM pg_event_trigger_dropped_objects()\n"
+		" WHERE lower(object_type) <> 'type'\n"
+		"   AND schema_name <> 'pg_toast'";
 
 	/* Attempt to connect */
 	result = SPI_connect();
 	if (result < 0)
 		elog(ERROR, "pg_audit_ddl_drop: SPI_connect returned %d",
-					result);
+			 result);
 
 	/* Execute the query */
 	result = SPI_execute(query, true, 0);
 	if (result != SPI_OK_SELECT)
 		elog(ERROR, "pg_audit_ddl_drop: SPI_execute returned %d",
-					result);
+			 result);
 
 	/* Iterate returned rows */
 	spiTupDesc = SPI_tuptable->tupdesc;
 	for (row = 0; row < SPI_processed; row++)
 	{
-		HeapTuple  spiTuple;
+		HeapTuple	spiTuple;
 
 		spiTuple = SPI_tuptable->vals[row];
 
 		auditEventStack->auditEvent.objectType =
-			SPI_getvalue(spiTuple, spiTupDesc, 1);
+		SPI_getvalue(spiTuple, spiTupDesc, 1);
+
 		auditEventStack->auditEvent.objectName =
-				SPI_getvalue(spiTuple, spiTupDesc, 2);
+			SPI_getvalue(spiTuple, spiTupDesc, 2);
 
 		log_audit_event(auditEventStack);
 	}
@@ -1562,10 +1581,10 @@ pg_audit_sql_drop(PG_FUNCTION_ARGS)
 static bool
 check_pg_audit_log(char **newVal, void **extra, GucSource source)
 {
-	List *flagRawList;
-	char *rawVal;
-	ListCell *lt;
-	int *flags;
+	List	   *flagRawList;
+	char	   *rawVal;
+	ListCell   *lt;
+	int		   *flags;
 
 	/* Make sure newval is a comma-separated list of tokens. */
 	rawVal = pstrdup(*newVal);
@@ -1581,18 +1600,18 @@ check_pg_audit_log(char **newVal, void **extra, GucSource source)
 	 * Check that we recognise each token, and add it to the bitmap we're
 	 * building up in a newly-allocated int *f.
 	 */
-	if (!(flags = (int *)malloc(sizeof(int))))
+	if (!(flags = (int *) malloc(sizeof(int))))
 		return false;
 
 	*flags = 0;
 
 	foreach(lt, flagRawList)
 	{
-		bool subtract = false;
-		int class;
+		bool		subtract = false;
+		int			class;
 
 		/* Retrieve a token */
-		char *token = (char *)lfirst(lt);
+		char	   *token = (char *) lfirst(lt);
 
 		/* If token is preceded by -, then the token is subtractive */
 		if (strstr(token, "-") == token)
@@ -1651,7 +1670,7 @@ static void
 assign_pg_audit_log(const char *newVal, void *extra)
 {
 	if (extra)
-		auditLogBitmap = *(int *)extra;
+		auditLogBitmap = *(int *) extra;
 }
 
 /*
@@ -1662,10 +1681,10 @@ assign_pg_audit_log(const char *newVal, void *extra)
 static bool
 check_pg_audit_log_level(char **newVal, void **extra, GucSource source)
 {
-	int *logLevel;
+	int		   *logLevel;
 
 	/* Allocate memory to store the log level */
-	if (!(logLevel = (int *)malloc(sizeof(int))))
+	if (!(logLevel = (int *) malloc(sizeof(int))))
 		return false;
 
 	/* Find the log level enum */
@@ -1718,7 +1737,7 @@ static void
 assign_pg_audit_log_level(const char *newVal, void *extra)
 {
 	if (extra)
-		auditLogLevel = *(int *)extra;
+		auditLogLevel = *(int *) extra;
 }
 
 /*
@@ -1729,126 +1748,126 @@ _PG_init(void)
 {
 	/* Define pg_audit.log */
 	DefineCustomStringVariable(
-		"pg_audit.log",
+							   "pg_audit.log",
 
-		"Specifies which classes of statements will be logged by session audit "
-		"logging. Multiple classes can be provided using a comma-separated "
-		"list and classes can be subtracted by prefacing the class with a "
-		"- sign.",
+	 "Specifies which classes of statements will be logged by session audit "
+		 "logging. Multiple classes can be provided using a comma-separated "
+		  "list and classes can be subtracted by prefacing the class with a "
+							   "- sign.",
 
-		NULL,
-		&auditLog,
-		"none",
-		PGC_SUSET,
-		GUC_LIST_INPUT | GUC_NOT_IN_SAMPLE,
-		check_pg_audit_log,
-		assign_pg_audit_log,
-		NULL);
+							   NULL,
+							   &auditLog,
+							   "none",
+							   PGC_SUSET,
+							   GUC_LIST_INPUT | GUC_NOT_IN_SAMPLE,
+							   check_pg_audit_log,
+							   assign_pg_audit_log,
+							   NULL);
 
 	/* Define pg_audit.log_catalog */
 	DefineCustomBoolVariable(
-		"pg_audit.log_catalog",
+							 "pg_audit.log_catalog",
 
 		"Specifies that session logging should be enabled in the case where "
-		"all relations in a statement are in pg_catalog.  Disabling this "
-		"setting will reduce noise in the log from tools like psql and PgAdmin "
-		"that query the catalog heavily.",
+		   "all relations in a statement are in pg_catalog.  Disabling this "
+	 "setting will reduce noise in the log from tools like psql and PgAdmin "
+							 "that query the catalog heavily.",
 
-		NULL,
-		&auditLogCatalog,
-		true,
-		PGC_SUSET,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							 NULL,
+							 &auditLogCatalog,
+							 true,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
 
 	/* Define pg_audit.log_level */
 	DefineCustomStringVariable(
-		"pg_audit.log_level",
+							   "pg_audit.log_level",
 
-		"Specifies the log level that will be used for log entries. This "
-		"setting is used for regression testing and may also be useful to end "
-		"users for testing or other purposes.  It is not intended to be used "
-		"in a production environment as it may leak which statements are being "
-		"logged to the user.",
+		   "Specifies the log level that will be used for log entries. This "
+	  "setting is used for regression testing and may also be useful to end "
+	   "users for testing or other purposes.  It is not intended to be used "
+	 "in a production environment as it may leak which statements are being "
+							   "logged to the user.",
 
-		NULL,
-		&auditLogLevelString,
-		"log",
-		PGC_SUSET,
-		GUC_LIST_INPUT | GUC_NOT_IN_SAMPLE,
-		check_pg_audit_log_level,
-		assign_pg_audit_log_level,
-		NULL);
+							   NULL,
+							   &auditLogLevelString,
+							   "log",
+							   PGC_SUSET,
+							   GUC_LIST_INPUT | GUC_NOT_IN_SAMPLE,
+							   check_pg_audit_log_level,
+							   assign_pg_audit_log_level,
+							   NULL);
 
 	/* Define pg_audit.log_parameter */
 	DefineCustomBoolVariable(
-		"pg_audit.log_parameter",
+							 "pg_audit.log_parameter",
 
-		"Specifies that audit logging should include the parameters that were "
-		"passed with the statement. When parameters are present they will be "
-		"be included in CSV format after the statement text.",
+	  "Specifies that audit logging should include the parameters that were "
+	   "passed with the statement. When parameters are present they will be "
+					   "be included in CSV format after the statement text.",
 
-		NULL,
-		&auditLogParameter,
-		false,
-		PGC_SUSET,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							 NULL,
+							 &auditLogParameter,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
 
 	/* Define pg_audit.log_relation */
 	DefineCustomBoolVariable(
-		"pg_audit.log_relation",
+							 "pg_audit.log_relation",
 
-		"Specifies whether session audit logging should create a separate log "
-		"entry for each relation referenced in a SELECT or DML statement. "
-		"This is a useful shortcut for exhaustive logging without using object "
-		"audit logging.",
+	  "Specifies whether session audit logging should create a separate log "
+		  "entry for each relation referenced in a SELECT or DML statement. "
+	 "This is a useful shortcut for exhaustive logging without using object "
+							 "audit logging.",
 
-		NULL,
-		&auditLogRelation,
-		false,
-		PGC_SUSET,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							 NULL,
+							 &auditLogRelation,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
 
 	/* Define pg_audit.log_statement_once */
 	DefineCustomBoolVariable(
-		"pg_audit.log_statement_once",
+							 "pg_audit.log_statement_once",
 
-		"Specifies whether logging will include the statement text and "
-		"parameters with the first log entry for a statement/substatement "
-		"combination or with every entry.  Disabling this setting will result "
-		"in less verbose logging but may make it more difficult to determine "
-		"the statement that generated a log entry, though the "
-		"statement/substatement pair along with the process id should suffice "
-		"to identify the statement text logged with a previous entry.",
+			 "Specifies whether logging will include the statement text and "
+		  "parameters with the first log entry for a statement/substatement "
+	  "combination or with every entry.  Disabling this setting will result "
+	   "in less verbose logging but may make it more difficult to determine "
+					  "the statement that generated a log entry, though the "
+	  "statement/substatement pair along with the process id should suffice "
+			  "to identify the statement text logged with a previous entry.",
 
-		NULL,
-		&auditLogStatementOnce,
-		false,
-		PGC_SUSET,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							 NULL,
+							 &auditLogStatementOnce,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
 
 	/* Define pg_audit.role */
 	DefineCustomStringVariable(
-		"pg_audit.role",
+							   "pg_audit.role",
 
-		"Specifies the master role to use for object audit logging.  Muliple "
-		"audit roles can be defined by granting them to the master role. This "
-		"allows multiple groups to be in charge of different aspects of audit "
-		"logging.",
+	   "Specifies the master role to use for object audit logging.  Muliple "
+	  "audit roles can be defined by granting them to the master role. This "
+	  "allows multiple groups to be in charge of different aspects of audit "
+							   "logging.",
 
-		NULL,
-		&auditRole,
-		"",
-		PGC_SUSET,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							   NULL,
+							   &auditRole,
+							   "",
+							   PGC_SUSET,
+							   GUC_NOT_IN_SAMPLE,
+							   NULL, NULL, NULL);
 
 	/*
-	 * Install our hook functions after saving the existing pointers to preserve
-	 * the chains.
+	 * Install our hook functions after saving the existing pointers to
+	 * preserve the chains.
 	 */
 	next_ExecutorStart_hook = ExecutorStart_hook;
 	ExecutorStart_hook = pg_audit_ExecutorStart_hook;

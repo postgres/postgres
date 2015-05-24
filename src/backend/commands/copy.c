@@ -861,8 +861,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		 * RLS (returns RLS_ENABLED) or not for this COPY statement.
 		 *
 		 * If the relation has a row security policy and we are to apply it
-		 * then perform a "query" copy and allow the normal query processing to
-		 * handle the policies.
+		 * then perform a "query" copy and allow the normal query processing
+		 * to handle the policies.
 		 *
 		 * If RLS is not enabled for this, then just fall through to the
 		 * normal non-filtering relation handling.
@@ -877,7 +877,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			if (is_from)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("COPY FROM not supported with row level security."),
+				  errmsg("COPY FROM not supported with row level security."),
 						 errhint("Use direct INSERT statements instead.")));
 
 			/* Build target list */
@@ -904,7 +904,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			select->targetList = list_make1(target);
 			select->fromClause = list_make1(from);
 
-			query = (Node*) select;
+			query = (Node *) select;
 
 			/* Close the handle to the relation as it is no longer needed. */
 			heap_close(rel, (is_from ? RowExclusiveLock : AccessShareLock));
@@ -1408,26 +1408,27 @@ BeginCopy(bool is_from,
 
 		/*
 		 * If we were passed in a relid, make sure we got the same one back
-		 * after planning out the query.  It's possible that it changed between
-		 * when we checked the policies on the table and decided to use a query
-		 * and now.
+		 * after planning out the query.  It's possible that it changed
+		 * between when we checked the policies on the table and decided to
+		 * use a query and now.
 		 */
 		if (queryRelId != InvalidOid)
 		{
-			Oid relid = linitial_oid(plan->relationOids);
+			Oid			relid = linitial_oid(plan->relationOids);
 
 			/*
-			 * There should only be one relationOid in this case, since we will
-			 * only get here when we have changed the command for the user from
-			 * a "COPY relation TO" to "COPY (SELECT * FROM relation) TO", to
-			 * allow row level security policies to be applied.
+			 * There should only be one relationOid in this case, since we
+			 * will only get here when we have changed the command for the
+			 * user from a "COPY relation TO" to "COPY (SELECT * FROM
+			 * relation) TO", to allow row level security policies to be
+			 * applied.
 			 */
 			Assert(list_length(plan->relationOids) == 1);
 
 			if (relid != queryRelId)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("relation referenced by COPY statement has changed")));
+				errmsg("relation referenced by COPY statement has changed")));
 		}
 
 		/*
@@ -2439,7 +2440,7 @@ CopyFrom(CopyState cstate)
 
 				if (resultRelInfo->ri_NumIndices > 0)
 					recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-														   estate, false, NULL,
+														 estate, false, NULL,
 														   NIL);
 
 				/* AFTER ROW INSERT Triggers */

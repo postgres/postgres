@@ -78,9 +78,9 @@
  * another in-progress tuple, it has two options:
  *
  * 1. back out the speculatively inserted tuple, then wait for the other
- *    transaction, and retry. Or,
+ *	  transaction, and retry. Or,
  * 2. wait for the other transaction, with the speculatively inserted tuple
- *    still in place.
+ *	  still in place.
  *
  * If two backends insert at the same time, and both try to wait for each
  * other, they will deadlock.  So option 2 is not acceptable.  Option 1
@@ -428,7 +428,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 													 indexRelation, indexInfo,
 													 tupleid, values, isnull,
 													 estate, false,
-													 waitMode, violationOK, NULL);
+												waitMode, violationOK, NULL);
 		}
 
 		if ((checkUnique == UNIQUE_CHECK_PARTIAL ||
@@ -538,7 +538,7 @@ ExecCheckIndexConstraints(TupleTableSlot *slot,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("ON CONFLICT does not support deferred unique constraints/exclusion constraints as arbiters"),
 					 errtableconstraint(heapRelation,
-										RelationGetRelationName(indexRelation))));
+								   RelationGetRelationName(indexRelation))));
 
 		checkedIndex = true;
 
@@ -578,7 +578,7 @@ ExecCheckIndexConstraints(TupleTableSlot *slot,
 		satisfiesConstraint =
 			check_exclusion_or_unique_constraint(heapRelation, indexRelation,
 												 indexInfo, &invalidItemPtr,
-												 values, isnull, estate, false,
+											   values, isnull, estate, false,
 												 CEOUC_WAIT, true,
 												 conflictTid);
 		if (!satisfiesConstraint)
@@ -814,9 +814,9 @@ retry:
 					 errmsg("could not create exclusion constraint \"%s\"",
 							RelationGetRelationName(index)),
 					 error_new && error_existing ?
-						errdetail("Key %s conflicts with key %s.",
-								  error_new, error_existing) :
-						errdetail("Key conflicts exist."),
+					 errdetail("Key %s conflicts with key %s.",
+							   error_new, error_existing) :
+					 errdetail("Key conflicts exist."),
 					 errtableconstraint(heap,
 										RelationGetRelationName(index))));
 		else
@@ -825,9 +825,9 @@ retry:
 					 errmsg("conflicting key value violates exclusion constraint \"%s\"",
 							RelationGetRelationName(index)),
 					 error_new && error_existing ?
-						errdetail("Key %s conflicts with existing key %s.",
-								  error_new, error_existing) :
-						errdetail("Key conflicts with existing key."),
+					 errdetail("Key %s conflicts with existing key %s.",
+							   error_new, error_existing) :
+					 errdetail("Key conflicts with existing key."),
 					 errtableconstraint(heap,
 										RelationGetRelationName(index))));
 	}
@@ -838,8 +838,8 @@ retry:
 	 * Ordinarily, at this point the search should have found the originally
 	 * inserted tuple (if any), unless we exited the loop early because of
 	 * conflict.  However, it is possible to define exclusion constraints for
-	 * which that wouldn't be true --- for instance, if the operator is <>.
-	 * So we no longer complain if found_self is still false.
+	 * which that wouldn't be true --- for instance, if the operator is <>. So
+	 * we no longer complain if found_self is still false.
 	 */
 
 	econtext->ecxt_scantuple = save_scantuple;

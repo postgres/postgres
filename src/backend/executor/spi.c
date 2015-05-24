@@ -1344,11 +1344,11 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	}
 
 	/*
-	 * If told to be read-only, or in parallel mode, verify that this query
-	 * is in fact read-only.  This can't be done earlier because we need to
-	 * look at the finished, planned queries.  (In particular, we don't want
-	 * to do it between GetCachedPlan and PortalDefineQuery, because throwing
-	 * an error between those steps would result in leaking our plancache
+	 * If told to be read-only, or in parallel mode, verify that this query is
+	 * in fact read-only.  This can't be done earlier because we need to look
+	 * at the finished, planned queries.  (In particular, we don't want to do
+	 * it between GetCachedPlan and PortalDefineQuery, because throwing an
+	 * error between those steps would result in leaking our plancache
 	 * refcount.)
 	 */
 	if (read_only || IsInParallelMode())
@@ -1365,8 +1365,8 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					/* translator: %s is a SQL statement name */
-							 errmsg("%s is not allowed in a non-volatile function",
-									CreateCommandTag(pstmt))));
+					   errmsg("%s is not allowed in a non-volatile function",
+							  CreateCommandTag(pstmt))));
 				else
 					PreventCommandIfParallelMode(CreateCommandTag(pstmt));
 			}

@@ -51,8 +51,8 @@ int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
-static bool infer_collation_opclass_match(InferenceElem *elem, Relation	idxRel,
-						Bitmapset *inferAttrs, List *idxExprs);
+static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
+							  Bitmapset *inferAttrs, List *idxExprs);
 static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
@@ -427,6 +427,7 @@ List *
 infer_arbiter_indexes(PlannerInfo *root)
 {
 	OnConflictExpr *onconflict = root->parse->onConflict;
+
 	/* Iteration state */
 	Relation	relation;
 	Oid			relationObjectId;
@@ -468,9 +469,9 @@ infer_arbiter_indexes(PlannerInfo *root)
 	 */
 	foreach(l, onconflict->arbiterElems)
 	{
-		InferenceElem  *elem;
-		Var			   *var;
-		int				attno;
+		InferenceElem *elem;
+		Var		   *var;
+		int			attno;
 
 		elem = (InferenceElem *) lfirst(l);
 
@@ -548,8 +549,8 @@ infer_arbiter_indexes(PlannerInfo *root)
 			goto next;
 
 		/*
-		 * Note that we do not perform a check against indcheckxmin (like
-		 * e.g. get_relation_info()) here to eliminate candidates, because
+		 * Note that we do not perform a check against indcheckxmin (like e.g.
+		 * get_relation_info()) here to eliminate candidates, because
 		 * uniqueness checking only cares about the most recently committed
 		 * tuple versions.
 		 */
@@ -605,7 +606,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		idxExprs = RelationGetIndexExpressions(idxRel);
 		foreach(el, onconflict->arbiterElems)
 		{
-			InferenceElem   *elem = (InferenceElem *) lfirst(el);
+			InferenceElem *elem = (InferenceElem *) lfirst(el);
 
 			/*
 			 * Ensure that collation/opclass aspects of inference expression
@@ -710,7 +711,7 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 {
 	AttrNumber	natt;
 	Oid			inferopfamily = InvalidOid;		/* OID of att opfamily */
-	Oid			inferopcinputtype = InvalidOid;		/* OID of att opfamily */
+	Oid			inferopcinputtype = InvalidOid; /* OID of att opfamily */
 
 	/*
 	 * If inference specification element lacks collation/opclass, then no
@@ -730,9 +731,9 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 
 	for (natt = 1; natt <= idxRel->rd_att->natts; natt++)
 	{
-		Oid		opfamily = idxRel->rd_opfamily[natt - 1];
-		Oid		opcinputtype = idxRel->rd_opcintype[natt - 1];
-		Oid		collation = idxRel->rd_indcollation[natt - 1];
+		Oid			opfamily = idxRel->rd_opfamily[natt - 1];
+		Oid			opcinputtype = idxRel->rd_opcintype[natt - 1];
+		Oid			collation = idxRel->rd_indcollation[natt - 1];
 
 		if (elem->inferopclass != InvalidOid &&
 			(inferopfamily != opfamily || inferopcinputtype != opcinputtype))

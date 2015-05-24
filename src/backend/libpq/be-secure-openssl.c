@@ -77,10 +77,10 @@
 #include "utils/memutils.h"
 
 
-static int my_sock_read(BIO *h, char *buf, int size);
-static int my_sock_write(BIO *h, const char *buf, int size);
+static int	my_sock_read(BIO *h, char *buf, int size);
+static int	my_sock_write(BIO *h, const char *buf, int size);
 static BIO_METHOD *my_BIO_s_socket(void);
-static int my_SSL_set_fd(Port *port, int fd);
+static int	my_SSL_set_fd(Port *port, int fd);
 
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
@@ -571,10 +571,9 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 	int			err;
 
 	/*
-	 * If SSL renegotiations are enabled and we're getting close to the
-	 * limit, start one now; but avoid it if there's one already in
-	 * progress.  Request the renegotiation 1kB before the limit has
-	 * actually expired.
+	 * If SSL renegotiations are enabled and we're getting close to the limit,
+	 * start one now; but avoid it if there's one already in progress.
+	 * Request the renegotiation 1kB before the limit has actually expired.
 	 */
 	if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
 		port->count > (ssl_renegotiation_limit - 1) * 1024L)
@@ -583,12 +582,12 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 
 		/*
 		 * The way we determine that a renegotiation has completed is by
-		 * observing OpenSSL's internal renegotiation counter.  Make sure
-		 * we start out at zero, and assume that the renegotiation is
-		 * complete when the counter advances.
+		 * observing OpenSSL's internal renegotiation counter.  Make sure we
+		 * start out at zero, and assume that the renegotiation is complete
+		 * when the counter advances.
 		 *
-		 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't
-		 * seem to work in testing.
+		 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't seem
+		 * to work in testing.
 		 */
 		SSL_clear_num_renegotiations(port->ssl);
 
@@ -658,9 +657,9 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 		}
 
 		/*
-		 * if renegotiation is still ongoing, and we've gone beyond the
-		 * limit, kill the connection now -- continuing to use it can be
-		 * considered a security problem.
+		 * if renegotiation is still ongoing, and we've gone beyond the limit,
+		 * kill the connection now -- continuing to use it can be considered a
+		 * security problem.
 		 */
 		if (in_ssl_renegotiation &&
 			port->count > ssl_renegotiation_limit * 1024L)
@@ -700,7 +699,7 @@ my_sock_read(BIO *h, char *buf, int size)
 
 	if (buf != NULL)
 	{
-		res = secure_raw_read(((Port *)h->ptr), buf, size);
+		res = secure_raw_read(((Port *) h->ptr), buf, size);
 		BIO_clear_retry_flags(h);
 		if (res <= 0)
 		{
@@ -1044,7 +1043,7 @@ SSLerrmessage(void)
 int
 be_tls_get_cipher_bits(Port *port)
 {
-	int bits;
+	int			bits;
 
 	if (port->ssl)
 	{

@@ -26,11 +26,11 @@ extern void XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
 /* Result codes for XLogReadBufferForRedo[Extended] */
 typedef enum
 {
-	BLK_NEEDS_REDO,		/* changes from WAL record need to be applied */
-	BLK_DONE,			/* block is already up-to-date */
-	BLK_RESTORED,		/* block was restored from a full-page image */
-	BLK_NOTFOUND		/* block was not found (and hence does not need to be
-						 * replayed) */
+	BLK_NEEDS_REDO,				/* changes from WAL record need to be applied */
+	BLK_DONE,					/* block is already up-to-date */
+	BLK_RESTORED,				/* block was restored from a full-page image */
+	BLK_NOTFOUND				/* block was not found (and hence does not
+								 * need to be replayed) */
 } XLogRedoAction;
 
 extern XLogRedoAction XLogReadBufferForRedo(XLogReaderState *record,

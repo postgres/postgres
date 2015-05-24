@@ -153,16 +153,16 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * If the transaction is read-only, we need to check if any writes are
 	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
 	 *
-	 * Don't allow writes in parallel mode.  Supporting UPDATE and DELETE would
-	 * require (a) storing the combocid hash in shared memory, rather than
-	 * synchronizing it just once at the start of parallelism, and (b) an
+	 * Don't allow writes in parallel mode.  Supporting UPDATE and DELETE
+	 * would require (a) storing the combocid hash in shared memory, rather
+	 * than synchronizing it just once at the start of parallelism, and (b) an
 	 * alternative to heap_update()'s reliance on xmax for mutual exclusion.
 	 * INSERT may have no such troubles, but we forbid it to simplify the
 	 * checks.
 	 *
 	 * We have lower-level defenses in CommandCounterIncrement and elsewhere
-	 * against performing unsafe operations in parallel mode, but this gives
-	 * a more user-friendly error message.
+	 * against performing unsafe operations in parallel mode, but this gives a
+	 * more user-friendly error message.
 	 */
 	if ((XactReadOnly || IsInParallelMode()) &&
 		!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
@@ -670,14 +670,14 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 		 */
 		if (remainingPerms & ACL_INSERT && !ExecCheckRTEPermsModified(relOid,
 																	  userid,
-																	  rte->insertedCols,
-																	  ACL_INSERT))
+														   rte->insertedCols,
+																 ACL_INSERT))
 			return false;
 
 		if (remainingPerms & ACL_UPDATE && !ExecCheckRTEPermsModified(relOid,
 																	  userid,
-																	  rte->updatedCols,
-																	  ACL_UPDATE))
+															rte->updatedCols,
+																 ACL_UPDATE))
 			return false;
 	}
 	return true;
@@ -695,10 +695,9 @@ ExecCheckRTEPermsModified(Oid relOid, Oid userid, Bitmapset *modifiedCols,
 	int			col = -1;
 
 	/*
-	 * When the query doesn't explicitly update any columns, allow the
-	 * query if we have permission on any column of the rel.  This is
-	 * to handle SELECT FOR UPDATE as well as possible corner cases in
-	 * UPDATE.
+	 * When the query doesn't explicitly update any columns, allow the query
+	 * if we have permission on any column of the rel.  This is to handle
+	 * SELECT FOR UPDATE as well as possible corner cases in UPDATE.
 	 */
 	if (bms_is_empty(modifiedCols))
 	{
@@ -742,8 +741,8 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	ListCell   *l;
 
 	/*
-	 * Fail if write permissions are requested in parallel mode for
-	 * table (temp or non-temp), otherwise fail for any non-temp table.
+	 * Fail if write permissions are requested in parallel mode for table
+	 * (temp or non-temp), otherwise fail for any non-temp table.
 	 */
 	foreach(l, plannedstmt->rtable)
 	{
@@ -1665,9 +1664,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	TupleConstr *constr = tupdesc->constr;
-	Bitmapset   *modifiedCols;
-	Bitmapset   *insertedCols;
-	Bitmapset   *updatedCols;
+	Bitmapset  *modifiedCols;
+	Bitmapset  *insertedCols;
+	Bitmapset  *updatedCols;
 
 	Assert(constr);
 
@@ -1722,7 +1721,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed),
-					 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
+			  val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
 					 errtableconstraint(rel, failed)));
 		}
 	}
@@ -1773,11 +1772,11 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 		/*
 		 * WITH CHECK OPTION checks are intended to ensure that the new tuple
 		 * is visible (in the case of a view) or that it passes the
-		 * 'with-check' policy (in the case of row security).
-		 * If the qual evaluates to NULL or FALSE, then the new tuple won't be
-		 * included in the view or doesn't pass the 'with-check' policy for the
-		 * table.  We need ExecQual to return FALSE for NULL to handle the view
-		 * case (the opposite of what we do above for CHECK constraints).
+		 * 'with-check' policy (in the case of row security). If the qual
+		 * evaluates to NULL or FALSE, then the new tuple won't be included in
+		 * the view or doesn't pass the 'with-check' policy for the table.  We
+		 * need ExecQual to return FALSE for NULL to handle the view case (the
+		 * opposite of what we do above for CHECK constraints).
 		 */
 		if (!ExecQual((List *) wcoExpr, econtext, false))
 		{
@@ -1788,14 +1787,15 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 
 			switch (wco->kind)
 			{
-				/*
-				 * For WITH CHECK OPTIONs coming from views, we might be able to
-				 * provide the details on the row, depending on the permissions
-				 * on the relation (that is, if the user could view it directly
-				 * anyway).  For RLS violations, we don't include the data since
-				 * we don't know if the user should be able to view the tuple as
-				 * as that depends on the USING policy.
-				 */
+					/*
+					 * For WITH CHECK OPTIONs coming from views, we might be
+					 * able to provide the details on the row, depending on
+					 * the permissions on the relation (that is, if the user
+					 * could view it directly anyway).  For RLS violations, we
+					 * don't include the data since we don't know if the user
+					 * should be able to view the tuple as as that depends on
+					 * the USING policy.
+					 */
 				case WCO_VIEW_CHECK:
 					insertedCols = GetInsertedColumns(resultRelInfo, estate);
 					updatedCols = GetUpdatedColumns(resultRelInfo, estate);
@@ -1808,8 +1808,8 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 
 					ereport(ERROR,
 							(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
-						errmsg("new row violates WITH CHECK OPTION for \"%s\"",
-							   wco->relname),
+					  errmsg("new row violates WITH CHECK OPTION for \"%s\"",
+							 wco->relname),
 							 val_desc ? errdetail("Failing row contains %s.",
 												  val_desc) : 0));
 					break;
@@ -1817,14 +1817,14 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 				case WCO_RLS_UPDATE_CHECK:
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("new row violates row level security policy for \"%s\"",
-								wco->relname)));
+							 errmsg("new row violates row level security policy for \"%s\"",
+									wco->relname)));
 					break;
 				case WCO_RLS_CONFLICT_CHECK:
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("new row violates row level security policy (USING expression) for \"%s\"",
-								wco->relname)));
+							 errmsg("new row violates row level security policy (USING expression) for \"%s\"",
+									wco->relname)));
 					break;
 				default:
 					elog(ERROR, "unrecognized WCO kind: %u", wco->kind);
@@ -1915,8 +1915,8 @@ ExecBuildSlotValueDescription(Oid reloid,
 		{
 			/*
 			 * No table-level SELECT, so need to make sure they either have
-			 * SELECT rights on the column or that they have provided the
-			 * data for the column.  If not, omit this column from the error
+			 * SELECT rights on the column or that they have provided the data
+			 * for the column.  If not, omit this column from the error
 			 * message.
 			 */
 			aclresult = pg_attribute_aclcheck(reloid, tupdesc->attrs[i]->attnum,
@@ -2258,14 +2258,14 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 						break;
 					case LockWaitSkip:
 						if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
-							return NULL; /* skip instead of waiting */
+							return NULL;		/* skip instead of waiting */
 						break;
 					case LockWaitError:
 						if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
 							ereport(ERROR,
 									(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 									 errmsg("could not obtain lock on row in relation \"%s\"",
-											RelationGetRelationName(relation))));
+										RelationGetRelationName(relation))));
 						break;
 				}
 				continue;		/* loop back to repeat heap_fetch */
@@ -2313,9 +2313,9 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 					 * doing so would require changing heap_update and
 					 * heap_delete to not complain about updating "invisible"
 					 * tuples, which seems pretty scary (heap_lock_tuple will
-					 * not complain, but few callers expect HeapTupleInvisible,
-					 * and we're not one of them).  So for now, treat the tuple
-					 * as deleted and do not process.
+					 * not complain, but few callers expect
+					 * HeapTupleInvisible, and we're not one of them).  So for
+					 * now, treat the tuple as deleted and do not process.
 					 */
 					ReleaseBuffer(buffer);
 					return NULL;
@@ -2563,8 +2563,8 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 				if (fdwroutine->RefetchForeignRow == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot lock rows in foreign table \"%s\"",
-									RelationGetRelationName(erm->relation))));
+						   errmsg("cannot lock rows in foreign table \"%s\"",
+								  RelationGetRelationName(erm->relation))));
 				copyTuple = fdwroutine->RefetchForeignRow(epqstate->estate,
 														  erm,
 														  datum,

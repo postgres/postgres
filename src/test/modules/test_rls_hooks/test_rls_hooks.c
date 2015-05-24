@@ -35,11 +35,12 @@ PG_MODULE_MAGIC;
 static row_security_policy_hook_type prev_row_security_policy_hook_permissive = NULL;
 static row_security_policy_hook_type prev_row_security_policy_hook_restrictive = NULL;
 
-void        _PG_init(void);
-void        _PG_fini(void);
+void		_PG_init(void);
+void		_PG_fini(void);
 
 /* Install hooks */
-void		_PG_init(void)
+void
+_PG_init(void)
 {
 	/* Save values for unload  */
 	prev_row_security_policy_hook_permissive = row_security_policy_hook_permissive;
@@ -51,7 +52,8 @@ void		_PG_init(void)
 }
 
 /* Uninstall hooks */
-void        _PG_fini(void)
+void
+_PG_fini(void)
 {
 	row_security_policy_hook_permissive = prev_row_security_policy_hook_permissive;
 	row_security_policy_hook_restrictive = prev_row_security_policy_hook_restrictive;
@@ -60,20 +62,20 @@ void        _PG_fini(void)
 /*
  * Return permissive policies to be added
  */
-List*
+List *
 test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 {
-	List			   *policies = NIL;
-	RowSecurityPolicy  *policy = palloc0(sizeof(RowSecurityPolicy));
-	Datum				role;
-	FuncCall		   *n;
-	Node			   *e;
-	ColumnRef		   *c;
-	ParseState		   *qual_pstate;
-	RangeTblEntry	   *rte;
+	List	   *policies = NIL;
+	RowSecurityPolicy *policy = palloc0(sizeof(RowSecurityPolicy));
+	Datum		role;
+	FuncCall   *n;
+	Node	   *e;
+	ColumnRef  *c;
+	ParseState *qual_pstate;
+	RangeTblEntry *rte;
 
-	if (strcmp(RelationGetRelationName(relation),"rls_test_permissive")
-			&& strcmp(RelationGetRelationName(relation),"rls_test_both"))
+	if (strcmp(RelationGetRelationName(relation), "rls_test_permissive")
+		&& strcmp(RelationGetRelationName(relation), "rls_test_both"))
 		return NIL;
 
 	qual_pstate = make_parsestate(NULL);
@@ -88,11 +90,11 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	policy->policy_id = InvalidOid;
 	policy->polcmd = '*';
 	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, 'i');
+
 	/*
-	policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
-									  sizeof(bool), BoolGetDatum(true),
-									  false, true);
-									  */
+	 * policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
+	 * sizeof(bool), BoolGetDatum(true), false, true);
+	 */
 
 	n = makeFuncCall(list_make2(makeString("pg_catalog"),
 								makeString("current_user")), NIL, 0);
@@ -101,11 +103,11 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	c->fields = list_make1(makeString("username"));
 	c->location = 0;
 
-	e = (Node*) makeSimpleA_Expr(AEXPR_OP, "=", (Node*) n, (Node*) c, 0);
+	e = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) n, (Node *) c, 0);
 
-	policy->qual = (Expr*) transformWhereClause(qual_pstate, copyObject(e),
-												EXPR_KIND_WHERE,
-												"POLICY");
+	policy->qual = (Expr *) transformWhereClause(qual_pstate, copyObject(e),
+												 EXPR_KIND_WHERE,
+												 "POLICY");
 
 	policy->with_check_qual = copyObject(policy->qual);
 	policy->hassublinks = false;
@@ -118,21 +120,21 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 /*
  * Return restrictive policies to be added
  */
-List*
+List *
 test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 {
-	List			   *policies = NIL;
-	RowSecurityPolicy  *policy = palloc0(sizeof(RowSecurityPolicy));
-	Datum				role;
-	FuncCall		   *n;
-	Node			   *e;
-	ColumnRef		   *c;
-	ParseState		   *qual_pstate;
-	RangeTblEntry	   *rte;
+	List	   *policies = NIL;
+	RowSecurityPolicy *policy = palloc0(sizeof(RowSecurityPolicy));
+	Datum		role;
+	FuncCall   *n;
+	Node	   *e;
+	ColumnRef  *c;
+	ParseState *qual_pstate;
+	RangeTblEntry *rte;
 
 
-	if (strcmp(RelationGetRelationName(relation),"rls_test_restrictive")
-			&& strcmp(RelationGetRelationName(relation),"rls_test_both"))
+	if (strcmp(RelationGetRelationName(relation), "rls_test_restrictive")
+		&& strcmp(RelationGetRelationName(relation), "rls_test_both"))
 		return NIL;
 
 	qual_pstate = make_parsestate(NULL);
@@ -155,11 +157,11 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 	c->fields = list_make1(makeString("supervisor"));
 	c->location = 0;
 
-	e = (Node*) makeSimpleA_Expr(AEXPR_OP, "=", (Node*) n, (Node*) c, 0);
+	e = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) n, (Node *) c, 0);
 
-	policy->qual = (Expr*) transformWhereClause(qual_pstate, copyObject(e),
-												EXPR_KIND_WHERE,
-												"POLICY");
+	policy->qual = (Expr *) transformWhereClause(qual_pstate, copyObject(e),
+												 EXPR_KIND_WHERE,
+												 "POLICY");
 
 	policy->with_check_qual = copyObject(policy->qual);
 	policy->hassublinks = false;

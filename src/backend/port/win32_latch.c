@@ -151,7 +151,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	if (wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE))
 	{
 		/* Need an event object to represent events on the socket */
-		int			flags = FD_CLOSE; /* always check for errors/EOF */
+		int			flags = FD_CLOSE;	/* always check for errors/EOF */
 
 		if (wakeEvents & WL_SOCKET_READABLE)
 			flags |= FD_READ;

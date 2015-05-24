@@ -290,7 +290,7 @@ ExecSortRestrPos(SortState *node)
 void
 ExecReScanSort(SortState *node)
 {
-	PlanState	*outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 
 	/*
 	 * If we haven't sorted yet, just return. If outerplan's chgParam is not

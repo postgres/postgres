@@ -60,7 +60,7 @@ typedef struct hyperLogLogState
 } hyperLogLogState;
 
 extern void initHyperLogLog(hyperLogLogState *cState, uint8 bwidth);
-extern void	addHyperLogLog(hyperLogLogState *cState, uint32 hash);
+extern void addHyperLogLog(hyperLogLogState *cState, uint32 hash);
 extern double estimateHyperLogLog(hyperLogLogState *cState);
 extern void mergeHyperLogLog(hyperLogLogState *cState, const hyperLogLogState *oState);
 

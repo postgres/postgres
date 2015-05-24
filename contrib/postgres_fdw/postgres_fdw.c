@@ -203,7 +203,7 @@ typedef struct PgFdwAnalyzeState
 	/* for random sampling */
 	double		samplerows;		/* # of rows fetched */
 	double		rowstoskip;		/* # of rows to skip before next sample */
-	ReservoirStateData rstate;		/* state for reservoir sampling*/
+	ReservoirStateData rstate;	/* state for reservoir sampling */
 
 	/* working memory contexts */
 	MemoryContext anl_cxt;		/* context for per-analyze lifespan data */

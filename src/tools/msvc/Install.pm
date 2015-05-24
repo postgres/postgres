@@ -306,6 +306,7 @@ sub CopySolutionOutput
 			}
 			else    # 'StaticLibrary'
 			{
+
 				# Static lib, such as libpgport, only used internally
 				# during build, don't install.
 				next;
@@ -438,6 +439,7 @@ sub CopyContribFiles
 		opendir($D, $subdir) || croak "Could not opendir on $subdir!\n";
 		while (my $d = readdir($D))
 		{
+
 			# These configuration-based exclusions must match vcregress.pl
 			next if ($d eq "uuid-ossp"       && !defined($config->{uuid}));
 			next if ($d eq "sslinfo"         && !defined($config->{openssl}));
@@ -463,7 +465,7 @@ sub CopySubdirFiles
 	return if ($module =~ /^\./);
 	return unless (-f "$subdir/$module/Makefile");
 	return
-		  if ($insttype eq "client" && !grep { $_ eq $module } @client_contribs);
+	  if ($insttype eq "client" && !grep { $_ eq $module } @client_contribs);
 
 	my $mf = read_file("$subdir/$module/Makefile");
 	$mf =~ s{\\\r?\n}{}g;
@@ -480,18 +482,17 @@ sub CopySubdirFiles
 
 		foreach my $f (split /\s+/, $flist)
 		{
-			lcopy(
-					"$subdir/$module/$f.control",
-					"$target/share/extension/$f.control"
-				) || croak("Could not copy file $f.control in contrib $module");
-				print '.';
+			lcopy("$subdir/$module/$f.control",
+				"$target/share/extension/$f.control")
+			  || croak("Could not copy file $f.control in contrib $module");
+			print '.';
 		}
 	}
 
 	$flist = '';
 	if ($mf =~ /^DATA_built\s*=\s*(.*)$/m) { $flist .= $1 }
 	if ($mf =~ /^DATA\s*=\s*(.*)$/m)       { $flist .= " $1" }
-	$flist =~ s/^\s*//;  # Remove leading spaces if we had only DATA_built
+	$flist =~ s/^\s*//;    # Remove leading spaces if we had only DATA_built
 
 	if ($flist ne '')
 	{
@@ -500,9 +501,9 @@ sub CopySubdirFiles
 		foreach my $f (split /\s+/, $flist)
 		{
 			lcopy("$subdir/$module/$f",
-				  "$target/share/$moduledir/" . basename($f))
-				  || croak("Could not copy file $f in contrib $module");
-				print '.';
+				"$target/share/$moduledir/" . basename($f))
+			  || croak("Could not copy file $f in contrib $module");
+			print '.';
 		}
 	}
 
@@ -533,8 +534,7 @@ sub CopySubdirFiles
 		  if ($module eq 'spi');
 		foreach my $f (split /\s+/, $flist)
 		{
-			lcopy("$subdir/$module/$f",
-				  "$target/doc/$moduledir/$f")
+			lcopy("$subdir/$module/$f", "$target/doc/$moduledir/$f")
 			  || croak("Could not copy file $f in contrib $module");
 			print '.';
 		}

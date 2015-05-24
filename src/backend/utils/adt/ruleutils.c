@@ -106,8 +106,8 @@ typedef struct
 	int			wrapColumn;		/* max line length, or -1 for no limit */
 	int			indentLevel;	/* current indent level for prettyprint */
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
-	ParseExprKind special_exprkind;	/* set only for exprkinds needing */
-									/* special handling */
+	ParseExprKind special_exprkind;		/* set only for exprkinds needing */
+	/* special handling */
 } deparse_context;
 
 /*
@@ -350,7 +350,7 @@ static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags, int wrapColumn);
 static void get_tablesample_def(TableSampleClause *tablesample,
-								deparse_context *context);
+					deparse_context *context);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 			  TupleDesc resultDesc,
 			  int prettyFlags, int wrapColumn, int startIndent);
@@ -361,8 +361,8 @@ static void get_select_query_def(Query *query, deparse_context *context,
 static void get_insert_query_def(Query *query, deparse_context *context);
 static void get_update_query_def(Query *query, deparse_context *context);
 static void get_update_query_targetlist_def(Query *query, List *targetList,
-									deparse_context *context,
-									RangeTblEntry *rte);
+								deparse_context *context,
+								RangeTblEntry *rte);
 static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context,
@@ -376,7 +376,7 @@ static Node *get_rule_sortgroupclause(Index ref, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
 static void get_rule_groupingset(GroupingSet *gset, List *targetlist,
-								 bool omit_parens, deparse_context *context);
+					 bool omit_parens, deparse_context *context);
 static void get_rule_orderby(List *orderList, List *targetList,
 				 bool force_colno, deparse_context *context);
 static void get_rule_windowclause(Query *query, deparse_context *context);
@@ -424,9 +424,9 @@ static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs,
-							List *argnames, Oid *argtypes,
-							bool has_variadic, bool *use_variadic_p,
-							ParseExprKind special_exprkind);
+					   List *argnames, Oid *argtypes,
+					   bool has_variadic, bool *use_variadic_p,
+					   ParseExprKind special_exprkind);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -1963,7 +1963,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	print_function_trftypes(&buf, proctup);
 
 	appendStringInfo(&buf, "\n LANGUAGE %s\n",
-					 quote_identifier(get_language_name(proc->prolang, false)));
+				  quote_identifier(get_language_name(proc->prolang, false)));
 
 	/* Emit some miscellaneous options on one line */
 	oldlen = buf.len;
@@ -2364,13 +2364,13 @@ is_input_argument(int nth, const char *argmodes)
 static void
 print_function_trftypes(StringInfo buf, HeapTuple proctup)
 {
-	Oid	*trftypes;
-	int	ntypes;
+	Oid		   *trftypes;
+	int			ntypes;
 
 	ntypes = get_func_trftypes(proctup, &trftypes);
 	if (ntypes > 0)
 	{
-		int	i;
+		int			i;
 
 		appendStringInfoString(buf, "\n TRANSFORM ");
 		for (i = 0; i < ntypes; i++)
@@ -4714,7 +4714,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/* Add the GROUP BY clause if given */
 	if (query->groupClause != NULL || query->groupingSets != NULL)
 	{
-		ParseExprKind	save_exprkind;
+		ParseExprKind save_exprkind;
 
 		appendContextKeyword(context, " GROUP BY ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
@@ -5045,13 +5045,13 @@ get_rule_sortgroupclause(Index ref, List *tlist, bool force_colno,
 	expr = (Node *) tle->expr;
 
 	/*
-	 * Use column-number form if requested by caller.  Otherwise, if expression
-	 * is a constant, force it to be dumped with an explicit cast as decoration
-	 * --- this is because a simple integer constant is ambiguous (and will be
-	 * misinterpreted by findTargetlistEntry()) if we dump it without any
-	 * decoration.  If it's anything more complex than a simple Var, then force
-	 * extra parens around it, to ensure it can't be misinterpreted as a cube()
-	 * or rollup() construct.
+	 * Use column-number form if requested by caller.  Otherwise, if
+	 * expression is a constant, force it to be dumped with an explicit cast
+	 * as decoration --- this is because a simple integer constant is
+	 * ambiguous (and will be misinterpreted by findTargetlistEntry()) if we
+	 * dump it without any decoration.  If it's anything more complex than a
+	 * simple Var, then force extra parens around it, to ensure it can't be
+	 * misinterpreted as a cube() or rollup() construct.
 	 */
 	if (force_colno)
 	{
@@ -5067,14 +5067,15 @@ get_rule_sortgroupclause(Index ref, List *tlist, bool force_colno,
 		/*
 		 * We must force parens for function-like expressions even if
 		 * PRETTY_PAREN is off, since those are the ones in danger of
-		 * misparsing. For other expressions we need to force them
-		 * only if PRETTY_PAREN is on, since otherwise the expression
-		 * will output them itself. (We can't skip the parens.)
+		 * misparsing. For other expressions we need to force them only if
+		 * PRETTY_PAREN is on, since otherwise the expression will output them
+		 * itself. (We can't skip the parens.)
 		 */
-		bool	need_paren = (PRETTY_PAREN(context)
-							  || IsA(expr, FuncExpr)
-							  || IsA(expr, Aggref)
-							  || IsA(expr, WindowFunc));
+		bool		need_paren = (PRETTY_PAREN(context)
+								  || IsA(expr, FuncExpr)
+								  ||IsA(expr, Aggref)
+								  ||IsA(expr, WindowFunc));
+
 		if (need_paren)
 			appendStringInfoString(context->buf, "(");
 		get_rule_expr(expr, context, true);
@@ -5110,7 +5111,7 @@ get_rule_groupingset(GroupingSet *gset, List *targetlist,
 
 				foreach(l, gset->content)
 				{
-					Index ref = lfirst_int(l);
+					Index		ref = lfirst_int(l);
 
 					appendStringInfoString(buf, sep);
 					get_rule_sortgroupclause(ref, targetlist,
@@ -5502,7 +5503,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		}
 		else if (confl->constraint != InvalidOid)
 		{
-			char   *constraint = get_constraint_name(confl->constraint);
+			char	   *constraint = get_constraint_name(confl->constraint);
 
 			appendStringInfo(buf, " ON CONSTRAINT %s",
 							 quote_qualified_identifier(NULL, constraint));
@@ -7917,9 +7918,9 @@ get_rule_expr(Node *node, deparse_context *context,
 
 		case T_InferenceElem:
 			{
-				InferenceElem  *iexpr = (InferenceElem *) node;
-				bool			varprefix = context->varprefix;
-				bool			need_parens;
+				InferenceElem *iexpr = (InferenceElem *) node;
+				bool		varprefix = context->varprefix;
+				bool		need_parens;
 
 				/*
 				 * InferenceElem can only refer to target relation, so a
@@ -7948,13 +7949,13 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				if (iexpr->infercollid)
 					appendStringInfo(buf, " COLLATE %s",
-									 generate_collation_name(iexpr->infercollid));
+								generate_collation_name(iexpr->infercollid));
 
 				/* Add the operator class name, if not default */
 				if (iexpr->inferopclass)
 				{
-					Oid		inferopclass = iexpr->inferopclass;
-					Oid		inferopcinputtype = get_opclass_input_type(iexpr->inferopclass);
+					Oid			inferopclass = iexpr->inferopclass;
+					Oid			inferopcinputtype = get_opclass_input_type(iexpr->inferopclass);
 
 					get_opclass_name(inferopclass, inferopcinputtype, buf);
 				}

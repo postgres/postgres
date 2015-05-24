@@ -69,9 +69,9 @@ InitBufferPool(void)
 
 	/* Align descriptors to a cacheline boundary. */
 	BufferDescriptors = (BufferDescPadded *) CACHELINEALIGN(
-		ShmemInitStruct("Buffer Descriptors",
-						NBuffers * sizeof(BufferDescPadded) + PG_CACHE_LINE_SIZE,
-						&foundDescs));
+										ShmemInitStruct("Buffer Descriptors",
+					NBuffers * sizeof(BufferDescPadded) + PG_CACHE_LINE_SIZE,
+														&foundDescs));
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",

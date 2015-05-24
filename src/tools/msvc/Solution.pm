@@ -36,7 +36,7 @@ sub _new
 	$options->{float8byval} = ($bits == 64)
 	  unless exists $options->{float8byval};
 	die "float8byval not permitted on 32 bit platforms"
-	  if  $options->{float8byval} && $bits == 32;
+	  if $options->{float8byval} && $bits == 32;
 	if ($options->{xml})
 	{
 		if (!($options->{xslt} && $options->{iconv}))
@@ -143,16 +143,13 @@ sub GenerateFiles
 	confess "Unable to parse configure.in for all variables!"
 	  if ($self->{strver} eq '' || $self->{numver} eq '');
 
-	if (IsNewer(
-			"src/include/pg_config_os.h", "src/include/port/win32.h"))
+	if (IsNewer("src/include/pg_config_os.h", "src/include/port/win32.h"))
 	{
 		print "Copying pg_config_os.h...\n";
-		copyFile("src/include/port/win32.h",
-			"src/include/pg_config_os.h");
+		copyFile("src/include/port/win32.h", "src/include/pg_config_os.h");
 	}
 
-	if (IsNewer(
-			"src/include/pg_config.h", "src/include/pg_config.h.win32"))
+	if (IsNewer("src/include/pg_config.h", "src/include/pg_config.h.win32"))
 	{
 		print "Generating pg_config.h...\n";
 		open(I, "src/include/pg_config.h.win32")
@@ -165,7 +162,7 @@ sub GenerateFiles
 		{
 			s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}$extraver"};
 			s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
-			s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
+s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
 			print O;
 		}
 		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
@@ -177,10 +174,10 @@ sub GenerateFiles
 		  if ($self->{options}->{asserts});
 		print O "#define USE_INTEGER_DATETIMES 1\n"
 		  if ($self->{options}->{integer_datetimes});
-		print O "#define USE_LDAP 1\n"   if ($self->{options}->{ldap});
-		print O "#define HAVE_LIBZ 1\n"  if ($self->{options}->{zlib});
+		print O "#define USE_LDAP 1\n"    if ($self->{options}->{ldap});
+		print O "#define HAVE_LIBZ 1\n"   if ($self->{options}->{zlib});
 		print O "#define USE_OPENSSL 1\n" if ($self->{options}->{openssl});
-		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+		print O "#define ENABLE_NLS 1\n"  if ($self->{options}->{nls});
 
 		print O "#define BLCKSZ ", 1024 * $self->{options}->{blocksize}, "\n";
 		print O "#define RELSEG_SIZE ",

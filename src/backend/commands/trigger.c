@@ -4329,7 +4329,7 @@ AfterTriggerEndSubXact(bool isCommit)
 static void
 AfterTriggerEnlargeQueryState(void)
 {
-	int		init_depth = afterTriggers.maxquerydepth;
+	int			init_depth = afterTriggers.maxquerydepth;
 
 	Assert(afterTriggers.query_depth >= afterTriggers.maxquerydepth);
 
@@ -4396,7 +4396,7 @@ SetConstraintStateCreate(int numalloc)
 	state = (SetConstraintState)
 		MemoryContextAllocZero(TopTransactionContext,
 							   offsetof(SetConstraintStateData, trigstates) +
-						   numalloc * sizeof(SetConstraintTriggerData));
+							   numalloc * sizeof(SetConstraintTriggerData));
 
 	state->numalloc = numalloc;
 

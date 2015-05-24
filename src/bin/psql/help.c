@@ -81,11 +81,11 @@ usage(unsigned short int pager)
 	fprintf(output, _("  -f, --file=FILENAME      execute commands from file, then exit\n"));
 	fprintf(output, _("  -l, --list               list available databases, then exit\n"));
 	fprintf(output, _("  -v, --set=, --variable=NAME=VALUE\n"
-			 "                           set psql variable NAME to VALUE e.g.: -v ON_ERROR_STOP=1\n"));
+					  "                           set psql variable NAME to VALUE e.g.: -v ON_ERROR_STOP=1\n"));
 	fprintf(output, _("  -V, --version            output version information, then exit\n"));
 	fprintf(output, _("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
 	fprintf(output, _("  -1 (\"one\"), --single-transaction\n"
-			 "                           execute as a single transaction (if non-interactive)\n"));
+					  "                           execute as a single transaction (if non-interactive)\n"));
 	fprintf(output, _("  -?, --help[=options]     show this help, then exit\n"));
 	fprintf(output, _("      --help=variables     show a list of all specially treated variables, then exit\n"));
 	fprintf(output, _("      --help=commands      show a list of backslash commands, then exit\n"));
@@ -105,29 +105,29 @@ usage(unsigned short int pager)
 	fprintf(output, _("\nOutput format options:\n"));
 	fprintf(output, _("  -A, --no-align           unaligned table output mode\n"));
 	fprintf(output, _("  -F, --field-separator=STRING\n"
-			 "                           field separator for unaligned output (default: \"%s\")\n"),
-		   DEFAULT_FIELD_SEP);
+					  "                           field separator for unaligned output (default: \"%s\")\n"),
+			DEFAULT_FIELD_SEP);
 	fprintf(output, _("  -H, --html               HTML table output mode\n"));
 	fprintf(output, _("  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"));
 	fprintf(output, _("  -R, --record-separator=STRING\n"
-			 "                           record separator for unaligned output (default: newline)\n"));
+					  "                           record separator for unaligned output (default: newline)\n"));
 	fprintf(output, _("  -t, --tuples-only        print rows only\n"));
 	fprintf(output, _("  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"));
 	fprintf(output, _("  -x, --expanded           turn on expanded table output\n"));
 	fprintf(output, _("  -z, --field-separator-zero\n"
-			 "                           set field separator for unaligned output to zero byte\n"));
+					  "                           set field separator for unaligned output to zero byte\n"));
 	fprintf(output, _("  -0, --record-separator-zero\n"
-			 "                           set record separator for unaligned output to zero byte\n"));
+					  "                           set record separator for unaligned output to zero byte\n"));
 
 	fprintf(output, _("\nConnection options:\n"));
 	/* Display default host */
 	env = getenv("PGHOST");
 	fprintf(output, _("  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"),
-		   env ? env : _("local socket"));
+			env ? env : _("local socket"));
 	/* Display default port */
 	env = getenv("PGPORT");
 	fprintf(output, _("  -p, --port=PORT          database server port (default: \"%s\")\n"),
-		   env ? env : DEF_PGPORT_STR);
+			env ? env : DEF_PGPORT_STR);
 	/* Display default user */
 	env = getenv("PGUSER");
 	if (!env)
@@ -137,8 +137,8 @@ usage(unsigned short int pager)
 	fprintf(output, _("  -W, --password           force password prompt (should happen automatically)\n"));
 
 	fprintf(output, _("\nFor more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
-			 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
-			 "documentation.\n\n"));
+					  "commands) from within psql, or consult the psql section in the PostgreSQL\n"
+					  "documentation.\n\n"));
 	fprintf(output, _("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 
 	ClosePager(output);
@@ -315,15 +315,15 @@ helpVariables(unsigned short int pager)
 
 	fprintf(output, _("  AUTOCOMMIT         if set, successful SQL commands are automatically committed\n"));
 	fprintf(output, _("  COMP_KEYWORD_CASE  determine the case used to complete SQL keywords\n"
-					 "                     [lower, upper, preserve-lower, preserve-upper]\n"));
+	"                     [lower, upper, preserve-lower, preserve-upper]\n"));
 	fprintf(output, _("  DBNAME             the currently connected database name\n"));
 	fprintf(output, _("  ECHO               control what input is written to standard output\n"
-					 "                     [all, errors, none, queries]\n"));
+					  "                     [all, errors, none, queries]\n"));
 	fprintf(output, _("  ECHO_HIDDEN        display internal queries executed by backslash commands when it is set\n"
-					 "                     or with [noexec] just show without execution\n"));
+	 "                     or with [noexec] just show without execution\n"));
 	fprintf(output, _("  ENCODING           current client character set encoding\n"));
 	fprintf(output, _("  FETCH_COUNT        the number of result rows to fetch and display at a time\n"
-					 "                     (default: 0=unlimited)\n"));
+					  "                     (default: 0=unlimited)\n"));
 	fprintf(output, _("  HISTCONTROL        control history list [ignorespace, ignoredups, ignoreboth]\n"));
 	fprintf(output, _("  HISTFILE           file name used to store the history list\n"));
 	fprintf(output, _("  HISTSIZE           the number of commands to store in the command history\n"));
@@ -356,18 +356,18 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  linestyle          set the border line drawing style [ascii, old-ascii, unicode]\n"));
 	fprintf(output, _("  null               set the string to be printed in place of a null value\n"));
 	fprintf(output, _("  numericlocale      enable or disable display of a locale-specific character to separate\n"
-					 "                     groups of digits [on, off]\n"));
+					  "                     groups of digits [on, off]\n"));
 	fprintf(output, _("  pager              control when an external pager is used [yes, no, always]\n"));
 	fprintf(output, _("  recordsep          specify the record (line) separator to use in unaligned output format\n"));
 	fprintf(output, _("  recordsep_zero     set the record separator to use in unaligned output format to a zero byte.\n"));
 	fprintf(output, _("  tableattr (or T)   specify attributes for table tag in html format or proportional\n"
-					 "                     column width of left aligned data type in latex format\n"));
+					  "                     column width of left aligned data type in latex format\n"));
 	fprintf(output, _("  title              set the table title for any subsequently printed tables\n"));
 	fprintf(output, _("  tuples_only        if set, only actual table data is shown\n"));
 	fprintf(output, _("  unicode_border_linestyle\n"));
 	fprintf(output, _("  unicode_column_linestyle\n"));
 	fprintf(output, _("  unicode_header_linestyle\n"
-					 "                     set the style of unicode line drawing [single, double]\n"));
+					  "                     set the style of unicode line drawing [single, double]\n"));
 
 	fprintf(output, _("\nEnvironment variables:\n"));
 	fprintf(output, _("Usage:\n"));
@@ -388,9 +388,9 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  PGPASSWORD         connection password (not recommended)\n"));
 	fprintf(output, _("  PGPASSFILE         password file name\n"));
 	fprintf(output, _("  PSQL_EDITOR, EDITOR, VISUAL\n"
-					 "                     editor used by the \\e and \\ef commands\n"));
+		 "                     editor used by the \\e and \\ef commands\n"));
 	fprintf(output, _("  PSQL_EDITOR_LINENUMBER_ARG\n"
-					 "                     how to specify a line number when invoking the editor\n"));
+					  "                     how to specify a line number when invoking the editor\n"));
 	fprintf(output, _("  PSQL_HISTORY       alternative location for the command history file\n"));
 	fprintf(output, _("  PSQLRC             alternative location for the user's .psqlrc file\n"));
 	fprintf(output, _("  SHELL              shell used by the \\! command\n"));

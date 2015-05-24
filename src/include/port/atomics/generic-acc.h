@@ -10,9 +10,9 @@
  *
  * Documentation:
  * * inline assembly for Itanium-based HP-UX:
- *   http://h21007.www2.hp.com/portal/download/files/unprot/Itanium/inline_assem_ERS.pdf
+ *	 http://h21007.www2.hp.com/portal/download/files/unprot/Itanium/inline_assem_ERS.pdf
  * * Implementing Spinlocks on the Intel (R) Itanium (R) Architecture and PA-RISC
- *   http://h21007.www2.hp.com/portal/download/files/unprot/itanium/spinlocks.pdf
+ *	 http://h21007.www2.hp.com/portal/download/files/unprot/itanium/spinlocks.pdf
  *
  * Itanium only supports a small set of numbers (6, -8, -4, -1, 1, 4, 8, 16)
  * for atomic add/sub, so we just implement everything but compare_exchange
@@ -49,7 +49,7 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value;
 } pg_atomic_uint64;
 
-#endif /* defined(HAVE_ATOMICS) */
+#endif   /* defined(HAVE_ATOMICS) */
 
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
@@ -64,23 +64,25 @@ STATIC_IF_INLINE bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool	ret;
-	uint32	current;
+	bool		ret;
+	uint32		current;
 
 	_Asm_mov_to_ar(_AREG_CCV, *expected, MINOR_FENCE);
+
 	/*
 	 * We want a barrier, not just release/acquire semantics.
 	 */
 	_Asm_mf();
+
 	/*
-	 * Notes:
-	 * DOWN_MEM_FENCE | _UP_MEM_FENCE prevents reordering by the compiler
+	 * Notes: DOWN_MEM_FENCE | _UP_MEM_FENCE prevents reordering by the
+	 * compiler
 	 */
-	current =  _Asm_cmpxchg(_SZ_W, /* word */
-							_SEM_REL,
-							&ptr->value,
-							newval, _LDHINT_NONE,
-							_DOWN_MEM_FENCE | _UP_MEM_FENCE);
+	current = _Asm_cmpxchg(_SZ_W,		/* word */
+						   _SEM_REL,
+						   &ptr->value,
+						   newval, _LDHINT_NONE,
+						   _DOWN_MEM_FENCE | _UP_MEM_FENCE);
 	ret = current == *expected;
 	*expected = current;
 	return ret;
@@ -92,16 +94,16 @@ STATIC_IF_INLINE bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool	ret;
-	uint64	current;
+	bool		ret;
+	uint64		current;
 
 	_Asm_mov_to_ar(_AREG_CCV, *expected, MINOR_FENCE);
 	_Asm_mf();
-	current =  _Asm_cmpxchg(_SZ_D, /* doubleword */
-							_SEM_REL,
-							&ptr->value,
-							newval, _LDHINT_NONE,
-							_DOWN_MEM_FENCE | _UP_MEM_FENCE);
+	current = _Asm_cmpxchg(_SZ_D,		/* doubleword */
+						   _SEM_REL,
+						   &ptr->value,
+						   newval, _LDHINT_NONE,
+						   _DOWN_MEM_FENCE | _UP_MEM_FENCE);
 	ret = current == *expected;
 	*expected = current;
 	return ret;
@@ -109,6 +111,7 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 
 #undef MINOR_FENCE
 
-#endif /* defined(HAVE_ATOMICS) */
+#endif   /* defined(HAVE_ATOMICS) */
 
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif   /* defined(PG_USE_INLINE) ||
+								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */

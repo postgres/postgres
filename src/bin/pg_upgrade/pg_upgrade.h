@@ -329,7 +329,7 @@ extern OSInfo os_info;
 /* check.c */
 
 void		output_check_banner(bool live_check);
-void check_and_dump_old_cluster(bool live_check);
+void		check_and_dump_old_cluster(bool live_check);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
 void		issue_warnings(void);
@@ -358,7 +358,7 @@ void		optionally_create_toast_tables(void);
 
 #define EXEC_PSQL_ARGS "--echo-queries --set ON_ERROR_STOP=on --no-psqlrc --dbname=template1"
 
-bool		exec_prog(const char *log_file, const char *opt_log_file,
+bool exec_prog(const char *log_file, const char *opt_log_file,
 		  bool throw_error, const char *fmt,...) pg_attribute_printf(4, 5);
 void		verify_directories(void);
 bool		pid_lock_file_exists(const char *datadir);
@@ -471,7 +471,7 @@ void		pg_putenv(const char *var, const char *val);
 
 void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 										 bool check_mode);
-void old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
+void		old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 
 /* parallel.c */
 void parallel_exec_prog(const char *log_file, const char *opt_log_file,

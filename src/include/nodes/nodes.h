@@ -645,9 +645,9 @@ typedef enum JoinType
  */
 typedef enum OnConflictAction
 {
-	ONCONFLICT_NONE,		/* No "ON CONFLICT" clause */
-	ONCONFLICT_NOTHING,		/* ON CONFLICT ... DO NOTHING */
-	ONCONFLICT_UPDATE		/* ON CONFLICT ... DO UPDATE */
+	ONCONFLICT_NONE,			/* No "ON CONFLICT" clause */
+	ONCONFLICT_NOTHING,			/* ON CONFLICT ... DO NOTHING */
+	ONCONFLICT_UPDATE			/* ON CONFLICT ... DO UPDATE */
 } OnConflictAction;
 
 #endif   /* NODES_H */

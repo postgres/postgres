@@ -1407,7 +1407,7 @@ initGISTstate(Relation index)
 		/* opclasses are not required to provide a Fetch method */
 		if (OidIsValid(index_getprocid(index, i + 1, GIST_FETCH_PROC)))
 			fmgr_info_copy(&(giststate->fetchFn[i]),
-						 index_getprocinfo(index, i + 1, GIST_FETCH_PROC),
+						   index_getprocinfo(index, i + 1, GIST_FETCH_PROC),
 						   scanCxt);
 		else
 			giststate->fetchFn[i].fn_oid = InvalidOid;

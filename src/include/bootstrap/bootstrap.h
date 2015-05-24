@@ -25,7 +25,7 @@
 
 #define BOOTCOL_NULL_AUTO			1
 #define BOOTCOL_NULL_FORCE_NULL		2
-#define BOOTCOL_NULL_FORCE_NOT_NULL	3
+#define BOOTCOL_NULL_FORCE_NOT_NULL 3
 
 extern Relation boot_reldesc;
 extern Form_pg_attribute attrtypes[MAXATTR];

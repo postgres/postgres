@@ -574,10 +574,10 @@ ProcessClientWriteInterrupt(bool blocked)
 
 	/*
 	 * We only want to process the interrupt here if socket writes are
-	 * blocking to increase the chance to get an error message to the
-	 * client. If we're not blocked there'll soon be a
-	 * CHECK_FOR_INTERRUPTS(). But if we're blocked we'll never get out of
-	 * that situation if the client has died.
+	 * blocking to increase the chance to get an error message to the client.
+	 * If we're not blocked there'll soon be a CHECK_FOR_INTERRUPTS(). But if
+	 * we're blocked we'll never get out of that situation if the client has
+	 * died.
 	 */
 	if (ProcDiePending && blocked)
 	{
@@ -2653,9 +2653,9 @@ die(SIGNAL_ARGS)
 
 	/*
 	 * If we're in single user mode, we want to quit immediately - we can't
-	 * rely on latches as they wouldn't work when stdin/stdout is a
-	 * file. Rather ugly, but it's unlikely to be worthwhile to invest much
-	 * more effort just for the benefit of single user mode.
+	 * rely on latches as they wouldn't work when stdin/stdout is a file.
+	 * Rather ugly, but it's unlikely to be worthwhile to invest much more
+	 * effort just for the benefit of single user mode.
 	 */
 	if (DoingCommandRead && whereToSendOutput != DestRemote)
 		ProcessInterrupts();
@@ -2906,13 +2906,13 @@ ProcessInterrupts(void)
 	 */
 	if (RecoveryConflictPending && DoingCommandRead)
 	{
-		QueryCancelPending = false;			/* this trumps QueryCancel */
+		QueryCancelPending = false;		/* this trumps QueryCancel */
 		RecoveryConflictPending = false;
 		LockErrorCleanup();
 		pgstat_report_recovery_conflict(RecoveryConflictReason);
 		ereport(FATAL,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-				 errmsg("terminating connection due to conflict with recovery"),
+			  errmsg("terminating connection due to conflict with recovery"),
 				 errdetail_recovery_conflict(),
 				 errhint("In a moment you should be able to reconnect to the"
 						 " database and repeat your command.")));
@@ -3894,7 +3894,7 @@ PostgresMain(int argc, char *argv[],
 		if (pq_is_reading_msg())
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("terminating connection because protocol sync was lost")));
+			errmsg("terminating connection because protocol sync was lost")));
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();

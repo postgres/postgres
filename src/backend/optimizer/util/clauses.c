@@ -1475,8 +1475,8 @@ contain_leaked_vars_walker(Node *node, void *context)
 				ListCell   *rarg;
 
 				/*
-				 * Check the comparison function and arguments passed to it for
-				 * each pair of row elements.
+				 * Check the comparison function and arguments passed to it
+				 * for each pair of row elements.
 				 */
 				forthree(opid, rcexpr->opnos,
 						 larg, rcexpr->largs,

@@ -89,7 +89,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 
 	if (stmt->if_not_exists)
 	{
-		Oid	nspid;
+		Oid			nspid;
 
 		nspid = RangeVarGetCreationNamespace(stmt->into->rel);
 

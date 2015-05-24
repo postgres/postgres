@@ -92,20 +92,23 @@ const printTextFormat pg_asciiformat_old =
 /* Default unicode linestyle format */
 const printTextFormat pg_utf8format;
 
-typedef struct unicodeStyleRowFormat {
+typedef struct unicodeStyleRowFormat
+{
 	const char *horizontal;
 	const char *vertical_and_right[2];
 	const char *vertical_and_left[2];
 } unicodeStyleRowFormat;
 
-typedef struct unicodeStyleColumnFormat {
+typedef struct unicodeStyleColumnFormat
+{
 	const char *vertical;
 	const char *vertical_and_horizontal[2];
 	const char *up_and_horizontal[2];
 	const char *down_and_horizontal[2];
 } unicodeStyleColumnFormat;
 
-typedef struct unicodeStyleBorderFormat {
+typedef struct unicodeStyleBorderFormat
+{
 	const char *up_and_right;
 	const char *vertical;
 	const char *down_and_right;
@@ -114,7 +117,8 @@ typedef struct unicodeStyleBorderFormat {
 	const char *left_and_right;
 } unicodeStyleBorderFormat;
 
-typedef struct unicodeStyleFormat {
+typedef struct unicodeStyleFormat
+{
 	unicodeStyleRowFormat row_style[2];
 	unicodeStyleColumnFormat column_style[2];
 	unicodeStyleBorderFormat border_style[2];
@@ -124,7 +128,7 @@ typedef struct unicodeStyleFormat {
 	const char *nl_right;
 	const char *wrap_left;
 	const char *wrap_right;
-	bool wrap_right_border;
+	bool		wrap_right_border;
 } unicodeStyleFormat;
 
 const unicodeStyleFormat unicode_style = {
@@ -175,11 +179,11 @@ const unicodeStyleFormat unicode_style = {
 		{"\342\225\232", "\342\225\221", "\342\225\224", "\342\225\220", "\342\225\227", "\342\225\235"},
 	},
 	" ",
-	"\342\206\265", /* ↵ */
+	"\342\206\265",				/* ↵ */
 	" ",
-	"\342\206\265", /* ↵ */
-	"\342\200\246", /* … */
-	"\342\200\246", /* … */
+	"\342\206\265",				/* ↵ */
+	"\342\200\246",				/* … */
+	"\342\200\246",				/* … */
 	true
 };
 
@@ -984,7 +988,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
 				bool		finalspaces = (opt_border == 2 ||
-								(col_count > 0 && j < col_count - 1));
+									   (col_count > 0 && j < col_count - 1));
 
 				/* Print left-hand wrap or newline mark */
 				if (opt_border != 0)
@@ -1356,12 +1360,13 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		else if (opt_border == 1)
 		{
 			/*
-			 * For border = 1, one for the pipe (|) in the middle
-			 * between the two spaces.
+			 * For border = 1, one for the pipe (|) in the middle between the
+			 * two spaces.
 			 */
 			swidth = 3;
 		}
 		else
+
 			/*
 			 * For border = 2, two more for the pipes (|) at the beginning and
 			 * at the end of the lines.
@@ -1370,10 +1375,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 		if ((opt_border < 2) &&
 			((hmultiline &&
-			(format == &pg_asciiformat_old)) ||
-			(dmultiline &&
-			(format != &pg_asciiformat_old))))
-			iwidth++; /* for newline indicators */
+			  (format == &pg_asciiformat_old)) ||
+			 (dmultiline &&
+			  (format != &pg_asciiformat_old))))
+			iwidth++;			/* for newline indicators */
 
 		min_width = hwidth + iwidth + swidth + 3;
 
@@ -1386,6 +1391,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			 * Record number
 			 */
 			unsigned int rwidth = 1 + log10(cont->nrows);
+
 			if (opt_border == 0)
 				rwidth += 9;	/* "* RECORD " */
 			else if (opt_border == 1)
@@ -1402,6 +1408,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if ((width < min_width) || (output_columns < min_width))
 			width = min_width - hwidth - iwidth - swidth;
 		else if (output_columns > 0)
+
 			/*
 			 * Wrap to maximum width
 			 */
@@ -1412,7 +1419,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			dmultiline = true;
 			if ((opt_border == 0) &&
 				(format != &pg_asciiformat_old))
-				width--; /* for wrap indicators */
+				width--;		/* for wrap indicators */
 		}
 		dwidth = width;
 	}
@@ -1440,10 +1447,11 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if (i % cont->ncolumns == 0)
 		{
 			unsigned int lhwidth = hwidth;
+
 			if ((opt_border < 2) &&
 				(hmultiline) &&
 				(format == &pg_asciiformat_old))
-				lhwidth++; /* for newline indicators */
+				lhwidth++;		/* for newline indicators */
 
 			if (!opt_tuples_only)
 				print_aligned_vertical_line(format, opt_border, record++,
@@ -1480,12 +1488,14 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			{
 				int			swidth = hwidth,
 							target_width = hwidth;
+
 				/*
 				 * Left spacer or new line indicator
 				 */
 				if ((opt_border == 2) ||
 					(hmultiline && (format == &pg_asciiformat_old)))
 					fputs(hline ? format->header_nl_left : " ", fout);
+
 				/*
 				 * Header text
 				 */
@@ -1523,6 +1533,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			else
 			{
 				unsigned int swidth = hwidth + opt_border;
+
 				if ((opt_border < 2) &&
 					(hmultiline) &&
 					(format == &pg_asciiformat_old))
@@ -1886,9 +1897,10 @@ static void
 asciidoc_escaped_print(const char *in, FILE *fout)
 {
 	const char *p;
+
 	for (p = in; *p; p++)
 	{
-		switch(*p)
+		switch (*p)
 		{
 			case '|':
 				fputs("\\|", fout);
@@ -1925,7 +1937,7 @@ print_asciidoc_text(const printTableContent *cont, FILE *fout)
 
 		/* print table [] header definition */
 		fprintf(fout, "[%scols=\"", !opt_tuples_only ? "options=\"header\"," : "");
-		for(i = 0; i < cont->ncolumns; i++)
+		for (i = 0; i < cont->ncolumns; i++)
 		{
 			if (i != 0)
 				fputs(",", fout);
@@ -2046,7 +2058,7 @@ print_asciidoc_vertical(const printTableContent *cont, FILE *fout)
 				break;
 			case 2:
 				fputs(",frame=\"all\",grid=\"all\"", fout);
-			break;
+				break;
 		}
 		fputs("]\n", fout);
 		fputs("|====\n", fout);
@@ -2729,8 +2741,8 @@ PageOutput(int lines, const printTableOpt *topt)
 	{
 		const char *pagerprog;
 		FILE	   *pagerpipe;
-		unsigned short int  pager =  topt->pager;
-		int         min_lines = topt->pager_min_lines;
+		unsigned short int pager = topt->pager;
+		int			min_lines = topt->pager_min_lines;
 
 #ifdef TIOCGWINSZ
 		int			result;
@@ -3262,7 +3274,7 @@ get_line_style(const printTableOpt *opt)
 void
 refresh_utf8format(const printTableOpt *opt)
 {
-	printTextFormat *popt =  (printTextFormat *) &pg_utf8format;
+	printTextFormat *popt = (printTextFormat *) &pg_utf8format;
 
 	const unicodeStyleBorderFormat *border;
 	const unicodeStyleRowFormat *header;

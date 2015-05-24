@@ -387,7 +387,7 @@ bringetbitmap(PG_FUNCTION_ARGS)
 					 */
 					Assert((key->sk_flags & SK_ISNULL) ||
 						   (key->sk_collation ==
-					   bdesc->bd_tupdesc->attrs[keyattno - 1]->attcollation));
+					  bdesc->bd_tupdesc->attrs[keyattno - 1]->attcollation));
 
 					/* First time this column? look up consistent function */
 					if (consistentFn[keyattno - 1].fn_oid == InvalidOid)
@@ -523,10 +523,10 @@ brinbuildCallback(Relation index,
 	thisblock = ItemPointerGetBlockNumber(&htup->t_self);
 
 	/*
-	 * If we're in a block that belongs to a future range, summarize what we've
-	 * got and start afresh.  Note the scan might have skipped many pages,
-	 * if they were devoid of live tuples; make sure to insert index tuples
-	 * for those too.
+	 * If we're in a block that belongs to a future range, summarize what
+	 * we've got and start afresh.  Note the scan might have skipped many
+	 * pages, if they were devoid of live tuples; make sure to insert index
+	 * tuples for those too.
 	 */
 	while (thisblock > state->bs_currRangeStart + state->bs_pagesPerRange - 1)
 	{
@@ -660,7 +660,6 @@ brinbuild(PG_FUNCTION_ARGS)
 Datum
 brinbuildempty(PG_FUNCTION_ARGS)
 {
-
 	Relation	index = (Relation) PG_GETARG_POINTER(0);
 	Buffer		metabuf;
 
@@ -696,7 +695,7 @@ brinbulkdelete(PG_FUNCTION_ARGS)
 {
 	/* other arguments are not currently used */
 	IndexBulkDeleteResult *stats =
-		(IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	(IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 
 	/* allocate stats if first time through, else re-use existing struct */
 	if (stats == NULL)
@@ -714,7 +713,7 @@ brinvacuumcleanup(PG_FUNCTION_ARGS)
 {
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
 	IndexBulkDeleteResult *stats =
-		(IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	(IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	Relation	heapRel;
 
 	/* No-op in ANALYZE ONLY mode */
@@ -900,7 +899,7 @@ terminate_brin_buildstate(BrinBuildState *state)
 
 		page = BufferGetPage(state->bs_currentInsertBuf);
 		RecordPageWithFreeSpace(state->bs_irel,
-								BufferGetBlockNumber(state->bs_currentInsertBuf),
+							BufferGetBlockNumber(state->bs_currentInsertBuf),
 								PageGetFreeSpace(page));
 		ReleaseBuffer(state->bs_currentInsertBuf);
 	}

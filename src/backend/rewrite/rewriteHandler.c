@@ -682,7 +682,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * order of the original tlist's non-junk entries.  This is needed for
  * processing VALUES RTEs.
  */
-static List*
+static List *
 rewriteTargetListIU(List *targetList,
 					CmdType commandType,
 					Relation target_relation,
@@ -1750,8 +1750,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 	/*
 	 * Apply any row level security policies.  We do this last because it
 	 * requires special recursion detection if the new quals have sublink
-	 * subqueries, and if we did it in the loop above query_tree_walker
-	 * would then recurse into those quals a second time.
+	 * subqueries, and if we did it in the loop above query_tree_walker would
+	 * then recurse into those quals a second time.
 	 */
 	rt_index = 0;
 	foreach(lc, parsetree->rtable)
@@ -1795,11 +1795,11 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
 
-				expression_tree_walker( (Node*) securityQuals,
-										fireRIRonSubLink, (void*)activeRIRs );
+				expression_tree_walker((Node *) securityQuals,
+									   fireRIRonSubLink, (void *) activeRIRs);
 
-				expression_tree_walker( (Node*) withCheckOptions,
-										fireRIRonSubLink, (void*)activeRIRs );
+				expression_tree_walker((Node *) withCheckOptions,
+									   fireRIRonSubLink, (void *) activeRIRs);
 
 				activeRIRs = list_delete_first(activeRIRs);
 			}
@@ -1814,7 +1814,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 											 rte->securityQuals);
 
 			parsetree->withCheckOptions = list_concat(withCheckOptions,
-													  parsetree->withCheckOptions);
+												parsetree->withCheckOptions);
 		}
 
 		/*
@@ -2662,7 +2662,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 				if (!tle->resjunk)
 					modified_cols = bms_add_member(modified_cols,
-								tle->resno - FirstLowInvalidHeapAttributeNumber);
+							tle->resno - FirstLowInvalidHeapAttributeNumber);
 			}
 		}
 
@@ -2797,8 +2797,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * happens in ordinary SELECT usage of a view: all referenced columns must
 	 * have read permission, even if optimization finds that some of them can
 	 * be discarded during query transformation.  The flattening we're doing
-	 * here is an optional optimization, too.  (If you are unpersuaded and want
-	 * to change this, note that applying adjust_view_column_set to
+	 * here is an optional optimization, too.  (If you are unpersuaded and
+	 * want to change this, note that applying adjust_view_column_set to
 	 * view_rte->selectedCols is clearly *not* the right answer, since that
 	 * neglects base-rel columns used in the view's WHERE quals.)
 	 *
@@ -3150,9 +3150,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 				/* Process the main targetlist ... */
 				parsetree->targetList = rewriteTargetListIU(parsetree->targetList,
-															parsetree->commandType,
+													  parsetree->commandType,
 															rt_entry_relation,
-															parsetree->resultRelation,
+												   parsetree->resultRelation,
 															&attrnos);
 				/* ... and the VALUES expression lists */
 				rewriteValuesRTE(values_rte, rt_entry_relation, attrnos);
@@ -3334,9 +3334,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		if (parsetree->onConflict &&
 			(product_queries != NIL || hasUpdate) &&
 			!updatableview)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules")));
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("INSERT with ON CONFLICT clause cannot be used with table that has INSERT or UPDATE rules")));
 
 		heap_close(rt_entry_relation, NoLock);
 	}

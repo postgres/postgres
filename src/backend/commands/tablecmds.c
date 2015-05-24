@@ -306,14 +306,14 @@ static void createForeignKeyTriggers(Relation rel, Oid refRelOid,
 						 Constraint *fkconstraint,
 						 Oid constraintOid, Oid indexOid);
 static void ATController(AlterTableStmt *parsetree,
-						 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
+			 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing, LOCKMODE lockmode);
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATRewriteTables(AlterTableStmt *parsetree,
-							List **wqueue, LOCKMODE lockmode);
+				List **wqueue, LOCKMODE lockmode);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
 static void ATSimplePermissions(Relation rel, int allowed_targets);
@@ -631,7 +631,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 			cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 			cooked->contype = CONSTR_DEFAULT;
-			cooked->conoid = InvalidOid;	/* until created */
+			cooked->conoid = InvalidOid;		/* until created */
 			cooked->name = NULL;
 			cooked->attnum = attnum;
 			cooked->expr = colDef->cooked_default;
@@ -1751,7 +1751,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 					cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 					cooked->contype = CONSTR_CHECK;
-					cooked->conoid = InvalidOid;	/* until created */
+					cooked->conoid = InvalidOid;		/* until created */
 					cooked->name = pstrdup(name);
 					cooked->attnum = 0; /* not used for constraints */
 					cooked->expr = expr;
@@ -1781,7 +1781,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	 */
 	if (inhSchema != NIL)
 	{
-		int		schema_attno = 0;
+		int			schema_attno = 0;
 
 		foreach(entry, schema)
 		{
@@ -1809,14 +1809,14 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				 * Yes, try to merge the two column definitions. They must
 				 * have the same type, typmod, and collation.
 				 */
-				 if (exist_attno == schema_attno)
+				if (exist_attno == schema_attno)
 					ereport(NOTICE,
-					   (errmsg("merging column \"%s\" with inherited definition",
-							   attributeName)));
+					(errmsg("merging column \"%s\" with inherited definition",
+							attributeName)));
 				else
 					ereport(NOTICE,
-					   (errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
-						errdetail("User-specified column moved to the position of the inherited column.")));
+							(errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
+							 errdetail("User-specified column moved to the position of the inherited column.")));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
 				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
 				typenameTypeIdAndMod(NULL, newdef->typeName, &newTypeId, &newtypmod);
@@ -3496,7 +3496,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_ReAddIndex:		/* ADD INDEX */
 			address = ATExecAddIndex(tab, rel, (IndexStmt *) cmd->def, true,
-									lockmode);
+									 lockmode);
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
 			address =
@@ -3803,7 +3803,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			 * And fire it only once.
 			 */
 			if (parsetree)
-				EventTriggerTableRewrite((Node *)parsetree,
+				EventTriggerTableRewrite((Node *) parsetree,
 										 tab->relid,
 										 tab->rewrite);
 
@@ -5960,7 +5960,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 									  true,		/* update pg_index */
 									  true,		/* remove old dependencies */
 									  allowSystemTableMods,
-									  false);		/* is_internal */
+									  false);	/* is_internal */
 
 	index_close(indexRel, NoLock);
 
@@ -6906,7 +6906,7 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 						 HeapTupleGetOid(tuple));
 	}
 	else
-		address = InvalidObjectAddress;		/* already validated */
+		address = InvalidObjectAddress; /* already validated */
 
 	systable_endscan(scan);
 
@@ -7866,11 +7866,12 @@ ATPrepAlterColumnType(List **wqueue,
 	{
 		/*
 		 * Set up an expression to transform the old data value to the new
-		 * type. If a USING option was given, use the expression as transformed
-		 * by transformAlterTableStmt, else just take the old value and try to
-		 * coerce it.  We do this first so that type incompatibility can be
-		 * detected before we waste effort, and because we need the expression
-		 * to be parsed against the original table row type.
+		 * type. If a USING option was given, use the expression as
+		 * transformed by transformAlterTableStmt, else just take the old
+		 * value and try to coerce it.  We do this first so that type
+		 * incompatibility can be detected before we waste effort, and because
+		 * we need the expression to be parsed against the original table row
+		 * type.
 		 */
 		if (!transform)
 		{
@@ -8221,8 +8222,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				 * specified in the policy's USING or WITH CHECK qual
 				 * expressions.  It might be possible to rewrite and recheck
 				 * the policy expression, but punt for now.  It's certainly
-				 * easy enough to remove and recreate the policy; still,
-				 * FIXME someday.
+				 * easy enough to remove and recreate the policy; still, FIXME
+				 * someday.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -9701,9 +9702,9 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 			!ConditionalLockRelationOid(relOid, AccessExclusiveLock))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			   errmsg("aborting because lock on relation \"%s\".\"%s\" is not available",
-					  get_namespace_name(relForm->relnamespace),
-					  NameStr(relForm->relname))));
+					 errmsg("aborting because lock on relation \"%s\".\"%s\" is not available",
+							get_namespace_name(relForm->relnamespace),
+							NameStr(relForm->relname))));
 		else
 			LockRelationOid(relOid, AccessExclusiveLock);
 
@@ -10923,9 +10924,9 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 static void
 ATExecEnableRowSecurity(Relation rel)
 {
-	Relation		pg_class;
-	Oid				relid;
-	HeapTuple		tuple;
+	Relation	pg_class;
+	Oid			relid;
+	HeapTuple	tuple;
 
 	relid = RelationGetRelid(rel);
 
@@ -10949,9 +10950,9 @@ ATExecEnableRowSecurity(Relation rel)
 static void
 ATExecDisableRowSecurity(Relation rel)
 {
-	Relation		pg_class;
-	Oid				relid;
-	HeapTuple		tuple;
+	Relation	pg_class;
+	Oid			relid;
+	HeapTuple	tuple;
 
 	relid = RelationGetRelid(rel);
 

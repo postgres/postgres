@@ -399,7 +399,7 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 	char	   *line;
 	char	   *nextline;
 	char	   *eol,
-				*colon;
+			   *colon;
 	int			hlen;
 	char	   *buf;
 	int			hdrlines;

@@ -38,14 +38,14 @@ static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
  * January 1, 1601 (UTC).
  */
 #define FILETIME_UNITS_PER_SEC	10000000L
-#define FILETIME_UNITS_PER_USEC	10
+#define FILETIME_UNITS_PER_USEC 10
 
 /*
  * Both GetSystemTimeAsFileTime and GetSystemTimePreciseAsFileTime share a
  * signature, so we can just store a pointer to whichever we find. This
  * is the pointer's type.
  */
-typedef VOID (WINAPI *PgGetSystemTimeFn)(LPFILETIME);
+typedef		VOID(WINAPI * PgGetSystemTimeFn) (LPFILETIME);
 
 /* One-time initializer function, must match that signature. */
 static void WINAPI init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime);
@@ -71,12 +71,12 @@ init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
 	 *
 	 * While we could look up the Windows version and skip this on Windows
 	 * versions below Windows 8 / Windows Server 2012 there isn't much point,
-	 * and determining the windows version is its self somewhat Windows version
-	 * and development SDK specific...
+	 * and determining the windows version is its self somewhat Windows
+	 * version and development SDK specific...
 	 */
 	pg_get_system_time = (PgGetSystemTimeFn) GetProcAddress(
-			GetModuleHandle(TEXT("kernel32.dll")),
-				"GetSystemTimePreciseAsFileTime");
+									   GetModuleHandle(TEXT("kernel32.dll")),
+										   "GetSystemTimePreciseAsFileTime");
 	if (pg_get_system_time == NULL)
 	{
 		/*
@@ -84,15 +84,15 @@ init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
 		 * the function isn't present. No other error should occur.
 		 *
 		 * We can't report an error here because this might be running in
-		 * frontend code; and even if we're in the backend, it's too early
-		 * to elog(...) if we get some unexpected error.  Also, it's not a
+		 * frontend code; and even if we're in the backend, it's too early to
+		 * elog(...) if we get some unexpected error.  Also, it's not a
 		 * serious problem, so just silently fall back to
 		 * GetSystemTimeAsFileTime irrespective of why the failure occurred.
 		 */
 		pg_get_system_time = &GetSystemTimeAsFileTime;
 	}
 
-	(*pg_get_system_time)(lpSystemTimeAsFileTime);
+	(*pg_get_system_time) (lpSystemTimeAsFileTime);
 }
 
 /*
@@ -107,13 +107,13 @@ gettimeofday(struct timeval * tp, struct timezone * tzp)
 	FILETIME	file_time;
 	ULARGE_INTEGER ularge;
 
-	(*pg_get_system_time)(&file_time);
+	(*pg_get_system_time) (&file_time);
 	ularge.LowPart = file_time.dwLowDateTime;
 	ularge.HighPart = file_time.dwHighDateTime;
 
 	tp->tv_sec = (long) ((ularge.QuadPart - epoch) / FILETIME_UNITS_PER_SEC);
 	tp->tv_usec = (long) (((ularge.QuadPart - epoch) % FILETIME_UNITS_PER_SEC)
-		/ FILETIME_UNITS_PER_USEC);
+						  / FILETIME_UNITS_PER_USEC);
 
 	return 0;
 }

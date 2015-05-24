@@ -1082,7 +1082,8 @@ exec_command(const char *cmd,
 
 			for (i = 0; my_list[i] != NULL; i++)
 			{
-				char   *val = pset_value_string(my_list[i], &pset.popt);
+				char	   *val = pset_value_string(my_list[i], &pset.popt);
+
 				printf("%-24s %s\n", my_list[i], val);
 				free(val);
 			}
@@ -1515,7 +1516,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "?") == 0)
 	{
 		char	   *opt0 = psql_scan_slash_option(scan_state,
-													OT_NORMAL, NULL, false);
+												  OT_NORMAL, NULL, false);
 
 		if (!opt0 || strcmp(opt0, "commands") == 0)
 			slashUsage(pset.popt.topt.pager);
@@ -1636,8 +1637,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 
 	/*
 	 * Any change in the parameters read above makes us discard the password.
-	 * We also discard it if we're to use a conninfo rather than the positional
-	 * syntax.
+	 * We also discard it if we're to use a conninfo rather than the
+	 * positional syntax.
 	 */
 	keep_password =
 		((strcmp(user, PQuser(o_conn)) == 0) &&
@@ -1863,7 +1864,7 @@ printSSLInfo(void)
 		   protocol ? protocol : _("unknown"),
 		   cipher ? cipher : _("unknown"),
 		   bits ? bits : _("unknown"),
-		   (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"));
+	  (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"));
 }
 
 
@@ -2402,7 +2403,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!value)
 			;
 		else if (!set_unicode_line_style(popt, value, vallen,
-										 &popt->topt.unicode_border_linestyle))
+									   &popt->topt.unicode_border_linestyle))
 		{
 			psql_error("\\pset: allowed unicode border linestyle are single, double\n");
 			return false;
@@ -2415,7 +2416,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!value)
 			;
 		else if (!set_unicode_line_style(popt, value, vallen,
-										 &popt->topt.unicode_column_linestyle))
+									   &popt->topt.unicode_column_linestyle))
 		{
 			psql_error("\\pset: allowed unicode column linestyle are single, double\n");
 			return false;
@@ -2428,7 +2429,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!value)
 			;
 		else if (!set_unicode_line_style(popt, value, vallen,
-										 &popt->topt.unicode_header_linestyle))
+									   &popt->topt.unicode_header_linestyle))
 		{
 			psql_error("\\pset: allowed unicode header linestyle are single, double\n");
 			return false;
@@ -2742,19 +2743,19 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	else if (strcmp(param, "unicode_border_linestyle") == 0)
 	{
 		printf(_("Unicode border linestyle is \"%s\".\n"),
-				_unicode_linestyle2string(popt->topt.unicode_border_linestyle));
+			 _unicode_linestyle2string(popt->topt.unicode_border_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_column_linestyle") == 0)
 	{
 		printf(_("Unicode column linestyle is \"%s\".\n"),
-				_unicode_linestyle2string(popt->topt.unicode_column_linestyle));
+			 _unicode_linestyle2string(popt->topt.unicode_column_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_header_linestyle") == 0)
 	{
 		printf(_("Unicode border linestyle is \"%s\".\n"),
-				_unicode_linestyle2string(popt->topt.unicode_header_linestyle));
+			 _unicode_linestyle2string(popt->topt.unicode_header_linestyle));
 	}
 
 	else
@@ -2945,7 +2946,7 @@ do_watch(PQExpBuffer query_buf, long sleep)
 
 	for (;;)
 	{
-		int	res;
+		int			res;
 		time_t		timer;
 		long		i;
 
@@ -2962,8 +2963,8 @@ do_watch(PQExpBuffer query_buf, long sleep)
 		res = PSQLexecWatch(query_buf->data, &myopt);
 
 		/*
-		 * PSQLexecWatch handles the case where we can no longer
-		 * repeat the query, and returns 0 or -1.
+		 * PSQLexecWatch handles the case where we can no longer repeat the
+		 * query, and returns 0 or -1.
 		 */
 		if (res == 0)
 			break;
@@ -3001,7 +3002,7 @@ do_watch(PQExpBuffer query_buf, long sleep)
  * returns true unless we have ECHO_HIDDEN_NOEXEC.
  */
 static bool
-lookup_function_echo_hidden(char * query)
+lookup_function_echo_hidden(char *query)
 {
 	if (pset.echo_hidden != PSQL_ECHO_HIDDEN_OFF)
 	{

@@ -232,8 +232,8 @@ MJExamineQuals(List *mergeclauses,
 		/*
 		 * sortsupport routine must know if abbreviation optimization is
 		 * applicable in principle.  It is never applicable for merge joins
-		 * because there is no convenient opportunity to convert to alternative
-		 * representation.
+		 * because there is no convenient opportunity to convert to
+		 * alternative representation.
 		 */
 		clause->ssup.abbreviate = false;
 

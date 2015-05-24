@@ -5202,7 +5202,7 @@ get_rolespec_tuple(const Node *node)
 			if (!HeapTupleIsValid(tuple))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("role \"%s\" does not exist", role->rolename)));
+					  errmsg("role \"%s\" does not exist", role->rolename)));
 			break;
 
 		case ROLESPEC_CURRENT_USER:
@@ -5221,7 +5221,7 @@ get_rolespec_tuple(const Node *node)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("role \"%s\" does not exist", "public")));
-			tuple = NULL;	/* make compiler happy */
+			tuple = NULL;		/* make compiler happy */
 
 		default:
 			elog(ERROR, "unexpected role type %d", role->roletype);

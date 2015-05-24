@@ -401,18 +401,18 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup, Oid langid, List *t
 		arg->func = PLyObject_ToComposite;
 	}
 	else
-	switch (base_type)
-	{
-		case BOOLOID:
-			arg->func = PLyObject_ToBool;
-			break;
-		case BYTEAOID:
-			arg->func = PLyObject_ToBytea;
-			break;
-		default:
-			arg->func = PLyObject_ToDatum;
-			break;
-	}
+		switch (base_type)
+		{
+			case BOOLOID:
+				arg->func = PLyObject_ToBool;
+				break;
+			case BYTEAOID:
+				arg->func = PLyObject_ToBytea;
+				break;
+			default:
+				arg->func = PLyObject_ToDatum;
+				break;
+		}
 
 	if (element_type)
 	{
@@ -464,39 +464,39 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup, Oid lan
 		perm_fmgr_info(funcid, &arg->typtransform);
 	}
 	else
-	switch (base_type)
-	{
-		case BOOLOID:
-			arg->func = PLyBool_FromBool;
-			break;
-		case FLOAT4OID:
-			arg->func = PLyFloat_FromFloat4;
-			break;
-		case FLOAT8OID:
-			arg->func = PLyFloat_FromFloat8;
-			break;
-		case NUMERICOID:
-			arg->func = PLyDecimal_FromNumeric;
-			break;
-		case INT2OID:
-			arg->func = PLyInt_FromInt16;
-			break;
-		case INT4OID:
-			arg->func = PLyInt_FromInt32;
-			break;
-		case INT8OID:
-			arg->func = PLyLong_FromInt64;
-			break;
-		case OIDOID:
-			arg->func = PLyLong_FromOid;
-			break;
-		case BYTEAOID:
-			arg->func = PLyBytes_FromBytea;
-			break;
-		default:
-			arg->func = PLyString_FromDatum;
-			break;
-	}
+		switch (base_type)
+		{
+			case BOOLOID:
+				arg->func = PLyBool_FromBool;
+				break;
+			case FLOAT4OID:
+				arg->func = PLyFloat_FromFloat4;
+				break;
+			case FLOAT8OID:
+				arg->func = PLyFloat_FromFloat8;
+				break;
+			case NUMERICOID:
+				arg->func = PLyDecimal_FromNumeric;
+				break;
+			case INT2OID:
+				arg->func = PLyInt_FromInt16;
+				break;
+			case INT4OID:
+				arg->func = PLyInt_FromInt32;
+				break;
+			case INT8OID:
+				arg->func = PLyLong_FromInt64;
+				break;
+			case OIDOID:
+				arg->func = PLyLong_FromOid;
+				break;
+			case BYTEAOID:
+				arg->func = PLyBytes_FromBytea;
+				break;
+			default:
+				arg->func = PLyString_FromDatum;
+				break;
+		}
 
 	if (element_type)
 	{

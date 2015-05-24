@@ -405,6 +405,7 @@ HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
 				}
 			}
 		}
+
 		/*
 		 * An invalid Xmin can be left behind by a speculative insertion that
 		 * is cancelled by super-deleting the tuple.  We shouldn't see any of
@@ -550,7 +551,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 				if (!TransactionIdIsCurrentTransactionId(xmax))
 				{
 					if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
-																	   false))
+											 false))
 						return HeapTupleBeingUpdated;
 					return HeapTupleMayBeUpdated;
 				}
@@ -820,10 +821,10 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			/*
-			 * Return the speculative token to caller.  Caller can worry
-			 * about xmax, since it requires a conclusively locked row
-			 * version, and a concurrent update to this tuple is a conflict
-			 * of its purposes.
+			 * Return the speculative token to caller.  Caller can worry about
+			 * xmax, since it requires a conclusively locked row version, and
+			 * a concurrent update to this tuple is a conflict of its
+			 * purposes.
 			 */
 			if (HeapTupleHeaderIsSpeculative(tuple))
 			{

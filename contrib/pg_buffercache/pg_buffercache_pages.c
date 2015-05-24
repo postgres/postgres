@@ -34,6 +34,7 @@ typedef struct
 	bool		isvalid;
 	bool		isdirty;
 	uint16		usagecount;
+
 	/*
 	 * An int32 is sufficiently large, as MAX_BACKENDS prevents a buffer from
 	 * being pinned by too many backends and each backend will only pin once

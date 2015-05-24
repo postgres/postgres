@@ -657,7 +657,7 @@ extern List *stringToQualifiedNameList(const char *string);
 extern char *format_procedure(Oid procedure_oid);
 extern char *format_procedure_qualified(Oid procedure_oid);
 extern void format_procedure_parts(Oid operator_oid, List **objnames,
-					  List **objargs);
+					   List **objargs);
 extern char *format_operator(Oid operator_oid);
 extern char *format_operator_qualified(Oid operator_oid);
 extern void format_operator_parts(Oid operator_oid, List **objnames,
@@ -804,9 +804,9 @@ extern Datum textoverlay_no_len(PG_FUNCTION_ARGS);
 extern Datum name_text(PG_FUNCTION_ARGS);
 extern Datum text_name(PG_FUNCTION_ARGS);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid);
-extern int	varstr_levenshtein(const char *source, int slen, const char *target,
+extern int varstr_levenshtein(const char *source, int slen, const char *target,
 				   int tlen, int ins_c, int del_c, int sub_c);
-extern int	varstr_levenshtein_less_equal(const char *source, int slen,
+extern int varstr_levenshtein_less_equal(const char *source, int slen,
 							  const char *target, int tlen, int ins_c,
 							  int del_c, int sub_c, int max_d);
 extern List *textToQualifiedNameList(text *textval);

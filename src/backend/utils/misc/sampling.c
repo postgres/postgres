@@ -150,7 +150,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 		double		V,
 					quot;
 
-		V = sampler_random_fract(rs->randstate); /* Generate V */
+		V = sampler_random_fract(rs->randstate);		/* Generate V */
 		S = 0;
 		t += 1;
 		/* Note: "num" in Vitter's code is always equal to t - n */
@@ -276,7 +276,7 @@ anl_init_selection_state(int n)
 double
 anl_get_next_S(double t, int n, double *stateptr)
 {
-	double result;
+	double		result;
 
 	oldrs.W = *stateptr;
 	result = reservoir_get_next_S(&oldrs, t, n);

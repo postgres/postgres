@@ -113,12 +113,12 @@ gin_btree_compare_prefix(FunctionCallInfo fcinfo)
 				cmp;
 
 	cmp = DatumGetInt32(DirectFunctionCall2Coll(
-				data->typecmp,
-				PG_GET_COLLATION(),
-				(data->strategy == BTLessStrategyNumber ||
-				 data->strategy == BTLessEqualStrategyNumber)
-				 ? data->datum : a,
-				b));
+												data->typecmp,
+												PG_GET_COLLATION(),
+								   (data->strategy == BTLessStrategyNumber ||
+								 data->strategy == BTLessEqualStrategyNumber)
+												? data->datum : a,
+												b));
 
 	switch (data->strategy)
 	{
@@ -186,14 +186,14 @@ Datum																		\
 gin_extract_value_##type(PG_FUNCTION_ARGS)									\
 {																			\
 	return gin_btree_extract_value(fcinfo, is_varlena);						\
-}																			\
+}	\
 PG_FUNCTION_INFO_V1(gin_extract_query_##type);								\
 Datum																		\
 gin_extract_query_##type(PG_FUNCTION_ARGS)									\
 {																			\
 	return gin_btree_extract_query(fcinfo,									\
 								   is_varlena, leftmostvalue, typecmp);		\
-}																			\
+}	\
 PG_FUNCTION_INFO_V1(gin_compare_prefix_##type);								\
 Datum																		\
 gin_compare_prefix_##type(PG_FUNCTION_ARGS)									\
@@ -209,6 +209,7 @@ leftmostvalue_int2(void)
 {
 	return Int16GetDatum(SHRT_MIN);
 }
+
 GIN_SUPPORT(int2, false, leftmostvalue_int2, btint2cmp)
 
 static Datum
@@ -216,6 +217,7 @@ leftmostvalue_int4(void)
 {
 	return Int32GetDatum(INT_MIN);
 }
+
 GIN_SUPPORT(int4, false, leftmostvalue_int4, btint4cmp)
 
 static Datum
@@ -226,6 +228,7 @@ leftmostvalue_int8(void)
 	 */
 	return Int64GetDatum(SEQ_MINVALUE);
 }
+
 GIN_SUPPORT(int8, false, leftmostvalue_int8, btint8cmp)
 
 static Datum
@@ -233,6 +236,7 @@ leftmostvalue_float4(void)
 {
 	return Float4GetDatum(-get_float4_infinity());
 }
+
 GIN_SUPPORT(float4, false, leftmostvalue_float4, btfloat4cmp)
 
 static Datum
@@ -240,6 +244,7 @@ leftmostvalue_float8(void)
 {
 	return Float8GetDatum(-get_float8_infinity());
 }
+
 GIN_SUPPORT(float8, false, leftmostvalue_float8, btfloat8cmp)
 
 static Datum
@@ -250,6 +255,7 @@ leftmostvalue_money(void)
 	 */
 	return Int64GetDatum(SEQ_MINVALUE);
 }
+
 GIN_SUPPORT(money, false, leftmostvalue_money, cash_cmp)
 
 static Datum
@@ -257,6 +263,7 @@ leftmostvalue_oid(void)
 {
 	return ObjectIdGetDatum(0);
 }
+
 GIN_SUPPORT(oid, false, leftmostvalue_oid, btoidcmp)
 
 static Datum
@@ -264,6 +271,7 @@ leftmostvalue_timestamp(void)
 {
 	return TimestampGetDatum(DT_NOBEGIN);
 }
+
 GIN_SUPPORT(timestamp, false, leftmostvalue_timestamp, timestamp_cmp)
 
 GIN_SUPPORT(timestamptz, false, leftmostvalue_timestamp, timestamp_cmp)
@@ -273,6 +281,7 @@ leftmostvalue_time(void)
 {
 	return TimeADTGetDatum(0);
 }
+
 GIN_SUPPORT(time, false, leftmostvalue_time, time_cmp)
 
 static Datum
@@ -285,6 +294,7 @@ leftmostvalue_timetz(void)
 
 	return TimeTzADTPGetDatum(v);
 }
+
 GIN_SUPPORT(timetz, false, leftmostvalue_timetz, timetz_cmp)
 
 static Datum
@@ -292,6 +302,7 @@ leftmostvalue_date(void)
 {
 	return DateADTGetDatum(DATEVAL_NOBEGIN);
 }
+
 GIN_SUPPORT(date, false, leftmostvalue_date, date_cmp)
 
 static Datum
@@ -304,6 +315,7 @@ leftmostvalue_interval(void)
 	v->month = 0;
 	return IntervalPGetDatum(v);
 }
+
 GIN_SUPPORT(interval, false, leftmostvalue_interval, interval_cmp)
 
 static Datum
@@ -313,6 +325,7 @@ leftmostvalue_macaddr(void)
 
 	return MacaddrPGetDatum(v);
 }
+
 GIN_SUPPORT(macaddr, false, leftmostvalue_macaddr, macaddr_cmp)
 
 static Datum
@@ -320,6 +333,7 @@ leftmostvalue_inet(void)
 {
 	return DirectFunctionCall1(inet_in, CStringGetDatum("0.0.0.0/0"));
 }
+
 GIN_SUPPORT(inet, true, leftmostvalue_inet, network_cmp)
 
 GIN_SUPPORT(cidr, true, leftmostvalue_inet, network_cmp)
@@ -329,6 +343,7 @@ leftmostvalue_text(void)
 {
 	return PointerGetDatum(cstring_to_text_with_len("", 0));
 }
+
 GIN_SUPPORT(text, true, leftmostvalue_text, bttextcmp)
 
 static Datum
@@ -336,6 +351,7 @@ leftmostvalue_char(void)
 {
 	return CharGetDatum(SCHAR_MIN);
 }
+
 GIN_SUPPORT(char, false, leftmostvalue_char, btcharcmp)
 
 GIN_SUPPORT(bytea, true, leftmostvalue_text, byteacmp)
@@ -348,6 +364,7 @@ leftmostvalue_bit(void)
 							   ObjectIdGetDatum(0),
 							   Int32GetDatum(-1));
 }
+
 GIN_SUPPORT(bit, true, leftmostvalue_bit, bitcmp)
 
 static Datum
@@ -358,6 +375,7 @@ leftmostvalue_varbit(void)
 							   ObjectIdGetDatum(0),
 							   Int32GetDatum(-1));
 }
+
 GIN_SUPPORT(varbit, true, leftmostvalue_varbit, bitcmp)
 
 /*
@@ -402,4 +420,5 @@ leftmostvalue_numeric(void)
 {
 	return PointerGetDatum(NULL);
 }
+
 GIN_SUPPORT(numeric, true, leftmostvalue_numeric, gin_numeric_cmp)

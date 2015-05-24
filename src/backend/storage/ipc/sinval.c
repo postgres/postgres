@@ -188,8 +188,8 @@ ProcessCatchupInterrupt(void)
 		 *
 		 * It is awfully tempting to just call AcceptInvalidationMessages()
 		 * without the rest of the xact start/stop overhead, and I think that
-		 * would actually work in the normal case; but I am not sure that things
-		 * would clean up nicely if we got an error partway through.
+		 * would actually work in the normal case; but I am not sure that
+		 * things would clean up nicely if we got an error partway through.
 		 */
 		if (IsTransactionOrTransactionBlock())
 		{

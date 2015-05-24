@@ -142,8 +142,10 @@ cmp_txid(const void *aa, const void *bb)
 static void
 sort_snapshot(TxidSnapshot *snap)
 {
-	txid	last = 0;
-	int		nxip, idx1, idx2;
+	txid		last = 0;
+	int			nxip,
+				idx1,
+				idx2;
 
 	if (snap->nxip > 1)
 	{

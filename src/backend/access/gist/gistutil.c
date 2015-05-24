@@ -583,7 +583,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 						  isleaf);
 			cep = (GISTENTRY *)
 				DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
-										   giststate->supportCollation[i],
+											  giststate->supportCollation[i],
 												  PointerGetDatum(&centry)));
 			compatt[i] = cep->key;
 		}

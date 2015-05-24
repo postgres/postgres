@@ -288,9 +288,9 @@ next_indextuple:
 		 * Can we return this tuple immediately, or does it need to be pushed
 		 * to the reorder queue?  If the ORDER BY expression values returned
 		 * by the index were inaccurate, we can't return it yet, because the
-		 * next tuple from the index might need to come before this one.
-		 * Also, we can't return it yet if there are any smaller tuples in the
-		 * queue already.
+		 * next tuple from the index might need to come before this one. Also,
+		 * we can't return it yet if there are any smaller tuples in the queue
+		 * already.
 		 */
 		if (!was_exact || (topmost && cmp_orderbyvals(lastfetched_vals,
 													  lastfetched_nulls,

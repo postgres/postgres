@@ -1707,12 +1707,12 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 	pgxact = &allPgXact[proc->pgprocno];
 
 	/*
-	 * Be certain that the referenced PGPROC has an advertised xmin which
-	 * is no later than the one we're installing, so that the system-wide
-	 * xmin can't go backwards.  Also, make sure it's running in the same
-	 * database, so that the per-database xmin cannot go backwards.
+	 * Be certain that the referenced PGPROC has an advertised xmin which is
+	 * no later than the one we're installing, so that the system-wide xmin
+	 * can't go backwards.  Also, make sure it's running in the same database,
+	 * so that the per-database xmin cannot go backwards.
 	 */
-	xid = pgxact->xmin;		/* fetch just once */
+	xid = pgxact->xmin;			/* fetch just once */
 	if (proc->databaseId == MyDatabaseId &&
 		TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedesOrEquals(xid, xmin))

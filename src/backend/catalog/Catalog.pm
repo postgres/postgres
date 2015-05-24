@@ -189,7 +189,8 @@ sub Catalogs
 						}
 						else
 						{
-							die "unknown column option $attopt on column $attname"
+							die
+"unknown column option $attopt on column $attname";
 						}
 					}
 					push @{ $catalog{columns} }, \%row;

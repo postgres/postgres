@@ -1337,6 +1337,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 			switch (change->action)
 			{
 				case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
+
 					/*
 					 * Confirmation for speculative insertion arrived. Simply
 					 * use as a normal record. It'll be cleaned up at the end
@@ -1380,10 +1381,10 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						goto change_done;
 
 					/*
-					 * For now ignore sequence changes entirely. Most of
-					 * the time they don't log changes using records we
-					 * understand, so it doesn't make sense to handle the
-					 * few cases we do.
+					 * For now ignore sequence changes entirely. Most of the
+					 * time they don't log changes using records we
+					 * understand, so it doesn't make sense to handle the few
+					 * cases we do.
 					 */
 					if (relation->rd_rel->relkind == RELKIND_SEQUENCE)
 						goto change_done;
@@ -1395,9 +1396,9 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						rb->apply_change(rb, txn, relation, change);
 
 						/*
-						 * Only clear reassembled toast chunks if we're
-						 * sure they're not required anymore. The creator
-						 * of the tuple tells us.
+						 * Only clear reassembled toast chunks if we're sure
+						 * they're not required anymore. The creator of the
+						 * tuple tells us.
 						 */
 						if (change->data.tp.clear_toast_afterwards)
 							ReorderBufferToastReset(rb, txn);
@@ -1418,7 +1419,8 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 													  change);
 					}
 
-				change_done:
+			change_done:
+
 					/*
 					 * Either speculative insertion was confirmed, or it was
 					 * unsuccessful and the record isn't needed anymore.
@@ -1437,6 +1439,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					break;
 
 				case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
+
 					/*
 					 * Speculative insertions are dealt with by delaying the
 					 * processing of the insert until the confirmation record
@@ -1704,9 +1707,9 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 	txn->final_lsn = lsn;
 
 	/*
-	 * Process cache invalidation messages if there are any. Even if we're
-	 * not interested in the transaction's contents, it could have manipulated
-	 * the catalog and we need to update the caches according to that.
+	 * Process cache invalidation messages if there are any. Even if we're not
+	 * interested in the transaction's contents, it could have manipulated the
+	 * catalog and we need to update the caches according to that.
 	 */
 	if (txn->base_snapshot != NULL && txn->ninvalidations > 0)
 	{
@@ -2068,7 +2071,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	switch (change->action)
 	{
-		/* fall through these, they're all similar enough */
+			/* fall through these, they're all similar enough */
 		case REORDER_BUFFER_CHANGE_INSERT:
 		case REORDER_BUFFER_CHANGE_UPDATE:
 		case REORDER_BUFFER_CHANGE_DELETE:
@@ -2322,7 +2325,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	/* restore individual stuff */
 	switch (change->action)
 	{
-		/* fall through these, they're all similar enough */
+			/* fall through these, they're all similar enough */
 		case REORDER_BUFFER_CHANGE_INSERT:
 		case REORDER_BUFFER_CHANGE_UPDATE:
 		case REORDER_BUFFER_CHANGE_DELETE:

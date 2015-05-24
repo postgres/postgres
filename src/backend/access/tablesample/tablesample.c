@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * tablesample.c
- *        TABLESAMPLE internal API
+ *		  TABLESAMPLE internal API
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *        src/backend/access/tablesample/tablesample.c
+ *		  src/backend/access/tablesample/tablesample.c
  *
  * TABLESAMPLE is the SQL standard clause for sampling the relations.
  *
@@ -53,7 +53,7 @@ tablesample_init(SampleScanState *scanstate, TableSampleClause *tablesample)
 	List	   *args = tablesample->args;
 	ListCell   *arg;
 	ExprContext *econtext = scanstate->ss.ps.ps_ExprContext;
-	TableSampleDesc	*tsdesc = (TableSampleDesc *) palloc0(sizeof(TableSampleDesc));
+	TableSampleDesc *tsdesc = (TableSampleDesc *) palloc0(sizeof(TableSampleDesc));
 
 	/* Load functions */
 	fmgr_info(tablesample->tsminit, &(tsdesc->tsminit));
@@ -78,21 +78,21 @@ tablesample_init(SampleScanState *scanstate, TableSampleClause *tablesample)
 	fcinfo.argnull[0] = false;
 
 	/*
-	 * Second arg for init function is always REPEATABLE
-	 * When tablesample->repeatable is NULL then REPEATABLE clause was not
-	 * specified.
-	 * When specified, the expression cannot evaluate to NULL.
+	 * Second arg for init function is always REPEATABLE When
+	 * tablesample->repeatable is NULL then REPEATABLE clause was not
+	 * specified. When specified, the expression cannot evaluate to NULL.
 	 */
 	if (tablesample->repeatable)
 	{
 		ExprState  *argstate = ExecInitExpr((Expr *) tablesample->repeatable,
 											(PlanState *) scanstate);
+
 		fcinfo.arg[1] = ExecEvalExpr(argstate, econtext,
 									 &fcinfo.argnull[1], NULL);
 		if (fcinfo.argnull[1])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("REPEATABLE clause must be NOT NULL numeric value")));
+				errmsg("REPEATABLE clause must be NOT NULL numeric value")));
 	}
 	else
 	{
@@ -130,15 +130,15 @@ tablesample_init(SampleScanState *scanstate, TableSampleClause *tablesample)
 HeapTuple
 tablesample_getnext(TableSampleDesc *desc)
 {
-	HeapScanDesc	scan = desc->heapScan;
-	HeapTuple		tuple = &(scan->rs_ctup);
-	bool			pagemode = scan->rs_pageatatime;
-	BlockNumber		blockno;
-	Page			page;
-	bool			page_all_visible;
-	ItemId			itemid;
-	OffsetNumber	tupoffset,
-					maxoffset;
+	HeapScanDesc scan = desc->heapScan;
+	HeapTuple	tuple = &(scan->rs_ctup);
+	bool		pagemode = scan->rs_pageatatime;
+	BlockNumber blockno;
+	Page		page;
+	bool		page_all_visible;
+	ItemId		itemid;
+	OffsetNumber tupoffset,
+				maxoffset;
 
 	if (!scan->rs_inited)
 	{
@@ -152,7 +152,7 @@ tablesample_getnext(TableSampleDesc *desc)
 			return NULL;
 		}
 		blockno = DatumGetInt32(FunctionCall1(&desc->tsmnextblock,
-											PointerGetDatum(desc)));
+											  PointerGetDatum(desc)));
 		if (!BlockNumberIsValid(blockno))
 		{
 			tuple->t_data = NULL;
@@ -184,14 +184,14 @@ tablesample_getnext(TableSampleDesc *desc)
 		CHECK_FOR_INTERRUPTS();
 
 		tupoffset = DatumGetUInt16(FunctionCall3(&desc->tsmnexttuple,
-											 PointerGetDatum(desc),
-											 UInt32GetDatum(blockno),
-											 UInt16GetDatum(maxoffset)));
+												 PointerGetDatum(desc),
+												 UInt32GetDatum(blockno),
+												 UInt16GetDatum(maxoffset)));
 
 		if (OffsetNumberIsValid(tupoffset))
 		{
-			bool	visible;
-			bool	found;
+			bool		visible;
+			bool		found;
 
 			/* Skip invalid tuple pointers. */
 			itemid = PageGetItemId(page, tupoffset);
@@ -208,8 +208,8 @@ tablesample_getnext(TableSampleDesc *desc)
 				visible = SampleTupleVisible(tuple, tupoffset, scan);
 
 			/*
-			 * Let the sampling method examine the actual tuple and decide if we
-			 * should return it.
+			 * Let the sampling method examine the actual tuple and decide if
+			 * we should return it.
 			 *
 			 * Note that we let it examine even invisible tuples for
 			 * statistical purposes, but not return them since user should
@@ -218,10 +218,10 @@ tablesample_getnext(TableSampleDesc *desc)
 			if (OidIsValid(desc->tsmexaminetuple.fn_oid))
 			{
 				found = DatumGetBool(FunctionCall4(&desc->tsmexaminetuple,
-											   PointerGetDatum(desc),
-											   UInt32GetDatum(blockno),
-											   PointerGetDatum(tuple),
-											   BoolGetDatum(visible)));
+												   PointerGetDatum(desc),
+												   UInt32GetDatum(blockno),
+												   PointerGetDatum(tuple),
+												   BoolGetDatum(visible)));
 				/* Should not happen if sampling method is well written. */
 				if (found && !visible)
 					elog(ERROR, "Sampling method wanted to return invisible tuple");
@@ -248,19 +248,19 @@ tablesample_getnext(TableSampleDesc *desc)
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 		blockno = DatumGetInt32(FunctionCall1(&desc->tsmnextblock,
-										  PointerGetDatum(desc)));
+											  PointerGetDatum(desc)));
 
 		/*
-		 * Report our new scan position for synchronization purposes. We
-		 * don't do that when moving backwards, however. That would just
-		 * mess up any other forward-moving scanners.
+		 * Report our new scan position for synchronization purposes. We don't
+		 * do that when moving backwards, however. That would just mess up any
+		 * other forward-moving scanners.
 		 *
-		 * Note: we do this before checking for end of scan so that the
-		 * final state of the position hint is back at the start of the
-		 * rel.  That's not strictly necessary, but otherwise when you run
-		 * the same query multiple times the starting position would shift
-		 * a little bit backwards on every invocation, which is confusing.
-		 * We don't guarantee any specific ordering in general, though.
+		 * Note: we do this before checking for end of scan so that the final
+		 * state of the position hint is back at the start of the rel.  That's
+		 * not strictly necessary, but otherwise when you run the same query
+		 * multiple times the starting position would shift a little bit
+		 * backwards on every invocation, which is confusing. We don't
+		 * guarantee any specific ordering in general, though.
 		 */
 		if (scan->rs_syncscan)
 			ss_report_location(scan->rs_rd, BlockNumberIsValid(blockno) ?
@@ -321,25 +321,25 @@ SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
 {
 	/*
 	 * If this scan is reading whole pages at a time, there is already
-	 * visibility info present in rs_vistuples so we can just search it
-	 * for the tupoffset.
+	 * visibility info present in rs_vistuples so we can just search it for
+	 * the tupoffset.
 	 */
 	if (scan->rs_pageatatime)
 	{
-		int start = 0,
-			end = scan->rs_ntuples - 1;
+		int			start = 0,
+					end = scan->rs_ntuples - 1;
 
 		/*
 		 * Do the binary search over rs_vistuples, it's already sorted by
 		 * OffsetNumber so we don't need to do any sorting ourselves here.
 		 *
-		 * We could use bsearch() here but it's slower for integers because
-		 * of the function call overhead and because it needs boiler plate code
+		 * We could use bsearch() here but it's slower for integers because of
+		 * the function call overhead and because it needs boiler plate code
 		 * it would not save us anything code-wise anyway.
 		 */
 		while (start <= end)
 		{
-			int mid = start + (end - start) / 2;
+			int			mid = start + (end - start) / 2;
 			OffsetNumber curoffset = scan->rs_vistuples[mid];
 
 			if (curoffset == tupoffset)
@@ -358,7 +358,7 @@ SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
 		Snapshot	snapshot = scan->rs_snapshot;
 		Buffer		buffer = scan->rs_cbuf;
 
-		bool visible = HeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
+		bool		visible = HeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
 
 		CheckForSerializableConflictOut(visible, scan->rs_rd, tuple, buffer,
 										snapshot);

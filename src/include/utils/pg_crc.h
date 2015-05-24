@@ -93,7 +93,7 @@ do {															  \
 \
 	while (__len-- > 0) \
 	{ \
-		int		__tab_index = ((int) ((crc) >> 24) ^ *__data++) & 0xFF;	\
+		int		__tab_index = ((int) ((crc) >> 24) ^ *__data++) & 0xFF; \
 		(crc) = table[__tab_index] ^ ((crc) << 8); \
 	} \
 } while (0)

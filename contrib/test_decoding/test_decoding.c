@@ -53,16 +53,16 @@ static void pg_decode_shutdown(LogicalDecodingContext *ctx);
 static void pg_decode_begin_txn(LogicalDecodingContext *ctx,
 					ReorderBufferTXN *txn);
 static void pg_output_begin(LogicalDecodingContext *ctx,
-							TestDecodingData *data,
-							ReorderBufferTXN *txn,
-							bool last_write);
+				TestDecodingData *data,
+				ReorderBufferTXN *txn,
+				bool last_write);
 static void pg_decode_commit_txn(LogicalDecodingContext *ctx,
 					 ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pg_decode_change(LogicalDecodingContext *ctx,
 				 ReorderBufferTXN *txn, Relation rel,
 				 ReorderBufferChange *change);
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
-							 RepOriginId origin_id);
+				 RepOriginId origin_id);
 
 void
 _PG_init(void)

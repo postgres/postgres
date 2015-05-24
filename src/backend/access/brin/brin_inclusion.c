@@ -61,11 +61,11 @@
  * 0 - the union of the values in the block range
  * 1 - whether an empty value is present in any tuple in the block range
  * 2 - whether the values in the block range cannot be merged (e.g. an IPv6
- *     address amidst IPv4 addresses).
+ *	   address amidst IPv4 addresses).
  */
-#define	INCLUSION_UNION				0
-#define	INCLUSION_UNMERGEABLE		1
-#define	INCLUSION_CONTAINS_EMPTY	2
+#define INCLUSION_UNION				0
+#define INCLUSION_UNMERGEABLE		1
+#define INCLUSION_CONTAINS_EMPTY	2
 
 
 typedef struct InclusionOpaque
@@ -294,22 +294,22 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 	unionval = column->bv_values[INCLUSION_UNION];
 	switch (key->sk_strategy)
 	{
-		/*
-		 * Placement strategies
-		 *
-		 * These are implemented by logically negating the result of the
-		 * converse placement operator; for this to work, the converse operator
-		 * must be part of the opclass.  An error will be thrown by
-		 * inclusion_get_strategy_procinfo() if the required strategy is not
-		 * part of the opclass.
-		 *
-		 * These all return false if either argument is empty, so there is
-		 * no need to check for empty elements.
-		 */
+			/*
+			 * Placement strategies
+			 *
+			 * These are implemented by logically negating the result of the
+			 * converse placement operator; for this to work, the converse
+			 * operator must be part of the opclass.  An error will be thrown
+			 * by inclusion_get_strategy_procinfo() if the required strategy
+			 * is not part of the opclass.
+			 *
+			 * These all return false if either argument is empty, so there is
+			 * no need to check for empty elements.
+			 */
 
 		case RTLeftStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
-													RTOverRightStrategyNumber);
+												  RTOverRightStrategyNumber);
 			result = FunctionCall2Coll(finfo, colloid, unionval, query);
 			PG_RETURN_BOOL(!DatumGetBool(result));
 
@@ -333,7 +333,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 
 		case RTBelowStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
-													RTOverAboveStrategyNumber);
+												  RTOverAboveStrategyNumber);
 			result = FunctionCall2Coll(finfo, colloid, unionval, query);
 			PG_RETURN_BOOL(!DatumGetBool(result));
 
@@ -351,7 +351,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 
 		case RTAboveStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
-													RTOverBelowStrategyNumber);
+												  RTOverBelowStrategyNumber);
 			result = FunctionCall2Coll(finfo, colloid, unionval, query);
 			PG_RETURN_BOOL(!DatumGetBool(result));
 
@@ -381,8 +381,8 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * strategies because some elements can be contained even though
 			 * the union is not; instead we use the overlap operator.
 			 *
-			 * We check for empty elements separately as they are not merged to
-			 * the union but contained by everything.
+			 * We check for empty elements separately as they are not merged
+			 * to the union but contained by everything.
 			 */
 
 		case RTContainedByStrategyNumber:
@@ -400,8 +400,8 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			/*
 			 * Adjacent strategy
 			 *
-			 * We test for overlap first but to be safe we need to call
-			 * the actual adjacent operator also.
+			 * We test for overlap first but to be safe we need to call the
+			 * actual adjacent operator also.
 			 *
 			 * An empty element cannot be adjacent to any other, so there is
 			 * no need to check for it.
@@ -426,8 +426,8 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * the contains operator.  Generally, inequality strategies do not
 			 * make much sense for the types which will be used with the
 			 * inclusion BRIN family of opclasses, but is is possible to
-			 * implement them with logical negation of the left-of and right-of
-			 * operators.
+			 * implement them with logical negation of the left-of and
+			 * right-of operators.
 			 *
 			 * NB: These strategies cannot be used with geometric datatypes
 			 * that use comparison of areas!  The only exception is the "same"

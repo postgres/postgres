@@ -1785,7 +1785,8 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	/*
 	 * Set up the scan keys, and check for unsatisfiable query.
 	 */
-	ginFreeScanKeys(so); /* there should be no keys yet, but just to be sure */
+	ginFreeScanKeys(so);		/* there should be no keys yet, but just to be
+								 * sure */
 	ginNewScanKey(scan);
 
 	if (GinIsVoidRes(scan))

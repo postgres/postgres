@@ -238,15 +238,15 @@ DATA(insert (	2742	jsonb_path_ops		PGNSP PGUID 4037  3802 f 23 ));
 
 /* BRIN operator classes */
 /* no brin opclass for bool */
-DATA(insert (	3580	bytea_minmax_ops		PGNSP PGUID 4064    17 t 17 ));
-DATA(insert (	3580	char_minmax_ops			PGNSP PGUID 4062    18 t 18 ));
-DATA(insert (	3580	name_minmax_ops			PGNSP PGUID 4065    19 t 19 ));
-DATA(insert (	3580	int8_minmax_ops			PGNSP PGUID 4054    20 t 20 ));
-DATA(insert (	3580	int2_minmax_ops			PGNSP PGUID 4054    21 t 21 ));
-DATA(insert (	3580	int4_minmax_ops			PGNSP PGUID 4054    23 t 23 ));
-DATA(insert (	3580	text_minmax_ops			PGNSP PGUID 4056    25 t 25 ));
-DATA(insert (	3580	oid_minmax_ops			PGNSP PGUID 4068    26 t 26 ));
-DATA(insert (	3580	tid_minmax_ops			PGNSP PGUID 4069    27 t 27 ));
+DATA(insert (	3580	bytea_minmax_ops		PGNSP PGUID 4064	17 t 17 ));
+DATA(insert (	3580	char_minmax_ops			PGNSP PGUID 4062	18 t 18 ));
+DATA(insert (	3580	name_minmax_ops			PGNSP PGUID 4065	19 t 19 ));
+DATA(insert (	3580	int8_minmax_ops			PGNSP PGUID 4054	20 t 20 ));
+DATA(insert (	3580	int2_minmax_ops			PGNSP PGUID 4054	21 t 21 ));
+DATA(insert (	3580	int4_minmax_ops			PGNSP PGUID 4054	23 t 23 ));
+DATA(insert (	3580	text_minmax_ops			PGNSP PGUID 4056	25 t 25 ));
+DATA(insert (	3580	oid_minmax_ops			PGNSP PGUID 4068	26 t 26 ));
+DATA(insert (	3580	tid_minmax_ops			PGNSP PGUID 4069	27 t 27 ));
 DATA(insert (	3580	float4_minmax_ops		PGNSP PGUID 4070   700 t 700 ));
 DATA(insert (	3580	float8_minmax_ops		PGNSP PGUID 4070   701 t 701 ));
 DATA(insert (	3580	abstime_minmax_ops		PGNSP PGUID 4072   702 t 702 ));

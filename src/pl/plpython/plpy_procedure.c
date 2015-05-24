@@ -172,8 +172,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	{
 		MemoryContext oldcxt;
 
-		Datum protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
-												  Anum_pg_proc_protrftypes, &isnull);
+		Datum		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
+										  Anum_pg_proc_protrftypes, &isnull);
+
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 		proc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
 		MemoryContextSwitchTo(oldcxt);

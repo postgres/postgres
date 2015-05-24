@@ -254,15 +254,15 @@ BackgroundWorkerStateChange(void)
 		}
 
 		/*
-		 * If the worker is marked for termination, we don't need to add it
-		 * to the registered workers list; we can just free the slot.
-		 * However, if bgw_notify_pid is set, the process that registered the
-		 * worker may need to know that we've processed the terminate request,
-		 * so be sure to signal it.
+		 * If the worker is marked for termination, we don't need to add it to
+		 * the registered workers list; we can just free the slot. However, if
+		 * bgw_notify_pid is set, the process that registered the worker may
+		 * need to know that we've processed the terminate request, so be sure
+		 * to signal it.
 		 */
 		if (slot->terminate)
 		{
-			int	notify_pid;
+			int			notify_pid;
 
 			/*
 			 * We need a memory barrier here to make sure that the load of
@@ -426,7 +426,7 @@ BackgroundWorkerStopNotifications(pid_t pid)
 void
 ResetBackgroundWorkerCrashTimes(void)
 {
-	slist_mutable_iter	iter;
+	slist_mutable_iter iter;
 
 	slist_foreach_modify(iter, &BackgroundWorkerList)
 	{
@@ -435,8 +435,8 @@ ResetBackgroundWorkerCrashTimes(void)
 		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 
 		/*
-		 * For workers that should not be restarted, we don't want to lose
-		 * the information that they have crashed; otherwise, they would be
+		 * For workers that should not be restarted, we don't want to lose the
+		 * information that they have crashed; otherwise, they would be
 		 * restarted, which is wrong.
 		 */
 		if (rw->rw_worker.bgw_restart_time != BGW_NEVER_RESTART)
@@ -679,7 +679,8 @@ StartBackgroundWorker(void)
 		/*
 		 * Early initialization.  Some of this could be useful even for
 		 * background workers that aren't using shared memory, but they can
-		 * call the individual startup routines for those subsystems if needed.
+		 * call the individual startup routines for those subsystems if
+		 * needed.
 		 */
 		BaseInit();
 

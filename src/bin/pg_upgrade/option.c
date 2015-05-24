@@ -142,7 +142,7 @@ parseCommandLine(int argc, char *argv[])
 					old_cluster.pgopts = pg_strdup(optarg);
 				else
 				{
-					char *old_pgopts = old_cluster.pgopts;
+					char	   *old_pgopts = old_cluster.pgopts;
 
 					old_cluster.pgopts = psprintf("%s %s", old_pgopts, optarg);
 					free(old_pgopts);
@@ -155,7 +155,7 @@ parseCommandLine(int argc, char *argv[])
 					new_cluster.pgopts = pg_strdup(optarg);
 				else
 				{
-					char *new_pgopts = new_cluster.pgopts;
+					char	   *new_pgopts = new_cluster.pgopts;
 
 					new_cluster.pgopts = psprintf("%s %s", new_pgopts, optarg);
 					free(new_pgopts);
@@ -249,13 +249,15 @@ parseCommandLine(int argc, char *argv[])
 							 "PGDATANEW", "-D", "new cluster data resides");
 
 #ifdef WIN32
+
 	/*
 	 * On Windows, initdb --sync-only will fail with a "Permission denied"
-	 * error on file pg_upgrade_utility.log if pg_upgrade is run inside
-	 * the new cluster directory, so we do a check here.
+	 * error on file pg_upgrade_utility.log if pg_upgrade is run inside the
+	 * new cluster directory, so we do a check here.
 	 */
 	{
-		char	cwd[MAXPGPATH], new_cluster_pgdata[MAXPGPATH];
+		char		cwd[MAXPGPATH],
+					new_cluster_pgdata[MAXPGPATH];
 
 		strlcpy(new_cluster_pgdata, new_cluster.pgdata, MAXPGPATH);
 		canonicalize_path(new_cluster_pgdata);

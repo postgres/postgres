@@ -317,7 +317,7 @@ shm_mq_set_handle(shm_mq_handle *mqh, BackgroundWorkerHandle *handle)
 shm_mq_result
 shm_mq_send(shm_mq_handle *mqh, Size nbytes, const void *data, bool nowait)
 {
-	shm_mq_iovec	iov;
+	shm_mq_iovec iov;
 
 	iov.data = data;
 	iov.len = nbytes;
@@ -385,7 +385,7 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 	offset = mqh->mqh_partial_bytes;
 	do
 	{
-		Size	chunksize;
+		Size		chunksize;
 
 		/* Figure out which bytes need to be sent next. */
 		if (offset >= iov[which_iov].len)
@@ -399,18 +399,18 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 
 		/*
 		 * We want to avoid copying the data if at all possible, but every
-		 * chunk of bytes we write into the queue has to be MAXALIGN'd,
-		 * except the last.  Thus, if a chunk other than the last one ends
-		 * on a non-MAXALIGN'd boundary, we have to combine the tail end of
-		 * its data with data from one or more following chunks until we
-		 * either reach the last chunk or accumulate a number of bytes which
-		 * is MAXALIGN'd.
+		 * chunk of bytes we write into the queue has to be MAXALIGN'd, except
+		 * the last.  Thus, if a chunk other than the last one ends on a
+		 * non-MAXALIGN'd boundary, we have to combine the tail end of its
+		 * data with data from one or more following chunks until we either
+		 * reach the last chunk or accumulate a number of bytes which is
+		 * MAXALIGN'd.
 		 */
 		if (which_iov + 1 < iovcnt &&
 			offset + MAXIMUM_ALIGNOF > iov[which_iov].len)
 		{
-			char	tmpbuf[MAXIMUM_ALIGNOF];
-			int		j = 0;
+			char		tmpbuf[MAXIMUM_ALIGNOF];
+			int			j = 0;
 
 			for (;;)
 			{

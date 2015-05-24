@@ -176,7 +176,7 @@ write_eventlog(int level, const char *line)
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
 		evtHandle = RegisterEventSource(NULL,
-						event_source ? event_source : DEFAULT_EVENT_SOURCE);
+						 event_source ? event_source : DEFAULT_EVENT_SOURCE);
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -263,7 +263,8 @@ get_pgpid(bool is_status_request)
 		/*
 		 * The Linux Standard Base Core Specification 3.1 says this should
 		 * return '4, program or service status is unknown'
-		 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+		 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-g
+		 * eneric/iniscrptact.html
 		 */
 		exit(is_status_request ? 4 : 1);
 	}
@@ -1600,10 +1601,10 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 			{
 				/*
 				 * status.dwCheckPoint can be incremented by
-				 * test_postmaster_connection(true), so it might not
-				 * start from 0.
+				 * test_postmaster_connection(true), so it might not start
+				 * from 0.
 				 */
-				int maxShutdownCheckPoint = status.dwCheckPoint + 12;;
+				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;;
 
 				kill(postmasterPID, SIGINT);
 
@@ -2215,7 +2216,7 @@ main(int argc, char **argv)
 						post_opts = pg_strdup(optarg);
 					else
 					{
-						char *old_post_opts = post_opts;
+						char	   *old_post_opts = post_opts;
 
 						post_opts = psprintf("%s %s", old_post_opts, optarg);
 						free(old_post_opts);

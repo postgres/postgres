@@ -696,7 +696,7 @@ similar_escape(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 						 errmsg("invalid escape string"),
-						 errhint("Escape string must be empty or one character.")));
+				  errhint("Escape string must be empty or one character.")));
 		}
 	}
 
@@ -742,7 +742,8 @@ similar_escape(PG_FUNCTION_ARGS)
 
 		if (elen > 1)
 		{
-			int mblen = pg_mblen(p);
+			int			mblen = pg_mblen(p);
+
 			if (mblen > 1)
 			{
 				/* slow, multi-byte path */

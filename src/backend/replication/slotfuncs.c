@@ -99,9 +99,9 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	CheckLogicalDecodingRequirements();
 
 	/*
-	 * Acquire a logical decoding slot, this will check for conflicting
-	 * names. Initially create it as ephemeral - that allows us to nicely
-	 * handle errors during initialization because it'll get dropped if this
+	 * Acquire a logical decoding slot, this will check for conflicting names.
+	 * Initially create it as ephemeral - that allows us to nicely handle
+	 * errors during initialization because it'll get dropped if this
 	 * transaction fails. We'll make it persistent at the end.
 	 */
 	ReplicationSlotCreate(NameStr(*name), true, RS_EPHEMERAL);

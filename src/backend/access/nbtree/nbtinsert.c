@@ -160,8 +160,8 @@ top:
 	 */
 	if (checkUnique != UNIQUE_CHECK_NO)
 	{
-		TransactionId	xwait;
-		uint32			speculativeToken;
+		TransactionId xwait;
+		uint32		speculativeToken;
 
 		offset = _bt_binsrch(rel, buf, natts, itup_scankey, false);
 		xwait = _bt_check_unique(rel, itup, heapRel, buf, offset, itup_scankey,
@@ -171,9 +171,10 @@ top:
 		{
 			/* Have to wait for the other guy ... */
 			_bt_relbuf(rel, buf);
+
 			/*
-			 * If it's a speculative insertion, wait for it to finish (ie.
-			 * to go ahead with the insertion, or kill the tuple).  Otherwise
+			 * If it's a speculative insertion, wait for it to finish (ie. to
+			 * go ahead with the insertion, or kill the tuple).  Otherwise
 			 * wait for the transaction to finish as usual.
 			 */
 			if (speculativeToken)
@@ -417,8 +418,8 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 								(errcode(ERRCODE_UNIQUE_VIOLATION),
 								 errmsg("duplicate key value violates unique constraint \"%s\"",
 										RelationGetRelationName(rel)),
-								 key_desc ? errdetail("Key %s already exists.",
-													  key_desc) : 0,
+							   key_desc ? errdetail("Key %s already exists.",
+													key_desc) : 0,
 								 errtableconstraint(heapRel,
 											 RelationGetRelationName(rel))));
 					}

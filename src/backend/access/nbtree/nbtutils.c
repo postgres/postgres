@@ -1430,8 +1430,8 @@ _bt_checkkeys(IndexScanDesc scan,
 		Datum		test;
 
 		/*
-		 * If the scan key has already matched we can skip this key, as
-		 * long as the index tuple does not contain NULL values.
+		 * If the scan key has already matched we can skip this key, as long
+		 * as the index tuple does not contain NULL values.
 		 */
 		if (key->sk_flags & SK_BT_MATCHED && !IndexTupleHasNulls(tuple))
 			continue;
@@ -1740,7 +1740,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
  * any items from the page, and so there is no need to search left from the
  * recorded offset.  (This observation also guarantees that the item is still
  * the right one to delete, which might otherwise be questionable since heap
- * TIDs can get recycled.)  This holds true even if the page has been modified
+ * TIDs can get recycled.)	This holds true even if the page has been modified
  * by inserts and page splits, so there is no need to consult the LSN.
  *
  * If the pin was released after reading the page, then we re-read it.  If it

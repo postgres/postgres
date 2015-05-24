@@ -1936,7 +1936,7 @@ expression_tree_walker(Node *node,
 			break;
 		case T_OnConflictExpr:
 			{
-				OnConflictExpr   *onconflict = (OnConflictExpr *) node;
+				OnConflictExpr *onconflict = (OnConflictExpr *) node;
 
 				if (walker((Node *) onconflict->arbiterElems, context))
 					return true;
@@ -2269,8 +2269,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_GroupingFunc:
 			{
-				GroupingFunc   *grouping = (GroupingFunc *) node;
-				GroupingFunc   *newnode;
+				GroupingFunc *grouping = (GroupingFunc *) node;
+				GroupingFunc *newnode;
 
 				FLATCOPY(newnode, grouping, GroupingFunc);
 				MUTATE(newnode->args, grouping->args, List *);
@@ -2691,8 +2691,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_OnConflictExpr:
 			{
-				OnConflictExpr   *oc = (OnConflictExpr *) node;
-				OnConflictExpr   *newnode;
+				OnConflictExpr *oc = (OnConflictExpr *) node;
+				OnConflictExpr *newnode;
 
 				FLATCOPY(newnode, oc, OnConflictExpr);
 				MUTATE(newnode->arbiterElems, oc->arbiterElems, List *);

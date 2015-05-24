@@ -213,8 +213,8 @@ mdinit(void)
 		/*
 		 * XXX: The checkpointer needs to add entries to the pending ops table
 		 * when absorbing fsync requests.  That is done within a critical
-		 * section, which isn't usually allowed, but we make an exception.
-		 * It means that there's a theoretical possibility that you run out of
+		 * section, which isn't usually allowed, but we make an exception. It
+		 * means that there's a theoretical possibility that you run out of
 		 * memory while absorbing fsync requests, which leads to a PANIC.
 		 * Fortunately the hash table is small so that's unlikely to happen in
 		 * practice.

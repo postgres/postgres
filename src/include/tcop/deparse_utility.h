@@ -37,8 +37,8 @@ typedef enum CollectedCommandType
  */
 typedef struct CollectedATSubcmd
 {
-	ObjectAddress	address; /* affected column, constraint, index, ... */
-	Node		   *parsetree;
+	ObjectAddress address;		/* affected column, constraint, index, ... */
+	Node	   *parsetree;
 } CollectedATSubcmd;
 
 typedef struct CollectedCommand
@@ -54,52 +54,52 @@ typedef struct CollectedCommand
 		{
 			ObjectAddress address;
 			ObjectAddress secondaryObject;
-		} simple;
+		}			simple;
 
 		/* ALTER TABLE, and internal uses thereof */
 		struct
 		{
-			Oid		objectId;
-			Oid		classId;
-			List   *subcmds;
-		} alterTable;
+			Oid			objectId;
+			Oid			classId;
+			List	   *subcmds;
+		}			alterTable;
 
 		/* GRANT / REVOKE */
 		struct
 		{
 			InternalGrant *istmt;
-		} grant;
+		}			grant;
 
 		/* ALTER OPERATOR FAMILY */
 		struct
 		{
 			ObjectAddress address;
-			List   *operators;
-			List   *procedures;
-		} opfam;
+			List	   *operators;
+			List	   *procedures;
+		}			opfam;
 
 		/* CREATE OPERATOR CLASS */
 		struct
 		{
 			ObjectAddress address;
-			List   *operators;
-			List   *procedures;
-		} createopc;
+			List	   *operators;
+			List	   *procedures;
+		}			createopc;
 
 		/* ALTER TEXT SEARCH CONFIGURATION ADD/ALTER/DROP MAPPING */
 		struct
 		{
 			ObjectAddress address;
-			Oid	   *dictIds;
-			int		ndicts;
-		} atscfg;
+			Oid		   *dictIds;
+			int			ndicts;
+		}			atscfg;
 
 		/* ALTER DEFAULT PRIVILEGES */
 		struct
 		{
 			GrantObjectType objtype;
-		} defprivs;
-	} d;
+		}			defprivs;
+	}			d;
 } CollectedCommand;
 
-#endif	/* DEPARSE_UTILITY_H */
+#endif   /* DEPARSE_UTILITY_H */

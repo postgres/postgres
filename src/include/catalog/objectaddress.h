@@ -67,7 +67,7 @@ extern HeapTuple get_catalog_object_by_oid(Relation catalog,
 extern char *getObjectDescription(const ObjectAddress *object);
 extern char *getObjectDescriptionOids(Oid classid, Oid objid);
 
-extern int read_objtype_from_string(const char *objtype);
+extern int	read_objtype_from_string(const char *objtype);
 extern char *getObjectTypeDescription(const ObjectAddress *object);
 extern char *getObjectIdentity(const ObjectAddress *address);
 extern char *getObjectIdentityParts(const ObjectAddress *address,

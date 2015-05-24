@@ -84,7 +84,7 @@ extern void ExplainSeparatePlans(ExplainState *es);
 extern void ExplainPropertyList(const char *qlabel, List *data,
 					ExplainState *es);
 extern void ExplainPropertyListNested(const char *qlabel, List *data,
-					ExplainState *es);
+						  ExplainState *es);
 extern void ExplainPropertyText(const char *qlabel, const char *value,
 					ExplainState *es);
 extern void ExplainPropertyInteger(const char *qlabel, int value,

@@ -2011,7 +2011,7 @@ keep_going:						/* We will come back to here until there is
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("could not look up local user ID %d: %s\n"),
 											  (int) uid,
-											  pqStrerror(passerr, sebuf, sizeof(sebuf)));
+								  pqStrerror(passerr, sebuf, sizeof(sebuf)));
 						else
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("local user with ID %d does not exist\n"),
@@ -3845,7 +3845,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 						if (!options[i].val)
 						{
 							printfPQExpBuffer(errorMessage,
-											libpq_gettext("out of memory\n"));
+										   libpq_gettext("out of memory\n"));
 							free(result);
 							return 3;
 						}
@@ -4085,7 +4085,7 @@ parseServiceFile(const char *serviceFile,
 						if (!options[i].val)
 						{
 							printfPQExpBuffer(errorMessage,
-											libpq_gettext("out of memory\n"));
+										   libpq_gettext("out of memory\n"));
 							fclose(f);
 							return 3;
 						}
@@ -4516,7 +4516,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 								if (!options[k].val)
 								{
 									printfPQExpBuffer(errorMessage,
-													  libpq_gettext("out of memory\n"));
+										   libpq_gettext("out of memory\n"));
 									PQconninfoFree(options);
 									PQconninfoFree(dbname_options);
 									return NULL;
@@ -4526,6 +4526,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 						}
 					}
 				}
+
 				/*
 				 * Forget the parsed connection string, so that any subsequent
 				 * dbname parameters will not be expanded.
@@ -5018,7 +5019,7 @@ conninfo_uri_parse_params(char *params,
 			/* Insert generic message if conninfo_storeval didn't give one. */
 			if (errorMessage->len == 0)
 				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("invalid URI query parameter: \"%s\"\n"),
+					  libpq_gettext("invalid URI query parameter: \"%s\"\n"),
 								  keyword);
 			/* And fail. */
 			if (malloced)

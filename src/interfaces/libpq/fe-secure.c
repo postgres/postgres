@@ -251,14 +251,14 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext(
 								"server closed the connection unexpectedly\n"
-					"\tThis probably means the server terminated abnormally\n"
+				   "\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
 				break;
 #endif
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("could not receive data from server: %s\n"),
+				   libpq_gettext("could not receive data from server: %s\n"),
 								  SOCK_STRERROR(result_errno,
 												sebuf, sizeof(sebuf)));
 				break;
@@ -323,9 +323,9 @@ retry_masked:
 		result_errno = SOCK_ERRNO;
 
 		/*
-		 * If we see an EINVAL, it may be because MSG_NOSIGNAL isn't
-		 * available on this machine.  So, clear sigpipe_flag so we don't
-		 * try the flag again, and retry the send().
+		 * If we see an EINVAL, it may be because MSG_NOSIGNAL isn't available
+		 * on this machine.  So, clear sigpipe_flag so we don't try the flag
+		 * again, and retry the send().
 		 */
 #ifdef MSG_NOSIGNAL
 		if (flags != 0 && result_errno == EINVAL)
@@ -360,15 +360,15 @@ retry_masked:
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext(
 								"server closed the connection unexpectedly\n"
-					"\tThis probably means the server terminated abnormally\n"
+				   "\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
 				break;
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("could not send data to server: %s\n"),
-									  SOCK_STRERROR(result_errno,
-													sebuf, sizeof(sebuf)));
+								  SOCK_STRERROR(result_errno,
+												sebuf, sizeof(sebuf)));
 				break;
 		}
 	}
@@ -411,7 +411,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 const char **
 PQsslAttributes(PGconn *conn)
 {
-	static const char *result[] = { NULL };
+	static const char *result[] = {NULL};
 
 	return result;
 }

@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * committsdesc.c
- *    rmgr descriptor routines for access/transam/commit_ts.c
+ *	  rmgr descriptor routines for access/transam/commit_ts.c
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/committsdesc.c
+ *	  src/backend/access/rmgrdesc/committsdesc.c
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ commit_ts_desc(StringInfo buf, XLogReaderState *record)
 	else if (info == COMMIT_TS_SETTS)
 	{
 		xl_commit_ts_set *xlrec = (xl_commit_ts_set *) rec;
-		int		nsubxids;
+		int			nsubxids;
 
 		appendStringInfo(buf, "set %s/%d for: %u",
 						 timestamptz_to_str(xlrec->timestamp),
@@ -51,7 +51,7 @@ commit_ts_desc(StringInfo buf, XLogReaderState *record)
 					sizeof(TransactionId));
 		if (nsubxids > 0)
 		{
-			int		i;
+			int			i;
 			TransactionId *subxids;
 
 			subxids = palloc(sizeof(TransactionId) * nsubxids);

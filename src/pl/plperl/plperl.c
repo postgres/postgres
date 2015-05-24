@@ -2690,7 +2690,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 			MemoryContext oldcxt;
 
 			protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
-												Anum_pg_proc_protrftypes, &isnull);
+										  Anum_pg_proc_protrftypes, &isnull);
 			oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 			prodesc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
 			MemoryContextSwitchTo(oldcxt);

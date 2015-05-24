@@ -8,7 +8,7 @@ PG_MODULE_MAGIC;
 
 
 PG_FUNCTION_INFO_V1(hstore_to_plpython);
-Datum hstore_to_plpython(PG_FUNCTION_ARGS);
+Datum		hstore_to_plpython(PG_FUNCTION_ARGS);
 
 Datum
 hstore_to_plpython(PG_FUNCTION_ARGS)
@@ -31,9 +31,9 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 			PyDict_SetItem(dict, key, Py_None);
 		else
 		{
-			PyObject *value;
+			PyObject   *value;
 
-			value = PyString_FromStringAndSize(HS_VAL(entries, base,i), HS_VALLEN(entries, i));
+			value = PyString_FromStringAndSize(HS_VAL(entries, base, i), HS_VALLEN(entries, i));
 			PyDict_SetItem(dict, key, value);
 			Py_XDECREF(value);
 		}
@@ -45,7 +45,7 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(plpython_to_hstore);
-Datum plpython_to_hstore(PG_FUNCTION_ARGS);
+Datum		plpython_to_hstore(PG_FUNCTION_ARGS);
 
 Datum
 plpython_to_hstore(PG_FUNCTION_ARGS)
@@ -75,9 +75,9 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < pcount; i++)
 		{
-			PyObject *tuple;
-			PyObject *key;
-			PyObject *value;
+			PyObject   *tuple;
+			PyObject   *key;
+			PyObject   *value;
 
 			tuple = PyList_GetItem(items, i);
 			key = PyTuple_GetItem(tuple, 0);

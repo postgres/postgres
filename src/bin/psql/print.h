@@ -90,7 +90,7 @@ typedef struct printTableOpt
 								 * 1=dividing lines, 2=full */
 	unsigned short int pager;	/* use pager for output (if to stdout and
 								 * stdout is a tty) 0=off 1=on 2=always */
-	int         pager_min_lines;/* don't use pager unless there are at least
+	int			pager_min_lines;/* don't use pager unless there are at least
 								 * this many lines */
 	bool		tuples_only;	/* don't output headers, row counts, etc. */
 	bool		start_table;	/* print start decoration, eg <table> */
@@ -106,9 +106,9 @@ typedef struct printTableOpt
 	int			encoding;		/* character encoding */
 	int			env_columns;	/* $COLUMNS on psql start, 0 is unset */
 	int			columns;		/* target width for wrapped format */
-	unicode_linestyle	unicode_border_linestyle;
-	unicode_linestyle	unicode_column_linestyle;
-	unicode_linestyle	unicode_header_linestyle;
+	unicode_linestyle unicode_border_linestyle;
+	unicode_linestyle unicode_column_linestyle;
+	unicode_linestyle unicode_header_linestyle;
 } printTableOpt;
 
 /*

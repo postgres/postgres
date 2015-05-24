@@ -17,7 +17,7 @@
 #include "utils/guc.h"
 
 
-extern PGDLLIMPORT bool	track_commit_timestamp;
+extern PGDLLIMPORT bool track_commit_timestamp;
 
 extern bool check_track_commit_timestamp(bool *newval, void **extra,
 							 GucSource source);
@@ -53,9 +53,9 @@ extern void AdvanceOldestCommitTs(TransactionId oldestXact);
 
 typedef struct xl_commit_ts_set
 {
-	TimestampTz		timestamp;
-	RepOriginId		nodeid;
-	TransactionId	mainxid;
+	TimestampTz timestamp;
+	RepOriginId nodeid;
+	TransactionId mainxid;
 	/* subxact Xids follow */
 } xl_commit_ts_set;
 

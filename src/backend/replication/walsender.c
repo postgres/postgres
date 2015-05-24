@@ -781,6 +781,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	else
 	{
 		CheckLogicalDecodingRequirements();
+
 		/*
 		 * Initially create the slot as ephemeral - that allows us to nicely
 		 * handle errors during initialization because it'll get dropped if
@@ -1266,9 +1267,9 @@ exec_replication_command(const char *cmd_string)
 	MemoryContext old_context;
 
 	/*
-	 * Log replication command if log_replication_commands is enabled.
-	 * Even when it's disabled, log the command with DEBUG1 level for
-	 * backward compatibility.
+	 * Log replication command if log_replication_commands is enabled. Even
+	 * when it's disabled, log the command with DEBUG1 level for backward
+	 * compatibility.
 	 */
 	ereport(log_replication_commands ? LOG : DEBUG1,
 			(errmsg("received replication command: %s", cmd_string)));
@@ -2663,8 +2664,8 @@ WalSndWakeup(void)
 
 	for (i = 0; i < max_wal_senders; i++)
 	{
-		Latch *latch;
-		WalSnd *walsnd = &WalSndCtl->walsnds[i];
+		Latch	   *latch;
+		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
 		/*
 		 * Get latch pointer with spinlock held, for the unlikely case that

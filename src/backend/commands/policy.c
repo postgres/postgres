@@ -45,27 +45,27 @@
 #include "utils/syscache.h"
 
 static void RangeVarCallbackForPolicy(const RangeVar *rv,
-				Oid relid, Oid oldrelid, void *arg);
+						  Oid relid, Oid oldrelid, void *arg);
 static char parse_policy_command(const char *cmd_name);
-static ArrayType* policy_role_list_to_array(List *roles);
+static ArrayType *policy_role_list_to_array(List *roles);
 
 /*
  * Callback to RangeVarGetRelidExtended().
  *
  * Checks the following:
- *  - the relation specified is a table.
- *  - current user owns the table.
- *  - the table is not a system table.
+ *	- the relation specified is a table.
+ *	- current user owns the table.
+ *	- the table is not a system table.
  *
  * If any of these checks fails then an error is raised.
  */
 static void
 RangeVarCallbackForPolicy(const RangeVar *rv, Oid relid, Oid oldrelid,
-								void *arg)
+						  void *arg)
 {
-	HeapTuple		tuple;
-	Form_pg_class	classform;
-	char			relkind;
+	HeapTuple	tuple;
+	Form_pg_class classform;
+	char		relkind;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
@@ -96,8 +96,8 @@ RangeVarCallbackForPolicy(const RangeVar *rv, Oid relid, Oid oldrelid,
 
 /*
  * parse_policy_command -
- *   helper function to convert full command strings to their char
- *   representation.
+ *	 helper function to convert full command strings to their char
+ *	 representation.
  *
  * cmd_name - full string command name. Valid values are 'all', 'select',
  *			  'insert', 'update' and 'delete'.
@@ -106,7 +106,7 @@ RangeVarCallbackForPolicy(const RangeVar *rv, Oid relid, Oid oldrelid,
 static char
 parse_policy_command(const char *cmd_name)
 {
-	char cmd;
+	char		cmd;
 
 	if (!cmd_name)
 		elog(ERROR, "unrecognized policy command");
@@ -129,7 +129,7 @@ parse_policy_command(const char *cmd_name)
 
 /*
  * policy_role_list_to_array
- *   helper function to convert a list of RoleSpecs to an array of role ids.
+ *	 helper function to convert a list of RoleSpecs to an array of role ids.
  */
 static ArrayType *
 policy_role_list_to_array(List *roles)
@@ -156,7 +156,7 @@ policy_role_list_to_array(List *roles)
 
 	foreach(cell, roles)
 	{
-		RoleSpec *spec = lfirst(cell);
+		RoleSpec   *spec = lfirst(cell);
 
 		/*
 		 * PUBLIC covers all roles, so it only makes sense alone.
@@ -167,7 +167,7 @@ policy_role_list_to_array(List *roles)
 				ereport(WARNING,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("ignoring roles specified other than public"),
-						 errhint("All roles are members of the public role.")));
+					  errhint("All roles are members of the public role.")));
 			temp_array[0] = ObjectIdGetDatum(ACL_ID_PUBLIC);
 			num_roles = 1;
 			break;
@@ -193,14 +193,14 @@ policy_role_list_to_array(List *roles)
 void
 RelationBuildRowSecurity(Relation relation)
 {
-	MemoryContext		rscxt;
-	MemoryContext		oldcxt = CurrentMemoryContext;
-	RowSecurityDesc	   * volatile rsdesc = NULL;
+	MemoryContext rscxt;
+	MemoryContext oldcxt = CurrentMemoryContext;
+	RowSecurityDesc *volatile rsdesc = NULL;
 
 	/*
 	 * Create a memory context to hold everything associated with this
-	 * relation's row security policy.  This makes it easy to clean up
-	 * during a relcache flush.
+	 * relation's row security policy.  This makes it easy to clean up during
+	 * a relcache flush.
 	 */
 	rscxt = AllocSetContextCreate(CacheMemoryContext,
 								  "row security descriptor",
@@ -209,15 +209,15 @@ RelationBuildRowSecurity(Relation relation)
 								  ALLOCSET_SMALL_MAXSIZE);
 
 	/*
-	 * Since rscxt lives under CacheMemoryContext, it is long-lived.  Use
-	 * a PG_TRY block to ensure it'll get freed if we fail partway through.
+	 * Since rscxt lives under CacheMemoryContext, it is long-lived.  Use a
+	 * PG_TRY block to ensure it'll get freed if we fail partway through.
 	 */
 	PG_TRY();
 	{
-		Relation			catalog;
-		ScanKeyData			skey;
-		SysScanDesc			sscan;
-		HeapTuple			tuple;
+		Relation	catalog;
+		ScanKeyData skey;
+		SysScanDesc sscan;
+		HeapTuple	tuple;
 
 		rsdesc = MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc));
 		rsdesc->rscxt = rscxt;
@@ -238,17 +238,17 @@ RelationBuildRowSecurity(Relation relation)
 		 */
 		while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 		{
-			Datum				value_datum;
-			char				cmd_value;
-			Datum				roles_datum;
-			char			   *qual_value;
-			Expr			   *qual_expr;
-			char			   *with_check_value;
-			Expr			   *with_check_qual;
-			char			   *policy_name_value;
-			Oid					policy_id;
-			bool				isnull;
-			RowSecurityPolicy  *policy;
+			Datum		value_datum;
+			char		cmd_value;
+			Datum		roles_datum;
+			char	   *qual_value;
+			Expr	   *qual_expr;
+			char	   *with_check_value;
+			Expr	   *with_check_qual;
+			char	   *policy_name_value;
+			Oid			policy_id;
+			bool		isnull;
+			RowSecurityPolicy *policy;
 
 			/*
 			 * Note: all the pass-by-reference data we collect here is either
@@ -259,26 +259,26 @@ RelationBuildRowSecurity(Relation relation)
 
 			/* Get policy command */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polcmd,
-								 RelationGetDescr(catalog), &isnull);
+									   RelationGetDescr(catalog), &isnull);
 			Assert(!isnull);
 			cmd_value = DatumGetChar(value_datum);
 
 			/* Get policy name */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polname,
-										RelationGetDescr(catalog), &isnull);
+									   RelationGetDescr(catalog), &isnull);
 			Assert(!isnull);
 			policy_name_value = NameStr(*(DatumGetName(value_datum)));
 
 			/* Get policy roles */
 			roles_datum = heap_getattr(tuple, Anum_pg_policy_polroles,
-										RelationGetDescr(catalog), &isnull);
+									   RelationGetDescr(catalog), &isnull);
 			/* shouldn't be null, but initdb doesn't mark it so, so check */
 			if (isnull)
 				elog(ERROR, "unexpected null value in pg_policy.polroles");
 
 			/* Get policy qual */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polqual,
-								 RelationGetDescr(catalog), &isnull);
+									   RelationGetDescr(catalog), &isnull);
 			if (!isnull)
 			{
 				qual_value = TextDatumGetCString(value_datum);
@@ -289,7 +289,7 @@ RelationBuildRowSecurity(Relation relation)
 
 			/* Get WITH CHECK qual */
 			value_datum = heap_getattr(tuple, Anum_pg_policy_polwithcheck,
-										RelationGetDescr(catalog), &isnull);
+									   RelationGetDescr(catalog), &isnull);
 			if (!isnull)
 			{
 				with_check_value = TextDatumGetCString(value_datum);
@@ -311,7 +311,7 @@ RelationBuildRowSecurity(Relation relation)
 			policy->qual = copyObject(qual_expr);
 			policy->with_check_qual = copyObject(with_check_qual);
 			policy->hassublinks = checkExprHasSubLink((Node *) qual_expr) ||
-								  checkExprHasSubLink((Node *) with_check_qual);
+				checkExprHasSubLink((Node *) with_check_qual);
 
 			rsdesc->policies = lcons(policy, rsdesc->policies);
 
@@ -330,15 +330,15 @@ RelationBuildRowSecurity(Relation relation)
 		/*
 		 * Check if no policies were added
 		 *
-		 * If no policies exist in pg_policy for this relation, then we
-		 * need to create a single default-deny policy.  We use InvalidOid for
-		 * the Oid to indicate that this is the default-deny policy (we may
-		 * decide to ignore the default policy if an extension adds policies).
+		 * If no policies exist in pg_policy for this relation, then we need
+		 * to create a single default-deny policy.  We use InvalidOid for the
+		 * Oid to indicate that this is the default-deny policy (we may decide
+		 * to ignore the default policy if an extension adds policies).
 		 */
 		if (rsdesc->policies == NIL)
 		{
-			RowSecurityPolicy  *policy;
-			Datum				role;
+			RowSecurityPolicy *policy;
+			Datum		role;
 
 			MemoryContextSwitchTo(rscxt);
 
@@ -351,7 +351,7 @@ RelationBuildRowSecurity(Relation relation)
 			policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true,
 											'i');
 			policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
-											  sizeof(bool), BoolGetDatum(false),
+										   sizeof(bool), BoolGetDatum(false),
 											  false, true);
 			policy->with_check_qual = copyObject(policy->qual);
 			policy->hassublinks = false;
@@ -376,15 +376,15 @@ RelationBuildRowSecurity(Relation relation)
 
 /*
  * RemovePolicyById -
- *   remove a policy by its OID.  If a policy does not exist with the provided
- *   oid, then an error is raised.
+ *	 remove a policy by its OID.  If a policy does not exist with the provided
+ *	 oid, then an error is raised.
  *
  * policy_id - the oid of the policy.
  */
 void
 RemovePolicyById(Oid policy_id)
 {
-	Relation 	pg_policy_rel;
+	Relation	pg_policy_rel;
 	SysScanDesc sscan;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
@@ -435,8 +435,8 @@ RemovePolicyById(Oid policy_id)
 
 	/*
 	 * Note that, unlike some of the other flags in pg_class, relrowsecurity
-	 * is not just an indication of if policies exist.  When relrowsecurity
-	 * is set by a user, then all access to the relation must be through a
+	 * is not just an indication of if policies exist.  When relrowsecurity is
+	 * set by a user, then all access to the relation must be through a
 	 * policy.  If no policy is defined for the relation then a default-deny
 	 * policy is created and all records are filtered (except for queries from
 	 * the owner).
@@ -450,31 +450,31 @@ RemovePolicyById(Oid policy_id)
 
 /*
  * CreatePolicy -
- *   handles the execution of the CREATE POLICY command.
+ *	 handles the execution of the CREATE POLICY command.
  *
  * stmt - the CreatePolicyStmt that describes the policy to create.
  */
 ObjectAddress
 CreatePolicy(CreatePolicyStmt *stmt)
 {
-	Relation		pg_policy_rel;
-	Oid				policy_id;
-	Relation		target_table;
-	Oid				table_id;
-	char			polcmd;
-	ArrayType	   *role_ids;
-	ParseState	   *qual_pstate;
-	ParseState	   *with_check_pstate;
-	RangeTblEntry  *rte;
-	Node		   *qual;
-	Node		   *with_check_qual;
-	ScanKeyData		skey[2];
-	SysScanDesc		sscan;
-	HeapTuple		policy_tuple;
-	Datum			values[Natts_pg_policy];
-	bool			isnull[Natts_pg_policy];
-	ObjectAddress	target;
-	ObjectAddress	myself;
+	Relation	pg_policy_rel;
+	Oid			policy_id;
+	Relation	target_table;
+	Oid			table_id;
+	char		polcmd;
+	ArrayType  *role_ids;
+	ParseState *qual_pstate;
+	ParseState *with_check_pstate;
+	RangeTblEntry *rte;
+	Node	   *qual;
+	Node	   *with_check_qual;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	HeapTuple	policy_tuple;
+	Datum		values[Natts_pg_policy];
+	bool		isnull[Natts_pg_policy];
+	ObjectAddress target;
+	ObjectAddress myself;
 
 	/* Parse command */
 	polcmd = parse_policy_command(stmt->cmd);
@@ -506,8 +506,8 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	with_check_pstate = make_parsestate(NULL);
 
 	/* zero-clear */
-	memset(values,   0, sizeof(values));
-	memset(isnull,   0, sizeof(isnull));
+	memset(values, 0, sizeof(values));
+	memset(isnull, 0, sizeof(isnull));
 
 	/* Get id of table.  Also handles permissions checks. */
 	table_id = RangeVarGetRelidExtended(stmt->table, AccessExclusiveLock,
@@ -515,7 +515,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 										RangeVarCallbackForPolicy,
 										(void *) stmt);
 
-	/* Open target_table to build quals. No lock is necessary.*/
+	/* Open target_table to build quals. No lock is necessary. */
 	target_table = relation_open(table_id, NoLock);
 
 	/* Add for the regular security quals */
@@ -534,9 +534,9 @@ CreatePolicy(CreatePolicyStmt *stmt)
 								"POLICY");
 
 	with_check_qual = transformWhereClause(with_check_pstate,
-								copyObject(stmt->with_check),
-								EXPR_KIND_WHERE,
-								"POLICY");
+										   copyObject(stmt->with_check),
+										   EXPR_KIND_WHERE,
+										   "POLICY");
 
 	/* Open pg_policy catalog */
 	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
@@ -568,7 +568,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 
 	values[Anum_pg_policy_polrelid - 1] = ObjectIdGetDatum(table_id);
 	values[Anum_pg_policy_polname - 1] = DirectFunctionCall1(namein,
-															 CStringGetDatum(stmt->policy_name));
+										 CStringGetDatum(stmt->policy_name));
 	values[Anum_pg_policy_polcmd - 1] = CharGetDatum(polcmd);
 	values[Anum_pg_policy_polroles - 1] = PointerGetDatum(role_ids);
 
@@ -625,34 +625,34 @@ CreatePolicy(CreatePolicyStmt *stmt)
 
 /*
  * AlterPolicy -
- *   handles the execution of the ALTER POLICY command.
+ *	 handles the execution of the ALTER POLICY command.
  *
  * stmt - the AlterPolicyStmt that describes the policy and how to alter it.
  */
 ObjectAddress
 AlterPolicy(AlterPolicyStmt *stmt)
 {
-	Relation		pg_policy_rel;
-	Oid				policy_id;
-	Relation		target_table;
-	Oid				table_id;
-	ArrayType	   *role_ids = NULL;
-	List		   *qual_parse_rtable = NIL;
-	List		   *with_check_parse_rtable = NIL;
-	Node		   *qual = NULL;
-	Node		   *with_check_qual = NULL;
-	ScanKeyData		skey[2];
-	SysScanDesc		sscan;
-	HeapTuple		policy_tuple;
-	HeapTuple		new_tuple;
-	Datum			values[Natts_pg_policy];
-	bool			isnull[Natts_pg_policy];
-	bool			replaces[Natts_pg_policy];
-	ObjectAddress	target;
-	ObjectAddress	myself;
-	Datum			cmd_datum;
-	char			polcmd;
-	bool			polcmd_isnull;
+	Relation	pg_policy_rel;
+	Oid			policy_id;
+	Relation	target_table;
+	Oid			table_id;
+	ArrayType  *role_ids = NULL;
+	List	   *qual_parse_rtable = NIL;
+	List	   *with_check_parse_rtable = NIL;
+	Node	   *qual = NULL;
+	Node	   *with_check_qual = NULL;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	HeapTuple	policy_tuple;
+	HeapTuple	new_tuple;
+	Datum		values[Natts_pg_policy];
+	bool		isnull[Natts_pg_policy];
+	bool		replaces[Natts_pg_policy];
+	ObjectAddress target;
+	ObjectAddress myself;
+	Datum		cmd_datum;
+	char		polcmd;
+	bool		polcmd_isnull;
 
 	/* Parse role_ids */
 	if (stmt->roles != NULL)
@@ -669,8 +669,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	/* Parse the using policy clause */
 	if (stmt->qual)
 	{
-		RangeTblEntry  *rte;
-		ParseState	   *qual_pstate = make_parsestate(NULL);
+		RangeTblEntry *rte;
+		ParseState *qual_pstate = make_parsestate(NULL);
 
 		rte = addRangeTableEntryForRelation(qual_pstate, target_table,
 											NULL, false, false);
@@ -688,8 +688,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	/* Parse the with-check policy clause */
 	if (stmt->with_check)
 	{
-		RangeTblEntry  *rte;
-		ParseState	   *with_check_pstate = make_parsestate(NULL);
+		RangeTblEntry *rte;
+		ParseState *with_check_pstate = make_parsestate(NULL);
 
 		rte = addRangeTableEntryForRelation(with_check_pstate, target_table,
 											NULL, false, false);
@@ -706,9 +706,9 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	}
 
 	/* zero-clear */
-	memset(values,   0, sizeof(values));
+	memset(values, 0, sizeof(values));
 	memset(replaces, 0, sizeof(replaces));
-	memset(isnull,   0, sizeof(isnull));
+	memset(isnull, 0, sizeof(isnull));
 
 	/* Find policy to update. */
 	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
@@ -756,8 +756,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 				 errmsg("only USING expression allowed for SELECT, DELETE")));
 
 	/*
-	 * If the command is INSERT then WITH CHECK should be the only
-	 * expression provided.
+	 * If the command is INSERT then WITH CHECK should be the only expression
+	 * provided.
 	 */
 	if ((polcmd == ACL_INSERT_CHR)
 		&& stmt->qual != NULL)
@@ -829,19 +829,19 @@ AlterPolicy(AlterPolicyStmt *stmt)
 
 /*
  * rename_policy -
- *   change the name of a policy on a relation
+ *	 change the name of a policy on a relation
  */
 ObjectAddress
 rename_policy(RenameStmt *stmt)
 {
-	Relation		pg_policy_rel;
-	Relation		target_table;
-	Oid				table_id;
-	Oid				opoloid;
-	ScanKeyData		skey[2];
-	SysScanDesc		sscan;
-	HeapTuple		policy_tuple;
-	ObjectAddress	address;
+	Relation	pg_policy_rel;
+	Relation	target_table;
+	Oid			table_id;
+	Oid			opoloid;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	HeapTuple	policy_tuple;
+	ObjectAddress address;
 
 	/* Get id of table.  Also handles permissions checks. */
 	table_id = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
@@ -875,7 +875,7 @@ rename_policy(RenameStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("policy \"%s\" for table \"%s\" already exists",
-						stmt->newname, RelationGetRelationName(target_table))));
+					 stmt->newname, RelationGetRelationName(target_table))));
 
 	systable_endscan(sscan);
 
@@ -903,7 +903,7 @@ rename_policy(RenameStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("policy \"%s\" for table \"%s\" does not exist",
-						stmt->subname, RelationGetRelationName(target_table))));
+					 stmt->subname, RelationGetRelationName(target_table))));
 
 	opoloid = HeapTupleGetOid(policy_tuple);
 
@@ -923,9 +923,9 @@ rename_policy(RenameStmt *stmt)
 	ObjectAddressSet(address, PolicyRelationId, opoloid);
 
 	/*
-	 * Invalidate relation's relcache entry so that other backends (and
-	 * this one too!) are sent SI message to make them rebuild relcache
-	 * entries.  (Ideally this should happen automatically...)
+	 * Invalidate relation's relcache entry so that other backends (and this
+	 * one too!) are sent SI message to make them rebuild relcache entries.
+	 * (Ideally this should happen automatically...)
 	 */
 	CacheInvalidateRelcache(target_table);
 
@@ -946,11 +946,11 @@ rename_policy(RenameStmt *stmt)
 Oid
 get_relation_policy_oid(Oid relid, const char *policy_name, bool missing_ok)
 {
-	Relation		pg_policy_rel;
-	ScanKeyData		skey[2];
-	SysScanDesc		sscan;
-	HeapTuple		policy_tuple;
-	Oid				policy_oid;
+	Relation	pg_policy_rel;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	HeapTuple	policy_tuple;
+	Oid			policy_oid;
 
 	pg_policy_rel = heap_open(PolicyRelationId, AccessShareLock);
 

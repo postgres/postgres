@@ -153,8 +153,8 @@ CreateCachedPlan(Node *raw_parse_tree,
 	CachedPlanSource *plansource;
 	MemoryContext source_context;
 	MemoryContext oldcxt;
-	Oid user_id;
-	int security_context;
+	Oid			user_id;
+	int			security_context;
 
 	Assert(query_string != NULL);		/* required as of 8.4 */
 

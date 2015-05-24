@@ -113,7 +113,7 @@ extern BgwHandleStatus
 WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *
 							   handle, pid_t *pid);
 extern BgwHandleStatus
-WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *);
+			WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *);
 
 /* Terminate a bgworker */
 extern void TerminateBackgroundWorker(BackgroundWorkerHandle *handle);

@@ -1158,11 +1158,11 @@ fail:
 List *
 oid_array_to_list(Datum datum)
 {
-	ArrayType *array = DatumGetArrayTypeP(datum);
-	Datum *values;
-	int nelems;
-	int i;
-	List *result = NIL;
+	ArrayType  *array = DatumGetArrayTypeP(datum);
+	Datum	   *values;
+	int			nelems;
+	int			i;
+	List	   *result = NIL;
 
 	deconstruct_array(array,
 					  OIDOID,

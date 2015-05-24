@@ -36,26 +36,26 @@ static bool still_sending = true;		/* feedback still needs to be sent? */
 static PGresult *HandleCopyStream(PGconn *conn, XLogRecPtr startpos,
 				 uint32 timeline, char *basedir,
 			   stream_stop_callback stream_stop, int standby_message_timeout,
-				  char *partial_suffix, XLogRecPtr *stoppos,
-				  bool synchronous, bool mark_done);
-static int CopyStreamPoll(PGconn *conn, long timeout_ms);
-static int CopyStreamReceive(PGconn *conn, long timeout, char **buffer);
+				 char *partial_suffix, XLogRecPtr *stoppos,
+				 bool synchronous, bool mark_done);
+static int	CopyStreamPoll(PGconn *conn, long timeout_ms);
+static int	CopyStreamReceive(PGconn *conn, long timeout, char **buffer);
 static bool ProcessKeepaliveMsg(PGconn *conn, char *copybuf, int len,
-								XLogRecPtr blockpos, int64 *last_status);
+					XLogRecPtr blockpos, int64 *last_status);
 static bool ProcessXLogDataMsg(PGconn *conn, char *copybuf, int len,
-							   XLogRecPtr *blockpos, uint32 timeline,
-							   char *basedir, stream_stop_callback stream_stop,
-							   char *partial_suffix, bool mark_done);
+				   XLogRecPtr *blockpos, uint32 timeline,
+				   char *basedir, stream_stop_callback stream_stop,
+				   char *partial_suffix, bool mark_done);
 static PGresult *HandleEndOfCopyStream(PGconn *conn, char *copybuf,
-									   XLogRecPtr blockpos, char *basedir, char *partial_suffix,
-									   XLogRecPtr *stoppos, bool mark_done);
+					XLogRecPtr blockpos, char *basedir, char *partial_suffix,
+					  XLogRecPtr *stoppos, bool mark_done);
 static bool CheckCopyStreamStop(PGconn *conn, XLogRecPtr blockpos,
-								uint32 timeline, char *basedir,
-								stream_stop_callback stream_stop,
-								char *partial_suffix, XLogRecPtr *stoppos,
-								bool mark_done);
+					uint32 timeline, char *basedir,
+					stream_stop_callback stream_stop,
+					char *partial_suffix, XLogRecPtr *stoppos,
+					bool mark_done);
 static long CalculateCopyStreamSleeptime(int64 now, int standby_message_timeout,
-										 int64 last_status);
+							 int64 last_status);
 
 static bool ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos,
 						 uint32 *timeline);
@@ -63,7 +63,7 @@ static bool ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos,
 static bool
 mark_file_as_archived(const char *basedir, const char *fname)
 {
-	int fd;
+	int			fd;
 	static char tmppath[MAXPGPATH];
 
 	snprintf(tmppath, sizeof(tmppath), "%s/archive_status/%s.done",
@@ -831,15 +831,15 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		 * Check if we should continue streaming, or abort at this point.
 		 */
 		if (!CheckCopyStreamStop(conn, blockpos, timeline, basedir,
-								stream_stop, partial_suffix, stoppos,
-								mark_done))
+								 stream_stop, partial_suffix, stoppos,
+								 mark_done))
 			goto error;
 
 		now = feGetCurrentTimestamp();
 
 		/*
-		 * If synchronous option is true, issue sync command as soon as
-		 * there are WAL data which has not been flushed yet.
+		 * If synchronous option is true, issue sync command as soon as there
+		 * are WAL data which has not been flushed yet.
 		 */
 		if (synchronous && lastFlushPosition < blockpos && walfile != -1)
 		{
@@ -886,9 +886,10 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				goto error;
 			if (r == -2)
 			{
-				PGresult	*res = HandleEndOfCopyStream(conn, copybuf, blockpos,
-														 basedir, partial_suffix,
-														 stoppos, mark_done);
+				PGresult   *res = HandleEndOfCopyStream(conn, copybuf, blockpos,
+													 basedir, partial_suffix,
+														stoppos, mark_done);
+
 				if (res == NULL)
 					goto error;
 				else
@@ -910,7 +911,8 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 					goto error;
 
 				/*
-				 * Check if we should continue streaming, or abort at this point.
+				 * Check if we should continue streaming, or abort at this
+				 * point.
 				 */
 				if (!CheckCopyStreamStop(conn, blockpos, timeline, basedir,
 										 stream_stop, partial_suffix, stoppos,
@@ -925,8 +927,8 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			}
 
 			/*
-			 * Process the received data, and any subsequent data we
-			 * can read without blocking.
+			 * Process the received data, and any subsequent data we can read
+			 * without blocking.
 			 */
 			r = CopyStreamReceive(conn, 0, &copybuf);
 		}
@@ -972,7 +974,7 @@ CopyStreamPoll(PGconn *conn, long timeout_ms)
 
 	ret = select(PQsocket(conn) + 1, &input_mask, NULL, NULL, timeoutptr);
 	if (ret == 0 || (ret < 0 && errno == EINTR))
-		return 0;		/* Got a timeout or signal */
+		return 0;				/* Got a timeout or signal */
 	else if (ret < 0)
 	{
 		fprintf(stderr, _("%s: select() failed: %s\n"),
@@ -1009,12 +1011,12 @@ CopyStreamReceive(PGconn *conn, long timeout, char **buffer)
 	if (rawlen == 0)
 	{
 		/*
-		 * No data available. Wait for some to appear, but not longer than
-		 * the specified timeout, so that we can ping the server.
+		 * No data available. Wait for some to appear, but not longer than the
+		 * specified timeout, so that we can ping the server.
 		 */
 		if (timeout != 0)
 		{
-			int		ret;
+			int			ret;
 
 			ret = CopyStreamPoll(conn, timeout);
 			if (ret <= 0)
@@ -1061,13 +1063,12 @@ ProcessKeepaliveMsg(PGconn *conn, char *copybuf, int len,
 	int64		now;
 
 	/*
-	 * Parse the keepalive message, enclosed in the CopyData message.
-	 * We just check if the server requested a reply, and ignore the
-	 * rest.
+	 * Parse the keepalive message, enclosed in the CopyData message. We just
+	 * check if the server requested a reply, and ignore the rest.
 	 */
-	pos = 1;			/* skip msgtype 'k' */
-	pos += 8;			/* skip walEnd */
-	pos += 8;			/* skip sendTime */
+	pos = 1;					/* skip msgtype 'k' */
+	pos += 8;					/* skip walEnd */
+	pos += 8;					/* skip sendTime */
 
 	if (len < pos + 1)
 	{
@@ -1084,11 +1085,11 @@ ProcessKeepaliveMsg(PGconn *conn, char *copybuf, int len,
 			walfile != -1)
 		{
 			/*
-			 * If a valid flush location needs to be reported,
-			 * flush the current WAL file so that the latest flush
-			 * location is sent back to the server. This is necessary to
-			 * see whether the last WAL data has been successfully
-			 * replicated or not, at the normal shutdown of the server.
+			 * If a valid flush location needs to be reported, flush the
+			 * current WAL file so that the latest flush location is sent back
+			 * to the server. This is necessary to see whether the last WAL
+			 * data has been successfully replicated or not, at the normal
+			 * shutdown of the server.
 			 */
 			if (fsync(walfile) != 0)
 			{
@@ -1123,21 +1124,21 @@ ProcessXLogDataMsg(PGconn *conn, char *copybuf, int len,
 	int			hdr_len;
 
 	/*
-	 * Once we've decided we don't want to receive any more, just
-	 * ignore any subsequent XLogData messages.
+	 * Once we've decided we don't want to receive any more, just ignore any
+	 * subsequent XLogData messages.
 	 */
 	if (!(still_sending))
 		return true;
 
 	/*
-	 * Read the header of the XLogData message, enclosed in the
-	 * CopyData message. We only need the WAL location field
-	 * (dataStart), the rest of the header is ignored.
+	 * Read the header of the XLogData message, enclosed in the CopyData
+	 * message. We only need the WAL location field (dataStart), the rest of
+	 * the header is ignored.
 	 */
-	hdr_len = 1;		/* msgtype 'w' */
-	hdr_len += 8;		/* dataStart */
-	hdr_len += 8;		/* walEnd */
-	hdr_len += 8;		/* sendTime */
+	hdr_len = 1;				/* msgtype 'w' */
+	hdr_len += 8;				/* dataStart */
+	hdr_len += 8;				/* walEnd */
+	hdr_len += 8;				/* sendTime */
 	if (len < hdr_len)
 	{
 		fprintf(stderr, _("%s: streaming header too small: %d\n"),
@@ -1150,8 +1151,8 @@ ProcessXLogDataMsg(PGconn *conn, char *copybuf, int len,
 	xlogoff = *blockpos % XLOG_SEG_SIZE;
 
 	/*
-	 * Verify that the initial location in the stream matches where we
-	 * think we are.
+	 * Verify that the initial location in the stream matches where we think
+	 * we are.
 	 */
 	if (walfile == -1)
 	{
@@ -1208,7 +1209,7 @@ ProcessXLogDataMsg(PGconn *conn, char *copybuf, int len,
 				  bytes_to_write) != bytes_to_write)
 		{
 			fprintf(stderr,
-					_("%s: could not write %u bytes to WAL file \"%s\": %s\n"),
+				  _("%s: could not write %u bytes to WAL file \"%s\": %s\n"),
 					progname, bytes_to_write, current_walfile_name,
 					strerror(errno));
 			return false;
@@ -1252,15 +1253,15 @@ ProcessXLogDataMsg(PGconn *conn, char *copybuf, int len,
  */
 static PGresult *
 HandleEndOfCopyStream(PGconn *conn, char *copybuf,
-					  XLogRecPtr blockpos, char *basedir, char *partial_suffix,
+					XLogRecPtr blockpos, char *basedir, char *partial_suffix,
 					  XLogRecPtr *stoppos, bool mark_done)
 {
 	PGresult   *res = PQgetResult(conn);
 
 	/*
-	 * The server closed its end of the copy stream.  If we haven't
-	 * closed ours already, we need to do so now, unless the server
-	 * threw an error, in which case we don't.
+	 * The server closed its end of the copy stream.  If we haven't closed
+	 * ours already, we need to do so now, unless the server threw an error,
+	 * in which case we don't.
 	 */
 	if (still_sending)
 	{

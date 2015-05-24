@@ -121,6 +121,7 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
 	Assert(!(tup->t_infomask & HEAP_MOVED));
+
 	/*
 	 * Because GetUpdateXid() performs memory allocations if xmax is a
 	 * multixact we can't Assert() if we're inside a critical section. This
@@ -128,7 +129,7 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 	 * things too much.
 	 */
 	Assert(CritSectionCount > 0 ||
-		   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
+	  TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
 
 	if (tup->t_infomask & HEAP_COMBOCID)
 		return GetRealCmax(cid);
@@ -317,7 +318,7 @@ SerializeComboCIDState(Size maxsize, char *start_address)
 	char	   *endptr;
 
 	/* First, we store the number of currently-existing ComboCIDs. */
-	* (int *) start_address = usedComboCids;
+	*(int *) start_address = usedComboCids;
 
 	/* If maxsize is too small, throw an error. */
 	endptr = start_address + sizeof(int) +
@@ -347,7 +348,7 @@ RestoreComboCIDState(char *comboCIDstate)
 	Assert(!comboCids && !comboHash);
 
 	/* First, we retrieve the number of ComboCIDs that were serialized. */
-	num_elements = * (int *) comboCIDstate;
+	num_elements = *(int *) comboCIDstate;
 	keydata = (ComboCidKeyData *) (comboCIDstate + sizeof(int));
 
 	/* Use GetComboCommandId to restore each ComboCID. */

@@ -64,19 +64,19 @@
 
 static bool verify_peer_name_matches_certificate(PGconn *);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
-static int	verify_peer_name_matches_certificate_name(PGconn *conn,
-												  ASN1_STRING *name,
-												  char **store_name);
+static int verify_peer_name_matches_certificate_name(PGconn *conn,
+										  ASN1_STRING *name,
+										  char **store_name);
 static void destroy_ssl_system(void);
 static int	initialize_SSL(PGconn *conn);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
 static char *SSLerrmessage(void);
 static void SSLerrfree(char *buf);
 
-static int my_sock_read(BIO *h, char *buf, int size);
-static int my_sock_write(BIO *h, const char *buf, int size);
+static int	my_sock_read(BIO *h, char *buf, int size);
+static int	my_sock_write(BIO *h, const char *buf, int size);
 static BIO_METHOD *my_BIO_s_socket(void);
-static int my_SSL_set_fd(PGconn *conn, int fd);
+static int	my_SSL_set_fd(PGconn *conn, int fd);
 
 
 static bool pq_init_ssl_lib = true;
@@ -187,7 +187,7 @@ pgtls_open_client(PGconn *conn)
 }
 
 /*
- *  Is there unread data waiting in the SSL read buffer?
+ *	Is there unread data waiting in the SSL read buffer?
  */
 bool
 pgtls_read_pending(PGconn *conn)
@@ -221,7 +221,7 @@ rloop:
 			{
 				/* Not supposed to happen, so we don't translate the msg */
 				printfPQExpBuffer(&conn->errorMessage,
-								  "SSL_read failed but did not provide error information\n");
+				  "SSL_read failed but did not provide error information\n");
 				/* assume the connection is broken */
 				result_errno = ECONNRESET;
 			}
@@ -247,7 +247,7 @@ rloop:
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 								"server closed the connection unexpectedly\n"
-													"\tThis probably means the server terminated abnormally\n"
+					"\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
 				else
 					printfPQExpBuffer(&conn->errorMessage,
@@ -279,12 +279,12 @@ rloop:
 		case SSL_ERROR_ZERO_RETURN:
 
 			/*
-			 * Per OpenSSL documentation, this error code is only returned
-			 * for a clean connection closure, so we should not report it
-			 * as a server crash.
+			 * Per OpenSSL documentation, this error code is only returned for
+			 * a clean connection closure, so we should not report it as a
+			 * server crash.
 			 */
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("SSL connection has been closed unexpectedly\n"));
+			 libpq_gettext("SSL connection has been closed unexpectedly\n"));
 			result_errno = ECONNRESET;
 			n = -1;
 			break;
@@ -329,7 +329,7 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 			{
 				/* Not supposed to happen, so we don't translate the msg */
 				printfPQExpBuffer(&conn->errorMessage,
-								  "SSL_write failed but did not provide error information\n");
+				 "SSL_write failed but did not provide error information\n");
 				/* assume the connection is broken */
 				result_errno = ECONNRESET;
 			}
@@ -337,9 +337,8 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 		case SSL_ERROR_WANT_READ:
 
 			/*
-			 * Returning 0 here causes caller to wait for write-ready,
-			 * which is not really the right thing, but it's the best we
-			 * can do.
+			 * Returning 0 here causes caller to wait for write-ready, which
+			 * is not really the right thing, but it's the best we can do.
 			 */
 			n = 0;
 			break;
@@ -354,7 +353,7 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
+					"\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
 				else
 					printfPQExpBuffer(&conn->errorMessage,
@@ -386,12 +385,12 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 		case SSL_ERROR_ZERO_RETURN:
 
 			/*
-			 * Per OpenSSL documentation, this error code is only returned
-			 * for a clean connection closure, so we should not report it
-			 * as a server crash.
+			 * Per OpenSSL documentation, this error code is only returned for
+			 * a clean connection closure, so we should not report it as a
+			 * server crash.
 			 */
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("SSL connection has been closed unexpectedly\n"));
+			 libpq_gettext("SSL connection has been closed unexpectedly\n"));
 			result_errno = ECONNRESET;
 			n = -1;
 			break;
@@ -509,7 +508,7 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	if (name_entry == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("SSL certificate's name entry is missing\n"));
+				 libpq_gettext("SSL certificate's name entry is missing\n"));
 		return -1;
 	}
 
@@ -539,7 +538,7 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	{
 		free(name);
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("SSL certificate's name contains embedded null\n"));
+		   libpq_gettext("SSL certificate's name contains embedded null\n"));
 		return -1;
 	}
 
@@ -574,8 +573,9 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	bool		found_match = false;
 	bool		got_error = false;
 	char	   *first_name = NULL;
+
 	STACK_OF(GENERAL_NAME) *peer_san;
-	int 		i;
+	int			i;
 	int			rc;
 
 	/*
@@ -614,7 +614,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 
 				names_examined++;
 				rc = verify_peer_name_matches_certificate_name(conn,
-															   name->d.dNSName,
+															 name->d.dNSName,
 															   &alt_name);
 				if (rc == -1)
 					got_error = true;
@@ -634,6 +634,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		}
 		sk_GENERAL_NAME_free(peer_san);
 	}
+
 	/*
 	 * If there is no subjectAltName extension of type dNSName, check the
 	 * Common Name.
@@ -656,10 +657,10 @@ verify_peer_name_matches_certificate(PGconn *conn)
 			{
 				names_examined++;
 				rc = verify_peer_name_matches_certificate_name(
-					conn,
-					X509_NAME_ENTRY_get_data(
-						X509_NAME_get_entry(subject_name, cn_index)),
-					&first_name);
+															   conn,
+													X509_NAME_ENTRY_get_data(
+								X509_NAME_get_entry(subject_name, cn_index)),
+															   &first_name);
 
 				if (rc == -1)
 					got_error = true;
@@ -672,10 +673,10 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	if (!found_match && !got_error)
 	{
 		/*
-		 * No match. Include the name from the server certificate in the
-		 * error message, to aid debugging broken configurations. If there
-		 * are multiple names, only print the first one to avoid an overly
-		 * long error message.
+		 * No match. Include the name from the server certificate in the error
+		 * message, to aid debugging broken configurations. If there are
+		 * multiple names, only print the first one to avoid an overly long
+		 * error message.
 		 */
 		if (names_examined > 1)
 		{
@@ -806,8 +807,10 @@ pgtls_init(PGconn *conn)
 
 		if (ssl_open_connections++ == 0)
 		{
-			/* These are only required for threaded libcrypto applications, but
-			 * make sure we don't stomp on them if they're already set. */
+			/*
+			 * These are only required for threaded libcrypto applications,
+			 * but make sure we don't stomp on them if they're already set.
+			 */
 			if (CRYPTO_get_id_callback() == NULL)
 				CRYPTO_set_id_callback(pq_threadidcallback);
 			if (CRYPTO_get_locking_callback() == NULL)
@@ -888,8 +891,10 @@ destroy_ssl_system(void)
 
 	if (pq_init_crypto_lib && ssl_open_connections == 0)
 	{
-		/* No connections left, unregister libcrypto callbacks, if no one
-		 * registered different ones in the meantime. */
+		/*
+		 * No connections left, unregister libcrypto callbacks, if no one
+		 * registered different ones in the meantime.
+		 */
 		if (CRYPTO_get_locking_callback() == pq_lockingcallback)
 			CRYPTO_set_locking_callback(NULL);
 		if (CRYPTO_get_id_callback() == pq_threadidcallback)
@@ -1538,6 +1543,7 @@ PQsslAttributes(PGconn *conn)
 		"protocol",
 		NULL
 	};
+
 	return result;
 }
 
@@ -1555,7 +1561,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 	if (strcmp(attribute_name, "key_bits") == 0)
 	{
 		static char sslbits_str[10];
-		int		sslbits;
+		int			sslbits;
 
 		SSL_get_cipher_bits(conn->ssl, &sslbits);
 		snprintf(sslbits_str, sizeof(sslbits_str), "%d", sslbits);
@@ -1571,7 +1577,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 	if (strcmp(attribute_name, "protocol") == 0)
 		return SSL_get_version(conn->ssl);
 
-	return NULL;		/* unknown attribute */
+	return NULL;				/* unknown attribute */
 }
 
 /*

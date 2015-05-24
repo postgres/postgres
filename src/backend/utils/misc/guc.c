@@ -666,11 +666,12 @@ const char *const config_type_names[] =
 
 typedef struct
 {
-	char	unit[MAX_UNIT_LEN + 1];	/* unit, as a string, like "kB" or "min" */
-	int		base_unit;		/* GUC_UNIT_XXX */
-	int		multiplier;		/* If positive, multiply the value with this for
-							 * unit -> base_unit conversion.  If negative,
-							 * divide (with the absolute value) */
+	char		unit[MAX_UNIT_LEN + 1]; /* unit, as a string, like "kB" or
+										 * "min" */
+	int			base_unit;		/* GUC_UNIT_XXX */
+	int			multiplier;		/* If positive, multiply the value with this
+								 * for unit -> base_unit conversion.  If
+								 * negative, divide (with the absolute value) */
 } unit_conversion;
 
 /* Ensure that the constants in the tables don't overflow or underflow */
@@ -684,58 +685,56 @@ typedef struct
 #error XLOG_SEG_SIZE must be between 1MB and 1GB
 #endif
 
-static const char *memory_units_hint =
-	gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
+static const char *memory_units_hint = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
 
 static const unit_conversion memory_unit_conversion_table[] =
 {
-	{ "TB",		GUC_UNIT_KB,	 	1024*1024*1024 },
-	{ "GB",		GUC_UNIT_KB,	 	1024*1024 },
-	{ "MB",		GUC_UNIT_KB,	 	1024 },
-	{ "kB",		GUC_UNIT_KB,	 	1 },
+	{"TB", GUC_UNIT_KB, 1024 * 1024 * 1024},
+	{"GB", GUC_UNIT_KB, 1024 * 1024},
+	{"MB", GUC_UNIT_KB, 1024},
+	{"kB", GUC_UNIT_KB, 1},
 
-	{ "TB",		GUC_UNIT_BLOCKS,	(1024*1024*1024) / (BLCKSZ / 1024) },
-	{ "GB",		GUC_UNIT_BLOCKS,	(1024*1024) / (BLCKSZ / 1024) },
-	{ "MB",		GUC_UNIT_BLOCKS,	1024 / (BLCKSZ / 1024) },
-	{ "kB",		GUC_UNIT_BLOCKS,	-(BLCKSZ / 1024) },
+	{"TB", GUC_UNIT_BLOCKS, (1024 * 1024 * 1024) / (BLCKSZ / 1024)},
+	{"GB", GUC_UNIT_BLOCKS, (1024 * 1024) / (BLCKSZ / 1024)},
+	{"MB", GUC_UNIT_BLOCKS, 1024 / (BLCKSZ / 1024)},
+	{"kB", GUC_UNIT_BLOCKS, -(BLCKSZ / 1024)},
 
-	{ "TB",		GUC_UNIT_XBLOCKS,	(1024*1024*1024) / (XLOG_BLCKSZ / 1024) },
-	{ "GB",		GUC_UNIT_XBLOCKS,	(1024*1024) / (XLOG_BLCKSZ / 1024) },
-	{ "MB",		GUC_UNIT_XBLOCKS,	1024 / (XLOG_BLCKSZ / 1024) },
-	{ "kB",		GUC_UNIT_XBLOCKS,	-(XLOG_BLCKSZ / 1024) },
+	{"TB", GUC_UNIT_XBLOCKS, (1024 * 1024 * 1024) / (XLOG_BLCKSZ / 1024)},
+	{"GB", GUC_UNIT_XBLOCKS, (1024 * 1024) / (XLOG_BLCKSZ / 1024)},
+	{"MB", GUC_UNIT_XBLOCKS, 1024 / (XLOG_BLCKSZ / 1024)},
+	{"kB", GUC_UNIT_XBLOCKS, -(XLOG_BLCKSZ / 1024)},
 
-	{ "TB",		GUC_UNIT_XSEGS,		(1024*1024*1024) / (XLOG_SEG_SIZE / 1024) },
-	{ "GB",		GUC_UNIT_XSEGS,		(1024*1024) / (XLOG_SEG_SIZE / 1024) },
-	{ "MB",		GUC_UNIT_XSEGS,		-(XLOG_SEG_SIZE / (1024 * 1024)) },
-	{ "kB",		GUC_UNIT_XSEGS,		-(XLOG_SEG_SIZE / 1024) },
+	{"TB", GUC_UNIT_XSEGS, (1024 * 1024 * 1024) / (XLOG_SEG_SIZE / 1024)},
+	{"GB", GUC_UNIT_XSEGS, (1024 * 1024) / (XLOG_SEG_SIZE / 1024)},
+	{"MB", GUC_UNIT_XSEGS, -(XLOG_SEG_SIZE / (1024 * 1024))},
+	{"kB", GUC_UNIT_XSEGS, -(XLOG_SEG_SIZE / 1024)},
 
-	{ "" }		/* end of table marker */
+	{""}						/* end of table marker */
 };
 
-static const char *time_units_hint =
-	gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
+static const char *time_units_hint = gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
 
 static const unit_conversion time_unit_conversion_table[] =
 {
-	{ "d",		GUC_UNIT_MS,	1000 * 60 * 60 * 24 },
-	{ "h",		GUC_UNIT_MS,	1000 * 60 * 60 },
-	{ "min", 	GUC_UNIT_MS,	1000 * 60},
-	{ "s",		GUC_UNIT_MS,	1000 },
-	{ "ms",		GUC_UNIT_MS,	1 },
+	{"d", GUC_UNIT_MS, 1000 * 60 * 60 * 24},
+	{"h", GUC_UNIT_MS, 1000 * 60 * 60},
+	{"min", GUC_UNIT_MS, 1000 * 60},
+	{"s", GUC_UNIT_MS, 1000},
+	{"ms", GUC_UNIT_MS, 1},
 
-	{ "d",		GUC_UNIT_S,		60 * 60 * 24 },
-	{ "h",		GUC_UNIT_S,		60 * 60 },
-	{ "min", 	GUC_UNIT_S,		60 },
-	{ "s",		GUC_UNIT_S,		1 },
-	{ "ms", 	GUC_UNIT_S,	 	-1000 },
+	{"d", GUC_UNIT_S, 60 * 60 * 24},
+	{"h", GUC_UNIT_S, 60 * 60},
+	{"min", GUC_UNIT_S, 60},
+	{"s", GUC_UNIT_S, 1},
+	{"ms", GUC_UNIT_S, -1000},
 
-	{ "d", 		GUC_UNIT_MIN,	60 * 24 },
-	{ "h", 		GUC_UNIT_MIN,	60 },
-	{ "min", 	GUC_UNIT_MIN,	1 },
-	{ "s", 		GUC_UNIT_MIN,	-60 },
-	{ "ms", 	GUC_UNIT_MIN,	-1000 * 60 },
+	{"d", GUC_UNIT_MIN, 60 * 24},
+	{"h", GUC_UNIT_MIN, 60},
+	{"min", GUC_UNIT_MIN, 1},
+	{"s", GUC_UNIT_MIN, -60},
+	{"ms", GUC_UNIT_MIN, -1000 * 60},
 
-	{ "" }		/* end of table marker */
+	{""}						/* end of table marker */
 };
 
 /*
@@ -993,8 +992,8 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"wal_compression", PGC_USERSET, WAL_SETTINGS,
-			 gettext_noop("Compresses full-page writes written in WAL file."),
-			 NULL
+			gettext_noop("Compresses full-page writes written in WAL file."),
+			NULL
 		},
 		&wal_compression,
 		false,
@@ -3685,10 +3684,10 @@ static int	num_guc_variables;
  */
 typedef struct ConfigFileVariable
 {
-	char	*name;
-	char	*value;
-	char	*filename;
-	int		sourceline;
+	char	   *name;
+	char	   *value;
+	char	   *filename;
+	int			sourceline;
 } ConfigFileVariable;
 static struct ConfigFileVariable *guc_file_variables;
 
@@ -5160,7 +5159,7 @@ convert_to_base_unit(int64 value, const char *unit,
 					 int base_unit, int64 *base_value)
 {
 	const unit_conversion *table;
-	int 		i;
+	int			i;
 
 	if (base_unit & GUC_UNIT_MEMORY)
 		table = memory_unit_conversion_table;
@@ -5207,9 +5206,9 @@ convert_from_base_unit(int64 base_value, int base_unit,
 		if (base_unit == table[i].base_unit)
 		{
 			/*
-			 * Accept the first conversion that divides the value evenly.
-			 * We assume that the conversions for each base unit are ordered
-			 * from greatest unit to the smallest!
+			 * Accept the first conversion that divides the value evenly. We
+			 * assume that the conversions for each base unit are ordered from
+			 * greatest unit to the smallest!
 			 */
 			if (table[i].multiplier < 0)
 			{
@@ -5278,7 +5277,7 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 		bool		converted = false;
 
 		if ((flags & GUC_UNIT) == 0)
-			return false;	/* this setting does not accept a unit */
+			return false;		/* this setting does not accept a unit */
 
 		unitlen = 0;
 		while (*endptr != '\0' && !isspace((unsigned char) *endptr) &&
@@ -5694,7 +5693,7 @@ set_config_option(const char *name, const char *value,
 	if (IsInParallelMode() && changeVal && action != GUC_ACTION_SAVE)
 		ereport(elevel,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot set parameters during a parallel operation")));
+			   errmsg("cannot set parameters during a parallel operation")));
 
 	record = find_option(name, true, elevel);
 	if (record == NULL)
@@ -7017,7 +7016,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot set parameters during a parallel operation")));
+			   errmsg("cannot set parameters during a parallel operation")));
 
 	switch (stmt->kind)
 	{

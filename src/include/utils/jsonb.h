@@ -244,7 +244,7 @@ struct JsonbValue
 	union
 	{
 		Numeric numeric;
-		bool		boolean;
+		bool boolean;
 		struct
 		{
 			int			len;
@@ -401,9 +401,9 @@ extern Datum jsonb_pretty(PG_FUNCTION_ARGS);
 extern Datum jsonb_concat(PG_FUNCTION_ARGS);
 
 /* deletion */
-Datum jsonb_delete(PG_FUNCTION_ARGS);
-Datum jsonb_delete_idx(PG_FUNCTION_ARGS);
-Datum jsonb_delete_path(PG_FUNCTION_ARGS);
+Datum		jsonb_delete(PG_FUNCTION_ARGS);
+Datum		jsonb_delete_idx(PG_FUNCTION_ARGS);
+Datum		jsonb_delete_path(PG_FUNCTION_ARGS);
 
 /* replacement */
 extern Datum jsonb_replace(PG_FUNCTION_ARGS);
@@ -431,7 +431,7 @@ extern void JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash);
 extern char *JsonbToCString(StringInfo out, JsonbContainer *in,
 			   int estimated_len);
 extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
-			   int estimated_len);
+					 int estimated_len);
 
 
 #endif   /* __JSONB_H__ */

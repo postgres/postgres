@@ -34,4 +34,4 @@ extern bool ReceiveXlogStream(PGconn *conn,
 				  bool synchronous,
 				  bool mark_done);
 
-#endif	/* RECEIVELOG_H */
+#endif   /* RECEIVELOG_H */

@@ -28,8 +28,8 @@ typedef struct shm_mq_handle shm_mq_handle;
 /* Descriptors for a single write spanning multiple locations. */
 typedef struct
 {
-	const char  *data;
-	Size	len;
+	const char *data;
+	Size		len;
 } shm_mq_iovec;
 
 /* Possible results of a send or receive operation. */
@@ -69,7 +69,7 @@ extern void shm_mq_detach(shm_mq *);
 extern shm_mq_result shm_mq_send(shm_mq_handle *mqh,
 			Size nbytes, const void *data, bool nowait);
 extern shm_mq_result shm_mq_sendv(shm_mq_handle *mqh,
-			shm_mq_iovec *iov, int iovcnt, bool nowait);
+			 shm_mq_iovec *iov, int iovcnt, bool nowait);
 extern shm_mq_result shm_mq_receive(shm_mq_handle *mqh,
 			   Size *nbytesp, void **datap, bool nowait);
 

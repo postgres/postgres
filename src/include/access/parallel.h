@@ -21,33 +21,33 @@
 #include "storage/shm_toc.h"
 #include "utils/elog.h"
 
-typedef void (*parallel_worker_main_type)(dsm_segment *seg, shm_toc *toc);
+typedef void (*parallel_worker_main_type) (dsm_segment *seg, shm_toc *toc);
 
 typedef struct ParallelWorkerInfo
 {
 	BackgroundWorkerHandle *bgwhandle;
 	shm_mq_handle *error_mqh;
-	int32 pid;
+	int32		pid;
 } ParallelWorkerInfo;
 
 typedef struct ParallelContext
 {
-	dlist_node node;
+	dlist_node	node;
 	SubTransactionId subid;
-	int nworkers;
+	int			nworkers;
 	parallel_worker_main_type entrypoint;
-	char *library_name;
-	char *function_name;
+	char	   *library_name;
+	char	   *function_name;
 	ErrorContextCallback *error_context_stack;
 	shm_toc_estimator estimator;
 	dsm_segment *seg;
-	void *private_memory;
-	shm_toc *toc;
+	void	   *private_memory;
+	shm_toc    *toc;
 	ParallelWorkerInfo *worker;
 } ParallelContext;
 
 extern bool ParallelMessagePending;
-extern int ParallelWorkerNumber;
+extern int	ParallelWorkerNumber;
 
 #define		IsParallelWorker()		(ParallelWorkerNumber >= 0)
 

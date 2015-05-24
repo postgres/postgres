@@ -106,8 +106,8 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		 * away, because the tuple is still visible until the deleting
 		 * transaction commits or the statement ends (if it's our
 		 * transaction). In either case, the lock on the VM buffer will have
-		 * been released (acting as a write barrier) after clearing the
-		 * bit. And for us to have a snapshot that includes the deleting
+		 * been released (acting as a write barrier) after clearing the bit.
+		 * And for us to have a snapshot that includes the deleting
 		 * transaction (making the tuple invisible), we must have acquired
 		 * ProcArrayLock after that time, acting as a read barrier.
 		 *

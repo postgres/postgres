@@ -645,7 +645,7 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 	 * overall targetlist's econtext.  GroupingFunc arguments are never
 	 * evaluated at all.
 	 */
-	if (IsA(node, Aggref) || IsA(node, GroupingFunc))
+	if (IsA(node, Aggref) ||IsA(node, GroupingFunc))
 		return false;
 	if (IsA(node, WindowFunc))
 		return false;

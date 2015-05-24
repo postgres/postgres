@@ -37,7 +37,8 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 
 	memset(parsed, 0, sizeof(*parsed));
 
-	parsed->xinfo = 0; /* default, if no XLOG_XACT_HAS_INFO is present */
+	parsed->xinfo = 0;			/* default, if no XLOG_XACT_HAS_INFO is
+								 * present */
 
 	parsed->xact_time = xlrec->xact_time;
 
@@ -62,7 +63,7 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 
 	if (parsed->xinfo & XACT_XINFO_HAS_SUBXACTS)
 	{
-		xl_xact_subxacts   *xl_subxacts = (xl_xact_subxacts *) data;
+		xl_xact_subxacts *xl_subxacts = (xl_xact_subxacts *) data;
 
 		parsed->nsubxacts = xl_subxacts->nsubxacts;
 		parsed->subxacts = xl_subxacts->subxacts;
@@ -123,7 +124,8 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 
 	memset(parsed, 0, sizeof(*parsed));
 
-	parsed->xinfo = 0; /* default, if no XLOG_XACT_HAS_INFO is present */
+	parsed->xinfo = 0;			/* default, if no XLOG_XACT_HAS_INFO is
+								 * present */
 
 	parsed->xact_time = xlrec->xact_time;
 
@@ -138,7 +140,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 
 	if (parsed->xinfo & XACT_XINFO_HAS_SUBXACTS)
 	{
-		xl_xact_subxacts   *xl_subxacts = (xl_xact_subxacts *) data;
+		xl_xact_subxacts *xl_subxacts = (xl_xact_subxacts *) data;
 
 		parsed->nsubxacts = xl_subxacts->nsubxacts;
 		parsed->subxacts = xl_subxacts->subxacts;
@@ -236,8 +238,8 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	{
 		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
 						 origin_id,
-						 (uint32)(parsed.origin_lsn >> 32),
-						 (uint32)parsed.origin_lsn,
+						 (uint32) (parsed.origin_lsn >> 32),
+						 (uint32) parsed.origin_lsn,
 						 timestamptz_to_str(parsed.origin_timestamp));
 	}
 }

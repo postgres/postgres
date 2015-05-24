@@ -57,13 +57,15 @@ typedef struct EventTriggerQueryState
 	bool		in_sql_drop;
 
 	/* table_rewrite */
-	Oid			table_rewrite_oid;	/* InvalidOid, or set for table_rewrite event */
+	Oid			table_rewrite_oid;		/* InvalidOid, or set for
+										 * table_rewrite event */
 	int			table_rewrite_reason;	/* AT_REWRITE reason */
 
 	/* Support for command collection */
 	bool		commandCollectionInhibited;
 	CollectedCommand *currentCommand;
-	List	   *commandList;		/* list of CollectedCommand; see deparse_utility.h */
+	List	   *commandList;	/* list of CollectedCommand; see
+								 * deparse_utility.h */
 	struct EventTriggerQueryState *previous;
 } EventTriggerQueryState;
 
@@ -143,7 +145,7 @@ static void AlterEventTriggerOwner_internal(Relation rel,
 								Oid newOwnerId);
 static event_trigger_command_tag_check_result check_ddl_tag(const char *tag);
 static event_trigger_command_tag_check_result check_table_rewrite_ddl_tag(
-	const char *tag);
+							const char *tag);
 static void error_duplicate_filter_variable(const char *defname);
 static Datum filter_list_to_array(List *filterlist);
 static Oid insert_event_trigger_tuple(char *trigname, char *eventname,
@@ -714,7 +716,7 @@ EventTriggerCommonSetup(Node *parsetree,
 
 		dbgtag = CreateCommandTag(parsetree);
 		if (event == EVT_DDLCommandStart ||
-			event == EVT_DDLCommandEnd   ||
+			event == EVT_DDLCommandEnd ||
 			event == EVT_SQLDrop)
 		{
 			if (check_ddl_tag(dbgtag) != EVENT_TRIGGER_COMMAND_TAG_OK)
@@ -1562,8 +1564,8 @@ pg_event_trigger_table_rewrite_oid(PG_FUNCTION_ARGS)
 		currentEventTriggerState->table_rewrite_oid == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_EVENT_TRIGGER_PROTOCOL_VIOLATED),
-		 errmsg("%s can only be called in a table_rewrite event trigger function",
-				"pg_event_trigger_table_rewrite_oid()")));
+				 errmsg("%s can only be called in a table_rewrite event trigger function",
+						"pg_event_trigger_table_rewrite_oid()")));
 
 	PG_RETURN_OID(currentEventTriggerState->table_rewrite_oid);
 }
@@ -1583,8 +1585,8 @@ pg_event_trigger_table_rewrite_reason(PG_FUNCTION_ARGS)
 		currentEventTriggerState->table_rewrite_reason == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_EVENT_TRIGGER_PROTOCOL_VIOLATED),
-		 errmsg("%s can only be called in a table_rewrite event trigger function",
-				"pg_event_trigger_table_rewrite_reason()")));
+				 errmsg("%s can only be called in a table_rewrite event trigger function",
+						"pg_event_trigger_table_rewrite_reason()")));
 
 	PG_RETURN_INT32(currentEventTriggerState->table_rewrite_reason);
 }
@@ -1672,7 +1674,7 @@ EventTriggerCollectSimpleCommand(ObjectAddress address,
 	command->parsetree = copyObject(parsetree);
 
 	currentEventTriggerState->commandList = lappend(currentEventTriggerState->commandList,
-											  command);
+													command);
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -1687,13 +1689,13 @@ EventTriggerCollectSimpleCommand(ObjectAddress address,
  *
  * XXX -- this API isn't considering the possibility of an ALTER TABLE command
  * being called reentrantly by an event trigger function.  Do we need stackable
- * commands at this level?  Perhaps at least we should detect the condition and
+ * commands at this level?	Perhaps at least we should detect the condition and
  * raise an error.
  */
 void
 EventTriggerAlterTableStart(Node *parsetree)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 	CollectedCommand *command;
 
 	/* ignore if event trigger context not set, or collection disabled */
@@ -1744,7 +1746,7 @@ EventTriggerAlterTableRelid(Oid objectId)
 void
 EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 	CollectedATSubcmd *newsub;
 
 	/* ignore if event trigger context not set, or collection disabled */
@@ -1808,8 +1810,8 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 {
 	MemoryContext oldcxt;
 	CollectedCommand *command;
-	InternalGrant  *icopy;
-	ListCell	   *cell;
+	InternalGrant *icopy;
+	ListCell   *cell;
 
 	/* ignore if event trigger context not set, or collection disabled */
 	if (!currentEventTriggerState ||
@@ -1849,9 +1851,9 @@ EventTriggerCollectGrant(InternalGrant *istmt)
  */
 void
 EventTriggerCollectAlterOpFam(AlterOpFamilyStmt *stmt, Oid opfamoid,
-							List *operators, List *procedures)
+							  List *operators, List *procedures)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 	CollectedCommand *command;
 
 	/* ignore if event trigger context not set, or collection disabled */
@@ -1882,9 +1884,9 @@ EventTriggerCollectAlterOpFam(AlterOpFamilyStmt *stmt, Oid opfamoid,
  */
 void
 EventTriggerCollectCreateOpClass(CreateOpClassStmt *stmt, Oid opcoid,
-							   List *operators, List *procedures)
+								 List *operators, List *procedures)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 	CollectedCommand *command;
 
 	/* ignore if event trigger context not set, or collection disabled */
@@ -1918,7 +1920,7 @@ void
 EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 								 Oid *dictIds, int ndicts)
 {
-	MemoryContext   oldcxt;
+	MemoryContext oldcxt;
 	CollectedCommand *command;
 
 	/* ignore if event trigger context not set, or collection disabled */
@@ -1952,7 +1954,7 @@ EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 void
 EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 	CollectedCommand *command;
 
 	/* ignore if event trigger context not set, or collection disabled */
@@ -2034,10 +2036,10 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 		 * object, the returned OID is Invalid.  Don't return anything.
 		 *
 		 * One might think that a viable alternative would be to look up the
-		 * Oid of the existing object and run the deparse with that.  But since
-		 * the parse tree might be different from the one that created the
-		 * object in the first place, we might not end up in a consistent state
-		 * anyway.
+		 * Oid of the existing object and run the deparse with that.  But
+		 * since the parse tree might be different from the one that created
+		 * the object in the first place, we might not end up in a consistent
+		 * state anyway.
 		 */
 		if (cmd->type == SCT_Simple &&
 			!OidIsValid(cmd->d.simple.address.objectId))
@@ -2074,10 +2076,10 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 					identity = getObjectIdentity(&addr);
 
 					/*
-					 * Obtain schema name, if any ("pg_temp" if a temp object).
-					 * If the object class is not in the supported list here,
-					 * we assume it's a schema-less object type, and thus
-					 * "schema" remains set to NULL.
+					 * Obtain schema name, if any ("pg_temp" if a temp
+					 * object). If the object class is not in the supported
+					 * list here, we assume it's a schema-less object type,
+					 * and thus "schema" remains set to NULL.
 					 */
 					if (is_objectclass_supported(addr.classId))
 					{
@@ -2099,10 +2101,10 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 									 addr.classId, addr.objectId);
 							schema_oid =
 								heap_getattr(objtup, nspAttnum,
-											 RelationGetDescr(catalog), &isnull);
+										 RelationGetDescr(catalog), &isnull);
 							if (isnull)
 								elog(ERROR,
-									 "invalid null namespace in object %u/%u/%d",
+								 "invalid null namespace in object %u/%u/%d",
 									 addr.classId, addr.objectId, addr.objectSubId);
 							/* XXX not quite get_namespace_name_or_temp */
 							if (isAnyTempNamespace(schema_oid))
@@ -2149,7 +2151,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 				values[i++] = CStringGetTextDatum(CreateCommandTag(cmd->parsetree));
 				/* object_type */
 				values[i++] = CStringGetTextDatum(stringify_adefprivs_objtype(
-																			  cmd->d.defprivs.objtype));
+												   cmd->d.defprivs.objtype));
 				/* schema */
 				nulls[i++] = true;
 				/* identity */
@@ -2172,7 +2174,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 												  "GRANT" : "REVOKE");
 				/* object_type */
 				values[i++] = CStringGetTextDatum(stringify_grantobjtype(
-																		 cmd->d.grant.istmt->objtype));
+											   cmd->d.grant.istmt->objtype));
 				/* schema */
 				nulls[i++] = true;
 				/* identity */
@@ -2230,7 +2232,7 @@ stringify_grantobjtype(GrantObjectType objtype)
 			return "TYPE";
 		default:
 			elog(ERROR, "unrecognized type %d", objtype);
-			return "???";	/* keep compiler quiet */
+			return "???";		/* keep compiler quiet */
 	}
 }
 
@@ -2257,6 +2259,6 @@ stringify_adefprivs_objtype(GrantObjectType objtype)
 			break;
 		default:
 			elog(ERROR, "unrecognized type %d", objtype);
-			return "???";	/* keep compiler quiet */
+			return "???";		/* keep compiler quiet */
 	}
 }

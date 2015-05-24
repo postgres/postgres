@@ -9,7 +9,7 @@ PG_MODULE_MAGIC;
 
 
 PG_FUNCTION_INFO_V1(hstore_to_plperl);
-Datum hstore_to_plperl(PG_FUNCTION_ARGS);
+Datum		hstore_to_plperl(PG_FUNCTION_ARGS);
 
 Datum
 hstore_to_plperl(PG_FUNCTION_ARGS)
@@ -26,10 +26,10 @@ hstore_to_plperl(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; i++)
 	{
 		const char *key;
-		SV	   *value;
+		SV		   *value;
 
 		key = pnstrdup(HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
-		value = HS_VALISNULL(entries, i) ? newSV(0) : cstr2sv(pnstrdup(HS_VAL(entries, base,i), HS_VALLEN(entries, i)));
+		value = HS_VALISNULL(entries, i) ? newSV(0) : cstr2sv(pnstrdup(HS_VAL(entries, base, i), HS_VALLEN(entries, i)));
 
 		(void) hv_store(hv, key, strlen(key), value, 0);
 	}
@@ -39,7 +39,7 @@ hstore_to_plperl(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(plperl_to_hstore);
-Datum plperl_to_hstore(PG_FUNCTION_ARGS);
+Datum		plperl_to_hstore(PG_FUNCTION_ARGS);
 
 Datum
 plperl_to_hstore(PG_FUNCTION_ARGS)
@@ -61,8 +61,8 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 	i = 0;
 	while ((he = hv_iternext(hv)))
 	{
-		char	 *key = sv2cstr(HeSVKEY_force(he));
-		SV		 *value = HeVAL(he);
+		char	   *key = sv2cstr(HeSVKEY_force(he));
+		SV		   *value = HeVAL(he);
 
 		pairs[i].key = pstrdup(key);
 		pairs[i].keylen = hstoreCheckKeyLen(strlen(pairs[i].key));

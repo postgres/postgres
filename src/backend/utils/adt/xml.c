@@ -1405,7 +1405,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			if (*(utf8string + count))
 			{
 				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
-													   utf8string + count, NULL);
+												   utf8string + count, NULL);
 				if (res_code != 0 || xmlerrcxt->err_occurred)
 					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
 								"invalid XML content");
@@ -3697,7 +3697,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					for (i = 0; i < result; i++)
 					{
 						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
-																	 xmlerrcxt));
+																 xmlerrcxt));
 						(void) accumArrayResult(astate, datum, false,
 												XMLOID, CurrentMemoryContext);
 					}

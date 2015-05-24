@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * replorigindesc.c
- *    rmgr descriptor routines for replication/logical/replication_origin.c
+ *	  rmgr descriptor routines for replication/logical/replication_origin.c
  *
  * Portions Copyright (c) 2015, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/replorigindesc.c
+ *	  src/backend/access/rmgrdesc/replorigindesc.c
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ replorigin_desc(StringInfo buf, XLogReaderState *record)
 		case XLOG_REPLORIGIN_SET:
 			{
 				xl_replorigin_set *xlrec;
+
 				xlrec = (xl_replorigin_set *) rec;
 
 				appendStringInfo(buf, "set %u; lsn %X/%X; force: %d",
@@ -38,6 +39,7 @@ replorigin_desc(StringInfo buf, XLogReaderState *record)
 		case XLOG_REPLORIGIN_DROP:
 			{
 				xl_replorigin_drop *xlrec;
+
 				xlrec = (xl_replorigin_drop *) rec;
 
 				appendStringInfo(buf, "drop %u", xlrec->node_id);

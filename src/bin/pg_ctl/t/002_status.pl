@@ -3,7 +3,7 @@ use warnings;
 use TestLib;
 use Test::More tests => 3;
 
-my $tempdir = TestLib::tempdir;
+my $tempdir       = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
 
 command_exit_is([ 'pg_ctl', 'status', '-D', "$tempdir/nonexistent" ],

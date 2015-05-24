@@ -280,7 +280,7 @@ ExecEndGroup(GroupState *node)
 void
 ExecReScanGroup(GroupState *node)
 {
-	PlanState	*outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 
 	node->grp_done = FALSE;
 	node->ss.ps.ps_TupFromTlist = false;

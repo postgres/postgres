@@ -135,16 +135,16 @@ typedef struct VacAttrStats
  */
 typedef struct VacuumParams
 {
-	int		freeze_min_age;		/* min freeze age, -1 to use default */
-	int		freeze_table_age;	/* age at which to scan whole table */
-	int		multixact_freeze_min_age;	/* min multixact freeze age,
-										 * -1 to use default */
-	int		multixact_freeze_table_age;	/* multixact age at which to
-										 * scan whole table */
-	bool	is_wraparound;		/* force a for-wraparound vacuum */
-	int		log_min_duration;	/* minimum execution threshold in ms at
-								 * which  verbose logs are activated,
-								 * -1 to use default */
+	int			freeze_min_age; /* min freeze age, -1 to use default */
+	int			freeze_table_age;		/* age at which to scan whole table */
+	int			multixact_freeze_min_age;		/* min multixact freeze age,
+												 * -1 to use default */
+	int			multixact_freeze_table_age;		/* multixact age at which to
+												 * scan whole table */
+	bool		is_wraparound;	/* force a for-wraparound vacuum */
+	int			log_min_duration;		/* minimum execution threshold in ms
+										 * at which  verbose logs are
+										 * activated, -1 to use default */
 } VacuumParams;
 
 /* GUC parameters */

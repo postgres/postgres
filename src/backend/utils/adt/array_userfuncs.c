@@ -687,7 +687,7 @@ array_position_start(PG_FUNCTION_ARGS)
 
 /*
  * array_position_common
- * 		Common code for array_position and array_position_start
+ *		Common code for array_position and array_position_start
  *
  * These are separate wrappers for the sake of opr_sanity regression test.
  * They are not strict so we have to test for null inputs explicitly.
@@ -755,7 +755,8 @@ array_position_common(FunctionCallInfo fcinfo)
 
 	/*
 	 * We arrange to look up type info for array_create_iterator only once per
-	 * series of calls, assuming the element type doesn't change underneath us.
+	 * series of calls, assuming the element type doesn't change underneath
+	 * us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
@@ -778,8 +779,8 @@ array_position_common(FunctionCallInfo fcinfo)
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("could not identify an equality operator for type %s",
-							format_type_be(element_type))));
+				errmsg("could not identify an equality operator for type %s",
+					   format_type_be(element_type))));
 
 		my_extra->element_type = element_type;
 		fmgr_info(typentry->eq_opr_finfo.fn_oid, &my_extra->proc);
@@ -892,7 +893,8 @@ array_positions(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up type info for array_create_iterator only once per
-	 * series of calls, assuming the element type doesn't change underneath us.
+	 * series of calls, assuming the element type doesn't change underneath
+	 * us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
@@ -915,15 +917,16 @@ array_positions(PG_FUNCTION_ARGS)
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("could not identify an equality operator for type %s",
-							format_type_be(element_type))));
+				errmsg("could not identify an equality operator for type %s",
+					   format_type_be(element_type))));
 
 		my_extra->element_type = element_type;
 		fmgr_info(typentry->eq_opr_finfo.fn_oid, &my_extra->proc);
 	}
 
 	/*
-	 * Accumulate each array position iff the element matches the given element.
+	 * Accumulate each array position iff the element matches the given
+	 * element.
 	 */
 	array_iterator = array_create_iterator(array, 0, my_extra);
 	while (array_iterate(array_iterator, &value, &isnull))

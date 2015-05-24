@@ -500,8 +500,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	bucket_bytes = sizeof(HashJoinTuple) * nbuckets;
 
 	/*
-	 * If there's not enough space to store the projected number of tuples
-	 * and the required bucket headers, we will need multiple batches.
+	 * If there's not enough space to store the projected number of tuples and
+	 * the required bucket headers, we will need multiple batches.
 	 */
 	if (inner_rel_bytes + bucket_bytes > hash_table_bytes)
 	{
@@ -512,8 +512,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		long		bucket_size;
 
 		/*
-		 * Estimate the number of buckets we'll want to have when work_mem
-		 * is entirely full.  Each bucket will contain a bucket pointer plus
+		 * Estimate the number of buckets we'll want to have when work_mem is
+		 * entirely full.  Each bucket will contain a bucket pointer plus
 		 * NTUP_PER_BUCKET tuples, whose projected size already includes
 		 * overhead for the hash code, pointer to the next tuple, etc.
 		 */
@@ -527,9 +527,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		 * Buckets are simple pointers to hashjoin tuples, while tupsize
 		 * includes the pointer, hash code, and MinimalTupleData.  So buckets
 		 * should never really exceed 25% of work_mem (even for
-		 * NTUP_PER_BUCKET=1); except maybe * for work_mem values that are
-		 * not 2^N bytes, where we might get more * because of doubling.
-		 * So let's look for 50% here.
+		 * NTUP_PER_BUCKET=1); except maybe * for work_mem values that are not
+		 * 2^N bytes, where we might get more * because of doubling. So let's
+		 * look for 50% here.
 		 */
 		Assert(bucket_bytes <= hash_table_bytes / 2);
 
@@ -655,7 +655,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		hashtable->log2_nbuckets = hashtable->log2_nbuckets_optimal;
 
 		hashtable->buckets = repalloc(hashtable->buckets,
-									  sizeof(HashJoinTuple) * hashtable->nbuckets);
+								sizeof(HashJoinTuple) * hashtable->nbuckets);
 	}
 
 	/*
@@ -671,6 +671,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	while (oldchunks != NULL)
 	{
 		HashMemoryChunk nextchunk = oldchunks->next;
+
 		/* position within the buffer (up to oldchunks->used) */
 		size_t		idx = 0;
 
@@ -691,7 +692,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			{
 				/* keep tuple in memory - copy it into the new chunk */
 				HashJoinTuple copyTuple =
-					(HashJoinTuple) dense_alloc(hashtable, hashTupleSize);
+				(HashJoinTuple) dense_alloc(hashtable, hashTupleSize);
+
 				memcpy(copyTuple, hashTuple, hashTupleSize);
 
 				/* and add it back to the appropriate bucket */
@@ -749,15 +751,15 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 static void
 ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 {
-	HashMemoryChunk	chunk;
+	HashMemoryChunk chunk;
 
 	/* do nothing if not an increase (it's called increase for a reason) */
 	if (hashtable->nbuckets >= hashtable->nbuckets_optimal)
 		return;
 
 	/*
-	 * We already know the optimal number of buckets, so let's just
-	 * compute the log2_nbuckets for it.
+	 * We already know the optimal number of buckets, so let's just compute
+	 * the log2_nbuckets for it.
 	 */
 	hashtable->nbuckets = hashtable->nbuckets_optimal;
 	hashtable->log2_nbuckets = my_log2(hashtable->nbuckets_optimal);
@@ -771,14 +773,14 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 #endif
 
 	/*
-	 * Just reallocate the proper number of buckets - we don't need to
-	 * walk through them - we can walk the dense-allocated chunks
-	 * (just like in ExecHashIncreaseNumBatches, but without all the
-	 * copying into new chunks)
+	 * Just reallocate the proper number of buckets - we don't need to walk
+	 * through them - we can walk the dense-allocated chunks (just like in
+	 * ExecHashIncreaseNumBatches, but without all the copying into new
+	 * chunks)
 	 */
 	hashtable->buckets =
 		(HashJoinTuple *) repalloc(hashtable->buckets,
-								   hashtable->nbuckets * sizeof(HashJoinTuple));
+								hashtable->nbuckets * sizeof(HashJoinTuple));
 
 	memset(hashtable->buckets, 0, sizeof(void *) * hashtable->nbuckets);
 
@@ -786,12 +788,13 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 	for (chunk = hashtable->chunks; chunk != NULL; chunk = chunk->next)
 	{
 		/* process all tuples stored in this chunk */
-		size_t idx = 0;
+		size_t		idx = 0;
+
 		while (idx < chunk->used)
 		{
 			HashJoinTuple hashTuple = (HashJoinTuple) (chunk->data + idx);
-			int		bucketno;
-			int		batchno;
+			int			bucketno;
+			int			batchno;
 
 			ExecHashGetBucketAndBatch(hashtable, hashTuple->hashvalue,
 									  &bucketno, &batchno);
@@ -869,10 +872,11 @@ ExecHashTableInsert(HashJoinTable hashtable,
 
 		/*
 		 * Increase the (optimal) number of buckets if we just exceeded the
-		 * NTUP_PER_BUCKET threshold, but only when there's still a single batch.
+		 * NTUP_PER_BUCKET threshold, but only when there's still a single
+		 * batch.
 		 */
 		if ((hashtable->nbatch == 1) &&
-			(hashtable->nbuckets_optimal <= INT_MAX/2) &&	/* overflow protection */
+			(hashtable->nbuckets_optimal <= INT_MAX / 2) &&		/* overflow protection */
 			(ntuples >= (hashtable->nbuckets_optimal * NTUP_PER_BUCKET)))
 		{
 			hashtable->nbuckets_optimal *= 2;
@@ -1636,7 +1640,7 @@ dense_alloc(HashJoinTable hashtable, Size size)
 	{
 		/* allocate new chunk and put it at the beginning of the list */
 		newChunk = (HashMemoryChunk) MemoryContextAlloc(hashtable->batchCxt,
-								  offsetof(HashMemoryChunkData, data) + size);
+								 offsetof(HashMemoryChunkData, data) + size);
 		newChunk->maxlen = size;
 		newChunk->used = 0;
 		newChunk->ntuples = 0;
@@ -1663,15 +1667,15 @@ dense_alloc(HashJoinTable hashtable, Size size)
 	}
 
 	/*
-	 * See if we have enough space for it in the current chunk (if any).
-	 * If not, allocate a fresh chunk.
+	 * See if we have enough space for it in the current chunk (if any). If
+	 * not, allocate a fresh chunk.
 	 */
 	if ((hashtable->chunks == NULL) ||
 		(hashtable->chunks->maxlen - hashtable->chunks->used) < size)
 	{
 		/* allocate new chunk and put it at the beginning of the list */
 		newChunk = (HashMemoryChunk) MemoryContextAlloc(hashtable->batchCxt,
-					   offsetof(HashMemoryChunkData, data) + HASH_CHUNK_SIZE);
+					  offsetof(HashMemoryChunkData, data) + HASH_CHUNK_SIZE);
 
 		newChunk->maxlen = HASH_CHUNK_SIZE;
 		newChunk->used = size;

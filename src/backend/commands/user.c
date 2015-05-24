@@ -87,7 +87,8 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
 	bool		isreplication = false;	/* Is this a replication role? */
-	bool		bypassrls = false;		/* Is this a row security enabled role? */
+	bool		bypassrls = false;		/* Is this a row security enabled
+										 * role? */
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *addroleto = NIL;	/* roles to make this a member of */
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
@@ -300,7 +301,7 @@ CreateRole(CreateRoleStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change bypassrls attribute.")));
+				errmsg("must be superuser to change bypassrls attribute.")));
 	}
 	else
 	{
@@ -681,7 +682,7 @@ AlterRole(AlterRoleStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change bypassrls attribute")));
+				 errmsg("must be superuser to change bypassrls attribute")));
 	}
 	else if (!have_createrole_privilege())
 	{
@@ -721,11 +722,11 @@ AlterRole(AlterRoleStmt *stmt)
 	 * Call the password checking hook if there is one defined
 	 */
 	if (check_password_hook && password)
-		(*check_password_hook)(rolename ,
-							   password,
-			 isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
-							   validUntil_datum,
-							   validUntil_null);
+		(*check_password_hook) (rolename,
+								password,
+			   isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+								validUntil_datum,
+								validUntil_null);
 
 	/*
 	 * Build an updated tuple, perusing the information just obtained
@@ -1358,8 +1359,8 @@ roleSpecsToIds(List *memberNames)
 
 	foreach(l, memberNames)
 	{
-		Node   *rolespec = (Node *) lfirst(l);
-		Oid		roleid;
+		Node	   *rolespec = (Node *) lfirst(l);
+		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
 		result = lappend_oid(result, roleid);
@@ -1455,7 +1456,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 (errmsg("role \"%s\" is a member of role \"%s\"",
-							 rolename, get_rolespec_name((Node *) memberRole)))));
+						rolename, get_rolespec_name((Node *) memberRole)))));
 
 		/*
 		 * Check if entry for this role/member already exists; if so, give
@@ -1470,7 +1471,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		{
 			ereport(NOTICE,
 					(errmsg("role \"%s\" is already a member of role \"%s\"",
-							get_rolespec_name((Node *) memberRole), rolename)));
+						 get_rolespec_name((Node *) memberRole), rolename)));
 			ReleaseSysCache(authmem_tuple);
 			continue;
 		}
@@ -1581,7 +1582,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 		{
 			ereport(WARNING,
 					(errmsg("role \"%s\" is not a member of role \"%s\"",
-							get_rolespec_name((Node *) memberRole), rolename)));
+						 get_rolespec_name((Node *) memberRole), rolename)));
 			continue;
 		}
 

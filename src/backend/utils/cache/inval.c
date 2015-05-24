@@ -226,7 +226,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
 							   offsetof(InvalidationChunk, msgs) +
-					FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
+						 FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = FIRSTCHUNKSIZE;
 		chunk->next = *listHdr;
@@ -240,7 +240,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
 							   offsetof(InvalidationChunk, msgs) +
-						 chunksize * sizeof(SharedInvalidationMessage));
+							   chunksize * sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = chunksize;
 		chunk->next = *listHdr;
@@ -333,6 +333,7 @@ AddCatcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.cc.id = (int8) id;
 	msg.cc.dbId = dbId;
 	msg.cc.hashValue = hashValue;
+
 	/*
 	 * Define padding bytes in SharedInvalidationMessage structs to be
 	 * defined. Otherwise the sinvaladt.c ringbuffer, which is accessed by
@@ -712,11 +713,11 @@ PrepareInvalidationState(void)
 	myInfo->my_level = GetCurrentTransactionNestLevel();
 
 	/*
-	 * If there's any previous entry, this one should be for a deeper
-	 * nesting level.
+	 * If there's any previous entry, this one should be for a deeper nesting
+	 * level.
 	 */
 	Assert(transInvalInfo == NULL ||
-		myInfo->my_level > transInvalInfo->my_level);
+		   myInfo->my_level > transInvalInfo->my_level);
 
 	transInvalInfo = myInfo;
 }

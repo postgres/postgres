@@ -1596,6 +1596,7 @@ CheckDeadLockAlert(void)
 	int			save_errno = errno;
 
 	got_deadlock_timeout = true;
+
 	/*
 	 * Have to set the latch again, even if handle_sig_alarm already did. Back
 	 * then got_deadlock_timeout wasn't yet set... It's unlikely that this

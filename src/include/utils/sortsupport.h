@@ -100,18 +100,18 @@ typedef struct SortSupportData
 	 * INT_MIN, as callers are allowed to negate the result before using it.
 	 *
 	 * This may be either the authoritative comparator, or the abbreviated
-	 * comparator.  Core code may switch this over the initial preference of an
-	 * opclass support function despite originally indicating abbreviation was
-	 * applicable, by assigning the authoritative comparator back.
+	 * comparator.  Core code may switch this over the initial preference of
+	 * an opclass support function despite originally indicating abbreviation
+	 * was applicable, by assigning the authoritative comparator back.
 	 */
 	int			(*comparator) (Datum x, Datum y, SortSupport ssup);
 
 	/*
 	 * "Abbreviated key" infrastructure follows.
 	 *
-	 * All callbacks must be set by sortsupport opclasses that make use of this
-	 * optional additional infrastructure (unless for whatever reasons the
-	 * opclass doesn't proceed with abbreviation, in which case
+	 * All callbacks must be set by sortsupport opclasses that make use of
+	 * this optional additional infrastructure (unless for whatever reasons
+	 * the opclass doesn't proceed with abbreviation, in which case
 	 * abbrev_converter must not be set).
 	 *
 	 * This allows opclass authors to supply a conversion routine, used to
@@ -120,20 +120,20 @@ typedef struct SortSupportData
 	 * pass-by-value Datum format that only the opclass has knowledge of.  An
 	 * alternative comparator, used only with this alternative representation
 	 * must also be provided (which is assigned to "comparator").  This
-	 * representation is a simple approximation of the original Datum.  It must
-	 * be possible to compare datums of this representation with each other
-	 * using the supplied alternative comparator, and have any non-zero return
-	 * value be a reliable proxy for what a proper comparison would indicate.
-	 * Returning zero from the alternative comparator does not indicate
-	 * equality, as with a conventional support routine 1, though -- it
-	 * indicates that it wasn't possible to determine how the two abbreviated
-	 * values compared.  A proper comparison, using "abbrev_full_comparator"/
-	 * ApplySortAbbrevFullComparator() is therefore required.  In many cases
-	 * this results in most or all comparisons only using the cheap alternative
-	 * comparison func, which is typically implemented as code that compiles to
-	 * just a few CPU instructions.  CPU cache miss penalties are expensive; to
-	 * get good overall performance, sort infrastructure must heavily weigh
-	 * cache performance.
+	 * representation is a simple approximation of the original Datum.  It
+	 * must be possible to compare datums of this representation with each
+	 * other using the supplied alternative comparator, and have any non-zero
+	 * return value be a reliable proxy for what a proper comparison would
+	 * indicate. Returning zero from the alternative comparator does not
+	 * indicate equality, as with a conventional support routine 1, though --
+	 * it indicates that it wasn't possible to determine how the two
+	 * abbreviated values compared.  A proper comparison, using
+	 * "abbrev_full_comparator"/ ApplySortAbbrevFullComparator() is therefore
+	 * required.  In many cases this results in most or all comparisons only
+	 * using the cheap alternative comparison func, which is typically
+	 * implemented as code that compiles to just a few CPU instructions.  CPU
+	 * cache miss penalties are expensive; to get good overall performance,
+	 * sort infrastructure must heavily weigh cache performance.
 	 *
 	 * Opclass authors must consider the final cardinality of abbreviated keys
 	 * when devising an encoding scheme.  It's possible for a strategy to work
@@ -143,16 +143,16 @@ typedef struct SortSupportData
 	 */
 
 	/*
-	 * "abbreviate" concerns whether or not the abbreviated key optimization is
-	 * applicable in principle (that is, the sortsupport routine needs to know
-	 * if its dealing with a key where an abbreviated representation can
+	 * "abbreviate" concerns whether or not the abbreviated key optimization
+	 * is applicable in principle (that is, the sortsupport routine needs to
+	 * know if its dealing with a key where an abbreviated representation can
 	 * usefully be packed together.  Conventionally, this is the leading
 	 * attribute key).  Note, however, that in order to determine that
 	 * abbreviation is not in play, the core code always checks whether or not
 	 * the opclass has set abbrev_converter.  This is a one way, one time
 	 * message to the opclass.
 	 */
-	bool			abbreviate;
+	bool		abbreviate;
 
 	/*
 	 * Converter to abbreviated format, from original representation.  Core
@@ -161,24 +161,25 @@ typedef struct SortSupportData
 	 * guaranteed NOT NULL, because it doesn't make sense to factor NULLness
 	 * into ad-hoc cost model.
 	 *
-	 * abbrev_converter is tested to see if abbreviation is in play.  Core code
-	 * may set it to NULL to indicate abbreviation should not be used (which is
-	 * something sortsupport routines need not concern themselves with).
-	 * However, sortsupport routines must not set it when it is immediately
-	 * established that abbreviation should not proceed (e.g., for !abbreviate
-	 * calls, or due to platform-specific impediments to using abbreviation).
+	 * abbrev_converter is tested to see if abbreviation is in play.  Core
+	 * code may set it to NULL to indicate abbreviation should not be used
+	 * (which is something sortsupport routines need not concern themselves
+	 * with). However, sortsupport routines must not set it when it is
+	 * immediately established that abbreviation should not proceed (e.g., for
+	 * !abbreviate calls, or due to platform-specific impediments to using
+	 * abbreviation).
 	 */
-	Datum			(*abbrev_converter) (Datum original, SortSupport ssup);
+	Datum		(*abbrev_converter) (Datum original, SortSupport ssup);
 
 	/*
-	 * abbrev_abort callback allows clients to verify that the current strategy
-	 * is working out, using a sortsupport routine defined ad-hoc cost model.
-	 * If there is a lot of duplicate abbreviated keys in practice, it's useful
-	 * to be able to abandon the strategy before paying too high a cost in
-	 * conversion (perhaps certain opclass-specific adaptations are useful
-	 * too).
+	 * abbrev_abort callback allows clients to verify that the current
+	 * strategy is working out, using a sortsupport routine defined ad-hoc
+	 * cost model. If there is a lot of duplicate abbreviated keys in
+	 * practice, it's useful to be able to abandon the strategy before paying
+	 * too high a cost in conversion (perhaps certain opclass-specific
+	 * adaptations are useful too).
 	 */
-	bool			(*abbrev_abort) (int memtupcount, SortSupport ssup);
+	bool		(*abbrev_abort) (int memtupcount, SortSupport ssup);
 
 	/*
 	 * Full, authoritative comparator for key that an abbreviated
@@ -200,8 +201,8 @@ extern int ApplySortComparator(Datum datum1, bool isNull1,
 					Datum datum2, bool isNull2,
 					SortSupport ssup);
 extern int ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
-							Datum datum2, bool isNull2,
-							SortSupport ssup);
+							  Datum datum2, bool isNull2,
+							  SortSupport ssup);
 #endif   /* !PG_USE_INLINE */
 #if defined(PG_USE_INLINE) || defined(SORTSUPPORT_INCLUDE_DEFINITIONS)
 /*
@@ -284,6 +285,6 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
 extern void PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup);
 extern void PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup);
 extern void PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
-										   SortSupport ssup);
+							   SortSupport ssup);
 
 #endif   /* SORTSUPPORT_H */

@@ -397,14 +397,14 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	istmt.behavior = stmt->behavior;
 
 	/*
-	 * Convert the RoleSpec list into an Oid list.  Note that at this point
-	 * we insert an ACL_ID_PUBLIC into the list if appropriate, so downstream
+	 * Convert the RoleSpec list into an Oid list.  Note that at this point we
+	 * insert an ACL_ID_PUBLIC into the list if appropriate, so downstream
 	 * there shouldn't be any additional work needed to support this case.
 	 */
 	foreach(cell, stmt->grantees)
 	{
-		RoleSpec *grantee = (RoleSpec *) lfirst(cell);
-		Oid grantee_uid;
+		RoleSpec   *grantee = (RoleSpec *) lfirst(cell);
+		Oid			grantee_uid;
 
 		switch (grantee->roletype)
 		{
@@ -892,14 +892,14 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 	iacls.behavior = action->behavior;
 
 	/*
-	 * Convert the RoleSpec list into an Oid list.  Note that at this point
-	 * we insert an ACL_ID_PUBLIC into the list if appropriate, so downstream
+	 * Convert the RoleSpec list into an Oid list.  Note that at this point we
+	 * insert an ACL_ID_PUBLIC into the list if appropriate, so downstream
 	 * there shouldn't be any additional work needed to support this case.
 	 */
 	foreach(cell, action->grantees)
 	{
-		RoleSpec *grantee = (RoleSpec *) lfirst(cell);
-		Oid grantee_uid;
+		RoleSpec   *grantee = (RoleSpec *) lfirst(cell);
+		Oid			grantee_uid;
 
 		switch (grantee->roletype)
 		{

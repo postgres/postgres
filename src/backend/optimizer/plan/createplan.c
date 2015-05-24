@@ -59,7 +59,7 @@ static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
 static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static SampleScan *create_samplescan_plan(PlannerInfo *root, Path *best_path,
-					List *tlist, List *scan_clauses);
+					   List *tlist, List *scan_clauses);
 static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses, bool indexonly);
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
@@ -1153,7 +1153,7 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
  */
 static SampleScan *
 create_samplescan_plan(PlannerInfo *root, Path *best_path,
-					List *tlist, List *scan_clauses)
+					   List *tlist, List *scan_clauses)
 {
 	SampleScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
@@ -1340,7 +1340,7 @@ create_indexscan_plan(PlannerInfo *root,
 		Assert(list_length(best_path->path.pathkeys) == list_length(indexorderbys));
 		forboth(pathkeyCell, best_path->path.pathkeys, exprCell, indexorderbys)
 		{
-			PathKey	   *pathkey = (PathKey *) lfirst(pathkeyCell);
+			PathKey    *pathkey = (PathKey *) lfirst(pathkeyCell);
 			Node	   *expr = (Node *) lfirst(exprCell);
 			Oid			exprtype = exprType(expr);
 			Oid			sortop;

@@ -1,6 +1,6 @@
 /*
  * rewrite/rowsecurity.c
- *    Routines to support policies for row level security (aka RLS).
+ *	  Routines to support policies for row level security (aka RLS).
  *
  * Policies in PostgreSQL provide a mechanism to limit what records are
  * returned to a user and what records a user is permitted to add to a table.
@@ -57,12 +57,12 @@
 #include "tcop/utility.h"
 
 static List *pull_row_security_policies(CmdType cmd, Relation relation,
-										Oid user_id);
-static void process_policies(Query* root, List *policies, int rt_index,
-							 Expr **final_qual,
-							 Expr **final_with_check_qual,
-							 bool *hassublinks,
-							 BoolExprType boolop);
+						   Oid user_id);
+static void process_policies(Query *root, List *policies, int rt_index,
+				 Expr **final_qual,
+				 Expr **final_with_check_qual,
+				 bool *hassublinks,
+				 BoolExprType boolop);
 static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 
 /*
@@ -77,8 +77,8 @@ static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
  * See below where the hook is called in prepend_row_security_policies for
  * insight into how to use this hook.
  */
-row_security_policy_hook_type	row_security_policy_hook_permissive = NULL;
-row_security_policy_hook_type	row_security_policy_hook_restrictive = NULL;
+row_security_policy_hook_type row_security_policy_hook_permissive = NULL;
+row_security_policy_hook_type row_security_policy_hook_restrictive = NULL;
 
 /*
  * Get any row security quals and check quals that should be applied to the
@@ -89,27 +89,27 @@ row_security_policy_hook_type	row_security_policy_hook_restrictive = NULL;
  * set to true if any of the quals returned contain sublinks.
  */
 void
-get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
+get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 						  int rt_index, List **securityQuals,
 						  List **withCheckOptions, bool *hasRowSecurity,
 						  bool *hasSubLinks)
 {
-	Expr			   *rowsec_expr = NULL;
-	Expr			   *rowsec_with_check_expr = NULL;
-	Expr			   *hook_expr_restrictive = NULL;
-	Expr			   *hook_with_check_expr_restrictive = NULL;
-	Expr			   *hook_expr_permissive = NULL;
-	Expr			   *hook_with_check_expr_permissive = NULL;
+	Expr	   *rowsec_expr = NULL;
+	Expr	   *rowsec_with_check_expr = NULL;
+	Expr	   *hook_expr_restrictive = NULL;
+	Expr	   *hook_with_check_expr_restrictive = NULL;
+	Expr	   *hook_expr_permissive = NULL;
+	Expr	   *hook_with_check_expr_permissive = NULL;
 
-	List			   *rowsec_policies;
-	List			   *hook_policies_restrictive = NIL;
-	List			   *hook_policies_permissive = NIL;
+	List	   *rowsec_policies;
+	List	   *hook_policies_restrictive = NIL;
+	List	   *hook_policies_permissive = NIL;
 
-	Relation 			rel;
-	Oid					user_id;
-	int					sec_context;
-	int					rls_status;
-	bool				defaultDeny = false;
+	Relation	rel;
+	Oid			user_id;
+	int			sec_context;
+	int			rls_status;
+	bool		defaultDeny = false;
 
 	/* Defaults for the return values */
 	*securityQuals = NIL;
@@ -124,9 +124,9 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	user_id = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 	/*
-	 * If this is not a normal relation, or we have been told
-	 * to explicitly skip RLS (perhaps because this is an FK check)
-	 * then just return immediately.
+	 * If this is not a normal relation, or we have been told to explicitly
+	 * skip RLS (perhaps because this is an FK check) then just return
+	 * immediately.
 	 */
 	if (rte->relid < FirstNormalObjectId
 		|| rte->relkind != RELKIND_RELATION
@@ -148,9 +148,9 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	if (rls_status == RLS_NONE_ENV)
 	{
 		/*
-		 * Indicate that this query may involve RLS and must therefore
-		 * be replanned if the environment changes (GUCs, role), but we
-		 * are not adding anything here.
+		 * Indicate that this query may involve RLS and must therefore be
+		 * replanned if the environment changes (GUCs, role), but we are not
+		 * adding anything here.
 		 */
 		*hasRowSecurity = true;
 
@@ -166,15 +166,14 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	/*
 	 * Check if this is only the default-deny policy.
 	 *
-	 * Normally, if the table has row security enabled but there are
-	 * no policies, we use a default-deny policy and not allow anything.
-	 * However, when an extension uses the hook to add their own
-	 * policies, we don't want to include the default deny policy or
-	 * there won't be any way for a user to use an extension exclusively
-	 * for the policies to be used.
+	 * Normally, if the table has row security enabled but there are no
+	 * policies, we use a default-deny policy and not allow anything. However,
+	 * when an extension uses the hook to add their own policies, we don't
+	 * want to include the default deny policy or there won't be any way for a
+	 * user to use an extension exclusively for the policies to be used.
 	 */
 	if (((RowSecurityPolicy *) linitial(rowsec_policies))->policy_id
-			== InvalidOid)
+		== InvalidOid)
 		defaultDeny = true;
 
 	/* Now that we have our policies, build the expressions from them. */
@@ -187,8 +186,8 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	 * extensions can add either permissive or restrictive policies.
 	 *
 	 * Note that, as with the internal policies, if multiple policies are
-	 * returned then they will be combined into a single expression with
-	 * all of them OR'd (for permissive) or AND'd (for restrictive) together.
+	 * returned then they will be combined into a single expression with all
+	 * of them OR'd (for permissive) or AND'd (for restrictive) together.
 	 *
 	 * If only a USING policy is returned by the extension then it will be
 	 * used for WITH CHECK as well, similar to how internal policies are
@@ -202,7 +201,7 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	 */
 	if (row_security_policy_hook_restrictive)
 	{
-		hook_policies_restrictive = (*row_security_policy_hook_restrictive)(commandType, rel);
+		hook_policies_restrictive = (*row_security_policy_hook_restrictive) (commandType, rel);
 
 		/* Build the expression from any policies returned. */
 		if (hook_policies_restrictive != NIL)
@@ -215,7 +214,7 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 
 	if (row_security_policy_hook_permissive)
 	{
-		hook_policies_permissive = (*row_security_policy_hook_permissive)(commandType, rel);
+		hook_policies_permissive = (*row_security_policy_hook_permissive) (commandType, rel);
 
 		/* Build the expression from any policies returned. */
 		if (hook_policies_permissive != NIL)
@@ -226,9 +225,9 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	}
 
 	/*
-	 * If the only built-in policy is the default-deny one, and hook
-	 * policies exist, then use the hook policies only and do not apply
-	 * the default-deny policy.  Otherwise, we will apply both sets below.
+	 * If the only built-in policy is the default-deny one, and hook policies
+	 * exist, then use the hook policies only and do not apply the
+	 * default-deny policy.  Otherwise, we will apply both sets below.
 	 */
 	if (defaultDeny &&
 		(hook_policies_restrictive != NIL || hook_policies_permissive != NIL))
@@ -238,10 +237,10 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	}
 
 	/*
-	 * For INSERT or UPDATE, we need to add the WITH CHECK quals to
-	 * Query's withCheckOptions to verify that any new records pass the
-	 * WITH CHECK policy (this will be a copy of the USING policy, if no
-	 * explicit WITH CHECK policy exists).
+	 * For INSERT or UPDATE, we need to add the WITH CHECK quals to Query's
+	 * withCheckOptions to verify that any new records pass the WITH CHECK
+	 * policy (this will be a copy of the USING policy, if no explicit WITH
+	 * CHECK policy exists).
 	 */
 	if (commandType == CMD_INSERT || commandType == CMD_UPDATE)
 	{
@@ -257,11 +256,11 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 		 */
 		if (hook_with_check_expr_restrictive)
 		{
-			WithCheckOption	   *wco;
+			WithCheckOption *wco;
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
 			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-														  WCO_RLS_UPDATE_CHECK;
+				WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) hook_with_check_expr_restrictive;
 			wco->cascaded = false;
@@ -269,16 +268,16 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 		}
 
 		/*
-		 * Handle built-in policies, if there are no permissive
-		 * policies from the hook.
+		 * Handle built-in policies, if there are no permissive policies from
+		 * the hook.
 		 */
 		if (rowsec_with_check_expr && !hook_with_check_expr_permissive)
 		{
-			WithCheckOption	   *wco;
+			WithCheckOption *wco;
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
 			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-														  WCO_RLS_UPDATE_CHECK;
+				WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) rowsec_with_check_expr;
 			wco->cascaded = false;
@@ -287,11 +286,11 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 		/* Handle the hook policies, if there are no built-in ones. */
 		else if (!rowsec_with_check_expr && hook_with_check_expr_permissive)
 		{
-			WithCheckOption	   *wco;
+			WithCheckOption *wco;
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
 			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-														  WCO_RLS_UPDATE_CHECK;
+				WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) hook_with_check_expr_permissive;
 			wco->cascaded = false;
@@ -300,9 +299,9 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 		/* Handle the case where there are both. */
 		else if (rowsec_with_check_expr && hook_with_check_expr_permissive)
 		{
-			WithCheckOption	   *wco;
-			List			   *combined_quals = NIL;
-			Expr			   *combined_qual_eval;
+			WithCheckOption *wco;
+			List	   *combined_quals = NIL;
+			Expr	   *combined_qual_eval;
 
 			combined_quals = lcons(copyObject(rowsec_with_check_expr),
 								   combined_quals);
@@ -314,7 +313,7 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 
 			wco = (WithCheckOption *) makeNode(WithCheckOption);
 			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-														  WCO_RLS_UPDATE_CHECK;
+				WCO_RLS_UPDATE_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(rel));
 			wco->qual = (Node *) combined_qual_eval;
 			wco->cascaded = false;
@@ -361,8 +360,8 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 
 			foreach(item, conflictSecurityQuals)
 			{
-				Expr			   *conflict_rowsec_expr = (Expr *) lfirst(item);
-				WithCheckOption	   *wco;
+				Expr	   *conflict_rowsec_expr = (Expr *) lfirst(item);
+				WithCheckOption *wco;
 
 				wco = (WithCheckOption *) makeNode(WithCheckOption);
 
@@ -393,8 +392,8 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 		/* if we have both, we have to combine them with an OR */
 		else if (rowsec_expr && hook_expr_permissive)
 		{
-			List   *combined_quals = NIL;
-			Expr   *combined_qual_eval;
+			List	   *combined_quals = NIL;
+			Expr	   *combined_qual_eval;
 
 			combined_quals = lcons(copyObject(rowsec_expr), combined_quals);
 			combined_quals = lcons(copyObject(hook_expr_permissive),
@@ -409,8 +408,8 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 	heap_close(rel, NoLock);
 
 	/*
-	 * Mark this query as having row security, so plancache can invalidate
-	 * it when necessary (eg: role changes)
+	 * Mark this query as having row security, so plancache can invalidate it
+	 * when necessary (eg: role changes)
 	 */
 	*hasRowSecurity = true;
 
@@ -427,26 +426,27 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 static List *
 pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 {
-	List			   *policies = NIL;
-	ListCell		   *item;
+	List	   *policies = NIL;
+	ListCell   *item;
 
 	/*
 	 * Row security is enabled for the relation and the row security GUC is
-	 * either 'on' or 'force' here, so find the policies to apply to the table.
-	 * There must always be at least one policy defined (may be the simple
-	 * 'default-deny' policy, if none are explicitly defined on the table).
+	 * either 'on' or 'force' here, so find the policies to apply to the
+	 * table. There must always be at least one policy defined (may be the
+	 * simple 'default-deny' policy, if none are explicitly defined on the
+	 * table).
 	 */
 	foreach(item, relation->rd_rsdesc->policies)
 	{
-		RowSecurityPolicy  *policy = (RowSecurityPolicy *) lfirst(item);
+		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
 
 		/* Always add ALL policies, if they exist. */
 		if (policy->polcmd == '*' &&
-				check_role_for_policy(policy->roles, user_id))
+			check_role_for_policy(policy->roles, user_id))
 			policies = lcons(policy, policies);
 
 		/* Add relevant command-specific policies to the list. */
-		switch(cmd)
+		switch (cmd)
 		{
 			case CMD_SELECT:
 				if (policy->polcmd == ACL_SELECT_CHR
@@ -482,8 +482,8 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 	 */
 	if (policies == NIL)
 	{
-		RowSecurityPolicy  *policy = NULL;
-		Datum               role;
+		RowSecurityPolicy *policy = NULL;
+		Datum		role;
 
 		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
@@ -519,18 +519,18 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
  * qual_eval, with_check_eval, and hassublinks are output variables
  */
 static void
-process_policies(Query* root, List *policies, int rt_index, Expr **qual_eval,
+process_policies(Query *root, List *policies, int rt_index, Expr **qual_eval,
 				 Expr **with_check_eval, bool *hassublinks,
 				 BoolExprType boolop)
 {
-	ListCell		   *item;
-	List			   *quals = NIL;
-	List			   *with_check_quals = NIL;
+	ListCell   *item;
+	List	   *quals = NIL;
+	List	   *with_check_quals = NIL;
 
 	/*
-	 * Extract the USING and WITH CHECK quals from each of the policies
-	 * and add them to our lists.  We only want WITH CHECK quals if this
-	 * RTE is the query's result relation.
+	 * Extract the USING and WITH CHECK quals from each of the policies and
+	 * add them to our lists.  We only want WITH CHECK quals if this RTE is
+	 * the query's result relation.
 	 */
 	foreach(item, policies)
 	{
@@ -545,8 +545,8 @@ process_policies(Query* root, List *policies, int rt_index, Expr **qual_eval,
 									 with_check_quals);
 
 		/*
-		 * For each policy, if there is only a USING clause then copy/use it for
-		 * the WITH CHECK policy also, if this RTE is the query's result
+		 * For each policy, if there is only a USING clause then copy/use it
+		 * for the WITH CHECK policy also, if this RTE is the query's result
 		 * relation.
 		 */
 		if (policy->qual != NULL && policy->with_check_qual == NULL &&
@@ -568,16 +568,16 @@ process_policies(Query* root, List *policies, int rt_index, Expr **qual_eval,
 								BoolGetDatum(false), false, true), quals);
 
 	/*
-	 * Row security quals always have the target table as varno 1, as no
-	 * joins are permitted in row security expressions. We must walk the
-	 * expression, updating any references to varno 1 to the varno
-	 * the table has in the outer query.
+	 * Row security quals always have the target table as varno 1, as no joins
+	 * are permitted in row security expressions. We must walk the expression,
+	 * updating any references to varno 1 to the varno the table has in the
+	 * outer query.
 	 *
 	 * We rewrite the expression in-place.
 	 *
 	 * We must have some quals at this point; the default-deny policy, if
-	 * nothing else.  Note that we might not have any WITH CHECK quals-
-	 * that's fine, as this might not be the resultRelation.
+	 * nothing else.  Note that we might not have any WITH CHECK quals- that's
+	 * fine, as this might not be the resultRelation.
 	 */
 	Assert(quals != NIL);
 
@@ -593,11 +593,11 @@ process_policies(Query* root, List *policies, int rt_index, Expr **qual_eval,
 	if (list_length(quals) > 1)
 		*qual_eval = makeBoolExpr(boolop, quals, -1);
 	else
-		*qual_eval = (Expr*) linitial(quals);
+		*qual_eval = (Expr *) linitial(quals);
 
 	/*
-	 * Similairly, if more than one WITH CHECK qual is returned, then
-	 * they need to be combined together.
+	 * Similairly, if more than one WITH CHECK qual is returned, then they
+	 * need to be combined together.
 	 *
 	 * with_check_quals is allowed to be NIL here since this might not be the
 	 * resultRelation (see above).
@@ -605,7 +605,7 @@ process_policies(Query* root, List *policies, int rt_index, Expr **qual_eval,
 	if (list_length(with_check_quals) > 1)
 		*with_check_eval = makeBoolExpr(boolop, with_check_quals, -1);
 	else if (with_check_quals != NIL)
-		*with_check_eval = (Expr*) linitial(with_check_quals);
+		*with_check_eval = (Expr *) linitial(with_check_quals);
 	else
 		*with_check_eval = NULL;
 
@@ -614,7 +614,7 @@ process_policies(Query* root, List *policies, int rt_index, Expr **qual_eval,
 
 /*
  * check_role_for_policy -
- *   determines if the policy should be applied for the current role
+ *	 determines if the policy should be applied for the current role
  */
 static bool
 check_role_for_policy(ArrayType *policy_roles, Oid user_id)

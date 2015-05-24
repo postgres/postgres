@@ -499,9 +499,9 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 	char	   *newcopy = NULL;
 
 	/*
-	 * arrays are not possible unless the column is an array, too
-	 * FIXME: we do not know if the column is an array here
-	 * array input to singleton column will result in a runtime error
+	 * arrays are not possible unless the column is an array, too FIXME: we do
+	 * not know if the column is an array here array input to singleton column
+	 * will result in a runtime error
 	 */
 
 	/*
@@ -852,7 +852,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-							return false;
+						return false;
 
 					for (element = 0; element < asize; element++)
 					{
@@ -915,7 +915,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-							return false;
+						return false;
 
 					for (element = 0; element < asize; element++)
 					{
@@ -962,7 +962,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-							return false;
+						return false;
 
 					for (element = 0; element < asize; element++)
 					{
@@ -1009,7 +1009,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-							return false;
+						return false;
 
 					for (element = 0; element < asize; element++)
 					{

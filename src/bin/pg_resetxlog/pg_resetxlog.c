@@ -914,9 +914,9 @@ FindEndOfXLOG(void)
 			XLogSegNo	segno;
 
 			/*
-			 * Note: We don't use XLogFromFileName here, because we want
-			 * to use the segment size from the control file, not the size
-			 * the pg_resetxlog binary was compiled with
+			 * Note: We don't use XLogFromFileName here, because we want to
+			 * use the segment size from the control file, not the size the
+			 * pg_resetxlog binary was compiled with
 			 */
 			sscanf(xlde->d_name, "%08X%08X%08X", &tli, &log, &seg);
 			segno = ((uint64) log) * segs_per_xlogid + seg;

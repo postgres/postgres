@@ -48,7 +48,7 @@ struct BrinRevmap
 {
 	Relation	rm_irel;
 	BlockNumber rm_pagesPerRange;
-	BlockNumber rm_lastRevmapPage; /* cached from the metapage */
+	BlockNumber rm_lastRevmapPage;		/* cached from the metapage */
 	Buffer		rm_metaBuf;
 	Buffer		rm_currBuf;
 };
@@ -57,7 +57,7 @@ struct BrinRevmap
 
 
 static BlockNumber revmap_get_blkno(BrinRevmap *revmap,
-				  BlockNumber heapBlk);
+				 BlockNumber heapBlk);
 static Buffer revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk);
 static BlockNumber revmap_extend_and_get_blkno(BrinRevmap *revmap,
 							BlockNumber heapBlk);
@@ -110,7 +110,7 @@ brinRevmapTerminate(BrinRevmap *revmap)
 void
 brinRevmapExtend(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	BlockNumber	mapBlk PG_USED_FOR_ASSERTS_ONLY;
+	BlockNumber mapBlk PG_USED_FOR_ASSERTS_ONLY;
 
 	mapBlk = revmap_extend_and_get_blkno(revmap, heapBlk);
 
@@ -245,7 +245,7 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 		if (ItemPointerIsValid(&previptr) && ItemPointerEquals(&previptr, iptr))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg_internal("corrupted BRIN index: inconsistent range map")));
+			errmsg_internal("corrupted BRIN index: inconsistent range map")));
 		previptr = *iptr;
 
 		blk = ItemPointerGetBlockNumber(iptr);
@@ -356,7 +356,7 @@ revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk)
 static BlockNumber
 revmap_extend_and_get_blkno(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	BlockNumber	targetblk;
+	BlockNumber targetblk;
 
 	/* obtain revmap block number, skip 1 for metapage block */
 	targetblk = HEAPBLK_TO_REVMAP_BLK(revmap->rm_pagesPerRange, heapBlk) + 1;
@@ -445,10 +445,10 @@ revmap_physical_extend(BrinRevmap *revmap)
 	if (!PageIsNew(page) && !BRIN_IS_REGULAR_PAGE(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
-						BrinPageType(page),
-						RelationGetRelationName(irel),
-						BufferGetBlockNumber(buf))));
+		  errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
+				 BrinPageType(page),
+				 RelationGetRelationName(irel),
+				 BufferGetBlockNumber(buf))));
 
 	/* If the page is in use, evacuate it and restart */
 	if (brin_start_evacuating_page(irel, buf))

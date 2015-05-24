@@ -242,8 +242,8 @@ cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	Cost		cpu_per_tuple;
 	BlockNumber pages;
 	double		tuples;
-	RangeTblEntry		   *rte = planner_rt_fetch(baserel->relid, root);
-	TableSampleClause	   *tablesample = rte->tablesample;
+	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
+	TableSampleClause *tablesample = rte->tablesample;
 
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
@@ -268,7 +268,7 @@ cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 
 
 	spc_page_cost = tablesample->tsmseqscan ? spc_seq_page_cost :
-					spc_random_page_cost;
+		spc_random_page_cost;
 
 	/*
 	 * disk costs

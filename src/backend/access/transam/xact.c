@@ -102,9 +102,9 @@ int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
  * The XIDs are stored sorted in numerical order (not logical order) to make
  * lookups as fast as possible.
  */
-TransactionId	XactTopTransactionId = InvalidTransactionId;
-int				nParallelCurrentXids = 0;
-TransactionId  *ParallelCurrentXids;
+TransactionId XactTopTransactionId = InvalidTransactionId;
+int			nParallelCurrentXids = 0;
+TransactionId *ParallelCurrentXids;
 
 /*
  * MyXactAccessedTempRel is set when a temporary relation is accessed.
@@ -142,7 +142,7 @@ typedef enum TBlockState
 	/* transaction block states */
 	TBLOCK_BEGIN,				/* starting transaction block */
 	TBLOCK_INPROGRESS,			/* live transaction */
-	TBLOCK_PARALLEL_INPROGRESS,	/* live transaction inside parallel worker */
+	TBLOCK_PARALLEL_INPROGRESS, /* live transaction inside parallel worker */
 	TBLOCK_END,					/* COMMIT received */
 	TBLOCK_ABORT,				/* failed xact, awaiting ROLLBACK */
 	TBLOCK_ABORT_END,			/* failed xact, ROLLBACK received */
@@ -184,7 +184,7 @@ typedef struct TransactionStateData
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	bool		startedInRecovery;		/* did we start in recovery? */
 	bool		didLogXid;		/* has xid been included in WAL record? */
-	int			parallelModeLevel;	/* Enter/ExitParallelMode counter */
+	int			parallelModeLevel;		/* Enter/ExitParallelMode counter */
 	struct TransactionStateData *parent;		/* back link to parent */
 } TransactionStateData;
 
@@ -494,8 +494,8 @@ AssignTransactionId(TransactionState s)
 	Assert(s->state == TRANS_INPROGRESS);
 
 	/*
-	 * Workers synchronize transaction state at the beginning of each
-	 * parallel operation, so we can't account for new XIDs at this point.
+	 * Workers synchronize transaction state at the beginning of each parallel
+	 * operation, so we can't account for new XIDs at this point.
 	 */
 	if (IsInParallelMode())
 		elog(ERROR, "cannot assign XIDs during a parallel operation");
@@ -788,10 +788,10 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 		return false;
 
 	/*
-	 * In parallel workers, the XIDs we must consider as current are stored
-	 * in ParallelCurrentXids rather than the transaction-state stack.  Note
-	 * that the XIDs in this array are sorted numerically rather than
-	 * according to transactionIdPrecedes order.
+	 * In parallel workers, the XIDs we must consider as current are stored in
+	 * ParallelCurrentXids rather than the transaction-state stack.  Note that
+	 * the XIDs in this array are sorted numerically rather than according to
+	 * transactionIdPrecedes order.
 	 */
 	if (nParallelCurrentXids > 0)
 	{
@@ -1204,7 +1204,7 @@ RecordTransactionCommit(void)
 							nchildren, children, nrels, rels,
 							nmsgs, invalMessages,
 							RelcacheInitFileInval, forceSyncCommit,
-							InvalidTransactionId /* plain commit */);
+							InvalidTransactionId /* plain commit */ );
 
 		/*
 		 * Record plain commit ts if not replaying remote actions, or if no
@@ -1505,7 +1505,7 @@ RecordTransactionAbort(bool isSubXact)
 	RelFileNode *rels;
 	int			nchildren;
 	TransactionId *children;
-	TimestampTz	xact_time;
+	TimestampTz xact_time;
 
 	/*
 	 * If we haven't been assigned an XID, nobody will care whether we aborted
@@ -2316,8 +2316,8 @@ PrepareTransaction(void)
 
 	/*
 	 * In normal commit-processing, this is all non-critical post-transaction
-	 * cleanup.  When the transaction is prepared, however, it's important that
-	 * the locks and other per-backend resources are transferred to the
+	 * cleanup.  When the transaction is prepared, however, it's important
+	 * that the locks and other per-backend resources are transferred to the
 	 * prepared transaction's PGPROC entry.  Note that if an error is raised
 	 * here, it's too late to abort the transaction. XXX: This probably should
 	 * be in a critical section, to force a PANIC if any of this fails, but
@@ -2358,9 +2358,8 @@ PrepareTransaction(void)
 
 	/*
 	 * Allow another backend to finish the transaction.  After
-	 * PostPrepare_Twophase(), the transaction is completely detached from
-	 * our backend.  The rest is just non-critical cleanup of backend-local
-	 * state.
+	 * PostPrepare_Twophase(), the transaction is completely detached from our
+	 * backend.  The rest is just non-critical cleanup of backend-local state.
 	 */
 	PostPrepare_Twophase();
 
@@ -2417,7 +2416,7 @@ AbortTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 	TransactionId latestXid;
-	bool	is_parallel_worker;
+	bool		is_parallel_worker;
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
@@ -2520,9 +2519,9 @@ AbortTransaction(void)
 		latestXid = InvalidTransactionId;
 
 		/*
-		 * Since the parallel master won't get our value of XactLastRecEnd in this
-		 * case, we nudge WAL-writer ourselves in this case.  See related comments in
-		 * RecordTransactionAbort for why this matters.
+		 * Since the parallel master won't get our value of XactLastRecEnd in
+		 * this case, we nudge WAL-writer ourselves in this case.  See related
+		 * comments in RecordTransactionAbort for why this matters.
 		 */
 		XLogSetAsyncXactLSN(XactLastRecEnd);
 	}
@@ -3720,7 +3719,7 @@ DefineSavepoint(char *name)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot define savepoints during a parallel operation")));
+			errmsg("cannot define savepoints during a parallel operation")));
 
 	switch (s->blockState)
 	{
@@ -3787,7 +3786,7 @@ ReleaseSavepoint(List *options)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot release savepoints during a parallel operation")));
+		   errmsg("cannot release savepoints during a parallel operation")));
 
 	switch (s->blockState)
 	{
@@ -3900,7 +3899,7 @@ RollbackToSavepoint(List *options)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot rollback to savepoints during a parallel operation")));
+		errmsg("cannot rollback to savepoints during a parallel operation")));
 
 	switch (s->blockState)
 	{
@@ -4017,17 +4016,18 @@ BeginInternalSubTransaction(char *name)
 
 	/*
 	 * Workers synchronize transaction state at the beginning of each parallel
-	 * operation, so we can't account for new subtransactions after that point.
-	 * We might be able to make an exception for the type of subtransaction
-	 * established by this function, which is typically used in contexts where
-	 * we're going to release or roll back the subtransaction before proceeding
-	 * further, so that no enduring change to the transaction state occurs.
-	 * For now, however, we prohibit this case along with all the others.
+	 * operation, so we can't account for new subtransactions after that
+	 * point. We might be able to make an exception for the type of
+	 * subtransaction established by this function, which is typically used in
+	 * contexts where we're going to release or roll back the subtransaction
+	 * before proceeding further, so that no enduring change to the
+	 * transaction state occurs. For now, however, we prohibit this case along
+	 * with all the others.
 	 */
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot start subtransactions during a parallel operation")));
+		errmsg("cannot start subtransactions during a parallel operation")));
 
 	switch (s->blockState)
 	{
@@ -4094,7 +4094,7 @@ ReleaseCurrentSubTransaction(void)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot commit subtransactions during a parallel operation")));
+		errmsg("cannot commit subtransactions during a parallel operation")));
 
 	if (s->blockState != TBLOCK_SUBINPROGRESS)
 		elog(ERROR, "ReleaseCurrentSubTransaction: unexpected state %s",
@@ -4773,7 +4773,8 @@ Size
 EstimateTransactionStateSpace(void)
 {
 	TransactionState s;
-	Size	nxids = 5; /* iso level, deferrable, top & current XID, XID count */
+	Size		nxids = 5;		/* iso level, deferrable, top & current XID,
+								 * XID count */
 
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
@@ -4804,8 +4805,8 @@ void
 SerializeTransactionState(Size maxsize, char *start_address)
 {
 	TransactionState s;
-	Size	nxids = 0;
-	Size	i = 0;
+	Size		nxids = 0;
+	Size		i = 0;
 	TransactionId *workspace;
 	TransactionId *result = (TransactionId *) start_address;
 
@@ -4830,8 +4831,8 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	}
 
 	/*
-	 * OK, we need to generate a sorted list of XIDs that our workers
-	 * should view as current.  First, figure out how many there are.
+	 * OK, we need to generate a sorted list of XIDs that our workers should
+	 * view as current.  First, figure out how many there are.
 	 */
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
@@ -5060,22 +5061,22 @@ xactGetCommittedChildren(TransactionId **ptr)
  */
 XLogRecPtr
 XactLogCommitRecord(TimestampTz commit_time,
-					 int nsubxacts, TransactionId *subxacts,
-					 int nrels, RelFileNode *rels,
-					 int nmsgs, SharedInvalidationMessage *msgs,
-					 bool relcacheInval, bool forceSync,
-					 TransactionId twophase_xid)
+					int nsubxacts, TransactionId *subxacts,
+					int nrels, RelFileNode *rels,
+					int nmsgs, SharedInvalidationMessage *msgs,
+					bool relcacheInval, bool forceSync,
+					TransactionId twophase_xid)
 {
-	xl_xact_commit		xlrec;
-	xl_xact_xinfo		xl_xinfo;
-	xl_xact_dbinfo		xl_dbinfo;
-	xl_xact_subxacts	xl_subxacts;
+	xl_xact_commit xlrec;
+	xl_xact_xinfo xl_xinfo;
+	xl_xact_dbinfo xl_dbinfo;
+	xl_xact_subxacts xl_subxacts;
 	xl_xact_relfilenodes xl_relfilenodes;
-	xl_xact_invals		xl_invals;
-	xl_xact_twophase	xl_twophase;
-	xl_xact_origin		xl_origin;
+	xl_xact_invals xl_invals;
+	xl_xact_twophase xl_twophase;
+	xl_xact_origin xl_origin;
 
-	uint8				info;
+	uint8		info;
 
 	Assert(CritSectionCount > 0);
 
@@ -5198,17 +5199,17 @@ XactLogCommitRecord(TimestampTz commit_time,
  */
 XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
-					int nsubxacts, TransactionId *subxacts,
-					int nrels, RelFileNode *rels,
-					TransactionId twophase_xid)
+				   int nsubxacts, TransactionId *subxacts,
+				   int nrels, RelFileNode *rels,
+				   TransactionId twophase_xid)
 {
-	xl_xact_abort		xlrec;
-	xl_xact_xinfo		xl_xinfo;
-	xl_xact_subxacts	xl_subxacts;
+	xl_xact_abort xlrec;
+	xl_xact_xinfo xl_xinfo;
+	xl_xact_subxacts xl_subxacts;
 	xl_xact_relfilenodes xl_relfilenodes;
-	xl_xact_twophase	xl_twophase;
+	xl_xact_twophase xl_twophase;
 
-	uint8				info;
+	uint8		info;
 
 	Assert(CritSectionCount > 0);
 
@@ -5289,7 +5290,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 {
 	TransactionId max_xid;
 	int			i;
-	TimestampTz	commit_time;
+	TimestampTz commit_time;
 
 	max_xid = TransactionIdLatest(xid, parsed->nsubxacts, parsed->subxacts);
 
@@ -5351,13 +5352,13 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		 * recovered. It's unlikely but it's good to be safe.
 		 */
 		TransactionIdAsyncCommitTree(
-			xid, parsed->nsubxacts, parsed->subxacts, lsn);
+							  xid, parsed->nsubxacts, parsed->subxacts, lsn);
 
 		/*
 		 * We must mark clog before we update the ProcArray.
 		 */
 		ExpireTreeKnownAssignedTransactionIds(
-			xid, parsed->nsubxacts, parsed->subxacts, max_xid);
+						  xid, parsed->nsubxacts, parsed->subxacts, max_xid);
 
 		/*
 		 * Send any cache invalidations attached to the commit. We must
@@ -5365,9 +5366,9 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		 * occurs in CommitTransaction().
 		 */
 		ProcessCommittedInvalidationMessages(
-			parsed->msgs, parsed->nmsgs,
-			XactCompletionRelcacheInitFileInval(parsed->xinfo),
-			parsed->dbId, parsed->tsId);
+											 parsed->msgs, parsed->nmsgs,
+						  XactCompletionRelcacheInitFileInval(parsed->xinfo),
+											 parsed->dbId, parsed->tsId);
 
 		/*
 		 * Release locks, if any. We do this for both two phase and normal one
@@ -5383,7 +5384,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 	{
 		/* recover apply progress */
 		replorigin_advance(origin_id, parsed->origin_lsn, lsn,
-						   false /* backward */, false /* WAL */);
+						   false /* backward */ , false /* WAL */ );
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
@@ -5447,8 +5448,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 static void
 xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 {
-	int				i;
-	TransactionId	max_xid;
+	int			i;
+	TransactionId max_xid;
 
 	/*
 	 * Make sure nextXid is beyond any XID mentioned in the record.
@@ -5495,7 +5496,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 		 * We must update the ProcArray after we have marked clog.
 		 */
 		ExpireTreeKnownAssignedTransactionIds(
-			xid, parsed->nsubxacts, parsed->subxacts, max_xid);
+						  xid, parsed->nsubxacts, parsed->subxacts, max_xid);
 
 		/*
 		 * There are no flat files that need updating, nor invalidation
@@ -5557,7 +5558,7 @@ xact_redo(XLogReaderState *record)
 		xl_xact_parsed_abort parsed;
 
 		ParseAbortRecord(XLogRecGetInfo(record), xlrec,
-						  &parsed);
+						 &parsed);
 
 		if (info == XLOG_XACT_ABORT)
 		{

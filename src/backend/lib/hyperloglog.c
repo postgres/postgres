@@ -153,7 +153,7 @@ estimateHyperLogLog(hyperLogLogState *cState)
 	if (result <= (5.0 / 2.0) * cState->nRegisters)
 	{
 		/* Small range correction */
-		int 	zero_count = 0;
+		int			zero_count = 0;
 
 		for (i = 0; i < cState->nRegisters; i++)
 		{
@@ -183,7 +183,7 @@ estimateHyperLogLog(hyperLogLogState *cState)
 void
 mergeHyperLogLog(hyperLogLogState *cState, const hyperLogLogState *oState)
 {
-	int		r;
+	int			r;
 
 	if (cState->nRegisters != oState->nRegisters)
 		elog(ERROR, "number of registers mismatch: %zu != %zu",
@@ -216,7 +216,7 @@ mergeHyperLogLog(hyperLogLogState *cState, const hyperLogLogState *oState)
 static inline uint8
 rho(uint32 x, uint8 b)
 {
-	uint8	j = 1;
+	uint8		j = 1;
 
 	while (j <= b && !(x & 0x80000000))
 	{

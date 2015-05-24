@@ -138,10 +138,10 @@ typedef struct Counters
 {
 	int64		calls;			/* # of times executed */
 	double		total_time;		/* total execution time, in msec */
-	double      min_time;       /* minimim execution time in msec */
-	double      max_time;       /* maximum execution time in msec */
-	double      mean_time;      /* mean execution time in msec */
-	double      sum_var_time;   /* sum of variances in execution time in msec */
+	double		min_time;		/* minimim execution time in msec */
+	double		max_time;		/* maximum execution time in msec */
+	double		mean_time;		/* mean execution time in msec */
+	double		sum_var_time;	/* sum of variances in execution time in msec */
 	int64		rows;			/* total # of retrieved or affected rows */
 	int64		shared_blks_hit;	/* # of shared buffer hits */
 	int64		shared_blks_read;		/* # of shared disk blocks read */
@@ -1231,10 +1231,10 @@ pgss_store(const char *query, uint32 queryId,
 		else
 		{
 			/*
-			 * Welford's method for accurately computing variance.
-			 * See <http://www.johndcook.com/blog/standard_deviation/>
+			 * Welford's method for accurately computing variance. See
+			 * <http://www.johndcook.com/blog/standard_deviation/>
 			 */
-			double old_mean = e->counters.mean_time;
+			double		old_mean = e->counters.mean_time;
 
 			e->counters.mean_time +=
 				(total_time - old_mean) / e->counters.calls;
@@ -1572,10 +1572,11 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			values[i++] = Float8GetDatumFast(tmp.min_time);
 			values[i++] = Float8GetDatumFast(tmp.max_time);
 			values[i++] = Float8GetDatumFast(tmp.mean_time);
+
 			/*
 			 * Note we are calculating the population variance here, not the
-			 * sample variance, as we have data for the whole population,
-			 * so Bessel's correction is not used, and we don't divide by
+			 * sample variance, as we have data for the whole population, so
+			 * Bessel's correction is not used, and we don't divide by
 			 * tmp.calls - 1.
 			 */
 			if (tmp.calls > 1)
@@ -2687,16 +2688,16 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 			break;
 		case T_OnConflictExpr:
 			{
-				OnConflictExpr   *conf = (OnConflictExpr *) node;
+				OnConflictExpr *conf = (OnConflictExpr *) node;
 
 				APP_JUMB(conf->action);
 				JumbleExpr(jstate, (Node *) conf->arbiterElems);
 				JumbleExpr(jstate, conf->arbiterWhere);
-				JumbleExpr(jstate, (Node  *) conf->onConflictSet);
+				JumbleExpr(jstate, (Node *) conf->onConflictSet);
 				JumbleExpr(jstate, conf->onConflictWhere);
 				APP_JUMB(conf->constraint);
 				APP_JUMB(conf->exclRelIndex);
-				JumbleExpr(jstate, (Node  *) conf->exclRelTlist);
+				JumbleExpr(jstate, (Node *) conf->exclRelTlist);
 			}
 			break;
 		case T_List:

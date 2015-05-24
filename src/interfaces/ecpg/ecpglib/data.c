@@ -291,7 +291,8 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					date		ddres;
 					timestamp	tres;
 					interval   *ires;
-					char *endptr, endchar;
+					char	   *endptr,
+								endchar;
 
 				case ECPGt_short:
 				case ECPGt_int:

@@ -1709,8 +1709,8 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * ncols);
 
 	/*
-	 * We have to look up the operator's strategy number.  This
-	 * provides a cross-check that the operator does match the index.
+	 * We have to look up the operator's strategy number.  This provides a
+	 * cross-check that the operator does match the index.
 	 */
 	/* We need the func OIDs and strategy numbers too */
 	for (i = 0; i < ncols; i++)
@@ -3186,7 +3186,7 @@ IndexGetRelation(Oid indexId, bool missing_ok)
  */
 void
 reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
-				int options)
+			  int options)
 {
 	Relation	iRel,
 				heapRelation;

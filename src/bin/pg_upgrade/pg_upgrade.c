@@ -333,8 +333,8 @@ create_new_objects(void)
 	check_ok();
 
 	/*
-	 * We don't have minmxids for databases or relations in pre-9.3
-	 * clusters, so set those after we have restores the schemas.
+	 * We don't have minmxids for databases or relations in pre-9.3 clusters,
+	 * so set those after we have restores the schemas.
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
 		set_frozenxids(true);
@@ -473,7 +473,7 @@ copy_clog_xlog_xid(void)
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  /* use timeline 1 to match controldata and no WAL history file */
+	/* use timeline 1 to match controldata and no WAL history file */
 			  "\"%s/pg_resetxlog\" -l 00000001%s \"%s\"", new_cluster.bindir,
 			  old_cluster.controldata.nextxlogfile + 8,
 			  new_cluster.pgdata);

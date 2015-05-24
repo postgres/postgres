@@ -1592,8 +1592,8 @@ FlushErrorState(void)
 void
 ThrowErrorData(ErrorData *edata)
 {
-	ErrorData *newedata;
-	MemoryContext	oldcontext;
+	ErrorData  *newedata;
+	MemoryContext oldcontext;
 
 	if (!errstart(edata->elevel, edata->filename, edata->lineno,
 				  edata->funcname, NULL))

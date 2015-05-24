@@ -23,21 +23,24 @@
  *		typedef struct FormData_pg_tablesample_method
  * ----------------
  */
-#define TableSampleMethodRelationId	3330
+#define TableSampleMethodRelationId 3330
 
 CATALOG(pg_tablesample_method,3330)
 {
 	NameData	tsmname;		/* tablesample method name */
-	bool		tsmseqscan;		/* does this method scan whole table sequentially? */
+	bool		tsmseqscan;		/* does this method scan whole table
+								 * sequentially? */
 	bool		tsmpagemode;	/* does this method scan page at a time? */
 	regproc		tsminit;		/* init scan function */
-	regproc		tsmnextblock;	/* function returning next block to sample
-								   or InvalidBlockOffset if finished */
-	regproc		tsmnexttuple;	/* function returning next tuple offset from current block
-								   or InvalidOffsetNumber if end of the block was reacher */
-	regproc		tsmexaminetuple;	/* optional function which can examine tuple contents and
-								   decide if tuple should be returned or not */
-	regproc		tsmend;			/* end scan function*/
+	regproc		tsmnextblock;	/* function returning next block to sample or
+								 * InvalidBlockOffset if finished */
+	regproc		tsmnexttuple;	/* function returning next tuple offset from
+								 * current block or InvalidOffsetNumber if end
+								 * of the block was reacher */
+	regproc		tsmexaminetuple;/* optional function which can examine tuple
+								 * contents and decide if tuple should be
+								 * returned or not */
+	regproc		tsmend;			/* end scan function */
 	regproc		tsmreset;		/* reset state - used by rescan */
 	regproc		tsmcost;		/* costing function */
 } FormData_pg_tablesample_method;

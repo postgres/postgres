@@ -575,13 +575,13 @@ DefineType(List *names, List *parameters)
 	if (typmodinOid && func_volatile(typmodinOid) == PROVOLATILE_VOLATILE)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("type modifier input function %s should not be volatile",
-						NameListToString(typmodinName))));
+			 errmsg("type modifier input function %s should not be volatile",
+					NameListToString(typmodinName))));
 	if (typmodoutOid && func_volatile(typmodoutOid) == PROVOLATILE_VOLATILE)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("type modifier output function %s should not be volatile",
-						NameListToString(typmodoutName))));
+			errmsg("type modifier output function %s should not be volatile",
+				   NameListToString(typmodoutName))));
 
 	/*
 	 * OK, we're done checking, time to make the type.  We must assign the
@@ -643,32 +643,32 @@ DefineType(List *names, List *parameters)
 			   array_type,		/* type name */
 			   typeNamespace,	/* namespace */
 			   InvalidOid,		/* relation oid (n/a here) */
-			   0,		/* relation kind (ditto) */
-			   GetUserId(),	/* owner's ID */
-			   -1,		/* internal size (always varlena) */
+			   0,				/* relation kind (ditto) */
+			   GetUserId(),		/* owner's ID */
+			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
 			   TYPCATEGORY_ARRAY,		/* type-category (array) */
-			   false,	/* array types are never preferred */
+			   false,			/* array types are never preferred */
 			   delimiter,		/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
-			   F_ARRAY_OUT,	/* output procedure */
+			   F_ARRAY_OUT,		/* output procedure */
 			   F_ARRAY_RECV,	/* receive procedure */
 			   F_ARRAY_SEND,	/* send procedure */
-			   typmodinOid,	/* typmodin procedure */
+			   typmodinOid,		/* typmodin procedure */
 			   typmodoutOid,	/* typmodout procedure */
 			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
-			   typoid, /* element type ID */
-			   true,	/* yes this is an array type */
+			   typoid,			/* element type ID */
+			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
 			   InvalidOid,		/* base type ID */
-			   NULL,	/* never a default type value */
-			   NULL,	/* binary default isn't sent either */
-			   false,	/* never passed by value */
+			   NULL,			/* never a default type value */
+			   NULL,			/* binary default isn't sent either */
+			   false,			/* never passed by value */
 			   alignment,		/* see above */
-			   'x',	/* ARRAY is always toastable */
-			   -1,		/* typMod (Domains only) */
-			   0,		/* Array dimensions of typbasetype */
-			   false,	/* Type NOT NULL */
+			   'x',				/* ARRAY is always toastable */
+			   -1,				/* typMod (Domains only) */
+			   0,				/* Array dimensions of typbasetype */
+			   false,			/* Type NOT NULL */
 			   collation);		/* type's collation */
 
 	pfree(array_type);
@@ -1616,7 +1616,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 PointerGetDatum(NULL), /* parameterModes */
 								 PointerGetDatum(NULL), /* parameterNames */
 								 NIL,	/* parameterDefaults */
-								 PointerGetDatum(NULL),		/* trftypes */
+								 PointerGetDatum(NULL), /* trftypes */
 								 PointerGetDatum(NULL), /* proconfig */
 								 1.0,	/* procost */
 								 0.0);	/* prorows */

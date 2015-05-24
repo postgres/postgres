@@ -1139,15 +1139,15 @@ spawn_process(const char *cmdline)
 	/* in parent */
 	return pid;
 #else
-	PROCESS_INFORMATION	pi;
-	char	*cmdline2;
-	HANDLE	restrictedToken;
+	PROCESS_INFORMATION pi;
+	char	   *cmdline2;
+	HANDLE		restrictedToken;
 
 	memset(&pi, 0, sizeof(pi));
 	cmdline2 = psprintf("cmd /c \"%s\"", cmdline);
 
-	if((restrictedToken =
-		CreateRestrictedProcess(cmdline2, &pi, progname)) == 0)
+	if ((restrictedToken =
+		 CreateRestrictedProcess(cmdline2, &pi, progname)) == 0)
 		exit(2);
 
 	CloseHandle(pi.hThread);
@@ -1973,8 +1973,9 @@ help(void)
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (can be used multiple times to concatenate)\n"));
 	printf(_("  --temp-instance=DIR       create a temporary instance in DIR\n"));
-	printf(_("  --use-existing            use an existing installation\n")); // XXX
-	printf(_("\n"));
+	printf(_("  --use-existing            use an existing installation\n"));
+	//XXX
+		printf(_("\n"));
 	printf(_("Options for \"temp-instance\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
 	printf(_("  --port=PORT               start postmaster on PORT\n"));
@@ -2446,8 +2447,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	/*
 	 * If there were no errors, remove the temp instance immediately to
-	 * conserve disk space.  (If there were errors, we leave the instance
-	 * in place for possible manual investigation.)
+	 * conserve disk space.  (If there were errors, we leave the instance in
+	 * place for possible manual investigation.)
 	 */
 	if (temp_instance && fail_count == 0 && fail_ignore_count == 0)
 	{

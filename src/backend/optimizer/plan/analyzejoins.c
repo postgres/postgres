@@ -672,20 +672,20 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	else if (query->groupingSets)
 	{
 		/*
-		 * If we have grouping sets with expressions, we probably
-		 * don't have uniqueness and analysis would be hard. Punt.
+		 * If we have grouping sets with expressions, we probably don't have
+		 * uniqueness and analysis would be hard. Punt.
 		 */
 		if (query->groupClause)
 			return false;
 
 		/*
-		 * If we have no groupClause (therefore no grouping expressions),
-		 * we might have one or many empty grouping sets. If there's just
-		 * one, then we're returning only one row and are certainly unique.
-		 * But otherwise, we know we're certainly not unique.
+		 * If we have no groupClause (therefore no grouping expressions), we
+		 * might have one or many empty grouping sets. If there's just one,
+		 * then we're returning only one row and are certainly unique. But
+		 * otherwise, we know we're certainly not unique.
 		 */
 		if (list_length(query->groupingSets) == 1 &&
-			((GroupingSet *)linitial(query->groupingSets))->kind == GROUPING_SET_EMPTY)
+			((GroupingSet *) linitial(query->groupingSets))->kind == GROUPING_SET_EMPTY)
 			return true;
 		else
 			return false;

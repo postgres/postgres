@@ -40,9 +40,9 @@ struct locale_map
 {
 	/*
 	 * String in locale name to replace. Can be a single string (end is NULL),
-	 * or separate start and end strings. If two strings are given, the
-	 * locale name must contain both of them, and everything between them
-	 * is replaced. This is used for a poor-man's regexp search, allowing
+	 * or separate start and end strings. If two strings are given, the locale
+	 * name must contain both of them, and everything between them is
+	 * replaced. This is used for a poor-man's regexp search, allowing
 	 * replacement of "start.*end".
 	 */
 	const char *locale_name_start;
@@ -104,7 +104,7 @@ static const struct locale_map locale_map_result[] = {
 #define MAX_LOCALE_NAME_LEN		100
 
 static const char *
-map_locale(const struct locale_map *map, const char *locale)
+map_locale(const struct locale_map * map, const char *locale)
 {
 	static char aliasbuf[MAX_LOCALE_NAME_LEN];
 	int			i;

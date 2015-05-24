@@ -185,11 +185,11 @@ BuildIndexValueDescription(Relation indexRelation,
 	 * Check permissions- if the user does not have access to view all of the
 	 * key columns then return NULL to avoid leaking data.
 	 *
-	 * First check if RLS is enabled for the relation.  If so, return NULL
-	 * to avoid leaking data.
+	 * First check if RLS is enabled for the relation.  If so, return NULL to
+	 * avoid leaking data.
 	 *
-	 * Next we need to check table-level SELECT access and then, if
-	 * there is no access there, check column-level permissions.
+	 * Next we need to check table-level SELECT access and then, if there is
+	 * no access there, check column-level permissions.
 	 */
 
 	/*
@@ -215,18 +215,18 @@ BuildIndexValueDescription(Relation indexRelation,
 	if (aclresult != ACLCHECK_OK)
 	{
 		/*
-		 * No table-level access, so step through the columns in the
-		 * index and make sure the user has SELECT rights on all of them.
+		 * No table-level access, so step through the columns in the index and
+		 * make sure the user has SELECT rights on all of them.
 		 */
 		for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 		{
 			AttrNumber	attnum = idxrec->indkey.values[keyno];
 
 			/*
-			 * Note that if attnum == InvalidAttrNumber, then this is an
-			 * index based on an expression and we return no detail rather
-			 * than try to figure out what column(s) the expression includes
-			 * and if the user has SELECT rights on them.
+			 * Note that if attnum == InvalidAttrNumber, then this is an index
+			 * based on an expression and we return no detail rather than try
+			 * to figure out what column(s) the expression includes and if the
+			 * user has SELECT rights on them.
 			 */
 			if (attnum == InvalidAttrNumber ||
 				pg_attribute_aclcheck(indrelid, attnum, GetUserId(),

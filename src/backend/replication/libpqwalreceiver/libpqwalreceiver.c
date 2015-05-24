@@ -89,15 +89,15 @@ _PG_init(void)
 static void
 libpqrcv_connect(char *conninfo)
 {
-	const char	*keys[5];
-	const char	*vals[5];
+	const char *keys[5];
+	const char *vals[5];
 
 	/*
-	 * We use the expand_dbname parameter to process the connection string
-	 * (or URI), and pass some extra options. The deliberately undocumented
-	 * parameter "replication=true" makes it a replication connection.
-	 * The database name is ignored by the server in replication mode, but
-	 * specify "replication" for .pgpass lookup.
+	 * We use the expand_dbname parameter to process the connection string (or
+	 * URI), and pass some extra options. The deliberately undocumented
+	 * parameter "replication=true" makes it a replication connection. The
+	 * database name is ignored by the server in replication mode, but specify
+	 * "replication" for .pgpass lookup.
 	 */
 	keys[0] = "dbname";
 	vals[0] = conninfo;

@@ -921,9 +921,9 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	ReleaseSysCache(languageTuple);
 
 	/*
-	 * Only superuser is allowed to create leakproof functions because leakproof
-	 * functions can see tuples which have not yet been filtered out by security
-	 * barrier views or row level security policies.
+	 * Only superuser is allowed to create leakproof functions because
+	 * leakproof functions can see tuples which have not yet been filtered out
+	 * by security barrier views or row level security policies.
 	 */
 	if (isLeakProof && !superuser())
 		ereport(ERROR,
@@ -932,14 +932,15 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 	if (transformDefElem)
 	{
-		ListCell *lc;
+		ListCell   *lc;
 
 		Assert(IsA(transformDefElem, List));
 
-		foreach (lc, (List *) transformDefElem)
+		foreach(lc, (List *) transformDefElem)
 		{
-			Oid typeid = typenameTypeId(NULL, lfirst(lc));
-			Oid elt = get_base_element_type(typeid);
+			Oid			typeid = typenameTypeId(NULL, lfirst(lc));
+			Oid			elt = get_base_element_type(typeid);
+
 			typeid = elt ? elt : typeid;
 
 			get_transform_oid(typeid, languageOid, false);
@@ -992,13 +993,13 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 	if (list_length(trftypes_list) > 0)
 	{
-		ListCell *lc;
-		Datum *arr;
-		int i;
+		ListCell   *lc;
+		Datum	   *arr;
+		int			i;
 
 		arr = palloc(list_length(trftypes_list) * sizeof(Datum));
 		i = 0;
-		foreach (lc, trftypes_list)
+		foreach(lc, trftypes_list)
 			arr[i++] = ObjectIdGetDatum(lfirst_oid(lc));
 		trftypes = construct_array(arr, list_length(trftypes_list),
 								   OIDOID, sizeof(Oid), true, 'i');
@@ -1716,7 +1717,7 @@ check_transform_function(Form_pg_proc procstruct)
 	if (procstruct->proisagg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("transform function must not be an aggregate function")));
+			errmsg("transform function must not be an aggregate function")));
 	if (procstruct->proiswindow)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1867,9 +1868,9 @@ CreateTransform(CreateTransformStmt *stmt)
 		if (!stmt->replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("transform for type %s language \"%s\" already exists",
-							format_type_be(typeid),
-							stmt->lang)));
+			   errmsg("transform for type %s language \"%s\" already exists",
+					  format_type_be(typeid),
+					  stmt->lang)));
 
 		MemSet(replaces, false, sizeof(replaces));
 		replaces[Anum_pg_transform_trffromsql - 1] = true;
@@ -1958,9 +1959,9 @@ get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok)
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("transform for type %s language \"%s\" does not exist",
-						format_type_be(type_id),
-						get_language_name(lang_id, false))));
+			   errmsg("transform for type %s language \"%s\" does not exist",
+					  format_type_be(type_id),
+					  get_language_name(lang_id, false))));
 	return oid;
 }
 

@@ -14,15 +14,15 @@
 #define RLS_H
 
 /* GUC variable */
-extern int row_security;
+extern int	row_security;
 
 /* Possible values for row_security GUC */
 typedef enum RowSecurityConfigType
 {
-	ROW_SECURITY_OFF,		/* RLS never applied- error thrown if no priv */
-	ROW_SECURITY_ON,		/* normal case, RLS applied for regular users */
-	ROW_SECURITY_FORCE		/* RLS applied for superusers and table owners */
-} RowSecurityConfigType;
+	ROW_SECURITY_OFF,			/* RLS never applied- error thrown if no priv */
+	ROW_SECURITY_ON,			/* normal case, RLS applied for regular users */
+	ROW_SECURITY_FORCE			/* RLS applied for superusers and table owners */
+}	RowSecurityConfigType;
 
 /*
  * Used by callers of check_enable_rls.
@@ -48,11 +48,11 @@ typedef enum RowSecurityConfigType
  */
 enum CheckEnableRlsResult
 {
-		RLS_NONE,
-		RLS_NONE_ENV,
-		RLS_ENABLED
+	RLS_NONE,
+	RLS_NONE_ENV,
+	RLS_ENABLED
 };
 
-extern int check_enable_rls(Oid relid, Oid checkAsUser, bool noError);
+extern int	check_enable_rls(Oid relid, Oid checkAsUser, bool noError);
 
 #endif   /* RLS_H */

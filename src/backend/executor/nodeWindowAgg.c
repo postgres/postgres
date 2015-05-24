@@ -2057,7 +2057,7 @@ ExecEndWindowAgg(WindowAggState *node)
 void
 ExecReScanWindowAgg(WindowAggState *node)
 {
-	PlanState	*outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
 	node->all_done = false;

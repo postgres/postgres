@@ -712,7 +712,7 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 Path *
 create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 {
-	Path		   *pathnode = makeNode(Path);
+	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_SampleScan;
 	pathnode->parent = rel;

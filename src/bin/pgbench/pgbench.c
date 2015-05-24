@@ -100,7 +100,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
-#define MIN_GAUSSIAN_THRESHOLD		2.0	/* minimum threshold for gauss */
+#define MIN_GAUSSIAN_THRESHOLD		2.0 /* minimum threshold for gauss */
 
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
@@ -244,7 +244,8 @@ typedef struct
 	int64		throttle_trigger;		/* previous/next throttling (us) */
 	int64		throttle_lag;	/* total transaction lag behind throttling */
 	int64		throttle_lag_max;		/* max transaction lag */
-	int64		throttle_latency_skipped; /* lagging transactions skipped */
+	int64		throttle_latency_skipped;		/* lagging transactions
+												 * skipped */
 	int64		latency_late;	/* late transactions */
 } TState;
 
@@ -296,8 +297,8 @@ typedef struct
 
 	long		start_time;		/* when does the interval start */
 	int			cnt;			/* number of transactions */
-	int			skipped;		/* number of transactions skipped under
-								 * --rate and --latency-limit */
+	int			skipped;		/* number of transactions skipped under --rate
+								 * and --latency-limit */
 
 	double		min_latency;	/* min/max latencies */
 	double		max_latency;
@@ -389,7 +390,7 @@ usage(void)
 		 "  -f, --file=FILENAME      read transaction script from FILENAME\n"
 		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
 		   "  -l, --log                write transaction times to log file\n"
-		   "  -L, --latency-limit=NUM  count transactions lasting more than NUM ms\n"
+	"  -L, --latency-limit=NUM  count transactions lasting more than NUM ms\n"
 		   "                           as late.\n"
 		   "  -M, --protocol=simple|extended|prepared\n"
 		   "                           protocol for submitting queries (default: simple)\n"
@@ -509,19 +510,22 @@ getrand(TState *thread, int64 min, int64 max)
 static int64
 getExponentialRand(TState *thread, int64 min, int64 max, double threshold)
 {
-	double cut, uniform, rand;
+	double		cut,
+				uniform,
+				rand;
+
 	Assert(threshold > 0.0);
 	cut = exp(-threshold);
 	/* erand in [0, 1), uniform in (0, 1] */
 	uniform = 1.0 - pg_erand48(thread->random_state);
+
 	/*
-	 * inner expresion in (cut, 1] (if threshold > 0),
-	 * rand in [0, 1)
+	 * inner expresion in (cut, 1] (if threshold > 0), rand in [0, 1)
 	 */
 	Assert((1.0 - cut) != 0.0);
-	rand = - log(cut + (1.0 - cut) * uniform) / threshold;
+	rand = -log(cut + (1.0 - cut) * uniform) / threshold;
 	/* return int64 random number within between min and max */
-	return min + (int64)((max - min + 1) * rand);
+	return min + (int64) ((max - min + 1) * rand);
 }
 
 /* random number generator: gaussian distribution from min to max inclusive */
@@ -532,34 +536,37 @@ getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
 	double		rand;
 
 	/*
-	 * Get user specified random number from this loop, with
-	 * -threshold < stdev <= threshold
+	 * Get user specified random number from this loop, with -threshold <
+	 * stdev <= threshold
 	 *
 	 * This loop is executed until the number is in the expected range.
 	 *
 	 * As the minimum threshold is 2.0, the probability of looping is low:
-	 * sqrt(-2 ln(r)) <= 2 => r >= e^{-2} ~ 0.135, then when taking the average
-	 * sinus multiplier as 2/pi, we have a 8.6% looping probability in the
-	 * worst case. For a 5.0 threshold value, the looping probability
-	 * is about e^{-5} * 2 / pi ~ 0.43%.
+	 * sqrt(-2 ln(r)) <= 2 => r >= e^{-2} ~ 0.135, then when taking the
+	 * average sinus multiplier as 2/pi, we have a 8.6% looping probability in
+	 * the worst case. For a 5.0 threshold value, the looping probability is
+	 * about e^{-5} * 2 / pi ~ 0.43%.
 	 */
 	do
 	{
 		/*
 		 * pg_erand48 generates [0,1), but for the basic version of the
 		 * Box-Muller transform the two uniformly distributed random numbers
-		 * are expected in (0, 1] (see http://en.wikipedia.org/wiki/Box_muller)
+		 * are expected in (0, 1] (see
+		 * http://en.wikipedia.org/wiki/Box_muller)
 		 */
-		double rand1 = 1.0 - pg_erand48(thread->random_state);
-		double rand2 = 1.0 - pg_erand48(thread->random_state);
+		double		rand1 = 1.0 - pg_erand48(thread->random_state);
+		double		rand2 = 1.0 - pg_erand48(thread->random_state);
 
 		/* Box-Muller basic form transform */
-		double var_sqrt = sqrt(-2.0 * log(rand1));
+		double		var_sqrt = sqrt(-2.0 * log(rand1));
+
 		stdev = var_sqrt * sin(2.0 * M_PI * rand2);
 
 		/*
-		 * we may try with cos, but there may be a bias induced if the previous
-		 * value fails the test. To be on the safe side, let us try over.
+		 * we may try with cos, but there may be a bias induced if the
+		 * previous value fails the test. To be on the safe side, let us try
+		 * over.
 		 */
 	}
 	while (stdev < -threshold || stdev >= threshold);
@@ -568,7 +575,7 @@ getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
 	rand = (stdev + threshold) / (threshold * 2.0);
 
 	/* return int64 random number within between min and max */
-	return min + (int64)((max - min + 1) * rand);
+	return min + (int64) ((max - min + 1) * rand);
 }
 
 /*
@@ -582,7 +589,7 @@ getPoissonRand(TState *thread, int64 center)
 	 * Use inverse transform sampling to generate a value > 0, such that the
 	 * expected (i.e. average) value is the given argument.
 	 */
-	double uniform;
+	double		uniform;
 
 	/* erand in [0, 1), uniform in (0, 1] */
 	uniform = 1.0 - pg_erand48(thread->random_state);
@@ -918,7 +925,7 @@ evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
 				if ((var = getVariable(st, expr->u.variable.varname)) == NULL)
 				{
 					fprintf(stderr, "undefined variable %s\n",
-						expr->u.variable.varname);
+							expr->u.variable.varname);
 					return false;
 				}
 				*retval = strtoint64(var);
@@ -927,8 +934,8 @@ evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
 
 		case ENODE_OPERATOR:
 			{
-				int64	lval;
-				int64	rval;
+				int64		lval;
+				int64		rval;
 
 				if (!evaluateExpr(st, expr->u.operator.lexpr, &lval))
 					return false;
@@ -1115,7 +1122,7 @@ agg_vals_init(AggVals *aggs, instr_time start)
 	aggs->skipped = 0;			/* xacts skipped under --rate --latency-limit */
 
 	aggs->sum_latency = 0;		/* SUM(latency) */
-	aggs->sum2_latency = 0;				/* SUM(latency*latency) */
+	aggs->sum2_latency = 0;		/* SUM(latency*latency) */
 
 	/* min and max transaction duration */
 	aggs->min_latency = 0;
@@ -1535,9 +1542,10 @@ top:
 			/*
 			 * Generate random number functions need to be able to subtract
 			 * max from min and add one to the result without overflowing.
-			 * Since we know max > min, we can detect overflow just by checking
-			 * for a negative result. But we must check both that the subtraction
-			 * doesn't overflow, and that adding one to the result doesn't overflow either.
+			 * Since we know max > min, we can detect overflow just by
+			 * checking for a negative result. But we must check both that the
+			 * subtraction doesn't overflow, and that adding one to the result
+			 * doesn't overflow either.
 			 */
 			if (max - min < 0 || (max - min) + 1 < 0)
 			{
@@ -1546,7 +1554,7 @@ top:
 				return true;
 			}
 
-			if (argc == 4 || /* uniform without or with "uniform" keyword */
+			if (argc == 4 ||	/* uniform without or with "uniform" keyword */
 				(argc == 5 && pg_strcasecmp(argv[4], "uniform") == 0))
 			{
 #ifdef DEBUG
@@ -1598,7 +1606,7 @@ top:
 					snprintf(res, sizeof(res), INT64_FORMAT, getExponentialRand(thread, min, max, threshold));
 				}
 			}
-			else /* this means an error somewhere in the parsing phase... */
+			else	/* this means an error somewhere in the parsing phase... */
 			{
 				fprintf(stderr, "%s: unexpected arguments\n", argv[0]);
 				st->ecnt++;
@@ -1742,7 +1750,10 @@ doLog(TState *thread, CState *st, FILE *logfile, instr_time *now, AggVals *agg,
 			agg->cnt += 1;
 			if (skipped)
 			{
-				/* there is no latency to record if the transaction was skipped */
+				/*
+				 * there is no latency to record if the transaction was
+				 * skipped
+				 */
 				agg->skipped += 1;
 			}
 			else
@@ -1779,9 +1790,9 @@ doLog(TState *thread, CState *st, FILE *logfile, instr_time *now, AggVals *agg,
 			while (agg->start_time + agg_interval < INSTR_TIME_GET_DOUBLE(*now))
 			{
 				/*
-				 * This is a non-Windows branch (thanks to the
-				 * ifdef in usage), so we don't need to handle
-				 * this in a special way (see below).
+				 * This is a non-Windows branch (thanks to the ifdef in
+				 * usage), so we don't need to handle this in a special way
+				 * (see below).
 				 */
 				fprintf(logfile, "%ld %d %.0f %.0f %.0f %.0f",
 						agg->start_time,
@@ -2217,7 +2228,7 @@ syntax_error(const char *source, const int lineno,
 		fprintf(stderr, "%s\n", line);
 		if (column != -1)
 		{
-			int i;
+			int			i;
 
 			for (i = 0; i < column - 1; i++)
 				fprintf(stderr, " ");
@@ -2260,7 +2271,8 @@ process_commands(char *buf, const char *source, const int lineno)
 
 	if (*p == '\\')
 	{
-		int		max_args = -1;
+		int			max_args = -1;
+
 		my_commands->type = META_COMMAND;
 
 		j = 0;
@@ -2282,9 +2294,9 @@ process_commands(char *buf, const char *source, const int lineno)
 
 		if (pg_strcasecmp(my_commands->argv[0], "setrandom") == 0)
 		{
-			/* parsing:
-			 * \setrandom variable min max [uniform]
-			 * \setrandom variable min max (gaussian|exponential) threshold
+			/*
+			 * parsing: \setrandom variable min max [uniform] \setrandom
+			 * variable min max (gaussian|exponential) threshold
 			 */
 
 			if (my_commands->argc < 4)
@@ -2295,20 +2307,21 @@ process_commands(char *buf, const char *source, const int lineno)
 
 			/* argc >= 4 */
 
-			if (my_commands->argc == 4 || /* uniform without/with "uniform" keyword */
+			if (my_commands->argc == 4 ||		/* uniform without/with
+												 * "uniform" keyword */
 				(my_commands->argc == 5 &&
 				 pg_strcasecmp(my_commands->argv[4], "uniform") == 0))
 			{
 				/* nothing to do */
 			}
-			else if (/* argc >= 5 */
+			else if (			/* argc >= 5 */
 					 (pg_strcasecmp(my_commands->argv[4], "gaussian") == 0) ||
-					 (pg_strcasecmp(my_commands->argv[4], "exponential") == 0))
+				   (pg_strcasecmp(my_commands->argv[4], "exponential") == 0))
 			{
 				if (my_commands->argc < 6)
 				{
 					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-								 "missing threshold argument", my_commands->argv[4], -1);
+					 "missing threshold argument", my_commands->argv[4], -1);
 				}
 				else if (my_commands->argc > 6)
 				{
@@ -2317,7 +2330,7 @@ process_commands(char *buf, const char *source, const int lineno)
 								 my_commands->cols[6]);
 				}
 			}
-			else /* cannot parse, unexpected arguments */
+			else	/* cannot parse, unexpected arguments */
 			{
 				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
 							 "unexpected argument", my_commands->argv[4],
@@ -2486,7 +2499,8 @@ process_file(char *filename)
 
 	Command   **my_commands;
 	FILE	   *fd;
-	int			lineno, index;
+	int			lineno,
+				index;
 	char	   *buf;
 	int			alloc_num;
 
@@ -2514,6 +2528,7 @@ process_file(char *filename)
 	while ((buf = read_line_from_file(fd)) != NULL)
 	{
 		Command    *command;
+
 		lineno += 1;
 
 		command = process_commands(buf, filename, lineno);
@@ -2547,7 +2562,8 @@ process_builtin(char *tb, const char *source)
 #define COMMANDS_ALLOC_NUM 128
 
 	Command   **my_commands;
-	int			lineno, index;
+	int			lineno,
+				index;
 	char		buf[BUFSIZ];
 	int			alloc_num;
 
@@ -2653,7 +2669,7 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	if (latency_limit)
 		printf("number of transactions above the %.1f ms latency limit: " INT64_FORMAT " (%.3f %%)\n",
 			   latency_limit / 1000.0, latency_late,
-			   100.0 * latency_late / (throttle_latency_skipped + normal_xacts));
+		   100.0 * latency_late / (throttle_latency_skipped + normal_xacts));
 
 	if (throttle_delay || progress || latency_limit)
 	{
@@ -3045,7 +3061,8 @@ main(int argc, char **argv)
 				break;
 			case 'L':
 				{
-					double limit_ms = atof(optarg);
+					double		limit_ms = atof(optarg);
+
 					if (limit_ms <= 0.0)
 					{
 						fprintf(stderr, "invalid latency limit: %s\n", optarg);

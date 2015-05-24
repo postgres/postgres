@@ -72,4 +72,4 @@ typedef uint16 StrategyNumber;
 #define RTMaxStrategyNumber				27
 
 
-#endif		/* STRATNUM_H */
+#endif   /* STRATNUM_H */

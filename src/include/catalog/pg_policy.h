@@ -1,6 +1,6 @@
 /*
  * pg_policy.h
- *   definition of the system "policy" relation (pg_policy)
+ *	 definition of the system "policy" relation (pg_policy)
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -20,14 +20,14 @@
 
 CATALOG(pg_policy,3256)
 {
-	NameData		polname;		/* Policy name. */
-	Oid				polrelid;		/* Oid of the relation with policy. */
-	char			polcmd;			/* One of ACL_*_CHR, or '*' for all */
+	NameData	polname;		/* Policy name. */
+	Oid			polrelid;		/* Oid of the relation with policy. */
+	char		polcmd;			/* One of ACL_*_CHR, or '*' for all */
 
 #ifdef CATALOG_VARLEN
-	Oid				polroles[1];	/* Roles associated with policy, not-NULL */
-	pg_node_tree	polqual;		/* Policy quals. */
-	pg_node_tree	polwithcheck;	/* WITH CHECK quals. */
+	Oid			polroles[1];	/* Roles associated with policy, not-NULL */
+	pg_node_tree polqual;		/* Policy quals. */
+	pg_node_tree polwithcheck;	/* WITH CHECK quals. */
 #endif
 } FormData_pg_policy;
 
@@ -39,7 +39,7 @@ CATALOG(pg_policy,3256)
 typedef FormData_pg_policy *Form_pg_policy;
 
 /* ----------------
- * 		compiler constants for pg_policy
+ *		compiler constants for pg_policy
  * ----------------
  */
 #define Natts_pg_policy				6
@@ -48,6 +48,6 @@ typedef FormData_pg_policy *Form_pg_policy;
 #define Anum_pg_policy_polcmd		3
 #define Anum_pg_policy_polroles		4
 #define Anum_pg_policy_polqual		5
-#define Anum_pg_policy_polwithcheck	6
+#define Anum_pg_policy_polwithcheck 6
 
-#endif  /* PG_POLICY_H */
+#endif   /* PG_POLICY_H */

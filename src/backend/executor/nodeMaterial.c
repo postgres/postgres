@@ -317,7 +317,7 @@ ExecMaterialRestrPos(MaterialState *node)
 void
 ExecReScanMaterial(MaterialState *node)
 {
-	PlanState	*outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 

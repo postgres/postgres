@@ -63,6 +63,7 @@ sub ReplaceFile
 
 	foreach my $file (keys %{ $self->{files} })
 	{
+
 		# Match complete filename
 		if ($filename =~ m!/!)
 		{

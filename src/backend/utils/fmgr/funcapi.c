@@ -886,15 +886,14 @@ int
 get_func_trftypes(HeapTuple procTup,
 				  Oid **p_trftypes)
 {
-
 	Datum		protrftypes;
 	ArrayType  *arr;
 	int			nelems;
-	bool			isNull;
+	bool		isNull;
 
 	protrftypes = SysCacheGetAttr(PROCOID, procTup,
-									 Anum_pg_proc_protrftypes,
-									 &isNull);
+								  Anum_pg_proc_protrftypes,
+								  &isNull);
 	if (!isNull)
 	{
 		/*
@@ -903,7 +902,7 @@ get_func_trftypes(HeapTuple procTup,
 		 * deconstruct_array() since the array data is just going to look like
 		 * a C array of values.
 		 */
-		arr = DatumGetArrayTypeP(protrftypes);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(protrftypes);	/* ensure not toasted */
 		nelems = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			nelems < 0 ||

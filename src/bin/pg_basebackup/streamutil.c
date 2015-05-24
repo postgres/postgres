@@ -241,7 +241,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 				  XLogRecPtr *startpos, char **db_name)
 {
 	PGresult   *res;
-	uint32		hi, lo;
+	uint32		hi,
+				lo;
 
 	/* Check connection existence */
 	Assert(conn != NULL);
@@ -279,7 +280,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-					_("%s: could not parse transaction log location \"%s\"\n"),
+				  _("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 2));
 
 			PQclear(res);
@@ -289,7 +290,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	}
 
 	/* Get database name, only available in 9.4 and newer versions */
-	if  (db_name != NULL)
+	if (db_name != NULL)
 	{
 		if (PQnfields(res) < 4)
 			fprintf(stderr,
@@ -297,7 +298,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 					progname, PQntuples(res), PQnfields(res), 1, 4);
 
 		if (PQgetisnull(res, 0, 3))
-			*db_name =  NULL;
+			*db_name = NULL;
 		else
 			*db_name = pg_strdup(PQgetvalue(res, 0, 3));
 	}
@@ -358,12 +359,13 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	/* Get LSN start position if necessary */
 	if (startpos != NULL)
 	{
-		uint32		hi, lo;
+		uint32		hi,
+					lo;
 
 		if (sscanf(PQgetvalue(res, 0, 1), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-					_("%s: could not parse transaction log location \"%s\"\n"),
+				  _("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 1));
 
 			destroyPQExpBuffer(query);

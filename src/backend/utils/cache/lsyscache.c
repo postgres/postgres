@@ -3012,8 +3012,8 @@ get_tablesample_method_name(Oid tsmid)
 	tuple = SearchSysCache1(TABLESAMPLEMETHODOID, ObjectIdGetDatum(tsmid));
 	if (HeapTupleIsValid(tuple))
 	{
-		Form_pg_tablesample_method	tup =
-			(Form_pg_tablesample_method) GETSTRUCT(tuple);
+		Form_pg_tablesample_method tup =
+		(Form_pg_tablesample_method) GETSTRUCT(tuple);
 		char	   *result;
 
 		result = pstrdup(NameStr(tup->tsmname));

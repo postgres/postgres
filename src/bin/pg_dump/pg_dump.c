@@ -126,8 +126,8 @@ static const CatalogId nilCatalogId = {0, 0};
 
 static void help(const char *progname);
 static void setup_connection(Archive *AH, DumpOptions *dopt,
-				const char *dumpencoding, const char *dumpsnapshot,
-				char *use_role);
+				 const char *dumpencoding, const char *dumpsnapshot,
+				 char *use_role);
 static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
 static void expand_schema_name_patterns(Archive *fout,
 							SimpleStringList *patterns,
@@ -671,7 +671,7 @@ main(int argc, char **argv)
 	/* check the version when a snapshot is explicitly specified by user */
 	if (dumpsnapshot && fout->remoteVersion < 90200)
 		exit_horribly(NULL,
-			"Exported snapshots are not supported by this server version.\n");
+		   "Exported snapshots are not supported by this server version.\n");
 
 	/* Find the last built-in OID, if needed */
 	if (fout->remoteVersion < 70300)
@@ -1052,8 +1052,8 @@ setup_connection(Archive *AH, DumpOptions *dopt, const char *dumpencoding,
 							"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 
 	/*
-	 * define an export snapshot, either chosen by user or needed for
-	 * parallel dump.
+	 * define an export snapshot, either chosen by user or needed for parallel
+	 * dump.
 	 */
 	if (dumpsnapshot)
 		AH->sync_snapshot_id = strdup(dumpsnapshot);
@@ -1061,6 +1061,7 @@ setup_connection(Archive *AH, DumpOptions *dopt, const char *dumpencoding,
 	if (AH->sync_snapshot_id)
 	{
 		PQExpBuffer query = createPQExpBuffer();
+
 		appendPQExpBuffer(query, "SET TRANSACTION SNAPSHOT ");
 		appendStringLiteralConn(query, AH->sync_snapshot_id, conn);
 		ExecuteSqlStatement(AH, query->data);
@@ -2841,8 +2842,8 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 
 		/*
 		 * Get row security enabled information for the table. We represent
-		 * RLS enabled on a table by creating PolicyInfo object with an
-		 * empty policy.
+		 * RLS enabled on a table by creating PolicyInfo object with an empty
+		 * policy.
 		 */
 		if (tbinfo->rowsec)
 		{
@@ -2882,8 +2883,8 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 						  "SELECT oid, tableoid, pol.polname, pol.polcmd, "
 						  "CASE WHEN pol.polroles = '{0}' THEN 'PUBLIC' ELSE "
 						  "   pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(rolname) from pg_catalog.pg_roles WHERE oid = ANY(pol.polroles)), ', ') END AS polroles, "
-						  "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
-				"pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
+			 "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
+						  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
 						  "FROM pg_catalog.pg_policy pol "
 						  "WHERE polrelid = '%u'",
 						  tbinfo->dobj.catId.oid);
@@ -2895,8 +2896,8 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 		{
 			/*
 			 * No explicit policies to handle (only the default-deny policy,
-			 * which is handled as part of the table definition).  Clean up and
-			 * return.
+			 * which is handled as part of the table definition).  Clean up
+			 * and return.
 			 */
 			PQclear(res);
 			continue;
@@ -2959,9 +2960,9 @@ dumpPolicy(Archive *fout, DumpOptions *dopt, PolicyInfo *polinfo)
 		return;
 
 	/*
-	 * If polname is NULL, then this record is just indicating that ROW
-	 * LEVEL SECURITY is enabled for the table. Dump as ALTER TABLE <table>
-	 * ENABLE ROW LEVEL SECURITY.
+	 * If polname is NULL, then this record is just indicating that ROW LEVEL
+	 * SECURITY is enabled for the table. Dump as ALTER TABLE <table> ENABLE
+	 * ROW LEVEL SECURITY.
 	 */
 	if (polinfo->polname == NULL)
 	{
@@ -3046,7 +3047,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 
 	appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
 	appendPQExpBuffer(upgrade_buffer,
-	 "SELECT pg_catalog.binary_upgrade_set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
+					  "SELECT pg_catalog.binary_upgrade_set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
 					  pg_type_oid);
 
 	/* we only support old >= 8.3 for binary upgrades */
@@ -6597,7 +6598,7 @@ getTransforms(Archive *fout, int *numTransforms)
 	int			ntups;
 	int			i;
 	PQExpBuffer query;
-	TransformInfo   *transforminfo;
+	TransformInfo *transforminfo;
 	int			i_tableoid;
 	int			i_oid;
 	int			i_trftype;
@@ -8462,7 +8463,7 @@ dumpExtension(Archive *fout, DumpOptions *dopt, ExtensionInfo *extinfo)
 		appendPQExpBuffer(q, "DROP EXTENSION IF EXISTS %s;\n", qextname);
 
 		appendPQExpBufferStr(q,
-							 "SELECT pg_catalog.binary_upgrade_create_empty_extension(");
+				 "SELECT pg_catalog.binary_upgrade_create_empty_extension(");
 		appendStringLiteralAH(q, extinfo->dobj.name, fout);
 		appendPQExpBufferStr(q, ", ");
 		appendStringLiteralAH(q, extinfo->namespace, fout);
@@ -9367,7 +9368,7 @@ dumpDomain(Archive *fout, DumpOptions *dopt, TypeInfo *tyinfo)
 	for (i = 0; i < tyinfo->nDomChecks; i++)
 	{
 		ConstraintInfo *domcheck = &(tyinfo->domChecks[i]);
-		PQExpBuffer	labelq = createPQExpBuffer();
+		PQExpBuffer labelq = createPQExpBuffer();
 
 		appendPQExpBuffer(labelq, "CONSTRAINT %s ",
 						  fmtId(domcheck->dobj.name));
@@ -10451,8 +10452,8 @@ dumpFunc(Archive *fout, DumpOptions *dopt, FuncInfo *finfo)
 
 	if (protrftypes != NULL && strcmp(protrftypes, "") != 0)
 	{
-		Oid *typeids = palloc(FUNC_MAX_ARGS * sizeof(Oid));
-		int i;
+		Oid		   *typeids = palloc(FUNC_MAX_ARGS * sizeof(Oid));
+		int			i;
 
 		appendPQExpBufferStr(q, " TRANSFORM ");
 		parseOidArray(protrftypes, typeids, FUNC_MAX_ARGS);
@@ -10461,7 +10462,7 @@ dumpFunc(Archive *fout, DumpOptions *dopt, FuncInfo *finfo)
 			if (i != 0)
 				appendPQExpBufferStr(q, ", ");
 			appendPQExpBuffer(q, "FOR TYPE %s",
-							  getFormattedTypeName(fout, typeids[i], zeroAsNone));
+						 getFormattedTypeName(fout, typeids[i], zeroAsNone));
 		}
 	}
 
@@ -10729,11 +10730,11 @@ dumpTransform(Archive *fout, DumpOptions *dopt, TransformInfo *transform)
 	lanname = get_language_name(fout, transform->trflang);
 
 	appendPQExpBuffer(delqry, "DROP TRANSFORM FOR %s LANGUAGE %s;\n",
-					  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
+				  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
 					  lanname);
 
 	appendPQExpBuffer(defqry, "CREATE TRANSFORM FOR %s LANGUAGE %s (",
-					  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
+				  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
 					  lanname);
 
 	if (!transform->trffromsql && !transform->trftosql)
@@ -10747,11 +10748,10 @@ dumpTransform(Archive *fout, DumpOptions *dopt, TransformInfo *transform)
 
 			/*
 			 * Always qualify the function name, in case it is not in
-			 * pg_catalog schema (format_function_signature won't qualify
-			 * it).
+			 * pg_catalog schema (format_function_signature won't qualify it).
 			 */
 			appendPQExpBuffer(defqry, "FROM SQL WITH FUNCTION %s.%s",
-							  fmtId(fromsqlFuncInfo->dobj.namespace->dobj.name), fsig);
+					fmtId(fromsqlFuncInfo->dobj.namespace->dobj.name), fsig);
 			free(fsig);
 		}
 		else
@@ -10769,11 +10769,10 @@ dumpTransform(Archive *fout, DumpOptions *dopt, TransformInfo *transform)
 
 			/*
 			 * Always qualify the function name, in case it is not in
-			 * pg_catalog schema (format_function_signature won't qualify
-			 * it).
+			 * pg_catalog schema (format_function_signature won't qualify it).
 			 */
 			appendPQExpBuffer(defqry, "TO SQL WITH FUNCTION %s.%s",
-							  fmtId(tosqlFuncInfo->dobj.namespace->dobj.name), fsig);
+					  fmtId(tosqlFuncInfo->dobj.namespace->dobj.name), fsig);
 			free(fsig);
 		}
 		else
@@ -10783,7 +10782,7 @@ dumpTransform(Archive *fout, DumpOptions *dopt, TransformInfo *transform)
 	appendPQExpBuffer(defqry, ");\n");
 
 	appendPQExpBuffer(labelq, "TRANSFORM FOR %s LANGUAGE %s",
-					  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
+				  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
 					  lanname);
 
 	if (dopt->binary_upgrade)
@@ -14012,9 +14011,9 @@ dumpTableSchema(Archive *fout, DumpOptions *dopt, TableInfo *tbinfo)
 		 * here, also updating their attlen/attalign values so that the
 		 * dropped column can be skipped properly.  (We do not bother with
 		 * restoring the original attbyval setting.)  Also, inheritance
-		 * relationships are set up by doing ALTER TABLE INHERIT rather than using
-		 * an INHERITS clause --- the latter would possibly mess up the column
-		 * order.  That also means we have to take care about setting
+		 * relationships are set up by doing ALTER TABLE INHERIT rather than
+		 * using an INHERITS clause --- the latter would possibly mess up the
+		 * column order.  That also means we have to take care about setting
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 * Analogously, we set up typed tables using ALTER TABLE / OF here.
 		 */
@@ -15473,28 +15472,28 @@ dumpRule(Archive *fout, DumpOptions *dopt, RuleInfo *rinfo)
  *
  * 1. Identify objects which are members of extensions
  *
- *    Generally speaking, this is to mark them as *not* being dumped, as most
- *    extension objects are created by the single CREATE EXTENSION command.
- *    The one exception is binary upgrades with pg_upgrade will still dump the
- *    non-table objects.
+ *	  Generally speaking, this is to mark them as *not* being dumped, as most
+ *	  extension objects are created by the single CREATE EXTENSION command.
+ *	  The one exception is binary upgrades with pg_upgrade will still dump the
+ *	  non-table objects.
  *
  * 2. Identify and create dump records for extension configuration tables.
  *
- *    Extensions can mark tables as "configuration", which means that the user
- *    is able and expected to modify those tables after the extension has been
- *    loaded.  For these tables, we dump out only the data- the structure is
- *    expected to be handled at CREATE EXTENSION time, including any indexes or
- *    foreign keys, which brings us to-
+ *	  Extensions can mark tables as "configuration", which means that the user
+ *	  is able and expected to modify those tables after the extension has been
+ *	  loaded.  For these tables, we dump out only the data- the structure is
+ *	  expected to be handled at CREATE EXTENSION time, including any indexes or
+ *	  foreign keys, which brings us to-
  *
  * 3. Record FK dependencies between configuration tables.
  *
- *    Due to the FKs being created at CREATE EXTENSION time and therefore before
- *    the data is loaded, we have to work out what the best order for reloading
- *    the data is, to avoid FK violations when the tables are restored.  This is
- *    not perfect- we can't handle circular dependencies and if any exist they
- *    will cause an invalid dump to be produced (though at least all of the data
- *    is included for a user to manually restore).  This is currently documented
- *    but perhaps we can provide a better solution in the future.
+ *	  Due to the FKs being created at CREATE EXTENSION time and therefore before
+ *	  the data is loaded, we have to work out what the best order for reloading
+ *	  the data is, to avoid FK violations when the tables are restored.  This is
+ *	  not perfect- we can't handle circular dependencies and if any exist they
+ *	  will cause an invalid dump to be produced (though at least all of the data
+ *	  is included for a user to manually restore).  This is currently documented
+ *	  but perhaps we can provide a better solution in the future.
  */
 void
 getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[],
@@ -15691,21 +15690,20 @@ getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[]
 	}
 
 	/*
-	 * Now that all the TableInfoData objects have been created for all
-	 * the extensions, check their FK dependencies and register them to
-	 * try and dump the data out in an order which they can be restored
-	 * in.
+	 * Now that all the TableInfoData objects have been created for all the
+	 * extensions, check their FK dependencies and register them to try and
+	 * dump the data out in an order which they can be restored in.
 	 *
 	 * Note that this is not a problem for user tables as their FKs are
 	 * recreated after the data has been loaded.
 	 */
 	printfPQExpBuffer(query,
-			"SELECT conrelid, confrelid "
-			"FROM pg_constraint "
-				"JOIN pg_depend ON (objid = confrelid) "
-			"WHERE contype = 'f' "
-			"AND refclassid = 'pg_extension'::regclass "
-			"AND classid = 'pg_class'::regclass;");
+					  "SELECT conrelid, confrelid "
+					  "FROM pg_constraint "
+					  "JOIN pg_depend ON (objid = confrelid) "
+					  "WHERE contype = 'f' "
+					  "AND refclassid = 'pg_extension'::regclass "
+					  "AND classid = 'pg_class'::regclass;");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 	ntups = PQntuples(res);
@@ -15716,8 +15714,10 @@ getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[]
 	/* Now get the dependencies and register them */
 	for (i = 0; i < ntups; i++)
 	{
-		Oid			conrelid, confrelid;
-		TableInfo  *reftable, *contable;
+		Oid			conrelid,
+					confrelid;
+		TableInfo  *reftable,
+				   *contable;
 
 		conrelid = atooid(PQgetvalue(res, i, i_conrelid));
 		confrelid = atooid(PQgetvalue(res, i, i_confrelid));
@@ -15731,8 +15731,8 @@ getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[]
 			continue;
 
 		/*
-		 * Make referencing TABLE_DATA object depend on the
-		 * referenced table's TABLE_DATA object.
+		 * Make referencing TABLE_DATA object depend on the referenced table's
+		 * TABLE_DATA object.
 		 */
 		addObjectDependency(&contable->dataObj->dobj,
 							reftable->dataObj->dobj.dumpId);

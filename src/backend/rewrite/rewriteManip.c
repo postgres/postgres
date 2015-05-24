@@ -729,7 +729,7 @@ IncrementVarSublevelsUp_walker(Node *node,
 	}
 	if (IsA(node, GroupingFunc))
 	{
-		GroupingFunc   *grp = (GroupingFunc *) node;
+		GroupingFunc *grp = (GroupingFunc *) node;
 
 		if (grp->agglevelsup >= context->min_sublevels_up)
 			grp->agglevelsup += context->delta_sublevels_up;

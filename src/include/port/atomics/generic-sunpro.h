@@ -9,8 +9,8 @@
  *
  * Documentation:
  * * manpage for atomic_cas(3C)
- *   http://www.unix.com/man-page/opensolaris/3c/atomic_cas/
- *   http://docs.oracle.com/cd/E23824_01/html/821-1465/atomic-cas-3c.html
+ *	 http://www.unix.com/man-page/opensolaris/3c/atomic_cas/
+ *	 http://docs.oracle.com/cd/E23824_01/html/821-1465/atomic-cas-3c.html
  *
  * src/include/port/atomics/generic-sunpro.h
  *
@@ -30,16 +30,16 @@
  * membar #StoreStore | #LoadStore | #StoreLoad | #LoadLoad on x86/sparc
  * respectively.
  */
-#	define pg_memory_barrier_impl()		__machine_rw_barrier()
+#define pg_memory_barrier_impl()	 __machine_rw_barrier()
 #endif
 #ifndef pg_read_barrier_impl
-#	define pg_read_barrier_impl()		__machine_r_barrier()
+#define pg_read_barrier_impl()		 __machine_r_barrier()
 #endif
 #ifndef pg_write_barrier_impl
-#	define pg_write_barrier_impl()		__machine_w_barrier()
+#define pg_write_barrier_impl()		 __machine_w_barrier()
 #endif
 
-#endif /* HAVE_MBARRIER_H */
+#endif   /* HAVE_MBARRIER_H */
 
 /* Older versions of the compiler don't have atomic.h... */
 #ifdef HAVE_ATOMIC_H
@@ -64,9 +64,9 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value pg_attribute_aligned(8);
 } pg_atomic_uint64;
 
-#endif /* HAVE_ATOMIC_H */
+#endif   /* HAVE_ATOMIC_H */
 
-#endif /* defined(HAVE_ATOMICS) */
+#endif   /* defined(HAVE_ATOMICS) */
 
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
@@ -80,8 +80,8 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool	ret;
-	uint32	current;
+	bool		ret;
+	uint32		current;
 
 	current = atomic_cas_32(&ptr->value, *expected, newval);
 	ret = current == *expected;
@@ -94,8 +94,8 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool	ret;
-	uint64	current;
+	bool		ret;
+	uint64		current;
 
 	current = atomic_cas_64(&ptr->value, *expected, newval);
 	ret = current == *expected;
@@ -103,8 +103,9 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	return ret;
 }
 
-#endif /* HAVE_ATOMIC_H */
+#endif   /* HAVE_ATOMIC_H */
 
-#endif /* defined(HAVE_ATOMICS) */
+#endif   /* defined(HAVE_ATOMICS) */
 
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif   /* defined(PG_USE_INLINE) ||
+								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */

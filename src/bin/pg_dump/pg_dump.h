@@ -471,7 +471,7 @@ typedef struct _policyInfo
 {
 	DumpableObject dobj;
 	TableInfo  *poltable;
-	char	   *polname;	/* null indicates RLS is enabled on rel */
+	char	   *polname;		/* null indicates RLS is enabled on rel */
 	char	   *polcmd;
 	char	   *polroles;
 	char	   *polqual;

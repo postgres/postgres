@@ -35,10 +35,10 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
 
 	/*
-	 * Transferring files by tablespace is tricky because a single database can
-	 * use multiple tablespaces.  For non-parallel mode, we just pass a NULL
-	 * tablespace path, which matches all tablespaces.  In parallel mode, we
-	 * pass the default tablespace and all user-created tablespaces and let
+	 * Transferring files by tablespace is tricky because a single database
+	 * can use multiple tablespaces.  For non-parallel mode, we just pass a
+	 * NULL tablespace path, which matches all tablespaces.  In parallel mode,
+	 * we pass the default tablespace and all user-created tablespaces and let
 	 * those operations happen in parallel.
 	 */
 	if (user_opts.jobs <= 1)

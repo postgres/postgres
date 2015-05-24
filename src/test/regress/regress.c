@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------
  *
  * regress.c
- *   Code for various C-language functions defined as part of the
- *   regression tests.
+ *	 Code for various C-language functions defined as part of the
+ *	 regression tests.
  *
  * This code is released under the terms of the PostgreSQL License.
  *
@@ -911,14 +911,14 @@ test_atomic_flag(void)
 
 	pg_atomic_clear_flag(&flag);
 }
-#endif /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
+#endif   /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
 
 static void
 test_atomic_uint32(void)
 {
 	pg_atomic_uint32 var;
-	uint32 expected;
-	int i;
+	uint32		expected;
+	int			i;
 
 	pg_atomic_init_u32(&var, 0);
 
@@ -955,7 +955,7 @@ test_atomic_uint32(void)
 	if (pg_atomic_fetch_add_u32(&var, INT_MAX) != INT_MAX)
 		elog(ERROR, "pg_atomic_add_fetch_u32() #3 wrong");
 
-	pg_atomic_fetch_add_u32(&var, 1); /* top up to UINT_MAX */
+	pg_atomic_fetch_add_u32(&var, 1);	/* top up to UINT_MAX */
 
 	if (pg_atomic_read_u32(&var) != UINT_MAX)
 		elog(ERROR, "atomic_read_u32() #2 wrong");
@@ -963,7 +963,7 @@ test_atomic_uint32(void)
 	if (pg_atomic_fetch_sub_u32(&var, INT_MAX) != UINT_MAX)
 		elog(ERROR, "pg_atomic_fetch_sub_u32() #2 wrong");
 
-	if (pg_atomic_read_u32(&var) != (uint32)INT_MAX + 1)
+	if (pg_atomic_read_u32(&var) != (uint32) INT_MAX + 1)
 		elog(ERROR, "atomic_read_u32() #3 wrong: %u", pg_atomic_read_u32(&var));
 
 	expected = pg_atomic_sub_fetch_u32(&var, INT_MAX);
@@ -1018,8 +1018,8 @@ static void
 test_atomic_uint64(void)
 {
 	pg_atomic_uint64 var;
-	uint64 expected;
-	int i;
+	uint64		expected;
+	int			i;
 
 	pg_atomic_init_u64(&var, 0);
 
@@ -1083,13 +1083,13 @@ test_atomic_uint64(void)
 		elog(ERROR, "pg_atomic_fetch_and_u64() #1 wrong");
 
 	if (pg_atomic_fetch_and_u64(&var, ~1) != 1)
-		elog(ERROR, "pg_atomic_fetch_and_u64() #2 wrong: is "UINT64_FORMAT,
+		elog(ERROR, "pg_atomic_fetch_and_u64() #2 wrong: is " UINT64_FORMAT,
 			 pg_atomic_read_u64(&var));
 	/* no bits set anymore */
 	if (pg_atomic_fetch_and_u64(&var, ~0) != 0)
 		elog(ERROR, "pg_atomic_fetch_and_u64() #3 wrong");
 }
-#endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
+#endif   /* PG_HAVE_ATOMIC_U64_SUPPORT */
 
 
 PG_FUNCTION_INFO_V1(test_atomic_ops);

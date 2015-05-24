@@ -111,7 +111,7 @@ optionally_create_toast_tables(void)
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n "
 								"WHERE	c.relnamespace = n.oid AND "
-							  "		n.nspname NOT IN ('pg_catalog', 'information_schema') AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema') AND "
 								"c.relkind IN ('r', 'm') AND "
 								"c.reltoastrelid = 0");
 
@@ -122,12 +122,12 @@ optionally_create_toast_tables(void)
 		{
 			/* enable auto-oid-numbered TOAST creation if needed */
 			PQclear(executeQueryOrDie(conn, "SELECT pg_catalog.binary_upgrade_set_next_toast_pg_class_oid('%d'::pg_catalog.oid);",
-					OPTIONALLY_CREATE_TOAST_OID));
+									  OPTIONALLY_CREATE_TOAST_OID));
 
 			/* dummy command that also triggers check for required TOAST table */
 			PQclear(executeQueryOrDie(conn, "ALTER TABLE %s.%s RESET (binary_upgrade_dummy_option);",
-					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
-					quote_identifier(PQgetvalue(res, rowno, i_relname))));
+						 quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+					   quote_identifier(PQgetvalue(res, rowno, i_relname))));
 		}
 
 		PQclear(res);

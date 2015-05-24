@@ -127,7 +127,7 @@ struct XLogReaderState
 	uint32		main_data_len;	/* main data portion's length */
 	uint32		main_data_bufsz;	/* allocated size of the buffer */
 
-	RepOriginId	record_origin;
+	RepOriginId record_origin;
 
 	/* information about blocks referenced by the record. */
 	DecodedBkpBlock blocks[XLR_MAX_BLOCK_ID + 1];

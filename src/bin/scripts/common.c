@@ -21,7 +21,7 @@
 
 
 static PGcancel *volatile cancelConn = NULL;
-bool CancelRequested = false;
+bool		CancelRequested = false;
 
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;

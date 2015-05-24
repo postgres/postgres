@@ -32,8 +32,11 @@ sub run_test
 
 	# Insert additional data on master that will be replicated to standby
 	master_psql("INSERT INTO tbl1 values ('in master, before promotion')");
-	master_psql("INSERT INTO trunc_tbl values ('in master, before promotion')");
-	master_psql("INSERT INTO tail_tbl SELECT g, 'in master, before promotion: ' || g FROM generate_series(1, 10000) g");
+	master_psql(
+		"INSERT INTO trunc_tbl values ('in master, before promotion')");
+	master_psql(
+"INSERT INTO tail_tbl SELECT g, 'in master, before promotion: ' || g FROM generate_series(1, 10000) g"
+	);
 
 	master_psql('CHECKPOINT');
 
@@ -50,7 +53,9 @@ sub run_test
 
 	# Insert enough rows to trunc_tbl to extend the file. pg_rewind should
 	# truncate it back to the old size.
-	master_psql("INSERT INTO trunc_tbl SELECT 'in master, after promotion: ' || g FROM generate_series(1, 10000) g");
+	master_psql(
+"INSERT INTO trunc_tbl SELECT 'in master, after promotion: ' || g FROM generate_series(1, 10000) g"
+	);
 
 	# Truncate tail_tbl. pg_rewind should copy back the truncated part
 	# (We cannot use an actual TRUNCATE command here, as that creates a
@@ -60,20 +65,23 @@ sub run_test
 
 	RewindTest::run_pg_rewind($test_mode);
 
-	check_query('SELECT * FROM tbl1',
+	check_query(
+		'SELECT * FROM tbl1',
 		qq(in master
 in master, before promotion
 in standby, after promotion
 ),
 		'table content');
 
-	check_query('SELECT * FROM trunc_tbl',
+	check_query(
+		'SELECT * FROM trunc_tbl',
 		qq(in master
 in master, before promotion
 ),
 		'truncation');
 
-	check_query('SELECT count(*) FROM tail_tbl',
+	check_query(
+		'SELECT count(*) FROM tail_tbl',
 		qq(10001
 ),
 		'tail-copy');

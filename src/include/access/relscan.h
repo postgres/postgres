@@ -38,8 +38,8 @@ typedef struct HeapScanDescData
 	/* state set up at initscan time */
 	BlockNumber rs_nblocks;		/* total number of blocks in rel */
 	BlockNumber rs_startblock;	/* block # to start at */
-	BlockNumber	rs_initblock;	/* block # to consider initial of rel */
-	BlockNumber	rs_numblocks;	/* number of blocks to scan */
+	BlockNumber rs_initblock;	/* block # to consider initial of rel */
+	BlockNumber rs_numblocks;	/* number of blocks to scan */
 	BufferAccessStrategy rs_strategy;	/* access strategy for reads */
 	bool		rs_syncscan;	/* report location to syncscan logic? */
 

@@ -213,8 +213,8 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 		{
 			const ObjectAddress *thisobj = &targetObjects->refs[i];
 			const ObjectAddressExtra *extra = &targetObjects->extras[i];
-			bool	original = false;
-			bool	normal = false;
+			bool		original = false;
+			bool		normal = false;
 
 			if (extra->flags & DEPFLAG_ORIGINAL)
 				original = true;
@@ -1611,10 +1611,10 @@ find_expr_references_walker(Node *node,
 										   context->addrs);
 					break;
 
-				/*
-				 * Dependencies for regrole should be shared among all
-				 * databases, so explicitly inhibit to have dependencies.
-				 */
+					/*
+					 * Dependencies for regrole should be shared among all
+					 * databases, so explicitly inhibit to have dependencies.
+					 */
 				case REGROLEOID:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

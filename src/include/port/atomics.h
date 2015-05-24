@@ -60,15 +60,15 @@
  */
 #if defined(__arm__) || defined(__arm) || \
 	defined(__aarch64__) || defined(__aarch64)
-#	include "port/atomics/arch-arm.h"
+#include "port/atomics/arch-arm.h"
 #elif defined(__i386__) || defined(__i386) || defined(__x86_64__)
-#	include "port/atomics/arch-x86.h"
+#include "port/atomics/arch-x86.h"
 #elif defined(__ia64__) || defined(__ia64)
-#	include "port/atomics/arch-ia64.h"
+#include "port/atomics/arch-ia64.h"
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
-#	include "port/atomics/arch-ppc.h"
+#include "port/atomics/arch-ppc.h"
 #elif defined(__hppa) || defined(__hppa__)
-#	include "port/atomics/arch-hppa.h"
+#include "port/atomics/arch-hppa.h"
 #endif
 
 /*
@@ -83,15 +83,15 @@
  */
 /* gcc or compatible, including clang and icc */
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#	include "port/atomics/generic-gcc.h"
+#include "port/atomics/generic-gcc.h"
 #elif defined(WIN32_ONLY_COMPILER)
-#	include "port/atomics/generic-msvc.h"
+#include "port/atomics/generic-msvc.h"
 #elif defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
-#	include "port/atomics/generic-acc.h"
+#include "port/atomics/generic-acc.h"
 #elif defined(__SUNPRO_C) && !defined(__GNUC__)
-#	include "port/atomics/generic-sunpro.h"
+#include "port/atomics/generic-sunpro.h"
 #elif (defined(__IBMC__) || defined(__IBMCPP__)) && !defined(__GNUC__)
-#	include "port/atomics/generic-xlc.h"
+#include "port/atomics/generic-xlc.h"
 #else
 /*
  * Unsupported compiler, we'll likely use slower fallbacks... At least
@@ -128,7 +128,7 @@ STATIC_IF_INLINE_DECLARE uint32 pg_atomic_read_u32(volatile pg_atomic_uint32 *pt
 STATIC_IF_INLINE_DECLARE void pg_atomic_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val);
 STATIC_IF_INLINE_DECLARE uint32 pg_atomic_exchange_u32(volatile pg_atomic_uint32 *ptr, uint32 newval);
 STATIC_IF_INLINE_DECLARE bool pg_atomic_compare_exchange_u32(volatile pg_atomic_uint32 *ptr,
-															 uint32 *expected, uint32 newval);
+							   uint32 *expected, uint32 newval);
 STATIC_IF_INLINE_DECLARE uint32 pg_atomic_fetch_add_u32(volatile pg_atomic_uint32 *ptr, int32 add_);
 STATIC_IF_INLINE_DECLARE uint32 pg_atomic_fetch_sub_u32(volatile pg_atomic_uint32 *ptr, int32 sub_);
 STATIC_IF_INLINE_DECLARE uint32 pg_atomic_fetch_and_u32(volatile pg_atomic_uint32 *ptr, uint32 and_);
@@ -143,7 +143,7 @@ STATIC_IF_INLINE_DECLARE uint64 pg_atomic_read_u64(volatile pg_atomic_uint64 *pt
 STATIC_IF_INLINE_DECLARE void pg_atomic_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val);
 STATIC_IF_INLINE_DECLARE uint64 pg_atomic_exchange_u64(volatile pg_atomic_uint64 *ptr, uint64 newval);
 STATIC_IF_INLINE_DECLARE bool pg_atomic_compare_exchange_u64(volatile pg_atomic_uint64 *ptr,
-															 uint64 *expected, uint64 newval);
+							   uint64 *expected, uint64 newval);
 STATIC_IF_INLINE_DECLARE uint64 pg_atomic_fetch_add_u64(volatile pg_atomic_uint64 *ptr, int64 add_);
 STATIC_IF_INLINE_DECLARE uint64 pg_atomic_fetch_sub_u64(volatile pg_atomic_uint64 *ptr, int64 sub_);
 STATIC_IF_INLINE_DECLARE uint64 pg_atomic_fetch_and_u64(volatile pg_atomic_uint64 *ptr, uint64 and_);
@@ -151,7 +151,7 @@ STATIC_IF_INLINE_DECLARE uint64 pg_atomic_fetch_or_u64(volatile pg_atomic_uint64
 STATIC_IF_INLINE_DECLARE uint64 pg_atomic_add_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 add_);
 STATIC_IF_INLINE_DECLARE uint64 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_);
 
-#endif /* PG_HAVE_64_BIT_ATOMICS */
+#endif   /* PG_HAVE_64_BIT_ATOMICS */
 
 
 /*
@@ -175,14 +175,14 @@ STATIC_IF_INLINE_DECLARE uint64 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint6
  * architectures) this requires issuing some sort of memory fencing
  * instruction.
  */
-#define pg_memory_barrier()	pg_memory_barrier_impl()
+#define pg_memory_barrier() pg_memory_barrier_impl()
 
 /*
  * pg_(read|write)_barrier - prevent the CPU from reordering memory access
  *
  * A read barrier must act as a compiler barrier, and in addition must
  * guarantee that any loads issued prior to the barrier are completed before
- * any loads issued after the barrier.	Similarly, a write barrier acts
+ * any loads issued after the barrier.  Similarly, a write barrier acts
  * as a compiler barrier, and also orders stores.  Read and write barriers
  * are thus weaker than a full memory barrier, but stronger than a compiler
  * barrier.  In practice, on machines with strong memory ordering, read and
@@ -194,7 +194,7 @@ STATIC_IF_INLINE_DECLARE uint64 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint6
 /*
  * Spinloop delay - Allow CPU to relax in busy loops
  */
-#define pg_spin_delay()	pg_spin_delay_impl()
+#define pg_spin_delay() pg_spin_delay_impl()
 
 /*
  * The following functions are wrapper functions around the platform specific
@@ -522,10 +522,11 @@ pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 	return pg_atomic_sub_fetch_u64_impl(ptr, sub_);
 }
 
-#endif /* PG_HAVE_64_BIT_ATOMICS */
+#endif   /* PG_HAVE_64_BIT_ATOMICS */
 
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif   /* defined(PG_USE_INLINE) ||
+								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */
 
 #undef INSIDE_ATOMICS_H
 
-#endif /* ATOMICS_H */
+#endif   /* ATOMICS_H */

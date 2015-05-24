@@ -96,8 +96,8 @@ varstr_levenshtein(const char *source, int slen, const char *target, int tlen,
 #endif
 
 	/*
-	 * A common use for Levenshtein distance is to match attributes when building
-	 * diagnostic, user-visible messages.  Restrict the size of
+	 * A common use for Levenshtein distance is to match attributes when
+	 * building diagnostic, user-visible messages.  Restrict the size of
 	 * MAX_LEVENSHTEIN_STRLEN at compile time so that this is guaranteed to
 	 * work.
 	 */

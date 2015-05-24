@@ -578,12 +578,13 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 				/* we do NOT descend into the contained expression */
 				return false;
 			case PVC_RECURSE_AGGREGATES:
+
 				/*
-				 * we do NOT descend into the contained expression,
-				 * even if the caller asked for it, because we never
-				 * actually evaluate it - the result is driven entirely
-				 * off the associated GROUP BY clause, so we never need
-				 * to extract the actual Vars here.
+				 * we do NOT descend into the contained expression, even if
+				 * the caller asked for it, because we never actually evaluate
+				 * it - the result is driven entirely off the associated GROUP
+				 * BY clause, so we never need to extract the actual Vars
+				 * here.
 				 */
 				return false;
 		}

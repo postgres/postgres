@@ -84,8 +84,8 @@ statapprox_heap(Relation rel, output_type *stat)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * If the page has only visible tuples, then we can find out the
-		 * free space from the FSM and move on.
+		 * If the page has only visible tuples, then we can find out the free
+		 * space from the FSM and move on.
 		 */
 		if (visibilitymap_test(rel, blkno, &vmbuffer))
 		{
@@ -103,8 +103,8 @@ statapprox_heap(Relation rel, output_type *stat)
 		page = BufferGetPage(buf);
 
 		/*
-		 * It's not safe to call PageGetHeapFreeSpace() on new pages, so
-		 * we treat them as being free space for our purposes.
+		 * It's not safe to call PageGetHeapFreeSpace() on new pages, so we
+		 * treat them as being free space for our purposes.
 		 */
 		if (!PageIsNew(page))
 			stat->free_space += PageGetHeapFreeSpace(page);
@@ -120,9 +120,9 @@ statapprox_heap(Relation rel, output_type *stat)
 		scanned++;
 
 		/*
-		 * Look at each tuple on the page and decide whether it's live
-		 * or dead, then count it and its size. Unlike lazy_scan_heap,
-		 * we can afford to ignore problems and special cases.
+		 * Look at each tuple on the page and decide whether it's live or
+		 * dead, then count it and its size. Unlike lazy_scan_heap, we can
+		 * afford to ignore problems and special cases.
 		 */
 		maxoff = PageGetMaxOffsetNumber(page);
 
@@ -179,9 +179,10 @@ statapprox_heap(Relation rel, output_type *stat)
 		UnlockReleaseBuffer(buf);
 	}
 
-	stat->table_len = (uint64) nblocks * BLCKSZ;
+	stat->table_len = (uint64) nblocks *BLCKSZ;
+
 	stat->tuple_count = vac_estimate_reltuples(rel, false, nblocks, scanned,
-											   stat->tuple_count+misc_count);
+											 stat->tuple_count + misc_count);
 
 	/*
 	 * Calculate percentages if the relation has one or more pages.
@@ -240,9 +241,9 @@ pgstattuple_approx(PG_FUNCTION_ARGS)
 				 errmsg("cannot access temporary tables of other sessions")));
 
 	/*
-	 * We support only ordinary relations and materialised views,
-	 * because we depend on the visibility map and free space map
-	 * for our estimates about unscanned pages.
+	 * We support only ordinary relations and materialised views, because we
+	 * depend on the visibility map and free space map for our estimates about
+	 * unscanned pages.
 	 */
 	if (!(rel->rd_rel->relkind == RELKIND_RELATION ||
 		  rel->rd_rel->relkind == RELKIND_MATVIEW))
@@ -268,6 +269,6 @@ pgstattuple_approx(PG_FUNCTION_ARGS)
 	values[i++] = Int64GetDatum(stat.free_space);
 	values[i++] = Float8GetDatum(stat.free_percent);
 
-	ret =  heap_form_tuple(tupdesc, values, nulls);
+	ret = heap_form_tuple(tupdesc, values, nulls);
 	return HeapTupleGetDatum(ret);
 }

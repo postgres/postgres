@@ -55,8 +55,8 @@
  */
 typedef struct CommitTimestampEntry
 {
-	TimestampTz		time;
-	RepOriginId		nodeid;
+	TimestampTz time;
+	RepOriginId nodeid;
 } CommitTimestampEntry;
 
 #define SizeOfCommitTimestampEntry (offsetof(CommitTimestampEntry, nodeid) + \
@@ -65,7 +65,7 @@ typedef struct CommitTimestampEntry
 #define COMMIT_TS_XACTS_PER_PAGE \
 	(BLCKSZ / SizeOfCommitTimestampEntry)
 
-#define TransactionIdToCTsPage(xid)	\
+#define TransactionIdToCTsPage(xid) \
 	((xid) / (TransactionId) COMMIT_TS_XACTS_PER_PAGE)
 #define TransactionIdToCTsEntry(xid)	\
 	((xid) % (TransactionId) COMMIT_TS_XACTS_PER_PAGE)
@@ -83,21 +83,21 @@ static SlruCtlData CommitTsCtlData;
  */
 typedef struct CommitTimestampShared
 {
-	TransactionId	xidLastCommit;
+	TransactionId xidLastCommit;
 	CommitTimestampEntry dataLastCommit;
 } CommitTimestampShared;
 
-CommitTimestampShared	*commitTsShared;
+CommitTimestampShared *commitTsShared;
 
 
 /* GUC variable */
-bool	track_commit_timestamp;
+bool		track_commit_timestamp;
 
 static void SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 					 TransactionId *subxids, TimestampTz ts,
 					 RepOriginId nodeid, int pageno);
 static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
-						  RepOriginId nodeid, int slotno);
+						 RepOriginId nodeid, int slotno);
 static int	ZeroCommitTsPage(int pageno, bool writeXlog);
 static bool CommitTsPagePrecedes(int page1, int page2);
 static void WriteZeroPageXlogRec(int pageno);
@@ -141,8 +141,8 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 		return;
 
 	/*
-	 * Comply with the WAL-before-data rule: if caller specified it wants
-	 * this value to be recorded in WAL, do so before touching the data.
+	 * Comply with the WAL-before-data rule: if caller specified it wants this
+	 * value to be recorded in WAL, do so before touching the data.
 	 */
 	if (do_xlog)
 		WriteSetTimestampXlogRec(xid, nsubxids, subxids, timestamp, nodeid);
@@ -159,9 +159,9 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 	/*
 	 * We split the xids to set the timestamp to in groups belonging to the
 	 * same SLRU page; the first element in each such set is its head.  The
-	 * first group has the main XID as the head; subsequent sets use the
-	 * first subxid not on the previous page as head.  This way, we only have
-	 * to lock/modify each SLRU page once.
+	 * first group has the main XID as the head; subsequent sets use the first
+	 * subxid not on the previous page as head.  This way, we only have to
+	 * lock/modify each SLRU page once.
 	 */
 	for (i = 0, headxid = xid;;)
 	{
@@ -183,8 +183,8 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 			break;
 
 		/*
-		 * Set the new head and skip over it, as well as over the subxids
-		 * we just wrote.
+		 * Set the new head and skip over it, as well as over the subxids we
+		 * just wrote.
 		 */
 		headxid = subxids[j];
 		i += j - i + 1;
@@ -271,14 +271,14 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not get commit timestamp data"),
-				 errhint("Make sure the configuration parameter \"%s\" is set.",
-						 "track_commit_timestamp")));
+			  errhint("Make sure the configuration parameter \"%s\" is set.",
+					  "track_commit_timestamp")));
 
 	/* error if the given Xid doesn't normally commit */
 	if (!TransactionIdIsNormal(xid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot retrieve commit timestamp for transaction %u", xid)));
+		errmsg("cannot retrieve commit timestamp for transaction %u", xid)));
 
 	/*
 	 * Return empty if the requested value is outside our valid range.
@@ -350,15 +350,15 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 TransactionId
 GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 {
-	TransactionId	xid;
+	TransactionId xid;
 
 	/* Error if module not enabled */
 	if (!track_commit_timestamp)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not get commit timestamp data"),
-				 errhint("Make sure the configuration parameter \"%s\" is set.",
-						 "track_commit_timestamp")));
+			  errhint("Make sure the configuration parameter \"%s\" is set.",
+					  "track_commit_timestamp")));
 
 	LWLockAcquire(CommitTsLock, LW_SHARED);
 	xid = commitTsShared->xidLastCommit;
@@ -377,9 +377,9 @@ GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 Datum
 pg_xact_commit_timestamp(PG_FUNCTION_ARGS)
 {
-	TransactionId	xid = PG_GETARG_UINT32(0);
-	TimestampTz		ts;
-	bool			found;
+	TransactionId xid = PG_GETARG_UINT32(0);
+	TimestampTz ts;
+	bool		found;
 
 	found = TransactionIdGetCommitTsData(xid, &ts, NULL);
 
@@ -393,11 +393,11 @@ pg_xact_commit_timestamp(PG_FUNCTION_ARGS)
 Datum
 pg_last_committed_xact(PG_FUNCTION_ARGS)
 {
-	TransactionId	xid;
-	TimestampTz		ts;
-	Datum       values[2];
-	bool        nulls[2];
-	TupleDesc   tupdesc;
+	TransactionId xid;
+	TimestampTz ts;
+	Datum		values[2];
+	bool		nulls[2];
+	TupleDesc	tupdesc;
 	HeapTuple	htup;
 
 	/* and construct a tuple with our data */
@@ -462,7 +462,7 @@ CommitTsShmemSize(void)
 void
 CommitTsShmemInit(void)
 {
-	bool	found;
+	bool		found;
 
 	CommitTsCtl->PagePrecedes = CommitTsPagePrecedes;
 	SimpleLruInit(CommitTsCtl, "CommitTs Ctl", CommitTsShmemBuffers(), 0,
@@ -495,8 +495,8 @@ BootStrapCommitTs(void)
 {
 	/*
 	 * Nothing to do here at present, unlike most other SLRU modules; segments
-	 * are created when the server is started with this module enabled.
-	 * See StartupCommitTs.
+	 * are created when the server is started with this module enabled. See
+	 * StartupCommitTs.
 	 */
 }
 
@@ -561,9 +561,9 @@ CompleteCommitTsInitialization(void)
 
 /*
  * Activate this module whenever necessary.
- * 		This must happen during postmaster or standalong-backend startup,
- * 		or during WAL replay anytime the track_commit_timestamp setting is
- * 		changed in the master.
+ *		This must happen during postmaster or standalong-backend startup,
+ *		or during WAL replay anytime the track_commit_timestamp setting is
+ *		changed in the master.
  *
  * The reason why this SLRU needs separate activation/deactivation functions is
  * that it can be enabled/disabled during start and the activation/deactivation
@@ -612,7 +612,7 @@ ActivateCommitTs(void)
 	/* Finally, create the current segment file, if necessary */
 	if (!SimpleLruDoesPhysicalPageExist(CommitTsCtl, pageno))
 	{
-		int		slotno;
+		int			slotno;
 
 		LWLockAcquire(CommitTsControlLock, LW_EXCLUSIVE);
 		slotno = ZeroCommitTsPage(pageno, false);
@@ -834,7 +834,7 @@ WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
 						 TransactionId *subxids, TimestampTz timestamp,
 						 RepOriginId nodeid)
 {
-	xl_commit_ts_set	record;
+	xl_commit_ts_set record;
 
 	record.timestamp = timestamp;
 	record.nodeid = nodeid;
@@ -907,7 +907,7 @@ commit_ts_redo(XLogReaderState *record)
 			subxids = NULL;
 
 		TransactionTreeSetCommitTsData(setts->mainxid, nsubxids, subxids,
-									   setts->timestamp, setts->nodeid, false);
+									 setts->timestamp, setts->nodeid, false);
 		if (subxids)
 			pfree(subxids);
 	}

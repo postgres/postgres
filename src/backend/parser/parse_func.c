@@ -778,14 +778,15 @@ TableSampleClause *
 ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 				 List *sampleargs, int location)
 {
-	HeapTuple		tuple;
+	HeapTuple	tuple;
 	Form_pg_tablesample_method tsm;
 	Form_pg_proc procform;
 	TableSampleClause *tablesample;
-	List		   *fargs;
-	ListCell	   *larg;
-	int				nargs, initnargs;
-	Oid				init_arg_types[FUNC_MAX_ARGS];
+	List	   *fargs;
+	ListCell   *larg;
+	int			nargs,
+				initnargs;
+	Oid			init_arg_types[FUNC_MAX_ARGS];
 
 	/* Load the tablesample method */
 	tuple = SearchSysCache1(TABLESAMPLEMETHODNAME, PointerGetDatum(samplemethod));
@@ -817,7 +818,7 @@ ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 	tuple = SearchSysCache1(PROCOID,
 							ObjectIdGetDatum(tablesample->tsminit));
 
-	if (!HeapTupleIsValid(tuple))	/* should not happen */
+	if (!HeapTupleIsValid(tuple))		/* should not happen */
 		elog(ERROR, "cache lookup failed for function %u",
 			 tablesample->tsminit);
 
@@ -826,15 +827,15 @@ ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 	Assert(initnargs >= 3);
 
 	/*
-	 * First parameter is used to pass the SampleScanState, second is
-	 * seed (REPEATABLE), skip the processing for them here, just assert
-	 * that the types are correct.
+	 * First parameter is used to pass the SampleScanState, second is seed
+	 * (REPEATABLE), skip the processing for them here, just assert that the
+	 * types are correct.
 	 */
 	Assert(procform->proargtypes.values[0] == INTERNALOID);
 	Assert(procform->proargtypes.values[1] == INT4OID);
 	initnargs -= 2;
 	memcpy(init_arg_types, procform->proargtypes.values + 2,
-				   initnargs * sizeof(Oid));
+		   initnargs * sizeof(Oid));
 
 	/* Now we are done with the catalog */
 	ReleaseSysCache(tuple);
@@ -842,7 +843,7 @@ ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 	/* Process repeatable (seed) */
 	if (repeatable != NULL)
 	{
-		Node   *arg = repeatable;
+		Node	   *arg = repeatable;
 
 		if (arg && IsA(arg, A_Const))
 		{
@@ -851,7 +852,7 @@ ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 			if (con->val.type == T_Null)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("REPEATABLE clause must be NOT NULL numeric value"),
+				  errmsg("REPEATABLE clause must be NOT NULL numeric value"),
 						 parser_errposition(pstate, con->location)));
 
 		}
@@ -867,21 +868,21 @@ ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 	if (list_length(sampleargs) != initnargs)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-		 errmsg_plural("tablesample method \"%s\" expects %d argument got %d",
-					   "tablesample method \"%s\" expects %d arguments got %d",
-					   initnargs,
-					   samplemethod,
-					   initnargs, list_length(sampleargs)),
-		 parser_errposition(pstate, location)));
+		errmsg_plural("tablesample method \"%s\" expects %d argument got %d",
+					  "tablesample method \"%s\" expects %d arguments got %d",
+					  initnargs,
+					  samplemethod,
+					  initnargs, list_length(sampleargs)),
+				 parser_errposition(pstate, location)));
 
 	/* Transform the arguments, typecasting them as needed. */
 	fargs = NIL;
 	nargs = 0;
 	foreach(larg, sampleargs)
 	{
-		Node   *inarg = (Node *) lfirst(larg);
-		Node   *arg = transformExpr(pstate, inarg, EXPR_KIND_FROM_FUNCTION);
-		Oid		argtype = exprType(arg);
+		Node	   *inarg = (Node *) lfirst(larg);
+		Node	   *arg = transformExpr(pstate, inarg, EXPR_KIND_FROM_FUNCTION);
+		Oid			argtype = exprType(arg);
 
 		if (argtype != init_arg_types[nargs])
 		{
@@ -889,12 +890,12 @@ ParseTableSample(ParseState *pstate, char *samplemethod, Node *repeatable,
 								 COERCION_IMPLICIT))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("wrong parameter %d for tablesample method \"%s\"",
-							nargs + 1, samplemethod),
-					 errdetail("Expected type %s got %s.",
-							   format_type_be(init_arg_types[nargs]),
-							   format_type_be(argtype)),
-					 parser_errposition(pstate, exprLocation(inarg))));
+				   errmsg("wrong parameter %d for tablesample method \"%s\"",
+						  nargs + 1, samplemethod),
+						 errdetail("Expected type %s got %s.",
+								   format_type_be(init_arg_types[nargs]),
+								   format_type_be(argtype)),
+						 parser_errposition(pstate, exprLocation(inarg))));
 
 			arg = coerce_type(pstate, arg, argtype, init_arg_types[nargs], -1,
 							  COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);

@@ -1107,7 +1107,7 @@ ShutdownPostgres(int code, Datum arg)
 static void
 StatementTimeoutHandler(void)
 {
-	int sig = SIGINT;
+	int			sig = SIGINT;
 
 	/*
 	 * During authentication the timeout is used to deal with

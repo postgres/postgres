@@ -742,7 +742,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			{
 				for (i = 1; i <= keysz; i++)
 				{
-					SortSupport	entry;
+					SortSupport entry;
 					Datum		attrDatum1,
 								attrDatum2;
 					bool		isNull1,

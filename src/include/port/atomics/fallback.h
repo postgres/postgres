@@ -1,8 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * fallback.h
- *    Fallback for platforms without spinlock and/or atomics support. Slower
- *    than native atomics support, but not unusably slow.
+ *	  Fallback for platforms without spinlock and/or atomics support. Slower
+ *	  than native atomics support, but not unusably slow.
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -14,7 +14,7 @@
 
 /* intentionally no include guards, should only be included by atomics.h */
 #ifndef INSIDE_ATOMICS_H
-#	error "should be included via atomics.h"
+#error "should be included via atomics.h"
 #endif
 
 #ifndef pg_memory_barrier_impl
@@ -75,14 +75,15 @@ typedef struct pg_atomic_flag
 	 * be content with just one byte instead of 4, but that's not too much
 	 * waste.
 	 */
-#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
+#if defined(__hppa) || defined(__hppa__)		/* HP PA-RISC, GCC and HP
+												 * compilers */
 	int			sema[4];
 #else
 	int			sema;
 #endif
 } pg_atomic_flag;
 
-#endif /* PG_HAVE_ATOMIC_FLAG_SUPPORT */
+#endif   /* PG_HAVE_ATOMIC_FLAG_SUPPORT */
 
 #if !defined(PG_HAVE_ATOMIC_U32_SUPPORT)
 
@@ -92,7 +93,8 @@ typedef struct pg_atomic_flag
 typedef struct pg_atomic_uint32
 {
 	/* Check pg_atomic_flag's definition above for an explanation */
-#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
+#if defined(__hppa) || defined(__hppa__)		/* HP PA-RISC, GCC and HP
+												 * compilers */
 	int			sema[4];
 #else
 	int			sema;
@@ -100,7 +102,7 @@ typedef struct pg_atomic_uint32
 	volatile uint32 value;
 } pg_atomic_uint32;
 
-#endif /* PG_HAVE_ATOMIC_U32_SUPPORT */
+#endif   /* PG_HAVE_ATOMIC_U32_SUPPORT */
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
 
@@ -128,7 +130,7 @@ pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
 	return true;
 }
 
-#endif /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
+#endif   /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
 
 #ifdef PG_HAVE_ATOMIC_U32_SIMULATION
 
@@ -137,12 +139,13 @@ extern void pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_)
 
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
 extern bool pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
-												uint32 *expected, uint32 newval);
+									uint32 *expected, uint32 newval);
 
 #define PG_HAVE_ATOMIC_FETCH_ADD_U32
 extern uint32 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_);
 
-#endif /* PG_HAVE_ATOMIC_U32_SIMULATION */
+#endif   /* PG_HAVE_ATOMIC_U32_SIMULATION */
 
 
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif   /* defined(PG_USE_INLINE) ||
+								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */

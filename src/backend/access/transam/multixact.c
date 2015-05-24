@@ -965,7 +965,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 	 */
 	if (!MultiXactIdPrecedes(result, MultiXactState->multiVacLimit) ||
 		(MultiXactState->nextOffset - MultiXactState->oldestOffset
-			> MULTIXACT_MEMBER_SAFE_THRESHOLD))
+		 > MULTIXACT_MEMBER_SAFE_THRESHOLD))
 	{
 		/*
 		 * For safety's sake, we release MultiXactGenLock while sending
@@ -1190,9 +1190,9 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	MultiXactIdSetOldestVisible();
 
 	/*
-	 * If we know the multi is used only for locking and not for updates,
-	 * then we can skip checking if the value is older than our oldest
-	 * visible multi.  It cannot possibly still be running.
+	 * If we know the multi is used only for locking and not for updates, then
+	 * we can skip checking if the value is older than our oldest visible
+	 * multi.  It cannot possibly still be running.
 	 */
 	if (onlyLock &&
 		MultiXactIdPrecedes(multi, OldestVisibleMXactId[MyBackendId]))
@@ -1207,14 +1207,14 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 *
 	 * An ID older than MultiXactState->oldestMultiXactId cannot possibly be
 	 * useful; it has already been removed, or will be removed shortly, by
-	 * truncation.  Returning the wrong values could lead
-	 * to an incorrect visibility result.  However, to support pg_upgrade we
-	 * need to allow an empty set to be returned regardless, if the caller is
-	 * willing to accept it; the caller is expected to check that it's an
-	 * allowed condition (such as ensuring that the infomask bits set on the
-	 * tuple are consistent with the pg_upgrade scenario).  If the caller is
-	 * expecting this to be called only on recently created multis, then we
-	 * raise an error.
+	 * truncation.  Returning the wrong values could lead to an incorrect
+	 * visibility result.  However, to support pg_upgrade we need to allow an
+	 * empty set to be returned regardless, if the caller is willing to accept
+	 * it; the caller is expected to check that it's an allowed condition
+	 * (such as ensuring that the infomask bits set on the tuple are
+	 * consistent with the pg_upgrade scenario).  If the caller is expecting
+	 * this to be called only on recently created multis, then we raise an
+	 * error.
 	 *
 	 * Conversely, an ID >= nextMXact shouldn't ever be seen here; if it is
 	 * seen, it implies undetected ID wraparound has occurred.  This raises a
@@ -2123,11 +2123,11 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
 	 * enough to contain the next value that would be created.
 	 *
 	 * We need to do this pretty early during the first startup in binary
-	 * upgrade mode: before StartupMultiXact() in fact, because this routine is
-	 * called even before that by StartupXLOG().  And we can't do it earlier
-	 * than at this point, because during that first call of this routine we
-	 * determine the MultiXactState->nextMXact value that MaybeExtendOffsetSlru
-	 * needs.
+	 * upgrade mode: before StartupMultiXact() in fact, because this routine
+	 * is called even before that by StartupXLOG().  And we can't do it
+	 * earlier than at this point, because during that first call of this
+	 * routine we determine the MultiXactState->nextMXact value that
+	 * MaybeExtendOffsetSlru needs.
 	 */
 	if (IsBinaryUpgrade)
 		MaybeExtendOffsetSlru();
@@ -2202,11 +2202,11 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 	/*
 	 * Determine the offset of the oldest multixact that might still be
-	 * referenced.  Normally, we can read the offset from the multixact itself,
-	 * but there's an important special case: if there are no multixacts in
-	 * existence at all, oldest_datminmxid obviously can't point to one.  It
-	 * will instead point to the multixact ID that will be assigned the next
-	 * time one is needed.
+	 * referenced.  Normally, we can read the offset from the multixact
+	 * itself, but there's an important special case: if there are no
+	 * multixacts in existence at all, oldest_datminmxid obviously can't point
+	 * to one.  It will instead point to the multixact ID that will be
+	 * assigned the next time one is needed.
 	 *
 	 * NB: oldest_dataminmxid is the oldest multixact that might still be
 	 * referenced from a table, unlike in DetermineSafeOldestOffset, where we
@@ -2520,10 +2520,9 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 	 * obviously can't point to one.  It will instead point to the multixact
 	 * ID that will be assigned the next time one is needed.
 	 *
-	 * NB: oldestMXact should be the oldest multixact that still exists in
-	 * the SLRU, unlike in SetMultiXactIdLimit, where we do this same
-	 * computation based on the oldest value that might be referenced in a
-	 * table.
+	 * NB: oldestMXact should be the oldest multixact that still exists in the
+	 * SLRU, unlike in SetMultiXactIdLimit, where we do this same computation
+	 * based on the oldest value that might be referenced in a table.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 	if (MultiXactState->nextMXact == oldestMXact)
@@ -2679,9 +2678,9 @@ int
 MultiXactMemberFreezeThreshold(void)
 {
 	MultiXactOffset members;
-	uint32 multixacts;
-	uint32 victim_multixacts;
-	double fraction;
+	uint32		multixacts;
+	uint32		victim_multixacts;
+	double		fraction;
 
 	ReadMultiXactCounts(&multixacts, &members);
 
@@ -2800,7 +2799,7 @@ SlruScanDirCbFindEarliest(SlruCtl ctl, char *filename, int segpage, void *data)
 void
 TruncateMultiXact(void)
 {
-	MultiXactId		oldestMXact;
+	MultiXactId oldestMXact;
 	MultiXactOffset oldestOffset;
 	MultiXactOffset nextOffset;
 	mxtruncinfo trunc;

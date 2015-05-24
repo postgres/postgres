@@ -39,6 +39,6 @@ typedef struct bipartite_match_state
 
 BipartiteMatchState *BipartiteMatch(int u_size, int v_size, short **adjacency);
 
-void BipartiteMatchFree(BipartiteMatchState *state);
+void		BipartiteMatchFree(BipartiteMatchState *state);
 
 #endif   /* BIPARTITE_MATCH_H */

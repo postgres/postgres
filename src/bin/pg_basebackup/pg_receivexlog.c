@@ -43,7 +43,7 @@ static bool synchronous = false;
 
 
 static void usage(void);
-static DIR* get_destination_dir(char *dest_folder);
+static DIR *get_destination_dir(char *dest_folder);
 static void close_destination_dir(DIR *dest_dir, char *dest_folder);
 static XLogRecPtr FindStreamingStart(uint32 *tli);
 static void StreamLog(void);
@@ -128,10 +128,10 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 /*
  * Get destination directory.
  */
-static DIR*
+static DIR *
 get_destination_dir(char *dest_folder)
 {
-	DIR *dir;
+	DIR		   *dir;
 
 	Assert(dest_folder != NULL);
 	dir = opendir(dest_folder);
@@ -274,8 +274,10 @@ FindStreamingStart(uint32 *tli)
 static void
 StreamLog(void)
 {
-	XLogRecPtr	startpos, serverpos;
-	TimeLineID	starttli, servertli;
+	XLogRecPtr	startpos,
+				serverpos;
+	TimeLineID	starttli,
+				servertli;
 
 	/*
 	 * Connect in replication mode to the server
@@ -513,7 +515,8 @@ main(int argc, char **argv)
 	 */
 	if (!do_drop_slot)
 	{
-		DIR *dir = get_destination_dir(basedir);
+		DIR		   *dir = get_destination_dir(basedir);
+
 		close_destination_dir(dir, basedir);
 	}
 
@@ -538,8 +541,8 @@ main(int argc, char **argv)
 		disconnect_and_exit(1);
 
 	/*
-	 * Check that there is a database associated with connection, none
-	 * should be defined in this context.
+	 * Check that there is a database associated with connection, none should
+	 * be defined in this context.
 	 */
 	if (db_name)
 	{
@@ -577,8 +580,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Don't close the connection here so that subsequent StreamLog()
-	 * can reuse it.
+	 * Don't close the connection here so that subsequent StreamLog() can
+	 * reuse it.
 	 */
 
 	while (true)

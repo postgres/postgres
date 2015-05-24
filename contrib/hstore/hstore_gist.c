@@ -72,7 +72,7 @@ typedef struct
 static pg_crc32
 crc32_sz(char *buf, int size)
 {
-	pg_crc32 crc;
+	pg_crc32	crc;
 
 	INIT_TRADITIONAL_CRC32(crc);
 	COMP_TRADITIONAL_CRC32(crc, buf, size);

@@ -58,8 +58,8 @@ static int	lengthCompareJsonbStringValue(const void *a, const void *b);
 static int	lengthCompareJsonbPair(const void *a, const void *b, void *arg);
 static void uniqueifyJsonbObject(JsonbValue *object);
 static JsonbValue *pushJsonbValueScalar(JsonbParseState **pstate,
-										JsonbIteratorToken seq,
-										JsonbValue *scalarVal);
+					 JsonbIteratorToken seq,
+					 JsonbValue *scalarVal);
 
 /*
  * Turn an in-memory JsonbValue into a Jsonb for on-disk storage.
@@ -518,7 +518,7 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
 {
 	JsonbIterator *it;
 	JsonbValue *res = NULL;
-	JsonbValue v;
+	JsonbValue	v;
 	JsonbIteratorToken tok;
 
 	if (!jbval || (seq != WJB_ELEM && seq != WJB_VALUE) ||
@@ -543,7 +543,7 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
  */
 static JsonbValue *
 pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
-			   JsonbValue *scalarVal)
+					 JsonbValue *scalarVal)
 {
 	JsonbValue *result = NULL;
 
@@ -1231,6 +1231,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 			break;
 		case jbvBool:
 			tmp = scalarVal->val.boolean ? 0x02 : 0x04;
+
 			break;
 		default:
 			elog(ERROR, "invalid jsonb scalar type");
@@ -1304,7 +1305,7 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 			case jbvBool:
 				if (aScalar->val.boolean == bScalar->val.boolean)
 					return 0;
-				else if (aScalar->val.boolean > bScalar->val.boolean)
+				else if (aScalar->val.boolean >bScalar->val.boolean)
 					return 1;
 				else
 					return -1;

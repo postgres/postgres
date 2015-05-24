@@ -78,7 +78,7 @@ typedef void (*LogicalDecodeCommitCB) (
  */
 typedef bool (*LogicalDecodeFilterByOriginCB) (
 											 struct LogicalDecodingContext *,
-												   RepOriginId origin_id);
+													  RepOriginId origin_id);
 
 /*
  * Called to shutdown an output plugin.

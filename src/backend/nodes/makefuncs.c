@@ -562,7 +562,7 @@ makeFuncCall(List *name, List *args, int location)
 GroupingSet *
 makeGroupingSet(GroupingSetKind kind, List *content, int location)
 {
-	GroupingSet	   *n = makeNode(GroupingSet);
+	GroupingSet *n = makeNode(GroupingSet);
 
 	n->kind = kind;
 	n->content = content;

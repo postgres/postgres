@@ -60,11 +60,15 @@ $ENV{PGPORT} = int($ENV{PGPORT}) % 65536;
 
 sub tempdir
 {
-	return File::Temp::tempdir('tmp_testXXXX', DIR => $ENV{TESTDIR} || cwd(), CLEANUP => 1);
+	return File::Temp::tempdir(
+		'tmp_testXXXX',
+		DIR => $ENV{TESTDIR} || cwd(),
+		CLEANUP => 1);
 }
 
 sub tempdir_short
 {
+
 	# Use a separate temp dir outside the build tree for the
 	# Unix-domain socket, to avoid file name length issues.
 	return File::Temp::tempdir(CLEANUP => 1);
@@ -75,7 +79,7 @@ sub standard_initdb
 	my $pgdata = shift;
 	system_or_bail("initdb -D '$pgdata' -A trust -N >/dev/null");
 	system_or_bail("$ENV{top_builddir}/src/test/regress/pg_regress",
-				   '--config-auth', $pgdata);
+		'--config-auth', $pgdata);
 }
 
 my ($test_server_datadir, $test_server_logfile);
@@ -90,7 +94,7 @@ sub start_test_server
 	standard_initdb "$tempdir/pgdata";
 	$ret = system 'pg_ctl', '-D', "$tempdir/pgdata", '-s', '-w', '-l',
 	  "$tempdir/logfile", '-o',
-	  "--fsync=off -k $tempdir_short --listen-addresses='' --log-statement=all",
+"--fsync=off -k $tempdir_short --listen-addresses='' --log-statement=all",
 	  'start';
 
 	if ($ret != 0)
@@ -185,7 +189,8 @@ sub program_options_handling_ok
 {
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
-	my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout, '2>', \$stderr;
+	my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout, '2>',
+	  \$stderr;
 	ok(!$result, "$cmd with invalid option nonzero exit code");
 	isnt($stderr, '', "$cmd with invalid option prints error message");
 }

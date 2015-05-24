@@ -25,7 +25,7 @@
 #ifdef WIN32
 
 /* internal vars */
-char	*restrict_env;
+char	   *restrict_env;
 
 typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 

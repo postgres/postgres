@@ -60,9 +60,9 @@ RelationPutHeapTuple(Relation relation,
 	ItemPointerSet(&(tuple->t_self), BufferGetBlockNumber(buffer), offnum);
 
 	/*
-	 * Insert the correct position into CTID of the stored tuple, too
-	 * (unless this is a speculative insertion, in which case the token is
-	 * held in CTID field instead)
+	 * Insert the correct position into CTID of the stored tuple, too (unless
+	 * this is a speculative insertion, in which case the token is held in
+	 * CTID field instead)
 	 */
 	if (!token)
 	{

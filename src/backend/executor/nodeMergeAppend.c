@@ -139,10 +139,10 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 
 		/*
 		 * It isn't feasible to perform abbreviated key conversion, since
-		 * tuples are pulled into mergestate's binary heap as needed.  It would
-		 * likely be counter-productive to convert tuples into an abbreviated
-		 * representation as they're pulled up, so opt out of that additional
-		 * optimization entirely.
+		 * tuples are pulled into mergestate's binary heap as needed.  It
+		 * would likely be counter-productive to convert tuples into an
+		 * abbreviated representation as they're pulled up, so opt out of that
+		 * additional optimization entirely.
 		 */
 		sortKey->abbreviate = false;
 

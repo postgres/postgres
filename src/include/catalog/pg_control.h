@@ -46,8 +46,10 @@ typedef struct CheckPoint
 	MultiXactId oldestMulti;	/* cluster-wide minimum datminmxid */
 	Oid			oldestMultiDB;	/* database with minimum datminmxid */
 	pg_time_t	time;			/* time stamp of checkpoint */
-	TransactionId oldestCommitTs; /* oldest Xid with valid commit timestamp */
-	TransactionId newestCommitTs; /* newest Xid with valid commit timestamp */
+	TransactionId oldestCommitTs;		/* oldest Xid with valid commit
+										 * timestamp */
+	TransactionId newestCommitTs;		/* newest Xid with valid commit
+										 * timestamp */
 
 	/*
 	 * Oldest XID still running. This is only needed to initialize hot standby

@@ -82,7 +82,7 @@ static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
 						 List **tlist, ParseExprKind exprKind);
 static int get_matching_location(int sortgroupref,
 					  List *sortgrouprefs, List *exprs);
-static List *resolve_unique_index_expr(ParseState *pstate, InferClause * infer,
+static List *resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 						  Relation heapRel);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
@@ -426,14 +426,15 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *namespace)
 static RangeTblEntry *
 transformTableSampleEntry(ParseState *pstate, RangeTableSample *rv)
 {
-	RangeTblEntry   *rte = NULL;
+	RangeTblEntry *rte = NULL;
 	CommonTableExpr *cte = NULL;
 	TableSampleClause *tablesample = NULL;
 
 	/* if relation has an unqualified name, it might be a CTE reference */
 	if (!rv->relation->schemaname)
 	{
-		Index	levelsup;
+		Index		levelsup;
+
 		cte = scanNameSpaceForCTE(pstate, rv->relation->relname, &levelsup);
 	}
 
@@ -443,7 +444,7 @@ transformTableSampleEntry(ParseState *pstate, RangeTableSample *rv)
 
 	if (!rte ||
 		(rte->relkind != RELKIND_RELATION &&
-		rte->relkind != RELKIND_MATVIEW))
+		 rte->relkind != RELKIND_MATVIEW))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("TABLESAMPLE clause can only be used on tables and materialized views"),
@@ -1167,7 +1168,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 	else if (IsA(n, RangeTableSample))
 	{
 		/* Tablesample reference */
-		RangeTableSample   *rv = (RangeTableSample *) n;
+		RangeTableSample *rv = (RangeTableSample *) n;
 		RangeTblRef *rtr;
 		RangeTblEntry *rte = NULL;
 		int			rtindex;
@@ -1738,9 +1739,9 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
  * CUBE or ROLLUP can be nested inside GROUPING SETS (but not the reverse),
  * and we leave that alone if we find it. But if we see GROUPING SETS inside
  * GROUPING SETS, we can flatten and normalize as follows:
- *   GROUPING SETS (a, (b,c), GROUPING SETS ((c,d),(e)), (f,g))
+ *	 GROUPING SETS (a, (b,c), GROUPING SETS ((c,d),(e)), (f,g))
  * becomes
- *   GROUPING SETS ((a), (b,c), (c,d), (e), (f,g))
+ *	 GROUPING SETS ((a), (b,c), (c,d), (e), (f,g))
  *
  * This is per the spec's syntax transformations, but these are the only such
  * transformations we do in parse analysis, so that queries retain the
@@ -1750,12 +1751,12 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
  *
  * When we're done, the resulting list should contain only these possible
  * elements:
- *   - an expression
- *   - a CUBE or ROLLUP with a list of expressions nested 2 deep
- *   - a GROUPING SET containing any of:
- *      - expression lists
- *      - empty grouping sets
- *      - CUBE or ROLLUP nodes with lists nested 2 deep
+ *	 - an expression
+ *	 - a CUBE or ROLLUP with a list of expressions nested 2 deep
+ *	 - a GROUPING SET containing any of:
+ *		- expression lists
+ *		- empty grouping sets
+ *		- CUBE or ROLLUP nodes with lists nested 2 deep
  * The return is a new list, but doesn't deep-copy the old nodes except for
  * GroupingSet nodes.
  *
@@ -1775,7 +1776,8 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 	{
 		case T_RowExpr:
 			{
-				RowExpr *r = (RowExpr *) expr;
+				RowExpr    *r = (RowExpr *) expr;
+
 				if (r->row_format == COERCE_IMPLICIT_CAST)
 					return flatten_grouping_sets((Node *) r->args,
 												 false, NULL);
@@ -1792,7 +1794,8 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 
 				/*
 				 * at the top level, we skip over all empty grouping sets; the
-				 * caller can supply the canonical GROUP BY () if nothing is left.
+				 * caller can supply the canonical GROUP BY () if nothing is
+				 * left.
 				 */
 
 				if (toplevel && gset->kind == GROUPING_SET_EMPTY)
@@ -1800,15 +1803,15 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 
 				foreach(l2, gset->content)
 				{
-					Node   *n2 = flatten_grouping_sets(lfirst(l2), false, NULL);
+					Node	   *n2 = flatten_grouping_sets(lfirst(l2), false, NULL);
 
 					result_set = lappend(result_set, n2);
 				}
 
 				/*
-				 * At top level, keep the grouping set node; but if we're in a nested
-				 * grouping set, then we need to concat the flattened result into the
-				 * outer list if it's simply nested.
+				 * At top level, keep the grouping set node; but if we're in a
+				 * nested grouping set, then we need to concat the flattened
+				 * result into the outer list if it's simply nested.
 				 */
 
 				if (toplevel || (gset->kind != GROUPING_SET_SETS))
@@ -1823,12 +1826,13 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 				List	   *result = NIL;
 				ListCell   *l;
 
-				foreach(l, (List *)expr)
+				foreach(l, (List *) expr)
 				{
-					Node   *n = flatten_grouping_sets(lfirst(l), toplevel, hasGroupingSets);
+					Node	   *n = flatten_grouping_sets(lfirst(l), toplevel, hasGroupingSets);
+
 					if (n != (Node *) NIL)
 					{
-						if (IsA(n,List))
+						if (IsA(n, List))
 							result = list_concat(result, (List *) n);
 						else
 							result = lappend(result, n);
@@ -1888,15 +1892,15 @@ transformGroupClauseExpr(List **flatresult, Bitmapset *seen_local,
 		 * (Duplicates in grouping sets can affect the number of returned
 		 * rows, so can't be dropped indiscriminately.)
 		 *
-		 * Since we don't care about anything except the sortgroupref,
-		 * we can use a bitmapset rather than scanning lists.
+		 * Since we don't care about anything except the sortgroupref, we can
+		 * use a bitmapset rather than scanning lists.
 		 */
-		if (bms_is_member(tle->ressortgroupref,seen_local))
+		if (bms_is_member(tle->ressortgroupref, seen_local))
 			return 0;
 
 		/*
-		 * If we're already in the flat clause list, we don't need
-		 * to consider adding ourselves again.
+		 * If we're already in the flat clause list, we don't need to consider
+		 * adding ourselves again.
 		 */
 		found = targetIsInSortList(tle, InvalidOid, *flatresult);
 		if (found)
@@ -1928,6 +1932,7 @@ transformGroupClauseExpr(List **flatresult, Bitmapset *seen_local,
 			if (sc->tleSortGroupRef == tle->ressortgroupref)
 			{
 				SortGroupClause *grpc = copyObject(sc);
+
 				if (!toplevel)
 					grpc->nulls_first = false;
 				*flatresult = lappend(*flatresult, grpc);
@@ -1983,17 +1988,18 @@ transformGroupClauseList(List **flatresult,
 
 	foreach(gl, list)
 	{
-		Node        *gexpr = (Node *) lfirst(gl);
+		Node	   *gexpr = (Node *) lfirst(gl);
 
-		Index ref = transformGroupClauseExpr(flatresult,
-											 seen_local,
-											 pstate,
-											 gexpr,
-											 targetlist,
-											 sortClause,
-											 exprKind,
-											 useSQL99,
-											 toplevel);
+		Index		ref = transformGroupClauseExpr(flatresult,
+												   seen_local,
+												   pstate,
+												   gexpr,
+												   targetlist,
+												   sortClause,
+												   exprKind,
+												   useSQL99,
+												   toplevel);
+
 		if (ref > 0)
 		{
 			seen_local = bms_add_member(seen_local, ref);
@@ -2036,14 +2042,14 @@ transformGroupingSet(List **flatresult,
 
 	foreach(gl, gset->content)
 	{
-		Node   *n = lfirst(gl);
+		Node	   *n = lfirst(gl);
 
 		if (IsA(n, List))
 		{
-			List *l = transformGroupClauseList(flatresult,
-											   pstate, (List *) n,
-											   targetlist, sortClause,
-											   exprKind, useSQL99, false);
+			List	   *l = transformGroupClauseList(flatresult,
+													 pstate, (List *) n,
+													 targetlist, sortClause,
+												  exprKind, useSQL99, false);
 
 			content = lappend(content, makeGroupingSet(GROUPING_SET_SIMPLE,
 													   l,
@@ -2055,20 +2061,20 @@ transformGroupingSet(List **flatresult,
 
 			content = lappend(content, transformGroupingSet(flatresult,
 															pstate, gset2,
-															targetlist, sortClause,
-															exprKind, useSQL99, false));
+													  targetlist, sortClause,
+												 exprKind, useSQL99, false));
 		}
 		else
 		{
-			Index ref = transformGroupClauseExpr(flatresult,
-												 NULL,
-												 pstate,
-												 n,
-												 targetlist,
-												 sortClause,
-												 exprKind,
-												 useSQL99,
-												 false);
+			Index		ref = transformGroupClauseExpr(flatresult,
+													   NULL,
+													   pstate,
+													   n,
+													   targetlist,
+													   sortClause,
+													   exprKind,
+													   useSQL99,
+													   false);
 
 			content = lappend(content, makeGroupingSet(GROUPING_SET_SIMPLE,
 													   list_make1_int(ref),
@@ -2121,7 +2127,7 @@ transformGroupingSet(List **flatresult,
  *
  * pstate		ParseState
  * grouplist	clause to transform
- * groupingSets	reference to list to contain the grouping set tree
+ * groupingSets reference to list to contain the grouping set tree
  * targetlist	reference to TargetEntry list
  * sortClause	ORDER BY clause (SortGroupClause nodes)
  * exprKind		expression kind
@@ -2136,34 +2142,34 @@ transformGroupClause(ParseState *pstate, List *grouplist, List **groupingSets,
 	List	   *flat_grouplist;
 	List	   *gsets = NIL;
 	ListCell   *gl;
-	bool        hasGroupingSets = false;
+	bool		hasGroupingSets = false;
 	Bitmapset  *seen_local = NULL;
 
 	/*
-	 * Recursively flatten implicit RowExprs. (Technically this is only
-	 * needed for GROUP BY, per the syntax rules for grouping sets, but
-	 * we do it anyway.)
+	 * Recursively flatten implicit RowExprs. (Technically this is only needed
+	 * for GROUP BY, per the syntax rules for grouping sets, but we do it
+	 * anyway.)
 	 */
 	flat_grouplist = (List *) flatten_grouping_sets((Node *) grouplist,
 													true,
 													&hasGroupingSets);
 
 	/*
-	 * If the list is now empty, but hasGroupingSets is true, it's because
-	 * we elided redundant empty grouping sets. Restore a single empty
-	 * grouping set to leave a canonical form: GROUP BY ()
+	 * If the list is now empty, but hasGroupingSets is true, it's because we
+	 * elided redundant empty grouping sets. Restore a single empty grouping
+	 * set to leave a canonical form: GROUP BY ()
 	 */
 
 	if (flat_grouplist == NIL && hasGroupingSets)
 	{
 		flat_grouplist = list_make1(makeGroupingSet(GROUPING_SET_EMPTY,
 													NIL,
-													exprLocation((Node *) grouplist)));
+										  exprLocation((Node *) grouplist)));
 	}
 
 	foreach(gl, flat_grouplist)
 	{
-		Node        *gexpr = (Node *) lfirst(gl);
+		Node	   *gexpr = (Node *) lfirst(gl);
 
 		if (IsA(gexpr, GroupingSet))
 		{
@@ -2184,17 +2190,17 @@ transformGroupClause(ParseState *pstate, List *grouplist, List **groupingSets,
 					gsets = lappend(gsets,
 									transformGroupingSet(&result,
 														 pstate, gset,
-														 targetlist, sortClause,
-														 exprKind, useSQL99, true));
+													  targetlist, sortClause,
+												  exprKind, useSQL99, true));
 					break;
 			}
 		}
 		else
 		{
-			Index ref = transformGroupClauseExpr(&result, seen_local,
-												 pstate, gexpr,
-												 targetlist, sortClause,
-												 exprKind, useSQL99, true);
+			Index		ref = transformGroupClauseExpr(&result, seen_local,
+													   pstate, gexpr,
+													   targetlist, sortClause,
+												   exprKind, useSQL99, true);
 
 			if (ref > 0)
 			{
@@ -2661,9 +2667,9 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 
 	foreach(l, infer->indexElems)
 	{
-		IndexElem	   *ielem = (IndexElem *) lfirst(l);
-		InferenceElem  *pInfer = makeNode(InferenceElem);
-		Node		   *parse;
+		IndexElem  *ielem = (IndexElem *) lfirst(l);
+		InferenceElem *pInfer = makeNode(InferenceElem);
+		Node	   *parse;
 
 		/*
 		 * Raw grammar re-uses CREATE INDEX infrastructure for unique index
@@ -2684,7 +2690,7 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 		if (ielem->nulls_ordering != SORTBY_NULLS_DEFAULT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("NULLS FIRST/LAST is not allowed in ON CONFLICT clause"),
+			 errmsg("NULLS FIRST/LAST is not allowed in ON CONFLICT clause"),
 					 parser_errposition(pstate,
 										exprLocation((Node *) infer))));
 
@@ -2767,7 +2773,7 @@ transformOnConflictArbiter(ParseState *pstate,
 				 errmsg("ON CONFLICT DO UPDATE requires inference specification or constraint name"),
 				 errhint("For example, ON CONFLICT (<column>)."),
 				 parser_errposition(pstate,
-									exprLocation((Node *) onConflictClause))));
+								  exprLocation((Node *) onConflictClause))));
 
 	/*
 	 * To simplify certain aspects of its design, speculative insertion into
@@ -2776,9 +2782,9 @@ transformOnConflictArbiter(ParseState *pstate,
 	if (IsCatalogRelation(pstate->p_target_relation))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ON CONFLICT not supported with system catalog tables"),
+			  errmsg("ON CONFLICT not supported with system catalog tables"),
 				 parser_errposition(pstate,
-									exprLocation((Node *) onConflictClause))));
+								  exprLocation((Node *) onConflictClause))));
 
 	/* Same applies to table used by logical decoding as catalog table */
 	if (RelationIsUsedAsCatalogTable(pstate->p_target_relation))
@@ -2787,7 +2793,7 @@ transformOnConflictArbiter(ParseState *pstate,
 				 errmsg("ON CONFLICT not supported on table \"%s\" used as a catalog table",
 						RelationGetRelationName(pstate->p_target_relation)),
 				 parser_errposition(pstate,
-									exprLocation((Node *) onConflictClause))));
+								  exprLocation((Node *) onConflictClause))));
 
 	/* ON CONFLICT DO NOTHING does not require an inference clause */
 	if (infer)
@@ -2795,9 +2801,8 @@ transformOnConflictArbiter(ParseState *pstate,
 		List	   *save_namespace;
 
 		/*
-		 * While we process the arbiter expressions, accept only
-		 * non-qualified references to the target table. Hide any other
-		 * relations.
+		 * While we process the arbiter expressions, accept only non-qualified
+		 * references to the target table. Hide any other relations.
 		 */
 		save_namespace = pstate->p_namespace;
 		pstate->p_namespace = NIL;
@@ -2806,7 +2811,7 @@ transformOnConflictArbiter(ParseState *pstate,
 
 		if (infer->indexElems)
 			*arbiterExpr = resolve_unique_index_expr(pstate, infer,
-													 pstate->p_target_relation);
+												  pstate->p_target_relation);
 
 		/*
 		 * Handling inference WHERE clause (for partial unique index

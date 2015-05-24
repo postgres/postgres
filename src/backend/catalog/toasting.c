@@ -175,9 +175,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		/*
 		 * Check to see whether the table needs a TOAST table.
 		 *
-		 * If an update-in-place TOAST relfilenode is specified, force TOAST file
-		 * creation even if it seems not to need one.  This handles the case
-		 * where the old cluster needed a TOAST table but the new cluster
+		 * If an update-in-place TOAST relfilenode is specified, force TOAST
+		 * file creation even if it seems not to need one.  This handles the
+		 * case where the old cluster needed a TOAST table but the new cluster
 		 * would not normally create one.
 		 */
 
@@ -260,9 +260,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		namespaceid = PG_TOAST_NAMESPACE;
 
 	/*
-	 * Use binary-upgrade override for pg_type.oid, if supplied.  We might
-	 * be in the post-schema-restore phase where we are doing ALTER TABLE
-	 * to create TOAST tables that didn't exist in the old cluster.
+	 * Use binary-upgrade override for pg_type.oid, if supplied.  We might be
+	 * in the post-schema-restore phase where we are doing ALTER TABLE to
+	 * create TOAST tables that didn't exist in the old cluster.
 	 */
 	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 	{

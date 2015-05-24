@@ -23,7 +23,7 @@ open(FILE, $in_file) || die("cannot open $in_file");
 
 while (<FILE>)
 {
-	next if (! m/<a u="([0-9A-F]+)" b="([0-9A-F ]+)"/);
+	next if (!m/<a u="([0-9A-F]+)" b="([0-9A-F ]+)"/);
 	$u = $1;
 	$c = $2;
 	$c =~ s/ //g;
@@ -42,7 +42,7 @@ while (<FILE>)
 			printf STDERR "Warning: duplicate GB18030: %08x\n", $code;
 			next;
 		}
-		$arrayu{$utf} = $code;
+		$arrayu{$utf}  = $code;
 		$arrayc{$code} = $utf;
 		$count++;
 	}

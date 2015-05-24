@@ -419,7 +419,7 @@ PreventAdvisoryLocksInParallelMode(void)
 	if (IsInParallelMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot use advisory locks during a parallel operation")));
+		   errmsg("cannot use advisory locks during a parallel operation")));
 }
 
 /*

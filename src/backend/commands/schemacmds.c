@@ -44,7 +44,7 @@ static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerI
 Oid
 CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 {
-	const char	*schemaName = stmt->schemaname;
+	const char *schemaName = stmt->schemaname;
 	Oid			namespaceId;
 	OverrideSearchPath *overridePath;
 	List	   *parsetree_list;
@@ -68,7 +68,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/* fill schema name with the user name if not specified */
 	if (!schemaName)
 	{
-		HeapTuple tuple;
+		HeapTuple	tuple;
 
 		tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(owner_uid));
 		if (!HeapTupleIsValid(tuple))

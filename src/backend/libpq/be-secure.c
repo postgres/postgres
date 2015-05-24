@@ -51,7 +51,7 @@ char	   *ssl_crl_file;
 int			ssl_renegotiation_limit;
 
 #ifdef USE_SSL
-bool ssl_loaded_verify_locations = false;
+bool		ssl_loaded_verify_locations = false;
 #endif
 
 /* GUC variable controlling SSL cipher list */
@@ -146,7 +146,7 @@ retry:
 	/* In blocking mode, wait until the socket is ready */
 	if (n < 0 && !port->noblock && (errno == EWOULDBLOCK || errno == EAGAIN))
 	{
-		int		w;
+		int			w;
 
 		Assert(waitfor);
 
@@ -162,8 +162,8 @@ retry:
 
 			/*
 			 * We'll retry the read. Most likely it will return immediately
-			 * because there's still no data available, and we'll wait
-			 * for the socket to become ready again.
+			 * because there's still no data available, and we'll wait for the
+			 * socket to become ready again.
 			 */
 		}
 		goto retry;
@@ -225,7 +225,7 @@ retry:
 
 	if (n < 0 && !port->noblock && (errno == EWOULDBLOCK || errno == EAGAIN))
 	{
-		int		w;
+		int			w;
 
 		Assert(waitfor);
 
@@ -241,8 +241,8 @@ retry:
 
 			/*
 			 * We'll retry the write. Most likely it will return immediately
-			 * because there's still no data available, and we'll wait
-			 * for the socket to become ready again.
+			 * because there's still no data available, and we'll wait for the
+			 * socket to become ready again.
 			 */
 		}
 		goto retry;

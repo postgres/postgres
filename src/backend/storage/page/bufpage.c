@@ -962,8 +962,8 @@ PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos, int nitems)
 				offset != MAXALIGN(offset))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg("corrupted item pointer: offset = %u, length = %u",
-								offset, (unsigned int) itemlen)));
+				   errmsg("corrupted item pointer: offset = %u, length = %u",
+						  offset, (unsigned int) itemlen)));
 
 			if (nextitm < nitems && offnum == itemnos[nextitm])
 			{
@@ -1039,8 +1039,8 @@ PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos, int nitems)
 		if (totallen > (Size) (pd_special - pd_lower))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted item lengths: total %u, available space %u",
-							(unsigned int) totallen, pd_special - pd_lower)));
+			   errmsg("corrupted item lengths: total %u, available space %u",
+					  (unsigned int) totallen, pd_special - pd_lower)));
 
 		/*
 		 * Defragment the data areas of each tuple, being careful to preserve

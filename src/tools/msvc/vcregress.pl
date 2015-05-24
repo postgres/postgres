@@ -15,7 +15,7 @@ my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
-my $topdir = getcwd();
+my $topdir         = getcwd();
 my $tmp_installdir = "$topdir/tmp_install";
 
 require 'src/tools/msvc/config_default.pl';
@@ -230,11 +230,11 @@ sub subdircheck
 {
 	my $subdir = shift;
 	my $module = shift;
-	my $mstat = 0;
+	my $mstat  = 0;
 
-	if ( ! -d "$module/sql" ||
-		 ! -d "$module/expected" ||
-		 ( ! -f "$module/GNUmakefile" && ! -f "$module/Makefile"))
+	if (   !-d "$module/sql"
+		|| !-d "$module/expected"
+		|| (!-f "$module/GNUmakefile" && !-f "$module/Makefile"))
 	{
 		return;
 	}
@@ -246,19 +246,17 @@ sub subdircheck
 	# Add some options for transform modules, see their respective
 	# Makefile for more details regarding Python-version specific
 	# dependencies.
-	if ($module eq "hstore_plpython" ||
-		$module eq "ltree_plpython")
+	if (   $module eq "hstore_plpython"
+		|| $module eq "ltree_plpython")
 	{
 		die "Python not enabled in configuration"
-			if !defined($config->{python});
+		  if !defined($config->{python});
 
 		# Attempt to get python version and location.
 		# Assume python.exe in specified dir.
-		my $pythonprog = "import sys;" .
-		  "print(str(sys.version_info[0]))";
-		my $prefixcmd = $config->{python}
-			  . "\\python -c \"$pythonprog\"";
-		my $pyver = `$prefixcmd`;
+		my $pythonprog = "import sys;" . "print(str(sys.version_info[0]))";
+		my $prefixcmd  = $config->{python} . "\\python -c \"$pythonprog\"";
+		my $pyver      = `$prefixcmd`;
 		die "Could not query for python version!\n" if $?;
 		chomp($pyver);
 		if ($pyver eq "2")
@@ -268,6 +266,7 @@ sub subdircheck
 		}
 		else
 		{
+
 			# disable tests on python3 for now.
 			chdir "..";
 			return;
@@ -275,10 +274,9 @@ sub subdircheck
 	}
 
 
-	print
-	  "============================================================\n";
+	print "============================================================\n";
 	print "Checking $module\n";
-	my @args  = (
+	my @args = (
 		"${tmp_installdir}/bin/pg_regress",
 		"--bindir=${tmp_installdir}/bin",
 		"--dbname=contrib_regression", @opts, @tests);
@@ -295,11 +293,12 @@ sub contribcheck
 	chdir "$topdir/contrib";
 	foreach my $module (glob("*"))
 	{
+
 		# these configuration-based exclusions must match Install.pm
-		next if ($module eq "uuid-ossp"       && !defined($config->{uuid}));
-		next if ($module eq "sslinfo"         && !defined($config->{openssl}));
-		next if ($module eq "xml2"            && !defined($config->{xml}));
-		next if ($module eq "hstore_plperl"   && !defined($config->{perl}));
+		next if ($module eq "uuid-ossp"     && !defined($config->{uuid}));
+		next if ($module eq "sslinfo"       && !defined($config->{openssl}));
+		next if ($module eq "xml2"          && !defined($config->{xml}));
+		next if ($module eq "hstore_plperl" && !defined($config->{perl}));
 		next if ($module eq "hstore_plpython" && !defined($config->{python}));
 		next if ($module eq "ltree_plpython"  && !defined($config->{python}));
 		next if ($module eq "sepgsql");
@@ -412,6 +411,7 @@ sub fetchRegressOpts
 	$m =~ s{\\\r?\n}{}g;
 	if ($m =~ /^\s*REGRESS_OPTS\s*\+?=(.*)/m)
 	{
+
 		# Substitute known Makefile variables, then ignore options that retain
 		# an unhandled variable reference.  Ignore anything that isn't an
 		# option starting with "--".
@@ -492,6 +492,6 @@ sub usage
 {
 	print STDERR
 	  "Usage: vcregress.pl ",
-	  "<check|installcheck|plcheck|contribcheck|isolationcheck|ecpgcheck|upgradecheck> [schedule]\n";
+"<check|installcheck|plcheck|contribcheck|isolationcheck|ecpgcheck|upgradecheck> [schedule]\n";
 	exit(1);
 }

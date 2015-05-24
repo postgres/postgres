@@ -634,7 +634,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		16
 	},
-	{ReplicationOriginRelationId,	/* REPLORIGNAME */
+	{ReplicationOriginRelationId,		/* REPLORIGNAME */
 		ReplicationOriginNameIndex,
 		1,
 		{
@@ -701,26 +701,26 @@ static const struct cachedesc cacheinfo[] = {
 		4
 	},
 	{TransformRelationId,		/* TRFOID */
-	 TransformOidIndexId,
-	 1,
-	 {
-		 ObjectIdAttributeNumber,
-		 0,
-		 0,
-		 0,
-	 },
-	 16
+		TransformOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0,
+		},
+		16
 	},
 	{TransformRelationId,		/* TRFTYPELANG */
-	 TransformTypeLangIndexId,
-	 2,
-	 {
-		 Anum_pg_transform_trftype,
-		 Anum_pg_transform_trflang,
-		 0,
-		 0,
-	 },
-	 16
+		TransformTypeLangIndexId,
+		2,
+		{
+			Anum_pg_transform_trftype,
+			Anum_pg_transform_trflang,
+			0,
+			0,
+		},
+		16
 	},
 	{TSConfigMapRelationId,		/* TSCONFIGMAP */
 		TSConfigMapIndexId,

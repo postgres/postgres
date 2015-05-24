@@ -236,7 +236,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 {
 	XLogPageReadPrivate *private = (XLogPageReadPrivate *) xlogreader->private_data;
 	uint32		targetPageOff;
-	XLogSegNo	targetSegNo PG_USED_FOR_ASSERTS_ONLY;
+	XLogSegNo targetSegNo PG_USED_FOR_ASSERTS_ONLY;
 
 	XLByteToSeg(targetPagePtr, targetSegNo);
 	targetPageOff = targetPagePtr % XLogSegSize;
@@ -315,10 +315,10 @@ extractPageInfo(XLogReaderState *record)
 		/*
 		 * New databases can be safely ignored. It won't be present in the
 		 * source system, so it will be deleted. There's one corner-case,
-		 * though: if a new, different, database is also created in the
-		 * source system, we'll see that the files already exist and not copy
-		 * them. That's OK, though; WAL replay of creating the new database,
-		 * from the source systems's WAL, will re-copy the new database,
+		 * though: if a new, different, database is also created in the source
+		 * system, we'll see that the files already exist and not copy them.
+		 * That's OK, though; WAL replay of creating the new database, from
+		 * the source systems's WAL, will re-copy the new database,
 		 * overwriting the database created in the target system.
 		 */
 	}

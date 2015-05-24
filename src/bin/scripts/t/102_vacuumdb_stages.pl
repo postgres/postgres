@@ -19,7 +19,7 @@ qr/.*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
 
 issues_sql_like(
 	[ 'vacuumdb', '--analyze-in-stages', '--all' ],
-                qr/.*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
+qr/.*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
                    .*statement:\ ANALYZE.*
                    .*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
                    .*statement:\ ANALYZE.*

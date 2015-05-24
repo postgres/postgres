@@ -83,11 +83,11 @@ static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 static void show_agg_keys(AggState *astate, List *ancestors,
 			  ExplainState *es);
 static void show_grouping_sets(PlanState *planstate, Agg *agg,
-							   List *ancestors, ExplainState *es);
+				   List *ancestors, ExplainState *es);
 static void show_grouping_set_keys(PlanState *planstate,
-								   Agg *aggnode, Sort *sortnode,
-								   List *context, bool useprefix,
-								   List *ancestors, ExplainState *es);
+					   Agg *aggnode, Sort *sortnode,
+					   List *context, bool useprefix,
+					   List *ancestors, ExplainState *es);
 static void show_group_keys(GroupState *gstate, List *ancestors,
 				ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
@@ -754,7 +754,7 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 									((ModifyTable *) plan)->nominalRelation);
 			if (((ModifyTable *) plan)->exclRelRTI)
 				*rels_used = bms_add_member(*rels_used,
-											((ModifyTable *) plan)->exclRelRTI);
+										 ((ModifyTable *) plan)->exclRelRTI);
 			break;
 		default:
 			break;
@@ -984,6 +984,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				 * quite messy.
 				 */
 				RangeTblEntry *rte;
+
 				rte = rt_fetch(((SampleScan *) plan)->scanrelid, es->rtable);
 				custom_name = get_tablesample_method_name(rte->tablesample->tsmid);
 				pname = psprintf("Sample Scan (%s)", custom_name);
@@ -1895,8 +1896,8 @@ show_grouping_sets(PlanState *planstate, Agg *agg,
 
 	foreach(lc, agg->chain)
 	{
-		Agg *aggnode = lfirst(lc);
-		Sort *sortnode = (Sort *) aggnode->plan.lefttree;
+		Agg		   *aggnode = lfirst(lc);
+		Sort	   *sortnode = (Sort *) aggnode->plan.lefttree;
 
 		show_grouping_set_keys(planstate, aggnode, sortnode,
 							   context, useprefix, ancestors, es);
@@ -2561,7 +2562,7 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 	{
 		ExplainProperty("Conflict Resolution",
 						node->onConflictAction == ONCONFLICT_NOTHING ?
-							"NOTHING" : "UPDATE",
+						"NOTHING" : "UPDATE",
 						false, es);
 
 		/*
@@ -2582,9 +2583,9 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 		/* EXPLAIN ANALYZE display of actual outcome for each tuple proposed */
 		if (es->analyze && mtstate->ps.instrument)
 		{
-			double total;
-			double insert_path;
-			double other_path;
+			double		total;
+			double		insert_path;
+			double		other_path;
 
 			InstrEndLoop(mtstate->mt_plans[0]->instrument);
 

@@ -1233,6 +1233,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 					lbuf = _bt_getbuf(rel, leftsib, BT_READ);
 					lpage = BufferGetPage(lbuf);
 					lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
+
 					/*
 					 * If the left sibling is split again by another backend,
 					 * after we released the lock, we know that the first
@@ -1345,11 +1346,11 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	leafrightsib = opaque->btpo_next;
 
 	/*
-	 * Before attempting to lock the parent page, check that the right
-	 * sibling is not in half-dead state.  A half-dead right sibling would
-	 * have no downlink in the parent, which would be highly confusing later
-	 * when we delete the downlink that follows the current page's downlink.
-	 * (I believe the deletion would work correctly, but it would fail the
+	 * Before attempting to lock the parent page, check that the right sibling
+	 * is not in half-dead state.  A half-dead right sibling would have no
+	 * downlink in the parent, which would be highly confusing later when we
+	 * delete the downlink that follows the current page's downlink. (I
+	 * believe the deletion would work correctly, but it would fail the
 	 * cross-check we make that the following downlink points to the right
 	 * sibling of the delete page.)
 	 */

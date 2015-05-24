@@ -117,7 +117,7 @@ typedef struct GlobalTransactionData
 	TimestampTz prepared_at;	/* time of preparation */
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
 	Oid			owner;			/* ID of user that executed the xact */
-	BackendId	locking_backend; /* backend currently working on the xact */
+	BackendId	locking_backend;	/* backend currently working on the xact */
 	bool		valid;			/* TRUE if PGPROC entry is in proc array */
 	char		gid[GIDSIZE];	/* The GID assigned to the prepared xact */
 }	GlobalTransactionData;
@@ -256,24 +256,24 @@ AtAbort_Twophase(void)
 		return;
 
 	/*
-	 * What to do with the locked global transaction entry?  If we were in
-	 * the process of preparing the transaction, but haven't written the WAL
+	 * What to do with the locked global transaction entry?  If we were in the
+	 * process of preparing the transaction, but haven't written the WAL
 	 * record and state file yet, the transaction must not be considered as
 	 * prepared.  Likewise, if we are in the process of finishing an
-	 * already-prepared transaction, and fail after having already written
-	 * the 2nd phase commit or rollback record to the WAL, the transaction
-	 * should not be considered as prepared anymore.  In those cases, just
-	 * remove the entry from shared memory.
+	 * already-prepared transaction, and fail after having already written the
+	 * 2nd phase commit or rollback record to the WAL, the transaction should
+	 * not be considered as prepared anymore.  In those cases, just remove the
+	 * entry from shared memory.
 	 *
-	 * Otherwise, the entry must be left in place so that the transaction
-	 * can be finished later, so just unlock it.
+	 * Otherwise, the entry must be left in place so that the transaction can
+	 * be finished later, so just unlock it.
 	 *
 	 * If we abort during prepare, after having written the WAL record, we
 	 * might not have transferred all locks and other state to the prepared
 	 * transaction yet.  Likewise, if we abort during commit or rollback,
-	 * after having written the WAL record, we might not have released
-	 * all the resources held by the transaction yet.  In those cases, the
-	 * in-memory state can be wrong, but it's too late to back out.
+	 * after having written the WAL record, we might not have released all the
+	 * resources held by the transaction yet.  In those cases, the in-memory
+	 * state can be wrong, but it's too late to back out.
 	 */
 	if (!MyLockedGxact->valid)
 	{
@@ -408,8 +408,8 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	TwoPhaseState->prepXacts[TwoPhaseState->numPrepXacts++] = gxact;
 
 	/*
-	 * Remember that we have this GlobalTransaction entry locked for us.
-	 * If we abort after this, we must release it.
+	 * Remember that we have this GlobalTransaction entry locked for us. If we
+	 * abort after this, we must release it.
 	 */
 	MyLockedGxact = gxact;
 
@@ -499,8 +499,8 @@ LockGXact(const char *gid, Oid user)
 		if (gxact->locking_backend != InvalidBackendId)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("prepared transaction with identifier \"%s\" is busy",
-							gid)));
+				errmsg("prepared transaction with identifier \"%s\" is busy",
+					   gid)));
 
 		if (user != gxact->owner && !superuser_arg(user))
 			ereport(ERROR,
@@ -1423,8 +1423,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 
 	/*
 	 * In case we fail while running the callbacks, mark the gxact invalid so
-	 * no one else will try to commit/rollback, and so it will be recycled
-	 * if we fail after this point.  It is still locked by our backend so it
+	 * no one else will try to commit/rollback, and so it will be recycled if
+	 * we fail after this point.  It is still locked by our backend so it
 	 * won't go away yet.
 	 *
 	 * (We assume it's safe to do this without taking TwoPhaseStateLock.)
@@ -2055,8 +2055,9 @@ RecoverPreparedTransactions(void)
 				StandbyReleaseLockTree(xid, hdr->nsubxacts, subxids);
 
 			/*
-			 * We're done with recovering this transaction. Clear MyLockedGxact,
-			 * like we do in PrepareTransaction() during normal operation.
+			 * We're done with recovering this transaction. Clear
+			 * MyLockedGxact, like we do in PrepareTransaction() during normal
+			 * operation.
 			 */
 			PostPrepare_Twophase();
 

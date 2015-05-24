@@ -246,6 +246,7 @@ SwitchToSharedLatch(void)
 	Assert(MyProc != NULL);
 
 	MyLatch = &MyProc->procLatch;
+
 	/*
 	 * Set the shared latch as the local one might have been set. This
 	 * shouldn't normally be necessary as code is supposed to check the

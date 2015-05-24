@@ -1442,7 +1442,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				if (DATE_NOT_FINITE(date))
 				{
 					/* we have to format infinity ourselves */
-					appendStringInfoString(result,DT_INFINITY);
+					appendStringInfoString(result, DT_INFINITY);
 				}
 				else
 				{
@@ -1465,7 +1465,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 				{
 					/* we have to format infinity ourselves */
-					appendStringInfoString(result,DT_INFINITY);
+					appendStringInfoString(result, DT_INFINITY);
 				}
 				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
 				{
@@ -1492,7 +1492,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 				{
 					/* we have to format infinity ourselves */
-					appendStringInfoString(result,DT_INFINITY);
+					appendStringInfoString(result, DT_INFINITY);
 				}
 				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
 				{

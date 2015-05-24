@@ -27,7 +27,7 @@
 #include "utils/tqual.h"
 
 static void InitScanRelation(SampleScanState *node, EState *estate,
-							 int eflags, TableSampleClause *tablesample);
+				 int eflags, TableSampleClause *tablesample);
 static TupleTableSlot *SampleNext(SampleScanState *node);
 
 
@@ -45,9 +45,9 @@ static TupleTableSlot *SampleNext(SampleScanState *node);
 static TupleTableSlot *
 SampleNext(SampleScanState *node)
 {
-	TupleTableSlot	   *slot;
-	TableSampleDesc	   *tsdesc;
-	HeapTuple			tuple;
+	TupleTableSlot *slot;
+	TableSampleDesc *tsdesc;
+	HeapTuple	tuple;
 
 	/*
 	 * get information from the scan state
@@ -60,7 +60,8 @@ SampleNext(SampleScanState *node)
 	if (tuple)
 		ExecStoreTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   tsdesc->heapScan->rs_cbuf,	/* buffer associated with this tuple */
+					   tsdesc->heapScan->rs_cbuf,		/* buffer associated
+														 * with this tuple */
 					   false);	/* don't pfree this pointer */
 	else
 		ExecClearTuple(slot);
@@ -112,7 +113,7 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags,
 	 * open that relation and acquire appropriate lock on it.
 	 */
 	currentRelation = ExecOpenScanRelation(estate,
-										   ((SampleScan *) node->ss.ps.plan)->scanrelid,
+								((SampleScan *) node->ss.ps.plan)->scanrelid,
 										   eflags);
 
 	node->ss.ss_currentRelation = currentRelation;

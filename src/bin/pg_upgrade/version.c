@@ -167,9 +167,9 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 	{
 		pg_log(PG_REPORT, "fatal\n");
 		pg_fatal("Your installation contains the \"line\" data type in user tables.  This\n"
-		"data type changed its internal and input/output format between your old\n"
+				 "data type changed its internal and input/output format between your old\n"
 				 "and new clusters so this cluster cannot currently be upgraded.  You can\n"
-		"remove the problem tables and restart the upgrade.  A list of the problem\n"
+				 "remove the problem tables and restart the upgrade.  A list of the problem\n"
 				 "columns is in the file:\n"
 				 "    %s\n\n", output_path);
 	}

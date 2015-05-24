@@ -14,7 +14,7 @@
 
 /* intentionally no include guards, should only be included by atomics.h */
 #ifndef INSIDE_ATOMICS_H
-#	error "should be included via atomics.h"
+#error "should be included via atomics.h"
 #endif
 
 /*
@@ -22,10 +22,10 @@
  * barriers.
  */
 #if !defined(pg_read_barrier_impl)
-#	define pg_read_barrier_impl pg_memory_barrier_impl
+#define pg_read_barrier_impl pg_memory_barrier_impl
 #endif
 #if !defined(pg_write_barrier_impl)
-#	define pg_write_barrier_impl pg_memory_barrier_impl
+#define pg_write_barrier_impl pg_memory_barrier_impl
 #endif
 
 #ifndef PG_HAVE_SPIN_DELAY
@@ -113,7 +113,8 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 static inline bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	uint32 value = 0;
+	uint32		value = 0;
+
 	return pg_atomic_compare_exchange_u32_impl(ptr, &value, 1);
 }
 
@@ -129,23 +130,23 @@ static inline void
 pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr)
 {
 	/*
-	 * Use a memory barrier + plain write if we have a native memory
-	 * barrier. But don't do so if memory barriers use spinlocks - that'd lead
-	 * to circularity if flags are used to implement spinlocks.
+	 * Use a memory barrier + plain write if we have a native memory barrier.
+	 * But don't do so if memory barriers use spinlocks - that'd lead to
+	 * circularity if flags are used to implement spinlocks.
 	 */
 #ifndef PG_HAVE_MEMORY_BARRIER_EMULATION
 	/* XXX: release semantics suffice? */
 	pg_memory_barrier_impl();
 	pg_atomic_write_u32_impl(ptr, 0);
 #else
-	uint32 value = 1;
+	uint32		value = 1;
 	pg_atomic_compare_exchange_u32_impl(ptr, &value, 0);
 #endif
 }
 
 #elif !defined(PG_HAVE_ATOMIC_TEST_SET_FLAG)
-#	error "No pg_atomic_test_and_set provided"
-#endif /* !defined(PG_HAVE_ATOMIC_TEST_SET_FLAG) */
+#error "No pg_atomic_test_and_set provided"
+#endif   /* !defined(PG_HAVE_ATOMIC_TEST_SET_FLAG) */
 
 
 #ifndef PG_HAVE_ATOMIC_INIT_U32
@@ -162,7 +163,8 @@ pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_)
 static inline uint32
 pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 xchg_)
 {
-	uint32 old;
+	uint32		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u32_impl(ptr);
@@ -178,7 +180,8 @@ pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 xchg_)
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
-	uint32 old;
+	uint32		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u32_impl(ptr);
@@ -203,7 +206,8 @@ pg_atomic_fetch_sub_u32_impl(volatile pg_atomic_uint32 *ptr, int32 sub_)
 static inline uint32
 pg_atomic_fetch_and_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 and_)
 {
-	uint32 old;
+	uint32		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u32_impl(ptr);
@@ -219,7 +223,8 @@ pg_atomic_fetch_and_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 and_)
 static inline uint32
 pg_atomic_fetch_or_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 or_)
 {
-	uint32 old;
+	uint32		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u32_impl(ptr);
@@ -255,7 +260,8 @@ pg_atomic_sub_fetch_u32_impl(volatile pg_atomic_uint32 *ptr, int32 sub_)
 static inline uint64
 pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 xchg_)
 {
-	uint64 old;
+	uint64		old;
+
 	while (true)
 	{
 		old = ptr->value;
@@ -284,7 +290,7 @@ pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
 static inline uint64
 pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 {
-	uint64 old = 0;
+	uint64		old = 0;
 
 	/*
 	 * 64 bit reads aren't safe on all platforms. In the generic
@@ -312,7 +318,8 @@ pg_atomic_init_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val_)
 static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
-	uint64 old;
+	uint64		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u64_impl(ptr);
@@ -337,7 +344,8 @@ pg_atomic_fetch_sub_u64_impl(volatile pg_atomic_uint64 *ptr, int64 sub_)
 static inline uint64
 pg_atomic_fetch_and_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 and_)
 {
-	uint64 old;
+	uint64		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u64_impl(ptr);
@@ -353,7 +361,8 @@ pg_atomic_fetch_and_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 and_)
 static inline uint64
 pg_atomic_fetch_or_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 or_)
 {
-	uint64 old;
+	uint64		old;
+
 	while (true)
 	{
 		old = pg_atomic_read_u64_impl(ptr);
@@ -382,6 +391,7 @@ pg_atomic_sub_fetch_u64_impl(volatile pg_atomic_uint64 *ptr, int64 sub_)
 }
 #endif
 
-#endif /* PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64 */
+#endif   /* PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64 */
 
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif   /* defined(PG_USE_INLINE) ||
+								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */

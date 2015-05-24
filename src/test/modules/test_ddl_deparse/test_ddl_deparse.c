@@ -63,8 +63,8 @@ Datum
 get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 {
 	CollectedCommand *cmd = (CollectedCommand *) PG_GETARG_POINTER(0);
-	ArrayBuildState	*astate = NULL;
-	ListCell *cell;
+	ArrayBuildState *astate = NULL;
+	ListCell   *cell;
 
 	if (cmd->type != SCT_AlterTable)
 		elog(ERROR, "command is not ALTER TABLE");
@@ -72,8 +72,8 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 	foreach(cell, cmd->d.alterTable.subcmds)
 	{
 		CollectedATSubcmd *sub = lfirst(cell);
-		AlterTableCmd  *subcmd = (AlterTableCmd *) sub->parsetree;
-		const char     *strtype;
+		AlterTableCmd *subcmd = (AlterTableCmd *) sub->parsetree;
+		const char *strtype;
 
 		Assert(IsA(subcmd, AlterTableCmd));
 

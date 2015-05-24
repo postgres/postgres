@@ -50,7 +50,7 @@ typedef struct
 	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
 	 */
-	uint32		 completePasses; /* Complete cycles of the clock sweep */
+	uint32		completePasses; /* Complete cycles of the clock sweep */
 	pg_atomic_uint32 numBufferAllocs;	/* Buffers allocated since last reset */
 
 	/*
@@ -111,7 +111,7 @@ static void AddBufferToRing(BufferAccessStrategy strategy,
 static inline uint32
 ClockSweepTick(void)
 {
-	uint32 victim;
+	uint32		victim;
 
 	/*
 	 * Atomically move hand ahead one buffer - if there's several processes
@@ -123,7 +123,7 @@ ClockSweepTick(void)
 
 	if (victim >= NBuffers)
 	{
-		uint32 originalVictim = victim;
+		uint32		originalVictim = victim;
 
 		/* always wrap what we look up in BufferDescriptors */
 		victim = victim % NBuffers;
@@ -136,9 +136,9 @@ ClockSweepTick(void)
 		 */
 		if (victim == 0)
 		{
-			uint32 expected;
-			uint32 wrapped;
-			bool success = false;
+			uint32		expected;
+			uint32		wrapped;
+			bool		success = false;
 
 			expected = originalVictim + 1;
 
@@ -381,6 +381,7 @@ StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc)
 	if (complete_passes)
 	{
 		*complete_passes = StrategyControl->completePasses;
+
 		/*
 		 * Additionally add the number of wraparounds that happened before
 		 * completePasses could be incremented. C.f. ClockSweepTick().

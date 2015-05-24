@@ -490,15 +490,15 @@ createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli, XLogRecPtr checkpo
 				   "BACKUP METHOD: pg_rewind\n"
 				   "BACKUP FROM: standby\n"
 				   "START TIME: %s\n",
-				   /* omit LABEL: line */
-				   (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename,
+	/* omit LABEL: line */
+			  (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename,
 				   (uint32) (checkpointloc >> 32), (uint32) checkpointloc,
 				   strfbuf);
 	if (len >= sizeof(buf))
-		pg_fatal("backup label buffer too small\n"); /* shouldn't happen */
+		pg_fatal("backup label buffer too small\n");	/* shouldn't happen */
 
 	/* TODO: move old file out of the way, if any. */
-	open_target_file("backup_label", true); /* BACKUP_LABEL_FILE */
+	open_target_file("backup_label", true);		/* BACKUP_LABEL_FILE */
 	write_target_range(buf, 0, len);
 }
 

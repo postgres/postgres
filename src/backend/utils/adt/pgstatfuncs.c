@@ -531,14 +531,14 @@ Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
 #define PG_STAT_GET_ACTIVITY_COLS	22
-	int					num_backends = pgstat_fetch_stat_numbackends();
-	int					curr_backend;
-	int					pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
-	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc			tupdesc;
-	Tuplestorestate	   *tupstore;
-	MemoryContext		per_query_ctx;
-	MemoryContext		oldcontext;
+	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			curr_backend;
+	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -628,7 +628,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		if (beentry->st_ssl)
 		{
-			values[16] = BoolGetDatum(true); /* ssl */
+			values[16] = BoolGetDatum(true);	/* ssl */
 			values[17] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
 			values[18] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
 			values[19] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
@@ -637,7 +637,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			values[16] = BoolGetDatum(false); /* ssl */
+			values[16] = BoolGetDatum(false);	/* ssl */
 			nulls[17] = nulls[18] = nulls[19] = nulls[20] = nulls[21] = true;
 		}
 

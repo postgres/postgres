@@ -107,17 +107,16 @@ mq_is_send_pending(void)
 static int
 mq_putmessage(char msgtype, const char *s, size_t len)
 {
-	shm_mq_iovec	iov[2];
-	shm_mq_result	result;
+	shm_mq_iovec iov[2];
+	shm_mq_result result;
 
 	/*
-	 * If we're sending a message, and we have to wait because the
-	 * queue is full, and then we get interrupted, and that interrupt
-	 * results in trying to send another message, we respond by detaching
-	 * the queue.  There's no way to return to the original context, but
-	 * even if there were, just queueing the message would amount to
-	 * indefinitely postponing the response to the interrupt.  So we do
-	 * this instead.
+	 * If we're sending a message, and we have to wait because the queue is
+	 * full, and then we get interrupted, and that interrupt results in trying
+	 * to send another message, we respond by detaching the queue.  There's no
+	 * way to return to the original context, but even if there were, just
+	 * queueing the message would amount to indefinitely postponing the
+	 * response to the interrupt.  So we do this instead.
 	 */
 	if (pq_mq_busy)
 	{
@@ -166,10 +165,10 @@ mq_putmessage_noblock(char msgtype, const char *s, size_t len)
 {
 	/*
 	 * While the shm_mq machinery does support sending a message in
-	 * non-blocking mode, there's currently no way to try sending beginning
-	 * to send the message that doesn't also commit us to completing the
-	 * transmission.  This could be improved in the future, but for now
-	 * we don't need it.
+	 * non-blocking mode, there's currently no way to try sending beginning to
+	 * send the message that doesn't also commit us to completing the
+	 * transmission.  This could be improved in the future, but for now we
+	 * don't need it.
 	 */
 	elog(ERROR, "not currently supported");
 }
@@ -201,7 +200,7 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 	/* Loop over fields and extract each one. */
 	for (;;)
 	{
-		char	code = pq_getmsgbyte(msg);
+		char		code = pq_getmsgbyte(msg);
 		const char *value;
 
 		if (code == '\0')
@@ -215,9 +214,9 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 		{
 			case PG_DIAG_SEVERITY:
 				if (strcmp(value, "DEBUG") == 0)
-					edata->elevel = DEBUG1;	/* or some other DEBUG level */
+					edata->elevel = DEBUG1;		/* or some other DEBUG level */
 				else if (strcmp(value, "LOG") == 0)
-					edata->elevel = LOG;	/* can't be COMMERROR */
+					edata->elevel = LOG;		/* can't be COMMERROR */
 				else if (strcmp(value, "INFO") == 0)
 					edata->elevel = INFO;
 				else if (strcmp(value, "NOTICE") == 0)

@@ -3274,7 +3274,7 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 		{
 			int			fnum = attnums[idx];
 			char	   *name,
-				   *val;
+					   *val;
 
 			name = SPI_fname(tupdesc, fnum);
 			val = SPI_getvalue(violator, tupdesc, fnum);
@@ -3298,11 +3298,11 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 						RelationGetRelationName(fk_rel),
 						NameStr(riinfo->conname)),
 				 has_perm ?
-					 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
-							   key_names.data, key_values.data,
-							   RelationGetRelationName(pk_rel)) :
-					 errdetail("Key is not present in table \"%s\".",
-							   RelationGetRelationName(pk_rel)),
+				 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
+						   key_names.data, key_values.data,
+						   RelationGetRelationName(pk_rel)) :
+				 errdetail("Key is not present in table \"%s\".",
+						   RelationGetRelationName(pk_rel)),
 				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 	else
 		ereport(ERROR,
@@ -3315,8 +3315,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 			errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 					  key_names.data, key_values.data,
 					  RelationGetRelationName(fk_rel)) :
-					errdetail("Key is still referenced from table \"%s\".",
-					  RelationGetRelationName(fk_rel)),
+				 errdetail("Key is still referenced from table \"%s\".",
+						   RelationGetRelationName(fk_rel)),
 				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 }
 

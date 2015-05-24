@@ -531,7 +531,7 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 	if (verbose)
 	{
 		appendPQExpBuffer(&buf,
-						  "  pg_catalog.pg_get_userbyid(t.typowner) AS \"%s\",\n",
+					 "  pg_catalog.pg_get_userbyid(t.typowner) AS \"%s\",\n",
 						  gettext_noop("Owner"));
 	}
 	if (verbose && pset.sversion >= 90200)
@@ -803,7 +803,7 @@ permissionsList(const char *pattern)
 						  "       ELSE E''\n"
 						  "       END"
 						  "    || CASE WHEN polroles <> '{0}' THEN\n"
-						  "           E'\\n  to: ' || pg_catalog.array_to_string(\n"
+				   "           E'\\n  to: ' || pg_catalog.array_to_string(\n"
 						  "               ARRAY(\n"
 						  "                   SELECT rolname\n"
 						  "                   FROM pg_catalog.pg_roles\n"
@@ -2031,19 +2031,19 @@ describeOneTableDetails(const char *schemaname,
 		if (pset.sversion >= 90500)
 		{
 			printfPQExpBuffer(&buf,
-						   "SELECT pol.polname,\n"
-						   "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
-						   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
-						   "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
-						   "CASE pol.polcmd \n"
-						   "WHEN 'r' THEN 'SELECT'\n"
-						   "WHEN 'a' THEN 'INSERT'\n"
-						   "WHEN 'w' THEN 'UPDATE'\n"
-						   "WHEN 'd' THEN 'DELETE'\n"
-						   "WHEN '*' THEN 'ALL'\n"
-						   "END AS cmd\n"
+							  "SELECT pol.polname,\n"
+							  "CASE WHEN pol.polroles = '{0}' THEN NULL ELSE array_to_string(array(select rolname from pg_roles where oid = any (pol.polroles) order by 1),',') END,\n"
+					   "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid),\n"
+				  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid),\n"
+							  "CASE pol.polcmd \n"
+							  "WHEN 'r' THEN 'SELECT'\n"
+							  "WHEN 'a' THEN 'INSERT'\n"
+							  "WHEN 'w' THEN 'UPDATE'\n"
+							  "WHEN 'd' THEN 'DELETE'\n"
+							  "WHEN '*' THEN 'ALL'\n"
+							  "END AS cmd\n"
 							  "FROM pg_catalog.pg_policy pol\n"
-				  "WHERE pol.polrelid = '%s' ORDER BY 1;",
+							  "WHERE pol.polrelid = '%s' ORDER BY 1;",
 							  oid);
 
 			result = PSQLexec(buf.data);
@@ -2053,9 +2053,9 @@ describeOneTableDetails(const char *schemaname,
 				tuples = PQntuples(result);
 
 			/*
-			 * Handle cases where RLS is enabled and there are policies,
-			 * or there aren't policies, or RLS isn't enabled but there
-			 * are policies
+			 * Handle cases where RLS is enabled and there are policies, or
+			 * there aren't policies, or RLS isn't enabled but there are
+			 * policies
 			 */
 			if (tableinfo.rowsecurity && tuples > 0)
 				printTableAddFooter(&cont, _("Policies:"));
@@ -2070,7 +2070,7 @@ describeOneTableDetails(const char *schemaname,
 			for (i = 0; i < tuples; i++)
 			{
 				printfPQExpBuffer(&buf, "    POLICY \"%s\"",
-									  PQgetvalue(result, i, 0));
+								  PQgetvalue(result, i, 0));
 
 				if (!PQgetisnull(result, i, 4))
 					appendPQExpBuffer(&buf, " FOR %s",
