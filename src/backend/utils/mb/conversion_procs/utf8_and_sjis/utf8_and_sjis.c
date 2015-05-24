@@ -22,9 +22,6 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(sjis_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_sjis);
 
-extern Datum sjis_to_utf8(PG_FUNCTION_ARGS);
-extern Datum utf8_to_sjis(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id

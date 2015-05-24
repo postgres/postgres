@@ -61,10 +61,8 @@
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(dsnowball_init);
-Datum		dsnowball_init(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(dsnowball_lexize);
-Datum		dsnowball_lexize(PG_FUNCTION_ARGS);
 
 /* List of supported modules */
 typedef struct stemmer_module

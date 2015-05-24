@@ -42,10 +42,6 @@ PG_MODULE_MAGIC;
 
 void		_PG_init(void);
 
-/* Prototypes for functions used with event triggers */
-Datum		pg_audit_ddl_command_end(PG_FUNCTION_ARGS);
-Datum		pg_audit_sql_drop(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_audit_ddl_command_end);
 PG_FUNCTION_INFO_V1(pg_audit_sql_drop);
 

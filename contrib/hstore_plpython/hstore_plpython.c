@@ -8,7 +8,6 @@ PG_MODULE_MAGIC;
 
 
 PG_FUNCTION_INFO_V1(hstore_to_plpython);
-Datum		hstore_to_plpython(PG_FUNCTION_ARGS);
 
 Datum
 hstore_to_plpython(PG_FUNCTION_ARGS)
@@ -45,7 +44,6 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(plpython_to_hstore);
-Datum		plpython_to_hstore(PG_FUNCTION_ARGS);
 
 Datum
 plpython_to_hstore(PG_FUNCTION_ARGS)

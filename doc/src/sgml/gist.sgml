@@ -327,7 +327,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_consistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_consistent);
 
 Datum
@@ -390,7 +389,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_union(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_union);
 
 Datum
@@ -464,7 +462,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_compress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_compress);
 
 Datum
@@ -525,7 +522,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_decompress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_decompress);
 
 Datum
@@ -565,7 +561,6 @@ LANGUAGE C STRICT;  -- in some cases penalty functions need not be strict
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_penalty(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_penalty);
 
 Datum
@@ -614,7 +609,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_picksplit(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_picksplit);
 
 Datum
@@ -721,7 +715,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_same(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_same);
 
 Datum
@@ -772,7 +765,6 @@ LANGUAGE C STRICT;
         And the matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_distance(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_distance);
 
 Datum
@@ -859,7 +851,6 @@ LANGUAGE C STRICT;
         The matching code in the C module could then follow this skeleton:
 
 <programlisting>
-Datum       my_fetch(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(my_fetch);
 
 Datum

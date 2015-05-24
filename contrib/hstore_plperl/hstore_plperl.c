@@ -9,7 +9,6 @@ PG_MODULE_MAGIC;
 
 
 PG_FUNCTION_INFO_V1(hstore_to_plperl);
-Datum		hstore_to_plperl(PG_FUNCTION_ARGS);
 
 Datum
 hstore_to_plperl(PG_FUNCTION_ARGS)
@@ -39,7 +38,6 @@ hstore_to_plperl(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(plperl_to_hstore);
-Datum		plperl_to_hstore(PG_FUNCTION_ARGS);
 
 Datum
 plperl_to_hstore(PG_FUNCTION_ARGS)

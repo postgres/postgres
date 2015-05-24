@@ -24,13 +24,6 @@ PG_FUNCTION_INFO_V1(mic_to_latin3);
 PG_FUNCTION_INFO_V1(latin4_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_latin4);
 
-extern Datum latin1_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_latin1(PG_FUNCTION_ARGS);
-extern Datum latin3_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_latin3(PG_FUNCTION_ARGS);
-extern Datum latin4_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_latin4(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id

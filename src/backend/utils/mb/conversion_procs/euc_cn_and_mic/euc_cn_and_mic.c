@@ -20,9 +20,6 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(euc_cn_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_euc_cn);
 
-extern Datum euc_cn_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_euc_cn(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id

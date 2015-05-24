@@ -22,9 +22,6 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(gb18030_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_gb18030);
 
-extern Datum gb18030_to_utf8(PG_FUNCTION_ARGS);
-extern Datum utf8_to_gb18030(PG_FUNCTION_ARGS);
-
 /*
  * Convert 4-byte GB18030 characters to and from a linear code space
  *

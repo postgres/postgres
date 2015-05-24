@@ -998,8 +998,6 @@ typedef struct EventTriggerData
 
 PG_MODULE_MAGIC;
 
-Datum noddl(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(noddl);
 
 Datum

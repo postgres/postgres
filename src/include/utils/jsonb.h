@@ -401,9 +401,9 @@ extern Datum jsonb_pretty(PG_FUNCTION_ARGS);
 extern Datum jsonb_concat(PG_FUNCTION_ARGS);
 
 /* deletion */
-Datum		jsonb_delete(PG_FUNCTION_ARGS);
-Datum		jsonb_delete_idx(PG_FUNCTION_ARGS);
-Datum		jsonb_delete_path(PG_FUNCTION_ARGS);
+extern Datum jsonb_delete(PG_FUNCTION_ARGS);
+extern Datum jsonb_delete_idx(PG_FUNCTION_ARGS);
+extern Datum jsonb_delete_path(PG_FUNCTION_ARGS);
 
 /* replacement */
 extern Datum jsonb_replace(PG_FUNCTION_ARGS);

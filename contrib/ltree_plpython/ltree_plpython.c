@@ -7,7 +7,6 @@ PG_MODULE_MAGIC;
 
 
 PG_FUNCTION_INFO_V1(ltree_to_plpython);
-Datum		ltree_to_plpython(PG_FUNCTION_ARGS);
 
 Datum
 ltree_to_plpython(PG_FUNCTION_ARGS)

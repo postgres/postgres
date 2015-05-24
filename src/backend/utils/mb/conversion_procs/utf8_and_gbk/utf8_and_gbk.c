@@ -22,9 +22,6 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(gbk_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_gbk);
 
-extern Datum gbk_to_utf8(PG_FUNCTION_ARGS);
-extern Datum utf8_to_gbk(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id

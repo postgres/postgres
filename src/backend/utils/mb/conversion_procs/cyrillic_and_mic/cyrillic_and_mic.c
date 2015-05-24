@@ -40,27 +40,6 @@ PG_FUNCTION_INFO_V1(win1251_to_iso);
 PG_FUNCTION_INFO_V1(iso_to_win866);
 PG_FUNCTION_INFO_V1(win866_to_iso);
 
-extern Datum koi8r_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_koi8r(PG_FUNCTION_ARGS);
-extern Datum iso_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_iso(PG_FUNCTION_ARGS);
-extern Datum win1251_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_win1251(PG_FUNCTION_ARGS);
-extern Datum win866_to_mic(PG_FUNCTION_ARGS);
-extern Datum mic_to_win866(PG_FUNCTION_ARGS);
-extern Datum koi8r_to_win1251(PG_FUNCTION_ARGS);
-extern Datum win1251_to_koi8r(PG_FUNCTION_ARGS);
-extern Datum koi8r_to_win866(PG_FUNCTION_ARGS);
-extern Datum win866_to_koi8r(PG_FUNCTION_ARGS);
-extern Datum win866_to_win1251(PG_FUNCTION_ARGS);
-extern Datum win1251_to_win866(PG_FUNCTION_ARGS);
-extern Datum iso_to_koi8r(PG_FUNCTION_ARGS);
-extern Datum koi8r_to_iso(PG_FUNCTION_ARGS);
-extern Datum iso_to_win1251(PG_FUNCTION_ARGS);
-extern Datum win1251_to_iso(PG_FUNCTION_ARGS);
-extern Datum iso_to_win866(PG_FUNCTION_ARGS);
-extern Datum win866_to_iso(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id

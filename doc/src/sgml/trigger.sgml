@@ -709,11 +709,7 @@ CREATE TABLE ttest (
 #include "commands/trigger.h"   /* ... triggers ... */
 #include "utils/rel.h"          /* ... and relations */
 
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
-
-extern Datum trigf(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(trigf);
 

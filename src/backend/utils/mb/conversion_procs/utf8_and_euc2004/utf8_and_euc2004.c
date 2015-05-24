@@ -24,9 +24,6 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(euc_jis_2004_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_euc_jis_2004);
 
-extern Datum euc_jis_2004_to_utf8(PG_FUNCTION_ARGS);
-extern Datum utf8_to_euc_jis_2004(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id

@@ -27,12 +27,6 @@ PG_FUNCTION_INFO_V1(koi8r_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_koi8u);
 PG_FUNCTION_INFO_V1(koi8u_to_utf8);
 
-extern Datum utf8_to_koi8r(PG_FUNCTION_ARGS);
-extern Datum koi8r_to_utf8(PG_FUNCTION_ARGS);
-
-extern Datum utf8_to_koi8u(PG_FUNCTION_ARGS);
-extern Datum koi8u_to_utf8(PG_FUNCTION_ARGS);
-
 /* ----------
  * conv_proc(
  *		INTEGER,	-- source encoding id
