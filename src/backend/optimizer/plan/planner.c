@@ -1918,10 +1918,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * whether HAVING succeeds.  Furthermore, there cannot be any
 				 * variables in either HAVING or the targetlist, so we
 				 * actually do not need the FROM table at all!	We can just
-				 * throw away the plan-so-far and generate a Result node.
-				 * This is a sufficiently unusual corner case that it's not
-				 * worth contorting the structure of this routine to avoid
-				 * having to generate the plan in the first place.
+				 * throw away the plan-so-far and generate a Result node. This
+				 * is a sufficiently unusual corner case that it's not worth
+				 * contorting the structure of this routine to avoid having to
+				 * generate the plan in the first place.
 				 */
 				result_plan = (Plan *) make_result(root,
 												   tlist,
@@ -3157,22 +3157,23 @@ extract_rollup_sets(List *groupingSets)
 	if (!lc1)
 		return list_make1(groupingSets);
 
-	/*
+	/*----------
 	 * We don't strictly need to remove duplicate sets here, but if we don't,
 	 * they tend to become scattered through the result, which is a bit
-	 * confusing (and irritating if we ever decide to optimize them out). So
-	 * we remove them here and add them back after.
+	 * confusing (and irritating if we ever decide to optimize them out).
+	 * So we remove them here and add them back after.
 	 *
 	 * For each non-duplicate set, we fill in the following:
 	 *
-	 * orig_sets[i] = list of the original set lists set_masks[i] = bitmapset
-	 * for testing inclusion adjacency[i] = array [n, v1, v2, ... vn] of
-	 * adjacency indices
+	 * orig_sets[i] = list of the original set lists
+	 * set_masks[i] = bitmapset for testing inclusion
+	 * adjacency[i] = array [n, v1, v2, ... vn] of adjacency indices
 	 *
 	 * chains[i] will be the result group this set is assigned to.
 	 *
-	 * We index all of these from 1 rather than 0 because it is convenient to
-	 * leave 0 free for the NIL node in the graph algorithm.
+	 * We index all of these from 1 rather than 0 because it is convenient
+	 * to leave 0 free for the NIL node in the graph algorithm.
+	 *----------
 	 */
 	orig_sets = palloc0((num_sets_raw + 1) * sizeof(List *));
 	set_masks = palloc0((num_sets_raw + 1) * sizeof(Bitmapset *));

@@ -106,8 +106,8 @@ typedef struct
 	int			wrapColumn;		/* max line length, or -1 for no limit */
 	int			indentLevel;	/* current indent level for prettyprint */
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
-	ParseExprKind special_exprkind;		/* set only for exprkinds needing */
-	/* special handling */
+	ParseExprKind special_exprkind;		/* set only for exprkinds needing
+										 * special handling */
 } deparse_context;
 
 /*

@@ -645,9 +645,11 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 	 * overall targetlist's econtext.  GroupingFunc arguments are never
 	 * evaluated at all.
 	 */
-	if (IsA(node, Aggref) ||IsA(node, GroupingFunc))
+	if (IsA(node, Aggref))
 		return false;
 	if (IsA(node, WindowFunc))
+		return false;
+	if (IsA(node, GroupingFunc))
 		return false;
 	return expression_tree_walker(node, get_last_attnums,
 								  (void *) projInfo);

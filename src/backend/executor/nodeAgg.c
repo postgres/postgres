@@ -1519,8 +1519,9 @@ agg_retrieve_direct(AggState *aggstate)
 	/*
 	 * get state info from node
 	 *
-	 * econtext is the per-output-tuple expression context tmpcontext is the
-	 * per-input-tuple expression context
+	 * econtext is the per-output-tuple expression context
+	 *
+	 * tmpcontext is the per-input-tuple expression context
 	 */
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	tmpcontext = aggstate->tmpcontext;
@@ -1609,7 +1610,7 @@ agg_retrieve_direct(AggState *aggstate)
 		else
 			nextSetSize = 0;
 
-		/*-
+		/*----------
 		 * If a subgroup for the current grouping set is present, project it.
 		 *
 		 * We have a new group if:
@@ -1624,6 +1625,7 @@ agg_retrieve_direct(AggState *aggstate)
 		 *	  AND
 		 *	  - the previous and pending rows differ on the grouping columns
 		 *		of the next grouping set
+		 *----------
 		 */
 		if (aggstate->input_done ||
 			(node->aggstrategy == AGG_SORTED &&

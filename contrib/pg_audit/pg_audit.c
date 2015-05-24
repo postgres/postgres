@@ -212,19 +212,19 @@ typedef struct
 	int64		statementId;	/* Simple counter */
 	int64		substatementId; /* Simple counter */
 
-	LogStmtLevel logStmtLevel;	/* From GetCommandLogLevel when possible, */
-	/* generated when not. */
+	LogStmtLevel logStmtLevel;	/* From GetCommandLogLevel when possible,
+								 * generated when not. */
 	NodeTag		commandTag;		/* same here */
 	const char *command;		/* same here */
-	const char *objectType;		/* From event trigger when possible */
-	/* generated when not. */
+	const char *objectType;		/* From event trigger when possible, generated
+								 * when not. */
 	char	   *objectName;		/* Fully qualified object identification */
 	const char *commandText;	/* sourceText / queryString */
 	ParamListInfo paramList;	/* QueryDesc/ProcessUtility parameters */
 
 	bool		granted;		/* Audit role has object permissions? */
-	bool		logged;			/* Track if we have logged this event, used */
-	/* post-ProcessUtility to make sure we log */
+	bool		logged;			/* Track if we have logged this event, used
+								 * post-ProcessUtility to make sure we log */
 	bool		statementLogged;	/* Track if we have logged the statement */
 } AuditEvent;
 
@@ -467,7 +467,7 @@ log_audit_event(AuditEventStackItem *stackItem)
 	/* Classify the statement using log stmt level and the command tag */
 	switch (stackItem->auditEvent.logStmtLevel)
 	{
-			/* All mods go in WRITE class, execpt EXECUTE */
+			/* All mods go in WRITE class, except EXECUTE */
 		case LOGSTMT_MOD:
 			className = CLASS_WRITE;
 			class = LOG_WRITE;
@@ -553,13 +553,14 @@ log_audit_event(AuditEventStackItem *stackItem)
 			break;
 	}
 
-	/*
+	/*----------
 	 * Only log the statement if:
 	 *
-	 * 1. If object was selected for audit logging (granted) 2. The statement
-	 * belongs to a class that is being logged
+	 * 1. If object was selected for audit logging (granted), or
+	 * 2. The statement belongs to a class that is being logged
 	 *
 	 * If neither of these is true, return.
+	 *----------
 	 */
 	if (!stackItem->auditEvent.granted && !(auditLogBitmap & class))
 		return;
@@ -979,57 +980,39 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 		switch (rte->relkind)
 		{
 			case RELKIND_RELATION:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_TABLE;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_TABLE;
 				break;
 
 			case RELKIND_INDEX:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_INDEX;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_INDEX;
 				break;
 
 			case RELKIND_SEQUENCE:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_SEQUENCE;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_SEQUENCE;
 				break;
 
 			case RELKIND_TOASTVALUE:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_TOASTVALUE;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_TOASTVALUE;
 				break;
 
 			case RELKIND_VIEW:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_VIEW;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_VIEW;
 				break;
 
 			case RELKIND_COMPOSITE_TYPE:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_COMPOSITE_TYPE;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_COMPOSITE_TYPE;
 				break;
 
 			case RELKIND_FOREIGN_TABLE:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_FOREIGN_TABLE;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_FOREIGN_TABLE;
 				break;
 
 			case RELKIND_MATVIEW:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_MATVIEW;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_MATVIEW;
 				break;
 
 			default:
-				auditEventStack->auditEvent.objectType =
-				OBJECT_TYPE_UNKNOWN;
-
+				auditEventStack->auditEvent.objectType = OBJECT_TYPE_UNKNOWN;
 				break;
 		}
 
@@ -1043,9 +1026,7 @@ log_select_dml(Oid auditOid, List *rangeTabls)
 		/* Perform object auditing only if the audit role is valid */
 		if (auditOid != InvalidOid)
 		{
-			AclMode		auditPerms =
-			(ACL_SELECT | ACL_UPDATE | ACL_INSERT | ACL_DELETE) &
-			rte->requiredPerms;
+			AclMode		auditPerms = (ACL_SELECT | ACL_UPDATE | ACL_INSERT | ACL_DELETE) & rte->requiredPerms;
 
 			/*
 			 * If any of the required permissions for the relation are granted
@@ -1166,7 +1147,6 @@ log_function_execute(Oid objectId)
 	stackItem->auditEvent.commandTag = T_DoStmt;
 	stackItem->auditEvent.command = COMMAND_EXECUTE;
 	stackItem->auditEvent.objectType = OBJECT_TYPE_FUNCTION;
-
 	stackItem->auditEvent.commandText = stackItem->next->auditEvent.commandText;
 
 	log_audit_event(stackItem);
@@ -1459,8 +1439,7 @@ pg_audit_ddl_command_end(PG_FUNCTION_ARGS)
 
 		/* Supply object name and type for audit event */
 		auditEventStack->auditEvent.objectType =
-		SPI_getvalue(spiTuple, spiTupDesc, 1);
-
+			SPI_getvalue(spiTuple, spiTupDesc, 1);
 		auditEventStack->auditEvent.objectName =
 			SPI_getvalue(spiTuple, spiTupDesc, 2);
 
@@ -1545,8 +1524,7 @@ pg_audit_sql_drop(PG_FUNCTION_ARGS)
 		spiTuple = SPI_tuptable->vals[row];
 
 		auditEventStack->auditEvent.objectType =
-		SPI_getvalue(spiTuple, spiTupDesc, 1);
-
+			SPI_getvalue(spiTuple, spiTupDesc, 1);
 		auditEventStack->auditEvent.objectName =
 			SPI_getvalue(spiTuple, spiTupDesc, 2);
 
@@ -1603,16 +1581,14 @@ check_pg_audit_log(char **newVal, void **extra, GucSource source)
 
 	foreach(lt, flagRawList)
 	{
+		char	   *token = (char *) lfirst(lt);
 		bool		subtract = false;
 		int			class;
 
-		/* Retrieve a token */
-		char	   *token = (char *) lfirst(lt);
-
 		/* If token is preceded by -, then the token is subtractive */
-		if (strstr(token, "-") == token)
+		if (token[0] == '-')
 		{
-			token = token + 1;
+			token++;
 			subtract = true;
 		}
 

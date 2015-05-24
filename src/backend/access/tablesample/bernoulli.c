@@ -80,8 +80,7 @@ Datum
 tsm_bernoulli_nextblock(PG_FUNCTION_ARGS)
 {
 	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	BernoulliSamplerData *sampler =
-	(BernoulliSamplerData *) tsdesc->tsmdata;
+	BernoulliSamplerData *sampler = (BernoulliSamplerData *) tsdesc->tsmdata;
 
 	/*
 	 * Bernoulli sampling scans all blocks on the table and supports syncscan
@@ -117,10 +116,10 @@ tsm_bernoulli_nextblock(PG_FUNCTION_ARGS)
  * tuples have same probability of being returned the visible and invisible
  * tuples will be returned in same ratio as they have in the actual table.
  * This means that there is no skew towards either visible or invisible tuples
- * and the	number returned visible tuples to from the executor node is the
- * fraction of visible tuples which was specified in input.
+ * and the number of visible tuples returned from the executor node should
+ * match the fraction of visible tuples which was specified by user.
  *
- * This is faster than doing the coinflip in the examinetuple because we don't
+ * This is faster than doing the coinflip in examinetuple because we don't
  * have to do visibility checks on uninteresting tuples.
  *
  * If we reach end of the block return InvalidOffsetNumber which tells
@@ -131,8 +130,7 @@ tsm_bernoulli_nexttuple(PG_FUNCTION_ARGS)
 {
 	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
 	OffsetNumber maxoffset = PG_GETARG_UINT16(2);
-	BernoulliSamplerData *sampler =
-	(BernoulliSamplerData *) tsdesc->tsmdata;
+	BernoulliSamplerData *sampler = (BernoulliSamplerData *) tsdesc->tsmdata;
 	OffsetNumber tupoffset = sampler->lt;
 	float4		probability = sampler->probability;
 
@@ -185,8 +183,7 @@ Datum
 tsm_bernoulli_reset(PG_FUNCTION_ARGS)
 {
 	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	BernoulliSamplerData *sampler =
-	(BernoulliSamplerData *) tsdesc->tsmdata;
+	BernoulliSamplerData *sampler = (BernoulliSamplerData *) tsdesc->tsmdata;
 
 	sampler->blockno = InvalidBlockNumber;
 	sampler->lt = InvalidOffsetNumber;

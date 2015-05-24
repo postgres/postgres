@@ -78,9 +78,12 @@ tablesample_init(SampleScanState *scanstate, TableSampleClause *tablesample)
 	fcinfo.argnull[0] = false;
 
 	/*
-	 * Second arg for init function is always REPEATABLE When
-	 * tablesample->repeatable is NULL then REPEATABLE clause was not
-	 * specified. When specified, the expression cannot evaluate to NULL.
+	 * Second arg for init function is always REPEATABLE.
+	 *
+	 * If tablesample->repeatable is NULL then REPEATABLE clause was not
+	 * specified, and we insert a random value as default.
+	 *
+	 * When specified, the expression cannot evaluate to NULL.
 	 */
 	if (tablesample->repeatable)
 	{

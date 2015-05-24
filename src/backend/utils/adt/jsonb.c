@@ -584,7 +584,7 @@ add_indent(StringInfo out, bool indent, int level)
  *
  * Given the datatype OID, return its JsonbTypeCategory, as well as the type's
  * output function OID.  If the returned category is JSONBTYPE_JSONCAST,
- *	we return the OID of the relevant cast function instead.
+ * we return the OID of the relevant cast function instead.
  */
 static void
 jsonb_categorize_type(Oid typoid,

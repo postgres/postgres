@@ -527,8 +527,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		 * Buckets are simple pointers to hashjoin tuples, while tupsize
 		 * includes the pointer, hash code, and MinimalTupleData.  So buckets
 		 * should never really exceed 25% of work_mem (even for
-		 * NTUP_PER_BUCKET=1); except maybe * for work_mem values that are not
-		 * 2^N bytes, where we might get more * because of doubling. So let's
+		 * NTUP_PER_BUCKET=1); except maybe for work_mem values that are not
+		 * 2^N bytes, where we might get more because of doubling. So let's
 		 * look for 50% here.
 		 */
 		Assert(bucket_bytes <= hash_table_bytes / 2);
@@ -691,9 +691,9 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			if (batchno == curbatch)
 			{
 				/* keep tuple in memory - copy it into the new chunk */
-				HashJoinTuple copyTuple =
-				(HashJoinTuple) dense_alloc(hashtable, hashTupleSize);
+				HashJoinTuple copyTuple;
 
+				copyTuple = (HashJoinTuple) dense_alloc(hashtable, hashTupleSize);
 				memcpy(copyTuple, hashTuple, hashTupleSize);
 
 				/* and add it back to the appropriate bucket */

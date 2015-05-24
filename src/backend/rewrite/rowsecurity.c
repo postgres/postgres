@@ -596,8 +596,8 @@ process_policies(Query *root, List *policies, int rt_index, Expr **qual_eval,
 		*qual_eval = (Expr *) linitial(quals);
 
 	/*
-	 * Similairly, if more than one WITH CHECK qual is returned, then they
-	 * need to be combined together.
+	 * Similarly, if more than one WITH CHECK qual is returned, then they need
+	 * to be combined together.
 	 *
 	 * with_check_quals is allowed to be NIL here since this might not be the
 	 * resultRelation (see above).
