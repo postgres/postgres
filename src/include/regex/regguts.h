@@ -162,6 +162,10 @@ typedef int pcolor;				/* what color promotes to */
  * deep (in the past it was shallower during construction but was "filled"
  * to full depth at the end of that); areas that are unaltered as yet point
  * to "fill blocks" which are entirely WHITE in color.
+ *
+ * Leaf-level tree blocks are of type "struct colors", while upper-level
+ * blocks are of type "struct ptrs".  Pointers into the tree are generally
+ * declared as "union tree *" to be agnostic about what level they point to.
  */
 
 /* the tree itself */
@@ -179,6 +183,7 @@ union tree
 	struct ptrs ptrs;
 };
 
+/* use these pseudo-field names when dereferencing a "union tree" pointer */
 #define tcolor	colors.ccolor
 #define tptr	ptrs.pptr
 
