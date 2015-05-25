@@ -100,11 +100,12 @@ that pg_multixact needs to retain pages of its data until we're certain that
 the MultiXacts in them are no longer of interest.
 
 VACUUM is in charge of removing old MultiXacts at the time of tuple freezing.
-This works in the same way that pg_clog segments are removed: we have a
-pg_class column that stores the earliest multixact that could possibly be
-stored in the table; the minimum of all such values is stored in a pg_database
-column.  VACUUM computes the minimum across all pg_database values, and
-removes pg_multixact segments older than the minimum.
+The lower bound used by vacuum (that is, the value below which all multixacts
+are removed) is stored as pg_class.relminmxid for each table; the minimum of
+all such values is stored in pg_database.datminmxid.  The minimum across
+all databases, in turn, is recorded in checkpoint records, and CHECKPOINT
+removes pg_multixact/ segments older than that value once the checkpoint
+record has been flushed.
 
 Infomask Bits
 -------------
@@ -124,14 +125,15 @@ The following infomask bits are applicable:
   the XMAX is a plain Xid that locked the tuple, as well.
 
 - HEAP_XMAX_KEYSHR_LOCK
+- HEAP_XMAX_SHR_LOCK
 - HEAP_XMAX_EXCL_LOCK
   These bits indicate the strength of the lock acquired; they are useful when
   the XMAX is not a MultiXactId.  If it's a multi, the info is to be found in
   the member flags.  If HEAP_XMAX_IS_MULTI is not set and HEAP_XMAX_LOCK_ONLY
   is set, then one of these *must* be set as well.
-  Note there is no infomask bit for a SELECT FOR SHARE lock.  Also there is no
-  separate bit for a SELECT FOR NO KEY UPDATE lock; this is implemented by the
-  HEAP_KEYS_UPDATED bit.
+
+  Note that HEAP_XMAX_EXCL_LOCK does not distinguish FOR NO KEY UPDATE from
+  FOR UPDATE; this is implemented by the HEAP_KEYS_UPDATED bit.
 
 - HEAP_KEYS_UPDATED
   This bit lives in t_infomask2.  If set, indicates that the XMAX updated
