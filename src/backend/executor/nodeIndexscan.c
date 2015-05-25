@@ -532,10 +532,18 @@ ExecReScanIndexScan(IndexScanState *node)
 	}
 	node->iss_RuntimeKeysReady = true;
 
+	/* flush the reorder queue */
+	if (node->iss_ReorderQueue)
+	{
+		while (!pairingheap_is_empty(node->iss_ReorderQueue))
+			reorderqueue_pop(node);
+	}
+
 	/* reset index scan */
 	index_rescan(node->iss_ScanDesc,
 				 node->iss_ScanKeys, node->iss_NumScanKeys,
 				 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+	node->iss_ReachedEnd = false;
 
 	ExecScanReScan(&node->ss);
 }
