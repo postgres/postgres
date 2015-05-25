@@ -10,9 +10,9 @@
  *
  * Documentation:
  * * Legacy __sync Built-in Functions for Atomic Memory Access
- *	 http://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/_005f_005fsync-Builtins.html
+ *   http://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/_005f_005fsync-Builtins.html
  * * Built-in functions for memory model aware atomic operations
- *	 http://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/_005f_005fatomic-Builtins.html
+ *   http://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/_005f_005fatomic-Builtins.html
  *
  * src/include/port/atomics/generic-gcc.h
  *
@@ -40,21 +40,21 @@
  * definitions where possible, and use this only as a fallback.
  */
 #if !defined(pg_memory_barrier_impl)
-#if defined(HAVE_GCC__ATOMIC_INT32_CAS)
-#define pg_memory_barrier_impl()	 __atomic_thread_fence(__ATOMIC_SEQ_CST)
-#elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
-#define pg_memory_barrier_impl()	 __sync_synchronize()
-#endif
-#endif   /* !defined(pg_memory_barrier_impl) */
+#	if defined(HAVE_GCC__ATOMIC_INT32_CAS)
+#		define pg_memory_barrier_impl()		__atomic_thread_fence(__ATOMIC_SEQ_CST)
+#	elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#		define pg_memory_barrier_impl()		__sync_synchronize()
+#	endif
+#endif /* !defined(pg_memory_barrier_impl) */
 
 #if !defined(pg_read_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
 /* acquire semantics include read barrier semantics */
-#define pg_read_barrier_impl()		 __atomic_thread_fence(__ATOMIC_ACQUIRE)
+#		define pg_read_barrier_impl()		__atomic_thread_fence(__ATOMIC_ACQUIRE)
 #endif
 
 #if !defined(pg_write_barrier_impl) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
 /* release semantics include write barrier semantics */
-#define pg_write_barrier_impl()		 __atomic_thread_fence(__ATOMIC_RELEASE)
+#		define pg_write_barrier_impl()		__atomic_thread_fence(__ATOMIC_RELEASE)
 #endif
 
 #ifdef HAVE_ATOMICS
@@ -75,7 +75,7 @@ typedef struct pg_atomic_flag
 #endif
 } pg_atomic_flag;
 
-#endif   /* !ATOMIC_FLAG_SUPPORT && SYNC_INT32_TAS */
+#endif /* !ATOMIC_FLAG_SUPPORT && SYNC_INT32_TAS */
 
 /* generic gcc based atomic uint32 implementation */
 #if !defined(PG_HAVE_ATOMIC_U32_SUPPORT) \
@@ -87,8 +87,7 @@ typedef struct pg_atomic_uint32
 	volatile uint32 value;
 } pg_atomic_uint32;
 
-#endif   /* defined(HAVE_GCC__ATOMIC_INT32_CAS) ||
-								 * defined(HAVE_GCC__SYNC_INT32_CAS) */
+#endif /* defined(HAVE_GCC__ATOMIC_INT32_CAS) || defined(HAVE_GCC__SYNC_INT32_CAS) */
 
 /* generic gcc based atomic uint64 implementation */
 #if !defined(PG_HAVE_ATOMIC_U64_SUPPORT) \
@@ -102,8 +101,7 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value pg_attribute_aligned(8);
 } pg_atomic_uint64;
 
-#endif   /* defined(HAVE_GCC__ATOMIC_INT64_CAS) ||
-								 * defined(HAVE_GCC__SYNC_INT64_CAS) */
+#endif /* defined(HAVE_GCC__ATOMIC_INT64_CAS) || defined(HAVE_GCC__SYNC_INT64_CAS) */
 
 /*
  * Implementation follows. Inlined or directly included from atomics.c
@@ -125,7 +123,7 @@ pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 }
 #endif
 
-#endif   /* defined(HAVE_GCC__SYNC_*_TAS) */
+#endif /* defined(HAVE_GCC__SYNC_*_TAS) */
 
 #ifndef PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
 #define PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
@@ -154,7 +152,7 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 }
 #endif
 
-#endif   /* defined(PG_HAVE_ATOMIC_FLAG_SUPPORT) */
+#endif /* defined(PG_HAVE_ATOMIC_FLAG_SUPPORT) */
 
 /* prefer __atomic, it has a better API */
 #if !defined(PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
@@ -175,9 +173,8 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool		ret;
-	uint32		current;
-
+	bool	ret;
+	uint32	current;
 	current = __sync_val_compare_and_swap(&ptr->value, *expected, newval);
 	ret = current == *expected;
 	*expected = current;
@@ -214,9 +211,8 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool		ret;
-	uint64		current;
-
+	bool	ret;
+	uint64	current;
 	current = __sync_val_compare_and_swap(&ptr->value, *expected, newval);
 	ret = current == *expected;
 	*expected = current;
@@ -233,9 +229,8 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 }
 #endif
 
-#endif   /* !defined(PG_DISABLE_64_BIT_ATOMICS) */
+#endif /* !defined(PG_DISABLE_64_BIT_ATOMICS) */
 
-#endif   /* defined(PG_USE_INLINE) ||
-								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
 
-#endif   /* defined(HAVE_ATOMICS) */
+#endif /* defined(HAVE_ATOMICS) */

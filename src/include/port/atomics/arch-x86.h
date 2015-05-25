@@ -78,10 +78,9 @@ typedef struct pg_atomic_uint64
 } pg_atomic_uint64;
 #endif
 
-#endif   /* defined(HAVE_ATOMICS) */
+#endif /* defined(HAVE_ATOMICS) */
 
-#endif   /* defined(__GNUC__) &&
-								 * !defined(__INTEL_COMPILER) */
+#endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
 
@@ -94,20 +93,20 @@ typedef struct pg_atomic_uint64
  * PAUSE in the inner loop of a spin lock is necessary for good
  * performance:
  *
- *	   The PAUSE instruction improves the performance of IA-32
- *	   processors supporting Hyper-Threading Technology when
- *	   executing spin-wait loops and other routines where one
- *	   thread is accessing a shared lock or semaphore in a tight
- *	   polling loop. When executing a spin-wait loop, the
- *	   processor can suffer a severe performance penalty when
- *	   exiting the loop because it detects a possible memory order
- *	   violation and flushes the core processor's pipeline. The
- *	   PAUSE instruction provides a hint to the processor that the
- *	   code sequence is a spin-wait loop. The processor uses this
- *	   hint to avoid the memory order violation and prevent the
- *	   pipeline flush. In addition, the PAUSE instruction
- *	   de-pipelines the spin-wait loop to prevent it from
- *	   consuming execution resources excessively.
+ *     The PAUSE instruction improves the performance of IA-32
+ *     processors supporting Hyper-Threading Technology when
+ *     executing spin-wait loops and other routines where one
+ *     thread is accessing a shared lock or semaphore in a tight
+ *     polling loop. When executing a spin-wait loop, the
+ *     processor can suffer a severe performance penalty when
+ *     exiting the loop because it detects a possible memory order
+ *     violation and flushes the core processor's pipeline. The
+ *     PAUSE instruction provides a hint to the processor that the
+ *     code sequence is a spin-wait loop. The processor uses this
+ *     hint to avoid the memory order violation and prevent the
+ *     pipeline flush. In addition, the PAUSE instruction
+ *     de-pipelines the spin-wait loop to prevent it from
+ *     consuming execution resources excessively.
  */
 #if defined(__INTEL_COMPILER)
 #define PG_HAVE_SPIN_DELAY
@@ -121,8 +120,8 @@ pg_spin_delay_impl(void)
 static __inline__ void
 pg_spin_delay_impl(void)
 {
-	__asm__		__volatile__(
-										 " rep; nop			\n");
+	__asm__ __volatile__(
+		" rep; nop			\n");
 }
 #elif defined(WIN32_ONLY_COMPILER) && defined(__x86_64__)
 #define PG_HAVE_SPIN_DELAY
@@ -137,10 +136,10 @@ static __forceinline void
 pg_spin_delay_impl(void)
 {
 	/* See comment for gcc code. Same code, MASM syntax */
-	__asm rep	nop;
+	__asm rep nop;
 }
 #endif
-#endif   /* !defined(PG_HAVE_SPIN_DELAY) */
+#endif /* !defined(PG_HAVE_SPIN_DELAY) */
 
 
 #if defined(HAVE_ATOMICS)
@@ -154,13 +153,12 @@ pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
 	register char _res = 1;
 
-	__asm__		__volatile__(
-										 "	lock			\n"
-										 "	xchgb	%0,%1	\n"
-							 :			 "+q"(_res), "+m"(ptr->value)
-							 :
-							 :			 "memory");
-
+	__asm__ __volatile__(
+		"	lock			\n"
+		"	xchgb	%0,%1	\n"
+:		"+q"(_res), "+m"(ptr->value)
+:
+:		"memory");
 	return _res == 0;
 }
 
@@ -172,8 +170,7 @@ pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr)
 	 * On a TSO architecture like x86 it's sufficient to use a compiler
 	 * barrier to achieve release semantics.
 	 */
-	__asm__		__volatile__("":::"memory");
-
+	__asm__ __volatile__("" ::: "memory");
 	ptr->value = 0;
 }
 
@@ -182,20 +179,19 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	char		ret;
+	char	ret;
 
 	/*
 	 * Perform cmpxchg and use the zero flag which it implicitly sets when
 	 * equal to measure the success.
 	 */
-	__asm__		__volatile__(
-								   "	lock				\n"
-										 "	cmpxchgl	%4,%5	\n"
-								   "   setz		%2		\n"
-					 :			 "=a"(*expected), "=m"(ptr->value), "=q"(ret)
-					 :			 "a"(*expected), "r"(newval), "m"(ptr->value)
-							 :			 "memory", "cc");
-
+	__asm__ __volatile__(
+		"	lock				\n"
+		"	cmpxchgl	%4,%5	\n"
+		"   setz		%2		\n"
+:		"=a" (*expected), "=m"(ptr->value), "=q" (ret)
+:		"a" (*expected), "r" (newval), "m"(ptr->value)
+:		"memory", "cc");
 	return (bool) ret;
 }
 
@@ -203,14 +199,13 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
-	uint32		res;
-	__asm__		__volatile__(
-								   "	lock				\n"
-										 "	xaddl	%0,%1		\n"
-							 :			 "=q"(res), "=m"(ptr->value)
-							 :			 "0"(add_), "m"(ptr->value)
-							 :			 "memory", "cc");
-
+	uint32 res;
+	__asm__ __volatile__(
+		"	lock				\n"
+		"	xaddl	%0,%1		\n"
+:		"=q"(res), "=m"(ptr->value)
+:		"0" (add_), "m"(ptr->value)
+:		"memory", "cc");
 	return res;
 }
 
@@ -221,20 +216,19 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	char		ret;
+	char	ret;
 
 	/*
 	 * Perform cmpxchg and use the zero flag which it implicitly sets when
 	 * equal to measure the success.
 	 */
-	__asm__		__volatile__(
-								   "	lock				\n"
-										 "	cmpxchgq	%4,%5	\n"
-								   "   setz		%2		\n"
-					 :			 "=a"(*expected), "=m"(ptr->value), "=q"(ret)
-					 :			 "a"(*expected), "r"(newval), "m"(ptr->value)
-							 :			 "memory", "cc");
-
+	__asm__ __volatile__(
+		"	lock				\n"
+		"	cmpxchgq	%4,%5	\n"
+		"   setz		%2		\n"
+:		"=a" (*expected), "=m"(ptr->value), "=q" (ret)
+:		"a" (*expected), "r" (newval), "m"(ptr->value)
+:		"memory", "cc");
 	return (bool) ret;
 }
 
@@ -242,23 +236,20 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
-	uint64		res;
-	__asm__		__volatile__(
-								   "	lock				\n"
-										 "	xaddq	%0,%1		\n"
-							 :			 "=q"(res), "=m"(ptr->value)
-							 :			 "0"(add_), "m"(ptr->value)
-							 :			 "memory", "cc");
-
+	uint64 res;
+	__asm__ __volatile__(
+		"	lock				\n"
+		"	xaddq	%0,%1		\n"
+:		"=q"(res), "=m"(ptr->value)
+:		"0" (add_), "m"(ptr->value)
+:		"memory", "cc");
 	return res;
 }
 
-#endif   /* __x86_64__ */
+#endif /* __x86_64__ */
 
-#endif   /* defined(__GNUC__) &&
-								 * !defined(__INTEL_COMPILER) */
+#endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
 
-#endif   /* HAVE_ATOMICS */
+#endif /* HAVE_ATOMICS */
 
-#endif   /* defined(PG_USE_INLINE) ||
-								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

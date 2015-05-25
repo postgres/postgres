@@ -10,7 +10,7 @@
  *
  * Documentation:
  * * Interlocked Variable Access
- *	 http://msdn.microsoft.com/en-us/library/ms684122%28VS.85%29.aspx
+ *   http://msdn.microsoft.com/en-us/library/ms684122%28VS.85%29.aspx
  *
  * src/include/port/atomics/generic-msvc.h
  *
@@ -41,14 +41,12 @@ typedef struct pg_atomic_uint32
 } pg_atomic_uint32;
 
 #define PG_HAVE_ATOMIC_U64_SUPPORT
-typedef struct __declspec (
-						   align(8))
-pg_atomic_uint64
+typedef struct __declspec(align(8)) pg_atomic_uint64
 {
 	volatile uint64 value;
 } pg_atomic_uint64;
 
-#endif   /* defined(HAVE_ATOMICS) */
+#endif /* defined(HAVE_ATOMICS) */
 
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
@@ -60,9 +58,8 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool		ret;
-	uint32		current;
-
+	bool	ret;
+	uint32	current;
 	current = InterlockedCompareExchange(&ptr->value, newval, *expected);
 	ret = current == *expected;
 	*expected = current;
@@ -89,9 +86,8 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool		ret;
-	uint64		current;
-
+	bool	ret;
+	uint64	current;
 	current = _InterlockedCompareExchange64(&ptr->value, newval, *expected);
 	ret = current == *expected;
 	*expected = current;
@@ -108,9 +104,8 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
 	return _InterlockedExchangeAdd64(&ptr->value, add_);
 }
-#endif   /* _WIN64 */
+#endif /* _WIN64 */
 
-#endif   /* HAVE_ATOMICS */
+#endif /* HAVE_ATOMICS */
 
-#endif   /* defined(PG_USE_INLINE) ||
-								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

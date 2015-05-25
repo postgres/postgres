@@ -9,7 +9,7 @@
  *
  * Documentation:
  * * Synchronization and atomic built-in functions
- *	 http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/topic/com.ibm.xlcpp8l.doc/compiler/ref/bif_sync.htm
+ *   http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/topic/com.ibm.xlcpp8l.doc/compiler/ref/bif_sync.htm
  *
  * src/include/port/atomics/generic-xlc.h
  *
@@ -35,9 +35,9 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value pg_attribute_aligned(8);
 } pg_atomic_uint64;
 
-#endif   /* __64BIT__ */
+#endif /* __64BIT__ */
 
-#endif   /* defined(HAVE_ATOMICS) */
+#endif /* defined(HAVE_ATOMICS) */
 
 #if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
 
@@ -48,13 +48,13 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool		ret;
-	uint64		current;
+	bool	ret;
+	uint64	current;
 
 	/*
-	 * xlc's documentation tells us: "If __compare_and_swap is used as a
-	 * locking primitive, insert a call to the __isync built-in function at
-	 * the start of any critical sections."
+	 * xlc's documentation tells us:
+	 * "If __compare_and_swap is used as a locking primitive, insert a call to
+	 * the __isync built-in function at the start of any critical sections."
 	 */
 	__isync();
 
@@ -62,8 +62,8 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	 * XXX: __compare_and_swap is defined to take signed parameters, but that
 	 * shouldn't matter since we don't perform any arithmetic operations.
 	 */
-	current = (uint32) __compare_and_swap((volatile int *) ptr->value,
-										  (int) *expected, (int) newval);
+	current = (uint32)__compare_and_swap((volatile int*)ptr->value,
+										 (int)*expected, (int)newval);
 	ret = current == *expected;
 	*expected = current;
 	return ret;
@@ -83,13 +83,13 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool		ret;
-	uint64		current;
+	bool	ret;
+	uint64	current;
 
 	__isync();
 
-	current = (uint64) __compare_and_swaplp((volatile long *) ptr->value,
-											(long) *expected, (long) newval);
+	current = (uint64)__compare_and_swaplp((volatile long*)ptr->value,
+										   (long)*expected, (long)newval);
 	ret = current == *expected;
 	*expected = current;
 	return ret;
@@ -102,9 +102,8 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 	return __fetch_and_addlp(&ptr->value, add_);
 }
 
-#endif   /* PG_HAVE_ATOMIC_U64_SUPPORT */
+#endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
 
-#endif   /* defined(HAVE_ATOMICS) */
+#endif /* defined(HAVE_ATOMICS) */
 
-#endif   /* defined(PG_USE_INLINE) ||
-								 * defined(ATOMICS_INCLUDE_DEFINITIONS) */
+#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
