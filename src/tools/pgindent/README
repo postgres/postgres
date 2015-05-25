@@ -82,7 +82,7 @@ Notes about excluded files
 --------------------------
 
 src/include/storage/s_lock.h and src/include/port/atomics/ are excluded
-because they contains assembly code that pgindent tends to mess up.
+because they contain assembly code that pgindent tends to mess up.
 
 src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
 are excluded because those files are imported from an external project,
