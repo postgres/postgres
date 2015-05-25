@@ -309,8 +309,8 @@
     using <xref linkend="sql-importforeignschema">.  This command creates
     foreign table definitions on the local server that match tables or
     views present on the remote server.  If the remote tables to be imported
-    have columns of user-defined data types, the local server must have types
-    of the same names.
+    have columns of user-defined data types, the local server must have
+    compatible types of the same names.
    </para>
 
    <para>
@@ -361,9 +361,16 @@
 
    <para>
     Note that constraints other than <literal>NOT NULL</> will never be
-    imported from the remote tables, since <productname>PostgreSQL</>
-    does not support any other type of constraint on a foreign table.
-    Checking other types of constraints is always left to the remote server.
+    imported from the remote tables.  Although <productname>PostgreSQL</>
+    does support <literal>CHECK</> constraints on foreign tables, there is no
+    provision for importing them automatically, because of the risk that a
+    constraint expression could evaluate differently on the local and remote
+    servers.  Any such inconsistency in the behavior of a <literal>CHECK</>
+    constraint could lead to hard-to-detect errors in query optimization.
+    So if you wish to import <literal>CHECK</> constraints, you must do so
+    manually, and you should verify the semantics of each one carefully.
+    For more detail about the treatment of <literal>CHECK</> constraints on
+    foreign tables, see <xref linkend="sql-createforeigntable">.
    </para>
   </sect3>
  </sect2>
