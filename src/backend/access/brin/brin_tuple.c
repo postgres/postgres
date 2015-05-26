@@ -103,9 +103,10 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 	Assert(brdesc->bd_totalstored > 0);
 
-	values = palloc(sizeof(Datum) * brdesc->bd_totalstored);
-	nulls = palloc0(sizeof(bool) * brdesc->bd_totalstored);
-	phony_nullbitmap = palloc(sizeof(bits8) * BITMAPLEN(brdesc->bd_totalstored));
+	values = (Datum *) palloc(sizeof(Datum) * brdesc->bd_totalstored);
+	nulls = (bool *) palloc0(sizeof(bool) * brdesc->bd_totalstored);
+	phony_nullbitmap = (bits8 *)
+		palloc(sizeof(bits8) * BITMAPLEN(brdesc->bd_totalstored));
 
 	/*
 	 * Set up the values/nulls arrays for heap_fill_tuple
@@ -144,6 +145,9 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 			values[idxattno++] = tuple->bt_columns[keyno].bv_values[datumno];
 	}
 
+	/* Assert we did not overrun temp arrays */
+	Assert(idxattno <= brdesc->bd_totalstored);
+
 	/* compute total space needed */
 	len = SizeOfBrinTuple;
 	if (anynulls)
@@ -160,12 +164,15 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 	data_len = heap_compute_data_size(brtuple_disk_tupdesc(brdesc),
 									  values, nulls);
-
 	len += data_len;
+
+	len = MAXALIGN(len);
 
 	rettuple = palloc0(len);
 	rettuple->bt_blkno = blkno;
 	rettuple->bt_info = hoff;
+
+	/* Assert that hoff fits in the space available */
 	Assert((rettuple->bt_info & BRIN_OFFSET_MASK) == hoff);
 
 	/*

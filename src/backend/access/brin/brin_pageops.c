@@ -55,7 +55,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	Buffer		newbuf;
 	bool		extended = false;
 
-	newsz = MAXALIGN(newsz);
+	Assert(newsz == MAXALIGN(newsz));
 
 	/* make sure the revmap is long enough to contain the entry we need */
 	brinRevmapExtend(revmap, heapBlk);
@@ -273,7 +273,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	ItemPointerData tid;
 	bool		extended = false;
 
-	itemsz = MAXALIGN(itemsz);
+	Assert(itemsz == MAXALIGN(itemsz));
 
 	/* Make sure the revmap is long enough to contain the entry we need */
 	brinRevmapExtend(revmap, heapBlk);
