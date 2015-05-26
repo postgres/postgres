@@ -3225,8 +3225,9 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
  * If the parse state container is an object, the jsonb is pushed as
  * a value, not a key.
  *
- * This needs to be done using an iterator because pushJsonbValue doesn't
- * like getting jbvBinary values, so we can't just push jb as a whole.
+ * If the new value is a root scalar, extract the value using an iterator, and
+ * just add that. Otherwise, add the value as the type appropriate for
+ * the container.
  */
 static void
 addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb)
@@ -3236,36 +3237,26 @@ addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb)
 	int			type;
 	JsonbValue	v;
 
-	it = JsonbIteratorInit(&jb->root);
-
 	Assert(o->type == jbvArray || o->type == jbvObject);
 
 	if (JB_ROOT_IS_SCALAR(jb))
 	{
+		it = JsonbIteratorInit(&jb->root);
+
 		(void) JsonbIteratorNext(&it, &v, false);		/* skip array header */
 		(void) JsonbIteratorNext(&it, &v, false);		/* fetch scalar value */
 
-		switch (o->type)
-		{
-			case jbvArray:
-				(void) pushJsonbValue(jbps, WJB_ELEM, &v);
-				break;
-			case jbvObject:
-				(void) pushJsonbValue(jbps, WJB_VALUE, &v);
-				break;
-			default:
-				elog(ERROR, "unexpected parent of nested structure");
-		}
+		if (o->type == jbvArray)
+			(void) pushJsonbValue(jbps, WJB_ELEM, &v);
+		else
+			(void) pushJsonbValue(jbps, WJB_VALUE, &v);
 	}
 	else
 	{
-		while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
-		{
-			if (type == WJB_KEY || type == WJB_VALUE || type == WJB_ELEM)
-				(void) pushJsonbValue(jbps, type, &v);
-			else
-				(void) pushJsonbValue(jbps, type, NULL);
-		}
+		if (o->type == jbvArray)
+			(void) pushJsonbValue(jbps, WJB_ELEM, &jb->root);
+		else
+			(void) pushJsonbValue(jbps, WJB_VALUE, &jb->root);
 	}
 
 }
