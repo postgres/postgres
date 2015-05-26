@@ -26,7 +26,7 @@ CREATE TABLE brintest (byteacol bytea,
 	int4rangecol int4range,
 	lsncol pg_lsn,
 	boxcol box
-) WITH (fillfactor=10, autovacuum_enabled=off);
+) WITH (fillfactor=10);
 
 INSERT INTO brintest SELECT
 	repeat(stringu1, 8)::bytea,
@@ -247,7 +247,7 @@ INSERT INTO brintest SELECT
 	box(point(odd, even), point(thousand, twothousand))
 FROM tenk1 LIMIT 5 OFFSET 5;
 
-SELECT brin_summarize_new_values('brinidx'::regclass);
+VACUUM brintest;  -- force a summarization cycle in brinidx
 
 UPDATE brintest SET int8col = int8col * int4col;
 UPDATE brintest SET textcol = '' WHERE textcol IS NOT NULL;
