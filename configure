@@ -7526,23 +7526,6 @@ python_additional_libs=`${PYTHON} -c "import distutils.sysconfig; print(' '.join
 $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
 
 
-# threaded python is not supported on OpenBSD
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Python is compiled with thread support" >&5
-$as_echo_n "checking whether Python is compiled with thread support... " >&6; }
-pythreads=`${PYTHON} -c "import sys; print(int('thread' in sys.builtin_module_names))"`
-if test "$pythreads" = "1"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  case $host_os in
-  openbsd*)
-    as_fn_error $? "threaded Python not supported on this platform" "$LINENO" 5
-    ;;
-  esac
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
 
 
   # We need libpython as a shared library.  With Python >=2.5, we
