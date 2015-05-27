@@ -509,8 +509,8 @@ fillJsonbValue(JsonbContainer *container, int index,
  * "raw scalar" pseudo array to append it - the actual scalar should be passed
  * next and it will be added as the only member of the array.
  *
- * All non-scalar types (jvbBinary, jbvArray and jbvObject) passed as
- * elements or values are unpacked before being added to the result.
+ * Values of type jvbBinary, which are rolled up arrays and objects,
+ * are unpacked before being added to the result.
  */
 JsonbValue *
 pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
@@ -522,18 +522,14 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
 	JsonbIteratorToken tok;
 
 	if (!jbval || (seq != WJB_ELEM && seq != WJB_VALUE) ||
-		IsAJsonbScalar(jbval))
+		jbval->type != jbvBinary)
 	{
 		/* drop through */
 		return pushJsonbValueScalar(pstate, seq, jbval);
 	}
 
-	/* unpack the data and add each piece to the pstate */
-	if (jbval->type == jbvBinary)
-		it = JsonbIteratorInit(jbval->val.binary.data);
-	else
-		it = JsonbIteratorInit(jbval);
-
+	/* unpack the binary and add each piece to the pstate */
+	it = JsonbIteratorInit(jbval->val.binary.data);
 	while ((tok = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 		res = pushJsonbValueScalar(pstate, tok,
 								   tok < WJB_BEGIN_ARRAY ? &v : NULL);
