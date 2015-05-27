@@ -58,7 +58,7 @@ teardown		{ return(TEARDOWN); }
 					litbuf[litbufpos] = '\0';
 					yylval.str = strdup(litbuf);
 					BEGIN(INITIAL);
-					return(string);
+					return(string_literal);
 				}
 <qstr>.			{ addlitchar(yytext[0]); }
 <qstr>\n		{ yyerror("unexpected newline in quoted string"); }
