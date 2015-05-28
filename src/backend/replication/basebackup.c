@@ -1028,7 +1028,8 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 								pathbuf)));
 			if (rllen >= sizeof(linkpath))
 				ereport(ERROR,
-						(errmsg("symbolic link \"%s\" target is too long",
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("symbolic link \"%s\" target is too long",
 								pathbuf)));
 			linkpath[rllen] = '\0';
 

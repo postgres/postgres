@@ -374,11 +374,13 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	rllen = readlink(sourcepath, targetpath, sizeof(targetpath));
 	if (rllen < 0)
 		ereport(ERROR,
-				(errmsg("could not read symbolic link \"%s\": %m",
+				(errcode_for_file_access(),
+				 errmsg("could not read symbolic link \"%s\": %m",
 						sourcepath)));
-	else if (rllen >= sizeof(targetpath))
+	if (rllen >= sizeof(targetpath))
 		ereport(ERROR,
-				(errmsg("symbolic link \"%s\" target is too long",
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("symbolic link \"%s\" target is too long",
 						sourcepath)));
 	targetpath[rllen] = '\0';
 

@@ -2517,18 +2517,17 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 			int			len;
 			struct stat lst;
 
-			len = readlink(subpath, linkpath, sizeof(linkpath) - 1);
+			len = readlink(subpath, linkpath, sizeof(linkpath));
 			if (len < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not read symbolic link \"%s\": %m",
 								subpath)));
-
-			if (len >= sizeof(linkpath) - 1)
+			if (len >= sizeof(linkpath))
 				ereport(ERROR,
-						(errmsg("symbolic link \"%s\" target is too long",
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("symbolic link \"%s\" target is too long",
 								subpath)));
-
 			linkpath[len] = '\0';
 
 			if (lstat(linkpath, &lst) == 0)
