@@ -1103,11 +1103,11 @@ AlterFunction(AlterFunctionStmt *stmt)
 		procForm->prosecdef = intVal(security_def_item->arg);
 	if (leakproof_item)
 	{
-		if (intVal(leakproof_item->arg) && !superuser())
+		procForm->proleakproof = intVal(leakproof_item->arg);
+		if (procForm->proleakproof && !superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				  errmsg("only superuser can define a leakproof function")));
-		procForm->proleakproof = intVal(leakproof_item->arg);
 	}
 	if (cost_item)
 	{

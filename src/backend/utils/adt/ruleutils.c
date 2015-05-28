@@ -1944,6 +1944,8 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 		appendStringInfoString(&buf, " STRICT");
 	if (proc->prosecdef)
 		appendStringInfoString(&buf, " SECURITY DEFINER");
+	if (proc->proleakproof)
+		appendStringInfoString(&buf, " LEAKPROOF");
 
 	/* This code for the default cost and rows should match functioncmds.c */
 	if (proc->prolang == INTERNALlanguageId ||
