@@ -619,12 +619,6 @@ pre_sync_fname(const char *fname, bool isdir)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return;
-
-#ifdef ETXTBSY
-		if (errno == ETXTBSY)
-			return;
-#endif
-
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
 		return;
@@ -684,12 +678,6 @@ fsync_fname_ext(const char *fname, bool isdir)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return;
-
-#ifdef ETXTBSY
-		if (errno == ETXTBSY)
-			return;
-#endif
-
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
 		return;
