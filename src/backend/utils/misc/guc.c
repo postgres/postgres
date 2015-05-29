@@ -435,7 +435,6 @@ int			temp_file_limit = -1;
 int			num_temp_buffers = 1024;
 
 char	   *cluster_name = "";
-char	   *data_directory;
 char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
@@ -476,6 +475,7 @@ static char *timezone_string;
 static char *log_timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
+static char *data_directory;
 static char *session_authorization_string;
 static int	max_function_args;
 static int	max_index_keys;
@@ -6895,11 +6895,11 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	}
 
 	/*
-	 * Use data directory as reference path for PG_AUTOCONF_FILENAME and its
-	 * corresponding temporary file.
+	 * PG_AUTOCONF_FILENAME and its corresponding temporary file are always in
+	 * the data directory, so we can reference them by simple relative paths.
 	 */
-	join_path_components(AutoConfFileName, data_directory, PG_AUTOCONF_FILENAME);
-	canonicalize_path(AutoConfFileName);
+	snprintf(AutoConfFileName, sizeof(AutoConfFileName), "%s",
+			 PG_AUTOCONF_FILENAME);
 	snprintf(AutoConfTmpFileName, sizeof(AutoConfTmpFileName), "%s.%s",
 			 AutoConfFileName,
 			 "tmp");
