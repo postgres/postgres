@@ -3564,10 +3564,19 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* If we only need to fsync, just to it and exit */
+	/* If we only need to fsync, just do it and exit */
 	if (sync_only)
 	{
 		setup_pgdata();
+
+		/* must check that directory is readable */
+		if (pg_check_dir(pg_data) <= 0)
+		{
+			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
+					progname, pg_data, strerror(errno));
+			exit_nicely();
+		}
+
 		fsync_pgdata();
 		return 0;
 	}
