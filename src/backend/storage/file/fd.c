@@ -2647,18 +2647,15 @@ pre_sync_fname(const char *fname, bool isdir, int elevel)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return;
-
-#ifdef ETXTBSY
-		if (errno == ETXTBSY)
-			return;
-#endif
-
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", fname)));
 		return;
 	}
 
+	/*
+	 * We ignore errors from pg_flush_data() because this is only a hint.
+	 */
 	(void) pg_flush_data(fd, 0, 0);
 
 	(void) CloseTransientFile(fd);
@@ -2702,12 +2699,6 @@ fsync_fname_ext(const char *fname, bool isdir, int elevel)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return;
-
-#ifdef ETXTBSY
-		if (errno == ETXTBSY)
-			return;
-#endif
-
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", fname)));
