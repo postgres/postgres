@@ -130,6 +130,7 @@ WHERE p1.oid < p2.oid AND
     (p1.prolang != p2.prolang OR
      p1.proisagg != p2.proisagg OR
      p1.prosecdef != p2.prosecdef OR
+     p1.proleakproof != p2.proleakproof OR
      p1.proisstrict != p2.proisstrict OR
      p1.proretset != p2.proretset OR
      p1.provolatile != p2.provolatile OR
@@ -572,6 +573,7 @@ interval_gt(interval,interval)
 charlt("char","char")
 tidne(tid,tid)
 tideq(tid,tid)
+xideqint4(xid,integer)
 timetz_eq(time with time zone,time with time zone)
 timetz_ne(time with time zone,time with time zone)
 timetz_lt(time with time zone,time with time zone)
