@@ -43,12 +43,10 @@ CREATE FUNCTION test1arr(val hstore[]) RETURNS int
 LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
-plpy.info(repr(val))
+assert(val == [{'aa': 'bb', 'cc': None}, {'dd': 'ee'}])
 return len(val)
 $$;
 SELECT test1arr(array['aa=>bb, cc=>NULL'::hstore, 'dd=>ee']);
-INFO:  [{'aa': 'bb', 'cc': None}, {'dd': 'ee'}]
-CONTEXT:  PL/Python function "test1arr"
  test1arr 
 ----------
         2
@@ -88,18 +86,14 @@ LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 rv = plpy.execute("SELECT 'aa=>bb, cc=>NULL'::hstore AS col1")
-plpy.info(repr(rv[0]["col1"]))
+assert(rv[0]["col1"] == {'aa': 'bb', 'cc': None})
 
 val = {'a': 1, 'b': 'boo', 'c': None}
 plan = plpy.prepare("SELECT $1::text AS col1", ["hstore"])
 rv = plpy.execute(plan, [val])
-plpy.info(repr(rv[0]["col1"]))
+assert(rv[0]["col1"] == '"a"=>"1", "b"=>"boo", "c"=>NULL')
 $$;
 SELECT test3();
-INFO:  {'aa': 'bb', 'cc': None}
-CONTEXT:  PL/Python function "test3"
-INFO:  '"a"=>"1", "b"=>"boo", "c"=>NULL'
-CONTEXT:  PL/Python function "test3"
  test3 
 -------
  
@@ -118,7 +112,7 @@ CREATE FUNCTION test4() RETURNS trigger
 LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
-plpy.info("Trigger row: {'a': %r, 'b': %r}" % (TD["new"]["a"], TD["new"]["b"]))
+assert(TD["new"] == {'a': 1, 'b': {'aa': 'bb', 'cc': None}})
 if TD["new"]["a"] == 1:
     TD["new"]["b"] = {'a': 1, 'b': 'boo', 'c': None}
 
@@ -126,8 +120,6 @@ return "MODIFY"
 $$;
 CREATE TRIGGER test4 BEFORE UPDATE ON test1 FOR EACH ROW EXECUTE PROCEDURE test4();
 UPDATE test1 SET a = a;
-INFO:  Trigger row: {'a': 1, 'b': {'aa': 'bb', 'cc': None}}
-CONTEXT:  PL/Python function "test4"
 SELECT * FROM test1;
  a |                b                
 ---+---------------------------------

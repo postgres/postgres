@@ -37,7 +37,7 @@ CREATE FUNCTION test1arr(val hstore[]) RETURNS int
 LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
-plpy.info(repr(val))
+assert(val == [{'aa': 'bb', 'cc': None}, {'dd': 'ee'}])
 return len(val)
 $$;
 
@@ -74,12 +74,12 @@ LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 rv = plpy.execute("SELECT 'aa=>bb, cc=>NULL'::hstore AS col1")
-plpy.info(repr(rv[0]["col1"]))
+assert(rv[0]["col1"] == {'aa': 'bb', 'cc': None})
 
 val = {'a': 1, 'b': 'boo', 'c': None}
 plan = plpy.prepare("SELECT $1::text AS col1", ["hstore"])
 rv = plpy.execute(plan, [val])
-plpy.info(repr(rv[0]["col1"]))
+assert(rv[0]["col1"] == '"a"=>"1", "b"=>"boo", "c"=>NULL')
 $$;
 
 SELECT test3();
@@ -94,7 +94,7 @@ CREATE FUNCTION test4() RETURNS trigger
 LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
-plpy.info("Trigger row: {'a': %r, 'b': %r}" % (TD["new"]["a"], TD["new"]["b"]))
+assert(TD["new"] == {'a': 1, 'b': {'aa': 'bb', 'cc': None}})
 if TD["new"]["a"] == 1:
     TD["new"]["b"] = {'a': 1, 'b': 'boo', 'c': None}
 
