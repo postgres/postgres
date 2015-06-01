@@ -10323,6 +10323,15 @@ table2-mapping
      </tgroup>
    </table>
 
+  <note>
+   <para>
+    The <literal>||</> operator concatenates the elements at the top level of
+    each of its operands. It does not operate recursively. For example, if
+    both operands are objects with a common key field name, the value of the
+    field in the result will just be the value from the right hand operand.
+   </para>
+  </note>
+
   <para>
    <xref linkend="functions-json-creation-table"> shows the functions that are
    available for creating <type>json</type> and <type>jsonb</type> values.
@@ -10830,17 +10839,24 @@ table2-mapping
        <entry><literal>[{"f1":1},2,null,3]</literal></entry>
        </row>
       <row>
-       <entry><para><literal>jsonb_replace(target jsonb, path text[], replacement jsonb)</literal>
+       <entry><para><literal>jsonb_set(target jsonb, path text[], new_value jsonb<optional>, <parameter>create_missing</parameter> <type>boolean</type></optional>)</literal>
          </para></entry>
        <entry><para><type>jsonb</type></para></entry>
        <entry>
          Returns <replaceable>target</replaceable>
-         with the section designated by  <replaceable>path</replaceable>
-         replaced by <replaceable>replacement</replaceable>.
+         with the section designated by <replaceable>path</replaceable>
+         replaced by <replaceable>new_value</replaceable>, or with
+         <replaceable>new_value</replaceable> added if
+         <replaceable>create_missing</replaceable> is true ( default is
+         <literal>true</>) and the item
+         designated by <replaceable>path</replaceable> does not exist.
        </entry>
-       <entry><literal>jsonb_replace('[{"f1":1,"f2":null},2,null,3]', '{0,f1}','[2,3,4]')</literal></entry>
-       <entry><literal>[{"f1":[2,3,4],"f2":null},2,null,3]</literal>
-        </entry>
+       <entry><para><literal>jsonb_set('[{"f1":1,"f2":null},2,null,3]', '{0,f1}','[2,3,4]', false)</literal>
+         </para><para><literal>jsonb_set('[{"f1":1,"f2":null},2]', '{0,f3}','[2,3,4]')</literal>
+         </para></entry>
+       <entry><para><literal>[{"f1":[2,3,4],"f2":null},2,null,3]</literal>
+         </para><para><literal>[{"f1": 1, "f2": null, "f3": [2, 3, 4]}, 2]</literal>
+        </para></entry>
        </row>
       <row>
        <entry><para><literal>jsonb_pretty(from_json jsonb)</literal>
@@ -10888,6 +10904,27 @@ table2-mapping
       identical column names in the target row type.  JSON fields that do not
       appear in the target row type will be omitted from the output, and
       target columns that do not match any JSON field will simply be NULL.
+    </para>
+  </note>
+
+  <note>
+    <para>
+      All the items of the <literal>path</> parameter of <literal>jsonb_set</>
+      must be present in the <literal>target</>, unless
+      <literal>create_missing</> is true, in which case all but the last item
+      must be present. If these conditions are not met the <literal>target</>
+      is returned unchanged.
+    </para>
+    <para>
+      If the last path item is an object key, it will be created if it
+      is absent and given the new value. If the last path item is an array
+      index, if it is positive the item to set is found by counting from
+      the left, and if negative by counting from the right - <literal>-1</>
+      designates the rightmost element, and so on.
+      If the item is out of the range -array_length .. array_length -1,
+      and create_missing is true, the new value is added at the beginning
+      of the array if the item is negative, and at the end of the array if
+      it is positive.
     </para>
   </note>
 
