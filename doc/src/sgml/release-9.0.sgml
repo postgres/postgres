@@ -1,6 +1,100 @@
 <!-- doc/src/sgml/release-9.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-0-21">
+  <title>Release 9.0.21</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-04</simpara>
+  </note>
+
+  <para>
+   This release contains a small number of fixes from 9.0.20.
+   For information about new features in the 9.0 major release, see
+   <xref linkend="release-9-0">.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</> community will stop releasing updates
+   for the 9.0.X release series in September 2015.
+   Users are encouraged to update to a newer release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.0.21</title>
+
+   <para>
+    A dump/restore is not required for those running 9.0.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.0.18,
+    see <xref linkend="release-9-0-18">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Avoid failures while <function>fsync</>'ing data directory during
+      crash restart (Abhijit Menon-Sen, Tom Lane)
+     </para>
+
+     <para>
+      In the previous minor releases we added a patch to <function>fsync</>
+      everything in the data directory after a crash.  Unfortunately its
+      response to any error condition was to fail, thereby preventing the
+      server from starting up, even when the problem was quite harmless.
+      An example is that an unwritable file in the data directory would
+      prevent restart on some platforms; but it is common to make SSL
+      certificate files unwritable by the server.  Revise this behavior so
+      that permissions failures are ignored altogether, and other types of
+      failures are logged but do not prevent continuing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove <application>configure</>'s check prohibiting linking to a
+      threaded <application>libpython</>
+      on <systemitem class="osname">OpenBSD</> (Tom Lane)
+     </para>
+
+     <para>
+      The failure this restriction was meant to prevent seems to not be a
+      problem anymore on current <systemitem class="osname">OpenBSD</>
+      versions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <application>libpq</> to use TLS protocol versions beyond v1
+      (Noah Misch)
+     </para>
+
+     <para>
+      For a long time, <application>libpq</> was coded so that the only SSL
+      protocol it would allow was TLS v1.  Now that newer TLS versions are
+      becoming popular, allow it to negotiate the highest commonly-supported
+      TLS version with the server.  (<productname>PostgreSQL</> servers were
+      already capable of such negotiation, so no change is needed on the
+      server side.)  This is a back-patch of a change already released in
+      9.4.0.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-0-20">
   <title>Release 9.0.20</title>
 
@@ -166,6 +260,13 @@
      <para>
       Don't archive useless preallocated WAL files after a timeline switch
       (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid <quote>cannot GetMultiXactIdMembers() during recovery</> error
+      (&Aacute;lvaro Herrera)
      </para>
     </listitem>
 
