@@ -1,6 +1,114 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-8">
+  <title>Release 9.3.8</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-04</simpara>
+  </note>
+
+  <para>
+   This release contains a small number of fixes from 9.3.7.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.8</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.3.7,
+    see <xref linkend="release-9-3-7">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Avoid failures while <function>fsync</>'ing data directory during
+      crash restart (Abhijit Menon-Sen, Tom Lane)
+     </para>
+
+     <para>
+      In the previous minor releases we added a patch to <function>fsync</>
+      everything in the data directory after a crash.  Unfortunately its
+      response to any error condition was to fail, thereby preventing the
+      server from starting up, even when the problem was quite harmless.
+      An example is that an unwritable file in the data directory would
+      prevent restart on some platforms; but it is common to make SSL
+      certificate files unwritable by the server.  Revise this behavior so
+      that permissions failures are ignored altogether, and other types of
+      failures are logged but do not prevent continuing.
+     </para>
+
+     <para>
+      Also apply the same rules in <literal>initdb --sync-only</>.
+      This case is less critical but it should act similarly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pg_get_functiondef()</> to show
+      functions' <literal>LEAKPROOF</> property, if set (Jeevan Chalke)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove <application>configure</>'s check prohibiting linking to a
+      threaded <application>libpython</>
+      on <systemitem class="osname">OpenBSD</> (Tom Lane)
+     </para>
+
+     <para>
+      The failure this restriction was meant to prevent seems to not be a
+      problem anymore on current <systemitem class="osname">OpenBSD</>
+      versions.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_3_STABLE [c6b7b9a9c] 2015-05-21 20:41:55 -0400
+Branch: REL9_2_STABLE [b78fbfe65] 2015-05-21 20:41:55 -0400
+Branch: REL9_1_STABLE [2c2c5f0e0] 2015-05-21 20:41:55 -0400
+Branch: REL9_0_STABLE [4dddf8552] 2015-05-21 20:41:55 -0400
+-->
+
+    <listitem>
+     <para>
+      Allow <application>libpq</> to use TLS protocol versions beyond v1
+      (Noah Misch)
+     </para>
+
+     <para>
+      For a long time, <application>libpq</> was coded so that the only SSL
+      protocol it would allow was TLS v1.  Now that newer TLS versions are
+      becoming popular, allow it to negotiate the highest commonly-supported
+      TLS version with the server.  (<productname>PostgreSQL</> servers were
+      already capable of such negotiation, so no change is needed on the
+      server side.)  This is a back-patch of a change already released in
+      9.4.0.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3-7">
   <title>Release 9.3.7</title>
 
