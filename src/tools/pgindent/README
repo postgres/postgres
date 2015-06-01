@@ -22,7 +22,8 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
-   (see http://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full list of typedefs)
+   (see http://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full list of typedefs,
+    also http://adpgtech.blogspot.com/2015/05/running-pgindent-on-non-core-code-or.html)
 
 6) Run pgindent:
 
