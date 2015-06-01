@@ -3716,13 +3716,13 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	/* empty object is a special case for create */
 	if ((npairs == 0) && create && (level == path_len - 1))
 	{
-		JsonbValue	new = k;
+		JsonbValue	newkey;
 
-		new.type = jbvString;
-		new.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
-		new.val.string.val = VARDATA_ANY(path_elems[level]);
+		newkey.type = jbvString;
+		newkey.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
+		newkey.val.string.val = VARDATA_ANY(path_elems[level]);
 
-		(void) pushJsonbValue(st, WJB_KEY, &new);
+		(void) pushJsonbValue(st, WJB_KEY, &newkey);
 		addJsonbToParseState(st, newval);
 	}
 
@@ -3758,13 +3758,13 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		{
 			if (create && !done && level == path_len - 1 && i == npairs - 1)
 			{
-				JsonbValue	new = k;
+				JsonbValue	newkey;
 
-				new.type = jbvString;
-				new.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
-				new.val.string.val = VARDATA_ANY(path_elems[level]);
+				newkey.type = jbvString;
+				newkey.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
+				newkey.val.string.val = VARDATA_ANY(path_elems[level]);
 
-				(void) pushJsonbValue(st, WJB_KEY, &new);
+				(void) pushJsonbValue(st, WJB_KEY, &newkey);
 				addJsonbToParseState(st, newval);
 			}
 
