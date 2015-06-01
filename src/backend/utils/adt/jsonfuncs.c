@@ -3718,6 +3718,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	{
 		JsonbValue	new = k;
 
+		new.type = jbvString;
 		new.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
 		new.val.string.val = VARDATA_ANY(path_elems[level]);
 
@@ -3759,6 +3760,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			{
 				JsonbValue	new = k;
 
+				new.type = jbvString;
 				new.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
 				new.val.string.val = VARDATA_ANY(path_elems[level]);
 
