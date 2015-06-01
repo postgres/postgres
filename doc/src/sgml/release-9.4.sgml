@@ -1,6 +1,149 @@
 <!-- doc/src/sgml/release-9.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-4-3">
+  <title>Release 9.4.3</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-04</simpara>
+  </note>
+
+  <para>
+   This release contains a small number of fixes from 9.4.2.
+   For information about new features in the 9.4 major release, see
+   <xref linkend="release-9-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.4.3</title>
+
+   <para>
+    A dump/restore is not required for those running 9.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.4.2,
+    see <xref linkend="release-9-4-2">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d8179b001] 2015-05-28 17:33:03 -0400
+Branch: REL9_4_STABLE [a3ae3db43] 2015-05-28 17:33:03 -0400
+Branch: REL9_3_STABLE [81f3d3b7c] 2015-05-28 17:33:03 -0400
+Branch: REL9_2_STABLE [aa8377e64] 2015-05-28 17:33:03 -0400
+Branch: REL9_1_STABLE [cb867853a] 2015-05-28 17:33:03 -0400
+Branch: REL9_0_STABLE [e4a04e5a4] 2015-05-28 17:33:03 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c07d8c963] 2015-05-29 13:05:16 -0400
+Branch: REL9_4_STABLE [dbde225b1] 2015-05-29 13:05:16 -0400
+Branch: REL9_3_STABLE [52fc94844] 2015-05-29 13:05:16 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [57e1138bc] 2015-05-29 15:11:36 -0400
+Branch: REL9_4_STABLE [70a4519b8] 2015-05-29 15:11:36 -0400
+Branch: REL9_3_STABLE [35dd1b51f] 2015-05-29 15:11:36 -0400
+Branch: REL9_2_STABLE [77642a819] 2015-05-29 15:11:36 -0400
+Branch: REL9_1_STABLE [9e79ca326] 2015-05-29 15:11:36 -0400
+Branch: REL9_0_STABLE [bf2f20c08] 2015-05-29 15:11:36 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1943c000b] 2015-05-29 17:02:58 -0400
+Branch: REL9_4_STABLE [99f50dd72] 2015-05-29 17:02:58 -0400
+Branch: REL9_3_STABLE [c2b68b1f7] 2015-05-29 17:02:58 -0400
+-->
+
+    <listitem>
+     <para>
+      Avoid failures while <function>fsync</>'ing data directory during
+      crash restart (Abhijit Menon-Sen, Tom Lane)
+     </para>
+
+     <para>
+      In the previous minor releases we added a patch to <function>fsync</>
+      everything in the data directory after a crash.  Unfortunately its
+      response to any error condition was to fail, thereby preventing the
+      server from starting up, even when the problem was quite harmless.
+      An example is that an unwritable file in the data directory would
+      prevent restart on some platforms; but it is common to make SSL
+      certificate files unwritable by the server.  Revise this behavior so
+      that permissions failures are ignored altogether, and other types of
+      failures are logged but do not prevent continuing.
+     </para>
+
+     <para>
+      Also apply the same rules in <literal>initdb --sync-only</>.
+      This case is less critical but it should act similarly.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f46edf479] 2015-05-28 11:24:37 -0400
+Branch: REL9_4_STABLE [d4a9f5519] 2015-05-28 11:24:37 -0400
+Branch: REL9_3_STABLE [27bae8d96] 2015-05-28 11:24:37 -0400
+Branch: REL9_2_STABLE [f3c67aad4] 2015-05-28 11:24:37 -0400
+-->
+
+    <listitem>
+     <para>
+      Fix <function>pg_get_functiondef()</> to show
+      functions' <literal>LEAKPROOF</> property, if set (Jeevan Chalke)
+     </para>
+    </listitem>
+
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [5302760a5] 2015-05-22 10:21:41 -0400
+Branch: REL9_4_STABLE [9b74f32cd] 2015-05-22 10:31:29 -0400
+-->
+
+    <listitem>
+     <para>
+      Fix <function>pushJsonbValue()</> to unpack <type>jbvBinary</>
+      objects (Andrew Dunstan)
+     </para>
+
+     <para>
+      This change does not affect any behavior in the core code as of 9.4,
+      but it avoids a corner case for possible third-party callers.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [86832eb89] 2015-05-26 22:14:59 -0400
+Branch: REL9_4_STABLE [79f0f7cab] 2015-05-26 22:14:59 -0400
+Branch: REL9_3_STABLE [9e980e7d0] 2015-05-26 22:14:59 -0400
+Branch: REL9_2_STABLE [1b1457120] 2015-05-26 22:14:59 -0400
+Branch: REL9_1_STABLE [5585cc707] 2015-05-26 22:14:59 -0400
+Branch: REL9_0_STABLE [b06649b7f] 2015-05-26 22:15:00 -0400
+-->
+
+    <listitem>
+     <para>
+      Remove <application>configure</>'s check prohibiting linking to a
+      threaded <application>libpython</>
+      on <systemitem class="osname">OpenBSD</> (Tom Lane)
+     </para>
+
+     <para>
+      The failure this restriction was meant to prevent seems to not be a
+      problem anymore on current <systemitem class="osname">OpenBSD</>
+      versions.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-4-2">
   <title>Release 9.4.2</title>
 
