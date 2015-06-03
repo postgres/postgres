@@ -19,7 +19,7 @@ try:
         if what_error == "SPI":
             plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
         elif what_error == "Python":
-            plpy.attribute_error
+            raise Exception("Python exception")
     except:
         exc = False
         subxact.__exit__(*sys.exc_info())
@@ -58,10 +58,10 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_test('Python');
-ERROR:  AttributeError: 'module' object has no attribute 'attribute_error'
+ERROR:  Exception: Python exception
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_test", line 13, in <module>
-    plpy.attribute_error
+    raise Exception("Python exception")
 PL/Python function "subtransaction_test"
 SELECT * FROM subtransaction_tbl;
  i 
@@ -78,7 +78,7 @@ with plpy.subtransaction():
     if what_error == "SPI":
         plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
     elif what_error == "Python":
-        plpy.attribute_error
+        raise Exception("Python exception")
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_ctx_test();
  subtransaction_ctx_test 
@@ -110,10 +110,10 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_ctx_test('Python');
-ERROR:  AttributeError: 'module' object has no attribute 'attribute_error'
+ERROR:  Exception: Python exception
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_ctx_test", line 8, in <module>
-    plpy.attribute_error
+    raise Exception("Python exception")
 PL/Python function "subtransaction_ctx_test"
 SELECT * FROM subtransaction_tbl;
  i 
