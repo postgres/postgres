@@ -16270,7 +16270,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <row>
        <entry><literal><function>txid_current()</function></literal></entry>
        <entry><type>bigint</type></entry>
-       <entry>get current transaction ID</entry>
+       <entry>get current transaction ID, assigning a new one if the current transaction does not have one</entry>
       </row>
       <row>
        <entry><literal><function>txid_current_snapshot()</function></literal></entry>
