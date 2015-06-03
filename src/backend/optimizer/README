@@ -798,7 +798,7 @@ a nestloop that provides parameters to the lower join's inputs).  While we
 do not ignore merge joins entirely, joinpath.c does not fully explore the
 space of potential merge joins with parameterized inputs.  Also, add_path
 treats parameterized paths as having no pathkeys, so that they compete
-only on total cost and rowcount; they don't get preference for producing a
+only on cost and rowcount; they don't get preference for producing a
 special sort order.  This creates additional bias against merge joins,
 since we might discard a path that could have been useful for performing
 a merge without an explicit sort step.  Since a parameterized path must
@@ -806,6 +806,13 @@ ultimately be used on the inside of a nestloop, where its sort order is
 uninteresting, these choices do not affect any requirement for the final
 output order of a query --- they only make it harder to use a merge join
 at a lower level.  The savings in planning work justifies that.
+
+Similarly, parameterized paths do not normally get preference in add_path
+for having cheap startup cost; that's seldom of much value when on the
+inside of a nestloop, so it seems not worth keeping extra paths solely for
+that.  An exception occurs for parameterized paths for the RHS relation of
+a SEMI or ANTI join: in those cases, we can stop the inner scan after the
+first match, so it's primarily startup not total cost that we care about.
 
 
 LATERAL subqueries
