@@ -321,8 +321,9 @@ typedef struct PlannerInfo
  *			   clauses have been applied (ie, output rows of a plan for it)
  *		width - avg. number of bytes per tuple in the relation after the
  *				appropriate projections have been done (ie, output width)
- *		consider_startup - true if there is any value in keeping paths for
+ *		consider_startup - true if there is any value in keeping plain paths for
  *						   this rel on the basis of having cheap startup cost
+ *		consider_param_startup - the same for parameterized paths
  *		reltargetlist - List of Var and PlaceHolderVar nodes for the values
  *						we need to output from this relation.
  *						List is in no particular order, but all rels of an
@@ -437,6 +438,7 @@ typedef struct RelOptInfo
 
 	/* per-relation planner control flags */
 	bool		consider_startup;		/* keep cheap-startup-cost paths? */
+	bool		consider_param_startup; /* ditto, for parameterized paths? */
 
 	/* materialization information */
 	List	   *reltargetlist;	/* Vars to be output by scan of relation */
@@ -1719,12 +1721,10 @@ typedef struct JoinCostWorkspace
 	Cost		run_cost;		/* non-startup cost components */
 
 	/* private for cost_nestloop code */
+	Cost		inner_run_cost; /* also used by cost_mergejoin code */
 	Cost		inner_rescan_run_cost;
-	double		outer_matched_rows;
-	Selectivity inner_scan_frac;
 
 	/* private for cost_mergejoin code */
-	Cost		inner_run_cost;
 	double		outer_rows;
 	double		inner_rows;
 	double		outer_skip_rows;

@@ -101,6 +101,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->width = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	rel->consider_startup = (root->tuple_fraction > 0);
+	rel->consider_param_startup = false;		/* might get changed later */
 	rel->reltargetlist = NIL;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
@@ -361,6 +362,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->width = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	joinrel->consider_startup = (root->tuple_fraction > 0);
+	joinrel->consider_param_startup = false;
 	joinrel->reltargetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;

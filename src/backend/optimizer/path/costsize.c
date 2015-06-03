@@ -1767,7 +1767,8 @@ cost_group(Path *path, PlannerInfo *root,
  * estimate and getting a tight lower bound.  We choose to not examine the
  * join quals here, since that's by far the most expensive part of the
  * calculations.  The end result is that CPU-cost considerations must be
- * left for the second phase.
+ * left for the second phase; and for SEMI/ANTI joins, we must also postpone
+ * incorporation of the inner path's run cost.
  *
  * 'workspace' is to be filled with startup_cost, total_cost, and perhaps
  *		other data to be used by final_cost_nestloop
@@ -1815,44 +1816,16 @@ initial_cost_nestloop(PlannerInfo *root, JoinCostWorkspace *workspace,
 
 	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI)
 	{
-		double		outer_matched_rows;
-		Selectivity inner_scan_frac;
-
 		/*
 		 * SEMI or ANTI join: executor will stop after first match.
 		 *
-		 * For an outer-rel row that has at least one match, we can expect the
-		 * inner scan to stop after a fraction 1/(match_count+1) of the inner
-		 * rows, if the matches are evenly distributed.  Since they probably
-		 * aren't quite evenly distributed, we apply a fuzz factor of 2.0 to
-		 * that fraction.  (If we used a larger fuzz factor, we'd have to
-		 * clamp inner_scan_frac to at most 1.0; but since match_count is at
-		 * least 1, no such clamp is needed now.)
-		 *
-		 * A complicating factor is that rescans may be cheaper than first
-		 * scans.  If we never scan all the way to the end of the inner rel,
-		 * it might be (depending on the plan type) that we'd never pay the
-		 * whole inner first-scan run cost.  However it is difficult to
-		 * estimate whether that will happen, so be conservative and always
-		 * charge the whole first-scan cost once.
-		 */
-		run_cost += inner_run_cost;
-
-		outer_matched_rows = rint(outer_path_rows * semifactors->outer_match_frac);
-		inner_scan_frac = 2.0 / (semifactors->match_count + 1.0);
-
-		/* Add inner run cost for additional outer tuples having matches */
-		if (outer_matched_rows > 1)
-			run_cost += (outer_matched_rows - 1) * inner_rescan_run_cost * inner_scan_frac;
-
-		/*
-		 * The cost of processing unmatched rows varies depending on the
-		 * details of the joinclauses, so we leave that part for later.
+		 * Getting decent estimates requires inspection of the join quals,
+		 * which we choose to postpone to final_cost_nestloop.
 		 */
 
 		/* Save private data for final_cost_nestloop */
-		workspace->outer_matched_rows = outer_matched_rows;
-		workspace->inner_scan_frac = inner_scan_frac;
+		workspace->inner_run_cost = inner_run_cost;
+		workspace->inner_rescan_run_cost = inner_rescan_run_cost;
 	}
 	else
 	{
@@ -1869,7 +1842,6 @@ initial_cost_nestloop(PlannerInfo *root, JoinCostWorkspace *workspace,
 	workspace->total_cost = startup_cost + run_cost;
 	/* Save private data for final_cost_nestloop */
 	workspace->run_cost = run_cost;
-	workspace->inner_rescan_run_cost = inner_rescan_run_cost;
 }
 
 /*
@@ -1893,7 +1865,6 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	double		inner_path_rows = inner_path->rows;
 	Cost		startup_cost = workspace->startup_cost;
 	Cost		run_cost = workspace->run_cost;
-	Cost		inner_rescan_run_cost = workspace->inner_rescan_run_cost;
 	Cost		cpu_per_tuple;
 	QualCost	restrict_qual_cost;
 	double		ntuples;
@@ -1912,42 +1883,101 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	if (!enable_nestloop)
 		startup_cost += disable_cost;
 
-	/* cost of source data */
+	/* cost of inner-relation source data (we already dealt with outer rel) */
 
 	if (path->jointype == JOIN_SEMI || path->jointype == JOIN_ANTI)
 	{
-		double		outer_matched_rows = workspace->outer_matched_rows;
-		Selectivity inner_scan_frac = workspace->inner_scan_frac;
-
 		/*
 		 * SEMI or ANTI join: executor will stop after first match.
 		 */
+		Cost		inner_run_cost = workspace->inner_run_cost;
+		Cost		inner_rescan_run_cost = workspace->inner_rescan_run_cost;
+		double		outer_matched_rows;
+		Selectivity inner_scan_frac;
 
-		/* Compute number of tuples processed (not number emitted!) */
+		/*
+		 * For an outer-rel row that has at least one match, we can expect the
+		 * inner scan to stop after a fraction 1/(match_count+1) of the inner
+		 * rows, if the matches are evenly distributed.  Since they probably
+		 * aren't quite evenly distributed, we apply a fuzz factor of 2.0 to
+		 * that fraction.  (If we used a larger fuzz factor, we'd have to
+		 * clamp inner_scan_frac to at most 1.0; but since match_count is at
+		 * least 1, no such clamp is needed now.)
+		 */
+		outer_matched_rows = rint(outer_path_rows * semifactors->outer_match_frac);
+		inner_scan_frac = 2.0 / (semifactors->match_count + 1.0);
+
+		/*
+		 * Compute number of tuples processed (not number emitted!).  First,
+		 * account for successfully-matched outer rows.
+		 */
 		ntuples = outer_matched_rows * inner_path_rows * inner_scan_frac;
 
 		/*
-		 * For unmatched outer-rel rows, there are two cases.  If the inner
-		 * path is an indexscan using all the joinquals as indexquals, then an
-		 * unmatched row results in an indexscan returning no rows, which is
-		 * probably quite cheap.  We estimate this case as the same cost to
-		 * return the first tuple of a nonempty scan.  Otherwise, the executor
-		 * will have to scan the whole inner rel; not so cheap.
+		 * Now we need to estimate the actual costs of scanning the inner
+		 * relation, which may be quite a bit less than N times inner_run_cost
+		 * due to early scan stops.  We consider two cases.  If the inner path
+		 * is an indexscan using all the joinquals as indexquals, then an
+		 * unmatched outer row results in an indexscan returning no rows,
+		 * which is probably quite cheap.  Otherwise, the executor will have
+		 * to scan the whole inner rel for an unmatched row; not so cheap.
 		 */
 		if (has_indexed_join_quals(path))
 		{
+			/*
+			 * Successfully-matched outer rows will only require scanning
+			 * inner_scan_frac of the inner relation.  In this case, we don't
+			 * need to charge the full inner_run_cost even when that's more
+			 * than inner_rescan_run_cost, because we can assume that none of
+			 * the inner scans ever scan the whole inner relation.  So it's
+			 * okay to assume that all the inner scan executions can be
+			 * fractions of the full cost, even if materialization is reducing
+			 * the rescan cost.  At this writing, it's impossible to get here
+			 * for a materialized inner scan, so inner_run_cost and
+			 * inner_rescan_run_cost will be the same anyway; but just in
+			 * case, use inner_run_cost for the first matched tuple and
+			 * inner_rescan_run_cost for additional ones.
+			 */
+			run_cost += inner_run_cost * inner_scan_frac;
+			if (outer_matched_rows > 1)
+				run_cost += (outer_matched_rows - 1) * inner_rescan_run_cost * inner_scan_frac;
+
+			/*
+			 * Add the cost of inner-scan executions for unmatched outer rows.
+			 * We estimate this as the same cost as returning the first tuple
+			 * of a nonempty scan.  We consider that these are all rescans,
+			 * since we used inner_run_cost once already.
+			 */
 			run_cost += (outer_path_rows - outer_matched_rows) *
 				inner_rescan_run_cost / inner_path_rows;
 
 			/*
-			 * We won't be evaluating any quals at all for these rows, so
+			 * We won't be evaluating any quals at all for unmatched rows, so
 			 * don't add them to ntuples.
 			 */
 		}
 		else
 		{
+			/*
+			 * Here, a complicating factor is that rescans may be cheaper than
+			 * first scans.  If we never scan all the way to the end of the
+			 * inner rel, it might be (depending on the plan type) that we'd
+			 * never pay the whole inner first-scan run cost.  However it is
+			 * difficult to estimate whether that will happen (and it could
+			 * not happen if there are any unmatched outer rows!), so be
+			 * conservative and always charge the whole first-scan cost once.
+			 */
+			run_cost += inner_run_cost;
+
+			/* Add inner run cost for additional outer tuples having matches */
+			if (outer_matched_rows > 1)
+				run_cost += (outer_matched_rows - 1) * inner_rescan_run_cost * inner_scan_frac;
+
+			/* Add inner run cost for unmatched outer tuples */
 			run_cost += (outer_path_rows - outer_matched_rows) *
 				inner_rescan_run_cost;
+
+			/* And count the unmatched join tuples as being processed */
 			ntuples += (outer_path_rows - outer_matched_rows) *
 				inner_path_rows;
 		}
