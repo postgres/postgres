@@ -38,6 +38,13 @@ typedef enum
 	COSTS_DIFFERENT				/* neither path dominates the other on cost */
 } PathCostComparison;
 
+/*
+ * STD_FUZZ_FACTOR is the normal fuzz factor for compare_path_costs_fuzzily.
+ * XXX is it worth making this user-controllable?  It provides a tradeoff
+ * between planner runtime and the accuracy of path cost comparisons.
+ */
+#define STD_FUZZ_FACTOR 1.01
+
 static List *translate_sub_tlist(List *tlist, int relid);
 
 
@@ -140,8 +147,10 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  *
  * This function also enforces a policy rule that paths for which the relevant
  * one of parent->consider_startup and parent->consider_param_startup is false
- * cannot win comparisons on the grounds of good startup cost, so we never
- * return COSTS_DIFFERENT when that is true for the total-cost loser.
+ * cannot survive comparisons solely on the grounds of good startup cost, so
+ * we never return COSTS_DIFFERENT when that is true for the total-cost loser.
+ * (But if total costs are fuzzily equal, we compare startup costs anyway,
+ * in hopes of eliminating one path or the other.)
  */
 static PathCostComparison
 compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
@@ -177,21 +186,13 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 		/* else path1 dominates */
 		return COSTS_BETTER1;
 	}
-
-	/*
-	 * Fuzzily the same on total cost (so we might as well compare startup
-	 * cost, even when that would otherwise be uninteresting; but
-	 * parameterized paths aren't allowed to win this way, we'd rather move on
-	 * to other comparison heuristics)
-	 */
-	if (path1->startup_cost > path2->startup_cost * fuzz_factor &&
-		path2->param_info == NULL)
+	/* fuzzily the same on total cost ... */
+	if (path1->startup_cost > path2->startup_cost * fuzz_factor)
 	{
 		/* ... but path1 fuzzily worse on startup, so path2 wins */
 		return COSTS_BETTER2;
 	}
-	if (path2->startup_cost > path1->startup_cost * fuzz_factor &&
-		path1->param_info == NULL)
+	if (path2->startup_cost > path1->startup_cost * fuzz_factor)
 	{
 		/* ... but path2 fuzzily worse on startup, so path1 wins */
 		return COSTS_BETTER1;
@@ -434,10 +435,10 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		p1_next = lnext(p1);
 
 		/*
-		 * Do a fuzzy cost comparison with 1% fuzziness limit.  (XXX does this
-		 * percentage need to be user-configurable?)
+		 * Do a fuzzy cost comparison with standard fuzziness limit.
 		 */
-		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01);
+		costcmp = compare_path_costs_fuzzily(new_path, old_path,
+											 STD_FUZZ_FACTOR);
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
@@ -624,10 +625,14 @@ add_path_precheck(RelOptInfo *parent_rel,
 				  List *pathkeys, Relids required_outer)
 {
 	List	   *new_path_pathkeys;
+	bool		consider_startup;
 	ListCell   *p1;
 
 	/* Pretend parameterized paths have no pathkeys, per add_path policy */
 	new_path_pathkeys = required_outer ? NIL : pathkeys;
+
+	/* Decide whether new path's startup cost is interesting */
+	consider_startup = required_outer ? parent_rel->consider_param_startup : parent_rel->consider_startup;
 
 	foreach(p1, parent_rel->pathlist)
 	{
@@ -640,16 +645,15 @@ add_path_precheck(RelOptInfo *parent_rel,
 		 * pathkeys as well as both cost metrics.  If we find one, we can
 		 * reject the new path.
 		 *
-		 * For speed, we make exact rather than fuzzy cost comparisons. If an
-		 * old path dominates the new path exactly on both costs, it will
-		 * surely do so fuzzily.
+		 * Cost comparisons here should match compare_path_costs_fuzzily.
 		 */
-		if (total_cost >= old_path->total_cost)
+		if (total_cost > old_path->total_cost * STD_FUZZ_FACTOR)
 		{
-			/* can win on startup cost only if unparameterized */
-			if (startup_cost >= old_path->startup_cost || required_outer)
+			/* new path can win on startup cost only if consider_startup */
+			if (startup_cost > old_path->startup_cost * STD_FUZZ_FACTOR ||
+				!consider_startup)
 			{
-				/* new path does not win on cost, so check pathkeys... */
+				/* new path loses on cost, so check pathkeys... */
 				List	   *old_path_pathkeys;
 
 				old_path_pathkeys = old_path->param_info ? NIL : old_path->pathkeys;
