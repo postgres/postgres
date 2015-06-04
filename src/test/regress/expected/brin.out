@@ -77,6 +77,8 @@ CREATE INDEX brinidx ON brintest USING brin (
 	macaddrcol,
 	inetcol inet_inclusion_ops,
 	inetcol inet_minmax_ops,
+	cidrcol inet_inclusion_ops,
+	cidrcol inet_minmax_ops,
 	bpcharcol,
 	datecol,
 	timecol,
@@ -373,34 +375,6 @@ BEGIN
 	END LOOP;
 END;
 $x$;
-WARNING:  did not get bitmap indexscan plan for (cidrcol,&&,inet,10/8,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,=,inet,10.2.14/24,2)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<,inet,255.255.255.255,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<=,inet,255.255.255.255,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>,inet,0.0.0.0,125)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>=,inet,0.0.0.0,125)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>>=,inet,10.2.14.231/24,2)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>>,inet,10.2.14.231/25,2)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<<=,inet,10.2.14.231/8,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<<,inet,0/0,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,&&,inet,fe80::6e40:8ff:fea9:a673/32,25)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>>=,inet,fe80::6e40:8ff:fea9:8c46,1)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<<=,inet,fe80::6e40:8ff:fea9:a673/32,25)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,=,inet,fe80::6e40:8ff:fea9:8c46,1)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,&&,cidr,10/8,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,=,cidr,10.2.14/24,2)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<,cidr,255.255.255.255,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<=,cidr,255.255.255.255,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>,cidr,0.0.0.0,125)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>=,cidr,0.0.0.0,125)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>>=,cidr,10.2.14/24,2)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>>,cidr,10.2.14/25,2)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<<=,cidr,10/8,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<<,cidr,0/0,100)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,&&,cidr,fe80::/32,25)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,>>=,cidr,fe80::6e40:8ff:fea9:8c46,1)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,<<=,cidr,fe80::/32,25)
-WARNING:  did not get bitmap indexscan plan for (cidrcol,=,cidr,fe80::6e40:8ff:fea9:8c46,1)
 INSERT INTO brintest SELECT
 	repeat(stringu1, 42)::bytea,
 	substr(stringu1, 1, 1)::"char",
