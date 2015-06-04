@@ -306,8 +306,8 @@ typedef struct mXactCacheEnt
 } mXactCacheEnt;
 
 #define MAX_CACHE_ENTRIES	256
-static dlist_head	MXactCache = DLIST_STATIC_INIT(MXactCache);
-static int			MXactCacheMembers = 0;
+static dlist_head MXactCache = DLIST_STATIC_INIT(MXactCache);
+static int	MXactCacheMembers = 0;
 static MemoryContext MXactContext = NULL;
 
 #ifdef MULTIXACT_DEBUG
@@ -620,9 +620,9 @@ MultiXactIdSetOldestMember(void)
 		 * back.  Which would be wrong.
 		 *
 		 * Note that a shared lock is sufficient, because it's enough to stop
-		 * someone from advancing nextMXact; and nobody else could be trying to
-		 * write to our OldestMember entry, only reading (and we assume storing
-		 * it is atomic.)
+		 * someone from advancing nextMXact; and nobody else could be trying
+		 * to write to our OldestMember entry, only reading (and we assume
+		 * storing it is atomic.)
 		 */
 		LWLockAcquire(MultiXactGenLock, LW_SHARED);
 
@@ -970,7 +970,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 	 */
 	if (!MultiXactIdPrecedes(result, MultiXactState->multiVacLimit) ||
 		(MultiXactState->nextOffset - MultiXactState->oldestOffset
-			> MULTIXACT_MEMBER_SAFE_THRESHOLD))
+		 > MULTIXACT_MEMBER_SAFE_THRESHOLD))
 	{
 		/*
 		 * For safety's sake, we release MultiXactGenLock while sending
@@ -1025,8 +1025,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 						(errmsg_plural("database \"%s\" must be vacuumed before %u more MultiXactId is used",
 									   "database \"%s\" must be vacuumed before %u more MultiXactIds are used",
 									   multiWrapLimit - result,
-								oldest_datname,
-								multiWrapLimit - result),
+									   oldest_datname,
+									   multiWrapLimit - result),
 				 errhint("Execute a database-wide VACUUM in that database.\n"
 						 "You might also need to commit or roll back old prepared transactions.")));
 			else
@@ -1034,8 +1034,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 						(errmsg_plural("database with OID %u must be vacuumed before %u more MultiXactId is used",
 									   "database with OID %u must be vacuumed before %u more MultiXactIds are used",
 									   multiWrapLimit - result,
-								oldest_datoid,
-								multiWrapLimit - result),
+									   oldest_datoid,
+									   multiWrapLimit - result),
 				 errhint("Execute a database-wide VACUUM in that database.\n"
 						 "You might also need to commit or roll back old prepared transactions.")));
 		}
@@ -1194,14 +1194,14 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 *
 	 * An ID older than MultiXactState->oldestMultiXactId cannot possibly be
 	 * useful; it has already been removed, or will be removed shortly, by
-	 * truncation.  Returning the wrong values could lead
-	 * to an incorrect visibility result.  However, to support pg_upgrade we
-	 * need to allow an empty set to be returned regardless, if the caller is
-	 * willing to accept it; the caller is expected to check that it's an
-	 * allowed condition (such as ensuring that the infomask bits set on the
-	 * tuple are consistent with the pg_upgrade scenario).  If the caller is
-	 * expecting this to be called only on recently created multis, then we
-	 * raise an error.
+	 * truncation.  Returning the wrong values could lead to an incorrect
+	 * visibility result.  However, to support pg_upgrade we need to allow an
+	 * empty set to be returned regardless, if the caller is willing to accept
+	 * it; the caller is expected to check that it's an allowed condition
+	 * (such as ensuring that the infomask bits set on the tuple are
+	 * consistent with the pg_upgrade scenario).  If the caller is expecting
+	 * this to be called only on recently created multis, then we raise an
+	 * error.
 	 *
 	 * Conversely, an ID >= nextMXact shouldn't ever be seen here; if it is
 	 * seen, it implies undetected ID wraparound has occurred.  This raises a
@@ -1383,8 +1383,8 @@ retry:
 
 /*
  * MultiXactHasRunningRemoteMembers
- * 		Does the given multixact have still-live members from
- * 		transactions other than our own?
+ *		Does the given multixact have still-live members from
+ *		transactions other than our own?
  */
 bool
 MultiXactHasRunningRemoteMembers(MultiXactId multi)
@@ -1935,7 +1935,7 @@ MaybeExtendOffsetSlru(void)
 
 	if (!SimpleLruDoesPhysicalPageExist(MultiXactOffsetCtl, pageno))
 	{
-		int		slotno;
+		int			slotno;
 
 		/*
 		 * Fortunately for us, SimpleLruWritePage is already prepared to deal
@@ -2142,11 +2142,11 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
 	 * enough to contain the next value that would be created.
 	 *
 	 * We need to do this pretty early during the first startup in binary
-	 * upgrade mode: before StartupMultiXact() in fact, because this routine is
-	 * called even before that by StartupXLOG().  And we can't do it earlier
-	 * than at this point, because during that first call of this routine we
-	 * determine the MultiXactState->nextMXact value that MaybeExtendOffsetSlru
-	 * needs.
+	 * upgrade mode: before StartupMultiXact() in fact, because this routine
+	 * is called even before that by StartupXLOG().  And we can't do it
+	 * earlier than at this point, because during that first call of this
+	 * routine we determine the MultiXactState->nextMXact value that
+	 * MaybeExtendOffsetSlru needs.
 	 */
 	if (IsBinaryUpgrade)
 		MaybeExtendOffsetSlru();
@@ -2221,11 +2221,11 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 	/*
 	 * Determine the offset of the oldest multixact that might still be
-	 * referenced.  Normally, we can read the offset from the multixact itself,
-	 * but there's an important special case: if there are no multixacts in
-	 * existence at all, oldest_datminmxid obviously can't point to one.  It
-	 * will instead point to the multixact ID that will be assigned the next
-	 * time one is needed.
+	 * referenced.  Normally, we can read the offset from the multixact
+	 * itself, but there's an important special case: if there are no
+	 * multixacts in existence at all, oldest_datminmxid obviously can't point
+	 * to one.  It will instead point to the multixact ID that will be
+	 * assigned the next time one is needed.
 	 *
 	 * NB: oldest_dataminmxid is the oldest multixact that might still be
 	 * referenced from a table, unlike in DetermineSafeOldestOffset, where we
@@ -2302,8 +2302,8 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 					(errmsg_plural("database \"%s\" must be vacuumed before %u more MultiXactId is used",
 								   "database \"%s\" must be vacuumed before %u more MultiXactIds are used",
 								   multiWrapLimit - curMulti,
-							oldest_datname,
-							multiWrapLimit - curMulti),
+								   oldest_datname,
+								   multiWrapLimit - curMulti),
 					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
 							 "You might also need to commit or roll back old prepared transactions.")));
 		else
@@ -2311,8 +2311,8 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 					(errmsg_plural("database with OID %u must be vacuumed before %u more MultiXactId is used",
 								   "database with OID %u must be vacuumed before %u more MultiXactIds are used",
 								   multiWrapLimit - curMulti,
-							oldest_datoid,
-							multiWrapLimit - curMulti),
+								   oldest_datoid,
+								   multiWrapLimit - curMulti),
 					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
 							 "You might also need to commit or roll back old prepared transactions.")));
 	}
@@ -2539,10 +2539,9 @@ DetermineSafeOldestOffset(MultiXactId oldestMXact)
 	 * obviously can't point to one.  It will instead point to the multixact
 	 * ID that will be assigned the next time one is needed.
 	 *
-	 * NB: oldestMXact should be the oldest multixact that still exists in
-	 * the SLRU, unlike in SetMultiXactIdLimit, where we do this same
-	 * computation based on the oldest value that might be referenced in a
-	 * table.
+	 * NB: oldestMXact should be the oldest multixact that still exists in the
+	 * SLRU, unlike in SetMultiXactIdLimit, where we do this same computation
+	 * based on the oldest value that might be referenced in a table.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 	if (MultiXactState->nextMXact == oldestMXact)
@@ -2680,7 +2679,7 @@ ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
  * to a value just less than the number of multixacts in use.  We hope that
  * this will quickly trigger autovacuuming on the table or tables with the
  * oldest relminmxid, thus allowing datminmxid values to advance and removing
- * some members.  
+ * some members.
  *
  * As the fraction of the member space currently in use grows, we become
  * more aggressive in clamping this value.  That not only causes autovacuum
@@ -2698,9 +2697,9 @@ int
 MultiXactMemberFreezeThreshold(void)
 {
 	MultiXactOffset members;
-	uint32 multixacts;
-	uint32 victim_multixacts;
-	double fraction;
+	uint32		multixacts;
+	uint32		victim_multixacts;
+	double		fraction;
 
 	ReadMultiXactCounts(&multixacts, &members);
 
@@ -2725,16 +2724,16 @@ MultiXactMemberFreezeThreshold(void)
 
 /*
  * SlruScanDirectory callback.
- * 		This callback deletes segments that are outside the range determined by
- * 		the given page numbers.
+ *		This callback deletes segments that are outside the range determined by
+ *		the given page numbers.
  *
  * Both range endpoints are exclusive (that is, segments containing any of
  * those pages are kept.)
  */
 typedef struct MembersLiveRange
 {
-	int		rangeStart;
-	int		rangeEnd;
+	int			rangeStart;
+	int			rangeEnd;
 } MembersLiveRange;
 
 static bool
@@ -2742,15 +2741,15 @@ SlruScanDirCbRemoveMembers(SlruCtl ctl, char *filename, int segpage,
 						   void *data)
 {
 	MembersLiveRange *range = (MembersLiveRange *) data;
-	MultiXactOffset	nextOffset;
+	MultiXactOffset nextOffset;
 
 	if ((segpage == range->rangeStart) ||
 		(segpage == range->rangeEnd))
-		return false;		/* easy case out */
+		return false;			/* easy case out */
 
 	/*
-	 * To ensure that no segment is spuriously removed, we must keep track
-	 * of new segments added since the start of the directory scan; to do this,
+	 * To ensure that no segment is spuriously removed, we must keep track of
+	 * new segments added since the start of the directory scan; to do this,
 	 * we update our end-of-range point as we run.
 	 *
 	 * As an optimization, we can skip looking at shared memory if we know for
@@ -2819,12 +2818,12 @@ SlruScanDirCbFindEarliest(SlruCtl ctl, char *filename, int segpage, void *data)
 void
 TruncateMultiXact(void)
 {
-	MultiXactId		oldestMXact;
+	MultiXactId oldestMXact;
 	MultiXactOffset oldestOffset;
-	MultiXactOffset	nextOffset;
+	MultiXactOffset nextOffset;
 	mxtruncinfo trunc;
 	MultiXactId earliest;
-	MembersLiveRange	range;
+	MembersLiveRange range;
 
 	Assert(AmCheckpointerProcess() || AmStartupProcess() ||
 		   !IsPostmasterEnvironment);
@@ -2879,7 +2878,6 @@ TruncateMultiXact(void)
 	SimpleLruTruncate(MultiXactOffsetCtl,
 					  MultiXactIdToOffsetPage(oldestMXact));
 
-	
 	/*
 	 * Now, and only now, we can advance the stop point for multixact members.
 	 * If we did it any sooner, the segments we deleted above might already
