@@ -68,8 +68,6 @@ INSERT INTO document VALUES
     ( 6, 22, 1, 'rls_regress_user2', 'great science fiction'),
     ( 7, 33, 2, 'rls_regress_user2', 'great technology book'),
     ( 8, 44, 1, 'rls_regress_user2', 'great manga');
-VACUUM ANALYZE category;
-VACUUM ANALYZE document;
 ALTER TABLE document ENABLE ROW LEVEL SECURITY;
 -- user's security level must be higher than or equal to document's
 CREATE POLICY p1 ON document
@@ -186,19 +184,20 @@ EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
 (7 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                           QUERY PLAN                           
-----------------------------------------------------------------
- Nested Loop
-   Join Filter: (document.cid = category.cid)
-   ->  Subquery Scan on document
-         Filter: f_leak(document.dtitle)
-         ->  Seq Scan on document document_1
-               Filter: (dlevel <= $0)
-               InitPlan 1 (returns $0)
-                 ->  Index Scan using uaccount_pkey on uaccount
-                       Index Cond: (pguser = "current_user"())
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (category.cid = document.cid)
    ->  Seq Scan on category
-(10 rows)
+   ->  Hash
+         ->  Subquery Scan on document
+               Filter: f_leak(document.dtitle)
+               ->  Seq Scan on document document_1
+                     Filter: (dlevel <= $0)
+                     InitPlan 1 (returns $0)
+                       ->  Index Scan using uaccount_pkey on uaccount
+                             Index Cond: (pguser = "current_user"())
+(11 rows)
 
 -- only owner can change policies
 ALTER POLICY p1 ON document USING (true);    --fail
@@ -276,12 +275,12 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
                      QUERY PLAN                     
 ----------------------------------------------------
  Nested Loop
-   Join Filter: (document.cid = category.cid)
    ->  Subquery Scan on document
          Filter: f_leak(document.dtitle)
          ->  Seq Scan on document document_1
                Filter: (dauthor = "current_user"())
-   ->  Seq Scan on category
+   ->  Index Scan using category_pkey on category
+         Index Cond: (cid = document.cid)
 (7 rows)
 
 -- interaction of FK/PK constraints
@@ -296,12 +295,12 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
  did | cid | dlevel |      dauthor      |       dtitle       | cid |   cname    
 -----+-----+--------+-------------------+--------------------+-----+------------
-   1 |  11 |      1 | rls_regress_user1 | my first novel     |  11 | novel
    2 |  11 |      2 | rls_regress_user1 | my second novel    |  11 | novel
-   3 |  22 |      2 | rls_regress_user1 | my science fiction |     | 
-   4 |  44 |      1 | rls_regress_user1 | my first manga     |     | 
-   5 |  44 |      2 | rls_regress_user1 | my second manga    |     | 
+   1 |  11 |      1 | rls_regress_user1 | my first novel     |  11 | novel
      |     |        |                   |                    |  33 | technology
+   5 |  44 |      2 | rls_regress_user1 | my second manga    |     | 
+   4 |  44 |      1 | rls_regress_user1 | my first manga     |     | 
+   3 |  22 |      2 | rls_regress_user1 | my science fiction |     | 
 (6 rows)
 
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
@@ -313,8 +312,8 @@ SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
  did | cid | dlevel |      dauthor      |        dtitle         | cid |      cname      
 -----+-----+--------+-------------------+-----------------------+-----+-----------------
    6 |  22 |      1 | rls_regress_user2 | great science fiction |  22 | science fiction
-   7 |  33 |      2 | rls_regress_user2 | great technology book |     | 
    8 |  44 |      1 | rls_regress_user2 | great manga           |  44 | manga
+   7 |  33 |      2 | rls_regress_user2 | great technology book |     | 
 (3 rows)
 
 INSERT INTO document VALUES (10, 33, 1, current_user, 'hoge');

@@ -82,9 +82,6 @@ INSERT INTO document VALUES
     ( 7, 33, 2, 'rls_regress_user2', 'great technology book'),
     ( 8, 44, 1, 'rls_regress_user2', 'great manga');
 
-VACUUM ANALYZE category;
-VACUUM ANALYZE document;
-
 ALTER TABLE document ENABLE ROW LEVEL SECURITY;
 
 -- user's security level must be higher than or equal to document's
