@@ -24,4 +24,11 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
+<!-- bug fix from <https://sourceforge.net/p/docbook/bugs/1360/#831b> -->
+
+<xsl:template match="varlistentry/term" mode="xref-to">
+  <xsl:param name="verbose" select="1"/>
+  <xsl:apply-templates mode="no.anchor.mode"/>
+</xsl:template>
+
 </xsl:stylesheet>
