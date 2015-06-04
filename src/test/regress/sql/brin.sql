@@ -56,14 +56,14 @@ INSERT INTO brintest SELECT
 	int4range(thousand, twothousand),
 	format('%s/%s%s', odd, even, tenthous)::pg_lsn,
 	box(point(odd, even), point(thousand, twothousand))
-FROM tenk1 LIMIT 100;
+FROM tenk1 ORDER BY unique2 LIMIT 100;
 
 -- throw in some NULL's and different values
 INSERT INTO brintest (inetcol, cidrcol, int4rangecol) SELECT
 	inet 'fe80::6e40:8ff:fea9:8c46' + tenthous,
 	cidr 'fe80::6e40:8ff:fea9:8c46' + tenthous,
 	'empty'::int4range
-FROM tenk1 LIMIT 25;
+FROM tenk1 ORDER BY thousand, tenthous LIMIT 25;
 
 CREATE INDEX brinidx ON brintest USING brin (
 	byteacol,
@@ -245,7 +245,7 @@ INSERT INTO brintest SELECT
 	int4range(thousand, twothousand),
 	format('%s/%s%s', odd, even, tenthous)::pg_lsn,
 	box(point(odd, even), point(thousand, twothousand))
-FROM tenk1 LIMIT 5 OFFSET 5;
+FROM tenk1 ORDER BY unique2 LIMIT 5 OFFSET 5;
 
 VACUUM brintest;  -- force a summarization cycle in brinidx
 
