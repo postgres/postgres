@@ -88,7 +88,6 @@ main(int argc, char **argv)
 		{"format", 1, NULL, 'F'},
 		{"function", 1, NULL, 'P'},
 		{"host", 1, NULL, 'h'},
-		{"ignore-version", 0, NULL, 'i'},
 		{"index", 1, NULL, 'I'},
 		{"jobs", 1, NULL, 'j'},
 		{"list", 0, NULL, 'l'},
@@ -147,7 +146,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:j:lL:n:Op:P:RsS:t:T:U:vwWx1",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:Op:P:RsS:t:T:U:vwWx1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -177,9 +176,6 @@ main(int argc, char **argv)
 			case 'h':
 				if (strlen(optarg) != 0)
 					opts->pghost = pg_strdup(optarg);
-				break;
-			case 'i':
-				/* ignored, deprecated option */
 				break;
 
 			case 'j':			/* number of restore jobs */

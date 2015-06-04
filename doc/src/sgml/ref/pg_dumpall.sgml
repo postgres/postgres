@@ -121,16 +121,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i</></term>
-      <term><option>--ignore-version</></term>
-      <listitem>
-       <para>
-        A deprecated option that is now ignored.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-o</></term>
       <term><option>--oids</></term>
       <listitem>

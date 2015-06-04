@@ -280,16 +280,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i</></term>
-      <term><option>--ignore-version</></term>
-      <listitem>
-       <para>
-        A deprecated option that is now ignored.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-j <replaceable class="parameter">njobs</replaceable></></term>
       <term><option>--jobs=<replaceable class="parameter">njobs</replaceable></></term>
       <listitem>
