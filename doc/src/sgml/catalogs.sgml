@@ -1889,11 +1889,11 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       All multitransaction IDs before this one have been replaced by a
+       All multixact IDs before this one have been replaced by a
        transaction ID in this table.  This is used to track
-       whether the table needs to be vacuumed in order to prevent multitransaction ID
-       ID wraparound or to allow <literal>pg_clog</> to be shrunk.  Zero
-       (<symbol>InvalidTransactionId</symbol>) if the relation is not a table.
+       whether the table needs to be vacuumed in order to prevent multixact ID
+       wraparound or to allow <literal>pg_multixact</> to be shrunk.  Zero
+       (<symbol>InvalidMultiXactId</symbol>) if the relation is not a table.
       </entry>
      </row>
 
@@ -2557,10 +2557,10 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       All multitransaction IDs before this one have been replaced with a
+       All multixact IDs before this one have been replaced with a
        transaction ID in this database.  This is used to
        track whether the database needs to be vacuumed in order to prevent
-       transaction ID wraparound or to allow <literal>pg_clog</> to be shrunk.
+       multixact ID wraparound or to allow <literal>pg_multixact</> to be shrunk.
        It is the minimum of the per-table
        <structname>pg_class</>.<structfield>relminmxid</> values.
       </entry>
