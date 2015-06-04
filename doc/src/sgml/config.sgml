@@ -4707,7 +4707,7 @@ local0.*    /var/log/postgresql
          of printing those items.  For example, to generate the session
          identifier from <literal>pg_stat_activity</>, use this query:
 <programlisting>
-SELECT to_hex(EXTRACT(EPOCH FROM backend_start)::integer) || '.' ||
+SELECT to_hex(trunc(EXTRACT(EPOCH FROM backend_start))::integer) || '.' ||
        to_hex(pid)
 FROM pg_stat_activity;
 </programlisting>
