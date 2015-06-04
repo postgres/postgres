@@ -96,7 +96,7 @@ CREATE TABLE brinopers (colname name, typ text, op text[], value text[],
 	check (cardinality(op) = cardinality(value)));
 INSERT INTO brinopers VALUES
 	('byteacol', 'bytea', '{>, >=, =, <=, <}', '{AAAAAA, AAAAAA, BNAAAABNAAAABNAAAABNAAAABNAAAABNAAAABNAAAABNAAAA, ZZZZZZ, ZZZZZZ}'),
-	('charcol', 'char', '{>, >=, =, <=, <}', '{A, A, M, Z, Z}'),
+	('charcol', '"char"', '{>, >=, =, <=, <}', '{A, A, M, Z, Z}'),
 	('namecol', 'name', '{>, >=, =, <=, <}', '{AAAAAA, AAAAAA, MAAAAA, ZZAAAA, ZZAAAA}'),
 	('int2col', 'int2', '{>, >=, =, <=, <}', '{0, 0, 800, 999, 999}'),
 	('int2col', 'int4', '{>, >=, =, <=, <}', '{0, 0, 800, 999, 1999}'),
