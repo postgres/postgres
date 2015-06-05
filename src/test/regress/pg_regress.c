@@ -1974,8 +1974,7 @@ help(void)
 	printf(_("                            (can be used multiple times to concatenate)\n"));
 	printf(_("  --temp-instance=DIR       create a temporary instance in DIR\n"));
 	printf(_("  --use-existing            use an existing installation\n"));
-	//XXX
-		printf(_("\n"));
+	printf(_("\n"));
 	printf(_("Options for \"temp-instance\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
 	printf(_("  --port=PORT               start postmaster on PORT\n"));
