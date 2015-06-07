@@ -754,10 +754,17 @@ static const struct cachedesc cacheinfo[] = {
 	}
 };
 
-static CatCache *SysCache[
-						  lengthof(cacheinfo)];
-static int	SysCacheSize = lengthof(cacheinfo);
+#define SysCacheSize	((int) lengthof(cacheinfo))
+
+static CatCache *SysCache[SysCacheSize];
+
 static bool CacheInitialized = false;
+
+/* Sorted array of OIDs of tables and indexes used by caches */
+static Oid	SysCacheSupportingRelOid[SysCacheSize * 2];
+static int	SysCacheSupportingRelOidSize;
+
+static int	oid_compare(const void *a, const void *b);
 
 
 /*
@@ -772,10 +779,12 @@ void
 InitCatalogCache(void)
 {
 	int			cacheId;
+	int			i,
+				j;
 
 	Assert(!CacheInitialized);
 
-	MemSet(SysCache, 0, sizeof(SysCache));
+	SysCacheSupportingRelOidSize = 0;
 
 	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
 	{
@@ -788,7 +797,25 @@ InitCatalogCache(void)
 		if (!PointerIsValid(SysCache[cacheId]))
 			elog(ERROR, "could not initialize cache %u (%d)",
 				 cacheinfo[cacheId].reloid, cacheId);
+		/* Accumulate data for OID lists, too */
+		SysCacheSupportingRelOid[SysCacheSupportingRelOidSize++] =
+			cacheinfo[cacheId].reloid;
+		SysCacheSupportingRelOid[SysCacheSupportingRelOidSize++] =
+			cacheinfo[cacheId].indoid;
 	}
+
+	Assert(SysCacheSupportingRelOidSize <= lengthof(SysCacheSupportingRelOid));
+
+	/* Sort and de-dup OID arrays, so we can use binary search. */
+	pg_qsort(SysCacheSupportingRelOid, SysCacheSupportingRelOidSize,
+			 sizeof(Oid), oid_compare);
+	for (i = 1, j = 0; i < SysCacheSupportingRelOidSize; i++)
+	{
+		if (SysCacheSupportingRelOid[i] != SysCacheSupportingRelOid[j])
+			SysCacheSupportingRelOid[++j] = SysCacheSupportingRelOid[i];
+	}
+	SysCacheSupportingRelOidSize = j + 1;
+
 	CacheInitialized = true;
 }
 
@@ -1051,4 +1078,44 @@ SearchSysCacheList(int cacheId, int nkeys,
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,
 							  key1, key2, key3, key4);
+}
+
+/*
+ * Test whether a relation supports a system cache, ie it is either a
+ * cached table or the index used for a cache.
+ */
+bool
+RelationSupportsSysCache(Oid relid)
+{
+	int			low = 0,
+				high = SysCacheSupportingRelOidSize - 1;
+
+	while (low <= high)
+	{
+		int			middle = low + (high - low) / 2;
+
+		if (SysCacheSupportingRelOid[middle] == relid)
+			return true;
+		if (SysCacheSupportingRelOid[middle] < relid)
+			low = middle + 1;
+		else
+			high = middle - 1;
+	}
+
+	return false;
+}
+
+
+/*
+ * OID comparator for pg_qsort
+ */
+static int
+oid_compare(const void *a, const void *b)
+{
+	Oid			oa = *((const Oid *) a);
+	Oid			ob = *((const Oid *) b);
+
+	if (oa == ob)
+		return 0;
+	return (oa > ob) ? 1 : -1;
 }
