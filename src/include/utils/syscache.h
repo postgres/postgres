@@ -18,7 +18,7 @@
 
 #include "access/attnum.h"
 #include "access/htup.h"
-/* we purposedly do not include utils/catcache.h here */
+/* we intentionally do not include utils/catcache.h here */
 
 /*
  *		SysCache identifiers.
@@ -131,8 +131,9 @@ struct catclist;
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
 
-extern bool RelationInvalidatesSnapshotsOnly(Oid);
-extern bool RelationHasSysCache(Oid);
+extern bool RelationInvalidatesSnapshotsOnly(Oid relid);
+extern bool RelationHasSysCache(Oid relid);
+extern bool RelationSupportsSysCache(Oid relid);
 
 /*
  * The use of the macros below rather than direct calls to the corresponding
