@@ -120,6 +120,8 @@ extern uint32 GetSysCacheHashValue(int cacheId,
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
 
+extern bool RelationSupportsSysCache(Oid relid);
+
 /*
  * The use of the macros below rather than direct calls to the corresponding
  * functions is encouraged, as it insulates the caller from changes in the
