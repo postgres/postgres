@@ -17260,8 +17260,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-create">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-create">
         <indexterm>
          <primary>pg_replication_origin_create</primary>
         </indexterm>
@@ -17276,8 +17276,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-drop">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-drop">
         <indexterm>
          <primary>pg_replication_origin_drop</primary>
         </indexterm>
@@ -17308,8 +17308,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-session-setup">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-session-setup">
         <indexterm>
          <primary>pg_replication_origin_session_setup</primary>
         </indexterm>
@@ -17357,8 +17357,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-session-progress">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-session-progress">
         <indexterm>
          <primary>pg_replication_origin_session_progress</primary>
         </indexterm>
@@ -17375,8 +17375,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-xact-setup">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-xact-setup">
         <indexterm>
          <primary>pg_replication_origin_xact_setup</primary>
         </indexterm>
@@ -17394,8 +17394,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-xact-reset">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-xact-reset">
         <indexterm>
          <primary>pg_replication_origin_xact_reset</primary>
         </indexterm>
@@ -17429,8 +17429,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        </entry>
       </row>
 
-      <row id="pg-replication-origin-progress">
-       <entry>
+      <row>
+       <entry id="pg-replication-origin-progress">
         <indexterm>
          <primary>pg_replication_origin_progress</primary>
         </indexterm>
