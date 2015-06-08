@@ -10302,8 +10302,9 @@ table2-mapping
        <row>
         <entry><literal>-</literal></entry>
         <entry><type>text</type></entry>
-        <entry>Delete the field with a specified key, or element with this
-        value</entry>
+        <entry>Delete key/value pair or <emphasis>string</emphasis>
+        element from left operand.  Key/value pairs are matched based
+        on their key value.</entry>
         <entry><literal>'{"a": "b"}'::jsonb - 'a' </literal></entry>
        </row>
        <row>
