@@ -6203,7 +6203,7 @@ StartupXLOG(void)
 	 * safest to just remove them always and let them be rebuilt during the
 	 * first backend startup.  These files needs to be removed from all
 	 * directories including pg_tblspc, however the symlinks are created only
-	 * after reading tablesapce_map file in case of archive recovery from
+	 * after reading tablespace_map file in case of archive recovery from
 	 * backup, so needs to clear old relcache files here after creating
 	 * symlinks.
 	 */
@@ -9728,7 +9728,7 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  * A non-exclusive backup is used for the streaming base backups (see
  * src/backend/replication/basebackup.c). The difference to exclusive backups
  * is that the backup label and tablespace map files are not written to disk.
- * Instead, there would-be contents are returned in *labelfile and *tblspcmapfile,
+ * Instead, their would-be contents are returned in *labelfile and *tblspcmapfile,
  * and the caller is responsible for including them in the backup archive as
  * 'backup_label' and 'tablespace_map'. There can be many non-exclusive backups
  * active at the same time, and they don't conflict with an exclusive backup

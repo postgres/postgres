@@ -969,7 +969,7 @@ SELECT pg_stop_backup();
    <para>
     It's also worth noting that the <function>pg_start_backup</> function
     makes files named <filename>backup_label</> and
-    <filename>tablesapce_map</> in the database cluster directory,
+    <filename>tablespace_map</> in the database cluster directory,
     which are removed by <function>pg_stop_backup</>.  These files will of
     course be archived as a part of your backup dump file.  The backup label
     file includes the label string you gave to <function>pg_start_backup</>,
