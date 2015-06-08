@@ -10309,8 +10309,9 @@ table2-mapping
        <row>
         <entry><literal>-</literal></entry>
         <entry><type>integer</type></entry>
-        <entry>Delete the field or element with specified index (Negative
-        integers count from the end)</entry>
+        <entry>Delete the array element with specified index (Negative
+        integers count from the end).  Throws an error if top level
+        container is not an array.</entry>
         <entry><literal>'["a", "b"]'::jsonb - 1 </literal></entry>
        </row>
        <row>

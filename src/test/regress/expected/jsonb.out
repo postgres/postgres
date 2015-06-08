@@ -3031,54 +3031,6 @@ select '["a","b","c"]'::jsonb - -4;
  ["a", "b", "c"]
 (1 row)
 
-select '{"a":1, "b":2, "c":3}'::jsonb - 3;
-         ?column?         
---------------------------
- {"a": 1, "b": 2, "c": 3}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - 2;
-     ?column?     
-------------------
- {"a": 1, "b": 2}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - 1;
-     ?column?     
-------------------
- {"a": 1, "c": 3}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - 0;
-     ?column?     
-------------------
- {"b": 2, "c": 3}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - -1;
-     ?column?     
-------------------
- {"a": 1, "b": 2}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - -2;
-     ?column?     
-------------------
- {"a": 1, "c": 3}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - -3;
-     ?column?     
-------------------
- {"b": 2, "c": 3}
-(1 row)
-
-select '{"a":1, "b":2, "c":3}'::jsonb - -4;
-         ?column?         
---------------------------
- {"a": 1, "b": 2, "c": 3}
-(1 row)
-
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{n}', '[1,2,3]');
                                 jsonb_set                                 
 --------------------------------------------------------------------------
@@ -3192,12 +3144,8 @@ select '[]'::jsonb - 'a';
 
 select '"a"'::jsonb - 1; -- error
 ERROR:  cannot delete from scalar
-select '{}'::jsonb -  1 ;
- ?column? 
-----------
- {}
-(1 row)
-
+select '{}'::jsonb -  1; -- error
+ERROR:  cannot delete from object using integer subscript
 select '[]'::jsonb - 1;
  ?column? 
 ----------

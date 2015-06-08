@@ -738,15 +738,6 @@ select '["a","b","c"]'::jsonb - -2;
 select '["a","b","c"]'::jsonb - -3;
 select '["a","b","c"]'::jsonb - -4;
 
-select '{"a":1, "b":2, "c":3}'::jsonb - 3;
-select '{"a":1, "b":2, "c":3}'::jsonb - 2;
-select '{"a":1, "b":2, "c":3}'::jsonb - 1;
-select '{"a":1, "b":2, "c":3}'::jsonb - 0;
-select '{"a":1, "b":2, "c":3}'::jsonb - -1;
-select '{"a":1, "b":2, "c":3}'::jsonb - -2;
-select '{"a":1, "b":2, "c":3}'::jsonb - -3;
-select '{"a":1, "b":2, "c":3}'::jsonb - -4;
-
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{n}', '[1,2,3]');
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{b,-1}', '[1,2,3]');
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{d,1,0}', '[1,2,3]');
@@ -775,7 +766,7 @@ select '"a"'::jsonb - 'a'; -- error
 select '{}'::jsonb - 'a';
 select '[]'::jsonb - 'a';
 select '"a"'::jsonb - 1; -- error
-select '{}'::jsonb -  1 ;
+select '{}'::jsonb -  1; -- error
 select '[]'::jsonb - 1;
 select '"a"'::jsonb - '{a}'::text[]; -- error
 select '{}'::jsonb - '{a}'::text[];
