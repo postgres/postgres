@@ -50,7 +50,7 @@ const char *progname;
 
 
 static void startup_hacks(const char *progname);
-static void init_locale(int category, const char *locale);
+static void init_locale(const char *categoryname, int category, const char *locale);
 static void help(const char *progname);
 static void check_root(const char *progname);
 static char *get_current_username(const char *progname);
@@ -112,31 +112,31 @@ main(int argc, char *argv[])
 		char	   *env_locale;
 
 		if ((env_locale = getenv("LC_COLLATE")) != NULL)
-			init_locale(LC_COLLATE, env_locale);
+			init_locale("LC_COLLATE", LC_COLLATE, env_locale);
 		else
-			init_locale(LC_COLLATE, "");
+			init_locale("LC_COLLATE", LC_COLLATE, "");
 
 		if ((env_locale = getenv("LC_CTYPE")) != NULL)
-			init_locale(LC_CTYPE, env_locale);
+			init_locale("LC_CTYPE", LC_CTYPE, env_locale);
 		else
-			init_locale(LC_CTYPE, "");
+			init_locale("LC_CTYPE", LC_CTYPE, "");
 	}
 #else
-	init_locale(LC_COLLATE, "");
-	init_locale(LC_CTYPE, "");
+	init_locale("LC_COLLATE", LC_COLLATE, "");
+	init_locale("LC_CTYPE", LC_CTYPE, "");
 #endif
 
 #ifdef LC_MESSAGES
-	init_locale(LC_MESSAGES, "");
+	init_locale("LC_MESSAGES", LC_MESSAGES, "");
 #endif
 
 	/*
 	 * We keep these set to "C" always, except transiently in pg_locale.c; see
 	 * that file for explanations.
 	 */
-	init_locale(LC_MONETARY, "C");
-	init_locale(LC_NUMERIC, "C");
-	init_locale(LC_TIME, "C");
+	init_locale("LC_MONETARY", LC_MONETARY, "C");
+	init_locale("LC_NUMERIC", LC_NUMERIC, "C");
+	init_locale("LC_TIME", LC_TIME, "C");
 
 	/*
 	 * Now that we have absorbed as much as we wish to from the locale
@@ -277,11 +277,12 @@ startup_hacks(const char *progname)
  * category's environment variable.
  */
 static void
-init_locale(int category, const char *locale)
+init_locale(const char *categoryname, int category, const char *locale)
 {
 	if (pg_perm_setlocale(category, locale) == NULL &&
 		pg_perm_setlocale(category, "C") == NULL)
-		elog(FATAL, "could not adopt C locale");
+		elog(FATAL, "could not adopt \"%s\" locale nor C locale for %s",
+			 locale, categoryname);
 }
 
 
