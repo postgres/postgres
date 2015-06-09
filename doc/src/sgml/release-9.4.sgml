@@ -65,13 +65,13 @@ Branch: REL9_3_STABLE [2a9b01928] 2015-06-05 09:34:15 -0400
      </para>
 
      <para>
-      The  <application>pg_upgrade</> bug in question was that it would
+      The <application>pg_upgrade</> bug in question was that it would
       set <literal>oldestMultiXid</> to 1 in <filename>pg_control</> even
       if the true value should be higher.  With the fixes introduced in
       this release, such a situation will result in immediate emergency
       autovacuuming until a correct <literal>oldestMultiXid</> value can
-      be determined.  Users can avoid that by doing manual
-      vacuuming <emphasis>before</> upgrading to this release.
+      be determined.  If that would pose a hardship, users can avoid it by
+      doing manual vacuuming <emphasis>before</> upgrading to this release.
       In detail:
 
       <orderedlist>
@@ -97,8 +97,7 @@ Branch: REL9_3_STABLE [2a9b01928] 2015-06-05 09:34:15 -0400
          and <xref linkend="guc-vacuum-multixact-freeze-table-age"> set to
          zero.  (You can use the vacuum cost delay parameters described
          in <xref linkend="runtime-config-resource-vacuum-cost"> to reduce
-         the performance consequences for concurrent sessions.)  You must
-         use <productname>PostgreSQL</> 9.3.5 or later to perform this step.
+         the performance consequences for concurrent sessions.)
         </para>
        </listitem>
       </orderedlist>
