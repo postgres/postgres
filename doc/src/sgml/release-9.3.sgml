@@ -1,6 +1,155 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-9">
+  <title>Release 9.3.9</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-12</simpara>
+  </note>
+
+  <para>
+   This release contains a small number of fixes from 9.3.8.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.9</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading an installation that was previously
+    upgraded using a <application>pg_upgrade</> version between 9.3.0 and
+    9.3.4 inclusive, see the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.3.7,
+    see <xref linkend="release-9-3-7">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix possible failure to recover from an inconsistent database state
+      (Robert Haas)
+     </para>
+
+     <para>
+      Recent <productname>PostgreSQL</> releases introduced mechanisms to
+      protect against multixact wraparound, but some of that code did not
+      account for the possibility that it would need to run during crash
+      recovery, when the database may not be in a consistent state.  This
+      could result in failure to restart after a crash, or failure to start
+      up a secondary server.  The lingering effects of a previously-fixed
+      bug in <application>pg_upgrade</> could also cause such a failure, in
+      installations that had used <application>pg_upgrade</> versions
+      between 9.3.0 and 9.3.4.
+     </para>
+
+     <para>
+      The <application>pg_upgrade</> bug in question was that it would
+      set <literal>oldestMultiXid</> to 1 in <filename>pg_control</> even
+      if the true value should be higher.  With the fixes introduced in
+      this release, such a situation will result in immediate emergency
+      autovacuuming until a correct <literal>oldestMultiXid</> value can be
+      determined.  If that would pose a hardship, users can avoid it by
+      doing manual vacuuming <emphasis>before</> upgrading to this release.
+      In detail:
+
+      <orderedlist>
+       <listitem>
+        <para>
+         Check whether <application>pg_controldata</> reports <quote>Latest
+         checkpoint's oldestMultiXid</> to be 1.  If not, there's nothing
+         to do.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Look in <filename>PGDATA/pg_multixact/offsets</> to see if there's a
+         file named <filename>0000</>.  If there is, there's nothing to do.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Otherwise, for each table that has
+         <structname>pg_class</>.<structfield>relminmxid</> equal to 1,
+         <command>VACUUM</> that table with
+         both <xref linkend="guc-vacuum-multixact-freeze-min-age">
+         and <xref linkend="guc-vacuum-multixact-freeze-table-age"> set to
+         zero.  (You can use the vacuum cost delay parameters described
+         in <xref linkend="runtime-config-resource-vacuum-cost"> to reduce
+         the performance consequences for concurrent sessions.)  You must
+         use <productname>PostgreSQL</> 9.3.5 or later to perform this step.
+        </para>
+       </listitem>
+      </orderedlist>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare failure to invalidate relation cache init file (Tom Lane)
+     </para>
+
+     <para>
+      With just the wrong timing of concurrent activity, a <command>VACUUM
+      FULL</> on a system catalog might fail to update the <quote>init file</>
+      that's used to avoid cache-loading work for new sessions.  This would
+      result in later sessions being unable to access that catalog at all.
+      This is a very ancient bug, but it's so hard to trigger that no
+      reproducible case had been seen until recently.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid deadlock between incoming sessions and <literal>CREATE/DROP
+      DATABASE</> (Tom Lane)
+     </para>
+
+     <para>
+      A new session starting in a database that is the target of
+      a <command>DROP DATABASE</> command, or is the template for
+      a <command>CREATE DATABASE</> command, could cause the command to wait
+      for five seconds and then fail, even if the new session would have
+      exited before that.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve planner's cost estimates for semi-joins and anti-joins with
+      inner indexscans (Tom Lane, Tomas Vondra)
+     </para>
+
+     <para>
+      This type of plan is quite cheap when all the join clauses are used
+      as index scan conditions, even if the inner scan would nominally
+      fetch many rows, because the executor will stop after obtaining one
+      row.  The planner only partially accounted for that effect, and would
+      therefore overestimate the cost, leading it to possibly choose some
+      other much less efficient plan type.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3-8">
   <title>Release 9.3.8</title>
 
