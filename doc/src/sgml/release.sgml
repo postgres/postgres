@@ -10,7 +10,7 @@ postgresql.conf, pg_hba.conf,
 [A-Z][A-Z_ ]+[A-Z_]             <command>, <literal>, <envar>, <acronym>
 [A-Za-z_][A-Za-z0-9_]+()        <function>
 -[-A-Za-z_]+                    <option>
-[A-Za-z_]/[A-Za-z_]+            <filename>
+[A-Za-z_]+/[A-Za-z_]+           <filename>
 psql                            <application>
 pg_[A-Za-z0-9_]+                <application>, <structname>
 [A-Z][A-Z][A-Z_ ]*              <type>
