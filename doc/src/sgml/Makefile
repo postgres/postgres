@@ -271,9 +271,11 @@ htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
 
 %-A4.fo.tmp: stylesheet-fo.xsl %.xml
+	$(XMLLINT) --noout --valid $*.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type A4 -o $@ $^
 
 %-US.fo.tmp: stylesheet-fo.xsl %.xml
+	$(XMLLINT) --noout --valid $*.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
 
 FOP = fop
