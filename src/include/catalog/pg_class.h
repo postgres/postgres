@@ -167,7 +167,7 @@ DESCR("");
 #define		  REPLICA_IDENTITY_DEFAULT	'd'
 /* no replica identity is logged for this relation */
 #define		  REPLICA_IDENTITY_NOTHING	'n'
-/* all columns are loged as replica identity */
+/* all columns are logged as replica identity */
 #define		  REPLICA_IDENTITY_FULL		'f'
 /*
  * an explicitly chosen candidate key's columns are used as identity;
