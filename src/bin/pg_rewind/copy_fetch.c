@@ -43,7 +43,7 @@ traverse_datadir(const char *datadir, process_file_callback_t callback)
 /*
  * recursive part of traverse_datadir
  *
- * parent_path is the current subdirectory's path relative to datadir,
+ * parentpath is the current subdirectory's path relative to datadir,
  * or NULL at the top level.
  */
 static void
@@ -262,5 +262,5 @@ execute_pagemap(datapagemap_t *pagemap, const char *path)
 		copy_file_range(path, offset, offset + BLCKSZ, false);
 		/* Ok, this block has now been copied from new data dir to old */
 	}
-	free(iter);
+	pg_free(iter);
 }

@@ -69,7 +69,7 @@ libpqConnect(const char *connstr)
 	pg_free(str);
 
 	/*
-	 * Also check that full_page-writes are enabled. We can get torn pages if
+	 * Also check that full_page_writes is enabled. We can get torn pages if
 	 * a page is modified while we read it with pg_read_binary_file(), and we
 	 * rely on full page images to fix them.
 	 */
@@ -465,5 +465,5 @@ execute_pagemap(datapagemap_t *pagemap, const char *path)
 
 		fetch_file_range(path, offset, offset + BLCKSZ);
 	}
-	free(iter);
+	pg_free(iter);
 }

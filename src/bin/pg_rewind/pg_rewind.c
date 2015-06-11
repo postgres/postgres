@@ -121,7 +121,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:NnP", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "D:nP", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -370,7 +370,7 @@ sanityChecks(void)
 	if (ControlFile_target.data_checksum_version != PG_DATA_CHECKSUM_VERSION &&
 		!ControlFile_target.wal_log_hints)
 	{
-		pg_fatal("target server need to use either data checksums or \"wal_log_hints = on\"\n");
+		pg_fatal("target server needs to use either data checksums or \"wal_log_hints = on\"\n");
 	}
 
 	/*
@@ -450,7 +450,7 @@ findCommonAncestorTimeline(XLogRecPtr *recptr, TimeLineID *tli)
 			*recptr = entry->end;
 			*tli = entry->tli;
 
-			free(sourceHistory);
+			pg_free(sourceHistory);
 			return;
 		}
 	}

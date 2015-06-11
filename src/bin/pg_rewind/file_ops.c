@@ -105,10 +105,16 @@ write_target_range(char *buf, off_t begin, size_t size)
 	{
 		int			writelen;
 
+		errno = 0;
 		writelen = write(dstfd, p, writeleft);
 		if (writelen < 0)
+		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			pg_fatal("could not write file \"%s\": %s\n",
 					 dstpath, strerror(errno));
+		}
 
 		p += writelen;
 		writeleft -= writelen;

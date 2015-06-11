@@ -67,7 +67,7 @@ datapagemap_add(datapagemap_t *map, BlockNumber blkno)
  * Start iterating through all entries in the page map.
  *
  * After datapagemap_iterate, call datapagemap_next to return the entries,
- * until it returns NULL. After you're done, use free() to destroy the
+ * until it returns false. After you're done, use pg_free() to destroy the
  * iterator.
  */
 datapagemap_iterator_t *
@@ -122,5 +122,5 @@ datapagemap_print(datapagemap_t *map)
 	while (datapagemap_next(iter, &blocknum))
 		printf("  blk %u\n", blocknum);
 
-	free(iter);
+	pg_free(iter);
 }
