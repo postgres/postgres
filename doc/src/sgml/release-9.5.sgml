@@ -1860,6 +1860,13 @@
 
      <listitem>
       <para>
+       Add information about buffer pins to <application>pg_buffercache</>
+       display (Andres Freund)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Allow <application>pgstattuple</> to report approximate answers
        with less overhead using <function>pgstattuple_approx()</>
        (Abhijit Menon-Sen)
@@ -1911,13 +1918,6 @@
        <para>
         Allow pgbench to generate Gaussian/exponential distributions
         using <command>\setrandom</> (Kondo Mitsumasa, Fabien Coelho)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add information about buffer pins to <application>pg_buffercache</>
-        display (Andres Freund)
        </para>
       </listitem>
 
