@@ -1322,8 +1322,15 @@
 
      <listitem>
       <para>
-       Have <application>pg_basebackup</> use a tablespace mapping file,
-       to allow for file paths of 100+ characters in length (Amit Kapila)
+       Have <application>pg_basebackup</> use a tablespace mapping
+       file with the <application>tar</> format, to handle file paths
+       of 100+ characters in length and sybolic links on <systemitem
+       class="osname">MS Windows</> (Amit Kapila)
+      </para>
+
+      <para>
+       This change prevents <application>pg_basebackup</> from backing
+       up pre-9.5 servers.
       </para>
      </listitem>
 
