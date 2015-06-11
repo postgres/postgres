@@ -1501,8 +1501,8 @@
 
        <para>
         The remote snapshot must have been exported by
-        <function>pg_export_snapshot()</> or been defined as a
-        logical replication slot.  This can be used by parallel
+        <function>pg_export_snapshot()</> or been defined when creating
+        a logical replication slot.  This can be used by parallel
         <application>pg_dump</> to use a consistent snapshot across
         <application>pg_dump</> processes.
        </para>
@@ -1617,8 +1617,8 @@
        </para>
 
        <para>
-        This allows external tools to more easily process <acronym>WAL</>
-        files.
+        This allows external tools to more easily track what blocks
+        are modified.
        </para>
       </listitem>
 
@@ -1754,7 +1754,9 @@
 
       <listitem>
        <para>
-        Add icons to all <productname>MSVC</>-built binaries (Noah Misch)
+        Add icons to all <productname>MSVC</>-built binaries and version
+        information to all <systemitem class="osname">MS Windows</>
+        binaries (Noah Misch)
        </para>
 
        <para>
