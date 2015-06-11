@@ -213,8 +213,8 @@
 
       <listitem>
        <para>
-        Improve hash creation performance (Tomas Vondra, Teodor Sigaev,
-        Tom Lane)
+        Improve hash creation and lookup performance (Tomas Vondra,
+        Teodor Sigaev, Tom Lane, Robert Haas)
        </para>
       </listitem>
 
