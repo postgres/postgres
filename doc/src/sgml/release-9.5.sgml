@@ -1143,7 +1143,8 @@
        </para>
 
        <para>
-        WHAT IS A STATISTICS SNAPSHOT?
+        This represents the last time the snapshot files was written to
+        the file system.
        </para>
       </listitem>
 
