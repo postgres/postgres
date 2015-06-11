@@ -221,7 +221,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	ReplicationSlotValidateName(name, ERROR);
 
 	/*
-	 * If some other backend ran this code currently with us, we'd likely both
+	 * If some other backend ran this code concurrently with us, we'd likely both
 	 * allocate the same slot, and that would be bad.  We'd also be at risk of
 	 * missing a name collision.  Also, we don't want to try to create a new
 	 * slot while somebody's busy cleaning up an old one, because we might
