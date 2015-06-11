@@ -313,7 +313,7 @@ PostgreSQL documentation
             Stream the transaction log while the backup is created. This will
             open a second connection to the server and start streaming the
             transaction log in parallel while running the backup. Therefore,
-            it will use up two slots configured by the
+            it will use up two connections configured by the
             <xref linkend="guc-max-wal-senders"> parameter. As long as the
              client can keep up with transaction log received, using this mode
              requires no extra transaction logs to be saved on the master.
