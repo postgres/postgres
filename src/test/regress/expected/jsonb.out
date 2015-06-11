@@ -2947,37 +2947,37 @@ select jsonb_delete('{"a":1 , "b":2, "c":3}'::jsonb, 'd');
  {"a": 1, "b": 2, "c": 3}
 (1 row)
 
-select '{"a":1 , "b":2, "c":3}'::jsonb - 'a'::text;
+select '{"a":1 , "b":2, "c":3}'::jsonb - 'a';
      ?column?     
 ------------------
  {"b": 2, "c": 3}
 (1 row)
 
-select '{"a":null , "b":2, "c":3}'::jsonb - 'a'::text;
+select '{"a":null , "b":2, "c":3}'::jsonb - 'a';
      ?column?     
 ------------------
  {"b": 2, "c": 3}
 (1 row)
 
-select '{"a":1 , "b":2, "c":3}'::jsonb - 'b'::text;
+select '{"a":1 , "b":2, "c":3}'::jsonb - 'b';
      ?column?     
 ------------------
  {"a": 1, "c": 3}
 (1 row)
 
-select '{"a":1 , "b":2, "c":3}'::jsonb - 'c'::text;
+select '{"a":1 , "b":2, "c":3}'::jsonb - 'c';
      ?column?     
 ------------------
  {"a": 1, "b": 2}
 (1 row)
 
-select '{"a":1 , "b":2, "c":3}'::jsonb - 'd'::text;
+select '{"a":1 , "b":2, "c":3}'::jsonb - 'd';
          ?column?         
 --------------------------
  {"a": 1, "b": 2, "c": 3}
 (1 row)
 
-select pg_column_size('{"a":1 , "b":2, "c":3}'::jsonb - 'b'::text) = pg_column_size('{"a":1, "b":2}'::jsonb);
+select pg_column_size('{"a":1 , "b":2, "c":3}'::jsonb - 'b') = pg_column_size('{"a":1, "b":2}'::jsonb);
  ?column? 
 ----------
  t
@@ -3091,37 +3091,37 @@ select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::j
  {"a": 1, "b": [1, {"f": "test"}], "c": {"1": 2}, "d": {"1": [2, 3]}, "n": null}
 (1 row)
 
-select jsonb_delete('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{n}'::text[]);
-                       jsonb_delete                       
+select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{n}');
+                    jsonb_delete_path                     
 ----------------------------------------------------------
  {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [2, 3]}}
 (1 row)
 
-select jsonb_delete('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{b,-1}'::text[]);
-                           jsonb_delete                           
+select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{b,-1}');
+                        jsonb_delete_path                         
 ------------------------------------------------------------------
  {"a": 1, "b": [1], "c": {"1": 2}, "d": {"1": [2, 3]}, "n": null}
 (1 row)
 
-select jsonb_delete('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{d,1,0}'::text[]);
-                           jsonb_delete                           
+select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{d,1,0}');
+                        jsonb_delete_path                         
 ------------------------------------------------------------------
  {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [3]}, "n": null}
 (1 row)
 
-select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb - '{n}'::text[];
+select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{n}';
                          ?column?                         
 ----------------------------------------------------------
  {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [2, 3]}}
 (1 row)
 
-select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb - '{b,-1}'::text[];
+select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{b,-1}';
                              ?column?                             
 ------------------------------------------------------------------
  {"a": 1, "b": [1], "c": {"1": 2}, "d": {"1": [2, 3]}, "n": null}
 (1 row)
 
-select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb - '{d,1,0}'::text[];
+select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{d,1,0}';
                              ?column?                             
 ------------------------------------------------------------------
  {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [3]}, "n": null}
@@ -3152,15 +3152,15 @@ select '[]'::jsonb - 1;
  []
 (1 row)
 
-select '"a"'::jsonb - '{a}'::text[]; -- error
+select '"a"'::jsonb #- '{a}'; -- error
 ERROR:  cannot delete path in scalar
-select '{}'::jsonb - '{a}'::text[];
+select '{}'::jsonb #- '{a}';
  ?column? 
 ----------
  {}
 (1 row)
 
-select '[]'::jsonb - '{a}'::text[];
+select '[]'::jsonb #- '{a}';
  ?column? 
 ----------
  []

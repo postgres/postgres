@@ -10316,10 +10316,10 @@ table2-mapping
         <entry><literal>'["a", "b"]'::jsonb - 1 </literal></entry>
        </row>
        <row>
-        <entry><literal>-</literal></entry>
+        <entry><literal>#-</literal></entry>
         <entry><type>text[]</type></entry>
         <entry>Delete the field or element with specified path</entry>
-        <entry><literal>'["a", {"b":1}]'::jsonb - '{1,b}'::text[] </literal></entry>
+        <entry><literal>'["a", {"b":1}]'::jsonb #- '{1,b}'</literal></entry>
        </row>
       </tbody>
      </tgroup>
