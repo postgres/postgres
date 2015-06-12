@@ -53,8 +53,8 @@
 
     <listitem>
      <para>
-      Adjust operator precedence to match the <acronym>SQL</> standard
-      (Tom Lane)
+      Adjust <link linkend="functions-comparison">operator precedence</>
+      to match the <acronym>SQL</> standard (Tom Lane)
      </para>
 
      <para>
@@ -81,8 +81,9 @@
 
     <listitem>
      <para>
-      Allow special characters in server startup option values to be
-      escaped with a backslash (Andres Freund)
+      Allow special characters in <link linkend="libpq-envars">server
+      startup option values</> to be escaped with a backslash (Andres
+      Freund)
      </para>
 
      <para>
@@ -93,7 +94,8 @@
 
     <listitem>
      <para>
-      Set the default value of <varname>include_realm</> to not remove
+      Set the default value of <link
+      linkend="gssapi-auth"><varname>include_realm</></> to not remove
       the <acronym>GSS</> and <acronym>SSPI</> realm from the principal
       (Stephen Frost)
      </para>
@@ -101,9 +103,10 @@
 
     <listitem>
      <para>
-      Fix <command>REASSIGN</> and <command>ALTER OWNER TO</> to properly
-      reassign ownership of types, foreign data wrappers, and foreign
-      servers (Bruce Momjian)
+      Fix <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN</></>
+      and <link linkend="SQL-ALTERTABLE"><command>ALTER OWNER TO</></>
+      to properly reassign ownership of types, foreign data wrappers,
+      and foreign servers (Bruce Momjian)
      </para>
     </listitem>
 
@@ -116,8 +119,9 @@
 
     <listitem>
      <para>
-      Remove <structname>pg_authid</>.<structname>rolcatupdate</>, as it
-      had no purpose (Adam Brightwell)
+      Remove <link
+      linkend="catalog-pg-authid"><structname>pg_authid</>.<structname>rolcatupdate</></>,
+      as it had no purpose (Adam Brightwell)
      </para>
     </listitem>
 
@@ -144,8 +148,8 @@
 
       <listitem>
        <para>
-        Add Block Range Indexes (<acronym>BRIN</>) (&Aacute;lvaro Herrera,
-        Heikki Linnakangas, Emre Hasegeli)
+        Add <link linkend="BRIN">Block Range Indexes</> (<acronym>BRIN</>)
+        (&Aacute;lvaro Herrera, Heikki Linnakangas, Emre Hasegeli)
        </para>
 
        <para>
@@ -157,8 +161,9 @@
       <listitem>
        <para>
         Allow queries to perform accurate distance filtering of
-        bounding-box-indexed objects (polygons, circles) using GiST indexes
-        (Alexander Korotkov, Heikki Linnakangas)
+        bounding-box-indexed objects (polygons, circles) using <link
+        linkend="GiST">GiST</> indexes (Alexander Korotkov, Heikki
+        Linnakangas)
        </para>
 
        <para>
@@ -171,27 +176,30 @@
 
       <listitem>
        <para>
-        Allow GiST indexes to perform index-only scans (Anastasia
-        Lubennikova, Heikki Linnakangas, Andreas Karlsson)
+        Allow <link linkend="GiST">GiST</> indexes to perform index-only
+        scans (Anastasia Lubennikova, Heikki Linnakangas, Andreas Karlsson)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <varname>gin_pending_list_limit</> to control
-        the size of <acronym>GIN</> pending lists (Fujii Masao)
+        Add <acronym>GUC</> <link
+        linkend="guc-gin-pending-list-limit"><varname>gin_pending_list_limit</></>
+        to control the size of <acronym>GIN</> pending lists (Fujii Masao)
        </para>
 
        <para>
-        Previously this was controlled by <varname>work_mem</>.  This can
-        also be set as an index storage parameter.
+        Previously this was controlled by <link
+        linkend="guc-work-mem"><varname>work_mem</></>.  This can also
+        be set as an index storage parameter.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Issue a warning during the creation of hash indexes because they
-        are not crash-safe (Bruce Momjian)
+        Issue a warning during the creation of <link
+        linkend="SQL-CREATEINDEX">hash</> indexes because they are not
+        crash-safe (Bruce Momjian)
        </para>
       </listitem>
 
@@ -220,8 +228,8 @@
 
       <listitem>
        <para>
-        Improve concurrency of shared buffer replacement (Robert Haas,
-        Amit Kapila)
+        Improve concurrency of <link linkend="guc-shared-buffers">shared
+        buffer</> replacement (Robert Haas, Amit Kapila)
        </para>
       </listitem>
 
@@ -258,25 +266,32 @@
         Add per-table autovacuum logging control via
         <varname>log_min_autovacuum_duration</> (Michael Paquier)
        </para>
+
+       <para>
+        NOT DOCUMENTED?
+       </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <acronym>GUC</> variable <varname>cluster_name</> (Thomas
+        Add <acronym>GUC</> variable <link
+        linkend="guc-cluster-name"><varname>cluster_name</></> (Thomas
         Munro)
        </para>
 
        <para>
-        This string, set in <filename>postgresql.conf</>, allows clients
-        to query the cluster name.  This name also appears in the process
-        title, allowing for easier grouping of processes belonging to
-        the same cluster.
+        This string, set in <link
+        linkend="config-setting-configuration-file"><filename>postgresql.conf</></>,
+        allows clients to query the cluster name.  This name also appears
+        in the process title, allowing for easier grouping of processes
+        belonging to the same cluster.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Prevent non-superusers from changing <varname>log_disconnections</>
+        Prevent non-superusers from changing <link
+        linkend="guc-log-disconnections"><varname>log_disconnections</></>
         on connection startup (Fujii Masao)
        </para>
       </listitem>
@@ -292,8 +307,9 @@
 
       <listitem>
        <para>
-        Check <quote>Subject Alternative Names</> in <acronym>SSL</>
-        server certificates, if present (Alexey Klyukin)
+        Check <link linkend="libpq-ssl"><quote>Subject Alternative
+        Names</></> in <acronym>SSL</> server certificates, if present
+        (Alexey Klyukin)
        </para>
 
        <para>
@@ -304,21 +320,23 @@
 
       <listitem>
        <para>
-        Add system view <structname>pg_stat_ssl</> to report
+        Add system view <link
+        linkend="pg-stat-ssl-view"><structname>pg_stat_ssl</></> to report
         <acronym>SSL</> connection information (Magnus Hagander)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <application>libpq</> function <function>PQsslAttribute()</>
+        Add <application>libpq</> function <link
+        linkend="libpq-pqsslAttribute"><function>PQsslAttribute()</></>
         that returns <acronym>SSL</> information (Heikki Linnakangas)
        </para>
 
        <para>
-        While <function>PQgetssl()</> can still be used
-        to then call <productname>OpenSSL</> functions,
-        <function>PQsslAttribute()</> returns <acronym>SSL</>
+        While <link linkend="libpq-pqgetssl"><function>PQgetssl()</></>
+        can still be used to then call <productname>OpenSSL</>
+        functions, <function>PQsslAttribute()</> returns <acronym>SSL</>
         information in an <acronym>SSL</>-implementation-independent way.
         (Future versions of libpq might support other <acronym>SSL</>
         implementations.)
@@ -347,9 +365,10 @@
 
       <listitem>
        <para>
-        Replace <varname>checkpoint_segments</> with
-        <varname>min_wal_size</> and <varname>max_wal_size</> (Heikki
-        Linnakangas)
+        Replace <varname>checkpoint_segments</> with <link
+        linkend="guc-min-wal-size"><varname>min_wal_size</></> and
+        <link linkend="guc-max-wal-size"><varname>max_wal_size</></>
+        (Heikki Linnakangas)
        </para>
 
        <para>
@@ -360,65 +379,74 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <varname>wal_compression</> to enable
-        compression of full page images stored in <acronym>WAL</>
+        Add <acronym>GUC</> <link
+        linkend="guc-wal-compression"><varname>wal_compression</></> to
+        enable compression of full page images stored in <acronym>WAL</>
         (Rahila Syed, Michael Paquier)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow the recording of transaction commit timestamps when
-        <acronym>GUC</> <varname>track_commit_timestamp</> is enabled
-        (&Aacute;lvaro Herrera, Petr Jelinek)
+        Allow the recording of transaction
+        commit timestamps when <acronym>GUC</> <link
+        linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</></>
+        is enabled (&Aacute;lvaro Herrera, Petr Jelinek)
        </para>
 
        <para>
-        Timestamp information can be accessed using
-        functions <function>pg_xact_commit_timestamp()</> and
-        <function>pg_last_committed_xact()</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <varname>local_preload_libraries</> to be set by
-        <command>ALTER ROLE SET</> (Peter Eisentraut, Kyotaro Horiguchi)
+        Timestamp information can be accessed using functions <link
+        linkend="functions-commit-timestamp"><function>pg_xact_commit_timestamp()</></>
+        and <function>pg_last_committed_xact()</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow running autovacuum workers to respond to configuration
-        parameter changes (Michael Paquier)
+        Allow <link
+        linkend="guc-local-preload-libraries"><varname>local_preload_libraries</></>
+        to be set by <command>ALTER ROLE SET</> (Peter Eisentraut,
+        Kyotaro Horiguchi)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Make <acronym>GUC</> <varname>debug_assertions</> read-only
-        (Andres Freund)
-       </para>
-
-       <para>
-        This means that assertions can no longer be turned off once enabled
-        at compile-time, allowing for more efficient code optimization.
-        This also removed the postgres <option>-A</> option.
+        Allow running <link linkend="autovacuum">autovacuum workers</>
+        to respond to configuration parameter changes (Michael Paquier)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow setting <varname>effective_io_concurrency</> on systems
-        where it has no effect (Peter Eisentraut)
+        Make <acronym>GUC</> <link
+        linkend="guc-debug-assertions"><varname>debug_assertions</></>
+        read-only (Andres Freund)
+       </para>
+
+       <para>
+        This means that assertions can no longer be turned
+        off once enabled at compile-time, allowing for more
+        efficient code optimization.  This also removed the <link
+        linkend="app-postgres-options">postgres</> <option>-A</> option.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add environment variables <envar>PG_OOM_ADJUST_FILE</> and
-        <envar>PG_OOM_ADJUST_VALUE</> to control Linux <acronym>OOM</>
-        killer (Gurjeet Singh)
+        Allow setting <link
+        linkend="guc-effective-io-concurrency"><varname>effective_io_concurrency</></>
+        on systems where it has no effect (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add environment variables <link
+        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_FILE</></>
+        and <link
+        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_VALUE</></>
+        to control Linux <acronym>OOM</> killer (Gurjeet Singh)
        </para>
 
        <para>
@@ -429,24 +457,26 @@
 
       <listitem>
        <para>
-        Add function and view <function>pg_file_settings</> to show
-        the source of <acronym>GUC</> values set in configuration files
-        (Sawada Masahiko)
+        Add function and view <link
+        linkend="view-pg-file-settings"><function>pg_file_settings</></>
+        to show the source of <acronym>GUC</> values set in configuration
+        files (Sawada Masahiko)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <structname>pending_restart</> to the system view
-        <structname>pg_settings</> to indicate a change is pending a
-        restart (Peter Eisentraut)
+        Add <structname>pending_restart</> to the system view <link
+        linkend="view-pg-settings"><structname>pg_settings</></> to
+        indicate a change is pending a restart (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <command>ALTER SYSTEM</> values to be reset with
-        <command>ALTER SYSTEM RESET</> (Vik Fearing)
+        Allow <link linkend="SQL-ALTERSYSTEM"><command>ALTER SYSTEM</></>
+        values to be reset with <command>ALTER SYSTEM RESET</> (Vik
+        Fearing)
        </para>
 
        <para>
@@ -467,9 +497,10 @@
 
       <listitem>
        <para>
-        Add <filename>recovery.conf</> parameter
-        <varname>recovery_target_action</> to control post-recovery
-        activity (Petr Jelinek)
+        Add <link linkend="recovery-config"><filename>recovery.conf</></>
+        parameter <link
+        linkend="recovery-target-action"><varname>recovery_target_action</></>
+        to control post-recovery activity (Petr Jelinek)
        </para>
 
        <para>
@@ -481,16 +512,18 @@
         
       <listitem>
        <para>
-        Add <varname>archive_mode</> <literal>always</> to allow standbys
-        to always archive received <acronym>WAL</> files (Fujii Masao)
+        Add <link linkend="guc-archive-mode"><varname>archive_mode</></>
+        <literal>always</> to allow standbys to always archive received
+        <acronym>WAL</> files (Fujii Masao)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <varname>wal_retrieve_retry_interval</> to
-        control <acronym>WAL</> read retry after failure (Alexey Vasiliev,
-        Michael Paquier)
+        Add <acronym>GUC</> <link
+        linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</></>
+        to control <acronym>WAL</> read retry after failure (Alexey
+        Vasiliev, Michael Paquier)
        </para>
 
        <para>
@@ -507,8 +540,9 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <varname>log_replication_commands</> to log
-        replication commands (Fujii Masao)
+        Add <acronym>GUC</> <link
+        linkend="guc-log-replication-commands"><varname>log_replication_commands</></>
+        to log replication commands (Fujii Masao)
        </para>
 
        <para>
@@ -520,8 +554,8 @@
 
       <listitem>
        <para>
-        Allow the labeling of the origin of logical replication changes
-        (Andres Freund)
+        Allow the <link linkend="pg-replication-origin-create">labeling</>
+        of the origin of logical replication changes (Andres Freund)
        </para>
 
        <para>
@@ -531,8 +565,9 @@
 
       <listitem>
        <para>
-        Report the backends holding replication slots in
-        <structname>pg_replication_slots</> (Craig Ringer)
+        Report the backends holding replication slots in <link
+        linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</></>
+        (Craig Ringer)
        </para>
 
        <para>
@@ -542,8 +577,9 @@
 
       <listitem>
        <para>
-        Allow <filename>recovery.conf</>'s <varname>primary_conninfo</>
-        to use connection <acronym>URI</>s, e.g. <literal>postgres://</>
+        Allow <filename>recovery.conf</>'s <link
+        linkend="primary-conninfo"><varname>primary_conninfo</></> to
+        use connection <acronym>URI</>s, e.g. <literal>postgres://</>
         (Alex Shulgin)
        </para>
       </listitem>
@@ -559,9 +595,10 @@
 
       <listitem>
        <para>
-        Allow <command>INSERTS</> that would generate constraint conflicts
-        to be turned into <command>UPDATE</>s or ignored (Peter Geoghegan,
-        Heikki Linnakangas, Andres Freund)
+        Allow <link linkend="sql-on-conflict"><command>INSERTS</></>
+        that would generate constraint conflicts to be turned into
+        <command>UPDATE</>s or ignored (Peter Geoghegan, Heikki
+        Linnakangas, Andres Freund)
        </para>
 
        <para>
@@ -573,15 +610,18 @@
 
       <listitem>
        <para>
-        Add <literal>GROUP BY</> analysis functions <literal>GROUPING
-        SETS</>, <literal>CUBE</> and <literal>ROLLUP</> (Andrew Gierth,
-        Atri Sharma)
+        Add <literal>GROUP BY</> analysis functions <link
+        linkend="queries-grouping-sets"><literal>GROUPING SETS</></>,
+        <link linkend="queries-grouping-sets"><literal>CUBE</></> and
+        <link linkend="queries-grouping-sets"><literal>ROLLUP</></>
+        (Andrew Gierth, Atri Sharma)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow multi-column <command>UPDATE</>s with a single subselect
+        Allow multi-column <link
+        linkend="SQL-UPDATE"><command>UPDATE</></>s with a single subselect
         (Tom Lane)
        </para>
 
@@ -593,8 +633,8 @@
 
       <listitem>
        <para>
-        Add new <command>SELECT</> option <literal>SKIP LOCKED</> to skip
-        locked rows (Thomas Munro)
+        Add new <link linkend="SQL-SELECT"><command>SELECT</></> option
+        <literal>SKIP LOCKED</> to skip locked rows (Thomas Munro)
        </para>
 
        <para>
@@ -605,8 +645,9 @@
 
       <listitem>
        <para>
-        Add <command>SELECT</> option <literal>TABLESAMPLE</> to return
-        a subset of a table (Petr Jelinek)
+        Add <link linkend="SQL-SELECT"><command>SELECT</></> option
+        <literal>TABLESAMPLE</> to return a subset of a table (Petr
+        Jelinek)
        </para>
       </listitem>
 
@@ -628,8 +669,9 @@
 
       <listitem>
        <para>
-        Add more details about sort ordering in <command>EXPLAIN</> output
-        (Marius Timmer, Lukas Kreft, Arne Scheffer)
+        Add more details about sort ordering in <link
+        linkend="SQL-EXPLAIN"><command>EXPLAIN</></> output (Marius Timmer,
+        Lukas Kreft, Arne Scheffer)
        </para>
 
        <para>
@@ -640,15 +682,15 @@
 
       <listitem>
        <para>
-        Have <command>VACUUM</> log the number of pages skipped due to pins
-        (Jim Nasby)
+        Have <link linkend="SQL-VACUUM"><command>VACUUM</></> log the
+        number of pages skipped due to pins (Jim Nasby)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <command>TRUNCATE</> properly update the <literal>pg_stat</>*
-        tuple counters (Alexander Shulgin)
+        Have <link linkend="SQL-TRUNCATE"><command>TRUNCATE</></> properly
+        update the <literal>pg_stat</>* tuple counters (Alexander Shulgin)
        </para>
       </listitem>
 
@@ -705,32 +747,38 @@
 
        <para>
         This controls viewing and adding/modifying rows via new commands
-        <command>CREATE</>/<command>ALTER</>/<command>DROP POLICY</>
-        and <command>ALTER TABLE ... ENABLE/DISABLE ROW SECURITY</>.
+        <link linkend="SQL-CREATEPOLICY"><command>CREATE</></>/<link
+        linkend="SQL-ALTERPOLICY"><command>ALTER</></>/<link
+        linkend="SQL-DROPPOLICY"><command>DROP POLICY</></> and <link
+        linkend="SQL-ALTERTABLE"><command>ALTER TABLE ... ENABLE/DISABLE
+        ROW SECURITY</></>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow control of table <acronym>WAL</> logging after table
-        creation with <command>ALTER TABLE .. SET LOGGED / UNLOGGED</>
-        (Fabr&iacute;zio de Royes Mello)
+        Allow control of table <acronym>WAL</> logging after table creation
+        with <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE .. SET
+        LOGGED / UNLOGGED</></> (Fabr&iacute;zio de Royes Mello)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <literal>IF NOT EXISTS</> clause to <command>CREATE TABLE
-        AS</>, <command>CREATE INDEX</>, <command>CREATE SEQUENCE</>,
-        and <command>CREATE MATERIALIZED VIEW</> (Fabr&iacute;zio de
-        Royes Mello)
+        Add <literal>IF NOT EXISTS</> clause to <link
+        linkend="SQL-CREATETABLEAS"><command>CREATE TABLE AS</></>,
+        <link linkend="SQL-CREATEINDEX"><command>CREATE INDEX</></>,
+        <link linkend="SQL-CREATESEQUENCE"><command>CREATE SEQUENCE</></>,
+        and <link linkend="SQL-CREATEMATERIALIZEDVIEW"><command>CREATE
+        MATERIALIZED VIEW</></> (Fabr&iacute;zio de Royes Mello)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add support for <literal>IF EXISTS</> to <command>ALTER TABLE
-        ... RENAME CONSTRAINT</> (Bruce Momjian)
+        Add support for <literal>IF EXISTS</> to <link
+        linkend="SQL-ALTERTABLE"><command>ALTER TABLE ... RENAME
+        CONSTRAINT</></> (Bruce Momjian)
        </para>
       </listitem>
 
@@ -741,15 +789,19 @@
        </para>
 
        <para>
-        Commands include <command>ALTER USER</>, <command>ALTER
-        GROUP</>, <command>ALTER ROLE</>, <command>GRANT</>, and various
-        <command>ALTER OBJECT / OWNER TO</> commands.
+        Commands include <link linkend="SQL-ALTERUSER"><command>ALTER
+        USER</></>,
+       <link linkend="SQL-ALTERGROUP"><command>ALTER
+        GROUP</></>, <link linkend="SQL-ALTERROLE"><command>ALTER
+        ROLE</></>, <link linkend="SQL-GRANT"><command>GRANT</></>,
+        and various <command>ALTER OBJECT / OWNER TO</> commands.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow comments on domain constraints (&Aacute;lvaro Herrera)
+        Allow comments on <link linkend="SQL-CREATEDOMAIN">domain
+        constraints</> (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
@@ -762,8 +814,9 @@
 
       <listitem>
        <para>
-        Allow <command>LOCK TABLE .. ROW EXCLUSIVE MODE</> for those with
-        <command>INSERT</> privileges (Stephen Frost)
+        Allow <link linkend="SQL-LOCK"><command>LOCK TABLE .. ROW EXCLUSIVE
+        MODE</></> for those with <command>INSERT</> privileges (Stephen
+        Frost)
        </para>
 
        <para>
@@ -785,21 +838,27 @@
 
       <listitem>
        <para>
-        Allow <command>CREATE</>/<command>ALTER DATABASE</> to manipulate
-        <structname>datistemplate</> and <structname>datallowconn</>
-        (Vik Fearing)
+        Allow <link
+        linkend="SQL-CREATEDATABASE"><command>CREATE</></>/<link
+        linkend="SQL-ALTERDATABASE"><command>ALTER DATABASE</></>
+        to manipulate <structname>datistemplate</> and
+        <structname>datallowconn</> (Vik Fearing)
        </para>
 
        <para>
-        This allows these database settings to be changed more easily
-        than modifying the <structname>pg_database</> system table.
+        This allows these database settings to be
+        changed more easily than modifying the <link
+        linkend="catalog-pg-database"><structname>pg_database</></>
+        system table.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <command>CREATE TABLE AS</> and <command>REFRESH</> return
-        an <type>OID</> (&Aacute;lvaro Herrera)
+        Have <link linkend="SQL-CREATETABLEAS"><command>CREATE
+        TABLE AS</></> and <link
+        linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH</></>
+        return an <type>OID</> (&Aacute;lvaro Herrera)
        </para>
 
        <para>
@@ -816,15 +875,16 @@
 
       <listitem>
        <para>
-        Add support for <command>IMPORT FOREIGN SCHEMA</> (Ronan Dunklau,
-        Michael Paquier, Tom Lane)
+        Add support for <link
+        linkend="SQL-IMPORTFOREIGNSCHEMA"><command>IMPORT FOREIGN
+        SCHEMA</></> (Ronan Dunklau, Michael Paquier, Tom Lane)
        </para>
 
        <para>
         This allows the creation of local foreign tables definitions
         that match the remote table structure.  Currently, only the
-        <application>postgres_fdw</> foreign data wrapper supports this
-        feature.
+        <link linkend="postgres-fdw"><application>postgres_fdw</></>
+        foreign data wrapper supports this feature.
        </para>
       </listitem>
 
@@ -871,32 +931,36 @@
 
        <listitem>
         <para>
-         Add <function>pg_event_trigger_ddl_commands</> set-returning
-         function, which returns <acronym>DDL</> activity associated with
-         event triggers (&Aacute;lvaro Herrera)
+         Add <link
+         linkend="pg-event-trigger-ddl-command-end-functions"><function>pg_event_trigger_ddl_commands</></>
+         set-returning function, which returns <acronym>DDL</> activity
+         associated with event triggers (&Aacute;lvaro Herrera)
         </para>
        </listitem>
 
        <listitem>
         <para>
-         Allow event triggers on table rewrites caused by <command>ALTER
-         TABLE</> (Dimitri Fontaine)
+         Allow event triggers on table rewrites caused by <link
+         linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></> (Dimitri
+         Fontaine)
         </para>
        </listitem>
 
        <listitem>
         <para>
-         Add event trigger support for database-level
-         <command>COMMENT</>, <command>SECURITY LABEL</>, and
-         <command>GRANT</>/<command>REVOKE</> (&Aacute;lvaro Herrera)
+         Add event trigger support for database-level <link
+         linkend="SQL-COMMENT"><command>COMMENT</></>, <link
+         linkend="SQL-SECURITY-LABEL"><command>SECURITY LABEL</></>,
+         and <link linkend="SQL-GRANT"><command>GRANT</></>/<link
+         linkend="SQL-REVOKE"><command>REVOKE</></> (&Aacute;lvaro Herrera)
         </para>
        </listitem>
 
        <listitem>
         <para>
-         Add columns to the output of
-         <function>pg_event_trigger_dropped_objects</> (&Aacute;lvaro
-         Herrera)
+         Add columns to the output of <link
+         linkend="pg-event-trigger-sql-drop-functions"><function>pg_event_trigger_dropped_objects</></>
+         (&Aacute;lvaro Herrera)
         </para>
 
         <para>
@@ -917,8 +981,8 @@
 
      <listitem>
       <para>
-       Allow the <type>XML</> data type to accept empty or all-whitespace
-       values (Peter Eisentraut)
+       Allow the <link linkend="datatype-xml"><type>XML</></> data type
+       to accept empty or all-whitespace values (Peter Eisentraut)
       </para>
 
       <para>
@@ -929,8 +993,10 @@
 
      <listitem>
       <para>
-       Fix <type>XML</> xpath handling to return namespace declarations
-       even if the namespace is in a parent element (Ali Akbar)
+       Fix <type>XML</> <link
+       linkend="functions-xml-processing"><function>xpath()</></> handling
+       to return namespace declarations even if the namespace is in a
+       parent element (Ali Akbar)
       </para>
 
       <para>
@@ -941,15 +1007,16 @@
 
      <listitem>
       <para>
-       Allow <type>macaddr</> input using the format
-       <literal>xxxx-xxxx-xxxx</> (Herwin Weststrate)
+       Allow <link linkend="datatype-macaddr"><type>MACADDR</></> input
+       using the format <literal>xxxx-xxxx-xxxx</> (Herwin Weststrate)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Tighten specification of <type>INTERVAL</> precision specifications
-       (Bruce Momjian)
+       Tighten specification of <link
+       linkend="datatype-interval-input"><type>INTERVAL</></> precision
+       specifications (Bruce Momjian)
       </para>
 
       <para>
@@ -960,9 +1027,10 @@
 
      <listitem>
       <para>
-       Add selectivity estimators for <type>INET</>/<type>CIDR</> operators
-       and improve estimators for text search functions (Emre Hasegeli,
-       Tom Lane)
+       Add selectivity estimators for <link
+       linkend="datatype-inet"><type>INET</></>/<link
+       linkend="datatype-cidr"><type>CIDR</></> operators and improve
+       estimators for text search functions (Emre Hasegeli, Tom Lane)
       </para>
      </listitem>
 
@@ -975,8 +1043,11 @@
 
       <listitem>
        <para>
-        Add <type>JSONB</> functions <function>jsonb_set()</> and
-        <function>jsonb_pretty</> (Dmitry Dolgov, Andrew Dunstan)
+        Add <type>JSONB</> functions <link
+        linkend="functions-json-processing-table"><function>jsonb_set()</></>
+        and <link
+        linkend="functions-json-processing-table"><function>jsonb_pretty</></>
+        (Dmitry Dolgov, Andrew Dunstan)
        </para>
       </listitem>
 
@@ -987,39 +1058,53 @@
        </para>
 
        <para>
-        The functions are <function>to_jsonb()</>,
-        <function>jsonb_object()</>, <function>jsonb_build_object()</>,
-        <function>jsonb_build_array()</>, <function>jsonb_agg()</>,
-        and <function>jsonb_object_agg()</>.
+        The functions are <link
+        linkend="functions-json-creation-table"><function>to_jsonb()</></>,
+        <link
+        linkend="functions-json-creation-table"><function>jsonb_object()</></>,
+        <link
+        linkend="functions-json-creation-table"><function>jsonb_build_object()</></>,
+        <link
+        linkend="functions-json-creation-table"><function>jsonb_build_array()</></>,
+        <link
+        linkend="functions-aggregate-table"><function>jsonb_agg()</></>,
+        and <link
+        linkend="functions-aggregate-table"><function>jsonb_object_agg()</></>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Reduce casting requirements to/from <type>JSON</> and
-        <type>JSONB</> (Tom Lane)
+        Reduce casting requirements to/from <link
+        linkend="datatype-json"><type>JSON</></> and <link
+        linkend="datatype-json"><type>JSONB</></> (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow <type>TEXT</>, <type>TEXT</> array, and <type>INTEGER</>
-        values to be subtracted from <type>JSONB</> documents (Dmitry
-        Dolgov, Andrew Dunstan)
+        values to be <link linkend="functions-jsonb-op-table">subtracted</>
+        from <type>JSONB</> documents (Dmitry Dolgov, Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <type>JSONB</> operator || (Dmitry Dolgov, Andrew Dunstan)
+        Add <type>JSONB</> <link
+        linkend="functions-jsonb-op-table">operator</> <literal>||</>
+        (Dmitry Dolgov, Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <function>json_strip_nulls()</> and
-        <function>jsonb_strip_nulls()</> functions to remove <type>JSON</>
-        null values from documents (Andrew Dunstan)
+        Add <link
+        linkend="functions-json-processing-table"><function>json_strip_nulls()</></>
+        and <link
+        linkend="functions-json-processing-table"><function>jsonb_strip_nulls()</></>
+        functions to remove <type>JSON</> null values from documents
+        (Andrew Dunstan)
        </para>
       </listitem>
 
@@ -1036,37 +1121,43 @@
 
       <listitem>
        <para>
-        Add <function>generate_series()</> for <type>NUMERIC</> values
-        (Plato Malugin)
+        Add <link linkend="functions-srf"><function>generate_series()</></>
+        for <type>NUMERIC</> values (Plato Malugin)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <function>array_agg()</> and <function>ARRAY()</> to take
-        arrays as inputs (Ali Akbar, Tom Lane)
+        Allow <link
+        linkend="functions-aggregate-table"><function>array_agg()</></> and
+        <function>ARRAY()</> to take arrays as inputs (Ali Akbar, Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add functions <function>array_position()</> and
-        <function>array_positions()</> to return subscripts of array values
-        (Pavel Stehule)
+        Add functions <link
+        linkend="array-functions-table"><function>array_position()</></>
+        and <link
+        linkend="array-functions-table"><function>array_positions()</></>
+        to return subscripts of array values (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <type>point</>-to-<type>polygon</> distance operator
-        (&lt;-&gt;) (Alexander Korotkov)
+        Add <link
+        linkend="gist-builtin-opclasses-table"><type>point</>-to-<type>polygon</></>
+        distance operator (&lt;-&gt;) (Alexander Korotkov)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow multi-byte characters as escape in <literal>SIMILAR TO</>
-        and <literal>SUBSTRING</> (Jeff Davis)
+        Allow multi-byte characters as escape in <link
+        linkend="functions-similarto-regexp"><literal>SIMILAR TO</></>
+        and <link linkend="functions-string-sql"><literal>SUBSTRING</></>
+        (Jeff Davis)
        </para>
 
        <para>
@@ -1076,21 +1167,23 @@
 
       <listitem>
        <para>
-        Add <function>width_bucket()</> which supports any sortable data
-        type and non-uniform bucket widths (Petr Jelinek)
+        Add <link
+        linkend="functions-math-func-table"><function>width_bucket()</></>
+        which supports any sortable data type and non-uniform bucket widths
+        (Petr Jelinek)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow =&gt; to specify named parameters in function calls
-        (Pavel Stehule)
+        Allow <link linkend="sql-syntax-calling-funcs"><literal>=&gt;</></>
+        to specify named parameters in function calls (Pavel Stehule)
        </para>
 
        <para>
-        User-defined =&gt; operators have been issuing warnings since
-        Postgres 9.0, and were removed in hstore in 9.2.  Previously only
-        <literal>:=</> could be used.
+        User-defined <literal>=&gt;</> operators have been issuing
+        warnings since Postgres 9.0, and were removed in hstore in 9.2.
+        Previously only <literal>:=</> could be used.
        </para>
       </listitem>
 
@@ -1110,24 +1203,31 @@
 
       <listitem>
        <para>
-        Add function <function>pg_get_object_address()</> to return
-        <type>OID</>s that uniquely identify an object (&Aacute;lvaro
+        Add function <link
+        linkend="functions-info-object-table"><function>pg_get_object_address()</></>
+        to return <type>OID</>s that uniquely identify an object
+        (&Aacute;lvaro Herrera)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add function <link
+        linkend="functions-info-object-table"><function>pg_identify_object_as_address()</></>
+        to return object information based on <type>OID</>s (&Aacute;lvaro
         Herrera)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add function <function>pg_identify_object_as_address()</> to return
-        object information based on <type>OID</>s (&Aacute;lvaro Herrera)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Loosen security checks for viewing <structname>pg_stat_activity</>,
-        <function>pg_cancel_backend()</>, and
-        <function>pg_terminate_backend</> (Stephen Frost)
+        Loosen security checks for viewing <link
+        linkend="pg-stat-activity-view"><structname>pg_stat_activity</></>,
+        <link
+        linkend="functions-admin-signal-table"><function>pg_cancel_backend()</></>,
+        and <link
+        linkend="functions-admin-signal-table"><function>pg_terminate_backend</></>
+        (Stephen Frost)
        </para>
 
        <para>
@@ -1138,8 +1238,9 @@
 
       <listitem>
        <para>
-        Add <function>pg_stat_get_snapshot_timestamp()</> to output the
-        timestamp of the statistics snapshot (Matt Kelly)
+        Add <link
+        linkend="monitoring-stats-funcs-table"><function>pg_stat_get_snapshot_timestamp()</></>
+        to output the timestamp of the statistics snapshot (Matt Kelly)
        </para>
 
        <para>
@@ -1150,22 +1251,25 @@
 
       <listitem>
        <para>
-        Add <function>mxid_age()</> to compute multi-xid age (Bruce
-        Momjian)
+        Add <link
+        linkend="vacuum-for-multixact-wraparound"><function>mxid_age()</></>
+        to compute multi-xid age (Bruce Momjian)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add data type <type>regrole</> that returns the <type>OID</>
-        of a role (Kyotaro Horiguchi)
+        Add data type <link
+        linkend="datatype-oid-table"><type>regrole</></> that returns
+        the <type>OID</> of a role (Kyotaro Horiguchi)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add data type <type>regnamespace</> that returns the <type>OID</>
-        of a schema (Kyotaro Horiguchi)
+        Add data type <link
+        linkend="datatype-oid-table"><type>regnamespace</></> that returns
+        the <type>OID</> of a schema (Kyotaro Horiguchi)
        </para>
       </listitem>
 
@@ -1180,8 +1284,10 @@
 
       <listitem>
        <para>
-        Add <function>MIN()</>/<function>MAX()</> aggregates for
-        <type>INET</>/<type>CIDR</> data types (Haribabu Kommi)
+        Add <function>MIN()</>/<function>MAX()</> aggregates
+        for <link linkend="datatype-inet"><type>INET</></>/<link
+        linkend="datatype-cidr"><type>CIDR</></> data types (Haribabu
+        Kommi)
        </para>
       </listitem>
 
@@ -1205,8 +1311,9 @@
 
      <listitem>
       <para>
-       Improve support for composite types in <application>PL/Python</>
-       (Ed Behn, Ronan Dunklau)
+       Improve support for composite types in <link
+       linkend="plpython"><application>PL/Python</></> (Ed Behn, Ronan
+       Dunklau)
       </para>
 
       <para>
@@ -1217,7 +1324,8 @@
 
      <listitem>
       <para>
-       Reduce lossiness of <application>PL/Python</> floating value
+       Reduce lossiness of <link
+       linkend="plpython"><application>PL/Python</></> floating value
        conversions (Marko Kreen)
       </para>
      </listitem>
@@ -1229,10 +1337,14 @@
       </para>
 
       <para>
-       This adds new commands <command>CREATE</>/<command>DROP
-       TRANSFORM</>.  This also adds transformations between
-       <application>hstore</> and <application>ltree</> to/from
-       <application>PL/Perl</> and <application>PL/Python</>.
+       This adds new commands <link
+       linkend="SQL-CREATETRANSFORM"><command>CREATE</></>/<link
+       linkend="SQL-DROPTRANSFORM"><command>DROP TRANSFORM</></>.
+       This also adds transformations between <link
+       linkend="hstore"><application>hstore</></> and <link
+       linkend="ltree"><application>ltree</></> to/from <link
+       linkend="plperl"><application>PL/Perl</></> and <link
+       linkend="plpython"><application>PL/Python</></>.
       </para>
      </listitem>
 
@@ -1245,21 +1357,22 @@
 
      <listitem>
       <para>
-       Improve <application>PL/pgSQL</> array performance (Tom Lane)
+       Improve <link linkend="plpgsql"><application>PL/pgSQL</></> array
+       performance (Tom Lane)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <command>ASSERT</> statement in <application>PL/pgSQL</>
-       (Pavel Stehule)
+       Add <link linkend="plpgsql-statements-assert"><command>ASSERT</></>
+       statement in <application>PL/pgSQL</> (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow more <application>PL/pgSQL</> keywords to be used as
-       identifiers (Tom Lane)
+       Allow more <link linkend="plpgsql"><application>PL/pgSQL</></>
+       keywords to be used as identifiers (Tom Lane)
       </para>
      </listitem>
 
@@ -1276,17 +1389,20 @@
 
      <listitem>
       <para>
-       Move <application>pg_archivecleanup</>,
-       <application>pg_test_fsync</>, <application>pg_test_timing</>,
-       and <application>pg_xlogdump</> from <filename>contrib</> to
-       <filename>src/bin</> (Peter Eisentraut)
+       Move <link
+       linkend="pgarchivecleanup"><application>pg_archivecleanup</></>,
+       <link linkend="pgtestfsync"><application>pg_test_fsync</></>,
+       <link linkend="pgtesttiming"><application>pg_test_timing</></>,
+       and <link linkend="pgxlogdump"><application>pg_xlogdump</></>
+       from <filename>contrib</> to <filename>src/bin</> (Peter Eisentraut)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <application>pg_receivexlog</> to manage physical replication
-       slots (Michael Paquier)
+       Allow <link
+       linkend="app-pgreceivexlog"><application>pg_receivexlog</></>
+       to manage physical replication slots (Michael Paquier)
       </para>
 
       <para>
@@ -1297,9 +1413,10 @@
 
      <listitem>
       <para>
-       Allow the <application>pg_receivexlog</> to synchronously flush
-       <acronym>WAL</> to storage using <option>--synchronous</> (Furuya
-       Osamu, Fujii Masao)
+       Allow the <link
+       linkend="app-pgreceivexlog"><application>pg_receivexlog</></>
+       to synchronously flush <acronym>WAL</> to storage using
+       <option>--synchronous</> (Furuya Osamu, Fujii Masao)
       </para>
 
       <para>
@@ -1309,24 +1426,26 @@
 
      <listitem>
       <para>
-       Allow <command>vacuumdb</> to vacuum in parallel using
-       <option>--jobs</> (Dilip Kumar)
+       Allow <link linkend="APP-VACUUMDB"><command>vacuumdb</></> to
+       vacuum in parallel using <option>--jobs</> (Dilip Kumar)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <option>--verbose</> option to <application>reindexdb</>
-       (Sawada Masahiko)
+       Add <option>--verbose</> option to <link
+       linkend="APP-REINDEXDB"><application>reindexdb</></> (Sawada
+       Masahiko)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have <application>pg_basebackup</> use a tablespace mapping
-       file with the <application>tar</> format, to handle file paths
-       of 100+ characters in length and sybolic links on <systemitem
-       class="osname">MS Windows</> (Amit Kapila)
+       Have <link
+       linkend="app-pgbasebackup"><application>pg_basebackup</></> use
+       a tablespace mapping file with the <application>tar</> format,
+       to handle file paths of 100+ characters in length and sybolic
+       links on <systemitem class="osname">MS Windows</> (Amit Kapila)
       </para>
 
       <para>
@@ -1375,7 +1494,8 @@
 
        <listitem>
         <para>
-         Add <application>psql</> <envar>PROMPT</> variable option
+         Add <application>psql</> <link
+         linkend="APP-PSQL-variables"><envar>PROMPT</></> variables option
          (<literal>%l</>) to display the multi-line statement line number
          (Sawada Masahiko)
         </para>
@@ -1383,7 +1503,8 @@
 
        <listitem>
         <para>
-         Add <application>psql</> setting <varname>pager_min_lines</>
+         Add <application>psql</> setting <link
+         linkend="APP-PSQL-meta-commands"><varname>pager_min_lines</></>
          setting to control pager invocation (Andrew Dunstan)
         </para>
        </listitem>
@@ -1613,7 +1734,8 @@
 
       <listitem>
        <para>
-        Simplify <acronym>WAL</> record format (Heikki Linnakangas)
+        Simplify <link linkend="wal"><acronym>WAL</></> record format
+        (Heikki Linnakangas)
        </para>
 
        <para>
@@ -1698,9 +1820,11 @@
 
       <listitem>
        <para>
-        Change columns <structname>pg_seclabel</>.<structname>provider</>
-        and <structname>pg_shseclabel</>.<structname>provider</> to
-        <type>TEXT</> (Tom Lane)
+        Change columns <link
+        linkend="catalog-pg-seclabel"><structname>pg_seclabel</></>.<structname>provider</>
+        and <link
+        linkend="catalog-pg-seclabel"><structname>pg_shseclabel</></>.<structname>provider</>
+        to <type>TEXT</> (Tom Lane)
        </para>
 
        <para>
@@ -1740,8 +1864,9 @@
 
       <listitem>
        <para>
-        Allow configure's <option>--with-extra-version</> to be honored
-        by the <productname>MSVC</> build (Michael Paquier)
+        Allow <link linkend="install-procedure">configure's
+        <option>--with-extra-version</></> to be honored by the
+        <productname>MSVC</> build (Michael Paquier)
        </para>
       </listitem>
 
@@ -1789,22 +1914,24 @@
 
      <listitem>
       <para>
-       Add <application>pg_rewind</>, which allows re-synchronizing a
-       master server after failback (Heikki Linnakangas)
+       Add <link linkend="app-pgrewind"><application>pg_rewind</></>,
+       which allows re-synchronizing a master server after failback
+       (Heikki Linnakangas)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add statistics for minimum, maximum, mean, and standard deviation
-       times to <application>pg_stat_statements</> (Mitsumasa Kondo,
-       Andrew Dunstan)
+       Add statistics for minimum, maximum,
+       mean, and standard deviation times to <link
+       linkend="pgstatstatements-columns"><application>pg_stat_statements</></>
+       (Mitsumasa Kondo, Andrew Dunstan)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <application>pgcrypto</> function
+       Add <link linkend="pgcrypto"><application>pgcrypto</></> function
        <function>pgp_armor_headers()</> to extract <productname>PGP</>
        armor headers (Marko Tiikkaja, Heikki Linnakangas)
       </para>
@@ -1812,8 +1939,8 @@
 
      <listitem>
       <para>
-       Allow empty replacement strings in <application>unaccent</>
-       (Mohammad Alhashash)
+       Allow empty replacement strings in <link
+       linkend="unaccent"><application>unaccent</></> (Mohammad Alhashash)
       </para>
 
       <para>
@@ -1824,8 +1951,8 @@
 
      <listitem>
       <para>
-       Allow multi-character source strings in <application>unaccent</>
-       (Tom Lane)
+       Allow multi-character source strings in <link
+       linkend="unaccent"><application>unaccent</></> (Tom Lane)
       </para>
 
       <para>
@@ -1837,39 +1964,42 @@
 
      <listitem>
       <para>
-       Add <filename>contrib</> modules <application>tsm_system_rows</>
-       and <application>tsm_system_time</> to allow additional table
-       sampling methods (Petr Jelinek)
+       Add <filename>contrib</> modules <link
+       linkend="tsm-system-rows"><application>tsm_system_rows</></> and
+       <link linkend="tsm-system-time"><application>tsm_system_time</></>
+       to allow additional table sampling methods (Petr Jelinek)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <application>pg_xlogdump</> option <option>--stats</> to
-       display summary statistics (Abhijit Menon-Sen)
+       Add <link linkend="pgxlogdump"><application>pg_xlogdump</></> option
+       <option>--stats</> to display summary statistics (Abhijit Menon-Sen)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <acronym>GIN</> index inspection functions to
-       <application>pageinspect</> (Heikki Linnakangas, Peter Geoghegan,
-       Michael Paquier)
+       Allow <link linkend="GIN"><acronym>GIN</></>
+       index inspection functions to <link
+       linkend="pageinspect"><application>pageinspect</></> (Heikki
+       Linnakangas, Peter Geoghegan, Michael Paquier)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add information about buffer pins to <application>pg_buffercache</>
-       display (Andres Freund)
+       Add information about buffer pins to <link
+       linkend="pgbuffercache"><application>pg_buffercache</></> display
+       (Andres Freund)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <application>pgstattuple</> to report approximate answers
-       with less overhead using <function>pgstattuple_approx()</>
-       (Abhijit Menon-Sen)
+       Allow <link linkend="pgstattuple"><application>pgstattuple</></>
+       to report approximate answers with less overhead using
+       <function>pgstattuple_approx()</> (Abhijit Menon-Sen)
       </para>
      </listitem>
 
