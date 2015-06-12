@@ -126,8 +126,12 @@ typedef enum WalLevel
 } WalLevel;
 extern int	wal_level;
 
+/* Is WAL archiving enabled (always or only while server is running normally)? */
 #define XLogArchivingActive() \
 	(XLogArchiveMode > ARCHIVE_MODE_OFF && wal_level >= WAL_LEVEL_ARCHIVE)
+/* Is WAL archiving enabled always (even during recovery)? */
+#define XLogArchivingAlways() \
+	(XLogArchiveMode == ARCHIVE_MODE_ALWAYS && wal_level >= WAL_LEVEL_ARCHIVE)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
 
 /*
