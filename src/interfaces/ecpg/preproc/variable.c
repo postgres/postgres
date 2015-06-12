@@ -437,8 +437,12 @@ remove_variable_from_list(struct arguments ** list, struct variable * var)
 void
 dump_variables(struct arguments * list, int mode)
 {
+	char	   *str_zero;
+
 	if (list == NULL)
 		return;
+
+	str_zero = mm_strdup("0");
 
 	/*
 	 * The list is build up from the beginning so lets first dump the end of
@@ -450,11 +454,13 @@ dump_variables(struct arguments * list, int mode)
 	/* Then the current element and its indicator */
 	ECPGdump_a_type(yyout, list->variable->name, list->variable->type, list->variable->brace_level,
 					list->indicator->name, list->indicator->type, list->indicator->brace_level,
-					NULL, NULL, mm_strdup("0"), NULL, NULL);
+					NULL, NULL, str_zero, NULL, NULL);
 
 	/* Then release the list element. */
 	if (mode != 0)
 		free(list);
+
+	free(str_zero);
 }
 
 void
