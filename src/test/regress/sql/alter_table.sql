@@ -1175,6 +1175,7 @@ insert into anothertab (atcol1, atcol2) values (default, false);
 select * from anothertab;
 
 alter table anothertab alter column atcol1 type boolean; -- fails
+alter table anothertab alter column atcol1 type boolean using atcol1::int; -- fails
 alter table anothertab alter column atcol1 type integer;
 
 select * from anothertab;

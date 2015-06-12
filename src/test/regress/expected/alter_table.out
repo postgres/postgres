@@ -1665,7 +1665,7 @@ select f3,max(f1) from foo group by f3;
 -- Simple tests for alter table column type
 alter table foo alter f1 TYPE integer; -- fails
 ERROR:  column "f1" cannot be cast automatically to type integer
-HINT:  Specify a USING expression to perform the conversion.
+HINT:  You might need to specify "USING f1::integer".
 alter table foo alter f1 TYPE varchar(10);
 create table anothertab (atcol1 serial8, atcol2 boolean,
 	constraint anothertab_chk check (atcol1 <= 3));
@@ -1680,7 +1680,10 @@ select * from anothertab;
 
 alter table anothertab alter column atcol1 type boolean; -- fails
 ERROR:  column "atcol1" cannot be cast automatically to type boolean
-HINT:  Specify a USING expression to perform the conversion.
+HINT:  You might need to specify "USING atcol1::boolean".
+alter table anothertab alter column atcol1 type boolean using atcol1::int; -- fails
+ERROR:  result of USING clause for column "atcol1" cannot be cast automatically to type boolean
+HINT:  You might need to add an explicit cast.
 alter table anothertab alter column atcol1 type integer;
 select * from anothertab;
  atcol1 | atcol2 
