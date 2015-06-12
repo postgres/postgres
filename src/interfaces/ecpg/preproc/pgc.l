@@ -27,7 +27,7 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
-static char	   *dolqstart;		/* current $foo$ quote start string */
+static char	   *dolqstart = NULL;	/* current $foo$ quote start string */
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
 
@@ -543,6 +543,8 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 			}
 <SQL>{dolqdelim} {
 				token_start = yytext;
+				if (dolqstart)
+					free(dolqstart);
 				dolqstart = mm_strdup(yytext);
 				BEGIN(xdolq);
 				startlit();
