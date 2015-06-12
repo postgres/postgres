@@ -4001,6 +4001,38 @@ $$ language plpgsql;
 select compos();
 ERROR:  cannot return non-composite value from function returning composite type
 CONTEXT:  PL/pgSQL function compos() line 3 at RETURN
+-- RETURN variable is a different code path ...
+create or replace function compos() returns compostype as $$
+declare x int := 42;
+begin
+  return x;
+end;
+$$ language plpgsql;
+select * from compos();
+ERROR:  cannot return non-composite value from function returning composite type
+CONTEXT:  PL/pgSQL function compos() line 4 at RETURN
+drop function compos();
+-- test: invalid use of composite variable in scalar-returning function
+create or replace function compos() returns int as $$
+declare
+  v compostype;
+begin
+  v := (1, 'hello');
+  return v;
+end;
+$$ language plpgsql;
+select compos();
+ERROR:  invalid input syntax for integer: "(1,hello)"
+CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
+-- test: invalid use of composite expression in scalar-returning function
+create or replace function compos() returns int as $$
+begin
+  return (1, 'hello')::compostype;
+end;
+$$ language plpgsql;
+select compos();
+ERROR:  invalid input syntax for integer: "(1,hello)"
+CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 drop function compos();
 drop type compostype;
 --

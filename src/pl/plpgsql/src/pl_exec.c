@@ -2508,6 +2508,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	estate->retval = (Datum) 0;
 	estate->rettupdesc = NULL;
 	estate->retisnull = true;
+	estate->rettype = InvalidOid;
 
 	/*
 	 * Special case path when the RETURN expression is a simple variable
@@ -2534,18 +2535,40 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 					estate->retval = var->value;
 					estate->retisnull = var->isnull;
 					estate->rettype = var->datatype->typoid;
+
+					/*
+					 * Cope with retistuple case.  A PLpgSQL_var could not be
+					 * of composite type, so we needn't make any effort to
+					 * convert.  However, for consistency with the expression
+					 * code path, don't throw error if the result is NULL.
+					 */
+					if (estate->retistuple && !estate->retisnull)
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("cannot return non-composite value from function returning composite type")));
 				}
 				break;
 
 			case PLPGSQL_DTYPE_REC:
 				{
 					PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
+					int32		rettypmod;
 
 					if (HeapTupleIsValid(rec->tup))
 					{
-						estate->retval = PointerGetDatum(rec->tup);
-						estate->rettupdesc = rec->tupdesc;
-						estate->retisnull = false;
+						if (estate->retistuple)
+						{
+							estate->retval = PointerGetDatum(rec->tup);
+							estate->rettupdesc = rec->tupdesc;
+							estate->retisnull = false;
+						}
+						else
+							exec_eval_datum(estate,
+											retvar,
+											&estate->rettype,
+											&rettypmod,
+											&estate->retval,
+											&estate->retisnull);
 					}
 				}
 				break;
@@ -2553,15 +2576,28 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 			case PLPGSQL_DTYPE_ROW:
 				{
 					PLpgSQL_row *row = (PLpgSQL_row *) retvar;
+					int32		rettypmod;
 
-					Assert(row->rowtupdesc);
-					estate->retval =
-						PointerGetDatum(make_tuple_from_row(estate, row,
-															row->rowtupdesc));
-					if (DatumGetPointer(estate->retval) == NULL)		/* should not happen */
-						elog(ERROR, "row not compatible with its own tupdesc");
-					estate->rettupdesc = row->rowtupdesc;
-					estate->retisnull = false;
+					if (estate->retistuple)
+					{
+						HeapTuple	tup;
+
+						if (!row->rowtupdesc)	/* should not happen */
+							elog(ERROR, "row variable has no tupdesc");
+						tup = make_tuple_from_row(estate, row, row->rowtupdesc);
+						if (tup == NULL)		/* should not happen */
+							elog(ERROR, "row not compatible with its own tupdesc");
+						estate->retval = PointerGetDatum(tup);
+						estate->rettupdesc = row->rowtupdesc;
+						estate->retisnull = false;
+					}
+					else
+						exec_eval_datum(estate,
+										retvar,
+										&estate->rettype,
+										&rettypmod,
+										&estate->retval,
+										&estate->retisnull);
 				}
 				break;
 

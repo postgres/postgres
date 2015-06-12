@@ -3248,6 +3248,39 @@ $$ language plpgsql;
 
 select compos();
 
+-- RETURN variable is a different code path ...
+create or replace function compos() returns compostype as $$
+declare x int := 42;
+begin
+  return x;
+end;
+$$ language plpgsql;
+
+select * from compos();
+
+drop function compos();
+
+-- test: invalid use of composite variable in scalar-returning function
+create or replace function compos() returns int as $$
+declare
+  v compostype;
+begin
+  v := (1, 'hello');
+  return v;
+end;
+$$ language plpgsql;
+
+select compos();
+
+-- test: invalid use of composite expression in scalar-returning function
+create or replace function compos() returns int as $$
+begin
+  return (1, 'hello')::compostype;
+end;
+$$ language plpgsql;
+
+select compos();
+
 drop function compos();
 drop type compostype;
 
