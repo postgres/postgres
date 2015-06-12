@@ -3814,11 +3814,14 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	if (level < path_len && !path_nulls[level])
 	{
 		char	   *c = VARDATA_ANY(path_elems[level]);
+		long		lindex;
 
 		errno = 0;
-		idx = (int) strtol(c, &badp, 10);
-		if (errno != 0 || badp == c)
+		lindex = strtol(c, &badp, 10);
+		if (errno != 0 || badp == c || lindex > INT_MAX || lindex < INT_MIN)
 			idx = nelems;
+		else
+			idx = lindex;
 	}
 	else
 		idx = nelems;
