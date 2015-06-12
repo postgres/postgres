@@ -666,12 +666,16 @@ dttofmtasc(timestamp * ts, char *output, int str_len, char *fmtstr)
 int
 intoasc(interval * i, char *str)
 {
-	errno = 0;
-	str = PGTYPESinterval_to_asc(i);
+	char *tmp;
 
-	if (!str)
+	errno = 0;
+	tmp = PGTYPESinterval_to_asc(i);
+
+	if (!tmp)
 		return -errno;
 
+	memcpy(str, tmp, strlen(tmp));
+	free(tmp);
 	return 0;
 }
 
