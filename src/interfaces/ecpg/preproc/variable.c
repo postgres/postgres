@@ -437,10 +437,12 @@ remove_variable_from_list(struct arguments ** list, struct variable * var)
 void
 dump_variables(struct arguments * list, int mode)
 {
-	char	   *str_zero = mm_strdup("0");
+	char	   *str_zero;
 
 	if (list == NULL)
 		return;
+
+	str_zero = mm_strdup("0");
 
 	/*
 	 * The list is build up from the beginning so lets first dump the end of
