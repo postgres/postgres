@@ -215,7 +215,7 @@
       <listitem>
        <para>
         Improve the speed of sorting character and numeric fields (Peter
-        Geoghegan, Robert Haas, Andrew Gierth)
+        Geoghegan, Andrew Gierth, Robert Haas)
        </para>
       </listitem>
 
