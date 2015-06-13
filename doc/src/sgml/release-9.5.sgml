@@ -1064,7 +1064,7 @@
         linkend="functions-json-processing-table"><function>jsonb_set()</></>
         and <link
         linkend="functions-json-processing-table"><function>jsonb_pretty</></>
-        (Dmitry Dolgov, Andrew Dunstan)
+        (Dmitry Dolgov, Andrew Dunstan, Petr Jelinek)
        </para>
       </listitem>
 
