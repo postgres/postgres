@@ -560,9 +560,11 @@
        </para>
 
        <para>
-        By default, replication commands,
-        e.g. <literal>IDENTIFY_COMMAND</>, are not logged, even when
-        <varname>log_statements</> is set to <literal>all</>.
+        By default, replication commands, e.g. <link
+        linkend="protocol-replication"><literal>IDENTIFY_SYSTEM</></>,
+        are not logged, even when <link
+        linkend="guc-log-statement"><varname>log_statement</></> is set
+        to <literal>all</>.
        </para>
       </listitem>
 
@@ -724,7 +726,8 @@
 
       <listitem>
        <para>
-        Add <literal>VERBOSE</> option to <command>REINDEX</> (Fujii Masao)
+        Add <literal>VERBOSE</> option to <command>REINDEX</> (Sawada
+        Masahiko)
        </para>
       </listitem>
 
@@ -876,7 +879,7 @@
        </para>
 
        <para>
-        RETURN WHERE
+        WHERE IS THE OID RETURNED?
        </para>
       </listitem>
 
