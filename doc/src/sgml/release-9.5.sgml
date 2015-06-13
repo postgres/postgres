@@ -242,6 +242,21 @@
 
       <listitem>
        <para>
+        Allow the optimizer to remove unnecessary references to left
+        outer join subqueries (David Rowley)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow pushdown of query restrictions into <link
+        linkend="functions-window">window functions</>, where appropriate
+        (David Rowley)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Speed up <acronym>CRC</> (cyclic redundancy check) computations
         (Abhijit Menon-Sen, Heikki Linnakangas)
        </para>
