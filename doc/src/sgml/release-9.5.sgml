@@ -221,8 +221,7 @@
 
       <listitem>
        <para>
-        Improve hash creation and lookup performance (Tomas Vondra,
-        Teodor Sigaev, Tom Lane, Robert Haas)
+        Improve in-memory hash performance (Tomas Vondra, Robert Haas)
        </para>
       </listitem>
 
@@ -1792,6 +1791,12 @@
        <para>
         Allow foreign data wrappers to do post-filter locking (Etsuro
         Fujita)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve dynahash capabilities (Teodor Sigaev, Tom Lane)
        </para>
       </listitem>
 
