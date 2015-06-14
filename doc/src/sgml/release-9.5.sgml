@@ -802,7 +802,8 @@
       <listitem>
        <para>
         Allow <literal>CURRENT</><literal>/SESSION_USER</> to specify the
-        current user in certain (Kyotaro Horiguchi, &Aacute;lvaro Herrera)
+        current user in some commands (Kyotaro Horiguchi, &Aacute;lvaro
+        Herrera)
        </para>
 
        <para>
@@ -867,19 +868,6 @@
         changed more easily than modifying the <link
         linkend="catalog-pg-database"><structname>pg_database</></>
         system table.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have <link linkend="SQL-CREATETABLEAS"><command>CREATE
-        TABLE AS</></> and <link
-        linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH</></>
-        return an <type>OID</> (&Aacute;lvaro Herrera)
-       </para>
-
-       <para>
-        WHERE IS THE OID RETURNED?
        </para>
       </listitem>
 
@@ -1728,10 +1716,16 @@
 
       <listitem>
        <para>
-        Remove <application>pg_upgrade</> support for 8.3 old clusters
-        (Bruce Momjian)
+        Remove support for upgrading from 8.3 clusters (Bruce Momjian)
        </para>
       </listitem>
+
+     <listitem>
+      <para>
+       Move <application>pg_upgrade_support</> code into backend and
+       remove the module (Peter Eisentraut)
+      </para>
+     </listitem>
 
      </itemizedlist>
 
@@ -2018,13 +2012,6 @@
        Allow <link linkend="pgstattuple"><application>pgstattuple</></>
        to report approximate answers with less overhead using
        <function>pgstattuple_approx()</> (Abhijit Menon-Sen)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Move <application>pg_upgrade_support</> code into backend and
-       remove the module (Peter Eisentraut)
       </para>
      </listitem>
 
