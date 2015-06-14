@@ -514,7 +514,7 @@
         Add <link linkend="recovery-config"><filename>recovery.conf</></>
         parameter <link
         linkend="recovery-target-action"><varname>recovery_target_action</></>
-        to control post-recovery activity (Petr Petr Jel&iacute;nek)
+        to control post-recovery activity (Petr Jel&iacute;nek)
        </para>
 
        <para>
@@ -663,7 +663,7 @@
        <para>
         Add <link linkend="SQL-SELECT"><command>SELECT</></> option
         <literal>TABLESAMPLE</> to return a subset of a table (Petr
-        Petr Jel&iacute;nek)
+        Jel&iacute;nek)
        </para>
       </listitem>
 
