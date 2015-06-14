@@ -46,6 +46,12 @@ PostgreSQL documentation
   </para>
 
   <para>
+   <application>pg_dump</application> only dumps a single database.  To backup
+   global objects that are common to all databases in a cluster, such as roles
+   and tablespaces, use <xref linkend="app-pg-dumpall">.
+  </para>
+
+  <para>
    Dumps can be output in script or archive file formats. Script
    dumps are plain-text files containing the SQL commands required
    to reconstruct the database to the state it was in at the time it was
