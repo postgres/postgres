@@ -596,7 +596,7 @@
         Allow <filename>recovery.conf</>'s <link
         linkend="primary-conninfo"><varname>primary_conninfo</></> to
         use connection <acronym>URI</>s, e.g. <literal>postgres://</>
-        (Alex Shulgin)
+        (Alexander Shulgin)
        </para>
       </listitem>
 
