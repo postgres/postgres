@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/release-9.5.sgml -->
+/<!-- doc/src/sgml/release-9.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-9-5">
@@ -405,7 +405,7 @@
         Allow the recording of transaction
         commit timestamps when <acronym>GUC</> <link
         linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</></>
-        is enabled (&Aacute;lvaro Herrera, Petr Jelinek)
+        is enabled (&Aacute;lvaro Herrera, Petr Jel&iacute;nek)
        </para>
 
        <para>
@@ -514,7 +514,7 @@
         Add <link linkend="recovery-config"><filename>recovery.conf</></>
         parameter <link
         linkend="recovery-target-action"><varname>recovery_target_action</></>
-        to control post-recovery activity (Petr Jelinek)
+        to control post-recovery activity (Petr Petr Jel&iacute;nek)
        </para>
 
        <para>
@@ -663,7 +663,7 @@
        <para>
         Add <link linkend="SQL-SELECT"><command>SELECT</></> option
         <literal>TABLESAMPLE</> to return a subset of a table (Petr
-        Jelinek)
+        Petr Jel&iacute;nek)
        </para>
       </listitem>
 
@@ -1064,7 +1064,7 @@
         linkend="functions-json-processing-table"><function>jsonb_set()</></>
         and <link
         linkend="functions-json-processing-table"><function>jsonb_pretty</></>
-        (Dmitry Dolgov, Andrew Dunstan, Petr Jelinek)
+        (Dmitry Dolgov, Andrew Dunstan, Petr Jel&iacute;nek)
        </para>
       </listitem>
 
@@ -1187,7 +1187,7 @@
         Add <link
         linkend="functions-math-func-table"><function>width_bucket()</></>
         which supports any sortable data type and non-uniform bucket widths
-        (Petr Jelinek)
+        (Petr Jel&iacute;nek)
        </para>
       </listitem>
 
@@ -1985,7 +1985,7 @@
        Add <filename>contrib</> modules <link
        linkend="tsm-system-rows"><application>tsm_system_rows</></> and
        <link linkend="tsm-system-time"><application>tsm_system_time</></>
-       to allow additional table sampling methods (Petr Jelinek)
+       to allow additional table sampling methods (Petr Jel&iacute;nek)
       </para>
      </listitem>
 
