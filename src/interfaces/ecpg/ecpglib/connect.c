@@ -322,7 +322,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	}
 
 	if ((this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno)) == NULL)
+	{
+		ecpg_free(dbname);
 		return false;
+	}
 
 	if (dbname != NULL)
 	{
