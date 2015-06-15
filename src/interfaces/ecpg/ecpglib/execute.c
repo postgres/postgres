@@ -1441,6 +1441,13 @@ ecpg_execute(struct statement * stmt)
 	if (!ecpg_check_PQresult(results, stmt->lineno, stmt->connection->connection, stmt->compat))
 		return (false);
 
+	if (sqlca == NULL)
+	{
+		ecpg_raise(stmt->lineno, ECPG_OUT_OF_MEMORY,
+				   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+		return (false);
+	}
+
 	var = stmt->outlist;
 	switch (PQresultStatus(results))
 	{

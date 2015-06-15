@@ -1024,6 +1024,8 @@ void
 ECPG_informix_reset_sqlca(void)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+	if (sqlca == NULL)
+		return;
 
 	memcpy((char *) sqlca, (char *) &sqlca_init, sizeof(struct sqlca_t));
 }
