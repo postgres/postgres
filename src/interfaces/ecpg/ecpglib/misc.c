@@ -106,6 +106,13 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
+	if (sqlca == NULL)
+	{
+		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY,
+				   NULL);
+		return (false);
+	}
+
 	ecpg_init_sqlca(sqlca);
 	if (con == NULL)
 	{
@@ -143,6 +150,8 @@ ECPGget_sqlca(void)
 	if (sqlca == NULL)
 	{
 		sqlca = malloc(sizeof(struct sqlca_t));
+		if (sqlca == NULL)
+			return NULL;
 		ecpg_init_sqlca(sqlca);
 		pthread_setspecific(sqlca_key, sqlca);
 	}
@@ -286,9 +295,11 @@ ecpg_log(const char *format,...)
 	va_end(ap);
 
 	/* dump out internal sqlca variables */
-	if (ecpg_internal_regression_mode)
+	if (ecpg_internal_regression_mode && sqlca != NULL)
+	{
 		fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
 				sqlca->sqlcode, sqlca->sqlstate);
+	}
 
 	fflush(debugstream);
 
@@ -523,6 +534,13 @@ ECPGset_var(int number, void *pointer, int lineno)
 	if (!ptr)
 	{
 		struct sqlca_t *sqlca = ECPGget_sqlca();
+
+		if (sqlca == NULL)
+		{
+			ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
+					   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+			return;
+		}
 
 		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
 		strncpy(sqlca->sqlstate, "YE001", sizeof(sqlca->sqlstate));

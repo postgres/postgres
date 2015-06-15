@@ -1493,6 +1493,13 @@ ecpg_process_output(struct statement * stmt, bool clear_result)
 				ntuples,
 				act_field;
 
+	if (sqlca == NULL)
+	{
+		ecpg_raise(stmt->lineno, ECPG_OUT_OF_MEMORY,
+				   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+		return (false);
+	}
+
 	var = stmt->outlist;
 	switch (PQresultStatus(stmt->results))
 	{

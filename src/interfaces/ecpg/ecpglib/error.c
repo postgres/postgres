@@ -14,6 +14,13 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
+	if (sqlca == NULL)
+	{
+		ecpg_log("out of memory");
+		ECPGfree_auto_mem();
+		return;
+	}
+
 	sqlca->sqlcode = code;
 	strncpy(sqlca->sqlstate, sqlstate, sizeof(sqlca->sqlstate));
 
@@ -215,6 +222,13 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 	char	   *sqlstate;
 	char	   *message;
 
+	if (sqlca == NULL)
+	{
+		ecpg_log("out of memory");
+		ECPGfree_auto_mem();
+		return;
+	}
+
 	if (result)
 	{
 		sqlstate = PQresultErrorField(result, PG_DIAG_SQLSTATE);
@@ -322,6 +336,12 @@ void
 sqlprint(void)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+
+	if (sqlca == NULL)
+	{
+		ecpg_log("out of memory");
+		return;
+	}
 
 	sqlca->sqlerrm.sqlerrmc[sqlca->sqlerrm.sqlerrml] = '\0';
 	fprintf(stderr, ecpg_gettext("SQL error: %s\n"), sqlca->sqlerrm.sqlerrmc);
