@@ -505,9 +505,9 @@ extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
 
 /* These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.  These are essentially FunctionLookup() followed
- * by FunctionCallN().  If the same function is to be invoked repeatedly,
- * do the FunctionLookup() once and then use FunctionCallN().
+ * are allowed to be NULL.  These are essentially fmgr_info() followed by
+ * FunctionCallN().  If the same function is to be invoked repeatedly, do the
+ * fmgr_info() once and then use FunctionCallN().
  */
 extern Datum OidFunctionCall0Coll(Oid functionId, Oid collation);
 extern Datum OidFunctionCall1Coll(Oid functionId, Oid collation,
