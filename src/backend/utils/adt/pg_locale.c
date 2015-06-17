@@ -58,6 +58,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_control.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
@@ -148,6 +149,7 @@ pg_perm_setlocale(int category, const char *locale)
 	char	   *result;
 	const char *envvar;
 	char	   *envbuf;
+	char		orig_result[LC_ENV_BUFSIZE];
 
 #ifndef WIN32
 	result = setlocale(category, locale);
@@ -173,6 +175,7 @@ pg_perm_setlocale(int category, const char *locale)
 
 	if (result == NULL)
 		return result;			/* fall out immediately on failure */
+	strlcpy(orig_result, result, sizeof(orig_result));
 
 	/*
 	 * Use the right encoding in translated messages.  Under ENABLE_NLS, let
@@ -231,6 +234,17 @@ pg_perm_setlocale(int category, const char *locale)
 	}
 
 	snprintf(envbuf, LC_ENV_BUFSIZE - 1, "%s=%s", envvar, result);
+	if (strcmp(orig_result, result) != 0)
+	{
+		char		hex[2 * LC_ENV_BUFSIZE + 1];
+		unsigned	hexlen;
+
+		hexlen =
+			hex_encode(result, Min(1 + strlen(result), LC_ENV_BUFSIZE), hex);
+		hex[hexlen] = '\0';
+		elog(FATAL, "setlocale() result %s clobbered to 0x%s",
+			 orig_result, hex);
+	}
 
 	if (putenv(envbuf))
 		return NULL;
