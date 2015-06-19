@@ -2870,10 +2870,14 @@ range_table_mutator(List *rtable,
 			case RTE_RELATION:
 				if (rte->tablesample)
 				{
-					MUTATE(rte->tablesample->args, rte->tablesample->args,
+					CHECKFLATCOPY(newrte->tablesample, rte->tablesample,
+								  TableSampleClause);
+					MUTATE(newrte->tablesample->args,
+						   newrte->tablesample->args,
 						   List *);
-					MUTATE(rte->tablesample->repeatable,
-						   rte->tablesample->repeatable, Node *);
+					MUTATE(newrte->tablesample->repeatable,
+						   newrte->tablesample->repeatable,
+						   Node *);
 				}
 				break;
 			case RTE_CTE:
