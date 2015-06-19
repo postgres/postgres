@@ -128,6 +128,7 @@ int			Log_autovacuum_min_duration = -1;
 
 /* the minimum allowed time between two awakenings of the launcher */
 #define MIN_AUTOVAC_SLEEPTIME 100.0		/* milliseconds */
+#define MAX_AUTOVAC_SLEEPTIME 300		/* seconds */
 
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
@@ -844,6 +845,15 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
 		nap->tv_sec = 0;
 		nap->tv_usec = MIN_AUTOVAC_SLEEPTIME * 1000;
 	}
+
+	/*
+	 * If the sleep time is too large, clamp it to an arbitrary maximum (plus
+	 * any fractional seconds, for simplicity).  This avoids an essentially
+	 * infinite sleep in strange cases like the system clock going backwards a
+	 * few years.
+	 */
+	if (nap->tv_sec > MAX_AUTOVAC_SLEEPTIME)
+		nap->tv_sec = MAX_AUTOVAC_SLEEPTIME;
 }
 
 /*
