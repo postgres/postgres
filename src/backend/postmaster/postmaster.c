@@ -324,8 +324,10 @@ typedef enum
 
 static PMState pmState = PM_INIT;
 
-/* Start time of abort processing at immediate shutdown or child crash */
-static time_t AbortStartTime;
+/* Start time of SIGKILL timeout during immediate shutdown or child crash */
+/* Zero means timeout is not running */
+static time_t AbortStartTime = 0;
+/* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
@@ -1419,7 +1421,8 @@ checkDataDir(void)
  * In normal conditions we wait at most one minute, to ensure that the other
  * background tasks handled by ServerLoop get done even when no requests are
  * arriving.  However, if there are background workers waiting to be started,
- * we don't actually sleep so that they are quickly serviced.
+ * we don't actually sleep so that they are quickly serviced.  Other exception
+ * cases are as shown in the code.
  */
 static void
 DetermineSleepTime(struct timeval * timeout)
@@ -1433,11 +1436,12 @@ DetermineSleepTime(struct timeval * timeout)
 	if (Shutdown > NoShutdown ||
 		(!StartWorkerNeeded && !HaveCrashedWorker))
 	{
-		if (AbortStartTime > 0)
+		if (AbortStartTime != 0)
 		{
 			/* time left to abort; clamp to 0 in case it already expired */
-			timeout->tv_sec = Max(SIGKILL_CHILDREN_AFTER_SECS -
-								  (time(NULL) - AbortStartTime), 0);
+			timeout->tv_sec = SIGKILL_CHILDREN_AFTER_SECS -
+				(time(NULL) - AbortStartTime);
+			timeout->tv_sec = Max(timeout->tv_sec, 0);
 			timeout->tv_usec = 0;
 		}
 		else
@@ -1707,20 +1711,13 @@ ServerLoop(void)
 		 * Note we also do this during recovery from a process crash.
 		 */
 		if ((Shutdown >= ImmediateShutdown || (FatalError && !SendStop)) &&
-			AbortStartTime > 0 &&
-			now - AbortStartTime >= SIGKILL_CHILDREN_AFTER_SECS)
+			AbortStartTime != 0 &&
+			(now - AbortStartTime) >= SIGKILL_CHILDREN_AFTER_SECS)
 		{
 			/* We were gentle with them before. Not anymore */
 			TerminateChildren(SIGKILL);
 			/* reset flag so we don't SIGKILL again */
 			AbortStartTime = 0;
-
-			/*
-			 * Additionally, unless we're recovering from a process crash,
-			 * it's now the time for postmaster to abandon ship.
-			 */
-			if (!FatalError)
-				ExitPostmaster(1);
 		}
 	}
 }

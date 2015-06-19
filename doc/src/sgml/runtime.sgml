@@ -1441,10 +1441,11 @@ $ <userinput>sysctl -w vm.nr_hugepages=3170</userinput>
       <para>
       This is the <firstterm>Immediate Shutdown</firstterm> mode.
       The server will send <systemitem>SIGQUIT</systemitem> to all child
-      processes and wait for them to terminate.  Those that don't terminate
-      within 5 seconds, will be sent <systemitem>SIGKILL</systemitem> by the
-      master <command>postgres</command> process, which will then terminate
-      without further waiting.  This will lead to recovery (by
+      processes and wait for them to terminate.  If any do not terminate
+      within 5 seconds, they will be sent <systemitem>SIGKILL</systemitem>.
+      The master server process exits as soon as all child processes have
+      exited, without doing normal database shutdown processing.
+      This will lead to recovery (by
       replaying the WAL log) upon next start-up. This is recommended
       only in emergencies.
       </para>
