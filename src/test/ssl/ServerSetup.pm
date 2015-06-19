@@ -43,6 +43,20 @@ sub copy_files
 	}
 }
 
+# Perform chmod on a set of files, taking into account wildcards
+sub chmod_files
+{
+	my $mode = shift;
+	my $file_expr = shift;
+
+	my @all_files = glob $file_expr;
+	foreach my $file_entry (@all_files)
+	{
+		chmod $mode, $file_entry
+		  or die "Could not run chmod with mode $mode on $file_entry";
+	}
+}
+
 sub configure_test_server_for_ssl
 {
 	my $tempdir = $_[0];
@@ -68,7 +82,7 @@ sub configure_test_server_for_ssl
 # Copy all server certificates and keys, and client root cert, to the data dir
 	copy_files("ssl/server-*.crt", "$tempdir/pgdata");
 	copy_files("ssl/server-*.key", "$tempdir/pgdata");
-	system_or_bail "chmod 0600 '$tempdir'/pgdata/server-*.key";
+	chmod_files(0600, "$tempdir/pgdata/server-*.key");
 	copy_files("ssl/root+client_ca.crt", "$tempdir/pgdata");
 	copy_files("ssl/root+client.crl",    "$tempdir/pgdata");
 

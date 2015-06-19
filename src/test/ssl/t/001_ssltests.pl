@@ -78,7 +78,7 @@ sub test_connect_fails
 # The client's private key must not be world-readable. Git doesn't track
 # permissions (except for the executable bit), so they might be wrong after
 # a checkout.
-system_or_bail "chmod 0600 ssl/client.key";
+chmod 0600, "ssl/client.key";
 
 #### Part 0. Set up the server.
 
