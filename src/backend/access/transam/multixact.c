@@ -2662,6 +2662,18 @@ SetOffsetVacuumLimit(bool finish_setup)
 	}
 
 	/*
+	 * If we failed to get the oldest offset this time, but we have a value
+	 * from a previous pass through this function, assess the need for
+	 * autovacuum based on that old value rather than automatically forcing
+	 * it.
+	 */
+	if (prevOldestOffsetKnown && !oldestOffsetKnown)
+	{
+		oldestOffset = prevOldestOffset;
+		oldestOffsetKnown = true;
+	}
+
+	/*
 	 * Do we need an emergency autovacuum?  If we're not sure, assume yes.
 	 */
 	return !oldestOffsetKnown ||
