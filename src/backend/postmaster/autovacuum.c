@@ -673,8 +673,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		/*
 		 * There are some conditions that we need to check before trying to
-		 * start a launcher.  First, we need to make sure that there is a
-		 * launcher slot available.  Second, we need to make sure that no
+		 * start a worker.  First, we need to make sure that there is a
+		 * worker slot available.  Second, we need to make sure that no
 		 * other worker failed while starting up.
 		 */
 
