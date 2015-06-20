@@ -183,6 +183,12 @@ pg_perm_setlocale(int category, const char *locale)
 	 */
 	if (category == LC_CTYPE)
 	{
+		static char save_lc_ctype[LC_ENV_BUFSIZE];
+
+		/* copy setlocale() return value before callee invokes it again */
+		strlcpy(save_lc_ctype, result, sizeof(save_lc_ctype));
+		result = save_lc_ctype;
+
 #ifdef ENABLE_NLS
 		SetMessageEncoding(pg_bind_textdomain_codeset(textdomain(NULL)));
 #else
