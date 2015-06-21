@@ -36,6 +36,9 @@ CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
 CREATE USER MAPPING FOR regtest_addr_user SERVER "integer";
 ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regtest_addr_user;
 ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user REVOKE DELETE ON TABLES FROM regtest_addr_user;
+CREATE TRANSFORM FOR int LANGUAGE SQL (
+	FROM SQL WITH FUNCTION varchar_transform(internal),
+	TO SQL WITH FUNCTION int4recv(internal));
 
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
@@ -74,7 +77,7 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy'), ('user mapping'), ('default acl'),
+		('policy'), ('user mapping'), ('default acl'), ('transform'),
 		('operator of access method'), ('function of access method')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
@@ -162,7 +165,8 @@ WITH objects (type, name, args) AS (VALUES
 				('default acl', '{regtest_addr_user}', '{r}'),
 				-- extension
 				-- event trigger
-				('policy', '{addr_nsp, gentable, genpol}', '{}')
+				('policy', '{addr_nsp, gentable, genpol}', '{}'),
+				('transform', '{int}', '{sql}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	-- test roundtrip through pg_identify_object_as_address

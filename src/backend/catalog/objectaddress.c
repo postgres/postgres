@@ -634,6 +634,10 @@ static const struct object_type_map
 	/* OCLASS_POLICY */
 	{
 		"policy", OBJECT_POLICY
+	},
+	/* OCLASS_TRANSFORM */
+	{
+		"transform", OBJECT_TRANSFORM
 	}
 };
 
@@ -1855,7 +1859,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	 * exceptions.
 	 */
 	if (type == OBJECT_TYPE || type == OBJECT_DOMAIN || type == OBJECT_CAST ||
-		type == OBJECT_DOMCONSTRAINT)
+		type == OBJECT_TRANSFORM || type == OBJECT_DOMCONSTRAINT)
 	{
 		Datum	   *elems;
 		bool	   *nulls;
@@ -1946,6 +1950,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_CAST:
 		case OBJECT_USER_MAPPING:
 		case OBJECT_DEFACL:
+		case OBJECT_TRANSFORM:
 			if (list_length(args) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -3599,6 +3604,10 @@ getObjectTypeDescription(const ObjectAddress *object)
 			appendStringInfoString(&buffer, "policy");
 			break;
 
+		case OCLASS_TRANSFORM:
+			appendStringInfoString(&buffer, "transform");
+			break;
+
 		default:
 			appendStringInfo(&buffer, "unrecognized %u", object->classId);
 			break;
@@ -4520,6 +4529,40 @@ getObjectIdentityParts(const ObjectAddress *object,
 				ReleaseSysCache(tup);
 				break;
 			}
+
+		case OCLASS_TRANSFORM:
+			{
+				Relation	transformDesc;
+				HeapTuple	tup;
+				Form_pg_transform transform;
+				char	   *transformLang;
+				char	   *transformType;
+
+				transformDesc = heap_open(TransformRelationId, AccessShareLock);
+
+				tup = get_catalog_object_by_oid(transformDesc, object->objectId);
+
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "could not find tuple for transform %u",
+						 object->objectId);
+
+				transform = (Form_pg_transform) GETSTRUCT(tup);
+
+				transformType = format_type_be_qualified(transform->trftype);
+				transformLang = get_language_name(transform->trflang, false);
+
+				appendStringInfo(&buffer, "for %s on language %s",
+								 transformType,
+								 transformLang);
+				if (objname)
+				{
+					*objname = list_make1(transformType);
+					*objargs = list_make1(pstrdup(transformLang));
+				}
+
+				heap_close(transformDesc, AccessShareLock);
+			}
+			break;
 
 		default:
 			appendStringInfo(&buffer, "unrecognized object %u %u %d",

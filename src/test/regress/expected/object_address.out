@@ -32,6 +32,9 @@ CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
 CREATE USER MAPPING FOR regtest_addr_user SERVER "integer";
 ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regtest_addr_user;
 ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user REVOKE DELETE ON TABLES FROM regtest_addr_user;
+CREATE TRANSFORM FOR int LANGUAGE SQL (
+	FROM SQL WITH FUNCTION varchar_transform(internal),
+	TO SQL WITH FUNCTION int4recv(internal));
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
@@ -76,7 +79,7 @@ BEGIN
 		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
-		('policy'), ('user mapping'), ('default acl'),
+		('policy'), ('user mapping'), ('default acl'), ('transform'),
 		('operator of access method'), ('function of access method')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
@@ -261,6 +264,12 @@ WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be
 WARNING:  error for default acl,{addr_nsp,zwei},{integer}: unrecognized default ACL object type i
 WARNING:  error for default acl,{eins,zwei,drei},{}: argument list length must be exactly 1
 WARNING:  error for default acl,{eins,zwei,drei},{integer}: unrecognized default ACL object type i
+WARNING:  error for transform,{eins},{}: argument list length must be exactly 1
+WARNING:  error for transform,{eins},{integer}: type "eins" does not exist
+WARNING:  error for transform,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for transform,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for transform,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for transform,{eins,zwei,drei},{integer}: name list length must be exactly 1
 WARNING:  error for operator of access method,{eins},{}: name list length must be at least 3
 WARNING:  error for operator of access method,{eins},{integer}: name list length must be at least 3
 WARNING:  error for operator of access method,{addr_nsp,zwei},{}: name list length must be at least 3
@@ -363,7 +372,8 @@ WITH objects (type, name, args) AS (VALUES
 				('default acl', '{regtest_addr_user}', '{r}'),
 				-- extension
 				-- event trigger
-				('policy', '{addr_nsp, gentable, genpol}', '{}')
+				('policy', '{addr_nsp, gentable, genpol}', '{}'),
+				('transform', '{int}', '{sql}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	-- test roundtrip through pg_identify_object_as_address
@@ -411,11 +421,12 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops USING btree                                   | t
  policy                    |            |                   | genpol on addr_nsp.gentable                                          | t
  collation                 | pg_catalog | "default"         | pg_catalog."default"                                                 | t
+ transform                 |            |                   | for integer on language sql                                          | t
  text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict                                                | t
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(40 rows)
+(41 rows)
 
 ---
 --- Cleanup resources
