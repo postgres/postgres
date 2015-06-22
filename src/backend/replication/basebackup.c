@@ -1159,7 +1159,7 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 	memset(h, 0, sizeof(h));
 
 	/* Name 100 */
-	sprintf(&h[0], "%.99s", filename);
+	strlcpy(&h[0], filename, 100);
 	if (linktarget != NULL || S_ISDIR(statbuf->st_mode))
 	{
 		/*
@@ -1201,7 +1201,7 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 		/* Type - Symbolic link */
 		sprintf(&h[156], "2");
 		/* Link Name 100 */
-		sprintf(&h[157], "%.99s", linktarget);
+		strlcpy(&h[157], linktarget, 100);
 	}
 	else if (S_ISDIR(statbuf->st_mode))
 		/* Type - directory */
@@ -1218,11 +1218,11 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 
 	/* User 32 */
 	/* XXX: Do we need to care about setting correct username? */
-	sprintf(&h[265], "%.31s", "postgres");
+	strlcpy(&h[265], "postgres", 32);
 
 	/* Group 32 */
 	/* XXX: Do we need to care about setting correct group name? */
-	sprintf(&h[297], "%.31s", "postgres");
+	strlcpy(&h[297], "postgres", 32);
 
 	/* Major Dev 8 */
 	sprintf(&h[329], "%07o ", 0);
