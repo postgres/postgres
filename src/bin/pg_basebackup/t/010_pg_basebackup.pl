@@ -17,6 +17,14 @@ command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup fails because of hba');
 
+# Some Windows ANSI code pages may reject this filename, in which case we
+# quietly proceed without this bit of test coverage.
+if (open BADCHARS, ">>$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
+{
+	print BADCHARS "test backup of file with non-UTF8 name\n";
+	close BADCHARS;
+}
+
 open HBA, ">>$tempdir/pgdata/pg_hba.conf";
 print HBA "local replication all trust\n";
 print HBA "host replication all 127.0.0.1/32 trust\n";
