@@ -834,7 +834,9 @@ inheritance_planner(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
 	int			parentRTindex = parse->resultRelation;
-	Bitmapset  *resultRTindexes = NULL;
+	Bitmapset  *resultRTindexes;
+	Bitmapset  *subqueryRTindexes;
+	Bitmapset  *modifiableARIindexes;
 	int			nominalRelation = -1;
 	List	   *final_rtable = NIL;
 	int			save_rel_array_size = 0;
@@ -845,6 +847,7 @@ inheritance_planner(PlannerInfo *root)
 	List	   *returningLists = NIL;
 	List	   *rowMarks;
 	ListCell   *lc;
+	Index		rti;
 
 	Assert(parse->commandType != CMD_INSERT);
 
@@ -867,8 +870,10 @@ inheritance_planner(PlannerInfo *root)
 	 * subqueries during planning, and so we must create copies of them too,
 	 * except where they are target relations, which will each only be used in
 	 * a single plan.
+	 *
+	 * To begin with, we'll need a bitmapset of the target relation relids.
 	 */
-	resultRTindexes = bms_add_member(resultRTindexes, parentRTindex);
+	resultRTindexes = bms_make_singleton(parentRTindex);
 	foreach(lc, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
@@ -878,12 +883,57 @@ inheritance_planner(PlannerInfo *root)
 											 appinfo->child_relid);
 	}
 
+	/*
+	 * Now, generate a bitmapset of the relids of the subquery RTEs, including
+	 * security-barrier RTEs that will become subqueries, as just explained.
+	 */
+	subqueryRTindexes = NULL;
+	rti = 1;
+	foreach(lc, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (rte->rtekind == RTE_SUBQUERY ||
+			(rte->securityQuals != NIL &&
+			 !bms_is_member(rti, resultRTindexes)))
+			subqueryRTindexes = bms_add_member(subqueryRTindexes, rti);
+		rti++;
+	}
+
+	/*
+	 * Next, we want to identify which AppendRelInfo items contain references
+	 * to any of the aforesaid subquery RTEs.  These items will need to be
+	 * copied and modified to adjust their subquery references; whereas the
+	 * other ones need not be touched.  It's worth being tense over this
+	 * because we can usually avoid processing most of the AppendRelInfo
+	 * items, thereby saving O(N^2) space and time when the target is a large
+	 * inheritance tree.  We can identify AppendRelInfo items by their
+	 * child_relid, since that should be unique within the list.
+	 */
+	modifiableARIindexes = NULL;
+	if (subqueryRTindexes != NULL)
+	{
+		foreach(lc, root->append_rel_list)
+		{
+			AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
+
+			if (bms_is_member(appinfo->parent_relid, subqueryRTindexes) ||
+				bms_is_member(appinfo->child_relid, subqueryRTindexes) ||
+				bms_overlap(pull_varnos((Node *) appinfo->translated_vars),
+							subqueryRTindexes))
+				modifiableARIindexes = bms_add_member(modifiableARIindexes,
+													  appinfo->child_relid);
+		}
+	}
+
+	/*
+	 * And now we can get on with generating a plan for each child table.
+	 */
 	foreach(lc, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
 		PlannerInfo subroot;
 		Plan	   *subplan;
-		Index		rti;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
@@ -917,9 +967,29 @@ inheritance_planner(PlannerInfo *root)
 		/*
 		 * The append_rel_list likewise might contain references to subquery
 		 * RTEs (if any subqueries were flattenable UNION ALLs).  So prepare
-		 * to apply ChangeVarNodes to that, too.
+		 * to apply ChangeVarNodes to that, too.  As explained above, we only
+		 * want to copy items that actually contain such references; the rest
+		 * can just get linked into the subroot's append_rel_list.
+		 *
+		 * If we know there are no such references, we can just use the outer
+		 * append_rel_list unmodified.
 		 */
-		subroot.append_rel_list = (List *) copyObject(root->append_rel_list);
+		if (modifiableARIindexes != NULL)
+		{
+			ListCell   *lc2;
+
+			subroot.append_rel_list = NIL;
+			foreach(lc2, root->append_rel_list)
+			{
+				AppendRelInfo *appinfo2 = (AppendRelInfo *) lfirst(lc2);
+
+				if (bms_is_member(appinfo2->child_relid, modifiableARIindexes))
+					appinfo2 = (AppendRelInfo *) copyObject(appinfo2);
+
+				subroot.append_rel_list = lappend(subroot.append_rel_list,
+												  appinfo2);
+			}
+		}
 
 		/*
 		 * Add placeholders to the child Query's rangetable list to fill the
@@ -933,13 +1003,13 @@ inheritance_planner(PlannerInfo *root)
 
 		/*
 		 * If this isn't the first child Query, generate duplicates of all
-		 * subquery RTEs, and adjust Var numbering to reference the
-		 * duplicates. To simplify the loop logic, we scan the original rtable
-		 * not the copy just made by adjust_appendrel_attrs; that should be OK
-		 * since subquery RTEs couldn't contain any references to the target
-		 * rel.
+		 * subquery (or subquery-to-be) RTEs, and adjust Var numbering to
+		 * reference the duplicates.  To simplify the loop logic, we scan the
+		 * original rtable not the copy just made by adjust_appendrel_attrs;
+		 * that should be OK since subquery RTEs couldn't contain any
+		 * references to the target rel.
 		 */
-		if (final_rtable != NIL)
+		if (final_rtable != NIL && subqueryRTindexes != NULL)
 		{
 			ListCell   *lr;
 
@@ -948,14 +1018,7 @@ inheritance_planner(PlannerInfo *root)
 			{
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(lr);
 
-				/*
-				 * Copy subquery RTEs and RTEs with security barrier quals
-				 * that will be turned into subqueries, except those that are
-				 * target relations.
-				 */
-				if (rte->rtekind == RTE_SUBQUERY ||
-					(rte->securityQuals != NIL &&
-					 !bms_is_member(rti, resultRTindexes)))
+				if (bms_is_member(rti, subqueryRTindexes))
 				{
 					Index		newrti;
 
@@ -968,7 +1031,20 @@ inheritance_planner(PlannerInfo *root)
 					newrti = list_length(subroot.parse->rtable) + 1;
 					ChangeVarNodes((Node *) subroot.parse, rti, newrti, 0);
 					ChangeVarNodes((Node *) subroot.rowMarks, rti, newrti, 0);
-					ChangeVarNodes((Node *) subroot.append_rel_list, rti, newrti, 0);
+					/* Skip processing unchanging parts of append_rel_list */
+					if (modifiableARIindexes != NULL)
+					{
+						ListCell   *lc2;
+
+						foreach(lc2, subroot.append_rel_list)
+						{
+							AppendRelInfo *appinfo2 = (AppendRelInfo *) lfirst(lc2);
+
+							if (bms_is_member(appinfo2->child_relid,
+											  modifiableARIindexes))
+								ChangeVarNodes((Node *) appinfo2, rti, newrti, 0);
+						}
+					}
 					rte = copyObject(rte);
 					ChangeVarNodes((Node *) rte->securityQuals, rti, newrti, 0);
 					subroot.parse->rtable = lappend(subroot.parse->rtable,
