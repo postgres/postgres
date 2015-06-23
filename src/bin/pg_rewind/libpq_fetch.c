@@ -212,7 +212,7 @@ receiveFileChunks(const char *sql)
 	if (PQsendQueryParams(conn, sql, 0, NULL, NULL, NULL, NULL, 1) != 1)
 		pg_fatal("could not send query: %s", PQerrorMessage(conn));
 
-	pg_log(PG_DEBUG, "getting file chunks");
+	pg_log(PG_DEBUG, "getting file chunks\n");
 
 	if (PQsetSingleRowMode(conn) != 1)
 		pg_fatal("could not set libpq connection to single row mode\n");
