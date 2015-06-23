@@ -84,11 +84,11 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, TimeLineID tli,
 			errptr = startpoint ? startpoint : xlogreader->EndRecPtr;
 
 			if (errormsg)
-				pg_fatal("error reading WAL at %X/%X: %s\n",
+				pg_fatal("could not read WAL record at %X/%X: %s\n",
 						 (uint32) (errptr >> 32), (uint32) (errptr),
 						 errormsg);
 			else
-				pg_fatal("error reading WAL at %X/%X\n",
+				pg_fatal("could not read WAL record at %X/%X\n",
 						 (uint32) (startpoint >> 32),
 						 (uint32) (startpoint));
 		}

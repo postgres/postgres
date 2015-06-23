@@ -148,7 +148,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 				 fullparentpath, strerror(errno));
 
 	if (closedir(xldir))
-		pg_fatal("could not close archive location \"%s\": %s\n",
+		pg_fatal("could not close directory \"%s\": %s\n",
 				 fullparentpath, strerror(errno));
 }
 
@@ -199,7 +199,7 @@ copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
 	}
 
 	if (close(srcfd) != 0)
-		pg_fatal("error closing file \"%s\": %s\n", srcpath, strerror(errno));
+		pg_fatal("could not close file \"%s\": %s\n", srcpath, strerror(errno));
 }
 
 /*

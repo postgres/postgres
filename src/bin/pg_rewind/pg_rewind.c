@@ -56,22 +56,18 @@ bool		dry_run = false;
 static void
 usage(const char *progname)
 {
-	printf(_("%s resynchronizes a cluster with another copy of the cluster.\n\n"), progname);
+	printf(_("%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
 	printf(_("Options:\n"));
-	printf(_("  -D, --target-pgdata=DIRECTORY\n"));
-	printf(_("                 existing data directory to modify\n"));
-	printf(_("  --source-pgdata=DIRECTORY\n"));
-	printf(_("                 source data directory to sync with\n"));
-	printf(_("  --source-server=CONNSTR\n"));
-	printf(_("                 source server to sync with\n"));
-	printf(_("  -P, --progress write progress messages\n"));
-	printf(_("  -n, --dry-run  stop before modifying anything\n"));
-	printf(_("  --debug        write a lot of debug messages\n"));
-	printf(_("  -V, --version  output version information, then exit\n"));
-	printf(_("  -?, --help     show this help, then exit\n"));
-	printf(_("\n"));
-	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
+	printf(_("      --source-pgdata=DIRECTORY  source data directory to sync with\n"));
+	printf(_("      --source-server=CONNSTR    source server to sync with\n"));
+	printf(_("  -n, --dry-run                  stop before modifying anything\n"));
+	printf(_("  -P, --progress                 write progress messages\n"));
+	printf(_("      --debug                    write a lot of debug messages\n"));
+	printf(_("  -V, --version                  output version information, then exit\n"));
+	printf(_("  -?, --help                     show this help, then exit\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 
@@ -154,24 +150,24 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* No source given? Show usage */
 	if (datadir_source == NULL && connstr_source == NULL)
 	{
-		fprintf(stderr, _("no source specified (--source-pgdata or --source-server)\n"));
+		fprintf(stderr, _("%s: no source specified (--source-pgdata or --source-server)\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
 	if (datadir_target == NULL)
 	{
-		fprintf(stderr, _("no target data directory specified (--target-pgdata)\n"));
+		fprintf(stderr, _("%s: no target data directory specified (--target-pgdata)\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
-	if (argc != optind)
+	if (optind < argc)
 	{
-		fprintf(stderr, _("invalid arguments\n"));
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
@@ -184,9 +180,11 @@ main(int argc, char **argv)
 	 */
 #ifndef WIN32
 	if (geteuid() == 0)
-		pg_fatal("cannot be executed by \"root\"\n"
-				 "You must run %s as the PostgreSQL superuser.\n",
-				 progname);
+	{
+		fprintf(stderr, _("cannot be executed by \"root\"\n"));
+		fprintf(stderr, _("You must run %s as the PostgreSQL superuser.\n"),
+				progname);
+	}
 #endif
 
 	get_restricted_token(progname);
@@ -295,7 +293,7 @@ main(int argc, char **argv)
 	 */
 	if (showprogress)
 	{
-		pg_log(PG_PROGRESS, "Need to copy %lu MB (total source directory size is %lu MB)\n",
+		pg_log(PG_PROGRESS, "need to copy %lu MB (total source directory size is %lu MB)\n",
 			   (unsigned long) (filemap->fetch_size / (1024 * 1024)),
 			   (unsigned long) (filemap->total_size / (1024 * 1024)));
 

@@ -93,7 +93,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	 * regular file
 	 */
 	if (type != FILE_TYPE_REGULAR && isRelDataFile(path))
-		pg_fatal("data file in source \"%s\" is not a regular file\n", path);
+		pg_fatal("data file \"%s\" in source is not a regular file\n", path);
 
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 
@@ -256,7 +256,7 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	if (lstat(localpath, &statbuf) < 0)
 	{
 		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %s",
+			pg_fatal("could not stat file \"%s\": %s\n",
 					 localpath, strerror(errno));
 
 		exists = false;

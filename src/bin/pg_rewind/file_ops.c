@@ -25,7 +25,7 @@
 #include "pg_rewind.h"
 
 /*
- * Currently open destination file.
+ * Currently open target file.
  */
 static int	dstfd = -1;
 static char dstpath[MAXPGPATH] = "";
@@ -61,7 +61,7 @@ open_target_file(const char *path, bool trunc)
 		mode |= O_TRUNC;
 	dstfd = open(dstpath, mode, 0600);
 	if (dstfd < 0)
-		pg_fatal("could not open destination file \"%s\": %s\n",
+		pg_fatal("could not open target file \"%s\": %s\n",
 				 dstpath, strerror(errno));
 }
 
@@ -75,7 +75,7 @@ close_target_file(void)
 		return;
 
 	if (close(dstfd) != 0)
-		pg_fatal("error closing destination file \"%s\": %s\n",
+		pg_fatal("could not close target file \"%s\": %s\n",
 				 dstpath, strerror(errno));
 
 	dstfd = -1;
@@ -96,7 +96,7 @@ write_target_range(char *buf, off_t begin, size_t size)
 		return;
 
 	if (lseek(dstfd, begin, SEEK_SET) == -1)
-		pg_fatal("could not seek in destination file \"%s\": %s\n",
+		pg_fatal("could not seek in target file \"%s\": %s\n",
 				 dstpath, strerror(errno));
 
 	writeleft = size;

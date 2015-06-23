@@ -73,20 +73,20 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		if (nfields < 1)
 		{
 			/* expect a numeric timeline ID as first field of line */
-			printf(_("syntax error in history file: %s\n"), fline);
-			printf(_("Expected a numeric timeline ID.\n"));
+			fprintf(stderr, _("syntax error in history file: %s\n"), fline);
+			fprintf(stderr, _("Expected a numeric timeline ID.\n"));
 			exit(1);
 		}
 		if (nfields != 3)
 		{
-			printf(_("syntax error in history file: %s\n"), fline);
-			printf(_("Expected an XLOG switchpoint location.\n"));
+			fprintf(stderr, _("syntax error in history file: %s\n"), fline);
+			fprintf(stderr, _("Expected an XLOG switchpoint location.\n"));
 			exit(1);
 		}
 		if (entries && tli <= lasttli)
 		{
-			printf(_("invalid data in history file: %s\n"), fline);
-			printf(_("Timeline IDs must be in increasing sequence.\n"));
+			fprintf(stderr, _("invalid data in history file: %s\n"), fline);
+			fprintf(stderr, _("Timeline IDs must be in increasing sequence.\n"));
 			exit(1);
 		}
 
@@ -106,8 +106,8 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 
 	if (entries && targetTLI <= lasttli)
 	{
-		printf(_("invalid data in history file\n"));
-		printf(_("Timeline IDs must be less than child timeline's ID.\n"));
+		fprintf(stderr, _("invalid data in history file\n"));
+		fprintf(stderr, _("Timeline IDs must be less than child timeline's ID.\n"));
 		exit(1);
 	}
 
