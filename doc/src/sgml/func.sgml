@@ -10585,6 +10585,12 @@ table2-mapping
   <indexterm>
    <primary>jsonb_strip_nulls</primary>
   </indexterm>
+  <indexterm>
+   <primary>jsonb_set</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_pretty</primary>
+  </indexterm>
 
   <table id="functions-json-processing-table">
     <title>JSON Processing Functions</title>
