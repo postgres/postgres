@@ -508,11 +508,8 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	/*
 	 * If the relation being invalidated is one of those cached in the local
 	 * relcache init file, mark that we need to zap that file at commit.
-	 * (Note: perhaps it would be better if this code were a bit more
-	 * decoupled from the knowledge that the init file contains exactly those
-	 * non-shared rels used in catalog caches.)
 	 */
-	if (OidIsValid(dbId) && RelationSupportsSysCache(relId))
+	if (OidIsValid(dbId) && RelationIdIsInInitFile(relId))
 		transInvalInfo->RelcacheInitFileInval = true;
 }
 
