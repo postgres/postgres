@@ -5731,7 +5731,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       <tbody>
        <row>
         <entry><literal>FM</literal> prefix</entry>
-        <entry>fill mode (suppress padding blanks and trailing zeroes)</entry>
+        <entry>fill mode (suppress leading zeroes and padding blanks)</entry>
         <entry><literal>FMMonth</literal></entry>
        </row>
        <row>
@@ -6134,7 +6134,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       <tbody>
        <row>
         <entry><literal>FM</literal> prefix</entry>
-        <entry>fill mode (suppress padding blanks and trailing zeroes)</entry>
+        <entry>fill mode (suppress leading zeroes and padding blanks)</entry>
         <entry><literal>FM9999</literal></entry>
        </row>
        <row>
