@@ -116,6 +116,7 @@ extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 /*
  * Routines to help manage rebuilding of relcache init files
  */
+extern bool RelationIdIsInInitFile(Oid relationId);
 extern void RelationCacheInitFilePreInvalidate(void);
 extern void RelationCacheInitFilePostInvalidate(void);
 extern void RelationCacheInitFileRemove(void);

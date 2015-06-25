@@ -4879,21 +4879,32 @@ load_relcache_init_file(bool shared)
 	}
 
 	/*
-	 * We reached the end of the init file without apparent problem. Did we
-	 * get the right number of nailed items?  (This is a useful crosscheck in
-	 * case the set of critical rels or indexes changes.)
+	 * We reached the end of the init file without apparent problem.  Did we
+	 * get the right number of nailed items?  This is a useful crosscheck in
+	 * case the set of critical rels or indexes changes.  However, that should
+	 * not happen in a normally-running system, so let's bleat if it does.
 	 */
 	if (shared)
 	{
 		if (nailed_rels != NUM_CRITICAL_SHARED_RELS ||
 			nailed_indexes != NUM_CRITICAL_SHARED_INDEXES)
+		{
+			elog(WARNING, "found %d nailed shared rels and %d nailed shared indexes in init file, but expected %d and %d respectively",
+				 nailed_rels, nailed_indexes,
+				 NUM_CRITICAL_SHARED_RELS, NUM_CRITICAL_SHARED_INDEXES);
 			goto read_failed;
+		}
 	}
 	else
 	{
 		if (nailed_rels != NUM_CRITICAL_LOCAL_RELS ||
 			nailed_indexes != NUM_CRITICAL_LOCAL_INDEXES)
+		{
+			elog(WARNING, "found %d nailed rels and %d nailed indexes in init file, but expected %d and %d respectively",
+				 nailed_rels, nailed_indexes,
+				 NUM_CRITICAL_LOCAL_RELS, NUM_CRITICAL_LOCAL_INDEXES);
 			goto read_failed;
+		}
 	}
 
 	/*
@@ -5011,12 +5022,19 @@ write_relcache_init_file(bool shared)
 		/*
 		 * Ignore if not supposed to be in init file.  We can allow any shared
 		 * relation that's been loaded so far to be in the shared init file,
-		 * but unshared relations must be used for catalog caches.  (Note: if
-		 * you want to change the criterion for rels to be kept in the init
-		 * file, see also inval.c.)
+		 * but unshared relations must be ones that should be in the local
+		 * file per RelationIdIsInInitFile.  (Note: if you want to change the
+		 * criterion for rels to be kept in the init file, see also inval.c.
+		 * The reason for filtering here is to be sure that we don't put
+		 * anything into the local init file for which a relcache inval would
+		 * not cause invalidation of that init file.)
 		 */
-		if (!shared && !RelationSupportsSysCache(RelationGetRelid(rel)))
+		if (!shared && !RelationIdIsInInitFile(RelationGetRelid(rel)))
+		{
+			/* Nailed rels had better get stored. */
+			Assert(!rel->rd_isnailed);
 			continue;
+		}
 
 		/* first write the relcache entry proper */
 		write_item(rel, sizeof(RelationData), fp);
@@ -5130,6 +5148,32 @@ write_item(const void *data, Size len, FILE *fp)
 		elog(FATAL, "could not write init file");
 	if (fwrite(data, 1, len, fp) != len)
 		elog(FATAL, "could not write init file");
+}
+
+/*
+ * Determine whether a given relation (identified by OID) is one of the ones
+ * we should store in the local relcache init file.
+ *
+ * We must cache all nailed rels, and for efficiency we should cache every rel
+ * that supports a syscache.  The former set is almost but not quite a subset
+ * of the latter.  Currently, we must special-case TriggerRelidNameIndexId,
+ * which RelationCacheInitializePhase3 chooses to nail for efficiency reasons,
+ * but which does not support any syscache.
+ *
+ * Note: this function is currently never called for shared rels.  If it were,
+ * we'd probably also need a special case for DatabaseNameIndexId, which is
+ * critical but does not support a syscache.
+ */
+bool
+RelationIdIsInInitFile(Oid relationId)
+{
+	if (relationId == TriggerRelidNameIndexId)
+	{
+		/* If this Assert fails, we don't need this special case anymore. */
+		Assert(!RelationSupportsSysCache(relationId));
+		return true;
+	}
+	return RelationSupportsSysCache(relationId);
 }
 
 /*
