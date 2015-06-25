@@ -798,7 +798,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		/* take database name from the caller, just for paranoia */
 		strlcpy(dbname, in_dbname, sizeof(dbname));
 	}
-	else
+	else if (OidIsValid(dboid))
 	{
 		/* caller specified database by OID */
 		HeapTuple	tuple;
@@ -817,6 +817,18 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		/* pass the database name back to the caller */
 		if (out_dbname)
 			strcpy(out_dbname, dbname);
+	}
+	else
+	{
+		/*
+		 * If this is a background worker not bound to any particular
+		 * database, we're done now.  Everything that follows only makes
+		 * sense if we are bound to a specific database.  We do need to
+		 * close the transaction we started before returning.
+		 */
+		if (!bootstrap)
+			CommitTransactionCommand();
+		return;
 	}
 
 	/*
