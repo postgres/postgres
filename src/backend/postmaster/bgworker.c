@@ -341,7 +341,7 @@ BackgroundWorkerStateChange(void)
 		rw->rw_terminate = false;
 
 		/* Log it! */
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("registering background worker \"%s\"",
 						rw->rw_worker.bgw_name)));
 
@@ -370,7 +370,7 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
 	slot->in_use = false;
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("unregistering background worker \"%s\"",
 					rw->rw_worker.bgw_name)));
 
@@ -741,7 +741,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	static int	numworkers = 0;
 
 	if (!IsUnderPostmaster)
-		ereport(LOG,
+		ereport(DEBUG1,
 		 (errmsg("registering background worker \"%s\"", worker->bgw_name)));
 
 	if (!process_shared_preload_libraries_in_progress)
