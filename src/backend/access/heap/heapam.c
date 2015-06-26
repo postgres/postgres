@@ -7572,9 +7572,12 @@ heap_xlog_freeze_page(XLogReaderState *record)
 	if (InHotStandby)
 	{
 		RelFileNode rnode;
+		TransactionId latestRemovedXid = cutoff_xid;
+
+		TransactionIdRetreat(latestRemovedXid);
 
 		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
-		ResolveRecoveryConflictWithSnapshot(cutoff_xid, rnode);
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, rnode);
 	}
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
