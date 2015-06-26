@@ -7413,12 +7413,11 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 		ResolveRecoveryConflictWithSnapshot(xlrec->cutoff_xid, xlrec->node);
 
 	/*
-	 * If heap block was backed up, restore it. This can only happen with
-	 * checksums enabled.
+	 * If heap block was backed up, restore it. (This can only happen with
+	 * checksums or wal_log_hints enabled).
 	 */
 	if (record->xl_info & XLR_BKP_BLOCK(1))
 	{
-		Assert(DataChecksumsEnabled());
 		(void) RestoreBackupBlock(lsn, record, 1, false, false);
 	}
 	else
@@ -7441,11 +7440,11 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 
 			/*
 			 * We don't bump the LSN of the heap page when setting the
-			 * visibility map bit (unless checksums are enabled, in which case
-			 * we must), because that would generate an unworkable volume of
-			 * full-page writes.  This exposes us to torn page hazards, but
-			 * since we're not inspecting the existing page contents in any
-			 * way, we don't care.
+			 * visibility map bit (unless checksums or wal_log_hints is
+			 * enabled, in which case we must), because that would generate an
+			 * unworkable volume of full-page writes.  This exposes us to torn
+			 * page hazards, but since we're not inspecting the existing page
+			 * contents in any way, we don't care.
 			 *
 			 * However, all operations that clear the visibility map bit *do*
 			 * bump the LSN, and those operations will only be replayed if the
