@@ -402,8 +402,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		}
 	}
 
-	if (output)
-		pclose(output);
+	pclose(output);
 
 	/*
 	 * Restore environment variables
