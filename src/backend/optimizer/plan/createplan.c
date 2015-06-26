@@ -2157,6 +2157,16 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 {
 	CustomScan *cplan;
 	RelOptInfo *rel = best_path->path.parent;
+	List	   *custom_plans = NIL;
+	ListCell   *lc;
+
+	/* Recursively transform child paths. */
+	foreach (lc, best_path->custom_paths)
+	{
+		Plan   *plan = create_plan_recurse(root, (Path *) lfirst(lc));
+
+		custom_plans = lappend(custom_plans, plan);
+	}
 
 	/*
 	 * Sort clauses into the best execution order, although custom-scan
@@ -2172,7 +2182,8 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 															  rel,
 															  best_path,
 															  tlist,
-															  scan_clauses);
+															  scan_clauses,
+															  custom_plans);
 	Assert(IsA(cplan, CustomScan));
 
 	/*

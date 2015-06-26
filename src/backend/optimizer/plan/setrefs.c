@@ -1151,6 +1151,8 @@ set_customscan_references(PlannerInfo *root,
 						  CustomScan *cscan,
 						  int rtoffset)
 {
+	ListCell   *lc;
+
 	/* Adjust scanrelid if it's valid */
 	if (cscan->scan.scanrelid > 0)
 		cscan->scan.scanrelid += rtoffset;
@@ -1192,6 +1194,12 @@ set_customscan_references(PlannerInfo *root,
 			fix_scan_list(root, cscan->scan.plan.qual, rtoffset);
 		cscan->custom_exprs =
 			fix_scan_list(root, cscan->custom_exprs, rtoffset);
+	}
+
+	/* Adjust child plan-nodes recursively, if needed */
+	foreach (lc, cscan->custom_plans)
+	{
+		lfirst(lc) = set_plan_refs(root, (Plan *) lfirst(lc), rtoffset);
 	}
 
 	/* Adjust custom_relids if needed */

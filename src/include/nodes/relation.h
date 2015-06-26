@@ -929,7 +929,8 @@ typedef struct CustomPathMethods
 												RelOptInfo *rel,
 												struct CustomPath *best_path,
 												List *tlist,
-												List *clauses);
+												List *clauses,
+												List *custom_plans);
 	/* Optional: print additional fields besides "private" */
 	void		(*TextOutCustomPath) (StringInfo str,
 											  const struct CustomPath *node);
@@ -939,6 +940,7 @@ typedef struct CustomPath
 {
 	Path		path;
 	uint32		flags;			/* mask of CUSTOMPATH_* flags, see above */
+	List	   *custom_paths;	/* list of child Path nodes, if any */
 	List	   *custom_private;
 	const CustomPathMethods *methods;
 } CustomPath;

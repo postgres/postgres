@@ -1616,6 +1616,7 @@ typedef struct CustomScanState
 {
 	ScanState	ss;
 	uint32		flags;			/* mask of CUSTOMPATH_* flags, see relation.h */
+	List	   *custom_ps;		/* list of child PlanState nodes, if any */
 	const CustomExecMethods *methods;
 } CustomScanState;
 

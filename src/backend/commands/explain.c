@@ -115,6 +115,8 @@ static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
 				const char *relationship, ExplainState *es);
+static void ExplainCustomChildren(CustomScanState *css,
+								  List *ancestors, ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
 static void ExplainOpenGroup(const char *objtype, const char *labelname,
@@ -1624,6 +1626,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		IsA(plan, BitmapAnd) ||
 		IsA(plan, BitmapOr) ||
 		IsA(plan, SubqueryScan) ||
+		(IsA(planstate, CustomScanState) &&
+		 ((CustomScanState *) planstate)->custom_ps != NIL) ||
 		planstate->subPlan;
 	if (haschildren)
 	{
@@ -1677,6 +1681,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_SubqueryScan:
 			ExplainNode(((SubqueryScanState *) planstate)->subplan, ancestors,
 						"Subquery", NULL, es);
+			break;
+		case T_CustomScan:
+			ExplainCustomChildren((CustomScanState *) planstate,
+								  ancestors, es);
 			break;
 		default:
 			break;
@@ -2645,6 +2653,20 @@ ExplainSubPlans(List *plans, List *ancestors,
 		ExplainNode(sps->planstate, ancestors,
 					relationship, sp->plan_name, es);
 	}
+}
+
+/*
+ * Explain a list of children of a CustomScan.
+ */
+static void
+ExplainCustomChildren(CustomScanState *css, List *ancestors, ExplainState *es)
+{
+	ListCell   *cell;
+	const char *label =
+		(list_length(css->custom_ps) != 1 ? "children" : "child");
+
+	foreach (cell, css->custom_ps)
+		ExplainNode((PlanState *) lfirst(cell), ancestors, label, NULL, es);
 }
 
 /*

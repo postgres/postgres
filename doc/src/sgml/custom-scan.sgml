@@ -60,6 +60,7 @@ typedef struct CustomPath
 {
     Path      path;
     uint32    flags;
+    List     *custom_paths;
     List     *custom_private;
     const CustomPathMethods *methods;
 } CustomPath;
@@ -73,6 +74,9 @@ typedef struct CustomPath
     <literal>CUSTOMPATH_SUPPORT_BACKWARD_SCAN</> if the custom path can support
     a backward scan and <literal>CUSTOMPATH_SUPPORT_MARK_RESTORE</> if it
     can support mark and restore.  Both capabilities are optional.
+    An optional <structfield>custom_paths</> is a list of <structname>Path</>
+    nodes used by this custom-path node; these will be transformed into
+    <structname>Plan</> nodes by planner.
     <structfield>custom_private</> can be used to store the custom path's
     private data.  Private data should be stored in a form that can be handled
     by <literal>nodeToString</>, so that debugging routines that attempt to
@@ -112,7 +116,8 @@ Plan *(*PlanCustomPath) (PlannerInfo *root,
                          RelOptInfo *rel,
                          CustomPath *best_path,
                          List *tlist,
-                         List *clauses);
+                         List *clauses,
+                         List *custom_plans);
 </programlisting>
     Convert a custom path to a finished plan.  The return value will generally
     be a <literal>CustomScan</> object, which the callback must allocate and
@@ -145,6 +150,7 @@ typedef struct CustomScan
 {
     Scan      scan;
     uint32    flags;
+    List     *custom_plans;
     List     *custom_exprs;
     List     *custom_private;
     List     *custom_scan_tlist;
@@ -159,6 +165,8 @@ typedef struct CustomScan
     estimated costs, target lists, qualifications, and so on.
     <structfield>flags</> is a bitmask with the same meaning as in
     <structname>CustomPath</>.
+    <structfield>custom_plans</> can be used to store child
+    <structname>Plan</> nodes.
     <structfield>custom_exprs</> should be used to
     store expression trees that will need to be fixed up by
     <filename>setrefs.c</> and <filename>subselect.c</>, while
