@@ -1740,7 +1740,7 @@ check_transform_function(Form_pg_proc procstruct)
 /*
  * CREATE TRANSFORM
  */
-Oid
+ObjectAddress
 CreateTransform(CreateTransformStmt *stmt)
 {
 	Oid			typeid;
@@ -1938,7 +1938,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	heap_close(relation, RowExclusiveLock);
 
-	return transformid;
+	return myself;
 }
 
 

@@ -15,6 +15,7 @@ REGRESS = test_ddl_deparse \
 	create_domain \
 	create_sequence_1 \
 	create_table \
+	create_transform \
 	alter_table \
 	create_view \
 	create_trigger \

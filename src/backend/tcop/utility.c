@@ -1438,7 +1438,7 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_CreateTransformStmt:
-				CreateTransform((CreateTransformStmt *) parsetree);
+				address = CreateTransform((CreateTransformStmt *) parsetree);
 				break;
 
 			case T_AlterOpFamilyStmt:

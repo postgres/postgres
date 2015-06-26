@@ -51,7 +51,7 @@ extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern ObjectAddress AlterFunction(AlterFunctionStmt *stmt);
 extern ObjectAddress CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
-extern Oid	CreateTransform(CreateTransformStmt *stmt);
+extern ObjectAddress CreateTransform(CreateTransformStmt *stmt);
 extern void DropTransformById(Oid transformOid);
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
