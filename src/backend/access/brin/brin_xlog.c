@@ -47,6 +47,7 @@ brin_xlog_insert_update(XLogReaderState *record,
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		buffer;
+	BlockNumber	regpgno;
 	Page		page;
 	XLogRedoAction action;
 
@@ -65,6 +66,9 @@ brin_xlog_insert_update(XLogReaderState *record,
 	{
 		action = XLogReadBufferForRedo(record, 0, &buffer);
 	}
+
+	/* need this page's blkno to store in revmap */
+	regpgno = BufferGetBlockNumber(buffer);
 
 	/* insert the index item into the page */
 	if (action == BLK_NEEDS_REDO)
@@ -97,9 +101,8 @@ brin_xlog_insert_update(XLogReaderState *record,
 	if (action == BLK_NEEDS_REDO)
 	{
 		ItemPointerData tid;
-		BlockNumber blkno = BufferGetBlockNumber(buffer);
 
-		ItemPointerSet(&tid, blkno, xlrec->offnum);
+		ItemPointerSet(&tid, regpgno, xlrec->offnum);
 		page = (Page) BufferGetPage(buffer);
 
 		brinSetHeapBlockItemptr(buffer, xlrec->pagesPerRange, xlrec->heapBlk,
