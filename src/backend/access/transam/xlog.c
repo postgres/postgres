@@ -38,6 +38,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
+#include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
@@ -6074,7 +6075,6 @@ StartupXLOG(void)
 		if (read_tablespace_map(&tablespaces))
 		{
 			ListCell   *lc;
-			struct stat st;
 
 			foreach(lc, tablespaces)
 			{
@@ -6085,27 +6085,9 @@ StartupXLOG(void)
 
 				/*
 				 * Remove the existing symlink if any and Create the symlink
-				 * under PGDATA.  We need to use rmtree instead of rmdir as
-				 * the link location might contain directories or files
-				 * corresponding to the actual path. Some tar utilities do
-				 * things that way while extracting symlinks.
+				 * under PGDATA.
 				 */
-				if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
-				{
-					if (!rmtree(linkloc, true))
-						ereport(ERROR,
-								(errcode_for_file_access(),
-							  errmsg("could not remove directory \"%s\": %m",
-									 linkloc)));
-				}
-				else
-				{
-					if (unlink(linkloc) < 0 && errno != ENOENT)
-						ereport(ERROR,
-								(errcode_for_file_access(),
-						  errmsg("could not remove symbolic link \"%s\": %m",
-								 linkloc)));
-				}
+				remove_tablespace_symlink(linkloc);
 
 				if (symlink(ti->path, linkloc) < 0)
 					ereport(ERROR,

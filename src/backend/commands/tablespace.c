@@ -627,31 +627,9 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 
 	/*
 	 * In recovery, remove old symlink, in case it points to the wrong place.
-	 *
-	 * On Windows, junction points act like directories so we must be able to
-	 * apply rmdir; in general it seems best to make this code work like the
-	 * symlink removal code in destroy_tablespace_directories, except that
-	 * failure to remove is always an ERROR.
 	 */
 	if (InRecovery)
-	{
-		if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
-		{
-			if (rmdir(linkloc) < 0)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not remove directory \"%s\": %m",
-								linkloc)));
-		}
-		else
-		{
-			if (unlink(linkloc) < 0 && errno != ENOENT)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not remove symbolic link \"%s\": %m",
-								linkloc)));
-		}
-	}
+		remove_tablespace_symlink(linkloc);
 
 	/*
 	 * Create the symlink under PGDATA
@@ -802,7 +780,8 @@ remove_symlink:
 					 errmsg("could not remove directory \"%s\": %m",
 							linkloc)));
 	}
-	else
+#ifdef S_ISLNK
+	else if (S_ISLNK(st.st_mode))
 	{
 		if (unlink(linkloc) < 0)
 		{
@@ -813,6 +792,15 @@ remove_symlink:
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
 		}
+	}
+#endif
+	else
+	{
+		/* Refuse to remove anything that's not a directory or symlink */
+		ereport(redo ? LOG : ERROR,
+				(ERRCODE_SYSTEM_ERROR,
+				 errmsg("not a directory or symbolic link: \"%s\"",
+						linkloc)));
 	}
 
 	pfree(linkloc_with_version_dir);
@@ -848,6 +836,59 @@ directory_is_empty(const char *path)
 	return true;
 }
 
+/*
+ *	remove_tablespace_symlink
+ *
+ * This function removes symlinks in pg_tblspc.  On Windows, junction points
+ * act like directories so we must be able to apply rmdir.  This function
+ * works like the symlink removal code in destroy_tablespace_directories,
+ * except that failure to remove is always an ERROR.  But if the file doesn't
+ * exist at all, that's OK.
+ */
+void
+remove_tablespace_symlink(const char *linkloc)
+{
+	struct stat st;
+
+	if (lstat(linkloc, &st) != 0)
+	{
+		if (errno == ENOENT)
+			return;
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat \"%s\": %m", linkloc)));
+	}
+
+	if (S_ISDIR(st.st_mode))
+	{
+		/*
+		 * This will fail if the directory isn't empty, but not
+		 * if it's a junction point.
+		 */
+		if (rmdir(linkloc) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not remove directory \"%s\": %m",
+							linkloc)));
+	}
+#ifdef S_ISLNK
+	else if (S_ISLNK(st.st_mode))
+	{
+		if (unlink(linkloc) < 0 && errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+						errmsg("could not remove symbolic link \"%s\": %m",
+							linkloc)));
+	}
+#endif
+	else
+	{
+		/* Refuse to remove anything that's not a directory or symlink */
+		ereport(ERROR,
+				(errmsg("not a directory or symbolic link: \"%s\"",
+						linkloc)));
+	}
+}
 
 /*
  * Rename a tablespace
