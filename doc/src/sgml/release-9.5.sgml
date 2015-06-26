@@ -221,6 +221,15 @@
 
       <listitem>
        <para>
+        Extend the infrastructure allow sorting to be performed by inlined,
+        non-<acronym>SQL</acronym>-callable comparison functions to cover
+        <command>CREATE INDEX</>, <command>REINDEX</>, and
+        <command>CLUSTER</> (Peter Geoghegan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve in-memory hash performance (Tomas Vondra, Robert Haas)
        </para>
       </listitem>
