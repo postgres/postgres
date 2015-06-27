@@ -258,6 +258,10 @@ ALTER TABLE table_without_key REPLICA IDENTITY FULL;
 UPDATE table_without_key SET data = 3 WHERE data = 2;
 UPDATE table_without_key SET id = -id;
 UPDATE table_without_key SET id = -id;
+-- ensure that FULL correctly deals with new columns
+ALTER TABLE table_without_key ADD COLUMN new_column text;
+UPDATE table_without_key SET id = -id;
+UPDATE table_without_key SET id = -id, new_column = 'someval';
 DELETE FROM table_without_key WHERE data = 3;
 
 CREATE TABLE table_with_pkey(id serial primary key, data int);

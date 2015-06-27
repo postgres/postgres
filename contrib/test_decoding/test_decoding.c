@@ -318,7 +318,7 @@ tuple_to_stringinfo(StringInfo s, TupleDesc tupdesc, HeapTuple tuple, bool skip_
 		typid = attr->atttypid;
 
 		/* get Datum from tuple */
-		origval = fastgetattr(tuple, natt + 1, tupdesc, &isnull);
+		origval = heap_getattr(tuple, natt + 1, tupdesc, &isnull);
 
 		if (isnull && skip_nulls)
 			continue;
