@@ -4239,13 +4239,7 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	 * consider the frozen xids as running.
 	 */
 	if (InHotStandby)
-	{
-		TransactionId latestRemovedXid = cutoff_xid;
-
-		TransactionIdRetreat(latestRemovedXid);
-
-		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, rnode);
-	}
+		ResolveRecoveryConflictWithSnapshot(cutoff_xid, xlrec->node);
 
 	/* If we have a full-page image, restore it and we're done */
 	if (record->xl_info & XLR_BKP_BLOCK(0))
