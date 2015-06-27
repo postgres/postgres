@@ -718,6 +718,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	SysScanDesc tgscan;
 	int			findx = 0;
 	char	   *tgname;
+	Oid			argtypes[1];	/* dummy */
 	Datum		value;
 	bool		isnull;
 
@@ -893,7 +894,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
-											NIL, NULL,
+											NIL, argtypes,
 											false, NULL, EXPR_KIND_NONE));
 
 	if (trigrec->tgnargs > 0)

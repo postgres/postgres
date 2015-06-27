@@ -1415,6 +1415,9 @@ func_get_detail(List *funcname,
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
 
+	/* Passing NULL for argtypes is no longer allowed */
+	Assert(argtypes);
+
 	/* initialize output arguments to silence compiler warnings */
 	*funcid = InvalidOid;
 	*rettype = InvalidOid;
@@ -2042,6 +2045,9 @@ Oid
 LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
+
+	/* Passing NULL for argtypes is no longer allowed */
+	Assert(argtypes);
 
 	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false, noError);
 
