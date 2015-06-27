@@ -1460,7 +1460,7 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
  *	  subplans, by setting the varnos to OUTER_VAR or INNER_VAR and setting
  *	  attno values to the result domain number of either the corresponding
  *	  outer or inner join tuple item.  Also perform opcode lookup for these
- *	  expressions. and add regclass OIDs to root->glob->relationOids.
+ *	  expressions, and add regclass OIDs to root->glob->relationOids.
  */
 static void
 set_join_references(PlannerInfo *root, Join *join, int rtoffset)
