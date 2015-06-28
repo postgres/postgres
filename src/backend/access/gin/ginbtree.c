@@ -358,20 +358,15 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 	 * placeToPage can register some data to the WAL record.
 	 *
 	 * If placeToPage returns INSERTED, placeToPage has already called
-	 * START_CRIT_SECTION(), and we're responsible for calling
-	 * END_CRIT_SECTION. When it returns INSERTED, it is also responsible for
-	 * registering any data required to replay the operation with
-	 * XLogRegisterData(0, ...). It may only add data to block index 0; the
-	 * main data of the WAL record is reserved for this function.
+	 * START_CRIT_SECTION() and XLogBeginInsert(), and registered any data
+	 * required to replay the operation, in block index 0. We're responsible
+	 * for filling in the main data portion of the WAL record, calling
+	 * XLogInsert(), and END_CRIT_SECTION.
 	 *
 	 * If placeToPage returns SPLIT, we're wholly responsible for WAL logging.
 	 * Splits happen infrequently, so we just make a full-page image of all
 	 * the pages involved.
 	 */
-
-	if (RelationNeedsWAL(btree->index))
-		XLogBeginInsert();
-
 	rc = btree->placeToPage(btree, stack->buffer, stack,
 							insertdata, updateblkno,
 							&newlpage, &newrpage);
@@ -557,6 +552,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		if (RelationNeedsWAL(btree->index))
 		{
 			XLogRecPtr	recptr;
+
+			XLogBeginInsert();
 
 			/*
 			 * We just take full page images of all the split pages. Splits
