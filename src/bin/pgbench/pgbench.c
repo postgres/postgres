@@ -1113,8 +1113,7 @@ clientDone(CState *st, bool ok)
 	return false;				/* always false */
 }
 
-static
-void
+static void
 agg_vals_init(AggVals *aggs, instr_time start)
 {
 	/* basic counters */
