@@ -587,7 +587,6 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 								 head_p, tail_p))
 				OK = false;
 			yy_switch_to_buffer(lex_buffer);
-			ConfigFileLineno = save_ConfigFileLineno;
 			pfree(opt_name);
 			pfree(opt_value);
 		}
