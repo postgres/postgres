@@ -230,11 +230,16 @@ ProcessConfigFile(GucContext context)
 	 * same reason, we don't attempt to validate the options' values here.
 	 *
 	 * In addition, the GUC_IS_IN_FILE flag is set on each existing GUC
-	 * variable mentioned in the file.
+	 * variable mentioned in the file; and we detect duplicate entries in
+	 * the file and mark the earlier occurrences as ignorable.
 	 */
 	for (item = head; item; item = item->next)
 	{
 		struct config_generic *record;
+
+		/* Ignore anything already marked as ignorable */
+		if (item->ignore)
+			continue;
 
 		/*
 		 * Try to find the variable; but do not create a custom placeholder
@@ -244,7 +249,24 @@ ProcessConfigFile(GucContext context)
 
 		if (record)
 		{
-			/* Found, so mark it as present in file */
+			/* If it's already marked, then this is a duplicate entry */
+			if (record->status & GUC_IS_IN_FILE)
+			{
+				/*
+				 * Mark the earlier occurrence(s) as dead/ignorable.  We could
+				 * avoid the O(N^2) behavior here with some additional state,
+				 * but it seems unlikely to be worth the trouble.
+				 */
+				ConfigVariable *pitem;
+
+				for (pitem = head; pitem != item; pitem = pitem->next)
+				{
+					if (!pitem->ignore &&
+						strcmp(pitem->name, item->name) == 0)
+						pitem->ignore = true;
+				}
+			}
+			/* Now mark it as present in file */
 			record->status |= GUC_IS_IN_FILE;
 		}
 		else if (strchr(item->name, GUC_QUALIFIER_SEPARATOR) == NULL)
@@ -351,6 +373,10 @@ ProcessConfigFile(GucContext context)
 	{
 		char   *pre_value = NULL;
 		int		scres;
+
+		/* Ignore anything marked as ignorable */
+		if (item->ignore)
+			continue;
 
 		/* In SIGHUP cases in the postmaster, we want to report changes */
 		if (context == PGC_SIGHUP && !IsUnderPostmaster)
@@ -557,12 +583,12 @@ GUC_flex_fatal(const char *msg)
  *	config_file: absolute or relative path name of the configuration file
  *	depth: recursion depth (should be 0 in the outermost call)
  *	elevel: error logging level to use
- * Output parameters:
+ * Input/Output parameters:
  *	head_p, tail_p: head and tail of linked list of name/value pairs
  *
- * *head_p and *tail_p must be initialized to NULL before calling the outer
- * recursion level.  On exit, they contain a list of name-value pairs read
- * from the input file(s).
+ * *head_p and *tail_p must be initialized, either to NULL or valid pointers
+ * to a ConfigVariable list, before calling the outer recursion level.  Any
+ * name-value pairs read from the input file(s) will be appended to the list.
  *
  * Returns TRUE if successful, FALSE if an error occurred.  The error has
  * already been ereport'd, it is only necessary for the caller to clean up
@@ -570,6 +596,12 @@ GUC_flex_fatal(const char *msg)
  *
  * Note: if elevel >= ERROR then an error will not return control to the
  * caller, so there is no need to check the return value in that case.
+ *
+ * Note: this function is used to parse not only postgresql.conf, but
+ * various other configuration files that use the same "name = value"
+ * syntax.  Hence, do not do anything here or in the subsidiary routines
+ * ParseConfigFile/ParseConfigDirectory that assumes we are processing
+ * GUCs specifically.
  */
 bool
 ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
@@ -658,11 +690,10 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			 * processed immediately.
 			 */
 			if (!ParseConfigDirectory(opt_value, config_file,
-								 depth + 1, elevel,
-								 head_p, tail_p))
+									  depth + 1, elevel,
+									  head_p, tail_p))
 				OK = false;
 			yy_switch_to_buffer(lex_buffer);
-			ConfigFileLineno = save_ConfigFileLineno;
 			pfree(opt_name);
 			pfree(opt_value);
 		}
@@ -702,6 +733,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			item->value = opt_value;
 			item->filename = pstrdup(config_file);
 			item->sourceline = ConfigFileLineno-1;
+			item->ignore = false;
 			item->next = NULL;
 			if (*head_p == NULL)
 				*head_p = item;

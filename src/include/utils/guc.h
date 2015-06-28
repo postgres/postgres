@@ -110,8 +110,11 @@ typedef enum
 } GucSource;
 
 /*
- * Parsing the configuration file will return a list of name-value pairs
+ * Parsing the configuration file(s) will return a list of name-value pairs
  * with source location info.
+ *
+ * If "ignore" is true, don't attempt to apply the item (it might be an item
+ * we determined to be duplicate, for instance).
  */
 typedef struct ConfigVariable
 {
@@ -120,6 +123,7 @@ typedef struct ConfigVariable
 	char	   *filename;
 	int			sourceline;
 	struct ConfigVariable *next;
+	bool		ignore;
 } ConfigVariable;
 
 extern bool ParseConfigFile(const char *config_file, const char *calling_file,
