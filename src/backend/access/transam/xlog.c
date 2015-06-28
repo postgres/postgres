@@ -10943,7 +10943,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 		 * Request a restartpoint if we've replayed too much xlog since the
 		 * last one.
 		 */
-		if (StandbyModeRequested && bgwriterLaunched)
+		if (bgwriterLaunched)
 		{
 			if (XLogCheckpointNeeded(readSegNo))
 			{

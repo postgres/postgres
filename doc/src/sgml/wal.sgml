@@ -590,7 +590,11 @@
    A restartpoint is triggered when a checkpoint record is reached if at
    least <varname>checkpoint_timeout</> seconds have passed since the last
    restartpoint, or if WAL size is about to exceed
-   <varname>max_wal_size</>.
+   <varname>max_wal_size</>. However, because of limitations on when a
+   restartpoint can be performed, <varname>max_wal_size</> is often exceeded
+   during recovery, by up to one checkpoint cycle's worth of WAL.
+   (<varname>max_wal_size</> is never a hard limit anyway, so you should
+   always leave plenty of headroom to avoid running out of disk space.)
   </para>
 
   <para>

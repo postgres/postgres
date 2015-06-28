@@ -475,10 +475,12 @@ CheckpointerMain(void)
 
 			/*
 			 * Initialize checkpointer-private variables used during
-			 * checkpoint
+			 * checkpoint.
 			 */
 			ckpt_active = true;
-			if (!do_restartpoint)
+			if (do_restartpoint)
+				ckpt_start_recptr = GetXLogReplayRecPtr(NULL);
+			else
 				ckpt_start_recptr = GetInsertRecPtr();
 			ckpt_start_time = now;
 			ckpt_cached_elapsed = 0;
@@ -720,7 +722,7 @@ CheckpointWriteDelay(int flags, double progress)
 
 /*
  * IsCheckpointOnSchedule -- are we on schedule to finish this checkpoint
- *		 in time?
+ *		 (or restartpoint) in time?
  *
  * Compares the current progress against the time/segments elapsed since last
  * checkpoint, and returns true if the progress we've made this far is greater
@@ -757,17 +759,27 @@ IsCheckpointOnSchedule(double progress)
 	 * compares against RedoRecptr, so this is not completely accurate.
 	 * However, it's good enough for our purposes, we're only calculating an
 	 * estimate anyway.
+	 *
+	 * During recovery, we compare last replayed WAL record's location with
+	 * the location computed before calling CreateRestartPoint. That maintains
+	 * the same pacing as we have during checkpoints in normal operation, but
+	 * we might exceed max_wal_size by a fair amount. That's because there can
+	 * be a large gap between a checkpoint's redo-pointer and the checkpoint
+	 * record itself, and we only start the restartpoint after we've seen the
+	 * checkpoint record. (The gap is typically up to CheckPointSegments *
+	 * checkpoint_completion_target where checkpoint_completion_target is the
+	 * value that was in effect when the WAL was generated).
 	 */
-	if (!RecoveryInProgress())
-	{
+	if (RecoveryInProgress())
+		recptr = GetXLogReplayRecPtr(NULL);
+	else
 		recptr = GetInsertRecPtr();
-		elapsed_xlogs = (((double) (recptr - ckpt_start_recptr)) / XLogSegSize) / CheckPointSegments;
+	elapsed_xlogs = (((double) (recptr - ckpt_start_recptr)) / XLogSegSize) / CheckPointSegments;
 
-		if (progress < elapsed_xlogs)
-		{
-			ckpt_cached_elapsed = elapsed_xlogs;
-			return false;
-		}
+	if (progress < elapsed_xlogs)
+	{
+		ckpt_cached_elapsed = elapsed_xlogs;
+		return false;
 	}
 
 	/*
