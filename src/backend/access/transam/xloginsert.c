@@ -122,11 +122,13 @@ XLogBeginInsert(void)
 	Assert(max_registered_block_id == 0);
 	Assert(mainrdata_last == (XLogRecData *) &mainrdata_head);
 	Assert(mainrdata_len == 0);
-	Assert(!begininsert_called);
 
 	/* cross-check on whether we should be here or not */
 	if (!XLogInsertAllowed())
 		elog(ERROR, "cannot make new WAL entries during recovery");
+
+	if (begininsert_called)
+		elog(ERROR, "XLogBeginInsert was already called");
 
 	begininsert_called = true;
 }
