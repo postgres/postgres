@@ -175,6 +175,14 @@ shared_buffers = 128MB
      effect in the same way.  Settings in <filename>postgresql.auto.conf</>
      override those in <filename>postgresql.conf</>.
     </para>
+
+    <para>
+     The system view
+     <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link>
+     can be helpful for pre-testing changes to the configuration file, or for
+     diagnosing problems if a <systemitem>SIGHUP</> signal did not have the
+     desired effects.
+    </para>
    </sect2>
 
    <sect2 id="config-setting-sql-command-interaction">

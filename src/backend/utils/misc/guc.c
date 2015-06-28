@@ -182,6 +182,10 @@ static bool check_cluster_name(char **newval, void **extra, GucSource source);
 static const char *show_unix_socket_permissions(void);
 static const char *show_log_file_mode(void);
 
+/* Private functions in guc-file.l that need to be called from guc.c */
+static ConfigVariable *ProcessConfigFileInternal(GucContext context,
+						  bool applySettings, int elevel);
+
 
 /*
  * Options for enum values defined in this module.
@@ -3678,22 +3682,6 @@ static struct config_generic **guc_variables;
 /* Current number of variables contained in the vector */
 static int	num_guc_variables;
 
-/*
- * Lookup of variables for pg_file_settings view.
- * guc_file_variables is an array of length num_guc_file_variables.
- */
-typedef struct ConfigFileVariable
-{
-	char	   *name;
-	char	   *value;
-	char	   *filename;
-	int			sourceline;
-} ConfigFileVariable;
-static struct ConfigFileVariable *guc_file_variables;
-
-/* Number of file variables */
-static int	num_guc_file_variables;
-
 /* Vector capacity */
 static int	size_guc_variables;
 
@@ -6781,8 +6769,11 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 	item = palloc(sizeof *item);
 	item->name = pstrdup(name);
 	item->value = pstrdup(value);
+	item->errmsg = NULL;
 	item->filename = pstrdup("");		/* new item has no location */
 	item->sourceline = 0;
+	item->ignore = false;
+	item->applied = false;
 	item->next = NULL;
 
 	if (*head_p == NULL)
@@ -6931,7 +6922,10 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 								AutoConfFileName)));
 
 			/* parse it */
-			ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail);
+			if (!ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail))
+				ereport(ERROR,
+						(errmsg("could not parse contents of file \"%s\"",
+								AutoConfFileName)));
 
 			FreeFile(infile);
 		}
@@ -8181,10 +8175,12 @@ show_all_settings(PG_FUNCTION_ARGS)
 /*
  * show_all_file_settings
  *
- * returns a table of all parameter settings in all configuration files
- * which includes the config file path/name, the line number, a sequence number
- * indicating when we loaded it, the parameter name, and the value it is
- * set to.
+ * Returns a table of all parameter settings in all configuration files
+ * which includes the config file pathname, the line number, a sequence number
+ * indicating the order in which the settings were encountered, the parameter
+ * name and value, a bool showing if the value could be applied, and possibly
+ * an associated error message.  (For problems such as syntax errors, the
+ * parameter name/value might be NULL.)
  *
  * Note: no filtering is done here, instead we depend on the GRANT system
  * to prevent unprivileged users from accessing this function or the view
@@ -8193,92 +8189,111 @@ show_all_settings(PG_FUNCTION_ARGS)
 Datum
 show_all_file_settings(PG_FUNCTION_ARGS)
 {
-#define NUM_PG_FILE_SETTINGS_ATTS 5
-	FuncCallContext *funcctx;
+#define NUM_PG_FILE_SETTINGS_ATTS 7
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	int			call_cntr;
-	int			max_calls;
-	AttInMetadata *attinmeta;
+	Tuplestorestate *tupstore;
+	ConfigVariable *conf;
+	int			seqno;
+	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
-	if (SRF_IS_FIRSTCALL())
+	/* Check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	/* Scan the config files using current context as workspace */
+	conf = ProcessConfigFileInternal(PGC_SIGHUP, false, DEBUG3);
+
+	/* Switch into long-lived context to construct returned data structures */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/* Build a tuple descriptor for our result type */
+	tupdesc = CreateTemplateTupleDesc(NUM_PG_FILE_SETTINGS_ATTS, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "sourcefile",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "sourceline",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "seqno",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "name",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "setting",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "applied",
+					   BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "error",
+					   TEXTOID, -1, 0);
+
+	/* Build a tuplestore to return our results in */
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	/* The rest can be done in short-lived context */
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Process the results and create a tuplestore */
+	for (seqno = 1; conf != NULL; conf = conf->next, seqno++)
 	{
-		funcctx = SRF_FIRSTCALL_INIT();
+		Datum		values[NUM_PG_FILE_SETTINGS_ATTS];
+		bool		nulls[NUM_PG_FILE_SETTINGS_ATTS];
 
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		/*
-		 * need a tuple descriptor representing NUM_PG_FILE_SETTINGS_ATTS
-		 * columns of the appropriate types
-		 */
-
-		tupdesc = CreateTemplateTupleDesc(NUM_PG_FILE_SETTINGS_ATTS, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "sourcefile",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "sourceline",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "seqno",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "setting",
-						   TEXTOID, -1, 0);
-
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
-		funcctx->max_calls = num_guc_file_variables;
-		MemoryContextSwitchTo(oldcontext);
-	}
-
-	funcctx = SRF_PERCALL_SETUP();
-
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	attinmeta = funcctx->attinmeta;
-
-	if (call_cntr < max_calls)
-	{
-		char	   *values[NUM_PG_FILE_SETTINGS_ATTS];
-		HeapTuple	tuple;
-		Datum		result;
-		ConfigFileVariable conf;
-		char		buffer[12]; /* must be at least 12, per pg_ltoa */
-
-		/* Check to avoid going past end of array */
-		if (call_cntr > num_guc_file_variables)
-			SRF_RETURN_DONE(funcctx);
-
-		conf = guc_file_variables[call_cntr];
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
 
 		/* sourcefile */
-		values[0] = conf.filename;
+		if (conf->filename)
+			values[0] = PointerGetDatum(cstring_to_text(conf->filename));
+		else
+			nulls[0] = true;
 
-		/* sourceline */
-		pg_ltoa(conf.sourceline, buffer);
-		values[1] = pstrdup(buffer);
+		/* sourceline (not meaningful if no sourcefile) */
+		if (conf->filename)
+			values[1] = Int32GetDatum(conf->sourceline);
+		else
+			nulls[1] = true;
 
 		/* seqno */
-		pg_ltoa(call_cntr + 1, buffer);
-		values[2] = pstrdup(buffer);
+		values[2] = Int32GetDatum(seqno);
 
 		/* name */
-		values[3] = conf.name;
+		if (conf->name)
+			values[3] = PointerGetDatum(cstring_to_text(conf->name));
+		else
+			nulls[3] = true;
 
 		/* setting */
-		values[4] = conf.value;
+		if (conf->value)
+			values[4] = PointerGetDatum(cstring_to_text(conf->value));
+		else
+			nulls[4] = true;
 
-		/* build a tuple */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+		/* applied */
+		values[5] = BoolGetDatum(conf->applied);
 
-		/* make the tuple into a datum */
-		result = HeapTupleGetDatum(tuple);
+		/* error */
+		if (conf->errmsg)
+			values[6] = PointerGetDatum(cstring_to_text(conf->errmsg));
+		else
+			nulls[6] = true;
 
-		SRF_RETURN_NEXT(funcctx, result);
+		/* shove row into tuplestore */
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
-	else
-	{
-		SRF_RETURN_DONE(funcctx);
-	}
+
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }
 
 static char *

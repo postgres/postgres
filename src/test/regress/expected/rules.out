@@ -1316,8 +1316,10 @@ pg_file_settings| SELECT a.sourcefile,
     a.sourceline,
     a.seqno,
     a.name,
-    a.setting
-   FROM pg_show_all_file_settings() a(sourcefile, sourceline, seqno, name, setting);
+    a.setting,
+    a.applied,
+    a.error
+   FROM pg_show_all_file_settings() a(sourcefile, sourceline, seqno, name, setting, applied, error);
 pg_group| SELECT pg_authid.rolname AS groname,
     pg_authid.oid AS grosysid,
     ARRAY( SELECT pg_auth_members.member

@@ -6,8 +6,8 @@
 
   <note>
    <title>Release Date</title>
-   <para>AS OF 2015-06-01</para>
-   <simpara>2015-XX-XX</simpara>
+   <simpara>2015-??-??</simpara>
+   <simpara>Current as of 2015-06-01</simpara>
   </note>
 
   <sect2>
@@ -23,6 +23,7 @@
 
     <listitem>
      <para>
+      ... to be filled in ...
      </para>
     </listitem>
 
@@ -480,10 +481,10 @@
 
       <listitem>
        <para>
-        Add function and view <link
-        linkend="view-pg-file-settings"><function>pg_file_settings</></>
-        to show the source of <acronym>GUC</> values set in configuration
-        files (Sawada Masahiko)
+        Add system view <link
+        linkend="view-pg-file-settings"><structname>pg_file_settings</></>
+        to show the contents of the server's configuration files
+        (Sawada Masahiko)
        </para>
       </listitem>
 
@@ -503,7 +504,7 @@
        </para>
 
        <para>
-        This removes the setting from <filename>postgresql.auto.conf</>.
+        This command removes the setting from <filename>postgresql.auto.conf</>.
        </para>
       </listitem>
 

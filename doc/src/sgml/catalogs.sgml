@@ -7626,7 +7626,7 @@
 
      <row>
       <entry><link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link></entry>
-      <entry>file location of parameter settings</entry>
+      <entry>summary of configuration file contents</entry>
      </row>
 
      <row>
@@ -8007,13 +8007,26 @@
   </indexterm>
 
   <para>
-   The view <structname>pg_file_settings</structname> provides the file
-   name, line number and value of all parameters which are set through
-   configuration files.
-   In contrast to <structname>pg_settings</structname>, a row is provided for
-   each occurrence of the parameter across all configuration files. This is helpful
-   for discovering why one value may have been used in preference to another
-   when the parameters were loaded.
+   The view <structname>pg_file_settings</structname> provides a summary of
+   the contents of the server's configuration file(s).  A row appears in
+   this view for each <quote>name = value</> entry appearing in the files,
+   with annotations indicating whether the value could be applied
+   successfully.  Additional row(s) may appear for problems not linked to
+   a <quote>name = value</> entry, such as syntax errors in the files.
+  </para>
+
+  <para>
+   This view is helpful for checking whether planned changes in the
+   configuration files will work, or for diagnosing a previous failure.
+   Note that this view reports on the <emphasis>current</> contents of the
+   files, not on what was last applied by the server.  (The
+   <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
+   view is usually sufficient to determine that.)
+  </para>
+
+  <para>
+   The <structname>pg_file_settings</structname> view can be read only by
+   superusers.
   </para>
 
   <table>
@@ -8031,43 +8044,64 @@
     <row>
      <entry><structfield>sourcefile</structfield></entry>
      <entry><structfield>text</structfield></entry>
-     <entry>Path to and name of the configration file</entry>
+     <entry>Full pathname of the configuration file</entry>
     </row>
     <row>
      <entry><structfield>sourceline</structfield></entry>
      <entry><structfield>integer</structfield></entry>
      <entry>
-      Line number within the configuration file where the value was set
+      Line number within the configuration file where the entry appears
      </entry>
     </row>
     <row>
      <entry><structfield>seqno</structfield></entry>
      <entry><structfield>integer</structfield></entry>
-     <entry>Order in which the setting was loaded</entry>
+     <entry>Order in which the entries are processed (1..<replaceable>n</>)</entry>
     </row>
     <row>
      <entry><structfield>name</structfield></entry>
      <entry><structfield>text</structfield></entry>
-     <entry>Run-time configuration parameter name</entry>
+     <entry>Configuration parameter name</entry>
     </row>
     <row>
      <entry><structfield>setting</structfield></entry>
      <entry><structfield>text</structfield></entry>
-     <entry>value of the parameter</entry>
+     <entry>Value to be assigned to the parameter</entry>
+    </row>
+    <row>
+     <entry><structfield>applied</structfield></entry>
+     <entry><structfield>boolean</structfield></entry>
+     <entry>True if the value can be applied successfully</entry>
+    </row>
+    <row>
+     <entry><structfield>error</structfield></entry>
+     <entry><structfield>text</structfield></entry>
+     <entry>If not null, an error message indicating why this entry could
+      not be applied</entry>
     </row>
    </tbody>
   </tgroup>
- </table>
+  </table>
 
   <para>
-   See <xref linkend="config-setting"> for more information about the various
-   ways to change these parameters.
+   If the configuration file contains syntax errors or invalid parameter
+   names, the server will not attempt to apply any settings from it, and
+   therefore all the <structfield>applied</> fields will read as false.
+   In such a case there will be one or more rows with
+   non-null <structfield>error</structfield> fields indicating the
+   problem(s).  Otherwise, individual settings will be applied if possible.
+   If an individual setting cannot be applied (e.g., invalid value, or the
+   setting cannot be changed after server start) it will have an appropriate
+   message in the <structfield>error</structfield> field.  Another way that
+   an entry might have <structfield>applied</> = false is that it is
+   overridden by a later entry for the same parameter name; this case is not
+   considered an error so nothing appears in
+   the <structfield>error</structfield> field.
   </para>
 
   <para>
-   The <structname>pg_file_settings</structname> view cannot be modified
-   directly as it represents information, as read in at server start or
-   reload time, about all parameter settings across all configuration files.
+   See <xref linkend="config-setting"> for more information about the various
+   ways to change run-time parameters.
   </para>
 
 </sect1>
