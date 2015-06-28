@@ -149,14 +149,14 @@ libpqProcessFileList(void)
 	sql =
 		"WITH RECURSIVE files (path, filename, size, isdir) AS (\n"
 		"  SELECT '' AS path, filename, size, isdir FROM\n"
-		"  (SELECT pg_ls_dir('.') AS filename) AS fn,\n"
-		"        pg_stat_file(fn.filename) AS this\n"
+		"  (SELECT pg_ls_dir('.', true, false) AS filename) AS fn,\n"
+		"        pg_stat_file(fn.filename, true) AS this\n"
 		"  UNION ALL\n"
 		"  SELECT parent.path || parent.filename || '/' AS path,\n"
 		"         fn, this.size, this.isdir\n"
 		"  FROM files AS parent,\n"
-		"       pg_ls_dir(parent.path || parent.filename) AS fn,\n"
-		"       pg_stat_file(parent.path || parent.filename || '/' || fn) AS this\n"
+		"       pg_ls_dir(parent.path || parent.filename, true, false) AS fn,\n"
+		"       pg_stat_file(parent.path || parent.filename || '/' || fn, true) AS this\n"
 		"       WHERE parent.isdir = 't'\n"
 		")\n"
 		"SELECT path || filename, size, isdir,\n"
@@ -182,6 +182,15 @@ libpqProcessFileList(void)
 		bool		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
 		char	   *link_target = PQgetvalue(res, i, 3);
 		file_type_t type;
+
+		if (PQgetisnull(res, 0, 1))
+		{
+			/*
+			 * The file was removed from the server while the query was
+			 * running. Ignore it.
+			 */
+			continue;
+		}
 
 		if (link_target[0])
 			type = FILE_TYPE_SYMLINK;
@@ -259,8 +268,7 @@ receiveFileChunks(const char *sql)
 		}
 
 		if (PQgetisnull(res, 0, 0) ||
-			PQgetisnull(res, 0, 1) ||
-			PQgetisnull(res, 0, 2))
+			PQgetisnull(res, 0, 1))
 		{
 			pg_fatal("unexpected null values in result while fetching remote files\n");
 		}
@@ -279,6 +287,21 @@ receiveFileChunks(const char *sql)
 		filename[filenamelen] = '\0';
 
 		chunk = PQgetvalue(res, 0, 2);
+
+		/*
+		 * It's possible that the file was deleted on remote side after we
+		 * created the file map. In this case simply ignore it, as if it was
+		 * not there in the first place, and move on.
+		 */
+		if (PQgetisnull(res, 0, 2))
+		{
+			pg_log(PG_DEBUG,
+				   "received NULL chunk for file \"%s\", file has been deleted\n",
+				   filename);
+			pg_free(filename);
+			PQclear(res);
+			continue;
+		}
 
 		pg_log(PG_DEBUG, "received chunk for file \"%s\", offset %d, size %d\n",
 			   filename, chunkoff, chunksize);
@@ -445,7 +468,7 @@ libpq_executeFileMap(filemap_t *map)
 	 */
 	sql =
 		"SELECT path, begin, \n"
-		"  pg_read_binary_file(path, begin, len) AS chunk\n"
+		"  pg_read_binary_file(path, begin, len, true) AS chunk\n"
 		"FROM fetchchunks\n";
 
 	receiveFileChunks(sql);
