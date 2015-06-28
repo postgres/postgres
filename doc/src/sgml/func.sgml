@@ -17865,7 +17865,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     and other special files) in the specified directory. The <parameter>
     include_dot_dirs</> indicates whether <quote>.</> and <quote>..</> are
     included in the result set. The default is to exclude them
-    (<literal>false/>), but including them can be useful when
+    (<literal>false</>), but including them can be useful when
     <parameter>missing_ok</> is <literal>true</literal>, to distinguish an
     empty directory from an non-existent directory.
    </para>
