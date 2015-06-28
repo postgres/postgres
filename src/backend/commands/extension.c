@@ -25,6 +25,8 @@
 
 #include <dirent.h>
 #include <limits.h>
+#include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "access/htup_details.h"
@@ -51,6 +53,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
@@ -103,6 +106,7 @@ static void ApplyExtensionUpdates(Oid extensionOid,
 					  ExtensionControlFile *pcontrol,
 					  const char *initialVersion,
 					  List *updateVersions);
+static char *read_whole_file(const char *filename, int *length);
 
 
 /*
@@ -635,12 +639,11 @@ read_extension_script_file(const ExtensionControlFile *control,
 						   const char *filename)
 {
 	int			src_encoding;
-	bytea	   *content;
 	char	   *src_str;
 	char	   *dest_str;
 	int			len;
 
-	content = read_binary_file(filename, 0, -1);
+	src_str = read_whole_file(filename, &len);
 
 	/* use database encoding if not given */
 	if (control->encoding < 0)
@@ -649,20 +652,14 @@ read_extension_script_file(const ExtensionControlFile *control,
 		src_encoding = control->encoding;
 
 	/* make sure that source string is valid in the expected encoding */
-	len = VARSIZE_ANY_EXHDR(content);
-	src_str = VARDATA_ANY(content);
 	pg_verify_mbstr_len(src_encoding, src_str, len, false);
 
-	/* convert the encoding to the database encoding */
+	/*
+	 * Convert the encoding to the database encoding. read_whole_file
+	 * null-terminated the string, so if no conversion happens the string is
+	 * valid as is.
+	 */
 	dest_str = pg_any_to_server(src_str, len, src_encoding);
-
-	/* if no conversion happened, we have to arrange for null termination */
-	if (dest_str == src_str)
-	{
-		dest_str = (char *) palloc(len + 1);
-		memcpy(dest_str, src_str, len);
-		dest_str[len] = '\0';
-	}
 
 	return dest_str;
 }
@@ -3007,4 +3004,50 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 		relation_close(relation, NoLock);
 
 	return extension;
+}
+
+/*
+ * Read the whole of file into memory.
+ *
+ * The file contents are returned as a single palloc'd chunk. For convenience
+ * of the callers, an extra \0 byte is added to the end.
+ */
+static char *
+read_whole_file(const char *filename, int *length)
+{
+	char	   *buf;
+	FILE	   *file;
+	size_t		bytes_to_read;
+	struct stat fst;
+
+	if (stat(filename, &fst) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", filename)));
+
+	if (fst.st_size > (MaxAllocSize - 1))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("file too large")));
+	bytes_to_read = (size_t) fst.st_size;
+
+	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\" for reading: %m",
+						filename)));
+
+	buf = (char *) palloc(bytes_to_read + 1);
+
+	*length = fread(buf, 1, bytes_to_read, file);
+
+	if (ferror(file))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read file \"%s\": %m", filename)));
+
+	FreeFile(file);
+
+	buf[*length] = '\0';
+	return buf;
 }

@@ -17811,43 +17811,63 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
      <tbody>
       <row>
        <entry>
-        <literal><function>pg_ls_dir(<parameter>dirname</> <type>text</>)</function></literal>
+        <literal><function>pg_ls_dir(<parameter>dirname</> <type>text</> [, <parameter>missing_ok</> <type>boolean</>, <parameter>include_dot_dirs</> <type>boolean</>])</function></literal>
        </entry>
        <entry><type>setof text</type></entry>
-       <entry>List the contents of a directory</entry>
+       <entry>
+        List the contents of a directory.
+       </entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_read_file(<parameter>filename</> <type>text</> [, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</>])</function></literal>
+        <literal><function>pg_read_file(<parameter>filename</> <type>text</> [, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</> [, <parameter>missing_ok</> <type>boolean</>] ])</function></literal>
        </entry>
        <entry><type>text</type></entry>
-       <entry>Return the contents of a text file</entry>
+       <entry>
+        Return the contents of a text file.
+       </entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_read_binary_file(<parameter>filename</> <type>text</> [, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</>])</function></literal>
+        <literal><function>pg_read_binary_file(<parameter>filename</> <type>text</> [, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</> [, <parameter>missing_ok</> <type>boolean</>] ])</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
-       <entry>Return the contents of a file</entry>
+       <entry>
+        Return the contents of a file.
+       </entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_stat_file(<parameter>filename</> <type>text</>)</function></literal>
+        <literal><function>pg_stat_file(<parameter>filename</> <type>text</>[, <parameter>missing_ok</> <type>boolean</type>])</function></literal>
        </entry>
        <entry><type>record</type></entry>
-       <entry>Return information about a file</entry>
+       <entry>
+        Return information about a file.
+       </entry>
       </row>
      </tbody>
     </tgroup>
    </table>
 
+   <para>
+    All of these functions take an optional <parameter>missing_ok</> parameter,
+    which specifies the behaviour when the file or directory does not exist.
+    If <literal>true</literal>, the function returns NULL (except
+    <function>pg_ls_dir</>, which returns an empty result set). If
+    <literal>false</>, an error is raised. The default is <literal>false</>.
+   </para>
+
    <indexterm>
     <primary>pg_ls_dir</primary>
    </indexterm>
    <para>
-    <function>pg_ls_dir</> returns all the names in the specified
-    directory, except the special entries <quote><literal>.</></> and
-    <quote><literal>..</></>.
+    <function>pg_ls_dir</> returns the names of all files (and directories
+    and other special files) in the specified directory. The <parameter>
+    include_dot_dirs</> indicates whether <quote>.</> and <quote>..</> are
+    included in the result set. The default is to exclude them
+    (<literal>false/>), but including them can be useful when
+    <parameter>missing_ok</> is <literal>true</literal>, to distinguish an
+    empty directory from an non-existent directory.
    </para>
 
    <indexterm>
