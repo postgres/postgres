@@ -1570,7 +1570,7 @@ GetCurrentTimestamp(void)
 /*
  * GetCurrentIntegerTimestamp -- get the current operating system time as int64
  *
- * Result is the number of milliseconds since the Postgres epoch. If compiled
+ * Result is the number of microseconds since the Postgres epoch. If compiled
  * with --enable-integer-datetimes, this is identical to GetCurrentTimestamp(),
  * and is implemented as a macro.
  */
