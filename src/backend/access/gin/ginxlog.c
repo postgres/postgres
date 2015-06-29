@@ -512,6 +512,7 @@ ginRedoUpdateMetapage(XLogReaderState *record)
 	Assert(BufferGetBlockNumber(metabuffer) == GIN_METAPAGE_BLKNO);
 	metapage = BufferGetPage(metabuffer);
 
+	GinInitPage(metapage, GIN_META, BufferGetPageSize(metabuffer));
 	memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 	PageSetLSN(metapage, lsn);
 	MarkBufferDirty(metabuffer);
