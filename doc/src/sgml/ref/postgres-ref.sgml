@@ -284,12 +284,18 @@ PostgreSQL documentation
       <term><option>-o <replaceable class="parameter">extra-options</replaceable></option></term>
       <listitem>
        <para>
-        The command-line-style options specified in <replaceable
+        The command-line-style arguments specified in <replaceable
         class="parameter">extra-options</replaceable> are passed to
         all server processes started by this
-        <command>postgres</command> process.  If the option string contains
-        any spaces, the entire string must be quoted;  multiple
-        option invocations are appended.
+        <command>postgres</command> process.
+       </para>
+
+       <para>
+        Spaces within <replaceable class="parameter">extra-options</> are
+        considered to separate arguments, unless escaped with a backslash
+        (<literal>\</>); write <literal>\\</> to represent a literal
+        backslash.  Multiple arguments can also be specified via multiple
+        uses of <option>-o</>.
        </para>
 
        <para>

@@ -4739,7 +4739,10 @@ StartupMessage (F)
 <para>
                         Command-line arguments for the backend.  (This is
                         deprecated in favor of setting individual run-time
-                        parameters.)
+                        parameters.)  Spaces within this string are
+                        considered to separate arguments, unless escaped with
+                        a backslash (<literal>\</>); write <literal>\\</> to
+                        represent a literal backslash.
 </para>
 </listitem>
 </varlistentry>
@@ -4748,11 +4751,8 @@ StartupMessage (F)
                 In addition to the above, any run-time parameter that can be
                 set at backend start time might be listed.  Such settings
                 will be applied during backend start (after parsing the
-                command-line options if any).  The values will act as
-                session defaults.  Spaces in option values need to be escaped
-                with a backslash (<literal>\</>). A literal backslash can be
-                passed by escaping it with another backslash
-                (i.e <literal>\\</>).
+                command-line arguments if any).  The values will act as
+                session defaults.
 </para>
 </listitem>
 </varlistentry>

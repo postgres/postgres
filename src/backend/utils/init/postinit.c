@@ -418,7 +418,7 @@ InitCommunication(void)
  * backslashes, with \\ representing a literal backslash.
  */
 void
-pg_split_opts(char **argv, int *argcp, char *optstr)
+pg_split_opts(char **argv, int *argcp, const char *optstr)
 {
 	StringInfoData s;
 
@@ -438,8 +438,8 @@ pg_split_opts(char **argv, int *argcp, char *optstr)
 			break;
 
 		/*
-		 * Parse a single option + value, stopping at the first space, unless
-		 * it's escaped.
+		 * Parse a single option, stopping at the first space, unless it's
+		 * escaped.
 		 */
 		while (*optstr)
 		{
@@ -457,10 +457,11 @@ pg_split_opts(char **argv, int *argcp, char *optstr)
 			optstr++;
 		}
 
-		/* now store the option */
+		/* now store the option in the next argv[] position */
 		argv[(*argcp)++] = pstrdup(s.data);
 	}
-	resetStringInfo(&s);
+
+	pfree(s.data);
 }
 
 /*

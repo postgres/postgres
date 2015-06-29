@@ -1016,10 +1016,13 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>options</literal></term>
       <listitem>
        <para>
-        Adds command-line options to send to the server at run-time.
-        For example, setting this to <literal>-c geqo=off</> sets the
+        Specifies command-line options to send to the server at connection
+        start.  For example, setting this to <literal>-c geqo=off</> sets the
         session's value of the <varname>geqo</> parameter to
-        <literal>off</>.  For a detailed discussion of the available
+        <literal>off</>.  Spaces within this string are considered to
+        separate command-line arguments, unless escaped with a backslash
+        (<literal>\</>); write <literal>\\</> to represent a literal
+        backslash.  For a detailed discussion of the available
         options, consult <xref linkend="runtime-config">.
        </para>
       </listitem>
