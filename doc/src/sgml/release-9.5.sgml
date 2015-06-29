@@ -54,75 +54,90 @@
 
     <listitem>
      <para>
-      Adjust <link linkend="functions-comparison">operator precedence</>
+      Adjust <link linkend="sql-precedence">operator precedence</>
       to match the <acronym>SQL</> standard (Tom Lane)
      </para>
 
      <para>
-      "&lt;" and "&gt;" now have the same precedence as "&lt;="
-      "&gt;=" and "&lt;&gt;", and <literal>IS</> now has lower
-      precedence.  <literal>NOT</> now also has symmetric precedence.
-      The <acronym>GUC</> <varname>operator_precedence_warning</> can be
-      enabled to warn about queries where the precedence has changed.
+      The precedence of <literal>&lt;=</literal>, <literal>&gt;=</literal>
+      and <literal>&lt;&gt;</literal> has been reduced to match that of
+      <literal>&lt;</literal>, <literal>&gt;</literal>
+      and <literal>=</literal>.  The precedence of <literal>IS</> tests
+      (e.g., <replaceable>x</> <literal>IS NULL</>) has been reduced to be
+      just below these six comparison operators.
+      Also, multi-keyword operators beginning with <literal>NOT</> now have
+      the precedence of their base operator (for example, <literal>NOT
+      BETWEEN</> now has the same precedence as <literal>BETWEEN</>) whereas
+      before they had inconsistent precedence, behaving like <literal>NOT</>
+      with respect to their left operand but like their base operator with
+      respect to their right operand.  The new configuration
+      parameter <xref linkend="guc-operator-precedence-warning"> can be
+      enabled to warn about queries in which these precedence changes result
+      in different parsing choices.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Use cast conversions for <application>PL/pgSQL</> type conversions,
-      rather than converting to and from text (Tom Lane)
+      Use assignment cast behavior for data type conversions
+      in <application>PL/pgSQL</> assignments, rather than converting to and
+      from text (Tom Lane)
      </para>
 
      <para>
-      This causes conversions of booleans to strings to
-      return <literal>true</> or <literal>false</>, not
-      <literal>t</>/<literal>f</>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Allow special characters in <link linkend="libpq-envars">server
-      startup option values</> to be escaped with a backslash (Andres
-      Freund)
-     </para>
-
-     <para>
-      This allows characters like spaces to be passed inside option values.
-      Passing a backslash now requires supplying a double-backslash.
+      This change causes conversions of booleans to strings to
+      produce <literal>true</> or <literal>false</>, not <literal>t</>
+      or <literal>f</>.  Other type conversions may succeed in more cases
+      than before; for example, assigning a numeric value <literal>3.9</> to
+      an integer variable will now assign 4 rather than failing.  If no
+      assignment-grade cast is defined for the particular source and
+      destination types, <application>PL/pgSQL</> will fall back to its old
+      I/O conversion behavior.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Set the default value of <link
-      linkend="gssapi-auth"><varname>include_realm</></> to not remove
-      the <acronym>GSS</> and <acronym>SSPI</> realm from the principal
-      (Stephen Frost)
+      Allow characters in <link linkend="libpq-connect-options">server
+      command-line options</> to be escaped with a backslash (Andres Freund)
+     </para>
+
+     <para>
+      Formerly, spaces in the options string always separated options, so
+      there was no way to include a space in an option value.  Including
+      a backslash in an option value now requires writing <literal>\\</>.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN</></>
-      and <link linkend="SQL-ALTERTABLE"><command>ALTER OWNER TO</></>
-      to properly reassign ownership of types, foreign data wrappers,
-      and foreign servers (Bruce Momjian)
+      Change the default value of <link
+      linkend="gssapi-auth"><varname>include_realm</></> to 1, so that
+      by default the realm is not removed from a <acronym>GSS</>
+      or <acronym>SSPI</> principal name (Stephen Frost)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Remove server-side <acronym>GUC</> <varname>autocommit</>, which
+      Fix <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN OWNED</></>
+      and <link linkend="SQL-ALTERTYPE"><command>ALTER OWNER TO</></>
+      to properly update permissions lists (ACLs) when changing ownership of
+      types, foreign data wrappers, and foreign servers (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove server configuration parameter <varname>autocommit</>, which
       was already deprecated and non-operational (Tom Lane)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Remove <link
-      linkend="catalog-pg-authid"><structname>pg_authid</>.<structname>rolcatupdate</></>,
-      as it had no purpose (Adam Brightwell)
+      Remove <link linkend="catalog-pg-authid"><structname>pg_authid</></>'s
+      <structfield>rolcatupdate</> field, as it had no value (Adam Brightwell)
      </para>
     </listitem>
 
@@ -134,9 +149,9 @@
    <title>Changes</title>
 
    <para>
-     Below you will find a detailed account of the changes between
+    Below you will find a detailed account of the changes between
     <productname>PostgreSQL</productname> 9.5 and the previous major
-     release.
+    release.
    </para>
 
    <sect3>
@@ -184,22 +199,21 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <link
-        linkend="guc-gin-pending-list-limit"><varname>gin_pending_list_limit</></>
+        Add configuration parameter <xref linkend="guc-gin-pending-list-limit">
         to control the size of <acronym>GIN</> pending lists (Fujii Masao)
        </para>
 
        <para>
-        Previously this was controlled by <link
-        linkend="guc-work-mem"><varname>work_mem</></>.  This can also
-        be set as an index storage parameter.
+        Previously the list size was controlled
+        by <xref linkend="guc-work-mem">.  This can also be set as an index
+        storage parameter.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Issue a warning during the creation of <link
-        linkend="SQL-CREATEINDEX">hash</> indexes because they are not
+        linkend="indexes-types">hash</> indexes because they are not
         crash-safe (Bruce Momjian)
        </para>
       </listitem>
@@ -237,8 +251,8 @@
 
       <listitem>
        <para>
-        Improve concurrency of <link linkend="guc-shared-buffers">shared
-        buffer</> replacement (Robert Haas, Amit Kapila)
+        Improve concurrency of shared buffer replacement
+        (Robert Haas, Amit Kapila)
        </para>
       </listitem>
 
@@ -269,11 +283,6 @@
         Speed up <acronym>CRC</> (cyclic redundancy check) computations
         (Abhijit Menon-Sen, Heikki Linnakangas)
        </para>
-
-       <para>
-        Also use <acronym>CPU</> instructions for <acronym>CRC</>
-        calculations, if supported
-       </para>
       </listitem>
 
        </itemizedlist>
@@ -298,25 +307,23 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> variable <link
-        linkend="guc-cluster-name"><varname>cluster_name</></> (Thomas
-        Munro)
+        Add new configuration parameter <xref linkend="guc-cluster-name">
+        (Thomas Munro)
        </para>
 
        <para>
-        This string, set in <link
+        This string, typically set in <link
         linkend="config-setting-configuration-file"><filename>postgresql.conf</></>,
-        allows clients to query the cluster name.  This name also appears
-        in the process title, allowing for easier grouping of processes
-        belonging to the same cluster.
+        allows clients to identify the cluster.  This name also appears
+        in the process title of all server processes, allowing for easier
+        identification of processes belonging to the same cluster.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Prevent non-superusers from changing <link
-        linkend="guc-log-disconnections"><varname>log_disconnections</></>
-        on connection startup (Fujii Masao)
+        Prevent non-superusers from changing <xref
+        linkend="guc-log-disconnections"> on connection startup (Fujii Masao)
        </para>
       </listitem>
 
@@ -337,7 +344,7 @@
        </para>
 
        <para>
-        Their presence replaces checks against the certificate's
+        When they are present, this replaces checks against the certificate's
         <quote>Common Name</>.
        </para>
       </listitem>
@@ -359,7 +366,7 @@
 
        <para>
         While <link linkend="libpq-pqgetssl"><function>PQgetssl()</></>
-        can still be used to then call <productname>OpenSSL</>
+        can still be used to call <productname>OpenSSL</>
         functions, <function>PQsslAttribute()</> returns <acronym>SSL</>
         information in an <acronym>SSL</>-implementation-independent way.
         (Future versions of libpq might support other <acronym>SSL</>
@@ -369,7 +376,7 @@
 
       <listitem>
        <para>
-        Have <application>libpq</> honor any <productname>OpenSSL</>
+        Make <application>libpq</> honor any <productname>OpenSSL</>
         thread callbacks (Jan Urbanski)
        </para>
 
@@ -389,10 +396,9 @@
 
       <listitem>
        <para>
-        Replace <varname>checkpoint_segments</> with <link
-        linkend="guc-min-wal-size"><varname>min_wal_size</></> and
-        <link linkend="guc-max-wal-size"><varname>max_wal_size</></>
-        (Heikki Linnakangas)
+        Replace configuration parameter <varname>checkpoint_segments</>
+        with <xref linkend="guc-min-wal-size">
+        and <xref linkend="guc-max-wal-size"> (Heikki Linnakangas)
        </para>
 
        <para>
@@ -403,18 +409,17 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <link
-        linkend="guc-wal-compression"><varname>wal_compression</></> to
-        enable compression of full page images stored in <acronym>WAL</>
+        Add configuration parameter <xref linkend="guc-wal-compression"> to
+        control compression of full page images stored in <acronym>WAL</>
         (Rahila Syed, Michael Paquier)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow the recording of transaction
-        commit timestamps when <acronym>GUC</> <link
-        linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</></>
+        Allow recording of transaction
+        commit timestamps when configuration parameter <xref
+        linkend="guc-track-commit-timestamp">
         is enabled (&Aacute;lvaro Herrera, Petr Jel&iacute;nek)
        </para>
 
@@ -427,10 +432,8 @@
 
       <listitem>
        <para>
-        Allow <link
-        linkend="guc-local-preload-libraries"><varname>local_preload_libraries</></>
-        to be set by <command>ALTER ROLE SET</> (Peter Eisentraut,
-        Kyotaro Horiguchi)
+        Allow <xref linkend="guc-local-preload-libraries"> to be set
+        by <command>ALTER ROLE SET</> (Peter Eisentraut, Kyotaro Horiguchi)
        </para>
       </listitem>
 
@@ -443,24 +446,22 @@
 
       <listitem>
        <para>
-        Make <acronym>GUC</> <link
-        linkend="guc-debug-assertions"><varname>debug_assertions</></>
+        Make configuration parameter <xref linkend="guc-debug-assertions">
         read-only (Andres Freund)
        </para>
 
        <para>
         This means that assertions can no longer be turned
-        off once enabled at compile-time, allowing for more
-        efficient code optimization.  This also removed the <link
+        off if they were enabled at compile time, allowing for more
+        efficient code optimization.  This change also removed the <link
         linkend="app-postgres-options">postgres</> <option>-A</> option.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow setting <link
-        linkend="guc-effective-io-concurrency"><varname>effective_io_concurrency</></>
-        on systems where it has no effect (Peter Eisentraut)
+        Allow setting <xref linkend="guc-effective-io-concurrency"> on
+        systems where it has no effect (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -470,12 +471,12 @@
         linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_FILE</></>
         and <link
         linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_VALUE</></>
-        to control Linux <acronym>OOM</> killer (Gurjeet Singh)
+        to help control the Linux <acronym>OOM</> killer (Gurjeet Singh)
        </para>
 
        <para>
-        The previous <acronym>OOM</> control involved a compile-time
-        option.
+        The previous <acronym>OOM</> control infrastructure involved a
+        compile-time option.
        </para>
       </listitem>
 
@@ -528,15 +529,13 @@
        </para>
 
        <para>
-        <acronym>GUC</> <varname>pause_at_recovery_target</> was also
-        removed.
+        This replaces the old parameter <varname>pause_at_recovery_target</>.
        </para>
       </listitem>
 
-        
       <listitem>
        <para>
-        Add <link linkend="guc-archive-mode"><varname>archive_mode</></>
+        Add new <xref linkend="guc-archive-mode"> value
         <literal>always</> to allow standbys to always archive received
         <acronym>WAL</> files (Fujii Masao)
        </para>
@@ -544,10 +543,10 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <link
-        linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</></>
-        to control <acronym>WAL</> read retry after failure (Alexey
-        Vasiliev, Michael Paquier)
+        Add configuration
+        parameter <xref linkend="guc-wal-retrieve-retry-interval"> to
+        control <acronym>WAL</> read retry after failure
+        (Alexey Vasiliev, Michael Paquier)
        </para>
 
        <para>
@@ -564,23 +563,22 @@
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <link
-        linkend="guc-log-replication-commands"><varname>log_replication_commands</></>
+        Add configuration parameter <xref
+        linkend="guc-log-replication-commands">
         to log replication commands (Fujii Masao)
        </para>
 
        <para>
         By default, replication commands, e.g. <link
         linkend="protocol-replication"><literal>IDENTIFY_SYSTEM</></>,
-        are not logged, even when <link
-        linkend="guc-log-statement"><varname>log_statement</></> is set
+        are not logged, even when <xref linkend="guc-log-statement"> is set
         to <literal>all</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow the <link linkend="pg-replication-origin-create">labeling</>
+        Allow <link linkend="pg-replication-origin-create">labeling</>
         of the origin of logical replication changes (Andres Freund)
        </para>
 
@@ -591,7 +589,7 @@
 
       <listitem>
        <para>
-        Report the backends holding replication slots in <link
+        Report the processes holding replication slots in <link
         linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</></>
         (Craig Ringer)
        </para>
@@ -896,10 +894,8 @@
        </para>
 
        <para>
-        This allows the creation of local foreign tables definitions
-        that match the remote table structure.  Currently, only the
-        <link linkend="postgres-fdw"><application>postgres_fdw</></>
-        foreign data wrapper supports this feature.
+        This command allows automatic creation of local foreign tables
+        that match the structure of existing tables on a remote server.
        </para>
       </listitem>
 
@@ -922,9 +918,11 @@
        </para>
 
        <para>
-        These checks are assumed to be enforced on the remote server,
-        and are not checked locally.  However, they are considered for
-        optimization and constraint-exclusion checking.
+        These constraints are assumed to be enforced on the remote server,
+        and are not enforced locally.  However, they are assumed to hold for
+        purposes of query optimization, such
+        as <link linkend="ddl-partitioning-constraint-exclusion">constraint
+        exclusion</>.
        </para>
       </listitem>
 
@@ -946,9 +944,8 @@
 
        <listitem>
         <para>
-         Add <link
-         linkend="pg-event-trigger-ddl-command-end-functions"><function>pg_event_trigger_ddl_commands</></>
-         set-returning function, which returns <acronym>DDL</> activity
+         Add a set-returning function <link
+         linkend="pg-event-trigger-ddl-command-end-functions"><function>pg_event_trigger_ddl_commands()</></>, which returns <acronym>DDL</> activity
          associated with event triggers (&Aacute;lvaro Herrera)
         </para>
        </listitem>
@@ -1015,8 +1012,8 @@
       </para>
 
       <para>
-       Previously the namespace was not returned, leading to invalid
-       <type>XML</>.
+       Previously the namespace was not returned, potentially leading to
+       invalid <type>XML</>.
       </para>
      </listitem>
 
@@ -1029,7 +1026,7 @@
 
      <listitem>
       <para>
-       Tighten specification of <link
+       Tighten syntax of <link
        linkend="datatype-interval-input"><type>INTERVAL</></> precision
        specifications (Bruce Momjian)
       </para>
@@ -1061,19 +1058,19 @@
         Add <type>JSONB</> functions <link
         linkend="functions-json-processing-table"><function>jsonb_set()</></>
         and <link
-        linkend="functions-json-processing-table"><function>jsonb_pretty</></>
+        linkend="functions-json-processing-table"><function>jsonb_pretty()</></>
         (Dmitry Dolgov, Andrew Dunstan, Petr Jel&iacute;nek)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add several generator functions for <type>JSONB</> that exist
-        for <type>JSON</> (Andrew Dunstan)
+        Add several generator functions for <type>JSONB</> that already
+        existed for <type>JSON</> (Andrew Dunstan)
        </para>
 
        <para>
-        The functions are <link
+        These are <link
         linkend="functions-json-creation-table"><function>to_jsonb()</></>,
         <link
         linkend="functions-json-creation-table"><function>jsonb_object()</></>,
@@ -1182,10 +1179,10 @@
 
       <listitem>
        <para>
-        Add <link
+        Add a <link
         linkend="functions-math-func-table"><function>width_bucket()</></>
-        which supports any sortable data type and non-uniform bucket widths
-        (Petr Jel&iacute;nek)
+        variant that supports any sortable data type and non-uniform bucket
+        widths (Petr Jel&iacute;nek)
        </para>
       </listitem>
 
@@ -1196,9 +1193,10 @@
        </para>
 
        <para>
-        User-defined <literal>=&gt;</> operators have been issuing
-        warnings since Postgres 9.0, and were removed in hstore in 9.2.
-        Previously only <literal>:=</> could be used.
+        Previously only <literal>:=</> could be used.  This requires removing
+        the possibility for <literal>=&gt;</> to be a user-defined operator.
+        Creation of user-defined <literal>=&gt;</> operators has been issuing
+        warnings since Postgres 9.0.
        </para>
       </listitem>
 
@@ -1236,18 +1234,18 @@
 
       <listitem>
        <para>
-        Loosen security checks for viewing <link
+        Loosen security checks for viewing queries in <link
         linkend="pg-stat-activity-view"><structname>pg_stat_activity</></>,
-        <link
+        executing <link
         linkend="functions-admin-signal-table"><function>pg_cancel_backend()</></>,
-        and <link
-        linkend="functions-admin-signal-table"><function>pg_terminate_backend</></>
+        and executing <link
+        linkend="functions-admin-signal-table"><function>pg_terminate_backend()</></>
         (Stephen Frost)
        </para>
 
        <para>
-        Now, role membership is sufficient;  previously only the same
-        role could perform such operations.
+        Now, role membership is sufficient; previously only the same
+        role could perform these operations.
        </para>
       </listitem>
 
@@ -1347,17 +1345,17 @@
 
      <listitem>
       <para>
-       Add specification of conversion routines to/from <acronym>SQL</>
-       data types to procedural languages data types (Peter Eisentraut)
+       Allow specification of conversion routines between <acronym>SQL</>
+       data types and data types of procedural languages (Peter Eisentraut)
       </para>
 
       <para>
-       This adds new commands <link
+       This change adds new commands <link
        linkend="SQL-CREATETRANSFORM"><command>CREATE</></>/<link
        linkend="SQL-DROPTRANSFORM"><command>DROP TRANSFORM</></>.
-       This also adds transformations between <link
+       This also adds optional transformations between the <link
        linkend="hstore"><application>hstore</></> and <link
-       linkend="ltree"><application>ltree</></> to/from <link
+       linkend="ltree"><application>ltree</></> types to/from <link
        linkend="plperl"><application>PL/Perl</></> and <link
        linkend="plpython"><application>PL/Python</></>.
       </para>
@@ -1415,6 +1413,14 @@
 
      <listitem>
       <para>
+       Add <link linkend="app-pgrewind"><application>pg_rewind</></>,
+       which allows re-synchronizing a master server after failback
+       (Heikki Linnakangas)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Allow <link
        linkend="app-pgreceivexlog"><application>pg_receivexlog</></>
        to manage physical replication slots (Michael Paquier)
@@ -1456,11 +1462,17 @@
 
      <listitem>
       <para>
-       Have <link
-       linkend="app-pgbasebackup"><application>pg_basebackup</></> use
-       a tablespace mapping file with the <application>tar</> format,
-       to handle file paths of 100+ characters in length and sybolic
-       links on <systemitem class="osname">MS Windows</> (Amit Kapila)
+       Make <link linkend="app-pgbasebackup"><application>pg_basebackup</></>
+       use a tablespace mapping file when using <application>tar</> format,
+       to support symbolic links and file paths of 100+ characters in length
+       on <systemitem class="osname">MS Windows</> (Amit Kapila)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add <link linkend="pgxlogdump"><application>pg_xlogdump</></> option
+       <option>--stats</> to display summary statistics (Abhijit Menon-Sen)
       </para>
      </listitem>
 
@@ -1515,7 +1527,7 @@
         <para>
          Add <application>psql</> setting <link
          linkend="APP-PSQL-meta-commands"><varname>pager_min_lines</></>
-         setting to control pager invocation (Andrew Dunstan)
+         to control pager invocation (Andrew Dunstan)
         </para>
        </listitem>
 
@@ -1529,7 +1541,7 @@
        <listitem>
         <para>
          Add <application>psql</> tab completion when setting the
-         <varname>search_path</> variable (Jeff Janes)
+         <xref linkend="guc-search-path"> variable (Jeff Janes)
         </para>
 
         <para>
@@ -1539,7 +1551,7 @@
 
        <listitem>
         <para>
-         Improve <application>psql</> tab-completion for triggers and rules
+         Improve <application>psql</>'s tab completion for triggers and rules
          (Andreas Karlsson)
         </para>
        </listitem>
@@ -1581,7 +1593,7 @@
 
        <listitem>
         <para>
-         Allow <application>psql</> <command>\watch</> to output
+         Allow <application>psql</>'s <command>\watch</> to output
          <command>\timing</> information (Fujii Masao)
         </para>
 
@@ -1608,8 +1620,8 @@
 
        <listitem>
         <para>
-         Allow tab completion of <application>psql</> <literal>\c</>
-         role names (Ian Barwick)
+         Allow tab completion of role names
+         in <application>psql</> <literal>\c</> commands (Ian Barwick)
         </para>
        </listitem>
 
@@ -1662,7 +1674,7 @@
 
       <listitem>
        <para>
-        Change <application>pg_ctl</> default shutdown mode from
+        Change <application>pg_ctl</>'s default shutdown mode from
         <literal>smart</> to <literal>fast</> (Bruce Momjian)
        </para>
       </listitem>
@@ -1740,6 +1752,47 @@
 
     </sect4>
 
+    <sect4>
+     <title><xref linkend="pgbench"></title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Move pgbench from <filename>contrib</> to <filename>src/bin</>
+        (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow counting of pgbench transactions that take over a specified
+        amount of time (Fabien Coelho)
+       </para>
+
+       <para>
+        This is controlled by new <option>--latency-limit</> option.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow pgbench to generate Gaussian/exponential distributions
+        using <command>\setrandom</> (Kondo Mitsumasa, Fabien Coelho)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <application>pgbench</>'s <command>\set</> command to handle
+        multi-operator expressions (Robert Haas, Fabien Coelho)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
    </sect3>
 
    <sect3>
@@ -1797,7 +1850,8 @@
 
       <listitem>
        <para>
-        Improve dynahash capabilities (Teodor Sigaev, Tom Lane)
+        Improve <function>hash_create()</>'s API for selecting
+        simple-binary-key hash functions (Teodor Sigaev, Tom Lane)
        </para>
       </listitem>
 
@@ -1841,15 +1895,16 @@
 
       <listitem>
        <para>
-        Change columns <link
+        Change index opclass for columns <link
         linkend="catalog-pg-seclabel"><structname>pg_seclabel</></>.<structname>provider</>
         and <link
-        linkend="catalog-pg-seclabel"><structname>pg_shseclabel</></>.<structname>provider</>
-        to <type>TEXT</> (Tom Lane)
+        linkend="catalog-pg-shseclabel"><structname>pg_shseclabel</></>.<structname>provider</>
+        to be <literal>text_pattern_ops</> (Tom Lane)
        </para>
 
        <para>
-        This allows these columns to store 64+ characters.
+        This avoids possible problems with these indexes when different
+        databases of a cluster have different default collations.
        </para>
       </listitem>
 
@@ -1935,14 +1990,6 @@
 
      <listitem>
       <para>
-       Add <link linkend="app-pgrewind"><application>pg_rewind</></>,
-       which allows re-synchronizing a master server after failback
-       (Heikki Linnakangas)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Add statistics for minimum, maximum,
        mean, and standard deviation times to <link
        linkend="pgstatstatements-columns"><application>pg_stat_statements</></>
@@ -1994,14 +2041,7 @@
 
      <listitem>
       <para>
-       Add <link linkend="pgxlogdump"><application>pg_xlogdump</></> option
-       <option>--stats</> to display summary statistics (Abhijit Menon-Sen)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <link linkend="GIN"><acronym>GIN</></>
+       Add <link linkend="GIN"><acronym>GIN</></>
        index inspection functions to <link
        linkend="pageinspect"><application>pageinspect</></> (Heikki
        Linnakangas, Peter Geoghegan, Michael Paquier)
@@ -2031,50 +2071,14 @@
        from <filename>contrib</> to <filename>src/test/modules</>
        (&Aacute;lvaro Herrera)
       </para>
+
+      <para>
+       These modules are only meant for server testing, so they do not need
+       to be built or installed when packaging <productname>PostgreSQL</>.
+      </para>
      </listitem>
 
     </itemizedlist>
-
-    <sect4>
-     <title><xref linkend="pgbench"></title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Move pgbench from <filename>contrib</> to <filename>src/bin</>
-        (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow counting of pgbench transactions that take over a specified
-        amount of time (Fabien Coelho)
-       </para>
-
-       <para>
-        This is controlled by new <option>--latency-limit</> option.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow pgbench to generate Gaussian/exponential distributions
-        using <command>\setrandom</> (Kondo Mitsumasa, Fabien Coelho)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <application>pgbench</>'s <command>\set</> command to handle
-        multi-operator expressions (Robert Haas, Fabien Coelho)
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
 
    </sect3>
 
