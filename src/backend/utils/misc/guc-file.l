@@ -29,7 +29,8 @@
 #undef fprintf
 #define fprintf(file, fmt, msg) GUC_flex_fatal(msg)
 
-enum {
+enum
+{
 	GUC_ID = 1,
 	GUC_STRING = 2,
 	GUC_INTEGER = 3,
@@ -53,7 +54,7 @@ static void record_config_file_error(const char *errmsg,
 						 ConfigVariable **head_p,
 						 ConfigVariable **tail_p);
 
-static int GUC_flex_fatal(const char *msg);
+static int	GUC_flex_fatal(const char *msg);
 static char *GUC_scanstr(const char *s);
 
 %}
@@ -124,15 +125,15 @@ ProcessConfigFile(GucContext context)
 	MemoryContext caller_cxt;
 
 	/*
-	 * Config files are processed on startup (by the postmaster only)
-	 * and on SIGHUP (by the postmaster and its children)
+	 * Config files are processed on startup (by the postmaster only) and on
+	 * SIGHUP (by the postmaster and its children)
 	 */
 	Assert((context == PGC_POSTMASTER && !IsUnderPostmaster) ||
 		   context == PGC_SIGHUP);
 
 	/*
-	 * To avoid cluttering the log, only the postmaster bleats loudly
-	 * about problems with the config file.
+	 * To avoid cluttering the log, only the postmaster bleats loudly about
+	 * problems with the config file.
 	 */
 	elevel = IsUnderPostmaster ? DEBUG2 : LOG;
 
@@ -191,10 +192,10 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	}
 
 	/*
-	 * Parse the PG_AUTOCONF_FILENAME file, if present, after the main file
-	 * to replace any parameters set by ALTER SYSTEM command.  Because this
-	 * file is in the data directory, we can't read it until the DataDir has
-	 * been set.
+	 * Parse the PG_AUTOCONF_FILENAME file, if present, after the main file to
+	 * replace any parameters set by ALTER SYSTEM command.  Because this file
+	 * is in the data directory, we can't read it until the DataDir has been
+	 * set.
 	 */
 	if (DataDir)
 	{
@@ -246,9 +247,9 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	}
 
 	/*
-	 * Mark all extant GUC variables as not present in the config file.
-	 * We need this so that we can tell below which ones have been removed
-	 * from the file since we last processed it.
+	 * Mark all extant GUC variables as not present in the config file. We
+	 * need this so that we can tell below which ones have been removed from
+	 * the file since we last processed it.
 	 */
 	for (i = 0; i < num_guc_variables; i++)
 	{
@@ -260,15 +261,15 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	/*
 	 * Check if all the supplied option names are valid, as an additional
 	 * quasi-syntactic check on the validity of the config file.  It is
-	 * important that the postmaster and all backends agree on the results
-	 * of this phase, else we will have strange inconsistencies about which
+	 * important that the postmaster and all backends agree on the results of
+	 * this phase, else we will have strange inconsistencies about which
 	 * processes accept a config file update and which don't.  Hence, unknown
 	 * custom variable names have to be accepted without complaint.  For the
 	 * same reason, we don't attempt to validate the options' values here.
 	 *
 	 * In addition, the GUC_IS_IN_FILE flag is set on each existing GUC
-	 * variable mentioned in the file; and we detect duplicate entries in
-	 * the file and mark the earlier occurrences as ignorable.
+	 * variable mentioned in the file; and we detect duplicate entries in the
+	 * file and mark the earlier occurrences as ignorable.
 	 */
 	for (item = head; item; item = item->next)
 	{
@@ -279,8 +280,8 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 			continue;
 
 		/*
-		 * Try to find the variable; but do not create a custom placeholder
-		 * if it's not there already.
+		 * Try to find the variable; but do not create a custom placeholder if
+		 * it's not there already.
 		 */
 		record = find_option(item->name, false, elevel);
 
@@ -321,8 +322,8 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	}
 
 	/*
-	 * If we've detected any errors so far, we don't want to risk applying
-	 * any changes.
+	 * If we've detected any errors so far, we don't want to risk applying any
+	 * changes.
 	 */
 	if (error)
 		goto bail_out;
@@ -363,8 +364,8 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 			continue;
 
 		/*
-		 * Reset any "file" sources to "default", else set_config_option
-		 * will not override those settings.
+		 * Reset any "file" sources to "default", else set_config_option will
+		 * not override those settings.
 		 */
 		if (gconf->reset_source == PGC_S_FILE)
 			gconf->reset_source = PGC_S_DEFAULT;
@@ -394,14 +395,14 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	 * dynamically-computed defaults.  This is a no-op except in the case
 	 * where one of these had been in the config file and is now removed.
 	 *
-	 * In particular, we *must not* do this during the postmaster's
-	 * initial loading of the file, since the timezone functions in
-	 * particular should be run only after initialization is complete.
+	 * In particular, we *must not* do this during the postmaster's initial
+	 * loading of the file, since the timezone functions in particular should
+	 * be run only after initialization is complete.
 	 *
-	 * XXX this is an unmaintainable crock, because we have to know how
-	 * to set (or at least what to call to set) every variable that could
-	 * potentially have PGC_S_DYNAMIC_DEFAULT or PGC_S_ENV_VAR source.
-	 * However, there's no time to redesign it for 9.1.
+	 * XXX this is an unmaintainable crock, because we have to know how to set
+	 * (or at least what to call to set) every variable that could potentially
+	 * have PGC_S_DYNAMIC_DEFAULT or PGC_S_ENV_VAR source. However, there's no
+	 * time to redesign it for 9.1.
 	 */
 	if (context == PGC_SIGHUP && applySettings)
 	{
@@ -417,8 +418,8 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	 */
 	for (item = head; item; item = item->next)
 	{
-		char   *pre_value = NULL;
-		int		scres;
+		char	   *pre_value = NULL;
+		int			scres;
 
 		/* Ignore anything marked as ignorable */
 		if (item->ignore)
@@ -485,7 +486,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	if (applySettings)
 		PgReloadTime = GetCurrentTimestamp();
 
- bail_out:
+bail_out:
 	if (error && applySettings)
 	{
 		/* During postmaster startup, any error is fatal */
@@ -567,9 +568,9 @@ ParseConfigFile(const char *config_file, bool strict,
 	FILE	   *fp;
 
 	/*
-	 * Reject too-deep include nesting depth.  This is just a safety check
-	 * to avoid dumping core due to stack overflow if an include file loops
-	 * back to itself.  The maximum nesting depth is pretty arbitrary.
+	 * Reject too-deep include nesting depth.  This is just a safety check to
+	 * avoid dumping core due to stack overflow if an include file loops back
+	 * to itself.  The maximum nesting depth is pretty arbitrary.
 	 */
 	if (depth > 10)
 	{
@@ -660,7 +661,7 @@ GUC_flex_fatal(const char *msg)
 {
 	GUC_flex_fatal_errmsg = msg;
 	siglongjmp(*GUC_flex_fatal_jmp, 1);
-	return 0;	/* keep compiler quiet */
+	return 0;					/* keep compiler quiet */
 }
 
 /*
@@ -828,7 +829,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			item->value = opt_value;
 			item->errmsg = NULL;
 			item->filename = pstrdup(config_file);
-			item->sourceline = ConfigFileLineno-1;
+			item->sourceline = ConfigFileLineno - 1;
 			item->ignore = false;
 			item->applied = false;
 			item->next = NULL;
@@ -844,7 +845,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			break;
 		continue;
 
-	parse_error:
+parse_error:
 		/* release storage if we allocated any on this line */
 		if (opt_name)
 			pfree(opt_name);
@@ -856,8 +857,8 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("syntax error in file \"%s\" line %u, near end of line",
-							config_file, ConfigFileLineno - 1)));
+			  errmsg("syntax error in file \"%s\" line %u, near end of line",
+					 config_file, ConfigFileLineno - 1)));
 			record_config_file_error("syntax error",
 									 config_file, ConfigFileLineno - 1,
 									 head_p, tail_p);
@@ -866,8 +867,8 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"",
-							config_file, ConfigFileLineno, yytext)));
+			 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"",
+					config_file, ConfigFileLineno, yytext)));
 			record_config_file_error("syntax error",
 									 config_file, ConfigFileLineno,
 									 head_p, tail_p);
@@ -878,16 +879,16 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		/*
 		 * To avoid producing too much noise when fed a totally bogus file,
 		 * give up after 100 syntax errors per file (an arbitrary number).
-		 * Also, if we're only logging the errors at DEBUG level anyway,
-		 * might as well give up immediately.  (This prevents postmaster
-		 * children from bloating the logs with duplicate complaints.)
+		 * Also, if we're only logging the errors at DEBUG level anyway, might
+		 * as well give up immediately.  (This prevents postmaster children
+		 * from bloating the logs with duplicate complaints.)
 		 */
 		if (errorcount >= 100 || elevel <= DEBUG1)
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("too many syntax errors found, abandoning file \"%s\"",
-							config_file)));
+			   errmsg("too many syntax errors found, abandoning file \"%s\"",
+					  config_file)));
 			break;
 		}
 
@@ -959,7 +960,7 @@ ParseConfigDirectory(const char *includedir,
 	while ((de = ReadDir(d, directory)) != NULL)
 	{
 		struct stat st;
-		char	filename[MAXPGPATH];
+		char		filename[MAXPGPATH];
 
 		/*
 		 * Only parse files with names ending in ".conf".  Explicitly reject
@@ -984,7 +985,7 @@ ParseConfigDirectory(const char *includedir,
 				{
 					size_filenames += 32;
 					filenames = (char **) repalloc(filenames,
-												   size_filenames * sizeof(char *));
+											size_filenames * sizeof(char *));
 				}
 				filenames[num_filenames] = pstrdup(filename);
 				num_filenames++;
@@ -1013,6 +1014,7 @@ ParseConfigDirectory(const char *includedir,
 	if (num_filenames > 0)
 	{
 		int			i;
+
 		qsort(filenames, num_filenames, sizeof(char *), pg_qsort_strcmp);
 		for (i = 0; i < num_filenames; i++)
 		{
@@ -1091,7 +1093,7 @@ GUC_scanstr(const char *s)
 	Assert(s != NULL && s[0] == '\'');
 	len = strlen(s);
 	Assert(len >= 2);
-	Assert(s[len-1] == '\'');
+	Assert(s[len - 1] == '\'');
 
 	/* Skip the leading quote; we'll handle the trailing quote below */
 	s++, len--;
@@ -1146,7 +1148,7 @@ GUC_scanstr(const char *s)
 					break;
 			}					/* switch */
 		}
-		else if (s[i] == '\'' && s[i+1] == '\'')
+		else if (s[i] == '\'' && s[i + 1] == '\'')
 		{
 			/* doubled quote becomes just one quote */
 			newStr[j] = s[++i];
