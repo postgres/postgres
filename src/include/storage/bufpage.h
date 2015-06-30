@@ -304,6 +304,8 @@ typedef PageHeaderData *PageHeader;
 #define PageGetSpecialPointer(page) \
 ( \
 	AssertMacro(PageIsValid(page)), \
+	AssertMacro(((PageHeader) (page))->pd_special <= BLCKSZ), \
+	AssertMacro(((PageHeader) (page))->pd_special >= SizeOfPageHeaderData), \
 	(char *) ((char *) (page) + ((PageHeader) (page))->pd_special) \
 )
 
