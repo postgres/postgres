@@ -864,9 +864,10 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 
 		buffer = XLogInitBufferForRedo(record, 3);
 		page = (Page) BufferGetPage(buffer);
-		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		_bt_pageinit(page, BufferGetPageSize(buffer));
+		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
 		pageop->btpo_flags = BTP_HALF_DEAD | BTP_LEAF;
 		pageop->btpo_prev = xlrec->leafleftsib;
 		pageop->btpo_next = xlrec->leafrightsib;
