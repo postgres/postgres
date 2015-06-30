@@ -195,7 +195,7 @@
        </para>
 
        <para>
-        <acronym>BRIN</> indexes are very compact and cheap to to update by
+        <acronym>BRIN</> indexes are very compact and cheap to update by
         storing min/max values for a range of heap blocks.
        </para>
       </listitem>
@@ -282,7 +282,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
       <listitem>
 <!--
-FIXME: I'm unclear which commits this refers to?
+2014-11-07 [5ea86e6] Robert..: Use the sortsupport infrastructure in more cas..
 -->
        <para>
         Extend the infrastructure that allows sorting to be performed by
