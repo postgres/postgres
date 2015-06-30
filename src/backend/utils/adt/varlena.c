@@ -2034,12 +2034,8 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 		}
 
 		/* Just like strcoll(), strxfrm() expects a NUL-terminated string */
-		memcpy(tss->buf1, VARDATA_ANY(authoritative), len);
+		memcpy(tss->buf1, authoritative_data, len);
 		tss->buf1[len] = '\0';
-
-		/* Don't leak memory here */
-		if (PointerGetDatum(authoritative) != original)
-			pfree(authoritative);
 
 		for (;;)
 		{
@@ -2107,6 +2103,10 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 #endif
 
 	addHyperLogLog(&tss->abbr_card, hash);
+
+	/* Don't leak memory here */
+	if (PointerGetDatum(authoritative) != original)
+		pfree(authoritative);
 
 	return res;
 }
