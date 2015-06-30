@@ -103,18 +103,12 @@ tablesample_init(SampleScanState *scanstate, TableSampleClause *tablesample)
 		fcinfo.argnull[1] = false;
 	}
 
-	/* Rest of the arguments come from user.  */
+	/* Rest of the arguments come from user. */
 	i = 2;
 	foreach(arg, args)
 	{
 		Expr	   *argexpr = (Expr *) lfirst(arg);
 		ExprState  *argstate = ExecInitExpr(argexpr, (PlanState *) scanstate);
-
-		if (argstate == NULL)
-		{
-			fcinfo.argnull[i] = true;
-			fcinfo.arg[i] = (Datum) 0;;
-		}
 
 		fcinfo.arg[i] = ExecEvalExpr(argstate, econtext,
 									 &fcinfo.argnull[i], NULL);
