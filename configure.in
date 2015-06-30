@@ -872,6 +872,8 @@ AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 AC_SEARCH_LIBS(crypt, crypt)
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
+# Required for thread_test.c on Solaris
+AC_SEARCH_LIBS(sched_yield, rt)
 # Required for thread_test.c on Solaris 2.5:
 # Other ports use it too (HP-UX) so test unconditionally
 AC_SEARCH_LIBS(gethostbyname_r, nsl)
