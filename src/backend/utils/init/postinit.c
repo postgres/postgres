@@ -52,6 +52,7 @@
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/portal.h"
 #include "utils/ps_status.h"
@@ -190,6 +191,18 @@ PerformAuthentication(Port *port)
 	 * FIXME: [fork/exec] Ugh.  Is there a way around this overhead?
 	 */
 #ifdef EXEC_BACKEND
+	/*
+	 * load_hba() and load_ident() want to work within the PostmasterContext,
+	 * so create that if it doesn't exist (which it won't).  We'll delete it
+	 * again later, in PostgresMain.
+	 */
+	if (PostmasterContext == NULL)
+		PostmasterContext = AllocSetContextCreate(TopMemoryContext,
+												  "Postmaster",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
+
 	if (!load_hba())
 	{
 		/*
