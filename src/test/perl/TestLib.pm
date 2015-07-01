@@ -11,6 +11,7 @@ our @EXPORT = qw(
   start_test_server
   restart_test_server
   psql
+  slurp_dir
   slurp_file
   system_or_bail
   system_log
@@ -174,6 +175,15 @@ sub psql
 	my ($dbname, $sql) = @_;
 	print("# Running SQL command: $sql\n");
 	run [ 'psql', '-X', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql or die;
+}
+
+sub slurp_dir
+{
+	my ($dir) = @_;
+	opendir(my $dh, $dir) or die;
+	my @direntries = readdir $dh;
+	closedir $dh;
+	return @direntries;
 }
 
 sub slurp_file

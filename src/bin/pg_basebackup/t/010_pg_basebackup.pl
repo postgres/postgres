@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Cwd;
 use TestLib;
-use Test::More tests => 39;
+use Test::More tests => 44;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -45,6 +45,10 @@ restart_test_server;
 command_ok([ 'pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
+
+is_deeply([sort(slurp_dir("$tempdir/backup/pg_xlog/"))],
+		  [sort qw(. .. archive_status)],
+		  'no WAL files copied');
 
 command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backup2", '--xlogdir',
@@ -145,3 +149,10 @@ ok(-f "$tempdir/backupR/recovery.conf", 'recovery.conf was created');
 my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
 like($recovery_conf, qr/^standby_mode = 'on'$/m, 'recovery.conf sets standby_mode');
 like($recovery_conf, qr/^primary_conninfo = '.*port=$ENV{PGPORT}.*'$/m, 'recovery.conf sets primary_conninfo');
+
+command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxf", '-X', 'fetch' ],
+	'pg_basebackup -X fetch runs');
+ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_xlog")), 'WAL files copied');
+command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxs", '-X', 'stream' ],
+	'pg_basebackup -X stream runs');
+ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_xlog")), 'WAL files copied');
