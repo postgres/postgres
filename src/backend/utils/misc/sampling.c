@@ -237,7 +237,14 @@ sampler_random_init_state(long seed, SamplerRandomState randstate)
 double
 sampler_random_fract(SamplerRandomState randstate)
 {
-	return pg_erand48(randstate);
+	double		res;
+
+	/* pg_erand48 returns a value in [0.0 - 1.0), so we must reject 0 */
+	do
+	{
+		res = pg_erand48(randstate);
+	} while (res == 0.0);
+	return res;
 }
 
 
