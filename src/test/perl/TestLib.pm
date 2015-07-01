@@ -11,6 +11,7 @@ our @EXPORT = qw(
   start_test_server
   restart_test_server
   psql
+  slurp_file
   system_or_bail
   system_log
   run_log
@@ -173,6 +174,13 @@ sub psql
 	my ($dbname, $sql) = @_;
 	print("# Running SQL command: $sql\n");
 	run [ 'psql', '-X', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql or die;
+}
+
+sub slurp_file
+{
+	local $/;
+	local @ARGV = @_;
+	<>
 }
 
 sub system_or_bail

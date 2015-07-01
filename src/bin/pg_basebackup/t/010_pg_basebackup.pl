@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Cwd;
 use TestLib;
-use Test::More tests => 35;
+use Test::More tests => 39;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -138,3 +138,10 @@ psql 'postgres',
 command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
 	'pg_basebackup tar with long symlink target');
 psql 'postgres', "DROP TABLESPACE tblspc3;";
+
+command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
+	'pg_basebackup -R runs');
+ok(-f "$tempdir/backupR/recovery.conf", 'recovery.conf was created');
+my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
+like($recovery_conf, qr/^standby_mode = 'on'$/m, 'recovery.conf sets standby_mode');
+like($recovery_conf, qr/^primary_conninfo = '.*port=$ENV{PGPORT}.*'$/m, 'recovery.conf sets primary_conninfo');
