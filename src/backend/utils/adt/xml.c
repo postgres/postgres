@@ -2473,7 +2473,7 @@ query_to_xml_internal(const char *query, char *tablename,
 	{
 		xmldata_root_element_start(result, xmltn, xmlschema,
 								   targetns, top_level);
-		appendStringInfoString(result, "\n");
+		appendStringInfoChar(result, '\n');
 	}
 
 	if (xmlschema)
@@ -2637,7 +2637,7 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlsn, xmlschema, targetns, top_level);
-	appendStringInfoString(result, "\n");
+	appendStringInfoChar(result, '\n');
 
 	if (xmlschema)
 		appendStringInfo(result, "%s\n\n", xmlschema);
@@ -2815,7 +2815,7 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlcn, xmlschema, targetns, true);
-	appendStringInfoString(result, "\n");
+	appendStringInfoChar(result, '\n');
 
 	if (xmlschema)
 		appendStringInfo(result, "%s\n\n", xmlschema);

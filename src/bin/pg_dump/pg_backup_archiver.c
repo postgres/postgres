@@ -533,7 +533,7 @@ RestoreArchive(Archive *AHX)
 							 * search for hardcoded "DROP CONSTRAINT" instead.
 							 */
 							if (strcmp(te->desc, "DEFAULT") == 0)
-								appendPQExpBuffer(ftStmt, "%s", dropStmt);
+								appendPQExpBufferStr(ftStmt, dropStmt);
 							else
 							{
 								if (strcmp(te->desc, "CONSTRAINT") == 0 ||

@@ -232,7 +232,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	}
 
 	if (XactCompletionForceSyncCommit(parsed.xinfo))
-		appendStringInfo(buf, "; sync");
+		appendStringInfoString(buf, "; sync");
 
 	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
 	{

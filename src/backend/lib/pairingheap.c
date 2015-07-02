@@ -306,7 +306,7 @@ pairingheap_dump_recurse(StringInfo buf,
 
 		appendStringInfoSpaces(buf, depth * 4);
 		dumpfunc(node, buf, opaque);
-		appendStringInfoString(buf, "\n");
+		appendStringInfoChar(buf, '\n');
 		if (node->first_child)
 			pairingheap_dump_recurse(buf, node->first_child, dumpfunc, opaque, depth + 1, node);
 		prev_or_parent = node;

@@ -30,14 +30,14 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 			{
 				spgxlogAddLeaf *xlrec = (spgxlogAddLeaf *) rec;
 
-				appendStringInfo(buf, "add leaf to page");
+				appendStringInfoString(buf, "add leaf to page");
 				appendStringInfo(buf, "; off %u; headoff %u; parentoff %u",
 								 xlrec->offnumLeaf, xlrec->offnumHeadLeaf,
 								 xlrec->offnumParent);
 				if (xlrec->newPage)
-					appendStringInfo(buf, " (newpage)");
+					appendStringInfoString(buf, " (newpage)");
 				if (xlrec->storesNulls)
-					appendStringInfo(buf, " (nulls)");
+					appendStringInfoString(buf, " (nulls)");
 			}
 			break;
 		case XLOG_SPGIST_MOVE_LEAFS:
@@ -63,9 +63,9 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 				appendStringInfo(buf, "ndel %u; nins %u",
 								 xlrec->nDelete, xlrec->nInsert);
 				if (xlrec->innerIsParent)
-					appendStringInfo(buf, " (innerIsParent)");
+					appendStringInfoString(buf, " (innerIsParent)");
 				if (xlrec->isRootSplit)
-					appendStringInfo(buf, " (isRootSplit)");
+					appendStringInfoString(buf, " (isRootSplit)");
 			}
 			break;
 		case XLOG_SPGIST_VACUUM_LEAF:

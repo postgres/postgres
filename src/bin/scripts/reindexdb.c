@@ -295,7 +295,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 		appendPQExpBuffer(&sql, " SCHEMA %s", name);
 	else if (strcmp(type, "DATABASE") == 0)
 		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(name));
-	appendPQExpBufferStr(&sql, ";");
+	appendPQExpBufferChar(&sql, ';');
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, false);

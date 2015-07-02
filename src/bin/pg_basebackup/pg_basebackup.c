@@ -1516,7 +1516,7 @@ GenerateRecoveryConf(PGconn *conn)
 
 		/* Separate key-value pairs with spaces */
 		if (conninfo_buf.len != 0)
-			appendPQExpBufferStr(&conninfo_buf, " ");
+			appendPQExpBufferChar(&conninfo_buf, ' ');
 
 		/*
 		 * Write "keyword=value" pieces, the value string is escaped and/or
