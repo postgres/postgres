@@ -1097,7 +1097,7 @@ XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn)
 
 		if (!debug_reader)
 		{
-			appendStringInfo(&buf, "error decoding record: out of memory");
+			appendStringInfoString(&buf, "error decoding record: out of memory");
 		}
 		else if (!DecodeXLogRecord(debug_reader, (XLogRecord *) recordBuf.data,
 								   &errormsg))
@@ -9528,7 +9528,7 @@ xlog_outrec(StringInfo buf, XLogReaderState *record)
 							 rnode.spcNode, rnode.dbNode, rnode.relNode,
 							 blk);
 		if (XLogRecHasBlockImage(record, block_id))
-			appendStringInfo(buf, " FPW");
+			appendStringInfoString(buf, " FPW");
 	}
 }
 #endif   /* WAL_DEBUG */

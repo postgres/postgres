@@ -5487,7 +5487,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	{
 		OnConflictExpr *confl = query->onConflict;
 
-		appendStringInfo(buf, " ON CONFLICT");
+		appendStringInfoString(buf, " ON CONFLICT");
 
 		if (confl->arbiterElems)
 		{

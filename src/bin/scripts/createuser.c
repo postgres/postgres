@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(&sql, "%s", fmtId(cell->val));
 		}
 	}
-	appendPQExpBufferStr(&sql, ";");
+	appendPQExpBufferChar(&sql, ';');
 
 	if (echo)
 		printf("%s\n", sql.data);

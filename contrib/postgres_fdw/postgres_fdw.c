@@ -2738,7 +2738,7 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 		}
 
 		/* Append ORDER BY at the end of query to ensure output ordering */
-		appendStringInfo(&buf, " ORDER BY c.relname, a.attnum");
+		appendStringInfoString(&buf, " ORDER BY c.relname, a.attnum");
 
 		/* Fetch the data */
 		res = PQexec(conn, buf.data);

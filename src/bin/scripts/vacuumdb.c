@@ -392,7 +392,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		ntups = PQntuples(res);
 		for (i = 0; i < ntups; i++)
 		{
-			appendPQExpBuffer(&buf, "%s",
+			appendPQExpBufferStr(&buf,
 							  fmtQualifiedId(PQserverVersion(conn),
 											 PQgetvalue(res, i, 1),
 											 PQgetvalue(res, i, 0)));
@@ -643,7 +643,7 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
 				sep = comma;
 			}
 			if (sep != paren)
-				appendPQExpBufferStr(sql, ")");
+				appendPQExpBufferChar(sql, ')');
 		}
 		else
 		{
