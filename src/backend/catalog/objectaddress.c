@@ -1831,7 +1831,7 @@ textarray_to_strvaluelist(ArrayType *arr)
 Datum
 pg_get_object_address(PG_FUNCTION_ARGS)
 {
-	char	   *ttype = TextDatumGetCString(PG_GETARG_TEXT_P(0));
+	char	   *ttype = TextDatumGetCString(PG_GETARG_DATUM(0));
 	ArrayType  *namearr = PG_GETARG_ARRAYTYPE_P(1);
 	ArrayType  *argsarr = PG_GETARG_ARRAYTYPE_P(2);
 	int			itype;
