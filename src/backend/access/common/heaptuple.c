@@ -777,39 +777,6 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 }
 
 /*
- *		heap_formtuple
- *
- *		construct a tuple from the given values[] and nulls[] arrays
- *
- *		Null attributes are indicated by a 'n' in the appropriate byte
- *		of nulls[]. Non-null attributes are indicated by a ' ' (space).
- *
- * OLD API with char 'n'/' ' convention for indicating nulls.
- * This is deprecated and should not be used in new code, but we keep it
- * around for use by old add-on modules.
- */
-HeapTuple
-heap_formtuple(TupleDesc tupleDescriptor,
-			   Datum *values,
-			   char *nulls)
-{
-	HeapTuple	tuple;			/* return tuple */
-	int			numberOfAttributes = tupleDescriptor->natts;
-	bool	   *boolNulls = (bool *) palloc(numberOfAttributes * sizeof(bool));
-	int			i;
-
-	for (i = 0; i < numberOfAttributes; i++)
-		boolNulls[i] = (nulls[i] == 'n');
-
-	tuple = heap_form_tuple(tupleDescriptor, values, boolNulls);
-
-	pfree(boolNulls);
-
-	return tuple;
-}
-
-
-/*
  * heap_modify_tuple
  *		form a new tuple from an old tuple and a set of replacement values.
  *
@@ -877,44 +844,6 @@ heap_modify_tuple(HeapTuple tuple,
 		HeapTupleSetOid(newTuple, HeapTupleGetOid(tuple));
 
 	return newTuple;
-}
-
-/*
- *		heap_modifytuple
- *
- *		forms a new tuple from an old tuple and a set of replacement values.
- *		returns a new palloc'ed tuple.
- *
- * OLD API with char 'n'/' ' convention for indicating nulls, and
- * char 'r'/' ' convention for indicating whether to replace columns.
- * This is deprecated and should not be used in new code, but we keep it
- * around for use by old add-on modules.
- */
-HeapTuple
-heap_modifytuple(HeapTuple tuple,
-				 TupleDesc tupleDesc,
-				 Datum *replValues,
-				 char *replNulls,
-				 char *replActions)
-{
-	HeapTuple	result;
-	int			numberOfAttributes = tupleDesc->natts;
-	bool	   *boolNulls = (bool *) palloc(numberOfAttributes * sizeof(bool));
-	bool	   *boolActions = (bool *) palloc(numberOfAttributes * sizeof(bool));
-	int			attnum;
-
-	for (attnum = 0; attnum < numberOfAttributes; attnum++)
-	{
-		boolNulls[attnum] = (replNulls[attnum] == 'n');
-		boolActions[attnum] = (replActions[attnum] == 'r');
-	}
-
-	result = heap_modify_tuple(tuple, tupleDesc, replValues, boolNulls, boolActions);
-
-	pfree(boolNulls);
-	pfree(boolActions);
-
-	return result;
 }
 
 /*
@@ -1022,46 +951,6 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 		values[attnum] = (Datum) 0;
 		isnull[attnum] = true;
 	}
-}
-
-/*
- *		heap_deformtuple
- *
- *		Given a tuple, extract data into values/nulls arrays; this is
- *		the inverse of heap_formtuple.
- *
- *		Storage for the values/nulls arrays is provided by the caller;
- *		it should be sized according to tupleDesc->natts not
- *		HeapTupleHeaderGetNatts(tuple->t_data).
- *
- *		Note that for pass-by-reference datatypes, the pointer placed
- *		in the Datum will point into the given tuple.
- *
- *		When all or most of a tuple's fields need to be extracted,
- *		this routine will be significantly quicker than a loop around
- *		heap_getattr; the loop will become O(N^2) as soon as any
- *		noncacheable attribute offsets are involved.
- *
- * OLD API with char 'n'/' ' convention for indicating nulls.
- * This is deprecated and should not be used in new code, but we keep it
- * around for use by old add-on modules.
- */
-void
-heap_deformtuple(HeapTuple tuple,
-				 TupleDesc tupleDesc,
-				 Datum *values,
-				 char *nulls)
-{
-	int			natts = tupleDesc->natts;
-	bool	   *boolNulls = (bool *) palloc(natts * sizeof(bool));
-	int			attnum;
-
-	heap_deform_tuple(tuple, tupleDesc, values, boolNulls);
-
-	for (attnum = 0; attnum < natts; attnum++)
-		nulls[attnum] = (boolNulls[attnum] ? 'n' : ' ');
-
-	pfree(boolNulls);
 }
 
 /*
