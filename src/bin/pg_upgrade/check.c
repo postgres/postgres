@@ -337,8 +337,14 @@ equivalent_locale(int category, const char *loca, const char *locb)
 	lenb = charb ? (charb - canonb) : strlen(canonb);
 
 	if (lena == lenb && pg_strncasecmp(canona, canonb, lena) == 0)
+	{
+		pg_free(canona);
+		pg_free(canonb);
 		return true;
+	}
 
+	pg_free(canona);
+	pg_free(canonb);
 	return false;
 }
 

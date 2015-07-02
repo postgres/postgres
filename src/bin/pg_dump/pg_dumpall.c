@@ -1442,6 +1442,13 @@ dumpCreateDB(PGconn *conn)
 		free(fdbname);
 	}
 
+	if (default_encoding)
+		free(default_encoding);
+	if (default_collate)
+		free(default_collate);
+	if (default_ctype)
+		free(default_ctype);
+
 	PQclear(res);
 	destroyPQExpBuffer(buf);
 
