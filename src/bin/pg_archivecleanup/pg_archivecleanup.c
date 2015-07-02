@@ -21,6 +21,8 @@
 
 #include "pg_getopt.h"
 
+#include "access/xlog_internal.h"
+
 const char *progname;
 
 /* Options and defaults */
@@ -31,7 +33,7 @@ char	   *additional_ext = NULL;		/* Extension to remove from filenames */
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
 char		WALFilePath[MAXPGPATH];		/* the file path including archive */
-char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we
+char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the oldest file we
 														 * want to remain in
 														 * archive */
 
@@ -50,12 +52,6 @@ char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we
  *	or personally to the current maintainer. Those changes may be
  *	folded in to later versions of this program.
  */
-
-#define XLOG_DATA_FNAME_LEN		24
-/* Reworked from access/xlog_internal.h */
-#define XLogFileName(fname, tli, log, seg)	\
-	snprintf(fname, XLOG_DATA_FNAME_LEN + 1, "%08X%08X%08X", tli, log, seg)
-#define XLOG_BACKUP_FNAME_LEN	40
 
 /*
  *	Initialize allows customized commands into the archive cleanup program.
@@ -110,7 +106,7 @@ CleanupPriorWALFiles(void)
 		{
 			/*
 			 * Truncation is essentially harmless, because we skip names of
-			 * length other than XLOG_DATA_FNAME_LEN.  (In principle, one
+			 * length other than XLOG_FNAME_LEN.  (In principle, one
 			 * could use a 1000-character additional_ext and get trouble.)
 			 */
 			strlcpy(walfile, xlde->d_name, MAXPGPATH);
@@ -129,8 +125,7 @@ CleanupPriorWALFiles(void)
 			 * file. Note that this means files are not removed in the order
 			 * they were originally written, in case this worries you.
 			 */
-			if (strlen(walfile) == XLOG_DATA_FNAME_LEN &&
-				strspn(walfile, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
+			if (IsXLogFileName(walfile) &&
 				strcmp(walfile + 8, exclusiveCleanupFileName + 8) < 0)
 			{
 				/*
@@ -202,13 +197,12 @@ SetWALFileNameForCleanup(void)
 	 * 000000010000000000000010.00000020.backup is after
 	 * 000000010000000000000010.
 	 */
-	if (strlen(restartWALFileName) == XLOG_DATA_FNAME_LEN &&
-		strspn(restartWALFileName, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN)
+	if (IsXLogFileName(restartWALFileName))
 	{
 		strcpy(exclusiveCleanupFileName, restartWALFileName);
 		fnameOK = true;
 	}
-	else if (strlen(restartWALFileName) == XLOG_BACKUP_FNAME_LEN)
+	else if (IsBackupHistoryFileName(restartWALFileName))
 	{
 		int			args;
 		uint32		tli = 1,
@@ -225,7 +219,7 @@ SetWALFileNameForCleanup(void)
 			 * Use just the prefix of the filename, ignore everything after
 			 * first period
 			 */
-			XLogFileName(exclusiveCleanupFileName, tli, log, seg);
+			XLogFileNameById(exclusiveCleanupFileName, tli, log, seg);
 		}
 	}
 

@@ -32,6 +32,8 @@
 
 #include "pg_getopt.h"
 
+#include "access/xlog_internal.h"
+
 const char *progname;
 
 /* Options and defaults */
@@ -57,7 +59,7 @@ char	   *restartWALFileName; /* the file from which we can restart restore */
 char	   *priorWALFileName;	/* the file we need to get from archive */
 char		WALFilePath[MAXPGPATH];		/* the file path including archive */
 char		restoreCommand[MAXPGPATH];	/* run this to restore */
-char		exclusiveCleanupFileName[MAXPGPATH];		/* the file we need to
+char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the file we need to
 														 * get from archive */
 
 /*
@@ -112,11 +114,6 @@ struct stat stat_buf;
  *	or personally to the current maintainer. Those changes may be
  *	folded in to later versions of this program.
  */
-
-#define XLOG_DATA_FNAME_LEN		24
-/* Reworked from access/xlog_internal.h */
-#define XLogFileName(fname, tli, log, seg)	\
-	snprintf(fname, XLOG_DATA_FNAME_LEN + 1, "%08X%08X%08X", tli, log, seg)
 
 /*
  *	Initialize allows customized commands into the warm standby program.
@@ -182,10 +179,7 @@ CustomizableNextWALFileReady()
 		 * If it's a backup file, return immediately. If it's a regular file
 		 * return only if it's the right size already.
 		 */
-		if (strlen(nextWALFileName) > 24 &&
-			strspn(nextWALFileName, "0123456789ABCDEF") == 24 &&
-		strcmp(nextWALFileName + strlen(nextWALFileName) - strlen(".backup"),
-			   ".backup") == 0)
+		if (IsBackupHistoryFileName(nextWALFileName))
 		{
 			nextWALFileType = XLOG_BACKUP_LABEL;
 			return true;
@@ -261,8 +255,7 @@ CustomizableCleanupPriorWALFiles(void)
 				 * are not removed in the order they were originally written,
 				 * in case this worries you.
 				 */
-				if (strlen(xlde->d_name) == XLOG_DATA_FNAME_LEN &&
-					strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
+				if (IsXLogFileName(xlde->d_name) &&
 				  strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 				{
 #ifdef WIN32
@@ -366,7 +359,7 @@ SetWALFileNameForCleanup(void)
 		}
 	}
 
-	XLogFileName(exclusiveCleanupFileName, tli, log, seg);
+	XLogFileNameById(exclusiveCleanupFileName, tli, log, seg);
 
 	return cleanup;
 }
@@ -740,10 +733,7 @@ main(int argc, char **argv)
 	 * Check for initial history file: always the first file to be requested
 	 * It's OK if the file isn't there - all other files need to wait
 	 */
-	if (strlen(nextWALFileName) > 8 &&
-		strspn(nextWALFileName, "0123456789ABCDEF") == 8 &&
-		strcmp(nextWALFileName + strlen(nextWALFileName) - strlen(".history"),
-			   ".history") == 0)
+	if (IsTLHistoryFileName(nextWALFileName))
 	{
 		nextWALFileType = XLOG_HISTORY;
 		if (RestoreWALFileForRecovery())
