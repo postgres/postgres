@@ -2122,7 +2122,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak('abc');
 (2 rows)
 
 CREATE TABLE test_qual_pushdown (
-	abc		text
+    abc text
 );
 INSERT INTO test_qual_pushdown VALUES ('abc'),('def');
 SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(abc);
