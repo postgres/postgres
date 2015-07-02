@@ -802,7 +802,7 @@ SELECT * FROM y2 WHERE f_leak('abc');
 EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak('abc');
 
 CREATE TABLE test_qual_pushdown (
-	abc		text
+    abc text
 );
 
 INSERT INTO test_qual_pushdown VALUES ('abc'),('def');
