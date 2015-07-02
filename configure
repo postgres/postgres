@@ -627,6 +627,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 vpath_build
+PG_VERSION_NUM
 PROVE
 OSX
 XSLTPROC
@@ -15518,6 +15519,7 @@ $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"
 cat >>confdefs.h <<_ACEOF
 #define PG_VERSION_NUM $PG_VERSION_NUM
 _ACEOF
+
 
 
 
