@@ -17851,7 +17851,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     All of these functions take an optional <parameter>missing_ok</> parameter,
-    which specifies the behaviour when the file or directory does not exist.
+    which specifies the behavior when the file or directory does not exist.
     If <literal>true</literal>, the function returns NULL (except
     <function>pg_ls_dir</>, which returns an empty result set). If
     <literal>false</>, an error is raised. The default is <literal>false</>.
