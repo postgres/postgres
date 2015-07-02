@@ -15277,13 +15277,12 @@ dumpEventTrigger(Archive *fout, DumpOptions *dopt, EventTriggerInfo *evtinfo)
 	appendPQExpBufferStr(query, fmtId(evtinfo->dobj.name));
 	appendPQExpBufferStr(query, " ON ");
 	appendPQExpBufferStr(query, fmtId(evtinfo->evtevent));
-	appendPQExpBufferStr(query, " ");
 
 	if (strcmp("", evtinfo->evttags) != 0)
 	{
 		appendPQExpBufferStr(query, "\n         WHEN TAG IN (");
 		appendPQExpBufferStr(query, evtinfo->evttags);
-		appendPQExpBufferStr(query, ") ");
+		appendPQExpBufferChar(query, ')');
 	}
 
 	appendPQExpBufferStr(query, "\n   EXECUTE PROCEDURE ");
