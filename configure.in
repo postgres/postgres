@@ -373,15 +373,15 @@ AC_PROG_CC([$pgac_cc_list])
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
 # but has idiosyncrasies of its own.  We assume icc will define
 # __INTEL_COMPILER regardless of CFLAGS.
-AC_TRY_COMPILE([], [@%:@ifndef __INTEL_COMPILER
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [@%:@ifndef __INTEL_COMPILER
 choke me
-@%:@endif], [ICC=[yes]], [ICC=[no]])
+@%:@endif])], [ICC=yes], [ICC=no])
 
 # Check if it's Sun Studio compiler. We assume that
 # __SUNPRO_C will be defined for Sun Studio compilers
-AC_TRY_COMPILE([], [@%:@ifndef __SUNPRO_C
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [@%:@ifndef __SUNPRO_C
 choke me
-@%:@endif], [SUN_STUDIO_CC=yes], [SUN_STUDIO_CC=no])
+@%:@endif])], [SUN_STUDIO_CC=yes], [SUN_STUDIO_CC=no])
 
 AC_SUBST(SUN_STUDIO_CC)
 
@@ -506,16 +506,16 @@ CFLAGS="$CFLAGS $user_CFLAGS"
 
 # Check if the compiler still works with the final flag settings
 AC_MSG_CHECKING([whether the C compiler still works])
-AC_TRY_LINK([], [return 0;],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    AC_MSG_ERROR([cannot proceed])])
 
 # Defend against gcc -ffast-math
 if test "$GCC" = yes; then
-AC_TRY_COMPILE([], [@%:@ifdef __FAST_MATH__
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [@%:@ifdef __FAST_MATH__
 choke me
-@%:@endif], [], [AC_MSG_ERROR([do not put -ffast-math in CFLAGS])])
+@%:@endif])], [], [AC_MSG_ERROR([do not put -ffast-math in CFLAGS])])
 fi
 
 AC_PROG_CPP
@@ -844,7 +844,9 @@ case $host_os in sysv5*)
   AC_CACHE_CHECK([whether ld -R works], [pgac_cv_prog_ld_R],
   [
     pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
-    AC_TRY_LINK([], [], [pgac_cv_prog_ld_R=yes], [pgac_cv_prog_ld_R=no])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+      [pgac_cv_prog_ld_R=yes],
+      [pgac_cv_prog_ld_R=no])
     LDFLAGS=$pgac_save_LDFLAGS
   ])
   ld_R_works=$pgac_cv_prog_ld_R
@@ -1275,9 +1277,9 @@ fi
 case $host_cpu in
   ppc*|powerpc*)
     AC_MSG_CHECKING([whether assembler supports lwarx hint bit])
-    AC_TRY_COMPILE([],
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
 	[int a = 0; int *p = &a; int r;
-	 __asm__ __volatile__ (" lwarx %0,0,%1,1\n" : "=&r"(r) : "r"(p));],
+	 __asm__ __volatile__ (" lwarx %0,0,%1,1\n" : "=&r"(r) : "r"(p));])],
 	[pgac_cv_have_ppc_mutex_hint=yes],
 	[pgac_cv_have_ppc_mutex_hint=no])
     AC_MSG_RESULT([$pgac_cv_have_ppc_mutex_hint])
@@ -1360,12 +1362,12 @@ AC_CHECK_TYPE([struct sockaddr_in6],
 AC_SUBST(HAVE_IPV6)
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
-[AC_TRY_LINK(
+[AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [#include <machine/vmparam.h>
 #include <sys/exec.h>
 ],
 [PS_STRINGS->ps_nargvstr = 1;
-PS_STRINGS->ps_argvstr = "foo";],
+PS_STRINGS->ps_argvstr = "foo";])],
 [pgac_cv_var_PS_STRINGS=yes],
 [pgac_cv_var_PS_STRINGS=no])])
 if test "$pgac_cv_var_PS_STRINGS" = yes ; then
@@ -1422,11 +1424,11 @@ AC_CHECK_DECLS([snprintf, vsnprintf])
 
 dnl Cannot use AC_CHECK_FUNC because isinf may be a macro
 AC_CACHE_CHECK([for isinf], ac_cv_func_isinf,
-[AC_TRY_LINK([
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <math.h>
 double glob_double;
 ],
-[return isinf(glob_double) ? 0 : 1;],
+[return isinf(glob_double) ? 0 : 1;])],
 [ac_cv_func_isinf=yes],
 [ac_cv_func_isinf=no])])
 
@@ -1518,23 +1520,29 @@ dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro
 dnl (especially on GNU libc)
 dnl See also comments in c.h.
 AC_CACHE_CHECK([for sigsetjmp], pgac_cv_func_sigsetjmp,
-[AC_TRY_LINK([#include <setjmp.h>],
-            [sigjmp_buf x; sigsetjmp(x, 1);],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <setjmp.h>],
+            [sigjmp_buf x; sigsetjmp(x, 1);])],
             [pgac_cv_func_sigsetjmp=yes],
             [pgac_cv_func_sigsetjmp=no])])
 if test x"$pgac_cv_func_sigsetjmp" = x"yes"; then
   AC_DEFINE(HAVE_SIGSETJMP, 1, [Define to 1 if you have sigsetjmp().])
 fi
 
-AC_DECL_SYS_SIGLIST
+AC_CHECK_DECLS([sys_siglist], [], [],
+[#include <signal.h>
+/* NetBSD declares sys_siglist in unistd.h.  */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+])
 
 AC_CHECK_FUNC(syslog,
               [AC_CHECK_HEADER(syslog.h,
                                [AC_DEFINE(HAVE_SYSLOG, 1, [Define to 1 if you have the syslog interface.])])])
 
 AC_CACHE_CHECK([for opterr], pgac_cv_var_int_opterr,
-[AC_TRY_LINK([#include <unistd.h>],
-  [extern int opterr; opterr = 1;],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <unistd.h>],
+  [extern int opterr; opterr = 1;])],
   [pgac_cv_var_int_opterr=yes],
   [pgac_cv_var_int_opterr=no])])
 if test x"$pgac_cv_var_int_opterr" = x"yes"; then
@@ -1542,8 +1550,8 @@ if test x"$pgac_cv_var_int_opterr" = x"yes"; then
 fi
 
 AC_CACHE_CHECK([for optreset], pgac_cv_var_int_optreset,
-[AC_TRY_LINK([#include <unistd.h>],
-  [extern int optreset; optreset = 1;],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <unistd.h>],
+  [extern int optreset; optreset = 1;])],
   [pgac_cv_var_int_optreset=yes],
   [pgac_cv_var_int_optreset=no])])
 if test x"$pgac_cv_var_int_optreset" = x"yes"; then
@@ -1640,7 +1648,7 @@ AC_SUBST(LDAP_LIBS_BE)
 # This check should come after all modifications of compiler or linker
 # variables, and before any other run tests.
 AC_MSG_CHECKING([test program])
-AC_TRY_RUN([int main() { return 0; }],
+AC_RUN_IFELSE([AC_LANG_SOURCE([int main() { return 0; }])],
 [AC_MSG_RESULT(ok)],
 [AC_MSG_RESULT(failed)
 AC_MSG_ERROR([[
@@ -1698,11 +1706,10 @@ AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
 dnl If we need to use "long long int", figure out whether nnnLL notation works.
 
 if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #define INT64CONST(x)  x##LL
 long long int foo = INT64CONST(0x1234567890123456);
-],
-	[],
+])],
 	[AC_DEFINE(HAVE_LL_CONSTANTS, 1, [Define to 1 if constants of type 'long long int' should have the suffix LL.])],
 	[])
 fi
@@ -1835,10 +1842,10 @@ PGAC_HAVE_GCC__ATOMIC_INT64_CAS
 
 # Check for x86 cpuid instruction
 AC_CACHE_CHECK([for __get_cpuid], [pgac_cv__get_cpuid],
-[AC_TRY_LINK([#include <cpuid.h>],
-  [unsigned int exx[4] = {0, 0, 0, 0};
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <cpuid.h>],
+  [[unsigned int exx[4] = {0, 0, 0, 0};
   __get_cpuid(1, &exx[0], &exx[1], &exx[2], &exx[3]);
-  ],
+  ]])],
   [pgac_cv__get_cpuid="yes"],
   [pgac_cv__get_cpuid="no"])])
 if test x"$pgac_cv__get_cpuid" = x"yes"; then
@@ -1846,10 +1853,10 @@ if test x"$pgac_cv__get_cpuid" = x"yes"; then
 fi
 
 AC_CACHE_CHECK([for __cpuid], [pgac_cv__cpuid],
-[AC_TRY_LINK([#include <intrin.h>],
-  [unsigned int exx[4] = {0, 0, 0, 0};
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <intrin.h>],
+  [[unsigned int exx[4] = {0, 0, 0, 0};
   __get_cpuid(exx[0], 1);
-  ],
+  ]])],
   [pgac_cv__cpuid="yes"],
   [pgac_cv__cpuid="no"])])
 if test x"$pgac_cv__cpuid" = x"yes"; then
@@ -1869,11 +1876,11 @@ AC_SUBST(CFLAGS_SSE42)
 
 # Are we targeting a processor that supports SSE 4.2? gcc, clang and icc all
 # define __SSE4_2__ in that case.
-AC_TRY_COMPILE([], [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
 #ifndef __SSE4_2__
 #error __SSE4_2__ not defined
 #endif
-], [SSE4_2_TARGETED=1])
+])], [SSE4_2_TARGETED=1])
 
 # Select CRC-32C implementation.
 #
@@ -2010,10 +2017,10 @@ if test "$with_perl" = yes; then
   pgac_save_LIBS=$LIBS
   LIBS="$perl_embed_ldflags"
   AC_MSG_CHECKING([for libperl])
-  AC_TRY_LINK([
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <EXTERN.h>
 #include <perl.h>
-],  [perl_alloc();],
+],  [perl_alloc();])],
     [AC_MSG_RESULT(yes)],
     [AC_MSG_RESULT(no)
      AC_MSG_ERROR([libperl library is required for Perl])])
@@ -2069,7 +2076,8 @@ _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS -DIN_CONFIGURE"
 LIBS="$LIBS $PTHREAD_LIBS"
-AC_TRY_RUN([#include "$srcdir/src/test/thread/thread_test.c"],
+AC_RUN_IFELSE(
+  [AC_LANG_SOURCE([[#include "$srcdir/src/test/thread/thread_test.c"]])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
   AC_MSG_ERROR([thread test program failed

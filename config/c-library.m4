@@ -8,13 +8,13 @@
 # HAVE_INT_TIMEZONE.
 AC_DEFUN([PGAC_VAR_INT_TIMEZONE],
 [AC_CACHE_CHECK(for int timezone, pgac_cv_var_int_timezone,
-[AC_TRY_LINK([#include <time.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <time.h>
 int res;],
   [#ifndef __CYGWIN__
 res = timezone / 60;
 #else
 res = _timezone / 60;
-#endif],
+#endif])],
   [pgac_cv_var_int_timezone=yes],
   [pgac_cv_var_int_timezone=no])])
 if test x"$pgac_cv_var_int_timezone" = xyes ; then
@@ -41,13 +41,13 @@ if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
              `HAVE_STRUCT_TM_TM_ZONE' instead.])
 fi
 AC_CACHE_CHECK(for tzname, ac_cv_var_tzname,
-[AC_TRY_LINK(
-[#include <time.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[[#include <time.h>
 #ifndef tzname /* For SGI.  */
 extern char *tzname[]; /* RS6000 and others reject char **tzname.  */
 #endif
-],
-[atoi(*tzname);], ac_cv_var_tzname=yes, ac_cv_var_tzname=no)])
+]],
+[atoi(*tzname);])], ac_cv_var_tzname=yes, ac_cv_var_tzname=no)])
 if test $ac_cv_var_tzname = yes; then
     AC_DEFINE(HAVE_TZNAME, 1,
               [Define to 1 if you have the external array `tzname'.])
@@ -62,10 +62,10 @@ fi
 AC_DEFUN([PGAC_FUNC_GETTIMEOFDAY_1ARG],
 [AC_CACHE_CHECK(whether gettimeofday takes only one argument,
 pgac_cv_func_gettimeofday_1arg,
-[AC_TRY_COMPILE([#include <sys/time.h>],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/time.h>],
 [struct timeval *tp;
 struct timezone *tzp;
-gettimeofday(tp,tzp);],
+gettimeofday(tp,tzp);])],
 [pgac_cv_func_gettimeofday_1arg=no],
 [pgac_cv_func_gettimeofday_1arg=yes])])
 if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
@@ -86,13 +86,13 @@ AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 AC_DEFUN([PGAC_FUNC_STRERROR_R_INT],
 [AC_CACHE_CHECK(whether strerror_r returns int,
 pgac_cv_func_strerror_r_int,
-[AC_TRY_COMPILE([#include <string.h>],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <string.h>],
 [#ifndef _AIX
 int strerror_r(int, char *, size_t);
 #else
 /* Older AIX has 'int' for the third argument so we don't test the args. */
 int strerror_r();
-#endif],
+#endif])],
 [pgac_cv_func_strerror_r_int=yes],
 [pgac_cv_func_strerror_r_int=no])])
 if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
@@ -181,12 +181,12 @@ AC_DEFUN([PGAC_STRUCT_ADDRINFO],
 # a fancier check.
 AC_DEFUN([PGAC_FUNC_POSIX_SIGNALS],
 [AC_CACHE_CHECK(for POSIX signal interface, pgac_cv_func_posix_signals,
-[AC_TRY_LINK([#include <signal.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <signal.h>
 ],
 [struct sigaction act, oact;
 sigemptyset(&act.sa_mask);
 act.sa_flags = SA_RESTART;
-sigaction(0, &act, &oact);],
+sigaction(0, &act, &oact);])],
 [pgac_cv_func_posix_signals=yes],
 [pgac_cv_func_posix_signals=no])])
 if test x"$pgac_cv_func_posix_signals" = xyes ; then
@@ -210,7 +210,7 @@ AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER],
 [AC_MSG_CHECKING([snprintf length modifier for long long int])
 AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_modifier,
 [for pgac_modifier in 'll' 'q' 'I64'; do
-AC_TRY_RUN([#include <stdio.h>
+AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
 typedef long long int ac_int64;
 #define INT64_FORMAT "%${pgac_modifier}d"
 
@@ -233,7 +233,7 @@ int does_int64_snprintf_work()
 }
 main() {
   exit(! does_int64_snprintf_work());
-}],
+}]])],
 [pgac_cv_snprintf_long_long_int_modifier=$pgac_modifier; break],
 [],
 [pgac_cv_snprintf_long_long_int_modifier=cross; break])
@@ -259,7 +259,7 @@ esac])# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
 AC_DEFUN([PGAC_FUNC_SNPRINTF_ARG_CONTROL],
 [AC_MSG_CHECKING([whether snprintf supports argument control])
 AC_CACHE_VAL(pgac_cv_snprintf_arg_control,
-[AC_TRY_RUN([#include <stdio.h>
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
 #include <string.h>
 
 int main()
@@ -271,7 +271,7 @@ int main()
   if (strcmp(buf, "4 3") != 0)
     return 1;
   return 0;
-}],
+}]])],
 [pgac_cv_snprintf_arg_control=yes],
 [pgac_cv_snprintf_arg_control=no],
 [pgac_cv_snprintf_arg_control=cross])
@@ -288,7 +288,7 @@ AC_MSG_RESULT([$pgac_cv_snprintf_arg_control])
 AC_DEFUN([PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT],
 [AC_MSG_CHECKING([whether snprintf supports the %z modifier])
 AC_CACHE_VAL(pgac_cv_snprintf_size_t_support,
-[AC_TRY_RUN([#include <stdio.h>
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
 #include <string.h>
 
 int main()
@@ -308,7 +308,7 @@ int main()
   if (strcmp(bufz, buf64) != 0)
     return 1;
   return 0;
-}],
+}]])],
 [pgac_cv_snprintf_size_t_support=yes],
 [pgac_cv_snprintf_size_t_support=no],
 [pgac_cv_snprintf_size_t_support=cross])

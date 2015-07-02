@@ -5,8 +5,7 @@ dnl upstream changes!
 dnl
 AC_DEFUN([ACX_PTHREAD], [
 AC_REQUIRE([AC_CANONICAL_HOST])
-AC_LANG_SAVE
-AC_LANG_C
+AC_LANG_PUSH([C])
 acx_pthread_ok=no
 
 # We used to check for pthread.h first, but this fails if pthread.h
@@ -122,10 +121,10 @@ for flag in $acx_pthread_flags; do
         # pthread_cleanup_push because it is one of the few pthread
         # functions on Solaris that doesn't have a non-functional libc stub.
         # We try pthread_create on general principles.
-        AC_TRY_LINK([#include <pthread.h>],
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <pthread.h>],
                     [pthread_t th; pthread_join(th, 0);
                      pthread_attr_init(0); pthread_cleanup_push(0, 0);
-                     pthread_create(0,0,0,0); pthread_cleanup_pop(0); ],
+                     pthread_create(0,0,0,0); pthread_cleanup_pop(0); ])],
                     [acx_pthread_ok=yes], [acx_pthread_ok=no])
 
         if test "x$acx_pthread_ok" = xyes; then
@@ -167,5 +166,5 @@ fi
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(PTHREAD_CFLAGS)
 
-AC_LANG_RESTORE
+AC_LANG_POP([C])
 ])dnl ACX_PTHREAD

@@ -10465,13 +10465,7 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 static unsigned long int x = __builtin_bswap32(0xaabbccdd);
-int
-main ()
-{
 
-  ;
-  return 0;
-}
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   pgac_cv__builtin_bswap32=yes
@@ -10495,13 +10489,7 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 static int x; static int y[__builtin_constant_p(x) ? x : 1];
-int
-main ()
-{
 
-  ;
-  return 0;
-}
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   pgac_cv__builtin_constant_p=yes
@@ -11433,13 +11421,6 @@ else
 #include <sys/socket.h>
 #endif
 extern $ac_cv_func_accept_return accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   ac_not_found=no; break 4
@@ -12338,7 +12319,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
 ac_fn_c_check_func "$LINENO" "syslog" "ac_cv_func_syslog"
 if test "x$ac_cv_func_syslog" = xyes; then :
   ac_fn_c_check_header_mongrel "$LINENO" "syslog.h" "ac_cv_header_syslog_h" "$ac_includes_default"
@@ -12517,7 +12497,6 @@ fi
 # See the comment at the top of src/port/thread.c for more information.
 # WIN32 doesn't need the pthread tests;  it always uses threads
 if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
-
 
 
 ac_ext=c
@@ -13287,13 +13266,6 @@ if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
 #define INT64CONST(x)  x##LL
 long long int foo = INT64CONST(0x1234567890123456);
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
 

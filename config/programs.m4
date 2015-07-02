@@ -200,14 +200,14 @@ fi
 
 AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
 [AC_CACHE_CHECK([for rl_completion_append_character], pgac_cv_var_rl_completion_append_character,
-[AC_TRY_LINK([#include <stdio.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>
 #ifdef HAVE_READLINE_READLINE_H
 # include <readline/readline.h>
 #elif defined(HAVE_READLINE_H)
 # include <readline.h>
 #endif
 ],
-[rl_completion_append_character = 'x';],
+[rl_completion_append_character = 'x';])],
 [pgac_cv_var_rl_completion_append_character=yes],
 [pgac_cv_var_rl_completion_append_character=no])])
 if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
