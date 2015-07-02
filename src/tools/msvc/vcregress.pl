@@ -290,6 +290,7 @@ sub subdircheck
 
 sub contribcheck
 {
+	InstallTemp();
 	chdir "$topdir/contrib";
 	foreach my $module (glob("*"))
 	{
@@ -309,6 +310,7 @@ sub contribcheck
 
 sub modulescheck
 {
+	InstallTemp();
 	chdir "$topdir/src/test/modules";
 	foreach my $module (glob("*"))
 	{
