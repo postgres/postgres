@@ -227,7 +227,7 @@ main(int argc, char **argv)
 				if (strlen(optarg) != 0)
 					opts->superuser = pg_strdup(optarg);
 				break;
-			case 't':			/* Dump data for this table only */
+			case 't':			/* Dump specified table(s) only */
 				opts->selTypes = 1;
 				opts->selTable = 1;
 				simple_string_list_append(&opts->tableNames, optarg);
@@ -455,7 +455,7 @@ usage(const char *progname)
 	printf(_("  -P, --function=NAME(args)    restore named function\n"));
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"));
-	printf(_("  -t, --table=NAME             restore named table\n"));
+	printf(_("  -t, --table=NAME             restore named relation (table, view, etc)\n"));
 	printf(_("  -T, --trigger=NAME           restore named trigger\n"));
 	printf(_("  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"));
 	printf(_("  -1, --single-transaction     restore as a single transaction\n"));

@@ -2663,7 +2663,13 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 	if (ropt->selTypes)
 	{
 		if (strcmp(te->desc, "TABLE") == 0 ||
-			strcmp(te->desc, "TABLE DATA") == 0)
+			strcmp(te->desc, "TABLE DATA") == 0 ||
+			strcmp(te->desc, "VIEW") == 0 ||
+			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
+			strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
+			strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0 ||
+			strcmp(te->desc, "SEQUENCE") == 0 ||
+			strcmp(te->desc, "SEQUENCE SET") == 0)
 		{
 			if (!ropt->selTable)
 				return 0;
