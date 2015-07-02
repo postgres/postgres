@@ -258,6 +258,19 @@ select myfunc(0);
 select current_setting('work_mem');
 select myfunc(1), current_setting('work_mem');
 
+-- check current_setting()'s behavior with invalid setting name
+
+select current_setting('nosuch.setting');  -- FAIL
+select current_setting('nosuch.setting', false);  -- FAIL
+select current_setting('nosuch.setting', true) is null;
+
+-- after this, all three cases should yield 'nada'
+set nosuch.setting = 'nada';
+
+select current_setting('nosuch.setting');
+select current_setting('nosuch.setting', false);
+select current_setting('nosuch.setting', true);
+
 -- Normally, CREATE FUNCTION should complain about invalid values in
 -- function SET options; but not if check_function_bodies is off,
 -- because that creates ordering hazards for pg_dump

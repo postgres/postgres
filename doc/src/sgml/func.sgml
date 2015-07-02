@@ -16444,7 +16444,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <indexterm>
          <primary>current_setting</primary>
         </indexterm>
-        <literal><function>current_setting(<parameter>setting_name</parameter>)</function></literal>
+        <literal><function>current_setting(<parameter>setting_name</parameter> [, <parameter>missing_ok</parameter> ])</function></literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>get current value of setting</entry>
@@ -16492,6 +16492,11 @@ SELECT current_setting('datestyle');
  ISO, MDY
 (1 row)
 </programlisting>
+
+    If there is no setting named <parameter>setting_name</parameter>,
+    <function>current_setting</function> throws an error
+    unless <parameter>missing_ok</parameter> is supplied and is
+    <literal>true</literal>.
    </para>
 
    <para>

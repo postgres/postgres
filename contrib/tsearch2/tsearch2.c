@@ -363,7 +363,7 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 		tgargs[i + 1] = trigger->tgargs[i];
 
 	tgargs[1] = pstrdup(GetConfigOptionByName("default_text_search_config",
-											  NULL));
+											  NULL, false));
 	tgargs_old = trigger->tgargs;
 	trigger->tgargs = tgargs;
 	trigger->tgnargs++;

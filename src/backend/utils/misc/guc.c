@@ -7131,7 +7131,7 @@ ExtractSetVariableArgs(VariableSetStmt *stmt)
 		case VAR_SET_VALUE:
 			return flatten_set_variable_args(stmt->name, stmt->args);
 		case VAR_SET_CURRENT:
-			return GetConfigOptionByName(stmt->name, NULL);
+			return GetConfigOptionByName(stmt->name, NULL, false);
 		default:
 			return NULL;
 	}
@@ -7200,7 +7200,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 							 true, 0, false);
 
 	/* get the new current value */
-	new_value = GetConfigOptionByName(name, NULL);
+	new_value = GetConfigOptionByName(name, NULL, false);
 
 	/* Convert return string to text */
 	PG_RETURN_TEXT_P(cstring_to_text(new_value));
@@ -7627,7 +7627,7 @@ GetPGVariableResultDesc(const char *name)
 		const char *varname;
 
 		/* Get the canonical spelling of name */
-		(void) GetConfigOptionByName(name, &varname);
+		(void) GetConfigOptionByName(name, &varname, false);
 
 		/* need a tuple descriptor representing a single TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
@@ -7650,7 +7650,7 @@ ShowGUCConfigOption(const char *name, DestReceiver *dest)
 	char	   *value;
 
 	/* Get the value and canonical spelling of name */
-	value = GetConfigOptionByName(name, &varname);
+	value = GetConfigOptionByName(name, &varname, false);
 
 	/* need a tuple descriptor representing a single TEXT column */
 	tupdesc = CreateTemplateTupleDesc(1, false);
@@ -7734,19 +7734,30 @@ ShowAllGUCConfig(DestReceiver *dest)
 }
 
 /*
- * Return GUC variable value by name; optionally return canonical
- * form of name.  Return value is palloc'd.
+ * Return GUC variable value by name; optionally return canonical form of
+ * name.  If the GUC is unset, then throw an error unless missing_ok is true,
+ * in which case return NULL.  Return value is palloc'd (but *varname isn't).
  */
 char *
-GetConfigOptionByName(const char *name, const char **varname)
+GetConfigOptionByName(const char *name, const char **varname, bool missing_ok)
 {
 	struct config_generic *record;
 
 	record = find_option(name, false, ERROR);
 	if (record == NULL)
+	{
+		if (missing_ok)
+		{
+			if (varname)
+				*varname = NULL;
+			return NULL;
+		}
+
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+	}
+
 	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -8033,14 +8044,34 @@ GetNumConfigOptions(void)
 Datum
 show_config_by_name(PG_FUNCTION_ARGS)
 {
-	char	   *varname;
+	char	   *varname = TextDatumGetCString(PG_GETARG_DATUM(0));
 	char	   *varval;
 
-	/* Get the GUC variable name */
-	varname = TextDatumGetCString(PG_GETARG_DATUM(0));
+	/* Get the value */
+	varval = GetConfigOptionByName(varname, NULL, false);
+
+	/* Convert to text */
+	PG_RETURN_TEXT_P(cstring_to_text(varval));
+}
+
+/*
+ * show_config_by_name_missing_ok - equiv to SHOW X command but implemented as
+ * a function.  If X does not exist, suppress the error and just return NULL
+ * if missing_ok is TRUE.
+ */
+Datum
+show_config_by_name_missing_ok(PG_FUNCTION_ARGS)
+{
+	char	   *varname = TextDatumGetCString(PG_GETARG_DATUM(0));
+	bool		missing_ok = PG_GETARG_BOOL(1);
+	char	   *varval;
 
 	/* Get the value */
-	varval = GetConfigOptionByName(varname, NULL);
+	varval = GetConfigOptionByName(varname, NULL, missing_ok);
+
+	/* return NULL if no such variable */
+	if (varval == NULL)
+		PG_RETURN_NULL();
 
 	/* Convert to text */
 	PG_RETURN_TEXT_P(cstring_to_text(varval));
