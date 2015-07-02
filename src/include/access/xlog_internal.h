@@ -137,13 +137,20 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  */
 #define MAXFNAMELEN		64
 
+/* Length of XLog file name */
+#define XLOG_FNAME_LEN     24
+
 #define XLogFileName(fname, tli, logSegNo)	\
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,		\
 			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId), \
 			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
 
+#define XLogFileNameById(fname, tli, log, seg)	\
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg)
+
 #define IsXLogFileName(fname) \
-	(strlen(fname) == 24 && strspn(fname, "0123456789ABCDEF") == 24)
+	(strlen(fname) == XLOG_FNAME_LEN && \
+	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN)
 
 /*
  * XLOG segment with .partial suffix.  Used by pg_receivexlog and at end of
@@ -151,9 +158,9 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * be complete yet.
  */
 #define IsPartialXLogFileName(fname)	\
-	(strlen(fname) == 24 + strlen(".partial") &&	\
-	 strspn(fname, "0123456789ABCDEF") == 24 &&		\
-	 strcmp((fname) + 24, ".partial") == 0)
+	(strlen(fname) == XLOG_FNAME_LEN + strlen(".partial") &&	\
+	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN &&		\
+	 strcmp((fname) + XLOG_FNAME_LEN, ".partial") == 0)
 
 #define XLogFromFileName(fname, tli, logSegNo)	\
 	do {												\
@@ -188,8 +195,8 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId), offset)
 
 #define IsBackupHistoryFileName(fname) \
-	(strlen(fname) > 24 && \
-	 strspn(fname, "0123456789ABCDEF") == 24 && \
+	(strlen(fname) > XLOG_FNAME_LEN && \
+	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN && \
 	 strcmp((fname) + strlen(fname) - strlen(".backup"), ".backup") == 0)
 
 #define BackupHistoryFilePath(path, tli, logSegNo, offset)	\
