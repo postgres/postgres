@@ -906,7 +906,8 @@ FindEndOfXLOG(void)
 
 	while (errno = 0, (xlde = readdir(xldir)) != NULL)
 	{
-		if (IsXLogFileName(xlde->d_name))
+		if (IsXLogFileName(xlde->d_name) ||
+			IsPartialXLogFileName(xlde->d_name))
 		{
 			unsigned int tli,
 						log,
@@ -976,7 +977,8 @@ KillExistingXLOG(void)
 
 	while (errno = 0, (xlde = readdir(xldir)) != NULL)
 	{
-		if (IsXLogFileName(xlde->d_name))
+		if (IsXLogFileName(xlde->d_name) ||
+			IsPartialXLogFileName(xlde->d_name))
 		{
 			snprintf(path, MAXPGPATH, "%s/%s", XLOGDIR, xlde->d_name);
 			if (unlink(path) < 0)
@@ -1028,7 +1030,9 @@ KillExistingArchiveStatus(void)
 	{
 		if (strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_FNAME_LEN &&
 			(strcmp(xlde->d_name + XLOG_FNAME_LEN, ".ready") == 0 ||
-			 strcmp(xlde->d_name + XLOG_FNAME_LEN, ".done") == 0))
+			 strcmp(xlde->d_name + XLOG_FNAME_LEN, ".done") == 0 ||
+			 strcmp(xlde->d_name + XLOG_FNAME_LEN, ".partial.ready") == 0 ||
+			 strcmp(xlde->d_name + XLOG_FNAME_LEN, ".partial.done") == 0))
 		{
 			snprintf(path, MAXPGPATH, "%s/%s", ARCHSTATDIR, xlde->d_name);
 			if (unlink(path) < 0)

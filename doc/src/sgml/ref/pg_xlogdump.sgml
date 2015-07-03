@@ -215,6 +215,12 @@ PostgreSQL documentation
     Only the specified timeline is displayed (or the default, if none is
     specified). Records in other timelines are ignored.
   </para>
+
+  <para>
+    <application>pg_xlogdump</> cannot read WAL files with suffix
+    <literal>.partial</>. If those files need to be read, <literal>.partial</>
+    suffix needs to be removed from the filename.
+  </para>
  </refsect1>
 
  <refsect1>

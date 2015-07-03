@@ -125,7 +125,7 @@ CleanupPriorWALFiles(void)
 			 * file. Note that this means files are not removed in the order
 			 * they were originally written, in case this worries you.
 			 */
-			if (IsXLogFileName(walfile) &&
+			if ((IsXLogFileName(walfile) || IsPartialXLogFileName(walfile)) &&
 				strcmp(walfile + 8, exclusiveCleanupFileName + 8) < 0)
 			{
 				/*
@@ -181,7 +181,7 @@ CleanupPriorWALFiles(void)
  * SetWALFileNameForCleanup()
  *
  *	  Set the earliest WAL filename that we want to keep on the archive
- *	  and decide whether we need_cleanup
+ *	  and decide whether we need cleanup
  */
 static void
 SetWALFileNameForCleanup(void)
@@ -192,15 +192,36 @@ SetWALFileNameForCleanup(void)
 
 	/*
 	 * If restartWALFileName is a WAL file name then just use it directly. If
-	 * restartWALFileName is a .backup filename, make sure we use the prefix
-	 * of the filename, otherwise we will remove wrong files since
-	 * 000000010000000000000010.00000020.backup is after
+	 * restartWALFileName is a .partial or .backup filename, make sure we use
+	 * the prefix of the filename, otherwise we will remove wrong files since
+	 * 000000010000000000000010.partial and
+	 * 000000010000000000000010.00000020.backup are after
 	 * 000000010000000000000010.
 	 */
 	if (IsXLogFileName(restartWALFileName))
 	{
 		strcpy(exclusiveCleanupFileName, restartWALFileName);
 		fnameOK = true;
+	}
+	else if (IsPartialXLogFileName(restartWALFileName))
+	{
+		int			args;
+		uint32		tli = 1,
+					log = 0,
+					seg = 0;
+
+		args = sscanf(restartWALFileName, "%08X%08X%08X.partial",
+					  &tli, &log, &seg);
+		if (args == 3)
+		{
+			fnameOK = true;
+
+			/*
+			 * Use just the prefix of the filename, ignore everything after
+			 * first period
+			 */
+			XLogFileNameById(exclusiveCleanupFileName, tli, log, seg);
+		}
 	}
 	else if (IsBackupHistoryFileName(restartWALFileName))
 	{
