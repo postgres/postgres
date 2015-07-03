@@ -181,6 +181,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("Query Buffer\n"));
 	fprintf(output, _("  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"));
 	fprintf(output, _("  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"));
+	fprintf(output, _("  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"));
 	fprintf(output, _("  \\p                     show the contents of the query buffer\n"));
 	fprintf(output, _("  \\r                     reset (clear) the query buffer\n"));
 #ifdef USE_READLINE
@@ -237,7 +238,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
 	fprintf(output, _("  \\dy     [PATTERN]      list event triggers\n"));
 	fprintf(output, _("  \\l[+]   [PATTERN]      list databases\n"));
-	fprintf(output, _("  \\sf[+] FUNCNAME        show a function's definition\n"));
+	fprintf(output, _("  \\sf[+]  FUNCNAME       show a function's definition\n"));
+	fprintf(output, _("  \\sv[+]  VIEWNAME       show a view's definition\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
 	fprintf(output, "\n");
 
@@ -388,7 +390,7 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  PGPASSWORD         connection password (not recommended)\n"));
 	fprintf(output, _("  PGPASSFILE         password file name\n"));
 	fprintf(output, _("  PSQL_EDITOR, EDITOR, VISUAL\n"
-		 "                     editor used by the \\e and \\ef commands\n"));
+					  "                     editor used by the \\e, \\ef, and \\ev commands\n"));
 	fprintf(output, _("  PSQL_EDITOR_LINENUMBER_ARG\n"
 					  "                     how to specify a line number when invoking the editor\n"));
 	fprintf(output, _("  PSQL_HISTORY       alternative location for the command history file\n"));

@@ -900,11 +900,11 @@ psql_completion(const char *text, int start, int end)
 		"\\d", "\\da", "\\db", "\\dc", "\\dC", "\\dd", "\\dD", "\\des", "\\det", "\\deu", "\\dew", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", "\\dL",
 		"\\dn", "\\do", "\\dp", "\\drds", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du", "\\dx",
-		"\\e", "\\echo", "\\ef", "\\encoding",
+		"\\e", "\\echo", "\\ef", "\\encoding", "\\ev",
 		"\\f", "\\g", "\\gset", "\\h", "\\help", "\\H", "\\i", "\\ir", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
 		"\\o", "\\p", "\\password", "\\prompt", "\\pset", "\\q", "\\qecho", "\\r",
-		"\\set", "\\sf", "\\t", "\\T",
+		"\\set", "\\sf", "\\sv", "\\t", "\\T",
 		"\\timing", "\\unset", "\\x", "\\w", "\\watch", "\\z", "\\!", NULL
 	};
 
@@ -2591,7 +2591,7 @@ psql_completion(const char *text, int start, int end)
 			"NOCREATEDB", "NOCREATEROLE", "NOCREATEUSER", "NOINHERIT",
 			"NOLOGIN", "NOREPLICATION", "NOSUPERUSER", "PASSWORD",
 			"REPLICATION", "ROLE", "SUPERUSER", "SYSID", "UNENCRYPTED",
-			"VALID UNTIL", "WITH", NULL};
+		"VALID UNTIL", "WITH", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATEROLE);
 	}
@@ -2610,7 +2610,7 @@ psql_completion(const char *text, int start, int end)
 			"NOCREATEDB", "NOCREATEROLE", "NOCREATEUSER", "NOINHERIT",
 			"NOLOGIN", "NOREPLICATION", "NOSUPERUSER", "PASSWORD",
 			"REPLICATION", "ROLE", "SUPERUSER", "SYSID", "UNENCRYPTED",
-			"VALID UNTIL", NULL};
+		"VALID UNTIL", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATEROLE_WITH);
 	}
@@ -3798,6 +3798,8 @@ psql_completion(const char *text, int start, int end)
 
 	else if (strcmp(prev_wd, "\\ef") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
+	else if (strcmp(prev_wd, "\\ev") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 
 	else if (strcmp(prev_wd, "\\encoding") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_encodings);
@@ -3912,6 +3914,8 @@ psql_completion(const char *text, int start, int end)
 	}
 	else if (strcmp(prev_wd, "\\sf") == 0 || strcmp(prev_wd, "\\sf+") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
+	else if (strcmp(prev_wd, "\\sv") == 0 || strcmp(prev_wd, "\\sv+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 	else if (strcmp(prev_wd, "\\cd") == 0 ||
 			 strcmp(prev_wd, "\\e") == 0 || strcmp(prev_wd, "\\edit") == 0 ||
 			 strcmp(prev_wd, "\\g") == 0 ||

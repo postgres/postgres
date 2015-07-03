@@ -49,6 +49,14 @@
 #include "settings.h"
 #include "variables.h"
 
+/*
+ * Editable database object types.
+ */
+typedef enum EditableObjectType
+{
+	EditableFunction,
+	EditableView
+} EditableObjectType;
 
 /* functions for use in this file */
 static backslashResult exec_command(const char *cmd,
@@ -59,9 +67,14 @@ static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 static bool do_watch(PQExpBuffer query_buf, long sleep);
-static bool lookup_function_oid(const char *desc, Oid *foid);
-static bool get_create_function_cmd(Oid oid, PQExpBuffer buf);
-static int	strip_lineno_from_funcdesc(char *func);
+static bool lookup_object_oid(EditableObjectType obj_type, const char *desc,
+				  Oid *obj_oid);
+static bool get_create_object_cmd(EditableObjectType obj_type, Oid oid,
+					  PQExpBuffer buf);
+static int	strip_lineno_from_objdesc(char *obj);
+static int	count_lines_in_buf(PQExpBuffer buf);
+static void print_with_linenumbers(FILE *output, char *lines,
+					   const char *header_keyword);
 static void minimal_error_message(PGresult *res);
 
 static void printSSLInfo(void);
@@ -612,7 +625,7 @@ exec_command(const char *cmd,
 
 			func = psql_scan_slash_option(scan_state,
 										  OT_WHOLE_LINE, NULL, true);
-			lineno = strip_lineno_from_funcdesc(func);
+			lineno = strip_lineno_from_objdesc(func);
 			if (lineno == 0)
 			{
 				/* error already reported */
@@ -629,12 +642,12 @@ exec_command(const char *cmd,
 								  "AS $function$\n"
 								  "\n$function$\n");
 			}
-			else if (!lookup_function_oid(func, &foid))
+			else if (!lookup_object_oid(EditableFunction, func, &foid))
 			{
 				/* error already reported */
 				status = PSQL_CMD_ERROR;
 			}
-			else if (!get_create_function_cmd(foid, query_buf))
+			else if (!get_create_object_cmd(EditableFunction, foid, query_buf))
 			{
 				/* error already reported */
 				status = PSQL_CMD_ERROR;
@@ -667,6 +680,74 @@ exec_command(const char *cmd,
 
 			if (func)
 				free(func);
+		}
+
+		if (status != PSQL_CMD_ERROR)
+		{
+			bool		edited = false;
+
+			if (!do_edit(NULL, query_buf, lineno, &edited))
+				status = PSQL_CMD_ERROR;
+			else if (!edited)
+				puts(_("No changes"));
+			else
+				status = PSQL_CMD_NEWEDIT;
+		}
+	}
+
+	/*
+	 * \ev -- edit the named view, or present a blank CREATE VIEW template if
+	 * no argument is given
+	 */
+	else if (strcmp(cmd, "ev") == 0)
+	{
+		int			lineno = -1;
+
+		if (pset.sversion < 70400)
+		{
+			psql_error("The server (version %d.%d) does not support editing view definitions.\n",
+					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!query_buf)
+		{
+			psql_error("no query buffer\n");
+			status = PSQL_CMD_ERROR;
+		}
+		else
+		{
+			char	   *view;
+			Oid			view_oid = InvalidOid;
+
+			view = psql_scan_slash_option(scan_state,
+										  OT_WHOLE_LINE, NULL, true);
+			lineno = strip_lineno_from_objdesc(view);
+			if (lineno == 0)
+			{
+				/* error already reported */
+				status = PSQL_CMD_ERROR;
+			}
+			else if (!view)
+			{
+				/* set up an empty command to fill in */
+				printfPQExpBuffer(query_buf,
+								  "CREATE VIEW  AS\n"
+								  " SELECT \n"
+								  "  -- something...\n");
+			}
+			else if (!lookup_object_oid(EditableView, view, &view_oid))
+			{
+				/* error already reported */
+				status = PSQL_CMD_ERROR;
+			}
+			else if (!get_create_object_cmd(EditableView, view_oid, query_buf))
+			{
+				/* error already reported */
+				status = PSQL_CMD_ERROR;
+			}
+
+			if (view)
+				free(view);
 		}
 
 		if (status != PSQL_CMD_ERROR)
@@ -1235,12 +1316,12 @@ exec_command(const char *cmd,
 			psql_error("function name is required\n");
 			status = PSQL_CMD_ERROR;
 		}
-		else if (!lookup_function_oid(func, &foid))
+		else if (!lookup_object_oid(EditableFunction, func, &foid))
 		{
 			/* error already reported */
 			status = PSQL_CMD_ERROR;
 		}
-		else if (!get_create_function_cmd(foid, func_buf))
+		else if (!get_create_object_cmd(EditableFunction, foid, func_buf))
 		{
 			/* error already reported */
 			status = PSQL_CMD_ERROR;
@@ -1254,18 +1335,7 @@ exec_command(const char *cmd,
 			if (pset.queryFout == stdout)
 			{
 				/* count lines in function to see if pager is needed */
-				int			lineno = 0;
-				const char *lines = func_buf->data;
-
-				while (*lines != '\0')
-				{
-					lineno++;
-					/* find start of next line */
-					lines = strchr(lines, '\n');
-					if (!lines)
-						break;
-					lines++;
-				}
+				int			lineno = count_lines_in_buf(func_buf);
 
 				output = PageOutput(lineno, &(pset.popt.topt));
 				is_pager = true;
@@ -1279,45 +1349,14 @@ exec_command(const char *cmd,
 
 			if (show_linenumbers)
 			{
-				bool		in_header = true;
-				int			lineno = 0;
-				char	   *lines = func_buf->data;
-
 				/*
 				 * lineno "1" should correspond to the first line of the
 				 * function body.  We expect that pg_get_functiondef() will
 				 * emit that on a line beginning with "AS ", and that there
 				 * can be no such line before the real start of the function
 				 * body.
-				 *
-				 * Note that this loop scribbles on func_buf.
 				 */
-				while (*lines != '\0')
-				{
-					char	   *eol;
-
-					if (in_header && strncmp(lines, "AS ", 3) == 0)
-						in_header = false;
-					/* increment lineno only for body's lines */
-					if (!in_header)
-						lineno++;
-
-					/* find and mark end of current line */
-					eol = strchr(lines, '\n');
-					if (eol != NULL)
-						*eol = '\0';
-
-					/* show current line as appropriate */
-					if (in_header)
-						fprintf(output, "        %s\n", lines);
-					else
-						fprintf(output, "%-7d %s\n", lineno, lines);
-
-					/* advance to next line, if any */
-					if (eol == NULL)
-						break;
-					lines = ++eol;
-				}
+				print_with_linenumbers(output, func_buf->data, "AS ");
 			}
 			else
 			{
@@ -1332,6 +1371,79 @@ exec_command(const char *cmd,
 		if (func)
 			free(func);
 		destroyPQExpBuffer(func_buf);
+	}
+
+	/* \sv -- show a view's source code */
+	else if (strcmp(cmd, "sv") == 0 || strcmp(cmd, "sv+") == 0)
+	{
+		bool		show_linenumbers = (strcmp(cmd, "sv+") == 0);
+		PQExpBuffer view_buf;
+		char	   *view;
+		Oid			view_oid = InvalidOid;
+
+		view_buf = createPQExpBuffer();
+		view = psql_scan_slash_option(scan_state,
+									  OT_WHOLE_LINE, NULL, true);
+		if (pset.sversion < 70400)
+		{
+			psql_error("The server (version %d.%d) does not support showing view definitions.\n",
+					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!view)
+		{
+			psql_error("view name is required\n");
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!lookup_object_oid(EditableView, view, &view_oid))
+		{
+			/* error already reported */
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!get_create_object_cmd(EditableView, view_oid, view_buf))
+		{
+			/* error already reported */
+			status = PSQL_CMD_ERROR;
+		}
+		else
+		{
+			FILE	   *output;
+			bool		is_pager;
+
+			/* Select output stream: stdout, pager, or file */
+			if (pset.queryFout == stdout)
+			{
+				/* count lines in view to see if pager is needed */
+				int			lineno = count_lines_in_buf(view_buf);
+
+				output = PageOutput(lineno, &(pset.popt.topt));
+				is_pager = true;
+			}
+			else
+			{
+				/* use previously set output file, without pager */
+				output = pset.queryFout;
+				is_pager = false;
+			}
+
+			if (show_linenumbers)
+			{
+				/* add line numbers, numbering all lines */
+				print_with_linenumbers(output, view_buf->data, NULL);
+			}
+			else
+			{
+				/* just send the view definition to output */
+				fputs(view_buf->data, output);
+			}
+
+			if (is_pager)
+				ClosePager(output);
+		}
+
+		if (view)
+			free(view);
+		destroyPQExpBuffer(view_buf);
 	}
 
 	/* \t -- turn off headers and row count */
@@ -3002,7 +3114,7 @@ do_watch(PQExpBuffer query_buf, long sleep)
  * returns true unless we have ECHO_HIDDEN_NOEXEC.
  */
 static bool
-lookup_function_echo_hidden(char *query)
+echo_hidden_command(const char *query)
 {
 	if (pset.echo_hidden != PSQL_ECHO_HIDDEN_OFF)
 	{
@@ -3026,34 +3138,57 @@ lookup_function_echo_hidden(char *query)
 }
 
 /*
- * This function takes a function description, e.g. "x" or "x(int)", and
- * issues a query on the given connection to retrieve the function's OID
- * using a cast to regproc or regprocedure (as appropriate). The result,
- * if there is one, is returned at *foid.  Note that we'll fail if the
- * function doesn't exist OR if there are multiple matching candidates
- * OR if there's something syntactically wrong with the function description;
- * unfortunately it can be hard to tell the difference.
+ * Look up the object identified by obj_type and desc.  If successful,
+ * store its OID in *obj_oid and return TRUE, else return FALSE.
+ *
+ * Note that we'll fail if the object doesn't exist OR if there are multiple
+ * matching candidates OR if there's something syntactically wrong with the
+ * object description; unfortunately it can be hard to tell the difference.
  */
 static bool
-lookup_function_oid(const char *desc, Oid *foid)
+lookup_object_oid(EditableObjectType obj_type, const char *desc,
+				  Oid *obj_oid)
 {
 	bool		result = true;
-	PQExpBuffer query;
+	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 
-	query = createPQExpBuffer();
-	appendPQExpBufferStr(query, "SELECT ");
-	appendStringLiteralConn(query, desc, pset.db);
-	appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
-					  strchr(desc, '(') ? "regprocedure" : "regproc");
-	if (!lookup_function_echo_hidden(query->data))
+	switch (obj_type)
+	{
+		case EditableFunction:
+
+			/*
+			 * We have a function description, e.g. "x" or "x(int)".  Issue a
+			 * query to retrieve the function's OID using a cast to regproc or
+			 * regprocedure (as appropriate).
+			 */
+			appendPQExpBufferStr(query, "SELECT ");
+			appendStringLiteralConn(query, desc, pset.db);
+			appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
+							  strchr(desc, '(') ? "regprocedure" : "regproc");
+			break;
+
+		case EditableView:
+
+			/*
+			 * Convert view name (possibly schema-qualified) to OID.  Note:
+			 * this code doesn't check if the relation is actually a view.
+			 * We'll detect that in get_create_object_cmd().
+			 */
+			appendPQExpBufferStr(query, "SELECT ");
+			appendStringLiteralConn(query, desc, pset.db);
+			appendPQExpBuffer(query, "::pg_catalog.regclass::pg_catalog.oid");
+			break;
+	}
+
+	if (!echo_hidden_command(query->data))
 	{
 		destroyPQExpBuffer(query);
 		return false;
 	}
 	res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
-		*foid = atooid(PQgetvalue(res, 0, 0));
+		*obj_oid = atooid(PQgetvalue(res, 0, 0));
 	else
 	{
 		minimal_error_message(res);
@@ -3067,20 +3202,42 @@ lookup_function_oid(const char *desc, Oid *foid)
 }
 
 /*
- * Fetches the "CREATE OR REPLACE FUNCTION ..." command that describes the
- * function with the given OID.  If successful, the result is stored in buf.
+ * Construct a "CREATE OR REPLACE ..." command that describes the specified
+ * database object.  If successful, the result is stored in buf.
  */
 static bool
-get_create_function_cmd(Oid oid, PQExpBuffer buf)
+get_create_object_cmd(EditableObjectType obj_type, Oid oid,
+					  PQExpBuffer buf)
 {
 	bool		result = true;
-	PQExpBuffer query;
+	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 
-	query = createPQExpBuffer();
-	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);
+	switch (obj_type)
+	{
+		case EditableFunction:
+			printfPQExpBuffer(query,
+							  "SELECT pg_catalog.pg_get_functiondef(%u)",
+							  oid);
+			break;
 
-	if (!lookup_function_echo_hidden(query->data))
+		case EditableView:
+
+			/*
+			 * pg_get_viewdef() just prints the query, so we must prepend
+			 * CREATE for ourselves.  We must fully qualify the view name to
+			 * ensure the right view gets replaced.  Also, check relation kind
+			 * to be sure it's a view.
+			 */
+			printfPQExpBuffer(query,
+							  "SELECT nspname, relname, relkind, pg_catalog.pg_get_viewdef(c.oid, true) FROM "
+				 "pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n "
+							  "ON c.relnamespace = n.oid WHERE c.oid = %u",
+							  oid);
+			break;
+	}
+
+	if (!echo_hidden_command(query->data))
 	{
 		destroyPQExpBuffer(query);
 		return false;
@@ -3089,7 +3246,53 @@ get_create_function_cmd(Oid oid, PQExpBuffer buf)
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 	{
 		resetPQExpBuffer(buf);
-		appendPQExpBufferStr(buf, PQgetvalue(res, 0, 0));
+		switch (obj_type)
+		{
+			case EditableFunction:
+				appendPQExpBufferStr(buf, PQgetvalue(res, 0, 0));
+				break;
+
+			case EditableView:
+				{
+					char	   *nspname = PQgetvalue(res, 0, 0);
+					char	   *relname = PQgetvalue(res, 0, 1);
+					char	   *relkind = PQgetvalue(res, 0, 2);
+					char	   *viewdef = PQgetvalue(res, 0, 3);
+
+					/*
+					 * If the backend ever supports CREATE OR REPLACE
+					 * MATERIALIZED VIEW, allow that here; but as of today it
+					 * does not, so editing a matview definition in this way
+					 * is impossible.
+					 */
+					switch (relkind[0])
+					{
+#ifdef NOT_USED
+						case 'm':
+							appendPQExpBufferStr(buf, "CREATE OR REPLACE MATERIALIZED VIEW ");
+							break;
+#endif
+						case 'v':
+							appendPQExpBufferStr(buf, "CREATE OR REPLACE VIEW ");
+							break;
+						default:
+							psql_error("%s.%s is not a view\n",
+									   nspname, relname);
+							result = false;
+							break;
+					}
+					appendPQExpBuffer(buf, "%s.", fmtId(nspname));
+					appendPQExpBuffer(buf, "%s AS\n", fmtId(relname));
+					appendPQExpBufferStr(buf, viewdef);
+					/* Get rid of the semicolon that pg_get_viewdef appends */
+					if (buf->len > 0 && buf->data[buf->len - 1] == ';')
+						buf->data[--(buf->len)] = '\0';
+				}
+				break;
+		}
+		/* Make sure result ends with a newline */
+		if (buf->len > 0 && buf->data[buf->len - 1] != '\n')
+			appendPQExpBufferChar(buf, '\n');
 	}
 	else
 	{
@@ -3104,24 +3307,24 @@ get_create_function_cmd(Oid oid, PQExpBuffer buf)
 }
 
 /*
- * If the given argument of \ef ends with a line number, delete the line
+ * If the given argument of \ef or \ev ends with a line number, delete the line
  * number from the argument string and return it as an integer.  (We need
- * this kluge because we're too lazy to parse \ef's function name argument
- * carefully --- we just slop it up in OT_WHOLE_LINE mode.)
+ * this kluge because we're too lazy to parse \ef's function or \ev's view
+ * argument carefully --- we just slop it up in OT_WHOLE_LINE mode.)
  *
  * Returns -1 if no line number is present, 0 on error, or a positive value
  * on success.
  */
 static int
-strip_lineno_from_funcdesc(char *func)
+strip_lineno_from_objdesc(char *obj)
 {
 	char	   *c;
 	int			lineno;
 
-	if (!func || func[0] == '\0')
+	if (!obj || obj[0] == '\0')
 		return -1;
 
-	c = func + strlen(func) - 1;
+	c = obj + strlen(obj) - 1;
 
 	/*
 	 * This business of parsing backwards is dangerous as can be in a
@@ -3134,20 +3337,20 @@ strip_lineno_from_funcdesc(char *func)
 	 */
 
 	/* skip trailing whitespace */
-	while (c > func && isascii((unsigned char) *c) && isspace((unsigned char) *c))
+	while (c > obj && isascii((unsigned char) *c) && isspace((unsigned char) *c))
 		c--;
 
 	/* must have a digit as last non-space char */
-	if (c == func || !isascii((unsigned char) *c) || !isdigit((unsigned char) *c))
+	if (c == obj || !isascii((unsigned char) *c) || !isdigit((unsigned char) *c))
 		return -1;
 
 	/* find start of digit string */
-	while (c > func && isascii((unsigned char) *c) && isdigit((unsigned char) *c))
+	while (c > obj && isascii((unsigned char) *c) && isdigit((unsigned char) *c))
 		c--;
 
-	/* digits must be separated from func name by space or closing paren */
-	/* notice also that we are not allowing an empty func name ... */
-	if (c == func || !isascii((unsigned char) *c) ||
+	/* digits must be separated from object name by space or closing paren */
+	/* notice also that we are not allowing an empty object name ... */
+	if (c == obj || !isascii((unsigned char) *c) ||
 		!(isspace((unsigned char) *c) || *c == ')'))
 		return -1;
 
@@ -3160,10 +3363,78 @@ strip_lineno_from_funcdesc(char *func)
 		return 0;
 	}
 
-	/* strip digit string from func */
+	/* strip digit string from object name */
 	*c = '\0';
 
 	return lineno;
+}
+
+/*
+ * Count number of lines in the buffer.
+ * This is used to test if pager is needed or not.
+ */
+static int
+count_lines_in_buf(PQExpBuffer buf)
+{
+	int			lineno = 0;
+	const char *lines = buf->data;
+
+	while (*lines != '\0')
+	{
+		lineno++;
+		/* find start of next line */
+		lines = strchr(lines, '\n');
+		if (!lines)
+			break;
+		lines++;
+	}
+
+	return lineno;
+}
+
+/*
+ * Write text at *lines to output with line numbers.
+ *
+ * If header_keyword isn't NULL, then line 1 should be the first line beginning
+ * with header_keyword; lines before that are unnumbered.
+ *
+ * Caution: this scribbles on *lines.
+ */
+static void
+print_with_linenumbers(FILE *output, char *lines,
+					   const char *header_keyword)
+{
+	bool		in_header = (header_keyword != NULL);
+	size_t		header_sz = in_header ? strlen(header_keyword) : 0;
+	int			lineno = 0;
+
+	while (*lines != '\0')
+	{
+		char	   *eol;
+
+		if (in_header && strncmp(lines, header_keyword, header_sz) == 0)
+			in_header = false;
+
+		/* increment lineno only for body's lines */
+		if (!in_header)
+			lineno++;
+
+		/* find and mark end of current line */
+		eol = strchr(lines, '\n');
+		if (eol != NULL)
+			*eol = '\0';
+
+		/* show current line as appropriate */
+		if (in_header)
+			fprintf(output, "        %s\n", lines);
+		else
+			fprintf(output, "%-7d %s\n", lineno, lines);
+
+		/* advance to next line, if any */
+		if (eol == NULL)
+			break;
+		lines = ++eol;
+	}
 }
 
 /*

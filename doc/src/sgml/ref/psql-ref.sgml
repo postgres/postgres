@@ -1651,6 +1651,32 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\ev <optional> <replaceable class="parameter">view_name</> <optional>  <replaceable class="parameter">line_number</> </optional> </optional> </literal></term>
+
+        <listitem>
+        <para>
+         This command fetches and edits the definition of the named view,
+         in the form of a <command>CREATE OR REPLACE VIEW</> command.
+         Editing is done in the same way as for <literal>\edit</>.
+         After the editor exits, the updated command waits in the query buffer;
+         type semicolon or <literal>\g</> to send it, or <literal>\r</>
+         to cancel.
+        </para>
+
+        <para>
+         If no view is specified, a blank <command>CREATE VIEW</>
+         template is presented for editing.
+        </para>
+
+        <para>
+         If a line number is specified, <application>psql</application> will
+         position the cursor on the specified line of the view definition.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\encoding [ <replaceable class="parameter">encoding</replaceable> ]</literal></term>
 
         <listitem>
@@ -2517,6 +2543,25 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
          output lines are numbered, with the first line of the function body
          being line 1.
         </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\sv[+] <replaceable class="parameter">view_name</> </literal></term>
+
+        <listitem>
+         <para>
+          This command fetches and shows the definition of the named view,
+          in the form of a <command>CREATE OR REPLACE VIEW</> command.
+          The definition is printed to the current query output channel,
+          as set by <command>\o</command>.
+         </para>
+
+         <para>
+          If <literal>+</literal> is appended to the command name, then the
+          output lines are numbered from 1.
+         </para>
         </listitem>
       </varlistentry>
 
@@ -3554,9 +3599,10 @@ $endif
 
     <listitem>
      <para>
-      Editor used by the <command>\e</command> and
-      <command>\ef</command> commands.  The variables are examined in
-      the order listed; the first that is set is used.
+      Editor used by the <command>\e</command>, <command>\ef</command>,
+      and <command>\ev</command> commands.
+      These variables are examined in the order listed;
+      the first that is set is used.
      </para>
 
      <para>
@@ -3571,7 +3617,8 @@ $endif
 
     <listitem>
      <para>
-      When <command>\e</command> or <command>\ef</command> is used
+      When <command>\e</command>, <command>\ef</command>, or
+      <command>\ev</command> is used
       with a line number argument, this variable specifies the
       command-line argument used to pass the starting line number to
       the user's editor.  For editors such as <productname>Emacs</> or
