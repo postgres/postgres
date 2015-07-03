@@ -730,6 +730,30 @@ SELECT a, ceil(a), ceiling(a), floor(a), round(a) FROM ceil_floor_round;
 (7 rows)
 
 DROP TABLE ceil_floor_round;
+-- Check rounding, it should round ties away from zero.
+SELECT i as pow,
+	round((-2.5 * 10 ^ i)::numeric, -i),
+	round((-1.5 * 10 ^ i)::numeric, -i),
+	round((-0.5 * 10 ^ i)::numeric, -i),
+	round((0.5 * 10 ^ i)::numeric, -i),
+	round((1.5 * 10 ^ i)::numeric, -i),
+	round((2.5 * 10 ^ i)::numeric, -i)
+FROM generate_series(-5,5) AS t(i);
+ pow |  round   |  round   |  round   |  round  |  round  |  round  
+-----+----------+----------+----------+---------+---------+---------
+  -5 | -0.00003 | -0.00002 | -0.00001 | 0.00001 | 0.00002 | 0.00003
+  -4 |  -0.0003 |  -0.0002 |  -0.0001 |  0.0001 |  0.0002 |  0.0003
+  -3 |   -0.003 |   -0.002 |   -0.001 |   0.001 |   0.002 |   0.003
+  -2 |    -0.03 |    -0.02 |    -0.01 |    0.01 |    0.02 |    0.03
+  -1 |     -0.3 |     -0.2 |     -0.1 |     0.1 |     0.2 |     0.3
+   0 |       -3 |       -2 |       -1 |       1 |       2 |       3
+   1 |      -30 |      -20 |      -10 |      10 |      20 |      30
+   2 |     -300 |     -200 |     -100 |     100 |     200 |     300
+   3 |    -3000 |    -2000 |    -1000 |    1000 |    2000 |    3000
+   4 |   -30000 |   -20000 |   -10000 |   10000 |   20000 |   30000
+   5 |  -300000 |  -200000 |  -100000 |  100000 |  200000 |  300000
+(11 rows)
+
 -- Testing for width_bucket(). For convenience, we test both the
 -- numeric and float8 versions of the function in this file.
 -- errors

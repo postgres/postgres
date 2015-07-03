@@ -286,3 +286,23 @@ FROM (VALUES (-2.5::float8),
   2.5 |          2
 (7 rows)
 
+-- check rounding when casting from numeric
+SELECT x, x::int2 AS int2_value
+FROM (VALUES (-2.5::numeric),
+             (-1.5::numeric),
+             (-0.5::numeric),
+             (0.0::numeric),
+             (0.5::numeric),
+             (1.5::numeric),
+             (2.5::numeric)) t(x);
+  x   | int2_value 
+------+------------
+ -2.5 |         -3
+ -1.5 |         -2
+ -0.5 |         -1
+  0.0 |          0
+  0.5 |          1
+  1.5 |          2
+  2.5 |          3
+(7 rows)
+
