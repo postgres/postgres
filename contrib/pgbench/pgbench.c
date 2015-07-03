@@ -3213,6 +3213,33 @@ threadRun(void *arg)
 				maxsock = sock;
 		}
 
+		/* also wake up to print the next progress report on time */
+		if (progress && min_usec > 0
+#if !defined(PTHREAD_FORK_EMULATION)
+			&& thread->tid == 0
+#endif   /* !PTHREAD_FORK_EMULATION */
+			)
+		{
+			/* get current time if needed */
+			if (now_usec == 0)
+			{
+				instr_time	now;
+
+				INSTR_TIME_SET_CURRENT(now);
+				now_usec = INSTR_TIME_GET_MICROSEC(now);
+			}
+
+			if (now_usec >= next_report)
+				min_usec = 0;
+			else if ((next_report - now_usec) < min_usec)
+				min_usec = next_report - now_usec;
+		}
+
+		/*
+		 * Sleep until we receive data from the server, or a nap-time
+		 * specified in the script ends, or it's time to print a progress
+		 * report.
+		 */
 		if (min_usec > 0 && maxsock != -1)
 		{
 			int			nsocks; /* return from select(2) */
@@ -3314,7 +3341,15 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-				next_report += (int64) progress *1000000;
+
+				/*
+				 * Ensure that the next report is in the future, in case
+				 * pgbench/postgres got stuck somewhere.
+				 */
+				do
+				{
+					next_report += (int64) progress *1000000;
+				} while (now >= next_report);
 			}
 		}
 #else
@@ -3374,7 +3409,15 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-				next_report += (int64) progress *1000000;
+
+				/*
+				 * Ensure that the next report is in the future, in case
+				 * pgbench/postgres got stuck somewhere.
+				 */
+				do
+				{
+					next_report += (int64) progress *1000000;
+				} while (now >= next_report);
 			}
 		}
 #endif   /* PTHREAD_FORK_EMULATION */
