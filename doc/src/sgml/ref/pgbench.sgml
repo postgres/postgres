@@ -326,8 +326,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        <para>
         Number of worker threads within <application>pgbench</application>.
         Using more than one thread can be helpful on multi-CPU machines.
-        The number of clients must be a multiple of the number of threads,
-        since each thread is given the same number of client sessions to manage.
+        Clients are distributed as evenly as possible among available threads.
         Default is 1.
        </para>
       </listitem>

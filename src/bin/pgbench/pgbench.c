@@ -2819,6 +2819,7 @@ main(int argc, char **argv)
 	int64		latency_late = 0;
 
 	int			i;
+	int			nclients_dealt;
 
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
@@ -3114,6 +3115,14 @@ main(int argc, char **argv)
 		}
 	}
 
+	/*
+	 * Don't need more threads than there are clients.  (This is not merely an
+	 * optimization; throttle_delay is calculated incorrectly below if some
+	 * threads have no clients assigned to them.)
+	 */
+	if (nthreads > nclients)
+		nthreads = nclients;
+
 	/* compute a per thread delay */
 	throttle_delay *= nthreads;
 
@@ -3152,12 +3161,6 @@ main(int argc, char **argv)
 	/* Use DEFAULT_NXACTS if neither nxacts nor duration is specified. */
 	if (nxacts <= 0 && duration <= 0)
 		nxacts = DEFAULT_NXACTS;
-
-	if (nclients % nthreads != 0)
-	{
-		fprintf(stderr, "number of clients (%d) must be a multiple of number of threads (%d)\n", nclients, nthreads);
-		exit(1);
-	}
 
 	/* --sampling-rate may be used only with -l */
 	if (sample_rate > 0.0 && !use_log)
@@ -3359,18 +3362,23 @@ main(int argc, char **argv)
 
 	/* set up thread data structures */
 	threads = (TState *) pg_malloc(sizeof(TState) * nthreads);
+	nclients_dealt = 0;
+
 	for (i = 0; i < nthreads; i++)
 	{
 		TState	   *thread = &threads[i];
 
 		thread->tid = i;
-		thread->state = &state[nclients / nthreads * i];
-		thread->nstate = nclients / nthreads;
+		thread->state = &state[nclients_dealt];
+		thread->nstate =
+			(nclients - nclients_dealt + nthreads - i - 1) / (nthreads - i);
 		thread->random_state[0] = random();
 		thread->random_state[1] = random();
 		thread->random_state[2] = random();
 		thread->throttle_latency_skipped = 0;
 		thread->latency_late = 0;
+
+		nclients_dealt += thread->nstate;
 
 		if (is_latencies)
 		{
@@ -3394,6 +3402,9 @@ main(int argc, char **argv)
 			thread->exec_count = NULL;
 		}
 	}
+
+	/* all clients must be assigned to a thread */
+	Assert(nclients_dealt == nclients);
 
 	/* get start up time */
 	INSTR_TIME_SET_CURRENT(start_time);
