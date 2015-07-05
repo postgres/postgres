@@ -37,6 +37,7 @@ all:
 # PostgreSQL version number
 VERSION = @PACKAGE_VERSION@
 MAJORVERSION = @PG_MAJORVERSION@
+VERSION_NUM = @PG_VERSION_NUM@
 
 # Support for VPATH builds
 vpath_build = @vpath_build@
