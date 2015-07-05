@@ -216,6 +216,8 @@ static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
 				 PLpgSQL_expr *expr);
+static ParamListInfo setup_unshared_param_list(PLpgSQL_execstate *estate,
+						  PLpgSQL_expr *expr);
 static void plpgsql_param_fetch(ParamListInfo params, int paramid);
 static void exec_move_row(PLpgSQL_execstate *estate,
 			  PLpgSQL_rec *rec,
@@ -242,8 +244,10 @@ static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
 static void plpgsql_destroy_econtext(PLpgSQL_execstate *estate);
-static void free_var(PLpgSQL_var *var);
-static void assign_text_var(PLpgSQL_var *var, const char *str);
+static void assign_simple_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
+				  Datum newvalue, bool isnull, bool freeable);
+static void assign_text_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
+				const char *str);
 static PreparedParamsData *exec_eval_using_params(PLpgSQL_execstate *estate,
 					   List *params);
 static void free_params_data(PreparedParamsData *ppd);
@@ -312,9 +316,10 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) estate.datums[n];
 
-					var->value = fcinfo->arg[i];
-					var->isnull = fcinfo->argnull[i];
-					var->freeval = false;
+					assign_simple_var(&estate, var,
+									  fcinfo->arg[i],
+									  fcinfo->argnull[i],
+									  false);
 
 					/*
 					 * Force any array-valued parameter to be stored in
@@ -336,9 +341,11 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 						if (VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(var->value)))
 						{
 							/* take ownership of R/W object */
-							var->value = TransferExpandedObject(var->value,
-													   CurrentMemoryContext);
-							var->freeval = true;
+							assign_simple_var(&estate, var,
+										   TransferExpandedObject(var->value,
+													   CurrentMemoryContext),
+											  false,
+											  true);
 						}
 						else if (VARATT_IS_EXTERNAL_EXPANDED_RO(DatumGetPointer(var->value)))
 						{
@@ -347,10 +354,12 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 						else
 						{
 							/* flat array, so force to expanded form */
-							var->value = expand_array(var->value,
-													  CurrentMemoryContext,
-													  NULL);
-							var->freeval = true;
+							assign_simple_var(&estate, var,
+											  expand_array(var->value,
+														CurrentMemoryContext,
+														   NULL),
+											  false,
+											  true);
 						}
 					}
 				}
@@ -641,76 +650,69 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_op_varno]);
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-		var->value = CStringGetTextDatum("INSERT");
+		assign_text_var(&estate, var, "INSERT");
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		var->value = CStringGetTextDatum("UPDATE");
+		assign_text_var(&estate, var, "UPDATE");
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		var->value = CStringGetTextDatum("DELETE");
+		assign_text_var(&estate, var, "DELETE");
 	else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
-		var->value = CStringGetTextDatum("TRUNCATE");
+		assign_text_var(&estate, var, "TRUNCATE");
 	else
 		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, UPDATE, or TRUNCATE");
-	var->isnull = false;
-	var->freeval = true;
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_name_varno]);
-	var->value = DirectFunctionCall1(namein,
-							  CStringGetDatum(trigdata->tg_trigger->tgname));
-	var->isnull = false;
-	var->freeval = true;
+	assign_simple_var(&estate, var,
+					  DirectFunctionCall1(namein,
+							  CStringGetDatum(trigdata->tg_trigger->tgname)),
+					  false, true);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_when_varno]);
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-		var->value = CStringGetTextDatum("BEFORE");
+		assign_text_var(&estate, var, "BEFORE");
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
-		var->value = CStringGetTextDatum("AFTER");
+		assign_text_var(&estate, var, "AFTER");
 	else if (TRIGGER_FIRED_INSTEAD(trigdata->tg_event))
-		var->value = CStringGetTextDatum("INSTEAD OF");
+		assign_text_var(&estate, var, "INSTEAD OF");
 	else
 		elog(ERROR, "unrecognized trigger execution time: not BEFORE, AFTER, or INSTEAD OF");
-	var->isnull = false;
-	var->freeval = true;
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	if (TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		var->value = CStringGetTextDatum("ROW");
+		assign_text_var(&estate, var, "ROW");
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		var->value = CStringGetTextDatum("STATEMENT");
+		assign_text_var(&estate, var, "STATEMENT");
 	else
 		elog(ERROR, "unrecognized trigger event type: not ROW or STATEMENT");
-	var->isnull = false;
-	var->freeval = true;
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relid_varno]);
-	var->value = ObjectIdGetDatum(trigdata->tg_relation->rd_id);
-	var->isnull = false;
-	var->freeval = false;
+	assign_simple_var(&estate, var,
+					  ObjectIdGetDatum(trigdata->tg_relation->rd_id),
+					  false, false);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relname_varno]);
-	var->value = DirectFunctionCall1(namein,
-			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
-	var->isnull = false;
-	var->freeval = true;
+	assign_simple_var(&estate, var,
+					  DirectFunctionCall1(namein,
+			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation))),
+					  false, true);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_table_name_varno]);
-	var->value = DirectFunctionCall1(namein,
-			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
-	var->isnull = false;
-	var->freeval = true;
+	assign_simple_var(&estate, var,
+					  DirectFunctionCall1(namein,
+			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation))),
+					  false, true);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_table_schema_varno]);
-	var->value = DirectFunctionCall1(namein,
-									 CStringGetDatum(
-													 get_namespace_name(
+	assign_simple_var(&estate, var,
+					  DirectFunctionCall1(namein,
+										  CStringGetDatum(get_namespace_name(
 														RelationGetNamespace(
-												   trigdata->tg_relation))));
-	var->isnull = false;
-	var->freeval = true;
+												   trigdata->tg_relation)))),
+					  false, true);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_nargs_varno]);
-	var->value = Int16GetDatum(trigdata->tg_trigger->tgnargs);
-	var->isnull = false;
-	var->freeval = false;
+	assign_simple_var(&estate, var,
+					  Int16GetDatum(trigdata->tg_trigger->tgnargs),
+					  false, false);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_argv_varno]);
 	if (trigdata->tg_trigger->tgnargs > 0)
@@ -730,18 +732,16 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		dims[0] = nelems;
 		lbs[0] = 0;
 
-		var->value = PointerGetDatum(construct_md_array(elems, NULL,
-														1, dims, lbs,
-														TEXTOID,
-														-1, false, 'i'));
-		var->isnull = false;
-		var->freeval = true;
+		assign_simple_var(&estate, var,
+						  PointerGetDatum(construct_md_array(elems, NULL,
+															 1, dims, lbs,
+															 TEXTOID,
+															 -1, false, 'i')),
+						  false, true);
 	}
 	else
 	{
-		var->value = (Datum) 0;
-		var->isnull = true;
-		var->freeval = false;
+		assign_simple_var(&estate, var, (Datum) 0, true, false);
 	}
 
 	estate.err_text = gettext_noop("during function entry");
@@ -874,14 +874,10 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 	 * Assign the special tg_ variables
 	 */
 	var = (PLpgSQL_var *) (estate.datums[func->tg_event_varno]);
-	var->value = CStringGetTextDatum(trigdata->event);
-	var->isnull = false;
-	var->freeval = true;
+	assign_text_var(&estate, var, trigdata->event);
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_tag_varno]);
-	var->value = CStringGetTextDatum(trigdata->tag);
-	var->isnull = false;
-	var->freeval = true;
+	assign_text_var(&estate, var, trigdata->tag);
 
 	/*
 	 * Let the instrumentation plugin peek at this function
@@ -1012,10 +1008,9 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 				PLpgSQL_var *new = palloc(sizeof(PLpgSQL_var));
 
 				memcpy(new, datum, sizeof(PLpgSQL_var));
-				/* Ensure the value is null (possibly not needed?) */
-				new->value = 0;
-				new->isnull = true;
-				new->freeval = false;
+				/* should be preset to null/non-freeable */
+				Assert(new->isnull);
+				Assert(!new->freeval);
 
 				result = (PLpgSQL_datum *) new;
 			}
@@ -1026,11 +1021,11 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 				PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
 
 				memcpy(new, datum, sizeof(PLpgSQL_rec));
-				/* Ensure the value is null (possibly not needed?) */
-				new->tup = NULL;
-				new->tupdesc = NULL;
-				new->freetup = false;
-				new->freetupdesc = false;
+				/* should be preset to null/non-freeable */
+				Assert(new->tup == NULL);
+				Assert(new->tupdesc == NULL);
+				Assert(!new->freetup);
+				Assert(!new->freetupdesc);
 
 				result = (PLpgSQL_datum *) new;
 			}
@@ -1114,12 +1109,11 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) (estate->datums[n]);
 
-					/* free any old value, in case re-entering block */
-					free_var(var);
-
-					/* Initially it contains a NULL */
-					var->value = (Datum) 0;
-					var->isnull = true;
+					/*
+					 * Free any old value, in case re-entering block, and
+					 * initialize to NULL
+					 */
+					assign_simple_var(estate, var, (Datum) 0, true, false);
 
 					if (var->default_val == NULL)
 					{
@@ -1308,9 +1302,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					errm_var = (PLpgSQL_var *)
 						estate->datums[block->exceptions->sqlerrm_varno];
 
-					assign_text_var(state_var,
+					assign_text_var(estate, state_var,
 									unpack_sql_state(edata->sqlerrcode));
-					assign_text_var(errm_var, edata->message);
+					assign_text_var(estate, errm_var, edata->message);
 
 					/*
 					 * Also set up cur_error so the error data is accessible
@@ -1788,11 +1782,7 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 
 			/* We can now discard any value we had for the temp variable */
 			if (t_var != NULL)
-			{
-				free_var(t_var);
-				t_var->value = (Datum) 0;
-				t_var->isnull = true;
-			}
+				assign_simple_var(estate, t_var, (Datum) 0, true, false);
 
 			/* Evaluate the statement(s), and we're done */
 			return exec_stmts(estate, cwt->stmts);
@@ -1801,11 +1791,7 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 
 	/* We can now discard any value we had for the temp variable */
 	if (t_var != NULL)
-	{
-		free_var(t_var);
-		t_var->value = (Datum) 0;
-		t_var->isnull = true;
-	}
+		assign_simple_var(estate, t_var, (Datum) 0, true, false);
 
 	/* SQL2003 mandates this error if there was no ELSE clause */
 	if (!stmt->have_else)
@@ -2035,8 +2021,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		/*
 		 * Assign current value to loop var
 		 */
-		var->value = Int32GetDatum(loop_value);
-		var->isnull = false;
+		assign_simple_var(estate, var, Int32GetDatum(loop_value), false, false);
 
 		/*
 		 * Execute the statements
@@ -2228,9 +2213,9 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 		exec_prepare_plan(estate, query, curvar->cursor_options);
 
 	/*
-	 * Set up ParamListInfo (hook function and possibly data values)
+	 * Set up short-lived ParamListInfo
 	 */
-	paramLI = setup_param_list(estate, query);
+	paramLI = setup_unshared_param_list(estate, query);
 
 	/*
 	 * Open the cursor (the paramlist will get copied into the portal)
@@ -2242,11 +2227,15 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 		elog(ERROR, "could not open cursor: %s",
 			 SPI_result_code_string(SPI_result));
 
+	/* don't need paramlist any more */
+	if (paramLI)
+		pfree(paramLI);
+
 	/*
 	 * If cursor variable was NULL, store the generated portal name in it
 	 */
 	if (curname == NULL)
-		assign_text_var(curvar, portal->name);
+		assign_text_var(estate, curvar, portal->name);
 
 	/*
 	 * Execute the loop.  We can't prefetch because the cursor is accessible
@@ -2261,11 +2250,7 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 	SPI_cursor_close(portal);
 
 	if (curname == NULL)
-	{
-		free_var(curvar);
-		curvar->value = (Datum) 0;
-		curvar->isnull = true;
-	}
+		assign_simple_var(estate, curvar, (Datum) 0, true, false);
 
 	if (curname)
 		pfree(curname);
@@ -3314,6 +3299,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
 	estate->paramLI->parserSetupArg = NULL;		/* filled during use */
 	estate->paramLI->numParams = estate->ndatums;
+	estate->params_dirty = false;
 
 	/* set up for use of appropriate simple-expression EState */
 	if (simple_eval_estate)
@@ -3478,7 +3464,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * Set up ParamListInfo (hook function and possibly data values)
+	 * Set up ParamListInfo to pass to executor
 	 */
 	paramLI = setup_param_list(estate, expr);
 
@@ -3937,7 +3923,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 * If cursor variable was NULL, store the generated portal name in it
 		 */
 		if (curname == NULL)
-			assign_text_var(curvar, portal->name);
+			assign_text_var(estate, curvar, portal->name);
 
 		return PLPGSQL_RC_OK;
 	}
@@ -3991,9 +3977,9 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	}
 
 	/*
-	 * Set up ParamListInfo (hook function and possibly data values)
+	 * Set up short-lived ParamListInfo
 	 */
-	paramLI = setup_param_list(estate, query);
+	paramLI = setup_unshared_param_list(estate, query);
 
 	/*
 	 * Open the cursor
@@ -4009,10 +3995,12 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	 * If cursor variable was NULL, store the generated portal name in it
 	 */
 	if (curname == NULL)
-		assign_text_var(curvar, portal->name);
+		assign_text_var(estate, curvar, portal->name);
 
 	if (curname)
 		pfree(curname);
+	if (paramLI)
+		pfree(paramLI);
 
 	return PLPGSQL_RC_OK;
 }
@@ -4282,19 +4270,16 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				}
 
 				/*
-				 * Now free the old value, unless it's the same as the new
-				 * value (ie, we're doing "foo := foo").  Note that for
-				 * expanded objects, this test is necessary and cannot
-				 * reliably be made any earlier; we have to be looking at the
-				 * object's standard R/W pointer to be sure pointer equality
-				 * is meaningful.
+				 * Now free the old value, if any, and assign the new one. But
+				 * skip the assignment if old and new values are the same.
+				 * Note that for expanded objects, this test is necessary and
+				 * cannot reliably be made any earlier; we have to be looking
+				 * at the object's standard R/W pointer to be sure pointer
+				 * equality is meaningful.
 				 */
 				if (var->value != newvalue || var->isnull || isNull)
-					free_var(var);
-
-				var->value = newvalue;
-				var->isnull = isNull;
-				var->freeval = (!var->datatype->typbyval && !isNull);
+					assign_simple_var(estate, var, newvalue, isNull,
+									  (!var->datatype->typbyval && !isNull));
 				break;
 			}
 
@@ -4638,7 +4623,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
  *
  * The type oid, typmod, value in Datum format, and null flag are returned.
  *
- * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums.
+ * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums;
+ * that's not needed because we never pass references to such datums to SPI.
  *
  * NOTE: the returned Datum points right at the stored value in the case of
  * pass-by-reference datatypes.  Generally callers should take care not to
@@ -5082,23 +5068,30 @@ exec_run_select(PLpgSQL_execstate *estate,
 		exec_prepare_plan(estate, expr, 0);
 
 	/*
-	 * Set up ParamListInfo (hook function and possibly data values)
-	 */
-	paramLI = setup_param_list(estate, expr);
-
-	/*
 	 * If a portal was requested, put the query into the portal
 	 */
 	if (portalP != NULL)
 	{
+		/*
+		 * Set up short-lived ParamListInfo
+		 */
+		paramLI = setup_unshared_param_list(estate, expr);
+
 		*portalP = SPI_cursor_open_with_paramlist(NULL, expr->plan,
 												  paramLI,
 												  estate->readonly_func);
 		if (*portalP == NULL)
 			elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				 expr->query, SPI_result_code_string(SPI_result));
+		if (paramLI)
+			pfree(paramLI);
 		return SPI_OK_CURSOR;
 	}
+
+	/*
+	 * Set up ParamListInfo to pass to executor
+	 */
+	paramLI = setup_param_list(estate, expr);
 
 	/*
 	 * Execute the query
@@ -5402,7 +5395,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * Set up param list.  For safety, save and restore
+	 * Set up ParamListInfo to pass to executor.  For safety, save and restore
 	 * estate->paramLI->parserSetupArg around our use of the param list.
 	 */
 	save_setup_arg = estate->paramLI->parserSetupArg;
@@ -5451,23 +5444,30 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
  * Create a ParamListInfo to pass to SPI
  *
  * We share a single ParamListInfo array across all SPI calls made from this
- * estate.  This is generally OK since any given slot in the array would
- * need to contain the same current datum value no matter which query or
- * expression we're evaluating.  However, paramLI->parserSetupArg points to
- * the specific PLpgSQL_expr being evaluated.  This is not an issue for
- * statement-level callers, but lower-level callers should save and restore
- * estate->paramLI->parserSetupArg just in case there's an active evaluation
- * at an outer call level.
+ * estate, except calls creating cursors, which use setup_unshared_param_list
+ * (see its comments for reasons why).  A shared array is generally OK since
+ * any given slot in the array would need to contain the same current datum
+ * value no matter which query or expression we're evaluating.  However,
+ * paramLI->parserSetupArg points to the specific PLpgSQL_expr being
+ * evaluated.  This is not an issue for statement-level callers, but
+ * lower-level callers must save and restore estate->paramLI->parserSetupArg
+ * just in case there's an active evaluation at an outer call level.
  *
- * We fill in the values for any expression parameters that are plain
- * PLpgSQL_var datums; these are cheap and safe to evaluate, and by setting
- * them with PARAM_FLAG_CONST flags, we allow the planner to use those values
- * in custom plans.  However, parameters that are not plain PLpgSQL_vars
- * should not be evaluated here, because they could throw errors (for example
- * "no such record field") and we do not want that to happen in a part of
- * the expression that might never be evaluated at runtime.  To handle those
- * parameters, we set up a paramFetch hook for the executor to call when it
- * wants a not-presupplied value.
+ * The general plan for passing parameters to SPI is that plain VAR datums
+ * always have valid images in the shared param list.  This is ensured by
+ * assign_simple_var(), which also marks those params as PARAM_FLAG_CONST,
+ * allowing the planner to use those values in custom plans.  However, non-VAR
+ * datums cannot conveniently be managed that way.  For one thing, they could
+ * throw errors (for example "no such record field") and we do not want that
+ * to happen in a part of the expression that might never be evaluated at
+ * runtime.  For another thing, exec_eval_datum() may return short-lived
+ * values stored in the estate's short-term memory context, which will not
+ * necessarily survive to the next SPI operation.  And for a third thing, ROW
+ * and RECFIELD datums' values depend on other datums, and we don't have a
+ * cheap way to track that.  Therefore, param slots for non-VAR datum types
+ * are always reset here and then filled on-demand by plpgsql_param_fetch().
+ * We can save a few cycles by not bothering with the reset loop unless at
+ * least one such param has actually been filled by plpgsql_param_fetch().
  */
 static ParamListInfo
 setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
@@ -5488,28 +5488,102 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 */
 	if (expr->paramnos)
 	{
-		int			dno;
-
-		/* Use the common ParamListInfo for all evals in this estate */
+		/* Use the common ParamListInfo */
 		paramLI = estate->paramLI;
 
 		/*
-		 * Reset all entries to "invalid".  It's pretty annoying to have to do
-		 * this, but we don't currently track enough information to know which
-		 * old entries might be obsolete.  (There are a couple of nontrivial
-		 * issues that would have to be dealt with in order to do better here.
-		 * First, ROW and RECFIELD datums depend on other datums, and second,
-		 * exec_eval_datum() will return short-lived palloc'd values for ROW
-		 * and REC datums.)
+		 * If any resettable parameters have been passed to the executor since
+		 * last time, we need to reset those param slots to "invalid", for the
+		 * reasons mentioned in the comment above.
 		 */
-		MemSet(paramLI->params, 0, estate->ndatums * sizeof(ParamExternData));
+		if (estate->params_dirty)
+		{
+			Bitmapset  *resettable_datums = estate->func->resettable_datums;
+			int			dno = -1;
+
+			while ((dno = bms_next_member(resettable_datums, dno)) >= 0)
+			{
+				ParamExternData *prm = &paramLI->params[dno];
+
+				prm->ptype = InvalidOid;
+			}
+			estate->params_dirty = false;
+		}
 
 		/*
-		 * Instantiate values for "safe" parameters of the expression.  One of
-		 * them might be the variable the expression result will be assigned
-		 * to, in which case we can pass the variable's value as-is even if
-		 * it's a read-write expanded object; otherwise, convert read-write
-		 * pointers to read-only pointers for safety.
+		 * Set up link to active expr where the hook functions can find it.
+		 * Callers must save and restore parserSetupArg if there is any chance
+		 * that they are interrupting an active use of parameters.
+		 */
+		paramLI->parserSetupArg = (void *) expr;
+
+		/*
+		 * Also make sure this is set before parser hooks need it.  There is
+		 * no need to save and restore, since the value is always correct once
+		 * set.  (Should be set already, but let's be sure.)
+		 */
+		expr->func = estate->func;
+	}
+	else
+	{
+		/*
+		 * Expression requires no parameters.  Be sure we represent this case
+		 * as a NULL ParamListInfo, so that plancache.c knows there is no
+		 * point in a custom plan.
+		 */
+		paramLI = NULL;
+	}
+	return paramLI;
+}
+
+/*
+ * Create an unshared, short-lived ParamListInfo to pass to SPI
+ *
+ * When creating a cursor, we do not use the shared ParamListInfo array
+ * but create a short-lived one that will contain only params actually
+ * referenced by the query.  The reason for this is that copyParamList() will
+ * be used to copy the parameters into cursor-lifespan storage, and we don't
+ * want it to copy anything that's not used by the specific cursor; that
+ * could result in uselessly copying some large values.
+ *
+ * Caller should pfree the result after use, if it's not NULL.
+ */
+static ParamListInfo
+setup_unshared_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
+{
+	ParamListInfo paramLI;
+
+	/*
+	 * We must have created the SPIPlan already (hence, query text has been
+	 * parsed/analyzed at least once); else we cannot rely on expr->paramnos.
+	 */
+	Assert(expr->plan != NULL);
+
+	/*
+	 * We only need a ParamListInfo if the expression has parameters.  In
+	 * principle we should test with bms_is_empty(), but we use a not-null
+	 * test because it's faster.  In current usage bits are never removed from
+	 * expr->paramnos, only added, so this test is correct anyway.
+	 */
+	if (expr->paramnos)
+	{
+		int			dno;
+
+		/* initialize ParamListInfo with one entry per datum, all invalid */
+		paramLI = (ParamListInfo)
+			palloc0(offsetof(ParamListInfoData, params) +
+					estate->ndatums * sizeof(ParamExternData));
+		paramLI->paramFetch = plpgsql_param_fetch;
+		paramLI->paramFetchArg = (void *) estate;
+		paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
+		paramLI->parserSetupArg = (void *) expr;
+		paramLI->numParams = estate->ndatums;
+
+		/*
+		 * Instantiate values for "safe" parameters of the expression.  We
+		 * could skip this and leave them to be filled by plpgsql_param_fetch;
+		 * but then the values would not be available for query planning,
+		 * since the planner doesn't call the paramFetch hook.
 		 */
 		dno = -1;
 		while ((dno = bms_next_member(expr->paramnos, dno)) >= 0)
@@ -5532,13 +5606,6 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 				prm->ptype = var->datatype->typoid;
 			}
 		}
-
-		/*
-		 * Set up link to active expr where the hook functions can find it.
-		 * Callers must save and restore parserSetupArg if there is any chance
-		 * that they are interrupting an active use of parameters.
-		 */
-		paramLI->parserSetupArg = (void *) expr;
 
 		/*
 		 * Also make sure this is set before parser hooks need it.  There is
@@ -5581,20 +5648,50 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 	expr = (PLpgSQL_expr *) params->parserSetupArg;
 	Assert(params->numParams == estate->ndatums);
 
-	/*
-	 * Do nothing if asked for a value that's not supposed to be used by this
-	 * SQL expression.  This avoids unwanted evaluations when functions such
-	 * as copyParamList try to materialize all the values.
-	 */
-	if (!bms_is_member(dno, expr->paramnos))
-		return;
+	/* now we can access the target datum */
+	datum = estate->datums[dno];
+
+	/* need to behave slightly differently for shared and unshared arrays */
+	if (params != estate->paramLI)
+	{
+		/*
+		 * We're being called, presumably from copyParamList(), for cursor
+		 * parameters.  Since copyParamList() will try to materialize every
+		 * single parameter slot, it's important to do nothing when asked for
+		 * a datum that's not supposed to be used by this SQL expression.
+		 * Otherwise we risk failures in exec_eval_datum(), not to mention
+		 * possibly copying a lot more data than the cursor actually uses.
+		 */
+		if (!bms_is_member(dno, expr->paramnos))
+			return;
+	}
+	else
+	{
+		/*
+		 * Normal evaluation cases.  We don't need to sanity-check dno, but we
+		 * do need to mark the shared params array dirty if we're about to
+		 * evaluate a resettable datum.
+		 */
+		switch (datum->dtype)
+		{
+			case PLPGSQL_DTYPE_ROW:
+			case PLPGSQL_DTYPE_REC:
+			case PLPGSQL_DTYPE_RECFIELD:
+				estate->params_dirty = true;
+				break;
+
+			default:
+				break;
+		}
+	}
 
 	/* OK, evaluate the value and store into the appropriate paramlist slot */
-	datum = estate->datums[dno];
 	prm = &params->params[dno];
 	exec_eval_datum(estate, datum,
 					&prm->ptype, &prmtypmod,
 					&prm->value, &prm->isnull);
+	/* We can always mark params as "const" for executor's purposes */
+	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
 	 * If it's a read/write expanded datum, convert reference to read-only,
@@ -6663,8 +6760,7 @@ exec_set_found(PLpgSQL_execstate *estate, bool state)
 	PLpgSQL_var *var;
 
 	var = (PLpgSQL_var *) (estate->datums[estate->found_varno]);
-	var->value = BoolGetDatum(state);
-	var->isnull = false;
+	assign_simple_var(estate, var, BoolGetDatum(state), false, false);
 }
 
 /*
@@ -6799,14 +6895,19 @@ plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 }
 
 /*
- * free_var --- pfree any pass-by-reference value of the variable.
+ * assign_simple_var --- assign a new value to any VAR datum.
  *
- * This should always be followed by some assignment to var->value,
- * as it leaves a dangling pointer.
+ * This should be the only mechanism for assignment to simple variables,
+ * lest we forget to update the paramLI image.
  */
 static void
-free_var(PLpgSQL_var *var)
+assign_simple_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
+				  Datum newvalue, bool isnull, bool freeable)
 {
+	ParamExternData *prm;
+
+	Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+	/* Free the old value if needed */
 	if (var->freeval)
 	{
 		if (DatumIsReadWriteExpandedObject(var->value,
@@ -6815,20 +6916,29 @@ free_var(PLpgSQL_var *var)
 			DeleteExpandedObject(var->value);
 		else
 			pfree(DatumGetPointer(var->value));
-		var->freeval = false;
 	}
+	/* Assign new value to datum */
+	var->value = newvalue;
+	var->isnull = isnull;
+	var->freeval = freeable;
+	/* And update the image in the common parameter list */
+	prm = &estate->paramLI->params[var->dno];
+	prm->value = MakeExpandedObjectReadOnly(newvalue,
+											isnull,
+											var->datatype->typlen);
+	prm->isnull = isnull;
+	/* these might be set already, but let's be sure */
+	prm->pflags = PARAM_FLAG_CONST;
+	prm->ptype = var->datatype->typoid;
 }
 
 /*
  * free old value of a text variable and assign new value from C string
  */
 static void
-assign_text_var(PLpgSQL_var *var, const char *str)
+assign_text_var(PLpgSQL_execstate *estate, PLpgSQL_var *var, const char *str)
 {
-	free_var(var);
-	var->value = CStringGetTextDatum(str);
-	var->isnull = false;
-	var->freeval = true;
+	assign_simple_var(estate, var, CStringGetTextDatum(str), false, true);
 }
 
 /*
