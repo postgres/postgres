@@ -390,7 +390,7 @@ DROP OPERATOR FAMILY alt_opf16 USING gist;
 
 -- Should fail. duplicate operator number / function number in ALTER OPERATOR FAMILY ... ADD FUNCTION
 CREATE OPERATOR FAMILY alt_opf17 USING btree;
-ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4), OPERATOR 1 < (int4, int4); -- operator # appears twice in same statment
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4), OPERATOR 1 < (int4, int4); -- operator # appears twice in same statement
 ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4); -- operator 1 requested first-time
 ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4); -- operator 1 requested again in separate statement
 ALTER OPERATOR FAMILY alt_opf17 USING btree ADD
