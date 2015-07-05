@@ -531,8 +531,8 @@ typedef struct BrinOpcInfo
 
   To implement these methods in a generic way, the operator class
   defines its own internal support functions.
-  (For instance, <quote>min/max</> operator classes implements
-  support functions for the four inequality operators for the data type.)
+  (For instance, the <quote>min/max</> operator classes implement
+  support functions for the four inequality operators for their data type.)
   Additionally, the operator class must supply appropriate
   operator entries,
   to enable the optimizer to use the index when those operators are
