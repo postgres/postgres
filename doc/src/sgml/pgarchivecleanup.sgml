@@ -128,11 +128,6 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
         .gz</literal>.
        </para>
 
-       <para>
-        Note that the
-        <filename>.backup</> file name passed to the program should not
-        include the extension.
-       </para>
       </listitem>
      </varlistentry>
 
