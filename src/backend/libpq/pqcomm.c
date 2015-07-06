@@ -726,6 +726,11 @@ StreamConnection(pgsocket server_fd, Port *port)
 	if (!IS_AF_UNIX(port->laddr.addr.ss_family))
 	{
 		int			on;
+#ifdef WIN32
+		int			oldopt;
+		int			optlen;
+		int			newopt;
+#endif
 
 #ifdef	TCP_NODELAY
 		on = 1;
@@ -747,15 +752,42 @@ StreamConnection(pgsocket server_fd, Port *port)
 #ifdef WIN32
 
 		/*
-		 * This is a Win32 socket optimization.  The ideal size is 32k.
-		 * http://support.microsoft.com/kb/823764/EN-US/
+		 * This is a Win32 socket optimization.  The OS send buffer should be
+		 * large enough to send the whole Postgres send buffer in one go, or
+		 * performance suffers.  The Postgres send buffer can be enlarged if a
+		 * very large message needs to be sent, but we won't attempt to
+		 * enlarge the OS buffer if that happens, so somewhat arbitrarily
+		 * ensure that the OS buffer is at least PQ_SEND_BUFFER_SIZE * 4.
+		 * (That's 32kB with the current default).
+		 *
+		 * The default OS buffer size used to be 8kB in earlier Windows
+		 * versions, but was raised to 64kB in Windows 2012.  So it shouldn't
+		 * be necessary to change it in later versions anymore.  Changing it
+		 * unnecessarily can even reduce performance, because setting
+		 * SO_SNDBUF in the application disables the "dynamic send buffering"
+		 * feature that was introduced in Windows 7.  So before fiddling with
+		 * SO_SNDBUF, check if the current buffer size is already large enough
+		 * and only increase it if necessary.
+		 *
+		 * See https://support.microsoft.com/kb/823764/EN-US/ and
+		 * https://msdn.microsoft.com/en-us/library/bb736549%28v=vs.85%29.aspx
 		 */
-		on = PQ_SEND_BUFFER_SIZE * 4;
-		if (setsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &on,
-					   sizeof(on)) < 0)
+		optlen = sizeof(oldopt);
+		if (getsockopt(server_fd, SOL_SOCKET, SO_SNDBUF, (char *) &oldopt,
+					   &optlen) < 0)
 		{
-			elog(LOG, "setsockopt(SO_SNDBUF) failed: %m");
+			elog(LOG, "getsockopt(SO_SNDBUF) failed: %m");
 			return STATUS_ERROR;
+		}
+		newopt = PQ_SEND_BUFFER_SIZE * 4;
+		if (oldopt < newopt)
+		{
+			if (setsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &newopt,
+						   sizeof(newopt)) < 0)
+			{
+				elog(LOG, "setsockopt(SO_SNDBUF) failed: %m");
+				return STATUS_ERROR;
+			}
 		}
 #endif
 
