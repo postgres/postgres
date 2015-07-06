@@ -773,7 +773,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 		 * https://msdn.microsoft.com/en-us/library/bb736549%28v=vs.85%29.aspx
 		 */
 		optlen = sizeof(oldopt);
-		if (getsockopt(server_fd, SOL_SOCKET, SO_SNDBUF, (char *) &oldopt,
+		if (getsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &oldopt,
 					   &optlen) < 0)
 		{
 			elog(LOG, "getsockopt(SO_SNDBUF) failed: %m");
