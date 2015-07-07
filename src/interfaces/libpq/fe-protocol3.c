@@ -204,10 +204,15 @@ pqParseInput3(PGconn *conn)
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_COMMAND_OK);
 						if (!conn->result)
-							return;
+						{
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("out of memory"));
+							pqSaveErrorResult(conn);
+						}
 					}
-					strlcpy(conn->result->cmdStatus, conn->workBuffer.data,
-							CMDSTATUS_LEN);
+					if (conn->result)
+						strlcpy(conn->result->cmdStatus, conn->workBuffer.data,
+								CMDSTATUS_LEN);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'E':		/* error return */
@@ -226,7 +231,11 @@ pqParseInput3(PGconn *conn)
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_EMPTY_QUERY);
 						if (!conn->result)
-							return;
+						{
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("out of memory"));
+							pqSaveErrorResult(conn);
+						}
 					}
 					conn->asyncStatus = PGASYNC_READY;
 					break;
@@ -239,7 +248,11 @@ pqParseInput3(PGconn *conn)
 							conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_COMMAND_OK);
 							if (!conn->result)
-								return;
+							{
+								printfPQExpBuffer(&conn->errorMessage,
+												  libpq_gettext("out of memory"));
+								pqSaveErrorResult(conn);
+							}
 						}
 						conn->asyncStatus = PGASYNC_READY;
 					}
@@ -311,7 +324,11 @@ pqParseInput3(PGconn *conn)
 							conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_COMMAND_OK);
 							if (!conn->result)
-								return;
+							{
+								printfPQExpBuffer(&conn->errorMessage,
+												  libpq_gettext("out of memory"));
+								pqSaveErrorResult(conn);
+							}
 						}
 						conn->asyncStatus = PGASYNC_READY;
 					}
@@ -736,11 +753,14 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	 * Make a PGresult to hold the accumulated fields.  We temporarily lie
 	 * about the result status, so that PQmakeEmptyPGresult doesn't uselessly
 	 * copy conn->errorMessage.
+	 *
+	 * NB: This allocation can fail, if you run out of memory. The rest of the
+	 * function handles that gracefully, and we still try to set the error
+	 * message as the connection's error message.
 	 */
 	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
-	if (!res)
-		goto fail;
-	res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
+	if (res)
+		res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
 
 	/*
 	 * Read the fields and save into res.
@@ -853,20 +873,27 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	 */
 	if (isError)
 	{
-		res->errMsg = pqResultStrdup(res, workBuf.data);
-		if (!res->errMsg)
-			goto fail;
+		if (res)
+			res->errMsg = pqResultStrdup(res, workBuf.data);
 		pqClearAsyncResult(conn);
 		conn->result = res;
-		appendPQExpBufferStr(&conn->errorMessage, workBuf.data);
+		if (PQExpBufferDataBroken(workBuf))
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("out of memory"));
+		else
+			appendPQExpBufferStr(&conn->errorMessage, workBuf.data);
 	}
 	else
 	{
-		/* We can cheat a little here and not copy the message. */
-		res->errMsg = workBuf.data;
-		if (res->noticeHooks.noticeRec != NULL)
-			(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
-		PQclear(res);
+		/* if we couldn't allocate the result set, just discard the NOTICE */
+		if (res)
+		{
+			/* We can cheat a little here and not copy the message. */
+			res->errMsg = workBuf.data;
+			if (res->noticeHooks.noticeRec != NULL)
+				(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+			PQclear(res);
+		}
 	}
 
 	termPQExpBuffer(&workBuf);
