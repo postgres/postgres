@@ -62,7 +62,8 @@ esac
 POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES -k \"$PGHOST\""
 export PGHOST
 
-temp_root=$PWD/tmp_check
+# don't rely on $PWD here, as old shells don't set it
+temp_root=`pwd`/tmp_check
 
 if [ "$1" = '--install' ]; then
 	temp_install=$temp_root/install
@@ -104,7 +105,7 @@ PGDATA="$BASE_PGDATA.old"
 export PGDATA
 rm -rf "$BASE_PGDATA" "$PGDATA"
 
-logdir=$PWD/log
+logdir=`pwd`/log
 rm -rf "$logdir"
 mkdir "$logdir"
 
