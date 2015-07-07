@@ -3367,7 +3367,7 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
       <varlistentry>
         <term><literal>%p</literal></term>
         <listitem>
-         <para>The pid of the backend currently connected to.</para>
+         <para>The process ID of the backend currently connected to.</para>
         </listitem>
       </varlistentry>
 
