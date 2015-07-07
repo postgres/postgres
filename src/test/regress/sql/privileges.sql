@@ -975,3 +975,87 @@ DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
 DROP USER regressuser6;
+
+
+-- permissions with LOCK TABLE
+CREATE USER locktable_user;
+CREATE TABLE lock_table (a int);
+
+-- LOCK TABLE and SELECT permission
+GRANT SELECT ON lock_table TO locktable_user;
+SET SESSION AUTHORIZATION locktable_user;
+BEGIN;
+LOCK TABLE lock_table IN ROW EXCLUSIVE MODE; -- should fail
+ROLLBACK;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS SHARE MODE; -- should pass
+COMMIT;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS EXCLUSIVE MODE; -- should fail
+ROLLBACK;
+\c
+REVOKE SELECT ON lock_table FROM locktable_user;
+
+-- LOCK TABLE and INSERT permission
+GRANT INSERT ON lock_table TO locktable_user;
+SET SESSION AUTHORIZATION locktable_user;
+BEGIN;
+LOCK TABLE lock_table IN ROW EXCLUSIVE MODE; -- should pass
+COMMIT;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS SHARE MODE; -- should fail
+ROLLBACK;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS EXCLUSIVE MODE; -- should fail
+ROLLBACK;
+\c
+REVOKE INSERT ON lock_table FROM locktable_user;
+
+-- LOCK TABLE and UPDATE permission
+GRANT UPDATE ON lock_table TO locktable_user;
+SET SESSION AUTHORIZATION locktable_user;
+BEGIN;
+LOCK TABLE lock_table IN ROW EXCLUSIVE MODE; -- should pass
+COMMIT;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS SHARE MODE; -- should fail
+ROLLBACK;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS EXCLUSIVE MODE; -- should pass
+COMMIT;
+\c
+REVOKE UPDATE ON lock_table FROM locktable_user;
+
+-- LOCK TABLE and DELETE permission
+GRANT DELETE ON lock_table TO locktable_user;
+SET SESSION AUTHORIZATION locktable_user;
+BEGIN;
+LOCK TABLE lock_table IN ROW EXCLUSIVE MODE; -- should pass
+COMMIT;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS SHARE MODE; -- should fail
+ROLLBACK;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS EXCLUSIVE MODE; -- should pass
+COMMIT;
+\c
+REVOKE DELETE ON lock_table FROM locktable_user;
+
+-- LOCK TABLE and TRUNCATE permission
+GRANT TRUNCATE ON lock_table TO locktable_user;
+SET SESSION AUTHORIZATION locktable_user;
+BEGIN;
+LOCK TABLE lock_table IN ROW EXCLUSIVE MODE; -- should pass
+COMMIT;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS SHARE MODE; -- should fail
+ROLLBACK;
+BEGIN;
+LOCK TABLE lock_table IN ACCESS EXCLUSIVE MODE; -- should pass
+COMMIT;
+\c
+REVOKE TRUNCATE ON lock_table FROM locktable_user;
+
+-- clean up
+DROP TABLE lock_table;
+DROP USER locktable_user;
