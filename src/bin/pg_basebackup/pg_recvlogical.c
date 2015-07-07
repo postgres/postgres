@@ -50,6 +50,7 @@ static const char *plugin = "test_decoding";
 static int	outfd = -1;
 static volatile sig_atomic_t time_to_abort = false;
 static volatile sig_atomic_t output_reopen = false;
+static bool output_isfile;
 static int64 output_last_fsync = -1;
 static bool output_needs_fsync = false;
 static XLogRecPtr output_written_lsn = InvalidXLogRecPtr;
@@ -177,8 +178,11 @@ OutputFsync(int64 now)
 
 	output_needs_fsync = false;
 
-	/* Accept EINVAL, in case output is writing to a pipe or similar. */
-	if (fsync(outfd) != 0 && errno != EINVAL)
+	/* can only fsync if it's a regular file */
+	if (!output_isfile)
+		return true;
+
+	if (fsync(outfd) != 0)
 	{
 		fprintf(stderr,
 				_("%s: could not fsync log file \"%s\": %s\n"),
@@ -317,6 +321,8 @@ StreamLogicalLog(void)
 		/* open the output file, if not open yet */
 		if (outfd == -1)
 		{
+			struct stat statbuf;
+
 			if (strcmp(outfile, "-") == 0)
 				outfd = fileno(stdout);
 			else
@@ -329,6 +335,13 @@ StreamLogicalLog(void)
 						progname, outfile, strerror(errno));
 				goto error;
 			}
+
+			if (fstat(outfd, &statbuf) != 0)
+				fprintf(stderr,
+						_("%s: could not stat file \"%s\": %s\n"),
+						progname, outfile, strerror(errno));
+
+			output_isfile = S_ISREG(statbuf.st_mode) && !isatty(outfd);
 		}
 
 		r = PQgetCopyData(conn, &copybuf, 1);
