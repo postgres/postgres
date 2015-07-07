@@ -1988,7 +1988,7 @@ GRANT ALL ON y1, y2 TO rls_regress_user1;
 CREATE POLICY p1 ON y1 FOR ALL USING (a % 2 = 0);
 CREATE POLICY p2 ON y1 FOR SELECT USING (a > 2);
 CREATE POLICY p1 ON y1 FOR SELECT USING (a % 2 = 1);  --fail
-ERROR:  policy "p1" for relation "y1" already exists
+ERROR:  policy "p1" for table "y1" already exists
 CREATE POLICY p1 ON y2 FOR ALL USING (a % 2 = 0);  --OK
 ALTER TABLE y1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE y2 ENABLE ROW LEVEL SECURITY;
