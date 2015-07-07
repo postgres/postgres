@@ -887,7 +887,7 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 			res->errMsg = pqResultStrdup(res, workBuf.data);
 		pqClearAsyncResult(conn);
 		conn->result = res;
-		if (PQExpBufferDataBroken(workBuf))
+		if (PQExpBufferBroken(&workBuf))
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("out of memory"));
 		else
