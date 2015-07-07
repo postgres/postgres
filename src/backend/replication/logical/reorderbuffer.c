@@ -1937,7 +1937,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		 * store in segment in which it belongs by start lsn, don't split over
 		 * multiple segments tho
 		 */
-		if (fd == -1 || XLByteInSeg(change->lsn, curOpenSegNo))
+		if (fd == -1 || !XLByteInSeg(change->lsn, curOpenSegNo))
 		{
 			XLogRecPtr	recptr;
 
