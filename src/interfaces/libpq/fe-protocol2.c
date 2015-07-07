@@ -888,7 +888,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 		pqClearAsyncResult(conn);
 		conn->result = res;
 		resetPQExpBuffer(&conn->errorMessage);
-		if (res && !PQExpBufferDataBroken(workBuf) && res->errMsg)
+		if (res && !PQExpBufferBroken(&workBuf) && res->errMsg)
 			appendPQExpBufferStr(&conn->errorMessage, res->errMsg);
 		else
 			printfPQExpBuffer(&conn->errorMessage,
