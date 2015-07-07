@@ -3365,6 +3365,13 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
       </varlistentry>
 
       <varlistentry>
+        <term><literal>%p</literal></term>
+        <listitem>
+         <para>The pid of the backend currently connected to.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>%&gt;</literal></term>
         <listitem><para>The port number at which the database server is listening.</para></listitem>
       </varlistentry>
