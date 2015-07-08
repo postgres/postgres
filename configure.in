@@ -1579,7 +1579,7 @@ fi
 # See the comment at the top of src/port/thread.c for more information.
 # WIN32 doesn't need the pthread tests;  it always uses threads
 if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
-ACX_PTHREAD	# set thread flags
+AX_PTHREAD	# set thread flags
 
 # Some platforms use these, so just define them.  They can't hurt if they
 # are not supported.  For example, on Solaris -D_POSIX_PTHREAD_SEMANTICS
