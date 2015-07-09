@@ -2303,6 +2303,7 @@ include_dir 'conf.d'
         <xref linkend="guc-full-page-writes"> is on or during a base backup.
         A compressed page image will be decompressed during WAL replay.
         The default value is <literal>off</>.
+        Only superusers can change this setting.
        </para>
 
        <para>
