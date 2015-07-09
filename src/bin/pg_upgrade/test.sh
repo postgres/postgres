@@ -216,10 +216,11 @@ case $testhost in
 	*)	    sh ./delete_old_cluster.sh ;;
 esac
 
-if diff -q "$temp_root"/dump1.sql "$temp_root"/dump2.sql; then
+if diff "$temp_root"/dump1.sql "$temp_root"/dump2.sql >/dev/null; then
 	echo PASSED
 	exit 0
 else
+	echo "Files $temp_root/dump1.sql and $temp_root/dump2.sql differ"
 	echo "dumps were not identical"
 	exit 1
 fi
