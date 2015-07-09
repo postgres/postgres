@@ -9,6 +9,8 @@ DATA = pg_stat_statements--1.3.sql pg_stat_statements--1.2--1.3.sql \
 	pg_stat_statements--unpackaged--1.0.sql
 PGFILEDESC = "pg_stat_statements - execution statistics of SQL statements"
 
+LDFLAGS_SL += $(filter -lm, $(LIBS))
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
