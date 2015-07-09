@@ -295,6 +295,7 @@ sub run_pg_rewind
 	{
 		# Do rewind using a remote connection as source
 		command_ok(['pg_rewind',
+					"--debug",
 					"--source-server",
 					"port=$port_standby dbname=postgres",
 					"--target-pgdata=$test_master_datadir"],
