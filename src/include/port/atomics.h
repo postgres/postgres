@@ -81,8 +81,15 @@
  * * pg_atomic_compare_exchange_u32(), pg_atomic_fetch_add_u32()
  * using compiler intrinsics are a good idea.
  */
+/*
+ * Given a gcc-compatible xlc compiler, prefer the xlc implementation.  The
+ * ppc64le "IBM XL C/C++ for Linux, V13.1.2" implements both interfaces, but
+ * __sync_lock_test_and_set() of one-byte types elicits SIGSEGV.
+ */
+#if defined(__IBMC__) || defined(__IBMCPP__)
+#include "port/atomics/generic-xlc.h"
 /* gcc or compatible, including clang and icc */
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#elif defined(__GNUC__) || defined(__INTEL_COMPILER)
 #include "port/atomics/generic-gcc.h"
 #elif defined(WIN32_ONLY_COMPILER)
 #include "port/atomics/generic-msvc.h"
@@ -90,8 +97,6 @@
 #include "port/atomics/generic-acc.h"
 #elif defined(__SUNPRO_C) && !defined(__GNUC__)
 #include "port/atomics/generic-sunpro.h"
-#elif (defined(__IBMC__) || defined(__IBMCPP__)) && !defined(__GNUC__)
-#include "port/atomics/generic-xlc.h"
 #else
 /*
  * Unsupported compiler, we'll likely use slower fallbacks... At least
