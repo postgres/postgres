@@ -45,7 +45,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_rewind$(X) $(OBJS) xlogreader.c
-	rm -rf tmp_check regress_log
+	rm -rf tmp_check
 
 check:
 	$(prove_check)
