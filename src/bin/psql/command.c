@@ -1627,7 +1627,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * syntax.
 	 */
 	keep_password =
-		((strcmp(user, PQuser(o_conn)) == 0) &&
+		(o_conn &&
+		 (strcmp(user, PQuser(o_conn)) == 0) &&
 		 (!host || strcmp(host, PQhost(o_conn)) == 0) &&
 		 (strcmp(port, PQport(o_conn)) == 0) &&
 		 !has_connection_string);
@@ -1754,7 +1755,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	/* Tell the user about the new connection */
 	if (!pset.quiet)
 	{
-		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)) ||
+		if (!o_conn ||
+			param_is_newly_set(PQhost(o_conn), PQhost(pset.db)) ||
 			param_is_newly_set(PQport(o_conn), PQport(pset.db)))
 		{
 			char	   *host = PQhost(pset.db);
