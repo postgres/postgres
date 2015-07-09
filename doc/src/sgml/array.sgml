@@ -346,7 +346,7 @@ SELECT array_length(schedule, 1) FROM sal_emp WHERE name = 'Carol';
 <programlisting>
 SELECT cardinality(schedule) FROM sal_emp WHERE name = 'Carol';
 
- cardinality 
+ cardinality
 -------------
            4
 (1 row)
@@ -494,11 +494,7 @@ SELECT array_dims(ARRAY[1,2] || ARRAY[[3,4],[5,6]]);
   <function>array_prepend</function>, <function>array_append</function>,
   or <function>array_cat</function>. The first two only support one-dimensional
   arrays, but <function>array_cat</function> supports multidimensional arrays.
-
-  Note that the concatenation operator discussed above is preferred over
-  direct use of these functions. In fact, these functions primarily exist for use
-  in implementing the concatenation operator. However, they might be directly
-  useful in the creation of user-defined aggregates. Some examples:
+  Some examples:
 
 <programlisting>
 SELECT array_prepend(1, ARRAY[2,3]);
@@ -530,6 +526,45 @@ SELECT array_cat(ARRAY[5,6], ARRAY[[1,2],[3,4]]);
 ---------------------
  {{5,6},{1,2},{3,4}}
 </programlisting>
+ </para>
+
+ <para>
+  In simple cases, the concatenation operator discussed above is preferred
+  over direct use of these functions.  However, because the concatenation
+  operator is overloaded to serve all three cases, there are situations where
+  use of one of the functions is helpful to avoid ambiguity.  For example
+  consider:
+
+<programlisting>
+SELECT ARRAY[1, 2] || '{3, 4}';  -- the untyped literal is taken as an array
+ ?column?
+-----------
+ {1,2,3,4}
+
+SELECT ARRAY[1, 2] || '7';                 -- so is this one
+ERROR:  malformed array literal: "7"
+
+SELECT ARRAY[1, 2] || NULL;                -- so is an undecorated NULL
+ ?column?
+----------
+ {1,2}
+(1 row)
+
+SELECT array_append(ARRAY[1, 2], NULL);    -- this might have been meant
+ array_append
+--------------
+ {1,2,NULL}
+</programlisting>
+
+  In the examples above, the parser sees an integer array on one side of the
+  concatenation operator, and a constant of undetermined type on the other.
+  The heuristic it uses to resolve the constant's type is to assume it's of
+  the same type as the operator's other input &mdash; in this case,
+  integer array.  So the concatenation operator is presumed to
+  represent <function>array_cat</>, not <function>array_append</>.  When
+  that's the wrong choice, it could be fixed by casting the constant to the
+  array's element type; but explicit use of <function>array_append</> might
+  be a preferable solution.
  </para>
  </sect2>
 
