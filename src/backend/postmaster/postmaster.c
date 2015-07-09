@@ -219,6 +219,17 @@ static pid_t StartupPID = 0,
 			PgStatPID = 0,
 			SysLoggerPID = 0;
 
+/* Startup process's status */
+typedef enum
+{
+	STARTUP_NOT_RUNNING,
+	STARTUP_RUNNING,
+	STARTUP_SIGNALED,			/* we sent it a SIGQUIT or SIGKILL */
+	STARTUP_CRASHED
+} StartupStatusEnum;
+
+static StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
+
 /* Startup/shutdown state */
 #define			NoShutdown		0
 #define			SmartShutdown	1
@@ -227,7 +238,6 @@ static pid_t StartupPID = 0,
 static int	Shutdown = NoShutdown;
 
 static bool FatalError = false; /* T if recovering from backend crash */
-static bool RecoveryError = false;		/* T if WAL recovery failed */
 
 /*
  * We use a simple state machine to control startup, shutdown, and
@@ -270,8 +280,6 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * states, nor in PM_SHUTDOWN states (because we don't enter those states
  * when trying to recover from a crash).  It can be true in PM_STARTUP state,
  * because we don't clear it until we've successfully started WAL redo.
- * Similarly, RecoveryError means that we have crashed during recovery, and
- * should not try to restart.
  */
 typedef enum
 {
@@ -1139,6 +1147,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	StartupPID = StartupDataBase();
 	Assert(StartupPID != 0);
+	StartupStatus = STARTUP_RUNNING;
 	pmState = PM_STARTUP;
 
 	status = ServerLoop();
@@ -2410,6 +2419,7 @@ reaper(SIGNAL_ARGS)
 			if (Shutdown > NoShutdown &&
 				(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
 			{
+				StartupStatus = STARTUP_NOT_RUNNING;
 				pmState = PM_WAIT_BACKENDS;
 				/* PostmasterStateMachine logic does the rest */
 				continue;
@@ -2432,16 +2442,18 @@ reaper(SIGNAL_ARGS)
 			/*
 			 * After PM_STARTUP, any unexpected exit (including FATAL exit) of
 			 * the startup process is catastrophic, so kill other children,
-			 * and set RecoveryError so we don't try to reinitialize after
-			 * they're gone.  Exception: if FatalError is already set, that
-			 * implies we previously sent the startup process a SIGQUIT, so
+			 * and set StartupStatus so we don't try to reinitialize after
+			 * they're gone.  Exception: if StartupStatus is STARTUP_SIGNALED,
+			 * then we previously sent the startup process a SIGQUIT; so
 			 * that's probably the reason it died, and we do want to try to
 			 * restart in that case.
 			 */
 			if (!EXIT_STATUS_0(exitstatus))
 			{
-				if (!FatalError)
-					RecoveryError = true;
+				if (StartupStatus == STARTUP_SIGNALED)
+					StartupStatus = STARTUP_NOT_RUNNING;
+				else
+					StartupStatus = STARTUP_CRASHED;
 				HandleChildCrash(pid, exitstatus,
 								 _("startup process"));
 				continue;
@@ -2450,6 +2462,7 @@ reaper(SIGNAL_ARGS)
 			/*
 			 * Startup succeeded, commence normal operations
 			 */
+			StartupStatus = STARTUP_NOT_RUNNING;
 			FatalError = false;
 			ReachedNormalRunning = true;
 			pmState = PM_RUN;
@@ -2788,7 +2801,10 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 
 	/* Take care of the startup process too */
 	if (pid == StartupPID)
+	{
 		StartupPID = 0;
+		StartupStatus = STARTUP_CRASHED;
+	}
 	else if (StartupPID != 0 && !FatalError)
 	{
 		ereport(DEBUG2,
@@ -2796,6 +2812,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 								 (int) StartupPID)));
 		signal_child(StartupPID, (SendStop ? SIGSTOP : SIGQUIT));
+		StartupStatus = STARTUP_SIGNALED;
 	}
 
 	/* Take care of the bgwriter too */
@@ -3142,13 +3159,14 @@ PostmasterStateMachine(void)
 	}
 
 	/*
-	 * If recovery failed, or the user does not want an automatic restart
-	 * after backend crashes, wait for all non-syslogger children to exit, and
-	 * then exit postmaster. We don't try to reinitialize when recovery fails,
-	 * because more than likely it will just fail again and we will keep
-	 * trying forever.
+	 * If the startup process failed, or the user does not want an automatic
+	 * restart after backend crashes, wait for all non-syslogger children to
+	 * exit, and then exit postmaster.  We don't try to reinitialize when the
+	 * startup process fails, because more than likely it will just fail again
+	 * and we will keep trying forever.
 	 */
-	if (pmState == PM_NO_CHILDREN && (RecoveryError || !restart_after_crash))
+	if (pmState == PM_NO_CHILDREN &&
+		(StartupStatus == STARTUP_CRASHED || !restart_after_crash))
 		ExitPostmaster(1);
 
 	/*
@@ -3165,6 +3183,7 @@ PostmasterStateMachine(void)
 
 		StartupPID = StartupDataBase();
 		Assert(StartupPID != 0);
+		StartupStatus = STARTUP_RUNNING;
 		pmState = PM_STARTUP;
 	}
 }
