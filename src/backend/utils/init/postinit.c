@@ -391,6 +391,8 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_OVERRIDE);
 	SetConfigOption("lc_ctype", ctype, PGC_INTERNAL, PGC_S_OVERRIDE);
 
+	check_strxfrm_bug();
+
 	ReleaseSysCache(tup);
 }
 
