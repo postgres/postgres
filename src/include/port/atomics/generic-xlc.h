@@ -18,8 +18,6 @@
 
 #if defined(HAVE_ATOMICS)
 
-#include <atomic.h>
-
 #define PG_HAVE_ATOMIC_U32_SUPPORT
 typedef struct pg_atomic_uint32
 {
@@ -48,9 +46,6 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool	ret;
-	uint64	current;
-
 	/*
 	 * xlc's documentation tells us:
 	 * "If __compare_and_swap is used as a locking primitive, insert a call to
@@ -62,18 +57,15 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	 * XXX: __compare_and_swap is defined to take signed parameters, but that
 	 * shouldn't matter since we don't perform any arithmetic operations.
 	 */
-	current = (uint32)__compare_and_swap((volatile int*)ptr->value,
-										 (int)*expected, (int)newval);
-	ret = current == *expected;
-	*expected = current;
-	return ret;
+	return __compare_and_swap((volatile int*)&ptr->value,
+							  (int *)expected, (int)newval);
 }
 
 #define PG_HAVE_ATOMIC_FETCH_ADD_U32
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
-	return __fetch_and_add(&ptr->value, add_);
+	return __fetch_and_add((volatile int *)&ptr->value, add_);
 }
 
 #ifdef PG_HAVE_ATOMIC_U64_SUPPORT
@@ -83,23 +75,17 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool	ret;
-	uint64	current;
-
 	__isync();
 
-	current = (uint64)__compare_and_swaplp((volatile long*)ptr->value,
-										   (long)*expected, (long)newval);
-	ret = current == *expected;
-	*expected = current;
-	return ret;
+	return __compare_and_swaplp((volatile long*)&ptr->value,
+								(long *)expected, (long)newval);;
 }
 
 #define PG_HAVE_ATOMIC_FETCH_ADD_U64
 static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
-	return __fetch_and_addlp(&ptr->value, add_);
+	return __fetch_and_addlp((volatile long *)&ptr->value, add_);
 }
 
 #endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
