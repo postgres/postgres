@@ -34,13 +34,13 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   } [, ... ]
 
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable>
-            RENAME TO <replaceable>new_name</replaceable>
+    RENAME TO <replaceable>new_name</replaceable>
 
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable>
-             OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+    OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable>
-           SET SCHEMA <replaceable>new_schema</replaceable>
+    SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
