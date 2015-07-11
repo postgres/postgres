@@ -1088,6 +1088,18 @@ RESET SESSION AUTHORIZATION;
 DROP TABLE copy_t;
 
 --
+-- Collation support
+--
+BEGIN;
+SET row_security = force;
+CREATE TABLE coll_t (c) AS VALUES ('bar'::text);
+CREATE POLICY coll_p ON coll_t USING (c < ('foo'::text COLLATE "C"));
+ALTER TABLE coll_t ENABLE ROW LEVEL SECURITY;
+SELECT (string_to_array(polqual, ':'))[7] AS inputcollid FROM pg_policy WHERE polrelid = 'coll_t'::regclass;
+SELECT * FROM coll_t;
+ROLLBACK;
+
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
