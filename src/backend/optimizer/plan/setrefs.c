@@ -776,6 +776,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 									  linitial_int(splan->resultRelations),
 									  rtoffset);
 
+					pfree(itlist);
+
 					splan->exclRelTlist =
 						fix_scan_list(root, splan->exclRelTlist, rtoffset);
 				}
