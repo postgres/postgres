@@ -38,6 +38,7 @@ static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 static volatile bool time_to_abort = false;
 static bool do_create_slot = false;
+static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
 static bool synchronous = false;
 
@@ -66,6 +67,7 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
+	printf(_("      --if-not-exists    do not treat naming conflicts as an error when creating a slot\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
@@ -371,7 +373,8 @@ main(int argc, char **argv)
 /* action */
 		{"create-slot", no_argument, NULL, 1},
 		{"drop-slot", no_argument, NULL, 2},
-		{"synchronous", no_argument, NULL, 3},
+		{"if-not-exists", no_argument, NULL, 3},
+		{"synchronous", no_argument, NULL, 4},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -455,6 +458,9 @@ main(int argc, char **argv)
 				do_drop_slot = true;
 				break;
 			case 3:
+				slot_exists_ok = true;
+				break;
+			case 4:
 				synchronous = true;
 				break;
 			default:
@@ -575,7 +581,8 @@ main(int argc, char **argv)
 					_("%s: creating replication slot \"%s\"\n"),
 					progname, replication_slot);
 
-		if (!CreateReplicationSlot(conn, replication_slot, NULL, NULL, true))
+		if (!CreateReplicationSlot(conn, replication_slot, NULL, true,
+								   slot_exists_ok))
 			disconnect_and_exit(1);
 	}
 

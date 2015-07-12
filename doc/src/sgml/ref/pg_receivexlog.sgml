@@ -93,6 +93,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--if-not-exists</option></term>
+      <listitem>
+       <para>
+        Do not not error out when <option>--create-slot</option> is specified
+        and a slot with the specified name already exists.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-n</option></term>
       <term><option>--no-loop</option></term>
       <listitem>
