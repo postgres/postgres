@@ -1880,7 +1880,7 @@ FIXME: Add more specifics?
 2015-01-23 [a179232] Alvaro..: vacuumdb: enable parallel mode
 -->
       <para>
-       Allow <link linkend="APP-VACUUMDB"><command>vacuumdb</></> to
+       Allow <link linkend="APP-VACUUMDB"><application>vacuumdb</></> to
        vacuum in parallel using <option>--jobs</> (Dilip Kumar)
       </para>
      </listitem>
