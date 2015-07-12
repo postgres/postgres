@@ -15133,6 +15133,7 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 		addObjectDependency(&contable->dataObj->dobj,
 							reftable->dataObj->dobj.dumpId);
 	}
+	PQclear(res);
 	destroyPQExpBuffer(query);
 }
 
