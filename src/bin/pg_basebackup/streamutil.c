@@ -414,6 +414,7 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 		return false;
 	}
 
+	destroyPQExpBuffer(query);
 	PQclear(res);
 	return true;
 }

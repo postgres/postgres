@@ -6660,6 +6660,7 @@ getTransforms(Archive *fout, int *numTransforms)
 			appendPQExpBuffer(&namebuf, "%s %s",
 							  typeInfo->dobj.name, lanname);
 		transforminfo[i].dobj.name = namebuf.data;
+		free(lanname);
 	}
 
 	PQclear(res);
@@ -15735,6 +15736,7 @@ getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionInfo extinfo[]
 		addObjectDependency(&contable->dataObj->dobj,
 							reftable->dataObj->dobj.dumpId);
 	}
+	PQclear(res);
 	destroyPQExpBuffer(query);
 }
 

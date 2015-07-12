@@ -69,7 +69,7 @@ libpqConnect(const char *connstr)
 	pg_free(str);
 
 	/*
-	 * Also check that full_page_writes is enabled. We can get torn pages if
+	 * Also check that full_page_writes is enabled.  We can get torn pages if
 	 * a page is modified while we read it with pg_read_binary_file(), and we
 	 * rely on full page images to fix them.
 	 */
@@ -81,6 +81,7 @@ libpqConnect(const char *connstr)
 
 /*
  * Runs a query that returns a single value.
+ * The result should be pg_free'd after use.
  */
 static char *
 run_simple_query(const char *sql)
@@ -122,6 +123,8 @@ libpqGetCurrentXlogInsertLocation(void)
 		pg_fatal("unrecognized result \"%s\" for current XLOG insert location\n", val);
 
 	result = ((uint64) hi) << 32 | lo;
+
+	pg_free(val);
 
 	return result;
 }
@@ -201,6 +204,7 @@ libpqProcessFileList(void)
 
 		process_source_file(path, type, filesize, link_target);
 	}
+	PQclear(res);
 }
 
 /*----
@@ -296,7 +300,7 @@ receiveFileChunks(const char *sql)
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log(PG_DEBUG,
-				   "received NULL chunk for file \"%s\", file has been deleted\n",
+			  "received NULL chunk for file \"%s\", file has been deleted\n",
 				   filename);
 			pg_free(filename);
 			PQclear(res);
