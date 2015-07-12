@@ -53,7 +53,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   <para>
    Generally, the system will enforce filter conditions imposed using
    security policies prior to qualifications that appear in the query itself,
-   in order to the prevent the inadvertent exposure of the protected data to
+   in order to prevent the inadvertent exposure of the protected data to
    user-defined functions which might not be trustworthy.  However,
    functions and operators marked by the system (or the system
    administrator) as LEAKPROOF may be evaluated before policy
