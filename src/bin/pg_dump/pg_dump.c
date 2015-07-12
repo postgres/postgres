@@ -14007,6 +14007,7 @@ getExtensionMembership(ExtensionInfo extinfo[], int numExtensions)
 		addObjectDependency(&contable->dataObj->dobj,
 							reftable->dataObj->dobj.dumpId);
 	}
+	PQclear(res);
 	destroyPQExpBuffer(query);
 }
 
