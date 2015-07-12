@@ -1447,7 +1447,7 @@
 
      <listitem>
       <para>
-       Allow <link linkend="APP-VACUUMDB"><command>vacuumdb</></> to
+       Allow <link linkend="APP-VACUUMDB"><application>vacuumdb</></> to
        vacuum in parallel using <option>--jobs</> (Dilip Kumar)
       </para>
      </listitem>
