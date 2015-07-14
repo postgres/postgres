@@ -8645,69 +8645,67 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 		Node	   *stm = (Node *) lfirst(list_item);
 		AlteredTableInfo *tab;
 
-		switch (nodeTag(stm))
+		tab = ATGetQueueEntry(wqueue, rel);
+
+		if (IsA(stm, IndexStmt))
 		{
-			case T_IndexStmt:
+			IndexStmt  *stmt = (IndexStmt *) stm;
+			AlterTableCmd *newcmd;
+
+			if (!rewrite)
+				TryReuseIndex(oldId, stmt);
+
+			newcmd = makeNode(AlterTableCmd);
+			newcmd->subtype = AT_ReAddIndex;
+			newcmd->def = (Node *) stmt;
+			tab->subcmds[AT_PASS_OLD_INDEX] =
+				lappend(tab->subcmds[AT_PASS_OLD_INDEX], newcmd);
+		}
+		else if (IsA(stm, AlterTableStmt))
+		{
+			AlterTableStmt *stmt = (AlterTableStmt *) stm;
+			ListCell   *lcmd;
+
+			foreach(lcmd, stmt->cmds)
+			{
+				AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+
+				if (cmd->subtype == AT_AddIndex)
 				{
-					IndexStmt  *stmt = (IndexStmt *) stm;
-					AlterTableCmd *newcmd;
+					Assert(IsA(cmd->def, IndexStmt));
 
 					if (!rewrite)
-						TryReuseIndex(oldId, stmt);
+						TryReuseIndex(get_constraint_index(oldId),
+									  (IndexStmt *) cmd->def);
 
-					tab = ATGetQueueEntry(wqueue, rel);
-					newcmd = makeNode(AlterTableCmd);
-					newcmd->subtype = AT_ReAddIndex;
-					newcmd->def = (Node *) stmt;
+					cmd->subtype = AT_ReAddIndex;
 					tab->subcmds[AT_PASS_OLD_INDEX] =
-						lappend(tab->subcmds[AT_PASS_OLD_INDEX], newcmd);
-					break;
+						lappend(tab->subcmds[AT_PASS_OLD_INDEX], cmd);
 				}
-			case T_AlterTableStmt:
+				else if (cmd->subtype == AT_AddConstraint)
 				{
-					AlterTableStmt *stmt = (AlterTableStmt *) stm;
-					ListCell   *lcmd;
+					Constraint *con;
 
-					tab = ATGetQueueEntry(wqueue, rel);
-					foreach(lcmd, stmt->cmds)
-					{
-						AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-						Constraint *con;
+					Assert(IsA(cmd->def, Constraint));
 
-						switch (cmd->subtype)
-						{
-							case AT_AddIndex:
-								Assert(IsA(cmd->def, IndexStmt));
-								if (!rewrite)
-									TryReuseIndex(get_constraint_index(oldId),
-												  (IndexStmt *) cmd->def);
-								cmd->subtype = AT_ReAddIndex;
-								tab->subcmds[AT_PASS_OLD_INDEX] =
-									lappend(tab->subcmds[AT_PASS_OLD_INDEX], cmd);
-								break;
-							case AT_AddConstraint:
-								Assert(IsA(cmd->def, Constraint));
-								con = (Constraint *) cmd->def;
-								con->old_pktable_oid = refRelId;
-								/* rewriting neither side of a FK */
-								if (con->contype == CONSTR_FOREIGN &&
-									!rewrite && tab->rewrite == 0)
-									TryReuseForeignKey(oldId, con);
-								cmd->subtype = AT_ReAddConstraint;
-								tab->subcmds[AT_PASS_OLD_CONSTR] =
-									lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
-								break;
-							default:
-								elog(ERROR, "unexpected statement type: %d",
-									 (int) cmd->subtype);
-						}
-					}
-					break;
+					con = (Constraint *) cmd->def;
+					con->old_pktable_oid = refRelId;
+					/* rewriting neither side of a FK */
+					if (con->contype == CONSTR_FOREIGN &&
+						!rewrite && tab->rewrite == 0)
+						TryReuseForeignKey(oldId, con);
+					cmd->subtype = AT_ReAddConstraint;
+					tab->subcmds[AT_PASS_OLD_CONSTR] =
+						lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
 				}
-			default:
-				elog(ERROR, "unexpected statement type: %d",
-					 (int) nodeTag(stm));
+				else
+					elog(ERROR, "unexpected statement type: %d",
+						 (int) cmd->subtype);
+			}
 		}
+		else
+			elog(ERROR, "unexpected statement type: %d",
+				 (int) nodeTag(stm));
 	}
 
 	relation_close(rel, NoLock);
