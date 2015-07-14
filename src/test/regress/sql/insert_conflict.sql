@@ -102,7 +102,6 @@ insert into insertconflicttest values (5, 'Lemon') on conflict (fruit) do update
 insert into insertconflicttest values (6, 'Passionfruit') on conflict (lower(fruit)) do update set fruit = excluded.fruit;
 
 -- Check the target relation can be aliased
-insert into insertconflicttest values (6, 'Passionfruits') on conflict (key) do update set fruit = excluded.fruit;
 insert into insertconflicttest AS ict values (6, 'Passionfruit') on conflict (key) do update set fruit = excluded.fruit; -- ok, no reference to target table
 insert into insertconflicttest AS ict values (6, 'Passionfruit') on conflict (key) do update set fruit = ict.fruit; -- ok, alias
 insert into insertconflicttest AS ict values (6, 'Passionfruit') on conflict (key) do update set fruit = insertconflicttest.fruit; -- error, references aliased away name
