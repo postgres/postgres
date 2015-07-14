@@ -1610,8 +1610,8 @@ COMMENT ON CONSTRAINT comment_test_pk ON comment_test IS 'PRIMARY KEY constraint
 COMMENT ON INDEX comment_test_pk IS 'Index backing the PRIMARY KEY of comment_test';
 
 SELECT col_description('comment_test'::regclass, 1) as comment;
-SELECT indexrelid::regclass as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass;
-SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass;
+SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;
+SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass ORDER BY 1, 2;
 
 -- Change the datatype of all the columns. ALTER TABLE is optimized to not
 -- rebuild an index if the new data type is binary compatible with the old
@@ -1626,8 +1626,8 @@ ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
 
 -- Check that the comments are intact.
 SELECT col_description('comment_test'::regclass, 1) as comment;
-SELECT indexrelid::regclass as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass;
-SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass;
+SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;
+SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass ORDER BY 1, 2;
 
 
 -- Check that we map relation oids to filenodes and back correctly.  Only
