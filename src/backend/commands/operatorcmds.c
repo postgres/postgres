@@ -38,6 +38,7 @@
 #include "access/htup_details.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
@@ -499,7 +500,11 @@ AlterOperator(AlterOperatorStmt *stmt)
 	simple_heap_update(catalog, &tup->t_self, tup);
 	CatalogUpdateIndexes(catalog, tup);
 
-	heap_close(catalog, RowExclusiveLock);
+	InvokeObjectPostAlterHook(OperatorRelationId, oprId, 0);
+
+	ObjectAddressSet(address, OperatorRelationId, oprId);
+
+	heap_close(catalog, NoLock);
 
 	return address;
 }
