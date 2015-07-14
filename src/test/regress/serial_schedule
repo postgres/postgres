@@ -111,6 +111,7 @@ test: replica_identity
 test: rowsecurity
 test: object_address
 test: alter_generic
+test: alter_operator
 test: misc
 test: psql
 test: async

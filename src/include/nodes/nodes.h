@@ -347,6 +347,7 @@ typedef enum NodeTag
 	T_DropTableSpaceStmt,
 	T_AlterObjectSchemaStmt,
 	T_AlterOwnerStmt,
+	T_AlterOperatorStmt,
 	T_DropOwnedStmt,
 	T_ReassignOwnedStmt,
 	T_CompositeTypeStmt,

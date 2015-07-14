@@ -51,6 +51,9 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+static Oid	ValidateRestrictionEstimator(List *restrictionName);
+static Oid	ValidateJoinEstimator(List *joinName);
+
 /*
  * DefineOperator
  *		this function extracts all the information from the
@@ -80,7 +83,7 @@ DefineOperator(List *names, List *parameters)
 	Oid			functionOid;	/* functions converted to OID */
 	Oid			restrictionOid;
 	Oid			joinOid;
-	Oid			typeId[5];		/* only need up to 5 args here */
+	Oid			typeId[2];		/* to hold left and right arg */
 	int			nargs;
 	ListCell   *pl;
 
@@ -140,10 +143,13 @@ DefineOperator(List *names, List *parameters)
 		else if (pg_strcasecmp(defel->defname, "gtcmp") == 0)
 			canMerge = true;
 		else
+		{
+			/* WARNING, not ERROR, for historical backwards-compatibility */
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("operator attribute \"%s\" not recognized",
 							defel->defname)));
+		}
 	}
 
 	/*
@@ -216,69 +222,14 @@ DefineOperator(List *names, List *parameters)
 		aclcheck_error_type(aclresult, rettype);
 
 	/*
-	 * Look up restriction estimator if specified
+	 * Look up restriction and join estimators if specified
 	 */
 	if (restrictionName)
-	{
-		typeId[0] = INTERNALOID;	/* PlannerInfo */
-		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = INTERNALOID;	/* args list */
-		typeId[3] = INT4OID;	/* varRelid */
-
-		restrictionOid = LookupFuncName(restrictionName, 4, typeId, false);
-
-		/* estimators must return float8 */
-		if (get_func_rettype(restrictionOid) != FLOAT8OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("restriction estimator function %s must return type \"float8\"",
-							NameListToString(restrictionName))));
-
-		/* Require EXECUTE rights for the estimator */
-		aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC,
-						   NameListToString(restrictionName));
-	}
+		restrictionOid = ValidateRestrictionEstimator(restrictionName);
 	else
 		restrictionOid = InvalidOid;
-
-	/*
-	 * Look up join estimator if specified
-	 */
 	if (joinName)
-	{
-		typeId[0] = INTERNALOID;	/* PlannerInfo */
-		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = INTERNALOID;	/* args list */
-		typeId[3] = INT2OID;	/* jointype */
-		typeId[4] = INTERNALOID;	/* SpecialJoinInfo */
-
-		/*
-		 * As of Postgres 8.4, the preferred signature for join estimators has
-		 * 5 arguments, but we still allow the old 4-argument form. Try the
-		 * preferred form first.
-		 */
-		joinOid = LookupFuncName(joinName, 5, typeId, true);
-		if (!OidIsValid(joinOid))
-			joinOid = LookupFuncName(joinName, 4, typeId, true);
-		/* If not found, reference the 5-argument signature in error msg */
-		if (!OidIsValid(joinOid))
-			joinOid = LookupFuncName(joinName, 5, typeId, false);
-
-		/* estimators must return float8 */
-		if (get_func_rettype(joinOid) != FLOAT8OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("join estimator function %s must return type \"float8\"",
-					NameListToString(joinName))));
-
-		/* Require EXECUTE rights for the estimator */
-		aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC,
-						   NameListToString(joinName));
-	}
+		joinOid = ValidateJoinEstimator(joinName);
 	else
 		joinOid = InvalidOid;
 
@@ -297,6 +248,87 @@ DefineOperator(List *names, List *parameters)
 					   joinOid, /* optional join sel. procedure name */
 					   canMerge,	/* operator merges */
 					   canHash);	/* operator hashes */
+}
+
+/*
+ * Look up a restriction estimator function ny name, and verify that it has
+ * the correct signature and we have the permissions to attach it to an
+ * operator.
+ */
+static Oid
+ValidateRestrictionEstimator(List *restrictionName)
+{
+	Oid			typeId[4];
+	Oid			restrictionOid;
+	AclResult	aclresult;
+
+	typeId[0] = INTERNALOID;	/* PlannerInfo */
+	typeId[1] = OIDOID;			/* operator OID */
+	typeId[2] = INTERNALOID;	/* args list */
+	typeId[3] = INT4OID;		/* varRelid */
+
+	restrictionOid = LookupFuncName(restrictionName, 4, typeId, false);
+
+	/* estimators must return float8 */
+	if (get_func_rettype(restrictionOid) != FLOAT8OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("restriction estimator function %s must return type \"float8\"",
+						NameListToString(restrictionName))));
+
+	/* Require EXECUTE rights for the estimator */
+	aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC,
+					   NameListToString(restrictionName));
+
+	return restrictionOid;
+}
+
+/*
+ * Look up a join estimator function ny name, and verify that it has the
+ * correct signature and we have the permissions to attach it to an
+ * operator.
+ */
+static Oid
+ValidateJoinEstimator(List *joinName)
+{
+	Oid			typeId[5];
+	Oid			joinOid;
+	AclResult	aclresult;
+
+	typeId[0] = INTERNALOID;	/* PlannerInfo */
+	typeId[1] = OIDOID;			/* operator OID */
+	typeId[2] = INTERNALOID;	/* args list */
+	typeId[3] = INT2OID;		/* jointype */
+	typeId[4] = INTERNALOID;	/* SpecialJoinInfo */
+
+	/*
+	 * As of Postgres 8.4, the preferred signature for join estimators has 5
+	 * arguments, but we still allow the old 4-argument form. Try the
+	 * preferred form first.
+	 */
+	joinOid = LookupFuncName(joinName, 5, typeId, true);
+	if (!OidIsValid(joinOid))
+		joinOid = LookupFuncName(joinName, 4, typeId, true);
+	/* If not found, reference the 5-argument signature in error msg */
+	if (!OidIsValid(joinOid))
+		joinOid = LookupFuncName(joinName, 5, typeId, false);
+
+	/* estimators must return float8 */
+	if (get_func_rettype(joinOid) != FLOAT8OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+			 errmsg("join estimator function %s must return type \"float8\"",
+					NameListToString(joinName))));
+
+	/* Require EXECUTE rights for the estimator */
+	aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC,
+					   NameListToString(joinName));
+
+	return joinOid;
 }
 
 /*
@@ -319,4 +351,155 @@ RemoveOperatorById(Oid operOid)
 	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
+}
+
+/*
+ * AlterOperator
+ *		routine implementing ALTER OPERATOR <operator> SET (option = ...).
+ *
+ * Currently, only RESTRICT and JOIN estimator functions can be changed.
+ */
+ObjectAddress
+AlterOperator(AlterOperatorStmt *stmt)
+{
+	ObjectAddress address;
+	Oid			oprId;
+	Relation	catalog;
+	HeapTuple	tup;
+	Form_pg_operator oprForm;
+	int			i;
+	ListCell   *pl;
+	Datum		values[Natts_pg_operator];
+	bool		nulls[Natts_pg_operator];
+	bool		replaces[Natts_pg_operator];
+	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
+	bool		updateRestriction = false;
+	Oid			restrictionOid;
+	List	   *joinName = NIL; /* optional join sel. procedure */
+	bool		updateJoin = false;
+	Oid			joinOid;
+
+	/* Look up the operator */
+	oprId = LookupOperNameTypeNames(NULL, stmt->opername,
+									(TypeName *) linitial(stmt->operargs),
+									(TypeName *) lsecond(stmt->operargs),
+									false, -1);
+	catalog = heap_open(OperatorRelationId, RowExclusiveLock);
+	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(oprId));
+	if (tup == NULL)
+		elog(ERROR, "cache lookup failed for operator %u", oprId);
+	oprForm = (Form_pg_operator) GETSTRUCT(tup);
+
+	/* Process options */
+	foreach(pl, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(pl);
+		List	   *param;
+
+		if (defel->arg == NULL)
+			param = NIL;		/* NONE, removes the function */
+		else
+			param = defGetQualifiedName(defel);
+
+		if (pg_strcasecmp(defel->defname, "restrict") == 0)
+		{
+			restrictionName = param;
+			updateRestriction = true;
+		}
+		else if (pg_strcasecmp(defel->defname, "join") == 0)
+		{
+			joinName = param;
+			updateJoin = true;
+		}
+
+		/*
+		 * The rest of the options that CREATE accepts cannot be changed.
+		 * Check for them so that we can give a meaningful error message.
+		 */
+		else if (pg_strcasecmp(defel->defname, "leftarg") == 0 ||
+				 pg_strcasecmp(defel->defname, "rightarg") == 0 ||
+				 pg_strcasecmp(defel->defname, "procedure") == 0 ||
+				 pg_strcasecmp(defel->defname, "commutator") == 0 ||
+				 pg_strcasecmp(defel->defname, "negator") == 0 ||
+				 pg_strcasecmp(defel->defname, "hashes") == 0 ||
+				 pg_strcasecmp(defel->defname, "merges") == 0)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("operator attribute \"%s\" can not be changed",
+							defel->defname)));
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("operator attribute \"%s\" not recognized",
+							defel->defname)));
+	}
+
+	/* Check permissions. Must be owner. */
+	if (!pg_oper_ownercheck(oprId, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+					   NameStr(oprForm->oprname));
+
+	/*
+	 * Look up restriction and join estimators if specified
+	 */
+	if (restrictionName)
+		restrictionOid = ValidateRestrictionEstimator(restrictionName);
+	else
+		restrictionOid = InvalidOid;
+	if (joinName)
+		joinOid = ValidateJoinEstimator(joinName);
+	else
+		joinOid = InvalidOid;
+
+	/* Perform additional checks, like OperatorCreate does */
+	if (!(OidIsValid(oprForm->oprleft) && OidIsValid(oprForm->oprright)))
+	{
+		/* If it's not a binary op, these things mustn't be set: */
+		if (OidIsValid(joinOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("only binary operators can have join selectivity")));
+	}
+
+	if (oprForm->oprresult != BOOLOID)
+	{
+		if (OidIsValid(restrictionOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can have restriction selectivity")));
+		if (OidIsValid(joinOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				errmsg("only boolean operators can have join selectivity")));
+	}
+
+	/* Update the tuple */
+	for (i = 0; i < Natts_pg_operator; ++i)
+	{
+		values[i] = (Datum) 0;
+		replaces[i] = false;
+		nulls[i] = false;
+	}
+	if (updateRestriction)
+	{
+		replaces[Anum_pg_operator_oprrest - 1] = true;
+		values[Anum_pg_operator_oprrest - 1] = restrictionOid;
+	}
+	if (updateJoin)
+	{
+		replaces[Anum_pg_operator_oprjoin - 1] = true;
+		values[Anum_pg_operator_oprjoin - 1] = joinOid;
+	}
+
+	tup = heap_modify_tuple(tup, RelationGetDescr(catalog),
+							values, nulls, replaces);
+
+	simple_heap_update(catalog, &tup->t_self, tup);
+	CatalogUpdateIndexes(catalog, tup);
+
+	heap_close(catalog, RowExclusiveLock);
+
+	return address;
 }

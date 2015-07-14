@@ -1339,6 +1339,16 @@ _equalAlterOwnerStmt(const AlterOwnerStmt *a, const AlterOwnerStmt *b)
 }
 
 static bool
+_equalAlterOperatorStmt(const AlterOperatorStmt *a, const AlterOperatorStmt *b)
+{
+	COMPARE_NODE_FIELD(opername);
+	COMPARE_NODE_FIELD(operargs);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
 _equalRuleStmt(const RuleStmt *a, const RuleStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
@@ -2979,6 +2989,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_AlterOwnerStmt:
 			retval = _equalAlterOwnerStmt(a, b);
+			break;
+		case T_AlterOperatorStmt:
+			retval = _equalAlterOperatorStmt(a, b);
 			break;
 		case T_RuleStmt:
 			retval = _equalRuleStmt(a, b);

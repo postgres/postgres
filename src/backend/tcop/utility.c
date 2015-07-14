@@ -149,6 +149,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterRoleSetStmt:
 		case T_AlterObjectSchemaStmt:
 		case T_AlterOwnerStmt:
+		case T_AlterOperatorStmt:
 		case T_AlterSeqStmt:
 		case T_AlterTableMoveAllStmt:
 		case T_AlterTableStmt:
@@ -1481,6 +1482,10 @@ ProcessUtilitySlow(Node *parsetree,
 				address = ExecAlterOwnerStmt((AlterOwnerStmt *) parsetree);
 				break;
 
+			case T_AlterOperatorStmt:
+				address = AlterOperator((AlterOperatorStmt *) parsetree);
+				break;
+
 			case T_CommentStmt:
 				address = CommentObject((CommentStmt *) parsetree);
 				break;
@@ -2492,6 +2497,10 @@ CreateCommandTag(Node *parsetree)
 
 		case T_AlterOpFamilyStmt:
 			tag = "ALTER OPERATOR FAMILY";
+			break;
+
+		case T_AlterOperatorStmt:
+			tag = "ALTER OPERATOR";
 			break;
 
 		case T_AlterTSDictionaryStmt:

@@ -2544,6 +2544,19 @@ typedef struct AlterOwnerStmt
 
 
 /* ----------------------
+ *		Alter Operator Set Restrict, Join
+ * ----------------------
+ */
+typedef struct AlterOperatorStmt
+{
+	NodeTag		type;
+	List	   *opername;		/* operator name */
+	List	   *operargs;		/* operator's argument TypeNames */
+	List	   *options;		/* List of DefElem nodes */
+} AlterOperatorStmt;
+
+
+/* ----------------------
  *		Create Rule Statement
  * ----------------------
  */

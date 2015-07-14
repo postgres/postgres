@@ -26,6 +26,11 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
 
 ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } )
     SET SCHEMA <replaceable>new_schema</replaceable>
+
+ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } )
+    SET ( {  RESTRICT = { <replaceable class="parameter">res_proc</replaceable> | NONE }
+           | JOIN = { <replaceable class="parameter">join_proc</replaceable> | NONE }
+         } [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 
@@ -34,8 +39,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
 
   <para>
    <command>ALTER OPERATOR</command> changes the definition of
-   an operator.  The only currently available functionality is to change the
-   owner of the operator.
+   an operator.
   </para>
 
   <para>
@@ -98,6 +102,25 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+     <term><replaceable class="parameter">res_proc</replaceable></term>
+     <listitem>
+       <para>
+         The restriction selectivity estimator function for this operator; write NONE to remove existing selectivity estimator.
+       </para>
+      </listitem>
+   </varlistentry>
+
+   <varlistentry>
+     <term><replaceable class="parameter">join_proc</replaceable></term>
+     <listitem>
+       <para>
+         The join selectivity estimator function for this operator; write NONE to remove existing selectivity estimator.
+       </para>
+     </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -109,6 +132,13 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
 <programlisting>
 ALTER OPERATOR @@ (text, text) OWNER TO joe;
 </programlisting></para>
+
+  <para>
+    Change the restriction and join selectivity estimator functions of a custom operator <literal>a && b</literal> for type <type>int[]</type>:
+<programlisting>
+ALTER OPERATOR && (_int4, _int4) SET (RESTRICT = _int_contsel, JOIN = _int_contjoinsel);
+</programlisting></para>
+
  </refsect1>
 
  <refsect1>

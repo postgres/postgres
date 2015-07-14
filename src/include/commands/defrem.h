@@ -73,6 +73,7 @@ extern void interpret_function_parameter_list(List *parameters,
 /* commands/operatorcmds.c */
 extern ObjectAddress DefineOperator(List *names, List *parameters);
 extern void RemoveOperatorById(Oid operOid);
+extern ObjectAddress AlterOperator(AlterOperatorStmt *stmt);
 
 /* commands/aggregatecmds.c */
 extern ObjectAddress DefineAggregate(List *name, List *args, bool oldstyle,

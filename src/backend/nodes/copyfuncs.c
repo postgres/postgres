@@ -3212,6 +3212,18 @@ _copyAlterOwnerStmt(const AlterOwnerStmt *from)
 	return newnode;
 }
 
+static AlterOperatorStmt *
+_copyAlterOperatorStmt(const AlterOperatorStmt *from)
+{
+	AlterOperatorStmt *newnode = makeNode(AlterOperatorStmt);
+
+	COPY_NODE_FIELD(opername);
+	COPY_NODE_FIELD(operargs);
+	COPY_NODE_FIELD(options);
+
+	return newnode;
+}
+
 static RuleStmt *
 _copyRuleStmt(const RuleStmt *from)
 {
@@ -4614,6 +4626,9 @@ copyObject(const void *from)
 			break;
 		case T_AlterOwnerStmt:
 			retval = _copyAlterOwnerStmt(from);
+			break;
+		case T_AlterOperatorStmt:
+			retval = _copyAlterOperatorStmt(from);
 			break;
 		case T_RuleStmt:
 			retval = _copyRuleStmt(from);

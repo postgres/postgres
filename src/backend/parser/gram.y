@@ -232,7 +232,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		AlterEventTrigStmt
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
-		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
+		AlterObjectSchemaStmt AlterOwnerStmt AlterOperatorStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
 		AlterTblSpcStmt AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
 		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt AlterPolicyStmt
@@ -359,7 +359,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				any_operator expr_list attrs
 				target_list opt_target_list insert_column_list set_target_list
 				set_clause_list set_clause multiple_set_clause
-				ctext_expr_list ctext_row def_list indirection opt_indirection
+				ctext_expr_list ctext_row def_list operator_def_list indirection opt_indirection
 				reloption_list group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list opclass_drop_list
 				opclass_purpose opt_opfamily transaction_mode_list_or_empty
@@ -432,7 +432,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
 %type <node>	columnDef columnOptions
-%type <defelt>	def_elem reloption_elem old_aggr_elem
+%type <defelt>	def_elem reloption_elem old_aggr_elem operator_def_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
@@ -769,6 +769,7 @@ stmt :
 			| AlterGroupStmt
 			| AlterObjectSchemaStmt
 			| AlterOwnerStmt
+			| AlterOperatorStmt
 			| AlterPolicyStmt
 			| AlterSeqStmt
 			| AlterSystemStmt
@@ -8194,6 +8195,33 @@ AlterObjectSchemaStmt:
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
+		;
+
+/*****************************************************************************
+ *
+ * ALTER OPERATOR name SET define
+ *
+ *****************************************************************************/
+
+AlterOperatorStmt:
+			ALTER OPERATOR any_operator oper_argtypes SET '(' operator_def_list ')'
+				{
+					AlterOperatorStmt *n = makeNode(AlterOperatorStmt);
+					n->opername = $3;
+					n->operargs = $4;
+					n->options = $7;
+					$$ = (Node *)n;
+				}
+		;
+
+operator_def_list:	operator_def_elem								{ $$ = list_make1($1); }
+			| operator_def_list ',' operator_def_elem				{ $$ = lappend($1, $3); }
+		;
+
+operator_def_elem: ColLabel '=' NONE
+						{ $$ = makeDefElem($1, NULL); }
+				   | ColLabel '=' def_arg
+						{ $$ = makeDefElem($1, (Node *) $3); }
 		;
 
 /*****************************************************************************
