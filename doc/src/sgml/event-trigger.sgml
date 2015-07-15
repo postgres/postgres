@@ -935,7 +935,7 @@ typedef struct EventTriggerData
        <para>
         Describes the event for which the function is called, one of
         <literal>"ddl_command_start"</literal>, <literal>"ddl_command_end"</literal>,
-        <literal>"sql_drop"</literal>.
+        <literal>"sql_drop"</literal>, <literal>"table_rewrite"</literal>.
         See <xref linkend="event-trigger-definition"> for the meaning of these
         events.
        </para>
