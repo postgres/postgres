@@ -88,7 +88,7 @@ endif # win32
 ifeq ($(PORTNAME), aix)
 
 postgres: $(POSTGRES_IMP)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(call expand_subsys,$(OBJS)) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(call expand_subsys,$(OBJS)) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -Wl,-brtllib -o $@
 
 $(POSTGRES_IMP): $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
