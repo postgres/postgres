@@ -4217,7 +4217,7 @@ make_sort_from_groupcols(PlannerInfo *root,
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[numsortkeys]);
 
 		if (!tle)
-			elog(ERROR, "could not retrive tle for sort-from-groupcols");
+			elog(ERROR, "could not retrieve tle for sort-from-groupcols");
 
 		sortColIdx[numsortkeys] = tle->resno;
 		sortOperators[numsortkeys] = grpcl->sortop;
