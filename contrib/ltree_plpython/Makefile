@@ -25,7 +25,7 @@ endif
 
 ifeq ($(PORTNAME), win32)
 # This means we need an in-tree build on Windows, not a pgxs build
-SHLIB_LINK += $(wildcard ../../src/pl/plpython/libpython*.a)
+SHLIB_LINK += $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
 endif
 
 REGRESS_OPTS += --load-extension=ltree
