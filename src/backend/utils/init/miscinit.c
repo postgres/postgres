@@ -199,8 +199,8 @@ InitPostmasterChild(void)
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
 	 * can signal any child processes too. Not all processes will have
-	 * children, but for consistency we , but for consistency we make all
-	 * postmaster child processes do this.
+	 * children, but for consistency we make all postmaster child processes do
+	 * this.
 	 */
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
