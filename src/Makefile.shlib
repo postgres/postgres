@@ -111,6 +111,7 @@ ifeq ($(PORTNAME), aix)
     shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   endif
   haslibarule   = yes
+  # $(exports_file) is also usable as an import file
   exports_file		= lib$(NAME).exp
 endif
 
@@ -341,7 +342,7 @@ $(shlib) $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	rm -f $(stlib)
 	$(LINK.static) $(stlib) $^
 	$(RANLIB) $(stlib)
-	$(MKLDEXPORT) $(stlib) >$(exports_file)
+	$(MKLDEXPORT) $(stlib) $(shlib) >$(exports_file)
 	$(COMPILER) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK)
 	rm -f $(stlib)
 	$(AR) $(AROPT) $(stlib) $(shlib)

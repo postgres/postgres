@@ -23,10 +23,15 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+# In configurations that forbid undefined symbols in libraries, link with each
+# dependency.  This does preclude pgxs builds.
+ifeq ($(PORTNAME), aix)
+rpathdir = $(pkglibdir):$(perl_archlibexp)/CORE
+SHLIB_LINK += ../hstore/libhstore.exp $(perl_embed_ldflags)
+endif
 ifeq ($(PORTNAME), win32)
 # these settings are the same as for plperl
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
-# This means we need an in-tree build on Windows, not a pgxs build
 SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plperl/libperl*.a)
 endif
 
