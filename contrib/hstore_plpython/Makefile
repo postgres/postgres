@@ -23,8 +23,13 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+# In configurations that forbid undefined symbols in libraries, link with each
+# dependency.  This does preclude pgxs builds.
+ifeq ($(PORTNAME), aix)
+rpathdir = $(pkglibdir):$(python_libdir)
+SHLIB_LINK += ../hstore/libhstore.exp $(python_libspec) $(python_additional_libs) $(wildcard ../../src/pl/plpython/libplpython*.exp)
+endif
 ifeq ($(PORTNAME), win32)
-# This means we need an in-tree build on Windows, not a pgxs build
 SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
 endif
 
