@@ -48,17 +48,15 @@ ALTER OPERATOR === (boolean, boolean) SET (JOIN = non_existent_func);
 ALTER OPERATOR === (boolean, boolean) SET (COMMUTATOR = !==);
 ALTER OPERATOR === (boolean, boolean) SET (NEGATOR = !==);
 
-
 --
 -- Test permission check. Must be owner to ALTER OPERATOR.
 --
 CREATE USER regtest_alter_user;
-SET SESSION AUTHORIZATION regtest_alter_user_user;
+SET SESSION AUTHORIZATION regtest_alter_user;
 
 ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = NONE);
 
-RESET SESSION AUTHORIZATION;
-
 -- Clean up
-DROP USER regression_alter_user;
+RESET SESSION AUTHORIZATION;
+DROP USER regtest_alter_user;
 DROP OPERATOR === (boolean, boolean);

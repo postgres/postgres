@@ -66,11 +66,10 @@ ERROR:  operator attribute "negator" can not be changed
 -- Test permission check. Must be owner to ALTER OPERATOR.
 --
 CREATE USER regtest_alter_user;
-SET SESSION AUTHORIZATION regtest_alter_user_user;
-ERROR:  role "regtest_alter_user_user" does not exist
+SET SESSION AUTHORIZATION regtest_alter_user;
 ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = NONE);
-RESET SESSION AUTHORIZATION;
+ERROR:  must be owner of operator ===
 -- Clean up
-DROP USER regression_alter_user;
-ERROR:  role "regression_alter_user" does not exist
+RESET SESSION AUTHORIZATION;
+DROP USER regtest_alter_user;
 DROP OPERATOR === (boolean, boolean);
