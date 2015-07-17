@@ -447,6 +447,7 @@ elif test "$ICC" = yes; then
 elif test "$PORTNAME" = "aix"; then
   # AIX's xlc has to have strict aliasing turned off too
   PGAC_PROG_CC_CFLAGS_OPT([-qnoansialias])
+  PGAC_PROG_CC_CFLAGS_OPT([-qlonglong])
 fi
 
 # supply -g if --enable-debug
