@@ -6,6 +6,7 @@
  *	  Remove __inline, _DIAGASSERTs, __P
  *	  Remove ill-considered "swap_cnt" switch to insertion sort,
  *	  in favor of a simple check for presorted input.
+ *	  Take care to recurse on the smaller partition, to bound stack usage.
  *
  *	CAUTION: if you change this file, see also qsort.c, gen_qsort_tuple.pl
  *
@@ -54,9 +55,18 @@ static void swapfunc(char *, char *, size_t, int);
  * Qsort routine based on J. L. Bentley and M. D. McIlroy,
  * "Engineering a sort function",
  * Software--Practice and Experience 23 (1993) 1249-1265.
+ *
  * We have modified their original by adding a check for already-sorted input,
  * which seems to be a win per discussions on pgsql-hackers around 2006-03-21.
+ *
+ * Also, we recurse on the smaller partition and iterate on the larger one,
+ * which ensures we cannot recurse more than log(N) levels (since the
+ * partition recursed to is surely no more than half of the input).  Bentley
+ * and McIlroy explicitly rejected doing this on the grounds that it's "not
+ * worth the effort", but we have seen crashes in the field due to stack
+ * overrun, so that judgment seems wrong.
  */
+
 #define swapcode(TYPE, parmi, parmj, n) \
 do {		\
 	size_t i = (n) / sizeof (TYPE);			\
@@ -89,7 +99,7 @@ swapfunc(char *a, char *b, size_t n, int swaptype)
 	} else							\
 		swapfunc(a, b, es, swaptype)
 
-#define vecswap(a, b, n) if ((n) > 0) swapfunc((a), (b), (size_t)(n), swaptype)
+#define vecswap(a, b, n) if ((n) > 0) swapfunc(a, b, n, swaptype)
 
 static char *
 med3(char *a, char *b, char *c, qsort_arg_comparator cmp, void *arg)
@@ -109,8 +119,9 @@ qsort_arg(void *a, size_t n, size_t es, qsort_arg_comparator cmp, void *arg)
 			   *pl,
 			   *pm,
 			   *pn;
-	int			d,
-				r,
+	size_t		d1,
+				d2;
+	int			r,
 				swaptype,
 				presorted;
 
@@ -141,7 +152,8 @@ loop:SWAPINIT(a, es);
 		pn = (char *) a + (n - 1) * es;
 		if (n > 40)
 		{
-			d = (n / 8) * es;
+			size_t		d = (n / 8) * es;
+
 			pl = med3(pl, pl + d, pl + 2 * d, cmp, arg);
 			pm = med3(pm - d, pm, pm + d, cmp, arg);
 			pn = med3(pn - 2 * d, pn - d, pn, cmp, arg);
@@ -178,18 +190,37 @@ loop:SWAPINIT(a, es);
 		pc -= es;
 	}
 	pn = (char *) a + n * es;
-	r = Min(pa - (char *) a, pb - pa);
-	vecswap(a, pb - r, r);
-	r = Min(pd - pc, pn - pd - es);
-	vecswap(pb, pn - r, r);
-	if ((r = pb - pa) > es)
-		qsort_arg(a, r / es, es, cmp, arg);
-	if ((r = pd - pc) > es)
+	d1 = Min(pa - (char *) a, pb - pa);
+	vecswap(a, pb - d1, d1);
+	d1 = Min(pd - pc, pn - pd - es);
+	vecswap(pb, pn - d1, d1);
+	d1 = pb - pa;
+	d2 = pd - pc;
+	if (d1 <= d2)
 	{
-		/* Iterate rather than recurse to save stack space */
-		a = pn - r;
-		n = r / es;
-		goto loop;
+		/* Recurse on left partition, then iterate on right partition */
+		if (d1 > es)
+			qsort_arg(a, d1 / es, es, cmp, arg);
+		if (d2 > es)
+		{
+			/* Iterate rather than recurse to save stack space */
+			/* qsort_arg(pn - d2, d2 / es, es, cmp, arg); */
+			a = pn - d2;
+			n = d2 / es;
+			goto loop;
+		}
 	}
-/*		qsort_arg(pn - r, r / es, es, cmp, arg);*/
+	else
+	{
+		/* Recurse on right partition, then iterate on left partition */
+		if (d2 > es)
+			qsort_arg(pn - d2, d2 / es, es, cmp, arg);
+		if (d1 > es)
+		{
+			/* Iterate rather than recurse to save stack space */
+			/* qsort_arg(a, d1 / es, es, cmp, arg); */
+			n = d1 / es;
+			goto loop;
+		}
+	}
 }
