@@ -7,7 +7,7 @@ if test "$GCC" != yes ; then
       CFLAGS="-O -qmaxmem=16384 -qsrcmsg"
       ;;
     *)
-      CFLAGS="-O2 -qmaxmem=16384 -qsrcmsg -qlonglong"
+      CFLAGS="-O2 -qmaxmem=16384 -qsrcmsg"
       ;;
   esac
 fi
