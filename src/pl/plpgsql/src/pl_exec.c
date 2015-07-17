@@ -53,21 +53,6 @@ typedef struct
 	bool	   *freevals;		/* which arguments are pfree-able */
 } PreparedParamsData;
 
-typedef struct
-{
-	/* NB: we assume this struct contains no padding bytes */
-	Oid			srctype;		/* source type for cast */
-	Oid			dsttype;		/* destination type for cast */
-	int32		srctypmod;		/* source typmod for cast */
-	int32		dsttypmod;		/* destination typmod for cast */
-} plpgsql_CastHashKey;
-
-typedef struct
-{
-	plpgsql_CastHashKey key;	/* hash key --- MUST BE FIRST */
-	ExprState  *cast_exprstate; /* cast expression, or NULL if no-op cast */
-} plpgsql_CastHashEntry;
-
 /*
  * All plpgsql function executions within a single transaction share the same
  * executor EState for evaluating "simple" expressions.  Each function call
@@ -103,6 +88,38 @@ typedef struct SimpleEcontextStackEntry
 
 static EState *shared_simple_eval_estate = NULL;
 static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
+
+/*
+ * We use a session-wide hash table for caching cast information.
+ *
+ * Once built, the compiled expression trees (cast_expr fields) survive for
+ * the life of the session.  At some point it might be worth invalidating
+ * those after pg_cast changes, but for the moment we don't bother.
+ *
+ * The evaluation state trees (cast_exprstate) are managed in the same way as
+ * simple expressions (i.e., we assume cast expressions are always simple).
+ */
+typedef struct					/* lookup key for cast info */
+{
+	/* NB: we assume this struct contains no padding bytes */
+	Oid			srctype;		/* source type for cast */
+	Oid			dsttype;		/* destination type for cast */
+	int32		srctypmod;		/* source typmod for cast */
+	int32		dsttypmod;		/* destination typmod for cast */
+} plpgsql_CastHashKey;
+
+typedef struct					/* cast_hash table entry */
+{
+	plpgsql_CastHashKey key;	/* hash key --- MUST BE FIRST */
+	Expr	   *cast_expr;		/* cast expression, or NULL if no-op cast */
+	/* The ExprState tree is valid only when cast_lxid matches current LXID */
+	ExprState  *cast_exprstate; /* expression's eval tree */
+	bool		cast_in_use;	/* true while we're executing eval tree */
+	LocalTransactionId cast_lxid;
+} plpgsql_CastHashEntry;
+
+static MemoryContext cast_hash_context = NULL;
+static HTAB *cast_hash = NULL;
 
 /************************************************************
  * Local function forward declarations
@@ -238,8 +255,9 @@ static Datum exec_cast_value(PLpgSQL_execstate *estate,
 				Datum value, bool *isnull,
 				Oid valtype, int32 valtypmod,
 				Oid reqtype, int32 reqtypmod);
-static ExprState *get_cast_expression(PLpgSQL_execstate *estate,
-				 Oid srctype, int32 srctypmod, Oid dsttype, int32 dsttypmod);
+static plpgsql_CastHashEntry *get_cast_hashentry(PLpgSQL_execstate *estate,
+				   Oid srctype, int32 srctypmod,
+				   Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
@@ -6043,12 +6061,12 @@ exec_cast_value(PLpgSQL_execstate *estate,
 	if (valtype != reqtype ||
 		(valtypmod != reqtypmod && reqtypmod != -1))
 	{
-		ExprState  *cast_expr;
+		plpgsql_CastHashEntry *cast_entry;
 
-		cast_expr = get_cast_expression(estate,
+		cast_entry = get_cast_hashentry(estate,
 										valtype, valtypmod,
 										reqtype, reqtypmod);
-		if (cast_expr)
+		if (cast_entry)
 		{
 			ExprContext *econtext = estate->eval_econtext;
 			MemoryContext oldcontext;
@@ -6058,7 +6076,12 @@ exec_cast_value(PLpgSQL_execstate *estate,
 			econtext->caseValue_datum = value;
 			econtext->caseValue_isNull = *isnull;
 
-			value = ExecEvalExpr(cast_expr, econtext, isnull, NULL);
+			cast_entry->cast_in_use = true;
+
+			value = ExecEvalExpr(cast_entry->cast_exprstate, econtext,
+								 isnull, NULL);
+
+			cast_entry->cast_in_use = false;
 
 			MemoryContextSwitchTo(oldcontext);
 		}
@@ -6068,46 +6091,44 @@ exec_cast_value(PLpgSQL_execstate *estate,
 }
 
 /* ----------
- * get_cast_expression			Look up how to perform a type cast
+ * get_cast_hashentry			Look up how to perform a type cast
  *
- * Returns an expression evaluation tree based on a CaseTestExpr input,
- * or NULL if the cast is a mere no-op relabeling.
- *
- * We cache the results of the lookup in a per-function hash table.
- * It's tempting to consider using a session-wide hash table instead,
- * but that introduces some corner-case questions that probably aren't
- * worth dealing with; in particular that re-entrant use of an evaluation
- * tree might occur.  That would also set in stone the assumption that
- * collation isn't important to a cast function.
+ * Returns a plpgsql_CastHashEntry if an expression has to be evaluated,
+ * or NULL if the cast is a mere no-op relabeling.  If there's work to be
+ * done, the cast_exprstate field contains an expression evaluation tree
+ * based on a CaseTestExpr input, and the cast_in_use field should be set
+ * TRUE while executing it.
  * ----------
  */
-static ExprState *
-get_cast_expression(PLpgSQL_execstate *estate,
-				  Oid srctype, int32 srctypmod, Oid dsttype, int32 dsttypmod)
+static plpgsql_CastHashEntry *
+get_cast_hashentry(PLpgSQL_execstate *estate,
+				   Oid srctype, int32 srctypmod,
+				   Oid dsttype, int32 dsttypmod)
 {
-	HTAB	   *cast_hash = estate->func->cast_hash;
 	plpgsql_CastHashKey cast_key;
 	plpgsql_CastHashEntry *cast_entry;
 	bool		found;
-	CaseTestExpr *placeholder;
-	Node	   *cast_expr;
-	ExprState  *cast_exprstate;
+	LocalTransactionId curlxid;
 	MemoryContext oldcontext;
 
-	/* Create the cast-info hash table if we didn't already */
+	/* Create the session-wide cast-info hash table if we didn't already */
 	if (cast_hash == NULL)
 	{
 		HASHCTL		ctl;
 
+		cast_hash_context = AllocSetContextCreate(TopMemoryContext,
+												  "PLpgSQL cast info",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(plpgsql_CastHashKey);
 		ctl.entrysize = sizeof(plpgsql_CastHashEntry);
-		ctl.hcxt = estate->func->fn_cxt;
+		ctl.hcxt = cast_hash_context;
 		cast_hash = hash_create("PLpgSQL cast cache",
 								16,		/* start small and extend */
 								&ctl,
 								HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-		estate->func->cast_hash = cast_hash;
 	}
 
 	/* Look for existing entry */
@@ -6118,102 +6139,131 @@ get_cast_expression(PLpgSQL_execstate *estate,
 	cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
 													   (void *) &cast_key,
 													   HASH_FIND, NULL);
-	if (cast_entry)
-		return cast_entry->cast_exprstate;
 
-	/* Construct expression tree for coercion in function's context */
-	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
-
-	/*
-	 * We use a CaseTestExpr as the base of the coercion tree, since it's very
-	 * cheap to insert the source value for that.
-	 */
-	placeholder = makeNode(CaseTestExpr);
-	placeholder->typeId = srctype;
-	placeholder->typeMod = srctypmod;
-	placeholder->collation = get_typcollation(srctype);
-	if (OidIsValid(estate->func->fn_input_collation) &&
-		OidIsValid(placeholder->collation))
-		placeholder->collation = estate->func->fn_input_collation;
-
-	/*
-	 * Apply coercion.  We use ASSIGNMENT coercion because that's the closest
-	 * match to plpgsql's historical behavior; in particular, EXPLICIT
-	 * coercion would allow silent truncation to a destination
-	 * varchar/bpchar's length, which we do not want.
-	 *
-	 * If source type is UNKNOWN, coerce_to_target_type will fail (it only
-	 * expects to see that for Const input nodes), so don't call it; we'll
-	 * apply CoerceViaIO instead.  Likewise, it doesn't currently work for
-	 * coercing RECORD to some other type, so skip for that too.
-	 */
-	if (srctype == UNKNOWNOID || srctype == RECORDOID)
-		cast_expr = NULL;
-	else
-		cast_expr = coerce_to_target_type(NULL,
-										  (Node *) placeholder, srctype,
-										  dsttype, dsttypmod,
-										  COERCION_ASSIGNMENT,
-										  COERCE_IMPLICIT_CAST,
-										  -1);
-
-	/*
-	 * If there's no cast path according to the parser, fall back to using an
-	 * I/O coercion; this is semantically dubious but matches plpgsql's
-	 * historical behavior.  We would need something of the sort for UNKNOWN
-	 * literals in any case.
-	 */
-	if (cast_expr == NULL)
+	if (cast_entry == NULL)
 	{
-		CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+		/* We've not looked up this coercion before */
+		Node	   *cast_expr;
+		CaseTestExpr *placeholder;
 
-		iocoerce->arg = (Expr *) placeholder;
-		iocoerce->resulttype = dsttype;
-		iocoerce->resultcollid = InvalidOid;
-		iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
-		iocoerce->location = -1;
-		cast_expr = (Node *) iocoerce;
-		if (dsttypmod != -1)
+		/*
+		 * Since we could easily fail (no such coercion), construct a
+		 * temporary coercion expression tree in a short-lived context, then
+		 * if successful copy it to cast_hash_context.
+		 */
+		oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
+
+		/*
+		 * We use a CaseTestExpr as the base of the coercion tree, since it's
+		 * very cheap to insert the source value for that.
+		 */
+		placeholder = makeNode(CaseTestExpr);
+		placeholder->typeId = srctype;
+		placeholder->typeMod = srctypmod;
+		placeholder->collation = get_typcollation(srctype);
+
+		/*
+		 * Apply coercion.  We use ASSIGNMENT coercion because that's the
+		 * closest match to plpgsql's historical behavior; in particular,
+		 * EXPLICIT coercion would allow silent truncation to a destination
+		 * varchar/bpchar's length, which we do not want.
+		 *
+		 * If source type is UNKNOWN, coerce_to_target_type will fail (it only
+		 * expects to see that for Const input nodes), so don't call it; we'll
+		 * apply CoerceViaIO instead.  Likewise, it doesn't currently work for
+		 * coercing RECORD to some other type, so skip for that too.
+		 */
+		if (srctype == UNKNOWNOID || srctype == RECORDOID)
+			cast_expr = NULL;
+		else
 			cast_expr = coerce_to_target_type(NULL,
-											  cast_expr, dsttype,
+											  (Node *) placeholder, srctype,
 											  dsttype, dsttypmod,
 											  COERCION_ASSIGNMENT,
 											  COERCE_IMPLICIT_CAST,
 											  -1);
+
+		/*
+		 * If there's no cast path according to the parser, fall back to using
+		 * an I/O coercion; this is semantically dubious but matches plpgsql's
+		 * historical behavior.  We would need something of the sort for
+		 * UNKNOWN literals in any case.
+		 */
+		if (cast_expr == NULL)
+		{
+			CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+
+			iocoerce->arg = (Expr *) placeholder;
+			iocoerce->resulttype = dsttype;
+			iocoerce->resultcollid = InvalidOid;
+			iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
+			iocoerce->location = -1;
+			cast_expr = (Node *) iocoerce;
+			if (dsttypmod != -1)
+				cast_expr = coerce_to_target_type(NULL,
+												  cast_expr, dsttype,
+												  dsttype, dsttypmod,
+												  COERCION_ASSIGNMENT,
+												  COERCE_IMPLICIT_CAST,
+												  -1);
+		}
+
+		/* Note: we don't bother labeling the expression tree with collation */
+
+		/* Detect whether we have a no-op (RelabelType) coercion */
+		if (IsA(cast_expr, RelabelType) &&
+			((RelabelType *) cast_expr)->arg == (Expr *) placeholder)
+			cast_expr = NULL;
+
+		if (cast_expr)
+		{
+			/* ExecInitExpr assumes we've planned the expression */
+			cast_expr = (Node *) expression_planner((Expr *) cast_expr);
+
+			/* Now copy the tree into cast_hash_context */
+			MemoryContextSwitchTo(cast_hash_context);
+
+			cast_expr = copyObject(cast_expr);
+		}
+
+		MemoryContextSwitchTo(oldcontext);
+
+		/* Now we can fill in a hashtable entry. */
+		cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
+														   (void *) &cast_key,
+														 HASH_ENTER, &found);
+		Assert(!found);			/* wasn't there a moment ago */
+		cast_entry->cast_expr = (Expr *) cast_expr;
+		cast_entry->cast_exprstate = NULL;
+		cast_entry->cast_in_use = false;
+		cast_entry->cast_lxid = InvalidLocalTransactionId;
 	}
 
-	/* Note: we don't bother labeling the expression tree with collation */
-
-	/* Detect whether we have a no-op (RelabelType) coercion */
-	if (IsA(cast_expr, RelabelType) &&
-		((RelabelType *) cast_expr)->arg == (Expr *) placeholder)
-		cast_expr = NULL;
-
-	if (cast_expr)
-	{
-		/* ExecInitExpr assumes we've planned the expression */
-		cast_expr = (Node *) expression_planner((Expr *) cast_expr);
-		/* Create an expression eval state tree for it */
-		cast_exprstate = ExecInitExpr((Expr *) cast_expr, NULL);
-	}
-	else
-		cast_exprstate = NULL;
-
-	MemoryContextSwitchTo(oldcontext);
+	/* Done if we have determined that this is a no-op cast. */
+	if (cast_entry->cast_expr == NULL)
+		return NULL;
 
 	/*
-	 * Now fill in a hashtable entry.  If we fail anywhere up to/including
-	 * this step, we've only leaked some memory in the function context, which
-	 * isn't great but isn't disastrous either.
+	 * Prepare the expression for execution, if it's not been done already in
+	 * the current transaction; also, if it's marked busy in the current
+	 * transaction, abandon that expression tree and build a new one, so as to
+	 * avoid potential problems with recursive cast expressions and failed
+	 * executions.  (We will leak some memory intra-transaction if that
+	 * happens a lot, but we don't expect it to.)  It's okay to update the
+	 * hash table with the new tree because all plpgsql functions within a
+	 * given transaction share the same simple_eval_estate.
 	 */
-	cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
-													   (void *) &cast_key,
-													   HASH_ENTER, &found);
-	Assert(!found);				/* wasn't there a moment ago */
+	curlxid = MyProc->lxid;
+	if (cast_entry->cast_lxid != curlxid || cast_entry->cast_in_use)
+	{
+		oldcontext = MemoryContextSwitchTo(estate->simple_eval_estate->es_query_cxt);
+		cast_entry->cast_exprstate = ExecInitExpr(cast_entry->cast_expr, NULL);
+		cast_entry->cast_in_use = false;
+		cast_entry->cast_lxid = curlxid;
+		MemoryContextSwitchTo(oldcontext);
+	}
 
-	cast_entry->cast_exprstate = cast_exprstate;
-
-	return cast_exprstate;
+	return cast_entry;
 }
 
 /* ----------

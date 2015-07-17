@@ -22,7 +22,6 @@
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
-#include "utils/hsearch.h"
 
 /**********************************************************************
  * Definitions
@@ -759,9 +758,6 @@ typedef struct PLpgSQL_function
 
 	/* function body parsetree */
 	PLpgSQL_stmt_block *action;
-
-	/* table for performing casts needed in this function */
-	HTAB	   *cast_hash;
 
 	/* these fields change when the function is used */
 	struct PLpgSQL_execstate *cur_estate;
