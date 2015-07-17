@@ -1,0 +1,17 @@
+Parsed test spec with 2 sessions
+
+starting permutation: listen begin check notify check
+step listen: LISTEN a;
+step begin: BEGIN;
+step check: SELECT pg_notification_queue_usage() > 0 AS nonzero;
+nonzero        
+
+f              
+step notify: SELECT count(pg_notify('a', s::text)) FROM generate_series(1, 1000) s;
+count          
+
+1000           
+step check: SELECT pg_notification_queue_usage() > 0 AS nonzero;
+nonzero        
+
+t              

@@ -14806,6 +14806,12 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       </row>
 
       <row>
+       <entry><literal><function>pg_notification_queue_usage()</function></literal></entry>
+       <entry><type>double</type></entry>
+       <entry>fraction of the asynchronous notification queue currently occupied (0-1)</entry>
+      </row>
+
+      <row>
        <entry><literal><function>pg_my_temp_schema()</function></literal></entry>
        <entry><type>oid</type></entry>
        <entry>OID of session's temporary schema, or 0 if none</entry>
@@ -14945,10 +14951,19 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     <primary>pg_listening_channels</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>pg_notification_queue_usage</primary>
+   </indexterm>
+
    <para>
     <function>pg_listening_channels</function> returns a set of names of
-    channels that the current session is listening to.  See <xref
-    linkend="sql-listen"> for more information.
+    asynchronous notification channels that the current session is listening
+    to.  <function>pg_notification_queue_usage</function> returns the
+    fraction of the total available space for notifications currently
+    occupied by notifications that are waiting to be processed, as a
+    <type>double</type> in the range 0-1.
+    See <xref linkend="sql-listen"> and <xref linkend="sql-notify">
+    for more information.
    </para>
 
    <indexterm>

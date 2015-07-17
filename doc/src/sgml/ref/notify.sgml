@@ -166,6 +166,11 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
    current transaction so that cleanup can proceed.
   </para>
   <para>
+   The function <function>pg_notification_queue_usage</function> returns the
+   fraction of the queue that is currently occupied by pending notifications.
+   See <xref linkend="functions-info"> for more information.
+  </para>
+  <para>
    A transaction that has executed <command>NOTIFY</command> cannot be
    prepared for two-phase commit.
   </para>

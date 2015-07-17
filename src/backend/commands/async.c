@@ -371,6 +371,7 @@ static bool asyncQueueIsFull(void);
 static bool asyncQueueAdvance(volatile QueuePosition *position, int entryLength);
 static void asyncQueueNotificationToEntry(Notification *n, AsyncQueueEntry *qe);
 static ListCell *asyncQueueAddEntries(ListCell *nextNotify);
+static double asyncQueueUsage(void);
 static void asyncQueueFillWarning(void);
 static bool SignalBackends(void);
 static void asyncQueueReadAllNotifications(void);
@@ -1362,6 +1363,48 @@ asyncQueueAddEntries(ListCell *nextNotify)
 }
 
 /*
+ * SQL function to return the fraction of the notification queue currently
+ * occupied.
+ */
+Datum
+pg_notification_queue_usage(PG_FUNCTION_ARGS)
+{
+	double		usage;
+
+	LWLockAcquire(AsyncQueueLock, LW_SHARED);
+	usage = asyncQueueUsage();
+	LWLockRelease(AsyncQueueLock);
+
+	PG_RETURN_FLOAT8(usage);
+}
+
+/*
+ * Return the fraction of the queue that is currently occupied.
+ *
+ * The caller must hold AysncQueueLock in (at least) shared mode.
+ */
+static double
+asyncQueueUsage(void)
+{
+	int			headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
+	int			tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
+	int			occupied;
+
+	occupied = headPage - tailPage;
+
+	if (occupied == 0)
+		return (double) 0;		/* fast exit for common case */
+
+	if (occupied < 0)
+	{
+		/* head has wrapped around, tail not yet */
+		occupied += QUEUE_MAX_PAGE + 1;
+	}
+
+	return (double) occupied / (double) ((QUEUE_MAX_PAGE + 1) / 2);
+}
+
+/*
  * Check whether the queue is at least half full, and emit a warning if so.
  *
  * This is unlikely given the size of the queue, but possible.
@@ -1372,25 +1415,10 @@ asyncQueueAddEntries(ListCell *nextNotify)
 static void
 asyncQueueFillWarning(void)
 {
-	int			headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
-	int			tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
-	int			occupied;
 	double		fillDegree;
 	TimestampTz t;
 
-	occupied = headPage - tailPage;
-
-	if (occupied == 0)
-		return;					/* fast exit for common case */
-
-	if (occupied < 0)
-	{
-		/* head has wrapped around, tail not yet */
-		occupied += QUEUE_MAX_PAGE + 1;
-	}
-
-	fillDegree = (double) occupied / (double) ((QUEUE_MAX_PAGE + 1) / 2);
-
+	fillDegree = asyncQueueUsage();
 	if (fillDegree < 0.5)
 		return;
 
