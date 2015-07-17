@@ -4702,6 +4702,68 @@ select error2('public.stuffs');
 rollback;
 drop function error2(p_name_table text);
 drop function error1(text);
+-- Test for proper handling of cast-expression caching
+create function sql_to_date(integer) returns date as $$
+select $1::text::date
+$$ language sql immutable strict;
+create cast (integer as date) with function sql_to_date(integer) as assignment;
+create function cast_invoker(integer) returns date as $$
+begin
+  return $1;
+end$$ language plpgsql;
+select cast_invoker(20150717);
+ cast_invoker 
+--------------
+ 07-17-2015
+(1 row)
+
+select cast_invoker(20150718);  -- second call crashed in pre-release 9.5
+ cast_invoker 
+--------------
+ 07-18-2015
+(1 row)
+
+begin;
+select cast_invoker(20150717);
+ cast_invoker 
+--------------
+ 07-17-2015
+(1 row)
+
+select cast_invoker(20150718);
+ cast_invoker 
+--------------
+ 07-18-2015
+(1 row)
+
+savepoint s1;
+select cast_invoker(20150718);
+ cast_invoker 
+--------------
+ 07-18-2015
+(1 row)
+
+select cast_invoker(-1); -- fails
+ERROR:  invalid input syntax for type date: "-1"
+CONTEXT:  SQL function "sql_to_date" statement 1
+PL/pgSQL function cast_invoker(integer) while casting return value to function's return type
+rollback to savepoint s1;
+select cast_invoker(20150719);
+ cast_invoker 
+--------------
+ 07-19-2015
+(1 row)
+
+select cast_invoker(20150720);
+ cast_invoker 
+--------------
+ 07-20-2015
+(1 row)
+
+commit;
+drop function cast_invoker(integer);
+drop function sql_to_date(integer) cascade;
+NOTICE:  drop cascades to cast from integer to date
 -- Test for consistent reporting of error context
 create function fail() returns int language plpgsql as $$
 begin
