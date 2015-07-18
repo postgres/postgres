@@ -162,6 +162,17 @@
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      Allow <type>json</> and <type>jsonb</> extraction operators to
+      accept negative subscripts, which count from the end of JSON
+      arrays.  Historically, these operators yielded <literal>NULL</>
+      in the event of a negative subscript, because negative
+      subscripts were considered invalid.  (Peter Geoghegan, Andrew
+      Dunstan)
+     </para>
+    </listitem>
+
    </itemizedlist>
 
   </sect2>
