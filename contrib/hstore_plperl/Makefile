@@ -35,6 +35,10 @@ override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
 SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plperl/libperl*.a)
 endif
 
+ifeq ($(PORTNAME), cygwin)
+SHLIB_LINK += -L../hstore -l hstore $(perl_embed_ldflags)
+endif
+
 # As with plperl we need to make sure that the CORE directory is included
 # last, probably because it sometimes contains some header files with names
 # that clash with some of ours, or with some that we include, notably on
