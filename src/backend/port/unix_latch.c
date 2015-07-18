@@ -442,7 +442,8 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				result |= WL_SOCKET_WRITEABLE;
 			}
 			if ((wakeEvents & WL_POSTMASTER_DEATH) &&
-			FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask))
+				FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH],
+						 &input_mask))
 			{
 				/*
 				 * According to the select(2) man page on Linux, select(2) may
@@ -461,17 +462,22 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 #endif   /* HAVE_POLL */
 
 		/* If we're not done, update cur_timeout for next iteration */
-		if (result == 0 && cur_timeout >= 0)
+		if (result == 0 && (wakeEvents & WL_TIMEOUT))
 		{
 			INSTR_TIME_SET_CURRENT(cur_time);
 			INSTR_TIME_SUBTRACT(cur_time, start_time);
 			cur_timeout = timeout - (long) INSTR_TIME_GET_MILLISEC(cur_time);
-			if (cur_timeout < 0)
-				cur_timeout = 0;
-
+			if (cur_timeout <= 0)
+			{
+				/* Timeout has expired, no need to continue looping */
+				result |= WL_TIMEOUT;
+			}
 #ifndef HAVE_POLL
-			tv.tv_sec = cur_timeout / 1000L;
-			tv.tv_usec = (cur_timeout % 1000L) * 1000L;
+			else
+			{
+				tv.tv_sec = cur_timeout / 1000L;
+				tv.tv_usec = (cur_timeout % 1000L) * 1000L;
+			}
 #endif
 		}
 	} while (result == 0);
