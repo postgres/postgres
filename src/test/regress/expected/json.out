@@ -569,6 +569,14 @@ WHERE json_type = 'array';
  "two"
 (1 row)
 
+SELECT test_json -> -1
+FROM test_json
+WHERE json_type = 'array';
+ ?column? 
+----------
+ {"f1":9}
+(1 row)
+
 SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'object';
@@ -693,6 +701,12 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> null::int;
 (1 row)
 
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 1;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> -1;
  ?column? 
 ----------
  

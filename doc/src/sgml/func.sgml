@@ -10177,7 +10177,8 @@ table2-mapping
        <row>
         <entry><literal>-&gt;</literal></entry>
         <entry><type>int</type></entry>
-        <entry>Get JSON array element (indexed from zero)</entry>
+        <entry>Get JSON array element (indexed from zero, negative
+        integers count from the end)</entry>
         <entry><literal>'[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json-&gt;2</literal></entry>
         <entry><literal>{"c":"baz"}</literal></entry>
        </row>
@@ -10230,7 +10231,10 @@ table2-mapping
     returning <type>text</>, which coerce the value to text.
     The field/element/path extraction operators return NULL, rather than
     failing, if the JSON input does not have the right structure to match
-    the request; for example if no such element exists.
+    the request; for example if no such element exists.  The
+    field/element/path extraction operators that accept integer JSON
+    array subscripts all support negative subscripting from the end of
+    arrays.
    </para>
   </note>
   <para>
@@ -10318,7 +10322,8 @@ table2-mapping
        <row>
         <entry><literal>#-</literal></entry>
         <entry><type>text[]</type></entry>
-        <entry>Delete the field or element with specified path</entry>
+        <entry>Delete the field or element with specified path (for
+        JSON arrays, negative integers count from the end)</entry>
         <entry><literal>'["a", {"b":1}]'::jsonb #- '{1,b}'</literal></entry>
        </row>
       </tbody>
@@ -10858,6 +10863,9 @@ table2-mapping
          <replaceable>create_missing</replaceable> is true ( default is
          <literal>true</>) and the item
          designated by <replaceable>path</replaceable> does not exist.
+         As with the path orientated operators, negative integers that
+         appear in <replaceable>path</replaceable> count from the end
+         of JSON arrays.
        </entry>
        <entry><para><literal>jsonb_set('[{"f1":1,"f2":null},2,null,3]', '{0,f1}','[2,3,4]', false)</literal>
          </para><para><literal>jsonb_set('[{"f1":1,"f2":null},2]', '{0,f3}','[2,3,4]')</literal>
@@ -10872,7 +10880,7 @@ table2-mapping
        <entry><para><type>text</type></para></entry>
        <entry>
          Returns <replaceable>from_json</replaceable>
-         as indented json text.
+         as indented JSON text.
        </entry>
        <entry><literal>jsonb_pretty('[{"f1":1,"f2":null},2,null,3]')</literal></entry>
        <entry>

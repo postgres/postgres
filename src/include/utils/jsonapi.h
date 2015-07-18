@@ -104,6 +104,13 @@ typedef struct JsonSemAction
 extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
 
 /*
+ * json_count_array_elements performs a fast secondary parse to determine the
+ * number of elements in passed array lex context. It should be called from an
+ * array_start action.
+ */
+extern int json_count_array_elements(JsonLexContext *lex);
+
+/*
  * constructors for JsonLexContext, with or without strval element.
  * If supplied, the strval element will contain a de-escaped version of
  * the lexeme. However, doing this imposes a performance penalty, so

@@ -184,6 +184,10 @@ SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'array';
 
+SELECT test_json -> -1
+FROM test_json
+WHERE json_type = 'array';
+
 SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'object';
@@ -241,6 +245,7 @@ where json_type = 'array';
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> null::text;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> null::int;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 1;
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> -1;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 'z';
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> '';
 select '[{"b": "c"}, {"b": "cc"}]'::json -> 1;

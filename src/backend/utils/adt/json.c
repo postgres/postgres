@@ -341,6 +341,45 @@ pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
 }
 
 /*
+ * json_count_array_elements
+ *
+ * Returns number of array elements in lex context at start of array token
+ * until end of array token at same nesting level.
+ *
+ * Designed to be called from array_start routines.
+ */
+int
+json_count_array_elements(JsonLexContext *lex)
+{
+	JsonLexContext	copylex;
+	int				count;
+
+	/*
+	 * It's safe to do this with a shallow copy because the lexical routines
+	 * don't scribble on the input. They do scribble on the other pointers etc,
+	 * so doing this with a copy makes that safe.
+	 */
+	memcpy(&copylex, lex, sizeof(JsonLexContext));
+	copylex.strval = NULL; /* not interested in values here */
+	copylex.lex_level++;
+
+	count = 0;
+	lex_expect(JSON_PARSE_ARRAY_START, &copylex, JSON_TOKEN_ARRAY_START);
+	if (lex_peek(&copylex) != JSON_TOKEN_ARRAY_END)
+	{
+		do
+		{
+			count++;
+			parse_array_element(&copylex, &nullSemAction);
+		}
+		while (lex_accept(&copylex, JSON_TOKEN_COMMA, NULL));
+	}
+	lex_expect(JSON_PARSE_ARRAY_NEXT, &copylex, JSON_TOKEN_ARRAY_END);
+
+	return count;
+}
+
+/*
  *	Recursive Descent parse routines. There is one for each structural
  *	element in a json document:
  *	  - scalar (string, number, true, false, null)
