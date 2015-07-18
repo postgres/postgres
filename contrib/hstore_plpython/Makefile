@@ -33,6 +33,11 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
 endif
 
+ifeq ($(PORTNAME), cygwin)
+SHLIB_LINK += -L../hstore -lhstore -L../../src/pl/plpython \
+	-lplpython$(python_majorversion) $(python_libspec)
+endif
+
 REGRESS_OPTS += --load-extension=hstore
 ifeq ($(python_majorversion),2)
 REGRESS_OPTS += --load-extension=plpythonu --load-extension=hstore_plpythonu

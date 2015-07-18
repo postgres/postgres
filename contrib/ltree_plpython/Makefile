@@ -33,6 +33,11 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
 endif
 
+ifeq ($(PORTNAME), cygwin)
+SHLIB_LINK += -L../ltree -lltree -L../../src/pl/plpython \
+	-lplpython$(python_majorversion) $(python_libspec)
+endif
+
 REGRESS_OPTS += --load-extension=ltree
 ifeq ($(python_majorversion),2)
 REGRESS_OPTS += --load-extension=plpythonu --load-extension=ltree_plpythonu
