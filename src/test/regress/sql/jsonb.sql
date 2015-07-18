@@ -642,6 +642,8 @@ SELECT '["a","b","c",[1,2],null]'::jsonb -> 3 -> 1;
 SELECT '["a","b","c",[1,2],null]'::jsonb -> 4;
 SELECT '["a","b","c",[1,2],null]'::jsonb -> 5;
 SELECT '["a","b","c",[1,2],null]'::jsonb -> -1;
+SELECT '["a","b","c",[1,2],null]'::jsonb -> -5;
+SELECT '["a","b","c",[1,2],null]'::jsonb -> -6;
 
 --nested path extraction
 SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{0}';
@@ -652,6 +654,8 @@ SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{c,1}';
 SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{c,2}';
 SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{c,3}';
 SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{c,-1}';
+SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{c,-3}';
+SELECT '{"a":"b","c":[1,2,3]}'::jsonb #> '{c,-4}';
 
 SELECT '[0,1,2,[3,4],{"5":"five"}]'::jsonb #> '{0}';
 SELECT '[0,1,2,[3,4],{"5":"five"}]'::jsonb #> '{3}';
@@ -757,6 +761,7 @@ select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,
 
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{n}';
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{b,-1}';
+select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{b,-1e}'; -- invalid array subscript
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{d,1,0}';
 
 

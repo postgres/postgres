@@ -597,6 +597,17 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 	if (!JB_ROOT_IS_ARRAY(jb))
 		PG_RETURN_NULL();
 
+	/* Handle negative subscript */
+	if (element < 0)
+	{
+		uint32	nelements = JB_ROOT_COUNT(jb);
+
+		if (-element > nelements)
+			PG_RETURN_NULL();
+		else
+			element += nelements;
+	}
+
 	v = getIthJsonbValueFromContainer(&jb->root, element);
 	if (v != NULL)
 		PG_RETURN_JSONB(JsonbValueToJsonb(v));
@@ -628,6 +639,17 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 
 	if (!JB_ROOT_IS_ARRAY(jb))
 		PG_RETURN_NULL();
+
+	/* Handle negative subscript */
+	if (element < 0)
+	{
+		uint32	nelements = JB_ROOT_COUNT(jb);
+
+		if (-element > nelements)
+			PG_RETURN_NULL();
+		else
+			element += nelements;
+	}
 
 	v = getIthJsonbValueFromContainer(&jb->root, element);
 	if (v != NULL)
@@ -719,7 +741,7 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 		/*
 		 * we have no idea at this stage what structure the document is so
 		 * just convert anything in the path that we can to an integer and set
-		 * all the other integers to -1 which will never match.
+		 * all the other integers to INT_MIN which will never match.
 		 */
 		if (*tpath[i] != '\0')
 		{
@@ -728,13 +750,13 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 
 			errno = 0;
 			ind = strtol(tpath[i], &endptr, 10);
-			if (*endptr == '\0' && errno == 0 && ind <= INT_MAX && ind >= 0)
+			if (*endptr == '\0' && errno == 0 && ind <= INT_MAX && ind >= INT_MIN)
 				ipath[i] = (int) ind;
 			else
-				ipath[i] = -1;
+				ipath[i] = INT_MIN;
 		}
 		else
-			ipath[i] = -1;
+			ipath[i] = INT_MIN;
 	}
 
 	result = get_worker(json, tpath, ipath, npath, as_text);
@@ -752,14 +774,15 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
  *
  * json: JSON object (in text form)
  * tpath[]: field name(s) to extract
- * ipath[]: array index(es) (zero-based) to extract
+ * ipath[]: array index(es) (zero-based) to extract, accepts negatives
  * npath: length of tpath[] and/or ipath[]
  * normalize_results: true to de-escape string and null scalars
  *
  * tpath can be NULL, or any one tpath[] entry can be NULL, if an object
  * field is not to be matched at that nesting level.  Similarly, ipath can
- * be NULL, or any one ipath[] entry can be -1, if an array element is not
- * to be matched at that nesting level.
+ * be NULL, or any one ipath[] entry can be INT_MIN if an array element is
+ * not to be matched at that nesting level (a json datum should never be
+ * large enough to have -INT_MIN elements due to MaxAllocSize restriction).
  */
 static text *
 get_worker(text *json,
@@ -963,6 +986,17 @@ get_array_start(void *state)
 		 * been started by the outer field or array element callback.
 		 */
 		_state->result_start = _state->lex->token_start;
+	}
+
+	/* INT_MIN value is reserved to represent invalid subscript */
+	if (_state->path_indexes[lex_level] < 0 &&
+		_state->path_indexes[lex_level] != INT_MIN)
+	{
+		/* Negative subscript -- convert to positive-wise subscript */
+		int		nelements = json_count_array_elements(_state->lex);
+
+		if (-_state->path_indexes[lex_level] <= nelements)
+			_state->path_indexes[lex_level] += nelements;
 	}
 }
 
@@ -1209,9 +1243,30 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 			errno = 0;
 			lindex = strtol(indextext, &endptr, 10);
 			if (endptr == indextext || *endptr != '\0' || errno != 0 ||
-				lindex > INT_MAX || lindex < 0)
+				lindex > INT_MAX || lindex < INT_MIN)
 				PG_RETURN_NULL();
-			index = (uint32) lindex;
+
+			if (lindex >= 0)
+			{
+				index = (uint32) lindex;
+			}
+			else
+			{
+				/* Handle negative subscript */
+				uint32		nelements;
+
+				/* Container must be array, but make sure */
+				if ((container->header & JB_FARRAY) == 0)
+					elog(ERROR, "not a jsonb array");
+
+				nelements = container->header & JB_CMASK;
+
+				if (-lindex > nelements)
+					PG_RETURN_NULL();
+				else
+					index = nelements + lindex;
+			}
+
 			jbvp = getIthJsonbValueFromContainer(container, index);
 		}
 		else
@@ -3411,10 +3466,8 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	it = JsonbIteratorInit(&in->root);
 
 	r = JsonbIteratorNext(&it, &v, false);
-	if (r == WJB_BEGIN_ARRAY)
-		n = v.val.array.nElems;
-	else
-		n = v.val.object.nPairs;
+	Assert (r == WJB_BEGIN_ARRAY);
+	n = v.val.array.nElems;
 
 	if (idx < 0)
 	{
@@ -3431,14 +3484,10 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 
 	while ((r = JsonbIteratorNext(&it, &v, true)) != 0)
 	{
-		if (r == WJB_ELEM || r == WJB_KEY)
+		if (r == WJB_ELEM)
 		{
 			if (i++ == idx)
-			{
-				if (r == WJB_KEY)
-					JsonbIteratorNext(&it, &v, true);	/* skip value */
 				continue;
-			}
 		}
 
 		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
@@ -3657,7 +3706,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
  * If newval is null, the element is to be removed.
  *
  * If create is true, we create the new value if the key or array index
- * does not exist. All path elemnts before the last must already exist
+ * does not exist. All path elements before the last must already exist
  * whether or not create is true, or nothing is done.
  */
 static JsonbValue *
@@ -3818,7 +3867,8 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 
 		errno = 0;
 		lindex = strtol(c, &badp, 10);
-		if (errno != 0 || badp == c || lindex > INT_MAX || lindex < INT_MIN)
+		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
+			lindex < INT_MIN)
 			idx = nelems;
 		else
 			idx = lindex;
@@ -3829,7 +3879,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	if (idx < 0)
 	{
 		if (-idx > nelems)
-			idx = -1;
+			idx = INT_MIN;
 		else
 			idx = nelems + idx;
 	}
@@ -3838,12 +3888,12 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		idx = nelems;
 
 	/*
-	 * if we're creating, and idx == -1, we prepend the new value to the array
-	 * also if the array is empty - in which case we don't really care what
-	 * the idx value is
+	 * if we're creating, and idx == INT_MIN, we prepend the new value to the
+	 * array also if the array is empty - in which case we don't really care
+	 * what the idx value is
 	 */
 
-	if ((idx == -1 || nelems == 0) && create && (level == path_len - 1))
+	if ((idx == INT_MIN || nelems == 0) && create && (level == path_len - 1))
 	{
 		Assert(newval != NULL);
 		addJsonbToParseState(st, newval);
