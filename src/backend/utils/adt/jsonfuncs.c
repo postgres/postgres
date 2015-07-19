@@ -3480,7 +3480,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	if (idx >= n)
 		PG_RETURN_JSONB(in);
 
-	pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+	pushJsonbValue(&state, r, NULL);
 
 	while ((r = JsonbIteratorNext(&it, &v, true)) != 0)
 	{
