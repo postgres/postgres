@@ -311,13 +311,6 @@ CreateRole(CreateRoleStmt *stmt)
 					 errmsg("permission denied to create role")));
 	}
 
-	if (strcmp(stmt->role, "public") == 0 ||
-		strcmp(stmt->role, "none") == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_RESERVED_NAME),
-				 errmsg("role name \"%s\" is reserved",
-						stmt->role)));
-
 	/*
 	 * Check the pg_authid relation to be certain the role doesn't already
 	 * exist.
@@ -1158,13 +1151,6 @@ RenameRole(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("role \"%s\" already exists", newname)));
-
-	if (strcmp(newname, "public") == 0 ||
-		strcmp(newname, "none") == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_RESERVED_NAME),
-				 errmsg("role name \"%s\" is reserved",
-						newname)));
 
 	/*
 	 * createrole is enough privilege unless you want to mess with a superuser
