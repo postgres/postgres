@@ -14,6 +14,7 @@ PG_FUNCTION_INFO_V1(gin_extract_trgm);
 PG_FUNCTION_INFO_V1(gin_extract_value_trgm);
 PG_FUNCTION_INFO_V1(gin_extract_query_trgm);
 PG_FUNCTION_INFO_V1(gin_trgm_consistent);
+PG_FUNCTION_INFO_V1(gin_trgm_triconsistent);
 
 /*
  * This function can only be called if a pre-9.1 version of the GIN operator
@@ -234,4 +235,95 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BOOL(res);
+}
+
+/*
+ * In all cases, GIN_TRUE is at least as favorable to inclusion as
+ * GIN_MAYBE. If no better option is available, simply treat
+ * GIN_MAYBE as if it were GIN_TRUE and apply the same test as the binary
+ * consistent function.
+ */
+Datum
+gin_trgm_triconsistent(PG_FUNCTION_ARGS)
+{
+	GinTernaryValue  *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
+	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
+	/* text    *query = PG_GETARG_TEXT_P(2); */
+	int32		nkeys = PG_GETARG_INT32(3);
+	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
+	GinTernaryValue	res = GIN_MAYBE;
+	int32		i,
+				ntrue;
+	bool	   *boolcheck;
+
+	switch (strategy)
+	{
+		case SimilarityStrategyNumber:
+			/* Count the matches */
+			ntrue = 0;
+			for (i = 0; i < nkeys; i++)
+			{
+				if (check[i] != GIN_FALSE)
+					ntrue++;
+			}
+#ifdef DIVUNION
+			res = (nkeys == ntrue) ? GIN_MAYBE : (((((float4) ntrue) / ((float4) (nkeys - ntrue))) >= trgm_limit) ? GIN_MAYBE : GIN_FALSE);
+#else
+			res = (nkeys == 0) ? GIN_FALSE : (((((float4) ntrue) / ((float4) nkeys)) >= trgm_limit) ? GIN_MAYBE : GIN_FALSE);
+#endif
+			break;
+		case ILikeStrategyNumber:
+#ifndef IGNORECASE
+			elog(ERROR, "cannot handle ~~* with case-sensitive trigrams");
+#endif
+			/* FALL THRU */
+		case LikeStrategyNumber:
+			/* Check if all extracted trigrams are presented. */
+			res = GIN_MAYBE;
+			for (i = 0; i < nkeys; i++)
+			{
+				if (check[i] == GIN_FALSE)
+				{
+					res = GIN_FALSE;
+					break;
+				}
+			}
+			break;
+		case RegExpICaseStrategyNumber:
+#ifndef IGNORECASE
+			elog(ERROR, "cannot handle ~* with case-sensitive trigrams");
+#endif
+			/* FALL THRU */
+		case RegExpStrategyNumber:
+			if (nkeys < 1)
+			{
+				/* Regex processing gave no result: do full index scan */
+				res = GIN_MAYBE;
+			}
+			else
+			{
+				/*
+				 * As trigramsMatchGraph implements a montonic boolean function,
+				 * promoting all GIN_MAYBE keys to GIN_TRUE will give a
+				 * conservative result.
+				 */
+				boolcheck = (bool *) palloc(sizeof(bool) * nkeys);
+				for (i = 0; i < nkeys; i++)
+					boolcheck[i] = (check[i] != GIN_FALSE);
+				if (!trigramsMatchGraph((TrgmPackedGraph *) extra_data[0],
+										boolcheck))
+					res = GIN_FALSE;
+				pfree(boolcheck);
+			}
+			break;
+		default:
+			elog(ERROR, "unrecognized strategy number: %d", strategy);
+			res = GIN_FALSE;		/* keep compiler quiet */
+			break;
+	}
+
+	/* All cases served by this function are inexact */
+	Assert(res != GIN_TRUE);
+	PG_RETURN_GIN_TERNARY_VALUE(res);
 }

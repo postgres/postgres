@@ -1,4 +1,4 @@
-/* contrib/pg_trgm/pg_trgm--1.1.sql */
+/* contrib/pg_trgm/pg_trgm--1.2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_trgm" to load this file. \quit
@@ -176,3 +176,13 @@ ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
 ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
         OPERATOR        5       pg_catalog.~ (text, text),
         OPERATOR        6       pg_catalog.~* (text, text);
+
+-- Add functions that are new in 9.6 (pg_trgm 1.2).
+
+CREATE FUNCTION gin_trgm_triconsistent(internal, int2, text, int4, internal, internal, internal)
+RETURNS "char"
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
+        FUNCTION        6      (text,text) gin_trgm_triconsistent (internal, int2, text, int4, internal, internal, internal);
