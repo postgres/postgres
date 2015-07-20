@@ -152,9 +152,6 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_ReAddConstraint:
 				strtype = "(re) ADD CONSTRAINT";
 				break;
-			case AT_ReAddComment:
-				strtype = "(re) ADD COMMENT";
-				break;
 			case AT_AlterConstraint:
 				strtype = "ALTER CONSTRAINT";
 				break;
