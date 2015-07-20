@@ -529,14 +529,79 @@ typedef struct BrinOpcInfo
    </varlistentry>
   </variablelist>
 
-  To implement these methods in a generic way, the operator class
-  defines its own internal support functions.
-  (For instance, the <quote>min/max</> operator classes implement
-  support functions for the four inequality operators for their data type.)
-  Additionally, the operator class must supply appropriate
-  operator entries,
-  to enable the optimizer to use the index when those operators are
-  used in queries.
+  The core distribution includes support for two types of operator classes:
+  minmax and inclusion.  Operator class definitions using them are shipped for
+  in-core data types as appropriate.  Additional operator classes can be
+  defined by the user for other datatypes using equivalent definitions,
+  without having to write any source code; appropriate catalog entries being
+  declared is enough.  Note that assumptions about the semantics of operator
+  strategies are embedded in the support procedures's source code.
  </para>
+
+ <para>
+  Operator classes that implement completely different semantics are also
+  possible, provided implementations of the four main support procedures
+  described above are written.  Note that backwards compatibility across major
+  releases is not guaranteed: for example, additional support procedures might
+  be required in later releases.
+ </para>
+
+ <para>
+  To write an operator class for a datatype that implements a totally
+  ordered set, it is possible to use the Minmax support procedures
+  alongside the corresponding operators, as shown in
+  <xref linkend="brin-extensibility-minmax-table">.
+  All operator class members (procedures and operators) are mandatory.
+ </para>
+
+ <table id="brin-extensibility-minmax-table">
+  <title>Procedure and Support Numbers for Minmax Operator Classes</title>
+  <tgroup cols="2">
+   <thead>
+    <row>
+     <entry>Operator class member</entry>
+     <entry>Object</entry>
+    </row>
+   </thead>
+   <tbody>
+    <row>
+     <entry>Support Procedure 1</entry>
+     <entry>function <function>brin_minmax_opcinfo()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 2</entry>
+     <entry>function <function>brin_minmax_add_value()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 3</entry>
+     <entry>function <function>brin_minmax_consistent()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 4</entry>
+     <entry>function <function>brin_minmax_union()</function></entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 1</entry>
+     <entry>operator less-than</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 2</entry>
+     <entry>operator less-than-or-equal-to</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 3</entry>
+     <entry>operator equal-to</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 4</entry>
+     <entry>operator greater-than-or-equal-to</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 5</entry>
+     <entry>operator greater-than</entry>
+    </row>
+   </tbody>
+  </tgroup>
+ </table>
 </sect1>
 </chapter>

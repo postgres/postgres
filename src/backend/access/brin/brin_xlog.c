@@ -180,11 +180,11 @@ brin_xlog_samepage_update(XLogReaderState *record)
 	if (action == BLK_NEEDS_REDO)
 	{
 		Size		tuplen;
-		BrinTuple  *mmtuple;
+		BrinTuple  *brintuple;
 		Page		page;
 		OffsetNumber offnum;
 
-		mmtuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
+		brintuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
 
 		page = (Page) BufferGetPage(buffer);
 
@@ -193,7 +193,7 @@ brin_xlog_samepage_update(XLogReaderState *record)
 			elog(PANIC, "brin_xlog_samepage_update: invalid max offset number");
 
 		PageIndexDeleteNoCompact(page, &offnum, 1);
-		offnum = PageAddItem(page, (Item) mmtuple, tuplen, offnum, true, false);
+		offnum = PageAddItem(page, (Item) brintuple, tuplen, offnum, true, false);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "brin_xlog_samepage_update: failed to add tuple");
 

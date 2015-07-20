@@ -688,7 +688,7 @@ brinbuildempty(PG_FUNCTION_ARGS)
  *
  * XXX we could mark item tuples as "dirty" (when a minimum or maximum heap
  * tuple is deleted), meaning the need to re-run summarization on the affected
- * range.  Need to an extra flag in mmtuples for that.
+ * range.  Need to an extra flag in brintuples for that.
  */
 Datum
 brinbulkdelete(PG_FUNCTION_ARGS)
