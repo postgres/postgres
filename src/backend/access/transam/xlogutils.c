@@ -328,12 +328,25 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	ForkNumber	forknum;
 	BlockNumber blkno;
 	Page		page;
+	bool		zeromode;
+	bool		willinit;
 
 	if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
 	{
 		/* Caller specified a bogus block_id */
 		elog(PANIC, "failed to locate backup block with ID %d", block_id);
 	}
+
+	/*
+	 * Make sure that if the block is marked with WILL_INIT, the caller is
+	 * going to initialize it. And vice versa.
+	 */
+	zeromode = (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK);
+	willinit = (record->blocks[block_id].flags & BKPBLOCK_WILL_INIT) != 0;
+	if (willinit && !zeromode)
+		elog(PANIC, "block with WILL_INIT flag in WAL record must be zeroed by redo routine");
+	if (!willinit && zeromode)
+		elog(PANIC, "block to be initialized in redo routine must be marked with WILL_INIT flag in the WAL record");
 
 	/* If it's a full-page image, restore it. */
 	if (XLogRecHasBlockImage(record, block_id))
@@ -359,12 +372,6 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	}
 	else
 	{
-		if ((record->blocks[block_id].flags & BKPBLOCK_WILL_INIT) != 0 &&
-			mode != RBM_ZERO_AND_LOCK && mode != RBM_ZERO_AND_CLEANUP_LOCK)
-		{
-			elog(PANIC, "block with WILL_INIT flag in WAL record must be zeroed by redo routine");
-		}
-
 		*buf = XLogReadBufferExtended(rnode, forknum, blkno, mode);
 		if (BufferIsValid(*buf))
 		{
