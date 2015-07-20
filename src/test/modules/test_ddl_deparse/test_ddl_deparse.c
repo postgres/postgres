@@ -151,6 +151,9 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_DropConstraintRecurse:
 				strtype = "DROP CONSTRAINT (and recurse)";
 				break;
+			case AT_ReAddComment:
+				strtype = "(re) ADD COMMENT";
+				break;
 			case AT_AlterColumnType:
 				strtype = "ALTER COLUMN SET TYPE";
 				break;
@@ -253,6 +256,8 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_GenericOptions:
 				strtype = "SET OPTIONS";
 				break;
+			default:
+				strtype = "unrecognized";
 		}
 
 		astate =
