@@ -2207,7 +2207,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		make_directory(temp_instance);
 
 		/* and a directory for log files */
-		snprintf(buf, sizeof(buf), "%s/log", temp_instance);
+		snprintf(buf, sizeof(buf), "%s/log", outputdir);
 		if (!directory_exists(buf))
 			make_directory(buf);
 
@@ -2220,10 +2220,10 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 temp_instance,
 				 debug ? " --debug" : "",
 				 nolocale ? " --no-locale" : "",
-				 temp_instance);
+				 outputdir);
 		if (system(buf))
 		{
-			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, temp_instance, buf);
+			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
 			exit(2);
 		}
 
@@ -2324,7 +2324,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 bindir ? "/" : "",
 				 temp_instance, debug ? " -d 5" : "",
 				 hostname ? hostname : "", sockdir ? sockdir : "",
-				 temp_instance);
+				 outputdir);
 		postmaster_pid = spawn_process(buf);
 		if (postmaster_pid == INVALID_PID)
 		{
@@ -2353,7 +2353,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			if (WaitForSingleObject(postmaster_pid, 0) == WAIT_OBJECT_0)
 #endif
 			{
-				fprintf(stderr, _("\n%s: postmaster failed\nExamine %s/log/postmaster.log for the reason\n"), progname, temp_instance);
+				fprintf(stderr, _("\n%s: postmaster failed\nExamine %s/log/postmaster.log for the reason\n"), progname, outputdir);
 				exit(2);
 			}
 
@@ -2361,7 +2361,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		}
 		if (i >= 60)
 		{
-			fprintf(stderr, _("\n%s: postmaster did not respond within 60 seconds\nExamine %s/log/postmaster.log for the reason\n"), progname, temp_instance);
+			fprintf(stderr, _("\n%s: postmaster did not respond within 60 seconds\nExamine %s/log/postmaster.log for the reason\n"), progname, outputdir);
 
 			/*
 			 * If we get here, the postmaster is probably wedged somewhere in
