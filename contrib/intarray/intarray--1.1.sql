@@ -1,4 +1,4 @@
-/* contrib/intarray/intarray--1.0.sql */
+/* contrib/intarray/intarray--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION intarray" to load this file. \quit
@@ -45,12 +45,17 @@ LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION rboolop(query_int, _int4) IS 'boolean operation with array';
 
+CREATE FUNCTION _int_matchsel(internal, oid, internal, integer)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
 CREATE OPERATOR @@ (
 	LEFTARG = _int4,
 	RIGHTARG = query_int,
 	PROCEDURE = boolop,
 	COMMUTATOR = '~~',
-	RESTRICT = contsel,
+	RESTRICT = _int_matchsel,
 	JOIN = contjoinsel
 );
 
@@ -59,7 +64,7 @@ CREATE OPERATOR ~~ (
 	RIGHTARG = _int4,
 	PROCEDURE = rboolop,
 	COMMUTATOR = '@@',
-	RESTRICT = contsel,
+	RESTRICT = _int_matchsel,
 	JOIN = contjoinsel
 );
 
@@ -117,6 +122,36 @@ RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE FUNCTION _int_overlap_sel(internal, oid, internal, integer)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
+CREATE FUNCTION _int_contains_sel(internal, oid, internal, integer)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
+CREATE FUNCTION _int_contained_sel(internal, oid, internal, integer)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
+CREATE FUNCTION _int_overlap_joinsel(internal, oid, internal, smallint, internal)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
+CREATE FUNCTION _int_contains_joinsel(internal, oid, internal, smallint, internal)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
+CREATE FUNCTION _int_contained_joinsel(internal, oid, internal, smallint, internal)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;
+
 --
 -- OPERATORS
 --
@@ -126,8 +161,8 @@ CREATE OPERATOR && (
 	RIGHTARG = _int4,
 	PROCEDURE = _int_overlap,
 	COMMUTATOR = '&&',
-	RESTRICT = contsel,
-	JOIN = contjoinsel
+	RESTRICT = _int_overlap_sel,
+	JOIN = _int_overlap_joinsel
 );
 
 --CREATE OPERATOR = (
@@ -157,8 +192,8 @@ CREATE OPERATOR @> (
 	RIGHTARG = _int4,
 	PROCEDURE = _int_contains,
 	COMMUTATOR = '<@',
-	RESTRICT = contsel,
-	JOIN = contjoinsel
+	RESTRICT = _int_contains_sel,
+	JOIN = _int_contains_joinsel
 );
 
 CREATE OPERATOR <@ (
@@ -166,8 +201,8 @@ CREATE OPERATOR <@ (
 	RIGHTARG = _int4,
 	PROCEDURE = _int_contained,
 	COMMUTATOR = '@>',
-	RESTRICT = contsel,
-	JOIN = contjoinsel
+	RESTRICT = _int_contained_sel,
+	JOIN = _int_contained_joinsel
 );
 
 -- obsolete:
@@ -176,8 +211,8 @@ CREATE OPERATOR @ (
 	RIGHTARG = _int4,
 	PROCEDURE = _int_contains,
 	COMMUTATOR = '~',
-	RESTRICT = contsel,
-	JOIN = contjoinsel
+	RESTRICT = _int_contains_sel,
+	JOIN = _int_contains_joinsel
 );
 
 CREATE OPERATOR ~ (
@@ -185,8 +220,8 @@ CREATE OPERATOR ~ (
 	RIGHTARG = _int4,
 	PROCEDURE = _int_contained,
 	COMMUTATOR = '@',
-	RESTRICT = contsel,
-	JOIN = contjoinsel
+	RESTRICT = _int_contained_sel,
+	JOIN = _int_contained_joinsel
 );
 
 --------------

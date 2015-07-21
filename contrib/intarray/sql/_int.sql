@@ -68,8 +68,8 @@ SELECT '1&(2&(4&(5|!6)))'::query_int;
 
 
 CREATE TABLE test__int( a int[] );
-
 \copy test__int from 'data/test__int.data'
+ANALYZE test__int;
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23|50';
