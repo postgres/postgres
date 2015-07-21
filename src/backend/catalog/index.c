@@ -2168,7 +2168,8 @@ IndexBuildHeapScan(Relation heapRelation,
 /*
  * As above, except that instead of scanning the complete heap, only the given
  * number of blocks are scanned.  Scan to end-of-rel can be signalled by
- * passing InvalidBlockNumber as numblocks.
+ * passing InvalidBlockNumber as numblocks.  Note that restricting the range
+ * to scan cannot be done when requesting syncscan.
  */
 double
 IndexBuildHeapRangeScan(Relation heapRelation,
@@ -2251,7 +2252,14 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 								allow_sync);	/* syncscan OK? */
 
 	/* set our scan endpoints */
-	heap_setscanlimits(scan, start_blockno, numblocks);
+	if (!allow_sync)
+		heap_setscanlimits(scan, start_blockno, numblocks);
+	else
+	{
+		/* syncscan can only be requested on whole relation */
+		Assert(start_blockno == 0);
+		Assert(numblocks == InvalidBlockNumber);
+	}
 
 	reltuples = 0;
 

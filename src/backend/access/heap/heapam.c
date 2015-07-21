@@ -277,7 +277,6 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 		scan->rs_startblock = 0;
 	}
 
-	scan->rs_initblock = 0;
 	scan->rs_numblocks = InvalidBlockNumber;
 	scan->rs_inited = false;
 	scan->rs_ctup.t_data = NULL;
@@ -302,11 +301,22 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 		pgstat_count_heap_scan(scan->rs_rd);
 }
 
+/*
+ * heap_setscanlimits - restrict range of a heapscan
+ *
+ * startBlk is the page to start at
+ * numBlks is number of pages to scan (InvalidBlockNumber means "all")
+ */
 void
 heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk, BlockNumber numBlks)
 {
+	Assert(!scan->rs_inited);	/* else too late to change */
+	Assert(!scan->rs_syncscan); /* else rs_startblock is significant */
+
+	/* Check startBlk is valid (but allow case of zero blocks...) */
+	Assert(startBlk == 0 || startBlk < scan->rs_nblocks);
+
 	scan->rs_startblock = startBlk;
-	scan->rs_initblock = startBlk;
 	scan->rs_numblocks = numBlks;
 }
 
@@ -477,7 +487,7 @@ heapgettup(HeapScanDesc scan,
 			/*
 			 * return null immediately if relation is empty
 			 */
-			if (scan->rs_nblocks == 0)
+			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
@@ -511,7 +521,7 @@ heapgettup(HeapScanDesc scan,
 			/*
 			 * return null immediately if relation is empty
 			 */
-			if (scan->rs_nblocks == 0)
+			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
@@ -651,7 +661,7 @@ heapgettup(HeapScanDesc scan,
 		if (backward)
 		{
 			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
 			if (page == 0)
 				page = scan->rs_nblocks;
 			page--;
@@ -662,7 +672,7 @@ heapgettup(HeapScanDesc scan,
 			if (page >= scan->rs_nblocks)
 				page = 0;
 			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
 
 			/*
 			 * Report our new scan position for synchronization purposes. We
@@ -754,7 +764,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			/*
 			 * return null immediately if relation is empty
 			 */
-			if (scan->rs_nblocks == 0)
+			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
@@ -785,7 +795,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			/*
 			 * return null immediately if relation is empty
 			 */
-			if (scan->rs_nblocks == 0)
+			if (scan->rs_nblocks == 0 || scan->rs_numblocks == 0)
 			{
 				Assert(!BufferIsValid(scan->rs_cbuf));
 				tuple->t_data = NULL;
@@ -914,7 +924,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		if (backward)
 		{
 			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
 			if (page == 0)
 				page = scan->rs_nblocks;
 			page--;
@@ -925,7 +935,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			if (page >= scan->rs_nblocks)
 				page = 0;
 			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks <= 0 : false);
+				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
 
 			/*
 			 * Report our new scan position for synchronization purposes. We
