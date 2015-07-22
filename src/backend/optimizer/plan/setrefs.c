@@ -372,10 +372,11 @@ flatten_rtes_walker(Node *node, PlannerGlobal *glob)
  *
  * In the flat rangetable, we zero out substructure pointers that are not
  * needed by the executor; this reduces the storage space and copying cost
- * for cached plans.  We keep only the alias and eref Alias fields, which are
- * needed by EXPLAIN, and the selectedCols, insertedCols and updatedCols
- * bitmaps, which are needed for executor-startup permissions checking and for
- * trigger event checking.
+ * for cached plans.  We keep only the tablesample field (which we'd otherwise
+ * have to put in the plan tree, anyway); the ctename, alias and eref Alias
+ * fields, which are needed by EXPLAIN; and the selectedCols, insertedCols and
+ * updatedCols bitmaps, which are needed for executor-startup permissions
+ * checking and for trigger event checking.
  */
 static void
 add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
@@ -395,6 +396,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	newrte->ctecoltypes = NIL;
 	newrte->ctecoltypmods = NIL;
 	newrte->ctecolcollations = NIL;
+	newrte->securityQuals = NIL;
 
 	glob->finalrtable = lappend(glob->finalrtable, newrte);
 
@@ -1199,7 +1201,7 @@ set_customscan_references(PlannerInfo *root,
 	}
 
 	/* Adjust child plan-nodes recursively, if needed */
-	foreach (lc, cscan->custom_plans)
+	foreach(lc, cscan->custom_plans)
 	{
 		lfirst(lc) = set_plan_refs(root, (Plan *) lfirst(lc), rtoffset);
 	}
