@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Cwd;
 use TestLib;
-use Test::More tests => 44;
+use Test::More tests => 51;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -37,6 +37,7 @@ command_fails(
 	'pg_basebackup fails because of WAL configuration');
 
 open CONF, ">>$tempdir/pgdata/postgresql.conf";
+print CONF "max_replication_slots = 10\n";
 print CONF "max_wal_senders = 10\n";
 print CONF "wal_level = archive\n";
 close CONF;
@@ -156,3 +157,22 @@ ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_xlog")), 'WAL files co
 command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxs", '-X', 'stream' ],
 	'pg_basebackup -X stream runs');
 ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_xlog")), 'WAL files copied');
+
+command_fails([ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1' ],
+	'pg_basebackup with replication slot fails without -X stream');
+command_fails([ 'pg_basebackup', '-D', "$tempdir/backupxs_sl_fail", '-X', 'stream', '-S', 'slot1' ],
+	'pg_basebackup fails with nonexistent replication slot');
+
+psql 'postgres', q{SELECT * FROM pg_create_physical_replication_slot('slot1')};
+my $lsn = psql 'postgres', q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'};
+is($lsn, '', 'restart LSN of new slot is null');
+command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X', 'stream', '-S', 'slot1' ],
+	'pg_basebackup -X stream with replication slot runs');
+$lsn = psql 'postgres', q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'};
+like($lsn, qr!^0/[0-9A-Z]{8}$!, 'restart LSN of slot has advanced');
+
+command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '-X', 'stream', '-S', 'slot1', '-R' ],
+	'pg_basebackup with replication slot and -R runs');
+like(slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),
+	 qr/^primary_slot_name = 'slot1'$/m,
+	 'recovery.conf sets primary_slot_name');

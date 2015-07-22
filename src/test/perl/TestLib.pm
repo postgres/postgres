@@ -173,8 +173,11 @@ END
 sub psql
 {
 	my ($dbname, $sql) = @_;
+	my ($stdout, $stderr);
 	print("# Running SQL command: $sql\n");
-	run [ 'psql', '-X', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql or die;
+	run [ 'psql', '-X', '-A', '-t', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql, '>', \$stdout, '2>', \$stderr or die;
+	chomp $stdout;
+	return $stdout;
 }
 
 sub slurp_dir
