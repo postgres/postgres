@@ -173,6 +173,8 @@
 #define MULTIXACT_MEMBER_DANGER_THRESHOLD	\
 	(MaxMultiXactOffset - MaxMultiXactOffset / 4)
 
+#define PreviousMultiXactId(xid) \
+	((xid) == FirstMultiXactId ? MaxMultiXactId : (xid) - 1)
 
 /*
  * Links to shared-memory data structures for MultiXact control
@@ -3057,10 +3059,15 @@ TruncateMultiXact(void)
 
 	SlruScanDirectory(MultiXactMemberCtl, SlruScanDirCbRemoveMembers, &range);
 
-	/* Now we can truncate MultiXactOffset */
+	/*
+	 * Now we can truncate MultiXactOffset.  We step back one multixact to
+	 * avoid passing a cutoff page that hasn't been created yet in the rare
+	 * case that oldestMXact would be the first item on a page and oldestMXact
+	 * == nextMXact.  In that case, if we didn't subtract one, we'd trigger
+	 * SimpleLruTruncate's wraparound detection.
+	 */
 	SimpleLruTruncate(MultiXactOffsetCtl,
-					  MultiXactIdToOffsetPage(oldestMXact));
-
+				  MultiXactIdToOffsetPage(PreviousMultiXactId(oldestMXact)));
 
 	/*
 	 * Now, and only now, we can advance the stop point for multixact members.
