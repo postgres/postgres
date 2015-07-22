@@ -15,6 +15,7 @@
 
 #define InvalidMultiXactId	((MultiXactId) 0)
 #define FirstMultiXactId	((MultiXactId) 1)
+#define MaxMultiXactId		((MultiXactId) 0xFFFFFFFF)
 
 #define MultiXactIdIsValid(multi) ((multi) != InvalidMultiXactId)
 
