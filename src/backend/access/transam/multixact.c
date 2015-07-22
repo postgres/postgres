@@ -90,6 +90,8 @@
 #define MXOffsetToMemberEntry(xid) \
 	((xid) % (TransactionId) MULTIXACT_MEMBERS_PER_PAGE)
 
+#define PreviousMultiXactId(xid) \
+	((xid) == FirstMultiXactId ? MaxMultiXactId : (xid) - 1)
 
 /*
  * Links to shared-memory data structures for MultiXact control
@@ -1902,17 +1904,21 @@ TruncateMultiXact(void)
 	}
 
 	/*
-	 * The cutoff point is the start of the segment containing oldestMXact. We
-	 * pass the *page* containing oldestMXact to SimpleLruTruncate.
+	 * The cutoff point is the start of the segment containing oldestMXact.
+	 * We step back one multixact to avoid passing a cutoff page that hasn't
+	 * been created yet in the rare case that oldestMXact would be the first
+	 * item on a page and oldestMXact == nextMXact.  In that case, if we
+	 * didn't subtract one, we'd trigger SimpleLruTruncate's wraparound
+	 * detection.
 	 */
-	cutoffPage = MultiXactIdToOffsetPage(oldestMXact);
+	cutoffPage = MultiXactIdToOffsetPage(PreviousMultiXactId(oldestMXact));
 
 	SimpleLruTruncate(MultiXactOffsetCtl, cutoffPage);
 
 	/*
 	 * Also truncate MultiXactMember at the previously determined offset.
 	 */
-	cutoffPage = MXOffsetToMemberPage(oldestOffset);
+	cutoffPage = MXOffsetToMemberPage(oldestOffset - 1);
 
 	SimpleLruTruncate(MultiXactMemberCtl, cutoffPage);
 
