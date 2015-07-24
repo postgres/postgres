@@ -1087,6 +1087,55 @@ COPY copy_t FROM STDIN; --fail - permission denied.
 RESET SESSION AUTHORIZATION;
 DROP TABLE copy_t;
 
+-- Check WHERE CURRENT OF
+SET SESSION AUTHORIZATION rls_regress_user0;
+
+CREATE TABLE current_check (currentid int, payload text, rlsuser text);
+GRANT ALL ON current_check TO PUBLIC;
+
+INSERT INTO current_check VALUES
+    (1, 'abc', 'rls_regress_user1'),
+    (2, 'bcd', 'rls_regress_user1'),
+    (3, 'cde', 'rls_regress_user1'),
+    (4, 'def', 'rls_regress_user1');
+
+CREATE POLICY p1 ON current_check FOR SELECT USING (currentid % 2 = 0);
+CREATE POLICY p2 ON current_check FOR DELETE USING (currentid = 4 AND rlsuser = current_user);
+CREATE POLICY p3 ON current_check FOR UPDATE USING (currentid = 4) WITH CHECK (rlsuser = current_user);
+
+ALTER TABLE current_check ENABLE ROW LEVEL SECURITY;
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+
+-- Can SELECT even rows
+SELECT * FROM current_check;
+
+-- Cannot UPDATE row 2
+UPDATE current_check SET payload = payload || '_new' WHERE currentid = 2 RETURNING *;
+
+BEGIN;
+
+DECLARE current_check_cursor SCROLL CURSOR FOR SELECT * FROM current_check;
+-- Returns rows that can be seen according to SELECT policy, like plain SELECT
+-- above (even rows)
+FETCH ABSOLUTE 1 FROM current_check_cursor;
+-- Still cannot UPDATE row 2 through cursor
+UPDATE current_check SET payload = payload || '_new' WHERE CURRENT OF current_check_cursor RETURNING *;
+-- Can update row 4 through cursor, which is the next visible row
+FETCH RELATIVE 1 FROM current_check_cursor;
+UPDATE current_check SET payload = payload || '_new' WHERE CURRENT OF current_check_cursor RETURNING *;
+SELECT * FROM current_check;
+-- Plan should be a subquery TID scan
+EXPLAIN (COSTS OFF) UPDATE current_check SET payload = payload WHERE CURRENT OF current_check_cursor;
+-- Similarly can only delete row 4
+FETCH ABSOLUTE 1 FROM current_check_cursor;
+DELETE FROM current_check WHERE CURRENT OF current_check_cursor RETURNING *;
+FETCH RELATIVE 1 FROM current_check_cursor;
+DELETE FROM current_check WHERE CURRENT OF current_check_cursor RETURNING *;
+SELECT * FROM current_check;
+
+COMMIT;
+
 --
 -- Collation support
 --

@@ -2177,6 +2177,46 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 		recurse_push_qual(subquery->setOperations, subquery,
 						  rte, rti, qual);
 	}
+	else if (IsA(qual, CurrentOfExpr))
+	{
+		/*
+		 * This is possible when a WHERE CURRENT OF expression is applied to a
+		 * table with row-level security.  In that case, the subquery should
+		 * contain precisely one rtable entry for the table, and we can safely
+		 * push the expression down into the subquery.  This will cause a TID
+		 * scan subquery plan to be generated allowing the target relation to
+		 * be updated.
+		 *
+		 * Someday we might also be able to use a WHERE CURRENT OF expression
+		 * on a view, but currently the rewriter prevents that, so we should
+		 * never see any other case here, but generate sane error messages in
+		 * case it does somehow happen.
+		 */
+		if (subquery->rtable == NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WHERE CURRENT OF is not supported on a view with no underlying relation")));
+
+		if (list_length(subquery->rtable) > 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WHERE CURRENT OF is not supported on a view with more than one underlying relation")));
+
+		if (subquery->hasAggs || subquery->groupClause || subquery->groupingSets || subquery->havingQual)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WHERE CURRENT OF is not supported on a view with grouping or aggregation")));
+
+		/*
+		 * Adjust the CURRENT OF expression to refer to the underlying table
+		 * in the subquery, and attach it to the subquery's WHERE clause.
+		 */
+		qual = copyObject(qual);
+		((CurrentOfExpr *) qual)->cvarno = 1;
+
+		subquery->jointree->quals =
+			make_and_qual(subquery->jointree->quals, qual);
+	}
 	else
 	{
 		/*
