@@ -126,7 +126,12 @@ SELECT json_agg(q)
          FROM generate_series(1,2) x,
               generate_series(4,5) y) q;
 
-SELECT json_agg(q)
+SELECT json_agg(q ORDER BY x, y)
+  FROM rows q;
+
+UPDATE rows SET x = NULL WHERE x = 1;
+
+SELECT json_agg(q ORDER BY x NULLS FIRST, y)
   FROM rows q;
 
 -- non-numeric output
@@ -442,7 +447,6 @@ SELECT json_build_object(
        'd', json_build_object('e',array[9,8,7]::int[],
            'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
 
-
 -- empty objects/arrays
 SELECT json_build_array();
 
@@ -467,6 +471,11 @@ INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
 
 SELECT json_build_object('turbines',json_object_agg(serial_num,json_build_object('name',name,'type',type)))
 FROM foo;
+
+SELECT json_object_agg(name, type) FROM foo;
+
+INSERT INTO foo VALUES (999999, NULL, 'bar');
+SELECT json_object_agg(name, type) FROM foo;
 
 -- json_object
 
