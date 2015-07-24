@@ -705,6 +705,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 
 	if (is_null)
 	{
+		Assert(!key_scalar);
 		jb.type = jbvNull;
 	}
 	else if (key_scalar &&
@@ -1606,7 +1607,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 
 	memset(&elem, 0, sizeof(JsonbInState));
 
-	datum_to_jsonb(val, false, &elem, tcategory, outfuncoid, false);
+	datum_to_jsonb(val, PG_ARGISNULL(1), &elem, tcategory, outfuncoid, false);
 
 	jbelem = JsonbValueToJsonb(elem.res);
 
@@ -1752,7 +1753,12 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-	val = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+	if (PG_ARGISNULL(1))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("field name must not be null")));
+
+	val = PG_GETARG_DATUM(1);
 
 	jsonb_categorize_type(val_type,
 						  &tcategory, &outfuncoid);
@@ -1777,7 +1783,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	memset(&elem, 0, sizeof(JsonbInState));
 
-	datum_to_jsonb(val, false, &elem, tcategory, outfuncoid, false);
+	datum_to_jsonb(val, PG_ARGISNULL(2), &elem, tcategory, outfuncoid, false);
 
 	jbval = JsonbValueToJsonb(elem.res);
 

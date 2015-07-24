@@ -369,11 +369,19 @@ SELECT jsonb_agg(q)
  [{"b": "a1", "c": 4, "z": [{"f1": 1, "f2": [1, 2, 3]}, {"f1": 4, "f2": [4, 5, 6]}]}, {"b": "a1", "c": 5, "z": [{"f1": 1, "f2": [1, 2, 3]}, {"f1": 5, "f2": [4, 5, 6]}]}, {"b": "a2", "c": 4, "z": [{"f1": 2, "f2": [1, 2, 3]}, {"f1": 4, "f2": [4, 5, 6]}]}, {"b": "a2", "c": 5, "z": [{"f1": 2, "f2": [1, 2, 3]}, {"f1": 5, "f2": [4, 5, 6]}]}]
 (1 row)
 
-SELECT jsonb_agg(q)
+SELECT jsonb_agg(q ORDER BY x, y)
   FROM rows q;
                                jsonb_agg                               
 -----------------------------------------------------------------------
  [{"x": 1, "y": "txt1"}, {"x": 2, "y": "txt2"}, {"x": 3, "y": "txt3"}]
+(1 row)
+
+UPDATE rows SET x = NULL WHERE x = 1;
+SELECT jsonb_agg(q ORDER BY x NULLS FIRST, y)
+  FROM rows q;
+                                jsonb_agg                                 
+--------------------------------------------------------------------------
+ [{"x": null, "y": "txt1"}, {"x": 2, "y": "txt2"}, {"x": 3, "y": "txt3"}]
 (1 row)
 
 -- jsonb extraction functions
@@ -1393,6 +1401,15 @@ FROM foo;
  {"turbines": {"847001": {"name": "t15", "type": "GE1043"}, "847002": {"name": "t16", "type": "GE1043"}, "847003": {"name": "sub-alpha", "type": "GESS90"}}}
 (1 row)
 
+SELECT jsonb_object_agg(name, type) FROM foo;
+                     jsonb_object_agg                      
+-----------------------------------------------------------
+ {"t15": "GE1043", "t16": "GE1043", "sub-alpha": "GESS90"}
+(1 row)
+
+INSERT INTO foo VALUES (999999, NULL, 'bar');
+SELECT jsonb_object_agg(name, type) FROM foo;
+ERROR:  field name must not be null
 -- jsonb_object
 -- one dimension
 SELECT jsonb_object('{a,1,b,2,3,NULL,"d e f","a b c"}');

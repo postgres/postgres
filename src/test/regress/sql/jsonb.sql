@@ -93,7 +93,12 @@ SELECT jsonb_agg(q)
          FROM generate_series(1,2) x,
               generate_series(4,5) y) q;
 
-SELECT jsonb_agg(q)
+SELECT jsonb_agg(q ORDER BY x, y)
+  FROM rows q;
+
+UPDATE rows SET x = NULL WHERE x = 1;
+
+SELECT jsonb_agg(q ORDER BY x NULLS FIRST, y)
   FROM rows q;
 
 -- jsonb extraction functions
@@ -333,6 +338,11 @@ INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
 
 SELECT jsonb_build_object('turbines',jsonb_object_agg(serial_num,jsonb_build_object('name',name,'type',type)))
 FROM foo;
+
+SELECT jsonb_object_agg(name, type) FROM foo;
+
+INSERT INTO foo VALUES (999999, NULL, 'bar');
+SELECT jsonb_object_agg(name, type) FROM foo;
 
 -- jsonb_object
 
