@@ -1492,6 +1492,16 @@ contain_leaked_vars_walker(Node *node, void *context)
 			}
 			break;
 
+		case T_CurrentOfExpr:
+
+			/*
+			 * WHERE CURRENT OF doesn't contain function calls.  Moreover, it
+			 * is important that this can be pushed down into a
+			 * security_barrier view, since the planner must always generate
+			 * a TID scan when CURRENT OF is present -- c.f. cost_tidscan.
+			 */
+			return false;
+
 		default:
 
 			/*
