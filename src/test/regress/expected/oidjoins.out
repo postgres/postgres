@@ -545,6 +545,30 @@ WHERE	extnamespace != 0 AND
 ------+--------------
 (0 rows)
 
+SELECT	ctid, fdwowner
+FROM	pg_catalog.pg_foreign_data_wrapper fk
+WHERE	fdwowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.fdwowner);
+ ctid | fdwowner 
+------+----------
+(0 rows)
+
+SELECT	ctid, srvowner
+FROM	pg_catalog.pg_foreign_server fk
+WHERE	srvowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.srvowner);
+ ctid | srvowner 
+------+----------
+(0 rows)
+
+SELECT	ctid, srvfdw
+FROM	pg_catalog.pg_foreign_server fk
+WHERE	srvfdw != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_foreign_data_wrapper pk WHERE pk.oid = fk.srvfdw);
+ ctid | srvfdw 
+------+--------
+(0 rows)
+
 SELECT	ctid, indexrelid
 FROM	pg_catalog.pg_index fk
 WHERE	indexrelid != 0 AND
@@ -607,6 +631,22 @@ WHERE	lanvalidator != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.lanvalidator);
  ctid | lanvalidator 
 ------+--------------
+(0 rows)
+
+SELECT	ctid, loid
+FROM	pg_catalog.pg_largeobject fk
+WHERE	loid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject_metadata pk WHERE pk.oid = fk.loid);
+ ctid | loid 
+------+------
+(0 rows)
+
+SELECT	ctid, lomowner
+FROM	pg_catalog.pg_largeobject_metadata fk
+WHERE	lomowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.lomowner);
+ ctid | lomowner 
+------+----------
 (0 rows)
 
 SELECT	ctid, nspowner
@@ -942,6 +982,38 @@ FROM	pg_catalog.pg_tablespace fk
 WHERE	spcowner != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.spcowner);
  ctid | spcowner 
+------+----------
+(0 rows)
+
+SELECT	ctid, trftype
+FROM	pg_catalog.pg_transform fk
+WHERE	trftype != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.trftype);
+ ctid | trftype 
+------+---------
+(0 rows)
+
+SELECT	ctid, trflang
+FROM	pg_catalog.pg_transform fk
+WHERE	trflang != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_language pk WHERE pk.oid = fk.trflang);
+ ctid | trflang 
+------+---------
+(0 rows)
+
+SELECT	ctid, trffromsql
+FROM	pg_catalog.pg_transform fk
+WHERE	trffromsql != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.trffromsql);
+ ctid | trffromsql 
+------+------------
+(0 rows)
+
+SELECT	ctid, trftosql
+FROM	pg_catalog.pg_transform fk
+WHERE	trftosql != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.trftosql);
+ ctid | trftosql 
 ------+----------
 (0 rows)
 
