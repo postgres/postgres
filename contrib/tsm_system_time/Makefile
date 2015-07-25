@@ -9,6 +9,8 @@ DATA = tsm_system_time--1.0.sql
 
 REGRESS = tsm_system_time
 
+SHLIB_LINK += $(filter -lm, $(LIBS))
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
