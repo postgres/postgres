@@ -273,6 +273,18 @@ SELECT	ctid, extnamespace
 FROM	pg_catalog.pg_extension fk
 WHERE	extnamespace != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.extnamespace);
+SELECT	ctid, fdwowner
+FROM	pg_catalog.pg_foreign_data_wrapper fk
+WHERE	fdwowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.fdwowner);
+SELECT	ctid, srvowner
+FROM	pg_catalog.pg_foreign_server fk
+WHERE	srvowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.srvowner);
+SELECT	ctid, srvfdw
+FROM	pg_catalog.pg_foreign_server fk
+WHERE	srvfdw != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_foreign_data_wrapper pk WHERE pk.oid = fk.srvfdw);
 SELECT	ctid, indexrelid
 FROM	pg_catalog.pg_index fk
 WHERE	indexrelid != 0 AND
@@ -305,6 +317,14 @@ SELECT	ctid, lanvalidator
 FROM	pg_catalog.pg_language fk
 WHERE	lanvalidator != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.lanvalidator);
+SELECT	ctid, loid
+FROM	pg_catalog.pg_largeobject fk
+WHERE	loid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject_metadata pk WHERE pk.oid = fk.loid);
+SELECT	ctid, lomowner
+FROM	pg_catalog.pg_largeobject_metadata fk
+WHERE	lomowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.lomowner);
 SELECT	ctid, nspowner
 FROM	pg_catalog.pg_namespace fk
 WHERE	nspowner != 0 AND
@@ -473,6 +493,22 @@ SELECT	ctid, spcowner
 FROM	pg_catalog.pg_tablespace fk
 WHERE	spcowner != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.spcowner);
+SELECT	ctid, trftype
+FROM	pg_catalog.pg_transform fk
+WHERE	trftype != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.trftype);
+SELECT	ctid, trflang
+FROM	pg_catalog.pg_transform fk
+WHERE	trflang != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_language pk WHERE pk.oid = fk.trflang);
+SELECT	ctid, trffromsql
+FROM	pg_catalog.pg_transform fk
+WHERE	trffromsql != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.trffromsql);
+SELECT	ctid, trftosql
+FROM	pg_catalog.pg_transform fk
+WHERE	trftosql != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.trftosql);
 SELECT	ctid, tgrelid
 FROM	pg_catalog.pg_trigger fk
 WHERE	tgrelid != 0 AND
