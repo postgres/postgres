@@ -208,13 +208,6 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 		ctx->hasSeek = checkSeek(ctx->tarFH);
 
-		if (AH->compression < 0 || AH->compression > 9)
-			AH->compression = Z_DEFAULT_COMPRESSION;
-
-		/* Don't compress into tar files unless asked to do so */
-		if (AH->compression == Z_DEFAULT_COMPRESSION)
-			AH->compression = 0;
-
 		/*
 		 * We don't support compression because reading the files back is not
 		 * possible since gzdopen uses buffered IO which totally screws file
