@@ -457,8 +457,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <jexpr>	joined_table
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
+%type <node>	tablesample_clause opt_repeatable_clause
 %type <target>	target_el single_set_clause set_target insert_column_item
-%type <node>	relation_expr_tablesample tablesample_clause opt_repeatable_clause
 
 %type <str>		generic_option_name
 %type <node>	generic_option_arg
@@ -10491,9 +10491,13 @@ table_ref:	relation_expr opt_alias_clause
 					$1->alias = $2;
 					$$ = (Node *) $1;
 				}
-			| relation_expr_tablesample
+			| relation_expr opt_alias_clause tablesample_clause
 				{
-					$$ = (Node *) $1;
+					RangeTableSample *n = (RangeTableSample *) $3;
+					$1->alias = $2;
+					/* relation_expr goes inside the RangeTableSample node */
+					n->relation = (Node *) $1;
+					$$ = (Node *) n;
 				}
 			| func_table func_alias_clause
 				{
@@ -10820,23 +10824,18 @@ relation_expr_opt_alias: relation_expr					%prec UMINUS
 				}
 		;
 
-
-relation_expr_tablesample: relation_expr opt_alias_clause tablesample_clause
-				{
-					RangeTableSample *n = (RangeTableSample *) $3;
-					n->relation = $1;
-					n->relation->alias = $2;
-					$$ = (Node *) n;
-				}
-		;
-
+/*
+ * TABLESAMPLE decoration in a FROM item
+ */
 tablesample_clause:
-			TABLESAMPLE ColId '(' expr_list ')' opt_repeatable_clause
+			TABLESAMPLE func_name '(' expr_list ')' opt_repeatable_clause
 				{
 					RangeTableSample *n = makeNode(RangeTableSample);
+					/* n->relation will be filled in later */
 					n->method = $2;
 					n->args = $4;
 					n->repeatable = $6;
+					n->location = @2;
 					$$ = (Node *) n;
 				}
 		;

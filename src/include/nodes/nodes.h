@@ -51,6 +51,7 @@ typedef enum NodeTag
 	T_BitmapOr,
 	T_Scan,
 	T_SeqScan,
+	T_SampleScan,
 	T_IndexScan,
 	T_IndexOnlyScan,
 	T_BitmapIndexScan,
@@ -61,7 +62,6 @@ typedef enum NodeTag
 	T_ValuesScan,
 	T_CteScan,
 	T_WorkTableScan,
-	T_SampleScan,
 	T_ForeignScan,
 	T_CustomScan,
 	T_Join,
@@ -400,6 +400,7 @@ typedef enum NodeTag
 	T_WindowDef,
 	T_RangeSubselect,
 	T_RangeFunction,
+	T_RangeTableSample,
 	T_TypeName,
 	T_ColumnDef,
 	T_IndexElem,
@@ -407,6 +408,7 @@ typedef enum NodeTag
 	T_DefElem,
 	T_RangeTblEntry,
 	T_RangeTblFunction,
+	T_TableSampleClause,
 	T_WithCheckOption,
 	T_SortGroupClause,
 	T_GroupingSet,
@@ -425,8 +427,6 @@ typedef enum NodeTag
 	T_OnConflictClause,
 	T_CommonTableExpr,
 	T_RoleSpec,
-	T_RangeTableSample,
-	T_TableSampleClause,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
@@ -452,7 +452,8 @@ typedef enum NodeTag
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
-	T_FdwRoutine				/* in foreign/fdwapi.h */
+	T_FdwRoutine,				/* in foreign/fdwapi.h */
+	T_TsmRoutine				/* in access/tsmapi.h */
 } NodeTag;
 
 /*

@@ -2202,6 +2202,10 @@ street| SELECT r.name,
    FROM ONLY road r,
     real_city c
   WHERE (c.outline ## r.thepath);
+test_tablesample_v1| SELECT test_tablesample.id
+   FROM test_tablesample TABLESAMPLE system ((10 * 2)) REPEATABLE (2);
+test_tablesample_v2| SELECT test_tablesample.id
+   FROM test_tablesample TABLESAMPLE system (99);
 toyemp| SELECT emp.name,
     emp.age,
     emp.location,

@@ -566,6 +566,8 @@ extern Datum language_handler_in(PG_FUNCTION_ARGS);
 extern Datum language_handler_out(PG_FUNCTION_ARGS);
 extern Datum fdw_handler_in(PG_FUNCTION_ARGS);
 extern Datum fdw_handler_out(PG_FUNCTION_ARGS);
+extern Datum tsm_handler_in(PG_FUNCTION_ARGS);
+extern Datum tsm_handler_out(PG_FUNCTION_ARGS);
 extern Datum internal_in(PG_FUNCTION_ARGS);
 extern Datum internal_out(PG_FUNCTION_ARGS);
 extern Datum opaque_in(PG_FUNCTION_ARGS);
@@ -1212,6 +1214,12 @@ extern Datum ginarrayextract_2args(PG_FUNCTION_ARGS);
 extern Datum ginqueryarrayextract(PG_FUNCTION_ARGS);
 extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
 extern Datum ginarraytriconsistent(PG_FUNCTION_ARGS);
+
+/* access/tablesample/bernoulli.c */
+extern Datum tsm_bernoulli_handler(PG_FUNCTION_ARGS);
+
+/* access/tablesample/system.c */
+extern Datum tsm_system_handler(PG_FUNCTION_ARGS);
 
 /* access/transam/twophase.c */
 extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);

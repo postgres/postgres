@@ -1,54 +1,100 @@
 CREATE EXTENSION tsm_system_time;
-CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10); -- force smaller pages so we don't have to load too much data to get multiple pages
-INSERT INTO test_tablesample SELECT i, repeat(i::text, 1000) FROM generate_series(0, 30) s(i) ORDER BY i;
+CREATE TABLE test_tablesample (id int, name text);
+INSERT INTO test_tablesample SELECT i, repeat(i::text, 1000)
+  FROM generate_series(0, 30) s(i);
 ANALYZE test_tablesample;
-SELECT count(*) FROM test_tablesample TABLESAMPLE system_time (1000);
+-- It's a bit tricky to test SYSTEM_TIME in a platform-independent way.
+-- We can test the zero-time corner case ...
+SELECT count(*) FROM test_tablesample TABLESAMPLE system_time (0);
+ count 
+-------
+     0
+(1 row)
+
+-- ... and we assume that this will finish before running out of time:
+SELECT count(*) FROM test_tablesample TABLESAMPLE system_time (100000);
  count 
 -------
     31
 (1 row)
 
-SELECT id FROM test_tablesample TABLESAMPLE system_time (1000) REPEATABLE (5432);
- id 
-----
-  7
- 14
- 21
- 28
-  4
- 11
- 18
- 25
-  1
-  8
- 15
- 22
- 29
-  5
- 12
- 19
- 26
-  2
-  9
- 16
- 23
- 30
-  6
- 13
- 20
- 27
-  3
- 10
- 17
- 24
-  0
-(31 rows)
+-- bad parameters should get through planning, but not execution:
+EXPLAIN (COSTS OFF)
+SELECT id FROM test_tablesample TABLESAMPLE system_time (-1);
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sample Scan on test_tablesample
+   Sampling: system_time ('-1'::double precision)
+(2 rows)
 
-EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE system_time (100) REPEATABLE (10);
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
- Sample Scan (system_time) on test_tablesample  (cost=0.00..100.25 rows=25 width=4)
-(1 row)
+SELECT id FROM test_tablesample TABLESAMPLE system_time (-1);
+ERROR:  sample collection time must not be negative
+-- fail, this method is not repeatable:
+SELECT * FROM test_tablesample TABLESAMPLE system_time (10) REPEATABLE (0);
+ERROR:  tablesample method system_time does not support REPEATABLE
+LINE 1: SELECT * FROM test_tablesample TABLESAMPLE system_time (10) ...
+                                                   ^
+-- since it's not repeatable, we expect a Materialize node in these plans:
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (VALUES (0),(100000)) v(time),
+  LATERAL (SELECT COUNT(*) FROM test_tablesample
+           TABLESAMPLE system_time (100000)) ss;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Nested Loop
+   ->  Aggregate
+         ->  Materialize
+               ->  Sample Scan on test_tablesample
+                     Sampling: system_time ('100000'::double precision)
+   ->  Values Scan on "*VALUES*"
+(6 rows)
 
--- done
-DROP TABLE test_tablesample CASCADE;
+SELECT * FROM
+  (VALUES (0),(100000)) v(time),
+  LATERAL (SELECT COUNT(*) FROM test_tablesample
+           TABLESAMPLE system_time (100000)) ss;
+  time  | count 
+--------+-------
+      0 |    31
+ 100000 |    31
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (VALUES (0),(100000)) v(time),
+  LATERAL (SELECT COUNT(*) FROM test_tablesample
+           TABLESAMPLE system_time (time)) ss;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Nested Loop
+   ->  Values Scan on "*VALUES*"
+   ->  Aggregate
+         ->  Materialize
+               ->  Sample Scan on test_tablesample
+                     Sampling: system_time ("*VALUES*".column1)
+(6 rows)
+
+SELECT * FROM
+  (VALUES (0),(100000)) v(time),
+  LATERAL (SELECT COUNT(*) FROM test_tablesample
+           TABLESAMPLE system_time (time)) ss;
+  time  | count 
+--------+-------
+      0 |     0
+ 100000 |    31
+(2 rows)
+
+CREATE VIEW vv AS
+  SELECT * FROM test_tablesample TABLESAMPLE system_time (20);
+EXPLAIN (COSTS OFF) SELECT * FROM vv;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sample Scan on test_tablesample
+   Sampling: system_time ('20'::double precision)
+(2 rows)
+
+DROP EXTENSION tsm_system_time;  -- fail, view depends on extension
+ERROR:  cannot drop extension tsm_system_time because other objects depend on it
+DETAIL:  view vv depends on function system_time(internal)
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.

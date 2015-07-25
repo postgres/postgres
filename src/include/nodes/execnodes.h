@@ -1257,13 +1257,22 @@ typedef struct ScanState
  */
 typedef ScanState SeqScanState;
 
-/*
- * SampleScan
+/* ----------------
+ *	 SampleScanState information
+ * ----------------
  */
 typedef struct SampleScanState
 {
 	ScanState	ss;
-	struct TableSampleDesc *tsdesc;
+	List	   *args;			/* expr states for TABLESAMPLE params */
+	ExprState  *repeatable;		/* expr state for REPEATABLE expr */
+	/* use struct pointer to avoid including tsmapi.h here */
+	struct TsmRoutine *tsmroutine;		/* descriptor for tablesample method */
+	void	   *tsm_state;		/* tablesample method can keep state here */
+	bool		use_bulkread;	/* use bulkread buffer access strategy? */
+	bool		use_pagemode;	/* use page-at-a-time visibility checking? */
+	bool		begun;			/* false means need to call BeginSampleScan */
+	uint32		seed;			/* random seed */
 } SampleScanState;
 
 /*

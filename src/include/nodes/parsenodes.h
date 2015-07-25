@@ -338,26 +338,6 @@ typedef struct FuncCall
 } FuncCall;
 
 /*
- * TableSampleClause - a sampling method information
- */
-typedef struct TableSampleClause
-{
-	NodeTag		type;
-	Oid			tsmid;
-	bool		tsmseqscan;
-	bool		tsmpagemode;
-	Oid			tsminit;
-	Oid			tsmnextblock;
-	Oid			tsmnexttuple;
-	Oid			tsmexaminetuple;
-	Oid			tsmend;
-	Oid			tsmreset;
-	Oid			tsmcost;
-	Node	   *repeatable;
-	List	   *args;
-} TableSampleClause;
-
-/*
  * A_Star - '*' representing all columns of a table or compound field
  *
  * This can appear within ColumnRef.fields, A_Indirection.indirection, and
@@ -558,19 +538,23 @@ typedef struct RangeFunction
 } RangeFunction;
 
 /*
- * RangeTableSample - represents <table> TABLESAMPLE <method> (<params>) REPEATABLE (<num>)
+ * RangeTableSample - TABLESAMPLE appearing in a raw FROM clause
  *
- * SQL Standard specifies only one parameter which is percentage. But we allow
- * custom tablesample methods which may need different input arguments so we
- * accept list of arguments.
+ * This node, appearing only in raw parse trees, represents
+ *		<relation> TABLESAMPLE <method> (<params>) REPEATABLE (<num>)
+ * Currently, the <relation> can only be a RangeVar, but we might in future
+ * allow RangeSubselect and other options.  Note that the RangeTableSample
+ * is wrapped around the node representing the <relation>, rather than being
+ * a subfield of it.
  */
 typedef struct RangeTableSample
 {
 	NodeTag		type;
-	RangeVar   *relation;
-	char	   *method;			/* sampling method */
-	Node	   *repeatable;
-	List	   *args;			/* arguments for sampling method */
+	Node	   *relation;		/* relation to be sampled */
+	List	   *method;			/* sampling method name (possibly qualified) */
+	List	   *args;			/* argument(s) for sampling method */
+	Node	   *repeatable;		/* REPEATABLE expression, or NULL if none */
+	int			location;		/* method name location, or -1 if unknown */
 } RangeTableSample;
 
 /*
@@ -810,7 +794,7 @@ typedef struct RangeTblEntry
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
-	TableSampleClause *tablesample;		/* sampling method and parameters */
+	struct TableSampleClause *tablesample;		/* sampling info, or NULL */
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
@@ -911,6 +895,19 @@ typedef struct RangeTblFunction
 	/* This is set during planning for use by the executor: */
 	Bitmapset  *funcparams;		/* PARAM_EXEC Param IDs affecting this func */
 } RangeTblFunction;
+
+/*
+ * TableSampleClause - TABLESAMPLE appearing in a transformed FROM clause
+ *
+ * Unlike RangeTableSample, this is a subnode of the relevant RangeTblEntry.
+ */
+typedef struct TableSampleClause
+{
+	NodeTag		type;
+	Oid			tsmhandler;		/* OID of the tablesample handler function */
+	List	   *args;			/* tablesample argument expression(s) */
+	Expr	   *repeatable;		/* REPEATABLE expression, or NULL if none */
+} TableSampleClause;
 
 /*
  * WithCheckOption -
@@ -2520,7 +2517,7 @@ typedef struct RenameStmt
 typedef struct AlterObjectSchemaStmt
 {
 	NodeTag		type;
-	ObjectType objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
+	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
@@ -2535,7 +2532,7 @@ typedef struct AlterObjectSchemaStmt
 typedef struct AlterOwnerStmt
 {
 	NodeTag		type;
-	ObjectType objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
+	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */

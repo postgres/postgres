@@ -1,107 +1,123 @@
-CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10); -- force smaller pages so we don't have to load too much data to get multiple pages
-INSERT INTO test_tablesample SELECT i, repeat(i::text, 200) FROM generate_series(0, 9) s(i) ORDER BY i;
-SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (10);
+CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10);
+-- use fillfactor so we don't have to load too much data to get multiple pages
+INSERT INTO test_tablesample
+  SELECT i, repeat(i::text, 200) FROM generate_series(0, 9) s(i);
+SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (0);
  id 
 ----
-  0
-  1
-  2
   3
   4
   5
-  9
-(7 rows)
-
-SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (9999);
- id 
-----
   6
   7
   8
-(3 rows)
+(6 rows)
 
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (0);
+ id 
+----
+(0 rows)
+
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
+ id 
+----
+  3
+  4
+  5
+  6
+  7
+  8
+(6 rows)
+
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (50) REPEATABLE (0);
+ id 
+----
+  4
+  5
+  6
+  7
+  8
+(5 rows)
+
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (5.5) REPEATABLE (0);
+ id 
+----
+  7
+(1 row)
+
+-- 100% should give repeatable count results (ie, all rows) in any case
 SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100);
  count 
 -------
     10
 (1 row)
 
-SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
- id 
-----
-  0
-  1
-  2
-  6
-  7
-  8
-  9
-(7 rows)
-
-SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (50) REPEATABLE (100);
- id 
-----
-  0
-  1
-  3
-  4
-  5
-(5 rows)
-
-SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
- id 
-----
-  0
-  5
-(2 rows)
-
-CREATE VIEW test_tablesample_v1 AS SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (10*2) REPEATABLE (2);
-CREATE VIEW test_tablesample_v2 AS SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
-SELECT pg_get_viewdef('test_tablesample_v1'::regclass);
-                                 pg_get_viewdef                                 
---------------------------------------------------------------------------------
-  SELECT test_tablesample.id                                                   +
-    FROM test_tablesample TABLESAMPLE system (((10 * 2))::real) REPEATABLE (2);
+SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100) REPEATABLE (1+2);
+ count 
+-------
+    10
 (1 row)
 
-SELECT pg_get_viewdef('test_tablesample_v2'::regclass);
-                      pg_get_viewdef                       
------------------------------------------------------------
-  SELECT test_tablesample.id                              +
-    FROM test_tablesample TABLESAMPLE system ((99)::real);
+SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100) REPEATABLE (0.4);
+ count 
+-------
+    10
 (1 row)
 
+CREATE VIEW test_tablesample_v1 AS
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (10*2) REPEATABLE (2);
+CREATE VIEW test_tablesample_v2 AS
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
+\d+ test_tablesample_v1
+          View "public.test_tablesample_v1"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ id     | integer |           | plain   | 
+View definition:
+ SELECT test_tablesample.id
+   FROM test_tablesample TABLESAMPLE system ((10 * 2)) REPEATABLE (2);
+
+\d+ test_tablesample_v2
+          View "public.test_tablesample_v2"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ id     | integer |           | plain   | 
+View definition:
+ SELECT test_tablesample.id
+   FROM test_tablesample TABLESAMPLE system (99);
+
+-- check a sampled query doesn't affect cursor in progress
 BEGIN;
-DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
+DECLARE tablesample_cur CURSOR FOR
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
 FETCH FIRST FROM tablesample_cur;
  id 
 ----
-  0
+  3
 (1 row)
 
 FETCH NEXT FROM tablesample_cur;
  id 
 ----
-  1
+  4
 (1 row)
 
 FETCH NEXT FROM tablesample_cur;
  id 
 ----
-  2
+  5
 (1 row)
 
-SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
  id 
 ----
-  0
-  1
-  2
   3
   4
   5
-  9
-(7 rows)
+  6
+  7
+  8
+(6 rows)
 
 FETCH NEXT FROM tablesample_cur;
  id 
@@ -124,19 +140,19 @@ FETCH NEXT FROM tablesample_cur;
 FETCH FIRST FROM tablesample_cur;
  id 
 ----
-  0
+  3
 (1 row)
 
 FETCH NEXT FROM tablesample_cur;
  id 
 ----
-  1
+  4
 (1 row)
 
 FETCH NEXT FROM tablesample_cur;
  id 
 ----
-  2
+  5
 (1 row)
 
 FETCH NEXT FROM tablesample_cur;
@@ -159,41 +175,129 @@ FETCH NEXT FROM tablesample_cur;
 
 CLOSE tablesample_cur;
 END;
-EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Sample Scan (system) on test_tablesample  (cost=0.00..26.35 rows=635 width=4)
+EXPLAIN (COSTS OFF)
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (2);
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Sample Scan on test_tablesample
+   Sampling: system ('50'::real) REPEATABLE ('2'::double precision)
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+  SELECT * FROM test_tablesample_v1;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Sample Scan on test_tablesample
+   Sampling: system ('20'::real) REPEATABLE ('2'::double precision)
+(2 rows)
+
+-- check inheritance behavior
+explain (costs off)
+  select count(*) from person tablesample bernoulli (100);
+                   QUERY PLAN                    
+-------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Sample Scan on person
+               Sampling: bernoulli ('100'::real)
+         ->  Sample Scan on emp
+               Sampling: bernoulli ('100'::real)
+         ->  Sample Scan on student
+               Sampling: bernoulli ('100'::real)
+         ->  Sample Scan on stud_emp
+               Sampling: bernoulli ('100'::real)
+(10 rows)
+
+select count(*) from person tablesample bernoulli (100);
+ count 
+-------
+    58
 (1 row)
 
-EXPLAIN SELECT * FROM test_tablesample_v1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Sample Scan (system) on test_tablesample  (cost=0.00..10.54 rows=254 width=4)
+select count(*) from person;
+ count 
+-------
+    58
+(1 row)
+
+-- check that collations get assigned within the tablesample arguments
+SELECT count(*) FROM test_tablesample TABLESAMPLE bernoulli (('1'::text < '0'::text)::int);
+ count 
+-------
+     0
+(1 row)
+
+-- check behavior during rescans, as well as correct handling of min/max pct
+select * from
+  (values (0),(100)) v(pct),
+  lateral (select count(*) from tenk1 tablesample bernoulli (pct)) ss;
+ pct | count 
+-----+-------
+   0 |     0
+ 100 | 10000
+(2 rows)
+
+select * from
+  (values (0),(100)) v(pct),
+  lateral (select count(*) from tenk1 tablesample system (pct)) ss;
+ pct | count 
+-----+-------
+   0 |     0
+ 100 | 10000
+(2 rows)
+
+explain (costs off)
+select pct, count(unique1) from
+  (values (0),(100)) v(pct),
+  lateral (select * from tenk1 tablesample bernoulli (pct)) ss
+  group by pct;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ HashAggregate
+   Group Key: "*VALUES*".column1
+   ->  Nested Loop
+         ->  Values Scan on "*VALUES*"
+         ->  Sample Scan on tenk1
+               Sampling: bernoulli ("*VALUES*".column1)
+(6 rows)
+
+select pct, count(unique1) from
+  (values (0),(100)) v(pct),
+  lateral (select * from tenk1 tablesample bernoulli (pct)) ss
+  group by pct;
+ pct | count 
+-----+-------
+ 100 | 10000
+(1 row)
+
+select pct, count(unique1) from
+  (values (0),(100)) v(pct),
+  lateral (select * from tenk1 tablesample system (pct)) ss
+  group by pct;
+ pct | count 
+-----+-------
+ 100 | 10000
 (1 row)
 
 -- errors
 SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
-ERROR:  tablesample method "foobar" does not exist
+ERROR:  tablesample method foobar does not exist
 LINE 1: SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
-                       ^
+                                                    ^
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (NULL);
+ERROR:  TABLESAMPLE parameter cannot be null
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (NULL);
-ERROR:  REPEATABLE clause must be NOT NULL numeric value
-LINE 1: ... test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (NULL);
-                                                                 ^
+ERROR:  TABLESAMPLE REPEATABLE parameter cannot be null
 SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (-1);
-ERROR:  invalid sample size
-HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+ERROR:  sample percentage must be between 0 and 100
 SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (200);
-ERROR:  invalid sample size
-HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+ERROR:  sample percentage must be between 0 and 100
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (-1);
-ERROR:  invalid sample size
-HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+ERROR:  sample percentage must be between 0 and 100
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (200);
-ERROR:  invalid sample size
-HINT:  Sample size must be numeric value between 0 and 100 (inclusive).
+ERROR:  sample percentage must be between 0 and 100
 SELECT id FROM test_tablesample_v1 TABLESAMPLE BERNOULLI (1);
-ERROR:  TABLESAMPLE clause can only be used on tables and materialized views
+ERROR:  TABLESAMPLE clause can only be applied to tables and materialized views
 LINE 1: SELECT id FROM test_tablesample_v1 TABLESAMPLE BERNOULLI (1)...
                        ^
 INSERT INTO test_tablesample_v1 VALUES(1);
@@ -202,30 +306,10 @@ DETAIL:  Views containing TABLESAMPLE are not automatically updatable.
 HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 WITH query_select AS (SELECT * FROM test_tablesample)
 SELECT * FROM query_select TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
-ERROR:  TABLESAMPLE clause can only be used on tables and materialized views
+ERROR:  TABLESAMPLE clause can only be applied to tables and materialized views
 LINE 2: SELECT * FROM query_select TABLESAMPLE BERNOULLI (5.5) REPEA...
                       ^
 SELECT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPLE BERNOULLI (5);
 ERROR:  syntax error at or near "TABLESAMPLE"
 LINE 1: ...CT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPL...
                                                              ^
--- catalog sanity
-SELECT *
-FROM pg_tablesample_method
-WHERE tsminit IS NULL
-   OR tsmseqscan IS NULL
-   OR tsmpagemode IS NULL
-   OR tsmnextblock IS NULL
-   OR tsmnexttuple IS NULL
-   OR tsmend IS NULL
-   OR tsmreset IS NULL
-   OR tsmcost IS NULL;
- tsmname | tsmseqscan | tsmpagemode | tsminit | tsmnextblock | tsmnexttuple | tsmexaminetuple | tsmend | tsmreset | tsmcost 
----------+------------+-------------+---------+--------------+--------------+-----------------+--------+----------+---------
-(0 rows)
-
--- done
-DROP TABLE test_tablesample CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to view test_tablesample_v1
-drop cascades to view test_tablesample_v2

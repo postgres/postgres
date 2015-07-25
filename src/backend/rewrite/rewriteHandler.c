@@ -418,6 +418,10 @@ rewriteRuleAction(Query *parsetree,
 
 			switch (rte->rtekind)
 			{
+				case RTE_RELATION:
+					sub_action->hasSubLinks =
+						checkExprHasSubLink((Node *) rte->tablesample);
+					break;
 				case RTE_FUNCTION:
 					sub_action->hasSubLinks =
 						checkExprHasSubLink((Node *) rte->functions);

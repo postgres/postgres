@@ -8,25 +8,39 @@
  </indexterm>
 
  <para>
-  The <filename>tsm_system_time</> module provides the tablesample method
-  <literal>SYSTEM_TIME</literal>, which can be used inside the
-  <command>TABLESAMPLE</command> clause of a <command>SELECT</command>.
+  The <filename>tsm_system_time</> module provides the table sampling method
+  <literal>SYSTEM_TIME</literal>, which can be used in
+  the <literal>TABLESAMPLE</> clause of a <xref linkend="sql-select">
+  command.
  </para>
 
  <para>
-  This tablesample method uses a linear probing algorithm to read sample
-  of a table and uses time in milliseconds as limit (unlike the
-  <literal>SYSTEM</literal> tablesample method which limits by percentage
-  of a table). This gives you some control over the length of execution
-  of your query.
+  This table sampling method accepts a single floating-point argument that
+  is the maximum number of milliseconds to spend reading the table.  This
+  gives you direct control over how long the query takes, at the price that
+  the size of the sample becomes hard to predict.  The resulting sample will
+  contain as many rows as could be read in the specified time, unless the
+  whole table has been read first.
+ </para>
+
+ <para>
+  Like the built-in <literal>SYSTEM</literal> sampling
+  method, <literal>SYSTEM_TIME</literal> performs block-level sampling, so
+  that the sample is not completely random but may be subject to clustering
+  effects, especially if only a small number of rows are selected.
+ </para>
+
+ <para>
+  <literal>SYSTEM_TIME</literal> does not support
+  the <literal>REPEATABLE</literal> clause.
  </para>
 
  <sect2>
   <title>Examples</title>
 
   <para>
-   Here is an example of selecting sample of a table with
-   <literal>SYSTEM_TIME</>. First install the extension:
+   Here is an example of selecting a sample of a table with
+   <literal>SYSTEM_TIME</>.  First install the extension:
   </para>
 
 <programlisting>
@@ -34,8 +48,7 @@ CREATE EXTENSION tsm_system_time;
 </programlisting>
 
   <para>
-   Then you can use it in a <command>SELECT</command> command the same way as
-   other tablesample methods:
+   Then you can use it in a <command>SELECT</command> command, for instance:
 
 <programlisting>
 SELECT * FROM my_table TABLESAMPLE SYSTEM_TIME(1000);
@@ -43,8 +56,9 @@ SELECT * FROM my_table TABLESAMPLE SYSTEM_TIME(1000);
   </para>
 
   <para>
-   The above command will return as large a sample of my_table as it can read in
-   1 second (or less if it reads whole table faster).
+   This command will return as large a sample of <structname>my_table</> as
+   it can read in 1 second (1000 milliseconds).  Of course, if the whole
+   table can be read in under 1 second, all its rows will be returned.
   </para>
  </sect2>
 
