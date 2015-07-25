@@ -546,11 +546,21 @@ cfopen(const char *path, const char *mode, int compression)
 	if (compression != 0)
 	{
 #ifdef HAVE_LIBZ
-		char		mode_compression[32];
+		if (compression != Z_DEFAULT_COMPRESSION)
+		{
+			/* user has specified a compression level, so tell zlib to use it */
+			char		mode_compression[32];
 
-		snprintf(mode_compression, sizeof(mode_compression), "%s%d",
-				 mode, compression);
-		fp->compressedfp = gzopen(path, mode_compression);
+			snprintf(mode_compression, sizeof(mode_compression), "%s%d",
+					 mode, compression);
+			fp->compressedfp = gzopen(path, mode_compression);
+		}
+		else
+		{
+			/* don't specify a level, just use the zlib default */
+			fp->compressedfp = gzopen(path, mode);
+		}
+
 		fp->uncompressedfp = NULL;
 		if (fp->compressedfp == NULL)
 		{
