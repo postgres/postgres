@@ -648,7 +648,12 @@ test_postmaster_connection(bool do_checkpoint)
 			struct stat statbuf;
 
 			if (stat(pid_file, &statbuf) != 0)
+			{
+				if (errno != ENOENT)
+					write_stderr(_("\n%s: could not stat file \"%s\": %s\n"),
+								 progname, pid_file, strerror(errno));
 				return PQPING_NO_RESPONSE;
+			}
 
 			if (found_stale_pidfile)
 			{
