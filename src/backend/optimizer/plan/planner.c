@@ -505,14 +505,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		if (rte->rtekind == RTE_RELATION)
 		{
 			if (rte->tablesample)
-			{
-				rte->tablesample->args = (List *)
-					preprocess_expression(root, (Node *) rte->tablesample->args,
+				rte->tablesample = (TableSampleClause *)
+					preprocess_expression(root,
+										  (Node *) rte->tablesample,
 										  EXPRKIND_TABLESAMPLE);
-				rte->tablesample->repeatable = (Node *)
-					preprocess_expression(root, rte->tablesample->repeatable,
-										  EXPRKIND_TABLESAMPLE);
-			}
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
@@ -697,11 +693,14 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * If the query has any join RTEs, replace join alias variables with
 	 * base-relation variables.  We must do this before sublink processing,
 	 * else sublinks expanded out from join aliases would not get processed.
-	 * We can skip it in non-lateral RTE functions and VALUES lists, however,
-	 * since they can't contain any Vars of the current query level.
+	 * We can skip it in non-lateral RTE functions, VALUES lists, and
+	 * TABLESAMPLE clauses, however, since they can't contain any Vars of the
+	 * current query level.
 	 */
 	if (root->hasJoinRTEs &&
-		!(kind == EXPRKIND_RTFUNC || kind == EXPRKIND_VALUES))
+		!(kind == EXPRKIND_RTFUNC ||
+		  kind == EXPRKIND_VALUES ||
+		  kind == EXPRKIND_TABLESAMPLE))
 		expr = flatten_join_alias_vars(root, expr);
 
 	/*

@@ -1911,6 +1911,14 @@ find_expr_references_walker(Node *node,
 								   context->addrs);
 		}
 	}
+	else if (IsA(node, TableSampleClause))
+	{
+		TableSampleClause *tsc = (TableSampleClause *) node;
+
+		add_object_address(OCLASS_PROC, tsc->tsmhandler, 0,
+						   context->addrs);
+		/* fall through to examine arguments */
+	}
 
 	return expression_tree_walker(node, find_expr_references_walker,
 								  (void *) context);

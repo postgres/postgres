@@ -1,10 +1,10 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for utils/tablesample
+#    Makefile for access/tablesample
 #
 # IDENTIFICATION
-#    src/backend/utils/tablesample/Makefile
+#    src/backend/access/tablesample/Makefile
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,6 @@ subdir = src/backend/access/tablesample
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = tablesample.o system.o bernoulli.o
+OBJS = bernoulli.o system.o tablesample.o
 
 include $(top_srcdir)/src/backend/common.mk

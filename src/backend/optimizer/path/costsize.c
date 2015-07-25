@@ -74,6 +74,7 @@
 #include <math.h>
 
 #include "access/htup_details.h"
+#include "access/tsmapi.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "miscadmin.h"
@@ -223,64 +224,66 @@ cost_seqscan(Path *path, PlannerInfo *root,
  * cost_samplescan
  *	  Determines and returns the cost of scanning a relation using sampling.
  *
- * From planner/optimizer perspective, we don't care all that much about cost
- * itself since there is always only one scan path to consider when sampling
- * scan is present, but number of rows estimation is still important.
- *
  * 'baserel' is the relation to be scanned
  * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  */
 void
-cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+cost_samplescan(Path *path, PlannerInfo *root,
+				RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	RangeTblEntry *rte;
+	TableSampleClause *tsc;
+	TsmRoutine *tsm;
 	double		spc_seq_page_cost,
 				spc_random_page_cost,
 				spc_page_cost;
 	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
-	BlockNumber pages;
-	double		tuples;
-	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
-	TableSampleClause *tablesample = rte->tablesample;
 
-	/* Should only be applied to base relations */
+	/* Should only be applied to base relations with tablesample clauses */
 	Assert(baserel->relid > 0);
-	Assert(baserel->rtekind == RTE_RELATION);
+	rte = planner_rt_fetch(baserel->relid, root);
+	Assert(rte->rtekind == RTE_RELATION);
+	tsc = rte->tablesample;
+	Assert(tsc != NULL);
+	tsm = GetTsmRoutine(tsc->tsmhandler);
 
 	/* Mark the path with the correct row estimate */
-	if (path->param_info)
-		path->rows = path->param_info->ppi_rows;
+	if (param_info)
+		path->rows = param_info->ppi_rows;
 	else
 		path->rows = baserel->rows;
-
-	/* Call the sampling method's costing function. */
-	OidFunctionCall6(tablesample->tsmcost, PointerGetDatum(root),
-					 PointerGetDatum(path), PointerGetDatum(baserel),
-					 PointerGetDatum(tablesample->args),
-					 PointerGetDatum(&pages), PointerGetDatum(&tuples));
 
 	/* fetch estimated page cost for tablespace containing table */
 	get_tablespace_page_costs(baserel->reltablespace,
 							  &spc_random_page_cost,
 							  &spc_seq_page_cost);
 
-
-	spc_page_cost = tablesample->tsmseqscan ? spc_seq_page_cost :
-		spc_random_page_cost;
+	/* if NextSampleBlock is used, assume random access, else sequential */
+	spc_page_cost = (tsm->NextSampleBlock != NULL) ?
+		spc_random_page_cost : spc_seq_page_cost;
 
 	/*
-	 * disk costs
+	 * disk costs (recall that baserel->pages has already been set to the
+	 * number of pages the sampling method will visit)
 	 */
-	run_cost += spc_page_cost * pages;
+	run_cost += spc_page_cost * baserel->pages;
 
-	/* CPU costs */
-	get_restriction_qual_cost(root, baserel, path->param_info, &qpqual_cost);
+	/*
+	 * CPU costs (recall that baserel->tuples has already been set to the
+	 * number of tuples the sampling method will select).  Note that we ignore
+	 * execution cost of the TABLESAMPLE parameter expressions; they will be
+	 * evaluated only once per scan, and in most usages they'll likely be
+	 * simple constants anyway.  We also don't charge anything for the
+	 * calculations the sampling method might do internally.
+	 */
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
 
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
-	run_cost += cpu_per_tuple * tuples;
+	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;

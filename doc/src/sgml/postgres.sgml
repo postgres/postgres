@@ -243,6 +243,7 @@
   &nls;
   &plhandler;
   &fdwhandler;
+  &tablesample-method;
   &custom-scan;
   &geqo;
   &indexam;
@@ -250,7 +251,6 @@
   &spgist;
   &gin;
   &brin;
-  &tablesample-method;
   &storage;
   &bki;
   &planstats;

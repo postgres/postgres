@@ -1,8 +1,8 @@
-# src/test/modules/tsm_system_time/Makefile
+# contrib/tsm_system_time/Makefile
 
 MODULE_big = tsm_system_time
 OBJS = tsm_system_time.o $(WIN32RES)
-PGFILEDESC = "tsm_system_time - SYSTEM TABLESAMPLE method which accepts number rows of as a limit"
+PGFILEDESC = "tsm_system_time - TABLESAMPLE method which accepts time in milliseconds as a limit"
 
 EXTENSION = tsm_system_time
 DATA = tsm_system_time--1.0.sql

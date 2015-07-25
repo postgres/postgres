@@ -8,24 +8,37 @@
  </indexterm>
 
  <para>
-  The <filename>tsm_system_rows</> module provides the tablesample method
-  <literal>SYSTEM_ROWS</literal>, which can be used inside the
-  <command>TABLESAMPLE</command> clause of a <command>SELECT</command>.
+  The <filename>tsm_system_rows</> module provides the table sampling method
+  <literal>SYSTEM_ROWS</literal>, which can be used in
+  the <literal>TABLESAMPLE</> clause of a <xref linkend="sql-select">
+  command.
  </para>
 
  <para>
-  This tablesample method uses a linear probing algorithm to read sample
-  of a table and uses actual number of rows as limit (unlike the
-  <literal>SYSTEM</literal> tablesample method which limits by percentage
-  of a table).
+  This table sampling method accepts a single integer argument that is the
+  maximum number of rows to read.  The resulting sample will always contain
+  exactly that many rows, unless the table does not contain enough rows, in
+  which case the whole table is selected.
+ </para>
+
+ <para>
+  Like the built-in <literal>SYSTEM</literal> sampling
+  method, <literal>SYSTEM_ROWS</literal> performs block-level sampling, so
+  that the sample is not completely random but may be subject to clustering
+  effects, especially if only a small number of rows are requested.
+ </para>
+
+ <para>
+  <literal>SYSTEM_ROWS</literal> does not support
+  the <literal>REPEATABLE</literal> clause.
  </para>
 
  <sect2>
   <title>Examples</title>
 
   <para>
-   Here is an example of selecting sample of a table with
-   <literal>SYSTEM_ROWS</>. First install the extension:
+   Here is an example of selecting a sample of a table with
+   <literal>SYSTEM_ROWS</>.  First install the extension:
   </para>
 
 <programlisting>
@@ -33,8 +46,7 @@ CREATE EXTENSION tsm_system_rows;
 </programlisting>
 
   <para>
-   Then you can use it in <command>SELECT</command> command same way as other
-   tablesample methods:
+   Then you can use it in a <command>SELECT</command> command, for instance:
 
 <programlisting>
 SELECT * FROM my_table TABLESAMPLE SYSTEM_ROWS(100);
@@ -42,8 +54,9 @@ SELECT * FROM my_table TABLESAMPLE SYSTEM_ROWS(100);
   </para>
 
   <para>
-   The above command will return a sample of 100 rows from the table my_table
-   (less if the table does not have 100 visible rows).
+   This command will return a sample of 100 rows from the
+   table <structname>my_table</> (unless the table does not have 100
+   visible rows, in which case all its rows are returned).
   </para>
  </sect2>
 

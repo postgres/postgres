@@ -177,6 +177,8 @@ Section: Class 22 - Data Exception
 2201B    E    ERRCODE_INVALID_REGULAR_EXPRESSION                             invalid_regular_expression
 2201W    E    ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE                      invalid_row_count_in_limit_clause
 2201X    E    ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE              invalid_row_count_in_result_offset_clause
+2202H    E    ERRCODE_INVALID_TABLESAMPLE_ARGUMENT                           invalid_tablesample_argument
+2202G    E    ERRCODE_INVALID_TABLESAMPLE_REPEAT                             invalid_tablesample_repeat
 22009    E    ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE                   invalid_time_zone_displacement_value
 2200C    E    ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER                        invalid_use_of_escape_character
 2200G    E    ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH                            most_specific_type_mismatch

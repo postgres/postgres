@@ -1,286 +1,320 @@
 /*-------------------------------------------------------------------------
  *
  * tsm_system_time.c
- *	  interface routines for system_time tablesample method
+ *	  support routines for SYSTEM_TIME tablesample method
  *
+ * The desire here is to produce a random sample with as many rows as possible
+ * in no more than the specified amount of time.  We use a block-sampling
+ * approach.  To ensure that the whole relation will be visited if necessary,
+ * we start at a randomly chosen block and then advance with a stride that
+ * is randomly chosen but is relatively prime to the relation's nblocks.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Because of the time dependence, this method is necessarily unrepeatable.
+ * However, we do what we can to reduce surprising behavior by selecting
+ * the sampling pattern just once per query, much as in tsm_system_rows.
+ *
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  contrib/tsm_system_time_rowlimit/tsm_system_time.c
+ *	  contrib/tsm_system_time/tsm_system_time.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "fmgr.h"
+#ifdef _MSC_VER
+#include <float.h>				/* for _isnan */
+#endif
+#include <math.h>
 
-#include "access/tablesample.h"
 #include "access/relscan.h"
+#include "access/tsmapi.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "nodes/execnodes.h"
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
-#include "storage/bufmgr.h"
+#include "optimizer/cost.h"
 #include "utils/sampling.h"
 #include "utils/spccache.h"
-#include "utils/timestamp.h"
 
 PG_MODULE_MAGIC;
 
-/*
- * State
- */
+PG_FUNCTION_INFO_V1(tsm_system_time_handler);
+
+
+/* Private state */
 typedef struct
 {
-	SamplerRandomState randstate;
 	uint32		seed;			/* random seed */
-	BlockNumber nblocks;		/* number of block in relation */
-	int32		time;			/* time limit for sampling */
-	TimestampTz start_time;		/* start time of sampling */
-	TimestampTz end_time;		/* end time of sampling */
+	double		millis;			/* time limit for sampling */
+	instr_time	start_time;		/* scan start time */
 	OffsetNumber lt;			/* last tuple returned from current block */
-	BlockNumber step;			/* step size */
+	BlockNumber doneblocks;		/* number of already-scanned blocks */
 	BlockNumber lb;				/* last block visited */
-	BlockNumber estblocks;		/* estimated number of returned blocks
-								 * (moving) */
-	BlockNumber doneblocks;		/* number of already returned blocks */
-} SystemSamplerData;
+	/* these three values are not changed during a rescan: */
+	BlockNumber nblocks;		/* number of blocks in relation */
+	BlockNumber firstblock;		/* first block to sample from */
+	BlockNumber step;			/* step size, or 0 if not set yet */
+} SystemTimeSamplerData;
 
-
-PG_FUNCTION_INFO_V1(tsm_system_time_init);
-PG_FUNCTION_INFO_V1(tsm_system_time_nextblock);
-PG_FUNCTION_INFO_V1(tsm_system_time_nexttuple);
-PG_FUNCTION_INFO_V1(tsm_system_time_end);
-PG_FUNCTION_INFO_V1(tsm_system_time_reset);
-PG_FUNCTION_INFO_V1(tsm_system_time_cost);
-
+static void system_time_samplescangetsamplesize(PlannerInfo *root,
+									RelOptInfo *baserel,
+									List *paramexprs,
+									BlockNumber *pages,
+									double *tuples);
+static void system_time_initsamplescan(SampleScanState *node,
+						   int eflags);
+static void system_time_beginsamplescan(SampleScanState *node,
+							Datum *params,
+							int nparams,
+							uint32 seed);
+static BlockNumber system_time_nextsampleblock(SampleScanState *node);
+static OffsetNumber system_time_nextsampletuple(SampleScanState *node,
+							BlockNumber blockno,
+							OffsetNumber maxoffset);
 static uint32 random_relative_prime(uint32 n, SamplerRandomState randstate);
 
+
 /*
- * Initializes the state.
+ * Create a TsmRoutine descriptor for the SYSTEM_TIME method.
  */
 Datum
-tsm_system_time_init(PG_FUNCTION_ARGS)
+tsm_system_time_handler(PG_FUNCTION_ARGS)
 {
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	uint32		seed = PG_GETARG_UINT32(1);
-	int32		time = PG_ARGISNULL(2) ? -1 : PG_GETARG_INT32(2);
-	HeapScanDesc scan = tsdesc->heapScan;
-	SystemSamplerData *sampler;
+	TsmRoutine *tsm = makeNode(TsmRoutine);
 
-	if (time < 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("invalid time limit"),
-				 errhint("Time limit must be positive integer value.")));
+	tsm->parameterTypes = list_make1_oid(FLOAT8OID);
 
-	sampler = palloc0(sizeof(SystemSamplerData));
+	/* See notes at head of file */
+	tsm->repeatable_across_queries = false;
+	tsm->repeatable_across_scans = false;
 
-	/* Remember initial values for reinit */
-	sampler->seed = seed;
-	sampler->nblocks = scan->rs_nblocks;
-	sampler->lt = InvalidOffsetNumber;
-	sampler->estblocks = 2;
-	sampler->doneblocks = 0;
-	sampler->time = time;
-	sampler->start_time = GetCurrentTimestamp();
-	sampler->end_time = TimestampTzPlusMilliseconds(sampler->start_time,
-													sampler->time);
+	tsm->SampleScanGetSampleSize = system_time_samplescangetsamplesize;
+	tsm->InitSampleScan = system_time_initsamplescan;
+	tsm->BeginSampleScan = system_time_beginsamplescan;
+	tsm->NextSampleBlock = system_time_nextsampleblock;
+	tsm->NextSampleTuple = system_time_nextsampletuple;
+	tsm->EndSampleScan = NULL;
 
-	sampler_random_init_state(sampler->seed, sampler->randstate);
-
-	/* Find relative prime as step size for linear probing. */
-	sampler->step = random_relative_prime(sampler->nblocks, sampler->randstate);
-
-	/*
-	 * Randomize start position so that blocks close to step size don't have
-	 * higher probability of being chosen on very short scan.
-	 */
-	sampler->lb = sampler_random_fract(sampler->randstate) * (sampler->nblocks / sampler->step);
-
-	tsdesc->tsmdata = (void *) sampler;
-
-	PG_RETURN_VOID();
+	PG_RETURN_POINTER(tsm);
 }
 
 /*
- * Get next block number or InvalidBlockNumber when we're done.
- *
- * Uses linear probing algorithm for picking next block.
+ * Sample size estimation.
  */
-Datum
-tsm_system_time_nextblock(PG_FUNCTION_ARGS)
+static void
+system_time_samplescangetsamplesize(PlannerInfo *root,
+									RelOptInfo *baserel,
+									List *paramexprs,
+									BlockNumber *pages,
+									double *tuples)
 {
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	SystemSamplerData *sampler = (SystemSamplerData *) tsdesc->tsmdata;
-
-	sampler->lb = (sampler->lb + sampler->step) % sampler->nblocks;
-	sampler->doneblocks++;
-
-	/* All blocks have been read, we're done */
-	if (sampler->doneblocks > sampler->nblocks)
-		PG_RETURN_UINT32(InvalidBlockNumber);
-
-	/*
-	 * Update the estimations for time limit at least 10 times per estimated
-	 * number of returned blocks to handle variations in block read speed.
-	 */
-	if (sampler->doneblocks % Max(sampler->estblocks / 10, 1) == 0)
-	{
-		TimestampTz now = GetCurrentTimestamp();
-		long		secs;
-		int			usecs;
-		int			usecs_remaining;
-		int			time_per_block;
-
-		TimestampDifference(sampler->start_time, now, &secs, &usecs);
-		usecs += (int) secs *1000000;
-
-		time_per_block = usecs / sampler->doneblocks;
-
-		/* No time left, end. */
-		TimestampDifference(now, sampler->end_time, &secs, &usecs);
-		if (secs <= 0 && usecs <= 0)
-			PG_RETURN_UINT32(InvalidBlockNumber);
-
-		/* Remaining microseconds */
-		usecs_remaining = usecs + (int) secs *1000000;
-
-		/* Recalculate estimated returned number of blocks */
-		if (time_per_block < usecs_remaining && time_per_block > 0)
-			sampler->estblocks = sampler->time * time_per_block;
-	}
-
-	PG_RETURN_UINT32(sampler->lb);
-}
-
-/*
- * Get next tuple offset in current block or InvalidOffsetNumber if we are done
- * with this block.
- */
-Datum
-tsm_system_time_nexttuple(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	OffsetNumber maxoffset = PG_GETARG_UINT16(2);
-	SystemSamplerData *sampler = (SystemSamplerData *) tsdesc->tsmdata;
-	OffsetNumber tupoffset = sampler->lt;
-
-	if (tupoffset == InvalidOffsetNumber)
-		tupoffset = FirstOffsetNumber;
-	else
-		tupoffset++;
-
-	if (tupoffset > maxoffset)
-		tupoffset = InvalidOffsetNumber;
-
-	sampler->lt = tupoffset;
-
-	PG_RETURN_UINT16(tupoffset);
-}
-
-/*
- * Cleanup method.
- */
-Datum
-tsm_system_time_end(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-
-	pfree(tsdesc->tsmdata);
-
-	PG_RETURN_VOID();
-}
-
-/*
- * Reset state (called by ReScan).
- */
-Datum
-tsm_system_time_reset(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	SystemSamplerData *sampler = (SystemSamplerData *) tsdesc->tsmdata;
-
-	sampler->lt = InvalidOffsetNumber;
-	sampler->start_time = GetCurrentTimestamp();
-	sampler->end_time = TimestampTzPlusMilliseconds(sampler->start_time,
-													sampler->time);
-	sampler->estblocks = 2;
-	sampler->doneblocks = 0;
-
-	sampler_random_init_state(sampler->seed, sampler->randstate);
-	sampler->step = random_relative_prime(sampler->nblocks, sampler->randstate);
-	sampler->lb = sampler_random_fract(sampler->randstate) * (sampler->nblocks / sampler->step);
-
-	PG_RETURN_VOID();
-}
-
-/*
- * Costing function.
- */
-Datum
-tsm_system_time_cost(PG_FUNCTION_ARGS)
-{
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Path	   *path = (Path *) PG_GETARG_POINTER(1);
-	RelOptInfo *baserel = (RelOptInfo *) PG_GETARG_POINTER(2);
-	List	   *args = (List *) PG_GETARG_POINTER(3);
-	BlockNumber *pages = (BlockNumber *) PG_GETARG_POINTER(4);
-	double	   *tuples = (double *) PG_GETARG_POINTER(5);
 	Node	   *limitnode;
-	int32		time;
-	BlockNumber relpages;
-	double		reltuples;
-	double		density;
+	double		millis;
 	double		spc_random_page_cost;
+	double		npages;
+	double		ntuples;
 
-	limitnode = linitial(args);
+	/* Try to extract an estimate for the limit time spec */
+	limitnode = (Node *) linitial(paramexprs);
 	limitnode = estimate_expression_value(root, limitnode);
 
-	if (IsA(limitnode, RelabelType))
-		limitnode = (Node *) ((RelabelType *) limitnode)->arg;
-
-	if (IsA(limitnode, Const))
-		time = DatumGetInt32(((Const *) limitnode)->constvalue);
+	if (IsA(limitnode, Const) &&
+		!((Const *) limitnode)->constisnull)
+	{
+		millis = DatumGetFloat8(((Const *) limitnode)->constvalue);
+		if (millis < 0 || isnan(millis))
+		{
+			/* Default millis if the value is bogus */
+			millis = 1000;
+		}
+	}
 	else
 	{
-		/* Default time (1s) if the estimation didn't return Const. */
-		time = 1000;
+		/* Default millis if we didn't obtain a non-null Const */
+		millis = 1000;
 	}
 
-	relpages = baserel->pages;
-	reltuples = baserel->tuples;
-
-	/* estimate the tuple density */
-	if (relpages > 0)
-		density = reltuples / (double) relpages;
-	else
-		density = (BLCKSZ - SizeOfPageHeaderData) / baserel->width;
-
-	/*
-	 * We equal random page cost value to number of ms it takes to read the
-	 * random page here which is far from accurate but we don't have anything
-	 * better to base our predicted page reads.
-	 */
+	/* Get the planner's idea of cost per page read */
 	get_tablespace_page_costs(baserel->reltablespace,
 							  &spc_random_page_cost,
 							  NULL);
 
 	/*
-	 * Assumption here is that we'll never read less than 1% of table pages,
-	 * this is here mainly because it is much less bad to overestimate than
-	 * underestimate and using just spc_random_page_cost will probably lead to
-	 * underestimations in general.
+	 * Estimate the number of pages we can read by assuming that the cost
+	 * figure is expressed in milliseconds.  This is completely, unmistakably
+	 * bogus, but we have to do something to produce an estimate and there's
+	 * no better answer.
 	 */
-	*pages = Min(baserel->pages, Max(time / spc_random_page_cost, baserel->pages / 100));
-	*tuples = rint(density * (double) *pages * path->rows / baserel->tuples);
-	path->rows = *tuples;
+	if (spc_random_page_cost > 0)
+		npages = millis / spc_random_page_cost;
+	else
+		npages = millis;		/* even more bogus, but whatcha gonna do? */
 
-	PG_RETURN_VOID();
+	/* Clamp to sane value */
+	npages = clamp_row_est(Min((double) baserel->pages, npages));
+
+	if (baserel->tuples > 0 && baserel->pages > 0)
+	{
+		/* Estimate number of tuples returned based on tuple density */
+		double		density = baserel->tuples / (double) baserel->pages;
+
+		ntuples = npages * density;
+	}
+	else
+	{
+		/* For lack of data, assume one tuple per page */
+		ntuples = npages;
+	}
+
+	/* Clamp to the estimated relation size */
+	ntuples = clamp_row_est(Min(baserel->tuples, ntuples));
+
+	*pages = npages;
+	*tuples = ntuples;
 }
 
+/*
+ * Initialize during executor setup.
+ */
+static void
+system_time_initsamplescan(SampleScanState *node, int eflags)
+{
+	node->tsm_state = palloc0(sizeof(SystemTimeSamplerData));
+	/* Note the above leaves tsm_state->step equal to zero */
+}
+
+/*
+ * Examine parameters and prepare for a sample scan.
+ */
+static void
+system_time_beginsamplescan(SampleScanState *node,
+							Datum *params,
+							int nparams,
+							uint32 seed)
+{
+	SystemTimeSamplerData *sampler = (SystemTimeSamplerData *) node->tsm_state;
+	double		millis = DatumGetFloat8(params[0]);
+
+	if (millis < 0 || isnan(millis))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLESAMPLE_ARGUMENT),
+				 errmsg("sample collection time must not be negative")));
+
+	sampler->seed = seed;
+	sampler->millis = millis;
+	sampler->lt = InvalidOffsetNumber;
+	sampler->doneblocks = 0;
+	/* start_time, lb will be initialized during first NextSampleBlock call */
+	/* we intentionally do not change nblocks/firstblock/step here */
+}
+
+/*
+ * Select next block to sample.
+ *
+ * Uses linear probing algorithm for picking next block.
+ */
+static BlockNumber
+system_time_nextsampleblock(SampleScanState *node)
+{
+	SystemTimeSamplerData *sampler = (SystemTimeSamplerData *) node->tsm_state;
+	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+	instr_time	cur_time;
+
+	/* First call within scan? */
+	if (sampler->doneblocks == 0)
+	{
+		/* First scan within query? */
+		if (sampler->step == 0)
+		{
+			/* Initialize now that we have scan descriptor */
+			SamplerRandomState randstate;
+
+			/* If relation is empty, there's nothing to scan */
+			if (scan->rs_nblocks == 0)
+				return InvalidBlockNumber;
+
+			/* We only need an RNG during this setup step */
+			sampler_random_init_state(sampler->seed, randstate);
+
+			/* Compute nblocks/firstblock/step only once per query */
+			sampler->nblocks = scan->rs_nblocks;
+
+			/* Choose random starting block within the relation */
+			/* (Actually this is the predecessor of the first block visited) */
+			sampler->firstblock = sampler_random_fract(randstate) *
+				sampler->nblocks;
+
+			/* Find relative prime as step size for linear probing */
+			sampler->step = random_relative_prime(sampler->nblocks, randstate);
+		}
+
+		/* Reinitialize lb and start_time */
+		sampler->lb = sampler->firstblock;
+		INSTR_TIME_SET_CURRENT(sampler->start_time);
+	}
+
+	/* If we've read all blocks in relation, we're done */
+	if (++sampler->doneblocks > sampler->nblocks)
+		return InvalidBlockNumber;
+
+	/* If we've used up all the allotted time, we're done */
+	INSTR_TIME_SET_CURRENT(cur_time);
+	INSTR_TIME_SUBTRACT(cur_time, sampler->start_time);
+	if (INSTR_TIME_GET_MILLISEC(cur_time) >= sampler->millis)
+		return InvalidBlockNumber;
+
+	/*
+	 * It's probably impossible for scan->rs_nblocks to decrease between scans
+	 * within a query; but just in case, loop until we select a block number
+	 * less than scan->rs_nblocks.  We don't care if scan->rs_nblocks has
+	 * increased since the first scan.
+	 */
+	do
+	{
+		/* Advance lb, using uint64 arithmetic to forestall overflow */
+		sampler->lb = ((uint64) sampler->lb + sampler->step) % sampler->nblocks;
+	} while (sampler->lb >= scan->rs_nblocks);
+
+	return sampler->lb;
+}
+
+/*
+ * Select next sampled tuple in current block.
+ *
+ * In block sampling, we just want to sample all the tuples in each selected
+ * block.
+ *
+ * When we reach end of the block, return InvalidOffsetNumber which tells
+ * SampleScan to go to next block.
+ */
+static OffsetNumber
+system_time_nextsampletuple(SampleScanState *node,
+							BlockNumber blockno,
+							OffsetNumber maxoffset)
+{
+	SystemTimeSamplerData *sampler = (SystemTimeSamplerData *) node->tsm_state;
+	OffsetNumber tupoffset = sampler->lt;
+
+	/* Advance to next possible offset on page */
+	if (tupoffset == InvalidOffsetNumber)
+		tupoffset = FirstOffsetNumber;
+	else
+		tupoffset++;
+
+	/* Done? */
+	if (tupoffset > maxoffset)
+		tupoffset = InvalidOffsetNumber;
+
+	sampler->lt = tupoffset;
+
+	return tupoffset;
+}
+
+/*
+ * Compute greatest common divisor of two uint32's.
+ */
 static uint32
 gcd(uint32 a, uint32 b)
 {
@@ -296,22 +330,29 @@ gcd(uint32 a, uint32 b)
 	return b;
 }
 
+/*
+ * Pick a random value less than and relatively prime to n, if possible
+ * (else return 1).
+ */
 static uint32
 random_relative_prime(uint32 n, SamplerRandomState randstate)
 {
-	/* Pick random starting number, with some limits on what it can be. */
-	uint32		r = (uint32) sampler_random_fract(randstate) * n / 2 + n / 4,
-				t;
+	uint32		r;
+
+	/* Safety check to avoid infinite loop or zero result for small n. */
+	if (n <= 1)
+		return 1;
 
 	/*
 	 * This should only take 2 or 3 iterations as the probability of 2 numbers
-	 * being relatively prime is ~61%.
+	 * being relatively prime is ~61%; but just in case, we'll include a
+	 * CHECK_FOR_INTERRUPTS in the loop.
 	 */
-	while ((t = gcd(r, n)) > 1)
+	do
 	{
 		CHECK_FOR_INTERRUPTS();
-		r /= t;
-	}
+		r = (uint32) (sampler_random_fract(randstate) * n);
+	} while (r == 0 || gcd(r, n) > 1);
 
 	return r;
 }

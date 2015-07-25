@@ -1,233 +1,231 @@
 /*-------------------------------------------------------------------------
  *
  * bernoulli.c
- *	  interface routines for BERNOULLI tablesample method
+ *	  support routines for BERNOULLI tablesample method
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * To ensure repeatability of samples, it is necessary that selection of a
+ * given tuple be history-independent; otherwise syncscanning would break
+ * repeatability, to say nothing of logically-irrelevant maintenance such
+ * as physical extension or shortening of the relation.
+ *
+ * To achieve that, we proceed by hashing each candidate TID together with
+ * the active seed, and then selecting it if the hash is less than the
+ * cutoff value computed from the selection probability by BeginSampleScan.
+ *
+ *
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/utils/tablesample/bernoulli.c
+ *	  src/backend/access/tablesample/bernoulli.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "fmgr.h"
+#ifdef _MSC_VER
+#include <float.h>				/* for _isnan */
+#endif
+#include <math.h>
 
-#include "access/tablesample.h"
-#include "access/relscan.h"
-#include "nodes/execnodes.h"
-#include "nodes/relation.h"
+#include "access/hash.h"
+#include "access/tsmapi.h"
+#include "catalog/pg_type.h"
 #include "optimizer/clauses.h"
-#include "storage/bufmgr.h"
-#include "utils/sampling.h"
+#include "optimizer/cost.h"
+#include "utils/builtins.h"
 
 
-/* tsdesc */
+/* Private state */
 typedef struct
 {
+	uint64		cutoff;			/* select tuples with hash less than this */
 	uint32		seed;			/* random seed */
-	BlockNumber startblock;		/* starting block, we use ths for syncscan
-								 * support */
-	BlockNumber nblocks;		/* number of blocks */
-	BlockNumber blockno;		/* current block */
-	float4		probability;	/* probabilty that tuple will be returned
-								 * (0.0-1.0) */
 	OffsetNumber lt;			/* last tuple returned from current block */
-	SamplerRandomState randstate;		/* random generator tsdesc */
 } BernoulliSamplerData;
 
+
+static void bernoulli_samplescangetsamplesize(PlannerInfo *root,
+								  RelOptInfo *baserel,
+								  List *paramexprs,
+								  BlockNumber *pages,
+								  double *tuples);
+static void bernoulli_initsamplescan(SampleScanState *node,
+						 int eflags);
+static void bernoulli_beginsamplescan(SampleScanState *node,
+						  Datum *params,
+						  int nparams,
+						  uint32 seed);
+static OffsetNumber bernoulli_nextsampletuple(SampleScanState *node,
+						  BlockNumber blockno,
+						  OffsetNumber maxoffset);
+
+
 /*
- * Initialize the state.
+ * Create a TsmRoutine descriptor for the BERNOULLI method.
  */
 Datum
-tsm_bernoulli_init(PG_FUNCTION_ARGS)
+tsm_bernoulli_handler(PG_FUNCTION_ARGS)
 {
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	uint32		seed = PG_GETARG_UINT32(1);
-	float4		percent = PG_ARGISNULL(2) ? -1 : PG_GETARG_FLOAT4(2);
-	HeapScanDesc scan = tsdesc->heapScan;
-	BernoulliSamplerData *sampler;
+	TsmRoutine *tsm = makeNode(TsmRoutine);
 
-	if (percent < 0 || percent > 100)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("invalid sample size"),
-				 errhint("Sample size must be numeric value between 0 and 100 (inclusive).")));
+	tsm->parameterTypes = list_make1_oid(FLOAT4OID);
+	tsm->repeatable_across_queries = true;
+	tsm->repeatable_across_scans = true;
+	tsm->SampleScanGetSampleSize = bernoulli_samplescangetsamplesize;
+	tsm->InitSampleScan = bernoulli_initsamplescan;
+	tsm->BeginSampleScan = bernoulli_beginsamplescan;
+	tsm->NextSampleBlock = NULL;
+	tsm->NextSampleTuple = bernoulli_nextsampletuple;
+	tsm->EndSampleScan = NULL;
 
-	sampler = palloc0(sizeof(BernoulliSamplerData));
-
-	/* Remember initial values for reinit */
-	sampler->seed = seed;
-	sampler->startblock = scan->rs_startblock;
-	sampler->nblocks = scan->rs_nblocks;
-	sampler->blockno = InvalidBlockNumber;
-	sampler->probability = percent / 100;
-	sampler->lt = InvalidOffsetNumber;
-	sampler_random_init_state(sampler->seed, sampler->randstate);
-
-	tsdesc->tsmdata = (void *) sampler;
-
-	PG_RETURN_VOID();
+	PG_RETURN_POINTER(tsm);
 }
 
 /*
- * Get next block number to read or InvalidBlockNumber if we are at the
- * end of the relation.
+ * Sample size estimation.
  */
-Datum
-tsm_bernoulli_nextblock(PG_FUNCTION_ARGS)
+static void
+bernoulli_samplescangetsamplesize(PlannerInfo *root,
+								  RelOptInfo *baserel,
+								  List *paramexprs,
+								  BlockNumber *pages,
+								  double *tuples)
 {
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	BernoulliSamplerData *sampler = (BernoulliSamplerData *) tsdesc->tsmdata;
+	Node	   *pctnode;
+	float4		samplefract;
 
-	/*
-	 * Bernoulli sampling scans all blocks on the table and supports syncscan
-	 * so loop from startblock to startblock instead of from 0 to nblocks.
-	 */
-	if (sampler->blockno == InvalidBlockNumber)
-		sampler->blockno = sampler->startblock;
+	/* Try to extract an estimate for the sample percentage */
+	pctnode = (Node *) linitial(paramexprs);
+	pctnode = estimate_expression_value(root, pctnode);
+
+	if (IsA(pctnode, Const) &&
+		!((Const *) pctnode)->constisnull)
+	{
+		samplefract = DatumGetFloat4(((Const *) pctnode)->constvalue);
+		if (samplefract >= 0 && samplefract <= 100 && !isnan(samplefract))
+			samplefract /= 100.0f;
+		else
+		{
+			/* Default samplefract if the value is bogus */
+			samplefract = 0.1f;
+		}
+	}
 	else
 	{
-		sampler->blockno++;
-
-		if (sampler->blockno >= sampler->nblocks)
-			sampler->blockno = 0;
-
-		if (sampler->blockno == sampler->startblock)
-			PG_RETURN_UINT32(InvalidBlockNumber);
+		/* Default samplefract if we didn't obtain a non-null Const */
+		samplefract = 0.1f;
 	}
 
-	PG_RETURN_UINT32(sampler->blockno);
+	/* We'll visit all pages of the baserel */
+	*pages = baserel->pages;
+
+	*tuples = clamp_row_est(baserel->tuples * samplefract);
 }
 
 /*
- * Get next tuple from current block.
+ * Initialize during executor setup.
+ */
+static void
+bernoulli_initsamplescan(SampleScanState *node, int eflags)
+{
+	node->tsm_state = palloc0(sizeof(BernoulliSamplerData));
+}
+
+/*
+ * Examine parameters and prepare for a sample scan.
+ */
+static void
+bernoulli_beginsamplescan(SampleScanState *node,
+						  Datum *params,
+						  int nparams,
+						  uint32 seed)
+{
+	BernoulliSamplerData *sampler = (BernoulliSamplerData *) node->tsm_state;
+	double		percent = DatumGetFloat4(params[0]);
+
+	if (percent < 0 || percent > 100 || isnan(percent))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLESAMPLE_ARGUMENT),
+				 errmsg("sample percentage must be between 0 and 100")));
+
+	/*
+	 * The cutoff is sample probability times (PG_UINT32_MAX + 1); we have to
+	 * store that as a uint64, of course.  Note that this gives strictly
+	 * correct behavior at the limits of zero or one probability.
+	 */
+	sampler->cutoff = rint(((double) PG_UINT32_MAX + 1) * percent / 100);
+	sampler->seed = seed;
+	sampler->lt = InvalidOffsetNumber;
+
+	/*
+	 * Use bulkread, since we're scanning all pages.  But pagemode visibility
+	 * checking is a win only at larger sampling fractions.  The 25% cutoff
+	 * here is based on very limited experimentation.
+	 */
+	node->use_bulkread = true;
+	node->use_pagemode = (percent >= 25);
+}
+
+/*
+ * Select next sampled tuple in current block.
  *
- * This method implements the main logic in bernoulli sampling.
- * The algorithm simply generates new random number (in 0.0-1.0 range) and if
- * it falls within user specified probability (in the same range) return the
- * tuple offset.
+ * It is OK here to return an offset without knowing if the tuple is visible
+ * (or even exists).  The reason is that we do the coinflip for every tuple
+ * offset in the table.  Since all tuples have the same probability of being
+ * returned, it doesn't matter if we do extra coinflips for invisible tuples.
  *
- * It is ok here to return tuple offset without knowing if tuple is visible
- * and not check it via examinetuple. The reason for that is that we do the
- * coinflip (random number generation) for every tuple in the table. Since all
- * tuples have same probability of being returned the visible and invisible
- * tuples will be returned in same ratio as they have in the actual table.
- * This means that there is no skew towards either visible or invisible tuples
- * and the number of visible tuples returned from the executor node should
- * match the fraction of visible tuples which was specified by user.
- *
- * This is faster than doing the coinflip in examinetuple because we don't
- * have to do visibility checks on uninteresting tuples.
- *
- * If we reach end of the block return InvalidOffsetNumber which tells
+ * When we reach end of the block, return InvalidOffsetNumber which tells
  * SampleScan to go to next block.
  */
-Datum
-tsm_bernoulli_nexttuple(PG_FUNCTION_ARGS)
+static OffsetNumber
+bernoulli_nextsampletuple(SampleScanState *node,
+						  BlockNumber blockno,
+						  OffsetNumber maxoffset)
 {
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	OffsetNumber maxoffset = PG_GETARG_UINT16(2);
-	BernoulliSamplerData *sampler = (BernoulliSamplerData *) tsdesc->tsmdata;
+	BernoulliSamplerData *sampler = (BernoulliSamplerData *) node->tsm_state;
 	OffsetNumber tupoffset = sampler->lt;
-	float4		probability = sampler->probability;
+	uint32		hashinput[3];
 
+	/* Advance to first/next tuple in block */
 	if (tupoffset == InvalidOffsetNumber)
 		tupoffset = FirstOffsetNumber;
 	else
 		tupoffset++;
 
 	/*
-	 * Loop over tuple offsets until the random generator returns value that
-	 * is within the probability of returning the tuple or until we reach end
-	 * of the block.
+	 * We compute the hash by applying hash_any to an array of 3 uint32's
+	 * containing the block, offset, and seed.  This is efficient to set up,
+	 * and with the current implementation of hash_any, it gives
+	 * machine-independent results, which is a nice property for regression
+	 * testing.
 	 *
-	 * (This is our implementation of bernoulli trial)
+	 * These words in the hash input are the same throughout the block:
 	 */
-	while (sampler_random_fract(sampler->randstate) > probability)
-	{
-		tupoffset++;
+	hashinput[0] = blockno;
+	hashinput[2] = sampler->seed;
 
-		if (tupoffset > maxoffset)
+	/*
+	 * Loop over tuple offsets until finding suitable TID or reaching end of
+	 * block.
+	 */
+	for (; tupoffset <= maxoffset; tupoffset++)
+	{
+		uint32		hash;
+
+		hashinput[1] = tupoffset;
+
+		hash = DatumGetUInt32(hash_any((const unsigned char *) hashinput,
+									   (int) sizeof(hashinput)));
+		if (hash < sampler->cutoff)
 			break;
 	}
 
 	if (tupoffset > maxoffset)
-		/* Tell SampleScan that we want next block. */
 		tupoffset = InvalidOffsetNumber;
 
 	sampler->lt = tupoffset;
 
-	PG_RETURN_UINT16(tupoffset);
-}
-
-/*
- * Cleanup method.
- */
-Datum
-tsm_bernoulli_end(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-
-	pfree(tsdesc->tsmdata);
-
-	PG_RETURN_VOID();
-}
-
-/*
- * Reset tsdesc (called by ReScan).
- */
-Datum
-tsm_bernoulli_reset(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	BernoulliSamplerData *sampler = (BernoulliSamplerData *) tsdesc->tsmdata;
-
-	sampler->blockno = InvalidBlockNumber;
-	sampler->lt = InvalidOffsetNumber;
-	sampler_random_init_state(sampler->seed, sampler->randstate);
-
-	PG_RETURN_VOID();
-}
-
-/*
- * Costing function.
- */
-Datum
-tsm_bernoulli_cost(PG_FUNCTION_ARGS)
-{
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Path	   *path = (Path *) PG_GETARG_POINTER(1);
-	RelOptInfo *baserel = (RelOptInfo *) PG_GETARG_POINTER(2);
-	List	   *args = (List *) PG_GETARG_POINTER(3);
-	BlockNumber *pages = (BlockNumber *) PG_GETARG_POINTER(4);
-	double	   *tuples = (double *) PG_GETARG_POINTER(5);
-	Node	   *pctnode;
-	float4		samplesize;
-
-	*pages = baserel->pages;
-
-	pctnode = linitial(args);
-	pctnode = estimate_expression_value(root, pctnode);
-
-	if (IsA(pctnode, RelabelType))
-		pctnode = (Node *) ((RelabelType *) pctnode)->arg;
-
-	if (IsA(pctnode, Const))
-	{
-		samplesize = DatumGetFloat4(((Const *) pctnode)->constvalue);
-		samplesize /= 100.0;
-	}
-	else
-	{
-		/* Default samplesize if the estimation didn't return Const. */
-		samplesize = 0.1f;
-	}
-
-	*tuples = path->rows * samplesize;
-	path->rows = *tuples;
-
-	PG_RETURN_VOID();
+	return tupoffset;
 }

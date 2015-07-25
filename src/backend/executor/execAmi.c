@@ -463,6 +463,10 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_CteScan:
 			return TargetListSupportsBackwardScan(node->targetlist);
 
+		case T_SampleScan:
+			/* Simplify life for tablesample methods by disallowing this */
+			return false;
+
 		case T_IndexScan:
 			return IndexSupportsBackwardScan(((IndexScan *) node)->indexid) &&
 				TargetListSupportsBackwardScan(node->targetlist);
@@ -483,9 +487,6 @@ ExecSupportsBackwardScan(Plan *node)
 					TargetListSupportsBackwardScan(node->targetlist))
 					return true;
 			}
-			return false;
-
-		case T_SampleScan:
 			return false;
 
 		case T_Material:

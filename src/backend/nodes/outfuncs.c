@@ -445,6 +445,16 @@ _outSeqScan(StringInfo str, const SeqScan *node)
 }
 
 static void
+_outSampleScan(StringInfo str, const SampleScan *node)
+{
+	WRITE_NODE_TYPE("SAMPLESCAN");
+
+	_outScanInfo(str, (const Scan *) node);
+
+	WRITE_NODE_FIELD(tablesample);
+}
+
+static void
 _outIndexScan(StringInfo str, const IndexScan *node)
 {
 	WRITE_NODE_TYPE("INDEXSCAN");
@@ -589,14 +599,6 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	_outToken(str, node->methods->CustomName);
 	if (node->methods->TextOutCustomScan)
 		node->methods->TextOutCustomScan(str, node);
-}
-
-static void
-_outSampleScan(StringInfo str, const SampleScan *node)
-{
-	WRITE_NODE_TYPE("SAMPLESCAN");
-
-	_outScanInfo(str, (const Scan *) node);
 }
 
 static void
@@ -2479,36 +2481,6 @@ _outCommonTableExpr(StringInfo str, const CommonTableExpr *node)
 }
 
 static void
-_outRangeTableSample(StringInfo str, const RangeTableSample *node)
-{
-	WRITE_NODE_TYPE("RANGETABLESAMPLE");
-
-	WRITE_NODE_FIELD(relation);
-	WRITE_STRING_FIELD(method);
-	WRITE_NODE_FIELD(repeatable);
-	WRITE_NODE_FIELD(args);
-}
-
-static void
-_outTableSampleClause(StringInfo str, const TableSampleClause *node)
-{
-	WRITE_NODE_TYPE("TABLESAMPLECLAUSE");
-
-	WRITE_OID_FIELD(tsmid);
-	WRITE_BOOL_FIELD(tsmseqscan);
-	WRITE_BOOL_FIELD(tsmpagemode);
-	WRITE_OID_FIELD(tsminit);
-	WRITE_OID_FIELD(tsmnextblock);
-	WRITE_OID_FIELD(tsmnexttuple);
-	WRITE_OID_FIELD(tsmexaminetuple);
-	WRITE_OID_FIELD(tsmend);
-	WRITE_OID_FIELD(tsmreset);
-	WRITE_OID_FIELD(tsmcost);
-	WRITE_NODE_FIELD(repeatable);
-	WRITE_NODE_FIELD(args);
-}
-
-static void
 _outSetOperationStmt(StringInfo str, const SetOperationStmt *node)
 {
 	WRITE_NODE_TYPE("SETOPERATIONSTMT");
@@ -2592,6 +2564,16 @@ _outRangeTblFunction(StringInfo str, const RangeTblFunction *node)
 	WRITE_NODE_FIELD(funccoltypmods);
 	WRITE_NODE_FIELD(funccolcollations);
 	WRITE_BITMAPSET_FIELD(funcparams);
+}
+
+static void
+_outTableSampleClause(StringInfo str, const TableSampleClause *node)
+{
+	WRITE_NODE_TYPE("TABLESAMPLECLAUSE");
+
+	WRITE_OID_FIELD(tsmhandler);
+	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(repeatable);
 }
 
 static void
@@ -2846,6 +2828,18 @@ _outRangeFunction(StringInfo str, const RangeFunction *node)
 }
 
 static void
+_outRangeTableSample(StringInfo str, const RangeTableSample *node)
+{
+	WRITE_NODE_TYPE("RANGETABLESAMPLE");
+
+	WRITE_NODE_FIELD(relation);
+	WRITE_NODE_FIELD(method);
+	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(repeatable);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
 _outConstraint(StringInfo str, const Constraint *node)
 {
 	WRITE_NODE_TYPE("CONSTRAINT");
@@ -3002,6 +2996,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_SeqScan:
 				_outSeqScan(str, obj);
 				break;
+			case T_SampleScan:
+				_outSampleScan(str, obj);
+				break;
 			case T_IndexScan:
 				_outIndexScan(str, obj);
 				break;
@@ -3037,9 +3034,6 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_CustomScan:
 				_outCustomScan(str, obj);
-				break;
-			case T_SampleScan:
-				_outSampleScan(str, obj);
 				break;
 			case T_Join:
 				_outJoin(str, obj);
@@ -3393,12 +3387,6 @@ _outNode(StringInfo str, const void *obj)
 			case T_CommonTableExpr:
 				_outCommonTableExpr(str, obj);
 				break;
-			case T_RangeTableSample:
-				_outRangeTableSample(str, obj);
-				break;
-			case T_TableSampleClause:
-				_outTableSampleClause(str, obj);
-				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
@@ -3407,6 +3395,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_RangeTblFunction:
 				_outRangeTblFunction(str, obj);
+				break;
+			case T_TableSampleClause:
+				_outTableSampleClause(str, obj);
 				break;
 			case T_A_Expr:
 				_outAExpr(str, obj);
@@ -3449,6 +3440,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_RangeFunction:
 				_outRangeFunction(str, obj);
+				break;
+			case T_RangeTableSample:
+				_outRangeTableSample(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);

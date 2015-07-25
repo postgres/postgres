@@ -228,7 +228,7 @@ reservoir_get_next_S(ReservoirState rs, double t, int n)
 void
 sampler_random_init_state(long seed, SamplerRandomState randstate)
 {
-	randstate[0] = RAND48_SEED_0;
+	randstate[0] = 0x330e;		/* same as pg_erand48, but could be anything */
 	randstate[1] = (unsigned short) seed;
 	randstate[2] = (unsigned short) (seed >> 16);
 }
