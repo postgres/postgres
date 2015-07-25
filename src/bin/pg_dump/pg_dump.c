@@ -477,7 +477,7 @@ main(int argc, char **argv)
 				if (compressLevel < 0 || compressLevel > 9)
 				{
 					write_msg(NULL, "compression level must be in range 0..9\n");
-					exit_nicely(1);
+					exit_nicely();
 				}
 				break;
 
