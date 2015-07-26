@@ -2165,6 +2165,26 @@ select count(*) from tenk1 x where
 
 rollback;
 --
+-- regression test: be sure we cope with proven-dummy append rels
+--
+explain (costs off)
+select aa, bb, unique1, unique1
+  from tenk1 right join b on aa = unique1
+  where bb < bb and bb is null;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+select aa, bb, unique1, unique1
+  from tenk1 right join b on aa = unique1
+  where bb < bb and bb is null;
+ aa | bb | unique1 | unique1 
+----+----+---------+---------
+(0 rows)
+
+--
 -- Clean up
 --
 DROP TABLE t1;
