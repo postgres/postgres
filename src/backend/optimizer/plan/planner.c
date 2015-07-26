@@ -570,13 +570,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 		if (contain_agg_clause(havingclause) ||
 			contain_volatile_functions(havingclause) ||
-			contain_subplans(havingclause) ||
-			parse->groupingSets)
+			contain_subplans(havingclause))
 		{
 			/* keep it in HAVING */
 			newHaving = lappend(newHaving, havingclause);
 		}
-		else if (parse->groupClause)
+		else if (parse->groupClause && !parse->groupingSets)
 		{
 			/* move it to WHERE */
 			parse->jointree->quals = (Node *)
