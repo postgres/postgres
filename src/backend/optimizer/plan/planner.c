@@ -2401,13 +2401,8 @@ build_grouping_chain(PlannerInfo *root,
 	 * Prepare the grpColIdx for the real Agg node first, because we may need
 	 * it for sorting
 	 */
-	if (list_length(rollup_groupclauses) > 1)
-	{
-		Assert(rollup_lists && llast(rollup_lists));
-
-		top_grpColIdx =
-			remap_groupColIdx(root, llast(rollup_groupclauses));
-	}
+	if (parse->groupingSets)
+		top_grpColIdx = remap_groupColIdx(root, llast(rollup_groupclauses));
 
 	/*
 	 * If we need a Sort operation on the input, generate that.

@@ -162,4 +162,8 @@ group by rollup(ten);
 select * from (values (1),(2)) v(a) left join lateral (select v.a, four, ten, count(*) from onek group by cube(four,ten)) s on true order by v.a,four,ten;
 select array(select row(v.a,s1.*) from (select two,four, count(*) from onek group by cube(two,four) order by two,four) s1) from (values (1),(2)) v(a);
 
+-- Grouping on text columns
+select sum(ten) from onek group by two, rollup(four::text) order by 1;
+select sum(ten) from onek group by rollup(four::text), two order by 1;
+
 -- end
