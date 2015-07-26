@@ -390,7 +390,7 @@ make_ands_implicit(Expr *clause)
 
 /*
  * contain_agg_clause
- *	  Recursively search for Aggref nodes within a clause.
+ *	  Recursively search for Aggref/GroupingFunc nodes within a clause.
  *
  *	  Returns true if any aggregate found.
  *
@@ -415,6 +415,11 @@ contain_agg_clause_walker(Node *node, void *context)
 	if (IsA(node, Aggref))
 	{
 		Assert(((Aggref *) node)->agglevelsup == 0);
+		return true;			/* abort the tree traversal and return true */
+	}
+	if (IsA(node, GroupingFunc))
+	{
+		Assert(((GroupingFunc *) node)->agglevelsup == 0);
 		return true;			/* abort the tree traversal and return true */
 	}
 	Assert(!IsA(node, SubLink));
