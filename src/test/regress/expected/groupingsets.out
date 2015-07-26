@@ -587,4 +587,27 @@ select array(select row(v.a,s1.*) from (select two,four, count(*) from onek grou
  {"(2,0,0,250)","(2,0,2,250)","(2,0,,500)","(2,1,1,250)","(2,1,3,250)","(2,1,,500)","(2,,0,250)","(2,,1,250)","(2,,2,250)","(2,,3,250)","(2,,,1000)"}
 (2 rows)
 
+-- Grouping on text columns
+select sum(ten) from onek group by two, rollup(four::text) order by 1;
+ sum  
+------
+ 1000
+ 1000
+ 1250
+ 1250
+ 2000
+ 2500
+(6 rows)
+
+select sum(ten) from onek group by rollup(four::text), two order by 1;
+ sum  
+------
+ 1000
+ 1000
+ 1250
+ 1250
+ 2000
+ 2500
+(6 rows)
+
 -- end
