@@ -2185,6 +2185,40 @@ select aa, bb, unique1, unique1
 (0 rows)
 
 --
+-- regression test: check handling of empty-FROM subquery underneath outer join
+--
+explain (costs off)
+select * from int8_tbl i1 left join (int8_tbl i2 join
+  (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
+order by 1, 2;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Sort
+   Sort Key: i1.q1, i1.q2
+   ->  Hash Left Join
+         Hash Cond: (i1.q2 = i2.q2)
+         ->  Seq Scan on int8_tbl i1
+         ->  Hash
+               ->  Hash Join
+                     Hash Cond: (i2.q1 = (123))
+                     ->  Seq Scan on int8_tbl i2
+                     ->  Hash
+                           ->  Result
+(11 rows)
+
+select * from int8_tbl i1 left join (int8_tbl i2 join
+  (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
+order by 1, 2;
+        q1        |        q2         | q1  |        q2        |  x  
+------------------+-------------------+-----+------------------+-----
+              123 |               456 | 123 |              456 | 123
+              123 |  4567890123456789 | 123 | 4567890123456789 | 123
+ 4567890123456789 | -4567890123456789 |     |                  |    
+ 4567890123456789 |               123 |     |                  |    
+ 4567890123456789 |  4567890123456789 | 123 | 4567890123456789 | 123
+(5 rows)
+
+--
 -- Clean up
 --
 DROP TABLE t1;
