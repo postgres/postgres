@@ -486,6 +486,68 @@ having exists (select 1 from onek b where sum(distinct a.four) = b.four);
    9 |   3
 (25 rows)
 
+-- HAVING with GROUPING queries
+select ten, grouping(ten) from onek
+group by grouping sets(ten) having grouping(ten) >= 0
+order by 2,1;
+ ten | grouping 
+-----+----------
+   0 |        0
+   1 |        0
+   2 |        0
+   3 |        0
+   4 |        0
+   5 |        0
+   6 |        0
+   7 |        0
+   8 |        0
+   9 |        0
+(10 rows)
+
+select ten, grouping(ten) from onek
+group by grouping sets(ten, four) having grouping(ten) > 0
+order by 2,1;
+ ten | grouping 
+-----+----------
+     |        1
+     |        1
+     |        1
+     |        1
+(4 rows)
+
+select ten, grouping(ten) from onek
+group by rollup(ten) having grouping(ten) > 0
+order by 2,1;
+ ten | grouping 
+-----+----------
+     |        1
+(1 row)
+
+select ten, grouping(ten) from onek
+group by cube(ten) having grouping(ten) > 0
+order by 2,1;
+ ten | grouping 
+-----+----------
+     |        1
+(1 row)
+
+select ten, grouping(ten) from onek
+group by (ten) having grouping(ten) >= 0
+order by 2,1;
+ ten | grouping 
+-----+----------
+   0 |        0
+   1 |        0
+   2 |        0
+   3 |        0
+   4 |        0
+   5 |        0
+   6 |        0
+   7 |        0
+   8 |        0
+   9 |        0
+(10 rows)
+
 -- FILTER queries
 select ten, sum(distinct four) filter (where four::text ~ '123') from onek a
 group by rollup(ten);
