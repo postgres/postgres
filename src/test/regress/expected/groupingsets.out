@@ -145,6 +145,127 @@ select a, b, sum(c), sum(sum(c)) over (order by a,b) as rsum
    |   |  12 |   36
 (6 rows)
 
+-- nesting with grouping sets
+select sum(c) from gstest2
+  group by grouping sets((), grouping sets((), grouping sets(())))
+  order by 1 desc;
+ sum 
+-----
+  12
+  12
+  12
+(3 rows)
+
+select sum(c) from gstest2
+  group by grouping sets((), grouping sets((), grouping sets(((a, b)))))
+  order by 1 desc;
+ sum 
+-----
+  12
+  12
+   8
+   2
+   2
+(5 rows)
+
+select sum(c) from gstest2
+  group by grouping sets(grouping sets(rollup(c), grouping sets(cube(c))))
+  order by 1 desc;
+ sum 
+-----
+  12
+  12
+   6
+   6
+   6
+   6
+(6 rows)
+
+select sum(c) from gstest2
+  group by grouping sets(a, grouping sets(a, cube(b)))
+  order by 1 desc;
+ sum 
+-----
+  12
+  10
+  10
+   8
+   4
+   2
+   2
+(7 rows)
+
+select sum(c) from gstest2
+  group by grouping sets(grouping sets((a, (b))))
+  order by 1 desc;
+ sum 
+-----
+   8
+   2
+   2
+(3 rows)
+
+select sum(c) from gstest2
+  group by grouping sets(grouping sets((a, b)))
+  order by 1 desc;
+ sum 
+-----
+   8
+   2
+   2
+(3 rows)
+
+select sum(c) from gstest2
+  group by grouping sets(grouping sets(a, grouping sets(a), a))
+  order by 1 desc;
+ sum 
+-----
+  10
+  10
+  10
+   2
+   2
+   2
+(6 rows)
+
+select sum(c) from gstest2
+  group by grouping sets(grouping sets(a, grouping sets(a, grouping sets(a), ((a)), a, grouping sets(a), (a)), a))
+  order by 1 desc;
+ sum 
+-----
+  10
+  10
+  10
+  10
+  10
+  10
+  10
+  10
+   2
+   2
+   2
+   2
+   2
+   2
+   2
+   2
+(16 rows)
+
+select sum(c) from gstest2
+  group by grouping sets((a,(a,b)), grouping sets((a,(a,b)),a))
+  order by 1 desc;
+ sum 
+-----
+  10
+   8
+   8
+   2
+   2
+   2
+   2
+   2
+(8 rows)
+
 -- empty input: first is 0 rows, second 1, third 3 etc.
 select a, b, sum(v), count(*) from gstest_empty group by grouping sets ((a,b),a);
  a | b | sum | count 

@@ -1812,7 +1812,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
  * Inside a grouping set (ROLLUP, CUBE, or GROUPING SETS), we expect the
  * content to be nested no more than 2 deep: i.e. ROLLUP((a,b),(c,d)) is
  * ok, but ROLLUP((a,(b,c)),d) is flattened to ((a,b,c),d), which we then
- * normalize to ((a,b,c),(d)).
+ * (later) normalize to ((a,b,c),(d)).
  *
  * CUBE or ROLLUP can be nested inside GROUPING SETS (but not the reverse),
  * and we leave that alone if we find it. But if we see GROUPING SETS inside
@@ -1881,9 +1881,16 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 
 				foreach(l2, gset->content)
 				{
-					Node	   *n2 = flatten_grouping_sets(lfirst(l2), false, NULL);
+					Node	   *n1 = lfirst(l2);
+					Node	   *n2 = flatten_grouping_sets(n1, false, NULL);
 
-					result_set = lappend(result_set, n2);
+					if (IsA(n1, GroupingSet) &&
+						((GroupingSet *)n1)->kind == GROUPING_SET_SETS)
+					{
+						result_set = list_concat(result_set, (List *) n2);
+					}
+					else
+						result_set = lappend(result_set, n2);
 				}
 
 				/*
