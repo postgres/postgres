@@ -52,7 +52,7 @@ get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
 static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
-							  Bitmapset *inferAttrs, List *idxExprs);
+							  List *idxExprs);
 static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
@@ -616,8 +616,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 			 * this for both expressions and ordinary (non-expression)
 			 * attributes appearing as inference elements.
 			 */
-			if (!infer_collation_opclass_match(elem, idxRel, inferAttrs,
-											   idxExprs))
+			if (!infer_collation_opclass_match(elem, idxRel, idxExprs))
 				goto next;
 
 			/*
@@ -682,11 +681,10 @@ next:
  * infer_collation_opclass_match - ensure infer element opclass/collation match
  *
  * Given unique index inference element from inference specification, if
- * collation was specified, or if opclass (represented here as opfamily +
- * opcintype) was specified, verify that there is at least one matching
- * indexed attribute (occasionally, there may be more).  Skip this in the
- * common case where inference specification does not include collation or
- * opclass (instead matching everything, regardless of cataloged
+ * collation was specified, or if opclass was specified, verify that there is
+ * at least one matching indexed attribute (occasionally, there may be more).
+ * Skip this in the common case where inference specification does not include
+ * collation or opclass (instead matching everything, regardless of cataloged
  * collation/opclass of indexed attribute).
  *
  * At least historically, Postgres has not offered collations or opclasses
@@ -708,11 +706,12 @@ next:
  */
 static bool
 infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
-							  Bitmapset *inferAttrs, List *idxExprs)
+							  List *idxExprs)
 {
 	AttrNumber	natt;
-	Oid			inferopfamily = InvalidOid;		/* OID of att opfamily */
-	Oid			inferopcinputtype = InvalidOid; /* OID of att opfamily */
+	Oid			inferopfamily = InvalidOid;		/* OID of opclass opfamily */
+	Oid			inferopcinputtype = InvalidOid; /* OID of opclass input type */
+	int			nplain = 0;						/* # plain attrs observed */
 
 	/*
 	 * If inference specification element lacks collation/opclass, then no
@@ -735,6 +734,10 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 		Oid			opfamily = idxRel->rd_opfamily[natt - 1];
 		Oid			opcinputtype = idxRel->rd_opcintype[natt - 1];
 		Oid			collation = idxRel->rd_indcollation[natt - 1];
+		int			attno = idxRel->rd_index->indkey.values[natt - 1];
+
+		if (attno != 0)
+			nplain++;
 
 		if (elem->inferopclass != InvalidOid &&
 			(inferopfamily != opfamily || inferopcinputtype != opcinputtype))
@@ -750,12 +753,23 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 			continue;
 		}
 
-		if ((IsA(elem->expr, Var) &&
-			 bms_is_member(((Var *) elem->expr)->varattno, inferAttrs)) ||
-			list_member(idxExprs, elem->expr))
+		/* If one matching index att found, good enough -- return true */
+		if (IsA(elem->expr, Var))
 		{
-			/* Found one match - good enough */
-			return true;
+			if (((Var *) elem->expr)->varattno == attno)
+				return true;
+		}
+		else if (attno == 0)
+		{
+			Node	   *nattExpr = list_nth(idxExprs, (natt - 1) - nplain);
+
+			/*
+			 * Note that unlike routines like match_index_to_operand() we
+			 * don't need to care about RelabelType.  Neither the index
+			 * definition nor the inference clause should contain them.
+			 */
+			if (equal(elem->expr, nattExpr))
+				return true;
 		}
 	}
 

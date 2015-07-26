@@ -58,6 +58,18 @@ drop index both_index_key;
 drop index both_index_expr_key;
 
 --
+-- Make sure that cross matching of attribute opclass/collation does not occur
+--
+create unique index cross_match on insertconflicttest(lower(fruit) collate "C", upper(fruit) text_pattern_ops);
+
+-- fails:
+explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (lower(fruit) text_pattern_ops, upper(fruit) collate "C") do nothing;
+-- works:
+explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (lower(fruit) collate "C", upper(fruit) text_pattern_ops) do nothing;
+
+drop index cross_match;
+
+--
 -- Single key tests
 --
 create unique index key_index on insertconflicttest(key);
