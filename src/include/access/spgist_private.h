@@ -48,14 +48,14 @@ typedef SpGistPageOpaqueData *SpGistPageOpaque;
 
 /* Flag bits in page special space */
 #define SPGIST_META			(1<<0)
-#define SPGIST_DELETED		(1<<1)
+#define SPGIST_DELETED		(1<<1)		/* never set, but keep for backwards
+										 * compatibility */
 #define SPGIST_LEAF			(1<<2)
 #define SPGIST_NULLS		(1<<3)
 
 #define SpGistPageGetOpaque(page) ((SpGistPageOpaque) PageGetSpecialPointer(page))
 #define SpGistPageIsMeta(page) (SpGistPageGetOpaque(page)->flags & SPGIST_META)
 #define SpGistPageIsDeleted(page) (SpGistPageGetOpaque(page)->flags & SPGIST_DELETED)
-#define SpGistPageSetDeleted(page) (SpGistPageGetOpaque(page)->flags |= SPGIST_DELETED)
 #define SpGistPageIsLeaf(page) (SpGistPageGetOpaque(page)->flags & SPGIST_LEAF)
 #define SpGistPageStoresNulls(page) (SpGistPageGetOpaque(page)->flags & SPGIST_NULLS)
 
