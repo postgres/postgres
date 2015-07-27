@@ -896,8 +896,12 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			target->val = (Node *) cr;
 			target->location = 1;
 
-			/* Build FROM clause */
-			from = stmt->relation;
+			/*
+			 * Build RangeVar for from clause, fully qualified based on the
+			 * relation which we have opened and locked.
+			 */
+			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+								RelationGetRelationName(rel), -1);
 
 			/* Build query */
 			select = makeNode(SelectStmt);
@@ -906,8 +910,13 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 
 			query = (Node *) select;
 
-			/* Close the handle to the relation as it is no longer needed. */
-			heap_close(rel, (is_from ? RowExclusiveLock : AccessShareLock));
+			/*
+			 * Close the relation for now, but keep the lock on it to prevent
+			 * changes between now and when we start the query-based COPY.
+			 *
+			 * We'll reopen it later as part of the query-based COPY.
+			 */
+			heap_close(rel, NoLock);
 			rel = NULL;
 		}
 	}
@@ -1407,25 +1416,25 @@ BeginCopy(bool is_from,
 		plan = planner(query, 0, NULL);
 
 		/*
-		 * If we were passed in a relid, make sure we got the same one back
-		 * after planning out the query.  It's possible that it changed
-		 * between when we checked the policies on the table and decided to
-		 * use a query and now.
+		 * With row level security and a user using "COPY relation TO", we
+		 * have to convert the "COPY relation TO" to a query-based COPY (eg:
+		 * "COPY (SELECT * FROM relation) TO"), to allow the rewriter to add
+		 * in any RLS clauses.
+		 *
+		 * When this happens, we are passed in the relid of the originally
+		 * found relation (which we have locked).  As the planner will look
+		 * up the relation again, we double-check here to make sure it found
+		 * the same one that we have locked.
 		 */
 		if (queryRelId != InvalidOid)
 		{
-			Oid			relid = linitial_oid(plan->relationOids);
-
 			/*
-			 * There should only be one relationOid in this case, since we
-			 * will only get here when we have changed the command for the
-			 * user from a "COPY relation TO" to "COPY (SELECT * FROM
-			 * relation) TO", to allow row level security policies to be
-			 * applied.
+			 * Note that with RLS involved there may be multiple relations,
+			 * and while the one we need is almost certainly first, we don't
+			 * make any guarantees of that in the planner, so check the whole
+			 * list and make sure we find the original relation.
 			 */
-			Assert(list_length(plan->relationOids) == 1);
-
-			if (relid != queryRelId)
+			if (!list_member_oid(plan->relationOids, queryRelId))
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("relation referenced by COPY statement has changed")));
