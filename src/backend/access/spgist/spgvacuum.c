@@ -652,7 +652,7 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	 */
 	if (!SpGistBlockIsRoot(blkno))
 	{
-		if (PageIsEmpty(page))
+		if (PageIsNew(page) || PageIsEmpty(page))
 		{
 			RecordFreeIndexPage(index, blkno);
 			bds->stats->pages_deleted++;
