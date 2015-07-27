@@ -351,8 +351,7 @@ ExecInsert(ModifyTableState *mtstate,
 			 *
 			 * We loop back here if we find a conflict below, either during
 			 * the pre-check, or when we re-check after inserting the tuple
-			 * speculatively.  See the executor README for a full discussion
-			 * of speculative insertion.
+			 * speculatively.
 			 */
 	vlock:
 			specConflict = false;
