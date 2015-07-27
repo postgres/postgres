@@ -3024,7 +3024,7 @@ pgstat_read_current_status(void)
 			localappname += NAMEDATALEN;
 			localactivity += pgstat_track_activity_query_size;
 #ifdef USE_SSL
-			localsslstatus += sizeof(PgBackendSSLStatus);
+			localsslstatus++;
 #endif
 			localNumBackends++;
 		}
