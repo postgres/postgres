@@ -881,7 +881,7 @@ btvacuumpage(BTVacState *vstate, BlockNumber blkno, BlockNumber orig_blkno)
 	BlockNumber recurse_to;
 	Buffer		buf;
 	Page		page;
-	BTPageOpaque opaque;
+	BTPageOpaque opaque = NULL;
 
 restart:
 	delete_now = false;
@@ -900,9 +900,11 @@ restart:
 							 info->strategy);
 	LockBuffer(buf, BT_READ);
 	page = BufferGetPage(buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (!PageIsNew(page))
+	{
 		_bt_checkpage(rel, buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	}
 
 	/*
 	 * If we are recursing, the only case we want to do anything with is a
