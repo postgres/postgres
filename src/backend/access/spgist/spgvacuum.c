@@ -621,14 +621,10 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	{
 		/*
 		 * We found an all-zero page, which could happen if the database
-		 * crashed just after extending the file.  Initialize and recycle it.
+		 * crashed just after extending the file.  Recycle it.
 		 */
-		SpGistInitBuffer(buffer, 0);
-		SpGistPageSetDeleted(page);
-		/* We don't bother to WAL-log this action; easy to redo */
-		MarkBufferDirty(buffer);
 	}
-	else if (SpGistPageIsDeleted(page))
+	else if (PageIsEmpty(page))
 	{
 		/* nothing to do */
 	}
@@ -654,29 +650,22 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	/*
 	 * The root pages must never be deleted, nor marked as available in FSM,
 	 * because we don't want them ever returned by a search for a place to put
-	 * a new tuple.  Otherwise, check for empty/deletable page, and make sure
-	 * FSM knows about it.
+	 * a new tuple.  Otherwise, check for empty page, and make sure the FSM
+	 * knows about it.
 	 */
 	if (!SpGistBlockIsRoot(blkno))
 	{
-		/* If page is now empty, mark it deleted */
-		if (PageIsEmpty(page) && !SpGistPageIsDeleted(page))
-		{
-			SpGistPageSetDeleted(page);
-			/* We don't bother to WAL-log this action; easy to redo */
-			MarkBufferDirty(buffer);
-		}
-
-		if (SpGistPageIsDeleted(page))
+		if (PageIsEmpty(page))
 		{
 			RecordFreeIndexPage(index, blkno);
 			bds->stats->pages_deleted++;
 		}
 		else
+		{
+			SpGistSetLastUsedPage(index, buffer);
 			bds->lastFilledBlock = blkno;
+		}
 	}
-
-	SpGistSetLastUsedPage(index, buffer);
 
 	UnlockReleaseBuffer(buffer);
 }
