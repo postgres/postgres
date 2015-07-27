@@ -465,7 +465,7 @@ typedef struct spgxlogAddNode
 	 * -1: parent not updated
 	 *----
 	 */
-	char		parentBlk;
+	int8		parentBlk;
 	OffsetNumber offnumParent;	/* offset within the parent page */
 
 	uint16		nodeI;
