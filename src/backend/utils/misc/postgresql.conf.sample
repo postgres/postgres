@@ -80,7 +80,7 @@
 #ssl = off				# (change requires restart)
 #ssl_ciphers = 'ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH'	# allowed SSL ciphers
 					# (change requires restart)
-#ssl_renegotiation_limit = 512MB	# amount of data between renegotiations
+#ssl_renegotiation_limit = 0		# amount of data between renegotiations
 #ssl_cert_file = 'server.crt'		# (change requires restart)
 #ssl_key_file = 'server.key'		# (change requires restart)
 #ssl_ca_file = ''			# (change requires restart)
