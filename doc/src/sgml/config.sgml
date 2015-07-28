@@ -1040,7 +1040,7 @@ include_dir 'conf.d'
         cryptanalysis when large amounts of traffic can be examined, but it
         also carries a large performance penalty. The sum of sent and received
         traffic is used to check the limit. If this parameter is set to 0,
-        renegotiation is disabled. The default is <literal>512MB</>.
+        renegotiation is disabled. The default is <literal>0</>.
        </para>
        <note>
         <para>
@@ -1052,6 +1052,14 @@ include_dir 'conf.d'
          disabled.
         </para>
        </note>
+
+       <warning>
+        <para>
+         Due to bugs in <productname>OpenSSL</> enabling ssl renegotiation, by
+         configuring a non-zero <varname>ssl_renegotiation_limit</>, is likely
+         to lead to problems like long-lived connections breaking.
+        </para>
+       </warning>
       </listitem>
      </varlistentry>
 

@@ -2457,7 +2457,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB,
 		},
 		&ssl_renegotiation_limit,
-		512 * 1024, 0, MAX_KILOBYTES,
+		0, 0, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
