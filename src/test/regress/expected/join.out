@@ -2219,6 +2219,54 @@ order by 1, 2;
 (5 rows)
 
 --
+-- regression test: check a case where join_clause_is_movable_into() gives
+-- an imprecise result
+--
+analyze pg_enum;
+explain (costs off)
+select anname, outname, enumtypid
+from
+  (select pa.proname as anname, coalesce(po.proname, typname) as outname
+   from pg_type t
+     left join pg_proc po on po.oid = t.typoutput
+     join pg_proc pa on pa.oid = t.typanalyze) ss,
+  pg_enum,
+  pg_type t2
+where anname = enumlabel and outname = t2.typname and enumtypid = t2.oid;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop
+   Join Filter: (pg_enum.enumtypid = t2.oid)
+   ->  Nested Loop Left Join
+         ->  Hash Join
+               Hash Cond: ((t.typanalyze)::oid = pa.oid)
+               ->  Seq Scan on pg_type t
+               ->  Hash
+                     ->  Hash Join
+                           Hash Cond: (pa.proname = pg_enum.enumlabel)
+                           ->  Seq Scan on pg_proc pa
+                           ->  Hash
+                                 ->  Seq Scan on pg_enum
+         ->  Index Scan using pg_proc_oid_index on pg_proc po
+               Index Cond: (oid = (t.typoutput)::oid)
+   ->  Index Scan using pg_type_typname_nsp_index on pg_type t2
+         Index Cond: (typname = COALESCE(po.proname, t.typname))
+(16 rows)
+
+select anname, outname, enumtypid
+from
+  (select pa.proname as anname, coalesce(po.proname, typname) as outname
+   from pg_type t
+     left join pg_proc po on po.oid = t.typoutput
+     join pg_proc pa on pa.oid = t.typanalyze) ss,
+  pg_enum,
+  pg_type t2
+where anname = enumlabel and outname = t2.typname and enumtypid = t2.oid;
+ anname | outname | enumtypid 
+--------+---------+-----------
+(0 rows)
+
+--
 -- Clean up
 --
 DROP TABLE t1;
