@@ -307,7 +307,7 @@ SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
 
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
 ERROR:  update or delete on table "category" violates foreign key constraint "document_cid_fkey" on table "document"
-DETAIL:  Key (cid)=(33) is still referenced from table "document".
+DETAIL:  Key is still referenced from table "document".
 -- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
@@ -2887,10 +2887,44 @@ SELECT * FROM current_check;
 
 COMMIT;
 --
+-- check pg_stats view filtering
+--
+SET row_security TO ON;
+SET SESSION AUTHORIZATION rls_regress_user0;
+ANALYZE current_check;
+-- Stats visible
+SELECT row_security_active('current_check');
+ row_security_active 
+---------------------
+ f
+(1 row)
+
+SELECT most_common_vals FROM pg_stats where tablename = 'current_check';
+  most_common_vals   
+---------------------
+ 
+ 
+ {rls_regress_user1}
+(3 rows)
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+-- Stats not visible
+SELECT row_security_active('current_check');
+ row_security_active 
+---------------------
+ t
+(1 row)
+
+SELECT most_common_vals FROM pg_stats where tablename = 'current_check';
+ most_common_vals 
+------------------
+(0 rows)
+
+--
 -- Collation support
 --
 BEGIN;
-SET row_security = force;
+SET row_security TO FORCE;
 CREATE TABLE coll_t (c) AS VALUES ('bar'::text);
 CREATE POLICY coll_p ON coll_t USING (c < ('foo'::text COLLATE "C"));
 ALTER TABLE coll_t ENABLE ROW LEVEL SECURITY;

@@ -1874,7 +1874,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 	 * then don't return anything.  Otherwise, go through normal permission
 	 * checks.
 	 */
-	if (check_enable_rls(reloid, GetUserId(), true) == RLS_ENABLED)
+	if (check_enable_rls(reloid, InvalidOid, true) == RLS_ENABLED)
 		return NULL;
 
 	initStringInfo(&buf);

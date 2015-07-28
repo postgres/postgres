@@ -150,7 +150,7 @@ CREATE VIEW pg_indexes AS
          LEFT JOIN pg_tablespace T ON (T.oid = I.reltablespace)
     WHERE C.relkind IN ('r', 'm') AND I.relkind = 'i';
 
-CREATE VIEW pg_stats AS
+CREATE VIEW pg_stats WITH (security_barrier) AS
     SELECT
         nspname AS schemaname,
         relname AS tablename,
@@ -211,7 +211,9 @@ CREATE VIEW pg_stats AS
     FROM pg_statistic s JOIN pg_class c ON (c.oid = s.starelid)
          JOIN pg_attribute a ON (c.oid = attrelid AND attnum = s.staattnum)
          LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace)
-    WHERE NOT attisdropped AND has_column_privilege(c.oid, a.attnum, 'select');
+    WHERE NOT attisdropped
+    AND has_column_privilege(c.oid, a.attnum, 'select')
+    AND (c.relrowsecurity = false OR NOT row_security_active(c.oid));
 
 REVOKE ALL on pg_statistic FROM public;
 

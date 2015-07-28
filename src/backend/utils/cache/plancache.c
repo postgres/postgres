@@ -153,8 +153,6 @@ CreateCachedPlan(Node *raw_parse_tree,
 	CachedPlanSource *plansource;
 	MemoryContext source_context;
 	MemoryContext oldcxt;
-	Oid			user_id;
-	int			security_context;
 
 	Assert(query_string != NULL);		/* required as of 8.4 */
 
@@ -176,8 +174,6 @@ CreateCachedPlan(Node *raw_parse_tree,
 	 * Most fields are just left empty for the moment.
 	 */
 	oldcxt = MemoryContextSwitchTo(source_context);
-
-	GetUserIdAndSecContext(&user_id, &security_context);
 
 	plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
@@ -208,8 +204,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource->total_custom_cost = 0;
 	plansource->num_custom_plans = 0;
 	plansource->hasRowSecurity = false;
-	plansource->rowSecurityDisabled
-		= (security_context & SECURITY_ROW_LEVEL_DISABLED) != 0;
+	plansource->rowSecurityDisabled = InRowLevelSecurityDisabled();
 	plansource->row_security_env = row_security;
 	plansource->planUserId = InvalidOid;
 

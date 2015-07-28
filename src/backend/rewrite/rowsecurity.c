@@ -107,7 +107,6 @@ get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 
 	Relation	rel;
 	Oid			user_id;
-	int			sec_context;
 	int			rls_status;
 	bool		defaultDeny = false;
 
@@ -117,21 +116,12 @@ get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 	*hasRowSecurity = false;
 	*hasSubLinks = false;
 
-	/* This is just to get the security context */
-	GetUserIdAndSecContext(&user_id, &sec_context);
+	/* If this is not a normal relation, just return immediately */
+	if (rte->relkind != RELKIND_RELATION)
+		return;
 
 	/* Switch to checkAsUser if it's set */
 	user_id = rte->checkAsUser ? rte->checkAsUser : GetUserId();
-
-	/*
-	 * If this is not a normal relation, or we have been told to explicitly
-	 * skip RLS (perhaps because this is an FK check) then just return
-	 * immediately.
-	 */
-	if (rte->relid < FirstNormalObjectId
-		|| rte->relkind != RELKIND_RELATION
-		|| (sec_context & SECURITY_ROW_LEVEL_DISABLED))
-		return;
 
 	/* Determine the state of RLS for this, pass checkAsUser explicitly */
 	rls_status = check_enable_rls(rte->relid, rte->checkAsUser, false);

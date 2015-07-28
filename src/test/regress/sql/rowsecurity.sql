@@ -1190,10 +1190,25 @@ SELECT * FROM current_check;
 COMMIT;
 
 --
+-- check pg_stats view filtering
+--
+SET row_security TO ON;
+SET SESSION AUTHORIZATION rls_regress_user0;
+ANALYZE current_check;
+-- Stats visible
+SELECT row_security_active('current_check');
+SELECT most_common_vals FROM pg_stats where tablename = 'current_check';
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+-- Stats not visible
+SELECT row_security_active('current_check');
+SELECT most_common_vals FROM pg_stats where tablename = 'current_check';
+
+--
 -- Collation support
 --
 BEGIN;
-SET row_security = force;
+SET row_security TO FORCE;
 CREATE TABLE coll_t (c) AS VALUES ('bar'::text);
 CREATE POLICY coll_p ON coll_t USING (c < ('foo'::text COLLATE "C"));
 ALTER TABLE coll_t ENABLE ROW LEVEL SECURITY;
