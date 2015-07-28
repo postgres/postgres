@@ -3012,10 +3012,10 @@ dumpPolicy(Archive *fout, DumpOptions *dopt, PolicyInfo *polinfo)
 		appendPQExpBuffer(query, " TO %s", polinfo->polroles);
 
 	if (polinfo->polqual != NULL)
-		appendPQExpBuffer(query, " USING %s", polinfo->polqual);
+		appendPQExpBuffer(query, " USING (%s)", polinfo->polqual);
 
 	if (polinfo->polwithcheck != NULL)
-		appendPQExpBuffer(query, " WITH CHECK %s", polinfo->polwithcheck);
+		appendPQExpBuffer(query, " WITH CHECK (%s)", polinfo->polwithcheck);
 
 	appendPQExpBuffer(query, ";\n");
 
