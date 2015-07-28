@@ -3456,8 +3456,8 @@ main(int argc, char **argv)
 		for (j = 0; j < thread->nstate; j++)
 		{
 			total_xacts += thread->state[j].cnt;
-			total_latencies += thread->state[i].txn_latencies;
-			total_sqlats += thread->state[i].txn_sqlats;
+			total_latencies += thread->state[j].txn_latencies;
+			total_sqlats += thread->state[j].txn_sqlats;
 		}
 	}
 	disconnect_all(state, nclients);
