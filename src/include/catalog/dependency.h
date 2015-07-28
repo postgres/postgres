@@ -96,6 +96,10 @@ typedef enum DependencyType
  * created for the owner of an object; hence two objects may be linked by
  * one or the other, but not both, of these dependency types.)
  *
+ * (d) a SHARED_DEPENDENCY_POLICY entry means that the referenced object is
+ * a role mentioned in a policy object.  The referenced object must be a
+ * pg_authid entry.
+ *
  * SHARED_DEPENDENCY_INVALID is a value used as a parameter in internal
  * routines, and is not valid in the catalog itself.
  */
@@ -104,6 +108,7 @@ typedef enum SharedDependencyType
 	SHARED_DEPENDENCY_PIN = 'p',
 	SHARED_DEPENDENCY_OWNER = 'o',
 	SHARED_DEPENDENCY_ACL = 'a',
+	SHARED_DEPENDENCY_POLICY = 'r',
 	SHARED_DEPENDENCY_INVALID = 0
 } SharedDependencyType;
 

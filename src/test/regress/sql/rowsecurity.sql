@@ -1217,6 +1217,50 @@ SELECT * FROM coll_t;
 ROLLBACK;
 
 --
+-- Shared Object Dependencies
+--
+RESET SESSION AUTHORIZATION;
+BEGIN;
+CREATE ROLE alice;
+CREATE ROLE bob;
+CREATE TABLE tbl1 (c) AS VALUES ('bar'::text);
+GRANT SELECT ON TABLE tbl1 TO alice;
+CREATE POLICY P ON tbl1 TO alice, bob USING (true);
+SELECT refclassid::regclass, deptype
+  FROM pg_depend
+  WHERE classid = 'pg_policy'::regclass
+  AND refobjid = 'tbl1'::regclass;
+SELECT refclassid::regclass, deptype
+  FROM pg_shdepend
+  WHERE classid = 'pg_policy'::regclass
+  AND refobjid IN ('alice'::regrole, 'bob'::regrole);
+
+SAVEPOINT q;
+DROP ROLE alice; --fails due to dependency on POLICY p
+ROLLBACK TO q;
+
+ALTER POLICY p ON tbl1 TO bob USING (true);
+SAVEPOINT q;
+DROP ROLE alice; --fails due to dependency on GRANT SELECT
+ROLLBACK TO q;
+
+REVOKE ALL ON TABLE tbl1 FROM alice;
+SAVEPOINT q;
+DROP ROLE alice; --succeeds
+ROLLBACK TO q;
+
+SAVEPOINT q;
+DROP ROLE bob; --fails due to dependency on POLICY p
+ROLLBACK TO q;
+
+DROP POLICY p ON tbl1;
+SAVEPOINT q;
+DROP ROLE bob; -- succeeds
+ROLLBACK TO q;
+
+ROLLBACK; -- cleanup
+
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;

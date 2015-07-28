@@ -1083,6 +1083,8 @@ storeObjectDescription(StringInfo descs,
 				appendStringInfo(descs, _("owner of %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_ACL)
 				appendStringInfo(descs, _("privileges for %s"), objdesc);
+			else if (deptype == SHARED_DEPENDENCY_POLICY)
+				appendStringInfo(descs, _("target of %s"), objdesc);
 			else
 				elog(ERROR, "unrecognized dependency type: %d",
 					 (int) deptype);
