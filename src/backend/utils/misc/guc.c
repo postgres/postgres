@@ -2578,17 +2578,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
-			gettext_noop("Set the amount of traffic to send and receive before renegotiating the encryption keys."),
-			NULL,
-			GUC_UNIT_KB,
-		},
-		&ssl_renegotiation_limit,
-		512 * 1024, 0, MAX_KILOBYTES,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"tcp_keepalives_count", PGC_USERSET, CLIENT_CONN_OTHER,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
 			gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
