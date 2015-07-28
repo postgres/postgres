@@ -1037,3 +1037,32 @@ get_relation_policy_oid(Oid relid, const char *policy_name, bool missing_ok)
 
 	return policy_oid;
 }
+
+/*
+ * relation_has_policies - Determine if relation has any policies
+ */
+bool
+relation_has_policies(Relation rel)
+{
+	Relation	catalog;
+	ScanKeyData skey;
+	SysScanDesc sscan;
+	HeapTuple	policy_tuple;
+	bool		ret = false;
+
+	catalog = heap_open(PolicyRelationId, AccessShareLock);
+	ScanKeyInit(&skey,
+				Anum_pg_policy_polrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	sscan = systable_beginscan(catalog, PolicyPolrelidPolnameIndexId, true,
+							   NULL, 1, &skey);
+	policy_tuple = systable_getnext(sscan);
+	if (HeapTupleIsValid(policy_tuple))
+		ret = true;
+
+	systable_endscan(sscan);
+	heap_close(catalog, AccessShareLock);
+
+	return ret;
+}

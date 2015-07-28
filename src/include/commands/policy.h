@@ -31,5 +31,6 @@ extern Oid get_relation_policy_oid(Oid relid, const char *policy_name,
 
 extern ObjectAddress rename_policy(RenameStmt *stmt);
 
+extern bool relation_has_policies(Relation rel);
 
 #endif   /* POLICY_H */
