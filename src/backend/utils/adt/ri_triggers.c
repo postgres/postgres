@@ -3243,7 +3243,7 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 	 * privileges.
 	 */
 
-	if (check_enable_rls(rel_oid, GetUserId(), true) != RLS_ENABLED)
+	if (check_enable_rls(rel_oid, InvalidOid, true) != RLS_ENABLED)
 	{
 		aclresult = pg_class_aclcheck(rel_oid, GetUserId(), ACL_SELECT);
 		if (aclresult != ACLCHECK_OK)
@@ -3264,6 +3264,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 			}
 		}
 	}
+	else
+		has_perm = false;
 
 	if (has_perm)
 	{

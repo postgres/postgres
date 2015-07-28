@@ -1121,6 +1121,10 @@ extern Datum set_config_by_name(PG_FUNCTION_ARGS);
 extern Datum show_all_settings(PG_FUNCTION_ARGS);
 extern Datum show_all_file_settings(PG_FUNCTION_ARGS);
 
+/* rls.c */
+extern Datum row_security_active(PG_FUNCTION_ARGS);
+extern Datum row_security_active_name(PG_FUNCTION_ARGS);
+
 /* lockfuncs.c */
 extern Datum pg_lock_status(PG_FUNCTION_ARGS);
 extern Datum pg_advisory_lock_int8(PG_FUNCTION_ARGS);

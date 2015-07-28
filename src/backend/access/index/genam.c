@@ -204,7 +204,7 @@ BuildIndexValueDescription(Relation indexRelation,
 	Assert(indexrelid == idxrec->indexrelid);
 
 	/* RLS check- if RLS is enabled then we don't return anything. */
-	if (check_enable_rls(indrelid, GetUserId(), true) == RLS_ENABLED)
+	if (check_enable_rls(indrelid, InvalidOid, true) == RLS_ENABLED)
 	{
 		ReleaseSysCache(ht_idx);
 		return NULL;

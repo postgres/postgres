@@ -15259,6 +15259,12 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry><type>boolean</type></entry>
        <entry>does current user have privilege for role</entry>
       </row>
+      <row>
+       <entry><literal><function>row_security_active</function>(<parameter>table</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have row level security active for table</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -15298,6 +15304,9 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
    <indexterm>
     <primary>pg_has_role</primary>
+   </indexterm>
+   <indexterm>
+    <primary>row_security_active</primary>
    </indexterm>
 
    <para>
@@ -15460,6 +15469,13 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     the role (that is, the right to do <command>SET ROLE</>), while
     <literal>USAGE</literal> denotes whether the privileges of the role
     are immediately available without doing <command>SET ROLE</>.
+   </para>
+
+   <para>
+    <function>row_security_active</function> checks whether row level
+    security is active for the specified table in the context of the
+    <function>current_user</function> and environment. The table can
+    be specified by name or by OID.
    </para>
 
   <para>
