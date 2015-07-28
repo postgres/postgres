@@ -16,12 +16,8 @@
  *	  backend can restart automatically, it is important that
  *	  we select an algorithm that continues to provide confidentiality
  *	  even if the attacker has the server's private key.  Ephemeral
- *	  DH (EDH) keys provide this, and in fact provide Perfect Forward
- *	  Secrecy (PFS) except for situations where the session can
- *	  be hijacked during a periodic handshake/renegotiation.
- *	  Even that backdoor can be closed if client certificates
- *	  are used (since the imposter will be unable to successfully
- *	  complete renegotiation).
+ *	  DH (EDH) keys provide this and more (Perfect Forward Secrecy
+ *	  aka PFS).
  *
  *	  N.B., the static private key should still be protected to
  *	  the largest extent possible, to minimize the risk of
@@ -36,12 +32,6 @@
  *	  use ssldump(1) if there's a problem establishing an SSL
  *	  session.  In this case you'll need to temporarily disable
  *	  EDH by commenting out the callback.
- *
- *	  ...
- *
- *	  Because the risk of cryptanalysis increases as large
- *	  amounts of data are sent with the same session key, the
- *	  session keys are periodically renegotiated.
  *
  *-------------------------------------------------------------------------
  */
@@ -91,9 +81,6 @@ static void initialize_ecdh(void);
 static const char *SSLerrmessage(void);
 
 static char *X509_NAME_to_cstring(X509_NAME *name);
-
-/* are we in the middle of a renegotiation? */
-static bool in_ssl_renegotiation = false;
 
 static SSL_CTX *SSL_context = NULL;
 
@@ -570,37 +557,6 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 	ssize_t		n;
 	int			err;
 
-	/*
-	 * If SSL renegotiations are enabled and we're getting close to the limit,
-	 * start one now; but avoid it if there's one already in progress.
-	 * Request the renegotiation 1kB before the limit has actually expired.
-	 */
-	if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
-		port->count > (ssl_renegotiation_limit - 1) * 1024L)
-	{
-		in_ssl_renegotiation = true;
-
-		/*
-		 * The way we determine that a renegotiation has completed is by
-		 * observing OpenSSL's internal renegotiation counter.  Make sure we
-		 * start out at zero, and assume that the renegotiation is complete
-		 * when the counter advances.
-		 *
-		 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't seem
-		 * to work in testing.
-		 */
-		SSL_clear_num_renegotiations(port->ssl);
-
-		/* without this, renegotiation fails when a client cert is used */
-		SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
-								   sizeof(SSL_context));
-
-		if (SSL_renegotiate(port->ssl) <= 0)
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("SSL failure during renegotiation start")));
-	}
-
 	errno = 0;
 	n = SSL_write(port->ssl, ptr, len);
 	err = SSL_get_error(port->ssl, n);
@@ -644,28 +600,6 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 			errno = ECONNRESET;
 			n = -1;
 			break;
-	}
-
-	if (n >= 0)
-	{
-		/* is renegotiation complete? */
-		if (in_ssl_renegotiation &&
-			SSL_num_renegotiations(port->ssl) >= 1)
-		{
-			in_ssl_renegotiation = false;
-			port->count = 0;
-		}
-
-		/*
-		 * if renegotiation is still ongoing, and we've gone beyond the limit,
-		 * kill the connection now -- continuing to use it can be considered a
-		 * security problem.
-		 */
-		if (in_ssl_renegotiation &&
-			port->count > ssl_renegotiation_limit * 1024L)
-			ereport(FATAL,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("SSL failed to renegotiate connection before limit expired")));
 	}
 
 	return n;

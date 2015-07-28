@@ -43,13 +43,6 @@ char	   *ssl_key_file;
 char	   *ssl_ca_file;
 char	   *ssl_crl_file;
 
-/*
- *	How much data can be sent across a secure connection
- *	(total in both directions) before we require renegotiation.
- *	Set to 0 to disable renegotiation completely.
- */
-int			ssl_renegotiation_limit;
-
 #ifdef USE_SSL
 bool		ssl_loaded_verify_locations = false;
 #endif
