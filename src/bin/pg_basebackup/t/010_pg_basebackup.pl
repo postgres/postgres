@@ -30,7 +30,7 @@ print HBA "local replication all trust\n";
 print HBA "host replication all 127.0.0.1/32 trust\n";
 print HBA "host replication all ::1/128 trust\n";
 close HBA;
-system_or_bail 'pg_ctl', '-s', '-D', "$tempdir/pgdata", 'reload';
+system_or_bail 'pg_ctl', '-D', "$tempdir/pgdata", 'reload';
 
 command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup" ],

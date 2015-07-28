@@ -33,4 +33,4 @@ command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
 command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
 	'pg_ctl restart with server running');
 
-system_or_bail 'pg_ctl', '-s', 'stop', '-D', "$tempdir/data", '-m', 'fast';
+system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/data", '-m', 'fast';
