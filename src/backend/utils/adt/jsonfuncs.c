@@ -977,26 +977,26 @@ get_array_start(void *state)
 	{
 		/* Initialize counting of elements in this array */
 		_state->array_cur_index[lex_level] = -1;
+
+		/* INT_MIN value is reserved to represent invalid subscript */
+		if (_state->path_indexes[lex_level] < 0 &&
+			_state->path_indexes[lex_level] != INT_MIN)
+		{
+			/* Negative subscript -- convert to positive-wise subscript */
+			int		nelements = json_count_array_elements(_state->lex);
+
+			if (-_state->path_indexes[lex_level] <= nelements)
+				_state->path_indexes[lex_level] += nelements;
+		}
 	}
 	else if (lex_level == 0 && _state->npath == 0)
 	{
 		/*
 		 * Special case: we should match the entire array.  We only need this
-		 * at outermost level because at nested levels the match will have
-		 * been started by the outer field or array element callback.
+		 * at the outermost level because at nested levels the match will
+		 * have been started by the outer field or array element callback.
 		 */
 		_state->result_start = _state->lex->token_start;
-	}
-
-	/* INT_MIN value is reserved to represent invalid subscript */
-	if (_state->path_indexes[lex_level] < 0 &&
-		_state->path_indexes[lex_level] != INT_MIN)
-	{
-		/* Negative subscript -- convert to positive-wise subscript */
-		int		nelements = json_count_array_elements(_state->lex);
-
-		if (-_state->path_indexes[lex_level] <= nelements)
-			_state->path_indexes[lex_level] += nelements;
 	}
 }
 
