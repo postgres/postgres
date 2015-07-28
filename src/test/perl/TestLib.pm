@@ -23,6 +23,9 @@ our @EXPORT = qw(
   program_options_handling_ok
   command_like
   issues_sql_like
+
+  $tmp_check
+  $log_path
 );
 
 use Cwd;
@@ -37,8 +40,10 @@ use Test::More;
 
 # Open log file. For each test, the log file name uses the name of the
 # file launching this module, without the .pl suffix.
-my $log_path = 'tmp_check/log';
-mkdir 'tmp_check';
+our ($tmp_check, $log_path);
+$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
+$log_path = "$tmp_check/log";
+mkdir $tmp_check;
 mkdir $log_path;
 my $test_logfile = basename($0);
 $test_logfile =~ s/\.[^.]+$//;
@@ -132,19 +137,19 @@ sub start_test_server
 	print("### Starting test server in $tempdir\n");
 	standard_initdb "$tempdir/pgdata";
 	$ret = system_log('pg_ctl', '-D', "$tempdir/pgdata", '-w', '-l',
-	  "$tempdir/logfile", '-o',
+	  "$log_path/postmaster.log", '-o',
 "--fsync=off -k \"$tempdir_short\" --listen-addresses='' --log-statement=all",
 					'start');
 	if ($ret != 0)
 	{
 		print "# pg_ctl failed; logfile:\n";
-		system('cat', "$tempdir/logfile");
+		system('cat', "$log_path/postmaster.log");
 		BAIL_OUT("pg_ctl failed");
 	}
 
 	$ENV{PGHOST}         = $tempdir_short;
 	$test_server_datadir = "$tempdir/pgdata";
-	$test_server_logfile = "$tempdir/logfile";
+	$test_server_logfile = "$log_path/postmaster.log";
 }
 
 sub restart_test_server

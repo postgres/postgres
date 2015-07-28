@@ -72,9 +72,6 @@ our $test_standby_datadir = "$testroot/data_standby";
 
 mkdir $testroot;
 
-# Log files are created here
-mkdir "regress_log";
-
 # Define non-conflicting ports for both nodes.
 my $port_master  = $ENV{PGPORT};
 my $port_standby = $port_master + 1;
@@ -202,6 +199,7 @@ local replication all trust
 
 	system_or_bail('pg_ctl' , '-w',
 				   '-D' , $test_master_datadir,
+				   '-l',  "$log_path/master.log",
 				   "-o", "-k $tempdir_short --listen-addresses='' -p $port_master",
 				   'start');
 
@@ -228,6 +226,7 @@ recovery_target_timeline='latest'
 
 	# Start standby
 	system_or_bail('pg_ctl', '-w', '-D', $test_standby_datadir,
+				   '-l', "$log_path/standby.log",
 				   '-o', "-k $tempdir_short --listen-addresses='' -p $port_standby",
 				   'start');
 
@@ -323,6 +322,7 @@ recovery_target_timeline='latest'
 
 	# Restart the master to check that rewind went correctly
 	system_or_bail('pg_ctl', '-w', '-D', $test_master_datadir,
+				   '-l', "$log_path/master.log",
 				   '-o', "-k $tempdir_short --listen-addresses='' -p $port_master",
 				   'start');
 
