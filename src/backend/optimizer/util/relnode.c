@@ -969,9 +969,18 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
+		/*
+		 * In principle, join_clause_is_movable_into() should accept anything
+		 * returned by generate_join_implied_equalities(); but because its
+		 * analysis is only approximate, sometimes it doesn't.  So we
+		 * currently cannot use this Assert; instead just assume it's okay to
+		 * apply the joinclause at this level.
+		 */
+#ifdef NOT_USED
 		Assert(join_clause_is_movable_into(rinfo,
 										   joinrel->relids,
 										   join_and_req));
+#endif
 		if (!join_clause_is_movable_into(rinfo,
 										 outer_path->parent->relids,
 										 outer_and_req) &&
