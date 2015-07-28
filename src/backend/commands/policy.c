@@ -144,14 +144,14 @@ policy_role_list_to_array(List *roles, int *num_roles)
 	/* Handle no roles being passed in as being for public */
 	if (roles == NIL)
 	{
-	   *num_roles = 1;
+		*num_roles = 1;
 		role_oids = (Datum *) palloc(*num_roles * sizeof(Datum));
 		role_oids[0] = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
 		return role_oids;
 	}
 
-   *num_roles = list_length(roles);
+	*num_roles = list_length(roles);
 	role_oids = (Datum *) palloc(*num_roles * sizeof(Datum));
 
 	foreach(cell, roles)
@@ -169,7 +169,7 @@ policy_role_list_to_array(List *roles, int *num_roles)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("ignoring roles specified other than public"),
 					  errhint("All roles are members of the public role.")));
-			   *num_roles = 1;
+				*num_roles = 1;
 			}
 			role_oids[0] = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
@@ -656,7 +656,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	Oid			policy_id;
 	Relation	target_table;
 	Oid			table_id;
-	Datum	   *role_oids;
+	Datum	   *role_oids = NULL;
 	int			nitems = 0;
 	ArrayType  *role_ids = NULL;
 	List	   *qual_parse_rtable = NIL;
