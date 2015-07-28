@@ -78,6 +78,7 @@ struct PGPROC
 {
 	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
 	SHM_QUEUE	links;			/* list link if process is in a list */
+	PGPROC	  **procgloballist;	/* procglobal list that owns this PGPROC */
 
 	PGSemaphoreData sem;		/* ONE semaphore to sleep on */
 	int			waitStatus;		/* STATUS_WAITING, STATUS_OK or STATUS_ERROR */
