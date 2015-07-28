@@ -338,7 +338,7 @@ cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPOR
 endef
 
 define prove_check
-rm -rf $(srcdir)/tmp_check/log
+rm -rf $(CURDIR)/tmp_check/log
 cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
 
