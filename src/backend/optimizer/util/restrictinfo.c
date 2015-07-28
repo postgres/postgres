@@ -651,10 +651,9 @@ extract_actual_join_clauses(List *restrictinfo_list,
  * outer join, as that would change the results (rows would be suppressed
  * rather than being null-extended).
  *
- * And the target relation must not be in the clause's nullable_relids, i.e.,
- * there must not be an outer join below the clause that would null the Vars
- * coming from the target relation.  Otherwise the clause might give results
- * different from what it would give at its normal semantic level.
+ * Also there must not be an outer join below the clause that would null the
+ * Vars coming from the target relation.  Otherwise the clause might give
+ * results different from what it would give at its normal semantic level.
  */
 bool
 join_clause_is_movable_to(RestrictInfo *rinfo, Index baserelid)
@@ -695,6 +694,21 @@ join_clause_is_movable_to(RestrictInfo *rinfo, Index baserelid)
  * not pushing the clause into its outer-join outer side, nor down into
  * a lower outer join's inner side.
  *
+ * The check about pushing a clause down into a lower outer join's inner side
+ * is only approximate; it sometimes returns "false" when actually it would
+ * be safe to use the clause here because we're still above the outer join
+ * in question.  This is okay as long as the answers at different join levels
+ * are consistent: it just means we might sometimes fail to push a clause as
+ * far down as it could safely be pushed.  It's unclear whether it would be
+ * worthwhile to do this more precisely.  (But if it's ever fixed to be
+ * exactly accurate, there's an Assert in get_joinrel_parampathinfo() that
+ * should be re-enabled.)
+ *
+ * Note: if this returns true, it means that the clause could be moved to
+ * this join relation, but that doesn't mean that this is the lowest join
+ * it could be moved to.  Caller may need to make additional calls to verify
+ * that this doesn't succeed on either of the inputs of a proposed join.
+ *
  * Note: get_joinrel_parampathinfo depends on the fact that if
  * current_and_outer is NULL, this function will always return false
  * (since one or the other of the first two tests must fail).
@@ -708,7 +722,7 @@ join_clause_is_movable_into(RestrictInfo *rinfo,
 	if (!bms_is_subset(rinfo->clause_relids, current_and_outer))
 		return false;
 
-	/* Clause must physically reference target rel(s) */
+	/* Clause must physically reference at least one target rel */
 	if (!bms_overlap(currentrelids, rinfo->clause_relids))
 		return false;
 
@@ -716,7 +730,12 @@ join_clause_is_movable_into(RestrictInfo *rinfo,
 	if (bms_overlap(currentrelids, rinfo->outer_relids))
 		return false;
 
-	/* Target rel(s) must not be nullable below the clause */
+	/*
+	 * Target rel(s) must not be nullable below the clause.  This is
+	 * approximate, in the safe direction, because the current join might be
+	 * above the join where the nulling would happen, in which case the clause
+	 * would work correctly here.  But we don't have enough info to be sure.
+	 */
 	if (bms_overlap(currentrelids, rinfo->nullable_relids))
 		return false;
 
