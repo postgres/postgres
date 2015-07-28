@@ -9,7 +9,6 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	RewindTest::init_rewind_test('databases', $test_mode);
 	RewindTest::setup_cluster();
 
 	# Create a database in master.
