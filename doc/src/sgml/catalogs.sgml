@@ -5793,6 +5793,16 @@
     </varlistentry>
 
     <varlistentry>
+     <term><symbol>SHARED_DEPENDENCY_POLICY</> (<literal>r</>)</term>
+     <listitem>
+      <para>
+       The referenced object (which must be a role) is mentioned as the
+       target of a dependent policy object.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><symbol>SHARED_DEPENDENCY_PIN</> (<literal>p</>)</term>
      <listitem>
       <para>
