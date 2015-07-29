@@ -50,6 +50,20 @@ step "writep1"	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
 step "writep2"	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
 step "c1"	{ COMMIT; }
 
+# these tests are meant to exercise EvalPlanQualFetchRowMarks,
+# ie, handling non-locked tables in an EvalPlanQual recheck
+
+step "partiallock"	{
+	SELECT * FROM accounts a1, accounts a2
+	  WHERE a1.accountid = a2.accountid
+	  FOR UPDATE OF a1;
+}
+step "lockwithvalues"	{
+	SELECT * FROM accounts a1, (values('checking'),('savings')) v(id)
+	  WHERE a1.accountid = v.id
+	  FOR UPDATE OF a1;
+}
+
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step "wx2"	{ UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking'; }
@@ -79,3 +93,5 @@ permutation "wy1" "wy2" "c1" "c2" "read"
 permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"
+permutation "wx2" "partiallock" "c2" "c1" "read"
+permutation "wx2" "lockwithvalues" "c2" "c1" "read"

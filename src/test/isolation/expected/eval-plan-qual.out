@@ -104,3 +104,43 @@ a              b              c
 2              2              2              
 2              3              0              
 step c2: COMMIT;
+
+starting permutation: wx2 partiallock c2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking';
+step partiallock: 
+	SELECT * FROM accounts a1, accounts a2
+	  WHERE a1.accountid = a2.accountid
+	  FOR UPDATE OF a1;
+ <waiting ...>
+step c2: COMMIT;
+step partiallock: <... completed>
+accountid      balance        accountid      balance        
+
+checking       1050           checking       600            
+savings        600            savings        600            
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1050           
+savings        600            
+
+starting permutation: wx2 lockwithvalues c2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking';
+step lockwithvalues: 
+	SELECT * FROM accounts a1, (values('checking'),('savings')) v(id)
+	  WHERE a1.accountid = v.id
+	  FOR UPDATE OF a1;
+ <waiting ...>
+step c2: COMMIT;
+step lockwithvalues: <... completed>
+accountid      balance        id             
+
+checking       1050           checking       
+savings        600            savings        
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1050           
+savings        600            
