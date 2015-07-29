@@ -796,8 +796,7 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
  *
  * This is used if we queued ourselves because we thought we needed to sleep
  * but, after further checking, we discovered that we don't actually need to
- * do so. Returns false if somebody else already has woken us up, otherwise
- * returns true.
+ * do so.
  */
 static void
 LWLockDequeueSelf(LWLock *lock)
