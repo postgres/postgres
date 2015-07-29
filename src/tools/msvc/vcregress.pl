@@ -7,7 +7,9 @@ use strict;
 our $config;
 
 use Cwd;
+use File::Basename;
 use File::Copy;
+use File::Find ();
 
 use Install qw(Install);
 
@@ -32,7 +34,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck)$/i
+/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|tapcheck)$/i
   )
 {
 	$what = uc $what;
@@ -59,7 +61,7 @@ unless ($schedule)
 	$schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
 }
 
-$ENV{PERL5LIB} = "$topdir/src/tools/msvc";
+$ENV{PERL5LIB} = "$topdir/src/tools/msvc;$ENV{PERL5LIB}";
 
 my $maxconn = "";
 $maxconn = "--max_connections=$ENV{MAX_CONNECTIONS}"
@@ -79,6 +81,7 @@ my %command = (
 	CONTRIBCHECK   => \&contribcheck,
 	MODULESCHECK   => \&modulescheck,
 	ISOLATIONCHECK => \&isolationcheck,
+	TAPCHECK       => \&tapcheck,
 	UPGRADECHECK   => \&upgradecheck,);
 
 my $proc = $command{$what};
@@ -170,6 +173,45 @@ sub isolationcheck
 	system(@args);
 	my $status = $? >> 8;
 	exit $status if $status;
+}
+
+sub tapcheck
+{
+	InstallTemp();
+
+	my @args = ( "prove", "--verbose", "t/*.pl");
+
+	$ENV{PATH} = "$tmp_installdir/bin;$ENV{PATH}";
+	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
+	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
+
+	# Find out all the existing TAP tests by looking for t/ directories
+	# in the tree.
+	my $tap_dirs = [];
+	my @top_dir = ($topdir);
+	File::Find::find(
+		{   wanted => sub {
+				/^t\z/s
+				  && push(@$tap_dirs, $File::Find::name);
+			  }
+		},
+		@top_dir);
+
+	# Process each test
+	foreach my $test_path (@$tap_dirs)
+	{
+		# Like on Unix "make check-world", don't run the SSL test suite
+		# automatically.
+		next if ($test_path =~ /\/src\/test\/ssl\//);
+
+		my $dir = dirname($test_path);
+		chdir $dir;
+		# Reset those values, they may have been changed by another test.
+		$ENV{TESTDIR} = "$dir";
+		system(@args);
+		my $status = $? >> 8;
+		exit $status if $status;
+	}
 }
 
 sub plcheck

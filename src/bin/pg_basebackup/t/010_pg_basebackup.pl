@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Cwd;
+use Config;
 use TestLib;
 use Test::More tests => 51;
 
@@ -25,11 +26,7 @@ if (open BADCHARS, ">>$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
 	close BADCHARS;
 }
 
-open HBA, ">>$tempdir/pgdata/pg_hba.conf";
-print HBA "local replication all trust\n";
-print HBA "host replication all 127.0.0.1/32 trust\n";
-print HBA "host replication all ::1/128 trust\n";
-close HBA;
+configure_hba_for_replication "$tempdir/pgdata";
 system_or_bail 'pg_ctl', '-D', "$tempdir/pgdata", 'reload';
 
 command_fails(
@@ -62,61 +59,6 @@ command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup", '-Ft' ],
 	'tar format');
 ok(-f "$tempdir/tarbackup/base.tar", 'backup tar was created');
 
-my $superlongname = "superlongname_" . ("x" x 100);
-
-system_or_bail 'touch', "$tempdir/pgdata/$superlongname";
-command_fails([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
-	'pg_basebackup tar with long name fails');
-unlink "$tempdir/pgdata/$superlongname";
-
-# Create a temporary directory in the system location and symlink it
-# to our physical temp location.  That way we can use shorter names
-# for the tablespace directories, which hopefully won't run afoul of
-# the 99 character length limit.
-my $shorter_tempdir = tempdir_short . "/tempdir";
-symlink "$tempdir", $shorter_tempdir;
-
-mkdir "$tempdir/tblspc1";
-psql 'postgres',
-  "CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';";
-psql 'postgres', "CREATE TABLE test1 (a int) TABLESPACE tblspc1;";
-command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup2", '-Ft' ],
-	'tar format with tablespaces');
-ok(-f "$tempdir/tarbackup2/base.tar", 'backup tar was created');
-my @tblspc_tars = glob "$tempdir/tarbackup2/[0-9]*.tar";
-is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
-
-command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup1", '-Fp' ],
-	'plain format with tablespaces fails without tablespace mapping');
-
-command_ok(
-	[   'pg_basebackup', '-D', "$tempdir/backup1", '-Fp',
-		"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1" ],
-	'plain format with tablespaces succeeds with tablespace mapping');
-ok(-d "$tempdir/tbackup/tblspc1", 'tablespace was relocated');
-opendir(my $dh, "$tempdir/pgdata/pg_tblspc") or die;
-ok( (   grep {
-			-l "$tempdir/backup1/pg_tblspc/$_"
-			  and readlink "$tempdir/backup1/pg_tblspc/$_" eq
-			  "$tempdir/tbackup/tblspc1"
-		  } readdir($dh)),
-	"tablespace symlink was updated");
-closedir $dh;
-
-mkdir "$tempdir/tbl=spc2";
-psql 'postgres', "DROP TABLE test1;";
-psql 'postgres', "DROP TABLESPACE tblspc1;";
-psql 'postgres',
-  "CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';";
-command_ok(
-	[   'pg_basebackup', '-D', "$tempdir/backup3", '-Fp',
-		"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2" ],
-	'mapping tablespace with = sign in path');
-ok(-d "$tempdir/tbackup/tbl=spc2", 'tablespace with = sign was relocated');
-
-psql 'postgres', "DROP TABLESPACE tblspc2;";
-
 command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-T=/foo" ],
 	'-T with empty old directory fails');
@@ -137,12 +79,75 @@ command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-Tfoo" ],
 	'-T with invalid format fails');
 
-mkdir "$tempdir/$superlongname";
-psql 'postgres',
-  "CREATE TABLESPACE tblspc3 LOCATION '$tempdir/$superlongname';";
-command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
-	'pg_basebackup tar with long symlink target');
-psql 'postgres', "DROP TABLESPACE tblspc3;";
+# Tar format doesn't support filenames longer than 100 bytes.
+my $superlongname = "superlongname_" . ("x" x 100);
+my $superlongpath = "$tempdir/pgdata/$superlongname";
+
+open FILE, ">$superlongpath" or die "unable to create file $superlongpath";
+close FILE;
+command_fails([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l1", '-Ft' ],
+	'pg_basebackup tar with long name fails');
+unlink "$tempdir/pgdata/$superlongname";
+
+# The following tests test symlinks. Windows doesn't have symlinks, so
+# skip on Windows.
+SKIP: {
+    skip "symlinks not supported on Windows", 10 if ($Config{osname} eq "MSWin32");
+
+	# Create a temporary directory in the system location and symlink it
+	# to our physical temp location.  That way we can use shorter names
+	# for the tablespace directories, which hopefully won't run afoul of
+	# the 99 character length limit.
+	my $shorter_tempdir = tempdir_short . "/tempdir";
+	symlink "$tempdir", $shorter_tempdir;
+
+	mkdir "$tempdir/tblspc1";
+	psql 'postgres',
+	"CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';";
+	psql 'postgres', "CREATE TABLE test1 (a int) TABLESPACE tblspc1;";
+	command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup2", '-Ft' ],
+			   'tar format with tablespaces');
+	ok(-f "$tempdir/tarbackup2/base.tar", 'backup tar was created');
+	my @tblspc_tars = glob "$tempdir/tarbackup2/[0-9]*.tar";
+	is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
+
+	command_fails(
+		[ 'pg_basebackup', '-D', "$tempdir/backup1", '-Fp' ],
+		'plain format with tablespaces fails without tablespace mapping');
+
+	command_ok(
+		[   'pg_basebackup', '-D', "$tempdir/backup1", '-Fp',
+			"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1" ],
+		'plain format with tablespaces succeeds with tablespace mapping');
+	ok(-d "$tempdir/tbackup/tblspc1", 'tablespace was relocated');
+	opendir(my $dh, "$tempdir/pgdata/pg_tblspc") or die;
+	ok( (   grep {
+		-l "$tempdir/backup1/pg_tblspc/$_"
+			and readlink "$tempdir/backup1/pg_tblspc/$_" eq
+			"$tempdir/tbackup/tblspc1"
+			} readdir($dh)),
+		"tablespace symlink was updated");
+	closedir $dh;
+
+	mkdir "$tempdir/tbl=spc2";
+	psql 'postgres', "DROP TABLE test1;";
+	psql 'postgres', "DROP TABLESPACE tblspc1;";
+	psql 'postgres',
+	"CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';";
+	command_ok(
+		[   'pg_basebackup', '-D', "$tempdir/backup3", '-Fp',
+			"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2" ],
+		'mapping tablespace with = sign in path');
+	ok(-d "$tempdir/tbackup/tbl=spc2", 'tablespace with = sign was relocated');
+	psql 'postgres', "DROP TABLESPACE tblspc2;";
+
+	mkdir "$tempdir/$superlongname";
+	psql 'postgres',
+	"CREATE TABLESPACE tblspc3 LOCATION '$tempdir/$superlongname';";
+	command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
+			   'pg_basebackup tar with long symlink target');
+	psql 'postgres', "DROP TABLESPACE tblspc3;";
+}
 
 command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
 	'pg_basebackup -R runs');
@@ -169,7 +174,7 @@ is($lsn, '', 'restart LSN of new slot is null');
 command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X', 'stream', '-S', 'slot1' ],
 	'pg_basebackup -X stream with replication slot runs');
 $lsn = psql 'postgres', q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'};
-like($lsn, qr!^0/[0-9A-Z]{8}$!, 'restart LSN of slot has advanced');
+like($lsn, qr!^0/[0-9A-Z]{7,8}$!, 'restart LSN of slot has advanced');
 
 command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '-X', 'stream', '-S', 'slot1', '-R' ],
 	'pg_basebackup with replication slot and -R runs');

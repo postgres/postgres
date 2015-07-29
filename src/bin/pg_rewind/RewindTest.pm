@@ -192,20 +192,15 @@ max_connections = 10
 ));
 
 	# Accept replication connections on master
-	append_to_file(
-		"$test_master_datadir/pg_hba.conf", qq(
-local replication all trust
-));
+	configure_hba_for_replication $test_master_datadir;
 
 	system_or_bail('pg_ctl' , '-w',
 				   '-D' , $test_master_datadir,
 				   '-l',  "$log_path/master.log",
-				   "-o", "-k $tempdir_short --listen-addresses='' -p $port_master",
-				   'start');
+				   "-o", "-p $port_master", 'start');
 
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
-	$ENV{PGHOST} = $tempdir_short;
 }
 
 sub create_standby
@@ -227,8 +222,7 @@ recovery_target_timeline='latest'
 	# Start standby
 	system_or_bail('pg_ctl', '-w', '-D', $test_standby_datadir,
 				   '-l', "$log_path/standby.log",
-				   '-o', "-k $tempdir_short --listen-addresses='' -p $port_standby",
-				   'start');
+				   '-o', "-p $port_standby", 'start');
 
 	# Wait until the standby has caught up with the primary, by polling
 	# pg_stat_replication.
@@ -264,7 +258,7 @@ sub run_pg_rewind
 	my $test_mode = shift;
 
 	# Stop the master and be ready to perform the rewind
-	system_or_bail('pg_ctl', '-D', $test_master_datadir, 'stop', '-m', 'fast');
+	system_or_bail('pg_ctl', '-D', $test_master_datadir, '-m', 'fast', 'stop');
 
 	# At this point, the rewind processing is ready to run.
 	# We now have a very simple scenario with a few diverged WAL record.
@@ -282,8 +276,8 @@ sub run_pg_rewind
 	{
 		# Do rewind using a local pgdata as source
 		# Stop the master and be ready to perform the rewind
-		system_or_bail('pg_ctl', '-D', $test_standby_datadir, 'stop',
-					   '-m', 'fast');
+		system_or_bail('pg_ctl', '-D', $test_standby_datadir,
+					   '-m', 'fast', 'stop');
 		command_ok(['pg_rewind',
 					"--debug",
 					"--source-pgdata=$test_standby_datadir",
@@ -323,8 +317,7 @@ recovery_target_timeline='latest'
 	# Restart the master to check that rewind went correctly
 	system_or_bail('pg_ctl', '-w', '-D', $test_master_datadir,
 				   '-l', "$log_path/master.log",
-				   '-o', "-k $tempdir_short --listen-addresses='' -p $port_master",
-				   'start');
+				   '-o', "-p $port_master", 'start');
 
 	#### Now run the test-specific parts to check the result
 }
