@@ -584,6 +584,15 @@ checking for osx... osx
    </para>
 
    <para>
+    To produce HTML documentation with the stylesheet used on <ulink
+    url="http://postgresql.org/docs/current">postgresql.org</> instead of the
+    default simple style use:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>make STYLE=website html</userinput>
+</screen>
+   </para>
+
+   <para>
     To create a proper index, the build might process several identical
     stages.  If you do not care about the index, and just want to
     proof-read the output, use <literal>draft</>:
