@@ -1197,12 +1197,16 @@ SET SESSION AUTHORIZATION rls_regress_user0;
 ANALYZE current_check;
 -- Stats visible
 SELECT row_security_active('current_check');
-SELECT most_common_vals FROM pg_stats where tablename = 'current_check';
+SELECT attname, most_common_vals FROM pg_stats
+  WHERE tablename = 'current_check'
+  ORDER BY 1;
 
 SET SESSION AUTHORIZATION rls_regress_user1;
 -- Stats not visible
 SELECT row_security_active('current_check');
-SELECT most_common_vals FROM pg_stats where tablename = 'current_check';
+SELECT attname, most_common_vals FROM pg_stats
+  WHERE tablename = 'current_check'
+  ORDER BY 1;
 
 --
 -- Collation support
