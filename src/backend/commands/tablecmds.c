@@ -11169,7 +11169,7 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 
 	/*
 	 * Check existing foreign key constraints to preserve the invariant that
-	 * no permanent tables cannot reference unlogged ones.  Self-referencing
+	 * permanent tables cannot reference unlogged ones.  Self-referencing
 	 * foreign keys can safely be ignored.
 	 */
 	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
