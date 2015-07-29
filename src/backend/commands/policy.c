@@ -629,6 +629,8 @@ CreatePolicy(CreatePolicyStmt *stmt)
 									 SHARED_DEPENDENCY_POLICY);
 	}
 
+	InvokeObjectPostCreateHook(PolicyRelationId, policy_id, 0);
+
 	/* Invalidate Relation Cache */
 	CacheInvalidateRelcache(target_table);
 
@@ -859,6 +861,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 			recordSharedDependencyOn(&myself, &target,
 									 SHARED_DEPENDENCY_POLICY);
 	}
+
+	InvokeObjectPostAlterHook(PolicyRelationId, policy_id, 0);
 
 	heap_freetuple(new_tuple);
 
