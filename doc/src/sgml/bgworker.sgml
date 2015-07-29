@@ -70,14 +70,39 @@ typedef struct BackgroundWorker
 
   <para>
    <structfield>bgw_flags</> is a bitwise-or'd bit mask indicating the
-   capabilities that the module wants.  Possible values are
-   <literal>BGWORKER_SHMEM_ACCESS</literal> (requesting shared memory access)
-   and <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> (requesting the
-   ability to establish a database connection, through which it can later run
-   transactions and queries). A background worker using
-   <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> to connect to
-   a database must also attach shared memory using
-   <literal>BGWORKER_SHMEM_ACCESS</literal>, or worker start-up will fail.
+   capabilities that the module wants.  Possible values are:
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>BGWORKER_SHMEM_ACCESS</literal></term>
+     <listitem>
+      <para>
+       <indexterm><primary>BGWORKER_SHMEM_ACCESS</primary></indexterm>
+       Requests shared memory access.  Workers without shared memory access
+       cannot access any of <productname>PostgreSQL's</productname> shared
+       data structures, such as heavyweight or lightweight locks, shared
+       buffers, or any custom data structures which the worker itself may
+       wish to create and use.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal></term>
+     <listitem>
+      <para>
+       <indexterm><primary>BGWORKER_BACKEND_DATABASE_CONNECTION</primary></indexterm>
+       Requests the ability to establish a database connection through which it
+       can later run transactions and queries.  A background worker using
+       <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> to connect to a
+       database must also attach shared memory using
+       <literal>BGWORKER_SHMEM_ACCESS</literal>, or worker start-up will fail.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+
   </para>
 
   <para>
@@ -106,34 +131,55 @@ typedef struct BackgroundWorker
 
   <para>
    <structfield>bgw_main</structfield> is a pointer to the function to run when
-   the process is started.  This function must take a single argument of type
-   <type>Datum</> and return <type>void</>.
-   <structfield>bgw_main_arg</structfield> will be passed to it as its only
-   argument.  Note that the global variable <literal>MyBgworkerEntry</literal>
-   points to a copy of the <structname>BackgroundWorker</structname> structure
-   passed at registration time. <structfield>bgw_main</structfield> may be
-   NULL; in that case, <structfield>bgw_library_name</structfield> and
-   <structfield>bgw_function_name</structfield> will be used to determine
-   the entry point.  This is useful for background workers launched after
-   postmaster startup, where the postmaster does not have the requisite
-   library loaded.
+   the process is started.  This field can only safely be used to launch
+   functions within the core server, because shared libraries may be loaded
+   at different starting addresses in different backend processes.  This will
+   happen on all platforms when the library is loaded using any mechanism
+   other than <xref linkend="guc-shared-preload-libraries">.  Even when that
+   mechanism is used, address space layout variations will still occur on
+   Windows, and when <literal>EXEC_BACKEND</> is used.  Therefore, most users
+   of this API should set this field to NULL.  If it is non-NULL, it takes
+   precedence over <structfield>bgw_library_name</> and
+   <structfield>bgw_function_name</>.
   </para>
 
   <para>
    <structfield>bgw_library_name</structfield> is the name of a library in
    which the initial entry point for the background worker should be sought.
-   It is ignored unless <structfield>bgw_main</structfield> is NULL.
-   But if <structfield>bgw_main</structfield> is NULL, then the named library
-   will be dynamically loaded by the worker process and
-   <structfield>bgw_function_name</structfield> will be used to identify
-   the function to be called.
+   The named library will be dynamically loaded by the worker process and
+   <structfield>bgw_function_name</structfield> will be used to identify the
+   function to be called.  If loading a function from the core code,
+   <structfield>bgw_main</> should be set instead.
   </para>
 
   <para>
    <structfield>bgw_function_name</structfield> is the name of a function in
    a dynamically loaded library which should be used as the initial entry point
-   for a new background worker.  It is ignored unless
-   <structfield>bgw_main</structfield> is NULL.
+   for a new background worker.
+  </para>
+
+  <para>
+   <structfield>bgw_main_arg</structfield> is the <type>Datum</> argument
+   to the background worker main function.  Regardless of whether that
+   function is specified via <structfield>bgw_main</> or via the combination
+   of <function>bgw_library_name</> and <function>bgw_function_name</>,
+   this main function should take a single argument of type <type>Datum</>
+   and return <type>void</>.  <structfield>bgw_main_arg</structfield> will be
+   passed as the argument.  In addition, the global variable
+   <literal>MyBgworkerEntry</literal>
+   points to a copy of the <structname>BackgroundWorker</structname> structure
+   passed at registration time; the worker may find it helpful to examine
+   this structure.
+  </para>
+
+  <para>
+   On Windows (and anywhere else where <literal>EXEC_BACKEND</literal> is
+   defined) or in dynamic background workers it is not safe to pass a
+   <type>Datum</> by reference, only by value. If an argument is required, it
+   is safest to pass an int32 or other small value and use that as an index
+   into an array allocated in shared memory. If a value like a <type>cstring</>
+   or <type>text</type> is passed then the pointer won't be valid from the
+   new background worker process.
   </para>
 
   <para>
