@@ -373,6 +373,13 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 		case EXPR_KIND_WHERE:
 			errkind = true;
 			break;
+		case EXPR_KIND_POLICY:
+			if (isAgg)
+				err = _("aggregate functions are not allowed in policy expressions");
+			else
+				err = _("grouping operations are not allowed in policy expressions");
+
+			break;
 		case EXPR_KIND_HAVING:
 			/* okay */
 			break;
@@ -769,6 +776,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			break;
 		case EXPR_KIND_WHERE:
 			errkind = true;
+			break;
+		case EXPR_KIND_POLICY:
+			err = _("window functions are not allowed in policy expressions");
 			break;
 		case EXPR_KIND_HAVING:
 			errkind = true;

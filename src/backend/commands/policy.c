@@ -534,12 +534,12 @@ CreatePolicy(CreatePolicyStmt *stmt)
 
 	qual = transformWhereClause(qual_pstate,
 								copyObject(stmt->qual),
-								EXPR_KIND_WHERE,
+								EXPR_KIND_POLICY,
 								"POLICY");
 
 	with_check_qual = transformWhereClause(with_check_pstate,
 										   copyObject(stmt->with_check),
-										   EXPR_KIND_WHERE,
+										   EXPR_KIND_POLICY,
 										   "POLICY");
 
 	/* Fix up collation information */
@@ -707,7 +707,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		addRTEtoQuery(qual_pstate, rte, false, true, true);
 
 		qual = transformWhereClause(qual_pstate, copyObject(stmt->qual),
-									EXPR_KIND_WHERE,
+									EXPR_KIND_POLICY,
 									"POLICY");
 
 		/* Fix up collation information */
@@ -730,7 +730,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 
 		with_check_qual = transformWhereClause(with_check_pstate,
 											   copyObject(stmt->with_check),
-											   EXPR_KIND_WHERE,
+											   EXPR_KIND_POLICY,
 											   "POLICY");
 
 		/* Fix up collation information */

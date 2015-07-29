@@ -1290,6 +1290,15 @@ CREATE RULE "_RETURN" AS ON SELECT TO t DO INSTEAD
 ROLLBACK;
 
 --
+-- Policy expression handling
+--
+BEGIN;
+SET row_security = FORCE;
+CREATE TABLE t (c) AS VALUES ('bar'::text);
+CREATE POLICY p ON t USING (max(c)); -- fails: aggregate functions are not allowed in policy expressions
+ROLLBACK;
+
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
