@@ -1536,9 +1536,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 								  standard_qp_callback, &qp_extra);
 
 		/*
-		 * Extract rowcount and width estimates for use below.
+		 * Extract rowcount and width estimates for use below.  If final_rel
+		 * has been proven dummy, its rows estimate will be zero; clamp it to
+		 * one to avoid zero-divide in subsequent calculations.
 		 */
-		path_rows = final_rel->rows;
+		path_rows = clamp_row_est(final_rel->rows);
 		path_width = final_rel->width;
 
 		/*
