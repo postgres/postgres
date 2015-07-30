@@ -1299,6 +1299,46 @@ CREATE POLICY p ON t USING (max(c)); -- fails: aggregate functions are not allow
 ROLLBACK;
 
 --
+-- Non-target relations are only subject to SELECT policies
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+CREATE TABLE r1 (a int);
+CREATE TABLE r2 (a int);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+GRANT ALL ON r1, r2 TO rls_regress_user1;
+
+CREATE POLICY p1 ON r1 USING (true);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY p1 ON r2 FOR SELECT USING (true);
+CREATE POLICY p2 ON r2 FOR INSERT WITH CHECK (false);
+CREATE POLICY p3 ON r2 FOR UPDATE USING (false);
+CREATE POLICY p4 ON r2 FOR DELETE USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+
+SET SESSION AUTHORIZATION rls_regress_user1;
+SELECT * FROM r1;
+SELECT * FROM r2;
+
+-- r2 is read-only
+INSERT INTO r2 VALUES (2); -- Not allowed
+UPDATE r2 SET a = 2 RETURNING *; -- Updates nothing
+DELETE FROM r2 RETURNING *; -- Deletes nothing
+
+-- r2 can be used as a non-target relation in DML
+INSERT INTO r1 SELECT a + 1 FROM r2 RETURNING *; -- OK
+UPDATE r1 SET a = r2.a + 2 FROM r2 WHERE r1.a = r2.a RETURNING *; -- OK
+DELETE FROM r1 USING r2 WHERE r1.a = r2.a + 2 RETURNING *; -- OK
+SELECT * FROM r1;
+SELECT * FROM r2;
+
+SET SESSION AUTHORIZATION rls_regress_user0;
+DROP TABLE r1;
+DROP TABLE r2;
+
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;

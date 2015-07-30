@@ -147,8 +147,18 @@ get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 		return;
 	}
 
-	/* Grab the built-in policies which should be applied to this relation. */
+	/*
+	 * RLS is enabled for this relation.
+	 *
+	 * Get the security policies that should be applied, based on the command
+	 * type.  Note that if this isn't the target relation, we actually want
+	 * the relation's SELECT policies, regardless of the query command type,
+	 * for example in UPDATE t1 ... FROM t2 we need to apply t1's UPDATE
+	 * policies and t2's SELECT policies.
+	 */
 	rel = heap_open(rte->relid, NoLock);
+	if (rt_index != root->resultRelation)
+		commandType = CMD_SELECT;
 
 	rowsec_policies = pull_row_security_policies(commandType, rel,
 												 user_id);
