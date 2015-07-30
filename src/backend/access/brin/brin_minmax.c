@@ -174,8 +174,14 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 		 * For IS NOT NULL, we can only skip ranges that are known to have
 		 * only nulls.
 		 */
-		Assert(key->sk_flags & SK_SEARCHNOTNULL);
-		PG_RETURN_BOOL(!column->bv_allnulls);
+		if (key->sk_flags & SK_SEARCHNOTNULL)
+			PG_RETURN_BOOL(!column->bv_allnulls);
+
+		/*
+		 * Neither IS NULL nor IS NOT NULL was used; assume all indexable
+		 * operators are strict and return false.
+		 */
+		PG_RETURN_BOOL(false);
 	}
 
 	/* if the range is all empty, it cannot possibly be consistent */
