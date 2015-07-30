@@ -111,15 +111,12 @@ sub installcheck
 
 sub check
 {
-	chdir $startdir;
-
 	InstallTemp();
 	chdir "${topdir}/src/test/regress";
-
 	my @args = (
-		"${tmp_installdir}/bin/pg_regress",
+		"../../../$Config/pg_regress/pg_regress",
 		"--dlpath=.",
-		"--bindir=${tmp_installdir}/bin",
+		"--bindir=",
 		"--schedule=${schedule}_schedule",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
@@ -139,11 +136,9 @@ sub ecpgcheck
 	exit $status if $status;
 	InstallTemp();
 	chdir "$topdir/src/interfaces/ecpg/test";
-
-	$ENV{PATH} = "${tmp_installdir}/bin;${tmp_installdir}/lib;$ENV{PATH}";
 	$schedule = "ecpg";
 	my @args = (
-		"${tmp_installdir}/bin/pg_regress_ecpg",
+		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
 		"--bindir=",
 		"--dbname=regress1,connectdb",
 		"--create-role=connectuser,connectdb",
@@ -159,14 +154,12 @@ sub ecpgcheck
 
 sub isolationcheck
 {
-	chdir $startdir;
-
-	InstallTemp();
-	chdir "${topdir}/src/test/isolation";
-
+	chdir "../isolation";
+	copy("../../../$Config/isolationtester/isolationtester.exe",
+		"../../../$Config/pg_isolation_regress");
 	my @args = (
-		"${tmp_installdir}/bin/pg_isolation_regress",
-		"--bindir=${tmp_installdir}/bin",
+		"../../../$Config/pg_isolation_regress/pg_isolation_regress",
+		"--bindir=../../../$Config/psql",
 		"--inputdir=.",
 		"--schedule=./isolation_schedule");
 	push(@args, $maxconn) if $maxconn;
@@ -180,8 +173,8 @@ sub tapcheck
 	InstallTemp();
 
 	my @args = ( "prove", "--verbose", "t/*.pl");
+	my $mstat = 0;
 
-	$ENV{PATH} = "$tmp_installdir/bin;$ENV{PATH}";
 	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
 	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
 
@@ -210,16 +203,14 @@ sub tapcheck
 		$ENV{TESTDIR} = "$dir";
 		system(@args);
 		my $status = $? >> 8;
-		exit $status if $status;
+		$mstat ||= $status;
 	}
+	exit $mstat if $mstat;
 }
 
 sub plcheck
 {
-	chdir $startdir;
-
-	InstallTemp();
-	chdir "${topdir}/src/pl";
+	chdir "../../pl";
 
 	foreach my $pl (glob("*"))
 	{
@@ -256,8 +247,8 @@ sub plcheck
 		  "============================================================\n";
 		print "Checking $lang\n";
 		my @args = (
-			"${tmp_installdir}/bin/pg_regress",
-			"--bindir=${tmp_installdir}/bin",
+			"../../../$Config/pg_regress/pg_regress",
+			"--bindir=../../../$Config/psql",
 			"--dbname=pl_regression", @lang_args, @tests);
 		system(@args);
 		my $status = $? >> 8;
@@ -272,7 +263,6 @@ sub subdircheck
 {
 	my $subdir = shift;
 	my $module = shift;
-	my $mstat  = 0;
 
 	if (   !-d "$module/sql"
 		|| !-d "$module/expected"
@@ -319,24 +309,19 @@ sub subdircheck
 	print "============================================================\n";
 	print "Checking $module\n";
 	my @args = (
-		"${tmp_installdir}/bin/pg_regress",
-		"--bindir=${tmp_installdir}/bin",
+		"$topdir/$Config/pg_regress/pg_regress",
+		"--bindir=${topdir}/${Config}/psql",
 		"--dbname=contrib_regression", @opts, @tests);
 	system(@args);
-	my $status = $? >> 8;
-	$mstat ||= $status;
 	chdir "..";
-
-	exit $mstat if $mstat;
 }
 
 sub contribcheck
 {
-	InstallTemp();
-	chdir "$topdir/contrib";
+	chdir "../../../contrib";
+	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
-
 		# these configuration-based exclusions must match Install.pm
 		next if ($module eq "uuid-ossp"     && !defined($config->{uuid}));
 		next if ($module eq "sslinfo"       && !defined($config->{openssl}));
@@ -347,26 +332,31 @@ sub contribcheck
 		next if ($module eq "sepgsql");
 
 		subdircheck("$topdir/contrib", $module);
+		my $status = $? >> 8;
+		$mstat ||= $status;
 	}
+	exit $mstat if $mstat;
 }
 
 sub modulescheck
 {
-	InstallTemp();
-	chdir "$topdir/src/test/modules";
+	chdir "../../../src/test/modules";
+	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
 		subdircheck("$topdir/src/test/modules", $module);
+		my $status = $? >> 8;
+		$mstat ||= $status;
 	}
+	exit $mstat if $mstat;
 }
-
 
 # Run "initdb", then reconfigure authentication.
 sub standard_initdb
 {
 	return (
-		system("${tmp_installdir}/bin/initdb", '-N') == 0 and system(
-			"${tmp_installdir}/bin/pg_regress", '--config-auth',
+		system('initdb', '-N') == 0 and system(
+			"$topdir/$Config/pg_regress/pg_regress", '--config-auth',
 			$ENV{PGDATA}) == 0);
 }
 
@@ -385,13 +375,14 @@ sub upgradecheck
 	$ENV{PGPORT} ||= 50432;
 	my $tmp_root = "$topdir/src/bin/pg_upgrade/tmp_check";
 	(mkdir $tmp_root || die $!) unless -d $tmp_root;
-
-	InstallTemp();
+	my $upg_tmp_install = "$tmp_root/install";    # unshared temp install
+	print "Setting up temp install\n\n";
+	Install($upg_tmp_install, "all", $config);
 
 	# Install does a chdir, so change back after that
 	chdir $cwd;
 	my ($bindir, $libdir, $oldsrc, $newsrc) =
-	  ("$tmp_installdir/bin", "$tmp_installdir/lib", $topdir, $topdir);
+	  ("$upg_tmp_install/bin", "$upg_tmp_install/lib", $topdir, $topdir);
 	$ENV{PATH} = "$bindir;$ENV{PATH}";
 	my $data = "$tmp_root/data";
 	$ENV{PGDATA} = "$data.old";
@@ -530,6 +521,7 @@ sub InstallTemp
 {
 	print "Setting up temp install\n\n";
 	Install("$tmp_installdir", "all", $config);
+	$ENV{PATH} = "$tmp_installdir/bin;$ENV{PATH}";
 }
 
 sub usage
