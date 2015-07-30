@@ -350,9 +350,18 @@ CREATE [ OR REPLACE ] FUNCTION
        effects.  It reveals no information about its arguments other than by
        its return value.  For example, a function which throws an error message
        for some argument values but not others, or which includes the argument
-       values in any error message, is not leakproof.   The query planner may
-       push leakproof functions (but not others) into views created with the
-       <literal>security_barrier</literal> option.  See
+       values in any error message, is not leakproof.  This affects how the
+       system executes queries against views created with the
+       <literal>security_barrier</literal> option or tables with row level
+       security enabled.  The system will enforce conditions from security
+       policies and security barrier views before any user-supplied conditions
+       from the query itself that contain non-leakproof functions, in order to
+       prevent the inadvertent exposure of data.  Functions and operators
+       marked as leakproof are assumed to be trustworthy, and may be executed
+       before conditions from security policies and security barrier views.
+       In addtion, functions which do not take arguments or which are not
+       passed any arguments from the security barrier view or table do not have
+       to be marked as leakproof to be executed before security conditions.  See
        <xref linkend="sql-createview"> and <xref linkend="rules-privileges">.
        This option can only be set by the superuser.
       </para>
