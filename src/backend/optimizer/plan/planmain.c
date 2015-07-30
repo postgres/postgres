@@ -356,7 +356,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * can be divided by the number of tuples.
 		 */
 		if (tuple_fraction >= 1.0)
-			tuple_fraction /= final_rel->rows;
+			tuple_fraction /= clamp_row_est(final_rel->rows);
 	}
 
 	/*

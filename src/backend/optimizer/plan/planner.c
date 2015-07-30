@@ -1295,11 +1295,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Extract rowcount and width estimates for possible use in grouping
 		 * decisions.  Beware here of the possibility that
-		 * cheapest_path->parent is NULL (ie, there is no FROM clause).
+		 * cheapest_path->parent is NULL (ie, there is no FROM clause).  Also,
+		 * if the final rel has been proven dummy, its rows estimate will be
+		 * zero; clamp it to one to avoid zero-divide in subsequent
+		 * calculations.
 		 */
 		if (cheapest_path->parent)
 		{
-			path_rows = cheapest_path->parent->rows;
+			path_rows = clamp_row_est(cheapest_path->parent->rows);
 			path_width = cheapest_path->parent->width;
 		}
 		else
