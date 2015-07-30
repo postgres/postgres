@@ -542,6 +542,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 			nbatch <<= 1;
 	}
 
+	Assert(nbuckets > 0);
+	Assert(nbatch > 0);
+
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
 }
