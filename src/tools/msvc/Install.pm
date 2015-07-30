@@ -98,6 +98,9 @@ sub Install
 		{   wanted => sub {
 				/^.*\.sample\z/s
 				  && push(@$sample_files, $File::Find::name);
+
+				# Don't find files of in-tree temporary installations.
+				$_ eq 'share' and $File::Find::prune = 1;
 			  }
 		},
 		@top_dir);
@@ -152,6 +155,9 @@ sub Install
 			{   wanted => sub {
 					/^(.*--.*\.sql|.*\.control)\z/s
 					  && push(@$pl_extension_files, $File::Find::name);
+
+					# Don't find files of in-tree temporary installations.
+					$_ eq 'share' and $File::Find::prune = 1;
 				  }
 			},
 			@pldirs);
@@ -199,8 +205,6 @@ sub CopySetOfFiles
 	print "Copying $what" if $what;
 	foreach (@$flist)
 	{
-		next if /regress/;      # Skip temporary install in regression subdir
-		next if /ecpg.test/;    # Skip temporary install in regression subdir
 		my $tgt = $target . basename($_);
 		print ".";
 		lcopy($_, $tgt) || croak "Could not copy $_: $!\n";
