@@ -7799,6 +7799,7 @@ if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then :
    # then
 
 
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -7808,7 +7809,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ax_pthread_ok=no
 
 # We used to check for pthread.h first, but this fails if pthread.h
-# requires special compiler flags (e.g. on True64 or Sequent).
+# requires special compiler flags (e.g. on Tru64 or Sequent).
 # It gets checked for in the link test anyway.
 
 # First of all, check if the user has set any of the PTHREAD_LIBS,
@@ -7819,8 +7820,8 @@ if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
         CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
         save_LIBS="$LIBS"
         LIBS="$PTHREAD_LIBS $LIBS"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS" >&5
-$as_echo_n "checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS... " >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_join using $CC $PTHREAD_CFLAGS $PTHREAD_LIBS" >&5
+$as_echo_n "checking for pthread_join using $CC $PTHREAD_CFLAGS $PTHREAD_LIBS... " >&6; }
         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -7864,7 +7865,7 @@ fi
 # which indicates that we try without any flags at all, and "pthread-config"
 # which is a program returning the flags for the Pth emulation library.
 
-ax_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mthreads pthread --thread-safe -mt pthread-config"
+ax_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mt -mthreads pthread --thread-safe pthread-config"
 
 # The ordering *is* (sometimes) important.  Some notes on the
 # individual items follow:
@@ -7875,46 +7876,80 @@ ax_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mt
 # -Kthread: Sequent (threads in libc, but -Kthread needed for pthread.h)
 # -kthread: FreeBSD kernel threads (preferred to -pthread since SMP-able)
 # lthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
-# -pthread: Linux/gcc (kernel threads), BSD/gcc (userland threads)
+# -pthread: Linux/gcc (kernel threads), BSD/gcc (userland threads), Tru64
 # -pthreads: Solaris/gcc
-# -mthreads: Mingw32/gcc, Lynx/gcc
 # -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
-#      doesn't hurt to check since this sometimes defines pthreads too;
-#      also defines -D_REENTRANT)
-#      ... -mt is also the pthreads flag for HP/aCC
+#      doesn't hurt to check since this sometimes defines pthreads and
+#      -D_REENTRANT too), HP C (must be checked before -lpthread, which
+#      is present but should not be used directly)
+# -mthreads: Mingw32/gcc, Lynx/gcc
 # pthread: Linux, etcetera
 # --thread-safe: KAI C++
 # pthread-config: use pthread-config program (for GNU Pth library)
 
-case ${host_os} in
+case $host_os in
+
+        hpux*)
+
+        # From the cc(1) man page: "[-mt] Sets various -D flags to enable
+        # multi-threading and also sets -lpthread."
+
+        ax_pthread_flags="-mt -pthread pthread $ax_pthread_flags"
+        ;;
+
+        openedition*)
+
+        # IBM z/OS requires a feature-test macro to be defined in order to
+        # enable POSIX threads at all, so give the user a hint if this is
+        # not set. (We don't define these ourselves, as they can affect
+        # other portions of the system API in unpredictable ways.)
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#            if !defined(_OPEN_THREADS) && !defined(_UNIX03_THREADS)
+             AX_PTHREAD_ZOS_MISSING
+#            endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "AX_PTHREAD_ZOS_MISSING" >/dev/null 2>&1; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: IBM z/OS requires -D_OPEN_THREADS or -D_UNIX03_THREADS to enable pthreads support." >&5
+$as_echo "$as_me: WARNING: IBM z/OS requires -D_OPEN_THREADS or -D_UNIX03_THREADS to enable pthreads support." >&2;}
+fi
+rm -f conftest*
+
+        ;;
+
         solaris*)
 
-        # On Solaris (at least, for some versions), libc contains stubbed
+        # Newer versions of Solaris require the "-mt -lpthread" pair, and we
+        # check that first.  On some older versions, libc contains stubbed
         # (non-functional) versions of the pthreads routines, so link-based
         # tests will erroneously succeed.  (We need to link with -pthreads/-mt/
         # -lpthread.)  (The stubs are missing pthread_cleanup_push, or rather
         # a function called by this macro, so we could check for that, but
-        # who knows whether they'll stub that too in a future libc.)  So,
-        # we'll just look for -pthreads and -lpthread first:
+        # who knows whether they'll stub that too in a future libc.)  So
+        # we'll look for -pthreads and -lpthread shortly thereafter.
 
-        ax_pthread_flags="-pthreads pthread -mt -pthread $ax_pthread_flags"
-        ;;
-
-        darwin*)
-        ax_pthread_flags="-pthread $ax_pthread_flags"
+        ax_pthread_flags="-mt,pthread -pthreads -pthread pthread $ax_pthread_flags"
         ;;
 esac
 
-# Clang doesn't consider unrecognized options an error unless we specify
-# -Werror. We throw in some extra Clang-specific options to ensure that
-# this doesn't happen for GCC, which also accepts -Werror.
+# Older versions of Clang only give a warning instead of an error for an
+# unrecognized option, unless we specify -Werror. (We throw in some extra
+# Clang warning flags for good measure.)
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler needs -Werror to reject unknown flags" >&5
-$as_echo_n "checking if compiler needs -Werror to reject unknown flags... " >&6; }
-save_CFLAGS="$CFLAGS"
-ax_pthread_extra_flags="-Werror"
-CFLAGS="$CFLAGS $ax_pthread_extra_flags -Wunknown-warning-option -Wsizeof-array-argument"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler needs certain flags to reject unknown flags" >&5
+$as_echo_n "checking if compiler needs certain flags to reject unknown flags... " >&6; }
+if ${ax_cv_PTHREAD_REJECT_UNKNOWN+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ax_cv_PTHREAD_REJECT_UNKNOWN=unknown
+     save_CFLAGS="$CFLAGS"
+     ax_pthread_extra_flags="-Wunknown-warning-option -Wunused-command-line-argument"
+     CFLAGS="$CFLAGS $ax_pthread_extra_flags -Wfoobaz -foobaz"
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 int foo(void);
 int
@@ -7926,15 +7961,20 @@ foo()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+  ax_cv_PTHREAD_REJECT_UNKNOWN="-Werror $ax_pthread_extra_flags"
 else
-  ax_pthread_extra_flags=
-                   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+  ax_cv_PTHREAD_REJECT_UNKNOWN=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-CFLAGS="$save_CFLAGS"
+     CFLAGS="$save_CFLAGS"
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_PTHREAD_REJECT_UNKNOWN" >&5
+$as_echo "$ax_cv_PTHREAD_REJECT_UNKNOWN" >&6; }
+ax_pthread_extra_flags=
+if test "x$ax_cv_PTHREAD_REJECT_UNKNOWN" != "xno"; then :
+  ax_pthread_extra_flags="$ax_cv_PTHREAD_REJECT_UNKNOWN"
+fi
 
 if test x"$ax_pthread_ok" = xno; then
 for flag in $ax_pthread_flags; do
@@ -7943,6 +7983,13 @@ for flag in $ax_pthread_flags; do
                 none)
                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work without any flags" >&5
 $as_echo_n "checking whether pthreads work without any flags... " >&6; }
+                ;;
+
+                -mt,pthread)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work with -mt -lpthread" >&5
+$as_echo_n "checking whether pthreads work with -mt -lpthread... " >&6; }
+                PTHREAD_CFLAGS="-mt"
+                PTHREAD_LIBS="-lpthread"
                 ;;
 
                 -*)
@@ -8064,9 +8111,12 @@ if test "x$ax_pthread_ok" = xyes; then
         # Detect AIX lossage: JOINABLE attribute is called UNDETACHED.
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for joinable pthread attribute" >&5
 $as_echo_n "checking for joinable pthread attribute... " >&6; }
-        attr_name=unknown
-        for attr in PTHREAD_CREATE_JOINABLE PTHREAD_CREATE_UNDETACHED; do
-            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+if ${ax_cv_PTHREAD_JOINABLE_ATTR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ax_cv_PTHREAD_JOINABLE_ATTR=unknown
+             for attr in PTHREAD_CREATE_JOINABLE PTHREAD_CREATE_UNDETACHED; do
+                 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <pthread.h>
 int
@@ -8078,49 +8128,69 @@ int attr = $attr; return attr /* ; */
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  attr_name=$attr; break
+  ax_cv_PTHREAD_JOINABLE_ATTR=$attr; break
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        done
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $attr_name" >&5
-$as_echo "$attr_name" >&6; }
-        if test "$attr_name" != PTHREAD_CREATE_JOINABLE; then
+             done
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_PTHREAD_JOINABLE_ATTR" >&5
+$as_echo "$ax_cv_PTHREAD_JOINABLE_ATTR" >&6; }
+        if test "$ax_cv_PTHREAD_JOINABLE_ATTR" != unknown && \
+               test "$ax_cv_PTHREAD_JOINABLE_ATTR" != PTHREAD_CREATE_JOINABLE; then :
 
 cat >>confdefs.h <<_ACEOF
-#define PTHREAD_CREATE_JOINABLE $attr_name
+#define PTHREAD_CREATE_JOINABLE $ax_cv_PTHREAD_JOINABLE_ATTR
 _ACEOF
 
-        fi
+fi
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking if more special flags are required for pthreads" >&5
 $as_echo_n "checking if more special flags are required for pthreads... " >&6; }
-        flag=no
-        case ${host_os} in
-            aix* | freebsd* | darwin*) flag="-D_THREAD_SAFE";;
-            osf* | hpux*) flag="-D_REENTRANT";;
-            solaris*)
-            if test "$GCC" = "yes"; then
-                flag="-D_REENTRANT"
-            else
-                # TODO: What about Clang on Solaris?
-                flag="-mt -D_REENTRANT"
-            fi
-            ;;
-        esac
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $flag" >&5
-$as_echo "$flag" >&6; }
-        if test "x$flag" != xno; then
-            PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
-        fi
+if ${ax_cv_PTHREAD_SPECIAL_FLAGS+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ax_cv_PTHREAD_SPECIAL_FLAGS=no
+             ax_pthread_special_flags_added=no
+             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#                 if !defined(_REENTRANT) && !defined(_THREAD_SAFE)
+                  AX_PTHREAD_NEED_SPECIAL_FLAG
+#                 endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "AX_PTHREAD_NEED_SPECIAL_FLAG" >/dev/null 2>&1; then :
+  case $host_os in
+                  aix* | freebsd*)
+                  ax_cv_PTHREAD_SPECIAL_FLAGS="-D_THREAD_SAFE"
+                  ;;
+                  darwin* | hpux* | osf* | solaris*)
+                  ax_cv_PTHREAD_SPECIAL_FLAGS="-D_REENTRANT"
+                  ;;
+                  esac
+
+fi
+rm -f conftest*
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_PTHREAD_SPECIAL_FLAGS" >&5
+$as_echo "$ax_cv_PTHREAD_SPECIAL_FLAGS" >&6; }
+        if test "x$ax_cv_PTHREAD_SPECIAL_FLAGS" != "xno" && \
+               test "x$ax_pthread_special_flags_added" != "xyes"; then :
+  PTHREAD_CFLAGS="$ax_cv_PTHREAD_SPECIAL_FLAGS $PTHREAD_CFLAGS"
+               ax_pthread_special_flags_added=yes
+fi
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PTHREAD_PRIO_INHERIT" >&5
 $as_echo_n "checking for PTHREAD_PRIO_INHERIT... " >&6; }
 if ${ax_cv_PTHREAD_PRIO_INHERIT+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-
-                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <pthread.h>
 int
