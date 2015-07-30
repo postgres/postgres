@@ -4337,8 +4337,8 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
  *
  * vardata: results of examine_variable
  *
- * NB: be careful to produce an integral result, since callers may compare
- * the result to exact integer counts.
+ * NB: be careful to produce a positive integral result, since callers may
+ * compare the result to exact integer counts, or might divide by it.
  */
 double
 get_variable_numdistinct(VariableStatData *vardata)
@@ -4412,7 +4412,7 @@ get_variable_numdistinct(VariableStatData *vardata)
 	 * If we had an absolute estimate, use that.
 	 */
 	if (stadistinct > 0.0)
-		return stadistinct;
+		return clamp_row_est(stadistinct);
 
 	/*
 	 * Otherwise we need to get the relation size; punt if not available.
@@ -4427,14 +4427,14 @@ get_variable_numdistinct(VariableStatData *vardata)
 	 * If we had a relative estimate, use that.
 	 */
 	if (stadistinct < 0.0)
-		return floor((-stadistinct * ntuples) + 0.5);
+		return clamp_row_est(-stadistinct * ntuples);
 
 	/*
 	 * With no data, estimate ndistinct = ntuples if the table is small, else
 	 * use default.
 	 */
 	if (ntuples < DEFAULT_NUM_DISTINCT)
-		return ntuples;
+		return clamp_row_est(ntuples);
 
 	return DEFAULT_NUM_DISTINCT;
 }
