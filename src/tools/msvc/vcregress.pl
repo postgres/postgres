@@ -52,7 +52,7 @@ copy("$Config/autoinc/autoinc.dll",               "src/test/regress");
 copy("$Config/regress/regress.dll",               "src/test/regress");
 copy("$Config/dummy_seclabel/dummy_seclabel.dll", "src/test/regress");
 
-$ENV{PATH} = "$topdir/$Config/libpq;$topdir/$Config/libpq;$ENV{PATH}";
+$ENV{PATH} = "$topdir/$Config/libpq;$ENV{PATH}";
 
 my $schedule = shift;
 unless ($schedule)
