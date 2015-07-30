@@ -1942,6 +1942,16 @@ alter_table_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
 					n->def = $2;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ADD IF NOT EXISTS <coldef> */
+			| ADD_P IF_P NOT EXISTS columnDef
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AddColumn;
+					n->def = $5;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ADD COLUMN <coldef> */
@@ -1950,6 +1960,16 @@ alter_table_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
 					n->def = $3;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ADD COLUMN IF NOT EXISTS <coldef> */
+			| ADD_P COLUMN IF_P NOT EXISTS columnDef
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AddColumn;
+					n->def = $6;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */

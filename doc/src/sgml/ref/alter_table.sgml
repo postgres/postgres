@@ -36,7 +36,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    ADD [ COLUMN ] [ IF NOT EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
@@ -96,11 +96,13 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
 
   <variablelist>
    <varlistentry>
-    <term><literal>ADD COLUMN</literal></term>
+    <term><literal>ADD COLUMN [ IF NOT EXISTS ]</literal></term>
     <listitem>
      <para>
       This form adds a new column to the table, using the same syntax as
-      <xref linkend="SQL-CREATETABLE">.
+      <xref linkend="SQL-CREATETABLE">. If <literal>IF NOT EXISTS</literal>
+      is specified and a column already exists with this name,
+      no error is thrown.
      </para>
     </listitem>
    </varlistentry>
