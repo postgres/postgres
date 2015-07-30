@@ -1135,11 +1135,12 @@ doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile, AggVa
 	 * first time it's needed, and reuse the same value throughout this
 	 * function after that. This also ensures that e.g. the calculated latency
 	 * reported in the log file and in the totals are the same. Zero means
-	 * "not set yet".
+	 * "not set yet". Reset "now" when we step to the next command with "goto
+	 * top", though.
 	 */
+top:
 	INSTR_TIME_SET_ZERO(now);
 
-top:
 	commands = sql_files[st->use_file];
 
 	/*
