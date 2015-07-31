@@ -40,9 +40,24 @@ VERSION = @PACKAGE_VERSION@
 MAJORVERSION = @PG_MAJORVERSION@
 VERSION_NUM = @PG_VERSION_NUM@
 
-# Support for VPATH builds
-# (PGXS VPATH support is handled separately in pgxs.mk)
-ifndef PGXS
+# Set top_srcdir, srcdir, and VPATH.
+ifdef PGXS
+top_srcdir = $(top_builddir)
+
+# If VPATH is set or Makefile is not in current directory we are building
+# the extension with VPATH so we set the variable here.
+ifdef VPATH
+srcdir = $(VPATH)
+else
+ifeq ($(CURDIR),$(dir $(firstword $(MAKEFILE_LIST))))
+srcdir = .
+VPATH =
+else
+srcdir = $(dir $(firstword $(MAKEFILE_LIST)))
+VPATH = $(srcdir)
+endif
+endif
+else # not PGXS
 vpath_build = @vpath_build@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
