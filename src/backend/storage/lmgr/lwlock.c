@@ -582,29 +582,33 @@ LWLockInitialize(LWLock *lock, int tranche_id)
 static bool
 LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 {
+	uint32		old_state;
+
 	AssertArg(mode == LW_EXCLUSIVE || mode == LW_SHARED);
+
+	/*
+	 * Read once outside the loop, later iterations will get the newer value
+	 * via compare & exchange.
+	 */
+	old_state = pg_atomic_read_u32(&lock->state);
 
 	/* loop until we've determined whether we could acquire the lock or not */
 	while (true)
 	{
-		uint32		old_state;
-		uint32		expected_state;
 		uint32		desired_state;
 		bool		lock_free;
 
-		old_state = pg_atomic_read_u32(&lock->state);
-		expected_state = old_state;
-		desired_state = expected_state;
+		desired_state = old_state;
 
 		if (mode == LW_EXCLUSIVE)
 		{
-			lock_free = (expected_state & LW_LOCK_MASK) == 0;
+			lock_free = (old_state & LW_LOCK_MASK) == 0;
 			if (lock_free)
 				desired_state += LW_VAL_EXCLUSIVE;
 		}
 		else
 		{
-			lock_free = (expected_state & LW_VAL_EXCLUSIVE) == 0;
+			lock_free = (old_state & LW_VAL_EXCLUSIVE) == 0;
 			if (lock_free)
 				desired_state += LW_VAL_SHARED;
 		}
@@ -620,7 +624,7 @@ LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 		 * Retry if the value changed since we last looked at it.
 		 */
 		if (pg_atomic_compare_exchange_u32(&lock->state,
-										   &expected_state, desired_state))
+										   &old_state, desired_state))
 		{
 			if (lock_free)
 			{
