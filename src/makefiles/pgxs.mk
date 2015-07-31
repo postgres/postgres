@@ -61,21 +61,6 @@ ifdef PGXS
 top_builddir := $(dir $(PGXS))../..
 include $(top_builddir)/src/Makefile.global
 
-top_srcdir = $(top_builddir)
-# If VPATH is set or Makefile is not in current directory we are building
-# the extension with VPATH so we set the variable here.
-ifdef VPATH
-srcdir = $(VPATH)
-else
-ifeq ($(CURDIR),$(dir $(firstword $(MAKEFILE_LIST))))
-srcdir = .
-VPATH =
-else
-srcdir = $(dir $(firstword $(MAKEFILE_LIST)))
-VPATH = $(srcdir)
-endif
-endif
-
 # These might be set in Makefile.global, but if they were not found
 # during the build of PostgreSQL, supply default values so that users
 # of pgxs can use the variables.
