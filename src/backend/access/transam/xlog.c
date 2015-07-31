@@ -1408,9 +1408,7 @@ WALInsertLockAcquire(void)
 	 * The insertingAt value is initially set to 0, as we don't know our
 	 * insert location yet.
 	 */
-	immed = LWLockAcquireWithVar(&WALInsertLocks[MyLockNo].l.lock,
-								 &WALInsertLocks[MyLockNo].l.insertingAt,
-								 0);
+	immed = LWLockAcquire(&WALInsertLocks[MyLockNo].l.lock, LW_EXCLUSIVE);
 	if (!immed)
 	{
 		/*
@@ -1435,26 +1433,28 @@ WALInsertLockAcquireExclusive(void)
 	int			i;
 
 	/*
-	 * When holding all the locks, we only update the last lock's insertingAt
-	 * indicator.  The others are set to 0xFFFFFFFFFFFFFFFF, which is higher
-	 * than any real XLogRecPtr value, to make sure that no-one blocks waiting
-	 * on those.
+	 * When holding all the locks, all but the last lock's insertingAt
+	 * indicator is set to 0xFFFFFFFFFFFFFFFF, which is higher than any real
+	 * XLogRecPtr value, to make sure that no-one blocks waiting on those.
 	 */
 	for (i = 0; i < NUM_XLOGINSERT_LOCKS - 1; i++)
 	{
-		LWLockAcquireWithVar(&WALInsertLocks[i].l.lock,
-							 &WALInsertLocks[i].l.insertingAt,
-							 PG_UINT64_MAX);
+		LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
+		LWLockUpdateVar(&WALInsertLocks[i].l.lock,
+						&WALInsertLocks[i].l.insertingAt,
+						PG_UINT64_MAX);
 	}
-	LWLockAcquireWithVar(&WALInsertLocks[i].l.lock,
-						 &WALInsertLocks[i].l.insertingAt,
-						 0);
+	/* Variable value reset to 0 at release */
+	LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
 
 	holdingAllLocks = true;
 }
 
 /*
  * Release our insertion lock (or locks, if we're holding them all).
+ *
+ * NB: Reset all variables to 0, so they cause LWLockWaitForVar to block the
+ * next time the lock is acquired.
  */
 static void
 WALInsertLockRelease(void)
@@ -1464,13 +1464,17 @@ WALInsertLockRelease(void)
 		int			i;
 
 		for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
-			LWLockRelease(&WALInsertLocks[i].l.lock);
+			LWLockReleaseClearVar(&WALInsertLocks[i].l.lock,
+								  &WALInsertLocks[i].l.insertingAt,
+								  0);
 
 		holdingAllLocks = false;
 	}
 	else
 	{
-		LWLockRelease(&WALInsertLocks[MyLockNo].l.lock);
+		LWLockReleaseClearVar(&WALInsertLocks[MyLockNo].l.lock,
+							  &WALInsertLocks[MyLockNo].l.insertingAt,
+							  0);
 	}
 }
 
