@@ -536,7 +536,9 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			if (!bms_is_subset(ljinfo->lateral_lhs, rel1->relids))
 				return false;	/* rel1 can't compute the required parameter */
 			if (match_sjinfo &&
-				(reversed || match_sjinfo->jointype == JOIN_FULL))
+				(reversed ||
+				 unique_ified ||
+				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
 		}
 		if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
@@ -549,7 +551,9 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			if (!bms_is_subset(ljinfo->lateral_lhs, rel2->relids))
 				return false;	/* rel2 can't compute the required parameter */
 			if (match_sjinfo &&
-				(!reversed || match_sjinfo->jointype == JOIN_FULL))
+				(!reversed ||
+				 unique_ified ||
+				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
 		}
 	}
