@@ -5,6 +5,8 @@ MODULES = isn
 EXTENSION = isn
 DATA = isn--1.0.sql isn--unpackaged--1.0.sql
 
+REGRESS = isn
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

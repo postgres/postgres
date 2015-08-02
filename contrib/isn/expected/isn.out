@@ -1,0 +1,222 @@
+--
+-- Test ISN extension
+--
+CREATE EXTENSION isn;
+--
+-- test valid conversions
+--
+SELECT '9780123456786'::EAN13, -- old book
+       '9790123456785'::EAN13, -- music
+       '9791234567896'::EAN13, -- new book
+       '9771234567898'::EAN13, -- serial
+       '0123456789012'::EAN13, -- upc
+       '1234567890128'::EAN13;
+       ean13       |       ean13       |      ean13      |       ean13       |      ean13      |      ean13      
+-------------------+-------------------+-----------------+-------------------+-----------------+-----------------
+ 978-0-12-345678-6 | 979-0-1234-5678-5 | 979-123456789-6 | 977-1234-567-89-8 | 012-345678901-2 | 123-456789012-8
+(1 row)
+
+SELECT '9780123456786'::ISBN,
+       '123456789X'::ISBN,
+       '9780123456786'::ISBN13::ISBN,
+       '9780123456786'::EAN13::ISBN;
+     isbn      |     isbn      |     isbn      |     isbn      
+---------------+---------------+---------------+---------------
+ 0-12-345678-9 | 1-234-56789-X | 0-12-345678-9 | 0-12-345678-9
+(1 row)
+
+SELECT -- new books, shown as ISBN13 even for ISBN...
+       '9791234567896'::ISBN,
+       '9791234567896'::ISBN13::ISBN,
+       '9791234567896'::EAN13::ISBN;
+      isbn       |      isbn       |      isbn       
+-----------------+-----------------+-----------------
+ 979-123456789-6 | 979-123456789-6 | 979-123456789-6
+(1 row)
+
+SELECT '9780123456786'::ISBN13,
+       '123456789X'::ISBN13,
+       '9791234567896'::ISBN13,
+       '9791234567896'::EAN13::ISBN13;
+      isbn13       |      isbn13       |     isbn13      |     isbn13      
+-------------------+-------------------+-----------------+-----------------
+ 978-0-12-345678-6 | 978-1-234-56789-7 | 979-123456789-6 | 979-123456789-6
+(1 row)
+
+SELECT '9790123456785'::ISMN,
+       '9790123456785'::EAN13::ISMN,
+       'M123456785'::ISMN,
+       'M-1234-5678-5'::ISMN;
+     ismn      |     ismn      |     ismn      |     ismn      
+---------------+---------------+---------------+---------------
+ M-1234-5678-5 | M-1234-5678-5 | M-1234-5678-5 | M-1234-5678-5
+(1 row)
+
+SELECT '9790123456785'::ISMN13,
+       'M123456785'::ISMN13,
+       'M-1234-5678-5'::ISMN13;
+      ismn13       |      ismn13       |      ismn13       
+-------------------+-------------------+-------------------
+ 979-0-1234-5678-5 | 979-0-1234-5678-5 | 979-0-1234-5678-5
+(1 row)
+
+SELECT '9771234567003'::ISSN,
+       '12345679'::ISSN;
+   issn    |   issn    
+-----------+-----------
+ 1234-5679 | 1234-5679
+(1 row)
+
+SELECT '9771234567003'::ISSN13,
+       '12345679'::ISSN13,
+       '9771234567898'::ISSN13,
+       '9771234567898'::EAN13::ISSN13;
+      issn13       |      issn13       |      issn13       |      issn13       
+-------------------+-------------------+-------------------+-------------------
+ 977-1234-567-00-3 | 977-1234-567-00-3 | 977-1234-567-89-8 | 977-1234-567-89-8
+(1 row)
+
+SELECT '0123456789012'::UPC,
+       '0123456789012'::EAN13::UPC;
+     upc      |     upc      
+--------------+--------------
+ 123456789012 | 123456789012
+(1 row)
+
+--
+-- test invalid checksums
+--
+SELECT '1234567890'::ISBN;
+ERROR:  invalid check digit for ISBN number: "1234567890", should be X
+LINE 1: SELECT '1234567890'::ISBN;
+               ^
+SELECT 'M123456780'::ISMN;
+ERROR:  invalid check digit for ISMN number: "M123456780", should be 5
+LINE 1: SELECT 'M123456780'::ISMN;
+               ^
+SELECT '12345670'::ISSN;
+ERROR:  invalid check digit for ISSN number: "12345670", should be 9
+LINE 1: SELECT '12345670'::ISSN;
+               ^
+SELECT '9780123456780'::ISBN;
+ERROR:  invalid check digit for ISBN number: "9780123456780", should be 6
+LINE 1: SELECT '9780123456780'::ISBN;
+               ^
+SELECT '9791234567890'::ISBN13;
+ERROR:  invalid check digit for ISBN number: "9791234567890", should be 6
+LINE 1: SELECT '9791234567890'::ISBN13;
+               ^
+SELECT '0123456789010'::UPC;
+ERROR:  invalid check digit for UPC number: "0123456789010", should be 2
+LINE 1: SELECT '0123456789010'::UPC;
+               ^
+SELECT '1234567890120'::EAN13;
+ERROR:  invalid check digit for EAN13 number: "1234567890120", should be 8
+LINE 1: SELECT '1234567890120'::EAN13;
+               ^
+--
+-- test invalid conversions
+--
+SELECT '9790123456785'::ISBN; -- not a book
+ERROR:  cannot cast ISMN to ISBN for number: "9790123456785"
+LINE 1: SELECT '9790123456785'::ISBN;
+               ^
+SELECT '9771234567898'::ISBN; -- not a book
+ERROR:  cannot cast ISSN to ISBN for number: "9771234567898"
+LINE 1: SELECT '9771234567898'::ISBN;
+               ^
+SELECT '0123456789012'::ISBN; -- not a book
+ERROR:  cannot cast UPC to ISBN for number: "0123456789012"
+LINE 1: SELECT '0123456789012'::ISBN;
+               ^
+SELECT '9790123456785'::ISBN13; -- not a book
+ERROR:  cannot cast ISMN to ISBN for number: "9790123456785"
+LINE 1: SELECT '9790123456785'::ISBN13;
+               ^
+SELECT '9771234567898'::ISBN13; -- not a book
+ERROR:  cannot cast ISSN to ISBN for number: "9771234567898"
+LINE 1: SELECT '9771234567898'::ISBN13;
+               ^
+SELECT '0123456789012'::ISBN13; -- not a book
+ERROR:  cannot cast UPC to ISBN for number: "0123456789012"
+LINE 1: SELECT '0123456789012'::ISBN13;
+               ^
+SELECT '9780123456786'::ISMN; -- not music
+ERROR:  cannot cast ISBN to ISMN for number: "9780123456786"
+LINE 1: SELECT '9780123456786'::ISMN;
+               ^
+SELECT '9771234567898'::ISMN; -- not music
+ERROR:  cannot cast ISSN to ISMN for number: "9771234567898"
+LINE 1: SELECT '9771234567898'::ISMN;
+               ^
+SELECT '9791234567896'::ISMN; -- not music
+ERROR:  cannot cast ISBN to ISMN for number: "9791234567896"
+LINE 1: SELECT '9791234567896'::ISMN;
+               ^
+SELECT '0123456789012'::ISMN; -- not music
+ERROR:  cannot cast UPC to ISMN for number: "0123456789012"
+LINE 1: SELECT '0123456789012'::ISMN;
+               ^
+SELECT '9780123456786'::ISSN; -- not serial
+ERROR:  cannot cast ISBN to ISSN for number: "9780123456786"
+LINE 1: SELECT '9780123456786'::ISSN;
+               ^
+SELECT '9790123456785'::ISSN; -- not serial
+ERROR:  cannot cast ISMN to ISSN for number: "9790123456785"
+LINE 1: SELECT '9790123456785'::ISSN;
+               ^
+SELECT '9791234567896'::ISSN; -- not serial
+ERROR:  cannot cast ISBN to ISSN for number: "9791234567896"
+LINE 1: SELECT '9791234567896'::ISSN;
+               ^
+SELECT '0123456789012'::ISSN; -- not serial
+ERROR:  cannot cast UPC to ISSN for number: "0123456789012"
+LINE 1: SELECT '0123456789012'::ISSN;
+               ^
+SELECT '9780123456786'::UPC; -- not a product
+ERROR:  cannot cast ISBN to UPC for number: "9780123456786"
+LINE 1: SELECT '9780123456786'::UPC;
+               ^
+SELECT '9771234567898'::UPC; -- not a product
+ERROR:  cannot cast ISSN to UPC for number: "9771234567898"
+LINE 1: SELECT '9771234567898'::UPC;
+               ^
+SELECT '9790123456785'::UPC; -- not a product
+ERROR:  cannot cast ISMN to UPC for number: "9790123456785"
+LINE 1: SELECT '9790123456785'::UPC;
+               ^
+SELECT '9791234567896'::UPC; -- not a product
+ERROR:  cannot cast ISBN to UPC for number: "9791234567896"
+LINE 1: SELECT '9791234567896'::UPC;
+               ^
+SELECT 'postgresql...'::EAN13;
+ERROR:  invalid input syntax for EAN13 number: "postgresql..."
+LINE 1: SELECT 'postgresql...'::EAN13;
+               ^
+SELECT 'postgresql...'::ISBN;
+ERROR:  invalid input syntax for ISBN number: "postgresql..."
+LINE 1: SELECT 'postgresql...'::ISBN;
+               ^
+SELECT 9780123456786::EAN13;
+ERROR:  cannot cast type bigint to ean13
+LINE 1: SELECT 9780123456786::EAN13;
+                            ^
+SELECT 9780123456786::ISBN;
+ERROR:  cannot cast type bigint to isbn
+LINE 1: SELECT 9780123456786::ISBN;
+                            ^
+--
+-- test some comparisons, must yield true
+--
+SELECT '12345679'::ISSN = '9771234567003'::EAN13 AS "ok",
+       'M-1234-5678-5'::ISMN = '9790123456785'::EAN13 AS "ok",
+       '9791234567896'::EAN13 != '123456789X'::ISBN AS "nope";
+ ok | ok | nope 
+----+----+------
+ t  | t  | t
+(1 row)
+
+--
+-- cleanup
+--
+DROP EXTENSION isn;
