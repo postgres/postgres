@@ -443,16 +443,23 @@ ean2ISBN(char *isn)
 	char	   *aux;
 	unsigned	check;
 
-	/* the number should come in this format: 978-0-000-00000-0 */
-	/* Strip the first part and calculate the new check digit */
-	hyphenate(isn, isn + 4, NULL, NULL);
-	check = weight_checkdig(isn, 10);
-	aux = strchr(isn, '\0');
-	while (!isdigit((unsigned char) *--aux));
-	if (check == 10)
-		*aux = 'X';
-	else
-		*aux = check + '0';
+	/*
+	 * The number should come in this format: 978-0-000-00000-0
+	 * or may be an ISBN-13 number, 979-..., which does not have a short
+	 * representation. Do the short output version if possible.
+	 */
+	if (strncmp("978-", isn, 4) == 0)
+	{
+		/* Strip the first part and calculate the new check digit */
+		hyphenate(isn, isn + 4, NULL, NULL);
+		check = weight_checkdig(isn, 10);
+		aux = strchr(isn, '\0');
+		while (!isdigit((unsigned char) *--aux));
+		if (check == 10)
+			*aux = 'X';
+		else
+			*aux = check + '0';
+	}
 }
 
 static inline void
