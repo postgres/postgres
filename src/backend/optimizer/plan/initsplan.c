@@ -1128,6 +1128,20 @@ make_outerjoininfo(PlannerInfo *root,
 	min_righthand = bms_int_members(bms_union(clause_relids, inner_join_rels),
 									right_rels);
 
+	/*
+	 * If we have a degenerate join clause that doesn't mention any RHS rels,
+	 * force the min RHS to be the syntactic RHS; otherwise we can end up
+	 * making serious errors, like putting the LHS on the wrong side of an
+	 * outer join.  It seems to be safe to not do this when we have a
+	 * contribution from inner_join_rels, though; that's enough to pin the SJ
+	 * to occur at a reasonable place in the tree.
+	 */
+	if (bms_is_empty(min_righthand))
+		min_righthand = bms_copy(right_rels);
+
+	/*
+	 * Now check previous outer joins for ordering restrictions.
+	 */
 	foreach(l, root->join_info_list)
 	{
 		SpecialJoinInfo *otherinfo = (SpecialJoinInfo *) lfirst(l);
@@ -1224,12 +1238,10 @@ make_outerjoininfo(PlannerInfo *root,
 	 * If we found nothing to put in min_lefthand, punt and make it the full
 	 * LHS, to avoid having an empty min_lefthand which will confuse later
 	 * processing. (We don't try to be smart about such cases, just correct.)
-	 * Likewise for min_righthand.
+	 * We already forced min_righthand nonempty, so nothing to do for that.
 	 */
 	if (bms_is_empty(min_lefthand))
 		min_lefthand = bms_copy(left_rels);
-	if (bms_is_empty(min_righthand))
-		min_righthand = bms_copy(right_rels);
 
 	/* Now they'd better be nonempty */
 	Assert(!bms_is_empty(min_lefthand));

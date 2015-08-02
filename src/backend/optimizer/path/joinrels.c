@@ -467,20 +467,26 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		}
 		else
 		{
+			/*
+			 * Otherwise, the proposed join overlaps the RHS but isn't a valid
+			 * implementation of this SJ.  It might still be a legal join,
+			 * however, if it does not overlap the LHS.
+			 */
+			if (bms_overlap(joinrelids, sjinfo->min_lefthand))
+				return false;
+
 			/*----------
-			 * Otherwise, the proposed join overlaps the RHS but isn't
-			 * a valid implementation of this SJ.  It might still be
-			 * a legal join, however.  If both inputs overlap the RHS,
-			 * assume that it's OK.  Since the inputs presumably got past
-			 * this function's checks previously, they can't overlap the
-			 * LHS and their violations of the RHS boundary must represent
-			 * SJs that have been determined to commute with this one.
+			 * If both inputs overlap the RHS, assume that it's OK.  Since the
+			 * inputs presumably got past this function's checks previously,
+			 * their violations of the RHS boundary must represent SJs that
+			 * have been determined to commute with this one.
 			 * We have to allow this to work correctly in cases like
 			 *		(a LEFT JOIN (b JOIN (c LEFT JOIN d)))
 			 * when the c/d join has been determined to commute with the join
 			 * to a, and hence d is not part of min_righthand for the upper
 			 * join.  It should be legal to join b to c/d but this will appear
 			 * as a violation of the upper join's RHS.
+			 *
 			 * Furthermore, if one input overlaps the RHS and the other does
 			 * not, we should still allow the join if it is a valid
 			 * implementation of some other SJ.  We have to allow this to
@@ -496,11 +502,13 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				bms_overlap(rel1->relids, sjinfo->min_righthand) &&
 				bms_overlap(rel2->relids, sjinfo->min_righthand))
 			{
-				/* seems OK */
-				Assert(!bms_overlap(joinrelids, sjinfo->min_lefthand));
+				/* both overlap; assume OK */
 			}
 			else
+			{
+				/* one overlaps, the other doesn't (or it's a semijoin) */
 				is_valid_inner = false;
+			}
 		}
 	}
 
