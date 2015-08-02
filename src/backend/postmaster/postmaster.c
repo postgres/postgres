@@ -338,6 +338,7 @@ static DNSServiceRef bonjour_sdref = NULL;
 /*
  * postmaster.c - function prototypes
  */
+static void CloseServerPorts(int status, Datum arg);
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
 static Port *ConnCreate(int serverFd);
@@ -992,6 +993,14 @@ PostmasterMain(int argc, char *argv[])
 				(errmsg("no socket created for listening")));
 
 	/*
+	 * Set up an on_proc_exit function that's charged with closing the sockets
+	 * again at postmaster shutdown.  You might think we should have done this
+	 * earlier, but we want it to run before not after the proc_exit callback
+	 * that will remove the Unix socket file.
+	 */
+	on_proc_exit(CloseServerPorts, 0);
+
+	/*
 	 * If no valid TCP ports, write an empty line for listen address,
 	 * indicating the Unix socket must be used.  Note that this line is not
 	 * added to the lock file until there is a socket backing it.
@@ -1158,6 +1167,36 @@ PostmasterMain(int argc, char *argv[])
 	ExitPostmaster(status != STATUS_OK);
 
 	return 0;					/* not reached */
+}
+
+
+/*
+ * on_proc_exit callback to close server's listen sockets
+ */
+static void
+CloseServerPorts(int status, Datum arg)
+{
+	int			i;
+
+	/*
+	 * First, explicitly close all the socket FDs.  We used to just let this
+	 * happen implicitly at postmaster exit, but it's better to close them
+	 * before we remove the postmaster.pid lockfile; otherwise there's a race
+	 * condition if a new postmaster wants to re-use the TCP port number.
+	 */
+	for (i = 0; i < MAXLISTEN; i++)
+	{
+		if (ListenSocket[i] != PGINVALID_SOCKET)
+		{
+			StreamClose(ListenSocket[i]);
+			ListenSocket[i] = PGINVALID_SOCKET;
+		}
+	}
+
+	/*
+	 * Removal of the Unix socket file and socket lockfile will happen in
+	 * later on_proc_exit callbacks.
+	 */
 }
 
 
