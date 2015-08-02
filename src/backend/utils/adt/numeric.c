@@ -4769,7 +4769,9 @@ set_var_from_var(NumericVar *value, NumericVar *dest)
 
 	newbuf = digitbuf_alloc(value->ndigits + 1);
 	newbuf[0] = 0;				/* spare digit for rounding */
-	memcpy(newbuf + 1, value->digits, value->ndigits * sizeof(NumericDigit));
+	if (value->ndigits > 0)		/* else value->digits might be null */
+		memcpy(newbuf + 1, value->digits,
+			   value->ndigits * sizeof(NumericDigit));
 
 	digitbuf_free(dest->buf);
 
@@ -5090,8 +5092,9 @@ make_result(NumericVar *var)
 		result->choice.n_long.n_weight = weight;
 	}
 
-	memcpy(NUMERIC_DIGITS(result), digits, n * sizeof(NumericDigit));
 	Assert(NUMERIC_NDIGITS(result) == n);
+	if (n > 0)
+		memcpy(NUMERIC_DIGITS(result), digits, n * sizeof(NumericDigit));
 
 	/* Check for overflow of int16 fields */
 	if (NUMERIC_WEIGHT(result) != weight ||
