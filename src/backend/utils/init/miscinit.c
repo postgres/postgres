@@ -884,7 +884,11 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	if (lock_files == NIL)
 		on_proc_exit(UnlinkLockFiles, 0);
 
-	lock_files = lappend(lock_files, pstrdup(filename));
+	/*
+	 * Use lcons so that the lock files are unlinked in reverse order of
+	 * creation; this is critical!
+	 */
+	lock_files = lcons(pstrdup(filename), lock_files);
 }
 
 /*

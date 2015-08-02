@@ -50,6 +50,7 @@ extern int StreamServerPort(int family, char *hostName,
 extern int	StreamConnection(pgsocket server_fd, Port *port);
 extern void StreamClose(pgsocket sock);
 extern void TouchSocketFiles(void);
+extern void RemoveSocketFiles(void);
 extern void pq_init(void);
 extern void pq_comm_reset(void);
 extern int	pq_getbytes(char *s, size_t len);

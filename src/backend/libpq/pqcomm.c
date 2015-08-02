@@ -247,28 +247,6 @@ pq_close(int code, Datum arg)
  */
 
 
-/* StreamDoUnlink()
- * Shutdown routine for backend connection
- * If any Unix sockets are used for communication, explicitly close them.
- */
-#ifdef HAVE_UNIX_SOCKETS
-static void
-StreamDoUnlink(int code, Datum arg)
-{
-	ListCell   *l;
-
-	/* Loop through all created sockets... */
-	foreach(l, sock_paths)
-	{
-		char	   *sock_path = (char *) lfirst(l);
-
-		unlink(sock_path);
-	}
-	/* Since we're about to exit, no need to reclaim storage */
-	sock_paths = NIL;
-}
-#endif   /* HAVE_UNIX_SOCKETS */
-
 /*
  * StreamServerPort -- open a "listening" port to accept connections.
  *
@@ -550,16 +528,11 @@ Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath)
 	 * Once we have the interlock, we can safely delete any pre-existing
 	 * socket file to avoid failure at bind() time.
 	 */
-	unlink(unixSocketPath);
+	(void) unlink(unixSocketPath);
 
 	/*
-	 * Arrange to unlink the socket file(s) at proc_exit.  If this is the
-	 * first one, set up the on_proc_exit function to do it; then add this
-	 * socket file to the list of files to unlink.
+	 * Remember socket file pathnames for later maintenance.
 	 */
-	if (sock_paths == NIL)
-		on_proc_exit(StreamDoUnlink, 0);
-
 	sock_paths = lappend(sock_paths, pstrdup(unixSocketPath));
 
 	return STATUS_OK;
@@ -786,6 +759,26 @@ TouchSocketFiles(void)
 #endif   /* HAVE_UTIMES */
 #endif   /* HAVE_UTIME */
 	}
+}
+
+/*
+ * RemoveSocketFiles -- unlink socket files at postmaster shutdown
+ */
+void
+RemoveSocketFiles(void)
+{
+	ListCell   *l;
+
+	/* Loop through all created sockets... */
+	foreach(l, sock_paths)
+	{
+		char	   *sock_path = (char *) lfirst(l);
+
+		/* Ignore any error. */
+		(void) unlink(sock_path);
+	}
+	/* Since we're about to exit, no need to reclaim storage */
+	sock_paths = NIL;
 }
 
 
