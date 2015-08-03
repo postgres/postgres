@@ -2083,11 +2083,11 @@ describeOneTableDetails(const char *schemaname,
 				}
 
 				if (!PQgetisnull(result, i, 2))
-					appendPQExpBuffer(&buf, "\n      USING %s",
+					appendPQExpBuffer(&buf, "\n      USING (%s)",
 									  PQgetvalue(result, i, 2));
 
 				if (!PQgetisnull(result, i, 3))
-					appendPQExpBuffer(&buf, "\n      WITH CHECK %s",
+					appendPQExpBuffer(&buf, "\n      WITH CHECK (%s)",
 									  PQgetvalue(result, i, 3));
 
 				printTableAddFooter(&cont, buf.data);
