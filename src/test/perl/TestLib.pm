@@ -30,6 +30,7 @@ our @EXPORT = qw(
 
   $tmp_check
   $log_path
+  $windows_os
 );
 
 use Cwd;
@@ -41,6 +42,8 @@ use IPC::Run qw(run start);
 use SimpleTee;
 
 use Test::More;
+
+our $windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 
 # Open log file. For each test, the log file name uses the name of the
 # file launching this module, without the .pl suffix.
@@ -140,7 +143,7 @@ sub standard_initdb
 
 	open CONF, ">>$pgdata/postgresql.conf";
 	print CONF "\n# Added by TestLib.pm)\n";
-	if ($Config{osname} eq "MSWin32")
+	if ($windows_os)
 	{
 		print CONF "listen_addresses = '127.0.0.1'\n";
 	}
@@ -151,7 +154,7 @@ sub standard_initdb
 	}
 	close CONF;
 
-	$ENV{PGHOST}         = ($Config{osname} eq "MSWin32") ? "127.0.0.1" : $tempdir_short;
+	$ENV{PGHOST}         = $windows_os ? "127.0.0.1" : $tempdir_short;
 }
 
 # Set up the cluster to allow replication connections, in the same way that
@@ -162,7 +165,7 @@ sub configure_hba_for_replication
 
 	open HBA, ">>$pgdata/pg_hba.conf";
 	print HBA "\n# Allow replication (set up by TestLib.pm)\n";
-	if ($Config{osname} ne "MSWin32")
+	if (! $windows_os)
 	{
 		print HBA "local replication all trust\n";
 	}

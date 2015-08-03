@@ -20,7 +20,7 @@ command_ok(
 		"$tempdir/data" ],
 	'configure authentication');
 open CONF, ">>$tempdir/data/postgresql.conf";
-if ($Config{osname} ne "MSWin32")
+if (! $windows_os)
 {
 	print CONF "listen_addresses = ''\n";
 	print CONF "unix_socket_directories = '$tempdir_short'\n";

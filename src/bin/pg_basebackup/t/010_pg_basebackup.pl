@@ -92,7 +92,7 @@ unlink "$tempdir/pgdata/$superlongname";
 # The following tests test symlinks. Windows doesn't have symlinks, so
 # skip on Windows.
 SKIP: {
-    skip "symlinks not supported on Windows", 10 if ($Config{osname} eq "MSWin32");
+    skip "symlinks not supported on Windows", 10 if ($windows_os);
 
 	# Create a temporary directory in the system location and symlink it
 	# to our physical temp location.  That way we can use shorter names
