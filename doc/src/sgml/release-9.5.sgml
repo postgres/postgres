@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2015-??-??</simpara>
-   <simpara>Current as of 2015-06-01</simpara>
+   <simpara>Current as of 2015-08-03</simpara>
   </note>
 
   <sect2>
@@ -144,6 +144,24 @@
 
     <listitem>
 <!--
+2015-07-28 [6087d95] Andres..: Remove ssl renegotiation support.
+-->
+     <para>
+      Remove server configuration
+      parameter <varname>ssl_renegotiation_limit</>, which was deprecated
+      in earlier releases (Andres Freund)
+     </para>
+
+     <para>
+      While SSL renegotiation is a good idea in theory, it has caused enough
+      bugs to be considered a net negative in practice, and it is due to be
+      removed from future versions of the relevant standards.  We have
+      therefore removed support for it from <productname>PostgreSQL</>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2014-11-05 [525a489] Tom Lane: Remove the last vestige of server-side autocomm..
 -->
      <para>
@@ -163,13 +181,14 @@
     </listitem>
 
     <listitem>
+<!--
+2015-07-17 [89ddd29] Andrew..: Support JSON negative array subscripts everywh..
+-->
      <para>
-      Allow <type>json</> and <type>jsonb</> extraction operators to
-      accept negative subscripts, which count from the end of JSON
-      arrays.  Historically, these operators yielded <literal>NULL</>
-      in the event of a negative subscript, because negative
-      subscripts were considered invalid.  (Peter Geoghegan, Andrew
-      Dunstan)
+      Allow <type>json</> and <type>jsonb</> array extraction operators to
+      accept negative subscripts, which count from the end of JSON arrays.
+      Previously, these operators returned <literal>NULL</> for negative
+      subscripts.  (Peter Geoghegan, Andrew Dunstan)
      </para>
     </listitem>
 
@@ -1570,6 +1589,17 @@ FIXME: Add more specifics?
 
       <listitem>
 <!--
+2015-06-28 [cb2acb1] Heikki..: Add missing_ok option to the SQL functions for..
+-->
+       <para>
+        Add an optional <replaceable>missing_ok</> argument to <link
+        linkend="functions-admin-genfile-table"><function>pg_read_file()</></>
+        and related functions (Michael Paquier, Heikki Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-03-10 [865f14a] Robert..: Allow named parameters to be specified using =>..
 -->
        <para>
@@ -2165,6 +2195,17 @@ FIXME: Add more specifics?
        <para>
         Previously, version information was only printed in
         <option>--verbose</> mode.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-06-04 [232cd63] Fujii ..: Remove -i/-ignore-version option from pg_dump..
+-->
+       <para>
+        Remove the long-ignored <option>-i</>/<option>--ignore-version</>
+        option from <application>pg_dump</>, <application>pg_dumpall</>,
+        and <application>pg_restore</> (Fujii Masao)
        </para>
       </listitem>
 
