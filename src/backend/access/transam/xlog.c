@@ -5912,6 +5912,7 @@ StartupXLOG(void)
 	XLogReaderState *xlogreader;
 	XLogPageReadPrivate private;
 	bool		fast_promoted = false;
+	struct stat st;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -6138,6 +6139,33 @@ StartupXLOG(void)
 	}
 	else
 	{
+		/*
+		 * If tablespace_map file is present without backup_label file, there
+		 * is no use of such file.  There is no harm in retaining it, but it
+		 * is better to get rid of the map file so that we don't have any
+		 * redundant file in data directory and it will avoid any sort of
+		 * confusion.  It seems prudent though to just rename the file out
+		 * of the way rather than delete it completely, also we ignore any
+		 * error that occurs in rename operation as even if map file is
+		 * present without backup_label file, it is harmless.
+		 */
+		if (stat(TABLESPACE_MAP, &st) == 0)
+		{
+			unlink(TABLESPACE_MAP_OLD);
+			if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) == 0)
+				ereport(LOG,
+					(errmsg("ignoring \"%s\" file because no \"%s\" file exists",
+							TABLESPACE_MAP, BACKUP_LABEL_FILE),
+					 errdetail("\"%s\" was renamed to \"%s\".",
+							   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+			else
+				ereport(LOG,
+						(errmsg("ignoring \"%s\" file because no \"%s\" file exists",
+								TABLESPACE_MAP, BACKUP_LABEL_FILE),
+						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
+								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+		}
+
 		/*
 		 * It's possible that archive recovery was requested, but we don't
 		 * know how far we need to replay the WAL before we reach consistency.
