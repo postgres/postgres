@@ -17,6 +17,12 @@ CREATE TABLE rls_test_restrictive (
     data            integer
 );
 
+-- At least one permissive policy must exist, otherwise
+-- the default deny policy will be applied.  For
+-- testing the only-restrictive-policies from the hook,
+-- create a simple 'allow all' policy.
+CREATE POLICY p1 ON rls_test_restrictive USING (true);
+
 -- initial test data
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',1);
 INSERT INTO rls_test_restrictive VALUES ('r2','s2',2);
@@ -101,6 +107,8 @@ RESET ROLE;
 -- the hooks are combined correctly.
 CREATE POLICY p1 ON rls_test_permissive USING (data % 2 = 0);
 
+-- Remove the original allow-all policy
+DROP POLICY p1 ON rls_test_restrictive;
 CREATE POLICY p1 ON rls_test_restrictive USING (data % 2 = 0);
 
 CREATE POLICY p1 ON rls_test_both USING (data % 2 = 0);

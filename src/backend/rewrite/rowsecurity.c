@@ -225,12 +225,18 @@ get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 	}
 
 	/*
-	 * If the only built-in policy is the default-deny one, and hook policies
-	 * exist, then use the hook policies only and do not apply the
+	 * If the only built-in policy is the default-deny one, and permissive hook
+	 * policies exist, then use the hook policies only and do not apply the
 	 * default-deny policy.  Otherwise, we will apply both sets below.
+	 *
+	 * Note that we do not remove the defaultDeny policy if only *restrictive*
+	 * policies exist as restrictive policies should only ever be reducing what
+	 * is visible.  Therefore, at least one permissive policy must exist which
+	 * allows records to be seen before restrictive policies can remove rows
+	 * from that set.  A single "true" policy can be created to address this
+	 * requirement, if necessary.
 	 */
-	if (defaultDeny &&
-		(hook_policies_restrictive != NIL || hook_policies_permissive != NIL))
+	if (defaultDeny && hook_policies_permissive != NIL)
 	{
 		rowsec_expr = NULL;
 		rowsec_with_check_expr = NULL;
