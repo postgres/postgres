@@ -432,7 +432,9 @@ crosstab(PG_FUNCTION_ARGS)
 			break;
 		default:
 			/* result type isn't composite */
-			elog(ERROR, "return type must be a row type");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("return type must be a row type")));
 			break;
 	}
 
@@ -1350,7 +1352,9 @@ build_tuplestore_recursively(char *key_fld,
 				appendStringInfo(&chk_current_key, "%s%s%s",
 								 branch_delim, current_key, branch_delim);
 				if (strstr(chk_branchstr.data, chk_current_key.data))
-					elog(ERROR, "infinite recursion detected");
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_RECURSION),
+							 errmsg("infinite recursion detected")));
 			}
 
 			/* OK, extend the branch */
@@ -1429,7 +1433,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	{
 		if (tupdesc->natts != (CONNECTBY_NCOLS + serial_column))
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("invalid return type"),
 					 errdetail("Query-specified return tuple has " \
 							   "wrong number of columns.")));
@@ -1438,7 +1442,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	{
 		if (tupdesc->natts != CONNECTBY_NCOLS_NOBRANCH + serial_column)
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("invalid return type"),
 					 errdetail("Query-specified return tuple has " \
 							   "wrong number of columns.")));
@@ -1447,14 +1451,14 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	/* check that the types of the first two columns match */
 	if (tupdesc->attrs[0]->atttypid != tupdesc->attrs[1]->atttypid)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("First two columns must be the same type.")));
 
 	/* check that the type of the third column is INT4 */
 	if (tupdesc->attrs[2]->atttypid != INT4OID)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("Third column must be type %s.",
 						   format_type_be(INT4OID))));
@@ -1462,20 +1466,26 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	/* check that the type of the fourth column is TEXT if applicable */
 	if (show_branch && tupdesc->attrs[3]->atttypid != TEXTOID)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("Fourth column must be type %s.",
 						   format_type_be(TEXTOID))));
 
 	/* check that the type of the fifth column is INT4 */
 	if (show_branch && show_serial && tupdesc->attrs[4]->atttypid != INT4OID)
-		elog(ERROR, "query-specified return tuple not valid for Connectby: "
-			 "fifth column must be type %s", format_type_be(INT4OID));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+			  errmsg("query-specified return tuple not valid for Connectby: "
+					 "fifth column must be type %s",
+					 format_type_be(INT4OID))));
 
 	/* check that the type of the fifth column is INT4 */
 	if (!show_branch && show_serial && tupdesc->attrs[3]->atttypid != INT4OID)
-		elog(ERROR, "query-specified return tuple not valid for Connectby: "
-			 "fourth column must be type %s", format_type_be(INT4OID));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+			  errmsg("query-specified return tuple not valid for Connectby: "
+					 "fourth column must be type %s",
+					 format_type_be(INT4OID))));
 
 	/* OK, the tupdesc is valid for our purposes */
 }
@@ -1496,7 +1506,7 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 */
 	if (sql_tupdesc->natts < 2)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("Query must return at least two columns.")));
 
@@ -1511,7 +1521,7 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	if (ret_atttypid != sql_atttypid ||
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("SQL key field type %s does " \
 						   "not match return key field type %s.",
@@ -1525,7 +1535,7 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	if (ret_atttypid != sql_atttypid ||
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("SQL parent key field type %s does " \
 						   "not match return parent key field type %s.",
@@ -1556,7 +1566,7 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
 	if (ret_atttypid != sql_atttypid)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("SQL rowid datatype does not match " \
 						   "return rowid datatype.")));

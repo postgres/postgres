@@ -551,7 +551,8 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	if (SPI_processed == 0)
 	{
 		SPI_freetuptable(SPI_tuptable);
-		elog(WARNING, "module \"unknown\" not found in pltcl_modules");
+		ereport(WARNING,
+				(errmsg("module \"unknown\" not found in pltcl_modules")));
 		relation_close(pmrel, AccessShareLock);
 		return;
 	}
@@ -585,8 +586,10 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	if (tcl_rc != TCL_OK)
 	{
 		UTF_BEGIN;
-		elog(ERROR, "could not load module \"unknown\": %s",
-			 UTF_U2E(Tcl_GetStringResult(interp)));
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("could not load module \"unknown\": %s",
+						UTF_U2E(Tcl_GetStringResult(interp)))));
 		UTF_END;
 	}
 
@@ -1039,8 +1042,10 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 					  &ret_numvals, &ret_values) != TCL_OK)
 	{
 		UTF_BEGIN;
-		elog(ERROR, "could not split return value from trigger: %s",
-			 UTF_U2E(Tcl_GetStringResult(interp)));
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("could not split return value from trigger: %s",
+						UTF_U2E(Tcl_GetStringResult(interp)))));
 		UTF_END;
 	}
 
@@ -1048,7 +1053,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	PG_TRY();
 	{
 		if (ret_numvals % 2 != 0)
-			elog(ERROR, "invalid return list from trigger - must have even # of elements");
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("invalid return list from trigger - must have even # of elements")));
 
 		modattrs = (int *) palloc(tupdesc->natts * sizeof(int));
 		modvalues = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
@@ -1082,9 +1089,15 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			 ************************************************************/
 			attnum = SPI_fnumber(tupdesc, ret_name);
 			if (attnum == SPI_ERROR_NOATTRIBUTE)
-				elog(ERROR, "invalid attribute \"%s\"", ret_name);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("unrecognized attribute \"%s\"",
+								ret_name)));
 			if (attnum <= 0)
-				elog(ERROR, "cannot set system attribute \"%s\"", ret_name);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot set system attribute \"%s\"",
+								ret_name)));
 
 			/************************************************************
 			 * Ignore dropped columns
@@ -1205,7 +1218,8 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
 	econtext = UTF_U2E((char *) Tcl_GetVar(interp, "errorInfo",
 										   TCL_GLOBAL_ONLY));
 	ereport(ERROR,
-			(errmsg("%s", emsg),
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+			 errmsg("%s", emsg),
 			 errcontext("%s\nin PL/Tcl function \"%s\"",
 						econtext, proname)));
 	UTF_END;
@@ -1545,8 +1559,11 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 			free(prodesc->internal_proname);
 			free(prodesc);
 			UTF_BEGIN;
-			elog(ERROR, "could not create internal procedure \"%s\": %s",
-				 internal_proname, UTF_U2E(Tcl_GetStringResult(interp)));
+			ereport(ERROR,
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					 errmsg("could not create internal procedure \"%s\": %s",
+							internal_proname,
+							UTF_U2E(Tcl_GetStringResult(interp)))));
 			UTF_END;
 		}
 
@@ -1614,10 +1631,10 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/*
-	 * For non-error messages, just pass 'em to elog().  We do not expect that
-	 * this will fail, but just on the off chance it does, report the error
-	 * back to Tcl.  Note we are assuming that elog() can't have any internal
-	 * failures that are so bad as to require a transaction abort.
+	 * For non-error messages, just pass 'em to ereport().  We do not expect
+	 * that this will fail, but just on the off chance it does, report the
+	 * error back to Tcl.  Note we are assuming that ereport() can't have any
+	 * internal failures that are so bad as to require a transaction abort.
 	 *
 	 * This path is also used for FATAL errors, which aren't going to come
 	 * back to us at all.
@@ -1626,7 +1643,9 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		UTF_BEGIN;
-		elog(level, "%s", UTF_U2E(argv[2]));
+		ereport(level,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", UTF_U2E(argv[2]))));
 		UTF_END;
 	}
 	PG_CATCH();

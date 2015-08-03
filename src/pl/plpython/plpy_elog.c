@@ -97,7 +97,7 @@ PLy_elog(int elevel, const char *fmt,...)
 	PG_TRY();
 	{
 		ereport(elevel,
-				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_INTERNAL_ERROR),
+				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 			  errmsg_internal("%s", primary ? primary : "no exception data"),
 				 (detail) ? errdetail_internal("%s", detail) : 0,
 				 (tb_depth > 0 && tbmsg) ? errcontext("%s", tbmsg) : 0,

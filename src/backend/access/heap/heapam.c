@@ -2801,7 +2801,9 @@ l1:
 	if (result == HeapTupleInvisible)
 	{
 		UnlockReleaseBuffer(buffer);
-		elog(ERROR, "attempted to delete invisible tuple");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("attempted to delete invisible tuple")));
 	}
 	else if (result == HeapTupleBeingUpdated && wait)
 	{
@@ -3343,7 +3345,9 @@ l2:
 	if (result == HeapTupleInvisible)
 	{
 		UnlockReleaseBuffer(buffer);
-		elog(ERROR, "attempted to update invisible tuple");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("attempted to update invisible tuple")));
 	}
 	else if (result == HeapTupleBeingUpdated && wait)
 	{
