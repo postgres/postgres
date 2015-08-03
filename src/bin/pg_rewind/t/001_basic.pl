@@ -10,6 +10,7 @@ sub run_test
 	my $test_mode = shift;
 
 	RewindTest::setup_cluster();
+	RewindTest::start_master();
 
 	# Create a test table and insert a row in master.
 	master_psql("CREATE TABLE tbl1 (d text)");

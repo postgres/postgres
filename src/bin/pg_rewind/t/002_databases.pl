@@ -10,6 +10,7 @@ sub run_test
 	my $test_mode = shift;
 
 	RewindTest::setup_cluster();
+	RewindTest::start_master();
 
 	# Create a database in master.
 	master_psql('CREATE DATABASE inmaster');

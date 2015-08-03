@@ -79,6 +79,14 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 		return;
 
 	/*
+	 * Pretend that pg_xlog is a directory, even if it's really a symlink.
+	 * We don't want to mess with the symlink itself, nor complain if it's a
+	 * symlink in source but not in target or vice versa.
+	 */
+	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
+		type = FILE_TYPE_DIRECTORY;
+
+	/*
 	 * Skip temporary files, .../pgsql_tmp/... and .../pgsql_tmp.* in source.
 	 * This has the effect that all temporary files in the destination will be
 	 * removed.
@@ -112,7 +120,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	switch (type)
 	{
 		case FILE_TYPE_DIRECTORY:
-			if (exists && !S_ISDIR(statbuf.st_mode))
+			if (exists && !S_ISDIR(statbuf.st_mode) && strcmp(path, "pg_xlog") != 0)
 			{
 				/* it's a directory in source, but not in target. Strange.. */
 				pg_fatal("\"%s\" is not a directory\n", localpath);
@@ -284,6 +292,12 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	if (strcmp(path, "postmaster.pid") == 0 ||
 		strcmp(path, "postmaster.opts") == 0)
 		return;
+
+	/*
+	 * Like in process_source_file, pretend that xlog is always a  directory.
+	 */
+	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
+		type = FILE_TYPE_DIRECTORY;
 
 	key.path = (char *) path;
 	key_ptr = &key;
