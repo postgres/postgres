@@ -662,11 +662,13 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 	{
 		if ((plntup = PyDict_GetItemString(pltd, "new")) == NULL)
 			ereport(ERROR,
-					(errmsg("TD[\"new\"] deleted, cannot modify row")));
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("TD[\"new\"] deleted, cannot modify row")));
 		Py_INCREF(plntup);
 		if (!PyDict_Check(plntup))
 			ereport(ERROR,
-					(errmsg("TD[\"new\"] is not a dictionary")));
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("TD[\"new\"] is not a dictionary")));
 
 		plkeys = PyDict_Keys(plntup);
 		natts = PyList_Size(plkeys);
@@ -690,13 +692,15 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			else
 			{
 				ereport(ERROR,
-						(errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
 				plattstr = NULL;	/* keep compiler quiet */
 			}
 			attn = SPI_fnumber(tupdesc, plattstr);
 			if (attn == SPI_ERROR_NOATTRIBUTE)
 				ereport(ERROR,
-						(errmsg("key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row",
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row",
 								plattstr)));
 			atti = attn - 1;
 

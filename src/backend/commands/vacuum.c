@@ -180,7 +180,10 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	 * calls a hostile index expression that itself calls ANALYZE.
 	 */
 	if (in_vacuum)
-		elog(ERROR, "%s cannot be executed from VACUUM or ANALYZE", stmttype);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s cannot be executed from VACUUM or ANALYZE",
+						stmttype)));
 
 	/*
 	 * Send info about dead objects to the statistics collector, unless we are

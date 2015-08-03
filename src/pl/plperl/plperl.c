@@ -640,8 +640,9 @@ select_perl_context(bool trusted)
 		else
 			plperl_untrusted_init();
 #else
-		elog(ERROR,
-			 "cannot allocate multiple Perl interpreters on this platform");
+		errmsg(ERROR,
+			   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("cannot allocate multiple Perl interpreters on this platform")));
 #endif
 	}
 
@@ -660,7 +661,8 @@ select_perl_context(bool trusted)
 	eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 		errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
 
 	/* Fully initialized, so mark the hashtable entry valid */
@@ -834,12 +836,14 @@ plperl_init_interp(void)
 	if (perl_parse(plperl, plperl_init_shared_libs,
 				   nargs, embedding, NULL) != 0)
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while parsing Perl initialization")));
 
 	if (perl_run(plperl) != 0)
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while running Perl initialization")));
 
 #ifdef PLPERL_RESTORE_LOCALE
@@ -952,7 +956,8 @@ plperl_trusted_init(void)
 	eval_pv(PLC_TRUSTED, FALSE);
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while executing PLC_TRUSTED")));
 
 	/*
@@ -963,7 +968,8 @@ plperl_trusted_init(void)
 	eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while executing utf8fix")));
 
 	/*
@@ -1002,11 +1008,12 @@ plperl_trusted_init(void)
 	if (plperl_on_plperl_init && *plperl_on_plperl_init)
 	{
 		eval_pv(plperl_on_plperl_init, FALSE);
+		/* XXX need to find a way to determine a better errcode here */
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while executing plperl.on_plperl_init")));
-
 	}
 }
 
@@ -1025,7 +1032,8 @@ plperl_untrusted_init(void)
 		eval_pv(plperl_on_plperlu_init, FALSE);
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while executing plperl.on_plperlu_init")));
 	}
 }
@@ -1382,7 +1390,9 @@ plperl_sv_to_literal(SV *sv, char *fqtypename)
 				isnull;
 
 	if (!OidIsValid(typid))
-		elog(ERROR, "lookup failed for type %s", fqtypename);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("lookup failed for type %s", fqtypename)));
 
 	datum = plperl_sv_to_datum(sv,
 							   typid, -1,
@@ -2059,7 +2069,8 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 
 	if (!subref)
 		ereport(ERROR,
-		(errmsg("didn't get a CODE reference from compiling function \"%s\"",
+				(errcode(ERRCODE_SYNTAX_ERROR),
+		 errmsg("didn't get a CODE reference from compiling function \"%s\"",
 				prodesc->proname)));
 
 	prodesc->reference = subref;
@@ -2147,7 +2158,9 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "didn't get a return item from function");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("didn't get a return item from function")));
 	}
 
 	if (SvTRUE(ERRSV))
@@ -2156,9 +2169,10 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		/* XXX need to find a way to assign an errcode here */
+		/* XXX need to find a way to determine a better errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -2187,7 +2201,9 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 
 	TDsv = get_sv("main::_TD", 0);
 	if (!TDsv)
-		elog(ERROR, "couldn't fetch $_TD");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("couldn't fetch $_TD")));
 
 	save_item(TDsv);			/* local $_TD */
 	sv_setsv(TDsv, td);
@@ -2209,7 +2225,9 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "didn't get a return item from trigger function");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("didn't get a return item from trigger function")));
 	}
 
 	if (SvTRUE(ERRSV))
@@ -2218,9 +2236,10 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		/* XXX need to find a way to assign an errcode here */
+		/* XXX need to find a way to determine a better errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -2248,7 +2267,9 @@ plperl_call_perl_event_trigger_func(plperl_proc_desc *desc,
 
 	TDsv = get_sv("main::_TD", 0);
 	if (!TDsv)
-		elog(ERROR, "couldn't fetch $_TD");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("couldn't fetch $_TD")));
 
 	save_item(TDsv);			/* local $_TD */
 	sv_setsv(TDsv, td);
@@ -2266,7 +2287,9 @@ plperl_call_perl_event_trigger_func(plperl_proc_desc *desc,
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "didn't get a return item from trigger function");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("didn't get a return item from trigger function")));
 	}
 
 	if (SvTRUE(ERRSV))
@@ -2275,9 +2298,10 @@ plperl_call_perl_event_trigger_func(plperl_proc_desc *desc,
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		/* XXX need to find a way to assign an errcode here */
+		/* XXX need to find a way to determine a better errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);

@@ -1422,9 +1422,9 @@ BeginCopy(bool is_from,
 		 * in any RLS clauses.
 		 *
 		 * When this happens, we are passed in the relid of the originally
-		 * found relation (which we have locked).  As the planner will look
-		 * up the relation again, we double-check here to make sure it found
-		 * the same one that we have locked.
+		 * found relation (which we have locked).  As the planner will look up
+		 * the relation again, we double-check here to make sure it found the
+		 * same one that we have locked.
 		 */
 		if (queryRelId != InvalidOid)
 		{
@@ -1603,10 +1603,12 @@ ClosePipeToProgram(CopyState cstate)
 	pclose_rc = ClosePipeStream(cstate->copy_file);
 	if (pclose_rc == -1)
 		ereport(ERROR,
-				(errmsg("could not close pipe to external command: %m")));
+				(errcode_for_file_access(),
+				 errmsg("could not close pipe to external command: %m")));
 	else if (pclose_rc != 0)
 		ereport(ERROR,
-				(errmsg("program \"%s\" failed",
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("program \"%s\" failed",
 						cstate->filename),
 				 errdetail_internal("%s", wait_result_to_str(pclose_rc))));
 }
@@ -1703,7 +1705,8 @@ BeginCopyTo(Relation rel,
 			cstate->copy_file = OpenPipeStream(cstate->filename, PG_BINARY_W);
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
-						(errmsg("could not execute command \"%s\": %m",
+						(errcode_for_file_access(),
+						 errmsg("could not execute command \"%s\": %m",
 								cstate->filename)));
 		}
 		else
@@ -1730,7 +1733,10 @@ BeginCopyTo(Relation rel,
 								cstate->filename)));
 
 			if (fstat(fileno(cstate->copy_file), &st))
-				elog(ERROR, "could not stat file \"%s\": %m", cstate->filename);
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m",
+								cstate->filename)));
 
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
@@ -2271,13 +2277,13 @@ CopyFrom(CopyState cstate)
 	{
 		if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
 			ereport(ERROR,
-					(ERRCODE_INVALID_TRANSACTION_STATE,
+					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 					 errmsg("cannot perform FREEZE because of prior transaction activity")));
 
 		if (cstate->rel->rd_createSubid != GetCurrentSubTransactionId() &&
 		 cstate->rel->rd_newRelfilenodeSubid != GetCurrentSubTransactionId())
 			ereport(ERROR,
-					(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("cannot perform FREEZE because the table was not created or truncated in the current subtransaction")));
 
 		hi_options |= HEAP_INSERT_FROZEN;
@@ -2737,7 +2743,8 @@ BeginCopyFrom(Relation rel,
 			cstate->copy_file = OpenPipeStream(cstate->filename, PG_BINARY_R);
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
-						(errmsg("could not execute command \"%s\": %m",
+						(errcode_for_file_access(),
+						 errmsg("could not execute command \"%s\": %m",
 								cstate->filename)));
 		}
 		else
@@ -2752,7 +2759,10 @@ BeginCopyFrom(Relation rel,
 								cstate->filename)));
 
 			if (fstat(fileno(cstate->copy_file), &st))
-				elog(ERROR, "could not stat file \"%s\": %m", cstate->filename);
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m",
+								cstate->filename)));
 
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
