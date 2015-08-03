@@ -15,6 +15,7 @@ sub run_test
 	my $test_mode = shift;
 
 	RewindTest::setup_cluster();
+	RewindTest::start_master();
 
 	my $test_master_datadir = $RewindTest::test_master_datadir;
 

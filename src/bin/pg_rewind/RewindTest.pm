@@ -13,16 +13,18 @@ package RewindTest;
 #
 # 2. setup_cluster - creates a PostgreSQL cluster that runs as the master
 #
-# 3. create_standby - runs pg_basebackup to initialize a standby server, and
+# 3. start_master - starts the master server
+#
+# 4. create_standby - runs pg_basebackup to initialize a standby server, and
 #    sets it up to follow the master.
 #
-# 4. promote_standby - runs "pg_ctl promote" to promote the standby server.
+# 5. promote_standby - runs "pg_ctl promote" to promote the standby server.
 # The old master keeps running.
 #
-# 5. run_pg_rewind - stops the old master (if it's still running) and runs
+# 6. run_pg_rewind - stops the old master (if it's still running) and runs
 # pg_rewind to synchronize it with the now-promoted standby server.
 #
-# 6. clean_rewind_test - stops both servers used in the test, if they're
+# 7. clean_rewind_test - stops both servers used in the test, if they're
 # still running.
 #
 # The test script can use the helper functions master_psql and standby_psql
@@ -56,6 +58,7 @@ our @EXPORT = qw(
 
   init_rewind_test
   setup_cluster
+  start_master
   create_standby
   promote_standby
   run_pg_rewind
@@ -182,7 +185,10 @@ max_connections = 10
 
 	# Accept replication connections on master
 	configure_hba_for_replication $test_master_datadir;
+}
 
+sub start_master
+{
 	system_or_bail('pg_ctl' , '-w',
 				   '-D' , $test_master_datadir,
 				   '-l',  "$log_path/master.log",
