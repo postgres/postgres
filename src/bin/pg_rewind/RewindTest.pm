@@ -62,21 +62,12 @@ our @EXPORT = qw(
   clean_rewind_test
 );
 
-# A temporary directory created with 'tempdir' is deleted automatically at
-# the end of the tests. You can change it to a constant if you need to keep it
-# for debugging purposes,
-my $testroot = tempdir;
-
-our $test_master_datadir  = "$testroot/data_master";
-our $test_standby_datadir = "$testroot/data_standby";
-
-mkdir $testroot;
+our $test_master_datadir  = "$tmp_check/data_master";
+our $test_standby_datadir = "$tmp_check/data_standby";
 
 # Define non-conflicting ports for both nodes.
 my $port_master  = $ENV{PGPORT};
 my $port_standby = $port_master + 1;
-
-my $tempdir_short;
 
 my $connstr_master  = "port=$port_master";
 my $connstr_standby = "port=$port_standby";
@@ -171,8 +162,6 @@ sub append_to_file
 
 sub setup_cluster
 {
-	$tempdir_short = tempdir_short;
-
 	# Initialize master, data checksums are mandatory
 	remove_tree($test_master_datadir);
 	standard_initdb($test_master_datadir);
@@ -267,9 +256,8 @@ sub run_pg_rewind
 
 	# Keep a temporary postgresql.conf for master node or it would be
 	# overwritten during the rewind.
-	copy(
-		"$test_master_datadir/postgresql.conf",
-		"$testroot/master-postgresql.conf.tmp");
+	copy("$test_master_datadir/postgresql.conf",
+		 "$tmp_check/master-postgresql.conf.tmp");
 
 	# Now run pg_rewind
 	if ($test_mode eq "local")
@@ -302,9 +290,8 @@ sub run_pg_rewind
 	}
 
 	# Now move back postgresql.conf with old settings
-	move(
-		"$testroot/master-postgresql.conf.tmp",
-		"$test_master_datadir/postgresql.conf");
+	move("$tmp_check/master-postgresql.conf.tmp",
+		 "$test_master_datadir/postgresql.conf");
 
 	# Plug-in rewound node to the now-promoted standby node
 	append_to_file(
