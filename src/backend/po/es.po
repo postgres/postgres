@@ -59,7 +59,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-12-15 05:38+0000\n"
-"PO-Revision-Date: 2014-12-18 18:58-0300\n"
+"PO-Revision-Date: 2015-07-06 17:44-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -14652,7 +14652,7 @@ msgstr "el proceso %d detectó un deadlock mientras esperaba %s en %s después d
 #: storage/lmgr/proc.c:1317
 #, c-format
 msgid "process %d still waiting for %s on %s after %ld.%03d ms"
-msgstr "el proceso %d está aún espera %s en %s después de %ld.%03d ms"
+msgstr "el proceso %d aún espera %s en %s después de %ld.%03d ms"
 
 #: storage/lmgr/proc.c:1324
 #, c-format

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-05-19 00:44+0000\n"
-"PO-Revision-Date: 2015-05-18 22:40-0400\n"
+"PO-Revision-Date: 2015-06-30 20:49-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -150,7 +150,7 @@ msgstr ""
 #: pg_controldata.c:222
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control-Versionsnummer:                  %u\n"
+msgstr "pg_control-Versionsnummer:                   %u\n"
 
 #: pg_controldata.c:225
 #, c-format
@@ -169,57 +169,57 @@ msgstr ""
 #: pg_controldata.c:229
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Katalogversionsnummer:                      %u\n"
+msgstr "Katalogversionsnummer:                       %u\n"
 
 #: pg_controldata.c:231
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "Datenbanksystemidentifikation:              %s\n"
+msgstr "Datenbanksystemidentifikation:               %s\n"
 
 #: pg_controldata.c:233
 #, c-format
 msgid "Database cluster state:               %s\n"
-msgstr "Datenbank-Cluster-Status:                   %s\n"
+msgstr "Datenbank-Cluster-Status:                    %s\n"
 
 #: pg_controldata.c:235
 #, c-format
 msgid "pg_control last modified:             %s\n"
-msgstr "pg_control zuletzt geändert:                %s\n"
+msgstr "pg_control zuletzt geändert:                 %s\n"
 
 #: pg_controldata.c:237
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "Position des letzten Checkpoints:           %X/%X\n"
+msgstr "Position des letzten Checkpoints:            %X/%X\n"
 
 #: pg_controldata.c:240
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
-msgstr "Position des vorletzten Checkpoints:        %X/%X\n"
+msgstr "Position des vorletzten Checkpoints:         %X/%X\n"
 
 #: pg_controldata.c:243
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "REDO-Position des letzten Checkpoints:      %X/%X\n"
+msgstr "REDO-Position des letzten Checkpoints:       %X/%X\n"
 
 #: pg_controldata.c:246
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "REDO-WAL-Datei des letzten Checkpoints:     %s\n"
+msgstr "REDO-WAL-Datei des letzten Checkpoints:      %s\n"
 
 #: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "TimeLineID des letzten Checkpoints:         %u\n"
+msgstr "TimeLineID des letzten Checkpoints:          %u\n"
 
 #: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
-msgstr "PrevTimeLineID des letzten Checkpoints:     %u\n"
+msgstr "PrevTimeLineID des letzten Checkpoints:      %u\n"
 
 #: pg_controldata.c:252
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "full_page_writes des letzten Checkpoints:   %s\n"
+msgstr "full_page_writes des letzten Checkpoints:    %s\n"
 
 #: pg_controldata.c:253 pg_controldata.c:296 pg_controldata.c:306
 msgid "off"
@@ -232,89 +232,87 @@ msgstr "an"
 #: pg_controldata.c:254
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "NextXID des letzten Checkpoints:            %u/%u\n"
+msgstr "NextXID des letzten Checkpoints:             %u/%u\n"
 
 #: pg_controldata.c:257
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "NextOID des letzten Checkpoints:            %u\n"
+msgstr "NextOID des letzten Checkpoints:             %u\n"
 
 #: pg_controldata.c:259
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "NextMultiXactId des letzten Checkpoints:    %u\n"
+msgstr "NextMultiXactId des letzten Checkpoints:     %u\n"
 
 #: pg_controldata.c:261
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "NextMultiOffset des letzten Checkpoints:    %u\n"
+msgstr "NextMultiOffset des letzten Checkpoints:     %u\n"
 
 #: pg_controldata.c:263
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "oldestXID des letzten Checkpoints:          %u\n"
+msgstr "oldestXID des letzten Checkpoints:           %u\n"
 
 #: pg_controldata.c:265
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "DB der oldestXID des letzten Checkpoints:   %u\n"
+msgstr "DB der oldestXID des letzten Checkpoints:    %u\n"
 
 #: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID des letzten Checkpoints:    %u\n"
+msgstr "oldestActiveXID des letzten Checkpoints:     %u\n"
 
 #: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "oldestMultiXid des letzten Checkpoints:     %u\n"
+msgstr "oldestMultiXid des letzten Checkpoints:      %u\n"
 
 #: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "DB des oldestMulti des letzten Checkpoints: %u\n"
+msgstr "DB des oldestMulti des letzten Checkpoints:  %u\n"
 
 #: pg_controldata.c:273
 #, c-format
 msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "oldestCommitTs des letzten Checkpoints:     %u\n"
+msgstr "oldestCommitTs des letzten Checkpoints:      %u\n"
 
 #: pg_controldata.c:275
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
-msgstr "Zeit des letzten Checkpoints:               %s\n"
+msgstr "Zeit des letzten Checkpoints:                %s\n"
 
 #: pg_controldata.c:277
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
-msgstr "Fake-LSN-Zähler für ungeloggte Relationen:  %X/%X\n"
+msgstr "Fake-LSN-Zähler für ungeloggte Relationen:   %X/%X\n"
 
 #: pg_controldata.c:280
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
-msgstr "Minimaler Wiederherstellungsendpunkt:       %X/%X\n"
+msgstr "Minimaler Wiederherstellungsendpunkt:        %X/%X\n"
 
 #: pg_controldata.c:283
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
-msgstr ""
-"Zeitleiste des minimalen Wiederherstellungsendpunkts:\n"
-"                                            %u\n"
+msgstr "Zeitleiste des minimalen Wiederherstellungsendpunkts: %u\n"
 
 #: pg_controldata.c:285
 #, c-format
 msgid "Backup start location:                %X/%X\n"
-msgstr "Backup-Startpunkt:                          %X/%X\n"
+msgstr "Backup-Startpunkt:                           %X/%X\n"
 
 #: pg_controldata.c:288
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
-msgstr "Backup-Endpunkt:                            %X/%X\n"
+msgstr "Backup-Endpunkt:                             %X/%X\n"
 
 #: pg_controldata.c:291
 #, c-format
 msgid "End-of-backup record required:        %s\n"
-msgstr "End-of-Backup-Eintrag erforderlich:         %s\n"
+msgstr "End-of-Backup-Eintrag erforderlich:          %s\n"
 
 #: pg_controldata.c:292
 msgid "no"
@@ -327,32 +325,32 @@ msgstr "ja"
 #: pg_controldata.c:293
 #, c-format
 msgid "Current wal_level setting:            %s\n"
-msgstr "Aktuelle wal_level-Einstellung:             %s\n"
+msgstr "Aktuelle wal_level-Einstellung:              %s\n"
 
 #: pg_controldata.c:295
 #, c-format
 msgid "Current wal_log_hints setting:        %s\n"
-msgstr "Aktuelle wal_log_hints-Einstellung:         %s\n"
+msgstr "Aktuelle wal_log_hints-Einstellung:          %s\n"
 
 #: pg_controldata.c:297
 #, c-format
 msgid "Current max_connections setting:      %d\n"
-msgstr "Aktuelle max_connections-Einstellung:       %d\n"
+msgstr "Aktuelle max_connections-Einstellung:        %d\n"
 
 #: pg_controldata.c:299
 #, c-format
 msgid "Current max_worker_processes setting: %d\n"
-msgstr "Aktuelle max_worker_processes-Einstellung:  %d\n"
+msgstr "Aktuelle max_worker_processes-Einstellung:   %d\n"
 
 #: pg_controldata.c:301
 #, c-format
 msgid "Current max_prepared_xacts setting:   %d\n"
-msgstr "Aktuelle max_prepared_xacts-Einstellung:    %d\n"
+msgstr "Aktuelle max_prepared_xacts-Einstellung:     %d\n"
 
 #: pg_controldata.c:303
 #, c-format
 msgid "Current max_locks_per_xact setting:   %d\n"
-msgstr "Aktuelle max_locks_per_xact-Einstellung:    %d\n"
+msgstr "Aktuelle max_locks_per_xact-Einstellung:     %d\n"
 
 #: pg_controldata.c:305
 #, c-format
@@ -362,52 +360,52 @@ msgstr "Aktuelle track_commit_timestamp-Einstellung: %s\n"
 #: pg_controldata.c:307
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "Maximale Datenausrichtung (Alignment):      %u\n"
+msgstr "Maximale Datenausrichtung (Alignment):       %u\n"
 
 #: pg_controldata.c:310
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Datenbankblockgröße:                        %u\n"
+msgstr "Datenbankblockgröße:                         %u\n"
 
 #: pg_controldata.c:312
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Blöcke pro Segment:                         %u\n"
+msgstr "Blöcke pro Segment:                          %u\n"
 
 #: pg_controldata.c:314
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "WAL-Blockgröße:                             %u\n"
+msgstr "WAL-Blockgröße:                              %u\n"
 
 #: pg_controldata.c:316
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Bytes pro WAL-Segment:                      %u\n"
+msgstr "Bytes pro WAL-Segment:                       %u\n"
 
 #: pg_controldata.c:318
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "Maximale Bezeichnerlänge:                   %u\n"
+msgstr "Maximale Bezeichnerlänge:                    %u\n"
 
 #: pg_controldata.c:320
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Maximale Spalten in einem Index:            %u\n"
+msgstr "Maximale Spalten in einem Index:             %u\n"
 
 #: pg_controldata.c:322
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "Maximale Größe eines Stücks TOAST:          %u\n"
+msgstr "Maximale Größe eines Stücks TOAST:           %u\n"
 
 #: pg_controldata.c:324
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
-msgstr "Größe eines Large-Object-Chunks:            %u\n"
+msgstr "Größe eines Large-Object-Chunks:             %u\n"
 
 #: pg_controldata.c:326
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "Speicherung von Datum/Zeit-Typen:           %s\n"
+msgstr "Speicherung von Datum/Zeit-Typen:            %s\n"
 
 #: pg_controldata.c:327
 msgid "64-bit integers"
@@ -420,7 +418,7 @@ msgstr "Gleitkommazahlen"
 #: pg_controldata.c:328
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "Übergabe von Float4-Argumenten:             %s\n"
+msgstr "Übergabe von Float4-Argumenten:              %s\n"
 
 #: pg_controldata.c:329 pg_controldata.c:331
 msgid "by reference"
@@ -433,9 +431,9 @@ msgstr "Wert"
 #: pg_controldata.c:330
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "Übergabe von Float8-Argumenten:             %s\n"
+msgstr "Übergabe von Float8-Argumenten:              %s\n"
 
 #: pg_controldata.c:332
 #, c-format
 msgid "Data page checksum version:           %u\n"
-msgstr "Datenseitenprüfsummenversion:               %u\n"
+msgstr "Datenseitenprüfsummenversion:                %u\n"

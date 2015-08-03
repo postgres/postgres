@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-05-19 16:13+0000\n"
-"PO-Revision-Date: 2015-05-19 20:46-0400\n"
+"PO-Revision-Date: 2015-06-30 20:49-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -214,27 +214,27 @@ msgstr ""
 #: pg_resetxlog.c:641
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control-Versionsnummer:                  %u\n"
+msgstr "pg_control-Versionsnummer:                   %u\n"
 
 #: pg_resetxlog.c:643
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Katalogversionsnummer:                      %u\n"
+msgstr "Katalogversionsnummer:                       %u\n"
 
 #: pg_resetxlog.c:645
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "Datenbanksystemidentifikation:              %s\n"
+msgstr "Datenbanksystemidentifikation:               %s\n"
 
 #: pg_resetxlog.c:647
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "TimeLineID des letzten Checkpoints:         %u\n"
+msgstr "TimeLineID des letzten Checkpoints:          %u\n"
 
 #: pg_resetxlog.c:649
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "full_page_writes des letzten Checkpoints:   %s\n"
+msgstr "full_page_writes des letzten Checkpoints:    %s\n"
 
 #: pg_resetxlog.c:650
 msgid "off"
@@ -247,47 +247,47 @@ msgstr "an"
 #: pg_resetxlog.c:651
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "NextXID des letzten Checkpoints:            %u/%u\n"
+msgstr "NextXID des letzten Checkpoints:             %u/%u\n"
 
 #: pg_resetxlog.c:654
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "NextOID des letzten Checkpoints:            %u\n"
+msgstr "NextOID des letzten Checkpoints:             %u\n"
 
 #: pg_resetxlog.c:656
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "NextMultiXactId des letzten Checkpoints:    %u\n"
+msgstr "NextMultiXactId des letzten Checkpoints:     %u\n"
 
 #: pg_resetxlog.c:658
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "NextMultiOffset des letzten Checkpoints:    %u\n"
+msgstr "NextMultiOffset des letzten Checkpoints:     %u\n"
 
 #: pg_resetxlog.c:660
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "oldestXID des letzten Checkpoints:          %u\n"
+msgstr "oldestXID des letzten Checkpoints:           %u\n"
 
 #: pg_resetxlog.c:662
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "DB der oldestXID des letzten Checkpoints:   %u\n"
+msgstr "DB der oldestXID des letzten Checkpoints:    %u\n"
 
 #: pg_resetxlog.c:664
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID des letzten Checkpoints:    %u\n"
+msgstr "oldestActiveXID des letzten Checkpoints:     %u\n"
 
 #: pg_resetxlog.c:666
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "oldestMultiXid des letzten Checkpoints:     %u\n"
+msgstr "oldestMultiXid des letzten Checkpoints:      %u\n"
 
 #: pg_resetxlog.c:668
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "DB des oldestMulti des letzten Checkpoints: %u\n"
+msgstr "DB des oldestMulti des letzten Checkpoints:  %u\n"
 
 #: pg_resetxlog.c:670
 #, fuzzy, c-format
@@ -304,52 +304,52 @@ msgstr "oldestCommitTs des letzten Checkpoints:     %u\n"
 #: pg_resetxlog.c:674
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "Maximale Datenausrichtung (Alignment):      %u\n"
+msgstr "Maximale Datenausrichtung (Alignment):       %u\n"
 
 #: pg_resetxlog.c:677
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Datenbankblockgröße:                        %u\n"
+msgstr "Datenbankblockgröße:                         %u\n"
 
 #: pg_resetxlog.c:679
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Blöcke pro Segment:                         %u\n"
+msgstr "Blöcke pro Segment:                          %u\n"
 
 #: pg_resetxlog.c:681
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "WAL-Blockgröße:                             %u\n"
+msgstr "WAL-Blockgröße:                              %u\n"
 
 #: pg_resetxlog.c:683
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Bytes pro WAL-Segment:                      %u\n"
+msgstr "Bytes pro WAL-Segment:                       %u\n"
 
 #: pg_resetxlog.c:685
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "Maximale Bezeichnerlänge:                   %u\n"
+msgstr "Maximale Bezeichnerlänge:                    %u\n"
 
 #: pg_resetxlog.c:687
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Maximale Spalten in einem Index:            %u\n"
+msgstr "Maximale Spalten in einem Index:             %u\n"
 
 #: pg_resetxlog.c:689
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "Maximale Größe eines Stücks TOAST:          %u\n"
+msgstr "Maximale Größe eines Stücks TOAST:           %u\n"
 
 #: pg_resetxlog.c:691
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
-msgstr "Größe eines Large-Object-Chunks:            %u\n"
+msgstr "Größe eines Large-Object-Chunks:             %u\n"
 
 #: pg_resetxlog.c:693
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "Speicherung von Datum/Zeit-Typen:           %s\n"
+msgstr "Speicherung von Datum/Zeit-Typen:            %s\n"
 
 #: pg_resetxlog.c:694
 msgid "64-bit integers"
@@ -362,7 +362,7 @@ msgstr "Gleitkommazahlen"
 #: pg_resetxlog.c:695
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "Übergabe von Float4-Argumenten:             %s\n"
+msgstr "Übergabe von Float4-Argumenten:              %s\n"
 
 #: pg_resetxlog.c:696 pg_resetxlog.c:698
 msgid "by reference"
@@ -375,12 +375,12 @@ msgstr "Wert"
 #: pg_resetxlog.c:697
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "Übergabe von Float8-Argumenten:             %s\n"
+msgstr "Übergabe von Float8-Argumenten:              %s\n"
 
 #: pg_resetxlog.c:699
 #, c-format
 msgid "Data page checksum version:           %u\n"
-msgstr "Datenseitenprüfsummenversion:               %u\n"
+msgstr "Datenseitenprüfsummenversion:                %u\n"
 
 #: pg_resetxlog.c:713
 #, c-format
@@ -398,62 +398,62 @@ msgstr ""
 #: pg_resetxlog.c:716
 #, c-format
 msgid "First log segment after reset:        %s\n"
-msgstr "Erstes Logdateisegment nach Zurücksetzen:   %s\n"
+msgstr "Erstes Logdateisegment nach Zurücksetzen:    %s\n"
 
 #: pg_resetxlog.c:720
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
-msgstr "NextMultiXactId:                            %u\n"
+msgstr "NextMultiXactId:                             %u\n"
 
 #: pg_resetxlog.c:722
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
-msgstr "OldestMultiXid:                             %u\n"
+msgstr "OldestMultiXid:                              %u\n"
 
 #: pg_resetxlog.c:724
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
-msgstr "OldestMulti's DB:                           %u\n"
+msgstr "OldestMulti's DB:                            %u\n"
 
 #: pg_resetxlog.c:730
 #, c-format
 msgid "NextMultiOffset:                      %u\n"
-msgstr "NextMultiOffset:                            %u\n"
+msgstr "NextMultiOffset:                             %u\n"
 
 #: pg_resetxlog.c:736
 #, c-format
 msgid "NextOID:                              %u\n"
-msgstr "NextOID:                                    %u\n"
+msgstr "NextOID:                                     %u\n"
 
 #: pg_resetxlog.c:742
 #, c-format
 msgid "NextXID:                              %u\n"
-msgstr "NextXID:                                    %u\n"
+msgstr "NextXID:                                     %u\n"
 
 #: pg_resetxlog.c:744
 #, c-format
 msgid "OldestXID:                            %u\n"
-msgstr "OldestXID:                                  %u\n"
+msgstr "OldestXID:                                   %u\n"
 
 #: pg_resetxlog.c:746
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
-msgstr "OldestXID's DB:                             %u\n"
+msgstr "OldestXID's DB:                              %u\n"
 
 #: pg_resetxlog.c:752
 #, c-format
 msgid "NextXID epoch:                        %u\n"
-msgstr "NextXID-Epoche:                             %u\n"
+msgstr "NextXID-Epoche:                              %u\n"
 
 #: pg_resetxlog.c:758
 #, c-format
 msgid "oldestCommitTs:                       %u\n"
-msgstr "oldestCommitTs:                             %u\n"
+msgstr "oldestCommitTs:                              %u\n"
 
 #: pg_resetxlog.c:763
 #, c-format
 msgid "newestCommitTs:                       %u\n"
-msgstr "newestCommitTs:                             %u\n"
+msgstr "newestCommitTs:                              %u\n"
 
 #: pg_resetxlog.c:829
 #, c-format
