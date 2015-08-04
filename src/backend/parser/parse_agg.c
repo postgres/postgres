@@ -1829,44 +1829,40 @@ resolve_aggregate_transtype(Oid aggfuncid,
 }
 
 /*
- * Create expression trees for the transition and final functions
- * of an aggregate.  These are needed so that polymorphic functions
- * can be used within an aggregate --- without the expression trees,
- * such functions would not know the datatypes they are supposed to use.
- * (The trees will never actually be executed, however, so we can skimp
- * a bit on correctness.)
+ * Create an expression tree for the transition function of an aggregate.
+ * This is needed so that polymorphic functions can be used within an
+ * aggregate --- without the expression tree, such functions would not know
+ * the datatypes they are supposed to use.  (The trees will never actually
+ * be executed, however, so we can skimp a bit on correctness.)
  *
- * agg_input_types, agg_state_type, agg_result_type identify the input,
- * transition, and result types of the aggregate.  These should all be
- * resolved to actual types (ie, none should ever be ANYELEMENT etc).
+ * agg_input_types and agg_state_type identifies the input types of the
+ * aggregate.  These should be resolved to actual types (ie, none should
+ * ever be ANYELEMENT etc).
  * agg_input_collation is the aggregate function's input collation.
  *
  * For an ordered-set aggregate, remember that agg_input_types describes
  * the direct arguments followed by the aggregated arguments.
  *
- * transfn_oid, invtransfn_oid and finalfn_oid identify the funcs to be
- * called; the latter two may be InvalidOid.
+ * transfn_oid and invtransfn_oid identify the funcs to be called; the
+ * latter may be InvalidOid, however if invtransfn_oid is set then
+ * transfn_oid must also be set.
  *
  * Pointers to the constructed trees are returned into *transfnexpr,
- * *invtransfnexpr and *finalfnexpr. If there is no invtransfn or finalfn,
- * the respective pointers are set to NULL.  Since use of the invtransfn is
- * optional, NULL may be passed for invtransfnexpr.
+ * *invtransfnexpr. If there is no invtransfn, the respective pointer is set
+ * to NULL.  Since use of the invtransfn is optional, NULL may be passed for
+ * invtransfnexpr.
  */
 void
-build_aggregate_fnexprs(Oid *agg_input_types,
-						int agg_num_inputs,
-						int agg_num_direct_inputs,
-						int num_finalfn_inputs,
-						bool agg_variadic,
-						Oid agg_state_type,
-						Oid agg_result_type,
-						Oid agg_input_collation,
-						Oid transfn_oid,
-						Oid invtransfn_oid,
-						Oid finalfn_oid,
-						Expr **transfnexpr,
-						Expr **invtransfnexpr,
-						Expr **finalfnexpr)
+build_aggregate_transfn_expr(Oid *agg_input_types,
+							 int agg_num_inputs,
+							 int agg_num_direct_inputs,
+							 bool agg_variadic,
+							 Oid agg_state_type,
+							 Oid agg_input_collation,
+							 Oid transfn_oid,
+							 Oid invtransfn_oid,
+							 Expr **transfnexpr,
+							 Expr **invtransfnexpr)
 {
 	Param	   *argp;
 	List	   *args;
@@ -1929,13 +1925,24 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		else
 			*invtransfnexpr = NULL;
 	}
+}
 
-	/* see if we have a final function */
-	if (!OidIsValid(finalfn_oid))
-	{
-		*finalfnexpr = NULL;
-		return;
-	}
+/*
+ * Like build_aggregate_transfn_expr, but creates an expression tree for the
+ * final function of an aggregate, rather than the transition function.
+ */
+void
+build_aggregate_finalfn_expr(Oid *agg_input_types,
+							 int num_finalfn_inputs,
+							 Oid agg_state_type,
+							 Oid agg_result_type,
+							 Oid agg_input_collation,
+							 Oid finalfn_oid,
+							 Expr **finalfnexpr)
+{
+	Param	   *argp;
+	List	   *args;
+	int			i;
 
 	/*
 	 * Build expr tree for final function

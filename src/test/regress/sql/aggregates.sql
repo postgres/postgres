@@ -590,3 +590,168 @@ drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
+
+
+-- test aggregates with common transition functions share the same states
+begin work;
+
+create type avg_state as (total bigint, count bigint);
+
+create or replace function avg_transfn(state avg_state, n int) returns avg_state as
+$$
+declare new_state avg_state;
+begin
+	raise notice 'avg_transfn called with %', n;
+	if state is null then
+		if n is not null then
+			new_state.total := n;
+			new_state.count := 1;
+			return new_state;
+		end if;
+		return null;
+	elsif n is not null then
+		state.total := state.total + n;
+		state.count := state.count + 1;
+		return state;
+	end if;
+
+	return null;
+end
+$$ language plpgsql;
+
+create function avg_finalfn(state avg_state) returns int4 as
+$$
+begin
+	if state is null then
+		return NULL;
+	else
+		return state.total / state.count;
+	end if;
+end
+$$ language plpgsql;
+
+create function sum_finalfn(state avg_state) returns int4 as
+$$
+begin
+	if state is null then
+		return NULL;
+	else
+		return state.total;
+	end if;
+end
+$$ language plpgsql;
+
+create aggregate my_avg(int4)
+(
+   stype = avg_state,
+   sfunc = avg_transfn,
+   finalfunc = avg_finalfn
+);
+
+create aggregate my_sum(int4)
+(
+   stype = avg_state,
+   sfunc = avg_transfn,
+   finalfunc = sum_finalfn
+);
+
+-- aggregate state should be shared as aggs are the same.
+select my_avg(one),my_avg(one) from (values(1),(3)) t(one);
+
+-- aggregate state should be shared as transfn is the same for both aggs.
+select my_avg(one),my_sum(one) from (values(1),(3)) t(one);
+
+-- shouldn't share states due to the distinctness not matching.
+select my_avg(distinct one),my_sum(one) from (values(1),(3)) t(one);
+
+-- shouldn't share states due to the filter clause not matching.
+select my_avg(one) filter (where one > 1),my_sum(one) from (values(1),(3)) t(one);
+
+-- this should not share the state due to different input columns.
+select my_avg(one),my_sum(two) from (values(1,2),(3,4)) t(one,two);
+
+-- test that aggs with the same sfunc and initcond share the same agg state
+create aggregate my_sum_init(int4)
+(
+   stype = avg_state,
+   sfunc = avg_transfn,
+   finalfunc = sum_finalfn,
+   initcond = '(10,0)'
+);
+
+create aggregate my_avg_init(int4)
+(
+   stype = avg_state,
+   sfunc = avg_transfn,
+   finalfunc = avg_finalfn,
+   initcond = '(10,0)'
+);
+
+create aggregate my_avg_init2(int4)
+(
+   stype = avg_state,
+   sfunc = avg_transfn,
+   finalfunc = avg_finalfn,
+   initcond = '(4,0)'
+);
+
+-- state should be shared if INITCONDs are matching
+select my_sum_init(one),my_avg_init(one) from (values(1),(3)) t(one);
+
+-- Varying INITCONDs should cause the states not to be shared.
+select my_sum_init(one),my_avg_init2(one) from (values(1),(3)) t(one);
+
+rollback;
+
+-- test aggregate state sharing to ensure it works if one aggregate has a
+-- finalfn and the other one has none.
+begin work;
+
+create or replace function sum_transfn(state int4, n int4) returns int4 as
+$$
+declare new_state int4;
+begin
+	raise notice 'sum_transfn called with %', n;
+	if state is null then
+		if n is not null then
+			new_state := n;
+			return new_state;
+		end if;
+		return null;
+	elsif n is not null then
+		state := state + n;
+		return state;
+	end if;
+
+	return null;
+end
+$$ language plpgsql;
+
+create function halfsum_finalfn(state int4) returns int4 as
+$$
+begin
+	if state is null then
+		return NULL;
+	else
+		return state / 2;
+	end if;
+end
+$$ language plpgsql;
+
+create aggregate my_sum(int4)
+(
+   stype = int4,
+   sfunc = sum_transfn
+);
+
+create aggregate my_half_sum(int4)
+(
+   stype = int4,
+   sfunc = sum_transfn,
+   finalfunc = halfsum_finalfn
+);
+
+-- Agg state should be shared even though my_sum has no finalfn
+select my_sum(one),my_half_sum(one) from (values(1),(2),(3),(4)) t(one);
+
+rollback;

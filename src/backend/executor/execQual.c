@@ -4487,35 +4487,15 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_Aggref:
 			{
-				Aggref	   *aggref = (Aggref *) node;
 				AggrefExprState *astate = makeNode(AggrefExprState);
 
 				astate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalAggref;
 				if (parent && IsA(parent, AggState))
 				{
 					AggState   *aggstate = (AggState *) parent;
-					int			naggs;
 
 					aggstate->aggs = lcons(astate, aggstate->aggs);
-					naggs = ++aggstate->numaggs;
-
-					astate->aggdirectargs = (List *) ExecInitExpr((Expr *) aggref->aggdirectargs,
-																  parent);
-					astate->args = (List *) ExecInitExpr((Expr *) aggref->args,
-														 parent);
-					astate->aggfilter = ExecInitExpr(aggref->aggfilter,
-													 parent);
-
-					/*
-					 * Complain if the aggregate's arguments contain any
-					 * aggregates; nested agg functions are semantically
-					 * nonsensical.  (This should have been caught earlier,
-					 * but we defend against it here anyway.)
-					 */
-					if (naggs != aggstate->numaggs)
-						ereport(ERROR,
-								(errcode(ERRCODE_GROUPING_ERROR),
-						errmsg("aggregate function calls cannot be nested")));
+					aggstate->numaggs++;
 				}
 				else
 				{
