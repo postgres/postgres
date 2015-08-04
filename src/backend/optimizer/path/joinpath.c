@@ -118,7 +118,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * is usually no need to create a parameterized result path unless there
 	 * is a join order restriction that prevents joining one of our input rels
 	 * directly to the parameter source rel instead of joining to the other
-	 * input rel.  (But see exception in try_nestloop_path.)  This restriction
+	 * input rel.  (But see allow_star_schema_join().)	This restriction
 	 * reduces the number of parameterized paths we have to deal with at
 	 * higher join levels, without compromising the quality of the resulting
 	 * plan.  We express the restriction as a Relids set that must overlap the
@@ -271,6 +271,74 @@ add_paths_to_joinrel(PlannerInfo *root,
 }
 
 /*
+ * We override the param_source_rels heuristic to accept nestloop paths in
+ * which the outer rel satisfies some but not all of the inner path's
+ * parameterization.  This is necessary to get good plans for star-schema
+ * scenarios, in which a parameterized path for a large table may require
+ * parameters from multiple small tables that will not get joined directly to
+ * each other.  We can handle that by stacking nestloops that have the small
+ * tables on the outside; but this breaks the rule the param_source_rels
+ * heuristic is based on, namely that parameters should not be passed down
+ * across joins unless there's a join-order-constraint-based reason to do so.
+ * So we ignore the param_source_rels restriction when this case applies.
+ *
+ * However, there's a pitfall: suppose the inner rel (call it A) has a
+ * parameter that is a PlaceHolderVar, and that PHV's minimum eval_at set
+ * includes the outer rel (B) and some third rel (C).  If we treat this as a
+ * star-schema case and create a B/A nestloop join that's parameterized by C,
+ * we would end up with a plan in which the PHV's expression has to be
+ * evaluated as a nestloop parameter at the B/A join; and the executor is only
+ * set up to handle simple Vars as NestLoopParams.  Rather than add complexity
+ * and overhead to the executor for such corner cases, it seems better to
+ * forbid the join.  (Note that existence of such a PHV probably means there
+ * is a join order constraint that will cause us to consider joining B and C
+ * directly; so we can still make use of A's parameterized path, and there is
+ * no need for the star-schema exception.)	To implement this exception to the
+ * exception, we check whether any PHVs used in the query could pose such a
+ * hazard.  We don't have any simple way of checking whether a risky PHV would
+ * actually be used in the inner plan, and the case is so unusual that it
+ * doesn't seem worth working very hard on it.
+ *
+ * allow_star_schema_join() returns TRUE if the param_source_rels restriction
+ * should be overridden, ie, it's okay to perform this join.
+ */
+static bool
+allow_star_schema_join(PlannerInfo *root,
+					   Path *outer_path,
+					   Path *inner_path)
+{
+	Relids		innerparams = PATH_REQ_OUTER(inner_path);
+	Relids		outerrelids = outer_path->parent->relids;
+	ListCell   *lc;
+
+	/*
+	 * It's not a star-schema case unless the outer rel provides some but not
+	 * all of the inner rel's parameterization.
+	 */
+	if (!(bms_overlap(innerparams, outerrelids) &&
+		  bms_nonempty_difference(innerparams, outerrelids)))
+		return false;
+
+	/* Check for hazardous PHVs */
+	foreach(lc, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
+
+		if (!bms_is_subset(phinfo->ph_eval_at, innerparams))
+			continue;			/* ignore, could not be a nestloop param */
+		if (!bms_overlap(phinfo->ph_eval_at, outerrelids))
+			continue;			/* ignore, not relevant to this join */
+		if (bms_is_subset(phinfo->ph_eval_at, outerrelids))
+			continue;			/* safe, it can be eval'd within outerrel */
+		/* Otherwise, it's potentially unsafe, so reject the join */
+		return false;
+	}
+
+	/* OK to perform the join */
+	return true;
+}
+
+/*
  * try_nestloop_path
  *	  Consider a nestloop join path; if it appears useful, push it into
  *	  the joinrel's pathlist via add_path().
@@ -289,36 +357,18 @@ try_nestloop_path(PlannerInfo *root,
 
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
-	 * parameterization wouldn't be sensible.
+	 * parameterization wouldn't be sensible --- unless allow_star_schema_join
+	 * says to allow it anyway.
 	 */
 	required_outer = calc_nestloop_required_outer(outer_path,
 												  inner_path);
 	if (required_outer &&
-		!bms_overlap(required_outer, extra->param_source_rels))
+		!bms_overlap(required_outer, extra->param_source_rels) &&
+		!allow_star_schema_join(root, outer_path, inner_path))
 	{
-		/*
-		 * We override the param_source_rels heuristic to accept nestloop
-		 * paths in which the outer rel satisfies some but not all of the
-		 * inner path's parameterization.  This is necessary to get good plans
-		 * for star-schema scenarios, in which a parameterized path for a
-		 * large table may require parameters from multiple small tables that
-		 * will not get joined directly to each other.  We can handle that by
-		 * stacking nestloops that have the small tables on the outside; but
-		 * this breaks the rule the param_source_rels heuristic is based on,
-		 * namely that parameters should not be passed down across joins
-		 * unless there's a join-order-constraint-based reason to do so.  So
-		 * ignore the param_source_rels restriction when this case applies.
-		 */
-		Relids		outerrelids = outer_path->parent->relids;
-		Relids		innerparams = PATH_REQ_OUTER(inner_path);
-
-		if (!(bms_overlap(innerparams, outerrelids) &&
-			  bms_nonempty_difference(innerparams, outerrelids)))
-		{
-			/* Waste no memory when we reject a path here */
-			bms_free(required_outer);
-			return;
-		}
+		/* Waste no memory when we reject a path here */
+		bms_free(required_outer);
+		return;
 	}
 
 	/*
