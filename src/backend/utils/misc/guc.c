@@ -2215,7 +2215,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_XBLOCKS
 		},
 		&XLOGbuffers,
-		-1, -1, INT_MAX,
+		-1, -1, (INT_MAX / XLOG_BLCKSZ),
 		check_wal_buffers, NULL, NULL
 	},
 
