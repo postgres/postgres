@@ -356,9 +356,9 @@ struct Tuplesortstate
 
 	/*
 	 * Additional state for managing "abbreviated key" sortsupport routines
-	 * (which currently may be used by all cases except the Datum sort case
-	 * and hash index case).  Tracks the intervals at which the optimization's
-	 * effectiveness is tested.
+	 * (which currently may be used by all cases except the hash index case).
+	 * Tracks the intervals at which the optimization's effectiveness is
+	 * tested.
 	 */
 	int64		abbrevNext;		/* Tuple # at which to next check
 								 * applicability */
