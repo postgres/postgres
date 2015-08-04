@@ -31,6 +31,9 @@ CREATE TYPE shell;   -- fail, type already present
 DROP TYPE shell;
 DROP TYPE shell;     -- fail, type not exist
 
+-- also, let's leave one around for purposes of pg_dump testing
+CREATE TYPE myshell;
+
 --
 -- Test type-related default values (broken in releases before PG 7.2)
 --

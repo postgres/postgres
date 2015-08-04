@@ -161,7 +161,7 @@ typedef struct _typeInfo
 	char		typtype;		/* 'b', 'c', etc */
 	bool		isArray;		/* true if auto-generated array type */
 	bool		isDefined;		/* true if typisdefined */
-	/* If it's a dumpable base type, we create a "shell type" entry for it */
+	/* If needed, we'll create a "shell type" entry for it; link that here: */
 	struct _shellTypeInfo *shellType;	/* shell-type entry, or NULL */
 	/* If it's a domain, we store links to its constraints here: */
 	int			nDomChecks;
