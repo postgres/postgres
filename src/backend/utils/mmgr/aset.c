@@ -112,9 +112,9 @@
  *
  * With the current parameters, request sizes up to 8K are treated as chunks,
  * larger requests go into dedicated blocks.  Change ALLOCSET_NUM_FREELISTS
- * to adjust the boundary point.  (But in contexts with small maxBlockSize,
- * we may set the allocChunkLimit to less than 8K, so as to avoid space
- * wastage.)
+ * to adjust the boundary point; and adjust ALLOCSET_SEPARATE_THRESHOLD in
+ * memutils.h to agree.  (Note: in contexts with small maxBlockSize, we may
+ * set the allocChunkLimit to less than 8K, so as to avoid space wastage.)
  *--------------------
  */
 
@@ -476,7 +476,12 @@ AllocSetContextCreate(MemoryContext parent,
 	 * We have to have allocChunkLimit a power of two, because the requested
 	 * and actually-allocated sizes of any chunk must be on the same side of
 	 * the limit, else we get confused about whether the chunk is "big".
+	 *
+	 * Also, allocChunkLimit must not exceed ALLOCSET_SEPARATE_THRESHOLD.
 	 */
+	StaticAssertStmt(ALLOC_CHUNK_LIMIT == ALLOCSET_SEPARATE_THRESHOLD,
+					 "ALLOC_CHUNK_LIMIT != ALLOCSET_SEPARATE_THRESHOLD");
+
 	context->allocChunkLimit = ALLOC_CHUNK_LIMIT;
 	while ((Size) (context->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
 		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
