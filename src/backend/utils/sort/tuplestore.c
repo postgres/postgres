@@ -261,7 +261,14 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 
 	state->memtupdeleted = 0;
 	state->memtupcount = 0;
-	state->memtupsize = 1024;	/* initial guess */
+
+	/*
+	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
+	 * see comments in grow_memtuples().
+	 */
+	state->memtupsize = Max(16384 / sizeof(void *),
+							ALLOCSET_SEPARATE_THRESHOLD / sizeof(void *) + 1);
+
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
 
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
@@ -644,6 +651,8 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 						repalloc(state->memtuples,
 								 state->memtupsize * sizeof(void *));
 					USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+					if (LACKMEM(state))
+						elog(ERROR, "unexpected out-of-memory situation in tuplestore");
 				}
 			}
 

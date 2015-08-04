@@ -557,7 +557,14 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	state->tapeset = NULL;
 
 	state->memtupcount = 0;
-	state->memtupsize = 1024;	/* initial guess */
+
+	/*
+	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
+	 * see comments in grow_memtuples().
+	 */
+	state->memtupsize = Max(1024,
+						ALLOCSET_SEPARATE_THRESHOLD / sizeof(SortTuple) + 1);
+
 	state->memtuples = (SortTuple *) palloc(state->memtupsize * sizeof(SortTuple));
 
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
@@ -1000,7 +1007,7 @@ grow_memtuples(Tuplesortstate *state)
 				 state->memtupsize * sizeof(SortTuple));
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 	if (LACKMEM(state))
-		elog(ERROR, "unexpected out-of-memory situation during sort");
+		elog(ERROR, "unexpected out-of-memory situation in tuplesort");
 	return true;
 }
 
