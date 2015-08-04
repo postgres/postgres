@@ -2467,6 +2467,35 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "TO") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 
+/* CREATE TEMP/TEMPORARY SEQUENCE <name> */
+	else if ((pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
+			  pg_strcasecmp(prev2_wd, "SEQUENCE") == 0) ||
+			 (pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
+			  (pg_strcasecmp(prev3_wd, "TEMP") == 0 ||
+			   pg_strcasecmp(prev3_wd, "TEMPORARY") == 0) &&
+			  pg_strcasecmp(prev2_wd, "SEQUENCE") == 0))
+	{
+		static const char *const list_CREATESEQUENCE[] =
+		{"INCREMENT BY", "MINVALUE", "MAXVALUE", "NO", "CACHE",
+		 "CYCLE", "OWNED BY", "START WITH", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATESEQUENCE);
+	}
+/* CREATE TEMP/TEMPORARY SEQUENCE <name> NO */
+	else if (((pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
+			  pg_strcasecmp(prev3_wd, "SEQUENCE") == 0) ||
+			 (pg_strcasecmp(prev5_wd, "CREATE") == 0 &&
+			  (pg_strcasecmp(prev4_wd, "TEMP") == 0 ||
+			   pg_strcasecmp(prev4_wd, "TEMPORARY") == 0) &&
+			  pg_strcasecmp(prev3_wd, "SEQUENCE") == 0)) &&
+			 pg_strcasecmp(prev_wd, "NO") == 0)
+	{
+		static const char *const list_CREATESEQUENCE2[] =
+		{"MINVALUE", "MAXVALUE", "CYCLE", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATESEQUENCE2);
+	}
+
 /* CREATE SERVER <name> */
 	else if (pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "SERVER") == 0)
