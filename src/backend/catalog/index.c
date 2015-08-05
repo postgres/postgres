@@ -2161,6 +2161,7 @@ IndexBuildHeapScan(Relation heapRelation,
 {
 	return IndexBuildHeapRangeScan(heapRelation, indexRelation,
 								   indexInfo, allow_sync,
+								   false,
 								   0, InvalidBlockNumber,
 								   callback, callback_state);
 }
@@ -2170,12 +2171,17 @@ IndexBuildHeapScan(Relation heapRelation,
  * number of blocks are scanned.  Scan to end-of-rel can be signalled by
  * passing InvalidBlockNumber as numblocks.  Note that restricting the range
  * to scan cannot be done when requesting syncscan.
+ *
+ * When "anyvisible" mode is requested, all tuples visible to any transaction
+ * are considered, including those inserted or deleted by transactions that are
+ * still in progress.
  */
 double
 IndexBuildHeapRangeScan(Relation heapRelation,
 						Relation indexRelation,
 						IndexInfo *indexInfo,
 						bool allow_sync,
+						bool anyvisible,
 						BlockNumber start_blockno,
 						BlockNumber numblocks,
 						IndexBuildCallback callback,
@@ -2210,6 +2216,12 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 						   indexInfo->ii_ExclusionOps != NULL);
 
 	/*
+	 * "Any visible" mode is not compatible with uniqueness checks; make sure
+	 * only one of those is requested.
+	 */
+	Assert(!(anyvisible && checking_uniqueness));
+
+	/*
 	 * Need an EState for evaluation of index expressions and partial-index
 	 * predicates.  Also a slot to hold the current tuple.
 	 */
@@ -2236,6 +2248,9 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	{
 		snapshot = RegisterSnapshot(GetTransactionSnapshot());
 		OldestXmin = InvalidTransactionId;		/* not used */
+
+		/* "any visible" mode is not compatible with this */
+		Assert(!anyvisible);
 	}
 	else
 	{
@@ -2364,6 +2379,17 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 				case HEAPTUPLE_INSERT_IN_PROGRESS:
 
 					/*
+					 * In "anyvisible" mode, this tuple is visible and we don't
+					 * need any further checks.
+					 */
+					if (anyvisible)
+					{
+						indexIt = true;
+						tupleIsAlive = true;
+						break;
+					}
+
+					/*
 					 * Since caller should hold ShareLock or better, normally
 					 * the only way to see this is if it was inserted earlier
 					 * in our own transaction.  However, it can happen in
@@ -2409,8 +2435,16 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 
 					/*
 					 * As with INSERT_IN_PROGRESS case, this is unexpected
-					 * unless it's our own deletion or a system catalog.
+					 * unless it's our own deletion or a system catalog;
+					 * but in anyvisible mode, this tuple is visible.
 					 */
+					if (anyvisible)
+					{
+						indexIt = true;
+						tupleIsAlive = false;
+						break;
+					}
+
 					xwait = HeapTupleHeaderGetUpdateXid(heapTuple->t_data);
 					if (!TransactionIdIsCurrentTransactionId(xwait))
 					{

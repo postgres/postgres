@@ -696,7 +696,7 @@ brinbuildempty(PG_FUNCTION_ARGS)
  *
  * XXX we could mark item tuples as "dirty" (when a minimum or maximum heap
  * tuple is deleted), meaning the need to re-run summarization on the affected
- * range.  Need to an extra flag in brintuples for that.
+ * range.  Would need to add an extra flag in brintuples for that.
  */
 Datum
 brinbulkdelete(PG_FUNCTION_ARGS)
@@ -951,9 +951,13 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	 * Execute the partial heap scan covering the heap blocks in the specified
 	 * page range, summarizing the heap tuples in it.  This scan stops just
 	 * short of brinbuildCallback creating the new index entry.
+	 *
+	 * Note that it is critical we use the "any visible" mode of
+	 * IndexBuildHeapRangeScan here: otherwise, we would miss tuples inserted
+	 * by transactions that are still in progress, among other corner cases.
 	 */
 	state->bs_currRangeStart = heapBlk;
-	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false,
+	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false, true,
 							heapBlk, state->bs_pagesPerRange,
 							brinbuildCallback, (void *) state);
 
@@ -1058,36 +1062,6 @@ brinsummarize(Relation index, Relation heapRel, double *numSummarized,
 				state = initialize_brin_buildstate(index, revmap,
 												   pagesPerRange);
 				indexInfo = BuildIndexInfo(index);
-
-				/*
-				 * We only have ShareUpdateExclusiveLock on the table, and
-				 * therefore other sessions may insert tuples into the range
-				 * we're going to scan.  This is okay, because we take
-				 * additional precautions to avoid losing the additional
-				 * tuples; see comments in summarize_range.  Set the
-				 * concurrent flag, which causes IndexBuildHeapRangeScan to
-				 * use a snapshot other than SnapshotAny, and silences
-				 * warnings emitted there.
-				 */
-				indexInfo->ii_Concurrent = true;
-
-				/*
-				 * If using transaction-snapshot mode, it would be possible
-				 * for another transaction to insert a tuple that's not
-				 * visible to our snapshot if we have already acquired one,
-				 * when in snapshot-isolation mode; therefore, disallow this
-				 * from running in such a transaction unless a snapshot hasn't
-				 * been acquired yet.
-				 *
-				 * This code is called by VACUUM and
-				 * brin_summarize_new_values. Have the error message mention
-				 * the latter because VACUUM cannot run in a transaction and
-				 * thus cannot cause this issue.
-				 */
-				if (IsolationUsesXactSnapshot() && FirstSnapshotSet)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-							 errmsg("brin_summarize_new_values() cannot run in a transaction that has already obtained a snapshot")));
 			}
 			summarize_range(indexInfo, state, heapRel, heapBlk);
 
@@ -1111,7 +1085,10 @@ brinsummarize(Relation index, Relation heapRel, double *numSummarized,
 	/* free resources */
 	brinRevmapTerminate(revmap);
 	if (state)
+	{
 		terminate_brin_buildstate(state);
+		pfree(indexInfo);
+	}
 }
 
 /*
