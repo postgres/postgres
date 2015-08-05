@@ -18,9 +18,6 @@
  */
 #include "postgres.h"
 
-/* See ilist.h */
-#define ILIST_INCLUDE_DEFINITIONS
-
 #include "lib/ilist.h"
 
 /*

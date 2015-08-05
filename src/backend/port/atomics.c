@@ -13,13 +13,6 @@
  */
 #include "postgres.h"
 
-/*
- * We want the functions below to be inline; but if the compiler doesn't
- * support that, fall back on providing them as regular functions.  See
- * STATIC_IF_INLINE in c.h.
- */
-#define ATOMICS_INCLUDE_DEFINITIONS
-
 #include "miscadmin.h"
 #include "port/atomics.h"
 #include "storage/spin.h"

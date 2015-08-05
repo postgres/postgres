@@ -82,8 +82,6 @@ typedef struct pg_atomic_uint64
 
 #endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
 
-#if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
-
 #if !defined(PG_HAVE_SPIN_DELAY)
 /*
  * This sequence is equivalent to the PAUSE instruction ("rep" is
@@ -251,5 +249,3 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 #endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
 
 #endif /* HAVE_ATOMICS */
-
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

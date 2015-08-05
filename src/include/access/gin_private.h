@@ -952,11 +952,8 @@ extern ItemPointer ginMergeItemPointers(ItemPointerData *a, uint32 na,
 
 /*
  * Merging the results of several gin scans compares item pointers a lot,
- * so we want this to be inlined. But if the compiler doesn't support that,
- * fall back on the non-inline version from itemptr.c. See STATIC_IF_INLINE in
- * c.h.
+ * so we want this to be inlined.
  */
-#ifdef PG_USE_INLINE
 static inline int
 ginCompareItemPointers(ItemPointer a, ItemPointer b)
 {
@@ -970,8 +967,5 @@ ginCompareItemPointers(ItemPointer a, ItemPointer b)
 	else
 		return -1;
 }
-#else
-#define ginCompareItemPointers(a, b) ItemPointerCompare(a, b)
-#endif   /* PG_USE_INLINE */
 
 #endif   /* GIN_PRIVATE_H */

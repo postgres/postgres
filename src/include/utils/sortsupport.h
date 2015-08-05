@@ -193,23 +193,10 @@ typedef struct SortSupportData
 
 
 /*
- * ApplySortComparator should be inlined if possible.  See STATIC_IF_INLINE
- * in c.h.
- */
-#ifndef PG_USE_INLINE
-extern int ApplySortComparator(Datum datum1, bool isNull1,
-					Datum datum2, bool isNull2,
-					SortSupport ssup);
-extern int ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
-							  Datum datum2, bool isNull2,
-							  SortSupport ssup);
-#endif   /* !PG_USE_INLINE */
-#if defined(PG_USE_INLINE) || defined(SORTSUPPORT_INCLUDE_DEFINITIONS)
-/*
  * Apply a sort comparator function and return a 3-way comparison result.
  * This takes care of handling reverse-sort and NULLs-ordering properly.
  */
-STATIC_IF_INLINE int
+static inline int
 ApplySortComparator(Datum datum1, bool isNull1,
 					Datum datum2, bool isNull2,
 					SortSupport ssup)
@@ -247,7 +234,7 @@ ApplySortComparator(Datum datum1, bool isNull1,
  * authoritative comparator.  This takes care of handling reverse-sort and
  * NULLs-ordering properly.
  */
-STATIC_IF_INLINE int
+static inline int
 ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
 							  Datum datum2, bool isNull2,
 							  SortSupport ssup)
@@ -279,7 +266,6 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
 
 	return compare;
 }
-#endif   /*-- PG_USE_INLINE || SORTSUPPORT_INCLUDE_DEFINITIONS */
 
 /* Other functions in utils/sort/sortsupport.c */
 extern void PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup);

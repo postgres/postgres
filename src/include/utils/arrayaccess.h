@@ -44,20 +44,8 @@ typedef struct array_iter
 	int			bitmask;		/* mask for current bit in nulls bitmap */
 } array_iter;
 
-/*
- * We want the functions below to be inline; but if the compiler doesn't
- * support that, fall back on providing them as regular functions.  See
- * STATIC_IF_INLINE in c.h.
- */
-#ifndef PG_USE_INLINE
-extern void array_iter_setup(array_iter *it, AnyArrayType *a);
-extern Datum array_iter_next(array_iter *it, bool *isnull, int i,
-				int elmlen, bool elmbyval, char elmalign);
-#endif   /* !PG_USE_INLINE */
 
-#if defined(PG_USE_INLINE) || defined(ARRAYACCESS_INCLUDE_DEFINITIONS)
-
-STATIC_IF_INLINE void
+static inline void
 array_iter_setup(array_iter *it, AnyArrayType *a)
 {
 	if (VARATT_IS_EXPANDED_HEADER(a))
@@ -89,7 +77,7 @@ array_iter_setup(array_iter *it, AnyArrayType *a)
 	it->bitmask = 1;
 }
 
-STATIC_IF_INLINE Datum
+static inline Datum
 array_iter_next(array_iter *it, bool *isnull, int i,
 				int elmlen, bool elmbyval, char elmalign)
 {
@@ -126,8 +114,5 @@ array_iter_next(array_iter *it, bool *isnull, int i,
 
 	return ret;
 }
-
-#endif   /* defined(PG_USE_INLINE) ||
-								 * defined(ARRAYACCESS_INCLUDE_DEFINITIONS) */
 
 #endif   /* ARRAYACCESS_H */

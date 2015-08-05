@@ -49,18 +49,12 @@ typedef struct pg_atomic_uint64
 	volatile uint64 value;
 } pg_atomic_uint64;
 
-#endif /* defined(HAVE_ATOMICS) */
-
-
-#if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
-
-#if defined(HAVE_ATOMICS)
 
 #define MINOR_FENCE (_Asm_fence) (_UP_CALL_FENCE | _UP_SYS_FENCE | \
 								 _DOWN_CALL_FENCE | _DOWN_SYS_FENCE )
 
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
-STATIC_IF_INLINE bool
+static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
@@ -88,7 +82,7 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 
 
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64
-STATIC_IF_INLINE bool
+static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
@@ -110,5 +104,3 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 #undef MINOR_FENCE
 
 #endif /* defined(HAVE_ATOMICS) */
-
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

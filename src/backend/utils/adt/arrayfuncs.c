@@ -20,9 +20,6 @@
 #endif
 #include <math.h>
 
-/* See arrayaccess.h */
-#define ARRAYACCESS_INCLUDE_DEFINITIONS
-
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"

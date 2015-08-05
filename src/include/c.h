@@ -54,6 +54,20 @@
 #include "pg_config_manual.h"	/* must be after pg_config.h */
 
 /*
+ * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
+ * to work around compiler bugs and might also be useful for investigatory
+ * purposes.
+ *
+ * This is done early (in slightly the wrong section) for two reasons: a) we
+ * don't want to include headers with different settings of this b)
+ * functionality later in this file might want to rely on inline functions.
+ */
+#ifdef PG_FORCE_DISABLE_INLINE
+#undef inline
+#define inline
+#endif
+
+/*
  * We always rely on the WIN32 macro being set by our build system,
  * but _WIN32 is the compiler pre-defined macro. So make sure we define
  * WIN32 whenever _WIN32 is set, to facilitate standalone building.
@@ -918,34 +932,6 @@ typedef NameData *Name;
 #else
 #define pg_unreachable() abort()
 #endif
-
-
-/*
- * Function inlining support -- Allow modules to define functions that may be
- * inlined, if the compiler supports it.
- *
- * The function bodies must be defined in the module header prefixed by
- * STATIC_IF_INLINE, protected by a cpp symbol that the module's .c file must
- * define.  If the compiler doesn't support inline functions, the function
- * definitions are pulled in by the .c file as regular (not inline) symbols.
- *
- * The header must also declare the functions' prototypes, protected by
- * !PG_USE_INLINE.
- */
-
-/* declarations which are only visible when not inlining and in the .c file */
-#ifdef PG_USE_INLINE
-#define STATIC_IF_INLINE static inline
-#else
-#define STATIC_IF_INLINE
-#endif   /* PG_USE_INLINE */
-
-/* declarations which are marked inline when inlining, extern otherwise */
-#ifdef PG_USE_INLINE
-#define STATIC_IF_INLINE_DECLARE static inline
-#else
-#define STATIC_IF_INLINE_DECLARE extern
-#endif   /* PG_USE_INLINE */
 
 
 /* ----------------------------------------------------------------

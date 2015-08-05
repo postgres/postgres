@@ -12,6 +12,14 @@ if test "$GCC" != yes ; then
   esac
 fi
 
+# "IBM XL C/C++ for AIX, V12.1" miscompiles, for 32-bit, some inline
+# expansions of ginCompareItemPointers() "long long" arithmetic.  To
+# take advantage of inlining, build a 64-bit PostgreSQL.
+test "$GCC" != yes -a $(getconf HARDWARE_BITMODE) == '32'; then
+  echo "$as_me: WARNING: disabling inlining on 32 bit aix due to a bug in xlc" 2>&1
+  CPPFLAGS="$CPPFLAGS -DPG_FORCE_DISABLE_INLINE"
+fi
+
 # Native memset() is faster, tested on:
 # 	AIX 5.1 and 5.2, XLC 6.0 (IBM's cc)
 # 	AIX 5.3 ML3, gcc 4.0.1

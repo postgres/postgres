@@ -11006,44 +11006,6 @@ _ACEOF
     ;;
 esac
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for quiet inline (no complaint if unreferenced)" >&5
-$as_echo_n "checking for quiet inline (no complaint if unreferenced)... " >&6; }
-if ${pgac_cv_c_inline_quietly+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  pgac_cv_c_inline_quietly=no
-  if test "$ac_cv_c_inline" != no; then
-    pgac_c_inline_save_werror=$ac_c_werror_flag
-    ac_c_werror_flag=yes
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include "$srcdir/config/test_quiet_include.h"
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  pgac_cv_c_inline_quietly=yes
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-    ac_c_werror_flag=$pgac_c_inline_save_werror
-  fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_c_inline_quietly" >&5
-$as_echo "$pgac_cv_c_inline_quietly" >&6; }
-if test "$pgac_cv_c_inline_quietly" != no; then
-
-cat >>confdefs.h <<_ACEOF
-#define PG_USE_INLINE 1
-_ACEOF
-
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for printf format archetype" >&5
 $as_echo_n "checking for printf format archetype... " >&6; }
 if ${pgac_cv_printf_archetype+:} false; then :
