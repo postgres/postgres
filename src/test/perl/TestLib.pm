@@ -226,6 +226,7 @@ sub psql
 	print("# Running SQL command: $sql\n");
 	run [ 'psql', '-X', '-A', '-t', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql, '>', \$stdout, '2>', \$stderr or die;
 	chomp $stdout;
+	$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 	return $stdout;
 }
 
@@ -242,7 +243,9 @@ sub slurp_file
 {
 	local $/;
 	local @ARGV = @_;
-	<>
+	my $contents = <>;
+	$contents =~ s/\r//g if $Config{osname} eq 'msys';
+	return $contents;
 }
 
 sub system_or_bail
