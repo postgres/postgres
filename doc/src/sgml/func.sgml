@@ -5203,10 +5203,37 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     The quantifiers <literal>{1,1}</> and <literal>{1,1}?</>
     can be used to force greediness or non-greediness, respectively,
     on a subexpression or a whole RE.
+    This is useful when you need the whole RE to have a greediness attribute
+    different from what's deduced from its elements.  As an example,
+    suppose that we are trying to separate a string containing some digits
+    into the digits and the parts before and after them.  We might try to
+    do that like this:
+<screen>
+SELECT regexp_matches('abc01234xyz', '(.*)(\d+)(.*)');
+<lineannotation>Result: </lineannotation><computeroutput>{abc0123,4,xyz}</computeroutput>
+</screen>
+    That didn't work: the first <literal>.*</> is greedy so
+    it <quote>eats</> as much as it can, leaving the <literal>\d+</> to
+    match at the last possible place, the last digit.  We might try to fix
+    that by making it non-greedy:
+<screen>
+SELECT regexp_matches('abc01234xyz', '(.*?)(\d+)(.*)');
+<lineannotation>Result: </lineannotation><computeroutput>{abc,0,""}</computeroutput>
+</screen>
+    That didn't work either, because now the RE as a whole is non-greedy
+    and so it ends the overall match as soon as possible.  We can get what
+    we want by forcing the RE as a whole to be greedy:
+<screen>
+SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
+<lineannotation>Result: </lineannotation><computeroutput>{abc,01234,xyz}</computeroutput>
+</screen>
+    Controlling the RE's overall greediness separately from its components'
+    greediness allows great flexibility in handling variable-length patterns.
    </para>
 
    <para>
-    Match lengths are measured in characters, not collating elements.
+    When deciding what is a longer or shorter match,
+    match lengths are measured in characters, not collating elements.
     An empty string is considered longer than no match at all.
     For example:
     <literal>bb*</>
