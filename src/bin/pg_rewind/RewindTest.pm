@@ -41,7 +41,7 @@ use TestLib;
 use Test::More;
 
 use File::Copy;
-use File::Path qw(remove_tree);
+use File::Path qw(rmtree);
 use IPC::Run qw(run start);
 
 use Exporter 'import';
@@ -166,7 +166,7 @@ sub append_to_file
 sub setup_cluster
 {
 	# Initialize master, data checksums are mandatory
-	remove_tree($test_master_datadir);
+	rmtree($test_master_datadir);
 	standard_initdb($test_master_datadir);
 
 	# Custom parameters for master's postgresql.conf
@@ -202,7 +202,7 @@ sub create_standby
 {
 
 	# Set up standby with necessary parameter
-	remove_tree $test_standby_datadir;
+	rmtree $test_standby_datadir;
 
 	# Base backup is taken with xlog files included
 	system_or_bail('pg_basebackup', '-D', $test_standby_datadir,
