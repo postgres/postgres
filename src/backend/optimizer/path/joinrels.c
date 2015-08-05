@@ -470,10 +470,14 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			/*
 			 * Otherwise, the proposed join overlaps the RHS but isn't a valid
 			 * implementation of this SJ.  It might still be a legal join,
-			 * however, if it does not overlap the LHS.
+			 * however, if it does not overlap the LHS.  But we never allow
+			 * violations of the RHS of SEMI or ANTI joins.  (In practice,
+			 * therefore, only LEFT joins ever allow RHS violation.)
 			 */
-			if (bms_overlap(joinrelids, sjinfo->min_lefthand))
-				return false;
+			if (sjinfo->jointype == JOIN_SEMI ||
+				sjinfo->jointype == JOIN_ANTI ||
+				bms_overlap(joinrelids, sjinfo->min_lefthand))
+				return false;	/* invalid join path */
 
 			/*----------
 			 * If both inputs overlap the RHS, assume that it's OK.  Since the
@@ -498,15 +502,14 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * Set flag here to check at bottom of loop.
 			 *----------
 			 */
-			if (sjinfo->jointype != JOIN_SEMI &&
-				bms_overlap(rel1->relids, sjinfo->min_righthand) &&
+			if (bms_overlap(rel1->relids, sjinfo->min_righthand) &&
 				bms_overlap(rel2->relids, sjinfo->min_righthand))
 			{
 				/* both overlap; assume OK */
 			}
 			else
 			{
-				/* one overlaps, the other doesn't (or it's a semijoin) */
+				/* one overlaps, the other doesn't */
 				is_valid_inner = false;
 			}
 		}
