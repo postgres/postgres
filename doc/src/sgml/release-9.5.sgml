@@ -412,6 +412,17 @@ FIXME: Add Andres
 
       <listitem>
 <!--
+2015-04-27 [dcbf594]  Stephe..: Improve qual pushdown for RLS and SB views
+-->
+       <para>
+        Allow non-LEAKPROOF functions to be passed into security barrier
+        views if the function does not reference any table columns
+        (Dean Rasheed)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2014-11-04 [5028f22] Heikki..: Switch to CRC-32C in WAL and other places.
 2015-02-10 [025c024] Heikki..: Speed up CRC calculation using slicing-by-8 alg..
 2015-04-14 [3dc2d62] Heikki..: Use Intel SSE 4.2 CRC instructions where availa..
