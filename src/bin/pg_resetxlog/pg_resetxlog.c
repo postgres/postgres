@@ -56,8 +56,6 @@
 #include "common/restricted_token.h"
 #include "storage/large_object.h"
 #include "pg_getopt.h"
-#include "replication/logical.h"
-#include "replication/origin.h"
 
 
 static ControlFileData ControlFile;		/* pg_control values */
