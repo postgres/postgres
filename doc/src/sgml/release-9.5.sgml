@@ -440,7 +440,7 @@ FIXME: Add Andres
 -->
        <para>
         Speed up <acronym>CRC</> (cyclic redundancy check) computations
-        (Abhijit Menon-Sen, Heikki Linnakangas)
+        and switch to CRC-32C (Abhijit Menon-Sen, Heikki Linnakangas)
        </para>
       </listitem>
 
