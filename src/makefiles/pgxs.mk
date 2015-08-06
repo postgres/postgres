@@ -202,7 +202,7 @@ endif # MODULE_big
 
 clean:
 ifdef MODULES
-	rm -f $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .o, $(MODULES)) $(WIN32RES)
+	rm -f $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .o, $(MODULES)) $(if $(PGFILEDESC),$(WIN32RES))
 endif
 ifdef DATA_built
 	rm -f $(DATA_built)
