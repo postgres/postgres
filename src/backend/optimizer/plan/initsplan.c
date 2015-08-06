@@ -1129,17 +1129,6 @@ make_outerjoininfo(PlannerInfo *root,
 									right_rels);
 
 	/*
-	 * If we have a degenerate join clause that doesn't mention any RHS rels,
-	 * force the min RHS to be the syntactic RHS; otherwise we can end up
-	 * making serious errors, like putting the LHS on the wrong side of an
-	 * outer join.  It seems to be safe to not do this when we have a
-	 * contribution from inner_join_rels, though; that's enough to pin the SJ
-	 * to occur at a reasonable place in the tree.
-	 */
-	if (bms_is_empty(min_righthand))
-		min_righthand = bms_copy(right_rels);
-
-	/*
 	 * Now check previous outer joins for ordering restrictions.
 	 */
 	foreach(l, root->join_info_list)
@@ -1181,9 +1170,15 @@ make_outerjoininfo(PlannerInfo *root,
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs; otherwise we must add
-		 * the lower OJ's full syntactic relset to min_righthand.  Also, we
-		 * must preserve ordering anyway if either the current join or the
-		 * lower OJ is either a semijoin or an antijoin.
+		 * the lower OJ's full syntactic relset to min_righthand.
+		 *
+		 * Also, if our join condition does not use the lower join's LHS
+		 * either, force the ordering to be preserved.  Otherwise we can end
+		 * up with SpecialJoinInfos with identical min_righthands, which can
+		 * confuse join_is_legal (see discussion in backend/optimizer/README).
+		 *
+		 * Also, we must preserve ordering anyway if either the current join
+		 * or the lower OJ is either a semijoin or an antijoin.
 		 *
 		 * Here, we have to consider that "our join condition" includes any
 		 * clauses that syntactically appeared above the lower OJ and below
@@ -1199,6 +1194,7 @@ make_outerjoininfo(PlannerInfo *root,
 		if (bms_overlap(right_rels, otherinfo->syn_righthand))
 		{
 			if (bms_overlap(clause_relids, otherinfo->syn_righthand) ||
+				!bms_overlap(clause_relids, otherinfo->min_lefthand) ||
 				jointype == JOIN_SEMI ||
 				jointype == JOIN_ANTI ||
 				otherinfo->jointype == JOIN_SEMI ||
@@ -1238,10 +1234,12 @@ make_outerjoininfo(PlannerInfo *root,
 	 * If we found nothing to put in min_lefthand, punt and make it the full
 	 * LHS, to avoid having an empty min_lefthand which will confuse later
 	 * processing. (We don't try to be smart about such cases, just correct.)
-	 * We already forced min_righthand nonempty, so nothing to do for that.
+	 * Likewise for min_righthand.
 	 */
 	if (bms_is_empty(min_lefthand))
 		min_lefthand = bms_copy(left_rels);
+	if (bms_is_empty(min_righthand))
+		min_righthand = bms_copy(right_rels);
 
 	/* Now they'd better be nonempty */
 	Assert(!bms_is_empty(min_lefthand));

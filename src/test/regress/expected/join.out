@@ -3425,7 +3425,7 @@ select t1.* from
    Output: t1.f1
    Hash Cond: (i8.q2 = i4.f1)
    ->  Nested Loop Left Join
-         Output: i8.q2, t1.f1
+         Output: t1.f1, i8.q2
          Join Filter: (t1.f1 = '***'::text)
          ->  Seq Scan on public.text_tbl t1
                Output: t1.f1
@@ -3462,6 +3462,76 @@ select t1.* from
   left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
     left join int8_tbl i8
       left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+        f1         
+-------------------
+ doh!
+ hi de ho neighbor
+(2 rows)
+
+explain (verbose, costs off)
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2
+                 where q1 = f1) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Hash Left Join
+   Output: t1.f1
+   Hash Cond: (i8.q2 = i4.f1)
+   ->  Nested Loop Left Join
+         Output: t1.f1, i8.q2
+         Join Filter: (t1.f1 = '***'::text)
+         ->  Seq Scan on public.text_tbl t1
+               Output: t1.f1
+         ->  Materialize
+               Output: i8.q2
+               ->  Hash Right Join
+                     Output: i8.q2
+                     Hash Cond: ((NULL::integer) = i8b1.q2)
+                     ->  Hash Right Join
+                           Output: i8.q2, (NULL::integer)
+                           Hash Cond: (i8b2.q1 = i8.q1)
+                           ->  Hash Join
+                                 Output: i8b2.q1, NULL::integer
+                                 Hash Cond: (i8b2.q1 = i4b2.f1)
+                                 ->  Seq Scan on public.int8_tbl i8b2
+                                       Output: i8b2.q1, i8b2.q2
+                                 ->  Hash
+                                       Output: i4b2.f1
+                                       ->  Seq Scan on public.int4_tbl i4b2
+                                             Output: i4b2.f1
+                           ->  Hash
+                                 Output: i8.q1, i8.q2
+                                 ->  Seq Scan on public.int8_tbl i8
+                                       Output: i8.q1, i8.q2
+                     ->  Hash
+                           Output: i8b1.q2
+                           ->  Seq Scan on public.int8_tbl i8b1
+                                 Output: i8b1.q2
+   ->  Hash
+         Output: i4.f1
+         ->  Seq Scan on public.int4_tbl i4
+               Output: i4.f1
+(37 rows)
+
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2
+                 where q1 = f1) b2
       on (i8.q1 = b2.q1)
     on (b2.d2 = b1.q2)
   on (t1.f1 = b1.d1)
