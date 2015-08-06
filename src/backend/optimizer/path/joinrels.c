@@ -331,7 +331,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	SpecialJoinInfo *match_sjinfo;
 	bool		reversed;
 	bool		unique_ified;
-	bool		is_valid_inner;
+	bool		must_be_leftjoin;
 	bool		lateral_fwd;
 	bool		lateral_rev;
 	ListCell   *l;
@@ -346,12 +346,12 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	/*
 	 * If we have any special joins, the proposed join might be illegal; and
 	 * in any case we have to determine its join type.  Scan the join info
-	 * list for conflicts.
+	 * list for matches and conflicts.
 	 */
 	match_sjinfo = NULL;
 	reversed = false;
 	unique_ified = false;
-	is_valid_inner = true;
+	must_be_leftjoin = false;
 
 	foreach(l, root->join_info_list)
 	{
@@ -402,7 +402,8 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		 * If one input contains min_lefthand and the other contains
 		 * min_righthand, then we can perform the SJ at this join.
 		 *
-		 * Barf if we get matches to more than one SJ (is that possible?)
+		 * Reject if we get matches to more than one SJ; that implies we're
+		 * considering something that's not really valid.
 		 */
 		if (bms_is_subset(sjinfo->min_lefthand, rel1->relids) &&
 			bms_is_subset(sjinfo->min_righthand, rel2->relids))
@@ -470,58 +471,38 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			/*
 			 * Otherwise, the proposed join overlaps the RHS but isn't a valid
 			 * implementation of this SJ.  It might still be a legal join,
-			 * however, if it does not overlap the LHS.  But we never allow
-			 * violations of the RHS of SEMI or ANTI joins.  (In practice,
-			 * therefore, only LEFT joins ever allow RHS violation.)
+			 * however, if we're allowed to associate it into the RHS of this
+			 * SJ.  That means this SJ must be a LEFT join (not SEMI or ANTI,
+			 * and certainly not FULL) and the proposed join must not overlap
+			 * the LHS.
 			 */
-			if (sjinfo->jointype == JOIN_SEMI ||
-				sjinfo->jointype == JOIN_ANTI ||
+			if (sjinfo->jointype != JOIN_LEFT ||
 				bms_overlap(joinrelids, sjinfo->min_lefthand))
 				return false;	/* invalid join path */
 
-			/*----------
-			 * If both inputs overlap the RHS, assume that it's OK.  Since the
-			 * inputs presumably got past this function's checks previously,
-			 * their violations of the RHS boundary must represent SJs that
-			 * have been determined to commute with this one.
-			 * We have to allow this to work correctly in cases like
-			 *		(a LEFT JOIN (b JOIN (c LEFT JOIN d)))
-			 * when the c/d join has been determined to commute with the join
-			 * to a, and hence d is not part of min_righthand for the upper
-			 * join.  It should be legal to join b to c/d but this will appear
-			 * as a violation of the upper join's RHS.
-			 *
-			 * Furthermore, if one input overlaps the RHS and the other does
-			 * not, we should still allow the join if it is a valid
-			 * implementation of some other SJ.  We have to allow this to
-			 * support the associative identity
-			 *		(a LJ b on Pab) LJ c ON Pbc = a LJ (b LJ c ON Pbc) on Pab
-			 * since joining B directly to C violates the lower SJ's RHS.
-			 * We assume that make_outerjoininfo() set things up correctly
-			 * so that we'll only match to some SJ if the join is valid.
-			 * Set flag here to check at bottom of loop.
-			 *----------
+			/*
+			 * To be valid, the proposed join must be a LEFT join; otherwise
+			 * it can't associate into this SJ's RHS.  But we may not yet have
+			 * found the SpecialJoinInfo matching the proposed join, so we
+			 * can't test that yet.  Remember the requirement for later.
 			 */
-			if (bms_overlap(rel1->relids, sjinfo->min_righthand) &&
-				bms_overlap(rel2->relids, sjinfo->min_righthand))
-			{
-				/* both overlap; assume OK */
-			}
-			else
-			{
-				/* one overlaps, the other doesn't */
-				is_valid_inner = false;
-			}
+			must_be_leftjoin = true;
 		}
 	}
 
 	/*
-	 * Fail if violated some SJ's RHS and didn't match to another SJ. However,
-	 * "matching" to a semijoin we are implementing by unique-ification
-	 * doesn't count (think: it's really an inner join).
+	 * Fail if violated any SJ's RHS and didn't match to a LEFT SJ: the
+	 * proposed join can't associate into an SJ's RHS.
+	 *
+	 * Also, fail if the proposed join's predicate isn't strict; we're
+	 * essentially checking to see if we can apply outer-join identity 3, and
+	 * that's a requirement.  (This check may be redundant with checks in
+	 * make_outerjoininfo, but I'm not quite sure, and it's cheap to test.)
 	 */
-	if (!is_valid_inner &&
-		(match_sjinfo == NULL || unique_ified))
+	if (must_be_leftjoin &&
+		(match_sjinfo == NULL ||
+		 match_sjinfo->jointype != JOIN_LEFT ||
+		 !match_sjinfo->lhs_strict))
 		return false;			/* invalid join path */
 
 	/*
