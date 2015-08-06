@@ -181,6 +181,7 @@ InitProcGlobal(void)
 	ProcGlobal->startupBufferPinWaitBufId = -1;
 	ProcGlobal->walwriterLatch = NULL;
 	ProcGlobal->checkpointerLatch = NULL;
+	pg_atomic_init_u32(&ProcGlobal->nextClearXidElem, INVALID_PGPROCNO);
 
 	/*
 	 * Create and initialize all the PGPROC structures we'll need.  There are
@@ -392,6 +393,10 @@ InitProcess(void)
 	MyProc->waitLSN = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
+
+	/* Initialize fields for group XID clearing. */
+	MyProc->backendLatestXid = InvalidTransactionId;
+	pg_atomic_init_u32(&MyProc->nextClearXidElem, INVALID_PGPROCNO);
 
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch

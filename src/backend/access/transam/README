@@ -252,6 +252,9 @@ implementation of this is that GetSnapshotData takes the ProcArrayLock in
 shared mode (so that multiple backends can take snapshots in parallel),
 but ProcArrayEndTransaction must take the ProcArrayLock in exclusive mode
 while clearing MyPgXact->xid at transaction end (either commit or abort).
+(To reduce context switching, when multiple transactions commit nearly
+simultaneously, we have one backend take ProcArrayLock and clear the XIDs
+of multiple processes at once.)
 
 ProcArrayEndTransaction also holds the lock while advancing the shared
 latestCompletedXid variable.  This allows GetSnapshotData to use
