@@ -241,12 +241,23 @@ non-FULL joins can be freely associated into the lefthand side of an
 OJ, but in some cases they can't be associated into the righthand side.
 So the restriction enforced by join_is_legal is that a proposed join
 can't join a rel within or partly within an RHS boundary to one outside
-the boundary, unless the join validly implements some outer join.
-(To support use of identity 3, we have to allow cases where an apparent
-violation of a lower OJ's RHS is committed while forming an upper OJ.
-If this wouldn't in fact be legal, the upper OJ's minimum LHS or RHS
-set must be expanded to include the whole of the lower OJ, thereby
-preventing it from being formed before the lower OJ is.)
+the boundary, unless the proposed join is a LEFT join that can associate
+into the SpecialJoinInfo's RHS using identity 3.
+
+The use of minimum Relid sets has some pitfalls; consider a query like
+	A leftjoin (B leftjoin (C innerjoin D) on (Pbcd)) on Pa
+where Pa doesn't mention B/C/D at all.  In this case a naive computation
+would give the upper leftjoin's min LHS as {A} and min RHS as {C,D} (since
+we know that the innerjoin can't associate out of the leftjoin's RHS, and
+enforce that by including its relids in the leftjoin's min RHS).  And the
+lower leftjoin has min LHS of {B} and min RHS of {C,D}.  Given such
+information, join_is_legal would think it's okay to associate the upper
+join into the lower join's RHS, transforming the query to
+	B leftjoin (A leftjoin (C innerjoin D) on Pa) on (Pbcd)
+which yields totally wrong answers.  We prevent that by forcing the min LHS
+for the upper join to include B.  This is perhaps overly restrictive, but
+such cases don't arise often so it's not clear that it's worth developing a
+more complicated system.
 
 
 Pulling Up Subqueries
