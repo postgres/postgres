@@ -1270,7 +1270,8 @@ DROP TABLE check_fk_presence_1, check_fk_presence_2;
 --
 drop type lockmodes;
 create type lockmodes as enum (
- 'AccessShareLock'
+ 'SIReadLock'
+,'AccessShareLock'
 ,'RowShareLock'
 ,'RowExclusiveLock'
 ,'ShareUpdateExclusiveLock'
