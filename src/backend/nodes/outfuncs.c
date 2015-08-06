@@ -341,7 +341,7 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_NODE_FIELD(arbiterIndexes);
 	WRITE_NODE_FIELD(onConflictSet);
 	WRITE_NODE_FIELD(onConflictWhere);
-	WRITE_INT_FIELD(exclRelRTI);
+	WRITE_UINT_FIELD(exclRelRTI);
 	WRITE_NODE_FIELD(exclRelTlist);
 }
 
@@ -591,6 +591,7 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	_outScanInfo(str, (const Scan *) node);
 
 	WRITE_UINT_FIELD(flags);
+	WRITE_NODE_FIELD(custom_plans);
 	WRITE_NODE_FIELD(custom_exprs);
 	WRITE_NODE_FIELD(custom_private);
 	WRITE_NODE_FIELD(custom_scan_tlist);
@@ -1016,7 +1017,7 @@ _outGroupingFunc(StringInfo str, const GroupingFunc *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(refs);
 	WRITE_NODE_FIELD(cols);
-	WRITE_INT_FIELD(agglevelsup);
+	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1532,9 +1533,9 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 	WRITE_ENUM_FIELD(action, OnConflictAction);
 	WRITE_NODE_FIELD(arbiterElems);
 	WRITE_NODE_FIELD(arbiterWhere);
+	WRITE_OID_FIELD(constraint);
 	WRITE_NODE_FIELD(onConflictSet);
 	WRITE_NODE_FIELD(onConflictWhere);
-	WRITE_OID_FIELD(constraint);
 	WRITE_INT_FIELD(exclRelIndex);
 	WRITE_NODE_FIELD(exclRelTlist);
 }
@@ -1674,6 +1675,7 @@ _outCustomPath(StringInfo str, const CustomPath *node)
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_UINT_FIELD(flags);
+	WRITE_NODE_FIELD(custom_paths);
 	WRITE_NODE_FIELD(custom_private);
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);

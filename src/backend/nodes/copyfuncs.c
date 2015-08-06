@@ -647,6 +647,7 @@ _copyCustomScan(const CustomScan *from)
 	 * copy remainder of node
 	 */
 	COPY_SCALAR_FIELD(flags);
+	COPY_NODE_FIELD(custom_plans);
 	COPY_NODE_FIELD(custom_exprs);
 	COPY_NODE_FIELD(custom_private);
 	COPY_NODE_FIELD(custom_scan_tlist);
@@ -1925,9 +1926,9 @@ _copyOnConflictExpr(const OnConflictExpr *from)
 	COPY_SCALAR_FIELD(action);
 	COPY_NODE_FIELD(arbiterElems);
 	COPY_NODE_FIELD(arbiterWhere);
+	COPY_SCALAR_FIELD(constraint);
 	COPY_NODE_FIELD(onConflictSet);
 	COPY_NODE_FIELD(onConflictWhere);
-	COPY_SCALAR_FIELD(constraint);
 	COPY_SCALAR_FIELD(exclRelIndex);
 	COPY_NODE_FIELD(exclRelTlist);
 
@@ -4082,7 +4083,7 @@ _copyCreatePolicyStmt(const CreatePolicyStmt *from)
 
 	COPY_STRING_FIELD(policy_name);
 	COPY_NODE_FIELD(table);
-	COPY_SCALAR_FIELD(cmd);
+	COPY_STRING_FIELD(cmd);
 	COPY_NODE_FIELD(roles);
 	COPY_NODE_FIELD(qual);
 	COPY_NODE_FIELD(with_check);

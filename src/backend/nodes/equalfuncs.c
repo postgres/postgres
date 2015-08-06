@@ -759,9 +759,9 @@ _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 	COMPARE_SCALAR_FIELD(action);
 	COMPARE_NODE_FIELD(arbiterElems);
 	COMPARE_NODE_FIELD(arbiterWhere);
+	COMPARE_SCALAR_FIELD(constraint);
 	COMPARE_NODE_FIELD(onConflictSet);
 	COMPARE_NODE_FIELD(onConflictWhere);
-	COMPARE_SCALAR_FIELD(constraint);
 	COMPARE_SCALAR_FIELD(exclRelIndex);
 	COMPARE_NODE_FIELD(exclRelTlist);
 
@@ -1868,8 +1868,8 @@ _equalCreateEventTrigStmt(const CreateEventTrigStmt *a, const CreateEventTrigStm
 {
 	COMPARE_STRING_FIELD(trigname);
 	COMPARE_STRING_FIELD(eventname);
-	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(whenclause);
+	COMPARE_NODE_FIELD(funcname);
 
 	return true;
 }
@@ -2074,7 +2074,7 @@ _equalCreatePolicyStmt(const CreatePolicyStmt *a, const CreatePolicyStmt *b)
 {
 	COMPARE_STRING_FIELD(policy_name);
 	COMPARE_NODE_FIELD(table);
-	COMPARE_SCALAR_FIELD(cmd);
+	COMPARE_STRING_FIELD(cmd);
 	COMPARE_NODE_FIELD(roles);
 	COMPARE_NODE_FIELD(qual);
 	COMPARE_NODE_FIELD(with_check);
