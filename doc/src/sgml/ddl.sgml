@@ -1742,9 +1742,9 @@ GRANT UPDATE
 
 <programlisting>
 -- admin can view all rows and fields
-postgres=> set role admin;
+postgres=&gt; set role admin;
 SET
-postgres=> table passwd;
+postgres=&gt; table passwd;
  username | pwhash | uid | gid | real_name |  home_phone  | extra_info | home_dir    |   shell   
 ----------+--------+-----+-----+-----------+--------------+------------+-------------+-----------
  admin    | xxx    |   0 |   0 | Admin     | 111-222-3333 |            | /root       | /bin/dash
@@ -1753,11 +1753,11 @@ postgres=> table passwd;
 (3 rows)
 
 -- Test what Alice is able to do
-postgres=> set role alice;
+postgres=&gt; set role alice;
 SET
-postgres=> table passwd;
+postgres=&gt; table passwd;
 ERROR:  permission denied for relation passwd
-postgres=> select username,real_name,home_phone,extra_info,home_dir,shell from passwd;
+postgres=&gt; select username,real_name,home_phone,extra_info,home_dir,shell from passwd;
  username | real_name |  home_phone  | extra_info | home_dir    |   shell   
 ----------+-----------+--------------+------------+-------------+-----------
  admin    | Admin     | 111-222-3333 |            | /root       | /bin/dash
@@ -1765,21 +1765,21 @@ postgres=> select username,real_name,home_phone,extra_info,home_dir,shell from p
  alice    | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
 (3 rows)
 
-postgres=> update passwd set username = 'joe';
+postgres=&gt; update passwd set username = 'joe';
 ERROR:  permission denied for relation passwd
 -- Allowed to change her own real_name, but no others
-postgres=> update passwd set real_name = 'Alice Doe';
+postgres=&gt; update passwd set real_name = 'Alice Doe';
 UPDATE 1
-postgres=> update passwd set real_name = 'John Doe' where username = 'admin';
+postgres=&gt; update passwd set real_name = 'John Doe' where username = 'admin';
 UPDATE 0
-postgres=> update passwd set shell = '/bin/xx';
+postgres=&gt; update passwd set shell = '/bin/xx';
 ERROR:  new row violates WITH CHECK OPTION for "passwd"
-postgres=> delete from passwd;
+postgres=&gt; delete from passwd;
 ERROR:  permission denied for relation passwd
-postgres=> insert into passwd (username) values ('xxx');
+postgres=&gt; insert into passwd (username) values ('xxx');
 ERROR:  permission denied for relation passwd
 -- Alice can change her own password
-postgres=> update passwd set pwhash = 'abc';
+postgres=&gt; update passwd set pwhash = 'abc';
 UPDATE 1
 </programlisting>
 

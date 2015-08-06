@@ -6813,7 +6813,7 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          Create interval from years, months, weeks, days, hours, minutes and
          seconds fields
         </entry>
-        <entry><literal>make_interval(days => 10)</literal></entry>
+        <entry><literal>make_interval(days =&gt; 10)</literal></entry>
         <entry><literal>10 days</literal></entry>
        </row>
 

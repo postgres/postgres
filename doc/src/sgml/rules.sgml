@@ -2100,7 +2100,7 @@ CREATE VIEW phone_number AS
 <programlisting>
 CREATE FUNCTION tricky(text, text) RETURNS bool AS $$
 BEGIN
-    RAISE NOTICE '% => %', $1, $2;
+    RAISE NOTICE '% =&gt; %', $1, $2;
     RETURN true;
 END
 $$ LANGUAGE plpgsql COST 0.0000000000000000000001;

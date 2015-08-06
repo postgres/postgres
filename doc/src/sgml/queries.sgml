@@ -1885,7 +1885,7 @@ SELECT 3, 'three';
    it's usually better to override the default names with a table alias
    list, like this:
 <programlisting>
-=> SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
+=&gt; SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
  num | letter
 -----+--------
    1 | one
