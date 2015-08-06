@@ -538,7 +538,7 @@ _readGroupingFunc(void)
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(refs);
 	READ_NODE_FIELD(cols);
-	READ_INT_FIELD(agglevelsup);
+	READ_UINT_FIELD(agglevelsup);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1256,9 +1256,9 @@ _readOnConflictExpr(void)
 	READ_ENUM_FIELD(action, OnConflictAction);
 	READ_NODE_FIELD(arbiterElems);
 	READ_NODE_FIELD(arbiterWhere);
+	READ_OID_FIELD(constraint);
 	READ_NODE_FIELD(onConflictSet);
 	READ_NODE_FIELD(onConflictWhere);
-	READ_OID_FIELD(constraint);
 	READ_INT_FIELD(exclRelIndex);
 	READ_NODE_FIELD(exclRelTlist);
 
