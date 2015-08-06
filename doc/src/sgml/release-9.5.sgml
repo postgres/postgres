@@ -82,6 +82,16 @@
 
     <listitem>
 <!--
+2015-03-31 [0badb06] Bruce ..: pg_ctl:  change default shutdown mode from 'sma..
+-->
+     <para>
+      Change <application>pg_ctl</>'s default shutdown mode from
+      <literal>smart</> to <literal>fast</> (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2015-03-04 [1345cc6] Tom Lane: Use standard casting mechanism to convert type..
 -->
      <para>
@@ -828,12 +838,12 @@ FIXME: Add docs about restartpoint behaviour change
 FIXME: Correct description
 -->
        <para>
-        Allow <link linkend="pg-replication-origin-create">labeling</>
-        of the origin of logical replication changes (Andres Freund)
+        Allow <link linkend="pg-replication-origin-create">labeling</> of
+        the origin progress of logical replication changes (Andres Freund)
        </para>
 
        <para>
-        This helps with change tracking.
+        This is helpful when implementing replication solutions.
        </para>
       </listitem>
 
@@ -1085,9 +1095,9 @@ FIXME: Correct description
 2014-08-22 [f41872d] Alvaro..: Implement ALTER TABLE .. SET LOGGED / UNLOGGED
 -->
        <para>
-        Allow to convert a <acronym>WAL</acronym> logged table to an UNLOGGED
-        one, and the other way round with
-        <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE .. SET LOGGED /
+        Allow changing of the <acronym>WAL</acronym>
+        logging status of a table ater creation with <link
+        linkend="SQL-ALTERTABLE"><command>ALTER TABLE .. SET LOGGED /
         UNLOGGED</></> (Fabr&iacute;zio de Royes Mello)
        </para>
       </listitem>
@@ -2187,10 +2197,10 @@ FIXME: Add more specifics?
 
        <para>
         The remote snapshot must have been exported by
-        <function>pg_export_snapshot()</> or been defined when creating
-        a logical replication slot.  This can be used by parallel
-        <application>pg_dump</> to use a consistent snapshot across
-        <application>pg_dump</> processes.
+        <function>pg_export_snapshot()</> or logical replication slot
+        creation.  This can be used by another <application>pg_dump</> to
+        use a share a consistent snapshot across <application>pg_dump</>
+        processes.
        </para>
       </listitem>
 
@@ -2228,16 +2238,6 @@ FIXME: Add more specifics?
      <title><xref linkend="app-pg-ctl"></title>
 
      <itemizedlist>
-
-      <listitem>
-<!--
-2015-03-31 [0badb06] Bruce ..: pg_ctl:  change default shutdown mode from 'sma..
--->
-       <para>
-        Change <application>pg_ctl</>'s default shutdown mode from
-        <literal>smart</> to <literal>fast</> (Bruce Momjian)
-       </para>
-      </listitem>
 
       <listitem>
 <!--
