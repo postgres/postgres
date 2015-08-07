@@ -5450,10 +5450,11 @@
       <entry><structfield>local_lsn</structfield></entry>
       <entry><type>pg_lsn</type></entry>
       <entry></entry>
-      <entry>This node's LSN that at
-      which <literal>remote_lsn</literal> has been replicated. Used to
-      flush commit records before persisting data to disk when using
-      asynchronous commits.</entry>
+      <entry>
+       This node's LSN at which <literal>remote_lsn</literal> has
+       been replicated. Used to flush commit records before persisting
+       data to disk when using asynchronous commits.
+      </entry>
      </row>
     </tbody>
    </tgroup>

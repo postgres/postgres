@@ -17441,7 +17441,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_replication_origin_session_progress</primary>
         </indexterm>
-        <literal><function>pg_replication_origin_progress(<parameter>flush</parameter> <type>bool</type>)</function></literal>
+        <literal><function>pg_replication_origin_session_progress(<parameter>flush</parameter> <type>bool</type>)</function></literal>
        </entry>
        <entry>
         pg_lsn

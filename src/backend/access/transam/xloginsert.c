@@ -73,7 +73,7 @@ static XLogRecData *mainrdata_head;
 static XLogRecData *mainrdata_last = (XLogRecData *) &mainrdata_head;
 static uint32 mainrdata_len;	/* total # of bytes in chain */
 
-/* Should te in-progress insertion log the origin */
+/* Should the in-progress insertion log the origin? */
 static bool include_origin = false;
 
 /*

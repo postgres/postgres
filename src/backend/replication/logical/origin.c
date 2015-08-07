@@ -313,7 +313,7 @@ replorigin_create(char *roname)
 	if (tuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("no free replication oid could be found")));
+				 errmsg("no free replication origin oid could be found")));
 
 	heap_freetuple(tuple);
 	return roident;
@@ -375,6 +375,10 @@ replorigin_drop(RepOriginId roident)
 	LWLockRelease(ReplicationOriginLock);
 
 	tuple = SearchSysCache1(REPLORIGIDENT, ObjectIdGetDatum(roident));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for replication origin with oid %u",
+			 roident);
+
 	simple_heap_delete(rel, &tuple->t_self);
 	ReleaseSysCache(tuple);
 
@@ -437,7 +441,7 @@ ReplicationOriginShmemSize(void)
 	Size		size = 0;
 
 	/*
-	 * XXX: max_replication_slots is arguablethe wrong thing to use here, here
+	 * XXX: max_replication_slots is arguably the wrong thing to use, as here
 	 * we keep the replay state of *remote* transactions. But for now it seems
 	 * sufficient to reuse it, lest we introduce a separate guc.
 	 */
@@ -523,7 +527,7 @@ CheckPointReplicationOrigin(void)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
-						path)));
+						tmppath)));
 
 	/*
 	 * no other backend can perform this at the same time, we're protected by
@@ -799,12 +803,12 @@ replorigin_redo(XLogReaderState *record)
  * Tell the replication origin progress machinery that a commit from 'node'
  * that originated at the LSN remote_commit on the remote node was replayed
  * successfully and that we don't need to do so again. In combination with
- * setting up replorigin_sesssion_origin_lsn and replorigin_sesssion_origin that ensures we
- * won't loose knowledge about that after a crash if the transaction had a
- * persistent effect (think of asynchronous commits).
+ * setting up replorigin_sesssion_origin_lsn and replorigin_sesssion_origin
+ * that ensures we won't loose knowledge about that after a crash if the
+ * transaction had a persistent effect (think of asynchronous commits).
  *
  * local_commit needs to be a local LSN of the commit so that we can make sure
- * uppon a checkpoint that enough WAL has been persisted to disk.
+ * upon a checkpoint that enough WAL has been persisted to disk.
  *
  * Needs to be called with a RowExclusiveLock on pg_replication_origin,
  * unless running in recovery.
@@ -1249,7 +1253,6 @@ pg_replication_origin_session_reset(PG_FUNCTION_ARGS)
 
 	replorigin_session_reset();
 
-	/* FIXME */
 	replorigin_sesssion_origin = InvalidRepOriginId;
 	replorigin_sesssion_origin_lsn = InvalidXLogRecPtr;
 	replorigin_sesssion_origin_timestamp = 0;
