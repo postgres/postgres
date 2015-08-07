@@ -231,7 +231,7 @@
 -->
        <para>
         Add <link linkend="BRIN">Block Range Indexes</> (<acronym>BRIN</>)
-        (&Aacute;lvaro Herrera, Heikki Linnakangas, Emre Hasegeli)
+        (&Aacute;lvaro Herrera)
        </para>
 
        <para>
@@ -315,8 +315,8 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-05-13 [78efd5c] Robert..: Extend abbreviated key infrastructure to datum ..
 -->
        <para>
-        Improve the speed of sorting character and numeric fields (Peter
-        Geoghegan, Andrew Gierth, Robert Haas)
+        Improve the speed of sorting character and <type>NUMERIC</> fields
+        (Peter Geoghegan, Andrew Gierth, Robert Haas)
        </para>
       </listitem>
 
@@ -1656,21 +1656,13 @@ FIXME: Add more specifics?
       <listitem>
 <!--
 2014-12-23 [d7ee82e] Alvaro..: Add SQL-callable pg_get_object_address
--->
-       <para>
-        Add function <link
-        linkend="functions-info-object-table"><function>pg_get_object_address()</></>
-        to return <type>OID</>s that uniquely identify an object
-        (&Aacute;lvaro Herrera)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2014-12-30 [a676201] Alvaro..: Add pg_identify_object_as_address
 -->
        <para>
         Add function <link
+        linkend="functions-info-object-table"><function>pg_get_object_address()</></>
+        to return <type>OID</>s that uniquely
+        identify an object, and function <link
         linkend="functions-info-object-table"><function>pg_identify_object_as_address()</></>
         to return object information based on <type>OID</>s (&Aacute;lvaro
         Herrera)
