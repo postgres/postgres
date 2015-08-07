@@ -403,6 +403,27 @@ reset enable_seqscan;
 drop table matest0 cascade;
 
 --
+-- Check that use of an index with an extraneous column doesn't produce
+-- a plan with extraneous sorting
+--
+
+create table matest0 (a int, b int, c int, d int);
+create table matest1 () inherits(matest0);
+create index matest0i on matest0 (b, c);
+create index matest1i on matest1 (b, c);
+
+set enable_nestloop = off;  -- we want a plan with two MergeAppends
+
+explain (costs off)
+select t1.* from matest0 t1, matest0 t2
+where t1.b = t2.b and t2.c = t2.d
+order by t1.b limit 10;
+
+reset enable_nestloop;
+
+drop table matest0 cascade;
+
+--
 -- Test merge-append for UNION ALL append relations
 --
 
