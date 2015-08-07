@@ -54,20 +54,6 @@
 #include "pg_config_manual.h"	/* must be after pg_config.h */
 
 /*
- * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
- * to work around compiler bugs and might also be useful for investigatory
- * purposes.
- *
- * This is done early (in slightly the wrong section) for two reasons: a) we
- * don't want to include headers with different settings of this b)
- * functionality later in this file might want to rely on inline functions.
- */
-#ifdef PG_FORCE_DISABLE_INLINE
-#undef inline
-#define inline
-#endif
-
-/*
  * We always rely on the WIN32 macro being set by our build system,
  * but _WIN32 is the compiler pre-defined macro. So make sure we define
  * WIN32 whenever _WIN32 is set, to facilitate standalone building.
@@ -113,6 +99,19 @@
 #if defined(WIN32) || defined(__CYGWIN__)
 /* We have to redefine some system functions after they are included above. */
 #include "pg_config_os.h"
+#endif
+
+/*
+ * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
+ * to work around compiler bugs and might also be useful for investigatory
+ * purposes by defining the symbol in the platform's header..
+ *
+ * This is done early (in slightly the wrong section) as functionality later
+ * in this file might want to rely on inline functions.
+ */
+#ifdef PG_FORCE_DISABLE_INLINE
+#undef inline
+#define inline
 #endif
 
 /* Must be before gettext() games below */
