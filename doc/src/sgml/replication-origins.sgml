@@ -57,7 +57,7 @@
   Using the replication origin infrastructure a session can be
   marked as replaying from a remote node (using the
   <link linkend="pg-replication-origin-session-setup"><function>pg_replication_origin_session_setup()</function></link>
-  function. Additionally the <acronym>LSN</acronym> and commit
+  function). Additionally the <acronym>LSN</acronym> and commit
   timestamp of every source transaction can be configured on a per
   transaction basis using
   <link linkend="pg-replication-origin-xact-setup"><function>pg_replication_origin_xact_setup()</function></link>.
