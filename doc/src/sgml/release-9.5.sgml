@@ -2447,6 +2447,24 @@ FIXME: Improve description, link
 
       <listitem>
 <!--
+2015-05-08 [168d580] Andres..: Add support for INSERT ... ON CONFLICT DO NOTHI..
+2015-05-08 [2c8f483] Andres..: Represent columns requiring insert and update p..
+-->
+       <para>
+        Foreign tables can now take part in <command>INSERT ... ON CONFLICT
+        DO NOTHING</> queries (Peter Geoghegan, Heikki Linnakangas,
+        Andres Freund)
+       </para>
+
+       <para>
+        Foreign data wrappers must be modified to handle this.
+        <command>INSERT ... ON CONFLICT DO UPDATE</> is not supported on
+        foreign tables.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2014-12-18 [4a14f13] Tom Lane: Improve hash_create's API for selecting simple-..
 -->
        <para>
