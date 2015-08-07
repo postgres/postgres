@@ -3878,6 +3878,47 @@ select t1.* from
  Seq Scan on uniquetbl t1
 (1 row)
 
+explain (costs off)
+select t0.*
+from
+ text_tbl t0
+ left join
+   (select case t1.ten when 0 then 'doh!'::text else null::text end as case1,
+           t1.stringu2
+     from tenk1 t1
+     join int4_tbl i4 ON i4.f1 = t1.unique2
+     left join uniquetbl u1 ON u1.f1 = t1.string4) ss
+  on t0.f1 = ss.case1
+where ss.stringu2 !~* ss.case1;
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Nested Loop
+   Join Filter: (CASE t1.ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END = t0.f1)
+   ->  Nested Loop
+         ->  Seq Scan on int4_tbl i4
+         ->  Index Scan using tenk1_unique2 on tenk1 t1
+               Index Cond: (unique2 = i4.f1)
+               Filter: (stringu2 !~* CASE ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END)
+   ->  Materialize
+         ->  Seq Scan on text_tbl t0
+(9 rows)
+
+select t0.*
+from
+ text_tbl t0
+ left join
+   (select case t1.ten when 0 then 'doh!'::text else null::text end as case1,
+           t1.stringu2
+     from tenk1 t1
+     join int4_tbl i4 ON i4.f1 = t1.unique2
+     left join uniquetbl u1 ON u1.f1 = t1.string4) ss
+  on t0.f1 = ss.case1
+where ss.stringu2 !~* ss.case1;
+  f1  
+------
+ doh!
+(1 row)
+
 rollback;
 -- bug #8444: we've historically allowed duplicate aliases within aliased JOINs
 select * from
