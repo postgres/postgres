@@ -1247,6 +1247,21 @@ SELECT * FROM
 
 rollback;
 
+-- another join removal bug: we must clean up correctly when removing a PHV
+begin;
+
+create temp table uniquetbl (f1 text unique);
+
+explain (costs off)
+select t1.* from
+  uniquetbl as t1
+  left join (select *, '***'::text as d1 from uniquetbl) t2
+  on t1.f1 = t2.f1
+  left join uniquetbl t3
+  on t2.d1 = t3.f1;
+
+rollback;
+
 -- bug #8444: we've historically allowed duplicate aliases within aliased JOINs
 
 select * from

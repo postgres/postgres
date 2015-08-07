@@ -464,16 +464,24 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	}
 
 	/*
-	 * Likewise remove references from PlaceHolderVar data structures.
+	 * Likewise remove references from PlaceHolderVar data structures,
+	 * removing any no-longer-needed placeholders entirely.
 	 */
-	foreach(l, root->placeholder_list)
+	for (l = list_head(root->placeholder_list); l != NULL; l = nextl)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
-		phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
-		Assert(!bms_is_empty(phinfo->ph_eval_at));
-		Assert(!bms_is_member(relid, phinfo->ph_lateral));
-		phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
+		nextl = lnext(l);
+		if (bms_is_subset(phinfo->ph_needed, joinrelids))
+			root->placeholder_list = list_delete_ptr(root->placeholder_list,
+													 phinfo);
+		else
+		{
+			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
+			Assert(!bms_is_empty(phinfo->ph_eval_at));
+			Assert(!bms_is_member(relid, phinfo->ph_lateral));
+			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
+		}
 	}
 
 	/*
