@@ -24,7 +24,7 @@
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 #include "utils/relcache.h"
 
 /*

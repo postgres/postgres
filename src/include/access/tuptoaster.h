@@ -14,8 +14,8 @@
 #define TUPTOASTER_H
 
 #include "access/htup_details.h"
+#include "storage/lockdefs.h"
 #include "utils/relcache.h"
-#include "storage/lock.h"
 
 /*
  * This enables de-toasting of index entries.  Needed until VACUUM is

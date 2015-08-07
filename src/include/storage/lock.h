@@ -14,6 +14,11 @@
 #ifndef LOCK_H_
 #define LOCK_H_
 
+#ifdef FRONTEND
+#error "lock.h may not be included from frontend code"
+#endif
+
+#include "storage/lockdefs.h"
 #include "storage/backendid.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -77,15 +82,6 @@ typedef struct
 	((vxid).backendId = (proc).backendId, \
 	 (vxid).localTransactionId = (proc).lxid)
 
-
-/*
- * LOCKMODE is an integer (1..N) indicating a lock type.  LOCKMASK is a bit
- * mask indicating a set of held or requested lock types (the bit 1<<mode
- * corresponds to a particular lock mode).
- */
-typedef int LOCKMASK;
-typedef int LOCKMODE;
-
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
 #define MAX_LOCKMODES		10
 
@@ -132,28 +128,6 @@ typedef uint16 LOCKMETHODID;
 /* These identify the known lock methods */
 #define DEFAULT_LOCKMETHOD	1
 #define USER_LOCKMETHOD		2
-
-/*
- * These are the valid values of type LOCKMODE for all the standard lock
- * methods (both DEFAULT and USER).
- */
-
-/* NoLock is not a lock mode, but a flag value meaning "don't get a lock" */
-#define NoLock					0
-
-#define AccessShareLock			1		/* SELECT */
-#define RowShareLock			2		/* SELECT FOR UPDATE/FOR SHARE */
-#define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
-#define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL),ANALYZE, CREATE
-										 * INDEX CONCURRENTLY */
-#define ShareLock				5		/* CREATE INDEX (WITHOUT CONCURRENTLY) */
-#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows ROW
-										 * SHARE */
-#define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
-										 * UPDATE */
-#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
-										 * FULL, and unqualified LOCK TABLE */
-
 
 /*
  * LOCKTAG is the key information needed to look up a LOCK item in the
@@ -535,13 +509,6 @@ extern void GrantAwaitedLock(void);
 extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
 extern Size LockShmemSize(void);
 extern LockData *GetLockStatusData(void);
-
-typedef struct xl_standby_lock
-{
-	TransactionId xid;			/* xid of holder of AccessExclusiveLock */
-	Oid			dbOid;
-	Oid			relOid;
-} xl_standby_lock;
 
 extern xl_standby_lock *GetRunningTransactionLocks(int *nlocks);
 extern const char *GetLockmodeName(LOCKMETHODID lockmethodid, LOCKMODE mode);

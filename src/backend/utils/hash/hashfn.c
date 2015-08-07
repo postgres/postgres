@@ -22,6 +22,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "utils/hsearch.h"
 
 
 /*

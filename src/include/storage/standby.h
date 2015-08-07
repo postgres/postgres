@@ -16,7 +16,7 @@
 
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 #include "storage/procsignal.h"
 #include "storage/relfilenode.h"
 

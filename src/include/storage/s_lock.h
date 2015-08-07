@@ -96,6 +96,10 @@
 #ifndef S_LOCK_H
 #define S_LOCK_H
 
+#ifdef FRONTEND
+#error "s_lock.h may not be included from frontend code"
+#endif
+
 #ifdef HAVE_SPINLOCKS	/* skip spinlocks if requested */
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)

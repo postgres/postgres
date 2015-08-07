@@ -14,6 +14,10 @@
 #ifndef LWLOCK_H
 #define LWLOCK_H
 
+#ifdef FRONTEND
+#error "lwlock.h may not be included from frontend code"
+#endif
+
 #include "lib/ilist.h"
 #include "storage/s_lock.h"
 #include "port/atomics.h"
