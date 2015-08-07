@@ -130,7 +130,8 @@ extern bool have_relevant_eclass_joinclause(PlannerInfo *root,
 								RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool has_relevant_eclass_joinclause(PlannerInfo *root,
 							   RelOptInfo *rel1);
-extern bool eclass_useful_for_merging(EquivalenceClass *eclass,
+extern bool eclass_useful_for_merging(PlannerInfo *root,
+						  EquivalenceClass *eclass,
 						  RelOptInfo *rel);
 extern bool is_redundant_derived_clause(RestrictInfo *rinfo, List *clauselist);
 

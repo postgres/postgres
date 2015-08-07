@@ -1373,7 +1373,7 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 		 * surely possible to generate a mergejoin clause using them.
 		 */
 		if (rel->has_eclass_joins &&
-			eclass_useful_for_merging(pathkey->pk_eclass, rel))
+			eclass_useful_for_merging(root, pathkey->pk_eclass, rel))
 			matched = true;
 		else
 		{
