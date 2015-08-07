@@ -777,33 +777,37 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 			return SHM_MQ_DETACHED;
 		}
 
-		if (available == 0)
+		if (available == 0 && !mqh->mqh_counterparty_attached)
 		{
-			shm_mq_result res;
-
 			/*
 			 * The queue is full, so if the receiver isn't yet known to be
 			 * attached, we must wait for that to happen.
 			 */
-			if (!mqh->mqh_counterparty_attached)
+			if (nowait)
 			{
-				if (nowait)
+				if (shm_mq_get_receiver(mq) == NULL)
 				{
-					if (shm_mq_get_receiver(mq) == NULL)
-					{
-						*bytes_written = sent;
-						return SHM_MQ_WOULD_BLOCK;
-					}
-				}
-				else if (!shm_mq_wait_internal(mq, &mq->mq_receiver,
-											   mqh->mqh_handle))
-				{
-					mq->mq_detached = true;
 					*bytes_written = sent;
-					return SHM_MQ_DETACHED;
+					return SHM_MQ_WOULD_BLOCK;
 				}
-				mqh->mqh_counterparty_attached = true;
 			}
+			else if (!shm_mq_wait_internal(mq, &mq->mq_receiver,
+										   mqh->mqh_handle))
+			{
+				mq->mq_detached = true;
+				*bytes_written = sent;
+				return SHM_MQ_DETACHED;
+			}
+			mqh->mqh_counterparty_attached = true;
+
+			/*
+			 * The receiver may have read some data after attaching, so we
+			 * must not wait without rechecking the queue state.
+			 */
+		}
+		else if (available == 0)
+		{
+			shm_mq_result res;
 
 			/* Let the receiver know that we need them to read some data. */
 			res = shm_mq_notify_receiver(mq);
