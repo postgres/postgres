@@ -3646,7 +3646,7 @@ threadRun(void *arg)
 		}
 
 		/* also wake up to print the next progress report on time */
-		if (progress && min_usec > 0)
+		if (progress && min_usec > 0 && thread->tid == 0)
 		{
 			/* get current time if needed */
 			if (now_usec == 0)
