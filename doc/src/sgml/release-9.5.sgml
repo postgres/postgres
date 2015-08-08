@@ -463,6 +463,20 @@ FIXME: Add Andres
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+<!--
+2014-10-02 [3acc10c9] Robert..: Increase the number of buffer mapping partitio..
+-->
+        Increase the number of buffer mapping partitions (Amit Kapila,
+        Andres Freund, Robert Haas)
+       </para>
+
+       <para>
+        This improves performance for highly concurrent workloads.
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
