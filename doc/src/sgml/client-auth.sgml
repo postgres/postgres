@@ -1584,7 +1584,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
    <para>
     Here is the same search+bind configuration written as a URL:
 <programlisting>
-host ... ldap lapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
+host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
 </programlisting>
     Some other software that supports authentication against LDAP uses the
     same URL format, so it will be easier to share the configuration.
