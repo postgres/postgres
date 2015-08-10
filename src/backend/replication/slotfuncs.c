@@ -263,7 +263,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			nulls[i++] = true;
 
-		if (restart_lsn != InvalidTransactionId)
+		if (restart_lsn != InvalidXLogRecPtr)
 			values[i++] = LSNGetDatum(restart_lsn);
 		else
 			nulls[i++] = true;
