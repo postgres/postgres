@@ -508,7 +508,7 @@ main(int argc, char **argv)
 	/*
 	 * Required arguments
 	 */
-	if (basedir == NULL && !do_drop_slot)
+	if (basedir == NULL && !do_drop_slot && !do_create_slot)
 	{
 		fprintf(stderr, _("%s: no target directory specified\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
@@ -519,7 +519,7 @@ main(int argc, char **argv)
 	/*
 	 * Check existence of destination folder.
 	 */
-	if (!do_drop_slot)
+	if (!do_drop_slot && !do_create_slot)
 	{
 		DIR		   *dir = get_destination_dir(basedir);
 
@@ -584,6 +584,7 @@ main(int argc, char **argv)
 		if (!CreateReplicationSlot(conn, replication_slot, NULL, true,
 								   slot_exists_ok))
 			disconnect_and_exit(1);
+		disconnect_and_exit(0);
 	}
 
 	/*
