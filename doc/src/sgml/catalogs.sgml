@@ -5577,6 +5577,17 @@
       automatically removed during checkpoints.
       </entry>
      </row>
+
+     <row>
+      <entry><structfield>confirmed_flush</structfield></entry>
+      <entry><type>pg_lsn</type></entry>
+      <entry></entry>
+      <entry>The address (<literal>LSN</literal>) up to which the logical
+      slot's consumer has confirmed receiving data. Data older than this is
+      not available anymore. <literal>NULL</> for physical slots.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
