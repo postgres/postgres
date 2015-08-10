@@ -273,7 +273,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Create a new physical replication slot with the name specified in
-        <option>--slot</option>, then start to stream WAL.
+        <option>--slot</option>, then exit.
        </para>
       </listitem>
      </varlistentry>
