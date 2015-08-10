@@ -348,12 +348,12 @@ tas(volatile slock_t *lock)
 :		"=r"(_res), "+m"(*lock)
 :		"r"(lock)
 :		"memory");
-#if defined(__sparcv7)
+#if defined(__sparcv7) || defined(__sparc_v7__)
 	/*
 	 * No stbar or membar available, luckily no actually produced hardware
 	 * requires a barrier.
 	 */
-#elif defined(__sparcv8)
+#elif defined(__sparcv8) || defined(__sparc_v8__)
 	/* stbar is available (and required for both PSO, RMO), membar isn't */
 	__asm__ __volatile__ ("stbar	 \n":::"memory");
 #else
@@ -366,13 +366,13 @@ tas(volatile slock_t *lock)
 	return (int) _res;
 }
 
-#if defined(__sparcv7)
+#if defined(__sparcv7) || defined(__sparc_v7__)
 /*
  * No stbar or membar available, luckily no actually produced hardware
  * requires a barrier.
  */
 #define S_UNLOCK(lock)		(*((volatile slock_t *) (lock)) = 0)
-#elif defined(__sparcv8)
+#elif defined(__sparcv8) || defined(__sparc_v8__)
 /* stbar is available (and required for both PSO, RMO), membar isn't */
 #define S_UNLOCK(lock)	\
 do \
