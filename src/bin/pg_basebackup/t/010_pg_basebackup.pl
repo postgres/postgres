@@ -153,7 +153,9 @@ command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
 	'pg_basebackup -R runs');
 ok(-f "$tempdir/backupR/recovery.conf", 'recovery.conf was created');
 my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
-like($recovery_conf, qr/^standby_mode = 'on'$/m, 'recovery.conf sets standby_mode');
+# using a character class for the final "'" here works around an apparent
+# bug in several version of the Msys DTK perl
+like($recovery_conf, qr/^standby_mode = 'on[']$/m, 'recovery.conf sets standby_mode');
 like($recovery_conf, qr/^primary_conninfo = '.*port=$ENV{PGPORT}.*'$/m, 'recovery.conf sets primary_conninfo');
 
 command_ok([ 'pg_basebackup', '-D', "$tempdir/backupxf", '-X', 'fetch' ],
