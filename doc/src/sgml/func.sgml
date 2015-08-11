@@ -17211,21 +17211,22 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_physical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type><optional>, <parameter>immediately_reserve</> <type>boolean</> </optional>)</function></literal>
+        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type> <optional>, <parameter>immediately_reserve</> <type>boolean</> </optional>)</function></literal>
        </entry>
        <entry>
         (<parameter>slot_name</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new physical replication slot named
-        <parameter>slot_name</parameter>. Streaming changes from a physical slot
-        is only possible with the streaming-replication protocol - see <xref
-        linkend="protocol-replication">. Corresponds to the replication protocol
-        command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>. The optional
-        second parameter,  when <literal>true</>, specifies that the <acronym>LSN</>
-        for this replication slot be reserved immediately; the <acronym<LSN</>
-        is otherwise reserved on first connection from a streaming replication
-        client.
+        <parameter>slot_name</parameter>. The optional second parameter,
+        when <literal>true</>, specifies that the <acronym>LSN</> for this
+        replication slot be reserved immediately; otherwise
+        the <acronym>LSN</> is reserved on first connection from a streaming
+        replication client. Streaming changes from a physical slot is only
+        possible with the streaming-replication protocol &mdash;
+        see <xref linkend="protocol-replication">. This function corresponds
+        to the replication protocol command <literal>CREATE_REPLICATION_SLOT
+        ... PHYSICAL</literal>.
        </entry>
       </row>
       <row>
