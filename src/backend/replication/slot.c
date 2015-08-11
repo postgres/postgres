@@ -693,7 +693,7 @@ ReplicationSlotsComputeLogicalRestartLSN(void)
 			continue;
 
 		/* we're only interested in logical slots */
-		if (s->data.database == InvalidOid)
+		if (!SlotIsLogical(s))
 			continue;
 
 		/* read once, it's ok if it increases while we're checking */
@@ -740,8 +740,8 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
 		if (!s->in_use)
 			continue;
 
-		/* not database specific, skip */
-		if (s->data.database == InvalidOid)
+		/* only logical slots are database specific, skip */
+		if (!SlotIsLogical(s))
 			continue;
 
 		/* not our database, skip */

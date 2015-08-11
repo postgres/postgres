@@ -228,7 +228,7 @@ CreateInitDecodingContext(char *plugin,
 		elog(ERROR, "cannot initialize logical decoding without a specified plugin");
 
 	/* Make sure the passed slot is suitable. These are user facing errors. */
-	if (slot->data.database == InvalidOid)
+	if (SlotIsPhysical(slot))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 		errmsg("cannot use physical replication slot for logical decoding")));
@@ -377,7 +377,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 		elog(ERROR, "cannot perform logical decoding without an acquired slot");
 
 	/* make sure the passed slot is suitable, these are user facing errors */
-	if (slot->data.database == InvalidOid)
+	if (SlotIsPhysical(slot))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 (errmsg("cannot use physical replication slot for logical decoding"))));
