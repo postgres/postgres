@@ -3231,7 +3231,7 @@ getTypes(Archive *fout, int *numTypes)
 	else if (fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
-						  "typnamespace, '{=U}' AS typacl, "
+						  "typnamespace, NULL AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -3246,7 +3246,7 @@ getTypes(Archive *fout, int *numTypes)
 	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
-						  "typnamespace, '{=U}' AS typacl, "
+						  "typnamespace, NULL AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -3260,7 +3260,7 @@ getTypes(Archive *fout, int *numTypes)
 	else if (fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
-						  "0::oid AS typnamespace, '{=U}' AS typacl, "
+						  "0::oid AS typnamespace, NULL AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -3276,7 +3276,7 @@ getTypes(Archive *fout, int *numTypes)
 		appendPQExpBuffer(query, "SELECT "
 		 "(SELECT oid FROM pg_class WHERE relname = 'pg_type') AS tableoid, "
 						  "oid, typname, "
-						  "0::oid AS typnamespace, '{=U}' AS typacl, "
+						  "0::oid AS typnamespace, NULL AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -3965,7 +3965,7 @@ getAggregates(Archive *fout, int *numAggs)
 				  "CASE WHEN aggbasetype = 0 THEN 0 ELSE 1 END AS pronargs, "
 						  "aggbasetype AS proargtypes, "
 						  "(%s aggowner) AS rolname, "
-						  "'{=X}' AS aggacl "
+						  "NULL AS aggacl "
 						  "FROM pg_aggregate "
 						  "where oid > '%u'::oid",
 						  username_subquery,
@@ -3980,7 +3980,7 @@ getAggregates(Archive *fout, int *numAggs)
 				  "CASE WHEN aggbasetype = 0 THEN 0 ELSE 1 END AS pronargs, "
 						  "aggbasetype AS proargtypes, "
 						  "(%s aggowner) AS rolname, "
-						  "'{=X}' AS aggacl "
+						  "NULL AS aggacl "
 						  "FROM pg_aggregate "
 						  "where oid > '%u'::oid",
 						  username_subquery,
@@ -4124,7 +4124,7 @@ getFuncs(Archive *fout, int *numFuncs)
 		appendPQExpBuffer(query,
 						  "SELECT tableoid, oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, "
-						  "'{=X}' AS proacl, "
+						  "NULL AS proacl, "
 						  "0::oid AS pronamespace, "
 						  "(%s proowner) AS rolname "
 						  "FROM pg_proc "
@@ -4140,7 +4140,7 @@ getFuncs(Archive *fout, int *numFuncs)
 						  " WHERE relname = 'pg_proc') AS tableoid, "
 						  "oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, "
-						  "'{=X}' AS proacl, "
+						  "NULL AS proacl, "
 						  "0::oid AS pronamespace, "
 						  "(%s proowner) AS rolname "
 						  "FROM pg_proc "
@@ -5890,7 +5890,7 @@ getProcLangs(Archive *fout, int *numProcLangs)
 		/* pg_language has a laninline column */
 		appendPQExpBuffer(query, "SELECT tableoid, oid, "
 						  "lanname, lanpltrusted, lanplcallfoid, "
-						  "laninline, lanvalidator,  lanacl, "
+						  "laninline, lanvalidator, lanacl, "
 						  "(%s lanowner) AS lanowner "
 						  "FROM pg_language "
 						  "WHERE lanispl "
@@ -5902,7 +5902,7 @@ getProcLangs(Archive *fout, int *numProcLangs)
 		/* pg_language has a lanowner column */
 		appendPQExpBuffer(query, "SELECT tableoid, oid, "
 						  "lanname, lanpltrusted, lanplcallfoid, "
-						  "lanvalidator,  lanacl, "
+						  "0 AS laninline, lanvalidator, lanacl, "
 						  "(%s lanowner) AS lanowner "
 						  "FROM pg_language "
 						  "WHERE lanispl "
@@ -5912,7 +5912,9 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	else if (fout->remoteVersion >= 80100)
 	{
 		/* Languages are owned by the bootstrap superuser, OID 10 */
-		appendPQExpBuffer(query, "SELECT tableoid, oid, *, "
+		appendPQExpBuffer(query, "SELECT tableoid, oid, "
+						  "lanname, lanpltrusted, lanplcallfoid, "
+						  "0 AS laninline, lanvalidator, lanacl, "
 						  "(%s '10') AS lanowner "
 						  "FROM pg_language "
 						  "WHERE lanispl "
@@ -5922,17 +5924,33 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	else if (fout->remoteVersion >= 70400)
 	{
 		/* Languages are owned by the bootstrap superuser, sysid 1 */
-		appendPQExpBuffer(query, "SELECT tableoid, oid, *, "
+		appendPQExpBuffer(query, "SELECT tableoid, oid, "
+						  "lanname, lanpltrusted, lanplcallfoid, "
+						  "0 AS laninline, lanvalidator, lanacl, "
 						  "(%s '1') AS lanowner "
 						  "FROM pg_language "
 						  "WHERE lanispl "
 						  "ORDER BY oid",
 						  username_subquery);
 	}
-	else if (fout->remoteVersion >= 70100)
+	else if (fout->remoteVersion >= 70300)
 	{
 		/* No clear notion of an owner at all before 7.4 ... */
-		appendPQExpBuffer(query, "SELECT tableoid, oid, * FROM pg_language "
+		appendPQExpBuffer(query, "SELECT tableoid, oid, "
+						  "lanname, lanpltrusted, lanplcallfoid, "
+						  "0 AS laninline, lanvalidator, lanacl, "
+						  "NULL AS lanowner "
+						  "FROM pg_language "
+						  "WHERE lanispl "
+						  "ORDER BY oid");
+	}
+	else if (fout->remoteVersion >= 70100)
+	{
+		appendPQExpBuffer(query, "SELECT tableoid, oid, "
+						  "lanname, lanpltrusted, lanplcallfoid, "
+						"0 AS laninline, 0 AS lanvalidator, NULL AS lanacl, "
+						  "NULL AS lanowner "
+						  "FROM pg_language "
 						  "WHERE lanispl "
 						  "ORDER BY oid");
 	}
@@ -5940,7 +5958,11 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	{
 		appendPQExpBuffer(query, "SELECT "
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_language') AS tableoid, "
-						  "oid, * FROM pg_language "
+						  "oid, "
+						  "lanname, lanpltrusted, lanplcallfoid, "
+						"0 AS laninline, 0 AS lanvalidator, NULL AS lanacl, "
+						  "NULL AS lanowner "
+						  "FROM pg_language "
 						  "WHERE lanispl "
 						  "ORDER BY oid");
 	}
@@ -5958,7 +5980,6 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	i_lanname = PQfnumber(res, "lanname");
 	i_lanpltrusted = PQfnumber(res, "lanpltrusted");
 	i_lanplcallfoid = PQfnumber(res, "lanplcallfoid");
-	/* these may fail and return -1: */
 	i_laninline = PQfnumber(res, "laninline");
 	i_lanvalidator = PQfnumber(res, "lanvalidator");
 	i_lanacl = PQfnumber(res, "lanacl");
@@ -5974,22 +5995,10 @@ getProcLangs(Archive *fout, int *numProcLangs)
 		planginfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_lanname));
 		planginfo[i].lanpltrusted = *(PQgetvalue(res, i, i_lanpltrusted)) == 't';
 		planginfo[i].lanplcallfoid = atooid(PQgetvalue(res, i, i_lanplcallfoid));
-		if (i_laninline >= 0)
-			planginfo[i].laninline = atooid(PQgetvalue(res, i, i_laninline));
-		else
-			planginfo[i].laninline = InvalidOid;
-		if (i_lanvalidator >= 0)
-			planginfo[i].lanvalidator = atooid(PQgetvalue(res, i, i_lanvalidator));
-		else
-			planginfo[i].lanvalidator = InvalidOid;
-		if (i_lanacl >= 0)
-			planginfo[i].lanacl = pg_strdup(PQgetvalue(res, i, i_lanacl));
-		else
-			planginfo[i].lanacl = pg_strdup("{=U}");
-		if (i_lanowner >= 0)
-			planginfo[i].lanowner = pg_strdup(PQgetvalue(res, i, i_lanowner));
-		else
-			planginfo[i].lanowner = pg_strdup("");
+		planginfo[i].laninline = atooid(PQgetvalue(res, i, i_laninline));
+		planginfo[i].lanvalidator = atooid(PQgetvalue(res, i, i_lanvalidator));
+		planginfo[i].lanacl = pg_strdup(PQgetvalue(res, i, i_lanacl));
+		planginfo[i].lanowner = pg_strdup(PQgetvalue(res, i, i_lanowner));
 
 		if (fout->remoteVersion < 70300)
 		{
