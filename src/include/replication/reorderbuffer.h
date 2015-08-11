@@ -10,13 +10,10 @@
 #define REORDERBUFFER_H
 
 #include "access/htup_details.h"
-
 #include "lib/ilist.h"
-
 #include "storage/sinval.h"
-
 #include "utils/hsearch.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 #include "utils/snapshot.h"
 #include "utils/timestamp.h"
 

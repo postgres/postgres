@@ -69,7 +69,7 @@
 #include "utils/combocid.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-#include "utils/relcache.h"
+#include "utils/rel.h"
 #include "utils/relfilenodemap.h"
 #include "utils/tqual.h"
 
