@@ -40,6 +40,7 @@ use warnings;
 use TestLib;
 use Test::More;
 
+use Config;
 use File::Copy;
 use File::Path qw(rmtree);
 use IPC::Run qw(run start);
@@ -119,6 +120,7 @@ sub check_query
 	}
 	else
 	{
+		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
 }
@@ -138,6 +140,7 @@ sub poll_query_until
 		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
 
 		chomp($stdout);
+		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		if ($stdout eq "t")
 		{
 			return 1;

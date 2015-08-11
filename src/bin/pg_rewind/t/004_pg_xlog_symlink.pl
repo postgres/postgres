@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use File::Copy;
-use File::Path qw(remove_tree);
+use File::Path qw(rmtree);
 use TestLib;
 use Test::More;
 if ($windows_os)
@@ -25,7 +25,7 @@ sub run_test
 
 	my $master_xlogdir = "$tmp_check/xlog_master";
 
-	remove_tree($master_xlogdir);
+	rmtree($master_xlogdir);
 	RewindTest::setup_cluster();
 
 	# turn pg_xlog into a symlink
