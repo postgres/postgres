@@ -339,7 +339,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	ParallelSlot *slots = NULL;
 	SimpleStringList dbtables = {NULL, NULL};
 	int			i;
-	bool		result = 0;
+	bool		failed = false;
 	bool		parallel = concurrentCons > 1;
 	const char *stage_commands[] = {
 		"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
@@ -457,7 +457,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 
 		if (CancelRequested)
 		{
-			result = -1;
+			failed = true;
 			goto finish;
 		}
 
@@ -476,7 +476,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 			free_slot = GetIdleSlot(slots, concurrentCons, dbname, progname);
 			if (!free_slot)
 			{
-				result = -1;
+				failed = true;
 				goto finish;
 			}
 
@@ -518,7 +518,7 @@ finish:
 
 	termPQExpBuffer(&sql);
 
-	if (result == -1)
+	if (failed)
 		exit(1);
 }
 
