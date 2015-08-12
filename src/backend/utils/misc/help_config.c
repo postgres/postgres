@@ -31,7 +31,7 @@
 typedef union
 {
 	struct config_generic generic;
-	struct config_bool bool;
+	struct config_bool _bool;
 	struct config_real real;
 	struct config_int integer;
 	struct config_string string;
@@ -98,7 +98,7 @@ printMixedStruct(mixedStruct *structToPrint)
 
 		case PGC_BOOL:
 			printf("BOOLEAN\t%s\t\t\t",
-				   (structToPrint->bool.reset_val == 0) ?
+				   (structToPrint->_bool.reset_val == 0) ?
 				   "FALSE" : "TRUE");
 			break;
 
