@@ -942,6 +942,7 @@ parseqatom(struct vars * v,
 			NOERR();
 			assert(v->nextvalue > 0);
 			atom = subre(v, 'b', BACKR, lp, rp);
+			NOERR();
 			subno = v->nextvalue;
 			atom->subno = subno;
 			EMPTYARC(lp, rp);	/* temporarily, so there's something */
@@ -1076,6 +1077,7 @@ parseqatom(struct vars * v,
 
 	/* break remaining subRE into x{...} and what follows */
 	t = subre(v, '.', COMBINE(qprefer, atom->flags), lp, rp);
+	NOERR();
 	t->left = atom;
 	atomp = &t->left;
 
@@ -1084,6 +1086,7 @@ parseqatom(struct vars * v,
 	/* split top into prefix and remaining */
 	assert(top->op == '=' && top->left == NULL && top->right == NULL);
 	top->left = subre(v, '=', top->flags, top->begin, lp);
+	NOERR();
 	top->op = '.';
 	top->right = t;
 
