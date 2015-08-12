@@ -239,6 +239,25 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 			top_plan = materialize_finished_plan(top_plan);
 	}
 
+	/*
+	 * If any Params were generated, run through the plan tree and compute
+	 * each plan node's extParam/allParam sets.  Ideally we'd merge this into
+	 * set_plan_references' tree traversal, but for now it has to be separate
+	 * because we need to visit subplans before not after main plan.
+	 */
+	if (glob->nParamExec > 0)
+	{
+		Assert(list_length(glob->subplans) == list_length(glob->subroots));
+		forboth(lp, glob->subplans, lr, glob->subroots)
+		{
+			Plan	   *subplan = (Plan *) lfirst(lp);
+			PlannerInfo *subroot = (PlannerInfo *) lfirst(lr);
+
+			SS_finalize_plan(subroot, subplan);
+		}
+		SS_finalize_plan(root, top_plan);
+	}
+
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
@@ -312,7 +331,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				 bool hasRecursion, double tuple_fraction,
 				 PlannerInfo **subroot)
 {
-	int			num_old_subplans = list_length(glob->subplans);
 	PlannerInfo *root;
 	Plan	   *plan;
 	List	   *newWithCheckOptions;
@@ -327,6 +345,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->query_level = parent_root ? parent_root->query_level + 1 : 1;
 	root->parent_root = parent_root;
 	root->plan_params = NIL;
+	root->outer_params = NULL;
 	root->planner_cxt = CurrentMemoryContext;
 	root->init_plans = NIL;
 	root->cte_plan_ids = NIL;
@@ -656,13 +675,17 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	}
 
 	/*
-	 * If any subplans were generated, or if there are any parameters to worry
-	 * about, build initPlan list and extParam/allParam sets for plan nodes,
-	 * and attach the initPlans to the top plan node.
+	 * Capture the set of outer-level param IDs we have access to, for use in
+	 * extParam/allParam calculations later.
 	 */
-	if (list_length(glob->subplans) != num_old_subplans ||
-		root->glob->nParamExec > 0)
-		SS_finalize_plan(root, plan, true);
+	SS_identify_outer_params(root);
+
+	/*
+	 * If any initPlans were created in this query level, attach them to the
+	 * topmost plan node for the level, and increment that node's cost to
+	 * account for them.
+	 */
+	SS_attach_initplans(root, plan);
 
 	/* Return internal info if caller wants it */
 	if (subroot)

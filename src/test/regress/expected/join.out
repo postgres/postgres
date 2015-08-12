@@ -4889,6 +4889,63 @@ select * from
   0 | 9998 |  0
 (1 row)
 
+-- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
+-- but we can make the test case much more compact with LATERAL)
+explain (verbose, costs off)
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Nested Loop
+   Output: "*VALUES*".column1, t1.q1, t1.q2, ss2.q1, ss2.q2
+   ->  Seq Scan on public.int8_tbl t1
+         Output: t1.q1, t1.q2
+   ->  Nested Loop
+         Output: "*VALUES*".column1, ss2.q1, ss2.q2
+         ->  Values Scan on "*VALUES*"
+               Output: "*VALUES*".column1
+         ->  Subquery Scan on ss2
+               Output: ss2.q1, ss2.q2
+               Filter: (t1.q1 = ss2.q2)
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+                     Filter: (SubPlan 3)
+                     SubPlan 3
+                       ->  Result
+                             Output: t3.q2
+                             One-Time Filter: $4
+                             InitPlan 1 (returns $2)
+                               ->  Result
+                                     Output: GREATEST($0, t2.q2)
+                             InitPlan 2 (returns $4)
+                               ->  Result
+                                     Output: ($3 = 0)
+                             ->  Seq Scan on public.int8_tbl t3
+                                   Output: t3.q1, t3.q2
+                                   Filter: (t3.q2 = $2)
+(27 rows)
+
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+ id |        q1        |        q2         |        q1        |        q2        
+----+------------------+-------------------+------------------+------------------
+  0 | 4567890123456789 |               123 | 4567890123456789 | 4567890123456789
+  0 | 4567890123456789 |  4567890123456789 | 4567890123456789 | 4567890123456789
+  0 | 4567890123456789 | -4567890123456789 | 4567890123456789 | 4567890123456789
+(3 rows)
+
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
 ERROR:  column "f1" does not exist

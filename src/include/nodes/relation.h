@@ -131,7 +131,14 @@ typedef struct PlannerInfo
 
 	struct PlannerInfo *parent_root;	/* NULL at outermost Query */
 
+	/*
+	 * plan_params contains the expressions that this query level needs to
+	 * make available to a lower query level that is currently being planned.
+	 * outer_params contains the paramIds of PARAM_EXEC Params that outer
+	 * query levels will make available to this query level.
+	 */
 	List	   *plan_params;	/* list of PlannerParamItems, see below */
+	Bitmapset  *outer_params;
 
 	/*
 	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
