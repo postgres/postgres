@@ -76,7 +76,6 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 		nulls[1] = true;
 	}
 
