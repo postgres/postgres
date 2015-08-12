@@ -68,6 +68,7 @@ static void brinsummarize(Relation index, Relation heapRel,
 static void form_and_insert_tuple(BrinBuildState *state);
 static void union_tuples(BrinDesc *bdesc, BrinMemTuple *a,
 			 BrinTuple *b);
+static void brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy);
 
 
 /*
@@ -736,6 +737,8 @@ brinvacuumcleanup(PG_FUNCTION_ARGS)
 	heapRel = heap_open(IndexGetRelation(RelationGetRelid(info->index), false),
 						AccessShareLock);
 
+	brin_vacuum_scan(info->index, info->strategy);
+
 	brinsummarize(info->index, heapRel,
 				  &stats->num_index_tuples, &stats->num_index_tuples);
 
@@ -1149,4 +1152,44 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 	}
 
 	MemoryContextDelete(cxt);
+}
+
+/*
+ * brin_vacuum_scan
+ *		Do a complete scan of the index during VACUUM.
+ *
+ * This routine scans the complete index looking for uncatalogued index pages,
+ * i.e. those that might have been lost due to a crash after index extension
+ * and such.
+ */
+static void
+brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy)
+{
+	bool		vacuum_fsm = false;
+	BlockNumber blkno;
+
+	/*
+	 * Scan the index in physical order, and clean up any possible mess in
+	 * each page.
+	 */
+	for (blkno = 0; blkno < RelationGetNumberOfBlocks(idxrel); blkno++)
+	{
+		Buffer		buf;
+
+		CHECK_FOR_INTERRUPTS();
+
+		buf = ReadBufferExtended(idxrel, MAIN_FORKNUM, blkno,
+								 RBM_NORMAL, strategy);
+
+		vacuum_fsm |= brin_page_cleanup(idxrel, buf);
+
+		ReleaseBuffer(buf);
+	}
+
+	/*
+	 * If we made any change to the FSM, make sure the new info is visible all
+	 * the way to the top.
+	 */
+	if (vacuum_fsm)
+		FreeSpaceMapVacuum(idxrel);
 }
