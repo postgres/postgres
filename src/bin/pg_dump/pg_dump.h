@@ -202,7 +202,7 @@ typedef struct _tableInfo
 	char		relkind;
 	char		relpersistence; /* relation persistence */
 	bool		relispopulated; /* relation is populated */
-	bool		relreplident;	/* replica identifier */
+	char		relreplident;	/* replica identifier */
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
 	char	   *checkoption;	/* WITH CHECK OPTION */
