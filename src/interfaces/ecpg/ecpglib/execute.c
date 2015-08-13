@@ -146,7 +146,7 @@ next_insert(char *text, int pos, bool questionmarks)
 }
 
 static bool
-ecpg_type_infocache_push(struct ECPGtype_information_cache ** cache, int oid, bool isarray, int lineno)
+ecpg_type_infocache_push(struct ECPGtype_information_cache ** cache, int oid, enum ARRAY_TYPE isarray, int lineno)
 {
 	struct ECPGtype_information_cache *new_entry
 	= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
