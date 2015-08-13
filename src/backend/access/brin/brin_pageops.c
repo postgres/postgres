@@ -86,6 +86,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	{
 		LockBuffer(oldbuf, BUFFER_LOCK_EXCLUSIVE);
 		newbuf = InvalidBuffer;
+		extended = false;
 	}
 	oldpage = BufferGetPage(oldbuf);
 	oldlp = PageGetItemId(oldpage, oldoff);
@@ -335,9 +336,8 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	brinRevmapExtend(revmap, heapBlk);
 
 	/*
-	 * Obtain a locked buffer to insert the new tuple.  Note
-	 * brin_getinsertbuffer ensures there's enough space in the returned
-	 * buffer.
+	 * Acquire lock on buffer supplied by caller, if any.  If it doesn't have
+	 * enough space, unpin it to obtain a new one below.
 	 */
 	if (BufferIsValid(*buffer))
 	{
@@ -354,12 +354,18 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		}
 	}
 
+	/*
+	 * If we still don't have a usable buffer, have brin_getinsertbuffer
+	 * obtain one for us.
+	 */
 	if (!BufferIsValid(*buffer))
 	{
 		*buffer = brin_getinsertbuffer(idxrel, InvalidBuffer, itemsz, &extended);
 		Assert(BufferIsValid(*buffer));
 		Assert(extended || br_page_get_freespace(BufferGetPage(*buffer)) >= itemsz);
 	}
+	else
+		extended = false;
 
 	/* Now obtain lock on revmap buffer */
 	revmapbuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
@@ -367,6 +373,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	page = BufferGetPage(*buffer);
 	blk = BufferGetBlockNumber(*buffer);
 
+	/* Execute the actual insertion */
 	START_CRIT_SECTION();
 	if (extended)
 		brin_page_init(BufferGetPage(*buffer), BRIN_PAGETYPE_REGULAR);
