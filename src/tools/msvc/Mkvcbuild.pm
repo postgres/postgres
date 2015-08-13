@@ -41,7 +41,7 @@ my $contrib_extrasource = {
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ], };
 my @contrib_excludes = (
 	'commit_ts',      'hstore_plperl', 'hstore_plpython', 'intagg',
-	'ltree_plpython', 'pgcrypto',      'sepgsql');
+	'ltree_plpython', 'pgcrypto',      'sepgsql',         'brin');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
