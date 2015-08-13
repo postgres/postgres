@@ -3563,6 +3563,52 @@ select t1.* from
  hi de ho neighbor
 (2 rows)
 
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  inner join int8_tbl i8
+  on i8.q2 = 456
+  right join text_tbl t2
+  on t1.f1 = 'doh!'
+  left join int4_tbl i4
+  on i8.q1 = i4.f1;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.f1, i8.q1, i8.q2, t2.f1, i4.f1
+   ->  Seq Scan on public.text_tbl t2
+         Output: t2.f1
+   ->  Materialize
+         Output: i8.q1, i8.q2, i4.f1, t1.f1
+         ->  Nested Loop
+               Output: i8.q1, i8.q2, i4.f1, t1.f1
+               ->  Nested Loop Left Join
+                     Output: i8.q1, i8.q2, i4.f1
+                     Join Filter: (i8.q1 = i4.f1)
+                     ->  Seq Scan on public.int8_tbl i8
+                           Output: i8.q1, i8.q2
+                           Filter: (i8.q2 = 456)
+                     ->  Seq Scan on public.int4_tbl i4
+                           Output: i4.f1
+               ->  Seq Scan on public.text_tbl t1
+                     Output: t1.f1
+                     Filter: (t1.f1 = 'doh!'::text)
+(19 rows)
+
+select * from
+  text_tbl t1
+  inner join int8_tbl i8
+  on i8.q2 = 456
+  right join text_tbl t2
+  on t1.f1 = 'doh!'
+  left join int4_tbl i4
+  on i8.q1 = i4.f1;
+  f1  | q1  | q2  |        f1         | f1 
+------+-----+-----+-------------------+----
+ doh! | 123 | 456 | doh!              |   
+ doh! | 123 | 456 | hi de ho neighbor |   
+(2 rows)
+
 --
 -- test ability to push constants through outer join clauses
 --
