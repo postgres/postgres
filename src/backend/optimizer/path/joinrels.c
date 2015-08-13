@@ -470,11 +470,30 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		{
 			/*
 			 * Otherwise, the proposed join overlaps the RHS but isn't a valid
-			 * implementation of this SJ.  It might still be a legal join,
-			 * however, if we're allowed to associate it into the RHS of this
-			 * SJ.  That means this SJ must be a LEFT join (not SEMI or ANTI,
-			 * and certainly not FULL) and the proposed join must not overlap
-			 * the LHS.
+			 * implementation of this SJ.  But don't panic quite yet: the RHS
+			 * violation might have occurred previously, in one or both input
+			 * relations, in which case we must have previously decided that
+			 * it was OK to commute some other SJ with this one.  If we need
+			 * to perform this join to finish building up the RHS, rejecting
+			 * it could lead to not finding any plan at all.  (This can occur
+			 * because of the heuristics elsewhere in this file that postpone
+			 * clauseless joins: we might not consider doing a clauseless join
+			 * within the RHS until after we've performed other, validly
+			 * commutable SJs with one or both sides of the clauseless join.)
+			 * This consideration boils down to the rule that if both inputs
+			 * overlap the RHS, we can allow the join --- they are either
+			 * fully within the RHS, or represent previously-allowed joins to
+			 * rels outside it.
+			 */
+			if (bms_overlap(rel1->relids, sjinfo->min_righthand) &&
+				bms_overlap(rel2->relids, sjinfo->min_righthand))
+				continue;		/* assume valid previous violation of RHS */
+
+			/*
+			 * The proposed join could still be legal, but only if we're
+			 * allowed to associate it into the RHS of this SJ.  That means
+			 * this SJ must be a LEFT join (not SEMI or ANTI, and certainly
+			 * not FULL) and the proposed join must not overlap the LHS.
 			 */
 			if (sjinfo->jointype != JOIN_LEFT ||
 				bms_overlap(joinrelids, sjinfo->min_lefthand))
