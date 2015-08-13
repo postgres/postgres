@@ -379,29 +379,17 @@ order by 1, 2;
 
 --
 -- regression test: check a case where join_clause_is_movable_into() gives
--- an imprecise result
+-- an imprecise result, causing an assertion failure
 --
-analyze pg_enum;
-explain (costs off)
-select anname, outname, enumtypid
+select count(*)
 from
-  (select pa.proname as anname, coalesce(po.proname, typname) as outname
-   from pg_type t
-     left join pg_proc po on po.oid = t.typoutput
-     join pg_proc pa on pa.oid = t.typanalyze) ss,
-  pg_enum,
-  pg_type t2
-where anname = enumlabel and outname = t2.typname and enumtypid = t2.oid;
-
-select anname, outname, enumtypid
-from
-  (select pa.proname as anname, coalesce(po.proname, typname) as outname
-   from pg_type t
-     left join pg_proc po on po.oid = t.typoutput
-     join pg_proc pa on pa.oid = t.typanalyze) ss,
-  pg_enum,
-  pg_type t2
-where anname = enumlabel and outname = t2.typname and enumtypid = t2.oid;
+  (select t3.tenthous as x1, coalesce(t1.stringu1, t2.stringu1) as x2
+   from tenk1 t1
+   left join tenk1 t2 on t1.unique1 = t2.unique1
+   join tenk1 t3 on t1.unique2 = t3.unique2) ss,
+  tenk1 t4,
+  tenk1 t5
+where t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
 
 
 --
