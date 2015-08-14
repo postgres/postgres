@@ -3038,16 +3038,12 @@ AlterTableGetLockLevel(List *cmds)
 				 * are set here for tables, views and indexes; for historical
 				 * reasons these can all be used with ALTER TABLE, so we can't
 				 * decide between them using the basic grammar.
-				 *
-				 * XXX Look in detail at each option to determine lock level,
-				 * e.g. cmd_lockmode = GetRelOptionsLockLevel((List *)
-				 * cmd->def);
 				 */
 			case AT_SetRelOptions:		/* Uses MVCC in getIndexes() and
 										 * getTables() */
 			case AT_ResetRelOptions:	/* Uses MVCC in getIndexes() and
 										 * getTables() */
-				cmd_lockmode = AccessExclusiveLock;
+				cmd_lockmode = AlterTableGetRelOptionsLockLevel((List *) cmd->def);
 				break;
 
 			default:			/* oops */

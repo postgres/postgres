@@ -22,6 +22,7 @@
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "nodes/pg_list.h"
+#include "storage/lock.h"
 
 /* types supported by reloptions */
 typedef enum relopt_type
@@ -62,6 +63,7 @@ typedef struct relopt_gen
 								 * marker) */
 	const char *desc;
 	bits32		kinds;
+	LOCKMODE	lockmode;
 	int			namelen;
 	relopt_type type;
 } relopt_gen;
@@ -274,5 +276,6 @@ extern bytea *index_reloptions(RegProcedure amoptions, Datum reloptions,
 				 bool validate);
 extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
+extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);
 
 #endif   /* RELOPTIONS_H */

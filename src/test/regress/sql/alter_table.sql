@@ -1332,6 +1332,11 @@ begin; alter table alterlock alter column f2 set (n_distinct = 1);
 select * from my_locks order by 1;
 rollback;
 
+-- test that mixing options with different lock levels works as expected
+begin; alter table alterlock set (autovacuum_enabled = off, fillfactor = 80);
+select * from my_locks order by 1;
+commit;
+
 begin; alter table alterlock alter column f2 set storage extended;
 select * from my_locks order by 1;
 rollback;
@@ -1363,6 +1368,39 @@ commit;
 begin;
 alter table alterlock2 validate constraint alterlock2nv;
 select * from my_locks order by 1;
+rollback;
+
+create or replace view my_locks as
+select case when c.relname like 'pg_toast%' then 'pg_toast' else c.relname end, max(mode::lockmodes) as max_lockmode
+from pg_locks l join pg_class c on l.relation = c.oid
+where virtualtransaction = (
+        select virtualtransaction
+        from pg_locks
+        where transactionid = txid_current()::integer)
+and locktype = 'relation'
+and relnamespace != (select oid from pg_namespace where nspname = 'pg_catalog')
+and c.relname = 'my_locks'
+group by c.relname;
+
+-- raise exception
+alter table my_locks set (autovacuum_enabled = false);
+alter view my_locks set (autovacuum_enabled = false);
+alter table my_locks reset (autovacuum_enabled);
+alter view my_locks reset (autovacuum_enabled);
+
+begin;
+alter view my_locks set (security_barrier=off);
+select * from my_locks order by 1;
+alter view my_locks reset (security_barrier);
+rollback;
+
+-- this test intentionally applies the ALTER TABLE command against a view, but
+-- uses a view option so we expect this to succeed. This form of SQL is
+-- accepted for historical reasons, as shown in the docs for ALTER VIEW
+begin;
+alter table my_locks set (security_barrier=off);
+select * from my_locks order by 1;
+alter table my_locks reset (security_barrier);
 rollback;
 
 -- cleanup

@@ -543,6 +543,10 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       of <command>ALTER TABLE</> that forces a table rewrite.
      </para>
 
+     <para>
+      Changing autovacuum storage parameters acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+     </para>
+
      <note>
       <para>
        While <command>CREATE TABLE</> allows <literal>OIDS</> to be specified
