@@ -140,23 +140,12 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ 
    that were added due to cascading).
   </para>
 
-  <warning>
-   <para>
-    <command>TRUNCATE</> is not MVCC-safe (see <xref linkend="mvcc">
-     for general information about MVCC).  After truncation, the table
-     will appear empty to all concurrent transactions, even if they
-     are using a snapshot taken before the truncation occurred.  This
-     will only be an issue for a transaction that did not access the
-     truncated table before the truncation happened &mdash; any
-     transaction that has done so would hold at least an
-     <literal>ACCESS SHARE</literal> lock, which would block
-     <command>TRUNCATE</> until that transaction completes.  So
-     truncation will not cause any apparent inconsistency in the table
-     contents for successive queries on the same table, but it could
-     cause visible inconsistency between the contents of the truncated
-     table and other tables in the database.
-   </para>
-  </warning>
+  <para>
+   <command>TRUNCATE</> is not MVCC-safe.  After truncation, the table will
+   appear empty to concurrent transactions, if they are using a snapshot
+   taken before the truncation occurred.
+   See <xref linkend="mvcc-caveats"> for more details.
+  </para>
 
   <para>
    <command>TRUNCATE</> is transaction-safe with respect to the data
