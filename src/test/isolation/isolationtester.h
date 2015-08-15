@@ -49,6 +49,8 @@ typedef struct
 	int			nsessions;
 	Permutation **permutations;
 	int			npermutations;
+	Step	  **allsteps;
+	int			nallsteps;
 } TestSpec;
 
 extern TestSpec parseresult;

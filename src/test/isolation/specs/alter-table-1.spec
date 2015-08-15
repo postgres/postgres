@@ -28,5 +28,5 @@ session "s2"
 setup		{ BEGIN; }
 step "rx1"	{ SELECT * FROM b WHERE a_id = 1 LIMIT 1; }
 step "wx"	{ INSERT INTO b VALUES (0); }
-step "rx1"	{ SELECT * FROM b WHERE a_id = 3 LIMIT 3; }
+step "rx3"	{ SELECT * FROM b WHERE a_id = 3 LIMIT 3; }
 step "c2"	{ COMMIT; }
