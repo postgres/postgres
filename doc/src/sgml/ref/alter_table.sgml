@@ -699,7 +699,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
 
    <para>
     Adding a <literal>CHECK</> or <literal>NOT NULL</> constraint requires
-    scanning the table to verify that existing rows meet the constraint.
+    scanning the table to verify that existing rows meet the constraint,
+    but does not require a table rewrite.
    </para>
 
    <para>
@@ -733,6 +734,13 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
     This results in no semantically-visible change in the table,
     but the command forces rewriting, which gets rid of no-longer-useful
     data.
+   </para>
+
+   <para>
+    The rewriting forms of <command>ALTER TABLE</> are not MVCC-safe.
+    After a table rewrite, the table will appear empty to concurrent
+    transactions, if they are using a snapshot taken before the rewrite
+    occurred.  See <xref linkend="mvcc-caveats"> for more details.
    </para>
 
    <para>
