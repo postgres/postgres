@@ -801,6 +801,10 @@ typedef struct PLpgSQL_execstate
 	/* EState to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;
 
+	/* Lookup table to use for executing type casts */
+	HTAB	   *cast_hash;
+	MemoryContext cast_hash_context;
+
 	/* temporary state for results from evaluation of query or expr */
 	SPITupleTable *eval_tuptable;
 	uint32		eval_processed;

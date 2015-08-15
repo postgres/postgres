@@ -98,6 +98,10 @@ static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
  *
  * The evaluation state trees (cast_exprstate) are managed in the same way as
  * simple expressions (i.e., we assume cast expressions are always simple).
+ *
+ * As with simple expressions, DO blocks don't use the shared hash table but
+ * must have their own.  This isn't ideal, but we don't want to deal with
+ * multiple simple_eval_estates within a DO block.
  */
 typedef struct					/* lookup key for cast info */
 {
@@ -118,8 +122,8 @@ typedef struct					/* cast_hash table entry */
 	LocalTransactionId cast_lxid;
 } plpgsql_CastHashEntry;
 
-static MemoryContext cast_hash_context = NULL;
-static HTAB *cast_hash = NULL;
+static MemoryContext shared_cast_context = NULL;
+static HTAB *shared_cast_hash = NULL;
 
 /************************************************************
  * Local function forward declarations
@@ -287,7 +291,9 @@ static char *format_preparedparamsdata(PLpgSQL_execstate *estate,
  * difference that this code is aware of is that for a DO block, we want
  * to use a private simple_eval_estate, which is created and passed in by
  * the caller.  For regular functions, pass NULL, which implies using
- * shared_simple_eval_estate.
+ * shared_simple_eval_estate.  (When using a private simple_eval_estate,
+ * we must also use a private cast hashtable, but that's taken care of
+ * within plpgsql_estate_setup.)
  * ----------
  */
 Datum
@@ -3271,6 +3277,8 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 					 ReturnSetInfo *rsi,
 					 EState *simple_eval_estate)
 {
+	HASHCTL		ctl;
+
 	/* this link will be restored at exit from plpgsql_call_handler */
 	func->cur_estate = estate;
 
@@ -3319,11 +3327,44 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->paramLI->numParams = estate->ndatums;
 	estate->params_dirty = false;
 
-	/* set up for use of appropriate simple-expression EState */
+	/* set up for use of appropriate simple-expression EState and cast hash */
 	if (simple_eval_estate)
+	{
 		estate->simple_eval_estate = simple_eval_estate;
+		/* Private cast hash just lives in function's main context */
+		memset(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(plpgsql_CastHashKey);
+		ctl.entrysize = sizeof(plpgsql_CastHashEntry);
+		ctl.hcxt = CurrentMemoryContext;
+		estate->cast_hash = hash_create("PLpgSQL private cast cache",
+										16,		/* start small and extend */
+										&ctl,
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+		estate->cast_hash_context = CurrentMemoryContext;
+	}
 	else
+	{
 		estate->simple_eval_estate = shared_simple_eval_estate;
+		/* Create the session-wide cast-info hash table if we didn't already */
+		if (shared_cast_hash == NULL)
+		{
+			shared_cast_context = AllocSetContextCreate(TopMemoryContext,
+														"PLpgSQL cast info",
+													ALLOCSET_DEFAULT_MINSIZE,
+												   ALLOCSET_DEFAULT_INITSIZE,
+												   ALLOCSET_DEFAULT_MAXSIZE);
+			memset(&ctl, 0, sizeof(ctl));
+			ctl.keysize = sizeof(plpgsql_CastHashKey);
+			ctl.entrysize = sizeof(plpgsql_CastHashEntry);
+			ctl.hcxt = shared_cast_context;
+			shared_cast_hash = hash_create("PLpgSQL cast cache",
+										   16,	/* start small and extend */
+										   &ctl,
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+		}
+		estate->cast_hash = shared_cast_hash;
+		estate->cast_hash_context = shared_cast_context;
+	}
 
 	estate->eval_tuptable = NULL;
 	estate->eval_processed = 0;
@@ -6111,32 +6152,12 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	LocalTransactionId curlxid;
 	MemoryContext oldcontext;
 
-	/* Create the session-wide cast-info hash table if we didn't already */
-	if (cast_hash == NULL)
-	{
-		HASHCTL		ctl;
-
-		cast_hash_context = AllocSetContextCreate(TopMemoryContext,
-												  "PLpgSQL cast info",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
-		memset(&ctl, 0, sizeof(ctl));
-		ctl.keysize = sizeof(plpgsql_CastHashKey);
-		ctl.entrysize = sizeof(plpgsql_CastHashEntry);
-		ctl.hcxt = cast_hash_context;
-		cast_hash = hash_create("PLpgSQL cast cache",
-								16,		/* start small and extend */
-								&ctl,
-								HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-	}
-
 	/* Look for existing entry */
 	cast_key.srctype = srctype;
 	cast_key.dsttype = dsttype;
 	cast_key.srctypmod = srctypmod;
 	cast_key.dsttypmod = dsttypmod;
-	cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
+	cast_entry = (plpgsql_CastHashEntry *) hash_search(estate->cast_hash,
 													   (void *) &cast_key,
 													   HASH_FIND, NULL);
 
@@ -6221,7 +6242,7 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 			cast_expr = (Node *) expression_planner((Expr *) cast_expr);
 
 			/* Now copy the tree into cast_hash_context */
-			MemoryContextSwitchTo(cast_hash_context);
+			MemoryContextSwitchTo(estate->cast_hash_context);
 
 			cast_expr = copyObject(cast_expr);
 		}
@@ -6229,7 +6250,7 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 		MemoryContextSwitchTo(oldcontext);
 
 		/* Now we can fill in a hashtable entry. */
-		cast_entry = (plpgsql_CastHashEntry *) hash_search(cast_hash,
+		cast_entry = (plpgsql_CastHashEntry *) hash_search(estate->cast_hash,
 														   (void *) &cast_key,
 														 HASH_ENTER, &found);
 		Assert(!found);			/* wasn't there a moment ago */
@@ -6251,7 +6272,9 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	 * executions.  (We will leak some memory intra-transaction if that
 	 * happens a lot, but we don't expect it to.)  It's okay to update the
 	 * hash table with the new tree because all plpgsql functions within a
-	 * given transaction share the same simple_eval_estate.
+	 * given transaction share the same simple_eval_estate.  (Well, regular
+	 * functions do; DO blocks have private simple_eval_estates, and private
+	 * cast hash tables to go with them.)
 	 */
 	curlxid = MyProc->lxid;
 	if (cast_entry->cast_lxid != curlxid || cast_entry->cast_in_use)
