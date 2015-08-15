@@ -1027,7 +1027,7 @@ dsm_impl_pin_segment(dsm_handle handle, void *impl_private)
 }
 
 static int
-errcode_for_dynamic_shared_memory()
+errcode_for_dynamic_shared_memory(void)
 {
 	if (errno == EFBIG || errno == ENOMEM)
 		return errcode(ERRCODE_OUT_OF_MEMORY);

@@ -2993,7 +2993,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 
 
 static void
-check_spi_usage_allowed()
+check_spi_usage_allowed(void)
 {
 	/* see comment in plperl_fini() */
 	if (plperl_ending)

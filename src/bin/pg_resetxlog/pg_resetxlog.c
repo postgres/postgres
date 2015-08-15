@@ -703,7 +703,7 @@ PrintControlValues(bool guessed)
  * Print the values to be changed.
  */
 static void
-PrintNewControlValues()
+PrintNewControlValues(void)
 {
 	char		fname[MAXFNAMELEN];
 

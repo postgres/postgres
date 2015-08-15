@@ -295,7 +295,7 @@ AtAbort_Twophase(void)
  * PGXACT entry.
  */
 void
-PostPrepare_Twophase()
+PostPrepare_Twophase(void)
 {
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 	MyLockedGxact->locking_backend = InvalidBackendId;

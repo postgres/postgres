@@ -610,7 +610,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
  * owner back to its original value.
  */
 void
-SnapBuildClearExportedSnapshot()
+SnapBuildClearExportedSnapshot(void)
 {
 	/* nothing exported, thats the usual case */
 	if (!ExportInProgress)

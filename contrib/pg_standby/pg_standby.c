@@ -171,7 +171,7 @@ CustomizableInitialize(void)
  *	  Is the requested file ready yet?
  */
 static bool
-CustomizableNextWALFileReady()
+CustomizableNextWALFileReady(void)
 {
 	if (stat(WALFilePath, &stat_buf) == 0)
 	{

@@ -249,7 +249,7 @@ InitWalSender(void)
  * process, similar to what transaction abort does in a regular backend.
  */
 void
-WalSndErrorCleanup()
+WalSndErrorCleanup(void)
 {
 	LWLockReleaseAll();
 

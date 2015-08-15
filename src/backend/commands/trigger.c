@@ -3226,7 +3226,7 @@ static SetConstraintState SetConstraintStateAddItem(SetConstraintState state,
  * Gets the current query fdw tuplestore and initializes it if necessary
  */
 static Tuplestorestate *
-GetCurrentFDWTuplestore()
+GetCurrentFDWTuplestore(void)
 {
 	Tuplestorestate *ret;
 

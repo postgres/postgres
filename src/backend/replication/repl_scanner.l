@@ -237,7 +237,7 @@ replication_scanner_init(const char *str)
 }
 
 void
-replication_scanner_finish()
+replication_scanner_finish(void)
 {
 	yy_delete_buffer(scanbufhandle);
 	scanbufhandle = NULL;
