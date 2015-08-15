@@ -405,7 +405,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		if (indexInfo->ii_ExclusionOps != NULL)
 		{
 			bool		violationOK;
-			bool		waitMode;
+			CEOUC_WAIT_MODE waitMode;
 
 			if (noDupErr)
 			{
