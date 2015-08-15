@@ -1063,7 +1063,8 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 
 	/*
 	 * Use MultiByteToWideChar directly if there is a corresponding codepage,
-	 * or double conversion through UTF8 if not.
+	 * or double conversion through UTF8 if not.  Double conversion is needed,
+	 * for example, in an ENCODING=LATIN8, LC_CTYPE=C database.
 	 */
 	if (codepage != 0)
 	{
@@ -1075,12 +1076,21 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 	{
 		char	   *utf8;
 
-		utf8 = (char *) pg_do_encoding_conversion((unsigned char *) str,
-												  len,
-												  GetMessageEncoding(),
-												  PG_UTF8);
-		if (utf8 != str)
-			len = strlen(utf8);
+		/*
+		 * XXX pg_do_encoding_conversion() requires a transaction.  In the
+		 * absence of one, hope for the input to be valid UTF8.
+		 */
+		if (IsTransactionState())
+		{
+			utf8 = (char *) pg_do_encoding_conversion((unsigned char *) str,
+													  len,
+													  GetMessageEncoding(),
+													  PG_UTF8);
+			if (utf8 != str)
+				len = strlen(utf8);
+		}
+		else
+			utf8 = (char *) str;
 
 		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
 		dstlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, utf16, len);
