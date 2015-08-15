@@ -3836,6 +3836,15 @@ commit;
 drop function cast_invoker(integer);
 drop function sql_to_date(integer) cascade;
 
+-- Test handling of cast cache inside DO blocks
+-- (to check the original crash case, this must be a cast not previously
+-- used in this session)
+
+begin;
+do $$ declare x text[]; begin x := '{1.23, 4.56}'::numeric[]; end $$;
+do $$ declare x text[]; begin x := '{1.23, 4.56}'::numeric[]; end $$;
+end;
+
 -- Test for consistent reporting of error context
 
 create function fail() returns int language plpgsql as $$
