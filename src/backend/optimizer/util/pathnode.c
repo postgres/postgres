@@ -92,44 +92,45 @@ compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
  * same if they agree to within a "fuzz factor".  This is used by add_path
  * to avoid keeping both of a pair of paths that really have insignificantly
  * different cost.
+ *
+ * The fuzz_factor argument must be 1.0 plus delta, where delta is the
+ * fraction of the smaller cost that is considered to be a significant
+ * difference.  For example, fuzz_factor = 1.01 makes the fuzziness limit
+ * be 1% of the smaller cost.
  */
 static int
-compare_fuzzy_path_costs(Path *path1, Path *path2, CostSelector criterion)
+compare_fuzzy_path_costs(Path *path1, Path *path2, CostSelector criterion,
+						 double fuzz_factor)
 {
-	/*
-	 * We use a fuzz factor of 1% of the smaller cost.
-	 *
-	 * XXX does this percentage need to be user-configurable?
-	 */
 	if (criterion == STARTUP_COST)
 	{
-		if (path1->startup_cost > path2->startup_cost * 1.01)
+		if (path1->startup_cost > path2->startup_cost * fuzz_factor)
 			return +1;
-		if (path2->startup_cost > path1->startup_cost * 1.01)
+		if (path2->startup_cost > path1->startup_cost * fuzz_factor)
 			return -1;
 
 		/*
 		 * If paths have the same startup cost (not at all unlikely), order
 		 * them by total cost.
 		 */
-		if (path1->total_cost > path2->total_cost * 1.01)
+		if (path1->total_cost > path2->total_cost * fuzz_factor)
 			return +1;
-		if (path2->total_cost > path1->total_cost * 1.01)
+		if (path2->total_cost > path1->total_cost * fuzz_factor)
 			return -1;
 	}
 	else
 	{
-		if (path1->total_cost > path2->total_cost * 1.01)
+		if (path1->total_cost > path2->total_cost * fuzz_factor)
 			return +1;
-		if (path2->total_cost > path1->total_cost * 1.01)
+		if (path2->total_cost > path1->total_cost * fuzz_factor)
 			return -1;
 
 		/*
 		 * If paths have the same total cost, order them by startup cost.
 		 */
-		if (path1->startup_cost > path2->startup_cost * 1.01)
+		if (path1->startup_cost > path2->startup_cost * fuzz_factor)
 			return +1;
-		if (path2->startup_cost > path1->startup_cost * 1.01)
+		if (path2->startup_cost > path1->startup_cost * fuzz_factor)
 			return -1;
 	}
 	return 0;
@@ -277,9 +278,11 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		/*
 		 * As of Postgres 8.0, we use fuzzy cost comparison to avoid wasting
 		 * cycles keeping paths that are really not significantly different in
-		 * cost.
+		 * cost.  We use a 1% fuzziness limit.  (XXX does this percentage need
+		 * to be user-configurable?)
 		 */
-		costcmp = compare_fuzzy_path_costs(new_path, old_path, TOTAL_COST);
+		costcmp = compare_fuzzy_path_costs(new_path, old_path,
+										   TOTAL_COST, 1.01);
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
@@ -292,7 +295,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 */
 		if (costcmp == 0 ||
 			costcmp == compare_fuzzy_path_costs(new_path, old_path,
-												STARTUP_COST))
+												STARTUP_COST, 1.01))
 		{
 			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
 			{
@@ -305,11 +308,16 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 					{
 						/*
 						 * Same pathkeys, and fuzzily the same cost, so keep
-						 * just one --- but we'll do an exact cost comparison
-						 * to decide which.
+						 * just one; to decide which, do a fuzzy total-cost
+						 * comparison with very small fuzz limit.  (We used to
+						 * do an exact cost comparison, but that results in
+						 * annoying platform-specific plan variations due to
+						 * roundoff in the cost estimates.)  If things are
+						 * still tied, arbitrarily keep only the old path.
 						 */
-						if (compare_path_costs(new_path, old_path,
-											   TOTAL_COST) < 0)
+						if (compare_fuzzy_path_costs(new_path, old_path,
+													 TOTAL_COST,
+													 1.0000000001) < 0)
 							remove_old = true;	/* new dominates old */
 						else
 							accept_new = false; /* old equals or dominates new */
