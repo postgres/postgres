@@ -652,7 +652,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       This form changes the information which is written to the write-ahead log
       to identify rows which are updated or deleted.  This option has no effect
       except when logical replication is in use.  <literal>DEFAULT</>
-      (the default for non-system tables) records the 
+      (the default for non-system tables) records the
       old values of the columns of the primary key, if any.  <literal>USING INDEX</>
       records the old values of the columns covered by the named index, which
       must be unique, not partial, not deferrable, and include only columns marked
@@ -954,7 +954,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
 
    <para>
     Adding a <literal>CHECK</> or <literal>NOT NULL</> constraint requires
-    scanning the table to verify that existing rows meet the constraint.
+    scanning the table to verify that existing rows meet the constraint,
+    but does not require a table rewrite.
    </para>
 
    <para>
@@ -976,11 +977,17 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </para>
 
    <para>
-    To force an immediate rewrite of the table, you can use
-    <link linkend="SQL-VACUUM">VACUUM FULL</>, <xref linkend="SQL-CLUSTER">
-    or one of the forms of ALTER TABLE that forces a rewrite.  This results in
-    no semantically-visible change in the table, but gets rid of
-    no-longer-useful data.
+    To force immediate reclamation of space occupied by a dropped column,
+    you can execute one of the forms of <command>ALTER TABLE</> that
+    performs a rewrite of the whole table.  This results in reconstructing
+    each row with the dropped column replaced by a null value.
+   </para>
+
+   <para>
+    The rewriting forms of <command>ALTER TABLE</> are not MVCC-safe.
+    After a table rewrite, the table will appear empty to concurrent
+    transactions, if they are using a snapshot taken before the rewrite
+    occurred.  See <xref linkend="mvcc-caveats"> for more details.
    </para>
 
    <para>
