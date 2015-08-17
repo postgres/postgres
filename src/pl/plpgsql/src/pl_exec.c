@@ -5454,12 +5454,18 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * Set up ParamListInfo to pass to executor.  For safety, save and restore
-	 * estate->paramLI->parserSetupArg around our use of the param list.
+	 * Set up ParamListInfo to pass to executor.  We need an unshared list if
+	 * it's going to include any R/W expanded-object pointer.  For safety,
+	 * save and restore estate->paramLI->parserSetupArg around our use of the
+	 * param list.
 	 */
 	save_setup_arg = estate->paramLI->parserSetupArg;
 
-	paramLI = setup_param_list(estate, expr);
+	if (expr->rwparam >= 0)
+		paramLI = setup_unshared_param_list(estate, expr);
+	else
+		paramLI = setup_param_list(estate, expr);
+
 	econtext->ecxt_param_list_info = paramLI;
 
 	/*
@@ -5477,6 +5483,9 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 	/* Assorted cleanup */
 	expr->expr_simple_in_use = false;
+
+	if (paramLI && paramLI != estate->paramLI)
+		pfree(paramLI);
 
 	estate->paramLI->parserSetupArg = save_setup_arg;
 
@@ -5504,11 +5513,15 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
  *
  * We share a single ParamListInfo array across all SPI calls made from this
  * estate, except calls creating cursors, which use setup_unshared_param_list
- * (see its comments for reasons why).  A shared array is generally OK since
- * any given slot in the array would need to contain the same current datum
- * value no matter which query or expression we're evaluating.  However,
- * paramLI->parserSetupArg points to the specific PLpgSQL_expr being
- * evaluated.  This is not an issue for statement-level callers, but
+ * (see its comments for reasons why), and calls that pass a R/W expanded
+ * object pointer.  A shared array is generally OK since any given slot in
+ * the array would need to contain the same current datum value no matter
+ * which query or expression we're evaluating; but of course that doesn't
+ * hold when a specific variable is being passed as a R/W pointer, because
+ * other expressions in the same function probably don't want to do that.
+ *
+ * Note that paramLI->parserSetupArg points to the specific PLpgSQL_expr
+ * being evaluated.  This is not an issue for statement-level callers, but
  * lower-level callers must save and restore estate->paramLI->parserSetupArg
  * just in case there's an active evaluation at an outer call level.
  *
@@ -5538,6 +5551,11 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 * parsed/analyzed at least once); else we cannot rely on expr->paramnos.
 	 */
 	Assert(expr->plan != NULL);
+
+	/*
+	 * Expressions with R/W parameters can't use the shared param list.
+	 */
+	Assert(expr->rwparam == -1);
 
 	/*
 	 * We only need a ParamListInfo if the expression has parameters.  In
@@ -5604,6 +5622,10 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
  * be used to copy the parameters into cursor-lifespan storage, and we don't
  * want it to copy anything that's not used by the specific cursor; that
  * could result in uselessly copying some large values.
+ *
+ * We also use this for expressions that are passing a R/W object pointer
+ * to some trusted function.  We don't want the R/W pointer to get into the
+ * shared param list, where it could get passed to some less-trusted function.
  *
  * Caller should pfree the result after use, if it's not NULL.
  */
