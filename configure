@@ -14296,8 +14296,6 @@ if ${pgac_cv_sse42_crc32_intrinsics_+:} false; then :
 else
   pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS "
-ac_save_c_werror_flag=$ac_c_werror_flag
-ac_c_werror_flag=yes
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <nmmintrin.h>
@@ -14307,6 +14305,8 @@ main ()
 unsigned int crc = 0;
    crc = _mm_crc32_u8(crc, 0);
    crc = _mm_crc32_u32(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;
   ;
   return 0;
 }
@@ -14318,7 +14318,6 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-ac_c_werror_flag=$ac_save_c_werror_flag
 CFLAGS="$pgac_save_CFLAGS"
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_sse42_crc32_intrinsics_" >&5
@@ -14336,8 +14335,6 @@ if ${pgac_cv_sse42_crc32_intrinsics__msse4_2+:} false; then :
 else
   pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -msse4.2"
-ac_save_c_werror_flag=$ac_c_werror_flag
-ac_c_werror_flag=yes
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <nmmintrin.h>
@@ -14347,6 +14344,8 @@ main ()
 unsigned int crc = 0;
    crc = _mm_crc32_u8(crc, 0);
    crc = _mm_crc32_u32(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;
   ;
   return 0;
 }
@@ -14358,7 +14357,6 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-ac_c_werror_flag=$ac_save_c_werror_flag
 CFLAGS="$pgac_save_CFLAGS"
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_sse42_crc32_intrinsics__msse4_2" >&5
