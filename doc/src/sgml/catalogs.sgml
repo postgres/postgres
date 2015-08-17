@@ -5579,7 +5579,7 @@
      </row>
 
      <row>
-      <entry><structfield>confirmed_flush</structfield></entry>
+      <entry><structfield>confirmed_flush_lsn</structfield></entry>
       <entry><type>pg_lsn</type></entry>
       <entry></entry>
       <entry>The address (<literal>LSN</literal>) up to which the logical
