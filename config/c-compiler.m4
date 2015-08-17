@@ -456,15 +456,14 @@ AC_DEFUN([PGAC_SSE42_CRC32_INTRINSICS],
 AC_CACHE_CHECK([for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=$1], [Ac_cachevar],
 [pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS $1"
-ac_save_c_werror_flag=$ac_c_werror_flag
-ac_c_werror_flag=yes
 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nmmintrin.h>],
   [unsigned int crc = 0;
    crc = _mm_crc32_u8(crc, 0);
-   crc = _mm_crc32_u32(crc, 0);])],
+   crc = _mm_crc32_u32(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;])],
   [Ac_cachevar=yes],
   [Ac_cachevar=no])
-ac_c_werror_flag=$ac_save_c_werror_flag
 CFLAGS="$pgac_save_CFLAGS"])
 if test x"$Ac_cachevar" = x"yes"; then
   CFLAGS_SSE42="$1"
