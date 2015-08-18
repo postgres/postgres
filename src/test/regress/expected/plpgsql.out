@@ -3115,7 +3115,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3125,7 +3125,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
 drop function footest();
 -- test printing parameters after failure due to STRICT
 set plpgsql.print_strict_params to true;
@@ -3177,7 +3177,7 @@ end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
 DETAIL:  parameters: $1 = '0', $2 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3188,7 +3188,7 @@ end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: $1 = '1'
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3198,7 +3198,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
 create or replace function footest() returns void as $$
 -- override the global
 #print_strict_params off
@@ -4237,7 +4237,7 @@ end;
 $$ language plpgsql;
 select stacked_diagnostics_test();
 ERROR:  GET STACKED DIAGNOSTICS cannot be used outside an exception handler
-CONTEXT:  PL/pgSQL function stacked_diagnostics_test() line 6 at GET DIAGNOSTICS
+CONTEXT:  PL/pgSQL function stacked_diagnostics_test() line 6 at GET STACKED DIAGNOSTICS
 drop function zero_divide();
 drop function stacked_diagnostics_test();
 -- check cases where implicit SQLSTATE variable could be confused with
