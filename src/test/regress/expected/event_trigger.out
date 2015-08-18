@@ -235,15 +235,15 @@ drop cascades to table schema_one."table two"
 drop cascades to table schema_one.table_three
 NOTICE:  table "schema_two_table_two" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_two"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "audit_tbls_schema_two_table_three" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.audit_tbls_schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 ERROR:  object audit_tbls.schema_two_table_three of type table cannot be dropped
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 DELETE FROM undroppable_objs WHERE object_identity = 'audit_tbls.schema_two_table_three';
 DROP SCHEMA schema_one, schema_two CASCADE;
 NOTICE:  drop cascades to 7 other objects
@@ -256,21 +256,21 @@ drop cascades to table schema_one."table two"
 drop cascades to table schema_one.table_three
 NOTICE:  table "schema_two_table_two" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_two"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "audit_tbls_schema_two_table_three" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.audit_tbls_schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "schema_one_table_one" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_one_table_one"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "schema_one_table two" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls."schema_one_table two""
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "schema_one_table_three" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_one_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 ERROR:  object schema_one.table_three of type table cannot be dropped
 DELETE FROM undroppable_objs WHERE object_identity = 'schema_one.table_three';
 DROP SCHEMA schema_one, schema_two CASCADE;
@@ -284,21 +284,21 @@ drop cascades to table schema_one."table two"
 drop cascades to table schema_one.table_three
 NOTICE:  table "schema_two_table_two" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_two"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "audit_tbls_schema_two_table_three" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.audit_tbls_schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_two_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "schema_one_table_one" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_one_table_one"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "schema_one_table two" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls."schema_one_table two""
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 NOTICE:  table "schema_one_table_three" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.schema_one_table_three"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
      type     |   schema   |               object                
 --------------+------------+-------------------------------------
@@ -330,7 +330,7 @@ SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
 DROP OWNED BY regression_bob;
 NOTICE:  schema "audit_tbls" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.audit_tbls_schema_one_table_two"
-PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
+PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE
 SELECT * FROM dropped_objects WHERE type = 'schema';
   type  | schema |   object   
 --------+--------+------------

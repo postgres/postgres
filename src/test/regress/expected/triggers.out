@@ -1493,7 +1493,7 @@ CONTEXT:  SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
 CONTEXT:  SQL statement "insert into depth_c values (1)"
-PL/pgSQL function depth_b_tf() line 5 at EXECUTE statement
+PL/pgSQL function depth_b_tf() line 5 at EXECUTE
 SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  SQLSTATE = U9999: depth = 2
@@ -1504,12 +1504,12 @@ CONTEXT:  SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
 CONTEXT:  SQL statement "insert into depth_c values (1)"
-PL/pgSQL function depth_b_tf() line 12 at EXECUTE statement
+PL/pgSQL function depth_b_tf() line 12 at EXECUTE
 SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 ERROR:  U9999
 CONTEXT:  SQL statement "insert into depth_c values (1)"
-PL/pgSQL function depth_b_tf() line 12 at EXECUTE statement
+PL/pgSQL function depth_b_tf() line 12 at EXECUTE
 SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 select pg_trigger_depth();
@@ -1525,12 +1525,12 @@ CONTEXT:  SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
 CONTEXT:  SQL statement "insert into depth_c values (2)"
-PL/pgSQL function depth_b_tf() line 5 at EXECUTE statement
+PL/pgSQL function depth_b_tf() line 5 at EXECUTE
 SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
 CONTEXT:  SQL statement "insert into depth_c values (2)"
-PL/pgSQL function depth_b_tf() line 5 at EXECUTE statement
+PL/pgSQL function depth_b_tf() line 5 at EXECUTE
 SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_b_tr: depth = 2

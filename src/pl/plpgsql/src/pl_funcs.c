@@ -235,7 +235,7 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 		case PLPGSQL_STMT_FOREACH_A:
 			return _("FOREACH over array");
 		case PLPGSQL_STMT_EXIT:
-			return "EXIT";
+			return ((PLpgSQL_stmt_exit *) stmt)->is_exit ? "EXIT" : "CONTINUE";
 		case PLPGSQL_STMT_RETURN:
 			return "RETURN";
 		case PLPGSQL_STMT_RETURN_NEXT:
@@ -249,15 +249,16 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 		case PLPGSQL_STMT_EXECSQL:
 			return _("SQL statement");
 		case PLPGSQL_STMT_DYNEXECUTE:
-			return _("EXECUTE statement");
+			return "EXECUTE";
 		case PLPGSQL_STMT_DYNFORS:
 			return _("FOR over EXECUTE statement");
 		case PLPGSQL_STMT_GETDIAG:
-			return "GET DIAGNOSTICS";
+			return ((PLpgSQL_stmt_getdiag *) stmt)->is_stacked ?
+				"GET STACKED DIAGNOSTICS" : "GET DIAGNOSTICS";
 		case PLPGSQL_STMT_OPEN:
 			return "OPEN";
 		case PLPGSQL_STMT_FETCH:
-			return "FETCH";
+			return ((PLpgSQL_stmt_fetch *) stmt)->is_move ? "MOVE" : "FETCH";
 		case PLPGSQL_STMT_CLOSE:
 			return "CLOSE";
 		case PLPGSQL_STMT_PERFORM:
