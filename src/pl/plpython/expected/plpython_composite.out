@@ -65,6 +65,8 @@ elif typ == 'obj':
     type_record.first = first
     type_record.second = second
     return type_record
+elif typ == 'str':
+    return "('%s',%r)" % (first, second)
 $$ LANGUAGE plpythonu;
 SELECT * FROM multiout_record_as('dict', 'foo', 1, 'f');
  first | second 
@@ -76,6 +78,138 @@ SELECT multiout_record_as('dict', 'foo', 1, 'f');
  multiout_record_as 
 --------------------
  (foo,1)
+(1 row)
+
+SELECT * FROM multiout_record_as('dict', null, null, false);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('dict', 'one', null, false);
+ first | second 
+-------+--------
+ one   |       
+(1 row)
+
+SELECT * FROM multiout_record_as('dict', null, 2, false);
+ first | second 
+-------+--------
+       |      2
+(1 row)
+
+SELECT * FROM multiout_record_as('dict', 'three', 3, false);
+ first | second 
+-------+--------
+ three |      3
+(1 row)
+
+SELECT * FROM multiout_record_as('dict', null, null, true);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('tuple', null, null, false);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('tuple', 'one', null, false);
+ first | second 
+-------+--------
+ one   |       
+(1 row)
+
+SELECT * FROM multiout_record_as('tuple', null, 2, false);
+ first | second 
+-------+--------
+       |      2
+(1 row)
+
+SELECT * FROM multiout_record_as('tuple', 'three', 3, false);
+ first | second 
+-------+--------
+ three |      3
+(1 row)
+
+SELECT * FROM multiout_record_as('tuple', null, null, true);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('list', null, null, false);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('list', 'one', null, false);
+ first | second 
+-------+--------
+ one   |       
+(1 row)
+
+SELECT * FROM multiout_record_as('list', null, 2, false);
+ first | second 
+-------+--------
+       |      2
+(1 row)
+
+SELECT * FROM multiout_record_as('list', 'three', 3, false);
+ first | second 
+-------+--------
+ three |      3
+(1 row)
+
+SELECT * FROM multiout_record_as('list', null, null, true);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('obj', null, null, false);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('obj', 'one', null, false);
+ first | second 
+-------+--------
+ one   |       
+(1 row)
+
+SELECT * FROM multiout_record_as('obj', null, 2, false);
+ first | second 
+-------+--------
+       |      2
+(1 row)
+
+SELECT * FROM multiout_record_as('obj', 'three', 3, false);
+ first | second 
+-------+--------
+ three |      3
+(1 row)
+
+SELECT * FROM multiout_record_as('obj', null, null, true);
+ first | second 
+-------+--------
+       |       
+(1 row)
+
+SELECT * FROM multiout_record_as('str', 'one', 1, false);
+ first | second 
+-------+--------
+ 'one' |      1
+(1 row)
+
+SELECT * FROM multiout_record_as('str', 'one', 2, false);
+ first | second 
+-------+--------
+ 'one' |      2
 (1 row)
 
 SELECT *, s IS NULL AS snull FROM multiout_record_as('tuple', 'xxx', NULL, 'f') AS f(f, s);
@@ -179,10 +313,14 @@ elif typ == 'dict':
     d = {'first': n * 2, 'second': n * 3, 'extra': 'not important'}
 elif typ == 'tuple':
     d = (n * 2, n * 3)
+elif typ == 'list':
+    d = [ n * 2, n * 3 ]
 elif typ == 'obj':
     class d: pass
     d.first = n * 2
     d.second = n * 3
+elif typ == 'str':
+    d = "(%r,%r)" % (n * 2, n * 3)
 for i in range(n):
     yield (i, d)
 $$ LANGUAGE plpythonu;
@@ -200,12 +338,47 @@ SELECT * FROM multiout_table_type_setof('dict', 'f', 3);
  2 | (6,9)
 (3 rows)
 
+SELECT * FROM multiout_table_type_setof('dict', 'f', 7);
+ n | column2 
+---+---------
+ 0 | (14,21)
+ 1 | (14,21)
+ 2 | (14,21)
+ 3 | (14,21)
+ 4 | (14,21)
+ 5 | (14,21)
+ 6 | (14,21)
+(7 rows)
+
 SELECT * FROM multiout_table_type_setof('tuple', 'f', 2);
  n | column2 
 ---+---------
  0 | (4,6)
  1 | (4,6)
 (2 rows)
+
+SELECT * FROM multiout_table_type_setof('tuple', 'f', 3);
+ n | column2 
+---+---------
+ 0 | (6,9)
+ 1 | (6,9)
+ 2 | (6,9)
+(3 rows)
+
+SELECT * FROM multiout_table_type_setof('list', 'f', 2);
+ n | column2 
+---+---------
+ 0 | (4,6)
+ 1 | (4,6)
+(2 rows)
+
+SELECT * FROM multiout_table_type_setof('list', 'f', 3);
+ n | column2 
+---+---------
+ 0 | (6,9)
+ 1 | (6,9)
+ 2 | (6,9)
+(3 rows)
 
 SELECT * FROM multiout_table_type_setof('obj', 'f', 4);
  n | column2 
@@ -215,6 +388,39 @@ SELECT * FROM multiout_table_type_setof('obj', 'f', 4);
  2 | (8,12)
  3 | (8,12)
 (4 rows)
+
+SELECT * FROM multiout_table_type_setof('obj', 'f', 5);
+ n | column2 
+---+---------
+ 0 | (10,15)
+ 1 | (10,15)
+ 2 | (10,15)
+ 3 | (10,15)
+ 4 | (10,15)
+(5 rows)
+
+SELECT * FROM multiout_table_type_setof('str', 'f', 6);
+ n | column2 
+---+---------
+ 0 | (12,18)
+ 1 | (12,18)
+ 2 | (12,18)
+ 3 | (12,18)
+ 4 | (12,18)
+ 5 | (12,18)
+(6 rows)
+
+SELECT * FROM multiout_table_type_setof('str', 'f', 7);
+ n | column2 
+---+---------
+ 0 | (14,21)
+ 1 | (14,21)
+ 2 | (14,21)
+ 3 | (14,21)
+ 4 | (14,21)
+ 5 | (14,21)
+ 6 | (14,21)
+(7 rows)
 
 SELECT * FROM multiout_table_type_setof('dict', 't', 3);
  n | column2 
