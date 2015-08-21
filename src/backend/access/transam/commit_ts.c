@@ -252,8 +252,10 @@ TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
 /*
  * Interrogate the commit timestamp of a transaction.
  *
- * Return value indicates whether commit timestamp record was found for
- * given xid.
+ * The return value indicates whether a commit timestamp record was found for
+ * the given xid.  The timestamp value is returned in *ts (which may not be
+ * null), and the origin node for the Xid is returned in *nodeid, if it's not
+ * null.
  */
 bool
 TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
@@ -294,8 +296,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		TransactionIdPrecedes(xid, oldestCommitTs) ||
 		TransactionIdPrecedes(newestCommitTs, xid))
 	{
-		if (ts)
-			*ts = 0;
+		*ts = 0;
 		if (nodeid)
 			*nodeid = InvalidRepOriginId;
 		return false;
@@ -312,8 +313,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		LWLockAcquire(CommitTsLock, LW_SHARED);
 		if (commitTsShared->xidLastCommit == xid)
 		{
-			if (ts)
-				*ts = commitTsShared->dataLastCommit.time;
+			*ts = commitTsShared->dataLastCommit.time;
 			if (nodeid)
 				*nodeid = commitTsShared->dataLastCommit.nodeid;
 
@@ -330,8 +330,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		   SizeOfCommitTimestampEntry * entryno,
 		   SizeOfCommitTimestampEntry);
 
-	if (ts)
-		*ts = entry.time;
+	*ts = entry.time;
 	if (nodeid)
 		*nodeid = entry.nodeid;
 
