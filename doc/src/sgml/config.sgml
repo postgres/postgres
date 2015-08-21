@@ -2518,7 +2518,7 @@ include_dir 'conf.d'
         mode. In <literal>always</> mode, all files restored from the archive
         or streamed with streaming replication will be archived (again). See
         <xref linkend="continuous-archiving-in-standby"> for details.
-       </para>  
+       </para>
        <para>
         <varname>archive_mode</> and <varname>archive_command</> are
         separate variables so that <varname>archive_command</> can be
