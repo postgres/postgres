@@ -78,8 +78,20 @@ SELECT * FROM pg_authid WHERE rolname = 'test_bypassrls';
 ALTER ROLE test_bypassrls WITH BYPASSRLS;
 SELECT * FROM pg_authid WHERE rolname = 'test_bypassrls';
 
--- remove the one role with LOGIN rights
+-- clean up roles
+DROP ROLE test_def_superuser;
+DROP ROLE test_superuser;
+DROP ROLE test_def_inherit;
+DROP ROLE test_inherit;
+DROP ROLE test_def_createrole;
+DROP ROLE test_createrole;
+DROP ROLE test_def_createdb;
+DROP ROLE test_createdb;
+DROP ROLE test_def_role_canlogin;
 DROP ROLE test_role_canlogin;
-
--- other roles not removed to test pg_dumpall role dump through
--- pg_upgrade
+DROP USER test_def_user_canlogin;
+DROP USER test_user_canlogin;
+DROP ROLE test_def_replication;
+DROP ROLE test_replication;
+DROP ROLE test_def_bypassrls;
+DROP ROLE test_bypassrls;
