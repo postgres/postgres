@@ -32,10 +32,40 @@ elif typ == 'obj':
     type_record.first = first
     type_record.second = second
     return type_record
+elif typ == 'str':
+    return "('%s',%r)" % (first, second)
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM multiout_record_as('dict', 'foo', 1, 'f');
 SELECT multiout_record_as('dict', 'foo', 1, 'f');
+
+SELECT * FROM multiout_record_as('dict', null, null, false);
+SELECT * FROM multiout_record_as('dict', 'one', null, false);
+SELECT * FROM multiout_record_as('dict', null, 2, false);
+SELECT * FROM multiout_record_as('dict', 'three', 3, false);
+SELECT * FROM multiout_record_as('dict', null, null, true);
+
+SELECT * FROM multiout_record_as('tuple', null, null, false);
+SELECT * FROM multiout_record_as('tuple', 'one', null, false);
+SELECT * FROM multiout_record_as('tuple', null, 2, false);
+SELECT * FROM multiout_record_as('tuple', 'three', 3, false);
+SELECT * FROM multiout_record_as('tuple', null, null, true);
+
+SELECT * FROM multiout_record_as('list', null, null, false);
+SELECT * FROM multiout_record_as('list', 'one', null, false);
+SELECT * FROM multiout_record_as('list', null, 2, false);
+SELECT * FROM multiout_record_as('list', 'three', 3, false);
+SELECT * FROM multiout_record_as('list', null, null, true);
+
+SELECT * FROM multiout_record_as('obj', null, null, false);
+SELECT * FROM multiout_record_as('obj', 'one', null, false);
+SELECT * FROM multiout_record_as('obj', null, 2, false);
+SELECT * FROM multiout_record_as('obj', 'three', 3, false);
+SELECT * FROM multiout_record_as('obj', null, null, true);
+
+SELECT * FROM multiout_record_as('str', 'one', 1, false);
+SELECT * FROM multiout_record_as('str', 'one', 2, false);
+
 SELECT *, s IS NULL AS snull FROM multiout_record_as('tuple', 'xxx', NULL, 'f') AS f(f, s);
 SELECT *, f IS NULL AS fnull, s IS NULL AS snull FROM multiout_record_as('tuple', 'xxx', 1, 't') AS f(f, s);
 SELECT * FROM multiout_record_as('obj', NULL, 10, 'f');
@@ -92,18 +122,29 @@ elif typ == 'dict':
     d = {'first': n * 2, 'second': n * 3, 'extra': 'not important'}
 elif typ == 'tuple':
     d = (n * 2, n * 3)
+elif typ == 'list':
+    d = [ n * 2, n * 3 ]
 elif typ == 'obj':
     class d: pass
     d.first = n * 2
     d.second = n * 3
+elif typ == 'str':
+    d = "(%r,%r)" % (n * 2, n * 3)
 for i in range(n):
     yield (i, d)
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM multiout_composite(2);
 SELECT * FROM multiout_table_type_setof('dict', 'f', 3);
+SELECT * FROM multiout_table_type_setof('dict', 'f', 7);
 SELECT * FROM multiout_table_type_setof('tuple', 'f', 2);
+SELECT * FROM multiout_table_type_setof('tuple', 'f', 3);
+SELECT * FROM multiout_table_type_setof('list', 'f', 2);
+SELECT * FROM multiout_table_type_setof('list', 'f', 3);
 SELECT * FROM multiout_table_type_setof('obj', 'f', 4);
+SELECT * FROM multiout_table_type_setof('obj', 'f', 5);
+SELECT * FROM multiout_table_type_setof('str', 'f', 6);
+SELECT * FROM multiout_table_type_setof('str', 'f', 7);
 SELECT * FROM multiout_table_type_setof('dict', 't', 3);
 
 -- check what happens if a type changes under us
