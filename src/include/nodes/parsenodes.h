@@ -2039,7 +2039,7 @@ typedef struct CreatePolicyStmt
 	NodeTag		type;
 	char	   *policy_name;	/* Policy's name */
 	RangeVar   *table;			/* the table name the policy applies to */
-	char	   *cmd;			/* the command name the policy applies to */
+	char	   *cmd_name;		/* the command name the policy applies to */
 	List	   *roles;			/* the roles associated with the policy */
 	Node	   *qual;			/* the policy's condition */
 	Node	   *with_check;		/* the policy's WITH CHECK condition. */
