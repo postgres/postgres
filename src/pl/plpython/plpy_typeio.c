@@ -912,20 +912,30 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 static Datum
 PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string)
 {
+	Datum		result;
 	HeapTuple	typeTup;
+	PLyTypeInfo locinfo;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+
+	/* Create a dummy PLyTypeInfo */
+	MemSet(&locinfo, 0, sizeof(PLyTypeInfo));
+	PLy_typeinfo_init(&locinfo);
 
 	typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(desc->tdtypeid));
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", desc->tdtypeid);
 
-	PLy_output_datum_func2(&info->out.d, typeTup,
+	PLy_output_datum_func2(&locinfo.out.d, typeTup,
 						   exec_ctx->curr_proc->langid,
 						   exec_ctx->curr_proc->trftypes);
 
 	ReleaseSysCache(typeTup);
 
-	return PLyObject_ToDatum(&info->out.d, info->out.d.typmod, string);
+	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string);
+
+	PLy_typeinfo_dealloc(&locinfo);
+
+	return result;
 }
 
 
