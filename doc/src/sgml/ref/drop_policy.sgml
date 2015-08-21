@@ -83,9 +83,9 @@ DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <
    To drop the policy called <literal>p1</literal> on the table named
    <literal>my_table</literal>:
 
-   <programlisting>
-    DROP POLICY p1 ON my_table;
-   </programlisting>
+<programlisting>
+DROP POLICY p1 ON my_table;
+</programlisting>
   </para>
  </refsect1>
 

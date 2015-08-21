@@ -10911,16 +10911,16 @@ table2-mapping
        </entry>
        <entry><literal>jsonb_pretty('[{"f1":1,"f2":null},2,null,3]')</literal></entry>
        <entry>
-<programlisting>                    
- [
-     {
-         "f1": 1,
-         "f2": null
-     },
-     2,
-     null,
-     3
- ]
+<programlisting>
+[
+    {
+        "f1": 1,
+        "f2": null
+    },
+    2,
+    null,
+    3
+]
 </programlisting>
         </entry>
        </row>

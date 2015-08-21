@@ -621,9 +621,9 @@ INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
    expression is used to reference values originally proposed for
    insertion:
 <programlisting>
-  INSERT INTO distributors (did, dname)
-  VALUES (5, 'Gizmo transglobal'), (6, 'Associated Computing, inc')
-  ON CONFLICT (did) DO UPDATE SET dname = EXCLUDED.dname;
+INSERT INTO distributors (did, dname)
+    VALUES (5, 'Gizmo transglobal'), (6, 'Associated Computing, inc')
+    ON CONFLICT (did) DO UPDATE SET dname = EXCLUDED.dname;
 </programlisting>
   </para>
   <para>
@@ -633,8 +633,8 @@ INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
    Example assumes a unique index has been defined that constrains
    values appearing in the <literal>did</literal> column:
 <programlisting>
-  INSERT INTO distributors (did, dname) VALUES (7, 'Redline GmbH')
-  ON CONFLICT (did) DO NOTHING;
+INSERT INTO distributors (did, dname) VALUES (7, 'Redline GmbH')
+    ON CONFLICT (did) DO NOTHING;
 </programlisting>
   </para>
   <para>
@@ -644,16 +644,16 @@ INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
    used to limit the rows actually updated (any existing row not
    updated will still be locked, though):
 <programlisting>
-  -- Don't update existing distributors based in a certain ZIP code
-  INSERT INTO distributors AS d (did, dname) VALUES (8, 'Anvil Distribution')
-  ON CONFLICT (did) DO UPDATE
-  SET dname = EXCLUDED.dname || ' (formerly ' || d.dname || ')'
-  WHERE d.zipcode != '21201';
+-- Don't update existing distributors based in a certain ZIP code
+INSERT INTO distributors AS d (did, dname) VALUES (8, 'Anvil Distribution')
+    ON CONFLICT (did) DO UPDATE
+    SET dname = EXCLUDED.dname || ' (formerly ' || d.dname || ')'
+    WHERE d.zipcode &lt;&gt; '21201';
 
-  -- Name a constraint directly in the statement (uses associated
-  -- index to arbitrate taking the DO NOTHING action)
-  INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
-  ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING;
+-- Name a constraint directly in the statement (uses associated
+-- index to arbitrate taking the DO NOTHING action)
+INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
+    ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING;
 </programlisting>
   </para>
   <para>
@@ -664,11 +664,11 @@ INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
    <literal>is_active</literal> boolean column evaluates to
    <literal>true</literal>:
 <programlisting>
-  -- This statement could infer a partial unique index on "did"
-  -- with a predicate of "WHERE is_active", but it could also
-  -- just use a regular unique constraint on "did"
-  INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
-  ON CONFLICT (did) WHERE is_active DO NOTHING;
+-- This statement could infer a partial unique index on "did"
+-- with a predicate of "WHERE is_active", but it could also
+-- just use a regular unique constraint on "did"
+INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
+    ON CONFLICT (did) WHERE is_active DO NOTHING;
 </programlisting>
   </para>
  </refsect1>

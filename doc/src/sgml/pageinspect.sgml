@@ -382,7 +382,7 @@ test=# SELECT * FROM gin_page_opaque_info(get_raw_page('gin_index', 2));
       <function>gin_leafpage_items</function> returns information about
       the data stored in a <acronym>GIN</acronym> leaf page.  For example:
 <screen>
- test=# SELECT first_tid, nbytes, tids[0:5] as some_tids
+test=# SELECT first_tid, nbytes, tids[0:5] as some_tids
         FROM gin_leafpage_items(get_raw_page('gin_test_idx', 2));
  first_tid | nbytes |                        some_tids
 -----------+--------+----------------------------------------------------------

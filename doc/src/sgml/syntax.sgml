@@ -2617,7 +2617,7 @@ SELECT concat_lower_or_upper(a =&gt; 'Hello', uppercase =&gt; true, b =&gt; 'Wor
     <para>
       An older syntax based on ":=" is supported for backward compatibility:
 <screen>
-    SELECT concat_lower_or_upper(a := 'Hello', uppercase := true, b := 'World');
+SELECT concat_lower_or_upper(a := 'Hello', uppercase := true, b := 'World');
  concat_lower_or_upper 
 -----------------------
  HELLO WORLD

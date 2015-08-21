@@ -48,7 +48,7 @@
   geometrical types might store the bounding box for all the objects
   in the block range.
  </para>
-  
+
  <para>
   The size of the block range is determined at index creation time by
   the <literal>pages_per_range</> storage parameter.  The number of index
@@ -65,7 +65,7 @@
 
  <para>
   The core <productname>PostgreSQL</productname> distribution
-  includes the <acronym>BRIN</acronym> operator classes shown in 
+  includes the <acronym>BRIN</acronym> operator classes shown in
   <xref linkend="brin-builtin-opclasses-table">.
  </para>
 

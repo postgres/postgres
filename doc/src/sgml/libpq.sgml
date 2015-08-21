@@ -1906,8 +1906,10 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          <term><literal>protocol</literal></term>
           <listitem>
            <para>
-             SSL/TLS version in use. Common values are "SSLv2", "SSLv3", 
-             "TLSv1", "TLSv1.1" and "TLSv1.2", but an implementation may
+             SSL/TLS version in use. Common values
+             are <literal>"SSLv2"</literal>, <literal>"SSLv3"</literal>,
+             <literal>"TLSv1"</literal>, <literal>"TLSv1.1"</literal>
+             and <literal>"TLSv1.2"</literal>, but an implementation may
              return other strings if some other protocol is used.
            </para>
           </listitem>
@@ -1924,7 +1926,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          <term><literal>cipher</literal></term>
           <listitem>
            <para>
-            A short name of the ciphersuite used, e.g. 
+            A short name of the ciphersuite used, e.g.
             <literal>"DHE-RSA-DES-CBC3-SHA"</literal>. The names are specific
             to each SSL implementation.
            </para>
@@ -5149,7 +5151,7 @@ int PQputCopyEnd(PGconn *conn,
        connections.)
       </para>
 
-      <para> 
+      <para>
        The result is 1 if the termination message was sent; or in
        nonblocking mode, this may only indicate that the termination
        message was successfully queued.  (In nonblocking mode, to be
