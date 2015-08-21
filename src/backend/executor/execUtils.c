@@ -713,18 +713,6 @@ ExecFreeExprContext(PlanState *planstate)
  */
 
 /* ----------------
- *		ExecGetScanType
- * ----------------
- */
-TupleDesc
-ExecGetScanType(ScanState *scanstate)
-{
-	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
-
-	return slot->tts_tupleDescriptor;
-}
-
-/* ----------------
  *		ExecAssignScanType
  * ----------------
  */

@@ -344,7 +344,6 @@ extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 extern void ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc);
 extern void ExecFreeExprContext(PlanState *planstate);
-extern TupleDesc ExecGetScanType(ScanState *scanstate);
 extern void ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc);
 extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 
