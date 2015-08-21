@@ -4083,7 +4083,7 @@ _copyCreatePolicyStmt(const CreatePolicyStmt *from)
 
 	COPY_STRING_FIELD(policy_name);
 	COPY_NODE_FIELD(table);
-	COPY_STRING_FIELD(cmd);
+	COPY_STRING_FIELD(cmd_name);
 	COPY_NODE_FIELD(roles);
 	COPY_NODE_FIELD(qual);
 	COPY_NODE_FIELD(with_check);

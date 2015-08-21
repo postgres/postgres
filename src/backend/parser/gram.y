@@ -4613,7 +4613,7 @@ CreatePolicyStmt:
 					CreatePolicyStmt *n = makeNode(CreatePolicyStmt);
 					n->policy_name = $3;
 					n->table = $5;
-					n->cmd = $6;
+					n->cmd_name = $6;
 					n->roles = $7;
 					n->qual = $8;
 					n->with_check = $9;

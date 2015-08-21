@@ -108,25 +108,25 @@ RangeVarCallbackForPolicy(const RangeVar *rv, Oid relid, Oid oldrelid,
 static char
 parse_policy_command(const char *cmd_name)
 {
-	char		cmd;
+	char		polcmd;
 
 	if (!cmd_name)
 		elog(ERROR, "unrecognized policy command");
 
 	if (strcmp(cmd_name, "all") == 0)
-		cmd = '*';
+		polcmd = '*';
 	else if (strcmp(cmd_name, "select") == 0)
-		cmd = ACL_SELECT_CHR;
+		polcmd = ACL_SELECT_CHR;
 	else if (strcmp(cmd_name, "insert") == 0)
-		cmd = ACL_INSERT_CHR;
+		polcmd = ACL_INSERT_CHR;
 	else if (strcmp(cmd_name, "update") == 0)
-		cmd = ACL_UPDATE_CHR;
+		polcmd = ACL_UPDATE_CHR;
 	else if (strcmp(cmd_name, "delete") == 0)
-		cmd = ACL_DELETE_CHR;
+		polcmd = ACL_DELETE_CHR;
 	else
 		elog(ERROR, "unrecognized policy command");
 
-	return cmd;
+	return polcmd;
 }
 
 /*
@@ -480,7 +480,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	int			i;
 
 	/* Parse command */
-	polcmd = parse_policy_command(stmt->cmd);
+	polcmd = parse_policy_command(stmt->cmd_name);
 
 	/*
 	 * If the command is SELECT or DELETE then WITH CHECK should be NULL.
@@ -674,7 +674,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	bool		replaces[Natts_pg_policy];
 	ObjectAddress target;
 	ObjectAddress myself;
-	Datum		cmd_datum;
+	Datum		polcmd_datum;
 	char		polcmd;
 	bool		polcmd_isnull;
 	int			i;
@@ -775,11 +775,11 @@ AlterPolicy(AlterPolicyStmt *stmt)
 						RelationGetRelationName(target_table))));
 
 	/* Get policy command */
-	cmd_datum = heap_getattr(policy_tuple, Anum_pg_policy_polcmd,
+	polcmd_datum = heap_getattr(policy_tuple, Anum_pg_policy_polcmd,
 							 RelationGetDescr(pg_policy_rel),
 							 &polcmd_isnull);
 	Assert(!polcmd_isnull);
-	polcmd = DatumGetChar(cmd_datum);
+	polcmd = DatumGetChar(polcmd_datum);
 
 	/*
 	 * If the command is SELECT or DELETE then WITH CHECK should be NULL.
