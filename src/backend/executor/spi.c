@@ -1769,7 +1769,8 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 
 	if (tuptable->free == 0)
 	{
-		tuptable->free = 256;
+		/* Double the size of the pointer array */
+		tuptable->free = tuptable->alloced;
 		tuptable->alloced += tuptable->free;
 		tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
 									  tuptable->alloced * sizeof(HeapTuple));
