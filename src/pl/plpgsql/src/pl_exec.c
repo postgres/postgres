@@ -437,19 +437,9 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
-
-		/*
-		 * Provide a more helpful message if a CONTINUE has been used outside
-		 * the context it can work in.
-		 */
-		if (rc == PLPGSQL_RC_CONTINUE)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("CONTINUE cannot be used outside a loop")));
-		else
-			ereport(ERROR,
-			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				errmsg("control reached end of function without RETURN")));
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+				 errmsg("control reached end of function without RETURN")));
 	}
 
 	/*
@@ -791,19 +781,9 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
-
-		/*
-		 * Provide a more helpful message if a CONTINUE has been used outside
-		 * the context it can work in.
-		 */
-		if (rc == PLPGSQL_RC_CONTINUE)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("CONTINUE cannot be used outside a loop")));
-		else
-			ereport(ERROR,
-			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				errmsg("control reached end of trigger procedure without RETURN")));
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+		 errmsg("control reached end of trigger procedure without RETURN")));
 	}
 
 	estate.err_stmt = NULL;
@@ -919,19 +899,9 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
-
-		/*
-		 * Provide a more helpful message if a CONTINUE has been used outside
-		 * the context it can work in.
-		 */
-		if (rc == PLPGSQL_RC_CONTINUE)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("CONTINUE cannot be used outside a loop")));
-		else
-			ereport(ERROR,
-			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				errmsg("control reached end of trigger procedure without RETURN")));
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+		 errmsg("control reached end of trigger procedure without RETURN")));
 	}
 
 	estate.err_stmt = NULL;

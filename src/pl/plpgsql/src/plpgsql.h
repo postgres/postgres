@@ -47,6 +47,17 @@ enum
 };
 
 /* ----------
+ * A PLPGSQL_NSTYPE_LABEL stack entry must be one of these types
+ * ----------
+ */
+enum PLpgSQL_label_types
+{
+	PLPGSQL_LABEL_BLOCK,		/* DECLARE/BEGIN block */
+	PLPGSQL_LABEL_LOOP,			/* looping construct */
+	PLPGSQL_LABEL_OTHER			/* anything else */
+};
+
+/* ----------
  * Datum array node types
  * ----------
  */
@@ -331,6 +342,8 @@ typedef struct PLpgSQL_nsitem
 {								/* Item in the compilers namespace tree */
 	int			itemtype;
 	int			itemno;
+	/* For labels, itemno is a value of enum PLpgSQL_label_types. */
+	/* For other itemtypes, itemno is the associated PLpgSQL_datum's dno. */
 	struct PLpgSQL_nsitem *prev;
 	char		name[FLEXIBLE_ARRAY_MEMBER];	/* nul-terminated string */
 } PLpgSQL_nsitem;
@@ -997,7 +1010,8 @@ extern void exec_get_datum_type_info(PLpgSQL_execstate *estate,
  * ----------
  */
 extern void plpgsql_ns_init(void);
-extern void plpgsql_ns_push(const char *label);
+extern void plpgsql_ns_push(const char *label,
+				enum PLpgSQL_label_types label_type);
 extern void plpgsql_ns_pop(void);
 extern PLpgSQL_nsitem *plpgsql_ns_top(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
@@ -1006,6 +1020,7 @@ extern PLpgSQL_nsitem *plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur, bool localmode,
 				  const char *name3, int *names_used);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
 						const char *name);
+extern PLpgSQL_nsitem *plpgsql_ns_find_nearest_loop(PLpgSQL_nsitem *ns_cur);
 
 /* ----------
  * Other functions in pl_funcs.c

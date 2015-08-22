@@ -2830,21 +2830,58 @@ NOTICE:  10
  
 (1 row)
 
--- CONTINUE is only legal inside a loop
-create function continue_test2() returns void as $$
+drop function continue_test1();
+drop table conttesttbl;
+-- should fail: CONTINUE is only legal inside a loop
+create function continue_error1() returns void as $$
 begin
     begin
         continue;
     end;
-    return;
 end;
 $$ language plpgsql;
--- should fail
-select continue_test2();
 ERROR:  CONTINUE cannot be used outside a loop
-CONTEXT:  PL/pgSQL function continue_test2()
--- CONTINUE can't reference the label of a named block
-create function continue_test3() returns void as $$
+LINE 4:         continue;
+                ^
+-- should fail: EXIT is only legal inside a loop
+create function exit_error1() returns void as $$
+begin
+    begin
+        exit;
+    end;
+end;
+$$ language plpgsql;
+ERROR:  EXIT cannot be used outside a loop
+LINE 4:         exit;
+                ^
+-- should fail: no such label
+create function continue_error2() returns void as $$
+begin
+    begin
+        loop
+            continue no_such_label;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+ERROR:  label "no_such_label" does not exist
+LINE 5:             continue no_such_label;
+                             ^
+-- should fail: no such label
+create function exit_error2() returns void as $$
+begin
+    begin
+        loop
+            exit no_such_label;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+ERROR:  label "no_such_label" does not exist
+LINE 5:             exit no_such_label;
+                         ^
+-- should fail: CONTINUE can't reference the label of a named block
+create function continue_error3() returns void as $$
 begin
     <<begin_block1>>
     begin
@@ -2854,14 +2891,28 @@ begin
     end;
 end;
 $$ language plpgsql;
--- should fail
-select continue_test3();
-ERROR:  CONTINUE cannot be used outside a loop
-CONTEXT:  PL/pgSQL function continue_test3()
-drop function continue_test1();
-drop function continue_test2();
-drop function continue_test3();
-drop table conttesttbl;
+ERROR:  block label "begin_block1" cannot be used in CONTINUE
+LINE 6:             continue begin_block1;
+                             ^
+-- On the other hand, EXIT *can* reference the label of a named block
+create function exit_block1() returns void as $$
+begin
+    <<begin_block1>>
+    begin
+        loop
+            exit begin_block1;
+            raise exception 'should not get here';
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+select exit_block1();
+ exit_block1 
+-------------
+ 
+(1 row)
+
+drop function exit_block1();
 -- verbose end block and end loop
 create function end_label1() returns void as $$
 <<blbl>>
@@ -2891,7 +2942,7 @@ begin
   end loop flbl1;
 end;
 $$ language plpgsql;
-ERROR:  label does not exist at or near "flbl1"
+ERROR:  end label "flbl1" specified for unlabelled block
 LINE 5:   end loop flbl1;
                    ^
 -- should fail: end label does not match start label

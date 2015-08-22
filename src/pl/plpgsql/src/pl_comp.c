@@ -371,7 +371,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 * variables (such as FOUND), and is named after the function itself.
 	 */
 	plpgsql_ns_init();
-	plpgsql_ns_push(NameStr(procStruct->proname));
+	plpgsql_ns_push(NameStr(procStruct->proname), PLPGSQL_LABEL_BLOCK);
 	plpgsql_DumpExecTree = false;
 	plpgsql_start_datums();
 
@@ -851,7 +851,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->extra_errors = 0;
 
 	plpgsql_ns_init();
-	plpgsql_ns_push(func_name);
+	plpgsql_ns_push(func_name, PLPGSQL_LABEL_BLOCK);
 	plpgsql_DumpExecTree = false;
 	plpgsql_start_datums();
 

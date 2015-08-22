@@ -2361,21 +2361,51 @@ end; $$ language plpgsql;
 
 select continue_test1();
 
--- CONTINUE is only legal inside a loop
-create function continue_test2() returns void as $$
+drop function continue_test1();
+drop table conttesttbl;
+
+-- should fail: CONTINUE is only legal inside a loop
+create function continue_error1() returns void as $$
 begin
     begin
         continue;
     end;
-    return;
 end;
 $$ language plpgsql;
 
--- should fail
-select continue_test2();
+-- should fail: EXIT is only legal inside a loop
+create function exit_error1() returns void as $$
+begin
+    begin
+        exit;
+    end;
+end;
+$$ language plpgsql;
 
--- CONTINUE can't reference the label of a named block
-create function continue_test3() returns void as $$
+-- should fail: no such label
+create function continue_error2() returns void as $$
+begin
+    begin
+        loop
+            continue no_such_label;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+
+-- should fail: no such label
+create function exit_error2() returns void as $$
+begin
+    begin
+        loop
+            exit no_such_label;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+
+-- should fail: CONTINUE can't reference the label of a named block
+create function continue_error3() returns void as $$
 begin
     <<begin_block1>>
     begin
@@ -2386,13 +2416,21 @@ begin
 end;
 $$ language plpgsql;
 
--- should fail
-select continue_test3();
+-- On the other hand, EXIT *can* reference the label of a named block
+create function exit_block1() returns void as $$
+begin
+    <<begin_block1>>
+    begin
+        loop
+            exit begin_block1;
+            raise exception 'should not get here';
+        end loop;
+    end;
+end;
+$$ language plpgsql;
 
-drop function continue_test1();
-drop function continue_test2();
-drop function continue_test3();
-drop table conttesttbl;
+select exit_block1();
+drop function exit_block1();
 
 -- verbose end block and end loop
 create function end_label1() returns void as $$
