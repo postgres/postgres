@@ -11,7 +11,7 @@
 /*
  * Given a bipartite graph consisting of nodes U numbered 1..nU, nodes V
  * numbered 1..nV, and an adjacency map of undirected edges in the form
- * adjacency[u] = [n, v1, v2, v3, ... vn], we wish to find a "maximum
+ * adjacency[u] = [k, v1, v2, v3, ... vk], we wish to find a "maximum
  * cardinality matching", which is defined as follows: a matching is a subset
  * of the original edges such that no node has more than one edge, and a
  * matching has maximum cardinality if there exists no other matching with a
@@ -24,21 +24,23 @@
  * the problem of planning a collection of grouping sets with the provably
  * minimal number of sort operations.
  */
-typedef struct bipartite_match_state
+typedef struct BipartiteMatchState
 {
+	/* inputs: */
 	int			u_size;			/* size of U */
 	int			v_size;			/* size of V */
+	short	  **adjacency;		/* adjacency[u] = [k, v1,v2,v3,...,vk] */
+	/* outputs: */
 	int			matching;		/* number of edges in matching */
-	short	  **adjacency;		/* adjacency[u] = [n, v1,v2,v3,...,vn] */
 	short	   *pair_uv;		/* pair_uv[u] -> v */
 	short	   *pair_vu;		/* pair_vu[v] -> u */
-
-	float	   *distance;		/* distance[u], float so we can have +inf */
+	/* private state for matching algorithm: */
+	short	   *distance;		/* distance[u] */
 	short	   *queue;			/* queue storage for breadth search */
 } BipartiteMatchState;
 
-BipartiteMatchState *BipartiteMatch(int u_size, int v_size, short **adjacency);
+extern BipartiteMatchState *BipartiteMatch(int u_size, int v_size, short **adjacency);
 
-void		BipartiteMatchFree(BipartiteMatchState *state);
+extern void BipartiteMatchFree(BipartiteMatchState *state);
 
 #endif   /* BIPARTITE_MATCH_H */
