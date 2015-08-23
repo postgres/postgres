@@ -16,17 +16,20 @@
  */
 #include "postgres.h"
 
-#include <float.h>
-#include <math.h>
 #include <limits.h>
 
 #include "lib/bipartite_match.h"
 #include "miscadmin.h"
-#include "utils/builtins.h"
 
+/*
+ * The distances computed in hk_breadth_search can easily be seen to never
+ * exceed u_size.  Since we restrict u_size to be less than SHRT_MAX, we
+ * can therefore use SHRT_MAX as the "infinity" distance needed as a marker.
+ */
+#define HK_INFINITY  SHRT_MAX
 
 static bool hk_breadth_search(BipartiteMatchState *state);
-static bool hk_depth_search(BipartiteMatchState *state, int u, int depth);
+static bool hk_depth_search(BipartiteMatchState *state, int u);
 
 /*
  * Given the size of U and V, where each is indexed 1..size, and an adjacency
@@ -37,26 +40,29 @@ BipartiteMatch(int u_size, int v_size, short **adjacency)
 {
 	BipartiteMatchState *state = palloc(sizeof(BipartiteMatchState));
 
-	Assert(u_size < SHRT_MAX);
-	Assert(v_size < SHRT_MAX);
+	if (u_size < 0 || u_size >= SHRT_MAX ||
+		v_size < 0 || v_size >= SHRT_MAX)
+		elog(ERROR, "invalid set size for BipartiteMatch");
 
 	state->u_size = u_size;
 	state->v_size = v_size;
-	state->matching = 0;
 	state->adjacency = adjacency;
-	state->pair_uv = palloc0((u_size + 1) * sizeof(short));
-	state->pair_vu = palloc0((v_size + 1) * sizeof(short));
-	state->distance = palloc((u_size + 1) * sizeof(float));
-	state->queue = palloc((u_size + 2) * sizeof(short));
+	state->matching = 0;
+	state->pair_uv = (short *) palloc0((u_size + 1) * sizeof(short));
+	state->pair_vu = (short *) palloc0((v_size + 1) * sizeof(short));
+	state->distance = (short *) palloc((u_size + 1) * sizeof(short));
+	state->queue = (short *) palloc((u_size + 2) * sizeof(short));
 
 	while (hk_breadth_search(state))
 	{
 		int			u;
 
-		for (u = 1; u <= u_size; ++u)
+		for (u = 1; u <= u_size; u++)
+		{
 			if (state->pair_uv[u] == 0)
-				if (hk_depth_search(state, u, 1))
+				if (hk_depth_search(state, u))
 					state->matching++;
+		}
 
 		CHECK_FOR_INTERRUPTS(); /* just in case */
 	}
@@ -79,19 +85,23 @@ BipartiteMatchFree(BipartiteMatchState *state)
 	pfree(state);
 }
 
+/*
+ * Perform the breadth-first search step of H-K matching.
+ * Returns true if successful.
+ */
 static bool
 hk_breadth_search(BipartiteMatchState *state)
 {
 	int			usize = state->u_size;
 	short	   *queue = state->queue;
-	float	   *distance = state->distance;
+	short	   *distance = state->distance;
 	int			qhead = 0;		/* we never enqueue any node more than once */
 	int			qtail = 0;		/* so don't have to worry about wrapping */
 	int			u;
 
-	distance[0] = get_float4_infinity();
+	distance[0] = HK_INFINITY;
 
-	for (u = 1; u <= usize; ++u)
+	for (u = 1; u <= usize; u++)
 	{
 		if (state->pair_uv[u] == 0)
 		{
@@ -99,7 +109,7 @@ hk_breadth_search(BipartiteMatchState *state)
 			queue[qhead++] = u;
 		}
 		else
-			distance[u] = get_float4_infinity();
+			distance[u] = HK_INFINITY;
 	}
 
 	while (qtail < qhead)
@@ -111,45 +121,52 @@ hk_breadth_search(BipartiteMatchState *state)
 			short	   *u_adj = state->adjacency[u];
 			int			i = u_adj ? u_adj[0] : 0;
 
-			for (; i > 0; --i)
+			for (; i > 0; i--)
 			{
 				int			u_next = state->pair_vu[u_adj[i]];
 
-				if (isinf(distance[u_next]))
+				if (distance[u_next] == HK_INFINITY)
 				{
 					distance[u_next] = 1 + distance[u];
+					Assert(qhead < usize + 2);
 					queue[qhead++] = u_next;
-					Assert(qhead <= usize + 2);
 				}
 			}
 		}
 	}
 
-	return !isinf(distance[0]);
+	return (distance[0] != HK_INFINITY);
 }
 
+/*
+ * Perform the depth-first search step of H-K matching.
+ * Returns true if successful.
+ */
 static bool
-hk_depth_search(BipartiteMatchState *state, int u, int depth)
+hk_depth_search(BipartiteMatchState *state, int u)
 {
-	float	   *distance = state->distance;
+	short	   *distance = state->distance;
 	short	   *pair_uv = state->pair_uv;
 	short	   *pair_vu = state->pair_vu;
 	short	   *u_adj = state->adjacency[u];
 	int			i = u_adj ? u_adj[0] : 0;
+	short		nextdist;
 
 	if (u == 0)
 		return true;
+	if (distance[u] == HK_INFINITY)
+		return false;
+	nextdist = distance[u] + 1;
 
-	if ((depth % 8) == 0)
-		check_stack_depth();
+	check_stack_depth();
 
-	for (; i > 0; --i)
+	for (; i > 0; i--)
 	{
 		int			v = u_adj[i];
 
-		if (distance[pair_vu[v]] == distance[u] + 1)
+		if (distance[pair_vu[v]] == nextdist)
 		{
-			if (hk_depth_search(state, pair_vu[v], depth + 1))
+			if (hk_depth_search(state, pair_vu[v]))
 			{
 				pair_vu[v] = u;
 				pair_uv[u] = v;
@@ -158,6 +175,6 @@ hk_depth_search(BipartiteMatchState *state, int u, int depth)
 		}
 	}
 
-	distance[u] = get_float4_infinity();
+	distance[u] = HK_INFINITY;
 	return false;
 }
