@@ -4126,7 +4126,7 @@ AfterTriggerEndXact(bool isCommit)
 
 
 	/*
-	 * Forget the query stack and constrant-related state information.  As
+	 * Forget the query stack and constraint-related state information.  As
 	 * with the subtransaction state information, we don't bother freeing the
 	 * memory here.
 	 */
