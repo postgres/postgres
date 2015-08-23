@@ -2373,7 +2373,7 @@ begin
 end;
 $$ language plpgsql;
 
--- should fail: EXIT is only legal inside a loop
+-- should fail: unlabeled EXIT is only legal inside a loop
 create function exit_error1() returns void as $$
 begin
     begin

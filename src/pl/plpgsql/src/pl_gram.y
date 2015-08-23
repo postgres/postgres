@@ -1676,11 +1676,11 @@ stmt_exit		: exit_type opt_label opt_exitcond
 							if (label == NULL)
 								ereport(ERROR,
 										(errcode(ERRCODE_SYNTAX_ERROR),
-										 errmsg("label \"%s\" does not exist",
+										 errmsg("there is no label \"%s\" surrounding this statement",
 												$2),
 										 parser_errposition(@2)));
 							/* CONTINUE only allows loop labels */
-							if (label->itemno != PLPGSQL_LABEL_LOOP && !$1)
+							if (label->itemno != PLPGSQL_LABEL_LOOP && !new->is_exit)
 								ereport(ERROR,
 										(errcode(ERRCODE_SYNTAX_ERROR),
 										 errmsg("block label \"%s\" cannot be used in CONTINUE",
@@ -1697,9 +1697,9 @@ stmt_exit		: exit_type opt_label opt_exitcond
 							if (plpgsql_ns_find_nearest_loop(plpgsql_ns_top()) == NULL)
 								ereport(ERROR,
 										(errcode(ERRCODE_SYNTAX_ERROR),
-										 /* translator: %s is EXIT or CONTINUE */
-										 errmsg("%s cannot be used outside a loop",
-												plpgsql_stmt_typename((PLpgSQL_stmt *) new)),
+										 new->is_exit ?
+										 errmsg("EXIT cannot be used outside a loop, unless it has a label") :
+										 errmsg("CONTINUE cannot be used outside a loop"),
 										 parser_errposition(@1)));
 						}
 

@@ -2843,7 +2843,7 @@ $$ language plpgsql;
 ERROR:  CONTINUE cannot be used outside a loop
 LINE 4:         continue;
                 ^
--- should fail: EXIT is only legal inside a loop
+-- should fail: unlabeled EXIT is only legal inside a loop
 create function exit_error1() returns void as $$
 begin
     begin
@@ -2851,7 +2851,7 @@ begin
     end;
 end;
 $$ language plpgsql;
-ERROR:  EXIT cannot be used outside a loop
+ERROR:  EXIT cannot be used outside a loop, unless it has a label
 LINE 4:         exit;
                 ^
 -- should fail: no such label
@@ -2864,7 +2864,7 @@ begin
     end;
 end;
 $$ language plpgsql;
-ERROR:  label "no_such_label" does not exist
+ERROR:  there is no label "no_such_label" surrounding this statement
 LINE 5:             continue no_such_label;
                              ^
 -- should fail: no such label
@@ -2877,7 +2877,7 @@ begin
     end;
 end;
 $$ language plpgsql;
-ERROR:  label "no_such_label" does not exist
+ERROR:  there is no label "no_such_label" surrounding this statement
 LINE 5:             exit no_such_label;
                          ^
 -- should fail: CONTINUE can't reference the label of a named block
