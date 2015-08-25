@@ -2864,7 +2864,7 @@ begin
     end;
 end;
 $$ language plpgsql;
-ERROR:  there is no label "no_such_label" surrounding this statement
+ERROR:  there is no label "no_such_label" attached to any block or loop enclosing this statement
 LINE 5:             continue no_such_label;
                              ^
 -- should fail: no such label
@@ -2877,7 +2877,7 @@ begin
     end;
 end;
 $$ language plpgsql;
-ERROR:  there is no label "no_such_label" surrounding this statement
+ERROR:  there is no label "no_such_label" attached to any block or loop enclosing this statement
 LINE 5:             exit no_such_label;
                          ^
 -- should fail: CONTINUE can't reference the label of a named block

@@ -1676,7 +1676,8 @@ stmt_exit		: exit_type opt_label opt_exitcond
 							if (label == NULL)
 								ereport(ERROR,
 										(errcode(ERRCODE_SYNTAX_ERROR),
-										 errmsg("there is no label \"%s\" surrounding this statement",
+										 errmsg("there is no label \"%s\" "
+												"attached to any block or loop enclosing this statement",
 												$2),
 										 parser_errposition(@2)));
 							/* CONTINUE only allows loop labels */
