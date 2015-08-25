@@ -11395,9 +11395,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
         <primary>lag</primary>
        </indexterm>
        <function>
-         lag(<replaceable class="parameter">value</replaceable> <type>any</>
+         lag(<replaceable class="parameter">value</replaceable> <type>anyelement</>
              [, <replaceable class="parameter">offset</replaceable> <type>integer</>
-             [, <replaceable class="parameter">default</replaceable> <type>any</> ]])
+             [, <replaceable class="parameter">default</replaceable> <type>anyelement</> ]])
        </function>
       </entry>
       <entry>
@@ -11407,7 +11407,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        returns <replaceable class="parameter">value</replaceable> evaluated at
        the row that is <replaceable class="parameter">offset</replaceable>
        rows before the current row within the partition; if there is no such
-       row, instead return <replaceable class="parameter">default</replaceable>.
+       row, instead return <replaceable class="parameter">default</replaceable>
+       (which must be of the same type as
+       <replaceable class="parameter">value</replaceable>).
        Both <replaceable class="parameter">offset</replaceable> and
        <replaceable class="parameter">default</replaceable> are evaluated
        with respect to the current row.  If omitted,
@@ -11422,9 +11424,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
         <primary>lead</primary>
        </indexterm>
        <function>
-         lead(<replaceable class="parameter">value</replaceable> <type>any</>
+         lead(<replaceable class="parameter">value</replaceable> <type>anyelement</>
               [, <replaceable class="parameter">offset</replaceable> <type>integer</>
-              [, <replaceable class="parameter">default</replaceable> <type>any</> ]])
+              [, <replaceable class="parameter">default</replaceable> <type>anyelement</> ]])
        </function>
       </entry>
       <entry>
@@ -11434,7 +11436,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        returns <replaceable class="parameter">value</replaceable> evaluated at
        the row that is <replaceable class="parameter">offset</replaceable>
        rows after the current row within the partition; if there is no such
-       row, instead return <replaceable class="parameter">default</replaceable>.
+       row, instead return <replaceable class="parameter">default</replaceable>
+       (which must be of the same type as
+       <replaceable class="parameter">value</replaceable>).
        Both <replaceable class="parameter">offset</replaceable> and
        <replaceable class="parameter">default</replaceable> are evaluated
        with respect to the current row.  If omitted,
