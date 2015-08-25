@@ -52,7 +52,9 @@ MemoryContext CurTransactionContext = NULL;
 MemoryContext PortalContext = NULL;
 
 static void MemoryContextCallResetCallbacks(MemoryContext context);
-static void MemoryContextStatsInternal(MemoryContext context, int level);
+static void MemoryContextStatsInternal(MemoryContext context, int level,
+						   bool print, int max_children,
+						   MemoryContextCounters *totals);
 
 /*
  * You should not do memory allocations within a critical section, because
@@ -477,25 +479,106 @@ MemoryContextIsEmpty(MemoryContext context)
  * MemoryContextStats
  *		Print statistics about the named context and all its descendants.
  *
- * This is just a debugging utility, so it's not fancy.  The statistics
- * are merely sent to stderr.
+ * This is just a debugging utility, so it's not very fancy.  However, we do
+ * make some effort to summarize when the output would otherwise be very long.
+ * The statistics are sent to stderr.
  */
 void
 MemoryContextStats(MemoryContext context)
 {
-	MemoryContextStatsInternal(context, 0);
+	/* A hard-wired limit on the number of children is usually good enough */
+	MemoryContextStatsDetail(context, 100);
 }
 
-static void
-MemoryContextStatsInternal(MemoryContext context, int level)
+/*
+ * MemoryContextStatsDetail
+ *
+ * Entry point for use if you want to vary the number of child contexts shown.
+ */
+void
+MemoryContextStatsDetail(MemoryContext context, int max_children)
 {
+	MemoryContextCounters grand_totals;
+
+	memset(&grand_totals, 0, sizeof(grand_totals));
+
+	MemoryContextStatsInternal(context, 0, true, max_children, &grand_totals);
+
+	fprintf(stderr,
+	"Grand total: %zu bytes in %zd blocks; %zu free (%zd chunks); %zu used\n",
+			grand_totals.totalspace, grand_totals.nblocks,
+			grand_totals.freespace, grand_totals.freechunks,
+			grand_totals.totalspace - grand_totals.freespace);
+}
+
+/*
+ * MemoryContextStatsInternal
+ *		One recursion level for MemoryContextStats
+ *
+ * Print this context if print is true, but in any case accumulate counts into
+ * *totals (if given).
+ */
+static void
+MemoryContextStatsInternal(MemoryContext context, int level,
+						   bool print, int max_children,
+						   MemoryContextCounters *totals)
+{
+	MemoryContextCounters local_totals;
 	MemoryContext child;
+	int			ichild;
 
 	AssertArg(MemoryContextIsValid(context));
 
-	(*context->methods->stats) (context, level);
-	for (child = context->firstchild; child != NULL; child = child->nextchild)
-		MemoryContextStatsInternal(child, level + 1);
+	/* Examine the context itself */
+	(*context->methods->stats) (context, level, print, totals);
+
+	/*
+	 * Examine children.  If there are more than max_children of them, we do
+	 * not print the rest explicitly, but just summarize them.
+	 */
+	memset(&local_totals, 0, sizeof(local_totals));
+
+	for (child = context->firstchild, ichild = 0;
+		 child != NULL;
+		 child = child->nextchild, ichild++)
+	{
+		if (ichild < max_children)
+			MemoryContextStatsInternal(child, level + 1,
+									   print, max_children,
+									   totals);
+		else
+			MemoryContextStatsInternal(child, level + 1,
+									   false, max_children,
+									   &local_totals);
+	}
+
+	/* Deal with excess children */
+	if (ichild > max_children)
+	{
+		if (print)
+		{
+			int			i;
+
+			for (i = 0; i <= level; i++)
+				fprintf(stderr, "  ");
+			fprintf(stderr,
+					"%d more child contexts containing %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
+					ichild - max_children,
+					local_totals.totalspace,
+					local_totals.nblocks,
+					local_totals.freespace,
+					local_totals.freechunks,
+					local_totals.totalspace - local_totals.freespace);
+		}
+
+		if (totals)
+		{
+			totals->nblocks += local_totals.nblocks;
+			totals->freechunks += local_totals.freechunks;
+			totals->totalspace += local_totals.totalspace;
+			totals->freespace += local_totals.freespace;
+		}
+	}
 }
 
 /*

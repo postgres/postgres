@@ -17,6 +17,24 @@
 #include "nodes/nodes.h"
 
 /*
+ * MemoryContextCounters
+ *		Summarization state for MemoryContextStats collection.
+ *
+ * The set of counters in this struct is biased towards AllocSet; if we ever
+ * add any context types that are based on fundamentally different approaches,
+ * we might need more or different counters here.  A possible API spec then
+ * would be to print only nonzero counters, but for now we just summarize in
+ * the format historically used by AllocSet.
+ */
+typedef struct MemoryContextCounters
+{
+	Size		nblocks;		/* Total number of malloc blocks */
+	Size		freechunks;		/* Total number of free chunks */
+	Size		totalspace;		/* Total bytes requested from malloc */
+	Size		freespace;		/* The unused portion of totalspace */
+} MemoryContextCounters;
+
+/*
  * MemoryContext
  *		A logical context in which memory allocations occur.
  *
@@ -44,7 +62,8 @@ typedef struct MemoryContextMethods
 	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
-	void		(*stats) (MemoryContext context, int level);
+	void		(*stats) (MemoryContext context, int level, bool print,
+									  MemoryContextCounters *totals);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif

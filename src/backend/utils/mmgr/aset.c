@@ -253,7 +253,8 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
-static void AllocSetStats(MemoryContext context, int level);
+static void AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
@@ -1228,20 +1229,23 @@ AllocSetIsEmpty(MemoryContext context)
 
 /*
  * AllocSetStats
- *		Displays stats about memory consumption of an allocset.
+ *		Compute stats about memory consumption of an allocset.
+ *
+ * level: recursion level (0 at top level); used for print indentation.
+ * print: true to print stats to stderr.
+ * totals: if not NULL, add stats about this allocset into *totals.
  */
 static void
-AllocSetStats(MemoryContext context, int level)
+AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals)
 {
 	AllocSet	set = (AllocSet) context;
 	Size		nblocks = 0;
-	Size		nchunks = 0;
+	Size		freechunks = 0;
 	Size		totalspace = 0;
 	Size		freespace = 0;
 	AllocBlock	block;
-	AllocChunk	chunk;
 	int			fidx;
-	int			i;
 
 	for (block = set->blocks; block != NULL; block = block->next)
 	{
@@ -1251,21 +1255,35 @@ AllocSetStats(MemoryContext context, int level)
 	}
 	for (fidx = 0; fidx < ALLOCSET_NUM_FREELISTS; fidx++)
 	{
+		AllocChunk	chunk;
+
 		for (chunk = set->freelist[fidx]; chunk != NULL;
 			 chunk = (AllocChunk) chunk->aset)
 		{
-			nchunks++;
+			freechunks++;
 			freespace += chunk->size + ALLOC_CHUNKHDRSZ;
 		}
 	}
 
-	for (i = 0; i < level; i++)
-		fprintf(stderr, "  ");
+	if (print)
+	{
+		int			i;
 
-	fprintf(stderr,
+		for (i = 0; i < level; i++)
+			fprintf(stderr, "  ");
+		fprintf(stderr,
 			"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
-			set->header.name, totalspace, nblocks, freespace, nchunks,
-			totalspace - freespace);
+				set->header.name, totalspace, nblocks, freespace, freechunks,
+				totalspace - freespace);
+	}
+
+	if (totals)
+	{
+		totals->nblocks += nblocks;
+		totals->freechunks += freechunks;
+		totals->totalspace += totalspace;
+		totals->freespace += freespace;
+	}
 }
 
 
