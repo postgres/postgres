@@ -56,18 +56,18 @@ select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5));
 -- Also test an index-only knn-search
 explain (costs off)
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by p <-> point(0.2, 0.2);
+order by p <-> point(0.201, 0.201);
 
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by p <-> point(0.2, 0.2);
+order by p <-> point(0.201, 0.201);
 
 -- Check commuted case as well
 explain (costs off)
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by point(0.1, 0.1) <-> p;
+order by point(0.101, 0.101) <-> p;
 
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by point(0.1, 0.1) <-> p;
+order by point(0.101, 0.101) <-> p;
 
 drop index gist_tbl_point_index;
 
