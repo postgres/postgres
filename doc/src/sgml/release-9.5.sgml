@@ -1390,23 +1390,6 @@ FIXME: Better description?
 
      <listitem>
 <!--
-2015-01-06 [79af9a1] Peter ..: Fix namespace handling in xpath function
--->
-      <para>
-       Fix <type>XML</> <link
-       linkend="functions-xml-processing"><function>xpath()</></> handling
-       to return namespace declarations even if the namespace is in a
-       parent element (Ali Akbar)
-      </para>
-
-      <para>
-       Previously the namespace was not returned, potentially leading to
-       invalid <type>XML</>.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
 2014-10-21 [6f04368] Peter ..: Allow input format xxxx-xxxx-xxxx for macaddr ..
 -->
       <para>
