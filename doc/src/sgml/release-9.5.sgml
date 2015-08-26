@@ -315,8 +315,9 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-05-13 [78efd5c] Robert..: Extend abbreviated key infrastructure to datum ..
 -->
        <para>
-        Improve the speed of sorting character and <type>NUMERIC</> fields
-        (Peter Geoghegan, Andrew Gierth, Robert Haas)
+        Improve the speed of sorting <type>VARCHAR</>, <type>TEXT</>,
+        and <type>NUMERIC</> fields (Peter Geoghegan, Andrew Gierth,
+        Robert Haas)
        </para>
       </listitem>
 
