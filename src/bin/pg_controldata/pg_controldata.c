@@ -290,19 +290,19 @@ main(int argc, char *argv[])
 		   (uint32) ControlFile.backupEndPoint);
 	printf(_("End-of-backup record required:        %s\n"),
 		   ControlFile.backupEndRequired ? _("yes") : _("no"));
-	printf(_("Current wal_level setting:            %s\n"),
+	printf(_("wal_level setting:                    %s\n"),
 		   wal_level_str(ControlFile.wal_level));
-	printf(_("Current wal_log_hints setting:        %s\n"),
+	printf(_("wal_log_hints setting:                %s\n"),
 		   ControlFile.wal_log_hints ? _("on") : _("off"));
-	printf(_("Current max_connections setting:      %d\n"),
+	printf(_("max_connections setting:              %d\n"),
 		   ControlFile.MaxConnections);
-	printf(_("Current max_worker_processes setting: %d\n"),
+	printf(_("max_worker_processes setting:         %d\n"),
 		   ControlFile.max_worker_processes);
-	printf(_("Current max_prepared_xacts setting:   %d\n"),
+	printf(_("max_prepared_xacts setting:           %d\n"),
 		   ControlFile.max_prepared_xacts);
-	printf(_("Current max_locks_per_xact setting:   %d\n"),
+	printf(_("max_locks_per_xact setting:           %d\n"),
 		   ControlFile.max_locks_per_xact);
-	printf(_("Current track_commit_timestamp setting: %s\n"),
+	printf(_("track_commit_timestamp setting:       %s\n"),
 		   ControlFile.track_commit_timestamp ? _("on") : _("off"));
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
