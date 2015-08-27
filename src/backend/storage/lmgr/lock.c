@@ -344,6 +344,7 @@ static void BeginStrongLockAcquire(LOCALLOCK *locallock, uint32 fasthashcode);
 static void FinishStrongLockAcquire(void);
 static void WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner);
 static void ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock);
+static void LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent);
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 			PROCLOCK *proclock, LockMethod lockMethodTable);
 static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
@@ -1205,8 +1206,16 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 static void
 RemoveLocalLock(LOCALLOCK *locallock)
 {
+	int			i;
+
+	for (i = locallock->numLockOwners - 1; i >= 0; i--)
+	{
+		if (locallock->lockOwners[i].owner != NULL)
+			ResourceOwnerForgetLock(locallock->lockOwners[i].owner, locallock);
+	}
 	pfree(locallock->lockOwners);
 	locallock->lockOwners = NULL;
+
 	if (locallock->holdsStrongLockCount)
 	{
 		uint32		fasthashcode;
@@ -1219,6 +1228,7 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		locallock->holdsStrongLockCount = FALSE;
 		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
+
 	if (!hash_search(LockMethodLocalHash,
 					 (void *) &(locallock->tag),
 					 HASH_REMOVE, NULL))
@@ -1462,6 +1472,8 @@ GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner)
 	lockOwners[i].owner = owner;
 	lockOwners[i].nLocks = 1;
 	locallock->numLockOwners++;
+	if (owner != NULL)
+		ResourceOwnerRememberLock(owner, locallock);
 }
 
 /*
@@ -1778,6 +1790,8 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 				Assert(lockOwners[i].nLocks > 0);
 				if (--lockOwners[i].nLocks == 0)
 				{
+					if (owner != NULL)
+						ResourceOwnerForgetLock(owner, locallock);
 					/* compact out unused slot */
 					locallock->numLockOwners--;
 					if (i < locallock->numLockOwners)
@@ -1974,14 +1988,13 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 		{
 			LOCALLOCKOWNER *lockOwners = locallock->lockOwners;
 
-			/* If it's above array position 0, move it down to 0 */
-			for (i = locallock->numLockOwners - 1; i > 0; i--)
+			/* If session lock is above array position 0, move it down to 0 */
+			for (i = 0; i < locallock->numLockOwners; i++)
 			{
 				if (lockOwners[i].owner == NULL)
-				{
 					lockOwners[0] = lockOwners[i];
-					break;
-				}
+				else
+					ResourceOwnerForgetLock(lockOwners[i].owner, locallock);
 			}
 
 			if (locallock->numLockOwners > 0 &&
@@ -1994,6 +2007,8 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 				/* We aren't deleting this locallock, so done */
 				continue;
 			}
+			else
+				locallock->numLockOwners = 0;
 		}
 
 		/*
@@ -2200,18 +2215,31 @@ LockReleaseSession(LOCKMETHODID lockmethodid)
 /*
  * LockReleaseCurrentOwner
  *		Release all locks belonging to CurrentResourceOwner
+ *
+ * If the caller knows what those locks are, it can pass them as an array.
+ * That speeds up the call significantly, when a lot of locks are held.
+ * Otherwise, pass NULL for locallocks, and we'll traverse through our hash
+ * table to find them.
  */
 void
-LockReleaseCurrentOwner(void)
+LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 {
-	HASH_SEQ_STATUS status;
-	LOCALLOCK  *locallock;
-
-	hash_seq_init(&status, LockMethodLocalHash);
-
-	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
+	if (locallocks == NULL)
 	{
-		ReleaseLockIfHeld(locallock, false);
+		HASH_SEQ_STATUS status;
+		LOCALLOCK  *locallock;
+
+		hash_seq_init(&status, LockMethodLocalHash);
+
+		while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
+			ReleaseLockIfHeld(locallock, false);
+	}
+	else
+	{
+		int			i;
+
+		for (i = nlocks - 1; i >= 0; i--)
+			ReleaseLockIfHeld(locallocks[i], false);
 	}
 }
 
@@ -2257,6 +2285,8 @@ ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock)
 				locallock->nLocks -= lockOwners[i].nLocks;
 				/* compact out unused slot */
 				locallock->numLockOwners--;
+				if (owner != NULL)
+					ResourceOwnerForgetLock(owner, locallock);
 				if (i < locallock->numLockOwners)
 					lockOwners[i] = lockOwners[locallock->numLockOwners];
 			}
@@ -2279,57 +2309,83 @@ ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock)
 /*
  * LockReassignCurrentOwner
  *		Reassign all locks belonging to CurrentResourceOwner to belong
- *		to its parent resource owner
+ *		to its parent resource owner.
+ *
+ * If the caller knows what those locks are, it can pass them as an array.
+ * That speeds up the call significantly, when a lot of locks are held
+ * (e.g pg_dump with a large schema).  Otherwise, pass NULL for locallocks,
+ * and we'll traverse through our hash table to find them.
  */
 void
-LockReassignCurrentOwner(void)
+LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 {
 	ResourceOwner parent = ResourceOwnerGetParent(CurrentResourceOwner);
-	HASH_SEQ_STATUS status;
-	LOCALLOCK  *locallock;
-	LOCALLOCKOWNER *lockOwners;
 
 	Assert(parent != NULL);
 
-	hash_seq_init(&status, LockMethodLocalHash);
+	if (locallocks == NULL)
+	{
+		HASH_SEQ_STATUS status;
+		LOCALLOCK  *locallock;
 
-	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
+		hash_seq_init(&status, LockMethodLocalHash);
+
+		while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
+			LockReassignOwner(locallock, parent);
+	}
+	else
 	{
 		int			i;
-		int			ic = -1;
-		int			ip = -1;
 
-		/*
-		 * Scan to see if there are any locks belonging to current owner or
-		 * its parent
-		 */
-		lockOwners = locallock->lockOwners;
-		for (i = locallock->numLockOwners - 1; i >= 0; i--)
-		{
-			if (lockOwners[i].owner == CurrentResourceOwner)
-				ic = i;
-			else if (lockOwners[i].owner == parent)
-				ip = i;
-		}
-
-		if (ic < 0)
-			continue;			/* no current locks */
-
-		if (ip < 0)
-		{
-			/* Parent has no slot, so just give it child's slot */
-			lockOwners[ic].owner = parent;
-		}
-		else
-		{
-			/* Merge child's count with parent's */
-			lockOwners[ip].nLocks += lockOwners[ic].nLocks;
-			/* compact out unused slot */
-			locallock->numLockOwners--;
-			if (ic < locallock->numLockOwners)
-				lockOwners[ic] = lockOwners[locallock->numLockOwners];
-		}
+		for (i = nlocks - 1; i >= 0; i--)
+			LockReassignOwner(locallocks[i], parent);
 	}
+}
+
+/*
+ * Subroutine of LockReassignCurrentOwner. Reassigns a given lock belonging to
+ * CurrentResourceOwner to its parent.
+ */
+static void
+LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent)
+{
+	LOCALLOCKOWNER *lockOwners;
+	int			i;
+	int			ic = -1;
+	int			ip = -1;
+
+	/*
+	 * Scan to see if there are any locks belonging to current owner or its
+	 * parent
+	 */
+	lockOwners = locallock->lockOwners;
+	for (i = locallock->numLockOwners - 1; i >= 0; i--)
+	{
+		if (lockOwners[i].owner == CurrentResourceOwner)
+			ic = i;
+		else if (lockOwners[i].owner == parent)
+			ip = i;
+	}
+
+	if (ic < 0)
+		return;					/* no current locks */
+
+	if (ip < 0)
+	{
+		/* Parent has no slot, so just give it the child's slot */
+		lockOwners[ic].owner = parent;
+		ResourceOwnerRememberLock(parent, locallock);
+	}
+	else
+	{
+		/* Merge child's count with parent's */
+		lockOwners[ip].nLocks += lockOwners[ic].nLocks;
+		/* compact out unused slot */
+		locallock->numLockOwners--;
+		if (ic < locallock->numLockOwners)
+			lockOwners[ic] = lockOwners[locallock->numLockOwners];
+	}
+	ResourceOwnerForgetLock(CurrentResourceOwner, locallock);
 }
 
 /*
