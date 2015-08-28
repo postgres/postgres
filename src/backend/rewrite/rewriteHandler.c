@@ -9,6 +9,13 @@
  * IDENTIFICATION
  *	  src/backend/rewrite/rewriteHandler.c
  *
+ * NOTES
+ *	  Some of the terms used in this file are of historic nature: "retrieve"
+ *	  was the PostQUEL keyword for what today is SELECT. "RIR" stands for
+ *	  "Retrieve-Instead-Retrieve", that is an ON SELECT DO INSTEAD SELECT rule
+ *	  (which has to be unconditional and where only one rule can exist on each
+ *	  relation).
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
