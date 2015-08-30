@@ -9,7 +9,7 @@ DROP USER IF EXISTS regtest_sepgsql_test_user;
 RESET client_min_messages;
 
 -- confirm required permissions using audit messages
--- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0
 SET sepgsql.debug_audit = true;
 SET client_min_messages = LOG;
 
