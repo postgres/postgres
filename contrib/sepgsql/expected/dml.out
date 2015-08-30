@@ -192,9 +192,9 @@ LINE 1: SELECT * FROM my_schema_2.ts2;
 -- Clean up
 --
 SELECT sepgsql_getcon();	-- confirm client privilege
-                    sepgsql_getcon                    
-------------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c255
+                           sepgsql_getcon                            
+---------------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255
 (1 row)
 
 DROP TABLE IF EXISTS t1 CASCADE;

@@ -21,7 +21,7 @@ fi
 # Read SQL from stdin
 #
 TEMP=`mktemp`
-CONTEXT=""
+CONTEXT="unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255"
 
 while IFS='\\n' read LINE
 do

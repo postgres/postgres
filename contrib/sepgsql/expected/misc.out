@@ -12,11 +12,11 @@ SET sepgsql.debug_audit = on;
 SET client_min_messages = log;
 -- regular function and operators
 SELECT * FROM t1 WHERE x > 50 AND y like '%64%';
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column y"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4gt(integer,integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column y"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4gt(integer,integer)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
   x  |                y                 
 -----+----------------------------------
   77 | 28dd2c7955ce926456240b2ff0100bde
@@ -29,13 +29,13 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined
 
 -- aggregate function
 SELECT MIN(x), AVG(x) FROM t1;
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.avg(integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int8_avg(bigint[])"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.min(integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4smaller(integer,integer)"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.avg(integer)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int8_avg(bigint[])"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.min(integer)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4smaller(integer,integer)"
  min |         avg         
 -----+---------------------
    1 | 50.5000000000000000
@@ -43,11 +43,11 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined
 
 -- window function
 SELECT row_number() OVER (order by x), * FROM t1 WHERE y like '%86%';
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column y"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.row_number()"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column y"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.row_number()"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
  row_number | x  |                y                 
 ------------+----+----------------------------------
           1 |  2 | c81e728d9d4c2f636f067f89cc14862c
