@@ -110,27 +110,27 @@ SELECT sepgsql_getcon();	-- client's label must be restored
 --
 
 -- validation of transaction aware dynamic-transition
--- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0:c0.c25
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c15');
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c25
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c15');
 SELECT sepgsql_getcon();
 
 SELECT sepgsql_setcon(NULL);	-- failed to reset
 SELECT sepgsql_getcon();
 
 BEGIN;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c12');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c12');
 SELECT sepgsql_getcon();
 
 SAVEPOINT svpt_1;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c9');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c9');
 SELECT sepgsql_getcon();
 
 SAVEPOINT svpt_2;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c6');
 SELECT sepgsql_getcon();
 
 SAVEPOINT svpt_3;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c3');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c3');
 SELECT sepgsql_getcon();
 
 ROLLBACK TO SAVEPOINT svpt_2;
@@ -143,16 +143,16 @@ ABORT;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c15'
 
 BEGIN;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c8');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c8');
 SELECT sepgsql_getcon();
 
 SAVEPOINT svpt_1;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c4');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c4');
 SELECT sepgsql_getcon();
 
 ROLLBACK TO SAVEPOINT svpt_1;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c8'
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c6');
 
 COMMIT;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c6'
@@ -231,7 +231,7 @@ SELECT sepgsql_getcon();
 --
 -- Clean up
 --
--- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c255
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255
 DROP TABLE IF EXISTS t1 CASCADE;
 DROP TABLE IF EXISTS t2 CASCADE;
 DROP TABLE IF EXISTS t3 CASCADE;
