@@ -9,7 +9,7 @@ DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
 DROP USER IF EXISTS regtest_sepgsql_test_user;
 RESET client_min_messages;
 
--- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0
 
 --
 -- CREATE Objects to be altered (with debug_audit being silent)

@@ -126,7 +126,7 @@ SELECT * FROM my_schema_2.ts2;	-- failed (policy violation)
 --
 -- Clean up
 --
--- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c255
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255
 DROP TABLE IF EXISTS t1 CASCADE;
 DROP TABLE IF EXISTS t2 CASCADE;
 DROP TABLE IF EXISTS t3 CASCADE;
