@@ -449,9 +449,6 @@
 /* Define to 1 if you have sigsetjmp(). */
 #undef HAVE_SIGSETJMP
 
-/* Define to 1 if the system has the type `sig_atomic_t'. */
-#undef HAVE_SIG_ATOMIC_T
-
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 

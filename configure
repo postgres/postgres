@@ -14151,20 +14151,6 @@ _ACEOF
 fi
 
 
-# We also check for sig_atomic_t, which *should* be defined per ANSI
-# C, but is missing on some old platforms.
-ac_fn_c_check_type "$LINENO" "sig_atomic_t" "ac_cv_type_sig_atomic_t" "#include <signal.h>
-"
-if test "x$ac_cv_type_sig_atomic_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_SIG_ATOMIC_T 1
-_ACEOF
-
-
-fi
-
-
 # Check for extensions offering the integer scalar type __int128.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __int128" >&5
 $as_echo_n "checking for __int128... " >&6; }

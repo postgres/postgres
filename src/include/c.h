@@ -334,11 +334,6 @@ typedef unsigned PG_INT128_TYPE uint128;
 #define HAVE_INT64_TIMESTAMP
 #endif
 
-/* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
-#ifndef HAVE_SIG_ATOMIC_T
-typedef int sig_atomic_t;
-#endif
-
 /*
  * Size
  *		Size of any memory resident object, as returned by sizeof.
