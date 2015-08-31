@@ -266,6 +266,10 @@ spin_delay(void)
  * any explicit statement on that in the gcc manual.  In Intel's compiler,
  * the -m[no-]serialize-volatile option controls that, and testing shows that
  * it is enabled by default.
+ *
+ * While icc accepts gcc asm blocks on x86[_64], this is not true on ia64
+ * (at least not in icc versions before 12.x).  So we have to carry a separate
+ * compiler-intrinsic-based implementation for it.
  */
 #define HAS_TEST_AND_SET
 
@@ -302,6 +306,10 @@ tas(volatile slock_t *lock)
 
 	return ret;
 }
+
+/* icc can't use the regular gcc S_UNLOCK() macro either in this case */
+#define S_UNLOCK(lock)	\
+	do { __memory_barrier(); *(lock) = 0; } while (0)
 
 #endif /* __INTEL_COMPILER */
 #endif	 /* __ia64__ || __ia64 */
@@ -671,21 +679,18 @@ typedef unsigned char slock_t;
 #endif
 
 /*
- * Note that this implementation is unsafe for any platform that can speculate
+ * Default implementation of S_UNLOCK() for gcc/icc.
+ *
+ * Note that this implementation is unsafe for any platform that can reorder
  * a memory access (either load or store) after a following store.  That
- * happens not to be possible x86 and most legacy architectures (some are
+ * happens not to be possible on x86 and most legacy architectures (some are
  * single-processor!), but many modern systems have weaker memory ordering.
- * Those that do must define their own version S_UNLOCK() rather than relying
- * on this one.
+ * Those that do must define their own version of S_UNLOCK() rather than
+ * relying on this one.
  */
 #if !defined(S_UNLOCK)
-#if defined(__INTEL_COMPILER)
-#define S_UNLOCK(lock)	\
-	do { __memory_barrier(); *(lock) = 0; } while (0)
-#else
 #define S_UNLOCK(lock)	\
 	do { __asm__ __volatile__("" : : : "memory");  *(lock) = 0; } while (0)
-#endif
 #endif
 
 #endif	/* defined(__GNUC__) || defined(__INTEL_COMPILER) */
@@ -793,7 +798,7 @@ tas(volatile slock_t *lock)
 
 #if defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
 /*
- * HP-UX on Itanium, non-gcc compiler
+ * HP-UX on Itanium, non-gcc/icc compiler
  *
  * We assume that the compiler enforces strict ordering of loads/stores on
  * volatile data (see comments on the gcc-version earlier in this file).
@@ -816,7 +821,7 @@ typedef unsigned int slock_t;
 #define S_UNLOCK(lock)	\
 	do { _Asm_mf(); (*(lock)) = 0; } while (0)
 
-#endif	/* HPUX on IA64, non gcc */
+#endif	/* HPUX on IA64, non gcc/icc */
 
 #if defined(_AIX)	/* AIX */
 /*
@@ -935,7 +940,7 @@ extern int	tas_sema(volatile slock_t *lock);
 #if !defined(S_UNLOCK)
 /*
  * Our default implementation of S_UNLOCK is essentially *(lock) = 0.  This
- * is unsafe if the platform can speculate a memory access (either load or
+ * is unsafe if the platform can reorder a memory access (either load or
  * store) after a following store; platforms where this is possible must
  * define their own S_UNLOCK.  But CPU reordering is not the only concern:
  * if we simply defined S_UNLOCK() as an inline macro, the compiler might

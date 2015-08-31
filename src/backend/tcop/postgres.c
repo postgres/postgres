@@ -2998,6 +2998,10 @@ ProcessInterrupts(void)
  * IA64-specific code to fetch the AR.BSP register for stack depth checks.
  *
  * We currently support gcc, icc, and HP-UX's native compiler here.
+ *
+ * Note: while icc accepts gcc asm blocks on x86[_64], this is not true on
+ * ia64 (at least not in icc versions before 12.x).  So we have to carry a
+ * separate implementation for it.
  */
 #if defined(__ia64__) || defined(__ia64)
 
@@ -3005,8 +3009,12 @@ ProcessInterrupts(void)
 /* Assume it's HP-UX native compiler */
 #include <ia64/sys/inline.h>
 #define ia64_get_bsp() ((char *) (_Asm_mov_from_ar(_AREG_BSP, _NO_FENCE)))
+#elif defined(__INTEL_COMPILER)
+/* icc */
+#include <asm/ia64regs.h>
+#define ia64_get_bsp() ((char *) __getReg(_IA64_REG_AR_BSP))
 #else
-/* Use inline assembly; works with gcc and icc */
+/* gcc */
 static __inline__ char *
 ia64_get_bsp(void)
 {
