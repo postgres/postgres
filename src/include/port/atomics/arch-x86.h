@@ -5,7 +5,7 @@
  *
  * Note that we actually require a 486 upwards because the 386 doesn't have
  * support for xadd and cmpxchg. Given that the 386 isn't supported anywhere
- * anymore that's not much of restriction luckily.
+ * anymore that's not much of a restriction luckily.
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -28,18 +28,18 @@
  * do those things, a compiler barrier should be enough.
  *
  * "lock; addl" has worked for longer than "mfence". It's also rumored to be
- * faster in many scenarios
+ * faster in many scenarios.
  */
 
-#if defined(__INTEL_COMPILER)
-#define pg_memory_barrier_impl()		_mm_mfence()
-#elif defined(__GNUC__) && (defined(__i386__) || defined(__i386))
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if defined(__i386__) || defined(__i386)
 #define pg_memory_barrier_impl()		\
 	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory", "cc")
-#elif defined(__GNUC__) && defined(__x86_64__)
+#elif defined(__x86_64__)
 #define pg_memory_barrier_impl()		\
 	__asm__ __volatile__ ("lock; addl $0,0(%%rsp)" : : : "memory", "cc")
 #endif
+#endif /* defined(__GNUC__) || defined(__INTEL_COMPILER) */
 
 #define pg_read_barrier_impl()		pg_compiler_barrier_impl()
 #define pg_write_barrier_impl()		pg_compiler_barrier_impl()
@@ -51,7 +51,7 @@
  */
 #if defined(HAVE_ATOMICS)
 
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 
 #define PG_HAVE_ATOMIC_FLAG_SUPPORT
 typedef struct pg_atomic_flag
@@ -67,7 +67,7 @@ typedef struct pg_atomic_uint32
 
 /*
  * It's too complicated to write inline asm for 64bit types on 32bit and the
- * 468 can't do it.
+ * 468 can't do it anyway.
  */
 #ifdef __x86_64__
 #define PG_HAVE_ATOMIC_U64_SUPPORT
@@ -76,11 +76,11 @@ typedef struct pg_atomic_uint64
 	/* alignment guaranteed due to being on a 64bit platform */
 	volatile uint64 value;
 } pg_atomic_uint64;
-#endif
+#endif	/* __x86_64__ */
+
+#endif /* defined(__GNUC__) || defined(__INTEL_COMPILER) */
 
 #endif /* defined(HAVE_ATOMICS) */
-
-#endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
 
 #if !defined(PG_HAVE_SPIN_DELAY)
 /*
@@ -106,20 +106,12 @@ typedef struct pg_atomic_uint64
  *     de-pipelines the spin-wait loop to prevent it from
  *     consuming execution resources excessively.
  */
-#if defined(__INTEL_COMPILER)
-#define PG_HAVE_SPIN_DELAY
-static inline
-pg_spin_delay_impl(void)
-{
-	_mm_pause();
-}
-#elif defined(__GNUC__)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #define PG_HAVE_SPIN_DELAY
 static __inline__ void
 pg_spin_delay_impl(void)
 {
-	__asm__ __volatile__(
-		" rep; nop			\n");
+	__asm__ __volatile__(" rep; nop			\n");
 }
 #elif defined(WIN32_ONLY_COMPILER) && defined(__x86_64__)
 #define PG_HAVE_SPIN_DELAY
@@ -142,8 +134,7 @@ pg_spin_delay_impl(void)
 
 #if defined(HAVE_ATOMICS)
 
-/* inline assembly implementation for gcc */
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 
 #define PG_HAVE_ATOMIC_TEST_SET_FLAG
 static inline bool
@@ -246,6 +237,6 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 
 #endif /* __x86_64__ */
 
-#endif /* defined(__GNUC__) && !defined(__INTEL_COMPILER) */
+#endif /* defined(__GNUC__) || defined(__INTEL_COMPILER) */
 
 #endif /* HAVE_ATOMICS */
