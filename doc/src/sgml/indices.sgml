@@ -655,11 +655,7 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
   <note>
    <para>
-    The preferred way to add a unique constraint to a table is
-    <literal>ALTER TABLE ... ADD CONSTRAINT</literal>.  The use of
-    indexes to enforce unique constraints could be considered an
-    implementation detail that should not be accessed directly.
-    One should, however, be aware that there's no need to manually
+    There's no need to manually
     create indexes on unique columns; doing so would just duplicate
     the automatically-created index.
    </para>
