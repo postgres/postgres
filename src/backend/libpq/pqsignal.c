@@ -18,7 +18,7 @@
 #include "libpq/pqsignal.h"
 
 
-#ifdef HAVE_SIGPROCMASK
+#ifndef WIN32
 sigset_t	UnBlockSig,
 			BlockSig,
 			StartupBlockSig;
@@ -45,7 +45,7 @@ int			UnBlockSig,
 void
 pqinitmask(void)
 {
-#ifdef HAVE_SIGPROCMASK
+#ifndef WIN32
 
 	sigemptyset(&UnBlockSig);
 
@@ -101,7 +101,7 @@ pqinitmask(void)
 #ifdef SIGALRM
 	sigdelset(&StartupBlockSig, SIGALRM);
 #endif
-#else
+#else							/* WIN32 */
 	/* Set the signals we want. */
 	UnBlockSig = 0;
 	BlockSig = sigmask(SIGQUIT) |

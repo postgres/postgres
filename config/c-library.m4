@@ -170,33 +170,6 @@ AC_DEFUN([PGAC_STRUCT_ADDRINFO],
 ])])# PGAC_STRUCT_ADDRINFO
 
 
-# PGAC_FUNC_POSIX_SIGNALS
-# -----------------------
-# Check to see if the machine has the POSIX signal interface. Define
-# HAVE_POSIX_SIGNALS if so. Also set the output variable HAVE_POSIX_SIGNALS
-# to yes or no.
-#
-# Note that this test only compiles a test program, it doesn't check
-# whether the routines actually work. If that becomes a problem, make
-# a fancier check.
-AC_DEFUN([PGAC_FUNC_POSIX_SIGNALS],
-[AC_CACHE_CHECK(for POSIX signal interface, pgac_cv_func_posix_signals,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <signal.h>
-],
-[struct sigaction act, oact;
-sigemptyset(&act.sa_mask);
-act.sa_flags = SA_RESTART;
-sigaction(0, &act, &oact);])],
-[pgac_cv_func_posix_signals=yes],
-[pgac_cv_func_posix_signals=no])])
-if test x"$pgac_cv_func_posix_signals" = xyes ; then
-  AC_DEFINE(HAVE_POSIX_SIGNALS, 1,
-            [Define to 1 if you have the POSIX signal interface.])
-fi
-HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
-AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
-
-
 # PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
 # ---------------------------------------
 # Determine which length modifier snprintf uses for long long int.  We

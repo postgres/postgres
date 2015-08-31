@@ -379,9 +379,6 @@
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
-/* Define to 1 if you have the POSIX signal interface. */
-#undef HAVE_POSIX_SIGNALS
-
 /* Define to 1 if the assembler supports PPC's LWARX mutex hint bit. */
 #undef HAVE_PPC_LWARX_MUTEX_HINT
 
@@ -442,12 +439,6 @@
 
 /* Define to 1 if you have the `shm_open' function. */
 #undef HAVE_SHM_OPEN
-
-/* Define to 1 if you have the `sigprocmask' function. */
-#undef HAVE_SIGPROCMASK
-
-/* Define to 1 if you have sigsetjmp(). */
-#undef HAVE_SIGSETJMP
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF

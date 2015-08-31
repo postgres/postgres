@@ -15,27 +15,27 @@
 
 #include <signal.h>
 
-#ifdef HAVE_SIGPROCMASK
+#ifndef WIN32
 extern sigset_t UnBlockSig,
 			BlockSig,
 			StartupBlockSig;
 
 #define PG_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
-#else							/* not HAVE_SIGPROCMASK */
+#else							/* WIN32 */
+/*
+ * Windows doesn't provide the POSIX signal API, so we use something
+ * approximating the old BSD signal API.
+ */
 extern int	UnBlockSig,
 			BlockSig,
 			StartupBlockSig;
 
-#ifndef WIN32
-#define PG_SETMASK(mask)	sigsetmask(*((int*)(mask)))
-#else
-#define PG_SETMASK(mask)		pqsigsetmask(*((int*)(mask)))
-int			pqsigsetmask(int mask);
-#endif
+extern int	pqsigsetmask(int mask);
 
+#define PG_SETMASK(mask)		pqsigsetmask(*(mask))
 #define sigaddset(set, signum)	(*(set) |= (sigmask(signum)))
 #define sigdelset(set, signum)	(*(set) &= ~(sigmask(signum)))
-#endif   /* not HAVE_SIGPROCMASK */
+#endif   /* WIN32 */
 
 extern void pqinitmask(void);
 
