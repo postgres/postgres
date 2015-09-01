@@ -288,8 +288,9 @@ $$ LANGUAGE plpythonu;
   <sect2>
    <title>Data Type Mapping</title>
    <para>
-    Function arguments are converted from their PostgreSQL type to a
-    corresponding Python type:
+    When a PL/Python function is called, its arguments are converted from
+    their PostgreSQL data type to a corresponding Python type:
+
     <itemizedlist>
      <listitem>
       <para>
@@ -322,7 +323,7 @@ $$ LANGUAGE plpythonu;
        Otherwise,
        <literal>decimal.Decimal</literal> from the standard library will be
        used.  <literal>cdecimal</literal> is significantly faster
-       than <literal>decimal</literal>.  In Python 3.3,
+       than <literal>decimal</literal>.  In Python 3.3 and up,
        however, <literal>cdecimal</literal> has been integrated into the
        standard library under the name <literal>decimal</literal>, so there is
        no longer any difference.
@@ -356,8 +357,9 @@ $$ LANGUAGE plpythonu;
    </para>
 
    <para>
-    Function return values are converted to the declared PostgreSQL
-    return data type as follows:
+    When a PL/Python function returns, its return value is converted to the
+    function's declared PostgreSQL return data type as follows:
+
     <itemizedlist>
      <listitem>
       <para>
@@ -373,16 +375,18 @@ $$ LANGUAGE plpythonu;
        When the PostgreSQL return type is <type>bytea</type>, the
        return value will be converted to a string (Python 2) or bytes
        (Python 3) using the respective Python built-ins, with the
-       result being converted <type>bytea</type>.
+       result being converted to <type>bytea</type>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       For all other PostgreSQL return types, the returned Python
-       value is converted to a string using the Python
-       built-in <literal>str</literal>, and the result is passed to the
-       input function of the PostgreSQL data type.
+       For all other PostgreSQL return types, the return value is converted
+       to a string using the Python built-in <literal>str</literal>, and the
+       result is passed to the input function of the PostgreSQL data type.
+       (If the Python value is a <type>float</>, it is converted using
+       the <literal>repr</> built-in instead of <literal>str</literal>, to
+       avoid loss of precision.)
       </para>
 
       <para>
