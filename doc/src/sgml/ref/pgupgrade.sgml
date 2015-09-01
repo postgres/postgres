@@ -310,8 +310,21 @@ NET STOP postgresql-9.0
     </para>
 
     <para>
-     Streaming replication and log-shipping standby servers can remain running until
-     a later step.
+     Streaming replication and log-shipping standby servers can
+     remain running until a later step.
+    </para>
+   </step>
+
+   <step>
+    <title>Verify standby servers</title>
+
+    <para>
+     If you are upgrading Streaming Replication and Log-Shipping standby
+     servers, verify that the old standby servers are caught up by running
+     <application>pg_controldata</> against the old primary and standby
+     clusters.  Verify that the <quote>Latest checkpoint location</>
+     values match in all clusters.  (There will be a mismatch if old
+     standby servers were shut down before the old primary.)
     </para>
    </step>
 
@@ -404,7 +417,9 @@ pg_upgrade.exe
      If you have Streaming Replication (<xref
      linkend="streaming-replication">) or Log-Shipping (<xref
      linkend="warm-standby">) standby servers, follow these steps to
-     upgrade them (before starting any servers):
+     upgrade them.  You will not be running <application>pg_upgrade</>
+     on the standby servers, but rather <application>rsync</>.  Do not
+     start any servers yet.
     </para>
 
     <substeps>
@@ -444,18 +459,6 @@ pg_upgrade.exe
       <para>
        If the standby servers are still running, stop them now using the
        above instructions.
-      </para>
-     </step>
-
-     <step>
-      <title>Verify standby servers</title>
-
-      <para>
-       To prevent old standby servers from being modified, run
-       <application>pg_controldata</> against the primary and standby
-       clusters and verify that the <quote>Latest checkpoint location</>
-       values match in all clusters.  (This requires the standbys to be
-       shut down after the primary.)
       </para>
      </step>
 
