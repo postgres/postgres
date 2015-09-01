@@ -407,7 +407,7 @@ pg_upgrade.exe
      upgrade them (before starting any servers):
     </para>
 
-    <procedure>
+    <substeps>
 
      <step>
       <title>Install the new PostgreSQL binaries on standby servers</title>
@@ -522,7 +522,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
       </para>
      </step>
 
-    </procedure>
+    </substeps>
 
    </step>
 
