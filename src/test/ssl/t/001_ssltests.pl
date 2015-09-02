@@ -27,9 +27,6 @@ my $SERVERHOSTADDR = '127.0.0.1';
 
 my $tempdir = TestLib::tempdir;
 
-#my $tempdir = "tmp_check";
-
-
 # Define a couple of helper functions to test connecting to the server.
 
 my $common_connstr;
@@ -43,12 +40,7 @@ sub run_test_psql
 		'psql', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
 		'-d', "$connstr" ];
 
-	open CLIENTLOG, ">>$tempdir/client-log"
-	  or die "Could not open client-log file";
-	print CLIENTLOG "\n# Running test: $connstr $logstring\n";
-	close CLIENTLOG;
-
-	my $result = run $cmd, '>>', "$tempdir/client-log", '2>&1';
+	my $result = run_log($cmd);
 	return $result;
 }
 
@@ -84,7 +76,7 @@ chmod 0600, "ssl/client.key";
 
 diag "setting up data directory in \"$tempdir\"...";
 start_test_server($tempdir);
-configure_test_server_for_ssl($tempdir);
+configure_test_server_for_ssl($tempdir, $SERVERHOSTADDR);
 switch_server_cert($tempdir, 'server-cn-only');
 
 ### Part 1. Run client-side tests.

@@ -45,7 +45,8 @@ sub copy_files
 
 sub configure_test_server_for_ssl
 {
-	my $tempdir = $_[0];
+	my $tempdir    = $_[0];
+	my $serverhost = $_[1];
 
 	# Create test users and databases
 	psql 'postgres', "CREATE USER ssltestuser";
@@ -58,6 +59,7 @@ sub configure_test_server_for_ssl
 	print CONF "fsync=off\n";
 	print CONF "log_connections=on\n";
 	print CONF "log_hostname=on\n";
+	print CONF "listen_addresses='$serverhost'\n";
 	print CONF "log_statement=all\n";
 
 	# enable SSL and set up server key
@@ -80,11 +82,11 @@ sub configure_test_server_for_ssl
 	print HBA
 "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
 	print HBA
-"hostssl trustdb         ssltestuser     127.0.0.1/32            trust\n";
+"hostssl trustdb         ssltestuser     $serverhost/32            trust\n";
 	print HBA
 "hostssl trustdb         ssltestuser     ::1/128                 trust\n";
 	print HBA
-"hostssl certdb          ssltestuser     127.0.0.1/32            cert\n";
+"hostssl certdb          ssltestuser     $serverhost/32            cert\n";
 	print HBA
 "hostssl certdb          ssltestuser     ::1/128                 cert\n";
 	close HBA;
@@ -107,10 +109,6 @@ sub switch_server_cert
 	print SSLCONF "ssl_crl_file='root+client.crl'\n";
 	close SSLCONF;
 
-   # Stop and restart server to reload the new config. We cannot use
-   # restart_test_server() because that overrides listen_addresses to only all
-   # Unix domain socket connections.
-
-	system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/pgdata";
-	system_or_bail 'pg_ctl', 'start', '-D', "$tempdir/pgdata", '-w';
+	# Stop and restart server to reload the new config.
+	restart_test_server();
 }
