@@ -903,7 +903,7 @@ typedef struct GinEntryAccumulator
 typedef struct
 {
 	GinState   *ginstate;
-	long		allocatedMemory;
+	Size		allocatedMemory;
 	GinEntryAccumulator *entryallocator;
 	uint32		eas_used;
 	RBTree	   *tree;
