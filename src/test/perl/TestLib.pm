@@ -123,6 +123,11 @@ sub standard_initdb
 	system_or_bail('initdb', '-D', "$pgdata", '-A' , 'trust', '-N');
 	system_or_bail("$ENV{top_builddir}/src/test/regress/pg_regress",
 		'--config-auth', $pgdata);
+
+	open CONF, ">>$pgdata/postgresql.conf";
+	print CONF "\n# Added by TestLib.pm)\n";
+	print CONF "fsync = off\n";
+	close CONF;
 }
 
 my ($test_server_datadir, $test_server_logfile);
@@ -138,7 +143,7 @@ sub start_test_server
 	standard_initdb "$tempdir/pgdata";
 	$ret = system_log('pg_ctl', '-D', "$tempdir/pgdata", '-w', '-l',
 	  "$log_path/postmaster.log", '-o',
-"--fsync=off -k \"$tempdir_short\" --listen-addresses='' --log-statement=all",
+"-k \"$tempdir_short\" --listen-addresses='' --log-statement=all",
 					'start');
 	if ($ret != 0)
 	{
