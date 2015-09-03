@@ -2035,6 +2035,11 @@ LOG:  database system is ready to accept read only connections
          <varname>max_locks_per_transaction</>
         </para>
        </listitem>
+       <listitem>
+        <para>
+         <varname>max_worker_processes</>
+        </para>
+       </listitem>
       </itemizedlist>
    </para>
 

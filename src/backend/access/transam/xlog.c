@@ -5842,6 +5842,10 @@ do { \
 /*
  * Check to see if required parameters are set high enough on this server
  * for various aspects of recovery operation.
+ *
+ * Note that all the parameters which this function tests need to be
+ * listed in Administrator's Overview section in high-availability.sgml.
+ * If you change them, don't forget to update the list.
  */
 static void
 CheckRequiredParameterValues(void)
