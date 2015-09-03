@@ -143,6 +143,7 @@ sub standard_initdb
 
 	open CONF, ">>$pgdata/postgresql.conf";
 	print CONF "\n# Added by TestLib.pm)\n";
+	print CONF "fsync = off\n";
 	if ($windows_os)
 	{
 		print CONF "listen_addresses = '127.0.0.1'\n";
@@ -189,7 +190,7 @@ sub start_test_server
 	standard_initdb "$tempdir/pgdata";
 
 	$ret = system_log('pg_ctl', '-D', "$tempdir/pgdata", '-w', '-l',
-	  "$log_path/postmaster.log", '-o', "--fsync=off --log-statement=all",
+	  "$log_path/postmaster.log", '-o', "--log-statement=all",
 	  'start');
 
 	if ($ret != 0)
