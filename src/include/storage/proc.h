@@ -142,7 +142,8 @@ struct PGPROC
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
 	/* Support for group XID clearing. */
-	volatile pg_atomic_uint32	nextClearXidElem;
+	bool			clearXid;
+	pg_atomic_uint32	nextClearXidElem;
 	TransactionId	backendLatestXid;
 
 	/* Per-backend LWLock.  Protects fields below. */
@@ -207,7 +208,7 @@ typedef struct PROC_HDR
 	/* Head of list of bgworker free PGPROC structures */
 	PGPROC	   *bgworkerFreeProcs;
 	/* First pgproc waiting for group XID clear */
-	volatile pg_atomic_uint32 nextClearXidElem;
+	pg_atomic_uint32 firstClearXidElem;
 	/* WALWriter process's latch */
 	Latch	   *walwriterLatch;
 	/* Checkpointer process's latch */
