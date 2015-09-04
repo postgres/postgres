@@ -335,11 +335,7 @@ PersistHoldablePortal(Portal portal)
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
-	if (portal->status != PORTAL_READY)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("portal \"%s\" cannot be run", portal->name)));
-	portal->status = PORTAL_ACTIVE;
+	MarkPortalActive(portal);
 
 	/*
 	 * Set up global portal context pointers.
