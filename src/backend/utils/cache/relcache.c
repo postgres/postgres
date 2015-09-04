@@ -1830,7 +1830,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 {
 	/*
 	 * As per notes above, a rel to be rebuilt MUST have refcnt > 0; while of
-	 * course it would be a bad idea to blow away one with nonzero refcnt.
+	 * course it would be an equally bad idea to blow away one with nonzero
+	 * refcnt, since that would leave someone somewhere with a dangling
+	 * pointer.  All callers are expected to have verified that this holds.
 	 */
 	Assert(rebuild ?
 		   !RelationHasReferenceCountZero(relation) :
@@ -2320,10 +2322,24 @@ AtEOXact_RelationCache(bool isCommit)
 		{
 			if (isCommit)
 				relation->rd_createSubid = InvalidSubTransactionId;
-			else
+			else if (RelationHasReferenceCountZero(relation))
 			{
 				RelationClearRelation(relation, false);
 				continue;
+			}
+			else
+			{
+				/*
+				 * Hmm, somewhere there's a (leaked?) reference to the
+				 * relation.  We daren't remove the entry for fear of
+				 * dereferencing a dangling pointer later.  Bleat, and mark it
+				 * as not belonging to the current transaction.  Hopefully
+				 * it'll get cleaned up eventually.  This must be just a
+				 * WARNING to avoid error-during-error-recovery loops.
+				 */
+				relation->rd_createSubid = InvalidSubTransactionId;
+				elog(WARNING, "cannot remove relcache entry for \"%s\" because it has nonzero refcount",
+					 RelationGetRelationName(relation));
 			}
 		}
 
@@ -2385,10 +2401,24 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		{
 			if (isCommit)
 				relation->rd_createSubid = parentSubid;
-			else
+			else if (RelationHasReferenceCountZero(relation))
 			{
 				RelationClearRelation(relation, false);
 				continue;
+			}
+			else
+			{
+				/*
+				 * Hmm, somewhere there's a (leaked?) reference to the
+				 * relation.  We daren't remove the entry for fear of
+				 * dereferencing a dangling pointer later.  Bleat, and
+				 * transfer it to the parent subtransaction so we can try
+				 * again later.  This must be just a WARNING to avoid
+				 * error-during-error-recovery loops.
+				 */
+				relation->rd_createSubid = parentSubid;
+				elog(WARNING, "cannot remove relcache entry for \"%s\" because it has nonzero refcount",
+					 RelationGetRelationName(relation));
 			}
 		}
 
