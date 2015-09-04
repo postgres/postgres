@@ -387,6 +387,38 @@ fetch from foo;
 
 abort;
 
+
+-- Test for proper cleanup after a failure in a cursor portal
+-- that was created in an outer subtransaction
+CREATE FUNCTION invert(x float8) RETURNS float8 LANGUAGE plpgsql AS
+$$ begin return 1/x; end $$;
+
+CREATE FUNCTION create_temp_tab() RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  CREATE TEMP TABLE new_table (f1 float8);
+  -- case of interest is that we fail while holding an open
+  -- relcache reference to new_table
+  INSERT INTO new_table SELECT invert(0.0);
+  RETURN 'foo';
+END $$;
+
+BEGIN;
+DECLARE ok CURSOR FOR SELECT * FROM int8_tbl;
+DECLARE ctt CURSOR FOR SELECT create_temp_tab();
+FETCH ok;
+SAVEPOINT s1;
+FETCH ok;  -- should work
+FETCH ctt; -- error occurs here
+ROLLBACK TO s1;
+FETCH ok;  -- should work
+FETCH ctt; -- must be rejected
+COMMIT;
+
+DROP FUNCTION create_temp_tab();
+DROP FUNCTION invert(x float8);
+
+
 -- Test for successful cleanup of an aborted transaction at session exit.
 -- THIS MUST BE THE LAST TEST IN THIS FILE.
 

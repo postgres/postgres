@@ -119,12 +119,16 @@ typedef struct PortalData
 	MemoryContext heap;			/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal);		/* cleanup hook */
-	SubTransactionId createSubid;		/* the ID of the creating subxact */
 
 	/*
-	 * if createSubid is InvalidSubTransactionId, the portal is held over from
-	 * a previous transaction
+	 * State data for remembering which subtransaction(s) the portal was
+	 * created or used in.  If the portal is held over from a previous
+	 * transaction, both subxids are InvalidSubTransactionId.  Otherwise,
+	 * createSubid is the creating subxact and activeSubid is the last subxact
+	 * in which we ran the portal.
 	 */
+	SubTransactionId createSubid;		/* the creating subxact */
+	SubTransactionId activeSubid;		/* the last subxact with activity */
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
@@ -201,12 +205,14 @@ extern void AtSubCommit_Portals(SubTransactionId mySubid,
 					ResourceOwner parentXactOwner);
 extern void AtSubAbort_Portals(SubTransactionId mySubid,
 				   SubTransactionId parentSubid,
+				   ResourceOwner myXactOwner,
 				   ResourceOwner parentXactOwner);
 extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
 extern void PinPortal(Portal portal);
 extern void UnpinPortal(Portal portal);
+extern void MarkPortalActive(Portal portal);
 extern void MarkPortalDone(Portal portal);
 extern void MarkPortalFailed(Portal portal);
 extern void PortalDrop(Portal portal, bool isTopCommit);
