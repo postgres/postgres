@@ -329,6 +329,7 @@ PersistHoldablePortal(Portal portal)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("portal \"%s\" cannot be run", portal->name)));
 	portal->status = PORTAL_ACTIVE;
+	portal->activeSubid = GetCurrentSubTransactionId();
 
 	/*
 	 * Set up global portal context pointers.

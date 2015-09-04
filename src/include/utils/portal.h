@@ -112,12 +112,15 @@ typedef struct PortalData
 	MemoryContext heap;			/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal);		/* cleanup hook */
-	SubTransactionId createSubid;		/* the ID of the creating subxact */
 
 	/*
-	 * if createSubid is InvalidSubTransactionId, the portal is held over from
-	 * a previous transaction
+	 * State data for remembering which subtransaction(s) the portal was
+	 * created or used in.  If the portal is held over from a previous
+	 * transaction, both subxids are InvalidSubTransactionId.  Otherwise,
+	 * createSubid is the creating subxact and activeSubid is the last subxact
+	 * in which we ran the portal.
 	 */
+	SubTransactionId createSubid;		/* the creating subxact */
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
@@ -168,6 +171,13 @@ typedef struct PortalData
 	/* Presentation data, primarily used by the pg_cursors system view */
 	TimestampTz creation_time;	/* time at which this portal was defined */
 	bool		visible;		/* include this portal in pg_cursors? */
+
+	/*
+	 * This field belongs with createSubid, but in pre-9.5 branches, add it
+	 * at the end to avoid creating an ABI break for extensions that examine
+	 * Portal structs.
+	 */
+	SubTransactionId activeSubid;		/* the last subxact with activity */
 } PortalData;
 
 /*
@@ -196,6 +206,7 @@ extern void AtSubCommit_Portals(SubTransactionId mySubid,
 					ResourceOwner parentXactOwner);
 extern void AtSubAbort_Portals(SubTransactionId mySubid,
 				   SubTransactionId parentSubid,
+				   ResourceOwner myXactOwner,
 				   ResourceOwner parentXactOwner);
 extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
