@@ -460,7 +460,7 @@ FIXME: Add Andres
 <!--
 2014-07-01 [9f03ca9] Robert..: Avoid copying index tuples when building an ind..
 -->
-        Speed up CREATE INDEX by avoiding unneccessary memory copies (Robert Haas)
+        Speed up CREATE INDEX by avoiding unnecessary memory copies (Robert Haas)
        </para>
       </listitem>
 
@@ -1111,7 +1111,7 @@ FIXME: Correct description
 -->
        <para>
         Allow changing of the <acronym>WAL</acronym>
-        logging status of a table ater creation with <link
+        logging status of a table after creation with <link
         linkend="SQL-ALTERTABLE"><command>ALTER TABLE .. SET LOGGED /
         UNLOGGED</></> (Fabr&iacute;zio de Royes Mello)
        </para>

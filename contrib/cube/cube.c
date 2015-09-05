@@ -814,7 +814,7 @@ cube_inter(PG_FUNCTION_ARGS)
 									Max(LL_COORD(b, i), UR_COORD(b, i))
 			);
 	}
-	/* continue on the higher dimemsions only present in 'a' */
+	/* continue on the higher dimensions only present in 'a' */
 	for (; i < DIM(a); i++)
 	{
 		result->x[i] = Max(0,

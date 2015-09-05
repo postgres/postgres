@@ -369,7 +369,7 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 				newdbl[2];
 
 	/*
-	 * We are allways using "double" timestamps here. Precision should be good
+	 * We are always using "double" timestamps here. Precision should be good
 	 * enough.
 	 */
 	orgdbl[0] = ((double) origentry->lower);

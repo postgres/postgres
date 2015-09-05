@@ -1049,7 +1049,7 @@ replorigin_session_setup(RepOriginId node)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			 errmsg("replication identiefer %d is already active for pid %d",
+			 errmsg("replication identifier %d is already active for pid %d",
 					curstate->roident, curstate->acquired_by)));
 		}
 
