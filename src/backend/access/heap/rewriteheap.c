@@ -763,9 +763,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
  *
  * Crash-Safety: This module diverts from the usual patterns of doing WAL
  * since it cannot rely on checkpoint flushing out all buffers and thus
- * waiting for exlusive locks on buffers. Usually the XLogInsert() covering
+ * waiting for exclusive locks on buffers. Usually the XLogInsert() covering
  * buffer modifications is performed while the buffer(s) that are being
- * modified are exlusively locked guaranteeing that both the WAL record and
+ * modified are exclusively locked guaranteeing that both the WAL record and
  * the modified heap are on either side of the checkpoint. But since the
  * mapping files we log aren't in shared_buffers that interlock doesn't work.
  *
