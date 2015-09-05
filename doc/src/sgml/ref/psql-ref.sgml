@@ -3191,6 +3191,21 @@ bar
       </varlistentry>
 
       <varlistentry>
+        <term><varname>SHOW_CONTEXT</varname></term>
+        <listitem>
+        <para>
+        This variable can be set to the
+        values <literal>never</>, <literal>errors</>, or <literal>always</>
+        to control whether <literal>CONTEXT</> fields are displayed in
+        messages from the server. The default is <literal>errors</> (meaning
+        that context will be shown in error messages, but not in notice or
+        warning messages).  This setting has no effect
+        when <varname>VERBOSITY</> is set to <literal>terse</>.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><varname>SINGLELINE</varname></term>
         <listitem>
         <para>

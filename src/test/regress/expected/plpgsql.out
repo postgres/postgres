@@ -1518,27 +1518,35 @@ ERROR:  duplicate key value violates unique constraint "pfield_name"
 DETAIL:  Key (name)=(PF1_1) already exists.
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
 ERROR:  WS.not.there         does not exist
-CONTEXT:  PL/pgSQL function tg_backlink_a() line 17 at assignment
+CONTEXT:  PL/pgSQL function tg_backlink_set(character,character) line 30 at RAISE
+PL/pgSQL function tg_backlink_a() line 17 at assignment
 update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
 ERROR:  illegal backlink beginning with XX
-CONTEXT:  PL/pgSQL function tg_backlink_a() line 17 at assignment
+CONTEXT:  PL/pgSQL function tg_backlink_set(character,character) line 47 at RAISE
+PL/pgSQL function tg_backlink_a() line 17 at assignment
 update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
 ERROR:  PS.not.there         does not exist
-CONTEXT:  PL/pgSQL function tg_slotlink_a() line 17 at assignment
+CONTEXT:  PL/pgSQL function tg_slotlink_set(character,character) line 30 at RAISE
+PL/pgSQL function tg_slotlink_a() line 17 at assignment
 update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
 ERROR:  illegal slotlink beginning with XX
-CONTEXT:  PL/pgSQL function tg_slotlink_a() line 17 at assignment
+CONTEXT:  PL/pgSQL function tg_slotlink_set(character,character) line 77 at RAISE
+PL/pgSQL function tg_slotlink_a() line 17 at assignment
 insert into HSlot values ('HS', 'base.hub1', 1, '');
 ERROR:  duplicate key value violates unique constraint "hslot_name"
 DETAIL:  Key (slotname)=(HS.base.hub1.1      ) already exists.
 insert into HSlot values ('HS', 'base.hub1', 20, '');
 ERROR:  no manual manipulation of HSlot
+CONTEXT:  PL/pgSQL function tg_hslot_biu() line 12 at RAISE
 delete from HSlot;
 ERROR:  no manual manipulation of HSlot
+CONTEXT:  PL/pgSQL function tg_hslot_bd() line 12 at RAISE
 insert into IFace values ('IF', 'notthere', 'eth0', '');
 ERROR:  system "notthere" does not exist
+CONTEXT:  PL/pgSQL function tg_iface_biu() line 8 at RAISE
 insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '');
 ERROR:  IFace slotname "IF.orion.ethernet_interface_name_too_long" too long (20 char max)
+CONTEXT:  PL/pgSQL function tg_iface_biu() line 14 at RAISE
 --
 -- The following tests are unrelated to the scenario outlined above;
 -- they merely exercise specific parts of PL/pgSQL
@@ -1963,6 +1971,7 @@ NOTICE:  should see this
 NOTICE:  should see this only if -100 <> 0
 NOTICE:  should see this only if -100 fits in smallint
 ERROR:  -100 is less than zero
+CONTEXT:  PL/pgSQL function trap_zero_divide(integer) line 12 at RAISE
 create function trap_matching_test(int) returns int as $$
 declare x int;
 	sx smallint;
@@ -2066,14 +2075,8 @@ begin
 end$$ language plpgsql;
 select test_variable_storage();
 NOTICE:  should see this
-CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function test_variable_storage() line 8 at PERFORM
 NOTICE:  should see this only if -100 <> 0
-CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function test_variable_storage() line 8 at PERFORM
 NOTICE:  should see this only if -100 fits in smallint
-CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function test_variable_storage() line 8 at PERFORM
  test_variable_storage 
 -----------------------
  123456789012
@@ -4103,6 +4106,7 @@ DETAIL:  some detail info
 HINT:  some hint
 ERROR:  1 2 3
 DETAIL:  some detail info
+CONTEXT:  PL/pgSQL function raise_test() line 5 at RAISE
 -- Since we can't actually see the thrown SQLSTATE in default psql output,
 -- test it like this; this also tests re-RAISE
 create or replace function raise_test() returns void as $$
@@ -4119,6 +4123,7 @@ select raise_test();
 NOTICE:  SQLSTATE: 22012 SQLERRM: check me
 ERROR:  check me
 DETAIL:  some detail info
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 create or replace function raise_test() returns void as $$
 begin
   raise 'check me'
@@ -4133,6 +4138,7 @@ select raise_test();
 NOTICE:  SQLSTATE: 1234F SQLERRM: check me
 ERROR:  check me
 DETAIL:  some detail info
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 -- SQLSTATE specification in WHEN
 create or replace function raise_test() returns void as $$
 begin
@@ -4148,6 +4154,7 @@ select raise_test();
 NOTICE:  SQLSTATE: 1234F SQLERRM: check me
 ERROR:  check me
 DETAIL:  some detail info
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 create or replace function raise_test() returns void as $$
 begin
   raise division_by_zero using detail = 'some detail info';
@@ -4161,6 +4168,7 @@ select raise_test();
 NOTICE:  SQLSTATE: 22012 SQLERRM: division_by_zero
 ERROR:  division_by_zero
 DETAIL:  some detail info
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 create or replace function raise_test() returns void as $$
 begin
   raise division_by_zero;
@@ -4168,6 +4176,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  division_by_zero
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 create or replace function raise_test() returns void as $$
 begin
   raise sqlstate '1234F';
@@ -4175,6 +4184,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  1234F
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 create or replace function raise_test() returns void as $$
 begin
   raise division_by_zero using message = 'custom' || ' message';
@@ -4182,6 +4192,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  custom message
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 create or replace function raise_test() returns void as $$
 begin
   raise using message = 'custom' || ' message', errcode = '22012';
@@ -4189,6 +4200,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  custom message
+CONTEXT:  PL/pgSQL function raise_test() line 3 at RAISE
 -- conflict on message
 create or replace function raise_test() returns void as $$
 begin
@@ -4305,6 +4317,7 @@ $$ language plpgsql;
 select raise_test();
 NOTICE:  22012
 ERROR:  substitute message
+CONTEXT:  PL/pgSQL function raise_test() line 7 at RAISE
 drop function raise_test();
 -- test passing column_name, constraint_name, datatype_name, table_name
 -- and schema_name error fields
@@ -4864,7 +4877,6 @@ LINE 1: SELECT 'foo\\bar\041baz'
                ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
 QUERY:  SELECT 'foo\\bar\041baz'
-CONTEXT:  PL/pgSQL function strtest() line 4 at RETURN
    strtest   
 -------------
  foo\bar!baz
@@ -5380,22 +5392,14 @@ $$ language plpgsql;
 select outer_outer_func(10);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 4 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 7 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5406,22 +5410,14 @@ NOTICE:  outer_func() done
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 4 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 7 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5478,22 +5474,14 @@ $$ language plpgsql;
 select outer_outer_func(10);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 10 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 15 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5504,22 +5492,14 @@ NOTICE:  outer_func() done
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 10 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 15 at GET DIAGNOSTICS
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------

@@ -65,7 +65,11 @@ usage(unsigned short int pager)
 		}
 	}
 
-	output = PageOutput(59, pager ? &(pset.popt.topt) : NULL);
+	/*
+	 * Keep this line count in sync with the number of lines printed below!
+	 * Use "psql --help=options | wc" to count correctly.
+	 */
+	output = PageOutput(60, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
 	fprintf(output, _("Usage:\n"));
@@ -158,9 +162,12 @@ slashUsage(unsigned short int pager)
 
 	currdb = PQdb(pset.db);
 
-	output = PageOutput(103, pager ? &(pset.popt.topt) : NULL);
-
-	/* if you add/remove a line here, change the row count above */
+	/*
+	 * Keep this line count in sync with the number of lines printed below!
+	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
+	 * the USE_READLINE line even in builds without that.
+	 */
+	output = PageOutput(109, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -307,7 +314,13 @@ helpVariables(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(85, pager ? &(pset.popt.topt) : NULL);
+	/*
+	 * Keep this line count in sync with the number of lines printed below!
+	 * Use "psql --help=variables | wc" to count correctly; but notice that
+	 * Windows builds currently print one more line than non-Windows builds.
+	 * Using the larger number is fine.
+	 */
+	output = PageOutput(87, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables.\n"));
 
@@ -339,6 +352,7 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  PROMPT2            specify the prompt used when a statement continues from a previous line\n"));
 	fprintf(output, _("  PROMPT3            specify the prompt used during COPY ... FROM STDIN\n"));
 	fprintf(output, _("  QUIET              run quietly (same as -q option)\n"));
+	fprintf(output, _("  SHOW_CONTEXT       control display of message context fields [never, errors, always]\n"));
 	fprintf(output, _("  SINGLELINE         end of line terminates SQL command mode (same as -S option)\n"));
 	fprintf(output, _("  SINGLESTEP         single-step mode (same as -s option)\n"));
 	fprintf(output, _("  USER               the currently connected database user\n"));

@@ -282,7 +282,7 @@ select pg_event_trigger_table_rewrite_oid();
 CREATE OR REPLACE FUNCTION test_evtrig_no_rewrite() RETURNS event_trigger
 LANGUAGE plpgsql AS $$
 BEGIN
-  RAISE EXCEPTION 'I''m sorry Sir, No Rewrite Allowed.';
+  RAISE EXCEPTION 'rewrites not allowed';
 END;
 $$;
 

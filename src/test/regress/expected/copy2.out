@@ -447,12 +447,9 @@ Check constraints:
 
 copy check_con_tbl from stdin;
 NOTICE:  input = {"f1":1}
-CONTEXT:  COPY check_con_tbl, line 1: "1"
 NOTICE:  input = {"f1":null}
-CONTEXT:  COPY check_con_tbl, line 2: "\N"
 copy check_con_tbl from stdin;
 NOTICE:  input = {"f1":0}
-CONTEXT:  COPY check_con_tbl, line 1: "0"
 ERROR:  new row for relation "check_con_tbl" violates check constraint "check_con_tbl_check"
 DETAIL:  Failing row contains (0).
 CONTEXT:  COPY check_con_tbl, line 1: "0"

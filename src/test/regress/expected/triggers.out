@@ -958,11 +958,7 @@ NOTICE:  main_view BEFORE INSERT STATEMENT (before_view_ins_stmt)
 NOTICE:  main_view INSTEAD OF INSERT ROW (instead_of_ins)
 NOTICE:  NEW: (20,30)
 NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
-CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
-PL/pgSQL function view_trigger() line 17 at SQL statement
 NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
-PL/pgSQL function view_trigger() line 17 at SQL statement
 NOTICE:  main_view AFTER INSERT STATEMENT (after_view_ins_stmt)
 INSERT 0 1
 INSERT INTO main_view VALUES (21, 31) RETURNING a, b;
@@ -970,11 +966,7 @@ NOTICE:  main_view BEFORE INSERT STATEMENT (before_view_ins_stmt)
 NOTICE:  main_view INSTEAD OF INSERT ROW (instead_of_ins)
 NOTICE:  NEW: (21,31)
 NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
-CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
-PL/pgSQL function view_trigger() line 17 at SQL statement
 NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
-PL/pgSQL function view_trigger() line 17 at SQL statement
 NOTICE:  main_view AFTER INSERT STATEMENT (after_view_ins_stmt)
  a  | b  
 ----+----
@@ -988,17 +980,9 @@ NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
 NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
 NOTICE:  OLD: (20,30), NEW: (20,31)
 NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(before_upd_a_row) called: action = UPDATE, when = BEFORE, level = ROW
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
 UPDATE 0
 UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
@@ -1006,17 +990,9 @@ NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
 NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
 NOTICE:  OLD: (21,31), NEW: (21,32)
 NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(before_upd_a_row) called: action = UPDATE, when = BEFORE, level = ROW
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
  a | b 
 ---+---
@@ -1031,20 +1007,10 @@ NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
 NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
 NOTICE:  OLD: (20,30), NEW: (20,31)
 NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
 UPDATE 1
 UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
@@ -1052,20 +1018,10 @@ NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
 NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
 NOTICE:  OLD: (21,31), NEW: (21,32)
 NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
-PL/pgSQL function view_trigger() line 23 at SQL statement
 NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
  a  | b  
 ----+----
@@ -1277,6 +1233,7 @@ INSERT 0 1
 -- UPDATE .. RETURNING
 UPDATE city_view SET country_name = 'Japon' WHERE city_name = 'Tokyo'; -- error
 ERROR:  No such country: "Japon"
+CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
 UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Takyo'; -- no match
 UPDATE 0
 UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Tokyo' RETURNING *; -- OK
@@ -1489,26 +1446,13 @@ select pg_trigger_depth();
 insert into depth_a values (1);
 NOTICE:  depth_a_tr: depth = 1
 NOTICE:  depth_b_tr: depth = 2
-CONTEXT:  SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
-CONTEXT:  SQL statement "insert into depth_c values (1)"
-PL/pgSQL function depth_b_tf() line 5 at EXECUTE
-SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  SQLSTATE = U9999: depth = 2
-CONTEXT:  SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_b_tr: depth = 2
-CONTEXT:  SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
-CONTEXT:  SQL statement "insert into depth_c values (1)"
-PL/pgSQL function depth_b_tf() line 12 at EXECUTE
-SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 ERROR:  U9999
-CONTEXT:  SQL statement "insert into depth_c values (1)"
+CONTEXT:  PL/pgSQL function depth_c_tf() line 5 at RAISE
+SQL statement "insert into depth_c values (1)"
 PL/pgSQL function depth_b_tf() line 12 at EXECUTE
 SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
@@ -1521,21 +1465,9 @@ select pg_trigger_depth();
 insert into depth_a values (2);
 NOTICE:  depth_a_tr: depth = 1
 NOTICE:  depth_b_tr: depth = 2
-CONTEXT:  SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
-CONTEXT:  SQL statement "insert into depth_c values (2)"
-PL/pgSQL function depth_b_tf() line 5 at EXECUTE
-SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_c_tr: depth = 3
-CONTEXT:  SQL statement "insert into depth_c values (2)"
-PL/pgSQL function depth_b_tf() line 5 at EXECUTE
-SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_b_tr: depth = 2
-CONTEXT:  SQL statement "insert into depth_b values (new.id)"
-PL/pgSQL function depth_a_tf() line 4 at SQL statement
 NOTICE:  depth_a_tr: depth = 1
 select pg_trigger_depth();
  pg_trigger_depth 

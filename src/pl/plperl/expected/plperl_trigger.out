@@ -62,75 +62,41 @@ BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 insert into trigger_test values(1,'insert', '("(1)")');
 NOTICE:  $_TD->{argc} = '2'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['23', 'skidoo']
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'INSERT'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
-CONTEXT:  PL/Perl function "trigger_data"
 update trigger_test set v = 'update' where i = 1;
 NOTICE:  $_TD->{argc} = '2'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['23', 'skidoo']
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'UPDATE'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'update'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
-CONTEXT:  PL/Perl function "trigger_data"
 delete from trigger_test;
 NOTICE:  $_TD->{argc} = '2'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['23', 'skidoo']
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'DELETE'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'update'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
-CONTEXT:  PL/Perl function "trigger_data"
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 insert into trigger_test values(1,'insert', '("(1)")');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
@@ -139,75 +105,41 @@ INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
 insert into trigger_test_view values(2,'insert', '("(2)")');
 NOTICE:  $_TD->{argc} = '2'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['24', 'skidoo view']
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'INSERT'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '2'}}, 'i' => '2', 'v' => 'insert'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test_view'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test_view'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'INSTEAD OF'
-CONTEXT:  PL/Perl function "trigger_data"
 update trigger_test_view set v = 'update', foo = '("(3)")' where i = 1;
 NOTICE:  $_TD->{argc} = '2'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['24', 'skidoo view']
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'UPDATE'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '3'}}, 'i' => '1', 'v' => 'update'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test_view'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test_view'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'INSTEAD OF'
-CONTEXT:  PL/Perl function "trigger_data"
 delete from trigger_test_view;
 NOTICE:  $_TD->{argc} = '2'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['24', 'skidoo view']
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'DELETE'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test_view'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test_view'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
-CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'INSTEAD OF'
-CONTEXT:  PL/Perl function "trigger_data"
 DROP VIEW trigger_test_view;
 delete from trigger_test;
 DROP FUNCTION trigger_data();
@@ -319,28 +251,18 @@ create event trigger perl_b_snitch on ddl_command_end
    execute procedure perlsnitch();
 create or replace function foobar() returns int language sql as $$select 1;$$;
 NOTICE:  perlsnitch: ddl_command_start CREATE FUNCTION 
-CONTEXT:  PL/Perl function "perlsnitch"
 NOTICE:  perlsnitch: ddl_command_end CREATE FUNCTION 
-CONTEXT:  PL/Perl function "perlsnitch"
 alter function foobar() cost 77;
 NOTICE:  perlsnitch: ddl_command_start ALTER FUNCTION 
-CONTEXT:  PL/Perl function "perlsnitch"
 NOTICE:  perlsnitch: ddl_command_end ALTER FUNCTION 
-CONTEXT:  PL/Perl function "perlsnitch"
 drop function foobar();
 NOTICE:  perlsnitch: ddl_command_start DROP FUNCTION 
-CONTEXT:  PL/Perl function "perlsnitch"
 NOTICE:  perlsnitch: ddl_command_end DROP FUNCTION 
-CONTEXT:  PL/Perl function "perlsnitch"
 create table foo();
 NOTICE:  perlsnitch: ddl_command_start CREATE TABLE 
-CONTEXT:  PL/Perl function "perlsnitch"
 NOTICE:  perlsnitch: ddl_command_end CREATE TABLE 
-CONTEXT:  PL/Perl function "perlsnitch"
 drop table foo;
 NOTICE:  perlsnitch: ddl_command_start DROP TABLE 
-CONTEXT:  PL/Perl function "perlsnitch"
 NOTICE:  perlsnitch: ddl_command_end DROP TABLE 
-CONTEXT:  PL/Perl function "perlsnitch"
 drop event trigger perl_a_snitch;
 drop event trigger perl_b_snitch;

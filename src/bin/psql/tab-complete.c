@@ -3962,6 +3962,13 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_LIST_CS(boolean_value_list);
 		else if (strcmp(prev_wd, "QUIET") == 0)
 			COMPLETE_WITH_LIST_CS(boolean_value_list);
+		else if (strcmp(prev_wd, "SHOW_CONTEXT") == 0)
+		{
+			static const char *const my_list[] =
+			{"never", "errors", "always", NULL};
+
+			COMPLETE_WITH_LIST_CS(my_list);
+		}
 		else if (strcmp(prev_wd, "SINGLELINE") == 0)
 			COMPLETE_WITH_LIST_CS(boolean_value_list);
 		else if (strcmp(prev_wd, "SINGLESTEP") == 0)
@@ -4461,8 +4468,9 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
 		"AUTOCOMMIT", "COMP_KEYWORD_CASE", "DBNAME", "ECHO", "ECHO_HIDDEN",
 		"ENCODING", "FETCH_COUNT", "HISTCONTROL", "HISTFILE", "HISTSIZE",
 		"HOST", "IGNOREEOF", "LASTOID", "ON_ERROR_ROLLBACK", "ON_ERROR_STOP",
-		"PORT", "PROMPT1", "PROMPT2", "PROMPT3", "QUIET", "SINGLELINE",
-		"SINGLESTEP", "USER", "VERBOSITY", NULL
+		"PORT", "PROMPT1", "PROMPT2", "PROMPT3", "QUIET",
+		"SHOW_CONTEXT", "SINGLELINE", "SINGLESTEP",
+		"USER", "VERBOSITY", NULL
 	};
 
 	varnames = (char **) pg_malloc((maxvars + 1) * sizeof(char *));

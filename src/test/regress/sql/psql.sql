@@ -301,3 +301,26 @@ execute q;
 execute q;
 
 deallocate q;
+
+-- SHOW_CONTEXT
+
+\set SHOW_CONTEXT never
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+
+\set SHOW_CONTEXT errors
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+
+\set SHOW_CONTEXT always
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;

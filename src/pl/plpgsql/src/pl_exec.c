@@ -42,8 +42,6 @@
 #include "utils/typcache.h"
 
 
-static const char *const raise_skip_msg = "RAISE";
-
 typedef struct
 {
 	int			nargs;			/* number of arguments */
@@ -932,10 +930,6 @@ static void
 plpgsql_exec_error_callback(void *arg)
 {
 	PLpgSQL_execstate *estate = (PLpgSQL_execstate *) arg;
-
-	/* if we are doing RAISE, don't report its location */
-	if (estate->err_text == raise_skip_msg)
-		return;
 
 	if (estate->err_text != NULL)
 	{
@@ -3152,8 +3146,6 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 	/*
 	 * Throw the error (may or may not come back)
 	 */
-	estate->err_text = raise_skip_msg;	/* suppress traceback of raise */
-
 	ereport(stmt->elog_level,
 			(err_code ? errcode(err_code) : 0,
 			 errmsg_internal("%s", err_message),
@@ -3169,8 +3161,6 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 			 err_generic_string(PG_DIAG_TABLE_NAME, err_table) : 0,
 			 (err_schema != NULL) ?
 			 err_generic_string(PG_DIAG_SCHEMA_NAME, err_schema) : 0));
-
-	estate->err_text = NULL;	/* un-suppress... */
 
 	if (condname != NULL)
 		pfree(condname);

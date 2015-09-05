@@ -2332,3 +2332,31 @@ execute q;
 <l|int >l|11
 |====
 deallocate q;
+-- SHOW_CONTEXT
+\set SHOW_CONTEXT never
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+NOTICE:  foo
+ERROR:  bar
+\set SHOW_CONTEXT errors
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+NOTICE:  foo
+ERROR:  bar
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at RAISE
+\set SHOW_CONTEXT always
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+NOTICE:  foo
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+ERROR:  bar
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at RAISE

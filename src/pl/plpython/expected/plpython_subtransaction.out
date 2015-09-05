@@ -154,7 +154,6 @@ SELECT * FROM subtransaction_tbl;
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_nested_test('t');
 NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
-CONTEXT:  PL/Python function "subtransaction_nested_test"
  subtransaction_nested_test 
 ----------------------------
  ok
@@ -180,9 +179,6 @@ return "ok"
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_deeply_nested_test();
 NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
-CONTEXT:  PL/Python function "subtransaction_nested_test"
-SQL statement "SELECT subtransaction_nested_test('t')"
-PL/Python function "subtransaction_nested_test"
  subtransaction_deeply_nested_test 
 -----------------------------------
  ok
@@ -251,7 +247,6 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "subtransaction_exit_without_enter"
 SELECT subtransaction_enter_without_exit();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_without_exit"
  subtransaction_enter_without_exit 
 -----------------------------------
  
@@ -259,7 +254,6 @@ CONTEXT:  PL/Python function "subtransaction_enter_without_exit"
 
 SELECT subtransaction_exit_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_exit_twice"
 ERROR:  ValueError: this subtransaction has not been entered
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_exit_twice", line 3, in <module>
@@ -267,9 +261,7 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "subtransaction_exit_twice"
 SELECT subtransaction_enter_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_twice"
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_twice"
  subtransaction_enter_twice 
 ----------------------------
  
@@ -283,7 +275,6 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "subtransaction_exit_same_subtransaction_twice"
 SELECT subtransaction_enter_same_subtransaction_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_same_subtransaction_twice"
 ERROR:  ValueError: this subtransaction has already been entered
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_enter_same_subtransaction_twice", line 4, in <module>
@@ -329,9 +320,7 @@ except plpy.SPIError:
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_mix_explicit_and_implicit();
 WARNING:  Caught a SPI error from an explicit subtransaction
-CONTEXT:  PL/Python function "subtransaction_mix_explicit_and_implicit"
 WARNING:  Caught a SPI error
-CONTEXT:  PL/Python function "subtransaction_mix_explicit_and_implicit"
  subtransaction_mix_explicit_and_implicit 
 ------------------------------------------
  
@@ -370,7 +359,6 @@ with plpy.subtransaction():
 $$ LANGUAGE plpythonu;
 SELECT try_catch_inside_subtransaction();
 NOTICE:  caught
-CONTEXT:  PL/Python function "try_catch_inside_subtransaction"
  try_catch_inside_subtransaction 
 ---------------------------------
  
@@ -395,7 +383,6 @@ with plpy.subtransaction():
 $$ LANGUAGE plpythonu;
 SELECT pk_violation_inside_subtransaction();
 NOTICE:  caught
-CONTEXT:  PL/Python function "pk_violation_inside_subtransaction"
  pk_violation_inside_subtransaction 
 ------------------------------------
  

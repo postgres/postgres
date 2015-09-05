@@ -10,7 +10,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_bool(true);
 INFO:  (True, <type 'bool'>)
-CONTEXT:  PL/Python function "test_type_conversion_bool"
  test_type_conversion_bool 
 ---------------------------
  t
@@ -18,7 +17,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool"
 
 SELECT * FROM test_type_conversion_bool(false);
 INFO:  (False, <type 'bool'>)
-CONTEXT:  PL/Python function "test_type_conversion_bool"
  test_type_conversion_bool 
 ---------------------------
  f
@@ -26,7 +24,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool"
 
 SELECT * FROM test_type_conversion_bool(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_bool"
  test_type_conversion_bool 
 ---------------------------
  
@@ -54,7 +51,6 @@ return ret
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_bool_other(0);
 INFO:  (0, False)
-CONTEXT:  PL/Python function "test_type_conversion_bool_other"
  test_type_conversion_bool_other 
 ---------------------------------
  f
@@ -62,7 +58,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool_other"
 
 SELECT * FROM test_type_conversion_bool_other(1);
 INFO:  (5, True)
-CONTEXT:  PL/Python function "test_type_conversion_bool_other"
  test_type_conversion_bool_other 
 ---------------------------------
  t
@@ -70,7 +65,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool_other"
 
 SELECT * FROM test_type_conversion_bool_other(2);
 INFO:  ('', False)
-CONTEXT:  PL/Python function "test_type_conversion_bool_other"
  test_type_conversion_bool_other 
 ---------------------------------
  f
@@ -78,7 +72,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool_other"
 
 SELECT * FROM test_type_conversion_bool_other(3);
 INFO:  ('fa', True)
-CONTEXT:  PL/Python function "test_type_conversion_bool_other"
  test_type_conversion_bool_other 
 ---------------------------------
  t
@@ -86,7 +79,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool_other"
 
 SELECT * FROM test_type_conversion_bool_other(4);
 INFO:  ([], False)
-CONTEXT:  PL/Python function "test_type_conversion_bool_other"
  test_type_conversion_bool_other 
 ---------------------------------
  f
@@ -94,7 +86,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bool_other"
 
 SELECT * FROM test_type_conversion_bool_other(5);
 INFO:  ([0], True)
-CONTEXT:  PL/Python function "test_type_conversion_bool_other"
  test_type_conversion_bool_other 
 ---------------------------------
  t
@@ -106,7 +97,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_char('a');
 INFO:  ('a', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_char"
  test_type_conversion_char 
 ---------------------------
  a
@@ -114,7 +104,6 @@ CONTEXT:  PL/Python function "test_type_conversion_char"
 
 SELECT * FROM test_type_conversion_char(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_char"
  test_type_conversion_char 
 ---------------------------
  
@@ -126,7 +115,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_int2(100::int2);
 INFO:  (100, <type 'int'>)
-CONTEXT:  PL/Python function "test_type_conversion_int2"
  test_type_conversion_int2 
 ---------------------------
                        100
@@ -134,7 +122,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int2"
 
 SELECT * FROM test_type_conversion_int2(-100::int2);
 INFO:  (-100, <type 'int'>)
-CONTEXT:  PL/Python function "test_type_conversion_int2"
  test_type_conversion_int2 
 ---------------------------
                       -100
@@ -142,7 +129,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int2"
 
 SELECT * FROM test_type_conversion_int2(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_int2"
  test_type_conversion_int2 
 ---------------------------
                           
@@ -154,7 +140,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_int4(100);
 INFO:  (100, <type 'int'>)
-CONTEXT:  PL/Python function "test_type_conversion_int4"
  test_type_conversion_int4 
 ---------------------------
                        100
@@ -162,7 +147,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int4"
 
 SELECT * FROM test_type_conversion_int4(-100);
 INFO:  (-100, <type 'int'>)
-CONTEXT:  PL/Python function "test_type_conversion_int4"
  test_type_conversion_int4 
 ---------------------------
                       -100
@@ -170,7 +154,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int4"
 
 SELECT * FROM test_type_conversion_int4(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_int4"
  test_type_conversion_int4 
 ---------------------------
                           
@@ -182,7 +165,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_int8(100);
 INFO:  (100L, <type 'long'>)
-CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
                        100
@@ -190,7 +172,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 
 SELECT * FROM test_type_conversion_int8(-100);
 INFO:  (-100L, <type 'long'>)
-CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
                       -100
@@ -198,7 +179,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 
 SELECT * FROM test_type_conversion_int8(5000000000);
 INFO:  (5000000000L, <type 'long'>)
-CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
                 5000000000
@@ -206,7 +186,6 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 
 SELECT * FROM test_type_conversion_int8(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
                           
@@ -220,7 +199,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_numeric(100);
 INFO:  ('100', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
                           100
@@ -228,7 +206,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(-100);
 INFO:  ('-100', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
                          -100
@@ -236,7 +213,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(100.0);
 INFO:  ('100.0', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
                         100.0
@@ -244,7 +220,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(100.00);
 INFO:  ('100.00', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
                        100.00
@@ -252,7 +227,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(5000000000.5);
 INFO:  ('5000000000.5', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
                  5000000000.5
@@ -260,7 +234,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(1234567890.0987654321);
 INFO:  ('1234567890.0987654321', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
         1234567890.0987654321
@@ -268,7 +241,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(-1234567890.0987654321);
 INFO:  ('-1234567890.0987654321', 'Decimal')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
        -1234567890.0987654321
@@ -276,7 +248,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 
 SELECT * FROM test_type_conversion_numeric(null);
 INFO:  ('None', 'NoneType')
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
                              
@@ -288,7 +259,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_float4(100);
 INFO:  (100.0, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float4"
  test_type_conversion_float4 
 -----------------------------
                          100
@@ -296,7 +266,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float4"
 
 SELECT * FROM test_type_conversion_float4(-100);
 INFO:  (-100.0, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float4"
  test_type_conversion_float4 
 -----------------------------
                         -100
@@ -304,7 +273,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float4"
 
 SELECT * FROM test_type_conversion_float4(5000.5);
 INFO:  (5000.5, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float4"
  test_type_conversion_float4 
 -----------------------------
                       5000.5
@@ -312,7 +280,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float4"
 
 SELECT * FROM test_type_conversion_float4(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_float4"
  test_type_conversion_float4 
 -----------------------------
                             
@@ -324,7 +291,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_float8(100);
 INFO:  (100.0, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float8"
  test_type_conversion_float8 
 -----------------------------
                          100
@@ -332,7 +298,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
 
 SELECT * FROM test_type_conversion_float8(-100);
 INFO:  (-100.0, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float8"
  test_type_conversion_float8 
 -----------------------------
                         -100
@@ -340,7 +305,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
 
 SELECT * FROM test_type_conversion_float8(5000000000.5);
 INFO:  (5000000000.5, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float8"
  test_type_conversion_float8 
 -----------------------------
                 5000000000.5
@@ -348,7 +312,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
 
 SELECT * FROM test_type_conversion_float8(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_float8"
  test_type_conversion_float8 
 -----------------------------
                             
@@ -356,7 +319,6 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
 
 SELECT * FROM test_type_conversion_float8(100100100.654321);
 INFO:  (100100100.654321, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_float8"
  test_type_conversion_float8 
 -----------------------------
             100100100.654321
@@ -368,7 +330,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_oid(100);
 INFO:  (100L, <type 'long'>)
-CONTEXT:  PL/Python function "test_type_conversion_oid"
  test_type_conversion_oid 
 --------------------------
                       100
@@ -376,7 +337,6 @@ CONTEXT:  PL/Python function "test_type_conversion_oid"
 
 SELECT * FROM test_type_conversion_oid(2147483649);
 INFO:  (2147483649L, <type 'long'>)
-CONTEXT:  PL/Python function "test_type_conversion_oid"
  test_type_conversion_oid 
 --------------------------
                2147483649
@@ -384,7 +344,6 @@ CONTEXT:  PL/Python function "test_type_conversion_oid"
 
 SELECT * FROM test_type_conversion_oid(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_oid"
  test_type_conversion_oid 
 --------------------------
                          
@@ -396,7 +355,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_text('hello world');
 INFO:  ('hello world', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_text"
  test_type_conversion_text 
 ---------------------------
  hello world
@@ -404,7 +362,6 @@ CONTEXT:  PL/Python function "test_type_conversion_text"
 
 SELECT * FROM test_type_conversion_text(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_text"
  test_type_conversion_text 
 ---------------------------
  
@@ -416,7 +373,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_bytea('hello world');
 INFO:  ('hello world', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_bytea"
  test_type_conversion_bytea 
 ----------------------------
  \x68656c6c6f20776f726c64
@@ -424,7 +380,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bytea"
 
 SELECT * FROM test_type_conversion_bytea(E'null\\000byte');
 INFO:  ('null\x00byte', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_bytea"
  test_type_conversion_bytea 
 ----------------------------
  \x6e756c6c0062797465
@@ -432,7 +387,6 @@ CONTEXT:  PL/Python function "test_type_conversion_bytea"
 
 SELECT * FROM test_type_conversion_bytea(null);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_bytea"
  test_type_conversion_bytea 
 ----------------------------
  
@@ -481,7 +435,6 @@ return y
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_uint2(100::uint2, 50);
 INFO:  (100, <type 'int'>)
-CONTEXT:  PL/Python function "test_type_conversion_uint2"
  test_type_conversion_uint2 
 ----------------------------
                          50
@@ -489,13 +442,11 @@ CONTEXT:  PL/Python function "test_type_conversion_uint2"
 
 SELECT * FROM test_type_conversion_uint2(100::uint2, -50);
 INFO:  (100, <type 'int'>)
-CONTEXT:  PL/Python function "test_type_conversion_uint2"
 ERROR:  value for domain uint2 violates check constraint "uint2_check"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_uint2"
 SELECT * FROM test_type_conversion_uint2(null, 1);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_uint2"
  test_type_conversion_uint2 
 ----------------------------
                           1
@@ -524,7 +475,6 @@ return y
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_bytea10('hello wold', 'hello wold');
 INFO:  ('hello wold', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_bytea10"
  test_type_conversion_bytea10 
 ------------------------------
  \x68656c6c6f20776f6c64
@@ -534,7 +484,6 @@ SELECT * FROM test_type_conversion_bytea10('hello world', 'hello wold');
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 SELECT * FROM test_type_conversion_bytea10('hello word', 'hello world');
 INFO:  ('hello word', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_bytea10"
@@ -542,7 +491,6 @@ SELECT * FROM test_type_conversion_bytea10(null, 'hello word');
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 SELECT * FROM test_type_conversion_bytea10('hello word', null);
 INFO:  ('hello word', <type 'str'>)
-CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_bytea10"
@@ -555,7 +503,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_int4(ARRAY[0, 100]);
 INFO:  ([0, 100], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_int4"
  test_type_conversion_array_int4 
 ---------------------------------
  {0,100}
@@ -563,7 +510,6 @@ CONTEXT:  PL/Python function "test_type_conversion_array_int4"
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[0,-100,55]);
 INFO:  ([0, -100, 55], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_int4"
  test_type_conversion_array_int4 
 ---------------------------------
  {0,-100,55}
@@ -571,7 +517,6 @@ CONTEXT:  PL/Python function "test_type_conversion_array_int4"
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[NULL,1]);
 INFO:  ([None, 1], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_int4"
  test_type_conversion_array_int4 
 ---------------------------------
  {NULL,1}
@@ -579,7 +524,6 @@ CONTEXT:  PL/Python function "test_type_conversion_array_int4"
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[]::integer[]);
 INFO:  ([], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_int4"
  test_type_conversion_array_int4 
 ---------------------------------
  {}
@@ -587,7 +531,6 @@ CONTEXT:  PL/Python function "test_type_conversion_array_int4"
 
 SELECT * FROM test_type_conversion_array_int4(NULL);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_int4"
  test_type_conversion_array_int4 
 ---------------------------------
  
@@ -603,7 +546,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
 INFO:  (['foo', 'bar'], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_text"
  test_type_conversion_array_text 
 ---------------------------------
  {foo,bar}
@@ -615,7 +557,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_bytea(ARRAY[E'\\xdeadbeef'::bytea, NULL]);
 INFO:  (['\xde\xad\xbe\xef', None], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_bytea"
  test_type_conversion_array_bytea 
 ----------------------------------
  {"\\xdeadbeef",NULL}
@@ -681,7 +622,6 @@ return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_domain(ARRAY[0, 100]::ordered_pair_domain);
 INFO:  ([0, 100], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_domain"
  test_type_conversion_array_domain 
 -----------------------------------
  {0,100}
@@ -689,7 +629,6 @@ CONTEXT:  PL/Python function "test_type_conversion_array_domain"
 
 SELECT * FROM test_type_conversion_array_domain(NULL::ordered_pair_domain);
 INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_domain"
  test_type_conversion_array_domain 
 -----------------------------------
  
@@ -783,7 +722,6 @@ return rv[0]['val']
 $$;
 SELECT test_prep_bool_output(); -- false
 INFO:  {'val': False}
-CONTEXT:  PL/Python function "test_prep_bool_output"
  test_prep_bool_output 
 -----------------------
  f
@@ -812,7 +750,6 @@ return rv[0]['val']
 $$;
 SELECT test_prep_bytea_output();
 INFO:  {'val': '\xaa\x00\xbb'}
-CONTEXT:  PL/Python function "test_prep_bytea_output"
  test_prep_bytea_output 
 ------------------------
  \xaa00bb

@@ -154,6 +154,7 @@ main(int argc, char *argv[])
 	/* Default values for variables */
 	SetVariableBool(pset.vars, "AUTOCOMMIT");
 	SetVariable(pset.vars, "VERBOSITY", "default");
+	SetVariable(pset.vars, "SHOW_CONTEXT", "errors");
 	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
@@ -868,6 +869,28 @@ verbosity_hook(const char *newval)
 		PQsetErrorVerbosity(pset.db, pset.verbosity);
 }
 
+static void
+show_context_hook(const char *newval)
+{
+	if (newval == NULL)
+		pset.show_context = PQSHOW_CONTEXT_ERRORS;
+	else if (pg_strcasecmp(newval, "never") == 0)
+		pset.show_context = PQSHOW_CONTEXT_NEVER;
+	else if (pg_strcasecmp(newval, "errors") == 0)
+		pset.show_context = PQSHOW_CONTEXT_ERRORS;
+	else if (pg_strcasecmp(newval, "always") == 0)
+		pset.show_context = PQSHOW_CONTEXT_ALWAYS;
+	else
+	{
+		psql_error("unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n",
+				   newval, "SHOW_CONTEXT", "errors");
+		pset.show_context = PQSHOW_CONTEXT_ERRORS;
+	}
+
+	if (pset.db)
+		PQsetErrorContextVisibility(pset.db, pset.show_context);
+}
+
 
 static void
 EstablishVariableSpace(void)
@@ -889,4 +912,5 @@ EstablishVariableSpace(void)
 	SetVariableAssignHook(pset.vars, "PROMPT2", prompt2_hook);
 	SetVariableAssignHook(pset.vars, "PROMPT3", prompt3_hook);
 	SetVariableAssignHook(pset.vars, "VERBOSITY", verbosity_hook);
+	SetVariableAssignHook(pset.vars, "SHOW_CONTEXT", show_context_hook);
 }

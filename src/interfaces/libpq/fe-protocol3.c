@@ -250,7 +250,7 @@ pqParseInput3(PGconn *conn)
 							if (!conn->result)
 							{
 								printfPQExpBuffer(&conn->errorMessage,
-												  libpq_gettext("out of memory"));
+											 libpq_gettext("out of memory"));
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -321,7 +321,7 @@ pqParseInput3(PGconn *conn)
 							if (!conn->result)
 							{
 								printfPQExpBuffer(&conn->errorMessage,
-												  libpq_gettext("out of memory"));
+											 libpq_gettext("out of memory"));
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -934,9 +934,14 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 		val = PQresultErrorField(res, PG_DIAG_INTERNAL_QUERY);
 		if (val)
 			appendPQExpBuffer(&workBuf, libpq_gettext("QUERY:  %s\n"), val);
-		val = PQresultErrorField(res, PG_DIAG_CONTEXT);
-		if (val)
-			appendPQExpBuffer(&workBuf, libpq_gettext("CONTEXT:  %s\n"), val);
+		if (conn->show_context == PQSHOW_CONTEXT_ALWAYS ||
+			(conn->show_context == PQSHOW_CONTEXT_ERRORS && isError))
+		{
+			val = PQresultErrorField(res, PG_DIAG_CONTEXT);
+			if (val)
+				appendPQExpBuffer(&workBuf, libpq_gettext("CONTEXT:  %s\n"),
+								  val);
+		}
 	}
 	if (conn->verbosity == PQERRORS_VERBOSE)
 	{

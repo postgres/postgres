@@ -5582,6 +5582,46 @@ PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
     </listitem>
    </varlistentry>
 
+   <varlistentry id="libpq-pqseterrorcontextvisibility">
+    <term>
+     <function>PQsetErrorContextVisibility</function>
+     <indexterm>
+      <primary>PQsetErrorContextVisibility</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Determines the handling of <literal>CONTEXT</> fields in messages
+      returned by <function>PQerrorMessage</>
+      and <function>PQresultErrorMessage</>.
+<synopsis>
+typedef enum
+{
+    PQSHOW_CONTEXT_NEVER,
+    PQSHOW_CONTEXT_ERRORS,
+    PQSHOW_CONTEXT_ALWAYS
+} PGContextVisibility;
+
+PGContextVisibility PQsetErrorContextVisibility(PGconn *conn, PGContextVisibility show_context);
+</synopsis>
+
+      <function>PQsetErrorContextVisibility</> sets the context display mode,
+      returning the connection's previous setting.  This mode controls
+      whether the <literal>CONTEXT</literal> field is included in messages
+      (unless the verbosity setting is <firstterm>TERSE</>, in which
+      case <literal>CONTEXT</> is never shown).  The <firstterm>NEVER</> mode
+      never includes <literal>CONTEXT</>, while <firstterm>ALWAYS</> always
+      includes it if available.  In <firstterm>ERRORS</> mode (the
+      default), <literal>CONTEXT</> fields are included only for error
+      messages, not for notices and warnings.  Changing this mode does not
+      affect the messages available from
+      already-existing <structname>PGresult</> objects, only
+      subsequently-created ones.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="libpq-pqtrace">
     <term>
      <function>PQtrace</function>
