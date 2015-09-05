@@ -52,7 +52,7 @@ gbt_var_decompress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(entry);
 }
 
-/* Returns a better readable representaion of variable key ( sets pointer ) */
+/* Returns a better readable representation of variable key ( sets pointer ) */
 GBT_VARKEY_R
 gbt_var_key_readable(const GBT_VARKEY *k)
 {
