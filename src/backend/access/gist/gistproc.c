@@ -588,7 +588,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		 * We first consider splits where b is the lower bound of an entry.
 		 * We iterate through all entries, and for each b, calculate the
 		 * smallest possible a. Then we consider splits where a is the
-		 * uppper bound of an entry, and for each a, calculate the greatest
+		 * upper bound of an entry, and for each a, calculate the greatest
 		 * possible b.
 		 *
 		 * In the above example, the first loop would consider splits:
@@ -638,7 +638,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Iterate over upper bound of left group finding greates possible
+		 * Iterate over upper bound of left group finding greatest possible
 		 * lower bound of right group.
 		 */
 		i1 = nentries - 1;

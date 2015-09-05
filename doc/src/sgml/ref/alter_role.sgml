@@ -138,7 +138,7 @@ ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | A
       <term>CURRENT_USER</term>
       <listitem>
        <para>
-        Alter the current user instead of an explicitely identified role.
+        Alter the current user instead of an explicitly identified role.
        </para>
       </listitem>
      </varlistentry>
@@ -147,7 +147,7 @@ ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | A
       <term>SESSION_USER</term>
       <listitem>
        <para>
-        Alter the current session user instead of an explicitely identified
+        Alter the current session user instead of an explicitly identified
         role.
        </para>
       </listitem>

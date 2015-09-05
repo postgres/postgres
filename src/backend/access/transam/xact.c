@@ -83,7 +83,7 @@ int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
  * When running as a parallel worker, we place only a single
  * TransactionStateData on the parallel worker's state stack, and the XID
  * reflected there will be that of the *innermost* currently-active
- * subtransaction in the backend that initiated paralllelism.  However,
+ * subtransaction in the backend that initiated parallelism.  However,
  * GetTopTransactionId() and TransactionIdIsCurrentTransactionId()
  * need to return the same answers in the parallel worker as they would have
  * in the user backend, so we need some additional bookkeeping.

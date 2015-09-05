@@ -855,7 +855,7 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 
 		/*
 		 * Would this oper be found (given the right args) by regoperatorin?
-		 * If not, or if caller explicitely requests it, we need to qualify
+		 * If not, or if caller explicitly requests it, we need to qualify
 		 * it.
 		 */
 		if (force_qualify || !OperatorIsVisible(operator_oid))

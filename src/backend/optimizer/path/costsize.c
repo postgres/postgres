@@ -1039,7 +1039,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	/*
 	 * The TID qual expressions will be computed once, any other baserestrict
-	 * quals once per retrived tuple.
+	 * quals once per retrieved tuple.
 	 */
 	cost_qual_eval(&tid_qual_cost, tidquals, root);
 
