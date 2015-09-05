@@ -383,13 +383,14 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* We keep the lock on pg_tablespace until commit */
 	heap_close(rel, NoLock);
+
+	return tablespaceoid;
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
+	return InvalidOid;			/* keep compiler quiet */
 #endif   /* HAVE_SYMLINK */
-
-	return tablespaceoid;
 }
 
 /*
