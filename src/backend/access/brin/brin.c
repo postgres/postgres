@@ -934,12 +934,13 @@ terminate_brin_buildstate(BrinBuildState *state)
  */
 static void
 summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
-				BlockNumber heapBlk)
+				BlockNumber heapBlk, BlockNumber heapNumBlks)
 {
 	Buffer		phbuf;
 	BrinTuple  *phtup;
 	Size		phsz;
 	OffsetNumber offset;
+	BlockNumber scanNumBlks;
 
 	/*
 	 * Insert the placeholder tuple
@@ -960,8 +961,10 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	 * by transactions that are still in progress, among other corner cases.
 	 */
 	state->bs_currRangeStart = heapBlk;
+	scanNumBlks = heapBlk + state->bs_pagesPerRange <= heapNumBlks ?
+						state->bs_pagesPerRange : heapNumBlks - heapBlk;
 	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false, true,
-							heapBlk, state->bs_pagesPerRange,
+							heapBlk, scanNumBlks,
 							brinbuildCallback, (void *) state);
 
 	/*
@@ -1066,7 +1069,7 @@ brinsummarize(Relation index, Relation heapRel, double *numSummarized,
 												   pagesPerRange);
 				indexInfo = BuildIndexInfo(index);
 			}
-			summarize_range(indexInfo, state, heapRel, heapBlk);
+			summarize_range(indexInfo, state, heapRel, heapBlk, heapNumBlocks);
 
 			/* and re-initialize state for the next range */
 			brin_memtuple_initialize(state->bs_dtuple, state->bs_bdesc);
