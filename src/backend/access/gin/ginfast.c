@@ -841,8 +841,8 @@ ginInsertCleanup(Relation index, GinState *ginstate,
 												 * locking */
 
 			/*
-			 * remove readed pages from pending list, at this point all
-			 * content of readed pages is in regular structure
+			 * remove read pages from pending list, at this point all
+			 * content of read pages is in regular structure
 			 */
 			if (shiftList(index, metabuffer, blkno, stats))
 			{
