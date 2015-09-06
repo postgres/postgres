@@ -156,6 +156,7 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_re
 LOG:  SELinux: allowed { entrypoint } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_trusted_proc_exec_t:s0 tclass=db_procedure name="function f3()"
 LOG:  SELinux: allowed { transition } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=unconfined_u:unconfined_r:sepgsql_trusted_proc_t:s0 tclass=process
 ERROR:  an exception from f3()
+CONTEXT:  PL/pgSQL function f3() line 2 at RAISE
 SELECT f4();			-- failed on domain transition
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_nosuch_trusted_proc_exec_t:s0 tclass=db_procedure name="public.f4()"
 LOG:  SELinux: allowed { entrypoint } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_nosuch_trusted_proc_exec_t:s0 tclass=db_procedure name="function f4()"
