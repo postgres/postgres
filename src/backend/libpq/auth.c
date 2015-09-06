@@ -2168,6 +2168,7 @@ CheckCertAuth(Port *port)
 
 #define RADIUS_VECTOR_LENGTH 16
 #define RADIUS_HEADER_LENGTH 20
+#define RADIUS_MAX_PASSWORD_LENGTH 128
 
 typedef struct
 {
@@ -2241,7 +2242,9 @@ CheckRADIUSAuth(Port *port)
 	radius_packet *receivepacket = (radius_packet *) receive_buffer;
 	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
 	uint8	   *cryptvector;
-	uint8		encryptedpassword[RADIUS_VECTOR_LENGTH];
+	int			encryptedpasswordlen;
+	uint8		encryptedpassword[RADIUS_MAX_PASSWORD_LENGTH];
+	uint8	   *md5trailer;
 	int			packetlength;
 	pgsocket	sock;
 
@@ -2259,6 +2262,7 @@ CheckRADIUSAuth(Port *port)
 	fd_set		fdset;
 	struct timeval endtime;
 	int			i,
+				j,
 				r;
 
 	/* Make sure struct alignment is correct */
@@ -2316,12 +2320,13 @@ CheckRADIUSAuth(Port *port)
 		return STATUS_ERROR;
 	}
 
-	if (strlen(passwd) > RADIUS_VECTOR_LENGTH)
+	if (strlen(passwd) > RADIUS_MAX_PASSWORD_LENGTH)
 	{
 		ereport(LOG,
-				(errmsg("RADIUS authentication does not support passwords longer than 16 characters")));
+				(errmsg("RADIUS authentication does not support passwords longer than %d characters", RADIUS_MAX_PASSWORD_LENGTH)));
 		return STATUS_ERROR;
 	}
+
 
 	/* Construct RADIUS packet */
 	packet->code = RADIUS_ACCESS_REQUEST;
@@ -2344,28 +2349,43 @@ CheckRADIUSAuth(Port *port)
 	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
 
 	/*
-	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR
-	 * MD5(secret + vector)
+	 * RADIUS password attributes are calculated as:
+	 *   e[0] = p[0] XOR MD5(secret + Request Authenticator)
+	 * for the first group of 16 octets, and then:
+	 *   e[i] = p[i] XOR MD5(secret + e[i-1])
+	 * for the following ones (if necessary)
 	 */
-	cryptvector = palloc(RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret));
+	encryptedpasswordlen = ((strlen(passwd) + RADIUS_VECTOR_LENGTH - 1) / RADIUS_VECTOR_LENGTH) * RADIUS_VECTOR_LENGTH;
+	cryptvector = palloc(strlen(port->hba->radiussecret) + RADIUS_VECTOR_LENGTH);
 	memcpy(cryptvector, port->hba->radiussecret, strlen(port->hba->radiussecret));
-	memcpy(cryptvector + strlen(port->hba->radiussecret), packet->vector, RADIUS_VECTOR_LENGTH);
-	if (!pg_md5_binary(cryptvector, RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret), encryptedpassword))
+
+	/* for the first iteration, we use the Request Authenticator vector */
+	md5trailer = packet->vector;
+	for (i = 0; i < encryptedpasswordlen; i += RADIUS_VECTOR_LENGTH)
 	{
-		ereport(LOG,
-				(errmsg("could not perform MD5 encryption of password")));
-		pfree(cryptvector);
-		return STATUS_ERROR;
+		memcpy(cryptvector + strlen(port->hba->radiussecret), md5trailer, RADIUS_VECTOR_LENGTH);
+		/* .. and for subsequent iterations the result of the previous XOR (calculated below) */
+		md5trailer = encryptedpassword + i;
+
+		if (!pg_md5_binary(cryptvector, strlen(port->hba->radiussecret) + RADIUS_VECTOR_LENGTH, encryptedpassword + i))
+		{
+			ereport(LOG,
+					(errmsg("could not perform MD5 encryption of password")));
+			pfree(cryptvector);
+			return STATUS_ERROR;
+		}
+
+		for (j = i; j < i+RADIUS_VECTOR_LENGTH; j++)
+		{
+			if (j < strlen(passwd))
+				encryptedpassword[j] = passwd[j] ^ encryptedpassword[j];
+			else
+				encryptedpassword[j] = '\0' ^ encryptedpassword[j];
+		}
 	}
 	pfree(cryptvector);
-	for (i = 0; i < RADIUS_VECTOR_LENGTH; i++)
-	{
-		if (i < strlen(passwd))
-			encryptedpassword[i] = passwd[i] ^ encryptedpassword[i];
-		else
-			encryptedpassword[i] = '\0' ^ encryptedpassword[i];
-	}
-	radius_add_attribute(packet, RADIUS_PASSWORD, encryptedpassword, RADIUS_VECTOR_LENGTH);
+
+	radius_add_attribute(packet, RADIUS_PASSWORD, encryptedpassword, encryptedpasswordlen);
 
 	/* Length need to be in network order on the wire */
 	packetlength = packet->length;
