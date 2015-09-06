@@ -4458,6 +4458,26 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result = date2isoyear(tm->tm_year, tm->tm_mon, tm->tm_mday);
 				break;
 
+			case DTK_DOW:
+			case DTK_ISODOW:
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				if (val == DTK_ISODOW && result == 0)
+					result = 7;
+				break;
+
+			case DTK_DOY:
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+						  - date2j(tm->tm_year, 1, 1) + 1);
+				break;
+
 			case DTK_TZ:
 			case DTK_TZ_MINUTE:
 			case DTK_TZ_HOUR:
@@ -4479,26 +4499,6 @@ timestamp_part(PG_FUNCTION_ARGS)
 #else
 				result = timestamp - SetEpochTimestamp();
 #endif
-				break;
-
-			case DTK_DOW:
-			case DTK_ISODOW:
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
-				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
-				if (val == DTK_ISODOW && result == 0)
-					result = 7;
-				break;
-
-			case DTK_DOY:
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
-				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
-						  - date2j(tm->tm_year, 1, 1) + 1);
 				break;
 
 			default:
@@ -4672,6 +4672,26 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				result = date2isoyear(tm->tm_year, tm->tm_mon, tm->tm_mday);
 				break;
 
+			case DTK_DOW:
+			case DTK_ISODOW:
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				if (val == DTK_ISODOW && result == 0)
+					result = 7;
+				break;
+
+			case DTK_DOY:
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+						  - date2j(tm->tm_year, 1, 1) + 1);
+				break;
+
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -4691,26 +4711,6 @@ timestamptz_part(PG_FUNCTION_ARGS)
 #else
 				result = timestamp - SetEpochTimestamp();
 #endif
-				break;
-
-			case DTK_DOW:
-			case DTK_ISODOW:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
-				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
-				if (val == DTK_ISODOW && result == 0)
-					result = 7;
-				break;
-
-			case DTK_DOY:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
-				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
-						  - date2j(tm->tm_year, 1, 1) + 1);
 				break;
 
 			default:
