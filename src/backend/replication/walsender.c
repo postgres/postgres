@@ -826,6 +826,14 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 		ReplicationSlotPersist();
 	}
+	else if (cmd->kind == REPLICATION_KIND_PHYSICAL && cmd->reserve_wal)
+	{
+		ReplicationSlotReserveWal();
+
+		/* Write this slot to disk */
+		ReplicationSlotMarkDirty();
+		ReplicationSlotSave();
+	}
 
 	slot_name = NameStr(MyReplicationSlot->data.name);
 	snprintf(xpos, sizeof(xpos), "%X/%X",
