@@ -121,6 +121,10 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 	text	   *result;
 
 	membuf = BIO_new(BIO_s_mem());
+	if (membuf == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("failed to create OpenSSL BIO structure")));
 	(void) BIO_set_close(membuf, BIO_CLOSE);
 	ASN1_STRING_print_ex(membuf, str,
 						 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
@@ -136,7 +140,8 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 	result = cstring_to_text(dp);
 	if (dp != sp)
 		pfree(dp);
-	BIO_free(membuf);
+	if (BIO_free(membuf) != 1)
+		elog(ERROR, "failed to free OpenSSL BIO structure");
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -275,15 +280,28 @@ X509_NAME_to_text(X509_NAME *name)
 	char	   *dp;
 	text	   *result;
 
+	if (membuf == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("failed to create BIO")));
+
 	(void) BIO_set_close(membuf, BIO_CLOSE);
 	for (i = 0; i < count; i++)
 	{
 		e = X509_NAME_get_entry(name, i);
 		nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(e));
+		if (nid == NID_undef)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("failed to get NID for ASN1_OBJECT object")));
 		v = X509_NAME_ENTRY_get_data(e);
 		field_name = OBJ_nid2sn(nid);
-		if (!field_name)
+		if (field_name == NULL)
 			field_name = OBJ_nid2ln(nid);
+		if (field_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("failed to convert NID %d to an ASN1_OBJECT structure", nid)));
 		BIO_printf(membuf, "/%s=", field_name);
 		ASN1_STRING_print_ex(membuf, v,
 							 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
@@ -301,7 +319,8 @@ X509_NAME_to_text(X509_NAME *name)
 	result = cstring_to_text(dp);
 	if (dp != sp)
 		pfree(dp);
-	BIO_free(membuf);
+	if (BIO_free(membuf) != 1)
+		elog(ERROR, "failed to free OpenSSL BIO structure");
 
 	PG_RETURN_TEXT_P(result);
 }
