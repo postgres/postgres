@@ -222,18 +222,20 @@ recovery_target_timeline='latest'
 				   '-l', "$log_path/standby.log",
 				   '-o', "-p $port_standby", 'start');
 
-	# Wait until the standby has caught up with the primary, by polling
-	# pg_stat_replication.
-	my $caughtup_query =
-"SELECT pg_current_xlog_location() = replay_location FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
-	poll_query_until($caughtup_query, $connstr_master)
-	  or die "Timed out while waiting for standby to catch up";
+	# The standby may have WAL to apply before it matches the primary.  That
+	# is fine, because no test examines the standby before promotion.
 }
 
 sub promote_standby
 {
 	#### Now run the test-specific parts to run after standby has been started
 	# up standby
+
+	# Wait for the standby to receive and write all WAL.
+	my $wal_received_query =
+"SELECT pg_current_xlog_location() = write_location FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
+	poll_query_until($wal_received_query, $connstr_master)
+	  or die "Timed out while waiting for standby to receive and write WAL";
 
 	# Now promote slave and insert some new data on master, this will put
 	# the master out-of-sync with the standby. Wait until the standby is
