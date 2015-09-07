@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "storage/indexfsm.h"
 
 /* GUC parameter */
 int			gin_pending_list_limit = 0;
@@ -521,10 +522,12 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 		int64		nDeletedHeapTuples = 0;
 		ginxlogDeleteListPages data;
 		Buffer		buffers[GIN_NDELETE_AT_ONCE];
+		BlockNumber	freespace[GIN_NDELETE_AT_ONCE];
 
 		data.ndeleted = 0;
 		while (data.ndeleted < GIN_NDELETE_AT_ONCE && blknoToDelete != newHead)
 		{
+			freespace[data.ndeleted] = blknoToDelete;
 			buffers[data.ndeleted] = ReadBuffer(index, blknoToDelete);
 			LockBuffer(buffers[data.ndeleted], GIN_EXCLUSIVE);
 			page = BufferGetPage(buffers[data.ndeleted]);
@@ -609,6 +612,10 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 			UnlockReleaseBuffer(buffers[i]);
 
 		END_CRIT_SECTION();
+
+		for (i = 0; i < data.ndeleted; i++)
+			RecordFreeIndexPage(index, freespace[i]);
+
 	} while (blknoToDelete != newHead);
 
 	return false;
@@ -744,6 +751,7 @@ ginInsertCleanup(GinState *ginstate,
 	BuildAccumulator accum;
 	KeyArray	datums;
 	BlockNumber blkno;
+	bool		fsm_vac = false;
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	LockBuffer(metabuffer, GIN_SHARE);
@@ -793,6 +801,7 @@ ginInsertCleanup(GinState *ginstate,
 		{
 			/* another cleanup process is running concurrently */
 			UnlockReleaseBuffer(buffer);
+			fsm_vac = false;
 			break;
 		}
 
@@ -857,6 +866,7 @@ ginInsertCleanup(GinState *ginstate,
 				/* another cleanup process is running concurrently */
 				UnlockReleaseBuffer(buffer);
 				LockBuffer(metabuffer, GIN_UNLOCK);
+				fsm_vac = false;
 				break;
 			}
 
@@ -895,8 +905,12 @@ ginInsertCleanup(GinState *ginstate,
 			{
 				/* another cleanup process is running concurrently */
 				LockBuffer(metabuffer, GIN_UNLOCK);
+				fsm_vac = false;
 				break;
 			}
+
+			/* At this point, some pending pages have been freed up */
+			fsm_vac = true;
 
 			Assert(blkno == metadata->head);
 			LockBuffer(metabuffer, GIN_UNLOCK);
@@ -930,6 +944,15 @@ ginInsertCleanup(GinState *ginstate,
 	}
 
 	ReleaseBuffer(metabuffer);
+
+	/*
+	 * As pending list pages can have a high churn rate, it is
+	 * desirable to recycle them immediately to the FreeSpace Map when
+	 * ordinary backends clean the list.
+	 */
+	if (fsm_vac && !vac_delay)
+		IndexFreeSpaceMapVacuum(index);
+
 
 	/* Clean up temporary space */
 	MemoryContextSwitchTo(oldCtx);
