@@ -425,6 +425,7 @@
 					#   %p = process ID
 					#   %t = timestamp without milliseconds
 					#   %m = timestamp with milliseconds
+					#   %n = timestamp with milliseconds (as a Unix epoch)
 					#   %i = command tag
 					#   %e = SQL state
 					#   %c = session ID

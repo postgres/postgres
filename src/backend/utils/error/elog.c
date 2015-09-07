@@ -2438,6 +2438,20 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						appendStringInfoString(buf, strfbuf);
 				}
 				break;
+			case 'n':
+				{
+					struct	timeval tv;
+					char	strfbuf[128];
+
+					gettimeofday(&tv, NULL);
+					sprintf(strfbuf, "%ld.%03d", tv.tv_sec, (int)(tv.tv_usec / 1000));
+
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, strfbuf);
+					else
+						appendStringInfoString(buf, strfbuf);
+				}
+				break;
 			case 's':
 				if (formatted_start_time[0] == '\0')
 					setup_formatted_start_time();

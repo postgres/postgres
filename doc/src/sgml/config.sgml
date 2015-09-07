@@ -4630,6 +4630,11 @@ local0.*    /var/log/postgresql
              <entry>no</entry>
             </row>
             <row>
+             <entry><literal>%n</literal></entry>
+             <entry>Time stamp with milliseconds (as a Unix epoch)</entry>
+             <entry>no</entry>
+            </row>
+            <row>
              <entry><literal>%i</literal></entry>
              <entry>Command tag: type of session's current command</entry>
              <entry>yes</entry>
