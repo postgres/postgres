@@ -527,6 +527,7 @@
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
+#gin_fuzzy_search_limit = 0
 #gin_pending_list_limit = 4MB
 
 # - Locale and Formatting -
