@@ -500,6 +500,7 @@
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
+#gin_fuzzy_search_limit = 0
 
 # - Locale and Formatting -
 
