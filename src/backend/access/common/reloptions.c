@@ -254,6 +254,19 @@ static relopt_int intRelOpts[] =
 		},
 		-1, 64, MAX_KILOBYTES
 	},
+	{
+		{
+			"effective_io_concurrency",
+			"Number of simultaneous requests that can be handled efficiently by the disk subsystem.",
+			RELOPT_KIND_TABLESPACE,
+			AccessExclusiveLock
+		},
+#ifdef USE_PREFETCH
+		-1, 0, MAX_IO_CONCURRENCY
+#else
+		0, 0, 0
+#endif
+	},
 
 	/* list terminator */
 	{{NULL}}
@@ -1438,7 +1451,8 @@ tablespace_reloptions(Datum reloptions, bool validate)
 	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"random_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, random_page_cost)},
-		{"seq_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, seq_page_cost)}
+		{"seq_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, seq_page_cost)},
+		{"effective_io_concurrency", RELOPT_TYPE_INT, offsetof(TableSpaceOpts, effective_io_concurrency)}
 	};
 
 	options = parseRelOptions(reloptions, validate, RELOPT_KIND_TABLESPACE,

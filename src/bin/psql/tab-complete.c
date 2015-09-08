@@ -1885,7 +1885,7 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "(") == 0)
 	{
 		static const char *const list_TABLESPACEOPTIONS[] =
-		{"seq_page_cost", "random_page_cost", NULL};
+		{"seq_page_cost", "random_page_cost", "effective_io_concurrency", NULL};
 
 		COMPLETE_WITH_LIST(list_TABLESPACEOPTIONS);
 	}
