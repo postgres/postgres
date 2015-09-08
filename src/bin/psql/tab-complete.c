@@ -576,7 +576,9 @@ static const SchemaQuery Query_for_list_of_matviews = {
 " SELECT pg_catalog.quote_ident(rolname) "\
 "   FROM pg_catalog.pg_roles "\
 "  WHERE substring(pg_catalog.quote_ident(rolname),1,%d)='%s'"\
-" UNION ALL SELECT 'PUBLIC'"
+" UNION ALL SELECT 'PUBLIC'"\
+" UNION ALL SELECT 'CURRENT_USER'"\
+" UNION ALL SELECT 'SESSION_USER'"
 
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_table_owning_index \
@@ -888,7 +890,7 @@ psql_completion(const char *text, int start, int end)
 	char	  **matches = NULL;
 
 	/* This array will contain some scannage of the input line. */
-	char	   *previous_words[6];
+	char	   *previous_words[9];
 
 	/* For compactness, we use these macros to reference previous_words[]. */
 #define prev_wd   (previous_words[0])
@@ -897,6 +899,9 @@ psql_completion(const char *text, int start, int end)
 #define prev4_wd  (previous_words[3])
 #define prev5_wd  (previous_words[4])
 #define prev6_wd  (previous_words[5])
+#define prev7_wd  (previous_words[6])
+#define prev8_wd  (previous_words[7])
+#define prev9_wd  (previous_words[8])
 
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
@@ -3065,6 +3070,11 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "TABLE") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_foreign_tables, NULL);
 
+/* FOREIGN SERVER */
+	else if (pg_strcasecmp(prev2_wd, "FOREIGN") == 0 &&
+			 pg_strcasecmp(prev_wd, "SERVER") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_servers);
+
 /* GRANT && REVOKE */
 	/* Complete GRANT/REVOKE with a list of roles and privileges */
 	else if (pg_strcasecmp(prev_wd, "GRANT") == 0 ||
@@ -3118,20 +3128,23 @@ psql_completion(const char *text, int start, int end)
 	}
 
 	/*
-	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views, sequences,
-	 * and indexes
+	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views, and
+	 * sequences.
 	 *
-	 * keywords DATABASE, FUNCTION, LANGUAGE, SCHEMA added to query result via
-	 * UNION; seems to work intuitively
+	 * Keywords like DATABASE, FUNCTION, LANGUAGE and SCHEMA added to
+	 * query result via UNION; seems to work intuitively.
 	 *
 	 * Note: GRANT/REVOKE can get quite complex; tab-completion as implemented
 	 * here will only work if the privilege list contains exactly one
-	 * privilege
+	 * privilege.
 	 */
 	else if ((pg_strcasecmp(prev3_wd, "GRANT") == 0 ||
 			  pg_strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf,
+								   " UNION SELECT 'ALL FUNCTIONS IN SCHEMA'"
+								   " UNION SELECT 'ALL SEQUENCES IN SCHEMA'"
+								   " UNION SELECT 'ALL TABLES IN SCHEMA'"
 								   " UNION SELECT 'DATABASE'"
 								   " UNION SELECT 'DOMAIN'"
 								   " UNION SELECT 'FOREIGN DATA WRAPPER'"
@@ -3140,8 +3153,23 @@ psql_completion(const char *text, int start, int end)
 								   " UNION SELECT 'LANGUAGE'"
 								   " UNION SELECT 'LARGE OBJECT'"
 								   " UNION SELECT 'SCHEMA'"
+								   " UNION SELECT 'SEQUENCE'"
+								   " UNION SELECT 'TABLE'"
 								   " UNION SELECT 'TABLESPACE'"
 								   " UNION SELECT 'TYPE'");
+
+	else if ((pg_strcasecmp(prev4_wd, "GRANT") == 0 ||
+			  pg_strcasecmp(prev4_wd, "REVOKE") == 0) &&
+			 pg_strcasecmp(prev2_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev_wd, "ALL") == 0)
+	{
+		static const char *const list_privilege_all[] =
+		{"FUNCTIONS IN SCHEMA", "SEQUENCES IN SCHEMA", "TABLES IN SCHEMA",
+		 NULL};
+
+		COMPLETE_WITH_LIST(list_privilege_all);
+	}
+
 	else if ((pg_strcasecmp(prev4_wd, "GRANT") == 0 ||
 			  pg_strcasecmp(prev4_wd, "REVOKE") == 0) &&
 			 pg_strcasecmp(prev2_wd, "ON") == 0 &&
@@ -3153,7 +3181,12 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_privilege_foreign);
 	}
 
-	/* Complete "GRANT/REVOKE * ON * " with "TO/FROM" */
+	/*
+	 * Complete "GRANT/REMOVE * ON DATABASE/DOMAIN/..." with a list of
+	 * appropriate objects.
+	 *
+	 * Complete "GRANT/REVOKE * ON * " with "TO/FROM".
+	 */
 	else if ((pg_strcasecmp(prev4_wd, "GRANT") == 0 ||
 			  pg_strcasecmp(prev4_wd, "REVOKE") == 0) &&
 			 pg_strcasecmp(prev2_wd, "ON") == 0)
@@ -3168,6 +3201,10 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_QUERY(Query_for_list_of_languages);
 		else if (pg_strcasecmp(prev_wd, "SCHEMA") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+		else if (pg_strcasecmp(prev_wd, "SEQUENCE") == 0)
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
+		else if (pg_strcasecmp(prev_wd, "TABLE") == 0)
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
 		else if (pg_strcasecmp(prev_wd, "TABLESPACE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
 		else if (pg_strcasecmp(prev_wd, "TYPE") == 0)
@@ -3178,25 +3215,78 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_CONST("FROM");
 	}
 
-	/* Complete "GRANT/REVOKE * ON * TO/FROM" with username, GROUP, or PUBLIC */
+	/* Complete "GRANT/REVOKE * ON * *" with TO/FROM */
 	else if (pg_strcasecmp(prev5_wd, "GRANT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "ON") == 0)
-	{
-		if (pg_strcasecmp(prev_wd, "TO") == 0)
-			COMPLETE_WITH_QUERY(Query_for_list_of_grant_roles);
-		else
-			COMPLETE_WITH_CONST("TO");
-	}
+		COMPLETE_WITH_CONST("TO");
+
 	else if (pg_strcasecmp(prev5_wd, "REVOKE") == 0 &&
 			 pg_strcasecmp(prev3_wd, "ON") == 0)
+		COMPLETE_WITH_CONST("FROM");
+
+	/* Complete "GRANT/REVOKE * ON ALL * IN SCHEMA *" with TO/FROM */
+	else if ((pg_strcasecmp(prev8_wd, "GRANT") == 0 ||
+			  pg_strcasecmp(prev8_wd, "REVOKE") == 0) &&
+			 pg_strcasecmp(prev6_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev5_wd, "ALL") == 0 &&
+			 pg_strcasecmp(prev3_wd, "IN") == 0 &&
+			 pg_strcasecmp(prev2_wd, "SCHEMA") == 0)
 	{
-		if (pg_strcasecmp(prev_wd, "FROM") == 0)
-			COMPLETE_WITH_QUERY(Query_for_list_of_grant_roles);
+		if (pg_strcasecmp(prev8_wd, "GRANT") == 0)
+			COMPLETE_WITH_CONST("TO");
 		else
 			COMPLETE_WITH_CONST("FROM");
 	}
 
-	/* Complete "GRANT/REVOKE * TO/FROM" with username, GROUP, or PUBLIC */
+	/* Complete "GRANT/REVOKE * ON FOREIGN DATA WRAPPER *" with TO/FROM */
+	else if ((pg_strcasecmp(prev7_wd, "GRANT") == 0 ||
+			  pg_strcasecmp(prev7_wd, "REVOKE") == 0) &&
+			 pg_strcasecmp(prev5_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev4_wd, "FOREIGN") == 0 &&
+			 pg_strcasecmp(prev3_wd, "DATA") == 0 &&
+			 pg_strcasecmp(prev2_wd, "WRAPPER") == 0)
+	{
+		if (pg_strcasecmp(prev7_wd, "GRANT") == 0)
+			COMPLETE_WITH_CONST("TO");
+		else
+			COMPLETE_WITH_CONST("FROM");
+	}
+
+	/* Complete "GRANT/REVOKE * ON FOREIGN SERVER *" with TO/FROM */
+	else if ((pg_strcasecmp(prev6_wd, "GRANT") == 0 ||
+			  pg_strcasecmp(prev6_wd, "REVOKE") == 0) &&
+			 pg_strcasecmp(prev4_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev3_wd, "FOREIGN") == 0 &&
+			 pg_strcasecmp(prev2_wd, "SERVER") == 0)
+	{
+		if (pg_strcasecmp(prev6_wd, "GRANT") == 0)
+			COMPLETE_WITH_CONST("TO");
+		else
+			COMPLETE_WITH_CONST("FROM");
+	}
+
+	/*
+	 * Complete "GRANT/REVOKE ... TO/FROM" with username, PUBLIC,
+	 * CURRENT_USER, or SESSION_USER.
+	 */
+	else if (((pg_strcasecmp(prev9_wd, "GRANT") == 0 ||
+			   pg_strcasecmp(prev8_wd, "GRANT") == 0 ||
+			   pg_strcasecmp(prev7_wd, "GRANT") == 0 ||
+			   pg_strcasecmp(prev6_wd, "GRANT") == 0 ||
+			   pg_strcasecmp(prev5_wd, "GRANT") == 0) &&
+			  pg_strcasecmp(prev_wd, "TO") == 0) ||
+			 ((pg_strcasecmp(prev9_wd, "REVOKE") == 0 ||
+			   pg_strcasecmp(prev8_wd, "REVOKE") == 0 ||
+			   pg_strcasecmp(prev7_wd, "REVOKE") == 0 ||
+			   pg_strcasecmp(prev6_wd, "REVOKE") == 0 ||
+			   pg_strcasecmp(prev5_wd, "REVOKE") == 0) &&
+			  pg_strcasecmp(prev_wd, "FROM") == 0))
+		COMPLETE_WITH_QUERY(Query_for_list_of_grant_roles);
+
+	/*
+	 * Complete "GRANT/REVOKE * TO/FROM" with username, PUBLIC,
+	 * CURRENT_USER, or SESSION_USER.
+	 */
 	else if (pg_strcasecmp(prev3_wd, "GRANT") == 0 &&
 			 pg_strcasecmp(prev_wd, "TO") == 0)
 	{
