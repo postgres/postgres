@@ -321,6 +321,7 @@ extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern TimeLineID GetRecoveryTargetTLI(void);
+extern void RemovePromoteSignalFiles(void);
 
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
