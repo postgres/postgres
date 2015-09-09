@@ -22,6 +22,7 @@
 #include "storage/bufmgr.h"
 #include "storage/buffile.h"
 #include "utils/hsearch.h"
+#include "access/genam.h"
 
 /*
  * Maximum number of "halves" a page can be split into in one operation.
@@ -121,9 +122,11 @@ typedef struct GISTSearchHeapItem
 {
 	ItemPointerData heapPtr;
 	bool		recheck;		/* T if quals must be rechecked */
-	bool		recheckDistances;		/* T if distances must be rechecked */
+	bool		recheckDistances;	/* T if distances must be rechecked */
 	IndexTuple	ftup;			/* data fetched back from the index, used in
 								 * index-only scans */
+	OffsetNumber	offnum;		/* track offset in page to mark tuple as
+								 * LP_DEAD */
 } GISTSearchHeapItem;
 
 /* Unvisited item, either index page or heap tuple */
@@ -160,6 +163,12 @@ typedef struct GISTScanOpaqueData
 
 	/* pre-allocated workspace arrays */
 	double	   *distances;		/* output area for gistindex_keytest */
+
+	/* info about killed items if any (killedItems is NULL if never used) */
+	OffsetNumber *killedItems;		/* offset numbers of killed items */
+	int			numKilled;		/* number of currently stored items */
+	BlockNumber curBlkno;		/* current number of block */
+	GistNSN		curPageLSN;	/* pos in the WAL stream when page was read */
 
 	/* In a non-ordered search, returnable heap items are stored here: */
 	GISTSearchHeapItem pageData[BLCKSZ / sizeof(IndexTupleData)];

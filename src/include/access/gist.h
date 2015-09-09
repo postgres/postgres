@@ -41,8 +41,11 @@
  */
 #define F_LEAF				(1 << 0)	/* leaf page */
 #define F_DELETED			(1 << 1)	/* the page has been deleted */
-#define F_TUPLES_DELETED	(1 << 2)	/* some tuples on the page are dead */
+#define F_TUPLES_DELETED	(1 << 2)	/* some tuples on the page were
+										 * deleted */
 #define F_FOLLOW_RIGHT		(1 << 3)	/* page to the right has no downlink */
+#define F_HAS_GARBAGE		(1 << 4)	/* some tuples on the page are dead,
+										 * but not deleted yet */
 
 typedef XLogRecPtr GistNSN;
 
@@ -136,6 +139,10 @@ typedef struct GISTENTRY
 #define GistTuplesDeleted(page) ( GistPageGetOpaque(page)->flags & F_TUPLES_DELETED)
 #define GistMarkTuplesDeleted(page) ( GistPageGetOpaque(page)->flags |= F_TUPLES_DELETED)
 #define GistClearTuplesDeleted(page)	( GistPageGetOpaque(page)->flags &= ~F_TUPLES_DELETED)
+
+#define GistPageHasGarbage(page) ( GistPageGetOpaque(page)->flags & F_HAS_GARBAGE)
+#define GistMarkPageHasGarbage(page) ( GistPageGetOpaque(page)->flags |= F_HAS_GARBAGE)
+#define GistClearPageHasGarbage(page)	( GistPageGetOpaque(page)->flags &= ~F_HAS_GARBAGE)
 
 #define GistFollowRight(page) ( GistPageGetOpaque(page)->flags & F_FOLLOW_RIGHT)
 #define GistMarkFollowRight(page) ( GistPageGetOpaque(page)->flags |= F_FOLLOW_RIGHT)
