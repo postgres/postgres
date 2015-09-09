@@ -718,10 +718,12 @@ gistgettuple(PG_FUNCTION_ARGS)
 			/* find and process the next index page */
 			do
 			{
+				GISTSearchItem *item;
+
 				if ((so->curBlkno != InvalidBlockNumber) && (so->numKilled > 0))
 					gistkillitems(scan);
 
-				GISTSearchItem *item = getNextGISTSearchItem(so);
+				item = getNextGISTSearchItem(so);
 
 				if (!item)
 					PG_RETURN_BOOL(false);
