@@ -11588,6 +11588,16 @@ CheckForStandbyTrigger(void)
 }
 
 /*
+ * Remove the files signaling a standby promotion request.
+ */
+void
+RemovePromoteSignalFiles(void)
+{
+	unlink(PROMOTE_SIGNAL_FILE);
+	unlink(FALLBACK_PROMOTE_SIGNAL_FILE);
+}
+
+/*
  * Check to see if a promote request has arrived. Should be
  * called by postmaster after receiving SIGUSR1.
  */

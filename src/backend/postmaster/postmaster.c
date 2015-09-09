@@ -1176,6 +1176,27 @@ PostmasterMain(int argc, char *argv[])
 	RemovePgTempFiles();
 
 	/*
+	 * Forcibly remove the files signaling a standby promotion
+	 * request. Otherwise, the existence of those files triggers
+	 * a promotion too early, whether a user wants that or not.
+	 *
+	 * This removal of files is usually unnecessary because they
+	 * can exist only during a few moments during a standby
+	 * promotion. However there is a race condition: if pg_ctl promote
+	 * is executed and creates the files during a promotion,
+	 * the files can stay around even after the server is brought up
+	 * to new master. Then, if new standby starts by using the backup
+	 * taken from that master, the files can exist at the server
+	 * startup and should be removed in order to avoid an unexpected
+	 * promotion.
+	 *
+	 * Note that promotion signal files need to be removed before
+	 * the startup process is invoked. Because, after that, they can
+	 * be used by postmaster's SIGUSR1 signal handler.
+	 */
+	RemovePromoteSignalFiles();
+
+	/*
 	 * If enabled, start up syslogger collection subprocess
 	 */
 	SysLoggerPID = SysLogger_Start();
