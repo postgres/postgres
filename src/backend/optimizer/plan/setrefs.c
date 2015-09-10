@@ -1243,7 +1243,7 @@ copyVar(Var *var)
  * This is code that is common to all variants of expression-fixing.
  * We must look up operator opcode info for OpExpr and related nodes,
  * add OIDs from regclass Const nodes into root->glob->relationOids, and
- * add catalog OIDs for user-defined functions into root->glob->invalItems.
+ * add PlanInvalItems for user-defined functions into root->glob->invalItems.
  * We also fill in column index lists for GROUPING() expressions.
  *
  * We assume it's okay to update opcode info in-place.  So this could possibly
