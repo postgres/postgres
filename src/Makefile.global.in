@@ -59,7 +59,6 @@ endif
 endif
 else # not PGXS
 vpath_build = @vpath_build@
-abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
 ifneq ($(vpath_build),yes)
@@ -317,19 +316,6 @@ BZIP2	= bzip2
 
 # Testing
 
-check: temp-install
-
-.PHONY: temp-install
-temp-install:
-ifndef NO_TEMP_INSTALL
-ifeq ($(MAKELEVEL),0)
-	rm -rf '$(abs_top_builddir)'/tmp_install
-	$(MKDIR_P) '$(abs_top_builddir)'/tmp_install/log
-	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
-endif
-	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install >>'$(abs_top_builddir)'/tmp_install/log/install.log || exit; done)
-endif
-
 PROVE = @PROVE@
 PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
 PROVE_FLAGS = --verbose
@@ -344,10 +330,6 @@ define ld_library_path_var
 $(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,LD_LIBRARY_PATH))
 endef
 
-define with_temp_install
-PATH="$(abs_top_builddir)/tmp_install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(abs_top_builddir)/tmp_install$(libdir))
-endef
-
 ifeq ($(enable_tap_tests),yes)
 
 define prove_installcheck
@@ -356,7 +338,9 @@ endef
 
 define prove_check
 rm -rf $(CURDIR)/tmp_check/log
-cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
+$(MKDIR_P) tmp_check/log
+$(MAKE) -C $(top_builddir) DESTDIR='$(CURDIR)'/tmp_check/install install >'$(CURDIR)'/tmp_check/log/install.log 2>&1
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(CURDIR)/tmp_check/install$(libdir)) top_builddir='$(CURDIR)/$(top_builddir)' PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
 
 else
