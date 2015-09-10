@@ -560,21 +560,26 @@ makesearch(struct vars * v,
 	 * splitting each such state into progress and no-progress states.
 	 */
 
-	/* first, make a list of the states */
+	/* first, make a list of the states reachable from pre and elsewhere */
 	slist = NULL;
 	for (a = pre->outs; a != NULL; a = a->outchain)
 	{
 		s = a->to;
 		for (b = s->ins; b != NULL; b = b->inchain)
+		{
 			if (b->from != pre)
 				break;
+		}
+
+		/*
+		 * We want to mark states as being in the list already by having non
+		 * NULL tmp fields, but we can't just store the old slist value in tmp
+		 * because that doesn't work for the first such state.  Instead, the
+		 * first list entry gets its own address in tmp.
+		 */
 		if (b != NULL && s->tmp == NULL)
 		{
-			/*
-			 * Must be split if not already in the list (fixes bugs 505048,
-			 * 230589, 840258, 504785).
-			 */
-			s->tmp = slist;
+			s->tmp = (slist != NULL) ? slist : s;
 			slist = s;
 		}
 	}
@@ -593,7 +598,7 @@ makesearch(struct vars * v,
 				freearc(nfa, a);
 			}
 		}
-		s2 = s->tmp;
+		s2 = (s->tmp != s) ? s->tmp : NULL;
 		s->tmp = NULL;			/* clean up while we're at it */
 	}
 }
