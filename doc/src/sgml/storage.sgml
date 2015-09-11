@@ -758,18 +758,18 @@ data. Empty in ordinary tables.</entry>
  <para>
 
   The first 24 bytes of each page consists of a page header
-  (PageHeaderData). Its format is detailed in <xref
-  linkend="pageheaderdata-table">. The first two fields track the most
-  recent WAL entry related to this page. Next is a 2-byte field
-  containing flag bits. This is followed by three 2-byte integer fields
-  (<structfield>pd_lower</structfield>, <structfield>pd_upper</structfield>,
-  and <structfield>pd_special</structfield>). These contain byte offsets
-  from the page start to the start
-  of unallocated space, to the end of unallocated space, and to the start of
-  the special space.
-  The next 2 bytes of the page header,
-  <structfield>pd_pagesize_version</structfield>, store both the page size
-  and a version indicator.  Beginning with
+  (<structname>PageHeaderData</>). Its format is detailed in <xref
+  linkend="pageheaderdata-table">. The first field tracks the most
+  recent WAL entry related to this page. The second field contains
+  the page checksum if <xref linkend="app-initdb-data-checksums"> are
+  enabled.  Next is a 2-byte field containing flag bits. This is followed
+  by three 2-byte integer fields (<structfield>pd_lower</structfield>,
+  <structfield>pd_upper</structfield>, and
+  <structfield>pd_special</structfield>).  These contain byte offsets
+  from the page start to the start of unallocated space, to the end of
+  unallocated space, and to the start of the special space.  The next 2
+  bytes of the page header, <structfield>pd_pagesize_version</structfield>,
+  store both the page size and a version indicator.  Beginning with
   <productname>PostgreSQL</productname> 8.3 the version number is 4;
   <productname>PostgreSQL</productname> 8.1 and 8.2 used version number 3;
   <productname>PostgreSQL</productname> 8.0 used version number 2;
@@ -799,7 +799,7 @@ data. Empty in ordinary tables.</entry>
  <tbody>
   <row>
    <entry>pd_lsn</entry>
-   <entry>XLogRecPtr</entry>
+   <entry>PageXLogRecPtr</entry>
    <entry>8 bytes</entry>
    <entry>LSN: next byte after last byte of xlog record for last change
    to this page</entry>
