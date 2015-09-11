@@ -95,6 +95,9 @@
 #include "utils/hsearch.h"
 #endif
 
+/* Constants for lwlock names */
+#include "lwlocknames.c"
+
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
 extern slock_t *ShmemLock;
@@ -183,18 +186,32 @@ PRINT_LWDEBUG(const char *where, LWLock *lock, LWLockMode mode)
 	if (Trace_lwlocks)
 	{
 		uint32		state = pg_atomic_read_u32(&lock->state);
+		int			id = T_ID(lock);
 
-		ereport(LOG,
-				(errhidestmt(true),
-				 errhidecontext(true),
-				 errmsg("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
-						MyProcPid,
-						where, T_NAME(lock), T_ID(lock),
-						!!(state & LW_VAL_EXCLUSIVE),
-						state & LW_SHARED_MASK,
-						!!(state & LW_FLAG_HAS_WAITERS),
-						pg_atomic_read_u32(&lock->nwaiters),
-						!!(state & LW_FLAG_RELEASE_OK))));
+		if (lock->tranche == 0 && id < NUM_INDIVIDUAL_LWLOCKS)
+			ereport(LOG,
+					(errhidestmt(true),
+					 errhidecontext(true),
+					 errmsg("%d: %s(%s): excl %u shared %u haswaiters %u waiters %u rOK %d",
+							MyProcPid,
+							where, MainLWLockNames[id],
+							!!(state & LW_VAL_EXCLUSIVE),
+							state & LW_SHARED_MASK,
+							!!(state & LW_FLAG_HAS_WAITERS),
+							pg_atomic_read_u32(&lock->nwaiters),
+							!!(state & LW_FLAG_RELEASE_OK))));
+		else
+			ereport(LOG,
+					(errhidestmt(true),
+					 errhidecontext(true),
+					 errmsg("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
+							MyProcPid,
+							where, T_NAME(lock), id,
+							!!(state & LW_VAL_EXCLUSIVE),
+							state & LW_SHARED_MASK,
+							!!(state & LW_FLAG_HAS_WAITERS),
+							pg_atomic_read_u32(&lock->nwaiters),
+							!!(state & LW_FLAG_RELEASE_OK))));
 	}
 }
 
@@ -204,11 +221,20 @@ LOG_LWDEBUG(const char *where, LWLock *lock, const char *msg)
 	/* hide statement & context here, otherwise the log is just too verbose */
 	if (Trace_lwlocks)
 	{
-		ereport(LOG,
-				(errhidestmt(true),
-				 errhidecontext(true),
-				 errmsg("%s(%s %d): %s", where,
-						T_NAME(lock), T_ID(lock), msg)));
+		int			id = T_ID(lock);
+
+		if (lock->tranche == 0 && id < NUM_INDIVIDUAL_LWLOCKS)
+			ereport(LOG,
+					(errhidestmt(true),
+					 errhidecontext(true),
+					 errmsg("%s(%s): %s", where,
+							MainLWLockNames[id], msg)));
+		else
+			ereport(LOG,
+					(errhidestmt(true),
+					 errhidecontext(true),
+					 errmsg("%s(%s %d): %s", where,
+							T_NAME(lock), id, msg)));
 	}
 }
 

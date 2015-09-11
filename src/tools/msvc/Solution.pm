@@ -285,6 +285,22 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			'src/include/utils/fmgroids.h');
 	}
 
+	if (IsNewer(
+			'src/include/storage/lwlocknames.h', 'src/backend/storage/lmgr/lwlocknames.txt'))
+	{
+		print "Generating lwlocknames.c and lwlocknames.h...\n";
+		chdir('src/backend/storage/lmgr');
+		system('perl generate-lwlocknames.pl lwlocknames.txt');
+		chdir('../../../..');
+	}
+	if (IsNewer(
+			'src/include/storage/lwlocknames.h',
+			'src/backend/storage/lmgr/lwlocknames.h'))
+	{
+		copyFile('src/backend/storage/lmgr/lwlocknames.h',
+			'src/include/storage/lwlocknames.h');
+	}
+
 	if (IsNewer('src/include/utils/probes.h', 'src/backend/utils/probes.d'))
 	{
 		print "Generating probes.h...\n";
