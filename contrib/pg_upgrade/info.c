@@ -27,7 +27,7 @@ static void map_rel(migratorContext *ctx, const RelInfo *oldrel,
 static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
 			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const DbInfo *old_db,
+			  const char *old_tablespace, const char *new_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map);
 static RelInfo *relarr_lookup_reloid(migratorContext *ctx,
@@ -140,7 +140,7 @@ map_rel(migratorContext *ctx, const RelInfo *oldrel, const RelInfo *newrel,
 		const char *newdata, FileNameMap *map)
 {
 	map_rel_by_id(ctx, oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
-				  oldrel->relname, newrel->nspname, newrel->relname, oldrel->tablespace, old_db,
+				  oldrel->relname, newrel->nspname, newrel->relname, oldrel->tablespace, newrel->tablespace, old_db,
 				  new_db, olddata, newdata, map);
 }
 
@@ -154,7 +154,7 @@ static void
 map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
 			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const DbInfo *old_db,
+			  const char *old_tablespace, const char *new_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map)
 {
@@ -166,6 +166,7 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_nspname);
 	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_relname);
 
+	/* In case old/new tablespaces don't match, do them separately. */
 	if (strlen(old_tablespace) == 0)
 	{
 		/*
@@ -173,7 +174,6 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 		 * exist in the data directories.
 		 */
 		snprintf(map->old_file, sizeof(map->old_file), "%s/base/%u", olddata, old_db->db_oid);
-		snprintf(map->new_file, sizeof(map->new_file), "%s/base/%u", newdata, new_db->db_oid);
 	}
 	else
 	{
@@ -183,7 +183,24 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 		 */
 		snprintf(map->old_file, sizeof(map->old_file), "%s%s/%u", old_tablespace,
 				 ctx->old.tablespace_suffix, old_db->db_oid);
-		snprintf(map->new_file, sizeof(map->new_file), "%s%s/%u", old_tablespace,
+	}
+
+	/* Do the same for new tablespaces */
+	if (strlen(new_tablespace) == 0)
+	{
+		/*
+		 * relation belongs to the default tablespace, hence relfiles would
+		 * exist in the data directories.
+		 */
+		snprintf(map->new_file, sizeof(map->new_file), "%s/base/%u", newdata, new_db->db_oid);
+	}
+	else
+	{
+		/*
+		 * relation belongs to some tablespace, hence copy its physical
+		 * location
+		 */
+		snprintf(map->new_file, sizeof(map->new_file), "%s%s/%u", new_tablespace,
 				 ctx->new.tablespace_suffix, new_db->db_oid);
 	}
 }
