@@ -140,6 +140,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 						const RelInfo *old_rel, const RelInfo *new_rel,
 						FileNameMap *map)
 {
+	/* In case old/new tablespaces don't match, do them separately. */
 	if (strlen(old_rel->tablespace) == 0)
 	{
 		/*
@@ -147,16 +148,24 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		 * exist in the data directories.
 		 */
 		map->old_tablespace = old_data;
-		map->new_tablespace = new_data;
 		map->old_tablespace_suffix = "/base";
-		map->new_tablespace_suffix = "/base";
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
 		map->old_tablespace = old_rel->tablespace;
-		map->new_tablespace = new_rel->tablespace;
 		map->old_tablespace_suffix = old_cluster.tablespace_suffix;
+	}
+
+	/* Do the same for new tablespaces */
+	if (strlen(new_rel->tablespace) == 0)
+	{
+		map->new_tablespace = new_data;
+		map->new_tablespace_suffix = "/base";
+	}
+	else
+	{
+		map->new_tablespace = new_rel->tablespace;
 		map->new_tablespace_suffix = new_cluster.tablespace_suffix;
 	}
 
