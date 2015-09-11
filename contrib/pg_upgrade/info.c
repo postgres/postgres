@@ -140,6 +140,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 						const RelInfo *old_rel, const RelInfo *new_rel,
 						FileNameMap *map)
 {
+	/* In case old/new tablespaces don't match, do them separately. */
 	if (strlen(old_rel->tablespace) == 0)
 	{
 		/*
@@ -147,17 +148,30 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		 * exist in the data directories.
 		 */
 		strlcpy(map->old_tablespace, old_data, sizeof(map->old_tablespace));
-		strlcpy(map->new_tablespace, new_data, sizeof(map->new_tablespace));
 		strlcpy(map->old_tablespace_suffix, "/base", sizeof(map->old_tablespace_suffix));
-		strlcpy(map->new_tablespace_suffix, "/base", sizeof(map->new_tablespace_suffix));
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
 		strlcpy(map->old_tablespace, old_rel->tablespace, sizeof(map->old_tablespace));
-		strlcpy(map->new_tablespace, new_rel->tablespace, sizeof(map->new_tablespace));
 		strlcpy(map->old_tablespace_suffix, old_cluster.tablespace_suffix,
 				sizeof(map->old_tablespace_suffix));
+	}
+
+	/* Do the same for new tablespaces */
+	if (strlen(new_rel->tablespace) == 0)
+	{
+		/*
+		 * relation belongs to the default tablespace, hence relfiles should
+		 * exist in the data directories.
+		 */
+		strlcpy(map->new_tablespace, new_data, sizeof(map->new_tablespace));
+		strlcpy(map->new_tablespace_suffix, "/base", sizeof(map->new_tablespace_suffix));
+	}
+	else
+	{
+		/* relation belongs to a tablespace, so use the tablespace location */
+		strlcpy(map->new_tablespace, new_rel->tablespace, sizeof(map->new_tablespace));
 		strlcpy(map->new_tablespace_suffix, new_cluster.tablespace_suffix,
 				sizeof(map->new_tablespace_suffix));
 	}
