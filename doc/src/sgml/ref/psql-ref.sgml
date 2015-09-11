@@ -564,11 +564,11 @@ EOF
       <para>
       Show help about <application>psql</application> and exit. The optional
       <replaceable class="parameter">topic</> parameter (defaulting
-      to <literal>options</literal>) selects which part of psql is
+      to <literal>options</literal>) selects which part of <application>psql</application> is
       explained: <literal>commands</> describes <application>psql</>'s
-      backslash commands; <literal>options</> describes the commandline
-      switches that can be passed to <application>psql</>;
-      and <literal>variables</> shows help about about psql configuration
+      backslash commands; <literal>options</> describes the command-line
+      options that can be passed to <application>psql</>;
+      and <literal>variables</> shows help about about <application>psql</application> configuration
       variables.
       </para>
       </listitem>
@@ -2367,7 +2367,7 @@ lo_import 152801
           <term><literal>unicode_border_style</literal></term>
           <listitem>
           <para>
-          Sets the border drawing style for the unicode linestyle to one
+          Sets the border drawing style for the <literal>unicode</literal> line style to one
           of <literal>single</literal> or <literal>double</literal>.
           </para>
           </listitem>
@@ -2377,7 +2377,7 @@ lo_import 152801
           <term><literal>unicode_column_style</literal></term>
           <listitem>
           <para>
-          Sets the column drawing style for the unicode linestyle to one
+          Sets the column drawing style for the <literal>unicode</literal> line style to one
           of <literal>single</literal> or <literal>double</literal>.
           </para>
           </listitem>
@@ -2387,7 +2387,7 @@ lo_import 152801
           <term><literal>unicode_header_style</literal></term>
           <listitem>
           <para>
-          Sets the header drawing style for the unicode linestyle to one
+          Sets the header drawing style for the <literal>unicode</literal> line style to one
           of <literal>single</literal> or <literal>double</literal>.
           </para>
           </listitem>
@@ -2690,11 +2690,11 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         <para>
         Shows help information. The optional
         <replaceable class="parameter">topic</> parameter
-        (defaulting to <literal>commands</>) selects which part of psql is
+        (defaulting to <literal>commands</>) selects which part of <application>psql</application> is
         explained: <literal>commands</> describes <application>psql</>'s
-        backslash commands; <literal>options</> describes the commandline
-        switches that can be passed to <application>psql</>;
-        and <literal>variables</> shows help about about psql configuration
+        backslash commands; <literal>options</> describes the command-line
+        options that can be passed to <application>psql</>;
+        and <literal>variables</> shows help about about <application>psql</application> configuration
         variables.
         </para>
         </listitem>

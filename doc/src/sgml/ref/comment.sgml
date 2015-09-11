@@ -134,7 +134,7 @@ COMMENT ON
     <listitem>
      <para>
       When creating a comment on a constraint on a table or a domain, these
-      parameteres specify the name of the table or domain on which the
+      parameters specify the name of the table or domain on which the
       constraint is defined.
      </para>
     </listitem>

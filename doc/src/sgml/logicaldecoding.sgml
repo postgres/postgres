@@ -577,7 +577,7 @@ typedef void (*LogicalDecodeChangeCB) (
 
      <para>
        The optional <function>filter_by_origin_cb</function> callback
-       is called to determine wheter data that has been replayed
+       is called to determine whether data that has been replayed
        from <parameter>origin_id</parameter> is of interest to the
        output plugin.
 <programlisting>
@@ -594,7 +594,7 @@ typedef bool (*LogicalDecodeChangeCB) (
       for transactions and changes that have been filtered away.
      </para>
      <para>
-       This is useful when implementing cascading or multi directional
+       This is useful when implementing cascading or multidirectional
        replication solutions. Filtering by the origin allows to
        prevent replicating the same changes back and forth in such
        setups.  While transactions and changes also carry information

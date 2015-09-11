@@ -446,7 +446,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         It is possible that the replication delay between servers exceeds the
         value of this parameter, in which case no delay is added.
-        Note that the delay is calculated between the WAL timestamp as written
+        Note that the delay is calculated between the WAL time stamp as written
         on master and the current time on the standby. Delays in transfer
         because of network lag or cascading replication configurations
         may reduce the actual wait time significantly. If the system

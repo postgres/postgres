@@ -45,7 +45,7 @@
  </para>
 
  <para>
-  Typical output from pgbench looks like:
+  Typical output from <application>pgbench</application> looks like:
 
 <screen>
 transaction type: TPC-B (sort of)
@@ -544,7 +544,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Vacuum all four standard tables before running the test.
-        With neither <option>-n</> nor <option>-v</>, pgbench will vacuum the
+        With neither <option>-n</> nor <option>-v</>, <application>pgbench</application> will vacuum the
         <structname>pgbench_tellers</> and <structname>pgbench_branches</>
         tables, and will truncate <structname>pgbench_history</>.
        </para>
@@ -658,7 +658,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <title>Notes</title>
 
  <refsect2>
-  <title>What is the <quote>Transaction</> Actually Performed in pgbench?</title>
+  <title>What is the <quote>Transaction</> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
    The default transaction script issues seven commands per transaction:
@@ -955,7 +955,7 @@ END;
    <application>pgbench</> writes the time taken by each transaction
    to a log file.  The log file will be named
    <filename>pgbench_log.<replaceable>nnn</></filename>, where
-   <replaceable>nnn</> is the PID of the pgbench process.
+   <replaceable>nnn</> is the PID of the <application>pgbench</application> process.
    If the <option>-j</> option is 2 or higher, creating multiple worker
    threads, each will have its own log file. The first worker will use the
    same name for its log file as in the standard single worker case.
@@ -976,9 +976,9 @@ END;
    <replaceable>file_no</> identifies which script file was used
    (useful when multiple scripts were specified with <option>-f</>),
    and <replaceable>time_epoch</>/<replaceable>time_us</> are a
-   UNIX epoch format timestamp and an offset
+   Unix epoch format time stamp and an offset
    in microseconds (suitable for creating an ISO 8601
-   timestamp with fractional seconds) showing when
+   time stamp with fractional seconds) showing when
    the transaction completed.
    Field <replaceable>schedule_lag</> is the difference between the
    transaction's scheduled start time, and the time it actually started, in
@@ -1031,8 +1031,8 @@ END;
 <replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> <optional><replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</> <optional><replaceable>skipped_transactions</></optional></optional>
 </synopsis>
 
-   where <replaceable>interval_start</> is the start of the interval (UNIX epoch
-   format timestamp), <replaceable>num_of_transactions</> is the number of transactions
+   where <replaceable>interval_start</> is the start of the interval (Unix epoch
+   format time stamp), <replaceable>num_of_transactions</> is the number of transactions
    within the interval, <replaceable>latency_sum</replaceable> is a sum of latencies
    (so you can compute average latency easily). The following two fields are useful
    for variance estimation - <replaceable>latency_sum</> is a sum of latencies and

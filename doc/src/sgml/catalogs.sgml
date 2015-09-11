@@ -7946,7 +7946,7 @@
     <row>
      <entry><structfield>sourcefile</structfield></entry>
      <entry><structfield>text</structfield></entry>
-     <entry>Full pathname of the configuration file</entry>
+     <entry>Full path name of the configuration file</entry>
     </row>
     <row>
      <entry><structfield>sourceline</structfield></entry>

@@ -239,7 +239,7 @@ IterateForeignScan (ForeignScanState *node);
 
     <para>
      The rows returned must match the <structfield>fdw_scan_tlist</> target
-     list if one was supplied, otherwise they must match the rowtype of the
+     list if one was supplied, otherwise they must match the row type of the
      foreign table being scanned.  If you choose to optimize away fetching
      columns that are not needed, you should insert nulls in those column
      positions, or else generate a <structfield>fdw_scan_tlist</> list with
@@ -333,7 +333,7 @@ GetForeignJoinPaths (PlannerInfo *root,
      remote join cannot be found from the system catalogs, the FDW must
      fill <structfield>fdw_scan_tlist</> with an appropriate list
      of <structfield>TargetEntry</> nodes, representing the set of columns
-     it will supply at runtime in the tuples it returns.
+     it will supply at run time in the tuples it returns.
     </para>
 
     <para>
@@ -752,7 +752,7 @@ RefetchForeignRow (EState *estate,
      for the row to be re-fetched.  Although the <literal>rowid</> value is
      passed as a <type>Datum</>, it can currently only be a <type>tid</>.  The
      function API is chosen in hopes that it may be possible to allow other
-     datatypes for row IDs in future.
+     data types for row IDs in future.
     </para>
 
     <para>
@@ -1140,8 +1140,8 @@ GetForeignServerByName(const char *name, bool missing_ok);
      is <structfield>fdw_scan_tlist</>, which describes the tuples returned by
      the FDW for this plan node.  For simple foreign table scans this can be
      set to <literal>NIL</>, implying that the returned tuples have the
-     rowtype declared for the foreign table.  A non-NIL value must be a
-     targetlist (list of <structname>TargetEntry</>s) containing Vars and/or
+     row type declared for the foreign table.  A non-<symbol>NIL</symbol> value must be a
+     target list (list of <structname>TargetEntry</>s) containing Vars and/or
      expressions representing the returned columns.  This might be used, for
      example, to show that the FDW has omitted some columns that it noticed
      won't be needed for the query.  Also, if the FDW can compute expressions

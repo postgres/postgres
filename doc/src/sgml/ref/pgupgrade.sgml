@@ -403,7 +403,7 @@ pg_upgrade.exe
      exit and you will have to revert to the old cluster as outlined in <xref linkend="pgupgrade-step-revert">
      below. To try <command>pg_upgrade</command> again, you will need to modify the old
      cluster so the pg_upgrade schema restore succeeds. If the problem is a
-     contrib module, you might need to uninstall the contrib module from
+     <filename>contrib</filename> module, you might need to uninstall the <filename>contrib</filename> module from
      the old cluster and install it in the new cluster after the upgrade,
      assuming the module is not being used to store user data.
     </para>

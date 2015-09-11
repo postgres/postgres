@@ -139,7 +139,7 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       </para>
 
       <para>
-       If  any  parameter is <symbol>NULL</symbol> or an emptry string, the corresponding
+       If  any  parameter is <symbol>NULL</symbol> or an empty string, the corresponding
        environment variable (see <xref linkend="libpq-envars">) is checked.
        If the  environment  variable is not set either, then the indicated
        built-in defaults are used.
@@ -2014,7 +2014,7 @@ void *PQgetssl(const PGconn *conn);
       </para>
 
       <para>
-       This function is equivalent to PQsslStruct(conn, "OpenSSL"). It should
+       This function is equivalent to <literal>PQsslStruct(conn, "OpenSSL")</literal>. It should
        not be used in new applications, because the returned struct is
        specific to OpenSSL and will not be available if another SSL
        implementation is used. To check if a connection uses SSL, call

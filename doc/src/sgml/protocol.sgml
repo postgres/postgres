@@ -294,7 +294,7 @@
       <listitem>
        <para>
         The frontend must now send a PasswordMessage containing the
-        password (with username) encrypted via MD5, then encrypted
+        password (with user name) encrypted via MD5, then encrypted
         again using the 4-byte random salt specified in the
         AuthenticationMD5Password message.  If this is the correct
         password, the server responds with an AuthenticationOk,

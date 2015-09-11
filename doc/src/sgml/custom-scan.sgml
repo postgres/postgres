@@ -70,7 +70,7 @@ typedef struct CustomPath
   <para>
     <structfield>path</> must be initialized as for any other path, including
     the row-count estimate, start and total cost, and sort ordering provided
-    by this path.  <structfield>flags</> is a bitmask, which should include
+    by this path.  <structfield>flags</> is a bit mask, which should include
     <literal>CUSTOMPATH_SUPPORT_BACKWARD_SCAN</> if the custom path can support
     a backward scan and <literal>CUSTOMPATH_SUPPORT_MARK_RESTORE</> if it
     can support mark and restore.  Both capabilities are optional.
@@ -163,7 +163,7 @@ typedef struct CustomScan
   <para>
     <structfield>scan</> must be initialized as for any other scan, including
     estimated costs, target lists, qualifications, and so on.
-    <structfield>flags</> is a bitmask with the same meaning as in
+    <structfield>flags</> is a bit mask with the same meaning as in
     <structname>CustomPath</>.
     <structfield>custom_plans</> can be used to store child
     <structname>Plan</> nodes.
@@ -174,12 +174,12 @@ typedef struct CustomScan
     that is only used by the custom scan provider itself.
     <structfield>custom_scan_tlist</> can be NIL when scanning a base
     relation, indicating that the custom scan returns scan tuples that match
-    the base relation's rowtype.  Otherwise it is a targetlist describing
+    the base relation's row type.  Otherwise it is a target list describing
     the actual scan tuples.  <structfield>custom_scan_tlist</> must be
     provided for joins, and could be provided for scans if the custom scan
     provider can compute some non-Var expressions.
     <structfield>custom_relids</> is set by the core code to the set of
-    relations (rangetable indexes) that this scan node handles; except when
+    relations (range table indexes) that this scan node handles; except when
     this scan is replacing a join, it will have only one member.
     <structfield>methods</> must point to a (usually statically allocated)
     object implementing the required custom scan methods, which are further
@@ -251,10 +251,10 @@ typedef struct CustomScanState
   </para>
 
   <para>
-   <structfield>ss</> is initialized as for any other scanstate,
+   <structfield>ss</> is initialized as for any other scan state,
    except that if the scan is for a join rather than a base relation,
    <literal>ss.ss_currentRelation</> is left NULL.
-   <structfield>flags</> is a bitmask with the same meaning as in
+   <structfield>flags</> is a bit mask with the same meaning as in
    <structname>CustomPath</> and <structname>CustomScan</>.
    <structfield>methods</> must point to a (usually statically allocated)
    object implementing the required custom scan state methods, which are

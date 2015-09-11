@@ -1072,7 +1072,7 @@ ALTER TABLE distributors
   </para>
 
   <para>
-   To change an integer column containing UNIX timestamps to <type>timestamp
+   To change an integer column containing Unix timestamps to <type>timestamp
    with time zone</type> via a <literal>USING</literal> clause:
 <programlisting>
 ALTER TABLE foo

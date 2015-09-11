@@ -101,7 +101,7 @@
      </para>
 
      <para>
-      This change causes conversions of booleans to strings to
+      This change causes conversions of Booleans to strings to
       produce <literal>true</> or <literal>false</>, not <literal>t</>
       or <literal>f</>.  Other type conversions may succeed in more cases
       than before; for example, assigning a numeric value <literal>3.9</> to
@@ -426,7 +426,7 @@ FIXME: Add Andres
 2015-04-27 [dcbf594]  Stephe..: Improve qual pushdown for RLS and SB views
 -->
        <para>
-        Allow non-LEAKPROOF functions to be passed into security barrier
+        Allow non-leakproof functions to be passed into security barrier
         views if the function does not reference any table columns
         (Dean Rasheed)
        </para>
@@ -646,13 +646,13 @@ FIXME: Add docs about restartpoint behaviour change
 -->
        <para>
         Allow recording of transaction
-        commit timestamps when configuration parameter <xref
+        commit time stamps when configuration parameter <xref
         linkend="guc-track-commit-timestamp">
         is enabled (&Aacute;lvaro Herrera, Petr Jel&iacute;nek)
        </para>
 
        <para>
-        Timestamp information can be accessed using functions <link
+        Time stamp information can be accessed using functions <link
         linkend="functions-commit-timestamp"><function>pg_xact_commit_timestamp()</></>
         and <function>pg_last_committed_xact()</>.
        </para>
@@ -1583,7 +1583,7 @@ FIXME: Add more specifics?
 2014-08-27 [8167a38] Jeff D..: Allow multibyte characters as escape in SIMILA..
 -->
        <para>
-        Allow multi-byte characters as escape in <link
+        Allow multibyte characters as escape in <link
         linkend="functions-similarto-regexp"><literal>SIMILAR TO</></>
         and <link linkend="functions-string-sql"><literal>SUBSTRING</></>
         (Jeff Davis)
@@ -1630,7 +1630,7 @@ FIXME: Add more specifics?
         Previously only <literal>:=</> could be used.  This requires removing
         the possibility for <literal>=&gt;</> to be a user-defined operator.
         Creation of user-defined <literal>=&gt;</> operators has been issuing
-        warnings since Postgres 9.0.
+        warnings since PostgreSQL 9.0.
        </para>
       </listitem>
 
@@ -1640,7 +1640,7 @@ FIXME: Add more specifics?
 -->
        <para>
         Add <acronym>POSIX</>-compliant rounding for platforms that use
-        Postgres-supplied rounding functions (Pedro Gimeno Fortea)
+        PostgreSQL-supplied rounding functions (Pedro Gimeno Fortea)
        </para>
       </listitem>
 
@@ -1694,7 +1694,7 @@ FIXME: Add more specifics?
        <para>
         Add <link
         linkend="monitoring-stats-funcs-table"><function>pg_stat_get_snapshot_timestamp()</></>
-        to output the timestamp of the statistics snapshot (Matt Kelly)
+        to output the time stamp of the statistics snapshot (Matt Kelly)
        </para>
 
        <para>
@@ -2025,7 +2025,7 @@ FIXME: Add more specifics?
         <para>
          Add <application>psql</> <link
          linkend="APP-PSQL-variables"><envar>PROMPT</></> variables option
-         (<literal>%l</>) to display the multi-line statement line number
+         (<literal>%l</>) to display the multiline statement line number
          (Sawada Masahiko)
         </para>
        </listitem>
@@ -2519,7 +2519,7 @@ FIXME: Improve description, link
 2015-05-19 [0b28ea7] Tom Lane: Avoid collation dependence in indexes of syste..
 -->
        <para>
-        Change index opclass for columns <link
+        Change index operator class for columns <link
         linkend="catalog-pg-seclabel"><structname>pg_seclabel</></>.<structname>provider</>
         and <link
         linkend="catalog-pg-shseclabel"><structname>pg_shseclabel</></>.<structname>provider</>
@@ -2555,7 +2555,7 @@ FIXME: Improve description, link
 2014-12-08 [8001fe6] Simon ..: Windows: use GetSystemTimePreciseAsFileTime if ..
 -->
        <para>
-        Allow higher-precision timestamp resolution on <systemitem
+        Allow higher-precision time stamp resolution on <systemitem
         class="osname">Windows 8</> or <systemitem class="osname">Windows
         Server 2012</> and later Windows systems (Craig Ringer)
        </para>
@@ -2687,7 +2687,7 @@ FIXME: Improve description, link
 2014-06-30 [1b24887] Tom Lane: Allow multi-character source strings in contrib..
 -->
       <para>
-       Allow multi-character source strings in <link
+       Allow multicharacter source strings in <link
        linkend="unaccent"><application>unaccent</></> (Tom Lane)
       </para>
 

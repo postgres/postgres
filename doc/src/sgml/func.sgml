@@ -10327,7 +10327,7 @@ table2-mapping
        <row>
         <entry><literal>||</literal></entry>
         <entry><type>jsonb</type></entry>
-        <entry>Concatentate two jsonb values into a new jsonb value</entry>
+        <entry>Concatenate two <type>jsonb</type> values into a new <type>jsonb</type> value</entry>
         <entry><literal>'["a", "b"]'::jsonb || '["c", "d"]'::jsonb</literal></entry>
        </row>
        <row>
@@ -10986,7 +10986,7 @@ table2-mapping
       If the argument to <literal>json_strip_nulls</> contains duplicate
       field names in any object, the result could be semantically somewhat
       different, depending on the order in which they occur. This is not an
-      issue for <literal>jsonb_strip_nulls</> since jsonb values never have
+      issue for <literal>jsonb_strip_nulls</> since <type>jsonb</type> values never have
       duplicate object field names.
     </para>
   </note>
@@ -13433,7 +13433,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        <type>integer</type>
       </entry>
       <entry>
-       Integer bitmask indicating which arguments are not being included in the current
+       Integer bit mask indicating which arguments are not being included in the current
        grouping set
       </entry>
      </row>
@@ -16633,7 +16633,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>boolean</type></entry>
        <entry>Cancel a backend's current query.  This is also allowed if the
-        calling role is a member of the role whose backend is being cancelled,
+        calling role is a member of the role whose backend is being canceled,
         however only superusers can cancel superuser backends.
         </entry>
       </row>
@@ -18600,7 +18600,7 @@ CREATE EVENT TRIGGER test_event_trigger_for_drops
         <literal><function>pg_event_trigger_table_rewrite_oid()</function></literal>
        </entry>
        <entry><type>Oid</type></entry>
-       <entry>The Oid of the table about to be rewritten.</entry>
+       <entry>The OID of the table about to be rewritten.</entry>
       </row>
 
       <row>

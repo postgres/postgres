@@ -389,7 +389,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
      database cluster or backed up individually.  Similarly, if you lose
      a tablespace (file deletion, disk failure, etc), the database cluster
      might become unreadable or unable to start.  Placing a tablespace
-     on a temporary file system like a ramdisk risks the reliability of
+     on a temporary file system like a RAM disk risks the reliability of
      the entire cluster.
    </para>
   </warning>
