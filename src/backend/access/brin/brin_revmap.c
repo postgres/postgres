@@ -432,6 +432,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 			if (needLock)
 				UnlockRelationForExtension(irel, ExclusiveLock);
 			LockBuffer(revmap->rm_metaBuf, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buf);
 			return;
 		}
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
