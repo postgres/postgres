@@ -183,6 +183,7 @@ typedef struct RI_CompareHashEntry
  * ----------
  */
 static HTAB *ri_constraint_cache = NULL;
+static long  ri_constraint_cache_seq_count = 0;
 static HTAB *ri_query_cache = NULL;
 static HTAB *ri_compare_cache = NULL;
 
@@ -215,6 +216,7 @@ static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
 				   Datum oldvalue, Datum newvalue);
 
+static void ri_InitConstraintCache(void);
 static void ri_InitHashTables(void);
 static void InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);
 static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
@@ -2945,6 +2947,20 @@ InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 
 	Assert(ri_constraint_cache != NULL);
 
+	/*
+	 * Prevent an O(N^2) problem when creating large amounts of foreign
+	 * key constraints with ALTER TABLE, like it happens at the end of
+	 * a pg_dump with hundred-thousands of tables having references.
+	 */
+	ri_constraint_cache_seq_count += hash_get_num_entries(ri_constraint_cache);
+	if (ri_constraint_cache_seq_count > 1000000)
+	{
+		hash_destroy(ri_constraint_cache);
+		ri_InitConstraintCache();
+		ri_constraint_cache_seq_count = 0;
+		return;
+	}
+
 	hash_seq_init(&status, ri_constraint_cache);
 	while ((hentry = (RI_ConstraintInfo *) hash_seq_search(&status)) != NULL)
 	{
@@ -3364,6 +3380,27 @@ ri_NullCheck(HeapTuple tup,
 
 
 /* ----------
+ * ri_InitConstraintCache
+ *
+ * Initialize ri_constraint_cache when new or being rebuilt.
+ *
+ * This needs to be done from two places, so split it out to prevent drift.
+ * ----------
+ */
+static void
+ri_InitConstraintCache(void)
+{
+	HASHCTL		ctl;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(RI_ConstraintInfo);
+	ri_constraint_cache = hash_create("RI constraint cache",
+									  RI_INIT_CONSTRAINTHASHSIZE,
+									  &ctl, HASH_ELEM | HASH_BLOBS);
+}
+
+/* ----------
  * ri_InitHashTables -
  *
  *	Initialize our internal hash tables.
@@ -3374,12 +3411,7 @@ ri_InitHashTables(void)
 {
 	HASHCTL		ctl;
 
-	memset(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(RI_ConstraintInfo);
-	ri_constraint_cache = hash_create("RI constraint cache",
-									  RI_INIT_CONSTRAINTHASHSIZE,
-									  &ctl, HASH_ELEM | HASH_BLOBS);
+	ri_InitConstraintCache();
 
 	/* Arrange to flush cache on pg_constraint changes */
 	CacheRegisterSyscacheCallback(CONSTROID,
