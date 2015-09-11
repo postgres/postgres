@@ -52,7 +52,7 @@ install: all installdirs
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$dir/*.h  || exit; \
 	done
 ifeq ($(vpath_build),yes)
-	for file in dynloader.h catalog/schemapg.h parser/gram.h utils/probes.h; do \
+	for file in dynloader.h catalog/schemapg.h parser/gram.h storage/lwlocknames.h utils/probes.h; do \
 	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done
