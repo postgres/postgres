@@ -137,6 +137,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 						const RelInfo *old_rel, const RelInfo *new_rel,
 						FileNameMap *map)
 {
+	/* In case old/new tablespaces don't match, do them separately. */
 	if (strlen(old_rel->tablespace) == 0)
 	{
 		/*
@@ -145,14 +146,27 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		 */
 		snprintf(map->old_dir, sizeof(map->old_dir), "%s/base/%u", old_data,
 				 old_db->db_oid);
-		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", new_data,
-				 new_db->db_oid);
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
 		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_rel->tablespace,
 				 old_cluster.tablespace_suffix, old_db->db_oid);
+	}
+
+	/* Do the same for new tablespaces */
+	if (strlen(new_rel->tablespace) == 0)
+	{
+		/*
+		 * relation belongs to the default tablespace, hence relfiles should
+		 * exist in the data directories.
+		 */
+		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", new_data,
+				 new_db->db_oid);
+	}
+	else
+	{
+		/* relation belongs to a tablespace, so use the tablespace location */
 		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", new_rel->tablespace,
 				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
