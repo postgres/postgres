@@ -217,8 +217,8 @@ PostgreSQL documentation
     </step>
     <step>
      <para>
-      Copy all other files like clog, conf files etc. from the new cluster
-      to old cluster. Everything except the relation files.
+      Copy all other files such as <filename>clog</filename> and configuration files from the new cluster
+      to the old cluster, everything except the relation files.
      </para>
     </step>
     <step>

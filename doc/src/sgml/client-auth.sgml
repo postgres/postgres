@@ -958,11 +958,11 @@ omicron         bryanh                  guest1
     <productname>PostgreSQL</> also supports a parameter to strip the realm from
     the principal.  This method is supported for backwards compatibility and is
     strongly discouraged as it is then impossible to distinguish different users
-    with the same username but coming from different realms.  To enable this,
+    with the same user name but coming from different realms.  To enable this,
     set <literal>include_realm</> to 0.  For simple single-realm
     installations, <literal>include_realm</> combined with the
     <literal>krb_realm</> parameter (which checks that the realm provided
-    matches exactly what is in the krb_realm parameter) would be a secure but
+    matches exactly what is in the <literal>krb_realm</literal> parameter) would be a secure but
     less capable option compared to specifying an explicit mapping in
     <filename>pg_ident.conf</>.
    </para>
@@ -1009,8 +1009,8 @@ omicron         bryanh                  guest1
         If set to 0, the realm name from the authenticated user principal is
         stripped off before being passed through the user name mapping
         (<xref linkend="auth-username-maps">). This is discouraged and is
-        primairly available for backwards compatibility as it is not secure
-        in multi-realm environments unless krb_realm is also used.  Users
+        primarily available for backwards compatibility as it is not secure
+        in multi-realm environments unless <literal>krb_realm</literal> is also used.  Users
         are recommended to leave include_realm set to the default (1) and to
         provide an explicit mapping in <filename>pg_ident.conf</>.
        </para>
@@ -1030,7 +1030,7 @@ omicron         bryanh                  guest1
         <literal>username/hostbased@EXAMPLE.COM</literal>, respectively),
         unless <literal>include_realm</literal> has been set to 0, in which case
         <literal>username</literal> (or <literal>username/hostbased</literal>)
-        is what is seen as the system username when mapping.
+        is what is seen as the system user name when mapping.
        </para>
       </listitem>
      </varlistentry>
@@ -1088,8 +1088,8 @@ omicron         bryanh                  guest1
         If set to 0, the realm name from the authenticated user principal is
         stripped off before being passed through the user name mapping
         (<xref linkend="auth-username-maps">). This is discouraged and is
-        primairly available for backwards compatibility as it is not secure
-        in multi-realm environments unless krb_realm is also used.  Users
+        primarily available for backwards compatibility as it is not secure
+        in multi-realm environments unless <literal>krb_realm</literal> is also used.  Users
         are recommended to leave include_realm set to the default (1) and to
         provide an explicit mapping in <filename>pg_ident.conf</>.
        </para>
@@ -1109,7 +1109,7 @@ omicron         bryanh                  guest1
         <literal>username/hostbased@EXAMPLE.COM</literal>, respectively),
         unless <literal>include_realm</literal> has been set to 0, in which case
         <literal>username</literal> (or <literal>username/hostbased</literal>)
-        is what is seen as the system username when mapping.
+        is what is seen as the system user name when mapping.
        </para>
       </listitem>
      </varlistentry>
@@ -1292,7 +1292,7 @@ omicron         bryanh                  guest1
     this search, the server disconnects and re-binds to the directory as
     this user, using the password specified by the client, to verify that the
     login is correct. This mode is the same as that used by LDAP authentication
-    schemes in other software, such as Apache mod_authnz_ldap and pam_ldap.
+    schemes in other software, such as Apache <literal>mod_authnz_ldap</literal> and <literal>pam_ldap</literal>.
     This method allows for significantly more flexibility
     in where the user objects are located in the directory, but will cause
     two separate connections to the LDAP server to be made.

@@ -308,7 +308,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
       class="PARAMETER">column_name_index</replaceable> or
       <replaceable class="PARAMETER">expression_index</replaceable> use a
       particular collation in order to be matched in the inference clause.
-      Typically this is omitted, as collations usually do not affect wether or
+      Typically this is omitted, as collations usually do not affect whether or
       not a constraint violation occurs.  Follows <command>CREATE
       INDEX</command> format.
      </para>
@@ -661,7 +661,7 @@ INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
    <literal>DO NOTHING</literal>.  Example assumes a unique index has been
    defined that constrains values appearing in the
    <literal>did</literal> column on a subset of rows where the
-   <literal>is_active</literal> boolean column evaluates to
+   <literal>is_active</literal> Boolean column evaluates to
    <literal>true</literal>:
 <programlisting>
 -- This statement could infer a partial unique index on "did"

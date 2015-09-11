@@ -1236,7 +1236,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
 
    <para>
     References to the grouping columns or expressions are replaced
-    by <literal>NULL</> values in result rows for grouping sets in which those
+    by null values in result rows for grouping sets in which those
     columns do not appear.  To distinguish which grouping a particular output
     row resulted from, see <xref linkend="functions-grouping-table">.
    </para>
@@ -1289,8 +1289,8 @@ GROUPING SETS (
 
    <para>
     The individual elements of a <literal>CUBE</> or <literal>ROLLUP</>
-    clause may be either individual expressions, or sub-lists of elements in
-    parentheses.  In the latter case, the sub-lists are treated as single
+    clause may be either individual expressions, or sublists of elements in
+    parentheses.  In the latter case, the sublists are treated as single
     units for the purposes of generating the individual grouping sets.
     For example:
 <programlisting>
@@ -2202,7 +2202,7 @@ SELECT n FROM t LIMIT 100;
    functions with side-effects.
    However, the other side of this coin is that the optimizer is less able to
    push restrictions from the parent query down into a <literal>WITH</> query
-   than an ordinary sub-query.  The <literal>WITH</> query will generally be
+   than an ordinary subquery.  The <literal>WITH</> query will generally be
    evaluated as written, without suppression of rows that the parent query
    might discard afterwards.  (But, as mentioned above, evaluation might stop
    early if the reference(s) to the query demand only a limited number of

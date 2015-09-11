@@ -1990,7 +1990,7 @@ include_dir 'conf.d'
        <para>
         In <literal>logical</> level, the same information is logged as
         with <literal>hot_standby</>, plus information needed to allow
-        extracting logical changesets from the WAL. Using a level of
+        extracting logical change sets from the WAL. Using a level of
         <literal>logical</> will increase the WAL volume, particularly if many
         tables are configured for <literal>REPLICA IDENTITY FULL</literal> and
         many <command>UPDATE</> and <command>DELETE</> statements are
@@ -3906,7 +3906,7 @@ local0.*    /var/log/postgresql
         listed in the Open Group's <ulink
         url="http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html">strftime
         </ulink> specification.
-        Note that the system's <systemitem>strftime</systemitem> is not used
+        Note that the system's <function>strftime</function> is not used
         directly, so platform-specific (nonstandard) extensions do not work.
         The default is <literal>postgresql-%Y-%m-%d_%H%M%S.log</literal>.
        </para>

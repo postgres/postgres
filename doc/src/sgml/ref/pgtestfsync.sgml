@@ -13,7 +13,7 @@
 
  <refnamediv>
   <refname>pg_test_fsync</refname>
-  <refpurpose>determine fastest wal_sync_method for <productname>PostgreSQL</productname></refpurpose>
+  <refpurpose>determine fastest <varname>wal_sync_method</varname> for <productname>PostgreSQL</productname></refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

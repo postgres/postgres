@@ -49,7 +49,7 @@
   replay progress in a safe manner. When the applying process, or the whole
   cluster, dies, it needs to be possible to find out up to where data has
   successfully been replicated. Naive solutions to this like updating a row in
-  a table for every replayed transaction have problems like runtime overhead
+  a table for every replayed transaction have problems like run-time overhead
   bloat.
  </para>
 
@@ -58,7 +58,7 @@
   marked as replaying from a remote node (using the
   <link linkend="pg-replication-origin-session-setup"><function>pg_replication_origin_session_setup()</function></link>
   function). Additionally the <acronym>LSN</acronym> and commit
-  timestamp of every source transaction can be configured on a per
+  time stamp of every source transaction can be configured on a per
   transaction basis using
   <link linkend="pg-replication-origin-xact-setup"><function>pg_replication_origin_xact_setup()</function></link>.
   If that's done replication progress will persist in a crash safe

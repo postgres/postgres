@@ -153,13 +153,13 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
        <term><replaceable class="parameter">istemplate</replaceable></term>
        <listitem>
         <para>
-         If true, then this database can be cloned by any user with CREATEDB
+         If true, then this database can be cloned by any user with <literal>CREATEDB</literal>
          privileges; if false (the default), then only superusers or the owner
          of the database can clone it.
         </para>
        </listitem>
       </varlistentry>
- 
+
       <varlistentry>
        <term><replaceable class="parameter">allowconn</replaceable></term>
        <listitem>
@@ -170,7 +170,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
         </para>
        </listitem>
       </varlistentry>
- 
+
       <varlistentry>
       <term><replaceable class="parameter">connlimit</replaceable></term>
       <listitem>

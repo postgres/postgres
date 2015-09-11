@@ -174,7 +174,7 @@ PostgreSQL documentation
       <term><option>--xid=<replaceable>xid</replaceable></option></term>
       <listitem>
        <para>
-        Only display records marked with the given TransactionId.
+        Only display records marked with the given transaction ID.
        </para>
       </listitem>
      </varlistentry>
@@ -219,7 +219,7 @@ PostgreSQL documentation
   <para>
     <application>pg_xlogdump</> cannot read WAL files with suffix
     <literal>.partial</>. If those files need to be read, <literal>.partial</>
-    suffix needs to be removed from the filename.
+    suffix needs to be removed from the file name.
   </para>
  </refsect1>
 
