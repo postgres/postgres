@@ -305,7 +305,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          <literal>UPDATE</literal> path is taken.  Any existing row that
          necessitates that the <literal>UPDATE</literal> path be taken must pass
          the (UPDATE or ALL) <literal>USING</literal> qualifications (combined
-         using <literal>OR</literal>), which are always enforced as WTIH CHECK
+         using <literal>OR</literal>), which are always enforced as WITH CHECK
          options in this context (the <literal>UPDATE</literal> path will
          <emphasis>never</> be silently avoided; an error will be thrown
          instead).  Finally, the final row appended to the relation must pass
