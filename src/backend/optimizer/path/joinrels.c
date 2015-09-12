@@ -327,7 +327,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 {
 	SpecialJoinInfo *match_sjinfo;
 	bool		reversed;
-	bool		unique_ified;
 	bool		must_be_leftjoin;
 	ListCell   *l;
 
@@ -345,7 +344,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	 */
 	match_sjinfo = NULL;
 	reversed = false;
-	unique_ified = false;
 	must_be_leftjoin = false;
 
 	foreach(l, root->join_info_list)
@@ -447,7 +445,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				return false;	/* invalid join path */
 			match_sjinfo = sjinfo;
 			reversed = false;
-			unique_ified = true;
 		}
 		else if (sjinfo->jointype == JOIN_SEMI &&
 				 bms_equal(sjinfo->syn_righthand, rel1->relids) &&
@@ -459,7 +456,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				return false;	/* invalid join path */
 			match_sjinfo = sjinfo;
 			reversed = true;
-			unique_ified = true;
 		}
 		else
 		{
