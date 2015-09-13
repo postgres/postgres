@@ -718,6 +718,13 @@ select '["c"]' || '["a", "b"]'::jsonb;
 select '["a", "b"]'::jsonb || '"c"';
 select '"c"' || '["a", "b"]'::jsonb;
 
+select '[]'::jsonb || '["a"]'::jsonb;
+select '[]'::jsonb || '"a"'::jsonb;
+select '"b"'::jsonb || '"a"'::jsonb;
+select '{}'::jsonb || '{"a":"b"}'::jsonb;
+select '[]'::jsonb || '{"a":"b"}'::jsonb;
+select '{"a":"b"}'::jsonb || '[]'::jsonb;
+
 select '"a"'::jsonb || '{"a":1}';
 select '{"a":1}' || '"a"'::jsonb;
 
