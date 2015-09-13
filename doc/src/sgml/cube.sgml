@@ -391,10 +391,7 @@ t
    My thanks are primarily to Prof. Joe Hellerstein
    (<ulink url="http://db.cs.berkeley.edu/jmh/"></ulink>) for elucidating the
    gist of the GiST (<ulink url="http://gist.cs.berkeley.edu/"></ulink>), and
-   to his former student, Andy Dong (<ulink
-   url="http://best.me.berkeley.edu/~adong/"></ulink>), for his example
-   written for Illustra,
-   <ulink url="http://best.berkeley.edu/~adong/rtree/index.html"></ulink>.
+   to his former student Andy Dong for his example written for Illustra.
    I am also grateful to all Postgres developers, present and past, for
    enabling myself to create my own world and live undisturbed in it. And I
    would like to acknowledge my gratitude to Argonne Lab and to the
