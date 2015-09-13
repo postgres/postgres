@@ -2912,6 +2912,42 @@ select '"c"' || '["a", "b"]'::jsonb;
  ["c", "a", "b"]
 (1 row)
 
+select '[]'::jsonb || '["a"]'::jsonb;
+ ?column? 
+----------
+ ["a"]
+(1 row)
+
+select '[]'::jsonb || '"a"'::jsonb;
+ ?column? 
+----------
+ ["a"]
+(1 row)
+
+select '"b"'::jsonb || '"a"'::jsonb;
+  ?column?  
+------------
+ ["b", "a"]
+(1 row)
+
+select '{}'::jsonb || '{"a":"b"}'::jsonb;
+  ?column?  
+------------
+ {"a": "b"}
+(1 row)
+
+select '[]'::jsonb || '{"a":"b"}'::jsonb;
+   ?column?   
+--------------
+ [{"a": "b"}]
+(1 row)
+
+select '{"a":"b"}'::jsonb || '[]'::jsonb;
+   ?column?   
+--------------
+ [{"a": "b"}]
+(1 row)
+
 select '"a"'::jsonb || '{"a":1}';
 ERROR:  invalid concatenation of jsonb objects
 select '{"a":1}' || '"a"'::jsonb;
