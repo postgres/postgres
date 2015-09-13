@@ -2198,7 +2198,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 	return true;
 }
 
-void
+void pg_attribute_noreturn()
 syntax_error(const char *source, const int lineno,
 			 const char *line, const char *command,
 			 const char *msg, const char *more, const int column)
