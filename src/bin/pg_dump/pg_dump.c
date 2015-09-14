@@ -97,6 +97,9 @@ static const char *username_subquery;
 /* obsolete as of 7.3: */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 
+/* The specified names/patterns should to match at least one entity */
+static int	strict_names = 0;
+
 /*
  * Object inclusion/exclusion lists
  *
@@ -131,10 +134,12 @@ static void setup_connection(Archive *AH, DumpOptions *dopt,
 static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
 static void expand_schema_name_patterns(Archive *fout,
 							SimpleStringList *patterns,
-							SimpleOidList *oids);
+							SimpleOidList *oids,
+							bool strict_names);
 static void expand_table_name_patterns(Archive *fout,
 						   SimpleStringList *patterns,
-						   SimpleOidList *oids);
+						   SimpleOidList *oids,
+						   bool strict_names);
 static NamespaceInfo *findNamespace(Archive *fout, Oid nsoid, Oid objoid);
 static void dumpTableData(Archive *fout, DumpOptions *dopt, TableDataInfo *tdinfo);
 static void refreshMatViewData(Archive *fout, TableDataInfo *tdinfo);
@@ -333,6 +338,7 @@ main(int argc, char **argv)
 		{"section", required_argument, NULL, 5},
 		{"serializable-deferrable", no_argument, &dopt.serializable_deferrable, 1},
 		{"snapshot", required_argument, NULL, 6},
+		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
 		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
@@ -690,27 +696,32 @@ main(int argc, char **argv)
 	if (schema_include_patterns.head != NULL)
 	{
 		expand_schema_name_patterns(fout, &schema_include_patterns,
-									&schema_include_oids);
+									&schema_include_oids,
+									strict_names);
 		if (schema_include_oids.head == NULL)
 			exit_horribly(NULL, "No matching schemas were found\n");
 	}
 	expand_schema_name_patterns(fout, &schema_exclude_patterns,
-								&schema_exclude_oids);
+								&schema_exclude_oids,
+								false);
 	/* non-matching exclusion patterns aren't an error */
 
 	/* Expand table selection patterns into OID lists */
 	if (table_include_patterns.head != NULL)
 	{
 		expand_table_name_patterns(fout, &table_include_patterns,
-								   &table_include_oids);
+								   &table_include_oids,
+								   strict_names);
 		if (table_include_oids.head == NULL)
 			exit_horribly(NULL, "No matching tables were found\n");
 	}
 	expand_table_name_patterns(fout, &table_exclude_patterns,
-							   &table_exclude_oids);
+							   &table_exclude_oids,
+							   false);
 
 	expand_table_name_patterns(fout, &tabledata_exclude_patterns,
-							   &tabledata_exclude_oids);
+							   &tabledata_exclude_oids,
+							   false);
 
 	/* non-matching exclusion patterns aren't an error */
 
@@ -905,6 +916,8 @@ help(const char *progname)
 	printf(_("  --section=SECTION            dump named section (pre-data, data, or post-data)\n"));
 	printf(_("  --serializable-deferrable    wait until the dump can run without anomalies\n"));
 	printf(_("  --snapshot=SNAPSHOT          use given synchronous snapshot for the dump\n"));
+	printf(_("  --strict-names               require table and/or schema include patterns to\n"
+			 "                               match at least one entity each\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
@@ -1135,7 +1148,8 @@ parseArchiveFormat(const char *format, ArchiveMode *mode)
 static void
 expand_schema_name_patterns(Archive *fout,
 							SimpleStringList *patterns,
-							SimpleOidList *oids)
+							SimpleOidList *oids,
+							bool strict_names)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -1151,38 +1165,41 @@ expand_schema_name_patterns(Archive *fout,
 	query = createPQExpBuffer();
 
 	/*
-	 * We use UNION ALL rather than UNION; this might sometimes result in
-	 * duplicate entries in the OID list, but we don't care.
+	 * This might sometimes result in duplicate entries in the OID list,
+	 * but we don't care.
 	 */
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		if (cell != patterns->head)
-			appendPQExpBufferStr(query, "UNION ALL\n");
 		appendPQExpBuffer(query,
 						  "SELECT oid FROM pg_catalog.pg_namespace n\n");
 		processSQLNamePattern(GetConnection(fout), query, cell->val, false,
 							  false, NULL, "n.nspname", NULL, NULL);
+
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		if (strict_names && PQntuples(res) == 0)
+			exit_horribly(NULL, "No matching table(s) were found for pattern \"%s\"\n", cell->val);
+
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
+		}
+
+		PQclear(res);
+		resetPQExpBuffer(query);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	for (i = 0; i < PQntuples(res); i++)
-	{
-		simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
-	}
-
-	PQclear(res);
 	destroyPQExpBuffer(query);
 }
 
 /*
  * Find the OIDs of all tables matching the given list of patterns,
- * and append them to the given OID list.
+ * and append them to the given OID list. 
  */
 static void
 expand_table_name_patterns(Archive *fout,
-						   SimpleStringList *patterns, SimpleOidList *oids)
+						   SimpleStringList *patterns, SimpleOidList *oids,
+						   bool strict_names)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -1195,14 +1212,12 @@ expand_table_name_patterns(Archive *fout,
 	query = createPQExpBuffer();
 
 	/*
-	 * We use UNION ALL rather than UNION; this might sometimes result in
-	 * duplicate entries in the OID list, but we don't care.
+	 * this might sometimes result in duplicate entries in the OID list,
+	 * but we don't care.
 	 */
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		if (cell != patterns->head)
-			appendPQExpBufferStr(query, "UNION ALL\n");
 		appendPQExpBuffer(query,
 						  "SELECT c.oid"
 						  "\nFROM pg_catalog.pg_class c"
@@ -1213,16 +1228,20 @@ expand_table_name_patterns(Archive *fout,
 		processSQLNamePattern(GetConnection(fout), query, cell->val, true,
 							  false, "n.nspname", "c.relname", NULL,
 							  "pg_catalog.pg_table_is_visible(c.oid)");
+
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		if (strict_names && PQntuples(res) == 0)
+			exit_horribly(NULL, "No matching table(s) were found for pattern \"%s\"\n", cell->val);
+
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
+		}
+
+		PQclear(res);
+		resetPQExpBuffer(query);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	for (i = 0; i < PQntuples(res); i++)
-	{
-		simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
-	}
-
-	PQclear(res);
 	destroyPQExpBuffer(query);
 }
 

@@ -545,6 +545,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--strict-names</></term>
+      <listitem>
+       <para>
+        Require that each schema (-n / --schema) and table (-t / --table)
+        qualifier match at least one schema/table in the database to be dumped.
+        Note that if none of the schema/table qualifiers find matches pg_dump
+        will generate an error even without --strict-names.
+       </para>
+       <para>
+        This option has no effect on -N/--exclude-schema, -T/--exclude_table
+        or --exclude-table-date. An exclude pattern failing to match
+        any objects is not considered an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable class="parameter">table</replaceable></option></term>
       <term><option>--exclude-table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>

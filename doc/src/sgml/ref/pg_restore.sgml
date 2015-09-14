@@ -432,6 +432,16 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>--strict-names</></term>
+      <listitem>
+       <para>
+        Require that each schema (-n / --schema) and table (-t / --table)
+        qualifier match at least one schema/table in the backup file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable class="parameter">trigger</replaceable></option></term>
       <term><option>--trigger=<replaceable class="parameter">trigger</replaceable></option></term>
       <listitem>

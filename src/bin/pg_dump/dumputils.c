@@ -1220,6 +1220,7 @@ simple_string_list_append(SimpleStringList *list, const char *val)
 		pg_malloc(offsetof(SimpleStringListCell, val) +strlen(val) + 1);
 
 	cell->next = NULL;
+	cell->touched = false;
 	strcpy(cell->val, val);
 
 	if (list->tail)
@@ -1237,7 +1238,23 @@ simple_string_list_member(SimpleStringList *list, const char *val)
 	for (cell = list->head; cell; cell = cell->next)
 	{
 		if (strcmp(cell->val, val) == 0)
+		{
+			cell->touched = true;
 			return true;
+		}
 	}
 	return false;
+}
+
+const char *
+simple_string_list_not_touched(SimpleStringList *list)
+{
+	SimpleStringListCell *cell;
+
+	for (cell = list->head; cell; cell = cell->next)
+	{
+		if (!cell->touched)
+			return cell->val;
+	}
+	return NULL;
 }
