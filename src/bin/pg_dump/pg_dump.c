@@ -1165,8 +1165,8 @@ expand_schema_name_patterns(Archive *fout,
 	query = createPQExpBuffer();
 
 	/*
-	 * This might sometimes result in duplicate entries in the OID list,
-	 * but we don't care.
+	 * The loop below runs multiple SELECTs might sometimes result in
+	 * duplicate entries in the OID list, but we don't care.
 	 */
 
 	for (cell = patterns->head; cell; cell = cell->next)
