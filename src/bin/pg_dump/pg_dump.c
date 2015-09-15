@@ -1194,7 +1194,7 @@ expand_schema_name_patterns(Archive *fout,
 
 /*
  * Find the OIDs of all tables matching the given list of patterns,
- * and append them to the given OID list. 
+ * and append them to the given OID list.
  */
 static void
 expand_table_name_patterns(Archive *fout,
