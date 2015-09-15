@@ -928,6 +928,7 @@ typedef struct WithCheckOption
 	NodeTag		type;
 	WCOKind		kind;			/* kind of WCO */
 	char	   *relname;		/* name of relation that specified the WCO */
+	char	   *polname;		/* name of RLS policy being checked */
 	Node	   *qual;			/* constraint qual to check */
 	bool		cascaded;		/* true for a cascaded WCO on a view */
 } WithCheckOption;

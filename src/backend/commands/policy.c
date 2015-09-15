@@ -186,9 +186,6 @@ policy_role_list_to_array(List *roles, int *num_roles)
 /*
  * Load row security policy from the catalog, and store it in
  * the relation's relcache entry.
- *
- * We will always set up some kind of policy here.  If no explicit policies
- * are found then an implicit default-deny policy is created.
  */
 void
 RelationBuildRowSecurity(Relation relation)
@@ -246,7 +243,6 @@ RelationBuildRowSecurity(Relation relation)
 			char	   *with_check_value;
 			Expr	   *with_check_qual;
 			char	   *policy_name_value;
-			Oid			policy_id;
 			bool		isnull;
 			RowSecurityPolicy *policy;
 
@@ -298,14 +294,11 @@ RelationBuildRowSecurity(Relation relation)
 			else
 				with_check_qual = NULL;
 
-			policy_id = HeapTupleGetOid(tuple);
-
 			/* Now copy everything into the cache context */
 			MemoryContextSwitchTo(rscxt);
 
 			policy = palloc0(sizeof(RowSecurityPolicy));
 			policy->policy_name = pstrdup(policy_name_value);
-			policy->policy_id = policy_id;
 			policy->polcmd = cmd_value;
 			policy->roles = DatumGetArrayTypePCopy(roles_datum);
 			policy->qual = copyObject(qual_expr);
@@ -326,40 +319,6 @@ RelationBuildRowSecurity(Relation relation)
 
 		systable_endscan(sscan);
 		heap_close(catalog, AccessShareLock);
-
-		/*
-		 * Check if no policies were added
-		 *
-		 * If no policies exist in pg_policy for this relation, then we need
-		 * to create a single default-deny policy.  We use InvalidOid for the
-		 * Oid to indicate that this is the default-deny policy (we may decide
-		 * to ignore the default policy if an extension adds policies).
-		 */
-		if (rsdesc->policies == NIL)
-		{
-			RowSecurityPolicy *policy;
-			Datum		role;
-
-			MemoryContextSwitchTo(rscxt);
-
-			role = ObjectIdGetDatum(ACL_ID_PUBLIC);
-
-			policy = palloc0(sizeof(RowSecurityPolicy));
-			policy->policy_name = pstrdup("default-deny policy");
-			policy->policy_id = InvalidOid;
-			policy->polcmd = '*';
-			policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true,
-											'i');
-			policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
-										   sizeof(bool), BoolGetDatum(false),
-											  false, true);
-			policy->with_check_qual = copyObject(policy->qual);
-			policy->hassublinks = false;
-
-			rsdesc->policies = lcons(policy, rsdesc->policies);
-
-			MemoryContextSwitchTo(oldcxt);
-		}
 	}
 	PG_CATCH();
 	{

@@ -2168,6 +2168,7 @@ _copyWithCheckOption(const WithCheckOption *from)
 
 	COPY_SCALAR_FIELD(kind);
 	COPY_STRING_FIELD(relname);
+	COPY_STRING_FIELD(polname);
 	COPY_NODE_FIELD(qual);
 	COPY_SCALAR_FIELD(cascaded);
 
