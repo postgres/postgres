@@ -187,6 +187,33 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 						   hasSubLinks);
 
 	/*
+	 * For the target relation, when there is a returning list, we need to
+	 * collect up CMD_SELECT policies and add them via add_security_quals.
+	 * This is because, for the RETURNING case, we have to filter any records
+	 * which are not visible through an ALL or SELECT USING policy.
+	 *
+	 * We don't need to worry about the non-target relation case because we are
+	 * checking the ALL and SELECT policies for those relations anyway (see
+	 * above).
+	 */
+	if (root->returningList != NIL &&
+		(commandType == CMD_UPDATE || commandType == CMD_DELETE))
+	{
+		List	   *returning_permissive_policies;
+		List	   *returning_restrictive_policies;
+
+		get_policies_for_relation(rel, CMD_SELECT, user_id,
+								  &returning_permissive_policies,
+								  &returning_restrictive_policies);
+
+		add_security_quals(rt_index,
+						   returning_permissive_policies,
+						   returning_restrictive_policies,
+						   securityQuals,
+						   hasSubLinks);
+	}
+
+	/*
 	 * For INSERT and UPDATE, add withCheckOptions to verify that any new
 	 * records added are consistent with the security policies.  This will use
 	 * each policy's WITH CHECK clause, or its USING clause if no explicit
@@ -232,6 +259,26 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   conflict_restrictive_policies,
 								   withCheckOptions,
 								   hasSubLinks);
+
+			/*
+			 * Get and add ALL/SELECT policies, if there is a RETURNING clause,
+			 * also as WCO policies, again, to avoid silently dropping data.
+			 */
+			if (root->returningList != NIL)
+			{
+				List	   *conflict_returning_permissive_policies = NIL;
+				List	   *conflict_returning_restrictive_policies = NIL;
+
+				get_policies_for_relation(rel, CMD_SELECT, user_id,
+									  &conflict_returning_permissive_policies,
+									  &conflict_returning_restrictive_policies);
+				add_with_check_options(rel, rt_index,
+									   WCO_RLS_CONFLICT_CHECK,
+									   conflict_returning_permissive_policies,
+									   conflict_returning_restrictive_policies,
+									   withCheckOptions,
+									   hasSubLinks);
+			}
 
 			/* Enforce the WITH CHECK clauses of the UPDATE policies */
 			add_with_check_options(rel, rt_index,
