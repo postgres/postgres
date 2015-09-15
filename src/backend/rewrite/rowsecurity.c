@@ -13,11 +13,12 @@
  * Any part of the system which is returning records back to the user, or
  * which is accepting records from the user to add to a table, needs to
  * consider the policies associated with the table (if any).  For normal
- * queries, this is handled by calling prepend_row_security_policies() during
- * rewrite, which looks at each RTE and adds the expressions defined by the
- * policies to the securityQuals list for the RTE.  For queries which modify
- * the relation, any WITH CHECK policies are added to the list of
- * WithCheckOptions for the Query and checked against each row which is being
+ * queries, this is handled by calling get_row_security_policies() during
+ * rewrite, for each RTE in the query.  This returns the expressions defined
+ * by the table's policies as a list that is prepended to the securityQuals
+ * list for the RTE.  For queries which modify the table, any WITH CHECK
+ * clauses from the table's policies are also returned and prepended to the
+ * list of WithCheckOptions for the Query to check each row that is being
  * added to the table.  Other parts of the system (eg: COPY) simply construct
  * a normal query and use that, if RLS is to be applied.
  *
@@ -56,13 +57,29 @@
 #include "utils/syscache.h"
 #include "tcop/utility.h"
 
-static List *pull_row_security_policies(CmdType cmd, Relation relation,
-						   Oid user_id);
-static void process_policies(Query *root, List *policies, int rt_index,
-				 Expr **final_qual,
-				 Expr **final_with_check_qual,
-				 bool *hassublinks,
-				 BoolExprType boolop);
+static void get_policies_for_relation(Relation relation,
+						  CmdType cmd, Oid user_id,
+						  List **permissive_policies,
+						  List **restrictive_policies);
+
+static List *sort_policies_by_name(List *policies);
+
+static int row_security_policy_cmp(const void *a, const void *b);
+
+static void add_security_quals(int rt_index,
+							   List *permissive_policies,
+							   List *restrictive_policies,
+							   List **securityQuals,
+							   bool *hasSubLinks);
+
+static void add_with_check_options(Relation rel,
+								   int rt_index,
+								   WCOKind kind,
+								   List *permissive_policies,
+								   List *restrictive_policies,
+								   List **withCheckOptions,
+								   bool *hasSubLinks);
+
 static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 
 /*
@@ -73,42 +90,29 @@ static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
  *
  * row_security_policy_hook_restrictive can be used to add policies which
  * are enforced, regardless of other policies (they are "AND"d).
- *
- * See below where the hook is called in prepend_row_security_policies for
- * insight into how to use this hook.
  */
 row_security_policy_hook_type row_security_policy_hook_permissive = NULL;
 row_security_policy_hook_type row_security_policy_hook_restrictive = NULL;
 
 /*
- * Get any row security quals and check quals that should be applied to the
- * specified RTE.
+ * Get any row security quals and WithCheckOption checks that should be
+ * applied to the specified RTE.
  *
  * In addition, hasRowSecurity is set to true if row level security is enabled
  * (even if this RTE doesn't have any row security quals), and hasSubLinks is
  * set to true if any of the quals returned contain sublinks.
  */
 void
-get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
-						  int rt_index, List **securityQuals,
-						  List **withCheckOptions, bool *hasRowSecurity,
-						  bool *hasSubLinks)
+get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
+						  List **securityQuals, List **withCheckOptions,
+						  bool *hasRowSecurity, bool *hasSubLinks)
 {
-	Expr	   *rowsec_expr = NULL;
-	Expr	   *rowsec_with_check_expr = NULL;
-	Expr	   *hook_expr_restrictive = NULL;
-	Expr	   *hook_with_check_expr_restrictive = NULL;
-	Expr	   *hook_expr_permissive = NULL;
-	Expr	   *hook_with_check_expr_permissive = NULL;
-
-	List	   *rowsec_policies;
-	List	   *hook_policies_restrictive = NIL;
-	List	   *hook_policies_permissive = NIL;
-
-	Relation	rel;
 	Oid			user_id;
 	int			rls_status;
-	bool		defaultDeny = false;
+	Relation	rel;
+	CmdType		commandType;
+	List	   *permissive_policies;
+	List	   *restrictive_policies;
 
 	/* Defaults for the return values */
 	*securityQuals = NIL;
@@ -157,257 +161,85 @@ get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 	 * policies and t2's SELECT policies.
 	 */
 	rel = heap_open(rte->relid, NoLock);
-	if (rt_index != root->resultRelation)
-		commandType = CMD_SELECT;
 
-	rowsec_policies = pull_row_security_policies(commandType, rel,
-												 user_id);
+	commandType = rt_index == root->resultRelation ?
+				  root->commandType : CMD_SELECT;
+
+	get_policies_for_relation(rel, commandType, user_id, &permissive_policies,
+							  &restrictive_policies);
 
 	/*
-	 * Check if this is only the default-deny policy.
+	 * For SELECT, UPDATE and DELETE, add security quals to enforce these
+	 * policies.  These security quals control access to existing table rows.
+	 * Restrictive policies are "AND"d together, and permissive policies are
+	 * "OR"d together.
 	 *
-	 * Normally, if the table has row security enabled but there are no
-	 * policies, we use a default-deny policy and not allow anything. However,
-	 * when an extension uses the hook to add their own policies, we don't
-	 * want to include the default deny policy or there won't be any way for a
-	 * user to use an extension exclusively for the policies to be used.
+	 * If there are no policy clauses controlling access to the table, this
+	 * will add a single always-false clause (a default-deny policy).
 	 */
-	if (((RowSecurityPolicy *) linitial(rowsec_policies))->policy_id
-		== InvalidOid)
-		defaultDeny = true;
-
-	/* Now that we have our policies, build the expressions from them. */
-	process_policies(root, rowsec_policies, rt_index, &rowsec_expr,
-					 &rowsec_with_check_expr, hasSubLinks, OR_EXPR);
-
-	/*
-	 * Also, allow extensions to add their own policies.
-	 *
-	 * extensions can add either permissive or restrictive policies.
-	 *
-	 * Note that, as with the internal policies, if multiple policies are
-	 * returned then they will be combined into a single expression with all
-	 * of them OR'd (for permissive) or AND'd (for restrictive) together.
-	 *
-	 * If only a USING policy is returned by the extension then it will be
-	 * used for WITH CHECK as well, similar to how internal policies are
-	 * handled.
-	 *
-	 * The only caveat to this is that if there are NO internal policies
-	 * defined, there ARE policies returned by the extension, and RLS is
-	 * enabled on the table, then we will ignore the internally-generated
-	 * default-deny policy and use only the policies returned by the
-	 * extension.
-	 */
-	if (row_security_policy_hook_restrictive)
-	{
-		hook_policies_restrictive = (*row_security_policy_hook_restrictive) (commandType, rel);
-
-		/* Build the expression from any policies returned. */
-		if (hook_policies_restrictive != NIL)
-			process_policies(root, hook_policies_restrictive, rt_index,
-							 &hook_expr_restrictive,
-							 &hook_with_check_expr_restrictive,
-							 hasSubLinks,
-							 AND_EXPR);
-	}
-
-	if (row_security_policy_hook_permissive)
-	{
-		hook_policies_permissive = (*row_security_policy_hook_permissive) (commandType, rel);
-
-		/* Build the expression from any policies returned. */
-		if (hook_policies_permissive != NIL)
-			process_policies(root, hook_policies_permissive, rt_index,
-							 &hook_expr_permissive,
-							 &hook_with_check_expr_permissive, hasSubLinks,
-							 OR_EXPR);
-	}
+	if (commandType == CMD_SELECT ||
+		commandType == CMD_UPDATE ||
+		commandType == CMD_DELETE)
+		add_security_quals(rt_index,
+						   permissive_policies,
+						   restrictive_policies,
+						   securityQuals,
+						   hasSubLinks);
 
 	/*
-	 * If the only built-in policy is the default-deny one, and permissive hook
-	 * policies exist, then use the hook policies only and do not apply the
-	 * default-deny policy.  Otherwise, we will apply both sets below.
-	 *
-	 * Note that we do not remove the defaultDeny policy if only *restrictive*
-	 * policies exist as restrictive policies should only ever be reducing what
-	 * is visible.  Therefore, at least one permissive policy must exist which
-	 * allows records to be seen before restrictive policies can remove rows
-	 * from that set.  A single "true" policy can be created to address this
-	 * requirement, if necessary.
-	 */
-	if (defaultDeny && hook_policies_permissive != NIL)
-	{
-		rowsec_expr = NULL;
-		rowsec_with_check_expr = NULL;
-	}
-
-	/*
-	 * For INSERT or UPDATE, we need to add the WITH CHECK quals to Query's
-	 * withCheckOptions to verify that any new records pass the WITH CHECK
-	 * policy (this will be a copy of the USING policy, if no explicit WITH
-	 * CHECK policy exists).
+	 * For INSERT and UPDATE, add withCheckOptions to verify that any new
+	 * records added are consistent with the security policies.  This will use
+	 * each policy's WITH CHECK clause, or its USING clause if no explicit
+	 * WITH CHECK clause is defined.
 	 */
 	if (commandType == CMD_INSERT || commandType == CMD_UPDATE)
 	{
-		/*
-		 * WITH CHECK OPTIONS wants a WCO node which wraps each Expr, so
-		 * create them as necessary.
-		 */
+		/* This should be the target relation */
+		Assert(rt_index == root->resultRelation);
+
+		add_with_check_options(rel, rt_index,
+							   commandType == CMD_INSERT ?
+							   WCO_RLS_INSERT_CHECK : WCO_RLS_UPDATE_CHECK,
+							   permissive_policies,
+							   restrictive_policies,
+							   withCheckOptions,
+							   hasSubLinks);
 
 		/*
-		 * Handle any restrictive policies first.
-		 *
-		 * They can simply be added.
+		 * For INSERT ... ON CONFLICT DO UPDATE we need additional policy
+		 * checks for the UPDATE which may be applied to the same RTE.
 		 */
-		if (hook_with_check_expr_restrictive)
+		if (commandType == CMD_INSERT &&
+			root->onConflict && root->onConflict->action == ONCONFLICT_UPDATE)
 		{
-			WithCheckOption *wco;
+			List	   *conflict_permissive_policies;
+			List	   *conflict_restrictive_policies;
 
-			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-				WCO_RLS_UPDATE_CHECK;
-			wco->relname = pstrdup(RelationGetRelationName(rel));
-			wco->qual = (Node *) hook_with_check_expr_restrictive;
-			wco->cascaded = false;
-			*withCheckOptions = lappend(*withCheckOptions, wco);
-		}
-
-		/*
-		 * Handle built-in policies, if there are no permissive policies from
-		 * the hook.
-		 */
-		if (rowsec_with_check_expr && !hook_with_check_expr_permissive)
-		{
-			WithCheckOption *wco;
-
-			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-				WCO_RLS_UPDATE_CHECK;
-			wco->relname = pstrdup(RelationGetRelationName(rel));
-			wco->qual = (Node *) rowsec_with_check_expr;
-			wco->cascaded = false;
-			*withCheckOptions = lappend(*withCheckOptions, wco);
-		}
-		/* Handle the hook policies, if there are no built-in ones. */
-		else if (!rowsec_with_check_expr && hook_with_check_expr_permissive)
-		{
-			WithCheckOption *wco;
-
-			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-				WCO_RLS_UPDATE_CHECK;
-			wco->relname = pstrdup(RelationGetRelationName(rel));
-			wco->qual = (Node *) hook_with_check_expr_permissive;
-			wco->cascaded = false;
-			*withCheckOptions = lappend(*withCheckOptions, wco);
-		}
-		/* Handle the case where there are both. */
-		else if (rowsec_with_check_expr && hook_with_check_expr_permissive)
-		{
-			WithCheckOption *wco;
-			List	   *combined_quals = NIL;
-			Expr	   *combined_qual_eval;
-
-			combined_quals = lcons(copyObject(rowsec_with_check_expr),
-								   combined_quals);
-
-			combined_quals = lcons(copyObject(hook_with_check_expr_permissive),
-								   combined_quals);
-
-			combined_qual_eval = makeBoolExpr(OR_EXPR, combined_quals, -1);
-
-			wco = (WithCheckOption *) makeNode(WithCheckOption);
-			wco->kind = commandType == CMD_INSERT ? WCO_RLS_INSERT_CHECK :
-				WCO_RLS_UPDATE_CHECK;
-			wco->relname = pstrdup(RelationGetRelationName(rel));
-			wco->qual = (Node *) combined_qual_eval;
-			wco->cascaded = false;
-			*withCheckOptions = lappend(*withCheckOptions, wco);
-		}
-
-		/*
-		 * ON CONFLICT DO UPDATE has an RTE that is subject to both INSERT and
-		 * UPDATE RLS enforcement.  Those are enforced (as a special, distinct
-		 * kind of WCO) on the target tuple.
-		 *
-		 * Make a second, recursive pass over the RTE for this, gathering
-		 * UPDATE-applicable RLS checks/WCOs, and gathering and converting
-		 * UPDATE-applicable security quals into WCO_RLS_CONFLICT_CHECK RLS
-		 * checks/WCOs.  Finally, these distinct kinds of RLS checks/WCOs are
-		 * concatenated with our own INSERT-applicable list.
-		 */
-		if (root->onConflict && root->onConflict->action == ONCONFLICT_UPDATE &&
-			commandType == CMD_INSERT)
-		{
-			List	   *conflictSecurityQuals = NIL;
-			List	   *conflictWCOs = NIL;
-			ListCell   *item;
-			bool		conflictHasRowSecurity = false;
-			bool		conflictHasSublinks = false;
-
-			/* Assume that RTE is target resultRelation */
-			get_row_security_policies(root, CMD_UPDATE, rte, rt_index,
-									  &conflictSecurityQuals, &conflictWCOs,
-									  &conflictHasRowSecurity,
-									  &conflictHasSublinks);
-
-			if (conflictHasRowSecurity)
-				*hasRowSecurity = true;
-			if (conflictHasSublinks)
-				*hasSubLinks = true;
+			/* Get the policies that apply to the auxiliary UPDATE */
+			get_policies_for_relation(rel, CMD_UPDATE, user_id,
+									  &conflict_permissive_policies,
+									  &conflict_restrictive_policies);
 
 			/*
-			 * Append WITH CHECK OPTIONs/RLS checks, which should not conflict
-			 * between this INSERT and the auxiliary UPDATE
+			 * Enforce the USING clauses of the UPDATE policies using WCOs
+			 * rather than security quals.  This ensures that an error is
+			 * raised if the conflicting row cannot be updated due to RLS,
+			 * rather than the change being silently dropped.
 			 */
-			*withCheckOptions = list_concat(*withCheckOptions,
-											conflictWCOs);
+			add_with_check_options(rel, rt_index,
+								   WCO_RLS_CONFLICT_CHECK,
+								   conflict_permissive_policies,
+								   conflict_restrictive_policies,
+								   withCheckOptions,
+								   hasSubLinks);
 
-			foreach(item, conflictSecurityQuals)
-			{
-				Expr	   *conflict_rowsec_expr = (Expr *) lfirst(item);
-				WithCheckOption *wco;
-
-				wco = (WithCheckOption *) makeNode(WithCheckOption);
-
-				wco->kind = WCO_RLS_CONFLICT_CHECK;
-				wco->relname = pstrdup(RelationGetRelationName(rel));
-				wco->qual = (Node *) copyObject(conflict_rowsec_expr);
-				wco->cascaded = false;
-				*withCheckOptions = lappend(*withCheckOptions, wco);
-			}
-		}
-	}
-
-	/* For SELECT, UPDATE, and DELETE, set the security quals */
-	if (commandType == CMD_SELECT
-		|| commandType == CMD_UPDATE
-		|| commandType == CMD_DELETE)
-	{
-		/* restrictive policies can simply be added to the list first */
-		if (hook_expr_restrictive)
-			*securityQuals = lappend(*securityQuals, hook_expr_restrictive);
-
-		/* If we only have internal permissive, then just add those */
-		if (rowsec_expr && !hook_expr_permissive)
-			*securityQuals = lappend(*securityQuals, rowsec_expr);
-		/* .. and if we have only permissive policies from the hook */
-		else if (!rowsec_expr && hook_expr_permissive)
-			*securityQuals = lappend(*securityQuals, hook_expr_permissive);
-		/* if we have both, we have to combine them with an OR */
-		else if (rowsec_expr && hook_expr_permissive)
-		{
-			List	   *combined_quals = NIL;
-			Expr	   *combined_qual_eval;
-
-			combined_quals = lcons(copyObject(rowsec_expr), combined_quals);
-			combined_quals = lcons(copyObject(hook_expr_permissive),
-								   combined_quals);
-
-			combined_qual_eval = makeBoolExpr(OR_EXPR, combined_quals, -1);
-
-			*securityQuals = lappend(*securityQuals, combined_qual_eval);
+			/* Enforce the WITH CHECK clauses of the UPDATE policies */
+			add_with_check_options(rel, rt_index,
+								   WCO_RLS_UPDATE_CHECK,
+								   conflict_permissive_policies,
+								   conflict_restrictive_policies,
+								   withCheckOptions,
+								   hasSubLinks);
 		}
 	}
 
@@ -423,199 +255,385 @@ get_row_security_policies(Query *root, CmdType commandType, RangeTblEntry *rte,
 }
 
 /*
- * pull_row_security_policies
+ * get_policies_for_relation
  *
- * Returns the list of policies to be added for this relation, based on the
- * type of command and the roles to which it applies, from the relation cache.
+ * Returns lists of permissive and restrictive policies to be applied to the
+ * specified relation, based on the command type and role.
  *
+ * This includes any policies added by extensions.
  */
-static List *
-pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
+static void
+get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
+						  List **permissive_policies,
+						  List **restrictive_policies)
 {
-	List	   *policies = NIL;
 	ListCell   *item;
 
+	*permissive_policies = NIL;
+	*restrictive_policies = NIL;
+
 	/*
-	 * Row security is enabled for the relation and the row security GUC is
-	 * either 'on' or 'force' here, so find the policies to apply to the
-	 * table. There must always be at least one policy defined (may be the
-	 * simple 'default-deny' policy, if none are explicitly defined on the
-	 * table).
+	 * First find all internal policies for the relation.  CREATE POLICY does
+	 * not currently support defining restrictive policies, so for now all
+	 * internal policies are permissive.
 	 */
 	foreach(item, relation->rd_rsdesc->policies)
 	{
-		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+		bool				cmd_matches = false;
+		RowSecurityPolicy  *policy = (RowSecurityPolicy *) lfirst(item);
 
 		/* Always add ALL policies, if they exist. */
-		if (policy->polcmd == '*' &&
-			check_role_for_policy(policy->roles, user_id))
-			policies = lcons(policy, policies);
-
-		/* Add relevant command-specific policies to the list. */
-		switch (cmd)
+		if (policy->polcmd == '*')
+			cmd_matches = true;
+		else
 		{
-			case CMD_SELECT:
-				if (policy->polcmd == ACL_SELECT_CHR
-					&& check_role_for_policy(policy->roles, user_id))
-					policies = lcons(policy, policies);
-				break;
-			case CMD_INSERT:
-				/* If INSERT then only need to add the WITH CHECK qual */
-				if (policy->polcmd == ACL_INSERT_CHR
-					&& check_role_for_policy(policy->roles, user_id))
-					policies = lcons(policy, policies);
-				break;
-			case CMD_UPDATE:
-				if (policy->polcmd == ACL_UPDATE_CHR
-					&& check_role_for_policy(policy->roles, user_id))
-					policies = lcons(policy, policies);
-				break;
-			case CMD_DELETE:
-				if (policy->polcmd == ACL_DELETE_CHR
-					&& check_role_for_policy(policy->roles, user_id))
-					policies = lcons(policy, policies);
-				break;
-			default:
-				elog(ERROR, "unrecognized policy command type %d", (int) cmd);
-				break;
+			/* Check whether the policy applies to the specified command type */
+			switch (cmd)
+			{
+				case CMD_SELECT:
+					if (policy->polcmd == ACL_SELECT_CHR)
+						cmd_matches = true;
+					break;
+				case CMD_INSERT:
+					if (policy->polcmd == ACL_INSERT_CHR)
+						cmd_matches = true;
+					break;
+				case CMD_UPDATE:
+					if (policy->polcmd == ACL_UPDATE_CHR)
+						cmd_matches = true;
+					break;
+				case CMD_DELETE:
+					if (policy->polcmd == ACL_DELETE_CHR)
+						cmd_matches = true;
+					break;
+				default:
+					elog(ERROR, "unrecognized policy command type %d",
+						 (int) cmd);
+					break;
+			}
 		}
+
+		/*
+		 * Add this policy to the list of permissive policies if it
+		 * applies to the specified role.
+		 */
+		if (cmd_matches && check_role_for_policy(policy->roles, user_id))
+			*permissive_policies = lappend(*permissive_policies, policy);
 	}
 
 	/*
-	 * There should always be a policy applied.  If there are none found then
-	 * create a simply defauly-deny policy (might be that policies exist but
-	 * that none of them apply to the role which is querying the table).
+	 * Then add any permissive or restrictive policies defined by extensions.
+	 * These are simply appended to the lists of internal policies, if they
+	 * apply to the specified role.
 	 */
-	if (policies == NIL)
+	if (row_security_policy_hook_restrictive)
 	{
-		RowSecurityPolicy *policy = NULL;
-		Datum		role;
+		List	   *hook_policies =
+			(*row_security_policy_hook_restrictive) (cmd, relation);
 
-		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
+		/*
+		 * We sort restrictive policies by name so that any WCOs they generate
+		 * are checked in a well-defined order.
+		 */
+		hook_policies = sort_policies_by_name(hook_policies);
 
-		policy = palloc0(sizeof(RowSecurityPolicy));
-		policy->policy_name = pstrdup("default-deny policy");
-		policy->policy_id = InvalidOid;
-		policy->polcmd = '*';
-		policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true,
-										'i');
-		policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
-										  sizeof(bool), BoolGetDatum(false),
-										  false, true);
-		policy->with_check_qual = copyObject(policy->qual);
-		policy->hassublinks = false;
+		foreach(item, hook_policies)
+		{
+			RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
 
-		policies = list_make1(policy);
+			if (check_role_for_policy(policy->roles, user_id))
+				*restrictive_policies = lappend(*restrictive_policies, policy);
+		}
 	}
 
-	Assert(policies != NIL);
+	if (row_security_policy_hook_permissive)
+	{
+		List	   *hook_policies =
+			(*row_security_policy_hook_permissive) (cmd, relation);
+
+		foreach(item, hook_policies)
+		{
+			RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+
+			if (check_role_for_policy(policy->roles, user_id))
+				*permissive_policies = lappend(*permissive_policies, policy);
+		}
+	}
+}
+
+/*
+ * sort_policies_by_name
+ *
+ * This is only used for restrictive policies, ensuring that any
+ * WithCheckOptions they generate are applied in a well-defined order.
+ * This is not necessary for permissive policies, since they are all "OR"d
+ * together into a single WithCheckOption check.
+ */
+static List *
+sort_policies_by_name(List *policies)
+{
+	int			npol = list_length(policies);
+	RowSecurityPolicy *pols;
+	ListCell   *item;
+	int			ii = 0;
+
+	if (npol <= 1)
+		return policies;
+
+	pols = (RowSecurityPolicy *) palloc(sizeof(RowSecurityPolicy) * npol);
+
+	foreach(item, policies)
+	{
+		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+		pols[ii++] = *policy;
+	}
+
+	qsort(pols, npol, sizeof(RowSecurityPolicy), row_security_policy_cmp);
+
+	policies = NIL;
+	for (ii = 0; ii < npol; ii++)
+		policies = lappend(policies, &pols[ii]);
 
 	return policies;
 }
 
 /*
- * process_policies
+ * qsort comparator to sort RowSecurityPolicy entries by name
+ */
+static int
+row_security_policy_cmp(const void *a, const void *b)
+{
+	const RowSecurityPolicy *pa = (const RowSecurityPolicy *) a;
+	const RowSecurityPolicy *pb = (const RowSecurityPolicy *) b;
+
+	/* Guard against NULL policy names from extensions */
+	if (pa->policy_name == NULL)
+		return pb->policy_name == NULL ? 0 : 1;
+	if (pb->policy_name == NULL)
+		return -1;
+
+	return strcmp(pa->policy_name, pb->policy_name);
+}
+
+/*
+ * add_security_quals
  *
- * This will step through the policies which are passed in (which would come
- * from either the built-in ones created on a table, or from policies provided
- * by an extension through the hook provided), work out how to combine them,
- * rewrite them as necessary, and produce an Expr for the normal security
- * quals and an Expr for the with check quals.
+ * Add security quals to enforce the specified RLS policies, restricting
+ * access to existing data in a table.  If there are no policies controlling
+ * access to the table, then all access is prohibited --- i.e., an implicit
+ * default-deny policy is used.
  *
- * qual_eval, with_check_eval, and hassublinks are output variables
+ * New security quals are added to securityQuals, and hasSubLinks is set to
+ * true if any of the quals added contain sublink subqueries.
  */
 static void
-process_policies(Query *root, List *policies, int rt_index, Expr **qual_eval,
-				 Expr **with_check_eval, bool *hassublinks,
-				 BoolExprType boolop)
+add_security_quals(int rt_index,
+				   List *permissive_policies,
+				   List *restrictive_policies,
+				   List **securityQuals,
+				   bool *hasSubLinks)
 {
 	ListCell   *item;
-	List	   *quals = NIL;
-	List	   *with_check_quals = NIL;
+	List	   *permissive_quals = NIL;
+	Expr	   *rowsec_expr;
 
 	/*
-	 * Extract the USING and WITH CHECK quals from each of the policies and
-	 * add them to our lists.  We only want WITH CHECK quals if this RTE is
-	 * the query's result relation.
+	 * First collect up the permissive quals.  If we do not find any permissive
+	 * policies then no rows are visible (this is handled below).
 	 */
-	foreach(item, policies)
+	foreach(item, permissive_policies)
 	{
 		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
 
 		if (policy->qual != NULL)
-			quals = lcons(copyObject(policy->qual), quals);
-
-		if (policy->with_check_qual != NULL &&
-			rt_index == root->resultRelation)
-			with_check_quals = lcons(copyObject(policy->with_check_qual),
-									 with_check_quals);
-
-		/*
-		 * For each policy, if there is only a USING clause then copy/use it
-		 * for the WITH CHECK policy also, if this RTE is the query's result
-		 * relation.
-		 */
-		if (policy->qual != NULL && policy->with_check_qual == NULL &&
-			rt_index == root->resultRelation)
-			with_check_quals = lcons(copyObject(policy->qual),
-									 with_check_quals);
-
-
-		if (policy->hassublinks)
-			*hassublinks = true;
+		{
+			permissive_quals = lappend(permissive_quals,
+									   copyObject(policy->qual));
+			*hasSubLinks |= policy->hassublinks;
+		}
 	}
 
 	/*
-	 * If we end up without any normal quals (perhaps the only policy matched
-	 * was for INSERT), then create a single all-false one.
-	 */
-	if (quals == NIL)
-		quals = lcons(makeConst(BOOLOID, -1, InvalidOid, sizeof(bool),
-								BoolGetDatum(false), false, true), quals);
-
-	/*
-	 * Row security quals always have the target table as varno 1, as no joins
-	 * are permitted in row security expressions. We must walk the expression,
-	 * updating any references to varno 1 to the varno the table has in the
-	 * outer query.
+	 * We must have permissive quals, always, or no rows are visible.
 	 *
-	 * We rewrite the expression in-place.
-	 *
-	 * We must have some quals at this point; the default-deny policy, if
-	 * nothing else.  Note that we might not have any WITH CHECK quals- that's
-	 * fine, as this might not be the resultRelation.
+	 * If we do not, then we simply return a single 'false' qual which results
+	 * in no rows being visible.
 	 */
-	Assert(quals != NIL);
+	if (permissive_quals != NIL)
+	{
+		/*
+		 * We now know that permissive policies exist, so we can now add
+		 * security quals based on the USING clauses from the restrictive
+		 * policies.  Since these need to be "AND"d together, we can
+		 * just add them one at a time.
+		 */
+		foreach(item, restrictive_policies)
+		{
+			RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+			Expr	   *qual;
 
-	ChangeVarNodes((Node *) quals, 1, rt_index, 0);
+			if (policy->qual != NULL)
+			{
+				qual = copyObject(policy->qual);
+				ChangeVarNodes((Node *) qual, 1, rt_index, 0);
 
-	if (with_check_quals != NIL)
-		ChangeVarNodes((Node *) with_check_quals, 1, rt_index, 0);
+				*securityQuals = lappend(*securityQuals, qual);
+				*hasSubLinks |= policy->hassublinks;
+			}
+		}
 
-	/*
-	 * If more than one security qual is returned, then they need to be
-	 * combined together.
-	 */
-	if (list_length(quals) > 1)
-		*qual_eval = makeBoolExpr(boolop, quals, -1);
+		/*
+		 * Then add a single security qual "OR"ing together the USING clauses
+		 * from all the permissive policies.
+		 */
+		if (list_length(permissive_quals) == 1)
+			rowsec_expr = (Expr *) linitial(permissive_quals);
+		else
+			rowsec_expr = makeBoolExpr(OR_EXPR, permissive_quals, -1);
+
+		ChangeVarNodes((Node *) rowsec_expr, 1, rt_index, 0);
+		*securityQuals = lappend(*securityQuals, rowsec_expr);
+	}
 	else
-		*qual_eval = (Expr *) linitial(quals);
+		/*
+		 * A permissive policy must exist for rows to be visible at all.
+		 * Therefore, if there were no permissive policies found, return a
+		 * single always-false clause.
+		 */
+		*securityQuals = lappend(*securityQuals,
+								 makeConst(BOOLOID, -1, InvalidOid,
+										   sizeof(bool), BoolGetDatum(false),
+										   false, true));
+}
+
+/*
+ * add_with_check_options
+ *
+ * Add WithCheckOptions of the specified kind to check that new records
+ * added by an INSERT or UPDATE are consistent with the specified RLS
+ * policies.  Normally new data must satisfy the WITH CHECK clauses from the
+ * policies.  If a policy has no explicit WITH CHECK clause, its USING clause
+ * is used instead.  In the special case of an UPDATE arising from an
+ * INSERT ... ON CONFLICT DO UPDATE, existing records are first checked using
+ * a WCO_RLS_CONFLICT_CHECK WithCheckOption, which always uses the USING
+ * clauses from RLS policies.
+ *
+ * New WCOs are added to withCheckOptions, and hasSubLinks is set to true if
+ * any of the check clauses added contain sublink subqueries.
+ */
+static void
+add_with_check_options(Relation rel,
+					   int rt_index,
+					   WCOKind kind,
+					   List *permissive_policies,
+					   List *restrictive_policies,
+					   List **withCheckOptions,
+					   bool *hasSubLinks)
+{
+	ListCell   *item;
+	List	   *permissive_quals = NIL;
+
+#define QUAL_FOR_WCO(policy) \
+	( kind != WCO_RLS_CONFLICT_CHECK &&	\
+	  (policy)->with_check_qual != NULL ? \
+	  (policy)->with_check_qual : (policy)->qual )
 
 	/*
-	 * Similarly, if more than one WITH CHECK qual is returned, then they need
-	 * to be combined together.
-	 *
-	 * with_check_quals is allowed to be NIL here since this might not be the
-	 * resultRelation (see above).
+	 * First collect up the permissive policy clauses, similar to
+	 * add_security_quals.
 	 */
-	if (list_length(with_check_quals) > 1)
-		*with_check_eval = makeBoolExpr(boolop, with_check_quals, -1);
-	else if (with_check_quals != NIL)
-		*with_check_eval = (Expr *) linitial(with_check_quals);
-	else
-		*with_check_eval = NULL;
+	foreach(item, permissive_policies)
+	{
+		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+		Expr	   *qual = QUAL_FOR_WCO(policy);
 
-	return;
+		if (qual != NULL)
+		{
+			permissive_quals = lappend(permissive_quals, copyObject(qual));
+			*hasSubLinks |= policy->hassublinks;
+		}
+	}
+
+	/*
+	 * There must be at least one permissive qual found or no rows are
+	 * allowed to be added.  This is the same as in add_security_quals.
+	 *
+	 * If there are no permissive_quals then we fall through and return a single
+	 * 'false' WCO, preventing all new rows.
+	 */
+	if (permissive_quals != NIL)
+	{
+		/*
+		 * Add a single WithCheckOption for all the permissive policy clauses
+		 * "OR"d together.  This check has no policy name, since if the check
+		 * fails it means that no policy granted permission to perform the
+		 * update, rather than any particular policy being violated.
+		 */
+		WithCheckOption *wco;
+
+		wco = (WithCheckOption *) makeNode(WithCheckOption);
+		wco->kind = kind;
+		wco->relname = pstrdup(RelationGetRelationName(rel));
+		wco->polname = NULL;
+		wco->cascaded = false;
+
+		if (list_length(permissive_quals) == 1)
+			wco->qual = (Node *) linitial(permissive_quals);
+		else
+			wco->qual = (Node *) makeBoolExpr(OR_EXPR, permissive_quals, -1);
+
+		ChangeVarNodes(wco->qual, 1, rt_index, 0);
+
+		*withCheckOptions = lappend(*withCheckOptions, wco);
+
+		/*
+		 * Now add WithCheckOptions for each of the restrictive policy clauses
+		 * (which will be "AND"d together).  We use a separate WithCheckOption
+		 * for each restrictive policy to allow the policy name to be included
+		 * in error reports if the policy is violated.
+		 */
+		foreach(item, restrictive_policies)
+		{
+			RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+			Expr	   *qual = QUAL_FOR_WCO(policy);
+			WithCheckOption *wco;
+
+			if (qual != NULL)
+			{
+				qual = copyObject(qual);
+				ChangeVarNodes((Node *) qual, 1, rt_index, 0);
+
+				wco = (WithCheckOption *) makeNode(WithCheckOption);
+				wco->kind = kind;
+				wco->relname = pstrdup(RelationGetRelationName(rel));
+				wco->polname = pstrdup(policy->policy_name);
+				wco->qual = (Node *) qual;
+				wco->cascaded = false;
+
+				*withCheckOptions = lappend(*withCheckOptions, wco);
+				*hasSubLinks |= policy->hassublinks;
+			}
+		}
+	}
+	else
+	{
+		/*
+		 * If there were no policy clauses to check new data, add a single
+		 * always-false WCO (a default-deny policy).
+		 */
+		WithCheckOption *wco;
+
+		wco = (WithCheckOption *) makeNode(WithCheckOption);
+		wco->kind = kind;
+		wco->relname = pstrdup(RelationGetRelationName(rel));
+		wco->polname = NULL;
+		wco->qual = (Node *) makeConst(BOOLOID, -1, InvalidOid,
+									   sizeof(bool), BoolGetDatum(false),
+									   false, true);
+		wco->cascaded = false;
+
+		*withCheckOptions = lappend(*withCheckOptions, wco);
+	}
 }
 
 /*

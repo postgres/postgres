@@ -2403,6 +2403,7 @@ _outWithCheckOption(StringInfo str, const WithCheckOption *node)
 
 	WRITE_ENUM_FIELD(kind, WCOKind);
 	WRITE_STRING_FIELD(relname);
+	WRITE_STRING_FIELD(polname);
 	WRITE_NODE_FIELD(qual);
 	WRITE_BOOL_FIELD(cascaded);
 }

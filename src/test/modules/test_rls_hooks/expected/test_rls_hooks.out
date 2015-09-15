@@ -83,7 +83,7 @@ SELECT * FROM rls_test_restrictive;
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',10);
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r4','s4',10);
-ERROR:  new row violates row level security policy for "rls_test_restrictive"
+ERROR:  new row violates row level security policy "extension policy" for "rls_test_restrictive"
 SET ROLE s1;
 -- With only the hook's policies, both
 -- permissive hook's policy is current_user = username
@@ -124,7 +124,7 @@ EXPLAIN (costs off) SELECT * FROM rls_test_permissive;
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Seq Scan on rls_test_permissive
-   Filter: (("current_user"() = username) OR ((data % 2) = 0))
+   Filter: (((data % 2) = 0) OR ("current_user"() = username))
 (2 rows)
 
 SELECT * FROM rls_test_permissive;
@@ -163,7 +163,7 @@ SELECT * FROM rls_test_restrictive;
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',8);
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r3','s3',10);
-ERROR:  new row violates row level security policy for "rls_test_restrictive"
+ERROR:  new row violates row level security policy "extension policy" for "rls_test_restrictive"
 -- failure
 INSERT INTO rls_test_restrictive VALUES ('r1','s1',7);
 ERROR:  new row violates row level security policy for "rls_test_restrictive"
@@ -176,7 +176,7 @@ EXPLAIN (costs off) SELECT * FROM rls_test_both;
                                         QUERY PLAN                                         
 -------------------------------------------------------------------------------------------
  Subquery Scan on rls_test_both
-   Filter: (("current_user"() = rls_test_both.username) OR ((rls_test_both.data % 2) = 0))
+   Filter: (((rls_test_both.data % 2) = 0) OR ("current_user"() = rls_test_both.username))
    ->  Seq Scan on rls_test_both rls_test_both_1
          Filter: ("current_user"() = supervisor)
 (4 rows)
@@ -190,7 +190,7 @@ SELECT * FROM rls_test_both;
 INSERT INTO rls_test_both VALUES ('r1','s1',8);
 -- failure
 INSERT INTO rls_test_both VALUES ('r3','s3',10);
-ERROR:  new row violates row level security policy for "rls_test_both"
+ERROR:  new row violates row level security policy "extension policy" for "rls_test_both"
 -- failure
 INSERT INTO rls_test_both VALUES ('r1','s1',7);
 ERROR:  new row violates row level security policy for "rls_test_both"

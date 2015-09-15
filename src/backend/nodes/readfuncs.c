@@ -270,6 +270,7 @@ _readWithCheckOption(void)
 
 	READ_ENUM_FIELD(kind, WCOKind);
 	READ_STRING_FIELD(relname);
+	READ_STRING_FIELD(polname);
 	READ_NODE_FIELD(qual);
 	READ_BOOL_FIELD(cascaded);
 

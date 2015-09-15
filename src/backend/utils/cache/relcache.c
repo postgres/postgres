@@ -859,8 +859,6 @@ equalPolicy(RowSecurityPolicy *policy1, RowSecurityPolicy *policy2)
 		if (policy2 == NULL)
 			return false;
 
-		if (policy1->policy_id != policy2->policy_id)
-			return false;
 		if (policy1->polcmd != policy2->polcmd)
 			return false;
 		if (policy1->hassublinks != policy2->hassublinks)

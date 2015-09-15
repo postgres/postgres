@@ -1786,8 +1786,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		/*
 		 * Fetch any new security quals that must be applied to this RTE.
 		 */
-		get_row_security_policies(parsetree, parsetree->commandType, rte,
-								  rt_index, &securityQuals, &withCheckOptions,
+		get_row_security_policies(parsetree, rte, rt_index,
+								  &securityQuals, &withCheckOptions,
 								  &hasRowSecurity, &hasSubLinks);
 
 		if (securityQuals != NIL || withCheckOptions != NIL)
@@ -3026,6 +3026,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 			wco = makeNode(WithCheckOption);
 			wco->kind = WCO_VIEW_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(view));
+			wco->polname = NULL;
 			wco->qual = NULL;
 			wco->cascaded = cascaded;
 
