@@ -865,7 +865,7 @@ cbrdissect(struct vars * v,
 	if (tlen % brlen != 0)
 		return REG_NOMATCH;
 	numreps = tlen / brlen;
-	if (numreps < min || (numreps > max && max != INFINITY))
+	if (numreps < min || (numreps > max && max != DUPINF))
 		return REG_NOMATCH;
 
 	/* okay, compare the actual string contents */
@@ -964,7 +964,7 @@ citerdissect(struct vars * v,
 	 * sub-match endpoints in endpts[1..max_matches].
 	 */
 	max_matches = end - begin;
-	if (max_matches > t->max && t->max != INFINITY)
+	if (max_matches > t->max && t->max != DUPINF)
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
@@ -1149,7 +1149,7 @@ creviterdissect(struct vars * v,
 	 * sub-match endpoints in endpts[1..max_matches].
 	 */
 	max_matches = end - begin;
-	if (max_matches > t->max && t->max != INFINITY)
+	if (max_matches > t->max && t->max != DUPINF)
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;

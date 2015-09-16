@@ -960,13 +960,13 @@ parseqatom(struct vars * v,
 	{
 		case '*':
 			m = 0;
-			n = INFINITY;
+			n = DUPINF;
 			qprefer = (v->nextvalue) ? LONGER : SHORTER;
 			NEXT();
 			break;
 		case '+':
 			m = 1;
-			n = INFINITY;
+			n = DUPINF;
 			qprefer = (v->nextvalue) ? LONGER : SHORTER;
 			NEXT();
 			break;
@@ -984,7 +984,7 @@ parseqatom(struct vars * v,
 				if (SEE(DIGIT))
 					n = scannum(v);
 				else
-					n = INFINITY;
+					n = DUPINF;
 				if (m > n)
 				{
 					ERR(REG_BADBR);
@@ -1146,8 +1146,8 @@ parseqatom(struct vars * v,
 		 * really care where its submatches are.
 		 */
 		dupnfa(v->nfa, atom->begin, atom->end, s, atom->begin);
-		assert(m >= 1 && m != INFINITY && n >= 1);
-		repeat(v, s, atom->begin, m - 1, (n == INFINITY) ? n : n - 1);
+		assert(m >= 1 && m != DUPINF && n >= 1);
+		repeat(v, s, atom->begin, m - 1, (n == DUPINF) ? n : n - 1);
 		f = COMBINE(qprefer, atom->flags);
 		t = subre(v, '.', f, s, atom->end);		/* prefix and atom */
 		NOERR();
@@ -1268,7 +1268,7 @@ repeat(struct vars * v,
 #define  SOME	 2
 #define  INF	 3
 #define  PAIR(x, y)  ((x)*4 + (y))
-#define  REDUCE(x)	 ( ((x) == INFINITY) ? INF : (((x) > 1) ? SOME : (x)) )
+#define  REDUCE(x)	 ( ((x) == DUPINF) ? INF : (((x) > 1) ? SOME : (x)) )
 	const int	rm = REDUCE(m);
 	const int	rn = REDUCE(n);
 	struct state *s;
@@ -2026,7 +2026,7 @@ stdump(struct subre * t,
 	if (t->min != 1 || t->max != 1)
 	{
 		fprintf(f, " {%d,", t->min);
-		if (t->max != INFINITY)
+		if (t->max != DUPINF)
 			fprintf(f, "%d", t->max);
 		fprintf(f, "}");
 	}

@@ -860,6 +860,12 @@ lexescape(struct vars * v)
 			c = lexdigits(v, 8, 1, 3);
 			if (ISERR())
 				FAILW(REG_EESCAPE);
+			if (c > 0xff)
+			{
+				/* out of range, so we handled one digit too much */
+				v->now--;
+				c >>= 3;
+			}
 			RETV(PLAIN, c);
 			break;
 		default:
