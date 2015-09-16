@@ -4669,7 +4669,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> <literal>\e</> </entry>
        <entry> the character whose collating-sequence name
        is <literal>ESC</>,
-       or failing that, the character with octal value 033 </entry>
+       or failing that, the character with octal value <literal>033</> </entry>
        </row>
 
        <row>
@@ -4695,15 +4695,17 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>\u</><replaceable>wxyz</> </entry>
        <entry> (where <replaceable>wxyz</> is exactly four hexadecimal digits)
-       the UTF16 (Unicode, 16-bit) character <literal>U+</><replaceable>wxyz</>
-       in the local byte ordering </entry>
+       the character whose hexadecimal value is
+       <literal>0x</><replaceable>wxyz</>
+       </entry>
        </row>
 
        <row>
        <entry> <literal>\U</><replaceable>stuvwxyz</> </entry>
        <entry> (where <replaceable>stuvwxyz</> is exactly eight hexadecimal
        digits)
-       reserved for a hypothetical Unicode extension to 32 bits
+       the character whose hexadecimal value is
+       <literal>0x</><replaceable>stuvwxyz</>
        </entry>
        </row>
 
@@ -4750,6 +4752,17 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     Hexadecimal digits are <literal>0</>-<literal>9</>,
     <literal>a</>-<literal>f</>, and <literal>A</>-<literal>F</>.
     Octal digits are <literal>0</>-<literal>7</>.
+   </para>
+
+   <para>
+    Numeric character-entry escapes specifying values outside the ASCII range
+    (0-127) have meanings dependent on the database encoding.  When the
+    encoding is UTF-8, escape values are equivalent to Unicode code points,
+    for example <literal>\u1234</> means the character <literal>U+1234</>.
+    For other multibyte encodings, character-entry escapes usually just
+    specify the concatenation of the byte values for the character.  If the
+    escape value does not correspond to any legal character in the database
+    encoding, no error will be raised, but it will never match any data.
    </para>
 
    <para>
