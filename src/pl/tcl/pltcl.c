@@ -1055,7 +1055,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 		if (ret_numvals % 2 != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("invalid return list from trigger - must have even # of elements")));
+					 errmsg("trigger's return list must have even number of elements")));
 
 		modattrs = (int *) palloc(tupdesc->natts * sizeof(int));
 		modvalues = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
@@ -2345,7 +2345,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		if (strlen(nulls) != qdesc->nargs)
 		{
 			Tcl_SetResult(interp,
-					   "length of nulls string doesn't match # of arguments",
+				  "length of nulls string doesn't match number of arguments",
 						  TCL_STATIC);
 			return TCL_ERROR;
 		}
@@ -2370,12 +2370,12 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 			return TCL_ERROR;
 
 		/************************************************************
-		 * Check that the # of arguments matches
+		 * Check that the number of arguments matches
 		 ************************************************************/
 		if (callnargs != qdesc->nargs)
 		{
 			Tcl_SetResult(interp,
-			   "argument list length doesn't match # of arguments for query",
+						  "argument list length doesn't match number of arguments for query",
 						  TCL_STATIC);
 			ckfree((char *) callargs);
 			return TCL_ERROR;
