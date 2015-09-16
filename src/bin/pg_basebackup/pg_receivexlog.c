@@ -67,7 +67,7 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
-	printf(_("      --if-not-exists    do not treat naming conflicts as an error when creating a slot\n"));
+	printf(_("      --if-not-exists    do not error if slot already exists when creating a slot\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));

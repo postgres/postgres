@@ -1165,10 +1165,11 @@ static void
 usage(void)
 {
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
-	printf(_("Usage:\n  %s [OPTION]... {[-D] DATADIR}\n\n"), progname);
+	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"));
 	printf(_("                   (zero in either value means no change)\n"));
+	printf(_(" [-D] DATADIR      data directory\n"));
 	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
 	printf(_("  -f               force update to be done\n"));
 	printf(_("  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"));
