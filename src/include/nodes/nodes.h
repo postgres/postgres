@@ -413,7 +413,6 @@ typedef enum NodeTag
 	T_SortGroupClause,
 	T_GroupingSet,
 	T_WindowClause,
-	T_PrivGrantee,
 	T_FuncWithArgs,
 	T_AccessPriv,
 	T_CreateOpClassItem,
