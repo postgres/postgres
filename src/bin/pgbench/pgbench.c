@@ -165,6 +165,7 @@ bool		use_quiet;			/* quiet logging onto stderr */
 int			agg_interval;		/* log aggregates instead of individual
 								 * transactions */
 int			progress = 0;		/* thread progress report every this seconds */
+bool		progress_timestamp = false; /* progress report with Unix time */
 int			progress_nclients = 0;		/* number of clients for progress
 										 * report */
 int			progress_nthreads = 0;		/* number of threads for progress
@@ -388,6 +389,7 @@ usage(void)
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g. 0.01 for 1%%)\n"
+		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
 	  "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -2773,6 +2775,7 @@ main(int argc, char **argv)
 		{"aggregate-interval", required_argument, NULL, 5},
 		{"rate", required_argument, NULL, 'R'},
 		{"latency-limit", required_argument, NULL, 'L'},
+		{"progress-timestamp", no_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3108,6 +3111,10 @@ main(int argc, char **argv)
 					exit(1);
 				}
 #endif
+				break;
+			case 6:
+				progress_timestamp = true;
+				benchmarking_option_set = true;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -3747,6 +3754,7 @@ threadRun(void *arg)
 							sqlat,
 							lag,
 							stdev;
+				char		tbuf[64];
 
 				/*
 				 * Add up the statistics of all threads.
@@ -3779,10 +3787,16 @@ threadRun(void *arg)
 				stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
 				lag = 0.001 * (lags - last_lags) / (count - last_count);
 
+				if (progress_timestamp)
+					sprintf(tbuf, "%.03f s",
+							INSTR_TIME_GET_MILLISEC(now_time) / 1000.0);
+				else
+					sprintf(tbuf, "%.1f s", total_run);
+
 				fprintf(stderr,
-						"progress: %.1f s, %.1f tps, "
-						"lat %.3f ms stddev %.3f",
-						total_run, tps, latency, stdev);
+						"progress: %s, %.1f tps, lat %.3f ms stddev %.3f",
+						tbuf, tps, latency, stdev);
+
 				if (throttle_delay)
 				{
 					fprintf(stderr, ", lag %.3f ms", lag);
