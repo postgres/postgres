@@ -85,14 +85,15 @@ usage(unsigned short int pager)
 	fprintf(output, _("  -f, --file=FILENAME      execute commands from file, then exit\n"));
 	fprintf(output, _("  -l, --list               list available databases, then exit\n"));
 	fprintf(output, _("  -v, --set=, --variable=NAME=VALUE\n"
-					  "                           set psql variable NAME to VALUE e.g.: -v ON_ERROR_STOP=1\n"));
+					  "                           set psql variable NAME to VALUE\n"
+					  "                           (e.g., -v ON_ERROR_STOP=1)\n"));
 	fprintf(output, _("  -V, --version            output version information, then exit\n"));
 	fprintf(output, _("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
 	fprintf(output, _("  -1 (\"one\"), --single-transaction\n"
 					  "                           execute as a single transaction (if non-interactive)\n"));
 	fprintf(output, _("  -?, --help[=options]     show this help, then exit\n"));
-	fprintf(output, _("      --help=variables     show a list of all specially treated variables, then exit\n"));
-	fprintf(output, _("      --help=commands      show a list of backslash commands, then exit\n"));
+	fprintf(output, _("      --help=commands      list backslash commands, then exit\n"));
+	fprintf(output, _("      --help=variables     list special variables, then exit\n"));
 
 	fprintf(output, _("\nInput and output options:\n"));
 	fprintf(output, _("  -a, --echo-all           echo all input from script\n"));

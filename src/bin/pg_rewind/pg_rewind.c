@@ -60,8 +60,8 @@ usage(const char *progname)
 	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
-	printf(_("      --source-pgdata=DIRECTORY  source data directory to sync with\n"));
-	printf(_("      --source-server=CONNSTR    source server to sync with\n"));
+	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
+	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
 	printf(_("  -n, --dry-run                  stop before modifying anything\n"));
 	printf(_("  -P, --progress                 write progress messages\n"));
 	printf(_("      --debug                    write a lot of debug messages\n"));

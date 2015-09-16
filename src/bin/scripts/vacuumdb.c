@@ -936,15 +936,15 @@ help(const char *progname)
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
 	printf(_("  -f, --full                      do full vacuuming\n"));
 	printf(_("  -F, --freeze                    freeze row transaction information\n"));
+	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
 	printf(_("  -V, --version                   output version information, then exit\n"));
 	printf(_("  -z, --analyze                   update optimizer statistics\n"));
-	printf(_("  -Z, --analyze-only              only update optimizer statistics;  no vacuum\n"));
-	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
+	printf(_("  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"));
 	printf(_("      --analyze-in-stages         only update optimizer statistics, in multiple\n"
-			 "                                  stages for faster results;  no vacuum\n"));
+			 "                                  stages for faster results; no vacuum\n"));
 	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
