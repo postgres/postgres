@@ -94,6 +94,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_NODE_FIELD(invalItems);
 	COPY_SCALAR_FIELD(nParamExec);
 	COPY_SCALAR_FIELD(hasRowSecurity);
+	COPY_SCALAR_FIELD(parallelModeNeeded);
 
 	return newnode;
 }

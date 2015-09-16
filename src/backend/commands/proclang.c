@@ -135,6 +135,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 									  false,	/* isLeakProof */
 									  false,	/* isStrict */
 									  PROVOLATILE_VOLATILE,
+									  PROPARALLEL_UNSAFE,
 									  buildoidvector(funcargtypes, 0),
 									  PointerGetDatum(NULL),
 									  PointerGetDatum(NULL),
@@ -174,6 +175,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  false,		/* isLeakProof */
 										  true, /* isStrict */
 										  PROVOLATILE_VOLATILE,
+										  PROPARALLEL_UNSAFE,
 										  buildoidvector(funcargtypes, 1),
 										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
@@ -216,6 +218,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  false,		/* isLeakProof */
 										  true, /* isStrict */
 										  PROVOLATILE_VOLATILE,
+										  PROPARALLEL_UNSAFE,
 										  buildoidvector(funcargtypes, 1),
 										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),

@@ -10204,6 +10204,7 @@ dumpFunc(Archive *fout, DumpOptions *dopt, FuncInfo *finfo)
 	char	   *proconfig;
 	char	   *procost;
 	char	   *prorows;
+	char	   *proparallel;
 	char	   *lanname;
 	char	   *rettypename;
 	int			nallargs;
@@ -10228,7 +10229,25 @@ dumpFunc(Archive *fout, DumpOptions *dopt, FuncInfo *finfo)
 	selectSourceSchema(fout, finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-	if (fout->remoteVersion >= 90500)
+	if (fout->remoteVersion >= 90600)
+	{
+		/*
+		 * proparallel was added in 9.6
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+					"pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
+		  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
+					 "pg_catalog.pg_get_function_result(oid) AS funcresult, "
+						  "array_to_string(protrftypes, ' ') AS protrftypes, "
+						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "proleakproof, proconfig, procost, prorows, proparallel, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 90500)
 	{
 		/*
 		 * protrftypes was added in 9.5
@@ -10410,6 +10429,12 @@ dumpFunc(Archive *fout, DumpOptions *dopt, FuncInfo *finfo)
 	proconfig = PQgetvalue(res, 0, PQfnumber(res, "proconfig"));
 	procost = PQgetvalue(res, 0, PQfnumber(res, "procost"));
 	prorows = PQgetvalue(res, 0, PQfnumber(res, "prorows"));
+
+	if (PQfnumber(res, "proparallel") != -1)
+		proparallel = PQgetvalue(res, 0, PQfnumber(res, "proparallel"));
+	else
+		proparallel = NULL;
+
 	lanname = PQgetvalue(res, 0, PQfnumber(res, "lanname"));
 
 	/*
@@ -10607,6 +10632,17 @@ dumpFunc(Archive *fout, DumpOptions *dopt, FuncInfo *finfo)
 	if (proretset[0] == 't' &&
 		strcmp(prorows, "0") != 0 && strcmp(prorows, "1000") != 0)
 		appendPQExpBuffer(q, " ROWS %s", prorows);
+
+	if (proparallel != NULL && proparallel[0] != PROPARALLEL_UNSAFE)
+	{
+		if (proparallel[0] == PROPARALLEL_SAFE)
+			appendPQExpBufferStr(q, " PARALLEL SAFE");
+		else if (proparallel[0] == PROPARALLEL_RESTRICTED)
+			appendPQExpBufferStr(q, " PARALLEL RESTRICTED");
+		else if (proparallel[0] != PROPARALLEL_UNSAFE)
+			exit_horribly(NULL, "unrecognized proparallel value for function \"%s\"\n",
+						  finfo->dobj.name);
+	}
 
 	for (i = 0; i < nconfigitems; i++)
 	{

@@ -243,6 +243,11 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	if (!(eflags & (EXEC_FLAG_SKIP_TRIGGERS | EXEC_FLAG_EXPLAIN_ONLY)))
 		AfterTriggerBeginQuery();
 
+	/* Enter parallel mode, if required by the query. */
+	if (queryDesc->plannedstmt->parallelModeNeeded &&
+		!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
+		EnterParallelMode();
+
 	MemoryContextSwitchTo(oldcontext);
 }
 
@@ -473,6 +478,11 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	 * Must switch out of context before destroying it
 	 */
 	MemoryContextSwitchTo(oldcontext);
+
+	/* Exit parallel mode, if it was required by the query. */
+	if (queryDesc->plannedstmt->parallelModeNeeded &&
+		!(estate->es_top_eflags & EXEC_FLAG_EXPLAIN_ONLY))
+		ExitParallelMode();
 
 	/*
 	 * Release EState and per-query memory context.  This should release

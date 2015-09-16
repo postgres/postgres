@@ -540,6 +540,7 @@ AggregateCreate(const char *aggName,
 							 false,		/* isStrict (not needed for agg) */
 							 PROVOLATILE_IMMUTABLE,		/* volatility (not
 														 * needed for agg) */
+							 PROPARALLEL_UNSAFE,
 							 parameterTypes,	/* paramTypes */
 							 allParameterTypes, /* allParamTypes */
 							 parameterModes,	/* parameterModes */

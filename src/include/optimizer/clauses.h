@@ -62,6 +62,7 @@ extern bool contain_subplans(Node *clause);
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);
 extern bool contain_volatile_functions_not_nextval(Node *clause);
+extern bool contain_parallel_unsafe(Node *node);
 extern bool contain_nonstrict_functions(Node *clause);
 extern bool contain_leaked_vars(Node *clause);
 

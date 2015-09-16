@@ -4995,6 +4995,23 @@
      </row>
 
      <row>
+      <entry><structfield>proparallel</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>proparallel</structfield> tells whether the function
+       can be safely run in parallel mode.
+       It is <literal>s</literal> for functions which are safe to run in
+       parallel mode without restriction.
+       It is <literal>r</literal> for functions which can be run in parallel
+       mode, but their execution is restricted to the parallel group leader;
+       parallel worker processes cannot invoke these functions.
+       It is <literal>u</literal> for functions which are unsafe in parallel
+       mode; the presence of such a function forces a serial execution plan.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>pronargs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>

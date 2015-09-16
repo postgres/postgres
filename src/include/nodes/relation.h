@@ -102,6 +102,10 @@ typedef struct PlannerGlobal
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
 	bool		hasRowSecurity; /* row security applied? */
+
+	bool		parallelModeOK;	/* parallel mode potentially OK? */
+
+	bool		parallelModeNeeded;	/* parallel mode actually required? */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
