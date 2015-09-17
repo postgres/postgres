@@ -65,40 +65,6 @@ typedef struct
 
 static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
 
-
-/*
- * Check if datatype is the specified type or equivalent to it.
- *
- * Note: we could just do getBaseType() unconditionally, but since that's
- * a relatively expensive catalog lookup that most users won't need, we
- * try the straight comparison first.
- */
-static bool
-is_expected_type(Oid typid, Oid expected_type)
-{
-	if (typid == expected_type)
-		return true;
-	typid = getBaseType(typid);
-	if (typid == expected_type)
-		return true;
-	return false;
-}
-
-/* Check if datatype is TEXT or binary-equivalent to it */
-static bool
-is_text_type(Oid typid)
-{
-	/* varchar(n) and char(n) are binary-compatible with text */
-	if (typid == TEXTOID || typid == VARCHAROID || typid == BPCHAROID)
-		return true;
-	/* Allow domains over these types, too */
-	typid = getBaseType(typid);
-	if (typid == TEXTOID || typid == VARCHAROID || typid == BPCHAROID)
-		return true;
-	return false;
-}
-
-
 /*
  * Order: haspos, len, word, for all positions (pos, weight)
  */
@@ -1166,7 +1132,7 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 
 	if (SPI_tuptable == NULL ||
 		SPI_tuptable->tupdesc->natts != 1 ||
-		!is_expected_type(SPI_gettypeid(SPI_tuptable->tupdesc, 1),
+		!IsBinaryCoercible(SPI_gettypeid(SPI_tuptable->tupdesc, 1),
 						  TSVECTOROID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1352,7 +1318,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("tsvector column \"%s\" does not exist",
 						trigger->tgargs[0])));
-	if (!is_expected_type(SPI_gettypeid(rel->rd_att, tsvector_attr_num),
+	if (!IsBinaryCoercible(SPI_gettypeid(rel->rd_att, tsvector_attr_num),
 						  TSVECTOROID))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1370,7 +1336,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("configuration column \"%s\" does not exist",
 							trigger->tgargs[1])));
-		if (!is_expected_type(SPI_gettypeid(rel->rd_att, config_attr_num),
+		if (!IsBinaryCoercible(SPI_gettypeid(rel->rd_att, config_attr_num),
 							  REGCONFIGOID))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1416,7 +1382,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column \"%s\" does not exist",
 							trigger->tgargs[i])));
-		if (!is_text_type(SPI_gettypeid(rel->rd_att, numattr)))
+		if (!IsBinaryCoercible(SPI_gettypeid(rel->rd_att, numattr), TEXTOID))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("column \"%s\" is not of a character type",
