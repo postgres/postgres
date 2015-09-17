@@ -466,6 +466,11 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		 */
 		START_CRIT_SECTION();
 
+		/*
+		 * While we delete only one tuple at once we could mix calls
+		 * PageIndexTupleDelete() here and PageIndexMultiDelete() in
+		 * gistRedoPageUpdateRecord()
+		 */
 		if (OffsetNumberIsValid(oldoffnum))
 			PageIndexTupleDelete(page, oldoffnum);
 		gistfillbuffer(page, itup, ntup, InvalidOffsetNumber);
