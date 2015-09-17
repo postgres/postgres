@@ -19,6 +19,10 @@ export PGPORT
 # authentication configuration.
 standard_initdb() {
 	"$1"
+	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
+	then
+		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
+	fi
 	../../src/test/regress/pg_regress --config-auth "$PGDATA"
 }
 
