@@ -467,7 +467,7 @@ struct guts
 	size_t		nsub;			/* copy of re_nsub */
 	struct subre *tree;
 	struct cnfa search;			/* for fast preliminary search */
-	int			ntree;			/* number of subre's, less one */
+	int			ntree;			/* number of subre's, plus one */
 	struct colormap cmap;
 	int			FUNCPTR(compare, (const chr *, const chr *, size_t));
 	struct subre *lacons;		/* lookahead-constraint vector */

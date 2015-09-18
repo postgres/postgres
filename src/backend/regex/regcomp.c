@@ -228,7 +228,7 @@ struct vars
 	struct subre *tree;			/* subexpression tree */
 	struct subre *treechain;	/* all tree nodes allocated */
 	struct subre *treefree;		/* any free tree nodes */
-	int			ntree;			/* number of tree nodes */
+	int			ntree;			/* number of tree nodes, plus one */
 	struct cvec *cv;			/* interface cvec */
 	struct cvec *cv2;			/* utility cvec */
 	struct subre *lacons;		/* lookahead-constraint vector */
