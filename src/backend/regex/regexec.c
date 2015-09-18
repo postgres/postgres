@@ -326,7 +326,11 @@ find(struct vars * v,
 						   (chr **) NULL, &hitend);
 		else
 			end = longest(v, d, begin, v->stop, &hitend);
-		NOERR();
+		if (ISERR())
+		{
+			freedfa(d);
+			return v->err;
+		}
 		if (hitend && cold == NULL)
 			cold = begin;
 		if (end != NULL)
