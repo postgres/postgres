@@ -50,7 +50,7 @@ PostgreSQL documentation
 
   <para>
    Unlike the standby's WAL receiver, <application>pg_receivexlog</>
-   flushes WAL data only when a WAL file is closed, by default.
+   by default flushes WAL data only when a WAL file is closed.
    <literal>--synchronous</> option must be specified to flush WAL data
    in real time and ensure it's safely flushed to disk.
   </para>

@@ -81,6 +81,16 @@ PostgreSQL documentation
    <filename>recovery.conf</> file in the target data directory with a
    suitable <varname>restore_command</>.
   </para>
+
+  <para>
+   <application>pg_rewind</> requires that the target server either has
+   the <xref linkend="guc-wal-log-hints"> option is enabled
+   in <filename>postgresql.conf</> or that data checksums were enabled when
+   the cluster was initialized with <application>initdb</>.  Neither of these
+   are currently on by default.
+   <xref linkend="guc-full-page-writes"> must also be enabled.  That is the
+   default.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -159,13 +169,13 @@ PostgreSQL documentation
      <varlistentry>
       <term><option>-V</option></term>
       <term><option>--version</option></term>
-      <listitem><para>Display version information, then exit</para></listitem>
+      <listitem><para>Display version information, then exit.</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
-      <listitem><para>Show help, then exit</para></listitem>
+      <listitem><para>Show help, then exit.</para></listitem>
      </varlistentry>
 
     </variablelist>
@@ -184,13 +194,6 @@ PostgreSQL documentation
 
  <refsect1>
   <title>Notes</title>
-
-  <para>
-   <application>pg_rewind</> requires that the <varname>wal_log_hints</>
-   option is enabled in <filename>postgresql.conf</>, or that data checksums
-   were enabled when the cluster was initialized with <application>initdb</>.
-   <varname>full_page_writes</> must also be enabled.
-  </para>
 
   <refsect2>
    <title>How it works</title>

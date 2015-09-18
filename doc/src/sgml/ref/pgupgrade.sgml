@@ -414,8 +414,8 @@ pg_upgrade.exe
     servers</title>
 
     <para>
-     If you have Streaming Replication (<xref
-     linkend="streaming-replication">) or Log-Shipping (<xref
+     If you have Streaming Replication (see <xref
+     linkend="streaming-replication">) or Log-Shipping (see <xref
      linkend="warm-standby">) standby servers, follow these steps to
      upgrade them.  You will not be running <application>pg_upgrade</>
      on the standby servers, but rather <application>rsync</>.  Do not
