@@ -59,6 +59,15 @@ typedef enum					/* type categories for datum_to_jsonb */
 	JSONBTYPE_OTHER				/* all else */
 } JsonbTypeCategory;
 
+typedef struct JsonbAggState
+{
+   JsonbInState      *res;
+   JsonbTypeCategory  key_category;
+   Oid                key_output_func;
+   JsonbTypeCategory  val_category;
+   Oid                val_output_func;
+} JsonbAggState;
+
 static inline Datum jsonb_from_cstring(char *json, int len);
 static size_t checkStringLen(size_t len);
 static void jsonb_in_object_start(void *pstate);
@@ -1573,12 +1582,10 @@ clone_parse_state(JsonbParseState *state)
 Datum
 jsonb_agg_transfn(PG_FUNCTION_ARGS)
 {
-	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	MemoryContext oldcontext,
 				aggcontext;
+	JsonbAggState *state;
 	JsonbInState elem;
-	JsonbTypeCategory tcategory;
-	Oid			outfuncoid;
 	Datum		val;
 	JsonbInState *result;
 	bool		single_scalar = false;
@@ -1587,47 +1594,55 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 	JsonbValue	v;
 	JsonbIteratorToken type;
 
-	if (val_type == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not determine input data type")));
-
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
 		/* cannot be called directly because of internal-type argument */
 		elog(ERROR, "jsonb_agg_transfn called in non-aggregate context");
 	}
 
+	/* set up the accumulator on the first go round */
+
+	if (PG_ARGISNULL(0))
+	{
+
+		Oid         arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
+
+		if (arg_type == InvalidOid)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not determine input data type")));
+
+		oldcontext = MemoryContextSwitchTo(aggcontext);
+		state = palloc(sizeof(JsonbAggState));
+		result = palloc0(sizeof(JsonbInState));
+		state->res = result;
+		result->res = pushJsonbValue(&result->parseState,
+									 WJB_BEGIN_ARRAY, NULL);
+		MemoryContextSwitchTo(oldcontext);
+
+		jsonb_categorize_type(arg_type, &state->val_category,
+							  &state->val_output_func);
+	}
+	else
+	{
+		state = (JsonbAggState *) PG_GETARG_POINTER(0);
+		result = state->res;
+	}
+
 	/* turn the argument into jsonb in the normal function context */
 
 	val = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
 
-	jsonb_categorize_type(val_type,
-						  &tcategory, &outfuncoid);
-
 	memset(&elem, 0, sizeof(JsonbInState));
 
-	datum_to_jsonb(val, PG_ARGISNULL(1), &elem, tcategory, outfuncoid, false);
+	datum_to_jsonb(val, PG_ARGISNULL(1), &elem, state->val_category,
+				   state->val_output_func, false);
 
 	jbelem = JsonbValueToJsonb(elem.res);
 
 	/* switch to the aggregate context for accumulation operations */
 
 	oldcontext = MemoryContextSwitchTo(aggcontext);
-
-	/* set up the accumulator on the first go round */
-
-	if (PG_ARGISNULL(0))
-	{
-		result = palloc0(sizeof(JsonbInState));
-		result->res = pushJsonbValue(&result->parseState,
-									 WJB_BEGIN_ARRAY, NULL);
-
-	}
-	else
-	{
-		result = (JsonbInState *) PG_GETARG_POINTER(0);
-	}
 
 	it = JsonbIteratorInit(&jbelem->root);
 
@@ -1669,7 +1684,6 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 					v.val.numeric =
 					DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
 											NumericGetDatum(v.val.numeric)));
-
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 type, &v);
@@ -1681,13 +1695,13 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_RETURN_POINTER(result);
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	JsonbInState *arg;
+	JsonbAggState *arg;
 	JsonbInState result;
 	Jsonb	   *out;
 
@@ -1697,7 +1711,7 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();		/* returns null iff no input values */
 
-	arg = (JsonbInState *) PG_GETARG_POINTER(0);
+	arg = (JsonbAggState *) PG_GETARG_POINTER(0);
 
 	/*
 	 * We need to do a shallow clone of the argument in case the final
@@ -1706,11 +1720,10 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 	 * values, just add the final array end marker.
 	 */
 
-	result.parseState = clone_parse_state(arg->parseState);
+	result.parseState = clone_parse_state(arg->res->parseState);
 
 	result.res = pushJsonbValue(&result.parseState,
 								WJB_END_ARRAY, NULL);
-
 
 	out = JsonbValueToJsonb(result.res);
 
@@ -1723,12 +1736,10 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 Datum
 jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 {
-	Oid			val_type;
 	MemoryContext oldcontext,
 				aggcontext;
 	JsonbInState elem;
-	JsonbTypeCategory tcategory;
-	Oid			outfuncoid;
+	JsonbAggState *state;
 	Datum		val;
 	JsonbInState *result;
 	bool		single_scalar;
@@ -1744,14 +1755,47 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 		elog(ERROR, "jsonb_object_agg_transfn called in non-aggregate context");
 	}
 
+	/* set up the accumulator on the first go round */
+
+	if (PG_ARGISNULL(0))
+	{
+		Oid         arg_type;
+
+		oldcontext = MemoryContextSwitchTo(aggcontext);
+		state = palloc(sizeof(JsonbAggState));
+		result = palloc0(sizeof(JsonbInState));
+		state->res = result;
+		result->res = pushJsonbValue(&result->parseState,
+									 WJB_BEGIN_OBJECT, NULL);
+		MemoryContextSwitchTo(oldcontext);
+
+		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
+
+		if (arg_type == InvalidOid)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not determine input data type")));
+
+		jsonb_categorize_type(arg_type, &state->key_category,
+							  &state->key_output_func);
+
+		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 2);
+
+		if (arg_type == InvalidOid)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not determine input data type")));
+
+		jsonb_categorize_type(arg_type, &state->val_category,
+							  &state->val_output_func);
+	}
+	else
+	{
+		state = (JsonbAggState *) PG_GETARG_POINTER(0);
+		result = state->res;
+	}
+
 	/* turn the argument into jsonb in the normal function context */
-
-	val_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
-
-	if (val_type == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not determine input data type")));
 
 	if (PG_ARGISNULL(1))
 		ereport(ERROR,
@@ -1760,52 +1804,27 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	val = PG_GETARG_DATUM(1);
 
-	jsonb_categorize_type(val_type,
-						  &tcategory, &outfuncoid);
-
 	memset(&elem, 0, sizeof(JsonbInState));
 
-	datum_to_jsonb(val, false, &elem, tcategory, outfuncoid, true);
+	datum_to_jsonb(val, false, &elem, state->key_category,
+				   state->key_output_func, true);
 
 	jbkey = JsonbValueToJsonb(elem.res);
 
-	val_type = get_fn_expr_argtype(fcinfo->flinfo, 2);
-
-	if (val_type == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not determine input data type")));
-
 	val = PG_ARGISNULL(2) ? (Datum) 0 : PG_GETARG_DATUM(2);
-
-	jsonb_categorize_type(val_type,
-						  &tcategory, &outfuncoid);
 
 	memset(&elem, 0, sizeof(JsonbInState));
 
-	datum_to_jsonb(val, PG_ARGISNULL(2), &elem, tcategory, outfuncoid, false);
+	datum_to_jsonb(val, PG_ARGISNULL(2), &elem, state->val_category,
+				   state->val_output_func, false);
 
 	jbval = JsonbValueToJsonb(elem.res);
+
+	it = JsonbIteratorInit(&jbkey->root);
 
 	/* switch to the aggregate context for accumulation operations */
 
 	oldcontext = MemoryContextSwitchTo(aggcontext);
-
-	/* set up the accumulator on the first go round */
-
-	if (PG_ARGISNULL(0))
-	{
-		result = palloc0(sizeof(JsonbInState));
-		result->res = pushJsonbValue(&result->parseState,
-									 WJB_BEGIN_OBJECT, NULL);
-
-	}
-	else
-	{
-		result = (JsonbInState *) PG_GETARG_POINTER(0);
-	}
-
-	it = JsonbIteratorInit(&jbkey->root);
 
 	/*
 	 * keys should be scalar, and we should have already checked for that
@@ -1895,7 +1914,6 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 					v.val.numeric =
 					DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
 											NumericGetDatum(v.val.numeric)));
-
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 single_scalar ? WJB_VALUE : type,
@@ -1908,13 +1926,13 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_RETURN_POINTER(result);
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	JsonbInState *arg;
+	JsonbAggState *arg;
 	JsonbInState result;
 	Jsonb	   *out;
 
@@ -1924,20 +1942,19 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();		/* returns null iff no input values */
 
-	arg = (JsonbInState *) PG_GETARG_POINTER(0);
+	arg = (JsonbAggState *) PG_GETARG_POINTER(0);
 
 	/*
-	 * We need to do a shallow clone of the argument in case the final
-	 * function is called more than once, so we avoid changing the argument. A
-	 * shallow clone is sufficient as we aren't going to change any of the
-	 * values, just add the final object end marker.
+	 * We need to do a shallow clone of the argument's res field in case the
+	 * final function is called more than once, so we avoid changing the
+	 * it. A shallow clone is sufficient as we aren't going to change any of
+	 * the values, just add the final object end marker.
 	 */
 
-	result.parseState = clone_parse_state(arg->parseState);
+	result.parseState = clone_parse_state(arg->res->parseState);
 
 	result.res = pushJsonbValue(&result.parseState,
 								WJB_END_OBJECT, NULL);
-
 
 	out = JsonbValueToJsonb(result.res);
 
