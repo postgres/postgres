@@ -2014,6 +2014,7 @@ TupleHashEntry
 TupleHashEntryData
 TupleHashIterator
 TupleHashTable
+TupleQueueFunnel
 TupleTableSlot
 Tuplesortstate
 Tuplestorestate
