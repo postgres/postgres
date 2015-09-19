@@ -4978,7 +4978,7 @@ readRecoveryCommandFile(void)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid value for recovery parameter \"%s\"",
 								"recovery_target_action"),
-						 errhint("The allowed values are \"pause\", \"promote\" and \"shutdown\".")));
+						 errhint("The allowed values are \"pause\", \"promote\", and \"shutdown\".")));
 
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target_action = '%s'",
