@@ -13,7 +13,7 @@ GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
     report_invalid_record:2:c-format
 
 gettext-files: distprep
-	find $(srcdir)/ $(srcdir)/../common/ $(srcdir)/../port/ -name '*.c' -print | LC_ALL=C sort >$@
+	find $(srcdir) $(srcdir)/../common $(srcdir)/../port -name '*.c' -print | LC_ALL=C sort >$@
 
 my-clean:
 	rm -f gettext-files
