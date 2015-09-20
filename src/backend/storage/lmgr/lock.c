@@ -646,7 +646,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		locallock->nLocks = 0;
 		locallock->numLockOwners = 0;
 		locallock->maxLockOwners = 8;
-		locallock->lockOwners = NULL;
+		locallock->lockOwners = NULL;	/* in case next line fails */
 		locallock->lockOwners = (LOCALLOCKOWNER *)
 			MemoryContextAlloc(TopMemoryContext,
 						  locallock->maxLockOwners * sizeof(LOCALLOCKOWNER));
@@ -1004,8 +1004,11 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		if (locallock->lockOwners[i].owner != NULL)
 			ResourceOwnerForgetLock(locallock->lockOwners[i].owner, locallock);
 	}
-	pfree(locallock->lockOwners);
+	locallock->numLockOwners = 0;
+	if (locallock->lockOwners != NULL)
+		pfree(locallock->lockOwners);
 	locallock->lockOwners = NULL;
+
 	if (!hash_search(LockMethodLocalHash,
 					 (void *) &(locallock->tag),
 					 HASH_REMOVE, NULL))
