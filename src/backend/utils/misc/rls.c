@@ -63,13 +63,6 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	if (relid < FirstNormalObjectId)
 		return RLS_NONE;
 
-	/*
-	 * Check if we have been told to explicitly skip RLS (perhaps because this
-	 * is a foreign key check)
-	 */
-	if (InRowLevelSecurityDisabled())
-		return RLS_NONE;
-
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		return RLS_NONE;

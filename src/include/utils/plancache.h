@@ -111,7 +111,6 @@ typedef struct CachedPlanSource
 	int			num_custom_plans;		/* number of plans included in total */
 	bool		hasRowSecurity; /* planned with row security? */
 	bool		row_security_env;		/* row security setting when planned */
-	bool		rowSecurityDisabled;	/* is row security disabled? */
 } CachedPlanSource;
 
 /*
