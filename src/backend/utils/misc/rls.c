@@ -87,32 +87,19 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	/*
 	 * Check permissions
 	 *
-	 * If the relation has row level security enabled and the row_security GUC
-	 * is off, then check if the user has rights to bypass RLS for this
-	 * relation.  Table owners can always bypass, as can any role with the
-	 * BYPASSRLS capability.
-	 *
-	 * If the role is the table owner, then we bypass RLS unless row_security
-	 * is set to 'force'.  Note that superuser is always considered an owner.
-	 *
-	 * Return RLS_NONE_ENV to indicate that this decision depends on the
-	 * environment (in this case, what the current values of user_id and
-	 * row_security are).
+	 * Table owners always bypass RLS.  Note that superuser is always
+	 * considered an owner.  Return RLS_NONE_ENV to indicate that this
+	 * decision depends on the environment (in this case, the user_id).
 	 */
-	if (row_security != ROW_SECURITY_FORCE
-		&& (pg_class_ownercheck(relid, user_id)))
+	if (pg_class_ownercheck(relid, user_id))
 		return RLS_NONE_ENV;
 
 	/*
-	 * If the row_security GUC is 'off' then check if the user has permission
-	 * to bypass it.  Note that we have already handled the case where the
-	 * user is the table owner above.
-	 *
-	 * Note that row_security is always considered 'on' when querying through
-	 * a view or other cases where checkAsUser is true, so skip this if
-	 * checkAsUser is in use.
+	 * If the row_security GUC is 'off', check if the user has permission to
+	 * bypass RLS.  row_security is always considered 'on' when querying
+	 * through a view or other cases where checkAsUser is valid.
 	 */
-	if (!checkAsUser && row_security == ROW_SECURITY_OFF)
+	if (!row_security && !checkAsUser)
 	{
 		if (has_bypassrls_privilege(user_id))
 			/* OK to bypass */

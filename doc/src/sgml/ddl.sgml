@@ -1585,16 +1585,13 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    The table owners and superusers bypass the row security system when
-   querying a table, by default.  Row security can be enabled for
-   superusers and table owners by setting
-   <xref linkend="guc-row-security"> to <literal>force</literal>.  Any
-   user can request that row security be bypassed by setting
-   <xref linkend="guc-row-security"> to <literal>off</literal>.  If
-   the user does not have privileges to bypass row security when
-   querying a given table then an error will be returned instead.  Other
-   users can be granted the ability to bypass the row security system
-   with the <literal>BYPASSRLS</literal> role attribute.  This
-   attribute can only be set by a superuser.
+   querying a table.  Any user can request that row security be bypassed by
+   setting <xref linkend="guc-row-security"> to <literal>off</literal>.  If
+   the user does not have privileges to bypass row security when querying a
+   given table then an error will be returned instead.  Other users can be
+   granted the ability to bypass the row security system with
+   the <literal>BYPASSRLS</literal> role attribute.  This attribute can only
+   be set by a superuser.
   </para>
 
   <para>
