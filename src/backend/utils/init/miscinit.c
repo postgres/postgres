@@ -341,7 +341,7 @@ GetAuthenticatedUserId(void)
  * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
  * and the SecurityRestrictionContext flags.
  *
- * Currently there are three valid bits in SecurityRestrictionContext:
+ * Currently there are two valid bits in SecurityRestrictionContext:
  *
  * SECURITY_LOCAL_USERID_CHANGE indicates that we are inside an operation
  * that is temporarily changing CurrentUserId via these functions.  This is
@@ -358,9 +358,6 @@ GetAuthenticatedUserId(void)
  * these restrictions are fairly draconian, we apply them only in contexts
  * where the called functions are really supposed to be side-effect-free
  * anyway, such as VACUUM/ANALYZE/REINDEX.
- *
- * SECURITY_ROW_LEVEL_DISABLED indicates that we are inside an operation that
- * needs to bypass row level security checks, for example FK checks.
  *
  * Unlike GetUserId, GetUserIdAndSecContext does *not* Assert that the current
  * value of CurrentUserId is valid; nor does SetUserIdAndSecContext require
@@ -402,15 +399,6 @@ bool
 InSecurityRestrictedOperation(void)
 {
 	return (SecurityRestrictionContext & SECURITY_RESTRICTED_OPERATION) != 0;
-}
-
-/*
- * InRowLevelSecurityDisabled - are we inside a RLS-disabled operation?
- */
-bool
-InRowLevelSecurityDisabled(void)
-{
-	return (SecurityRestrictionContext & SECURITY_ROW_LEVEL_DISABLED) != 0;
 }
 
 
