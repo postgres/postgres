@@ -753,8 +753,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "{");
 
 					for (element = 0; element < asize; element++)
-                                                        sprintf(mallocedval + strlen(mallocedval), "%c,", (((bool *) var->value)[element]) ? 't' : 'f');
-
+						sprintf(mallocedval + strlen(mallocedval), "%c,", (((bool *) var->value)[element]) ? 't' : 'f');
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "}");
 				}
