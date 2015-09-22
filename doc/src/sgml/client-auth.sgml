@@ -690,9 +690,9 @@ local   db1,db2,@demodbs  all                                   md5
   </indexterm>
 
   <para>
-   When using an external authentication system like Ident or GSSAPI,
+   When using an external authentication system such as Ident or GSSAPI,
    the name of the operating system user that initiated the connection
-   might not be the same as the database user he needs to connect as.
+   might not be the same as the database user that is to be connect as.
    In this case, a user name map can be applied to map the operating system
    user name to a database user.  To use user name mapping, specify
    <literal>map</literal>=<replaceable>map-name</replaceable>
@@ -1185,7 +1185,7 @@ omicron         bryanh                  guest1
     The drawback of this procedure is that it depends on the integrity
     of the client: if the client machine is untrusted or compromised,
     an attacker could run just about any program on port 113 and
-    return any user name he chooses. This authentication method is
+    return any user name they choose. This authentication method is
     therefore only appropriate for closed networks where each client
     machine is under tight control and where the database and system
     administrators operate in close contact. In other words, you must

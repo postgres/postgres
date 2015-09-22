@@ -96,7 +96,7 @@
      Returns serial number of current client certificate.  The combination of
      certificate serial number and certificate issuer is guaranteed to
      uniquely identify a certificate (but not its owner &mdash; the owner
-     ought to regularly change his keys, and get new certificates from the
+     ought to regularly change their keys, and get new certificates from the
      issuer).
     </para>
 

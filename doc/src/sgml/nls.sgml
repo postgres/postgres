@@ -115,7 +115,7 @@ msgstr "another translated"
     for the translator, such as about expected alignment.  The #:
     comment indicates the exact location(s) where the message is used
     in the source.  The translator need not look at the program
-    source, but he can if there is doubt about the correct
+    source, but can if there is doubt about the correct
     translation.  The #, comments contain flags that describe the
     message in some way.  There are currently two flags:
     <literal>fuzzy</literal> is set if the message has possibly been

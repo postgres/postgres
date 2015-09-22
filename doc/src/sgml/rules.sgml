@@ -1652,7 +1652,7 @@ CREATE RULE shoelace_ins AS ON INSERT TO shoelace
     Now assume that once in a while, a pack of shoelaces arrives at
     the shop and a big parts list along with it.  But you don't want
     to manually update the <literal>shoelace</literal> view every
-    time.  Instead we setup two little tables: one where you can
+    time.  Instead we set up two little tables: one where you can
     insert the items from the part list, and one with a special
     trick. The creation commands for these are:
 
@@ -2023,57 +2023,57 @@ SELECT * FROM shoelace;
     behavior of the default access control system. Relations that
     are used due to rules get checked against the
     privileges of the rule owner, not the user invoking the rule.
-    This means that a user only needs the required privileges
-    for the tables/views that he names explicitly in his queries.
+    This means that users only need the required privileges
+    for the tables/views that are explicitly named in their queries.
 </para>
 
 <para>
     For example: A user has a list of phone numbers where some of
-    them are private, the others are of interest for the secretary of the office.
-    He can construct the following:
+    them are private, the others are of interest for the assistant of the office.
+    The user can construct the following:
 
 <programlisting>
 CREATE TABLE phone_data (person text, phone text, private boolean);
 CREATE VIEW phone_number AS
     SELECT person, CASE WHEN NOT private THEN phone END AS phone
     FROM phone_data;
-GRANT SELECT ON phone_number TO secretary;
+GRANT SELECT ON phone_number TO assistant;
 </programlisting>
 
-    Nobody except him (and the database superusers) can access the
+    Nobody except that user (and the database superusers) can access the
     <literal>phone_data</> table. But because of the <command>GRANT</>,
-    the secretary can run a <command>SELECT</command> on the
+    the assistant can run a <command>SELECT</command> on the
     <literal>phone_number</> view. The rule system will rewrite the
     <command>SELECT</command> from <literal>phone_number</> into a
     <command>SELECT</command> from <literal>phone_data</>.
     Since the user is the owner of
     <literal>phone_number</> and therefore the owner of the rule, the
-    read access to <literal>phone_data</> is now checked against his
+    read access to <literal>phone_data</> is now checked against the user's
     privileges and the query is permitted. The check for accessing
     <literal>phone_number</> is also performed, but this is done
     against the invoking user, so nobody but the user and the
-    secretary can use it.
+    assistant can use it.
 </para>
 
 <para>
-    The privileges are checked rule by rule. So the secretary is for now the
-    only one who can see the public phone numbers. But the secretary can setup
+    The privileges are checked rule by rule. So the assistant is for now the
+    only one who can see the public phone numbers. But the assistant can set up
     another view and grant access to that to the public. Then, anyone
-    can see the <literal>phone_number</> data through the secretary's view.
-    What the secretary cannot do is to create a view that directly
-    accesses <literal>phone_data</>.  (Actually he can, but it will not work since
+    can see the <literal>phone_number</> data through the assistant's view.
+    What the assistant cannot do is to create a view that directly
+    accesses <literal>phone_data</>.  (Actually the assistant can, but it will not work since
     every access will be denied during the permission checks.)
-    And as soon as the user will notice, that the secretary opened
-    his <literal>phone_number</> view, he can revoke his access. Immediately, any
-    access to the secretary's view would fail.
+    And as soon as the user notices that the assistant opened
+    their <literal>phone_number</> view, the user can revoke the assistant's access. Immediately, any
+    access to the assistant's view would fail.
 </para>
 
 <para>
     One might think that this rule-by-rule checking is a security
-    hole, but in fact it isn't.   But if it did not work this way, the secretary
+    hole, but in fact it isn't.   But if it did not work this way, the assistant
     could set up a table with the same columns as <literal>phone_number</> and
-    copy the data to there once per day. Then it's his own data and
-    he can grant access to everyone he wants. A
+    copy the data to there once per day. Then it's the assistant's own data and
+    the assistant can grant access to everyone they want. A
     <command>GRANT</command> command means, <quote>I trust you</quote>.
     If someone you trust does the thing above, it's time to
     think it over and then use <command>REVOKE</command>.
@@ -2093,7 +2093,7 @@ CREATE VIEW phone_number AS
     <command>SELECT</command> from <literal>phone_number</> into a
     <command>SELECT</command> from <literal>phone_data</> and add the
     qualification that only entries where <literal>phone</> does not begin
-    with 412 are wanted.  But if the user can create his or her own functions,
+    with 412 are wanted.  But if the user can create their own functions,
     it is not difficult to convince the planner to execute the user-defined
     function prior to the <function>NOT LIKE</function> expression.
     For example:
@@ -2124,8 +2124,8 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
     the <literal>shoelace</> view to someone else, but only
     <literal>SELECT</> on <literal>shoelace_log</>. The rule action to
     write log entries will still be executed successfully, and that
-    other user could see the log entries.  But he cannot create fake
-    entries, nor could he manipulate or remove existing ones.  In this
+    other user could see the log entries.  But they could not create fake
+    entries, nor could they manipulate or remove existing ones.  In this
     case, there is no possibility of subverting the rules by convincing
     the planner to alter the order of operations, because the only rule
     which references <literal>shoelace_log</> is an unqualified
@@ -2333,7 +2333,7 @@ DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
                        AND software.hostname = computer.hostname;
 </programlisting>
 
-    Since there are appropriate indexes setup, the planner
+    Since there are appropriate indexes set up, the planner
     will create a plan of
 
 <literallayout class="monospaced">

@@ -9274,7 +9274,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <filename>postgresql.conf</filename> without restarting the server.
       They can also be set for a particular session in the connection request
       packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
-      environment variable); any user can make such a change for his session.
+      environment variable); any user can make such a change for their session.
       However, these settings never change in a session after it is started.
       If you change them in <filename>postgresql.conf</filename>, send a
       <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
@@ -9303,7 +9303,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
       or within a session via the <command>SET</> command.  Any user is
-      allowed to change his session-local value.  Changes in
+      allowed to change their session-local value.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</>.
      </para>

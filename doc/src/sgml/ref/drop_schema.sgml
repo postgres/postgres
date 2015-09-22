@@ -35,7 +35,7 @@ DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
   <para>
    A schema can only be dropped by its owner or a superuser.  Note that
    the owner can drop the schema (and thereby all contained objects)
-   even if he does not own some of the objects within the schema.
+   even if they do not own some of the objects within the schema.
   </para>
  </refsect1>
 

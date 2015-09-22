@@ -1492,8 +1492,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
    <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc.)
    are always implicit in being the owner,
    and cannot be granted or revoked.  But the object owner can choose
-   to revoke his own ordinary privileges, for example to make a
-   table read-only for himself as well as others.
+   to revoke their own ordinary privileges, for example to make a
+   table read-only for themselves as well as others.
   </para>
 
   <para>
@@ -1816,7 +1816,7 @@ UPDATE 1
    example, both <literal>schema1</> and <literal>myschema</> can
    contain tables named <literal>mytable</>.  Unlike databases,
    schemas are not rigidly separated: a user can access objects in any
-   of the schemas in the database he is connected to, if he has
+   of the schemas in the database they are connected to, if they have
    privileges to do so.
   </para>
 

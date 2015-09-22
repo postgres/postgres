@@ -77,7 +77,7 @@ RESET ROLE
 
   <para>
    In particular, when a superuser chooses to <command>SET ROLE</> to a
-   non-superuser role, she loses her superuser privileges.
+   non-superuser role, they lose their superuser privileges.
   </para>
 
   <para>

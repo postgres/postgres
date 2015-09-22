@@ -3904,7 +3904,7 @@ CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
             RAISE EXCEPTION '% cannot have null salary', NEW.empname;
         END IF;
 
-        -- Who works for us when she must pay for it?
+        -- Who works for us when they must pay for it?
         IF NEW.salary &lt; 0 THEN
             RAISE EXCEPTION '% cannot have a negative salary', NEW.empname;
         END IF;

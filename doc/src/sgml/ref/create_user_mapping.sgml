@@ -41,7 +41,7 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable>
   <para>
    The owner of a foreign server can create user mappings for that
    server for any user.  Also, a user can create a user mapping for
-   his own user name if <literal>USAGE</> privilege on the server has
+   their own user name if <literal>USAGE</> privilege on the server has
    been granted to the user.
   </para>
  </refsect1>

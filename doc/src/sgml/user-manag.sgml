@@ -129,7 +129,7 @@ SELECT rolname FROM pg_roles;
    <xref linkend="client-authentication">. (Thus, a client is not
    limited to connect as the role matching
    its operating system user, just as a person's login name
-   need not match her real name.)  Since the role
+   need not match his or her real name.)  Since the role
    identity determines the set of privileges available to a connected
    client, it is important to carefully configure privileges when setting up
    a multiuser environment.

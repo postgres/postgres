@@ -570,7 +570,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
 
    <para>
     In this case, a regular user cannot reference <literal>customer.credit</>
-    directly, but a trusted procedure <literal>show_credit</> allows him
+    directly, but a trusted procedure <literal>show_credit</> allows the user
     to print the credit card numbers of customers with some of the digits
     masked out.
    </para>

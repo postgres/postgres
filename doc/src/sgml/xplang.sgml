@@ -49,7 +49,7 @@
     <literal>template1</> will be copied by <command>CREATE DATABASE</>.
     So the database administrator can
     decide which languages are available in which databases and can make
-    some languages available by default if he chooses.
+    some languages available by default if desired.
    </para>
 
    <para>
