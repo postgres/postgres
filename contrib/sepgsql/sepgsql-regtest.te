@@ -1,4 +1,4 @@
-policy_module(sepgsql-regtest, 1.04)
+policy_module(sepgsql-regtest, 1.08)
 
 gen_require(`
 	all_userspace_class_perms
@@ -19,6 +19,38 @@ type sepgsql_regtest_trusted_proc_exec_t;
 postgresql_procedure_object(sepgsql_regtest_trusted_proc_exec_t)
 type sepgsql_nosuch_trusted_proc_exec_t;
 postgresql_procedure_object(sepgsql_nosuch_trusted_proc_exec_t)
+
+type sepgsql_regtest_invisible_schema_t;
+postgresql_schema_object(sepgsql_regtest_invisible_schema_t);
+
+#
+# Test domains for self defined unconfined / superuser
+#
+role sepgsql_regtest_superuser_r;
+userdom_base_user_template(sepgsql_regtest_superuser)
+userdom_manage_home_role(sepgsql_regtest_superuser_r, sepgsql_regtest_superuser_t)
+userdom_exec_user_home_content_files(sepgsql_regtest_superuser_t)
+userdom_write_user_tmp_sockets(sepgsql_regtest_superuser_t)
+optional_policy(`
+	postgresql_stream_connect(sepgsql_regtest_superuser_t)
+	postgresql_unconfined(sepgsql_regtest_superuser_t)
+')
+optional_policy(`
+	unconfined_stream_connect(sepgsql_regtest_superuser_t)
+	unconfined_rw_pipes(sepgsql_regtest_superuser_t)
+')
+optional_policy(`
+	gen_require(`
+		attribute sepgsql_client_type;
+	')
+	allow sepgsql_regtest_superuser_t self : process { setcurrent };
+	allow sepgsql_regtest_superuser_t { self sepgsql_client_type } : process { dyntransition };
+')
+
+# Type transition rules
+allow sepgsql_regtest_user_t sepgsql_regtest_dba_t : process { transition };
+type_transition sepgsql_regtest_user_t sepgsql_regtest_trusted_proc_exec_t:process sepgsql_regtest_dba_t;
+type_transition sepgsql_regtest_user_t sepgsql_nosuch_trusted_proc_exec_t:process sepgsql_regtest_nosuch_t;
 
 #
 # Test domains for database administrators
@@ -42,6 +74,21 @@ allow sepgsql_regtest_dba_t self : process { setcurrent };
 allow sepgsql_regtest_dba_t sepgsql_regtest_user_t : process { dyntransition };
 allow sepgsql_regtest_dba_t sepgsql_regtest_foo_t : process { dyntransition };
 allow sepgsql_regtest_dba_t sepgsql_regtest_var_t : process { dyntransition };
+
+# special rule for system columns
+optional_policy(`
+	gen_require(`
+		attribute	sepgsql_table_type;
+		type		sepgsql_sysobj_t;
+	')
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "ctid";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "oid";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "xmin";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "xmax";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "cmin";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "cmax";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "tableoid";
+')
 
 #
 # Dummy domain for unpriv users
@@ -138,10 +185,12 @@ optional_policy(`
 	tunable_policy(`sepgsql_regression_test_mode',`
 		allow unconfined_t self : process { setcurrent dyntransition };
 		allow unconfined_t sepgsql_regtest_dba_t : process { transition dyntransition };
+		allow unconfined_t sepgsql_regtest_superuser_t : process { transition dyntransition };
 		allow unconfined_t sepgsql_regtest_user_t : process { transition dyntransition };
 		allow unconfined_t sepgsql_regtest_pool_t : process { transition dyntransition };
 	')
 	role unconfined_r types sepgsql_regtest_dba_t;
+	role unconfined_r types sepgsql_regtest_superuser_t;
 	role unconfined_r types sepgsql_regtest_user_t;
 	role unconfined_r types sepgsql_regtest_nosuch_t;
 	role unconfined_r types sepgsql_trusted_proc_t;
@@ -152,27 +201,42 @@ optional_policy(`
 ')
 
 #
+# Rule to make MCS policy work on regression test
+#
+# NOTE: MCS (multi category security) policy was enabled by default, to
+# allow DAC style access control, in the previous selinux policy.
+# However, its definition was changed later, then a limited number of
+# applications are restricted by MCS policy, for container features
+# mainly. The rules below enables MCS policy for domains of regression
+# test also, even if base security policy does not apply. If base policy
+# is old and MCS is enabled in default, rules below does nothing.
+#
+optional_policy(`
+	gen_require(`
+		type sepgsql_trusted_proc_t;
+	')
+	mcs_constrained(sepgsql_regtest_dba_t)
+	mcs_constrained(sepgsql_regtest_superuser_t)
+	mcs_constrained(sepgsql_regtest_user_t)
+	mcs_constrained(sepgsql_regtest_nosuch_t)
+	mcs_constrained(sepgsql_trusted_proc_t)
+
+	mcs_constrained(sepgsql_regtest_pool_t)
+	mcs_constrained(sepgsql_regtest_foo_t)
+	mcs_constrained(sepgsql_regtest_var_t)
+')
+
+#
 # Rule to execute original trusted procedures
 #
-# XXX - sepgsql_client_type contains any valid client types, so we allow
-# them to execute the original trusted procedure at once.
+# These rules intends to allow any valid client types to launch trusted-
+# procedures (including ones causes domain transition to invalid domain)
+# being labeled as sepgsql_regtest_trusted_proc_exec_t and
+# sepgsql_nosuch_trusted_proc_exec_t.
 #
 optional_policy(`
 	gen_require(`
 		attribute sepgsql_client_type;
 	')
-	allow sepgsql_client_type { sepgsql_regtest_trusted_proc_exec_t sepgsql_nosuch_trusted_proc_exec_t }:db_procedure { getattr execute };
-
-	# These rules intends sepgsql_regtest_user_t domain to translate
-	# sepgsql_regtest_dba_t on execution of procedures labeled as
-	# sepgsql_regtest_trusted_proc_exec_t.
-	#
-#	allow sepgsql_client_type sepgsql_regtest_trusted_proc_exec_t:db_procedure { getattr execute };
-
-	# These rules intends sepgsql_regtest_user_t domain to translate
-	# sepgsql_regtest_nosuch_t on execution of procedures labeled as
-	# sepgsql_nosuch_trusted_proc_exec_t, without permissions to
-	# translate to sepgsql_nosuch_trusted_proc_exec_t.
-	#
-#	allow sepgsql_client_type sepgsql_nosuch_trusted_proc_exec_t:db_procedure { getattr execute install };
+	allow sepgsql_client_type { sepgsql_regtest_trusted_proc_exec_t sepgsql_nosuch_trusted_proc_exec_t }:db_procedure { getattr execute entrypoint };
 ')

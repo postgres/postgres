@@ -126,6 +126,7 @@ sepgsql_object_access(ObjectAccessType access,
 							case T_CompositeTypeStmt:
 							case T_CreateForeignTableStmt:
 							case T_SelectStmt:
+							case T_CreateTableAsStmt:
 								sepgsql_relation_post_create(objectId);
 								break;
 							default:
