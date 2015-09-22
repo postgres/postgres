@@ -6312,7 +6312,7 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>to_char(485, 'L999')</literal></entry>
-        <entry><literal>'DM&nbsp;485</literal></entry>
+        <entry><literal>'DM&nbsp;485'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, 'RN')</literal></entry>
