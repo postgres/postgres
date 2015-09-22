@@ -107,7 +107,7 @@ extern slock_t *ShmemLock;
 
 #define LW_LOCK_MASK				((uint32) ((1 << 25)-1))
 /* Must be greater than MAX_BACKENDS - which is 2^23-1, so we're fine. */
-#define LW_SHARED_MASK				((uint32)(1 << 23))
+#define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
 
 /*
  * This is indexed by tranche ID and stores metadata for all tranches known
