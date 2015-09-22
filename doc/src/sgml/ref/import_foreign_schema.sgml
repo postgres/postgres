@@ -22,10 +22,10 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
-[ { LIMIT TO | EXCEPT } ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] ) ]
-FROM SERVER <replaceable class="PARAMETER">server_name</replaceable>
-INTO <replaceable class="PARAMETER">local_schema</replaceable>
-[ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+    [ { LIMIT TO | EXCEPT } ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] ) ]
+    FROM SERVER <replaceable class="PARAMETER">server_name</replaceable>
+    INTO <replaceable class="PARAMETER">local_schema</replaceable>
+    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
