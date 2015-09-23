@@ -11,8 +11,8 @@
  *	  src/backend/nodes/readfuncs.c
  *
  * NOTES
- *	  Path and Plan nodes do not have any readfuncs support, because we
- *	  never have occasion to read them in.  (There was once code here that
+ *	  Path nodes do not have any readfuncs support, because we never
+ *	  have occasion to read them in.  (There was once code here that
  *	  claimed to read them, but it was broken as well as unused.)  We
  *	  never read executor state trees, either.
  *
@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 #include "nodes/readfuncs.h"
 
 
@@ -66,6 +67,12 @@
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \
 	local_node->fldname = atoui(token)
+
+/* Read an long integer field (anything written as ":fldname %ld") */
+#define READ_LONG_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = atol(token)
 
 /* Read an OID field (don't hard-wire assumption that OID is same as uint) */
 #define READ_OID_FIELD(fldname) \
@@ -122,6 +129,26 @@
 	(void) token;				/* in case not used elsewhere */ \
 	local_node->fldname = _readBitmapset()
 
+/* Read an attribute number array */
+#define READ_ATTRNUMBER_ARRAY(fldname, len) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = readAttrNumberCols(len);
+
+/* Read an oid array */
+#define READ_OID_ARRAY(fldname, len) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = readOidCols(len);
+
+/* Read an int array */
+#define READ_INT_ARRAY(fldname, len) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = readIntCols(len);
+
+/* Read a bool array */
+#define READ_BOOL_ARRAY(fldname, len) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = readBoolCols(len);
+
 /* Routine exit */
 #define READ_DONE() \
 	return local_node
@@ -144,6 +171,10 @@
 
 
 static Datum readDatum(bool typbyval);
+static bool *readBoolCols(int numCols);
+static int *readIntCols(int numCols);
+static Oid *readOidCols(int numCols);
+static AttrNumber *readAttrNumberCols(int numCols);
 
 /*
  * _readBitmapset
@@ -1367,6 +1398,809 @@ _readTableSampleClause(void)
 	READ_DONE();
 }
 
+/*
+ * _readDefElem
+ */
+static DefElem *
+_readDefElem(void)
+{
+	READ_LOCALS(DefElem);
+
+	READ_STRING_FIELD(defnamespace);
+	READ_STRING_FIELD(defname);
+	READ_NODE_FIELD(arg);
+	READ_ENUM_FIELD(defaction, DefElemAction);
+
+	READ_DONE();
+}
+
+/*
+ * _readPlannedStmt
+ */
+static PlannedStmt *
+_readPlannedStmt(void)
+{
+	READ_LOCALS(PlannedStmt);
+
+	READ_ENUM_FIELD(commandType, CmdType);
+	READ_UINT_FIELD(queryId);
+	READ_BOOL_FIELD(hasReturning);
+	READ_BOOL_FIELD(hasModifyingCTE);
+	READ_BOOL_FIELD(canSetTag);
+	READ_BOOL_FIELD(transientPlan);
+	READ_NODE_FIELD(planTree);
+	READ_NODE_FIELD(rtable);
+	READ_NODE_FIELD(resultRelations);
+	READ_NODE_FIELD(utilityStmt);
+	READ_NODE_FIELD(subplans);
+	READ_BITMAPSET_FIELD(rewindPlanIDs);
+	READ_NODE_FIELD(rowMarks);
+	READ_NODE_FIELD(relationOids);
+	READ_NODE_FIELD(invalItems);
+	READ_INT_FIELD(nParamExec);
+	READ_BOOL_FIELD(hasRowSecurity);
+	READ_BOOL_FIELD(parallelModeNeeded);
+
+	READ_DONE();
+}
+
+/*
+ * ReadCommonPlan
+ *	Assign the basic stuff of all nodes that inherit from Plan
+ */
+static void
+ReadCommonPlan(Plan *local_node)
+{
+	READ_TEMP_LOCALS();
+
+	READ_FLOAT_FIELD(startup_cost);
+	READ_FLOAT_FIELD(total_cost);
+	READ_FLOAT_FIELD(plan_rows);
+	READ_INT_FIELD(plan_width);
+	READ_NODE_FIELD(targetlist);
+	READ_NODE_FIELD(qual);
+	READ_NODE_FIELD(lefttree);
+	READ_NODE_FIELD(righttree);
+	READ_NODE_FIELD(initPlan);
+	READ_BITMAPSET_FIELD(extParam);
+	READ_BITMAPSET_FIELD(allParam);
+}
+
+/*
+ * _readPlan
+ */
+static Plan *
+_readPlan(void)
+{
+	READ_LOCALS_NO_FIELDS(Plan);
+
+	ReadCommonPlan(local_node);
+
+	READ_DONE();
+}
+
+/*
+ * _readResult
+ */
+static Result *
+_readResult(void)
+{
+	READ_LOCALS(Result);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(resconstantqual);
+
+	READ_DONE();
+}
+
+/*
+ * _readModifyTable
+ */
+static ModifyTable *
+_readModifyTable(void)
+{
+	READ_LOCALS(ModifyTable);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_ENUM_FIELD(operation, CmdType);
+	READ_BOOL_FIELD(canSetTag);
+	READ_UINT_FIELD(nominalRelation);
+	READ_NODE_FIELD(resultRelations);
+	READ_INT_FIELD(resultRelIndex);
+	READ_NODE_FIELD(plans);
+	READ_NODE_FIELD(withCheckOptionLists);
+	READ_NODE_FIELD(returningLists);
+	READ_NODE_FIELD(fdwPrivLists);
+	READ_NODE_FIELD(rowMarks);
+	READ_INT_FIELD(epqParam);
+	READ_ENUM_FIELD(onConflictAction, OnConflictAction);
+	READ_NODE_FIELD(arbiterIndexes);
+	READ_NODE_FIELD(onConflictSet);
+	READ_NODE_FIELD(onConflictWhere);
+	READ_UINT_FIELD(exclRelRTI);
+	READ_NODE_FIELD(exclRelTlist);
+
+	READ_DONE();
+}
+
+/*
+ * _readAppend
+ */
+static Append *
+_readAppend(void)
+{
+	READ_LOCALS(Append);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(appendplans);
+
+	READ_DONE();
+}
+
+/*
+ * _readMergeAppend
+ */
+static MergeAppend *
+_readMergeAppend(void)
+{
+	READ_LOCALS(MergeAppend);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(mergeplans);
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(sortColIdx, local_node->numCols);
+	READ_OID_ARRAY(sortOperators, local_node->numCols);
+	READ_OID_ARRAY(collations, local_node->numCols);
+	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
+
+	READ_DONE();
+}
+
+/*
+ * _readRecursiveUnion
+ */
+static RecursiveUnion *
+_readRecursiveUnion(void)
+{
+	READ_LOCALS(RecursiveUnion);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_INT_FIELD(wtParam);
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(dupColIdx, local_node->numCols);
+	READ_OID_ARRAY(dupOperators, local_node->numCols);
+	READ_LONG_FIELD(numGroups);
+
+	READ_DONE();
+}
+
+/*
+ * _readBitmapAnd
+ */
+static BitmapAnd *
+_readBitmapAnd(void)
+{
+	READ_LOCALS(BitmapAnd);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(bitmapplans);
+
+	READ_DONE();
+}
+
+/*
+ * _readBitmapOr
+ */
+static BitmapOr *
+_readBitmapOr(void)
+{
+	READ_LOCALS(BitmapOr);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(bitmapplans);
+
+	READ_DONE();
+}
+
+/*
+ * ReadCommonScan
+ *	Assign the basic stuff of all nodes that inherit from Scan
+ */
+static void
+ReadCommonScan(Scan *local_node)
+{
+	READ_TEMP_LOCALS();
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_UINT_FIELD(scanrelid);
+}
+
+/*
+ * _readScan
+ */
+static Scan *
+_readScan(void)
+{
+	READ_LOCALS_NO_FIELDS(Scan);
+
+	ReadCommonScan(local_node);
+
+	READ_DONE();
+}
+
+/*
+ * _readSeqScan
+ */
+static SeqScan *
+_readSeqScan(void)
+{
+	READ_LOCALS_NO_FIELDS(SeqScan);
+
+	ReadCommonScan(local_node);
+
+	READ_DONE();
+}
+
+/*
+ * _readSampleScan
+ */
+static SampleScan *
+_readSampleScan(void)
+{
+	READ_LOCALS(SampleScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(tablesample);
+
+	READ_DONE();
+}
+
+/*
+ * _readIndexScan
+ */
+static IndexScan *
+_readIndexScan(void)
+{
+	READ_LOCALS(IndexScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_OID_FIELD(indexid);
+	READ_NODE_FIELD(indexqual);
+	READ_NODE_FIELD(indexqualorig);
+	READ_NODE_FIELD(indexorderby);
+	READ_NODE_FIELD(indexorderbyorig);
+	READ_NODE_FIELD(indexorderbyops);
+	READ_ENUM_FIELD(indexorderdir, ScanDirection);
+
+	READ_DONE();
+}
+
+/*
+ * _readIndexOnlyScan
+ */
+static IndexOnlyScan *
+_readIndexOnlyScan(void)
+{
+	READ_LOCALS(IndexOnlyScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_OID_FIELD(indexid);
+	READ_NODE_FIELD(indexqual);
+	READ_NODE_FIELD(indexorderby);
+	READ_NODE_FIELD(indextlist);
+	READ_ENUM_FIELD(indexorderdir, ScanDirection);
+
+	READ_DONE();
+}
+
+/*
+ * _readBitmapIndexScan
+ */
+static BitmapIndexScan *
+_readBitmapIndexScan(void)
+{
+	READ_LOCALS(BitmapIndexScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_OID_FIELD(indexid);
+	READ_NODE_FIELD(indexqual);
+	READ_NODE_FIELD(indexqualorig);
+
+	READ_DONE();
+}
+
+/*
+ * _readBitmapHeapScan
+ */
+static BitmapHeapScan *
+_readBitmapHeapScan(void)
+{
+	READ_LOCALS(BitmapHeapScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(bitmapqualorig);
+
+	READ_DONE();
+}
+
+/*
+ * _readTidScan
+ */
+static TidScan *
+_readTidScan(void)
+{
+	READ_LOCALS(TidScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(tidquals);
+
+	READ_DONE();
+}
+
+/*
+ * _readSubqueryScan
+ */
+static SubqueryScan *
+_readSubqueryScan(void)
+{
+	READ_LOCALS(SubqueryScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(subplan);
+
+	READ_DONE();
+}
+
+/*
+ * _readFunctionScan
+ */
+static FunctionScan *
+_readFunctionScan(void)
+{
+	READ_LOCALS(FunctionScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(functions);
+	READ_BOOL_FIELD(funcordinality);
+
+	READ_DONE();
+}
+
+/*
+ * _readValuesScan
+ */
+static ValuesScan *
+_readValuesScan(void)
+{
+	READ_LOCALS(ValuesScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(values_lists);
+
+	READ_DONE();
+}
+
+/*
+ * _readCteScan
+ */
+static CteScan *
+_readCteScan(void)
+{
+	READ_LOCALS(CteScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_INT_FIELD(ctePlanId);
+	READ_INT_FIELD(cteParam);
+
+	READ_DONE();
+}
+
+/*
+ * _readWorkTableScan
+ */
+static WorkTableScan *
+_readWorkTableScan(void)
+{
+	READ_LOCALS(WorkTableScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_INT_FIELD(wtParam);
+
+	READ_DONE();
+}
+
+/*
+ * _readForeignScan
+ */
+static ForeignScan *
+_readForeignScan(void)
+{
+	READ_LOCALS(ForeignScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_OID_FIELD(fs_server);
+	READ_NODE_FIELD(fdw_exprs);
+	READ_NODE_FIELD(fdw_private);
+	READ_NODE_FIELD(fdw_scan_tlist);
+	READ_BITMAPSET_FIELD(fs_relids);
+	READ_BOOL_FIELD(fsSystemCol);
+
+	READ_DONE();
+}
+
+/*
+ * ReadCommonJoin
+ *	Assign the basic stuff of all nodes that inherit from Join
+ */
+static void
+ReadCommonJoin(Join *local_node)
+{
+	READ_TEMP_LOCALS();
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_ENUM_FIELD(jointype, JoinType);
+	READ_NODE_FIELD(joinqual);
+}
+
+/*
+ * _readJoin
+ */
+static Join *
+_readJoin(void)
+{
+	READ_LOCALS_NO_FIELDS(Join);
+
+	ReadCommonJoin(local_node);
+
+	READ_DONE();
+}
+
+/*
+ * _readNestLoop
+ */
+static NestLoop *
+_readNestLoop(void)
+{
+	READ_LOCALS(NestLoop);
+
+	ReadCommonJoin(&local_node->join);
+
+	READ_NODE_FIELD(nestParams);
+
+	READ_DONE();
+}
+
+/*
+ * _readMergeJoin
+ */
+static MergeJoin *
+_readMergeJoin(void)
+{
+	int			numCols;
+
+	READ_LOCALS(MergeJoin);
+
+	ReadCommonJoin(&local_node->join);
+
+	READ_NODE_FIELD(mergeclauses);
+
+	numCols = list_length(local_node->mergeclauses);
+
+	READ_OID_ARRAY(mergeFamilies, numCols);
+	READ_OID_ARRAY(mergeCollations, numCols);
+	READ_INT_ARRAY(mergeStrategies, numCols);
+	READ_BOOL_ARRAY(mergeNullsFirst, numCols);
+
+	READ_DONE();
+}
+
+/*
+ * _readHashJoin
+ */
+static HashJoin *
+_readHashJoin(void)
+{
+	READ_LOCALS(HashJoin);
+
+	ReadCommonJoin(&local_node->join);
+
+	READ_NODE_FIELD(hashclauses);
+
+	READ_DONE();
+}
+
+/*
+ * _readMaterial
+ */
+static Material *
+_readMaterial(void)
+{
+	READ_LOCALS_NO_FIELDS(Material);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_DONE();
+}
+
+/*
+ * _readSort
+ */
+static Sort *
+_readSort(void)
+{
+	READ_LOCALS(Sort);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(sortColIdx, local_node->numCols);
+	READ_OID_ARRAY(sortOperators, local_node->numCols);
+	READ_OID_ARRAY(collations, local_node->numCols);
+	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
+
+	READ_DONE();
+}
+
+/*
+ * _readGroup
+ */
+static Group *
+_readGroup(void)
+{
+	READ_LOCALS(Group);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
+	READ_OID_ARRAY(grpOperators, local_node->numCols);
+
+	READ_DONE();
+}
+
+/*
+ * _readAgg
+ */
+static Agg *
+_readAgg(void)
+{
+	READ_LOCALS(Agg);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_ENUM_FIELD(aggstrategy, AggStrategy);
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
+	READ_OID_ARRAY(grpOperators, local_node->numCols);
+	READ_LONG_FIELD(numGroups);
+	READ_NODE_FIELD(groupingSets);
+	READ_NODE_FIELD(chain);
+
+	READ_DONE();
+}
+
+/*
+ * _readWindowAgg
+ */
+static WindowAgg *
+_readWindowAgg(void)
+{
+	READ_LOCALS(WindowAgg);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_UINT_FIELD(winref);
+	READ_INT_FIELD(partNumCols);
+	READ_ATTRNUMBER_ARRAY(partColIdx, local_node->partNumCols);
+	READ_OID_ARRAY(partOperators, local_node->partNumCols);
+	READ_INT_FIELD(ordNumCols);
+	READ_ATTRNUMBER_ARRAY(ordColIdx, local_node->ordNumCols);
+	READ_OID_ARRAY(ordOperators, local_node->ordNumCols);
+	READ_INT_FIELD(frameOptions);
+	READ_NODE_FIELD(startOffset);
+	READ_NODE_FIELD(endOffset);
+
+	READ_DONE();
+}
+
+/*
+ * _readUnique
+ */
+static Unique *
+_readUnique(void)
+{
+	READ_LOCALS(Unique);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(uniqColIdx, local_node->numCols);
+	READ_OID_ARRAY(uniqOperators, local_node->numCols);
+
+	READ_DONE();
+}
+
+/*
+ * _readHash
+ */
+static Hash *
+_readHash(void)
+{
+	READ_LOCALS(Hash);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_OID_FIELD(skewTable);
+	READ_INT_FIELD(skewColumn);
+	READ_BOOL_FIELD(skewInherit);
+	READ_OID_FIELD(skewColType);
+	READ_INT_FIELD(skewColTypmod);
+
+	READ_DONE();
+}
+
+/*
+ * _readSetOp
+ */
+static SetOp *
+_readSetOp(void)
+{
+	READ_LOCALS(SetOp);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_ENUM_FIELD(cmd, SetOpCmd);
+	READ_ENUM_FIELD(strategy, SetOpStrategy);
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(dupColIdx, local_node->numCols);
+	READ_OID_ARRAY(dupOperators, local_node->numCols);
+	READ_INT_FIELD(flagColIdx);
+	READ_INT_FIELD(firstFlag);
+	READ_LONG_FIELD(numGroups);
+
+	READ_DONE();
+}
+
+/*
+ * _readLockRows
+ */
+static LockRows *
+_readLockRows(void)
+{
+	READ_LOCALS(LockRows);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(rowMarks);
+	READ_INT_FIELD(epqParam);
+
+	READ_DONE();
+}
+
+/*
+ * _readLimit
+ */
+static Limit *
+_readLimit(void)
+{
+	READ_LOCALS(Limit);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_NODE_FIELD(limitOffset);
+	READ_NODE_FIELD(limitCount);
+
+	READ_DONE();
+}
+
+/*
+ * _readNestLoopParam
+ */
+static NestLoopParam *
+_readNestLoopParam(void)
+{
+	READ_LOCALS(NestLoopParam);
+
+	READ_INT_FIELD(paramno);
+	READ_NODE_FIELD(paramval);
+
+	READ_DONE();
+}
+
+/*
+ * _readPlanRowMark
+ */
+static PlanRowMark *
+_readPlanRowMark(void)
+{
+	READ_LOCALS(PlanRowMark);
+
+	READ_UINT_FIELD(rti);
+	READ_UINT_FIELD(prti);
+	READ_UINT_FIELD(rowmarkId);
+	READ_ENUM_FIELD(markType, RowMarkType);
+	READ_INT_FIELD(allMarkTypes);
+	READ_ENUM_FIELD(strength, LockClauseStrength);
+	READ_ENUM_FIELD(waitPolicy, LockWaitPolicy);
+	READ_BOOL_FIELD(isParent);
+
+	READ_DONE();
+}
+
+/*
+ * _readPlanInvalItem
+ */
+static PlanInvalItem *
+_readPlanInvalItem(void)
+{
+	READ_LOCALS(PlanInvalItem);
+
+	READ_INT_FIELD(cacheId);
+	READ_UINT_FIELD(hashValue);
+
+	READ_DONE();
+}
+
+/*
+ * _readSubPlan
+ */
+static SubPlan *
+_readSubPlan(void)
+{
+	READ_LOCALS(SubPlan);
+
+	READ_ENUM_FIELD(subLinkType, SubLinkType);
+	READ_NODE_FIELD(testexpr);
+	READ_NODE_FIELD(paramIds);
+	READ_INT_FIELD(plan_id);
+	READ_STRING_FIELD(plan_name);
+	READ_OID_FIELD(firstColType);
+	READ_INT_FIELD(firstColTypmod);
+	READ_OID_FIELD(firstColCollation);
+	READ_BOOL_FIELD(useHashTable);
+	READ_BOOL_FIELD(unknownEqFalse);
+	READ_NODE_FIELD(setParam);
+	READ_NODE_FIELD(parParam);
+	READ_NODE_FIELD(args);
+	READ_FLOAT_FIELD(startup_cost);
+	READ_FLOAT_FIELD(per_call_cost);
+
+	READ_DONE();
+}
+
+/*
+ * _readAlternativeSubPlan
+ */
+static AlternativeSubPlan *
+_readAlternativeSubPlan(void)
+{
+	READ_LOCALS(AlternativeSubPlan);
+
+	READ_NODE_FIELD(subplans);
+
+	READ_DONE();
+}
 
 /*
  * parseNodeString
@@ -1504,8 +2338,94 @@ parseNodeString(void)
 		return_value = _readTableSampleClause();
 	else if (MATCH("NOTIFY", 6))
 		return_value = _readNotifyStmt();
+	else if (MATCH("DEFELEM", 7))
+		return_value = _readDefElem();
 	else if (MATCH("DECLARECURSOR", 13))
 		return_value = _readDeclareCursorStmt();
+	else if (MATCH("PLANNEDSTMT", 11))
+		return_value = _readPlannedStmt();
+	else if (MATCH("PLAN", 4))
+		return_value = _readPlan();
+	else if (MATCH("RESULT", 6))
+		return_value = _readResult();
+	else if (MATCH("MODIFYTABLE", 11))
+		return_value = _readModifyTable();
+	else if (MATCH("APPEND", 6))
+		return_value = _readAppend();
+	else if (MATCH("MERGEAPPEND", 11))
+		return_value = _readMergeAppend();
+	else if (MATCH("RECURSIVEUNION", 14))
+		return_value = _readRecursiveUnion();
+	else if (MATCH("BITMAPAND", 9))
+		return_value = _readBitmapAnd();
+	else if (MATCH("BITMAPOR", 8))
+		return_value = _readBitmapOr();
+	else if (MATCH("SCAN", 4))
+		return_value = _readScan();
+	else if (MATCH("SEQSCAN", 7))
+		return_value = _readSeqScan();
+	else if (MATCH("SAMPLESCAN", 10))
+		return_value = _readSampleScan();
+	else if (MATCH("INDEXSCAN", 9))
+		return_value = _readIndexScan();
+	else if (MATCH("INDEXONLYSCAN", 13))
+		return_value = _readIndexOnlyScan();
+	else if (MATCH("BITMAPINDEXSCAN", 15))
+		return_value = _readBitmapIndexScan();
+	else if (MATCH("BITMAPHEAPSCAN", 14))
+		return_value = _readBitmapHeapScan();
+	else if (MATCH("TIDSCAN", 7))
+		return_value = _readTidScan();
+	else if (MATCH("SUBQUERYSCAN", 12))
+		return_value = _readSubqueryScan();
+	else if (MATCH("FUNCTIONSCAN", 12))
+		return_value = _readFunctionScan();
+	else if (MATCH("VALUESSCAN", 10))
+		return_value = _readValuesScan();
+	else if (MATCH("CTESCAN", 7))
+		return_value = _readCteScan();
+	else if (MATCH("WORKTABLESCAN", 13))
+		return_value = _readWorkTableScan();
+	else if (MATCH("FOREIGNSCAN", 11))
+		return_value = _readForeignScan();
+	else if (MATCH("JOIN", 4))
+		return_value = _readJoin();
+	else if (MATCH("NESTLOOP", 8))
+		return_value = _readNestLoop();
+	else if (MATCH("MERGEJOIN", 9))
+		return_value = _readMergeJoin();
+	else if (MATCH("HASHJOIN", 8))
+		return_value = _readHashJoin();
+	else if (MATCH("MATERIAL", 8))
+		return_value = _readMaterial();
+	else if (MATCH("SORT", 4))
+		return_value = _readSort();
+	else if (MATCH("GROUP", 5))
+		return_value = _readGroup();
+	else if (MATCH("AGG", 3))
+		return_value = _readAgg();
+	else if (MATCH("WINDOWAGG", 9))
+		return_value = _readWindowAgg();
+	else if (MATCH("UNIQUE", 6))
+		return_value = _readUnique();
+	else if (MATCH("HASH", 4))
+		return_value = _readHash();
+	else if (MATCH("SETOP", 5))
+		return_value = _readSetOp();
+	else if (MATCH("LOCKROWS", 8))
+		return_value = _readLockRows();
+	else if (MATCH("LIMIT", 5))
+		return_value = _readLimit();
+	else if (MATCH("NESTLOOPPARAM", 13))
+		return_value = _readNestLoopParam();
+	else if (MATCH("PLANROWMARK", 11))
+		return_value = _readPlanRowMark();
+	else if (MATCH("PLANINVALITEM", 13))
+		return_value = _readPlanInvalItem();
+	else if (MATCH("SUBPLAN", 7))
+		return_value = _readSubPlan();
+	else if (MATCH("ALTERNATIVESUBPLAN", 18))
+		return_value = _readAlternativeSubPlan();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);
@@ -1575,4 +2495,100 @@ readDatum(bool typbyval)
 			 token ? (const char *) token : "[NULL]", length);
 
 	return res;
+}
+
+/*
+ * readAttrNumberCols
+ */
+static AttrNumber *
+readAttrNumberCols(int numCols)
+{
+	int			tokenLength,
+				i;
+	char	   *token;
+	AttrNumber *attr_vals;
+
+	if (numCols <= 0)
+		return NULL;
+
+	attr_vals = (AttrNumber *) palloc(numCols * sizeof(AttrNumber));
+	for (i = 0; i < numCols; i++)
+	{
+		token = pg_strtok(&tokenLength);
+		attr_vals[i] = atoi(token);
+	}
+
+	return attr_vals;
+}
+
+/*
+ * readOidCols
+ */
+static Oid *
+readOidCols(int numCols)
+{
+	int			tokenLength,
+				i;
+	char	   *token;
+	Oid		   *oid_vals;
+
+	if (numCols <= 0)
+		return NULL;
+
+	oid_vals = (Oid *) palloc(numCols * sizeof(Oid));
+	for (i = 0; i < numCols; i++)
+	{
+		token = pg_strtok(&tokenLength);
+		oid_vals[i] = atooid(token);
+	}
+
+	return oid_vals;
+}
+
+/*
+ * readIntCols
+ */
+static int *
+readIntCols(int numCols)
+{
+	int			tokenLength,
+				i;
+	char	   *token;
+	int		   *int_vals;
+
+	if (numCols <= 0)
+		return NULL;
+
+	int_vals = (int *) palloc(numCols * sizeof(int));
+	for (i = 0; i < numCols; i++)
+	{
+		token = pg_strtok(&tokenLength);
+		int_vals[i] = atoi(token);
+	}
+
+	return int_vals;
+}
+
+/*
+ * readBoolCols
+ */
+static bool *
+readBoolCols(int numCols)
+{
+	int			tokenLength,
+				i;
+	char	   *token;
+	bool	   *bool_vals;
+
+	if (numCols <= 0)
+		return NULL;
+
+	bool_vals = (bool *) palloc(numCols * sizeof(bool));
+	for (i = 0; i < numCols; i++)
+	{
+		token = pg_strtok(&tokenLength);
+		bool_vals[i] = strtobool(token);
+	}
+
+	return bool_vals;
 }

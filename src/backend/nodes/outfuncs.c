@@ -13,9 +13,11 @@
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
  *	  have an output function defined here (as well as an input function
- *	  in readfuncs.c).  For use in debugging, we also provide output
- *	  functions for nodes that appear in raw parsetrees, path, and plan trees.
- *	  These nodes however need not have input functions.
+ *	  in readfuncs.c).  In addition, plan nodes should have input and
+ *	  output functions so that they can be sent to parallel workers.
+ *	  For use in debugging, we also provide output functions for nodes
+ *	  that appear in raw parsetrees and path.  These nodes however need
+ *	  not have input functions.
  *
  *-------------------------------------------------------------------------
  */
