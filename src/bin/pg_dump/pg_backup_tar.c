@@ -375,20 +375,23 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	}
 	else
 	{
-		int			old_umask;
-
 		tm = calloc(1, sizeof(TAR_MEMBER));
 
-		/*
-		 * POSIX does not require, but permits, tmpfile() to restrict file
-		 * permissions.  Given an OS crash after we write data, the filesystem
-		 * might retain the data but forget tmpfile()'s unlink().  If so, the
-		 * file mode protects confidentiality of the data written.
-		 */
-		old_umask = umask(S_IRWXG | S_IRWXO);
-
 #ifndef WIN32
-		tm->tmpFH = tmpfile();
+		{
+			int			old_umask;
+
+			/*
+			 * POSIX does not require, but permits, tmpfile() to restrict file
+			 * permissions.  Given an OS crash after we write data, the
+			 * filesystem might retain the data but forget tmpfile()'s
+			 * unlink().  If so, the file mode protects confidentiality of the
+			 * data written.
+			 */
+			old_umask = umask(S_IRWXG | S_IRWXO);
+			tm->tmpFH = tmpfile();
+			umask(old_umask);
+		}
 #else
 
 		/*
@@ -420,8 +423,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 		if (tm->tmpFH == NULL)
 			die_horribly(AH, modulename, "could not generate temporary file name: %s\n", strerror(errno));
-
-		umask(old_umask);
 
 #ifdef HAVE_LIBZ
 
