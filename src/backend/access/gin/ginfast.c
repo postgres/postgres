@@ -434,7 +434,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	END_CRIT_SECTION();
 
 	if (needCleanup)
-		ginInsertCleanup(ginstate, false, NULL);
+		ginInsertCleanup(ginstate, false, true, NULL);
 }
 
 /*
@@ -505,7 +505,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
  */
 static bool
 shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
-		  IndexBulkDeleteResult *stats)
+		  bool fill_fsm, IndexBulkDeleteResult *stats)
 {
 	Page		metapage;
 	GinMetaPageData *metadata;
@@ -613,7 +613,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 
 		END_CRIT_SECTION();
 
-		for (i = 0; i < data.ndeleted; i++)
+		for (i = 0; fill_fsm && i < data.ndeleted; i++)
 			RecordFreeIndexPage(index, freespace[i]);
 
 	} while (blknoToDelete != newHead);
@@ -732,13 +732,19 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  * action of removing a page from the pending list really needs exclusive
  * lock.
  *
- * vac_delay indicates that ginInsertCleanup is called from vacuum process,
- * so call vacuum_delay_point() periodically.
+ * vac_delay indicates that ginInsertCleanup should call
+ * vacuum_delay_point() periodically.
+ *
+ * fill_fsm indicates that ginInsertCleanup should add deleted pages
+ * to FSM otherwise caller is responsible to put deleted pages into
+ * FSM.
+ *
  * If stats isn't null, we count deleted pending pages into the counts.
  */
 void
 ginInsertCleanup(GinState *ginstate,
-				 bool vac_delay, IndexBulkDeleteResult *stats)
+				 bool vac_delay, bool fill_fsm,
+				 IndexBulkDeleteResult *stats)
 {
 	Relation	index = ginstate->index;
 	Buffer		metabuffer,
@@ -899,7 +905,7 @@ ginInsertCleanup(GinState *ginstate,
 			 * remove read pages from pending list, at this point all
 			 * content of read pages is in regular structure
 			 */
-			if (shiftList(index, metabuffer, blkno, stats))
+			if (shiftList(index, metabuffer, blkno, fill_fsm, stats))
 			{
 				/* another cleanup process is running concurrently */
 				LockBuffer(metabuffer, GIN_UNLOCK);
@@ -948,7 +954,7 @@ ginInsertCleanup(GinState *ginstate,
 	 * desirable to recycle them immediately to the FreeSpace Map when
 	 * ordinary backends clean the list.
 	 */
-	if (fsm_vac && !vac_delay)
+	if (fsm_vac && fill_fsm)
 		IndexFreeSpaceMapVacuum(index);
 
 
