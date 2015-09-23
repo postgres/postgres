@@ -3428,6 +3428,7 @@ bool
 planstate_tree_walker(PlanState *planstate, bool (*walker) (), void *context)
 {
 	Plan	   *plan = planstate->plan;
+	ListCell   *lc;
 
 	/* initPlan-s */
 	if (planstate_walk_subplans(planstate->initPlan, walker, context))
@@ -3483,6 +3484,13 @@ planstate_tree_walker(PlanState *planstate, bool (*walker) (), void *context)
 		case T_SubqueryScan:
 			if (walker(((SubqueryScanState *) planstate)->subplan, context))
 				return true;
+			break;
+		case T_CustomScan:
+			foreach (lc, ((CustomScanState *) planstate)->custom_ps)
+			{
+				if (walker((PlanState *) lfirst(lc), context))
+					return true;
+			}
 			break;
 		default:
 			break;
