@@ -2510,17 +2510,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_freeze_max_age,
 		/* see pg_resetxlog if you change the upper-limit value */
-		200000000, 100000000, 2000000000,
+		200000000, 100000, 2000000000,
 		NULL, NULL, NULL
 	},
 	{
-		/* see varsup.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
+		/* see multixact.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
 		{"autovacuum_multixact_freeze_max_age", PGC_POSTMASTER, AUTOVACUUM,
 			gettext_noop("Multixact age at which to autovacuum a table to prevent multixact wraparound."),
 			NULL
 		},
 		&autovacuum_multixact_freeze_max_age,
-		400000000, 10000000, 2000000000,
+		400000000, 10000, 2000000000,
 		NULL, NULL, NULL
 	},
 	{
