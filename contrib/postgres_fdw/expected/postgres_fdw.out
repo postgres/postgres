@@ -1005,70 +1005,109 @@ COMMIT;
 -- ===================================================================
 -- test handling of collations
 -- ===================================================================
-create table loct3 (f1 text collate "C", f2 text);
-create foreign table ft3 (f1 text collate "C", f2 text)
-  server loopback options (table_name 'loct3');
+create table loct3 (f1 text collate "C" unique, f2 text, f3 varchar(10) unique);
+create foreign table ft3 (f1 text collate "C", f2 text, f3 varchar(10))
+  server loopback options (table_name 'loct3', use_remote_estimate 'true');
 -- can be sent to remote
 explain (verbose, costs off) select * from ft3 where f1 = 'foo';
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
-   Remote SQL: SELECT f1, f2 FROM public.loct3 WHERE ((f1 = 'foo'::text))
+   Output: f1, f2, f3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3 WHERE ((f1 = 'foo'::text))
 (3 rows)
 
 explain (verbose, costs off) select * from ft3 where f1 COLLATE "C" = 'foo';
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
-   Remote SQL: SELECT f1, f2 FROM public.loct3 WHERE ((f1 = 'foo'::text))
+   Output: f1, f2, f3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3 WHERE ((f1 = 'foo'::text))
 (3 rows)
 
 explain (verbose, costs off) select * from ft3 where f2 = 'foo';
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
-   Remote SQL: SELECT f1, f2 FROM public.loct3 WHERE ((f2 = 'foo'::text))
+   Output: f1, f2, f3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3 WHERE ((f2 = 'foo'::text))
 (3 rows)
+
+explain (verbose, costs off) select * from ft3 where f3 = 'foo';
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2, f3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3 WHERE ((f3 = 'foo'::text))
+(3 rows)
+
+explain (verbose, costs off) select * from ft3 f, loct3 l
+  where f.f3 = l.f3 and l.f1 = 'foo';
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: f.f1, f.f2, f.f3, l.f1, l.f2, l.f3
+   ->  Index Scan using loct3_f1_key on public.loct3 l
+         Output: l.f1, l.f2, l.f3
+         Index Cond: (l.f1 = 'foo'::text)
+   ->  Foreign Scan on public.ft3 f
+         Output: f.f1, f.f2, f.f3
+         Remote SQL: SELECT f1, f2, f3 FROM public.loct3 WHERE (($1::character varying(10) = f3))
+(8 rows)
 
 -- can't be sent to remote
 explain (verbose, costs off) select * from ft3 where f1 COLLATE "POSIX" = 'foo';
-                  QUERY PLAN                   
------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
+   Output: f1, f2, f3
    Filter: ((ft3.f1)::text = 'foo'::text)
-   Remote SQL: SELECT f1, f2 FROM public.loct3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3
 (4 rows)
 
 explain (verbose, costs off) select * from ft3 where f1 = 'foo' COLLATE "C";
-                  QUERY PLAN                   
------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
+   Output: f1, f2, f3
    Filter: (ft3.f1 = 'foo'::text COLLATE "C")
-   Remote SQL: SELECT f1, f2 FROM public.loct3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3
 (4 rows)
 
 explain (verbose, costs off) select * from ft3 where f2 COLLATE "C" = 'foo';
-                  QUERY PLAN                   
------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
+   Output: f1, f2, f3
    Filter: ((ft3.f2)::text = 'foo'::text)
-   Remote SQL: SELECT f1, f2 FROM public.loct3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3
 (4 rows)
 
 explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
-                  QUERY PLAN                   
------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Foreign Scan on public.ft3
-   Output: f1, f2
+   Output: f1, f2, f3
    Filter: (ft3.f2 = 'foo'::text COLLATE "C")
-   Remote SQL: SELECT f1, f2 FROM public.loct3
+   Remote SQL: SELECT f1, f2, f3 FROM public.loct3
 (4 rows)
+
+explain (verbose, costs off) select * from ft3 f, loct3 l
+  where f.f3 = l.f3 COLLATE "POSIX" and l.f1 = 'foo';
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Hash Join
+   Output: f.f1, f.f2, f.f3, l.f1, l.f2, l.f3
+   Hash Cond: ((f.f3)::text = (l.f3)::text)
+   ->  Foreign Scan on public.ft3 f
+         Output: f.f1, f.f2, f.f3
+         Remote SQL: SELECT f1, f2, f3 FROM public.loct3
+   ->  Hash
+         Output: l.f1, l.f2, l.f3
+         ->  Index Scan using loct3_f1_key on public.loct3 l
+               Output: l.f1, l.f2, l.f3
+               Index Cond: (l.f1 = 'foo'::text)
+(11 rows)
 
 -- ===================================================================
 -- test writable foreign table stuff

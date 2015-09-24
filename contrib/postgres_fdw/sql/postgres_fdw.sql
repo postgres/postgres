@@ -316,19 +316,24 @@ COMMIT;
 -- ===================================================================
 -- test handling of collations
 -- ===================================================================
-create table loct3 (f1 text collate "C", f2 text);
-create foreign table ft3 (f1 text collate "C", f2 text)
-  server loopback options (table_name 'loct3');
+create table loct3 (f1 text collate "C" unique, f2 text, f3 varchar(10) unique);
+create foreign table ft3 (f1 text collate "C", f2 text, f3 varchar(10))
+  server loopback options (table_name 'loct3', use_remote_estimate 'true');
 
 -- can be sent to remote
 explain (verbose, costs off) select * from ft3 where f1 = 'foo';
 explain (verbose, costs off) select * from ft3 where f1 COLLATE "C" = 'foo';
 explain (verbose, costs off) select * from ft3 where f2 = 'foo';
+explain (verbose, costs off) select * from ft3 where f3 = 'foo';
+explain (verbose, costs off) select * from ft3 f, loct3 l
+  where f.f3 = l.f3 and l.f1 = 'foo';
 -- can't be sent to remote
 explain (verbose, costs off) select * from ft3 where f1 COLLATE "POSIX" = 'foo';
 explain (verbose, costs off) select * from ft3 where f1 = 'foo' COLLATE "C";
 explain (verbose, costs off) select * from ft3 where f2 COLLATE "C" = 'foo';
 explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
+explain (verbose, costs off) select * from ft3 f, loct3 l
+  where f.f3 = l.f3 COLLATE "POSIX" and l.f1 = 'foo';
 
 -- ===================================================================
 -- test writable foreign table stuff
