@@ -665,9 +665,9 @@ PrintControlValues(bool guessed)
 		   ControlFile.checkPointCopy.oldestMulti);
 	printf(_("Latest checkpoint's oldestMulti's DB: %u\n"),
 		   ControlFile.checkPointCopy.oldestMultiDB);
-	printf(_("Latest checkpoint's oldest CommitTs:  %u\n"),
+	printf(_("Latest checkpoint's oldestCommitTs:   %u\n"),
 		   ControlFile.checkPointCopy.oldestCommitTs);
-	printf(_("Latest checkpoint's newest CommitTs:  %u\n"),
+	printf(_("Latest checkpoint's newestCommitTs:   %u\n"),
 		   ControlFile.checkPointCopy.newestCommitTs);
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
