@@ -39,8 +39,9 @@
  */
 volatile bool cancel_pressed = false;
 
+/* info for locale-aware numeric formatting; set up by setDecimalLocale() */
 static char *decimal_point;
-static char *grouping;
+static int	groupdigits;
 static char *thousands_sep;
 
 static char default_footer[100];
@@ -196,42 +197,33 @@ static void IsPagerNeeded(const printTableContent *cont, const int extra_lines, 
 static void print_aligned_vertical(const printTableContent *cont, FILE *fout);
 
 
+/* Count number of digits in integral part of number */
 static int
 integer_digits(const char *my_str)
 {
-	int			frac_len;
-
-	if (my_str[0] == '-')
+	/* ignoring any sign ... */
+	if (my_str[0] == '-' || my_str[0] == '+')
 		my_str++;
-
-	frac_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
-
-	return strlen(my_str) - frac_len;
+	/* ... count initial integral digits */
+	return strspn(my_str, "0123456789");
 }
 
-/* Return additional length required for locale-aware numeric output */
+/* Compute additional length required for locale-aware numeric output */
 static int
 additional_numeric_locale_len(const char *my_str)
 {
 	int			int_len = integer_digits(my_str),
 				len = 0;
-	int			groupdigits = atoi(grouping);
 
-	if (int_len > 0)
-		/* Don't count a leading separator */
-		len = (int_len / groupdigits - (int_len % groupdigits == 0)) *
-			strlen(thousands_sep);
+	/* Account for added thousands_sep instances */
+	if (int_len > groupdigits)
+		len += ((int_len - 1) / groupdigits) * strlen(thousands_sep);
 
+	/* Account for possible additional length of decimal_point */
 	if (strchr(my_str, '.') != NULL)
-		len += strlen(decimal_point) - strlen(".");
+		len += strlen(decimal_point) - 1;
 
 	return len;
-}
-
-static int
-strlen_with_numeric_locale(const char *my_str)
-{
-	return strlen(my_str) + additional_numeric_locale_len(my_str);
 }
 
 /*
@@ -241,53 +233,51 @@ strlen_with_numeric_locale(const char *my_str)
 static char *
 format_numeric_locale(const char *my_str)
 {
+	int			new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
+	char	   *new_str = pg_malloc(new_len + 1);
+	int			int_len = integer_digits(my_str);
 	int			i,
-				j,
-				int_len = integer_digits(my_str),
 				leading_digits;
-	int			groupdigits = atoi(grouping);
-	int			new_str_start = 0;
-	char	   *new_str = pg_malloc(strlen_with_numeric_locale(my_str) + 1);
+	int			new_str_pos = 0;
 
-	leading_digits = (int_len % groupdigits != 0) ?
-		int_len % groupdigits : groupdigits;
+	/* number of digits in first thousands group */
+	leading_digits = int_len % groupdigits;
+	if (leading_digits == 0)
+		leading_digits = groupdigits;
 
-	if (my_str[0] == '-')		/* skip over sign, affects grouping
-								 * calculations */
+	/* process sign */
+	if (my_str[0] == '-' || my_str[0] == '+')
 	{
-		new_str[0] = my_str[0];
+		new_str[new_str_pos++] = my_str[0];
 		my_str++;
-		new_str_start = 1;
 	}
 
-	for (i = 0, j = new_str_start;; i++, j++)
+	/* process integer part of number */
+	for (i = 0; i < int_len; i++)
 	{
-		/* Hit decimal point? */
-		if (my_str[i] == '.')
+		/* Time to insert separator? */
+		if (i > 0 && --leading_digits == 0)
 		{
-			strcpy(&new_str[j], decimal_point);
-			j += strlen(decimal_point);
-			/* add fractional part */
-			strcpy(&new_str[j], &my_str[i] + 1);
-			break;
+			strcpy(&new_str[new_str_pos], thousands_sep);
+			new_str_pos += strlen(thousands_sep);
+			leading_digits = groupdigits;
 		}
-
-		/* End of string? */
-		if (my_str[i] == '\0')
-		{
-			new_str[j] = '\0';
-			break;
-		}
-
-		/* Add separator? */
-		if (i != 0 && (i - leading_digits) % groupdigits == 0)
-		{
-			strcpy(&new_str[j], thousands_sep);
-			j += strlen(thousands_sep);
-		}
-
-		new_str[j] = my_str[i];
+		new_str[new_str_pos++] = my_str[i];
 	}
+
+	/* handle decimal point if any */
+	if (my_str[i] == '.')
+	{
+		strcpy(&new_str[new_str_pos], decimal_point);
+		new_str_pos += strlen(decimal_point);
+		i++;
+	}
+
+	/* copy the rest (fractional digits and/or exponent, and \0 terminator) */
+	strcpy(&new_str[new_str_pos], &my_str[i]);
+
+	/* assert we didn't underestimate new_len (an overestimate is OK) */
+	Assert(strlen(new_str) <= new_len);
 
 	return new_str;
 }
@@ -3241,10 +3231,11 @@ setDecimalLocale(void)
 		decimal_point = pg_strdup(extlconv->decimal_point);
 	else
 		decimal_point = ".";	/* SQL output standard */
+
 	if (*extlconv->grouping && atoi(extlconv->grouping) > 0)
-		grouping = pg_strdup(extlconv->grouping);
+		groupdigits = atoi(extlconv->grouping);
 	else
-		grouping = "3";			/* most common */
+		groupdigits = 3;		/* most common */
 
 	/* similar code exists in formatting.c */
 	if (*extlconv->thousands_sep)
