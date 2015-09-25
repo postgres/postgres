@@ -185,18 +185,34 @@ additional_numeric_locale_len(const char *my_str)
 }
 
 /*
+ * Format a numeric value per current LC_NUMERIC locale setting
+ *
  * Returns the appropriately formatted string in a new allocated block,
- * caller must free
+ * caller must free.
+ *
+ * setDecimalLocale() must have been called earlier.
  */
 static char *
 format_numeric_locale(const char *my_str)
 {
-	int			new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
-	char	   *new_str = pg_local_malloc(new_len + 1);
-	int			int_len = integer_digits(my_str);
-	int			i,
-				leading_digits;
-	int			new_str_pos = 0;
+	char	   *new_str;
+	int			new_len,
+				int_len,
+				leading_digits,
+				i,
+				new_str_pos;
+
+	/*
+	 * If the string doesn't look like a number, return it unchanged.  This
+	 * check is essential to avoid mangling already-localized "money" values.
+	 */
+	if (strspn(my_str, "0123456789+-.eE") != strlen(my_str))
+		return pg_strdup(my_str);
+
+	new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
+	new_str = pg_local_malloc(new_len + 1);
+	new_str_pos = 0;
+	int_len = integer_digits(my_str);
 
 	/* number of digits in first thousands group */
 	leading_digits = int_len % groupdigits;
