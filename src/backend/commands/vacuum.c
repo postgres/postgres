@@ -1141,7 +1141,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 */
 	TruncateCLOG(frozenXID);
 	TruncateCommitTs(frozenXID, true);
-	TruncateMultiXact(minMulti, minmulti_datoid, false);
+	TruncateMultiXact(minMulti, minmulti_datoid);
 
 	/*
 	 * Update the wrap limit for GetNewTransactionId and creation of new
