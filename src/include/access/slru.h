@@ -143,14 +143,14 @@ extern int SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 extern int SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno,
 						   TransactionId xid);
 extern void SimpleLruWritePage(SlruCtl ctl, int slotno);
-extern void SimpleLruFlush(SlruCtl ctl, bool checkpoint);
+extern void SimpleLruFlush(SlruCtl ctl, bool allow_redirtied);
 extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);
 extern bool SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno);
 
 typedef bool (*SlruScanCallback) (SlruCtl ctl, char *filename, int segpage,
 											  void *data);
 extern bool SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data);
-extern void SlruDeleteSegment(SlruCtl ctl, char *filename);
+extern void SlruDeleteSegment(SlruCtl ctl, int segno);
 
 /* SlruScanDirectory public callbacks */
 extern bool SlruScanDirCbReportPresence(SlruCtl ctl, char *filename,

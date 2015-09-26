@@ -2750,6 +2750,7 @@ xl_invalid_page
 xl_invalid_page_key
 xl_multi_insert_tuple
 xl_multixact_create
+xl_multixact_truncate
 xl_parameter_change
 xl_relmap_update
 xl_replorigin_drop
