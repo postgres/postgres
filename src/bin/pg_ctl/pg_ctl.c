@@ -1914,11 +1914,10 @@ do_help(void)
 
 	printf(_("\nCommon options:\n"));
 	printf(_("  -D, --pgdata=DATADIR   location of the database storage area\n"));
-	printf(_("  -s, --silent           only print errors, no informational messages\n"));
 #if defined(WIN32) || defined(__CYGWIN__)
-	printf(_("  -e SOURCE              event source to use for logging when running\n"
-			 "                         as a service\n"));
+	printf(_("  -e SOURCE              event source for logging when running as a service\n"));
 #endif
+	printf(_("  -s, --silent           only print errors, no informational messages\n"));
 	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -w                     wait until operation completes\n"));
@@ -2203,14 +2202,14 @@ main(int argc, char **argv)
 						pgdata_opt = psprintf("-D \"%s\" ", pgdata_D);
 						break;
 					}
+				case 'e':
+					event_source = pg_strdup(optarg);
+					break;
 				case 'l':
 					log_file = pg_strdup(optarg);
 					break;
 				case 'm':
 					set_mode(optarg);
-					break;
-				case 'e':
-					event_source = pg_strdup(optarg);
 					break;
 				case 'N':
 					register_servicename = pg_strdup(optarg);
