@@ -398,7 +398,7 @@ help(const char *progname)
 	printf(_("  -i, --index=INDEX         recreate specific index(es) only\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));
 	printf(_("  -s, --system              reindex system catalogs\n"));
-	printf(_("  -S, --schema=SCHEMA       recreate specific schema(s) only\n"));
+	printf(_("  -S, --schema=SCHEMA       reindex specific schema(s) only\n"));
 	printf(_("  -t, --table=TABLE         reindex specific table(s) only\n"));
 	printf(_("  -v, --verbose             write a lot of output\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
