@@ -1210,12 +1210,12 @@ RecordTransactionCommit(void)
 		 * Record plain commit ts if not replaying remote actions, or if no
 		 * timestamp is configured.
 		 */
-		if (replorigin_sesssion_origin == InvalidRepOriginId ||
-			replorigin_sesssion_origin == DoNotReplicateId ||
-			replorigin_sesssion_origin_timestamp == 0)
-			replorigin_sesssion_origin_timestamp = xactStopTimestamp;
+		if (replorigin_session_origin == InvalidRepOriginId ||
+			replorigin_session_origin == DoNotReplicateId ||
+			replorigin_session_origin_timestamp == 0)
+			replorigin_session_origin_timestamp = xactStopTimestamp;
 		else
-			replorigin_session_advance(replorigin_sesssion_origin_lsn,
+			replorigin_session_advance(replorigin_session_origin_lsn,
 									   XactLastRecEnd);
 
 		/*
@@ -1224,8 +1224,8 @@ RecordTransactionCommit(void)
 		 * action during replay.
 		 */
 		TransactionTreeSetCommitTsData(xid, nchildren, children,
-									   replorigin_sesssion_origin_timestamp,
-									   replorigin_sesssion_origin, false);
+									   replorigin_session_origin_timestamp,
+									   replorigin_session_origin, false);
 	}
 
 	/*
@@ -5134,12 +5134,12 @@ XactLogCommitRecord(TimestampTz commit_time,
 	}
 
 	/* dump transaction origin information */
-	if (replorigin_sesssion_origin != InvalidRepOriginId)
+	if (replorigin_session_origin != InvalidRepOriginId)
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_ORIGIN;
 
-		xl_origin.origin_lsn = replorigin_sesssion_origin_lsn;
-		xl_origin.origin_timestamp = replorigin_sesssion_origin_timestamp;
+		xl_origin.origin_lsn = replorigin_session_origin_lsn;
+		xl_origin.origin_timestamp = replorigin_session_origin_timestamp;
 	}
 
 	if (xl_xinfo.xinfo != 0)
