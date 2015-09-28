@@ -378,10 +378,10 @@ initializeInput(int flags)
  *
  * max_lines: if >= 0, limit history file to that many entries.
  */
+#ifdef USE_READLINE
 static bool
 saveHistory(char *fname, int max_lines)
 {
-#ifdef USE_READLINE
 	int			errnum;
 
 	/*
@@ -446,10 +446,10 @@ saveHistory(char *fname, int max_lines)
 		psql_error("could not save history to file \"%s\": %s\n",
 				   fname, strerror(errnum));
 	}
-#endif
-
 	return false;
 }
+#endif
+
 
 
 /*
