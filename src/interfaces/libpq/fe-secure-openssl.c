@@ -1598,14 +1598,13 @@ static int
 my_sock_read(BIO *h, char *buf, int size)
 {
 	int			res;
-	int			save_errno;
 
 	res = pqsecure_raw_read((PGconn *) h->ptr, buf, size);
-	save_errno = errno;
 	BIO_clear_retry_flags(h);
 	if (res < 0)
 	{
-		switch (save_errno)
+		/* If we were interrupted, tell caller to retry */
+		switch (SOCK_ERRNO)
 		{
 #ifdef EAGAIN
 			case EAGAIN:
@@ -1622,7 +1621,6 @@ my_sock_read(BIO *h, char *buf, int size)
 		}
 	}
 
-	errno = save_errno;
 	return res;
 }
 
@@ -1630,16 +1628,26 @@ static int
 my_sock_write(BIO *h, const char *buf, int size)
 {
 	int			res;
-	int			save_errno;
 
 	res = pqsecure_raw_write((PGconn *) h->ptr, buf, size);
-	save_errno = errno;
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
-		if (save_errno == EINTR)
+		/* If we were interrupted, tell caller to retry */
+		switch (SOCK_ERRNO)
 		{
-			BIO_set_retry_write(h);
+#ifdef EAGAIN
+			case EAGAIN:
+#endif
+#if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+			case EWOULDBLOCK:
+#endif
+			case EINTR:
+				BIO_set_retry_write(h);
+				break;
+
+			default:
+				break;
 		}
 	}
 
