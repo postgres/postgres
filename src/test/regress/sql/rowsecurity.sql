@@ -1307,3 +1307,13 @@ DROP USER rls_regress_user2;
 DROP USER rls_regress_exempt_user;
 DROP ROLE rls_regress_group1;
 DROP ROLE rls_regress_group2;
+
+-- Arrange to have a few policies left over, for testing
+-- pg_dump/pg_restore
+CREATE SCHEMA rls_regress_schema;
+CREATE TABLE rls_tbl (c1 int);
+ALTER TABLE rls_tbl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p1 ON rls_tbl USING (c1 > 5);
+CREATE POLICY p2 ON rls_tbl FOR SELECT USING (c1 <= 3);
+CREATE POLICY p3 ON rls_tbl FOR UPDATE USING (c1 <= 3) WITH CHECK (c1 > 5);
+CREATE POLICY p4 ON rls_tbl FOR DELETE USING (c1 <= 3);
