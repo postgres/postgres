@@ -608,7 +608,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 				break;
 
 			/* Is there a conflict with this guy's request? */
-			if (((1 << proc->waitLockMode) & conflictMask) != 0)
+			if ((LOCKBIT_ON(proc->waitLockMode) & conflictMask) != 0)
 			{
 				/* This proc soft-blocks checkProc */
 				if (FindLockCycleRecurse(proc, depth + 1,
@@ -648,7 +648,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 				break;
 
 			/* Is there a conflict with this guy's request? */
-			if (((1 << proc->waitLockMode) & conflictMask) != 0)
+			if ((LOCKBIT_ON(proc->waitLockMode) & conflictMask) != 0)
 			{
 				/* This proc soft-blocks checkProc */
 				if (FindLockCycleRecurse(proc, depth + 1,

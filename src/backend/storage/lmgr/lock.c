@@ -64,41 +64,41 @@ static const LOCKMASK LockConflicts[] = {
 	0,
 
 	/* AccessShareLock */
-	(1 << AccessExclusiveLock),
+	LOCKBIT_ON(AccessExclusiveLock),
 
 	/* RowShareLock */
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock),
 
 	/* RowExclusiveLock */
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+	LOCKBIT_ON(ShareLock) | LOCKBIT_ON(ShareRowExclusiveLock) |
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock),
 
 	/* ShareUpdateExclusiveLock */
-	(1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+	LOCKBIT_ON(ShareUpdateExclusiveLock) |
+	LOCKBIT_ON(ShareLock) | LOCKBIT_ON(ShareRowExclusiveLock) |
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock),
 
 	/* ShareLock */
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+	LOCKBIT_ON(RowExclusiveLock) | LOCKBIT_ON(ShareUpdateExclusiveLock) |
+	LOCKBIT_ON(ShareRowExclusiveLock) |
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock),
 
 	/* ShareRowExclusiveLock */
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+	LOCKBIT_ON(RowExclusiveLock) | LOCKBIT_ON(ShareUpdateExclusiveLock) |
+	LOCKBIT_ON(ShareLock) | LOCKBIT_ON(ShareRowExclusiveLock) |
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock),
 
 	/* ExclusiveLock */
-	(1 << RowShareLock) |
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+	LOCKBIT_ON(RowShareLock) |
+	LOCKBIT_ON(RowExclusiveLock) | LOCKBIT_ON(ShareUpdateExclusiveLock) |
+	LOCKBIT_ON(ShareLock) | LOCKBIT_ON(ShareRowExclusiveLock) |
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock),
 
 	/* AccessExclusiveLock */
-	(1 << AccessShareLock) | (1 << RowShareLock) |
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock)
+	LOCKBIT_ON(AccessShareLock) | LOCKBIT_ON(RowShareLock) |
+	LOCKBIT_ON(RowExclusiveLock) | LOCKBIT_ON(ShareUpdateExclusiveLock) |
+	LOCKBIT_ON(ShareLock) | LOCKBIT_ON(ShareRowExclusiveLock) |
+	LOCKBIT_ON(ExclusiveLock) | LOCKBIT_ON(AccessExclusiveLock)
 
 };
 
