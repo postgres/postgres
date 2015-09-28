@@ -25,7 +25,6 @@
 #include "access/sysattr.h"
 #include "access/xact.h"
 #include "access/xlog.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/defrem.h"
@@ -37,12 +36,10 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
-#include "parser/parse_relation.h"
 #include "nodes/makefuncs.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1413,7 +1410,7 @@ BeginCopy(bool is_from,
 		Assert(query->utilityStmt == NULL);
 
 		/* plan the query */
-		plan = planner(query, 0, NULL);
+		plan = pg_plan_query(query, 0, NULL);
 
 		/*
 		 * With row level security and a user using "COPY relation TO", we
