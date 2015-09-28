@@ -2747,10 +2747,10 @@ PageOutput(int lines, const printTableOpt *topt)
 	{
 		const char *pagerprog;
 		FILE	   *pagerpipe;
-		unsigned short int pager = topt->pager;
-		int			min_lines = topt->pager_min_lines;
 
 #ifdef TIOCGWINSZ
+		unsigned short int pager = topt->pager;
+		int			min_lines = topt->pager_min_lines;
 		int			result;
 		struct winsize screen_size;
 
