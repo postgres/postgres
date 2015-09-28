@@ -1247,7 +1247,9 @@ repairDependencyLoop(DumpableObject **loop,
 	}
 	if (i >= nLoop)
 	{
-		write_msg(NULL, "NOTICE: there are circular foreign-key constraints among these table(s):\n");
+		write_msg(NULL, ngettext("NOTICE: there are circular foreign-key constraints on this table:\n",
+								 "NOTICE: there are circular foreign-key constraints among these tables:\n",
+								 nLoop));
 		for (i = 0; i < nLoop; i++)
 			write_msg(NULL, "  %s\n", loop[i]->name);
 		write_msg(NULL, "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n");
