@@ -42,9 +42,9 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/logical.h"
-#include "replication/walsender.h"
-#include "replication/syncrep.h"
 #include "replication/origin.h"
+#include "replication/syncrep.h"
+#include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
@@ -1119,6 +1119,8 @@ AtSubStart_ResourceOwner(void)
  *
  * Returns latest XID among xact and its children, or InvalidTransactionId
  * if the xact has no XID.  (We compute that here just because it's easier.)
+ *
+ * If you change this function, see RecordTransactionCommitPrepared also.
  */
 static TransactionId
 RecordTransactionCommit(void)
@@ -1172,6 +1174,15 @@ RecordTransactionCommit(void)
 	}
 	else
 	{
+		bool		replorigin;
+
+		/*
+		 * Are we using the replication origins feature?  Or, in other words,
+		 * are we replaying remote actions?
+		 */
+		replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+					  replorigin_session_origin != DoNotReplicateId);
+
 		/*
 		 * Begin commit critical section and insert the commit XLOG record.
 		 */
@@ -1206,26 +1217,28 @@ RecordTransactionCommit(void)
 							RelcacheInitFileInval, forceSyncCommit,
 							InvalidTransactionId /* plain commit */ );
 
-		/*
-		 * Record plain commit ts if not replaying remote actions, or if no
-		 * timestamp is configured.
-		 */
-		if (replorigin_session_origin == InvalidRepOriginId ||
-			replorigin_session_origin == DoNotReplicateId ||
-			replorigin_session_origin_timestamp == 0)
-			replorigin_session_origin_timestamp = xactStopTimestamp;
-		else
+		if (replorigin)
+			/* Move LSNs forward for this replication origin */
 			replorigin_session_advance(replorigin_session_origin_lsn,
 									   XactLastRecEnd);
 
 		/*
-		 * We don't need to WAL log origin or timestamp here, the commit
-		 * record contains all the necessary information and will redo the SET
-		 * action during replay.
+		 * Record commit timestamp.  The value comes from plain commit
+		 * timestamp if there's no replication origin; otherwise, the
+		 * timestamp was already set in replorigin_session_origin_timestamp by
+		 * replication.
+		 *
+		 * We don't need to WAL-log anything here, as the commit record
+		 * written above already contains the data.
 		 */
+
+		if (!replorigin || replorigin_session_origin_timestamp == 0)
+			replorigin_session_origin_timestamp = xactStopTimestamp;
+
 		TransactionTreeSetCommitTsData(xid, nchildren, children,
 									   replorigin_session_origin_timestamp,
-									   replorigin_session_origin, false);
+									   replorigin_session_origin,
+									   false, false);
 	}
 
 	/*
@@ -5321,7 +5334,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 	/* Set the transaction commit timestamp and metadata */
 	TransactionTreeSetCommitTsData(xid, parsed->nsubxacts, parsed->subxacts,
 								   commit_time, origin_id,
-								   false);
+								   true, false);
 
 	if (standbyState == STANDBY_DISABLED)
 	{

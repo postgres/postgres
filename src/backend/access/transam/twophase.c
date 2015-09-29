@@ -41,6 +41,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "access/commit_ts.h"
 #include "access/htup_details.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
@@ -56,8 +57,9 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-#include "replication/walsender.h"
+#include "replication/origin.h"
 #include "replication/syncrep.h"
+#include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
@@ -2070,8 +2072,9 @@ RecoverPreparedTransactions(void)
 /*
  *	RecordTransactionCommitPrepared
  *
- * This is basically the same as RecordTransactionCommit: in particular,
- * we must set the delayChkpt flag to avoid a race condition.
+ * This is basically the same as RecordTransactionCommit (q.v. if you change
+ * this function): in particular, we must set the delayChkpt flag to avoid a
+ * race condition.
  *
  * We know the transaction made at least one XLOG entry (its PREPARE),
  * so it is never possible to optimize out the commit record.
@@ -2087,6 +2090,15 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								bool initfileinval)
 {
 	XLogRecPtr	recptr;
+	TimestampTz committs = GetCurrentTimestamp();
+	bool		replorigin;
+
+	/*
+	 * Are we using the replication origins feature?  Or, in other words, are
+	 * we replaying remote actions?
+	 */
+	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+				  replorigin_session_origin != DoNotReplicateId);
 
 	START_CRIT_SECTION();
 
@@ -2094,11 +2106,32 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	MyPgXact->delayChkpt = true;
 
 	/* Emit the XLOG commit record */
-	recptr = XactLogCommitRecord(GetCurrentTimestamp(),
+	recptr = XactLogCommitRecord(committs,
 								 nchildren, children, nrels, rels,
 								 ninvalmsgs, invalmsgs,
 								 initfileinval, false,
 								 xid);
+
+
+	if (replorigin)
+		/* Move LSNs forward for this replication origin */
+		replorigin_session_advance(replorigin_session_origin_lsn,
+								   XactLastRecEnd);
+
+	/*
+	 * Record commit timestamp.  The value comes from plain commit timestamp
+	 * if replorigin is not enabled, or replorigin already set a value for us
+	 * in replorigin_session_origin_timestamp otherwise.
+	 *
+	 * We don't need to WAL-log anything here, as the commit record written
+	 * above already contains the data.
+	 */
+	if (!replorigin || replorigin_session_origin_timestamp == 0)
+		replorigin_session_origin_timestamp = committs;
+
+	TransactionTreeSetCommitTsData(xid, nchildren, children,
+								   replorigin_session_origin_timestamp,
+								   replorigin_session_origin, false, false);
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there any

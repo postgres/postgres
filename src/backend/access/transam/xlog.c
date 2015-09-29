@@ -5826,19 +5826,6 @@ do { \
 						minValue))); \
 } while(0)
 
-#define RecoveryRequiresBoolParameter(param_name, currValue, masterValue) \
-do { \
-	bool _currValue = (currValue); \
-	bool _masterValue = (masterValue); \
-	if (_currValue != _masterValue) \
-		ereport(ERROR, \
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
-				 errmsg("hot standby is not possible because it requires \"%s\" to be same on master and standby (master has \"%s\", standby has \"%s\")", \
-						param_name, \
-						_masterValue ? "true" : "false", \
-						_currValue ? "true" : "false"))); \
-} while(0)
-
 /*
  * Check to see if required parameters are set high enough on this server
  * for various aspects of recovery operation.
@@ -5885,9 +5872,6 @@ CheckRequiredParameterValues(void)
 		RecoveryRequiresIntParameter("max_locks_per_transaction",
 									 max_locks_per_xact,
 									 ControlFile->max_locks_per_xact);
-		RecoveryRequiresBoolParameter("track_commit_timestamp",
-									  track_commit_timestamp,
-									  ControlFile->track_commit_timestamp);
 	}
 }
 
