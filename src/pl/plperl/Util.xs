@@ -58,7 +58,7 @@ do_util_elog(int level, SV *msg)
 			pfree(cmsg);
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 	}
 	PG_END_TRY();
 }
