@@ -2876,7 +2876,7 @@ plperl_spi_exec(char *query, int limit)
 		SPI_restore_connection();
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
@@ -3109,7 +3109,7 @@ plperl_spi_query(char *query)
 		SPI_restore_connection();
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
@@ -3195,7 +3195,7 @@ plperl_spi_fetchrow(char *cursor)
 		SPI_restore_connection();
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
@@ -3370,7 +3370,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		SPI_restore_connection();
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
@@ -3511,7 +3511,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		SPI_restore_connection();
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
@@ -3640,7 +3640,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		SPI_restore_connection();
 
 		/* Punt the error to Perl */
-		croak("%s", edata->message);
+		croak_cstr(edata->message);
 
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
