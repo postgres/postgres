@@ -246,3 +246,121 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 	}
 	return res;
 }
+
+/*-------------------------------------------------------------------------
+ * datumEstimateSpace
+ *
+ * Compute the amount of space that datumSerialize will require for a
+ * particular Datum.
+ *-------------------------------------------------------------------------
+ */
+Size
+datumEstimateSpace(Datum value, bool isnull, bool typByVal, int typLen)
+{
+	Size	sz = sizeof(int);
+
+	if (!isnull)
+	{
+		/* no need to use add_size, can't overflow */
+		if (typByVal)
+			sz += sizeof(Datum);
+		else
+			sz += datumGetSize(value, typByVal, typLen);
+	}
+
+	return sz;
+}
+
+/*-------------------------------------------------------------------------
+ * datumSerialize
+ *
+ * Serialize a possibly-NULL datum into caller-provided storage.
+ *
+ * The format is as follows: first, we write a 4-byte header word, which
+ * is either the length of a pass-by-reference datum, -1 for a
+ * pass-by-value datum, or -2 for a NULL.  If the value is NULL, nothing
+ * further is written.  If it is pass-by-value, sizeof(Datum) bytes
+ * follow.  Otherwise, the number of bytes indicated by the header word
+ * follow.  The caller is responsible for ensuring that there is enough
+ * storage to store the number of bytes that will be written; use
+ * datumEstimateSpace() to find out how many will be needed.
+ * *start_address is updated to point to the byte immediately following
+ * those written.
+ *-------------------------------------------------------------------------
+ */
+void
+datumSerialize(Datum value, bool isnull, bool typByVal, int typLen,
+			   char **start_address)
+{
+	int		header;
+
+	/* Write header word. */
+	if (isnull)
+		header = -2;
+	else if (typByVal)
+		header = -1;
+	else
+		header = datumGetSize(value, typByVal, typLen);
+	memcpy(*start_address, &header, sizeof(int));
+	*start_address += sizeof(int);
+
+	/* If not null, write payload bytes. */
+	if (!isnull)
+	{
+		if (typByVal)
+		{
+			memcpy(*start_address, &value, sizeof(Datum));
+			*start_address += sizeof(Datum);
+		}
+		else
+		{
+			memcpy(*start_address, DatumGetPointer(value), header);
+			*start_address += header;
+		}
+	}
+}
+
+/*-------------------------------------------------------------------------
+ * datumRestore
+ *
+ * Restore a possibly-NULL datum previously serialized by datumSerialize.
+ * *start_address is updated according to the number of bytes consumed.
+ *-------------------------------------------------------------------------
+ */
+Datum
+datumRestore(char **start_address, bool *isnull)
+{
+	int		header;
+	void   *d;
+
+	/* Read header word. */
+	memcpy(&header, *start_address, sizeof(int));
+	*start_address += sizeof(int);
+
+	/* If this datum is NULL, we can stop here. */
+	if (header == -2)
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/* OK, datum is not null. */
+	*isnull = false;
+
+	/* If this datum is pass-by-value, sizeof(Datum) bytes follow. */
+	if (header == -1)
+	{
+		Datum		val;
+
+		memcpy(&val, *start_address, sizeof(Datum));
+		*start_address += sizeof(Datum);
+		return val;
+	}
+
+	/* Pass-by-reference case; copy indicated number of bytes. */
+	Assert(header > 0);
+	d = palloc(header);
+	memcpy(d, *start_address, header);
+	*start_address += header;
+	return PointerGetDatum(d);
+}

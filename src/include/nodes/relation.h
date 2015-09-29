@@ -99,6 +99,8 @@ typedef struct PlannerGlobal
 
 	Index		lastRowMarkId;	/* highest PlanRowMark ID assigned */
 
+	int			lastPlanNodeId;	/* highest plan node ID assigned */
+
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
 	bool		hasRowSecurity; /* row security applied? */

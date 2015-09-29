@@ -196,6 +196,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->nParamExec = 0;
 	glob->lastPHId = 0;
 	glob->lastRowMarkId = 0;
+	glob->lastPlanNodeId = 0;
 	glob->transientPlan = false;
 	glob->hasRowSecurity = false;
 

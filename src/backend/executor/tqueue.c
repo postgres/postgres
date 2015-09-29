@@ -66,7 +66,9 @@ tqueueStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo)
 static void
 tqueueShutdownReceiver(DestReceiver *self)
 {
-	/* do nothing */
+	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
+
+	shm_mq_detach(shm_mq_get_queue(tqueue->handle));
 }
 
 /*

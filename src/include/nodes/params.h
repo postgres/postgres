@@ -102,5 +102,8 @@ typedef struct ParamExecData
 
 /* Functions found in src/backend/nodes/params.c */
 extern ParamListInfo copyParamList(ParamListInfo from);
+extern Size EstimateParamListSpace(ParamListInfo paramLI);
+extern void SerializeParamList(ParamListInfo paramLI, char **start_address);
+extern ParamListInfo RestoreParamList(char **start_address);
 
 #endif   /* PARAMS_H */
