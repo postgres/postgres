@@ -24,7 +24,8 @@ extern bool check_track_commit_timestamp(bool *newval, void **extra,
 
 extern void TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 							   TransactionId *subxids, TimestampTz timestamp,
-							   RepOriginId nodeid, bool do_xlog);
+							   RepOriginId nodeid,
+							   bool replaying_xlog, bool write_xlog);
 extern bool TransactionIdGetCommitTsData(TransactionId xid,
 							 TimestampTz *ts, RepOriginId *nodeid);
 extern TransactionId GetLatestCommitTsData(TimestampTz *ts,
@@ -67,4 +68,4 @@ extern void commit_ts_redo(XLogReaderState *record);
 extern void commit_ts_desc(StringInfo buf, XLogReaderState *record);
 extern const char *commit_ts_identify(uint8 info);
 
-#endif   /* COMMITTS_H */
+#endif   /* COMMIT_TS_H */

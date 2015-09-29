@@ -122,29 +122,39 @@ static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
  * subtrans implementation changes in the future, we might want to revisit the
  * decision of storing timestamp info for each subxid.
  *
- * The do_xlog parameter tells us whether to include an XLog record of this
- * or not.  Normal path through RecordTransactionCommit() will be related
- * to a transaction commit XLog record, and so should pass "false" here.
- * Other callers probably want to pass true, so that the given values persist
- * in case of crashes.
+ * The replaying_xlog parameter indicates whether the module should execute
+ * its write even if the feature is nominally disabled, because we're replaying
+ * a record generated from a master where the feature is enabled.
+ *
+ * The write_xlog parameter tells us whether to include an XLog record of this
+ * or not.  Normally, this is called from transaction commit routines (both
+ * normal and prepared) and the information will be stored in the transaction
+ * commit XLog record, and so they should pass "false" for this.  The XLog redo
+ * code should use "false" here as well.  Other callers probably want to pass
+ * true, so that the given values persist in case of crashes.
  */
 void
 TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 							   TransactionId *subxids, TimestampTz timestamp,
-							   RepOriginId nodeid, bool do_xlog)
+							   RepOriginId nodeid,
+							   bool replaying_xlog, bool write_xlog)
 {
 	int			i;
 	TransactionId headxid;
 	TransactionId newestXact;
 
-	if (!track_commit_timestamp)
+	/* We'd better not try to write xlog during replay */
+	Assert(!(write_xlog && replaying_xlog));
+
+	/* No-op if feature not enabled, unless replaying WAL */
+	if (!track_commit_timestamp && !replaying_xlog)
 		return;
 
 	/*
 	 * Comply with the WAL-before-data rule: if caller specified it wants this
 	 * value to be recorded in WAL, do so before touching the data.
 	 */
-	if (do_xlog)
+	if (write_xlog)
 		WriteSetTimestampXlogRec(xid, nsubxids, subxids, timestamp, nodeid);
 
 	/*
@@ -906,7 +916,8 @@ commit_ts_redo(XLogReaderState *record)
 			subxids = NULL;
 
 		TransactionTreeSetCommitTsData(setts->mainxid, nsubxids, subxids,
-									 setts->timestamp, setts->nodeid, false);
+									   setts->timestamp, setts->nodeid, false,
+									   true);
 		if (subxids)
 			pfree(subxids);
 	}
