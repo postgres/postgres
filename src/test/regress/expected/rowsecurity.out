@@ -1220,23 +1220,21 @@ NOTICE:  f_leak => cde
 EXPLAIN (COSTS OFF) UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
 WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
 AND f_leak(t2_1.b) AND f_leak(t2_2.b) RETURNING *, t2_1, t2_2;
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Update on t2 t2_1_1
    ->  Nested Loop
          Join Filter: (t2_1.b = t2_2.b)
          ->  Subquery Scan on t2_1
                Filter: f_leak(t2_1.b)
-               ->  Subquery Scan on t2_1_2
-                     Filter: ((t2_1_2.a % 2) = 1)
-                     ->  LockRows
-                           ->  Seq Scan on t2 t2_1_3
-                                 Filter: ((a = 3) AND ((a % 2) = 1))
+               ->  LockRows
+                     ->  Seq Scan on t2 t2_1_2
+                           Filter: ((a = 3) AND ((a % 2) = 1))
          ->  Subquery Scan on t2_2
                Filter: f_leak(t2_2.b)
                ->  Seq Scan on t2 t2_2_1
                      Filter: ((a = 3) AND ((a % 2) = 1))
-(14 rows)
+(12 rows)
 
 UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
 WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
@@ -1251,8 +1249,8 @@ NOTICE:  f_leak => cde
 EXPLAIN (COSTS OFF) UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
 AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Update on t1 t1_1_3
    Update on t1 t1_1_3
    Update on t2 t1_1
@@ -1261,11 +1259,9 @@ AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
          Join Filter: (t1_1.b = t1_2.b)
          ->  Subquery Scan on t1_1
                Filter: f_leak(t1_1.b)
-               ->  Subquery Scan on t1_1_4
-                     Filter: ((t1_1_4.a % 2) = 0)
-                     ->  LockRows
-                           ->  Seq Scan on t1 t1_1_5
-                                 Filter: ((a = 4) AND ((a % 2) = 0))
+               ->  LockRows
+                     ->  Seq Scan on t1 t1_1_4
+                           Filter: ((a = 4) AND ((a % 2) = 0))
          ->  Subquery Scan on t1_2
                Filter: f_leak(t1_2.b)
                ->  Append
@@ -1279,11 +1275,9 @@ AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
          Join Filter: (t1_1_1.b = t1_2_1.b)
          ->  Subquery Scan on t1_1_1
                Filter: f_leak(t1_1_1.b)
-               ->  Subquery Scan on t1_1_6
-                     Filter: ((t1_1_6.a % 2) = 0)
-                     ->  LockRows
-                           ->  Seq Scan on t2 t1_1_7
-                                 Filter: ((a = 4) AND ((a % 2) = 0))
+               ->  LockRows
+                     ->  Seq Scan on t2 t1_1_5
+                           Filter: ((a = 4) AND ((a % 2) = 0))
          ->  Subquery Scan on t1_2_1
                Filter: f_leak(t1_2_1.b)
                ->  Append
@@ -1297,11 +1291,9 @@ AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
          Join Filter: (t1_1_2.b = t1_2_2.b)
          ->  Subquery Scan on t1_1_2
                Filter: f_leak(t1_1_2.b)
-               ->  Subquery Scan on t1_1_8
-                     Filter: ((t1_1_8.a % 2) = 0)
-                     ->  LockRows
-                           ->  Seq Scan on t3 t1_1_9
-                                 Filter: ((a = 4) AND ((a % 2) = 0))
+               ->  LockRows
+                     ->  Seq Scan on t3 t1_1_6
+                           Filter: ((a = 4) AND ((a % 2) = 0))
          ->  Subquery Scan on t1_2_2
                Filter: f_leak(t1_2_2.b)
                ->  Append
@@ -1311,7 +1303,7 @@ AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
                            Filter: ((a = 4) AND ((a % 2) = 0))
                      ->  Seq Scan on t3 t1_2_11
                            Filter: ((a = 4) AND ((a % 2) = 0))
-(58 rows)
+(52 rows)
 
 UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
@@ -2743,15 +2735,17 @@ SELECT * FROM current_check;
 
 -- Plan should be a subquery TID scan
 EXPLAIN (COSTS OFF) UPDATE current_check SET payload = payload WHERE CURRENT OF current_check_cursor;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Update on current_check current_check_1
    ->  Subquery Scan on current_check
-         ->  LockRows
-               ->  Tid Scan on current_check current_check_2
-                     TID Cond: CURRENT OF current_check_cursor
-                     Filter: (currentid = 4)
-(6 rows)
+         ->  Subquery Scan on current_check_2
+               Filter: ((current_check_2.currentid % 2) = 0)
+               ->  LockRows
+                     ->  Tid Scan on current_check current_check_3
+                           TID Cond: CURRENT OF current_check_cursor
+                           Filter: (currentid = 4)
+(8 rows)
 
 -- Similarly can only delete row 4
 FETCH ABSOLUTE 1 FROM current_check_cursor;

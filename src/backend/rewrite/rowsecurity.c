@@ -165,18 +165,58 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	commandType = rt_index == root->resultRelation ?
 				  root->commandType : CMD_SELECT;
 
-	get_policies_for_relation(rel, commandType, user_id, &permissive_policies,
-							  &restrictive_policies);
+	/*
+	 * In some cases, we need to apply USING policies (which control the
+	 * visibility of records) associated with multiple command types (see
+	 * specific cases below).
+	 *
+	 * When considering the order in which to apply these USING policies,
+	 * we prefer to apply higher privileged policies, those which allow the
+	 * user to lock records (UPDATE and DELETE), first, followed by policies
+	 * which don't (SELECT).
+	 *
+	 * Note that the optimizer is free to push down and reorder quals which
+	 * use leakproof functions.
+	 *
+	 * In all cases, if there are no policy clauses allowing access to rows in
+	 * the table for the specific type of operation, then a single always-false
+	 * clause (a default-deny policy) will be added (see add_security_quals).
+	 */
 
 	/*
-	 * For SELECT, UPDATE and DELETE, add security quals to enforce these
+	 * For a SELECT, if UPDATE privileges are required (eg: the user has
+	 * specified FOR [KEY] UPDATE/SHARE), then add the UPDATE USING quals first.
+	 *
+	 * This way, we filter out any records from the SELECT FOR SHARE/UPDATE
+	 * which the user does not have access to via the UPDATE USING policies,
+	 * similar to how we require normal UPDATE rights for these queries.
+	 */
+	if (commandType == CMD_SELECT && rte->requiredPerms & ACL_UPDATE)
+	{
+		List	   *update_permissive_policies;
+		List	   *update_restrictive_policies;
+
+		get_policies_for_relation(rel, CMD_UPDATE, user_id,
+								  &update_permissive_policies,
+								  &update_restrictive_policies);
+
+		add_security_quals(rt_index,
+						   update_permissive_policies,
+						   update_restrictive_policies,
+						   securityQuals,
+						   hasSubLinks);
+	}
+
+	/*
+	 * For SELECT, UPDATE and DELETE, add security quals to enforce the USING
 	 * policies.  These security quals control access to existing table rows.
 	 * Restrictive policies are "AND"d together, and permissive policies are
 	 * "OR"d together.
-	 *
-	 * If there are no policy clauses controlling access to the table, this
-	 * will add a single always-false clause (a default-deny policy).
 	 */
+
+	get_policies_for_relation(rel, commandType, user_id, &permissive_policies,
+							  &restrictive_policies);
+
 	if (commandType == CMD_SELECT ||
 		commandType == CMD_UPDATE ||
 		commandType == CMD_DELETE)
@@ -187,28 +227,27 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 						   hasSubLinks);
 
 	/*
-	 * For the target relation, when there is a returning list, we need to
-	 * collect up CMD_SELECT policies and add them via add_security_quals.
-	 * This is because, for the RETURNING case, we have to filter any records
-	 * which are not visible through an ALL or SELECT USING policy.
+	 * Similar to above, during an UPDATE or DELETE, if SELECT rights are also
+	 * required (eg: when a RETURNING clause exists, or the user has provided
+	 * a WHERE clause which involves columns from the relation), we collect up
+	 * CMD_SELECT policies and add them via add_security_quals first.
 	 *
-	 * We don't need to worry about the non-target relation case because we are
-	 * checking the ALL and SELECT policies for those relations anyway (see
-	 * above).
+	 * This way, we filter out any records which are not visible through an ALL
+	 * or SELECT USING policy.
 	 */
-	if (root->returningList != NIL &&
-		(commandType == CMD_UPDATE || commandType == CMD_DELETE))
+	if ((commandType == CMD_UPDATE || commandType == CMD_DELETE) &&
+		rte->requiredPerms & ACL_SELECT)
 	{
-		List	   *returning_permissive_policies;
-		List	   *returning_restrictive_policies;
+		List	   *select_permissive_policies;
+		List	   *select_restrictive_policies;
 
 		get_policies_for_relation(rel, CMD_SELECT, user_id,
-								  &returning_permissive_policies,
-								  &returning_restrictive_policies);
+								  &select_permissive_policies,
+								  &select_restrictive_policies);
 
 		add_security_quals(rt_index,
-						   returning_permissive_policies,
-						   returning_restrictive_policies,
+						   select_permissive_policies,
+						   select_restrictive_policies,
 						   securityQuals,
 						   hasSubLinks);
 	}
@@ -261,21 +300,22 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   hasSubLinks);
 
 			/*
-			 * Get and add ALL/SELECT policies, if there is a RETURNING clause,
-			 * also as WCO policies, again, to avoid silently dropping data.
+			 * Get and add ALL/SELECT policies, if SELECT rights are required
+			 * for this relation, also as WCO policies, again, to avoid
+			 * silently dropping data.  See above.
 			 */
-			if (root->returningList != NIL)
+			if (rte->requiredPerms & ACL_SELECT)
 			{
-				List	   *conflict_returning_permissive_policies = NIL;
-				List	   *conflict_returning_restrictive_policies = NIL;
+				List	   *conflict_select_permissive_policies = NIL;
+				List	   *conflict_select_restrictive_policies = NIL;
 
 				get_policies_for_relation(rel, CMD_SELECT, user_id,
-									  &conflict_returning_permissive_policies,
-									  &conflict_returning_restrictive_policies);
+									  &conflict_select_permissive_policies,
+									  &conflict_select_restrictive_policies);
 				add_with_check_options(rel, rt_index,
 									   WCO_RLS_CONFLICT_CHECK,
-									   conflict_returning_permissive_policies,
-									   conflict_returning_restrictive_policies,
+									   conflict_select_permissive_policies,
+									   conflict_select_restrictive_policies,
 									   withCheckOptions,
 									   hasSubLinks);
 			}
@@ -524,7 +564,7 @@ add_security_quals(int rt_index,
 				qual = copyObject(policy->qual);
 				ChangeVarNodes((Node *) qual, 1, rt_index, 0);
 
-				*securityQuals = lappend(*securityQuals, qual);
+				*securityQuals = list_append_unique(*securityQuals, qual);
 				*hasSubLinks |= policy->hassublinks;
 			}
 		}
@@ -539,7 +579,7 @@ add_security_quals(int rt_index,
 			rowsec_expr = makeBoolExpr(OR_EXPR, permissive_quals, -1);
 
 		ChangeVarNodes((Node *) rowsec_expr, 1, rt_index, 0);
-		*securityQuals = lappend(*securityQuals, rowsec_expr);
+		*securityQuals = list_append_unique(*securityQuals, rowsec_expr);
 	}
 	else
 		/*
@@ -631,7 +671,7 @@ add_with_check_options(Relation rel,
 
 		ChangeVarNodes(wco->qual, 1, rt_index, 0);
 
-		*withCheckOptions = lappend(*withCheckOptions, wco);
+		*withCheckOptions = list_append_unique(*withCheckOptions, wco);
 
 		/*
 		 * Now add WithCheckOptions for each of the restrictive policy clauses
@@ -657,7 +697,7 @@ add_with_check_options(Relation rel,
 				wco->qual = (Node *) qual;
 				wco->cascaded = false;
 
-				*withCheckOptions = lappend(*withCheckOptions, wco);
+				*withCheckOptions = list_append_unique(*withCheckOptions, wco);
 				*hasSubLinks |= policy->hassublinks;
 			}
 		}
