@@ -2616,7 +2616,7 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	time_include = INSTR_TIME_GET_DOUBLE(total_time);
 	tps_include = normal_xacts / time_include;
 	tps_exclude = normal_xacts / (time_include -
-						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nthreads));
+						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
 	if (ttype == 0)
 		s = "TPC-B (sort of)";
