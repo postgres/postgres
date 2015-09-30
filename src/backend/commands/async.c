@@ -224,6 +224,7 @@ typedef struct QueueBackendStatus
  * When holding the lock in EXCLUSIVE mode, backends can inspect the entries
  * of other backends and also change the head and tail pointers.
  *
+ * AsyncCtlLock is used as the control lock for the pg_notify SLRU buffers.
  * In order to avoid deadlocks, whenever we need both locks, we always first
  * get AsyncQueueLock and then AsyncCtlLock.
  *
@@ -234,7 +235,7 @@ typedef struct QueueBackendStatus
 typedef struct AsyncQueueControl
 {
 	QueuePosition head;			/* head points to the next free location */
-	QueuePosition tail;			/* the global tail is equivalent to the tail
+	QueuePosition tail;			/* the global tail is equivalent to the pos
 								 * of the "slowest" backend */
 	TimestampTz lastQueueFillWarn;		/* time of last queue-full msg */
 	QueueBackendStatus backend[FLEXIBLE_ARRAY_MEMBER];
