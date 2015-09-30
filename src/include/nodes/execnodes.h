@@ -1951,6 +1951,22 @@ typedef struct UniqueState
 } UniqueState;
 
 /* ----------------
+ * GatherState information
+ *
+ *		Gather nodes launch 1 or more parallel workers, run a subplan
+ *		in those workers, and collect the results.
+ * ----------------
+ */
+typedef struct GatherState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	struct ParallelExecutorInfo *pei;
+	struct TupleQueueFunnel *funnel;
+	bool		need_to_scan_workers;
+	bool		need_to_scan_locally;
+} GatherState;
+
+/* ----------------
  *	 HashState information
  * ----------------
  */

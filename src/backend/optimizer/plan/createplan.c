@@ -60,6 +60,8 @@ static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static SampleScan *create_samplescan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
+static Gather *create_gather_plan(PlannerInfo *root,
+				   GatherPath *best_path);
 static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses, bool indexonly);
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
@@ -104,6 +106,8 @@ static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static SampleScan *make_samplescan(List *qptlist, List *qpqual, Index scanrelid,
 				TableSampleClause *tsc);
+static Gather *make_gather(List *qptlist, List *qpqual,
+			int nworkers, bool single_copy, Plan *subplan);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
 			   List *indexorderby, List *indexorderbyorig,
@@ -272,6 +276,10 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 		case T_Unique:
 			plan = create_unique_plan(root,
 									  (UniquePath *) best_path);
+			break;
+		case T_Gather:
+			plan = (Plan *) create_gather_plan(root,
+											   (GatherPath *) best_path);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -1099,6 +1107,34 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	plan->plan_rows = best_path->path.rows;
 
 	return plan;
+}
+
+/*
+ * create_gather_plan
+ *
+ *	  Create a Gather plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Gather *
+create_gather_plan(PlannerInfo *root, GatherPath *best_path)
+{
+	Gather	   *gather_plan;
+	Plan	   *subplan;
+
+	subplan = create_plan_recurse(root, best_path->subpath);
+
+	gather_plan = make_gather(subplan->targetlist,
+							  NIL,
+							  best_path->num_workers,
+							  best_path->single_copy,
+							  subplan);
+
+	copy_path_costsize(&gather_plan->plan, &best_path->path);
+
+	/* use parallel mode for parallel plans. */
+	root->glob->parallelModeNeeded = true;
+
+	return gather_plan;
 }
 
 
@@ -4731,6 +4767,27 @@ make_unique(Plan *lefttree, List *distinctList)
 	node->numCols = numCols;
 	node->uniqColIdx = uniqColIdx;
 	node->uniqOperators = uniqOperators;
+
+	return node;
+}
+
+static Gather *
+make_gather(List *qptlist,
+			List *qpqual,
+			int nworkers,
+			bool single_copy,
+			Plan *subplan)
+{
+	Gather	   *node = makeNode(Gather);
+	Plan	   *plan = &node->plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = subplan;
+	plan->righttree = NULL;
+	node->num_workers = nworkers;
+	node->single_copy = single_copy;
 
 	return node;
 }

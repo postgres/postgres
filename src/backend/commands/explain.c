@@ -853,6 +853,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_SampleScan:
 			pname = sname = "Sample Scan";
 			break;
+		case T_Gather:
+			pname = sname = "Gather";
+			break;
 		case T_IndexScan:
 			pname = sname = "Index Scan";
 			break;
@@ -1275,6 +1278,22 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
+			break;
+		case T_Gather:
+			{
+				Gather *gather = (Gather *) plan;
+
+				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+				if (plan->qual)
+					show_instrumentation_count("Rows Removed by Filter", 1,
+											   planstate, es);
+				ExplainPropertyInteger("Number of Workers",
+									   gather->num_workers, es);
+				if (gather->single_copy)
+					ExplainPropertyText("Single Copy",
+										gather->single_copy ? "true" : "false",
+										es);
+			}
 			break;
 		case T_FunctionScan:
 			if (es->verbose)

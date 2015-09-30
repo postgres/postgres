@@ -1928,6 +1928,22 @@ include_dir 'conf.d'
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry id="guc-max-parallel-degree" xreflabel="max_parallel_degree">
+       <term><varname>max_parallel_degree</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>max_parallel_degree</> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Sets the maximum degree of parallelism for an individual parallel
+         operation.  Note that the requested number of workers may not actually
+         be available at runtime.  Parallel workers are taken from the pool
+         of processes established by <xref linkend="guc-max-worker-processes">.
+        </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
     </sect2>
    </sect1>
@@ -3394,6 +3410,36 @@ include_dir 'conf.d'
         Sets the planner's estimate of the cost of processing each
         operator or function executed during a query.
         The default is 0.0025.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="parallel-tuple-cost" xreflabel="parallel_tuple_cost">
+      <term><varname>parallel_tuple_cost</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>parallel_tuple_cost</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of transferring a tuple
+        from a parallel worker process to another process.
+        The default is 0.1.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="parallel-setup-cost" xreflabel="parallel_setup_cost">
+      <term><varname>parallel_setup_cost</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>parallel_setup_cost</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of launching parallel worker
+        processes.
+        The default is 1000.
        </para>
       </listitem>
      </varlistentry>

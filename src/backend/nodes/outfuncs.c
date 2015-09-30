@@ -433,6 +433,17 @@ _outBitmapOr(StringInfo str, const BitmapOr *node)
 }
 
 static void
+_outGather(StringInfo str, const Gather *node)
+{
+	WRITE_NODE_TYPE("GATHER");
+
+	_outPlanInfo(str, (const Plan *) node);
+
+	WRITE_UINT_FIELD(num_workers);
+	WRITE_UINT_FIELD(single_copy);
+}
+
+static void
 _outScan(StringInfo str, const Scan *node)
 {
 	WRITE_NODE_TYPE("SCAN");
@@ -2999,6 +3010,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_BitmapOr:
 				_outBitmapOr(str, obj);
+				break;
+			case T_Gather:
+				_outGather(str, obj);
 				break;
 			case T_Scan:
 				_outScan(str, obj);

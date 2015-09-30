@@ -164,6 +164,7 @@
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #max_worker_processes = 8
+#max_parallel_degree = 0		# max number of worker processes per node
 
 
 #------------------------------------------------------------------------------
@@ -290,6 +291,8 @@
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
+#parallel_tuple_cost = 0.1		# same scale as above
+#parallel_setup_cost = 1000.0	# same scale as above
 #effective_cache_size = 4GB
 
 # - Genetic Query Optimizer -

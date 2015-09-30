@@ -24,6 +24,7 @@
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
+#include "executor/nodeGather.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
@@ -158,6 +159,10 @@ ExecReScan(PlanState *node)
 
 		case T_SampleScanState:
 			ExecReScanSampleScan((SampleScanState *) node);
+			break;
+
+		case T_GatherState:
+			ExecReScanGather((GatherState *) node);
 			break;
 
 		case T_IndexScanState:
@@ -465,6 +470,9 @@ ExecSupportsBackwardScan(Plan *node)
 
 		case T_SampleScan:
 			/* Simplify life for tablesample methods by disallowing this */
+			return false;
+
+		case T_Gather:
 			return false;
 
 		case T_IndexScan:

@@ -2584,6 +2584,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
+		case T_Gather:
 		case T_SetOp:
 		case T_Group:
 			break;

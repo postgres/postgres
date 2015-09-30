@@ -71,7 +71,7 @@ typedef struct ExecParallelInitializeDSMContext
 } ExecParallelInitializeDSMContext;
 
 /* Helper functions that run in the parallel leader. */
-static char *ExecSerializePlan(Plan *plan, List *rangetable);
+static char *ExecSerializePlan(Plan *plan, EState *estate);
 static bool ExecParallelEstimate(PlanState *node,
 					 ExecParallelEstimateContext *e);
 static bool ExecParallelInitializeDSM(PlanState *node,
@@ -88,7 +88,7 @@ static DestReceiver *ExecParallelGetReceiver(dsm_segment *seg, shm_toc *toc);
  * Create a serialized representation of the plan to be sent to each worker.
  */
 static char *
-ExecSerializePlan(Plan *plan, List *rangetable)
+ExecSerializePlan(Plan *plan, EState *estate)
 {
 	PlannedStmt *pstmt;
 	ListCell   *tlist;
@@ -125,13 +125,13 @@ ExecSerializePlan(Plan *plan, List *rangetable)
 	pstmt->canSetTag = 1;
 	pstmt->transientPlan = 0;
 	pstmt->planTree = plan;
-	pstmt->rtable = rangetable;
+	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
 	pstmt->utilityStmt = NULL;
 	pstmt->subplans = NIL;
 	pstmt->rewindPlanIDs = NULL;
 	pstmt->rowMarks = NIL;
-	pstmt->nParamExec = 0;
+	pstmt->nParamExec = estate->es_plannedstmt->nParamExec;
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
 	pstmt->hasRowSecurity = false;
@@ -271,7 +271,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	pei->planstate = planstate;
 
 	/* Fix up and serialize plan to be sent to workers. */
-	pstmt_data = ExecSerializePlan(planstate->plan, estate->es_range_table);
+	pstmt_data = ExecSerializePlan(planstate->plan, estate);
 
 	/* Create a parallel context. */
 	pcxt = CreateParallelContext(ParallelQueryMain, nworkers);
@@ -568,7 +568,6 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	ExecutorStart(queryDesc, 0);
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 	ExecutorFinish(queryDesc);
-	ExecutorEnd(queryDesc);
 
 	/* Report buffer usage during parallel execution. */
 	buffer_usage = shm_toc_lookup(toc, PARALLEL_KEY_BUFFER_USAGE);
@@ -578,6 +577,9 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	if (instrumentation != NULL)
 		ExecParallelReportInstrumentation(queryDesc->planstate,
 										  instrumentation);
+
+	/* Must do this after capturing instrumentation. */
+	ExecutorEnd(queryDesc);
 
 	/* Cleanup. */
 	FreeQueryDesc(queryDesc);

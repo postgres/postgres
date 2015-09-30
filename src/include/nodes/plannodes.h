@@ -753,6 +753,17 @@ typedef struct Unique
 	Oid		   *uniqOperators;	/* equality operators to compare with */
 } Unique;
 
+/* ------------
+ *		gather node
+ * ------------
+ */
+typedef struct Gather
+{
+	Plan		plan;
+	int			num_workers;
+	bool		single_copy;
+} Gather;
+
 /* ----------------
  *		hash build node
  *

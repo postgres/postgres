@@ -314,6 +314,28 @@ _copyBitmapOr(const BitmapOr *from)
 	return newnode;
 }
 
+/*
+ * _copyGather
+ */
+static Gather *
+_copyGather(const Gather *from)
+{
+	Gather	   *newnode = makeNode(Gather);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((const Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(num_workers);
+	COPY_SCALAR_FIELD(single_copy);
+
+	return newnode;
+}
+
 
 /*
  * CopyScanFields
@@ -4234,6 +4256,9 @@ copyObject(const void *from)
 			break;
 		case T_Scan:
 			retval = _copyScan(from);
+			break;
+		case T_Gather:
+			retval = _copyGather(from);
 			break;
 		case T_SeqScan:
 			retval = _copySeqScan(from);

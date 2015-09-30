@@ -1308,6 +1308,32 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 }
 
 /*
+ * create_gather_path
+ *
+ *	  Creates a path corresponding to a gather scan, returning the
+ *	  pathnode.
+ */
+GatherPath *
+create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+				   Relids required_outer, int nworkers)
+{
+	GatherPath *pathnode = makeNode(GatherPath);
+
+	pathnode->path.pathtype = T_Gather;
+	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
+	pathnode->path.pathkeys = NIL;		/* Gather has unordered result */
+
+	pathnode->subpath = subpath;
+	pathnode->num_workers = nworkers;
+
+	cost_gather(pathnode, root, rel, pathnode->path.param_info);
+
+	return pathnode;
+}
+
+/*
  * translate_sub_tlist - get subquery column numbers represented by tlist
  *
  * The given targetlist usually contains only Vars referencing the given relid.

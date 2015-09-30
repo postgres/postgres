@@ -707,6 +707,9 @@ FunctionParameterMode
 FunctionScan
 FunctionScanPerFuncState
 FunctionScanState
+Gather
+GatherPath
+GatherState
 FuzzyAttrMatchState
 GBT_NUMKEY
 GBT_NUMKEY_R
@@ -1195,6 +1198,7 @@ OverrideSearchPath
 OverrideStackEntry
 PACE_HEADER
 PACL
+ParallelExecutorInfo
 PATH
 PBOOL
 PCtxtHandle

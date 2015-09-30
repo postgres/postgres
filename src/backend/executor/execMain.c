@@ -347,6 +347,9 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 					direction,
 					dest);
 
+	/* Allow nodes to release or shut down resources. */
+	(void) ExecShutdownNode(queryDesc->planstate);
+
 	/*
 	 * shutdown tuple receiver, if we started it
 	 */
