@@ -513,14 +513,17 @@ DestroyParallelContext(ParallelContext *pcxt)
 	dlist_delete(&pcxt->node);
 
 	/* Kill each worker in turn, and forget their error queues. */
-	for (i = 0; i < pcxt->nworkers; ++i)
+	if (pcxt->worker != NULL)
 	{
-		if (pcxt->worker[i].bgwhandle != NULL)
-			TerminateBackgroundWorker(pcxt->worker[i].bgwhandle);
-		if (pcxt->worker[i].error_mqh != NULL)
+		for (i = 0; i < pcxt->nworkers; ++i)
 		{
-			pfree(pcxt->worker[i].error_mqh);
-			pcxt->worker[i].error_mqh = NULL;
+			if (pcxt->worker[i].bgwhandle != NULL)
+				TerminateBackgroundWorker(pcxt->worker[i].bgwhandle);
+			if (pcxt->worker[i].error_mqh != NULL)
+			{
+				pfree(pcxt->worker[i].error_mqh);
+				pcxt->worker[i].error_mqh = NULL;
+			}
 		}
 	}
 
@@ -550,7 +553,7 @@ DestroyParallelContext(ParallelContext *pcxt)
 	{
 		BgwHandleStatus status;
 
-		if (pcxt->worker[i].bgwhandle == NULL)
+		if (pcxt->worker == NULL || pcxt->worker[i].bgwhandle == NULL)
 			continue;
 
 		/*
