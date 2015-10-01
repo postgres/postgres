@@ -1421,7 +1421,7 @@ pg_notification_queue_usage(PG_FUNCTION_ARGS)
 /*
  * Return the fraction of the queue that is currently occupied.
  *
- * The caller must hold AysncQueueLock in (at least) shared mode.
+ * The caller must hold AsyncQueueLock in (at least) shared mode.
  */
 static double
 asyncQueueUsage(void)
