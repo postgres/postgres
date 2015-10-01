@@ -439,8 +439,8 @@ _outGather(StringInfo str, const Gather *node)
 
 	_outPlanInfo(str, (const Plan *) node);
 
-	WRITE_UINT_FIELD(num_workers);
-	WRITE_UINT_FIELD(single_copy);
+	WRITE_INT_FIELD(num_workers);
+	WRITE_BOOL_FIELD(single_copy);
 }
 
 static void

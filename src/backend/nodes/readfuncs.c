@@ -1999,6 +1999,22 @@ _readUnique(void)
 }
 
 /*
+ * _readGather
+ */
+static Gather *
+_readGather(void)
+{
+	READ_LOCALS(Gather);
+
+	ReadCommonPlan(&local_node->plan);
+
+	READ_INT_FIELD(num_workers);
+	READ_BOOL_FIELD(single_copy);
+
+	READ_DONE();
+}
+
+/*
  * _readHash
  */
 static Hash *
@@ -2365,6 +2381,8 @@ parseNodeString(void)
 		return_value = _readWindowAgg();
 	else if (MATCH("UNIQUE", 6))
 		return_value = _readUnique();
+	else if (MATCH("GATHER", 6))
+		return_value = _readGather();
 	else if (MATCH("HASH", 4))
 		return_value = _readHash();
 	else if (MATCH("SETOP", 5))
