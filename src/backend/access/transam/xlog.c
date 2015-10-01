@@ -6567,7 +6567,7 @@ StartupXLOG(void)
 			 * maintained during recovery and need not be started yet.
 			 */
 			StartupCLOG();
-			StartupCommitTs();
+			StartupCommitTs(ControlFile->track_commit_timestamp);
 			StartupSUBTRANS(oldestActiveXID);
 
 			/*
@@ -7336,7 +7336,7 @@ StartupXLOG(void)
 	if (standbyState == STANDBY_DISABLED)
 	{
 		StartupCLOG();
-		StartupCommitTs();
+		StartupCommitTs(false);
 		StartupSUBTRANS(oldestActiveXID);
 	}
 
@@ -9456,25 +9456,9 @@ xlog_redo(XLogReaderState *record)
 			ControlFile->minRecoveryPointTLI = ThisTimeLineID;
 		}
 
-		/*
-		 * Update the commit timestamp tracking. If there was a change it
-		 * needs to be activated or deactivated accordingly.
-		 */
-		if (track_commit_timestamp != xlrec.track_commit_timestamp)
-		{
-			track_commit_timestamp = xlrec.track_commit_timestamp;
-			ControlFile->track_commit_timestamp = track_commit_timestamp;
-			if (track_commit_timestamp)
-				ActivateCommitTs();
-			else
-
-				/*
-				 * We can't create a new WAL record here, but that's OK as
-				 * master did the WAL logging already and we will replay the
-				 * record from master in case we crash.
-				 */
-				DeactivateCommitTs(false);
-		}
+		CommitTsParameterChange(xlrec.track_commit_timestamp,
+								ControlFile->track_commit_timestamp);
+		ControlFile->track_commit_timestamp = xlrec.track_commit_timestamp;
 
 		UpdateControlFile();
 		LWLockRelease(ControlFileLock);
