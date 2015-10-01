@@ -990,7 +990,7 @@ data. Empty in ordinary tables.</entry>
 
  <para>
    All the details can be found in
-   <filename>src/include/access/htup.h</filename>.
+   <filename>src/include/access/htup_details.h</filename>.
  </para>
 
  <para>
