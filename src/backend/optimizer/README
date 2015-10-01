@@ -254,7 +254,7 @@ lower leftjoin has min LHS of {B} and min RHS of {C,D}.  Given such
 information, join_is_legal would think it's okay to associate the upper
 join into the lower join's RHS, transforming the query to
 	B leftjoin (A leftjoin (C innerjoin D) on Pa) on (Pbcd)
-which yields totally wrong answers.  We prevent that by forcing the min LHS
+which yields totally wrong answers.  We prevent that by forcing the min RHS
 for the upper join to include B.  This is perhaps overly restrictive, but
 such cases don't arise often so it's not clear that it's worth developing a
 more complicated system.
