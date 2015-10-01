@@ -438,6 +438,19 @@ explain (costs off) select * from nv_parent where d between '2009-08-01'::date a
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
 (7 rows)
 
+-- add an inherited NOT VALID constraint
+alter table nv_parent add check (d between '2001-01-01'::date and '2099-12-31'::date) not valid;
+\d nv_child_2009
+Table "public.nv_child_2009"
+ Column | Type | Modifiers 
+--------+------+-----------
+ d      | date | 
+Check constraints:
+    "nv_child_2009_d_check" CHECK (d >= '01-01-2009'::date AND d <= '12-31-2009'::date)
+    "nv_parent_d_check" CHECK (d >= '01-01-2001'::date AND d <= '12-31-2099'::date) NOT VALID
+Inherits: nv_parent
+
+-- we leave nv_parent and children around to help test pg_dump logic
 -- Foreign key adding test with mixed types
 -- Note: these tables are TEMP to avoid name conflicts when this test
 -- is run in parallel with foreign_key.sql.

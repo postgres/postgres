@@ -14772,8 +14772,8 @@ dumpConstraint(Archive *fout, DumpOptions *dopt, ConstraintInfo *coninfo)
 	{
 		/* CHECK constraint on a table */
 
-		/* Ignore if not to be dumped separately */
-		if (coninfo->separate)
+		/* Ignore if not to be dumped separately, or if it was inherited */
+		if (coninfo->separate && coninfo->conislocal)
 		{
 			/* not ONLY since we want it to propagate to children */
 			appendPQExpBuffer(q, "ALTER TABLE %s\n",
