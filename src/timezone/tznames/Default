@@ -221,7 +221,7 @@ PYST   -10800 D  # Paraguay Summer Time
                  #     (America/Asuncion)
 PYT    America/Asuncion  # Paraguay Time
                  #     (America/Asuncion)
-UYST    -7200 D  # Uruguay Summer Time
+UYST    -7200 D  # Uruguay Summer Time (obsolete)
                  #     (America/Montevideo)
 UYT    -10800    # Uruguay Time
                  #     (America/Montevideo)
@@ -307,7 +307,7 @@ KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
 KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
                  #     (Asia/Krasnoyarsk)
 KST     32400    # Korean Standard Time
-                 #     (Asia/Pyongyang)
+                 #     (Asia/Seoul)
 LKT     Asia/Colombo  # Lanka Time (obsolete)
 MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
 MAGT    Asia/Magadan  # Magadan Time
