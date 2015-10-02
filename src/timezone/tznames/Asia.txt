@@ -168,8 +168,10 @@ KGT     Asia/Bishkek  # Kyrgyzstan Time
 KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
 KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
                  #     (Asia/Krasnoyarsk)
-KST     32400    # Korean Standard Time
+KST     Asia/Pyongyang    # Korean Standard Time
                  #     (Asia/Pyongyang)
+KST     32400    # Korean Standard Time
+                 #     (Asia/Seoul)
 LKT     Asia/Colombo  # Lanka Time (obsolete)
 MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
 MAGT    Asia/Magadan  # Magadan Time
