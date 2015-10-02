@@ -628,6 +628,13 @@ lacon(struct vars * v,
 	struct smalldfa sd;
 	chr		   *end;
 
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(v->re))
+	{
+		ERR(REG_ETOOBIG);
+		return 0;
+	}
+
 	n = co - pcnfa->ncolors;
 	assert(n < v->g->nlacons && v->g->lacons != NULL);
 	FDEBUG(("=== testing lacon %d\n", n));
