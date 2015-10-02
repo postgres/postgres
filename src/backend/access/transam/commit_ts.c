@@ -583,14 +583,15 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 	 * pg_control.  If the old value was already set, we already did this, so
 	 * don't do anything.
 	 *
-	 * If the module is disabled in the master, disable it here too.
+	 * If the module is disabled in the master, disable it here too, unless
+	 * the module is enabled locally.
 	 */
 	if (newvalue)
 	{
 		if (!track_commit_timestamp && !oldvalue)
 			ActivateCommitTs();
 	}
-	else if (oldvalue)
+	else if (!track_commit_timestamp && oldvalue)
 		DeactivateCommitTs(false);
 }
 
