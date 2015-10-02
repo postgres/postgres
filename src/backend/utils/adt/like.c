@@ -21,6 +21,7 @@
 
 #include "catalog/pg_collation.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
 
