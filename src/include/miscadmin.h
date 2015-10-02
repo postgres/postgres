@@ -268,6 +268,7 @@ typedef char *pg_stack_base_t;
 extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
+extern bool stack_is_too_deep(void);
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);

@@ -3081,15 +3081,32 @@ restore_stack_base(pg_stack_base_t base)
 }
 
 /*
- * check_stack_depth: check for excessively deep recursion
+ * check_stack_depth/stack_is_too_deep: check for excessively deep recursion
  *
  * This should be called someplace in any recursive routine that might possibly
  * recurse deep enough to overflow the stack.  Most Unixen treat stack
  * overflow as an unrecoverable SIGSEGV, so we want to error out ourselves
  * before hitting the hardware limit.
+ *
+ * check_stack_depth() just throws an error summarily.  stack_is_too_deep()
+ * can be used by code that wants to handle the error condition itself.
  */
 void
 check_stack_depth(void)
+{
+	if (stack_is_too_deep())
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
+				 errmsg("stack depth limit exceeded"),
+				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
+			  "after ensuring the platform's stack depth limit is adequate.",
+						 max_stack_depth)));
+	}
+}
+
+bool
+stack_is_too_deep(void)
 {
 	char		stack_top_loc;
 	long		stack_depth;
@@ -3115,14 +3132,7 @@ check_stack_depth(void)
 	 */
 	if (stack_depth > max_stack_depth_bytes &&
 		stack_base_ptr != NULL)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
-				 errmsg("stack depth limit exceeded"),
-				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
-			  "after ensuring the platform's stack depth limit is adequate.",
-						 max_stack_depth)));
-	}
+		return true;
 
 	/*
 	 * On IA64 there is a separate "register" stack that requires its own
@@ -3137,15 +3147,10 @@ check_stack_depth(void)
 
 	if (stack_depth > max_stack_depth_bytes &&
 		register_stack_base_ptr != NULL)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
-				 errmsg("stack depth limit exceeded"),
-				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
-			  "after ensuring the platform's stack depth limit is adequate.",
-						 max_stack_depth)));
-	}
+		return true;
 #endif   /* IA64 */
+
+	return false;
 }
 
 /* GUC check hook for max_stack_depth */
