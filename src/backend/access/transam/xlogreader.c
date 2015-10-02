@@ -748,20 +748,20 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 			snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 					 state->system_identifier);
 			report_invalid_record(state,
-								  "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s.",
+								  "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s",
 								  fhdrident_str, sysident_str);
 			return false;
 		}
 		else if (longhdr->xlp_seg_size != XLogSegSize)
 		{
 			report_invalid_record(state,
-								  "WAL file is from different database system: Incorrect XLOG_SEG_SIZE in page header.");
+								  "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header");
 			return false;
 		}
 		else if (longhdr->xlp_xlog_blcksz != XLOG_BLCKSZ)
 		{
 			report_invalid_record(state,
-								  "WAL file is from different database system: Incorrect XLOG_BLCKSZ in page header.");
+								  "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header");
 			return false;
 		}
 	}
