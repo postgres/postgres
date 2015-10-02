@@ -292,7 +292,7 @@ PYT    America/Asuncion  # Paraguay Time
                  #     (America/Asuncion)
 SRT    America/Paramaribo  # Suriname Time
                  #     (America/Paramaribo)
-UYST    -7200 D  # Uruguay Summer Time
+UYST    -7200 D  # Uruguay Summer Time (obsolete)
                  #     (America/Montevideo)
 UYT    -10800    # Uruguay Time
                  #     (America/Montevideo)
