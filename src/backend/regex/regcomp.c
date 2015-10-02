@@ -34,7 +34,7 @@
 
 #include "regex/regguts.h"
 
-#include "miscadmin.h"			/* needed by rcancelrequested() */
+#include "miscadmin.h"			/* needed by rcancelrequested/rstacktoodeep */
 
 /*
  * forward declarations, up here so forward datatypes etc. are defined early
@@ -70,6 +70,7 @@ static int	newlacon(struct vars *, struct state *, struct state *, int);
 static void freelacons(struct subre *, int);
 static void rfree(regex_t *);
 static int	rcancelrequested(void);
+static int	rstacktoodeep(void);
 
 #ifdef REG_DEBUG
 static void dump(regex_t *, FILE *);
@@ -152,7 +153,7 @@ static int	push(struct nfa *, struct arc *);
 #define COMPATIBLE	3			/* compatible but not satisfied yet */
 static int	combine(struct arc *, struct arc *);
 static void fixempties(struct nfa *, FILE *);
-static struct state *emptyreachable(struct state *, struct state *);
+static struct state *emptyreachable(struct nfa *, struct state *, struct state *);
 static void replaceempty(struct nfa *, struct state *, struct state *);
 static void cleanup(struct nfa *);
 static void markreachable(struct nfa *, struct state *, struct state *, struct state *);
@@ -279,7 +280,8 @@ struct vars
 /* static function list */
 static const struct fns functions = {
 	rfree,						/* regfree insides */
-	rcancelrequested			/* check for cancel request */
+	rcancelrequested,			/* check for cancel request */
+	rstacktoodeep				/* check for stack getting dangerously deep */
 };
 
 
@@ -1626,6 +1628,16 @@ subre(struct vars * v,
 {
 	struct subre *ret = v->treefree;
 
+	/*
+	 * Checking for stack overflow here is sufficient to protect parse() and
+	 * its recursive subroutines.
+	 */
+	if (STACK_TOO_DEEP(v->re))
+	{
+		ERR(REG_ETOOBIG);
+		return NULL;
+	}
+
 	if (ret != NULL)
 		v->treefree = ret->left;
 	else
@@ -1936,6 +1948,22 @@ static int
 rcancelrequested(void)
 {
 	return InterruptPending && (QueryCancelPending || ProcDiePending);
+}
+
+/*
+ * rstacktoodeep - check for stack getting dangerously deep
+ *
+ * Return nonzero to fail the operation with error code REG_ETOOBIG,
+ * zero to keep going
+ *
+ * The current implementation is Postgres-specific.  If we ever get around
+ * to splitting the regex code out as a standalone library, there will need
+ * to be some API to let applications define a callback function for this.
+ */
+static int
+rstacktoodeep(void)
+{
+	return stack_is_too_deep();
 }
 
 #ifdef REG_DEBUG
