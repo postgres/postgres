@@ -404,10 +404,14 @@ struct fns
 {
 	void		FUNCPTR(free, (regex_t *));
 	int			FUNCPTR(cancel_requested, (void));
+	int			FUNCPTR(stack_too_deep, (void));
 };
 
 #define CANCEL_REQUESTED(re)  \
 	((*((struct fns *) (re)->re_fns)->cancel_requested) ())
+
+#define STACK_TOO_DEEP(re)	\
+	((*((struct fns *) (re)->re_fns)->stack_too_deep) ())
 
 
 /*

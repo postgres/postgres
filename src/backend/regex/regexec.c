@@ -746,6 +746,9 @@ cdissect(struct vars * v,
 	/* handy place to check for operation cancel */
 	if (CANCEL_REQUESTED(v->re))
 		return REG_CANCEL;
+	/* ... and stack overrun */
+	if (STACK_TOO_DEEP(v->re))
+		return REG_ETOOBIG;
 
 	switch (t->op)
 	{

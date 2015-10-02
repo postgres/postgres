@@ -683,6 +683,8 @@ delsub(struct nfa * nfa,
 	rp->tmp = rp;				/* mark end */
 
 	deltraverse(nfa, lp, lp);
+	if (NISERR())
+		return;					/* asserts might not hold after failure */
 	assert(lp->nouts == 0 && rp->nins == 0);	/* did the job */
 	assert(lp->no != FREESTATE && rp->no != FREESTATE); /* no more */
 
@@ -702,6 +704,13 @@ deltraverse(struct nfa * nfa,
 	struct arc *a;
 	struct state *to;
 
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
+
 	if (s->nouts == 0)
 		return;					/* nothing to do */
 	if (s->tmp != NULL)
@@ -713,6 +722,8 @@ deltraverse(struct nfa * nfa,
 	{
 		to = a->to;
 		deltraverse(nfa, leftend, to);
+		if (NISERR())
+			return;				/* asserts might not hold after failure */
 		assert(to->nouts == 0 || to->tmp != NULL);
 		freearc(nfa, a);
 		if (to->nins == 0 && to->tmp == NULL)
@@ -767,6 +778,13 @@ duptraverse(struct nfa * nfa,
 {
 	struct arc *a;
 
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
+
 	if (s->tmp != NULL)
 		return;					/* already done */
 
@@ -795,6 +813,13 @@ cleartraverse(struct nfa * nfa,
 			  struct state * s)
 {
 	struct arc *a;
+
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
 
 	if (s->tmp == NULL)
 		return;
@@ -1284,7 +1309,7 @@ fixempties(struct nfa * nfa,
 	 */
 	for (s = nfa->states; s != NULL && !NISERR(); s = s->next)
 	{
-		for (s2 = emptyreachable(s, s); s2 != s && !NISERR(); s2 = nexts)
+		for (s2 = emptyreachable(nfa, s, s); s2 != s && !NISERR(); s2 = nexts)
 		{
 			/*
 			 * If s2 is doomed, we decide that (1) we will always push arcs
@@ -1342,19 +1367,28 @@ fixempties(struct nfa * nfa,
  *
  * The maximum recursion depth here is equal to the length of the longest
  * loop-free chain of EMPTY arcs, which is surely no more than the size of
- * the NFA, and in practice will be a lot less than that.
+ * the NFA ... but that could still be enough to cause trouble.
  */
 static struct state *
-emptyreachable(struct state * s, struct state * lastfound)
+emptyreachable(struct nfa * nfa,
+			   struct state * s,
+			   struct state * lastfound)
 {
 	struct arc *a;
+
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return lastfound;
+	}
 
 	s->tmp = lastfound;
 	lastfound = s;
 	for (a = s->outs; a != NULL; a = a->outchain)
 	{
 		if (a->type == EMPTY && a->to->tmp == NULL)
-			lastfound = emptyreachable(a->to, lastfound);
+			lastfound = emptyreachable(nfa, a->to, lastfound);
 	}
 	return lastfound;
 }
@@ -1433,19 +1467,22 @@ cleanup(struct nfa * nfa)
 	struct state *nexts;
 	int			n;
 
+	if (NISERR())
+		return;
+
 	/* clear out unreachable or dead-end states */
 	/* use pre to mark reachable, then post to mark can-reach-post */
 	markreachable(nfa, nfa->pre, (struct state *) NULL, nfa->pre);
 	markcanreach(nfa, nfa->post, nfa->pre, nfa->post);
-	for (s = nfa->states; s != NULL; s = nexts)
+	for (s = nfa->states; s != NULL && !NISERR(); s = nexts)
 	{
 		nexts = s->next;
 		if (s->tmp != nfa->post && !s->flag)
 			dropstate(nfa, s);
 	}
-	assert(nfa->post->nins == 0 || nfa->post->tmp == nfa->post);
+	assert(NISERR() || nfa->post->nins == 0 || nfa->post->tmp == nfa->post);
 	cleartraverse(nfa, nfa->pre);
-	assert(nfa->post->nins == 0 || nfa->post->tmp == NULL);
+	assert(NISERR() || nfa->post->nins == 0 || nfa->post->tmp == NULL);
 	/* the nins==0 (final unreachable) case will be caught later */
 
 	/* renumber surviving states */
@@ -1466,6 +1503,13 @@ markreachable(struct nfa * nfa,
 {
 	struct arc *a;
 
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
+
 	if (s->tmp != okay)
 		return;
 	s->tmp = mark;
@@ -1485,6 +1529,13 @@ markcanreach(struct nfa * nfa,
 {
 	struct arc *a;
 
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
+
 	if (s->tmp != okay)
 		return;
 	s->tmp = mark;
@@ -1501,6 +1552,9 @@ analyze(struct nfa * nfa)
 {
 	struct arc *a;
 	struct arc *aa;
+
+	if (NISERR())
+		return 0;
 
 	if (nfa->pre->outs == NULL)
 		return REG_UIMPOSSIBLE;
