@@ -180,7 +180,7 @@ newstate(struct nfa * nfa)
 	/*
 	 * This is a handy place to check for operation cancel during regex
 	 * compilation, since no code path will go very long without making a new
-	 * state.
+	 * state or arc.
 	 */
 	if (CANCEL_REQUESTED(nfa->v->re))
 	{
@@ -332,6 +332,17 @@ newarc(struct nfa * nfa,
 	struct arc *a;
 
 	assert(from != NULL && to != NULL);
+
+	/*
+	 * This is a handy place to check for operation cancel during regex
+	 * compilation, since no code path will go very long without making a new
+	 * state or arc.
+	 */
+	if (CANCEL_REQUESTED(nfa->v->re))
+	{
+		NERR(REG_CANCEL);
+		return;
+	}
 
 	/* check for duplicates */
 	for (a = from->outs; a != NULL; a = a->outchain)
