@@ -103,8 +103,8 @@ BT	+2728+08939	Asia/Thimphu
 BY	+5354+02734	Europe/Minsk
 BZ	+1730-08812	America/Belize
 CA	+4734-05243	America/St_Johns	Newfoundland Time, including SE Labrador
-CA	+4439-06336	America/Halifax	Atlantic Time - Nova Scotia (most places), PEI
-CA	+4612-05957	America/Glace_Bay	Atlantic Time - Nova Scotia - places that did not observe DST 1966-1971
+CA	+4439-06336	America/Halifax	Atlantic Time - Nova Scotia (peninsula), PEI
+CA	+4612-05957	America/Glace_Bay	Atlantic Time - Nova Scotia (Cape Breton)
 CA	+4606-06447	America/Moncton	Atlantic Time - New Brunswick
 CA	+5320-06025	America/Goose_Bay	Atlantic Time - Labrador - most locations
 CA	+5125-05707	America/Blanc-Sablon	Atlantic Standard Time - Quebec - Lower North Shore
@@ -126,6 +126,7 @@ CA	+6227-11421	America/Yellowknife	Mountain Time - central Northwest Territories
 CA	+682059-1334300	America/Inuvik	Mountain Time - west Northwest Territories
 CA	+4906-11631	America/Creston	Mountain Standard Time - Creston, British Columbia
 CA	+5946-12014	America/Dawson_Creek	Mountain Standard Time - Dawson Creek & Fort Saint John, British Columbia
+CA	+5848-12242	America/Fort_Nelson	Mountain Standard Time - Fort Nelson, British Columbia
 CA	+4916-12307	America/Vancouver	Pacific Time - west British Columbia
 CA	+6043-13503	America/Whitehorse	Pacific Time - south Yukon
 CA	+6404-13925	America/Dawson	Pacific Time - north Yukon
@@ -206,6 +207,7 @@ KI	-0308-17105	Pacific/Enderbury	Phoenix Islands
 KI	+0152-15720	Pacific/Kiritimati	Line Islands
 KP	+3901+12545	Asia/Pyongyang
 KR	+3733+12658	Asia/Seoul
+KY	+1918-08123	America/Cayman
 KZ	+4315+07657	Asia/Almaty	most locations
 KZ	+4448+06528	Asia/Qyzylorda	Qyzylorda (Kyzylorda, Kzyl-Orda)
 KZ	+5017+05710	Asia/Aqtobe	Aqtobe (Aktobe)
@@ -259,7 +261,7 @@ NR	-0031+16655	Pacific/Nauru
 NU	-1901-16955	Pacific/Niue
 NZ,AQ	-3652+17446	Pacific/Auckland	New Zealand time
 NZ	-4357-17633	Pacific/Chatham	Chatham Islands
-PA,KY	+0858-07932	America/Panama
+PA	+0858-07932	America/Panama
 PE	-1203-07703	America/Lima
 PF	-1732-14934	Pacific/Tahiti	Society Islands
 PF	-0900-13930	Pacific/Marquesas	Marquesas Islands
