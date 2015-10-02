@@ -423,6 +423,7 @@ cfindloop(struct vars * v,
 	close = v->search_start;
 	do
 	{
+		/* Search with the search RE for match range at/beyond "close" */
 		MDEBUG(("\ncsearch at %ld\n", LOFF(close)));
 		close = shortest(v, s, close, close, v->stop, &cold, (int *) NULL);
 		if (ISERR())
@@ -431,10 +432,11 @@ cfindloop(struct vars * v,
 			return v->err;
 		}
 		if (close == NULL)
-			break;				/* NOTE BREAK */
+			break;				/* no more possible match anywhere */
 		assert(cold != NULL);
 		open = cold;
 		cold = NULL;
+		/* Search for matches starting between "open" and "close" inclusive */
 		MDEBUG(("cbetween %ld and %ld\n", LOFF(open), LOFF(close)));
 		for (begin = open; begin <= close; begin++)
 		{
@@ -443,6 +445,7 @@ cfindloop(struct vars * v,
 			estop = v->stop;
 			for (;;)
 			{
+				/* Here we use the top node's detailed RE */
 				if (shorter)
 					end = shortest(v, d, begin, estart,
 								   estop, (chr **) NULL, &hitend);
@@ -457,8 +460,9 @@ cfindloop(struct vars * v,
 				if (hitend && cold == NULL)
 					cold = begin;
 				if (end == NULL)
-					break;		/* NOTE BREAK OUT */
+					break;		/* no match with this begin point, try next */
 				MDEBUG(("tentative end %ld\n", LOFF(end)));
+				/* Dissect the potential match to see if it really matches */
 				zapsubs(v->pmatch, v->nmatch);
 				zapmem(v, v->g->tree);
 				er = cdissect(v, v->g->tree, begin, end);
@@ -478,21 +482,28 @@ cfindloop(struct vars * v,
 					*coldp = cold;
 					return er;
 				}
-				/* try next shorter/longer match with same begin point */
+				/* Try next longer/shorter match with same begin point */
 				if (shorter)
 				{
 					if (end == estop)
-						break;	/* NOTE BREAK OUT */
+						break;	/* no more, so try next begin point */
 					estart = end + 1;
 				}
 				else
 				{
 					if (end == begin)
-						break;	/* NOTE BREAK OUT */
+						break;	/* no more, so try next begin point */
 					estop = end - 1;
 				}
 			}					/* end loop over endpoint positions */
 		}						/* end loop over beginning positions */
+
+		/*
+		 * If we get here, there is no possible match starting at or before
+		 * "close", so consider matches beyond that.  We'll do a fresh search
+		 * with the search RE to find a new promising match range.
+		 */
+		close++;
 	} while (close < v->stop);
 
 	*coldp = cold;
