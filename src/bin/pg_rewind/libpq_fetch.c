@@ -120,7 +120,7 @@ libpqGetCurrentXlogInsertLocation(void)
 	val = run_simple_query("SELECT pg_current_xlog_insert_location()");
 
 	if (sscanf(val, "%X/%X", &hi, &lo) != 2)
-		pg_fatal("unrecognized result \"%s\" for current XLOG insert location\n", val);
+		pg_fatal("unrecognized result \"%s\" for current WAL insert location\n", val);
 
 	result = ((uint64) hi) << 32 | lo;
 
@@ -248,7 +248,7 @@ receiveFileChunks(const char *sql)
 				continue;		/* final zero-row result */
 
 			default:
-				pg_fatal("unexpected result while fetching remote files: %s\n",
+				pg_fatal("unexpected result while fetching remote files: %s",
 						 PQresultErrorMessage(res));
 		}
 
@@ -300,7 +300,7 @@ receiveFileChunks(const char *sql)
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log(PG_DEBUG,
-			  "received NULL chunk for file \"%s\", file has been deleted\n",
+			  "received null value for chunk for file \"%s\", file has been deleted\n",
 				   filename);
 			pg_free(filename);
 			PQclear(res);
