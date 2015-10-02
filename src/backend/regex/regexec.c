@@ -428,6 +428,11 @@ cfindloop(struct vars * v,
 	{
 		MDEBUG(("\ncsearch at %ld\n", LOFF(close)));
 		close = shortest(v, s, close, close, v->stop, &cold, (int *) NULL);
+		if (ISERR())
+		{
+			*coldp = cold;
+			return v->err;
+		}
 		if (close == NULL)
 			break;				/* NOTE BREAK */
 		assert(cold != NULL);
@@ -447,6 +452,11 @@ cfindloop(struct vars * v,
 				else
 					end = longest(v, d, begin, estop,
 								  &hitend);
+				if (ISERR())
+				{
+					*coldp = cold;
+					return v->err;
+				}
 				if (hitend && cold == NULL)
 					cold = begin;
 				if (end == NULL)
@@ -626,15 +636,22 @@ condissect(struct vars * v,
 		mid = longest(v, d, begin, end, (int *) NULL);
 	if (mid == NULL)
 	{
+		ERR(REG_ASSERT);		/* if no other error reported already */
 		freedfa(d);
 		freedfa(d2);
-		return REG_ASSERT;
+		return v->err;
 	}
 	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
 
 	/* iterate until satisfaction or failure */
 	while (longest(v, d2, mid, end, (int *) NULL) != end)
 	{
+		if (ISERR())
+		{
+			freedfa(d);
+			freedfa(d2);
+			return v->err;
+		}
 		/* that midpoint didn't work, find a new one */
 		if (mid == stop)
 		{
@@ -653,9 +670,10 @@ condissect(struct vars * v,
 		{
 			/* failed to find a new one! */
 			MDEBUG(("failed midpoint!\n"));
+			ERR(REG_ASSERT);	/* if no other error reported already */
 			freedfa(d);
 			freedfa(d2);
-			return REG_ASSERT;
+			return v->err;
 		}
 		MDEBUG(("new midpoint %ld\n", LOFF(mid)));
 	}
@@ -690,8 +708,7 @@ altdissect(struct vars * v,
 		MDEBUG(("trying %dth\n", i));
 		assert(t->left != NULL && t->left->cnfa.nstates > 0);
 		d = newdfa(v, &t->left->cnfa, &v->g->cmap, &v->dfa1);
-		if (ISERR())
-			return v->err;
+		NOERR();
 		if (longest(v, d, begin, end, (int *) NULL) == end)
 		{
 			MDEBUG(("success\n"));
@@ -699,6 +716,7 @@ altdissect(struct vars * v,
 			return dissect(v, t->left, begin, end);
 		}
 		freedfa(d);
+		NOERR();
 	}
 	return REG_ASSERT;			/* none of them matched?!? */
 }
@@ -804,6 +822,7 @@ ccondissect(struct vars * v,
 		{
 			freedfa(d);
 			freedfa(d2);
+			NOERR();
 			return REG_NOMATCH;
 		}
 		MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
@@ -843,12 +862,13 @@ ccondissect(struct vars * v,
 		}
 
 		/* that midpoint didn't work, find a new one */
-		if (mid == begin)
+		if (ISERR() || mid == begin)
 		{
 			/* all possibilities exhausted */
 			MDEBUG(("%d no midpoint\n", t->retry));
 			freedfa(d);
 			freedfa(d2);
+			NOERR();
 			return REG_NOMATCH;
 		}
 		mid = longest(v, d, begin, mid - 1, (int *) NULL);
@@ -858,6 +878,7 @@ ccondissect(struct vars * v,
 			MDEBUG(("%d failed midpoint\n", t->retry));
 			freedfa(d);
 			freedfa(d2);
+			NOERR();
 			return REG_NOMATCH;
 		}
 		MDEBUG(("%d: new midpoint %ld\n", t->retry, LOFF(mid)));
@@ -911,6 +932,7 @@ crevdissect(struct vars * v,
 		{
 			freedfa(d);
 			freedfa(d2);
+			NOERR();
 			return REG_NOMATCH;
 		}
 		MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
@@ -950,12 +972,13 @@ crevdissect(struct vars * v,
 		}
 
 		/* that midpoint didn't work, find a new one */
-		if (mid == end)
+		if (ISERR() || mid == end)
 		{
 			/* all possibilities exhausted */
 			MDEBUG(("%d no midpoint\n", t->retry));
 			freedfa(d);
 			freedfa(d2);
+			NOERR();
 			return REG_NOMATCH;
 		}
 		mid = shortest(v, d, begin, mid + 1, end, (chr **) NULL, (int *) NULL);
@@ -965,6 +988,7 @@ crevdissect(struct vars * v,
 			MDEBUG(("%d failed midpoint\n", t->retry));
 			freedfa(d);
 			freedfa(d2);
+			NOERR();
 			return REG_NOMATCH;
 		}
 		MDEBUG(("%d: new midpoint %ld\n", t->retry, LOFF(mid)));
@@ -1096,6 +1120,7 @@ caltdissect(struct vars * v,
 		if (longest(v, d, begin, end, (int *) NULL) != end)
 		{
 			freedfa(d);
+			NOERR();
 			v->mem[t->retry] = TRIED;
 			return caltdissect(v, t->right, begin, end);
 		}
