@@ -1235,10 +1235,19 @@ Zone America/Goose_Bay	-4:01:40 -	LMT	1884 # Happy Valley-Goose Bay
 
 # west Labrador, Nova Scotia, Prince Edward I
 
-# From Paul Eggert (2006-03-22):
+# From Brian Inglis (2015-07-20):
+# From the historical weather station records available at:
+# https://weatherspark.com/history/28351/1971/Sydney-Nova-Scotia-Canada
+# Sydney shares the same time history as Glace Bay, so was
+# likely to be the same across the island....
+# Sydney, as the capital and most populous location, or Cape Breton, would
+# have been better names for the zone had we known this in 1996.
+
+# From Paul Eggert (2015-07-20):
 # Shanks & Pottenger write that since 1970 most of this region has been like
 # Halifax.  Many locales did not observe peacetime DST until 1972;
-# Glace Bay, NS is the largest that we know of.
+# the Cape Breton area, represented by Glace Bay, is the largest we know of
+# (Glace Bay was perhaps not the best name choice but no point changing now).
 # Shanks & Pottenger also write that Liverpool, NS was the only town
 # in Canada to observe DST in 1971 but not 1970; for now we'll assume
 # this is a typo.
@@ -1796,13 +1805,13 @@ Zone America/Edmonton	-7:33:52 -	LMT	1906 Sep
 # Exact date in October unknown; Sunday October 1 is a reasonable guess.
 # 3. June 1918: switch to Pacific Daylight Time (GMT-7)
 # Exact date in June unknown; Sunday June 2 is a reasonable guess.
-# note#1:
+# note 1:
 # On Oct 27/1918 when daylight saving ended in the rest of Canada,
 # Creston did not change its clocks.
-# note#2:
+# note 2:
 # During WWII when the Federal Government legislated a mandatory clock change,
 # Creston did not oblige.
-# note#3:
+# note 3:
 # There is no guarantee that Creston will remain on Mountain Standard Time
 # (UTC-7) forever.
 # The subject was debated at least once this year by the town Council.
@@ -1816,6 +1825,22 @@ Zone America/Edmonton	-7:33:52 -	LMT	1906 Sep
 # (to anyone) to further complicate the rules.
 
 # The transition dates (and times) are guesses.
+
+# From Matt Johnson (2015-09-21):
+# Fort Nelson, BC, Canada will cancel DST this year.  So while previously they
+# were aligned with America/Vancouver, they're now aligned with
+# America/Dawson_Creek.
+# http://www.northernrockies.ca/EN/meta/news/archives/2015/northern-rockies-time-change.html
+#
+# From Tim Parenti (2015-09-23):
+# This requires a new zone for the Northern Rockies Regional Municipality,
+# America/Fort_Nelson.  The resolution of 2014-12-08 was reached following a
+# 2014-11-15 poll with nearly 75% support.  Effectively, the municipality has
+# been on MST (-0700) like Dawson Creek since it advanced its clocks on
+# 2015-03-08.
+#
+# From Paul Eggert (2015-09-23):
+# Shanks says Fort Nelson did not observe DST in 1946, unlike Vancouver.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Vanc	1918	only	-	Apr	14	2:00	1:00	D
@@ -1834,6 +1859,12 @@ Zone America/Vancouver	-8:12:28 -	LMT	1884
 Zone America/Dawson_Creek -8:00:56 -	LMT	1884
 			-8:00	Canada	P%sT	1947
 			-8:00	Vanc	P%sT	1972 Aug 30  2:00
+			-7:00	-	MST
+Zone America/Fort_Nelson	-8:10:47 -	LMT	1884
+			-8:00	Vanc	P%sT	1946
+			-8:00	-	PST	1947
+			-8:00	Vanc	P%sT	1987
+			-8:00	Canada	P%sT	2015 Mar  8  2:00
 			-7:00	-	MST
 Zone America/Creston	-7:46:04 -	LMT	1884
 			-7:00	-	MST	1916 Oct 1
@@ -2661,7 +2692,17 @@ Zone Atlantic/Bermuda	-4:19:18 -	LMT	1930 Jan  1  2:00 # Hamilton
 			-4:00	US	A%sT
 
 # Cayman Is
-# See America/Panama.
+
+# From Paul Eggert (2015-05-15):
+# The Cayman government has decided to introduce DST in 2016, the idea being
+# to keep in sync with New York.  The legislation hasn't passed but the change
+# seems quite likely.  See: Meade B. Cayman 27.
+# http://www.cayman27.com.ky/2015/05/15/clock-ticks-toward-daylight-saving-time-in-cayman
+
+Zone	America/Cayman	-5:25:32 -	LMT	1890     # Georgetown
+			-5:07:11 -	KMT	1912 Feb # Kingston Mean Time
+			-5:00	-	EST	2016
+			-5:00	US	E%sT
 
 # Costa Rica
 
@@ -3184,7 +3225,6 @@ Zone	America/Managua	-5:45:08 -	LMT	1890
 Zone	America/Panama	-5:18:08 -	LMT	1890
 			-5:19:36 -	CMT	1908 Apr 22 # Colón Mean Time
 			-5:00	-	EST
-Link America/Panama America/Cayman
 
 # Puerto Rico
 # There are too many San Juans elsewhere, so we'll use 'Puerto_Rico'.

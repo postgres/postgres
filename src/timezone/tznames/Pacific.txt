@@ -58,7 +58,7 @@ NCT     39600    # New Caledonia Time
 # CONFLICT! NFT is not unique
 # Other timezones:
 #  - NFT: Newfoundland Time (America)
-NFT     41400    # Norfolk Time
+NFT     Pacific/Norfolk  # Norfolk Time
                  #     (Pacific/Norfolk)
 NRT     Pacific/Nauru  # Nauru Time
                  #     (Pacific/Nauru)
