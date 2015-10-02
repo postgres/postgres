@@ -450,6 +450,11 @@ cfindloop(struct vars * v,
 	{
 		MDEBUG(("\ncsearch at %ld\n", LOFF(close)));
 		close = shortest(v, s, close, close, v->stop, &cold, (int *) NULL);
+		if (ISERR())
+		{
+			*coldp = cold;
+			return v->err;
+		}
 		if (close == NULL)
 			break;				/* NOTE BREAK */
 		assert(cold != NULL);
@@ -469,6 +474,11 @@ cfindloop(struct vars * v,
 				else
 					end = longest(v, d, begin, estop,
 								  &hitend);
+				if (ISERR())
+				{
+					*coldp = cold;
+					return v->err;
+				}
 				if (hitend && cold == NULL)
 					cold = begin;
 				if (end == NULL)
@@ -681,6 +691,7 @@ ccondissect(struct vars * v,
 
 	/* pick a tentative midpoint */
 	mid = longest(v, d, begin, end, (int *) NULL);
+	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
 	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
@@ -705,6 +716,7 @@ ccondissect(struct vars * v,
 			if (er != REG_NOMATCH)
 				return er;
 		}
+		NOERR();
 
 		/* that midpoint didn't work, find a new one */
 		if (mid == begin)
@@ -714,6 +726,7 @@ ccondissect(struct vars * v,
 			return REG_NOMATCH;
 		}
 		mid = longest(v, d, begin, mid - 1, (int *) NULL);
+		NOERR();
 		if (mid == NULL)
 		{
 			/* failed to find a new one */
@@ -756,6 +769,7 @@ crevcondissect(struct vars * v,
 
 	/* pick a tentative midpoint */
 	mid = shortest(v, d, begin, begin, end, (chr **) NULL, (int *) NULL);
+	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
 	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
@@ -780,6 +794,7 @@ crevcondissect(struct vars * v,
 			if (er != REG_NOMATCH)
 				return er;
 		}
+		NOERR();
 
 		/* that midpoint didn't work, find a new one */
 		if (mid == end)
@@ -789,6 +804,7 @@ crevcondissect(struct vars * v,
 			return REG_NOMATCH;
 		}
 		mid = shortest(v, d, begin, mid + 1, end, (chr **) NULL, (int *) NULL);
+		NOERR();
 		if (mid == NULL)
 		{
 			/* failed to find a new one */
@@ -914,6 +930,7 @@ caltdissect(struct vars * v,
 			if (er != REG_NOMATCH)
 				return er;
 		}
+		NOERR();
 
 		t = t->right;
 	}
@@ -1005,6 +1022,11 @@ citerdissect(struct vars * v,
 	{
 		/* try to find an endpoint for the k'th sub-match */
 		endpts[k] = longest(v, d, endpts[k - 1], limit, (int *) NULL);
+		if (ISERR())
+		{
+			FREE(endpts);
+			return v->err;
+		}
 		if (endpts[k] == NULL)
 		{
 			/* no match possible, so see if we can shorten previous one */
@@ -1201,6 +1223,11 @@ creviterdissect(struct vars * v,
 		/* try to find an endpoint for the k'th sub-match */
 		endpts[k] = shortest(v, d, endpts[k - 1], limit, end,
 							 (chr **) NULL, (int *) NULL);
+		if (ISERR())
+		{
+			FREE(endpts);
+			return v->err;
+		}
 		if (endpts[k] == NULL)
 		{
 			/* no match possible, so see if we can lengthen previous one */
