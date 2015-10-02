@@ -198,7 +198,7 @@ truncate_target_file(const char *path, off_t newsize)
 				 dstpath, strerror(errno));
 
 	if (ftruncate(fd, newsize) != 0)
-		pg_fatal("could not truncate file \"%s\" to %u bytes: %s\n",
+		pg_fatal("could not truncate file \"%s\" to %u: %s\n",
 				 dstpath, (unsigned int) newsize, strerror(errno));
 
 	close(fd);
