@@ -2264,7 +2264,12 @@ psql_completion(const char *text, int start, int end)
 	/* CREATE EXTENSION <name> */
 	else if (pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "EXTENSION") == 0)
-		COMPLETE_WITH_CONST("WITH SCHEMA");
+	{
+		static const char *const list_CREATE_EXTENSION[] =
+		{"WITH SCHEMA", "CASCADE", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATE_EXTENSION);
+	}
 
 	/* CREATE FOREIGN */
 	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&

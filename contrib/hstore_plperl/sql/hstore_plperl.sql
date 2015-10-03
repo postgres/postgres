@@ -1,6 +1,4 @@
-CREATE EXTENSION hstore;
-CREATE EXTENSION plperl;
-CREATE EXTENSION hstore_plperl;
+CREATE EXTENSION hstore_plperl CASCADE;
 
 SELECT transforms.udt_schema, transforms.udt_name,
        routine_schema, routine_name,

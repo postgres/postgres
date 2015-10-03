@@ -1,5 +1,5 @@
-CREATE EXTENSION plpython2u;
-CREATE EXTENSION hstore_plpython2u;
+CREATE EXTENSION hstore_plpython2u CASCADE;
+NOTICE:  installing required extension "plpython2u"
 -- test hstore -> python
 CREATE FUNCTION test1(val hstore) RETURNS int
 LANGUAGE plpythonu

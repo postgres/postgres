@@ -3876,6 +3876,10 @@ create_extension_opt_item:
 				{
 					$$ = makeDefElem("old_version", (Node *)makeString($2));
 				}
+			| CASCADE
+				{
+					$$ = makeDefElem("cascade", (Node *)makeInteger(TRUE));
+				}
 		;
 
 /*****************************************************************************
