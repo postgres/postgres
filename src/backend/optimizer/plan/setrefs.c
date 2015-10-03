@@ -1935,16 +1935,21 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  *	   relation target lists.  Also perform opcode lookup and add
  *	   regclass OIDs to root->glob->relationOids.
  *
- * This is used in two different scenarios: a normal join clause, where all
- * the Vars in the clause *must* be replaced by OUTER_VAR or INNER_VAR
- * references; and a RETURNING clause, which may contain both Vars of the
- * target relation and Vars of other relations.  In the latter case we want
- * to replace the other-relation Vars by OUTER_VAR references, while leaving
- * target Vars alone.
- *
- * For a normal join, acceptable_rel should be zero so that any failure to
- * match a Var will be reported as an error.  For the RETURNING case, pass
- * inner_itlist = NULL and acceptable_rel = the ID of the target relation.
+ * This is used in three different scenarios:
+ * 1) a normal join clause, where all the Vars in the clause *must* be
+ *	  replaced by OUTER_VAR or INNER_VAR references.  In this case
+ *	  acceptable_rel should be zero so that any failure to match a Var will be
+ *	  reported as an error.
+ * 2) RETURNING clauses, which may contain both Vars of the target relation
+ *	  and Vars of other relations. In this case we want to replace the
+ *	  other-relation Vars by OUTER_VAR references, while leaving target Vars
+ *	  alone. Thus inner_itlist = NULL and acceptable_rel = the ID of the
+ *	  target relation should be passed.
+ * 3) ON CONFLICT UPDATE SET/WHERE clauses.  Here references to EXCLUDED are
+ *	  to be replaced with INNER_VAR references, while leaving target Vars (the
+ *	  to-be-updated relation) alone. Correspondingly inner_itlist is to be
+ *	  EXCLUDED elements, outer_itlist = NULL and acceptable_rel the target
+ *	  relation.
  *
  * 'clauses' is the targetlist or list of join clauses
  * 'outer_itlist' is the indexed target list of the outer join relation,
@@ -1987,7 +1992,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	{
 		Var		   *var = (Var *) node;
 
-		/* First look for the var in the input tlists */
+		/* Look for the var in the input tlists, first in the outer */
 		if (context->outer_itlist)
 		{
 			newvar = search_indexed_tlist_for_var(var,
@@ -1998,7 +2003,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 				return (Node *) newvar;
 		}
 
-		/* Then in the outer */
+		/* then in the inner. */
 		if (context->inner_itlist)
 		{
 			newvar = search_indexed_tlist_for_var(var,

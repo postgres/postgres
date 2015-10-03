@@ -891,33 +891,81 @@ transformOnConflictClause(ParseState *pstate,
 	/* Process DO UPDATE */
 	if (onConflictClause->action == ONCONFLICT_UPDATE)
 	{
+		Relation	targetrel = pstate->p_target_relation;
+		Var		   *var;
+		TargetEntry *te;
+		int			attno;
+
 		/*
 		 * All INSERT expressions have been parsed, get ready for potentially
 		 * existing SET statements that need to be processed like an UPDATE.
 		 */
 		pstate->p_is_insert = false;
 
+		/*
+		 * Add range table entry for the EXCLUDED pseudo relation; relkind is
+		 * set to composite to signal that we're not dealing with an actual
+		 * relation.
+		 */
 		exclRte = addRangeTableEntryForRelation(pstate,
-												pstate->p_target_relation,
+												targetrel,
 												makeAlias("excluded", NIL),
 												false, false);
+		exclRte->relkind = RELKIND_COMPOSITE_TYPE;
 		exclRelIndex = list_length(pstate->p_rtable);
 
 		/*
-		 * Build a targetlist for the EXCLUDED pseudo relation. Out of
-		 * simplicity we do that here, because expandRelAttrs() happens to
-		 * nearly do the right thing; specifically it also works with views.
-		 * It'd be more proper to instead scan some pseudo scan node, but it
-		 * doesn't seem worth the amount of code required.
-		 *
-		 * The only caveat of this hack is that the permissions expandRelAttrs
-		 * adds have to be reset. markVarForSelectPriv() will add the exact
-		 * required permissions back.
+		 * Build a targetlist for the EXCLUDED pseudo relation. Have to be
+		 * careful to use resnos that correspond to attnos of the underlying
+		 * relation.
 		 */
-		exclRelTlist = expandRelAttrs(pstate, exclRte,
-									  exclRelIndex, 0, -1);
-		exclRte->requiredPerms = 0;
-		exclRte->selectedCols = NULL;
+		Assert(pstate->p_next_resno == 1);
+		for (attno = 0; attno < targetrel->rd_rel->relnatts; attno++)
+		{
+			Form_pg_attribute attr = targetrel->rd_att->attrs[attno];
+			char	   *name;
+
+			if (attr->attisdropped)
+			{
+				/*
+				 * can't use atttypid here, but it doesn't really matter what
+				 * type the Const claims to be.
+				 */
+				var = (Var *) makeNullConst(INT4OID, -1, InvalidOid);
+				name = "";
+			}
+			else
+			{
+				var = makeVar(exclRelIndex, attno + 1,
+							  attr->atttypid, attr->atttypmod,
+							  attr->attcollation,
+							  0);
+				var->location = -1;
+
+				name = NameStr(attr->attname);
+			}
+
+			Assert(pstate->p_next_resno == attno + 1);
+			te = makeTargetEntry((Expr *) var,
+								 pstate->p_next_resno++,
+								 name,
+								 false);
+
+			/* don't require select access yet */
+			exclRelTlist = lappend(exclRelTlist, te);
+		}
+
+		/*
+		 * Additionally add a whole row tlist entry for EXCLUDED. That's
+		 * really only needed for ruleutils' benefit, which expects to find
+		 * corresponding entries in child tlists. Alternatively we could do
+		 * this only when required, but that doesn't seem worth the trouble.
+		 */
+		var = makeVar(exclRelIndex, InvalidAttrNumber,
+					  RelationGetRelid(targetrel),
+					  -1, InvalidOid, 0);
+		te = makeTargetEntry((Expr *) var, 0, NULL, true);
+		exclRelTlist = lappend(exclRelTlist, te);
 
 		/*
 		 * Add EXCLUDED and the target RTE to the namespace, so that they can

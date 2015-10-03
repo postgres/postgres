@@ -2900,7 +2900,7 @@ CREATE RULE hat_upsert AS ON INSERT TO hats
         ON CONFLICT (hat_name)
         DO UPDATE
            SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color
-           WHERE excluded.hat_color <>  'forbidden'
+           WHERE excluded.hat_color <>  'forbidden' AND hat_data.* != excluded.*
         RETURNING *;
 SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
                                                                definition                                                                
@@ -2908,7 +2908,7 @@ SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
  CREATE RULE hat_upsert AS                                                                                                              +
      ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                           +
    VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
-   WHERE (excluded.hat_color <> 'forbidden'::bpchar)                                                                                    +
+   WHERE ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))                                                   +
    RETURNING hat_data.hat_name,                                                                                                         +
      hat_data.hat_color;
 (1 row)
@@ -2956,19 +2956,19 @@ SELECT tablename, rulename, definition FROM pg_rules
  hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                                                              +
            |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                           +
            |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
-           |            |   WHERE (excluded.hat_color <> 'forbidden'::bpchar)                                                                                    +
+           |            |   WHERE ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))                                                   +
            |            |   RETURNING hat_data.hat_name,                                                                                                         +
            |            |     hat_data.hat_color;
 (1 row)
 
 -- ensure explain works for on insert conflict rules
 explain (costs off) INSERT INTO hats VALUES ('h8', 'forbidden') RETURNING *;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
  Insert on hat_data
    Conflict Resolution: UPDATE
    Conflict Arbiter Indexes: hat_data_unique_idx
-   Conflict Filter: (excluded.hat_color <> 'forbidden'::bpchar)
+   Conflict Filter: ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))
    ->  Result
 (5 rows)
 
@@ -2995,12 +2995,12 @@ EXPLAIN (costs off) WITH data(hat_name, hat_color) AS (
 INSERT INTO hats
     SELECT * FROM data
 RETURNING *;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
  Insert on hat_data
    Conflict Resolution: UPDATE
    Conflict Arbiter Indexes: hat_data_unique_idx
-   Conflict Filter: (excluded.hat_color <> 'forbidden'::bpchar)
+   Conflict Filter: ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))
    CTE data
      ->  Values Scan on "*VALUES*"
    ->  CTE Scan on data
