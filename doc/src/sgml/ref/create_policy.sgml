@@ -112,7 +112,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    the user running the overall query.  Therefore, users who are using a given
    policy must be able to access any tables or functions referenced in the
    expression or they will simply receive a permission denied error when
-   attempting to query the RLS-enabled table.  This does not change how views
+   attempting to query the table that has row-level security enabled.  This does not change how views
    work, however.  As with normal queries and views, permission checks and
    policies for the tables which are referenced by a view will use the view
    owner's rights and any policies which apply to the view owner.

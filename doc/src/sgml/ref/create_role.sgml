@@ -196,7 +196,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       <term><literal>NOBYPASSRLS</literal></term>
       <listitem>
        <para>
-        These clauses determine whether a role is allowed to bypass row-security
+        These clauses determine whether a role is allowed to bypass row-level security (RLS)
         policies.  A role having the <literal>BYPASSRLS</literal> attribute will
         be allowed to bypass row-security policies by setting
         <literal>row_security</literal> to

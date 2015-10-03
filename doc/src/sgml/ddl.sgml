@@ -1512,20 +1512,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <title>Row Security Policies</title>
 
   <indexterm zone="ddl-rowsecurity">
-   <primary>rowsecurity</primary>
+   <primary>row security</primary>
   </indexterm>
 
   <indexterm zone="ddl-rowsecurity">
-   <primary>rls</primary>
-  </indexterm>
-
-  <indexterm>
-   <primary>policies</primary>
-   <see>policy</see>
-  </indexterm>
-
-  <indexterm zone="ddl-rowsecurity">
-   <primary>POLICY</primary>
+   <primary>policy</primary>
   </indexterm>
 
   <para>
