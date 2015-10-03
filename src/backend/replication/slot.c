@@ -196,7 +196,7 @@ ReplicationSlotValidateName(const char *name, int elevel)
 					(errcode(ERRCODE_INVALID_NAME),
 			errmsg("replication slot name \"%s\" contains invalid character",
 				   name),
-					 errhint("Replication slot names may only contain letters, numbers, and the underscore character.")));
+					 errhint("Replication slot names may only contain lower case letters, numbers, and the underscore character.")));
 			return false;
 		}
 	}
