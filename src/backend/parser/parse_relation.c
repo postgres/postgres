@@ -686,9 +686,12 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 		return result;
 
 	/*
-	 * If the RTE represents a real table, consider system column names.
+	 * If the RTE represents a real relation, consider system column names.
+	 * Composites are only used for pseudo-relations like ON CONFLICT's
+	 * excluded.
 	 */
-	if (rte->rtekind == RTE_RELATION)
+	if (rte->rtekind == RTE_RELATION &&
+		rte->relkind != RELKIND_COMPOSITE_TYPE)
 	{
 		/* quick check to see if name could be a system column */
 		attnum = specialAttNum(colname);
