@@ -12,7 +12,7 @@ ERROR:  replication slot "regression_slot" already exists
 -- fail because of an invalid name
 SELECT 'init' FROM pg_create_logical_replication_slot('Invalid Name', 'test_decoding');
 ERROR:  replication slot name "Invalid Name" contains invalid character
-HINT:  Replication slot names may only contain letters, numbers, and the underscore character.
+HINT:  Replication slot names may only contain lower case letters, numbers, and the underscore character.
 -- fail twice because of an invalid parameter values
 SELECT 'init' FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', 'frakbar');
 ERROR:  could not parse value "frakbar" for parameter "include-xids"
