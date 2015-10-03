@@ -99,7 +99,7 @@
       <entry>Npgsql</entry>
       <entry>.NET</entry>
       <entry>.NET data provider</entry>
-      <entry><ulink url="http://npgsql.projects.postgresql.org/">http://npgsql.projects.postgresql.org/</ulink></entry>
+      <entry><ulink url="http://www.npgsql.org/">http://www.npgsql.org/</ulink></entry>
      </row>
 
      <row>
@@ -113,7 +113,7 @@
       <entry>psqlODBC</entry>
       <entry>ODBC</entry>
       <entry>ODBC driver</entry>
-      <entry><ulink url="http://psqlodbc.projects.postgresql.org/">http://psqlodbc.projects.postgresql.org/</ulink></entry>
+      <entry><ulink url="https://odbc.postgresql.org/">https://odbc.postgresql.org/</ulink></entry>
      </row>
 
      <row>
@@ -169,7 +169,7 @@
      <row>
       <entry>PL/Java</entry>
       <entry>Java</entry>
-      <entry><ulink url="http://pljava.projects.postgresql.org/">http://pljava.projects.postgresql.org/</ulink></entry>
+      <entry><ulink url="https://github.com/tada/pljava">https://github.com/tada/pljava</ulink></entry>
      </row>
 
      <row>
@@ -205,7 +205,7 @@
      <row>
       <entry>PL/sh</entry>
       <entry>Unix shell</entry>
-      <entry><ulink url="http://plsh.projects.postgresql.org/">http://plsh.projects.postgresql.org/</ulink></entry>
+      <entry><ulink url="https://github.com/petere/plsh">https://github.com/petere/plsh</ulink></entry>
      </row>
     </tbody>
    </tgroup>
