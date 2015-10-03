@@ -179,7 +179,7 @@ ExecEndGather(GatherState *node)
  * no data available from queues or no worker is available, it does
  * fetch the data from local node.
  */
-TupleTableSlot *
+static TupleTableSlot *
 gather_getnext(GatherState *gatherstate)
 {
 	PlanState  *outerPlan;
