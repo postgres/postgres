@@ -816,3 +816,6 @@ select jsonb_set('{}','{x}','{"foo":123}');
 select jsonb_set('[]','{0}','{"foo":123}');
 select jsonb_set('[]','{99}','{"foo":123}');
 select jsonb_set('[]','{-99}','{"foo":123}');
+select jsonb_set('{"a": [1, 2, 3]}', '{a, non_integer}', '"new_value"');
+select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, non_integer}', '"new_value"');
+select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, NULL}', '"new_value"');
