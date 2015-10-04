@@ -128,7 +128,7 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 		}
 		else if (strcmp(def->defname, "extensions") == 0)
 		{
-			/* this must have already-installed extensions */
+			/* check that the requested extensions are actually installed */
 			(void) ExtractExtensionList(defGetString(def), false);
 		}
 	}
@@ -157,10 +157,10 @@ InitPgFdwOptions(void)
 		/* cost factors */
 		{"fdw_startup_cost", ForeignServerRelationId, false},
 		{"fdw_tuple_cost", ForeignServerRelationId, false},
-		/* updatable is available on both server and table */
+		/* updatable option is available on both server and table */
 		{"updatable", ForeignServerRelationId, false},
 		{"updatable", ForeignTableRelationId, false},
-		/* extensions is available on server */
+		/* "extensions" option is available on server */
 		{"extensions", ForeignServerRelationId, false},
 		{NULL, InvalidOid, false}
 	};
@@ -307,7 +307,7 @@ ExtractConnectionOptions(List *defelems, const char **keywords,
  * Parse a comma-separated string and return a List of the Oids of the
  * extensions in the string. If an extension provided cannot be looked
  * up in the catalog (it hasn't been installed or doesn't exist) then
- * throw up an error.
+ * raise an error.
  */
 List *
 ExtractExtensionList(char *extensionString, bool populateList)

@@ -39,6 +39,7 @@ typedef struct
 {
 	/* extension the object appears within, or InvalidOid if none */
 	Oid	objid;
+	Oid	classid;
 } ShippableCacheKey;
 
 typedef struct
@@ -89,24 +90,23 @@ InitializeShippableCache(void)
 }
 
 /*
- * Returns true if given operator/function is part of an extension declared in
+ * Returns true if given operator/function is part of an extension listed in
  * the server options.
  */
 static bool
-lookup_shippable(Oid objnumber, List *extension_list)
+lookup_shippable(Oid objnumber, Oid classnumber, List *extension_list)
 {
-	static int nkeys = 1;
+	static int nkeys = 2;
 	ScanKeyData key[nkeys];
 	HeapTuple tup;
 	Relation depRel;
 	SysScanDesc scan;
 	bool is_shippable = false;
 
-	/* Always return false if we don't have any declared extensions */
+	/* Always return false if the user hasn't set the "extensions" option */
 	if (extension_list == NIL)
 		return false;
 
-	/* We need this relation to scan */
 	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
@@ -115,6 +115,11 @@ lookup_shippable(Oid objnumber, List *extension_list)
 	 * is an extension declared by the user in the options
 	 */
 	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classnumber));
+
+	ScanKeyInit(&key[1],
 				Anum_pg_depend_objid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objnumber));
@@ -147,12 +152,12 @@ lookup_shippable(Oid objnumber, List *extension_list)
  *     part of a declared extension if it is not cached.
  */
 bool
-is_shippable(Oid objnumber, List *extension_list)
+is_shippable(Oid objnumber, Oid classnumber, List *extension_list)
 {
 	ShippableCacheKey key;
 	ShippableCacheEntry *entry;
 
-	/* Always return false if we don't have any declared extensions */
+	/* Always return false if the user hasn't set the "extensions" option */
 	if (extension_list == NIL)
 		return false;
 
@@ -164,6 +169,7 @@ is_shippable(Oid objnumber, List *extension_list)
 	memset(&key, 0, sizeof(key));
 
 	key.objid = objnumber;
+	key.classid = classnumber;
 
 	entry = (ShippableCacheEntry *)
 				 hash_search(ShippableCacheHash,
@@ -180,7 +186,7 @@ is_shippable(Oid objnumber, List *extension_list)
 		 * In the future we could additionally have a whitelist of functions
 		 * declared one at a time.
 		 */
-		bool shippable = lookup_shippable(objnumber, extension_list);
+		bool shippable = lookup_shippable(objnumber, classnumber, extension_list);
 
 		entry = (ShippableCacheEntry *)
 					 hash_search(ShippableCacheHash,
