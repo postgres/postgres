@@ -5591,22 +5591,15 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        This variable controls if row security policies are to be applied
-        to queries which are run against tables that have row security enabled.
-        The default is <literal>on</>.  When set to <literal>on</>, all users,
-        except superusers and the owner of the table, will have the row
-        policies for the table applied to their queries.  When set to
-        <literal>off</>, queries will bypass row policies for the table, if
-        possible, and error if not.
-       </para>
-
-       <para>
-        For a user who is not a superuser and not the table owner to bypass
-        row policies for the table, they must have the <literal>BYPASSRLS</>
-        role attribute. If this is set to <literal>off</> and the user queries
-        a table which has row policies enabled and the user does not have the
-        right to bypass row policies then a permission denied error will be
-        returned.
+        This variable controls whether to raise an error in lieu of applying a
+        row security policy.  When set to <literal>on</>, policies apply
+        normally.  When set to <literal>off</>, queries fail which would
+        otherwise apply at least one policy.  The default is <literal>on</>.
+        Change to <literal>off</> where limited row visibility could cause
+        incorrect results; for example, <application>pg_dump</> makes that
+        change by default.  This variable has no effect on roles which bypass
+        every row security policy, to wit, superusers and roles with
+        the <literal>BYPASSRLS</> attribute.
        </para>
 
        <para>

@@ -1070,17 +1070,15 @@ COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
--- Check COPY TO as user with permissions and BYPASSRLS
+-- Check COPY FROM as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
-SET row_security TO OFF;
+SET row_security TO ON;
 COPY copy_t FROM STDIN; --ok
 1	abc
 2	bcd
 3	cde
 4	def
 \.
-SET row_security TO ON;
-COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
 -- Check COPY FROM as user without permissions.
 SET SESSION AUTHORIZATION rls_regress_user2;

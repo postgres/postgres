@@ -1454,7 +1454,7 @@
       <entry><structfield>rolbypassrls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>
-       Role can bypass row level security policies, see
+       Role bypasses every row level security policy, see
        <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>
@@ -9413,7 +9413,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       User can bypass row level security policies, see
+       User bypasses every row level security policy, see
        <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>
@@ -9888,7 +9888,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>usebypassrls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>
-       User can bypass row level security policies, see
+       User bypasses every row level security policy, see
        <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>

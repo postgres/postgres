@@ -40,10 +40,8 @@ extern int	check_enable_rls(Oid relid, Oid checkAsUser, bool noError);
  * for the table and the plan cache needs to be invalidated if the environment
  * changes.
  *
- * Handle checking as another role via checkAsUser (for views, etc). Note that
- * if *not* checking as another role, the caller should pass InvalidOid rather
- * than GetUserId(). Otherwise the check for row_security = OFF is skipped, and
- * so we may falsely report that RLS is active when the user has bypassed it.
+ * Handle checking as another role via checkAsUser (for views, etc).  Pass
+ * InvalidOid to check the current user.
  *
  * If noError is set to 'true' then we just return RLS_ENABLED instead of doing
  * an ereport() if the user has attempted to bypass RLS and they are not
@@ -78,32 +76,19 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 		return RLS_NONE;
 
 	/*
-	 * Check permissions
-	 *
-	 * Table owners always bypass RLS.  Note that superuser is always
-	 * considered an owner.  Return RLS_NONE_ENV to indicate that this
-	 * decision depends on the environment (in this case, the user_id).
+	 * Table owners and BYPASSRLS users bypass RLS.  Note that a superuser
+	 * qualifies as both.  Return RLS_NONE_ENV to indicate that this decision
+	 * depends on the environment (in this case, the user_id).
 	 */
-	if (pg_class_ownercheck(relid, user_id))
+	if (pg_class_ownercheck(relid, user_id) ||
+		has_bypassrls_privilege(user_id))
 		return RLS_NONE_ENV;
 
-	/*
-	 * If the row_security GUC is 'off', check if the user has permission to
-	 * bypass RLS.  row_security is always considered 'on' when querying
-	 * through a view or other cases where checkAsUser is valid.
-	 */
-	if (!row_security && !checkAsUser)
-	{
-		if (has_bypassrls_privilege(user_id))
-			/* OK to bypass */
-			return RLS_NONE_ENV;
-		else if (noError)
-			return RLS_ENABLED;
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				  errmsg("insufficient privilege to bypass row security.")));
-	}
+	/* row_security GUC says to bypass RLS, but user lacks permission */
+	if (!row_security && !noError)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("insufficient privilege to bypass row security.")));
 
 	/* RLS should be fully enabled for this relation. */
 	return RLS_ENABLED;

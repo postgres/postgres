@@ -1543,8 +1543,12 @@ REVOKE ALL ON accounts FROM PUBLIC;
    Row security policies can be specific to commands, or to roles, or to
    both.  The commands available are <literal>ALL</literal>,
    <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>, and
-   <literal>DELETE</>.  Multiple roles can be assigned to a given policy
-   and normal role membership and inheritance rules apply.
+   <literal>DELETE</>.  Multiple roles can be assigned to a given policy and
+   normal role membership and inheritance rules apply.  Table owners,
+   superusers, and roles with the <literal>BYPASSRLS</> attribute bypass the
+   row security system when querying a table.  Applications that expect to
+   bypass all row security through those mechanisms should
+   set <xref linkend="guc-row-security"> to <literal>off</>.
   </para>
 
   <para>
@@ -1572,17 +1576,6 @@ REVOKE ALL ON accounts FROM PUBLIC;
    and dropped using the <xref linkend="sql-droppolicy"> command.  To
    enable and disable row security for a given table, use the
    <xref linkend="sql-altertable"> command.
-  </para>
-
-  <para>
-   The table owners and superusers bypass the row security system when
-   querying a table.  Any user can request that row security be bypassed by
-   setting <xref linkend="guc-row-security"> to <literal>off</literal>.  If
-   the user does not have privileges to bypass row security when querying a
-   given table then an error will be returned instead.  Other users can be
-   granted the ability to bypass the row security system with
-   the <literal>BYPASSRLS</literal> role attribute.  This attribute can only
-   be set by a superuser.
   </para>
 
   <para>
