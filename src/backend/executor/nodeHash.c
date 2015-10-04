@@ -398,6 +398,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	long		hash_table_bytes;
 	long		skew_table_bytes;
 	long		max_pointers;
+	long		mppow2;
 	int			nbatch;
 	int			nbuckets;
 	int			i;
@@ -465,7 +466,12 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 */
 	max_pointers = (work_mem * 1024L) / sizeof(HashJoinTuple);
 	max_pointers = Min(max_pointers, MaxAllocSize / sizeof(HashJoinTuple));
-	/* also ensure we avoid integer overflow in nbatch and nbuckets */
+	/* If max_pointers isn't a power of 2, must round it down to one */
+	mppow2 = 1L << my_log2(max_pointers);
+	if (max_pointers != mppow2)
+		max_pointers = mppow2 / 2;
+
+	/* Also ensure we avoid integer overflow in nbatch and nbuckets */
 	/* (this step is redundant given the current value of MaxAllocSize) */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
 
