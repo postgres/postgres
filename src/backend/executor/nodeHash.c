@@ -461,10 +461,12 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
 	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
 	 * sufficient.  The Min() steps limit the results so that the pointer
-	 * arrays we'll try to allocate do not exceed work_mem.
+	 * arrays we'll try to allocate do not exceed work_mem nor MaxAllocSize.
 	 */
-	max_pointers = (work_mem * 1024L) / sizeof(void *);
+	max_pointers = (work_mem * 1024L) / sizeof(HashJoinTuple);
+	max_pointers = Min(max_pointers, MaxAllocSize / sizeof(HashJoinTuple));
 	/* also ensure we avoid integer overflow in nbatch and nbuckets */
+	/* (this step is redundant given the current value of MaxAllocSize) */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
 
 	if (inner_rel_bytes > hash_table_bytes)
