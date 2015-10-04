@@ -447,8 +447,13 @@
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
 #log_timezone = 'GMT'
+
+
+# - Process Title -
+
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)
+#update_process_title = on
 
 
 #------------------------------------------------------------------------------
@@ -462,7 +467,6 @@
 #track_io_timing = off
 #track_functions = none			# none, pl, all
 #track_activity_query_size = 1024	# (change requires restart)
-#update_process_title = on
 #stats_temp_directory = 'pg_stat_tmp'
 
 
