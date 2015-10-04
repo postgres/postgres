@@ -5584,7 +5584,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-row-security" xreflabel="row_security">
-      <term><varname>row_security</varname> (<type>enum</type>)
+      <term><varname>row_security</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>row_security</> configuration parameter</primary>
       </indexterm>
