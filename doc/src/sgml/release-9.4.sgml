@@ -47,7 +47,7 @@ Branch: REL9_0_STABLE [81ee435c4] 2015-09-04 13:36:50 -0400
     <listitem>
      <para>
       Fix subtransaction cleanup after a portal (cursor) belonging to an
-      outer subtransaction fails (Tom Lane and Michael Paquier)
+      outer subtransaction fails (Tom Lane, Michael Paquier)
      </para>
 
      <para>
@@ -166,24 +166,6 @@ Branch: REL9_3_STABLE [1bcc9e60a] 2015-09-25 13:16:31 -0400
      <para>
       This was seen primarily when restoring <application>pg_dump</> output
       for databases with many thousands of tables.
-     </para>
-    </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_2_STABLE [0e933fdf9] 2015-08-27 12:22:10 -0400
-Branch: REL9_1_STABLE [9b1b9446f] 2015-08-27 12:22:10 -0400
--->
-
-    <listitem>
-     <para>
-      Back-patch 9.3-era addition of per-resource-owner lock caches
-      (Jeff Janes)
-     </para>
-
-     <para>
-      This substantially improves performance when <application>pg_dump</>
-      tries to dump a large number of tables.
      </para>
     </listitem>
 
@@ -494,6 +476,29 @@ Branch: REL9_0_STABLE [36522d627] 2015-07-16 22:57:46 -0400
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_4_STABLE [ff4cbc1ff] 2015-10-04 14:16:59 -0400
+Branch: REL9_3_STABLE [45dd7cdba] 2015-10-04 14:17:14 -0400
+Branch: REL9_2_STABLE [fd3e3cf50] 2015-10-04 14:17:20 -0400
+Branch: REL9_1_STABLE [a8168fbcb] 2015-10-04 14:17:24 -0400
+Branch: REL9_0_STABLE [2647b245d] 2015-10-04 14:17:28 -0400
+Branch: master [f2fc98fb8] 2015-10-04 15:55:07 -0400
+Branch: REL9_5_STABLE [e5c94c7bb] 2015-10-04 15:55:07 -0400
+Branch: REL9_4_STABLE [4075fc4b9] 2015-10-04 15:55:07 -0400
+Branch: REL9_3_STABLE [0867e0ad5] 2015-10-04 15:55:07 -0400
+Branch: REL9_2_STABLE [ebc7d928a] 2015-10-04 15:55:07 -0400
+Branch: REL9_1_STABLE [d84cc40e4] 2015-10-04 15:55:07 -0400
+Branch: REL9_0_STABLE [d637a899c] 2015-10-04 15:55:07 -0400
+-->
+
+    <listitem>
+     <para>
+      Fix <quote>invalid memory alloc request size</> failure in hash joins
+      with large <varname>work_mem</> settings (Tomas Vondra, Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [8693ebe37] 2015-07-30 12:11:23 -0400
 Branch: REL9_5_STABLE [e91a1643a] 2015-07-30 12:11:23 -0400
 Branch: REL9_4_STABLE [3b4a9dbfa] 2015-07-30 12:11:23 -0400
@@ -586,23 +591,6 @@ Branch: REL9_2_STABLE [e538e510e] 2015-06-22 18:53:27 -0400
      <para>
       Improve planner's performance for <command>UPDATE</>/<command>DELETE</>
       on large inheritance sets (Tom Lane, Dean Rasheed)
-     </para>
-    </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_1_STABLE [3218f8c33] 2015-08-15 11:02:33 -0400
-Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
--->
-
-    <listitem>
-     <para>
-      Use fuzzy path cost tiebreaking rule in all supported branches (Tom Lane)
-     </para>
-
-     <para>
-      This change is meant to avoid platform-specific behavior when
-      alternative plan choices have effectively-identical estimated costs.
      </para>
     </listitem>
 
@@ -839,7 +827,7 @@ Branch: REL9_0_STABLE [e41718fa1] 2015-08-18 19:22:38 -0400
      <para>
       Fix misreporting of <command>CONTINUE</> and <command>MOVE</> statement
       types in <application>PL/pgSQL</>'s error context messages
-      (Pavel Stehule and Tom Lane)
+      (Pavel Stehule, Tom Lane)
      </para>
     </listitem>
 
@@ -926,6 +914,26 @@ Branch: REL9_1_STABLE [2d19a0e97] 2015-08-02 22:12:51 +0300
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8bbe4cbd9] 2015-10-04 17:58:42 -0400
+Branch: REL9_5_STABLE [39a716d93] 2015-10-04 17:58:30 -0400
+Branch: REL9_4_STABLE [93840f96c] 2015-10-04 17:58:30 -0400
+-->
+
+    <listitem>
+     <para>
+      Improve <filename>contrib/pg_stat_statements</>' handling of
+      query-text garbage collection (Peter Geoghegan)
+     </para>
+
+     <para>
+      The external file containing query texts could bloat to very large
+      sizes; once it got past 1GB attempts to trim it would fail, soon
+      leading to situations where the file could not be read at all.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [76f965ff1] 2015-09-24 12:47:29 -0400
 Branch: REL9_5_STABLE [59d765b65] 2015-09-24 12:47:30 -0400
 Branch: REL9_4_STABLE [0da864c53] 2015-09-24 12:47:30 -0400
@@ -942,18 +950,6 @@ Branch: REL9_3_STABLE [b7dcb2dd4] 2015-09-24 12:47:30 -0400
       The main user-visible effect is expected to be that comparisons
       involving <type>varchar</> columns will be sent to the remote server
       for execution in more cases than before.
-     </para>
-    </listitem>
-
-<!--
-Author: Joe Conway <mail@joeconway.com>
-Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
--->
-
-    <listitem>
-     <para>
-      Fix <filename>contrib/sepgsql</>'s handling of <command>SELECT INTO</>
-      statements (Kohei KaiGai)
      </para>
     </listitem>
 
