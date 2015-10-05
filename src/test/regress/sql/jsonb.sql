@@ -50,8 +50,8 @@ SELECT '{"abc":1,3}'::jsonb;		-- ERROR, no value
 
 -- Recursion.
 SET max_stack_depth = '100kB';
-SELECT repeat('[', 1000)::jsonb;
-SELECT repeat('{"a":', 1000)::jsonb;
+SELECT repeat('[', 10000)::jsonb;
+SELECT repeat('{"a":', 10000)::jsonb;
 RESET max_stack_depth;
 
 -- Miscellaneous stuff.

@@ -47,8 +47,8 @@ SELECT '{"abc":1,3}'::json;		-- ERROR, no value
 
 -- Recursion.
 SET max_stack_depth = '100kB';
-SELECT repeat('[', 1000)::json;
-SELECT repeat('{"a":', 1000)::json;
+SELECT repeat('[', 10000)::json;
+SELECT repeat('{"a":', 10000)::json;
 RESET max_stack_depth;
 
 -- Miscellaneous stuff.
