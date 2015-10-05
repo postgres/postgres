@@ -21,6 +21,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
@@ -85,6 +86,8 @@ record_in(PG_FUNCTION_ARGS)
 	Datum	   *values;
 	bool	   *nulls;
 	StringInfoData buf;
+
+	check_stack_depth();		/* recurses for record-type columns */
 
 	/*
 	 * Give a friendly error message if we did not get enough info to identify
@@ -309,6 +312,8 @@ record_out(PG_FUNCTION_ARGS)
 	bool	   *nulls;
 	StringInfoData buf;
 
+	check_stack_depth();		/* recurses for record-type columns */
+
 	/* Extract type info from the tuple itself */
 	tupType = HeapTupleHeaderGetTypeId(rec);
 	tupTypmod = HeapTupleHeaderGetTypMod(rec);
@@ -457,6 +462,8 @@ record_recv(PG_FUNCTION_ARGS)
 	int			i;
 	Datum	   *values;
 	bool	   *nulls;
+
+	check_stack_depth();		/* recurses for record-type columns */
 
 	/*
 	 * Give a friendly error message if we did not get enough info to identify
@@ -650,6 +657,8 @@ record_send(PG_FUNCTION_ARGS)
 	bool	   *nulls;
 	StringInfoData buf;
 
+	check_stack_depth();		/* recurses for record-type columns */
+
 	/* Extract type info from the tuple itself */
 	tupType = HeapTupleHeaderGetTypeId(rec);
 	tupTypmod = HeapTupleHeaderGetTypMod(rec);
@@ -792,6 +801,8 @@ record_cmp(FunctionCallInfo fcinfo)
 	int			i1;
 	int			i2;
 	int			j;
+
+	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from the tuples */
 	tupType1 = HeapTupleHeaderGetTypeId(record1);
@@ -1028,6 +1039,8 @@ record_eq(PG_FUNCTION_ARGS)
 	int			i1;
 	int			i2;
 	int			j;
+
+	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from the tuples */
 	tupType1 = HeapTupleHeaderGetTypeId(record1);
