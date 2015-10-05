@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-01-12 20:57+0000\n"
-"PO-Revision-Date: 2015-01-15 07:51+0300\n"
+"PO-Revision-Date: 2015-01-15 07:10+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -348,4 +348,3 @@ msgstr "не удалось преобразовать объект Python Unico
 #: plpython.c:3698
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
-

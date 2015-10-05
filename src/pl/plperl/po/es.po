@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-23 22:21+0000\n"
+"POT-Creation-Date: 2015-09-29 06:12+0000\n"
 "PO-Revision-Date: 2010-08-31 01:09-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -46,7 +46,7 @@ msgstr ""
 "vez."
 
 #: plperl.c:593 plperl.c:764 plperl.c:769 plperl.c:872 plperl.c:885
-#: plperl.c:927 plperl.c:948 plperl.c:1501 plperl.c:1607 plperl.c:1663
+#: plperl.c:927 plperl.c:948 plperl.c:1504 plperl.c:1610 plperl.c:1666
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -92,28 +92,28 @@ msgstr "$_TD->{new} no existe"
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} no es una referencia a un hash"
 
-#: plperl.c:1418 plperl.c:2123
+#: plperl.c:1421 plperl.c:2126
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "las funciones en PL/Perl no pueden retornar el tipo %s"
 
-#: plperl.c:1430 plperl.c:2167
+#: plperl.c:1433 plperl.c:2170
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "funciones de PL/Perl no pueden aceptar el tipo %s"
 
-#: plperl.c:1505
+#: plperl.c:1508
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "no se obtuvo una referencia CODE en la compilación de la función «%s»"
 
-#: plperl.c:1709
+#: plperl.c:1712
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "se llamó a una función que retorna un conjunto en un contexto que no puede "
 "aceptarlo"
 
-#: plperl.c:1752
+#: plperl.c:1755
 msgid ""
 "set-returning PL/Perl function must return reference to array or use "
 "return_next"
@@ -121,43 +121,43 @@ msgstr ""
 "una función PL/Perl que retorna un conjunto debe retornar una referencia a "
 "un array o usar return_next"
 
-#: plperl.c:1785
+#: plperl.c:1788
 msgid "composite-returning PL/Perl function must return reference to hash"
 msgstr ""
 "una función Perl que retorna un tipo compuesto debe retornar una referencia "
 "a un hash"
 
-#: plperl.c:1794
+#: plperl.c:1797
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
 "se llamó una función que retorna un registro en un contexto que no puede "
 "aceptarlo"
 
-#: plperl.c:1908
+#: plperl.c:1911
 msgid "ignoring modified row in DELETE trigger"
 msgstr "ignorando la tupla modificada en el disparador DELETE"
 
-#: plperl.c:1916
+#: plperl.c:1919
 msgid ""
 "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr ""
 "el resultado de la función disparadora en PL/Perl debe ser undef, «SKIP» o "
 "«MODIFY»"
 
-#: plperl.c:2053 plperl.c:2063
+#: plperl.c:2056 plperl.c:2066
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: plperl.c:2115
+#: plperl.c:2118
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plperl.c:2431
+#: plperl.c:2434
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "no se puede utilizar return_next en una función sin SETOF"
 
-#: plperl.c:2437
+#: plperl.c:2440
 msgid ""
 "SETOF-composite-returning PL/Perl function must call return_next with "
 "reference to hash"
@@ -165,16 +165,16 @@ msgstr ""
 "una función Perl que retorna SETOF de un tipo compuesto debe invocar "
 "return_next con una referencia a un hash"
 
-#: plperl.c:3258
+#: plperl.c:3261
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "función PL/Perl «%s»"
 
-#: plperl.c:3270
+#: plperl.c:3273
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "compilación de la función PL/Perl «%s»"
 
-#: plperl.c:3279
+#: plperl.c:3282
 msgid "PL/Perl anonymous code block"
 msgstr "bloque de código anónimo de PL/Perl"

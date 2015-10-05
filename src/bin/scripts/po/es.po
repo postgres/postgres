@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-23 22:27+0000\n"
+"POT-Creation-Date: 2015-09-29 06:15+0000\n"
 "PO-Revision-Date: 2010-04-26 18:11-0400\n"
 "Last-Translator: Ávaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -968,6 +968,9 @@ msgstr "s"
 msgid "n"
 msgstr "n"
 
+#. translator: This is a question followed by the translated options for
+#. "yes" and "no".
+#.
 #: common.c:296
 #, c-format
 msgid "%s (%s/%s) "

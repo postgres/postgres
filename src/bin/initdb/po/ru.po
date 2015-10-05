@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-01-12 21:00+0000\n"
-"PO-Revision-Date: 2015-01-15 07:50+0300\n"
+"POT-Creation-Date: 2015-07-17 08:08+0000\n"
+"PO-Revision-Date: 2015-07-13 20:39+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -768,27 +768,32 @@ msgstr "нехватка памяти\n"
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "не удалось создать связь для каталога \"%s\": %s\n"
 
-#: ../../port/dirmod.c:325
+#: ../../port/dirmod.c:361
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "не удалось получить связь для каталога \"%s\": %s\n"
+
+#: ../../port/dirmod.c:443
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
 msgstr "не удалось открыть каталог \"%s\": %s\n"
 
-#: ../../port/dirmod.c:358
+#: ../../port/dirmod.c:476
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "не удалось прочитать каталог \"%s\": %s\n"
 
-#: ../../port/dirmod.c:370
+#: ../../port/dirmod.c:488
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
 msgstr "не удалось закрыть каталог \"%s\": %s\n"
 
-#: ../../port/dirmod.c:449
+#: ../../port/dirmod.c:567
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
 msgstr "не удалось получить информацию о файле или каталоге \"%s\": %s\n"
 
-#: ../../port/dirmod.c:476 ../../port/dirmod.c:493
+#: ../../port/dirmod.c:594 ../../port/dirmod.c:611
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "ошибка при удалении файла или каталога \"%s\": %s\n"
@@ -847,4 +852,3 @@ msgstr "дочерний процесс завершён по сигналу %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
-

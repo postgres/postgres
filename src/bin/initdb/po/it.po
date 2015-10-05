@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-05 18:00+0000\n"
+"POT-Creation-Date: 2015-07-05 16:32+0000\n"
 "PO-Revision-Date: 2014-12-06 18:31+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
@@ -752,27 +752,32 @@ msgstr "memoria esaurita\n"
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "non è stato possibile impostare la giunzione per \"%s\": %s\n"
 
-#: ../../port/dirmod.c:325
+#: ../../port/dirmod.c:361
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "non è stato possibile ottenere la giunzione per \"%s\": %s\n"
+
+#: ../../port/dirmod.c:443
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
 msgstr "apertura della directory \"%s\" fallita: %s\n"
 
-#: ../../port/dirmod.c:358
+#: ../../port/dirmod.c:476
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "lettura della directory \"%s\" fallita: %s\n"
 
-#: ../../port/dirmod.c:370
+#: ../../port/dirmod.c:488
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
 msgstr "chiusura della directory \"%s\" fallita: %s\n"
 
-#: ../../port/dirmod.c:449
+#: ../../port/dirmod.c:567
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
 msgstr "non è stato possibile ottenere informazioni sul file o directory \"%s\": %s\n"
 
-#: ../../port/dirmod.c:476 ../../port/dirmod.c:493
+#: ../../port/dirmod.c:594 ../../port/dirmod.c:611
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "rimozione del file o directory \"%s\" fallita: %s\n"
