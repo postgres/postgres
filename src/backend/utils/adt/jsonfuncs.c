@@ -3724,6 +3724,8 @@ setPath(JsonbIterator **it, Datum *path_elems,
 	JsonbValue *res = NULL;
 	int			r;
 
+	check_stack_depth();
+
 	if (path_nulls[level])
 		elog(ERROR, "path element at the position %d is NULL", level + 1);
 

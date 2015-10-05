@@ -712,6 +712,8 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 	JsonbValue	jb;
 	bool		scalar_jsonb = false;
 
+	check_stack_depth();
+
 	if (is_null)
 	{
 		Assert(!key_scalar);
