@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-07-27 19:13+0000\n"
-"PO-Revision-Date: 2015-07-29 22:24-0400\n"
+"POT-Creation-Date: 2015-09-22 15:13+0000\n"
+"PO-Revision-Date: 2015-09-22 20:32-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -442,7 +442,7 @@ msgid "%s: incompatible server version %s\n"
 msgstr "%s: inkompatible Serverversion %s\n"
 
 #: pg_basebackup.c:1666 pg_recvlogical.c:261 receivelog.c:549 receivelog.c:600
-#: receivelog.c:641 streamutil.c:255 streamutil.c:351 streamutil.c:397
+#: receivelog.c:641 streamutil.c:255 streamutil.c:353 streamutil.c:399
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: konnte Replikationsbefehl „%s“ nicht senden: %s"
@@ -653,8 +653,8 @@ msgstr "  -D, --directory=VERZ   Transaktionslogdateien in dieses Verzeichnis em
 
 #: pg_receivexlog.c:70 pg_recvlogical.c:79
 #, c-format
-msgid "      --if-not-exists    do not treat naming conflicts as an error when creating a slot\n"
-msgstr ""
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "      --if-not-exists    keinen Fehler ausgeben, wenn Slot beim Erzeugen schon existiert\n"
 
 #: pg_receivexlog.c:71 pg_recvlogical.c:81
 #, c-format
@@ -775,13 +775,13 @@ msgstr "%s: lösche Replikations-Slot „%s“\n"
 msgid "%s: creating replication slot \"%s\"\n"
 msgstr "%s: erzeuge Replikations-Slot „%s“\n"
 
-#: pg_receivexlog.c:607 pg_recvlogical.c:922
+#: pg_receivexlog.c:608 pg_recvlogical.c:922
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s: Verbindung beendet\n"
 
 #. translator: check source for value for %d
-#: pg_receivexlog.c:614 pg_recvlogical.c:929
+#: pg_receivexlog.c:615 pg_recvlogical.c:929
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s: Verbindung beendet; erneuter Versuch in %d Sekunden\n"
@@ -1140,12 +1140,12 @@ msgstr "%s: konnte Servereinstellung für integer_datetimes nicht ermitteln\n"
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s: Kompilieroption „integer_datetimes“ stimmt nicht mit Server überein\n"
 
-#: streamutil.c:363
+#: streamutil.c:365
 #, c-format
 msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: konnte Replikations-Slot „%s“ nicht erzeugen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: streamutil.c:408
+#: streamutil.c:410
 #, c-format
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: konnte Replikations-Slot „%s“ nicht löschen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"

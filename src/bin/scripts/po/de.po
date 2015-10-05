@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-05-19 16:14+0000\n"
-"PO-Revision-Date: 2015-05-19 20:52-0400\n"
+"POT-Creation-Date: 2015-09-27 16:13+0000\n"
+"PO-Revision-Date: 2015-09-27 13:20-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -93,20 +93,20 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:262 createdb.c:252 createlang.c:236 createuser.c:348
-#: dropdb.c:155 droplang.c:237 dropuser.c:156 pg_isready.c:222 reindexdb.c:388
-#: vacuumdb.c:930
+#: dropdb.c:155 droplang.c:237 dropuser.c:156 pg_isready.c:222 reindexdb.c:392
+#: vacuumdb.c:931
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: clusterdb.c:263 reindexdb.c:389 vacuumdb.c:931
+#: clusterdb.c:263 reindexdb.c:393 vacuumdb.c:932
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
 #: clusterdb.c:264 createdb.c:254 createlang.c:238 createuser.c:350
-#: dropdb.c:157 droplang.c:239 dropuser.c:158 pg_isready.c:225 reindexdb.c:390
-#: vacuumdb.c:932
+#: dropdb.c:157 droplang.c:239 dropuser.c:158 pg_isready.c:225 reindexdb.c:394
+#: vacuumdb.c:933
 #, c-format
 msgid ""
 "\n"
@@ -126,14 +126,14 @@ msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       zu clusternde Datenbank\n"
 
 #: clusterdb.c:267 createlang.c:240 createuser.c:354 dropdb.c:158
-#: droplang.c:241 dropuser.c:159 reindexdb.c:393
+#: droplang.c:241 dropuser.c:159 reindexdb.c:397
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr ""
 "  -e, --echo                zeige die Befehle, die an den Server\n"
 "                            gesendet werden\n"
 
-#: clusterdb.c:268 reindexdb.c:395
+#: clusterdb.c:268 reindexdb.c:399
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               unterdrücke alle Mitteilungen\n"
@@ -143,26 +143,26 @@ msgstr "  -q, --quiet               unterdrücke alle Mitteilungen\n"
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
 msgstr "  -t, --table=TABELLE       clustere nur bestimmte Tabelle(n)\n"
 
-#: clusterdb.c:270 reindexdb.c:399
+#: clusterdb.c:270 reindexdb.c:403
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             erzeuge viele Meldungen\n"
 
 #: clusterdb.c:271 createlang.c:242 createuser.c:368 dropdb.c:160
-#: droplang.c:243 dropuser.c:162 reindexdb.c:400
+#: droplang.c:243 dropuser.c:162 reindexdb.c:404
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
 
 #: clusterdb.c:272 createlang.c:243 createuser.c:373 dropdb.c:162
-#: droplang.c:244 dropuser.c:164 reindexdb.c:401
+#: droplang.c:244 dropuser.c:164 reindexdb.c:405
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
 #: clusterdb.c:273 createdb.c:265 createlang.c:244 createuser.c:374
-#: dropdb.c:163 droplang.c:245 dropuser.c:165 pg_isready.c:231 reindexdb.c:402
-#: vacuumdb.c:948
+#: dropdb.c:163 droplang.c:245 dropuser.c:165 pg_isready.c:231 reindexdb.c:406
+#: vacuumdb.c:949
 #, c-format
 msgid ""
 "\n"
@@ -172,36 +172,36 @@ msgstr ""
 "Verbindungsoptionen:\n"
 
 #: clusterdb.c:274 createlang.c:245 createuser.c:375 dropdb.c:164
-#: droplang.c:246 dropuser.c:166 reindexdb.c:403 vacuumdb.c:949
+#: droplang.c:246 dropuser.c:166 reindexdb.c:407 vacuumdb.c:950
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME       Name des Datenbankservers oder Socket-Verzeichnis\n"
 
 #: clusterdb.c:275 createlang.c:246 createuser.c:376 dropdb.c:165
-#: droplang.c:247 dropuser.c:167 reindexdb.c:404 vacuumdb.c:950
+#: droplang.c:247 dropuser.c:167 reindexdb.c:408 vacuumdb.c:951
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           Port des Datenbankservers\n"
 
 #: clusterdb.c:276 createlang.c:247 dropdb.c:166 droplang.c:248
-#: reindexdb.c:405 vacuumdb.c:951
+#: reindexdb.c:409 vacuumdb.c:952
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=NAME       Datenbankbenutzername\n"
 
 #: clusterdb.c:277 createlang.c:248 createuser.c:378 dropdb.c:167
-#: droplang.c:249 dropuser.c:169 reindexdb.c:406 vacuumdb.c:952
+#: droplang.c:249 dropuser.c:169 reindexdb.c:410 vacuumdb.c:953
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         niemals nach Passwort fragen\n"
 
 #: clusterdb.c:278 createlang.c:249 createuser.c:379 dropdb.c:168
-#: droplang.c:250 dropuser.c:170 reindexdb.c:407 vacuumdb.c:953
+#: droplang.c:250 dropuser.c:170 reindexdb.c:411 vacuumdb.c:954
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            Passwortfrage erzwingen\n"
 
-#: clusterdb.c:279 dropdb.c:169 reindexdb.c:408 vacuumdb.c:954
+#: clusterdb.c:279 dropdb.c:169 reindexdb.c:412 vacuumdb.c:955
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME   alternative Wartungsdatenbank\n"
@@ -217,8 +217,8 @@ msgstr ""
 "SQL-Befehls CLUSTER.\n"
 
 #: clusterdb.c:281 createdb.c:273 createlang.c:250 createuser.c:380
-#: dropdb.c:170 droplang.c:251 dropuser.c:171 pg_isready.c:236 reindexdb.c:410
-#: vacuumdb.c:956
+#: dropdb.c:170 droplang.c:251 dropuser.c:171 pg_isready.c:236 reindexdb.c:414
+#: vacuumdb.c:957
 #, c-format
 msgid ""
 "\n"
@@ -853,10 +853,9 @@ msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
 msgstr "%s: kann nicht alle Datenbanken und Systemkataloge gleichzeitig reindizieren\n"
 
 #: reindexdb.c:169
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex specific table(s) in all databases\n"
+#, c-format
 msgid "%s: cannot reindex specific schema(s) in all databases\n"
-msgstr "%s: kann nicht bestimmte Tabelle(n) in allen Datenbanken reindizieren\n"
+msgstr "%s: kann nicht bestimmte Schemas in allen Datenbanken reindizieren\n"
 
 #: reindexdb.c:174
 #, c-format
@@ -869,10 +868,9 @@ msgid "%s: cannot reindex specific index(es) in all databases\n"
 msgstr "%s: kann nicht bestimmte Indexe in allen Datenbanken reindizieren\n"
 
 #: reindexdb.c:190
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex specific table(s) and system catalogs at the same time\n"
+#, c-format
 msgid "%s: cannot reindex specific schema(s) and system catalogs at the same time\n"
-msgstr "%s: kann nicht bestimmte Tabelle(n) und Systemkataloge gleichzeitig reindizieren\n"
+msgstr "%s: kann nicht bestimmte Schemas und Systemkataloge gleichzeitig reindizieren\n"
 
 #: reindexdb.c:195
 #, c-format
@@ -884,37 +882,37 @@ msgstr "%s: kann nicht bestimmte Tabelle(n) und Systemkataloge gleichzeitig rein
 msgid "%s: cannot reindex specific index(es) and system catalogs at the same time\n"
 msgstr "%s: kann nicht bestimmte Index und Systemkataloge gleichzeitig reindizieren\n"
 
-#: reindexdb.c:302
+#: reindexdb.c:306
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: Reindizieren der Tabelle „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
 
-#: reindexdb.c:305
+#: reindexdb.c:309
 #, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: Reindizieren des Index „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
 
-#: reindexdb.c:308
+#: reindexdb.c:312
 #, c-format
 msgid "%s: reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: Reindizieren des Schemas „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
 
-#: reindexdb.c:311
+#: reindexdb.c:315
 #, c-format
 msgid "%s: reindexing of database \"%s\" failed: %s"
 msgstr "%s: Reindizieren der Datenbank „%s“ fehlgeschlagen: %s"
 
-#: reindexdb.c:342
+#: reindexdb.c:346
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: reindiziere Datenbank „%s“\n"
 
-#: reindexdb.c:375
+#: reindexdb.c:379
 #, c-format
 msgid "%s: reindexing of system catalogs failed: %s"
 msgstr "%s: Reindizieren der Systemkataloge fehlgeschlagen: %s"
 
-#: reindexdb.c:387
+#: reindexdb.c:391
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -923,38 +921,37 @@ msgstr ""
 "%s reindiziert eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: reindexdb.c:391
+#: reindexdb.c:395
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
-msgstr "  -a, --all                 reindiziere alle Datenbanken\n"
+msgstr "  -a, --all                 alle Datenbanken reindizieren\n"
 
-#: reindexdb.c:392
+#: reindexdb.c:396
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=DBNAME       zu reindizierende Datenbank\n"
 
-#: reindexdb.c:394
-#, c-format
-msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
-msgstr "  -i, --index=INDEX         erneuere nur bestimmte(n) Index(e)\n"
-
-#: reindexdb.c:396
-#, c-format
-msgid "  -s, --system              reindex system catalogs\n"
-msgstr "  -s, --system              reindiziere Systemkataloge\n"
-
-#: reindexdb.c:397
-#, fuzzy, c-format
-#| msgid "  -n, --schema=SCHEMA          dump the named schema(s) only\n"
-msgid "  -S, --schema=SCHEMA       recreate specific schema(s) only\n"
-msgstr "  -n, --schema=SCHEMA          nur das/die angegebene(n) Schema(s) ausgeben\n"
-
 #: reindexdb.c:398
 #, c-format
-msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
-msgstr "  -t, --table=TABELLE       reindiziere nur bestimmte Tabelle(n)\n"
+msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
+msgstr "  -i, --index=INDEX         nur bestimmte(n) Index(e) erneuern\n"
 
-#: reindexdb.c:409
+#: reindexdb.c:400
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --system              Systemkataloge reindizieren\n"
+
+#: reindexdb.c:401
+#, c-format
+msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
+msgstr "  -S, --schema=SCHEMA       nur bestimmte(s) Schema(s) reindizieren\n"
+
+#: reindexdb.c:402
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
+msgstr "  -t, --table=TABELLE       nur bestimmte Tabelle(n) reindizieren\n"
+
+#: reindexdb.c:413
 #, c-format
 msgid ""
 "\n"
@@ -965,10 +962,9 @@ msgstr ""
 "SQL-Befehls REINDEX.\n"
 
 #: vacuumdb.c:190
-#, fuzzy, c-format
-#| msgid "%s: maximum number of parallel jobs is %d\n"
+#, c-format
 msgid "%s: number of parallel \"jobs\" must be at least 1\n"
-msgstr "%s: maximale Anzahl paralleler Jobs ist %d\n"
+msgstr "%s: Anzahl paralleler Jobs muss mindestens 1 sein\n"
 
 #: vacuumdb.c:196
 #, c-format
@@ -976,10 +972,9 @@ msgid "%s: too many parallel jobs requested (maximum: %d)\n"
 msgstr "%s: zu viele parallele Jobs angefordert (Maximum: %d)\n"
 
 #: vacuumdb.c:235 vacuumdb.c:241
-#, fuzzy, c-format
-#| msgid "%s: cannot use the \"full\" option when performing only analyze\n"
+#, c-format
 msgid "%s: cannot use the \"%s\" option when performing only analyze\n"
-msgstr "%s: kann Option „full“ nicht verwenden, wenn nur Analyze durchgeführt wird\n"
+msgstr "%s: kann Option „%s“ nicht verwenden, wenn nur Analyze durchgeführt wird\n"
 
 #: vacuumdb.c:258
 #, c-format
@@ -1004,27 +999,26 @@ msgid "Generating default (full) optimizer statistics"
 msgstr "Erzeuge volle Optimierer-Statistiken"
 
 #: vacuumdb.c:361
-#, fuzzy, c-format
-#| msgid "%s: clustering database \"%s\"\n"
+#, c-format
 msgid "%s: processing database \"%s\": %s\n"
-msgstr "%s: clustere Datenbank „%s“\n"
+msgstr "%s: bearbeite Datenbank „%s“: %s\n"
 
 #: vacuumdb.c:364
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: führe Vacuum in Datenbank „%s“ aus\n"
 
-#: vacuumdb.c:693
+#: vacuumdb.c:694
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: Vacuum der Tabelle „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
 
-#: vacuumdb.c:696 vacuumdb.c:813
+#: vacuumdb.c:697 vacuumdb.c:814
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: Vacuum der Datenbank „%s“ fehlgeschlagen: %s"
 
-#: vacuumdb.c:929
+#: vacuumdb.c:930
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -1033,90 +1027,90 @@ msgstr ""
 "%s säubert und analysiert eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: vacuumdb.c:933
+#: vacuumdb.c:934
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       führe Vacuum in allen Datenbanken aus\n"
 
-#: vacuumdb.c:934
+#: vacuumdb.c:935
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAME             führe Vacuum in dieser Datenbank aus\n"
 
-#: vacuumdb.c:935
+#: vacuumdb.c:936
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr ""
 "  -e, --echo                      zeige die Befehle, die an den Server\n"
 "                                  gesendet werden\n"
 
-#: vacuumdb.c:936
+#: vacuumdb.c:937
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      führe volles Vacuum durch\n"
 
-#: vacuumdb.c:937
+#: vacuumdb.c:938
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    Zeilentransaktionsinformationen einfrieren\n"
 
-#: vacuumdb.c:938
+#: vacuumdb.c:939
+#, c-format
+msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
+msgstr ""
+"  -j, --jobs=NUM                  so viele parallele Verbindungen zum Vacuum\n"
+"                                  verwenden\n"
+
+#: vacuumdb.c:940
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     unterdrücke alle Mitteilungen\n"
 
-#: vacuumdb.c:939
+#: vacuumdb.c:941
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr ""
 "  -t, --table='TABELLE[(SPALTEN)]'\n"
 "                                  führe Vacuum für bestimmte Tabelle(n) aus\n"
 
-#: vacuumdb.c:940
+#: vacuumdb.c:942
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   erzeuge viele Meldungen\n"
 
-#: vacuumdb.c:941
+#: vacuumdb.c:943
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   Versionsinformationen anzeigen, dann beenden\n"
 
-#: vacuumdb.c:942
+#: vacuumdb.c:944
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   aktualisiere Statistiken für den Optimierer\n"
 
-#: vacuumdb.c:943
-#, fuzzy, c-format
-#| msgid "  -Z, --analyze-only              only update optimizer statistics\n"
-msgid "  -Z, --analyze-only              only update optimizer statistics;  no vacuum\n"
-msgstr "  -Z, --analyze-only              aktualisiere nur Statistiken für den Optimierer\n"
-
-#: vacuumdb.c:944
-#, fuzzy, c-format
-#| msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
-msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
-msgstr "  -j, --jobs=NUM               so viele parallele Jobs zur Sicherung verwenden\n"
-
 #: vacuumdb.c:945
-#, fuzzy, c-format
-#| msgid ""
-#| "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
-#| "                                  stages for faster results\n"
+#, c-format
+msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
+msgstr ""
+"  -Z, --analyze-only              aktualisiere nur Statistiken für den Optimierer;\n"
+"                                  kein Vacuum\n"
+
+#: vacuumdb.c:946
+#, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
-"                                  stages for faster results;  no vacuum\n"
+"                                  stages for faster results; no vacuum\n"
 msgstr ""
 "      --analyze-in-stages         aktualisiere nur Statistiken für den Optimierer,\n"
-"                                  in mehreren Phasen für schnellere Ergebnisse\n"
+"                                  in mehreren Phasen für schnellere Ergebnisse;\n"
+"                                  kein Vacuum\n"
 
-#: vacuumdb.c:947
+#: vacuumdb.c:948
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      diese Hilfe anzeigen, dann beenden\n"
 
-#: vacuumdb.c:955
+#: vacuumdb.c:956
 #, c-format
 msgid ""
 "\n"

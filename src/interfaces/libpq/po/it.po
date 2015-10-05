@@ -40,8 +40,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-07-06 14:38+0000\n"
-"PO-Revision-Date: 2015-07-07 03:15+0100\n"
+"POT-Creation-Date: 2015-07-19 17:38+0000\n"
+"PO-Revision-Date: 2015-07-20 00:30+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -71,7 +71,7 @@ msgstr "richiesta di autenticazione GSS duplicata\n"
 #: fe-connect.c:4088 fe-connect.c:4168 fe-connect.c:4267 fe-connect.c:4519
 #: fe-connect.c:4548 fe-connect.c:4620 fe-connect.c:4638 fe-connect.c:4734
 #: fe-connect.c:5068 fe-connect.c:5218 fe-exec.c:3339 fe-exec.c:3504
-#: fe-lobj.c:896 fe-protocol2.c:1181 fe-protocol3.c:1544
+#: fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:1571
 #: fe-secure-openssl.c:527 fe-secure-openssl.c:1069
 msgid "out of memory\n"
 msgstr "memoria esaurita\n"
@@ -540,8 +540,8 @@ msgstr "lo stato COPY OUT deve prima essere terminato\n"
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "PQexec not consentito durante COPY BOTH\n"
 
-#: fe-exec.c:2208 fe-exec.c:2275 fe-exec.c:2365 fe-protocol2.c:1327
-#: fe-protocol3.c:1683
+#: fe-exec.c:2208 fe-exec.c:2275 fe-exec.c:2365 fe-protocol2.c:1352
+#: fe-protocol3.c:1710
 msgid "no COPY in progress\n"
 msgstr "nessun comando COPY in corso\n"
 
@@ -713,150 +713,156 @@ msgstr "stato %c non valido, probabilmente indica una corruzione di memoria\n"
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "messaggio tipo 0x%02x arrivato dal server mentre era inattivo"
 
-#: fe-protocol2.c:522
+#: fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
+#: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:324
+#: fe-protocol3.c:995
+msgid "out of memory"
+msgstr "memoria esaurita"
+
+#: fe-protocol2.c:529
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
 msgstr "carattere %c non previsto a seguito di una risposta vuota ad una query (messaggio \"I\")"
 
-#: fe-protocol2.c:580
+#: fe-protocol2.c:595
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "il server ha spedito dati (messaggio di tipo \"D\") senza prima il descrittore di riga (messaggio di tipo \"T\")"
 
-#: fe-protocol2.c:598
+#: fe-protocol2.c:613
 #, c-format
 msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
 msgstr "il server ha spedito dati binari (messaggio di tipo \"B\") senza prima il descrittore di riga (messaggio di tipo \"T\")"
 
-#: fe-protocol2.c:618 fe-protocol3.c:385
+#: fe-protocol2.c:633 fe-protocol3.c:402
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "risposta inattesa dal server; il primo carattere ricevuto era \"%c\"\n"
 
-#: fe-protocol2.c:747 fe-protocol2.c:922 fe-protocol3.c:600 fe-protocol3.c:782
+#: fe-protocol2.c:762 fe-protocol2.c:937 fe-protocol3.c:617 fe-protocol3.c:799
 msgid "out of memory for query result"
 msgstr "memoria esaurita per il risultato della query"
 
-#: fe-protocol2.c:1370 fe-protocol3.c:1752
+#: fe-protocol2.c:1395 fe-protocol3.c:1779
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-protocol2.c:1382
+#: fe-protocol2.c:1407
 #, c-format
 msgid "lost synchronization with server, resetting connection"
 msgstr "persa la sincronizzazione con il server, sto resettando la connessione"
 
-#: fe-protocol2.c:1516 fe-protocol2.c:1548 fe-protocol3.c:1955
+#: fe-protocol2.c:1541 fe-protocol2.c:1573 fe-protocol3.c:1982
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "errore di protocollo: id=0x%x\n"
 
-#: fe-protocol3.c:341
+#: fe-protocol3.c:358
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "il server ha spedito dati (messaggio di tipo \"D\") senza prima il descrittore di riga (messaggio di tipo \"T\")\n"
 
-#: fe-protocol3.c:406
+#: fe-protocol3.c:423
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "i contenuti del messaggio non sono in accordo con la lunghezza del tipo di messaggio \"%c\"\n"
 
-#: fe-protocol3.c:427
+#: fe-protocol3.c:444
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "persa la sincronizzazione con il server: ricevuto il tipo di messaggio \"%c\" di lunghezza %d\n"
 
-#: fe-protocol3.c:478 fe-protocol3.c:518
+#: fe-protocol3.c:495 fe-protocol3.c:535
 msgid "insufficient data in \"T\" message"
 msgstr "dati insufficienti nel messaggio di tipo \"T\""
 
-#: fe-protocol3.c:551
+#: fe-protocol3.c:568
 msgid "extraneous data in \"T\" message"
 msgstr "dati estranei nel messaggio di tipo \"T\""
 
-#: fe-protocol3.c:690 fe-protocol3.c:722 fe-protocol3.c:740
+#: fe-protocol3.c:707 fe-protocol3.c:739 fe-protocol3.c:757
 msgid "insufficient data in \"D\" message"
 msgstr "dati insufficienti nel messaggio di tipo \"D\""
 
-#: fe-protocol3.c:696
+#: fe-protocol3.c:713
 msgid "unexpected field count in \"D\" message"
 msgstr "numero dei campi non previsto nel messaggio di tipo \"D\""
 
-#: fe-protocol3.c:749
+#: fe-protocol3.c:766
 msgid "extraneous data in \"D\" message"
 msgstr "dati estranei nel messaggio di tipo \"D\""
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:878 fe-protocol3.c:897
+#: fe-protocol3.c:898 fe-protocol3.c:917
 #, c-format
 msgid " at character %s"
 msgstr " al carattere %s"
 
-#: fe-protocol3.c:910
+#: fe-protocol3.c:930
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETTAGLI: %s\n"
 
-#: fe-protocol3.c:913
+#: fe-protocol3.c:933
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "NOTA: %s\n"
 
-#: fe-protocol3.c:916
+#: fe-protocol3.c:936
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "QUERY: %s\n"
 
-#: fe-protocol3.c:919
+#: fe-protocol3.c:939
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "CONTESTO: %s\n"
 
-#: fe-protocol3.c:926
+#: fe-protocol3.c:946
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "NOME SCHEMA:  %s\n"
 
-#: fe-protocol3.c:930
+#: fe-protocol3.c:950
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "NOME TABELLA:  %s\n"
 
-#: fe-protocol3.c:934
+#: fe-protocol3.c:954
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "NOME COLONNA:  %s\n"
 
-#: fe-protocol3.c:938
+#: fe-protocol3.c:958
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "NOME TIPO DATI:  %s\n"
 
-#: fe-protocol3.c:942
+#: fe-protocol3.c:962
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "NOME VINCOLO:  %s\n"
 
-#: fe-protocol3.c:954
+#: fe-protocol3.c:974
 msgid "LOCATION:  "
 msgstr "POSIZIONE:  "
 
-#: fe-protocol3.c:956
+#: fe-protocol3.c:976
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:958
+#: fe-protocol3.c:978
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1182
+#: fe-protocol3.c:1209
 #, c-format
 msgid "LINE %d: "
 msgstr "RIGA %d: "
 
-#: fe-protocol3.c:1577
+#: fe-protocol3.c:1604
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: COPY OUT testuale ignorato\n"
 
