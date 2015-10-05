@@ -906,7 +906,6 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
-	COMPARE_NODE_FIELD(withCheckOptions);
 	COMPARE_NODE_FIELD(onConflict);
 	COMPARE_NODE_FIELD(returningList);
 	COMPARE_NODE_FIELD(groupClause);
@@ -920,6 +919,7 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_NODE_FIELD(rowMarks);
 	COMPARE_NODE_FIELD(setOperations);
 	COMPARE_NODE_FIELD(constraintDeps);
+	COMPARE_NODE_FIELD(withCheckOptions);
 
 	return true;
 }
