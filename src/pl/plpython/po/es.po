@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-26 19:10+0000\n"
+"POT-Creation-Date: 2015-09-28 22:51+0000\n"
 "PO-Revision-Date: 2013-08-28 12:55-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -74,8 +74,11 @@ msgstr "modo de retorno de conjunto de función no soportado"
 
 #: plpy_exec.c:92
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
-msgstr "Las funciones PL/Python que retornan conjuntos sólo permiten retornar un valor por invocación."
+msgid ""
+"PL/Python set-returning functions only support returning one value per call."
+msgstr ""
+"Las funciones PL/Python que retornan conjuntos sólo permiten retornar un "
+"valor por invocación."
 
 #: plpy_exec.c:104
 #, c-format
@@ -85,7 +88,9 @@ msgstr "objeto retornado no puede ser iterado"
 #: plpy_exec.c:105
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
-msgstr "Los funciones PL/Python que retornan conjuntos deben retornar un objeto iterable."
+msgstr ""
+"Los funciones PL/Python que retornan conjuntos deben retornar un objeto "
+"iterable."
 
 #: plpy_exec.c:130
 #, c-format
@@ -109,8 +114,11 @@ msgstr "Se esperaba None o una cadena."
 
 #: plpy_exec.c:305
 #, c-format
-msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "función de disparador de PL/Python retorno «MODIFY» en un disparador de tipo DELETE -- ignorado"
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"función de disparador de PL/Python retorno «MODIFY» en un disparador de tipo "
+"DELETE -- ignorado"
 
 #: plpy_exec.c:316
 #, c-format
@@ -129,8 +137,11 @@ msgstr "PyDict_SetItemString() falló, mientras se inicializaban los argumentos"
 
 #: plpy_exec.c:413
 #, c-format
-msgid "function returning record called in context that cannot accept type record"
-msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"se llamó una función que retorna un registro en un contexto que no puede "
+"aceptarlo"
 
 #: plpy_exec.c:451
 #, c-format
@@ -140,35 +151,41 @@ msgstr "mientras se creaba el valor de retorno"
 #: plpy_exec.c:475
 #, c-format
 msgid "could not create new dictionary while building trigger arguments"
-msgstr "no se pudo crear un nuevo diccionario mientras se construían los argumentos de disparador"
+msgstr ""
+"no se pudo crear un nuevo diccionario mientras se construían los argumentos "
+"de disparador"
 
-#: plpy_exec.c:665
+#: plpy_exec.c:663
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] borrado, no se puede modicar el registro"
 
-#: plpy_exec.c:668
+#: plpy_exec.c:667
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] no es un diccionario"
 
-#: plpy_exec.c:692
+#: plpy_exec.c:691
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
-msgstr "el nombre del atributo de TD[\"new\"] en la posición %d no es una cadena"
+msgstr ""
+"el nombre del atributo de TD[\"new\"] en la posición %d no es una cadena"
 
-#: plpy_exec.c:698
+#: plpy_exec.c:697
 #, c-format
-msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
-msgstr "la llave «%s» en TD[\"new\"] no existe como columna en la fila disparadora"
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"la llave «%s» en TD[\"new\"] no existe como columna en la fila disparadora"
 
-#: plpy_exec.c:779
+#: plpy_exec.c:777
 #, c-format
 msgid "while modifying trigger row"
 msgstr "mientras se modificaba la fila de disparador"
 
 # FIXME not very happy with this
-#: plpy_exec.c:840
+#: plpy_exec.c:838
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "abortando una subtransacción que no se ha cerrado"
@@ -180,13 +197,18 @@ msgstr "las versiones mayores de Python no coinciden en esta sesión"
 
 #: plpy_main.c:103
 #, c-format
-msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
-msgstr "Esta sesión ha usado previamente la versión mayor de Python %d, y ahora está intentando usar la versión mayor %d."
+msgid ""
+"This session has previously used Python major version %d, and it is now "
+"attempting to use Python major version %d."
+msgstr ""
+"Esta sesión ha usado previamente la versión mayor de Python %d, y ahora está "
+"intentando usar la versión mayor %d."
 
 #: plpy_main.c:105
 #, c-format
 msgid "Start a new session to use a different Python major version."
-msgstr "Inicie una nueva sesión para usar una versión mayor de Python diferente."
+msgstr ""
+"Inicie una nueva sesión para usar una versión mayor de Python diferente."
 
 #: plpy_main.c:120
 #, c-format
@@ -208,12 +230,12 @@ msgstr "no se pudo crear las globales"
 msgid "could not initialize globals"
 msgstr "no se pudo inicializar las globales"
 
-#: plpy_main.c:352
+#: plpy_main.c:356
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "función PL/Python «%s»"
 
-#: plpy_main.c:359
+#: plpy_main.c:363
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloque de código anónimo de PL/Python"
@@ -370,42 +392,60 @@ msgstr "no se pudo crear la representación de cadena de bytes de Python"
 #: plpy_typeio.c:753
 #, c-format
 msgid "could not create string representation of Python object"
-msgstr "no se pudo crear la representación de cadena de texto del objeto de Python"
+msgstr ""
+"no se pudo crear la representación de cadena de texto del objeto de Python"
 
 #: plpy_typeio.c:764
 #, c-format
-msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
-msgstr "no se pudo convertir el objeto Python a un cstring: la representación de cadena Python parece tener bytes nulos (\\0)"
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"no se pudo convertir el objeto Python a un cstring: la representación de "
+"cadena Python parece tener bytes nulos (\\0)"
 
 #: plpy_typeio.c:798
 #, c-format
-msgid "return value of function with array return type is not a Python sequence"
-msgstr "el valor de retorno de la función con tipo de retorno array no es una secuencia Python"
+msgid ""
+"return value of function with array return type is not a Python sequence"
+msgstr ""
+"el valor de retorno de la función con tipo de retorno array no es una "
+"secuencia Python"
 
-#: plpy_typeio.c:897
+#: plpy_typeio.c:907
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "la llave «%s» no fue encontrada en el mapa"
 
-#: plpy_typeio.c:898
+#: plpy_typeio.c:908
 #, c-format
-msgid "To return null in a column, add the value None to the mapping with the key named after the column."
-msgstr "Para retornar null en una columna, agregue el valor None al mapa, con llave llamada igual que la columna."
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"Para retornar null en una columna, agregue el valor None al mapa, con llave "
+"llamada igual que la columna."
 
-#: plpy_typeio.c:946
+#: plpy_typeio.c:956
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
-msgstr "el tamaño de la secuencia retornada no concuerda con el número de columnas de la fila"
+msgstr ""
+"el tamaño de la secuencia retornada no concuerda con el número de columnas "
+"de la fila"
 
-#: plpy_typeio.c:1054
+#: plpy_typeio.c:1064
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "el atributo «%s» no existe en el objeto Python"
 
-#: plpy_typeio.c:1055
+#: plpy_typeio.c:1065
 #, c-format
-msgid "To return null in a column, let the returned object have an attribute named after column with value None."
-msgstr "Para retornar null en una columna, haga que el objeto retornado tenga un atributo llamado igual que la columna, con valor None."
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"Para retornar null en una columna, haga que el objeto retornado tenga un "
+"atributo llamado igual que la columna, con valor None."
 
 #: plpy_util.c:72
 #, c-format

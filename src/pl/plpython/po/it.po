@@ -19,8 +19,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-07-29 09:14+0000\n"
-"PO-Revision-Date: 2014-07-30 22:35+0100\n"
+"POT-Creation-Date: 2015-01-08 04:13+0000\n"
+"PO-Revision-Date: 2015-01-09 12:39+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -84,8 +84,8 @@ msgstr "modalità di ritorno della funzione set non supportata"
 
 #: plpy_exec.c:92
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
-msgstr "le funzioni PL/Python che restituiscono insiemi supportano solo la restituzione di un solo valore per chiamata."
+msgid "PL/Python set-returning functions only support returning one value per call."
+msgstr "Le funzioni PL/Python che restituiscono insiemi supportano la restituzione di un solo valore per chiamata."
 
 #: plpy_exec.c:104
 #, c-format
@@ -95,7 +95,7 @@ msgstr "l'oggetto restituito non può essere iterato"
 #: plpy_exec.c:105
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
-msgstr "le funzioni PL/Python che restituiscono insiemi devono restituire un oggetto iterabile"
+msgstr "Le funzioni PL/Python che restituiscono insiemi devono restituire un oggetto iterabile."
 
 #: plpy_exec.c:130
 #, c-format

@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-04-24 23:53+0000\n"
-"PO-Revision-Date: 2015-04-25 16:28+0300\n"
+"PO-Revision-Date: 2015-07-27 22:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -423,17 +423,17 @@ msgstr "Установлен стиль линий: %s.\n"
 #: command.c:2327
 #, c-format
 msgid "Border style is %d.\n"
-msgstr "Установлен стиль границ: %d.\n"
+msgstr "Стиль границ: %d.\n"
 
 #: command.c:2344
 #, c-format
 msgid "Expanded display is on.\n"
-msgstr "Расширенный вывод включен.\n"
+msgstr "Расширенный вывод включён.\n"
 
 #: command.c:2346
 #, c-format
 msgid "Expanded display is used automatically.\n"
-msgstr "Автоматически включён расширенный вывод.\n"
+msgstr "Расширенный вывод применяется автоматически.\n"
 
 #: command.c:2348
 #, c-format
@@ -508,15 +508,15 @@ msgstr "Атрибуты HTML-таблицы не заданы.\n"
 
 #: command.c:2507
 msgid "Pager is used for long output."
-msgstr "Вывод длинного текста через постраничник."
+msgstr "Постраничник используется для вывода длинного текста."
 
 #: command.c:2509
 msgid "Pager is always used."
-msgstr "Вывод всего текста через постраничник."
+msgstr "Постраничник используется всегда."
 
 #: command.c:2511
 msgid "Pager usage is off."
-msgstr "Вывод без постраничника."
+msgstr "Постраничник выключен."
 
 #: command.c:2525
 msgid "Default footer is on."
@@ -1450,7 +1450,7 @@ msgstr "Неявное?"
 
 #: describe.c:3165
 msgid "List of casts"
-msgstr "Список преобразований типов"
+msgstr "Список приведений типов"
 
 #: describe.c:3190
 #, c-format

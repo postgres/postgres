@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-05-18 02:47+0000\n"
-"PO-Revision-Date: 2015-05-17 23:03-0400\n"
+"PO-Revision-Date: 2015-09-22 23:11-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -400,7 +400,7 @@ msgstr "%s: konnte Datei „%s“ nicht schreiben: %s\n"
 #: pg_resetxlog.c:1080
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: WARNUNG: auf dieser Platform können keine beschränkten Token erzeugt werden\n"
+msgstr "%s: WARNUNG: auf dieser Plattform können keine beschränkten Token erzeugt werden\n"
 
 #: pg_resetxlog.c:1089
 #, c-format

@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-01-14 00:17+0000\n"
-"PO-Revision-Date: 2015-01-14 20:59+0300\n"
+"PO-Revision-Date: 2015-07-27 15:35+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -594,7 +594,7 @@ msgstr ""
 #: pg_receivexlog.c:64
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
-msgstr "  -n, --no-loop           прерывать работу при потере соединения\n"
+msgstr "  -n, --no-loop          прерывать работу при потере соединения\n"
 
 #: pg_receivexlog.c:88
 #, c-format
