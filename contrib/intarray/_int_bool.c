@@ -564,6 +564,9 @@ typedef struct
 static void
 infix(INFIX *in, bool first)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (in->curpol->type == VAL)
 	{
 		RESIZEBUF(in, 11);
