@@ -176,7 +176,7 @@ static relopt_int intRelOpts[] =
 			"Age at which to autovacuum a table to prevent transaction ID wraparound",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 100000000, 2000000000
+		-1, 100000, 2000000000
 	},
 	{
 		{
@@ -184,7 +184,7 @@ static relopt_int intRelOpts[] =
 			"Multixact age at which to autovacuum a table to prevent multixact wraparound",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
-		-1, 100000000, 2000000000
+		-1, 10000, 2000000000
 	},
 	{
 		{
