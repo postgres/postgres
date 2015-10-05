@@ -8,6 +8,7 @@
 #include <ctype.h>
 
 #include "ltree.h"
+#include "miscadmin.h"
 
 PG_FUNCTION_INFO_V1(ltxtq_exec);
 PG_FUNCTION_INFO_V1(ltxtq_rexec);
@@ -18,6 +19,9 @@ PG_FUNCTION_INFO_V1(ltxtq_rexec);
 bool
 ltree_execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *val))
 {
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	if (curitem->type == VAL)
 		return (*chkcond) (checkval, curitem);
 	else if (curitem->val == (int32) '!')

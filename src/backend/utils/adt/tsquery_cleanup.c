@@ -33,6 +33,9 @@ maketree(QueryItem *in)
 {
 	NODE	   *node = (NODE *) palloc(sizeof(NODE));
 
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	node->valnode = in;
 	node->right = node->left = NULL;
 	if (in->type == QI_OPR)
