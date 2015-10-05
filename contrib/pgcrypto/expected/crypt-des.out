@@ -13,6 +13,10 @@ SELECT crypt('foox', 'NB');
  NB53EGGqrrb5E
 (1 row)
 
+-- We are supposed to pass in a 2-character salt.
+-- error since salt is too short:
+SELECT crypt('password', 'a');
+ERROR:  invalid salt
 CREATE TABLE ctest (data text, res text, salt text);
 INSERT INTO ctest VALUES ('password', '', '');
 UPDATE ctest SET salt = gen_salt('des');
