@@ -416,6 +416,9 @@ while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) \
 static void
 infix(INFIX *in, bool first)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (in->curpol->type == VAL)
 	{
 		char	   *op = in->op + in->curpol->distance;
