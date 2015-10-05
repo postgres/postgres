@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-05-17 16:23-0300\n"
+"POT-Creation-Date: 2015-05-18 13:44-0300\n"
 "PO-Revision-Date: 2005-10-04 22:55-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -399,7 +399,7 @@ msgstr "%s: não pôde abrir informação sobre processo: código de erro %lu\n"
 
 #: pg_resetxlog.c:1110
 #, c-format
-msgid "%s: could not to allocate SIDs: error code %lu\n"
+msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: não pôde alocar SIDs: código de erro %lu\n"
 
 #: pg_resetxlog.c:1129

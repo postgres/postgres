@@ -26,7 +26,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-01-14 00:22+0000\n"
-"PO-Revision-Date: 2015-01-14 21:46+0300\n"
+"PO-Revision-Date: 2015-07-27 22:16+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -452,22 +452,23 @@ msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя созд
 #: initdb.c:2459
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: не удалось открыть маркер процесса: код ошибки %lu\n"
+msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
 
 #: initdb.c:2472
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: не удалось подготовить структуры SID: код ошибки: %lu\n"
+msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
 
 #: initdb.c:2492
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: не удалось создать ограниченный маркер: код ошибки: %lu\n"
+msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
 
 #: initdb.c:2513
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: не удалось запустить процесс для команды \"%s\": код ошибки: %lu\n"
+msgstr ""
+"%s: не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)\n"
 
 #: initdb.c:2527
 #, c-format
@@ -666,7 +667,7 @@ msgid ""
 "--auth-local and --auth-host, the next time you run initdb.\n"
 msgstr ""
 "\n"
-"ВНИМАНИЕ: используется проверка подлинности \"trust\" для локальных "
+"ПРЕДУПРЕЖДЕНИЕ: используется проверка подлинности \"trust\" для локальных "
 "подключений.\n"
 "Другой метод можно выбрать, отредактировав pg_hba.conf или используя ключи -"
 "A,\n"
@@ -729,12 +730,12 @@ msgstr ""
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
 msgstr ""
-"%s: не удалось перезапуститься с ограниченным маркером: код ошибки: %lu\n"
+"%s: не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)\n"
 
 #: initdb.c:2888
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s: не удалось получить код выхода от подпроцесса: код ошибки %lu\n"
+msgstr "%s: не удалось получить код выхода от подпроцесса (код ошибки: %lu)\n"
 
 #: initdb.c:2916
 #, c-format
@@ -953,4 +954,3 @@ msgstr ""
 "или\n"
 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
 "\n"
-
