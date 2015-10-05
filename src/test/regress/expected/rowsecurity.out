@@ -3158,6 +3158,75 @@ TABLE r2;
 DROP TABLE r2;
 DROP TABLE r1;
 --
+-- Test INSERT+RETURNING applies SELECT policies as
+-- WithCheckOptions (meaning an error is thrown)
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+CREATE POLICY p1 ON r1 FOR SELECT USING (false);
+CREATE POLICY p2 ON r1 FOR INSERT WITH CHECK (true);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+-- Works fine
+INSERT INTO r1 VALUES (10), (20);
+-- No error, but no rows
+TABLE r1;
+ a 
+---
+(0 rows)
+
+SET row_security = off;
+-- Rows shown now
+TABLE r1;
+ a  
+----
+ 10
+ 20
+(2 rows)
+
+SET row_security = on;
+-- Error
+INSERT INTO r1 VALUES (10), (20) RETURNING *;
+ERROR:  new row violates row level security policy for "r1"
+DROP TABLE r1;
+--
+-- Test UPDATE+RETURNING applies SELECT policies as
+-- WithCheckOptions (meaning an error is thrown)
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+CREATE POLICY p1 ON r1 FOR SELECT USING (a < 20);
+CREATE POLICY p2 ON r1 FOR UPDATE USING (a < 20) WITH CHECK (true);
+INSERT INTO r1 VALUES (10);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+-- Works fine
+UPDATE r1 SET a = 30;
+-- Show updated rows
+SET row_security = off;
+TABLE r1;
+ a  
+----
+ 30
+(1 row)
+
+-- reset value in r1 for test with RETURNING
+UPDATE r1 SET a = 10;
+-- Verify row reset
+TABLE r1;
+ a  
+----
+ 10
+(1 row)
+
+SET row_security = on;
+-- Error
+UPDATE r1 SET a = 30 RETURNING *;
+ERROR:  new row violates row level security policy for "r1"
+DROP TABLE r1;
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
