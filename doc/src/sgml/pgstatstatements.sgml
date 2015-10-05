@@ -270,7 +270,7 @@
   </para>
 
   <para>
-   Consumers of <literal>pg_stat_statements</> may wish to use
+   Consumers of <structname>pg_stat_statements</> may wish to use
    <structfield>queryid</> (perhaps in combination with
    <structfield>dbid</> and <structfield>userid</>) as a more stable
    and reliable identifier for each entry than its query text.
@@ -280,7 +280,7 @@
    post-parse-analysis tree, its value is a function of, among other
    things, the internal object identifiers appearing in this representation.
    This has some counterintuitive implications.  For example,
-   <literal>pg_stat_statements</> will consider two apparently-identical
+   <filename>pg_stat_statements</> will consider two apparently-identical
    queries to be distinct, if they reference a table that was dropped
    and recreated between the executions of the two queries.
    The hashing process is also sensitive to differences in
@@ -299,6 +299,20 @@
    identical in all relevant details, so <structfield>queryid</> will
    not be a useful identifier for accumulating costs across a set of logical
    replicas.  If in doubt, direct testing is recommended.
+  </para>
+
+  <para>
+   The representative query texts are kept in an external disk file, and do
+   not consume shared memory.  Therefore, even very lengthy query texts can
+   be stored successfully.  However, if many long query texts are
+   accumulated, the external file might grow unmanageably large.  As a
+   recovery method if that happens, <filename>pg_stat_statements</> may
+   choose to discard the query texts, whereupon all existing entries in
+   the <structname>pg_stat_statements</> view will show
+   null <structfield>query</> fields, though the statistics associated with
+   each <structfield>queryid</> are preserved.  If this happens, consider
+   reducing <varname>pg_stat_statements.max</varname> to prevent
+   recurrences.
   </para>
  </sect2>
 
