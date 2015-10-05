@@ -42,7 +42,7 @@ run_crypt_des(const char *psw, const char *salt,
 	char	   *res;
 
 	res = px_crypt_des(psw, salt);
-	if (strlen(res) > len - 1)
+	if (res == NULL || strlen(res) > len - 1)
 		return NULL;
 	strcpy(buf, res);
 	return buf;

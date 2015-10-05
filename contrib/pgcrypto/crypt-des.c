@@ -682,9 +682,19 @@ px_crypt_des(const char *key, const char *setting)
 	if (*setting == _PASSWORD_EFMT1)
 	{
 		/*
-		 * "new"-style: setting - underscore, 4 bytes of count, 4 bytes of
-		 * salt key - unlimited characters
+		 * "new"-style: setting must be a 9-character (underscore, then 4
+		 * bytes of count, then 4 bytes of salt) string. See CRYPT(3) under
+		 * the "Extended crypt" heading for further details.
+		 *
+		 * Unlimited characters of the input key are used. This is known as
+		 * the "Extended crypt" DES method.
+		 *
 		 */
+		if (strlen(setting) < 9)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid salt")));
+
 		for (i = 1, count = 0L; i < 5; i++)
 			count |= ascii_to_bin(setting[i]) << (i - 1) * 6;
 
@@ -724,9 +734,15 @@ px_crypt_des(const char *key, const char *setting)
 #endif   /* !DISABLE_XDES */
 	{
 		/*
-		 * "old"-style: setting - 2 bytes of salt key - up to 8 characters
+		 * "old"-style: setting - 2 bytes of salt key - only up to the first 8
+		 * characters of the input key are used.
 		 */
 		count = 25;
+
+		if (strlen(setting) < 2)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid salt")));
 
 		salt = (ascii_to_bin(setting[1]) << 6)
 			| ascii_to_bin(setting[0]);

@@ -13,6 +13,15 @@ SELECT crypt('foox', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');
  $2a$06$RQiOJ.3ELirrXwxIZY8q0OR3CVJrAfda1z26CCHPnB6mmVZD8p0/C
 (1 row)
 
+-- error, salt too short:
+SELECT crypt('foox', '$2a$');
+ERROR:  invalid salt
+-- error, first digit of count in salt invalid
+SELECT crypt('foox', '$2a$40$RQiOJ.3ELirrXwxIZY8q0O');
+ERROR:  invalid salt
+-- error, count in salt too small
+SELECT crypt('foox', '$2a$00$RQiOJ.3ELirrXwxIZY8q0O');
+ERROR:  invalid salt
 CREATE TABLE ctest (data text, res text, salt text);
 INSERT INTO ctest VALUES ('password', '', '');
 UPDATE ctest SET salt = gen_salt('bf', 8);
