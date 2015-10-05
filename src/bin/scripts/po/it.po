@@ -27,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-06 18:12+0000\n"
-"PO-Revision-Date: 2014-12-06 18:31+0100\n"
+"POT-Creation-Date: 2015-07-06 12:20+0000\n"
+"PO-Revision-Date: 2015-07-07 03:07+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -58,10 +58,10 @@ msgstr "ID utente effettivo %ld non trovato: %s"
 msgid "user does not exist"
 msgstr "l'utente non esiste"
 
-#: ../../common/username.c:61
+#: ../../common/username.c:62
 #, c-format
-msgid "user name lookup failure: %s"
-msgstr "errore nella ricerca del nome: %s"
+msgid "user name lookup failure: error code %lu"
+msgstr "ricerca del nome utente fallita: codice di errore %lu"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:168

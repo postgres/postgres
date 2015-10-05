@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-15 05:38+0000\n"
+"POT-Creation-Date: 2015-09-04 17:45+0000\n"
 "PO-Revision-Date: 2014-12-15 15:22-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -31,27 +31,27 @@ msgstr "la variable «%s» debe tener tipo numérico"
 msgid "descriptor \"%s\" does not exist"
 msgstr "no existe el descriptor «%s»"
 
-#: descriptor.c:161 descriptor.c:210
+#: descriptor.c:161 descriptor.c:212
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "no existe el descriptor del elemento de cabecera «%d»"
 
-#: descriptor.c:182
+#: descriptor.c:183
 #, c-format
 msgid "nullable is always 1"
 msgstr "nullable es siempre 1"
 
-#: descriptor.c:185
+#: descriptor.c:186
 #, c-format
 msgid "key_member is always 0"
 msgstr "key_member es siempre 0"
 
-#: descriptor.c:277
+#: descriptor.c:279
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
 msgstr "elemento del descriptor «%s» no está implementado"
 
-#: descriptor.c:287
+#: descriptor.c:289
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
 msgstr "no se puede establecer el elemento del descriptor «%s»"
@@ -254,77 +254,77 @@ msgstr "una cadena hexadecimal está inconclusa"
 msgid "unterminated quoted string"
 msgstr "una cadena en comillas está inconclusa"
 
-#: pgc.l:592 pgc.l:605
+#: pgc.l:594 pgc.l:607
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "identificador delimitado de longitud cero"
 
-#: pgc.l:613
+#: pgc.l:615
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "un identificador en comillas está inconcluso"
 
-#: pgc.l:867
+#: pgc.l:869
 #, c-format
 msgid "nested /* ... */ comments"
 msgstr "comentarios /* ... */ anidados"
 
-#: pgc.l:960
+#: pgc.l:962
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "falta un identificador en la orden EXEC SQL UNDEF"
 
-#: pgc.l:1006 pgc.l:1020
+#: pgc.l:1008 pgc.l:1022
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "falta el «EXEC SQL IFDEF» / «EXEC SQL IFNDEF»"
 
-#: pgc.l:1009 pgc.l:1022 pgc.l:1198
+#: pgc.l:1011 pgc.l:1024 pgc.l:1200
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "falta el «EXEC SQL ENDIF;»"
 
-#: pgc.l:1038 pgc.l:1057
+#: pgc.l:1040 pgc.l:1059
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "hay más de un EXEC SQL ELSE"
 
-#: pgc.l:1079 pgc.l:1093
+#: pgc.l:1081 pgc.l:1095
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "EXEC SQL ENDIF sin coincidencia"
 
-#: pgc.l:1113
+#: pgc.l:1115
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "demasiadas condiciones EXEC SQL IFDEF anidadas"
 
-#: pgc.l:1146
+#: pgc.l:1148
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "identificador faltante en la orden EXEC SQL IFDEF"
 
-#: pgc.l:1155
+#: pgc.l:1157
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "identificador faltante en la orden EXEC SQL DEFINE"
 
-#: pgc.l:1188
+#: pgc.l:1190
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "error de sintaxis en orden EXEC SQL INCLUDE"
 
-#: pgc.l:1237
+#: pgc.l:1239
 #, c-format
 msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
 msgstr "Error Interno: estado no esperado; por favor reporte a <pgsql-bugs@postgresql.org>"
 
-#: pgc.l:1362
+#: pgc.l:1363
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr "Error: ruta de inclusión «%s/%s» es demasiada larga en la línea %d, omitiendo\n"
 
-#: pgc.l:1385
+#: pgc.l:1386
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "no se pudo abrir el archivo a incluir «%s» en la línea %d"
@@ -363,7 +363,7 @@ msgstr "el nombre de tipo «string» está reservado en modo Informix"
 msgid "type \"%s\" is already defined"
 msgstr "el tipo «%s» ya está definido"
 
-#: preproc.y:568 preproc.y:14525 preproc.y:14846 variable.c:618
+#: preproc.y:568 preproc.y:14525 preproc.y:14846 variable.c:620
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "los arrays multidimensionales para tipos de datos simples no están soportados"
@@ -626,34 +626,34 @@ msgstr "la variable «%s» no es un array"
 msgid "variable \"%s\" is not declared"
 msgstr "la variable «%s» no está declarada"
 
-#: variable.c:492
+#: variable.c:494
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "la variable de un indicador debe ser de algún tipo numérico entero"
 
-#: variable.c:504
+#: variable.c:506
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "nombre de tipo de datos «%s» no reconocido"
 
-#: variable.c:515 variable.c:523 variable.c:540 variable.c:543
+#: variable.c:517 variable.c:525 variable.c:542 variable.c:545
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "los arrays multidimensionales no están soportados"
 
-#: variable.c:532
+#: variable.c:534
 #, c-format
 msgid "multilevel pointers (more than 2 levels) are not supported; found %d level"
 msgid_plural "multilevel pointers (more than 2 levels) are not supported; found %d levels"
 msgstr[0] "no se soportan los punteros multinivel (más de 2); se encontró 1 nivel"
 msgstr[1] "no se soportan los punteros multinivel (más de 2); se encontraron %d niveles"
 
-#: variable.c:537
+#: variable.c:539
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "los punteros a puntero no están soportados para este tipo de dato"
 
-#: variable.c:557
+#: variable.c:559
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "los arrays multidimensionales para estructuras no están soportados"

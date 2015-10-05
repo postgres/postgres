@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-05-16 08:47-0300\n"
+"POT-Creation-Date: 2015-09-15 17:36-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -158,7 +158,7 @@ msgstr "Você está conectado ao banco de dados \"%s\" como usuário \"%s\" na m
 msgid "no query buffer\n"
 msgstr "nenhum buffer de consulta\n"
 
-#: command.c:571 command.c:3035
+#: command.c:571 command.c:3037
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "número de linha inválido: %s\n"
@@ -242,9 +242,9 @@ msgstr "Tempo de execução está habilitado."
 msgid "Timing is off."
 msgstr "Tempo de execução está desabilitado."
 
-#: command.c:1431 command.c:1451 command.c:2072 command.c:2075 command.c:2078
-#: command.c:2084 command.c:2086 command.c:2094 command.c:2104 command.c:2113
-#: command.c:2127 command.c:2144 command.c:2203 common.c:74 copy.c:333
+#: command.c:1431 command.c:1451 command.c:2074 command.c:2077 command.c:2080
+#: command.c:2086 command.c:2088 command.c:2096 command.c:2106 command.c:2115
+#: command.c:2129 command.c:2146 command.c:2205 common.c:74 copy.c:333
 #: copy.c:393 copy.c:408 psqlscan.l:1676 psqlscan.l:1687 psqlscan.l:1697
 #, c-format
 msgid "%s: %s\n"
@@ -269,44 +269,44 @@ msgstr "Senha para usuário %s: "
 msgid "All connection parameters must be supplied because no database connection exists\n"
 msgstr "Todos os parâmetros de conexão devem ser fornecidos porque nenhuma conexão de banco de dados existe\n"
 
-#: command.c:1725 command.c:3069 common.c:120 common.c:413 common.c:478
+#: command.c:1726 command.c:3071 common.c:120 common.c:413 common.c:478
 #: common.c:929 common.c:954 common.c:1051 copy.c:492 copy.c:695
 #: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1948
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1729
+#: command.c:1730
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "Conexão anterior mantida\n"
 
-#: command.c:1733
+#: command.c:1734
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1766
+#: command.c:1768
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Você está conectado agora ao banco de dados \"%s\" como usuário \"%s\" via soquete em \"%s\" na porta \"%s\".\n"
 
-#: command.c:1769
+#: command.c:1771
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Você está conectado agora ao banco de dados \"%s\" como usuário \"%s\" na máquina \"%s\" na porta \"%s\".\n"
 
-#: command.c:1773
+#: command.c:1775
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Você está conectado agora ao banco de dados \"%s\" como usuário \"%s\".\n"
 
-#: command.c:1807
+#: command.c:1809
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, servidor %s)\n"
 
-#: command.c:1815
+#: command.c:1817
 #, c-format
 msgid ""
 "WARNING: %s major version %d.%d, server major version %d.%d.\n"
@@ -315,25 +315,25 @@ msgstr ""
 "AVISO: %s versão %d.%d, servidor versão %d.%d.\n"
 "         Algumas funcionalidades do psql podem não funcionar.\n"
 
-#: command.c:1845
+#: command.c:1847
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %d, compression: %s)\n"
 msgstr "conexão SSL (protocolo: %s, cifra: %s, bits: %d, compressão: %s)\n"
 
-#: command.c:1847 help.c:46
+#: command.c:1849 help.c:46
 msgid "off"
 msgstr "desabilitado"
 
-#: command.c:1847 help.c:46
+#: command.c:1849 help.c:46
 msgid "on"
 msgstr "habilitado"
 
-#: command.c:1856
+#: command.c:1858
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "conexão SSL (cifra desconhecida)\n"
 
-#: command.c:1877
+#: command.c:1879
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -344,202 +344,202 @@ msgstr ""
 "         caracteres de 8 bits podem não funcionar corretamente. Veja página de\n"
 "         referência do psql \"Notes for Windows users\" para obter detalhes.\n"
 
-#: command.c:1961
+#: command.c:1963
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
 msgstr "variável de ambiente PSQL_EDITOR_LINENUMBER_ARG deve ser definida para especificar um número de linha\n"
 
-#: command.c:1990
+#: command.c:1992
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "não pôde iniciar o editor \"%s\"\n"
 
-#: command.c:1992
+#: command.c:1994
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "não pôde iniciar /bin/sh\n"
 
-#: command.c:2030
+#: command.c:2032
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "não pôde localizar diretório temporário: %s\n"
 
-#: command.c:2057
+#: command.c:2059
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo temporário \"%s\": %s\n"
 
-#: command.c:2325
+#: command.c:2327
 #, c-format
-msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
-msgstr "\\pset: formatos permitidos são unaligned, aligned, wrapped, html, latex, troff-ms\n"
+msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, latex-longtable, troff-ms\n"
+msgstr "\\pset: formatos permitidos são unaligned, aligned, wrapped, html, latex, latex-longtable, troff-ms\n"
 
-#: command.c:2344
+#: command.c:2346
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: estilos de linha permitidos são ascii, old-ascii, unicode\n"
 
-#: command.c:2490 command.c:2641
+#: command.c:2492 command.c:2643
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opção desconhecida: %s\n"
 
-#: command.c:2508
+#: command.c:2510
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Estilo de borda é %d.\n"
 
-#: command.c:2514
+#: command.c:2516
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "Largura não está definida.\n"
 
-#: command.c:2516
+#: command.c:2518
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "Largura é %d.\n"
 
-#: command.c:2523
+#: command.c:2525
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Exibição expandida está habilitada.\n"
 
-#: command.c:2525
+#: command.c:2527
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "Exibição expandida é utilizada automaticamente.\n"
 
-#: command.c:2527
+#: command.c:2529
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Exibição expandida está desabilitada.\n"
 
-#: command.c:2534 command.c:2542
+#: command.c:2536 command.c:2544
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Separador de campos é byte zero.\n"
 
-#: command.c:2536
+#: command.c:2538
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Separador de campos é \"%s\".\n"
 
-#: command.c:2549
+#: command.c:2551
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "Rodapé padrão está habilitado.\n"
 
-#: command.c:2551
+#: command.c:2553
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "Rodapé padrão está desabilitado.\n"
 
-#: command.c:2557
+#: command.c:2559
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Formato de saída é %s.\n"
 
-#: command.c:2563
+#: command.c:2565
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Estilo de linha é %s.\n"
 
-#: command.c:2570
+#: command.c:2572
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Exibição nula é \"%s\".\n"
 
-#: command.c:2578
+#: command.c:2580
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "Formato numérico baseado no idioma está habilitado.\n"
 
-#: command.c:2580
+#: command.c:2582
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "Formato numérico baseado no idioma está desabilitado.\n"
 
-#: command.c:2587
+#: command.c:2589
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "Paginação é usada para saída longa.\n"
 
-#: command.c:2589
+#: command.c:2591
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "Paginação é sempre utilizada.\n"
 
-#: command.c:2591
+#: command.c:2593
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "Uso de paginação está desabilitado.\n"
 
-#: command.c:2598 command.c:2608
+#: command.c:2600 command.c:2610
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Separador de registros é byte zero.\n"
 
-#: command.c:2600
+#: command.c:2602
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "Separador de registros é <novalinha>.\n"
 
-#: command.c:2602
+#: command.c:2604
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Separador de registros é \"%s\".\n"
 
-#: command.c:2615
+#: command.c:2617
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Atributos de tabela são \"%s\".\n"
 
-#: command.c:2618
+#: command.c:2620
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atributos de tabela não estão definidos.\n"
 
-#: command.c:2625
+#: command.c:2627
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Título é \"%s\".\n"
 
-#: command.c:2627
+#: command.c:2629
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Título não está definido.\n"
 
-#: command.c:2634
+#: command.c:2636
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "Somente tuplas está habilitado.\n"
 
-#: command.c:2636
+#: command.c:2638
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "Somente tuplas está desabilitado.\n"
 
-#: command.c:2787
+#: command.c:2789
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: falhou\n"
 
-#: command.c:2807 command.c:2865
+#: command.c:2809 command.c:2867
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch não pode ser utilizado com uma consulta vazia\n"
 
-#: command.c:2828
+#: command.c:2830
 #, c-format
 msgid "Watch every %lds\t%s"
 msgstr "Observar a cada %lds\t%s"
 
-#: command.c:2872
+#: command.c:2874
 #, c-format
 msgid "\\watch cannot be used with COPY\n"
 msgstr "\\watch não pode ser utilizado com COPY\n"
 
-#: command.c:2878
+#: command.c:2880
 #, c-format
 msgid "unexpected result status for \\watch\n"
 msgstr "status de resultado inesperado para \\watch\n"

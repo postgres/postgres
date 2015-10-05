@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-01-13 05:12+0000\n"
-"PO-Revision-Date: 2015-01-13 08:37+0300\n"
+"PO-Revision-Date: 2015-07-13 20:44+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -60,7 +60,7 @@ msgstr "пользователь не существует"
 #: ../../common/username.c:62
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "распознать имя пользователя не удалось: код ошибки %lu"
+msgstr "распознать имя пользователя не удалось (код ошибки: %lu)"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:168

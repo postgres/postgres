@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-04-24 23:48+0000\n"
-"PO-Revision-Date: 2015-04-25 15:40+0300\n"
+"PO-Revision-Date: 2015-07-27 22:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -97,7 +97,7 @@ msgstr "пользователь не существует"
 #: ../../common/username.c:62
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "распознать имя пользователя не удалось: код ошибки %lu"
+msgstr "распознать имя пользователя не удалось (код ошибки: %lu)"
 
 #: ../../common/wait_error.c:47
 #, c-format
@@ -1512,7 +1512,7 @@ msgstr "Неявное?"
 
 #: describe.c:3261
 msgid "List of casts"
-msgstr "Список преобразований типов"
+msgstr "Список приведений типов"
 
 #: describe.c:3287
 #, c-format

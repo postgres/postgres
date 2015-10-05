@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-15 05:37+0000\n"
-"PO-Revision-Date: 2014-12-15 16:56-0300\n"
+"POT-Creation-Date: 2015-09-25 17:45+0000\n"
+"PO-Revision-Date: 2015-09-26 00:06-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -75,7 +75,7 @@ msgstr "modo de retorno de conjunto de función no soportado"
 
 #: plpy_exec.c:92
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
+msgid "PL/Python set-returning functions only support returning one value per call."
 msgstr "Las funciones PL/Python que retornan conjuntos sólo permiten retornar un valor por invocación."
 
 #: plpy_exec.c:104
@@ -398,27 +398,27 @@ msgstr "no se pudo convertir el objeto Python a un cstring: la representación d
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "el valor de retorno de la función con tipo de retorno array no es una secuencia Python"
 
-#: plpy_typeio.c:930
+#: plpy_typeio.c:940
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "la llave «%s» no fue encontrada en el mapa"
 
-#: plpy_typeio.c:931
+#: plpy_typeio.c:941
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Para retornar null en una columna, agregue el valor None al mapa, con llave llamada igual que la columna."
 
-#: plpy_typeio.c:979
+#: plpy_typeio.c:989
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "el tamaño de la secuencia retornada no concuerda con el número de columnas de la fila"
 
-#: plpy_typeio.c:1087
+#: plpy_typeio.c:1097
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "el atributo «%s» no existe en el objeto Python"
 
-#: plpy_typeio.c:1088
+#: plpy_typeio.c:1098
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Para retornar null en una columna, haga que el objeto retornado tenga un atributo llamado igual que la columna, con valor None."

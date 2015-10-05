@@ -29,7 +29,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-09-02 11:42+0000\n"
-"PO-Revision-Date: 2014-09-03 22:42+0400\n"
+"PO-Revision-Date: 2015-07-27 22:28+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -316,7 +316,7 @@ msgid ""
 "Shutdown will not complete until pg_stop_backup() is called.\n"
 "\n"
 msgstr ""
-"ВНИМАНИЕ: активен режим копирования \"на ходу\"\n"
+"ПРЕДУПРЕЖДЕНИЕ: активен режим копирования \"на ходу\"\n"
 "Выключение произойдёт только при вызове pg_stop_backup().\n"
 "\n"
 
@@ -453,7 +453,7 @@ msgstr "%s: служба \"%s\" уже зарегистрирована\n"
 #: pg_ctl.c:1454
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
-msgstr "%s: не удалось зарегистрировать службу \"%s\": код ошибки %lu\n"
+msgstr "%s: не удалось зарегистрировать службу \"%s\" (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1475
 #, c-format
@@ -463,12 +463,12 @@ msgstr "%s: служба \"%s\" не зарегистрирована\n"
 #: pg_ctl.c:1482
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
-msgstr "%s: не удалось открыть службу \"%s\": код ошибки %lu\n"
+msgstr "%s: не удалось открыть службу \"%s\" (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1489
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
-msgstr "%s: ошибка при удалении службы \"%s\": код ошибки %lu\n"
+msgstr "%s: ошибка при удалении службы \"%s\" (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1574
 msgid "Waiting for server startup...\n"
@@ -485,7 +485,7 @@ msgstr "Сервер запущен и принимает подключения
 #: pg_ctl.c:1625
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
-msgstr "%s: не удалось запустить службу \"%s\": код ошибки %lu\n"
+msgstr "%s: не удалось запустить службу \"%s\" (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1697
 #, c-format
@@ -495,17 +495,17 @@ msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя созд
 #: pg_ctl.c:1706
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: не удалось открыть маркер процесса: код ошибки %lu\n"
+msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1719
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: не удалось подготовить структуры SID: код ошибки: %lu\n"
+msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1738
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: не удалось создать ограниченный маркер: код ошибки: %lu\n"
+msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
 
 #: pg_ctl.c:1771
 #, c-format

@@ -30,7 +30,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-04-24 23:48+0000\n"
-"PO-Revision-Date: 2015-04-25 16:27+0300\n"
+"PO-Revision-Date: 2015-07-18 12:41+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -336,7 +336,7 @@ msgstr "Максимальный размер порции TOAST:     %u\n"
 #: pg_resetxlog.c:635
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
-msgstr "Размер порции большого объекта:    %u\n"
+msgstr "Размер порции большого объекта:       %u\n"
 
 #: pg_resetxlog.c:637
 #, c-format
@@ -499,33 +499,34 @@ msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя созд
 #: pg_resetxlog.c:1133
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: не удалось открыть маркер процесса: код ошибки: %lu\n"
+msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1146
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: не удалось подготовить структуры SID: код ошибки: %lu\n"
+msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1165
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: не удалось создать ограниченный маркер: код ошибки: %lu\n"
+msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1186
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: не удалось запустить процесс для команды \"%s\": код ошибки: %lu\n"
+msgstr ""
+"%s: не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1218
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
 msgstr ""
-"%s: не удалось перезапуститься с ограниченным маркером: код ошибки: %lu\n"
+"%s: не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1233
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s: не удалось получить код выхода от подпроцесса: код ошибки: %lu\n"
+msgstr "%s: не удалось получить код выхода от подпроцесса (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1245
 #, c-format
