@@ -55,6 +55,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	HeapTuple	tuple;
 	Form_pg_class classform;
 	bool		relrowsecurity;
+	bool		relforcerowsecurity;
 	Oid			user_id = checkAsUser ? checkAsUser : GetUserId();
 
 	/* Nothing to do for built-in relations */
@@ -68,6 +69,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	relrowsecurity = classform->relrowsecurity;
+	relforcerowsecurity = classform->relforcerowsecurity;
 
 	ReleaseSysCache(tuple);
 
@@ -76,13 +78,45 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 		return RLS_NONE;
 
 	/*
-	 * Table owners and BYPASSRLS users bypass RLS.  Note that a superuser
-	 * qualifies as both.  Return RLS_NONE_ENV to indicate that this decision
-	 * depends on the environment (in this case, the user_id).
+	 * BYPASSRLS users always bypass RLS.  Note that superusers are always
+	 * considered to have BYPASSRLS.
+	 *
+	 * Return RLS_NONE_ENV to indicate that this decision depends on the
+	 * environment (in this case, the user_id).
 	 */
-	if (pg_class_ownercheck(relid, user_id) ||
-		has_bypassrls_privilege(user_id))
+	if (has_bypassrls_privilege(user_id))
 		return RLS_NONE_ENV;
+
+	/*
+	 * Table owners generally bypass RLS, except if row_security=true and the
+	 * table has been set (by an owner) to FORCE ROW SECURITY, and this is not
+	 * a referential integrity check.
+	 *
+	 * Return RLS_NONE_ENV to indicate that this decision depends on the
+	 * environment (in this case, the user_id).
+	 */
+	if (pg_class_ownercheck(relid, user_id))
+	{
+		/*
+		 * If row_security=true and FORCE ROW LEVEL SECURITY has been set on
+		 * the relation then we return RLS_ENABLED to indicate that RLS should
+		 * still be applied.  If we are in a SECURITY_NOFORCE_RLS context or if
+		 * row_security=false then we return RLS_NONE_ENV.
+		 *
+		 * The SECURITY_NOFORCE_RLS indicates that we should not apply RLS even
+		 * if the table has FORCE RLS set- IF the current user is the owner.
+		 * This is specifically to ensure that referential integrity checks are
+		 * able to still run correctly.
+		 *
+		 * This is intentionally only done after we have checked that the user
+		 * is the table owner, which should always be the case for referential
+		 * integrity checks.
+		 */
+		if (row_security && relforcerowsecurity && !InNoForceRLSOperation())
+			return RLS_ENABLED;
+		else
+			return RLS_NONE_ENV;
+	}
 
 	/* row_security GUC says to bypass RLS, but user lacks permission */
 	if (!row_security && !noError)

@@ -275,6 +275,12 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_DisableRowSecurity:
 				strtype = "DISABLE ROW SECURITY";
 				break;
+			case AT_ForceRowSecurity:
+				strtype = "FORCE ROW SECURITY";
+				break;
+			case AT_NoForceRowSecurity:
+				strtype = "NO FORCE ROW SECURITY";
+				break;
 			case AT_GenericOptions:
 				strtype = "SET OPTIONS";
 				break;

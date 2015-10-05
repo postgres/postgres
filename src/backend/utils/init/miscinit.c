@@ -341,7 +341,7 @@ GetAuthenticatedUserId(void)
  * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
  * and the SecurityRestrictionContext flags.
  *
- * Currently there are two valid bits in SecurityRestrictionContext:
+ * Currently there are three valid bits in SecurityRestrictionContext:
  *
  * SECURITY_LOCAL_USERID_CHANGE indicates that we are inside an operation
  * that is temporarily changing CurrentUserId via these functions.  This is
@@ -358,6 +358,13 @@ GetAuthenticatedUserId(void)
  * these restrictions are fairly draconian, we apply them only in contexts
  * where the called functions are really supposed to be side-effect-free
  * anyway, such as VACUUM/ANALYZE/REINDEX.
+ *
+ * SECURITY_NOFORCE_RLS indicates that we are inside an operation which should
+ * ignore the FORCE ROW LEVEL SECURITY per-table indication.  This is used to
+ * ensure that FORCE RLS does not mistakenly break referential integrity
+ * checks.  Note that this is intentionally only checked when running as the
+ * owner of the table (which should always be the case for referential
+ * integrity checks).
  *
  * Unlike GetUserId, GetUserIdAndSecContext does *not* Assert that the current
  * value of CurrentUserId is valid; nor does SetUserIdAndSecContext require
@@ -399,6 +406,15 @@ bool
 InSecurityRestrictedOperation(void)
 {
 	return (SecurityRestrictionContext & SECURITY_RESTRICTED_OPERATION) != 0;
+}
+
+/*
+ * InNoForceRLSOperation - are we ignoring FORCE ROW LEVEL SECURITY ?
+ */
+bool
+InNoForceRLSOperation(void)
+{
+	return (SecurityRestrictionContext & SECURITY_NOFORCE_RLS) != 0;
 }
 
 
