@@ -13,6 +13,30 @@ SELECT crypt('foox', '_J9..j2zz');
  _J9..j2zzAYKMvO2BYRY
 (1 row)
 
+-- check XDES handling of keys longer than 8 chars
+SELECT crypt('longlongpassword', '_J9..j2zz');
+        crypt         
+----------------------
+ _J9..j2zz4BeseiQNwUg
+(1 row)
+
+-- error, salt too short
+SELECT crypt('foox', '_J9..BWH');
+ERROR:  invalid salt
+-- error, count specified in the second argument is 0
+SELECT crypt('password', '_........');
+ERROR:  crypt(3) returned NULL
+-- error, count will wind up still being 0 due to invalid encoding
+-- of the count: only chars ``./0-9A-Za-z' are valid
+SELECT crypt('password', '_..!!!!!!');
+ERROR:  crypt(3) returned NULL
+-- count should be non-zero here, will work
+SELECT crypt('password', '_/!!!!!!!');
+        crypt         
+----------------------
+ _/!!!!!!!zqM49hRzxko
+(1 row)
+
 CREATE TABLE ctest (data text, res text, salt text);
 INSERT INTO ctest VALUES ('password', '', '');
 UPDATE ctest SET salt = gen_salt('xdes', 1001);
