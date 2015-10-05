@@ -34,6 +34,53 @@
    <itemizedlist>
 
 <!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [08fa47c48] 2015-10-05 10:06:29 -0400
+Branch: REL9_5_STABLE [98f30d2e5] 2015-10-05 10:06:33 -0400
+Branch: REL9_4_STABLE [16d58b5b5] 2015-10-05 10:06:34 -0400
+Branch: REL9_3_STABLE [f8862172e] 2015-10-05 10:06:34 -0400
+-->
+
+    <listitem>
+     <para>
+      Guard against stack overflows in <type>json</> parsing
+      (Oskari Saarenmaa)
+     </para>
+
+     <para>
+      If an application constructs PostgreSQL <type>json</>
+      or <type>jsonb</> values from arbitrary user input, the application's
+      users can reliably crash the PostgreSQL server, causing momentary
+      denial of service.  (CVE-2015-5289)
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [1d812c8b0] 2015-10-05 10:06:29 -0400
+Branch: REL9_5_STABLE [4d6752277] 2015-10-05 10:06:33 -0400
+Branch: REL9_4_STABLE [4d95419e8] 2015-10-05 10:06:34 -0400
+Branch: REL9_3_STABLE [cc1210f0a] 2015-10-05 10:06:34 -0400
+Branch: REL9_2_STABLE [56232f987] 2015-10-05 10:06:35 -0400
+Branch: REL9_1_STABLE [48f6310bc] 2015-10-05 10:06:35 -0400
+Branch: REL9_0_STABLE [188e081ef] 2015-10-05 10:06:36 -0400
+-->
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/pgcrypto</> to detect and report
+      too-short <function>crypt()</> salts (Josh Kupershmidt)
+     </para>
+
+     <para>
+      Certain invalid salt arguments crashed the server or disclosed a few
+      bytes of server memory.  We have not ruled out the viability of
+      attacks that arrange for presence of confidential information in the
+      disclosed bytes, but they seem unlikely.  (CVE-2015-5288)
+     </para>
+    </listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [c5454f99c] 2015-09-04 13:37:14 -0400
 Branch: REL9_5_STABLE [a2538da89] 2015-09-04 13:37:16 -0400
@@ -201,6 +248,13 @@ Branch: REL9_3_STABLE [fee2275ae] 2015-09-24 14:53:33 +0200
 Branch: REL9_2_STABLE [f12932dd4] 2015-09-24 14:53:33 +0200
 Branch: REL9_1_STABLE [ff090bbb7] 2015-09-24 14:53:33 +0200
 Branch: REL9_0_STABLE [078d471a9] 2015-09-24 14:53:33 +0200
+Branch: master [2596d705b] 2015-10-05 11:53:43 +0200
+Branch: REL9_5_STABLE [0577821b5] 2015-10-05 11:56:58 +0200
+Branch: REL9_4_STABLE [13ac4c035] 2015-10-05 11:57:07 +0200
+Branch: REL9_3_STABLE [393341714] 2015-10-05 11:57:11 +0200
+Branch: REL9_2_STABLE [e07cfef34] 2015-10-05 11:57:15 +0200
+Branch: REL9_1_STABLE [7116a3e98] 2015-10-05 11:57:20 +0200
+Branch: REL9_0_STABLE [eeb0b7830] 2015-10-05 11:57:25 +0200
 -->
 
     <listitem>
@@ -263,6 +317,33 @@ Branch: REL9_0_STABLE [a89781e34] 2015-09-21 12:12:16 -0400
      <para>
       Fix rare internal overflow in multiplication of <type>numeric</> values
       (Dean Rasheed)
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [30cb12881] 2015-10-05 10:06:29 -0400
+Branch: REL9_5_STABLE [acf0da1e6] 2015-10-05 10:06:33 -0400
+Branch: REL9_4_STABLE [a0c02ed5b] 2015-10-05 10:06:34 -0400
+Branch: REL9_3_STABLE [9286ff78f] 2015-10-05 10:06:34 -0400
+Branch: REL9_2_STABLE [5e43130b5] 2015-10-05 10:06:35 -0400
+Branch: REL9_1_STABLE [9581e2699] 2015-10-05 10:06:35 -0400
+Branch: REL9_0_STABLE [0398e071a] 2015-10-05 10:06:36 -0400
+Branch: master [5976097c0] 2015-10-05 10:06:30 -0400
+Branch: REL9_5_STABLE [7bed97d48] 2015-10-05 10:06:33 -0400
+Branch: REL9_4_STABLE [bed3f6d03] 2015-10-05 10:06:34 -0400
+Branch: REL9_3_STABLE [28dea9485] 2015-10-05 10:06:34 -0400
+Branch: REL9_2_STABLE [ea68c221f] 2015-10-05 10:06:35 -0400
+Branch: REL9_1_STABLE [879877b00] 2015-10-05 10:06:35 -0400
+Branch: REL9_0_STABLE [682a25d41] 2015-10-05 10:06:36 -0400
+Branch: REL9_2_STABLE [8dacb29ca] 2015-10-05 10:06:35 -0400
+-->
+
+    <listitem>
+     <para>
+      Guard against hard-to-reach stack overflows involving record types,
+      range types, <type>json</>, <type>jsonb</>, <type>tsquery</>,
+      <type>ltxtquery</> and <type>query_int</> (Noah Misch)
      </para>
     </listitem>
 
