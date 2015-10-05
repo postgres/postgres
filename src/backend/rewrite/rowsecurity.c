@@ -272,6 +272,30 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 							   hasSubLinks);
 
 		/*
+		 * Get and add ALL/SELECT policies, if SELECT rights are required
+		 * for this relation (eg: when RETURNING is used).  These are added as
+		 * WCO policies rather than security quals to ensure that an error is
+		 * raised if a policy is violated; otherwise, we might end up silently
+		 * dropping rows to be added.
+		 */
+		if (rte->requiredPerms & ACL_SELECT)
+		{
+			List	   *select_permissive_policies = NIL;
+			List	   *select_restrictive_policies = NIL;
+
+			get_policies_for_relation(rel, CMD_SELECT, user_id,
+									  &select_permissive_policies,
+									  &select_restrictive_policies);
+			add_with_check_options(rel, rt_index,
+								   commandType == CMD_INSERT ?
+								   WCO_RLS_INSERT_CHECK : WCO_RLS_UPDATE_CHECK,
+								   select_permissive_policies,
+								   select_restrictive_policies,
+								   withCheckOptions,
+								   hasSubLinks);
+		}
+
+		/*
 		 * For INSERT ... ON CONFLICT DO UPDATE we need additional policy
 		 * checks for the UPDATE which may be applied to the same RTE.
 		 */
@@ -300,9 +324,11 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   hasSubLinks);
 
 			/*
-			 * Get and add ALL/SELECT policies, if SELECT rights are required
-			 * for this relation, also as WCO policies, again, to avoid
-			 * silently dropping data.  See above.
+			 * Get and add ALL/SELECT policies, as WCO_RLS_CONFLICT_CHECK
+			 * WCOs to ensure they are considered when taking the UPDATE
+			 * path of an INSERT .. ON CONFLICT DO UPDATE, if SELECT
+			 * rights are required for this relation, also as WCO policies,
+			 * again, to avoid silently dropping data.  See above.
 			 */
 			if (rte->requiredPerms & ACL_SELECT)
 			{
