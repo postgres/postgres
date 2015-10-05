@@ -18,6 +18,7 @@
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -894,6 +895,8 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 	char	   *outputstr;
 	bool		numeric_error;
 	JsonLexContext dummy_lex;
+
+	check_stack_depth();
 
 	if (is_null)
 	{
