@@ -1009,9 +1009,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      Custom <xref linkend="guc-autovacuum-freeze-max-age"> parameter. Note that
      autovacuum will ignore attempts to set a per-table
      <literal>autovacuum_freeze_max_age</> larger than the system-wide setting
-     (it can only be set smaller). Note that while you can set
-     <literal>autovacuum_freeze_max_age</> very small, or even zero, this is
-     usually unwise since it will force frequent vacuuming.
+     (it can only be set smaller).
      </para>
     </listitem>
    </varlistentry>
@@ -1045,10 +1043,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       Custom <xref linkend="guc-autovacuum-multixact-freeze-max-age"> parameter. Note
       that autovacuum will ignore attempts to set a per-table
       <literal>autovacuum_multixact_freeze_max_age</> larger than the
-      system-wide setting (it can only be set smaller).  Note that while you
-      can set <literal>autovacuum_multixact_freeze_max_age</> very small,
-      or even zero, this is usually unwise since it will force frequent
-      vacuuming.
+      system-wide setting (it can only be set smaller).
      </para>
     </listitem>
    </varlistentry>
