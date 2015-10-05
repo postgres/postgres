@@ -1514,6 +1514,8 @@ typedef enum AlterTableType
 	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_EnableRowSecurity,		/* ENABLE ROW SECURITY */
 	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
+	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
+	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
 	AT_GenericOptions			/* OPTIONS (...) */
 } AlterTableType;
 

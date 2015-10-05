@@ -1972,6 +1972,16 @@
      </row>
 
      <row>
+      <entry><structfield>relforcerowsecurity</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if row level security (when enabled) will also apply to table owner; see
+       <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relispopulated</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
