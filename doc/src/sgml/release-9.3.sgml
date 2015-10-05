@@ -36,6 +36,34 @@
 
     <listitem>
      <para>
+      Guard against stack overflows in <type>json</> parsing
+      (Oskari Saarenmaa)
+     </para>
+
+     <para>
+      If an application constructs PostgreSQL <type>json</>
+      or <type>jsonb</> values from arbitrary user input, the application's
+      users can reliably crash the PostgreSQL server, causing momentary
+      denial of service.  (CVE-2015-5289)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/pgcrypto</> to detect and report
+      too-short <function>crypt()</> salts (Josh Kupershmidt)
+     </para>
+
+     <para>
+      Certain invalid salt arguments crashed the server or disclosed a few
+      bytes of server memory.  We have not ruled out the viability of
+      attacks that arrange for presence of confidential information in the
+      disclosed bytes, but they seem unlikely.  (CVE-2015-5288)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix subtransaction cleanup after a portal (cursor) belonging to an
       outer subtransaction fails (Tom Lane, Michael Paquier)
      </para>
@@ -143,6 +171,14 @@
      <para>
       Fix rare internal overflow in multiplication of <type>numeric</> values
       (Dean Rasheed)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Guard against hard-to-reach stack overflows involving record types,
+      range types, <type>json</>, <type>jsonb</>, <type>tsquery</>,
+      <type>ltxtquery</> and <type>query_int</> (Noah Misch)
      </para>
     </listitem>
 
