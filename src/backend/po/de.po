@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-05-18 02:54+0000\n"
-"PO-Revision-Date: 2015-05-18 00:06-0400\n"
+"PO-Revision-Date: 2015-09-21 23:43-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -14461,7 +14461,7 @@ msgstr "konnte Datei »%s« nicht vor fsync öffnen"
 #: storage/file/fd.c:2315
 #, c-format
 msgid "this platform does not support symbolic links; ignoring \"%s\""
-msgstr "diese Plattform unterstützt keine symbolischen Verknüpfungen; ignoriere «%s»"
+msgstr "diese Plattform unterstützt keine symbolischen Verknüpfungen; ignoriere »%s«"
 
 #: storage/ipc/shmem.c:346 storage/ipc/shmem.c:399
 #, c-format

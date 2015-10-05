@@ -28,7 +28,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-04-25 00:03+0000\n"
-"PO-Revision-Date: 2015-04-25 16:30+0300\n"
+"PO-Revision-Date: 2015-07-18 12:41+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -411,33 +411,34 @@ msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя созд
 #: pg_resetxlog.c:1091
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: не удалось открыть маркер процесса: код ошибки: %lu\n"
+msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1104
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: не удалось подготовить структуры SID: код ошибки: %lu\n"
+msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1123
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: не удалось создать ограниченный маркер: код ошибки: %lu\n"
+msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1144
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: не удалось запустить процесс для команды \"%s\": код ошибки: %lu\n"
+msgstr ""
+"%s: не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1176
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
 msgstr ""
-"%s: не удалось перезапуститься с ограниченным маркером: код ошибки: %lu\n"
+"%s: не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1191
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s: не удалось получить код выхода от подпроцесса: код ошибки: %lu\n"
+msgstr "%s: не удалось получить код выхода от подпроцесса (код ошибки: %lu)\n"
 
 #: pg_resetxlog.c:1203
 #, c-format
@@ -531,4 +532,3 @@ msgid ""
 msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
-
