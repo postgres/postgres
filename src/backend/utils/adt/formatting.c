@@ -5055,7 +5055,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 				  VARSIZE(value) - VARHDRSZ, 0, 0, false, PG_GET_COLLATION());
 
 	scale = Num.post;
-	precision = Max(0, Num.pre) + scale;
+	precision = Num.pre + Num.multi + scale;
 
 	if (shouldFree)
 		pfree(format);
@@ -5064,6 +5064,23 @@ numeric_to_number(PG_FUNCTION_ARGS)
 								 CStringGetDatum(numstr),
 								 ObjectIdGetDatum(InvalidOid),
 					  Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
+
+	if (IS_MULTI(&Num))
+	{
+		Numeric		x;
+		Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+													 Int32GetDatum(10)));
+		Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+											  Int32GetDatum(-Num.multi)));
+
+		x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
+												NumericGetDatum(a),
+												NumericGetDatum(b)));
+		result = DirectFunctionCall2(numeric_mul,
+									 result,
+									 NumericGetDatum(x));
+	}
+
 	pfree(numstr);
 	return result;
 }

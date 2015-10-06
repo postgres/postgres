@@ -6152,12 +6152,14 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       <literal>V</literal> effectively
+       <literal>V</literal> with <function>to_char</function>
        multiplies the input values by
        <literal>10^<replaceable>n</replaceable></literal>, where
        <replaceable>n</replaceable> is the number of digits following
-       <literal>V</literal>.
-       <function>to_char</function> does not support the use of
+       <literal>V</literal>.  <literal>V</literal> with
+       <function>to_number</function> divides in a similar manner.
+       <function>to_char</function> and <function>to_number</function>
+       do not support the use of
        <literal>V</literal> combined with a decimal point
        (e.g., <literal>99.9V99</literal> is not allowed).
       </para>
