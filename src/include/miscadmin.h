@@ -446,6 +446,7 @@ extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
 extern void AddToDataDirLockFile(int target_line, const char *str);
+extern bool RecheckDataDirLockFile(void);
 extern void ValidatePgVersion(const char *path);
 extern void process_shared_preload_libraries(void);
 extern void process_local_preload_libraries(void);
