@@ -2426,7 +2426,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * display time as shown on a 12-hour clock, even for
 				 * intervals
 				 */
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2,
+				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
 				 tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
 						tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(n->suffix))
@@ -2434,19 +2434,22 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				s += strlen(s);
 				break;
 			case DCH_HH24:
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2, tm->tm_hour);
+				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						tm->tm_hour);
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
 			case DCH_MI:
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2, tm->tm_min);
+				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_min >= 0) ? 2 : 3,
+						tm->tm_min);
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
 			case DCH_SS:
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2, tm->tm_sec);
+				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_sec >= 0) ? 2 : 3,
+						tm->tm_sec);
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -2503,7 +2506,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 			case DCH_OF:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%+0*d", S_FM(n->suffix) ? 0 : 3, (int) tm->tm_gmtoff / SECS_PER_HOUR);
+				sprintf(s, "%+0*d", S_FM(n->suffix) ? 0 : (tm->tm_gmtoff >= 0) ? 3 : 4,
+						(int) tm->tm_gmtoff / SECS_PER_HOUR);
 				s += strlen(s);
 				if ((int) tm->tm_gmtoff % SECS_PER_HOUR != 0)
 				{
@@ -2653,7 +2657,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				s += strlen(s);
 				break;
 			case DCH_MM:
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2, tm->tm_mon);
+				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_mon >= 0) ? 2 : 3,
+						tm->tm_mon);
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -2828,7 +2833,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 						i = tm->tm_year / 100 - 1;
 				}
 				if (i <= 99 && i >= -99)
-					sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2, i);
+					sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (i >= 0) ? 2 : 3, i);
 				else
 					sprintf(s, "%d", i);
 				if (S_THth(n->suffix))
@@ -2846,7 +2851,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_YYYY:
 			case DCH_IYYY:
 				sprintf(s, "%0*d",
-						S_FM(n->suffix) ? 0 : 4,
+						S_FM(n->suffix) ? 0 :
+						(ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 4 : 5,
 						(n->key->id == DCH_YYYY ?
 						 ADJUST_YEAR(tm->tm_year, is_interval) :
 						 ADJUST_YEAR(date2isoyear(tm->tm_year,
@@ -2860,7 +2866,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_YYY:
 			case DCH_IYY:
 				sprintf(s, "%0*d",
-						S_FM(n->suffix) ? 0 : 3,
+						S_FM(n->suffix) ? 0 :
+						(ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 3 : 4,
 						(n->key->id == DCH_YYY ?
 						 ADJUST_YEAR(tm->tm_year, is_interval) :
 						 ADJUST_YEAR(date2isoyear(tm->tm_year,
@@ -2874,7 +2881,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_YY:
 			case DCH_IY:
 				sprintf(s, "%0*d",
-						S_FM(n->suffix) ? 0 : 2,
+						S_FM(n->suffix) ? 0 :
+						(ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 2 : 3,
 						(n->key->id == DCH_YY ?
 						 ADJUST_YEAR(tm->tm_year, is_interval) :
 						 ADJUST_YEAR(date2isoyear(tm->tm_year,
