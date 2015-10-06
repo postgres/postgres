@@ -38,9 +38,9 @@ static HTAB *ShippableCacheHash = NULL;
 typedef struct
 {
 	/* extension the object appears within, or InvalidOid if none */
-	Oid	objid;
-	Oid	classid;
 	Oid serverid;
+	Oid	classid;
+	Oid	objid;
 } ShippableCacheKey;
 
 typedef struct

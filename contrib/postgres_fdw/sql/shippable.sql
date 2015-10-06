@@ -66,11 +66,68 @@ EXPLAIN VERBOSE SELECT c2 FROM shft1 WHERE cube_dim(c3) = 1 LIMIT 2;
 SELECT c2 FROM shft1 WHERE cube_dim(c3) = 1 LIMIT 2;
 
 -- ===================================================================
--- clean up
+-- add a second server with different extension shipping
 -- ===================================================================
 
+DO $d$
+    BEGIN
+        EXECUTE $$CREATE SERVER loopback_two FOREIGN DATA WRAPPER postgres_fdw
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
+    END;
+$d$;
+
+CREATE USER MAPPING FOR CURRENT_USER SERVER loopback_two;
+
+CREATE EXTENSION seg;
+
+CREATE TABLE seg_local (
+	id integer,
+	s seg,
+  n text
+);
+
+INSERT INTO seg_local (id, s, n) VALUES (1, '1.0 .. 2.0', 'foo');
+INSERT INTO seg_local (id, s, n) VALUES (2, '3.0 .. 4.0', 'bar');
+INSERT INTO seg_local (id, s, n) VALUES (3, '5.0 .. 6.0', 'baz');
+
+ANALYZE seg_local;
+
+CREATE FOREIGN TABLE seg_remote_two (
+  id integer,
+  s seg,
+  n text
+) SERVER loopback_two
+OPTIONS (table_name 'seg_local');
+
+SELECT id FROM seg_local WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+EXPLAIN VERBOSE SELECT id FROM seg_remote_two WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+ALTER SERVER loopback_two OPTIONS (ADD extensions 'seg');
+EXPLAIN VERBOSE SELECT id FROM seg_remote_two WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+
+CREATE FOREIGN TABLE seg_remote_one (
+  id integer,
+  s seg,
+  n text
+) SERVER loopback
+OPTIONS (table_name 'seg_local');
+
+SELECT id FROM seg_remote_one WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+EXPLAIN VERBOSE SELECT id FROM seg_remote_one WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+EXPLAIN VERBOSE SELECT id FROM seg_remote_two WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+
+
+-- ===================================================================
+-- clean up
+-- ===================================================================
+DROP FOREIGN TABLE seg_remote_one, seg_remote_two;
+DROP USER MAPPING FOR CURRENT_USER SERVER loopback_two;
+DROP SERVER loopback_two;
+DROP TABLE seg_local;
 DROP FOREIGN TABLE shft1;
 DROP TABLE "SH 1"."TBL 1";
 DROP SCHEMA "SH 1";
 DROP EXTENSION cube;
+DROP EXTENSION seg;
 ALTER SERVER loopback OPTIONS (DROP extensions);

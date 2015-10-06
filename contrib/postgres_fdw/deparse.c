@@ -1444,10 +1444,15 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 		 * References to extension types need to be fully qualified,
 		 * but references to built-in types shouldn't be.
 		 */
-		appendStringInfo(buf, "::%s",
-			is_shippable(node->consttype, TypeRelationId, fpinfo->server, fpinfo->extensions) ?
-			format_type_be_qualified(node->consttype) :
-			format_type_with_typemod(node->consttype, node->consttypmod));
+		if (!is_builtin(node->consttype) &&
+			 is_shippable(node->consttype, TypeRelationId, fpinfo->server, fpinfo->extensions))
+		{
+			appendStringInfo(buf, "::%s", format_type_be_qualified(node->consttype));
+		}
+		else
+		{
+			appendStringInfo(buf, "::%s", format_type_with_typemod(node->consttype, node->consttypmod));
+		}
 	}
 }
 

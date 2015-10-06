@@ -12,7 +12,8 @@ DATA = postgres_fdw--1.0.sql
 
 # Note: shippable tests depend on postgres_fdw tests setup
 REGRESS = postgres_fdw shippable
-EXTRA_INSTALL = contrib/cube
+# Note: shippable tests require cube and seg
+EXTRA_INSTALL = contrib/cube contrib/seg
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
