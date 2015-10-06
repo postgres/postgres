@@ -56,6 +56,7 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -150,6 +151,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	Oid			namespaceid;
 	Oid			existing_relid;
 	ParseCallbackState pcbstate;
+	bool		like_found = false;
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -242,7 +244,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
-	 * column defs from constraints, and do preliminary analysis.
+	 * column defs from constraints, and do preliminary analysis.  We have to
+	 * process column-defining clauses first because it can control the
+	 * presence of columns which are referenced by columns referenced by
+	 * constraints.
 	 */
 	foreach(elements, stmt->tableElts)
 	{
@@ -254,12 +259,17 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				transformColumnDefinition(&cxt, (ColumnDef *) element);
 				break;
 
-			case T_Constraint:
-				transformTableConstraint(&cxt, (Constraint *) element);
+			case T_TableLikeClause:
+				if (!like_found)
+				{
+					cxt.hasoids = false;
+					like_found = true;
+				}
+				transformTableLikeClause(&cxt, (TableLikeClause *) element);
 				break;
 
-			case T_TableLikeClause:
-				transformTableLikeClause(&cxt, (TableLikeClause *) element);
+			case T_Constraint:
+				/* process later */
 				break;
 
 			default:
@@ -269,6 +279,27 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		}
 	}
 
+	if (like_found)
+	{
+		/*
+		 * To match INHERITS, the existance of any LIKE table with OIDs
+		 * causes the new table to have oids.  For the same reason,
+		 * WITH/WITHOUT OIDs is also ignored with LIKE.  We prepend
+		 * because the first oid option list entry is honored.  Our
+		 * prepended WITHOUT OIDS clause will be overridden if an
+		 * inherited table has oids.
+		 */
+		stmt->options = lcons(makeDefElem("oids",
+							  (Node *)makeInteger(cxt.hasoids)), stmt->options);
+	}
+
+	foreach(elements, stmt->tableElts)
+	{
+		Node	   *element = lfirst(elements);
+
+		if (nodeTag(element) == T_Constraint)
+			transformTableConstraint(&cxt, (Constraint *) element);
+	}
 	/*
 	 * transformIndexConstraints wants cxt.alist to contain only index
 	 * statements, so transfer anything we already have into save_alist.
@@ -859,6 +890,9 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			cxt->alist = lappend(cxt->alist, stmt);
 		}
 	}
+
+	/* We use oids if at least one LIKE'ed table has oids. */
+	cxt->hasoids = cxt->hasoids || relation->rd_rel->relhasoids;
 
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
