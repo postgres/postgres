@@ -78,7 +78,7 @@ extern List *ExtractExtensionList(char *extensionString,
 								  bool populateList);
 
 /* in shippable.c */
-extern bool is_shippable(Oid objnumber, Oid classnumber, List *extension_list);
+extern bool is_shippable(Oid objnumber, Oid classnumber, ForeignServer *server, List *extension_list);
 
 /* in deparse.c */
 extern void classifyConditions(PlannerInfo *root,

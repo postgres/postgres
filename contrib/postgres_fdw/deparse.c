@@ -382,7 +382,7 @@ foreign_expr_walker(Node *node,
 				 * semantics on remote side.
 				 */
 				if (!is_builtin(fe->funcid) &&
-					!is_shippable(fe->funcid, ProcedureRelationId, fpinfo->extensions))
+					!is_shippable(fe->funcid, ProcedureRelationId, fpinfo->server, fpinfo->extensions))
 					return false;
 
 				/*
@@ -431,7 +431,7 @@ foreign_expr_walker(Node *node,
 				 * too.)
 				 */
 				if (!is_builtin(oe->opno) &&
-					!is_shippable(oe->opno, OperatorRelationId, fpinfo->extensions))
+					!is_shippable(oe->opno, OperatorRelationId, fpinfo->server, fpinfo->extensions))
 					return false;
 
 				/*
@@ -472,7 +472,7 @@ foreign_expr_walker(Node *node,
 				 * Again, only built-in operators can be sent to remote.
 				 */
 				if (!is_builtin(oe->opno) &&
-					!is_shippable(oe->opno, OperatorRelationId, fpinfo->extensions))
+					!is_shippable(oe->opno, OperatorRelationId, fpinfo->server, fpinfo->extensions))
 					return false;
 
 				/*
@@ -624,7 +624,7 @@ foreign_expr_walker(Node *node,
 	 */
 	if (check_type &&
 		!is_builtin(exprType(node)) &&
-		!is_shippable(exprType(node), TypeRelationId, fpinfo->extensions))
+		!is_shippable(exprType(node), TypeRelationId, fpinfo->server, fpinfo->extensions))
 		return false;
 
 	/*
@@ -1445,7 +1445,7 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 		 * but references to built-in types shouldn't be.
 		 */
 		appendStringInfo(buf, "::%s",
-			is_shippable(node->consttype, TypeRelationId, fpinfo->extensions) ?
+			is_shippable(node->consttype, TypeRelationId, fpinfo->server, fpinfo->extensions) ?
 			format_type_be_qualified(node->consttype) :
 			format_type_with_typemod(node->consttype, node->consttypmod));
 	}

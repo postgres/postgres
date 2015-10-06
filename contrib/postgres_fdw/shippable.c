@@ -40,6 +40,7 @@ typedef struct
 	/* extension the object appears within, or InvalidOid if none */
 	Oid	objid;
 	Oid	classid;
+	Oid serverid;
 } ShippableCacheKey;
 
 typedef struct
@@ -152,7 +153,7 @@ lookup_shippable(Oid objnumber, Oid classnumber, List *extension_list)
  *     part of a declared extension if it is not cached.
  */
 bool
-is_shippable(Oid objnumber, Oid classnumber, List *extension_list)
+is_shippable(Oid objnumber, Oid classnumber, ForeignServer *server, List *extension_list)
 {
 	ShippableCacheKey key;
 	ShippableCacheEntry *entry;
@@ -170,6 +171,7 @@ is_shippable(Oid objnumber, Oid classnumber, List *extension_list)
 
 	key.objid = objnumber;
 	key.classid = classnumber;
+	key.serverid = server->serverid;
 
 	entry = (ShippableCacheEntry *)
 				 hash_search(ShippableCacheHash,
