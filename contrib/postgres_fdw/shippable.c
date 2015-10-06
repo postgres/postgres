@@ -167,7 +167,7 @@ is_shippable(Oid objnumber, Oid classnumber, ForeignServer *server, List *extens
 		InitializeShippableCache();
 
 	/* Zero out the key */
-	memset(&key, 0, sizeof(key));
+	MemSet(&key, 0, sizeof(key));
 
 	key.objid = objnumber;
 	key.classid = classnumber;
