@@ -1218,6 +1218,76 @@ AddToDataDirLockFile(int target_line, const char *str)
 }
 
 
+/*
+ * Recheck that the data directory lock file still exists with expected
+ * content.  Return TRUE if the lock file appears OK, FALSE if it isn't.
+ *
+ * We call this periodically in the postmaster.  The idea is that if the
+ * lock file has been removed or replaced by another postmaster, we should
+ * do a panic database shutdown.  Therefore, we should return TRUE if there
+ * is any doubt: we do not want to cause a panic shutdown unnecessarily.
+ * Transient failures like EINTR or ENFILE should not cause us to fail.
+ * (If there really is something wrong, we'll detect it on a future recheck.)
+ */
+bool
+RecheckDataDirLockFile(void)
+{
+	int			fd;
+	int			len;
+	long		file_pid;
+	char		buffer[BLCKSZ];
+
+	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
+	if (fd < 0)
+	{
+		/*
+		 * There are many foreseeable false-positive error conditions.  For
+		 * safety, fail only on enumerated clearly-something-is-wrong
+		 * conditions.
+		 */
+		switch (errno)
+		{
+			case ENOENT:
+			case ENOTDIR:
+				/* disaster */
+				ereport(LOG,
+						(errcode_for_file_access(),
+						 errmsg("could not open file \"%s\": %m",
+								DIRECTORY_LOCK_FILE)));
+				return false;
+			default:
+				/* non-fatal, at least for now */
+				ereport(LOG,
+						(errcode_for_file_access(),
+				  errmsg("could not open file \"%s\": %m; continuing anyway",
+						 DIRECTORY_LOCK_FILE)));
+				return true;
+		}
+	}
+	len = read(fd, buffer, sizeof(buffer) - 1);
+	if (len < 0)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not read from file \"%s\": %m",
+						DIRECTORY_LOCK_FILE)));
+		close(fd);
+		return true;			/* treat read failure as nonfatal */
+	}
+	buffer[len] = '\0';
+	close(fd);
+	file_pid = atol(buffer);
+	if (file_pid == getpid())
+		return true;			/* all is well */
+
+	/* Trouble: someone's overwritten the lock file */
+	ereport(LOG,
+			(errmsg("lock file \"%s\" contains wrong PID: %ld instead of %ld",
+					DIRECTORY_LOCK_FILE, file_pid, (long) getpid())));
+	return false;
+}
+
+
 /*-------------------------------------------------------------------------
  *				Version checking support
  *-------------------------------------------------------------------------
