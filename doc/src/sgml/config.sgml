@@ -4394,30 +4394,6 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-cluster-name" xreflabel="cluster_name">
-      <term><varname>cluster_name</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>cluster_name</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Sets the cluster name that appears in the process title for all
-        processes in this cluster. The name can be any string of less than
-        <symbol>NAMEDATALEN</> characters (64 characters in a standard
-        build). Only printable ASCII characters may be used in the
-        <varname>cluster_name</varname> value. Other characters will be
-        replaced with question marks (<literal>?</literal>).  No name is shown
-        if this parameter is set to the empty string <literal>''</> (which is
-        the default). This parameter can only be set at server start.
-       </para>
-       <para>
-        The process title is typically viewed using programs like
-        <application>ps</> or, on Windows, <application>Process Explorer</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry>
       <term><varname>debug_print_parse</varname> (<type>boolean</type>)
       <indexterm>
@@ -5010,9 +4986,61 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </listitem>
         </orderedlist>
       </para>
-
     </sect2>
-   </sect1>
+
+   <sect2>
+    <title>Process Title</title>
+
+    <para>
+     These settings control how the process title as seen
+     by <command>ps</command> is modified.  See <xref linkend="monitoring-ps">
+     for details.
+    </para>
+
+    <variablelist>
+     <varlistentry id="guc-cluster-name" xreflabel="cluster_name">
+      <term><varname>cluster_name</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>cluster_name</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the cluster name that appears in the process title for all
+        processes in this cluster. The name can be any string of less than
+        <symbol>NAMEDATALEN</> characters (64 characters in a standard
+        build). Only printable ASCII characters may be used in the
+        <varname>cluster_name</varname> value. Other characters will be
+        replaced with question marks (<literal>?</literal>).  No name is shown
+        if this parameter is set to the empty string <literal>''</> (which is
+        the default). This parameter can only be set at server start.
+       </para>
+       <para>
+        The process title is typically viewed using programs like
+        <application>ps</> or, on Windows, <application>Process Explorer</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-update-process-title" xreflabel="update_process_title">
+      <term><varname>update_process_title</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>update_process_title</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables updating of the process title every time a new SQL command
+        is received by the server.  The process title is typically viewed
+        by the <command>ps</> command,
+        or in Windows by using the <application>Process Explorer</>.
+        Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </sect2>
+  </sect1>
 
    <sect1 id="runtime-config-statistics">
     <title>Run-time Statistics</title>
@@ -5127,23 +5155,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
          setting.
         </para>
        </note>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-update-process-title" xreflabel="update_process_title">
-      <term><varname>update_process_title</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>update_process_title</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables updating of the process title every time a new SQL command
-        is received by the server.  The process title is typically viewed
-        by the <command>ps</> command,
-        or in Windows by using the <application>Process Explorer</>.
-        Only superusers can change this setting.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -5584,29 +5595,22 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-row-security" xreflabel="row_security">
-      <term><varname>row_security</varname> (<type>enum</type>)
+      <term><varname>row_security</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>row_security</> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        This variable controls if row security policies are to be applied
-        to queries which are run against tables that have row security enabled.
-        The default is <literal>on</>.  When set to <literal>on</>, all users,
-        except superusers and the owner of the table, will have the row
-        policies for the table applied to their queries.  When set to
-        <literal>off</>, queries will bypass row policies for the table, if
-        possible, and error if not.
-       </para>
-
-       <para>
-        For a user who is not a superuser and not the table owner to bypass
-        row policies for the table, they must have the <literal>BYPASSRLS</>
-        role attribute. If this is set to <literal>off</> and the user queries
-        a table which has row policies enabled and the user does not have the
-        right to bypass row policies then a permission denied error will be
-        returned.
+        This variable controls whether to raise an error in lieu of applying a
+        row security policy.  When set to <literal>on</>, policies apply
+        normally.  When set to <literal>off</>, queries fail which would
+        otherwise apply at least one policy.  The default is <literal>on</>.
+        Change to <literal>off</> where limited row visibility could cause
+        incorrect results; for example, <application>pg_dump</> makes that
+        change by default.  This variable has no effect on roles which bypass
+        every row security policy, to wit, superusers and roles with
+        the <literal>BYPASSRLS</> attribute.
        </para>
 
        <para>

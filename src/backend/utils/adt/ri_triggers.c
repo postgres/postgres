@@ -3014,7 +3014,8 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	/* Switch to proper UID to perform check as */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(RelationGetForm(query_rel)->relowner,
-						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE |
+						   SECURITY_NOFORCE_RLS);
 
 	/* Create the plan */
 	qplan = SPI_prepare(querystr, nargs, argtypes);
@@ -3134,7 +3135,8 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 	/* Switch to proper UID to perform check as */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(RelationGetForm(query_rel)->relowner,
-						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE |
+						   SECURITY_NOFORCE_RLS);
 
 	/* Finally we can run the query. */
 	spi_result = SPI_execute_snapshot(qplan,

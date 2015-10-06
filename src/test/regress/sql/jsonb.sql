@@ -48,6 +48,12 @@ SELECT '{"abc":1,"def":2,"ghi":[3,4],"hij":{"klm":5,"nop":[6]}}'::jsonb; -- OK
 SELECT '{"abc":1:2}'::jsonb;		-- ERROR, colon in wrong spot
 SELECT '{"abc":1,3}'::jsonb;		-- ERROR, no value
 
+-- Recursion.
+SET max_stack_depth = '100kB';
+SELECT repeat('[', 10000)::jsonb;
+SELECT repeat('{"a":', 10000)::jsonb;
+RESET max_stack_depth;
+
 -- Miscellaneous stuff.
 SELECT 'true'::jsonb;			-- OK
 SELECT 'false'::jsonb;			-- OK
@@ -816,3 +822,6 @@ select jsonb_set('{}','{x}','{"foo":123}');
 select jsonb_set('[]','{0}','{"foo":123}');
 select jsonb_set('[]','{99}','{"foo":123}');
 select jsonb_set('[]','{-99}','{"foo":123}');
+select jsonb_set('{"a": [1, 2, 3]}', '{a, non_integer}', '"new_value"');
+select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, non_integer}', '"new_value"');
+select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, NULL}', '"new_value"');

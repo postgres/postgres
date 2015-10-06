@@ -3724,6 +3724,11 @@ setPath(JsonbIterator **it, Datum *path_elems,
 	JsonbValue *res = NULL;
 	int			r;
 
+	check_stack_depth();
+
+	if (path_nulls[level])
+		elog(ERROR, "path element at the position %d is NULL", level + 1);
+
 	r = JsonbIteratorNext(it, &v, false);
 
 	switch (r)
@@ -3875,7 +3880,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		lindex = strtol(c, &badp, 10);
 		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
 			lindex < INT_MIN)
-			idx = nelems;
+			elog(ERROR, "path element at the position %d is not an integer", level + 1);
 		else
 			idx = lindex;
 	}

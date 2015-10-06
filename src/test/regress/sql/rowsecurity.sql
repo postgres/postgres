@@ -1070,17 +1070,15 @@ COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
--- Check COPY TO as user with permissions and BYPASSRLS
+-- Check COPY FROM as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
-SET row_security TO OFF;
+SET row_security TO ON;
 COPY copy_t FROM STDIN; --ok
 1	abc
 2	bcd
 3	cde
 4	def
 \.
-SET row_security TO ON;
-COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
 -- Check COPY FROM as user without permissions.
 SET SESSION AUTHORIZATION rls_regress_user2;
@@ -1291,6 +1289,204 @@ DROP TABLE r1;
 DROP TABLE r2;
 
 --
+-- FORCE ROW LEVEL SECURITY applies RLS to owners but
+-- only when row_security = on
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+INSERT INTO r1 VALUES (10), (20);
+
+CREATE POLICY p1 ON r1 USING (false);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- No error, but no rows
+TABLE r1;
+
+-- RLS error
+INSERT INTO r1 VALUES (1);
+
+-- No error (unable to see any rows to update)
+UPDATE r1 SET a = 1;
+TABLE r1;
+
+-- No error (unable to see any rows to delete)
+DELETE FROM r1;
+TABLE r1;
+
+SET row_security = off;
+-- Shows all rows
+TABLE r1;
+
+-- Update all rows
+UPDATE r1 SET a = 1;
+TABLE r1;
+
+-- Delete all rows
+DELETE FROM r1;
+TABLE r1;
+
+DROP TABLE r1;
+
+--
+-- FORCE ROW LEVEL SECURITY does not break RI
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int PRIMARY KEY);
+CREATE TABLE r2 (a int REFERENCES r1);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+-- Create policies on r2 which prevent the
+-- owner from seeing any rows, but RI should
+-- still see them.
+CREATE POLICY p1 ON r2 USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
+
+-- Errors due to rows in r2
+DELETE FROM r1;
+
+-- Reset r2 to no-RLS
+DROP POLICY p1 ON r2;
+ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE r2 DISABLE ROW LEVEL SECURITY;
+
+-- clean out r2 for INSERT test below
+DELETE FROM r2;
+
+-- Change r1 to not allow rows to be seen
+CREATE POLICY p1 ON r1 USING (false);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- No rows seen
+TABLE r1;
+
+-- No error, RI still sees that row exists in r1
+INSERT INTO r2 VALUES (10);
+
+DROP TABLE r2;
+DROP TABLE r1;
+
+-- Ensure cascaded DELETE works
+CREATE TABLE r1 (a int PRIMARY KEY);
+CREATE TABLE r2 (a int REFERENCES r1 ON DELETE CASCADE);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+-- Create policies on r2 which prevent the
+-- owner from seeing any rows, but RI should
+-- still see them.
+CREATE POLICY p1 ON r2 USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
+
+-- Deletes all records from both
+DELETE FROM r1;
+
+-- Remove FORCE from r2
+ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
+
+-- As owner, we now bypass RLS
+-- verify no rows in r2 now
+TABLE r2;
+
+DROP TABLE r2;
+DROP TABLE r1;
+
+-- Ensure cascaded UPDATE works
+CREATE TABLE r1 (a int PRIMARY KEY);
+CREATE TABLE r2 (a int REFERENCES r1 ON UPDATE CASCADE);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+-- Create policies on r2 which prevent the
+-- owner from seeing any rows, but RI should
+-- still see them.
+CREATE POLICY p1 ON r2 USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
+
+-- Updates records in both
+UPDATE r1 SET a = a+5;
+
+-- Remove FORCE from r2
+ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
+
+-- As owner, we now bypass RLS
+-- verify records in r2 updated
+TABLE r2;
+
+DROP TABLE r2;
+DROP TABLE r1;
+
+--
+-- Test INSERT+RETURNING applies SELECT policies as
+-- WithCheckOptions (meaning an error is thrown)
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+
+CREATE POLICY p1 ON r1 FOR SELECT USING (false);
+CREATE POLICY p2 ON r1 FOR INSERT WITH CHECK (true);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- Works fine
+INSERT INTO r1 VALUES (10), (20);
+
+-- No error, but no rows
+TABLE r1;
+
+SET row_security = off;
+-- Rows shown now
+TABLE r1;
+
+SET row_security = on;
+
+-- Error
+INSERT INTO r1 VALUES (10), (20) RETURNING *;
+
+DROP TABLE r1;
+
+--
+-- Test UPDATE+RETURNING applies SELECT policies as
+-- WithCheckOptions (meaning an error is thrown)
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+
+CREATE POLICY p1 ON r1 FOR SELECT USING (a < 20);
+CREATE POLICY p2 ON r1 FOR UPDATE USING (a < 20) WITH CHECK (true);
+INSERT INTO r1 VALUES (10);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- Works fine
+UPDATE r1 SET a = 30;
+
+-- Show updated rows
+SET row_security = off;
+TABLE r1;
+-- reset value in r1 for test with RETURNING
+UPDATE r1 SET a = 10;
+
+-- Verify row reset
+TABLE r1;
+
+SET row_security = on;
+
+-- Error
+UPDATE r1 SET a = 30 RETURNING *;
+
+DROP TABLE r1;
+
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
@@ -1317,3 +1513,11 @@ CREATE POLICY p1 ON rls_tbl USING (c1 > 5);
 CREATE POLICY p2 ON rls_tbl FOR SELECT USING (c1 <= 3);
 CREATE POLICY p3 ON rls_tbl FOR UPDATE USING (c1 <= 3) WITH CHECK (c1 > 5);
 CREATE POLICY p4 ON rls_tbl FOR DELETE USING (c1 <= 3);
+
+CREATE TABLE rls_tbl_force (c1 int);
+ALTER TABLE rls_tbl_force ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_tbl_force FORCE ROW LEVEL SECURITY;
+CREATE POLICY p1 ON rls_tbl_force USING (c1 = 5) WITH CHECK (c1 < 5);
+CREATE POLICY p2 ON rls_tbl_force FOR SELECT USING (c1 = 8);
+CREATE POLICY p3 ON rls_tbl_force FOR UPDATE USING (c1 = 8) WITH CHECK (c1 >= 5);
+CREATE POLICY p4 ON rls_tbl_force FOR DELETE USING (c1 = 8);

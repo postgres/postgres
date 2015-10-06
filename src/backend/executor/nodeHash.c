@@ -131,17 +131,7 @@ MultiExecHash(HashState *node)
 
 	/* resize the hash table if needed (NTUP_PER_BUCKET exceeded) */
 	if (hashtable->nbuckets != hashtable->nbuckets_optimal)
-	{
-		/* We never decrease the number of buckets. */
-		Assert(hashtable->nbuckets_optimal > hashtable->nbuckets);
-
-#ifdef HJDEBUG
-		printf("Increasing nbuckets %d => %d\n",
-			   hashtable->nbuckets, hashtable->nbuckets_optimal);
-#endif
-
 		ExecHashIncreaseNumBuckets(hashtable);
-	}
 
 	/* Account for the buckets in spaceUsed (reported in EXPLAIN ANALYZE) */
 	hashtable->spaceUsed += hashtable->nbuckets * sizeof(HashJoinTuple);
@@ -425,6 +415,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	long		hash_table_bytes;
 	long		skew_table_bytes;
 	long		max_pointers;
+	long		mppow2;
 	int			nbatch = 1;
 	int			nbuckets;
 	double		dbuckets;
@@ -486,23 +477,37 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 	/*
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
-	 * memory is filled, assuming a single batch.  The Min() step limits the
-	 * results so that the pointer arrays we'll try to allocate do not exceed
-	 * work_mem.
+	 * memory is filled, assuming a single batch; but limit the value so that
+	 * the pointer arrays we'll try to allocate do not exceed work_mem nor
+	 * MaxAllocSize.
+	 *
+	 * Note that both nbuckets and nbatch must be powers of 2 to make
+	 * ExecHashGetBucketAndBatch fast.
 	 */
-	max_pointers = (work_mem * 1024L) / sizeof(void *);
-	/* also ensure we avoid integer overflow in nbatch and nbuckets */
+	max_pointers = (work_mem * 1024L) / sizeof(HashJoinTuple);
+	max_pointers = Min(max_pointers, MaxAllocSize / sizeof(HashJoinTuple));
+	/* If max_pointers isn't a power of 2, must round it down to one */
+	mppow2 = 1L << my_log2(max_pointers);
+	if (max_pointers != mppow2)
+		max_pointers = mppow2 / 2;
+
+	/* Also ensure we avoid integer overflow in nbatch and nbuckets */
+	/* (this step is redundant given the current value of MaxAllocSize) */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
+
 	dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
 	dbuckets = Min(dbuckets, max_pointers);
-	nbuckets = Max((int) dbuckets, 1024);
+	nbuckets = (int) dbuckets;
+	/* don't let nbuckets be really small, though ... */
+	nbuckets = Max(nbuckets, 1024);
+	/* ... and force it to be a power of 2. */
 	nbuckets = 1 << my_log2(nbuckets);
-	bucket_bytes = sizeof(HashJoinTuple) * nbuckets;
 
 	/*
 	 * If there's not enough space to store the projected number of tuples and
 	 * the required bucket headers, we will need multiple batches.
 	 */
+	bucket_bytes = sizeof(HashJoinTuple) * nbuckets;
 	if (inner_rel_bytes + bucket_bytes > hash_table_bytes)
 	{
 		/* We'll need multiple batches */
@@ -521,6 +526,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		lbuckets = 1L << my_log2(hash_table_bytes / bucket_size);
 		lbuckets = Min(lbuckets, max_pointers);
 		nbuckets = (int) lbuckets;
+		nbuckets = 1 << my_log2(nbuckets);
 		bucket_bytes = nbuckets * sizeof(HashJoinTuple);
 
 		/*
@@ -760,20 +766,17 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 	if (hashtable->nbuckets >= hashtable->nbuckets_optimal)
 		return;
 
-	/*
-	 * We already know the optimal number of buckets, so let's just compute
-	 * the log2_nbuckets for it.
-	 */
+#ifdef HJDEBUG
+	printf("Increasing nbuckets %d => %d\n",
+		   hashtable->nbuckets, hashtable->nbuckets_optimal);
+#endif
+
 	hashtable->nbuckets = hashtable->nbuckets_optimal;
-	hashtable->log2_nbuckets = my_log2(hashtable->nbuckets_optimal);
+	hashtable->log2_nbuckets = hashtable->log2_nbuckets_optimal;
 
 	Assert(hashtable->nbuckets > 1);
 	Assert(hashtable->nbuckets <= (INT_MAX / 2));
 	Assert(hashtable->nbuckets == (1 << hashtable->log2_nbuckets));
-
-#ifdef HJDEBUG
-	printf("Increasing nbuckets to %d\n", hashtable->nbuckets);
-#endif
 
 	/*
 	 * Just reallocate the proper number of buckets - we don't need to walk
@@ -785,7 +788,7 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 		(HashJoinTuple *) repalloc(hashtable->buckets,
 								hashtable->nbuckets * sizeof(HashJoinTuple));
 
-	memset(hashtable->buckets, 0, sizeof(void *) * hashtable->nbuckets);
+	memset(hashtable->buckets, 0, hashtable->nbuckets * sizeof(HashJoinTuple));
 
 	/* scan through all tuples in all chunks to rebuild the hash table */
 	for (chunk = hashtable->chunks; chunk != NULL; chunk = chunk->next)
@@ -878,12 +881,16 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 * NTUP_PER_BUCKET threshold, but only when there's still a single
 		 * batch.
 		 */
-		if ((hashtable->nbatch == 1) &&
-			(hashtable->nbuckets_optimal <= INT_MAX / 2) &&		/* overflow protection */
-			(ntuples >= (hashtable->nbuckets_optimal * NTUP_PER_BUCKET)))
+		if (hashtable->nbatch == 1 &&
+			ntuples > (hashtable->nbuckets_optimal * NTUP_PER_BUCKET))
 		{
-			hashtable->nbuckets_optimal *= 2;
-			hashtable->log2_nbuckets_optimal += 1;
+			/* Guard against integer overflow and alloc size overflow */
+			if (hashtable->nbuckets_optimal <= INT_MAX / 2 &&
+				hashtable->nbuckets_optimal * 2 <= MaxAllocSize / sizeof(HashJoinTuple))
+			{
+				hashtable->nbuckets_optimal *= 2;
+				hashtable->log2_nbuckets_optimal += 1;
+			}
 		}
 
 		/* Account for space used, and back off if we've used too much */

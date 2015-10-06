@@ -61,6 +61,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
     DISABLE ROW LEVEL SECURITY
     ENABLE ROW LEVEL SECURITY
+    FORCE ROW LEVEL SECURITY
+    NO FORCE ROW LEVEL SECURITY
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITH OIDS
@@ -427,6 +429,21 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       default-deny policy is applied.  Note that policies can exist for a table
       even if row level security is disabled - in this case, the policies will
       NOT be applied and the policies will be ignored.
+      See also
+      <xref linkend="SQL-CREATEPOLICY">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NO FORCE</literal>/<literal>FORCE ROW LEVEL SECURITY</literal></term>
+    <listitem>
+     <para>
+      These forms control the application of row security policies belonging
+      to the table when the user is the table owner.  If enabled, row level
+      security policies will be applied when the user is the table owner.  If
+      disabled (the default) then row level security will not be applied when
+      the user is the table owner.
       See also
       <xref linkend="SQL-CREATEPOLICY">.
      </para>

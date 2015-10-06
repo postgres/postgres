@@ -170,7 +170,7 @@ typedef struct pgssEntry
 	pgssHashKey key;			/* hash key of entry - MUST BE FIRST */
 	Counters	counters;		/* the statistics for this query */
 	Size		query_offset;	/* query text offset in external file */
-	int			query_len;		/* # of valid bytes in query string */
+	int			query_len;		/* # of valid bytes in query string, or -1 */
 	int			encoding;		/* query text encoding */
 	slock_t		mutex;			/* protects the counters only */
 } pgssEntry;
@@ -1705,7 +1705,8 @@ entry_cmp(const void *lhs, const void *rhs)
 }
 
 /*
- * Deallocate least used entries.
+ * Deallocate least-used entries.
+ *
  * Caller must hold an exclusive lock on pgss->lock.
  */
 static void
@@ -1716,17 +1717,27 @@ entry_dealloc(void)
 	pgssEntry  *entry;
 	int			nvictims;
 	int			i;
-	Size		totlen = 0;
+	Size		tottextlen;
+	int			nvalidtexts;
 
 	/*
 	 * Sort entries by usage and deallocate USAGE_DEALLOC_PERCENT of them.
 	 * While we're scanning the table, apply the decay factor to the usage
-	 * values.
+	 * values, and update the mean query length.
+	 *
+	 * Note that the mean query length is almost immediately obsolete, since
+	 * we compute it before not after discarding the least-used entries.
+	 * Hopefully, that doesn't affect the mean too much; it doesn't seem worth
+	 * making two passes to get a more current result.  Likewise, the new
+	 * cur_median_usage includes the entries we're about to zap.
 	 */
 
 	entries = palloc(hash_get_num_entries(pgss_hash) * sizeof(pgssEntry *));
 
 	i = 0;
+	tottextlen = 0;
+	nvalidtexts = 0;
+
 	hash_seq_init(&hash_seq, pgss_hash);
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
 	{
@@ -1736,20 +1747,27 @@ entry_dealloc(void)
 			entry->counters.usage *= STICKY_DECREASE_FACTOR;
 		else
 			entry->counters.usage *= USAGE_DECREASE_FACTOR;
-		/* Accumulate total size, too. */
-		totlen += entry->query_len + 1;
+		/* In the mean length computation, ignore dropped texts. */
+		if (entry->query_len >= 0)
+		{
+			tottextlen += entry->query_len + 1;
+			nvalidtexts++;
+		}
 	}
 
+	/* Sort into increasing order by usage */
 	qsort(entries, i, sizeof(pgssEntry *), entry_cmp);
 
+	/* Record the (approximate) median usage */
 	if (i > 0)
-	{
-		/* Record the (approximate) median usage */
 		pgss->cur_median_usage = entries[i / 2]->counters.usage;
-		/* Record the mean query length */
-		pgss->mean_query_len = totlen / i;
-	}
+	/* Record the mean query length */
+	if (nvalidtexts > 0)
+		pgss->mean_query_len = tottextlen / nvalidtexts;
+	else
+		pgss->mean_query_len = ASSUMED_LENGTH_INIT;
 
+	/* Now zap an appropriate fraction of lowest-usage entries */
 	nvictims = Max(10, i * USAGE_DEALLOC_PERCENT / 100);
 	nvictims = Min(nvictims, i);
 
@@ -1892,7 +1910,7 @@ qtext_load_file(Size *buffer_size)
 	}
 
 	/* Allocate buffer; beware that off_t might be wider than size_t */
-	if (stat.st_size <= MaxAllocSize)
+	if (stat.st_size <= MaxAllocHugeSize)
 		buf = (char *) malloc(stat.st_size);
 	else
 		buf = NULL;
@@ -1900,7 +1918,9 @@ qtext_load_file(Size *buffer_size)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				 errmsg("out of memory"),
+				 errdetail("Could not allocate enough memory to read pg_stat_statement file \"%s\".",
+						   PGSS_TEXT_FILE)));
 		CloseTransientFile(fd);
 		return NULL;
 	}
@@ -2002,13 +2022,17 @@ need_gc_qtexts(void)
  * occur in the foreseeable future.
  *
  * The caller must hold an exclusive lock on pgss->lock.
+ *
+ * At the first sign of trouble we unlink the query text file to get a clean
+ * slate (although existing statistics are retained), rather than risk
+ * thrashing by allowing the same problem case to recur indefinitely.
  */
 static void
 gc_qtexts(void)
 {
 	char	   *qbuffer;
 	Size		qbuffer_size;
-	FILE	   *qfile;
+	FILE	   *qfile = NULL;
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
 	Size		extent;
@@ -2023,12 +2047,15 @@ gc_qtexts(void)
 		return;
 
 	/*
-	 * Load the old texts file.  If we fail (out of memory, for instance) just
-	 * skip the garbage collection.
+	 * Load the old texts file.  If we fail (out of memory, for instance),
+	 * invalidate query texts.  Hopefully this is rare.  It might seem better
+	 * to leave things alone on an OOM failure, but the problem is that the
+	 * file is only going to get bigger; hoping for a future non-OOM result is
+	 * risky and can easily lead to complete denial of service.
 	 */
 	qbuffer = qtext_load_file(&qbuffer_size);
 	if (qbuffer == NULL)
-		return;
+		goto gc_fail;
 
 	/*
 	 * We overwrite the query texts file in place, so as to reduce the risk of
@@ -2063,6 +2090,7 @@ gc_qtexts(void)
 			/* Trouble ... drop the text */
 			entry->query_offset = 0;
 			entry->query_len = -1;
+			/* entry will not be counted in mean query length computation */
 			continue;
 		}
 
@@ -2147,7 +2175,36 @@ gc_fail:
 		entry->query_len = -1;
 	}
 
-	/* Seems like a good idea to bump the GC count even though we failed */
+	/*
+	 * Destroy the query text file and create a new, empty one
+	 */
+	(void) unlink(PGSS_TEXT_FILE);
+	qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
+	if (qfile == NULL)
+		ereport(LOG,
+				(errcode_for_file_access(),
+			  errmsg("could not write new pg_stat_statement file \"%s\": %m",
+					 PGSS_TEXT_FILE)));
+	else
+		FreeFile(qfile);
+
+	/* Reset the shared extent pointer */
+	pgss->extent = 0;
+
+	/* Reset mean_query_len to match the new state */
+	pgss->mean_query_len = ASSUMED_LENGTH_INIT;
+
+	/*
+	 * Bump the GC count even though we failed.
+	 *
+	 * This is needed to make concurrent readers of file without any lock on
+	 * pgss->lock notice existence of new version of file.  Once readers
+	 * subsequently observe a change in GC count with pgss->lock held, that
+	 * forces a safe reopen of file.  Writers also require that we bump here,
+	 * of course.  (As required by locking protocol, readers and writers don't
+	 * trust earlier file contents until gc_count is found unchanged after
+	 * pgss->lock acquired in shared or exclusive mode respectively.)
+	 */
 	record_gc_qtexts();
 }
 

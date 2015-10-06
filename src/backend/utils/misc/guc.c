@@ -580,6 +580,8 @@ const char *const config_group_names[] =
 	gettext_noop("Reporting and Logging / When to Log"),
 	/* LOGGING_WHAT */
 	gettext_noop("Reporting and Logging / What to Log"),
+	/* PROCESS_TITLE */
+	gettext_noop("Process Title"),
 	/* STATS */
 	gettext_noop("Statistics"),
 	/* STATS_MONITORING */
@@ -1180,7 +1182,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"update_process_title", PGC_SUSET, STATS_COLLECTOR,
+		{"update_process_title", PGC_SUSET, PROCESS_TITLE,
 			gettext_noop("Updates the process title to show the active SQL command."),
 			gettext_noop("Enables updating of the process title every time a new SQL command is received by the server.")
 		},
@@ -3395,7 +3397,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"cluster_name", PGC_POSTMASTER, LOGGING_WHAT,
+		{"cluster_name", PGC_POSTMASTER, PROCESS_TITLE,
 			gettext_noop("Sets the name of the cluster which is included in the process title."),
 			NULL,
 			GUC_IS_NAME

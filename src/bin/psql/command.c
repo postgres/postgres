@@ -2637,7 +2637,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	}
 
 	/* set title override */
-	else if (strcmp(param, "title") == 0)
+	else if (strcmp(param, "C") == 0 || strcmp(param, "title") == 0)
 	{
 		free(popt->title);
 		if (!value)
@@ -2837,7 +2837,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	}
 
 	/* show title override */
-	else if (strcmp(param, "title") == 0)
+	else if (strcmp(param, "C") == 0 || strcmp(param, "title") == 0)
 	{
 		if (popt->title)
 			printf(_("Title is \"%s\".\n"), popt->title);

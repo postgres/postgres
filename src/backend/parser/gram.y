@@ -2353,6 +2353,20 @@ alter_table_cmd:
 					n->subtype = AT_DisableRowSecurity;
 					$$ = (Node *)n;
 				}
+			/* ALTER TABLE <name> FORCE ROW LEVEL SECURITY */
+			| FORCE ROW LEVEL SECURITY
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ForceRowSecurity;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> NO FORCE ROW LEVEL SECURITY */
+			| NO FORCE ROW LEVEL SECURITY
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_NoForceRowSecurity;
+					$$ = (Node *)n;
+				}
 			| alter_generic_options
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -3875,6 +3889,10 @@ create_extension_opt_item:
 			| FROM NonReservedWord_or_Sconst
 				{
 					$$ = makeDefElem("old_version", (Node *)makeString($2));
+				}
+			| CASCADE
+				{
+					$$ = makeDefElem("cascade", (Node *)makeInteger(TRUE));
 				}
 		;
 

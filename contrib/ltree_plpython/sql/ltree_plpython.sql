@@ -1,5 +1,4 @@
-CREATE EXTENSION plpython2u;
-CREATE EXTENSION ltree_plpython2u;
+CREATE EXTENSION ltree_plpython2u CASCADE;
 
 
 CREATE FUNCTION test1(val ltree) RETURNS int

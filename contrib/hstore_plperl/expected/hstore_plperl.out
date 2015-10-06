@@ -1,6 +1,6 @@
-CREATE EXTENSION hstore;
-CREATE EXTENSION plperl;
-CREATE EXTENSION hstore_plperl;
+CREATE EXTENSION hstore_plperl CASCADE;
+NOTICE:  installing required extension "hstore"
+NOTICE:  installing required extension "plperl"
 SELECT transforms.udt_schema, transforms.udt_name,
        routine_schema, routine_name,
        group_name, transform_type

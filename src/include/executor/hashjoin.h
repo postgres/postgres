@@ -131,7 +131,7 @@ typedef struct HashJoinTableData
 	int			nbuckets_original;		/* # buckets when starting the first
 										 * hash */
 	int			nbuckets_optimal;		/* optimal # buckets (per batch) */
-	int			log2_nbuckets_optimal;	/* same as log2_nbuckets optimal */
+	int			log2_nbuckets_optimal;	/* log2(nbuckets_optimal) */
 
 	/* buckets[i] is head of list of tuples in i'th in-memory bucket */
 	struct HashJoinTupleData **buckets;

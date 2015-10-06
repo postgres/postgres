@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2015-??-??</simpara>
-   <simpara>Current as of 2015-08-03</simpara>
+   <simpara>Current as of 2015-10-03</simpara>
   </note>
 
   <sect2>
@@ -434,6 +434,28 @@ FIXME: Add Andres
 
       <listitem>
 <!--
+2015-09-24 [45d256c] Tom Lane: Allow planner to use expression-index stats fo..
+-->
+       <para>
+        Teach the planner to use statistics obtained from an expression
+        index on a boolean-returning function, when a matching function call
+        appears in <literal>WHERE</> (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-09-23 [cfb2024] Tom Lane: Make ANALYZE compute basic statistics even for..
+-->
+       <para>
+        Make <command>ANALYZE</> compute basic statistics (null fraction and
+        average column width) even for columns whose data type lacks an
+        equality function (Oleksandr Shulgin)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2014-11-04 [5028f22] Heikki..: Switch to CRC-32C in WAL and other places.
 2015-02-10 [025c024] Heikki..: Speed up CRC calculation using slicing-by-8 alg..
 2015-04-14 [3dc2d62] Heikki..: Use Intel SSE 4.2 CRC instructions where availa..
@@ -775,6 +797,21 @@ FIXME: Add docs about restartpoint behaviour change
 
       <listitem>
 <!--
+2015-09-26 [bd7c348] Andres..: Rework the way multixact truncations work.
+2015-09-26 [6e8af37] Andres..: Remove legacy multixact truncation support.
+-->
+       <para>
+        Rework truncation of the multixact commit log to be properly
+        WAL-logged (Andres Freund)
+       </para>
+
+       <para>
+        This makes things substantially simpler and more robust.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2014-11-25 [aedccb1] Simon ..: action_at_recovery_target recovery config option
 2014-12-07 [b8e33a8] Simon ..: Tweaks for recovery_target_action
 2015-03-15 [51c11a7] Andres..: Remove pause_at_recovery_target recovery.conf s..
@@ -936,9 +973,9 @@ FIXME: Correct description
 2014-06-18 [8f889b1] Tom Lane: Implement UPDATE tab SET (col1,col2,...) = (SEL..
 -->
        <para>
-        Allow to set multiple columns in
-        an <link linkend="SQL-UPDATE"><command>UPDATE</></> to the result of a
-        single subselect (Tom Lane)
+        Allow setting multiple target columns in
+        an <link linkend="SQL-UPDATE"><command>UPDATE</></> from the result of
+        a single sub-SELECT (Tom Lane)
        </para>
 
        <para>
@@ -2335,6 +2372,24 @@ FIXME: Add more specifics?
        <para>
         Move pgbench from <filename>contrib</> to <filename>src/bin</>
         (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-09-30 [3c4c5ac] Tatsuo..: Fix incorrect tps number calculation in "exclu..
+-->
+       <para>
+        Fix calculation of TPS number <quote>excluding connections
+        establishing</> (Tatsuo Ishii, Fabien Coelho)
+       </para>
+
+       <para>
+        The overhead for connection establishment was miscalculated whenever
+        the number of pgbench threads was less than the number of client
+        connections.  Although this is clearly a bug, we won't back-patch it
+        into pre-9.5 branches since it makes TPS numbers not comparable to
+        previous results.
        </para>
       </listitem>
 

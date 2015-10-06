@@ -239,6 +239,15 @@ LINE 1: SELECT '{"abc":1,3}'::jsonb;
                ^
 DETAIL:  Expected string, but found "3".
 CONTEXT:  JSON data, line 1: {"abc":1,3...
+-- Recursion.
+SET max_stack_depth = '100kB';
+SELECT repeat('[', 10000)::jsonb;
+ERROR:  stack depth limit exceeded
+HINT:  Increase the configuration parameter "max_stack_depth" (currently 100kB), after ensuring the platform's stack depth limit is adequate.
+SELECT repeat('{"a":', 10000)::jsonb;
+ERROR:  stack depth limit exceeded
+HINT:  Increase the configuration parameter "max_stack_depth" (currently 100kB), after ensuring the platform's stack depth limit is adequate.
+RESET max_stack_depth;
 -- Miscellaneous stuff.
 SELECT 'true'::jsonb;			-- OK
  jsonb 
@@ -3127,11 +3136,7 @@ select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::j
 (1 row)
 
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{d,NULL,0}', '[1,2,3]');
-                              jsonb_set                              
----------------------------------------------------------------------
- {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [2, 3]}, "n": null}
-(1 row)
-
+ERROR:  path element at the position 2 is NULL
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{n}', '{"1": 2}');
                                 jsonb_set                                
 -------------------------------------------------------------------------
@@ -3151,11 +3156,7 @@ select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::j
 (1 row)
 
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{d,NULL,0}', '{"1": 2}');
-                              jsonb_set                              
----------------------------------------------------------------------
- {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [2, 3]}, "n": null}
-(1 row)
-
+ERROR:  path element at the position 2 is NULL
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{b,-1}', '"test"');
                                 jsonb_set                                 
 --------------------------------------------------------------------------
@@ -3199,11 +3200,7 @@ select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{
 (1 row)
 
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{b,-1e}'; -- invalid array subscript
-                              ?column?                               
----------------------------------------------------------------------
- {"a": 1, "b": [1, 2], "c": {"1": 2}, "d": {"1": [2, 3]}, "n": null}
-(1 row)
-
+ERROR:  path element at the position 2 is not an integer
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{d,1,0}';
                              ?column?                             
 ------------------------------------------------------------------
@@ -3331,3 +3328,9 @@ select jsonb_set('[]','{-99}','{"foo":123}');
  [{"foo": 123}]
 (1 row)
 
+select jsonb_set('{"a": [1, 2, 3]}', '{a, non_integer}', '"new_value"');
+ERROR:  path element at the position 2 is not an integer
+select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, non_integer}', '"new_value"');
+ERROR:  path element at the position 3 is not an integer
+select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, NULL}', '"new_value"');
+ERROR:  path element at the position 3 is NULL
