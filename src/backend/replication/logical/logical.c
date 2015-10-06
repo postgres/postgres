@@ -848,16 +848,13 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 		bool		updated_xmin = false;
 		bool		updated_restart = false;
 
-		/* use volatile pointer to prevent code rearrangement */
-		volatile ReplicationSlot *slot = MyReplicationSlot;
+		SpinLockAcquire(&MyReplicationSlot->mutex);
 
-		SpinLockAcquire(&slot->mutex);
-
-		slot->data.confirmed_flush = lsn;
+		MyReplicationSlot->data.confirmed_flush = lsn;
 
 		/* if were past the location required for bumping xmin, do so */
-		if (slot->candidate_xmin_lsn != InvalidXLogRecPtr &&
-			slot->candidate_xmin_lsn <= lsn)
+		if (MyReplicationSlot->candidate_xmin_lsn != InvalidXLogRecPtr &&
+			MyReplicationSlot->candidate_xmin_lsn <= lsn)
 		{
 			/*
 			 * We have to write the changed xmin to disk *before* we change
@@ -868,28 +865,28 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 			 * ->effective_xmin once the new state is synced to disk. After a
 			 * crash ->effective_xmin is set to ->xmin.
 			 */
-			if (TransactionIdIsValid(slot->candidate_catalog_xmin) &&
-				slot->data.catalog_xmin != slot->candidate_catalog_xmin)
+			if (TransactionIdIsValid(MyReplicationSlot->candidate_catalog_xmin) &&
+				MyReplicationSlot->data.catalog_xmin != MyReplicationSlot->candidate_catalog_xmin)
 			{
-				slot->data.catalog_xmin = slot->candidate_catalog_xmin;
-				slot->candidate_catalog_xmin = InvalidTransactionId;
-				slot->candidate_xmin_lsn = InvalidXLogRecPtr;
+				MyReplicationSlot->data.catalog_xmin = MyReplicationSlot->candidate_catalog_xmin;
+				MyReplicationSlot->candidate_catalog_xmin = InvalidTransactionId;
+				MyReplicationSlot->candidate_xmin_lsn = InvalidXLogRecPtr;
 				updated_xmin = true;
 			}
 		}
 
-		if (slot->candidate_restart_valid != InvalidXLogRecPtr &&
-			slot->candidate_restart_valid <= lsn)
+		if (MyReplicationSlot->candidate_restart_valid != InvalidXLogRecPtr &&
+			MyReplicationSlot->candidate_restart_valid <= lsn)
 		{
-			Assert(slot->candidate_restart_lsn != InvalidXLogRecPtr);
+			Assert(MyReplicationSlot->candidate_restart_lsn != InvalidXLogRecPtr);
 
-			slot->data.restart_lsn = slot->candidate_restart_lsn;
-			slot->candidate_restart_lsn = InvalidXLogRecPtr;
-			slot->candidate_restart_valid = InvalidXLogRecPtr;
+			MyReplicationSlot->data.restart_lsn = MyReplicationSlot->candidate_restart_lsn;
+			MyReplicationSlot->candidate_restart_lsn = InvalidXLogRecPtr;
+			MyReplicationSlot->candidate_restart_valid = InvalidXLogRecPtr;
 			updated_restart = true;
 		}
 
-		SpinLockRelease(&slot->mutex);
+		SpinLockRelease(&MyReplicationSlot->mutex);
 
 		/* first write new xmin to disk, so we know whats up after a crash */
 		if (updated_xmin || updated_restart)
@@ -907,9 +904,9 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 		 */
 		if (updated_xmin)
 		{
-			SpinLockAcquire(&slot->mutex);
-			slot->effective_catalog_xmin = slot->data.catalog_xmin;
-			SpinLockRelease(&slot->mutex);
+			SpinLockAcquire(&MyReplicationSlot->mutex);
+			MyReplicationSlot->effective_catalog_xmin = MyReplicationSlot->data.catalog_xmin;
+			SpinLockRelease(&MyReplicationSlot->mutex);
 
 			ReplicationSlotsComputeRequiredXmin(false);
 			ReplicationSlotsComputeRequiredLSN();
@@ -917,10 +914,8 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 	}
 	else
 	{
-		volatile ReplicationSlot *slot = MyReplicationSlot;
-
-		SpinLockAcquire(&slot->mutex);
-		slot->data.confirmed_flush = lsn;
-		SpinLockRelease(&slot->mutex);
+		SpinLockAcquire(&MyReplicationSlot->mutex);
+		MyReplicationSlot->data.confirmed_flush = lsn;
+		SpinLockRelease(&MyReplicationSlot->mutex);
 	}
 }

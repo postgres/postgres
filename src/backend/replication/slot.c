@@ -288,15 +288,11 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->in_use = true;
 
 	/* We can now mark the slot active, and that makes it our slot. */
-	{
-		volatile ReplicationSlot *vslot = slot;
-
-		SpinLockAcquire(&slot->mutex);
-		Assert(vslot->active_pid == 0);
-		vslot->active_pid = MyProcPid;
-		SpinLockRelease(&slot->mutex);
-		MyReplicationSlot = slot;
-	}
+	SpinLockAcquire(&slot->mutex);
+	Assert(slot->active_pid == 0);
+	slot->active_pid = MyProcPid;
+	SpinLockRelease(&slot->mutex);
+	MyReplicationSlot = slot;
 
 	LWLockRelease(ReplicationSlotControlLock);
 
@@ -329,12 +325,10 @@ ReplicationSlotAcquire(const char *name)
 
 		if (s->in_use && strcmp(name, NameStr(s->data.name)) == 0)
 		{
-			volatile ReplicationSlot *vslot = s;
-
 			SpinLockAcquire(&s->mutex);
-			active_pid = vslot->active_pid;
+			active_pid = s->active_pid;
 			if (active_pid == 0)
-				vslot->active_pid = MyProcPid;
+				s->active_pid = MyProcPid;
 			SpinLockRelease(&s->mutex);
 			slot = s;
 			break;
@@ -380,10 +374,8 @@ ReplicationSlotRelease(void)
 	else
 	{
 		/* Mark slot inactive.  We're not freeing it, just disconnecting. */
-		volatile ReplicationSlot *vslot = slot;
-
 		SpinLockAcquire(&slot->mutex);
-		vslot->active_pid = 0;
+		slot->active_pid = 0;
 		SpinLockRelease(&slot->mutex);
 	}
 
@@ -459,11 +451,10 @@ ReplicationSlotDropAcquired(void)
 	}
 	else
 	{
-		volatile ReplicationSlot *vslot = slot;
 		bool		fail_softly = slot->data.persistency == RS_EPHEMERAL;
 
 		SpinLockAcquire(&slot->mutex);
-		vslot->active_pid = 0;
+		slot->active_pid = 0;
 		SpinLockRelease(&slot->mutex);
 
 		ereport(fail_softly ? WARNING : ERROR,
@@ -533,16 +524,13 @@ ReplicationSlotSave(void)
 void
 ReplicationSlotMarkDirty(void)
 {
+	ReplicationSlot *slot = MyReplicationSlot;
 	Assert(MyReplicationSlot != NULL);
 
-	{
-		volatile ReplicationSlot *vslot = MyReplicationSlot;
-
-		SpinLockAcquire(&vslot->mutex);
-		MyReplicationSlot->just_dirtied = true;
-		MyReplicationSlot->dirty = true;
-		SpinLockRelease(&vslot->mutex);
-	}
+	SpinLockAcquire(&slot->mutex);
+	MyReplicationSlot->just_dirtied = true;
+	MyReplicationSlot->dirty = true;
+	SpinLockRelease(&slot->mutex);
 }
 
 /*
@@ -557,13 +545,9 @@ ReplicationSlotPersist(void)
 	Assert(slot != NULL);
 	Assert(slot->data.persistency != RS_PERSISTENT);
 
-	{
-		volatile ReplicationSlot *vslot = slot;
-
-		SpinLockAcquire(&slot->mutex);
-		vslot->data.persistency = RS_PERSISTENT;
-		SpinLockRelease(&slot->mutex);
-	}
+	SpinLockAcquire(&slot->mutex);
+	slot->data.persistency = RS_PERSISTENT;
+	SpinLockRelease(&slot->mutex);
 
 	ReplicationSlotMarkDirty();
 	ReplicationSlotSave();
@@ -593,14 +577,10 @@ ReplicationSlotsComputeRequiredXmin(bool already_locked)
 		if (!s->in_use)
 			continue;
 
-		{
-			volatile ReplicationSlot *vslot = s;
-
-			SpinLockAcquire(&s->mutex);
-			effective_xmin = vslot->effective_xmin;
-			effective_catalog_xmin = vslot->effective_catalog_xmin;
-			SpinLockRelease(&s->mutex);
-		}
+		SpinLockAcquire(&s->mutex);
+		effective_xmin = s->effective_xmin;
+		effective_catalog_xmin = s->effective_catalog_xmin;
+		SpinLockRelease(&s->mutex);
 
 		/* check the data xmin */
 		if (TransactionIdIsValid(effective_xmin) &&
@@ -641,13 +621,9 @@ ReplicationSlotsComputeRequiredLSN(void)
 		if (!s->in_use)
 			continue;
 
-		{
-			volatile ReplicationSlot *vslot = s;
-
-			SpinLockAcquire(&s->mutex);
-			restart_lsn = vslot->data.restart_lsn;
-			SpinLockRelease(&s->mutex);
-		}
+		SpinLockAcquire(&s->mutex);
+		restart_lsn = s->data.restart_lsn;
+		SpinLockRelease(&s->mutex);
 
 		if (restart_lsn != InvalidXLogRecPtr &&
 			(min_required == InvalidXLogRecPtr ||
@@ -684,7 +660,7 @@ ReplicationSlotsComputeLogicalRestartLSN(void)
 
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		volatile ReplicationSlot *s;
+		ReplicationSlot *s;
 		XLogRecPtr	restart_lsn;
 
 		s = &ReplicationSlotCtl->replication_slots[i];
@@ -733,7 +709,7 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		volatile ReplicationSlot *s;
+		ReplicationSlot *s;
 
 		s = &ReplicationSlotCtl->replication_slots[i];
 
@@ -1023,14 +999,10 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	bool		was_dirty;
 
 	/* first check whether there's something to write out */
-	{
-		volatile ReplicationSlot *vslot = slot;
-
-		SpinLockAcquire(&vslot->mutex);
-		was_dirty = vslot->dirty;
-		vslot->just_dirtied = false;
-		SpinLockRelease(&vslot->mutex);
-	}
+	SpinLockAcquire(&slot->mutex);
+	was_dirty = slot->dirty;
+	slot->just_dirtied = false;
+	SpinLockRelease(&slot->mutex);
 
 	/* and don't do anything if there's nothing to write */
 	if (!was_dirty)
@@ -1124,14 +1096,10 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	 * Successfully wrote, unset dirty bit, unless somebody dirtied again
 	 * already.
 	 */
-	{
-		volatile ReplicationSlot *vslot = slot;
-
-		SpinLockAcquire(&vslot->mutex);
-		if (!vslot->just_dirtied)
-			vslot->dirty = false;
-		SpinLockRelease(&vslot->mutex);
-	}
+	SpinLockAcquire(&slot->mutex);
+	if (!slot->just_dirtied)
+		slot->dirty = false;
+	SpinLockRelease(&slot->mutex);
 
 	LWLockRelease(slot->io_in_progress_lock);
 }
