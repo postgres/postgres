@@ -188,6 +188,11 @@ is_shippable(Oid objnumber, Oid classnumber, List *extension_list)
 		 */
 		bool shippable = lookup_shippable(objnumber, classnumber, extension_list);
 
+		/*
+		 * Don't create a new hash entry until *after* we have the shippable
+		 * result in hand, as the shippable lookup might trigger a cache
+		 * invalidation.
+		 */
 		entry = (ShippableCacheEntry *)
 					 hash_search(ShippableCacheHash,
 						(void *) &key,
