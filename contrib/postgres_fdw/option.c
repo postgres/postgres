@@ -157,7 +157,7 @@ InitPgFdwOptions(void)
 		/* cost factors */
 		{"fdw_startup_cost", ForeignServerRelationId, false},
 		{"fdw_tuple_cost", ForeignServerRelationId, false},
-		/* updatable option is available on both server and table */
+		/* updatable is available on both server and table */
 		{"updatable", ForeignServerRelationId, false},
 		{"updatable", ForeignTableRelationId, false},
 		/* "extensions" option is available on server */
