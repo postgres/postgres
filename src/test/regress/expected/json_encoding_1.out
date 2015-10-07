@@ -1,0 +1,70 @@
+-- encoding-sensitive tests for json
+-- basic unicode input
+SELECT '"\u"'::json;			-- ERROR, incomplete escape
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\u"'::json;
+               ^
+DETAIL:  "\u" must be followed by four hexadecimal digits.
+CONTEXT:  JSON data, line 1: "\u"
+SELECT '"\u00"'::json;			-- ERROR, incomplete escape
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\u00"'::json;
+               ^
+DETAIL:  "\u" must be followed by four hexadecimal digits.
+CONTEXT:  JSON data, line 1: "\u00"
+SELECT '"\u000g"'::json;		-- ERROR, g is not a hex digit
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\u000g"'::json;
+               ^
+DETAIL:  "\u" must be followed by four hexadecimal digits.
+CONTEXT:  JSON data, line 1: "\u000g...
+SELECT '"\u0000"'::json;		-- OK, legal escape
+   json   
+----------
+ "\u0000"
+(1 row)
+
+SELECT '"\uaBcD"'::json;		-- OK, uppercase and lower case both OK
+   json   
+----------
+ "\uaBcD"
+(1 row)
+
+-- handling of unicode surrogate pairs
+select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode high surrogate must not follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode low surrogate must follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode low surrogate must follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode low surrogate must follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+--handling of simple unicode escapes
+select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
+ correct_everywhere 
+--------------------
+ dollar $ character
+(1 row)
+
+select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_escaped;
+    not_escaped     
+--------------------
+ null \u0000 escape
+(1 row)
+

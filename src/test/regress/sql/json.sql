@@ -7,11 +7,7 @@ SELECT '"abc
 def"'::json;					-- ERROR, unescaped newline in string constant
 SELECT '"\n\"\\"'::json;		-- OK, legal escapes
 SELECT '"\v"'::json;			-- ERROR, not a valid JSON escape
-SELECT '"\u"'::json;			-- ERROR, incomplete escape
-SELECT '"\u00"'::json;			-- ERROR, incomplete escape
-SELECT '"\u000g"'::json;		-- ERROR, g is not a hex digit
-SELECT '"\u0000"'::json;		-- OK, legal escape
-SELECT '"\uaBcD"'::json;		-- OK, uppercase and lower case both OK
+-- see json_encoding test for input with unicode escapes
 
 -- Numbers.
 SELECT '1'::json;				-- OK
@@ -306,16 +302,3 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 
--- handling of unicode surrogate pairs
-
-select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
-select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
-select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
-select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
-select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
-
---handling of simple unicode escapes
-
-select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
-select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
-select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_unescaped;
