@@ -39,10 +39,10 @@ DROP ROLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    A role cannot be removed if it is still referenced in any database
    of the cluster; an error will be raised if so.  Before dropping the role,
    you must drop all the objects it owns (or reassign their ownership)
-   and revoke any privileges the role has been granted. The <xref
-   linkend="sql-reassign-owned">
-   and <xref linkend="sql-drop-owned">
-   commands can be useful for this purpose.
+   and revoke any privileges the role has been granted on other objects.
+   The <xref linkend="sql-reassign-owned"> and <xref linkend="sql-drop-owned">
+   commands can be useful for this purpose; see <xref linkend="role-removal">
+   for more discussion.
   </para>
 
   <para>
