@@ -90,11 +90,16 @@ DROP OWNED BY { <replaceable class="PARAMETER">name</replaceable> | CURRENT_USER
   <para>
    The <xref linkend="sql-reassign-owned"> command is an alternative that
    reassigns the ownership of all the database objects owned by one or
-   more roles.
+   more roles.  However, <command>REASSIGN OWNED</> does not deal with
+   privileges for other objects.
   </para>
 
   <para>
    Databases and tablespaces owned by the role(s) will not be removed.
+  </para>
+
+  <para>
+   See <xref linkend="role-removal"> for more discussion.
   </para>
  </refsect1>
 
@@ -102,7 +107,7 @@ DROP OWNED BY { <replaceable class="PARAMETER">name</replaceable> | CURRENT_USER
   <title>Compatibility</title>
 
   <para>
-   The <command>DROP OWNED</command> statement is a
+   The <command>DROP OWNED</command> command is a
    <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>

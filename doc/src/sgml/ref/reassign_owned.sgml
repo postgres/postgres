@@ -31,8 +31,9 @@ REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURR
 
   <para>
    <command>REASSIGN OWNED</command> instructs the system to change
-   the ownership of database objects owned by one of the
-   old_roles, to new_role.
+   the ownership of database objects owned by any of the
+   <replaceable class="PARAMETER">old_roles</replaceable> to
+   <replaceable class="PARAMETER">new_role</replaceable>.
   </para>
  </refsect1>
 
@@ -82,16 +83,18 @@ REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURR
 
   <para>
    The <xref linkend="sql-drop-owned"> command is an alternative that
-   drops all the database objects owned by one or more roles. Note
-   also that <command>DROP OWNED</command> requires privileges only
-   on the source role(s).
+   simply drops all the database objects owned by one or more roles.
   </para>
 
   <para>
-   The <command>REASSIGN OWNED</command> command does not affect the
-   privileges granted to the old_roles in objects that are not owned
-   by them.  Use <command>DROP OWNED</command> to revoke those
-   privileges.
+   The <command>REASSIGN OWNED</command> command does not affect any
+   privileges granted to the <replaceable class="PARAMETER">old_roles</> for
+   objects that are not owned by them.  Use <command>DROP OWNED</command> to
+   revoke such privileges.
+  </para>
+
+  <para>
+   See <xref linkend="role-removal"> for more discussion.
   </para>
 
  </refsect1>
@@ -100,7 +103,7 @@ REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURR
   <title>Compatibility</title>
 
   <para>
-   The <command>REASSIGN OWNED</command> statement is a
+   The <command>REASSIGN OWNED</command> command is a
    <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
