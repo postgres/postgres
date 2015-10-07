@@ -79,7 +79,7 @@ INSERT INTO reservation VALUES
     (1108, '[2010-01-01 14:30, 2010-01-01 15:30)');
 
 -- Containment
-SELECT int4range(10, 20) @> 3;
+SELECT int4range(10, 20) @&gt; 3;
 
 -- Overlaps
 SELECT numrange(11.1, 22.2) &amp;&amp; numrange(20.0, 30.0);
