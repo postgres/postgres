@@ -29,7 +29,7 @@ DROP USER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
   <title>Description</title>
 
   <para>
-   <command>DROP USER</command> is now an alias for
+   <command>DROP USER</command> is simply an alternate spelling of
    <xref linkend="sql-droprole">.
   </para>
  </refsect1>
